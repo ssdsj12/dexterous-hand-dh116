@@ -10,6 +10,30 @@ def inputs():
     return J,np.array([[1.,0,0],[-1.,0,0]]),W
 
 
+@pytest.mark.parametrize('actual',[False,True])
+def test_touch_first_holds_index_world_point_and_palm(actual):
+    from go2_pvcnn.control.dh116.coordinated_closure import coordinated_bimanual_increment
+    pairs=[actual_same_section_inputs(s) if actual else inputs() for s in ('left','right')]
+    J,n,W=(np.asarray(x) for x in zip(*pairs))
+    dq=coordinated_bimanual_increment(J,n,W,np.zeros((2,2)),1e-4,
+        target_loads_n=np.full((2,2),.05),transport_velocity_w=np.zeros(3),
+        normal_speeds_m_s=np.array([[.0005,0.],[.0005,0.]]))
+    v=np.einsum('shij,sj->shi',J,dq/1e-4)
+    np.testing.assert_allclose(v[:,1],0.,atol=1e-10)
+    assert np.all(np.sum(v[:,0]*n[:,0],axis=1)>0)
+    np.testing.assert_allclose(np.einsum('sij,sj->si',W,dq/1e-4),0.,atol=1e-10)
+
+
+@pytest.mark.parametrize('speeds', [np.full((2,2),np.nan),np.full((2,2),.0021),np.zeros(4)])
+def test_explicit_pad_speed_rejects_invalid_or_excessive_commands(speeds):
+    from go2_pvcnn.control.dh116.coordinated_closure import coordinated_bimanual_increment
+    J,n,W=inputs()
+    with pytest.raises(ValueError):
+        coordinated_bimanual_increment(np.stack((J,J)),np.stack((n,n)),np.stack((W,W)),
+            np.zeros((2,2)),1e-4,target_loads_n=np.full((2,2),.05),transport_velocity_w=np.zeros(3),
+            normal_speeds_m_s=speeds)
+
+
 def test_tangent_and_palm_rotation_cancelled():
     J,n,W=inputs()
     dq=coordinated_closure_increment(J,n,W,[.1,1.5],1e-4,target_loads_n=[1.,1.])

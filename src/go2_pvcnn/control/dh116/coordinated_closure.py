@@ -9,7 +9,7 @@ import numpy as np
 
 
 def _velocity_candidate(point_jacobians,normals,palm_angular_jacobian,
-                        loads_n,dt,*,target_loads_n,transport_velocity_w=None):
+                        loads_n,dt,*,target_loads_n,transport_velocity_w=None,normal_speeds_m_s=None):
     J=np.asarray(point_jacobians,dtype=float)
     n=np.asarray(normals,dtype=float)
     W=np.asarray(palm_angular_jacobian,dtype=float)
@@ -29,12 +29,18 @@ def _velocity_candidate(point_jacobians,normals,palm_angular_jacobian,
     error=target-load
     speed=np.clip(.01*error,-.002,.002)
     speed[np.abs(error)<=.03]=0.
+    if normal_speeds_m_s is not None:
+        speed=np.asarray(normal_speeds_m_s,dtype=float)
+        if speed.shape!=(2,) or not np.isfinite(speed).all() or np.any(np.abs(speed)>.002):
+            raise ValueError('invalid explicit pad normal speed')
     A=np.vstack((J.reshape(6,10),.05*W))
     b=np.r_[(n*speed[:,None]+transport).reshape(6),np.zeros(3)]
     if np.linalg.svd(A,compute_uv=False)[-1]<1e-5:
         raise ValueError('coordinated closure Jacobian is singular')
     velocity=np.linalg.lstsq(A,b,rcond=None)[0]
     if not np.isfinite(velocity).all():raise ValueError('nonfinite closure velocity')
+    if normal_speeds_m_s is not None and not np.allclose(A@velocity,b,atol=1e-10,rtol=1e-7):
+        raise ValueError('touch-first point hold is not achievable')
     return velocity
 
 
@@ -48,7 +54,7 @@ def coordinated_closure_increment(point_jacobians,normals,palm_angular_jacobian,
 
 
 def coordinated_bimanual_increment(point_jacobians,normals,palm_angular_jacobians,
-                                   loads_n,dt,*,target_loads_n,transport_velocity_w):
+                                   loads_n,dt,*,target_loads_n,transport_velocity_w,normal_speeds_m_s=None):
     """Left/right candidates share one rate scale; no runtime safety authority."""
     J=np.asarray(point_jacobians,dtype=float);n=np.asarray(normals,dtype=float)
     W=np.asarray(palm_angular_jacobians,dtype=float)
@@ -56,8 +62,13 @@ def coordinated_bimanual_increment(point_jacobians,normals,palm_angular_jacobian
     if (J.shape!=(2,2,3,10) or n.shape!=(2,2,3) or W.shape!=(2,3,10)
             or loads.shape!=(2,2) or targets.shape!=(2,2)):
         raise ValueError('invalid bimanual closure evidence shape')
+    speeds=None if normal_speeds_m_s is None else np.asarray(normal_speeds_m_s,dtype=float)
+    if speeds is not None and (speeds.shape!=(2,2) or not np.isfinite(speeds).all()
+                               or np.any(np.abs(speeds)>.002)):
+        raise ValueError('invalid bimanual explicit pad speeds')
     velocity=np.array([_velocity_candidate(J[i],n[i],W[i],loads[i],dt,
-        target_loads_n=targets[i],transport_velocity_w=transport_velocity_w) for i in range(2)])
+        target_loads_n=targets[i],transport_velocity_w=transport_velocity_w,
+        normal_speeds_m_s=None if speeds is None else speeds[i]) for i in range(2)])
     scale=max(1.,float(np.max(np.abs(velocity[:,:7])))/.05,
                  float(np.max(np.abs(velocity[:,7:])))/.02)
     return velocity*(dt/scale)
