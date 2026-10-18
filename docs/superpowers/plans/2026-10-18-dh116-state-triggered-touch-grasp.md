@@ -38,11 +38,11 @@ Files: `coordinated_closure.py`, `tests/test_dh116_coordinated_closure.py`（上
 
 Files: `grasp_sequence.py`, `stage_runtime.py`, `scripts/verify_fixed_dual_panda_dh116.py`, 对应 sequence/runtime/runner 测试。
 
-- [ ] 将原固定4秒测试改成实测到位、低速连续50ms；超过4秒不自动闭指，到位等待超过10s退出。
-- [ ] 主循环传入两侧实测关节速度及接触有效性；在 approach->close 时用当前测量建立闭指初值，与前一指令按限速平滑接管。
-- [ ] touch/oppose/preload 输出接入显式法向速度分配器；预载达标前不启动夹持计时。力与力矩仍从实际后端返回。
-- [ ] 恢复重新建立 readiness/轻触证据，不继承旧计时，不更改旧 SHA；测试缺失速度、接管目标、恢复子阶段与旧证据隔离。
-- [ ] `bash scripts/python.sh -m pytest tests -q --tb=short`，检查全部失败原因，不放宽安全或证据断言。
+- [x] 将原固定4秒测试改成实测到位、低速连续50ms；超过4秒不自动闭指，到位等待超过10s退出。
+- [x] 主循环传入两侧实测关节速度及接触有效性；在 approach->close 时用当前测量建立闭指初值，与前一指令按限速平滑接管。
+- [x] touch/oppose/preload 输出接入显式法向速度分配器；预载达标前不启动夹持计时。力与力矩仍从实际后端返回。
+- [x] 恢复重新建立 readiness/轻触证据，不继承旧计时，不更改旧 SHA；测试缺失速度、接管目标、恢复子阶段与旧证据隔离。
+- [x] `bash scripts/python.sh -m pytest tests -q --tb=short`：591 passed in 50.14s；物理验收单列 Task 4。
 
 ## Task 4: 物理验收与交接
 

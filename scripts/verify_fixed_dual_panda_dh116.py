@@ -10,6 +10,7 @@ from go2_pvcnn.control.dh116.run_evidence import write_start_manifest,check_stop
 from go2_pvcnn.control.dh116.grasp_sequence import TabletopGraspSequence,validate_continuous_options
 from go2_pvcnn.control.dh116.stage_state import load_state,save_state,PHASES
 from go2_pvcnn.control.dh116.stage_runtime import StageResetSequence,robot_restore_arrays
+from go2_pvcnn.control.dh116.touch_first import bounded_handoff
 from isaaclab.app import AppLauncher
 
 parser=argparse.ArgumentParser(description=__doc__)
@@ -154,6 +155,7 @@ try:
         approach_certificate_sha256=args.approach_certificate_sha256,
         closure_pilot=args.closure_pilot,grasp_sequence=args.grasp_sequence,closure_loads_n=args.closure_loads,
         coordinated_closure=args.coordinated_closure,
+        grasp_policy='touch-first-v1' if args.grasp_sequence else 'diagnostic',
         contact_subsamples=args.contact_subsamples,
         contact_broad_phase=args.contact_broad_phase,
         clearance_certificate_cache=args.clearance_certificate_cache,
@@ -353,8 +355,9 @@ try:
         result['fixed_material_ids']=dict(zip(BODY_NAMES,fixed_material_ids))
         material_baseline=None;contact_since=None;longest_contact_s=0.;max_material_slip_m=0.
         if args.grasp_sequence:
-            grasp_sequence=TabletopGraspSequence(material_ids=fixed_material_ids,target_loads_n=args.closure_loads)
-            if restore_payload is not None:grasp_sequence=StageResetSequence(restore_payload,state_pins)
+            grasp_sequence=TabletopGraspSequence(material_ids=fixed_material_ids,target_loads_n=args.closure_loads,
+                                                state_triggered=True)
+            if restore_payload is not None:grasp_sequence=StageResetSequence(restore_payload,state_pins,state_triggered=True)
             approach_measured=None
             approach_goals={}
             for c,ref in selected_refs.items():
@@ -397,13 +400,21 @@ try:
             damping=arm.root_physx_view.get_dof_dampings()[0].cpu().tolist(),
             max_force=arm.root_physx_view.get_dof_max_forces()[0].cpu().tolist(),
             max_velocity=arm.root_physx_view.get_dof_max_velocities()[0].cpu().tolist()) for side,arm in arms.items()}
+    handoff_seed=None
     for step in range(args.steps):
         check_stop_request(args.output)
         t=(step+1)*dt
         if args.grasp_sequence:
             closure_active=grasp_sequence.stage in ('close','hold','lift')
             if restore_payload is not None:closure_active=grasp_sequence.control_contact_active
-            if closure_active:
+            handoff_in_progress=handoff_seed is not None
+            if handoff_in_progress:
+                commands=np.array([np.r_[closure_arm_targets[s],closure_targets[s]] for s in arms])
+                commands,handoff_done=bounded_handoff(commands,handoff_seed,dt)
+                for i,s in enumerate(arms):
+                    closure_arm_targets[s]=commands[i,:7].copy();closure_targets[s]=commands[i,7:].copy()
+                if handoff_done:handoff_seed=None
+            if closure_active and not handoff_in_progress:
                 control_J=[];control_n=[];control_W=[]
                 for side,arm in arms.items():
                     raw=arm.root_physx_view.get_jacobians()[0].cpu().numpy()
@@ -419,8 +430,12 @@ try:
                     W[:,:7]=raw[pi-1,3:][:,ids]
                     control_J.append(Js);control_n.append(ns);control_W.append(W)
                 # One common scaling before either hand's target is published.
+                touch_command=grasp_sequence.touch_output if grasp_sequence.stage=='close' else None
                 increments=coordinated_bimanual_increment(control_J,control_n,control_W,
-                    previous_loads.reshape(2,2),dt,target_loads_n=np.asarray(args.closure_loads).reshape(2,2),
+                    previous_loads.reshape(2,2),dt,
+                    target_loads_n=(np.asarray(args.closure_loads).reshape(2,2) if touch_command is None
+                                    else touch_command['target_loads_n']),
+                    normal_speeds_m_s=None if touch_command is None else touch_command['normal_speeds_m_s'],
                     transport_velocity_w=grasp_sequence.transport_velocity(t))
                 for i,side in enumerate(arms):
                     closure_arm_targets[side]+=increments[i,:7]
@@ -669,6 +684,7 @@ try:
                 previous_stage=grasp_sequence.stage
                 evidence=grasp_sequence.update(now,settled=bool(record['wire']['passed']),
                     approach_position_errors_m=point_errors,approach_normal_errors_rad=normal_errors,
+                    joint_speeds_rad_s=np.array([arm.data.joint_vel[0].cpu().numpy() for arm in arms.values()]),
                     station_heights_m=station_heights,loads_n=previous_loads,
                     valid_contacts=[samples[c]['valid'] for c in BODY_NAMES],normals=actual_normals,
                     anchors_local=anchors,min_surface_clearance_m=surface_clearance,
@@ -676,6 +692,16 @@ try:
                 if previous_stage=='approach' and evidence['stage']=='close':
                     approach_measured=dict(passed=True,time_s=now,position_errors_m=point_errors,
                         normal_errors_rad=normal_errors,grasp_qualified=False)
+                if previous_stage in ('approach','restore_validate') and evidence['stage']=='close':
+                    # Freeze the observed active pose, not the nominal approach endpoint.
+                    # Preserve the last published command and rate-limit the takeover.
+                    handoff_seed=np.array([[float(arm.data.joint_pos[0,arm.joint_names.index(n)])
+                        for n in [f'{s}_panda_joint{i}' for i in range(1,8)]+list(ACTIVE)]
+                        for s,arm in arms.items()])
+                    closure_arm_targets={s:target_arms[s].copy() for s in arms}
+                    closure_targets={s:target_hands[s].copy() for s in arms}
+                    record['handoff_seed_active']=handoff_seed.tolist()
+                record['handoff_active']=handoff_seed is not None
                 record['grasp_sequence']=dict(evidence,actual_station_heights_m=station_heights,
                     min_surface_clearance_m=surface_clearance,approach_position_errors_m=point_errors,
                     approach_normal_errors_rad=normal_errors)

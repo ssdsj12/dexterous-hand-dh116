@@ -19,6 +19,12 @@ def test_valid_continuous_options():
     validate_continuous_options(options())
 
 
+def test_touch_first_load_floor_checked_before_isaac_launch():
+    with pytest.raises(ValueError):
+        validate_continuous_options(options(closure_loads=[.049]*4))
+    validate_continuous_options(options(closure_loads=[.05]*4))
+
+
 @pytest.mark.parametrize('change',[
     {'closure_pilot':True},{'active_pose':None},{'active_pose_sha256':None},
     {'approach_certificate':None},{'approach_certificate_sha256':None},

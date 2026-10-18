@@ -6,6 +6,19 @@ velocities, not joint commands or evidence that grasping has succeeded.
 import numpy as np
 
 
+def bounded_handoff(command, measured, dt):
+    """Rate-limited transition to a captured actual active pose, not nominal end."""
+    q=np.asarray(command,dtype=float); actual=np.asarray(measured,dtype=float)
+    if (q.shape!=(2,13) or actual.shape!=(2,13)
+            or not np.isfinite(q).all() or not np.isfinite(actual).all()
+            or not np.isfinite(dt) or not 0<dt<=1e-4):
+        raise ValueError('invalid measured handoff or timestep')
+    cap=np.r_[np.full(7,.05),np.full(6,.02)]*dt
+    remaining=actual-q
+    ready=bool(np.all(np.abs(remaining)<=cap))
+    return (actual.copy() if ready else q+np.clip(remaining,-cap,cap)),ready
+
+
 def _time_delta(time_s, previous):
     if not np.isfinite(time_s) or time_s < 0:
         raise ValueError('invalid physical evidence time')

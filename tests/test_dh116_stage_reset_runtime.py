@@ -74,3 +74,31 @@ def test_restore_rejects_invalid_station_measurement():
     s=state();seq=api().StageResetSequence(s,s['pins']);m=measurement()
     m['station_heights_m']=[float('nan'),.308]
     with pytest.raises(ValueError):seq.update(0.,**m)
+
+
+@pytest.mark.parametrize('entry',['approach','close'])
+def test_touch_first_restore_rebuilds_measured_readiness_and_touch(entry):
+    s=state();s['entry_stage']=entry
+    s['source']['passed_stages']=['settle'] if entry=='approach' else ['settle','approach']
+    seq=api().StageResetSequence(s,s['pins'],state_triggered=True)
+    m=measurement();m['joint_speeds_rad_s']=np.zeros((2,18))
+    m['loads_n']=[0.]*4;m['valid_contacts']=[False]*4
+    for i in range(11):r=seq.update(i*.01,**m)
+    assert r['stage']==entry
+    assert seq.touch_output is None
+    for i in range(11,17):r=seq.update(i*.01,**m)
+    assert r['stage']=='close'
+    assert r['touch_first']['phases']==['touch','touch']
+    assert not r['continuous_grasp_qualified']
+
+
+def test_touch_restore_requires_actual_speed_even_before_release():
+    s=state();seq=api().StageResetSequence(s,s['pins'],state_triggered=True)
+    with pytest.raises(ValueError):seq.update(0.,**measurement())
+
+
+def test_runner_selects_state_triggered_measured_handoff_and_pad_speeds():
+    source=(Path(__file__).parents[1]/'scripts/verify_fixed_dual_panda_dh116.py').read_text()
+    for token in ('state_triggered=True','joint_speeds_rad_s=', 'bounded_handoff(',
+                  'normal_speeds_m_s=', 'handoff_seed', "grasp_policy='touch-first-v1'"):
+        assert token in source

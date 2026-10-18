@@ -24,9 +24,10 @@ def robot_restore_arrays(saved, joint_names, live_limits, live_root):
 
 
 class StageResetSequence(TabletopGraspSequence):
-    def __init__(self,payload,expected_pins):
+    def __init__(self,payload,expected_pins,*,state_triggered=False):
         self.saved=validate_state(payload,expected_pins)
-        super().__init__(material_ids=self.saved['material_ids'],target_loads_n=self.saved['target_loads_n'])
+        super().__init__(material_ids=self.saved['material_ids'],target_loads_n=self.saved['target_loads_n'],
+                         state_triggered=state_triggered)
         self.entry_stage=self.saved['entry_stage']
         self.imported_evidence=self.saved['source']['passed_stages'][:]
         self.restore_gate=RestoreGate(self.entry_stage,minimum_loads_n=self.minimum_loads,
@@ -45,6 +46,12 @@ class StageResetSequence(TabletopGraspSequence):
 
     def update(self,time_s,**m):
         if self.stage!='restore_validate':return super().update(time_s,**m)
+        speed_ok=True
+        if self.state_triggered:
+            speeds=np.asarray(m.get('joint_speeds_rad_s'),dtype=float)
+            if speeds.shape!=(2,18) or not np.isfinite(speeds).all():
+                raise ValueError('actual joint speeds required during restore')
+            speed_ok=bool(np.all(np.abs(speeds)<=.02))
         for key,shape in (('station_heights_m',(2,)),('approach_position_errors_m',(4,)),
                           ('approach_normal_errors_rad',(4,))):
             value=np.asarray(m[key],dtype=float)
@@ -53,7 +60,8 @@ class StageResetSequence(TabletopGraspSequence):
         if not np.isfinite(m['min_surface_clearance_m']):raise ValueError('invalid restore clearance')
         r=self.restore_gate.update(time_s,safety_ok=m['safety_ok'],active_constraints=m['active_constraints'],
             settled=m['settled'],approach_ok=bool(np.all(np.asarray(m['approach_position_errors_m'])<=.002)
-                and np.all(np.asarray(m['approach_normal_errors_rad'])<=np.deg2rad(5.))),
+                and np.all(np.asarray(m['approach_normal_errors_rad'])<=np.deg2rad(5.))
+                and speed_ok),
             loads_n=m['loads_n'],valid_contacts=m['valid_contacts'],normals=m['normals'],anchors_local=m['anchors_local'])
         self.last_time=float(time_s)
         if r['aborted']:
@@ -62,7 +70,7 @@ class StageResetSequence(TabletopGraspSequence):
             self.stage=self.entry_stage;self.released_at=float(time_s)
             self.settled_heights=np.array(self.saved['settled_heights_m'])
             self.last_rise=np.asarray(m['station_heights_m'])-self.settled_heights
-            self.approach_deadline=time_s+3.5
+            if not self.state_triggered:self.approach_deadline=time_s+3.5
             if self.entry_stage!='approach':
                 self.gate=GraspEvidenceGate(material_ids=self.material_ids,approach_qualified=True,
                                             minimum_hold_loads_n=self.minimum_loads)

@@ -1,5 +1,15 @@
 # 更新与阶段记录
 
+## 2026-10-18 — 轻触优先运行接线（本地，物理验收待完成）
+
+- 阶段：Task 3 运行接线与离线回归完成；Task 4 新控制器 Isaac 验收未执行。
+- 改进：实测位置、法向和全关节低速持续达标后闭指，不再依靠固定 4 秒启动；实测姿态与上次指令限速交接；每手轻触/对向闭指/预载输出接入协同分配器；恢复后重新建立接触证据，运行指纹加入 touch-first-v1。
+- 本次验证：`bash scripts/python.sh -m pytest tests/test_dh116_state_triggered_sequence.py tests/test_dh116_stage_reset_runtime.py tests/test_dh116_grasp_sequence.py -q` 为 35 passed；`bash scripts/python.sh -m pytest tests -q --tb=short` 为 591 passed in 50.14s，退出码 0；`git diff --check` 通过。
+- 原实例证据：step 53492 四指腹有效法向载荷约 0.228/0.184/0.265/0.250 N，reaction_applied=true，仍处于 close。此为旧控制器证据，不能作为新轻触策略或稳定夹持/抬升成功证据。
+- 未完成：原实例收尾、新策略实际接触/夹持/抬升验证。保留单 Isaac、单核、旧 checkpoint 指纹；未修改厂家额定参数或伪造绑定。
+- 后续启动校验修正：将新连续抓取入口的最低目标载荷与轻触组件对齐为 0.05 N，拒绝在 Isaac 启动后才发现不兼容；新增测试先失败，修正后运行器/状态触发/恢复针对性 49 passed in 0.45s。上面的 591 项完整回归发生在此小修正之前，未冒充修正后的完整结果。
+- 提交前重新完整验证：`bash scripts/python.sh -m pytest tests -q --tb=short`，**592 passed in 51.03s**、退出码 0；运行配置预览退出码 0。原实例 step 54945 仍在 close，四指载荷 0.471/0.426/0.495/0.489 N，最大观测滑移约 0.182 mm；尚未完成夹持/抬升。
+
 ## 2026-10-18 — 轻触优先组件（功能分支，尚未运行接线）
 
 - 阶段：Task 1/2 组件实现；运行器仍使用旧双侧闭指逻辑，不能声称已按新方式抓取。
