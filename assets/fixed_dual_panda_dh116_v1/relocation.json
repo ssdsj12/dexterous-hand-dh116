@@ -1,0 +1,43 @@
+{
+  "root": "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/fixed_dual_panda_dh116.usd",
+  "layers": [
+    {
+      "source": "/home/xk/coding/M1/assets/fixed_dual_panda_dh116_v1/fixed_dual_panda_dh116.usd",
+      "destination": "fixed_dual_panda_dh116.usd",
+      "source_sha256": "1ab78836ff1a1cea8b2afc2e5df5795f22973c8013f52e87d39ee6138c3c6ae8",
+      "sha256": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0",
+      "category": "relocated_usd"
+    },
+    {
+      "source": "/home/xk/coding/M1/.worktrees/t500-dual-panda-o6-mpc/Go2Pvcnn/assets/m1_dual_panda_o6/prefixed/left_panda.usd",
+      "destination": "dependencies/1202d37e93d1_left_panda.usd",
+      "source_sha256": "e0d800960987bd3f8c283849a621ee22695eeed0a7fe590a9d9ccb9189cef5b2",
+      "sha256": "e0d800960987bd3f8c283849a621ee22695eeed0a7fe590a9d9ccb9189cef5b2",
+      "category": "relocated_usd"
+    },
+    {
+      "source": "/home/xk/coding/M1/.worktrees/t500-dual-panda-o6-mpc/Go2Pvcnn/assets/m1_dual_panda_o6/prefixed/right_panda.usd",
+      "destination": "dependencies/9ad2c00e990b_right_panda.usd",
+      "source_sha256": "2362fd5eec61d5ca69f156e0aff5f45c65a7473014cb95c19fa81d87ed9590f0",
+      "sha256": "2362fd5eec61d5ca69f156e0aff5f45c65a7473014cb95c19fa81d87ed9590f0",
+      "category": "relocated_usd"
+    },
+    {
+      "source": "/home/xk/coding/M1/assets/dh116_v2/linear_limits_verified_v3/DH116_left.usd",
+      "destination": "dependencies/d134680ab619_DH116_left.usd",
+      "source_sha256": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+      "sha256": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+      "category": "relocated_usd"
+    },
+    {
+      "source": "/home/xk/coding/M1/assets/dh116_v2/linear_limits_verified_v3/DH116_right.usd",
+      "destination": "dependencies/3046ad2ed855_DH116_right.usd",
+      "source_sha256": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71",
+      "sha256": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71",
+      "category": "relocated_usd"
+    }
+  ],
+  "external_software_assets": [
+    "OmniPBR.mdl"
+  ]
+}

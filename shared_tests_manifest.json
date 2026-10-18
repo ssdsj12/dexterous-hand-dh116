@@ -1,0 +1,42 @@
+[
+  {
+    "source": "/home/xk/coding/M1/.worktrees/t500-dual-panda-o6-mpc/Go2Pvcnn/tests/test_fixed_dual_panda_o6_contact_bridge.py",
+    "destination": "tests/test_fixed_dual_panda_o6_contact_bridge.py",
+    "sha256": "7f1b9c4b11216461afb811fd5a28c7657bc41ce4880a45c518a3ecd68dff4a08",
+    "bytes": 11588,
+    "category": "shared_tests",
+    "status": "copied_verified"
+  },
+  {
+    "source": "/home/xk/coding/M1/.worktrees/t500-dual-panda-o6-mpc/Go2Pvcnn/tests/test_fixed_dual_panda_o6_wire_visual.py",
+    "destination": "tests/test_fixed_dual_panda_o6_wire_visual.py",
+    "sha256": "9a6189d66e36f13aae5f425fdecb206afd750f34b02b533c04cddfaca9ec3444",
+    "bytes": 2176,
+    "category": "shared_tests",
+    "status": "copied_verified"
+  },
+  {
+    "source": "/home/xk/coding/M1/.worktrees/t500-dual-panda-o6-mpc/Go2Pvcnn/tests/test_fixed_dual_panda_o6_free_rod.py",
+    "destination": "tests/test_fixed_dual_panda_o6_free_rod.py",
+    "sha256": "b8a7682ec57999b6ac04c888079b40cbb904c5343ec4793881ba713c08ca59a2",
+    "bytes": 6825,
+    "category": "shared_tests",
+    "status": "copied_verified"
+  },
+  {
+    "source": "/home/xk/coding/M1/.worktrees/t500-dual-panda-o6-mpc/Go2Pvcnn/tests/test_fixed_dual_panda_o6_moving_contact.py",
+    "destination": "tests/test_fixed_dual_panda_o6_moving_contact.py",
+    "sha256": "e0de9350a8f71f8193e6663c3b3cfe8b8ed40fd2ea8553e49b8d5e217623d2ab",
+    "bytes": 24738,
+    "category": "shared_tests",
+    "status": "copied_verified"
+  },
+  {
+    "source": "/home/xk/coding/M1/.worktrees/t500-dual-panda-o6-mpc/Go2Pvcnn/tests/test_fixed_dual_panda_o6_moving_contact_models.py",
+    "destination": "tests/test_fixed_dual_panda_o6_moving_contact_models.py",
+    "sha256": "b04e5f989889105d928cb60444d8e461a77a6598aca90b2ad1b5f20c9dee5109",
+    "bytes": 5632,
+    "category": "shared_tests",
+    "status": "copied_verified"
+  }
+]

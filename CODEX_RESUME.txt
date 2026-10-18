@@ -1,0 +1,6 @@
+DH116 独立目录迁移入口，2026-10-18。
+先读 README.md、migration_manifest.json 和原项目隔离设计/计划的 docs/source 副本。
+静态1380文件及5个共享测试已复制；5层USD本地化，新配置94区间重新通过；完整独立回归559 passed in50.95s，regression.log。主验证/空载/生成脚本及测试资源路径已适配；历史O6资产专用测试排除，未带入O6资产。
+剩余：旧活动试验结束后同步最终证据、串行新根Isaac验收。migration_manifest为原始复制SHA，migration_audit记录改写后SHA；勿把adapted文件误当复制损坏。
+不得删除原件或改历史stage pin。不得把静态验证当抓取成功。
+原活动进程PID6780/session44334，必须实时检查，不按旧文本假定仍活跃；输出原M1/assets/dh116_v2/table_margin_raise1mm_trial1。

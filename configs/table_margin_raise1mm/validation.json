@@ -1,0 +1,12 @@
+{
+  "source_geometry_validated": true,
+  "path_checks": 94,
+  "physics_validated": false,
+  "old_stage_states_reusable": false,
+  "files": {
+    "prepose.json": "40357c2a42743893acf55f7d0d5a408c0de3bc3660ca131f3e1bf36ec4bdb785",
+    "approach.json": "6b41c19abfb89066344a4a6369a2eb3816830bb3e4db6a71e41bd62fec0d3d03",
+    "point_references.json": "dd5ce2e0634029f3627fef9ee6f1201b6c8ea75a810726dcacd1d187dddf1c5b",
+    "contact/manifest.json": "f6b2a06214872357b4e65cf2bc44d0f95c7470fdbdc86f46e6db2f34befe118d"
+  }
+}

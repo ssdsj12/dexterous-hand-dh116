@@ -1,0 +1,77 @@
+{
+  "physical_dof": 36,
+  "active_dof": 26,
+  "articulation_roots": [
+    "/FixedDualPandaDH116/left_arm/left_root_joint",
+    "/FixedDualPandaDH116/right_arm/right_root_joint"
+  ],
+  "joints": [
+    "/FixedDualPandaDH116/left_arm/joints/left_panda_joint1",
+    "/FixedDualPandaDH116/left_arm/joints/left_panda_joint2",
+    "/FixedDualPandaDH116/left_arm/joints/left_panda_joint3",
+    "/FixedDualPandaDH116/left_arm/joints/left_panda_joint4",
+    "/FixedDualPandaDH116/left_arm/joints/left_panda_joint5",
+    "/FixedDualPandaDH116/left_arm/joints/left_panda_joint6",
+    "/FixedDualPandaDH116/left_arm/joints/left_panda_joint7",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger11",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger12",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger13",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger21",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger22",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger31",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger32",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger41",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger42",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger51",
+    "/FixedDualPandaDH116/left_arm/dh116/joints/finger52",
+    "/FixedDualPandaDH116/right_arm/joints/right_panda_joint1",
+    "/FixedDualPandaDH116/right_arm/joints/right_panda_joint2",
+    "/FixedDualPandaDH116/right_arm/joints/right_panda_joint3",
+    "/FixedDualPandaDH116/right_arm/joints/right_panda_joint4",
+    "/FixedDualPandaDH116/right_arm/joints/right_panda_joint5",
+    "/FixedDualPandaDH116/right_arm/joints/right_panda_joint6",
+    "/FixedDualPandaDH116/right_arm/joints/right_panda_joint7",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger11",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger12",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger13",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger21",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger22",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger31",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger32",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger41",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger42",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger51",
+    "/FixedDualPandaDH116/right_arm/dh116/joints/finger52"
+  ],
+  "mount": "identity link8 to base_link; simulation-only",
+  "drives_enabled": false,
+  "physics_verified": false,
+  "hardware_calibrated": false,
+  "asset_sha256": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0",
+  "sources": [
+    {
+      "side": "left",
+      "kind": "panda",
+      "path": "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/1202d37e93d1_left_panda.usd",
+      "sha256": "e0d800960987bd3f8c283849a621ee22695eeed0a7fe590a9d9ccb9189cef5b2"
+    },
+    {
+      "side": "left",
+      "kind": "dh116",
+      "path": "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd",
+      "sha256": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c"
+    },
+    {
+      "side": "right",
+      "kind": "panda",
+      "path": "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/9ad2c00e990b_right_panda.usd",
+      "sha256": "2362fd5eec61d5ca69f156e0aff5f45c65a7473014cb95c19fa81d87ed9590f0"
+    },
+    {
+      "side": "right",
+      "kind": "dh116",
+      "path": "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/3046ad2ed855_DH116_right.usd",
+      "sha256": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71"
+    }
+  ]
+}
