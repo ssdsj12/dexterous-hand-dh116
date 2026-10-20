@@ -1,5 +1,11 @@
 # DH116 独立工作目录
 
+## 2026-10-20 性能优化 Task 1
+
+已加入可选 `--profile` 阶段计时：输出逐步 `perf.jsonl` 与按阶段汇总的 `perf_summary.json`，记录控制、DeformX 杆/接触、反作用提交、PhysX、状态传感器、源碰撞保护和证据写入耗时，并把提交 SHA、设备、时间步、接触采样数、CPU 亲和性和数值线程环境写入运行清单。默认关闭 profiling，不改变物理参数、单核约束、接触反作用或碰撞保护。
+
+本阶段验证：`bash scripts/python.sh -m pytest tests/test_dh116_perf_meter.py tests/test_dh116_sequence_runtime.py -q` → **31 passed**；`python -m py_compile scripts/verify_fixed_dual_panda_dh116.py src/go2_pvcnn/control/dh116/perf_meter.py` 通过；`git diff --check` 通过。尚未完成完整回归和 Isaac 性能对照；实际闭指、持续夹持、抬升仍未验收。
+
 ## 2026-10-20 上传快照
 
 分支：`feat/dh116-simulation-10-20`。当前阶段为固定双 Panda + DH116 的抓取控制开发、半隐式接触离线验证和 Isaac 接触前探针验证；持续夹持与抬升尚未通过实际验收。

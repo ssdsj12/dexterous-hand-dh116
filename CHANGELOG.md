@@ -1,5 +1,12 @@
 # 更新与阶段记录
 
+## 2026-10-20 — 性能优化 Task 1：阶段计时与运行身份
+
+- 新增 `--profile` 和 `PerfMeter`，按步记录控制、杆/接触、源碰撞保护、反作用提交、PhysX、传感器状态和证据写入耗时，并原子写出 `perf_summary.json`。
+- 运行清单补充 `source_commit`、设备、`physics_dt`、wire `py_dt`、接触采样数、CPU 亲和性和数值线程环境；profiling 默认关闭，物理参数和单核约束保持不变。
+- 本阶段验证：`bash scripts/python.sh -m pytest tests/test_dh116_perf_meter.py tests/test_dh116_sequence_runtime.py -q` → **31 passed**；脚本编译和 diff 检查通过。
+- 未完成：完整回归、同物理时长的三次性能对照、正式 Isaac 性能测量，以及双手持续夹持和抬升验收。
+
 ## 2026-10-20 — 抓取控制与半隐式接触开发快照
 
 - 新分支 `feat/dh116-simulation-10-20`，汇总当前控制代码、配置、测试与设计计划。

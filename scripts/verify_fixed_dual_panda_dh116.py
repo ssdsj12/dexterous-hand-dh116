@@ -3,6 +3,9 @@ import argparse
 import hashlib
 import json
 import math
+import os
+import platform
+import subprocess
 from dataclasses import asdict
 from time import perf_counter
 from go2_pvcnn.control.dh116.render_schedule import render_due
@@ -15,6 +18,7 @@ from go2_pvcnn.control.dh116.stage_state import load_state,save_state,PHASES
 from go2_pvcnn.control.dh116.stage_runtime import StageResetSequence,robot_restore_arrays
 from go2_pvcnn.control.dh116.touch_first import bounded_handoff
 from go2_pvcnn.control.dh116.speed_profile import GraspSpeedProfile
+from go2_pvcnn.control.dh116.perf_meter import PerfMeter
 from isaaclab.app import AppLauncher
 
 parser=argparse.ArgumentParser(description=__doc__)
@@ -65,6 +69,9 @@ parser.add_argument('--probe-channel',choices=['left_thumb','left_index','right_
                     help='Diagnostic initial 0.1mm pad overlap; not an approach or grasp')
 parser.add_argument('--probe-overlap-m',type=float,default=.0001,help='Explicit diagnostic overlap, not grip success threshold')
 parser.add_argument('--disable-contact-reaction',action='store_true',help='Diagnostic uncoupled baseline only')
+parser.add_argument('--profile',action='store_true',help='Write phase-aware wall-clock perf.jsonl and perf_summary.json')
+parser.add_argument('--perf-flush-steps',type=int,default=1000,
+                    help='Flush performance rows after this many steps when profiling')
 AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args()
 render_due(0,args.render_every,args.headless)
@@ -111,6 +118,7 @@ if args.output.exists(): raise ValueError('refusing to overwrite evidence')
 args.output.mkdir(parents=True)
 app=AppLauncher(args).app
 result=dict(passed=False,physics_stepped=False,hardware_calibrated=False)
+perf_meter=PerfMeter(args.output/'perf.jsonl',args.physics_dt,args.perf_flush_steps) if args.profile else None
 try:
     import numpy as np
     import torch
@@ -178,6 +186,14 @@ try:
         clearance_certificate_cache=args.clearance_certificate_cache,
         contact_tangential_damping=args.contact_tangential_damping,
         diagnostic_initial_touch_not_continuous_grasp=args.closure_pilot,
+        profile=args.profile,perf_flush_steps=args.perf_flush_steps,
+        source_commit=subprocess.run(
+            ['git','rev-parse','HEAD'],cwd=Path(__file__).resolve().parents[1],
+            check=False,capture_output=True,text=True).stdout.strip() or 'unknown',
+        device=args.device,physics_dt=dt,wire_py_dt=1e-5,
+        cpu_affinity=sorted(os.sched_getaffinity(0)) if hasattr(os,'sched_getaffinity') else None,
+        numeric_threads={k:os.environ.get(k) for k in ('OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMBA_NUM_THREADS')},
+        platform=platform.platform(),python_version=platform.python_version(),
         script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
     write_start_manifest(args.output,result['run_config'],manifest)
     sim=su.SimulationContext(su.SimulationCfg(dt=dt,device=args.device,
@@ -428,6 +444,10 @@ try:
     for step in range(args.steps):
         check_stop_request(args.output)
         tick_start=perf_counter()
+        if perf_meter is not None:
+            perf_meter.begin_step(step,getattr(grasp_sequence,'stage','diagnostic'),step*dt)
+        rod_total_before=timing['rod_solver_s']
+        visual_total_before=timing['wire_visual_s']
         allocation_report=None
         t=(step+1)*dt
         if args.grasp_sequence:
@@ -528,9 +548,14 @@ try:
                         args.arm_effort_limit,args.hand_effort_limit))
             arm.write_data_to_sim()
         control_end=perf_counter()
+        if perf_meter is not None:
+            perf_meter.record_section('control',control_end-tick_start)
         do_render=render_due(step,args.render_every,args.headless)
         record=dict(step=step,passed=True,sides={})
         if allocation_report is not None:record['control_allocation']=allocation_report
+        source_pre_s=None
+        source_post_s=None
+        reaction_submit_s=None
         if grasp_mode:
             record['targets']={s:dict(arm=target_arms[s].tolist(),hand=target_hands[s].tolist()) for s in arms}
         if args.dynamics_diagnostics:
@@ -565,9 +590,11 @@ try:
                         mesh_end_poses={c:dict(position_w=b.position_collection[:,0].tolist(),
                             rotation_wb=b.director_collection[:,:,0].T.tolist()) for c,b in engine.mesh_bodies.items()})
                 if initial_actives is not None:
+                    source_guard_start=perf_counter()
                     record['source_before_physics']=measured_source_guard(snapshot,
                         engine.last_contact_diagnostics['rod_path_bound_m'] if grasp_mode else 0.,
                         engine.last_contact_diagnostics['max_rod_radius_m'] if grasp_mode else .008)
+                    source_pre_s=perf_counter()-source_guard_start
                 if grasp_mode:
                     failures=[];samples={}
                     for c,body in engine.mesh_bodies.items():
@@ -598,7 +625,9 @@ try:
                 result['pending_contact']=dict(step=step,dt=dt,
                     durations_s={c:i.contact_duration_s for c,i in impulses.items()},
                     peak_force_n={c:i.peak_force_n for c,i in impulses.items()})
+                reaction_start=perf_counter()
                 batch=bridge.publish(f'step-{step}',step*dt,impulses,engine.last_contact_diagnostics,positions,dt)
+                reaction_submit_s=perf_counter()-reaction_start
                 if grasp_mode:record['contact_candidate']['reaction_published']=True
                 previous_states=states
                 contact_peak=max(contact_peak,max(i.peak_force_n for i in impulses.values()))
@@ -630,8 +659,17 @@ try:
             record['passed']=bool(np.isfinite(snapshot['rod_position']).all() and
                 wm.get('min_surface_z_m',-np.inf)>=.299 and wm.get('max_speed_m_s',np.inf)<=2.)
         wire_end=perf_counter()
+        if perf_meter is not None:
+            perf_meter.record_section('rod_and_contact',timing['rod_solver_s']-rod_total_before)
+            perf_meter.record_section('wire_visual',timing['wire_visual_s']-visual_total_before)
+            if source_pre_s is not None:
+                perf_meter.record_section('source_guard_pre',source_pre_s)
+            if reaction_submit_s is not None:
+                perf_meter.record_section('reaction_submit',reaction_submit_s)
         sim.step(render=do_render)
         isaac_end=perf_counter()
+        if perf_meter is not None:
+            perf_meter.record_section('physx_step',isaac_end-wire_end)
         result['physics_stepped']=True
         for side,arm in arms.items():
             arm.update(dt)
@@ -679,7 +717,9 @@ try:
                     point_rows.append(dict(step=step,side=side,digit=ref['digit'],passed=ok,**errors))
                     record['passed']=record['passed'] and ok
         if initial_actives is not None:
-            record['source_after_physics']=measured_source_guard(snapshot,wire_radius=float(engine.rod.radius.max()))
+                source_guard_start=perf_counter()
+                record['source_after_physics']=measured_source_guard(snapshot,wire_radius=float(engine.rod.radius.max()))
+                source_post_s=perf_counter()-source_guard_start
         if grasp_mode:
             palm_poses={};mismatch={}
             for side,arm in arms.items():
@@ -777,7 +817,15 @@ try:
                     sha=save_state(path,payload)
                     record['saved_stage_state']=dict(path=str(path),sha256=sha,entry_stage=entry)
                     print('DH116_STAGE_SAVED',entry,str(path),sha,flush=True)
+        evidence_start=perf_counter()
         rows.append(record)
+        evidence_s=perf_counter()-evidence_start
+        if perf_meter is not None:
+            perf_meter.record_section('state_and_sensors',perf_counter()-isaac_end)
+            if source_post_s is not None:
+                perf_meter.record_section('source_guard_post',source_post_s)
+            perf_meter.record_section('evidence',evidence_s)
+            perf_meter.end_step(completed=bool(record['passed']))
         timing['control_s']+=control_end-tick_start
         timing['wire_s']+=wire_end-control_end
         timing['isaac_step_s']+=isaac_end-wire_end
@@ -866,6 +914,8 @@ finally:
         if 'stage_reset' in result:result['stage_reset']['local_stages_passed']=bool(result['passed'])
         result['stage_status']=(grasp_sequence.stage_summary(final_passed=bool(result['passed']))
             if grasp_sequence is not None else dict.fromkeys(('settle','approach','close','hold','lift'),'NOT_RUN'))
+    if perf_meter is not None:
+        result['performance_profile']=perf_meter.close()
     if 'rows' in locals():rows.close()
     (args.output/'summary.json').write_text(evidence_json(result,indent=2)+'\n')
     print('DH116_MOUNTED',evidence_json(result),flush=True)
