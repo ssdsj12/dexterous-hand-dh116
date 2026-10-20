@@ -24,6 +24,7 @@ def test_points_follow_rod_without_republishing_topology():
     publish(state)
     counts = list(mesh.GetFaceVertexCountsAttr().Get())
     indices = list(mesh.GetFaceVertexIndicesAttr().Get())
+    assert publish.topology_arrays() == (tuple(counts), tuple(indices))
     changes = []
     notice = Tf.Notice.Register(Usd.Notice.ObjectsChanged,
         lambda event, sender: changes.extend(str(p) for p in event.GetChangedInfoOnlyPaths()), stage)

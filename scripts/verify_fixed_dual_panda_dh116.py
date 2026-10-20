@@ -8,7 +8,7 @@ import platform
 import subprocess
 from dataclasses import asdict
 from time import perf_counter
-from go2_pvcnn.control.dh116.render_schedule import render_due
+from go2_pvcnn.control.dh116.render_schedule import should_publish_wire
 from pathlib import Path
 from go2_pvcnn.control.dh116.evidence_json import dumps as evidence_json
 from go2_pvcnn.control.dh116.evidence_journal import EvidenceJournal
@@ -72,9 +72,12 @@ parser.add_argument('--disable-contact-reaction',action='store_true',help='Diagn
 parser.add_argument('--profile',action='store_true',help='Write phase-aware wall-clock perf.jsonl and perf_summary.json')
 parser.add_argument('--perf-flush-steps',type=int,default=1000,
                     help='Flush performance rows after this many steps when profiling')
+parser.add_argument('--ui-hz',type=float,default=15.,
+                    help='Wall-clock wire GUI publication rate; physics still steps every iteration')
 AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args()
-render_due(0,args.render_every,args.headless)
+if not math.isfinite(args.ui_hz) or args.ui_hz<=0:
+    raise ValueError('ui hz must be finite and positive')
 validate_continuous_options(args)
 if args.grasp_speed_profile!='baseline' and not args.grasp_sequence:
     raise ValueError('staged speed requires the guarded grasp sequence')
@@ -441,13 +444,14 @@ try:
                 isaac_step_s=0.,validation_s=0.,steps=0,rendered_steps=0)
     result['performance']=timing
     result['render_every']=args.render_every
+    result['ui_hz']=args.ui_hz
+    next_wire_publish=0.
     for step in range(args.steps):
         check_stop_request(args.output)
         tick_start=perf_counter()
         if perf_meter is not None:
             perf_meter.begin_step(step,getattr(grasp_sequence,'stage','diagnostic'),step*dt)
         rod_total_before=timing['rod_solver_s']
-        visual_total_before=timing['wire_visual_s']
         allocation_report=None
         t=(step+1)*dt
         if args.grasp_sequence:
@@ -550,7 +554,8 @@ try:
         control_end=perf_counter()
         if perf_meter is not None:
             perf_meter.record_section('control',control_end-tick_start)
-        do_render=render_due(step,args.render_every,args.headless)
+        do_render=should_publish_wire(headless=args.headless,now=perf_counter(),
+            next_publish=next_wire_publish,ui_hz=args.ui_hz)
         record=dict(step=step,passed=True,sides={})
         if allocation_report is not None:record['control_allocation']=allocation_report
         source_pre_s=None
@@ -650,10 +655,6 @@ try:
                 rod_start=perf_counter()
                 snapshot=engine.advance(dt)
                 timing['rod_solver_s']+=perf_counter()-rod_start
-            visual_start=perf_counter()
-            if do_render:
-                publish_wire(snapshot)
-            timing['wire_visual_s']+=perf_counter()-visual_start
             wm=settled_metrics(snapshot['rod_position'],snapshot['rod_velocity'],snapshot['active_constraints'])
             record['wire']=wm
             record['passed']=bool(np.isfinite(snapshot['rod_position']).all() and
@@ -661,15 +662,23 @@ try:
         wire_end=perf_counter()
         if perf_meter is not None:
             perf_meter.record_section('rod_and_contact',timing['rod_solver_s']-rod_total_before)
-            perf_meter.record_section('wire_visual',timing['wire_visual_s']-visual_total_before)
             if source_pre_s is not None:
                 perf_meter.record_section('source_guard_pre',source_pre_s)
             if reaction_submit_s is not None:
                 perf_meter.record_section('reaction_submit',reaction_submit_s)
-        sim.step(render=do_render)
+        sim.step(render=False)
         isaac_end=perf_counter()
+        visual_start=perf_counter()
+        if do_render:
+            publish_wire(snapshot)
+            sim.render()
+            next_wire_publish=perf_counter()+1./args.ui_hz
+        timing['wire_visual_s']+=perf_counter()-visual_start
+        if perf_meter is not None:
+            perf_meter.record_section('wire_visual',perf_counter()-visual_start)
         if perf_meter is not None:
             perf_meter.record_section('physx_step',isaac_end-wire_end)
+        state_start=perf_counter()
         result['physics_stepped']=True
         for side,arm in arms.items():
             arm.update(dt)
@@ -821,7 +830,7 @@ try:
         rows.append(record)
         evidence_s=perf_counter()-evidence_start
         if perf_meter is not None:
-            perf_meter.record_section('state_and_sensors',perf_counter()-isaac_end)
+            perf_meter.record_section('state_and_sensors',perf_counter()-state_start)
             if source_post_s is not None:
                 perf_meter.record_section('source_guard_post',source_post_s)
             perf_meter.record_section('evidence',evidence_s)

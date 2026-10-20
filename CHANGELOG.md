@@ -7,6 +7,13 @@
 - 本阶段验证：`bash scripts/python.sh -m pytest tests/test_dh116_perf_meter.py tests/test_dh116_sequence_runtime.py -q` → **31 passed**；脚本编译和 diff 检查通过。
 - 未完成：完整回归、同物理时长的三次性能对照、正式 Isaac 性能测量，以及双手持续夹持和抬升验收。
 
+## 2026-10-20 — 性能优化 Task 2：墙钟 wire 显示调度
+
+- 新增 `should_publish_wire` 墙钟调度和 `--ui-hz`（默认 15 Hz）；物理循环每步固定 `sim.step(render=False)`，到期 GUI 帧再发布 wire 并调用一次 `sim.render`。
+- `WireMeshPublisher` 缓存首次拓扑，后续只更新点和包围盒；节点或拓扑改变会抛出错误，避免静默写入错误网格。
+- 本阶段验证：`bash scripts/python.sh -m pytest tests -q` → **734 passed in 24.68s**；编译和 diff 检查通过。
+- 未完成：正式 Isaac 三次同物理时长测量、快照/反作用缓冲、证据缓冲，以及双手持续夹持和抬升验收。
+
 ## 2026-10-20 — 抓取控制与半隐式接触开发快照
 
 - 新分支 `feat/dh116-simulation-10-20`，汇总当前控制代码、配置、测试与设计计划。

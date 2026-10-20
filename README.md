@@ -6,6 +6,12 @@
 
 本阶段验证：`bash scripts/python.sh -m pytest tests/test_dh116_perf_meter.py tests/test_dh116_sequence_runtime.py -q` → **31 passed**；`python -m py_compile scripts/verify_fixed_dual_panda_dh116.py src/go2_pvcnn/control/dh116/perf_meter.py` 通过；`git diff --check` 通过。尚未完成完整回归和 Isaac 性能对照；实际闭指、持续夹持、抬升仍未验收。
 
+## 2026-10-20 性能优化 Task 2
+
+wire 的 GUI 发布改为墙钟调度，默认 15 Hz；每个物理步仍固定调用 `sim.step(render=False)`，到期后只调用一次 `publish_wire` 和 `sim.render`。网格拓扑在首次发布时缓存，节点数、面计数或索引变化会拒绝复用。物理步长、接触反作用、源碰撞保护和单核约束未改动。
+
+本阶段验证：新增调度和拓扑测试，完整回归 `bash scripts/python.sh -m pytest tests -q` → **734 passed in 24.68s**；脚本编译和 `git diff --check` 通过。尚未做正式 Isaac 三次同物理时长性能对照，也未完成闭指、持续夹持、抬升验收。
+
 ## 2026-10-20 上传快照
 
 分支：`feat/dh116-simulation-10-20`。当前阶段为固定双 Panda + DH116 的抓取控制开发、半隐式接触离线验证和 Isaac 接触前探针验证；持续夹持与抬升尚未通过实际验收。

@@ -14,15 +14,29 @@ class WireMeshPublisher:
         self.indices = mesh.CreateFaceVertexIndicesAttr()
         self.extent = mesh.CreateExtentAttr()
         self.vertex_count = None
+        self._topology = None
 
-    def __call__(self, snapshot):
+    def publish(self, snapshot):
         vertices, counts, indices = rod_surface(
             snapshot['rod_position'], snapshot['rod_director'], self.radius)
-        if self.vertex_count is not None and len(vertices) != self.vertex_count:
-            raise ValueError('wire visual topology changed')
+        topology = (tuple(counts), tuple(indices))
+        if self._topology is not None and (
+            len(vertices) != self.vertex_count or topology != self._topology
+        ):
+            raise ValueError('wire visual topology changed; create a new publisher')
         if self.vertex_count is None:
             self.counts.Set(counts)
             self.indices.Set(indices)
             self.vertex_count = len(vertices)
+            self._topology = topology
         self.points.Set(Vt.Vec3fArray.FromNumpy(vertices.astype(np.float32)))
         self.extent.Set([Gf.Vec3f(*vertices.min(0)), Gf.Vec3f(*vertices.max(0))])
+
+    def topology_arrays(self):
+        """Return immutable cached topology for diagnostics and tests."""
+        if self._topology is None:
+            return None
+        return self._topology
+
+    def __call__(self, snapshot):
+        self.publish(snapshot)

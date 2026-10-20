@@ -1,6 +1,6 @@
 import pytest
 
-from go2_pvcnn.control.dh116.render_schedule import render_due
+from go2_pvcnn.control.dh116.render_schedule import render_due, should_publish_wire
 
 
 def test_render_decimation_does_not_remove_physics_steps():
@@ -18,3 +18,18 @@ def test_baseline_and_headless():
 def test_invalid_interval(interval):
     with pytest.raises(ValueError):
         render_due(0, interval, False)
+
+
+def test_headless_never_publishes_on_wall_clock():
+    assert not should_publish_wire(headless=True, now=10.0, next_publish=0.0, ui_hz=15.0)
+
+
+def test_wall_clock_schedule_publishes_when_due():
+    assert should_publish_wire(headless=False, now=2.0, next_publish=1.9, ui_hz=15.0)
+    assert not should_publish_wire(headless=False, now=2.0, next_publish=2.1, ui_hz=15.0)
+
+
+@pytest.mark.parametrize('ui_hz', [0.0, -1.0, float('nan')])
+def test_wall_clock_schedule_rejects_invalid_rate(ui_hz):
+    with pytest.raises(ValueError):
+        should_publish_wire(headless=False, now=0.0, next_publish=0.0, ui_hz=ui_hz)
