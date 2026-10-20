@@ -21,6 +21,13 @@
 - 本阶段验证：`bash scripts/python.sh -m pytest tests -q` → **736 passed in 24.57s**；编译和 diff 检查通过。
 - 未完成：证据缓冲策略、正式 Isaac 三次同物理时长测量，以及双手持续夹持和抬升验收。
 
+## 2026-10-20 — 性能优化 Task 4：证据 flush 策略
+
+- `EvidenceJournal` 增加 `audit`/`buffered` 策略、按条数或墙钟时间 flush，以及公开 `flush()`；阶段切换、失败与关闭强制落盘。
+- verifier 增加 `--evidence-flush-policy`、`--evidence-flush-steps`、`--evidence-flush-seconds`；默认仍为 audit，轨迹行数和字段不变。
+- 本阶段验证：`bash scripts/python.sh -m pytest tests -q` → **739 passed in 24.52s**；静态配置、编译和 diff 检查通过。
+- 未完成：三次同物理时长 Isaac 性能测量、可复现性能报告，以及双手持续夹持和抬升验收。
+
 ## 2026-10-20 — 抓取控制与半隐式接触开发快照
 
 - 新分支 `feat/dh116-simulation-10-20`，汇总当前控制代码、配置、测试与设计计划。

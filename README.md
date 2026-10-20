@@ -18,6 +18,12 @@ wire 的 GUI 发布改为墙钟调度，默认 15 Hz；每个物理步仍固定�
 
 本阶段验证：`bash scripts/python.sh -m pytest tests -q` → **736 passed in 24.57s**；脚本编译和 `git diff --check` 通过。尚未完成证据缓冲、三次同物理时长 Isaac 性能对照，以及闭指、持续夹持、抬升验收。
 
+## 2026-10-20 性能优化 Task 4
+
+`EvidenceJournal` 增加 `audit` 与 `buffered` 两种 flush 策略。默认 audit 逐行落盘；使用 `--evidence-flush-policy buffered` 时按 `--evidence-flush-steps` 或 `--evidence-flush-seconds` 刷新，阶段切换、失败和关闭始终强制 flush。轨迹行数和字段保持不变。
+
+本阶段验证：`bash scripts/python.sh -m pytest tests -q` → **739 passed in 24.52s**；证据、静态配置和脚本编译检查通过。尚未做正式 Isaac 三次同物理时长性能对照，也未完成闭指、持续夹持、抬升验收。
+
 ## 2026-10-20 上传快照
 
 分支：`feat/dh116-simulation-10-20`。当前阶段为固定双 Panda + DH116 的抓取控制开发、半隐式接触离线验证和 Isaac 接触前探针验证；持续夹持与抬升尚未通过实际验收。

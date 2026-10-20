@@ -75,10 +75,18 @@ parser.add_argument('--perf-flush-steps',type=int,default=1000,
                     help='Flush performance rows after this many steps when profiling')
 parser.add_argument('--ui-hz',type=float,default=15.,
                     help='Wall-clock wire GUI publication rate; physics still steps every iteration')
+parser.add_argument('--evidence-flush-policy',choices=('audit','buffered'),default='audit',
+                    help='Evidence durability policy; audit flushes each row')
+parser.add_argument('--evidence-flush-steps',type=int,default=512,
+                    help='Buffered evidence flush count')
+parser.add_argument('--evidence-flush-seconds',type=float,default=.5,
+                    help='Buffered evidence flush wall-clock interval')
 AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args()
 if not math.isfinite(args.ui_hz) or args.ui_hz<=0:
     raise ValueError('ui hz must be finite and positive')
+if args.evidence_flush_steps<1 or not math.isfinite(args.evidence_flush_seconds) or args.evidence_flush_seconds<=0:
+    raise ValueError('evidence flush settings must be positive')
 validate_continuous_options(args)
 if args.grasp_speed_profile!='baseline' and not args.grasp_sequence:
     raise ValueError('staged speed requires the guarded grasp sequence')
@@ -191,6 +199,9 @@ try:
         contact_tangential_damping=args.contact_tangential_damping,
         diagnostic_initial_touch_not_continuous_grasp=args.closure_pilot,
         profile=args.profile,perf_flush_steps=args.perf_flush_steps,
+        evidence_flush_policy=args.evidence_flush_policy,
+        evidence_flush_steps=args.evidence_flush_steps,
+        evidence_flush_seconds=args.evidence_flush_seconds,
         source_commit=subprocess.run(
             ['git','rev-parse','HEAD'],cwd=Path(__file__).resolve().parents[1],
             check=False,capture_output=True,text=True).stdout.strip() or 'unknown',
@@ -438,7 +449,10 @@ try:
                 contact_subsamples=args.contact_subsamples,contact_broad_phase=args.contact_broad_phase,
                 velocity_damping_coefficient=args.contact_tangential_damping)
             publish_wire(engine.snapshot())
-    rows=EvidenceJournal(args.output/'trajectory.jsonl');max_gravity_effort=0.
+    rows=EvidenceJournal(args.output/'trajectory.jsonl');rows.configure(
+        flush_policy=args.evidence_flush_policy,flush_every=args.evidence_flush_steps,
+        flush_seconds=args.evidence_flush_seconds)
+    max_gravity_effort=0.
     result['initial_state']={side:dict(joint_names=arm.joint_names,
         joints=arm.data.joint_pos[0].cpu().tolist()) for side,arm in arms.items()}
     if args.dynamics_diagnostics:
@@ -455,6 +469,7 @@ try:
     result['ui_hz']=args.ui_hz
     next_wire_publish=0.
     snapshot_store=SnapshotStore()
+    previous_evidence_stage=None
     for step in range(args.steps):
         check_stop_request(args.output)
         tick_start=perf_counter()
@@ -850,7 +865,13 @@ try:
                     print('DH116_STAGE_SAVED',entry,str(path),sha,flush=True)
         record['post_snapshot_token']=post_snapshot.token
         evidence_start=perf_counter()
-        rows.append(record)
+        evidence_stage=record.get('grasp_sequence',{}).get('stage',stage_name)
+        phase_changed=(previous_evidence_stage is not None and evidence_stage!=previous_evidence_stage)
+        if phase_changed or not record['passed']:
+            rows.append(record,force_flush=True)
+        else:
+            rows.append(record)
+        previous_evidence_stage=evidence_stage
         evidence_s=perf_counter()-evidence_start
         if perf_meter is not None:
             perf_meter.record_section('state_and_sensors',perf_counter()-state_start)
