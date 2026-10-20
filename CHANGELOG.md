@@ -28,6 +28,13 @@
 - 本阶段验证：`bash scripts/python.sh -m pytest tests -q` → **739 passed in 24.52s**；静态配置、编译和 diff 检查通过。
 - 未完成：三次同物理时长 Isaac 性能测量、可复现性能报告，以及双手持续夹持和抬升验收。
 
+## 2026-10-20 — 性能优化 Task 5：可复现性能比较工具
+
+- 新增 `scripts/run_performance.py`，按 variant/phase/repetition 串行启动单个 verifier，固定物理身份、单核环境和独占输出目录。
+- 新增 `scripts/collect_performance.py`，要求每组至少三次完成运行，校验 `physics_dt`、wire `py_dt`、接触采样和步数一致，再计算中位数、P95、SPS、RTF并标记不可比组。
+- 本阶段验证：runner 专项 **3 passed**；完整回归 **742 passed in 24.56s**。
+- 未完成：实际 Isaac 三次串行测量、报告审查，以及双手持续夹持和抬升验收。
+
 ## 2026-10-20 — 抓取控制与半隐式接触开发快照
 
 - 新分支 `feat/dh116-simulation-10-20`，汇总当前控制代码、配置、测试与设计计划。

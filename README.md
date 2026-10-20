@@ -24,6 +24,12 @@ wire 的 GUI 发布改为墙钟调度，默认 15 Hz；每个物理步仍固定�
 
 本阶段验证：`bash scripts/python.sh -m pytest tests -q` → **739 passed in 24.52s**；证据、静态配置和脚本编译检查通过。尚未做正式 Isaac 三次同物理时长性能对照，也未完成闭指、持续夹持、抬升验收。
 
+## 2026-10-20 性能优化 Task 5
+
+新增 `scripts/run_performance.py` 和 `scripts/collect_performance.py`。runner 按 variant、phase 和 repetition 串行启动单个 verifier，固定资产、`physics_dt=1e-4`、wire `py_dt=1e-5`、16 点接触采样和单核启动约束；collector 要求每组至少三次、检查物理身份和完成步数，再输出中位数、P95、SPS 与 RTF。输出目录必须位于 `runs/` 且单次运行独占。
+
+本阶段验证：`bash scripts/python.sh -m pytest tests/test_dh116_performance_runner.py -q` → **3 passed**；完整回归 `bash scripts/python.sh -m pytest tests -q` → **742 passed in 24.56s**。尚未启动正式 Isaac 对照，闭指、持续夹持、抬升仍未验收。
+
 ## 2026-10-20 上传快照
 
 分支：`feat/dh116-simulation-10-20`。当前阶段为固定双 Panda + DH116 的抓取控制开发、半隐式接触离线验证和 Isaac 接触前探针验证；持续夹持与抬升尚未通过实际验收。
