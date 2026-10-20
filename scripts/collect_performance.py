@@ -68,6 +68,14 @@ def collect(paths, output):
             "variant": variant, "phase": phase, "comparable": comparable,
             "physics_identity": len(identities) == 1, "runs": group, "statistics": stats,
         })
+    for group in report["groups"]:
+        baseline = next((candidate for candidate in report["groups"]
+                         if candidate["variant"] == "baseline"
+                         and candidate["phase"] == group["phase"]), None)
+        if baseline and group["statistics"] and baseline["statistics"]:
+            current = group["statistics"]["median_wall_s"]
+            reference = baseline["statistics"]["median_wall_s"]
+            group["speedup_vs_baseline"] = reference / current if current > 0 else 0.0
     output = Path(output)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     return report
