@@ -13,7 +13,10 @@ import numpy as np
 import open3d as o3d
 
 from .free_rod import _finite_number
-from .moving_contact_models import ContactImpulse, MeshMotion, predict_motion, validate_motion
+from .moving_contact_models import (
+    ContactImpulse, MeshMotion, validate_motion,
+    _predict_validated_motion as predict_motion,
+)
 from .table_rod import TableRodEngine
 
 

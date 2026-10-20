@@ -81,6 +81,47 @@ def test_bimanual_transport_has_one_common_saturation_scale():
     np.testing.assert_allclose(np.einsum('sij,sj->si',both_W,dq/1e-4),0.,atol=1e-12)
 
 
+@pytest.mark.parametrize('actual',[False,True])
+def test_bilateral_transport_preserves_velocity_ratio_and_palm_orientation(actual):
+    from go2_pvcnn.control.dh116.coordinated_closure import coordinated_bimanual_increment
+    pairs=[actual_same_section_inputs(s) if actual else inputs() for s in ('left','right')]
+    J,n,W=(np.asarray(x) for x in zip(*pairs))
+    requested=np.array([[0.,0.,.001],[0.,0.,.003]])
+    dq=coordinated_bimanual_increment(J,n,W,np.ones((2,2)),1e-4,
+        target_loads_n=np.ones((2,2)),transport_velocity_w=requested)
+    v=np.einsum('shij,sj->shi',J,dq/1e-4)
+    np.testing.assert_allclose(v[:,0],v[:,1],atol=1e-10)
+    np.testing.assert_allclose(v[:,:,:2],0.,atol=1e-10)
+    np.testing.assert_allclose(v[1,0,2],3*v[0,0,2],atol=1e-10)
+    assert 0<v[0,0,2]<=.001+1e-12
+    np.testing.assert_allclose(np.einsum('sij,sj->si',W,dq/1e-4),0.,atol=1e-10)
+    assert np.max(np.abs(dq[:,:7]/1e-4))<=.05+1e-12
+    assert np.max(np.abs(dq[:,7:]/1e-4))<=.02+1e-12
+
+
+@pytest.mark.parametrize('v',[np.zeros((1,3)),np.zeros((2,2)),
+    [[0,0,.001],[0,0,np.nan]],[[0,0,.001],[0,0,.01001]]])
+def test_invalid_bilateral_transport_rejected(v):
+    from go2_pvcnn.control.dh116.coordinated_closure import coordinated_bimanual_increment
+    J,n,W=inputs()
+    with pytest.raises(ValueError):
+        coordinated_bimanual_increment(np.stack((J,J)),np.stack((n,n)),np.stack((W,W)),
+            np.ones((2,2)),1e-4,target_loads_n=np.ones((2,2)),transport_velocity_w=v)
+
+
+@pytest.mark.parametrize('requested',[
+    [[0.,0.,0.],[.0001,-.0002,.0003]],
+    [[.0001,.0002,.0003],[-.0002,.0001,-.0001]],
+])
+def test_generic_allocator_does_not_force_mirror_or_equal_height(requested):
+    from go2_pvcnn.control.dh116.coordinated_closure import coordinated_bimanual_increment
+    J,n,W=inputs();both_J=np.stack((J,J))
+    dq=coordinated_bimanual_increment(both_J,np.stack((n,n)),np.stack((W,W)),
+        np.ones((2,2)),1e-4,target_loads_n=np.ones((2,2)),transport_velocity_w=requested)
+    measured=np.einsum('shij,sj->shi',both_J,dq/1e-4)
+    np.testing.assert_allclose(measured,np.repeat(np.asarray(requested)[:,None,:],2,axis=1),atol=1e-12)
+
+
 @pytest.mark.parametrize('bad',['shape','singular','nonfinite'])
 def test_bimanual_rejects_bad_evidence_on_either_side(bad):
     from go2_pvcnn.control.dh116.coordinated_closure import coordinated_bimanual_increment

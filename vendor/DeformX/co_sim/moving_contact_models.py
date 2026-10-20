@@ -127,7 +127,17 @@ def _so3_exp(rotation_vector: np.ndarray) -> np.ndarray:
 
 def predict_motion(value: MeshMotion, dt: float) -> MeshMotion:
     """Advance prescribed motion by one symplectic-Euler interval."""
-    current = validate_motion(value)
+    return _predict_validated_motion(validate_motion(value), dt)
+
+
+def _predict_validated_motion(current: MeshMotion, dt: float) -> MeshMotion:
+    """Internal predictor for a boundary-validated, immutable owned motion.
+
+    The moving-contact engine validates/copies inputs once per outer call.
+    Avoid repeating that input copy at every fine step; retain dt validation
+    and full output validation, including finite arrays and proper rotation.
+    Public callers must continue to use predict_motion/validate_motion.
+    """
     step = _finite_scalar(dt, "dt", positive=True)
     with np.errstate(over="ignore", invalid="ignore"):
         velocity = current.velocity_w + current.acceleration_w * step

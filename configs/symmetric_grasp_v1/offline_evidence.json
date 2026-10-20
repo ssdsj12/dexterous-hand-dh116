@@ -1,0 +1,573 @@
+{
+  "grasp_candidate": {
+    "states": {
+      "left": [
+        0.013896215050171265,
+        0.3564640342597527,
+        -0.33811706163448296,
+        -1.603809068840793,
+        0.25867033810872647,
+        0.7751383757675144,
+        1.993778791016927,
+        0.2660589919848208,
+        0.41380362723910236,
+        0.6946551328083483,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "right": [
+        -0.2518292031087964,
+        0.3973958852267898,
+        0.642027439130698,
+        -1.6069730516743235,
+        -0.32908317561690476,
+        0.7601887672069949,
+        1.18734229359132,
+        0.06821738274632455,
+        0.020765479601155025,
+        0.6757359251603567,
+        0.2,
+        0.2,
+        0.2
+      ]
+    },
+    "angle_deg": 7.257829308090851,
+    "nfev": 1581,
+    "palm_position_error_m": 0.0009000000008365732,
+    "palm_rotation_error_deg": 3.18021659490119,
+    "measurements": {
+      "left": {
+        "p": [
+          [
+            0.43860618853109035,
+            0.1998679254504978,
+            0.30910370375201235
+          ],
+          [
+            0.4217550941398896,
+            0.19984286682328695,
+            0.30931460313729214
+          ]
+        ],
+        "n": [
+          [
+            -0.9987661860219545,
+            0.006384456565898576,
+            -0.049247785468113
+          ],
+          [
+            0.9932577324027192,
+            0.018095809098490782,
+            -0.11450597676661459
+          ]
+        ],
+        "palm_p": [
+          0.4381435976752763,
+          0.16757772268313542,
+          0.3814732200387565
+        ],
+        "palm_R": [
+          [
+            -0.8286575763491169,
+            0.5176097911560722,
+            0.21308853854342266
+          ],
+          [
+            0.4016255078764409,
+            0.8149622657302298,
+            -0.4177720154089289
+          ],
+          [
+            -0.38990200381915857,
+            -0.2606081532400986,
+            -0.8832099511908745
+          ]
+        ]
+      },
+      "right": {
+        "p": [
+          [
+            0.4373415957933351,
+            -0.20014405347328493,
+            0.3089278853515599
+          ],
+          [
+            0.42236113452019003,
+            -0.20014516434927077,
+            0.3087263963144054
+          ]
+        ],
+        "n": [
+          [
+            -0.9792344089875265,
+            0.0053833653149127645,
+            -0.20265979283699273
+          ],
+          [
+            0.9903327882946802,
+            0.017712129465333907,
+            -0.1375763384390051
+          ]
+        ],
+        "palm_p": [
+          0.43856405374819063,
+          -0.16721884860961533,
+          0.38218344964361
+        ],
+        "palm_R": [
+          [
+            -0.8061898007756884,
+            -0.5602224990049015,
+            0.19028598669885202
+          ],
+          [
+            -0.4391217304417074,
+            0.7820992560257795,
+            0.4421457447242928
+          ],
+          [
+            -0.39652252266313087,
+            0.2728946780950887,
+            -0.8765263165976488
+          ]
+        ]
+      }
+    },
+    "residual": [
+      0.002010860896906441,
+      -0.0003962236485066106,
+      0.00027908271219112546,
+      -0.0009270128839665714,
+      -0.0004713995301391938,
+      0.0009117808680305095,
+      -0.00033892451700471285,
+      0.0003192228282949288,
+      0.0038543368596067984,
+      6.350183604294513e-05,
+      0.0009047904549245392,
+      0.0005914272946817193,
+      -0.0017829173163593226,
+      -0.00043216041985474907,
+      -0.00024837248916620425,
+      0.0008911082569347251,
+      -0.00043549304781226317,
+      -0.0008528396006297068,
+      0.0006376643347166922,
+      0.00026916826574563825,
+      -0.003816263508837188,
+      -8.274536935900524e-05,
+      0.0008856064732666954,
+      -0.0005620907889378066,
+      0.0008409121458287094,
+      0.0007177481470401759,
+      0.0014204592097070146,
+      -0.0010065579081307622,
+      0.00017304442423377644,
+      -0.001315160201397594
+    ],
+    "source_screen": {
+      "source_clearance_passed": true,
+      "minimum_lower_bound_m": 0.0013147146110193964,
+      "failures": [],
+      "collision_bodies": 50,
+      "motion_qualified": false,
+      "measured_body_poses_used": false,
+      "measured_interval_bound_used": false,
+      "wire_motion_bound_m": 0.0,
+      "wire_radius_m": 0.008,
+      "joint_box_covered": false,
+      "pad_front_contact_qualified": false,
+      "delegated_pad_bodies": [
+        "/FixedDualPandaDH116/left_arm/dh116/finger14_link",
+        "/FixedDualPandaDH116/left_arm/dh116/finger23_link",
+        "/FixedDualPandaDH116/right_arm/dh116/finger14_link",
+        "/FixedDualPandaDH116/right_arm/dh116/finger23_link"
+      ],
+      "certificate_reused": false
+    },
+    "grasp_qualified": false,
+    "motion_qualified": false
+  },
+  "pad_and_palm": {
+    "pad_regions": {
+      "left_thumb": {
+        "passed": true,
+        "failures": [],
+        "nonfront_lower_bound_m": 0.00275606529583931,
+        "signed_distance_method": "convex-halfspaces",
+        "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+        "partition_sha256": "5c0942f605d25232a169cbdc6cbaab1a4cac589bc647837018bfeab33c90ed5e",
+        "local_patch": {
+          "passed": true,
+          "failures": [],
+          "front_samples": 42,
+          "max_penetration_m": 0.0,
+          "min_nonfront_clearance_m": 0.0031613684973522266
+        },
+        "sample_allowance_m": 0.0002500000000000002,
+        "numerical_allowance_m": 1e-07,
+        "wire_radius_m": 0.008,
+        "grasp_qualified": false
+      },
+      "left_index": {
+        "passed": true,
+        "failures": [],
+        "nonfront_lower_bound_m": 0.0029705637859344484,
+        "signed_distance_method": "convex-halfspaces",
+        "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+        "partition_sha256": "2cc0a96beb0e076bf55a6180a3a4bb538eda37311392a60bd19020a458888109",
+        "local_patch": {
+          "passed": true,
+          "failures": [],
+          "front_samples": 34,
+          "max_penetration_m": 0.0,
+          "min_nonfront_clearance_m": 0.0024164263638584774
+        },
+        "sample_allowance_m": 0.0002500000000000002,
+        "numerical_allowance_m": 1e-07,
+        "wire_radius_m": 0.008,
+        "grasp_qualified": false
+      },
+      "right_thumb": {
+        "passed": true,
+        "failures": [],
+        "nonfront_lower_bound_m": 0.0017347769605159762,
+        "signed_distance_method": "convex-halfspaces",
+        "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+        "partition_sha256": "f28e703c9d99774e12ab0c7f894527527df9f76f3b8c80c3ff1175aac7825145",
+        "local_patch": {
+          "passed": true,
+          "failures": [],
+          "front_samples": 38,
+          "max_penetration_m": 0.0008877632833677023,
+          "min_nonfront_clearance_m": 0.0016350053674443303
+        },
+        "sample_allowance_m": 0.0002500000000000002,
+        "numerical_allowance_m": 1e-07,
+        "wire_radius_m": 0.008,
+        "grasp_qualified": false
+      },
+      "right_index": {
+        "passed": true,
+        "failures": [],
+        "nonfront_lower_bound_m": 0.002497806751930714,
+        "signed_distance_method": "convex-halfspaces",
+        "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+        "partition_sha256": "7c27c6c0686c4e613ab60a647e1d1d2160757787bd6f51b11abc759a7e30eb21",
+        "local_patch": {
+          "passed": true,
+          "failures": [],
+          "front_samples": 34,
+          "max_penetration_m": 0.00058029589402758,
+          "min_nonfront_clearance_m": 0.001711428697774492
+        },
+        "sample_allowance_m": 0.0002500000000000002,
+        "numerical_allowance_m": 1e-07,
+        "wire_radius_m": 0.008,
+        "grasp_qualified": false
+      }
+    },
+    "palm_mirror": {
+      "palm_position_error_m": 0.0009000000008365732,
+      "functional_rotation_error_deg": 3.18021659490119
+    },
+    "motion_qualified": false,
+    "grasp_qualified": false
+  },
+  "jacobian_and_initial": {
+    "initial_wire_screen": {
+      "source_clearance_passed": true,
+      "minimum_lower_bound_m": 0.001238019076325425,
+      "failures": [],
+      "collision_bodies": 50,
+      "motion_qualified": false,
+      "measured_body_poses_used": false,
+      "measured_interval_bound_used": false,
+      "wire_motion_bound_m": 0.0,
+      "wire_radius_m": 0.008,
+      "joint_box_covered": false,
+      "pad_front_contact_qualified": false,
+      "delegated_pad_bodies": [],
+      "certificate_reused": false
+    },
+    "point_jacobians": [
+      {
+        "phase": "prepose",
+        "side": "left",
+        "digit": "thumb",
+        "max_error_m_rad": 1.1544515343686612e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "prepose",
+        "side": "left",
+        "digit": "index",
+        "max_error_m_rad": 1.0813805406684196e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "prepose",
+        "side": "right",
+        "digit": "thumb",
+        "max_error_m_rad": 5.456057827757377e-11,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "forward-2",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "prepose",
+        "side": "right",
+        "digit": "index",
+        "max_error_m_rad": 8.102252202490945e-11,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "forward-2",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "open",
+        "side": "left",
+        "digit": "thumb",
+        "max_error_m_rad": 1.2741110944070044e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "open",
+        "side": "left",
+        "digit": "index",
+        "max_error_m_rad": 1.1102230246251565e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "open",
+        "side": "right",
+        "digit": "thumb",
+        "max_error_m_rad": 6.890321646579878e-11,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "forward-2",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "open",
+        "side": "right",
+        "digit": "index",
+        "max_error_m_rad": 8.521877647993392e-11,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "forward-2",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "grasp",
+        "side": "left",
+        "digit": "thumb",
+        "max_error_m_rad": 1.1349415851569233e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "grasp",
+        "side": "left",
+        "digit": "index",
+        "max_error_m_rad": 8.550188335121334e-11,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "grasp",
+        "side": "right",
+        "digit": "thumb",
+        "max_error_m_rad": 7.284323144673976e-11,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "grasp",
+        "side": "right",
+        "digit": "index",
+        "max_error_m_rad": 9.620923502318135e-11,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "scope": "USD FK finite differences; actual PhysX Jacobian still required",
+    "motion_qualified": false,
+    "grasp_qualified": false
+  },
+  "source_files": {
+    "/home/xk/coding/dexterous hand/runs/symmetric_approach_probe1/setup.json": "5d6ef76d9c21583f09c1eb180ce68e85957beb3c131f912107b0b7dfc23fd836",
+    "/home/xk/coding/dexterous hand/runs/symmetric_approach_probe1/sweep.json": "baf14ed1ac2f275fbbbff0644df75da1ad4f66c825d1fcd94c840b6b727a7382",
+    "/home/xk/coding/dexterous hand/runs/symmetric_approach_probe1/jacobian_and_initial_check.json": "701c90df9a9cc23eecdd0c875033b1961320d973077cdd5ada6ba7678dd47c3c",
+    "/home/xk/coding/dexterous hand/runs/symmetric_feasibility8/summary.json": "136bcf56413214d136c7dcdd5edc15eabbf223a3e0afadb74f24d48671cf21b8",
+    "/home/xk/coding/dexterous hand/runs/symmetric_feasibility8/region_and_palm_check.json": "2948865205f29791e230abb782fc8f3283fb224ba6d7b30a0585f065c95bbbc3"
+  },
+  "scope": "Offline only, no actual grasp/lift qualification"
+}

@@ -24,10 +24,10 @@ def robot_restore_arrays(saved, joint_names, live_limits, live_root):
 
 
 class StageResetSequence(TabletopGraspSequence):
-    def __init__(self,payload,expected_pins,*,state_triggered=False):
+    def __init__(self,payload,expected_pins,*,state_triggered=False,symmetric_lift=False,speed_profile=None):
         self.saved=validate_state(payload,expected_pins)
         super().__init__(material_ids=self.saved['material_ids'],target_loads_n=self.saved['target_loads_n'],
-                         state_triggered=state_triggered)
+                         state_triggered=state_triggered,symmetric_lift=symmetric_lift,speed_profile=speed_profile)
         self.entry_stage=self.saved['entry_stage']
         self.imported_evidence=self.saved['source']['passed_stages'][:]
         self.restore_gate=RestoreGate(self.entry_stage,minimum_loads_n=self.minimum_loads,
@@ -45,6 +45,10 @@ class StageResetSequence(TabletopGraspSequence):
         return result
 
     def update(self,time_s,**m):
+        if self.speed_profile is not None:
+            gaps=np.asarray(m.get('surface_gaps_m'),dtype=float)
+            if gaps.shape!=(4,) or not np.isfinite(gaps).all():
+                raise ValueError('finite measured four-channel surface gaps required during restore')
         if self.stage!='restore_validate':return super().update(time_s,**m)
         speed_ok=True
         if self.state_triggered:

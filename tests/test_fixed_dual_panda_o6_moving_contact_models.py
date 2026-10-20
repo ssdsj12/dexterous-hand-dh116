@@ -30,6 +30,27 @@ def _motion(**changes):
     return MeshMotion(**values)
 
 
+def test_trusted_prediction_reuses_boundary_validation_without_changing_result(monkeypatch):
+    from co_sim import moving_contact_models as module
+    current=validate_motion(_motion(velocity_w=np.array([.01,-.02,.03]),
+        omega_w=np.array([.1,.2,-.3]),acceleration_w=np.array([.4,-.2,.1])))
+    expected=predict_motion(current,.0001)
+    def duplicate_validation(value):
+        pytest.fail('trusted internal motion was redundantly revalidated')
+    monkeypatch.setattr(module,'validate_motion',duplicate_validation)
+    actual=module._predict_validated_motion(current,.0001)
+    for field in ('position_w','rotation_wb','velocity_w','omega_w','acceleration_w','alpha_w'):
+        np.testing.assert_array_equal(getattr(actual,field),getattr(expected,field))
+        assert not getattr(actual,field).flags.writeable
+
+
+def test_trusted_prediction_still_rejects_nonfinite_result():
+    from co_sim import moving_contact_models as module
+    current=validate_motion(_motion(velocity_w=np.full(3,1e308)))
+    with pytest.raises(ValueError,match='finite'):
+        module._predict_validated_motion(current,10.)
+
+
 def test_predict_motion_uses_updated_linear_velocity_for_position():
     predicted = predict_motion(_motion(acceleration_w=np.array([2.0, 0.0, 0.0])), 0.1)
 

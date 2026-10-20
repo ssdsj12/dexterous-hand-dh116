@@ -5,8 +5,34 @@ from __future__ import annotations
 import numpy as np
 import open3d as o3d
 from numpy.typing import NDArray
+from numba import njit
 
 from elastica.rigidbody.rigid_body import RigidBodyBase
+
+
+@njit(cache=True)
+def _contact_candidate_mask(local, radii, box_min, box_max):
+    """Conservative point/sphere-to-AABB test; no fastmath or stale geometry.
+
+    Distance to the containing box is a lower bound on distance to the mesh.
+    Interior and boundary points stay candidates. Keep the existing float32
+    ray-query padding; exact mesh queries still determine every contact force.
+    """
+    result = np.empty(len(local), dtype=np.bool_)
+    box_scale = 1.0
+    for axis in range(3):
+        box_scale = max(box_scale, abs(box_min[axis]), abs(box_max[axis]))
+    for i in range(len(local)):
+        scale = box_scale
+        squared_distance = 0.0
+        for axis in range(3):
+            value = local[i, axis]
+            scale = max(scale, abs(value))
+            delta = max(box_min[axis] - value, value - box_max[axis], 0.0)
+            squared_distance += delta * delta
+        padded = radii[i] + 64 * np.finfo(np.float32).eps * scale
+        result[i] = squared_distance <= padded * padded
+    return result
 
 
 class MeshRigidBody(RigidBodyBase):
@@ -232,11 +258,8 @@ class MeshRigidBody(RigidBodyBase):
                 or np.any(radius<=0)):
             raise ValueError('contact points/radii must be finite N x 3 / positive N arrays')
         local=(points-self.position_collection[:,0])@self.director_collection[:,:,0].T
-        scale=np.maximum(1.,np.max(np.abs(local),axis=1))
-        scale=np.maximum(scale,max(np.abs(self._contact_box_min).max(),np.abs(self._contact_box_max).max()))
-        pad=radius+64*np.finfo(np.float32).eps*scale
-        candidate=np.all((local>=self._contact_box_min-pad[:,None]) &
-                         (local<=self._contact_box_max+pad[:,None]),axis=1)
+        candidate=_contact_candidate_mask(
+            local,radius,self._contact_box_min,self._contact_box_max)
         closest=points.copy();distance=radius+1.;normal=np.zeros_like(points)
         if np.any(candidate):
             closest[candidate],distance[candidate],normal[candidate]=self.query_closest_points(points[candidate])

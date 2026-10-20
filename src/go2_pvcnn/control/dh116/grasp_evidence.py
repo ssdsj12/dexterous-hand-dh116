@@ -25,12 +25,13 @@ class GraspEvidenceGate:
         self.hold_since=None;self.lift_since=None;self.baseline=None;self.reason=None
 
     def update(self,time_s,*,loads_n,valid_contacts,normals,anchors_local,
-               station_rise_m,min_surface_clearance_m,safety_ok,active_constraints):
+               station_rise_m,min_surface_clearance_m,safety_ok,active_constraints,lift_alignment_ok=True):
         load=np.asarray(loads_n,dtype=float);normal=np.asarray(normals,dtype=float)
         anchor=np.asarray(anchors_local,dtype=float);rise=np.asarray(station_rise_m,dtype=float)
         valid=np.asarray(valid_contacts)
         if (load.shape!=(4,) or normal.shape!=(4,3) or anchor.shape!=(4,3) or rise.shape!=(2,)
                 or valid.shape!=(4,) or valid.dtype.kind!='b' or type(safety_ok) is not bool
+                or type(lift_alignment_ok) is not bool
                 or any(not np.isfinite(x).all() for x in (load,normal,anchor,rise))
                 or not np.isfinite([time_s,min_surface_clearance_m]).all() or time_s<0
                 or not np.allclose(np.linalg.norm(normal,axis=1),1.,atol=1e-6,rtol=0)
@@ -56,7 +57,7 @@ class GraspEvidenceGate:
         elif self.stage=='hold' and time_s-self.hold_since>=1.-1e-12:
             self.stage='lift'
         elif self.stage=='lift':
-            if np.any(rise<.03):self.lift_since=None
+            if np.any(rise<.03) or not lift_alignment_ok:self.lift_since=None
             elif self.lift_since is None:self.lift_since=float(time_s)
             elif time_s-self.lift_since>=1.-1e-12:self.stage='finish'
         return dict(stage=self.stage,reason=self.reason,permit_lift=self.stage=='lift',

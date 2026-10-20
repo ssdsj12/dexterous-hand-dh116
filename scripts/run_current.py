@@ -12,7 +12,8 @@ root=Path(__file__).resolve().parents[1]
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--run',action='store_true');p.add_argument('--output',default='runs/table_margin_trial1')
 p.add_argument('--steps',type=int,default=160000);p.add_argument('--gui',action='store_true')
-a=p.parse_args();cfg=root/'configs/table_margin_raise1mm'
+p.add_argument('--config',choices=['table_margin_raise1mm','symmetric_grasp_v1'],default='table_margin_raise1mm')
+a=p.parse_args();cfg=root/'configs'/a.config
 pins=json.loads((cfg/'validation.json').read_text())['files']
 for name,digest in pins.items():
     if hashlib.sha256((cfg/name).read_bytes()).hexdigest()!=digest:raise ValueError('configuration changed: '+name)
@@ -32,6 +33,7 @@ cmd=[sys.executable,str(root/'scripts/verify_fixed_dual_panda_dh116.py'),
     '--hand-damping','.2','--external-force-iterations','--motion-prediction-order','1',
     '--physics-dt','.0001','--steps',str(a.steps),'--solver-position-iterations','1',
     '--table-wire','--save-stage-states','--device','cuda:0','--output',str(output)]
+if a.config=='symmetric_grasp_v1':cmd.append('--symmetric-lift')
 if not a.gui:cmd.append('--headless')
 print(shlex.join(cmd),flush=True)
 if a.run:

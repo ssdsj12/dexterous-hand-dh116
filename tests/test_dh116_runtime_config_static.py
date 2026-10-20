@@ -2,6 +2,16 @@
 import ast
 
 
+def test_motion_value_and_prediction_source_is_in_backend_identity():
+    source=(Path(__file__).parents[1]/'scripts/verify_fixed_dual_panda_dh116.py').read_text()
+    tree=ast.parse(source)
+    assignment=next(n for n in ast.walk(tree) if isinstance(n,ast.Assign) and
+        any(ast.unparse(t)=="result['backend_pins']" for t in n.targets))
+    values=[n.value for n in ast.walk(assignment.value.generators[0].iter)
+            if isinstance(n,ast.Constant) and isinstance(n.value,str)]
+    assert 'co_sim/moving_contact_models.py' in values
+
+
 def test_coordinated_closure_is_explicit_uses_measured_palm_and_updates_both_targets():
     source=(Path(__file__).parents[1]/'scripts/verify_fixed_dual_panda_dh116.py').read_text()
     tree=ast.parse(source)

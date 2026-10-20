@@ -1,0 +1,105 @@
+{
+  "asset_sha256": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0",
+  "layers": {
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/1202d37e93d1_left_panda.usd": "e0d800960987bd3f8c283849a621ee22695eeed0a7fe590a9d9ccb9189cef5b2",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/3046ad2ed855_DH116_right.usd": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/9ad2c00e990b_right_panda.usd": "2362fd5eec61d5ca69f156e0aff5f45c65a7473014cb95c19fa81d87ed9590f0",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/fixed_dual_panda_dh116.usd": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0"
+  },
+  "source_report_sha256": "5098a0c91b5eb9b28cfbee0ce724fea44f4e1cdaedbd79124455e475d8b5eedf",
+  "closure_preview_certificate_sha256": "cd43a2fb4be6cc64074303bd8ab4d15f596b36ed4586955d1d06c52978ae9f81",
+  "grasp_qualified": false,
+  "scope": "Relocated source geometry validated; physical grasp NOT qualified.",
+  "schema": "dh116-grasp-references-v1",
+  "references": [
+    {
+      "triangle_index": 603,
+      "weights": [
+        1.7023249566094911e-06,
+        0.6782410482862068,
+        0.3217572493888366
+      ],
+      "point": [
+        -4.2914034668575265e-20,
+        -0.01060070924508601,
+        -0.03371145310811698
+      ],
+      "normal": [
+        0.028708311269472864,
+        -0.8508170441113349,
+        -0.524677224885649
+      ],
+      "ray_distance_m": 0.032613363898813426,
+      "side": "left",
+      "digit": "thumb",
+      "body_name": "finger14_link"
+    },
+    {
+      "triangle_index": 2434,
+      "weights": [
+        0.5652019954458986,
+        0.3626691653863058,
+        0.07212883916779562
+      ],
+      "point": [
+        -0.004,
+        -0.015197294798192358,
+        0.03979520103894164
+      ],
+      "normal": [
+        -0.5982258348543671,
+        -0.7694504742609503,
+        0.22376733044033512
+      ],
+      "ray_distance_m": 0.031412630978527756,
+      "side": "left",
+      "digit": "index",
+      "body_name": "finger23_link"
+    },
+    {
+      "side": "right",
+      "digit": "thumb",
+      "body_name": "finger14_link",
+      "triangle_index": 637,
+      "weights": [
+        0.05169173534572287,
+        0.9482940074255272,
+        1.4257228749967484e-05
+      ],
+      "point": [
+        -1.0163319792172416e-24,
+        0.03208809606730938,
+        -0.01569024809655215
+      ],
+      "normal": [
+        -0.12867465803669142,
+        0.4388952393882225,
+        -0.8892771228483816
+      ],
+      "ray_distance_m": 0.03136297977510427
+    },
+    {
+      "side": "right",
+      "digit": "index",
+      "body_name": "finger23_link",
+      "triangle_index": 2047,
+      "weights": [
+        0.30904598315419307,
+        0.07182900025018914,
+        0.6191250165956178
+      ],
+      "point": [
+        0.004,
+        -0.015199929891585735,
+        0.03979520103894164
+      ],
+      "normal": [
+        0.6169678496368931,
+        -0.7584145115792177,
+        0.21013829051480543
+      ],
+      "ray_distance_m": 0.031409992159843934
+    }
+  ]
+}

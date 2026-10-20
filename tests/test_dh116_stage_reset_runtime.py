@@ -42,6 +42,20 @@ def test_restore_abort_is_latched_and_no_motion_clock_advances():
     assert not seq.transport_velocity(.01).any()
 
 
+def test_symmetric_lift_restore_rebuilds_transport_after_contact_validation():
+    s=state();s['entry_stage']='lift'
+    s['source']['passed_stages']=['settle','approach','close','hold']
+    seq=api().StageResetSequence(s,s['pins'],symmetric_lift=True)
+    for i in range(101):
+        seq.update(i*.01,**measurement())
+        np.testing.assert_array_equal(seq.transport_velocity(i*.01),np.zeros((2,3)))
+    seq.update(1.01,**measurement())
+    np.testing.assert_array_equal(seq.transport_velocity(1.01),np.zeros((2,3)))
+    seq.update(1.02,**measurement())
+    assert np.all(seq.transport_velocity(1.02)[:,2]>0.)
+    assert not seq._result()['continuous_grasp_qualified']
+
+
 def test_approach_uses_new_local_clock_not_original_run_time():
     s=state();s['entry_stage']='approach';s['source']['passed_stages']=['settle']
     seq=api().StageResetSequence(s,s['pins'])
@@ -100,5 +114,5 @@ def test_touch_restore_requires_actual_speed_even_before_release():
 def test_runner_selects_state_triggered_measured_handoff_and_pad_speeds():
     source=(Path(__file__).parents[1]/'scripts/verify_fixed_dual_panda_dh116.py').read_text()
     for token in ('state_triggered=True','joint_speeds_rad_s=', 'bounded_handoff(',
-                  'normal_speeds_m_s=', 'handoff_seed', "grasp_policy='touch-first-v1'"):
+                  'normal_speeds_m_s=', 'handoff_seed', "'touch-first-v1' if args.grasp_sequence else 'diagnostic'"):
         assert token in source

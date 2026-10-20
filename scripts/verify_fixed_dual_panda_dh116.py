@@ -3,6 +3,9 @@ import argparse
 import hashlib
 import json
 import math
+from dataclasses import asdict
+from time import perf_counter
+from go2_pvcnn.control.dh116.render_schedule import render_due
 from pathlib import Path
 from go2_pvcnn.control.dh116.evidence_json import dumps as evidence_json
 from go2_pvcnn.control.dh116.evidence_journal import EvidenceJournal
@@ -11,6 +14,7 @@ from go2_pvcnn.control.dh116.grasp_sequence import TabletopGraspSequence,validat
 from go2_pvcnn.control.dh116.stage_state import load_state,save_state,PHASES
 from go2_pvcnn.control.dh116.stage_runtime import StageResetSequence,robot_restore_arrays
 from go2_pvcnn.control.dh116.touch_first import bounded_handoff
+from go2_pvcnn.control.dh116.speed_profile import GraspSpeedProfile
 from isaaclab.app import AppLauncher
 
 parser=argparse.ArgumentParser(description=__doc__)
@@ -23,6 +27,9 @@ parser.add_argument('--approach-certificate',type=Path,help='Pinned source-swept
 parser.add_argument('--approach-certificate-sha256')
 parser.add_argument('--closure-pilot',action='store_true',help='Independent initial-touch force-control diagnostic, NOT continuous approach/grasp')
 parser.add_argument('--grasp-sequence',action='store_true',help='Measured settle/approach/close/hold/lift sequence; all physical guards mandatory')
+parser.add_argument('--symmetric-lift',action='store_true',help='Stage-local measured height synchronization; not a global mirror constraint')
+parser.add_argument('--grasp-speed-profile',choices=('baseline','staged'),default='baseline',
+                    help='Opt-in experimental measured-gap speed profile, not hardware rated or grasp qualified')
 parser.add_argument('--restore-state',type=Path,help='Pinned qualified stage initialization; NOT continuous-run certification')
 parser.add_argument('--restore-state-sha256')
 parser.add_argument('--save-stage-states',action='store_true',help='Publish exclusive states at measured qualified transitions')
@@ -39,6 +46,8 @@ parser.add_argument('--solver-position-iterations',type=int,choices=range(1,256)
 parser.add_argument('--dynamics-diagnostics',action='store_true',help='Record measured Jacobians, mass matrices and actuation readback')
 parser.add_argument('--motion-prediction-order',type=int,choices=[1,2],default=2)
 parser.add_argument('--steps',type=int,default=1920)
+parser.add_argument('--render-every',type=int,default=10,
+                    help='Render every N physics steps; 1 restores baseline, physics and guards remain per step')
 parser.add_argument('--physics-dt',type=float,default=1/240,help='Explicit co-simulation coupling interval in seconds')
 parser.add_argument('--table-wire',action='store_true',help='Free DeformX rod settling only; no hand-wire contacts yet')
 parser.add_argument('--backend-root',type=Path,default=Path(__file__).resolve().parents[1]/'vendor/DeformX')
@@ -58,7 +67,13 @@ parser.add_argument('--probe-overlap-m',type=float,default=.0001,help='Explicit 
 parser.add_argument('--disable-contact-reaction',action='store_true',help='Diagnostic uncoupled baseline only')
 AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args()
+render_due(0,args.render_every,args.headless)
 validate_continuous_options(args)
+if args.grasp_speed_profile!='baseline' and not args.grasp_sequence:
+    raise ValueError('staged speed requires the guarded grasp sequence')
+speed_profile=None if args.grasp_speed_profile=='baseline' else GraspSpeedProfile()
+if args.symmetric_lift and not args.grasp_sequence:
+    raise ValueError('symmetric lift requires the measured grasp sequence')
 if bool(args.restore_state)!=bool(args.restore_state_sha256):
     raise ValueError('restore state requires an external SHA')
 if (args.restore_state or args.save_stage_states) and not args.grasp_sequence:
@@ -155,7 +170,9 @@ try:
         approach_certificate_sha256=args.approach_certificate_sha256,
         closure_pilot=args.closure_pilot,grasp_sequence=args.grasp_sequence,closure_loads_n=args.closure_loads,
         coordinated_closure=args.coordinated_closure,
-        grasp_policy='touch-first-v1' if args.grasp_sequence else 'diagnostic',
+        speed_profile=None if speed_profile is None else asdict(speed_profile),
+        grasp_policy=('touch-first-symmetric-lift-v1' if args.symmetric_lift else
+                      'touch-first-v1' if args.grasp_sequence else 'diagnostic'),
         contact_subsamples=args.contact_subsamples,
         contact_broad_phase=args.contact_broad_phase,
         clearance_certificate_cache=args.clearance_certificate_cache,
@@ -165,6 +182,10 @@ try:
     write_start_manifest(args.output,result['run_config'],manifest)
     sim=su.SimulationContext(su.SimulationCfg(dt=dt,device=args.device,
         physx=su.PhysxCfg(enable_external_forces_every_iteration=args.external_force_iterations)))
+    if not args.headless:
+        sim.set_camera_view(eye=(1.35, -1.35, 1.05), target=(.36, 0., .32))
+        light=su.DomeLightCfg(intensity=2000.)
+        light.func('/World/DemoLight',light)
     engine=None
     if args.table_wire:
         import sys
@@ -184,14 +205,15 @@ try:
             from go2_pvcnn.control.dh116.contact_runtime import BODY_NAMES,load_mesh_manifest,mesh_motions,probe_rod_start
             from go2_pvcnn.control.fixed_dual_panda_o6.contact_bridge import (
                 BodyState,ContactReactionBridge,normalized_wxyz_to_rotation)
-            from scripts.verify_fixed_dual_panda_o6_moving_contact import prepublish_contact_gates
+            from go2_pvcnn.control.dh116.prepublish import prepublish_contact_gates
             contact_records=load_mesh_manifest(args.contact_manifest,args.contact_manifest_sha256)
             contact_assets={c:MeshAsset(r['resolved_path'],r['sha256']) for c,r in contact_records.items()}
             engine=MovingContactRodEngine(wire_config,table_center=TABLE_CENTER,table_size=TABLE_SIZE,meshes=contact_assets,
                 contact_subsamples=args.contact_subsamples,contact_broad_phase=args.contact_broad_phase,
                 velocity_damping_coefficient=args.contact_tangential_damping)
             result['backend_pins']={str(p):hashlib.sha256(p.read_bytes()).hexdigest()
-                for p in (args.backend_root/'co_sim/moving_contact.py',args.backend_root/'co_sim/free_rod.py',
+                for p in (args.backend_root/'co_sim/moving_contact.py',
+                          args.backend_root/'co_sim/moving_contact_models.py',args.backend_root/'co_sim/free_rod.py',
                           args.backend_root/'co_sim/table_rod.py',args.backend_root/'elastica/contact_forces.py',
                           args.backend_root/'elastica/_contact_functions.py',
                           args.backend_root/'elastica/rigidbody/mesh_rigid_body.py')}
@@ -235,11 +257,8 @@ try:
         mesh.CreateSubdivisionSchemeAttr().Set('none')
         mesh.CreateDisplayColorAttr().Set([Gf.Vec3f(1.,.2,.035)])
         # Visual only: DeformX owns rod/table contacts. No duplicate rigid wire.
-        def publish_wire(snapshot):
-            vertices,counts,indices=rod_surface(snapshot['rod_position'],snapshot['rod_director'],.008)
-            mesh.CreatePointsAttr().Set(Vt.Vec3fArray.FromNumpy(vertices.astype(np.float32)))
-            mesh.CreateFaceVertexCountsAttr().Set(counts);mesh.CreateFaceVertexIndicesAttr().Set(indices)
-            mesh.CreateExtentAttr().Set([Gf.Vec3f(*vertices.min(0)),Gf.Vec3f(*vertices.max(0))])
+        from go2_pvcnn.control.dh116.wire_mesh_publisher import WireMeshPublisher
+        publish_wire=WireMeshPublisher(mesh,.008)
         if args.grasp_sequence:
             def digest_json(value):
                 return hashlib.sha256(json.dumps(value,sort_keys=True,allow_nan=False).encode()).hexdigest()
@@ -356,8 +375,9 @@ try:
         material_baseline=None;contact_since=None;longest_contact_s=0.;max_material_slip_m=0.
         if args.grasp_sequence:
             grasp_sequence=TabletopGraspSequence(material_ids=fixed_material_ids,target_loads_n=args.closure_loads,
-                                                state_triggered=True)
-            if restore_payload is not None:grasp_sequence=StageResetSequence(restore_payload,state_pins,state_triggered=True)
+                                                state_triggered=True,symmetric_lift=args.symmetric_lift,speed_profile=speed_profile)
+            if restore_payload is not None:grasp_sequence=StageResetSequence(restore_payload,state_pins,
+                state_triggered=True,symmetric_lift=args.symmetric_lift,speed_profile=speed_profile)
             approach_measured=None
             approach_goals={}
             for c,ref in selected_refs.items():
@@ -401,8 +421,14 @@ try:
             max_force=arm.root_physx_view.get_dof_max_forces()[0].cpu().tolist(),
             max_velocity=arm.root_physx_view.get_dof_max_velocities()[0].cpu().tolist()) for side,arm in arms.items()}
     handoff_seed=None
+    timing=dict(control_s=0.,wire_s=0.,rod_solver_s=0.,wire_visual_s=0.,
+                isaac_step_s=0.,validation_s=0.,steps=0,rendered_steps=0)
+    result['performance']=timing
+    result['render_every']=args.render_every
     for step in range(args.steps):
         check_stop_request(args.output)
+        tick_start=perf_counter()
+        allocation_report=None
         t=(step+1)*dt
         if args.grasp_sequence:
             closure_active=grasp_sequence.stage in ('close','hold','lift')
@@ -431,11 +457,14 @@ try:
                     control_J.append(Js);control_n.append(ns);control_W.append(W)
                 # One common scaling before either hand's target is published.
                 touch_command=grasp_sequence.touch_output if grasp_sequence.stage=='close' else None
-                increments=coordinated_bimanual_increment(control_J,control_n,control_W,
+                increments,allocation_report=coordinated_bimanual_increment(control_J,control_n,control_W,
                     previous_loads.reshape(2,2),dt,
                     target_loads_n=(np.asarray(args.closure_loads).reshape(2,2) if touch_command is None
                                     else touch_command['target_loads_n']),
                     normal_speeds_m_s=None if touch_command is None else touch_command['normal_speeds_m_s'],
+                    normal_speed_limit_m_s=.002 if speed_profile is None else speed_profile.far_m_s,
+                    force_speed_limit_m_s=.002 if speed_profile is None else speed_profile.loaded_m_s,
+                    return_diagnostics=True,
                     transport_velocity_w=grasp_sequence.transport_velocity(t))
                 for i,side in enumerate(arms):
                     closure_arm_targets[side]+=increments[i,:7]
@@ -498,7 +527,10 @@ try:
                     arm.write_joint_effort_limit_to_sim(drive_headroom(command,arm.joint_names,side,
                         args.arm_effort_limit,args.hand_effort_limit))
             arm.write_data_to_sim()
+        control_end=perf_counter()
+        do_render=render_due(step,args.render_every,args.headless)
         record=dict(step=step,passed=True,sides={})
+        if allocation_report is not None:record['control_allocation']=allocation_report
         if grasp_mode:
             record['targets']={s:dict(arm=target_arms[s].tolist(),hand=target_hands[s].tolist()) for s in arms}
         if args.dynamics_diagnostics:
@@ -519,7 +551,9 @@ try:
                         com,velocity[:3],velocity[3:],step*dt,f'step-{step}')
                     positions[c]=com
                 motions=mesh_motions(states,offsets,previous_states,dt,args.motion_prediction_order)
+                rod_start=perf_counter()
                 snapshot,impulses=engine.advance_with_meshes(motions,dt)
+                timing['rod_solver_s']+=perf_counter()-rod_start
                 if grasp_mode:
                     # Preserve candidate physics even when a guard rejects the
                     # wrench before sink submission. This is not published-force evidence.
@@ -583,13 +617,21 @@ try:
                         side=c.split('_')[0];arm=arms[side];bi=body_indices[c]
                         J=arm.root_physx_view.get_jacobians()[0,bi-1].cpu().numpy()
                         record['contact']['joint_wrench_nm'][c]=(J.T@np.r_[w.force_w,w.torque_com_w]).tolist()
-            else:snapshot=engine.advance(dt)
-            publish_wire(snapshot)
+            else:
+                rod_start=perf_counter()
+                snapshot=engine.advance(dt)
+                timing['rod_solver_s']+=perf_counter()-rod_start
+            visual_start=perf_counter()
+            if do_render:
+                publish_wire(snapshot)
+            timing['wire_visual_s']+=perf_counter()-visual_start
             wm=settled_metrics(snapshot['rod_position'],snapshot['rod_velocity'],snapshot['active_constraints'])
             record['wire']=wm
             record['passed']=bool(np.isfinite(snapshot['rod_position']).all() and
                 wm.get('min_surface_z_m',-np.inf)>=.299 and wm.get('max_speed_m_s',np.inf)<=2.)
-        sim.step(render=False)
+        wire_end=perf_counter()
+        sim.step(render=do_render)
+        isaac_end=perf_counter()
         result['physics_stepped']=True
         for side,arm in arms.items():
             arm.update(dt)
@@ -686,6 +728,7 @@ try:
                     approach_position_errors_m=point_errors,approach_normal_errors_rad=normal_errors,
                     joint_speeds_rad_s=np.array([arm.data.joint_vel[0].cpu().numpy() for arm in arms.values()]),
                     station_heights_m=station_heights,loads_n=previous_loads,
+                    surface_gaps_m=[samples[c]['gap_m'] for c in BODY_NAMES],
                     valid_contacts=[samples[c]['valid'] for c in BODY_NAMES],normals=actual_normals,
                     anchors_local=anchors,min_surface_clearance_m=surface_clearance,
                     safety_ok=bool(record['passed']),active_constraints=snapshot['active_constraints'])
@@ -735,7 +778,14 @@ try:
                     record['saved_stage_state']=dict(path=str(path),sha256=sha,entry_stage=entry)
                     print('DH116_STAGE_SAVED',entry,str(path),sha,flush=True)
         rows.append(record)
+        timing['control_s']+=control_end-tick_start
+        timing['wire_s']+=wire_end-control_end
+        timing['isaac_step_s']+=isaac_end-wire_end
+        timing['validation_s']+=perf_counter()-isaac_end
+        timing['steps']+=1
+        timing['rendered_steps']+=int(do_render)
         if step%120==0:
+            print('DH116_TIMING',step+1,json.dumps(timing),flush=True)
             print('DH116_PROGRESS',step+1,args.steps,record.get('wire'),flush=True)
             if grasp_mode:
                 print('DH116_LOADS',step+1,record['contact']['normal_samples'],flush=True)

@@ -67,7 +67,7 @@ ready_for_hold only means ramp complete; the separate grasp evidence gate
 must still qualify actual four-channel preload, duration, slip and lift.
 """
 
-    def __init__(self, target_loads_n):
+    def __init__(self, target_loads_n, *, speed_profile=None):
         target = np.asarray(target_loads_n, dtype=float)
         if (target.shape != (2, 2) or not np.isfinite(target).all()
                 or np.any(target < .05) or np.any(target > 3.)):
@@ -77,14 +77,20 @@ must still qualify actual four-channel preload, duration, slip and lift.
         self.phases = ['touch', 'touch']
         self.since = [None, None]
         self.last_time = None
+        from .speed_profile import ContactSpeedGovernor
+        self.speed_governor = None if speed_profile is None else ContactSpeedGovernor(speed_profile)
 
-    def update(self, time_s, loads_n, valid_contacts):
+    def update(self, time_s, loads_n, valid_contacts, *, surface_gaps_m=None):
         loads = np.asarray(loads_n, dtype=float)
         valid = np.asarray(valid_contacts)
         dt = _time_delta(time_s, self.last_time)
         if (loads.shape != (2, 2) or valid.shape != (2, 2) or valid.dtype.kind != 'b'
                 or not np.isfinite(loads).all() or np.any(loads < 0)):
             raise ValueError('finite compressive loads and boolean measured contacts required')
+        if self.speed_governor is not None:
+            gaps = np.asarray(surface_gaps_m, dtype=float)
+            if gaps.shape != (2, 2) or not np.isfinite(gaps).all():
+                raise ValueError('finite measured surface gaps required for staged speed')
         self.last_time = float(time_s)
         for hand in range(2):
             thumb = bool(valid[hand, 0] and loads[hand, 0] >= .025)
@@ -115,6 +121,13 @@ must still qualify actual four-channel preload, duration, slip and lift.
         for hand, phase in enumerate(self.phases):
             if phase == 'touch':
                 speed[hand, 1] = 0.
+        if self.speed_governor is not None:
+            active = np.ones((2, 2), dtype=bool)
+            for hand, phase in enumerate(self.phases):
+                if phase == 'touch':
+                    active[hand, 1] = False
+            speed = self.speed_governor.update(time_s, force_speeds=speed, loads=loads,
+                valid=valid, gaps=gaps, active=active)
         return dict(phases=self.phases[:], target_loads_n=self.targets.copy(),
                     normal_speeds_m_s=speed,
                     ready_for_hold=bool(self.phases == ['preload', 'preload']

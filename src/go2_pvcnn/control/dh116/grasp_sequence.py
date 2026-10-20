@@ -7,6 +7,7 @@ or independent initial-touch diagnostic cannot qualify approach here.
 import numpy as np
 from .grasp_evidence import GraspEvidenceGate
 from .touch_first import ApproachReadiness, TouchFirst
+from .symmetric_transport import SynchronizedTransport
 
 
 def validate_continuous_options(args):
@@ -25,7 +26,12 @@ def validate_continuous_options(args):
 
 
 class TabletopGraspSequence:
-    def __init__(self,*,material_ids,target_loads_n,state_triggered=False):
+    def __init__(self,*,material_ids,target_loads_n,state_triggered=False,symmetric_lift=False,speed_profile=None):
+        from .speed_profile import GraspSpeedProfile
+        if speed_profile is not None and (not isinstance(speed_profile,GraspSpeedProfile)
+                or not state_triggered or speed_profile.lift_m_s>.01):
+            raise ValueError('staged speed requires measured control and lift <=10 mm/s')
+        self.speed_profile=speed_profile
         targets=np.asarray(target_loads_n,dtype=float)
         if (targets.shape!=(4,) or not np.isfinite(targets).all()
                 or np.any(targets<.005/.9) or np.any(targets>3.)):
@@ -40,9 +46,14 @@ class TabletopGraspSequence:
         if type(state_triggered) is not bool:raise ValueError('state_triggered must be bool')
         self.state_triggered=state_triggered
         self.readiness=ApproachReadiness() if state_triggered else None
-        self.touch=TouchFirst(targets.reshape(2,2)) if state_triggered else None
+        self.touch=TouchFirst(targets.reshape(2,2),speed_profile=speed_profile) if state_triggered else None
         self.touch_output=None
         self.settled_heights=None;self.last_rise=np.zeros(2);self.lift_started=None;self.last_grasp={}
+        if type(symmetric_lift) is not bool:raise ValueError('symmetric_lift must be bool')
+        self.symmetric_lift=symmetric_lift
+        self.lift_speed=.005 if speed_profile is None else speed_profile.lift_m_s
+        self.transport_coordinator=SynchronizedTransport(max_speed_m_s=self.lift_speed) if symmetric_lift else None
+        self.synchronization_output=None
 
     def _result(self):
         result=dict(self.last_grasp)
@@ -56,11 +67,18 @@ class TabletopGraspSequence:
             result['approach_ready_since']=self.readiness.ready_since
             result['touch_first']=None if self.touch_output is None else {
                 k:(v.tolist() if isinstance(v,np.ndarray) else v) for k,v in self.touch_output.items()}
+        if self.symmetric_lift:
+            result['lift_synchronization']=None if self.synchronization_output is None else {
+                k:(v.tolist() if isinstance(v,np.ndarray) else v) for k,v in self.synchronization_output.items()}
         return result
 
     def update(self,time_s,*,settled,approach_position_errors_m,approach_normal_errors_rad,
                station_heights_m,loads_n,valid_contacts,normals,anchors_local,
-               min_surface_clearance_m,safety_ok,active_constraints,joint_speeds_rad_s=None):
+               min_surface_clearance_m,safety_ok,active_constraints,joint_speeds_rad_s=None,surface_gaps_m=None):
+        if self.speed_profile is not None:
+            gaps=np.asarray(surface_gaps_m,dtype=float)
+            if gaps.shape!=(4,) or not np.isfinite(gaps).all():
+                raise ValueError('finite measured four-channel surface gaps required')
         position=np.asarray(approach_position_errors_m,dtype=float)
         angles=np.asarray(approach_normal_errors_rad,dtype=float)
         heights=np.asarray(station_heights_m,dtype=float);load=np.asarray(loads_n,dtype=float)
@@ -113,24 +131,37 @@ class TabletopGraspSequence:
             previous=self.stage
             gate_valid=valid
             if self.state_triggered and self.stage=='close':
-                self.touch_output=self.touch.update(time_s,load.reshape(2,2),valid.reshape(2,2))
+                self.touch_output=self.touch.update(time_s,load.reshape(2,2),valid.reshape(2,2),
+                    surface_gaps_m=None if self.speed_profile is None else gaps.reshape(2,2))
                 # Preserve measured contacts in logs; withhold qualification until
                 # touch/opposition and target ramp have actually completed.
                 if not self.touch_output['ready_for_hold']:gate_valid=np.zeros(4,dtype=bool)
             self.last_grasp=self.gate.update(time_s,loads_n=load,valid_contacts=gate_valid,normals=normal,
                 anchors_local=anchors,station_rise_m=self.last_rise,
-                min_surface_clearance_m=min_surface_clearance_m,safety_ok=safety_ok,active_constraints=active_constraints)
+                min_surface_clearance_m=min_surface_clearance_m,safety_ok=safety_ok,active_constraints=active_constraints,
+                lift_alignment_ok=bool(not self.symmetric_lift or abs(self.last_rise[0]-self.last_rise[1])<=.001))
             self.stage=self.last_grasp['stage'];self.reason=self.last_grasp['reason']
             if previous!='lift' and self.stage=='lift':self.lift_started=float(time_s)
+            if self.symmetric_lift and self.stage=='lift':
+                try:
+                    self.synchronization_output=self.transport_coordinator.update(time_s,
+                        rises_m=self.last_rise,contacts_valid=valid.reshape(2,2).all(axis=1),direction=1)
+                except ValueError as error:
+                    self.stage='abort';self.reason=str(error)
+                    self.gate.stage='abort';self.gate.reason=self.reason
         return self._result()
 
     def transport_velocity(self,time_s):
         if (not np.isfinite(time_s) or time_s<0 or (self.last_time is not None
                 and not 0<=time_s-self.last_time<=.01+1e-12)):
             raise ValueError('transport time must be finite and not precede evidence')
+        if self.symmetric_lift:
+            if self.stage!='lift' or np.all(self.last_rise>=.035) or self.synchronization_output is None:
+                return np.zeros((2,3))
+            return self.synchronization_output['velocity_w'].copy()
         velocity=np.zeros(3)
         if self.stage=='lift' and np.any(self.last_rise<.035):
-            velocity[2]=.005*float(np.clip((time_s-self.lift_started)/.2,0.,1.))
+            velocity[2]=self.lift_speed*float(np.clip((time_s-self.lift_started)/.2,0.,1.))
         return velocity
 
     def stage_summary(self,*,final_passed):

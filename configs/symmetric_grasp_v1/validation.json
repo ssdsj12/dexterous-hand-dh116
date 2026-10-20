@@ -1,0 +1,14 @@
+{
+  "source_geometry_validated": true,
+  "path_checks": 130,
+  "physics_validated": false,
+  "old_stage_states_reusable": false,
+  "policy": "touch-first-symmetric-lift-v1",
+  "files": {
+    "prepose.json": "5b6b38c81afc3a34db130e5bee42b266eb3e540e50a8995f4ebdad603a02c7a7",
+    "approach.json": "47d274b3a649b2f21ac4b1c037801510cce08407e737cf6d5106f225099f14d9",
+    "point_references.json": "dd5ce2e0634029f3627fef9ee6f1201b6c8ea75a810726dcacd1d187dddf1c5b",
+    "contact/manifest.json": "f6b2a06214872357b4e65cf2bc44d0f95c7470fdbdc86f46e6db2f34befe118d",
+    "offline_evidence.json": "05691e71193e4b17abc19dd7926e41f9532b66f60fc043c779140cb2f0afb24f"
+  }
+}

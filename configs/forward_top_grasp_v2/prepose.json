@@ -1,0 +1,78 @@
+{
+  "schema": "dh116-static-pose-v1",
+  "asset_sha256": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0",
+  "layers": {
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/1202d37e93d1_left_panda.usd": "e0d800960987bd3f8c283849a621ee22695eeed0a7fe590a9d9ccb9189cef5b2",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/3046ad2ed855_DH116_right.usd": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/9ad2c00e990b_right_panda.usd": "2362fd5eec61d5ca69f156e0aff5f45c65a7473014cb95c19fa81d87ed9590f0",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/fixed_dual_panda_dh116.usd": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0"
+  },
+  "states": {
+    "left": [
+      -1.0334038917383035,
+      -0.9546389504373617,
+      1.1691567005214576,
+      -2.4967338004068584,
+      2.8841452873226854,
+      3.226197250012826,
+      2.844993933389364,
+      0.25005672818577385,
+      0.3899952021100089,
+      0.6647529666861925,
+      0.2,
+      0.2,
+      0.2
+    ],
+    "right": [
+      1.070567306528919,
+      -1.0165880969025534,
+      -1.2284570554470045,
+      -2.490944453203067,
+      -2.8388957364112417,
+      3.257764654843081,
+      0.13028004629226278,
+      0.027456081264224493,
+      0.012912622218025699,
+      0.6397307521150258,
+      0.2,
+      0.2,
+      0.2
+    ]
+  },
+  "source_report_sha256": "9e31ad863f34ef4cec82acfab237b24e09e89cc0e0ff270642f08f66744a3fec",
+  "source_checks": [
+    {
+      "source_clearance_passed": true,
+      "minimum_lower_bound_m": 0.001398355230970455,
+      "failures": [],
+      "collision_bodies": 50,
+      "motion_qualified": false,
+      "measured_body_poses_used": false,
+      "measured_interval_bound_used": false,
+      "wire_motion_bound_m": 0.0,
+      "wire_radius_m": 0.008,
+      "joint_box_covered": false,
+      "pad_front_contact_qualified": false,
+      "delegated_pad_bodies": [],
+      "certificate_reused": false
+    },
+    {
+      "source_clearance_passed": true,
+      "minimum_lower_bound_m": 0.0011332283921147782,
+      "failures": [],
+      "collision_bodies": 50,
+      "motion_qualified": false,
+      "measured_body_poses_used": false,
+      "measured_interval_bound_used": false,
+      "wire_motion_bound_m": 0.0,
+      "wire_radius_m": 0.008,
+      "joint_box_covered": false,
+      "pad_front_contact_qualified": false,
+      "delegated_pad_bodies": [],
+      "certificate_reused": false
+    }
+  ],
+  "scope": "Mirror-grasp prepose: offline source checks only; physical run required",
+  "grasp_qualified": false
+}

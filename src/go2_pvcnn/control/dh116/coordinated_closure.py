@@ -9,7 +9,11 @@ import numpy as np
 
 
 def _velocity_candidate(point_jacobians,normals,palm_angular_jacobian,
-                        loads_n,dt,*,target_loads_n,transport_velocity_w=None,normal_speeds_m_s=None):
+                        loads_n,dt,*,target_loads_n,transport_velocity_w=None,normal_speeds_m_s=None,
+                        normal_speed_limit_m_s=.002,force_speed_limit_m_s=.002):
+    if (not np.isfinite([normal_speed_limit_m_s,force_speed_limit_m_s]).all()
+            or not 0<normal_speed_limit_m_s<=.05 or not 0<force_speed_limit_m_s<=.002):
+        raise ValueError('invalid simulation normal speed limits')
     J=np.asarray(point_jacobians,dtype=float)
     n=np.asarray(normals,dtype=float)
     W=np.asarray(palm_angular_jacobian,dtype=float)
@@ -27,11 +31,11 @@ def _velocity_candidate(point_jacobians,normals,palm_angular_jacobian,
             or not np.allclose(W[:,7:],0.,atol=1e-10,rtol=0)):
         raise ValueError('invalid coordinated closure evidence')
     error=target-load
-    speed=np.clip(.01*error,-.002,.002)
+    speed=np.clip(.01*error,-force_speed_limit_m_s,force_speed_limit_m_s)
     speed[np.abs(error)<=.03]=0.
     if normal_speeds_m_s is not None:
         speed=np.asarray(normal_speeds_m_s,dtype=float)
-        if speed.shape!=(2,) or not np.isfinite(speed).all() or np.any(np.abs(speed)>.002):
+        if speed.shape!=(2,) or not np.isfinite(speed).all() or np.any(np.abs(speed)>normal_speed_limit_m_s):
             raise ValueError('invalid explicit pad normal speed')
     A=np.vstack((J.reshape(6,10),.05*W))
     b=np.r_[(n*speed[:,None]+transport).reshape(6),np.zeros(3)]
@@ -54,21 +58,39 @@ def coordinated_closure_increment(point_jacobians,normals,palm_angular_jacobian,
 
 
 def coordinated_bimanual_increment(point_jacobians,normals,palm_angular_jacobians,
-                                   loads_n,dt,*,target_loads_n,transport_velocity_w,normal_speeds_m_s=None):
-    """Left/right candidates share one rate scale; no runtime safety authority."""
+                                   loads_n,dt,*,target_loads_n,transport_velocity_w,normal_speeds_m_s=None,
+                                   normal_speed_limit_m_s=.002,force_speed_limit_m_s=.002,return_diagnostics=False):
+    """Common (3,) or bilateral (2,3) transport; one shared joint-rate scale.
+
+    Per-hand transport enables measured synchronization by the caller. It does
+    not itself qualify contact, symmetry, collision clearance or a real lift.
+    """
+    if type(return_diagnostics) is not bool:raise ValueError('diagnostics flag must be bool')
     J=np.asarray(point_jacobians,dtype=float);n=np.asarray(normals,dtype=float)
     W=np.asarray(palm_angular_jacobians,dtype=float)
     loads=np.asarray(loads_n,dtype=float);targets=np.asarray(target_loads_n,dtype=float)
     if (J.shape!=(2,2,3,10) or n.shape!=(2,2,3) or W.shape!=(2,3,10)
             or loads.shape!=(2,2) or targets.shape!=(2,2)):
         raise ValueError('invalid bimanual closure evidence shape')
+    transport=np.asarray(transport_velocity_w,dtype=float)
+    if transport.shape==(3,):transport=np.broadcast_to(transport,(2,3))
+    if (transport.shape!=(2,3) or not np.isfinite(transport).all()
+            or np.any(np.linalg.norm(transport,axis=1)>.01+1e-12)):
+        raise ValueError('invalid bimanual transport velocity')
     speeds=None if normal_speeds_m_s is None else np.asarray(normal_speeds_m_s,dtype=float)
     if speeds is not None and (speeds.shape!=(2,2) or not np.isfinite(speeds).all()
-                               or np.any(np.abs(speeds)>.002)):
+                               or np.any(np.abs(speeds)>normal_speed_limit_m_s)):
         raise ValueError('invalid bimanual explicit pad speeds')
     velocity=np.array([_velocity_candidate(J[i],n[i],W[i],loads[i],dt,
-        target_loads_n=targets[i],transport_velocity_w=transport_velocity_w,
-        normal_speeds_m_s=None if speeds is None else speeds[i]) for i in range(2)])
+        target_loads_n=targets[i],transport_velocity_w=transport[i],
+        normal_speeds_m_s=None if speeds is None else speeds[i],
+        normal_speed_limit_m_s=normal_speed_limit_m_s,force_speed_limit_m_s=force_speed_limit_m_s) for i in range(2)])
     scale=max(1.,float(np.max(np.abs(velocity[:,:7])))/.05,
                  float(np.max(np.abs(velocity[:,7:])))/.02)
-    return velocity*(dt/scale)
+    increment=velocity*(dt/scale)
+    if not return_diagnostics:return increment
+    return increment,dict(joint_rate_scale=scale,
+        requested_pad_velocity_w_m_s=np.einsum('shij,sj->shi',J,velocity).tolist(),
+        allocated_pad_velocity_w_m_s=np.einsum('shij,sj->shi',J,velocity/scale).tolist(),
+        arm_joint_speed_cap_rad_s=.05,hand_joint_speed_cap_rad_s=.02,
+        scope='Jacobian allocation, not measured physical velocity')

@@ -1,0 +1,631 @@
+{
+  "grasp_candidate": {
+    "states": {
+      "left": [
+        -1.064451975646621,
+        -0.9850880103328749,
+        1.2274187037650912,
+        -2.5241332781503734,
+        2.8922998215323883,
+        3.189873570434623,
+        2.8922998215323883,
+        0.266134864777895,
+        0.41579480987326684,
+        0.6917598357263632,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "right": [
+        1.1018127432609985,
+        -1.035443982027936,
+        -1.308859408820543,
+        -2.5154003040583164,
+        -2.743506967383331,
+        3.2315669874619006,
+        -0.027199083396197882,
+        0.0621406532995485,
+        0.021109744703475375,
+        0.6754521346266561,
+        0.2,
+        0.2,
+        0.2
+      ]
+    },
+    "normal_sign": -1.0,
+    "angle_deg": 25.0,
+    "free_angles": true,
+    "solved_angles_deg": [
+      4.951474177237855,
+      9.422999659164343
+    ],
+    "mirror_weight": 12.0,
+    "target_radius": 0.0081,
+    "constrained": false,
+    "min_constraint": -1.4051511409178774,
+    "table_penalty": true,
+    "thumb_wire_penalty": true,
+    "wire_weight": 20.0,
+    "normal_weight": 0.2,
+    "palm_weight": 0.03,
+    "point_weight": 10.0,
+    "seed_name": "forward_feasibility13",
+    "nfev": 11,
+    "optimizer_success": true,
+    "optimizer_message": "`ftol` termination condition is satisfied.",
+    "measured": {
+      "left": {
+        "p": [
+          [
+            0.4213131452192758,
+            0.2002810491556219,
+            0.30912418048008694
+          ],
+          [
+            0.438237106705021,
+            0.20031738576376748,
+            0.3091159493886186
+          ]
+        ],
+        "n": [
+          [
+            0.998945525013494,
+            -0.0031790962292751446,
+            -0.04580099783492834
+          ],
+          [
+            -0.9924946036735521,
+            -0.05119550587311772,
+            -0.11105621034984761
+          ]
+        ],
+        "palm_p": [
+          0.42123243639883495,
+          0.2462160167222539,
+          0.37356745991357354
+        ],
+        "palm_R": [
+          [
+            0.8331391413477138,
+            -0.5084706330850705,
+            -0.21757018739812983
+          ],
+          [
+            -0.4618393487270978,
+            -0.8560530565014003,
+            0.23211544632345496
+          ],
+          [
+            -0.3042755118666629,
+            -0.09290198999308012,
+            -0.9480430544725289
+          ]
+        ],
+        "forward": {
+          "finger_error_rad": 0.5860367570052327,
+          "palm_error_rad": 0.3237690721125038,
+          "wrist_rear_margin_m": 0.069428718704109,
+          "passed": false
+        }
+      },
+      "right": {
+        "p": [
+          [
+            0.422662443755948,
+            -0.19960998893469398,
+            0.30898516774099044
+          ],
+          [
+            0.43778721249935093,
+            -0.19979080164849683,
+            0.30882654338538335
+          ]
+        ],
+        "n": [
+          [
+            0.9810107901560633,
+            0.036706212854591275,
+            -0.1904481124486301
+          ],
+          [
+            -0.9885755391015282,
+            0.006859750265349629,
+            -0.15057007443850137
+          ]
+        ],
+        "palm_p": [
+          0.42092017711446744,
+          -0.24663213733135642,
+          0.3741511994767975
+        ],
+        "palm_R": [
+          [
+            0.808223592028994,
+            0.5612548859757726,
+            -0.17823461576267668
+          ],
+          [
+            0.5111223440620855,
+            -0.8189186959915749,
+            -0.2610098058616463
+          ],
+          [
+            -0.29245268794836793,
+            0.11985458824666606,
+            -0.9487393229902473
+          ]
+        ],
+        "forward": {
+          "finger_error_rad": 0.629667096256726,
+          "palm_error_rad": 0.321573340873434,
+          "wrist_rear_margin_m": 0.06821628531288065,
+          "passed": false
+        }
+      }
+    },
+    "source_screen": {
+      "source_clearance_passed": true,
+      "minimum_lower_bound_m": 0.0013056686251023686,
+      "failures": [],
+      "collision_bodies": 50,
+      "motion_qualified": false,
+      "measured_body_poses_used": false,
+      "measured_interval_bound_used": false,
+      "wire_motion_bound_m": 0.0,
+      "wire_radius_m": 0.008,
+      "joint_box_covered": false,
+      "pad_front_contact_qualified": false,
+      "delegated_pad_bodies": [
+        "/FixedDualPandaDH116/left_arm/dh116/finger14_link",
+        "/FixedDualPandaDH116/left_arm/dh116/finger23_link",
+        "/FixedDualPandaDH116/right_arm/dh116/finger14_link",
+        "/FixedDualPandaDH116/right_arm/dh116/finger23_link"
+      ],
+      "certificate_reused": false
+    },
+    "residual": [
+      -0.006170827164762027,
+      0.0028104915562188193,
+      0.00425053287737287,
+      0.001673346407730092,
+      0.003173857637674693,
+      0.004168221962689289,
+      0.0005354737866990478,
+      -0.000635819245855029,
+      0.008102200244117482,
+      0.0007547104812893224,
+      -0.010239101174623545,
+      -0.004948842258866374,
+      -0.005005825759568585,
+      -0.013855180461812933,
+      -0.009128265355999888,
+      -0.006527105621943895,
+      0.006963463389703648,
+      0.001558708365824133,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.006531465667327652,
+      0.00390011065306034,
+      -0.0034098028608525732,
+      -0.0020349031143379603,
+      0.0020919835150318145,
+      -0.0049960464169235275,
+      -0.0010991459387810433,
+      0.007341242570918255,
+      -0.005345226759461835,
+      -0.00041380385031193346,
+      0.0013719500530699259,
+      0.002630380842563912,
+      -0.005753292239130181,
+      0.015333670321862563,
+      -0.008773580638451038,
+      -0.0053470384728803,
+      -0.007830294175849389,
+      0.0015378203102925801,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -0.0037471114124101312,
+      -0.004993447309230126,
+      0.007004874758687274,
+      -0.0013560931526164044,
+      0.0005534774908270535,
+      -0.0016016724570270316
+    ],
+    "layers": {
+      "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/1202d37e93d1_left_panda.usd": "e0d800960987bd3f8c283849a621ee22695eeed0a7fe590a9d9ccb9189cef5b2",
+      "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/3046ad2ed855_DH116_right.usd": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71",
+      "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/9ad2c00e990b_right_panda.usd": "2362fd5eec61d5ca69f156e0aff5f45c65a7473014cb95c19fa81d87ed9590f0",
+      "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+      "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/fixed_dual_panda_dh116.usd": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0"
+    },
+    "grasp_qualified": false,
+    "motion_qualified": false
+  },
+  "pad_and_palm": {
+    "pad_regions": {
+      "left_thumb": {
+        "passed": true,
+        "failures": [],
+        "nonfront_lower_bound_m": 0.0025804066823959353,
+        "signed_distance_method": "convex-halfspaces",
+        "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+        "partition_sha256": "5c0942f605d25232a169cbdc6cbaab1a4cac589bc647837018bfeab33c90ed5e",
+        "local_patch": {
+          "passed": true,
+          "failures": [],
+          "front_samples": 41,
+          "max_penetration_m": 0.0,
+          "min_nonfront_clearance_m": 0.003069945651046891
+        },
+        "sample_allowance_m": 0.0002500000000000002,
+        "numerical_allowance_m": 1e-07,
+        "wire_radius_m": 0.008,
+        "grasp_qualified": false
+      },
+      "left_index": {
+        "passed": true,
+        "failures": [],
+        "nonfront_lower_bound_m": 0.002768358753824234,
+        "signed_distance_method": "convex-halfspaces",
+        "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+        "partition_sha256": "2cc0a96beb0e076bf55a6180a3a4bb538eda37311392a60bd19020a458888109",
+        "local_patch": {
+          "passed": true,
+          "failures": [],
+          "front_samples": 35,
+          "max_penetration_m": 0.0,
+          "min_nonfront_clearance_m": 0.0020202265261650785
+        },
+        "sample_allowance_m": 0.0002500000000000002,
+        "numerical_allowance_m": 1e-07,
+        "wire_radius_m": 0.008,
+        "grasp_qualified": false
+      },
+      "right_thumb": {
+        "passed": true,
+        "failures": [],
+        "nonfront_lower_bound_m": 0.0015395233201026919,
+        "signed_distance_method": "convex-halfspaces",
+        "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+        "partition_sha256": "f28e703c9d99774e12ab0c7f894527527df9f76f3b8c80c3ff1175aac7825145",
+        "local_patch": {
+          "passed": true,
+          "failures": [],
+          "front_samples": 38,
+          "max_penetration_m": 0.0009230277339310738,
+          "min_nonfront_clearance_m": 0.0013920632852919678
+        },
+        "sample_allowance_m": 0.0002500000000000002,
+        "numerical_allowance_m": 1e-07,
+        "wire_radius_m": 0.008,
+        "grasp_qualified": false
+      },
+      "right_index": {
+        "passed": true,
+        "failures": [],
+        "nonfront_lower_bound_m": 0.0024473476948380472,
+        "signed_distance_method": "convex-halfspaces",
+        "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+        "partition_sha256": "7c27c6c0686c4e613ab60a647e1d1d2160757787bd6f51b11abc759a7e30eb21",
+        "local_patch": {
+          "passed": true,
+          "failures": [],
+          "front_samples": 34,
+          "max_penetration_m": 0.0004258167546036806,
+          "min_nonfront_clearance_m": 0.0018403452811693935
+        },
+        "sample_allowance_m": 0.0002500000000000002,
+        "numerical_allowance_m": 1e-07,
+        "wire_radius_m": 0.008,
+        "grasp_qualified": false
+      }
+    },
+    "palm_mirror": {
+      "palm_position_error_m": 0.0007819297280871408,
+      "functional_rotation_error_deg": 4.145178228094791
+    },
+    "motion_qualified": false,
+    "grasp_qualified": false
+  },
+  "jacobian_and_initial": {
+    "initial_wire_screen": {
+      "source_clearance_passed": true,
+      "minimum_lower_bound_m": 0.0013831524582093024,
+      "failures": [],
+      "collision_bodies": 50,
+      "motion_qualified": false,
+      "measured_body_poses_used": false,
+      "measured_interval_bound_used": false,
+      "wire_motion_bound_m": 0.0,
+      "wire_radius_m": 0.008,
+      "joint_box_covered": false,
+      "pad_front_contact_qualified": false,
+      "delegated_pad_bodies": [],
+      "certificate_reused": false
+    },
+    "point_jacobians": [
+      {
+        "phase": "prepose",
+        "side": "left",
+        "digit": "thumb",
+        "max_error_m_rad": 1.1751200013065954e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "prepose",
+        "side": "left",
+        "digit": "index",
+        "max_error_m_rad": 1.1705630909020215e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "prepose",
+        "side": "right",
+        "digit": "thumb",
+        "max_error_m_rad": 1.4888024146841872e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "forward-2",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "prepose",
+        "side": "right",
+        "digit": "index",
+        "max_error_m_rad": 3.228128597765334e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "forward-2",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "open",
+        "side": "left",
+        "digit": "thumb",
+        "max_error_m_rad": 1.4814749427216611e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "open",
+        "side": "left",
+        "digit": "index",
+        "max_error_m_rad": 1.0909428915795161e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "open",
+        "side": "right",
+        "digit": "thumb",
+        "max_error_m_rad": 9.868217354380704e-11,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "open",
+        "side": "right",
+        "digit": "index",
+        "max_error_m_rad": 1.1157247348236865e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "grasp",
+        "side": "left",
+        "digit": "thumb",
+        "max_error_m_rad": 1.3487178041060588e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "grasp",
+        "side": "left",
+        "digit": "index",
+        "max_error_m_rad": 1.3836481960183278e-10,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "grasp",
+        "side": "right",
+        "digit": "thumb",
+        "max_error_m_rad": 6.012690345613692e-11,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      },
+      {
+        "phase": "grasp",
+        "side": "right",
+        "digit": "index",
+        "max_error_m_rad": 8.758349601123427e-11,
+        "methods": [
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central",
+          "central"
+        ],
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "scope": "USD FK finite differences; actual PhysX Jacobian still required",
+    "motion_qualified": false,
+    "grasp_qualified": false
+  },
+  "source_files": {
+    "/home/xk/coding/dexterous hand/runs/forward_approach_probe2/setup.json": "34f061b21e8c94d31954da0492a45e07c7bda8e6a27281de373bb813a1e151c8",
+    "/home/xk/coding/dexterous hand/runs/forward_approach_probe2/sweep.json": "014f697b1017c4aeae3b4e60e84cb647353dd77e1dd338df8304680a5dc84c6e",
+    "/home/xk/coding/dexterous hand/runs/forward_approach_probe2/jacobian_and_initial_check.json": "fba7d600dbdb6abd2fabed551011c3eb83743bbedefca255f87c8939c8062019",
+    "/home/xk/coding/dexterous hand/runs/forward_feasibility14/summary.json": "7abce95ea669f7699d93d120e1217ae432b29150be835c97366d9e7a4824c252",
+    "/home/xk/coding/dexterous hand/runs/forward_feasibility14/region_and_palm_check.json": "33de2b4be18a9f42a5da550c2b056e516dfa7e32a0b70f06e59cb65caa8d394a"
+  },
+  "scope": "Offline only, no actual grasp/lift qualification"
+}
