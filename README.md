@@ -30,6 +30,12 @@ wire 的 GUI 发布改为墙钟调度，默认 15 Hz；每个物理步仍固定�
 
 本阶段验证：`bash scripts/python.sh -m pytest tests/test_dh116_performance_runner.py -q` → **3 passed**；完整回归 `bash scripts/python.sh -m pytest tests -q` → **742 passed in 24.56s**。尚未启动正式 Isaac 对照，闭指、持续夹持、抬升仍未验收。
 
+## 2026-10-20 性能优化 Task 6：首次 Isaac 对照
+
+按相同物理时长对 baseline、buffered 和 GUI 15 Hz 各串行运行 3 次，全部 1200/1200 步通过 settle/diagnostic 物理门。baseline 中位墙钟 **36.953951 s**，buffered **36.933635 s（1.000550×，处于噪声范围）**，GUI **44.014520 s（0.839585×）**。因此当前证据 flush 没有确定整机提速，GUI 显示增加墙钟成本；主要热点仍是 DeformX 杆/接触求解。详见 [性能报告](docs/superpowers/reports/2026-10-20-dh116-performance-report.md) 和本地 `runs/perf_20261020_settle/report.json`。
+
+这组运行只覆盖 0.12 s settle/diagnostic，没有进入闭指、持续夹持或抬升，不能作为抓取成功证据。下一步需针对杆/接触求解热点单独设计优化，并保留完整物理验收门。
+
 ## 2026-10-20 上传快照
 
 分支：`feat/dh116-simulation-10-20`。当前阶段为固定双 Panda + DH116 的抓取控制开发、半隐式接触离线验证和 Isaac 接触前探针验证；持续夹持与抬升尚未通过实际验收。

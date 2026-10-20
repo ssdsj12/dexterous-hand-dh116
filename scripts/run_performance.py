@@ -18,7 +18,7 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--variant", choices=VARIANTS, required=True)
     parser.add_argument("--phase", choices=PHASES, required=True)
-    parser.add_argument("--steps", type=int, default=40000)
+    parser.add_argument("--steps", type=int, default=1200)
     parser.add_argument("--repeat", type=int, default=3)
     parser.add_argument("--device", choices=("cuda:0", "cpu"), default="cuda:0")
     parser.add_argument("--output-root", type=Path, default=Path("runs/perf_20261020"))
@@ -26,6 +26,8 @@ def parse_args(argv=None):
     args = parser.parse_args(argv)
     if args.steps < 1:
         parser.error("--steps must be positive")
+    if args.phase in ("close", "hold", "lift") and args.steps * 1e-4 <= 5.1:
+        parser.error("--steps must cover more than 5.1 seconds at physics_dt=1e-4")
     if args.repeat < 1:
         parser.error("--repeat must be positive")
     return args
@@ -42,15 +44,10 @@ def build_command(args, output: Path) -> list[str]:
     command = [
         args.python, str(root / "scripts" / "verify_fixed_dual_panda_dh116.py"),
         "--asset-dir", str(root / "assets" / "fixed_dual_panda_dh116_v1"),
-        "--active-pose", str(cfg / "prepose.json"), "--active-pose-sha256", pins["prepose.json"],
-        "--approach-certificate", str(cfg / "approach.json"),
-        "--approach-certificate-sha256", pins["approach.json"],
         "--point-references", str(cfg / "point_references.json"),
         "--contact-manifest", str(cfg / "contact" / "manifest.json"),
         "--contact-manifest-sha256", pins["contact/manifest.json"],
         "--backend-root", str(root / "vendor" / "DeformX"),
-        "--grasp-sequence", "--coordinated-closure",
-        "--closure-loads", "1.0005", ".8855", "1.012", "1.0695",
         "--contact-subsamples", "16", "--contact-tangential-damping", "1000",
         "--clearance-certificate-cache", "--contact-broad-phase", "--gravity-hold",
         "--arm-effort-limit", "60", "--hand-effort-limit", ".2",
@@ -60,6 +57,17 @@ def build_command(args, output: Path) -> list[str]:
         "--table-wire", "--profile", "--perf-flush-steps", "1000",
         "--ui-hz", "15", "--device", args.device, "--output", str(output),
     ]
+    if args.phase != "settle":
+        command.extend([
+            "--active-pose", str(cfg / "prepose.json"), "--active-pose-sha256", pins["prepose.json"],
+            "--approach-certificate", str(cfg / "approach.json"),
+            "--approach-certificate-sha256", pins["approach.json"],
+        ])
+    if args.phase in ("close", "hold", "lift"):
+        command.extend([
+            "--grasp-sequence", "--coordinated-closure",
+            "--closure-loads", "1.0005", ".8855", "1.012", "1.0695",
+        ])
     if args.variant in ("baseline", "snapshot", "buffered"):
         command.append("--headless")
     if args.variant == "buffered":
@@ -85,6 +93,11 @@ def run(args) -> list[Path]:
         env["DH116_PERF_VARIANT"] = args.variant
         env["DH116_PERF_PHASE"] = args.phase
         subprocess.run(command, cwd=root, env=env, check=True)
+        summary = output / "summary.json"
+        if not summary.exists():
+            raise RuntimeError(f"verifier produced no summary: {output}")
+        if json.loads(summary.read_text()).get("passed") is not True:
+            raise RuntimeError(f"verifier did not complete successfully: {output}")
         output.mkdir(exist_ok=True)
         (output / "comparison_manifest.json").write_text(json.dumps({
             "variant": args.variant, "phase": args.phase, "repetition": repetition,

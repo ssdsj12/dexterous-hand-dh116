@@ -35,6 +35,13 @@
 - 本阶段验证：runner 专项 **3 passed**；完整回归 **742 passed in 24.56s**。
 - 未完成：实际 Isaac 三次串行测量、报告审查，以及双手持续夹持和抬升验收。
 
+## 2026-10-20 — 性能优化 Task 6：Isaac 三次对照证据
+
+- 在 RTX 5070、core 0、固定 `physics_dt=1e-4`/wire `py_dt=1e-5`/16 点采样下，baseline、buffered、GUI 15 Hz 各完成三次 1200 步 settle/diagnostic。
+- 中位墙钟：baseline 36.953951 s，buffered 36.933635 s（1.000550×，不可视为确定提速），GUI 44.014520 s（0.839585×）。所有运行 1200/1200 步通过物理门。
+- 报告：`docs/superpowers/reports/2026-10-20-dh116-performance-report.md`；原始数据留在本地 `runs/perf_20261020_settle/`，不上传运行目录。
+- 结论：当前主要热点是 DeformX 杆/接触求解；证据缓冲和显示调度不能证明整机加速。close/hold/lift 与真实抓取仍未验收。
+
 ## 2026-10-20 — 抓取控制与半隐式接触开发快照
 
 - 新分支 `feat/dh116-simulation-10-20`，汇总当前控制代码、配置、测试与设计计划。
