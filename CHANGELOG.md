@@ -14,6 +14,13 @@
 - 本阶段验证：`bash scripts/python.sh -m pytest tests -q` → **734 passed in 24.68s**；编译和 diff 检查通过。
 - 未完成：正式 Isaac 三次同物理时长测量、快照/反作用缓冲、证据缓冲，以及双手持续夹持和抬升验收。
 
+## 2026-10-20 — 性能优化 Task 3：快照与反作用缓冲
+
+- 新增不可变 pre/post `RuntimeSnapshot`，每步 token 独立递增；反作用记录绑定 DeformX post token。
+- 新增 `ReactionBuffer`，左右臂的力、矩、作用点及环境索引张量预分配并原地清零，避免每步重新创建整组张量。
+- 本阶段验证：`bash scripts/python.sh -m pytest tests -q` → **736 passed in 24.57s**；编译和 diff 检查通过。
+- 未完成：证据缓冲策略、正式 Isaac 三次同物理时长测量，以及双手持续夹持和抬升验收。
+
 ## 2026-10-20 — 抓取控制与半隐式接触开发快照
 
 - 新分支 `feat/dh116-simulation-10-20`，汇总当前控制代码、配置、测试与设计计划。

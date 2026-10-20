@@ -19,6 +19,7 @@ from go2_pvcnn.control.dh116.stage_runtime import StageResetSequence,robot_resto
 from go2_pvcnn.control.dh116.touch_first import bounded_handoff
 from go2_pvcnn.control.dh116.speed_profile import GraspSpeedProfile
 from go2_pvcnn.control.dh116.perf_meter import PerfMeter
+from go2_pvcnn.control.dh116.runtime_snapshot import SnapshotStore,ReactionBuffer
 from isaaclab.app import AppLauncher
 
 parser=argparse.ArgumentParser(description=__doc__)
@@ -406,18 +407,25 @@ try:
         body_indices={c:arms[c.split('_')[0]].body_names.index(n) for c,n in BODY_NAMES.items()}
         offsets={c:r['body_local_mesh_com_m'] for c,r in contact_records.items()}
         class IsaacReactionSink:
+            def __init__(self):
+                self.buffers={side:ReactionBuffer.allocate(args.device,len(arms[side].body_names))
+                              for side in ('left','right')}
+                self.environment_indices=torch.zeros((1,),device=args.device,dtype=torch.int32)
+
             def submit(self,side,force,torque,position):
                 if args.disable_contact_reaction:return
                 arm=arms[side]
-                arrays=[torch.zeros((1,len(arm.body_names),3),device=args.device) for _ in range(3)]
+                buffer=self.buffers[side].clear_()
                 for i,digit in enumerate(('thumb','index')):
                     bi=body_indices[f'{side}_{digit}']
-                    for target,source in zip(arrays,(force,torque,position)):
-                        target[0,bi]=torch.as_tensor(source[i].copy(),device=args.device,dtype=torch.float32)
+                    buffer.force[0,bi].copy_(torch.as_tensor(force[i],device=args.device,dtype=torch.float32))
+                    buffer.torque[0,bi].copy_(torch.as_tensor(torque[i],device=args.device,dtype=torch.float32))
+                    buffer.position[0,bi].copy_(torch.as_tensor(position[i],device=args.device,dtype=torch.float32))
                 arm.root_physx_view.apply_forces_and_torques_at_position(
-                    force_data=arrays[0],torque_data=arrays[1],position_data=arrays[2],
-                    indices=torch.tensor([0],device=args.device,dtype=torch.int32),is_global=True)
-        bridge=ContactReactionBridge(IsaacReactionSink(),max_force_n=10.)
+                    force_data=buffer.force,torque_data=buffer.torque,position_data=buffer.position,
+                    indices=self.environment_indices,is_global=True)
+        reaction_sink=IsaacReactionSink()
+        bridge=ContactReactionBridge(reaction_sink,max_force_n=10.)
         if args.probe_channel:
             c=args.probe_channel;side=c.split('_')[0];arm=arms[side];bi=body_indices[c]
             pose=arm.data.body_link_pose_w[0,bi].cpu().numpy()
@@ -446,11 +454,16 @@ try:
     result['render_every']=args.render_every
     result['ui_hz']=args.ui_hz
     next_wire_publish=0.
+    snapshot_store=SnapshotStore()
     for step in range(args.steps):
         check_stop_request(args.output)
         tick_start=perf_counter()
+        stage_name=getattr(grasp_sequence,'stage','diagnostic')
+        pre_snapshot=snapshot_store.capture_pre(
+            step=step,stage=stage_name,sample_time=step*dt,
+            values={'stage':stage_name,'step':step})
         if perf_meter is not None:
-            perf_meter.begin_step(step,getattr(grasp_sequence,'stage','diagnostic'),step*dt)
+            perf_meter.begin_step(step,stage_name,step*dt)
         rod_total_before=timing['rod_solver_s']
         allocation_report=None
         t=(step+1)*dt
@@ -557,6 +570,7 @@ try:
         do_render=should_publish_wire(headless=args.headless,now=perf_counter(),
             next_publish=next_wire_publish,ui_hz=args.ui_hz)
         record=dict(step=step,passed=True,sides={})
+        record['pre_snapshot_token']=pre_snapshot.token
         if allocation_report is not None:record['control_allocation']=allocation_report
         source_pre_s=None
         source_post_s=None
@@ -584,6 +598,9 @@ try:
                 rod_start=perf_counter()
                 snapshot,impulses=engine.advance_with_meshes(motions,dt)
                 timing['rod_solver_s']+=perf_counter()-rod_start
+                reaction_snapshot=snapshot_store.capture_post(
+                    step=step,stage=stage_name,sample_time=step*dt+dt,
+                    values={'rod_position':snapshot['rod_position']})
                 if grasp_mode:
                     # Preserve candidate physics even when a guard rejects the
                     # wrench before sink submission. This is not published-force evidence.
@@ -631,12 +648,14 @@ try:
                     durations_s={c:i.contact_duration_s for c,i in impulses.items()},
                     peak_force_n={c:i.peak_force_n for c,i in impulses.items()})
                 reaction_start=perf_counter()
-                batch=bridge.publish(f'step-{step}',step*dt,impulses,engine.last_contact_diagnostics,positions,dt)
+                batch=bridge.publish(f'step-{step}-post-{reaction_snapshot.token}',step*dt,
+                    impulses,engine.last_contact_diagnostics,positions,dt)
                 reaction_submit_s=perf_counter()-reaction_start
                 if grasp_mode:record['contact_candidate']['reaction_published']=True
                 previous_states=states
                 contact_peak=max(contact_peak,max(i.peak_force_n for i in impulses.values()))
                 record['contact']=dict(peak_force_n={c:i.peak_force_n for c,i in impulses.items()},
+                    reaction_snapshot_token=reaction_snapshot.token,
                     reaction_applied=not args.disable_contact_reaction,
                     **contact_metrics_before,
                     force_w={c:w.force_w.tolist() for c,w in batch.wrenches.items()},
@@ -678,6 +697,9 @@ try:
             perf_meter.record_section('wire_visual',perf_counter()-visual_start)
         if perf_meter is not None:
             perf_meter.record_section('physx_step',isaac_end-wire_end)
+        post_snapshot=snapshot_store.capture_post(
+            step=step,stage=stage_name,sample_time=(step+1)*dt,
+            values={'wire':snapshot if engine is not None else None})
         state_start=perf_counter()
         result['physics_stepped']=True
         for side,arm in arms.items():
@@ -826,6 +848,7 @@ try:
                     sha=save_state(path,payload)
                     record['saved_stage_state']=dict(path=str(path),sha256=sha,entry_stage=entry)
                     print('DH116_STAGE_SAVED',entry,str(path),sha,flush=True)
+        record['post_snapshot_token']=post_snapshot.token
         evidence_start=perf_counter()
         rows.append(record)
         evidence_s=perf_counter()-evidence_start
