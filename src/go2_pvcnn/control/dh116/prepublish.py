@@ -1,6 +1,9 @@
 """Shared pre-publication checks extracted unchanged from the legacy verifier."""
 
-CHANNELS = ("left_thumb", "left_index", "right_thumb", "right_index")
+CHANNELS = (
+    "left_thumb", "left_index", "left_middle",
+    "right_thumb", "right_index", "right_middle",
+)
 
 def prepublish_contact_gates(snapshot, mesh_bodies, motions, *, impulses, mode,
                              selected_channel, max_speed_m_s,

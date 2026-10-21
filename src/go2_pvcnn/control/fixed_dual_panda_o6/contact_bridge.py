@@ -21,8 +21,10 @@ import numpy as np
 CHANNEL_BODY_NAMES = {
     "left_thumb": "left_thumb_distal",
     "left_index": "left_index_distal",
+    "left_middle": "left_middle_distal",
     "right_thumb": "right_thumb_distal",
     "right_index": "right_index_distal",
+    "right_middle": "right_middle_distal",
 }
 _CHANNELS = tuple(CHANNEL_BODY_NAMES)
 _MANIFEST_SHA256 = "0af0f15e32f4f8a1a201066951a5cc8dcb417ad121c8b0feff78712c62cd7e21"
@@ -199,7 +201,7 @@ def compose_articulation_arrays(wrenches, body_indices, num_bodies):
         count = num_bodies[side]
         if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
             raise ValueError(f"{side} body count must be positive")
-        names = (f"{side}_thumb", f"{side}_index")
+        names = (f"{side}_thumb", f"{side}_index", f"{side}_middle")
         indices = body_indices[side]
         if not isinstance(indices, Mapping) or set(indices) != set(names):
             raise ValueError(f"{side} body indices must identify both pads")
@@ -333,7 +335,7 @@ class ContactReactionBridge:
             raise ValueError("force gate exceeded before sink submission")
         payload = {}
         for side in ("left", "right"):
-            names = (f"{side}_thumb", f"{side}_index")
+            names = (f"{side}_thumb", f"{side}_index", f"{side}_middle")
             payload[side] = tuple(np.stack([getattr(wrenches[name], field) for name in names])
                                   for field in ("force_w", "torque_com_w", "position_w"))
         try:

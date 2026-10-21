@@ -42,7 +42,7 @@ parser.add_argument('--restore-state',type=Path,help='Pinned qualified stage ini
 parser.add_argument('--restore-state-sha256')
 parser.add_argument('--save-stage-states',action='store_true',help='Publish exclusive states at measured qualified transitions')
 parser.add_argument('--coordinated-closure',action='store_true',help='Compensate pad tangent velocity with arm motion while holding palm orientation')
-parser.add_argument('--closure-loads',type=float,nargs=4,help='Explicit synthetic normal-force targets: left thumb/index, right thumb/index')
+parser.add_argument('--closure-loads',type=float,nargs=6,help='Explicit simulation normal-force targets: left thumb/index/middle, right thumb/index/middle')
 parser.add_argument('--gravity-hold',action='store_true',help='Hold initial pose under gravity with current-model feedforward')
 parser.add_argument('--arm-effort-limit',type=float,default=5.,help='Explicit synthetic simulation limit, not hardware specification')
 parser.add_argument('--hand-effort-limit',type=float,default=.1,help='Explicit synthetic simulation limit, not DH116 hardware capability')

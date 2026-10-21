@@ -20,7 +20,10 @@ from .moving_contact_models import (
 from .table_rod import TableRodEngine
 
 
-CHANNELS = ("left_thumb", "left_index", "right_thumb", "right_index")
+CHANNELS = (
+    "left_thumb", "left_index", "left_middle",
+    "right_thumb", "right_index", "right_middle",
+)
 
 
 @dataclass(frozen=True)
@@ -81,7 +84,7 @@ class _BaselineSampler(ea.NoForces):
 
 
 class MovingContactRodEngine(TableRodEngine):
-    """A free table rod coupled to four externally prescribed pad meshes."""
+    """A free table rod coupled to six externally prescribed DH116 pad meshes."""
 
     def __init__(self, config, *, table_center, table_size, meshes, **contact_parameters):
         prepared = self._prepare_assets(meshes)

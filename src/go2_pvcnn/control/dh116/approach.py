@@ -13,7 +13,7 @@ def _states(value):
     return q
 
 
-def approach_target(start,end,time_s,*,settle_s=.5,duration_s=3.):
+def approach_target(start,end,time_s,*,settle_s=.5,duration_s=1.2):
     a,b=_states(start),_states(end)
     if not np.isfinite([time_s,settle_s,duration_s]).all() or min(time_s,settle_s)<0 or duration_s<=0:
         raise ValueError('invalid approach time')
