@@ -8,4 +8,5 @@
 - [x] Task 3 (new objective) — explicit Torch-CUDA Cosserat approximation with fail-fast device selection; backend tests: 2 passed. PyElastica CPU path remains unchanged.
 - [ ] Task 4 (new objective) — Isaac hand-only physical grasp/lift validation and full GPU Cosserat parity/benchmark; not yet run.
 - Isaac hand-only wire probe is now present, but its first 12-action headless run failed numerical-stability gates (large contact impulses); no grasp/lift claim.
+- Student checkpoint is directly executable from Isaac joint feedback. A full 24-action/2400-step trajectory at a non-penetrating wire height remained finite but produced zero contact and zero lift. Moving the wire into the current finger envelope caused >500 N at the first physics step and the guard stopped. Next: calibrate detached-hand root pose and fingertip-to-wire position before retraining with physical contact/lift feedback.
 - Note: teacher/gpu implementer subagents hit model-capacity errors; Task 2/3 were implemented inline after the failure. No approach run was resumed.

@@ -7,6 +7,7 @@
 - 新增 `TorchCudaCosseratRod` 显式 CUDA 后端；CPU PyElastica 路径保持不变，CUDA 不可用时拒绝启动，不做隐式 CPU fallback。该实现标记为仿真近似，未替代实机参数。
 - 验证：hand-only MPC 9 passed，GPU backend 2 passed，短回放 smoke 通过；尚未完成 Isaac 抓取/lift 物理验收。
 - 新增 IsaacLab hand-only wire 接入探针；双手和回放动作可加载并推进 PhysX，但首轮姿态/碰撞稳定性验证失败（接触冲量异常大），因此未标记 grasp/lift 成功。
+- 验证器可直接运行 student checkpoint，并对 Isaac 关节状态/接触冲量做早停；24 动作/2400 步稳定运行无 wire 接触，调低 wire 后首步冲量超过 500 N。接触位置仍需标定，尚无抓取/lift 成功证据。
 
 ## 2026-10-20 — 性能优化 Task 1：阶段计时与运行身份
 
