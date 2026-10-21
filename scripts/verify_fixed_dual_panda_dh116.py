@@ -273,9 +273,10 @@ try:
                     orient_normals_toward_wire, wire_approach_normals)
                 from go2_pvcnn.control.dh116.contact_frames import point_jacobian
                 from go2_pvcnn.control.dh116.loaded_contact import normal_contact_sample
-                if point_refs.get('schema')!='dh116-grasp-references-v1':raise ValueError('pilot requires selected grasp references')
+                if point_refs.get('schema') not in ('dh116-grasp-references-v1','dh116-grasp-references-v2-middle-hook'):
+                    raise ValueError('pilot requires selected grasp references')
                 selected_refs={r['side']+'_'+r['digit']:r for r in point_refs['references']}
-                if tuple(selected_refs)!=tuple(BODY_NAMES):raise ValueError('pilot requires exactly four ordered grasp references')
+                if tuple(selected_refs)!=tuple(BODY_NAMES):raise ValueError('pilot requires exactly six ordered grasp references')
                 pad_guards={}
                 for c,r in contact_records.items():
                     mesh_data=o3d.io.read_triangle_mesh(str(r['resolved_path']))
@@ -397,7 +398,7 @@ try:
             for s,r in restore_payload['robot'].items():
                 closure_targets[s]=np.array([r['target'][r['joint_names'].index(n)] for n in ACTIVE])
                 closure_arm_targets[s]=np.array([r['target'][r['joint_names'].index(f'{s}_panda_joint{i}')] for i in range(1,8)])
-        previous_loads=np.zeros(4)
+        previous_loads=np.zeros(6)
         from go2_pvcnn.control.dh116.material_tracking import material_in_palm
         fixed_material_ids=[]
         initial_nodes=engine.snapshot()['rod_position'].T
@@ -436,7 +437,7 @@ try:
                 if args.disable_contact_reaction:return
                 arm=arms[side]
                 buffer=self.buffers[side].clear_()
-                for i,digit in enumerate(('thumb','index')):
+                for i,digit in enumerate(('thumb','index','middle')):
                     bi=body_indices[f'{side}_{digit}']
                     buffer.force[0,bi].copy_(torch.as_tensor(force[i],device=args.device,dtype=torch.float32))
                     buffer.torque[0,bi].copy_(torch.as_tensor(torque[i],device=args.device,dtype=torch.float32))
@@ -534,7 +535,7 @@ try:
                 for side,arm in arms.items():
                     raw=arm.root_physx_view.get_jacobians()[0].cpu().numpy()
                     Js=[];ns=[]
-                    for digit in ('thumb','index'):
+                    for digit in ('thumb','index','middle'):
                         ref=selected_refs[side+'_'+digit];bi=arm.body_names.index(ref['body_name'])
                         pose=arm.data.body_link_pose_w[0,bi].cpu().numpy();R=normalized_wxyz_to_rotation(pose[3:7])
                         point=pose[:3]+R@np.array(ref['point'])
@@ -551,8 +552,8 @@ try:
                 # One common scaling before either hand's target is published.
                 touch_command=grasp_sequence.touch_output if grasp_sequence.stage=='close' else None
                 increments,allocation_report=coordinated_bimanual_increment(control_J,control_n,control_W,
-                    previous_loads.reshape(2,2),dt,
-                    target_loads_n=(np.asarray(args.closure_loads).reshape(2,2) if touch_command is None
+                    previous_loads.reshape(2,3),dt,
+                    target_loads_n=(np.asarray(args.closure_loads).reshape(2,3) if touch_command is None
                                     else touch_command['target_loads_n']),
                     normal_speeds_m_s=None if touch_command is None else touch_command['normal_speeds_m_s'],
                     normal_speed_limit_m_s=.002 if speed_profile is None else speed_profile.far_m_s,
@@ -578,14 +579,14 @@ try:
             if args.closure_pilot:
                 normal_rows=[];point_rows_control=[];normals=[]
                 raw=arm.root_physx_view.get_jacobians()[0].cpu().numpy()
-                for digit in ('thumb','index'):
+                for digit in ('thumb','index','middle'):
                     c=side+'_'+digit;ref=selected_refs[c];bi=arm.body_names.index(ref['body_name'])
                     pose=arm.data.body_link_pose_w[0,bi].cpu().numpy();R=normalized_wxyz_to_rotation(pose[3:7])
                     point=pose[:3]+R@np.array(ref['point']);normal=R@np.array(ref['normal'])
                     J=point_jacobian(raw[bi-1],point-arm.data.body_com_pos_w[0,bi].cpu().numpy(),arm.joint_names,side)
                     normal_rows.append(normal@J[:,7:10])
                     point_rows_control.append(J[:,:10]);normals.append(normal)
-                i=0 if side=='left' else 2
+                i=0 if side=='left' else 3
                 if t>.1:
                     if args.coordinated_closure:
                         pi=arm.body_names.index('base_link')
@@ -665,7 +666,7 @@ try:
                     closest_sample=0,gap_m=1.,separation_speed_m_s=0.,
                     contact_duration_s=0.,noise_floor_n=.005,
                     separation_tolerance_m_s=.001) for c in BODY_NAMES}
-                previous_loads=np.zeros(4)
+                previous_loads=np.zeros(6)
                 record['contact']=dict(normal_samples=samples,
                     max_wire_speed_m_s=float(np.linalg.norm(snapshot['rod_velocity'],axis=0).max()),
                     max_pad_penetration_m=0.,reaction_published=False,
@@ -673,6 +674,8 @@ try:
                     peak_force_n={c:0. for c in BODY_NAMES},
                     force_w={c:[0.,0.,0.] for c in BODY_NAMES},
                     torque_com_w={c:[0.,0.,0.] for c in BODY_NAMES})
+                record.update(middle_hook_load_n=0., middle_hook_valid=False,
+                    middle_hook_direction_w=[0.,0.,1.], middle_hook_contact_duration_s=0.)
                 record['rod_state']={k:np.asarray(snapshot[k]).tolist() for k in
                     ('rod_position','rod_velocity','rod_director','rod_omega')}
                 if initial_actives is not None:
@@ -727,6 +730,11 @@ try:
                     max_speed=float(np.linalg.norm(snapshot['rod_velocity'],axis=0).max())
                     if max_speed>2:failures.append('wire speed gate')
                     contact_metrics_before=dict(normal_samples=samples,max_wire_speed_m_s=max_speed)
+                    middle = [samples[f'{side}_middle'] for side in ('left','right')]
+                    record.update(middle_hook_load_n=float(max(x['normal_load_n'] for x in middle)),
+                        middle_hook_valid=bool(all(x['valid'] for x in middle)),
+                        middle_hook_direction_w=[0.,0.,1.],
+                        middle_hook_contact_duration_s=float(min(x['contact_duration_s'] for x in middle)))
                     if not closure_active:
                         no_contact_failures,no_contact_metrics=prepublish_contact_gates(snapshot,engine.mesh_bodies,motions,
                             impulses=impulses,mode='no-contact',selected_channel=None,max_speed_m_s=2.,
@@ -889,7 +897,7 @@ try:
                     normal_errors.append(float(np.arccos(np.clip(normal@goal_normal,-1.,1.))))
                     actual_normals.append(normal)
                 nodes=np.asarray(snapshot['rod_position']).T
-                station_heights=[float(np.mean(nodes[np.asarray(fixed_material_ids[i:i+2]),2])) for i in (0,2)]
+                station_heights=[float(np.mean(nodes[np.asarray(fixed_material_ids[i:i+3]),2])) for i in (0,3)]
                 radius=np.asarray(engine.rod.radius)
                 node_radii=np.r_[radius[0],np.maximum(radius[:-1],radius[1:]),radius[-1]]
                 surface_clearance=float(np.min(nodes[:,2]-node_radii)-(TABLE_CENTER[2]+TABLE_SIZE[2]/2))

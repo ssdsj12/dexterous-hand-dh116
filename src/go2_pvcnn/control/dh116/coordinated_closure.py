@@ -21,7 +21,8 @@ def orient_normals_toward_wire(points, normals, rod_position):
     p = np.asarray(points, dtype=float)
     n = np.asarray(normals, dtype=float)
     rod = np.asarray(rod_position, dtype=float)
-    if (p.shape != (4, 3) or n.shape != (4, 3) or rod.ndim != 2
+    if (p.ndim != 2 or p.shape[1] != 3 or p.shape[0] not in (4, 6)
+            or n.shape != p.shape or rod.ndim != 2
             or rod.shape[0] != 3 or rod.shape[1] < 2
             or any(not np.isfinite(x).all() for x in (p, n, rod))):
         raise ValueError('invalid wire-normal orientation evidence')
@@ -39,7 +40,8 @@ def wire_approach_normals(points, rod_position):
     """Return measured pad-to-wire directions for active closure."""
     p = np.asarray(points, dtype=float)
     rod = np.asarray(rod_position, dtype=float)
-    if (p.shape != (4, 3) or rod.ndim != 2 or rod.shape[0] != 3
+    if (p.ndim != 2 or p.shape[1] != 3 or p.shape[0] not in (4, 6)
+            or rod.ndim != 2 or rod.shape[0] != 3
             or rod.shape[1] < 2
             or any(not np.isfinite(x).all() for x in (p, rod))):
         raise ValueError('invalid wire approach direction evidence')
@@ -67,8 +69,8 @@ def _velocity_candidate(point_jacobians,normals,palm_angular_jacobian,
     if (transport.shape!=(3,) or not np.isfinite(transport).all()
             or np.linalg.norm(transport)>.01+1e-12):
         raise ValueError('invalid coordinated transport velocity')
-    if (J.shape!=(2,3,10) or n.shape!=(2,3) or W.shape!=(3,10)
-            or load.shape!=(2,) or target.shape!=(2,)
+    if (J.ndim != 3 or J.shape[1:]!=(3,10) or n.shape!=(J.shape[0],3) or W.shape!=(3,10)
+            or load.shape!=(J.shape[0],) or target.shape!=(J.shape[0],)
             or any(not np.isfinite(a).all() for a in (J,n,W,load,target))
             or not np.isfinite(dt) or not 0<dt<=1e-4
             or np.any(load<0) or np.any(target<=0)
@@ -77,19 +79,19 @@ def _velocity_candidate(point_jacobians,normals,palm_angular_jacobian,
         raise ValueError('invalid coordinated closure evidence')
     if active_mask is not None:
         active=np.asarray(active_mask)
-        if active.shape!=(2,) or active.dtype.kind!='b':
+        if active.shape!=(J.shape[0],) or active.dtype.kind!='b':
             raise ValueError('invalid active pad mask')
     else:
-        active=np.ones(2,dtype=bool)
+        active=np.ones(J.shape[0],dtype=bool)
     error=target-load
     speed=np.clip(.01*error,-force_speed_limit_m_s,force_speed_limit_m_s)
     speed[np.abs(error)<=.03]=0.
     if normal_speeds_m_s is not None:
         speed=np.asarray(normal_speeds_m_s,dtype=float)
-        if speed.shape!=(2,) or not np.isfinite(speed).all() or np.any(np.abs(speed)>normal_speed_limit_m_s):
+        if speed.shape!=(J.shape[0],) or not np.isfinite(speed).all() or np.any(np.abs(speed)>normal_speed_limit_m_s):
             raise ValueError('invalid explicit pad normal speed')
     rows=[];rhs=[]
-    for i in range(2):
+    for i in range(J.shape[0]):
         if active[i]:
             rows.extend(J[i])
             rhs.extend(n[i]*speed[i]+transport)
@@ -126,8 +128,9 @@ def coordinated_bimanual_increment(point_jacobians,normals,palm_angular_jacobian
     J=np.asarray(point_jacobians,dtype=float);n=np.asarray(normals,dtype=float)
     W=np.asarray(palm_angular_jacobians,dtype=float)
     loads=np.asarray(loads_n,dtype=float);targets=np.asarray(target_loads_n,dtype=float)
-    if (J.shape!=(2,2,3,10) or n.shape!=(2,2,3) or W.shape!=(2,3,10)
-            or loads.shape!=(2,2) or targets.shape!=(2,2)):
+    if (J.ndim != 4 or J.shape[0] != 2 or J.shape[2:]!=(3,10)
+            or J.shape[1] not in (2,3) or n.shape!=(2,J.shape[1],3) or W.shape!=(2,3,10)
+            or loads.shape!=(2,J.shape[1]) or targets.shape!=(2,J.shape[1])):
         raise ValueError('invalid bimanual closure evidence shape')
     transport=np.asarray(transport_velocity_w,dtype=float)
     if transport.shape==(3,):transport=np.broadcast_to(transport,(2,3))
@@ -135,11 +138,11 @@ def coordinated_bimanual_increment(point_jacobians,normals,palm_angular_jacobian
             or np.any(np.linalg.norm(transport,axis=1)>.01+1e-12)):
         raise ValueError('invalid bimanual transport velocity')
     speeds=None if normal_speeds_m_s is None else np.asarray(normal_speeds_m_s,dtype=float)
-    if speeds is not None and (speeds.shape!=(2,2) or not np.isfinite(speeds).all()
+    if speeds is not None and (speeds.shape!=(2,J.shape[1]) or not np.isfinite(speeds).all()
                                or np.any(np.abs(speeds)>normal_speed_limit_m_s)):
         raise ValueError('invalid bimanual explicit pad speeds')
     active=None if active_pad_mask is None else np.asarray(active_pad_mask)
-    if active is not None and (active.shape!=(2,2) or active.dtype.kind!='b'):
+    if active is not None and (active.shape!=(2,J.shape[1]) or active.dtype.kind!='b'):
         raise ValueError('invalid bimanual active pad mask')
     velocity=np.array([_velocity_candidate(J[i],n[i],W[i],loads[i],dt,
         target_loads_n=targets[i],transport_velocity_w=transport[i],

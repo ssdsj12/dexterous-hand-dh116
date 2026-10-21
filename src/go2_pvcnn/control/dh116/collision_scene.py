@@ -47,7 +47,7 @@ class SourceCollisionScene:
                 self.geometry[path]=dict(vertices=p[h.vertices],planes=h.equations,side=side,
                     source_mesh_path=m['mesh_path'],geometry_sha256=m['geometry_sha256'],
                     motion_radii=point_rotation_radii(model.edges,path,p[h.vertices],model.names))
-                if body in ('finger14_link','finger23_link'):self.pad_bodies.add(path)
+                if body in ('finger14_link','finger23_link','finger33_link'):self.pad_bodies.add(path)
         # Same rigid cluster and directly joint-connected clusters are adjacent.
         groups={p:{p} for model in self.models.values() for p in model.bodies.values()}
         for e in edges:
