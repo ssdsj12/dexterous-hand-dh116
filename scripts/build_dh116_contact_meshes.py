@@ -28,7 +28,7 @@ def build(references,output):
         physics_contact_qualified=False,hardware_calibrated=False,meshes={})
     prepared={}
     for side in ('left','right'):
-        for digit in ('thumb','index'):
+        for digit in ('thumb','index','middle'):
             choices=[r for r in refs['references'] if r['side']==side and r['digit']==digit]
             if len(choices)!=1:raise ValueError('ambiguous reference')
             ref=choices[0];surface=read_surface(stage,ref['body_path'])

@@ -1,0 +1,185 @@
+{
+  "schema": "dh116-contact-hulls-v1",
+  "reference_sha256": "410b1e3a065400bb9ac8420e7aa1d46a451fa1d43fadceb003fa1c5fa84cac39",
+  "asset_sha256": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0",
+  "layers": {
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/1202d37e93d1_left_panda.usd": "e0d800960987bd3f8c283849a621ee22695eeed0a7fe590a9d9ccb9189cef5b2",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/3046ad2ed855_DH116_right.usd": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/9ad2c00e990b_right_panda.usd": "2362fd5eec61d5ca69f156e0aff5f45c65a7473014cb95c19fa81d87ed9590f0",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/fixed_dual_panda_dh116.usd": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0"
+  },
+  "approximation": "source convex hull quantized at 100 nm, not PhysX cooked hull",
+  "physics_contact_qualified": false,
+  "hardware_calibrated": false,
+  "meshes": {
+    "left_thumb": {
+      "path": "left_thumb.ply",
+      "sha256": "2174433486403d21866fa3d41e734a411d81659f907b3f0d2d8b859c0986a215",
+      "body_name": "finger14_link",
+      "body_path": "/FixedDualPandaDH116/left_arm/dh116/finger14_link",
+      "source_mesh_path": "/FixedDualPandaDH116/left_arm/dh116/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh",
+      "geometry_sha256": "a03d5f3b7a9e222f7d9588312302484b10476b7eeb8b7309a6086f53020eab54",
+      "body_local_mesh_com_m": [
+        4.064023555052646e-08,
+        -0.0060376821854326,
+        -0.023447228330493047
+      ],
+      "reference_point_body": [
+        5.355177261978138e-26,
+        -0.012953830518600789,
+        -0.02622765996493399
+      ],
+      "reference_normal_body": [
+        0.04175973296830427,
+        -0.991899677084423,
+        -0.11996314143199661
+      ],
+      "reference_surface_gap_m": -1.7216634715100376e-09,
+      "quantization_m": 1e-07,
+      "convex_hull_displacement_bound_m": 8.047557500750652e-08,
+      "vertices": 658,
+      "faces": 1312
+    },
+    "left_index": {
+      "path": "left_index.ply",
+      "sha256": "cf507643df43a40e5c70146b1f5761936fd9f9bc00b685102cf760bc6632ab1b",
+      "body_name": "finger23_link",
+      "body_path": "/FixedDualPandaDH116/left_arm/dh116/finger23_link",
+      "source_mesh_path": "/FixedDualPandaDH116/left_arm/dh116/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh",
+      "geometry_sha256": "01f89ea63c7b9246ed18684cb165e5d21074f993663494933a30515c359257de",
+      "body_local_mesh_com_m": [
+        -5.783263851071164e-06,
+        -0.006962483874904104,
+        0.025389553121030486
+      ],
+      "reference_point_body": [
+        1.5647235321408406e-19,
+        -0.016143391493985217,
+        0.03548186063766469
+      ],
+      "reference_normal_body": [
+        -0.0766032875295287,
+        -0.9460747243057431,
+        -0.31476110364764004
+      ],
+      "reference_surface_gap_m": 6.160343416238001e-06,
+      "quantization_m": 1e-07,
+      "convex_hull_displacement_bound_m": 8.160443334989973e-08,
+      "vertices": 561,
+      "faces": 1118
+    },
+    "left_middle": {
+      "path": "left_middle.ply",
+      "sha256": "9a4fda9718c2d931c6d9bcf3ee7c78948069dd5f38415d5f7463a5bca58694b7",
+      "body_name": "finger33_link",
+      "body_path": "/FixedDualPandaDH116/left_arm/dh116/finger33_link",
+      "source_mesh_path": "/FixedDualPandaDH116/left_arm/dh116/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh",
+      "geometry_sha256": "7e5c6f3e54a89758db45be8132d8dde9478e5051f9975da9ddbd4aa8147435c0",
+      "body_local_mesh_com_m": [
+        -5.810939025433988e-06,
+        -0.007746686701126815,
+        0.03242861637351553
+      ],
+      "reference_point_body": [
+        1.0049485116566357e-20,
+        -0.01692690644581529,
+        0.0425212325155735
+      ],
+      "reference_normal_body": [
+        -0.07660194334653116,
+        -0.9460939231485563,
+        -0.3147037191659932
+      ],
+      "reference_surface_gap_m": 6.173241048429423e-06,
+      "quantization_m": 1e-07,
+      "convex_hull_displacement_bound_m": 8.16679291509441e-08,
+      "vertices": 561,
+      "faces": 1118
+    },
+    "right_thumb": {
+      "path": "right_thumb.ply",
+      "sha256": "15e04416a5d934d1ea57b83ac0f0002ede9bf3da47404151b1fd9937e152bb4f",
+      "body_name": "finger14_link",
+      "body_path": "/FixedDualPandaDH116/right_arm/dh116/finger14_link",
+      "source_mesh_path": "/FixedDualPandaDH116/right_arm/dh116/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh",
+      "geometry_sha256": "6e8d14f405a375eb229e0caa2a41bd3de5b1ac365ea18fea1bdf3a51674540d9",
+      "body_local_mesh_com_m": [
+        -5.920378314055538e-08,
+        0.022162123542077677,
+        -0.00975022675497739
+      ],
+      "reference_point_body": [
+        -2.0857100696333817e-25,
+        0.025719524174928662,
+        -0.01702048784765676
+      ],
+      "reference_normal_body": [
+        -0.040615902754452954,
+        0.02592727115742388,
+        -0.9988383878554979
+      ],
+      "reference_surface_gap_m": 6.572694766920906e-09,
+      "quantization_m": 1e-07,
+      "convex_hull_displacement_bound_m": 8.052138374041527e-08,
+      "vertices": 657,
+      "faces": 1310
+    },
+    "right_index": {
+      "path": "right_index.ply",
+      "sha256": "017726a72d057334dbe2734cefcc431e8a164c207cd20c83e082c4530fb5e007",
+      "body_name": "finger23_link",
+      "body_path": "/FixedDualPandaDH116/right_arm/dh116/finger23_link",
+      "source_mesh_path": "/FixedDualPandaDH116/right_arm/dh116/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh",
+      "geometry_sha256": "2936694ef7389cd9c38a71acc0a6014ecf7e3ffc1bdecdccae6a68c878cd93a1",
+      "body_local_mesh_com_m": [
+        -5.269527745315097e-06,
+        -0.006962477387057641,
+        0.02538954813252723
+      ],
+      "reference_point_body": [
+        -2.5315985569578688e-20,
+        -0.016143293894251006,
+        0.03548186063766469
+      ],
+      "reference_normal_body": [
+        -0.07653215058059468,
+        -0.9460805204103231,
+        -0.3147609868259429
+      ],
+      "reference_surface_gap_m": 6.16521475214557e-06,
+      "quantization_m": 1e-07,
+      "convex_hull_displacement_bound_m": 8.359079644659022e-08,
+      "vertices": 561,
+      "faces": 1118
+    },
+    "right_middle": {
+      "path": "right_middle.ply",
+      "sha256": "ecbb205fa72645836465627bc23684cbbbf502186f77f2a3b43a566378541bbd",
+      "body_name": "finger33_link",
+      "body_path": "/FixedDualPandaDH116/right_arm/dh116/finger33_link",
+      "source_mesh_path": "/FixedDualPandaDH116/right_arm/dh116/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh",
+      "geometry_sha256": "c4d6ef984be5c63bf0eabfff99d32eb59a20c80d30bab35edeb9293471a1dc87",
+      "body_local_mesh_com_m": [
+        -5.2341286887946925e-06,
+        -0.0077466886940782105,
+        0.0324286127850312
+      ],
+      "reference_point_body": [
+        -8.896479999433252e-20,
+        -0.016926805374561045,
+        0.0425212325155735
+      ],
+      "reference_normal_body": [
+        -0.0765332508653485,
+        -0.9460991127050861,
+        -0.3147048306757152
+      ],
+      "reference_surface_gap_m": 6.17952235896016e-06,
+      "quantization_m": 1e-07,
+      "convex_hull_displacement_bound_m": 8.323609587089445e-08,
+      "vertices": 561,
+      "faces": 1118
+    }
+  }
+}
