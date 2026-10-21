@@ -12,7 +12,7 @@ class RestoreGate:
             raise ValueError('unsupported restore entry stage')
         loads = np.asarray(minimum_loads_n, dtype=float)
         anchors = np.asarray(saved_anchors_local, dtype=float)
-        if (loads.shape != (4,) or anchors.shape != (4, 3)
+        if (loads.shape != (6,) or anchors.shape != (6, 3)
                 or not np.isfinite(loads).all() or not np.isfinite(anchors).all()
                 or np.any(loads < .005) or np.any(loads > 3.)):
             raise ValueError('invalid saved restore thresholds or anchors')
@@ -32,8 +32,8 @@ class RestoreGate:
         if (type(time_s) not in (int, float) or not np.isfinite(time_s)
                 or time_s < 0 or any(type(x) is not bool for x in (safety_ok, settled, approach_ok))
                 or not isinstance(active_constraints, (list, tuple))
-                or loads.shape != (4,) or valid.shape != (4,) or valid.dtype.kind != 'b'
-                or normal.shape != (4, 3) or anchors.shape != (4, 3)
+                or loads.shape != (6,) or valid.shape != (6,) or valid.dtype.kind != 'b'
+                or normal.shape != (6, 3) or anchors.shape != (6, 3)
                 or not all(np.isfinite(x).all() for x in (loads, normal, anchors))
                 or np.any(loads < 0)
                 or not np.allclose(np.linalg.norm(normal, axis=1), 1., atol=1e-6, rtol=0)):
@@ -56,7 +56,8 @@ class RestoreGate:
         else:
             qualified = bool(valid.all() and np.all(loads >= self.minimum_loads)
                              and normal[0] @ normal[1] <= -.5
-                             and normal[2] @ normal[3] <= -.5)
+                             and normal[3] @ normal[4] <= -.5
+                             and np.all(normal[[2, 5], 2] >= .5))
         if self.reason is not None or not qualified:
             self.valid_since = None
         elif self.valid_since is None:

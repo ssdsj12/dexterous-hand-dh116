@@ -47,8 +47,8 @@ class StageResetSequence(TabletopGraspSequence):
     def update(self,time_s,**m):
         if self.speed_profile is not None:
             gaps=np.asarray(m.get('surface_gaps_m'),dtype=float)
-            if gaps.shape!=(4,) or not np.isfinite(gaps).all():
-                raise ValueError('finite measured four-channel surface gaps required during restore')
+            if gaps.shape!=(6,) or not np.isfinite(gaps).all():
+                raise ValueError('finite measured six-channel surface gaps required during restore')
         if self.stage!='restore_validate':return super().update(time_s,**m)
         speed_ok=True
         if self.state_triggered:
@@ -56,8 +56,8 @@ class StageResetSequence(TabletopGraspSequence):
             if speeds.shape!=(2,18) or not np.isfinite(speeds).all():
                 raise ValueError('actual joint speeds required during restore')
             speed_ok=bool(np.all(np.abs(speeds)<=.02))
-        for key,shape in (('station_heights_m',(2,)),('approach_position_errors_m',(4,)),
-                          ('approach_normal_errors_rad',(4,))):
+        for key,shape in (('station_heights_m',(2,)),('approach_position_errors_m',(6,)),
+                          ('approach_normal_errors_rad',(6,))):
             value=np.asarray(m[key],dtype=float)
             if value.shape!=shape or not np.isfinite(value).all():raise ValueError('invalid restore measurement')
             if key!='station_heights_m' and np.any(value<0):raise ValueError('negative approach error')

@@ -5,8 +5,14 @@ from pathlib import Path
 import numpy as np
 from go2_pvcnn.control.fixed_dual_panda_o6.contact_bridge import BodyState
 
-BODY_NAMES={f'{side}_{digit}':body for side in ('left','right')
-            for digit,body in (('thumb','finger14_link'),('index','finger23_link'))}
+BODY_NAMES = {
+    'left_thumb': 'finger14_link',
+    'left_index': 'finger23_link',
+    'left_middle': 'finger33_link',
+    'right_thumb': 'finger14_link',
+    'right_index': 'finger23_link',
+    'right_middle': 'finger33_link',
+}
 
 
 def probe_rod_start(point,normal,direction,overlap_m=.0001):

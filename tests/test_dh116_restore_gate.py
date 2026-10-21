@@ -5,15 +5,15 @@ import pytest
 
 def gate(stage='lift'):
     module = importlib.import_module('go2_pvcnn.control.dh116.restore_gate')
-    return module.RestoreGate(stage, minimum_loads_n=[.8]*4,
-                              saved_anchors_local=np.zeros((4, 3)))
+    return module.RestoreGate(stage, minimum_loads_n=[.8]*6,
+                              saved_anchors_local=np.zeros((6, 3)))
 
 
 def sample(**changes):
     result = dict(safety_ok=True, active_constraints=[], settled=True,
-                  approach_ok=True, loads_n=[1.]*4, valid_contacts=[True]*4,
-                  normals=[[1,0,0],[-1,0,0],[1,0,0],[-1,0,0]],
-                  anchors_local=np.zeros((4,3)))
+                  approach_ok=True, loads_n=[1.]*6, valid_contacts=[True]*6,
+                  normals=[[1,0,0],[-1,0,0],[0,0,1],[-1,0,0],[1,0,0],[0,0,1]],
+                  anchors_local=np.zeros((6,3)))
     result.update(changes)
     return result
 
@@ -31,7 +31,7 @@ def test_new_continuous_time_required(stage):
 
 @pytest.mark.parametrize('changes', [dict(safety_ok=False),
     dict(active_constraints=['endpoint_binding']),
-    dict(anchors_local=np.full((4,3), .002))])
+    dict(anchors_local=np.full((6,3), .002))])
 def test_safety_failure_latches(changes):
     g = gate()
     assert g.update(0., **sample(**changes))['aborted']
@@ -44,14 +44,14 @@ def test_preload_loss_restarts_fresh_hold_timer():
     g = gate()
     for i in range(90):
         g.update(i*.01, **sample())
-    assert not g.update(.90, **sample(loads_n=[.79]*4))['ready']
+    assert not g.update(.90, **sample(loads_n=[.79]*6))['ready']
     for i in range(91,191):
         assert not g.update(i*.01, **sample())['ready']
     assert g.update(1.91, **sample())['ready']
 
 
-@pytest.mark.parametrize('changes', [dict(valid_contacts=[False]*4),
-    dict(normals=[[1,0,0]]*4),dict(approach_ok=False)])
+@pytest.mark.parametrize('changes', [dict(valid_contacts=[False]*6),
+    dict(normals=[[1,0,0]]*6),dict(approach_ok=False)])
 def test_missing_required_evidence_blocks_release(changes):
     g = gate('close' if 'approach_ok' in changes else 'lift')
     for i in range(105):
@@ -70,7 +70,7 @@ def test_missing_interval_and_nan_rejected():
     with pytest.raises(ValueError):
         g.update(.02, **sample())
     with pytest.raises(ValueError):
-        g.update(.01, **sample(loads_n=[float('nan')]*4))
+        g.update(.01, **sample(loads_n=[float('nan')]*6))
 
 
 @pytest.mark.parametrize('stage', ['finish', 'lower', 'settle'])

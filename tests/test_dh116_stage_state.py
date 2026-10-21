@@ -24,8 +24,8 @@ def state():
                     rod_omega=np.zeros((3,40)).tolist()),
                     reference={'rest_lengths':[.0125]*40, 'rest_voronoi_lengths':[.0125]*39,
                                'rest_sigma':np.zeros((3,40)).tolist(),'rest_kappa':np.zeros((3,39)).tolist()}),
-                material_ids=[36,36,4,4], anchors_local=np.zeros((4,3)).tolist(),
-                settled_heights_m=[.308,.308], target_loads_n=[1.]*4)
+                material_ids=[36,36,36,4,4,4], anchors_local=np.zeros((6,3)).tolist(),
+                settled_heights_m=[.308,.308], target_loads_n=[1.]*6)
 
 
 def test_roundtrip_and_external_digest(tmp_path):
@@ -47,7 +47,7 @@ def test_roundtrip_and_external_digest(tmp_path):
     lambda s:s['rod']['reference'].pop('rest_sigma'),
     lambda s:s['rod'].pop('model_sha256'),
     lambda s:s['rod']['dynamic']['rod_director'][0][0].__setitem__(0,2.),
-    lambda s:s.update(material_ids=[4,4,4,4]),
+    lambda s:s.update(material_ids=[4,4,4,4,4,4]),
     lambda s:s['pins'].update(asset='missing'),
 ])
 def test_invalid_payload_rejected_before_writing(tmp_path,mutation):

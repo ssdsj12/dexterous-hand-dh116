@@ -62,10 +62,10 @@ def validate_state(payload, expected_pins):
     if not np.allclose(frames@frames.transpose(0,2,1),np.eye(3),atol=1e-6,rtol=0) or np.any(np.linalg.det(frames)<=0):
         raise ValueError('invalid material frame')
     ids=p['material_ids']
-    if len(ids)!=4 or any(type(i)is not int or not 0<=i<=40 for i in ids) or set(ids[:2])&set(ids[2:]):
-        raise ValueError('invalid fixed material regions')
-    array(p['anchors_local'],(4,3));array(p['settled_heights_m'],(2,))
-    loads=array(p['target_loads_n'],(4,))
+    if len(ids)!=6 or any(type(i)is not int or not 0<=i<=40 for i in ids) or set(ids[:3])&set(ids[3:]):
+        raise ValueError('invalid fixed six-channel material regions')
+    array(p['anchors_local'],(6,3));array(p['settled_heights_m'],(2,))
+    loads=array(p['target_loads_n'],(6,))
     if np.any(loads<.005/.9) or np.any(loads>3.):raise ValueError('invalid force targets')
     return p
 

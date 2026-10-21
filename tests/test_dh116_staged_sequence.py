@@ -9,17 +9,17 @@ from go2_pvcnn.control.dh116.coordinated_closure import coordinated_bimanual_inc
 
 
 def test_sequence_passes_measured_gaps_to_staged_touch_without_authorizing_lift():
-    seq = TabletopGraspSequence(material_ids=(36,36,4,4), target_loads_n=[1.]*4,
+    seq = TabletopGraspSequence(material_ids=(36,36,36,4,4,4), target_loads_n=[1.]*6,
         state_triggered=True, speed_profile=GraspSpeedProfile(), symmetric_lift=True)
     for i in range(1, 150):
-        result = seq.update(i*.01, **observation(loads_n=np.zeros(4), valid_contacts=[False]*4),
-            joint_speeds_rad_s=np.zeros((2,18)), surface_gaps_m=[.02,.02,.001,.001])
+        result = seq.update(i*.01, **observation(loads_n=np.zeros(6), valid_contacts=[False]*6),
+            joint_speeds_rad_s=np.zeros((2,18)), surface_gaps_m=[.02,.02,.02,.001,.001,.001])
     assert result['stage'] == 'close' and not result['permit_lift']
-    np.testing.assert_allclose(result['touch_first']['normal_speeds_m_s'], [[.02,0],[.001,0]])
+    np.testing.assert_allclose(result['touch_first']['normal_speeds_m_s'], [[.02,0,0],[.001,0,0]])
 
 
 def test_staged_sequence_requires_gaps_before_advancing_time():
-    seq = TabletopGraspSequence(material_ids=(36,36,4,4), target_loads_n=[1.]*4,
+    seq = TabletopGraspSequence(material_ids=(36,36,36,4,4,4), target_loads_n=[1.]*6,
         state_triggered=True, speed_profile=GraspSpeedProfile())
     with pytest.raises(ValueError, match='gap'):
         seq.update(.01, **observation(), joint_speeds_rad_s=np.zeros((2,18)))
@@ -71,7 +71,7 @@ def test_restore_validates_gaps_before_releasing_staged_control():
     with pytest.raises(ValueError,match='gap'):
         seq.update(0.,**measurement(),joint_speeds_rad_s=np.zeros((2,18)))
     assert seq.last_time is None
-    result=seq.update(0.,**measurement(),joint_speeds_rad_s=np.zeros((2,18)),surface_gaps_m=[.002]*4)
+    result=seq.update(0.,**measurement(),joint_speeds_rad_s=np.zeros((2,18)),surface_gaps_m=[.002]*6)
     assert result['stage']=='restore_validate' and not result['permit_lift']
 
 

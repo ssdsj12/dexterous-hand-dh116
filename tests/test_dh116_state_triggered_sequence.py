@@ -5,11 +5,11 @@ from test_dh116_grasp_sequence import observation
 
 
 def sequence():
-    return TabletopGraspSequence(material_ids=(36,36,4,4),target_loads_n=[.8]*4,state_triggered=True)
+    return TabletopGraspSequence(material_ids=(36,36,36,4,4,4),target_loads_n=[.8]*6,state_triggered=True)
 
 
 def advance(seq,start,end,**changes):
-    data=observation(joint_speeds_rad_s=np.zeros((2,18)),loads_n=[0.]*4,valid_contacts=[False]*4)
+    data=observation(joint_speeds_rad_s=np.zeros((2,18)),loads_n=[0.]*6,valid_contacts=[False]*6)
     data.update(changes)
     for i in range(start,end+1):result=seq.update(i*.01,**data)
     return result

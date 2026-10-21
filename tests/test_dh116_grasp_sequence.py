@@ -3,15 +3,26 @@ import pytest
 from go2_pvcnn.control.dh116.grasp_sequence import TabletopGraspSequence
 
 
-def sequence():return TabletopGraspSequence(material_ids=(36,36,4,4),target_loads_n=[.8]*4)
+def _six(value, *, fill):
+    a=np.asarray(value)
+    if a.shape[0] == 6:return a
+    if a.shape[0] != 4: return a
+    return np.asarray([a[0],a[1],fill,a[2],a[3],fill])
+
+def sequence():return TabletopGraspSequence(material_ids=(36,36,36,4,4,4),target_loads_n=[.8]*6)
 
 
 def observation(**changes):
-    d=dict(settled=True,approach_position_errors_m=np.zeros(4),approach_normal_errors_rad=np.zeros(4),
-        station_heights_m=np.full(2,.308),loads_n=np.ones(4),valid_contacts=[True]*4,
-        normals=np.array([[1.,0,0],[-1.,0,0],[1.,0,0],[-1.,0,0]]),anchors_local=np.zeros((4,3)),
+    d=dict(settled=True,approach_position_errors_m=np.zeros(6),approach_normal_errors_rad=np.zeros(6),
+        station_heights_m=np.full(2,.308),loads_n=np.ones(6),valid_contacts=[True]*6,
+        normals=np.array([[1.,0,0],[-1.,0,0],[0,0,1],[-1.,0,0],[1.,0,0],[0,0,1]]),anchors_local=np.zeros((6,3)),
         min_surface_clearance_m=0.,safety_ok=True,active_constraints=[])
-    d.update(changes);return d
+    d.update(changes)
+    for key,fill in (('approach_position_errors_m',0.),('approach_normal_errors_rad',0.),('loads_n',1.),('valid_contacts',True)):
+        if key in d: d[key]=_six(d[key],fill=fill)
+    if np.asarray(d['normals']).shape==(4,3): d['normals']=np.asarray([d['normals'][0],d['normals'][1],[0,0,1],d['normals'][2],d['normals'][3],[0,0,1]])
+    if np.asarray(d['anchors_local']).shape==(4,3): d['anchors_local']=np.asarray([d['anchors_local'][0],d['anchors_local'][1],[0,0,0],d['anchors_local'][2],d['anchors_local'][3],[0,0,0]])
+    return d
 
 
 def advance(s,start,end,**changes):

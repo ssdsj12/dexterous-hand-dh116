@@ -20,9 +20,9 @@ def validate_continuous_options(args):
     if (args.closure_pilot or args.probe_channel or args.disable_contact_reaction
             or not all(getattr(args,k) for k in required)
             or not np.isfinite(args.physics_dt) or not 0<args.physics_dt<=.0001
-            or args.steps*args.physics_dt<=5.1 or loads.shape!=(4,)
+            or args.steps*args.physics_dt<=5.1 or loads.shape!=(6,)
             or not np.isfinite(loads).all() or np.any(loads<.05) or np.any(loads>3.)):
-        raise ValueError('continuous grasp requires pinned approach, four loads in [.05,3] N, coordinated reaction control, dt<=100us and >5.1s')
+        raise ValueError('continuous grasp requires pinned approach, six loads in [.05,3] N, coordinated reaction control, dt<=100us and >5.1s')
 
 
 class TabletopGraspSequence:
@@ -33,20 +33,22 @@ class TabletopGraspSequence:
             raise ValueError('staged speed requires measured control and lift <=10 mm/s')
         self.speed_profile=speed_profile
         targets=np.asarray(target_loads_n,dtype=float)
-        if (targets.shape!=(4,) or not np.isfinite(targets).all()
+        if (targets.shape!=(6,) or not np.isfinite(targets).all()
                 or np.any(targets<.005/.9) or np.any(targets>3.)):
-            raise ValueError('four finite simulation targets in [.005/.9,3] N required')
+            raise ValueError('six finite simulation targets in [.005/.9,3] N required')
         # Validate IDs/thresholds without granting approach or retaining a gate.
-        if (len(material_ids)!=4 or any(type(i) is not int or not 0<=i<=40 for i in material_ids)
-                or set(material_ids[:2])&set(material_ids[2:])):
-            raise ValueError('fixed channel IDs in separate hand regions required')
+        if (len(material_ids)!=6 or any(type(i) is not int or not 0<=i<=40 for i in material_ids)
+                or set(material_ids[:3])&set(material_ids[3:])):
+            raise ValueError('six fixed channel IDs in separate hand regions required')
         self.material_ids=tuple(material_ids);self.minimum_loads=.9*targets
+        self.pinch_indices=(0,1,3,4)
+        self.support_indices=(2,5)
         self.stage='settle';self.reason=None;self.last_time=None;self.gate=None
         self.approach_deadline=4.
         if type(state_triggered) is not bool:raise ValueError('state_triggered must be bool')
         self.state_triggered=state_triggered
         self.readiness=ApproachReadiness() if state_triggered else None
-        self.touch=TouchFirst(targets.reshape(2,2),speed_profile=speed_profile) if state_triggered else None
+        self.touch=TouchFirst(targets.reshape(2,3),speed_profile=speed_profile) if state_triggered else None
         self.touch_output=None
         self.settled_heights=None;self.last_rise=np.zeros(2);self.lift_started=None;self.last_grasp={}
         if type(symmetric_lift) is not bool:raise ValueError('symmetric_lift must be bool')
@@ -77,15 +79,15 @@ class TabletopGraspSequence:
                min_surface_clearance_m,safety_ok,active_constraints,joint_speeds_rad_s=None,surface_gaps_m=None):
         if self.speed_profile is not None:
             gaps=np.asarray(surface_gaps_m,dtype=float)
-            if gaps.shape!=(4,) or not np.isfinite(gaps).all():
-                raise ValueError('finite measured four-channel surface gaps required')
+            if gaps.shape!=(6,) or not np.isfinite(gaps).all():
+                raise ValueError('finite measured six-channel surface gaps required')
         position=np.asarray(approach_position_errors_m,dtype=float)
         angles=np.asarray(approach_normal_errors_rad,dtype=float)
         heights=np.asarray(station_heights_m,dtype=float);load=np.asarray(loads_n,dtype=float)
         normal=np.asarray(normals,dtype=float);anchors=np.asarray(anchors_local,dtype=float)
         valid=np.asarray(valid_contacts)
-        if (position.shape!=(4,) or angles.shape!=(4,) or heights.shape!=(2,) or load.shape!=(4,)
-                or normal.shape!=(4,3) or anchors.shape!=(4,3) or valid.shape!=(4,)
+        if (position.shape!=(6,) or angles.shape!=(6,) or heights.shape!=(2,) or load.shape!=(6,)
+                or normal.shape!=(6,3) or anchors.shape!=(6,3) or valid.shape!=(6,)
                 or valid.dtype.kind!='b' or type(settled) is not bool or type(safety_ok) is not bool
                 or any(not np.isfinite(x).all() for x in (position,angles,heights,load,normal,anchors))
                 or np.any(position<0) or np.any(angles<0) or np.any(load<0)
@@ -131,11 +133,11 @@ class TabletopGraspSequence:
             previous=self.stage
             gate_valid=valid
             if self.state_triggered and self.stage=='close':
-                self.touch_output=self.touch.update(time_s,load.reshape(2,2),valid.reshape(2,2),
-                    surface_gaps_m=None if self.speed_profile is None else gaps.reshape(2,2))
+                self.touch_output=self.touch.update(time_s,load.reshape(2,3),valid.reshape(2,3),
+                    surface_gaps_m=None if self.speed_profile is None else gaps.reshape(2,3))
                 # Preserve measured contacts in logs; withhold qualification until
                 # touch/opposition and target ramp have actually completed.
-                if not self.touch_output['ready_for_hold']:gate_valid=np.zeros(4,dtype=bool)
+                if not self.touch_output['ready_for_hold']:gate_valid=np.zeros(6,dtype=bool)
             self.last_grasp=self.gate.update(time_s,loads_n=load,valid_contacts=gate_valid,normals=normal,
                 anchors_local=anchors,station_rise_m=self.last_rise,
                 min_surface_clearance_m=min_surface_clearance_m,safety_ok=safety_ok,active_constraints=active_constraints,
@@ -145,7 +147,7 @@ class TabletopGraspSequence:
             if self.symmetric_lift and self.stage=='lift':
                 try:
                     self.synchronization_output=self.transport_coordinator.update(time_s,
-                        rises_m=self.last_rise,contacts_valid=valid.reshape(2,2).all(axis=1),direction=1)
+                        rises_m=self.last_rise,contacts_valid=valid.reshape(2,3).all(axis=1),direction=1)
                 except ValueError as error:
                     self.stage='abort';self.reason=str(error)
                     self.gate.stage='abort';self.gate.reason=self.reason

@@ -1,6 +1,6 @@
 """Measured touch-first sequencing; simulation targets, no attachment authority.
 
-Rows are left/right hands; columns thumb/index. Outputs are desired pad-normal
+Rows are left/right hands; columns thumb/index/middle. Outputs are desired pad-normal
 velocities, not joint commands or evidence that grasping has succeeded.
 """
 import numpy as np
@@ -40,7 +40,7 @@ class ApproachReadiness:
         angles = np.asarray(normal_errors_rad, dtype=float)
         speeds = np.asarray(joint_speeds_rad_s, dtype=float)
         _time_delta(time_s, self.last_time)
-        if (position.shape != (4,) or angles.shape != (4,) or speeds.shape != (2, 18)
+        if (position.shape not in ((4,), (6,)) or angles.shape != position.shape or speeds.shape != (2, 18)
                 or any(not np.isfinite(a).all() for a in (position, angles, speeds))
                 or np.any(position < 0) or np.any(angles < 0)):
             raise ValueError('finite actual position, normal and joint speeds required')
@@ -64,16 +64,17 @@ class TouchFirst:
 
 Caller supplies valid contacts from actual load/region/separation checks.
 ready_for_hold only means ramp complete; the separate grasp evidence gate
-must still qualify actual four-channel preload, duration, slip and lift.
+must still qualify actual six-channel preload, duration, slip and lift.
 """
 
     def __init__(self, target_loads_n, *, speed_profile=None):
         target = np.asarray(target_loads_n, dtype=float)
-        if (target.shape != (2, 2) or not np.isfinite(target).all()
+        if (target.shape not in ((2, 2), (2, 3)) or not np.isfinite(target).all()
                 or np.any(target < .05) or np.any(target > 3.)):
-            raise ValueError('touch-first simulation targets must be (2,2) in [.05,3] N')
+            raise ValueError('touch-first simulation targets must be (2,2) or (2,3) in [.05,3] N')
+        self.channels = target.shape[1]
         self.final_targets = target.copy()
-        self.targets = np.full((2, 2), .05)
+        self.targets = np.full(target.shape, .05)
         self.phases = ['touch', 'touch']
         self.since = [None, None]
         self.last_time = None
@@ -84,35 +85,36 @@ must still qualify actual four-channel preload, duration, slip and lift.
         loads = np.asarray(loads_n, dtype=float)
         valid = np.asarray(valid_contacts)
         dt = _time_delta(time_s, self.last_time)
-        if (loads.shape != (2, 2) or valid.shape != (2, 2) or valid.dtype.kind != 'b'
+        if (loads.shape != (2, self.channels) or valid.shape != (2, self.channels) or valid.dtype.kind != 'b'
                 or not np.isfinite(loads).all() or np.any(loads < 0)):
             raise ValueError('finite compressive loads and boolean measured contacts required')
         if self.speed_governor is not None:
             gaps = np.asarray(surface_gaps_m, dtype=float)
-            if gaps.shape != (2, 2) or not np.isfinite(gaps).all():
+            if gaps.shape != (2, self.channels) or not np.isfinite(gaps).all():
                 raise ValueError('finite measured surface gaps required for staged speed')
         self.last_time = float(time_s)
         for hand in range(2):
             thumb = bool(valid[hand, 0] and loads[hand, 0] >= .025)
-            pair = thumb and bool(valid[hand, 1] and loads[hand, 1] >= .025)
+            pinch = thumb and bool(valid[hand, 1] and loads[hand, 1] >= .025)
+            support = self.channels == 3 and bool(valid[hand, 2] and loads[hand, 2] >= .025)
             phase = self.phases[hand]
             if phase != 'touch' and not thumb:
                 self.phases[hand] = 'touch'
                 self.since[hand] = None
-            elif phase == 'preload' and not pair:
+            elif phase == 'preload' and not pinch:
                 self.phases[hand] = 'oppose'
                 self.since[hand] = None
             phase = self.phases[hand]
             if phase in ('touch', 'oppose'):
                 self.targets[hand] = .05
-                qualified = thumb if phase == 'touch' else pair
+                qualified = thumb if phase == 'touch' else pinch
                 if not qualified:
                     self.since[hand] = None
                 elif self.since[hand] is None:
                     self.since[hand] = float(time_s)
                 elif time_s - self.since[hand] >= .05 - 1e-12:
                     self.phases[hand] = 'oppose' if phase == 'touch' else 'preload'
-                    self.since[hand] = float(time_s) if phase == 'touch' and pair else None
+                    self.since[hand] = float(time_s) if phase == 'touch' and pinch else None
             else:
                 self.targets[hand] = np.minimum(self.final_targets[hand], self.targets[hand] + dt)
         error = self.targets - loads
@@ -121,11 +123,20 @@ must still qualify actual four-channel preload, duration, slip and lift.
         for hand, phase in enumerate(self.phases):
             if phase == 'touch':
                 speed[hand, 1] = 0.
+                if self.channels == 3: speed[hand, 2] = 0.
+            elif phase == 'oppose':
+                # The middle finger remains parked until the thumb/index
+                # opposition is measured; then it is allowed to hook under
+                # the wire during preload.
+                if self.channels == 3: speed[hand, 2] = 0.
         if self.speed_governor is not None:
-            active = np.ones((2, 2), dtype=bool)
+            active = np.ones((2, self.channels), dtype=bool)
             for hand, phase in enumerate(self.phases):
                 if phase == 'touch':
                     active[hand, 1] = False
+                    if self.channels == 3: active[hand, 2] = False
+                elif phase == 'oppose':
+                    if self.channels == 3: active[hand, 2] = False
             speed = self.speed_governor.update(time_s, force_speeds=speed, loads=loads,
                 valid=valid, gaps=gaps, active=active)
         return dict(phases=self.phases[:], target_loads_n=self.targets.copy(),

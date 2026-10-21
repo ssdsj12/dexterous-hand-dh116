@@ -28,18 +28,21 @@ class ContactSpeedGovernor:
             raise ValueError('explicit simulation speed profile required')
         self.profile = profile
         self.last_time = None
-        self.last_speed = np.zeros((2, 2))
+        self.last_speed = None
 
     def update(self, time_s, *, force_speeds, loads, valid, gaps, active):
         force, load, gap = (np.asarray(a, dtype=float) for a in (force_speeds, loads, gaps))
         valid, active = np.asarray(valid), np.asarray(active)
-        if (any(a.shape != (2, 2) for a in (force, load, gap, valid, active))
+        shapes = {a.shape for a in (force, load, gap, valid, active)}
+        if (len(shapes) != 1 or shapes.pop() not in ((2, 2), (2, 3))
                 or any(not np.isfinite(a).all() for a in (force, load, gap))
                 or np.any(load < 0) or valid.dtype.kind != 'b' or active.dtype.kind != 'b'
                 or not np.isfinite(time_s) or time_s < 0
                 or (self.last_time is not None and not 0 < time_s - self.last_time <= .01 + 1e-12)):
             raise ValueError('invalid measured speed governor inputs')
         dt = 0. if self.last_time is None else float(time_s - self.last_time)
+        if self.last_speed is None or self.last_speed.shape != force.shape:
+            self.last_speed = np.zeros_like(force)
         p = self.profile
         envelope = np.minimum(p.far_m_s, np.sqrt(p.near_m_s**2 +
             2 * p.acceleration_m_s2 * np.maximum(gap - p.slowdown_gap_m, 0)))

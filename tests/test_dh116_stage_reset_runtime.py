@@ -9,11 +9,11 @@ def api():return importlib.import_module('go2_pvcnn.control.dh116.stage_runtime'
 
 
 def measurement():
-    return dict(settled=True,approach_position_errors_m=[0.]*4,
-        approach_normal_errors_rad=[0.]*4,station_heights_m=[.308]*2,
-        loads_n=[1.]*4,valid_contacts=[True]*4,
-        normals=[[1.,0,0],[-1.,0,0],[1.,0,0],[-1.,0,0]],
-        anchors_local=np.zeros((4,3)),min_surface_clearance_m=0.,
+    return dict(settled=True,approach_position_errors_m=[0.]*6,
+        approach_normal_errors_rad=[0.]*6,station_heights_m=[.308]*2,
+        loads_n=[1.]*6,valid_contacts=[True]*6,
+        normals=[[1.,0,0],[-1.,0,0],[0.,0,1],[-1.,0,0],[1.,0,0],[0.,0,1]],
+        anchors_local=np.zeros((6,3)),min_surface_clearance_m=0.,
         safety_ok=True,active_constraints=())
 
 
@@ -96,7 +96,7 @@ def test_touch_first_restore_rebuilds_measured_readiness_and_touch(entry):
     s['source']['passed_stages']=['settle'] if entry=='approach' else ['settle','approach']
     seq=api().StageResetSequence(s,s['pins'],state_triggered=True)
     m=measurement();m['joint_speeds_rad_s']=np.zeros((2,18))
-    m['loads_n']=[0.]*4;m['valid_contacts']=[False]*4
+    m['loads_n']=[0.]*6;m['valid_contacts']=[False]*6
     for i in range(11):r=seq.update(i*.01,**m)
     assert r['stage']==entry
     assert seq.touch_output is None
