@@ -21,6 +21,14 @@ def test_contract_is_two_hands_and_twelve_actions():
     assert state().batched().hand_poses.shape == (1, 2, 7)
 
 
+def test_passive_joints_are_derived_from_active_state():
+    s = state()
+    full = s.full_joints
+    assert full.shape == (2, 11)
+    # finger13 follows finger12 with the documented affine offset.
+    assert full[0, 2] == pytest.approx(0.0 - 0.00697725445)
+
+
 def test_aliases_and_previous_action_step():
     s = HandOnlyState(
         left_pose=np.zeros(7),

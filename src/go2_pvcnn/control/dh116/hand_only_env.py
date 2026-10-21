@@ -13,6 +13,8 @@ from typing import Any, Optional
 
 import numpy as np
 
+from .linear_coupling import MIMIC, coupling_matrix
+
 
 try:  # Torch is optional for the CPU/reference install.
     import torch
@@ -177,6 +179,33 @@ class HandOnlyState:
     @property
     def lift_progress(self) -> Array:
         return self.wire_features[..., 1]
+
+    @property
+    def full_joints(self) -> Array:
+        """Return all eleven DH116 joints with affine followers expanded.
+
+        The returned shape is ``(..., 2, 11)`` and is derived solely from the
+        authoritative six-joint ``active_joints`` state.  It is an observation
+        helper; the policy action remains 12D.
+        """
+        if _is_torch(self.active_joints):
+            matrix = torch.as_tensor(coupling_matrix(), device=self.active_joints.device, dtype=self.active_joints.dtype)
+            offsets = torch.zeros(11, device=self.active_joints.device, dtype=self.active_joints.dtype)
+            from .linear_coupling import JOINTS
+            for follower, _, _, offset in MIMIC:
+                offsets[JOINTS.index(follower)] = offset
+            return torch.matmul(self.active_joints, matrix.T) + offsets
+        matrix = coupling_matrix()
+        offsets = np.zeros(11, dtype=self.active_joints.dtype)
+        from .linear_coupling import JOINTS
+        for follower, _, _, offset in MIMIC:
+            offsets[JOINTS.index(follower)] = offset
+        return np.matmul(self.active_joints, matrix.T) + offsets
+
+    @property
+    def expanded_joints(self) -> Array:
+        """Alias for :attr:`full_joints` used by trajectory collectors."""
+        return self.full_joints
 
     def batched(self) -> "HandOnlyState":
         """Return a state with an explicit leading batch dimension."""
