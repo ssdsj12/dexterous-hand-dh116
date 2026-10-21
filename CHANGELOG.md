@@ -8,6 +8,7 @@
 - 验证：hand-only MPC 9 passed，GPU backend 2 passed，短回放 smoke 通过；尚未完成 Isaac 抓取/lift 物理验收。
 - 新增 IsaacLab hand-only wire 接入探针；双手和回放动作可加载并推进 PhysX，但首轮姿态/碰撞稳定性验证失败（接触冲量异常大），因此未标记 grasp/lift 成功。
 - 验证器可直接运行 student checkpoint，并对 Isaac 关节状态/接触冲量做早停；24 动作/2400 步稳定运行无 wire 接触，调低 wire 后首步冲量超过 500 N。接触位置仍需标定，尚无抓取/lift 成功证据。
+- 增加 wire 高度参数用于定位；0.36 m 测试产生 363.99 N 接触峰值并在 8 步内非预期抬升 33.65 mm，安全门禁停止，仍不算 grasp/lift 成功。
 
 ## 2026-10-20 — 性能优化 Task 1：阶段计时与运行身份
 

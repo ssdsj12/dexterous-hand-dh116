@@ -134,6 +134,7 @@ GitHub 版本不包含约 4.7 GB 的 `archive/` 历史证据、运行日志及�
 - 离线验证：手-only MPC **9 passed**；GPU 后端选择/无 CUDA 失败路径 **2 passed**；教师/学生采集 smoke 已生成 12 条回放。尚未完成 Isaac 物理抓取或实机验收。
 - 新增 `scripts/verify_dh116_hand_only_wire.py` 接入 IsaacLab 双 DH116 + wire proxy（无 Panda、无 approach）。首轮 12 行 headless 接入发现当前回放姿态/资产碰撞会产生数值爆炸，已明确判定失败；尚未宣称接触或 lift 成功。
 - 验证器可直接加载学生 checkpoint，以 Isaac 关节反馈推理动作，按单条 episode 顺序执行，并限制目标速率。完整运行 24 个策略动作/2400 个 PhysX 步后手部状态稳定，但安全 wire 高度下接触为 0 N、抬升为 0 m；把 wire 降到现有手指轨迹高度会在首个物理步产生超过 500 N 冲量并立即停止。抓取和 lift 尚未通过。
+- `--wire-z` 现可用于几何定位。学生策略在 `wire_z=0.36 m` 时触发接触，但 8 步内出现 363.99 N 峰值、wire 非预期上移 33.65 mm，稳定性门禁停止；这不是合格 lift，说明手指/线缆存在初始干涉或过大接触冲量。
 
 ```bash
 PYTHONPATH=src /home/xk/miniconda3/envs/go2/bin/python scripts/train_dh116_teacher_student.py \

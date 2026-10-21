@@ -9,4 +9,5 @@
 - [ ] Task 4 (new objective) — Isaac hand-only physical grasp/lift validation and full GPU Cosserat parity/benchmark; not yet run.
 - Isaac hand-only wire probe is now present, but its first 12-action headless run failed numerical-stability gates (large contact impulses); no grasp/lift claim.
 - Student checkpoint is directly executable from Isaac joint feedback. A full 24-action/2400-step trajectory at a non-penetrating wire height remained finite but produced zero contact and zero lift. Moving the wire into the current finger envelope caused >500 N at the first physics step and the guard stopped. Next: calibrate detached-hand root pose and fingertip-to-wire position before retraining with physical contact/lift feedback.
+- A 0.36 m wire-height probe did contact, but produced a 363.99 N peak and 33.65 mm uncontrolled wire rise within 8 steps; early-stop guard correctly failed it. Physical grasp/lift remains unqualified.
 - Note: teacher/gpu implementer subagents hit model-capacity errors; Task 2/3 were implemented inline after the failure. No approach run was resumed.

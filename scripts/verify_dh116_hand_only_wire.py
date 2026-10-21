@@ -24,6 +24,8 @@ parser.add_argument("--episode-index", type=int, default=0,
                     help="Select one complete episode from the step-major teacher/student replay")
 parser.add_argument("--joint-rate-limit", type=float, default=0.3,
                     help="Active joint target slew limit in rad/s")
+parser.add_argument("--wire-z", type=float, default=0.46,
+                    help="Initial center height of the rigid wire proxy in metres")
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
 if args.output.exists():
@@ -98,7 +100,7 @@ try:
         mass_props=sim_utils.MassPropertiesCfg(mass=0.12)),
         # Place the wire just above the neutral hand envelope; closure can
         # approach it without starting in penetration.
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.46)))
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, args.wire_z)))
     wire = RigidObject(wire_cfg)
     wire_sensor = ContactSensor(ContactSensorCfg(prim_path="/World/WireProxy", update_period=0.0))
     sim.reset()
