@@ -1,7 +1,30 @@
 from fixture_paths import ARCHIVE, ASSET, BACKEND, CONTACT, CONTACT_SHA, SURFACE_REFS
 import numpy as np
 import pytest
-from go2_pvcnn.control.dh116.coordinated_closure import coordinated_closure_increment
+from go2_pvcnn.control.dh116.coordinated_closure import (
+    coordinated_closure_increment, orient_normals_toward_wire,
+    wire_approach_normals)
+
+
+def test_orient_normals_toward_wire_flips_only_wrong_facing_pads():
+    points = [[0., 0., 0.], [0., 1., 0.], [1., 0., 0.], [1., 1., 0.]]
+    normals = [[-1., 0., 0.], [1., 0., 0.], [0., -1., 0.], [0., 1., 0.]]
+    rod = [[1., 1.], [0., 1.], [0., 0.]]
+    oriented, signs = orient_normals_toward_wire(points, normals, rod)
+    assert signs.tolist() == [-1., 1., 1., 1.]
+    assert np.allclose(np.linalg.norm(oriented, axis=1), 1.)
+    rod_array=np.asarray(rod)
+    assert np.all(np.einsum('ij,ij->i', oriented, rod_array.T[np.argmin(
+        np.linalg.norm(rod_array.T[:, None, :] - np.asarray(points)[None, :, :], axis=2), axis=0
+    )] - np.asarray(points)) >= 0.)
+
+
+def test_wire_approach_normals_point_to_measured_centerline():
+    points=np.array([[0.,0.,0.],[0.,1.,0.],[1.,0.,0.],[1.,1.,0.]])
+    rod=np.array([[1.,1.],[0.,1.],[.5,.5]])
+    directions=wire_approach_normals(points,rod)
+    nearest=rod.T[np.argmin(np.linalg.norm(rod.T[:,None,:]-points[None,:,:],axis=2),axis=0)]
+    np.testing.assert_allclose(directions,(nearest-points)/np.linalg.norm(nearest-points,axis=1)[:,None])
 
 
 def inputs():

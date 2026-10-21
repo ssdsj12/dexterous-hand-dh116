@@ -1,5 +1,13 @@
 # DH116 独立工作目录
 
+## 2026-10-21 close 直入与恢复姿态保持
+
+从 `stage_close.json` 恢复时，`restore_validate` 阶段保持当前实测关节姿态，校验通过后直接进入 `close`，不会重新回放 `approach`。这样可以把接近、闭指、夹持和抬升作为连续阶段运行，同时保留源几何碰撞保护与真实接触负载证据。
+
+## 2026-10-20 连续 approach 的 wire 计算策略
+
+正式连续序列支持 `--approach-wire-mode frozen`：`settle` 阶段正常推进 DeformX，使 wire 落桌并稳定；进入 `approach` 后复用该稳定快照，只推进 Panda/DH116，并持续执行源几何与碰撞保护；进入 `close` 后自动恢复 DeformX、指腹接触冲量和机器人反作用力，随后连续进入 `hold/lift`。不需要人工暂停或重启。默认 `dynamic` 保持原行为。该模式只减少 approach 的 wire 求解，不代表已完成闭指、夹持或抬升验收。
+
 ## 2026-10-20 性能优化 Task 1
 
 已加入可选 `--profile` 阶段计时：输出逐步 `perf.jsonl` 与按阶段汇总的 `perf_summary.json`，记录控制、DeformX 杆/接触、反作用提交、PhysX、状态传感器、源碰撞保护和证据写入耗时，并把提交 SHA、设备、时间步、接触采样数、CPU 亲和性和数值线程环境写入运行清单。默认关闭 profiling，不改变物理参数、单核约束、接触反作用或碰撞保护。

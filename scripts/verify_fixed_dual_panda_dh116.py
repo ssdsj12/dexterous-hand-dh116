@@ -20,6 +20,7 @@ from go2_pvcnn.control.dh116.touch_first import bounded_handoff
 from go2_pvcnn.control.dh116.speed_profile import GraspSpeedProfile
 from go2_pvcnn.control.dh116.perf_meter import PerfMeter
 from go2_pvcnn.control.dh116.runtime_snapshot import SnapshotStore,ReactionBuffer
+from go2_pvcnn.control.dh116.approach_wire_mode import wire_dynamics_enabled
 from isaaclab.app import AppLauncher
 
 parser=argparse.ArgumentParser(description=__doc__)
@@ -32,6 +33,8 @@ parser.add_argument('--approach-certificate',type=Path,help='Pinned source-swept
 parser.add_argument('--approach-certificate-sha256')
 parser.add_argument('--closure-pilot',action='store_true',help='Independent initial-touch force-control diagnostic, NOT continuous approach/grasp')
 parser.add_argument('--grasp-sequence',action='store_true',help='Measured settle/approach/close/hold/lift sequence; all physical guards mandatory')
+parser.add_argument('--approach-wire-mode',choices=('dynamic','frozen'),default='dynamic',
+                    help='Wire dynamics during approach; frozen keeps settled shape until close, then resumes DeformX')
 parser.add_argument('--symmetric-lift',action='store_true',help='Stage-local measured height synchronization; not a global mirror constraint')
 parser.add_argument('--grasp-speed-profile',choices=('baseline','staged'),default='baseline',
                     help='Opt-in experimental measured-gap speed profile, not hardware rated or grasp qualified')
@@ -90,6 +93,8 @@ if args.evidence_flush_steps<1 or not math.isfinite(args.evidence_flush_seconds)
 validate_continuous_options(args)
 if args.grasp_speed_profile!='baseline' and not args.grasp_sequence:
     raise ValueError('staged speed requires the guarded grasp sequence')
+if args.approach_wire_mode=='frozen' and not args.grasp_sequence:
+    raise ValueError('frozen approach wire mode requires the guarded grasp sequence')
 speed_profile=None if args.grasp_speed_profile=='baseline' else GraspSpeedProfile()
 if args.symmetric_lift and not args.grasp_sequence:
     raise ValueError('symmetric lift requires the measured grasp sequence')
@@ -189,6 +194,7 @@ try:
         active_pose_sha256=args.active_pose_sha256,
         approach_certificate_sha256=args.approach_certificate_sha256,
         closure_pilot=args.closure_pilot,grasp_sequence=args.grasp_sequence,closure_loads_n=args.closure_loads,
+        approach_wire_mode=args.approach_wire_mode,
         coordinated_closure=args.coordinated_closure,
         speed_profile=None if speed_profile is None else asdict(speed_profile),
         grasp_policy=('touch-first-symmetric-lift-v1' if args.symmetric_lift else
@@ -262,7 +268,9 @@ try:
                 import open3d as o3d
                 from go2_pvcnn.control.dh116.pad_region_guard import PadRegionGuard
                 from go2_pvcnn.control.dh116.closure import closure_increment
-                from go2_pvcnn.control.dh116.coordinated_closure import coordinated_closure_increment,coordinated_bimanual_increment
+                from go2_pvcnn.control.dh116.coordinated_closure import (
+                    coordinated_closure_increment, coordinated_bimanual_increment,
+                    orient_normals_toward_wire, wire_approach_normals)
                 from go2_pvcnn.control.dh116.contact_frames import point_jacobian
                 from go2_pvcnn.control.dh116.loaded_contact import normal_contact_sample
                 if point_refs.get('schema')!='dh116-grasp-references-v1':raise ValueError('pilot requires selected grasp references')
@@ -349,6 +357,7 @@ try:
     # before gravity queries/physics, independent of lazy diagnostic pose reads.
     sim.physics_sim_view.update_articulations_kinematic()
     previous_states=None;contact_peak=0.
+    approach_frozen_snapshot=None
     def measured_source_guard(wire_snapshot,wire_path_bound=0.,wire_radius=.008):
         from go2_pvcnn.control.fixed_dual_panda_o6.contact_bridge import normalized_wxyz_to_rotation
         active={};measured={}
@@ -462,6 +471,7 @@ try:
             max_force=arm.root_physx_view.get_dof_max_forces()[0].cpu().tolist(),
             max_velocity=arm.root_physx_view.get_dof_max_velocities()[0].cpu().tolist()) for side,arm in arms.items()}
     handoff_seed=None
+    closure_normals=None
     timing=dict(control_s=0.,wire_s=0.,rod_solver_s=0.,wire_visual_s=0.,
                 isaac_step_s=0.,validation_s=0.,steps=0,rendered_steps=0)
     result['performance']=timing
@@ -474,6 +484,13 @@ try:
         check_stop_request(args.output)
         tick_start=perf_counter()
         stage_name=getattr(grasp_sequence,'stage','diagnostic')
+        wire_step_enabled=wire_dynamics_enabled(stage_name,args.approach_wire_mode)
+        if (engine is not None and not wire_step_enabled
+                and approach_frozen_snapshot is None):
+            # The settle step immediately before approach has already advanced
+            # DeformX. Keep that measured state while the robot approaches.
+            approach_frozen_snapshot=engine.snapshot()
+            previous_states=None
         pre_snapshot=snapshot_store.capture_pre(
             step=step,stage=stage_name,sample_time=step*dt,
             values={'stage':stage_name,'step':step})
@@ -493,6 +510,26 @@ try:
                     closure_arm_targets[s]=commands[i,:7].copy();closure_targets[s]=commands[i,7:].copy()
                 if handoff_done:handoff_seed=None
             if closure_active and not handoff_in_progress:
+                if closure_normals is None and grasp_sequence.stage == 'close':
+                    pad_points=[];pad_normals=[]
+                    rod_position=np.asarray(engine.snapshot()['rod_position'])
+                    for c in BODY_NAMES:
+                        ref=selected_refs[c];arm=arms[ref['side']]
+                        bi=arm.body_names.index(ref['body_name'])
+                        pose=arm.data.body_link_pose_w[0,bi].cpu().numpy()
+                        R=normalized_wxyz_to_rotation(pose[3:7])
+                        pad_points.append(pose[:3]+R@np.asarray(ref['point']))
+                        pad_normals.append(R@np.asarray(ref['normal']))
+                    oriented, signs=orient_normals_toward_wire(
+                        np.asarray(pad_points),np.asarray(pad_normals),rod_position)
+                    approach_normals=wire_approach_normals(
+                        np.asarray(pad_points),rod_position)
+                    closure_normals={c:approach_normals[i] for i,c in enumerate(BODY_NAMES)}
+                    result['closure_normal_orientation']=dict(
+                        channels=list(BODY_NAMES),signs=signs.tolist(),
+                        approach_normals=approach_normals.tolist(),
+                        source='measured wire centerline at close entry',
+                        scope='simulation closure and normal-load sign only')
                 control_J=[];control_n=[];control_W=[]
                 for side,arm in arms.items():
                     raw=arm.root_physx_view.get_jacobians()[0].cpu().numpy()
@@ -502,7 +539,11 @@ try:
                         pose=arm.data.body_link_pose_w[0,bi].cpu().numpy();R=normalized_wxyz_to_rotation(pose[3:7])
                         point=pose[:3]+R@np.array(ref['point'])
                         Js.append(point_jacobian(raw[bi-1],point-arm.data.body_com_pos_w[0,bi].cpu().numpy(),arm.joint_names,side)[:,:10])
-                        ns.append(R@ref['normal'])
+                        # Isaac's fixed-base Jacobian rows use the opposite
+                        # command sign from the measured point displacement
+                        # in this asset.  Keep contact-load normals unchanged;
+                        # only the velocity-allocation command is inverted.
+                        ns.append(-closure_normals[side+'_'+digit])
                     pi=arm.body_names.index('base_link');W=np.zeros((3,10))
                     ids=[arm.joint_names.index(f'{side}_panda_joint{j}') for j in range(1,8)]
                     W[:,:7]=raw[pi-1,3:][:,ids]
@@ -516,6 +557,8 @@ try:
                     normal_speeds_m_s=None if touch_command is None else touch_command['normal_speeds_m_s'],
                     normal_speed_limit_m_s=.002 if speed_profile is None else speed_profile.far_m_s,
                     force_speed_limit_m_s=.002 if speed_profile is None else speed_profile.loaded_m_s,
+                    active_pad_mask=None if touch_command is None else
+                        np.abs(np.asarray(touch_command['normal_speeds_m_s']))>1e-12,
                     return_diagnostics=True,
                     transport_velocity_w=grasp_sequence.transport_velocity(t))
                 for i,side in enumerate(arms):
@@ -561,8 +604,18 @@ try:
                 target_hands[side]=closure_targets[side]
                 target_arms[side]=closure_arm_targets[side]
             if restore_payload is not None and grasp_sequence.stage=='restore_validate':
-                target_hands[side]=closure_targets[side]
-                target_arms[side]=closure_arm_targets[side]
+                # A close-stage restore is already at the approach endpoint.  During
+                # restore validation hold the measured live pose rather than replaying
+                # the approach/closure target.  Replaying that target while the
+                # checkpoint still has residual qd creates an artificial transient,
+                # trips the source-clearance guard, and makes a direct-close restore
+                # indistinguishable from restarting approach.
+                live_q=arm.data.joint_pos[0].cpu().numpy()
+                target_arms[side]=np.asarray(
+                    [live_q[arm.joint_names.index(f'{side}_panda_joint{i}')] for i in range(1,8)],
+                    dtype=float)
+                target_hands[side]=np.asarray(
+                    [live_q[arm.joint_names.index(n)] for n in ACTIVE], dtype=float)
             target=dict(zip(JOINTS,expand(target_hands[side])));target.update(zip([f'{side}_panda_joint{i}' for i in range(1,8)],target_arms[side]))
             arm.set_joint_position_target(torch.tensor([[target[n] for n in arm.joint_names]],dtype=torch.float32,device=args.device))
             if args.gravity_hold:
@@ -600,7 +653,34 @@ try:
                 actuation=arm.root_physx_view.get_dof_actuation_forces()[0].cpu().tolist(),
                 estimated_drive_torque=arm.data.applied_torque[0].cpu().tolist()) for side,arm in arms.items()}
         if engine is not None:
-            if args.contact_manifest:
+            frozen_approach=not wire_step_enabled
+            if frozen_approach:
+                snapshot=approach_frozen_snapshot
+                if snapshot is None:
+                    raise RuntimeError('frozen approach state was not initialized')
+                # Keep contact evidence explicit: no contact/reaction is
+                # allowed before the close stage. Source and collision guards
+                # still run below against the measured robot pose.
+                samples={c:dict(valid=False,normal_load_n=0.,closest_element=0,
+                    closest_sample=0,gap_m=1.,separation_speed_m_s=0.,
+                    contact_duration_s=0.,noise_floor_n=.005,
+                    separation_tolerance_m_s=.001) for c in BODY_NAMES}
+                previous_loads=np.zeros(4)
+                record['contact']=dict(normal_samples=samples,
+                    max_wire_speed_m_s=float(np.linalg.norm(snapshot['rod_velocity'],axis=0).max()),
+                    max_pad_penetration_m=0.,reaction_published=False,
+                    reaction_applied=False,approach_wire_frozen=True,
+                    peak_force_n={c:0. for c in BODY_NAMES},
+                    force_w={c:[0.,0.,0.] for c in BODY_NAMES},
+                    torque_com_w={c:[0.,0.,0.] for c in BODY_NAMES})
+                record['rod_state']={k:np.asarray(snapshot[k]).tolist() for k in
+                    ('rod_position','rod_velocity','rod_director','rod_omega')}
+                if initial_actives is not None:
+                    source_guard_start=perf_counter()
+                    record['source_before_physics']=measured_source_guard(
+                        snapshot,0.,float(engine.rod.radius.max()))
+                    source_pre_s=perf_counter()-source_guard_start
+            elif args.contact_manifest:
                 states={};positions={}
                 for c,body in BODY_NAMES.items():
                     arm=arms[c.split('_')[0]];bi=body_indices[c]
@@ -619,8 +699,8 @@ try:
                 if grasp_mode:
                     # Preserve candidate physics even when a guard rejects the
                     # wrench before sink submission. This is not published-force evidence.
-                    record['rod_state']={k:np.asarray(snapshot[k]).tolist() for k in
-                        ('rod_position','rod_velocity','rod_director','rod_omega')}
+                    record.update(rod_state={k:np.asarray(snapshot[k]).tolist() for k in
+                        ('rod_position','rod_velocity','rod_director','rod_omega')})
                     record['contact_candidate']=dict(reaction_published=False,
                         impulses={c:dict(linear_w=i.linear_w.tolist(),angular_com_w=i.angular_com_w.tolist(),
                             peak_force_n=i.peak_force_n,duration_s=i.contact_duration_s) for c,i in impulses.items()},
@@ -636,7 +716,9 @@ try:
                     failures=[];samples={}
                     for c,body in engine.mesh_bodies.items():
                         geometry=engine.contact_geometry(c)
-                        side=c.split('_')[0];normal=states[c].rotation_wb@np.array(selected_refs[c]['normal'])
+                        side=c.split('_')[0]
+                        normal=(closure_normals[c] if closure_normals is not None
+                                else states[c].rotation_wb@np.array(selected_refs[c]['normal']))
                         samples[c]=normal_contact_sample(force_on_mesh=impulses[c].linear_w/dt,normal=normal,
                             gaps=geometry['gaps'],relative_normal_speeds=geometry['relative_normal_speeds'],
                             element_ids=geometry['element_ids'],
@@ -799,7 +881,9 @@ try:
                 for c,ref in selected_refs.items():
                     arm=arms[ref['side']];bi=arm.body_names.index(ref['body_name'])
                     pose=arm.data.body_link_pose_w[0,bi].cpu().numpy();R=normalized_wxyz_to_rotation(pose[3:7])
-                    point=pose[:3]+R@ref['point'];normal=R@ref['normal']
+                    point=pose[:3]+R@ref['point']
+                    normal=(closure_normals[c] if closure_normals is not None
+                            else R@ref['normal'])
                     goal_point,goal_normal=approach_goals[c]
                     point_errors.append(float(np.linalg.norm(point-goal_point)))
                     normal_errors.append(float(np.arccos(np.clip(normal@goal_normal,-1.,1.))))
