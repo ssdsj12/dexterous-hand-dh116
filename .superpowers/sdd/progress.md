@@ -7,4 +7,5 @@
 - [x] Task 2 (new objective) — teacher/student hand-only JSONL replay collector and manifest verifier; short smoke generated 12 transitions.
 - [x] Task 3 (new objective) — explicit Torch-CUDA Cosserat approximation with fail-fast device selection; backend tests: 2 passed. PyElastica CPU path remains unchanged.
 - [ ] Task 4 (new objective) — Isaac hand-only physical grasp/lift validation and full GPU Cosserat parity/benchmark; not yet run.
+- Isaac hand-only wire probe is now present, but its first 12-action headless run failed numerical-stability gates (large contact impulses); no grasp/lift claim.
 - Note: teacher/gpu implementer subagents hit model-capacity errors; Task 2/3 were implemented inline after the failure. No approach run was resumed.
