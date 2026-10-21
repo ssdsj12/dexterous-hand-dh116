@@ -58,6 +58,15 @@ def main() -> int:
         state = {"hand_poses": poses, "active_joints": joints,
                  "wire_features": wire, "previous_action": previous}
         planned, diagnostics = mpc.plan(state)
+        # GPU MPC returns a CUDA tensor; replay serialization and the teacher
+        # noise sampler are NumPy-based, so make this boundary explicit.
+        if hasattr(planned, "detach"):
+            planned = planned.detach().cpu().numpy()
+        if hasattr(diagnostics, "items"):
+            diagnostics = {
+                k: (v.detach().cpu().numpy() if hasattr(v, "detach") else v)
+                for k, v in diagnostics.items()
+            }
         # Teacher follows the parallel-MPC target with bounded noise; student
         # receives only the non-privileged observation and imitates the target.
         teacher = planned + rng.normal(0.0, 0.005, planned.shape).astype(np.float32)
@@ -90,17 +99,24 @@ def main() -> int:
                 "input_dim": payload["input_dim"], "output_dim": 12}
     teacher_ckpt = fit("teacher")
     student_ckpt = fit("student")
+    diagnostics_summary = {
+        "phase_counts": {str(k): int(np.sum(np.asarray(diagnostics["phase"]) == k))
+                          for k in np.unique(np.asarray(diagnostics["phase"]))},
+        "mean_tracking_cost": float(np.mean(np.asarray(diagnostics["tracking_cost"]))),
+    }
     manifest = {"task": "dh116_hand_only_grasp_lift", "entry_phase": "grasp",
                 "action_dim": spec.action_dim, "previous_action_dim": spec.previous_action_dim,
                 "arm_state_included": False, "episodes": args.episodes,
                 "steps_per_episode": args.steps_per_episode, "device": args.device,
                 "rod_backend": args.rod_backend,
-                "mpc": {k: (v.tolist() if hasattr(v, "tolist") else v) for k, v in diagnostics.items()},
+                "mpc": diagnostics_summary,
                 "teacher": teacher_manifest, "student": student_manifest}
     manifest["teacher_checkpoint"] = teacher_ckpt
     manifest["student_checkpoint"] = student_ckpt
     (args.out / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-    print(json.dumps(manifest, indent=2, sort_keys=True))
+    print(json.dumps({"out": str(args.out), "episodes": args.episodes,
+                      "transitions": len(transitions), "action_dim": 12,
+                      "device": args.device, "rod_backend": args.rod_backend}, sort_keys=True))
     return 0
 
 
