@@ -1,5 +1,12 @@
 # 更新与阶段记录
 
+## 2026-10-21 — DH116 hand-only parallel MPC and GPU Cosserat
+
+- 新增 12D 双手主动关节 hand-only 状态/动作契约和批量并行 MPC；明确从 grasp 开始，跳过 approach，Panda 状态不进入规划或回放。
+- 新增教师/学生回放采集脚本，记录 privileged/non-privileged observation、previous action、MPC target、action、reward、phase，并生成 SHA256 manifest。
+- 新增 `TorchCudaCosseratRod` 显式 CUDA 后端；CPU PyElastica 路径保持不变，CUDA 不可用时拒绝启动，不做隐式 CPU fallback。该实现标记为仿真近似，未替代实机参数。
+- 验证：hand-only MPC 9 passed，GPU backend 2 passed，短回放 smoke 通过；尚未完成 Isaac 抓取/lift 物理验收。
+
 ## 2026-10-20 — 性能优化 Task 1：阶段计时与运行身份
 
 - 新增 `--profile` 和 `PerfMeter`，按步记录控制、杆/接触、源碰撞保护、反作用提交、PhysX、传感器状态和证据写入耗时，并原子写出 `perf_summary.json`。

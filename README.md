@@ -126,6 +126,20 @@ GitHub 版本不包含约 4.7 GB 的 `archive/` 历史证据、运行日志及�
 
 ## 内容
 
+## 2026-10-21 — DH116 hand-only parallel MPC / teacher-student / GPU rod
+
+- 训练对象已与 Panda 机械臂完全解耦：动作空间固定为左右 DH116 各 6 个主动关节（12D），保留上一动作作为连续性输入；不包含 approach 阶段，只收集 grasp→lift。
+- `ParallelJointMPC` 支持批量状态并行规划，动作受 DH116 主动关节限位约束；`scripts/train_dh116_teacher_student.py` 生成教师/学生 JSONL 回放和带 SHA256 的 manifest。
+- 新增显式 `TorchCudaCosseratRod`（`backend=torch_cuda`）。CUDA 不可用时直接失败，不静默退回 CPU；该后端是 gravity/damping 的显式 Torch 近似，不能宣称与 PyElastica 或实机动力学等价。
+- 离线验证：手-only MPC **9 passed**；GPU 后端选择/无 CUDA 失败路径 **2 passed**；教师/学生采集 smoke 已生成 12 条回放。尚未完成 Isaac 物理抓取或实机验收。
+
+```bash
+PYTHONPATH=src /home/xk/miniconda3/envs/go2/bin/python scripts/train_dh116_teacher_student.py \
+  --device cpu --episodes 4 --steps-per-episode 24 --out runs/dh116_hand_only_teacher_student
+PYTHONPATH=src /home/xk/miniconda3/envs/go2/bin/python scripts/verify_dh116_hand_only_training.py \
+  runs/dh116_hand_only_teacher_student/manifest.json
+```
+
 `src/` 控制与共享依赖；`scripts/` 运行/校验；`tests/` 回归；`assets/` 新运行 USD；`configs/` 新配置；`vendor/DeformX/` 实际后端；`resources/manufacturer/` 厂家资料；`archive/` 历史原件；`docs/source/` 设计与记录；`tools/` 可审计迁移工具。
 
 归档中的旧路径和 SHA 保持不变。它们不是新目录可直接恢复的状态；禁止修改旧 stage pin 冒充兼容。新配置的模拟参数不代表实机额定参数。
