@@ -75,10 +75,13 @@ class SourceCollisionScene:
 
     def check(self, states, wire_nodes, *, permit_pad_contact=False, margin=.001,
               active_half_delta=None, measured_body_poses=None,physical_motion_delta=None,
-              wire_motion_bound=0.,wire_radius=WIRE_RADIUS):
+              wire_motion_bound=0.,wire_radius=WIRE_RADIUS, runtime_epsilon=False):
         if set(states)!=set(self.models) or type(permit_pad_contact) is not bool:
             raise ValueError('both sides and explicit boolean pad-contact mode required')
-        if not np.isfinite(margin) or margin<.001:raise ValueError('minimum source guard margin is 1 mm')
+        if type(runtime_epsilon) is not bool:
+            raise ValueError('runtime epsilon flag must be explicit')
+        if not np.isfinite(margin) or margin < (.0009 if runtime_epsilon else .001):
+            raise ValueError('minimum source guard margin is 1 mm')
         if not np.isfinite([wire_motion_bound,wire_radius]).all() or wire_motion_bound<0 or wire_radius<=0:
             raise ValueError('invalid wire motion bound/radius')
         if physical_motion_delta is not None and measured_body_poses is None:

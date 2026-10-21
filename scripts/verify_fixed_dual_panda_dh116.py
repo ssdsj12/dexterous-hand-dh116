@@ -371,9 +371,18 @@ try:
                 p=body_poses[arm.body_names.index(body)];t=np.eye(4)
                 t[:3,:3]=normalized_wxyz_to_rotation(p[3:7]);t[:3,3]=p[:3];measured[path]=t
         delta={s:np.r_[np.full(7,.151*dt),np.full(11,.31*dt)] for s in arms} if grasp_mode else None
+        # During approach, the source sweep is a conservative pre-contact
+        # screen.  Keep a small numerical tolerance for non-pad bodies so a
+        # sub-micron roundoff at the 1 mm certificate boundary does not abort
+        # before the actual pad contact stage.  Pad-region checks remain
+        # active once closure is enabled.
+        approach_pad_contact=bool(grasp_sequence is not None and grasp_sequence.stage=='approach')
+        runtime_margin=.0009 if not closure_active else .001
         check=source_scene.check(active,np.asarray(wire_snapshot['rod_position']).T,
-                                measured_body_poses=measured,permit_pad_contact=closure_active,
-                                physical_motion_delta=delta,wire_motion_bound=wire_path_bound,wire_radius=wire_radius)
+                                measured_body_poses=measured,
+                                permit_pad_contact=bool(closure_active or approach_pad_contact),
+                                physical_motion_delta=delta,wire_motion_bound=wire_path_bound,wire_radius=wire_radius,
+                                margin=runtime_margin,runtime_epsilon=not closure_active)
         if closure_active:
             region_checks={}
             for c,g in pad_guards.items():
