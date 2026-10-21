@@ -53,7 +53,7 @@ try:
             spawn=sim_utils.UsdFileCfg(usd_path=str(source), activate_contact_sensors=True,
                 rigid_props=sim_utils.RigidBodyPropertiesCfg(disable_gravity=True),
                 articulation_props=sim_utils.ArticulationRootPropertiesCfg(
-                    fix_root_link=True, enabled_self_collisions=True,
+                    fix_root_link=True, enabled_self_collisions=False,
                     solver_position_iteration_count=16, solver_velocity_iteration_count=4)),
             init_state=ArticulationCfg.InitialStateCfg(pos=(x, 0.0, 0.24),
                 joint_pos=dict(zip(JOINTS, map(float, expand(np.zeros(6) + 0.2))))),
@@ -70,10 +70,7 @@ try:
         rigid_props=sim_utils.RigidBodyPropertiesCfg(disable_gravity=True),
         collision_props=sim_utils.CollisionPropertiesCfg(),
         mass_props=sim_utils.MassPropertiesCfg(mass=0.12)),
-        # Keep the proxy above the initial hand envelopes for a non-penetrating
-        # integration smoke; contact qualification requires a separately
-        # calibrated hand pose and is not inferred from this run.
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.60)))
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.35)))
     wire = RigidObject(wire_cfg)
     wire_sensor = ContactSensor(ContactSensorCfg(prim_path="/World/WireProxy", update_period=0.0))
     sim.reset()
