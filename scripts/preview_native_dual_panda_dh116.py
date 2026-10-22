@@ -85,6 +85,20 @@ try:
     )
     runtime = spawn_native_scene(sim, spec, pose, args.device)
     result.update(runtime.assert_visual_contract())
+    # Record the actual native flange and DH116 base poses used for the visual
+    # check; this makes the target-pose comparison auditable instead of only
+    # reporting the requested joint vector.
+    resolved_poses = {}
+    for side in ("left", "right"):
+        arm = runtime.arms[side]
+        hand = runtime.hands[side]
+        ai = arm.body_names.index(spec.flange_link)
+        hi = hand.body_names.index("base_link")
+        resolved_poses[side] = {
+            "panda_flange_pose_w": arm.data.body_link_pose_w[0, ai].detach().cpu().numpy().tolist(),
+            "dh116_base_pose_w": hand.data.body_link_pose_w[0, hi].detach().cpu().numpy().tolist(),
+        }
+    result["resolved_poses"] = resolved_poses
     sim.step(render=not args.headless)
     result["physics_stepped"] = True
     if args.stage == "static":

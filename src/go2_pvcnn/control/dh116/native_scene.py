@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -29,6 +29,11 @@ class NativeSceneSpec:
     hand_paths: dict[str, str]
     hand_usd: dict[str, Path]
     flange_link: str
+    # Base translations and DH116 palm poses are the reviewed candidate3
+    # mounting contract.  They keep native Panda geometry while reproducing
+    # the reference image's palm-down, fingers-forward placement.
+    panda_base_pos: dict[str, tuple[float, float, float]] | None = None
+    hand_root_pose: dict[str, tuple[float, float, float, float, float, float, float]] | None = None
 
 
 @dataclass
@@ -37,6 +42,8 @@ class NativeSceneRuntime:
     stage: object
     arms: dict[str, object]
     hands: dict[str, object]
+    hand_base_local: dict[str, object] = field(default_factory=dict)
+    hand_mount_offset: dict[str, object] = field(default_factory=dict)
 
     def assert_visual_contract(self) -> dict[str, object]:
         """Return the resolved scene paths and reject missing scene branches."""
@@ -62,6 +69,16 @@ def default_native_scene_spec(root: Path) -> NativeSceneSpec:
         hand_paths={"left": "/World/LeftDH116", "right": "/World/RightDH116"},
         hand_usd={side: hand_root / name for side, name in _HAND_ASSET_NAMES.items()},
         flange_link="panda_hand",
+        panda_base_pos={
+            "left": (0.0747597133794231, 0.2491319181085123, -0.0116718834772184),
+            "right": (0.0744969153918507, -0.2493211823662, -0.0123784326847),
+        },
+        hand_root_pose={
+            "left": (0.38154750224737377, 0.2373296462947355, 0.3612084291104437,
+                     -0.00524514, 0.99977878, -0.00643838, -0.01932409),
+            "right": (0.379352202466893, -0.237214928805469, 0.36181091453662617,
+                      0.00606007, 0.99966999, 0.00472094, -0.02451318),
+        },
     )
     validate_scene_spec(spec)
     for side, path in spec.hand_usd.items():
@@ -94,14 +111,39 @@ def _hide_builtin_panda_fingers(stage, panda_path: str) -> int:
     return hidden
 
 
-def _set_root_world_pose(stage, hand_path: str, pose) -> None:
-    from pxr import Gf, UsdGeom
+def _disable_gravity(stage, root_path: str) -> int:
+    """Keep the standalone DH116 preview at its commanded pose."""
+    from pxr import PhysxSchema, UsdPhysics
+
+    changed = 0
+    for prim in stage.Traverse():
+        if not str(prim.GetPath()).startswith(root_path):
+            continue
+        if prim.HasAPI(UsdPhysics.RigidBodyAPI):
+            api = PhysxSchema.PhysxRigidBodyAPI.Apply(prim)
+            api.CreateDisableGravityAttr().Set(True)
+            changed += 1
+    return changed
+
+
+def _pose_matrix(pose):
+    from pxr import Gf
 
     position = pose[:3]
     quaternion = Gf.Quatd(*[float(value) for value in pose[3:7]])
     matrix = Gf.Matrix4d().SetRotate(Gf.Matrix3d(quaternion))
     matrix.SetTranslate(Gf.Vec3d(*[float(value) for value in position]))
+    return matrix
+
+
+def _set_root_world_matrix(stage, hand_path: str, matrix) -> None:
+    from pxr import Gf, UsdGeom
+
     UsdGeom.Xformable(stage.GetPrimAtPath(hand_path)).MakeMatrixXform().Set(matrix)
+
+
+def _set_root_world_pose(stage, hand_path: str, pose) -> None:
+    _set_root_world_matrix(stage, hand_path, _pose_matrix(pose))
 
 
 def spawn_native_scene(sim, spec: NativeSceneSpec, pose: dict[str, np.ndarray], device: str):
@@ -118,11 +160,14 @@ def spawn_native_scene(sim, spec: NativeSceneSpec, pose: dict[str, np.ndarray], 
     stage = omni.usd.get_context().get_stage()
     arms: dict[str, object] = {}
     hands: dict[str, object] = {}
-    for side, y in (("left", 0.25), ("right", -0.25)):
+    base_positions = spec.panda_base_pos or {
+        "left": (0.0, 0.25, 0.0), "right": (0.0, -0.25, 0.0)
+    }
+    for side in SIDES:
         q = np.asarray(pose[side], dtype=np.float64)
         cfg = panda_cfg.copy()
         cfg.prim_path = spec.panda_paths[side]
-        cfg.init_state.pos = (0.0, y, 0.0)
+        cfg.init_state.pos = base_positions[side]
         cfg.init_state.joint_pos = {
             f"panda_joint{index}": float(q[index - 1]) for index in range(1, 8)
         }
@@ -142,11 +187,15 @@ def spawn_native_scene(sim, spec: NativeSceneSpec, pose: dict[str, np.ndarray], 
             children = [str(prim.GetPath()) for prim in stage.Traverse() if str(prim.GetPath()).startswith(spec.panda_paths[side])]
             raise RuntimeError(f"native Panda flange is missing: {spec.panda_paths[side]}/{spec.flange_link}; children={children[:30]}")
 
-    for side, _y in (("left", 0.25), ("right", -0.25)):
+    for side in SIDES:
+        # Use this side's state.  Reusing the last arm-loop value made both
+        # DH116 references receive the right-hand joint vector.
+        q = np.asarray(pose[side], dtype=np.float64)
         hand_path = spec.hand_paths[side]
         hand_prim = stage.DefinePrim(hand_path, "Xform")
         hand_prim.GetReferences().AddReference(str(spec.hand_usd[side]))
         stage.Load()
+        _disable_gravity(stage, hand_path)
         hand_root_path = hand_path
         if not stage.GetPrimAtPath(f"{hand_root_path}/base_link").IsValid():
             children = [str(prim.GetPath()) for prim in stage.Traverse() if str(prim.GetPath()).startswith(hand_path)]
@@ -189,16 +238,41 @@ def spawn_native_scene(sim, spec: NativeSceneSpec, pose: dict[str, np.ndarray], 
         hand.write_joint_state_to_sim(hand_state, torch.zeros_like(hand_state))
         arm.reset()
         hand.reset()
+        target_root = (spec.hand_root_pose or {}).get(side)
+        if target_root is not None:
+            root_state = torch.tensor(
+                [list(target_root)], device=device, dtype=torch.float32
+            )
+            hand.write_root_pose_to_sim(root_state)
     sim.step(render=False)
+    # Apply the reviewed candidate3 palm pose.  The independent root keeps
+    # DH116 separate from the native Panda articulation while the stored
+    # flange-to-palm offset lets later lift motion follow the arm.
+    target_roots = spec.hand_root_pose or {}
     for side in SIDES:
         arm = runtime.arms[side]
+        hand = runtime.hands[side]
         arm.update(1.0 / 240.0)
         try:
             flange_index = arm.body_names.index(spec.flange_link)
         except ValueError as exc:
             raise RuntimeError(f"native Panda flange body is missing: {spec.flange_link}") from exc
         flange_pose = arm.data.body_link_pose_w[0, flange_index].detach().cpu().numpy()
-        _set_root_world_pose(runtime.stage, spec.hand_paths[side], flange_pose)
+        flange_world = _pose_matrix(flange_pose)
+        if side in target_roots:
+            target_root = _pose_matrix(target_roots[side])
+            runtime.hand_mount_offset[side] = flange_world.GetInverse() * target_root
+            _set_root_world_matrix(runtime.stage, spec.hand_paths[side], target_root)
+            continue
+        base_index = hand.body_names.index("base_link")
+        base_pose = hand.data.body_link_pose_w[0, base_index].detach().cpu().numpy()
+        base_world = _pose_matrix(base_pose)
+        runtime.hand_base_local[side] = base_world
+        _set_root_world_matrix(
+            runtime.stage,
+            spec.hand_paths[side],
+            flange_world * base_world.GetInverse(),
+        )
     sim.physics_sim_view.update_articulations_kinematic()
     return runtime
 
@@ -231,7 +305,19 @@ def sync_native_hand_roots(runtime: NativeSceneRuntime) -> None:
         arm.update(1.0 / 240.0)
         flange_index = arm.body_names.index(runtime.spec.flange_link)
         flange_pose = arm.data.body_link_pose_w[0, flange_index].detach().cpu().numpy()
-        _set_root_world_pose(runtime.stage, runtime.spec.hand_paths[side], flange_pose)
+        mount_offset = runtime.hand_mount_offset.get(side)
+        if mount_offset is not None:
+            _set_root_world_matrix(
+                runtime.stage,
+                runtime.spec.hand_paths[side],
+                _pose_matrix(flange_pose) * mount_offset,
+            )
+            continue
+        local_base = runtime.hand_base_local.get(side)
+        if local_base is None:
+            raise RuntimeError(f"missing DH116 base-link mount transform for {side}")
+        _set_root_world_matrix(runtime.stage, runtime.spec.hand_paths[side],
+                               _pose_matrix(flange_pose) * local_base.GetInverse())
 
 
 def candidate3_pose(path: Path) -> dict[str, np.ndarray]:
