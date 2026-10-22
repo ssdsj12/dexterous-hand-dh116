@@ -1,0 +1,29 @@
+{
+  "schema": "dh116-static-pose-v1",
+  "asset_sha256": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0",
+  "layers": {
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/1202d37e93d1_left_panda.usd": "e0d800960987bd3f8c283849a621ee22695eeed0a7fe590a9d9ccb9189cef5b2",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/3046ad2ed855_DH116_right.usd": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/9ad2c00e990b_right_panda.usd": "2362fd5eec61d5ca69f156e0aff5f45c65a7473014cb95c19fa81d87ed9590f0",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+    "/home/xk/coding/dexterous hand/assets/fixed_dual_panda_dh116_v1/fixed_dual_panda_dh116.usd": "eca34c41a23d2fc1aad3cae4623bf62199827782f59c31134c1bf809d9b0b8b0"
+  },
+  "states": {
+    "left": [0.009941420402246349, 0.3578378910257567, -0.33516881943501586, -1.5980253795632269, 0.2554869493478717, 0.7692069198920203, 1.9920991733945532, 0.2532605869287957, 0.39311625952153245, 0.6729924819479286, 0.2, 0.2, 0.2],
+    "right": [-0.22466124308775934, 0.40375036086721366, 0.6148462179041704, -1.5909009972130237, -0.32530326077670724, 0.7464251913704276, 1.1795560446529434, 0.041631976521470146, 0.012912622218025699, 0.6479336645536925, 0.2, 0.2, 0.2]
+  },
+  "source": {
+    "path": "configs/symmetric_grasp_v2/approach.json",
+    "sha256": "24a9782fc62ee5daf457504c63cccd98e669eb7d48265d212a7d70b8d22913db",
+    "operation": "USD-FK bounded Panda IK: translate each palm +0.0005 m in world Z; retain palm rotation and all hand coordinates"
+  },
+  "offline_screen": {
+    "source_clearance_passed": true,
+    "minimum_lower_bound_m": 0.0010119031461844458,
+    "right_thumb_nonfront_lower_bound_m": 0.001038738371460752,
+    "physical_motion_delta_rad": {"panda": 0.0000151, "dh116_full_joint": 0.000031},
+    "motion_qualified": false
+  },
+  "scope": "Nominated direct-close initialization; physical grasp/lift require a new measured trial",
+  "grasp_qualified": false
+}

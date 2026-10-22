@@ -36,6 +36,7 @@ class ParallelJointMPC:
         device: str = "cpu",
         smoothing: float = 0.25,
         grasp_threshold: Optional[float] = None,
+        grasp_fraction: float = 0.65,
     ) -> None:
         self.spec = spec or HandOnlySpec()
         self.device = str(device)
@@ -50,6 +51,9 @@ class ParallelJointMPC:
         self.grasp_threshold = float(self.spec.grasp_threshold if grasp_threshold is None else grasp_threshold)
         if not np.isfinite(self.grasp_threshold):
             raise ValueError("grasp_threshold must be finite")
+        if not np.isfinite(grasp_fraction) or not 0.0 <= grasp_fraction <= 0.75:
+            raise ValueError("grasp_fraction must be finite and in [0, 0.75]")
+        self.grasp_fraction = float(grasp_fraction)
         lower, upper = active_limits()
         self.lower = lower.astype(np.float32)
         self.upper = upper.astype(np.float32)
@@ -76,10 +80,14 @@ class ParallelJointMPC:
         lift = np.clip(wire[:, 1], 0.0, 1.0)
         # Grasp closes from the lower limit toward a stable closure.  Lift
         # progress adds a small symmetric bias while preserving bounds.
-        closure = self.lower + (self.upper - self.lower) * (0.25 + 0.65 * grasp[:, None])
-        lift_bias = (lift[:, None] * 0.10 * (self.upper - self.lower))
-        desired_hand = np.clip(closure + lift_bias, self.lower, self.upper)
-        desired = np.concatenate((desired_hand, desired_hand), axis=1)
+        closure = self.lower + (self.upper - self.lower) * (0.25 + self.grasp_fraction * grasp[:, None])
+        hook_mask = np.tile(np.asarray([1, 0, 1, 0, 0, 1], dtype=np.float32), 2)
+        lift_bias = (lift[:, None] * 0.10 * np.tile(self.upper - self.lower, 2)) * hook_mask
+        # Lift-stage extra curl is focused on thumb and middle-finger hook
+        # joints.  The index/ring/little fingers hold the grasp instead of
+        # continuing to squeeze the whole hand.
+        desired = np.tile(closure, (1, 2)) + lift_bias
+        desired = np.clip(desired, np.tile(self.lower, 2), np.tile(self.upper, 2))
         targets = (1.0 - self.smoothing) * desired + self.smoothing * previous
         lower12 = np.tile(self.lower, 2)
         upper12 = np.tile(self.upper, 2)
@@ -104,9 +112,11 @@ class ParallelJointMPC:
         lift = torch.clamp(wire[:, 1], 0.0, 1.0)
         lower = torch.as_tensor(self.lower, device=device)
         upper = torch.as_tensor(self.upper, device=device)
-        closure = lower + (upper - lower) * (0.25 + 0.65 * grasp.unsqueeze(1))
-        desired_hand = torch.clamp(closure + lift.unsqueeze(1) * 0.10 * (upper - lower), lower, upper)
-        desired = torch.cat((desired_hand, desired_hand), dim=1)
+        closure = lower + (upper - lower) * (0.25 + self.grasp_fraction * grasp.unsqueeze(1))
+        hook_mask = torch.as_tensor(np.tile([1, 0, 1, 0, 0, 1], 2), device=device, dtype=torch.float32)
+        lift_bias = lift.unsqueeze(1) * 0.10 * torch.tile(upper - lower, (2,)) * hook_mask
+        desired = torch.cat((closure, closure), dim=1) + lift_bias
+        desired = torch.clamp(desired, torch.tile(lower, (2,)), torch.tile(upper, (2,)))
         targets = (1.0 - self.smoothing) * desired + self.smoothing * prev
         targets = torch.clamp(targets, torch.tile(lower, (2,)), torch.tile(upper, (2,)))
         phase = torch.where(grasp >= self.grasp_threshold, torch.where(lift > 0.0, torch.ones_like(lift), torch.zeros_like(lift)), torch.zeros_like(lift))
@@ -157,6 +167,99 @@ class ParallelJointMPC:
             )
             return self._torch_plan(tensor_state, torch.as_tensor(prev_np, device=self.device))
         return self._numpy_plan(batched, prev_np)
+
+    def plan_trajectory(
+        self,
+        batch_state: Any,
+        *,
+        grasp_steps: int,
+        lift_steps: int,
+        previous_action: Optional[Any] = None,
+    ) -> tuple[Any, dict[str, Any]]:
+        """Plan complete batched grasp/lift references before execution.
+
+        The leading batch dimension represents independent scenes/episodes;
+        the second trajectory dimension is time.  Grasp progress ramps from
+        zero to one over ``grasp_steps`` and lift progress then ramps from zero
+        to one over ``lift_steps``.  Each MPC step receives the preceding
+        planned action as its reference, including the caller-supplied initial
+        action.  Outputs have shapes ``(batch, grasp_steps + lift_steps, 12)``
+        and per-step diagnostic shapes ``(batch, horizon)``.  Phase is encoded
+        as 0=grasp and 1=lift so diagnostics remain portable to CUDA tensors.
+
+        This is a batched reference-trajectory planner, not a physics-rollout
+        optimizer: it deliberately builds on :meth:`plan` and keeps the whole
+        trajectory on the selected device until returned.
+        """
+        if isinstance(grasp_steps, bool) or not isinstance(grasp_steps, int) or grasp_steps <= 0:
+            raise ValueError("grasp_steps must be a positive integer")
+        if isinstance(lift_steps, bool) or not isinstance(lift_steps, int) or lift_steps <= 0:
+            raise ValueError("lift_steps must be a positive integer")
+
+        state = self._state(batch_state).batched()
+        use_torch = _is_torch(state.hand_poses) or self.device.startswith("cuda")
+        if use_torch:
+            if torch is None:  # pragma: no cover
+                raise RuntimeError("torch is required for tensor trajectory planning")
+            device = torch.device(self.device if self.device.startswith("cuda") else state.hand_poses.device)
+            poses = torch.as_tensor(state.hand_poses, dtype=torch.float32, device=device)
+            joints = torch.as_tensor(state.active_joints, dtype=torch.float32, device=device)
+            previous = torch.as_tensor(
+                state.previous_action if previous_action is None else previous_action,
+                dtype=torch.float32, device=device,
+            )
+        else:
+            poses = np.asarray(state.hand_poses, dtype=np.float32)
+            joints = np.asarray(state.active_joints, dtype=np.float32)
+            previous = np.asarray(
+                state.previous_action if previous_action is None else previous_action,
+                dtype=np.float32,
+            )
+        if previous.ndim == 1:
+            previous = previous.unsqueeze(0) if use_torch else previous[None, :]
+        expected = (state.batch_size, 12)
+        if tuple(previous.shape) != expected:
+            raise ValueError(f"previous_action must have shape (12,) or {expected}")
+        finite = bool(torch.isfinite(previous).all().item()) if use_torch else bool(np.isfinite(previous).all())
+        if not finite:
+            raise ValueError("previous_action contains NaN or infinite values")
+
+        actions = []
+        diagnostic_rows: dict[str, list[Any]] = {"phase": [], "grasp_progress": [],
+                                                  "lift_progress": [], "tracking_cost": []}
+        horizon = grasp_steps + lift_steps
+        for step in range(horizon):
+            if step < grasp_steps:
+                grasp = (step + 1) / grasp_steps
+                lift = 0.0
+                phase = 0
+            else:
+                grasp = 1.0
+                lift = (step - grasp_steps + 1) / lift_steps
+                phase = 1
+            if use_torch:
+                wire = torch.stack((torch.full((state.batch_size,), grasp, device=device),
+                                    torch.full((state.batch_size,), lift, device=device)), dim=-1)
+                step_state = HandOnlyState(poses, previous.reshape(-1, 2, 6), wire, previous)
+            else:
+                wire = np.broadcast_to(np.asarray([[grasp, lift]], dtype=np.float32),
+                                       (state.batch_size, 2)).copy()
+                step_state = HandOnlyState(poses, previous.reshape(-1, 2, 6), wire, previous)
+            action, diagnostics = self.plan(step_state, previous)
+            actions.append(action)
+            diagnostic_rows["phase"].append(
+                torch.full((state.batch_size,), phase, dtype=torch.int64, device=device)
+                if use_torch else np.full((state.batch_size,), phase, dtype=np.int64)
+            )
+            for key in ("grasp_progress", "lift_progress", "tracking_cost"):
+                diagnostic_rows[key].append(diagnostics[key])
+            previous = action
+
+        if use_torch:
+            return torch.stack(actions, dim=1), {key: torch.stack(values, dim=1)
+                                                  for key, values in diagnostic_rows.items()}
+        return np.stack(actions, axis=1), {key: np.stack(values, axis=1)
+                                            for key, values in diagnostic_rows.items()}
 
 
 __all__ = ["ParallelJointMPC"]

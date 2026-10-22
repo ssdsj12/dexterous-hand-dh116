@@ -13,7 +13,8 @@ class GraspEvidenceGate:
     PINCH_INDICES = (0, 1, 3, 4)
     SUPPORT_INDICES = (2, 5)
 
-    def __init__(self,*,material_ids,approach_qualified,minimum_hold_loads_n=None):
+    def __init__(self,*,material_ids,approach_qualified,minimum_hold_loads_n=None,
+                 require_middle_support=True):
         if (approach_qualified is not True or len(material_ids)!=6
                 or any(type(i) is not int or not 0<=i<=40 for i in material_ids)
                 or set(material_ids[:3]) & set(material_ids[3:])):
@@ -23,6 +24,8 @@ class GraspEvidenceGate:
                 or np.any(minimum<.005) or np.any(minimum>3.)):
             raise ValueError('hold preload must be six finite loads in [.005,3] N')
         self.minimum_hold_loads=minimum.copy()
+        if type(require_middle_support) is not bool:raise ValueError('explicit middle-support mode required')
+        self.require_middle_support=require_middle_support
         self.material_ids=tuple(material_ids)
         self.stage='close';self.last_time=None;self.contact_since=None
         self.hold_since=None;self.lift_since=None;self.baseline=None;self.reason=None
@@ -53,14 +56,17 @@ class GraspEvidenceGate:
                                and np.all(load[list(self.SUPPORT_INDICES)] >=
                                           self.minimum_hold_loads[list(self.SUPPORT_INDICES)])
                                and np.all(normal[list(self.SUPPORT_INDICES), 2] >= .5))
-        contact=bool(pinch_contact and support_contact)
-        slip=0. if self.baseline is None else float(np.linalg.norm(anchor-self.baseline,axis=1).max())
+        support_ready=bool(support_contact or not self.require_middle_support)
+        contact=bool(pinch_contact and support_ready)
+        tracked=range(6) if self.require_middle_support else self.PINCH_INDICES
+        slip=0. if self.baseline is None else float(np.linalg.norm(
+            (anchor-self.baseline)[list(tracked)],axis=1).max())
         if not safety_ok or active_constraints:
             self.stage='abort';self.reason='safety failure or forbidden wire constraint'
         elif self.stage in ('hold','lift','finish') and (not contact or slip>.002):
             self.stage='abort';self.reason='contact lost or material slip exceeds 2 mm'
         elif self.stage=='close':
-            if (not pinch_contact or not support_contact
+            if (not pinch_contact or not support_ready
                     or np.any(load[list(self.PINCH_INDICES)] < self.minimum_hold_loads[list(self.PINCH_INDICES)])):
                 self.contact_since=None
             elif self.contact_since is None:self.contact_since=float(time_s)

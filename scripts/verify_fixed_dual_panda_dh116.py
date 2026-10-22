@@ -6,6 +6,7 @@ import math
 import os
 import platform
 import subprocess
+import sys
 from dataclasses import asdict
 from time import perf_counter
 from go2_pvcnn.control.dh116.render_schedule import should_publish_wire
@@ -20,6 +21,7 @@ from go2_pvcnn.control.dh116.touch_first import bounded_handoff
 from go2_pvcnn.control.dh116.speed_profile import GraspSpeedProfile
 from go2_pvcnn.control.dh116.perf_meter import PerfMeter
 from go2_pvcnn.control.dh116.runtime_snapshot import SnapshotStore,ReactionBuffer
+from go2_pvcnn.control.dh116.contact_collection import ContactDecisionCollector
 from go2_pvcnn.control.dh116.approach_wire_mode import wire_dynamics_enabled
 from isaaclab.app import AppLauncher
 
@@ -33,6 +35,15 @@ parser.add_argument('--approach-certificate',type=Path,help='Pinned source-swept
 parser.add_argument('--approach-certificate-sha256')
 parser.add_argument('--closure-pilot',action='store_true',help='Independent initial-touch force-control diagnostic, NOT continuous approach/grasp')
 parser.add_argument('--grasp-sequence',action='store_true',help='Measured settle/approach/close/hold/lift sequence; all physical guards mandatory')
+parser.add_argument('--grasp-entry',choices=('settle','close'),default='settle',
+                    help='Start directly at the nominated grasp pose for a stage-local close/hold/lift trial')
+parser.add_argument('--grasp-contact-mode',choices=('pinch_hook','pinch'),default='pinch_hook',
+                    help='Require middle hooks, or establish a thumb/index pinch before lift')
+parser.add_argument('--hand-mpc',action='store_true',help='Use a hand-only parallel MPC/student for 12 active DH116 joints during close/hold')
+parser.add_argument('--hand-policy',type=Path,help='Optional hand-only teacher/student .pt or legacy JSON checkpoint; otherwise use online contact MPC')
+parser.add_argument('--hand-policy-role',choices=('teacher','student'),default='student',
+                    help='Explicit teacher or student role for the supplied hand checkpoint')
+parser.add_argument('--hand-mpc-update-steps',type=int,default=1000,help='Physics steps between hand MPC target updates during close')
 parser.add_argument('--approach-wire-mode',choices=('dynamic','frozen'),default='dynamic',
                     help='Wire dynamics during approach; frozen keeps settled shape until close, then resumes DeformX')
 parser.add_argument('--symmetric-lift',action='store_true',help='Stage-local measured height synchronization; not a global mirror constraint')
@@ -40,6 +51,9 @@ parser.add_argument('--grasp-speed-profile',choices=('baseline','staged'),defaul
                     help='Opt-in experimental measured-gap speed profile, not hardware rated or grasp qualified')
 parser.add_argument('--restore-state',type=Path,help='Pinned qualified stage initialization; NOT continuous-run certification')
 parser.add_argument('--restore-state-sha256')
+parser.add_argument('--close-initial-state',type=Path,
+                    help='Measured robot/rod initial conditions for a fresh direct-close trial; no imported phase credit')
+parser.add_argument('--close-initial-state-sha256')
 parser.add_argument('--save-stage-states',action='store_true',help='Publish exclusive states at measured qualified transitions')
 parser.add_argument('--coordinated-closure',action='store_true',help='Compensate pad tangent velocity with arm motion while holding palm orientation')
 parser.add_argument('--closure-loads',type=float,nargs=6,help='Explicit simulation normal-force targets: left thumb/index/middle, right thumb/index/middle')
@@ -53,11 +67,17 @@ parser.add_argument('--solver-position-iterations',type=int,choices=range(1,256)
                     help='Explicit diagnostic position iteration count; default unchanged, not a convergence guarantee')
 parser.add_argument('--dynamics-diagnostics',action='store_true',help='Record measured Jacobians, mass matrices and actuation readback')
 parser.add_argument('--motion-prediction-order',type=int,choices=[1,2],default=2)
+parser.add_argument('--mesh-motion-velocity-source',choices=('reported','pose_delta'),default='reported',
+                    help='Use reported solver twist, or first-order actual-pose secants (simulation approximation)')
+parser.add_argument('--mesh-motion-window-steps',type=int,default=1,
+                    help='Trailing actual-pose derivative window; positions and physical timestep remain current')
 parser.add_argument('--steps',type=int,default=1920)
 parser.add_argument('--render-every',type=int,default=10,
                     help='Render every N physics steps; 1 restores baseline, physics and guards remain per step')
 parser.add_argument('--physics-dt',type=float,default=1/240,help='Explicit co-simulation coupling interval in seconds')
-parser.add_argument('--table-wire',action='store_true',help='Free DeformX rod settling only; no hand-wire contacts yet')
+parser.add_argument('--table-wire',action='store_true',help='Enable flexible tabletop wire dynamics; add a contact manifest for hand-wire contacts')
+parser.add_argument('--rod-backend',choices=('auto','cpu','torch_cuda'),default='auto',
+                    help='Cosserat rod solver; auto uses CUDA for table-wire runs, CPU only when explicitly selected or no wire is simulated')
 parser.add_argument('--backend-root',type=Path,default=Path(__file__).resolve().parents[1]/'vendor/DeformX')
 parser.add_argument('--contact-manifest',type=Path)
 parser.add_argument('--contact-manifest-sha256')
@@ -86,6 +106,13 @@ parser.add_argument('--evidence-flush-seconds',type=float,default=.5,
                     help='Buffered evidence flush wall-clock interval')
 AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args()
+sys.path.insert(0,str(args.backend_root.resolve(strict=True)))
+import torch as _torch
+_torch.set_num_threads(1)
+from co_sim.gpu_cosserat import resolve_rod_backend
+args.rod_backend=resolve_rod_backend(args.rod_backend,
+    table_wire=args.table_wire,
+    cuda_available=bool(str(args.device).startswith('cuda') and _torch.cuda.is_available()))
 if not math.isfinite(args.ui_hz) or args.ui_hz<=0:
     raise ValueError('ui hz must be finite and positive')
 if args.evidence_flush_steps<1 or not math.isfinite(args.evidence_flush_seconds) or args.evidence_flush_seconds<=0:
@@ -95,16 +122,38 @@ if args.grasp_speed_profile!='baseline' and not args.grasp_sequence:
     raise ValueError('staged speed requires the guarded grasp sequence')
 if args.approach_wire_mode=='frozen' and not args.grasp_sequence:
     raise ValueError('frozen approach wire mode requires the guarded grasp sequence')
+if args.rod_backend=='torch_cuda' and not args.table_wire:
+    raise ValueError('torch_cuda rod backend requires --table-wire')
 speed_profile=None if args.grasp_speed_profile=='baseline' else GraspSpeedProfile()
 if args.symmetric_lift and not args.grasp_sequence:
     raise ValueError('symmetric lift requires the measured grasp sequence')
+if args.hand_mpc and not args.grasp_sequence:
+    raise ValueError('--hand-mpc requires --grasp-sequence')
+if args.grasp_entry=='close' and (not args.grasp_sequence or args.restore_state):
+    raise ValueError('direct close entry requires grasp sequence and a nominated pose, without a restore checkpoint')
+if bool(args.close_initial_state)!=bool(args.close_initial_state_sha256):
+    raise ValueError('close initial state requires an external SHA')
+if args.close_initial_state and (args.grasp_entry!='close' or args.rod_backend!='torch_cuda'):
+    raise ValueError('measured close initialization requires direct close and the CUDA rod')
+if args.hand_policy is not None and not args.hand_mpc:
+    raise ValueError('--hand-policy requires --hand-mpc')
+if args.hand_mpc_update_steps < 1:
+    raise ValueError('hand-mpc-update-steps must be positive')
+if args.mesh_motion_velocity_source=='pose_delta' and args.motion_prediction_order!=1:
+    raise ValueError('pose-delta motion requires --motion-prediction-order 1')
+if args.mesh_motion_window_steps<1 or (args.mesh_motion_velocity_source!='pose_delta'
+                                      and args.mesh_motion_window_steps!=1):
+    raise ValueError('a positive pose-delta motion window is required')
+if args.hand_policy is not None and not args.hand_policy.is_file():
+    raise ValueError('--hand-policy checkpoint does not exist')
 if bool(args.restore_state)!=bool(args.restore_state_sha256):
     raise ValueError('restore state requires an external SHA')
 if (args.restore_state or args.save_stage_states) and not args.grasp_sequence:
     raise ValueError('stage state options require guarded grasp sequence')
 restore_payload=None
 grasp_mode=args.closure_pilot or args.grasp_sequence
-closure_active=args.closure_pilot
+closure_active=args.closure_pilot or (args.grasp_sequence and args.grasp_entry=='close')
+initial_table_touch=args.closure_pilot or args.grasp_entry=='close'
 grasp_sequence=None
 if args.steps<1:raise ValueError('steps must be positive')
 if not math.isfinite(args.contact_tangential_damping) or args.contact_tangential_damping<0:
@@ -119,7 +168,7 @@ if args.active_pose and (not args.gravity_hold or not args.table_wire or args.pr
 if bool(args.approach_certificate)!=bool(args.approach_certificate_sha256):
     raise ValueError('approach certificate requires external SHA')
 if args.approach_certificate and (not args.active_pose or not args.contact_manifest or not args.point_references
-        or args.disable_contact_reaction or args.steps*args.physics_dt<4.):
+        or args.disable_contact_reaction or (args.grasp_entry=='settle' and args.steps*args.physics_dt<4.)):
     raise ValueError('approach requires pinned initial pose, contacts, point references, reactions and at least 4s')
 if args.closure_pilot and (not args.active_pose or not args.contact_manifest or not args.point_references
         or args.approach_certificate or args.disable_contact_reaction or args.physics_dt>.0001
@@ -143,13 +192,35 @@ try:
     from isaaclab.assets import Articulation,ArticulationCfg
     from isaaclab.actuators import ImplicitActuatorCfg
     from isaaclab.sensors import ContactSensor,ContactSensorCfg
-    from go2_pvcnn.control.dh116.linear_coupling import ACTIVE,JOINTS,expand
+    from go2_pvcnn.control.dh116.linear_coupling import ACTIVE,JOINTS,expand,fold_jacobian
+    from go2_pvcnn.control.dh116.integrated_hand_mpc import IntegratedHandMPC,route_phase_targets
+    from go2_pvcnn.control.dh116.contact_mpc import ContactMPCConfig,ParallelContactMPC,wire_surface_targets
+    from go2_pvcnn.control.dh116.grip_load_reference import GripLoadReference,PreloadTargetHold
+    from go2_pvcnn.control.dh116.hand_clearance import hand_wire_clearance_observations
+    from go2_pvcnn.control.dh116.contact_imitation import load_mounted_policy
+    from go2_pvcnn.control.dh116.mpc_feedback import advance_progress
     from go2_pvcnn.control.dh116.no_load import reference,metrics,contact_metrics
     from go2_pvcnn.control.dh116.usd_kinematics import SideKinematics
     from go2_pvcnn.control.dh116.point_probe import compare_point
     from go2_pvcnn.control.dh116.gravity import compensated_efforts,drive_headroom
     from pxr import Usd
     torch.set_num_threads(1)
+    hand_mpc_controller=None
+    hand_mpc_checkpoint_sha256=None
+    if args.hand_mpc:
+        if args.hand_policy is not None:
+            hand_policy=load_mounted_policy(args.hand_policy,role=args.hand_policy_role,device=args.device,
+                control_dt=args.hand_mpc_update_steps*args.physics_dt)
+            hand_mpc_controller=IntegratedHandMPC(hand_policy)
+            hand_mpc_checkpoint_sha256=hashlib.sha256(args.hand_policy.read_bytes()).hexdigest()
+            result['hand_policy_training']=getattr(hand_policy,'training_metadata',{'training_scope':'legacy_json'})
+        else:
+            hand_mpc_controller=IntegratedHandMPC(ParallelContactMPC(ContactMPCConfig(
+                horizon=16,control_dt=args.hand_mpc_update_steps*args.physics_dt),device=args.device))
+        result['hand_mpc_action_dim']=12
+        result['hand_mpc_arm_state_included']=False
+        result['hand_mpc_prediction_model']=(args.hand_policy_role+'_checkpoint' if args.hand_policy is not None
+                                            else 'linearized_pad_kinematics')
     asset=args.asset_dir/'fixed_dual_panda_dh116.usd'
     manifest=json.loads((args.asset_dir/'manifest.json').read_text())
     if hashlib.sha256(asset.read_bytes()).hexdigest()!=manifest['asset_sha256']:
@@ -157,6 +228,17 @@ try:
     for src in manifest['sources']:
         if hashlib.sha256(Path(src['path']).read_bytes()).hexdigest()!=src['sha256']:
             raise ValueError('source identity mismatch')
+    close_initial_payload=None
+    if args.close_initial_state:
+        from go2_pvcnn.control.dh116.close_initialization import load_close_initialization,robot_initial_arrays
+        close_initial_payload=load_close_initialization(args.close_initial_state,args.close_initial_state_sha256,
+            asset_sha256=manifest['asset_sha256'],contact_manifest_sha256=args.contact_manifest_sha256)
+        if not math.isclose(close_initial_payload.get('hand_stiffness_nm_rad',args.hand_stiffness),
+                            args.hand_stiffness,rel_tol=0.,abs_tol=1e-12):
+            raise ValueError('rebased initial target requires its nominated simulation hand stiffness')
+        result['close_initialization']=dict(source=close_initial_payload['source'],
+            sha256=args.close_initial_state_sha256,imported_phase_evidence=False,
+            scope='fresh physical initialization; explicit controller references only, no stage/dwell or solver-cache restoration')
     point_refs=None; point_rows=[]
     if args.point_references:
         point_refs=json.loads(args.point_references.read_text())
@@ -174,15 +256,36 @@ try:
         source_scene=SourceCollisionScene(Usd.Stage.Open(str(asset)),cache_certificates=args.clearance_certificate_cache)
         initial_actives=load_active_pose(args.active_pose,args.active_pose_sha256,
             manifest['asset_sha256'],source_scene.layer_pins)
-        initial_wire=np.c_[np.full(41,.43),np.linspace(-.25,.25,41),np.full(41,.308 if args.closure_pilot else .318)]
-        result['initial_source_screen']=source_scene.check(initial_actives,initial_wire,permit_pad_contact=args.closure_pilot)
-        if not result['initial_source_screen']['source_clearance_passed']:
-            raise ValueError('initial pose rejected by full source geometry screen')
+        initial_wire=np.c_[np.full(41,.43),np.linspace(-.25,.25,41),np.full(41,.308 if initial_table_touch else .318)]
+        if close_initial_payload is None:
+            result['initial_source_screen']=source_scene.check(initial_actives,initial_wire,permit_pad_contact=closure_active)
+            if not result['initial_source_screen']['source_clearance_passed']:
+                raise ValueError('initial pose rejected by full source geometry screen')
         if args.approach_certificate:
             from go2_pvcnn.control.dh116.approach import load_approach,approach_target
             approach=load_approach(args.approach_certificate,args.approach_certificate_sha256,source_scene.layer_pins)
             if any(not np.allclose(approach[0][s],initial_actives[s],atol=1e-12,rtol=0) for s in initial_actives):
                 raise ValueError('approach start does not match pinned initial pose')
+        if args.grasp_entry=='close':
+            from go2_pvcnn.control.dh116.approach import approach_target
+            # A new physical initialization, with no imported phase evidence.
+            if approach is not None:initial_actives={s:approach[1][s].copy() for s in ('left','right')}
+            else:approach=({s:q.copy() for s,q in initial_actives.items()},
+                           {s:q.copy() for s,q in initial_actives.items()})
+            if close_initial_payload is not None:
+                initial_actives={s:np.array([r['q'][r['joint_names'].index(n)] for n in
+                    [f'{s}_panda_joint{i}' for i in range(1,8)]+list(ACTIVE)])
+                    for s,r in close_initial_payload['robot'].items()}
+                approach=({s:q.copy() for s,q in initial_actives.items()},
+                          {s:q.copy() for s,q in initial_actives.items()})
+            from go2_pvcnn.control.dh116.close_initialization import initial_wire_geometry
+            initial_wire,initial_radius=initial_wire_geometry(close_initial_payload,initial_wire)
+            result['initial_source_screen']=source_scene.check(initial_actives,initial_wire,
+                permit_pad_contact=True,wire_radius=initial_radius)
+            result['initial_source_screen']['wire_geometry_source']=(
+                'restored_physical_state' if close_initial_payload is not None else 'nominal_initialization')
+            if not result['initial_source_screen']['source_clearance_passed']:
+                raise ValueError('nominated direct-close pose failed source geometry screen')
     result['run_config']=dict(dt=dt,steps=args.steps,gravity=args.gravity_hold,
         arm_effort_limit_nm=args.arm_effort_limit,hand_effort_limit_nm=args.hand_effort_limit,
         probe_channel=args.probe_channel,probe_overlap_m=args.probe_overlap_m,
@@ -190,11 +293,22 @@ try:
         external_force_iterations=args.external_force_iterations,
         solver_position_iterations=args.solver_position_iterations,solver_velocity_iterations=4,
         motion_prediction_order=args.motion_prediction_order,
+        mesh_motion_velocity_source=args.mesh_motion_velocity_source,
+        mesh_motion_window_steps=args.mesh_motion_window_steps,
         contact_manifest_sha256=args.contact_manifest_sha256,
         active_pose_sha256=args.active_pose_sha256,
         approach_certificate_sha256=args.approach_certificate_sha256,
         closure_pilot=args.closure_pilot,grasp_sequence=args.grasp_sequence,closure_loads_n=args.closure_loads,
+        hand_mpc=args.hand_mpc,hand_mpc_policy=None if args.hand_policy is None else str(args.hand_policy),
+        preload_feedback='completed_physics_window_v1' if args.hand_mpc else None,
+        hand_mpc_policy_sha256=hand_mpc_checkpoint_sha256,
+        hand_mpc_policy_role=args.hand_policy_role if args.hand_policy else None,
+        hand_mpc_update_steps=args.hand_mpc_update_steps if args.hand_mpc else None,
+        hand_mpc_horizon=16 if args.hand_mpc and args.hand_policy is None else None,
+        grasp_entry=args.grasp_entry,grasp_contact_mode=args.grasp_contact_mode,
+        close_initial_state_sha256=args.close_initial_state_sha256,
         approach_wire_mode=args.approach_wire_mode,
+        rod_backend=args.rod_backend,
         coordinated_closure=args.coordinated_closure,
         speed_profile=None if speed_profile is None else asdict(speed_profile),
         grasp_policy=('touch-first-symmetric-lift-v1' if args.symmetric_lift else
@@ -235,8 +349,32 @@ try:
         import omni.usd
         wire_config=CoSimConfig(n_elem=40,base_length=.5,base_radius=.008,
             density=1000.,youngs_modulus=1e6,shear_modulus_ratio=1.5,py_dt=1e-5,
-            isaac_dt=dt,damping_constant=.01,rod_start=np.array([.43,-.25,.308 if args.closure_pilot else .318]),
+            isaac_dt=dt,damping_constant=.01,rod_start=np.array([.43,-.25,.308 if initial_table_touch else .318]),
             rod_direction=np.array([0.,1.,0.]),rod_normal=np.array([0.,0.,1.]))
+        def make_cuda_rod(config, records=None):
+            from co_sim.gpu_cosserat import GpuRodConfig,TorchCudaCosseratRod
+            rod=TorchCudaCosseratRod(GpuRodConfig(
+                n_elem=config.n_elem,base_length=config.base_length,base_radius=config.base_radius,
+                density=config.density,youngs_modulus=config.youngs_modulus,
+                shear_modulus_ratio=config.shear_modulus_ratio,
+                axial_stretch_stiffening=config.axial_stretch_stiffening,dt=config.py_dt,
+                damping=config.damping_constant,gravity=(0.,0.,-9.81),
+                rod_start=tuple(config.rod_start),rod_direction=tuple(config.rod_direction),
+                rod_normal=tuple(config.rod_normal),table_center=tuple(TABLE_CENTER),
+                table_size=tuple(TABLE_SIZE),contact_stiffness=1e4,contact_damping=10.,
+                friction_coefficient=.5,tangential_damping=args.contact_tangential_damping,
+                contact_subsamples=args.contact_subsamples),device=args.device)
+            if records is not None:
+                import open3d as o3d
+                for channel,record in records.items():
+                    geometry=o3d.io.read_triangle_mesh(str(record['resolved_path']))
+                    if (geometry.is_empty() or not geometry.has_triangles() or
+                            not geometry.is_watertight() or not geometry.is_orientable() or
+                            geometry.is_self_intersecting()):
+                        raise ValueError(f'GPU contact mesh {channel} must be closed, orientable and non-self-intersecting')
+                    rod.register_contact_mesh(channel,np.asarray(geometry.vertices),
+                                              np.asarray(geometry.triangles))
+            return rod
         if args.contact_manifest:
             from co_sim.moving_contact import MovingContactRodEngine,MeshAsset
             from go2_pvcnn.control.dh116.contact_runtime import BODY_NAMES,load_mesh_manifest,mesh_motions,probe_rod_start
@@ -245,15 +383,22 @@ try:
             from go2_pvcnn.control.dh116.prepublish import prepublish_contact_gates
             contact_records=load_mesh_manifest(args.contact_manifest,args.contact_manifest_sha256)
             contact_assets={c:MeshAsset(r['resolved_path'],r['sha256']) for c,r in contact_records.items()}
-            engine=MovingContactRodEngine(wire_config,table_center=TABLE_CENTER,table_size=TABLE_SIZE,meshes=contact_assets,
-                contact_subsamples=args.contact_subsamples,contact_broad_phase=args.contact_broad_phase,
-                velocity_damping_coefficient=args.contact_tangential_damping)
-            result['backend_pins']={str(p):hashlib.sha256(p.read_bytes()).hexdigest()
-                for p in (args.backend_root/'co_sim/moving_contact.py',
-                          args.backend_root/'co_sim/moving_contact_models.py',args.backend_root/'co_sim/free_rod.py',
-                          args.backend_root/'co_sim/table_rod.py',args.backend_root/'elastica/contact_forces.py',
-                          args.backend_root/'elastica/_contact_functions.py',
-                          args.backend_root/'elastica/rigidbody/mesh_rigid_body.py')}
+            if args.rod_backend=='torch_cuda':
+                engine=make_cuda_rod(wire_config,contact_records)
+                result['backend_pins']={str(p):hashlib.sha256(p.read_bytes()).hexdigest()
+                    for p in (args.backend_root/'co_sim/gpu_cosserat.py',
+                              args.backend_root/'co_sim/moving_contact_models.py')}
+                result['gpu_contact_backend']='CUDA Cosserat strain + CUDA table/triangle-mesh contact; Isaac reaction bridge at outer step'
+            else:
+                engine=MovingContactRodEngine(wire_config,table_center=TABLE_CENTER,table_size=TABLE_SIZE,meshes=contact_assets,
+                    contact_subsamples=args.contact_subsamples,contact_broad_phase=args.contact_broad_phase,
+                    velocity_damping_coefficient=args.contact_tangential_damping)
+                result['backend_pins']={str(p):hashlib.sha256(p.read_bytes()).hexdigest()
+                    for p in (args.backend_root/'co_sim/moving_contact.py',
+                              args.backend_root/'co_sim/moving_contact_models.py',args.backend_root/'co_sim/free_rod.py',
+                              args.backend_root/'co_sim/table_rod.py',args.backend_root/'elastica/contact_forces.py',
+                              args.backend_root/'elastica/_contact_functions.py',
+                              args.backend_root/'elastica/rigidbody/mesh_rigid_body.py')}
             result['wire_physics']=dict(length_m=.5,radius_m=.008,elements=40,density_kg_m3=1000.,
                 youngs_modulus_pa=1e6,shear_modulus_ratio=1.5,py_dt_s=1e-5,damping_constant=.01,
                 contact_stiffness_n_m=engine.contact_k,contact_damping=engine.contact_nu,
@@ -288,9 +433,16 @@ try:
                     front_cap_method=g.front_cap_method,partially_clipped_face_ids=g.partially_clipped_face_ids,
                     partition_sha256=g.partition_sha256,
                     geometry_sha256=g.geometry_sha256) for c,g in pad_guards.items()}
-        else:engine=TableRodEngine(wire_config,table_center=TABLE_CENTER,table_size=TABLE_SIZE,
-            contact_subsamples=args.contact_subsamples,contact_broad_phase=args.contact_broad_phase,
-            velocity_damping_coefficient=args.contact_tangential_damping)
+        else:
+            if args.rod_backend=='torch_cuda':
+                engine=make_cuda_rod(wire_config)
+                result['backend_pins']={str(p):hashlib.sha256(p.read_bytes()).hexdigest()
+                    for p in (args.backend_root/'co_sim/gpu_cosserat.py',)}
+                result['gpu_contact_backend']='CUDA Cosserat strain + CUDA table contact'
+            else:
+                engine=TableRodEngine(wire_config,table_center=TABLE_CENTER,table_size=TABLE_SIZE,
+                    contact_subsamples=args.contact_subsamples,contact_broad_phase=args.contact_broad_phase,
+                    velocity_damping_coefficient=args.contact_tangential_damping)
         table=su.CuboidCfg(size=TABLE_SIZE,collision_props=su.CollisionPropertiesCfg())
         table.func('/World/Table',table,translation=TABLE_CENTER)
         mesh=UsdGeom.Mesh.Define(omni.usd.get_context().get_stage(),'/World/CosseratWire')
@@ -299,6 +451,8 @@ try:
         # Visual only: DeformX owns rod/table contacts. No duplicate rigid wire.
         from go2_pvcnn.control.dh116.wire_mesh_publisher import WireMeshPublisher
         publish_wire=WireMeshPublisher(mesh,.008)
+        if close_initial_payload is not None:
+            engine.restore_physical_state(close_initial_payload['rod'])
         if args.grasp_sequence:
             def digest_json(value):
                 return hashlib.sha256(json.dumps(value,sort_keys=True,allow_nan=False).encode()).hexdigest()
@@ -317,7 +471,9 @@ try:
                 result['stage_reset']=dict(source=str(args.restore_state),sha256=args.restore_state_sha256,
                     entry_stage=restore_payload['entry_stage'],imported_evidence=restore_payload['source'],
                     continuous_grasp_qualified=False,local_stages_passed=False)
-        publish_wire(engine.snapshot())
+        def rod_snapshot():
+            return engine.snapshot(device=False) if args.rod_backend=='torch_cuda' else engine.snapshot()
+        publish_wire(rod_snapshot())
     spawn=su.UsdFileCfg(usd_path=str(asset),activate_contact_sensors=True,
         rigid_props=su.RigidBodyPropertiesCfg(disable_gravity=not args.gravity_hold),
         articulation_props=su.ArticulationRootPropertiesCfg(enabled_self_collisions=True,
@@ -344,6 +500,12 @@ try:
         if len(arm.joint_names)!=18 or set(arm.joint_names)!=set(JOINTS)|{f'{side}_panda_joint{i}' for i in range(1,8)}:
             raise ValueError('mounted joint set mismatch')
         arm.write_joint_state_to_sim(arm.data.default_joint_pos.clone(),torch.zeros_like(arm.data.default_joint_vel))
+        if close_initial_payload is not None:
+            initialized=robot_initial_arrays(close_initial_payload['robot'][side],arm.joint_names,
+                arm.data.joint_pos_limits[0].cpu().numpy())
+            arm.write_joint_state_to_sim(
+                torch.tensor(initialized['q'][None],dtype=torch.float32,device=args.device),
+                torch.tensor(initialized['qd'][None],dtype=torch.float32,device=args.device))
         if restore_payload is not None:
             restored=robot_restore_arrays(restore_payload['robot'][side],arm.joint_names,
                 arm.data.joint_pos_limits[0].cpu().numpy(),arm.data.root_state_w[0].cpu().numpy())
@@ -358,6 +520,9 @@ try:
     # before gravity queries/physics, independent of lazy diagnostic pose reads.
     sim.physics_sim_view.update_articulations_kinematic()
     previous_states=None;contact_peak=0.
+    from go2_pvcnn.control.dh116.contact_runtime import PoseDeltaMotionWindow
+    motion_window=(PoseDeltaMotionWindow(dt=dt,steps=args.mesh_motion_window_steps)
+                   if args.mesh_motion_velocity_source=='pose_delta' else None)
     approach_frozen_snapshot=None
     def measured_source_guard(wire_snapshot,wire_path_bound=0.,wire_radius=.008):
         from go2_pvcnn.control.fixed_dual_panda_o6.contact_bridge import normalized_wxyz_to_rotation
@@ -399,18 +564,48 @@ try:
             raise ValueError('actual body source-clearance guard rejected motion')
         return check
     if grasp_mode:
-        result['initial_measured_source_guard']=measured_source_guard(engine.snapshot())
+        result['initial_measured_source_guard']=measured_source_guard(rod_snapshot())
         closure_start=approach[1] if args.grasp_sequence else initial_actives
         closure_targets={s:closure_start[s][7:].copy() for s in arms}
         closure_arm_targets={s:closure_start[s][:7].copy() for s in arms}
+        if close_initial_payload is not None:
+            for s,r in close_initial_payload['robot'].items():
+                closure_targets[s]=np.array([r['target'][r['joint_names'].index(n)] for n in ACTIVE])
+                closure_arm_targets[s]=np.array([r['target'][r['joint_names'].index(f'{s}_panda_joint{i}')] for i in range(1,8)])
         if restore_payload is not None:
             for s,r in restore_payload['robot'].items():
                 closure_targets[s]=np.array([r['target'][r['joint_names'].index(n)] for n in ACTIVE])
                 closure_arm_targets[s]=np.array([r['target'][r['joint_names'].index(f'{s}_panda_joint{i}')] for i in range(1,8)])
+        hand_mpc_previous_action=np.concatenate([closure_targets[s] for s in arms]).astype(np.float32)
+        hand_mpc_targets={s:closure_targets[s].copy() for s in arms}
+        hand_mpc_hold_target={s:closure_targets[s].copy() for s in arms}
+        hand_mpc_grasp_progress=0.0
+        hand_mpc_last_update=-args.hand_mpc_update_steps
+        hand_mpc_last_update_applied=False
+        hand_mpc_training_sample=None
+        hand_collection_phase=None
+        previous_contact_valid=np.zeros(6,dtype=bool)
+        contact_valid_known=np.zeros(6,dtype=bool)
+        hand_preload_held=np.zeros(12,dtype=bool)
+        hand_preload_window_report=None
         previous_loads=np.zeros(6)
+        if close_initial_payload is not None:
+            previous_loads=np.asarray(close_initial_payload.get('contact_loads_n',previous_loads),dtype=float)
+        grip_load_reference=GripLoadReference(np.asarray(args.closure_loads).reshape(2,3),
+            active_mask=([[1,1,0],[1,1,0]] if args.grasp_contact_mode=='pinch' else None),
+            contact_stiffness=engine.contact_k,initial_depth_m=(
+                close_initial_payload.get('controller_reference',{}).get('commanded_penetration_m')
+                if close_initial_payload is not None else None)) if args.hand_mpc else None
+        preload_target_hold=PreloadTargetHold(np.asarray(args.closure_loads).reshape(2,3),
+            active_mask=([[1,1,0],[1,1,0]] if args.grasp_contact_mode=='pinch'
+                         else np.ones((2,3),dtype=bool))) if args.hand_mpc else None
+        if (args.hand_mpc and args.hand_policy is None and close_initial_payload is not None
+                and 'tracking_bias_rad' in close_initial_payload.get('controller_reference',{})):
+            hand_mpc_controller.planner.restore_tracking_bias(
+                close_initial_payload['controller_reference']['tracking_bias_rad'])
         from go2_pvcnn.control.dh116.material_tracking import material_in_palm
         fixed_material_ids=[]
-        initial_nodes=engine.snapshot()['rod_position'].T
+        initial_nodes=rod_snapshot()['rod_position'].T
         for c,ref in selected_refs.items():
             arm=arms[ref['side']];bi=arm.body_names.index(ref['body_name'])
             pose=arm.data.body_link_pose_w[0,bi].cpu().numpy()
@@ -425,7 +620,8 @@ try:
         material_baseline=None;contact_since=None;longest_contact_s=0.;max_material_slip_m=0.
         if args.grasp_sequence:
             grasp_sequence=TabletopGraspSequence(material_ids=fixed_material_ids,target_loads_n=args.closure_loads,
-                                                state_triggered=True,symmetric_lift=args.symmetric_lift,speed_profile=speed_profile)
+                state_triggered=True,symmetric_lift=args.symmetric_lift,speed_profile=speed_profile,
+                entry_stage=args.grasp_entry,require_middle_support=args.grasp_contact_mode=='pinch_hook')
             if restore_payload is not None:grasp_sequence=StageResetSequence(restore_payload,state_pins,
                 state_triggered=True,symmetric_lift=args.symmetric_lift,speed_profile=speed_profile)
             approach_measured=None
@@ -464,13 +660,26 @@ try:
             normal=R@np.array(r['reference_normal_body'])
             wire_config.rod_start,direction=probe_rod_start(point,normal,R[:,0],args.probe_overlap_m)
             wire_config.rod_direction=direction;wire_config.rod_normal=normal
-            engine=MovingContactRodEngine(wire_config,table_center=TABLE_CENTER,table_size=TABLE_SIZE,meshes=contact_assets,
-                contact_subsamples=args.contact_subsamples,contact_broad_phase=args.contact_broad_phase,
-                velocity_damping_coefficient=args.contact_tangential_damping)
-            publish_wire(engine.snapshot())
+            if args.rod_backend=='torch_cuda':
+                engine=make_cuda_rod(wire_config,contact_records)
+            else:
+                engine=MovingContactRodEngine(wire_config,table_center=TABLE_CENTER,table_size=TABLE_SIZE,meshes=contact_assets,
+                    contact_subsamples=args.contact_subsamples,contact_broad_phase=args.contact_broad_phase,
+                    velocity_damping_coefficient=args.contact_tangential_damping)
+            publish_wire(rod_snapshot())
     rows=EvidenceJournal(args.output/'trajectory.jsonl');rows.configure(
         flush_policy=args.evidence_flush_policy,flush_every=args.evidence_flush_steps,
         flush_seconds=args.evidence_flush_seconds)
+    contact_collector=None;decision_rows=None;collector_latest_state=None
+    if args.hand_mpc:
+        contact_collector=ContactDecisionCollector(control_dt_s=args.hand_mpc_update_steps*dt)
+        decision_rows=EvidenceJournal(args.output/'contact_decisions.jsonl')
+        decision_rows.configure(flush_policy=args.evidence_flush_policy,
+            flush_every=args.evidence_flush_steps,flush_seconds=args.evidence_flush_seconds)
+        result['contact_collection']=dict(schema='dh116-contact-decision-v2',
+            path='contact_decisions.jsonl',action_dim=12,arm_state_included=False,
+            outcome_alignment='next_control_observation_or_truncated_terminal',
+            grasp_lift_passed=False)
     max_gravity_effort=0.
     result['initial_state']={side:dict(joint_names=arm.joint_names,
         joints=arm.data.joint_pos[0].cpu().tolist()) for side,arm in arms.items()}
@@ -499,8 +708,9 @@ try:
                 and approach_frozen_snapshot is None):
             # The settle step immediately before approach has already advanced
             # DeformX. Keep that measured state while the robot approaches.
-            approach_frozen_snapshot=engine.snapshot()
+            approach_frozen_snapshot=rod_snapshot()
             previous_states=None
+            if motion_window is not None:motion_window.reset()
         pre_snapshot=snapshot_store.capture_pre(
             step=step,stage=stage_name,sample_time=step*dt,
             values={'stage':stage_name,'step':step})
@@ -508,6 +718,7 @@ try:
             perf_meter.begin_step(step,stage_name,step*dt)
         rod_total_before=timing['rod_solver_s']
         allocation_report=None
+        hand_decision_observation=None
         t=(step+1)*dt
         if args.grasp_sequence:
             closure_active=grasp_sequence.stage in ('close','hold','lift')
@@ -518,11 +729,166 @@ try:
                 commands,handoff_done=bounded_handoff(commands,handoff_seed,dt)
                 for i,s in enumerate(arms):
                     closure_arm_targets[s]=commands[i,:7].copy();closure_targets[s]=commands[i,7:].copy()
-                if handoff_done:handoff_seed=None
-            if closure_active and not handoff_in_progress:
+                if handoff_done:
+                    handoff_seed=None
+                    if args.hand_mpc:
+                        hand_mpc_previous_action=np.concatenate([closure_targets[s] for s in arms]).astype(np.float32)
+                        hand_mpc_targets={s:closure_targets[s].copy() for s in arms}
+                        hand_mpc_hold_target={s:closure_targets[s].copy() for s in arms}
+            hand_mpc_last_update_applied=False
+            hand_mpc_training_sample=None
+            if (args.hand_mpc and closure_active
+                    and not handoff_in_progress
+                    and (step-hand_mpc_last_update>=args.hand_mpc_update_steps
+                         or hand_collection_phase!=grasp_sequence.stage)):
+                hand_decision_previous_action=hand_mpc_previous_action.copy()
+                from go2_pvcnn.control.dh116.mpc_feedback import advance_progress
+                hand_mpc_grasp_progress,_=advance_progress(
+                    hand_mpc_grasp_progress,0.0,
+                    contact_force_n=float(np.max(previous_loads)) if len(previous_loads) else 0.0,
+                    contact_latched=bool(np.any(previous_loads>=1.0)))
+                hand_poses=[];active_joints=[];mpc_pad_positions=[];mpc_pad_jacobians=[];mpc_gaps=[];clearance_bodies=[]
+                for side,arm in arms.items():
+                    base_index=arm.body_names.index('base_link')
+                    pose=arm.data.body_link_pose_w[0,base_index].detach().cpu().numpy()
+                    hand_poses.append(pose[:7])
+                    active_joints.append(arm.data.joint_pos[0,[arm.joint_names.index(n) for n in ACTIVE]].detach().cpu().numpy())
+                    raw=arm.root_physx_view.get_jacobians()[0].detach().cpu().numpy()
+                    side_points=[];side_jacobians=[];side_gaps=[]
+                    for digit in ('thumb','index','middle'):
+                        ref=selected_refs[side+'_'+digit];bi=arm.body_names.index(ref['body_name'])
+                        body_pose=arm.data.body_link_pose_w[0,bi].detach().cpu().numpy()
+                        rotation=normalized_wxyz_to_rotation(body_pose[3:7])
+                        channel=side+'_'+digit
+                        mesh_origin=body_pose[:3]+rotation@np.asarray(contact_records[channel]['body_local_mesh_com_m'])
+                        if args.rod_backend=='torch_cuda':
+                            closest=engine.closest_contact_point(channel,position=mesh_origin,rotation=rotation)
+                            point=closest['point_w'].detach().cpu().numpy()
+                            gap=float(closest['gap_m'])
+                        else:
+                            body=engine.mesh_bodies[channel]
+                            body.position_collection[:,0]=mesh_origin
+                            body.director_collection[:,:,0]=rotation.T
+                            mesh_points,distances,_=body.query_closest_points(rod_snapshot()['rod_position'].T)
+                            point=mesh_points[int(np.argmin(distances))]
+                            gap=float(np.min(distances)-np.max(engine.rod.radius))
+                        hand_jacobian=point_jacobian(raw[bi-1],
+                            point-arm.data.body_com_pos_w[0,bi].detach().cpu().numpy(),
+                            arm.joint_names,side)[:,7:]
+                        side_points.append(point);side_jacobians.append(hand_jacobian)
+                        side_gaps.append(gap)
+                    mpc_pad_positions.append(side_points);mpc_pad_jacobians.append(side_jacobians)
+                    mpc_gaps.append(side_gaps)
+                    hand_columns=[arm.joint_names.index(n) for n in JOINTS]
+                    for path,geometry in source_scene.geometry.items():
+                        if geometry['side']!=side or path in source_scene.pad_bodies:continue
+                        bi=arm.body_names.index(path.rsplit('/',1)[-1])
+                        pose=arm.data.body_link_pose_w[0,bi].detach().cpu().numpy()
+                        body_jacobian=np.zeros((6,6))
+                        if bi>0:
+                            body_jacobian[:3]=point_jacobian(raw[bi-1],
+                                pose[:3]-arm.data.body_com_pos_w[0,bi].detach().cpu().numpy(),
+                                arm.joint_names,side)[:,7:]
+                            body_jacobian[3:]=fold_jacobian(raw[bi-1,3:][:,hand_columns],JOINTS)
+                        clearance_bodies.append(dict(name=path,side=side,vertices=geometry['vertices'],
+                            planes=geometry['planes'],position=pose[:3],rotation=normalized_wxyz_to_rotation(pose[3:7]),
+                            jacobian=body_jacobian,motion_allowance_m=float(geometry['motion_radii']@
+                                np.r_[np.full(7,.151*dt),np.full(11,.31*dt)])))
+                mpc_pad_positions=np.asarray(mpc_pad_positions,dtype=np.float32)
+                mpc_pad_jacobians=np.asarray(mpc_pad_jacobians,dtype=np.float32)
+                if grasp_sequence.stage=='close':
+                    hand_preload_held=preload_target_hold.update(
+                        previous_loads.reshape(2,3),mpc_gaps,contact_valid_known.reshape(2,3))
+                    window_count=preload_target_hold.last_window['sample_count']
+                    hand_preload_window_report=dict(preload_target_hold.last_window,decision_step=step,
+                        first_physics_step=step-window_count if window_count else None,
+                        last_physics_step=step-1 if window_count else None)
+                mpc_penetration=(grip_load_reference.update(previous_loads.reshape(2,3),mpc_gaps,
+                    args.hand_mpc_update_steps*args.physics_dt,held_hands=preload_target_hold.held)
+                    if grasp_sequence.stage=='close'
+                    else grip_load_reference.depth.copy())
+                mpc_target_points=wire_surface_targets(
+                    torch.as_tensor(mpc_pad_positions,device=args.device),
+                    engine.rod_position if args.rod_backend=='torch_cuda' else engine.rod.position_collection,
+                    radius=engine.radius if args.rod_backend=='torch_cuda' else engine.rod.radius,
+                    target_loads=np.asarray(args.closure_loads).reshape(2,3),contact_stiffness=engine.contact_k,
+                    penetration_m=mpc_penetration,
+                    opposed_pinch=False)
+                if args.grasp_contact_mode=='pinch':
+                    mpc_target_points[:,2]=torch.as_tensor(mpc_pad_positions[:,2],device=args.device)
+                    mpc_pad_jacobians[:,2]=0.  # Park the middle finger until transport.
+                mpc_clearance=hand_wire_clearance_observations(clearance_bodies,
+                    np.asarray(rod_snapshot()['rod_position']).T,
+                    radius=float(engine.radius.max()) if args.rod_backend=='torch_cuda' else float(np.max(engine.rod.radius)))
+                if args.grasp_contact_mode=='pinch':
+                    mpc_clearance['clearance_jacobians'][:,[3,4,5,9,10,11]]=0.
+                approach_normals=wire_approach_normals(mpc_pad_positions.reshape(6,3),
+                    np.asarray(rod_snapshot()['rod_position']))
+                closure_normals={c:approach_normals[i] for i,c in enumerate(BODY_NAMES)}
+                # Normal contact wrench -> hand actuator load -> PD equilibrium
+                # offset. Without this term a free-space predictor expects a
+                # loaded hand to finish closing merely by holding its command.
+                mpc_load_offset=(np.einsum('hpcj,hpc,hp->hj',mpc_pad_jacobians,
+                    approach_normals.reshape(2,3,3),previous_loads.reshape(2,3))/args.hand_stiffness)
+                observed_active_velocities=np.asarray([
+                    arm.data.joint_vel[0,[arm.joint_names.index(n) for n in ACTIVE]].cpu().numpy()
+                    for arm in arms.values()])
+                decision_wire=rod_snapshot()
+                hand_decision_observation=dict(hand_q=np.asarray(active_joints),hand_qd=observed_active_velocities,
+                    palm_poses_w=np.asarray(hand_poses),pad_positions_w=mpc_pad_positions,
+                    pad_jacobians=mpc_pad_jacobians,target_points_w=mpc_target_points.detach().cpu().numpy(),
+                    contact_normals_w=approach_normals.reshape(2,3,3),
+                    contact_loads_n=previous_loads.copy(),contact_gaps_m=np.asarray(mpc_gaps),
+                    contact_valid=previous_contact_valid.copy(),contact_valid_known=contact_valid_known.copy(),
+                    target_loads_n=np.asarray(args.closure_loads),
+                    **{key:decision_wire[key] for key in ('rod_position','rod_velocity','rod_director','rod_omega')},
+                    rod_radius_m=(engine.radius.detach().cpu().numpy() if args.rod_backend=='torch_cuda'
+                                  else np.asarray(engine.rod.radius)),
+                    clearances_m=mpc_clearance['clearances'],clearance_jacobians=mpc_clearance['clearance_jacobians'],
+                    clearance_body_names=mpc_clearance['bodies'],
+                    goal=dict(lift_height_m=.035,contact_mode=args.grasp_contact_mode,
+                              preload_held_hands=preload_target_hold.held.tolist(),
+                              preload_window=hand_preload_window_report))
+                if grasp_sequence.stage=='close':
+                    hand_mpc_reference=hand_mpc_previous_action.copy()
+                    hand_mpc_targets_array=hand_mpc_controller.plan(
+                        np.asarray(hand_poses,dtype=np.float32),np.asarray(active_joints,dtype=np.float32),
+                        hand_mpc_grasp_progress,hand_mpc_previous_action,
+                        pad_positions=mpc_pad_positions,pad_jacobians=np.asarray(mpc_pad_jacobians),
+                        target_points=mpc_target_points,actuator_load_offset=mpc_load_offset.reshape(12),
+                        clearances=mpc_clearance['clearances'],
+                        clearance_jacobians=mpc_clearance['clearance_jacobians'],
+                        held_coordinates=hand_preload_held,
+                        complete_observation=hand_decision_observation,contact_phase=grasp_sequence.stage)
+                    hand_mpc_training_sample=dict(
+                        observed_active_joints=np.asarray(active_joints).tolist(),
+                        observed_active_velocities=observed_active_velocities.tolist(),
+                        previous_action=hand_mpc_reference.tolist(),
+                        mpc_action=hand_mpc_targets_array.reshape(12).tolist(),
+                        pad_positions_w=mpc_pad_positions.tolist(),
+                        target_points_w=mpc_target_points.detach().cpu().tolist(),
+                        contact_loads_n=previous_loads.tolist(),contact_gaps_m=mpc_gaps,
+                        commanded_penetration_m=mpc_penetration.tolist(),
+                        actuator_load_offset_rad=mpc_load_offset.tolist(),
+                        clearance_body_names=mpc_clearance['bodies'],
+                        clearances_m=mpc_clearance['clearances'].tolist(),
+                        clearance_jacobians=mpc_clearance['clearance_jacobians'].tolist(),
+                        point_source='actual_closest_mesh_surface_to_wire',
+                        rod_backend=args.rod_backend,arm_state_included=False,
+                        planner_diagnostics={key:(value.detach().cpu().tolist() if hasattr(value,'detach') else value)
+                            for key,value in (hand_mpc_controller.last_diagnostics or {}).items()})
+                    for i,side in enumerate(arms):
+                        hand_mpc_targets[side]=hand_mpc_targets_array[i].copy()
+                        closure_targets[side]=hand_mpc_targets[side].copy()
+                    hand_mpc_previous_action=hand_mpc_targets_array.reshape(-1).copy()
+                    hand_mpc_hold_target={s:hand_mpc_targets[s].copy() for s in arms}
+                    hand_mpc_last_update_applied=True
+                hand_mpc_last_update=step
+                hand_collection_phase=grasp_sequence.stage
+            if closure_active and not handoff_in_progress and not args.hand_mpc:
                 if closure_normals is None and grasp_sequence.stage == 'close':
                     pad_points=[];pad_normals=[]
-                    rod_position=np.asarray(engine.snapshot()['rod_position'])
+                    rod_position=np.asarray(rod_snapshot()['rod_position'])
                     for c in BODY_NAMES:
                         ref=selected_refs[c];arm=arms[ref['side']]
                         bi=arm.body_names.index(ref['body_name'])
@@ -574,12 +940,70 @@ try:
                 for i,side in enumerate(arms):
                     closure_arm_targets[side]+=increments[i,:7]
                     closure_targets[side][:3]+=increments[i,7:]
+            if args.hand_mpc and closure_active and grasp_sequence.stage=='lift' and not handoff_in_progress:
+                from go2_pvcnn.control.dh116.panda_lift import panda_only_transport_increment
+                from go2_pvcnn.control.dh116.contact_frames import point_jacobian
+                velocities=grasp_sequence.transport_velocity(t)
+                velocities=np.asarray(velocities,dtype=np.float64)
+                if velocities.shape==(3,):velocities=np.broadcast_to(velocities,(2,3)).copy()
+                panda_point_jacobians=[];palm_angular_jacobians=[]
+                for side,arm in arms.items():
+                    raw=arm.root_physx_view.get_jacobians()[0].detach().cpu().numpy()
+                    points=[]
+                    for digit in ('thumb','index','middle'):
+                        ref=selected_refs[side+'_'+digit];body_index=arm.body_names.index(ref['body_name'])
+                        pose=arm.data.body_link_pose_w[0,body_index].detach().cpu().numpy()
+                        rotation=normalized_wxyz_to_rotation(pose[3:7])
+                        point=pose[:3]+rotation@np.asarray(ref['point'])
+                        spatial=point_jacobian(raw[body_index-1],
+                            point-arm.data.body_com_pos_w[0,body_index].detach().cpu().numpy(),
+                            arm.joint_names,side)
+                        points.append(spatial[:,:7])
+                    panda_point_jacobians.append(np.asarray(points))
+                    base_index=arm.body_names.index('base_link')
+                    arm_ids=[arm.joint_names.index(f'{side}_panda_joint{j}') for j in range(1,8)]
+                    palm_angular_jacobians.append(raw[base_index-1,3:][:,arm_ids])
+                increments=panda_only_transport_increment(np.asarray(panda_point_jacobians),
+                    np.asarray(palm_angular_jacobians),velocities,dt)
+                for i,side in enumerate(arms):
+                    closure_arm_targets[side]+=increments[i]
         h=reference(0. if args.gravity_hold else t)
         arm_target=np.array(home); arm_target[6]+=(h[2]-.2)*.2
         target_hands={};target_arms={}
         approach_q=None if approach is None else approach_target(*approach,t)
+        if args.grasp_entry=='close':approach_q={s:q.copy() for s,q in approach[1].items()}
         if restore_payload is not None:
             approach_q=approach_target(*approach,grasp_sequence.motion_time(t))
+        hand_targets={}
+        routed_owners=None
+        routed_arm_targets=None
+        if args.hand_mpc:
+            for side in arms:
+                if approach_q is not None:
+                    target_hands[side]=approach_q[side][7:].copy()
+                    target_arms[side]=approach_q[side][:7].copy()
+                hand_targets[side]=target_hands[side].copy()
+            if grasp_sequence.stage in ('settle','approach'):
+                route_phase='approach'
+            elif grasp_sequence.stage=='close':
+                route_phase='close'
+            elif grasp_sequence.stage=='lift':
+                route_phase='lift'
+            else:
+                route_phase='hold'
+            arm_frozen=np.asarray([closure_arm_targets[side] for side in arms],dtype=np.float32)
+            arm_lift=np.asarray([closure_arm_targets[side] for side in arms],dtype=np.float32)
+            hand_mpc_array=np.asarray([hand_mpc_targets[side] for side in arms],dtype=np.float32)
+            hand_hold_array=np.asarray([hand_mpc_hold_target[side] for side in arms],dtype=np.float32)
+            routed_arm_targets,routed_hand_targets,routed_owners=route_phase_targets(
+                route_phase,
+                arm_approach=np.asarray([target_arms[side] for side in arms],dtype=np.float32),
+                arm_lift=arm_lift,arm_frozen=arm_frozen,
+                hand_approach=np.asarray([target_hands[side] for side in arms],dtype=np.float32),
+                hand_mpc=hand_mpc_array,hand_hold=hand_hold_array)
+            for i,side in enumerate(arms):
+                target_arms[side]=routed_arm_targets[i].copy()
+                hand_targets[side]=routed_hand_targets[i].copy()
         for side,arm in arms.items():
             target_hands[side]=h if initial_actives is None else initial_actives[side][7:]
             target_arms[side]=arm_target if initial_actives is None else initial_actives[side][:7]
@@ -626,6 +1050,9 @@ try:
                     dtype=float)
                 target_hands[side]=np.asarray(
                     [live_q[arm.joint_names.index(n)] for n in ACTIVE], dtype=float)
+            if args.hand_mpc:
+                target_hands[side]=hand_targets[side]
+                target_arms[side]=routed_arm_targets[list(arms).index(side)]
             target=dict(zip(JOINTS,expand(target_hands[side])));target.update(zip([f'{side}_panda_joint{i}' for i in range(1,8)],target_arms[side]))
             arm.set_joint_position_target(torch.tensor([[target[n] for n in arm.joint_names]],dtype=torch.float32,device=args.device))
             if args.gravity_hold:
@@ -648,6 +1075,29 @@ try:
         do_render=should_publish_wire(headless=args.headless,now=perf_counter(),
             next_publish=next_wire_publish,ui_hz=args.ui_hz)
         record=dict(step=step,passed=True,sides={})
+        if args.hand_mpc:
+            record['control_ownership']=dict(
+                phase=grasp_sequence.stage,
+                arm_owner=routed_owners['arm'],hand_owner=routed_owners['hand'],
+                arm_target_rad=[target_arms[side].tolist() for side in arms],
+                hand_target_active_rad=[hand_targets[side].tolist() for side in arms],
+                hand_mpc_action_dim=12,hand_mpc_update_steps=args.hand_mpc_update_steps,
+                hand_mpc_updated=hand_mpc_last_update_applied,
+                preload_held_hands=preload_target_hold.held.tolist(),
+                grasp_progress=float(hand_mpc_grasp_progress),
+                student_checkpoint_sha256=hand_mpc_checkpoint_sha256)
+            record['control_ownership']['hand_policy_role']=args.hand_policy_role if args.hand_policy else None
+            if hand_mpc_training_sample is not None:
+                record['hand_mpc_training_sample']=hand_mpc_training_sample
+            if hand_decision_observation is not None:
+                owner=(('hand_'+args.hand_policy_role) if args.hand_policy and stage_name=='close'
+                       else routed_owners['hand'])
+                completed_decision=contact_collector.begin(step=step,time_s=step*dt,token=pre_snapshot.token,
+                    phase=stage_name,owner=owner,observation=hand_decision_observation,
+                    previous_action=hand_decision_previous_action,
+                    action=np.concatenate([hand_targets[s] for s in arms]),
+                    prediction=hand_mpc_controller.last_diagnostics if stage_name=='close' else None)
+                if completed_decision is not None:decision_rows.append(completed_decision,force_flush=True)
         record['pre_snapshot_token']=pre_snapshot.token
         if allocation_report is not None:record['control_allocation']=allocation_report
         source_pre_s=None
@@ -701,7 +1151,9 @@ try:
                     states[c]=BodyState(body,pose[:3],normalized_wxyz_to_rotation(pose[3:7]),
                         com,velocity[:3],velocity[3:],step*dt,f'step-{step}')
                     positions[c]=com
-                motions=mesh_motions(states,offsets,previous_states,dt,args.motion_prediction_order)
+                motions=(motion_window.update(states,offsets) if motion_window is not None else
+                    mesh_motions(states,offsets,previous_states,dt,args.motion_prediction_order,
+                                 velocity_source=args.mesh_motion_velocity_source))
                 rod_start=perf_counter()
                 snapshot,impulses=engine.advance_with_meshes(motions,dt)
                 timing['rod_solver_s']+=perf_counter()-rod_start
@@ -714,6 +1166,14 @@ try:
                     record.update(rod_state={k:np.asarray(snapshot[k]).tolist() for k in
                         ('rod_position','rod_velocity','rod_director','rod_omega')})
                     record['contact_candidate']=dict(reaction_published=False,
+                        motion_velocity_source=('reported_initial' if previous_states is None
+                            else args.mesh_motion_velocity_source),
+                        motion_estimation_interval_s=(dt if motion_window is None else motion_window.interval_s),
+                        mesh_motions={c:dict(position_w=m.position_w.tolist(),rotation_wb=m.rotation_wb.tolist(),
+                            velocity_w=m.velocity_w.tolist(),omega_w=m.omega_w.tolist(),
+                            reported_mesh_velocity_w=(states[c].physical_com_velocity_w+
+                                np.cross(states[c].omega_w,m.position_w-states[c].physical_com_position_w)).tolist(),
+                            reported_omega_w=states[c].omega_w.tolist()) for c,m in motions.items()},
                         impulses={c:dict(linear_w=i.linear_w.tolist(),angular_com_w=i.angular_com_w.tolist(),
                             peak_force_n=i.peak_force_n,duration_s=i.contact_duration_s) for c,i in impulses.items()},
                         mesh_end_poses={c:dict(position_w=b.position_collection[:,0].tolist(),
@@ -736,6 +1196,8 @@ try:
                             element_ids=geometry['element_ids'],
                             contact_duration_s=impulses[c].contact_duration_s,dt=dt)
                     previous_loads=np.array([samples[c]['normal_load_n'] for c in BODY_NAMES])
+                    previous_contact_valid=np.array([samples[c]['valid'] for c in BODY_NAMES],dtype=bool)
+                    contact_valid_known[:]=True
                     max_speed=float(np.linalg.norm(snapshot['rod_velocity'],axis=0).max())
                     if max_speed>2:failures.append('wire speed gate')
                     contact_metrics_before=dict(normal_samples=samples,max_wire_speed_m_s=max_speed)
@@ -747,14 +1209,16 @@ try:
                     if not closure_active:
                         no_contact_failures,no_contact_metrics=prepublish_contact_gates(snapshot,engine.mesh_bodies,motions,
                             impulses=impulses,mode='no-contact',selected_channel=None,max_speed_m_s=2.,
-                            max_pad_penetration_m=.001,radius_m=engine.rod.radius)
+                            max_pad_penetration_m=.001,radius_m=(engine.radius.detach().cpu().numpy()
+                                if args.rod_backend=='torch_cuda' else engine.rod.radius))
                         failures.extend(no_contact_failures)
                         contact_metrics_before['preclosure_no_contact']=no_contact_metrics
                 else:
                     failures,contact_metrics_before=prepublish_contact_gates(snapshot,engine.mesh_bodies,motions,
                         impulses=impulses,mode='single-pad' if args.probe_channel else 'no-contact',
                         selected_channel=args.probe_channel,max_speed_m_s=2.,
-                        max_pad_penetration_m=.001,radius_m=engine.rod.radius)
+                        max_pad_penetration_m=.001,radius_m=(engine.radius.detach().cpu().numpy()
+                            if args.rod_backend=='torch_cuda' else engine.rod.radius))
                 if failures:
                     result['contact_gate_failure']=dict(failures=failures,**contact_metrics_before)
                     raise ValueError('contact gates failed before reaction publish')
@@ -907,14 +1371,20 @@ try:
                     actual_normals.append(normal)
                 nodes=np.asarray(snapshot['rod_position']).T
                 station_heights=[float(np.mean(nodes[np.asarray(fixed_material_ids[i:i+3]),2])) for i in (0,3)]
-                radius=np.asarray(engine.rod.radius)
+                radius=(engine.radius.detach().cpu().numpy() if args.rod_backend=='torch_cuda'
+                        else np.asarray(engine.rod.radius))
                 node_radii=np.r_[radius[0],np.maximum(radius[:-1],radius[1:]),radius[-1]]
                 surface_clearance=float(np.min(nodes[:,2]-node_radii)-(TABLE_CENTER[2]+TABLE_SIZE[2]/2))
                 previous_stage=grasp_sequence.stage
+                if args.hand_mpc and grasp_sequence.stage=='close':
+                    preload_target_hold.observe(previous_loads.reshape(2,3),
+                        np.asarray([samples[c]['gap_m'] for c in BODY_NAMES]).reshape(2,3),
+                        contact_valid_known.reshape(2,3))
                 evidence=grasp_sequence.update(now,settled=bool(record['wire']['passed']),
                     approach_position_errors_m=point_errors,approach_normal_errors_rad=normal_errors,
                     joint_speeds_rad_s=np.array([arm.data.joint_vel[0].cpu().numpy() for arm in arms.values()]),
                     station_heights_m=station_heights,loads_n=previous_loads,
+                    controller_target_loads_n=args.closure_loads if args.hand_mpc else None,
                     surface_gaps_m=[samples[c]['gap_m'] for c in BODY_NAMES],
                     valid_contacts=[samples[c]['valid'] for c in BODY_NAMES],normals=actual_normals,
                     anchors_local=anchors,min_surface_clearance_m=surface_clearance,
@@ -965,6 +1435,16 @@ try:
                     record['saved_stage_state']=dict(path=str(path),sha256=sha,entry_stage=entry)
                     print('DH116_STAGE_SAVED',entry,str(path),sha,flush=True)
         record['post_snapshot_token']=post_snapshot.token
+        if contact_collector is not None and closure_active:
+            collector_latest_state=dict(step=step+1,time_s=(step+1)*dt,token=post_snapshot.token,
+                state=dict(hand_q=[[record['sides'][s]['actual_joint_positions'][record['sides'][s]['joint_names'].index(n)]
+                                   for n in ACTIVE] for s in arms],
+                    hand_qd=[[record['sides'][s]['actual_joint_velocities'][record['sides'][s]['joint_names'].index(n)]
+                              for n in ACTIVE] for s in arms],
+                    contact_loads_n=previous_loads.copy(),
+                    contact_gaps_m=np.array([samples[c]['gap_m'] for c in BODY_NAMES]).reshape(2,3),
+                    contact_valid=previous_contact_valid.copy(),contact_valid_known=contact_valid_known.copy(),
+                    **record['rod_state'],rod_radius_m=np.asarray(radius).copy()))
         evidence_start=perf_counter()
         evidence_stage=record.get('grasp_sequence',{}).get('stage',stage_name)
         phase_changed=(previous_evidence_stage is not None and evidence_stage!=previous_evidence_stage)
@@ -1015,7 +1495,7 @@ try:
             last_loads_n=previous_loads.tolist(),all_four_contact_steps=sum(all(v['valid'] for v in
                 row['contact']['normal_samples'].values()) for row in rows),hold_qualified=False,lift_qualified=False)
     if args.grasp_sequence:
-        continuous_qualified=bool(result['passed']) and restore_payload is None
+        continuous_qualified=bool(result['passed']) and restore_payload is None and args.grasp_entry=='settle'
         result['continuous_grasp']=dict(rows[-1]['grasp_sequence'],grasp_qualified=continuous_qualified)
         if restore_payload is not None:
             result['continuous_grasp']['grasp_lift_passed']=False
@@ -1065,11 +1545,28 @@ finally:
             result['continuous_grasp']['grasp_lift_passed']=False
             result['continuous_grasp']['whole_wire_clear']=False
     if args.grasp_sequence:
+        if args.grasp_entry=='close':
+            result['grasp_only']=(dict(rows[-1]['grasp_sequence'],grasp_qualified=bool(result['passed']))
+                                  if 'rows' in locals() and len(rows) else {})
+            if 'continuous_grasp' in result:result['continuous_grasp']['grasp_lift_passed']=False
         if 'stage_reset' in result:result['stage_reset']['local_stages_passed']=bool(result['passed'])
         result['stage_status']=(grasp_sequence.stage_summary(final_passed=bool(result['passed']))
             if grasp_sequence is not None else dict.fromkeys(('settle','approach','close','hold','lift'),'NOT_RUN'))
     if perf_meter is not None:
         result['performance_profile']=perf_meter.close()
+    if locals().get('contact_collector') is not None:
+        pending=contact_collector.pending
+        latest=collector_latest_state
+        if pending is not None and latest is not None and latest['time_s']>pending['time_s']:
+            finished=contact_collector.finish(**latest,passed=bool(result['passed']),terminal=True,
+                grasp_lift_passed=bool(result.get('grasp_only',{}).get('grasp_lift_passed') and result['passed']))
+            decision_rows.append(finished,force_flush=True)
+        elif pending is not None:
+            result['incomplete_hand_decision']=dict(pending,outcome=None)
+        result['contact_collection']['completed_intervals']=len(decision_rows)
+        result['contact_collection']['grasp_lift_passed']=bool(
+            result.get('grasp_only',{}).get('grasp_lift_passed') and result['passed'])
+        decision_rows.close()
     if 'rows' in locals():rows.close()
     (args.output/'summary.json').write_text(evidence_json(result,indent=2)+'\n')
     print('DH116_MOUNTED',evidence_json(result),flush=True)

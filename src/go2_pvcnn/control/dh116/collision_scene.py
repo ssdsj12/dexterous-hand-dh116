@@ -153,7 +153,8 @@ class SourceCollisionScene:
             local=(wire-t[:3,3])@t[:3,:3]
             wire_bound=float(np.maximum(lo-wire_hi,wire_lo-hi).max()-wire_radius)
             if wire_bound-motion-wire_motion_bound<margin:
-                wire_bound=hull_wire_lower_bound(m['planes'],local,wire_radius,.0005)
+                wire_bound=hull_wire_lower_bound(m['planes'],local,wire_radius,.0005,
+                    refine_below=margin+motion+wire_motion_bound)
             record('wire',path,wire_bound-motion-wire_motion_bound)
         for (pa,(a,na)),(pb,(b,nb)) in combinations(world.items(),2):
             if frozenset((pa,pb)) in self.adjacent:continue

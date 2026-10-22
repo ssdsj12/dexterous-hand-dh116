@@ -84,13 +84,70 @@ class PadRegionGuard:
         patch=check_pad_front(closest,normal,distance,reference_point=self.reference_point,
             reference_normal=self.reference_normal,wire_radius=rounded_radius,
             patch_radius=.006,normal_cosine=float(np.cos(np.pi/6)))
+        patch_allowance=allowance;patch_refinement_levels=0
+        # A sample's distance can be safe while the half-spacing debit makes
+        # its local patch check ambiguous. Tighten the sampling, not the patch
+        # or its 1 mm clearance/penetration requirements. An already observed
+        # violation without the sampling debit must remain a rejection.
+        if not patch['passed']:
+            observed=check_pad_front(closest,normal,distance,reference_point=self.reference_point,
+                reference_normal=self.reference_normal,wire_radius=float(radius+1e-7),
+                patch_radius=.006,normal_cosine=float(np.cos(np.pi/6)))
+            if observed['passed']:
+                local_nodes=(np.asarray(wire_nodes)-p)@R
+                for spacing in (.0001,.000025):
+                    refined,patch_allowance=sample_wire(local_nodes,spacing=spacing)
+                    cp,sd,sn=self.surface_query(refined)
+                    patch=check_pad_front(cp,sn,sd,reference_point=self.reference_point,
+                        reference_normal=self.reference_normal,
+                        wire_radius=float(radius+patch_allowance+1e-7),
+                        patch_radius=.006,normal_cosine=float(np.cos(np.pi/6)))
+                    patch_refinement_levels+=1
+                    if patch['passed']:break
+                    observed=check_pad_front(cp,sn,sd,reference_point=self.reference_point,
+                        reference_normal=self.reference_normal,wire_radius=float(radius+1e-7),
+                        patch_radius=.006,normal_cosine=float(np.cos(np.pi/6)))
+                    if not observed['passed']:break
         distances=self.other.compute_distance(query).numpy().astype(float)
         if not np.isfinite(distances).all():raise ValueError('nonfinite non-front distance')
         bound=float(distances.min()-rounded_radius)
+        nonfront_allowance=allowance
+        refinement_levels=0
+        # The 0.25 mm coarse sampling allowance can make a safe 1.2 mm
+        # clearance look smaller than 1 mm. Refine only this ambiguity, never
+        # the required clearance, front partition, or penetration permission.
+        if bound<.001 and float(distances.min()-radius-1e-7)>=.001:
+            local_nodes=(np.asarray(wire_nodes)-p)@R
+            low=np.minimum(local_nodes[:-1],local_nodes[1:])
+            high=np.maximum(local_nodes[:-1],local_nodes[1:])
+            separation=np.maximum(np.maximum(self._box_min-high,low-self._box_max),0.)
+            segment_bounds=np.linalg.norm(separation,axis=1)-radius-1e-7
+            candidates=np.flatnonzero(segment_bounds<.001)
+            outside=float(np.min(segment_bounds[segment_bounds>=.001],initial=np.inf))
+            for spacing in (.0001,.000025):
+                if not len(candidates):
+                    bound=max(bound,outside)
+                    break
+                refined=[];refined_allowance=0.
+                for i in candidates:
+                    samples,error=sample_wire(local_nodes[i:i+2],spacing=spacing)
+                    refined.append(samples);refined_allowance=max(refined_allowance,error)
+                refined_query=o3d.core.Tensor(np.concatenate(refined).astype(np.float32))
+                refined_distances=self.other.compute_distance(refined_query).numpy().astype(float)
+                if not np.isfinite(refined_distances).all():raise ValueError('nonfinite refined non-front distance')
+                upper=float(refined_distances.min()-radius-1e-7)
+                refined_bound=min(outside,upper-refined_allowance)
+                if refined_bound>bound:bound=refined_bound;nonfront_allowance=refined_allowance
+                refinement_levels+=1
+                if bound>=.001 or upper<.001:break
         failures=list(patch['failures'])
         if bound<.001:failures.append('non-front triangle clearance below 1 mm')
         return dict(passed=not failures,failures=failures,nonfront_lower_bound_m=bound,
                     signed_distance_method=self.signed_distance_method,
                     front_cap_method=self.front_cap_method,partition_sha256=self.partition_sha256,
                     local_patch=patch,sample_allowance_m=allowance,
+                    patch_sampling_allowance_m=patch_allowance,
+                    patch_refinement_levels=patch_refinement_levels,
+                    nonfront_sampling_allowance_m=nonfront_allowance,
+                    nonfront_refinement_levels=refinement_levels,
                     numerical_allowance_m=1e-7,wire_radius_m=float(radius),grasp_qualified=False)

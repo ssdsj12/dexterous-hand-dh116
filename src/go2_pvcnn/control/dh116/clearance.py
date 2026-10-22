@@ -13,19 +13,23 @@ def _points(value):
     return p
 
 
-def hull_wire_lower_bound(planes, nodes, radius, spacing):
+def hull_wire_lower_bound(planes, nodes, radius, spacing, *, refine_below=None, refinement_steps=24):
     """Clearance lower bound for every segment of a radius-thick polyline.
 
     Each unit face plane gives a lower bound on distance to the convex solid.
     Their maximum is 1-Lipschitz. Sampling plus half-spacing subtraction covers
     intermediate points, unlike an endpoint-only collision test.
     Planes must be outward, n*x+b<=0 defining the source convex solid.
+    When requested, near-threshold segments use a convex-envelope bisection
+    with a final Lipschitz error bound instead of denser uniform sampling.
     """
     eq=np.asarray(planes,dtype=float);p=_points(nodes)
     if (eq.ndim!=2 or eq.shape[1]!=4 or len(eq)==0 or not np.isfinite(eq).all()
             or not np.allclose(np.linalg.norm(eq[:,:3],axis=1),1.,rtol=0,atol=1e-9)
             or len(p)<2 or not np.isfinite(radius) or radius<=0
-            or not np.isfinite(spacing) or spacing<=0):
+            or not np.isfinite(spacing) or spacing<=0
+            or (refine_below is not None and not np.isfinite(refine_below))
+            or type(refinement_steps) is not int or refinement_steps<1):
         raise ValueError('invalid planes, radius, spacing or polyline')
     best=np.inf
     for a,b in zip(p[:-1],p[1:]):
@@ -35,7 +39,24 @@ def hull_wire_lower_bound(planes, nodes, radius, spacing):
         count=max(1,int(np.ceil(length/spacing)))
         sample=a+np.linspace(0,1,count+1)[:,None]*(b-a)
         bound=float((sample@eq[:,:3].T+eq[:,3]).max(axis=1).min())
-        best=min(best,bound-length/(2*count)-radius)
+        segment_bound=bound-length/(2*count)-radius
+        if refine_below is not None and segment_bound<refine_below:
+            intercept=a@eq[:,:3].T+eq[:,3]
+            slope=(b-a)@eq[:,:3].T
+            lo=0.;hi=1.
+            for _ in range(refinement_steps):
+                mid=.5*(lo+hi);values=intercept+slope*mid
+                gradient=slope[int(np.argmax(values))]
+                if gradient==0.:
+                    lo=mid;hi=mid;break
+                if gradient>0.:hi=mid
+                else:lo=mid
+            mid=.5*(lo+hi)
+            value=float(np.max(intercept+slope*mid))
+            rounding=64*np.finfo(float).eps*max(1.,float(np.abs(intercept).max()),float(np.abs(slope).max()))
+            refined=value-length*(hi-lo)*.5-radius-rounding
+            segment_bound=max(segment_bound,refined)
+        best=min(best,segment_bound)
     if not np.isfinite(best):raise ValueError('nonfinite derived clearance')
     return float(best)
 

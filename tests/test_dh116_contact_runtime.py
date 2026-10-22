@@ -58,6 +58,61 @@ def test_first_order_prediction_preserves_twist_without_differenced_acceleration
     with pytest.raises(ValueError):mesh_motions(after,offsets,before,.01,prediction_order=0)
 
 
+def test_pose_delta_motion_does_not_move_stationary_geometry_using_reported_solver_twist():
+    offsets={c:[.02,0,0] for c in BODY_NAMES}
+    motions=mesh_motions(states(.0001,'b'),offsets,states(),.0001,
+                         prediction_order=1,velocity_source='pose_delta')
+    for m in motions.values():
+        np.testing.assert_array_equal(m.velocity_w,np.zeros(3))
+        np.testing.assert_array_equal(m.omega_w,np.zeros(3))
+        np.testing.assert_array_equal(m.acceleration_w,np.zeros(3))
+    # No imported pose history on initialization: preserve the reported twist
+    # for the first sample, never infer a stationary hand merely from restart.
+    initial=mesh_motions(states(),offsets,None,.0001,prediction_order=1,velocity_source='pose_delta')
+    for m in initial.values():np.testing.assert_allclose(m.velocity_w,[.1,.24,.3])
+
+
+def test_pose_delta_motion_preserves_actual_translation_rotation_and_mesh_offset():
+    from scipy.spatial.transform import Rotation
+    dt=.0001;R=Rotation.from_rotvec([0,0,.2*dt]).as_matrix()
+    offsets={c:[.02,0,0] for c in BODY_NAMES}
+    old=states();new={c:BodyState(n,[1+.001*dt,2,3],R,[1,2,2.9],[99,99,99],
+                                [99,99,99],dt,'b') for c,n in BODY_NAMES.items()}
+    motions=mesh_motions(new,offsets,old,dt,prediction_order=1,velocity_source='pose_delta')
+    expected=(np.array([.001*dt,0,0])+(R-np.eye(3))@np.array([.02,0,0]))/dt
+    for m in motions.values():
+        np.testing.assert_allclose(m.velocity_w,expected,atol=2e-12,rtol=0)
+        np.testing.assert_allclose(m.omega_w,[0,0,.2],atol=1e-12,rtol=0)
+    with pytest.raises(ValueError,match='first-order'):
+        mesh_motions(new,offsets,old,dt,prediction_order=2,velocity_source='pose_delta')
+
+
+def test_pose_window_rejects_quantization_spikes_without_hiding_real_fast_motion():
+    from go2_pvcnn.control.dh116.contact_runtime import PoseDeltaMotionWindow
+    dt=.0001;offsets={c:[0,0,0] for c in BODY_NAMES}
+    for speed in (.0002,.004):
+        window=PoseDeltaMotionWindow(dt=dt,steps=10)
+        measured=[]
+        for step in range(41):
+            x=np.round(speed*step*dt/2e-7)*2e-7
+            sample={c:BodyState(n,[x,0,0],np.eye(3),[x,0,0],[.01,0,0],[0,0,0],
+                               step*dt,str(step)) for c,n in BODY_NAMES.items()}
+            motions=window.update(sample,offsets)
+            if step>=10:measured.append(motions['right_thumb'].velocity_w[0])
+        np.testing.assert_allclose(measured,speed,atol=1e-15,rtol=0)
+        assert window.interval_s==pytest.approx(.001)
+        if speed>.001:assert min(measured)>.001
+        else:assert max(measured)<.001
+        with pytest.raises(ValueError,match='contiguous'):
+            late={c:BodyState(n,[x,0,0],np.eye(3),[x,0,0],[.01,0,0],[0,0,0],
+                             .0042,'late') for c,n in BODY_NAMES.items()}
+            window.update(late,offsets)
+        window.reset()
+        initial=window.update(states(),offsets)
+        assert window.interval_s==dt
+        np.testing.assert_allclose(initial['right_thumb'].velocity_w,[.1,.2,.3])
+
+
 def test_load_real_manifest_requires_external_pin():
     path=CONTACT
     if not path.exists():pytest.skip('local contact mesh manifest missing')

@@ -81,19 +81,27 @@ must still qualify actual six-channel preload, duration, slip and lift.
         from .speed_profile import ContactSpeedGovernor
         self.speed_governor = None if speed_profile is None else ContactSpeedGovernor(speed_profile)
 
-    def update(self, time_s, loads_n, valid_contacts, *, surface_gaps_m=None):
+    def update(self, time_s, loads_n, valid_contacts, *, surface_gaps_m=None,
+               controller_target_loads_n=None):
         loads = np.asarray(loads_n, dtype=float)
         valid = np.asarray(valid_contacts)
         dt = _time_delta(time_s, self.last_time)
         if (loads.shape != (2, self.channels) or valid.shape != (2, self.channels) or valid.dtype.kind != 'b'
                 or not np.isfinite(loads).all() or np.any(loads < 0)):
             raise ValueError('finite compressive loads and boolean measured contacts required')
+        controller_targets=(None if controller_target_loads_n is None else
+                            np.asarray(controller_target_loads_n,dtype=float))
+        if controller_targets is not None and (controller_targets.shape!=(2,self.channels)
+                or not np.isfinite(controller_targets).all() or np.any(controller_targets<.05)
+                or np.any(controller_targets>3.)):
+            raise ValueError('finite external controller load targets in [.05,3] N required')
         if self.speed_governor is not None:
             gaps = np.asarray(surface_gaps_m, dtype=float)
             if gaps.shape != (2, self.channels) or not np.isfinite(gaps).all():
                 raise ValueError('finite measured surface gaps required for staged speed')
         self.last_time = float(time_s)
         for hand in range(2):
+            if controller_targets is not None:self.targets[hand]=controller_targets[hand]
             thumb = bool(valid[hand, 0] and loads[hand, 0] >= .025)
             pinch = thumb and bool(valid[hand, 1] and loads[hand, 1] >= .025)
             support = self.channels == 3 and bool(valid[hand, 2] and loads[hand, 2] >= .025)
@@ -106,7 +114,7 @@ must still qualify actual six-channel preload, duration, slip and lift.
                 self.since[hand] = None
             phase = self.phases[hand]
             if phase in ('touch', 'oppose'):
-                self.targets[hand] = .05
+                if controller_targets is None:self.targets[hand] = .05
                 qualified = thumb if phase == 'touch' else pinch
                 if not qualified:
                     self.since[hand] = None
@@ -116,7 +124,8 @@ must still qualify actual six-channel preload, duration, slip and lift.
                     self.phases[hand] = 'oppose' if phase == 'touch' else 'preload'
                     self.since[hand] = float(time_s) if phase == 'touch' and pinch else None
             else:
-                self.targets[hand] = np.minimum(self.final_targets[hand], self.targets[hand] + dt)
+                if controller_targets is None:
+                    self.targets[hand] = np.minimum(self.final_targets[hand], self.targets[hand] + dt)
         error = self.targets - loads
         speed = np.clip(.01 * error, -.002, .002)
         speed[np.abs(error) <= .005] = 0.
@@ -140,6 +149,7 @@ must still qualify actual six-channel preload, duration, slip and lift.
             speed = self.speed_governor.update(time_s, force_speeds=speed, loads=loads,
                 valid=valid, gaps=gaps, active=active)
         return dict(phases=self.phases[:], target_loads_n=self.targets.copy(),
+                    preload_target_source='touch_first_ramp' if controller_targets is None else 'controller',
                     normal_speeds_m_s=speed,
                     ready_for_hold=bool(self.phases == ['preload', 'preload']
                                         and np.all(self.targets >= self.final_targets)))

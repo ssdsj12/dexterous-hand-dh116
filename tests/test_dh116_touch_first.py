@@ -88,6 +88,37 @@ def test_preload_ramps_and_contact_loss_prevents_hold():
     assert not r['ready_for_hold'] and r['phases'][1] == 'oppose'
 
 
+def test_external_controller_targets_skip_only_the_unused_ramp_not_contact_dwell():
+    control=TouchFirst(np.ones((2,2)))
+    loads=np.ones((2,2));valid=np.ones((2,2),dtype=bool)
+    for i in range(12):
+        r=control.update(i*.01,loads,valid,controller_target_loads_n=np.ones((2,2)))
+        if i<10:assert not r['ready_for_hold']
+        np.testing.assert_array_equal(r['target_loads_n'],1.)
+    assert r['phases']==['preload','preload'] and r['ready_for_hold']
+    assert r['preload_target_source']=='controller'
+    np.testing.assert_array_equal(r['target_loads_n'],1.)
+    valid[1,1]=False
+    r=control.update(.12,loads,valid,controller_target_loads_n=np.ones((2,2)))
+    assert not r['ready_for_hold'] and r['phases'][1]=='oppose'
+
+
+def test_external_target_is_not_evidence_of_contact():
+    control=TouchFirst(np.ones((2,2)))
+    for i in range(30):
+        r=control.update(i*.01,np.zeros((2,2)),np.zeros((2,2),dtype=bool),
+                         controller_target_loads_n=np.ones((2,2)))
+    assert r['phases']==['touch','touch'] and not r['ready_for_hold']
+
+
+@pytest.mark.parametrize('target',[np.ones(4),np.full((2,2),np.nan),np.full((2,2),4.)])
+def test_invalid_external_target_does_not_advance_evidence_time(target):
+    control=TouchFirst(np.ones((2,2)))
+    with pytest.raises(ValueError):
+        control.update(0.,np.zeros((2,2)),np.zeros((2,2),dtype=bool),controller_target_loads_n=target)
+    assert control.last_time is None
+
+
 def test_overloaded_thumb_retreats_while_index_stays_open():
     control = TouchFirst(np.ones((2, 2)))
     r = control.update(0., np.ones((2, 2)), np.zeros((2, 2), dtype=bool))

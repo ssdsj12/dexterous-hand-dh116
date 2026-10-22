@@ -1,6 +1,7 @@
 """DH116 identities and COM motion adapter for the generic DeformX impulse bridge."""
 import hashlib
 import json
+from collections import deque
 from pathlib import Path
 import numpy as np
 from go2_pvcnn.control.fixed_dual_panda_o6.contact_bridge import BodyState
@@ -58,9 +59,12 @@ def _states(states):
     return next(iter(times)),next(iter(tokens))
 
 
-def mesh_motions(states,offsets,previous,dt,prediction_order=2):
+def mesh_motions(states,offsets,previous,dt,prediction_order=2,*,velocity_source='reported'):
     from co_sim.moving_contact_models import MeshMotion
     if prediction_order not in (1,2):raise ValueError('prediction order must be 1 or 2')
+    if velocity_source not in ('reported','pose_delta'):raise ValueError('invalid motion velocity source')
+    if velocity_source=='pose_delta' and prediction_order!=1:
+        raise ValueError('pose-delta motion requires first-order prediction')
     if not np.isfinite(dt) or dt<=0:raise ValueError('invalid dt')
     now,token=_states(states)
     if tuple(offsets)!=tuple(BODY_NAMES):raise ValueError('wrong offset channels/order')
@@ -74,10 +78,50 @@ def mesh_motions(states,offsets,previous,dt,prediction_order=2):
         if offset.shape!=(3,) or not np.isfinite(offset).all():raise ValueError('invalid COM offset')
         p=s.link_position_w+s.rotation_wb@offset
         v=s.physical_com_velocity_w+np.cross(s.omega_w,p-s.physical_com_position_w)
+        omega=s.omega_w
         a=np.zeros(3);alpha=np.zeros(3)
-        if previous is not None and prediction_order==2:
+        if previous is not None and velocity_source=='pose_delta':
+            from scipy.spatial.transform import Rotation
+            old=previous[channel];old_p=old.link_position_w+old.rotation_wb@offset
+            # Secant twist of the actual collision geometry. PhysX's reported
+            # solver velocity can remain nonzero while its projected position
+            # is stationary. Do not advect a second simulator using that ghost
+            # boundary motion. This first-order interface is a simulation
+            # approximation, not a change to material/contact force parameters.
+            v=(p-old_p)/dt
+            omega=Rotation.from_matrix(s.rotation_wb@old.rotation_wb.T).as_rotvec()/dt
+        elif previous is not None and prediction_order==2:
             old=previous[channel];old_p=old.link_position_w+old.rotation_wb@offset
             old_v=old.physical_com_velocity_w+np.cross(old.omega_w,old_p-old.physical_com_position_w)
             a=(v-old_v)/dt;alpha=(s.omega_w-old.omega_w)/dt
-        result[channel]=MeshMotion(p,s.rotation_wb,v,s.omega_w,a,alpha)
+        result[channel]=MeshMotion(p,s.rotation_wb,v,omega,a,alpha)
     return result
+
+
+class PoseDeltaMotionWindow:
+    """Causal first-order boundary twist at measured-pose precision.
+
+    Positions stay current. Only their derivative uses the available trailing
+    window; neither the rod timestep nor the contact acceptance threshold changes.
+    """
+    def __init__(self,*,dt,steps):
+        if not np.isfinite(dt) or dt<=0 or type(steps) is not int or steps<1:
+            raise ValueError('positive motion timestep and window steps required')
+        self.dt=float(dt);self.history=deque(maxlen=steps);self.interval_s=self.dt
+
+    def reset(self):
+        self.history.clear();self.interval_s=self.dt
+
+    def update(self,states,offsets):
+        now,_=_states(states)
+        if self.history:
+            latest,_=_states(self.history[-1])
+            if not np.isclose(now-latest,self.dt,atol=1e-12,rtol=1e-9):
+                raise ValueError('pose-motion window requires contiguous actual samples')
+            before=self.history[0]
+            start,_=_states(before)
+            interval=now-start
+        else:before=None;interval=self.dt
+        result=mesh_motions(states,offsets,before,interval,prediction_order=1,velocity_source='pose_delta')
+        self.history.append(states);self.interval_s=float(interval)
+        return result

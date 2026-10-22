@@ -1,0 +1,182 @@
+{
+  "scope": "static CUDA collision-hull calibration; physical grasp unqualified",
+  "source_pose_sha256": "bc0f972ada18177604ccd7844a4c891da3133aaa48e47f1a71b8e2658eb8a809",
+  "source_reference_sha256": "10406c3a199630ed8508270825a0168d5d3eb4524b25bd3de90ddc64787c0160",
+  "source_manifest_sha256": "305a8d141ac3f0a19f62251b5e875be25e6aae5c997fdda9e76b88d04775c735",
+  "channels": {
+    "left_thumb": {
+      "reference_shift_m": 0.008111190016757768,
+      "point_w": [
+        0.4405987122556929,
+        0.19978045446135564,
+        0.309395176551825
+      ],
+      "normal_w": [
+        -0.991319987955869,
+        -0.016001424086164198,
+        -0.1304938155867574
+      ],
+      "initial_gap_m": 0.002691514732339634
+    },
+    "left_index": {
+      "reference_shift_m": 0.006386467694793519,
+      "point_w": [
+        0.4197235329376601,
+        0.1994373379573411,
+        0.3094012188098023
+      ],
+      "normal_w": [
+        0.9906954047250162,
+        0.016585107174553106,
+        -0.13508349002281878
+      ],
+      "initial_gap_m": 0.002372983475372301
+    },
+    "right_thumb": {
+      "reference_shift_m": 0.006696240073694748,
+      "point_w": [
+        0.4392239960403026,
+        -0.19937243259494003,
+        0.30963017459773173
+      ],
+      "normal_w": [
+        -0.9844245836178923,
+        -0.02528751393901685,
+        -0.17397925395725597
+      ],
+      "initial_gap_m": 0.0013699367059721163
+    },
+    "right_index": {
+      "reference_shift_m": 0.005999445894269473,
+      "point_w": [
+        0.42052292629002086,
+        -0.20033497348712415,
+        0.30927251415931256
+      ],
+      "normal_w": [
+        0.9910887009336385,
+        -0.005819896234748147,
+        -0.13307635285613165
+      ],
+      "initial_gap_m": 0.0015622861011849037
+    }
+  },
+  "pad_regions": {
+    "left_thumb": {
+      "passed": true,
+      "failures": [],
+      "nonfront_lower_bound_m": 0.0045861820291769224,
+      "signed_distance_method": "convex-halfspaces",
+      "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+      "partition_sha256": "edfd76890b59c241803eb2424a5532ce77c8cb73aa2512d50d39b6670124ae89",
+      "local_patch": {
+        "passed": true,
+        "failures": [],
+        "front_samples": 45,
+        "max_penetration_m": 0.0,
+        "min_nonfront_clearance_m": 0.005019132803990415
+      },
+      "sample_allowance_m": 0.0002500000000000002,
+      "numerical_allowance_m": 1e-07,
+      "wire_radius_m": 0.008078624226723938,
+      "grasp_qualified": false
+    },
+    "left_index": {
+      "passed": true,
+      "failures": [],
+      "nonfront_lower_bound_m": 0.0047166399232630475,
+      "signed_distance_method": "convex-halfspaces",
+      "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+      "partition_sha256": "86de2c04be49fe1db1a3bd701823fd69dd3e74609b7f2c369a5d6490b27b3133",
+      "local_patch": {
+        "passed": true,
+        "failures": [],
+        "front_samples": 40,
+        "max_penetration_m": 0.0,
+        "min_nonfront_clearance_m": 0.004610909387831085
+      },
+      "sample_allowance_m": 0.0002500000000000002,
+      "numerical_allowance_m": 1e-07,
+      "wire_radius_m": 0.008081799946224238,
+      "grasp_qualified": false
+    },
+    "left_middle": {
+      "passed": true,
+      "failures": [],
+      "nonfront_lower_bound_m": 0.05657636911674626,
+      "signed_distance_method": "convex-halfspaces",
+      "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+      "partition_sha256": "3b55e66751ed519be2a0d9b1db1503b9a95e80e50eae35aea7f1623db9d716a2",
+      "local_patch": {
+        "passed": true,
+        "failures": [],
+        "front_samples": 0,
+        "max_penetration_m": 0.0,
+        "min_nonfront_clearance_m": 0.0565763704150072
+      },
+      "sample_allowance_m": 0.0002500000000000002,
+      "numerical_allowance_m": 1e-07,
+      "wire_radius_m": 0.00808289218610637,
+      "grasp_qualified": false
+    },
+    "right_thumb": {
+      "passed": true,
+      "failures": [],
+      "nonfront_lower_bound_m": 0.0031841558434954724,
+      "signed_distance_method": "convex-halfspaces",
+      "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+      "partition_sha256": "e77f8cbb229fa2cfc0a84388143bff2d0e5a7c9da0ce69a67585ed454c0b990f",
+      "local_patch": {
+        "passed": true,
+        "failures": [],
+        "front_samples": 43,
+        "max_penetration_m": 0.0,
+        "min_nonfront_clearance_m": 0.003982923292111421
+      },
+      "sample_allowance_m": 0.0002500000000000002,
+      "numerical_allowance_m": 1e-07,
+      "wire_radius_m": 0.00807867652412738,
+      "grasp_qualified": false
+    },
+    "right_index": {
+      "passed": true,
+      "failures": [],
+      "nonfront_lower_bound_m": 0.00416528205792949,
+      "signed_distance_method": "convex-halfspaces",
+      "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+      "partition_sha256": "49d7d11060d92cdf7d755c8255ac34bc7d789e3b6ed1fb358d848ce72a50decc",
+      "local_patch": {
+        "passed": true,
+        "failures": [],
+        "front_samples": 39,
+        "max_penetration_m": 0.0,
+        "min_nonfront_clearance_m": 0.0038083703387658263
+      },
+      "sample_allowance_m": 0.0002500000000000002,
+      "numerical_allowance_m": 1e-07,
+      "wire_radius_m": 0.008081799946224238,
+      "grasp_qualified": false
+    },
+    "right_middle": {
+      "passed": true,
+      "failures": [],
+      "nonfront_lower_bound_m": 0.05330303103729374,
+      "signed_distance_method": "convex-halfspaces",
+      "front_cap_method": "connected-inscribed-icosphere3-clipped-cap",
+      "partition_sha256": "9fd5db8ba82e2059b7b526c0baf01e46b27370b10349ce6e84da9bc15750dbc1",
+      "local_patch": {
+        "passed": true,
+        "failures": [],
+        "front_samples": 0,
+        "max_penetration_m": 0.0,
+        "min_nonfront_clearance_m": 0.05330303032626689
+      },
+      "sample_allowance_m": 0.0002500000000000002,
+      "numerical_allowance_m": 1e-07,
+      "wire_radius_m": 0.008082892186106375,
+      "grasp_qualified": false
+    }
+  },
+  "pad_regions_passed": true,
+  "grasp_qualified": false
+}

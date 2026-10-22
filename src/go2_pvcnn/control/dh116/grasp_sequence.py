@@ -16,22 +16,31 @@ def validate_continuous_options(args):
     required=('active_pose','active_pose_sha256','approach_certificate',
               'approach_certificate_sha256','point_references','contact_manifest',
               'contact_manifest_sha256','coordinated_closure','gravity_hold','table_wire')
+    entry=getattr(args,'grasp_entry','settle')
+    if entry not in ('settle','close'):raise ValueError('grasp entry must be settle or close')
+    if entry=='close':
+        required=tuple(k for k in required if k not in ('approach_certificate',
+            'approach_certificate_sha256','coordinated_closure'))
     loads=np.asarray([] if args.closure_loads is None else args.closure_loads,dtype=float)
     if (args.closure_pilot or args.probe_channel or args.disable_contact_reaction
             or not all(getattr(args,k) for k in required)
             or not np.isfinite(args.physics_dt) or not 0<args.physics_dt<=.0001
-            or args.steps*args.physics_dt<=5.1 or loads.shape!=(6,)
+            or (entry=='settle' and args.steps*args.physics_dt<=5.1) or args.steps<1 or loads.shape!=(6,)
             or not np.isfinite(loads).all() or np.any(loads<.05) or np.any(loads>3.)):
         raise ValueError('continuous grasp requires pinned approach, six loads in [.05,3] N, coordinated reaction control, dt<=100us and >5.1s')
 
 
 class TabletopGraspSequence:
-    def __init__(self,*,material_ids,target_loads_n,state_triggered=False,symmetric_lift=False,speed_profile=None):
+    def __init__(self,*,material_ids,target_loads_n,state_triggered=False,symmetric_lift=False,speed_profile=None,
+                 entry_stage='settle',require_middle_support=True):
         from .speed_profile import GraspSpeedProfile
         if speed_profile is not None and (not isinstance(speed_profile,GraspSpeedProfile)
                 or not state_triggered or speed_profile.lift_m_s>.01):
             raise ValueError('staged speed requires measured control and lift <=10 mm/s')
         self.speed_profile=speed_profile
+        if entry_stage not in ('settle','close'):raise ValueError('invalid grasp entry stage')
+        self.initial_entry_stage=entry_stage
+        self.require_middle_support=require_middle_support
         targets=np.asarray(target_loads_n,dtype=float)
         if (targets.shape!=(6,) or not np.isfinite(targets).all()
                 or np.any(targets<.005/.9) or np.any(targets>3.)):
@@ -56,6 +65,10 @@ class TabletopGraspSequence:
         self.lift_speed=.005 if speed_profile is None else speed_profile.lift_m_s
         self.transport_coordinator=SynchronizedTransport(max_speed_m_s=self.lift_speed) if symmetric_lift else None
         self.synchronization_output=None
+        if entry_stage=='close':
+            self.stage='close'
+            self.gate=GraspEvidenceGate(material_ids=self.material_ids,approach_qualified=True,
+                minimum_hold_loads_n=self.minimum_loads,require_middle_support=require_middle_support)
 
     def _result(self):
         result=dict(self.last_grasp)
@@ -76,7 +89,14 @@ class TabletopGraspSequence:
 
     def update(self,time_s,*,settled,approach_position_errors_m,approach_normal_errors_rad,
                station_heights_m,loads_n,valid_contacts,normals,anchors_local,
-               min_surface_clearance_m,safety_ok,active_constraints,joint_speeds_rad_s=None,surface_gaps_m=None):
+               min_surface_clearance_m,safety_ok,active_constraints,joint_speeds_rad_s=None,surface_gaps_m=None,
+               controller_target_loads_n=None):
+        controller_targets=(None if controller_target_loads_n is None else
+                            np.asarray(controller_target_loads_n,dtype=float))
+        if controller_targets is not None and (controller_targets.shape!=(6,)
+                or not np.isfinite(controller_targets).all() or np.any(controller_targets<.05)
+                or np.any(controller_targets>3.)):
+            raise ValueError('six finite external controller load targets in [.05,3] N required')
         if self.speed_profile is not None:
             gaps=np.asarray(surface_gaps_m,dtype=float)
             if gaps.shape!=(6,) or not np.isfinite(gaps).all():
@@ -102,6 +122,8 @@ class TabletopGraspSequence:
                 or (self.last_time is not None and not 0<time_s-self.last_time<=.01+1e-12)):
             raise ValueError('sequence evidence must be contiguous and advance')
         self.last_time=float(time_s)
+        if self.initial_entry_stage=='close' and self.settled_heights is None:
+            self.settled_heights=heights.copy()
         if self.stage=='abort':return self._result()
         if not safety_ok or active_constraints:
             self.stage='abort';self.reason='safety failure or forbidden wire constraint'
@@ -127,14 +149,15 @@ class TabletopGraspSequence:
                 self.stage='abort';self.reason='measured approach position or normal failed'
                 return self._result()
             self.gate=GraspEvidenceGate(material_ids=self.material_ids,approach_qualified=True,
-                minimum_hold_loads_n=self.minimum_loads)
+                minimum_hold_loads_n=self.minimum_loads,require_middle_support=self.require_middle_support)
             self.stage='close'
         if self.gate is not None:
             previous=self.stage
             gate_valid=valid
             if self.state_triggered and self.stage=='close':
                 self.touch_output=self.touch.update(time_s,load.reshape(2,3),valid.reshape(2,3),
-                    surface_gaps_m=None if self.speed_profile is None else gaps.reshape(2,3))
+                    surface_gaps_m=None if self.speed_profile is None else gaps.reshape(2,3),
+                    controller_target_loads_n=None if controller_targets is None else controller_targets.reshape(2,3))
                 # Preserve measured contacts in logs; withhold qualification until
                 # touch/opposition and target ramp have actually completed.
                 if not self.touch_output['ready_for_hold']:gate_valid=np.zeros(6,dtype=bool)
@@ -147,7 +170,8 @@ class TabletopGraspSequence:
             if self.symmetric_lift and self.stage=='lift':
                 try:
                     self.synchronization_output=self.transport_coordinator.update(time_s,
-                        rises_m=self.last_rise,contacts_valid=valid.reshape(2,3).all(axis=1),direction=1)
+                        rises_m=self.last_rise,contacts_valid=(valid.reshape(2,3).all(axis=1)
+                            if self.require_middle_support else valid.reshape(2,3)[:,:2].all(axis=1)),direction=1)
                 except ValueError as error:
                     self.stage='abort';self.reason=str(error)
                     self.gate.stage='abort';self.gate.reason=self.reason
@@ -183,4 +207,6 @@ class TabletopGraspSequence:
         for phase,passed in zip(phases,completed):
             result[phase]='PASS' if passed else ('FAIL' if attempted else 'NOT_RUN')
             attempted=bool(passed)
+        if self.initial_entry_stage=='close':
+            result['settle']='INITIALIZED';result['approach']='NOT_RUN'
         return result

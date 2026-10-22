@@ -10,12 +10,15 @@ from .mpc_feedback import to_numpy
 
 
 class IntegratedHandMPC:
-    """Adapt the existing 12D hand planner to the mounted two-hand scene."""
+    """Adapt a hand-only MPC planner or student policy to the mounted scene."""
 
     def __init__(self, planner: Any) -> None:
-        if not callable(getattr(planner, "plan", None)):
-            raise TypeError("planner must expose plan(state, previous_action)")
+        if not (callable(getattr(planner, "plan", None))
+                or callable(getattr(planner, "plan_contact", None))
+                or callable(getattr(planner, "predict", None))):
+            raise TypeError("controller must expose plan_contact, plan or predict")
         self.planner = planner
+        self.last_diagnostics = None
 
     def plan(
         self,
@@ -23,6 +26,16 @@ class IntegratedHandMPC:
         active_joints: Any,
         grasp_progress: float,
         previous_action: Any,
+        *,
+        pad_positions: Any = None,
+        pad_jacobians: Any = None,
+        target_points: Any = None,
+        actuator_load_offset: Any = None,
+        clearances: Any = None,
+        clearance_jacobians: Any = None,
+        complete_observation: Any = None,
+        contact_phase: str = 'close',
+        held_coordinates: Any = None,
     ) -> np.ndarray:
         """Return bounded active joint targets shaped ``(2, 6)``.
 
@@ -39,18 +52,49 @@ class IntegratedHandMPC:
                 or not np.isfinite(grasp_progress)
                 or not 0.0 <= grasp_progress <= 1.0):
             raise ValueError("invalid integrated hand MPC observations")
-        state = HandOnlyState(
-            hand_poses=poses,
-            active_joints=joints,
-            wire_features=np.asarray([grasp_progress, 0.0], dtype=np.float32),
-            previous_action=previous,
-        )
-        action, _diagnostics = self.planner.plan(state, previous)
-        result = to_numpy(action)
+        held=np.zeros(12,dtype=bool) if held_coordinates is None else np.asarray(held_coordinates)
+        if held.shape!=(12,) or held.dtype.kind!='b':
+            raise ValueError('held_coordinates requires 12 boolean hand-only coordinates')
+        if callable(getattr(self.planner, "plan_contact", None)):
+            if any(value is None for value in (pad_positions, pad_jacobians, target_points)):
+                raise ValueError("contact MPC requires measured pad positions, hand Jacobians and targets")
+            contact_input=dict(
+                active_joints=joints, previous_action=previous,
+                pad_positions=pad_positions, pad_jacobians=pad_jacobians,
+                target_points=target_points)
+            if actuator_load_offset is not None:contact_input['actuator_load_offset']=actuator_load_offset
+            if held_coordinates is not None:contact_input['held_coordinates']=held
+            if clearances is not None or clearance_jacobians is not None:
+                contact_input.update(clearances=clearances,clearance_jacobians=clearance_jacobians)
+            if getattr(self.planner,'requires_complete_observation',False):
+                contact_input.update(complete_observation=complete_observation,phase=contact_phase)
+            action, self.last_diagnostics = self.planner.plan_contact(**contact_input)
+            result = to_numpy(action).reshape(12)
+        elif callable(getattr(self.planner, "predict", None)):
+            # Student checkpoints were trained on active-joint state, previous
+            # action, and grasp progress only (25 values); Panda state is never
+            # part of the policy input.
+            observation = np.concatenate((joints.reshape(-1), previous,
+                                          np.asarray([grasp_progress], dtype=np.float32)))
+            result = to_numpy(self.planner.predict(observation))
+        else:
+            state = HandOnlyState(
+                hand_poses=poses,
+                active_joints=joints,
+                wire_features=np.asarray([grasp_progress, 0.0], dtype=np.float32),
+                previous_action=previous,
+            )
+            action, _diagnostics = self.planner.plan(state, previous)
+            result = to_numpy(action)
         if result.shape == (1, 12):
             result = result[0]
         if result.shape != (12,) or not np.isfinite(result).all():
             raise ValueError("hand MPC must return one finite 12D active-joint target")
+        # Learned policies share the measured preload handoff. This does not
+        # freeze measured q or erase physical contact Jacobians from the state.
+        result=np.where(held,previous,result)
+        if self.last_diagnostics is not None:
+            self.last_diagnostics['held_coordinates']=held.copy()
         return result.reshape(2, 6).astype(np.float32, copy=True)
 
 
