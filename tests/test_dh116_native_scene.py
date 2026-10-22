@@ -7,7 +7,9 @@ import pytest
 from go2_pvcnn.control.dh116.native_scene import (
     NativeSceneSpec,
     candidate3_pose,
+    default_native_scene_spec,
     validate_scene_spec,
+    wire_orientation_wxyz,
 )
 
 
@@ -35,17 +37,17 @@ def test_scene_spec_rejects_combined_asset_and_duplicate_hands():
 
 
 def test_native_scene_uses_two_distinct_dh116_usd_paths():
-    left = ROOT / "assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd"
-    right = ROOT / "assets/fixed_dual_panda_dh116_v1/dependencies/3046ad2ed855_DH116_right.usd"
-    spec = NativeSceneSpec(
-        "/World/DH116DualPandaScene",
-        {"left": "/World/LeftPanda", "right": "/World/RightPanda"},
-        {"left": "/World/LeftDH116", "right": "/World/RightDH116"},
-        {"left": left, "right": right},
-        "panda_link8",
-    )
+    spec = default_native_scene_spec(ROOT)
     validate_scene_spec(spec)
     assert spec.hand_usd["left"].name == "d134680ab619_DH116_left.usd"
     assert spec.hand_usd["right"].name == "3046ad2ed855_DH116_right.usd"
     assert spec.hand_usd["left"] != spec.hand_usd["right"]
+    assert spec.flange_link == "panda_hand"
+
+
+def test_wire_orientation_is_a_numeric_wxyz_tuple():
+    orientation = wire_orientation_wxyz()
+    assert isinstance(orientation, tuple)
+    assert len(orientation) == 4
+    assert all(isinstance(value, float) for value in orientation)
 
