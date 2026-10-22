@@ -4,14 +4,14 @@
 
 **Goal:** Build and visibly validate a clean Isaac scene containing two Isaac-native Panda arms, two separately mounted DH116 V2.0 hands, the tabletop wire, and the candidate3 pose followed by direct close→hold→lift execution.
 
-**Architecture:** The scene loader owns only asset composition and explicit Panda-flange-to-DH116 mounting. A pose/stage controller owns candidate3 joint mapping and close/hold/lift commands. Evidence code records asset identity, per-side joint state, stage, contact, wire height, and screenshots. The old combined USD and per-link visual pose writer remain available for historical replay but are not called by the new entry point.
+**Architecture:** The scene loader owns asset composition and explicit Panda-flange-to-DH116 root mounting. Each DH116 remains an independent world-root articulation; only its root prim is aligned to the native Panda flange, so PhysX does not create nested articulations. A pose/stage controller owns candidate3 joint mapping and close/hold/lift commands. Evidence code records asset identity, per-side joint state, stage, contact, wire height, and screenshots. The old combined USD and per-link visual pose writer remain available for historical replay but are not called by the new entry point.
 
 **Tech Stack:** IsaacLab `FRANKA_PANDA_CFG`, Isaac Sim USD composition, DH116 V2.0 USD assets under `assets/fixed_dual_panda_dh116_v1/dependencies`, PyTorch/NumPy state mapping, pytest.
 
 ## Global Constraints
 
 - Use `runs/forward_feasibility3/pose.json` as the only initial pose source for this scene; do not substitute the 10-21 pose.
-- Panda uses IsaacLab's native Franka/Panda articulation; DH116 left and right are independent USD assets.
+- Panda uses IsaacLab's native Franka/Panda articulation; DH116 left and right are independent world-root USD articulations whose roots follow the corresponding native `panda_hand` pose.
 - Do not load `assets/fixed_dual_panda_dh116_v1/fixed_dual_panda_dh116.usd` in the new scene.
 - Do not call `visual_pose_sync` or write transforms directly to individual robot links.
 - Do not run approach; the stage sequence starts at the saved close state and proceeds close→hold→lift.
@@ -106,7 +106,7 @@ Expected: FAIL because `default_native_scene_spec` is not defined.
 
 - [ ] **Step 3: Implement explicit composition**
 
-Clone `isaaclab_assets.robots.franka.FRANKA_PANDA_CFG` twice with prim paths `/World/LeftPanda` and `/World/RightPanda`, use the candidate3 first seven joints for each articulation, and disable the built-in Panda gripper actuators/visibility so no second hand is displayed. Spawn `DH116_left.usd` and `DH116_right.usd` as separate references below the corresponding Panda flange with the explicit DH116 mounting transform. The new script must never import the combined USD path or `visual_pose_sync`.
+Clone `isaaclab_assets.robots.franka.FRANKA_PANDA_CFG` twice with prim paths `/World/LeftPanda` and `/World/RightPanda`, use the candidate3 first seven joints for each articulation, and disable the built-in Panda gripper actuators/visibility so no second hand is displayed. Spawn `DH116_left.usd` and `DH116_right.usd` as separate world-root references at `/World/LeftDH116` and `/World/RightDH116`, create independent DH116 articulations, and update only each hand root prim to the corresponding native `panda_hand` world pose. The new script must never import the combined USD path, create nested articulations, or call `visual_pose_sync`.
 
 - [ ] **Step 4: Run composition tests and compile**
 

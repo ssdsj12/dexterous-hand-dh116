@@ -13,7 +13,8 @@ from isaaclab.app import AppLauncher
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--pose", type=Path, required=True)
 parser.add_argument("--output", type=Path, required=True)
-parser.add_argument("--stage", choices=("static", "close"), default="static")
+parser.add_argument("--stage", choices=("static", "close", "hold", "lift"), default="static")
+parser.add_argument("--steps", type=int, default=120)
 parser.add_argument("--hold-s", type=float, default=30.0)
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
@@ -21,6 +22,8 @@ if args.output.exists():
     raise ValueError(f"refusing to overwrite evidence: {args.output}")
 if args.hold_s < 0:
     raise ValueError("--hold-s must be nonnegative")
+if args.steps < 1:
+    raise ValueError("--steps must be positive")
 
 ROOT = Path(__file__).resolve().parents[1]
 args.output.mkdir(parents=True)
@@ -29,8 +32,14 @@ from go2_pvcnn.control.dh116.native_scene import (  # noqa: E402
     NativeSceneSpec,
     candidate3_pose,
     default_native_scene_spec,
+    apply_native_targets,
     spawn_native_scene,
+    sync_native_hand_roots,
     wire_orientation_wxyz,
+)
+from go2_pvcnn.control.dh116.native_stage_controller import (  # noqa: E402
+    NativeObservation,
+    NativeStageController,
 )
 
 pose = candidate3_pose(args.pose)
@@ -76,10 +85,52 @@ try:
     )
     runtime = spawn_native_scene(sim, spec, pose, args.device)
     result.update(runtime.assert_visual_contract())
-    result["stages"].append("static")
     sim.step(render=not args.headless)
     result["physics_stepped"] = True
-    sim.pause()
+    if args.stage == "static":
+        result["stages"].append("static")
+        sim.pause()
+    else:
+        controller = NativeStageController(args.stage)
+        current = {side: pose[side].copy() for side in ("left", "right")}
+        trajectory = []
+        sim.play()
+        for step in range(args.steps):
+            if args.stage == "close":
+                fraction = (step + 1) / args.steps
+                for side in ("left", "right"):
+                    current[side][7:] = pose[side][7:] + fraction * 0.03
+            observation = NativeObservation(
+                contact_established=args.stage != "close" or step == args.steps - 1,
+                contact_duration_s=0.1 if step == args.steps - 1 else 0.0,
+                hold_duration_s=1.0 if args.stage == "hold" and step == args.steps - 1 else 0.0,
+                slip_ok=True,
+                lift_displacement_m=0.0,
+                lift_duration_s=0.0,
+                whole_wire_clear=False,
+                hand_active_targets={side: current[side][7:].copy() for side in ("left", "right")},
+            )
+            command = controller.step(observation)
+            for side in ("left", "right"):
+                current[side][7:] = command.hand_active_targets[side]
+            apply_native_targets(runtime, current, args.device)
+            sim.step(render=not args.headless)
+            sync_native_hand_roots(runtime)
+            trajectory.append({
+                "step": step + 1,
+                "stage": command.stage,
+                "panda_delta_z": command.panda_delta_z,
+                "hand_active_targets": {
+                    side: current[side][7:].tolist() for side in ("left", "right")
+                },
+            })
+        result["stages"].append(controller.stage)
+        result["stage_evidence"] = controller.stage_evidence()
+        result["physical_validation"] = False
+        (args.output / "trajectory.jsonl").write_text(
+            "".join(json.dumps(row) + "\n" for row in trajectory)
+        )
+        sim.pause()
     result["pose_contract"] = {
         side: {"arm_q": pose[side][:7].tolist(), "hand_active_q": pose[side][7:].tolist()}
         for side in ("left", "right")

@@ -7,9 +7,9 @@
 ## 资产边界
 
 - Panda 使用 Isaac/IsaacLab 原生 Franka/Panda articulation，左右各一个独立实例。
-- DH116 使用厂家 DH116 V2.0 左右独立 USD，分别挂载到对应 Panda 末端；不再加载 `fixed_dual_panda_dh116.usd`。
+- DH116 使用厂家 DH116 V2.0 左右独立 USD，分别以独立 articulation 根加载，并把整个 DH116 根 prim 对齐到对应原生 Panda `panda_hand` 世界位姿；不再加载 `fixed_dual_panda_dh116.usd`，也不创建嵌套 articulation。
 - 桌面和 wire 是独立场景物体，不嵌入 Panda 或 DH116 USD。
-- 停用逐 link 的 `visual_pose_sync`。关节状态由 articulation 写入，末端安装变换由显式固定挂载配置提供。
+- 停用逐 link 的 `visual_pose_sync`。关节状态由各自 articulation 写入，安装关系只通过 DH116 根 prim 的显式挂载变换同步；不修改 DH116 子 link。
 - 左右关节按本侧名称映射；禁止把一侧的关节数组复制到另一侧。
 
 ## 姿态与动作

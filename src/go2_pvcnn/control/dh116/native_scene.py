@@ -203,6 +203,37 @@ def spawn_native_scene(sim, spec: NativeSceneSpec, pose: dict[str, np.ndarray], 
     return runtime
 
 
+def apply_native_targets(runtime: NativeSceneRuntime, pose: dict[str, np.ndarray], device: str) -> None:
+    """Write one independent arm/hand target state for each side."""
+    import torch
+
+    from .linear_coupling import JOINTS, expand
+
+    for side in SIDES:
+        q = np.asarray(pose[side], dtype=np.float32)
+        arm = runtime.arms[side]
+        hand = runtime.hands[side]
+        arm_state = arm.data.default_joint_pos.clone()
+        for name in arm.joint_names:
+            if name.startswith("panda_joint") and name[-1:].isdigit():
+                joint_index = int(name[-1])
+                if 1 <= joint_index <= 7:
+                    arm_state[0, arm.joint_names.index(name)] = float(q[joint_index - 1])
+        hand_state = torch.tensor(expand(q[7:]), device=device, dtype=torch.float32)[None]
+        arm.write_joint_state_to_sim(arm_state, torch.zeros_like(arm_state))
+        hand.write_joint_state_to_sim(hand_state, torch.zeros_like(hand_state))
+
+
+def sync_native_hand_roots(runtime: NativeSceneRuntime) -> None:
+    """Align each independent DH116 root prim to its Panda flange pose."""
+    for side in SIDES:
+        arm = runtime.arms[side]
+        arm.update(1.0 / 240.0)
+        flange_index = arm.body_names.index(runtime.spec.flange_link)
+        flange_pose = arm.data.body_link_pose_w[0, flange_index].detach().cpu().numpy()
+        _set_root_world_pose(runtime.stage, runtime.spec.hand_paths[side], flange_pose)
+
+
 def candidate3_pose(path: Path) -> dict[str, np.ndarray]:
     """Load the reviewed candidate3 pose without changing its values."""
     payload = json.loads(Path(path).read_text())
