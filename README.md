@@ -1,5 +1,17 @@
 # DH116 独立工作目录
 
+## 2026-10-23 阶段快照：`10-23`
+
+当前分支基于 `10-22`，上传目标为 `ssdsj12/dexterous-hand-dh116`。本次保存当前工作区的源码、测试与方案修改，保留历史双臂工具；当前桌面实验入口仅生成双 DH116 手、桌面和刚性线材代理，不添加机器臂。
+
+- 新增 hand-only MPC 参考残差 PPO 实验入口、阶段奖励、安全检查、运行时 mimic、姿态/预览同步，以及候选抓取、预载与恢复规划模块。模块存在不代表完整物理闭环已经验证。
+- 当前修正：张手初始化、按下降距离平滑靠齐参考关节姿态、逐物理子步移动根部、接触停止锁存与桌面净空约束；桌面入口默认 PGS，控制 60 Hz、物理 240 Hz。奖励和安全阈值未放宽。
+- 本地实际 Isaac 证据：`tabletop_open_guarded_pgs_20261023a` 与 `tabletop_open_guarded_default_20261023b` 均运行约 15 秒，在接触后保持并最终超时。最低净空 8.86 mm，记录最大 mimic 误差 0.00613 rad、指尖力 0.78 N。仅验证该确定性下降/保持轨迹，未完成 close/lift，PPO 更新数为 0。
+- 本次上传前重新执行 `bash scripts/python.sh -m pytest tests/test_dh116_tabletop_task.py tests/test_dh116_runtime_mimic.py -q`：9 passed、1 skipped（Isaac schema 插件依赖）。未重跑全仓库测试，不声称全量通过；其他模块作为开发快照保留。
+- 下一步：接触后的闭合/提升与探索动作稳定性、独立训练准入条件；现有训练门槛仍要求成功基线，尚未改成仅要求物理稳定。
+
+`runs/`、`archive/`、运行日志、缓存和密钥不上传。新入口的 `--pose-summary` 仍需本地运行产物，部分资产路径绑定本机；此快照不保证新机器克隆后直接复现。详细记录见 [稳定性调查](docs/tabletop_stability_20261023.md)。下方为历史阶段，不代表当前 hand-only 已抓取成功。
+
 ## 2026-10-22 GitHub阶段快照：`10-22`
 
 上传目标：[ssdsj12/dexterous-hand-dh116，10-22分支](https://github.com/ssdsj12/dexterous-hand-dh116/tree/10-22)。本次从当前`10-21`工作状态新建分支，保留既有提交历史，不覆盖远程`10-21`。

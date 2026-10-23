@@ -8,7 +8,7 @@ import platform
 import subprocess
 import sys
 from dataclasses import asdict
-from time import perf_counter
+from time import perf_counter,sleep
 from go2_pvcnn.control.dh116.render_schedule import should_publish_wire
 from pathlib import Path
 from go2_pvcnn.control.dh116.evidence_json import dumps as evidence_json
@@ -24,6 +24,7 @@ from go2_pvcnn.control.dh116.runtime_snapshot import SnapshotStore,ReactionBuffe
 from go2_pvcnn.control.dh116.contact_collection import ContactDecisionCollector
 from go2_pvcnn.control.dh116.approach_wire_mode import wire_dynamics_enabled
 from isaaclab.app import AppLauncher
+from go2_pvcnn.control.dh116.reference_view import camera_preset
 
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--asset-dir',type=Path,required=True)
@@ -31,6 +32,8 @@ parser.add_argument('--output',type=Path,required=True)
 parser.add_argument('--point-references',type=Path,help='Optional calibrated source points for COM Jacobian comparison')
 parser.add_argument('--active-pose',type=Path,help='Pinned static initial pose diagnostic; no trajectory or grasp claim')
 parser.add_argument('--active-pose-sha256')
+parser.add_argument('--pose-lock-tolerance-rad',type=float,default=.12,
+                    help='Maximum DH116 active-joint deviation from the pinned candidate pose during MPC')
 parser.add_argument('--approach-certificate',type=Path,help='Pinned source-swept prepose-to-open-grasp approach; no closure')
 parser.add_argument('--approach-certificate-sha256')
 parser.add_argument('--closure-pilot',action='store_true',help='Independent initial-touch force-control diagnostic, NOT continuous approach/grasp')
@@ -98,6 +101,8 @@ parser.add_argument('--perf-flush-steps',type=int,default=1000,
                     help='Flush performance rows after this many steps when profiling')
 parser.add_argument('--ui-hz',type=float,default=15.,
                     help='Wall-clock wire GUI publication rate; physics still steps every iteration')
+parser.add_argument('--display-hold-s',type=float,default=0.,
+                    help='Keep the Isaac window open after the run for visual inspection; no physics is advanced')
 parser.add_argument('--evidence-flush-policy',choices=('audit','buffered'),default='audit',
                     help='Evidence durability policy; audit flushes each row')
 parser.add_argument('--evidence-flush-steps',type=int,default=512,
@@ -115,6 +120,10 @@ args.rod_backend=resolve_rod_backend(args.rod_backend,
     cuda_available=bool(str(args.device).startswith('cuda') and _torch.cuda.is_available()))
 if not math.isfinite(args.ui_hz) or args.ui_hz<=0:
     raise ValueError('ui hz must be finite and positive')
+if not math.isfinite(args.pose_lock_tolerance_rad) or not 0. < args.pose_lock_tolerance_rad <= 1.:
+    raise ValueError('pose lock tolerance must be finite and in (0,1] radians')
+if not math.isfinite(args.display_hold_s) or args.display_hold_s<0:
+    raise ValueError('display hold must be finite and nonnegative')
 if args.evidence_flush_steps<1 or not math.isfinite(args.evidence_flush_seconds) or args.evidence_flush_seconds<=0:
     raise ValueError('evidence flush settings must be positive')
 validate_continuous_options(args)
@@ -131,6 +140,8 @@ if args.hand_mpc and not args.grasp_sequence:
     raise ValueError('--hand-mpc requires --grasp-sequence')
 if args.grasp_entry=='close' and (not args.grasp_sequence or args.restore_state):
     raise ValueError('direct close entry requires grasp sequence and a nominated pose, without a restore checkpoint')
+if args.grasp_entry=='close' and args.active_pose and args.approach_certificate:
+    raise ValueError('candidate pose direct close cannot import an approach certificate')
 if bool(args.close_initial_state)!=bool(args.close_initial_state_sha256):
     raise ValueError('close initial state requires an external SHA')
 if args.close_initial_state and (args.grasp_entry!='close' or args.rod_backend!='torch_cuda'):
@@ -195,6 +206,8 @@ try:
     from go2_pvcnn.control.dh116.linear_coupling import ACTIVE,JOINTS,expand,fold_jacobian
     from go2_pvcnn.control.dh116.integrated_hand_mpc import IntegratedHandMPC,route_phase_targets
     from go2_pvcnn.control.dh116.contact_mpc import ContactMPCConfig,ParallelContactMPC,wire_surface_targets
+    from go2_pvcnn.control.dh116.adaptive_force_controller import AdaptiveForceController
+    from go2_pvcnn.control.dh116.recovery_planner import diagnose_lift
     from go2_pvcnn.control.dh116.grip_load_reference import GripLoadReference,PreloadTargetHold
     from go2_pvcnn.control.dh116.hand_clearance import hand_wire_clearance_observations
     from go2_pvcnn.control.dh116.contact_imitation import load_mounted_policy
@@ -221,6 +234,9 @@ try:
         result['hand_mpc_arm_state_included']=False
         result['hand_mpc_prediction_model']=(args.hand_policy_role+'_checkpoint' if args.hand_policy is not None
                                             else 'linearized_pad_kinematics')
+        # Every fresh verifier invocation is a new episode; discard any
+        # history/warm-start state that a mounted policy may carry.
+        hand_mpc_controller.reset()
     asset=args.asset_dir/'fixed_dual_panda_dh116.usd'
     manifest=json.loads((args.asset_dir/'manifest.json').read_text())
     if hashlib.sha256(asset.read_bytes()).hexdigest()!=manifest['asset_sha256']:
@@ -249,13 +265,20 @@ try:
         models={side:SideKinematics(model_stage,side) for side in ('left','right')}
     dt=args.physics_dt
     initial_actives=None
+    pose_lock=None
     approach=None
     if args.active_pose:
         from go2_pvcnn.control.dh116.collision_scene import SourceCollisionScene
-        from go2_pvcnn.control.dh116.pose_artifact import load_active_pose
+        from go2_pvcnn.control.dh116.pose_lock import load_pose_lock
         source_scene=SourceCollisionScene(Usd.Stage.Open(str(asset)),cache_certificates=args.clearance_certificate_cache)
-        initial_actives=load_active_pose(args.active_pose,args.active_pose_sha256,
-            manifest['asset_sha256'],source_scene.layer_pins)
+        pose_lock=load_pose_lock(args.active_pose,args.active_pose_sha256,
+            manifest['asset_sha256'],source_scene.layer_pins,tolerance_rad=args.pose_lock_tolerance_rad)
+        initial_actives={s:q.copy() for s,q in pose_lock.states.items()}
+        result['pose_lock']=dict(source_pose=str(args.active_pose),
+            source_pose_sha256=args.active_pose_sha256,
+            active_reference=pose_lock.active_reference.tolist(),
+            tolerance_rad=pose_lock.tolerance_rad,
+            scope='candidate3-only fresh direct-close MPC neighborhood')
         initial_wire=np.c_[np.full(41,.43),np.linspace(-.25,.25,41),np.full(41,.308 if initial_table_touch else .318)]
         if close_initial_payload is None:
             result['initial_source_screen']=source_scene.check(initial_actives,initial_wire,permit_pad_contact=closure_active)
@@ -273,9 +296,14 @@ try:
             else:approach=({s:q.copy() for s,q in initial_actives.items()},
                            {s:q.copy() for s,q in initial_actives.items()})
             if close_initial_payload is not None:
-                initial_actives={s:np.array([r['q'][r['joint_names'].index(n)] for n in
+                loaded_actives={s:np.array([r['q'][r['joint_names'].index(n)] for n in
                     [f'{s}_panda_joint{i}' for i in range(1,8)]+list(ACTIVE)])
                     for s,r in close_initial_payload['robot'].items()}
+                if pose_lock is not None:
+                    loaded_reference=np.concatenate([loaded_actives[s][7:] for s in ('left','right')])
+                    if np.max(np.abs(loaded_reference-pose_lock.active_reference)) > pose_lock.tolerance_rad:
+                        raise ValueError('close initial state is outside the pinned candidate pose neighborhood')
+                initial_actives=loaded_actives
                 approach=({s:q.copy() for s,q in initial_actives.items()},
                           {s:q.copy() for s,q in initial_actives.items()})
             from go2_pvcnn.control.dh116.close_initialization import initial_wire_geometry
@@ -297,6 +325,7 @@ try:
         mesh_motion_window_steps=args.mesh_motion_window_steps,
         contact_manifest_sha256=args.contact_manifest_sha256,
         active_pose_sha256=args.active_pose_sha256,
+        pose_lock_tolerance_rad=args.pose_lock_tolerance_rad if pose_lock is not None else None,
         approach_certificate_sha256=args.approach_certificate_sha256,
         closure_pilot=args.closure_pilot,grasp_sequence=args.grasp_sequence,closure_loads_n=args.closure_loads,
         hand_mpc=args.hand_mpc,hand_mpc_policy=None if args.hand_policy is None else str(args.hand_policy),
@@ -334,7 +363,8 @@ try:
     sim=su.SimulationContext(su.SimulationCfg(dt=dt,device=args.device,
         physx=su.PhysxCfg(enable_external_forces_every_iteration=args.external_force_iterations)))
     if not args.headless:
-        sim.set_camera_view(eye=(1.35, -1.35, 1.05), target=(.36, 0., .32))
+        view = camera_preset("perspective")
+        sim.set_camera_view(eye=view.eye, target=view.target)
         light=su.DomeLightCfg(intensity=2000.)
         light.func('/World/DemoLight',light)
     engine=None
@@ -591,6 +621,12 @@ try:
         previous_loads=np.zeros(6)
         if close_initial_payload is not None:
             previous_loads=np.asarray(close_initial_payload.get('contact_loads_n',previous_loads),dtype=float)
+        adaptive_target_loads_n=np.asarray(args.closure_loads,dtype=float).copy()
+        adaptive_force_controller=AdaptiveForceController(
+            adaptive_target_loads_n,
+            max_loads_n=np.minimum(3.,1.5*adaptive_target_loads_n),
+            min_loads_n=np.maximum(.05,.5*adaptive_target_loads_n),
+            rate_limit_n_s=1.,preload_step_n=.1)
         grip_load_reference=GripLoadReference(np.asarray(args.closure_loads).reshape(2,3),
             active_mask=([[1,1,0],[1,1,0]] if args.grasp_contact_mode=='pinch' else None),
             contact_stiffness=engine.contact_k,initial_depth_m=(
@@ -690,6 +726,7 @@ try:
             max_force=arm.root_physx_view.get_dof_max_forces()[0].cpu().tolist(),
             max_velocity=arm.root_physx_view.get_dof_max_velocities()[0].cpu().tolist()) for side,arm in arms.items()}
     handoff_seed=None
+    palm_lift_targets=None
     closure_normals=None
     timing=dict(control_s=0.,wire_s=0.,rod_solver_s=0.,wire_visual_s=0.,
                 isaac_step_s=0.,validation_s=0.,steps=0,rendered_steps=0)
@@ -703,6 +740,8 @@ try:
         check_stop_request(args.output)
         tick_start=perf_counter()
         stage_name=getattr(grasp_sequence,'stage','diagnostic')
+        if stage_name!='lift':
+            palm_lift_targets=None
         wire_step_enabled=wire_dynamics_enabled(stage_name,args.approach_wire_mode)
         if (engine is not None and not wire_step_enabled
                 and approach_frozen_snapshot is None):
@@ -718,6 +757,8 @@ try:
             perf_meter.begin_step(step,stage_name,step*dt)
         rod_total_before=timing['rod_solver_s']
         allocation_report=None
+        lift_tracking_reports=None
+        adaptive_force_observation=None
         hand_decision_observation=None
         t=(step+1)*dt
         if args.grasp_sequence:
@@ -803,6 +844,21 @@ try:
                     hand_preload_window_report=dict(preload_target_hold.last_window,decision_step=step,
                         first_physics_step=step-window_count if window_count else None,
                         last_physics_step=step-1 if window_count else None)
+                    pinch_indices=np.array([0,1,3,4],dtype=int)
+                    contact_ready=bool(np.all(contact_valid_known[pinch_indices]))
+                    adaptive_force_observation=adaptive_force_controller.update(
+                        previous_loads,
+                        args.hand_mpc_update_steps*args.physics_dt,
+                        support_feasible=(not contact_ready or bool(np.all(
+                            previous_loads[pinch_indices] >= .9*adaptive_target_loads_n[pinch_indices]))),
+                        requested_targets_n=np.asarray(args.closure_loads,dtype=float))
+                    adaptive_target_loads_n=np.asarray(
+                        adaptive_force_observation['target_loads_n'],dtype=float)
+                    result['adaptive_force'] = adaptive_force_observation
+                    grip_load_reference.targets=adaptive_target_loads_n.reshape(2,3)
+                    grip_load_reference.nominal=np.where(
+                        grip_load_reference.active,
+                        grip_load_reference.targets/engine.contact_k,0.)
                 mpc_penetration=(grip_load_reference.update(previous_loads.reshape(2,3),mpc_gaps,
                     args.hand_mpc_update_steps*args.physics_dt,held_hands=preload_target_hold.held)
                     if grasp_sequence.stage=='close'
@@ -811,7 +867,7 @@ try:
                     torch.as_tensor(mpc_pad_positions,device=args.device),
                     engine.rod_position if args.rod_backend=='torch_cuda' else engine.rod.position_collection,
                     radius=engine.radius if args.rod_backend=='torch_cuda' else engine.rod.radius,
-                    target_loads=np.asarray(args.closure_loads).reshape(2,3),contact_stiffness=engine.contact_k,
+                    target_loads=adaptive_target_loads_n.reshape(2,3),contact_stiffness=engine.contact_k,
                     penetration_m=mpc_penetration,
                     opposed_pinch=False)
                 if args.grasp_contact_mode=='pinch':
@@ -840,7 +896,7 @@ try:
                     contact_normals_w=approach_normals.reshape(2,3,3),
                     contact_loads_n=previous_loads.copy(),contact_gaps_m=np.asarray(mpc_gaps),
                     contact_valid=previous_contact_valid.copy(),contact_valid_known=contact_valid_known.copy(),
-                    target_loads_n=np.asarray(args.closure_loads),
+                    target_loads_n=adaptive_target_loads_n.copy(),
                     **{key:decision_wire[key] for key in ('rod_position','rod_velocity','rod_director','rod_omega')},
                     rod_radius_m=(engine.radius.detach().cpu().numpy() if args.rod_backend=='torch_cuda'
                                   else np.asarray(engine.rod.radius)),
@@ -859,7 +915,9 @@ try:
                         clearances=mpc_clearance['clearances'],
                         clearance_jacobians=mpc_clearance['clearance_jacobians'],
                         held_coordinates=hand_preload_held,
-                        complete_observation=hand_decision_observation,contact_phase=grasp_sequence.stage)
+                        complete_observation=hand_decision_observation,contact_phase=grasp_sequence.stage,
+                        reference_active_joints=(pose_lock.active_reference if pose_lock is not None else None),
+                        reference_tolerance_rad=(pose_lock.tolerance_rad if pose_lock is not None else None))
                     hand_mpc_training_sample=dict(
                         observed_active_joints=np.asarray(active_joints).tolist(),
                         observed_active_velocities=observed_active_velocities.tolist(),
@@ -941,12 +999,12 @@ try:
                     closure_arm_targets[side]+=increments[i,:7]
                     closure_targets[side][:3]+=increments[i,7:]
             if args.hand_mpc and closure_active and grasp_sequence.stage=='lift' and not handoff_in_progress:
-                from go2_pvcnn.control.dh116.panda_lift import panda_only_transport_increment
+                from go2_pvcnn.control.dh116.panda_lift import panda_feedback_increment
                 from go2_pvcnn.control.dh116.contact_frames import point_jacobian
                 velocities=grasp_sequence.transport_velocity(t)
                 velocities=np.asarray(velocities,dtype=np.float64)
                 if velocities.shape==(3,):velocities=np.broadcast_to(velocities,(2,3)).copy()
-                panda_point_jacobians=[];palm_angular_jacobians=[]
+                panda_point_jacobians=[];palm_angular_jacobians=[];palm_actual=[];panda_q=[];panda_lo=[];panda_hi=[]
                 for side,arm in arms.items():
                     raw=arm.root_physx_view.get_jacobians()[0].detach().cpu().numpy()
                     points=[]
@@ -963,8 +1021,19 @@ try:
                     base_index=arm.body_names.index('base_link')
                     arm_ids=[arm.joint_names.index(f'{side}_panda_joint{j}') for j in range(1,8)]
                     palm_angular_jacobians.append(raw[base_index-1,3:][:,arm_ids])
-                increments=panda_only_transport_increment(np.asarray(panda_point_jacobians),
-                    np.asarray(palm_angular_jacobians),velocities,dt)
+                    palm_actual.append(arm.data.body_link_pose_w[0,base_index,:3].detach().cpu().numpy())
+                    current_q=arm.data.joint_pos[0,arm_ids].detach().cpu().numpy()
+                    limits=arm.data.joint_pos_limits[0,arm_ids].detach().cpu().numpy()
+                    panda_q.append(current_q);panda_lo.append(limits[:,0]);panda_hi.append(limits[:,1])
+                if palm_lift_targets is None:
+                    palm_lift_targets=np.asarray(palm_actual,dtype=np.float64)
+                palm_lift_targets=np.asarray(palm_lift_targets)+velocities*dt
+                increments,lift_tracking_reports=panda_feedback_increment(
+                    np.asarray(panda_point_jacobians),np.asarray(palm_angular_jacobians),velocities,dt,
+                    palm_target_positions_w=palm_lift_targets,palm_actual_positions_w=np.asarray(palm_actual),
+                    joint_positions=np.asarray(panda_q),joint_lower=np.asarray(panda_lo),joint_upper=np.asarray(panda_hi))
+                if any(not report['reachable'] for report in lift_tracking_reports):
+                    raise ValueError('Panda lift target is not reachable within measured velocity limits')
                 for i,side in enumerate(arms):
                     closure_arm_targets[side]+=increments[i]
         h=reference(0. if args.gravity_hold else t)
@@ -1075,6 +1144,10 @@ try:
         do_render=should_publish_wire(headless=args.headless,now=perf_counter(),
             next_publish=next_wire_publish,ui_hz=args.ui_hz)
         record=dict(step=step,passed=True,sides={})
+        if lift_tracking_reports is not None:
+            record['lift_tracking']=lift_tracking_reports
+        if adaptive_force_observation is not None:
+            record['adaptive_force']=adaptive_force_observation
         if args.hand_mpc:
             record['control_ownership']=dict(
                 phase=grasp_sequence.stage,
@@ -1384,11 +1457,23 @@ try:
                     approach_position_errors_m=point_errors,approach_normal_errors_rad=normal_errors,
                     joint_speeds_rad_s=np.array([arm.data.joint_vel[0].cpu().numpy() for arm in arms.values()]),
                     station_heights_m=station_heights,loads_n=previous_loads,
-                    controller_target_loads_n=args.closure_loads if args.hand_mpc else None,
+                    controller_target_loads_n=adaptive_target_loads_n if args.hand_mpc else None,
                     surface_gaps_m=[samples[c]['gap_m'] for c in BODY_NAMES],
                     valid_contacts=[samples[c]['valid'] for c in BODY_NAMES],normals=actual_normals,
                     anchors_local=anchors,min_surface_clearance_m=surface_clearance,
                     safety_ok=bool(record['passed']),active_constraints=snapshot['active_constraints'])
+                tracking_error=max((float(r['position_error_m']) for r in (lift_tracking_reports or [])), default=0.)
+                pinch_indices=np.array([0,1,3,4],dtype=int)
+                record['recovery']=diagnose_lift(
+                    safety_ok=bool(record['passed']),
+                    contact_valid=bool(np.all(np.asarray([samples[c]['valid'] for c in BODY_NAMES]))),
+                    tracking_error_m=tracking_error,
+                    slip_m=float(0. if slip is None else slip),
+                    support_force_n=float(np.min(previous_loads[pinch_indices])),
+                    required_support_force_n=float(np.min(.9*np.asarray(
+                        adaptive_target_loads_n if args.hand_mpc else args.closure_loads)[pinch_indices])),
+                    station_rise_m=station_heights,
+                    min_surface_clearance_m=surface_clearance)
                 if previous_stage=='approach' and evidence['stage']=='close':
                     approach_measured=dict(passed=True,time_s=now,position_errors_m=point_errors,
                         normal_errors_rad=normal_errors,grasp_qualified=False)
@@ -1570,4 +1655,6 @@ finally:
     if 'rows' in locals():rows.close()
     (args.output/'summary.json').write_text(evidence_json(result,indent=2)+'\n')
     print('DH116_MOUNTED',evidence_json(result),flush=True)
+    if args.display_hold_s>0:
+        sleep(args.display_hold_s)
     app.close(wait_for_replicator=False,skip_cleanup=True)

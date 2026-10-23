@@ -68,6 +68,17 @@ def test_complete_policy_masks_parked_joints_and_never_takes_future_outcomes():
     for a,b in zip(before,after):np.testing.assert_array_equal(a,b)
 
 
+def test_complete_policy_reset_clears_episode_history():
+    from go2_pvcnn.control.dh116.complete_contact_policy import CompleteContactPolicy
+    p=CompleteContactPolicy(role='student',control_dt=.01,rod_nodes=5)
+    obs=observation()
+    p.plan_contact(active_joints=obs['hand_q'],previous_action=np.full(12,.2),
+                   complete_observation=obs,pad_jacobians=np.ones((2,3,3,6)))
+    assert len(p.history)==1
+    p.reset()
+    assert p.history==[]
+
+
 def test_training_cli_uses_complete_intervals_by_default(tmp_path):
     import json,subprocess,sys
     from pathlib import Path

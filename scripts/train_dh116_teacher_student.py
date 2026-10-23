@@ -15,8 +15,10 @@ import sys
 import numpy as np
 
 from go2_pvcnn.control.dh116.hand_only_env import HandOnlySpec
+from go2_pvcnn.control.dh116.hand_only_rod_runtime import HandOnlyRodRuntime
 from go2_pvcnn.control.dh116.teacher_student import (
-    make_trajectory_checkpoint, make_transition, write_replay,
+    LinearImitationPolicy, make_trajectory_checkpoint, make_transition,
+    relabel_transitions, write_replay,
 )
 from go2_pvcnn.control.dh116.parallel_mpc import ParallelJointMPC
 
@@ -52,9 +54,12 @@ def main() -> int:
                 raise RuntimeError("CUDA requested but unavailable")
         except ImportError as exc:
             raise RuntimeError("CUDA requested but torch is unavailable") from exc
+    if args.rod_backend == "torch_cuda" and not args.device.startswith("cuda"):
+        p.error("--rod-backend torch_cuda requires --device cuda:<index>")
     rng = np.random.default_rng(args.seed)
     spec = HandOnlySpec()
     mpc = ParallelJointMPC(device=args.device)
+    rod_runtime = HandOnlyRodRuntime(args.rod_backend, device=args.device)
     transitions = []
     # Explicit neutral pose; only hand features are exposed.
     poses = np.zeros((args.episodes, 2, 7), dtype=np.float32)
@@ -65,6 +70,7 @@ def main() -> int:
     joints = previous.reshape(args.episodes, 2, 6).copy()
     grasp_steps = args.steps_per_episode // 2
     lift_steps = args.steps_per_episode - grasp_steps
+    rod_report = None
     initial_wire = np.zeros((args.episodes, 2), dtype=np.float32)
     initial_state = {"hand_poses": poses, "active_joints": joints,
                      "wire_features": initial_wire, "previous_action": previous}
@@ -80,6 +86,9 @@ def main() -> int:
         for key, value in plan_diagnostics.items()
     }
     for step in range(args.steps_per_episode):
+        # Advance the selected Cosserat backend once per hand-only reference
+        # step.  This probe has no hand collider and is never a success gate.
+        rod_report = rod_runtime.step()
         grasp = float(plan_diagnostics["grasp_progress"][0, step])
         lift = float(plan_diagnostics["lift_progress"][0, step])
         planned_action = np.asarray(planned[:, step], dtype=np.float32)
@@ -95,12 +104,12 @@ def main() -> int:
                 obs_student=obs_student, obs_teacher_privileged=obs_priv,
                 previous_action=previous[env], mpc_action=planned_action[env],
                 action=teacher[env], reward=float(grasp + lift),
-                done=step == args.steps_per_episode - 1, phase=phase))
+                done=step == args.steps_per_episode - 1, phase=phase,
+                wire_lift_m=float(rod_report["wire_lift_m"]),
+                physics_valid=bool(rod_report["physics_valid"])))
         previous = teacher
         joints = teacher.reshape(args.episodes, 2, 6)
     args.out.mkdir(parents=True, exist_ok=True)
-    teacher_manifest = write_replay(args.out / "teacher.jsonl", transitions, role="teacher")
-    student_manifest = write_replay(args.out / "student.jsonl", transitions, role="student")
     def fit(role: str) -> dict[str, object]:
         if role == "student":
             # Student follows the precomputed grasp segment and then holds its
@@ -135,6 +144,16 @@ def main() -> int:
                 "input_dim": payload["input_dim"], "output_dim": 12}
     teacher_ckpt = fit("teacher")
     student_ckpt = fit("student")
+    # Keep the MPC action as the expert label, but execute the student policy
+    # once to produce a distinct student replay.  This is still an offline
+    # hand-only dataset; physics_valid remains false until an Isaac run feeds
+    # measured contact evidence into the replay.
+    student_policy = LinearImitationPolicy.load(
+        args.out / "student_checkpoint.json", expected_role="student")
+    student_transitions = relabel_transitions(
+        transitions, student_policy, episode_size=args.episodes)
+    teacher_manifest = write_replay(args.out / "teacher.jsonl", transitions, role="teacher")
+    student_manifest = write_replay(args.out / "student.jsonl", student_transitions, role="student")
     diagnostics_summary = {
         "planner": "batched_complete_grasp_lift_reference_trajectory",
         "student": "grasp_trajectory_imitation_then_hold_during_panda_lift",
@@ -144,12 +163,16 @@ def main() -> int:
         "mean_tracking_cost": float(np.mean(plan_diagnostics["tracking_cost"])),
         "initial_action": np.asarray(args.initial_action, dtype=np.float64).tolist(),
         "teacher_noise_rad": args.teacher_noise,
+        "rod_runtime": rod_report,
+        "physics_qualified": False,
     }
     manifest = {"task": "dh116_hand_only_grasp_lift", "entry_phase": "grasp",
                 "action_dim": spec.action_dim, "previous_action_dim": spec.previous_action_dim,
                 "arm_state_included": False, "episodes": args.episodes,
                 "steps_per_episode": args.steps_per_episode, "device": args.device,
                 "rod_backend": args.rod_backend,
+                "rod_runtime": rod_report,
+                "physics_qualified": False,
                 "mpc": diagnostics_summary,
                 "teacher": teacher_manifest, "student": student_manifest}
     manifest["teacher_checkpoint"] = teacher_ckpt

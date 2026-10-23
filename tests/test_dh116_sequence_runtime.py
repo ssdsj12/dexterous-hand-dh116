@@ -71,7 +71,7 @@ def test_hand_mpc_mode_preserves_full_scene_and_separates_action_owners():
     assert 'ParallelContactMPC' in source
     assert 'wire_surface_targets' in calls
     assert 'route_phase_targets' in calls
-    assert 'panda_only_transport_increment' in calls
+    assert 'panda_feedback_increment' in calls
     assert "hand_targets[side]" in source
     assert "target.update(zip([f'{side}_panda_joint{i}'" in source
     assert "hand_mpc_action_dim" in source
@@ -89,6 +89,39 @@ def test_contact_mpc_reference_uses_measured_load_and_gap_feedback():
     assert 'grip_load_reference.update' in source
     assert 'penetration_m=mpc_penetration' in source
     assert 'contact_loads_n=previous_loads.tolist()' in source
+
+
+def test_hand_mpc_uses_rate_limited_adaptive_force_targets():
+    source=(Path(__file__).parents[1]/'scripts/verify_fixed_dual_panda_dh116.py').read_text()
+    assert 'AdaptiveForceController' in source
+    assert 'adaptive_force_controller.update' in source
+    assert 'adaptive_target_loads_n' in source
+
+
+def test_runner_records_measured_lift_failure_class_for_recovery():
+    source=(Path(__file__).parents[1]/'scripts/verify_fixed_dual_panda_dh116.py').read_text()
+    assert 'diagnose_lift' in source
+    assert "record['recovery']" in source
+
+
+def test_direct_close_passes_candidate_pose_reference_to_hand_mpc():
+    source=(Path(__file__).parents[1]/'scripts/verify_fixed_dual_panda_dh116.py').read_text()
+    assert 'load_pose_lock' in source
+    assert 'reference_active_joints=' in source
+    assert 'reference_tolerance_rad=' in source
+
+
+def test_lift_routes_measured_palm_feedback_through_panda_controller():
+    source=(Path(__file__).parents[1]/'scripts/verify_fixed_dual_panda_dh116.py').read_text()
+    assert 'panda_feedback_increment' in source
+    assert 'palm_target_positions_w=' in source
+    assert 'palm_actual_positions_w=' in source
+    assert "record['lift_tracking']" in source
+
+
+def test_candidate_pose_direct_close_rejects_imported_approach_certificate():
+    source=(Path(__file__).parents[1]/'scripts/verify_fixed_dual_panda_dh116.py').read_text()
+    assert "args.grasp_entry=='close' and args.active_pose and args.approach_certificate" in source
 
 
 def test_contact_mpc_receives_actual_nonpad_hand_clearance_constraints():

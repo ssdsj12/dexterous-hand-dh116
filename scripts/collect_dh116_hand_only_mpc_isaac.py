@@ -92,11 +92,14 @@ try:
         compliant_contact_parameters, table_center_z_for_wire,
     )
     from go2_pvcnn.control.dh116.parallel_mpc import ParallelJointMPC
+    from go2_pvcnn.control.dh116.hand_only_reward import compute_hand_only_reward
     from go2_pvcnn.control.dh116.teacher_student import (
         LinearImitationPolicy, make_transition, qualify_proxy_lift, score_physics_outcome, write_replay,
     )
 
     student_policy = None
+    reward_totals = {}
+    reward_steps = 0
     if args.student_checkpoint is not None:
         student_policy = LinearImitationPolicy.load(args.student_checkpoint, expected_role="student")
         summary["student_checkpoint_sha256"] = hashlib.sha256(args.student_checkpoint.read_bytes()).hexdigest()
@@ -215,6 +218,7 @@ try:
                     for index in range(len(hands))]
         grasp_progress = lift_progress = 0.0
         contact_latched = False
+        lift_completion_rewarded = False
         contact_peak = 0.0
         contact_peak_by_body = {side: {"body": None, "force_n": 0.0}
                                 for side in ("left", "right")}
@@ -313,13 +317,32 @@ try:
                     break
             contact_peak = max(contact_peak, force_this_action)
             z = float(wire.data.root_pos_w[0, 2].item())
-            success, reward = score_physics_outcome(contact_force_n=contact_peak,
-                                                     wire_lift_m=z - wire_start)
+            phase = "grasp" if lift_progress == 0 else "lift"
+            wire_lift = z - wire_start
+            success, _terminal_score = score_physics_outcome(
+                contact_force_n=contact_peak, wire_lift_m=wire_lift,
+                max_contact_force_n=args.abort_force_n,
+            )
+            lift_reference_m = 0.02 * float(np.clip(lift_progress, 0.0, 1.0))
+            lift_completion_event = (not lift_completion_rewarded and phase == "lift"
+                                     and force_this_action >= 1.0 and wire_lift >= 0.02
+                                     and abort_reason is None)
+            reward, reward_terms = compute_hand_only_reward(
+                phase=phase, action=action, mpc_action=mpc_action,
+                previous_action=previous, contact_force_n=force_this_action,
+                wire_lift_m=wire_lift, lift_reference_m=lift_reference_m,
+                physics_valid=abort_reason is None and contact_peak <= args.abort_force_n,
+                lift_completion_event=lift_completion_event,
+            )
+            lift_completion_rewarded = lift_completion_rewarded or bool(reward_terms["lift_complete"])
+            for term, value in reward_terms.items():
+                reward_totals[term] = reward_totals.get(term, 0.0) + value
+            reward_steps += 1
             transitions.append(make_transition(
                 obs_student=obs_student, obs_teacher_privileged=obs_privileged,
                 previous_action=previous, mpc_action=mpc_action, action=action, reward=reward,
                 done=abort_reason is not None or action_index == args.actions_per_episode - 1,
-                phase="grasp" if lift_progress == 0 else "lift",
+                phase=phase,
                 contact_force_n=force_this_action, wire_lift_m=z - wire_start,
                 physics_valid=abort_reason is None and contact_peak <= args.abort_force_n))
             successful_action = successful_action or success
@@ -359,6 +382,15 @@ try:
 
     summary["passed"] = any(ep["proxy_lift_success"] and not ep["abort_reason"]
                             for ep in summary["episodes"])
+    summary["reward"] = {
+        "model": "dh116_mpc_aligned_dense_v1",
+        "step_count": reward_steps,
+        "term_sums": reward_totals,
+        "term_means": {name: value / max(1, reward_steps)
+                       for name, value in reward_totals.items()},
+        "reference": "mpc_action",
+        "approach_slip_deformation_terms": "disabled_unobserved",
+    }
     replay_role = "student" if student_policy is not None else "teacher"
     replay_name = "student_physics_feedback.jsonl" if student_policy is not None else "mpc_physics_feedback.jsonl"
     summary["replay"] = write_replay(args.output / replay_name, transitions, role=replay_role)

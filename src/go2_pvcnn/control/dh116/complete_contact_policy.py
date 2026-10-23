@@ -70,6 +70,10 @@ class CompleteContactPolicy(ContactImitationPolicy):
         self.net=nn.Sequential(nn.Linear(self.input_dim,128),nn.SiLU(),nn.Linear(128,128),
                                nn.SiLU(),nn.Linear(128,12),nn.Tanh()).to(self.device)
 
+    def reset(self):
+        """Clear recurrent observation history at the start of an episode."""
+        self.history.clear()
+
     @torch.no_grad()
     def plan_contact(self,*,active_joints,previous_action,complete_observation=None,phase='close',
                      pad_jacobians=None,**unused):

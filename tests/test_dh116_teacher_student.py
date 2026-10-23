@@ -4,7 +4,7 @@ import pytest
 
 from go2_pvcnn.control.dh116.teacher_student import (
     LinearImitationPolicy, make_transition, qualify_proxy_lift,
-    score_physics_outcome, write_replay,
+    relabel_transitions, score_physics_outcome, write_replay,
 )
 from go2_pvcnn.control.dh116.mpc_feedback import (
     advance_progress, initial_active_action, peak_body_force, to_numpy,
@@ -20,6 +20,34 @@ def test_replay_schema_and_hash(tmp_path):
     assert manifest["action_dim"] == 12
     row = json.loads((tmp_path / "teacher.jsonl").read_text())
     assert row["phase"] == "grasp"
+
+
+def test_student_replay_contains_policy_outputs_not_teacher_labels():
+    item = make_transition(obs_student=np.zeros(25), obs_teacher_privileged=np.zeros(26),
+                           previous_action=np.zeros(12), mpc_action=np.ones(12),
+                           action=np.ones(12), reward=1.0, done=False, phase="grasp")
+    policy = LinearImitationPolicy(role="student", input_dim=25,
+                                   weights=np.zeros((26, 12), dtype=np.float32))
+    relabeled = relabel_transitions([item], policy)
+    np.testing.assert_allclose(relabeled[0].action, policy.predict(np.zeros(25)))
+    assert not np.allclose(relabeled[0].action, item.action)
+
+
+def test_student_relabel_rolls_previous_action_within_each_episode():
+    first = make_transition(obs_student=np.zeros(25), obs_teacher_privileged=np.zeros(26),
+                            previous_action=np.zeros(12), mpc_action=np.ones(12),
+                            action=np.ones(12), reward=1.0, done=False, phase="grasp")
+    second_obs = np.zeros(25)
+    second_obs[12:24] = 1.0
+    second = make_transition(obs_student=second_obs, obs_teacher_privileged=np.zeros(26),
+                             previous_action=np.ones(12), mpc_action=np.full(12, 2.),
+                             action=np.full(12, 2.), reward=1.0, done=True, phase="lift")
+    policy = LinearImitationPolicy(role="student", input_dim=25,
+                                   weights=np.zeros((26, 12), dtype=np.float32))
+    relabeled = relabel_transitions([first, second], policy, episode_size=1)
+    np.testing.assert_allclose(relabeled[1].previous_action, relabeled[0].action)
+    np.testing.assert_allclose(relabeled[1].obs_student[12:24], relabeled[0].action)
+    np.testing.assert_allclose(relabeled[0].mpc_action, np.ones(12))
 
 
 def test_student_checkpoint_loads_and_predicts_bounded_active_targets(tmp_path):
@@ -125,6 +153,74 @@ def test_physics_feedback_is_saved_and_lift_requires_stable_contact():
     assert score_physics_outcome(contact_force_n=0.0, wire_lift_m=0.03) == (False, 0.0)
     assert not qualify_proxy_lift(contact_peak_n=4.0, wire_lift_m=0.03, abort_reason="wire_escape")
     assert qualify_proxy_lift(contact_peak_n=4.0, wire_lift_m=0.03, abort_reason=None)
+
+
+def test_hand_only_reward_tracks_mpc_smoothly_shapes_contact_and_lift():
+    from go2_pvcnn.control.dh116.hand_only_reward import compute_hand_only_reward
+
+    reference = np.full(12, 0.2, dtype=np.float32)
+    perfect, perfect_terms = compute_hand_only_reward(
+        phase="grasp", action=reference, mpc_action=reference,
+        previous_action=reference, contact_force_n=5.0, wire_lift_m=0.0,
+        lift_reference_m=0.0, physics_valid=True,
+    )
+    off_track, off_terms = compute_hand_only_reward(
+        phase="grasp", action=reference + 0.15, mpc_action=reference,
+        previous_action=reference, contact_force_n=5.0, wire_lift_m=0.0,
+        lift_reference_m=0.0, physics_valid=True,
+    )
+    assert perfect > off_track
+    assert perfect_terms["mpc_tracking"] == pytest.approx(1.0)
+    assert off_terms["mpc_tracking"] == pytest.approx(np.exp(-1.0))
+    assert perfect_terms["contact"] == pytest.approx(0.5)
+
+    lifted, terms = compute_hand_only_reward(
+        phase="lift", action=reference, mpc_action=reference,
+        previous_action=reference, contact_force_n=5.0, wire_lift_m=0.02,
+        lift_reference_m=0.02, physics_valid=True, lift_completion_event=True,
+    )
+    assert terms["lift_tracking"] == pytest.approx(1.0)
+    assert terms["lift_complete"] == pytest.approx(1.0)
+    assert lifted > perfect
+
+    _, invalid_completion = compute_hand_only_reward(
+        phase="lift", action=reference, mpc_action=reference,
+        previous_action=reference, contact_force_n=5.0, wire_lift_m=0.02,
+        lift_reference_m=0.02, physics_valid=False, lift_completion_event=True,
+    )
+    assert invalid_completion["lift_complete"] == 0.0
+
+
+def test_hand_only_reward_penalizes_action_change_and_excessive_force():
+    from go2_pvcnn.control.dh116.hand_only_reward import compute_hand_only_reward
+
+    action = np.full(12, 0.3, dtype=np.float32)
+    _, smooth = compute_hand_only_reward(
+        phase="grasp", action=action, mpc_action=action,
+        previous_action=action, contact_force_n=5.0, wire_lift_m=0.0,
+        lift_reference_m=0.0,
+    )
+    _, abrupt = compute_hand_only_reward(
+        phase="grasp", action=action, mpc_action=action,
+        previous_action=np.zeros(12), contact_force_n=20.0, wire_lift_m=0.0,
+        lift_reference_m=0.0,
+    )
+    assert abrupt["action_smoothness"] < smooth["action_smoothness"]
+    assert abrupt["force_penalty"] < 0.0
+    assert abrupt["contact"] < smooth["contact"]
+
+
+def test_hand_only_reward_rejects_nonfinite_and_wrong_shape_inputs():
+    from go2_pvcnn.control.dh116.hand_only_reward import compute_hand_only_reward
+
+    with pytest.raises(ValueError, match="12"):
+        compute_hand_only_reward(phase="grasp", action=np.zeros(11),
+            mpc_action=np.zeros(12), previous_action=np.zeros(12),
+            contact_force_n=0.0, wire_lift_m=0.0, lift_reference_m=0.0)
+    with pytest.raises(ValueError, match="finite"):
+        compute_hand_only_reward(phase="lift", action=np.full(12, np.nan),
+            mpc_action=np.zeros(12), previous_action=np.zeros(12),
+            contact_force_n=0.0, wire_lift_m=0.0, lift_reference_m=0.0)
 
 
 def test_online_mpc_progress_reacts_to_measured_contact():

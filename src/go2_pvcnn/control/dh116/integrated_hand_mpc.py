@@ -20,6 +20,13 @@ class IntegratedHandMPC:
         self.planner = planner
         self.last_diagnostics = None
 
+    def reset(self) -> None:
+        """Reset this adapter and any planner-owned episode history."""
+        self.last_diagnostics = None
+        reset = getattr(self.planner, "reset", None)
+        if callable(reset):
+            reset()
+
     def plan(
         self,
         hand_poses: Any,
@@ -36,6 +43,8 @@ class IntegratedHandMPC:
         complete_observation: Any = None,
         contact_phase: str = 'close',
         held_coordinates: Any = None,
+        reference_active_joints: Any = None,
+        reference_tolerance_rad: Any = None,
     ) -> np.ndarray:
         """Return bounded active joint targets shaped ``(2, 6)``.
 
@@ -66,6 +75,9 @@ class IntegratedHandMPC:
             if held_coordinates is not None:contact_input['held_coordinates']=held
             if clearances is not None or clearance_jacobians is not None:
                 contact_input.update(clearances=clearances,clearance_jacobians=clearance_jacobians)
+            if reference_active_joints is not None or reference_tolerance_rad is not None:
+                contact_input.update(reference_active_joints=reference_active_joints,
+                                     reference_tolerance_rad=reference_tolerance_rad)
             if getattr(self.planner,'requires_complete_observation',False):
                 contact_input.update(complete_observation=complete_observation,phase=contact_phase)
             action, self.last_diagnostics = self.planner.plan_contact(**contact_input)

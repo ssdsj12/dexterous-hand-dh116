@@ -67,6 +67,12 @@ class ParallelContactMPC:
         self._tracking_bias=torch.zeros(12,dtype=torch.float32,device=self.device)
         self._last_predicted_joints=None
 
+    def reset(self):
+        """Clear warm-start and tracking state before a new episode."""
+        self._warm_start=None
+        self._tracking_bias.zero_()
+        self._last_predicted_joints=None
+
     def restore_tracking_bias(self,value):
         bias=torch.as_tensor(value,dtype=torch.float32,device=self.device)
         if (bias.shape!=(12,) or not bool(torch.isfinite(bias).all())
@@ -78,7 +84,8 @@ class ParallelContactMPC:
     @torch.no_grad()
     def plan_contact(self, *, active_joints, previous_action, pad_positions,
                      pad_jacobians, target_points, actuator_load_offset=None,
-                     clearances=None, clearance_jacobians=None,held_coordinates=None):
+                     clearances=None, clearance_jacobians=None,held_coordinates=None,
+                     reference_active_joints=None, reference_tolerance_rad=None):
         """Use world-frame pad points/Jacobians, excluding every Panda column."""
         values = []
         for name, value, shape in (
@@ -138,6 +145,28 @@ class ParallelContactMPC:
         prediction_margin=.001 if actuator_load_offset is not None else 0.
         command_lower=torch.maximum(self.lower,self.lower+load_offset+prediction_margin*affected)
         command_upper=torch.minimum(self.upper,self.upper+load_offset-prediction_margin*affected)
+        pose_lock = None
+        if reference_active_joints is not None or reference_tolerance_rad is not None:
+            if reference_active_joints is None or reference_tolerance_rad is None:
+                raise ValueError('pose lock requires reference joints and tolerance')
+            reference = torch.as_tensor(reference_active_joints, dtype=q.dtype, device=self.device).reshape(-1)
+            if (reference.shape != (12,) or not bool(torch.isfinite(reference).all())
+                    or not math.isfinite(float(reference_tolerance_rad))
+                    or not 0. < float(reference_tolerance_rad) <= 1.):
+                raise ValueError('pose lock requires a finite 12D reference and tolerance in (0,1]')
+            tolerance = torch.as_tensor(float(reference_tolerance_rad), dtype=q.dtype, device=self.device)
+            local_lower = torch.maximum(command_lower, reference - tolerance)
+            local_upper = torch.minimum(command_upper, reference + tolerance)
+            if bool((local_lower >= local_upper).any()):
+                raise ValueError('pose lock neighborhood does not intersect active limits')
+            if bool(((q < local_lower - 1e-6) | (q > local_upper + 1e-6)).any()):
+                raise ValueError('measured hand state is outside candidate pose neighborhood')
+            if bool(((previous < local_lower - 1e-6) | (previous > local_upper + 1e-6)).any()):
+                raise ValueError('previous hand command is outside candidate pose neighborhood')
+            command_lower, command_upper = local_lower, local_upper
+            pose_lock = dict(reference_active_joints=reference.cpu().tolist(),
+                             reference_tolerance_rad=float(reference_tolerance_rad),
+                             lower=local_lower.cpu().tolist(), upper=local_upper.cpu().tolist())
         # A rolling closest surface point is not a fixed material marker.
         # Prioritize radial closure without suppressing necessary tangent motion.
         normal = (targets - points).reshape(6, 3)
@@ -184,7 +213,7 @@ class ParallelContactMPC:
         # Project the complete desired command path onto the rate bound. Simply
         # clipping each unconstrained increment discards the initial maneuver
         # rather than spreading it across subsequent prediction steps.
-        desired_commands=(previous+nominal.reshape(cfg.horizon,12).cumsum(0)).clamp(self.lower,self.upper)
+        desired_commands=(previous+nominal.reshape(cfg.horizon,12).cumsum(0)).clamp(command_lower,command_upper)
         command=previous.clone();projected=[]
         for desired in desired_commands:
             delta=(desired-command)*optimized
@@ -197,7 +226,7 @@ class ParallelContactMPC:
         zero = torch.zeros_like(mean)
 
         def rollout(controls):
-            commands = (previous + controls.cumsum(1)).clamp(self.lower, self.upper)
+            commands = (previous + controls.cumsum(1)).clamp(command_lower, command_upper)
             state = q.expand(len(controls), 12)
             predicted = [];applied_commands=[]
             last_command=previous.expand(len(controls),12)
@@ -255,7 +284,8 @@ class ParallelContactMPC:
             actuator_response=cfg.actuator_response,
             predicted_clearances=predicted_clearances[0],clearance_count=len(distances),
             minimum_clearance_m=cfg.minimum_clearance_m,clearance_weight=cfg.clearance_weight,
-            iterations=cfg.iterations, control_dt_s=cfg.control_dt)
+            iterations=cfg.iterations, control_dt_s=cfg.control_dt,
+            pose_lock=pose_lock)
 
 
 @torch.no_grad()

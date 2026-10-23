@@ -75,10 +75,16 @@ class GraspEvidenceGate:
         elif self.stage=='hold' and time_s-self.hold_since>=1.-1e-12:
             self.stage='lift'
         elif self.stage=='lift':
-            if np.any(rise<.03) or not lift_alignment_ok:self.lift_since=None
+            # The lift dwell is only valid while the complete wire is already
+            # clear of the table.  A final-frame-only check can otherwise
+            # report finish while the wire was on the table for most of the
+            # dwell.
+            if (np.any(rise<.03) or not lift_alignment_ok
+                    or min_surface_clearance_m < .002):
+                self.lift_since=None
             elif self.lift_since is None:self.lift_since=float(time_s)
             elif time_s-self.lift_since>=1.-1e-12:self.stage='finish'
         return dict(stage=self.stage,reason=self.reason,permit_lift=self.stage=='lift',
                     grasp_lift_passed=self.stage=='finish',material_ids=list(self.material_ids),
                     max_material_slip_m=slip,station_rise_m=rise.tolist(),
-                    whole_wire_clear=bool(self.stage=='finish' and min_surface_clearance_m>=.002))
+                    whole_wire_clear=bool(self.stage=='finish'))

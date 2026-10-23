@@ -232,6 +232,59 @@ def make_transition(*, obs_student: Any, obs_teacher_privileged: Any,
     )
 
 
+def relabel_transitions(transitions: Iterable[HandOnlyTransition], policy: Any, *,
+                        episode_size: int = 1) -> list[HandOnlyTransition]:
+    """Create a student replay by executing a hand-only policy on each record.
+
+    MPC actions stay in ``mpc_action`` as the expert reference; only the
+    executed ``action`` field is replaced.  Physics observations and rewards
+    are copied verbatim, so this helper cannot turn a synthetic rollout into a
+    physical success claim.
+    """
+    if (getattr(policy, "role", None) != "student"
+            or not callable(getattr(policy, "predict", None))):
+        raise ValueError("a student policy with predict() is required")
+    if isinstance(episode_size, bool) or not isinstance(episode_size, int) or episode_size < 1:
+        raise ValueError("episode_size must be a positive integer")
+    source = list(transitions)
+    if len(source) % episode_size:
+        raise ValueError("transitions must contain complete step-major episodes")
+    previous_by_env: dict[int, np.ndarray] = {}
+    output: list[HandOnlyTransition] = []
+    for index, item in enumerate(source):
+        if not isinstance(item, HandOnlyTransition):
+            raise TypeError("transitions must contain HandOnlyTransition values")
+        env = index % episode_size
+        previous = (np.asarray(item.previous_action, dtype=np.float32)
+                    if env not in previous_by_env else previous_by_env[env])
+        observation = np.asarray(item.obs_student, dtype=np.float32).copy()
+        # The synthetic hand-only observation layout is [active_joints(12),
+        # previous_action(12), grasp_progress].  Roll both state slices with
+        # the policy output after the first step; other feature layouts remain
+        # untouched and are still validated by the policy.
+        if env in previous_by_env and observation.shape == (25,):
+            observation[:12] = previous
+            observation[12:24] = previous
+        action = np.asarray(policy.predict(observation), dtype=np.float32)
+        if action.shape != (12,) or not np.isfinite(action).all():
+            raise ValueError("student policy must return a finite 12D action")
+        previous_by_env[env] = action.copy()
+        output.append(make_transition(
+            obs_student=observation,
+            obs_teacher_privileged=item.obs_teacher_privileged,
+            previous_action=previous,
+            mpc_action=item.mpc_action,
+            action=action,
+            reward=item.reward,
+            done=item.done,
+            phase=item.phase,
+            contact_force_n=item.contact_force_n,
+            wire_lift_m=item.wire_lift_m,
+            physics_valid=item.physics_valid,
+        ))
+    return output
+
+
 def write_replay(path: str | Path, transitions: Iterable[HandOnlyTransition], *, role: str) -> dict[str, Any]:
     """Write JSONL replay and return a hash-bearing manifest fragment."""
     if role not in {"teacher", "student"}:
@@ -250,5 +303,5 @@ def write_replay(path: str | Path, transitions: Iterable[HandOnlyTransition], *,
             "action_dim": 12, "arm_state_included": False}
 
 
-__all__ = ["HandOnlyTransition", "LinearImitationPolicy", "make_transition", "qualify_proxy_lift",
-           "make_trajectory_checkpoint", "score_physics_outcome", "write_replay"]
+__all__ = ["HandOnlyTransition", "LinearImitationPolicy", "make_transition", "relabel_transitions",
+           "qualify_proxy_lift", "make_trajectory_checkpoint", "score_physics_outcome", "write_replay"]

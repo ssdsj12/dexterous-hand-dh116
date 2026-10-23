@@ -45,6 +45,17 @@ def test_contact_mpc_reduces_geometry_error_and_respects_previous_command(device
     assert diag["action_dim"] == 12
 
 
+def test_pose_locked_contact_mpc_stays_in_candidate_neighborhood():
+    obs = observation()
+    reference = torch.full((12,), .2)
+    planner = ParallelContactMPC(ContactMPCConfig(horizon=6, candidates=32, elites=8, iterations=2,
+                                                   control_dt=.1, joint_speed_limit=.3))
+    action, diag = planner.plan_contact(**obs, reference_active_joints=reference,
+                                        reference_tolerance_rad=.01)
+    assert bool(((action.reshape(-1) >= .19 - 1e-6) & (action.reshape(-1) <= .21 + 1e-6)).all())
+    assert diag["pose_lock"]["reference_tolerance_rad"] == pytest.approx(.01)
+
+
 def test_contact_mpc_holds_an_already_satisfied_grasp_target():
     obs = observation()
     obs["target_points"] = obs["pad_positions"].clone()
