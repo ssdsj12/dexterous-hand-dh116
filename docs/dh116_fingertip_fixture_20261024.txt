@@ -1,0 +1,40 @@
+DH116 single-finger fixture — actual Isaac results,2026-10-24
+
+Scope and method
+User authorized the proposed fixed-fixture loading test. Four separate hands test left/right thumb/index distal pads at the current grasp posture. The palm stays fixed; source hand mass/linear rigid mimic is retained, gravity disabled. Only the selected distal pad collision remains enabled. A kinematic frictionless plate is placed .5mm beyond the pad collider support surface along the grasp's world-X closing direction. No table, straw, PPO or real robot is involved. This fixture is not the manufacturer's unspecified force-test setup.
+
+Drive gains20 Nm/rad,damping.2; target flexion ramps .05rad/s up to+.15rad,holds2s and unloads. The last1s is qualified from every480Hz physics sample, rejecting missing samples and any force below14N,>30N,mimic error>.02rad or >10%force variability. The entire trial is invalidated on any hard fault. Trace files contain60Hz joint states/actual command error/contact position and PD-estimated torque; hold480hz files retain all481 qualification samples. Torques are not solver-measured motor torques. Faulted trials are stopped/unloaded; their subsequent zero load is not rated capacity.
+
+Validation
+v55/v56/v57 failed during fixture setup (source instance proxies,CollisionAPI parent Xform versus child Mesh). These runs supplied no force result. v58 completed physics but its report failed to serialize a numpy boolean; its raw traces are preserved and excluded from final counts. The corrected runner copies its own source and hashes initialization/assets.
+Selected colliders are made noninstanceable only in the runtime stage; source USD files remain unchanged. Collision attributes/material are edited on their actual parent Xform; child Mesh vertices determine plate placement. Initial unloaded peak was0N in all56 final trials; plate position was guarded within1um. Current/final runtime drive limits were read back for every test hand.
+
+Results
+v59:16position iterations,effort caps .2/.5/1/2Nm,each repeated twice,32 finger trials.
+- .2Nm thumb transient peaks2.13–2.45N; final1s loads~.064/.074N. Index peaks1.31–1.42N before mimic_error>.02rad.
+- .5/1/2Nm all trigger mimic_error during ramp; thumb peaks~2.64N,index~1.31–1.42N. Increasing the torque ceiling does not bypass the earlier constraint failure.
+v60:identical .2Nm tests with articulation sleep threshold0,8 trials. Results matched baseline; disabling sleep did not fix the load behavior.
+v61:64position iterations,.2/2Nm,each repeated twice,16trials.
+- .2Nm all4 fingertips complete safely; peaks1.82–2.10N but steady loads only.051–.074N.
+- 2Nm left thumb peaks9.792N and holds~.8945N; right thumb peaks10.704N then mimic_error. Left/right index peak5.706/5.276N then mimic_error. Repeats agree.
+Across56 trials:18 safe completed,38 stopped for mimic error,0 sustained14N. No grab/lift success qualification exists for this fixture.
+
+Interpretation
+The current estimated simulator at this posture has a demonstrated loaded-coupling/steady-load-transfer limitation. Raising numerical iterations changes the threshold, so these numbers cannot be interpreted as actual DH116 hardware maximum force. Sleep-threshold comparison alone did not explain the steady-load loss. Exact root cause of the low steady force requires further drive/constraint-force diagnostics; do not label it fully diagnosed or resolved. Do not deploy2Nm merely because it was a test cap, and do not equate the14–16N manufacturer reference with a joint-torque parameter or the current two-pad load sum.
+
+Reproduction
+DH116_NUM_THREADS=1 PYTHONUNBUFFERED=1 bash scripts/python.sh scripts/test_dh116_fingertip_fixture.py --initialization runs/tabletop_pressure_geometry_20261024/initialization.json --output runs/<new-name> --efforts .2 .5 1 2 --repeat 2 --headless --device cpu
+v60 adds --disable-sleep and uses --efforts .2;v61 adds --position-iterations 64 and --efforts .2 2. Source snapshots/configuration are retained in each run.
+
+Software validation
+DH116_NUM_THREADS=1 bash scripts/python.sh -m pytest -q tests/test_dh116_fingertip_fixture.py tests/test_dh116_pressure_geometry.py tests/test_dh116_load_parameters.py
+20passed. Independent read-only review fixed decimation-based qualification, sample continuity,control-rate labeling and command/follower logging; no remaining blocking static finding. Changed files compile;git diff --check passes.
+
+Artifacts
+runs/fingertip_fixture_20261024_report/summary.json
+runs/fingertip_fixture_20261024_report/measurements.csv
+runs/fingertip_fixture_20261024_report/force_traces.png (displayed traces60Hz;qualification uses480Hz)
+runs/fingertip_fixture_20261024_report/force_traces.svg
+
+Training state
+v54 was interrupted during preflight with0 PPO transitions/updates; its outputs remain preserved. PPO remains stopped while this unresolved load-transfer limitation is investigated. No trial torque/solver setting was adopted into production or committed/pushed. Single Isaac instance,CPU0/numeric single thread throughout.

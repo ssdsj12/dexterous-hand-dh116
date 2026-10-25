@@ -14,7 +14,9 @@ def pair():
 def test_smooth_approach_stays_within_prechecked_joint_segment():
     a,b=pair()
     assert np.allclose(approach_target(a,b,.4)['left'],a['left'])
-    assert np.allclose(approach_target(a,b,2.)['left'],.025)
+    # Default: 0.5 s settling followed by a 1.2 s approach segment.
+    assert np.allclose(approach_target(a,b,1.1)['left'],.025)
+    assert np.allclose(approach_target(a,b,2.)['left'],b['left'])
     assert np.allclose(approach_target(a,b,4.)['left'],b['left'])
     dt=.001
     targets=np.array([approach_target(a,b,t)['left'] for t in np.arange(0,4,dt)])

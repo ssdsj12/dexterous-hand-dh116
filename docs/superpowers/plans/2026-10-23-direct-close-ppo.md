@@ -1,0 +1,15 @@
+# Direct-close PPO implementation plan
+
+User-approved decisions: rigid proxy; skip approach in training; initialize close from measured handoff; PPO outputs 12 active joint targets rather than scripted nominal closure; scripted bounded palm adjustment; LATEST steering: do not require four contacts; learn contact topology from object support, lift and stability. Close 2 s then hold .3 s initiates a lift attempt, not a qualification; success requires object bottom >=.33 m, speed <.03 m/s and relative slip <=.02 m for .5 s. The three answers confirm the revised design. No extra approval or commit is requested.
+
+Evidence: v18 round 4 deterministic evaluation has all 12 actions saturated after 8 s. Reconstructed observations reproduce clipped actions exactly; raw Gaussian means have magnitudes 1.53–11.08. Contact is worse than zero baseline. Five completed rounds failed close. Run interrupted during round 6; last periodic checkpoint 337920 exists, final summary was not emitted. Interrupted snapshot is not a successful complete run.
+
+Architecture: retain legacy modes for reproducibility. Add explicit direct-close snapshot/target mode and distinct contract. Restore measured poses/joints/velocities only at reset, discard contact cache/timers, settle and remeasure. Direct actions select targets within fixed calibrated joint envelopes and coupled limits, with rate and physical guards. Bounded policy mean and smaller initial variance prevent unbounded Gaussian mean drift. Contact shaping uses bounded aggregate-load progress without pad-count requirements. Object lift/stability earns reward; phase timers alone never qualify close. Legacy four-pad mode remains only for reproducibility.
+
+- [x] Add failing tests for direct close reset, target authority/rate limits, reward ranking and bounded actor save/load.
+- [x] Implement pure snapshot validation, explicit target controller, measured contact rewards, and bounded policy.
+- [x] Integrate CLI/backend restore, distinct metadata, direct close curriculum and small guarded per-hand palm corrections.
+- [x] Verify focused software tests (134 passed, 1 skipped); serial Isaac probes v19/v20 reached lift; actual PPO v21/v22 exercised new policy. Review and reward/report regressions complete.
+- [ ] Resolve physical stability before deterministic evaluation/long training: v21 stopped at 1048 steps, v22 at 1957, both right finger22 mimic error during early lift. V22's earlier .004 warning did not prevent .020175 hard error despite palm pause. No object lift success, no automatic restart after this failure. Evidence documented; root cause still requires isolation.
+
+Constraints: one Isaac instance; CPU 0 and one numerical thread; original mimic .02 rad, force 30 N and collision/drop guards unchanged; grasp topology relaxed by explicit user instruction. No object writes outside reset, no fabricated contact, no old residual-model resume into the new action contract. No automatic loop after physical errors; no claim of full approach-to-lift validation from direct-close training.

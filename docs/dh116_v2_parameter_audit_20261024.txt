@@ -1,0 +1,143 @@
+DH116 V2.0 最大力与仿真参数核对（2026-10-24）
+
+结论：用户确认按DH116 V2.0官方说明核对。当前采用V2资产，但不是完整硬件标定模型，不能宣称所有参数正确或已达到厂家最大夹持力。
+
+厂家依据：桌面《灵巧驱控 & DH116 V2.0系列灵巧手用户手册.pdf》第4页。
+指尖力14–16 N；侧向握力参数表≤50 N；勾握负载≤30 kg；整手490±10 g。
+同份手册简介写“侧向握力超50 N”，与参数表存在文字差异。资料未给逐关节最大输出力矩与上述力测试条件。
+不得把14–16 N直接写成14–16 N·m，也不得把30 kg负载当作捏持力。旧DH116/DH116S单位文档的电流额定值不能直接当作V2电机标定。
+
+核对范围：桌面资料、对应仓库原始URDF/MJCF、当前实际引用USD、运行源代码、v47配置和已有PhysX物体读回/接触预检。未启动第二个Isaac，未热改训练。以下逐项注明证据等级；安装版本默认值不冒充实时读回。
+
+1. model_version [confirmed]
+当前值："DH116 V2.0"
+判断：用户确认；源资产根名与V2 URDF一致，桌面9份对应资料与仓库副本SHA一致
+
+2. maximum_fingertip_force [manufacturer_reference]
+当前值："14–16 N"
+判断：V2.0手册PDF第4页；姿态、方向、持续时间及测试工装未定义，不能换成统一关节力矩
+
+3. lateral_grip_force [manufacturer_reference_with_conflict]
+当前值："参数表≤50 N"
+判断：同份手册第1页写超50 N；使用第4页参数表，不声称精确峰值
+
+4. hook_payload [manufacturer_reference]
+当前值："≤30 kg"
+判断：勾握负载，不等于指尖捏持力
+
+5. hand_mass [mismatch]
+当前值：{"left_kg": 0.31394789507612586, "right_kg": 0.3249061272945255, "manual_kg": 0.49, "manual_tolerance_kg": 0.01}
+判断：USD匹配源URDF质量，但未对齐整手手册；缺少正确质量分布，不能统一放大惯量冒充校准
+
+6. inertia [partially_verified]
+当前值："17个刚体/手；主惯量正且满足三角不等式"
+判断：离线数值有效，不代表实测分布准确
+
+7. active_joint_ranges [partially_aligned]
+当前值：{"finger11": [0.0, 80.0], "finger12": [0.45335985797431677, 59.01465289847479], "finger21": [0.0, 70.0], "finger31": [0.0, 70.0], "finger41": [0.0, 70.0], "finger51": [0.0, 70.0]}
+判断：拇指侧摆与四指符合V2手册；拇指屈伸取URDF/从动约束交集0.453–59.015°，未覆盖手册0–90°
+
+8. coupling [approximation]
+当前值："URDF线性mimic；400 s^-1、阻尼比1"
+判断：V2 MJCF为二次关系；运行时柔顺为仿真参数，未标定硬件，旧版Excel不能直接覆盖
+
+9. active_effort_cap [uncalibrated]
+当前值：0.2
+判断：N·m/主动关节；源URDF effort=0是未提供能力，手册无电机力矩常数/传动效率/逐关节力矩表
+
+10. force_target [experimental_range]
+当前值：[0.1, 1.0]
+判断：N/手，两个指垫对物体法向接触合力模长之和；范围非厂家最大力
+
+11. active_pd [uncalibrated]
+当前值：{"stiffness_nm_rad": [10, 20], "damping_nm_s_rad": 0.2}
+判断：隐式位置驱动；参数不是实机辨识结果
+
+12. torque_telemetry [interpretation_correction]
+当前值："applied_torque_nm来自ImplicitActuator估算"
+判断：不能作为真实求解器驱动力矩/是否饱和的直接证据；应补反力/关节传力诊断及受控加载试验
+
+13. contact_telemetry [limited_scope]
+当前值："4个物体过滤传感器：两手各拇指和食指末节"
+判断：当前Isaac Lab force_matrix_w是法向合力；未记录切向摩擦、法线方向和接触点；不覆盖其他指节/掌面
+
+14. joint_speeds [conservative_simulation]
+当前值：{"command_rad_s": 0.05, "active_solver_rad_s": 0.3, "passive_solver_rad_s": 3.0}
+判断：目标仅2.865°/s；不是V2手册≤0.5s全开合的性能复现
+
+15. gravity_and_roots [simulation_simplification]
+当前值："场景-9.81m/s²；手关闭重力、根固定后脚本移动；吸管开重力"
+判断：没有双Panda动力学、根部力矩限制或硬件自锁模型，不能据此宣称负载能力
+
+16. collision [simulation_simplification]
+当前值："每手17个凸包；双手34；手内自碰撞关闭；吸管32凸段"
+判断：刚性指垫和刚性吸管，不包含软胶形变或吸管挤瘪
+
+17. object_geometry [verified_against_declared_proxy]
+当前值：{"kind": "hollow_straw", "usd_sha256": "e04195bd95d853b432c5d88c73a81e75d34acc8846d292e98e9c370684b2a9d5", "mass_kg": 0.010956304379394401, "rigid": true, "collision": "32_convex_annular_segments", "outer_radius_m": 0.008, "inner_radius_m": 0.0075, "length_m": 0.5, "wall_thickness_m": 0.0005, "density_kg_m3": 900.0, "axis": "Y", "collision_segments": 32}
+判断：外径16mm/内径15mm/长0.5m；质量10.9563g，不等同任意实物吸管
+
+18. object_mass_inertia [runtime_readback_verified]
+当前值：[0.010956304147839546]
+判断：512物体质量和惯量一致，符合生成参数
+
+19. object_material [runtime_readback_verified]
+当前值：{"profile": "high_friction_v1", "static_friction": 1.2, "dynamic_friction": 1.0, "restitution": 0.0, "friction_combine_mode": "max", "restitution_combine_mode": "min", "scope": "object_colliders"}
+判断：512×32碰撞段已核验；高摩擦是用户指定试验材料；max合成也提高桌面摩擦，非实测识别
+
+20. contact_offsets [partially_audited]
+当前值：{"object_contact_offset_m": 0.001, "object_rest_offset_m": 0}
+判断：手/桌偏移使用USD或引擎回退；当前未保存完整逐形状运行时读回，不称已验证全部
+
+21. solver [configuration_verified]
+当前值：{"type": "PGS", "physics_hz": 480, "control_hz": 60, "position_iterations": 16, "velocity_iterations": 4, "contact_last": false}
+判断：数值配置与合同一致，长期/大力接触收敛仍需实测；contact_last是默认值推断，未单独现场读回
+
+22. friction_defaults [requires_sensitivity_validation]
+当前值：{"friction_offset_threshold_m": 0.04, "friction_correlation_distance_m": 0.025}
+判断：安装版本默认值、代码未覆盖；相对16mm对象较大，需单因素对照，不能仅凭数值断言错误
+
+23. force_protection [simulation_guard]
+当前值：{"penalty_above_pad_n": 15, "stop_above_pad_n": 30}
+判断：非厂家额定/持续力边界；只覆盖4个被观测指垫
+
+24. mimic_protection [simulation_guard]
+当前值：{"warning_rad": 0.004, "stop_rad": 0.02}
+判断：保留；预检8环境960个记录帧中至少一手禁止增压占77.8125%，需处理受载传力而非直接关闭保护
+
+25. readiness [learning_rule]
+当前值：{"target_hand_load_range_n": [0.1, 1.0], "measurement": "sum_of_two_pad_object_force_magnitudes_per_hand", "target_rate_n_s": 0.5, "filter_tau_s": 0.05, "deadband_n": 0.02, "closure_offset_limit_rad": 0.08, "closure_rate_rad_s": 0.03, "feedback_gain_rad_per_n_s": 0.1, "slip_boost_n_s": 0.25, "combined_joint_radius_rad": 0.15, "drive_stiffness_target": 20.0, "readiness_fraction": 0.8, "readiness_upper_factor": 1.25, "readiness_slip_m": 0.003, "readiness_speed_m_s": 0.02, "lift_pause_load_fraction": 0.8, "lift_pause_slip_m": 0.002, "lift_pause_slip_speed_m_s": 0.002, "close_dwell_s": 0.2, "hold_dwell_s": 0.3, "acquisition_timeout_s": 6.0}
+判断：原始瞬时接触与请求目标连续满足0.2+0.3秒；6秒超时；目标波动/接触抖动可阻止阶段推进，未证明是唯一原因
+
+26. task_success [verified_code_rule]
+当前值："离桌30mm、低速度/滑移保持0.5s"
+判断：不要求四点接触；不等于只要有力就成功
+
+27. reset_and_isolation [runtime_verified]
+当前值："512环境复位重复、单槽不扰动其他槽、非对称状态映射通过"
+判断：直接close、几何初态、零高度扰动；还不是泛化评估
+
+28. gpu_contact [runtime_verified]
+当前值："1024只手全部出现>0.01N接触；峰值0.19017–0.27536N/手"
+判断：预检并非最大力标定，也不是PPO成果
+
+29. training [stopped_for_v2_parameter_identification]
+当前值：{"status": "interrupted", "timesteps": 0, "updates": 0}
+判断：v47已主动停止并保留结果；v48/v49是固定动作物理对照，没有PPO更新，也没有实际离桌成功。网站检索见docs/dh116_v2_web_search_20261024.txt。
+
+修改优先级与未完成校准
+1. 修正力矩诊断口径：applied_torque是隐式PD近似，不是驱动力矩真值。保留原历史数据，但撤回仅据此排除饱和的结论。
+2. 做受控指尖加载标定，再确定每关节effort/gain与每手力目标范围。用物体过滤法向力、切向力、接触法线/位置与关节传力联合检查；先确认0.5/1 N目标能稳定跟踪，再逐级验证更大载荷。不要直接将50 N或16 N·m填入驱动器。
+3. 核对V2 URDF与MJCF的拇指行程、联动关系和质量分布。来源相互不一致时保留现有限位；不能只放宽范围或统一放大质量冒充正确模型。
+4. 在独立串行对照中验证受载mimic与接触求解、接触/摩擦距离尺度；不直接关闭.02rad硬保护。
+5. 若目标是任意手指/掌面自行抓取，应扩展接触测量覆盖面；当前“不要求四点”仍只观察拇指/食指这4个接触体。
+6. 当前高摩擦刚体吸管、零初态扰动、手掌脚本提升不支持硬件最大力或泛化结论。需要后续受控实物/多参数评估。
+
+当前量化证据：v47前8环境接触预检的960个60Hz记录帧，左右手禁止增压比例50.42%/57.50%，至少一手77.81%；每手目标为0.55N，全部512环境手载荷峰值仅0.190–0.275N。因此已有低载荷阶段受载联动预警的证据；尚不能证明提高effort上限就能解除该问题。
+
+官方软件语义交叉检查：
+https://isaac-sim.github.io/IsaacLab/v2.3.0/_modules/isaaclab/actuators/actuator_pd.html
+https://isaac-sim.github.io/IsaacLab/v2.2.0/source/api/lab/isaaclab.sensors.html
+本机同名源码确认ImplicitActuator.compute的approximate torque说明，以及ContactSensorData.force_matrix_w的normal contact forces说明。
+
+详细机器记录：runs/tabletop_gpu_20261024_v47_env512/manufacturer_parameter_audit.json

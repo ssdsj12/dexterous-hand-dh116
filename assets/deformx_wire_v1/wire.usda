@@ -1,0 +1,18 @@
+#usda 1.0
+(
+    defaultPrim = "Wire"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "Wire" (
+    prepend references = @./wire_orange_s20_r0.005_l1_smooth.usdc@
+)
+{
+    over "env_light" (
+        active = false
+    )
+    {
+    }
+}
+

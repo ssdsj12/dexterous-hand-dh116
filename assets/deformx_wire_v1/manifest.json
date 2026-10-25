@@ -1,0 +1,28 @@
+{
+  "source_project": "DeformX",
+  "source_asset": "wire_orange_s20_r0.005_l1_smooth.usdc",
+  "source_sha256": "990c18a99064c700fb4a742070aefff6036a8efd5bbb7c6bf8e56f873398d5a9",
+  "license": "LICENSE",
+  "entry": "wire.usda",
+  "dependencies": [
+    "textures/color_0C0C0C.exr"
+  ],
+  "length_m": 1.0,
+  "radius_m": 0.005,
+  "elements": 20,
+  "vertices": 2652,
+  "suppressed_lights": [
+    "/Wire/env_light"
+  ],
+  "example_material": {
+    "density_kg_m3": 700,
+    "young_modulus_pa": 200000,
+    "shear_modulus_pa": 66666.66666666667,
+    "damping": 0.1,
+    "dt_s": 1e-05,
+    "physics_radius_m": 0.005,
+    "provenance": "DeformX RL demo example; radius intentionally aligned to mesh; not calibrated"
+  },
+  "runtime": "External Cosserat solver required; no USD rigid-body physics",
+  "physics_radius_note": "Mesh radius 0.005 m; differs from upstream demo physics radius 0.00635 m"
+}

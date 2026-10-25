@@ -10,3 +10,6 @@ __pycache__/
 .env.*
 *.pem
 *.key
+
+# Generated code-graph caches (keep local only)
+graphify-out/

@@ -1,0 +1,542 @@
+#usda 1.0
+(
+    defaultPrim = "Straw"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "Straw" (
+    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+)
+{
+    point3f physics:centerOfMass = (0, 0, 0)
+    float3 physics:diagonalInertia = (0.00022858572, 6.587478e-7, 0.00022858572)
+    bool physics:kinematicEnabled = 0
+    float physics:mass = 0.010956304
+    quatf physics:principalAxes = (1, 0, 0, 0)
+    bool physics:rigidBodyEnabled = 1
+    custom token straw:axis = "Y"
+    custom double straw:inner_radius_m = 0.0075
+    custom double straw:length_m = 0.5
+    custom double straw:outer_radius_m = 0.008
+    custom double straw:wall_thickness_m = 0.0005
+    quatf xformOp:orient = (1, 0, 0, 0)
+    float3 xformOp:scale = (1, 1, 1)
+    double3 xformOp:translate = (0, 0, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+    def Mesh "Visual" (
+        prepend apiSchemas = ["MaterialBindingAPI"]
+    )
+    {
+        uniform bool doubleSided = 1
+        float3[] extent = [(-0.008, -0.25, -0.008), (0.008, 0.25, 0.008)]
+        int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+        int[] faceVertexIndices = [0, 32, 33, 1, 64, 65, 97, 96, 0, 1, 65, 64, 32, 96, 97, 33, 1, 33, 34, 2, 65, 66, 98, 97, 1, 2, 66, 65, 33, 97, 98, 34, 2, 34, 35, 3, 66, 67, 99, 98, 2, 3, 67, 66, 34, 98, 99, 35, 3, 35, 36, 4, 67, 68, 100, 99, 3, 4, 68, 67, 35, 99, 100, 36, 4, 36, 37, 5, 68, 69, 101, 100, 4, 5, 69, 68, 36, 100, 101, 37, 5, 37, 38, 6, 69, 70, 102, 101, 5, 6, 70, 69, 37, 101, 102, 38, 6, 38, 39, 7, 70, 71, 103, 102, 6, 7, 71, 70, 38, 102, 103, 39, 7, 39, 40, 8, 71, 72, 104, 103, 7, 8, 72, 71, 39, 103, 104, 40, 8, 40, 41, 9, 72, 73, 105, 104, 8, 9, 73, 72, 40, 104, 105, 41, 9, 41, 42, 10, 73, 74, 106, 105, 9, 10, 74, 73, 41, 105, 106, 42, 10, 42, 43, 11, 74, 75, 107, 106, 10, 11, 75, 74, 42, 106, 107, 43, 11, 43, 44, 12, 75, 76, 108, 107, 11, 12, 76, 75, 43, 107, 108, 44, 12, 44, 45, 13, 76, 77, 109, 108, 12, 13, 77, 76, 44, 108, 109, 45, 13, 45, 46, 14, 77, 78, 110, 109, 13, 14, 78, 77, 45, 109, 110, 46, 14, 46, 47, 15, 78, 79, 111, 110, 14, 15, 79, 78, 46, 110, 111, 47, 15, 47, 48, 16, 79, 80, 112, 111, 15, 16, 80, 79, 47, 111, 112, 48, 16, 48, 49, 17, 80, 81, 113, 112, 16, 17, 81, 80, 48, 112, 113, 49, 17, 49, 50, 18, 81, 82, 114, 113, 17, 18, 82, 81, 49, 113, 114, 50, 18, 50, 51, 19, 82, 83, 115, 114, 18, 19, 83, 82, 50, 114, 115, 51, 19, 51, 52, 20, 83, 84, 116, 115, 19, 20, 84, 83, 51, 115, 116, 52, 20, 52, 53, 21, 84, 85, 117, 116, 20, 21, 85, 84, 52, 116, 117, 53, 21, 53, 54, 22, 85, 86, 118, 117, 21, 22, 86, 85, 53, 117, 118, 54, 22, 54, 55, 23, 86, 87, 119, 118, 22, 23, 87, 86, 54, 118, 119, 55, 23, 55, 56, 24, 87, 88, 120, 119, 23, 24, 88, 87, 55, 119, 120, 56, 24, 56, 57, 25, 88, 89, 121, 120, 24, 25, 89, 88, 56, 120, 121, 57, 25, 57, 58, 26, 89, 90, 122, 121, 25, 26, 90, 89, 57, 121, 122, 58, 26, 58, 59, 27, 90, 91, 123, 122, 26, 27, 91, 90, 58, 122, 123, 59, 27, 59, 60, 28, 91, 92, 124, 123, 27, 28, 92, 91, 59, 123, 124, 60, 28, 60, 61, 29, 92, 93, 125, 124, 28, 29, 93, 92, 60, 124, 125, 61, 29, 61, 62, 30, 93, 94, 126, 125, 29, 30, 94, 93, 61, 125, 126, 62, 30, 62, 63, 31, 94, 95, 127, 126, 30, 31, 95, 94, 62, 126, 127, 63, 31, 63, 32, 0, 95, 64, 96, 127, 31, 0, 64, 95, 63, 127, 96, 32]
+        rel material:binding = </Straw/Looks/PaleYellow>
+        uniform token orientation = "rightHanded"
+        point3f[] points = [(0.008, -0.25, 0), (0.007846282, -0.25, 0.0015607226), (0.0073910365, -0.25, 0.0030614675), (0.006651757, -0.25, 0.004444562), (0.0056568542, -0.25, 0.0056568542), (0.004444562, -0.25, 0.006651757), (0.0030614675, -0.25, 0.0073910365), (0.0015607226, -0.25, 0.007846282), (4.8985874e-19, -0.25, 0.008), (-0.0015607226, -0.25, 0.007846282), (-0.0030614675, -0.25, 0.0073910365), (-0.004444562, -0.25, 0.006651757), (-0.0056568542, -0.25, 0.0056568542), (-0.006651757, -0.25, 0.004444562), (-0.0073910365, -0.25, 0.0030614675), (-0.007846282, -0.25, 0.0015607226), (-0.008, -0.25, 9.797175e-19), (-0.007846282, -0.25, -0.0015607226), (-0.0073910365, -0.25, -0.0030614675), (-0.006651757, -0.25, -0.004444562), (-0.0056568542, -0.25, -0.0056568542), (-0.004444562, -0.25, -0.006651757), (-0.0030614675, -0.25, -0.0073910365), (-0.0015607226, -0.25, -0.007846282), (-1.4695761e-18, -0.25, -0.008), (0.0015607226, -0.25, -0.007846282), (0.0030614675, -0.25, -0.0073910365), (0.004444562, -0.25, -0.006651757), (0.0056568542, -0.25, -0.0056568542), (0.006651757, -0.25, -0.004444562), (0.0073910365, -0.25, -0.0030614675), (0.007846282, -0.25, -0.0015607226), (0.008, 0.25, 0), (0.007846282, 0.25, 0.0015607226), (0.0073910365, 0.25, 0.0030614675), (0.006651757, 0.25, 0.004444562), (0.0056568542, 0.25, 0.0056568542), (0.004444562, 0.25, 0.006651757), (0.0030614675, 0.25, 0.0073910365), (0.0015607226, 0.25, 0.007846282), (4.8985874e-19, 0.25, 0.008), (-0.0015607226, 0.25, 0.007846282), (-0.0030614675, 0.25, 0.0073910365), (-0.004444562, 0.25, 0.006651757), (-0.0056568542, 0.25, 0.0056568542), (-0.006651757, 0.25, 0.004444562), (-0.0073910365, 0.25, 0.0030614675), (-0.007846282, 0.25, 0.0015607226), (-0.008, 0.25, 9.797175e-19), (-0.007846282, 0.25, -0.0015607226), (-0.0073910365, 0.25, -0.0030614675), (-0.006651757, 0.25, -0.004444562), (-0.0056568542, 0.25, -0.0056568542), (-0.004444562, 0.25, -0.006651757), (-0.0030614675, 0.25, -0.0073910365), (-0.0015607226, 0.25, -0.007846282), (-1.4695761e-18, 0.25, -0.008), (0.0015607226, 0.25, -0.007846282), (0.0030614675, 0.25, -0.0073910365), (0.004444562, 0.25, -0.006651757), (0.0056568542, 0.25, -0.0056568542), (0.006651757, 0.25, -0.004444562), (0.0073910365, 0.25, -0.0030614675), (0.007846282, 0.25, -0.0015607226), (0.0075, -0.25, 0), (0.00735589, -0.25, 0.0014631774), (0.0069290963, -0.25, 0.0028701257), (0.006236022, -0.25, 0.004166777), (0.005303301, -0.25, 0.005303301), (0.004166777, -0.25, 0.006236022), (0.0028701257, -0.25, 0.0069290963), (0.0014631774, -0.25, 0.00735589), (4.5924256e-19, -0.25, 0.0075), (-0.0014631774, -0.25, 0.00735589), (-0.0028701257, -0.25, 0.0069290963), (-0.004166777, -0.25, 0.006236022), (-0.005303301, -0.25, 0.005303301), (-0.006236022, -0.25, 0.004166777), (-0.0069290963, -0.25, 0.0028701257), (-0.00735589, -0.25, 0.0014631774), (-0.0075, -0.25, 9.184851e-19), (-0.00735589, -0.25, -0.0014631774), (-0.0069290963, -0.25, -0.0028701257), (-0.006236022, -0.25, -0.004166777), (-0.005303301, -0.25, -0.005303301), (-0.004166777, -0.25, -0.006236022), (-0.0028701257, -0.25, -0.0069290963), (-0.0014631774, -0.25, -0.00735589), (-1.3777276e-18, -0.25, -0.0075), (0.0014631774, -0.25, -0.00735589), (0.0028701257, -0.25, -0.0069290963), (0.004166777, -0.25, -0.006236022), (0.005303301, -0.25, -0.005303301), (0.006236022, -0.25, -0.004166777), (0.0069290963, -0.25, -0.0028701257), (0.00735589, -0.25, -0.0014631774), (0.0075, 0.25, 0), (0.00735589, 0.25, 0.0014631774), (0.0069290963, 0.25, 0.0028701257), (0.006236022, 0.25, 0.004166777), (0.005303301, 0.25, 0.005303301), (0.004166777, 0.25, 0.006236022), (0.0028701257, 0.25, 0.0069290963), (0.0014631774, 0.25, 0.00735589), (4.5924256e-19, 0.25, 0.0075), (-0.0014631774, 0.25, 0.00735589), (-0.0028701257, 0.25, 0.0069290963), (-0.004166777, 0.25, 0.006236022), (-0.005303301, 0.25, 0.005303301), (-0.006236022, 0.25, 0.004166777), (-0.0069290963, 0.25, 0.0028701257), (-0.00735589, 0.25, 0.0014631774), (-0.0075, 0.25, 9.184851e-19), (-0.00735589, 0.25, -0.0014631774), (-0.0069290963, 0.25, -0.0028701257), (-0.006236022, 0.25, -0.004166777), (-0.005303301, 0.25, -0.005303301), (-0.004166777, 0.25, -0.006236022), (-0.0028701257, 0.25, -0.0069290963), (-0.0014631774, 0.25, -0.00735589), (-1.3777276e-18, 0.25, -0.0075), (0.0014631774, 0.25, -0.00735589), (0.0028701257, 0.25, -0.0069290963), (0.004166777, 0.25, -0.006236022), (0.005303301, 0.25, -0.005303301), (0.006236022, 0.25, -0.004166777), (0.0069290963, 0.25, -0.0028701257), (0.00735589, 0.25, -0.0014631774)]
+        uniform token subdivisionScheme = "none"
+    }
+
+    def "Looks"
+    {
+        def Material "PaleYellow"
+        {
+            token outputs:surface.connect = </Straw/Looks/PaleYellow/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.97, 0.92, 0.65)
+                float inputs:metallic = 0
+                float inputs:roughness = 0.35
+                token outputs:surface
+            }
+        }
+    }
+
+    def "Collisions"
+    {
+        def Mesh "segment_00" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.00735589, -0.25, 0), (0.008, 0.25, 0.0015607226)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.008, -0.25, 0), (0.007846282, -0.25, 0.0015607226), (0.007846282, 0.25, 0.0015607226), (0.008, 0.25, 0), (0.0075, -0.25, 0), (0.00735589, -0.25, 0.0014631774), (0.00735589, 0.25, 0.0014631774), (0.0075, 0.25, 0)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_01" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.0069290963, -0.25, 0.0014631774), (0.007846282, 0.25, 0.0030614675)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.007846282, -0.25, 0.0015607226), (0.0073910365, -0.25, 0.0030614675), (0.0073910365, 0.25, 0.0030614675), (0.007846282, 0.25, 0.0015607226), (0.00735589, -0.25, 0.0014631774), (0.0069290963, -0.25, 0.0028701257), (0.0069290963, 0.25, 0.0028701257), (0.00735589, 0.25, 0.0014631774)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_02" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.006236022, -0.25, 0.0028701257), (0.0073910365, 0.25, 0.004444562)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.0073910365, -0.25, 0.0030614675), (0.006651757, -0.25, 0.004444562), (0.006651757, 0.25, 0.004444562), (0.0073910365, 0.25, 0.0030614675), (0.0069290963, -0.25, 0.0028701257), (0.006236022, -0.25, 0.004166777), (0.006236022, 0.25, 0.004166777), (0.0069290963, 0.25, 0.0028701257)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_03" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.005303301, -0.25, 0.004166777), (0.006651757, 0.25, 0.0056568542)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.006651757, -0.25, 0.004444562), (0.0056568542, -0.25, 0.0056568542), (0.0056568542, 0.25, 0.0056568542), (0.006651757, 0.25, 0.004444562), (0.006236022, -0.25, 0.004166777), (0.005303301, -0.25, 0.005303301), (0.005303301, 0.25, 0.005303301), (0.006236022, 0.25, 0.004166777)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_04" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.004166777, -0.25, 0.005303301), (0.0056568542, 0.25, 0.006651757)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.0056568542, -0.25, 0.0056568542), (0.004444562, -0.25, 0.006651757), (0.004444562, 0.25, 0.006651757), (0.0056568542, 0.25, 0.0056568542), (0.005303301, -0.25, 0.005303301), (0.004166777, -0.25, 0.006236022), (0.004166777, 0.25, 0.006236022), (0.005303301, 0.25, 0.005303301)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_05" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.0028701257, -0.25, 0.006236022), (0.004444562, 0.25, 0.0073910365)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.004444562, -0.25, 0.006651757), (0.0030614675, -0.25, 0.0073910365), (0.0030614675, 0.25, 0.0073910365), (0.004444562, 0.25, 0.006651757), (0.004166777, -0.25, 0.006236022), (0.0028701257, -0.25, 0.0069290963), (0.0028701257, 0.25, 0.0069290963), (0.004166777, 0.25, 0.006236022)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_06" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.0014631774, -0.25, 0.0069290963), (0.0030614675, 0.25, 0.007846282)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.0030614675, -0.25, 0.0073910365), (0.0015607226, -0.25, 0.007846282), (0.0015607226, 0.25, 0.007846282), (0.0030614675, 0.25, 0.0073910365), (0.0028701257, -0.25, 0.0069290963), (0.0014631774, -0.25, 0.00735589), (0.0014631774, 0.25, 0.00735589), (0.0028701257, 0.25, 0.0069290963)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_07" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(4.5924256e-19, -0.25, 0.00735589), (0.0015607226, 0.25, 0.008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.0015607226, -0.25, 0.007846282), (4.8985874e-19, -0.25, 0.008), (4.8985874e-19, 0.25, 0.008), (0.0015607226, 0.25, 0.007846282), (0.0014631774, -0.25, 0.00735589), (4.5924256e-19, -0.25, 0.0075), (4.5924256e-19, 0.25, 0.0075), (0.0014631774, 0.25, 0.00735589)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_08" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.0015607226, -0.25, 0.00735589), (4.8985874e-19, 0.25, 0.008)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(4.8985874e-19, -0.25, 0.008), (-0.0015607226, -0.25, 0.007846282), (-0.0015607226, 0.25, 0.007846282), (4.8985874e-19, 0.25, 0.008), (4.5924256e-19, -0.25, 0.0075), (-0.0014631774, -0.25, 0.00735589), (-0.0014631774, 0.25, 0.00735589), (4.5924256e-19, 0.25, 0.0075)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_09" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.0030614675, -0.25, 0.0069290963), (-0.0014631774, 0.25, 0.007846282)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.0015607226, -0.25, 0.007846282), (-0.0030614675, -0.25, 0.0073910365), (-0.0030614675, 0.25, 0.0073910365), (-0.0015607226, 0.25, 0.007846282), (-0.0014631774, -0.25, 0.00735589), (-0.0028701257, -0.25, 0.0069290963), (-0.0028701257, 0.25, 0.0069290963), (-0.0014631774, 0.25, 0.00735589)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_10" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.004444562, -0.25, 0.006236022), (-0.0028701257, 0.25, 0.0073910365)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.0030614675, -0.25, 0.0073910365), (-0.004444562, -0.25, 0.006651757), (-0.004444562, 0.25, 0.006651757), (-0.0030614675, 0.25, 0.0073910365), (-0.0028701257, -0.25, 0.0069290963), (-0.004166777, -0.25, 0.006236022), (-0.004166777, 0.25, 0.006236022), (-0.0028701257, 0.25, 0.0069290963)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_11" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.0056568542, -0.25, 0.005303301), (-0.004166777, 0.25, 0.006651757)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.004444562, -0.25, 0.006651757), (-0.0056568542, -0.25, 0.0056568542), (-0.0056568542, 0.25, 0.0056568542), (-0.004444562, 0.25, 0.006651757), (-0.004166777, -0.25, 0.006236022), (-0.005303301, -0.25, 0.005303301), (-0.005303301, 0.25, 0.005303301), (-0.004166777, 0.25, 0.006236022)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_12" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.006651757, -0.25, 0.004166777), (-0.005303301, 0.25, 0.0056568542)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.0056568542, -0.25, 0.0056568542), (-0.006651757, -0.25, 0.004444562), (-0.006651757, 0.25, 0.004444562), (-0.0056568542, 0.25, 0.0056568542), (-0.005303301, -0.25, 0.005303301), (-0.006236022, -0.25, 0.004166777), (-0.006236022, 0.25, 0.004166777), (-0.005303301, 0.25, 0.005303301)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_13" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.0073910365, -0.25, 0.0028701257), (-0.006236022, 0.25, 0.004444562)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.006651757, -0.25, 0.004444562), (-0.0073910365, -0.25, 0.0030614675), (-0.0073910365, 0.25, 0.0030614675), (-0.006651757, 0.25, 0.004444562), (-0.006236022, -0.25, 0.004166777), (-0.0069290963, -0.25, 0.0028701257), (-0.0069290963, 0.25, 0.0028701257), (-0.006236022, 0.25, 0.004166777)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_14" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.007846282, -0.25, 0.0014631774), (-0.0069290963, 0.25, 0.0030614675)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.0073910365, -0.25, 0.0030614675), (-0.007846282, -0.25, 0.0015607226), (-0.007846282, 0.25, 0.0015607226), (-0.0073910365, 0.25, 0.0030614675), (-0.0069290963, -0.25, 0.0028701257), (-0.00735589, -0.25, 0.0014631774), (-0.00735589, 0.25, 0.0014631774), (-0.0069290963, 0.25, 0.0028701257)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_15" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.008, -0.25, 9.184851e-19), (-0.00735589, 0.25, 0.0015607226)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.007846282, -0.25, 0.0015607226), (-0.008, -0.25, 9.797175e-19), (-0.008, 0.25, 9.797175e-19), (-0.007846282, 0.25, 0.0015607226), (-0.00735589, -0.25, 0.0014631774), (-0.0075, -0.25, 9.184851e-19), (-0.0075, 0.25, 9.184851e-19), (-0.00735589, 0.25, 0.0014631774)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_16" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.008, -0.25, -0.0015607226), (-0.00735589, 0.25, 9.797175e-19)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.008, -0.25, 9.797175e-19), (-0.007846282, -0.25, -0.0015607226), (-0.007846282, 0.25, -0.0015607226), (-0.008, 0.25, 9.797175e-19), (-0.0075, -0.25, 9.184851e-19), (-0.00735589, -0.25, -0.0014631774), (-0.00735589, 0.25, -0.0014631774), (-0.0075, 0.25, 9.184851e-19)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_17" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.007846282, -0.25, -0.0030614675), (-0.0069290963, 0.25, -0.0014631774)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.007846282, -0.25, -0.0015607226), (-0.0073910365, -0.25, -0.0030614675), (-0.0073910365, 0.25, -0.0030614675), (-0.007846282, 0.25, -0.0015607226), (-0.00735589, -0.25, -0.0014631774), (-0.0069290963, -0.25, -0.0028701257), (-0.0069290963, 0.25, -0.0028701257), (-0.00735589, 0.25, -0.0014631774)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_18" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.0073910365, -0.25, -0.004444562), (-0.006236022, 0.25, -0.0028701257)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.0073910365, -0.25, -0.0030614675), (-0.006651757, -0.25, -0.004444562), (-0.006651757, 0.25, -0.004444562), (-0.0073910365, 0.25, -0.0030614675), (-0.0069290963, -0.25, -0.0028701257), (-0.006236022, -0.25, -0.004166777), (-0.006236022, 0.25, -0.004166777), (-0.0069290963, 0.25, -0.0028701257)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_19" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.006651757, -0.25, -0.0056568542), (-0.005303301, 0.25, -0.004166777)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.006651757, -0.25, -0.004444562), (-0.0056568542, -0.25, -0.0056568542), (-0.0056568542, 0.25, -0.0056568542), (-0.006651757, 0.25, -0.004444562), (-0.006236022, -0.25, -0.004166777), (-0.005303301, -0.25, -0.005303301), (-0.005303301, 0.25, -0.005303301), (-0.006236022, 0.25, -0.004166777)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_20" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.0056568542, -0.25, -0.006651757), (-0.004166777, 0.25, -0.005303301)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.0056568542, -0.25, -0.0056568542), (-0.004444562, -0.25, -0.006651757), (-0.004444562, 0.25, -0.006651757), (-0.0056568542, 0.25, -0.0056568542), (-0.005303301, -0.25, -0.005303301), (-0.004166777, -0.25, -0.006236022), (-0.004166777, 0.25, -0.006236022), (-0.005303301, 0.25, -0.005303301)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_21" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.004444562, -0.25, -0.0073910365), (-0.0028701257, 0.25, -0.006236022)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.004444562, -0.25, -0.006651757), (-0.0030614675, -0.25, -0.0073910365), (-0.0030614675, 0.25, -0.0073910365), (-0.004444562, 0.25, -0.006651757), (-0.004166777, -0.25, -0.006236022), (-0.0028701257, -0.25, -0.0069290963), (-0.0028701257, 0.25, -0.0069290963), (-0.004166777, 0.25, -0.006236022)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_22" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.0030614675, -0.25, -0.007846282), (-0.0014631774, 0.25, -0.0069290963)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.0030614675, -0.25, -0.0073910365), (-0.0015607226, -0.25, -0.007846282), (-0.0015607226, 0.25, -0.007846282), (-0.0030614675, 0.25, -0.0073910365), (-0.0028701257, -0.25, -0.0069290963), (-0.0014631774, -0.25, -0.00735589), (-0.0014631774, 0.25, -0.00735589), (-0.0028701257, 0.25, -0.0069290963)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_23" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-0.0015607226, -0.25, -0.008), (-1.3777276e-18, 0.25, -0.00735589)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-0.0015607226, -0.25, -0.007846282), (-1.4695761e-18, -0.25, -0.008), (-1.4695761e-18, 0.25, -0.008), (-0.0015607226, 0.25, -0.007846282), (-0.0014631774, -0.25, -0.00735589), (-1.3777276e-18, -0.25, -0.0075), (-1.3777276e-18, 0.25, -0.0075), (-0.0014631774, 0.25, -0.00735589)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_24" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(-1.4695761e-18, -0.25, -0.008), (0.0015607226, 0.25, -0.00735589)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(-1.4695761e-18, -0.25, -0.008), (0.0015607226, -0.25, -0.007846282), (0.0015607226, 0.25, -0.007846282), (-1.4695761e-18, 0.25, -0.008), (-1.3777276e-18, -0.25, -0.0075), (0.0014631774, -0.25, -0.00735589), (0.0014631774, 0.25, -0.00735589), (-1.3777276e-18, 0.25, -0.0075)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_25" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.0014631774, -0.25, -0.007846282), (0.0030614675, 0.25, -0.0069290963)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.0015607226, -0.25, -0.007846282), (0.0030614675, -0.25, -0.0073910365), (0.0030614675, 0.25, -0.0073910365), (0.0015607226, 0.25, -0.007846282), (0.0014631774, -0.25, -0.00735589), (0.0028701257, -0.25, -0.0069290963), (0.0028701257, 0.25, -0.0069290963), (0.0014631774, 0.25, -0.00735589)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_26" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.0028701257, -0.25, -0.0073910365), (0.004444562, 0.25, -0.006236022)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.0030614675, -0.25, -0.0073910365), (0.004444562, -0.25, -0.006651757), (0.004444562, 0.25, -0.006651757), (0.0030614675, 0.25, -0.0073910365), (0.0028701257, -0.25, -0.0069290963), (0.004166777, -0.25, -0.006236022), (0.004166777, 0.25, -0.006236022), (0.0028701257, 0.25, -0.0069290963)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_27" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.004166777, -0.25, -0.006651757), (0.0056568542, 0.25, -0.005303301)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.004444562, -0.25, -0.006651757), (0.0056568542, -0.25, -0.0056568542), (0.0056568542, 0.25, -0.0056568542), (0.004444562, 0.25, -0.006651757), (0.004166777, -0.25, -0.006236022), (0.005303301, -0.25, -0.005303301), (0.005303301, 0.25, -0.005303301), (0.004166777, 0.25, -0.006236022)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_28" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.005303301, -0.25, -0.0056568542), (0.006651757, 0.25, -0.004166777)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.0056568542, -0.25, -0.0056568542), (0.006651757, -0.25, -0.004444562), (0.006651757, 0.25, -0.004444562), (0.0056568542, 0.25, -0.0056568542), (0.005303301, -0.25, -0.005303301), (0.006236022, -0.25, -0.004166777), (0.006236022, 0.25, -0.004166777), (0.005303301, 0.25, -0.005303301)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_29" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.006236022, -0.25, -0.004444562), (0.0073910365, 0.25, -0.0028701257)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.006651757, -0.25, -0.004444562), (0.0073910365, -0.25, -0.0030614675), (0.0073910365, 0.25, -0.0030614675), (0.006651757, 0.25, -0.004444562), (0.006236022, -0.25, -0.004166777), (0.0069290963, -0.25, -0.0028701257), (0.0069290963, 0.25, -0.0028701257), (0.006236022, 0.25, -0.004166777)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_30" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.0069290963, -0.25, -0.0030614675), (0.007846282, 0.25, -0.0014631774)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.0073910365, -0.25, -0.0030614675), (0.007846282, -0.25, -0.0015607226), (0.007846282, 0.25, -0.0015607226), (0.0073910365, 0.25, -0.0030614675), (0.0069290963, -0.25, -0.0028701257), (0.00735589, -0.25, -0.0014631774), (0.00735589, 0.25, -0.0014631774), (0.0069290963, 0.25, -0.0028701257)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+
+        def Mesh "segment_31" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
+        {
+            float3[] extent = [(0.00735589, -0.25, -0.0015607226), (0.008, 0.25, -1.8369702e-18)]
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5]
+            uniform token orientation = "rightHanded"
+            uniform token physics:approximation = "convexHull"
+            bool physics:collisionEnabled = 1
+            point3f[] points = [(0.007846282, -0.25, -0.0015607226), (0.008, -0.25, -1.959435e-18), (0.008, 0.25, -1.959435e-18), (0.007846282, 0.25, -0.0015607226), (0.00735589, -0.25, -0.0014631774), (0.0075, -0.25, -1.8369702e-18), (0.0075, 0.25, -1.8369702e-18), (0.00735589, 0.25, -0.0014631774)]
+            uniform token subdivisionScheme = "none"
+            token visibility = "invisible"
+        }
+    }
+}
+

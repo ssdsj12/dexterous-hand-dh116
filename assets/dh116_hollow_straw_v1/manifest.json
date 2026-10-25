@@ -1,0 +1,36 @@
+{
+  "format": "dh116-hollow-straw-v1",
+  "outer_radius_m": 0.008,
+  "inner_radius_m": 0.0075,
+  "wall_thickness_m": 0.0005,
+  "length_m": 0.5,
+  "density_kg_m3": 900.0,
+  "axis": "Y",
+  "collision_segments": 32,
+  "mass_kg": 0.010956304379394401,
+  "diagonal_inertia_kg_m2": [
+    0.00022858571513778892,
+    6.587478008110884e-07,
+    0.00022858571513778892
+  ],
+  "inner_polygon_inradius_m": 0.007463885450041476,
+  "outer_polygon_inradius_m": 0.007961477813377575,
+  "rigid": true,
+  "physics_verified": false,
+  "default_prim": "/Straw",
+  "usd_file": "straw.usda",
+  "collision_description": "32 independent convex annular prisms; open polygonal bore",
+  "mass_model": "analytic nominal continuous hollow cylinder",
+  "physics_material": "unmodified runtime default",
+  "usd_sha256": "e04195bd95d853b432c5d88c73a81e75d34acc8846d292e98e9c370684b2a9d5",
+  "generators": [
+    {
+      "path": "/home/xk/coding/dexterous hand/src/go2_pvcnn/control/dh116/hollow_straw.py",
+      "sha256": "1c8daf7bb2c7749b9b981eb1a1cb01cd4d1fc951def7086eb714006656befd2c"
+    },
+    {
+      "path": "/home/xk/coding/dexterous hand/scripts/build_dh116_hollow_straw.py",
+      "sha256": "c31a375056bf9d996ec943a26b2ad5f5732a161e9c1bb9c94067e358e035717c"
+    }
+  ]
+}

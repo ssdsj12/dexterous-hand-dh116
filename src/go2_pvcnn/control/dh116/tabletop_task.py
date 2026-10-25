@@ -77,19 +77,25 @@ class TabletopTask:
     success_time: float = 0.0
     success: bool = False
     failure: str | None = None
+    grasp_mode: str = 'four_pad'
+    force_feedback: bool = False
 
     def update(self, dt, *, approach_error_m, pad_forces_n, clearance_m,
-               object_bottom_m, object_speed_m_s, slip_m, max_force_n):
+               object_bottom_m, object_speed_m_s, slip_m, max_force_n,
+               approach_contact_ready=False, approach_blocked=False, approach_pregrasp_ready=False, grasp_ready=False):
         if self.success or self.failure:
             return False
-        values = np.r_[dt, approach_error_m, pad_forces_n, clearance_m,
+        forces = np.asarray(pad_forces_n, dtype=float)
+        if forces.shape != (4,):
+            self.failure = 'nonfinite_state'
+            return False
+        values = np.r_[dt, approach_error_m, forces, clearance_m,
                        object_bottom_m, object_speed_m_s, slip_m, max_force_n]
         if not np.isfinite(values).all() or dt <= 0:
             self.failure = 'nonfinite_state'
             return False
         self.elapsed += dt
-        contact = bool(np.asarray(pad_forces_n).shape == (4,) and
-                       np.all(np.asarray(pad_forces_n) >= 0.1))
+        contact = bool(np.all(forces >= 0.1))
         if clearance_m < -0.001:
             self.failure = 'table_penetration'
         elif max_force_n > 30:
@@ -100,8 +106,43 @@ class TabletopTask:
             self.failure = 'timeout'
         if self.failure:
             return False
+        if self.grasp_mode == 'object_stability' and self.phase != 'approach':
+            if self.force_feedback and self.phase in ('close', 'hold'):
+                if self.elapsed > 6.:
+                    self.failure = 'grasp_not_established'
+                    return False
+                if not grasp_ready:
+                    self.phase, self.contact_time = 'close', 0.
+                else:
+                    self.contact_time += dt
+                    dwell = .2 if self.phase == 'close' else .3
+                    if self.contact_time >= dwell:
+                        self.phase = 'hold' if self.phase == 'close' else 'lift'
+                        self.contact_time = 0.
+                return False
+            # Training attempts a lift without a prescribed contact topology.
+            # A timed phase transition is not a grasp qualification.
+            if self.phase in ('close', 'hold'):
+                self.contact_time += dt
+                if self.contact_time >= (2. if self.phase == 'close' else .3):
+                    self.phase = 'hold' if self.phase == 'close' else 'lift'
+                    self.contact_time = 0.
+            elif self.phase == 'lift':
+                ready = object_bottom_m >= .33 and object_speed_m_s < .03 and slip_m <= .02
+                self.success_time = self.success_time + dt if ready else 0.
+                if self.success_time >= .5:
+                    self.success = True
+                    return True
+            return False
         if self.phase == 'approach':
-            if approach_error_m <= 0.002:
+            if approach_blocked:
+                self.failure = 'approach_blocked'
+                return False
+            measured_stop = (approach_contact_ready and clearance_m >= 0.002
+                             and bool(np.any(forces >= 0.1)))
+            prepared_stop = (approach_pregrasp_ready and approach_error_m <= .005
+                             and clearance_m >= .002)
+            if approach_error_m <= 0.002 or measured_stop or prepared_stop:
                 self.phase = 'close'
         elif self.phase == 'close':
             self.contact_time = self.contact_time + dt if contact else 0.0
