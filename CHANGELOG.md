@@ -1,3 +1,12 @@
+## 2026-10-25 — 全手物体接触与逐关节范围 PPO
+
+- 新增全手物体过滤测力、五指/手掌分组、148维观测；旧四指垫观测保持原义。单环境与批量力反馈、奖励、阶段门控、局部过力检查采用一致数据。
+- 新增逐关节动作范围；修复恢复指令越过新范围、扩展诊断环境索引缺键、坏接触数值导致整批异常三项问题，并添加失败后通过的回归。
+- 新合同明确拒绝旧观测/动作模型静默续训；新PPO保持原物体位置和物理上限，2048环境、1024回合/环境已启动。
+- 本次命令：`DH116_NUM_THREADS=1 bash scripts/python.sh -m pytest -q tests/test_dh116_joint_envelope.py tests/test_dh116_free_grasp_regressions.py tests/test_dh116_tabletop_object_contact.py tests/test_dh116_tabletop_env.py tests/test_dh116_force_feedback.py tests/test_dh116_batched_task.py tests/test_dh116_env_expansion.py tests/test_dh116_tabletop_training.py tests/test_dh116_contact_reward_scale.py`：152通过、1预期警告。
+- 实际Isaac：16环境8192步完成，37优化epoch，16训练回合完成/复位，无safety_stop；检查点权重变化、策略/优化器有限。初次smoke发现诊断索引KeyError，修复后上述第二次运行正常完成。评估仍是grasp_not_established，无抓取成功。
+- 旧v71的mimic_error物理根因仍未证明；补充signed errors、命令、全关节状态、载荷诊断，保留原硬保护。历史全量失败未全部解决。后续持续观察目标规模实际训练与抓取成功率。
+
 ## 2026-10-25 — 自由夹持设计确认
 
 - 核实v71因mimic_error停止；接触统计、力反馈和门控仍只覆盖四个指定指垫。

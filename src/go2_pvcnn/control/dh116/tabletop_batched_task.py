@@ -14,11 +14,17 @@ class BatchTask:
           'bottom','approach_error','mimic_errors','hand_clearance','adaptive_palm_offset',
           'grip_stiffness','pad_relative')
 
+    contact_keys=('object_link_loads','grouped_object_loads','hand_object_loads')
+
     optional_shapes = {'material_relative': (2, 3), 'material_speed': (2,)}
 
     @classmethod
     def stack_measurements(cls,rows):
         result={k:np.asarray([m[k] for m in rows],dtype=float) for k in cls.keys}
+        if any('object_link_loads' in m for m in rows):
+            for key in cls.contact_keys:
+                if any(key not in m for m in rows):raise ValueError('incomplete full-hand contact batch')
+                result[key]=np.asarray([m[key] for m in rows],dtype=float)
         for key, shape in cls.optional_shapes.items():
             if any(key in m for m in rows):
                 result[key] = np.zeros((len(rows), *shape))
@@ -31,6 +37,10 @@ class BatchTask:
         return result
 
     def optional_measurements(self, measurements):
+        if self.full_hand_contact:
+            from .tabletop_object_contact import validate_object_contacts
+            arrays,valid=validate_object_contacts(measurements,self.envs[0].backend.object_contact_links,batch_size=self.n,return_validity=True)
+            measurements={**measurements, **arrays, '_valid_object_contacts':valid}
         # Presence masks allow rigid and flexible backends in the same batch.
         result = dict(measurements)
         for key, shape in self.optional_shapes.items():
@@ -53,6 +63,9 @@ class BatchTask:
         self.envs=list(envs);self.n=len(envs)
         if any(e.force_controller is None or e.stage!='full' or e.closed for e in envs):
             raise ValueError('batched task requires open full-stage force-feedback episodes')
+        self.full_hand_contact=bool(envs[0].full_hand_contact)
+        if any(e.full_hand_contact != self.full_hand_contact for e in envs):raise ValueError('mixed contact contracts')
+        if self.full_hand_contact and any(tuple(e.backend.object_contact_links)!=tuple(envs[0].backend.object_contact_links) for e in envs):raise ValueError('mixed contact link order')
         self.m=self.optional_measurements(self.stack_measurements([e.measurement for e in envs]))
         self.reference=np.stack([e.reference for e in envs])
         self.command=np.stack([e.command for e in envs])
@@ -94,7 +107,7 @@ class BatchTask:
         m=self.m
         self.paused=np.max(abs(m['mimic_errors']),axis=1)>=.004
         tracking=np.max(abs(self.command-m['q']),axis=1)<.03
-        loads=m['forces'].reshape(self.n,2,2).sum(axis=2)
+        loads=m['hand_object_loads'] if self.full_hand_contact else m['forces'].reshape(self.n,2,2).sum(axis=2)
         slipping=(self.slip>.002)&((self.slip-self.f_last_slip)/dt>.002)
         lift=(self.phase==3)&~self.paused&tracking&np.all(loads>=.8*self.f_requested,axis=1)&~slipping&live
         self.offset[lift]=np.minimum(.05,self.offset[lift]+.01*dt)
@@ -125,14 +138,22 @@ class BatchTask:
         self.palm_actions[selected]=compensated[selected]
         self.palm_clipped[selected]=clipped[selected]
         self.palm_targets[selected]=self.palm_actions[selected]*PALM_LIMIT_M
-        target=np.clip(self.reference+.08*actions[:,:12],self.low,self.high)
+        profile=self.envs[0].joint_envelope
+        if profile is None:
+            target=np.clip(self.reference+.08*actions[:,:12],self.low,self.high)
+        else:
+            from .tabletop_joint_envelope import targets,clip_targets
+            target=targets(profile,actions[:,:12])
         adjusted=target+(self.f_offset[:,:,None]*self.direction).reshape(self.n,12)
-        target=np.clip(self.reference+np.clip(adjusted-self.reference,-.15,.15),self.low,self.high)
+        target=(np.clip(self.reference+np.clip(adjusted-self.reference,-.15,.15),self.low,self.high)
+                if profile is None else clip_targets(profile,adjusted))
         for j,(_,master,ratio,_) in enumerate(MIMIC):
             for hand in range(2):
                 idx=6*hand+ACTIVE.index(master);err=m['mimic_errors'][:,5*hand+j]
                 target[:,idx]=np.where(abs(err)>=.004,
                     np.clip(m['q'][:,idx]+err/ratio,self.low[idx],self.high[idx]),target[:,idx])
+        if profile is not None:
+            target=clip_targets(profile,target)
         self.command[live]+=np.clip(target-self.command,-.05*dt,.05*dt)[live]
         return tracking&~self.paused&live
 
@@ -141,6 +162,7 @@ class BatchTask:
         old={k:v.copy() for k,v in self.m.items()}
         previous_phase=self.phase.copy()
         finite=np.ones(self.n,dtype=bool)
+        if self.full_hand_contact:finite &= new['_valid_object_contacts']
         for k in self.keys:
             a=np.asarray(new[k]);finite&=np.isfinite(a).reshape(self.n,-1).all(axis=1)
         for k in self.optional_shapes:
@@ -159,6 +181,7 @@ class BatchTask:
                 self.f_requested/self.parameters.max_force_n,
                 self.f_last_slip/.02,self.grip/.05,
                 np.stack([self.elapsed,self.contact_time,self.success_time],axis=1)/15.]
+            if self.full_hand_contact:scaled.append(new['grouped_object_loads']/10.)
             for a in scaled:
                 finite&=np.all(np.isfinite(a).reshape(self.n,-1)&
                     (abs(a).reshape(self.n,-1)<=np.finfo(np.float32).max),axis=1)
@@ -171,7 +194,7 @@ class BatchTask:
         for i,diagnostics in new.get('_diagnostics',{}).items():
             if valid[i]:
                 self.envs[i].measurement['diagnostics']=diagnostics
-                if '_lowest_links' in new:
+                if i in new.get('_lowest_links', {}):
                     self.envs[i].measurement['lowest_link']=new['_lowest_links'][i]
         for k in self.m:
             self.m[k][valid]=new[k][valid]
@@ -184,7 +207,7 @@ class BatchTask:
         self.elapsed[active]+=dt
         # TabletopTask's guard precedence is significant for terminal labels.
         for reason,condition in (('table_penetration',m['clearance']<-.001),
-                ('excess_force',m['forces'].max(axis=1)>30.),('object_dropped',m['bottom']<.29),
+                ('excess_force',(m['object_link_loads'].max(axis=(1,2)) if self.full_hand_contact else m['forces'].max(axis=1))>30.),('object_dropped',m['bottom']<.29),
                 ('timeout',self.elapsed>15.)):
             take=active&(self.failure==None)&condition
             self.failure[take]=reason
@@ -192,7 +215,7 @@ class BatchTask:
         close=active&(self.phase<3)
         expired=close&(self.elapsed>6.)
         self.failure[expired]='grasp_not_established';close&=~expired
-        loads=m['forces'].reshape(self.n,2,2).sum(axis=2)
+        loads=m['hand_object_loads'] if self.full_hand_contact else m['forces'].reshape(self.n,2,2).sum(axis=2)
         ready=(speed<.02)&(self.slip<=.003)&np.all(loads>=.8*self.f_requested,axis=1)&np.all(loads<=1.25*self.f_requested+self.parameters.deadband_n,axis=1)
         self.phase[close&~ready]=1;self.contact_time[close&~ready]=0.
         self.contact_time[close&ready]+=dt
@@ -213,13 +236,13 @@ class BatchTask:
         self.region_valid[establish]=m['_has_material_relative'][establish]
         self.region_valid[changed&(self.phase==1)]=False
         self.regions[changed&(self.phase==1)]=0.
-        support=lambda x:contact_potential(x['forces'])
+        support=lambda x:contact_potential(x['hand_object_loads'] if self.full_hand_contact else x['forces'])
         height=lambda x:np.clip((x['bottom']-.30)/.03,0.,1.)
         pieces=dict(contact=np.where(previous_phase<3,support(m)-support(old),0.),
             lift=np.where(previous_phase==3,5*(height(m)-height(old)),0.),
             slip=np.where(m['bottom']>.305,-np.minimum((np.maximum(0.,self.slip-.02)/.02)**2,25)*dt,0.),
             smoothness=-.05*np.minimum(np.mean(((self.command-self.old_command)/.1)**2,axis=1),25)*dt,
-            force=-.1*np.minimum(np.maximum(0.,m['forces'].max(axis=1)-15.)**2/225,25)*dt,
+            force=-.1*np.minimum(np.maximum(0.,(m['object_link_loads'].max(axis=(1,2)) if self.full_hand_contact else m['forces'].max(axis=1))-15.)**2/225,25)*dt,
             time=np.full(self.n,-.1*dt),success=np.where(event,25.,0.),
             failure=np.where(self.failure!=None,-25.,0.),
             lift_dwell=np.where((previous_phase==3)&(m['bottom']>=.31)&(speed<.03)&(self.slip<=.02),dt,0.))
@@ -267,7 +290,8 @@ class BatchTask:
             e.metrics=dict(approach_error_m=m['approach_error'],pad_forces_n=m['forces'],clearance_m=m['clearance'],
                 object_bottom_m=m['bottom'],object_speed_m_s=(float(np.max(m['material_speed']))
                     if 'material_speed' in m else float(np.linalg.norm(m['object_velocity'][:3]))),
-                slip_m=float(self.slip[i]),max_force_n=float(np.max(m['forces'])))
+                slip_m=float(self.slip[i]),max_force_n=float(np.max(m['object_link_loads'] if self.full_hand_contact else m['forces'])))
+            if self.full_hand_contact:e.metrics['hand_object_loads']=m['hand_object_loads'].copy()
             results.append(e.finish_transition(actions[i],float(self.reward[i]),
                 {k:float(v[i]) for k,v in self.terms.items()},float(self.used[i]),bool(self.paused[i]),bool(self.nonfinite[i])))
         return results

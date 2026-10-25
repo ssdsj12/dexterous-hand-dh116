@@ -34,6 +34,9 @@ class GpuWorld:
         self.device = args.device
         self.layout = copy.deepcopy(layout)
         self.flexible = getattr(args,'object_kind',None) == 'deformx_wire'
+        self.full_hand_contact = bool(getattr(args,'full_hand_contact',False))
+        if self.full_hand_contact and self.flexible:
+            raise ValueError('full-hand rigid contact is unavailable for flexible objects')
         self.flex = None
         self.cloner = GridCloner(spacing=args.env_spacing_m)
         self.cloner.define_base_env('/World/envs')
@@ -60,10 +63,34 @@ class GpuWorld:
         self.hands = [Articulation(h.cfg.replace(prim_path=f'/World/envs/env_.*/{side}Hand', spawn=None))
                       for h, side in zip(self.source['hands'], ('left','right'))]
         self.wire = None if self.flexible else RigidObject(self.source['wire'].cfg.replace(prim_path='/World/envs/env_.*/Wire', spawn=None))
+        self.object_contact_links = ()
+        if self.full_hand_contact:
+            from .tabletop_object_contact import link_groups
+            per_hand=[]
+            for side in ('left','right'):
+                base=f'{self.paths[0]}/{side}Hand'
+                links=set()
+                for prim in Usd.PrimRange(sim.stage.GetPrimAtPath(base), Usd.TraverseInstanceProxies()):
+                    path=str(prim.GetPath())
+                    # Match the scene's collision geometry traversal, including
+                    # instance proxies whose schemas may live on prototypes.
+                    if '/collisions/' in path and prim.IsA(UsdGeom.Mesh):
+                        links.add(path[len(base)+1:].split('/')[0])
+                    elif prim.HasAPI(UsdPhysics.CollisionAPI):
+                        body=prim
+                        while body and str(body.GetPath()).startswith(base+'/'):
+                            if body.HasAPI(UsdPhysics.RigidBodyAPI):
+                                links.add(str(body.GetPath())[len(base)+1:]);break
+                            body=body.GetParent()
+                per_hand.append(tuple(sorted(links)))
+            if per_hand[0] != per_hand[1]:raise ValueError('hand collision rigid link order mismatch')
+            self.object_contact_links=per_hand[0]
+            link_groups(self.object_contact_links)
+        self.sensor_links=self.object_contact_links if self.full_hand_contact else ('finger14_link','finger23_link')
         self.sensors = [] if self.flexible else [ContactSensor(ContactSensorCfg(
             prim_path=f'/World/envs/env_.*/{side}Hand/{link}',
             filter_prim_paths_expr=['/World/envs/env_.*/Wire'], update_period=0.))
-            for side in ('left','right') for link in ('finger14_link','finger23_link')]
+            for side in ('left','right') for link in self.sensor_links]
         self.backends = []
 
     def tensor(self, value, dtype=torch.float32):
@@ -81,10 +108,14 @@ class GpuWorld:
         if self.wire is not None and [p.rsplit('/Wire',1)[0] for p in self.wire.root_physx_view.prim_paths] != self.paths:
             raise ValueError('GPU object view order differs from environment order')
         for sensor, (side,link) in zip(self.sensors,[(s,l) for s in ('left','right')
-                                                   for l in ('finger14_link','finger23_link')]):
+                                                   for l in self.sensor_links]):
             expected = [f'{p}/{side}Hand/{link}' for p in self.paths]
             if list(sensor.body_physx_view.prim_paths) != expected:
                 raise ValueError('GPU contact sensor view order differs from environment order')
+        if self.full_hand_contact:
+            for hand in self.hands:
+                if any(link not in hand.body_names for link in self.object_contact_links):
+                    raise ValueError('collision contact links must each be a physics rigid body')
         self.ids = [[h.joint_names.index(n) for n in ACTIVE] for h in self.hands]
         self.named_ids = [[h.joint_names.index(n) for n in JOINTS] for h in self.hands]
         self.pad_ids = [[h.body_names.index(n) for n in ('finger14_link','finger23_link')] for h in self.hands]
@@ -109,6 +140,10 @@ class GpuWorld:
         self.limits = np.stack([h.data.joint_pos_limits.cpu().numpy() for h in self.hands],axis=1)
         self.force = np.zeros((self.n,4))
         self.force_vectors = np.zeros((self.n,4,3))
+        if self.full_hand_contact:
+            from .tabletop_object_contact import aggregate_object_contacts
+            self.object_link_vectors=np.zeros((self.n,2,len(self.object_contact_links),3))
+            for key,value in aggregate_object_contacts(self.object_link_vectors,self.object_contact_links).items():setattr(self,key,value)
         self.root_targets = np.zeros((self.n,2,7))
         self.commands = np.zeros((self.n,2,6))
         self.gains = np.full((self.n,2),10.)
@@ -152,10 +187,26 @@ class GpuWorld:
             if sensors:
                 for sensor in self.sensors:
                     sensor.update(self.dt,force_recompute=True)
-                self.force[:] = torch.stack([torch.linalg.vector_norm(s.data.force_matrix_w.flatten(1),dim=1)
-                                              for s in self.sensors],dim=1).cpu().numpy()
-                self.force_vectors[:] = torch.stack([s.data.force_matrix_w.reshape(self.n,-1,3).sum(dim=1)
-                                                     for s in self.sensors],dim=1).cpu().numpy()
+                if self.full_hand_contact:
+                    vectors=[]
+                    for sensor in self.sensors:
+                        matrix=sensor.data.force_matrix_w
+                        if matrix is None or tuple(matrix.shape)!=(self.n,1,1,3):
+                            raise ValueError('one rigid body and one per-environment Wire filter required')
+                        vectors.append(matrix[:,0,0,:])
+                    vectors=torch.stack(vectors,dim=1).cpu().numpy()
+                    from .tabletop_object_contact import aggregate_object_contacts
+                    self.object_link_vectors[:]=vectors.reshape(self.n,2,len(self.sensor_links),3)
+                    for key,value in aggregate_object_contacts(self.object_link_vectors,self.object_contact_links).items():getattr(self,key)[:]=value
+                    pad_indices=[h*len(self.sensor_links)+self.sensor_links.index(link)
+                                 for h in range(2) for link in ('finger14_link','finger23_link')]
+                    self.force_vectors[:]=vectors[:,pad_indices]
+                    self.force[:]=np.linalg.norm(self.force_vectors,axis=2)
+                else:
+                    self.force[:] = torch.stack([torch.linalg.vector_norm(s.data.force_matrix_w.flatten(1),dim=1)
+                                                  for s in self.sensors],dim=1).cpu().numpy()
+                    self.force_vectors[:] = torch.stack([s.data.force_matrix_w.reshape(self.n,-1,3).sum(dim=1)
+                                                         for s in self.sensors],dim=1).cpu().numpy()
         poses, q, wp, quat = self.poses[selection],self.q[selection],self.wp[selection],self.wq[selection]
         clear, lowest = collision_clearance(poses,self.shapes)
         store('clearances',clear); store('lowest',lowest)
@@ -227,6 +278,9 @@ class GpuWorld:
             self.flex.initialize_regions(self.pad_positions)
             self.refresh(sensors=False)
             self.flex.render()
+        if self.full_hand_contact:
+            from .tabletop_object_contact import clear_object_contact_slots
+            clear_object_contact_slots(self,indices)
         self.force[indices] = 0.
         self.force_vectors[indices] = 0.
 
@@ -264,7 +318,8 @@ class GpuWorld:
         goals=np.stack([self.layout['hand_roots'][s][:3] for s in ('left','right')])[None]+self.origins[:,None]
         delta=self.wp-(self.layout['wire_center']+self.origins)
         goals[:,:,:2]+=delta[:,None,:2]
-        return dict(**(dict(material_relative=self.material_relative.copy(),material_speed=self.material_speed.copy()) if self.flex is not None else {}),
+        return dict(**({k:getattr(self,k).copy() for k in ('object_link_loads','grouped_object_loads','hand_object_loads')} if self.full_hand_contact else {}),
+            **(dict(material_relative=self.material_relative.copy(),material_speed=self.material_speed.copy()) if self.flex is not None else {}),
             q=np.concatenate([self.q[:,h,self.ids[h]] for h in range(2)],axis=1),
             qd=np.concatenate([self.qd[:,h,self.ids[h]] for h in range(2)],axis=1),
             forces=self.force.copy(),clearance=self.clearances.min(axis=1),
@@ -274,7 +329,7 @@ class GpuWorld:
             mimic_errors=self.errors.reshape(self.n,10).copy(),hand_clearance=self.clearances.copy(),
             adaptive_palm_offset=self.palms.copy(),grip_stiffness=self.gains.copy(),
             pad_relative=self.pad_relative.copy(),joint_failure=failure,
-            _diagnostics={i:self.backends[i].measure()['diagnostics'] for i in range(min(8,self.n))},
+            _diagnostics={i:self.backends[i].measure()['diagnostics'] for i in sorted(set(range(min(8,self.n))) | set(np.flatnonzero(failure != None)) | set(np.flatnonzero(np.max(abs(self.errors),axis=(1,2))>=.004)[:8]))},
             _lowest_links={i:f'{("left","right")[self.shapes[self.lowest[i]][0]]}/'
                 +self.hands[self.shapes[self.lowest[i]][0]].body_names[self.shapes[self.lowest[i]][1]]
                 for i in range(min(8,self.n))})
@@ -307,6 +362,8 @@ class GpuWorld:
 class GpuBackend:
     def __init__(self, world, index):
         self.world, self.index = world,index
+        self.full_hand_contact = world.full_hand_contact
+        self.object_contact_links = world.object_contact_links
         self.dt, self.decimation = world.dt,world.args.physics_hz//60
         self.grasp = select_grasp_command(np.concatenate([world.layout['active_joints'][s]
             for s in ('left','right')]),world.seed)
@@ -339,18 +396,22 @@ class GpuBackend:
     def measure(self):
         w,i = self.world,self.index
         diagnostics, failure = [],None
+        failure = next((reason for hi in range(2) if (reason := joint_safety_failure(w.q[i,hi],w.limits[i,hi],w.errors[i,hi])) is not None),None)
         for hi,hand in enumerate(w.hands):
-            failure = failure or joint_safety_failure(w.q[i,hi],w.limits[i,hi],w.errors[i,hi])
-            if i < 8:
+            if i < 8 or failure is not None or np.max(abs(w.errors[i])) >= .004:
                 diagnostics.append(dict(joints_rad=dict(zip(hand.joint_names,map(float,w.q[i,hi]))),
                     mimic_error_rad=dict(zip([m[0] for m in MIMIC],map(float,w.errors[i,hi]))),
                     joint_vel_rad_s=w.qd[i,hi].tolist(),applied_torque_nm=w.torque[i,hi].tolist(),
                     torque_measurement='implicit_pd_estimate_not_measured_drive_torque',
                     force_on_pads_from_object_normal_w_n=w.force_vectors[i,hi*2:hi*2+2].tolist(),
-                    root_pose=w.roots[i,hi].tolist()))
+                    root_pose=w.roots[i,hi].tolist(),command_rad=w.commands[i,hi].tolist(),
+                    actual_stiffness=w.gains[i,hi].item(),
+                    object_link_loads_n=(w.object_link_loads[i,hi].tolist() if w.full_hand_contact else None),
+                    object_contact_links=(list(w.object_contact_links) if w.full_hand_contact else None)))
         hi,bi,_ = w.shapes[w.lowest[i]]
         goals = np.stack([w.layout['hand_roots'][s][:3]+w.origins[i] for s in ('left','right')])
-        return dict(**(dict(material_relative=w.material_relative[i].copy(),material_speed=w.material_speed[i].copy()) if w.flex is not None else {}),
+        return dict(**({k:getattr(w,k)[i].copy() for k in ('object_link_loads','grouped_object_loads','hand_object_loads')} if self.full_hand_contact else {}),
+            **(dict(material_relative=w.material_relative[i].copy(),material_speed=w.material_speed[i].copy()) if w.flex is not None else {}),
             q=np.concatenate([w.q[i,h,w.ids[h]] for h in range(2)]),
             qd=np.concatenate([w.qd[i,h,w.ids[h]] for h in range(2)]),
             forces=w.force[i].copy(),clearance=float(w.clearances[i].min()),

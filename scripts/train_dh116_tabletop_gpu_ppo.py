@@ -25,6 +25,10 @@ parser.add_argument('--grasp-initialization', type=Path,
                     help='explicit authored geometry for fresh adaptive grasp training')
 parser.add_argument('--force-feedback', action='store_true',
                     help='PPO targets measured hand reaction load; lift requires stable measured contact')
+parser.add_argument('--full-hand-contact', action='store_true',
+                    help='versioned rigid-object contact on all hand links, 148D observation')
+parser.add_argument('--joint-envelope', type=Path,
+                    help='explicit per-joint lower/center/upper targets for free grasp')
 parser.add_argument('--load-profile', type=Path, help='explicit estimated force/drive parameters; strict checkpoint provenance')
 parser.add_argument('--object-kind', choices=('solid_cylinder','hollow_straw','deformx_wire'),default='solid_cylinder')
 parser.add_argument('--object-material', choices=('default','high_friction','rough_rod'),default='default')
@@ -69,6 +73,15 @@ parser.add_argument('--position-iterations', type=int, default=16)
 parser.add_argument('--reset-height-jitter-m', type=float, default=.0003)
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+if args.full_hand_contact and (args.object_kind == 'deformx_wire' or not args.force_feedback):
+    parser.error('full-hand contact requires rigid-object force feedback')
+if args.joint_envelope and not args.full_hand_contact:
+    parser.error('joint-envelope requires full-hand contact')
+args.joint_envelope_data = None
+if args.joint_envelope:
+    from go2_pvcnn.control.dh116.tabletop_joint_envelope import bounds
+    args.joint_envelope_data = json.loads(args.joint_envelope.read_text())
+    bounds(args.joint_envelope_data)
 if args.object_kind == 'deformx_wire' and (args.hand_material != 'default' or args.object_material == 'rough_rod'):
     parser.error('explicit rigid friction profiles require a rigid object; external rod contact uses its own material')
 if args.play_episodes < 0 or (args.play_episodes and not args.play_checkpoint):
@@ -222,18 +235,38 @@ try:
             contract['pressure_geometry'] = payload['pressure_geometry']
     if args.protected_mimic_resets:
         contract['training_failure_handling'] = 'validated_mimic_reset_v1'
+    if args.joint_envelope_data is not None:
+        contract.pop('target_radius_rad', None)
+        contract.update(joint_envelope=args.joint_envelope_data,
+            joint_envelope_sha256=sha(args.joint_envelope),
+            action='20D_piecewise_joint_envelope_palm_load_v1')
     contract = canonical_contract(contract)
+    report['contract'] = contract
+    sim = sim_utils.SimulationContext(sim_utils.SimulationCfg(dt=1/args.physics_hz,device=args.device,
+        physx=sim_utils.PhysxCfg(solver_type=args.solver_type)))
+    from go2_pvcnn.control.dh116.tabletop_gpu_isaac import GpuWorld
+    world = GpuWorld(sim,args,layout,sources)
+    if args.full_hand_contact:
+        from go2_pvcnn.control.dh116.tabletop_object_contact import object_contact_contract
+        contact_contract = object_contact_contract(world.object_contact_links)
+        contract.update(object_contact=contact_contract,
+            observation_version=contact_contract['observation_version'],
+            observation_size=contact_contract['observation_size'],
+            reward='full_hand_object_support_progress_v1_10n_5',
+            force_feedback_measurement='sum_of_object_filtered_link_loads_per_hand',
+            full_hand_contact=True)
+        contract['force_feedback']['measurement'] = 'sum_of_object_filtered_link_loads_per_hand'
+        if args.joint_envelope_data is not None:
+            contract['force_feedback'].pop('combined_joint_radius_rad', None)
+            contract['force_feedback']['combined_joint_bounds'] = 'joint_envelope'
+        contract = canonical_contract(contract)
+        report['contract'] = contract
     if args.initialize_from:
         metadata = json.loads(args.initialize_from.with_suffix('.json').read_text())
         layout_keys = {'num_envs','env_spacing_m','vector_backend'}
         comparable = lambda c: {k:v for k,v in c.items() if k not in layout_keys}
         if comparable(metadata['contract']) != comparable(contract):
             raise ValueError('GPU initialization requires identical observation/action/reward/physics contract')
-    report['contract'] = contract
-    sim = sim_utils.SimulationContext(sim_utils.SimulationCfg(dt=1/args.physics_hz,device=args.device,
-        physx=sim_utils.PhysxCfg(solver_type=args.solver_type)))
-    from go2_pvcnn.control.dh116.tabletop_gpu_isaac import GpuWorld
-    world = GpuWorld(sim,args,layout,sources)
     if not args.headless:
         light=sim_utils.DomeLightCfg(intensity=1800.)
         light.func('/World/DemoLight',light)
@@ -242,6 +275,8 @@ try:
     sim.reset()
     signal.signal(signal.SIGINT,signal.default_int_handler)
     backends = world.bind(seed_state)
+    for backend in backends:
+        backend.joint_envelope = args.joint_envelope_data
     counts = [0]*args.num_envs
     def sink(index):
         directory=args.output/f'env_{index:03d}'

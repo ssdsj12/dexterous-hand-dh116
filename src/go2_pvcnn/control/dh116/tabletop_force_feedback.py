@@ -26,7 +26,8 @@ def closure_direction(value):
 
 
 class ReactionForceController:
-    def __init__(self, parameters=None):
+    def __init__(self, parameters=None, *, full_hand_contact=False):
+        self.full_hand_contact = bool(full_hand_contact)
         self.parameters = parameters or LEGACY_LOAD_PARAMETERS
         self.reset()
 
@@ -41,14 +42,14 @@ class ReactionForceController:
 
     def update(self, *, action, forces, blocked, slip_m, phase, dt):
         action=_array(action,(2,),'force action')
-        forces=_array(forces,(4,),'measured pad loads')
+        forces=_array(forces,(2,) if self.full_hand_contact else (4,),'measured object loads')
         blocked=_array(blocked,(2,),'coupling blocked')
         if (np.any(abs(action)>1) or np.any(forces<0) or np.any((blocked!=0)&(blocked!=1))
                 or not np.isscalar(dt) or not np.isfinite(dt) or not 0<dt<=1/60
                 or not np.isscalar(slip_m) or not np.isfinite(slip_m) or slip_m<0
                 or phase not in ('close','hold','lift')):
             raise ValueError('invalid force-feedback action, measurements or clock')
-        loads=forces.reshape(2,2).sum(axis=1)
+        loads=forces if self.full_hand_contact else forces.reshape(2,2).sum(axis=1)
         self.filtered += (1.-np.exp(-dt/FILTER_TAU))*(loads-self.filtered)
         maximum=self.parameters.max_force_n
         deadband=self.parameters.deadband_n
@@ -73,7 +74,8 @@ class ReactionForceController:
         self.offset=np.clip(self.offset+movement,-OFFSET_LIMIT,OFFSET_LIMIT)
 
     def ready(self, forces, *, speed, slip):
-        loads=_array(forces,(4,),'measured pad loads').reshape(2,2).sum(axis=1)
+        loads=_array(forces,(2,) if self.full_hand_contact else (4,),'measured object loads')
+        if not self.full_hand_contact: loads=loads.reshape(2,2).sum(axis=1)
         # A regulation warning is handled by command recovery and palm gating.
         # It does not erase independently measured stable load; hard failures
         # preempt the task update in TabletopEnv/TabletopTask.
@@ -82,7 +84,8 @@ class ReactionForceController:
             and np.all(loads<=self.requested*1.25+self.parameters.deadband_n))
 
     def lift_allowed(self, forces, *, slip_m, dt):
-        loads=_array(forces,(4,),'measured pad loads').reshape(2,2).sum(axis=1)
+        loads=_array(forces,(2,) if self.full_hand_contact else (4,),'measured object loads')
+        if not self.full_hand_contact: loads=loads.reshape(2,2).sum(axis=1)
         slipping=slip_m>.002 and (slip_m-self.last_slip)/dt>.002
         return bool(np.all(loads>=.8*self.requested) and not slipping)
 

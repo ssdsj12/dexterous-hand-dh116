@@ -26,6 +26,13 @@ class TabletopEnv(gym.Env):
                  grasp_mode='four_pad', force_direction=None, trace_steps=True,
                  force_palm_compensation=None, load_parameters=None):
         self.backend = backend
+        self.full_hand_contact = bool(getattr(backend, "full_hand_contact", False))
+        self.joint_envelope = getattr(backend, 'joint_envelope', None)
+        if self.joint_envelope is not None:
+            from .tabletop_joint_envelope import bounds
+            _, center, _ = bounds(self.joint_envelope)
+            if not np.allclose(center, backend.grasp, atol=1e-9, rtol=0):
+                raise ValueError('joint envelope center differs from grasp initialization')
         self.trace_steps = bool(trace_steps)
         if reset_phase not in ('approach', 'close') or control_mode not in ('residual', 'joint_target', 'adaptive_grasp'):
             raise ValueError('unknown reset phase/control mode')
@@ -53,8 +60,10 @@ class TabletopEnv(gym.Env):
                 raise ValueError('force feedback requires adaptive grasp')
             from .tabletop_force_feedback import ReactionForceController, closure_direction
             self.force_direction = closure_direction(force_direction)
-            self.force_controller = ReactionForceController(load_parameters)
-            self.observation_space = gym.spaces.Box(-np.inf, np.inf, (136,), dtype=np.float32)
+            self.force_controller = ReactionForceController(load_parameters, full_hand_contact=self.full_hand_contact)
+            self.observation_space = gym.spaces.Box(-np.inf, np.inf, (148 if self.full_hand_contact else 136,), dtype=np.float32)
+        if self.full_hand_contact and self.force_controller is None:
+            raise ValueError("full-hand contact requires force feedback")
         self.force_palm_compensation = None
         if load_parameters is not None and self.force_controller is None:
             raise ValueError('load parameters require force feedback')
@@ -129,6 +138,9 @@ class TabletopEnv(gym.Env):
 
     def _measure(self):
         m = self.backend.measure()
+        if self.full_hand_contact:
+            from .tabletop_object_contact import validate_object_contacts
+            m.update(validate_object_contacts(m, self.backend.object_contact_links))
         slip = 0. if self.grip_relative is None else float(np.linalg.norm(
             np.asarray(m['object_relative']) - self.grip_relative))
         for key, shape in (('material_relative', (2, 3)), ('material_speed', (2,))):
@@ -146,7 +158,9 @@ class TabletopEnv(gym.Env):
         metrics = dict(approach_error_m=m['approach_error'], pad_forces_n=m['forces'],
             clearance_m=m['clearance'], object_bottom_m=m['bottom'],
             object_speed_m_s=speed,
-            slip_m=slip, max_force_n=float(np.max(m['forces'])))
+            slip_m=slip, max_force_n=float(np.max(m['object_link_loads'] if self.full_hand_contact else m['forces'])))
+        if self.full_hand_contact:
+            metrics['hand_object_loads'] = m['hand_object_loads'].copy()
         if not np.isfinite(np.r_[metrics['approach_error_m'], metrics['pad_forces_n'],
                 metrics['clearance_m'], metrics['object_bottom_m'],
                 metrics['object_speed_m_s'], slip, metrics['max_force_n']]).all():
@@ -179,18 +193,32 @@ class TabletopEnv(gym.Env):
             observation[48:52] = np.log1p(np.maximum(m['forces'], 0.)/.1)
         if self.force_controller is not None:
             observation = np.r_[observation, self.force_controller.observation()].astype(np.float32)
+        if self.full_hand_contact:
+            observation = np.r_[observation, m['grouped_object_loads'].ravel()/10.].astype(np.float32)
         if self.control_mode == 'adaptive_grasp' and not np.isfinite(observation).all():
             raise ValueError('adaptive observation must be finite')
         return observation
+
+    def _feedback_loads(self):
+        return self.measurement['hand_object_loads'] if self.full_hand_contact else self.metrics['pad_forces_n']
 
     def _info(self):
         info = dict(is_success=self.task.success, failure=self.task.failure, phase=self.task.phase,
             stage_success=curriculum_complete(self.stage, self.task),
             reached_phases=list(self.reached_phases),
             safety_failure=self.task.failure if self.task.failure in PHYSICAL_FAILURES else None)
+        if info['safety_failure'] == 'mimic_error':
+            info['failure_diagnostics'] = dict(
+                command_rad=self.command.tolist(),
+                measured_q_rad=np.asarray(self.measurement['q']).tolist(),
+                mimic_errors_rad=np.asarray(self.measurement.get('mimic_errors', [])).tolist(),
+                object_relative=np.asarray(self.measurement['object_relative']).tolist(),
+                object_quat=np.asarray(self.measurement['object_quat']).tolist(),
+                object_velocity=np.asarray(self.measurement['object_velocity']).tolist(),
+                hands=self.measurement.get('diagnostics', []))
         if self.force_controller is not None:
             info['force_feedback'] = self.force_controller.diagnostics()
-            info['force_feedback']['measured_hand_load_n'] = np.asarray(self.metrics['pad_forces_n']).reshape(2,2).sum(axis=1).tolist()
+            info['force_feedback']['measured_hand_load_n'] = (self.measurement['hand_object_loads'] if self.full_hand_contact else np.asarray(self.metrics['pad_forces_n']).reshape(2,2).sum(axis=1)).tolist()
         if self.force_palm_compensation is not None:
             info['pressure_geometry'] = dict(
                 requested_compensation_m=(self.force_controller.offset[:, None]*self.force_palm_compensation).tolist(),
@@ -276,29 +304,38 @@ class TabletopEnv(gym.Env):
                 self.reference += np.clip(self.backend.grasp-self.reference, -.15*dt, .15*dt)
             elif phase == 'lift' and not coupling_pause and tracking_ready:
                 if (self.force_controller is None or self.force_controller.lift_allowed(
-                        self.metrics['pad_forces_n'],slip_m=self.metrics['slip_m'],dt=dt)):
+                        self._feedback_loads(),slip_m=self.metrics['slip_m'],dt=dt)):
                     self.offset = advance_root_offset(self.offset, phase, dt)
             # Limit residual bandwidth separately from nominal reference
             # motion. Expose this actuator state to the policy (v3 observation).
             if not coupling_pause or self.direct_joint_control:
                 if self.direct_joint_control:
                     from .tabletop_direct import joint_target, coupling_recovery_target
-                    target = joint_target(self.reference, finger_action, self.target_radius)
+                    if self.joint_envelope is None:
+                        target = joint_target(self.reference, finger_action, self.target_radius)
+                    else:
+                        from .tabletop_joint_envelope import targets, clip_targets
+                        target = targets(self.joint_envelope, finger_action)
                     if self.force_controller is not None:
                         errors = np.asarray(self.measurement['mimic_errors']).reshape(2, 5)
                         self.force_controller.update(action=grip_action,
-                            forces=self.metrics['pad_forces_n'],
+                            forces=self._feedback_loads(),
                             blocked=np.max(np.abs(errors), axis=1) >= warning,
                             slip_m=self.metrics['slip_m'], phase=phase, dt=dt)
                         adjusted = target + (self.force_controller.offset[:, None]*self.force_direction).ravel()
-                        target = joint_target(self.reference,
-                            np.clip((adjusted-self.reference)/.15, -1., 1.), .15)
+                        if self.joint_envelope is None:
+                            target = joint_target(self.reference,
+                                np.clip((adjusted-self.reference)/.15, -1., 1.), .15)
+                        else:
+                            target = clip_targets(self.joint_envelope, adjusted)
                     if coupling_pause:
                         errors = np.asarray(self.measurement.get('mimic_errors', np.zeros(10)))
                         # Move the loaded master toward the angle consistent
                         # with its measured follower, removing coupling strain.
                         # Other fingers remain controllable; palms still wait.
                         target = coupling_recovery_target(target, self.measurement['q'], errors, warning)
+                    if self.joint_envelope is not None:
+                        target = clip_targets(self.joint_envelope, target)
                     self.command += np.clip(target-self.command, -.05*dt, .05*dt)
                     self.filtered_residual = self.command-self.reference
                 else:
@@ -332,7 +369,7 @@ class TabletopEnv(gym.Env):
                 break
             if self.measurement['joint_failure']:
                 self.task.failure = self.measurement['joint_failure']
-            contact = bool(np.any(self.measurement['forces'] >= .1))
+            contact = bool(np.any(self._feedback_loads() >= .1))
             blocked = self.measurement['clearance'] <= .002 and not (
                 contact and self.measurement['clearance'] >= .002)
             # Handoff must use the resulting physical state, not the state
@@ -343,9 +380,9 @@ class TabletopEnv(gym.Env):
                 and np.max(np.abs(self.reference-self.command)) < .03)
             grasp_ready = False
             if self.force_controller is not None:
-                grasp_ready = self.force_controller.ready(self.metrics['pad_forces_n'],
+                grasp_ready = self.force_controller.ready(self._feedback_loads(),
                     speed=self.metrics['object_speed_m_s'], slip=self.metrics['slip_m'])
-            event = self.task.update(dt, **self.metrics, grasp_ready=grasp_ready,
+            event = self.task.update(dt, **{k:v for k,v in self.metrics.items() if k != 'hand_object_loads'}, grasp_ready=grasp_ready,
                 approach_contact_ready=contact, approach_blocked=blocked,
                 approach_pregrasp_ready=handoff_ready)
             if phase == 'approach' and self.task.phase == 'close':
@@ -394,7 +431,7 @@ class TabletopEnv(gym.Env):
                     value += pieces['slip']
                     # Optional contact guidance has no pad-count requirement.
                     from .tabletop_contact_reward import contact_potential
-                    support = lambda m: float(contact_potential(m['pad_forces_n']))
+                    support = lambda m: float(contact_potential(m['hand_object_loads'] if self.full_hand_contact else m['pad_forces_n']))
                     pieces['contact'] = support(self.metrics)-support(before) if phase in ('close','hold') else 0.
                     pieces['contact_dwell'] = 0.
                     height = lambda m: float(np.clip((m['object_bottom_m']-.30)/.03,0.,1.))
@@ -451,7 +488,7 @@ class TabletopEnv(gym.Env):
                             for name in ('adaptive_palm_offset', 'grip_stiffness', 'pad_relative')})
             if self.force_controller is not None:
                 row['force_feedback'] = self.force_controller.diagnostics()
-                row['force_feedback']['measured_hand_load_n'] = np.asarray(self.metrics['pad_forces_n']).reshape(2,2).sum(axis=1).tolist()
+                row['force_feedback']['measured_hand_load_n'] = (self.measurement['hand_object_loads'] if self.full_hand_contact else np.asarray(self.metrics['pad_forces_n']).reshape(2,2).sum(axis=1)).tolist()
             if 'pressure_geometry' in info:
                 row['pressure_geometry'] = info['pressure_geometry']
             self.log.append(row)
