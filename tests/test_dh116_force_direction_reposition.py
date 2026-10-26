@@ -10,7 +10,7 @@ def _setup(mask=(True,)):
     target = current.clone()
     target[:, :, 2] = -.001
     loads = torch.ones((n, 2), dtype=torch.float64)
-    force = torch.tensor([[-.30, -.02]] * n, dtype=torch.float64)
+    force = torch.tensor([[-.30, .02]] * n, dtype=torch.float64)
     phase = torch.ones(n, dtype=torch.long)
     live = torch.ones(n, dtype=torch.bool)
     return c, target, current, loads, force, phase, live
@@ -19,7 +19,8 @@ def _setup(mask=(True,)):
 def test_negative_vertical_force_releases_before_downward_motion():
     c, target, current, loads, force, phase, live = _setup()
     out, active = c.apply(target, current, loads, phase, live, .01, force)
-    torch.testing.assert_close(out, current)
+    torch.testing.assert_close(out[0, 0], current[0, 0])
+    torch.testing.assert_close(out[0, 1], target[0, 1])
     assert active.tolist() == [[True, False]]
     assert c.state[0, 0].item() == 1
 
