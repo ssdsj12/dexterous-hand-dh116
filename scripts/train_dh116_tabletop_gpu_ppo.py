@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import signal
 import traceback
@@ -31,11 +32,13 @@ parser.add_argument('--joint-envelope', type=Path,
                     help='explicit per-joint lower/center/upper targets for free grasp')
 parser.add_argument('--load-profile', type=Path, help='explicit estimated force/drive parameters; strict checkpoint provenance')
 parser.add_argument('--object-kind', choices=('solid_cylinder','hollow_straw','deformx_wire'),default='solid_cylinder')
-parser.add_argument('--object-material', choices=('default','high_friction','rough_rod'),default='default')
-parser.add_argument('--hand-material', choices=('default','grip'),default='default',
+parser.add_argument('--object-material', choices=('default','high_friction','rough_rod','extreme_grip'),default='default')
+parser.add_argument('--hand-material', choices=('default','grip','grip_compliant'),default='default',
                     help='explicit hand collider friction; grip is an uncalibrated training profile')
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--num-envs', type=int, default=4)
+parser.add_argument('--cpu-threads', type=int, default=int(os.environ.get('OMP_NUM_THREADS', '1')),
+                    help='PyTorch host threads; defaults to the launch environment')
 parser.add_argument('--env-spacing-m', type=float, default=2.)
 budget = parser.add_mutually_exclusive_group()
 budget.add_argument('--timesteps', type=int, default=65536)
@@ -43,10 +46,31 @@ budget.add_argument('--episodes-per-env', type=int,
                     help='train until every env completes this many episodes, checked after full PPO updates')
 parser.add_argument('--eval-episodes', type=int, default=8)
 parser.add_argument('--checkpoint-every', type=int, default=2048)
+parser.add_argument('--rollout-steps', type=int,
+                    help='per-env steps before each fresh-policy PPO update (default 64); resume uses the checkpoint value')
+parser.add_argument('--tensor-pipeline', action='store_true',
+                    help='device-resident rigid task and RSL-RL PPO; defaults to 24 steps per iteration')
+parser.add_argument('--pressure-relief', action='store_true',
+                    help='tensor controller: measured overload overrides policy closing targets; explicit native checkpoint migration allowed')
+parser.add_argument('--palm-transport',choices=('fixed_pose','driven_carriage'),default='fixed_pose',
+                    help='diagnostic moving wrist support with real surface velocity')
+parser.add_argument('--grasp-controller',choices=('legacy','coordinated'),default='legacy',
+                    help='opt-in measured-motion grasp governor; requires its own physics qualification')
+parser.add_argument('--release-reposition',action='store_true',
+                    help='release measured contact before downward reposition during close, then reclose')
+parser.add_argument('--force-direction-reposition',action='store_true',
+                    help='use signed vertical-force gated release, downward reposition, and reclose')
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--resume', type=Path)
+parser.add_argument('--control-probe-checkpoint',type=Path,
+                    help='8-env inference-only control comparison; no PPO updates')
+parser.add_argument('--control-probe-mode',choices=('grasp','lift_gate','bounded_thumb','coordinated','wrist_motion','loaded_palm','force_direction'),default='grasp')
+parser.add_argument('--control-probe-episodes',type=int,default=3)
+parser.add_argument('--control-probe-swap',action='store_true',help='counterbalance paired loaded-palm candidate slots')
 parser.add_argument('--play-checkpoint', type=Path,
                     help='single-environment GUI policy inference; no learning')
+parser.add_argument('--allow-playback-material-change', action='store_true',
+                    help='explicit object-friction-only inference comparison; never training resume')
 parser.add_argument('--play-episodes', type=int, default=0,
                     help='playback episode count; zero repeats until the GUI closes')
 parser.add_argument('--allow-env-expansion', action='store_true',
@@ -65,14 +89,95 @@ parser.add_argument('--probe-only', action='store_true')
 parser.add_argument('--startup-only', action='store_true',help='exit after reset isolation and bounded startup checks')
 parser.add_argument('--capacity-steps', type=int, default=0,
                     help='additional timed policy steps in startup-only mode; no optimization')
+parser.add_argument('--training-episode-resets', action='store_true',
+                    help='training-only isolated resets for bounded faults after independent guard validation')
 parser.add_argument('--direct-training', action='store_true',
                     help='skip three full admission batches; retain startup contact and runtime safety checks')
 parser.add_argument('--physics-hz', type=int, choices=(240, 480), default=240)
 parser.add_argument('--solver-type', type=int, choices=(0,), default=0)
 parser.add_argument('--position-iterations', type=int, default=16)
+parser.add_argument('--velocity-iterations', type=int, choices=(4,16), default=4,
+                    help='author contact velocity solver iterations before PhysX scene creation')
+parser.add_argument('--passive-velocity-limit-rad-s',type=float,choices=(3.,2.97),default=3.,
+                    help='opt-in 2.97 solver headroom candidate; measured velocity guard stays 3')
+parser.add_argument('--grasp-readiness',choices=('measured_load',),default=None,
+                    help='trial lift after stable measured hand loads, independent of stochastic force goals')
+parser.add_argument('--skip-hold',action='store_true',
+                    help='enter lift directly after 0.2 seconds of measured close readiness')
+parser.add_argument('--close-downward-penalty',action='store_true',
+                    help='add instantaneous -3 when close-to-lift force on object is downward')
+parser.add_argument('--grasp-shaping',action='store_true',
+                    help='add discounted force-direction potential and physical 3/10 mm milestones')
+parser.add_argument('--contact-reward-window',choices=('first_contact','close_start'),default=None,
+                    help='single one-second force reward window per episode, at most 5 points')
+parser.add_argument('--force-reward-start',choices=('episode_start','after_close','downward_after_close'),default='episode_start',
+                    help='after_close gates both signs; downward_after_close rewards upward force already during close')
+parser.add_argument('--vertical-force-reward-mode',choices=('window','continuous'),default='window',
+                    help='continuous removes positive reward time window and episode cap')
+parser.add_argument('--vertical-force-reward',action='store_true',
+                    help='reward upward object contact only; penalize downward signed force throughout the episode')
 parser.add_argument('--reset-height-jitter-m', type=float, default=.0003)
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+if args.control_probe_swap and (not args.control_probe_checkpoint or args.control_probe_mode not in ('loaded_palm','force_direction')):
+    parser.error('probe swap is only valid for paired palm reposition probes')
+if args.release_reposition and (args.grasp_controller!='coordinated' or args.control_probe_checkpoint):
+    parser.error('release-reposition requires coordinated tensor training; probes select candidate by mode')
+if args.force_direction_reposition and (args.release_reposition or args.grasp_controller!='coordinated'
+        or (args.control_probe_checkpoint and args.control_probe_mode!='force_direction')
+        or args.resume or args.initialize_from):
+    parser.error('force-direction-reposition requires a fresh coordinated tensor run or its probe mode')
+if args.palm_transport=='driven_carriage' and not args.control_probe_checkpoint and (
+        not args.tensor_pipeline or args.grasp_controller!='coordinated'):
+    parser.error('driven wrist carriage requires bounded probe or coordinated tensor training')
+if args.grasp_controller=='coordinated' and (not args.tensor_pipeline or not args.pressure_relief
+        or not args.skip_hold or args.grasp_readiness!='measured_load' or args.reset_height_jitter_m!=0
+        or (args.control_probe_checkpoint and args.control_probe_mode not in ('loaded_palm','force_direction')) or args.play_checkpoint):
+    parser.error('coordinated controller requires tensor measured-load direct lift, pressure relief and zero reset jitter; probes select it through probe mode')
+if args.force_direction_reposition and args.palm_transport!='driven_carriage':
+    parser.error('force-direction-reposition requires driven carriage palm transport')
+if args.grasp_shaping and not args.close_downward_penalty:
+    parser.error('--grasp-shaping requires --close-downward-penalty configuration')
+if args.close_downward_penalty and (not args.skip_hold or not args.vertical_force_reward
+        or args.vertical_force_reward_mode!='continuous' or args.force_reward_start!='downward_after_close'):
+    parser.error('--close-downward-penalty requires --skip-hold and continuous downward_after_close force rewards')
+if args.skip_hold and (not args.tensor_pipeline or args.grasp_readiness!='measured_load'):
+    parser.error('--skip-hold requires --tensor-pipeline and --grasp-readiness measured_load')
+if args.force_reward_start!='episode_start' and (not args.vertical_force_reward or args.vertical_force_reward_mode!='continuous'):
+    parser.error('phase-gated force rewards require continuous vertical force reward')
+if args.vertical_force_reward_mode=='continuous' and not args.vertical_force_reward:
+    parser.error('--vertical-force-reward-mode continuous requires --vertical-force-reward')
+if args.vertical_force_reward and (not args.tensor_pipeline or args.contact_reward_window!='close_start'):
+    parser.error('--vertical-force-reward requires --tensor-pipeline and --contact-reward-window close_start')
+if args.control_probe_episodes<1 or args.control_probe_episodes>3:
+    parser.error('control probe episodes must be 1..3')
+if not args.control_probe_checkpoint and (args.control_probe_mode!='grasp' or args.control_probe_episodes!=3):
+    parser.error('probe settings require --control-probe-checkpoint')
+if args.control_probe_checkpoint and (not args.tensor_pipeline or args.num_envs!=8
+        or not args.grasp_shaping or args.resume or args.initialize_from or args.play_checkpoint
+        or args.startup_only or args.probe_only or args.episodes_per_env is not None):
+    parser.error('control probe requires 8-env shaped tensor inference, without training/resume/play modes')
+if args.cpu_threads < 1:
+    parser.error('--cpu-threads must be positive')
+if args.pressure_relief and not args.tensor_pipeline:
+    parser.error('--pressure-relief requires --tensor-pipeline')
+if args.passive_velocity_limit_rad_s!=3. and not args.tensor_pipeline:
+    parser.error('passive velocity headroom candidate requires --tensor-pipeline')
+if args.grasp_readiness is not None and not args.tensor_pipeline:
+    parser.error('--grasp-readiness requires --tensor-pipeline')
+if args.contact_reward_window is not None and not args.tensor_pipeline:
+    parser.error('--contact-reward-window requires --tensor-pipeline')
+if args.rollout_steps is not None and args.rollout_steps < 2:
+    parser.error('--rollout-steps must be at least 2')
+if args.rollout_steps is not None and args.resume and not args.tensor_pipeline:
+    parser.error('--resume retains checkpoint rollout length; omit --rollout-steps')
+if args.training_episode_resets and (not args.full_hand_contact or args.reset_height_jitter_m != 0):
+    parser.error('--training-episode-resets requires full-hand contact and zero reset jitter')
+if args.tensor_pipeline and (not args.full_hand_contact or not args.force_feedback
+        or args.reset_height_jitter_m != 0 or args.object_kind=='deformx_wire'
+        or args.initialize_from or args.play_checkpoint or args.probe_only or args.startup_only
+        or args.allow_env_expansion or args.resume_episode_progress):
+    parser.error('--tensor-pipeline requires rigid full-hand force feedback, zero jitter, and training mode; legacy transfer is unsupported')
 if args.full_hand_contact and (args.object_kind == 'deformx_wire' or not args.force_feedback):
     parser.error('full-hand contact requires rigid-object force feedback')
 if args.joint_envelope and not args.full_hand_contact:
@@ -82,8 +187,10 @@ if args.joint_envelope:
     from go2_pvcnn.control.dh116.tabletop_joint_envelope import bounds
     args.joint_envelope_data = json.loads(args.joint_envelope.read_text())
     bounds(args.joint_envelope_data)
-if args.object_kind == 'deformx_wire' and (args.hand_material != 'default' or args.object_material == 'rough_rod'):
+if args.object_kind == 'deformx_wire' and (args.hand_material != 'default' or args.object_material in ('rough_rod','extreme_grip')):
     parser.error('explicit rigid friction profiles require a rigid object; external rod contact uses its own material')
+if args.allow_playback_material_change and not args.play_checkpoint:
+    parser.error('--allow-playback-material-change requires --play-checkpoint')
 if args.play_episodes < 0 or (args.play_episodes and not args.play_checkpoint):
     parser.error('--play-episodes must be nonnegative and requires --play-checkpoint')
 if args.play_checkpoint and (args.headless or args.num_envs != 1 or args.resume
@@ -162,11 +269,13 @@ except (ValueError, OSError, KeyError) as error:
 args.output.mkdir(parents=True)
 write_json(args.output/'monitor.json',dict(status='initializing',num_envs=args.num_envs,
     timesteps=0,updates=0,object_kind=args.object_kind,episodes_per_env_target=args.episodes_per_env))
-app = AppLauncher(args).app
+app = None
 report = dict(passed=False, grasp_qualified=False, num_envs=args.num_envs,
               status='initializing', rigid_proxy=args.object_kind != 'deformx_wire', pipeline_scope='close_to_lift')
 vec = None
+from go2_pvcnn.control.dh116.tabletop_run_status import finalize_run
 try:
+    app = AppLauncher(args).app
     import numpy as np
     import torch
     import isaaclab.sim as sim_utils
@@ -177,8 +286,13 @@ try:
     from go2_pvcnn.control.dh116.tabletop_vec_env import SharedPhysicsVecEnv
     from go2_pvcnn.control.dh116.tabletop_vec_isaac import spawn_scene, bind_scene, advance_world, isolate_scenes
     from go2_pvcnn.control.dh116.tabletop_vec_training import run_vector_training, collect_vector_episodes
-    torch.set_num_threads(1)
-    torch.set_num_interop_threads(1)
+    torch.set_num_threads(args.cpu_threads)
+    torch.set_num_interop_threads(args.cpu_threads)
+    report['cpu_runtime'] = dict(torch_threads=torch.get_num_threads(),
+        torch_interop_threads=torch.get_num_interop_threads(),
+        cpu_affinity=sorted(os.sched_getaffinity(0)),
+        omp_threads=os.environ.get('OMP_NUM_THREADS'),
+        openblas_threads=os.environ.get('OPENBLAS_NUM_THREADS'))
     root = Path(__file__).resolve().parents[1]
     sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()
     layout = native_pose_hand_only_layout(json.loads(args.pose_summary.read_text()),roll_degrees=dict(left=76.,right=82.))
@@ -199,7 +313,7 @@ try:
         nominal='fixed_target_center_no_scripted_closure',nominal_rate_rad_s=0.,
         reward='object_support_progress_v4_10n_5',grasp_mode='object_stability',
         coupling_pause_rad=.004,coupling_warning='follower_consistent_recovery_v2',
-        active_velocity_limit_rad_s=.3,passive_velocity_limit_rad_s=3.,
+        active_velocity_limit_rad_s=.3,passive_velocity_limit_rad_s=args.passive_velocity_limit_rad_s,
         mimic_natural_frequency_s_inv=float(args.mimic_frequency),mimic_damping_ratio=1.,
         lift_attempt_after_s=2.3,success_bottom_m=.33,success_dwell_s=.5,success_slip_m=.02,
         reset_phase='close',close_seed_sha256=sha(args.grasp_initialization if args.adaptive_grasp
@@ -209,6 +323,11 @@ try:
         policy='bounded_gaussian_mean_v1',force_observation='log1p_force_over_01N',
         num_envs=args.num_envs,env_spacing_m=args.env_spacing_m,vector_backend='cloned_gpu_normalized_convex_batched_task_v2')
     contract.update(seed_provenance)
+    if args.velocity_iterations != 4:
+        contract['velocity_iterations'] = args.velocity_iterations
+    if args.passive_velocity_limit_rad_s==2.97:
+        from go2_pvcnn.control.dh116.tabletop_velocity_limits import VELOCITY_HEADROOM_CONTRACT
+        contract['velocity_headroom']=VELOCITY_HEADROOM_CONTRACT
     contract.update(hand_material_contract(args.hand_material))
     contract.update(object_contract)
     if args.object_kind == 'deformx_wire':
@@ -233,6 +352,9 @@ try:
         force_palm_compensation = seed_pressure_compensation(payload)
         if force_palm_compensation is not None:
             contract['pressure_geometry'] = payload['pressure_geometry']
+    if args.training_episode_resets:
+        from go2_pvcnn.control.dh116.tabletop_gpu_recovery import VERSION
+        contract['training_failure_handling'] = VERSION
     if args.protected_mimic_resets:
         contract['training_failure_handling'] = 'validated_mimic_reset_v1'
     if args.joint_envelope_data is not None:
@@ -291,7 +413,7 @@ try:
         grasp_mode='object_stability',initial_offset=seed_state['root_offset'],reset_jitter=args.reset_height_jitter_m,
         episode_sink=sink(i),force_direction=force_direction,trace_steps=i<8,force_palm_compensation=force_palm_compensation,load_parameters=args.load_parameters) for i,b in enumerate(backends)]
     from go2_pvcnn.control.dh116.tabletop_gpu_vec_env import GpuTaskVecEnv
-    vec = GpuTaskVecEnv(envs, world)
+    vec = GpuTaskVecEnv(envs, world, recover_training_failures=args.training_episode_resets)
     # Actual isolation probe: a selected reset must not tick physics or change
     # another slot's physical state/clock; repeated local resets must agree.
     reset_started=time.monotonic()
@@ -321,9 +443,17 @@ try:
                 args.hand_material,args.num_envs,len(world.source['hand_material_colliders'][side]))
             for side,hand in zip(('left','right'),world.hands)}
         report['hand_material_bindings'] = world.source['hand_material_bindings']
+        if args.hand_material=='grip_compliant':
+            if not args.full_hand_contact or world.flexible:
+                raise ValueError('compliant pads require rigid full-hand contact sensors')
+            from go2_pvcnn.control.dh116.tabletop_material import verify_hand_link_material
+            report['hand_material_link_verification']=[verify_hand_link_material(
+                sensor.body_physx_view.get_material_properties().cpu().numpy(),args.hand_material,link,args.num_envs)
+                for sensor,link in zip(world.sensors,list(world.sensor_links)*2)]
     write_json(args.output/'material_verification.json',dict(
         object_material=report.get('object_material_verification'),
         hands=report.get('hand_material_verification'),hand_bindings=report.get('hand_material_bindings'),
+        hand_links=report.get('hand_material_link_verification'),
         contract={k:contract[k] for k in ('object_contact_material','hand_contact_material') if k in contract}))
     if world.flexible:
         local_centers=world.flex.engine.position.mean(dim=2).cpu().numpy()
@@ -394,12 +524,14 @@ try:
             progress=lambda row: write_json(args.output/'monitor.json',row))
         write_json(args.output/'contact_preflight.json',report['contact_preflight'])
     from go2_pvcnn.control.dh116.tabletop_load_parameters import physics_load_readback
-    report['physical_parameter_readback'] = physics_load_readback(world.hands,args.load_parameters)
+    report['physical_parameter_readback'] = physics_load_readback(world.hands,args.load_parameters,
+        passive_velocity_limit_rad_s=args.passive_velocity_limit_rad_s)
     write_json(args.output/'configuration.json',report)
     if args.play_checkpoint:
         from go2_pvcnn.control.dh116.tabletop_playback import play_policy
         report.update(play_policy(vec,app,args.play_checkpoint,contract,args.output,
-            device=args.device,seed=args.seed,episodes=args.play_episodes))
+            device=args.device,seed=args.seed,episodes=args.play_episodes,
+            allow_material_change=args.allow_playback_material_change))
     elif args.startup_only:
         if args.capacity_steps:
             from go2_pvcnn.control.dh116.tabletop_training import load_checkpoint
@@ -450,6 +582,10 @@ try:
                 reset_elapsed_seconds=report['first_reset_elapsed_seconds'])
             write_json(args.output/'capacity.json',report['capacity'])
         report.update(status='startup_validated',startup_validated=True)
+    elif args.tensor_pipeline:
+        from go2_pvcnn.control.dh116.tabletop_tensor_training import run_tensor_training
+        vec.reset()
+        report.update(run_tensor_training(world,envs[0],args,contract))
     else:
         training,model=run_vector_training(vec,args.output,contract,timesteps=args.timesteps,
             eval_episodes=args.eval_episodes,checkpoint_every=args.checkpoint_every,seed=args.seed,
@@ -461,23 +597,29 @@ try:
             episodes_per_env=args.episodes_per_env,resume_episode_progress=args.resume_episode_progress,
             allow_contact_reward_change=args.allow_contact_reward_change,
             allow_env_expansion=args.allow_env_expansion,
-            ppo_kwargs=dict(device=args.device,n_steps=64,batch_size=min(2048,64*args.num_envs)))
+            ppo_kwargs=dict(device=args.device,n_steps=args.rollout_steps or 64,
+                            batch_size=min(2048,(args.rollout_steps or 64)*args.num_envs)))
         report.update(training)
 
 except KeyboardInterrupt:
     report.update(status='interrupted',interrupted=True)
-except Exception:
+except (Exception,SystemExit):
     report.update(status='error',error=traceback.format_exc())
     print(report['error'],flush=True)
 finally:
-    if vec is not None:
-        vec.close()
-    code=2 if (report.get('error') or report.get('interrupted') or report.get('training_skipped')
-        or report.get('training_stopped')=='physical_safety_failure') else 0
-    report['process_exit_code']=code
-    write_json(args.output/'summary.json',report)
-    print('VECTOR_PPO_RESULT',json.dumps(report),flush=True)
-    import omni.kit.app
-    omni.kit.app.get_app().post_quit(code)
-    app.close(wait_for_replicator=False,skip_cleanup=True)
+    # Isaac fast shutdown may terminate the process without returning. Publish
+    # after fallible episode flushing but before the final application shutdown.
+    code=2
+    try:
+        code=finalize_run(args.output,report,[vec.close] if vec is not None else [])
+        print('VECTOR_PPO_RESULT',json.dumps(report),flush=True)
+    finally:
+        if app is not None:
+            try:
+                import omni.kit.app
+                omni.kit.app.get_app().post_quit(code)
+                app.close(wait_for_replicator=False,skip_cleanup=True)
+            except Exception:
+                report.update(status='error',error=report.get('error','')+'\n'+traceback.format_exc())
+                code=finalize_run(args.output,report,[])
 raise SystemExit(code)
