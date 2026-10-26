@@ -26,7 +26,7 @@ def check_probe_contract(saved,current,*,allow_controller_change=False):
     left=dict(saved);right=dict(current)
     left.pop('num_envs',None);right.pop('num_envs',None)
     if allow_controller_change:
-        for key in ('palm_reposition','force_direction_reposition'):
+        for key in ('palm_reposition','force_direction_reposition','training_failure_handling'):
             left.pop(key,None);right.pop(key,None)
     if left!=right:
         changed=[k for k in left.keys()|right.keys() if left.get(k)!=right.get(k)]
@@ -215,16 +215,16 @@ def run_control_probe(env,algorithm,args,contract,obs):
     elif mode=='force_direction':
         from .tabletop_force_direction_reposition import ForceDirectionReposition,CONTRACT
         if not getattr(t,'coordinated_all',False):raise ValueError('force direction probe requires coordinated controller')
-        mask=torch.tensor([False,True]*4,device=env.device)
+        mask=torch.tensor([False,True]*(env.n//2),device=env.device)
         if getattr(args,'control_probe_swap',False):mask=~mask
         t.palm_reposition=ForceDirectionReposition(mask)
         t.force_direction_reposition=True
         fixed[:,:12]=joints
-        fixed[:,18:]=force_action(8.,t.parameters.max_force_n)
-        cases=[f'force_direction_candidate{int(mask[i])}' for i in range(8)]
+        fixed[:,18:]=force_action(2.,t.parameters.max_force_n)
+        cases=[f'force_direction_candidate{int(mask[i])}' for i in range(env.n)]
         write_json(args.output/'diagnostic_override.json',dict(mode=mode,
             selected_environments=mask.cpu().tolist(),palm_reposition=CONTRACT,
-            hard_guards_changed=False,rewards_changed=False,optimizer_updates=0))
+            fixed_force_target_n=2.,hard_guards_changed=False,rewards_changed=False,optimizer_updates=0))
     elif mode=='coordinated':
         from .tabletop_coordinated_grasp import CONTRACT
         settings=[(f,enabled) for _ in range(2) for f in (4.,8.) for enabled in (False,True)]
@@ -272,13 +272,15 @@ def run_control_probe(env,algorithm,args,contract,obs):
     started=time.monotonic();status='control_probe_incomplete'
     try:
         with torch.inference_mode():
-            for tick in range(180 if mode=='wrist_motion' else (15*episode_limit+2)*60):
+            # Force-direction mode validates the close-time release/move/reclose
+            # state machine.  Stop before the long lift tail, whose existing
+            # coupled-joint guard is diagnosed by the training run itself.
+            tick_limit = (240 if mode == 'force_direction' else
+                          (180 if mode=='wrist_motion' else (15*episode_limit+2)*60))
+            for tick in range(tick_limit):
                 action=fixed.clone()
                 if mode=='grasp':action[:2]=algorithm.policy.act_inference(obs)[:2].clamp(-1.,1.)
                 if mode=='loaded_palm':action[4:]=algorithm.policy.act_inference(obs)[4:].clamp(-1.,1.)
-                if mode=='force_direction':
-                    policy_action=algorithm.policy.act_inference(obs).clamp(-1.,1.)
-                    action[~t.palm_reposition.mask]=policy_action[~t.palm_reposition.mask]
                 value,_,_,_=env.step(action)
                 obs=observations(value)
                 if tick%60==0:
@@ -289,6 +291,9 @@ def run_control_probe(env,algorithm,args,contract,obs):
                     print('CONTROL_PROBE_PROGRESS',json.dumps(progress),flush=True)
                 if bool((env.episodes>=episode_limit).all()):
                     status='control_probe_complete';break
+            else:
+                if mode == 'force_direction':
+                    status='force_direction_probe_complete'
     finally:
         if mode=='wrist_motion' and tick==179:status='wrist_motion_probe_complete'
         report=recorder.save(status)

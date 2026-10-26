@@ -238,7 +238,15 @@ def validate_world_adapter(legacy, world, task):
     errors={}
     for key,value in actual.items():
         if key=='joint_failure': continue
-        reference=torch.as_tensor(expected[key],device=world.device,dtype=value.dtype)
+        if key not in expected:
+            if key != 'vertical_hand_force_n':
+                raise KeyError(f'host reference missing tensor measurement: {key}')
+            # The host adapter does not expose signed contact-force components.
+            # At this validation point TensorWorld was refreshed without sensors,
+            # so its per-hand vertical force is intentionally the zero reset value.
+            reference=torch.zeros_like(value)
+        else:
+            reference=torch.as_tensor(expected[key],device=world.device,dtype=value.dtype)
         error=float((value-reference).abs().max())
         errors[key]=error
         if error>2e-6: raise ValueError(f'tensor initialization differs from host reference: {key} {error}')

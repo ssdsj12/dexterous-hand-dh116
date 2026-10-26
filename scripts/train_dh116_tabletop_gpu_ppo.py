@@ -153,10 +153,11 @@ if args.control_probe_episodes<1 or args.control_probe_episodes>3:
     parser.error('control probe episodes must be 1..3')
 if not args.control_probe_checkpoint and (args.control_probe_mode!='grasp' or args.control_probe_episodes!=3):
     parser.error('probe settings require --control-probe-checkpoint')
-if args.control_probe_checkpoint and (not args.tensor_pipeline or args.num_envs!=8
+probe_envs = (8, 16) if args.control_probe_mode == 'force_direction' else (8,)
+if args.control_probe_checkpoint and (not args.tensor_pipeline or args.num_envs not in probe_envs
         or not args.grasp_shaping or args.resume or args.initialize_from or args.play_checkpoint
         or args.startup_only or args.probe_only or args.episodes_per_env is not None):
-    parser.error('control probe requires 8-env shaped tensor inference, without training/resume/play modes')
+    parser.error(f'control probe requires {probe_envs}-env shaped tensor inference, without training/resume/play modes')
 if args.cpu_threads < 1:
     parser.error('--cpu-threads must be positive')
 if args.pressure_relief and not args.tensor_pipeline:
