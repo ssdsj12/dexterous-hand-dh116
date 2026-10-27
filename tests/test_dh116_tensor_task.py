@@ -45,6 +45,7 @@ def test_z_down_broadcasts_mean_close_z_to_both_hands():
     actions = torch.tensor([[[.1, -.1, -.2], [-.1, .1, .6]]], dtype=torch.float64)
     constrained = constrain_palm_exploration(actions, torch.tensor([1]), 'z_down')
     torch.testing.assert_close(constrained[0, :, 2], torch.tensor([-.1, -.1], dtype=torch.float64))
+    assert torch.equal(constrained[0, 0, 2], constrained[0, 1, 2])
 
 
 def test_z_down_zeroes_xy_and_z_after_lift():

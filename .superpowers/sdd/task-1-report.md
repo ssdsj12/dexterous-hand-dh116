@@ -36,3 +36,17 @@ $ bash scripts/python.sh -m pytest -q tests/test_dh116_tensor_task.py -k 'z_down
 ### Commit
 
 `f7c16af fix: synchronize close palm z commands`
+
+## Follow-up reviewer verification
+
+The close `z_down` path clamps each hand's Z action, averages the bounded pair,
+and broadcasts the mean to both hands. The regression now also checks exact
+tensor equality between the two resulting Z values. XY remains capped at the
+weighted ±0.5 mm limit and phase 3+ still zeros all palm actions.
+
+Focused verification:
+
+```text
+$ bash scripts/python.sh -m pytest -q tests/test_dh116_tensor_task.py -k 'z_down'
+4 passed, 10 deselected
+```
