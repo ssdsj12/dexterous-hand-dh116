@@ -361,7 +361,8 @@ class TensorTask:
         if self.shaping is not None:parts+=(self.shaping.observe(),)
         return torch.cat(parts,dim=1).float()
 
-    def consume(self, measurement, live, dt, *, vertical_force_n=None,object_weight_n=None):
+    def consume(self, measurement, live, dt, *, vertical_force_n=None, lift_vertical_force_n=None,
+                object_weight_n=None):
         new={k:torch.as_tensor(measurement[k],device=self.device,dtype=self.m[k].dtype) for k in self.keys}
         if self.vertical_force_reward:
             if vertical_force_n is None:
@@ -369,6 +370,17 @@ class TensorTask:
             vertical_force_n=torch.as_tensor(vertical_force_n,device=self.device,dtype=torch.float64)
             if vertical_force_n.shape!=(self.n,):
                 raise ValueError('vertical force must contain one signed sum per environment')
+            if lift_vertical_force_n is None:
+                lift_vertical_force_n = vertical_force_n
+            lift_vertical_force_n=torch.as_tensor(lift_vertical_force_n,device=self.device,dtype=torch.float64)
+            if lift_vertical_force_n.shape!=(self.n,):
+                raise ValueError('lift vertical force must contain one signed sum per environment')
+        elif lift_vertical_force_n is None:
+            lift_vertical_force_n = torch.zeros(self.n, device=self.device, dtype=torch.float64)
+        else:
+            lift_vertical_force_n=torch.as_tensor(lift_vertical_force_n,device=self.device,dtype=torch.float64)
+            if lift_vertical_force_n.shape!=(self.n,):
+                raise ValueError('lift vertical force must contain one signed sum per environment')
         if self.shaping is not None:
             if object_weight_n is None:raise ValueError('runtime object weight required for grasp shaping')
             object_weight_n=torch.as_tensor(object_weight_n,device=self.device,dtype=torch.float64)
@@ -381,7 +393,8 @@ class TensorTask:
         finite=torch.ones_like(live)
         for key in self.keys:
             if key!='joint_failure': finite &= torch.isfinite(new[key]).reshape(self.n,-1).all(dim=1)
-        if self.vertical_force_reward: finite &= torch.isfinite(vertical_force_n)
+        if self.vertical_force_reward:
+            finite &= torch.isfinite(vertical_force_n)&torch.isfinite(lift_vertical_force_n)
         if self.shaping is not None:finite &= torch.isfinite(object_weight_n)&(object_weight_n>0)
         # The full contact contract uses nonnegative loads and additive hand sums.
         for key in ('object_link_loads','grouped_object_loads','hand_object_loads'):
@@ -454,7 +467,7 @@ class TensorTask:
         self.phase[transition]=3 if self.skip_hold else self.phase[transition]+1
         self.contact_time[transition]=0.
         lift=active&(previous_phase==3)
-        stable=(m['bottom']>=.33)&(speed<.03)&(self.slip<=.02)
+        stable=(m['bottom']>=.33)&(speed<.03)&(self.slip<=.02)&(lift_vertical_force_n>=0.)
         self.success_time[lift]=torch.where(stable,self.success_time+dt,0.)[lift]
         event=lift&(self.success_time>=.5-1e-12)
         self.success[event]=True
@@ -493,7 +506,7 @@ class TensorTask:
             if self.vertical_force_reward:
                 # Downward squeezing is not upward support. Delay the one-off
                 # bonus until a still-ready grasp actually pushes upward.
-                ready_event=eligible&(self.phase==3)&ready&(vertical_force_n>0)&~self.grasp_ready_awarded
+                ready_event=eligible&(self.phase==3)&ready&(lift_vertical_force_n>0)&~self.grasp_ready_awarded
             self.grasp_ready_awarded|=ready_event
             pieces['contact']=credit
             pieces['contact_dwell']=torch.zeros_like(credit)

@@ -98,6 +98,7 @@ class TensorEnv:
 
     def step(self, actions):
         from .tabletop_tensor_task import FAILURE_CODES
+        from .tabletop_tensor_world import signed_hand_lift_vertical_force
         t, w = self.task, self.world
         self.reset_substep[:] = 0
         self.substep = 0
@@ -131,8 +132,9 @@ class TensorEnv:
             self.pending[:] = False
             previous_phase = t.phase.clone()
             if t.vertical_force_reward:
-                # Sum both hands and signed normal/friction BEFORE reset.
-                t.consume(m,live,w.dt,vertical_force_n=w.vertical_components.sum(dim=(1,2)),
+                # Sum both hands' signed normal forces; friction is telemetry only.
+                t.consume(m,live,w.dt,vertical_force_n=w.vertical_components[:,:,0].sum(dim=1),
+                          lift_vertical_force_n=signed_hand_lift_vertical_force(w.vertical_components).sum(dim=1),
                           object_weight_n=w.object_weight_n if t.shaping is not None else None)
             else:
                 t.consume(m,live,w.dt)

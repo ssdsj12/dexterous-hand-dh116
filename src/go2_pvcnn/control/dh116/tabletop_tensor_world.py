@@ -30,6 +30,20 @@ def signed_hand_vertical_force(vertical_components):
     return vertical_components.sum(dim=2)
 
 
+def signed_hand_normal_vertical_force(vertical_components):
+    """Reduce [environment, hand, (normal, friction)] to normal-only Fz."""
+    if vertical_components.ndim != 3 or vertical_components.shape[-1] < 1:
+        raise ValueError('vertical components must have shape (N, hand, components)')
+    return vertical_components[...,0]
+
+
+def signed_hand_lift_vertical_force(vertical_components):
+    """Reduce per-hand normal and friction components for lift checks."""
+    if vertical_components.ndim != 3 or vertical_components.shape[-1] != 2:
+        raise ValueError('vertical components must be N x 2 x 2')
+    return vertical_components[..., 0] + vertical_components[..., 1]
+
+
 def contact_geometry_from_sensors(sensors, object_center_w):
     """Reduce ordered PhysX contact reports to per-hand geometry."""
     if not sensors or len(sensors) % 2:
@@ -218,7 +232,7 @@ class TensorWorld:
             contact_valid=self.contact_valid,
             contact_all_below_centerline=self.contact_all_below_centerline,
             contact_count=self.contact_count,
-            vertical_hand_force_n=signed_hand_vertical_force(self.vertical_components),
+            vertical_hand_force_n=signed_hand_normal_vertical_force(self.vertical_components),
             object_link_loads=self.link_loads,grouped_object_loads=self.link_loads@self.group_matrix,
             hand_object_loads=self.link_loads.sum(-1),joint_failure=failure)
 

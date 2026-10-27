@@ -4,6 +4,8 @@ import torch
 from test_dh116_batched_task import make_env
 from go2_pvcnn.control.dh116.tabletop_tensor_task import (TensorTask, FAILURE_CODES, phase_potential,
     constrain_palm_exploration, apply_measured_contact_z_target)
+from go2_pvcnn.control.dh116.tabletop_tensor_world import (
+    signed_hand_normal_vertical_force, signed_hand_lift_vertical_force)
 from go2_pvcnn.control.dh116.tabletop_batched_task import BatchTask
 
 
@@ -69,6 +71,24 @@ def test_task_keeps_per_hand_vertical_force_for_direction_control():
     t = TensorTask(template(), 1, 'cpu')
     assert t.m['vertical_hand_force_n'].shape == (1, 2)
     assert torch.equal(t.m['vertical_hand_force_n'], torch.zeros((1, 2), dtype=torch.float64))
+
+
+def test_lift_force_channel_adds_friction_only_after_lift():
+    components = torch.tensor([[[1.0, .5], [2.0, -.25]]], dtype=torch.float64)
+    assert torch.equal(signed_hand_normal_vertical_force(components), torch.tensor([[1., 2.]]))
+    assert torch.equal(signed_hand_lift_vertical_force(components), torch.tensor([[1.5, 1.75]]))
+
+
+def test_lift_success_uses_combined_force_but_close_penalty_uses_normal_force():
+    task = TensorTask(template(), 1, 'cpu', contact_reward_window='close_start', vertical_force_reward=True,
+                      vertical_force_reward_mode='continuous', force_reward_start='downward_after_close',
+                      skip_hold=True, grasp_readiness='measured_load', close_downward_penalty=True)
+    task.phase[:] = 3
+    normal = torch.tensor([-.1], dtype=torch.float64)
+    combined = torch.tensor([1.0], dtype=torch.float64)
+    task.consume(measurement(task), torch.tensor([True]), .01,
+                 vertical_force_n=normal, lift_vertical_force_n=combined)
+    assert task.terms['close_downward'].item() == 0.
 
 
 def test_observation_matches_scalar_and_control_matches_batch():
