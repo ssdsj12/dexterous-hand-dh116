@@ -39,14 +39,20 @@ def make_env(force, compensation=None, parameters=None):
     e.reset(seed=11);return e
 
 
-def test_batch_force_policy_action_maps_to_two_to_twelve_newtons():
+@pytest.mark.parametrize(
+    'maximum,expected',
+    [(12., (2., 12.)), (1., (.1, 1.))],
+)
+def test_batch_force_policy_action_mapping_preserves_capacity_modes(maximum, expected):
     from go2_pvcnn.control.dh116.tabletop_load_parameters import LoadParameters
-    parameters=LoadParameters(max_force_n=12.,force_rate_n_s=None)
+    parameters=LoadParameters(max_force_n=maximum,force_rate_n_s=None)
     task=BatchTask([make_env(.055,parameters=parameters)])
-    task.control(np.tile(np.r_[np.zeros(18),-1.,-1.],(1,1)),np.ones(1,dtype=bool),1/480)
-    np.testing.assert_allclose(task.f_requested,[[2.,2.]])
-    task.control(np.tile(np.r_[np.zeros(18),1.,1.],(1,1)),np.ones(1,dtype=bool),1/480)
-    np.testing.assert_allclose(task.f_requested,[[12.,12.]])
+    actions=np.tile(np.r_[np.zeros(18),-1.,-1.],(1,1))
+    task.control(actions,np.ones(1,dtype=bool),1/480)
+    np.testing.assert_allclose(task.f_requested,[[expected[0],expected[0]]])
+    actions[:,18:]=1.
+    task.control(actions,np.ones(1,dtype=bool),1/480)
+    np.testing.assert_allclose(task.f_requested,[[expected[1],expected[1]]])
 
 
 @pytest.mark.parametrize('force,random_actions,compensated,profile',[(.055,False,False,False),(.055,True,False,False),(0.,False,False,False),(.055,True,True,False),(.4,True,True,True)])

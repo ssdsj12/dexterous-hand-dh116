@@ -116,10 +116,10 @@ class BatchTask:
         deadband=self.parameters.deadband_n
         rate=self.parameters.force_rate_n_s
         from .tabletop_tensor_task import POLICY_MIN_FORCE_N, POLICY_MAX_FORCE_N
-        # The GPU PPO contract uses a 2–12 N request range. Keep the legacy
-        # pad-load path differential-compatible; full-hand batches are the
-        # active PPO deployment path.
-        policy_mode = self.full_hand_contact or maximum >= POLICY_MAX_FORCE_N
+        # PPO profiles use a 2–12 N request range. Legacy low-capacity
+        # profiles retain their .1-to-configured-maximum action mapping.
+        policy_mode = ((self.full_hand_contact and maximum >= POLICY_MIN_FORCE_N)
+                       or maximum >= POLICY_MAX_FORCE_N)
         policy_min = POLICY_MIN_FORCE_N if policy_mode else .1
         policy_max = POLICY_MAX_FORCE_N if policy_mode else maximum
         nominal=policy_min+(actions[:,18:]+1)*.5*(policy_max-policy_min)
