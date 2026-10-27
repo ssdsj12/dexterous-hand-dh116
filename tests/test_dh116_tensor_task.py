@@ -18,17 +18,32 @@ def template():
 def measurement(t): return {k:v.clone() for k,v in t.m.items()}
 
 
-def test_z_down_palm_exploration_masks_xy_and_lift_palm_motion():
+def test_z_down_palm_exploration_bounds_xy_and_lift_palm_motion():
     actions=torch.tensor([[[.7,-.4,.8],[-.2,.3,-.6]],
                           [[.7,-.4,-.8],[-.2,.3,.6]]],dtype=torch.float64)
     original=actions.clone();phase=torch.tensor([1,3])
     constrained=constrain_palm_exploration(actions,phase,'z_down')
     torch.testing.assert_close(actions,original)
-    torch.testing.assert_close(constrained[0],torch.tensor([[0.,0.,0.], [0.,0.,-.6]],dtype=torch.float64))
+    assert constrained[0, :, :2].abs().max().item() <= .5 / 3.0 * .25 + 1e-12
+    torch.testing.assert_close(constrained[0, :, 2],torch.tensor([0.,-.6],dtype=torch.float64))
     torch.testing.assert_close(constrained[1],torch.zeros((2,3),dtype=torch.float64))
     torch.testing.assert_close(constrain_palm_exploration(actions,phase,'xyz'),actions)
     assert TensorTask(template(),1,'cpu',palm_exploration_axis='z_down').palm_descent_clearance_m == pytest.approx(.0003)
     assert TensorTask(template(),1,'cpu').palm_descent_clearance_m == pytest.approx(.0021)
+
+
+def test_z_down_allows_small_weighted_xy_and_shared_z_window():
+    actions = torch.tensor([[[1., -1., -1.], [-1., 1., .5]]], dtype=torch.float64)
+    constrained = constrain_palm_exploration(actions, torch.tensor([1]), 'z_down')
+    assert constrained[..., 0].abs().max().item() <= .5 / 3.0 * .25 + 1e-12
+    assert constrained[..., 1].abs().max().item() <= .5 / 3.0 * .25 + 1e-12
+    assert constrained[..., 2].max().item() <= 0.
+    assert constrained[..., 2].min().item() >= -1.
+
+
+def test_z_down_zeroes_xy_and_z_after_lift():
+    actions = torch.ones((1, 2, 3), dtype=torch.float64)
+    assert torch.equal(constrain_palm_exploration(actions, torch.tensor([3]), 'z_down'), torch.zeros_like(actions))
 
 
 def test_measured_contact_target_changes_only_z_and_is_bounded():

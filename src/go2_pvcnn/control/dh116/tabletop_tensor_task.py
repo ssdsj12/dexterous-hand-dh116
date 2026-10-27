@@ -23,6 +23,10 @@ FAILURE_NAMES = dict(enumerate((None, 'invalid_action', 'nonfinite_state', 'join
     'mimic_error', 'table_penetration', 'excess_force', 'object_dropped', 'timeout', 'grasp_not_established', 'nonfinite_joint_state')))
 FAILURE_CODES = {v:k for k,v in FAILURE_NAMES.items()}
 
+PALM_XY_SEARCH_LIMIT_M = 0.0005
+PALM_Z_SEARCH_LIMIT_M = 0.004
+PALM_XY_EXPLORATION_WEIGHT = 0.25
+
 
 def measured_readiness_contract(skip_hold=False):
     if skip_hold:
@@ -40,8 +44,9 @@ def constrain_palm_exploration(actions, phase, mode):
     result=actions.clone()
     if mode=='z_down':
         close=phase<3
-        result[close,:,:2]=0.
-        result[close,:,2]=result[close,:,2].clamp_max(0.)
+        xy_limit = PALM_XY_SEARCH_LIMIT_M / .003 * PALM_XY_EXPLORATION_WEIGHT
+        result[close,:,:2]=result[close,:,:2].clamp(-xy_limit, xy_limit)
+        result[close,:,2]=result[close,:,2].clamp(-PALM_Z_SEARCH_LIMIT_M / .004, 0.)
         result[~close]=0.
     return result
 
