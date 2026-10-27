@@ -1,6 +1,16 @@
 import torch
 import pytest
+from pathlib import Path
+import re
 from go2_pvcnn.control.dh116.tabletop_tensor_training import make_algorithm, observations
+
+
+def test_formal_tensor_ppo_launcher_uses_validated_mimic_frequency():
+    launcher = (Path(__file__).resolve().parents[1] / 'scripts' /
+                'train_dh116_tensor_ppo.sh').read_text()
+    frequencies = re.findall(r'--mimic-frequency\s+(\d+)', launcher)
+    assert frequencies == ['200']
+    assert '--mimic-frequency 400' not in launcher
 
 
 def test_below_axis_palm_contract_preserves_synchronized_z_fields():

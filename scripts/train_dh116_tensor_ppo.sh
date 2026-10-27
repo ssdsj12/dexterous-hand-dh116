@@ -20,6 +20,8 @@ reposition_flag=(--release-reposition)
 if [[ "${DH116_FORCE_DIRECTION_REPOSITION:-0}" == 1 ]]; then
   reposition_flag=(--force-direction-reposition)
 fi
+# nf200 is the validated closed-loop follower rate; nf400 has a recorded
+# passive-follower overshoot and is not qualified for the formal run.
 exec bash scripts/python.sh scripts/train_dh116_tabletop_gpu_ppo.py \
   --pose-summary configs/dh116_training/pose_reference.json \
   --adaptive-grasp --force-feedback --full-hand-contact \
@@ -27,7 +29,7 @@ exec bash scripts/python.sh scripts/train_dh116_tabletop_gpu_ppo.py \
   --grasp-initialization configs/dh116_training/grasp_initialization_pos64.json \
   --load-profile configs/dh116_load_profiles/v2_pressure_12n_instant_candidate.json \
   --object-kind solid_cylinder --object-material extreme_grip --hand-material grip_compliant \
-  --num-envs 4096 --rollout-steps 24 --physics-hz 480 --mimic-frequency 400 \
+  --num-envs 4096 --rollout-steps 24 --physics-hz 480 --mimic-frequency 200 \
   --position-iterations 64 --velocity-iterations 16 --reset-height-jitter-m 0 --cpu-threads "$DH116_NUM_THREADS" \
   --headless --device cuda:0 --direct-training --tensor-pipeline --training-episode-resets --pressure-relief \
   --grasp-controller coordinated --palm-transport driven_carriage \
