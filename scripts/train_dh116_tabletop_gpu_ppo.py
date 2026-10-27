@@ -539,6 +539,10 @@ try:
     from go2_pvcnn.control.dh116.tabletop_load_parameters import physics_load_readback
     report['physical_parameter_readback'] = physics_load_readback(world.hands,args.load_parameters,
         passive_velocity_limit_rad_s=args.passive_velocity_limit_rad_s)
+    if args.tensor_pipeline and args.full_hand_contact:
+        from go2_pvcnn.control.dh116.tabletop_tensor_training import tensor_contract_metadata
+        contract = tensor_contract_metadata(contract, args.load_parameters.max_force_n)
+        report['contract'] = contract
     write_json(args.output/'configuration.json',report)
     if args.play_checkpoint:
         from go2_pvcnn.control.dh116.tabletop_playback import play_policy

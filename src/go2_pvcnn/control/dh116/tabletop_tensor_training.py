@@ -15,6 +15,42 @@ from .tabletop_policy_noise import CONTRACT as POLICY_NOISE_CONTRACT, install_no
 VERSION = 'dh116-rsl-tensor-ppo-v1'
 
 
+def tensor_contract_metadata(contract, configured_max_force_n):
+    """Add the tensor policy contract fields to an existing full-hand contract."""
+    from .tabletop_tensor_task import (PALM_XY_SEARCH_LIMIT_M, PALM_Z_SEARCH_LIMIT_M,
+        PALM_XY_EXPLORATION_WEIGHT, POLICY_INITIAL_FORCE_ACTION_MEAN,
+        POLICY_INITIAL_FORCE_TARGET_N, POLICY_MIN_FORCE_N, POLICY_MAX_FORCE_N)
+    enriched=copy.deepcopy(contract)
+    enriched.update(
+        force_action_range_n=[POLICY_MIN_FORCE_N, POLICY_MAX_FORCE_N],
+        force_action_semantics=dict(version='phase_force_channels_v1',
+            close='signed_object_filtered_normal_vertical_sum',
+            hold='signed_object_filtered_normal_vertical_sum',
+            lift='signed_object_filtered_normal_plus_friction_vertical_sum'),
+        initial_force_action_mean=POLICY_INITIAL_FORCE_ACTION_MEAN,
+        initial_force_target_n=POLICY_INITIAL_FORCE_TARGET_N,
+        palm_exploration=dict(version='synchronized_z_v1',
+            xy_bounds_m=[-PALM_XY_SEARCH_LIMIT_M, PALM_XY_SEARCH_LIMIT_M],
+            z_bounds_m=[-PALM_Z_SEARCH_LIMIT_M, 0.],
+            xy_weight=PALM_XY_EXPLORATION_WEIGHT))
+    feedback=dict(enriched.get('force_feedback', {}))
+    feedback['target_hand_load_range_n']=[POLICY_MIN_FORCE_N, float(configured_max_force_n)]
+    enriched['force_feedback']=feedback
+    return enriched
+
+
+def apply_palm_exploration_contract(contract, axis):
+    """Add below-axis behavior while retaining synchronized-Z bounds and weights."""
+    if axis != 'xyz':
+        exploration=dict(contract.get('palm_exploration', {}))
+        exploration.update(version='synchronized_z_v1', axis='world_z',
+            close_policy='z<=0', close_xy='held_at_authored_pinch',
+            lift_policy='palm_zero_offset;task_offset_lifts_hand',
+            palm_descent_clearance_m=.0003)
+        contract['palm_exploration']=exploration
+    return contract
+
+
 def publish_stopped_monitor(path,error,physics_peaks,iteration,timesteps,num_envs):
     """Keep completed-update counters and include the failing rollout's peaks.
 
@@ -423,11 +459,7 @@ def run_tensor_training(world, template, args, contract):
         from .tabletop_grasp_shaping import CONTRACT as SHAPING_CONTRACT
         contract.update(grasp_shaping=dict(SHAPING_CONTRACT),observation_size=156,
                         observation_version='dh116-force-progress-milestones-v1')
-    if task.palm_exploration_axis!='xyz':
-        contract['palm_exploration']=dict(version='below_axis_z_only_v1',
-            axis='world_z',close_policy='z<=0',close_xy='held_at_authored_pinch',
-            lift_policy='palm_zero_offset;task_offset_lifts_hand',
-            palm_descent_clearance_m=.0003)
+    apply_palm_exploration_contract(contract, task.palm_exploration_axis)
     if hasattr(task,'coordinated_control'):
         from .tabletop_coordinated_grasp import CONTRACT as CONTROL_CONTRACT
         contract['grasp_controller']=dict(CONTROL_CONTRACT)

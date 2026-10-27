@@ -3,6 +3,32 @@ import pytest
 from go2_pvcnn.control.dh116.tabletop_tensor_training import make_algorithm, observations
 
 
+def test_below_axis_palm_contract_preserves_synchronized_z_fields():
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import apply_palm_exploration_contract
+    contract={'palm_exploration': {'version':'synchronized_z_v1',
+        'xy_bounds_m':[-.0005,.0005], 'z_bounds_m':[-.004,0.], 'xy_weight':.25}}
+    apply_palm_exploration_contract(contract, 'z_down')
+    assert contract['palm_exploration']=={
+        'version':'synchronized_z_v1', 'xy_bounds_m':[-.0005,.0005],
+        'z_bounds_m':[-.004,0.], 'xy_weight':.25, 'axis':'world_z',
+        'close_policy':'z<=0', 'close_xy':'held_at_authored_pinch',
+        'lift_policy':'palm_zero_offset;task_offset_lifts_hand',
+        'palm_descent_clearance_m':.0003}
+
+
+def test_tensor_contract_metadata_enriches_full_hand_force_contract():
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import tensor_contract_metadata
+    source={'force_feedback': {'target_hand_load_range_n':[.1, 4.], 'measurement':'loads'},
+        'legacy':'preserved'}
+    enriched=tensor_contract_metadata(source, 12.)
+    assert source['force_feedback']['target_hand_load_range_n']==[.1,4.]
+    assert enriched['force_action_range_n']==[2.,12.]
+    assert enriched['force_action_semantics']['version']=='phase_force_channels_v1'
+    assert enriched['initial_force_target_n']==pytest.approx(2.25)
+    assert enriched['palm_exploration']['version']=='synchronized_z_v1'
+    assert enriched['force_feedback']['target_hand_load_range_n']==[2.,12.]
+
+
 def test_stopped_monitor_retains_counters_and_partial_rollout_peaks(tmp_path):
     import json
     from go2_pvcnn.control.dh116.tabletop_tensor_training import publish_stopped_monitor
