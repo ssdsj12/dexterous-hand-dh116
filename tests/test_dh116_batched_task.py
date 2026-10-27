@@ -39,6 +39,16 @@ def make_env(force, compensation=None, parameters=None):
     e.reset(seed=11);return e
 
 
+def test_batch_force_policy_action_maps_to_two_to_twelve_newtons():
+    from go2_pvcnn.control.dh116.tabletop_load_parameters import LoadParameters
+    parameters=LoadParameters(max_force_n=12.,force_rate_n_s=None)
+    task=BatchTask([make_env(.055,parameters=parameters)])
+    task.control(np.tile(np.r_[np.zeros(18),-1.,-1.],(1,1)),np.ones(1,dtype=bool),1/480)
+    np.testing.assert_allclose(task.f_requested,[[2.,2.]])
+    task.control(np.tile(np.r_[np.zeros(18),1.,1.],(1,1)),np.ones(1,dtype=bool),1/480)
+    np.testing.assert_allclose(task.f_requested,[[12.,12.]])
+
+
 @pytest.mark.parametrize('force,random_actions,compensated,profile',[(.055,False,False,False),(.055,True,False,False),(0.,False,False,False),(.055,True,True,False),(.4,True,True,True)])
 def test_batch_matches_legacy_control_observation_reward_and_phase(force,random_actions,compensated,profile):
     from go2_pvcnn.control.dh116.tabletop_load_parameters import LoadParameters

@@ -115,11 +115,20 @@ class BatchTask:
         maximum=self.parameters.max_force_n
         deadband=self.parameters.deadband_n
         rate=self.parameters.force_rate_n_s
-        nominal=.1+(actions[:,18:]+1)*.5*(maximum-.1)
+        from .tabletop_tensor_task import POLICY_MIN_FORCE_N, POLICY_MAX_FORCE_N
+        # The GPU PPO contract uses a 2–12 N request range. Keep the legacy
+        # pad-load path differential-compatible; full-hand batches are the
+        # active PPO deployment path.
+        policy_mode = self.full_hand_contact or maximum >= POLICY_MAX_FORCE_N
+        policy_min = POLICY_MIN_FORCE_N if policy_mode else .1
+        policy_max = POLICY_MAX_FORCE_N if policy_mode else maximum
+        nominal=policy_min+(actions[:,18:]+1)*.5*(policy_max-policy_min)
         boost=self.f_boost+np.where(((self.phase==3)&slipping)[:,None]&(loads>.02),.25*dt,0.)
-        boost=np.clip(boost,0.,maximum-nominal)
-        requested=np.clip(nominal+boost,.1,maximum)
-        target=self.f_target+np.clip(requested-self.f_target,-rate*dt,rate*dt)
+        boost=np.clip(boost,0.,np.maximum(0.,maximum-nominal))
+        requested=np.clip(nominal+boost,policy_min,maximum)
+        requested=np.minimum(requested,policy_max)
+        target=(requested.copy() if rate is None else
+                self.f_target+np.clip(requested-self.f_target,-rate*dt,rate*dt))
         error=target-filtered
         error=np.where(loads>target+deadband,target-loads,error)
         error=np.where(abs(error)<=deadband,0.,error)
@@ -249,7 +258,7 @@ class BatchTask:
         for name,value in pieces.items():
             self.terms[name][valid]+=value[valid];self.reward[valid]+=value[valid]
 
-    def step(self,actions,advance):
+    def step(self,actions,advance,after_substep=None):
         actions=np.asarray(actions,dtype=float)
         if actions.shape!=(self.n,20):raise ValueError('expected N x 20 actions')
         invalid=~np.isfinite(actions).all(axis=1)|np.any(abs(actions)>1,axis=1)
@@ -257,12 +266,13 @@ class BatchTask:
         self.reward[invalid]-=25.;self.terms['failure'][invalid]-=25.
         safe_actions=np.where(invalid[:,None],0.,actions)
         dt=self.envs[0].backend.dt
-        for _ in range(self.envs[0].backend.decimation):
+        for substep in range(1,self.envs[0].backend.decimation+1):
             live=(self.failure==None)&~self.success
             allowed=self.control(safe_actions,live,dt)
             new=advance(self.offset,self.command,allowed,live)
             self.used[live]+=dt
             self.consume(new,live,dt)
+            if after_substep is not None:after_substep(self,new,substep)
         results=[]
         for i,e in enumerate(self.envs):
             e.pressure_palm_target=self.palm_targets[i].copy()
