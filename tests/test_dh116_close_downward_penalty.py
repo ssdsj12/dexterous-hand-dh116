@@ -75,7 +75,7 @@ def test_exact_one_way_event_contract_migration():
         grasp_readiness=measured_readiness_contract(True),observation_size=151,num_envs=4096,
         observation_version='dh116-after-close-force-v3')
     new=dict(old,close_downward_penalty=CLOSE_DOWNWARD_PENALTY_CONTRACT)
-    assert checkpoint_contract_changes(old,new)==['close_downward_event_penalty_v1']
+    assert checkpoint_contract_changes(old,new)==['close_downward_impulse_reset_v2']
     assert checkpoint_contract_changes(new,new)==[]
     for a,b in [(new,old),(old,dict(new,num_envs=16)),(old,dict(new,close_downward_penalty=dict(CLOSE_DOWNWARD_PENALTY_CONTRACT,points=-30.)))]:
         with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(a,b)

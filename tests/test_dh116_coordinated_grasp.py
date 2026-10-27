@@ -90,7 +90,7 @@ def test_controller_contract_migration_is_one_way_and_rejects_physics_changes():
     from go2_pvcnn.control.dh116.tabletop_coordinated_grasp import CONTRACT
     old=dict(num_envs=4096,physics_hz=480,observation_size=156)
     new=dict(old,grasp_controller=CONTRACT)
-    assert checkpoint_contract_changes(old,new)==['measured_motion_grasp_v1']
+    assert checkpoint_contract_changes(old,new)==['measured_motion_grasp_v2']
     assert checkpoint_contract_changes(new,new)==[]
     for a,b in [(new,old),(old,dict(new,physics_hz=240)),(old,dict(new,grasp_controller=dict(CONTRACT,position_lead_rad=.1)))]:
         with pytest.raises(ValueError):checkpoint_contract_changes(a,b)

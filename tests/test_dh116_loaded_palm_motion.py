@@ -90,7 +90,8 @@ def test_contract_migration_is_exact_one_way_and_requires_coordinated_control():
     from pathlib import Path
     old=json.loads(Path('runs/tabletop_rigid_20261026_v155_fresh_coordinated4096/tensor_contract.json').read_text())
     new=dict(old,palm_reposition=CONTRACT)
-    assert checkpoint_contract_changes(old,new)==['release_reposition_reclose_v1']
+    with pytest.raises(ValueError,match='contract mismatch'):
+        checkpoint_contract_changes(old,new)
     for a,b in [(new,old),(old,dict(new,physics_hz=240)),
                 (old,dict(new,palm_reposition=dict(CONTRACT,released_load_n=1.))),
                 ({'num_envs':4096},{'num_envs':4096,'palm_reposition':CONTRACT})]:

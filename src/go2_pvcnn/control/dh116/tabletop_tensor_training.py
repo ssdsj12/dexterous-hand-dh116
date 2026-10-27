@@ -87,7 +87,7 @@ def checkpoint_contract_changes(saved,current):
             and current.get('close_downward_penalty')==CLOSE_DOWNWARD_PENALTY_CONTRACT
             and all(saved.get(k)==v and current.get(k)==v for k,v in direct_new.items())):
         candidate['close_downward_penalty']=dict(CLOSE_DOWNWARD_PENALTY_CONTRACT)
-        changes.append('close_downward_event_penalty_v1')
+        changes.append(CLOSE_DOWNWARD_PENALTY_CONTRACT['version'])
     from .tabletop_grasp_shaping import CONTRACT as SHAPING_CONTRACT
     shaping_old=dict(direct_new,close_downward_penalty=CLOSE_DOWNWARD_PENALTY_CONTRACT)
     shaping_new=dict(shaping_old,grasp_shaping=SHAPING_CONTRACT,observation_size=156,

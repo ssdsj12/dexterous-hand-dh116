@@ -5,7 +5,7 @@ from .linear_coupling import ACTIVE, MIMIC
 from .tabletop_pressure_relief import pressure_limited_target
 from .tabletop_velocity_limits import CLOSE_COMMAND_RATE_RAD_S
 
-CONTRACT=dict(version='measured_motion_grasp_v1',position_lead_rad=.008,
+CONTRACT=dict(version='measured_motion_grasp_v2',position_lead_rad=.008,
     coupling_budget_rad=.008,severe_coupling_rad=.012,retreat_below_policy_rad=.03,
     command_rate_rad_s=CLOSE_COMMAND_RATE_RAD_S,palm_compensation='measured_pad_midpoint_relative_to_palm',
     pressure_priority=True,physical_guards_changed=False,
