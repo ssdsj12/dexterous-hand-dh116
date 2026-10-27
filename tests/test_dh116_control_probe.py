@@ -43,6 +43,14 @@ def test_force_direction_probe_allows_only_controller_contract_change():
         p.check_probe_contract(saved,dict(current,observation_size=151),allow_controller_change=True)
 
 
+def test_force_direction_probe_allows_legacy_grasp_controller_metadata_change():
+    p=module()
+    saved=dict(num_envs=4096,observation_size=156,physics_hz=480,
+               grasp_controller={'version':'measured_motion_grasp_v1'})
+    current=dict(num_envs=8,observation_size=156,physics_hz=480)
+    p.check_probe_contract(saved,current,allow_controller_change=True)
+
+
 def test_dwell_does_not_join_separate_contacts_and_requires_stable():
     p=module()
     assert p.longest_dwell(np.array([True]*30+[False]+[True]*30),1/480)==pytest.approx(30/480)

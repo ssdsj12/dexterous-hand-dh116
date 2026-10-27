@@ -26,7 +26,8 @@ def check_probe_contract(saved,current,*,allow_controller_change=False):
     left=dict(saved);right=dict(current)
     left.pop('num_envs',None);right.pop('num_envs',None)
     if allow_controller_change:
-        for key in ('palm_reposition','force_direction_reposition','training_failure_handling'):
+        for key in ('grasp_controller','palm_reposition','force_direction_reposition',
+                    'training_failure_handling'):
             left.pop(key,None);right.pop(key,None)
     if left!=right:
         changed=[k for k in left.keys()|right.keys() if left.get(k)!=right.get(k)]
@@ -181,6 +182,7 @@ def run_control_probe(env,algorithm,args,contract,obs):
     authored=torch.as_tensor(json.loads(args.grasp_initialization.read_text())['grasp_command'],device=env.device)
     joints=joint_actions(authored,t.lower,t.center,t.upper)
     fixed=torch.zeros((env.n,20),device=env.device,dtype=torch.float64)
+    teacher_z_offsets=None
     episode_limit=getattr(args,'control_probe_episodes',3)
     original_control=None
     if mode=='wrist_motion':
@@ -259,12 +261,32 @@ def run_control_probe(env,algorithm,args,contract,obs):
         write_json(args.output/'diagnostic_override.json',dict(mode=mode,
             lift_mimic_threshold_rad=t.diagnostic_lift_mimic_threshold.cpu().tolist(),
             joint_recovery_threshold_rad=.004,hard_guards_changed=False,rewards_changed=False))
-    else:
+    elif mode in ('grasp','grasp_fixed','grasp_z_sweep','grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm'):
         cases=['ppo_mean_0','ppo_mean_1']
-        for i,(force,z) in enumerate([(f,z) for z in (0.,-.001) for f in (4.,8.,12.)],2):
-            fixed[i,:12]=joints;fixed[i,18:]=force_action(force,t.parameters.max_force_n)
-            fixed[i,14]=fixed[i,17]=z/.004
-            cases.append(f'fixed_{force:g}N_z{z:g}m')
+        settings=[(f,z) for z in (0.,-.001) for f in (4.,8.,12.)]
+        if mode=='grasp':
+            for i,(force,z) in enumerate(settings,2):
+                fixed[i,:12]=joints;fixed[i,18:]=force_action(force,t.parameters.max_force_n)
+                fixed[i,14]=fixed[i,17]=z/.004
+                cases.append(f'fixed_{force:g}N_z{z:g}m')
+        elif mode=='grasp_z_sweep':
+            settings=[(8.,z) for z in (-.002,-.0015,-.001,-.0005,0.,.0005)]
+            fixed=fixed[:len(settings)]
+            for i,(force,z) in enumerate(settings):
+                fixed[i,:12]=joints;fixed[i,18:]=force_action(force,t.parameters.max_force_n)
+                fixed[i,14]=fixed[i,17]=z/.004
+            cases=[f'fixed_{force:g}N_z{z:g}m' for force,z in settings]
+        elif mode in ('grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm'):
+            values=(-.002,-.0015,-.001,-.0005,0.,.0005) if mode=='grasp_teacher_z_sweep' else ((-.00125,-.00075,-.00025,.00025,.00075,.00125) if mode=='grasp_teacher_z_fine' else (.00075,)*6)
+            teacher_z_offsets=torch.tensor(values,device=env.device,dtype=torch.float64)
+            fixed=fixed[:len(teacher_z_offsets)]
+            cases=[f'teacher_z{float(z):g}m' for z in teacher_z_offsets]
+        else:
+            fixed=fixed[:len(settings)]
+            for i,(force,z) in enumerate(settings):
+                fixed[i,:12]=joints;fixed[i,18:]=force_action(force,t.parameters.max_force_n)
+                fixed[i,14]=fixed[i,17]=z/.004
+            cases=[f'fixed_{force:g}N_z{z:g}m' for force,z in settings]
     if getattr(args,'palm_transport','fixed_pose')=='driven_carriage':
         from .tabletop_palm_mount import CONTRACT as MOUNT_CONTRACT
         write_json(args.output/'palm_transport_override.json',MOUNT_CONTRACT)
@@ -280,6 +302,10 @@ def run_control_probe(env,algorithm,args,contract,obs):
             for tick in range(tick_limit):
                 action=fixed.clone()
                 if mode=='grasp':action[:2]=algorithm.policy.act_inference(obs)[:2].clamp(-1.,1.)
+                if mode in ('grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm'):
+                    action[:]=algorithm.policy.act_inference(obs).clamp(-1.,1.)
+                    action[:,14]=teacher_z_offsets/.004
+                    action[:,17]=teacher_z_offsets/.004
                 if mode=='loaded_palm':action[4:]=algorithm.policy.act_inference(obs)[4:].clamp(-1.,1.)
                 value,_,_,_=env.step(action)
                 obs=observations(value)

@@ -64,7 +64,7 @@ parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--resume', type=Path)
 parser.add_argument('--control-probe-checkpoint',type=Path,
                     help='8-env inference-only control comparison; no PPO updates')
-parser.add_argument('--control-probe-mode',choices=('grasp','lift_gate','bounded_thumb','coordinated','wrist_motion','loaded_palm','force_direction'),default='grasp')
+parser.add_argument('--control-probe-mode',choices=('grasp','grasp_fixed','grasp_z_sweep','grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm','lift_gate','bounded_thumb','coordinated','wrist_motion','loaded_palm','force_direction'),default='grasp')
 parser.add_argument('--control-probe-episodes',type=int,default=3)
 parser.add_argument('--control-probe-swap',action='store_true',help='counterbalance paired loaded-palm candidate slots')
 parser.add_argument('--play-checkpoint', type=Path,
@@ -153,7 +153,7 @@ if args.control_probe_episodes<1 or args.control_probe_episodes>3:
     parser.error('control probe episodes must be 1..3')
 if not args.control_probe_checkpoint and (args.control_probe_mode!='grasp' or args.control_probe_episodes!=3):
     parser.error('probe settings require --control-probe-checkpoint')
-probe_envs = (8, 16) if args.control_probe_mode == 'force_direction' else (8,)
+probe_envs = (8, 16) if args.control_probe_mode == 'force_direction' else (6,) if args.control_probe_mode in ('grasp_fixed','grasp_z_sweep','grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm') else (8,)
 if args.control_probe_checkpoint and (not args.tensor_pipeline or args.num_envs not in probe_envs
         or not args.grasp_shaping or args.resume or args.initialize_from or args.play_checkpoint
         or args.startup_only or args.probe_only or args.episodes_per_env is not None):
