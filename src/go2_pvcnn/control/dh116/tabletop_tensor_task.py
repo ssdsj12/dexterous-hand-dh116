@@ -3,6 +3,7 @@ import math
 import torch
 from .linear_coupling import ACTIVE, MIMIC, active_limits
 from .tabletop_control import PHASES
+from .tabletop_velocity_limits import CLOSE_COMMAND_RATE_RAD_S
 
 REWARD_VERSION = 'phase_potential_v1_10n_5'
 LIFT_PRESSURE_TIMING_CONTRACT=dict(version='current_target_lift_pressure_v1',
@@ -265,7 +266,8 @@ class TensorTask:
             target=torch.clamp(target,self.lower,self.upper)
         else:
             target=torch.clamp(target,self.low,self.high)
-        self.command[live]+=torch.clamp(target-self.command,-.05*dt,.05*dt)[live]
+        self.command[live]+=torch.clamp(target-self.command,-CLOSE_COMMAND_RATE_RAD_S*dt,
+            CLOSE_COMMAND_RATE_RAD_S*dt)[live]
         return tracking&~self.paused&live&~self.pressure_limited.any(dim=1)
 
     def observe(self):

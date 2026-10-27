@@ -3,10 +3,11 @@ import math
 import torch
 from .linear_coupling import ACTIVE, MIMIC
 from .tabletop_pressure_relief import pressure_limited_target
+from .tabletop_velocity_limits import CLOSE_COMMAND_RATE_RAD_S
 
 CONTRACT=dict(version='measured_motion_grasp_v1',position_lead_rad=.008,
     coupling_budget_rad=.008,severe_coupling_rad=.012,retreat_below_policy_rad=.03,
-    command_rate_rad_s=.05,palm_compensation='measured_pad_midpoint_relative_to_palm',
+    command_rate_rad_s=CLOSE_COMMAND_RATE_RAD_S,palm_compensation='measured_pad_midpoint_relative_to_palm',
     pressure_priority=True,physical_guards_changed=False,
     thumb_limit_margin_rad=.005,thumb_limit_response='release_opposing_index_pause_motion',
     retreat_scope='index_only',policy_bounds='request_only_mechanical_governor_has_priority')
@@ -113,5 +114,6 @@ def control(t,actions,live,dt):
             lifting&~t.grip_force_ready(loads,lifting=True),lifting&slipping,lifting&over.any(1),lifting&(t.offset>=.05)),1)
         t.lift_diagnostic_masks[live]=gates[live]
     t.offset[lift]=(t.offset[lift]+.01*dt).clamp_max(.05)
-    t.command[live]+=(target-t.command).clamp(-.05*dt,.05*dt)[live]
+    t.command[live]+=(target-t.command).clamp(-CLOSE_COMMAND_RATE_RAD_S*dt,
+        CLOSE_COMMAND_RATE_RAD_S*dt)[live]
     return tracking&~severe&live&~over.any(1)

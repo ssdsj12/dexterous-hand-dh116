@@ -17,7 +17,7 @@ def test_recovery_can_retreat_below_policy_floor_but_not_mechanical_bounds():
     a=torch.zeros((2,20),dtype=torch.float64)
     before=t.command.clone();t.control(a,~t.done,1/480)
     assert (t.command[:,2]<t.lower[2]).all()
-    assert (t.command>=t.low).all() and ((t.command-before).abs()<=.05/480+1e-12).all()
+    assert (t.command>=t.low).all() and ((t.command-before).abs()<=.20/480+1e-12).all()
 
 
 def test_measured_midpoint_compensation_ignores_unrealized_force_request():
@@ -39,6 +39,15 @@ def test_lift_accepts_bounded_loaded_error_and_blocks_severe_error():
     assert t.paused.tolist()==[False,True]
 
 
+def test_close_command_slew_uses_the_faster_rate():
+    t=enabled();t.m=loads(t,4.);t.phase[:]=1;t.command.copy_(t.m['q'])
+    before=t.command.clone();a=torch.ones((2,20),dtype=torch.float64)
+    t.control(a,~t.done,1/480)
+    delta=(t.command-before).abs()
+    assert (delta.max(1).values>.10/480).all()
+    assert (delta<=.20/480+1e-12).all()
+
+
 def test_overpressure_blocks_lift_and_releases_with_slew_limit():
     t=enabled();t.phase[:]=3;t.m=loads(t,20.);t.command.copy_(t.m['q'])
     before=t.command.clone();lift=t.offset.clone();a=torch.ones((2,20),dtype=torch.float64);a[:,18:]=-1.
@@ -46,7 +55,7 @@ def test_overpressure_blocks_lift_and_releases_with_slew_limit():
     assert t.pressure_limited.all();torch.testing.assert_close(t.offset,lift)
     sign=torch.where(t.direction==0,1.,t.direction.sign()).flatten(1)
     assert (((t.command-before)*sign)<=1e-12).all()
-    assert (abs(t.command-before)<=.05/480+1e-12).all()
+    assert (abs(t.command-before)<=.20/480+1e-12).all()
 
 
 def test_partial_mask_preserves_legacy_behavior_and_inactive_commands():
@@ -131,7 +140,7 @@ def test_near_limit_thumb_reduces_stale_overshoot_without_opening_position_bias(
     for _ in range(150):
         before=t.command.clone();t.control(a,~t.done,1/480)
         assert (t.command[:,7]>=t.m['q'][:,7]).all()
-        assert ((t.command-before).abs()<=.05/480+1e-12).all()
+        assert ((t.command-before).abs()<=.20/480+1e-12).all()
     torch.testing.assert_close(t.command[:,7],t.m['q'][:,7]+.008)
     assert (t.command[:,8]<t.m['q'][:,8]).all()
     torch.testing.assert_close(t.offset,lift)
