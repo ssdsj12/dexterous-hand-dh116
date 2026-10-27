@@ -506,7 +506,7 @@ class TensorTask:
             if self.vertical_force_reward:
                 # Downward squeezing is not upward support. Delay the one-off
                 # bonus until a still-ready grasp actually pushes upward.
-                ready_event=eligible&(self.phase==3)&ready&(lift_vertical_force_n>0)&~self.grasp_ready_awarded
+                ready_event=eligible&(self.phase==3)&ready&(vertical_force_n>0)&~self.grasp_ready_awarded
             self.grasp_ready_awarded|=ready_event
             pieces['contact']=credit
             pieces['contact_dwell']=torch.zeros_like(credit)
