@@ -365,6 +365,50 @@ def make_algorithm(obs, steps=24):
     return algorithm
 
 
+def reposition_telemetry(adjustment):
+    """Return monitor fields supported by a palm-reposition implementation.
+
+    ``LoadedPalmReposition`` predates force-direction diagnostics and only
+    exposes state/attempt fields.  ForceDirectionReposition additionally
+    exposes signed force samples and timeout flags.  Keep the common fields
+    stable, while publishing optional diagnostics only when the controller
+    implements them so the default release-reposition path cannot crash the
+    training loop.
+    """
+    row = {
+        name: float((adjustment.state == index).double().mean())
+        for index, name in enumerate((
+            'idle_hand_fraction', 'release_hand_fraction',
+            'move_hand_fraction', 'reclose_hand_fraction'))
+    }
+    row['aborted_hand_fraction'] = float(adjustment.aborted.double().mean())
+    attempts = getattr(adjustment, 'attempts', None)
+    active = attempts > 0 if attempts is not None else None
+    force_fields = (
+        ('force_before_release_n', 'force_before'),
+        ('force_after_release_n', 'force_release'),
+        ('force_during_move_n', 'force_move'),
+        ('force_after_reclose_n', 'force_reclose'),
+    )
+    if active is not None:
+        for output_name, attribute_name in force_fields:
+            values = getattr(adjustment, attribute_name, None)
+            if values is None:
+                continue
+            row[output_name] = (
+                float(values[active].mean()) if bool(active.any()) else 0.
+            )
+    for output_name, attribute_name in (
+        ('release_timeout_fraction', 'release_timeout'),
+        ('recontact_abort_fraction', 'recontact_abort'),
+        ('reclose_timeout_fraction', 'reclose_timeout'),
+    ):
+        values = getattr(adjustment, attribute_name, None)
+        if values is not None:
+            row[output_name] = float(values.double().mean())
+    return row
+
+
 def save_checkpoint(path, algorithm, contract, iteration, timesteps, env):
     payload=dict(version=VERSION,contract=contract,iteration=iteration,timesteps=timesteps,
         policy=algorithm.policy.state_dict(),optimizer=algorithm.optimizer.state_dict(),
@@ -590,20 +634,7 @@ def run_tensor_training(world, template, args, contract):
                 row['palm_reposition']=contract['palm_reposition']
                 row['force_direction_reposition']=bool(getattr(task,'force_direction_reposition',False))
                 adjustment=task.palm_reposition
-                row['reposition']={name:float((adjustment.state==i).double().mean())
-                    for i,name in enumerate(('idle_hand_fraction','release_hand_fraction','move_hand_fraction','reclose_hand_fraction'))}
-                row['reposition']['aborted_hand_fraction']=float(adjustment.aborted.double().mean())
-                for name,values in (
-                    ('force_before_release_n',adjustment.force_before),
-                    ('force_after_release_n',adjustment.force_release),
-                    ('force_during_move_n',adjustment.force_move),
-                    ('force_after_reclose_n',adjustment.force_reclose),
-                ):
-                    active=adjustment.attempts>0
-                    row['reposition'][name]=float(values[active].mean()) if bool(active.any()) else 0.
-                row['reposition']['release_timeout_fraction']=float(adjustment.release_timeout.double().mean())
-                row['reposition']['recontact_abort_fraction']=float(adjustment.recontact_abort.double().mean())
-                row['reposition']['reclose_timeout_fraction']=float(adjustment.reclose_timeout.double().mean())
+                row['reposition']=reposition_telemetry(adjustment)
             row['policy_noise']=dict(POLICY_NOISE_CONTRACT)
             row['vertical_contact_force']=env.vertical_force_stats.summary()
             row['lift_entry_force']=env.lift_entry_force_stats.summary()

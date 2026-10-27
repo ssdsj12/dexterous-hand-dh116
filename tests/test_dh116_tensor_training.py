@@ -29,6 +29,28 @@ def test_tensor_contract_metadata_enriches_full_hand_force_contract():
     assert enriched['force_feedback']['target_hand_load_range_n']==[2.,12.]
 
 
+def test_reposition_telemetry_is_capability_aware_for_loaded_and_force_direction():
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import reposition_telemetry
+    from go2_pvcnn.control.dh116.tabletop_loaded_palm_motion import LoadedPalmReposition
+    from go2_pvcnn.control.dh116.tabletop_force_direction_reposition import ForceDirectionReposition
+
+    loaded=LoadedPalmReposition(torch.ones(2,dtype=torch.bool))
+    loaded_row=reposition_telemetry(loaded)
+    assert loaded_row['idle_hand_fraction']==pytest.approx(1.)
+    assert 'force_before_release_n' not in loaded_row
+    assert 'release_timeout_fraction' not in loaded_row
+
+    force_direction=ForceDirectionReposition(torch.ones(2,dtype=torch.bool))
+    force_direction_row=reposition_telemetry(force_direction)
+    assert force_direction_row['force_before_release_n']==pytest.approx(0.)
+    assert force_direction_row['force_after_release_n']==pytest.approx(0.)
+    assert force_direction_row['force_during_move_n']==pytest.approx(0.)
+    assert force_direction_row['force_after_reclose_n']==pytest.approx(0.)
+    assert force_direction_row['release_timeout_fraction']==pytest.approx(0.)
+    assert force_direction_row['recontact_abort_fraction']==pytest.approx(0.)
+    assert force_direction_row['reclose_timeout_fraction']==pytest.approx(0.)
+
+
 def test_stopped_monitor_retains_counters_and_partial_rollout_peaks(tmp_path):
     import json
     from go2_pvcnn.control.dh116.tabletop_tensor_training import publish_stopped_monitor
