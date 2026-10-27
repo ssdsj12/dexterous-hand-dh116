@@ -20,8 +20,43 @@ def test_joint_inverse_preserves_asymmetric_bounds_and_rejects_outside():
 
 def test_force_target_roundtrip_and_bounds():
     p=module()
-    for f in (.1,4.,8.,12.):assert .1+(p.force_action(f,12.)+1)*.5*11.9==pytest.approx(f)
+    for f in (2.,4.,8.,12.):assert 2.+(p.force_action(f,12.)+1)*.5*10.==pytest.approx(f)
+    with pytest.raises(ValueError):p.force_action(1.99,12.)
     with pytest.raises(ValueError):p.force_action(13.,12.)
+
+
+def test_force_direction_probe_uses_ten_newton_total_close_target():
+    p=module()
+    assert p.FORCE_DIRECTION_TOTAL_TARGET_N == pytest.approx(10.)
+    assert p.FORCE_DIRECTION_HAND_TARGET_N == pytest.approx(5.)
+
+
+def test_teacher_palm_xy_sweep_has_six_symmetric_candidates():
+    p=module()
+    candidates=p.teacher_palm_xy_candidates()
+    assert candidates == [(-.0015, 0.), (.0015, 0.), (0., -.0015),
+                           (0., .0015), (-.0015, .0015), (.0015, -.0015)]
+
+
+def test_teacher_palm_z_down_sweep_stays_below_object_axis():
+    p=module()
+    candidates=p.teacher_palm_z_down_candidates()
+    assert candidates == [-.004, -.003, -.002, -.0015, -.001, -.0005]
+    assert all(z < 0. for z in candidates)
+
+
+def test_diagnostic_palm_descent_clearance_override_only_changes_z_floor():
+    from go2_pvcnn.control.dh116.tabletop_tensor_world import constrain_palm_z_movement
+    movement=torch.zeros((1,2,3),dtype=torch.float64)
+    movement[:,:,2]=-0.01
+    clearance=torch.tensor([[.002,.004]],dtype=torch.float64)
+    normal=constrain_palm_z_movement(movement,clearance,.0021)
+    diagnostic=constrain_palm_z_movement(movement,clearance,.0003)
+    assert normal[0,0,2]==pytest.approx(-0.0)
+    assert diagnostic[0,0,2]==pytest.approx(-.0017)
+    assert diagnostic[0,1,2]==pytest.approx(-.0037)
+    torch.testing.assert_close(normal[:,:,0],movement[:,:,0])
+    torch.testing.assert_close(diagnostic[:,:,1],movement[:,:,1])
 
 
 def test_contract_only_environment_count_may_differ():
@@ -48,6 +83,14 @@ def test_force_direction_probe_allows_legacy_grasp_controller_metadata_change():
     saved=dict(num_envs=4096,observation_size=156,physics_hz=480,
                grasp_controller={'version':'measured_motion_grasp_v1'})
     current=dict(num_envs=8,observation_size=156,physics_hz=480)
+    p.check_probe_contract(saved,current,allow_controller_change=True)
+
+
+def test_force_direction_probe_allows_legacy_close_penalty_metadata_change():
+    p=module()
+    saved=dict(num_envs=4096,observation_size=156,physics_hz=480)
+    current=dict(saved,num_envs=8,
+                 close_downward_penalty={'version':'close_downward_no_impulse_reset_v4'})
     p.check_probe_contract(saved,current,allow_controller_change=True)
 
 

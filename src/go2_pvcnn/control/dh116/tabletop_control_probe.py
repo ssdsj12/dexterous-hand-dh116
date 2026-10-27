@@ -21,9 +21,11 @@ def joint_actions(target,lower,center,upper):
 
 
 def force_action(force,maximum):
-    if not math.isfinite(force) or not .1<=force<=maximum or maximum<=.1:
+    from .tabletop_tensor_task import POLICY_MIN_FORCE_N
+    if (not math.isfinite(force) or not math.isfinite(maximum)
+            or not POLICY_MIN_FORCE_N<=force<=maximum or maximum<=POLICY_MIN_FORCE_N):
         raise ValueError('force target outside configured limits')
-    return 2*(force-.1)/(maximum-.1)-1
+    return 2*(force-POLICY_MIN_FORCE_N)/(maximum-POLICY_MIN_FORCE_N)-1
 
 
 def teacher_palm_xy_candidates():
@@ -96,7 +98,7 @@ class ProbeRecorder:
             phase_before=previous_phase,phase_after=t.phase,elapsed=t.elapsed,
             failure=t.failure,success=t.success,bottom=m['bottom'],
             speed=m['object_velocity'][:,:3].norm(dim=1),slip=t.slip,
-            weight=w.object_weight_n,force=w.vertical_components.sum((1,2)),
+            weight=w.object_weight_n,force=w.vertical_components[:,:,0].sum(1),
             vertical_components=w.vertical_components,load=m['hand_object_loads'],
             contact_center_relative_m=m['contact_center_relative_m'],
             contact_normal=m.get('contact_normal_w',torch.full_like(m['contact_center_relative_m'],float('nan'))),
@@ -176,7 +178,7 @@ class ProbeRecorder:
         report=dict(status=status,episodes=result,physics_dt_s=dt,
             position_semantics='PhysX contact positions and force-weighted normals; pad_relative remains a proxy',
             recovery_semantics='recovery_target is the projected center, NOT final governed/slewed command; active uses legacy .004 or coordinated severe .012',
-            force_semantics='signed hand-to-object normal+friction; load is summed normal magnitudes',
+            force_semantics='signed hand-to-object normal only; friction telemetry is separate; load is summed normal magnitudes',
             repeat_semantics='same reset, repeatability only, not randomized generalization',
             gate_timing='pressure uses pre_load with updated target (not pre_target); pre_mimic/pre_tracking precede control; load/force are post-physics',
             completed_slots='continue guarded simulation; only requested episodes analyzed',
@@ -194,6 +196,18 @@ def run_control_probe(env,algorithm,args,contract,obs):
     saved=torch.load(args.control_probe_checkpoint,map_location=env.device,weights_only=False)
     if saved['version']!=VERSION:raise ValueError('not a tensor checkpoint')
     mode=getattr(args,'control_probe_mode','grasp')
+    # The latest teacher checkpoint predates the normal-only force contract.
+    # This inference-only probe may migrate just those force-semantic fields;
+    # all other contract fields remain subject to the usual exact comparison.
+    if mode=='grasp_teacher_contact_z_sweep':
+        legacy=saved['contract'].get('vertical_force_reward',{})
+        current=contract.get('vertical_force_reward',{})
+        if (legacy.get('source')=='object_filtered_normal_plus_friction_on_hand_negated'
+                and current.get('source')=='object_filtered_normal_on_hand_negated'):
+            for key in ('reward','phase_reward_version','vertical_force_reward',
+                        'vertical_force_telemetry','close_downward_penalty'):
+                if key in contract:
+                    saved['contract'][key]=contract[key]
     check_probe_contract(saved['contract'],contract,
                          allow_controller_change=mode in ('force_direction','grasp_teacher_contact_z_sweep'))
     algorithm.policy.load_state_dict(saved['policy']);algorithm.policy.eval()

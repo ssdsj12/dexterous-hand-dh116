@@ -59,9 +59,10 @@ def control(t,actions,live,dt):
     t.palm_clipped[live]=(raw_palm.abs()>t.palm_limit)[live]
     maximum=t.parameters.max_force_n;deadband=t.parameters.deadband_n
     filtered=t.f_filtered+(1-math.exp(-dt/.05))*(loads-t.f_filtered)
-    nominal=.1+(actions[:,18:]+1)*.5*(maximum-.1)
+    from .tabletop_tensor_task import POLICY_MIN_FORCE_N, POLICY_MAX_FORCE_N
+    nominal=POLICY_MIN_FORCE_N+(actions[:,18:]+1)*.5*(POLICY_MAX_FORCE_N-POLICY_MIN_FORCE_N)
     boost=(t.f_boost+torch.where(((t.phase==3)&slipping)[:,None]&(loads>.02),.25*dt,0.)).clamp_min(0.)
-    boost=torch.minimum(boost,maximum-nominal);requested=(nominal+boost).clamp(.1,maximum)
+    boost=torch.minimum(boost,(maximum-nominal).clamp_min(0.));requested=(nominal+boost).clamp(POLICY_MIN_FORCE_N,maximum).clamp_max(POLICY_MAX_FORCE_N)
     rate=t.parameters.force_rate_n_s
     target_force=requested if rate is None else t.f_target+(requested-t.f_target).clamp(-rate*dt,rate*dt)
     error=target_force-filtered;error=torch.where(loads>target_force+deadband,target_force-loads,error)

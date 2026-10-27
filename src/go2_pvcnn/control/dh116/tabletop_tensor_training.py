@@ -50,8 +50,13 @@ def checkpoint_contract_changes(saved,current):
     from .tabletop_velocity_limits import VELOCITY_HEADROOM_CONTRACT
     from .tabletop_contact_window import reward_contract, REWARD_VERSION as WINDOW_REWARD, OBSERVATION_VERSION
     from .tabletop_tensor_world import ROOT_POSE_WRITE_CONTRACT
-    from .tabletop_tensor_task import MEASURED_READINESS_CONTRACT, measured_readiness_contract, CLOSE_DOWNWARD_PENALTY_CONTRACT
+    from .tabletop_tensor_task import (MEASURED_READINESS_CONTRACT, measured_readiness_contract,
+        CLOSE_DOWNWARD_PENALTY_CONTRACT, POLICY_MIN_FORCE_N, POLICY_MAX_FORCE_N)
     candidate=dict(saved);changes=[]
+    if (saved.get('force_action_range_n')==[.1,12.] and
+            current.get('force_action_range_n')==[POLICY_MIN_FORCE_N,POLICY_MAX_FORCE_N]):
+        changes.append('force_action_range_2_to_12')
+        candidate['force_action_range_n'] = current['force_action_range_n']
     from .tabletop_coordinated_grasp import CONTRACT as CONTROL_CONTRACT
     if 'grasp_controller' not in saved and current.get('grasp_controller')==CONTROL_CONTRACT:
         candidate['grasp_controller']=dict(CONTROL_CONTRACT);changes.append(CONTROL_CONTRACT['version'])
@@ -83,6 +88,30 @@ def checkpoint_contract_changes(saved,current):
     direct_new=dict(close_fields,vertical_force_reward=direct_vertical,grasp_readiness=measured_readiness_contract(True))
     if all(saved.get(k)==v for k,v in direct_old.items()) and all(current.get(k)==v for k,v in direct_new.items()):
         candidate.update(direct_new);changes.append('close_direct_lift_v1')
+    # The close/lift state machine keeps the same observation shape while the
+    # signed force source changes from normal+friction to normal-only. Migrate
+    # old rigid checkpoints explicitly so the latest teacher checkpoint can be
+    # replayed under the new force semantics.
+    legacy_force=saved.get('vertical_force_reward')
+    current_force=current.get('vertical_force_reward')
+    legacy_close=saved.get('close_downward_penalty')
+    current_close=current.get('close_downward_penalty')
+    normal_only_migration=(isinstance(legacy_force,dict)
+        and legacy_force.get('source')=='object_filtered_normal_plus_friction_on_hand_negated'
+        and isinstance(current_force,dict)
+        and current_force.get('source')=='object_filtered_normal_on_hand_negated'
+        and isinstance(legacy_close,dict)
+        and legacy_close.get('version') in ('close_downward_impulse_reset_v3','close_downward_event_penalty_v1')
+        and current_close==CLOSE_DOWNWARD_PENALTY_CONTRACT)
+    if normal_only_migration:
+        excluded={'reward','phase_reward_version','vertical_force_reward',
+                  'vertical_force_telemetry','close_downward_penalty'}
+        if all(saved.get(k)==current.get(k) for k in (saved.keys()|current.keys())-excluded):
+            candidate.update(reward=current.get('reward'),phase_reward_version=current.get('phase_reward_version'),
+                vertical_force_reward=current_force,close_downward_penalty=current_close)
+            if 'vertical_force_telemetry' in current:
+                candidate['vertical_force_telemetry']=current['vertical_force_telemetry']
+            changes.append('normal_force_excludes_friction_v2')
     if ('close_downward_penalty' not in saved
             and current.get('close_downward_penalty')==CLOSE_DOWNWARD_PENALTY_CONTRACT
             and all(saved.get(k)==v and current.get(k)==v for k,v in direct_new.items())):
@@ -349,7 +378,17 @@ def run_tensor_training(world, template, args, contract):
     obs=observations(env.reset())
     write_json(args.output/'tensor_world_validation.json',validation)
     steps=args.rollout_steps or 24
+    from .tabletop_tensor_task import (POLICY_MIN_FORCE_N, POLICY_MAX_FORCE_N,
+        POLICY_INITIAL_FORCE_ACTION_MEAN, POLICY_INITIAL_FORCE_TARGET_N,
+        PALM_XY_SEARCH_LIMIT_M, PALM_Z_SEARCH_LIMIT_M, PALM_XY_EXPLORATION_WEIGHT)
     contract=dict(contract,tensor_training=VERSION,phase_reward_version=REWARD_VERSION,
+        force_action_range_n=[POLICY_MIN_FORCE_N,POLICY_MAX_FORCE_N],
+        force_action_semantics=dict(version='phase_force_channels_v1',close='signed_object_filtered_normal_vertical_sum',
+            hold='signed_object_filtered_normal_vertical_sum',lift='signed_object_filtered_normal_plus_friction_vertical_sum'),
+        initial_force_action_mean=POLICY_INITIAL_FORCE_ACTION_MEAN,
+        initial_force_target_n=POLICY_INITIAL_FORCE_TARGET_N,
+        palm_exploration=dict(version='synchronized_z_v1',xy_bounds_m=[-PALM_XY_SEARCH_LIMIT_M,PALM_XY_SEARCH_LIMIT_M],
+            z_bounds_m=[-PALM_Z_SEARCH_LIMIT_M,0.],xy_weight=PALM_XY_EXPLORATION_WEIGHT),
         vector_backend='device_resident_rigid_task_v1',rollout_steps=steps,
         optimizer='rsl_rl.PPO',kl_schedule='adaptive',epochs=5,
         minibatches=min(8,args.num_envs),learning_rate=3e-4,
@@ -416,6 +455,8 @@ def run_tensor_training(world, template, args, contract):
         if saved['version']!=VERSION:
             raise ValueError('tensor checkpoint contract mismatch; legacy SB3 resume is unsupported')
         changes=checkpoint_contract_changes(saved['contract'],contract)
+        if 'force_action_range_2_to_12' in changes:
+            raise ValueError('tensor checkpoint contract mismatch; legacy force-action range is not resume-compatible')
         if changes:
             write_json(args.output/'checkpoint_migration.json',dict(source=str(args.resume),
                 changes=changes,policy_and_optimizer_retained='bounded_policy_noise_v1' not in changes,

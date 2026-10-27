@@ -26,6 +26,10 @@ FAILURE_CODES = {v:k for k,v in FAILURE_NAMES.items()}
 PALM_XY_SEARCH_LIMIT_M = 0.0005
 PALM_Z_SEARCH_LIMIT_M = 0.004
 PALM_XY_EXPLORATION_WEIGHT = 0.25
+POLICY_MIN_FORCE_N = 2.0
+POLICY_MAX_FORCE_N = 12.0
+POLICY_INITIAL_FORCE_ACTION_MEAN = -0.95
+POLICY_INITIAL_FORCE_TARGET_N = POLICY_MIN_FORCE_N + .5 * (POLICY_INITIAL_FORCE_ACTION_MEAN + 1.) * (POLICY_MAX_FORCE_N - POLICY_MIN_FORCE_N)
 
 
 def measured_readiness_contract(skip_hold=False):
@@ -275,10 +279,10 @@ class TensorTask:
         maximum=self.parameters.max_force_n
         deadband=self.parameters.deadband_n
         rate=self.parameters.force_rate_n_s
-        nominal=.1+(actions[:,18:]+1)*.5*(maximum-.1)
+        nominal=POLICY_MIN_FORCE_N+(actions[:,18:]+1)*.5*(POLICY_MAX_FORCE_N-POLICY_MIN_FORCE_N)
         boost=self.f_boost+torch.where(((self.phase==3)&slipping)[:,None]&(loads>.02),.25*dt,0.)
-        boost=torch.minimum(torch.clamp(boost,min=0.),maximum-nominal)
-        requested=torch.clamp(nominal+boost,.1,maximum)
+        boost=torch.minimum(torch.clamp(boost,min=0.),(maximum-nominal).clamp_min(0.))
+        requested=torch.clamp(nominal+boost,POLICY_MIN_FORCE_N,maximum).clamp_max(POLICY_MAX_FORCE_N)
         target=(requested.clone() if rate is None else
                 self.f_target+torch.clamp(requested-self.f_target,-rate*dt,rate*dt))
         error=target-filtered

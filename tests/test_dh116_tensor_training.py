@@ -139,7 +139,7 @@ def test_close_force_behavior_requires_new_controller_contract():
     from go2_pvcnn.control.dh116.tabletop_tensor_task import CLOSE_DOWNWARD_PENALTY_CONTRACT
     from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
     assert CONTRACT['version']=='measured_motion_grasp_v2'
-    assert CLOSE_DOWNWARD_PENALTY_CONTRACT['version']=='close_downward_impulse_reset_v3'
+    assert CLOSE_DOWNWARD_PENALTY_CONTRACT['version']=='close_downward_no_impulse_reset_v4'
     old=dict(num_envs=4096,
         grasp_controller=dict(CONTRACT,version='measured_motion_grasp_v1',command_rate_rad_s=.05),
         close_downward_penalty=dict(CLOSE_DOWNWARD_PENALTY_CONTRACT,
@@ -147,6 +147,28 @@ def test_close_force_behavior_requires_new_controller_contract():
     with pytest.raises(ValueError,match='contract mismatch'):
         checkpoint_contract_changes(old,dict(num_envs=4096,grasp_controller=CONTRACT,
             close_downward_penalty=CLOSE_DOWNWARD_PENALTY_CONTRACT))
+
+
+def test_checkpoint_migrates_legacy_friction_force_contract_to_normal_only():
+    from go2_pvcnn.control.dh116.tabletop_tensor_task import CLOSE_DOWNWARD_PENALTY_CONTRACT
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
+    from go2_pvcnn.control.dh116.tabletop_vertical_force import vertical_reward_contract
+    current_force=vertical_reward_contract('continuous','downward_after_close',skip_hold=True)
+    legacy_force=dict(current_force,version='signed_vertical_close_upward_v4',
+                      source='object_filtered_normal_plus_friction_on_hand_negated')
+    legacy_close=dict(CLOSE_DOWNWARD_PENALTY_CONTRACT,
+                      version='close_downward_impulse_reset_v3',
+                      impulse_limit_n_s=2.,
+                      condition='signed_sum_hand_to_object_vertical_force_n_less_than_zero',
+                      force_semantics=None)
+    old=dict(num_envs=4096,reward=legacy_force['version'],
+        phase_reward_version=legacy_force['version'],vertical_force_reward=legacy_force,
+        grasp_readiness='measured_close_direct_lift_v1',observation_version='dh116-after-close-force-v3',
+        observation_size=151,close_downward_penalty=legacy_close)
+    current=dict(old,reward=current_force['version'],phase_reward_version=current_force['version'],
+        vertical_force_reward=current_force,close_downward_penalty=CLOSE_DOWNWARD_PENALTY_CONTRACT)
+    changes=checkpoint_contract_changes(old,current)
+    assert changes==['normal_force_excludes_friction_v2']
 
 
 def test_checkpoint_migration_only_accepts_exact_contact_window_reward():
@@ -194,6 +216,16 @@ def test_checkpoint_load_target_can_expand_from_four_to_twelve_only():
                 dict(force_feedback_contract(LoadParameters(max_force_n=15.)),num_envs=4096)):
         with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(old,bad)
     with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(new,old)
+
+
+def test_old_force_range_is_not_resume_compatible():
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
+    current_contract=dict(num_envs=4096,force_action_range_n=[2.,12.])
+    old=dict(current_contract,force_action_range_n=[.1,12.])
+    new=dict(current_contract)
+    assert checkpoint_contract_changes(old,new)==['force_action_range_2_to_12']
+    with pytest.raises(ValueError,match='contract mismatch'):
+        checkpoint_contract_changes(new,old)
 
 
 @pytest.mark.parametrize('old_size,new_size',[(148,150),(150,151)])
