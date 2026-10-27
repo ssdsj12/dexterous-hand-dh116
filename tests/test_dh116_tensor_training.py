@@ -11,7 +11,7 @@ def test_below_axis_palm_contract_preserves_synchronized_z_fields():
     assert contract['palm_exploration']=={
         'version':'synchronized_z_v1', 'xy_bounds_m':[-.0005,.0005],
         'z_bounds_m':[-.004,0.], 'xy_weight':.25, 'axis':'world_z',
-        'close_policy':'z<=0', 'close_xy':'held_at_authored_pinch',
+        'close_policy':'z<=0', 'close_xy':'bounded_weighted_refinement',
         'lift_policy':'palm_zero_offset;task_offset_lifts_hand',
         'palm_descent_clearance_m':.0003}
 

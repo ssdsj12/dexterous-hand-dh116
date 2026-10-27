@@ -35,15 +35,25 @@ def control(t,actions,live,dt):
     shift=midpoint_coordinates(m)-t.control_pad_anchor
     raw_palm=policy_palms-shift
     palm=raw_palm.maximum(-t.palm_limit).minimum(t.palm_limit)
+    # Midpoint subtraction is per-hand, but coordinated control has one final
+    # world-Z target. Keep XY independent while broadcasting the bounded Z
+    # request after this correction.
+    palm[:,:,2]=palm[:,:,2].mean(dim=1,keepdim=True)
     if t.contact_target_z_m is not None:
-        from .tabletop_tensor_task import apply_measured_contact_z_target
         contact_valid=m['contact_valid'] & m['contact_all_below_centerline']
         contact_valid &= (t.phase<3)[:,None]
-        palm=apply_measured_contact_z_target(
-            palm,m['contact_center_relative_m'],t.contact_target_z_m,contact_valid,
-            max_correction_m=getattr(t,'contact_z_step_m',.0005),
-            palm_limit_z=float(t.palm_limit[2]))
-        palm=palm.maximum(-t.palm_limit).minimum(t.palm_limit)
+        centers=m['contact_center_relative_m'][:,:,2]
+        targets=t.contact_target_z_m
+        finite=contact_valid & torch.isfinite(centers) & torch.isfinite(targets)
+        count=finite.sum(dim=1,keepdim=True)
+        correction=torch.where(finite,targets-centers,torch.zeros_like(centers)).sum(dim=1,keepdim=True)
+        correction=correction/count.clamp_min(1)
+        correction=torch.where(count>0,correction,torch.zeros_like(correction))
+        correction=correction.clamp(-getattr(t,'contact_z_step_m',.0005),
+                                    getattr(t,'contact_z_step_m',.0005))
+        palm[:,:,2]=(palm[:,:,2]+correction/float(t.palm_limit[2])).clamp(
+            -float(t.palm_limit[2]),float(t.palm_limit[2]))
+        palm[:,:,2]=palm[:,:,2].mean(dim=1,keepdim=True)
     releasing=torch.zeros_like(loads,dtype=torch.bool)
     if hasattr(t,'palm_reposition'):
         if getattr(t,'force_direction_reposition',False):
@@ -55,6 +65,7 @@ def control(t,actions,live,dt):
                 palm,m['adaptive_palm_offset'],loads,t.phase,live,dt,
                 clearance=m['hand_clearance'])
         palm=palm.maximum(-t.palm_limit).minimum(t.palm_limit)
+        palm[:,:,2]=palm[:,:,2].mean(dim=1,keepdim=True)
     t.palm_targets[live]=palm[live];t.palm_actions[live]=(palm/t.palm_limit)[live]
     t.palm_clipped[live]=(raw_palm.abs()>t.palm_limit)[live]
     maximum=t.parameters.max_force_n;deadband=t.parameters.deadband_n

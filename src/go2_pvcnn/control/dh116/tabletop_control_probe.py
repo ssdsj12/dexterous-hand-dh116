@@ -22,10 +22,32 @@ def joint_actions(target,lower,center,upper):
 
 def force_action(force,maximum):
     from .tabletop_tensor_task import POLICY_MIN_FORCE_N
+    from .tabletop_tensor_task import POLICY_MAX_FORCE_N
     if (not math.isfinite(force) or not math.isfinite(maximum)
-            or not POLICY_MIN_FORCE_N<=force<=maximum or maximum<=POLICY_MIN_FORCE_N):
+            or maximum<=POLICY_MIN_FORCE_N
+            or not POLICY_MIN_FORCE_N<=force<=POLICY_MAX_FORCE_N
+            or force>maximum):
         raise ValueError('force target outside configured limits')
-    return 2*(force-POLICY_MIN_FORCE_N)/(maximum-POLICY_MIN_FORCE_N)-1
+    return 2*(force-POLICY_MIN_FORCE_N)/(POLICY_MAX_FORCE_N-POLICY_MIN_FORCE_N)-1
+
+
+def migrate_teacher_probe_contract(saved, current):
+    """Migrate only legacy force ranges for inference-only teacher probes."""
+    import copy
+    migrated=copy.deepcopy(saved)
+    changes=[]
+    desired=current.get('force_action_range_n')
+    if desired==[2.,12.] and migrated.get('force_action_range_n',[.1,12.])==[.1,12.]:
+        migrated['force_action_range_n']=copy.deepcopy(desired)
+        changes.append('force_action_range_2_to_12')
+    old_feedback=migrated.get('force_feedback')
+    new_feedback=current.get('force_feedback')
+    if (isinstance(new_feedback,dict) and new_feedback.get('target_hand_load_range_n')==[2.,12.]
+            and (not isinstance(old_feedback,dict)
+                 or old_feedback.get('target_hand_load_range_n')==[.1,12.])):
+        migrated.setdefault('force_feedback',{})['target_hand_load_range_n']=[2.,12.]
+        changes.append('force_feedback_target_range_2_to_12')
+    return migrated,changes
 
 
 def teacher_palm_xy_candidates():
@@ -64,6 +86,21 @@ def longest_dwell(mask,dt):
     return best*dt
 
 
+def phase3_lift_summary(lift_force, phase_before, ready, speed, slip):
+    """Summarize finite combined normal-plus-friction force during lift."""
+    lift=np.asarray(phase_before)==3
+    force=np.asarray(lift_force)
+    finite=np.isfinite(force)
+    stable=lift&(np.asarray(ready)>0)&(np.asarray(speed)<.03)&(np.asarray(slip)<=.02)&finite
+    samples=force[lift & finite]
+    return dict(
+        mean_lift_force_n=float(samples.mean()) if samples.size else float('nan'),
+        peak_lift_force_n=float(samples.max()) if samples.size else float('nan'),
+        lift_force_finite_fraction=float(finite[lift].mean()) if lift.any() else float('nan'),
+        stable_lift_force_samples=int(stable.sum()),
+    )
+
+
 class ProbeRecorder:
     def __init__(self,env,cases,output,episode_limit=3):
         self.env=env;self.cases=cases;self.output=output
@@ -99,6 +136,7 @@ class ProbeRecorder:
             failure=t.failure,success=t.success,bottom=m['bottom'],
             speed=m['object_velocity'][:,:3].norm(dim=1),slip=t.slip,
             weight=w.object_weight_n,force=w.vertical_components[:,:,0].sum(1),
+            lift_force=w.vertical_components.sum(dim=(1,2)),
             vertical_components=w.vertical_components,load=m['hand_object_loads'],
             contact_center_relative_m=m['contact_center_relative_m'],
             contact_normal=m.get('contact_normal_w',torch.full_like(m['contact_center_relative_m'],float('nan'))),
@@ -158,7 +196,9 @@ class ProbeRecorder:
                 if not len(rows):continue
                 c=lambda key:rows[:,index[key]]
                 lifting=c('phase_before')==3
-                stable=lifting&(c('ready')>0)&(c('speed')<.03)&(c('slip')<=.02)
+                lift_summary=phase3_lift_summary(c('lift_force'),c('phase_before'),c('ready'),c('speed'),c('slip'))
+                lift_force_finite=np.isfinite(c('lift_force'))
+                stable=lifting&(c('ready')>0)&(c('speed')<.03)&(c('slip')<=.02)&lift_force_finite
                 gate_counts={key:float(c(f'gates:{i}').sum()/max(1,lifting.sum()))
                              for i,key in enumerate(LIFT_GATE_NAMES) if i}
                 early=longest_dwell(stable&(c('bottom')>=.303),dt)
@@ -171,6 +211,7 @@ class ProbeRecorder:
                     longest_allowed_lift_s=longest_dwell(c('gates:1')>0,dt),
                     max_command_lift_m=float(c('offset').max()),
                     mean_force_n=float(c('force').mean()),peak_up_force_n=float(c('force').max()),
+                    **lift_summary,
                     above_weight_fraction=float((c('force')>c('weight')).mean()),
                     mean_load_n=[float(c(f'load:{i}').mean()) for i in range(2)],
                     max_load_n=[float(c(f'load:{i}').max()) for i in range(2)],
@@ -179,6 +220,7 @@ class ProbeRecorder:
             position_semantics='PhysX contact positions and force-weighted normals; pad_relative remains a proxy',
             recovery_semantics='recovery_target is the projected center, NOT final governed/slewed command; active uses legacy .004 or coordinated severe .012',
             force_semantics='signed hand-to-object normal only; friction telemetry is separate; load is summed normal magnitudes',
+            lift_force_semantics='signed hand-to-object normal plus friction vertical sum from vertical_components',
             repeat_semantics='same reset, repeatability only, not randomized generalization',
             gate_timing='pressure uses pre_load with updated target (not pre_target); pre_mimic/pre_tracking precede control; load/force are post-physics',
             completed_slots='continue guarded simulation; only requested episodes analyzed',
@@ -196,6 +238,9 @@ def run_control_probe(env,algorithm,args,contract,obs):
     saved=torch.load(args.control_probe_checkpoint,map_location=env.device,weights_only=False)
     if saved['version']!=VERSION:raise ValueError('not a tensor checkpoint')
     mode=getattr(args,'control_probe_mode','grasp')
+    migration_changes=[]
+    if mode=='grasp_teacher_contact_z_sweep':
+        saved['contract'],migration_changes=migrate_teacher_probe_contract(saved['contract'],contract)
     # The latest teacher checkpoint predates the normal-only force contract.
     # This inference-only probe may migrate just those force-semantic fields;
     # all other contract fields remain subject to the usual exact comparison.
@@ -208,6 +253,7 @@ def run_control_probe(env,algorithm,args,contract,obs):
                         'vertical_force_telemetry','close_downward_penalty'):
                 if key in contract:
                     saved['contract'][key]=contract[key]
+            migration_changes.append('normal_force_excludes_friction_v2')
     check_probe_contract(saved['contract'],contract,
                          allow_controller_change=mode in ('force_direction','grasp_teacher_contact_z_sweep'))
     algorithm.policy.load_state_dict(saved['policy']);algorithm.policy.eval()
@@ -216,7 +262,7 @@ def run_control_probe(env,algorithm,args,contract,obs):
     write_json(args.output/'tensor_contract.json',contract)
     write_json(args.output/'probe_source.json',dict(checkpoint=str(args.control_probe_checkpoint),
         iteration=saved['iteration'],training_envs=saved['contract']['num_envs'],probe_envs=env.n,
-        optimizer_updates=0,changed_contract_fields=['num_envs']))
+        optimizer_updates=0,changed_contract_fields=['num_envs']+migration_changes))
     t=env.task
     authored=torch.as_tensor(json.loads(args.grasp_initialization.read_text())['grasp_command'],device=env.device)
     joints=joint_actions(authored,t.lower,t.center,t.upper)

@@ -67,6 +67,27 @@ def test_measured_contact_target_changes_only_z_and_is_bounded():
     torch.testing.assert_close(corrected[0,1],palms[0,1])
 
 
+def test_coordinated_control_broadcasts_final_z_for_valid_partial_and_missing_contacts():
+    from test_dh116_coordinated_grasp import enabled
+    for valid in (torch.tensor([[True, True]]), torch.tensor([[True, False]]),
+                  torch.tensor([[False, False]])):
+        t=enabled(1)
+        t.m['pad_relative'][:,:,2]=torch.tensor([[.001,.004,.001,.004]],dtype=torch.float64)
+        centers=torch.tensor([[[0.,0.,-.002],[0.,0.,-.004]]],dtype=torch.float64)
+        if not bool(valid[0,0]): centers[0,0]=float('nan')
+        t.m['contact_center_relative_m'][:]=centers
+        t.m['contact_valid'][:]=valid
+        t.m['contact_all_below_centerline'][:]=valid
+        t.contact_target_z_m=torch.tensor([[-.003,-.003]],dtype=torch.float64)
+        t.contact_z_step_m=.0005
+        action=torch.zeros((1,20),dtype=torch.float64)
+        action[:,14]=-.8
+        t.control(action,~t.done,1/480)
+        assert t.palm_targets[0,:,2].tolist()[0] == pytest.approx(
+            t.palm_targets[0,:,2].tolist()[1])
+        assert t.palm_targets[0,:,:2].abs().max().item() <= t.palm_limit[:2].max().item()
+
+
 def test_task_keeps_per_hand_vertical_force_for_direction_control():
     t = TensorTask(template(), 1, 'cpu')
     assert t.m['vertical_hand_force_n'].shape == (1, 2)

@@ -7,6 +7,7 @@ import numpy as np
 from .linear_coupling import active_limits, ACTIVE, MIMIC
 from .tabletop_control import PHASES
 from .tabletop_contact_reward import contact_potential
+from .tabletop_velocity_limits import CLOSE_COMMAND_RATE_RAD_S
 
 
 class BatchTask:
@@ -168,7 +169,8 @@ class BatchTask:
                     np.clip(m['q'][:,idx]+err/ratio,self.low[idx],self.high[idx]),target[:,idx])
         if profile is not None:
             target=clip_targets(profile,target)
-        self.command[live]+=np.clip(target-self.command,-.05*dt,.05*dt)[live]
+        self.command[live]+=np.clip(target-self.command,-CLOSE_COMMAND_RATE_RAD_S*dt,
+                                    CLOSE_COMMAND_RATE_RAD_S*dt)[live]
         return tracking&~self.paused&live
 
     def consume(self,new,live,dt):

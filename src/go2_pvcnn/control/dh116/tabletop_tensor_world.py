@@ -32,15 +32,17 @@ def signed_hand_vertical_force(vertical_components):
 
 def signed_hand_normal_vertical_force(vertical_components):
     """Reduce [environment, hand, (normal, friction)] to normal-only Fz."""
-    if vertical_components.ndim != 3 or vertical_components.shape[-1] < 1:
-        raise ValueError('vertical components must have shape (N, hand, components)')
+    if (vertical_components.ndim != 3 or tuple(vertical_components.shape[-2:]) != (2,2)
+            or not torch.isfinite(vertical_components).all()):
+        raise ValueError('vertical components must have shape (N, 2, 2) and be finite')
     return vertical_components[...,0]
 
 
 def signed_hand_lift_vertical_force(vertical_components):
     """Reduce per-hand normal and friction components for lift checks."""
-    if vertical_components.ndim != 3 or vertical_components.shape[-1] != 2:
-        raise ValueError('vertical components must be N x 2 x 2')
+    if (vertical_components.ndim != 3 or tuple(vertical_components.shape[-2:]) != (2,2)
+            or not torch.isfinite(vertical_components).all()):
+        raise ValueError('vertical components must be N x 2 x 2 and finite')
     return vertical_components[..., 0] + vertical_components[..., 1]
 
 

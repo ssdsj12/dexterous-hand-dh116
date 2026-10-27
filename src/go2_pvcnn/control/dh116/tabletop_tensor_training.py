@@ -44,7 +44,7 @@ def apply_palm_exploration_contract(contract, axis):
     if axis != 'xyz':
         exploration=dict(contract.get('palm_exploration', {}))
         exploration.update(version='synchronized_z_v1', axis='world_z',
-            close_policy='z<=0', close_xy='held_at_authored_pinch',
+            close_policy='z<=0', close_xy='bounded_weighted_refinement',
             lift_policy='palm_zero_offset;task_offset_lifts_hand',
             palm_descent_clearance_m=.0003)
         contract['palm_exploration']=exploration

@@ -284,10 +284,14 @@ class TensorTask:
         maximum=self.parameters.max_force_n
         deadband=self.parameters.deadband_n
         rate=self.parameters.force_rate_n_s
-        nominal=POLICY_MIN_FORCE_N+(actions[:,18:]+1)*.5*(POLICY_MAX_FORCE_N-POLICY_MIN_FORCE_N)
+        policy_mode=((self.full_hand_contact and maximum>=POLICY_MIN_FORCE_N)
+                     or maximum>=POLICY_MAX_FORCE_N)
+        policy_min=POLICY_MIN_FORCE_N if policy_mode else .1
+        policy_max=POLICY_MAX_FORCE_N if policy_mode else maximum
+        nominal=policy_min+(actions[:,18:]+1)*.5*(policy_max-policy_min)
         boost=self.f_boost+torch.where(((self.phase==3)&slipping)[:,None]&(loads>.02),.25*dt,0.)
         boost=torch.minimum(torch.clamp(boost,min=0.),(maximum-nominal).clamp_min(0.))
-        requested=torch.clamp(nominal+boost,POLICY_MIN_FORCE_N,maximum).clamp_max(POLICY_MAX_FORCE_N)
+        requested=torch.clamp(nominal+boost,policy_min,maximum).clamp_max(policy_max)
         target=(requested.clone() if rate is None else
                 self.f_target+torch.clamp(requested-self.f_target,-rate*dt,rate*dt))
         error=target-filtered
@@ -461,7 +465,7 @@ class TensorTask:
             active &= self.failure==0
             close=active&(self.phase<3)
             ready &= ~over_limit
-        if self.vertical_force_reward and self.skip_hold:
+        if self.vertical_force_reward:
             ready &= vertical_force_n>=0.
         if hasattr(self,'palm_reposition'):ready &= ~self.palm_reposition.active.any(1)
         if hasattr(self,'palm_reposition'):ready &= ~self.palm_reposition.aborted.any(1)

@@ -33,6 +33,14 @@ def test_close_grasp_ready_requires_positive_normal_force_even_with_positive_lif
     assert not t.grasp_ready_awarded.item()
 
 
+def test_ordinary_hold_does_not_advance_on_negative_normal_force():
+    t=task();t.phase[:]=1;t.contact_time[:]=.19;t.begin_step(torch.zeros((1,20)))
+    t.consume(loads(t,4),~t.done,.01,
+              vertical_force_n=torch.tensor([-1.]),
+              lift_vertical_force_n=torch.tensor([5.]))
+    assert t.phase.item()==1
+
+
 @pytest.mark.parametrize('hz',[60,480])
 def test_substep_frequency_does_not_change_penalty_and_inactive_rows_do_not_pay(hz):
     t=task(2);t.phase[:]=3;t.begin_step(torch.zeros((2,20)))
@@ -102,10 +110,14 @@ def test_downward_grip_cannot_get_ready_bonus_but_later_upward_support_can():
     m=loads(t,4.)
     for _ in range(240):
         t.consume(m,~t.done,1/480,vertical_force_n=torch.tensor([-2.25]))
-    assert t.phase.item()==3  # Still allowed to try lifting; reward is separate.
+    assert t.phase.item()==1
     assert t.terms['grasp_ready'].item()==0
     assert not t.grasp_ready_awarded.item()
     t.consume(m,~t.done,1/480,vertical_force_n=torch.tensor([1.2]))
+    assert t.phase.item()==1
+    for _ in range(239):
+        t.consume(m,~t.done,1/480,vertical_force_n=torch.tensor([1.2]))
+    assert t.phase.item()==3
     assert t.terms['grasp_ready'].item()==3
     t.consume(m,~t.done,1/480,vertical_force_n=torch.tensor([1.2]))
     assert t.terms['grasp_ready'].item()==3

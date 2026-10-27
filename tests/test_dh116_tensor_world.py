@@ -8,6 +8,7 @@ from go2_pvcnn.control.dh116.tabletop_tensor_world import (
     contact_geometry_from_sensors,
     rotated_heights,
     rotated_points,
+    signed_hand_normal_vertical_force,
     signed_hand_vertical_force,
 )
 
@@ -48,3 +49,21 @@ def test_signed_hand_vertical_force_sums_normal_and_friction_components():
         signed_hand_vertical_force(components),
         torch.tensor([[-1., -1.]], dtype=torch.float64),
     )
+
+
+def test_signed_hand_normal_vertical_force_ignores_friction_components():
+    components = torch.tensor([[[1., -20.], [3., -40.]]], dtype=torch.float64)
+    torch.testing.assert_close(
+        signed_hand_normal_vertical_force(components),
+        torch.tensor([[1., 3.]], dtype=torch.float64),
+    )
+
+
+@pytest.mark.parametrize('components', [
+    torch.zeros((2, 2, 3), dtype=torch.float64),
+    torch.zeros((2, 2), dtype=torch.float64),
+    torch.tensor([[[1., float('nan')], [3., 4.]]], dtype=torch.float64),
+])
+def test_signed_hand_normal_vertical_force_rejects_malformed_or_nonfinite_components(components):
+    with pytest.raises(ValueError):
+        signed_hand_normal_vertical_force(components)

@@ -25,6 +25,16 @@ def test_force_target_roundtrip_and_bounds():
     with pytest.raises(ValueError):p.force_action(13.,12.)
 
 
+def test_force_action_uses_fixed_ppo_range_and_validates_configured_maximum():
+    p=module()
+    assert p.force_action(2., 20.) == pytest.approx(-1.)
+    assert p.force_action(12., 20.) == pytest.approx(1.)
+    with pytest.raises(ValueError):p.force_action(12., 11.)
+    with pytest.raises(ValueError):p.force_action(2., 2.)
+    with pytest.raises(ValueError):p.force_action(2., float('nan'))
+    with pytest.raises(ValueError):p.force_action(float('inf'), 12.)
+
+
 def test_force_direction_probe_uses_ten_newton_total_close_target():
     p=module()
     assert p.FORCE_DIRECTION_TOTAL_TARGET_N == pytest.approx(10.)
@@ -101,6 +111,18 @@ def test_dwell_does_not_join_separate_contacts_and_requires_stable():
     assert p.longest_dwell(np.zeros(0,dtype=bool),1/480)==0
 
 
+def test_phase3_lift_summary_reports_combined_force_and_finite_stability_gate():
+    p=module()
+    summary=p.phase3_lift_summary(
+        np.array([1., 3., np.nan, 5.]), np.array([2,3,3,3]),
+        np.array([True, True, True, False]),
+        np.array([.01, .01, .01, .01]), np.array([0., .01, .01, .01]))
+    assert summary['mean_lift_force_n']==pytest.approx(4.)
+    assert summary['peak_lift_force_n']==pytest.approx(5.)
+    assert summary['lift_force_finite_fraction']==pytest.approx(2/3)
+    assert summary['stable_lift_force_samples']==1
+
+
 def test_observer_sees_terminal_force_before_reset_and_cannot_count_frozen_samples():
     from test_dh116_tensor_env import World,template,TensorTask,TensorEnv
     t=TensorTask(template(),2,'cpu');w=World(t);env=TensorEnv(w,t)
@@ -118,6 +140,18 @@ def test_observer_sees_terminal_force_before_reset_and_cannot_count_frozen_sampl
 def test_contract_rejects_missing_guard_field():
     p=module()
     with pytest.raises(ValueError):p.check_probe_contract({'num_envs':4096,'guard':True},{'num_envs':8})
+
+
+def test_teacher_probe_migrates_legacy_force_ranges_only_for_inference():
+    p=module()
+    saved={'force_feedback': {'target_hand_load_range_n':[.1,12.]}}
+    current={'force_action_range_n':[2.,12.],
+             'force_feedback': {'target_hand_load_range_n':[2.,12.]}}
+    migrated,changes=p.migrate_teacher_probe_contract(saved,current)
+    assert migrated['force_action_range_n']==[2.,12.]
+    assert migrated['force_feedback']['target_hand_load_range_n']==[2.,12.]
+    assert changes==['force_action_range_2_to_12','force_feedback_target_range_2_to_12']
+    assert 'force_action_range_n' not in saved
 
 
 def test_lift_only_threshold_preserves_joint_recovery_and_palm_pause():
