@@ -185,6 +185,11 @@ class TensorTask:
         for name in ('offset','filtered','target','requested','boost','last_slip','blocked'):
             value=repeat(getattr(e.force_controller,name))
             setattr(self,'f_'+name,value.bool() if name=='blocked' else value)
+        # Full-hand PPO force actions use the policy's 2 N floor from the
+        # first step, while legacy low-capacity profiles retain the .1 N seed.
+        if self.full_hand_contact and self.parameters.max_force_n >= POLICY_MIN_FORCE_N:
+            self.f_target.fill_(POLICY_MIN_FORCE_N)
+            self.f_requested.fill_(POLICY_MIN_FORCE_N)
         self.reward=repeat(0.); self.used=repeat(0.)
         self.close_downward_impulse=repeat(0.)
         self.paused=torch.zeros_like(self.success); self.nonfinite=torch.zeros_like(self.success)

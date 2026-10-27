@@ -94,6 +94,11 @@ class BatchTask:
         self.palm_clipped=np.stack([e.pressure_palm_clipped for e in envs])
         for name in ('offset','filtered','target','requested','boost','last_slip','blocked'):
             setattr(self,'f_'+name,np.asarray([getattr(e.force_controller,name) for e in envs]).copy())
+        # Full-hand PPO force actions start at the policy's 2 N floor;
+        # low-capacity legacy profiles retain their .1 N initialization.
+        if self.full_hand_contact and self.parameters.max_force_n >= 2.:
+            self.f_target.fill(2.)
+            self.f_requested.fill(2.)
         self.low,self.high=(np.tile(v,2) for v in active_limits())
         self.seen=np.zeros((self.n,4),dtype=bool)
         self.nonfinite=np.zeros(self.n,dtype=bool)

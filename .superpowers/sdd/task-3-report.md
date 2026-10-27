@@ -48,3 +48,21 @@ DH116_NUM_THREADS=1 bash scripts/python.sh -m pytest -q \
 
 python3 -m py_compile src/go2_pvcnn/control/dh116/tabletop_batched_task.py
 ```
+
+Instant-force regression fix (2026-10-27):
+
+- Full-hand tensor and batched controllers now seed and reset `f_target`/`f_requested` at the 2 N policy floor when `max_force_n >= 2`; legacy low-capacity profiles retain the 0.1 N seed.
+- Updated tensor action mapping assertions to the 2–12 N range, including inactive-row and post-reset targets. Scalar `ReactionForceController` assertions remain at 0.1–12 N.
+
+Verification (CUDA was available; the parametrized file exercised both CPU and CUDA):
+
+```text
+DH116_NUM_THREADS=1 bash scripts/python.sh -m pytest -q tests/test_dh116_instant_force_target.py
+4 passed
+
+DH116_NUM_THREADS=1 bash scripts/python.sh -m pytest -q \
+  tests/test_dh116_tensor_task.py -k 'control or force' \
+  tests/test_dh116_control_probe.py -k 'force or probe_contract' \
+  tests/test_dh116_batched_task.py
+12 passed, 41 deselected
+```

@@ -35,9 +35,9 @@ def test_immediate_tensor_batch_parity_inactive_rows_and_real_readiness(device):
         a=np.zeros((2,20));a[:,18:]=force_action
         previous=t.command.clone()
         t.control(torch.tensor(a,device=device),tlive,1/480);b.control(a,live,1/480)
-        expected=.1+(force_action+1)*.5*11.9
+        expected=2.+(force_action+1)*.5*10.
         np.testing.assert_allclose(t.f_target[0].cpu(),[expected]*2)
-        np.testing.assert_allclose(t.f_target[1].cpu(),[.1]*2)
+        np.testing.assert_allclose(t.f_target[1].cpu(),[2.]*2)
         for name in ('f_target','f_offset','f_requested','command'):
             np.testing.assert_allclose(getattr(t,name).cpu(),getattr(b,name),atol=1e-12)
         assert float((t.command-previous).abs().max())<=.20/480+1e-12
@@ -47,7 +47,7 @@ def test_immediate_tensor_batch_parity_inactive_rows_and_real_readiness(device):
     for _ in range(60):t.consume(m,tlive,.01)
     assert t.phase[0].item()==1 and not t.success[0]
     t.reset([0],m)
-    assert t.f_target[0].tolist()==[.1,.1]
+    assert t.f_target[0].tolist()==[2.,2.]
 
 
 def test_exact_immediate_target_checkpoint_migration():
