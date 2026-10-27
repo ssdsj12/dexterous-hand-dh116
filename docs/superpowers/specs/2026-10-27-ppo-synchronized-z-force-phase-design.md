@@ -15,7 +15,8 @@ reset behavior remain unchanged.
 The tensor action has 20 entries: 12 joint targets, six palm translations, and
 two per-hand force targets. The current palm controller can restrict close
 exploration to `z_down`, but the policy path must apply one shared Z command to
-both hands. PhysX reports normal and friction contact components separately;
+both hands while permitting only a low-weight ±0.5 mm XY refinement. PhysX
+reports normal and friction contact components separately;
 the close task already consumes the normal-only signed vertical sum. The old
 force target range is 0.1--12 N per hand and must be raised at the lower bound.
 
@@ -25,12 +26,16 @@ force target range is 0.1--12 N per hand and must be raised at the lower bound.
 
 For every live close control tick:
 
-1. Restrict the policy palm action to zero X/Y and non-positive Z.
+1. Restrict each policy palm action to a small XY search window of ±0.5 mm
+   and a non-positive Z search window of up to 4 mm. XY action magnitude and
+   its exploration regularizer are weighted at 25% of the corresponding Z
+   terms, so XY can refine a grasp without competing with the vertical search.
 2. Compute one policy Z value as the mean of the two hand Z actions.
 3. Compute one contact-point correction from all valid PhysX contact centers,
    using the force-weighted center and the shared target Z.
 4. Apply the same bounded correction to both hands and write the same final
-   world-Z target to both palms.
+   world-Z target to both palms. The XY policy offsets remain small and are
+   applied symmetrically with the shared Z command.
 
 Invalid contact centers are masked before aggregation. If neither hand has a
 valid contact, the correction is zero and the shared policy Z value is kept.
@@ -40,7 +45,8 @@ lift offset moves both hands together.
 The synchronized controller does not use `pad_relative` or kinematic pad
 centers for contact decisions. A candidate is eligible for direct lift only
 when all valid hands have contacts below the object centerline and the shared
-close force gate is satisfied.
+close force gate is satisfied. XY exploration is a refinement around the
+shared grasp pose; it does not create independent per-hand Z heights.
 
 ### Phase-specific force semantics
 
