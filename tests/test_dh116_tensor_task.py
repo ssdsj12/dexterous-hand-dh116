@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 import torch
 from test_dh116_batched_task import make_env
-from go2_pvcnn.control.dh116.tabletop_tensor_task import TensorTask, FAILURE_CODES, phase_potential
+from go2_pvcnn.control.dh116.tabletop_tensor_task import (TensorTask, FAILURE_CODES, phase_potential,
+    constrain_palm_exploration, apply_measured_contact_z_target)
 from go2_pvcnn.control.dh116.tabletop_batched_task import BatchTask
 
 
@@ -15,6 +16,31 @@ def template():
 
 
 def measurement(t): return {k:v.clone() for k,v in t.m.items()}
+
+
+def test_z_down_palm_exploration_masks_xy_and_lift_palm_motion():
+    actions=torch.tensor([[[.7,-.4,.8],[-.2,.3,-.6]],
+                          [[.7,-.4,-.8],[-.2,.3,.6]]],dtype=torch.float64)
+    original=actions.clone();phase=torch.tensor([1,3])
+    constrained=constrain_palm_exploration(actions,phase,'z_down')
+    torch.testing.assert_close(actions,original)
+    torch.testing.assert_close(constrained[0],torch.tensor([[0.,0.,0.], [0.,0.,-.6]],dtype=torch.float64))
+    torch.testing.assert_close(constrained[1],torch.zeros((2,3),dtype=torch.float64))
+    torch.testing.assert_close(constrain_palm_exploration(actions,phase,'xyz'),actions)
+    assert TensorTask(template(),1,'cpu',palm_exploration_axis='z_down').palm_descent_clearance_m == pytest.approx(.0003)
+    assert TensorTask(template(),1,'cpu').palm_descent_clearance_m == pytest.approx(.0021)
+
+
+def test_measured_contact_target_changes_only_z_and_is_bounded():
+    palms=torch.tensor([[[.2,-.3,.1],[-.4,.5,-.2]]],dtype=torch.float64)
+    centers=torch.tensor([[[0.,0.,-.002],[0.,0.,-.004]]],dtype=torch.float64)
+    target=torch.tensor([[-.004,-.001]],dtype=torch.float64)
+    valid=torch.tensor([[True,False]])
+    corrected=apply_measured_contact_z_target(palms,centers,target,valid,
+                                               max_correction_m=.0005,palm_limit_z=.004)
+    torch.testing.assert_close(corrected[0,0,:2],palms[0,0,:2])
+    assert corrected[0,0,2].item()==pytest.approx(-.025)
+    torch.testing.assert_close(corrected[0,1],palms[0,1])
 
 
 def test_task_keeps_per_hand_vertical_force_for_direction_control():

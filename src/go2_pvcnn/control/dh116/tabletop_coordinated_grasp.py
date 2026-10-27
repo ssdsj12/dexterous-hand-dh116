@@ -28,10 +28,22 @@ def control(t,actions,live,dt):
     coupling_ok=errors.abs().amax(1)<budget
     tracking=(t.command-q).abs().amax(1)<.03
     slipping=(t.slip>.002)&((t.slip-t.f_last_slip)/dt>.002)
-    policy_palms=actions[:,12:18].reshape(t.n,2,3)*t.palm_limit
+    from .tabletop_tensor_task import constrain_palm_exploration
+    policy_actions=constrain_palm_exploration(
+        actions[:,12:18].reshape(t.n,2,3),t.phase,t.palm_exploration_axis)
+    policy_palms=policy_actions*t.palm_limit
     shift=midpoint_coordinates(m)-t.control_pad_anchor
     raw_palm=policy_palms-shift
     palm=raw_palm.maximum(-t.palm_limit).minimum(t.palm_limit)
+    if t.contact_target_z_m is not None:
+        from .tabletop_tensor_task import apply_measured_contact_z_target
+        contact_valid=m['contact_valid'] & m['contact_all_below_centerline']
+        contact_valid &= (t.phase<3)[:,None]
+        palm=apply_measured_contact_z_target(
+            palm,m['contact_center_relative_m'],t.contact_target_z_m,contact_valid,
+            max_correction_m=getattr(t,'contact_z_step_m',.0005),
+            palm_limit_z=float(t.palm_limit[2]))
+        palm=palm.maximum(-t.palm_limit).minimum(t.palm_limit)
     releasing=torch.zeros_like(loads,dtype=torch.bool)
     if hasattr(t,'palm_reposition'):
         if getattr(t,'force_direction_reposition',False):

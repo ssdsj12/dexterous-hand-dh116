@@ -32,6 +32,10 @@ parser.add_argument('--joint-envelope', type=Path,
                     help='explicit per-joint lower/center/upper targets for free grasp')
 parser.add_argument('--load-profile', type=Path, help='explicit estimated force/drive parameters; strict checkpoint provenance')
 parser.add_argument('--object-kind', choices=('solid_cylinder','hollow_straw','deformx_wire'),default='solid_cylinder')
+parser.add_argument('--solid-cylinder-radius-m', type=float, default=.008,
+                    help='radius for the built-in solid cylinder; non-default radii require fresh geometry/checkpoints')
+parser.add_argument('--solid-cylinder-density-kg-m3', type=float, default=None,
+                    help='density for the built-in solid cylinder; omitted uses 200 kg/m^3 for non-default radii')
 parser.add_argument('--object-material', choices=('default','high_friction','rough_rod','extreme_grip'),default='default')
 parser.add_argument('--hand-material', choices=('default','grip','grip_compliant'),default='default',
                     help='explicit hand collider friction; grip is an uncalibrated training profile')
@@ -64,7 +68,7 @@ parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--resume', type=Path)
 parser.add_argument('--control-probe-checkpoint',type=Path,
                     help='8-env inference-only control comparison; no PPO updates')
-parser.add_argument('--control-probe-mode',choices=('grasp','grasp_fixed','grasp_z_sweep','grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm','lift_gate','bounded_thumb','coordinated','wrist_motion','loaded_palm','force_direction'),default='grasp')
+parser.add_argument('--control-probe-mode',choices=('grasp','grasp_fixed','grasp_z_sweep','grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm','grasp_teacher_z_down_sweep','grasp_teacher_contact_z_sweep','grasp_teacher_xy_sweep','lift_gate','bounded_thumb','coordinated','wrist_motion','loaded_palm','force_direction'),default='grasp')
 parser.add_argument('--control-probe-episodes',type=int,default=3)
 parser.add_argument('--control-probe-swap',action='store_true',help='counterbalance paired loaded-palm candidate slots')
 parser.add_argument('--play-checkpoint', type=Path,
@@ -108,6 +112,8 @@ parser.add_argument('--close-downward-penalty',action='store_true',
                     help='add instantaneous -3 when close-to-lift force on object is downward')
 parser.add_argument('--grasp-shaping',action='store_true',
                     help='add discounted force-direction potential and physical 3/10 mm milestones')
+parser.add_argument('--palm-exploration-axis',choices=('z_down','xyz'),default='z_down',
+                    help='training palm exploration: below-axis Z only, or legacy XYZ')
 parser.add_argument('--contact-reward-window',choices=('first_contact','close_start'),default=None,
                     help='single one-second force reward window per episode, at most 5 points')
 parser.add_argument('--force-reward-start',choices=('episode_start','after_close','downward_after_close'),default='episode_start',
@@ -132,7 +138,7 @@ if args.palm_transport=='driven_carriage' and not args.control_probe_checkpoint 
     parser.error('driven wrist carriage requires bounded probe or coordinated tensor training')
 if args.grasp_controller=='coordinated' and (not args.tensor_pipeline or not args.pressure_relief
         or not args.skip_hold or args.grasp_readiness!='measured_load' or args.reset_height_jitter_m!=0
-        or (args.control_probe_checkpoint and args.control_probe_mode not in ('loaded_palm','force_direction')) or args.play_checkpoint):
+        or (args.control_probe_checkpoint and args.control_probe_mode not in ('loaded_palm','force_direction','grasp_teacher_contact_z_sweep')) or args.play_checkpoint):
     parser.error('coordinated controller requires tensor measured-load direct lift, pressure relief and zero reset jitter; probes select it through probe mode')
 if args.force_direction_reposition and args.palm_transport!='driven_carriage':
     parser.error('force-direction-reposition requires driven carriage palm transport')
@@ -153,11 +159,14 @@ if args.control_probe_episodes<1 or args.control_probe_episodes>3:
     parser.error('control probe episodes must be 1..3')
 if not args.control_probe_checkpoint and (args.control_probe_mode!='grasp' or args.control_probe_episodes!=3):
     parser.error('probe settings require --control-probe-checkpoint')
-probe_envs = (8, 16) if args.control_probe_mode == 'force_direction' else (6,) if args.control_probe_mode in ('grasp_fixed','grasp_z_sweep','grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm') else (8,)
+probe_envs = (8, 16) if args.control_probe_mode == 'force_direction' else (6,) if args.control_probe_mode in ('grasp_fixed','grasp_z_sweep','grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm','grasp_teacher_z_down_sweep','grasp_teacher_contact_z_sweep','grasp_teacher_xy_sweep') else (8,)
 if args.control_probe_checkpoint and (not args.tensor_pipeline or args.num_envs not in probe_envs
         or not args.grasp_shaping or args.resume or args.initialize_from or args.play_checkpoint
         or args.startup_only or args.probe_only or args.episodes_per_env is not None):
     parser.error(f'control probe requires {probe_envs}-env shaped tensor inference, without training/resume/play modes')
+if (args.control_probe_checkpoint and args.palm_exploration_axis!='xyz'
+        and args.control_probe_mode!='grasp_teacher_contact_z_sweep'):
+    parser.error('control probes use the checkpoint legacy XYZ palm contract; set --palm-exploration-axis xyz')
 if args.cpu_threads < 1:
     parser.error('--cpu-threads must be positive')
 if args.pressure_relief and not args.tensor_pipeline:
@@ -264,7 +273,9 @@ try:
             visual='original_skin_mesh_points_env0',rope_self_contact=False)
     else:
         args.object_usd, args.object_mass_kg, object_contract = object_spec(
-            Path(__file__).resolve().parents[1], args.object_kind)
+            Path(__file__).resolve().parents[1], args.object_kind,
+            solid_radius_m=args.solid_cylinder_radius_m,
+            solid_density_kg_m3=args.solid_cylinder_density_kg_m3)
 except (ValueError, OSError, KeyError) as error:
     parser.error(str(error))
 args.output.mkdir(parents=True)
@@ -303,7 +314,8 @@ try:
         physics_hz=args.physics_hz,control_hz=60,solver_type=args.solver_type,position_iterations=args.position_iterations)
     if args.adaptive_grasp:
         layout, seed_state = adaptive_initialization(
-            json.loads(args.grasp_initialization.read_text()),layout,provenance)
+            json.loads(args.grasp_initialization.read_text()),layout,provenance,
+            object_radius_m=args.solid_cylinder_radius_m)
         seed_provenance = {}
     else:
         snapshot = json.loads(args.close_reset_snapshot.read_text())

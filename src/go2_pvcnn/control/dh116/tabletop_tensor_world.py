@@ -2,6 +2,7 @@
 import torch
 from .linear_coupling import MIMIC
 from .tabletop_object_contact import link_groups
+from .tabletop_contact_geometry import aggregate_contact_geometry
 
 ROOT_POSE_WRITE_CONTRACT = dict(version='changed_fixed_root_pose_v1',
     comparison='last_submitted_float32', reset='always_write_selected')
@@ -27,6 +28,38 @@ def signed_hand_vertical_force(vertical_components):
     if vertical_components.ndim != 3 or vertical_components.shape[-1] != 2:
         raise ValueError('vertical components must have shape (N, 2, 2)')
     return vertical_components.sum(dim=2)
+
+
+def contact_geometry_from_sensors(sensors, object_center_w):
+    """Reduce ordered PhysX contact reports to per-hand geometry."""
+    if not sensors or len(sensors) % 2:
+        raise ValueError('contact sensors must contain an even nonzero hand/link list')
+    positions=[]; forces=[]
+    for sensor in sensors:
+        position=sensor.data.contact_pos_w
+        force=sensor.data.force_matrix_w
+        if position is None or force is None:
+            raise ValueError('contact point and normal force reports are required')
+        if position.ndim != 4 or position.shape[1:3] != (1,1) or position.shape[-1] != 3:
+            raise ValueError('contact positions must be N x 1 x 1 x 3')
+        if force.shape != position.shape:
+            raise ValueError('contact force report shape must match contact positions')
+        positions.append(position[:,0,0,:])
+        forces.append(force[:,0,0,:])
+    n=positions[0].shape[0]
+    positions=torch.stack(positions,dim=1).reshape(n,2,-1,3)
+    forces=torch.stack(forces,dim=1).reshape(n,2,-1,3)
+    return aggregate_contact_geometry(positions,forces,object_center_w)
+
+
+def constrain_palm_z_movement(movement, clearances, clearance_floor_m):
+    """Keep palm descent above the configured floor without changing X/Y."""
+    if not torch.isfinite(torch.as_tensor(clearance_floor_m)) or clearance_floor_m < 0:
+        raise ValueError('clearance floor must be finite and nonnegative')
+    result=movement.clone()
+    result[:,:,2]=torch.maximum(result[:,:,2],
+        -(clearances-clearance_floor_m).clamp_min(0))
+    return result
 
 
 class TensorWorld:
@@ -75,6 +108,12 @@ class TensorWorld:
         self.link_loads = torch.zeros((self.n,2,len(groups)),device=self.device,dtype=torch.float64)
         self.forces = torch.zeros((self.n,4),device=self.device,dtype=torch.float64)
         self.vertical_components=torch.zeros((self.n,2,2),device=self.device,dtype=torch.float64)
+        self.contact_center_w=torch.full((self.n,2,3),float('nan'),device=self.device,dtype=torch.float64)
+        self.contact_normal_w=torch.full_like(self.contact_center_w,float('nan'))
+        self.contact_normal_load_n=torch.zeros((self.n,2),device=self.device,dtype=torch.float64)
+        self.contact_valid=torch.zeros((self.n,2),device=self.device,dtype=torch.bool)
+        self.contact_all_below_centerline=torch.zeros((self.n,2),device=self.device,dtype=torch.bool)
+        self.contact_count=torch.zeros((self.n,2),device=self.device,dtype=torch.long)
         gravity=world.sim.cfg.gravity
         if gravity[0]!=0 or gravity[1]!=0 or gravity[2]>=0:
             raise ValueError('vertical force telemetry requires downward world-Z gravity')
@@ -82,8 +121,9 @@ class TensorWorld:
         for sensor in world.sensors:
             if list(sensor.contact_physx_view.sensor_paths)!=list(sensor.body_physx_view.prim_paths):
                 raise ValueError('vertical force sensor ordering mismatch')
-            if sensor.contact_physx_view.filter_count!=1 or not sensor.cfg.track_friction_forces:
-                raise ValueError('object-only normal and friction sensor required')
+            if (sensor.contact_physx_view.filter_count!=1 or not sensor.cfg.track_friction_forces
+                    or not sensor.cfg.track_contact_points):
+                raise ValueError('object-only normal, friction, and contact-point sensor required')
         self.refresh(sensors=False)
         self._root_pose_written = self.roots.float().clone()
 
@@ -125,6 +165,13 @@ class TensorWorld:
             vectors = torch.stack([s.data.force_matrix_w[:,0,0,:] for s in w.sensors],1).double()
             self.link_loads = vectors.reshape(self.n,2,-1,3).norm(dim=-1)
             self.forces = vectors[:,self.pad_indices].norm(dim=-1)
+            geometry=contact_geometry_from_sensors(w.sensors,self.wp)
+            self.contact_center_w=geometry['contact_center_w']
+            self.contact_normal_w=geometry['contact_normal_w']
+            self.contact_normal_load_n=geometry['normal_load_n']
+            self.contact_valid=geometry['valid']
+            self.contact_all_below_centerline=geometry['all_below_centerline']
+            self.contact_count=geometry['contact_count']
             from .tabletop_vertical_force import object_vertical_components
             friction=torch.stack([s.data.friction_forces_w[:,0,0,:] for s in w.sensors],1).double()
             self.vertical_components=object_vertical_components(
@@ -164,6 +211,13 @@ class TensorWorld:
             approach_error=(self.roots[:,:,:3]-goals).norm(dim=-1).amax(1),
             mimic_errors=self.errors.flatten(1),hand_clearance=self.clearances,
             adaptive_palm_offset=palm_measure,grip_stiffness=self.gains,pad_relative=self.pad_relative,
+            contact_center_w=self.contact_center_w,
+            contact_center_relative_m=self.contact_center_w-self.wp[:,None,:],
+            contact_normal_w=self.contact_normal_w,
+            contact_normal_load_n=self.contact_normal_load_n,
+            contact_valid=self.contact_valid,
+            contact_all_below_centerline=self.contact_all_below_centerline,
+            contact_count=self.contact_count,
             vertical_hand_force_n=signed_hand_vertical_force(self.vertical_components),
             object_link_loads=self.link_loads,grouped_object_loads=self.link_loads@self.group_matrix,
             hand_object_loads=self.link_loads.sum(-1),joint_failure=failure)
@@ -171,7 +225,9 @@ class TensorWorld:
     def advance(self, task, allowed, live):
         target = task.palm_actions*self.palm_limit
         movement = (target-self.palms).clamp(-.002*self.dt,.002*self.dt)
-        movement[:,:,2] = torch.maximum(movement[:,:,2],-(self.clearances-.0021).clamp_min(0))
+        clearance_floor=getattr(task,'diagnostic_palm_descent_clearance_m',
+                                getattr(task,'palm_descent_clearance_m',.0021))
+        movement=constrain_palm_z_movement(movement,self.clearances,clearance_floor)
         self.palms = torch.where(allowed[:,None,None],
             torch.maximum(torch.minimum(self.palms+movement,self.palm_limit),-self.palm_limit),self.palms)
         self.gains = torch.where(live[:,None],(self.gains+self.parameters.stiffness_rate*self.dt)
@@ -222,5 +278,8 @@ class TensorWorld:
         for sensor in self.w.sensors: sensor.reset(ids)
         self.link_loads[ids] = 0.; self.forces[ids] = 0.
         self.vertical_components[ids]=0.
+        self.contact_center_w[ids]=float('nan'); self.contact_normal_w[ids]=float('nan')
+        self.contact_normal_load_n[ids]=0.; self.contact_valid[ids]=False
+        self.contact_all_below_centerline[ids]=False; self.contact_count[ids]=0
         self.w.sim.physics_sim_view.update_articulations_kinematic()
         return self.refresh(sensors=False)

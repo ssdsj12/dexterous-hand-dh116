@@ -31,6 +31,44 @@ def measured_readiness_contract(skip_hold=False):
     return dict(MEASURED_READINESS_CONTRACT)
 
 
+def constrain_palm_exploration(actions, phase, mode):
+    """Restrict policy palm exploration to the below-axis Z direction."""
+    if mode not in ('xyz','z_down'):
+        raise ValueError('unsupported palm exploration mode')
+    if actions.ndim != 3 or actions.shape[-1] != 3 or phase.shape != actions.shape[:1]:
+        raise ValueError('palm actions must be (N, 2, 3) and phase must be (N,)')
+    result=actions.clone()
+    if mode=='z_down':
+        close=phase<3
+        result[close,:,:2]=0.
+        result[close,:,2]=result[close,:,2].clamp_max(0.)
+        result[~close]=0.
+    return result
+
+
+def apply_measured_contact_z_target(palm_actions, contact_center_relative_m,
+                                    target_z_m, valid, *, max_correction_m=.0005,
+                                    palm_limit_z=.004):
+    """Apply a bounded Z-only correction from measured contact geometry.
+
+    ``contact_center_relative_m`` is relative to the object center.  Invalid
+    contact reports leave the policy action unchanged; XY is never modified.
+    """
+    if palm_actions.ndim != 3 or palm_actions.shape[-1] != 3:
+        raise ValueError('palm actions must be N x 2 x 3')
+    if contact_center_relative_m.shape != palm_actions.shape:
+        raise ValueError('contact centers must be N x 2 x 3')
+    if target_z_m.shape != palm_actions.shape[:2] or valid.shape != target_z_m.shape:
+        raise ValueError('contact target and validity must be N x 2')
+    if max_correction_m < 0 or palm_limit_z <= 0:
+        raise ValueError('correction and palm limits must be positive')
+    result=palm_actions.clone()
+    error=target_z_m-contact_center_relative_m[:,:,2]
+    correction=error.clamp(-max_correction_m,max_correction_m)/palm_limit_z
+    result[:,:,2]=torch.where(valid,result[:,:,2]+correction,result[:,:,2])
+    return result
+
+
 def phase_potential(phase, contact_time):
     """Continuous readiness potential: close 0..1, hold 1..3, lift 3."""
     return torch.where(phase == 1, torch.clamp(contact_time/.2,0.,1.),
@@ -43,12 +81,16 @@ class TensorTask:
           'grip_stiffness','pad_relative','vertical_hand_force_n','object_link_loads',
           'grouped_object_loads','hand_object_loads','joint_failure')
 
-    def __init__(self, template_env, num_envs, device, *, pressure_relief=False,contact_reward_window=None,grasp_readiness=None,vertical_force_reward=False,vertical_force_reward_mode='window',force_reward_start='episode_start',skip_hold=False,close_downward_penalty=False,grasp_shaping=False):
+    def __init__(self, template_env, num_envs, device, *, pressure_relief=False,contact_reward_window=None,grasp_readiness=None,vertical_force_reward=False,vertical_force_reward_mode='window',force_reward_start='episode_start',skip_hold=False,close_downward_penalty=False,grasp_shaping=False,palm_exploration_axis='xyz'):
         e=template_env
         if e.force_controller is None or e.stage!='full' or e.closed or not e.full_hand_contact:
             raise ValueError('open full-hand full-stage force-feedback template required')
         self.n=int(num_envs); self.device=torch.device(device)
         self.pressure_relief_enabled=bool(pressure_relief)
+        if palm_exploration_axis not in ('xyz','z_down'):
+            raise ValueError('unsupported palm exploration mode')
+        self.palm_exploration_axis=palm_exploration_axis
+        self.palm_descent_clearance_m=.0003 if palm_exploration_axis=='z_down' else .0021
         if grasp_readiness not in (None,'measured_load'):
             raise ValueError('unsupported grasp readiness mode')
         self.grasp_readiness=grasp_readiness
@@ -96,6 +138,15 @@ class TensorTask:
             self.lower,self.center,self.upper=map(tensor,bounds(self.envelope))
         self.m={k:repeat(e.measurement[k]) for k in self.keys
                 if k!='joint_failure' and k in e.measurement}
+        self.m['contact_center_relative_m']=repeat(e.measurement.get(
+            'contact_center_relative_m',[[float('nan')]*3]*2))
+        self.m['contact_normal_w']=repeat(e.measurement.get(
+            'contact_normal_w',[[float('nan')]*3]*2))
+        self.m['contact_count']=repeat(e.measurement.get('contact_count',[0,0]))
+        self.m['contact_valid']=repeat(e.measurement.get('contact_valid',[False,False])).bool()
+        self.m['contact_all_below_centerline']=repeat(e.measurement.get(
+            'contact_all_below_centerline',[False,False])).bool()
+        self.contact_target_z_m=None
         if 'vertical_hand_force_n' not in self.m:
             self.m['vertical_hand_force_n']=repeat([0.,0.])
         self.m['joint_failure']=torch.full((self.n,),FAILURE_CODES[e.measurement['joint_failure']],device=self.device,dtype=torch.long)
@@ -147,6 +198,12 @@ class TensorTask:
         for key in self.keys:
             value=torch.as_tensor(measurement[key],device=self.device,dtype=self.m[key].dtype)
             self.m[key][ids]=value[ids] if value.shape==self.m[key].shape else value
+        for key in ('contact_center_relative_m','contact_normal_w','contact_count',
+                    'contact_valid','contact_all_below_centerline'):
+            if key in measurement:
+                value=torch.as_tensor(measurement[key],device=self.device,dtype=self.m[key].dtype)
+                value=value[ids] if value.shape==self.m[key].shape else value
+                self.m[key][ids]=value.bool() if key in ('contact_valid','contact_all_below_centerline') else value
         for value in self.terms.values(): value[ids]=0.
         if hasattr(self,'coordinated_control'):
             from .tabletop_coordinated_grasp import midpoint_coordinates
@@ -224,7 +281,8 @@ class TensorTask:
                 ('target',target),('offset',torch.clamp(self.f_offset+movement,-.08,.08)),('blocked',blocked)):
             getattr(self,'f_'+name)[live]=value[live]
         self.f_last_slip[live]=self.slip[live]
-        self.palm_actions=actions[:,12:18].reshape(self.n,2,3).clone()
+        self.palm_actions=constrain_palm_exploration(
+            actions[:,12:18].reshape(self.n,2,3),self.phase,self.palm_exploration_axis)
         palm_target=self.palm_actions*self.palm_limit+self.f_offset[:,:,None]*self.compensation
         compensated=torch.clamp(palm_target/self.palm_limit,-1.,1.)
         clipped=abs(palm_target)>self.palm_limit
@@ -334,6 +392,11 @@ class TensorTask:
         valid=live&finite
         self.force_scoring_started |= valid&(previous_phase>=2)
         for key in self.keys: self.m[key][valid]=new[key][valid]
+        for key in ('contact_center_relative_m','contact_normal_w','contact_count',
+                    'contact_valid','contact_all_below_centerline'):
+            if key in measurement:
+                value=torch.as_tensor(measurement[key],device=self.device,dtype=self.m[key].dtype)
+                self.m[key][valid]=value[valid].bool() if key in ('contact_valid','contact_all_below_centerline') else value[valid]
         m=self.m
         slip=torch.where(self.grip_valid,torch.linalg.vector_norm(m['object_relative']-self.grip,dim=1),0.)
         speed=torch.linalg.vector_norm(m['object_velocity'][:,:3],dim=1)
@@ -373,6 +436,8 @@ class TensorTask:
         if hasattr(self,'coordinated_control'):
             from .tabletop_coordinated_grasp import CONTRACT
             ready &= ~self.coordinated_control | (m['mimic_errors'].abs().amax(1)<CONTRACT['coupling_budget_rad'])
+        if self.contact_target_z_m is not None:
+            ready &= (m['contact_valid'] & m['contact_all_below_centerline']).all(dim=1)
         self.phase[close&~ready]=1; self.contact_time[close&~ready]=0.
         self.contact_time[close&ready]+=dt
         transition=close&ready&(self.contact_time>=torch.where(self.phase==1,torch.full_like(self.contact_time,.2),torch.full_like(self.contact_time,.3))-1e-12)

@@ -238,6 +238,11 @@ def validate_world_adapter(legacy, world, task):
     errors={}
     for key,value in actual.items():
         if key=='joint_failure': continue
+        if key.startswith('contact_'):
+            # PhysX contact positions/normals are tensor-world telemetry and
+            # have no host-adapter reference at the no-sensor validation tick.
+            errors[key]=0.0
+            continue
         if key not in expected:
             if key != 'vertical_hand_force_n':
                 raise KeyError(f'host reference missing tensor measurement: {key}')
@@ -319,8 +324,11 @@ def run_tensor_training(world, template, args, contract):
                     force_reward_start=getattr(args,'force_reward_start','episode_start'),
                     skip_hold=getattr(args,'skip_hold',False),
                     close_downward_penalty=getattr(args,'close_downward_penalty',False),
-                    grasp_shaping=getattr(args,'grasp_shaping',False))
-    if getattr(args,'grasp_controller','legacy')=='coordinated':
+                    grasp_shaping=getattr(args,'grasp_shaping',False),
+                    palm_exploration_axis=getattr(args,'palm_exploration_axis','xyz'))
+    probe_contact_z=(getattr(args,'control_probe_mode',None)=='grasp_teacher_contact_z_sweep'
+                     and getattr(args,'control_probe_checkpoint',None))
+    if getattr(args,'grasp_controller','legacy')=='coordinated' or probe_contact_z:
         task.enable_coordinated_control(torch.ones(args.num_envs,dtype=torch.bool,device=args.device))
     if getattr(args,'release_reposition',False):
         from .tabletop_loaded_palm_motion import LoadedPalmReposition
@@ -376,6 +384,11 @@ def run_tensor_training(world, template, args, contract):
         from .tabletop_grasp_shaping import CONTRACT as SHAPING_CONTRACT
         contract.update(grasp_shaping=dict(SHAPING_CONTRACT),observation_size=156,
                         observation_version='dh116-force-progress-milestones-v1')
+    if task.palm_exploration_axis!='xyz':
+        contract['palm_exploration']=dict(version='below_axis_z_only_v1',
+            axis='world_z',close_policy='z<=0',close_xy='held_at_authored_pinch',
+            lift_policy='palm_zero_offset;task_offset_lifts_hand',
+            palm_descent_clearance_m=.0003)
     if hasattr(task,'coordinated_control'):
         from .tabletop_coordinated_grasp import CONTRACT as CONTROL_CONTRACT
         contract['grasp_controller']=dict(CONTROL_CONTRACT)

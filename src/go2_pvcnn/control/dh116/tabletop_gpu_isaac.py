@@ -89,6 +89,9 @@ class GpuWorld:
         self.sensor_links=self.object_contact_links if self.full_hand_contact else ('finger14_link','finger23_link')
         self.sensors = [] if self.flexible else [ContactSensor(ContactSensorCfg(
             prim_path=f'/World/envs/env_.*/{side}Hand/{link}',
+            track_friction_forces=bool(getattr(args,'tensor_pipeline',False)),
+            track_contact_points=bool(getattr(args,'tensor_pipeline',False)),
+            max_contact_data_count_per_prim=16 if getattr(args,'tensor_pipeline',False) else 4,
             filter_prim_paths_expr=['/World/envs/env_.*/Wire'], update_period=0.))
             for side in ('left','right') for link in self.sensor_links]
         self.backends = []
@@ -98,6 +101,13 @@ class GpuWorld:
 
     def bind(self, seed):
         self.seed = copy.deepcopy(seed)
+        self.mounts=None
+        if getattr(self.args,'palm_transport','fixed_pose')=='driven_carriage':
+            from .tabletop_palm_mount import MountView
+            self.mounts=[]
+            for hand in self.hands:
+                if not hand.is_fixed_base:raise ValueError('wrist carriage requires fixed rail anchor')
+                self.mounts.append(MountView(hand))
         if any(h.num_instances != self.n for h in self.hands) or (self.wire is not None and self.wire.num_instances != self.n):
             raise ValueError('GPU articulation/object instance count mismatch')
         # The view ordering must match the cloner's numerical environment order.
@@ -172,6 +182,8 @@ class GpuWorld:
         for name,attribute in (('poses','body_link_pose_w'),('q','joint_pos'),
                 ('qd','joint_vel'),('torque','applied_torque'),('roots','root_pose_w')):
             store(name,torch.stack([getattr(h.data,attribute)[selection] for h in self.hands],dim=1).cpu().numpy())
+        if self.mounts is not None:
+            store('roots',torch.stack([h.data.body_link_pose_w[selection,m.base_id] for h,m in zip(self.hands,self.mounts)],1).cpu().numpy())
         if self.flex is not None:
             measured=self.flex.measure(selection)
             for name in ('wp','wq','wv','bottom'):
@@ -253,6 +265,7 @@ class GpuWorld:
             pose[:,:3] += self.origins[indices]
             pose[:,:2] += self.seed['root_xy']
             pose[:,2] += offsets
+            if self.mounts is not None:self.mounts[hi].reset(self.tensor(pose),ids)
             hand.write_root_pose_to_sim(self.tensor(pose),env_ids=ids)
             hand.write_root_velocity_to_sim(self.tensor(np.zeros((count,6))),env_ids=ids)
             hand.set_joint_position_target(q[:,self.ids[hi]],joint_ids=self.ids[hi],env_ids=ids)
@@ -327,7 +340,8 @@ class GpuWorld:
             object_velocity=self.wv.copy(),bottom=self.bottom.copy(),
             approach_error=np.linalg.norm(self.roots[:,:,:3]-goals,axis=2).max(axis=1),
             mimic_errors=self.errors.reshape(self.n,10).copy(),hand_clearance=self.clearances.copy(),
-            adaptive_palm_offset=self.palms.copy(),grip_stiffness=self.gains.copy(),
+            adaptive_palm_offset=(self.palms.copy() if self.mounts is None else
+                self.palms+self.roots[:,:,:3]-self.root_targets[:,:,:3]),grip_stiffness=self.gains.copy(),
             pad_relative=self.pad_relative.copy(),joint_failure=failure,
             _diagnostics={i:self.backends[i].measure()['diagnostics'] for i in sorted(set(range(min(8,self.n))) | set(np.flatnonzero(failure != None)) | set(np.flatnonzero(np.max(abs(self.errors),axis=(1,2))>=.004)[:8]))},
             _lowest_links={i:f'{("left","right")[self.shapes[self.lowest[i]][0]]}/'
@@ -337,7 +351,10 @@ class GpuWorld:
     def _step(self):
         started=time.monotonic()
         for hi,hand in enumerate(self.hands):
-            hand.write_root_pose_to_sim(self.tensor(self.root_targets[:,hi]))
+            if self.mounts is None:
+                hand.write_root_pose_to_sim(self.tensor(self.root_targets[:,hi]))
+            else:
+                self.mounts[hi].move(self.tensor(self.root_targets[:,hi]))
             hand.set_joint_position_target(self.tensor(self.commands[:,hi]),joint_ids=self.ids[hi])
             if not np.array_equal(self.gains[:,hi],self.previous_gains[:,hi]):
                 gains = self.tensor(np.repeat(self.gains[:,hi,None],6,axis=1))
@@ -353,6 +370,9 @@ class GpuWorld:
         self.sim.step(render=not self.args.headless)
         stepped=time.monotonic()
         self.refresh()
+        if self.mounts is not None:
+            from .tabletop_palm_mount import check_transport
+            check_transport(self.hands,self.mounts,self.tensor(self.root_targets))
         self.last_step_timing=dict(hand_write=written-started,flexible=advanced-written,
             physx=stepped-advanced,readback=time.monotonic()-stepped)
         if os.environ.get('DH116_FLEX_PROFILE') == '1':
@@ -398,7 +418,8 @@ class GpuBackend:
         diagnostics, failure = [],None
         failure = next((reason for hi in range(2) if (reason := joint_safety_failure(w.q[i,hi],w.limits[i,hi],w.errors[i,hi])) is not None),None)
         for hi,hand in enumerate(w.hands):
-            if i < 8 or failure is not None or np.max(abs(w.errors[i])) >= .004:
+            if (i < 8 or failure is not None or np.max(abs(w.errors[i])) >= .004
+                    or np.max(w.object_link_loads[i] if w.full_hand_contact else w.force[i]) > 30.):
                 diagnostics.append(dict(joints_rad=dict(zip(hand.joint_names,map(float,w.q[i,hi]))),
                     mimic_error_rad=dict(zip([m[0] for m in MIMIC],map(float,w.errors[i,hi]))),
                     joint_vel_rad_s=w.qd[i,hi].tolist(),applied_torque_nm=w.torque[i,hi].tolist(),

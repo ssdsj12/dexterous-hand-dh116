@@ -7,6 +7,10 @@ import torch
 from .tabletop_training import write_json
 
 
+FORCE_DIRECTION_TOTAL_TARGET_N=10.
+FORCE_DIRECTION_HAND_TARGET_N=FORCE_DIRECTION_TOTAL_TARGET_N/2.
+
+
 def joint_actions(target,lower,center,upper):
     if not torch.isfinite(target).all() or ((target<lower)|(target>upper)).any():
         raise ValueError('fixed grasp target outside joint envelope')
@@ -22,12 +26,28 @@ def force_action(force,maximum):
     return 2*(force-.1)/(maximum-.1)-1
 
 
+def teacher_palm_xy_candidates():
+    """Six bounded palm translations for teacher-position screening."""
+    return [(-.0015, 0.), (.0015, 0.), (0., -.0015),
+            (0., .0015), (-.0015, .0015), (.0015, -.0015)]
+
+
+def teacher_palm_z_down_candidates():
+    """Downward-only palm offsets for the below-axis pinch diagnostic."""
+    return [-.004, -.003, -.002, -.0015, -.001, -.0005]
+
+
+def teacher_contact_z_candidates():
+    return [-.004, -.003, -.002, -.0015, -.001, -.0005]
+
+
 def check_probe_contract(saved,current,*,allow_controller_change=False):
     left=dict(saved);right=dict(current)
     left.pop('num_envs',None);right.pop('num_envs',None)
     if allow_controller_change:
         for key in ('grasp_controller','palm_reposition','force_direction_reposition',
-                    'training_failure_handling'):
+                    'training_failure_handling','close_downward_penalty',
+                    'minibatches','palm_exploration'):
             left.pop(key,None);right.pop(key,None)
     if left!=right:
         changed=[k for k in left.keys()|right.keys() if left.get(k)!=right.get(k)]
@@ -78,6 +98,11 @@ class ProbeRecorder:
             speed=m['object_velocity'][:,:3].norm(dim=1),slip=t.slip,
             weight=w.object_weight_n,force=w.vertical_components.sum((1,2)),
             vertical_components=w.vertical_components,load=m['hand_object_loads'],
+            contact_center_relative_m=m['contact_center_relative_m'],
+            contact_normal=m.get('contact_normal_w',torch.full_like(m['contact_center_relative_m'],float('nan'))),
+            contact_valid=m['contact_valid'],
+            contact_all_below_centerline=m['contact_all_below_centerline'],
+            contact_count=m.get('contact_count',torch.zeros_like(m['contact_valid'],dtype=torch.long)),
             target=t.f_target,force_offset=t.f_offset,offset=t.offset-w.initial_offset,
             palms=w.palms,palm_target=t.palm_targets,palm_clipped=t.palm_clipped,
             policy_palm=t.actions[:,12:18],command=t.command,q=m['q'],qd=m['qd'],
@@ -85,8 +110,8 @@ class ProbeRecorder:
             hand_clearance=m['hand_clearance'],pad_relative=m['pad_relative'],
             object_velocity=m['object_velocity'],ready=t.grip_force_ready(m['hand_object_loads']),
             gates=t.lift_diagnostic_masks,**self.before)
-        # These are forces on the OBJECT. Link centers/velocities are explicitly
-        # proxies, not contact positions or contact-point slip measurements.
+        # These are forces on the OBJECT. Contact geometry comes from the PhysX
+        # contact report; link centers remain separate kinematic telemetry.
         sensors=w.w.sensors
         fields['link_normal_z']=-torch.stack([s.data.force_matrix_w[:,0,0,2] for s in sensors],1)
         fields['link_friction_z']=-torch.stack([s.data.friction_forces_w[:,0,0,2] for s in sensors],1)
@@ -149,7 +174,7 @@ class ProbeRecorder:
                     max_load_n=[float(c(f'load:{i}').max()) for i in range(2)],
                     palm_z_range_m=[[float(c(f'palms:{i}').min()),float(c(f'palms:{i}').max())] for i in (2,5)]))
         report=dict(status=status,episodes=result,physics_dt_s=dt,
-            position_semantics='body centers and calibrated pad proxies; NOT measured contact points',
+            position_semantics='PhysX contact positions and force-weighted normals; pad_relative remains a proxy',
             recovery_semantics='recovery_target is the projected center, NOT final governed/slewed command; active uses legacy .004 or coordinated severe .012',
             force_semantics='signed hand-to-object normal+friction; load is summed normal magnitudes',
             repeat_semantics='same reset, repeatability only, not randomized generalization',
@@ -170,7 +195,7 @@ def run_control_probe(env,algorithm,args,contract,obs):
     if saved['version']!=VERSION:raise ValueError('not a tensor checkpoint')
     mode=getattr(args,'control_probe_mode','grasp')
     check_probe_contract(saved['contract'],contract,
-                         allow_controller_change=mode=='force_direction')
+                         allow_controller_change=mode in ('force_direction','grasp_teacher_contact_z_sweep'))
     algorithm.policy.load_state_dict(saved['policy']);algorithm.policy.eval()
     if not all(torch.isfinite(v).all() for v in algorithm.policy.state_dict().values()):
         raise ValueError('nonfinite probe policy')
@@ -220,13 +245,36 @@ def run_control_probe(env,algorithm,args,contract,obs):
         mask=torch.tensor([False,True]*(env.n//2),device=env.device)
         if getattr(args,'control_probe_swap',False):mask=~mask
         t.palm_reposition=ForceDirectionReposition(mask)
+        t.palm_reposition.goal_table_clearance_m=.0003
+        t.diagnostic_palm_descent_clearance_m=.0003
         t.force_direction_reposition=True
         fixed[:,:12]=joints
-        fixed[:,18:]=force_action(2.,t.parameters.max_force_n)
+        fixed[:,18:]=force_action(FORCE_DIRECTION_HAND_TARGET_N,t.parameters.max_force_n)
         cases=[f'force_direction_candidate{int(mask[i])}' for i in range(env.n)]
         write_json(args.output/'diagnostic_override.json',dict(mode=mode,
             selected_environments=mask.cpu().tolist(),palm_reposition=CONTRACT,
-            fixed_force_target_n=2.,hard_guards_changed=False,rewards_changed=False,optimizer_updates=0))
+            diagnostic_goal_table_clearance_m=.0003,
+            fixed_force_target_n=FORCE_DIRECTION_HAND_TARGET_N,
+            fixed_force_total_target_n=FORCE_DIRECTION_TOTAL_TARGET_N,
+            hard_guards_changed=False,rewards_changed=False,optimizer_updates=0))
+    elif mode=='grasp_teacher_contact_z_sweep':
+        if not getattr(t,'coordinated_all',False):
+            raise ValueError('measured contact Z probe requires coordinated controller')
+        teacher_z_offsets=torch.tensor(teacher_contact_z_candidates(),device=env.device,dtype=torch.float64)
+        t.contact_target_z_m=teacher_z_offsets[:,None].expand(-1,2).clone()
+        t.contact_z_step_m=.0005
+        fixed=fixed[:len(teacher_z_offsets)]
+        fixed[:,:12]=joints
+        fixed[:,18:]=force_action(FORCE_DIRECTION_HAND_TARGET_N,t.parameters.max_force_n)
+        cases=[f'contact_z{float(z):g}m' for z in teacher_z_offsets]
+        write_json(args.output/'diagnostic_override.json',dict(mode=mode,
+            contact_target_z_m=teacher_z_offsets.cpu().tolist(),
+            contact_target_semantics='force-weighted PhysX contact center relative to object center',
+            valid_contact_gate='all valid contacts below centerline for both hands',
+            fixed_force_target_n=FORCE_DIRECTION_HAND_TARGET_N,
+            fixed_force_total_target_n=FORCE_DIRECTION_TOTAL_TARGET_N,
+            max_correction_m=t.contact_z_step_m,
+            hard_guards_changed=False,rewards_changed=False,optimizer_updates=0))
     elif mode=='coordinated':
         from .tabletop_coordinated_grasp import CONTRACT
         settings=[(f,enabled) for _ in range(2) for f in (4.,8.) for enabled in (False,True)]
@@ -261,7 +309,13 @@ def run_control_probe(env,algorithm,args,contract,obs):
         write_json(args.output/'diagnostic_override.json',dict(mode=mode,
             lift_mimic_threshold_rad=t.diagnostic_lift_mimic_threshold.cpu().tolist(),
             joint_recovery_threshold_rad=.004,hard_guards_changed=False,rewards_changed=False))
-    elif mode in ('grasp','grasp_fixed','grasp_z_sweep','grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm'):
+    elif mode in ('grasp','grasp_fixed','grasp_z_sweep','grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm','grasp_teacher_z_down_sweep','grasp_teacher_contact_z_sweep','grasp_teacher_xy_sweep'):
+        if mode == 'grasp_teacher_z_down_sweep':
+            t.diagnostic_palm_descent_clearance_m=.0003
+            write_json(args.output/'diagnostic_override.json',dict(mode=mode,
+                palm_descent_clearance_m=.0003,
+                scope='probe-only downward Z exploration; ordinary training/demo floor unchanged',
+                hard_guards_changed=False,rewards_changed=False))
         cases=['ppo_mean_0','ppo_mean_1']
         settings=[(f,z) for z in (0.,-.001) for f in (4.,8.,12.)]
         if mode=='grasp':
@@ -281,6 +335,14 @@ def run_control_probe(env,algorithm,args,contract,obs):
             teacher_z_offsets=torch.tensor(values,device=env.device,dtype=torch.float64)
             fixed=fixed[:len(teacher_z_offsets)]
             cases=[f'teacher_z{float(z):g}m' for z in teacher_z_offsets]
+        elif mode == 'grasp_teacher_z_down_sweep':
+            teacher_z_offsets=torch.tensor(teacher_palm_z_down_candidates(),device=env.device,dtype=torch.float64)
+            fixed=fixed[:len(teacher_z_offsets)]
+            cases=[f'teacher_z{float(z):g}m' for z in teacher_z_offsets]
+        elif mode == 'grasp_teacher_xy_sweep':
+            teacher_xy_offsets=torch.tensor(teacher_palm_xy_candidates(),device=env.device,dtype=torch.float64)
+            fixed=fixed[:len(teacher_xy_offsets)]
+            cases=[f'teacher_xy{x:+.4f}_{y:+.4f}m' for x,y in teacher_palm_xy_candidates()]
         else:
             fixed=fixed[:len(settings)]
             for i,(force,z) in enumerate(settings):
@@ -302,10 +364,21 @@ def run_control_probe(env,algorithm,args,contract,obs):
             for tick in range(tick_limit):
                 action=fixed.clone()
                 if mode=='grasp':action[:2]=algorithm.policy.act_inference(obs)[:2].clamp(-1.,1.)
-                if mode in ('grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm'):
+                if mode in ('grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm','grasp_teacher_z_down_sweep'):
                     action[:]=algorithm.policy.act_inference(obs).clamp(-1.,1.)
                     action[:,14]=teacher_z_offsets/.004
                     action[:,17]=teacher_z_offsets/.004
+                if mode=='grasp_teacher_contact_z_sweep':
+                    action=algorithm.policy.act_inference(obs).clamp(-1.,1.)
+                    action[:,:12]=fixed[:,:12]
+                    action[:,12:18]=0.
+                    action[:,18:]=fixed[:,18:]
+                if mode == 'grasp_teacher_xy_sweep':
+                    action[:]=algorithm.policy.act_inference(obs).clamp(-1.,1.)
+                    action[:,12]=teacher_xy_offsets[:,0]/.003
+                    action[:,13]=teacher_xy_offsets[:,1]/.003
+                    action[:,15]=teacher_xy_offsets[:,0]/.003
+                    action[:,16]=teacher_xy_offsets[:,1]/.003
                 if mode=='loaded_palm':action[4:]=algorithm.policy.act_inference(obs)[4:].clamp(-1.,1.)
                 value,_,_,_=env.step(action)
                 obs=observations(value)
@@ -327,7 +400,12 @@ def run_control_probe(env,algorithm,args,contract,obs):
         del env.control_probe
         if hasattr(t,'diagnostic_lift_mimic_threshold'):del t.diagnostic_lift_mimic_threshold
         if hasattr(t,'diagnostic_thumb_position_lead'):del t.diagnostic_thumb_position_lead
+        if hasattr(t,'diagnostic_palm_descent_clearance_m'):del t.diagnostic_palm_descent_clearance_m
+        if hasattr(t,'contact_target_z_m'):t.contact_target_z_m=None
+        if hasattr(t,'contact_z_step_m'):del t.contact_z_step_m
         if hasattr(t,'force_direction_reposition'):del t.force_direction_reposition
+        if hasattr(t,'palm_reposition') and hasattr(t.palm_reposition,'goal_table_clearance_m'):
+            del t.palm_reposition
         if hasattr(t,'coordinated_control'):
             del t.coordinated_control;del t.coordinated_all;del t.control_pad_anchor
     return dict(status=status,control_probe=report,grasp_qualified=any(x['success'] for x in report['episodes']))

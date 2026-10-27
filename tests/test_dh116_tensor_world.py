@@ -1,12 +1,33 @@
 import numpy as np
+import pytest
 import torch
+from types import SimpleNamespace
 from go2_pvcnn.control.dh116.tabletop_batch_geometry import rotated_heights as reference_heights
 from go2_pvcnn.control.dh116.tabletop_batch_geometry import rotated_points as reference_points
 from go2_pvcnn.control.dh116.tabletop_tensor_world import (
+    contact_geometry_from_sensors,
     rotated_heights,
     rotated_points,
     signed_hand_vertical_force,
 )
+
+
+def test_contact_geometry_from_sensors_uses_physx_contact_positions():
+    def sensor(position, force):
+        return SimpleNamespace(data=SimpleNamespace(
+            contact_pos_w=torch.tensor([[[position]]], dtype=torch.float64),
+            force_matrix_w=torch.tensor([[[force]]], dtype=torch.float64)))
+
+    sensors = [
+        sensor([.008, 0., -.004], [3., 0., 0.]),
+        sensor([-.006, 0., -.003], [0., 0., 4.]),
+        sensor([-.008, 0., -.004], [-3., 0., 0.]),
+        sensor([.006, 0., -.003], [0., 0., 4.]),
+    ]
+    result = contact_geometry_from_sensors(sensors, torch.zeros((1, 3), dtype=torch.float64))
+    assert result['contact_count'].tolist() == [[2, 2]]
+    assert result['contact_center_w'][0, 0, 2].item() == pytest.approx(-.0034285714)
+    assert result['all_below_centerline'].tolist() == [[True, True]]
 
 
 def test_geometry_matches_exact_hull_reference():

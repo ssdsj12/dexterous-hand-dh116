@@ -15,6 +15,7 @@ from pxr import Usd, UsdGeom, UsdPhysics
 from .linear_coupling import ACTIVE, JOINTS, MIMIC, expand
 from .runtime_mimic import install_hand_mimic, configure_mimic_compliance
 from .tabletop_load_parameters import LEGACY_LOAD_PARAMETERS
+from .tabletop_velocity_limits import ACTIVE_VELOCITY_LIMIT_RAD_S, passive_velocity_limit
 from .tabletop_control import prepared_approach_reference, track_root_xy, moving_goal_error
 from .tabletop_task import joint_safety_failure
 from .tabletop_direct import adjust_palms
@@ -39,13 +40,18 @@ def wire_spawn_configuration(args):
             rigid_props=sim_utils.RigidBodyPropertiesCfg(disable_gravity=False),
             collision_props=sim_utils.CollisionPropertiesCfg(contact_offset=.001, rest_offset=0.),
             mass_props=sim_utils.MassPropertiesCfg(mass=mass))
-    return sim_utils.CylinderCfg(radius=.008, height=.5, axis='Y',
+    radius=float(getattr(args,'solid_cylinder_radius_m',.008))
+    mass=float(getattr(args,'object_mass_kg',.12))
+    if not np.isfinite(radius) or radius<=0 or not np.isfinite(mass) or mass<=0:
+        raise ValueError('solid cylinder radius and mass must be finite and positive')
+    return sim_utils.CylinderCfg(radius=radius, height=.5, axis='Y',
         activate_contact_sensors=True,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(disable_gravity=False),
         collision_props=sim_utils.CollisionPropertiesCfg(contact_offset=.001, rest_offset=0.),
-        mass_props=sim_utils.MassPropertiesCfg(mass=.12),
+        mass_props=sim_utils.MassPropertiesCfg(mass=mass),
         visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(.32, .16, .06)
-            if getattr(args,'object_material','default') == 'rough_rod' else (1., .35, .02)))
+            if getattr(args,'object_material','default') in ('rough_rod','extreme_grip') else (1., .35, .02),
+            **({'roughness':1.} if getattr(args,'object_material','default') == 'extreme_grip' else {})))
 
 
 def spawn_scene(sim, args, original_layout, sources, prefix, origin, *, external_wire=False):
@@ -59,18 +65,21 @@ def spawn_scene(sim, args, original_layout, sources, prefix, origin, *, external
     table = sim_utils.CuboidCfg(size=layout['table_size'],
                                collision_props=sim_utils.CollisionPropertiesCfg())
     table.func(prefix+'/Table', table, translation=layout['table_center'])
-    from .tabletop_material import hand_material_contract, bind_object_colliders, verify_collider_bindings
+    from .tabletop_material import (hand_material_contract, bind_object_colliders, verify_collider_bindings,
+                                    material_config_fields, bind_hand_materials)
     hand_profile = hand_material_contract(getattr(args,'hand_material','default'))
     hand_colliders, hand_bindings = {}, {}
-    hand_material = None
+    hand_material = pad_material = None
     if hand_profile:
         from pxr import UsdShade
         settings = hand_profile['hand_contact_material']
-        cfg = sim_utils.RigidBodyMaterialCfg(**{k:settings[k] for k in (
-            'static_friction','dynamic_friction','restitution',
-            'friction_combine_mode','restitution_combine_mode')})
+        cfg = sim_utils.RigidBodyMaterialCfg(**material_config_fields(settings))
         cfg.func(prefix+'/HandContactMaterial',cfg)
         hand_material = UsdShade.Material(sim.stage.GetPrimAtPath(prefix+'/HandContactMaterial'))
+        if 'pad_compliance' in settings:
+            cfg=sim_utils.RigidBodyMaterialCfg(**material_config_fields(settings,compliant=True))
+            cfg.func(prefix+'/PadContactMaterial',cfg)
+            pad_material=UsdShade.Material(sim.stage.GetPrimAtPath(prefix+'/PadContactMaterial'))
     hands, sensors = [], []
     for side in ('left', 'right'):
         pose = layout['hand_roots'][side].copy()
@@ -80,7 +89,7 @@ def spawn_scene(sim, args, original_layout, sources, prefix, origin, *, external
                 rigid_props=sim_utils.RigidBodyPropertiesCfg(disable_gravity=True),
                 articulation_props=sim_utils.ArticulationRootPropertiesCfg(fix_root_link=True,
                     enabled_self_collisions=False, solver_position_iteration_count=args.position_iterations,
-                    solver_velocity_iteration_count=4)),
+                    solver_velocity_iteration_count=getattr(args,'velocity_iterations',4))),
             init_state=ArticulationCfg.InitialStateCfg(pos=tuple(pose[:3]), rot=tuple(pose[3:]),
                 joint_pos=dict(zip(JOINTS, map(float, expand(
                     layout['active_joints'][side] if args.control_mode == 'adaptive_grasp'
@@ -88,22 +97,33 @@ def spawn_scene(sim, args, original_layout, sources, prefix, origin, *, external
             actuators={'active': ImplicitActuatorCfg(joint_names_expr=list(ACTIVE),
                 stiffness=10., damping=.2,
                 effort_limit_sim=(getattr(args,'load_parameters',None) or LEGACY_LOAD_PARAMETERS).effort_limit_nm if args.control_mode == 'adaptive_grasp' else .15,
-                velocity_limit_sim=.3),
+                velocity_limit_sim=ACTIVE_VELOCITY_LIMIT_RAD_S),
                 'passive': ImplicitActuatorCfg(joint_names_expr=[n for n in JOINTS if n not in ACTIVE],
                     stiffness=0., damping=0., effort_limit_sim=0.,
                     # A low solver brake on passive followers competes with
                     # mimic/contact correction. Keep active drives at .3.
-                    velocity_limit_sim=3. if args.control_mode in ('joint_target', 'adaptive_grasp') else .3)})
+                    velocity_limit_sim=passive_velocity_limit(args.control_mode,
+                        getattr(args, 'passive_velocity_limit_rad_s', 3.)))})
+        if getattr(args,'palm_transport','fixed_pose')=='driven_carriage':
+            from .tabletop_palm_mount import JOINT_NAMES,CONTRACT as WRIST
+            cfg.actuators['wrist']=ImplicitActuatorCfg(joint_names_expr=list(JOINT_NAMES),
+                stiffness=WRIST['stiffness_n_m'],damping=WRIST['damping_n_s_m'],
+                effort_limit_sim=WRIST['effort_limit_n'],velocity_limit_sim=WRIST['velocity_limit_m_s'])
         hands.append(Articulation(cfg))
+        if getattr(args,'palm_transport','fixed_pose')=='driven_carriage':
+            from .tabletop_palm_mount import author_mount
+            author_mount(sim.stage,f'{prefix}/{side}Hand')
         if hand_material is not None:
-            paths = bind_object_colliders(sim.stage,f'{prefix}/{side}Hand',hand_material)
+            paths,binding_report=bind_hand_materials(sim.stage,f'{prefix}/{side}Hand',hand_material,
+                                                    hand_profile['hand_contact_material'],pad_material)
             hand_colliders[side] = paths
-            hand_bindings[side] = verify_collider_bindings(sim.stage,paths,hand_profile['hand_contact_material'])
+            hand_bindings[side] = binding_report
         install_hand_mimic(sim.stage, f'{prefix}/{side}Hand')
         configure_mimic_compliance(sim.stage, f'{prefix}/{side}Hand', float(args.mimic_frequency), 1.,
             allow_rigid=getattr(args,'load_parameters',None) is not None)
         for link in (() if external_wire else ('finger14_link', 'finger23_link')):
             sensors.append(ContactSensor(ContactSensorCfg(prim_path=f'{prefix}/{side}Hand/{link}',
+                track_contact_points=bool(getattr(args,'tensor_pipeline',False)),
                 filter_prim_paths_expr=[prefix+'/Wire'], update_period=0.)))
     if external_wire:
         return dict(hands=hands,sensors=[],wire=None,layout=layout,prefix=prefix,origin=origin,
