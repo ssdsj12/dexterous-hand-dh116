@@ -91,7 +91,10 @@ def phase3_lift_summary(lift_force, phase_before, ready, speed, slip):
     lift=np.asarray(phase_before)==3
     force=np.asarray(lift_force)
     finite=np.isfinite(force)
-    stable=lift&(np.asarray(ready)>0)&(np.asarray(speed)<.03)&(np.asarray(slip)<=.02)&finite
+    # A stable lift requires an upward (non-negative) signed force.  Negative
+    # combined normal-plus-friction force means the hand is loading the object
+    # downward, even when all other readiness and motion gates pass.
+    stable=lift&(force>=0.)&(np.asarray(ready)>0)&(np.asarray(speed)<.03)&(np.asarray(slip)<=.02)&finite
     samples=force[lift & finite]
     return dict(
         mean_lift_force_n=float(samples.mean()) if samples.size else float('nan'),
@@ -198,7 +201,7 @@ class ProbeRecorder:
                 lifting=c('phase_before')==3
                 lift_summary=phase3_lift_summary(c('lift_force'),c('phase_before'),c('ready'),c('speed'),c('slip'))
                 lift_force_finite=np.isfinite(c('lift_force'))
-                stable=lifting&(c('ready')>0)&(c('speed')<.03)&(c('slip')<=.02)&lift_force_finite
+                stable=lifting&(c('lift_force')>=0.)&(c('ready')>0)&(c('speed')<.03)&(c('slip')<=.02)&lift_force_finite
                 gate_counts={key:float(c(f'gates:{i}').sum()/max(1,lifting.sum()))
                              for i,key in enumerate(LIFT_GATE_NAMES) if i}
                 early=longest_dwell(stable&(c('bottom')>=.303),dt)

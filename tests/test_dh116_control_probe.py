@@ -123,6 +123,16 @@ def test_phase3_lift_summary_reports_combined_force_and_finite_stability_gate():
     assert summary['stable_lift_force_samples']==1
 
 
+def test_phase3_lift_summary_rejects_downward_combined_force_as_unstable():
+    p=module()
+    summary=p.phase3_lift_summary(
+        np.array([-1., 2.]), np.array([3, 3]),
+        np.array([True, True]), np.array([.01, .01]), np.array([.01, .01]))
+    assert summary['mean_lift_force_n']==pytest.approx(.5)
+    assert summary['peak_lift_force_n']==pytest.approx(2.)
+    assert summary['stable_lift_force_samples']==1
+
+
 def test_observer_sees_terminal_force_before_reset_and_cannot_count_frozen_samples():
     from test_dh116_tensor_env import World,template,TensorTask,TensorEnv
     t=TensorTask(template(),2,'cpu');w=World(t);env=TensorEnv(w,t)
