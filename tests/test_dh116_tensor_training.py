@@ -139,7 +139,7 @@ def test_close_force_behavior_requires_new_controller_contract():
     from go2_pvcnn.control.dh116.tabletop_tensor_task import CLOSE_DOWNWARD_PENALTY_CONTRACT
     from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
     assert CONTRACT['version']=='measured_motion_grasp_v2'
-    assert CLOSE_DOWNWARD_PENALTY_CONTRACT['version']=='close_downward_impulse_reset_v2'
+    assert CLOSE_DOWNWARD_PENALTY_CONTRACT['version']=='close_downward_impulse_reset_v3'
     old=dict(num_envs=4096,
         grasp_controller=dict(CONTRACT,version='measured_motion_grasp_v1',command_rate_rad_s=.05),
         close_downward_penalty=dict(CLOSE_DOWNWARD_PENALTY_CONTRACT,

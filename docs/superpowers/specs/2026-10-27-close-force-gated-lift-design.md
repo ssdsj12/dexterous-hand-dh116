@@ -16,7 +16,7 @@ failed correction resets the episode.
 - Use the existing `-0.15 N` per-contact trigger for downward repositioning.
   Preserve its release, 1 mm correction, 2 mm maximum correction, and bounded
   reclose flow.
-- Set the close downward impulse reset limit to `0.20 N·s`. Reposition timeout,
+- Set the close downward impulse reset limit to `2.0 N·s`. Reposition timeout,
   exhausted attempts, or this impulse limit marks the episode failed so the
   normal environment reset path runs.
 - Require aggregate `vertical_force_n >= 0` in close readiness and in the

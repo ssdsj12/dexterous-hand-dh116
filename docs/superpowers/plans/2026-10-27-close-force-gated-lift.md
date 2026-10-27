@@ -12,7 +12,7 @@
 
 - Use aggregate signed hand-to-object vertical force; positive means world-up.
 - Preserve the existing `-0.15 N` reposition trigger, 1 mm correction, 2 mm maximum correction, and bounded release/reclose flow.
-- Reset when accumulated close downward impulse reaches `0.20 N·s`, or when reposition attempts/timeout are exhausted.
+- Reset when the close phase exceeds `4 s`, when accumulated close downward impulse reaches `2.0 N·s`, or when reposition attempts/timeout are exhausted.
 - Require `vertical_force_n >= 0` before close-to-lift admission.
 - Increase coordinated close command slew from `0.05 rad/s` to `0.20 rad/s`.
 - Keep the existing physical guards and do not alter the current checkpoint in place.
@@ -52,7 +52,7 @@ def test_downward_force_cannot_admit_direct_lift():
     assert t.phase.tolist() == [1, 3]
 ```
 
-The first test uses `97 / 480 ≈ 0.202 s`, which exceeds `0.20 N·s` at `-1 N`; the second verifies the signed transition gate independently of the reset threshold.
+The first test uses `961 / 480 ≈ 2.002 s`, which exceeds `2.0 N·s` at `-1 N`; the second verifies the signed transition gate independently of the reset threshold.
 
 - [x] **Step 2: Run the focused tests and verify RED**
 
@@ -80,18 +80,19 @@ git commit -m "test: specify close downward force reset and lift gate"
 
 **Interfaces:**
 - Consumes: `vertical_force_n` passed from `TensorEnv.step()` and the existing `palm_reposition` state.
-- Produces: `TensorTask.close_downward_impulse`, `CLOSE_DOWNWARD_PENALTY_CONTRACT` with the `0.20 N·s` limit, and a failure/reset path recognized by `TensorEnv`.
+- Produces: `TensorTask.close_downward_impulse`, `CLOSE_DOWNWARD_PENALTY_CONTRACT` with the `2.0 N·s` limit and `4 s` close timeout, and a failure/reset path recognized by `TensorEnv`.
 
 - [x] **Step 1: Add the minimum implementation**
 
-Add a task tensor `close_downward_impulse` initialized and reset to zero. During each valid phase-1 contact sample, add `clamp(-vertical_force_n, min=0) * dt`. Mark `grasp_not_established` when the accumulated value reaches `0.20`. Add `vertical_force_n >= 0` to the `ready` mask before dwell/transition. Treat an active, aborted, or timed-out repositioner as not ready and mark the same failure when its correction budget is exhausted. Keep the existing one-time event reward for telemetry, but make continuous close force cost apply while `previous_phase < 3` as well.
+Add a task tensor `close_downward_impulse` initialized and reset to zero. During each valid phase-1 contact sample, add `clamp(-vertical_force_n, min=0) * dt`. Mark `grasp_not_established` when the accumulated value reaches `2.0`. Mark the same failure when the close phase exceeds `4 s`. Add `vertical_force_n >= 0` to the `ready` mask before dwell/transition. Treat an active, aborted, or timed-out repositioner as not ready and mark the same failure when its correction budget is exhausted. Keep the existing one-time event reward for telemetry, but make continuous close force cost apply while `previous_phase < 3` as well.
 
 The task contract should expose:
 
 ```python
 CLOSE_DOWNWARD_PENALTY_CONTRACT.update(
-    version='close_downward_impulse_reset_v2',
-    impulse_limit_n_s=0.20,
+    version='close_downward_impulse_reset_v3',
+    impulse_limit_n_s=2.0,
+    close_timeout_s=4.0,
     lift_admission='vertical_force_n >= 0',
 )
 ```

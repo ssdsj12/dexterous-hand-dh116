@@ -8,12 +8,12 @@ from .tabletop_velocity_limits import CLOSE_COMMAND_RATE_RAD_S
 REWARD_VERSION = 'phase_potential_v1_10n_5'
 LIFT_PRESSURE_TIMING_CONTRACT=dict(version='current_target_lift_pressure_v1',
     gate='same_pressure_limited_mask_as_joint_and_palm_control',threshold_unchanged=True)
-CLOSE_DOWNWARD_PENALTY_CONTRACT=dict(version='close_downward_impulse_reset_v2',
+CLOSE_DOWNWARD_PENALTY_CONTRACT=dict(version='close_downward_impulse_reset_v3',
     event='valid_nonfailure_close_to_lift_physics_substep',
     condition='signed_sum_hand_to_object_vertical_force_n_less_than_zero',points=-3.,
     frequency='once_per_episode_phase_transition',dt_scaled=False,
     continuous_downward_penalty='close_contact_and_post_close',observation_unchanged=True,
-    impulse_limit_n_s=.20,lift_admission='vertical_force_n >= 0')
+    impulse_limit_n_s=2.,close_timeout_s=4.,lift_admission='vertical_force_n >= 0')
 MEASURED_READINESS_CONTRACT=dict(version='measured_hand_load_v1',min_hand_load_n=1.,
     max_hand_load='1.25 * configured_max_force_n + deadband_n',
     close_dwell_s=.2,hold_dwell_s=.3,max_speed_m_s=.02,max_slip_m=.003,
@@ -353,7 +353,7 @@ class TensorTask:
             self.failure[reposition_failed]=FAILURE_CODES['grasp_not_established']
             active &= self.failure==0
             close=active&(self.phase<3)
-        expired=close&(self.elapsed>6.)
+        expired=close&(self.elapsed>CLOSE_DOWNWARD_PENALTY_CONTRACT['close_timeout_s'])
         self.failure[expired]=FAILURE_CODES['grasp_not_established']; close &= ~expired
         loads=m['hand_object_loads']
         ready=(speed<.02)&(self.slip<=.003)&self.grip_force_ready(loads)
@@ -361,7 +361,7 @@ class TensorTask:
         if self.close_downward_penalty:
             close_live=active&(self.phase==1)&close_contact
             self.close_downward_impulse[close_live]+=torch.clamp(-vertical_force_n[close_live],min=0.)*dt
-            over_limit=close_live&(self.close_downward_impulse>=.20-1e-12)
+            over_limit=close_live&(self.close_downward_impulse>=CLOSE_DOWNWARD_PENALTY_CONTRACT['impulse_limit_n_s']-1e-12)
             self.failure[over_limit]=FAILURE_CODES['grasp_not_established']
             active &= self.failure==0
             close=active&(self.phase<3)
