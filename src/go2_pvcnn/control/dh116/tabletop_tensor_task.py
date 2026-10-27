@@ -7,11 +7,12 @@ from .tabletop_control import PHASES
 REWARD_VERSION = 'phase_potential_v1_10n_5'
 LIFT_PRESSURE_TIMING_CONTRACT=dict(version='current_target_lift_pressure_v1',
     gate='same_pressure_limited_mask_as_joint_and_palm_control',threshold_unchanged=True)
-CLOSE_DOWNWARD_PENALTY_CONTRACT=dict(version='close_downward_event_penalty_v1',
+CLOSE_DOWNWARD_PENALTY_CONTRACT=dict(version='close_downward_impulse_reset_v2',
     event='valid_nonfailure_close_to_lift_physics_substep',
     condition='signed_sum_hand_to_object_vertical_force_n_less_than_zero',points=-3.,
     frequency='once_per_episode_phase_transition',dt_scaled=False,
-    continuous_downward_penalty='unchanged_additive',observation_unchanged=True)
+    continuous_downward_penalty='close_contact_and_post_close',observation_unchanged=True,
+    impulse_limit_n_s=.20,lift_admission='vertical_force_n >= 0')
 MEASURED_READINESS_CONTRACT=dict(version='measured_hand_load_v1',min_hand_load_n=1.,
     max_hand_load='1.25 * configured_max_force_n + deadband_n',
     close_dwell_s=.2,hold_dwell_s=.3,max_speed_m_s=.02,max_slip_m=.003,
@@ -119,6 +120,7 @@ class TensorTask:
             value=repeat(getattr(e.force_controller,name))
             setattr(self,'f_'+name,value.bool() if name=='blocked' else value)
         self.reward=repeat(0.); self.used=repeat(0.)
+        self.close_downward_impulse=repeat(0.)
         self.paused=torch.zeros_like(self.success); self.nonfinite=torch.zeros_like(self.success)
         self.contact_reward_clock=repeat(0. if contact_reward_window=='close_start' else -1.)
         self.contact_reward_paid=repeat(0.)
@@ -344,11 +346,28 @@ class TensorTask:
             self.failure[active&(self.failure==0)&condition]=FAILURE_CODES[reason]
         active &= self.failure==0
         close=active&(self.phase<3)
+        if hasattr(self,'palm_reposition'):
+            reposition_failed=close&self.palm_reposition.aborted.any(1)
+            self.failure[reposition_failed]=FAILURE_CODES['grasp_not_established']
+            active &= self.failure==0
+            close=active&(self.phase<3)
         expired=close&(self.elapsed>6.)
         self.failure[expired]=FAILURE_CODES['grasp_not_established']; close &= ~expired
         loads=m['hand_object_loads']
         ready=(speed<.02)&(self.slip<=.003)&self.grip_force_ready(loads)
+        close_contact=loads.sum(1)>.2
+        if self.close_downward_penalty:
+            close_live=active&(self.phase==1)&close_contact
+            self.close_downward_impulse[close_live]+=torch.clamp(-vertical_force_n[close_live],min=0.)*dt
+            over_limit=close_live&(self.close_downward_impulse>=.20-1e-12)
+            self.failure[over_limit]=FAILURE_CODES['grasp_not_established']
+            active &= self.failure==0
+            close=active&(self.phase<3)
+            ready &= ~over_limit
+        if self.vertical_force_reward and self.skip_hold:
+            ready &= vertical_force_n>=0.
         if hasattr(self,'palm_reposition'):ready &= ~self.palm_reposition.active.any(1)
+        if hasattr(self,'palm_reposition'):ready &= ~self.palm_reposition.aborted.any(1)
         if hasattr(self,'coordinated_control'):
             from .tabletop_coordinated_grasp import CONTRACT
             ready &= ~self.coordinated_control | (m['mimic_errors'].abs().amax(1)<CONTRACT['coupling_budget_rad'])
@@ -405,7 +424,10 @@ class TensorTask:
         if self.vertical_force_reward:
             # Negative force on the object is downward. Once scoring starts,
             # include terminal samples and never cap accumulated cost.
-            pieces['downward_force']=torch.where(self.force_scoring_started,
+            downward_enabled=self.force_scoring_started
+            if self.close_downward_penalty:
+                downward_enabled |= (previous_phase==1)&close_contact
+            pieces['downward_force']=torch.where(downward_enabled,
                 -.5*torch.clamp(-vertical_force_n,min=0.)*dt,0.)
         if self.close_downward_penalty:
             # Score the force at the exact close completion sample, once.
