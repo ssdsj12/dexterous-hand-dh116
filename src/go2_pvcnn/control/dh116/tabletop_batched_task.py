@@ -169,8 +169,12 @@ class BatchTask:
                     np.clip(m['q'][:,idx]+err/ratio,self.low[idx],self.high[idx]),target[:,idx])
         if profile is not None:
             target=clip_targets(profile,target)
-        self.command[live]+=np.clip(target-self.command,-CLOSE_COMMAND_RATE_RAD_S*dt,
-                                    CLOSE_COMMAND_RATE_RAD_S*dt)[live]
+        # Tensor full-hand profiles use the configured close slew rate.  The
+        # legacy two-force-contact contract historically used a fixed .05
+        # rad/s rate, which keeps BatchTask in lockstep with TabletopEnv.
+        close_rate = CLOSE_COMMAND_RATE_RAD_S if self.full_hand_contact else .05
+        self.command[live]+=np.clip(target-self.command,-close_rate*dt,
+                                    close_rate*dt)[live]
         return tracking&~self.paused&live
 
     def consume(self,new,live,dt):
