@@ -25,7 +25,7 @@ def test_z_down_palm_exploration_bounds_xy_and_lift_palm_motion():
     constrained=constrain_palm_exploration(actions,phase,'z_down')
     torch.testing.assert_close(actions,original)
     assert constrained[0, :, :2].abs().max().item() <= .5 / 3.0 * .25 + 1e-12
-    torch.testing.assert_close(constrained[0, :, 2],torch.tensor([0.,-.6],dtype=torch.float64))
+    torch.testing.assert_close(constrained[0, :, 2],torch.tensor([-.3,-.3],dtype=torch.float64))
     torch.testing.assert_close(constrained[1],torch.zeros((2,3),dtype=torch.float64))
     torch.testing.assert_close(constrain_palm_exploration(actions,phase,'xyz'),actions)
     assert TensorTask(template(),1,'cpu',palm_exploration_axis='z_down').palm_descent_clearance_m == pytest.approx(.0003)
@@ -39,6 +39,12 @@ def test_z_down_allows_small_weighted_xy_and_shared_z_window():
     assert constrained[..., 1].abs().max().item() <= .5 / 3.0 * .25 + 1e-12
     assert constrained[..., 2].max().item() <= 0.
     assert constrained[..., 2].min().item() >= -1.
+
+
+def test_z_down_broadcasts_mean_close_z_to_both_hands():
+    actions = torch.tensor([[[.1, -.1, -.2], [-.1, .1, .6]]], dtype=torch.float64)
+    constrained = constrain_palm_exploration(actions, torch.tensor([1]), 'z_down')
+    torch.testing.assert_close(constrained[0, :, 2], torch.tensor([-.1, -.1], dtype=torch.float64))
 
 
 def test_z_down_zeroes_xy_and_z_after_lift():

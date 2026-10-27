@@ -47,6 +47,11 @@ def constrain_palm_exploration(actions, phase, mode):
         xy_limit = PALM_XY_SEARCH_LIMIT_M / .003 * PALM_XY_EXPLORATION_WEIGHT
         result[close,:,:2]=result[close,:,:2].clamp(-xy_limit, xy_limit)
         result[close,:,2]=result[close,:,2].clamp(-PALM_Z_SEARCH_LIMIT_M / .004, 0.)
+        # Use one shared Z command for both hands during close. Averaging the
+        # bounded per-hand commands preserves the permitted Z window while
+        # keeping the coordinated palms synchronized.
+        close_z = result[close,:,2].mean(dim=1, keepdim=True)
+        result[close,:,2] = close_z.expand(-1, result.shape[1])
         result[~close]=0.
     return result
 

@@ -1,36 +1,38 @@
-# Task 1 report — DH116 middle-hook contract
+# Task 1 Report
 
-Status: DONE_WITH_CONCERNS
+Implemented synchronized palm exploration bounds and low-weight XY refinement.
 
-Implemented the six-channel DH116 contact contract in the runtime evidence,
-restore, stage-state, material tracking, contact manifest, and staged touch
-paths. Channel order is explicitly:
+## Changes
+- Added `PALM_XY_SEARCH_LIMIT_M`, `PALM_Z_SEARCH_LIMIT_M`, and `PALM_XY_EXPLORATION_WEIGHT` constants.
+- Updated `constrain_palm_exploration` so `z_down` permits weighted XY refinement within ±0.0416667 normalized units, clamps Z to [-1, 0] during close, and zeros all palm motion at phase 3+.
+- Updated tensor task tests with bounds and post-lift zeroing assertions, and adjusted the existing z-down test for bounded XY behavior.
+- Coordinated grasp already routes palm policy actions through the shared constraint function before applying its common pad anchor; no additional edit was necessary.
 
-`left_thumb, left_index, left_middle, right_thumb, right_index, right_middle`.
+## Verification
+Command: `bash scripts/python.sh -m pytest -q tests/test_dh116_tensor_task.py -k 'z_down'`
 
-The evidence gate now requires thumb/index pinch opposition plus measured
-upward middle-finger support on both hands before entering hold; hold/lift
-continues to require all six valid contacts and rejects slip or missing
-reaction evidence. The staged speed path emits a `(2, 3)` pad-speed matrix and
-keeps middle fingers parked until measured thumb/index opposition, then allows
-the middle hook during preload. The low-level touch/governor helpers retain a
-two-column compatibility path for unrelated legacy unit tests; the tabletop
-sequence, gate, restore state, and production contract are six-channel only.
+Result: 3 passed, 10 deselected.
 
-Verification:
+## Commit
+`fb1f8a7 feat: bound synchronized palm xy exploration`
+
+## Reviewer Fix Report
+
+The close-mode palm Z policy now computes the mean of the two bounded per-hand
+Z commands and broadcasts that one command to both hands. XY bounds,
+non-positive Z clamping, and post-lift zeroing remain unchanged. The focused
+regression test supplies differing Z inputs (including a positive value that is
+clamped) and verifies both close outputs equal the shared mean.
+
+### Verification
 
 ```text
-PYTHONPATH=src bash scripts/python.sh -m pytest -q \
-  tests/test_dh116_middle_hook_contract.py \
-  tests/test_dh116_touch_first.py \
-  tests/test_dh116_speed_profile.py
-39 passed
+$ bash scripts/python.sh -m pytest -q tests/test_dh116_tensor_task.py -k 'z_down'
+4 passed, 10 deselected
 ```
 
-`python -m py_compile` passed for all modified DH116 modules and `git diff
---check` passed.
+`git diff --check` and Python compilation of the changed module passed.
 
-Concern for the next task: several older four-channel integration fixtures
-still need migration to the six-channel contract before the broad suite can
-be green. They are intentionally not used as evidence for the new contract.
-No Isaac or physical lift claim is made by this task.
+### Commit
+
+`f7c16af fix: synchronize close palm z commands`
