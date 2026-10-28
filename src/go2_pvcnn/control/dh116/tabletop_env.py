@@ -207,7 +207,7 @@ class TabletopEnv(gym.Env):
             stage_success=curriculum_complete(self.stage, self.task),
             reached_phases=list(self.reached_phases),
             safety_failure=self.task.failure if self.task.failure in PHYSICAL_FAILURES else None)
-        if info['safety_failure'] == 'mimic_error':
+        if info['safety_failure'] in ('mimic_error','excess_force'):
             info['failure_diagnostics'] = dict(
                 command_rad=self.command.tolist(),
                 measured_q_rad=np.asarray(self.measurement['q']).tolist(),

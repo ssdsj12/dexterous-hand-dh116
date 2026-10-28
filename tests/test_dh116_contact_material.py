@@ -110,3 +110,14 @@ def test_live_hand_audit_checks_all_clones_and_rejects_one_default_shape():
         verify_hand_material_properties(values, 'grip', 4, 17)
     with pytest.raises(ValueError):
         verify_hand_material_properties(values[:, :16], 'grip', 4, 17)
+
+
+def test_extreme_grip_is_distinct_and_live_values_are_checked():
+    from go2_pvcnn.control.dh116.tabletop_material import material_contract, verify_material_properties
+    spec=material_contract('extreme_grip')['object_contact_material']
+    assert spec['static_friction']==spec['dynamic_friction']==5.
+    assert spec['profile']=='extreme_grip_v1'
+    assert spec['friction_combine_mode']=='max' and spec['restitution']==0.
+    verify_material_properties(np.array([[[5.,5.,0.]]]),'extreme_grip',1)
+    with pytest.raises(ValueError,match='differs'):
+        verify_material_properties(np.array([[[1.5,1.2,0.]]]),'extreme_grip',1)

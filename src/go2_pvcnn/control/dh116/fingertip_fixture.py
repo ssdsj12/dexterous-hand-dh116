@@ -2,6 +2,27 @@
 import numpy as np
 
 
+def paired_thumb_setup():
+    """Current training drive settings; only fixture distance differs per pair."""
+    return dict(effort_nm=.2, mimic_frequency=400., active_speed=.3,
+        passive_speed=2.97, position_iterations=64, velocity_iterations=16,
+        cases=[dict(side=side, digit='thumb', load=load, plate_outward_m=distance)
+               for side in ('left','right')
+               for load,distance in (('unloaded',.1),('loaded',0.))])
+
+
+def bounded_position_target(requested, actual, previous, dt, error_cap, rate=.05):
+    """Limit requested position lead, then retain the original command slew cap.
+
+    Does not clamp measured state. During rapid externally driven motion the
+    slew bound has priority, so this is not a hard guarantee on tracking error.
+    """
+    if not np.isfinite([requested,actual,previous,dt,error_cap,rate]).all() or min(dt,error_cap,rate)<=0:
+        raise ValueError('finite positions and positive dt, cap and rate required')
+    target=np.clip(requested,actual-error_cap,actual+error_cap)
+    return float(previous+np.clip(target-previous,-rate*dt,rate*dt))
+
+
 def fixture_center(points, sign, *, gap=.0005, thickness=.004):
     points=np.asarray(points,dtype=float)
     if (points.ndim!=2 or points.shape[1]!=3 or not len(points)

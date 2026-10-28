@@ -22,7 +22,7 @@ def validate_adaptive_options(*, adaptive_grasp, grasp_initialization,
         raise ValueError('legacy mode requires close-reset-snapshot, without grasp-initialization')
 
 
-def adaptive_initialization(payload, layout, provenance):
+def adaptive_initialization(payload, layout, provenance, *, object_radius_m=.008):
     """Construct a reset state; no claim of a physically settled checkpoint.
 
     Initial roots are absolute local-scene poses. The existing scalar root
@@ -46,9 +46,11 @@ def adaptive_initialization(payload, layout, provenance):
     if (not np.allclose(np.linalg.norm(roots[:,3:],axis=1),1.,atol=1e-6,rtol=0)
             or abs(np.linalg.norm(wire[3:])-1.) > 1e-6):
         raise ValueError('unit root/object quaternions required')
-    # This initializer is for the horizontal rigid cylinder resting on this table.
-    if abs(wire[2]-.308) > .0005 or not np.allclose(wire[3:], [1,0,0,0],atol=1e-6,rtol=0):
-        raise ValueError('initial object must be horizontal on the table')
+    # The horizontal rigid cylinder rests on the table top at z=0.300 m.
+    if (not np.isfinite(object_radius_m) or object_radius_m<=0
+            or abs((wire[2]-object_radius_m)-.300) > .0005
+            or not np.allclose(wire[3:], [1,0,0,0],atol=1e-6,rtol=0)):
+        raise ValueError('initial object must be horizontal on the table at the configured radius')
     indices = [JOINTS.index(n) for n in ACTIVE]
     command = joints[:,indices].reshape(12)
     for hi in range(2):
@@ -81,10 +83,24 @@ def adaptive_contract_fields(initialization_sha256):
         grasp_initialization_sha256=initialization_sha256)
 
 
-def object_spec(root, kind):
+def object_spec(root, kind, *, solid_radius_m=.008, solid_density_kg_m3=None):
     """Load the actual hollow asset, keeping historical solid contracts intact."""
     if kind == 'solid_cylinder':
-        return None, .12, {}
+        if not np.isfinite(solid_radius_m) or solid_radius_m<=0 or solid_radius_m>.15:
+            raise ValueError('solid cylinder radius must be finite in (0, .15] m')
+        if solid_density_kg_m3 is not None and (
+                not np.isfinite(solid_density_kg_m3) or solid_density_kg_m3<=0):
+            raise ValueError('solid cylinder density must be finite and positive')
+        if (solid_density_kg_m3 is None
+                and np.isclose(solid_radius_m,.008,atol=0.,rtol=0.)):
+            return None, .12, {}
+        # Keep the historical 8 mm contract above; larger authored cylinders
+        # default to a light 200 kg/m^3 material so their load stays near .12 kg.
+        density = (200. if solid_density_kg_m3 is None
+                   else float(solid_density_kg_m3))
+        mass=float(density*np.pi*solid_radius_m**2*.5)
+        return None, mass, dict(object_kind='solid_cylinder',object_radius_m=float(solid_radius_m),
+            object_height_m=.5,object_mass_kg=mass,object_density_kg_m3=float(density))
     if kind != 'hollow_straw':
         raise ValueError('unknown grasp object kind')
     directory = Path(root)/'assets/dh116_hollow_straw_v1'

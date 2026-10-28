@@ -16,12 +16,20 @@ if [[ -n "${DH116_RESUME:-}" ]]; then
   fi
   continuation=(--resume "$DH116_RESUME")
 fi
-reposition_flag=(--release-reposition)
+controller="${DH116_GRASP_CONTROLLER:-policy}"
+reposition_flag=()
+palm_axis_flag=()
+if [[ "$controller" == policy ]]; then
+  palm_axis_flag=(--palm-exploration-axis xyz)
+fi
+if [[ "$controller" == coordinated ]]; then
+  reposition_flag=(--release-reposition)
+fi
 if [[ "${DH116_FORCE_DIRECTION_REPOSITION:-0}" == 1 ]]; then
   reposition_flag=(--force-direction-reposition)
 fi
-# nf200 is the validated closed-loop follower rate; nf400 has a recorded
-# passive-follower overshoot and is not qualified for the formal run.
+# Retain nf200 while diagnosing contact/control faults. Both nf200 and nf400
+# have recorded follower overshoots; neither guarantees the measured speed cap.
 exec bash scripts/python.sh scripts/train_dh116_tabletop_gpu_ppo.py \
   --pose-summary configs/dh116_training/pose_reference.json \
   --adaptive-grasp --force-feedback --full-hand-contact \
@@ -32,8 +40,8 @@ exec bash scripts/python.sh scripts/train_dh116_tabletop_gpu_ppo.py \
   --num-envs 4096 --rollout-steps 24 --physics-hz 480 --mimic-frequency 200 \
   --position-iterations 64 --velocity-iterations 16 --reset-height-jitter-m 0 --cpu-threads "$DH116_NUM_THREADS" \
   --headless --device cuda:0 --direct-training --tensor-pipeline --training-episode-resets --pressure-relief \
-  --grasp-controller coordinated --palm-transport driven_carriage \
-  "${reposition_flag[@]}" \
+  --grasp-controller "$controller" --palm-transport driven_carriage \
+  "${reposition_flag[@]}" "${palm_axis_flag[@]}" \
   --passive-velocity-limit-rad-s 2.97 --contact-reward-window close_start \
   --grasp-readiness measured_load --skip-hold --close-downward-penalty --grasp-shaping --vertical-force-reward --vertical-force-reward-mode continuous --force-reward-start downward_after_close \
   --episodes-per-env 1024 --output "$output" "${continuation[@]}" "$@"

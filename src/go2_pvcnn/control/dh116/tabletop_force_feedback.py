@@ -62,7 +62,10 @@ class ReactionForceController:
         self.boost=np.clip(self.boost,0.,maximum-nominal)
         self.requested=np.clip(nominal+self.boost,MIN_FORCE,maximum)
         rate=self.parameters.force_rate_n_s
-        self.target += np.clip(self.requested-self.target,-rate*dt,rate*dt)
+        if rate is None:
+            self.target = self.requested.copy()
+        else:
+            self.target += np.clip(self.requested-self.target,-rate*dt,rate*dt)
         error=self.target-self.filtered
         # Respond immediately to excessive live load rather than waiting for
         # the low-pass state; deadband otherwise holds the achieved pressure.

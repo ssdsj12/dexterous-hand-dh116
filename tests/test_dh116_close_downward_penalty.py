@@ -23,7 +23,7 @@ def test_boundary_sign_fixed_penalty_once_plus_continuous_and_reset(device,hz):
     dt=1/hz;force=torch.tensor([-1.,0.,1.],device=device)
     for _ in range(round(2.*hz)+1):t.consume(m,~t.done,dt,vertical_force_n=force)
     assert t.phase.tolist()==[1,3,3]
-    assert t.failure[0].item()!=0
+    assert t.failure[0].item()==0
     assert t.terms['downward_force'][0].item()<0.
     assert t.terms['close_downward'].tolist()==[0.,0.,0.]
     assert torch.allclose(t.reward,sum(t.terms.values()))
@@ -40,14 +40,23 @@ def test_failed_nonfinite_and_inactive_samples_never_pay_event():
     assert t.phase.tolist()==[1,1,1,1] and torch.isfinite(t.reward).all()
 
 
-def test_close_downward_impulse_marks_episode_failed_before_lift():
+def test_close_downward_impulse_no_longer_marks_episode_failed_before_timeout():
     t=task();t.begin_step(torch.zeros((3,20)));m=loads(t,4.)
     dt=1/480
     downward=torch.full((3,),-1.)
     for _ in range(961):
         t.consume(m,~t.done,dt,vertical_force_n=downward)
-    assert t.failure[0].item()!=0
+    assert t.failure.tolist()==[0,0,0]
     assert t.phase[0].item()==1
+    assert t.close_downward_impulse.tolist()==pytest.approx([961*dt]*3)
+    assert t.terms['downward_force'].tolist()==pytest.approx([-.5*961*dt]*3)
+    # Historical downward force stays in telemetry. Mechanical dwell has
+    # already elapsed, so the first current upward sample permits completion.
+    for _ in range(96):
+        t.consume(m,~t.done,dt,vertical_force_n=torch.ones(3))
+    assert t.failure.tolist()==[0,0,0]
+    assert t.phase.tolist()==[3,3,3]
+    assert t.close_downward_impulse.tolist()==pytest.approx([961*dt]*3)
 
 
 def test_close_timeout_marks_episode_failed_at_four_seconds():
@@ -79,13 +88,13 @@ def test_exact_one_way_event_contract_migration():
     from go2_pvcnn.control.dh116.tabletop_vertical_force import vertical_reward_contract
     from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
     v=vertical_reward_contract('continuous','downward_after_close',skip_hold=True)
-    assert CLOSE_DOWNWARD_PENALTY_CONTRACT['impulse_limit_n_s']==2.
+    assert CLOSE_DOWNWARD_PENALTY_CONTRACT['impulse_limit_n_s'] is None
     assert CLOSE_DOWNWARD_PENALTY_CONTRACT['close_timeout_s']==4.
     old=dict(reward=v['version'],phase_reward_version=v['version'],vertical_force_reward=v,
         grasp_readiness=measured_readiness_contract(True),observation_size=151,num_envs=4096,
         observation_version='dh116-after-close-force-v3')
     new=dict(old,close_downward_penalty=CLOSE_DOWNWARD_PENALTY_CONTRACT)
-    assert checkpoint_contract_changes(old,new)==['close_downward_impulse_reset_v3']
+    assert checkpoint_contract_changes(old,new)==['close_downward_no_impulse_reset_v4']
     assert checkpoint_contract_changes(new,new)==[]
     for a,b in [(new,old),(old,dict(new,num_envs=16)),(old,dict(new,close_downward_penalty=dict(CLOSE_DOWNWARD_PENALTY_CONTRACT,points=-30.)))]:
         with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(a,b)

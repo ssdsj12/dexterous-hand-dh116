@@ -1,0 +1,7 @@
+# Contact-feedback exploration and direct lift
+
+User confirmed continuous controller actions -> measured-contact grasp-point exploration -> immediate lift after measured stable grasp. No fixed two-second closure or fixed grasp-pose playback. Implement an explicit feedback-search controller over the new policy action interface, not a trained actor. Preserve production actuator/hard guard path and actual object success criteria. No claim that untrained heuristic exploration guarantees success.
+
+Readiness: both current hand loads in measured readiness band, valid contacts, nonnegative per-hand normal vertical support, low actual object speed and bounded relative slip. No dwell timer; close timeout and hard failures remain. Controller owns palm/finger/stiffness actions, uses contact centers/normals and load deficit for updates; bounded seeded search on hands without contact. Capture actual submitted palm offsets once ready and advance common lift at the existing carriage speed while continuing contact corrections. Reset only ended environments. Log terminal evidence before reset and action/physics timings. Use one actual GUI instance after tests, with bounded steps and optional final viewing time. Existing demo is cooperatively stopped before startup.
+
+Tasks: behavioral RED tests; implement controller, task readiness transition, explicit CLI runner; verify tests and independent review; singleton measured GUI run with performance profile; report measured success/failure and remaining slowness. No commit/push.

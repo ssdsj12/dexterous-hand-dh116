@@ -41,7 +41,7 @@ def test_no_event_is_missing_force_not_zero_force_and_no_scalar_point():
     v=torch.zeros((2,2,2),dtype=torch.float64);v[:,0,0]=torch.tensor([2.,-4.])
     s.add(v,torch.ones(2),torch.ones(2,dtype=torch.bool))
     row=s.summary();write_lift_entry_force_scalars(w,row,2)
-    assert w.points['lift_entry_force_N/向上力_平均']==1.
-    assert w.points['lift_entry_force_N/向下力_平均']==2.
-    assert w.points['lift_entry_force_N/竖直合力_向上为正']==-1.
+    assert w.points['lift_entry_event_summary_N/向上力_平均']==1.
+    assert w.points['lift_entry_event_summary_N/向下力_平均']==2.
+    assert w.points['lift_entry_event_summary_N/竖直合力_向上为正']==-1.
     s.clear();assert s.summary()['hands_total_mean_n'] is None

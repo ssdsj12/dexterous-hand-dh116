@@ -1,4 +1,5 @@
 import torch
+import pytest
 
 
 def _setup(mask=(True,)):
@@ -73,3 +74,19 @@ def test_lift_phase_and_unloaded_positioning_are_not_force_repositioned():
     out, active = c.apply(target, current, loads, phase, live, .01, force)
     torch.testing.assert_close(out, target)
     assert not active.any()
+
+
+def test_diagnostic_floor_allows_a_lower_below_axis_goal():
+    c, target, current, loads, force, phase, live = _setup()
+    current[:, :, 2] = .005
+    target[:, :, 2] = 0.
+    clearance = torch.full((1, 2), .004, dtype=torch.float64)
+    c.apply(target, current, loads, phase, live, .01, force, clearance=clearance)
+    default_goal = c.goal[0, 0, 2].item()
+    c2, target, current, loads, force, phase, live = _setup()
+    c2.goal_table_clearance_m=.0003
+    current[:, :, 2] = .005
+    target[:, :, 2] = 0.
+    c2.apply(target, current, loads, phase, live, .01, force, clearance=clearance)
+    assert default_goal == pytest.approx(.0031)
+    assert c2.goal[0, 0, 2].item() == pytest.approx(.003)

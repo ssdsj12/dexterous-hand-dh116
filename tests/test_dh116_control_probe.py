@@ -206,3 +206,55 @@ def test_thumb_position_lead_candidate_keeps_other_joints_and_lift_gate():
     other=[i for i in range(12) if i not in (1,7)]
     torch.testing.assert_close(t.command[0,other],t.command[1,other])
     torch.testing.assert_close(t.offset-offset,(t.offset-offset)[0].expand(2))
+def test_probe_accepts_only_known_training_joint_boundary_omission():
+    import pytest
+    from go2_pvcnn.control.dh116.tabletop_control_probe import check_probe_contract
+    from go2_pvcnn.control.dh116.tabletop_tensor_env import TRAINING_JOINT_LIMIT_CONTRACT
+    current=dict(num_envs=6,velocity_iterations=64)
+    saved=dict(current,num_envs=4096,training_joint_limit=TRAINING_JOINT_LIMIT_CONTRACT)
+    check_probe_contract(saved,current)
+    assert 'training_joint_limit' in saved  # validation never rewrites provenance
+    for altered in (dict(saved,training_joint_limit={'version':'unknown'}),
+                    dict(saved,training_joint_limit=dict(TRAINING_JOINT_LIMIT_CONTRACT,outside_nominal_limit_rad=.01)),
+                    dict(saved,velocity_iterations=16)):
+        with pytest.raises(ValueError,match='probe contract mismatch'):
+            check_probe_contract(altered,current)
+    with pytest.raises(ValueError,match='probe contract mismatch'):
+        check_probe_contract(current,saved)
+
+
+def test_joint_action_inverse_accepts_fixed_joints_without_dividing_by_zero():
+    import torch
+    from go2_pvcnn.control.dh116.tabletop_control_probe import joint_actions
+    lower=torch.tensor([.2,.1]);center=torch.tensor([.2,.2]);upper=torch.tensor([.2,.3])
+    action=joint_actions(torch.tensor([.2,.25]),lower,center,upper)
+    torch.testing.assert_close(action,torch.tensor([0.,.5]))
+
+
+def test_probe_records_lift_grip_recovery_separately_from_mimic_recovery(tmp_path):
+    from types import SimpleNamespace
+    from test_dh116_lift_grasp_hold import close_to_lift
+    t=close_to_lift();t.begin_step(torch.zeros((2,20),dtype=torch.float64))
+    sensor=SimpleNamespace(data=SimpleNamespace(force_matrix_w=torch.zeros((2,1,1,3)),
+        friction_forces_w=torch.zeros((2,1,1,3))))
+    hand=SimpleNamespace(body_names=['base_link'],data=SimpleNamespace(body_lin_vel_w=torch.zeros((2,1,3))))
+    roots=torch.zeros((2,2,7))
+    w=SimpleNamespace(initial_offset=.004,object_weight_n=torch.ones(2),
+        vertical_components=torch.zeros((2,2,2)),palms=t.palm_targets.clone(),
+        commands=t.command.reshape(2,2,6).clone(),parameters=t.parameters,
+        root_targets=roots.clone(),roots=roots,origins=torch.zeros((2,3)),
+        poses=torch.zeros((2,2,1,7)),hands=[hand,hand],
+        w=SimpleNamespace(sensors=[sensor,sensor]))
+    e=SimpleNamespace(task=t,world=w,n=2,device='cpu',episodes=torch.zeros(2,dtype=torch.long))
+    recorder=module().ProbeRecorder(e,[{},{}],tmp_path)
+    t.lift_grasp_hold.recovering[:]=torch.tensor([True,False])
+    t.lift_grasp_hold.contact_loss_s[:]=torch.tensor([.025,0.])
+    t.lift_grasp_hold.recovery_stable_s[:]=torch.tensor([0.,.012])
+    recorder.before_step();recorder.after_step(torch.ones(2,dtype=torch.bool),t.phase.clone())
+    index={name:i for i,name in enumerate(recorder.columns)}
+    np.testing.assert_array_equal(recorder.frames[0][:,index['lift_grip_recovering']],[1.,0.])
+    np.testing.assert_allclose(recorder.frames[0][:,index['lift_grip_contact_loss_s']],[.025,0.])
+    np.testing.assert_allclose(recorder.frames[0][:,index['lift_grip_recovery_stable_s']],[0.,.012])
+    assert not recorder.frames[0][:,[index['recovery_active:0'],index['recovery_active:5']]].any()
+    t.lift_grasp_hold.recovering.zero_()
+    assert recorder.frames[0][0,index['lift_grip_recovering']]==1.  # Recorded frame is immutable.

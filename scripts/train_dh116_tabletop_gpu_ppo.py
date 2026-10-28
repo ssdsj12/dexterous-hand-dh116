@@ -58,7 +58,7 @@ parser.add_argument('--pressure-relief', action='store_true',
                     help='tensor controller: measured overload overrides policy closing targets; explicit native checkpoint migration allowed')
 parser.add_argument('--palm-transport',choices=('fixed_pose','driven_carriage'),default='fixed_pose',
                     help='diagnostic moving wrist support with real surface velocity')
-parser.add_argument('--grasp-controller',choices=('legacy','coordinated'),default='legacy',
+parser.add_argument('--grasp-controller',choices=('legacy','coordinated','policy'),default='legacy',
                     help='opt-in measured-motion grasp governor; requires its own physics qualification')
 parser.add_argument('--release-reposition',action='store_true',
                     help='release measured contact before downward reposition during close, then reclose')
@@ -66,6 +66,13 @@ parser.add_argument('--force-direction-reposition',action='store_true',
                     help='use signed vertical-force gated release, downward reposition, and reclose')
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--resume', type=Path)
+parser.add_argument('--contact-effort-feedback',action='store_true',help='bounded contact torque feedback sharing the existing motor effort budget')
+parser.add_argument('--teacher-search-cases',type=Path)
+parser.add_argument('--teacher-episodes',type=int,default=1)
+parser.add_argument('--teacher-control-steps',type=int,default=1000)
+parser.add_argument('--actor-initialization',type=Path)
+parser.add_argument('--student-validation-only',action='store_true')
+parser.add_argument('--student-validation-steps',type=int,default=2700)
 parser.add_argument('--control-probe-checkpoint',type=Path,
                     help='8-env inference-only control comparison; no PPO updates')
 parser.add_argument('--control-probe-mode',choices=('grasp','grasp_fixed','grasp_z_sweep','grasp_teacher_z_sweep','grasp_teacher_z_fine','grasp_teacher_z_confirm','grasp_teacher_z_down_sweep','grasp_teacher_contact_z_sweep','grasp_teacher_xy_sweep','lift_gate','bounded_thumb','coordinated','wrist_motion','loaded_palm','force_direction'),default='grasp')
@@ -99,8 +106,10 @@ parser.add_argument('--direct-training', action='store_true',
                     help='skip three full admission batches; retain startup contact and runtime safety checks')
 parser.add_argument('--physics-hz', type=int, choices=(240, 480), default=240)
 parser.add_argument('--solver-type', type=int, choices=(0,), default=0)
+parser.add_argument('--solve-articulation-contact-last', action='store_true',
+                    help='solve contact and joint velocity constraints last; changes physics checkpoint contract')
 parser.add_argument('--position-iterations', type=int, default=16)
-parser.add_argument('--velocity-iterations', type=int, choices=(4,16), default=4,
+parser.add_argument('--velocity-iterations', type=int, choices=(4,16,64), default=4,
                     help='author contact velocity solver iterations before PhysX scene creation')
 parser.add_argument('--passive-velocity-limit-rad-s',type=float,choices=(3.,2.97),default=3.,
                     help='opt-in 2.97 solver headroom candidate; measured velocity guard stays 3')
@@ -125,6 +134,24 @@ parser.add_argument('--vertical-force-reward',action='store_true',
 parser.add_argument('--reset-height-jitter-m', type=float, default=.0003)
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+if args.grasp_controller=='policy':
+    from go2_pvcnn.control.dh116.tabletop_policy_control import validate_configuration
+    try:
+        validate_configuration(args)
+    except ValueError as exc:
+        parser.error(str(exc))
+if args.contact_effort_feedback and (not args.tensor_pipeline or args.grasp_controller!='coordinated'):
+    parser.error('contact effort feedback requires coordinated tensor control')
+if args.student_validation_only and not args.actor_initialization:
+    parser.error('student validation requires an initialized actor')
+if not 1<=args.student_validation_steps<=2700:
+    parser.error('student validation budget must be between 1 and 2700')
+if args.teacher_search_cases and (not args.tensor_pipeline or not args.training_episode_resets or args.resume or args.initialize_from or args.control_probe_checkpoint or args.play_checkpoint or args.actor_initialization):
+    parser.error('teacher search requires the production tensor task with ordinary episode resets and no checkpoint mode')
+if args.teacher_episodes<1 or args.teacher_control_steps<1:
+    parser.error('teacher episode and control-step budgets must be positive')
+if args.actor_initialization and (not args.tensor_pipeline or args.resume or args.initialize_from or args.control_probe_checkpoint or args.play_checkpoint):
+    parser.error('actor initialization requires a fresh tensor PPO run')
 if args.control_probe_swap and (not args.control_probe_checkpoint or args.control_probe_mode not in ('loaded_palm','force_direction')):
     parser.error('probe swap is only valid for paired palm reposition probes')
 if args.release_reposition and (args.grasp_controller!='coordinated' or args.control_probe_checkpoint):
@@ -134,7 +161,7 @@ if args.force_direction_reposition and (args.release_reposition or args.grasp_co
         or args.resume or args.initialize_from):
     parser.error('force-direction-reposition requires a fresh coordinated tensor run or its probe mode')
 if args.palm_transport=='driven_carriage' and not args.control_probe_checkpoint and (
-        not args.tensor_pipeline or args.grasp_controller!='coordinated'):
+        not args.tensor_pipeline or args.grasp_controller not in ('coordinated','policy')):
     parser.error('driven wrist carriage requires bounded probe or coordinated tensor training')
 if args.grasp_controller=='coordinated' and (not args.tensor_pipeline or not args.pressure_relief
         or not args.skip_hold or args.grasp_readiness!='measured_load' or args.reset_height_jitter_m!=0
@@ -338,6 +365,9 @@ try:
     contract.update(seed_provenance)
     if args.velocity_iterations != 4:
         contract['velocity_iterations'] = args.velocity_iterations
+    if args.solve_articulation_contact_last:
+        from go2_pvcnn.control.dh116.tabletop_solver_order import CONTRACT as SOLVER_ORDER
+        contract['articulation_solver_order'] = dict(SOLVER_ORDER)
     if args.passive_velocity_limit_rad_s==2.97:
         from go2_pvcnn.control.dh116.tabletop_velocity_limits import VELOCITY_HEADROOM_CONTRACT
         contract['velocity_headroom']=VELOCITY_HEADROOM_CONTRACT
@@ -378,7 +408,11 @@ try:
     contract = canonical_contract(contract)
     report['contract'] = contract
     sim = sim_utils.SimulationContext(sim_utils.SimulationCfg(dt=1/args.physics_hz,device=args.device,
-        physx=sim_utils.PhysxCfg(solver_type=args.solver_type)))
+        physx=sim_utils.PhysxCfg(solver_type=args.solver_type,
+            solve_articulation_contact_last=args.solve_articulation_contact_last)))
+    from go2_pvcnn.control.dh116.tabletop_solver_order import verify_solver_order
+    report['articulation_solver_order_readback'] = verify_solver_order(
+        sim.get_physics_context(), args.solve_articulation_contact_last)
     from go2_pvcnn.control.dh116.tabletop_gpu_isaac import GpuWorld
     world = GpuWorld(sim,args,layout,sources)
     if args.full_hand_contact:

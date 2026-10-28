@@ -1,0 +1,5 @@
+# Reward upward force during close
+
+User approved upward force reward during close; retain downward penalty exemption until first close completion. Add explicit downward_after_close start mode, retaining historical after_close behavior. Positive reward always applies to finite live nonfailure substeps (0.5*clamp(Fz,0,10)*dt); negative penalty uses the existing monotonic after-close latch. No new observation dimension or control changes: existing 151st bit remains the latch, now described as downward-penalty eligibility.
+
+Tests first: upward positive during close, downward zero until hold, late close continuous reward, post-hold positive/negative, loss-of-grip latch and reset, nonfinite/failure exclusion. Version contract v4 and permit only exact one-way v3-to-v4 migration with identical policy/optimizer shapes and all other fields unchanged. Default launcher uses new mode. Preserve current v129 progress and restart a single instance from its checkpoint; verify close-positive/upward curve and gate telemetry in real first rollouts. Keep old records and update actual validation notes.

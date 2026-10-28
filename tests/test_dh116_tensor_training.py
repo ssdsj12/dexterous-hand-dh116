@@ -5,12 +5,125 @@ import re
 from go2_pvcnn.control.dh116.tabletop_tensor_training import make_algorithm, observations
 
 
-def test_formal_tensor_ppo_launcher_uses_validated_mimic_frequency():
+def test_coordinated_close_contract_has_no_dwell_and_rejects_old_resume():
+    from types import SimpleNamespace
+    from copy import deepcopy
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import (
+        apply_close_completion_contract, checkpoint_contract_changes)
+    old={'grasp_readiness':{'close_dwell_s':.2,'hold_dwell_s':.3},
+         'palm_exploration':{'version':'synchronized_z_v1'}}
+    current=deepcopy(old)
+    task=SimpleNamespace(vertical_force_reward=True,skip_hold=True,close_grasp_hold=object())
+    apply_close_completion_contract(current,task)
+    assert current['close_grasp_hold']['version']=='instant_per_hand_retained_close_hold_v3'
+    assert current['grasp_readiness']['close_dwell_s']==0.
+    assert current['grasp_readiness']['hold_dwell_s']==0.
+    gate=current['close_completion_force_gate']
+    assert gate['nonforce_close_dwell_s']==0.
+    assert gate['nonforce_hold_dwell_s']==0.
+    assert gate['condition']=='each_hand_normal_z >= 0 and vertical_force_n >= 0'
+    assert current['palm_exploration']['close_hold_policy']=='hold_accepted_hand;other_hand_explores_independently'
+    with pytest.raises(ValueError,match='contract mismatch'):
+        checkpoint_contract_changes(old,current)
+    assert checkpoint_contract_changes(current,current)==[]
+
+
+def test_formal_tensor_ppo_launcher_retains_current_mimic_frequency():
     launcher = (Path(__file__).resolve().parents[1] / 'scripts' /
                 'train_dh116_tensor_ppo.sh').read_text()
     frequencies = re.findall(r'--mimic-frequency\s+(\d+)', launcher)
     assert frequencies == ['200']
     assert '--mimic-frequency 400' not in launcher
+
+
+def test_remove_impulse_reset_migrates_only_exact_old_contract():
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
+    from go2_pvcnn.control.dh116.tabletop_tensor_task import CLOSE_DOWNWARD_PENALTY_CONTRACT
+    current_penalty=dict(CLOSE_DOWNWARD_PENALTY_CONTRACT,
+        version='close_downward_no_impulse_reset_v4',impulse_limit_n_s=None)
+    old_penalty=dict(current_penalty,version='close_downward_impulse_reset_v3',impulse_limit_n_s=2.)
+    old=dict(num_envs=4096,close_downward_penalty=old_penalty,physics_hz=480)
+    current=dict(old,close_downward_penalty=current_penalty)
+    assert checkpoint_contract_changes(old,current)==['close_downward_no_impulse_reset_v4']
+    for bad in (dict(current,physics_hz=240),dict(current,close_downward_penalty=dict(current_penalty,points=-9.))):
+        with pytest.raises(ValueError,match='contract mismatch'):
+            checkpoint_contract_changes(old,bad)
+    with pytest.raises(ValueError,match='contract mismatch'):
+        checkpoint_contract_changes(current,old)
+
+
+def test_force_telemetry_metadata_migration_is_exact_and_one_way():
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
+    from go2_pvcnn.control.dh116.tabletop_vertical_force import CONTRACT
+    old_telemetry=dict(version='hand_object_normal_vertical_force_v2',units='N',positive='world_up_z',
+        source='object_filtered_normal_on_hand_negated',friction_excluded=True,
+        excludes='table_and_other_hand_contacts',sampling='live_physics_substeps',
+        window='completed_rollout_not_training_lifetime',use='telemetry_only_not_reward_or_lift_gate')
+    new_telemetry=dict(old_telemetry,version='normal_vertical_force_v3',
+        legacy_total_fields='signed_normal_z_only',friction_field='separate_diagnostic_only')
+    old=dict(num_envs=4096,vertical_force_telemetry=old_telemetry,reward='unchanged')
+    current=dict(old,vertical_force_telemetry=new_telemetry)
+    assert CONTRACT==new_telemetry
+    assert checkpoint_contract_changes(old,current)==['normal_force_telemetry_excludes_friction_v3']
+    assert checkpoint_contract_changes(current,current)==[]
+    for bad in (dict(current,num_envs=16),dict(current,reward='changed'),
+                dict(current,vertical_force_telemetry=dict(new_telemetry,friction_excluded=False))):
+        with pytest.raises(ValueError,match='contract mismatch'):
+            checkpoint_contract_changes(old,bad)
+    with pytest.raises(ValueError,match='contract mismatch'):
+        checkpoint_contract_changes(dict(old,vertical_force_telemetry=dict(old_telemetry,units='kN')),current)
+    with pytest.raises(ValueError,match='contract mismatch'):
+        checkpoint_contract_changes(current,old)
+
+
+def test_clearance_restoration_requires_fresh_training_for_legacy_controller():
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
+    from go2_pvcnn.control.dh116.tabletop_coordinated_grasp import CONTRACT
+    from go2_pvcnn.control.dh116.tabletop_tensor_world import PALM_TARGET_CONTRACT
+    legacy_control={k:v for k,v in CONTRACT.items()
+                    if k not in ('synchronized_release_z','contact_z_correction_units')}
+    old=dict(num_envs=4096,physics_hz=480,grasp_controller=legacy_control)
+    new=dict(old,grasp_controller=dict(CONTRACT),palm_target_safety=dict(PALM_TARGET_CONTRACT))
+    with pytest.raises(ValueError,match='contract mismatch'):
+        checkpoint_contract_changes(old,new)
+    assert checkpoint_contract_changes(new,new)==[]
+    for bad in (dict(new,physics_hz=240),
+                dict(new,grasp_controller=dict(CONTRACT,position_lead_rad=.02)),
+                dict(new,palm_target_safety=dict(PALM_TARGET_CONTRACT,scope='all'))):
+        with pytest.raises(ValueError,match='contract mismatch'):
+            checkpoint_contract_changes(old,bad)
+    with pytest.raises(ValueError,match='contract mismatch'):
+        checkpoint_contract_changes(new,old)
+
+
+def test_legacy_z_down_records_but_does_not_migrate_clearance_restoration():
+    from types import SimpleNamespace
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import (
+        apply_palm_target_contract,checkpoint_contract_changes)
+    from go2_pvcnn.control.dh116.tabletop_tensor_world import PALM_TARGET_CONTRACT
+    old=dict(num_envs=4096,palm_exploration=dict(axis='world_z',close_policy='z<=0'))
+    new=dict(old)
+    apply_palm_target_contract(new,SimpleNamespace(palm_exploration_axis='z_down'))
+    assert new['palm_target_safety']==PALM_TARGET_CONTRACT
+    with pytest.raises(ValueError,match='contract mismatch'):
+        checkpoint_contract_changes(old,new)
+    unchanged={}
+    apply_palm_target_contract(unchanged,SimpleNamespace(palm_exploration_axis='xyz'))
+    assert unchanged=={}
+    with pytest.raises(ValueError,match='contract mismatch'):
+        checkpoint_contract_changes(dict(num_envs=4096),dict(num_envs=4096,palm_target_safety=PALM_TARGET_CONTRACT))
+
+
+def test_clearance_restoration_rejects_v1_or_unknown_safety_contract():
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
+    from go2_pvcnn.control.dh116.tabletop_tensor_world import PALM_TARGET_CONTRACT
+    current=dict(num_envs=4096,palm_target_safety=dict(PALM_TARGET_CONTRACT))
+    previous={k:v for k,v in PALM_TARGET_CONTRACT.items() if k!='clearance_undershoot'}
+    previous['version']='synchronized_measured_clearance_v1'
+    assert checkpoint_contract_changes(current,current)==[]
+    for safety in (previous,dict(PALM_TARGET_CONTRACT,version='unknown')):
+        with pytest.raises(ValueError,match='contract mismatch'):
+            checkpoint_contract_changes(dict(current,palm_target_safety=safety),current)
 
 
 def test_below_axis_palm_contract_preserves_synchronized_z_fields():
@@ -23,7 +136,7 @@ def test_below_axis_palm_contract_preserves_synchronized_z_fields():
         'z_bounds_m':[-.004,0.], 'xy_weight':.25, 'axis':'world_z',
         'close_policy':'z<=0', 'close_xy':'bounded_weighted_refinement',
         'lift_policy':'palm_zero_offset;task_offset_lifts_hand',
-        'palm_descent_clearance_m':.0003}
+        'palm_descent_clearance_m':.0003,'effective_xy_bounds_m':[-.000125,.000125]}
 
 
 def test_tensor_contract_metadata_enriches_full_hand_force_contract():
@@ -33,7 +146,7 @@ def test_tensor_contract_metadata_enriches_full_hand_force_contract():
     enriched=tensor_contract_metadata(source, 12.)
     assert source['force_feedback']['target_hand_load_range_n']==[.1,4.]
     assert enriched['force_action_range_n']==[2.,12.]
-    assert enriched['force_action_semantics']['version']=='phase_force_channels_v1'
+    assert enriched['force_action_semantics']['version']=='normal_load_target_v2'
     assert enriched['initial_force_target_n']==pytest.approx(2.25)
     assert enriched['palm_exploration']['version']=='synchronized_z_v1'
     assert enriched['force_feedback']['target_hand_load_range_n']==[2.,12.]
@@ -115,8 +228,8 @@ def test_checkpoint_migration_only_adds_known_controller_guard_fields():
     current=dict(num_envs=4096,pressure_relief=CONTRACT,reset_velocity_guard=VELOCITY_GUARD_CONTRACT)
     assert checkpoint_contract_changes(current,current)==[]
     old=dict(num_envs=4096,pressure_relief=CONTRACT)
-    assert checkpoint_contract_changes(old,current)==['add_reset_velocity_tolerance']
-    assert set(checkpoint_contract_changes(dict(num_envs=4096),current))=={'add_measured_pressure_relief','add_reset_velocity_tolerance'}
+    with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(old,current)
+    with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(dict(num_envs=4096),current)
     for bad in (dict(old,num_envs=16),dict(current,reset_velocity_guard=dict(VELOCITY_GUARD_CONTRACT,absolute_tolerance_rad_s=.1))):
         with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(bad,current)
     with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(current,old)
@@ -133,12 +246,12 @@ def test_checkpoint_migration_records_exact_terminal_reset_change():
     with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(current,old)
 
 
-def test_checkpoint_migration_only_adds_exact_live_velocity_guard():
+def test_checkpoint_rejects_missing_live_velocity_reward_contract():
     from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
     from go2_pvcnn.control.dh116.tabletop_tensor_env import LIVE_VELOCITY_GUARD_CONTRACT
     old=dict(num_envs=4096)
     new=dict(old,live_velocity_guard=LIVE_VELOCITY_GUARD_CONTRACT)
-    assert checkpoint_contract_changes(old,new)==['add_live_substep_velocity_guard']
+    with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(old,new)
     for bad in (dict(new,num_envs=16),dict(new,live_velocity_guard=dict(LIVE_VELOCITY_GUARD_CONTRACT,nominal_limit_rad_s=9.))):
         with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(old,bad)
     with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(new,old)
@@ -196,8 +309,8 @@ def test_close_force_behavior_requires_new_controller_contract():
     from go2_pvcnn.control.dh116.tabletop_coordinated_grasp import CONTRACT
     from go2_pvcnn.control.dh116.tabletop_tensor_task import CLOSE_DOWNWARD_PENALTY_CONTRACT
     from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
-    assert CONTRACT['version']=='measured_motion_grasp_v2'
-    assert CLOSE_DOWNWARD_PENALTY_CONTRACT['version']=='close_downward_impulse_reset_v3'
+    assert CONTRACT['version']=='measured_motion_grip_recovery_v3'
+    assert CLOSE_DOWNWARD_PENALTY_CONTRACT['version']=='close_downward_no_impulse_reset_v4'
     old=dict(num_envs=4096,
         grasp_controller=dict(CONTRACT,version='measured_motion_grasp_v1',command_rate_rad_s=.05),
         close_downward_penalty=dict(CLOSE_DOWNWARD_PENALTY_CONTRACT,
@@ -342,3 +455,51 @@ def test_real_rsl_rollout_update_stays_on_device(device):
     result=alg.update()
     assert all(torch.isfinite(torch.tensor(v)) for v in result.values())
     assert any(not torch.equal(a,b) for a,b in zip(before,alg.policy.parameters()))
+
+
+@pytest.mark.parametrize('recovery,probe,enabled',[(True,None,True),(False,None,False),(True,'teacher.pt',False)])
+def test_early_joint_boundary_is_ppo_only_and_checkpointed(recovery,probe,enabled):
+    import ast
+    from pathlib import Path
+    from types import SimpleNamespace
+    from go2_pvcnn.control.dh116.tabletop_tensor_env import TRAINING_JOINT_LIMIT_CONTRACT
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
+    path=Path(__file__).parents[1]/'src/go2_pvcnn/control/dh116/tabletop_tensor_training.py'
+    tree=ast.parse(path.read_text())
+    call=next(n for n in ast.walk(tree) if isinstance(n,ast.Call)
+              and isinstance(n.func,ast.Name) and n.func.id=='TensorEnv')
+    cfg=eval(compile(ast.Expression(call),'<env construction>','eval'),dict(
+        TensorEnv=lambda *args,**kw:kw,device_world=None,task=None,
+        args=SimpleNamespace(training_episode_resets=recovery,control_probe_checkpoint=probe,output=Path('/tmp'))))
+    assert cfg['training_joint_limit'] is enabled
+    block=next(n for n in ast.walk(tree) if isinstance(n,ast.If)
+               and isinstance(n.test,ast.Attribute) and n.test.attr=='training_joint_limit')
+    contract={}
+    exec(compile(ast.Module(body=[block],type_ignores=[]),'<training contract>','exec'),dict(
+        env=SimpleNamespace(training_joint_limit=enabled),contract=contract,
+        TRAINING_JOINT_LIMIT_CONTRACT=TRAINING_JOINT_LIMIT_CONTRACT))
+    assert contract.get('training_joint_limit')==(TRAINING_JOINT_LIMIT_CONTRACT if enabled else None)
+    current=dict(num_envs=4096,training_joint_limit=TRAINING_JOINT_LIMIT_CONTRACT)
+    assert checkpoint_contract_changes(current,current)==[]
+    for other in (dict(num_envs=4096),dict(current,training_joint_limit=dict(TRAINING_JOINT_LIMIT_CONTRACT,outside_nominal_limit_rad=.01))):
+        for before,after in ((other,current),(current,other)):
+            with pytest.raises(ValueError,match='contract mismatch'):checkpoint_contract_changes(before,after)
+
+
+def test_tensor_command_metadata_matches_executed_force_and_joint_requests():
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import tensor_contract_metadata
+    from go2_pvcnn.control.dh116.tabletop_velocity_limits import CLOSE_COMMAND_RATE_RAD_S
+    contract=tensor_contract_metadata({'command_rate_rad_s':.05},12.)
+    assert contract['command_rate_rad_s']==CLOSE_COMMAND_RATE_RAD_S
+    assert contract['force_action_semantics']['quantity']=='per_hand_summed_normal_contact_load'
+    assert contract['force_action_semantics']['measured_force_guaranteed'] is False
+    assert contract['phase_force_measurements']['lift']=='signed_object_filtered_normal_plus_friction_vertical_sum'
+
+
+def test_tensor_palm_metadata_has_one_effective_clearance_and_weighted_bounds():
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import apply_palm_exploration_contract
+    contract={'palm_descent_clearance_m':.0021,'palm_motion':'ppo_per_hand_xyz_target_v1'}
+    apply_palm_exploration_contract(contract,'z_down')
+    assert contract['palm_descent_clearance_m']==contract['palm_exploration']['palm_descent_clearance_m']==.0003
+    assert contract['palm_motion']=='synchronized_exploration_z_with_bounded_xy'
+    assert contract['palm_exploration']['effective_xy_bounds_m']==[-.000125,.000125]

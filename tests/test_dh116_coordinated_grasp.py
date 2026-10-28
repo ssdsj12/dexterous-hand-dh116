@@ -1,4 +1,5 @@
 import torch
+import pytest
 from test_dh116_close_downward_penalty import task
 from test_dh116_tensor_contact_window import loads
 
@@ -49,7 +50,7 @@ def test_close_command_slew_uses_the_faster_rate():
 
 
 def test_overpressure_blocks_lift_and_releases_with_slew_limit():
-    t=enabled();t.phase[:]=3;t.m=loads(t,20.);t.command.copy_(t.m['q'])
+    t=enabled();t.phase[:]=3;t.m=loads(t,32.);t.command.copy_(t.m['q'])
     before=t.command.clone();lift=t.offset.clone();a=torch.ones((2,20),dtype=torch.float64);a[:,18:]=-1.
     t.control(a,~t.done,1/480)
     assert t.pressure_limited.all();torch.testing.assert_close(t.offset,lift)
@@ -84,13 +85,13 @@ def test_midpoint_reference_rejects_object_motion_and_common_lift_as_finger_moti
     torch.testing.assert_close(midpoint_coordinates(t.m),before)
 
 
-def test_controller_contract_migration_is_one_way_and_rejects_physics_changes():
+def test_controller_contract_requires_exact_recovery_semantics_on_resume():
     import pytest
     from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes
     from go2_pvcnn.control.dh116.tabletop_coordinated_grasp import CONTRACT
     old=dict(num_envs=4096,physics_hz=480,observation_size=156)
     new=dict(old,grasp_controller=CONTRACT)
-    assert checkpoint_contract_changes(old,new)==['measured_motion_grasp_v2']
+    with pytest.raises(ValueError):checkpoint_contract_changes(old,new)
     assert checkpoint_contract_changes(new,new)==[]
     for a,b in [(new,old),(old,dict(new,physics_hz=240)),(old,dict(new,grasp_controller=dict(CONTRACT,position_lead_rad=.1)))]:
         with pytest.raises(ValueError):checkpoint_contract_changes(a,b)
@@ -145,3 +146,77 @@ def test_near_limit_thumb_reduces_stale_overshoot_without_opening_position_bias(
     assert (t.command[:,8]<t.m['q'][:,8]).all()
     torch.testing.assert_close(t.offset,lift)
     assert t.paused.all()
+
+
+@pytest.mark.parametrize('loaded_hand', [0, 1])
+def test_shared_z_cannot_override_one_loaded_hands_release_hold(loaded_hand):
+    from go2_pvcnn.control.dh116.tabletop_loaded_palm_motion import LoadedPalmReposition
+    t=enabled();t.palm_reposition=LoadedPalmReposition(torch.ones(2,dtype=torch.bool))
+    t.m=loads(t,4.);t.m['hand_object_loads'][:,1-loaded_hand]=0.
+    t.command.copy_(t.m['q'])
+    action=torch.zeros((2,20),dtype=torch.float64);action[:,14]=action[:,17]=-.5
+    t.control(action,~t.done,1/480)
+    assert t.palm_reposition.state[0,loaded_hand]==1
+    torch.testing.assert_close(t.palm_targets[:,:,2],torch.zeros((2,2),dtype=torch.float64))
+
+
+@pytest.mark.parametrize('waiting_hand', [0, 1])
+def test_shared_z_waits_for_slower_release_without_discarding_moving_goal(waiting_hand):
+    from go2_pvcnn.control.dh116.tabletop_loaded_palm_motion import LoadedPalmReposition
+    t=enabled();c=LoadedPalmReposition(torch.ones(2,dtype=torch.bool));t.palm_reposition=c
+    t.m=loads(t,0.);t.m['hand_object_loads'][:,waiting_hand]=2.
+    c.state[:,waiting_hand]=1;c.state[:,1-waiting_hand]=2;c.goal[:,:,2]=-.001
+    t.command.copy_(t.m['q'])
+    action=torch.zeros((2,20),dtype=torch.float64);action[:,14]=action[:,17]=-.5
+    t.control(action,~t.done,1/480)
+    torch.testing.assert_close(t.palm_targets[:,:,2],torch.zeros((2,2),dtype=torch.float64))
+    torch.testing.assert_close(c.goal[:,:,2],torch.full((2,2),-.001,dtype=torch.float64))
+
+
+def test_shared_reposition_preserves_inactive_rows_and_lift_behavior():
+    from go2_pvcnn.control.dh116.tabletop_loaded_palm_motion import LoadedPalmReposition
+    t=enabled(3);baseline=enabled(3)
+    t.palm_reposition=LoadedPalmReposition(torch.ones(3,dtype=torch.bool))
+    for task in (t,baseline):
+        task.m=loads(task,4.);task.phase[:]=torch.tensor([1,3,1]);task.command.copy_(task.m['q'])
+        task.palm_targets[2]=.0007
+    t.palm_reposition.state[:]=1;t.palm_reposition.hold[:,:,2]=.001
+    live=torch.tensor([True,True,False]);action=torch.zeros((3,20),dtype=torch.float64)
+    action[:,14]=action[:,17]=-.5
+    before=t.palm_targets[2].clone()
+    for task in (t,baseline):task.control(action,live,1/480)
+    torch.testing.assert_close(t.palm_targets[1],baseline.palm_targets[1])
+    torch.testing.assert_close(t.palm_targets[2],before)
+
+
+def test_shared_clipped_reposition_goals_can_finish_at_the_common_safe_height():
+    from go2_pvcnn.control.dh116.tabletop_loaded_palm_motion import LoadedPalmReposition
+    t=enabled();c=LoadedPalmReposition(torch.ones(2,dtype=torch.bool));t.palm_reposition=c
+    t.m=loads(t,0.);t.command.copy_(t.m['q'])
+    c.state[:]=2;c.goal[:,:,2]=torch.tensor([-.0001,-.001],dtype=torch.float64)
+    action=torch.zeros((2,20),dtype=torch.float64)
+    t.control(action,~t.done,1/480)
+    t.m['adaptive_palm_offset'].copy_(t.palm_targets)
+    for _ in range(24):t.control(action,~t.done,1/480)
+    assert c.state.tolist()==[[3,3],[3,3]]
+    torch.testing.assert_close(c.goal[:,:,2],torch.full((2,2),-.0001,dtype=torch.float64))
+
+
+@pytest.mark.parametrize('error_m,expected_m', [(1e-5,1e-5),(-1e-5,-1e-5),(.002,.0005)])
+def test_coordinated_contact_correction_adds_meters_to_meter_targets(error_m,expected_m):
+    t=enabled();t.contact_target_z_m=torch.full((2,2),-.004+error_m,dtype=torch.float64)
+    t.m['contact_center_relative_m'][:,:,2]=-.004
+    t.m['contact_valid'][:]=True;t.m['contact_all_below_centerline'][:]=True
+    action=torch.zeros((2,20),dtype=torch.float64)
+    t.control(action,~t.done,1/480)
+    torch.testing.assert_close(t.palm_targets[:,:,2],torch.full((2,2),expected_m,dtype=torch.float64))
+
+
+def test_force_direction_release_supports_joint_envelope():
+    from go2_pvcnn.control.dh116.tabletop_force_direction_reposition import ForceDirectionReposition
+    t=enabled();t.envelope={};t.lower=t.low+.1;t.upper=t.high-.1;t.center=(t.lower+t.upper)/2
+    t.force_direction_reposition=True;t.palm_reposition=ForceDirectionReposition(torch.ones(2,dtype=torch.bool))
+    t.m=loads(t,4.);t.m['vertical_hand_force_n']=torch.full((2,2),-.3,dtype=torch.float64)
+    t.command.copy_(t.m['q'])
+    t.control(torch.zeros((2,20),dtype=torch.float64),~t.done,1/480)
+    assert torch.isfinite(t.command).all()

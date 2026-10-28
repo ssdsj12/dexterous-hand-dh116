@@ -107,3 +107,11 @@ def test_original_solid_object_leaves_legacy_contract_unchanged(tmp_path):
     assert object_spec(tmp_path,'solid_cylinder') == (None,.12,{})
     with pytest.raises(ValueError):
         object_spec(tmp_path,'not_an_object')
+
+
+def test_20mm_solid_cylinder_defaults_to_light_density(tmp_path):
+    from go2_pvcnn.control.dh116.tabletop_adaptive_initialization import object_spec
+    _, mass, contract = object_spec(tmp_path, 'solid_cylinder', solid_radius_m=.02)
+    assert mass == pytest.approx(.1256637061)
+    assert contract['object_radius_m'] == pytest.approx(.02)
+    assert contract['object_density_kg_m3'] == pytest.approx(200.)

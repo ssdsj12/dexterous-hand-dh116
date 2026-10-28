@@ -1,0 +1,16 @@
+{
+  "version": "dh116-simulation-load-v1",
+  "parameters": {
+    "max_force_n": 12.0,
+    "force_rate_n_s": 2.0,
+    "deadband_n": 0.02,
+    "stiffness_max": 20.0,
+    "stiffness_rate": 10.0,
+    "effort_limit_nm": 0.2,
+    "calibration_status": "simulation_estimate"
+  },
+  "status": "candidate_requires_physics_validation",
+  "scope": "12 N per-hand summed contact target ceiling; not calibrated fingertip force or manufacturer maximum torque",
+  "limitation": "2 N/s target slew: 0.1 to 12 N takes 5.95 s; target reachability does not establish measured-force capability",
+  "tested_pressure_geometry": "diametric_midpoint_feedforward_v1"
+}

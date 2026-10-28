@@ -8,12 +8,19 @@ from .tabletop_velocity_limits import CLOSE_COMMAND_RATE_RAD_S
 REWARD_VERSION = 'phase_potential_v1_10n_5'
 LIFT_PRESSURE_TIMING_CONTRACT=dict(version='current_target_lift_pressure_v1',
     gate='same_pressure_limited_mask_as_joint_and_palm_control',threshold_unchanged=True)
-CLOSE_DOWNWARD_PENALTY_CONTRACT=dict(version='close_downward_impulse_reset_v3',
+CLOSE_DOWNWARD_PENALTY_CONTRACT=dict(version='close_downward_no_impulse_reset_v4',
     event='valid_nonfailure_close_to_lift_physics_substep',
     condition='signed_sum_hand_to_object_vertical_force_n_less_than_zero',points=-3.,
     frequency='once_per_episode_phase_transition',dt_scaled=False,
     continuous_downward_penalty='close_contact_and_post_close',observation_unchanged=True,
-    impulse_limit_n_s=2.,close_timeout_s=4.,lift_admission='vertical_force_n >= 0')
+    impulse_limit_n_s=None,close_timeout_s=4.,lift_admission='vertical_force_n >= 0')
+CLOSE_COMPLETION_FORCE_CONTRACT=dict(version='instantaneous_close_completion_force_v1',
+    force_source='vertical_force_n',force_channel='hand_object_normal_only',
+    sample='current_physics_substep',condition='vertical_force_n >= 0',
+    timing='after_nonforce_readiness_dwell',nonforce_close_dwell_s=.2,nonforce_hold_dwell_s=.3,
+    negative_force='blocks_transition_without_resetting_nonforce_dwell',
+    nonforce_instability='reset_dwell_and_return_to_close',dwell_cap='current_phase_threshold',
+    close_timeout_s=4.,observation_unchanged=True)
 MEASURED_READINESS_CONTRACT=dict(version='measured_hand_load_v1',min_hand_load_n=1.,
     max_hand_load='1.25 * configured_max_force_n + deadband_n',
     close_dwell_s=.2,hold_dwell_s=.3,max_speed_m_s=.02,max_slip_m=.003,
@@ -212,6 +219,11 @@ class TensorTask:
     def reset(self, ids, measurement):
         ids=torch.as_tensor(ids,device=self.device,dtype=torch.long)
         if hasattr(self,'palm_reposition'):self.palm_reposition.reset(ids)
+        if hasattr(self,'lift_grasp_hold'):self.lift_grasp_hold.reset(ids)
+        if hasattr(self,'close_grasp_hold'):self.close_grasp_hold.reset(ids)
+        if hasattr(self,'contact_effort'):self.contact_effort.reset(ids)
+        for name in ('joint_requested_target','joint_governed_target','force_tracking_limited','force_guard_conflict'):
+            if hasattr(self,name):getattr(self,name)[ids]=0.
         if self.shaping is not None:self.shaping.reset(ids)
         for key,value in self._seed.items(): getattr(self,key)[ids]=value
         for key in self.keys:
@@ -238,6 +250,8 @@ class TensorTask:
         self.old_command.copy_(self.command)
         invalid=(~torch.isfinite(actions).all(dim=1)|(abs(actions)>1.).any(dim=1))&~self.done
         self.failure[invalid]=FAILURE_CODES['invalid_action']
+        if hasattr(self,'close_grasp_hold'):
+            self.close_grasp_hold.reset(invalid.nonzero(as_tuple=True)[0])
         self.reward[invalid]=-25.; self.terms['failure'][invalid]=-25.
         self.actions=torch.where(invalid[:,None],torch.zeros_like(actions),actions)
         return self.actions
@@ -250,16 +264,29 @@ class TensorTask:
         return ready if lifting else ready&(loads<=1.25*self.f_requested+self.parameters.deadband_n).all(dim=1)
 
     def enable_coordinated_control(self,mask):
+        if getattr(self,"policy_control",False):
+            raise ValueError("policy control cannot enable scripted coordination")
         from .tabletop_coordinated_grasp import midpoint_coordinates
+        from .tabletop_lift_grasp_hold import LiftGraspHold
+        from .tabletop_close_grasp_hold import CloseGraspHold
         mask=torch.as_tensor(mask,device=self.device,dtype=torch.bool)
         if mask.shape!=(self.n,):raise ValueError('one coordinated control selection per environment')
         self.coordinated_control=mask.clone()
         self.coordinated_all=bool(mask.all())
+        self.lift_grasp_hold=LiftGraspHold(self.n,self.device)
+        self.close_grasp_hold=CloseGraspHold(self.n,self.device)
         if self.shaping is not None:
             self.lift_diagnostic_masks=torch.zeros((self.n,8),device=self.device,dtype=torch.bool)
         self.control_pad_anchor=midpoint_coordinates(self.m).clone()
 
+    def enable_policy_control(self):
+        from .tabletop_policy_control import enable
+        enable(self)
+
     def control(self,actions,live,dt):
+        if getattr(self,"policy_control",False):
+            from .tabletop_policy_control import control
+            return control(self,actions,live,dt)
         if not hasattr(self,'coordinated_control'):
             return self._legacy_control(actions,live,dt)
         from .tabletop_coordinated_grasp import control
@@ -377,6 +404,12 @@ class TensorTask:
     def consume(self, measurement, live, dt, *, vertical_force_n=None, lift_vertical_force_n=None,
                 object_weight_n=None):
         new={k:torch.as_tensor(measurement[k],device=self.device,dtype=self.m[k].dtype) for k in self.keys}
+        if hasattr(self,'lift_grasp_hold'):
+            hold_palm_offset=torch.as_tensor(
+                measurement.get('commanded_palm_offset_m',self.palm_targets),
+                device=self.device,dtype=self.palm_targets.dtype)
+            if hold_palm_offset.shape!=(self.n,2,3):
+                raise ValueError('applied palm offset must have shape (N, 2, 3)')
         if self.vertical_force_reward:
             if vertical_force_n is None:
                 raise ValueError('measured signed vertical force is required')
@@ -404,10 +437,19 @@ class TensorTask:
         old_progress=phase_potential(self.phase,self.contact_time)
         old_success_time=self.success_time.clone()
         finite=torch.ones_like(live)
+        if hasattr(self,'lift_grasp_hold'):
+            finite &= ~self.coordinated_control | torch.isfinite(hold_palm_offset).flatten(1).all(1)
         for key in self.keys:
             if key!='joint_failure': finite &= torch.isfinite(new[key]).reshape(self.n,-1).all(dim=1)
         if self.vertical_force_reward:
             finite &= torch.isfinite(vertical_force_n)&torch.isfinite(lift_vertical_force_n)
+        if hasattr(self,'close_grasp_hold'):
+            close_normal=(new['vertical_hand_force_n'].sum(1) if vertical_force_n is None else
+                          torch.as_tensor(vertical_force_n,device=self.device,dtype=torch.float64))
+            if close_normal.shape!=(self.n,):raise ValueError('vertical force must contain one signed sum per environment')
+            hold_finite=(torch.isfinite(self.command).all(1)&torch.isfinite(self.f_target).all(1)
+                         &torch.isfinite(self.f_requested).all(1)&torch.isfinite(close_normal))
+            finite &= ~self.coordinated_control | hold_finite
         if self.shaping is not None:finite &= torch.isfinite(object_weight_n)&(object_weight_n>0)
         # The full contact contract uses nonnegative loads and additive hand sums.
         for key in ('object_link_loads','grouped_object_loads','hand_object_loads'):
@@ -459,14 +501,11 @@ class TensorTask:
         close_contact=loads.sum(1)>.2
         if self.close_downward_penalty:
             close_live=active&(self.phase==1)&close_contact
+            # Retain the accumulated impulse for telemetry only. Completion uses
+            # the current force; accumulated downward force does not reset close.
             self.close_downward_impulse[close_live]+=torch.clamp(-vertical_force_n[close_live],min=0.)*dt
-            over_limit=close_live&(self.close_downward_impulse>=CLOSE_DOWNWARD_PENALTY_CONTRACT['impulse_limit_n_s']-1e-12)
-            self.failure[over_limit]=FAILURE_CODES['grasp_not_established']
             active &= self.failure==0
             close=active&(self.phase<3)
-            ready &= ~over_limit
-        if self.vertical_force_reward:
-            ready &= vertical_force_n>=0.
         if hasattr(self,'palm_reposition'):ready &= ~self.palm_reposition.active.any(1)
         if hasattr(self,'palm_reposition'):ready &= ~self.palm_reposition.aborted.any(1)
         if hasattr(self,'coordinated_control'):
@@ -474,10 +513,30 @@ class TensorTask:
             ready &= ~self.coordinated_control | (m['mimic_errors'].abs().amax(1)<CONTRACT['coupling_budget_rad'])
         if self.contact_target_z_m is not None:
             ready &= (m['contact_valid'] & m['contact_all_below_centerline']).all(dim=1)
-        self.phase[close&~ready]=1; self.contact_time[close&~ready]=0.
-        self.contact_time[close&ready]+=dt
-        transition=close&ready&(self.contact_time>=torch.where(self.phase==1,torch.full_like(self.contact_time,.2),torch.full_like(self.contact_time,.3))-1e-12)
+        # Legacy environments retain their close/hold dwell. Coordinated close
+        # captures each hand immediately and admits lift on both current sides.
+        coordinated=getattr(self,'coordinated_control',torch.zeros_like(close))
+        legacy_close=close&~coordinated
+        self.phase[legacy_close&~ready]=1; self.contact_time[legacy_close&~ready]=0.
+        dwell_threshold=torch.where(self.phase==1,torch.full_like(self.contact_time,.2),torch.full_like(self.contact_time,.3))
+        self.contact_time[legacy_close&ready]=torch.minimum(self.contact_time+dt,dwell_threshold)[legacy_close&ready]
+        if self.vertical_force_reward:
+            ready &= vertical_force_n>=0.
+        transition=legacy_close&ready&(self.contact_time>=dwell_threshold-1e-12)
         self.phase[transition]=3 if self.skip_hold else self.phase[transition]+1
+        if hasattr(self,'close_grasp_hold'):
+            hand_ready=self.close_grasp_hold.update(self,live,close,speed,hold_palm_offset,dt)
+            current_ready=hand_ready.all(1)&(close_normal>=0.)
+            ready=torch.where(close&coordinated,current_ready,ready)
+            coordinated_transition=close&coordinated&current_ready
+            self.phase[close&coordinated&~current_ready]=1
+            self.contact_time[live&coordinated&(previous_phase<3)]=0.
+            self.phase[coordinated_transition]=3
+            transition |= coordinated_transition
+        if hasattr(self,'lift_grasp_hold'):
+            self.lift_grasp_hold.capture(self,
+                transition&(self.phase==3)&self.coordinated_control,
+                hold_palm_offset)
         self.contact_time[transition]=0.
         lift=active&(previous_phase==3)
         stable=(m['bottom']>=.33)&(speed<.03)&(self.slip<=.02)&(lift_vertical_force_n>=0.)

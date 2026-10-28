@@ -6,9 +6,14 @@ from .tabletop_batched_task import BatchTask
 
 
 class GpuTaskVecEnv(SharedPhysicsVecEnv):
-    def __init__(self,envs,world):
+    def __init__(self,envs,world,*,recover_training_failures=False):
         self.world=world
         super().__init__(envs,world.advance)
+        self._already_reset=set()
+        self.recovery=None
+        if recover_training_failures:
+            from .tabletop_gpu_recovery import GpuEpisodeRecovery
+            self.recovery=GpuEpisodeRecovery(self)
 
     @contextmanager
     def _batch_reset(self, indices):
@@ -25,7 +30,8 @@ class GpuTaskVecEnv(SharedPhysicsVecEnv):
         for i in indices:
             self.envs[i].flush_episode()
         offsets = [self.envs[i].initial_offset for i in indices]
-        self.world.reset_slots(indices, offsets)
+        fresh=[i for i in indices if i not in self._already_reset]
+        if fresh:self.world.reset_slots(fresh,[self.envs[i].initial_offset for i in fresh])
         try:
             for i, offset in zip(indices, offsets):
                 self.envs[i].backend._prepared_reset_offset = offset
@@ -33,8 +39,13 @@ class GpuTaskVecEnv(SharedPhysicsVecEnv):
         finally:
             for i in indices:
                 self.envs[i].backend.__dict__.pop('_prepared_reset_offset', None)
+            self._already_reset.difference_update(indices)
 
     def reset(self):
+        self._already_reset.clear()
+        if self.recovery:
+            self.recovery.pending.clear()
+            self.recovery.records.clear()
         with self._batch_reset(range(self.num_envs)):
             return super().reset()
 
@@ -53,7 +64,10 @@ class GpuTaskVecEnv(SharedPhysicsVecEnv):
         def advance(offset,command,allowed,live):
             self.world.advance_batch(offset,command,allowed,live,task.palm_actions)
             return self.world.measure_batch()
-        results=task.step(actions,advance)
+        recovering=self.recovery is not None and all(e.mode=='training' for e in self.envs)
+        if recovering:self.recovery.begin()
+        results=task.step(actions,advance,self.recovery.after_substep if recovering else None)
+        if recovering:self.recovery.finish(results)
         for i,b in enumerate(self.world.backends):
             b.adaptive_palm_offset=self.world.palms[i].copy()
             b.grip_stiffness=self.world.gains[i].copy()

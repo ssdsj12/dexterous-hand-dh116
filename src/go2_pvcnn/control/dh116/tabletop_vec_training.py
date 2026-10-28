@@ -1,7 +1,8 @@
 """Single-process vector PPO lifecycle with physical admission per environment.
 
 The supplied SB3 VecEnv owns one shared simulator. This module never launches
-workers or a second simulator, and treats one unsafe environment as a global stop.
+workers or a second simulator. Unsafe states stop globally unless an explicit,
+validated training-only isolated-reset contract accepts the failed episode.
 """
 from __future__ import annotations
 
@@ -12,6 +13,8 @@ from pathlib import Path
 import time
 
 import numpy as np
+
+from .tabletop_gpu_recovery import validated_recovery
 
 from .tabletop_training import (
     PHYSICAL_FAILURES, canonical_contract, load_checkpoint, save_checkpoint, write_json,
@@ -234,9 +237,10 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
     parameters.update(ppo_kwargs or {})
     result = dict(status='admission', passed=False, grasp_qualified=False,
                   num_envs=count, pipeline_scope='close_to_lift', ppo_updates=0,
-                  ppo_timesteps=0, ppo_parameters=parameters, recovered_mimic_episodes=0)
+                  ppo_timesteps=0, ppo_parameters=parameters, recovered_mimic_episodes=0, recovered_physical_episodes=0)
     model = None
     callback = None
+    live_writer = None
     started = time.monotonic()
     training_started = None
     training_finished = None
@@ -244,7 +248,7 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
     last_monitor = 0.
     per_env = [dict(env_index=i, episodes=0, successes=0, return_sum=0.,
                     last_return=None, last_failure=None, phase_counts={}, reached_phase_counts={},
-                    recovered_mimic_episodes=0, failure_counts={})
+                    recovered_mimic_episodes=0, recovered_physical_episodes=0, failure_counts={})
                for i in range(count)]
     episode_returns = np.zeros(count)
     episode_lengths = np.zeros(count, dtype=int)
@@ -288,11 +292,13 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
             training_elapsed_seconds=elapsed, elapsed_seconds=now-started,
             per_env=per_env, safety_stop=result.get('safety_failure'),
             recovered_mimic_episodes=result['recovered_mimic_episodes'],
+            recovered_physical_episodes=result['recovered_physical_episodes'],
             training_stopped=result.get('training_stopped'),
             passed=result['passed'], evaluation=result.get('evaluation'))
         if 'env_expansion' in result:
             value['env_expansion'] = result['env_expansion']
         value.update(episode_budget())
+        value.update({key:result[key] for key in ('telemetry_status','logging_errors') if key in result})
         value.update(extra or {})
         write_json(output/'monitor.json', value)
         write_json(output/'training_progress.json', value)
@@ -308,6 +314,7 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
             infos = self.locals.get('infos', [])
             rewards = self.locals.get('rewards')
             recovered = [_validated_recovered_mimic(info, done, contract, env.observation_space.shape)
+                         or validated_recovery(info, done, contract, env.observation_space.shape)
                          for info, done in zip(infos, self.locals.get('dones', []))]
             # Only training may continue after a validated isolated reset. Keep
             # original infos/rewards/dones intact for SB3 and diagnostic counts.
@@ -316,7 +323,8 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
             self.failure = _safety(safety_infos, self.locals.get('new_obs'), rewards)
             for i, info in enumerate(infos):
                 if 'force_feedback' in info:
-                    per_env[i]['force_feedback'] = info['force_feedback']
+                    from .tabletop_tensorboard import finite_diagnostics
+                    per_env[i]['force_feedback'] = finite_diagnostics(info['force_feedback'])
                 physical = info.get('physical')
                 if physical:
                     # Non-finite diagnostics must remain JSON-serializable so
@@ -348,8 +356,11 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
                         failures = row['failure_counts']
                         failures[info['failure']] = failures.get(info['failure'], 0)+1
                     if recovered[i]:
-                        row['recovered_mimic_episodes'] += 1
-                        result['recovered_mimic_episodes'] += 1
+                        row['recovered_physical_episodes'] = row.get('recovered_physical_episodes',0)+1
+                        result['recovered_physical_episodes'] += 1
+                        if info.get('failure') == 'mimic_error':
+                            row['recovered_mimic_episodes'] += 1
+                            result['recovered_mimic_episodes'] += 1
                     reached = Counter(row['reached_phase_counts'])
                     reached.update(set(info.get('reached_phases', [])))
                     row['reached_phase_counts'] = dict(reached)
@@ -366,7 +377,16 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
                 self.last_progress = self.num_timesteps
             else:
                 monitor()
+            live_writer.write(self.num_timesteps, infos, rewards, per_env, self.failure,
+                              force=bool(self.failure))
             return self.failure is None
+
+        def _on_training_end(self):
+            live_writer.write(self.num_timesteps, self.locals.get('infos', []),
+                              self.locals.get('rewards'), per_env, self.failure, force=True)
+            # The last PPO update otherwise stays buffered until the next rollout.
+            if self.logger.name_to_value:
+                self.logger.dump(step=self.num_timesteps)
 
     try:
         env.env_method('set_stage', 'full')
@@ -407,6 +427,9 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
                         v = row.get(key)
                         if isinstance(v, bool) or not isinstance(v, int) or v < 0:
                             raise ValueError('episode progress counters must be nonnegative integers')
+                    recovered_physical = row.get('recovered_physical_episodes',0)
+                    if type(recovered_physical) is not int or not 0 <= recovered_physical <= row['episodes']:
+                        raise ValueError('recovered physical episode count invalid')
                     if row['successes'] > row['episodes']:
                         raise ValueError('episode progress successes exceed completed episodes')
                     if (not isinstance(row.get('return_sum'), (int, float))
@@ -422,6 +445,7 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
                     raise ValueError('episode progress historical steps do not match checkpoint counters')
                 per_env[:source_count] = rows
                 result['recovered_mimic_episodes'] = sum(r['recovered_mimic_episodes'] for r in rows)
+                result['recovered_physical_episodes'] = sum(r.get('recovered_physical_episodes',0) for r in rows)
                 result['resumed_completed_episodes_per_env'] = [r['episodes'] for r in per_env]
             for key in ('learning_rate', 'n_steps', 'batch_size', 'n_epochs', 'gamma',
                         'gae_lambda', 'ent_coef', 'vf_coef', 'max_grad_norm', 'target_kl',
@@ -545,7 +569,9 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
                 from .tabletop_force_feedback import initialize_force_policy
                 initialize_force_policy(model.policy)
                 result['initial_force_action_mean'] = -.95
-        model.set_logger(configure(str(output/'ppo'), ['csv', 'stdout']))
+        model.set_logger(configure(str(output/'ppo'), ['csv', 'stdout', 'tensorboard']))
+        from .tabletop_tensorboard import LiveTrainingWriter
+        live_writer = LiveTrainingWriter(output/'ppo'/'live')
         env.env_method('set_mode', 'training')
         model._last_obs = None
         callback = SafetyCheckpoint()
@@ -617,6 +643,20 @@ def run_vector_training(env, output, contract, *, timesteps=1024, eval_episodes=
         result['exception'] = f'{type(exc).__name__}: {exc}'
         raise
     finally:
+        cleanups=[]
+        if live_writer is not None:
+            cleanups.append(('live_tensorboard',live_writer.close))
+        if model is not None and getattr(model, '_logger', None) is not None:
+            cleanups.append(('ppo_logger',model.logger.close))
+        for name,cleanup in cleanups:
+            try:
+                cleanup()
+            except OSError as error:
+                # An optional logger failure must not replace a physics stop or
+                # prevent saving the model and its original failure report.
+                result.setdefault('logging_errors',[]).append(dict(
+                    operation=name+'.close',error=f'{type(error).__name__}: {error}'))
+                result['telemetry_status']='degraded'
         result.update(episode_budget())
         if model is not None:
             result.update(ppo_updates=int(model._n_updates), ppo_timesteps=int(model.num_timesteps))

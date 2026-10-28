@@ -16,8 +16,11 @@ def joint_actions(target,lower,center,upper):
         raise ValueError('fixed grasp target outside joint envelope')
     delta=target-center
     scale=torch.where(delta>=0,upper-center,center-lower)
-    if (scale<=0).any():raise ValueError('degenerate joint envelope')
-    return delta/scale
+    if (not all(torch.isfinite(v).all() for v in (lower,center,upper))
+            or ((lower>center)|(center>upper)).any()
+            or ((scale<=0)&(delta!=0)).any()):
+        raise ValueError('degenerate joint envelope')
+    return torch.where(scale>0,delta/torch.where(scale>0,scale,1.),0.)
 
 
 def force_action(force,maximum):
@@ -66,8 +69,14 @@ def teacher_contact_z_candidates():
 
 
 def check_probe_contract(saved,current,*,allow_controller_change=False):
+    from .tabletop_tensor_env import TRAINING_JOINT_LIMIT_CONTRACT
     left=dict(saved);right=dict(current)
     left.pop('num_envs',None);right.pop('num_envs',None)
+    # Inference probes intentionally omit the known PPO-only early task limit.
+    # Unknown versions/thresholds and all physical differences still fail closed.
+    if ('training_joint_limit' not in right
+            and left.get('training_joint_limit')==TRAINING_JOINT_LIMIT_CONTRACT):
+        left.pop('training_joint_limit')
     if allow_controller_change:
         for key in ('grasp_controller','palm_reposition','force_direction_reposition',
                     'training_failure_handling','close_downward_penalty',
@@ -97,9 +106,9 @@ def phase3_lift_summary(lift_force, phase_before, ready, speed, slip):
     stable=lift&(force>=0.)&(np.asarray(ready)>0)&(np.asarray(speed)<.03)&(np.asarray(slip)<=.02)&finite
     samples=force[lift & finite]
     return dict(
-        mean_lift_force_n=float(samples.mean()) if samples.size else float('nan'),
-        peak_lift_force_n=float(samples.max()) if samples.size else float('nan'),
-        lift_force_finite_fraction=float(finite[lift].mean()) if lift.any() else float('nan'),
+        mean_lift_force_n=float(samples.mean()) if samples.size else None,
+        peak_lift_force_n=float(samples.max()) if samples.size else None,
+        lift_force_finite_fraction=float(finite[lift].mean()) if lift.any() else None,
         stable_lift_force_samples=int(stable.sum()),
     )
 
@@ -148,7 +157,17 @@ class ProbeRecorder:
             contact_count=m.get('contact_count',torch.zeros_like(m['contact_valid'],dtype=torch.long)),
             target=t.f_target,force_offset=t.f_offset,offset=t.offset-w.initial_offset,
             palms=w.palms,palm_target=t.palm_targets,palm_clipped=t.palm_clipped,
-            policy_palm=t.actions[:,12:18],command=t.command,q=m['q'],qd=m['qd'],
+            policy_action=t.actions,policy_palm=t.actions[:,12:18],
+            requested_joint_target=getattr(t,'joint_requested_target',torch.full_like(t.command,float('nan'))),
+            governed_joint_target=getattr(t,'joint_governed_target',torch.full_like(t.command,float('nan'))),
+            submitted_joint_target=w.commands.flatten(1).float(),
+            force_tracking_limited=getattr(t,'force_tracking_limited',t.f_blocked),
+            force_guard_conflict=getattr(t,'force_guard_conflict',torch.zeros_like(t.f_blocked)),
+            force_tracking_error=t.f_target-m['hand_object_loads'],
+            contact_effort_nm=getattr(w,'effort_feedforward',torch.zeros_like(w.commands)),
+            drive_effort_budget_nm=(w.parameters.effort_limit_nm-getattr(w,'effort_feedforward',torch.zeros_like(w.commands)).abs()),
+            commanded_root=w.root_targets,measured_root=w.roots,
+            command=t.command,q=m['q'],qd=m['qd'],
             signed_mimic=m['mimic_errors'],
             hand_clearance=m['hand_clearance'],pad_relative=m['pad_relative'],
             object_velocity=m['object_velocity'],ready=t.grip_force_ready(m['hand_object_loads']),
@@ -165,6 +184,8 @@ class ProbeRecorder:
             fields['reposition_state']=t.palm_reposition.state
             fields['reposition_attempts']=t.palm_reposition.attempts
             fields['reposition_aborted']=t.palm_reposition.aborted
+            if hasattr(t.palm_reposition,'exhausted_reposition'):
+                fields['reposition_exhausted']=t.palm_reposition.exhausted_reposition
             fields['reposition_goal_clipped']=t.palm_reposition.goal_clipped
             for name in ('force_before','force_release','force_move','force_reclose'):
                 if hasattr(t.palm_reposition,name):
@@ -176,6 +197,18 @@ class ProbeRecorder:
             fields['wrist_anchor']=torch.stack([h.data.root_pose_w for h in w.hands],1)
             fields['wrist_pose_target']=w.root_targets
 
+        if hasattr(t,'close_grasp_hold'):
+            fields.update(close_hand_holding=t.close_grasp_hold.active,
+                close_hand_ready=t.close_grasp_hold.ready,
+                close_held_force_target=t.close_grasp_hold.force_target,
+                close_held_palm_offset=t.close_grasp_hold.palm_offset,
+                close_contact_loss_s=t.close_grasp_hold.contact_loss_s)
+        if hasattr(t,'lift_grasp_hold'):
+            fields.update(lift_grip_recovering=t.lift_grasp_hold.recovering,
+                lift_grip_contact_loss_s=t.lift_grasp_hold.contact_loss_s,
+                lift_grip_recovery_stable_s=t.lift_grasp_hold.recovery_stable_s)
+        if hasattr(t,'held_safety_correction'):
+            fields['held_safety_correction']=t.held_safety_correction
         fields['body_vz']=torch.stack([h.data.body_lin_vel_w[...,2] for h in w.hands],1)
         values=[];columns=[]
         for name,value in fields.items():

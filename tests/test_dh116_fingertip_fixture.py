@@ -32,3 +32,25 @@ def test_nonfinite_measurements_are_rejected_and_empty_hold_is_not_success():
     assert summarize_hold([],[],[])['sustained_14n'] is False
     with pytest.raises(ValueError):fixture_center([[float('nan'),0,0]],1)
     with pytest.raises(ValueError):summarize_hold([0,1],[0,float('nan')],[0,0])
+
+
+def test_paired_thumb_cases_change_only_fixture_gap_and_keep_training_limits():
+    from go2_pvcnn.control.dh116.fingertip_fixture import paired_thumb_setup
+    setup=paired_thumb_setup()
+    assert setup['effort_nm']==.2 and setup['mimic_frequency']==400.
+    assert setup['active_speed']==.3 and setup['passive_speed']==2.97
+    assert setup['position_iterations']==64 and setup['velocity_iterations']==16
+    for side in ('left','right'):
+        pair=[c for c in setup['cases'] if c['side']==side]
+        assert len(pair)==2 and all(c['digit']=='thumb' for c in pair)
+        assert sorted(c['plate_outward_m'] for c in pair)==[0.,.1]
+        assert {c['load'] for c in pair}=={'unloaded','loaded'}
+
+
+def test_loaded_target_limits_lag_without_jumping_or_modifying_actual_state():
+    from go2_pvcnn.control.dh116.fingertip_fixture import bounded_position_target
+    assert bounded_position_target(.18,.04,.048,1/480,.008)==pytest.approx(.048)
+    assert bounded_position_target(.18,.04,.04,1/480,.008)==pytest.approx(.04+.05/480)
+    assert bounded_position_target(.03,.04,.048,1/480,.008)==pytest.approx(.048-.05/480)
+    assert bounded_position_target(.04,.0395,.04,1/480,.008)==pytest.approx(.04)
+    with pytest.raises(ValueError):bounded_position_target(.18,float('nan'),.04,1/480,.008)

@@ -50,6 +50,7 @@ class ForceDirectionReposition:
         self.release_timeout = torch.zeros_like(self.aborted)
         self.recontact_abort = torch.zeros_like(self.aborted)
         self.reclose_timeout = torch.zeros_like(self.aborted)
+        self.goal_table_clearance_m = CONTRACT['goal_table_clearance_m']
 
     @property
     def active(self):
@@ -65,27 +66,34 @@ class ForceDirectionReposition:
         ):
             getattr(self, name)[ids] = 0
 
-    def _clip_goal(self, goal, current, clearance):
+    def _clip_goal(self, goal, current, clearance, selected=None):
         lower = current[:, :, 2] - CONTRACT['max_downward_step_m']
         goal[:, :, 2] = torch.maximum(goal[:, :, 2], lower)
         if clearance is not None:
             safe = current[:, :, 2] - (
-                clearance - CONTRACT['goal_table_clearance_m']
+                clearance - self.goal_table_clearance_m
             ).clamp_min(0.)
             clipped = goal[:, :, 2] < safe
-            self.goal_clipped |= clipped
+            self.goal_clipped |= clipped if selected is None else clipped & selected
             goal[:, :, 2] = torch.maximum(goal[:, :, 2], safe)
         return goal
 
     def apply(self, target, current, loads, phase, live, dt,
-              vertical_hand_force_n, *, clearance=None):
+              vertical_hand_force_n, *, clearance=None, held_hands=None):
         selected = self.mask[:, None] & live[:, None] & (phase == 1)[:, None]
+        if held_hands is not None:
+            held_hands = torch.as_tensor(held_hands, device=loads.device, dtype=torch.bool)
+            if held_hands.shape != loads.shape:
+                raise ValueError('held_hands must have shape (N, 2)')
+            selected = selected & ~held_hands
         fz = torch.as_tensor(vertical_hand_force_n, device=current.device,
                              dtype=current.dtype)
         if fz.shape != loads.shape:
             raise ValueError('vertical_hand_force_n must have shape (N, 2)')
 
         inactive = self.active & ~selected
+        if held_hands is not None:
+            inactive &= live[:, None] & ~held_hands
         self.state[inactive] = 0
         self.clock[inactive] = 0.
         self.dwell[inactive] = 0.
@@ -100,7 +108,11 @@ class ForceDirectionReposition:
             goal = target.clone()
             goal[:, :, 2] = torch.minimum(
                 goal[:, :, 2], current[:, :, 2] - CONTRACT['correction_step_m'])
-            self.goal[:] = self._clip_goal(goal, current, clearance)
+            if held_hands is None:
+                self.goal[:] = self._clip_goal(goal, current, clearance)
+            else:
+                goal = self._clip_goal(goal, current, clearance, selected=trigger)
+                self.goal[trigger] = goal[trigger]
             self.hold[trigger] = current[trigger]
             self.force_before[trigger] = fz[trigger]
             self.attempts[trigger] += 1

@@ -28,3 +28,19 @@ def test_playback_rejects_changes_other_than_display_count(source, change):
     current.update(change)
     with pytest.raises(ValueError, match='contract|one environment'):
         load_playback_policy(path, vector(1), current)
+
+
+def test_material_comparison_is_explicit_inference_only_and_preserves_checkpoint(source):
+    from go2_pvcnn.control.dh116.tabletop_material import material_contract
+    path,contract,original=source
+    current=dict(contract,num_envs=1,**material_contract('high_friction'))
+    with pytest.raises(ValueError,match='contract'):
+        load_playback_policy(path,vector(1),current)
+    before=path.with_suffix('.json').read_bytes()
+    model,metadata=load_playback_policy(path,vector(1),current,allow_material_change=True)
+    assert_state_equal(original.policy.state_dict(),model.policy.state_dict())
+    assert metadata['playback_material_override']['current']==current['object_contact_material']
+    assert before==path.with_suffix('.json').read_bytes()
+    for change in [dict(physics_hz=1),dict(reward='different'),dict(hand_contact_material={'static_friction':99})]:
+        with pytest.raises(ValueError,match='contract'):
+            load_playback_policy(path,vector(1),dict(current,**change),allow_material_change=True)

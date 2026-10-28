@@ -342,6 +342,7 @@ class GpuWorld:
             mimic_errors=self.errors.reshape(self.n,10).copy(),hand_clearance=self.clearances.copy(),
             adaptive_palm_offset=(self.palms.copy() if self.mounts is None else
                 self.palms+self.roots[:,:,:3]-self.root_targets[:,:,:3]),grip_stiffness=self.gains.copy(),
+            commanded_palm_offset_m=self.palms.copy(),
             pad_relative=self.pad_relative.copy(),joint_failure=failure,
             _diagnostics={i:self.backends[i].measure()['diagnostics'] for i in sorted(set(range(min(8,self.n))) | set(np.flatnonzero(failure != None)) | set(np.flatnonzero(np.max(abs(self.errors),axis=(1,2))>=.004)[:8]))},
             _lowest_links={i:f'{("left","right")[self.shapes[self.lowest[i]][0]]}/'

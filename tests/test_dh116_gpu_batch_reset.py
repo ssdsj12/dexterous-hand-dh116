@@ -105,6 +105,8 @@ def make_physical_world():
     world_type, _ = isaac_classes()
     world = world_type.__new__(world_type)
     world.n, world.device = 4, 'cpu'
+    world.full_hand_contact = False
+    world.mounts = None  # This fixture exercises the fixed-root reset path.
     world.origins = np.arange(12).reshape(4, 3).astype(float)
     world.layout = {'hand_roots': {side: np.array([.1, .2, .3, 1., 0, 0, 0])
                                   for side in ('left', 'right')}}

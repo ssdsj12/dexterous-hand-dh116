@@ -6,6 +6,39 @@ from .tabletop_contact_geometry import aggregate_contact_geometry
 
 ROOT_POSE_WRITE_CONTRACT = dict(version='changed_fixed_root_pose_v1',
     comparison='last_submitted_float32', reset='always_write_selected')
+PALM_TARGET_CONTRACT = dict(version='synchronized_measured_clearance_v2',
+    synchronization='world_z_exploration_offset_preserve_authored_roots',
+    clearance='highest_per_hand_measured_safe_target',
+    descent_backlog='cancel_unsafe_clearance_or_release_hold_target_even_when_motion_paused',
+    clearance_undershoot='restore_signed_deficit_even_when_motion_paused',
+    reposition_goal_feedback='raise_moving_goal_after_safety_projection_preserve_pending_release_goal',
+    scope='live_coordinated_or_z_down')
+
+
+def contact_effort_permission(task, live):
+    from .tabletop_coordinated_grasp import CONTRACT as CONTROL
+    eligible=live[:,None].expand(-1,2).clone()
+    # Position pause/lead projection does not disable pressure generation.
+    # Only the existing severe coupling guard withdraws effort permission.
+    eligible &= task.m['mimic_errors'].reshape(task.n,2,5).abs().amax(2)<CONTROL['severe_coupling_rad']
+    eligible &= ~task.pressure_limited & ~task.force_guard_conflict
+    eligible &= task.m['q'][:,[1,7]]>=task.low[[1,7]]+CONTROL['thumb_limit_margin_rad']
+    if hasattr(task,'palm_reposition'):
+        eligible &= ~((task.palm_reposition.state==1)|(task.palm_reposition.state==2))
+    return eligible
+
+
+def write_contact_effort(hand, joint_ids, effort, total_limit, *, env_ids=None):
+    """Independent actuation + implicit drive share one motor effort budget."""
+    if not torch.isfinite(effort).all() or total_limit<=0:
+        raise ValueError('finite effort and positive total motor budget required')
+    effort=effort.float().clamp(-total_limit,total_limit)
+    drive_budget=(total_limit-effort.abs()).clamp_min(0.)
+    # Implicit actuator's estimated applied_torque is not a measured torque.
+    # Only this PhysX drive limit plus bounded explicit effort enforces the sum.
+    hand.write_joint_effort_limit_to_sim(drive_budget,joint_ids=joint_ids,env_ids=env_ids)
+    hand.set_joint_effort_target(effort,joint_ids=joint_ids,env_ids=env_ids)
+    return drive_budget
 
 
 def rotated_heights(poses, points):
@@ -85,6 +118,7 @@ class TensorWorld:
         self.w = world
         self.n, self.dt, self.device = world.n, world.dt, world.device
         self.decimation = world.args.physics_hz//60
+        self._physics_steps = 0
         self.parameters = world.parameters
         self.hands, self.wire = world.hands, world.wire
         self.origins = self.t(world.origins)
@@ -227,6 +261,7 @@ class TensorWorld:
             approach_error=(self.roots[:,:,:3]-goals).norm(dim=-1).amax(1),
             mimic_errors=self.errors.flatten(1),hand_clearance=self.clearances,
             adaptive_palm_offset=palm_measure,grip_stiffness=self.gains,pad_relative=self.pad_relative,
+            commanded_palm_offset_m=self.palms,
             contact_center_w=self.contact_center_w,
             contact_center_relative_m=self.contact_center_w-self.wp[:,None,:],
             contact_normal_w=self.contact_normal_w,
@@ -239,20 +274,93 @@ class TensorWorld:
             hand_object_loads=self.link_loads.sum(-1),joint_failure=failure)
 
     def advance(self, task, allowed, live):
-        target = task.palm_actions*self.palm_limit
-        movement = (target-self.palms).clamp(-.002*self.dt,.002*self.dt)
+        policy_control = getattr(task,"policy_control",False)
+        if policy_control:
+            from .tabletop_policy_control import CONTRACT as POLICY
+            target = task.palm_targets
+            palm_lower = self.t(POLICY["palm_lower_m"])
+            palm_upper = self.t(POLICY["palm_upper_m"])
+            rate = POLICY["wrist_rate_m_s"]
+        else:
+            target = task.palm_actions*self.palm_limit
+            palm_lower, palm_upper = -self.palm_limit, self.palm_limit
+            rate = .002
+        movement = (target-self.palms).clamp(-rate*self.dt,rate*self.dt)
         clearance_floor=getattr(task,'diagnostic_palm_descent_clearance_m',
                                 getattr(task,'palm_descent_clearance_m',.0021))
         movement=constrain_palm_z_movement(movement,self.clearances,clearance_floor)
-        self.palms = torch.where(allowed[:,None,None],
-            torch.maximum(torch.minimum(self.palms+movement,self.palm_limit),-self.palm_limit),self.palms)
+        self.palms = torch.where((allowed&live)[:,None,None],
+            torch.maximum(torch.minimum(self.palms+movement,palm_upper),palm_lower),self.palms)
+        synchronized=getattr(task,'coordinated_control',torch.zeros_like(live))
+        if getattr(task,'palm_exploration_axis',None)=='z_down':
+            synchronized=torch.ones_like(live)
+        if policy_control:
+            synchronized=torch.zeros_like(live)
+        safety_controlled=torch.ones_like(live) if policy_control else synchronized
+        if hasattr(task,'phase'):
+            synchronized=synchronized&(task.phase<3)
+        if hasattr(task,'close_grasp_hold'):
+            synchronized &= ~task.close_grasp_hold.active.any(1)
+        if policy_control or hasattr(task,'coordinated_control') or getattr(task,'palm_exploration_axis',None)=='z_down':
+            # Roots are measured bases (including driven-carriage lag). Express
+            # their safe heights in the exploration-offset frame of the *new*
+            # common lift target, preserving the authored left/right root gap.
+            measured_z=self.roots[:,:,2]-self.root_seed[:,:,2]-task.offset[:,None]
+            # Finger motion can lower a hard link even with palm descent held.
+            # Restore the signed deficit so the target clears that link rather
+            # than holding its already unsafe measured height.
+            safe_z=measured_z-(self.clearances-clearance_floor)
+            per_hand_z=torch.maximum(self.palms[:,:,2],safe_z)
+            shared_z=per_hand_z.amax(1,keepdim=True)
+            if hasattr(task,'palm_reposition'):
+                reposition=task.palm_reposition
+                waiting=(reposition.state==1)&((task.phase==1)&reposition.mask)[:,None]
+                if hasattr(task,'close_grasp_hold'):waiting &= ~task.close_grasp_hold.active
+                per_hand_z=torch.where(waiting,torch.maximum(per_hand_z,reposition.hold[:,:,2]),per_hand_z)
+                # A release hold forbids further descent even with ample table
+                # clearance. It is already in the exploration-offset frame;
+                # do not add/subtract the common lift a second time.
+                hold_z=torch.where(waiting,reposition.hold[:,:,2],-torch.inf).amax(1,keepdim=True)
+                shared_z=torch.maximum(shared_z,hold_z)
+                # Feed the final safety bound back into the motion goal, even
+                # when the world is already at that bound. Ordinary slew is not
+                # an arrival goal; a slower release must retain pending descent.
+                safe_goal_z=torch.where(synchronized[:,None],safe_z.amax(1,keepdim=True),safe_z)
+                moving=((safety_controlled&live&(task.phase==1)&reposition.mask
+                         )[:,None]&(reposition.state==2)&~waiting
+                        &~(synchronized&waiting.any(1))[:,None]
+                        &(safe_goal_z>reposition.goal[:,:,2]))
+                reposition.goal[:,:,2]=torch.where(moving,
+                    safe_goal_z,reposition.goal[:,:,2])
+                reposition.goal_clipped |= moving
+            # This projection also cancels a previously submitted unsafe lower
+            # target. Merely stopping new descent leaves a driven wrist pushing
+            # toward its queued target. Raising that target to the measured safe
+            # height takes priority over the ordinary exploration slew limit.
+            # Close shares a safe exploration height. Lift retains each hand's
+            # captured offset while applying its own measured clearance bound.
+            projected_z=torch.where(synchronized[:,None],shared_z,per_hand_z)
+            self.palms[:,:,2]=torch.where((safety_controlled&live)[:,None],projected_z,self.palms[:,:,2])
         self.gains = torch.where(live[:,None],(self.gains+self.parameters.stiffness_rate*self.dt)
                                 .clamp_max(self.parameters.stiffness_max),self.gains)
+        if policy_control:
+            self.gains = torch.where(live[:,None], task.policy_stiffness, self.gains)
         pose = self.root_seed.clone()
         pose[:,:,:3] += self.palms
         pose[:,:,2] += task.offset[:,None]
         self.root_targets = torch.where(live[:,None,None],pose,self.root_targets)
         self.commands = torch.where(live[:,None,None],task.command.reshape(self.n,2,6),self.commands)
+        if hasattr(task,'contact_effort'):
+            self.contact_effort_enabled=True
+            loads=task.m['hand_object_loads']
+            eligible=contact_effort_permission(task,live)
+            retained=torch.zeros_like(eligible)
+            if hasattr(task,'lift_grasp_hold'):
+                retained |= task.lift_grasp_hold.active[:,None]&(task.phase==3)[:,None]
+            if hasattr(task,'close_grasp_hold'):
+                retained |= task.close_grasp_hold.active&(task.phase<3)[:,None]
+            self.effort_feedforward=task.contact_effort.step(
+                task.f_target,loads,task.direction,eligible,self.dt,retained=retained)
         for hi, hand in enumerate(self.hands):
             if getattr(self.w,'mounts',None) is None:
                 self.write_root_pose(hi,self.root_targets[:,hi])
@@ -262,8 +370,15 @@ class TensorWorld:
             gains = self.gains[:,hi,None].expand(-1,6).float()
             hand.write_joint_stiffness_to_sim(gains,joint_ids=self.w.ids[hi])
             hand.actuators['active'].stiffness[:] = gains
+            if hasattr(task,'contact_effort'):
+                write_contact_effort(hand,self.w.ids[hi],self.effort_feedforward[:,hi],
+                                     self.parameters.effort_limit_nm)
             hand.write_data_to_sim()
-        self.w.sim.step(render=not self.w.args.headless)
+        # Physics/contact feedback still runs at physics_hz; present at 60 Hz.
+        # Rendering every substep made a four-second close take minutes in GUI.
+        self._physics_steps = getattr(self, '_physics_steps', 0) + 1
+        interval = getattr(self, 'decimation', max(1, round(1 / (60 * self.dt))))
+        self.w.sim.step(render=(not self.w.args.headless and self._physics_steps % interval == 0))
         measurement=self.refresh()
         if getattr(self.w,'mounts',None) is not None:
             from .tabletop_palm_mount import check_transport
@@ -284,6 +399,10 @@ class TensorWorld:
             gains = torch.full((len(ids),6),10.,device=self.device)
             hand.write_joint_stiffness_to_sim(gains,joint_ids=self.w.ids[hi],env_ids=ids)
             hand.actuators['active'].stiffness[ids] = 10.
+            if getattr(self,'contact_effort_enabled',False):
+                write_contact_effort(hand,self.w.ids[hi],torch.zeros((len(ids),6),device=self.device),
+                                     self.parameters.effort_limit_nm,env_ids=ids)
+                if hasattr(self,'effort_feedforward'):self.effort_feedforward[ids,hi]=0.
             hand.write_data_to_sim()
             self.root_targets[ids,hi] = pose
             self.commands[ids,hi] = q[:,self.w.ids[hi]].double()

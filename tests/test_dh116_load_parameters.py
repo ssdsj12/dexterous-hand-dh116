@@ -49,3 +49,17 @@ def test_physics_readback_rejects_unapplied_effort_and_gain_profile():
         verify_drive_readback(np.full((3,6),51.),np.full((3,6),.2),np.full((3,6),.5),parameters)
     # The older joint-target scene intentionally has a distinct 0.15 Nm limit.
     verify_drive_readback(np.full((1,6),10.),np.full((1,6),.2),np.full((1,6),.15),LoadParameters(effort_limit_nm=.15))
+
+
+def test_twelve_newton_profile_reaches_target_within_acquisition_timeout():
+    from pathlib import Path
+    from go2_pvcnn.control.dh116.tabletop_load_parameters import read_load_parameters
+    from go2_pvcnn.control.dh116.tabletop_force_feedback import ReactionForceController
+    parameters=read_load_parameters(Path(__file__).resolve().parents[1]/'configs/dh116_load_profiles/v2_pressure_12n_candidate.json')
+    control=ReactionForceController(parameters)
+    for step in range(360):
+        control.update(action=[1.,1.],forces=[0.,0.,0.,0.],blocked=[False,False],slip_m=0.,phase='close',dt=1/60)
+        assert np.all(control.target<=12.)
+        if step==59:np.testing.assert_allclose(control.target,[2.1,2.1],atol=1e-10)
+    np.testing.assert_allclose(control.target,[12.,12.],atol=1e-10)
+    assert parameters.effort_limit_nm==.2
