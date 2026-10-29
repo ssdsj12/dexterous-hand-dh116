@@ -67,7 +67,7 @@ class TeacherRecorder(ProbeRecorder):
                 joint_governed_rad=t.joint_governed_target,
                 joint_submitted_rad=w.commands.flatten(1).float(),
                 joint_measured_rad=m['q'],force_target_n=t.f_target,
-                force_tracking_limited=t.force_tracking_limited,
+                force_tracking_limited=getattr(t,'force_tracking_limited',t.f_blocked),
                 contact_effort_nm=getattr(w,'effort_feedforward',torch.zeros_like(w.commands)))
         if hasattr(t,'close_grasp_hold'):
             values.update(close_hand_holding=t.close_grasp_hold.active,
@@ -84,7 +84,11 @@ def run_success_teacher(env,args,contract,obs):
     cases=json.loads(args.teacher_search_cases.read_text())['cases']
     if len(cases)!=env.n:raise ValueError('teacher case count must equal num_envs')
     reference=json.loads(args.grasp_initialization.read_text())['grasp_command']
-    controller=TeacherController(cases,torch.tensor(reference,device=env.device,dtype=torch.float64),
+    controller_type=TeacherController
+    if getattr(env.task,'force_region',False):
+        from .tabletop_force_teacher import ForceTeacherController
+        controller_type=ForceTeacherController
+    controller=controller_type(cases,torch.tensor(reference,device=env.device,dtype=torch.float64),
         env.task.lower,env.task.center,env.task.upper,env.device)
     trace=TeacherRecorder(env,cases,args.output,episode_limit=args.teacher_episodes)
     env.control_probe=trace
@@ -101,7 +105,8 @@ def run_success_teacher(env,args,contract,obs):
         profiler.enable()
     try:
         for steps in range(1,args.teacher_control_steps+1):
-            actions=controller.actions(env.task.m)
+            actions=(controller.actions(env.task.m,env.task) if getattr(env.task,'force_region',False)
+                     else controller.actions(env.task.m))
             next_obs,rewards,dones,extras=env.step(actions)
             extras=dict(extras,physical_evidence=trace.evidence)
             recorder.append(current,actions,rewards,dones,extras)

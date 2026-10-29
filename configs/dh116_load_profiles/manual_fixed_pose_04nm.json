@@ -1,0 +1,14 @@
+{
+  "version": "dh116-simulation-load-v1",
+  "parameters": {
+    "max_force_n": 12.0,
+    "force_rate_n_s": null,
+    "deadband_n": 0.02,
+    "stiffness_max": 20.0,
+    "stiffness_rate": 10.0,
+    "effort_limit_nm": 0.4,
+    "calibration_status": "simulation_estimate"
+  },
+  "status": "manual_position_calibration_candidate",
+  "scope": "Manual demonstration only. Twice original angular joint effort ceiling; same fixed joint targets and physical guards."
+}

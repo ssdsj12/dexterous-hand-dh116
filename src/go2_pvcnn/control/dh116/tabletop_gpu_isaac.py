@@ -33,20 +33,19 @@ class GpuWorld:
         self.n, self.dt = args.num_envs, 1/args.physics_hz
         self.device = args.device
         self.layout = copy.deepcopy(layout)
-        self.flexible = getattr(args,'object_kind',None) == 'deformx_wire'
+        
         self.full_hand_contact = bool(getattr(args,'full_hand_contact',False))
-        if self.full_hand_contact and self.flexible:
-            raise ValueError('full-hand rigid contact is unavailable for flexible objects')
-        self.flex = None
+        
+        
         self.cloner = GridCloner(spacing=args.env_spacing_m)
         self.cloner.define_base_env('/World/envs')
         self.paths = self.cloner.generate_paths('/World/envs/env', self.n)
-        self.source = spawn_scene(sim, args, layout, sources, self.paths[0], np.zeros(3), external_wire=self.flexible)
+        self.source = spawn_scene(sim, args, layout, sources, self.paths[0], np.zeros(3))
         # PhysX cooks GPU convex data before applying mesh scale. The original
         # half-meter, half-millimeter wall prisms exceed its aspect-ratio limit.
         # Normalize cooking coordinates and restore their EXACT world vertices;
         # no change to bore, thickness, surface, mass, inertia or material.
-        for prim in ([] if self.flexible else Usd.PrimRange(sim.stage.GetPrimAtPath(self.paths[0]+'/Wire'))):
+        for prim in (Usd.PrimRange(sim.stage.GetPrimAtPath(self.paths[0]+'/Wire'))):
             if not prim.IsA(UsdGeom.Mesh) or not prim.HasAPI(UsdPhysics.CollisionAPI):
                 continue
             mesh = UsdGeom.Mesh(prim)
@@ -62,7 +61,7 @@ class GpuWorld:
         # wrappers for writes/reads after initialization.
         self.hands = [Articulation(h.cfg.replace(prim_path=f'/World/envs/env_.*/{side}Hand', spawn=None))
                       for h, side in zip(self.source['hands'], ('left','right'))]
-        self.wire = None if self.flexible else RigidObject(self.source['wire'].cfg.replace(prim_path='/World/envs/env_.*/Wire', spawn=None))
+        self.wire = RigidObject(self.source['wire'].cfg.replace(prim_path='/World/envs/env_.*/Wire', spawn=None))
         self.object_contact_links = ()
         if self.full_hand_contact:
             from .tabletop_object_contact import link_groups
@@ -87,7 +86,7 @@ class GpuWorld:
             self.object_contact_links=per_hand[0]
             link_groups(self.object_contact_links)
         self.sensor_links=self.object_contact_links if self.full_hand_contact else ('finger14_link','finger23_link')
-        self.sensors = [] if self.flexible else [ContactSensor(ContactSensorCfg(
+        self.sensors = [ContactSensor(ContactSensorCfg(
             prim_path=f'/World/envs/env_.*/{side}Hand/{link}',
             track_friction_forces=bool(getattr(args,'tensor_pipeline',False)),
             track_contact_points=bool(getattr(args,'tensor_pipeline',False)),
@@ -159,9 +158,7 @@ class GpuWorld:
         self.gains = np.full((self.n,2),10.)
         self.palms = np.zeros((self.n,2,3))
         self.previous_gains = self.gains.copy()
-        if self.flexible:
-            from .deformx_batched_adapter import FlexibleObject
-            self.flex = FlexibleObject(self)
+        
         self.backends = [GpuBackend(self,i) for i in range(self.n)]
         self.refresh(sensors=False)
         return self.backends
@@ -184,54 +181,43 @@ class GpuWorld:
             store(name,torch.stack([getattr(h.data,attribute)[selection] for h in self.hands],dim=1).cpu().numpy())
         if self.mounts is not None:
             store('roots',torch.stack([h.data.body_link_pose_w[selection,m.base_id] for h,m in zip(self.hands,self.mounts)],1).cpu().numpy())
-        if self.flex is not None:
-            measured=self.flex.measure(selection)
-            for name in ('wp','wq','wv','bottom'):
-                store(name,measured[name])
-            store('material_relative',measured['centers']-self.roots[selection,:,:3])
-            store('material_speed',measured['speed'])
-            store('region_centers',measured['centers'])
-            self.force_vectors[selection]=self.flex.normal[selection]
-            self.force[selection]=np.linalg.norm(self.force_vectors[selection],axis=2)
-        else:
-            for name,attribute in (('wp','root_pos_w'),('wq','root_quat_w'),('wv','root_vel_w')):
-                store(name,getattr(self.wire.data,attribute)[selection].cpu().numpy())
-            if sensors:
+        for name,attribute in (('wp','root_pos_w'),('wq','root_quat_w'),('wv','root_vel_w')):
+            store(name,getattr(self.wire.data,attribute)[selection].cpu().numpy())
+        if sensors:
+            for sensor in self.sensors:
+                sensor.update(self.dt,force_recompute=True)
+            if self.full_hand_contact:
+                vectors=[]
                 for sensor in self.sensors:
-                    sensor.update(self.dt,force_recompute=True)
-                if self.full_hand_contact:
-                    vectors=[]
-                    for sensor in self.sensors:
-                        matrix=sensor.data.force_matrix_w
-                        if matrix is None or tuple(matrix.shape)!=(self.n,1,1,3):
-                            raise ValueError('one rigid body and one per-environment Wire filter required')
-                        vectors.append(matrix[:,0,0,:])
-                    vectors=torch.stack(vectors,dim=1).cpu().numpy()
-                    from .tabletop_object_contact import aggregate_object_contacts
-                    self.object_link_vectors[:]=vectors.reshape(self.n,2,len(self.sensor_links),3)
-                    for key,value in aggregate_object_contacts(self.object_link_vectors,self.object_contact_links).items():getattr(self,key)[:]=value
-                    pad_indices=[h*len(self.sensor_links)+self.sensor_links.index(link)
-                                 for h in range(2) for link in ('finger14_link','finger23_link')]
-                    self.force_vectors[:]=vectors[:,pad_indices]
-                    self.force[:]=np.linalg.norm(self.force_vectors,axis=2)
-                else:
-                    self.force[:] = torch.stack([torch.linalg.vector_norm(s.data.force_matrix_w.flatten(1),dim=1)
-                                                  for s in self.sensors],dim=1).cpu().numpy()
-                    self.force_vectors[:] = torch.stack([s.data.force_matrix_w.reshape(self.n,-1,3).sum(dim=1)
-                                                         for s in self.sensors],dim=1).cpu().numpy()
+                    matrix=sensor.data.force_matrix_w
+                    if matrix is None or tuple(matrix.shape)!=(self.n,1,1,3):
+                        raise ValueError('one rigid body and one per-environment Wire filter required')
+                    vectors.append(matrix[:,0,0,:])
+                vectors=torch.stack(vectors,dim=1).cpu().numpy()
+                from .tabletop_object_contact import aggregate_object_contacts
+                self.object_link_vectors[:]=vectors.reshape(self.n,2,len(self.sensor_links),3)
+                for key,value in aggregate_object_contacts(self.object_link_vectors,self.object_contact_links).items():getattr(self,key)[:]=value
+                pad_indices=[h*len(self.sensor_links)+self.sensor_links.index(link)
+                             for h in range(2) for link in ('finger14_link','finger23_link')]
+                self.force_vectors[:]=vectors[:,pad_indices]
+                self.force[:]=np.linalg.norm(self.force_vectors,axis=2)
+            else:
+                self.force[:] = torch.stack([torch.linalg.vector_norm(s.data.force_matrix_w.flatten(1),dim=1)
+                                              for s in self.sensors],dim=1).cpu().numpy()
+                self.force_vectors[:] = torch.stack([s.data.force_matrix_w.reshape(self.n,-1,3).sum(dim=1)
+                                                     for s in self.sensors],dim=1).cpu().numpy()
         poses, q, wp, quat = self.poses[selection],self.q[selection],self.wp[selection],self.wq[selection]
         clear, lowest = collision_clearance(poses,self.shapes)
         store('clearances',clear); store('lowest',lowest)
         axis_z = np.abs(2*(quat[:,2]*quat[:,3]+quat[:,0]*quat[:,1]))
-        if self.flex is None:
-            store('bottom',wp[:,2]-.25*axis_z-.008*np.sqrt(np.maximum(0.,1-axis_z**2)))
+        store('bottom',wp[:,2]-.25*axis_z-.008*np.sqrt(np.maximum(0.,1-axis_z**2)))
         store('errors',np.stack([np.stack([q[:,hi,h.joint_names.index(f)]-
             r*q[:,hi,h.joint_names.index(m)]-o for f,m,r,o in MIMIC],axis=1)
             for hi,h in enumerate(self.hands)],axis=1))
         pads = np.concatenate([poses[:,hi,self.pad_ids[hi]] for hi in range(2)],axis=1)
         pad_positions=np.stack([rotated_points(pads[:,j],self.pad_points[j:j+1])[:,0] for j in range(4)],axis=1)
         store('pad_positions',pad_positions)
-        relative_to=np.repeat(self.region_centers[selection],2,axis=1) if self.flex is not None else wp[:,None]
+        relative_to=wp[:,None]
         store('pad_relative',pad_positions-relative_to)
 
     def reset_slot(self, i, offset):
@@ -276,21 +262,15 @@ class GpuWorld:
             self.commands[indices,hi] = q[:,self.ids[hi]].cpu().numpy()
         self.gains[indices] = self.previous_gains[indices] = 10.
         self.palms[indices] = 0.
-        if self.flex is not None:
-            self.flex.reset(indices)
-        else:
-            self.wire.reset(ids)
-            pose = np.tile(self.seed['wire_pose'], (count, 1)); pose[:,:3] += self.origins[indices]
-            self.wire.write_root_pose_to_sim(self.tensor(pose),env_ids=ids)
-            self.wire.write_root_velocity_to_sim(self.tensor(np.tile(self.seed['wire_velocity'], (count, 1))),env_ids=ids)
+        self.wire.reset(ids)
+        pose = np.tile(self.seed['wire_pose'], (count, 1)); pose[:,:3] += self.origins[indices]
+        self.wire.write_root_pose_to_sim(self.tensor(pose),env_ids=ids)
+        self.wire.write_root_velocity_to_sim(self.tensor(np.tile(self.seed['wire_velocity'], (count, 1))),env_ids=ids)
         for sensor in self.sensors:
             sensor.reset(ids)
         self.sim.physics_sim_view.update_articulations_kinematic()
         self.refresh(sensors=False,geometry_indices=indices)
-        if self.flex is not None and self.flex.regions is None and 0 in indices:
-            self.flex.initialize_regions(self.pad_positions)
-            self.refresh(sensors=False)
-            self.flex.render()
+        
         if self.full_hand_contact:
             from .tabletop_object_contact import clear_object_contact_slots
             clear_object_contact_slots(self,indices)
@@ -332,11 +312,11 @@ class GpuWorld:
         delta=self.wp-(self.layout['wire_center']+self.origins)
         goals[:,:,:2]+=delta[:,None,:2]
         return dict(**({k:getattr(self,k).copy() for k in ('object_link_loads','grouped_object_loads','hand_object_loads')} if self.full_hand_contact else {}),
-            **(dict(material_relative=self.material_relative.copy(),material_speed=self.material_speed.copy()) if self.flex is not None else {}),
+            **({}),
             q=np.concatenate([self.q[:,h,self.ids[h]] for h in range(2)],axis=1),
             qd=np.concatenate([self.qd[:,h,self.ids[h]] for h in range(2)],axis=1),
             forces=self.force.copy(),clearance=self.clearances.min(axis=1),
-            object_relative=self.wp-self.roots[:,:,:3].mean(axis=1),object_quat=self.wq.copy(),
+            object_relative=self.wp.astype(np.float64)-self.roots[:,:,:3].mean(axis=1,dtype=np.float64),object_quat=self.wq.copy(),
             object_velocity=self.wv.copy(),bottom=self.bottom.copy(),
             approach_error=np.linalg.norm(self.roots[:,:,:3]-goals,axis=2).max(axis=1),
             mimic_errors=self.errors.reshape(self.n,10).copy(),hand_clearance=self.clearances.copy(),
@@ -364,9 +344,7 @@ class GpuWorld:
             hand.write_data_to_sim()
         self.previous_gains[:] = self.gains
         written=time.monotonic()
-        if self.flex is not None:
-            self.sim.physics_sim_view.update_articulations_kinematic()
-            self.flex.advance()
+        
         advanced=time.monotonic()
         self.sim.step(render=not self.args.headless)
         stepped=time.monotonic()
@@ -374,9 +352,9 @@ class GpuWorld:
         if self.mounts is not None:
             from .tabletop_palm_mount import check_transport
             check_transport(self.hands,self.mounts,self.tensor(self.root_targets))
-        self.last_step_timing=dict(hand_write=written-started,flexible=advanced-written,
+        self.last_step_timing=dict(hand_write=written-started,
             physx=stepped-advanced,readback=time.monotonic()-stepped)
-        if os.environ.get('DH116_FLEX_PROFILE') == '1':
+        if os.environ.get('DH116_PHYSICS_PROFILE') == '1':
             print('PHYSICS_TIMING',json.dumps(self.last_step_timing),flush=True)
 
 
@@ -433,7 +411,7 @@ class GpuBackend:
         hi,bi,_ = w.shapes[w.lowest[i]]
         goals = np.stack([w.layout['hand_roots'][s][:3]+w.origins[i] for s in ('left','right')])
         return dict(**({k:getattr(w,k)[i].copy() for k in ('object_link_loads','grouped_object_loads','hand_object_loads')} if self.full_hand_contact else {}),
-            **(dict(material_relative=w.material_relative[i].copy(),material_speed=w.material_speed[i].copy()) if w.flex is not None else {}),
+            **({}),
             q=np.concatenate([w.q[i,h,w.ids[h]] for h in range(2)]),
             qd=np.concatenate([w.qd[i,h,w.ids[h]] for h in range(2)]),
             forces=w.force[i].copy(),clearance=float(w.clearances[i].min()),

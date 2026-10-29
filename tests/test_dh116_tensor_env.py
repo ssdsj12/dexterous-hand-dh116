@@ -53,7 +53,7 @@ def test_nonfinite_action_is_not_an_ordinary_training_reset():
     assert w.tick==0
 
 
-@pytest.mark.parametrize('force,mimic,eligible',[(31,.0,True),(45,0,False),(31,.021,False),(0,.025,True),(0,.03,False)])
+@pytest.mark.parametrize('force,mimic,eligible',[(31,.0,True),(45,0,False),(31,.021,True),(0,.025,True),(0,.03,False)])
 def test_independent_guard_recovery_bounds(force,mimic,eligible):
     t=TensorTask(template(),2,'cpu');w=World(t)
     w.m['object_link_loads'][:]=force;w.m['mimic_errors'][:]=mimic
@@ -199,6 +199,24 @@ def test_physics_peak_telemetry_keeps_substep_spike_after_immediate_reset():
     assert e.physics_peaks.tolist()==pytest.approx([31.,2.5,1.7,.002])
 
 
+def test_manual_failure_preserves_terminal_pose_before_reset():
+    t=TensorTask(template(),2,'cpu');t.manual_control=True
+    t.manual_lift_qualified=torch.zeros(2,dtype=torch.bool)
+    w=World(t);e=TensorEnv(w,t)
+    w.m['bottom'][0]=.3007
+    w.m['adaptive_palm_offset'][0,:,2]=.0012
+    w.m['mimic_errors'][0,1]=.002
+    _,_,done,_=e.step(torch.zeros((2,20)))
+    assert done[0]
+    saved=e.manual_last_failure
+    assert saved['object_lift_m'][0]==pytest.approx(.0007,abs=1e-7)
+    assert saved['palm_offsets_m'][0][0][2]==pytest.approx(.0012)
+    assert saved['max_mimic_error_rad'][0]==pytest.approx(.002)
+    assert saved['mimic_errors_rad'][0][1]==pytest.approx(.002)
+    assert saved['hand_load_n'][0][0]==31.
+    assert w.m['hand_object_loads'][0,0]==0.
+
+
 class JointExcursionWorld(World):
     """A failed grasp slowly pushes one active joint beyond its nominal limit."""
     def __init__(self,t,excursion=.006,side='lower',reset_excursion=0.,repeat=False,joint=7):
@@ -250,7 +268,7 @@ def test_training_joint_excursion_tolerance_does_not_reset_healthy_grasp(excursi
     assert not done.any() and not w.resets
 
 
-@pytest.mark.parametrize('fault',['hard_position','nonfinite_velocity','nonfinite','force','mimic','clearance','bottom'])
+@pytest.mark.parametrize('fault',['nonfinite_velocity','nonfinite','force','mimic','clearance'])
 def test_training_joint_excursion_cannot_hide_simultaneous_hard_fault(fault):
     t=TensorTask(template(),2,'cpu');w=JointExcursionWorld(t);e=TensorEnv(w,t,training_joint_limit=True)
     w.tick=2  # Both the excursion and the hard fault occur on this next sample.

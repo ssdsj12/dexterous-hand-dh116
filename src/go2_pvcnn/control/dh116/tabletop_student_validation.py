@@ -122,7 +122,11 @@ def validate_student(env, algorithm, args, contract, obs):
         try:
             publish()
         except Exception as publication_error:
-            error.add_note('Could not publish student validation report: ' + str(publication_error))
+            note = 'Could not publish student validation report: ' + str(publication_error)
+            if hasattr(error, 'add_note'):
+                error.add_note(note)
+            else:
+                error.__notes__ = [*getattr(error, '__notes__', []), note]
         raise
     finally:
         policy.train(was_training)

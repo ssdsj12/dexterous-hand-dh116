@@ -1,5 +1,6 @@
 """Device-resident rigid physics adapter; host scene construction remains unchanged."""
 import torch
+import time
 from .linear_coupling import MIMIC
 from .tabletop_object_contact import link_groups
 from .tabletop_contact_geometry import aggregate_contact_geometry
@@ -79,7 +80,7 @@ def signed_hand_lift_vertical_force(vertical_components):
     return vertical_components[..., 0] + vertical_components[..., 1]
 
 
-def contact_geometry_from_sensors(sensors, object_center_w):
+def contact_geometry_from_sensors(sensors, object_center_w, object_axis_w=None):
     """Reduce ordered PhysX contact reports to per-hand geometry."""
     if not sensors or len(sensors) % 2:
         raise ValueError('contact sensors must contain an even nonzero hand/link list')
@@ -98,7 +99,7 @@ def contact_geometry_from_sensors(sensors, object_center_w):
     n=positions[0].shape[0]
     positions=torch.stack(positions,dim=1).reshape(n,2,-1,3)
     forces=torch.stack(forces,dim=1).reshape(n,2,-1,3)
-    return aggregate_contact_geometry(positions,forces,object_center_w)
+    return aggregate_contact_geometry(positions,forces,object_center_w,object_axis_w=object_axis_w)
 
 
 def constrain_palm_z_movement(movement, clearances, clearance_floor_m):
@@ -113,7 +114,7 @@ def constrain_palm_z_movement(movement, clearances, clearance_floor_m):
 
 class TensorWorld:
     def __init__(self, world):
-        if world.flexible or not world.full_hand_contact:
+        if not world.full_hand_contact:
             raise ValueError('tensor training requires rigid full-hand contact')
         self.w = world
         self.n, self.dt, self.device = world.n, world.dt, world.device
@@ -215,7 +216,9 @@ class TensorWorld:
             vectors = torch.stack([s.data.force_matrix_w[:,0,0,:] for s in w.sensors],1).double()
             self.link_loads = vectors.reshape(self.n,2,-1,3).norm(dim=-1)
             self.forces = vectors[:,self.pad_indices].norm(dim=-1)
-            geometry=contact_geometry_from_sensors(w.sensors,self.wp)
+            qw,qx,qy,qz=self.wq.unbind(1)
+            axis_y=torch.stack((2*(qx*qy-qw*qz),1-2*(qx*qx+qz*qz),2*(qy*qz+qw*qx)),1)
+            geometry=contact_geometry_from_sensors(w.sensors,self.wp,axis_y)
             self.contact_center_w=geometry['contact_center_w']
             self.contact_normal_w=geometry['contact_normal_w']
             self.contact_normal_load_n=geometry['normal_load_n']
@@ -275,9 +278,19 @@ class TensorWorld:
 
     def advance(self, task, allowed, live):
         policy_control = getattr(task,"policy_control",False)
+        if hasattr(task,'policy_lift_hold') and not getattr(task,'manual_digit_force_balance',False):
+            hold=task.policy_lift_hold
+            paused=live&hold.active&(task.phase==3)&(hold.paused|task.paused)
+            # Cancel the queued upward drive target at measured carriage pose;
+            # freezing only new increments leaves the old target still pulling.
+            self.palms=torch.where(paused[:,None,None],task.m['adaptive_palm_offset'],self.palms)
         if policy_control:
             from .tabletop_policy_control import CONTRACT as POLICY
             target = task.palm_targets
+            if hasattr(task,'manual_pinch_home'):
+                from .tabletop_manual_pinch_geometry import measured_target
+                target=measured_target(task,self,target)
+                task.manual_pinch_compensation[live]=(target-task.palm_targets)[live]
             palm_lower = self.t(POLICY["palm_lower_m"])
             palm_upper = self.t(POLICY["palm_upper_m"])
             rate = POLICY["wrist_rate_m_s"]
@@ -286,6 +299,11 @@ class TensorWorld:
             palm_lower, palm_upper = -self.palm_limit, self.palm_limit
             rate = .002
         movement = (target-self.palms).clamp(-rate*self.dt,rate*self.dt)
+        if policy_control:
+            # The physical transport guard measures Cartesian speed, not each
+            # axis independently. Diagonal commands must share one speed budget.
+            norm=movement.norm(dim=-1,keepdim=True).clamp_min(1e-12)
+            movement=movement*((rate*self.dt)/norm).clamp_max(1.)
         clearance_floor=getattr(task,'diagnostic_palm_descent_clearance_m',
                                 getattr(task,'palm_descent_clearance_m',.0021))
         movement=constrain_palm_z_movement(movement,self.clearances,clearance_floor)
@@ -377,8 +395,13 @@ class TensorWorld:
         # Physics/contact feedback still runs at physics_hz; present at 60 Hz.
         # Rendering every substep made a four-second close take minutes in GUI.
         self._physics_steps = getattr(self, '_physics_steps', 0) + 1
-        interval = getattr(self, 'decimation', max(1, round(1 / (60 * self.dt))))
-        self.w.sim.step(render=(not self.w.args.headless and self._physics_steps % interval == 0))
+        interval = getattr(self,'render_interval_steps',getattr(self, 'decimation', max(1, round(1 / (60 * self.dt)))))
+        render=not self.w.args.headless and self._physics_steps % interval == 0
+        if not self.w.args.headless and hasattr(self,'manual_render_wall_interval_s'):
+            now=time.monotonic()
+            render=now-getattr(self,'last_manual_render_wall_s',0.)>=self.manual_render_wall_interval_s
+            if render:self.last_manual_render_wall_s=now
+        self.w.sim.step(render=render)
         measurement=self.refresh()
         if getattr(self.w,'mounts',None) is not None:
             from .tabletop_palm_mount import check_transport

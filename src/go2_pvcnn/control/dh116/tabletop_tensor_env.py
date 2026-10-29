@@ -15,12 +15,28 @@ LIVE_VELOCITY_GUARD_CONTRACT = dict(VELOCITY_GUARD_CONTRACT,
 TERMINAL_RESET_CONTRACT = dict(version='validated_terminal_substep_reset_v1',
     timing='after_validated_terminal_substep',
     transition='preserved_until_control_tick_end',next_physics='strict_fresh_guards')
+BOUNDED_FAILURE_RESET_CONTRACT = dict(version='joint_bounded_failure_reset_v2',
+    strict_force_n=30.,strict_mimic_rad=.02,max_force_exclusive_n=45.,max_mimic_exclusive_rad=.03,
+    combined_fault='failed_episode_isolated_reset_with_original_penalty',
+    requires='live_finite_independently_safe_and_matching_failure_label',
+    reset_validation='immediate_and_next_physics_strict_guards',
+    hard_fault='global_abort',physics_thresholds_changed=False)
+JOINT_LIMIT_RESET_CONTRACT = dict(version='finite_joint_limit_episode_reset_v1',
+    scope='live_finite_joint_limit_failures_all_articulation_joints',
+    action='failed_episode_immediate_isolated_reset',penalty_preserved=True,
+    joint_margin=.02,early_active_joint_margin=.005,
+    other_faults='retain_independent_finite_geometry_force_mimic_guards',
+    reset_validation='strict_immediate_and_next_physics')
 TRAINING_JOINT_LIMIT_CONTRACT = dict(version='early_active_joint_task_failure_v1',
     scope='ppo_training_active_angular_joints',outside_nominal_limit_rad=.005,
     eligibility='live_strict_physical_safe_no_prior_joint_failure',
     action='joint_limit_failure_then_validated_isolated_reset',
     reset_validation='early_boundary_and_strict_guards_through_next_physics',
     hard_position_tolerance_rad=.02)
+OBJECT_DROP_RESET_CONTRACT=dict(version='isolated_object_drop_reset_v1',bottom_threshold_m=.29,
+    action='failed_episode_immediate_isolated_reset',penalty_preserved=True,
+    other_guards='finite_state_finite_velocity_existing_joint_limit_resets_clearance_and_bounded_force_mimic_unchanged',
+    reset_validation='strict_immediate_and_next_physics',physics_thresholds_changed=False)
 
 
 def reset_velocity_safe(world):
@@ -29,7 +45,7 @@ def reset_velocity_safe(world):
     return torch.isfinite(world.qd).flatten(1).all(1)
 
 
-def physical_guard(world, m):
+def physical_guard(world, m, *, include_joint_candidate=False, include_drop_candidate=False):
     """Return strict guard and bounded recovery masks; no prioritized-label blind spot."""
     finite = torch.ones(world.n,dtype=torch.bool,device=world.device)
     optional_contact_geometry=('contact_center_w','contact_center_relative_m',
@@ -47,11 +63,30 @@ def physical_guard(world, m):
     velocity_safe = reset_velocity_safe(world)
     force = m['object_link_loads'].flatten(1).amax(1)
     mimic = m['mimic_errors'].abs().amax(1)
-    independent = finite & ~joint_out & (m['clearance']>=-.001) & (m['bottom']>=.29)
-    independent &= (m['object_link_loads']>=0).flatten(1).all(1)
+    geometry = finite & (m['clearance']>=-.001)
+    geometry &= (m['object_link_loads']>=0).flatten(1).all(1)
+    base = geometry & (m['bottom']>=.29)
+    independent = base & ~joint_out
     strict = independent & velocity_safe & (force<=30.) & (mimic<=.02)
-    recover_force = independent & velocity_safe & (force>30.) & (force<45.) & (mimic<=.02)
-    recover_mimic = independent & velocity_safe & (mimic>.02) & (mimic<.03) & (force<=30.)
+    # A failed grasp may cross both soft boundaries on the same sample. Both
+    # must remain inside their existing reset bounds; neither fault exempts a
+    # hard/nonfinite/geometry violation. The sample is failed, never accepted
+    # as strict-safe, and must reset before any further physics is executed.
+    bounded = independent & velocity_safe & (force<45.) & (mimic<.03)
+    recover_force = bounded & (force>30.)
+    recover_mimic = bounded & (mimic>.02)
+    if include_joint_candidate:
+        from .tabletop_tensor_task import FAILURE_CODES
+        declared=m['joint_failure']==FAILURE_CODES['joint_limit']
+        joint_candidate=base & velocity_safe & (force<45.) & (mimic<.03) & (joint_out|declared)
+        if include_drop_candidate:
+            # Only the dropped-object height is exempted. Raw measurements and
+            # every other physical bound remain authoritative before resetting.
+            dropped=(geometry & velocity_safe & (force<45.) & (mimic<.03)
+                     & (m['bottom']<OBJECT_DROP_RESET_CONTRACT['bottom_threshold_m']))
+            joint_candidate |= dropped & (joint_out|declared)
+            return strict,recover_force,recover_mimic,joint_candidate,dropped
+        return strict,recover_force,recover_mimic,joint_candidate
     return strict, recover_force, recover_mimic
 
 
@@ -73,6 +108,9 @@ class TensorEnv:
         self.episodes = torch.zeros(self.n,dtype=torch.long,device=self.device)
         self.successes = torch.zeros_like(self.episodes)
         self.recovered = torch.zeros_like(self.episodes)
+        self.combined_failure_resets=torch.zeros((),device=self.device,dtype=torch.long)
+        self.joint_limit_resets=torch.zeros((),device=self.device,dtype=torch.long)
+        self.object_drop_resets=torch.zeros((),device=self.device,dtype=torch.long)
         self.returns = torch.zeros(self.n,device=self.device)
         self.last_episode_returns = torch.zeros_like(self.returns)
         self.phase_visits = torch.zeros((self.n,4),dtype=torch.bool,device=self.device)
@@ -151,13 +189,19 @@ class TensorEnv:
         self.reset_substep[:] = 0
         self.substep = 0
         self.phase_visits[:] = False
-        self.phase_visits[:,1] = True
+        self.phase_visits[:,3 if getattr(self.task,'free_grasp_lift',False) else 1] = True
         return self.task.observe()
 
     def step(self, actions):
         from .tabletop_tensor_task import FAILURE_CODES
         from .tabletop_tensor_world import signed_hand_lift_vertical_force
         t, w = self.task, self.world
+        acquisition_before = None
+        if getattr(self, 'grasp_acquisition', False) and not getattr(t,'manual_lightweight',False):
+            from .tabletop_grasp_acquisition import potential
+            if getattr(t,'force_region',False):
+                from .tabletop_policy_force_region import potential
+            acquisition_before = potential(t.m, self.acquisition_radius_m, self.acquisition_length_m)
         self.reset_substep[:] = 0
         self.substep = 0
         actions = t.begin_step(actions)
@@ -187,7 +231,8 @@ class TensorEnv:
                                 w.qd.abs().amax(),m['mimic_errors'].abs().amax()))
             self.physics_peaks.copy_(torch.maximum(self.physics_peaks,sample))
             measured_speed=self.record_velocity()
-            safe, force_candidate, mimic_candidate = physical_guard(w,m)
+            safe, force_candidate, mimic_candidate, limit_reset, drop_reset = physical_guard(
+                w,m,include_joint_candidate=True,include_drop_candidate=True)
             joint_safe = self.training_joint_safe(m)
             # A reset must survive a real next physics step before it can ever
             # become eligible for another reset. Frozen terminal rows also checked.
@@ -199,8 +244,9 @@ class TensorEnv:
             previous_phase = t.phase.clone()
             # This is an earlier failed-grasp boundary, never an exemption from
             # a hard guard. Keep the world measurement and prior failures intact.
-            joint_candidate = live & safe & ~joint_safe & (m['joint_failure']==0)
-            task_m = dict(m,joint_failure=torch.where(joint_candidate,
+            joint_candidate = live & ((safe & ~joint_safe & (m['joint_failure']==0)) |
+                                      (limit_reset & self.recovery))
+            task_m = dict(m,joint_failure=torch.where(joint_candidate & (m['joint_failure']==0),
                 FAILURE_CODES['joint_limit'],m['joint_failure']))
             if t.vertical_force_reward:
                 # One current normal sample drives both close admission and its
@@ -208,7 +254,9 @@ class TensorEnv:
                 normal_vertical_force=w.vertical_components[:,:,0].sum(dim=1)
                 t.consume(task_m,live,w.dt,vertical_force_n=normal_vertical_force,
                           lift_vertical_force_n=signed_hand_lift_vertical_force(w.vertical_components).sum(dim=1),
-                          object_weight_n=w.object_weight_n if t.shaping is not None else None)
+                          object_weight_n=w.object_weight_n if (t.shaping is not None or getattr(t,'phase_force_reward',False)) else None,
+                          hand_lift_force_n=(signed_hand_lift_vertical_force(w.vertical_components)
+                              if getattr(t,'phase_force_reward',False) else None))
             else:
                 t.consume(task_m,live,w.dt)
             if bool((t.done&~velocity_safe).any()): self.fail(t.done&~velocity_safe,m,'terminal_velocity')
@@ -218,8 +266,12 @@ class TensorEnv:
             if bool(numerical.any()): self.fail(numerical,m,'nonfinite_task_or_observation')
             candidate = ((force_candidate & (t.failure==FAILURE_CODES['excess_force'])) |
                          (mimic_candidate & (t.failure==FAILURE_CODES['mimic_error'])) |
-                         (joint_candidate & (t.failure==FAILURE_CODES['joint_limit']))) & live
+                         (joint_candidate & t.done & (t.failure!=0)) |
+                         (drop_reset & t.done & (t.failure!=0))) & live
             if not self.recovery: candidate[:] = False
+            self.combined_failure_resets+=(candidate&force_candidate&mimic_candidate).sum()
+            self.joint_limit_resets+=(candidate&joint_candidate).sum()
+            self.object_drop_resets+=(candidate&drop_reset).sum()
             fatal = ~safe & ~candidate
             if bool(fatal.any()): self.fail(fatal,m,'independent_guard')
             # A finite speed excursion changes reward only, never termination.
@@ -243,6 +295,25 @@ class TensorEnv:
             newly_terminal = live & t.done
             ids = newly_terminal.nonzero().flatten()
             if ids.numel():
+                if getattr(t,'manual_control',False):
+                    self.manual_last_failure=dict(
+                        failure_codes=t.failure[ids].detach().cpu().tolist(),
+                        object_lift_m=(m['bottom'][ids]-.30).detach().cpu().tolist(),
+                        palm_offsets_m=m['adaptive_palm_offset'][ids].detach().cpu().tolist(),
+                        hand_load_n=m['hand_object_loads'][ids].detach().cpu().tolist(),
+                        mimic_errors_rad=m['mimic_errors'][ids].detach().cpu().tolist(),
+                        active_joint_rad=m['q'][ids].detach().cpu().tolist(),
+                        active_joint_target_rad=t.command[ids].detach().cpu().tolist(),
+                        max_mimic_error_rad=m['mimic_errors'][ids].abs().amax(1).detach().cpu().tolist())
+                    if w.n==1:
+                        try:
+                            from .tabletop_manual_digit_contacts import collect
+                            self.manual_last_failure['digit_contacts']=collect(self)[0]
+                            if getattr(t,'manual_digit_force_balance',False):
+                                from .tabletop_manual_digit_force_balance import summary
+                                self.manual_last_failure['digit_force_balance']=summary(t)
+                        except (AttributeError,ValueError,RuntimeError) as error:
+                            self.manual_last_failure['digit_contacts_error']=str(error)
                 reset_m = w.reset(ids)
                 self.velocity_exceedance_streak_s[ids]=0.
                 self.reset_substep[ids] = substep
@@ -256,6 +327,14 @@ class TensorEnv:
         obs,rewards,dones,extras = t.end_step()
         extras=dict(extras,terms=dict(extras['terms'],velocity_excess=velocity_penalty.clone()))
         rewards, dones = rewards.clone(), dones.clone()
+        if acquisition_before is not None:
+            from .tabletop_grasp_acquisition import potential, reward
+            if getattr(t,'force_region',False):
+                from .tabletop_policy_force_region import potential
+            after = potential(t.m, self.acquisition_radius_m, self.acquisition_length_m)
+            acquisition = reward(acquisition_before, after, dones)
+            rewards += acquisition
+            extras = dict(extras, terms=dict(extras['terms'], grasp_acquisition=acquisition.clone()))
         self.returns += rewards
         self.episodes += dones.long()
         self.successes += (dones&t.success).long()
@@ -276,6 +355,6 @@ class TensorEnv:
             t.reset(ids,reset_m)
             self.pending |= dones
             self.phase_visits[ids] = False
-            self.phase_visits[ids,1] = True
+            self.phase_visits[ids,3 if getattr(t,'free_grasp_lift',False) else 1] = True
             obs = t.observe()
         return obs,rewards,dones,extras

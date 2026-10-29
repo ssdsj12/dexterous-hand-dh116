@@ -1,0 +1,808 @@
+{
+  "base_branch": "10-28",
+  "base_commit": "bd805c6570eb14fdfcbb3beb8d4afd890c2e9415",
+  "payload_files": [
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_contact_geometry.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_contact_geometry.py",
+      "bytes": 3557,
+      "sha256": "afa7702cb66725f0cf0e6ce043d0b86d535a81a0399240049f353b73ad855eea"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_force_teacher.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_force_teacher.py",
+      "bytes": 6880,
+      "sha256": "39f469958538f71baa2dc3c19eec233b285f1e1083c61ea10b053b6b3fec4347"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_free_grasp_lift.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_free_grasp_lift.py",
+      "bytes": 3460,
+      "sha256": "f755918a0fc56ed9189a8318f24a8336afdb81be1ee7112504eae148430f2378"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_gpu_isaac.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_gpu_isaac.py",
+      "bytes": 26159,
+      "sha256": "064f659e0b48415665d0041d4f77aea47c320b92fdfd7f1b00a33e7f770e03b4"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_initial_contact_check.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_initial_contact_check.py",
+      "bytes": 1307,
+      "sha256": "44943a723806387ce3e93f14efbefb9bb2ebd4f29efb5a887796a383bb42fea2"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_manual_control.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_manual_control.py",
+      "bytes": 19649,
+      "sha256": "feb7972ab96f94ef7e09e0a19b101b9e02587c2ea71c9bb9df65d72389944e46"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_manual_digit_contacts.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_manual_digit_contacts.py",
+      "bytes": 5260,
+      "sha256": "366535c6e1c469e614809713b8440864b36375bfb17f2c1fae62085012197d4d"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_manual_digit_force_balance.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_manual_digit_force_balance.py",
+      "bytes": 5632,
+      "sha256": "d935cc17cf9228c7b7ec52c4b7770d15f5ee7d72c3989d0b355fb7ed8c1ce54f"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_manual_fast_force.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_manual_fast_force.py",
+      "bytes": 1185,
+      "sha256": "060aca3564dc01720e3f1d7bee7886cb2464abd09bd72a0dc2708bba5098c9a8"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_manual_joint_contact.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_manual_joint_contact.py",
+      "bytes": 15687,
+      "sha256": "9266158628572ae1c6821a989ad07086591cdb54769ae6e122d35cddb0a2aa8a"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_manual_pinch_geometry.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_manual_pinch_geometry.py",
+      "bytes": 1909,
+      "sha256": "4c5edc4e58194203e61ba411f8d11c725b3351a89f9700ea2f772a9c41054703"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_manual_thumb_stability.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_manual_thumb_stability.py",
+      "bytes": 1688,
+      "sha256": "ec3e88f4172d9ff30ca65323216fdc0d03200cb18311471adeada53c2d4b3b0c"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_phase_force_reward.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_phase_force_reward.py",
+      "bytes": 4175,
+      "sha256": "765a948c6dc48e06839ebeac121afe8a78c326ca80f4765c83865ddd6c54af61"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_policy_control.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_policy_control.py",
+      "bytes": 10687,
+      "sha256": "fc9d859e756ff50278d6f3a91faf456047fddba9c142292bce940a097b893106"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_policy_force_region.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_policy_force_region.py",
+      "bytes": 6356,
+      "sha256": "04fc0452077f2c326c90cad9794cb41659d8aeaa2542c3d675be6dd8fa6844bd"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_policy_lift_hold.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_policy_lift_hold.py",
+      "bytes": 11899,
+      "sha256": "280f1daab48802f5304292fd12b22efca08c426d9124957af510b9efa45656aa"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_solver_order.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_solver_order.py",
+      "bytes": 1296,
+      "sha256": "a011ade7650f4c058ff78cbd5cd3c82ee638f8f025efc9570a650b74d0b5a7c7"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_stable_lift_reward.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_stable_lift_reward.py",
+      "bytes": 2132,
+      "sha256": "92dbcfdd1a4fff880334d609df77d430280a455ff2f4f01ca1c08f4e3bde21ec"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_student_validation.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_student_validation.py",
+      "bytes": 6770,
+      "sha256": "6d7a2318e9378cb6c98e31f2eb526e9a893d2e4d04a387d89880693be51eef9b"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_success_teacher.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_success_teacher.py",
+      "bytes": 8504,
+      "sha256": "8db7cc9602fc6cc26cddcd9045c92a2fe0fbbf3755c4b660105675aff1c5c381"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_tensor_env.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_tensor_env.py",
+      "bytes": 23238,
+      "sha256": "ea5d26f48fe32042c68bc59e25c276f509ebe16d97a7552efe73be9c75e440cc"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_tensor_task.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_tensor_task.py",
+      "bytes": 49474,
+      "sha256": "59d22351848b23b7690046645e9afcf5b28618f1771388900f084fd4d4ff694c"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_tensor_training.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_tensor_training.py",
+      "bytes": 72229,
+      "sha256": "45037e16f870d4a114a6d8783137b698f37bc2bc7152afa0b3d0dfebf3648b10"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_tensor_world.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "src/tabletop_tensor_world.py",
+      "bytes": 27069,
+      "sha256": "020ec4f8211ea4cfd24a0c524e0751c7977ed17949803e114f3ea3d6ea54a5f8"
+    },
+    {
+      "path": "scripts/analyze_thumb_trace.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/analyze_thumb_trace.py",
+      "bytes": 1408,
+      "sha256": "dba219d943b37c1e11fcfbc565f4d30650fd8150fada38af8a196fa0317c831f"
+    },
+    {
+      "path": "scripts/audit_free_grasp_lift_run.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/audit_free_grasp_lift_run.py",
+      "bytes": 1712,
+      "sha256": "39227bd42722869806f16653df014661cadaed1b1e29ae2b6d0cb79dff52f497"
+    },
+    {
+      "path": "scripts/build_below_axis_teacher_cases.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/build_below_axis_teacher_cases.py",
+      "bytes": 964,
+      "sha256": "4838d87acb72f6a08192332222dc79f7884c605c982a4505cf5e54314529c3cf"
+    },
+    {
+      "path": "scripts/build_dh116_below_axis_initialization.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/build_dh116_below_axis_initialization.py",
+      "bytes": 16683,
+      "sha256": "eeaed5997297776a0fd48fc5ce9a370defd8e6e1c4c4f502603a922a724c1345"
+    },
+    {
+      "path": "scripts/check_hand_runtime.sh",
+      "mode": "100755",
+      "type": "blob",
+      "source": "scripts/check_hand_runtime.sh",
+      "bytes": 1706,
+      "sha256": "30be9ff13fff9615f50efa3385b5742af310f45210263e64e1725ae6740822a3"
+    },
+    {
+      "path": "scripts/demo_hand_scene.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/demo_hand_scene.py",
+      "bytes": 2917,
+      "sha256": "f1b12ab2e4f127be55a018c92b8dd7b6969885b3b71c90ec8a193ff099ab6a48"
+    },
+    {
+      "path": "scripts/inspect_hand_drives.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/inspect_hand_drives.py",
+      "bytes": 622,
+      "sha256": "010498b30526f069030be35d06f61ce5752581b5b79e9c48fa0b1b4649a3272e"
+    },
+    {
+      "path": "scripts/manual_dh116_control.sh",
+      "mode": "100755",
+      "type": "blob",
+      "source": "scripts/manual_dh116_control.sh",
+      "bytes": 1749,
+      "sha256": "b283e3bc265a83dec832b2e6a41217223217a56f32d370597369a18005991a0f"
+    },
+    {
+      "path": "scripts/probe_deep_grasp_geometry.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/probe_deep_grasp_geometry.py",
+      "bytes": 2739,
+      "sha256": "3614a8a1e86570529b8808a1dbdde90a7ee9068756134b653f26b2f2996766a3"
+    },
+    {
+      "path": "scripts/probe_fixed_pose_positions.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/probe_fixed_pose_positions.py",
+      "bytes": 7546,
+      "sha256": "ad6b9c2d091a34b071493f2e97612ca6f037be05555b913bc197e897e489d4bd"
+    },
+    {
+      "path": "scripts/probe_manual_joint_contact.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/probe_manual_joint_contact.py",
+      "bytes": 13845,
+      "sha256": "26851ccb1cd681f9423dc31122d77e68055ab64ab1376142375c89828fa0f604"
+    },
+    {
+      "path": "scripts/probe_manual_thumb_control.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/probe_manual_thumb_control.py",
+      "bytes": 12071,
+      "sha256": "24b9f8d8865a810d54939c315af4477e23279a02b6bfb0fe9435916fd398b3b1"
+    },
+    {
+      "path": "scripts/python.sh",
+      "mode": "100755",
+      "type": "blob",
+      "source": "scripts/python.sh",
+      "bytes": 2074,
+      "sha256": "3aadbf9026b9ccc9008a7b72eb5eb2cbacd2087fa5153e6717d32b6f991bf27e"
+    },
+    {
+      "path": "scripts/resize_ppo_checkpoint.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/resize_ppo_checkpoint.py",
+      "bytes": 2052,
+      "sha256": "33a9850d41886e2416378cc45c01d9fc0999eb701b7e6592e50a093ee2e29810"
+    },
+    {
+      "path": "scripts/search_manual_contact_geometry.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/search_manual_contact_geometry.py",
+      "bytes": 4965,
+      "sha256": "f88193b9f1da7da8c106e3a6efee7a5cb810ec2bc40e23e225389f33207b9027"
+    },
+    {
+      "path": "scripts/smoke_object_drop_reset.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/smoke_object_drop_reset.py",
+      "bytes": 3145,
+      "sha256": "c426dce0b2de1ea0835374a55506064f787e186940b3ae2f6184ca7e6fd4c751"
+    },
+    {
+      "path": "scripts/start_2mm_smoke.sh",
+      "mode": "100755",
+      "type": "blob",
+      "source": "scripts/start_2mm_smoke.sh",
+      "bytes": 297,
+      "sha256": "1c716e572b2159518e9c8c22501631ad0430a5a12c76e729dacbafbe8d40ff8e"
+    },
+    {
+      "path": "scripts/start_drop_reset_smoke.sh",
+      "mode": "100755",
+      "type": "blob",
+      "source": "scripts/start_drop_reset_smoke.sh",
+      "bytes": 201,
+      "sha256": "29d882cf6079bbe686072e7c6629dedf443b1121204c9b00b14506c19c48428f"
+    },
+    {
+      "path": "scripts/start_fixed_pose_probe.sh",
+      "mode": "100755",
+      "type": "blob",
+      "source": "scripts/start_fixed_pose_probe.sh",
+      "bytes": 205,
+      "sha256": "0ee8fab1f1a4bad7ff52cd7fbae604cc3cc751625474c0bfbb51384a825c584a"
+    },
+    {
+      "path": "scripts/start_free_grasp_lift.sh",
+      "mode": "100755",
+      "type": "blob",
+      "source": "scripts/start_free_grasp_lift.sh",
+      "bytes": 565,
+      "sha256": "2dc212f1b2622769930f109537e989d869dd97494ad824c9b4c7771cf475c0f4"
+    },
+    {
+      "path": "scripts/start_phase_force_10240_2048.sh",
+      "mode": "100755",
+      "type": "blob",
+      "source": "scripts/start_phase_force_10240_2048.sh",
+      "bytes": 454,
+      "sha256": "01c8e0e1b65e19240343b7b28518cbafa3e22eae62228de463fbdcb730daeea6"
+    },
+    {
+      "path": "scripts/switch_current_tensorboard.sh",
+      "mode": "100755",
+      "type": "blob",
+      "source": "scripts/switch_current_tensorboard.sh",
+      "bytes": 485,
+      "sha256": "5398ecce5510e3a8fe12634726565c95dc84130d7b7701454b285e57c7c523d7"
+    },
+    {
+      "path": "scripts/train_dh116_tabletop_gpu_ppo.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/train_dh116_tabletop_gpu_ppo.py",
+      "bytes": 48489,
+      "sha256": "49a555ec5ac4b2e11771444b7e8ff3738c4af80aa5832ba9085dd1c954122bc2"
+    },
+    {
+      "path": "scripts/train_dh116_tensor_ppo.sh",
+      "mode": "100755",
+      "type": "blob",
+      "source": "scripts/train_dh116_tensor_ppo.sh",
+      "bytes": 3843,
+      "sha256": "d4e3969665e0ba8ce16d041b4ff16a56a1728fd676e497bf4cccfc1d8c791efb"
+    },
+    {
+      "path": "scripts/xwd_screenshot_png.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "scripts/xwd_screenshot_png.py",
+      "bytes": 578,
+      "sha256": "dc4a33bf623dafb840d43771e945d2e8f6c1ae494a3eda1a82202afe423eb7b0"
+    },
+    {
+      "path": "scripts/audit_ppo_rewards.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "audit_ppo_rewards.py",
+      "bytes": 1711,
+      "sha256": "156531da84489901374f88b811c00882c83c9207864b581c3576c66a2fea5645"
+    },
+    {
+      "path": "scripts/backfill_reward_total.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "backfill_reward_total.py",
+      "bytes": 1128,
+      "sha256": "dd8ee5f684133809aabe139ce46f373a248f5fcf132f546b98379d1826d6b849"
+    },
+    {
+      "path": "scripts/check_lift_hold_run.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "check_lift_hold_run.py",
+      "bytes": 2222,
+      "sha256": "9f49f1dd810b725c5ec62c1ddc2c2f766ee523b710d0a9e14d7225ddea498396"
+    },
+    {
+      "path": "scripts/replay_physical_guard.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "replay_physical_guard.py",
+      "bytes": 1636,
+      "sha256": "c6d11700a787dfb83ebe841811641d2674f2131e90701d30d49f12be23c89036"
+    },
+    {
+      "path": "tests/test_combined_failure_reset.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_combined_failure_reset.py",
+      "bytes": 5692,
+      "sha256": "70818f166c950e5c16f3dd9ac4a373eecce507ceb15c6f53c10b587dbc0d1b2f"
+    },
+    {
+      "path": "tests/test_constant_force_hold.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_constant_force_hold.py",
+      "bytes": 2980,
+      "sha256": "df3f1fea8119532440e8737d327920538a2da48a14aebfa19a14ec2ed071e8d3"
+    },
+    {
+      "path": "tests/test_dh116_policy_control.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_dh116_policy_control.py",
+      "bytes": 9259,
+      "sha256": "f0d01959215fc8b4e99921c84f65e4584ad070dd6771aada53c4ab592603c980"
+    },
+    {
+      "path": "tests/test_dh116_tensor_env.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_dh116_tensor_env.py",
+      "bytes": 15674,
+      "sha256": "db05ec2766af406c927b636396ccc032d627bbea1b7ac8b122db07295bdd9c2a"
+    },
+    {
+      "path": "tests/test_force_region_integration.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_force_region_integration.py",
+      "bytes": 3183,
+      "sha256": "bbbb50cb30f01045ec2ed4f092b2931ea76845e4497eda7d1cb1aa7e885adbff"
+    },
+    {
+      "path": "tests/test_force_teacher_runtime.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_force_teacher_runtime.py",
+      "bytes": 1124,
+      "sha256": "9697a53e9f3d5bac40a72ed5b88047cfd154fa7edd0998aa0686b30adf75fe13"
+    },
+    {
+      "path": "tests/test_free_grasp_lift.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_free_grasp_lift.py",
+      "bytes": 3132,
+      "sha256": "4e22ba24979cc20da68b427d95fe66d87058dcc59ee8cba6faae6404b7af5ef6"
+    },
+    {
+      "path": "tests/test_grasp_acquisition_integration.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_grasp_acquisition_integration.py",
+      "bytes": 2222,
+      "sha256": "41c37ec71483b7e9dbf3b34a76abdfc0d0f84d6f92068d6d14166e4e58e760b3"
+    },
+    {
+      "path": "tests/test_hand_environment_compat.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_hand_environment_compat.py",
+      "bytes": 919,
+      "sha256": "d1bba15ffef514aba1e102f170233e843b543f9091e9368b44e7514345291e69"
+    },
+    {
+      "path": "tests/test_initial_contact_check.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_initial_contact_check.py",
+      "bytes": 787,
+      "sha256": "0211a0e7f05ba2fc277082790a30f926deee6597aafcd5ec6ec3537dc3f02845"
+    },
+    {
+      "path": "tests/test_large_grid_reference_precision.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_large_grid_reference_precision.py",
+      "bytes": 1041,
+      "sha256": "e595443167a26407adee33ea678d3946b35216072c1495e502faaf924cacfb16"
+    },
+    {
+      "path": "tests/test_manual_commands.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_manual_commands.py",
+      "bytes": 3361,
+      "sha256": "bb3062efd4abd76659264fdd1dfd1584285e879aed2fffcaf83792e09e4b235f"
+    },
+    {
+      "path": "tests/test_manual_digit_contacts.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_manual_digit_contacts.py",
+      "bytes": 1330,
+      "sha256": "5a3a008823d5970ba5a70ae06b51c773e202d089e563db6dc180ef70d2e8a164"
+    },
+    {
+      "path": "tests/test_manual_digit_force_balance.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_manual_digit_force_balance.py",
+      "bytes": 5640,
+      "sha256": "1579ddf2fde29ac37cd123fc74a3110ffc8837dc285c7f065c6e83d9e0ffb0cb"
+    },
+    {
+      "path": "tests/test_manual_fast_force.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_manual_fast_force.py",
+      "bytes": 1851,
+      "sha256": "08a8c954300c27ad8664d5ed45797354c9e5f37e7e7bb15e79fdbf718bac8609"
+    },
+    {
+      "path": "tests/test_manual_joint_contact_control.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_manual_joint_contact_control.py",
+      "bytes": 8647,
+      "sha256": "c09ad70c216bf0ea1a62ecbbbc3127fabb488f621406bfc1e6f213b401ad7dc3"
+    },
+    {
+      "path": "tests/test_manual_lightweight.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_manual_lightweight.py",
+      "bytes": 1086,
+      "sha256": "0ca851df768be14a361fa6a4d151994085de1169576e62b6dfca32d1d3cefe02"
+    },
+    {
+      "path": "tests/test_manual_pinch_geometry.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_manual_pinch_geometry.py",
+      "bytes": 2350,
+      "sha256": "63ef14337ab81fe39b0c23f247833777010331ed46588b2c6a25e9906fa8d2a2"
+    },
+    {
+      "path": "tests/test_manual_stable_ascent.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_manual_stable_ascent.py",
+      "bytes": 987,
+      "sha256": "9d5aaf25f903c3fede10ab2d88e97847852b31e0e67bffea319dc87b1879225c"
+    },
+    {
+      "path": "tests/test_manual_thumb_stability.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_manual_thumb_stability.py",
+      "bytes": 1062,
+      "sha256": "e2920ad1488793a2fa1252619607adb0f105d4be818f89339caa73e184c68371"
+    },
+    {
+      "path": "tests/test_object_drop_reset.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_object_drop_reset.py",
+      "bytes": 3360,
+      "sha256": "3c09acf9711efc72a6543fcaec2ecdf9379ea215ec753fc9d062e932e677940a"
+    },
+    {
+      "path": "tests/test_object_drop_resume.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_object_drop_resume.py",
+      "bytes": 900,
+      "sha256": "a6e06bf0c1e2fa9e9c67b19924e478f7d602fa69bb8c6c74d1ea6735efa3595f"
+    },
+    {
+      "path": "tests/test_phase_force_integration.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_phase_force_integration.py",
+      "bytes": 1956,
+      "sha256": "3f3f07635d67cfe66deca7f792127281566c882df3cadc4dac4ba79a562c6943"
+    },
+    {
+      "path": "tests/test_policy_lift_hold_integration.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_policy_lift_hold_integration.py",
+      "bytes": 5609,
+      "sha256": "63c64b2b86f531b53c40305f494f25d6b482ca97cccf6ba01abb47404893f054"
+    },
+    {
+      "path": "tests/test_resize_ppo_checkpoint.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_resize_ppo_checkpoint.py",
+      "bytes": 1607,
+      "sha256": "9ec465111f1118dd4687537df0cb42fee88b6484272fe9ba89630f24a8ebe9b4"
+    },
+    {
+      "path": "tests/test_reward_total_logging.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_reward_total_logging.py",
+      "bytes": 970,
+      "sha256": "4082e2ea0cf3803c691cb6716f51da1b73b4c76383256277d0841e54e1cfdb76"
+    },
+    {
+      "path": "tests/test_stable_lift_reward.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_stable_lift_reward.py",
+      "bytes": 3190,
+      "sha256": "bd4a7391ce52ee93c644bb15f4f3f2c8a164ac7f73e95ad8a7135dd5259d71b4"
+    },
+    {
+      "path": "tests/test_training_iteration_budget.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "test_training_iteration_budget.py",
+      "bytes": 1332,
+      "sha256": "d2fb6fa17683b9dd50e96574dd4026d13e939f908a8ce9028b675a77ce609f01"
+    },
+    {
+      "path": "docs/free-grasp-lift-plan.md",
+      "mode": "100644",
+      "type": "blob",
+      "source": "docs/free-grasp-lift-plan.md",
+      "bytes": 1216,
+      "sha256": "124d6f96402c9933d4649213250b579ac6958c3c40ecc799a66f877160c5dcd5"
+    },
+    {
+      "path": "docs/lift-reward-plan.md",
+      "mode": "100644",
+      "type": "blob",
+      "source": "docs/lift-reward-plan.md",
+      "bytes": 2137,
+      "sha256": "10bf2dd7495f316b00c547d181538c833600ab834c1a884fa1136e534c7fadcc"
+    },
+    {
+      "path": "docs/manual-digit-force-balance-plan.md",
+      "mode": "100644",
+      "type": "blob",
+      "source": "docs/manual-digit-force-balance-plan.md",
+      "bytes": 2061,
+      "sha256": "be0bfbd54cbb08b0b8cbbceab71bc111929f1f17965b1cf8413c6d97769e6bd2"
+    },
+    {
+      "path": "docs/phase-force-and-initialization-plan.md",
+      "mode": "100644",
+      "type": "blob",
+      "source": "docs/phase-force-and-initialization-plan.md",
+      "bytes": 1382,
+      "sha256": "a5205d600af3ac8deada210f9eb09e8afa1142766f13c0e08789279364fa23f8"
+    },
+    {
+      "path": "docs/teacher-search-plan.md",
+      "mode": "100644",
+      "type": "blob",
+      "source": "docs/teacher-search-plan.md",
+      "bytes": 1028,
+      "sha256": "e5db4146b6bd6607b0d19389e8ce64b86cbdf4997a72d750efd8715c4e78c133"
+    },
+    {
+      "path": "HAND_ENVIRONMENT.md",
+      "mode": "100644",
+      "type": "blob",
+      "source": "HAND_ENVIRONMENT.md",
+      "bytes": 22565,
+      "sha256": "2baa89e7057c4f19e32a7bb64d1079519b5c3bfe9e85576369c764766a8b145b"
+    },
+    {
+      "path": "MANUAL_ISAAC.md",
+      "mode": "100644",
+      "type": "blob",
+      "source": "MANUAL_ISAAC.md",
+      "bytes": 5837,
+      "sha256": "1e137386b04894af19fea68f0fbb45b2a3059704e6bc640e0e9e905925926d52"
+    },
+    {
+      "path": "requirements-hand.txt",
+      "mode": "100644",
+      "type": "blob",
+      "source": "requirements-hand.txt",
+      "bytes": 436,
+      "sha256": "e76e16dc2d4cc809db70cf1468f830e46a1b3ff7c4ac15e4fe0b48173dba8ee4"
+    },
+    {
+      "path": "configs/dh116_training/grasp_initialization_below_axis_2mm_v1.audit.json",
+      "mode": "100644",
+      "type": "blob",
+      "source": "configs/dh116_training/grasp_initialization_below_axis_2mm_v1.audit.json",
+      "bytes": 77512,
+      "sha256": "8a34cc6476e100c010312e70dfca8392a5722460e847a3b67697f287e9fb51ff"
+    },
+    {
+      "path": "configs/dh116_training/grasp_initialization_below_axis_2mm_v1.json",
+      "mode": "100644",
+      "type": "blob",
+      "source": "configs/dh116_training/grasp_initialization_below_axis_2mm_v1.json",
+      "bytes": 16611,
+      "sha256": "9b4c0c9393d994c02b16734297ebd3462e7d1629abde871009a418be12948a99"
+    },
+    {
+      "path": "configs/dh116_training/grasp_initialization_below_axis_v1.audit.json",
+      "mode": "100644",
+      "type": "blob",
+      "source": "configs/dh116_training/grasp_initialization_below_axis_v1.audit.json",
+      "bytes": 77522,
+      "sha256": "15066d2b1cd1204b23785e74a261961396086aacf3eee0c8187101b9a707ddde"
+    },
+    {
+      "path": "configs/dh116_training/grasp_initialization_below_axis_v1.json",
+      "mode": "100644",
+      "type": "blob",
+      "source": "configs/dh116_training/grasp_initialization_below_axis_v1.json",
+      "bytes": 16617,
+      "sha256": "b58a99303221c25ea3cd0b276160fd2d550fbf7ce8119375000a03f83d983573"
+    },
+    {
+      "path": "configs/dh116_training/grasp_initialization_below_axis_2mm_tgs_manual_v1.json",
+      "mode": "100644",
+      "type": "blob",
+      "source": "configs/grasp_initialization_below_axis_2mm_tgs_manual_v1.json",
+      "bytes": 17410,
+      "sha256": "f31b619b78dfee678db9f424024ac85de708dc7269b08b5bee77911f874a38cc"
+    },
+    {
+      "path": "configs/dh116_training/manual_contact_placement_candidate_v1.json",
+      "mode": "100644",
+      "type": "blob",
+      "source": "configs/manual_contact_placement_candidate_v1.json",
+      "bytes": 93,
+      "sha256": "70fbe5c94f530052bfcedde3bb86aab685ed85484777f2917345643fac749588"
+    },
+    {
+      "path": "configs/dh116_training/manual_digit_balanced_placement_v1.json",
+      "mode": "100644",
+      "type": "blob",
+      "source": "configs/manual_digit_balanced_placement_v1.json",
+      "bytes": 94,
+      "sha256": "27b450c41db21bc7657b878d700b094de17d7682270eb3c90542f585506f52de"
+    },
+    {
+      "path": "configs/dh116_load_profiles/manual_fixed_pose_04nm.json",
+      "mode": "100644",
+      "type": "blob",
+      "source": "configs/manual_fixed_pose_04nm.json",
+      "bytes": 460,
+      "sha256": "225941dfad1ebbad1de6478cc47e0c7eca7207334426bcdeba40f951d9d59b63"
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_grasp_acquisition.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "../src/go2_pvcnn/control/dh116/tabletop_grasp_acquisition.py",
+      "bytes": 4847,
+      "sha256": "7b13aed5d6a5a3077ea126e000d74fb3b328b3ce220d92e5efc182e5ed561df1"
+    },
+    {
+      "path": "tests/test_dh116_grasp_acquisition.py",
+      "mode": "100644",
+      "type": "blob",
+      "source": "../tests/test_dh116_grasp_acquisition.py",
+      "bytes": 7079,
+      "sha256": "9ef317976a31c973c9f79774672ebb6d64ceadb16b53c92f77c0a2aceb6dd926"
+    }
+  ],
+  "validation": {
+    "python_ast_passed": 73,
+    "json_parsed": 8,
+    "missing_imports": [],
+    "errors": [],
+    "runtime_tests_performed": false
+  },
+  "server_unreachable": true,
+  "model_weights_included": false,
+  "physics_grasp_success": false
+}

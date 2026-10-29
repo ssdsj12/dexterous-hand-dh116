@@ -70,6 +70,19 @@ def test_world_submits_policy_targets_at_carriage_rate_and_policy_gains():
     assert (w.palms[2]==0).all() and (w.gains[2]==10).all()
 
 
+def test_policy_wrist_diagonal_speed_is_bounded_by_vector_norm():
+    from test_dh116_tensor_world import palm_world
+    w,t=palm_world(); w.device='cpu'
+    del t.coordinated_control
+    t.policy_control=True; t.phase=torch.full((3,),3)
+    t.palm_targets=torch.full((3,2,3),.05,dtype=torch.float64)
+    t.policy_stiffness=w.gains.clone()
+    before=w.palms.clone()
+    w.advance(t,torch.ones(3,dtype=torch.bool),torch.ones(3,dtype=torch.bool))
+    speed=(w.palms-before).norm(dim=-1)/w.dt
+    assert (speed <= .05+1e-12).all()
+
+
 def test_policy_contract_rejects_legacy_action_semantics():
     from go2_pvcnn.control.dh116.tabletop_policy_control import apply_contract
     from go2_pvcnn.control.dh116.tabletop_tensor_training import checkpoint_contract_changes

@@ -1,0 +1,12 @@
+# Versions verified in the existing hand Conda environment, Python 3.10.
+# Install the matching CUDA 12.8 PyTorch build separately if recreating.
+numpy==1.26.4
+torch==2.7.0
+tensordict==0.13.0
+gymnasium==1.2.1
+stable-baselines3==2.8.0
+rsl-rl-lib==3.1.3
+tensorboard==2.20.0
+pytest==9.0.3
+# Isaac Sim and Isaac Lab need their vendor installation/source checkout.
+# Isaac Sim 4.5.0.0; Isaac Lab 0.54.4 (editable source, 4.5 launch config).

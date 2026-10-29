@@ -31,7 +31,7 @@ parser.add_argument('--full-hand-contact', action='store_true',
 parser.add_argument('--joint-envelope', type=Path,
                     help='explicit per-joint lower/center/upper targets for free grasp')
 parser.add_argument('--load-profile', type=Path, help='explicit estimated force/drive parameters; strict checkpoint provenance')
-parser.add_argument('--object-kind', choices=('solid_cylinder','hollow_straw','deformx_wire'),default='solid_cylinder')
+parser.add_argument('--object-kind', choices=('solid_cylinder','hollow_straw'),default='solid_cylinder')
 parser.add_argument('--solid-cylinder-radius-m', type=float, default=.008,
                     help='radius for the built-in solid cylinder; non-default radii require fresh geometry/checkpoints')
 parser.add_argument('--solid-cylinder-density-kg-m3', type=float, default=None,
@@ -68,6 +68,7 @@ parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--resume', type=Path)
 parser.add_argument('--contact-effort-feedback',action='store_true',help='bounded contact torque feedback sharing the existing motor effort budget')
 parser.add_argument('--teacher-search-cases',type=Path)
+parser.add_argument('--manual-control',action='store_true',help='interactive force/finger/wrist/lift controls; no PPO training')
 parser.add_argument('--teacher-episodes',type=int,default=1)
 parser.add_argument('--teacher-control-steps',type=int,default=1000)
 parser.add_argument('--actor-initialization',type=Path)
@@ -132,8 +133,54 @@ parser.add_argument('--vertical-force-reward-mode',choices=('window','continuous
 parser.add_argument('--vertical-force-reward',action='store_true',
                     help='reward upward object contact only; penalize downward signed force throughout the episode')
 parser.add_argument('--reset-height-jitter-m', type=float, default=.0003)
+parser.add_argument('--grasp-acquisition-shaping', action='store_true',
+                    help='potential feedback for real fingertip approach and bilateral object contact')
+parser.add_argument('--policy-lift-hold', action='store_true',
+                    help='retain accepted grasp during policy-requested lift, with bounded grip recovery')
+parser.add_argument('--stable-lift-reward', action='store_true',
+                    help='gate actual height progress by stable bilateral grip and add bounded low-slip holding credit')
+parser.add_argument('--force-region-control', action='store_true',
+                    help='policy requests 2-12N per hand with measured feedback and below-axis contact admission')
+parser.add_argument('--phase-force-reward',action='store_true',
+                    help='separate upward hand-force rewards in grasp and lift; lift includes actual friction')
+parser.add_argument('--free-grasp-lift',action='store_true',
+                    help='continuous policy grasp and lift, without stages, admission gates or pose latching')
+parser.add_argument('--manual-fast-force',action='store_true',help='manual-only bounded micro-closing contact acquisition and faster force adjustment')
+parser.add_argument('--manual-run',action='store_true',help='start the explicitly requested manual demonstration running')
+parser.add_argument('--manual-placement',type=Path,help='manual-only initial palm translation settings JSON')
+parser.add_argument('--manual-auto-lift-mm',type=float,help='manual demonstration: lift once measured bilateral forces stabilize, not necessarily at target')
+parser.add_argument('--require-initial-below-axis',action='store_true',
+                    help='verify measured reset pad references below object axis with table clearance')
+parser.add_argument('--max-iterations', type=int, default=None,
+                    help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+if (args.manual_fast_force or args.manual_run or args.manual_placement or args.manual_auto_lift_mm is not None) and not args.manual_control:
+    parser.error('--manual-fast-force and --manual-run require --manual-control')
+if args.manual_auto_lift_mm is not None and not (args.manual_fast_force and 0<args.manual_auto_lift_mm<=50):
+    parser.error('--manual-auto-lift-mm requires manual-fast-force and a height in (0,50]mm')
+if args.free_grasp_lift and (args.grasp_controller!='policy' or not args.force_region_control
+        or not args.phase_force_reward or args.policy_lift_hold or args.manual_control
+        or args.teacher_search_cases or args.control_probe_checkpoint):
+    parser.error('--free-grasp-lift requires policy force-region phase-force rewards and no staged hold/manual/teacher/probe')
+if args.phase_force_reward and (not args.force_region_control or not args.grasp_shaping):
+    parser.error('--phase-force-reward requires force-region control and grasp-shaping')
+if args.manual_control and (args.headless or args.num_envs!=1 or not args.force_region_control
+        or args.resume or args.teacher_search_cases or args.actor_initialization):
+    parser.error('--manual-control requires GUI, one env, force-region control and no checkpoint/teacher mode')
+if args.force_region_control and (args.grasp_controller!='policy' or not args.tensor_pipeline
+        or not args.vertical_force_reward or args.grasp_readiness!='measured_load'
+        or not (args.policy_lift_hold or getattr(args,'free_grasp_lift',False))):
+    parser.error('--force-region-control requires policy tensor measured_load vertical force rewards and --policy-lift-hold')
+if args.max_iterations is not None and (args.max_iterations<=0 or not args.tensor_pipeline):
+    parser.error('--max-iterations requires tensor pipeline and a positive update count')
+if args.stable_lift_reward and (not args.tensor_pipeline or args.grasp_readiness!='measured_load'
+        or not args.vertical_force_reward):
+    parser.error('--stable-lift-reward requires tensor measured_load and vertical force reward')
+if args.policy_lift_hold and (not args.tensor_pipeline or args.grasp_controller!='policy'):
+    parser.error('--policy-lift-hold requires policy tensor control')
+if args.grasp_acquisition_shaping and (not args.tensor_pipeline or args.grasp_controller!='policy'):
+    parser.error('--grasp-acquisition-shaping requires policy tensor training')
 if args.grasp_controller=='policy':
     from go2_pvcnn.control.dh116.tabletop_policy_control import validate_configuration
     try:
@@ -211,11 +258,11 @@ if args.rollout_steps is not None and args.resume and not args.tensor_pipeline:
 if args.training_episode_resets and (not args.full_hand_contact or args.reset_height_jitter_m != 0):
     parser.error('--training-episode-resets requires full-hand contact and zero reset jitter')
 if args.tensor_pipeline and (not args.full_hand_contact or not args.force_feedback
-        or args.reset_height_jitter_m != 0 or args.object_kind=='deformx_wire'
+        or args.reset_height_jitter_m != 0
         or args.initialize_from or args.play_checkpoint or args.probe_only or args.startup_only
         or args.allow_env_expansion or args.resume_episode_progress):
     parser.error('--tensor-pipeline requires rigid full-hand force feedback, zero jitter, and training mode; legacy transfer is unsupported')
-if args.full_hand_contact and (args.object_kind == 'deformx_wire' or not args.force_feedback):
+if args.full_hand_contact and (not args.force_feedback):
     parser.error('full-hand contact requires rigid-object force feedback')
 if args.joint_envelope and not args.full_hand_contact:
     parser.error('joint-envelope requires full-hand contact')
@@ -224,8 +271,7 @@ if args.joint_envelope:
     from go2_pvcnn.control.dh116.tabletop_joint_envelope import bounds
     args.joint_envelope_data = json.loads(args.joint_envelope.read_text())
     bounds(args.joint_envelope_data)
-if args.object_kind == 'deformx_wire' and (args.hand_material != 'default' or args.object_material in ('rough_rod','extreme_grip')):
-    parser.error('explicit rigid friction profiles require a rigid object; external rod contact uses its own material')
+
 if args.allow_playback_material_change and not args.play_checkpoint:
     parser.error('--allow-playback-material-change requires --play-checkpoint')
 if args.play_episodes < 0 or (args.play_episodes and not args.play_checkpoint):
@@ -257,10 +303,10 @@ if not args.force_feedback or not args.adaptive_grasp or args.protected_mimic_re
     parser.error('GPU batch requires adaptive force feedback; protected resets are unsupported')
 if args.force_feedback and not args.adaptive_grasp:
     parser.error('force feedback requires --adaptive-grasp')
-if (args.output.exists() or not 1 <= args.num_envs <= 4096 or args.env_spacing_m < 2.
+if (args.output.exists() or not 1 <= args.num_envs <= 10240 or args.env_spacing_m < 2.
         or args.timesteps <= 0 or not 0 <= args.reset_height_jitter_m <= .002
         or args.eval_episodes < 2 or args.checkpoint_every <= 0 or args.device != 'cuda:0'):
-    parser.error('new output,1..4096 envs,spacing>=2,positive budget,CUDA and bounded jitter required')
+    parser.error('new output,1..10240 envs,spacing>=2,positive budget,CUDA and bounded jitter required')
 if args.resume and args.initialize_from:
     parser.error('resume and initialize-from are mutually exclusive')
 if args.allow_physics_refinement and (not args.initialize_from or args.resume):
@@ -285,32 +331,20 @@ except ValueError as error:
     parser.error(str(error))
 args.control_mode = 'adaptive_grasp' if args.adaptive_grasp else 'joint_target'
 try:
-    if args.object_kind == 'deformx_wire':
-        from dataclasses import asdict
-        from go2_pvcnn.control.dh116.deformx_wire_runtime import paper_rod_config
-        asset_dir=Path(__file__).resolve().parents[1]/'assets/deformx_wire_v1'
-        manifest=json.loads((asset_dir/'manifest.json').read_text())
-        args.object_usd=asset_dir/'wire.usda'
-        if not args.object_usd.is_file(): raise ValueError('DeformX asset bundle is missing')
-        args.object_mass_kg=700.*3.141592653589793*.005**2
-        object_contract=dict(object_kind='deformx_wire',object_asset=manifest,
-            object_mass_kg=args.object_mass_kg,object_backend='batched_cuda_cosserat_v1',
-            grasp_geometry='fixed_material_regions_40mm_v1',
-            object_observation='two_region_center_mean_and_max_region_speed_v1',
-            visual='original_skin_mesh_points_env0',rope_self_contact=False)
-    else:
-        args.object_usd, args.object_mass_kg, object_contract = object_spec(
-            Path(__file__).resolve().parents[1], args.object_kind,
-            solid_radius_m=args.solid_cylinder_radius_m,
-            solid_density_kg_m3=args.solid_cylinder_density_kg_m3)
+    args.object_usd, args.object_mass_kg, object_contract = object_spec(
+        Path(__file__).resolve().parents[1], args.object_kind,
+        solid_radius_m=args.solid_cylinder_radius_m,
+        solid_density_kg_m3=args.solid_cylinder_density_kg_m3)
 except (ValueError, OSError, KeyError) as error:
     parser.error(str(error))
 args.output.mkdir(parents=True)
 write_json(args.output/'monitor.json',dict(status='initializing',num_envs=args.num_envs,
-    timesteps=0,updates=0,object_kind=args.object_kind,episodes_per_env_target=args.episodes_per_env))
+    timesteps=0,updates=0,object_kind=args.object_kind,
+    episodes_per_env_target=None if args.max_iterations is not None else args.episodes_per_env,
+    iteration_budget=args.max_iterations))
 app = None
 report = dict(passed=False, grasp_qualified=False, num_envs=args.num_envs,
-              status='initializing', rigid_proxy=args.object_kind != 'deformx_wire', pipeline_scope='close_to_lift')
+              status='initializing', rigid_proxy=True, pipeline_scope='close_to_lift')
 vec = None
 from go2_pvcnn.control.dh116.tabletop_run_status import finalize_run
 try:
@@ -373,12 +407,7 @@ try:
         contract['velocity_headroom']=VELOCITY_HEADROOM_CONTRACT
     contract.update(hand_material_contract(args.hand_material))
     contract.update(object_contract)
-    if args.object_kind == 'deformx_wire':
-        contract['flexible_physics']=asdict(paper_rod_config(seed_state['wire_pose'][:3],layout['table_center'],layout['table_size']))
-        contract['object_contact_material']=dict(model='penalty_regularized_coulomb',friction=1.,
-            normal_stiffness_n_m=10000.,normal_damping_ns_m=10.,tangential_damping_ns_m=10.)
-    else:
-        contract.update(material_contract(args.object_material))
+    contract.update(material_contract(args.object_material))
     if args.adaptive_grasp:
         for key in ('palm_xy_limit_m','palm_z_limit_m','palm_z_rate_m_s'):
             contract.pop(key)
@@ -475,12 +504,11 @@ try:
     vec.seed(args.seed);second=vec.reset()
     repeatable=bool(np.allclose(first,second,atol=1e-4,rtol=0))
     report['isolation']=dict(reset_does_not_change_other_envs=independent,reset_repeatable=repeatable,
-        origins=world.origins.tolist(), sensor_filters=('external rod contacts, explicit per-env CUDA indexing'
-            if world.flexible else 'Wire-only, GPU environment-ID isolation'),
+        origins=world.origins.tolist(), sensor_filters=('Wire-only, GPU environment-ID isolation'),
         collision_groups=args.num_envs)
     if not independent or not repeatable:
         raise ValueError('physical per-environment reset isolation failed')
-    if not world.flexible and args.object_material != 'default':
+    if not False and args.object_material != 'default':
         properties=world.wire.root_physx_view.get_material_properties().cpu().numpy()
         report['object_material_verification']=[verify_material_properties(properties[i:i+1],
             args.object_material,len(world.source['object_material_colliders'])) for i in range(args.num_envs)]
@@ -491,7 +519,7 @@ try:
             for side,hand in zip(('left','right'),world.hands)}
         report['hand_material_bindings'] = world.source['hand_material_bindings']
         if args.hand_material=='grip_compliant':
-            if not args.full_hand_contact or world.flexible:
+            if not args.full_hand_contact:
                 raise ValueError('compliant pads require rigid full-hand contact sensors')
             from go2_pvcnn.control.dh116.tabletop_material import verify_hand_link_material
             report['hand_material_link_verification']=[verify_hand_link_material(
@@ -502,26 +530,10 @@ try:
         hands=report.get('hand_material_verification'),hand_bindings=report.get('hand_material_bindings'),
         hand_links=report.get('hand_material_link_verification'),
         contract={k:contract[k] for k in ('object_contact_material','hand_contact_material') if k in contract}))
-    if world.flexible:
-        local_centers=world.flex.engine.position.mean(dim=2).cpu().numpy()
-        center_error=float(np.max(np.abs(local_centers-seed_state['wire_pose'][:3])))
-        expected_roots=np.stack([layout['hand_roots'][s][:3] for s in ('left','right')])
-        expected_roots[:,:2]+=seed_state['root_xy']
-        expected_roots[:,2]+=seed_state['root_offset']
-        root_error=float(np.max(np.abs(world.roots[:,:,:3]-world.origins[:,None]-expected_roots)))
-        if center_error>1e-9 or (args.reset_height_jitter_m==0 and root_error>5e-6):
-            raise ValueError('flexible replacement altered the original reset position')
-        report['initial_physics']=dict(object_mass_kg=args.object_mass_kg,
-            seed_center_error_m=center_error,hand_root_position_error_m=root_error,
-            seed_wire_pose=seed_state['wire_pose'].tolist(),hand_root_poses=world.roots[:8].tolist(),
-            material_intervals_m=world.flex.regions.intervals,
-            pad_relative_m=world.pad_relative[:8].tolist(),hand_clearance_m=world.clearances[:8].tolist(),
-            position_preserved=True,grasp_point_offset_m=0.,height_adjustment_m=0.)
-    else:
-        report['initial_physics'] = [dict(object_mass_kg=world.wire.root_physx_view.get_masses().cpu().tolist(),
-            object_inertia_kg_m2=world.wire.root_physx_view.get_inertias().cpu().tolist(),
-            pad_relative_m=world.pad_relative.tolist(),hand_clearance_m=world.clearances.tolist())]
-    if args.num_envs >= 12 and not world.flexible:
+    report['initial_physics'] = [dict(object_mass_kg=world.wire.root_physx_view.get_masses().cpu().tolist(),
+        object_inertia_kg_m2=world.wire.root_physx_view.get_inertias().cpu().tolist(),
+        pad_relative_m=world.pad_relative.tolist(),hand_clearance_m=world.clearances.tolist())]
+    if args.num_envs >= 12 and not False:
         # Asymmetric physical state catches env_2/env_10 ordering mistakes that
         # identical resets cannot detect. Do not tick physics in this audit.
         original = world.wire.data.root_pose_w.clone()
@@ -541,35 +553,10 @@ try:
             raise ValueError('selected GPU reset changed other object states')
         report['isolation']['asymmetric_object_mapping'] = True
         vec.seed(args.seed);vec.reset()
-    if world.flexible:
-        # A thinner replacement can initially miss the pads. Contact failure
-        # is learnable; it is not a numerical fault or an admission criterion.
-        before=world.flex.engine.position.clone()
-        if args.num_envs > 1:
-            world.flex.engine.position[1,2] += .0001
-            untouched=world.flex.engine.position[1:].clone()
-            envs[0].reset(seed=args.seed)
-            if not torch.equal(untouched,world.flex.engine.position[1:]):
-                raise ValueError('flexible reset changed another material state')
-            world.flex.engine.position.copy_(before)
-            world.refresh(sensors=False)
-        report['isolation']['asymmetric_object_mapping']=True
-        started=time.monotonic()
-        for tick in range(2):
-            obs,rewards,dones,infos=vec.step(np.zeros((args.num_envs,20),dtype=np.float32))
-            if not np.isfinite(obs).all() or any(info.get('safety_failure') for info in infos):
-                raise ValueError('flexible startup numerical/hand safety failure')
-            write_json(args.output/'monitor.json',dict(status='startup_preflight',num_envs=args.num_envs,
-                vector_steps=tick+1,elapsed_seconds=time.monotonic()-started))
-        report['contact_preflight']=dict(mode='finite_bounded_exploration_contact_not_required',
-            vector_steps=2,elapsed_seconds=time.monotonic()-started,
-            peak_hand_load_n=world.force.reshape(args.num_envs,2,2).sum(axis=2).tolist())
-        write_json(args.output/'contact_preflight.json',report['contact_preflight'])
-    else:
-        from go2_pvcnn.control.dh116.tabletop_preflight import contact_preflight
-        report['contact_preflight'] = contact_preflight(vec,world,direct=bool(args.direct_training or args.play_checkpoint),
-            progress=lambda row: write_json(args.output/'monitor.json',row))
-        write_json(args.output/'contact_preflight.json',report['contact_preflight'])
+    from go2_pvcnn.control.dh116.tabletop_preflight import contact_preflight
+    report['contact_preflight'] = contact_preflight(vec,world,direct=bool(args.direct_training or args.play_checkpoint),
+        progress=lambda row: write_json(args.output/'monitor.json',row))
+    write_json(args.output/'contact_preflight.json',report['contact_preflight'])
     from go2_pvcnn.control.dh116.tabletop_load_parameters import physics_load_readback
     report['physical_parameter_readback'] = physics_load_readback(world.hands,args.load_parameters,
         passive_velocity_limit_rad_s=args.passive_velocity_limit_rad_s)
@@ -669,7 +656,7 @@ finally:
             try:
                 import omni.kit.app
                 omni.kit.app.get_app().post_quit(code)
-                app.close(wait_for_replicator=False,skip_cleanup=True)
+                app.close(wait_for_replicator=False)
             except Exception:
                 report.update(status='error',error=report.get('error','')+'\n'+traceback.format_exc())
                 code=finalize_run(args.output,report,[])

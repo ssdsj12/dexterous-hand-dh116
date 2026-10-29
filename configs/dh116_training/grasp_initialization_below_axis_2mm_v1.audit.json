@@ -1,0 +1,1684 @@
+{
+  "version": "source_fk_below_axis_translation_v1",
+  "physics_qualified": false,
+  "grasp_qualified": false,
+  "simulator_started": false,
+  "parent_initialization_sha256": "74cde2e454ae537f35e9a23a119bcb941812bb9b7d434712c556fcd6ff56b6fb",
+  "builder_sha256": "eeaed5997297776a0fd48fc5ce9a370defd8e6e1c4c4f502603a922a724c1345",
+  "manifest_sha256": "8247c9fcb2bdb4abc9b60b1a1086fc7eb23225aac1ac2af518164f3d407462f9",
+  "method": "translation only; all original joint_positions and grasp_command retained",
+  "radius_m": 0.008,
+  "table_top_m": 0.3,
+  "required_initial_pad_radial_z_exclusive_m": -0.00185,
+  "minimum_table_clearance_required_m": 0.0003,
+  "collision_method": "all source collision vertices; convex projected polygon edge distance to infinite horizontal Y cylinder (conservative for finite rod); global hand AABBs establish hand-hand separation",
+  "limitations": [
+    "No PhysX cooking, force/contact measurements or dynamic qualification.",
+    "Only the INITIAL state is required nonpenetrating. The retained legacy closed command is audited separately and can overlap the rod.",
+    "Within-hand geometry unchanged; no new self-collision search."
+  ],
+  "unchanged": {
+    "source_contract": true,
+    "coupling": true,
+    "joint_positions": true,
+    "grasp_command": true,
+    "root_rotations": true,
+    "rod_pose": true,
+    "mass_geometry_material_physics_guards": true
+  },
+  "sides": {
+    "left": {
+      "source_path": "/root/hand/assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd",
+      "source_sha256": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+      "source_layer_sha256": {
+        "/root/hand/assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c"
+      },
+      "collision_mesh_count": 17,
+      "collision_meshes": [
+        {
+          "body": "/DH116_V2_0_L/base_link",
+          "path": "/DH116_V2_0_L/base_link/collisions/base_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 494196,
+          "local_vertices_sha256": "8b59a051ea5855c1df5f853533a7ee0b8dee531f170ecf4a0570b6e98e5cfe8d"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger11_link",
+          "path": "/DH116_V2_0_L/finger11_link/collisions/finger11_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 14184,
+          "local_vertices_sha256": "837c423259eafb2da017d7d65978b26116afabeb53116655907de31d02bbab95"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger12_link",
+          "path": "/DH116_V2_0_L/finger12_link/collisions/finger12_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 28164,
+          "local_vertices_sha256": "04585dc4c7b6dae5f18f6471a9e197316f66fb6e9927f51663585004ed98a080"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger13_link",
+          "path": "/DH116_V2_0_L/finger13_link/collisions/finger13_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 17574,
+          "local_vertices_sha256": "ec8f12dae855edcf3acaaf913986e100433b6f21c862a58913cea7e7c2cd92c0"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger14_link",
+          "path": "/DH116_V2_0_L/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 5622,
+          "local_vertices_sha256": "6d3d2be3a720b90687be0c6ecdbb0287a8a4ad25ef75c26b76a0dbbe9b85ca88"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger21_link",
+          "path": "/DH116_V2_0_L/finger21_link/collisions/finger21_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 26160,
+          "local_vertices_sha256": "aaac62d199ee90a2805bd05618d30420bb1246854185f46bc42a0597cefce728"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger22_link",
+          "path": "/DH116_V2_0_L/finger22_link/collisions/finger22_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 19950,
+          "local_vertices_sha256": "37c9306b932f5f29338b832a75830e00e60a65bc07b1e6a57390ca21166a32da"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger23_link",
+          "path": "/DH116_V2_0_L/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 11922,
+          "local_vertices_sha256": "8769245266648722236b6c1438ef178c8a8cc86e7c26d8f612cb814f352a9e6a"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger31_link",
+          "path": "/DH116_V2_0_L/finger31_link/collisions/finger31_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 26160,
+          "local_vertices_sha256": "e7d7a93db52c1b74f05329b31f1e93a6e3a7ab4e04c7d17a026045d8d3c1f4b6"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger32_link",
+          "path": "/DH116_V2_0_L/finger32_link/collisions/finger32_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 18342,
+          "local_vertices_sha256": "2a651dd251cf1f59434bcb2b87221c956973dfba77c44ee33afa3093564b89c4"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger33_link",
+          "path": "/DH116_V2_0_L/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 11922,
+          "local_vertices_sha256": "d15ea395eb7c0adec5df3deb24b31a34d47d9ce9d0f8cd43b57709c8e0a0e1af"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger41_link",
+          "path": "/DH116_V2_0_L/finger41_link/collisions/finger41_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 26160,
+          "local_vertices_sha256": "82e85bae07587fbb71d7d3935577ac5d085f033a7a2b4f1b05155bb652f06bf5"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger42_link",
+          "path": "/DH116_V2_0_L/finger42_link/collisions/finger42_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 19950,
+          "local_vertices_sha256": "7538ef74c6bb48600aff52eb0c96a826903adab4cfd2df9cd071c2c4576f2489"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger43_link",
+          "path": "/DH116_V2_0_L/finger43_link/collisions/finger43_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 11922,
+          "local_vertices_sha256": "36813676d8e66a166e0625c6c71c89cc05ede7c88a4637e8de476dfcdccd83ad"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger51_link",
+          "path": "/DH116_V2_0_L/finger51_link/collisions/finger51_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 26160,
+          "local_vertices_sha256": "ced2e33ba12b6b424725562bd64fcddcf76f8e6bc8aeaa44b5130d77c43f2d9a"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger52_link",
+          "path": "/DH116_V2_0_L/finger52_link/collisions/finger52_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 21444,
+          "local_vertices_sha256": "2b67c64b889d92588cbae2caf951bbc299129e041d6c9a5d8f6b9aa140944d84"
+        },
+        {
+          "body": "/DH116_V2_0_L/finger53_link",
+          "path": "/DH116_V2_0_L/finger53_link/collisions/finger53_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 10980,
+          "local_vertices_sha256": "aa3a73e32b65a6251e80cdc9e2d0b6449628e1d79034dc5a0d85602ffdb3b508"
+        }
+      ],
+      "old_root": [
+        0.5020698354040565,
+        0.1886170826989223,
+        0.429238318379092,
+        -0.4281031279514497,
+        -0.34228968950203076,
+        0.7910709792392532,
+        0.27161035713727344
+      ],
+      "new_root": [
+        0.502082647011545,
+        0.1886170826989223,
+        0.4275409146039766,
+        -0.4281031279514497,
+        -0.34228968950203076,
+        0.7910709792392532,
+        0.27161035713727344
+      ],
+      "root_delta_world_m": [
+        1.2811607488595806e-05,
+        0.0,
+        -0.0016974037751154008
+      ],
+      "initial_active_rad": [
+        0.3193726835167458,
+        0.40475200586220655,
+        0.6909494733541114,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224
+      ],
+      "closed_active_rad": [
+        0.3203346132196089,
+        0.4102028952660908,
+        0.6967254947035454,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224
+      ],
+      "before": {
+        "initial": {
+          "pad_positions": [
+            [
+              0.4384789188865387,
+              0.20010718539891548,
+              0.3076920524776665
+            ],
+            [
+              0.4214789280779275,
+              0.20012125527955138,
+              0.3077027550725643
+            ]
+          ],
+          "pad_relative_z_m": [
+            -0.0003079475223334849,
+            -0.0002972449274357136
+          ],
+          "pad_span_m": 0.016999999999998405,
+          "minimum_table_clearance_m": 0.0021765111774165735,
+          "minimum_infinite_cylinder_gap_m": 0.000378036912466493,
+          "table_body_clearance_m": {
+            "base_link": 0.0570802426448937,
+            "finger11_link": 0.0693780008111804,
+            "finger12_link": 0.027943765870709236,
+            "finger13_link": 0.0021765111774165735,
+            "finger14_link": 0.002700595155305796,
+            "finger21_link": 0.027324699163111588,
+            "finger22_link": 0.002188743469345944,
+            "finger23_link": 0.0029808155812678927,
+            "finger31_link": 0.044894589131111495,
+            "finger32_link": 0.004442272339813702,
+            "finger33_link": 0.0044645640171408485,
+            "finger41_link": 0.05812759249696603,
+            "finger42_link": 0.02442929703691782,
+            "finger43_link": 0.024422773584776403,
+            "finger51_link": 0.069347824081124,
+            "finger52_link": 0.04432554511600245,
+            "finger53_link": 0.04432302416490985
+          },
+          "wire_infinite_cylinder_radial_gap_m": {
+            "base_link": 0.04327192604920551,
+            "finger11_link": 0.06283063753937784,
+            "finger12_link": 0.028529366450338038,
+            "finger13_link": 0.003190223315320706,
+            "finger14_link": 0.000378036912466493,
+            "finger21_link": 0.027134543217418275,
+            "finger22_link": 0.003918410149848041,
+            "finger23_link": 0.00044040452162113185,
+            "finger31_link": 0.05437806168930186,
+            "finger32_link": 0.055847272662911264,
+            "finger33_link": 0.05608537944407598,
+            "finger41_link": 0.06965160119319172,
+            "finger42_link": 0.07057602355679124,
+            "finger43_link": 0.06937102378504048,
+            "finger51_link": 0.08122286485817001,
+            "finger52_link": 0.08165099566479592,
+            "finger53_link": 0.07858712676545188
+          },
+          "per_body": {
+            "base_link": {
+              "table_clearance_m": 0.0570802426448937,
+              "infinite_cylinder_surface_gap_m": 0.04327192604920551,
+              "source_mesh": "/DH116_V2_0_L/base_link/collisions/base_link/node_STL_BINARY_/mesh"
+            },
+            "finger11_link": {
+              "table_clearance_m": 0.0693780008111804,
+              "infinite_cylinder_surface_gap_m": 0.06283063753937784,
+              "source_mesh": "/DH116_V2_0_L/finger11_link/collisions/finger11_link/node_STL_BINARY_/mesh"
+            },
+            "finger12_link": {
+              "table_clearance_m": 0.027943765870709236,
+              "infinite_cylinder_surface_gap_m": 0.028529366450338038,
+              "source_mesh": "/DH116_V2_0_L/finger12_link/collisions/finger12_link/node_STL_BINARY_/mesh"
+            },
+            "finger13_link": {
+              "table_clearance_m": 0.0021765111774165735,
+              "infinite_cylinder_surface_gap_m": 0.003190223315320706,
+              "source_mesh": "/DH116_V2_0_L/finger13_link/collisions/finger13_link/node_STL_BINARY_/mesh"
+            },
+            "finger14_link": {
+              "table_clearance_m": 0.002700595155305796,
+              "infinite_cylinder_surface_gap_m": 0.000378036912466493,
+              "source_mesh": "/DH116_V2_0_L/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh"
+            },
+            "finger21_link": {
+              "table_clearance_m": 0.027324699163111588,
+              "infinite_cylinder_surface_gap_m": 0.027134543217418275,
+              "source_mesh": "/DH116_V2_0_L/finger21_link/collisions/finger21_link/node_STL_BINARY_/mesh"
+            },
+            "finger22_link": {
+              "table_clearance_m": 0.002188743469345944,
+              "infinite_cylinder_surface_gap_m": 0.003918410149848041,
+              "source_mesh": "/DH116_V2_0_L/finger22_link/collisions/finger22_link/node_STL_BINARY_/mesh"
+            },
+            "finger23_link": {
+              "table_clearance_m": 0.0029808155812678927,
+              "infinite_cylinder_surface_gap_m": 0.00044040452162113185,
+              "source_mesh": "/DH116_V2_0_L/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh"
+            },
+            "finger31_link": {
+              "table_clearance_m": 0.044894589131111495,
+              "infinite_cylinder_surface_gap_m": 0.05437806168930186,
+              "source_mesh": "/DH116_V2_0_L/finger31_link/collisions/finger31_link/node_STL_BINARY_/mesh"
+            },
+            "finger32_link": {
+              "table_clearance_m": 0.004442272339813702,
+              "infinite_cylinder_surface_gap_m": 0.055847272662911264,
+              "source_mesh": "/DH116_V2_0_L/finger32_link/collisions/finger32_link/node_STL_BINARY_/mesh"
+            },
+            "finger33_link": {
+              "table_clearance_m": 0.0044645640171408485,
+              "infinite_cylinder_surface_gap_m": 0.05608537944407598,
+              "source_mesh": "/DH116_V2_0_L/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh"
+            },
+            "finger41_link": {
+              "table_clearance_m": 0.05812759249696603,
+              "infinite_cylinder_surface_gap_m": 0.06965160119319172,
+              "source_mesh": "/DH116_V2_0_L/finger41_link/collisions/finger41_link/node_STL_BINARY_/mesh"
+            },
+            "finger42_link": {
+              "table_clearance_m": 0.02442929703691782,
+              "infinite_cylinder_surface_gap_m": 0.07057602355679124,
+              "source_mesh": "/DH116_V2_0_L/finger42_link/collisions/finger42_link/node_STL_BINARY_/mesh"
+            },
+            "finger43_link": {
+              "table_clearance_m": 0.024422773584776403,
+              "infinite_cylinder_surface_gap_m": 0.06937102378504048,
+              "source_mesh": "/DH116_V2_0_L/finger43_link/collisions/finger43_link/node_STL_BINARY_/mesh"
+            },
+            "finger51_link": {
+              "table_clearance_m": 0.069347824081124,
+              "infinite_cylinder_surface_gap_m": 0.08122286485817001,
+              "source_mesh": "/DH116_V2_0_L/finger51_link/collisions/finger51_link/node_STL_BINARY_/mesh"
+            },
+            "finger52_link": {
+              "table_clearance_m": 0.04432554511600245,
+              "infinite_cylinder_surface_gap_m": 0.08165099566479592,
+              "source_mesh": "/DH116_V2_0_L/finger52_link/collisions/finger52_link/node_STL_BINARY_/mesh"
+            },
+            "finger53_link": {
+              "table_clearance_m": 0.04432302416490985,
+              "infinite_cylinder_surface_gap_m": 0.07858712676545188,
+              "source_mesh": "/DH116_V2_0_L/finger53_link/collisions/finger53_link/node_STL_BINARY_/mesh"
+            }
+          },
+          "world_aabb_min_m": [
+            0.3418153558795744,
+            0.165295299108017,
+            0.30217651117741656
+          ],
+          "world_aabb_max_m": [
+            0.5130588146912564,
+            0.2463208003516179,
+            0.44826718493555856
+          ]
+        },
+        "closed": {
+          "pad_positions": [
+            [
+              0.4380000000000972,
+              0.19999999999999998,
+              0.30799999999999994
+            ],
+            [
+              0.42199999999990284,
+              0.2,
+              0.308
+            ]
+          ],
+          "pad_relative_z_m": [
+            -5.551115123125783e-17,
+            0.0
+          ],
+          "pad_span_m": 0.01600000000019436,
+          "minimum_table_clearance_m": 0.0024615219751396578,
+          "minimum_infinite_cylinder_gap_m": -8.516436335649809e-05,
+          "table_body_clearance_m": {
+            "base_link": 0.0570802426448937,
+            "finger11_link": 0.06938520603359755,
+            "finger12_link": 0.027988836287329788,
+            "finger13_link": 0.0024615219751396578,
+            "finger14_link": 0.0029903167539277464,
+            "finger21_link": 0.027291204386268364,
+            "finger22_link": 0.002461521975470393,
+            "finger23_link": 0.003262901083802172,
+            "finger31_link": 0.044894589131111495,
+            "finger32_link": 0.004442272339813702,
+            "finger33_link": 0.0044645640171408485,
+            "finger41_link": 0.05812759249696603,
+            "finger42_link": 0.02442929703691782,
+            "finger43_link": 0.024422773584776403,
+            "finger51_link": 0.069347824081124,
+            "finger52_link": 0.04432554511600245,
+            "finger53_link": 0.04432302416490985
+          },
+          "wire_infinite_cylinder_radial_gap_m": {
+            "base_link": 0.04327192604920551,
+            "finger11_link": 0.0628287286663545,
+            "finger12_link": 0.028379014288384956,
+            "finger13_link": 0.002619464923629685,
+            "finger14_link": -8.516436335649809e-05,
+            "finger21_link": 0.02698081690437895,
+            "finger22_link": 0.003286407582522164,
+            "finger23_link": -7.863263876149544e-05,
+            "finger31_link": 0.05437806168930186,
+            "finger32_link": 0.055847272662911264,
+            "finger33_link": 0.05608537944407598,
+            "finger41_link": 0.06965160119319172,
+            "finger42_link": 0.07057602355679124,
+            "finger43_link": 0.06937102378504048,
+            "finger51_link": 0.08122286485817001,
+            "finger52_link": 0.08165099566479592,
+            "finger53_link": 0.07858712676545188
+          },
+          "per_body": {
+            "base_link": {
+              "table_clearance_m": 0.0570802426448937,
+              "infinite_cylinder_surface_gap_m": 0.04327192604920551,
+              "source_mesh": "/DH116_V2_0_L/base_link/collisions/base_link/node_STL_BINARY_/mesh"
+            },
+            "finger11_link": {
+              "table_clearance_m": 0.06938520603359755,
+              "infinite_cylinder_surface_gap_m": 0.0628287286663545,
+              "source_mesh": "/DH116_V2_0_L/finger11_link/collisions/finger11_link/node_STL_BINARY_/mesh"
+            },
+            "finger12_link": {
+              "table_clearance_m": 0.027988836287329788,
+              "infinite_cylinder_surface_gap_m": 0.028379014288384956,
+              "source_mesh": "/DH116_V2_0_L/finger12_link/collisions/finger12_link/node_STL_BINARY_/mesh"
+            },
+            "finger13_link": {
+              "table_clearance_m": 0.0024615219751396578,
+              "infinite_cylinder_surface_gap_m": 0.002619464923629685,
+              "source_mesh": "/DH116_V2_0_L/finger13_link/collisions/finger13_link/node_STL_BINARY_/mesh"
+            },
+            "finger14_link": {
+              "table_clearance_m": 0.0029903167539277464,
+              "infinite_cylinder_surface_gap_m": -8.516436335649809e-05,
+              "source_mesh": "/DH116_V2_0_L/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh"
+            },
+            "finger21_link": {
+              "table_clearance_m": 0.027291204386268364,
+              "infinite_cylinder_surface_gap_m": 0.02698081690437895,
+              "source_mesh": "/DH116_V2_0_L/finger21_link/collisions/finger21_link/node_STL_BINARY_/mesh"
+            },
+            "finger22_link": {
+              "table_clearance_m": 0.002461521975470393,
+              "infinite_cylinder_surface_gap_m": 0.003286407582522164,
+              "source_mesh": "/DH116_V2_0_L/finger22_link/collisions/finger22_link/node_STL_BINARY_/mesh"
+            },
+            "finger23_link": {
+              "table_clearance_m": 0.003262901083802172,
+              "infinite_cylinder_surface_gap_m": -7.863263876149544e-05,
+              "source_mesh": "/DH116_V2_0_L/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh"
+            },
+            "finger31_link": {
+              "table_clearance_m": 0.044894589131111495,
+              "infinite_cylinder_surface_gap_m": 0.05437806168930186,
+              "source_mesh": "/DH116_V2_0_L/finger31_link/collisions/finger31_link/node_STL_BINARY_/mesh"
+            },
+            "finger32_link": {
+              "table_clearance_m": 0.004442272339813702,
+              "infinite_cylinder_surface_gap_m": 0.055847272662911264,
+              "source_mesh": "/DH116_V2_0_L/finger32_link/collisions/finger32_link/node_STL_BINARY_/mesh"
+            },
+            "finger33_link": {
+              "table_clearance_m": 0.0044645640171408485,
+              "infinite_cylinder_surface_gap_m": 0.05608537944407598,
+              "source_mesh": "/DH116_V2_0_L/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh"
+            },
+            "finger41_link": {
+              "table_clearance_m": 0.05812759249696603,
+              "infinite_cylinder_surface_gap_m": 0.06965160119319172,
+              "source_mesh": "/DH116_V2_0_L/finger41_link/collisions/finger41_link/node_STL_BINARY_/mesh"
+            },
+            "finger42_link": {
+              "table_clearance_m": 0.02442929703691782,
+              "infinite_cylinder_surface_gap_m": 0.07057602355679124,
+              "source_mesh": "/DH116_V2_0_L/finger42_link/collisions/finger42_link/node_STL_BINARY_/mesh"
+            },
+            "finger43_link": {
+              "table_clearance_m": 0.024422773584776403,
+              "infinite_cylinder_surface_gap_m": 0.06937102378504048,
+              "source_mesh": "/DH116_V2_0_L/finger43_link/collisions/finger43_link/node_STL_BINARY_/mesh"
+            },
+            "finger51_link": {
+              "table_clearance_m": 0.069347824081124,
+              "infinite_cylinder_surface_gap_m": 0.08122286485817001,
+              "source_mesh": "/DH116_V2_0_L/finger51_link/collisions/finger51_link/node_STL_BINARY_/mesh"
+            },
+            "finger52_link": {
+              "table_clearance_m": 0.04432554511600245,
+              "infinite_cylinder_surface_gap_m": 0.08165099566479592,
+              "source_mesh": "/DH116_V2_0_L/finger52_link/collisions/finger52_link/node_STL_BINARY_/mesh"
+            },
+            "finger53_link": {
+              "table_clearance_m": 0.04432302416490985,
+              "infinite_cylinder_surface_gap_m": 0.07858712676545188,
+              "source_mesh": "/DH116_V2_0_L/finger53_link/collisions/finger53_link/node_STL_BINARY_/mesh"
+            }
+          },
+          "world_aabb_min_m": [
+            0.3418153558795744,
+            0.165295299108017,
+            0.30246152197513965
+          ],
+          "world_aabb_max_m": [
+            0.5130588146912564,
+            0.2463208003516179,
+            0.44826718493555856
+          ]
+        }
+      },
+      "after": {
+        "initial": {
+          "pad_positions": [
+            [
+              0.4384917304940273,
+              0.20010718539891548,
+              0.3059946487025511
+            ],
+            [
+              0.42149173968541603,
+              0.20012125527955138,
+              0.3060053512974489
+            ]
+          ],
+          "pad_relative_z_m": [
+            -0.0020053512974488874,
+            -0.001994648702551116
+          ],
+          "pad_span_m": 0.016999999999998405,
+          "minimum_table_clearance_m": 0.000479107402301171,
+          "minimum_infinite_cylinder_gap_m": 0.0004465431194110997,
+          "table_body_clearance_m": {
+            "base_link": 0.055382838869778295,
+            "finger11_link": 0.067680597036065,
+            "finger12_link": 0.026246362095593834,
+            "finger13_link": 0.000479107402301171,
+            "finger14_link": 0.0010031913801903936,
+            "finger21_link": 0.025627295387996185,
+            "finger22_link": 0.0004913396942305415,
+            "finger23_link": 0.0012834118061524902,
+            "finger31_link": 0.04319718535599609,
+            "finger32_link": 0.0027448685646982995,
+            "finger33_link": 0.002767160242025446,
+            "finger41_link": 0.05643018872185063,
+            "finger42_link": 0.022731893261802416,
+            "finger43_link": 0.022725369809661,
+            "finger51_link": 0.0676504203060086,
+            "finger52_link": 0.04262814134088705,
+            "finger53_link": 0.04262562038979445
+          },
+          "wire_infinite_cylinder_radial_gap_m": {
+            "base_link": 0.04158891984373485,
+            "finger11_link": 0.061337408378513446,
+            "finger12_link": 0.027520913951687084,
+            "finger13_link": 0.003700637912271189,
+            "finger14_link": 0.0004465431194110997,
+            "finger21_link": 0.026114801066486094,
+            "finger22_link": 0.004581898018883751,
+            "finger23_link": 0.0004465431196972892,
+            "finger31_link": 0.05302066219382829,
+            "finger32_link": 0.05505165672242996,
+            "finger33_link": 0.05540765721493244,
+            "finger41_link": 0.06825390259968456,
+            "finger42_link": 0.06965481199441464,
+            "finger43_link": 0.06864461788691811,
+            "finger51_link": 0.07980956251994728,
+            "finger52_link": 0.08070023120337091,
+            "finger53_link": 0.07777658240820512
+          },
+          "per_body": {
+            "base_link": {
+              "table_clearance_m": 0.055382838869778295,
+              "infinite_cylinder_surface_gap_m": 0.04158891984373485,
+              "source_mesh": "/DH116_V2_0_L/base_link/collisions/base_link/node_STL_BINARY_/mesh"
+            },
+            "finger11_link": {
+              "table_clearance_m": 0.067680597036065,
+              "infinite_cylinder_surface_gap_m": 0.061337408378513446,
+              "source_mesh": "/DH116_V2_0_L/finger11_link/collisions/finger11_link/node_STL_BINARY_/mesh"
+            },
+            "finger12_link": {
+              "table_clearance_m": 0.026246362095593834,
+              "infinite_cylinder_surface_gap_m": 0.027520913951687084,
+              "source_mesh": "/DH116_V2_0_L/finger12_link/collisions/finger12_link/node_STL_BINARY_/mesh"
+            },
+            "finger13_link": {
+              "table_clearance_m": 0.000479107402301171,
+              "infinite_cylinder_surface_gap_m": 0.003700637912271189,
+              "source_mesh": "/DH116_V2_0_L/finger13_link/collisions/finger13_link/node_STL_BINARY_/mesh"
+            },
+            "finger14_link": {
+              "table_clearance_m": 0.0010031913801903936,
+              "infinite_cylinder_surface_gap_m": 0.0004465431194110997,
+              "source_mesh": "/DH116_V2_0_L/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh"
+            },
+            "finger21_link": {
+              "table_clearance_m": 0.025627295387996185,
+              "infinite_cylinder_surface_gap_m": 0.026114801066486094,
+              "source_mesh": "/DH116_V2_0_L/finger21_link/collisions/finger21_link/node_STL_BINARY_/mesh"
+            },
+            "finger22_link": {
+              "table_clearance_m": 0.0004913396942305415,
+              "infinite_cylinder_surface_gap_m": 0.004581898018883751,
+              "source_mesh": "/DH116_V2_0_L/finger22_link/collisions/finger22_link/node_STL_BINARY_/mesh"
+            },
+            "finger23_link": {
+              "table_clearance_m": 0.0012834118061524902,
+              "infinite_cylinder_surface_gap_m": 0.0004465431196972892,
+              "source_mesh": "/DH116_V2_0_L/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh"
+            },
+            "finger31_link": {
+              "table_clearance_m": 0.04319718535599609,
+              "infinite_cylinder_surface_gap_m": 0.05302066219382829,
+              "source_mesh": "/DH116_V2_0_L/finger31_link/collisions/finger31_link/node_STL_BINARY_/mesh"
+            },
+            "finger32_link": {
+              "table_clearance_m": 0.0027448685646982995,
+              "infinite_cylinder_surface_gap_m": 0.05505165672242996,
+              "source_mesh": "/DH116_V2_0_L/finger32_link/collisions/finger32_link/node_STL_BINARY_/mesh"
+            },
+            "finger33_link": {
+              "table_clearance_m": 0.002767160242025446,
+              "infinite_cylinder_surface_gap_m": 0.05540765721493244,
+              "source_mesh": "/DH116_V2_0_L/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh"
+            },
+            "finger41_link": {
+              "table_clearance_m": 0.05643018872185063,
+              "infinite_cylinder_surface_gap_m": 0.06825390259968456,
+              "source_mesh": "/DH116_V2_0_L/finger41_link/collisions/finger41_link/node_STL_BINARY_/mesh"
+            },
+            "finger42_link": {
+              "table_clearance_m": 0.022731893261802416,
+              "infinite_cylinder_surface_gap_m": 0.06965481199441464,
+              "source_mesh": "/DH116_V2_0_L/finger42_link/collisions/finger42_link/node_STL_BINARY_/mesh"
+            },
+            "finger43_link": {
+              "table_clearance_m": 0.022725369809661,
+              "infinite_cylinder_surface_gap_m": 0.06864461788691811,
+              "source_mesh": "/DH116_V2_0_L/finger43_link/collisions/finger43_link/node_STL_BINARY_/mesh"
+            },
+            "finger51_link": {
+              "table_clearance_m": 0.0676504203060086,
+              "infinite_cylinder_surface_gap_m": 0.07980956251994728,
+              "source_mesh": "/DH116_V2_0_L/finger51_link/collisions/finger51_link/node_STL_BINARY_/mesh"
+            },
+            "finger52_link": {
+              "table_clearance_m": 0.04262814134088705,
+              "infinite_cylinder_surface_gap_m": 0.08070023120337091,
+              "source_mesh": "/DH116_V2_0_L/finger52_link/collisions/finger52_link/node_STL_BINARY_/mesh"
+            },
+            "finger53_link": {
+              "table_clearance_m": 0.04262562038979445,
+              "infinite_cylinder_surface_gap_m": 0.07777658240820512,
+              "source_mesh": "/DH116_V2_0_L/finger53_link/collisions/finger53_link/node_STL_BINARY_/mesh"
+            }
+          },
+          "world_aabb_min_m": [
+            0.34182816748706296,
+            0.165295299108017,
+            0.30047910740230116
+          ],
+          "world_aabb_max_m": [
+            0.5130716262987449,
+            0.2463208003516179,
+            0.44656978116044316
+          ]
+        },
+        "closed": {
+          "pad_positions": [
+            [
+              0.43801281160758576,
+              0.19999999999999998,
+              0.30630259622488454
+            ],
+            [
+              0.4220128116073914,
+              0.2,
+              0.3063025962248846
+            ]
+          ],
+          "pad_relative_z_m": [
+            -0.001697403775115458,
+            -0.0016974037751154025
+          ],
+          "pad_span_m": 0.01600000000019436,
+          "minimum_table_clearance_m": 0.0007641182000242552,
+          "minimum_infinite_cylinder_gap_m": -7.378881632406735e-05,
+          "table_body_clearance_m": {
+            "base_link": 0.055382838869778295,
+            "finger11_link": 0.06768780225848214,
+            "finger12_link": 0.026291432512214385,
+            "finger13_link": 0.0007641182000242552,
+            "finger14_link": 0.001292912978812344,
+            "finger21_link": 0.02559380061115296,
+            "finger22_link": 0.0007641182003549907,
+            "finger23_link": 0.0015654973086867696,
+            "finger31_link": 0.04319718535599609,
+            "finger32_link": 0.0027448685646982995,
+            "finger33_link": 0.002767160242025446,
+            "finger41_link": 0.05643018872185063,
+            "finger42_link": 0.022731893261802416,
+            "finger43_link": 0.022725369809661,
+            "finger51_link": 0.0676504203060086,
+            "finger52_link": 0.04262814134088705,
+            "finger53_link": 0.04262562038979445
+          },
+          "wire_infinite_cylinder_radial_gap_m": {
+            "base_link": 0.04158891984373485,
+            "finger11_link": 0.06133549100448298,
+            "finger12_link": 0.027367984549228896,
+            "finger13_link": 0.003146622340111137,
+            "finger14_link": -3.025096009295035e-05,
+            "finger21_link": 0.025960569897990615,
+            "finger22_link": 0.003970394172584641,
+            "finger23_link": -7.378881632406735e-05,
+            "finger31_link": 0.05302066219382829,
+            "finger32_link": 0.05505165672242996,
+            "finger33_link": 0.05540765721493244,
+            "finger41_link": 0.06825390259968456,
+            "finger42_link": 0.06965481199441464,
+            "finger43_link": 0.06864461788691811,
+            "finger51_link": 0.07980956251994728,
+            "finger52_link": 0.08070023120337091,
+            "finger53_link": 0.07777658240820512
+          },
+          "per_body": {
+            "base_link": {
+              "table_clearance_m": 0.055382838869778295,
+              "infinite_cylinder_surface_gap_m": 0.04158891984373485,
+              "source_mesh": "/DH116_V2_0_L/base_link/collisions/base_link/node_STL_BINARY_/mesh"
+            },
+            "finger11_link": {
+              "table_clearance_m": 0.06768780225848214,
+              "infinite_cylinder_surface_gap_m": 0.06133549100448298,
+              "source_mesh": "/DH116_V2_0_L/finger11_link/collisions/finger11_link/node_STL_BINARY_/mesh"
+            },
+            "finger12_link": {
+              "table_clearance_m": 0.026291432512214385,
+              "infinite_cylinder_surface_gap_m": 0.027367984549228896,
+              "source_mesh": "/DH116_V2_0_L/finger12_link/collisions/finger12_link/node_STL_BINARY_/mesh"
+            },
+            "finger13_link": {
+              "table_clearance_m": 0.0007641182000242552,
+              "infinite_cylinder_surface_gap_m": 0.003146622340111137,
+              "source_mesh": "/DH116_V2_0_L/finger13_link/collisions/finger13_link/node_STL_BINARY_/mesh"
+            },
+            "finger14_link": {
+              "table_clearance_m": 0.001292912978812344,
+              "infinite_cylinder_surface_gap_m": -3.025096009295035e-05,
+              "source_mesh": "/DH116_V2_0_L/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh"
+            },
+            "finger21_link": {
+              "table_clearance_m": 0.02559380061115296,
+              "infinite_cylinder_surface_gap_m": 0.025960569897990615,
+              "source_mesh": "/DH116_V2_0_L/finger21_link/collisions/finger21_link/node_STL_BINARY_/mesh"
+            },
+            "finger22_link": {
+              "table_clearance_m": 0.0007641182003549907,
+              "infinite_cylinder_surface_gap_m": 0.003970394172584641,
+              "source_mesh": "/DH116_V2_0_L/finger22_link/collisions/finger22_link/node_STL_BINARY_/mesh"
+            },
+            "finger23_link": {
+              "table_clearance_m": 0.0015654973086867696,
+              "infinite_cylinder_surface_gap_m": -7.378881632406735e-05,
+              "source_mesh": "/DH116_V2_0_L/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh"
+            },
+            "finger31_link": {
+              "table_clearance_m": 0.04319718535599609,
+              "infinite_cylinder_surface_gap_m": 0.05302066219382829,
+              "source_mesh": "/DH116_V2_0_L/finger31_link/collisions/finger31_link/node_STL_BINARY_/mesh"
+            },
+            "finger32_link": {
+              "table_clearance_m": 0.0027448685646982995,
+              "infinite_cylinder_surface_gap_m": 0.05505165672242996,
+              "source_mesh": "/DH116_V2_0_L/finger32_link/collisions/finger32_link/node_STL_BINARY_/mesh"
+            },
+            "finger33_link": {
+              "table_clearance_m": 0.002767160242025446,
+              "infinite_cylinder_surface_gap_m": 0.05540765721493244,
+              "source_mesh": "/DH116_V2_0_L/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh"
+            },
+            "finger41_link": {
+              "table_clearance_m": 0.05643018872185063,
+              "infinite_cylinder_surface_gap_m": 0.06825390259968456,
+              "source_mesh": "/DH116_V2_0_L/finger41_link/collisions/finger41_link/node_STL_BINARY_/mesh"
+            },
+            "finger42_link": {
+              "table_clearance_m": 0.022731893261802416,
+              "infinite_cylinder_surface_gap_m": 0.06965481199441464,
+              "source_mesh": "/DH116_V2_0_L/finger42_link/collisions/finger42_link/node_STL_BINARY_/mesh"
+            },
+            "finger43_link": {
+              "table_clearance_m": 0.022725369809661,
+              "infinite_cylinder_surface_gap_m": 0.06864461788691811,
+              "source_mesh": "/DH116_V2_0_L/finger43_link/collisions/finger43_link/node_STL_BINARY_/mesh"
+            },
+            "finger51_link": {
+              "table_clearance_m": 0.0676504203060086,
+              "infinite_cylinder_surface_gap_m": 0.07980956251994728,
+              "source_mesh": "/DH116_V2_0_L/finger51_link/collisions/finger51_link/node_STL_BINARY_/mesh"
+            },
+            "finger52_link": {
+              "table_clearance_m": 0.04262814134088705,
+              "infinite_cylinder_surface_gap_m": 0.08070023120337091,
+              "source_mesh": "/DH116_V2_0_L/finger52_link/collisions/finger52_link/node_STL_BINARY_/mesh"
+            },
+            "finger53_link": {
+              "table_clearance_m": 0.04262562038979445,
+              "infinite_cylinder_surface_gap_m": 0.07777658240820512,
+              "source_mesh": "/DH116_V2_0_L/finger53_link/collisions/finger53_link/node_STL_BINARY_/mesh"
+            }
+          },
+          "world_aabb_min_m": [
+            0.34182816748706296,
+            0.165295299108017,
+            0.30076411820002424
+          ],
+          "world_aabb_max_m": [
+            0.5130716262987449,
+            0.2463208003516179,
+            0.44656978116044316
+          ]
+        }
+      },
+      "jacobian_max_translation_difference": 0.0,
+      "direction": [
+        0.15610511859654402,
+        0.6619192238359736,
+        0.7331399137029311,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "palm_compensation_m_per_rad": [
+        -0.0037123256049448466,
+        0.015149389452115681,
+        -0.03798743801702022
+      ],
+      "nearby_x_search": {
+        "lower_m": -0.003,
+        "upper_m": 0.003,
+        "grid_points": 241,
+        "selected_initial_min_surface_gap_m": 0.0004465431194111344
+      }
+    },
+    "right": {
+      "source_path": "/root/hand/assets/fixed_dual_panda_dh116_v1/dependencies/3046ad2ed855_DH116_right.usd",
+      "source_sha256": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71",
+      "source_layer_sha256": {
+        "/root/hand/assets/fixed_dual_panda_dh116_v1/dependencies/3046ad2ed855_DH116_right.usd": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71"
+      },
+      "collision_mesh_count": 17,
+      "collision_meshes": [
+        {
+          "body": "/DH116_V2_0_R/base_link",
+          "path": "/DH116_V2_0_R/base_link/collisions/base_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 478638,
+          "local_vertices_sha256": "f731344fa7bac81b74eb924063abf900cc52f5de9fad41102eaac7bcafed2914"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger11_link",
+          "path": "/DH116_V2_0_R/finger11_link/collisions/finger11_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 14196,
+          "local_vertices_sha256": "7e44c4c9f0b0712ee5d8d7c41432952d18cf373a1a3ec204b14dd723fe0f7be1"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger12_link",
+          "path": "/DH116_V2_0_R/finger12_link/collisions/finger12_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 28164,
+          "local_vertices_sha256": "70c64b8d611dc6d6d8c99eee7d202477cf96185074d5ad8c5526d7d59cfda782"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger13_link",
+          "path": "/DH116_V2_0_R/finger13_link/collisions/finger13_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 17652,
+          "local_vertices_sha256": "c82ed94dcb0fa0fb9ae638a9f129b4f500111ac65af6744df93c80eb31a0d7cc"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger14_link",
+          "path": "/DH116_V2_0_R/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 5610,
+          "local_vertices_sha256": "fb6281e595fa3c771d37b9e92d58ab3910af9e840733bd8bbd6e0ba6465638a1"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger21_link",
+          "path": "/DH116_V2_0_R/finger21_link/collisions/finger21_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 26160,
+          "local_vertices_sha256": "a3708bea61e8188f586ee26cc04456102076da05ca1a2dc71a1ebd1e9ce08687"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger22_link",
+          "path": "/DH116_V2_0_R/finger22_link/collisions/finger22_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 19950,
+          "local_vertices_sha256": "6520adf15fff88df8c2688e52decab9e4693027f972bf4b7722c329ea5efe9b4"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger23_link",
+          "path": "/DH116_V2_0_R/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 11922,
+          "local_vertices_sha256": "ec4adf0a98147fdf8b141eda24290c36c9e1a0aa1aaf6ec8761af359957b1f4b"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger31_link",
+          "path": "/DH116_V2_0_R/finger31_link/collisions/finger31_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 26160,
+          "local_vertices_sha256": "7d998056735b87942036fb2ba166368fe46a14df1ad8afc2785686567f513bfe"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger32_link",
+          "path": "/DH116_V2_0_R/finger32_link/collisions/finger32_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 18342,
+          "local_vertices_sha256": "9c8563ed1136914f648b641b862c1b5a7c52abcf95a82b47a44992b3587ba19a"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger33_link",
+          "path": "/DH116_V2_0_R/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 11922,
+          "local_vertices_sha256": "c4c00cde59adf1d7a51cad4b6b38c6308f42d0f164c075c868ffdc7945df78cd"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger41_link",
+          "path": "/DH116_V2_0_R/finger41_link/collisions/finger41_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 26160,
+          "local_vertices_sha256": "a045b4fac0b11171d0461a666a48869ad1d218fb0b6604d93ab719c770ce4b56"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger42_link",
+          "path": "/DH116_V2_0_R/finger42_link/collisions/finger42_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 19950,
+          "local_vertices_sha256": "fdfa9f3ae17f0c996037903d5a9d2035015fc8eb2ae7466162bd25a6f6a0f472"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger43_link",
+          "path": "/DH116_V2_0_R/finger43_link/collisions/finger43_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 11922,
+          "local_vertices_sha256": "56aaf46f6e4440d03d30a42628bbab54ec6fa008fc80e8158eee1f1dd6dcd45b"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger51_link",
+          "path": "/DH116_V2_0_R/finger51_link/collisions/finger51_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 26160,
+          "local_vertices_sha256": "f6491113f0b60e7f097140be0ee5c346ae6bffc2996bd23117b3b80eb3016f4a"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger52_link",
+          "path": "/DH116_V2_0_R/finger52_link/collisions/finger52_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 21444,
+          "local_vertices_sha256": "18622920aa47af555d3cfb478dedfeeff13fa5aa74c313af4a296a8ad216cc34"
+        },
+        {
+          "body": "/DH116_V2_0_R/finger53_link",
+          "path": "/DH116_V2_0_R/finger53_link/collisions/finger53_link/node_STL_BINARY_/mesh",
+          "approximation": "None",
+          "point_count": 10980,
+          "local_vertices_sha256": "22748a0742b6c46ca8f07a554a68fce69fd89434d9213ab51384d9840f338e32"
+        }
+      ],
+      "old_root": [
+        0.5218910366034816,
+        -0.197185513004142,
+        0.41972533565139225,
+        0.2671057425388976,
+        0.7448753766951223,
+        -0.3645619266270435,
+        -0.4908256280493329
+      ],
+      "new_root": [
+        0.5220666485014966,
+        -0.197185513004142,
+        0.41816242291027284,
+        0.2671057425388976,
+        0.7448753766951223,
+        -0.3645619266270435,
+        -0.4908256280493329
+      ],
+      "root_delta_world_m": [
+        0.00017561189801502104,
+        0.0,
+        -0.0015629127411194137
+      ],
+      "initial_active_rad": [
+        0.12220454218384325,
+        0.022390464236383394,
+        0.6383750024060806,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224
+      ],
+      "closed_active_rad": [
+        0.12301059036665939,
+        0.030153061928477696,
+        0.64846741673113,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224
+      ],
+      "before": {
+        "initial": {
+          "pad_positions": [
+            [
+              0.4385994000020862,
+              -0.20020271119837654,
+              0.30745636589838937
+            ],
+            [
+              0.4210007382349144,
+              -0.20016153977666937,
+              0.30766945958384945
+            ]
+          ],
+          "pad_relative_z_m": [
+            -0.0005436341016106239,
+            -0.00033054041615054874
+          ],
+          "pad_span_m": 0.01760000000000177,
+          "minimum_table_clearance_m": 0.0022105628822471912,
+          "minimum_infinite_cylinder_gap_m": 0.00012876146966853304,
+          "table_body_clearance_m": {
+            "base_link": 0.059530005883943804,
+            "finger11_link": 0.06393993943734294,
+            "finger12_link": 0.02476393336394972,
+            "finger13_link": 0.0022105628822471912,
+            "finger14_link": 0.00275846697351384,
+            "finger21_link": 0.0319614467288859,
+            "finger22_link": 0.0024381052808149506,
+            "finger23_link": 0.002990375267151346,
+            "finger31_link": 0.051816178605135266,
+            "finger32_link": 0.014258714801345218,
+            "finger33_link": 0.014198449824177062,
+            "finger41_link": 0.06608214186781453,
+            "finger42_link": 0.03489298216338654,
+            "finger43_link": 0.03477579092229249,
+            "finger51_link": 0.07779413134131635,
+            "finger52_link": 0.05474983820448964,
+            "finger53_link": 0.05460445534115416
+          },
+          "wire_infinite_cylinder_radial_gap_m": {
+            "base_link": 0.04361090475770386,
+            "finger11_link": 0.0653038143516447,
+            "finger12_link": 0.028025429450633244,
+            "finger13_link": 0.0023490755927784556,
+            "finger14_link": 0.00012876146966853304,
+            "finger21_link": 0.02744304411671996,
+            "finger22_link": 0.004946232695354361,
+            "finger23_link": 0.0006144473333300447,
+            "finger31_link": 0.053355995958632225,
+            "finger32_link": 0.05318344163732003,
+            "finger33_link": 0.053042530009086535,
+            "finger41_link": 0.06790571806330833,
+            "finger42_link": 0.06666599775978233,
+            "finger43_link": 0.06443313701517592,
+            "finger51_link": 0.07861864357309936,
+            "finger52_link": 0.0761840608732485,
+            "finger53_link": 0.07237406766508192
+          },
+          "per_body": {
+            "base_link": {
+              "table_clearance_m": 0.059530005883943804,
+              "infinite_cylinder_surface_gap_m": 0.04361090475770386,
+              "source_mesh": "/DH116_V2_0_R/base_link/collisions/base_link/node_STL_BINARY_/mesh"
+            },
+            "finger11_link": {
+              "table_clearance_m": 0.06393993943734294,
+              "infinite_cylinder_surface_gap_m": 0.0653038143516447,
+              "source_mesh": "/DH116_V2_0_R/finger11_link/collisions/finger11_link/node_STL_BINARY_/mesh"
+            },
+            "finger12_link": {
+              "table_clearance_m": 0.02476393336394972,
+              "infinite_cylinder_surface_gap_m": 0.028025429450633244,
+              "source_mesh": "/DH116_V2_0_R/finger12_link/collisions/finger12_link/node_STL_BINARY_/mesh"
+            },
+            "finger13_link": {
+              "table_clearance_m": 0.0022105628822471912,
+              "infinite_cylinder_surface_gap_m": 0.0023490755927784556,
+              "source_mesh": "/DH116_V2_0_R/finger13_link/collisions/finger13_link/node_STL_BINARY_/mesh"
+            },
+            "finger14_link": {
+              "table_clearance_m": 0.00275846697351384,
+              "infinite_cylinder_surface_gap_m": 0.00012876146966853304,
+              "source_mesh": "/DH116_V2_0_R/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh"
+            },
+            "finger21_link": {
+              "table_clearance_m": 0.0319614467288859,
+              "infinite_cylinder_surface_gap_m": 0.02744304411671996,
+              "source_mesh": "/DH116_V2_0_R/finger21_link/collisions/finger21_link/node_STL_BINARY_/mesh"
+            },
+            "finger22_link": {
+              "table_clearance_m": 0.0024381052808149506,
+              "infinite_cylinder_surface_gap_m": 0.004946232695354361,
+              "source_mesh": "/DH116_V2_0_R/finger22_link/collisions/finger22_link/node_STL_BINARY_/mesh"
+            },
+            "finger23_link": {
+              "table_clearance_m": 0.002990375267151346,
+              "infinite_cylinder_surface_gap_m": 0.0006144473333300447,
+              "source_mesh": "/DH116_V2_0_R/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh"
+            },
+            "finger31_link": {
+              "table_clearance_m": 0.051816178605135266,
+              "infinite_cylinder_surface_gap_m": 0.053355995958632225,
+              "source_mesh": "/DH116_V2_0_R/finger31_link/collisions/finger31_link/node_STL_BINARY_/mesh"
+            },
+            "finger32_link": {
+              "table_clearance_m": 0.014258714801345218,
+              "infinite_cylinder_surface_gap_m": 0.05318344163732003,
+              "source_mesh": "/DH116_V2_0_R/finger32_link/collisions/finger32_link/node_STL_BINARY_/mesh"
+            },
+            "finger33_link": {
+              "table_clearance_m": 0.014198449824177062,
+              "infinite_cylinder_surface_gap_m": 0.053042530009086535,
+              "source_mesh": "/DH116_V2_0_R/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh"
+            },
+            "finger41_link": {
+              "table_clearance_m": 0.06608214186781453,
+              "infinite_cylinder_surface_gap_m": 0.06790571806330833,
+              "source_mesh": "/DH116_V2_0_R/finger41_link/collisions/finger41_link/node_STL_BINARY_/mesh"
+            },
+            "finger42_link": {
+              "table_clearance_m": 0.03489298216338654,
+              "infinite_cylinder_surface_gap_m": 0.06666599775978233,
+              "source_mesh": "/DH116_V2_0_R/finger42_link/collisions/finger42_link/node_STL_BINARY_/mesh"
+            },
+            "finger43_link": {
+              "table_clearance_m": 0.03477579092229249,
+              "infinite_cylinder_surface_gap_m": 0.06443313701517592,
+              "source_mesh": "/DH116_V2_0_R/finger43_link/collisions/finger43_link/node_STL_BINARY_/mesh"
+            },
+            "finger51_link": {
+              "table_clearance_m": 0.07779413134131635,
+              "infinite_cylinder_surface_gap_m": 0.07861864357309936,
+              "source_mesh": "/DH116_V2_0_R/finger51_link/collisions/finger51_link/node_STL_BINARY_/mesh"
+            },
+            "finger52_link": {
+              "table_clearance_m": 0.05474983820448964,
+              "infinite_cylinder_surface_gap_m": 0.0761840608732485,
+              "source_mesh": "/DH116_V2_0_R/finger52_link/collisions/finger52_link/node_STL_BINARY_/mesh"
+            },
+            "finger53_link": {
+              "table_clearance_m": 0.05460445534115416,
+              "infinite_cylinder_surface_gap_m": 0.07237406766508192,
+              "source_mesh": "/DH116_V2_0_R/finger53_link/collisions/finger53_link/node_STL_BINARY_/mesh"
+            }
+          },
+          "world_aabb_min_m": [
+            0.35246589118454597,
+            -0.24591397198044745,
+            0.3022105628822472
+          ],
+          "world_aabb_max_m": [
+            0.5301088020173075,
+            -0.156870196033386,
+            0.43989381174433084
+          ]
+        },
+        "closed": {
+          "pad_positions": [
+            [
+              0.43800000000131273,
+              -0.20000000000000004,
+              0.30799999999999994
+            ],
+            [
+              0.42199999999868726,
+              -0.19999999999999996,
+              0.30799999999999994
+            ]
+          ],
+          "pad_relative_z_m": [
+            -5.551115123125783e-17,
+            -5.551115123125783e-17
+          ],
+          "pad_span_m": 0.01600000000262547,
+          "minimum_table_clearance_m": 0.0027121217708475087,
+          "minimum_infinite_cylinder_gap_m": -0.0004819229726819802,
+          "table_body_clearance_m": {
+            "base_link": 0.059530005883943804,
+            "finger11_link": 0.06394621773744613,
+            "finger12_link": 0.02485855460091424,
+            "finger13_link": 0.0027121217708475087,
+            "finger14_link": 0.003260255511401189,
+            "finger21_link": 0.03185419679946916,
+            "finger22_link": 0.002712121772464382,
+            "finger23_link": 0.00328456988607545,
+            "finger31_link": 0.051816178605135266,
+            "finger32_link": 0.014258714801345218,
+            "finger33_link": 0.014198449824177062,
+            "finger41_link": 0.06608214186781453,
+            "finger42_link": 0.03489298216338654,
+            "finger43_link": 0.03477579092229249,
+            "finger51_link": 0.07779413134131635,
+            "finger52_link": 0.05474983820448964,
+            "finger53_link": 0.05460445534115416
+          },
+          "wire_infinite_cylinder_radial_gap_m": {
+            "base_link": 0.04361090475770386,
+            "finger11_link": 0.06530268874310349,
+            "finger12_link": 0.02786480763157722,
+            "finger13_link": 0.0015509891861225766,
+            "finger14_link": -0.0004819229726819802,
+            "finger21_link": 0.02716679902989269,
+            "finger22_link": 0.003843941509992647,
+            "finger23_link": -0.0003410444344365878,
+            "finger31_link": 0.053355995958632225,
+            "finger32_link": 0.05318344163732003,
+            "finger33_link": 0.053042530009086535,
+            "finger41_link": 0.06790571806330833,
+            "finger42_link": 0.06666599775978233,
+            "finger43_link": 0.06443313701517592,
+            "finger51_link": 0.07861864357309936,
+            "finger52_link": 0.0761840608732485,
+            "finger53_link": 0.07237406766508192
+          },
+          "per_body": {
+            "base_link": {
+              "table_clearance_m": 0.059530005883943804,
+              "infinite_cylinder_surface_gap_m": 0.04361090475770386,
+              "source_mesh": "/DH116_V2_0_R/base_link/collisions/base_link/node_STL_BINARY_/mesh"
+            },
+            "finger11_link": {
+              "table_clearance_m": 0.06394621773744613,
+              "infinite_cylinder_surface_gap_m": 0.06530268874310349,
+              "source_mesh": "/DH116_V2_0_R/finger11_link/collisions/finger11_link/node_STL_BINARY_/mesh"
+            },
+            "finger12_link": {
+              "table_clearance_m": 0.02485855460091424,
+              "infinite_cylinder_surface_gap_m": 0.02786480763157722,
+              "source_mesh": "/DH116_V2_0_R/finger12_link/collisions/finger12_link/node_STL_BINARY_/mesh"
+            },
+            "finger13_link": {
+              "table_clearance_m": 0.0027121217708475087,
+              "infinite_cylinder_surface_gap_m": 0.0015509891861225766,
+              "source_mesh": "/DH116_V2_0_R/finger13_link/collisions/finger13_link/node_STL_BINARY_/mesh"
+            },
+            "finger14_link": {
+              "table_clearance_m": 0.003260255511401189,
+              "infinite_cylinder_surface_gap_m": -0.0004819229726819802,
+              "source_mesh": "/DH116_V2_0_R/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh"
+            },
+            "finger21_link": {
+              "table_clearance_m": 0.03185419679946916,
+              "infinite_cylinder_surface_gap_m": 0.02716679902989269,
+              "source_mesh": "/DH116_V2_0_R/finger21_link/collisions/finger21_link/node_STL_BINARY_/mesh"
+            },
+            "finger22_link": {
+              "table_clearance_m": 0.002712121772464382,
+              "infinite_cylinder_surface_gap_m": 0.003843941509992647,
+              "source_mesh": "/DH116_V2_0_R/finger22_link/collisions/finger22_link/node_STL_BINARY_/mesh"
+            },
+            "finger23_link": {
+              "table_clearance_m": 0.00328456988607545,
+              "infinite_cylinder_surface_gap_m": -0.0003410444344365878,
+              "source_mesh": "/DH116_V2_0_R/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh"
+            },
+            "finger31_link": {
+              "table_clearance_m": 0.051816178605135266,
+              "infinite_cylinder_surface_gap_m": 0.053355995958632225,
+              "source_mesh": "/DH116_V2_0_R/finger31_link/collisions/finger31_link/node_STL_BINARY_/mesh"
+            },
+            "finger32_link": {
+              "table_clearance_m": 0.014258714801345218,
+              "infinite_cylinder_surface_gap_m": 0.05318344163732003,
+              "source_mesh": "/DH116_V2_0_R/finger32_link/collisions/finger32_link/node_STL_BINARY_/mesh"
+            },
+            "finger33_link": {
+              "table_clearance_m": 0.014198449824177062,
+              "infinite_cylinder_surface_gap_m": 0.053042530009086535,
+              "source_mesh": "/DH116_V2_0_R/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh"
+            },
+            "finger41_link": {
+              "table_clearance_m": 0.06608214186781453,
+              "infinite_cylinder_surface_gap_m": 0.06790571806330833,
+              "source_mesh": "/DH116_V2_0_R/finger41_link/collisions/finger41_link/node_STL_BINARY_/mesh"
+            },
+            "finger42_link": {
+              "table_clearance_m": 0.03489298216338654,
+              "infinite_cylinder_surface_gap_m": 0.06666599775978233,
+              "source_mesh": "/DH116_V2_0_R/finger42_link/collisions/finger42_link/node_STL_BINARY_/mesh"
+            },
+            "finger43_link": {
+              "table_clearance_m": 0.03477579092229249,
+              "infinite_cylinder_surface_gap_m": 0.06443313701517592,
+              "source_mesh": "/DH116_V2_0_R/finger43_link/collisions/finger43_link/node_STL_BINARY_/mesh"
+            },
+            "finger51_link": {
+              "table_clearance_m": 0.07779413134131635,
+              "infinite_cylinder_surface_gap_m": 0.07861864357309936,
+              "source_mesh": "/DH116_V2_0_R/finger51_link/collisions/finger51_link/node_STL_BINARY_/mesh"
+            },
+            "finger52_link": {
+              "table_clearance_m": 0.05474983820448964,
+              "infinite_cylinder_surface_gap_m": 0.0761840608732485,
+              "source_mesh": "/DH116_V2_0_R/finger52_link/collisions/finger52_link/node_STL_BINARY_/mesh"
+            },
+            "finger53_link": {
+              "table_clearance_m": 0.05460445534115416,
+              "infinite_cylinder_surface_gap_m": 0.07237406766508192,
+              "source_mesh": "/DH116_V2_0_R/finger53_link/collisions/finger53_link/node_STL_BINARY_/mesh"
+            }
+          },
+          "world_aabb_min_m": [
+            0.35246589118454597,
+            -0.24591397198044745,
+            0.3027121217708475
+          ],
+          "world_aabb_max_m": [
+            0.5301088020173075,
+            -0.156870196033386,
+            0.43989381174433084
+          ]
+        }
+      },
+      "after": {
+        "initial": {
+          "pad_positions": [
+            [
+              0.43877501190010126,
+              -0.20020271119837654,
+              0.30589345315726996
+            ],
+            [
+              0.4211763501329295,
+              -0.20016153977666937,
+              0.30610654684273003
+            ]
+          ],
+          "pad_relative_z_m": [
+            -0.0021065468427300393,
+            -0.0018934531572699642
+          ],
+          "pad_span_m": 0.01760000000000177,
+          "minimum_table_clearance_m": 0.0006476501411277757,
+          "minimum_infinite_cylinder_gap_m": 0.00039773077353484794,
+          "table_body_clearance_m": {
+            "base_link": 0.05796709314282439,
+            "finger11_link": 0.062377026696223525,
+            "finger12_link": 0.023201020622830304,
+            "finger13_link": 0.0006476501411277757,
+            "finger14_link": 0.0011955542323944246,
+            "finger21_link": 0.030398533987766485,
+            "finger22_link": 0.0008751925396955351,
+            "finger23_link": 0.0014274625260319307,
+            "finger31_link": 0.05025326586401585,
+            "finger32_link": 0.012695802060225803,
+            "finger33_link": 0.012635537083057646,
+            "finger41_link": 0.06451922912669511,
+            "finger42_link": 0.03333006942226713,
+            "finger43_link": 0.03321287818117308,
+            "finger51_link": 0.07623121860019694,
+            "finger52_link": 0.05318692546337023,
+            "finger53_link": 0.05304154260003474
+          },
+          "wire_infinite_cylinder_radial_gap_m": {
+            "base_link": 0.042046902062074634,
+            "finger11_link": 0.0641685759277642,
+            "finger12_link": 0.02733093427322892,
+            "finger13_link": 0.003104976463510885,
+            "finger14_link": 0.0003977307761521727,
+            "finger21_link": 0.02619802967156281,
+            "finger22_link": 0.005138479699005997,
+            "finger23_link": 0.00039773077353484794,
+            "finger31_link": 0.05192059090027674,
+            "finger32_link": 0.052178787621996583,
+            "finger33_link": 0.05215391270103663,
+            "finger41_link": 0.06644609661578407,
+            "finger42_link": 0.06556180313057028,
+            "finger43_link": 0.06350679683943627,
+            "finger51_link": 0.07715002485553746,
+            "finger52_link": 0.0750554880839775,
+            "finger53_link": 0.07126803453021407
+          },
+          "per_body": {
+            "base_link": {
+              "table_clearance_m": 0.05796709314282439,
+              "infinite_cylinder_surface_gap_m": 0.042046902062074634,
+              "source_mesh": "/DH116_V2_0_R/base_link/collisions/base_link/node_STL_BINARY_/mesh"
+            },
+            "finger11_link": {
+              "table_clearance_m": 0.062377026696223525,
+              "infinite_cylinder_surface_gap_m": 0.0641685759277642,
+              "source_mesh": "/DH116_V2_0_R/finger11_link/collisions/finger11_link/node_STL_BINARY_/mesh"
+            },
+            "finger12_link": {
+              "table_clearance_m": 0.023201020622830304,
+              "infinite_cylinder_surface_gap_m": 0.02733093427322892,
+              "source_mesh": "/DH116_V2_0_R/finger12_link/collisions/finger12_link/node_STL_BINARY_/mesh"
+            },
+            "finger13_link": {
+              "table_clearance_m": 0.0006476501411277757,
+              "infinite_cylinder_surface_gap_m": 0.003104976463510885,
+              "source_mesh": "/DH116_V2_0_R/finger13_link/collisions/finger13_link/node_STL_BINARY_/mesh"
+            },
+            "finger14_link": {
+              "table_clearance_m": 0.0011955542323944246,
+              "infinite_cylinder_surface_gap_m": 0.0003977307761521727,
+              "source_mesh": "/DH116_V2_0_R/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh"
+            },
+            "finger21_link": {
+              "table_clearance_m": 0.030398533987766485,
+              "infinite_cylinder_surface_gap_m": 0.02619802967156281,
+              "source_mesh": "/DH116_V2_0_R/finger21_link/collisions/finger21_link/node_STL_BINARY_/mesh"
+            },
+            "finger22_link": {
+              "table_clearance_m": 0.0008751925396955351,
+              "infinite_cylinder_surface_gap_m": 0.005138479699005997,
+              "source_mesh": "/DH116_V2_0_R/finger22_link/collisions/finger22_link/node_STL_BINARY_/mesh"
+            },
+            "finger23_link": {
+              "table_clearance_m": 0.0014274625260319307,
+              "infinite_cylinder_surface_gap_m": 0.00039773077353484794,
+              "source_mesh": "/DH116_V2_0_R/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh"
+            },
+            "finger31_link": {
+              "table_clearance_m": 0.05025326586401585,
+              "infinite_cylinder_surface_gap_m": 0.05192059090027674,
+              "source_mesh": "/DH116_V2_0_R/finger31_link/collisions/finger31_link/node_STL_BINARY_/mesh"
+            },
+            "finger32_link": {
+              "table_clearance_m": 0.012695802060225803,
+              "infinite_cylinder_surface_gap_m": 0.052178787621996583,
+              "source_mesh": "/DH116_V2_0_R/finger32_link/collisions/finger32_link/node_STL_BINARY_/mesh"
+            },
+            "finger33_link": {
+              "table_clearance_m": 0.012635537083057646,
+              "infinite_cylinder_surface_gap_m": 0.05215391270103663,
+              "source_mesh": "/DH116_V2_0_R/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh"
+            },
+            "finger41_link": {
+              "table_clearance_m": 0.06451922912669511,
+              "infinite_cylinder_surface_gap_m": 0.06644609661578407,
+              "source_mesh": "/DH116_V2_0_R/finger41_link/collisions/finger41_link/node_STL_BINARY_/mesh"
+            },
+            "finger42_link": {
+              "table_clearance_m": 0.03333006942226713,
+              "infinite_cylinder_surface_gap_m": 0.06556180313057028,
+              "source_mesh": "/DH116_V2_0_R/finger42_link/collisions/finger42_link/node_STL_BINARY_/mesh"
+            },
+            "finger43_link": {
+              "table_clearance_m": 0.03321287818117308,
+              "infinite_cylinder_surface_gap_m": 0.06350679683943627,
+              "source_mesh": "/DH116_V2_0_R/finger43_link/collisions/finger43_link/node_STL_BINARY_/mesh"
+            },
+            "finger51_link": {
+              "table_clearance_m": 0.07623121860019694,
+              "infinite_cylinder_surface_gap_m": 0.07715002485553746,
+              "source_mesh": "/DH116_V2_0_R/finger51_link/collisions/finger51_link/node_STL_BINARY_/mesh"
+            },
+            "finger52_link": {
+              "table_clearance_m": 0.05318692546337023,
+              "infinite_cylinder_surface_gap_m": 0.0750554880839775,
+              "source_mesh": "/DH116_V2_0_R/finger52_link/collisions/finger52_link/node_STL_BINARY_/mesh"
+            },
+            "finger53_link": {
+              "table_clearance_m": 0.05304154260003474,
+              "infinite_cylinder_surface_gap_m": 0.07126803453021407,
+              "source_mesh": "/DH116_V2_0_R/finger53_link/collisions/finger53_link/node_STL_BINARY_/mesh"
+            }
+          },
+          "world_aabb_min_m": [
+            0.35264150308256104,
+            -0.24591397198044745,
+            0.30064765014112776
+          ],
+          "world_aabb_max_m": [
+            0.5302844139153226,
+            -0.156870196033386,
+            0.4383308990032114
+          ]
+        },
+        "closed": {
+          "pad_positions": [
+            [
+              0.4381756118993278,
+              -0.20000000000000004,
+              0.3064370872588805
+            ],
+            [
+              0.42217561189670233,
+              -0.19999999999999996,
+              0.3064370872588805
+            ]
+          ],
+          "pad_relative_z_m": [
+            -0.001562912741119471,
+            -0.001562912741119471
+          ],
+          "pad_span_m": 0.01600000000262547,
+          "minimum_table_clearance_m": 0.0011492090297280932,
+          "minimum_infinite_cylinder_gap_m": -0.0006039551192985769,
+          "table_body_clearance_m": {
+            "base_link": 0.05796709314282439,
+            "finger11_link": 0.062383304996326716,
+            "finger12_link": 0.023295641859794824,
+            "finger13_link": 0.0011492090297280932,
+            "finger14_link": 0.0016973427702817734,
+            "finger21_link": 0.030291284058349743,
+            "finger22_link": 0.0011492090313449665,
+            "finger23_link": 0.0017216571449560347,
+            "finger31_link": 0.05025326586401585,
+            "finger32_link": 0.012695802060225803,
+            "finger33_link": 0.012635537083057646,
+            "finger41_link": 0.06451922912669511,
+            "finger42_link": 0.03333006942226713,
+            "finger43_link": 0.03321287818117308,
+            "finger51_link": 0.07623121860019694,
+            "finger52_link": 0.05318692546337023,
+            "finger53_link": 0.05304154260003474
+          },
+          "wire_infinite_cylinder_radial_gap_m": {
+            "base_link": 0.042046902062074634,
+            "finger11_link": 0.0641674584084829,
+            "finger12_link": 0.027158876359574716,
+            "finger13_link": 0.002326542226611888,
+            "finger14_link": -0.00023589333187217995,
+            "finger21_link": 0.025916730371125025,
+            "finger22_link": 0.004072098711818333,
+            "finger23_link": -0.0006039551192985769,
+            "finger31_link": 0.05192059090027674,
+            "finger32_link": 0.052178787621996583,
+            "finger33_link": 0.05215391270103663,
+            "finger41_link": 0.06644609661578407,
+            "finger42_link": 0.06556180313057028,
+            "finger43_link": 0.06350679683943627,
+            "finger51_link": 0.07715002485553746,
+            "finger52_link": 0.0750554880839775,
+            "finger53_link": 0.07126803453021407
+          },
+          "per_body": {
+            "base_link": {
+              "table_clearance_m": 0.05796709314282439,
+              "infinite_cylinder_surface_gap_m": 0.042046902062074634,
+              "source_mesh": "/DH116_V2_0_R/base_link/collisions/base_link/node_STL_BINARY_/mesh"
+            },
+            "finger11_link": {
+              "table_clearance_m": 0.062383304996326716,
+              "infinite_cylinder_surface_gap_m": 0.0641674584084829,
+              "source_mesh": "/DH116_V2_0_R/finger11_link/collisions/finger11_link/node_STL_BINARY_/mesh"
+            },
+            "finger12_link": {
+              "table_clearance_m": 0.023295641859794824,
+              "infinite_cylinder_surface_gap_m": 0.027158876359574716,
+              "source_mesh": "/DH116_V2_0_R/finger12_link/collisions/finger12_link/node_STL_BINARY_/mesh"
+            },
+            "finger13_link": {
+              "table_clearance_m": 0.0011492090297280932,
+              "infinite_cylinder_surface_gap_m": 0.002326542226611888,
+              "source_mesh": "/DH116_V2_0_R/finger13_link/collisions/finger13_link/node_STL_BINARY_/mesh"
+            },
+            "finger14_link": {
+              "table_clearance_m": 0.0016973427702817734,
+              "infinite_cylinder_surface_gap_m": -0.00023589333187217995,
+              "source_mesh": "/DH116_V2_0_R/finger14_link/collisions/finger14_link/node_STL_BINARY_/mesh"
+            },
+            "finger21_link": {
+              "table_clearance_m": 0.030291284058349743,
+              "infinite_cylinder_surface_gap_m": 0.025916730371125025,
+              "source_mesh": "/DH116_V2_0_R/finger21_link/collisions/finger21_link/node_STL_BINARY_/mesh"
+            },
+            "finger22_link": {
+              "table_clearance_m": 0.0011492090313449665,
+              "infinite_cylinder_surface_gap_m": 0.004072098711818333,
+              "source_mesh": "/DH116_V2_0_R/finger22_link/collisions/finger22_link/node_STL_BINARY_/mesh"
+            },
+            "finger23_link": {
+              "table_clearance_m": 0.0017216571449560347,
+              "infinite_cylinder_surface_gap_m": -0.0006039551192985769,
+              "source_mesh": "/DH116_V2_0_R/finger23_link/collisions/finger23_link/node_STL_BINARY_/mesh"
+            },
+            "finger31_link": {
+              "table_clearance_m": 0.05025326586401585,
+              "infinite_cylinder_surface_gap_m": 0.05192059090027674,
+              "source_mesh": "/DH116_V2_0_R/finger31_link/collisions/finger31_link/node_STL_BINARY_/mesh"
+            },
+            "finger32_link": {
+              "table_clearance_m": 0.012695802060225803,
+              "infinite_cylinder_surface_gap_m": 0.052178787621996583,
+              "source_mesh": "/DH116_V2_0_R/finger32_link/collisions/finger32_link/node_STL_BINARY_/mesh"
+            },
+            "finger33_link": {
+              "table_clearance_m": 0.012635537083057646,
+              "infinite_cylinder_surface_gap_m": 0.05215391270103663,
+              "source_mesh": "/DH116_V2_0_R/finger33_link/collisions/finger33_link/node_STL_BINARY_/mesh"
+            },
+            "finger41_link": {
+              "table_clearance_m": 0.06451922912669511,
+              "infinite_cylinder_surface_gap_m": 0.06644609661578407,
+              "source_mesh": "/DH116_V2_0_R/finger41_link/collisions/finger41_link/node_STL_BINARY_/mesh"
+            },
+            "finger42_link": {
+              "table_clearance_m": 0.03333006942226713,
+              "infinite_cylinder_surface_gap_m": 0.06556180313057028,
+              "source_mesh": "/DH116_V2_0_R/finger42_link/collisions/finger42_link/node_STL_BINARY_/mesh"
+            },
+            "finger43_link": {
+              "table_clearance_m": 0.03321287818117308,
+              "infinite_cylinder_surface_gap_m": 0.06350679683943627,
+              "source_mesh": "/DH116_V2_0_R/finger43_link/collisions/finger43_link/node_STL_BINARY_/mesh"
+            },
+            "finger51_link": {
+              "table_clearance_m": 0.07623121860019694,
+              "infinite_cylinder_surface_gap_m": 0.07715002485553746,
+              "source_mesh": "/DH116_V2_0_R/finger51_link/collisions/finger51_link/node_STL_BINARY_/mesh"
+            },
+            "finger52_link": {
+              "table_clearance_m": 0.05318692546337023,
+              "infinite_cylinder_surface_gap_m": 0.0750554880839775,
+              "source_mesh": "/DH116_V2_0_R/finger52_link/collisions/finger52_link/node_STL_BINARY_/mesh"
+            },
+            "finger53_link": {
+              "table_clearance_m": 0.05304154260003474,
+              "infinite_cylinder_surface_gap_m": 0.07126803453021407,
+              "source_mesh": "/DH116_V2_0_R/finger53_link/collisions/finger53_link/node_STL_BINARY_/mesh"
+            }
+          },
+          "world_aabb_min_m": [
+            0.35264150308256104,
+            -0.24591397198044745,
+            0.3011492090297281
+          ],
+          "world_aabb_max_m": [
+            0.5302844139153226,
+            -0.156870196033386,
+            0.4383308990032114
+          ]
+        }
+      },
+      "jacobian_max_translation_difference": 0.0,
+      "direction": [
+        0.09943818504184333,
+        0.4190837142808832,
+        0.9024859487992725,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "palm_compensation_m_per_rad": [
+        -0.02825503385223038,
+        -0.013963284092444763,
+        -0.030173922128757157
+      ],
+      "nearby_x_search": {
+        "lower_m": -0.003,
+        "upper_m": 0.003,
+        "grid_points": 241,
+        "selected_initial_min_surface_gap_m": 0.00039773077353489825
+      }
+    }
+  },
+  "hand_hand_initial": {
+    "axis_separation_m": [
+      -0.16043012321618388,
+      0.322165495141403,
+      -0.13785179160091027
+    ],
+    "aabb_distance_lower_bound_m": 0.322165495141403,
+    "disjoint": true
+  },
+  "hand_hand_closed": {
+    "axis_separation_m": [
+      -0.16043012321618388,
+      0.322165495141403,
+      -0.13756678080318718
+    ],
+    "aabb_distance_lower_bound_m": 0.322165495141403,
+    "disjoint": true
+  },
+  "initial_static_geometry_passed": true,
+  "retained_closed_command_nonpenetrating": false,
+  "output_initialization_sha256": "9b4c0c9393d994c02b16734297ebd3462e7d1629abde871009a418be12948a99"
+}

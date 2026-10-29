@@ -129,7 +129,11 @@ def publish_stopped_monitor(path,error,physics_peaks,iteration,timesteps,num_env
     try:
         write_json(path,row)
     except Exception as publication_error:
-        error.add_note('Could not publish stopped monitor: '+str(publication_error))
+        note = 'Could not publish stopped monitor: '+str(publication_error)
+        if hasattr(error, 'add_note'):
+            error.add_note(note)
+        else:
+            error.__notes__ = [*getattr(error, '__notes__', []), note]
 
 
 def apply_lift_grasp_hold_contract(contract,task):
@@ -352,6 +356,25 @@ def checkpoint_contract_changes(saved,current):
         ('terminal_reset',TERMINAL_RESET_CONTRACT,'add_immediate_validated_terminal_reset')):
         if name not in saved and current.get(name)==expected:
             candidate[name]=expected;changes.append(change)
+    from .tabletop_tensor_env import BOUNDED_FAILURE_RESET_CONTRACT,JOINT_LIMIT_RESET_CONTRACT
+    if ('bounded_failure_reset' not in saved
+            and saved.get('terminal_reset')==TERMINAL_RESET_CONTRACT
+            and current.get('terminal_reset')==TERMINAL_RESET_CONTRACT
+            and current.get('bounded_failure_reset')==BOUNDED_FAILURE_RESET_CONTRACT):
+        candidate['bounded_failure_reset']=dict(BOUNDED_FAILURE_RESET_CONTRACT)
+        changes.append('joint_bounded_failure_reset_v2')
+    if ('joint_limit_reset' not in saved
+            and saved.get('terminal_reset')==TERMINAL_RESET_CONTRACT
+            and current.get('terminal_reset')==TERMINAL_RESET_CONTRACT
+            and current.get('joint_limit_reset')==JOINT_LIMIT_RESET_CONTRACT):
+        candidate['joint_limit_reset']=dict(JOINT_LIMIT_RESET_CONTRACT)
+        changes.append('finite_joint_limit_episode_reset_v1')
+    from .tabletop_tensor_env import OBJECT_DROP_RESET_CONTRACT
+    if ('object_drop_reset' not in saved
+            and current.get('object_drop_reset')==OBJECT_DROP_RESET_CONTRACT
+            and saved.get('terminal_reset')==TERMINAL_RESET_CONTRACT):
+        candidate['object_drop_reset']=dict(OBJECT_DROP_RESET_CONTRACT)
+        changes.append(OBJECT_DROP_RESET_CONTRACT['version'])
     if candidate!=current:
         raise ValueError('tensor checkpoint contract mismatch; legacy SB3 resume is unsupported')
     return changes
@@ -503,12 +526,30 @@ def reposition_telemetry(adjustment):
     return row
 
 
+def write_reward_scalars(writer,terms,total,iteration):
+    for name,value in terms.items():writer.add_scalar('reward/'+name,value,iteration)
+    writer.add_scalar('reward/total',total,iteration)
+
+
+def training_budget_reached(args,iteration,timesteps,min_episodes):
+    maximum=getattr(args,'max_iterations',None)
+    if maximum is not None:return iteration>=maximum
+    if args.episodes_per_env is not None:return min_episodes>=args.episodes_per_env
+    return timesteps>=args.timesteps
+
+
 def save_checkpoint(path, algorithm, contract, iteration, timesteps, env):
     payload=dict(version=VERSION,contract=contract,iteration=iteration,timesteps=timesteps,
         policy=algorithm.policy.state_dict(),optimizer=algorithm.optimizer.state_dict(),
         learning_rate=algorithm.learning_rate,episodes=env.episodes,successes=env.successes,
         recovered=env.recovered,reached_counts=env.reached_counts,transition_counts=env.transition_counts,
         torch_rng=torch.get_rng_state(),cuda_rng=torch.cuda.get_rng_state_all() if torch.cuda.is_available() else [])
+    if hasattr(env,'combined_failure_resets'):
+        payload['combined_failure_resets']=env.combined_failure_resets
+    if hasattr(env,'joint_limit_resets'):
+        payload['joint_limit_resets']=env.joint_limit_resets
+    if hasattr(env,'object_drop_resets'):
+        payload['object_drop_resets']=env.object_drop_resets
     if hasattr(env,'close_completion_events'):
         payload['close_completion_event_index']=env.close_completion_events.event_index
     tmp=Path(str(path)+'.tmp'); torch.save(payload,tmp); os.replace(tmp,path)
@@ -517,7 +558,7 @@ def save_checkpoint(path, algorithm, contract, iteration, timesteps, env):
 def run_tensor_training(world, template, args, contract):
     from .tabletop_tensor_task import TensorTask, REWARD_VERSION, FAILURE_NAMES, measured_readiness_contract, CLOSE_DOWNWARD_PENALTY_CONTRACT
     from .tabletop_tensor_world import TensorWorld, ROOT_POSE_WRITE_CONTRACT
-    from .tabletop_tensor_env import TensorEnv, VELOCITY_GUARD_CONTRACT, TERMINAL_RESET_CONTRACT, PHYSICS_PEAK_NAMES, LIVE_VELOCITY_GUARD_CONTRACT, TRAINING_JOINT_LIMIT_CONTRACT
+    from .tabletop_tensor_env import TensorEnv, VELOCITY_GUARD_CONTRACT, TERMINAL_RESET_CONTRACT, PHYSICS_PEAK_NAMES, LIVE_VELOCITY_GUARD_CONTRACT, TRAINING_JOINT_LIMIT_CONTRACT, BOUNDED_FAILURE_RESET_CONTRACT, JOINT_LIMIT_RESET_CONTRACT
     from torch.utils.tensorboard import SummaryWriter
     torch.manual_seed(args.seed)
     device_world=TensorWorld(world)
@@ -537,6 +578,26 @@ def run_tensor_training(world, template, args, contract):
         task.enable_coordinated_control(torch.ones(args.num_envs,dtype=torch.bool,device=args.device))
     if getattr(args,'grasp_controller','legacy')=='policy':
         task.enable_policy_control()
+    if getattr(args,'force_region_control',False):
+        from .tabletop_policy_force_region import enable
+        enable(task)
+        task.last_observation=task.observe().clone()
+    if getattr(args,'policy_lift_hold',False):
+        from .tabletop_policy_lift_hold import PolicyLiftHold
+        task.policy_lift_hold=PolicyLiftHold(args.num_envs,args.device)
+        task.last_observation=task.observe().clone()
+    if getattr(args,'stable_lift_reward',False):
+        from .tabletop_stable_lift_reward import StableLiftReward
+        task.stable_lift_reward=StableLiftReward(args.num_envs,args.device)
+        task.terms['stable_lift_hold']=torch.zeros_like(task.reward)
+        task.last_observation=task.observe().clone()
+    if getattr(args,'phase_force_reward',False):
+        task.phase_force_reward=True
+        for name in ('grasp_upward_force','lift_upward_force'):
+            task.terms[name]=torch.zeros_like(task.reward)
+    if getattr(args,'free_grasp_lift',False):
+        from .tabletop_free_grasp_lift import enable
+        enable(task)
     if getattr(args,'contact_effort_feedback',False):
         from .tabletop_contact_effort import ContactEffortFeedback
         task.contact_effort=ContactEffortFeedback(args.num_envs,args.device,effort_limit_nm=task.parameters.effort_limit_nm)
@@ -551,6 +612,12 @@ def run_tensor_training(world, template, args, contract):
     env=TensorEnv(device_world,task,recovery=args.training_episode_resets,
                   fault_trace_path=args.output/'physics_fault_trace.json',
                   training_joint_limit=args.training_episode_resets and not bool(getattr(args,'control_probe_checkpoint',None)))
+    if getattr(args, 'grasp_acquisition_shaping', False):
+        if getattr(args, 'object_kind', 'solid_cylinder') != 'solid_cylinder':
+            raise ValueError('acquisition geometry currently requires a solid cylinder')
+        env.grasp_acquisition = True
+        env.acquisition_radius_m = args.solid_cylinder_radius_m
+        env.acquisition_length_m = .5
     if task.shaping is not None:
         from .tabletop_grasp_shaping import LIFT_GATE_NAMES,lift_gate_summary
         env.lift_gate_counts=torch.zeros(len(LIFT_GATE_NAMES),device=args.device,dtype=torch.long)
@@ -560,6 +627,9 @@ def run_tensor_training(world, template, args, contract):
     obs=observations(env.reset())
     validation=validate_world_adapter(world,device_world,task)
     obs=observations(env.reset())
+    if getattr(args,'require_initial_below_axis',False):
+        from .tabletop_initial_contact_check import validate_initial_contact
+        write_json(args.output/'initial_contact_validation.json',validate_initial_contact(task.m))
     write_json(args.output/'tensor_world_validation.json',validation)
     steps=args.rollout_steps or 24
     from .tabletop_tensor_task import (POLICY_MIN_FORCE_N, POLICY_MAX_FORCE_N,
@@ -578,8 +648,12 @@ def run_tensor_training(world, template, args, contract):
         minibatches=min(8,args.num_envs),learning_rate=3e-4,
         reset_velocity_guard=VELOCITY_GUARD_CONTRACT,terminal_reset=TERMINAL_RESET_CONTRACT,
         live_velocity_guard=LIVE_VELOCITY_GUARD_CONTRACT,
+        bounded_failure_reset=dict(BOUNDED_FAILURE_RESET_CONTRACT),
+        joint_limit_reset=dict(JOINT_LIMIT_RESET_CONTRACT),
         root_pose_write=ROOT_POSE_WRITE_CONTRACT,policy_noise=POLICY_NOISE_CONTRACT,
         vertical_force_telemetry=VERTICAL_FORCE_CONTRACT)
+    from .tabletop_tensor_env import OBJECT_DROP_RESET_CONTRACT
+    contract['object_drop_reset']=dict(OBJECT_DROP_RESET_CONTRACT)
     if env.training_joint_limit:
         contract['training_joint_limit']=dict(TRAINING_JOINT_LIMIT_CONTRACT)
     if task.grasp_readiness is not None:
@@ -610,6 +684,10 @@ def run_tensor_training(world, template, args, contract):
         contract.update(grasp_shaping=dict(SHAPING_CONTRACT),observation_size=156,
                         observation_version='dh116-force-progress-milestones-v1')
     contract=tensor_contract_metadata(contract,task.parameters.max_force_n)
+    if getattr(env, 'grasp_acquisition', False):
+        from .tabletop_grasp_acquisition import CONTRACT as ACQUISITION
+        contract['grasp_acquisition'] = dict(ACQUISITION,
+            radius_m=env.acquisition_radius_m, length_m=env.acquisition_length_m)
     apply_palm_exploration_contract(contract, task.palm_exploration_axis)
     if hasattr(task,'coordinated_control'):
         from .tabletop_coordinated_grasp import CONTRACT as CONTROL_CONTRACT
@@ -640,7 +718,58 @@ def run_tensor_training(world, template, args, contract):
     if getattr(task,'policy_control',False):
         from .tabletop_policy_control import apply_contract
         apply_contract(contract,task)
+    if hasattr(task,'policy_lift_hold'):
+        from .tabletop_policy_lift_hold import CONTRACT as POLICY_LIFT_HOLD
+        contract['policy_lift_hold']=dict(POLICY_LIFT_HOLD)
+        contract['observation_size']=obs['policy'].shape[-1]
+        contract['observation_version']='dh116-policy-lift-hold-v1'
+        contract['policy_control']=dict(contract['policy_control'],
+            retained_pose_override=True,automatic_force_correction='lift_only',
+            ordinary_contact_pause='lift_grip_loss_or_tracking',automatic_ascent=False)
+        contract['force_feedback']=dict(enabled=True,scope='accepted_lift_grasp_only',
+            target='captured_measured_hand_load_with_bounded_recovery')
+        contract['palm_motion']='policy_close_then_policy_requested_common_lift'
+        contract['lift_gate_semantics']='accepted_grasp_retained_bilateral_load_slip_and_tracking_gated'
 
+    if hasattr(task,'stable_lift_reward'):
+        from .tabletop_stable_lift_reward import CONTRACT as STABLE_LIFT_CONTRACT
+        contract['stable_lift_reward']=dict(STABLE_LIFT_CONTRACT)
+        contract['observation_size']=obs['policy'].shape[-1]
+        contract['observation_version']='dh116-stable-lift-reward-v1'
+    if getattr(task,'force_region',False):
+        from .tabletop_policy_force_region import CONTRACT as FORCE_REGION_CONTRACT
+        from .tabletop_policy_lift_hold import FORCE_HOLD_CONTRACT
+        contract['force_region_control']=dict(FORCE_REGION_CONTRACT)
+        contract['constant_force_hold']=dict(FORCE_HOLD_CONTRACT)
+        contract['action']='20D_joint12_wrist6_force2_v1'
+        contract['force_action_range_n']=[2.,12.]
+        contract['force_feedback']=dict(enabled=True,scope='close_and_lift',
+            measurement='actual_per_hand_object_contact_load',physical_force_guarantee=False)
+        contract['policy_control']=dict(contract['policy_control'],automatic_force_correction='close_and_lift')
+        if 'policy_lift_hold' in contract:
+            contract['policy_lift_hold']=dict(contract['policy_lift_hold'],observation_size=34,
+                force_capture='accepted_close_requested_force_2_to_12',reference_recovery='immutable')
+        contract['stiffness_action']=dict(enabled=False,fixed_nm_rad=10.)
+        contract['grasp_readiness']=dict(contract['grasp_readiness'],min_hand_load_n=2.,max_hand_load_n=12.,
+            contact_region='all_valid_force_bearing_contacts_below_actual_local_Y_axis')
+        contract['observation_size']=obs['policy'].shape[-1]
+        contract['observation_version']='dh116-force-region-control-v1'
+        if 'grasp_acquisition' in contract:
+            contract['grasp_acquisition']['contact_region_weights']=dict(above=.5,below=2.)
+    if getattr(task,'phase_force_reward',False):
+        from .tabletop_phase_force_reward import CONTRACT as PHASE_FORCE_CONTRACT
+        contract['phase_force_reward']=dict(PHASE_FORCE_CONTRACT)
+    if getattr(args,'require_initial_below_axis',False):
+        from .tabletop_initial_contact_check import CONTRACT as INITIAL_CONTACT_CONTRACT
+        contract['initial_contact_validation']=dict(INITIAL_CONTACT_CONTRACT)
+    if getattr(task,'free_grasp_lift',False):
+        from .tabletop_free_grasp_lift import apply_contract
+        apply_contract(contract,task)
+
+    if getattr(args,'manual_control',False):
+        from .tabletop_manual_control import run_manual_control
+        write_json(args.output/'tensor_contract.json',contract)
+        return run_manual_control(env,args,contract)
     if getattr(args,'teacher_search_cases',None):
         from .tabletop_success_teacher import run_success_teacher
         return run_success_teacher(env,args,contract,obs)
@@ -702,6 +831,12 @@ def run_tensor_training(world, template, args, contract):
         close_event_index=int(saved.get('close_completion_event_index',0))
         for name in ('episodes','successes','recovered','reached_counts','transition_counts'):
             getattr(env,name).copy_(saved[name])
+        if 'combined_failure_resets' in saved:
+            env.combined_failure_resets.copy_(saved['combined_failure_resets'])
+        if 'joint_limit_resets' in saved:
+            env.joint_limit_resets.copy_(saved['joint_limit_resets'])
+        if 'object_drop_resets' in saved:
+            env.object_drop_resets.copy_(saved['object_drop_resets'])
         torch.set_rng_state(saved['torch_rng'].cpu())
         if saved['cuda_rng']: torch.cuda.set_rng_state_all([x.cpu() for x in saved['cuda_rng']])
     write_json(args.output/'tensor_contract.json',contract)
@@ -712,7 +847,7 @@ def run_tensor_training(world, template, args, contract):
         optimizer_state_entries=len(algorithm.optimizer.state),
         initial_policy_std=algorithm.policy.log_std.detach().exp().cpu().tolist()))
     writer=SummaryWriter(str(args.output/'tensorboard'))
-    if task.vertical_force_reward and task.skip_hold:
+    if task.vertical_force_reward and task.skip_hold and not getattr(task,'free_grasp_lift',False):
         from .tabletop_vertical_force import CloseCompletionForceEvents
         env.close_completion_events=CloseCompletionForceEvents(writer,
             args.output/'close_completion_events.jsonl',close_event_index)
@@ -729,8 +864,12 @@ def run_tensor_training(world, template, args, contract):
     stop=None
     stopped_telemetry=None
     failure_counts=torch.zeros(max(FAILURE_NAMES)+1,dtype=torch.long,device=args.device)
+    row=dict(backend=VERSION,num_envs=args.num_envs,iteration=iteration,timesteps=timesteps,
+             iteration_budget=getattr(args,'max_iterations',None),successes=int(env.successes.sum()))
+    if training_budget_reached(args,iteration,timesteps,int(env.episodes.min())):
+        save_checkpoint(checkpoint,algorithm,contract,iteration,timesteps,env)
     try:
-        while True:
+        while not training_budget_reached(args,iteration,timesteps,int(env.episodes.min())):
             collect=time.monotonic()
             if hasattr(env,'close_completion_events'):
                 env.close_completion_events.iteration=iteration+1
@@ -777,8 +916,12 @@ def run_tensor_training(world, template, args, contract):
                 transitions_per_second=args.num_envs*steps/(collect_seconds+learn_seconds),
                 elapsed_seconds=time.monotonic()-started,episodes=int(env.episodes.sum()),
                 episodes_per_env_min=int(env.episodes.min()),episodes_per_env_max=int(env.episodes.max()),
-                episode_budget_per_env=args.episodes_per_env,successes=int(env.successes.sum()),
+                episode_budget_per_env=(None if getattr(args,'max_iterations',None) is not None else args.episodes_per_env),
+                iteration_budget=getattr(args,'max_iterations',None),successes=int(env.successes.sum()),
                 recovered_physical_episodes=int(env.recovered.sum()),
+                combined_failure_resets=int(env.combined_failure_resets),
+                joint_limit_resets=int(env.joint_limit_resets),
+                object_drop_resets=int(env.object_drop_resets),
                 phase_occupancy=(occupancy/(steps*args.num_envs)).cpu().tolist(),
                 phase_reached_episodes=env.reached_counts.cpu().tolist(),
                 phase_transition_counts=env.transition_counts.reshape(4,4).cpu().tolist(),
@@ -788,6 +931,18 @@ def run_tensor_training(world, template, args, contract):
                 max_object_bottom_m=float(task.m['bottom'].max()),losses=losses,
                 learning_rate=algorithm.learning_rate,grasp_qualified=False)
             std=algorithm.policy.log_std.detach().exp()
+            if getattr(task,'free_grasp_lift',False):
+                from .tabletop_free_grasp_lift import bilateral_contact
+                for key in ('phase_occupancy','phase_reached_episodes','phase_transition_counts'):
+                    row.pop(key,None)
+                row['exploration_mode']='continuous_free_grasp_lift'
+                row['bilateral_contact_env_fraction']=float(bilateral_contact(task).float().mean())
+            simulated_seconds=steps*device_world.decimation*device_world.dt
+            row.update(simulated_seconds_per_env_per_iteration=simulated_seconds,
+                collection_realtime_factor=simulated_seconds/collect_seconds,
+                training_realtime_factor=simulated_seconds/(collect_seconds+learn_seconds),
+                physics_hz=args.physics_hz, control_hz=args.physics_hz/device_world.decimation,
+                wall_clock_pacing=False)
             if 'grasp_controller' in contract:row['grasp_controller']=contract['grasp_controller']
             if 'palm_transport' in contract:row['palm_transport']=contract['palm_transport']
             if 'palm_reposition' in contract:
@@ -797,6 +952,18 @@ def run_tensor_training(world, template, args, contract):
                 row['reposition']=reposition_telemetry(adjustment)
             row['policy_noise']=dict(POLICY_NOISE_CONTRACT)
             row['vertical_contact_force']=env.vertical_force_stats.summary()
+            if getattr(task,'force_region',False):
+                actual=task.m['hand_object_loads']
+                target=task.f_requested
+                valid_hand=task.m['contact_valid']
+                below_hand=valid_hand&task.m['contact_all_below_centerline']
+                row['force_control']=dict(requested_min_n=float(target.min()),requested_max_n=float(target.max()),
+                    below_axis_contact_fraction=float(below_hand.sum()/valid_hand.sum().clamp_min(1)),
+                    active_hold_envs=int(task.policy_lift_hold.active.sum()) if hasattr(task,'policy_lift_hold') else 0)
+                for i,side in enumerate(('left','right')):
+                    row['force_control'][side+'_requested_mean_n']=float(target[:,i].mean())
+                    row['force_control'][side+'_measured_mean_n']=float(actual[:,i].mean())
+                    row['force_control'][side+'_error_mean_n']=float((target[:,i]-actual[:,i]).abs().mean())
             row['lift_entry_force']=env.lift_entry_force_stats.summary()
             if hasattr(env,'close_completion_events'):
                 row['close_completion_event_index']=env.close_completion_events.event_index
@@ -805,7 +972,7 @@ def run_tensor_training(world, template, args, contract):
                 row['vertical_force_reward']=contract['vertical_force_reward']
                 row['force_reward_enabled_env_fraction']=float(task.force_scoring_started.float().mean())
                 row['downward_penalty_enabled_env_fraction']=row['force_reward_enabled_env_fraction']
-            if task.close_downward_penalty:
+            if task.close_downward_penalty and not getattr(task,'free_grasp_lift',False):
                 row['close_downward_penalty']=contract['close_downward_penalty']
             if task.shaping is not None:
                 row['grasp_shaping']=contract['grasp_shaping']
@@ -816,7 +983,7 @@ def run_tensor_training(world, template, args, contract):
             row['policy_std_min']=float(std.min())
             row['policy_std_max']=float(std.max())
             row['action_clipped_fraction']=float(clipped_fraction/steps)
-            if task.grasp_readiness is not None:
+            if task.grasp_readiness is not None and not getattr(task,'free_grasp_lift',False):
                 row['grasp_readiness']=contract['grasp_readiness']
                 row['load_ready_env_fraction']=float(task.grip_force_ready(task.m['hand_object_loads']).float().mean())
                 row['max_grasp_contact_time_s']=float(task.contact_time.max())
@@ -837,17 +1004,26 @@ def run_tensor_training(world, template, args, contract):
                 fps=row['transitions_per_second'],mean_step_reward=row['mean_step_reward'],
                 successes=row['successes'],episodes=row['episodes']).items(): writer.add_scalar(name,value,iteration)
             for name,value in losses.items(): writer.add_scalar('loss/'+name,value,iteration)
+            if getattr(task,'free_grasp_lift',False):
+                writer.add_scalar('exploration/bilateral_contact_env_fraction',row['bilateral_contact_env_fraction'],iteration)
+                writer.add_scalar('exploration/max_actual_lift_m',max(0.,row['max_object_bottom_m']-.30),iteration)
             if task.vertical_force_reward:
                 writer.add_scalar('force_reward/enabled_env_fraction',row['force_reward_enabled_env_fraction'],iteration)
                 writer.add_scalar('force_reward/downward_penalty_enabled_env_fraction',row['downward_penalty_enabled_env_fraction'],iteration)
-            for name,value in row['reward_terms'].items(): writer.add_scalar('reward/'+name,value,iteration)
+            write_reward_scalars(writer,row['reward_terms'],row['mean_step_reward'],iteration)
+            for key,value in row.get('force_control',{}).items():
+                writer.add_scalar('force_control/'+key,value,iteration)
+            writer.add_scalar('recovery/combined_failure_resets',row['combined_failure_resets'],iteration)
+            writer.add_scalar('recovery/joint_limit_resets',row['joint_limit_resets'],iteration)
+            writer.add_scalar('recovery/object_drop_resets',row['object_drop_resets'],iteration)
             for name,value in row.get('reposition',{}).items():writer.add_scalar('reposition/'+name,value,iteration)
             if task.shaping is not None:
                 for name,value in row['lift_gates'].items():
                     if name.endswith('_fraction') and value is not None:writer.add_scalar('lift_gates/'+name,value,iteration)
                 writer.add_scalar('lift_gates/lift_substeps',row['lift_gates']['lift_substeps'],iteration)
                 writer.add_scalar('lift_gates/max_command_offset_m',row['max_lift_command_offset_m'],iteration)
-            for phase in range(1,4): writer.add_scalar('phase/'+('approach','close','hold','lift')[phase],row['phase_occupancy'][phase],iteration)
+            if not getattr(task,'free_grasp_lift',False):
+                for phase in range(1,4): writer.add_scalar('phase/'+('approach','close','hold','lift')[phase],row['phase_occupancy'][phase],iteration)
             for name,value in row['physics_peaks_since_start'].items():writer.add_scalar('physics_peak/'+name,value,iteration)
             for name,value in row['velocity_diagnostics'].items():writer.add_scalar('velocity_warning/'+name,value,iteration)
             for name in ('policy_std_min','policy_std_max','action_clipped_fraction'):
@@ -865,14 +1041,15 @@ def run_tensor_training(world, template, args, contract):
                 for key in ('hand_normal_mean_n','hand_friction_mean_n','hand_total_mean_n'):
                     writer.add_scalar('vertical_force/'+side+'/'+key,vertical[key][hi],iteration)
             writer.flush()
+            for key in ('collection_realtime_factor','training_realtime_factor',
+                        'simulated_seconds_per_env_per_iteration'):
+                writer.add_scalar('timing/'+key,row[key],iteration)
             if hasattr(env,'close_completion_events'):
                 row['close_completion_telemetry']=env.close_completion_events.diagnostics()
             write_json(args.output/'monitor.json',row)
             with (args.output/'iterations.jsonl').open('a') as stream: stream.write(json.dumps(row)+'\n')
             print('TENSOR_PPO_ITERATION',json.dumps(row),flush=True)
-            if args.episodes_per_env is not None:
-                if int(env.episodes.min())>=args.episodes_per_env: break
-            elif timesteps>=args.timesteps: break
+            if training_budget_reached(args,iteration,timesteps,int(env.episodes.min())):break
     except BaseException as error:
         stop=error
         # Save only the last completed optimizer iteration. The partial rollout

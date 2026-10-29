@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-hand_python="${DH116_PYTHON:-/home/xk/miniconda3/envs/go2/bin/python}"
+hand_python="${DH116_PYTHON:-/opt/conda/envs/hand/bin/python}"
 python_prefix="$("$hand_python" -c 'import sys;print(sys.prefix)')"
-isaac_root="$python_prefix/lib/python3.11/site-packages/isaacsim"
-usd_candidates=("$isaac_root"/extscache/omni.usd.libs-*.cp311)
+read -r python_version python_abi < <("$hand_python" -c 'import sys;print(f"{sys.version_info.major}.{sys.version_info.minor}",f"cp{sys.version_info.major}{sys.version_info.minor}")')
+isaac_root="$python_prefix/lib/python$python_version/site-packages/isaacsim"
+usd_candidates=("$isaac_root"/extscache/omni.usd.libs-*.$python_abi)
 test -d "${usd_candidates[0]}"
-export PYTHONPATH="$project_root/src:$project_root:$project_root/vendor/DeformX:${usd_candidates[0]}"
+export PYTHONPATH="$project_root/src:$project_root:${usd_candidates[0]}"
 export LD_LIBRARY_PATH="$python_prefix/lib:${usd_candidates[0]}/bin:$isaac_root/kit${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 # Default to available cores; explicit per-run overrides remain supported.
 read -r default_numeric_threads default_cpu_affinity < <("$hand_python" -c '

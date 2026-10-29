@@ -5,9 +5,10 @@ from .tabletop_velocity_limits import ACTIVE_VELOCITY_LIMIT_RAD_S
 from .tabletop_palm_mount import CONTRACT as WRIST
 from .tabletop_pressure_relief import pressure_limited_target
 
-CONTRACT = dict(version='policy_owned_grasp_v1',
+CONTRACT = dict(version='policy_owned_grasp_v2',
     joint_rate_rad_s=ACTIVE_VELOCITY_LIMIT_RAD_S,
     wrist_rate_m_s=WRIST['velocity_limit_m_s'],
+    wrist_rate_metric='cartesian_vector_norm',
     palm_lower_m=[-.003, -.003, -.004], palm_upper_m=[.003, .003, .05],
     severe_coupling_rad=.012, stiffness_min=10., palm_descent_clearance_m=.0003,
     automatic_force_correction=False, automatic_ascent=False,
@@ -23,8 +24,11 @@ def validate_configuration(args):
             or args.palm_exploration_axis != 'xyz' or args.reset_height_jitter_m != 0):
         raise ValueError('policy controller requires tensor driven carriage, pressure relief, '
                          'measured-load direct lift, xyz actions and zero reset jitter')
+    if getattr(args,'teacher_search_cases',None) and not (
+            getattr(args,'force_region_control',False) and getattr(args,'policy_lift_hold',False)):
+        raise ValueError('policy teacher requires force-region control and latched lift hold')
     for name in ('release_reposition', 'force_direction_reposition', 'contact_effort_feedback',
-                 'teacher_search_cases', 'control_probe_checkpoint', 'play_checkpoint'):
+                 'control_probe_checkpoint', 'play_checkpoint'):
         if getattr(args, name, None):
             raise ValueError('policy controller is incompatible with '+name)
 
@@ -43,6 +47,8 @@ def enable(task):
 
 
 def control(t, actions, live, dt):
+    if hasattr(t,'manual_joint_contact'):
+        return t.manual_joint_contact.control(actions,live,dt)
     q = t.m['q']
     if t.envelope is None:
         requested = t.reference + .08 * actions[:, :12]
@@ -51,20 +57,50 @@ def control(t, actions, live, dt):
             actions[:, :12] >= 0, t.upper-t.center, t.center-t.lower)
     requested = requested.maximum(t.low).minimum(t.high)
     target = requested.clone()
+    palm_action = actions[:, 12:18].reshape(t.n, 2, 3)
+    lower = q.new_tensor(CONTRACT['palm_lower_m'])
+    upper = q.new_tensor(CONTRACT['palm_upper_m'])
+    palms = palm_action * torch.where(palm_action >= 0, upper, -lower)
+    stiffness = (CONTRACT['stiffness_min'] + (actions[:, 18:]+1)*.5*
+                 (t.parameters.stiffness_max-CONTRACT['stiffness_min']))
+    held = torch.zeros_like(live)
+    hold_paused = torch.zeros_like(live)
+    if hasattr(t, 'policy_lift_hold') and not getattr(t,'manual_digit_force_balance',False):
+        hold = t.policy_lift_hold
+        # Expose the current wrist request to the hold servo before replacing
+        # it with the accepted common-height target. Close remains policy-owned.
+        t.palm_targets[live] = palms[live]
+        held = live & hold.active & (t.phase == 3)
+        held_target, held_palms, held_stiffness, hold_paused = hold.targets(t,live,dt)
+        target = torch.where(held[:,None],held_target,target)
+        palms = torch.where(held[:,None,None],held_palms,palms)
+        stiffness = torch.where(held[:,None],held_stiffness,stiffness)
+    force_region=getattr(t,'force_region',False)
+    requested_force=None
+    if force_region:
+        from .tabletop_policy_force_region import requested_force as force_request,adjust
+        requested_force=force_request(actions)
+        target=adjust(t,target,requested_force,live&~held,dt)
+        stiffness=torch.where(held[:,None],stiffness,torch.full_like(stiffness,10.))
     errors = t.m['mimic_errors']
     severe = errors.abs().amax(1) >= CONTRACT['severe_coupling_rad']
     # Correct only severe linkage inconsistency; ordinary loaded lag does not
     # rewrite the policy target or stop exploration.
     for j, (_, master, ratio, _) in enumerate(MIMIC):
+        if j<2 and getattr(t,'manual_smooth_mimic',False):
+            continue  # Manual digit servo continuously tapers/releases first.
         for hand in range(2):
             k = 6*hand + ACTIVE.index(master)
             error = errors[:, 5*hand+j]
             target[:, k] = torch.where(error.abs() >= CONTRACT['severe_coupling_rad'],
                                       q[:, k]+error/ratio, target[:, k])
     ceiling = torch.full_like(t.f_target, min(t.parameters.max_force_n, 12.))
+    # The constrained mode releases at the actual 12N cap, rather than the
+    # legacy 1.25*12+deadband protection band.
+    relief_ceiling=((ceiling-t.parameters.deadband_n)/1.25 if force_region else ceiling)
     target, over = pressure_limited_target(
         t.command.reshape(t.n, 2, 6), target.reshape(t.n, 2, 6),
-        t.m['hand_object_loads'], ceiling, t.direction, dt, t.parameters.deadband_n)
+        t.m['hand_object_loads'], relief_ceiling, t.direction, dt, t.parameters.deadband_n)
     target = target.flatten(1).maximum(t.low).minimum(t.high)
     # Overload release must not worsen a severe follower error. As in the
     # coordinated controller, neutralize competing requests at measured q.
@@ -77,25 +113,30 @@ def control(t, actions, live, dt):
             target[:, k] = torch.where(conflict, q[:, k].clamp(t.low[k], t.high[k]), target[:, k])
     applied = t.command + (target-t.command).clamp(
         -CONTRACT['joint_rate_rad_s']*dt, CONTRACT['joint_rate_rad_s']*dt)
-    palm_action = actions[:, 12:18].reshape(t.n, 2, 3)
-    lower = q.new_tensor(CONTRACT['palm_lower_m'])
-    upper = q.new_tensor(CONTRACT['palm_upper_m'])
-    palms = palm_action * torch.where(palm_action >= 0, upper, -lower)
-    blocked = severe | over.any(1)
+    blocked = severe | over.any(1) | (held & hold_paused)
     t.command[live] = applied[live]
+    if hasattr(t,'manual_pinch_jacobian') and not hasattr(t,'manual_pinch_home'):
+        from .tabletop_manual_pinch_geometry import compensation
+        correction=compensation(t,applied,requested)
+        t.manual_pinch_compensation[live]=correction[live]
+        palms=(palms+correction).maximum(lower).minimum(upper)
+    if hasattr(t,'policy_lift_hold'):
+        t.policy_lift_hold.project_applied(t,held)
     t.joint_requested_target[live] = requested[live]
     t.joint_governed_target[live] = target[live]
     t.palm_targets[live] = palms[live]
     t.palm_actions[live] = palm_action[live]
     t.palm_clipped[live] = False
-    t.policy_stiffness[live] = (CONTRACT['stiffness_min'] + (actions[live, 18:]+1)*.5*
-                              (t.parameters.stiffness_max-CONTRACT['stiffness_min']))
+    t.policy_stiffness[live] = stiffness[live]
     # Legacy force fields remain observable, explicitly as a protection ceiling
     # in this contract, never as a claimed policy force command or achieved load.
-    t.f_target[live] = ceiling[live]
-    t.f_requested[live] = ceiling[live]
+    close_force=requested_force if force_region else ceiling
+    force_target = (torch.where(held[:,None],t.policy_lift_hold.force_target,close_force)
+                    if hasattr(t,'policy_lift_hold') else close_force)
+    t.f_target[live] = force_target[live]
+    t.f_requested[live] = force_target[live]
     t.f_filtered[live] = t.m['hand_object_loads'][live]
-    t.f_offset[live] = 0.
+    if not force_region:t.f_offset[live] = 0.
     t.f_boost[live] = 0.
     t.f_blocked[live] = blocked[live, None]
     t.f_last_slip[live] = t.slip[live]
@@ -107,7 +148,16 @@ def control(t, actions, live, dt):
         zero = torch.zeros_like(lifting)
         t.lift_diagnostic_masks = torch.stack((lifting, lifting & upward & ~blocked,
             lifting & severe, zero, zero, zero, lifting & over.any(1), zero), 1)
-    return live & ~blocked
+    allowed=live & ~blocked
+    if getattr(t,'manual_stable_grip_ascent',False):
+        measured=t.m['adaptive_palm_offset']
+        only_up=((palms[:,:,:2]-measured[:,:,:2]).abs().amax((1,2))<=.0001)
+        only_up &= (palms[:,:,2]>=measured[:,:,2]-1e-6).all(1)
+        only_up &= (palms[:,:,2]>measured[:,:,2]+1e-6).all(1)
+        inside_hard=errors.abs().amax(1)<.02
+        touching=(t.m['contact_valid']&(t.m['hand_object_loads']>.05)).all(1)
+        allowed |= live&only_up&inside_hard&touching&~over.any(1)&~(held&hold_paused)
+    return allowed
 
 
 def apply_contract(contract, task):

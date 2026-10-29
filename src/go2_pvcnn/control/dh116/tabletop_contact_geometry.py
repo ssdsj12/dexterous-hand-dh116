@@ -10,6 +10,7 @@ def aggregate_contact_geometry(
     *,
     force_threshold_n=0.05,
     centerline_epsilon_m=1e-6,
+    object_axis_w=None,
 ):
     """Aggregate finite force-bearing contact reports per hand.
 
@@ -46,7 +47,19 @@ def aggregate_contact_geometry(
     contact_center = torch.where(hand_valid[..., None], contact_center, torch.full_like(contact_center, float('nan')))
     contact_normal = torch.where(hand_valid[..., None], contact_normal, torch.full_like(contact_normal, float('nan')))
 
-    below = positions[..., 2] < center[:, None, None, 2] - centerline_epsilon_m
+    relative=positions-center[:,None,None,:]
+    if object_axis_w is not None:
+        axis=torch.as_tensor(object_axis_w,device=positions.device,dtype=positions.dtype)
+        if axis.shape!=center.shape or not torch.isfinite(axis).all():
+            raise ValueError('finite object axis must have shape (N,3)')
+        norm=torch.linalg.vector_norm(axis,dim=1,keepdim=True)
+        if (norm<=0).any():raise ValueError('object axis must be nonzero')
+        axis=axis/norm
+        along=(relative*axis[:,None,None,:]).sum(-1)
+        radial_z=relative[...,2]-along*axis[:,None,None,2]
+    else:
+        radial_z=relative[...,2]
+    below = radial_z < -centerline_epsilon_m
     all_below = hand_valid & ((~valid) | below).all(dim=2)
     return dict(
         contact_center_w=contact_center,
