@@ -64,6 +64,31 @@ def test_joint_target_integrates_current_pose_instead_of_home():
     torch.testing.assert_close(t.command[1],middle)
 
 
+def test_pinch_hold_does_not_reverse_closing_to_chase_finite_follower_error():
+    t,w=setup();t.pinch_force_hold=True;middle=(t.low+t.high)/2
+    t.command[:]=middle;t.m['q'][:]=middle;t.m['mimic_errors'][:,6]=-.03
+    t.m['hand_object_loads'][:]=2.
+    action=torch.zeros(2,26);action[:,8]=.1
+    module().control(t,action,torch.ones(2,dtype=torch.bool),.01)
+    assert (t.command[:,8]>middle[8]).all()
+    assert (t.command>=t.low).all() and (t.command<=t.high).all()
+
+
+def test_pinch_hold_retains_a_stationary_grip_with_finite_mimic_error():
+    t,w=setup();t.pinch_force_hold=True;middle=(t.low+t.high)/2
+    t.command[:]=middle;t.m['q'][:]=middle;t.m['mimic_errors'][:,6]=-.03
+    module().control(t,torch.zeros(2,26),torch.ones(2,dtype=torch.bool),.01)
+    torch.testing.assert_close(t.command,middle.expand(2,-1))
+
+
+def test_regular_policy_keeps_its_existing_follower_correction():
+    t,w=setup();middle=(t.low+t.high)/2
+    t.command[:]=middle;t.m['q'][:]=middle;t.m['mimic_errors'][:,6]=-.03
+    action=torch.zeros(2,26);action[:,8]=.1
+    module().control(t,action,torch.ones(2,dtype=torch.bool),.01)
+    assert (t.command[:,8]<middle[8]).all()
+
+
 def test_independent_wrist_translation_and_rotation_velocity_targets():
     t,w=setup();action=torch.zeros(2,26);action[:,-2:]=-.4
     action[0,12]=1.;action[0,18]=1.;action[1,17]=1.;action[1,23]=-1.

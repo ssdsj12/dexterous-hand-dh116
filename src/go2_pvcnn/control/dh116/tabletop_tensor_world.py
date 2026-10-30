@@ -354,6 +354,11 @@ class TensorWorld:
             movement=movement*((rate*self.dt)/norm).clamp_max(1.)
         clearance_floor=getattr(task,'diagnostic_palm_descent_clearance_m',
                                 getattr(task,'palm_descent_clearance_m',.0021))
+        if getattr(task,'pinch_force_hold',False):
+            # A 2.1mm convenience margin retracts a tabletop pinch even while
+            # the hand is clear of the table. Keep the audited 0.3mm margin;
+            # real collision response and below-margin restoration remain.
+            clearance_floor=.0003
         movement=constrain_palm_z_movement(movement,self.clearances,clearance_floor)
         self.palms = torch.where((allowed&live)[:,None,None],
             torch.maximum(torch.minimum(self.palms+movement,palm_upper),palm_lower),self.palms)

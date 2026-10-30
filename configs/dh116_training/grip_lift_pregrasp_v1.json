@@ -1,0 +1,326 @@
+{
+  "geometry_only": true,
+  "qualified": false,
+  "purpose": "Four safe initial poses for force-unrestricted lift diagnostics. Defaults reproduce expanded case35 in a40-environment layout. Transient penetration disqualifies the demonstrated motion as a clean teacher.",
+  "surface_model_contract": {
+    "version": "dh116_surface_fk_v2",
+    "active_per_hand": 6,
+    "passive_per_hand": 5,
+    "geometry": "source_USD_collision_convex_hulls_and_surface_samples",
+    "patch": "spread_inner_surface_samples_within15mm_reference_normal_cosine_gt0.5",
+    "collision_approximation": "sampled_points_and_convex_halfspaces;physical_validation_required",
+    "self_exclusions": "same_fixed_rigid_cluster_and_directly_adjacent_clusters_only",
+    "measured_contact": false,
+    "hardware_calibrated": false
+  },
+  "source_hashes": {
+    "left": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+    "right": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71"
+  },
+  "geometry_feasible_count": 4,
+  "candidates": [
+    {
+      "candidate_index": 0,
+      "active_angles": [
+        0.3193726835167458,
+        0.40475200586220655,
+        0.6909494733541114,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.12220454218384325,
+        0.022390464236383394,
+        0.6383750024060806,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224
+      ],
+      "wrist_pose_w": [
+        [
+          0.502582647011545,
+          0.1886170826989223,
+          0.4303409146039766,
+          -0.4281031279514497,
+          -0.34228968950203076,
+          0.7910709792392532,
+          0.27161035713727344
+        ],
+        [
+          0.5220666485014966,
+          -0.197185513004142,
+          0.4198624229102728,
+          0.2671057425388976,
+          0.7448753766951223,
+          -0.3645619266270435,
+          -0.4908256280493329
+        ]
+      ],
+      "geometry": {
+        "penetration": 0.015879606226858536,
+        "object_in_hand": 0.0,
+        "self": 0.0,
+        "table": 0.0,
+        "reach": 0.13143094597276855,
+        "minimum_clearance_m": 0.002347650141127755,
+        "patch_distance_m": [
+          [
+            0.00153256579667067,
+            0.0005703293388936269
+          ],
+          [
+            0.0009567500633503312,
+            0.0009931456957475854
+          ]
+        ]
+      },
+      "score": 0.0,
+      "qualified": false,
+      "placement_offsets_m": [
+        [
+          0.0005,
+          0.0,
+          0.0028
+        ],
+        [
+          0.0,
+          0.0,
+          0.0017
+        ]
+      ]
+    },
+    {
+      "candidate_index": 1,
+      "active_angles": [
+        0.3193726835167458,
+        0.40475200586220655,
+        0.6909494733541114,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.12220454218384325,
+        0.022390464236383394,
+        0.6383750024060806,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224
+      ],
+      "wrist_pose_w": [
+        [
+          0.5015826470115451,
+          0.1886170826989223,
+          0.4303409146039766,
+          -0.4281031279514497,
+          -0.34228968950203076,
+          0.7910709792392532,
+          0.27161035713727344
+        ],
+        [
+          0.5220666485014966,
+          -0.197185513004142,
+          0.4198624229102728,
+          0.2671057425388976,
+          0.7448753766951223,
+          -0.3645619266270435,
+          -0.4908256280493329
+        ]
+      ],
+      "geometry": {
+        "penetration": 0.05663627907501537,
+        "object_in_hand": 0.0,
+        "self": 0.0,
+        "table": 0.0,
+        "reach": 0.132760079900615,
+        "minimum_clearance_m": 0.002347650141127755,
+        "patch_distance_m": [
+          [
+            0.000562436241610813,
+            0.0015617250367990273
+          ],
+          [
+            0.0009567500633503312,
+            0.0009931456957475854
+          ]
+        ]
+      },
+      "score": 0.0,
+      "qualified": false,
+      "placement_offsets_m": [
+        [
+          -0.0005,
+          0.0,
+          0.0028
+        ],
+        [
+          0.0,
+          0.0,
+          0.0017
+        ]
+      ]
+    },
+    {
+      "candidate_index": 2,
+      "active_angles": [
+        0.3193726835167458,
+        0.40475200586220655,
+        0.6909494733541114,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.12220454218384325,
+        0.022390464236383394,
+        0.6383750024060806,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224
+      ],
+      "wrist_pose_w": [
+        [
+          0.502082647011545,
+          0.1886170826989223,
+          0.4298409146039766,
+          -0.4281031279514497,
+          -0.34228968950203076,
+          0.7910709792392532,
+          0.27161035713727344
+        ],
+        [
+          0.5225666485014966,
+          -0.197185513004142,
+          0.4193624229102728,
+          0.2671057425388976,
+          0.7448753766951223,
+          -0.3645619266270435,
+          -0.4908256280493329
+        ]
+      ],
+      "geometry": {
+        "penetration": 0.0919307836616326,
+        "object_in_hand": 0.008355173429605567,
+        "self": 0.0,
+        "table": 0.0,
+        "reach": 0.12669259792529958,
+        "minimum_clearance_m": 0.0018476501411277546,
+        "patch_distance_m": [
+          [
+            0.0009727028157761695,
+            0.001054378751028624
+          ],
+          [
+            0.001493742479139721,
+            0.0005110874923098049
+          ]
+        ]
+      },
+      "score": 0.0,
+      "qualified": false,
+      "placement_offsets_m": [
+        [
+          0.0,
+          0.0,
+          0.0023
+        ],
+        [
+          0.0005,
+          0.0,
+          0.0012
+        ]
+      ]
+    },
+    {
+      "candidate_index": 3,
+      "active_angles": [
+        0.3193726835167458,
+        0.40475200586220655,
+        0.6909494733541114,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.12220454218384325,
+        0.022390464236383394,
+        0.6383750024060806,
+        0.20000000298023224,
+        0.20000000298023224,
+        0.20000000298023224
+      ],
+      "wrist_pose_w": [
+        [
+          0.5015826470115451,
+          0.1886170826989223,
+          0.4293409146039766,
+          -0.4281031279514497,
+          -0.34228968950203076,
+          0.7910709792392532,
+          0.27161035713727344
+        ],
+        [
+          0.5215666485014967,
+          -0.197185513004142,
+          0.4198624229102728,
+          0.2671057425388976,
+          0.7448753766951223,
+          -0.3645619266270435,
+          -0.4908256280493329
+        ]
+      ],
+      "geometry": {
+        "penetration": 0.19540418167337398,
+        "object_in_hand": 0.18339045948805727,
+        "self": 0.0,
+        "table": 0.0,
+        "reach": 0.12505855180821593,
+        "minimum_clearance_m": 0.002279107402301195,
+        "patch_distance_m": [
+          [
+            0.0004348922857955323,
+            0.0015660445431359225
+          ],
+          [
+            0.0004634096120865588,
+            0.0014872038908093192
+          ]
+        ]
+      },
+      "score": 0.0,
+      "qualified": false,
+      "placement_offsets_m": [
+        [
+          -0.0005,
+          0.0,
+          0.0018
+        ],
+        [
+          -0.0005,
+          0.0,
+          0.0017
+        ]
+      ]
+    }
+  ],
+  "provenance": {
+    "source": "surface_pinch_hold_20261030_j/candidates.json",
+    "source_candidate_indices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "original_geometry_implementation_hashes": {
+      "src/go2_pvcnn/control/dh116/tabletop_surface_candidates.py": "151694a8409d061fe43934a3a7b13c98a6f447b4e53c1bb1e1bd5e1761c2c73a",
+      "src/go2_pvcnn/control/dh116/tabletop_surface_kinematics.py": "3e9e6bb32f03f73dca398211302d50beb1e83f85df7444b03cfc5b270d36609c",
+      "src/go2_pvcnn/control/dh116/tabletop_surface_objectives.py": "d7b46f0ec5e3c684b29914ed44e44b286d0e1e878d4152a041c0b7b5f4a20a39",
+      "src/go2_pvcnn/control/dh116/tabletop_surface_teacher.py": "790e19c258be8c001d227ebfeff9b270d8d2b507e80e39f0640ac5158a4bad06",
+      "src/go2_pvcnn/control/dh116/tabletop_surface_teacher_control.py": "75432cec5de7dc5185c9776ce98d75954337c6a8e3ab1d83ab21080a752bae7b",
+      "src/go2_pvcnn/control/dh116/tabletop_surface_support.py": "6a4709eb6fa9dd636c54372f279c572f3f8d77f2a12a17577c9093505281a2ef",
+      "src/go2_pvcnn/control/dh116/tabletop_surface_force_goals.py": "9ee7477ef3f5784e3f2cf0d47b0a66219e2e8da9f43a805d3c288e75f8c9951c",
+      "src/go2_pvcnn/control/dh116/tabletop_tensor_env.py": "ee1d483a42d44754a6caad9afe3770c856760059124e4afb14554c1252c600b5",
+      "src/go2_pvcnn/control/dh116/tabletop_tensor_task.py": "0be7a92d6c7bcda21bb0472075b7cb86262f5e1b99dfe712906bd54978445e38",
+      "src/go2_pvcnn/control/dh116/tabletop_tensor_world.py": "9e9525c2e575ef8dde88ff20117783be91288be9b4decb9b3269c1979c0725b8",
+      "src/go2_pvcnn/control/dh116/tabletop_free_wrist_grasp.py": "a14cd9c34f3574afbb3bee38af1b9fff80d34a47462b95b9edd2beee7da73dd1",
+      "src/go2_pvcnn/control/dh116/tabletop_policy_control.py": "a321cf6703e070e791b3f254d401ece1c369b19adc29bacc3cc8d40fb1bfd50e",
+      "scripts/generate_dh116_surface_candidates.py": "234c40f49385f3c64c11f2284861e3b330d1f7b594f533b32fef36a6ed621065",
+      "scripts/generate_dh116_phalanx_candidates.py": "c8c1477d29d543efd3cb834a5ff63768000960dd8c4fa020111b4a41190a5526",
+      "scripts/generate_dh116_initial_pinch_candidate.py": "91b1057b233ec12a2bdea36a488156029373fc1a99b4287270327735f327ec20",
+      "scripts/search_dh116_surface_teacher.py": "fc2484934afbc678881a642654b48f613ac026d04c0bb8b1eaca510a79589834"
+    }
+  }
+}

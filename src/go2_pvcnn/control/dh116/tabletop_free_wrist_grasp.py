@@ -80,6 +80,11 @@ def control(t,actions,live,dt):
     # Bounded follower correction is superimposed on the selected trajectory;
     # a finite error never becomes a wrist-motion admission test.
     for j,(_,master,ratio,_) in enumerate(MIMIC):
+        if getattr(t,'pinch_force_hold',False) and j<2:
+            # The original passive drives still track their affine targets.
+            # During explicit pinch/hold, do not undo the thumb/index force
+            # controller's master target to chase finite tracking deflection.
+            continue
         for h in range(2):
             k=6*h+ACTIVE.index(master);error=t.m['mimic_errors'][:,5*h+j]
             correction=(5.*error/ratio*dt).clamp(-ACTIVE_VELOCITY_LIMIT_RAD_S*dt,ACTIVE_VELOCITY_LIMIT_RAD_S*dt)

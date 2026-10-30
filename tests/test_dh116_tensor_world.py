@@ -98,6 +98,14 @@ def palm_world():
     return w,task
 
 
+@pytest.mark.parametrize('pinch,clearance,expected',[(True,.001,0.),(True,.0001,.0002),(False,.001,.0011)])
+def test_pinch_hold_avoids_clearance_retraction_but_keeps_actual_table_margin(pinch,clearance,expected):
+    w,task=palm_world();task.pinch_force_hold=pinch;task.palm_descent_clearance_m=.0021
+    w.clearances[:]=clearance
+    w.advance(task,torch.ones(3,dtype=torch.bool),torch.ones(3,dtype=torch.bool))
+    torch.testing.assert_close(w.palms[:,:,2],torch.full_like(w.palms[:,:,2],expected))
+
+
 def test_world_shared_z_uses_the_stricter_hands_measured_clearance():
     w,task=palm_world();task.palm_actions[:,:,2]=-1.
     w.clearances[:,0]=.0003
