@@ -428,3 +428,35 @@ def test_contact_seek_rejects_invalid_scalar_controls():
         kwargs.update(overrides)
         with pytest.raises(ValueError):
             module().contact_seek(*seek_packet(), **kwargs)
+
+
+def test_manifold_depth_uses_only_each_environments_valid_contacts():
+    separation = torch.tensor([float('nan'), .0003, -.0002, -.0005, float('nan')], dtype=torch.float64)
+    count = torch.tensor([2, 1, 0], dtype=torch.int32)
+    start = torch.tensor([1, 3, 0], dtype=torch.int32)
+    depth = module().manifold_depth(separation, count, start)
+    torch.testing.assert_close(depth, separation.new_tensor([.0002, .0005, 0.]))
+    assert torch.isnan(separation[0])
+
+
+def test_manifold_depth_positive_gap_is_not_penetration_and_empty_buffer_is_valid():
+    value = torch.tensor([.0002], dtype=torch.float32)
+    one, zero = torch.tensor([1]), torch.tensor([0])
+    assert torch.equal(module().manifold_depth(value, one, zero), value.new_zeros(1))
+    assert torch.equal(module().manifold_depth(value[:0], zero, zero), value.new_zeros(1))
+
+
+@pytest.mark.parametrize('fault', ['negative_count', 'negative_start', 'out_of_bounds',
+                                  'nonfinite_active', 'float_count', 'wrong_shape', 'device'])
+def test_manifold_depth_rejects_bad_contact_slices(fault):
+    value = torch.tensor([-.0002], dtype=torch.float64)
+    count, start = torch.tensor([1]), torch.tensor([0])
+    if fault == 'negative_count': count[0] = -1
+    elif fault == 'negative_start': start[0] = -1
+    elif fault == 'out_of_bounds': count[0] = 2
+    elif fault == 'nonfinite_active': value[0] = float('nan')
+    elif fault == 'float_count': count = count.float()
+    elif fault == 'wrong_shape': value = value[:, None]
+    else: start = start.to('meta')
+    with pytest.raises(ValueError):
+        module().manifold_depth(value, count, start)

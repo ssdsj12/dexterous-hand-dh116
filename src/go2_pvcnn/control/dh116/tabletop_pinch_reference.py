@@ -163,6 +163,35 @@ def gravity_cylinder_frame(center, axis):
     return result
 
 
+def manifold_depth(separation, count, start):
+    """Per-environment penetration from valid native contact buffer slices.
+
+    Positive separation is a gap. Empty slices return zero observed depth,
+    which is not proof that the complete collision geometry is penetration-free.
+    Padding is ignored, including nonfinite padding. Intended for the small
+    diagnostic batches: temporary storage is N times contact buffer capacity.
+    """
+    if (not isinstance(separation, torch.Tensor) or not separation.is_floating_point()
+            or separation.layout != torch.strided or separation.ndim != 1):
+        raise ValueError('separation must be a dense floating vector')
+    for value in (count, start):
+        if (not isinstance(value, torch.Tensor) or value.layout != torch.strided
+                or value.dtype not in (torch.int32, torch.int64) or value.ndim != 1
+                or value.numel() == 0 or value.device != separation.device):
+            raise ValueError('contact count/start must be nonempty integer vectors on the same device')
+    if (start.shape != count.shape or (count < 0).any() or (start < 0).any()
+            or (start + count > separation.numel()).any()):
+        raise ValueError('contact slices must lie within the separation buffer')
+    if separation.numel() == 0:
+        return separation.new_zeros(count.shape)
+    index = torch.arange(separation.numel(), device=separation.device)[None]
+    valid = (index >= start[:, None]) & (index < (start + count)[:, None])
+    selected = torch.where(valid, separation[None], float('inf'))
+    if (~torch.isfinite(separation)[None] & valid).any():
+        raise ValueError('active contact separation must be finite')
+    return (-selected.amin(-1)).clamp_min(0)
+
+
 def contact_seek(command, seed, digit_loads, digit_depth, dt, *, rate_rad_s=.02,
                  min_contact_n=.1, max_depth_m=.0008):
     """Seek contact independently at active coordinates [[1,2],[7,8]].
