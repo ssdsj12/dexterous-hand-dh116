@@ -1,0 +1,144 @@
+{
+  "geometry_only": true,
+  "qualified": false,
+  "purpose": "Both native hands matched to the right-hand distal pinch. Initial geometry verified; stable physical lift has not passed.",
+  "surface_model_contract": {
+    "version": "dh116_surface_fk_v2",
+    "active_per_hand": 6,
+    "passive_per_hand": 5,
+    "geometry": "source_USD_collision_convex_hulls_and_surface_samples",
+    "patch": "recorded_closest_surface_points_on_full_distal_thumb14_and_index23_hulls",
+    "collision_approximation": "sampled_points_and_convex_halfspaces;physical_validation_required",
+    "self_exclusions": "same_fixed_rigid_cluster_and_directly_adjacent_clusters_only",
+    "measured_contact": false,
+    "hardware_calibrated": false
+  },
+  "source_hashes": {
+    "left": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+    "right": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71"
+  },
+  "geometry_feasible_count": 1,
+  "candidates": [
+    {
+      "candidate_index": 0,
+      "active_angles": [
+        0.27403307122568155,
+        0.477642089915335,
+        0.6414571412399475,
+        0.32183481192820346,
+        0.2427768844178773,
+        0.9932010786835028,
+        0.4800281828083021,
+        0.012265000836081905,
+        0.6571602014052289,
+        0.2752428778245923,
+        0.5636945337259203,
+        0.25105323794772827
+      ],
+      "wrist_pose_w": [
+        [
+          0.5293408518521562,
+          0.213295747133373,
+          0.40986203989492637,
+          -0.5276195544547188,
+          -0.1699800271984477,
+          0.803722179392369,
+          0.21622917116661156
+        ],
+        [
+          0.5269872337300899,
+          -0.21766868510932458,
+          0.41049384592923605,
+          0.29216880650690324,
+          0.5926784568132161,
+          -0.5627252083246365,
+          -0.4966990791715153
+        ]
+      ],
+      "geometry": {
+        "penetration": 0.0,
+        "object_in_hand": 0.0,
+        "self": 0.0,
+        "table": 0.0,
+        "reach": 0.011658229633614172,
+        "minimum_clearance_m": 0.000458995641162363,
+        "patch_distance_m": [
+          [
+            9.326583706891338E-05,
+            8.876299163358575E-05
+          ],
+          [
+            5.127143184595166E-05,
+            1.2990846944727075E-05
+          ]
+        ]
+      },
+      "score": 16.079517394834593,
+      "qualified": false,
+      "reference_match_mm": [
+        1.9813433918280021,
+        1.9852609085213608
+      ],
+      "independent_geometry_verified": true,
+      "interhand_aabb_separated": true
+    }
+  ],
+  "reference": {
+    "recording": "runs/unrestricted_grip_lift_20261030_c",
+    "case": 35,
+    "frame": 4799,
+    "right_patch_distance_mm": [
+      [
+        0.03875894279055438
+      ],
+      [
+        0.6429312283054399
+      ]
+    ],
+    "object_frame_alignment": "gravity_aligned_roll_free_target_frame @ inverse(source_frame) @ recorded_link",
+    "target_points_w": [
+      [
+        [
+          [
+            0.43621235676848713,
+            -0.20793527117393576,
+            0.3029592678190325
+          ],
+          [
+            0.43601174882492916,
+            -0.20323520704241008,
+            0.302637617210694
+          ],
+          [
+            0.43701138117474597,
+            -0.20425989389361945,
+            0.30402393589950527
+          ]
+        ],
+        [
+          [
+            0.42233217960211594,
+            -0.21137062680073068,
+            0.30515992615591825
+          ],
+          [
+            0.4224895058931414,
+            -0.20472382385187493,
+            0.30347371745693286
+          ],
+          [
+            0.42179081092374643,
+            -0.2148355103697592,
+            0.304352749154953
+          ]
+        ]
+      ]
+    ],
+    "force_target": null
+  },
+  "producer_lf_sha256": {
+    "scripts/generate_dh116_right_pinch_reference.py": "c1bb7a270ee9a307725b9a290a07e1aed5c1ec5e141d3ef81ac5d9dc01852b8b",
+    "src/go2_pvcnn/control/dh116/tabletop_pinch_reference.py": "40e5a4c40f938bfb75d5728dc2ff3a4b6c7605aaa986af350cdcf2ad47a0eae6"
+  },
+  "independent_verifier_sha256": "9fb45cc769d59e5656013e86ee478b77ec5aebe9ea0fda8705b34a418c627014"
+}
