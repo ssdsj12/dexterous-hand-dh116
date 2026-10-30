@@ -61,18 +61,32 @@ def verify_drive_readback(stiffness, damping, effort, parameters=None):
         raise ValueError('simulator effort limit differs from selected profile')
 
 
+def _wrist_joint_ids(names):
+    """Accept no support, a complete XYZ support, or complete XYZ + roll/pitch/yaw."""
+    from .tabletop_palm_mount import JOINT_NAMES, ANGULAR_JOINT_NAMES
+    linear=[names.index(n) for n in JOINT_NAMES if n in names]
+    angular=[names.index(n) for n in ANGULAR_JOINT_NAMES if n in names]
+    if (len(linear) not in (0,3) or len(angular) not in (0,3)
+            or (angular and not linear) or len(names)!=len(set(names))):
+        raise ValueError('complete wrist carriage and optional complete angular joint set required')
+    return linear,angular
+
+
 def _verify_velocity_readback(velocity, names, instances, passive_limit):
     from .linear_coupling import ACTIVE, JOINTS
     from .tabletop_velocity_limits import ACTIVE_VELOCITY_LIMIT_RAD_S, passive_velocity_limit
     passive_limit = passive_velocity_limit('adaptive_grasp', passive_limit)
-    from .tabletop_palm_mount import JOINT_NAMES,CONTRACT as WRIST
-    valid=(set(names)==set(JOINTS) or set(names)==set(JOINTS)|set(JOINT_NAMES))
+    from .tabletop_palm_mount import JOINT_NAMES,CONTRACT as WRIST,ANGULAR_JOINT_NAMES,ROTATION_CONTRACT
+    _wrist_joint_ids(names)
+    valid=set(names) in (set(JOINTS),set(JOINTS)|set(JOINT_NAMES),
+                        set(JOINTS)|set(JOINT_NAMES)|set(ANGULAR_JOINT_NAMES))
     if len(names)!=len(set(names)) or not valid:
         raise ValueError('velocity readback requires eleven DH116 joints and optional complete wrist carriage')
     if (instances < 1 or velocity.shape != (instances, len(names))
             or not np.isfinite(velocity).all()):
         raise ValueError('finite all-instance N x 11 velocity limit readback required')
     expected = np.asarray([WRIST['velocity_limit_m_s'] if name in JOINT_NAMES else
+                           ROTATION_CONTRACT['velocity_limit_rad_s'] if name in ANGULAR_JOINT_NAMES else
                            (ACTIVE_VELOCITY_LIMIT_RAD_S if name in ACTIVE else passive_limit) for name in names])
     if not np.allclose(velocity, expected[None, :], atol=1e-6, rtol=0):
         raise ValueError('simulator velocity limits differ from selected active/passive limits')
@@ -80,41 +94,62 @@ def _verify_velocity_readback(velocity, names, instances, passive_limit):
 
 def physics_load_readback(hands, parameters=None, *, passive_velocity_limit_rad_s=None):
     """Actual PhysX views; compact samples plus all-instance drive validation."""
-    from .linear_coupling import ACTIVE
+    from .linear_coupling import ACTIVE, JOINTS
+    from .tabletop_palm_mount import JOINT_NAMES,CONTRACT as WRIST,ROTATION_CONTRACT
     result=[]
     for hand in hands:
+        wrist_ids,angular_ids=_wrist_joint_ids(hand.joint_names)
         view=hand.root_physx_view
         read=lambda method: getattr(view,method)().detach().cpu().numpy()
         stiffness,damping,effort=[read(method) for method in
             ('get_dof_stiffnesses','get_dof_dampings','get_dof_max_forces')]
         velocity=read('get_dof_max_velocities')
+        limits=read('get_dof_limits')
         if passive_velocity_limit_rad_s is not None:
             _verify_velocity_readback(velocity,hand.joint_names,stiffness.shape[0],
                                       passive_velocity_limit_rad_s)
         ids=[hand.joint_names.index(n) for n in ACTIVE]
         verify_drive_readback(stiffness[:,ids],damping[:,ids],effort[:,ids],parameters)
-        from .tabletop_palm_mount import JOINT_NAMES,CONTRACT as WRIST
-        if set(JOINT_NAMES).issubset(hand.joint_names):
-            wrist_ids=[hand.joint_names.index(n) for n in JOINT_NAMES]
-            for values,expected in [(stiffness,WRIST['stiffness_n_m']),(damping,WRIST['damping_n_s_m']),(effort,WRIST['effort_limit_n'])]:
-                if not np.allclose(values[:,wrist_ids],expected,rtol=0,atol=1e-5):
-                    raise ValueError('wrist carriage drive readback mismatch')
+        for support_ids,contract,keys in (
+                (wrist_ids,WRIST,('stiffness_n_m','damping_n_s_m','effort_limit_n','velocity_limit_m_s')),
+                (angular_ids,ROTATION_CONTRACT,('stiffness_nm_rad','damping_nms_rad','effort_limit_nm','velocity_limit_rad_s'))):
+            if not support_ids:continue
+            for values,key in zip((stiffness,damping,effort,velocity),keys):
+                if (values.shape!=(stiffness.shape[0],len(hand.joint_names))
+                        or not np.allclose(values[:,support_ids],contract[key],rtol=0,atol=1e-5)):
+                    raise ValueError('wrist carriage drive/velocity readback mismatch: '+key)
+        if angular_ids:
+            angle_limit=ROTATION_CONTRACT['angle_limit_rad']
+            if (limits.shape!=(stiffness.shape[0],len(hand.joint_names),2)
+                    or not np.allclose(limits[:,angular_ids],[-angle_limit,angle_limit],rtol=0,atol=1e-6)):
+                raise ValueError('angular wrist limits must read back in radians')
         mass,inertia,com=[read(method) for method in ('get_masses','get_inertias','get_coms')]
         result.append(dict(instances=int(stiffness.shape[0]),joint_names=hand.joint_names,
             body_names=hand.body_names,stiffness_nm_per_rad=stiffness[:1].tolist(),
             damping_nms_per_rad=damping[:1].tolist(),effort_limit_nm=effort[:1].tolist(),
-            joint_limits_rad=read('get_dof_limits')[:1].tolist(),
+            joint_limits_rad=limits[:1].tolist(),
             velocity_limits_rad_s=velocity[:1].tolist(),
             sample_body_masses_kg=mass[:1].tolist(),sample_body_inertias_kg_m2=inertia[:1].tolist(),
             sample_body_com_poses=com[:1].tolist(),total_mass_kg_range=[float(mass.sum(axis=1).min()),float(mass.sum(axis=1).max())],
             all_instance_drive_limits_verified=True))
-        if set(JOINT_NAMES).issubset(hand.joint_names):
+        if wrist_ids:
             result[-1]['wrist_carriage']=WRIST
             result[-1]['joint_units']={n:('linear_m_N' if n in JOINT_NAMES else 'angular_rad_Nm') for n in hand.joint_names}
+            result[-1]['all_instance_wrist_velocity_limits_verified']=True
+        if angular_ids:
+            result[-1]['wrist_rotation']=ROTATION_CONTRACT
+            result[-1]['all_instance_wrist_rotation_limits_verified']=True
         if passive_velocity_limit_rad_s is not None:
             result[-1]['all_instance_velocity_limits_verified']=True
-    return dict(hands=result,hardware_calibration_complete=False,
+    report=dict(hands=result,hardware_calibration_complete=False,
         inertial_model='unchanged manufacturer CAD; finger32 distribution anomaly unresolved',
         coupling_model='source URDF affine approximation; not nonlinear MJCF linkage',
         torque_diagnostic='implicit PD estimate, not measured solver drive torque',
         contact_diagnostic='object-filtered normal forces on pads, not total contact wrench')
+    if any('wrist_rotation' in hand for hand in result):
+        # Policy commands include force goals; those goals are not mechanical DOF.
+        external=sum(len(_wrist_joint_ids(hand['joint_names'])[0])+len(_wrist_joint_ids(hand['joint_names'])[1]) for hand in result)
+        report['dof_accounting']=dict(finger_active=len(ACTIVE)*len(result),
+            finger_passive=(len(JOINTS)-len(ACTIVE))*len(result),external_wrist_drives=external,
+            policy_command_size=(len(ACTIVE)+1)*len(result)+external,force_command_channels=len(result))
+    return report

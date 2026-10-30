@@ -47,6 +47,9 @@ def enable(task):
 
 
 def control(t, actions, live, dt):
+    if getattr(t,'free_wrist_grasp',False):
+        from .tabletop_free_wrist_grasp import control as free_control
+        return free_control(t,actions,live,dt)
     if hasattr(t,'manual_joint_contact'):
         return t.manual_joint_contact.control(actions,live,dt)
     continuous = getattr(t,'continuous_motion',False)

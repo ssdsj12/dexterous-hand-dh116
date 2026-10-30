@@ -29,6 +29,8 @@ def finite_physics(world,m):
         finite &= (world.object_weight_n>0).reshape(world.n,-1).all(1)
     if hasattr(world,'adapter_fault_bits'):
         finite &= world.adapter_fault_bits==0
+    if 'wrist_pose' in m:
+        finite &= (m['wrist_pose'][...,3:].abs().amax(-1)>0.).reshape(world.n,-1).all(1)
     return finite
 
 VELOCITY_GUARD_CONTRACT = dict(version='finite_velocity_warning_v2',

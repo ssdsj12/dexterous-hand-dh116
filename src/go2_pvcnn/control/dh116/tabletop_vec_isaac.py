@@ -105,14 +105,19 @@ def spawn_scene(sim, args, original_layout, sources, prefix, origin, *, external
                     velocity_limit_sim=passive_velocity_limit(args.control_mode,
                         getattr(args, 'passive_velocity_limit_rad_s', 3.)))})
         if getattr(args,'palm_transport','fixed_pose')=='driven_carriage':
-            from .tabletop_palm_mount import JOINT_NAMES,CONTRACT as WRIST
+            from .tabletop_palm_mount import JOINT_NAMES,CONTRACT as WRIST,ANGULAR_JOINT_NAMES,ROTATION_CONTRACT
             cfg.actuators['wrist']=ImplicitActuatorCfg(joint_names_expr=list(JOINT_NAMES),
                 stiffness=WRIST['stiffness_n_m'],damping=WRIST['damping_n_s_m'],
                 effort_limit_sim=WRIST['effort_limit_n'],velocity_limit_sim=WRIST['velocity_limit_m_s'])
+            if getattr(args,'free_wrist_grasp',False):
+                cfg.actuators['wrist_rotation']=ImplicitActuatorCfg(joint_names_expr=list(ANGULAR_JOINT_NAMES),
+                    stiffness=ROTATION_CONTRACT['stiffness_nm_rad'],damping=ROTATION_CONTRACT['damping_nms_rad'],
+                    effort_limit_sim=ROTATION_CONTRACT['effort_limit_nm'],
+                    velocity_limit_sim=ROTATION_CONTRACT['velocity_limit_rad_s'])
         hands.append(Articulation(cfg))
         if getattr(args,'palm_transport','fixed_pose')=='driven_carriage':
             from .tabletop_palm_mount import author_mount
-            author_mount(sim.stage,f'{prefix}/{side}Hand')
+            author_mount(sim.stage,f'{prefix}/{side}Hand',rotation=bool(getattr(args,'free_wrist_grasp',False)))
         if hand_material is not None:
             paths,binding_report=bind_hand_materials(sim.stage,f'{prefix}/{side}Hand',hand_material,
                                                     hand_profile['hand_contact_material'],pad_material)

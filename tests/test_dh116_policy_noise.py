@@ -10,7 +10,7 @@ def test_entropy_only_updates_cannot_expand_noise_beyond_action_scale():
     for group in alg.optimizer.param_groups: group['lr']=.1
     for _ in range(12):
         alg.optimizer.zero_grad()
-        alg.policy.update_distribution(torch.zeros(4,150))
+        alg.policy.act(observations(torch.zeros(4,150)))
         (-alg.policy.entropy.mean()).backward()
         alg.optimizer.step()
         assert alg.policy.log_std.exp().max()<=1.+1e-6

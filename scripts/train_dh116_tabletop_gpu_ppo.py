@@ -147,6 +147,8 @@ parser.add_argument('--free-grasp-lift',action='store_true',
                     help='continuous policy grasp and lift, without stages, admission gates or pose latching')
 parser.add_argument('--continuous-motion',action='store_true',
                     help='finite mimic errors are diagnostic; isolate and validate recoverable invalid-state resets')
+parser.add_argument('--free-wrist-grasp',action='store_true',
+                    help='26D freely integrated fingers/XYZ/orientation/normal-force policy; six physical wrist drives')
 parser.add_argument('--manual-fast-force',action='store_true',help='manual-only bounded micro-closing contact acquisition and faster force adjustment')
 parser.add_argument('--manual-run',action='store_true',help='start the explicitly requested manual demonstration running')
 parser.add_argument('--manual-placement',type=Path,help='manual-only initial palm translation settings JSON')
@@ -157,6 +159,10 @@ parser.add_argument('--max-iterations', type=int, default=None,
                     help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+if args.free_wrist_grasp and (not args.continuous_motion or not args.free_grasp_lift
+        or args.manual_control or args.policy_lift_hold or args.actor_initialization
+        or args.stable_lift_reward or args.grasp_acquisition_shaping):
+    parser.error('--free-wrist-grasp requires continuous free-grasp policy and excludes manual/latched/legacy reward or actor initialization modes')
 if args.continuous_motion and (not args.tensor_pipeline or args.grasp_controller!='policy'
         or not args.training_episode_resets or args.palm_transport!='driven_carriage'):
     parser.error('--continuous-motion requires policy tensor pipeline, driven_carriage and training-episode-resets')
@@ -350,7 +356,8 @@ write_json(args.output/'monitor.json',dict(status='initializing',num_envs=args.n
 app = None
 report = dict(passed=False, grasp_qualified=False, num_envs=args.num_envs,
               status='initializing', rigid_proxy=True, pipeline_scope='close_to_lift',
-              continuous_motion=args.continuous_motion)
+              continuous_motion=args.continuous_motion,free_wrist_grasp=args.free_wrist_grasp)
+if args.free_wrist_grasp:report['tensor_setup_resolved']=False
 vec = None
 from go2_pvcnn.control.dh116.tabletop_run_status import finalize_run
 try:

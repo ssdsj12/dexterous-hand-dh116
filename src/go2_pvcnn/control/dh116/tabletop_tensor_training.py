@@ -15,6 +15,15 @@ from .tabletop_policy_noise import CONTRACT as POLICY_NOISE_CONTRACT, install_no
 VERSION = 'dh116-rsl-tensor-ppo-v1'
 
 
+def publish_resolved_tensor_configuration(output,contract):
+    path=Path(output)/'configuration.json'
+    if not path.exists():return
+    report=json.loads(path.read_text())
+    if not isinstance(report,dict):raise ValueError('configuration report must be an object')
+    report.update(contract=copy.deepcopy(contract),tensor_setup_resolved=True)
+    write_json(path,report)
+
+
 def apply_continuous_motion_contract(contract, enabled):
     """Share the continuous-mode identity and reset semantics with startup."""
     if not enabled:
@@ -454,6 +463,16 @@ def validate_world_adapter(legacy, world, task):
     tensor_only={}
     for key,value in actual.items():
         if key=='joint_failure': continue
+        if getattr(world,'free_wrist_grasp',False) and key in ('wrist_pose','wrist_velocity','wrist_joint_angles'):
+            shape={'wrist_pose':(world.n,2,7),'wrist_velocity':(world.n,2,6),
+                   'wrist_joint_angles':(world.n,2,3)}[key]
+            if value.shape!=shape or not bool(torch.isfinite(value).all()):
+                raise ValueError('invalid free wrist startup measurement: '+key)
+            if key=='wrist_pose' and not bool((value[:,:,3:].norm(dim=-1)>0).all()):
+                raise ValueError('invalid free wrist startup quaternion')
+            tensor_only[key]=dict(shape=list(value.shape),dtype=str(value.dtype),finite=True)
+            errors[key]=0.
+            continue
         if getattr(world,'continuous_motion',False) and key in ('adapter_fault_bits','transport_warning'):
             # These diagnostics have no host equivalent. Validate their own
             # startup schema instead of treating them as unchecked telemetry.
@@ -511,8 +530,9 @@ def observations(value):
     return TensorDict({'policy':value},batch_size=[len(value)],device=value.device)
 
 
-def make_algorithm(obs, steps=24):
-    policy = ActorCritic(obs,{'policy':['policy'],'critic':['policy']},20,
+def make_algorithm(obs, steps=24,action_size=20):
+    if action_size not in (20,26):raise ValueError('supported policy action sizes are20 or26')
+    policy = ActorCritic(obs,{'policy':['policy'],'critic':['policy']},action_size,
         actor_hidden_dims=[128,128],critic_hidden_dims=[128,128],activation='tanh',
         init_noise_std=math.exp(-1.2),noise_std_type='log').to(obs.device)
     # Preserve bounded policy mean and initially gentle requested load. Gaussian
@@ -522,14 +542,14 @@ def make_algorithm(obs, steps=24):
         for layer in linear:
             torch.nn.init.orthogonal_(layer.weight,math.sqrt(2)); torch.nn.init.zeros_(layer.bias)
         torch.nn.init.orthogonal_(linear[-1].weight,.01 if network is policy.actor else 1.)
-    with torch.no_grad(): policy.actor[-1].bias[-2:] = math.atanh(-.95)
+    with torch.no_grad(): policy.actor[-1].bias[-2:] = math.atanh(-.4 if action_size==26 else -.95)
     policy.actor.append(torch.nn.Tanh())
     minibatches = min(8,len(obs))
     algorithm = PPO(policy,num_learning_epochs=5,num_mini_batches=minibatches,
         learning_rate=3e-4,gamma=.995,lam=.95,clip_param=.2,entropy_coef=.005,
         value_loss_coef=.5,max_grad_norm=.5,schedule='adaptive',desired_kl=.02,
         device=str(obs.device))
-    algorithm.init_storage('rl',len(obs),steps,obs,[20])
+    algorithm.init_storage('rl',len(obs),steps,obs,[action_size])
     install_noise_projection(algorithm)
     return algorithm
 
@@ -628,7 +648,7 @@ def run_tensor_training(world, template, args, contract):
                     force_reward_start=getattr(args,'force_reward_start','episode_start'),
                     skip_hold=getattr(args,'skip_hold',False),
                     close_downward_penalty=getattr(args,'close_downward_penalty',False),
-                    grasp_shaping=getattr(args,'grasp_shaping',False),
+                    grasp_shaping=getattr(args,'grasp_shaping',False) and not getattr(args,'free_wrist_grasp',False),
                     palm_exploration_axis=getattr(args,'palm_exploration_axis','xyz'))
     probe_contact_z=(getattr(args,'control_probe_mode',None)=='grasp_teacher_contact_z_sweep'
                      and getattr(args,'control_probe_checkpoint',None))
@@ -656,6 +676,9 @@ def run_tensor_training(world, template, args, contract):
     if getattr(args,'free_grasp_lift',False):
         from .tabletop_free_grasp_lift import enable
         enable(task)
+    if getattr(args,'free_wrist_grasp',False):
+        from .tabletop_free_wrist_grasp import enable
+        enable(task,device_world)
     if getattr(args,'contact_effort_feedback',False):
         from .tabletop_contact_effort import ContactEffortFeedback
         task.contact_effort=ContactEffortFeedback(args.num_envs,args.device,effort_limit_nm=task.parameters.effort_limit_nm)
@@ -825,10 +848,15 @@ def run_tensor_training(world, template, args, contract):
         apply_contract(contract,task)
 
     apply_continuous_motion_contract(contract,env.continuous_motion)
+    if getattr(task,'free_wrist_grasp',False):
+        from .tabletop_free_wrist_grasp import apply_contract
+        apply_contract(contract,task)
     # The caller's report holds this original dict. Publish the fully resolved
     # tensor contract there as well, including manual/probe/error exits.
     report_contract.clear()
     report_contract.update(contract)
+    if getattr(task,'free_wrist_grasp',False):
+        publish_resolved_tensor_configuration(args.output,contract)
 
     if getattr(args,'manual_control',False):
         from .tabletop_manual_control import run_manual_control
@@ -838,7 +866,7 @@ def run_tensor_training(world, template, args, contract):
         from .tabletop_success_teacher import run_success_teacher
         return run_success_teacher(env,args,contract,obs)
 
-    algorithm=make_algorithm(obs,steps)
+    algorithm=make_algorithm(obs,steps,action_size=getattr(task,'action_size',20))
     policy_recovery=None
     if env.continuous_motion:
         from .tabletop_policy_recovery import PolicyActionRecovery
@@ -1169,7 +1197,8 @@ def run_tensor_training(world, template, args, contract):
         row['close_completion_telemetry']=env.close_completion_events.diagnostics()
     write_json(args.output/'monitor.json',row)
     result=dict(status='training_budget_complete',tensor_training=VERSION,iteration=iteration,
-                timesteps=timesteps,successes=int(env.successes.sum()),grasp_qualified=False)
+                timesteps=timesteps,successes=int(env.successes.sum()),grasp_qualified=False,
+                tensor_setup_resolved=True)
     if policy_recovery is not None:
         result['policy_action_recovery']=dict(policy_recovery.counts)
     return result

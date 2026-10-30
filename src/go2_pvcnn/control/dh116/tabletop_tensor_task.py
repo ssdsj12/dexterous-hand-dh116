@@ -247,7 +247,9 @@ class TensorTask:
 
     def begin_step(self, actions):
         actions=torch.as_tensor(actions,device=self.device,dtype=torch.float64)
-        if actions.shape!=(self.n,20): raise ValueError('expected N x 20 actions')
+        size=getattr(self,'action_size',20)
+        if actions.shape!=(self.n,size): raise ValueError(f'expected N x {size} actions')
+        if getattr(self,'free_wrist_grasp',False):self.previous_actions.copy_(self.actions)
         if self.shaping is not None and not getattr(self,'manual_lightweight',False):self.shaping.begin(~self.done)
         self.reward.zero_(); self.used.zero_(); self.nonfinite.zero_()
         for value in self.terms.values(): value.zero_()
@@ -428,6 +430,9 @@ class TensorTask:
         if getattr(self,'force_region',False):
             from .tabletop_policy_force_region import observe
             parts+=(observe(self),)
+        if getattr(self,'free_wrist_grasp',False):
+            from .tabletop_free_wrist_grasp import observe
+            parts+=(observe(self),)
         return torch.cat(parts,dim=1).float()
 
     def consume(self, measurement, live, dt, *, vertical_force_n=None, lift_vertical_force_n=None,
@@ -497,6 +502,9 @@ class TensorTask:
         finite &= torch.isclose(new['object_link_loads'].sum(dim=2),new['hand_object_loads'],rtol=1e-6,atol=1e-8).all(dim=1)
         expected=torch.stack([new['object_link_loads'][...,self.link_groups==g].sum(dim=2) for g in range(6)],dim=2)
         finite &= torch.isclose(expected,new['grouped_object_loads'],rtol=1e-6,atol=1e-9).flatten(1).all(dim=1)
+        if getattr(self,'free_wrist_grasp',False):
+            finite &= new['object_quat'].abs().amax(1)>0.
+            finite &= (new['wrist_pose'][:,:,3:].abs().amax(2)>0.).all(1)
         before=self.m
         if getattr(self,'continuous_motion',False):
             self.m={k:torch.where(finite.reshape((self.n,)+(1,)*(v.ndim-1)),v,before[k])
@@ -710,6 +718,9 @@ class TensorTask:
                 torch.where(hand_mask,loads,0.),
                 hand_mask&m['contact_valid']&m['contact_all_below_centerline'],force_eligible,dt,
                 phase_free=getattr(self,'free_grasp_lift',False)))
+        if getattr(self,'free_wrist_grasp',False):
+            from .tabletop_free_wrist_grasp import add_feedback
+            add_feedback(self,pieces,valid,dt)
         for name,value in pieces.items():
             self.terms[name][valid]+=value[valid]; self.reward[valid]+=value[valid]
         self.used[live]+=dt

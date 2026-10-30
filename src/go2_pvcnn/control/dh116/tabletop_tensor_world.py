@@ -118,6 +118,7 @@ class TensorWorld:
             raise ValueError('tensor training requires rigid full-hand contact')
         self.w = world
         self.continuous_motion=bool(getattr(world.args,'continuous_motion',False))
+        self.free_wrist_grasp=bool(getattr(world.args,'free_wrist_grasp',False))
         self.n, self.dt, self.device = world.n, world.dt, world.device
         self.decimation = world.args.physics_hz//60
         self._physics_steps = 0
@@ -148,6 +149,7 @@ class TensorWorld:
         self.gains = self.t(world.gains)
         self.root_targets = self.t(world.root_targets)
         self.commands = self.t(world.commands)
+        self.wrist_angles=torch.zeros((self.n,2,3),device=self.device,dtype=torch.float64)
         self.shapes = [(h,b,self.t(p)) for h,b,p in world.shapes]
         self.shape_hands = [[i for i,(h,_,_) in enumerate(self.shapes) if h==hand] for hand in range(2)]
         groups = link_groups(world.sensor_links)
@@ -312,6 +314,12 @@ class TensorWorld:
         if continuous:result['adapter_fault_bits']=self.adapter_fault_bits
         if continuous and hasattr(self,'transport_warning_mask'):
             result['transport_warning']=self.transport_warning_mask
+        if getattr(self,'free_wrist_grasp',False):
+            result['wrist_pose']=self.roots
+            result['wrist_velocity']=torch.stack([torch.cat((h.data.body_lin_vel_w[:,m.base_id],
+                h.data.body_ang_vel_w[:,m.base_id]),-1) for h,m in zip(self.hands,self.w.mounts)],1).double()
+            result['wrist_joint_angles']=torch.stack([h.data.joint_pos[:,m.angular_ids]
+                for h,m in zip(self.hands,self.w.mounts)],1).double()
         return result
 
     def advance(self, task, allowed, live):
@@ -324,6 +332,8 @@ class TensorWorld:
             self.palms=torch.where(paused[:,None,None],task.m['adaptive_palm_offset'],self.palms)
         if policy_control:
             from .tabletop_policy_control import CONTRACT as POLICY
+            if getattr(task,'free_wrist_grasp',False):
+                from .tabletop_free_wrist_grasp import CONTRACT as POLICY
             target = task.palm_targets
             if hasattr(task,'manual_pinch_home'):
                 from .tabletop_manual_pinch_geometry import measured_target
@@ -404,6 +414,10 @@ class TensorWorld:
         pose = self.root_seed.clone()
         pose[:,:,:3] += self.palms
         pose[:,:,2] += task.offset[:,None]
+        if getattr(task,'free_wrist_grasp',False):
+            from .tabletop_free_wrist_grasp import compose_rotation
+            self.wrist_angles=torch.where((allowed&live)[:,None,None],task.rotation_targets,self.wrist_angles)
+            pose[:,:,3:]=compose_rotation(self.root_seed[:,:,3:],self.wrist_angles)
         self.root_targets = torch.where(live[:,None,None],pose,self.root_targets)
         self.commands = torch.where(live[:,None,None],task.command.reshape(self.n,2,6),self.commands)
         if hasattr(task,'contact_effort'):
@@ -421,7 +435,9 @@ class TensorWorld:
             if getattr(self.w,'mounts',None) is None:
                 self.write_root_pose(hi,self.root_targets[:,hi])
             else:
-                self.w.mounts[hi].move(self.root_targets[:,hi])
+                if getattr(task,'free_wrist_grasp',False):
+                    self.w.mounts[hi].move(self.root_targets[:,hi],angles=self.wrist_angles[:,hi])
+                else:self.w.mounts[hi].move(self.root_targets[:,hi])
             hand.set_joint_position_target(self.commands[:,hi].float(),joint_ids=self.w.ids[hi])
             gains = self.gains[:,hi,None].expand(-1,6).float()
             hand.write_joint_stiffness_to_sim(gains,joint_ids=self.w.ids[hi])
@@ -450,6 +466,7 @@ class TensorWorld:
         if ids.numel()==0: return self.measure()
         if hasattr(self,'adapter_fault_bits'):self.adapter_fault_bits[ids]=0
         if hasattr(self,'transport_warning_mask'):self.transport_warning_mask[ids]=False
+        if hasattr(self,'wrist_angles'):self.wrist_angles[ids]=0.
         for hi, hand in enumerate(self.hands):
             hand.reset(ids)
             q, qd = self.seed_q[hi][ids], self.seed_qd[hi][ids]
