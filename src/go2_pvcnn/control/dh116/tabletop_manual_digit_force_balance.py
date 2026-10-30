@@ -58,18 +58,32 @@ def adjust(t,target,requested,live,dt):
     change=torch.where(~t.manual_digit_contact_acquired&(error>0),
                        torch.full_like(change,CONTRACT['rate_rad_s']*dt),change)
     change=torch.where(error.abs()<=CONTRACT['deadband_n'],0.,change)
-    mimic=t.m['mimic_errors'].reshape(t.n,2,5)[:,:,:2].abs()
-    closing=((CONTRACT['mimic_closing_stop_rad']-mimic)/
-             (CONTRACT['mimic_closing_stop_rad']-CONTRACT['mimic_closing_taper_start_rad'])).clamp(0.,1.)
-    change=torch.where(change>0,change*closing,change)
-    # Integrate release in the same closure coordinates as force correction.
-    # A thresholded q_master+error/ratio override caused an open/close relay.
+    errors=t.m['mimic_errors'].reshape(t.n,2,5)[:,:,:2]
+    mimic=errors.abs()
     ratios=change.new_tensor([.88178789,.9206])
-    master_direction=torch.stack((t.manual_digit_directions[:,:,0,1],t.manual_digit_directions[:,:,1,2]),-1).abs()
-    release=-CONTRACT['mimic_release_gain_s_inv']*(mimic-CONTRACT['mimic_release_start_rad']).clamp_min(0.)*dt/(ratios*master_direction).clamp_min(1e-6)
-    change=torch.where(mimic>CONTRACT['mimic_release_start_rad'],torch.minimum(change,release),change)
+    master_axis=torch.stack((t.manual_digit_directions[:,:,0,1],t.manual_digit_directions[:,:,1,2]),-1)
+    if getattr(t,'continuous_motion',False):
+        # Correct signed follower lag in the existing per-digit coordinates.
+        # Keep force allocation/acquisition, authored pose axes and final rate/
+        # budget clamps; do not switch to an absolute q_master target at .012.
+        usable=master_axis.abs()>1e-6
+        scale=torch.where(usable,ratios*master_axis,1.)
+        lag=errors.sign()*(mimic-CONTRACT['mimic_release_start_rad']).clamp_min(0.)
+        correction=CONTRACT['mimic_release_gain_s_inv']*lag*dt/scale
+        correction=torch.where(usable,correction,0.)
+        change=change+correction
+        limited=correction!=0
+    else:
+        closing=((CONTRACT['mimic_closing_stop_rad']-mimic)/
+                 (CONTRACT['mimic_closing_stop_rad']-CONTRACT['mimic_closing_taper_start_rad'])).clamp(0.,1.)
+        change=torch.where(change>0,change*closing,change)
+        # Legacy release remains in per-digit closure coordinates.
+        master_direction=master_axis.abs()
+        release=-CONTRACT['mimic_release_gain_s_inv']*(mimic-CONTRACT['mimic_release_start_rad']).clamp_min(0.)*dt/(ratios*master_direction).clamp_min(1e-6)
+        change=torch.where(mimic>CONTRACT['mimic_release_start_rad'],torch.minimum(change,release),change)
+        limited=closing<1.
     change=change.clamp(-CONTRACT['rate_rad_s']*dt,CONTRACT['rate_rad_s']*dt)
-    t.manual_mimic_limited[live]=(closing<1.)[live]
+    t.manual_mimic_limited[live]=limited[live]
     offsets=(t.manual_digit_offsets+change).clamp(-CONTRACT['closure_budget_rad'],CONTRACT['closure_budget_rad'])
     t.manual_digit_offsets[live]=offsets[live]
     t.manual_digit_targets[live]=desired[live]

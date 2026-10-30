@@ -49,6 +49,7 @@ def enable(task):
 def control(t, actions, live, dt):
     if hasattr(t,'manual_joint_contact'):
         return t.manual_joint_contact.control(actions,live,dt)
+    continuous = getattr(t,'continuous_motion',False)
     q = t.m['q']
     if t.envelope is None:
         requested = t.reference + .08 * actions[:, :12]
@@ -88,7 +89,7 @@ def control(t, actions, live, dt):
     # rewrite the policy target or stop exploration.
     for j, (_, master, ratio, _) in enumerate(MIMIC):
         if j<2 and getattr(t,'manual_smooth_mimic',False):
-            continue  # Manual digit servo continuously tapers/releases first.
+            continue  # Manual digit servo owns continuous follower correction.
         for hand in range(2):
             k = 6*hand + ACTIVE.index(master)
             error = errors[:, 5*hand+j]
@@ -113,7 +114,10 @@ def control(t, actions, live, dt):
             target[:, k] = torch.where(conflict, q[:, k].clamp(t.low[k], t.high[k]), target[:, k])
     applied = t.command + (target-t.command).clamp(
         -CONTRACT['joint_rate_rad_s']*dt, CONTRACT['joint_rate_rad_s']*dt)
-    blocked = severe | over.any(1) | (held & hold_paused)
+    # Finite coupling deviations remain visible and corrected at joint slew;
+    # continuous mode does not turn them into a whole-environment wrist veto.
+    mimic_blocks = torch.zeros_like(severe) if continuous else severe
+    blocked = mimic_blocks | over.any(1) | (held & hold_paused)
     t.command[live] = applied[live]
     if hasattr(t,'manual_pinch_jacobian') and not hasattr(t,'manual_pinch_home'):
         from .tabletop_manual_pinch_geometry import compensation
@@ -149,7 +153,7 @@ def control(t, actions, live, dt):
         t.lift_diagnostic_masks = torch.stack((lifting, lifting & upward & ~blocked,
             lifting & severe, zero, zero, zero, lifting & over.any(1), zero), 1)
     allowed=live & ~blocked
-    if getattr(t,'manual_stable_grip_ascent',False):
+    if getattr(t,'manual_stable_grip_ascent',False) and not continuous:
         measured=t.m['adaptive_palm_offset']
         only_up=((palms[:,:,:2]-measured[:,:,:2]).abs().amax((1,2))<=.0001)
         only_up &= (palms[:,:,2]>=measured[:,:,2]-1e-6).all(1)

@@ -78,10 +78,16 @@ def transport_safe(actual_pose,target_pose,velocity):
             &(speed<=CONTRACT['linear_speed_guard_m_s']).all(1))
 
 
-def check_transport(hands,mounts,target):
+def check_transport(hands,mounts,target,*,return_validity=False):
     actual=torch.stack([h.data.body_link_pose_w[:,m.base_id] for h,m in zip(hands,mounts)],1)
     velocity=torch.stack([h.data.body_lin_vel_w[:,m.base_id] for h,m in zip(hands,mounts)],1)
     safe=transport_safe(actual,target,velocity)
+    if return_validity:
+        # Tracking lag and finite speed excursions are diagnostics; actuator
+        # limits constrain commands. Only invalid transport readback is a
+        # state-recovery event in continuous mode.
+        return (torch.isfinite(actual).flatten(1).all(1)&torch.isfinite(target).flatten(1).all(1)
+                &torch.isfinite(velocity).flatten(1).all(1))
     if not bool(safe.all()):
         raise RuntimeError('wrist carriage transport guard: '+str(dict(
             indices=(~safe).nonzero().flatten().cpu().tolist(),

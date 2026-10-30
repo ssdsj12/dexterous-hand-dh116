@@ -14,7 +14,8 @@ def adjust(task,target,requested,live,dt):
     loads=task.m['hand_object_loads']
     severe=task.m['mimic_errors'].reshape(-1,2,5).abs().amax(-1)>=.012
     change=(.4*(requested-loads)*dt).clamp(-.12*dt,.12*dt)
-    change=torch.where(severe&(change>0),0.,change)
+    if not getattr(task,'continuous_motion',False):
+        change=torch.where(severe&(change>0),0.,change)
     task.f_offset[live]=(task.f_offset+change).clamp(-.08,.08)[live]
     task.f_target[live]=requested[live];task.f_requested[live]=requested[live]
     task.f_filtered[live]=loads[live]

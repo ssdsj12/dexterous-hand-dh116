@@ -145,6 +145,8 @@ parser.add_argument('--phase-force-reward',action='store_true',
                     help='separate upward hand-force rewards in grasp and lift; lift includes actual friction')
 parser.add_argument('--free-grasp-lift',action='store_true',
                     help='continuous policy grasp and lift, without stages, admission gates or pose latching')
+parser.add_argument('--continuous-motion',action='store_true',
+                    help='finite mimic errors are diagnostic; isolate and validate recoverable invalid-state resets')
 parser.add_argument('--manual-fast-force',action='store_true',help='manual-only bounded micro-closing contact acquisition and faster force adjustment')
 parser.add_argument('--manual-run',action='store_true',help='start the explicitly requested manual demonstration running')
 parser.add_argument('--manual-placement',type=Path,help='manual-only initial palm translation settings JSON')
@@ -155,6 +157,9 @@ parser.add_argument('--max-iterations', type=int, default=None,
                     help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+if args.continuous_motion and (not args.tensor_pipeline or args.grasp_controller!='policy'
+        or not args.training_episode_resets or args.palm_transport!='driven_carriage'):
+    parser.error('--continuous-motion requires policy tensor pipeline, driven_carriage and training-episode-resets')
 if (args.manual_fast_force or args.manual_run or args.manual_placement or args.manual_auto_lift_mm is not None) and not args.manual_control:
     parser.error('--manual-fast-force and --manual-run require --manual-control')
 if args.manual_auto_lift_mm is not None and not (args.manual_fast_force and 0<args.manual_auto_lift_mm<=50):
@@ -344,7 +349,8 @@ write_json(args.output/'monitor.json',dict(status='initializing',num_envs=args.n
     iteration_budget=args.max_iterations))
 app = None
 report = dict(passed=False, grasp_qualified=False, num_envs=args.num_envs,
-              status='initializing', rigid_proxy=True, pipeline_scope='close_to_lift')
+              status='initializing', rigid_proxy=True, pipeline_scope='close_to_lift',
+              continuous_motion=args.continuous_motion)
 vec = None
 from go2_pvcnn.control.dh116.tabletop_run_status import finalize_run
 try:
@@ -561,8 +567,10 @@ try:
     report['physical_parameter_readback'] = physics_load_readback(world.hands,args.load_parameters,
         passive_velocity_limit_rad_s=args.passive_velocity_limit_rad_s)
     if args.tensor_pipeline and args.full_hand_contact:
-        from go2_pvcnn.control.dh116.tabletop_tensor_training import tensor_contract_metadata
+        from go2_pvcnn.control.dh116.tabletop_tensor_training import (
+            tensor_contract_metadata, apply_continuous_motion_contract)
         contract = tensor_contract_metadata(contract, args.load_parameters.max_force_n)
+        apply_continuous_motion_contract(contract,args.continuous_motion)
         report['contract'] = contract
     write_json(args.output/'configuration.json',report)
     if args.play_checkpoint:

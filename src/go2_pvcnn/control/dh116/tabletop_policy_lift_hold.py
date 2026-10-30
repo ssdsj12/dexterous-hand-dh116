@@ -109,31 +109,32 @@ class PolicyLiftHold:
                              self.recovery_stable_s+dt, 0.).clamp_max(.02)
         recovery = recovery & (stable < .02)
         severe = task.m['mimic_errors'].abs().amax(1) >= .012
+        mimic_blocks = torch.zeros_like(severe) if getattr(task,'continuous_motion',False) else severe
         tracking = (task.command-task.m['q']).abs().amax(1) > .03
-        paused = (loads < floor).any(1) | ~region | ~force_tracking | slipping | recovery | severe | tracking
+        paused = (loads < floor).any(1) | ~region | ~force_tracking | slipping | recovery | mimic_blocks | tracking
         ceiling = min(task.parameters.max_force_n,12.)
         ramp = (self.force_target+4.*dt).clamp_max(ceiling)
         if not getattr(task,'force_region',False):
             self.force_target[selected & recovery] = ramp[selected & recovery]
         error = self.force_target-loads
         change = (.1*error*dt).clamp(-.03*dt,.03*dt)
-        # Severe linkage error vetoes tightening but never blocks force release.
+        # Legacy coupling veto does not apply to continuous bounded correction.
         valid_hand=(task.m['contact_valid']&task.m['contact_all_below_centerline']) if getattr(task,'force_region',False) else torch.ones_like(loads,dtype=torch.bool)
-        change = torch.where((severe[:,None] | ~valid_hand) & (change > 0), 0., change)
+        change = torch.where((mimic_blocks[:,None] | ~valid_hand) & (change > 0), 0., change)
         closure = (self.closure+change).clamp(0.,.08)
         if getattr(task,'force_region',False):
             sensed=selected[:,None]&valid_hand&(loads>.05)
             filtered=self.force_filtered+(1-math.exp(-dt/.03))*(loads-self.force_filtered)
             self.force_filtered.copy_(torch.where(sensed,filtered,self.force_filtered))
             pi_error=self.force_target-self.force_filtered
-            permitted=sensed&~severe[:,None]&~tracking[:,None]&(loads<=12.)
+            permitted=sensed&~mimic_blocks[:,None]&~tracking[:,None]&(loads<=12.)
             trial=(self.force_integral+pi_error*dt).clamp(-2.,2.)
             raw=.01*pi_error+.02*trial
             winding=((raw>.08)&(pi_error>0))|((raw<-.08)&(pi_error<0))
             self.force_integral.copy_(torch.where(permitted&~winding,trial,self.force_integral))
             desired=(.01*pi_error+.02*self.force_integral).clamp(-.08,.08)
             change=(desired-self.closure).clamp(-.03*dt,.03*dt)
-            change=torch.where((~sensed|severe[:,None])&(change>0),0.,change)
+            change=torch.where((~sensed|mimic_blocks[:,None])&(change>0),0.,change)
             change=torch.where(sensed,change,0.)
             closure=(self.closure+change).clamp(-.08,.08)
         self.closure[selected] = closure[selected]

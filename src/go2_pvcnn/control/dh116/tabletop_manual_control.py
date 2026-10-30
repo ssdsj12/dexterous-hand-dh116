@@ -9,6 +9,17 @@ from .tabletop_control_probe import joint_actions
 from .tabletop_training import write_json
 
 
+def diagnostic_snapshot(value):
+    """JSON-safe copy with explicit nonfinite tags; keep raw diagnostics intact."""
+    if isinstance(value,dict):
+        return {key:diagnostic_snapshot(item) for key,item in value.items()}
+    if isinstance(value,(list,tuple)):
+        return [diagnostic_snapshot(item) for item in value]
+    if isinstance(value,float) and not math.isfinite(value):
+        return dict(nonfinite=str(value))
+    return value
+
+
 class ManualCommands:
     def __init__(self,reference,lower,center,upper,device):
         self.device=device
@@ -26,6 +37,10 @@ class ManualCommands:
     def pause_after_reset(self):
         self.running=False;self.lifting=False;self.lift_current=0.
         self.auto_lift_goal=None;self.force_stable_s=0.;self.previous_load=None
+
+    def recover_after_reset(self):
+        """Validated recovery keeps user intent and discards pre-reset progress."""
+        self.lift_current=0.;self.force_stable_s=0.;self.previous_load=None
 
     def start_lift(self):
         self.lifting=True
@@ -106,7 +121,10 @@ class ManualPanel:
                         ui.Button('Stop lift',clicked_fn=lambda:setattr(commands,'lifting',False))
                         ui.Button('Lower to start',clicked_fn=self.lower)
                     ui.Label('Lift moves the wrists. Actual object height is measured separately.',word_wrap=True,height=32)
-                    ui.Label('Physical guards remain active. Failure pauses motion; Reset starts again.',word_wrap=True,height=32)
+                    recovery_help=('Recovered faults reset and resume motion; unrecoverable faults stop.'
+                        if getattr(commands,'continuous_motion',False) else
+                        'Physical guards remain active. Failure pauses motion; Reset starts again.')
+                    ui.Label(recovery_help,word_wrap=True,height=32)
                     ui.Button('Close manual Isaac',height=28,clicked_fn=lambda:setattr(commands,'closed',True))
 
     def drag(self,ui,label,value,minimum,maximum,step,callback):
@@ -123,6 +141,10 @@ class ManualPanel:
 
 def manual_status(env,c,steps,notice):
     t=env.task;m=t.m
+    from .tabletop_coordinated_grasp import CONTRACT as COUPLING
+    mimic=m['mimic_errors'].abs().amax(1)
+    mimic_warning=(torch.isfinite(mimic)&(mimic>=COUPLING['severe_coupling_rad'])
+                   &bool(getattr(t,'continuous_motion',False)))
     valid=m['contact_valid'][0]
     positions=m['contact_center_relative_m'][0].detach().cpu().tolist()
     for h in range(2):
@@ -142,7 +164,9 @@ def manual_status(env,c,steps,notice):
         manual_fast_force=getattr(t,'manual_fast_force',False),effort_limit_nm=t.parameters.effort_limit_nm,
         force_feedback_offset_rad=t.f_offset[0].cpu().tolist(),
         pressure_limited=t.pressure_limited[0].cpu().tolist(),
-        max_mimic_error_rad=t.m['mimic_errors'].abs().amax(1).cpu().tolist(),
+        max_mimic_error_rad=mimic.cpu().tolist(),
+        mimic_warning=mimic_warning.cpu().tolist(),
+        mimic_warning_threshold_rad=COUPLING['severe_coupling_rad'],
         palm_motion_soft_paused=t.paused.cpu().tolist(),
         last_control_step_wall_s=c.last_step_wall_s,
         physics_realtime_factor=steps*env.world.dt*env.world.decimation/max(c.physics_wall_s,1e-9))
@@ -151,10 +175,12 @@ def manual_status(env,c,steps,notice):
 def run_manual_control(env,args,contract):
     import omni.kit.app
     t=env.task;t.manual_control=True
+    continuous=getattr(t,'continuous_motion',False)
     t.manual_lift_qualified=torch.zeros(t.n,device=t.device,dtype=torch.bool)
     t.manual_lightweight=True
     t.last_observation=t.observe().clone()
     c=ManualCommands(t.reference[0],t.lower,t.center,t.upper,env.device)
+    c.continuous_motion=continuous
     if getattr(args,'manual_placement',None):
         c.set_placement(json.loads(args.manual_placement.read_text()))
     t.manual_fast_force=bool(getattr(args,'manual_fast_force',False))
@@ -243,7 +269,11 @@ def run_manual_control(env,args,contract):
                     if not bool(done.any()):
                         thumb_stability.update(t.m['grouped_object_loads'][0,:,:2].detach().cpu().tolist(),dt)
                     if bool(done.any()):
-                        c.pause_after_reset()
+                        recovered=extra.get('recovered')
+                        if continuous and recovered is not None and bool(recovered[0]):
+                            c.recover_after_reset()
+                        else:
+                            c.pause_after_reset()
                         thumb_stability.reset()
                         from .tabletop_tensor_task import FAILURE_CODES
                         code=int(extra['failure'][0])
@@ -251,9 +281,13 @@ def run_manual_control(env,args,contract):
                         notice='Episode reset: '+reason
                         t.f_requested[0]=c.force.to(t.f_requested);t.f_target[0]=t.f_requested[0]
                         if hasattr(env,'manual_last_failure'):
-                            write_json(args.output/'manual_last_failure.json',env.manual_last_failure)
+                            snapshot=env.manual_last_failure
+                            write_json(args.output/'manual_last_failure.json',
+                                diagnostic_snapshot(snapshot) if continuous else snapshot)
                 except RuntimeError as error:
-                    if 'tensor physical safety failure' not in str(error):raise
+                    # TensorEnv owns validated recovery. A raised error in this
+                    # mode is unrecoverable and must not start another GUI reset.
+                    if continuous or 'tensor physical safety failure' not in str(error):raise
                     c.pause_after_reset()
                     thumb_stability.reset()
                     notice='Physics guard paused motion. Reset before continuing.'
@@ -306,15 +340,17 @@ def run_manual_control(env,args,contract):
                     balance_text+'\n'.join(digit_text)+'\n'+
                     f"All FOUR digits below: {row['digit_contacts']['all_four_digits_below_axis']}\n"
                     f"Thumb stable L/R: {row['thumb_stability']['thumb_force_stable']}; grasp stable: {row['grasp_stable']}\n"
-                    f"Lift criterion: {row['lift_criterion_met']}\n"+failure_text+notice)
-                write_json(args.output/'manual_status.json',row)
+                    f"Lift criterion: {row['lift_criterion_met']}\n"+
+                    (f"Mimic WARNING {max(row['max_mimic_error_rad']):.5f} rad; bounded correction; lift continues\n"
+                     if any(row['mimic_warning']) else '')+failure_text+notice)
+                write_json(args.output/'manual_status.json',diagnostic_snapshot(row) if continuous else row)
                 if c.pending_save:
                     c.pending_save=False
                     snapshot=dict(row,utc=datetime.now(timezone.utc).isoformat(),
                         settings=dict(joint_target_rad=c.joints.tolist(),force_n=c.force.tolist(),
                                       palms_m=c.palms.tolist(),lift_height_m=c.lift_goal,lift_speed_m_s=c.lift_speed))
                     with (args.output/'manual_snapshots.jsonl').open('a') as stream:
-                        stream.write(json.dumps(snapshot,allow_nan=False)+'\n')
+                        stream.write(json.dumps(diagnostic_snapshot(snapshot) if continuous else snapshot,allow_nan=False)+'\n')
                     notice='Settings saved to manual_snapshots.jsonl (unqualified candidate).'
                 last_status=now
             time.sleep(max(.001,dt-(time.monotonic()-start)))

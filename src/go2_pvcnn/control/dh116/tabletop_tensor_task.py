@@ -252,6 +252,8 @@ class TensorTask:
         self.reward.zero_(); self.used.zero_(); self.nonfinite.zero_()
         for value in self.terms.values(): value.zero_()
         self.old_command.copy_(self.command)
+        if getattr(self,'continuous_motion',False):
+            actions=torch.where(torch.isfinite(actions),actions.clamp(-1.,1.),actions)
         invalid=(~torch.isfinite(actions).all(dim=1)|(abs(actions)>1.).any(dim=1))&~self.done
         self.failure[invalid]=FAILURE_CODES['invalid_action']
         if hasattr(self,'close_grasp_hold'):
@@ -496,9 +498,12 @@ class TensorTask:
         expected=torch.stack([new['object_link_loads'][...,self.link_groups==g].sum(dim=2) for g in range(6)],dim=2)
         finite &= torch.isclose(expected,new['grouped_object_loads'],rtol=1e-6,atol=1e-9).flatten(1).all(dim=1)
         before=self.m
-        self.m=new
-        observation_finite=torch.isfinite(self.observe()).all(dim=1)
-        self.m=before
+        if getattr(self,'continuous_motion',False):
+            self.m={k:torch.where(finite.reshape((self.n,)+(1,)*(v.ndim-1)),v,before[k])
+                    for k,v in new.items()}
+        else:self.m=new
+        try:observation_finite=torch.isfinite(self.observe()).all(dim=1)
+        finally:self.m=before
         finite &= observation_finite
         finite &= torch.isfinite(torch.linalg.vector_norm(new['object_velocity'][:,:3],dim=1))
         finite &= ~self.grip_valid | torch.isfinite(torch.linalg.vector_norm(new['object_relative']-self.grip,dim=1))
@@ -524,6 +529,8 @@ class TensorTask:
         speed=torch.linalg.vector_norm(m['object_velocity'][:,:3],dim=1)
         self.slip[valid]=slip[valid]
         jointbad=valid&(m['joint_failure']!=0)
+        if getattr(self,'continuous_motion',False):
+            jointbad &= m['joint_failure']!=FAILURE_CODES['mimic_error']
         self.failure[jointbad]=m['joint_failure'][jointbad]
         active=valid&~jointbad
         self.elapsed[active]+=dt

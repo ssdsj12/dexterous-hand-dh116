@@ -21,4 +21,4 @@ exec bash scripts/python.sh scripts/train_dh116_tabletop_gpu_ppo.py \
   --skip-hold --close-downward-penalty --grasp-shaping --vertical-force-reward \
   --vertical-force-reward-mode continuous --force-reward-start downward_after_close \
   --grasp-acquisition-shaping --policy-lift-hold --stable-lift-reward --force-region-control --phase-force-reward \
-  --manual-control --output "$output" --kit_args=--allow-root "$@"
+  --continuous-motion --manual-control --output "$output" --kit_args=--allow-root "$@"

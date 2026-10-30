@@ -30,11 +30,15 @@ stable_lift_flag=()
 force_region_flag=()
 phase_force_flag=()
 free_grasp_flag=()
+continuous_motion_flag=()
 iteration_flag=()
 if [[ -n "${DH116_MAX_ITERATIONS:-}" ]]; then
   iteration_flag=(--max-iterations "$DH116_MAX_ITERATIONS")
 fi
 if [[ "$controller" == policy ]]; then
+  if [[ "${DH116_CONTINUOUS_MOTION:-1}" == 1 ]]; then
+    continuous_motion_flag=(--continuous-motion)
+  fi
   palm_axis_flag=(--palm-exploration-axis xyz)
   if [[ "${DH116_GRASP_ACQUISITION:-1}" == 1 ]]; then
     acquisition_flag=(--grasp-acquisition-shaping)
@@ -75,7 +79,7 @@ exec bash scripts/python.sh scripts/train_dh116_tabletop_gpu_ppo.py \
   --position-iterations 64 --velocity-iterations 16 --reset-height-jitter-m 0 --cpu-threads "$DH116_NUM_THREADS" \
   --headless --device cuda:0 --direct-training --tensor-pipeline --training-episode-resets --pressure-relief \
   --grasp-controller "$controller" --palm-transport driven_carriage \
-  "${reposition_flag[@]}" "${palm_axis_flag[@]}" "${acquisition_flag[@]}" "${lift_hold_flag[@]}" "${stable_lift_flag[@]}" "${force_region_flag[@]}" "${phase_force_flag[@]}" "${free_grasp_flag[@]}" "${iteration_flag[@]}" \
+  "${reposition_flag[@]}" "${palm_axis_flag[@]}" "${acquisition_flag[@]}" "${lift_hold_flag[@]}" "${stable_lift_flag[@]}" "${force_region_flag[@]}" "${phase_force_flag[@]}" "${free_grasp_flag[@]}" "${continuous_motion_flag[@]}" "${iteration_flag[@]}" \
   --passive-velocity-limit-rad-s 2.97 --contact-reward-window close_start \
   --grasp-readiness measured_load --skip-hold --close-downward-penalty --grasp-shaping --vertical-force-reward --vertical-force-reward-mode continuous --force-reward-start downward_after_close \
   --episodes-per-env 1024 --output "$output" "${kit_flags[@]}" "${continuation[@]}" "$@"

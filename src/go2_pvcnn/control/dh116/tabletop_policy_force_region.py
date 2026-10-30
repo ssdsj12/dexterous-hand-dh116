@@ -79,14 +79,16 @@ def adjust(task,target,requested,live,dt):
                        ('mimic_errors',task.m['mimic_errors'])):
         _finite(value,name)
     requested=requested.to(task.f_target).clamp(2.,12.)
+    continuous=getattr(task,'continuous_motion',False)
     if getattr(task,'manual_fast_force',False):
         from .tabletop_manual_fast_force import adjust as manual_adjust
         return manual_adjust(task,target,requested,live,dt)
     valid=task.m['contact_valid'] & (loads>.05)
     below=task.m['contact_all_below_centerline']
     severe=task.m['mimic_errors'].reshape(-1,2,5).abs().amax(-1)>=.012
+    mimic_blocks=torch.zeros_like(severe) if continuous else severe
     change=(.1*(requested-loads)*dt).clamp(-.03*dt,.03*dt)
-    change=torch.where((change>0)&~(valid&below&~severe),0.,change)
+    change=torch.where((change>0)&~(valid&below&~mimic_blocks),0.,change)
     offset=torch.where(valid,(task.f_offset+change).clamp(-.08,.08),0.)
     task.f_offset[live]=offset.to(task.f_offset)[live]
     task.f_target[live]=requested[live]

@@ -1,6 +1,14 @@
 # DH116 手动控制
 
-当前窗口由远端Isaac通过现有XLaunch显示在本机，自动PPO和教师搜索不同时运行。
+手动窗口由远端Isaac通过现有XLaunch显示在本机，自动PPO和教师搜索不同时运行。
+
+2026-10-30：标准脚本已默认启用 `--continuous-motion`。有限联动误差记录并有界纠偏，
+不再单独使双手暂停或触发 mimic_error reset；执行器原有限幅保留，参数尚未完成硬件标定。
+无效状态先隔离 reset 并完整验证，恢复成功自动继续 Run 和原提升目标；恢复失败才停止。
+用户点击 `Reset + Pause` 仍明确暂停。旧的0.02rad截止说明仅适用于未启用该模式的历史运行。
+面板及状态JSON保留0.012rad联动诊断警告；警告只提示有界纠偏继续，不是新的停止门限。
+单环境实测双手完成10mm上移、无回合复位，但圆杆未离桌；详见
+[验证记录](docs/superpowers/reports/2026-10-30-continuous-motion-validation.md)。
 
 1. 初始为暂停。点击 `Run / Pause` 开始/暂停物理步进。
 2. `Target force (N)` 设置每手2–12N法向夹持目标；它不是实测值，也不包含摩擦力。
@@ -9,14 +17,15 @@
 4. `Common lift height` 为手腕相对起点提升高度，0–50mm，默认10mm；`Lift speed` 为仿真速度，0–10mm/s。
    点击 `Lift to height` 会同时恢复运行并开始提升，`Stop lift` 停止，`Lower to start` 恢复运行并下降到起点。
    手腕目标高度与物体实际高度分别显示，不能把手腕上升算成物体成功提升。
-5. close实际成立后，抓姿和目标力由保持器锁定；用户想更改时点击
-   `Apply force reference` 或 `Apply finger pose`。仍经过位置速率和物理保护。
+5. 未启用逐指力控时，close实际成立后可由保持器锁定抓姿和目标力，使用
+   `Apply force reference` 或 `Apply finger pose` 显式更新；启用 `--manual-fast-force` 的逐指模式
+   持续处理手动目标，不由旧保持器接管。两种路径仍经过位置速率和执行器限幅。
 6. `Reset + Pause` 复位环境并暂停；会清除未执行的公共提升偏移。
 7. `Save settings` 将当前命令、实测力、接触、关节和高度保存到当前run的
    `manual_snapshots.jsonl`，只能作为未验证候选，不能直接当教师成功标签。
 
 训练用4秒close超时和15秒回合超时在manual模式关闭，避免用户操作时被定时reset。
-力学异常仍暂停并复位。达到原提升标准会显示 `Lift criterion: True`，不会为了
+continuous-motion下，恢复成功的异常复位后继续运行；历史模式仍暂停并复位。达到原提升标准会显示 `Lift criterion: True`，不会为了
 计训练回合而立刻复位。用户手动改力的实验不属于固定close目标的合格教师轨迹。
 
 启动入口：远端 `/root/hand/scripts/manual_dh116_control.sh`（需要有效X11 DISPLAY）。

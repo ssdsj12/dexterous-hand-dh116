@@ -15,6 +15,37 @@ from .tabletop_policy_noise import CONTRACT as POLICY_NOISE_CONTRACT, install_no
 VERSION = 'dh116-rsl-tensor-ppo-v1'
 
 
+def apply_continuous_motion_contract(contract, enabled):
+    """Share the continuous-mode identity and reset semantics with startup."""
+    if not enabled:
+        return contract
+    from .tabletop_tensor_env import (CONTINUOUS_MOTION_CONTRACT,
+        BOUNDED_FAILURE_RESET_CONTRACT, JOINT_LIMIT_RESET_CONTRACT, OBJECT_DROP_RESET_CONTRACT)
+    from .tabletop_palm_mount import CONTRACT as TRANSPORT_CONTRACT
+    from .tabletop_policy_recovery import CONTRACT as POLICY_RECOVERY_CONTRACT
+    contract['continuous_motion'] = dict(CONTINUOUS_MOTION_CONTRACT,
+        adapter_fault_bits=dict(object_reference=1, normal=2, friction=4, transport=8),
+        transport=dict(tracking_warning_m=TRANSPORT_CONTRACT['tracking_guard_m'],
+            linear_speed_warning_m_s=TRANSPORT_CONTRACT['linear_speed_guard_m_s'],
+            finite_exceedance='diagnostic_only',
+            invalid='nonfinite_actual_target_or_velocity_isolated_reset',
+            command_velocity_limit_m_s=TRANSPORT_CONTRACT['velocity_limit_m_s'],
+            effort_limit_n=TRANSPORT_CONTRACT['effort_limit_n']))
+    contract['bounded_failure_reset'] = dict(BOUNDED_FAILURE_RESET_CONTRACT,
+        strict_mimic_rad=None, max_mimic_exclusive_rad=None, max_force_exclusive_n=None,
+        finite_mimic='diagnostic_only', invalid_state='validated_isolated_reset',
+        requires='invalid_live_row_without_pending_reset_then_validated_isolated_reset',
+        hard_fault='abort_only_when_reset_invalid_or_immediate_recurrence')
+    contract['joint_limit_reset'] = dict(JOINT_LIMIT_RESET_CONTRACT,
+        early_active_joint_margin=None,
+        other_faults='all_invalid_physical_rows_receive_one_validated_isolated_reset')
+    contract['object_drop_reset'] = dict(OBJECT_DROP_RESET_CONTRACT,
+        other_guards='actual_actuator_limits_and_clearance_preserved_finite_mimic_transport_diagnostic_invalid_state_validated_isolated_reset')
+    contract['policy_action_recovery'] = dict(POLICY_RECOVERY_CONTRACT)
+    contract.pop('training_joint_limit', None)
+    return contract
+
+
 def tensor_contract_metadata(contract, configured_max_force_n):
     """Add the tensor policy contract fields to an existing full-hand contract."""
     from .tabletop_tensor_task import (PALM_XY_SEARCH_LIMIT_M, PALM_Z_SEARCH_LIMIT_M,
@@ -96,7 +127,8 @@ def apply_close_completion_contract(contract,task):
 
 
 def publish_stopped_monitor(path,error,physics_peaks,iteration,timesteps,num_envs,*,
-                            close_completion_telemetry=None,velocity_diagnostics=None):
+                            close_completion_telemetry=None,velocity_diagnostics=None,
+                            policy_action_recovery=None):
     """Keep completed-update counters and include the failing rollout's peaks.
 
     Telemetry failure must never replace the original training exception.
@@ -109,6 +141,8 @@ def publish_stopped_monitor(path,error,physics_peaks,iteration,timesteps,num_env
         row={}
     row.update(status='stopped',error=str(error),iteration=iteration,
                timesteps=timesteps,num_envs=num_envs,backend=VERSION)
+    if policy_action_recovery is not None:
+        row['policy_action_recovery']=dict(policy_action_recovery)
     if close_completion_telemetry is not None:
         row['close_completion_telemetry']=close_completion_telemetry
     if velocity_diagnostics is not None:
@@ -417,8 +451,25 @@ def validate_world_adapter(legacy, world, task):
     expected=legacy.measure_batch()
     actual=world.measure()
     errors={}
+    tensor_only={}
     for key,value in actual.items():
         if key=='joint_failure': continue
+        if getattr(world,'continuous_motion',False) and key in ('adapter_fault_bits','transport_warning'):
+            # These diagnostics have no host equivalent. Validate their own
+            # startup schema instead of treating them as unchecked telemetry.
+            if (not isinstance(value,torch.Tensor) or value.shape!=(world.n,)
+                    or not bool(torch.isfinite(value).all())):
+                raise ValueError(f'invalid tensor startup measurement: {key}')
+            if key=='adapter_fault_bits':
+                valid=value==0  # any raw adapter fault must fail startup
+            else:
+                valid=(value==0)|(value==1)  # finite transport warnings are allowed
+            if not bool(valid.all()):
+                raise ValueError(f'invalid tensor startup measurement: {key}')
+            errors[key]=0.0
+            tensor_only[key]=dict(shape=list(value.shape),dtype=str(value.dtype),
+                                  finite=True,nonzero_rows=int((value!=0).sum()))
+            continue
         if key.startswith('contact_'):
             # PhysX contact positions/normals are tensor-world telemetry and
             # have no host-adapter reference at the no-sensor validation tick.
@@ -451,7 +502,9 @@ def validate_world_adapter(legacy, world, task):
     if not torch.equal(before[others],world.wp[others]):
         raise ValueError('tensor selected reset altered other environments')
     world.reset(torch.arange(world.n,device=world.device))
-    return dict(maximum_reference_errors=errors,asymmetric_mapping=True,selected_reset_isolation=True)
+    result=dict(maximum_reference_errors=errors,asymmetric_mapping=True,selected_reset_isolation=True)
+    if tensor_only:result['tensor_only_startup_fields']=tensor_only
+    return result
 
 
 def observations(value):
@@ -550,6 +603,10 @@ def save_checkpoint(path, algorithm, contract, iteration, timesteps, env):
         payload['joint_limit_resets']=env.joint_limit_resets
     if hasattr(env,'object_drop_resets'):
         payload['object_drop_resets']=env.object_drop_resets
+    if hasattr(env,'numerical_resets'):
+        payload['numerical_resets']=env.numerical_resets
+    if getattr(algorithm,'policy_action_recovery',None) is not None:
+        payload['policy_action_recovery']=dict(algorithm.policy_action_recovery.counts)
     if hasattr(env,'close_completion_events'):
         payload['close_completion_event_index']=env.close_completion_events.event_index
     tmp=Path(str(path)+'.tmp'); torch.save(payload,tmp); os.replace(tmp,path)
@@ -560,6 +617,7 @@ def run_tensor_training(world, template, args, contract):
     from .tabletop_tensor_world import TensorWorld, ROOT_POSE_WRITE_CONTRACT
     from .tabletop_tensor_env import TensorEnv, VELOCITY_GUARD_CONTRACT, TERMINAL_RESET_CONTRACT, PHYSICS_PEAK_NAMES, LIVE_VELOCITY_GUARD_CONTRACT, TRAINING_JOINT_LIMIT_CONTRACT, BOUNDED_FAILURE_RESET_CONTRACT, JOINT_LIMIT_RESET_CONTRACT
     from torch.utils.tensorboard import SummaryWriter
+    report_contract=contract
     torch.manual_seed(args.seed)
     device_world=TensorWorld(world)
     window=getattr(args,'contact_reward_window',None)
@@ -766,6 +824,12 @@ def run_tensor_training(world, template, args, contract):
         from .tabletop_free_grasp_lift import apply_contract
         apply_contract(contract,task)
 
+    apply_continuous_motion_contract(contract,env.continuous_motion)
+    # The caller's report holds this original dict. Publish the fully resolved
+    # tensor contract there as well, including manual/probe/error exits.
+    report_contract.clear()
+    report_contract.update(contract)
+
     if getattr(args,'manual_control',False):
         from .tabletop_manual_control import run_manual_control
         write_json(args.output/'tensor_contract.json',contract)
@@ -775,6 +839,11 @@ def run_tensor_training(world, template, args, contract):
         return run_success_teacher(env,args,contract,obs)
 
     algorithm=make_algorithm(obs,steps)
+    policy_recovery=None
+    if env.continuous_motion:
+        from .tabletop_policy_recovery import PolicyActionRecovery
+        policy_recovery=PolicyActionRecovery()
+        algorithm.policy_action_recovery=policy_recovery
     actor_initialization=None
     if getattr(args,'actor_initialization',None):
         from .tabletop_behavior_cloning import load_actor_initialization
@@ -837,6 +906,11 @@ def run_tensor_training(world, template, args, contract):
             env.joint_limit_resets.copy_(saved['joint_limit_resets'])
         if 'object_drop_resets' in saved:
             env.object_drop_resets.copy_(saved['object_drop_resets'])
+        if 'numerical_resets' in saved:
+            env.numerical_resets.copy_(saved['numerical_resets'])
+        if policy_recovery is not None:
+            policy_recovery=PolicyActionRecovery(saved.get('policy_action_recovery'))
+            algorithm.policy_action_recovery=policy_recovery
         torch.set_rng_state(saved['torch_rng'].cpu())
         if saved['cuda_rng']: torch.cuda.set_rng_state_all([x.cpu() for x in saved['cuda_rng']])
     write_json(args.output/'tensor_contract.json',contract)
@@ -882,24 +956,37 @@ def run_tensor_training(world, template, args, contract):
             relief_fraction=torch.zeros((),device=args.device)
             clipped_fraction=torch.zeros((),device=args.device)
             with torch.inference_mode():
-                for rollout_step in range(steps):
-                    action=algorithm.act(obs)
-                    if not bool(torch.isfinite(action).all()):
-                        raise RuntimeError('nonfinite policy action before actuator clipping')
-                    clipped_fraction+=(action.abs()>1.).float().mean()
-                    if hasattr(env,'close_completion_events'):
-                        env.close_completion_events.control_step=timesteps//args.num_envs+rollout_step+1
-                    next_obs,reward,done,extra=env.step(action.clamp(-1,1))
-                    obs=observations(next_obs)
-                    algorithm.process_env_step(obs,reward,done,{})
-                    reward_sum+=reward.mean()
-                    occupancy+=torch.bincount(extra['phase'],minlength=4)
-                    relief_fraction+=extra['pressure_limited'].float().mean()
-                    for name,value in extra.get('terms',{}).items():
-                        terms[name]=terms.get(name,torch.zeros((),device=args.device))+value.mean()
-                    failures=extra.get('failure')
-                    if failures is not None: failure_counts+=torch.bincount(failures[done],minlength=len(failure_counts))
-                algorithm.compute_returns(obs)
+                if policy_recovery is not None:
+                    def before_step(control_step):
+                        if hasattr(env,'close_completion_events'):
+                            env.close_completion_events.control_step=control_step
+                    collected=policy_recovery.collect(algorithm,env,obs,steps,before_step)
+                    obs=collected['obs']
+                    reward_sum=collected['reward_sum'];terms=collected['terms']
+                    occupancy=collected['occupancy'];relief_fraction=collected['relief_fraction']
+                    clipped_fraction=collected['clipped_fraction']
+                    if collected['failures'] is not None:
+                        counts=collected['failures']
+                        failure_counts[:len(counts)]+=counts
+                else:
+                    for rollout_step in range(steps):
+                        action=algorithm.act(obs)
+                        if not bool(torch.isfinite(action).all()):
+                            raise RuntimeError('nonfinite policy action before actuator clipping')
+                        clipped_fraction+=(action.abs()>1.).float().mean()
+                        if hasattr(env,'close_completion_events'):
+                            env.close_completion_events.control_step=timesteps//args.num_envs+rollout_step+1
+                        next_obs,reward,done,extra=env.step(action.clamp(-1,1))
+                        obs=observations(next_obs)
+                        algorithm.process_env_step(obs,reward,done,{})
+                        reward_sum+=reward.mean()
+                        occupancy+=torch.bincount(extra['phase'],minlength=4)
+                        relief_fraction+=extra['pressure_limited'].float().mean()
+                        for name,value in extra.get('terms',{}).items():
+                            terms[name]=terms.get(name,torch.zeros((),device=args.device))+value.mean()
+                        failures=extra.get('failure')
+                        if failures is not None: failure_counts+=torch.bincount(failures[done],minlength=len(failure_counts))
+                    algorithm.compute_returns(obs)
             if str(args.device).startswith('cuda'): torch.cuda.synchronize()
             collect_seconds=time.monotonic()-collect
             learning=time.monotonic()
@@ -922,6 +1009,7 @@ def run_tensor_training(world, template, args, contract):
                 combined_failure_resets=int(env.combined_failure_resets),
                 joint_limit_resets=int(env.joint_limit_resets),
                 object_drop_resets=int(env.object_drop_resets),
+                numerical_resets=int(env.numerical_resets),
                 phase_occupancy=(occupancy/(steps*args.num_envs)).cpu().tolist(),
                 phase_reached_episodes=env.reached_counts.cpu().tolist(),
                 phase_transition_counts=env.transition_counts.reshape(4,4).cpu().tolist(),
@@ -943,6 +1031,8 @@ def run_tensor_training(world, template, args, contract):
                 training_realtime_factor=simulated_seconds/(collect_seconds+learn_seconds),
                 physics_hz=args.physics_hz, control_hz=args.physics_hz/device_world.decimation,
                 wall_clock_pacing=False)
+            if policy_recovery is not None:
+                row['policy_action_recovery']=dict(policy_recovery.counts)
             if 'grasp_controller' in contract:row['grasp_controller']=contract['grasp_controller']
             if 'palm_transport' in contract:row['palm_transport']=contract['palm_transport']
             if 'palm_reposition' in contract:
@@ -1016,6 +1106,7 @@ def run_tensor_training(world, template, args, contract):
             writer.add_scalar('recovery/combined_failure_resets',row['combined_failure_resets'],iteration)
             writer.add_scalar('recovery/joint_limit_resets',row['joint_limit_resets'],iteration)
             writer.add_scalar('recovery/object_drop_resets',row['object_drop_resets'],iteration)
+            writer.add_scalar('recovery/numerical_resets',row['numerical_resets'],iteration)
             for name,value in row.get('reposition',{}).items():writer.add_scalar('reposition/'+name,value,iteration)
             if task.shaping is not None:
                 for name,value in row['lift_gates'].items():
@@ -1059,7 +1150,8 @@ def run_tensor_training(world, template, args, contract):
             if hasattr(env,'close_completion_events') else None)
         publish_stopped_monitor(args.output/'monitor.json',error,env.physics_peaks,
             iteration,timesteps,args.num_envs,close_completion_telemetry=stopped_telemetry,
-            velocity_diagnostics=env.velocity_diagnostics)
+            velocity_diagnostics=env.velocity_diagnostics,
+            policy_action_recovery=policy_recovery.counts if policy_recovery is not None else None)
         raise
     finally:
         try:
@@ -1070,10 +1162,14 @@ def run_tensor_training(world, template, args, contract):
             if stop is not None and final_telemetry!=stopped_telemetry:
                 publish_stopped_monitor(args.output/'monitor.json',stop,env.physics_peaks,
                     iteration,timesteps,args.num_envs,
-                    close_completion_telemetry=final_telemetry,velocity_diagnostics=env.velocity_diagnostics)
+                    close_completion_telemetry=final_telemetry,velocity_diagnostics=env.velocity_diagnostics,
+                    policy_action_recovery=policy_recovery.counts if policy_recovery is not None else None)
     row['status']='training_budget_complete'
     if hasattr(env,'close_completion_events'):
         row['close_completion_telemetry']=env.close_completion_events.diagnostics()
     write_json(args.output/'monitor.json',row)
-    return dict(status='training_budget_complete',tensor_training=VERSION,iteration=iteration,
+    result=dict(status='training_budget_complete',tensor_training=VERSION,iteration=iteration,
                 timesteps=timesteps,successes=int(env.successes.sum()),grasp_qualified=False)
+    if policy_recovery is not None:
+        result['policy_action_recovery']=dict(policy_recovery.counts)
+    return result
