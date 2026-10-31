@@ -32,14 +32,14 @@ def samples(n=1, fingers=((0, 1), (0, 1)), dtype=torch.float64, device="cpu"):
     return loads, points, normals
 
 
-def step(monitor, data, dt=0.1, valid=None, reset=None):
+def step(monitor, data, dt=0.1, valid=None, reset=None, **kwargs):
     loads, points, normals = data
     n, device = loads.shape[0], loads.device
     if valid is None:
         valid = torch.ones(n, dtype=torch.bool, device=device)
     if reset is None:
         reset = torch.zeros(n, dtype=torch.bool, device=device)
-    return monitor.update(loads, points, normals, dt, valid, reset)
+    return monitor.update(loads, points, normals, dt, valid, reset, **kwargs)
 
 
 def fill(monitor, data, steps=4, **kwargs):
@@ -482,3 +482,334 @@ def test_world_to_hand_uses_supplied_palm_link_origin_and_orientation():
     points = api().rod_points_in_hands(obj, palm_link_pose_w)
     expected = obj.new_tensor([[-0.3, -0.3, 0.4], [0.1, -0.3, 0.4], [-0.1, -0.308, 0.4]])
     torch.testing.assert_close(points, expected[None, None].expand(1, 2, 3, 3))
+
+
+@pytest.mark.parametrize("total", [1.5, 3.5])
+def test_none_hand_force_range_preserves_legacy_ready(total):
+    data = samples()
+    data[0].mul_(total / 2)
+    legacy = api().GraspStabilityMonitor(1, "cpu", window_steps=4)
+    optional = api().GraspStabilityMonitor(1, "cpu", window_steps=4, hand_force_range=None)
+    expected = fill(legacy, data)
+    actual = fill(optional, data)
+    assert expected["ready"].item() and actual["ready"].item()
+    for name in ("ready", "loaded", "force_cv", "relative_drift_m", "slip_rate_m_s"):
+        torch.testing.assert_close(actual[name], expected[name])
+
+
+@pytest.mark.parametrize("digits", [(0, 1), (0, 2, 4), (0, 1, 2, 3, 4)])
+def test_hand_force_range_requires_full_window_of_two_point_five_n_per_hand(digits):
+    monitor = api().GraspStabilityMonitor(2, "cpu", hand_force_range=(2.0, 3.0))
+    data = samples(2, fingers=(digits, digits))
+    data[0].mul_(2.5 / len(digits))
+    result = fill(monitor, data, steps=143)
+    assert not result["ready"].any()
+    assert not result["hand_force_in_range"].any()
+    assert not result["hand_force_min_n"].any()
+    assert not result["hand_force_max_n"].any()
+    result = step(monitor, data)
+    assert result["ready"].tolist() == [True, True]
+    assert result["hand_force_in_range"].shape == (2,)
+    assert result["hand_force_in_range"].dtype == torch.bool
+    assert result["hand_force_in_range"].all()
+    for name in ("hand_force_min_n", "hand_force_max_n"):
+        torch.testing.assert_close(result[name], data[0].new_full((2, 2), 2.5))
+        torch.testing.assert_close(getattr(monitor, name), result[name])
+
+
+def test_hand_force_range_includes_both_boundaries():
+    monitor = api().GraspStabilityMonitor(1, "cpu", 4, (2.0, 3.0))
+    data = samples()
+    data[0][:, 1].mul_(1.5)
+    result = fill(monitor, data)
+    assert result["ready"].item()
+    assert result["hand_force_in_range"].item()
+
+
+@pytest.mark.parametrize("hand", [0, 1])
+@pytest.mark.parametrize("total", [1.9, 3.1])
+def test_hand_force_range_rejects_either_hand_outside_limits(hand, total):
+    data = samples()
+    data[0].mul_(1.25)
+    data[0][:, hand].mul_(total / 2.5)
+    legacy = api().GraspStabilityMonitor(1, "cpu", window_steps=4)
+    assert fill(legacy, data)["ready"].item()  # Existing balance/CV/slip pass.
+    monitor = api().GraspStabilityMonitor(1, "cpu", window_steps=4, hand_force_range=(2, 3))
+    result = fill(monitor, data)
+    assert not result["ready"].item()
+    assert not result["hand_force_in_range"].item()
+    torch.testing.assert_close(result["hand_force_min_n"], data[0].sum(-1))
+    torch.testing.assert_close(result["hand_force_max_n"], data[0].sum(-1))
+
+
+@pytest.mark.parametrize("hand", [0, 1])
+@pytest.mark.parametrize("pulse", [1.5, 3.5])
+def test_hand_force_range_rejects_raw_pulse_even_with_mean_two_point_five(hand, pulse):
+    window = 144
+    monitor = api().GraspStabilityMonitor(1, "cpu", hand_force_range=(2, 3))
+    legacy = api().GraspStabilityMonitor(1, "cpu")
+    data = samples()
+    totals = data[0].new_full((window, 2), 2.5)
+    totals[:, hand] = 2.5 + (2.5 - pulse) / (window - 1)
+    totals[0, hand] = pulse
+    torch.testing.assert_close(totals.mean(0), data[0].new_full((2,), 2.5))
+    for total in totals:
+        data[0][:, :, :2] = total[None, :, None] / 2
+        result = step(monitor, data)
+        old_result = step(legacy, data)
+    assert old_result["ready"].item()  # Pulse is small enough to pass the old CV.
+    assert result["force_cv"].amax() < 0.25
+    assert not result["ready"].item()
+    assert not result["hand_force_in_range"].item()
+    torch.testing.assert_close(result["hand_force_min_n"], totals.amin(0)[None])
+    torch.testing.assert_close(result["hand_force_max_n"], totals.amax(0)[None])
+    assert step(monitor, data)["ready"].item()  # Bad raw sample leaves the ring.
+
+
+@pytest.mark.parametrize("finger_total,actual_total,ready", [(1.9, 2.5, True), (2.5, 3.1, False)])
+def test_hand_total_load_keyword_includes_palm_force(finger_total, actual_total, ready):
+    monitor = api().GraspStabilityMonitor(1, "cpu", window_steps=4, hand_force_range=(2, 3))
+    data = samples()
+    data[0].mul_(finger_total / 2)
+    total = data[0].new_full((1, 2), actual_total)
+    result = fill(monitor, data, hand_total_load_n=total)
+    assert result["ready"].item() == ready
+    assert result["hand_force_in_range"].item() == ready
+    torch.testing.assert_close(result["hand_force_min_n"], total)
+    torch.testing.assert_close(result["hand_force_max_n"], total)
+
+
+@pytest.mark.parametrize("fault", ["nan", "inf", "negative", "valid", "reset", "loads_nan"])
+def test_hand_force_history_invalid_rows_are_isolated(fault):
+    monitor = api().GraspStabilityMonitor(3, "cpu", window_steps=4, hand_force_range=(2, 3))
+    data = samples(3)
+    total = data[0].new_full((3, 2), 2.5)
+    assert fill(monitor, data, hand_total_load_n=total)["ready"].all()
+    monitor.latch(torch.arange(3), data[1])
+    valid, reset = torch.ones(3, dtype=torch.bool), torch.zeros(3, dtype=torch.bool)
+    if fault in ("nan", "inf", "negative"):
+        total[1, 0] = {"nan": float("nan"), "inf": float("inf"), "negative": -0.1}[fault]
+    elif fault == "valid":
+        valid[1] = False
+    elif fault == "reset":
+        reset[1] = True
+    else:
+        data[0][1, 0, 0] = float("nan")
+    result = step(monitor, data, valid=valid, reset=reset, hand_total_load_n=total)
+    assert result["ready"].tolist() == [True, False, True]
+    assert result["hand_force_in_range"].tolist() == [True, False, True]
+    for name in ("hand_force_min_n", "hand_force_max_n"):
+        assert not result[name][1].any()
+        torch.testing.assert_close(result[name][[0, 2]], total[[0, 2]])
+    error = monitor.anchor_error(data[1])
+    assert error[[0, 2]].eq(0).all() and torch.isinf(error[1])
+    data, total = samples(3), total.new_full((3, 2), 2.5)
+    assert not fill(monitor, data, steps=3, hand_total_load_n=total)["ready"][1]
+    assert step(monitor, data, hand_total_load_n=total)["ready"].all()
+
+
+@pytest.mark.parametrize("as_mask", [False, True])
+def test_selected_reset_clears_hand_force_history_and_preserves_other_rows(as_mask):
+    monitor = api().GraspStabilityMonitor(3, "cpu", window_steps=4, hand_force_range=(2, 3))
+    monitor.reset([1])  # Also safe before allocation.
+    data = samples(3)
+    total = data[0].new_full((3, 2), 2.5)
+    fill(monitor, data, hand_total_load_n=total)
+    total[1, 0] = 3.5
+    result = step(monitor, data, hand_total_load_n=total)  # Nonzero ring cursor.
+    assert result["ready"].tolist() == [True, False, True]
+    before = {name: value.clone() for name, value in result.items()}
+    monitor.reset(torch.tensor([False, True, False] if as_mask else [1]))
+    for name, old in before.items():
+        now = getattr(monitor, name)
+        torch.testing.assert_close(now[[0, 2]], old[[0, 2]])
+        assert not now[1].any()
+    total[1] = 2.5
+    for _ in range(3):
+        result = step(monitor, data, hand_total_load_n=total)
+        assert result["ready"].tolist() == [True, False, True]
+        assert not result["hand_force_in_range"][1]
+    result = step(monitor, data, hand_total_load_n=total)
+    assert result["ready"].all()
+    torch.testing.assert_close(result["hand_force_max_n"], total)
+
+
+@pytest.mark.parametrize("limits", [2.5, "23", (), (2,), (2, 3, 4), (3, 2), (-1, 3), (2, 2), (True, 3), ("2", 3), (float("nan"), 3), (2, float("inf"))])
+def test_bad_hand_force_range_is_rejected(limits):
+    with pytest.raises((ValueError, TypeError), match="hand_force_range"):
+        api().GraspStabilityMonitor(1, "cpu", hand_force_range=limits)
+
+
+@pytest.mark.parametrize("fault", ["shape", "integer", "dtype", "not_tensor"])
+def test_bad_hand_total_load_structure_does_not_mutate_history(fault):
+    monitor = api().GraspStabilityMonitor(1, "cpu", window_steps=4, hand_force_range=(2, 3))
+    data = samples()
+    total = data[0].new_full((1, 2), 2.5)
+    fill(monitor, data, hand_total_load_n=total)
+    malformed = {"shape": total[:, :1], "integer": total.long(), "dtype": total.float(), "not_tensor": [[2.5, 2.5]]}[fault]
+    with pytest.raises((ValueError, TypeError), match="hand_total_load_n"):
+        step(monitor, data, hand_total_load_n=malformed)
+    assert monitor.ready.all()
+    assert step(monitor, data, hand_total_load_n=total)["ready"].all()
+
+
+def test_hand_total_load_diagnostics_keep_dtype_and_detach_autograd():
+    monitor = api().GraspStabilityMonitor(1, "cpu", window_steps=4, hand_force_range=(2, 3))
+    data = samples(dtype=torch.float64)
+    total = data[0].new_full((1, 2), 2.5, requires_grad=True)
+    result = fill(monitor, data, hand_total_load_n=total)
+    for name in ("hand_force_min_n", "hand_force_max_n"):
+        assert result[name].dtype == total.dtype and result[name].device == total.device
+        assert not result[name].requires_grad
+
+
+def test_none_max_digit_ratio_preserves_legacy_mean_balance():
+    data = samples()
+    data[0][:, :, :2] = data[0].new_tensor([1.0, 1.6])
+    legacy = api().GraspStabilityMonitor(1, "cpu", 4, (2, 3))
+    optional = api().GraspStabilityMonitor(1, "cpu", 4, (2, 3), max_digit_ratio=None)
+    expected, actual = fill(legacy, data), fill(optional, data)
+    assert expected["ready"].item() and actual["ready"].item()
+    for name, value in expected.items():
+        torch.testing.assert_close(actual[name], value)
+
+
+@pytest.mark.parametrize("hand", [0, 1])
+@pytest.mark.parametrize("forces,ready", [([1.0, 1.6], False), ([1.2, 1.3], True), ([1.0, 1.5], True)])
+def test_max_digit_ratio_checks_either_hand_inside_total_force_band(hand, forces, ready):
+    data = samples()
+    data[0].mul_(1.25)
+    data[0][:, hand, :2] = data[0].new_tensor(forces)
+    assert fill(api().GraspStabilityMonitor(1, "cpu", 4, (2, 3)), data)["ready"].item()
+    monitor = api().GraspStabilityMonitor(1, "cpu", 4, (2, 3), max_digit_ratio=1.5)
+    result = fill(monitor, data)
+    assert result["hand_force_in_range"].item()
+    assert result["ready"].item() == ready
+    assert result["digit_ratio_ok"].shape == (1,)
+    assert result["digit_ratio_ok"].dtype == torch.bool
+    assert result["digit_ratio_ok"].item() == ready
+    torch.testing.assert_close(monitor.digit_ratio_ok, result["digit_ratio_ok"])
+
+
+@pytest.mark.parametrize("left,right", [((0, 2, 4), (1, 2, 3)), ((1, 3, 4), (0, 1, 4)), ((0, 1, 3), (0, 2, 3))])
+@pytest.mark.parametrize("forces,ready", [([0.7, 0.8, 1.0], True), ([0.6, 0.8, 1.1], False)])
+def test_max_digit_ratio_uses_all_loaded_digits_in_arbitrary_three_finger_combinations(left, right, forces, ready):
+    data = samples(fingers=(left, right))
+    for hand, digits in enumerate((left, right)):
+        data[0][:, hand, list(digits)] = data[0].new_tensor(forces)
+    assert fill(api().GraspStabilityMonitor(1, "cpu", 4, (2, 3)), data)["ready"].item()
+    monitor = api().GraspStabilityMonitor(1, "cpu", 4, (2, 3), max_digit_ratio=1.5)
+    result = fill(monitor, data)
+    assert result["hand_force_in_range"].item()
+    assert result["ready"].item() == ready
+    assert result["digit_ratio_ok"].item() == ready
+
+
+@pytest.mark.parametrize("hand", [0, 1])
+def test_max_digit_ratio_rejects_raw_imbalance_even_when_finger_means_are_equal(hand):
+    data = samples()
+    monitor = api().GraspStabilityMonitor(1, "cpu", 4, (2, 3), max_digit_ratio=1.5)
+    legacy = api().GraspStabilityMonitor(1, "cpu", 4, (2, 3))
+    raw = data[0].new_tensor([[1.0, 1.6], [1.6, 1.0], [1.3, 1.3], [1.3, 1.3]])
+    torch.testing.assert_close(raw.mean(0), raw.new_full((2,), 1.3))
+    for forces in raw:
+        data[0][:, :, :2] = 1.3
+        data[0][:, hand, :2] = forces
+        result, old_result = step(monitor, data), step(legacy, data)
+    assert old_result["ready"].item()
+    assert result["force_cv"].amax() < 0.25
+    assert result["hand_force_in_range"].item()
+    assert not result["digit_ratio_ok"].item() and not result["ready"].item()
+    assert not step(monitor, data)["ready"].item()  # Second bad step remains.
+    result = step(monitor, data)
+    assert result["ready"].item() and result["digit_ratio_ok"].item()
+
+
+@pytest.mark.parametrize("fault", ["selected_reset", "valid", "loads_nan"])
+def test_max_digit_ratio_full_window_and_per_row_history_reset(fault):
+    monitor = api().GraspStabilityMonitor(3, "cpu", 4, (2, 3), max_digit_ratio=1.5)
+    monitor.reset([1])
+    assert not monitor.digit_ratio_ok.any()
+    data = samples(3)
+    data[0].mul_(1.25)
+    result = fill(monitor, data, steps=3)
+    assert not result["digit_ratio_ok"].any()
+    assert step(monitor, data)["digit_ratio_ok"].all()
+    data[0][1, 0, :2] = data[0].new_tensor([1.0, 1.6])
+    result = step(monitor, data)
+    assert result["ready"].tolist() == [True, False, True]
+    assert result["digit_ratio_ok"].tolist() == [True, False, True]
+    if fault == "selected_reset":
+        monitor.reset([1])
+        assert monitor.digit_ratio_ok.tolist() == [True, False, True]
+    elif fault == "valid":
+        step(monitor, data, valid=torch.tensor([True, False, True]))
+    else:
+        data[0][1, 0, 0] = float("nan")
+        step(monitor, data)
+    data[0].zero_()
+    data[0][:, :, :2] = 1.25
+    result = fill(monitor, data, steps=3)
+    assert result["ready"].tolist() == [True, False, True]
+    assert result["digit_ratio_ok"].tolist() == [True, False, True]
+    result = step(monitor, data)
+    assert result["ready"].all() and result["digit_ratio_ok"].all()
+
+
+def test_max_digit_ratio_one_allows_exact_equal_sharing():
+    monitor = api().GraspStabilityMonitor(1, "cpu", 4, (2, 3), max_digit_ratio=1.0)
+    data = samples()
+    data[0].mul_(1.25)
+    assert fill(monitor, data)["ready"].item()
+
+
+@pytest.mark.parametrize("ratio", [True, 0, -1, 0.99, "1.5", [1.5], float("nan"), float("inf")])
+def test_invalid_max_digit_ratio_is_rejected(ratio):
+    with pytest.raises((ValueError, TypeError), match="max_digit_ratio"):
+        api().GraspStabilityMonitor(1, "cpu", max_digit_ratio=ratio)
+
+
+@pytest.mark.parametrize("palm_hand", [0, 1])
+@pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+def test_hand_balance_uses_palm_inclusive_total_when_finger_totals_differ(palm_hand, dtype):
+    monitor = api().GraspStabilityMonitor(1, "cpu", 4, (2, 3), max_digit_ratio=1.5)
+    data = samples(dtype=dtype)
+    data[0][:, :, :2] = 1.25
+    data[0][:, palm_hand, :2] = 0.75  # 1.5 N from fingers plus 1 N from palm.
+    total = data[0].new_full((1, 2), 2.5)
+    result = fill(monitor, data, hand_total_load_n=total)
+    assert result["loaded"].sum() == 4
+    assert not result["force_cv"].any()
+    assert not result["relative_drift_m"].any() and not result["slip_rate_m_s"].any()
+    assert result["hand_force_in_range"].item() and result["digit_ratio_ok"].item()
+    assert result["ready"].item()
+
+
+@pytest.mark.parametrize("palm_hand", [0, 1])
+def test_hand_balance_rejects_actual_total_imbalance_hidden_by_equal_finger_loads(palm_hand):
+    monitor = api().GraspStabilityMonitor(1, "cpu", window_steps=4, max_digit_ratio=1.5)
+    data = samples()
+    total = data[0].new_full((1, 2), 2.0)
+    total[:, palm_hand] = 3.2  # Fingers are still 2 N per hand; palm adds 1.2 N.
+    result = fill(monitor, data, hand_total_load_n=total)
+    assert result["loaded"].sum() == 4 and result["digit_ratio_ok"].item()
+    assert not result["ready"].item()
+
+
+@pytest.mark.parametrize("totals,ready", [([4, 4, 4, 2], False), ([2, 2, 2, 4], True)])
+def test_hand_balance_uses_actual_total_window_mean_instead_of_latest_sample(totals, ready):
+    monitor = api().GraspStabilityMonitor(1, "cpu", window_steps=4, max_digit_ratio=1.5)
+    data = samples()
+    for right_total in totals:
+        total = data[0].new_tensor([[2.0, right_total]])
+        result = step(monitor, data, hand_total_load_n=total)
+    assert result["ready"].item() == ready
+
+
+@pytest.mark.parametrize("ratio,ready", [(1.5, True), (1.6, False)])
+def test_hand_balance_none_total_keeps_digit_sum_fallback(ratio, ready):
+    data = samples()
+    data[0][:, 1].mul_(ratio)
+    monitor = api().GraspStabilityMonitor(1, "cpu", window_steps=4, max_digit_ratio=1.5)
+    result = fill(monitor, data, hand_total_load_n=None)
+    assert result["ready"].item() == ready

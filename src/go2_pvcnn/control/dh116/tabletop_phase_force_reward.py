@@ -31,7 +31,7 @@ CONTRACT = dict(
     no_physics_change=True, no_measurement_fabrication=True)
 
 
-def reward_terms(phase,normal,lift_force,weight,loads,below,valid,dt,*,phase_free=False):
+def reward_terms(phase,normal,lift_force,weight,loads,below,valid,dt,*,phase_free=False,unrestricted_load=False):
     """Return two (N,) float64 rewards on the phase tensor's device.
 
     A single qualifying hand earns up to half the rate. The signed total gate
@@ -67,8 +67,11 @@ def reward_terms(phase,normal,lift_force,weight,loads,below,valid,dt,*,phase_fre
     # underflow to a zero half-weight and produce 0/0 for a zero force.
     normal_support=(normal.clamp_min(0)/weight[:,None]*2.).clamp_max(1.)
     lift_support=(lift_force.clamp_min(0)/weight[:,None]*2.).clamp_max(1.)
-    grasp_hands=below & (loads>.05) & (loads<=12.)
-    lift_hands=below & (loads>=2.) & (loads<=12.)
+    grasp_hands=below & (loads>.05)
+    lift_hands=below & (loads>.05)
+    if not unrestricted_load:
+        grasp_hands &= loads<=12.
+        lift_hands &= (loads>=2.) & (loads<=12.)
     grasp_live=valid & (torch.ones_like(valid) if phase_free else ((phase==1)|(phase==2))) & (normal.sum(1)>=0)
     lift_live=valid & (torch.ones_like(valid) if phase_free else (phase==3)) & (lift_force.sum(1)>=0)
     grasp=(normal_support*grasp_hands).mean(1)*(2.*seconds)

@@ -14,6 +14,9 @@ CONTRACT=dict(version='continuous_free_grasp_lift_v1',stage_flow='none',
 
 
 def bilateral_contact(task):
+    if getattr(task,'surface_force_sharing',False):
+        from .tabletop_surface_exploration import allocation
+        return allocation(task)['paired'].all(-1)
     return (task.m['contact_valid'] & (task.m['hand_object_loads']>.05)).all(1)
 
 

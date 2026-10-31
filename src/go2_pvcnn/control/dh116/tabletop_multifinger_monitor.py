@@ -74,10 +74,25 @@ class GraspStabilityMonitor:
     0.05 N on *every* sample. CV is population std / mean on raw samples.
     Each hand needs >=2 loaded digits, CV <=0.25, finger means within 0.5..1.5
     of that hand's loaded-finger mean, and an opposing loaded pair on every
-    sample (normalized normal dot <=-0.25). Total hand mean loads have ratio
-    <=1.5. Any digit whose window mean exceeds 0.05 N must also be continuously
+    sample (normalized normal dot <=-0.25). Total hand mean loads, including
+    palm support when supplied, have ratio <=1.5. Any digit whose window mean
+    exceeds 0.05 N must also be continuously
     loaded and stable: intermittent extra support cannot be excluded to qualify
     using only two quieter fingers. Unloaded zero normals are allowed.
+
+    Optional hand_force_range=(min_n, max_n) additionally requires each hand's
+    total normal force to stay within those inclusive limits on every raw sample
+    of the full window. update's keyword hand_total_load_n[N,2] includes palm
+    support; it defaults to loads.sum(-1). None preserves the old ready rules.
+    Diagnostics hand_force_in_range[N], hand_force_min_n[N,2] and
+    hand_force_max_n[N,2] are zero/False until the row has a full window.
+    With no configured range, hand_force_in_range is True for full valid rows.
+
+    Optional max_digit_ratio (finite, >=1) additionally limits max/min force
+    across all loaded digits of each hand on every raw sample. It applies to
+    any finger combination, alongside the original mean-balance and CV rules.
+    None keeps the old rules. Diagnostic digit_ratio_ok[N] is False until full;
+    without a ratio limit it is True for full valid rows.
 
     Drift is a conservative spatial envelope: maximum bounding-box diagonal
     over the six rod points across the window. This bounds every pairwise point
@@ -95,13 +110,30 @@ class GraspStabilityMonitor:
     during lift to detect cumulative drift beyond the rolling window.
     """
 
-    def __init__(self, n, device, window_steps=144):
+    def __init__(self, n, device, window_steps=144, hand_force_range=None, max_digit_ratio=None):
         if isinstance(n, bool) or not isinstance(n, Integral) or n < 1:
             raise ValueError("n must be a positive integer")
         if isinstance(window_steps, bool) or not isinstance(window_steps, Integral) or window_steps < 2:
             raise ValueError("window_steps must be an integer >=2")
+        if hand_force_range is not None:
+            if not isinstance(hand_force_range, (tuple, list)) or len(hand_force_range) != 2:
+                raise ValueError("hand_force_range must be a (min_n, max_n) pair or None")
+            if any(isinstance(bound, bool) or not isinstance(bound, Real) or not math.isfinite(bound)
+                   for bound in hand_force_range):
+                raise ValueError("hand_force_range bounds must be finite real numbers")
+            lower, upper = hand_force_range
+            if not 0 <= lower < upper:
+                raise ValueError("hand_force_range must satisfy 0 <= min_n < max_n")
+            hand_force_range = (float(lower), float(upper))
+        if max_digit_ratio is not None:
+            if (isinstance(max_digit_ratio, bool) or not isinstance(max_digit_ratio, Real)
+                    or not math.isfinite(max_digit_ratio) or max_digit_ratio < 1):
+                raise ValueError("max_digit_ratio must be a finite real number >=1 or None")
+            max_digit_ratio = float(max_digit_ratio)
         self.n = int(n)
         self.window_steps = int(window_steps)
+        self.hand_force_range = hand_force_range
+        self.max_digit_ratio = max_digit_ratio
         self.device = torch.empty(0, device=device).device
         self._dtype = None  # Infer floating precision from the first measurements.
         self._cursor = 0
@@ -112,11 +144,16 @@ class GraspStabilityMonitor:
         self.force_cv = torch.zeros((self.n, 2, 5), device=self.device)
         self.relative_drift_m = torch.zeros(self.n, device=self.device)
         self.slip_rate_m_s = torch.zeros(self.n, device=self.device)
+        self.hand_force_in_range = torch.zeros(self.n, dtype=torch.bool, device=self.device)
+        self.hand_force_min_n = torch.zeros((self.n, 2), device=self.device)
+        self.hand_force_max_n = torch.zeros((self.n, 2), device=self.device)
+        self.digit_ratio_ok = torch.zeros(self.n, dtype=torch.bool, device=self.device)
 
     def _allocate(self, dtype):
         self._dtype = dtype
         options = dict(device=self.device, dtype=dtype)
         self._loads = torch.zeros((self.window_steps, self.n, 2, 5), **options)
+        self._hand_total_loads = torch.zeros((self.window_steps, self.n, 2), **options)
         self._points = torch.zeros((self.window_steps, self.n, 2, 3, 3), **options)
         self._opposition = torch.zeros(
             (self.window_steps, self.n, 2, 5, 5), device=self.device, dtype=torch.bool
@@ -148,10 +185,15 @@ class GraspStabilityMonitor:
         self.force_cv.masked_fill_(rows[:, None, None], 0)
         self.relative_drift_m.masked_fill_(rows, 0)
         self.slip_rate_m_s.masked_fill_(rows, 0)
+        self.hand_force_in_range.masked_fill_(rows, False)
+        self.hand_force_min_n.masked_fill_(rows[:, None], 0)
+        self.hand_force_max_n.masked_fill_(rows[:, None], 0)
+        self.digit_ratio_ok.masked_fill_(rows, False)
         if self._dtype is None:
             return
         self._anchor.masked_fill_(rows[:, None, None, None], 0)
         self._loads.masked_fill_(rows[None, :, None, None], 0)
+        self._hand_total_loads.masked_fill_(rows[None, :, None], 0)
         self._points.masked_fill_(rows[None, :, None, None, None], 0)
         self._opposition.masked_fill_(rows[None, :, None, None, None], False)
 
@@ -167,8 +209,15 @@ class GraspStabilityMonitor:
         self._clear(self._selected_rows(ids))
 
     @torch.no_grad()
-    def update(self, loads, relative_points, normals, dt, valid, reset):
-        """Consume one step; dt is this sample's positive scalar interval in seconds."""
+    def update(self, loads, relative_points, normals, dt, valid, reset, *, hand_total_load_n=None):
+        """Consume one step; dt is the positive scalar interval in seconds.
+
+        hand_total_load_n is optional [N,2] actual total normal force, including
+        palm support, with the same floating dtype/device as loads. If omitted,
+        sum the five digit loads. These totals drive both the force range and
+        cross-hand window-mean balance. Nonfinite/negative totals invalidate only their
+        own row; malformed tensor structure raises before changing any history.
+        """
         _tensor("loads", loads, (self.n, 2, 5), device=self.device, dtype=self._dtype)
         _tensor("relative_points", relative_points, (self.n, 2, 3, 3), device=self.device, dtype=loads.dtype)
         _tensor("normals", normals, (self.n, 2, 5, 3), device=self.device, dtype=loads.dtype)
@@ -176,13 +225,18 @@ class GraspStabilityMonitor:
         _tensor("reset", reset, (self.n,), device=self.device, dtype=torch.bool)
         if isinstance(dt, bool) or not isinstance(dt, Real) or not math.isfinite(dt) or dt <= 0:
             raise ValueError("dt must be a finite positive scalar")
+        if hand_total_load_n is None:
+            hand_total_load_n = loads.sum(dim=-1)
+        else:
+            _tensor("hand_total_load_n", hand_total_load_n, (self.n, 2), device=self.device, dtype=loads.dtype)
         if self._dtype is None:
             self._allocate(loads.dtype)
 
         good = valid & ~reset
-        for measurement in (loads, relative_points, normals):
+        for measurement in (loads, relative_points, normals, hand_total_load_n):
             good = good & torch.isfinite(measurement).flatten(1).all(dim=1)
         good = good & (loads >= 0).flatten(1).all(dim=1)
+        good = good & (hand_total_load_n >= 0).all(dim=1)
         self._clear(~good)
         # torch.where also removes NaN/Inf before any reductions or divisions.
         clean_loads = torch.where(good[:, None, None], loads, 0)
@@ -198,6 +252,7 @@ class GraspStabilityMonitor:
         opposed = (dot <= -0.25) & nonzero[..., :, None] & nonzero[..., None, :]
 
         self._loads[self._cursor].copy_(clean_loads)
+        self._hand_total_loads[self._cursor].copy_(torch.where(good[:, None], hand_total_load_n, 0))
         self._points[self._cursor].copy_(clean_points)
         self._opposition[self._cursor].copy_(opposed)
         self._dt[self._cursor] = dt
@@ -205,17 +260,33 @@ class GraspStabilityMonitor:
         self._count.add_(good).clamp_(max=self.window_steps)
         full = self._count == self.window_steps
 
+        hand_min = self._hand_total_loads.amin(dim=0)
+        hand_max = self._hand_total_loads.amax(dim=0)
+        self.hand_force_min_n = torch.where(full[:, None], hand_min, 0)
+        self.hand_force_max_n = torch.where(full[:, None], hand_max, 0)
+        self.hand_force_in_range = full.clone()
+        if self.hand_force_range is not None:
+            lower, upper = self.hand_force_range
+            self.hand_force_in_range &= (hand_min >= lower).all(dim=-1) & (hand_max <= upper).all(dim=-1)
+
         mean = self._loads.mean(dim=0)
         std = self._loads.std(dim=0, unbiased=False)
         cv = std / mean.clamp_min(torch.finfo(loads.dtype).tiny)
         self.force_cv = torch.where(full[:, None, None], cv, 0)
         self.loaded = (self._loads.amin(dim=0) > 0.05) & full[:, None, None]
         count = self.loaded.sum(dim=-1)
+        self.digit_ratio_ok = full.clone()
+        if self.max_digit_ratio is not None:
+            digit_min = torch.where(self.loaded[None], self._loads, float("inf")).amin(dim=-1)
+            digit_max = torch.where(self.loaded[None], self._loads, 0).amax(dim=-1)
+            self.digit_ratio_ok &= (count > 0).all(dim=-1) & (
+                digit_max <= self.max_digit_ratio * digit_min
+            ).all(dim=(0, 2))
         finger_mean = (mean * self.loaded).sum(dim=-1) / count.clamp_min(1)
         balanced = (mean >= 0.5 * finger_mean[..., None]) & (mean <= 1.5 * finger_mean[..., None])
         participating = mean > 0.05
         stable_digits = ((~participating) | (self.loaded & balanced & (cv <= 0.25))).all(dim=(1, 2))
-        hand_load = mean.sum(dim=-1)
+        hand_load = self._hand_total_loads.mean(dim=0)
         hand_balance = (hand_load.amin(dim=-1) > 0) & (hand_load.amax(dim=-1) <= 1.5 * hand_load.amin(dim=-1))
         pairs = self.loaded[..., :, None] & self.loaded[..., None, :]
         # An opposing pair must exist in each hand on every raw sample.
@@ -231,12 +302,14 @@ class GraspStabilityMonitor:
         self.relative_drift_m = torch.where(full, drift, 0)
         self.slip_rate_m_s = torch.where(full, rate, 0)
         self.ready = (
-            full & (count >= 2).all(dim=-1) & stable_digits & hand_balance & opposition
+            full & self.hand_force_in_range & self.digit_ratio_ok
+            & (count >= 2).all(dim=-1) & stable_digits & hand_balance & opposition
             & (drift <= 0.0005) & (rate <= 0.001)
             & torch.isfinite(cv).all(dim=(1, 2))
         )
         return {name: getattr(self, name) for name in (
-            "ready", "loaded", "force_cv", "relative_drift_m", "slip_rate_m_s"
+            "ready", "loaded", "force_cv", "relative_drift_m", "slip_rate_m_s",
+            "hand_force_in_range", "hand_force_min_n", "hand_force_max_n", "digit_ratio_ok"
         )}
 
     @torch.no_grad()

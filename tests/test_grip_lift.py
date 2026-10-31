@@ -7,6 +7,20 @@ import math
 import pytest
 import torch
 
+
+@pytest.mark.parametrize('extra', [
+    ['--solve-articulation-contact-last'], ['--velocity-iterations','64']])
+def test_diagnostic_cli_accepts_explicit_solver_probe_before_starting_isaac(tmp_path, monkeypatch, extra):
+    import importlib,json,sys
+    driver=importlib.import_module('scripts.run_dh116_grip_lift')
+    candidate=tmp_path/'candidate.json'
+    candidate.write_text(json.dumps({'candidates':[{'geometry':dict(penetration=0.,object_in_hand=0.,self=0.,minimum_clearance_m=.001)}]}))
+    class ReachedLauncher(Exception): pass
+    def stop_before_launch(): raise ReachedLauncher
+    monkeypatch.setattr(driver,'awake_launcher',stop_before_launch)
+    monkeypatch.setattr(sys,'argv',['driver','--candidates',str(candidate),'--output',str(tmp_path/'out'),*extra])
+    with pytest.raises(ReachedLauncher):driver.entry()
+
 from go2_pvcnn.control.dh116.linear_coupling import active_limits
 
 

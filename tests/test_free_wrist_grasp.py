@@ -89,6 +89,19 @@ def test_regular_policy_keeps_its_existing_follower_correction():
     assert (t.command[:,8]<middle[8]).all()
 
 
+def test_explicit_teacher_arbitrary_bearing_digit_keeps_force_target_while_other_slots_correct():
+    t,w=setup();middle=(t.low+t.high)/2
+    t.command[:]=middle;t.m['q'][:]=middle
+    t.m['mimic_errors'][:,2]=-.03
+    t.teacher_force_controlled_digits=torch.zeros(2,2,5,dtype=torch.bool)
+    t.teacher_force_controlled_digits[0,0,2]=True
+    action=torch.zeros(2,26);action[:,3]=.1
+    module().control(t,action,torch.ones(2,dtype=torch.bool),.01)
+    assert t.command[0,3]>middle[3]
+    assert t.command[1,3]<middle[3]
+    assert (t.command>=t.low).all() and (t.command<=t.high).all()
+
+
 def test_independent_wrist_translation_and_rotation_velocity_targets():
     t,w=setup();action=torch.zeros(2,26);action[:,-2:]=-.4
     action[0,12]=1.;action[0,18]=1.;action[1,17]=1.;action[1,23]=-1.

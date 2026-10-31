@@ -217,10 +217,16 @@ class TensorTask:
     def done(self): return (self.failure!=0)|self.success
 
     def reset(self, ids, measurement):
+        if getattr(self,'surface_force_sharing',False) and self.surface_redistribution is not False:
+            self.surface_redistribution.reset(ids)
         if hasattr(self,'manual_joint_contact'):self.manual_joint_contact.reset(ids)
         if hasattr(self,'stable_lift_reward'):self.stable_lift_reward.reset(ids)
         if hasattr(self,'manual_lift_qualified'):self.manual_lift_qualified[ids]=False
         ids=torch.as_tensor(ids,device=self.device,dtype=torch.long)
+        if getattr(self,'surface_contact_history',None) is not None:
+            self.surface_contact_history.reset(ids)
+        if hasattr(self,'surface_lift_success'):self.surface_lift_success.reset(ids)
+        if hasattr(self,'surface_slip_tracking'):self.surface_slip_tracking.reset(ids)
         if hasattr(self,'policy_lift_hold'):self.policy_lift_hold.reset(ids)
         if hasattr(self,'palm_reposition'):self.palm_reposition.reset(ids)
         if hasattr(self,'lift_grasp_hold'):self.lift_grasp_hold.reset(ids)
@@ -265,6 +271,9 @@ class TensorTask:
         return self.actions
 
     def grip_force_ready(self,loads,*,lifting=False):
+        if getattr(self,'surface_force_sharing',False):
+            from .tabletop_surface_exploration import allocation
+            return allocation(self)['paired'].all(-1)
         if getattr(self,'force_region',False):
             from .tabletop_policy_force_region import force_ready
             reference=self.f_requested
@@ -433,6 +442,8 @@ class TensorTask:
         if getattr(self,'free_wrist_grasp',False):
             from .tabletop_free_wrist_grasp import observe
             parts+=(observe(self),)
+        if getattr(self,'surface_contact_history',None) is not None:
+            parts+=(self.surface_contact_history.features(),)
         return torch.cat(parts,dim=1).float()
 
     def consume(self, measurement, live, dt, *, vertical_force_n=None, lift_vertical_force_n=None,
@@ -519,6 +530,9 @@ class TensorTask:
         self.failure[bad]=FAILURE_CODES['nonfinite_state']; self.nonfinite|=bad
         self.reward[bad]-=25.; self.terms['failure'][bad]-=25.
         valid=live&finite
+        if getattr(self,'surface_contact_history',None) is not None:
+            self.surface_contact_history.update(new['effective_pad_loads_n'],new['effective_pad_vectors_w'],
+                new['effective_pad_depth_m'],dt)
         self.force_scoring_started |= valid&(previous_phase>=2)
         for key in self.keys: self.m[key][valid]=new[key][valid]
         for key in ('contact_center_relative_m','contact_normal_w','contact_count',
@@ -543,8 +557,9 @@ class TensorTask:
         active=valid&~jointbad
         self.elapsed[active]+=dt
         maximum=m['object_link_loads'].flatten(1).amax(dim=1)
+        reference_bottom=getattr(self,'surface_reference_bottom_m',.30)
         for reason,condition in (('table_penetration',m['clearance']<-.001),('excess_force',maximum>30.),
-                ('object_dropped',m['bottom']<.29),('timeout',(self.elapsed>15.)&~torch.full_like(active,getattr(self,'manual_control',False)))):
+                ('object_dropped',m['bottom']<reference_bottom-.01),('timeout',(self.elapsed>getattr(self,'episode_timeout_s',15.))&~torch.full_like(active,getattr(self,'manual_control',False)))):
             self.failure[active&(self.failure==0)&condition]=FAILURE_CODES[reason]
         active &= self.failure==0
         close=active&(self.phase<3)
@@ -606,12 +621,32 @@ class TensorTask:
                 device=self.device,dtype=self.palm_targets.dtype)
             self.policy_lift_hold.capture(self,transition&(self.phase==3)&(self.failure==0),applied_palm)
         lift=active&(previous_phase==3)
-        stable=(m['bottom']>=.33)&(speed<.03)&(self.slip<=.02)&(lift_vertical_force_n>=0.)
+        stable=(m['bottom']>=reference_bottom+.03)&(speed<.03)&(self.slip<=.02)&(lift_vertical_force_n>=0.)
+        if getattr(self,'surface_force_sharing',False):
+            from .tabletop_surface_exploration import qualified_pad_contact
+            stable &= qualified_pad_contact(self)&(self.slip<=.0005)
         if getattr(self,'free_grasp_lift',False):
             stable &= bilateral_contact(self)
         elif getattr(self,'force_region',False):stable &= self.grip_force_ready(loads,lifting=True)
-        self.success_time[lift]=torch.where(stable,self.success_time+dt,0.)[lift]
-        event=lift&(self.success_time>=.5-1e-12)
+        hold_seconds=getattr(self,'surface_success_hold_s',.5)
+        if getattr(self,'surface_force_sharing',False):
+            center=m['object_relative']+m['wrist_pose'][:,:,:3].mean(1)
+            progress=self.surface_lift_success.update(torch.cat((center,m['object_quat']),-1),
+                m['wrist_pose'],m['effective_pad_loads_n'],m['effective_pad_vectors_w'],
+                m['effective_pad_depth_m'],m['rejected_contact_loads_n'].sum(-1),m['bottom'],
+                m['object_velocity'],active,dt)
+            if hasattr(self,'surface_slip_tracking'):
+                # Reward-only observer. Its events never affect real success,
+                # episode resets, policy actions or actuator targets.
+                self.surface_slip_tracking.update(torch.cat((center,m['object_quat']),-1),
+                    m['wrist_pose'],m['effective_pad_loads_n'],m['effective_pad_vectors_w'],
+                    m['effective_pad_depth_m'],m['rejected_contact_loads_n'].sum(-1),m['bottom'],
+                    m['object_velocity'],active,dt)
+            self.success_time[lift]=progress['duration'][lift]
+            event=lift&progress['event']
+        else:
+            self.success_time[lift]=torch.where(stable,self.success_time+dt,0.)[lift]
+            event=lift&(self.success_time>=hold_seconds-1e-12)
         if getattr(self,'manual_control',False):
             self.manual_lift_qualified.copy_(event)
             event=torch.zeros_like(event)
@@ -630,15 +665,15 @@ class TensorTask:
         contact_delta=5.*torch.clamp(loads.sum(dim=1)/10.,0.,1.)-old_contact
         pieces=dict(contact=torch.where(previous_phase==1,contact_delta,
                 torch.where(previous_phase==2,torch.clamp(contact_delta,max=0.),0.)),
-            lift=torch.where(previous_phase==3,5.*(torch.clamp((m['bottom']-.30)/.03,0.,1.)-torch.clamp((old_bottom-.30)/.03,0.,1.)),0.),
+            lift=torch.where(previous_phase==3,5.*(torch.clamp((m['bottom']-reference_bottom)/.03,0.,1.)-torch.clamp((old_bottom-reference_bottom)/.03,0.,1.)),0.),
             contact_dwell=torch.where(previous_phase<3,progress,0.),
-            lift_dwell=torch.where(previous_phase==3,2.*(torch.clamp(self.success_time/.5,0.,1.)-torch.clamp(old_success_time/.5,0.,1.)),0.),
+            lift_dwell=torch.where(previous_phase==3,2.*(torch.clamp(self.success_time/hold_seconds,0.,1.)-torch.clamp(old_success_time/hold_seconds,0.,1.)),0.),
             slip=torch.where(previous_phase==2,-torch.clamp((torch.clamp(self.slip-.003,min=0.)/.003)**2,max=25)*dt,
-                torch.where(m['bottom']>.305,-torch.clamp((torch.clamp(self.slip-.02,min=0.)/.02)**2,max=25)*dt,0.)),
+                torch.where(m['bottom']>reference_bottom+.005,-torch.clamp((torch.clamp(self.slip-.02,min=0.)/.02)**2,max=25)*dt,0.)),
             smoothness=-.05*torch.clamp((((self.command-self.old_command)/.1)**2).mean(dim=1),max=25)*dt,
             force=-.1*torch.clamp(torch.clamp(maximum-15.,min=0.)**2/225,max=25)*dt,
             time=torch.full_like(self.elapsed,-.1*dt),success=torch.where(event,25.,0.),failure=torch.where(self.failure!=0,-25.,0.))
-        if self.contact_reward_window is not None:
+        if self.contact_reward_window is not None and not getattr(self,'surface_force_sharing',False):
             from .tabletop_contact_window import window_credit
             eligible=valid&(self.failure==0)
             clock,credit=window_credit(self.contact_reward_clock,self.contact_reward_paid,
@@ -671,7 +706,7 @@ class TensorTask:
                 downward_enabled |= (previous_phase==1)&close_contact
             pieces['downward_force']=torch.where(downward_enabled,
                 -.5*torch.clamp(-vertical_force_n,min=0.)*dt,0.)
-        if getattr(self,'force_region',False):
+        if getattr(self,'force_region',False) and not getattr(self,'surface_force_sharing',False):
             below=m['contact_valid']&m['contact_all_below_centerline']
             in_band=(loads>=2.)&(loads<=12.)
             eligible=valid&(self.failure==0)
@@ -709,15 +744,27 @@ class TensorTask:
             from .tabletop_phase_force_reward import reward_terms
             force_eligible=valid&(self.failure==0)
             hand_mask=force_eligible[:,None]
+            if getattr(self,'surface_force_sharing',False):
+                from .tabletop_surface_exploration import allocation,verified_support
+                force_contacts=hand_mask&allocation(self)['paired']
+                phase_normal,phase_lift=verified_support(self,hand_lift_force_n)
+                phase_loads=m['effective_pad_loads_n'].sum(-1)
+                # Native pad contact has its own reward. The legacy all-link
+                # positive contact term would otherwise credit a hand back.
+                pieces['contact']=torch.zeros_like(self.reward)
+            else:
+                force_contacts=hand_mask&m['contact_valid']&m['contact_all_below_centerline']
+                phase_normal=m['vertical_hand_force_n'];phase_lift=hand_lift_force_n;phase_loads=loads
             # Only reward inputs for already-ineligible rows are neutralized;
             # raw measurements/nonfinite failure flags remain untouched for guards.
             pieces.update(reward_terms(previous_phase,
-                torch.where(hand_mask,m['vertical_hand_force_n'],0.),
-                torch.where(hand_mask,hand_lift_force_n,0.),
+                torch.where(hand_mask,phase_normal,0.),
+                torch.where(hand_mask,phase_lift,0.),
                 torch.where(force_eligible,object_weight_n,1.),
-                torch.where(hand_mask,loads,0.),
-                hand_mask&m['contact_valid']&m['contact_all_below_centerline'],force_eligible,dt,
-                phase_free=getattr(self,'free_grasp_lift',False)))
+                torch.where(hand_mask,phase_loads,0.),
+                force_contacts,force_eligible,dt,
+                phase_free=getattr(self,'free_grasp_lift',False),
+                unrestricted_load=getattr(self,'surface_force_sharing',False)))
         if getattr(self,'free_wrist_grasp',False):
             from .tabletop_free_wrist_grasp import add_feedback
             add_feedback(self,pieces,valid,dt)

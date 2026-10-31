@@ -14,7 +14,9 @@ from isaacsim.core.cloner import GridCloner
 from isaaclab.assets import Articulation, RigidObject
 from isaaclab.sensors import ContactSensor, ContactSensorCfg
 from pxr import Gf, Usd, UsdGeom, UsdPhysics
-from .tabletop_vec_isaac import spawn_scene
+from .tabletop_vec_isaac import spawn_scene, wire_spawn_configuration
+from .tabletop_end_supported_scene import (plan_end_support_scene, translate_end_support_seed,
+                                          wire_geometry_from_spawn, author_end_supports)
 from .tabletop_batch_geometry import collision_clearance, rotated_points, normalized_convex
 from .linear_coupling import ACTIVE, JOINTS, MIMIC
 from .tabletop_adaptive_backend import adaptive_step, select_grasp_command
@@ -33,6 +35,18 @@ class GpuWorld:
         self.n, self.dt = args.num_envs, 1/args.physics_hz
         self.device = args.device
         self.layout = copy.deepcopy(layout)
+        self.end_support_scene = None
+        clearance = float(getattr(args, 'end_support_clearance_m', 0.))
+        if not np.isfinite(clearance) or clearance < 0:
+            raise ValueError('end support clearance must be finite and nonnegative')
+        if clearance > 0:
+            length, radius = wire_geometry_from_spawn(wire_spawn_configuration(args))
+            self.layout, self.end_support_scene = plan_end_support_scene(
+                layout, clearance, wire_length_m=length, wire_radius_m=radius)
+        # Local support height per slot; consumers add origins only to world-Z.
+        reference = (self.end_support_scene['lift_reference_bottom_m'] if self.end_support_scene
+                     else float(layout['table_center'][2] + layout['table_size'][2] / 2))
+        self.lift_reference_bottom_m = np.full(self.n, reference, dtype=float)
         
         self.full_hand_contact = bool(getattr(args,'full_hand_contact',False))
         
@@ -40,7 +54,9 @@ class GpuWorld:
         self.cloner = GridCloner(spacing=args.env_spacing_m)
         self.cloner.define_base_env('/World/envs')
         self.paths = self.cloner.generate_paths('/World/envs/env', self.n)
-        self.source = spawn_scene(sim, args, layout, sources, self.paths[0], np.zeros(3))
+        self.source = spawn_scene(sim, args, self.layout, sources, self.paths[0], np.zeros(3))
+        if self.end_support_scene is not None:
+            author_end_supports(sim.stage, self.paths[0], self.end_support_scene)
         # PhysX cooks GPU convex data before applying mesh scale. The original
         # half-meter, half-millimeter wall prisms exceed its aspect-ratio limit.
         # Normalize cooking coordinates and restore their EXACT world vertices;
@@ -100,6 +116,8 @@ class GpuWorld:
 
     def bind(self, seed):
         self.seed = copy.deepcopy(seed)
+        if self.end_support_scene is not None:
+            self.seed = translate_end_support_seed(seed, self.end_support_scene)
         self.mounts=None
         if getattr(self.args,'palm_transport','fixed_pose')=='driven_carriage':
             from .tabletop_palm_mount import MountView

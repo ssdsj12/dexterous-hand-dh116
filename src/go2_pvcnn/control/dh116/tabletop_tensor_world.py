@@ -182,6 +182,17 @@ class TensorWorld:
                 raise ValueError('object-only normal, friction, and contact-point sensor required')
         self.refresh(sensors=False)
         self._root_pose_written = self.roots.float().clone()
+        self.lift_reference_bottom_m=self.t(getattr(world,'lift_reference_bottom_m',.30))+self.origins[:,2]
+        self.surface_trace=[]
+        self.surface_trace_limit=int(getattr(world.args,'surface_diagnostic_steps',0))
+        if getattr(world.args,'surface_force_sharing',False):
+            from .tabletop_effective_pad_runtime import PadContactSampler
+            self.pad_sampler=PadContactSampler(self)
+            if getattr(world.args,'native_sensor_batch',False):
+                from .tabletop_native_sensor_batch import read_native_sensors
+                self.native_sensor_reader=read_native_sensors
+                self.pad_sampler.use_batched_native=True
+            self.pad_measurements=self.pad_sampler.sample()
 
     def t(self, value, dtype=torch.float64):
         return torch.as_tensor(value,device=self.device,dtype=dtype)
@@ -227,8 +238,17 @@ class TensorWorld:
                 |~torch.isfinite(axis_y).all(1)|(self.wq.norm(dim=1)<=0)|(axis_y.norm(dim=1)<=0))
             self.adapter_fault_bits.bitwise_or_(invalid_object.long())
         if sensors:
-            for sensor in w.sensors: sensor.update(self.dt,force_recompute=True)
-            vectors = torch.stack([s.data.force_matrix_w[:,0,0,:] for s in w.sensors],1).double()
+            reader=getattr(self,'native_sensor_reader',None)
+            native_packet=reader(self) if reader is not None else None
+            if native_packet is None:
+                for sensor in w.sensors: sensor.update(self.dt,force_recompute=True)
+                vectors = torch.stack([s.data.force_matrix_w[:,0,0,:] for s in w.sensors],1).double()
+            else:
+                vectors=native_packet['vectors'].reshape(self.n,-1,3).double()
+                if continuous:
+                    self.adapter_fault_bits.bitwise_or_(native_packet['bad_env'].long()*16)
+            if hasattr(self,'pad_sampler'):
+                self.pad_sampler.native_contact_data=None if native_packet is None else native_packet['raw_contacts']
             self.link_loads = vectors.reshape(self.n,2,-1,3).norm(dim=-1)
             self.forces = vectors[:,self.pad_indices].norm(dim=-1)
             geometry_axis=axis_y
@@ -237,7 +257,14 @@ class TensorWorld:
                 # Only derived geometry uses a placeholder axis for excluded
                 # bad rows. Preserve the original quaternion/center readback.
                 geometry_axis=torch.where(invalid_object[:,None],axis_y.new_tensor([0.,1.,0.]),axis_y)
-            geometry=contact_geometry_from_sensors(w.sensors,self.wp,geometry_axis)
+            if native_packet is None:
+                geometry=contact_geometry_from_sensors(w.sensors,self.wp,geometry_axis)
+            else:
+                # Legacy geometry reduces in the original contact-buffer dtype.
+                # Keep that arithmetic contract while the public packet is f64.
+                geometry_positions=native_packet['contact_positions'].to(native_packet['raw_contacts'][0][1].dtype)
+                geometry=aggregate_contact_geometry(geometry_positions,
+                    vectors.reshape(self.n,2,-1,3),self.wp,object_axis_w=geometry_axis)
             if continuous:
                 for key in ('valid','all_below_centerline'):geometry[key][invalid_object]=False
                 for key in ('contact_center_w','contact_normal_w'):geometry[key][invalid_object]=float('nan')
@@ -249,13 +276,20 @@ class TensorWorld:
             self.contact_all_below_centerline=geometry['all_below_centerline']
             self.contact_count=geometry['contact_count']
             from .tabletop_vertical_force import object_vertical_components
-            friction=torch.stack([s.data.friction_forces_w[:,0,0,:] for s in w.sensors],1).double()
+            friction=(torch.stack([s.data.friction_forces_w[:,0,0,:] for s in w.sensors],1).double()
+                if native_packet is None else native_packet['friction'].reshape(self.n,-1,3).double())
             if continuous:
                 self.adapter_fault_bits.bitwise_or_((~torch.isfinite(friction).flatten(1).all(1)).long()*4)
             self.vertical_components=object_vertical_components(
                 vectors.reshape(self.n,2,-1,3),friction.reshape(self.n,2,-1,3))
-        heights = torch.stack([rotated_heights(self.poses[:,h,b],p).amin(-1)
-                               for h,b,p in self.shapes],1)
+        if getattr(self,'native_sensor_reader',None) is not None:
+            if not hasattr(self,'_height_batch'):
+                from .tabletop_native_height_batch import HeightBatch
+                self._height_batch=HeightBatch(self.shapes)
+            heights=self._height_batch(self.poses)
+        else:
+            heights = torch.stack([rotated_heights(self.poses[:,h,b],p).amin(-1)
+                                   for h,b,p in self.shapes],1)
         self.clearances = torch.stack([heights[:,idx].amin(1) for idx in self.shape_hands],1)-.30
         az = (2*(self.wq[:,2]*self.wq[:,3]+self.wq[:,0]*self.wq[:,1])).abs()
         self.bottom = self.wp[:,2]-.25*az-.008*(1-az.square()).clamp_min(0).sqrt()
@@ -272,6 +306,27 @@ class TensorWorld:
             velocity=torch.stack([h.data.body_lin_vel_w[:,mount.base_id]
                                   for h,mount in zip(self.hands,w.mounts)],1)
             self.transport_warning_mask.copy_(~transport_safe(self.roots,self.root_targets,velocity))
+        if hasattr(self,'pad_sampler'):
+            if sensors:
+                self.pad_measurements=self.pad_sampler.sample()
+                self.pad_pose_bad_env=self.pad_measurements['effective_pad_bad_env'].clone()
+                self.adapter_fault_bits.bitwise_or_(self.pad_measurements['effective_pad_bad_env'].long()*16)
+            else:
+                # Reset reads new real FK/pose without re-reading the old
+                # episode's manifold; other slots keep their own cached forces.
+                geometry=self.pad_sampler.sample(contacts=False)
+                self.pad_pose_bad_env=geometry['effective_pad_bad_env']
+                self.pad_measurements['pad_reference_points_w']=geometry['pad_reference_points_w']
+                self.adapter_fault_bits.bitwise_or_(self.pad_pose_bad_env.long()*16)
+            if sensors and len(self.surface_trace)<self.surface_trace_limit:
+                record=dict(**self.pad_measurements,object_pose_w=torch.cat((self.wp,self.wq),-1),
+                    bottom=self.bottom,object_velocity=self.wv,wrist_pose_w=self.roots,
+                    q_measured=self.q,qd_measured=self.qd,q_command=self.commands,
+                    vertical_components_n=self.vertical_components,hand_total_loads_n=self.link_loads.sum(-1),
+                    joint_mimic_errors=self.errors,adapter_fault_bits=self.adapter_fault_bits,
+                    table_clearance_m=self.clearances)
+                record['native_signed_normal_force_on_hand_w']=self.pad_sampler.last_signed_force_w
+                self.surface_trace.append({k:v.detach().cpu().clone() for k,v in record.items()})
         return self.measure()
 
     def measure(self):
@@ -312,6 +367,7 @@ class TensorWorld:
             object_link_loads=self.link_loads,grouped_object_loads=self.link_loads@self.group_matrix,
             hand_object_loads=self.link_loads.sum(-1),joint_failure=failure)
         if continuous:result['adapter_fault_bits']=self.adapter_fault_bits
+        if hasattr(self,'pad_measurements'):result.update(self.pad_measurements)
         if continuous and hasattr(self,'transport_warning_mask'):
             result['transport_warning']=self.transport_warning_mask
         if getattr(self,'free_wrist_grasp',False):
@@ -502,4 +558,10 @@ class TensorWorld:
         self.contact_normal_load_n[ids]=0.; self.contact_valid[ids]=False
         self.contact_all_below_centerline[ids]=False; self.contact_count[ids]=0
         self.w.sim.physics_sim_view.update_articulations_kinematic()
-        return self.refresh(sensors=False)
+        measured=self.refresh(sensors=False)
+        if hasattr(self,'pad_measurements'):
+            from .tabletop_surface_exploration import clear_reset_contacts
+            clear_reset_contacts(self.pad_measurements,ids)
+            self.pad_measurements['effective_pad_bad_env'][ids]=self.pad_pose_bad_env[ids]
+            measured.update(self.pad_measurements)
+        return measured

@@ -68,6 +68,29 @@ parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--resume', type=Path)
 parser.add_argument('--contact-effort-feedback',action='store_true',help='bounded contact torque feedback sharing the existing motor effort budget')
 parser.add_argument('--teacher-search-cases',type=Path)
+parser.add_argument('--surface-teacher-replay',type=Path,
+                    help='replay qualified 24D native actions through normal TensorEnv and collect student observations')
+parser.add_argument('--surface-student-actor',type=Path,
+                    help='initialize only the 351D/24D surface student actor from its own BC artifact')
+parser.add_argument('--surface-imitation-mode',choices=('legacy','stable_hold_v2'),default='legacy',
+                    help='explicit independent actor optimizer and persistent hold-aware teacher correction')
+parser.add_argument('--surface-noise-mode',choices=('legacy','holding_v2'),default='legacy',
+                    help='explicit lower Gaussian sampling std for surface policies; physical action range unchanged')
+parser.add_argument('--surface-contact-history',action='store_true',
+                    help='explicit 401D input with causal native mean-force EMA and preceding-window max depth')
+parser.add_argument('--surface-student-validation-report',type=Path,action='append',default=[],
+                    help='native success report for this exact actor; every declared reset style is required')
+parser.add_argument('--require-native-student-validation',action='store_true',default=False,
+                    help='opt in to native admission or a cumulative 64-update pilot; inherited on resume')
+parser.add_argument('--surface-student-first-episode-only',action='store_true',
+                    help='finish deterministic evaluation after every environment completes its first episode')
+parser.add_argument('--surface-student-stop-on-success',action='store_true',
+                    help='finish deterministic evaluation when an actual native student success is observed')
+parser.add_argument('--surface-demonstrations',type=Path,
+                    help='separate qualified surface demonstrations for decaying auxiliary imitation')
+parser.add_argument('--surface-student-eval-steps',type=int,default=0,
+                    help='inference-only native student evaluation; requires surface student actor or PPO resume')
+parser.add_argument('--surface-mpc',action='store_true',help='inference-only local pad grip MPC; student owns wrist intent')
 parser.add_argument('--manual-control',action='store_true',help='interactive force/finger/wrist/lift controls; no PPO training')
 parser.add_argument('--teacher-episodes',type=int,default=1)
 parser.add_argument('--teacher-control-steps',type=int,default=1000)
@@ -149,6 +172,14 @@ parser.add_argument('--continuous-motion',action='store_true',
                     help='finite mimic errors are diagnostic; isolate and validate recoverable invalid-state resets')
 parser.add_argument('--free-wrist-grasp',action='store_true',
                     help='26D freely integrated fingers/XYZ/orientation/normal-force policy; six physical wrist drives')
+parser.add_argument('--surface-force-sharing',action='store_true',
+                    help='24D free fingers/wrists; no fixed Newton goal; opposed surfaces share then digits share')
+parser.add_argument('--native-sensor-batch',action='store_true',
+                    help='surface mode: equivalent batched native contact/friction readback and CAD heights')
+parser.add_argument('--end-support-clearance-m',type=float,default=0.,
+                    help='explicit raised rod with persistent narrow end supports; zero keeps tabletop scene')
+parser.add_argument('--surface-diagnostic-steps',type=int,default=0,
+                    help='bounded raw physical trace for surface-sharing validation; zero disables capture')
 parser.add_argument('--manual-fast-force',action='store_true',help='manual-only bounded micro-closing contact acquisition and faster force adjustment')
 parser.add_argument('--manual-run',action='store_true',help='start the explicitly requested manual demonstration running')
 parser.add_argument('--manual-placement',type=Path,help='manual-only initial palm translation settings JSON')
@@ -159,6 +190,13 @@ parser.add_argument('--max-iterations', type=int, default=None,
                     help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+from go2_pvcnn.control.dh116.tabletop_surface_exploration import validate_options as validate_surface_options
+try:validate_surface_options(args)
+except ValueError as exc:parser.error(str(exc))
+if not 0<=args.end_support_clearance_m<=.12 or not 0<=args.surface_diagnostic_steps<=10000:
+    parser.error('end-support clearance must be 0..0.12m; diagnostic frames must be 0..10000')
+if args.end_support_clearance_m and not args.surface_force_sharing:
+    parser.error('raised end supports currently require surface-force-sharing so net lift uses the support baseline')
 if args.free_wrist_grasp and (not args.continuous_motion or not args.free_grasp_lift
         or args.manual_control or args.policy_lift_hold or args.actor_initialization
         or args.stable_lift_reward or args.grasp_acquisition_shaping):
@@ -354,6 +392,7 @@ write_json(args.output/'monitor.json',dict(status='initializing',num_envs=args.n
     episodes_per_env_target=None if args.max_iterations is not None else args.episodes_per_env,
     iteration_budget=args.max_iterations))
 app = None
+sim = None
 report = dict(passed=False, grasp_qualified=False, num_envs=args.num_envs,
               status='initializing', rigid_proxy=True, pipeline_scope='close_to_lift',
               continuous_motion=args.continuous_motion,free_wrist_grasp=args.free_wrist_grasp)
@@ -572,7 +611,8 @@ try:
     write_json(args.output/'contact_preflight.json',report['contact_preflight'])
     from go2_pvcnn.control.dh116.tabletop_load_parameters import physics_load_readback
     report['physical_parameter_readback'] = physics_load_readback(world.hands,args.load_parameters,
-        passive_velocity_limit_rad_s=args.passive_velocity_limit_rad_s)
+        passive_velocity_limit_rad_s=args.passive_velocity_limit_rad_s,
+        force_command_channels=0 if args.surface_force_sharing else None)
     if args.tensor_pipeline and args.full_hand_contact:
         from go2_pvcnn.control.dh116.tabletop_tensor_training import (
             tensor_contract_metadata, apply_continuous_motion_contract)
@@ -664,7 +704,12 @@ finally:
     # after fallible episode flushing but before the final application shutdown.
     code=2
     try:
-        code=finalize_run(args.output,report,[vec.close] if vec is not None else [])
+        cleanups=[vec.close] if vec is not None else []
+        if sim is not None:
+            # IsaacLab's timeline-stop subscription can keep rendering forever
+            # during app.close(). Release it before requesting application quit.
+            cleanups.extend([sim.clear_all_callbacks,sim.clear_instance])
+        code=finalize_run(args.output,report,cleanups)
         print('VECTOR_PPO_RESULT',json.dumps(report),flush=True)
     finally:
         if app is not None:

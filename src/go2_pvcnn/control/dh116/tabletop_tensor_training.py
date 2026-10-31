@@ -423,6 +423,19 @@ def checkpoint_contract_changes(saved,current):
     return changes
 
 
+def surface_checkpoint_contract_changes(saved,current,reset_family=None):
+    """Allow only explicitly proven reset-family changes; physics stays exact."""
+    if not reset_family:return checkpoint_contract_changes(saved,current)
+    from .tabletop_surface_imitation import validate_reset_family
+    validate_reset_family(reset_family,saved,current)
+    candidate=copy.deepcopy(saved);changes=[]
+    for name in ('close_seed_sha256','grasp_initialization_sha256'):
+        if candidate[name]!=current[name]:
+            candidate[name]=current[name]
+            if not changes:changes.append('surface_reset_family_switch')
+    return changes+checkpoint_contract_changes(candidate,current)
+
+
 def extend_checkpoint_observations(saved,algorithm):
     """Append approved observation fields with zero weights and Adam moments."""
     policy=copy.deepcopy(saved['policy']);optimizer=copy.deepcopy(saved['optimizer'])
@@ -461,8 +474,16 @@ def validate_world_adapter(legacy, world, task):
     actual=world.measure()
     errors={}
     tensor_only={}
+    pad_only={}
+    if getattr(task,'surface_force_sharing',False):
+        from .tabletop_surface_exploration import validate_startup_measurements
+        pad_only=validate_startup_measurements(actual,world.n)
+        tensor_only.update(pad_only)
     for key,value in actual.items():
         if key=='joint_failure': continue
+        if key in pad_only:
+            errors[key]=0.
+            continue
         if getattr(world,'free_wrist_grasp',False) and key in ('wrist_pose','wrist_velocity','wrist_joint_angles'):
             shape={'wrist_pose':(world.n,2,7),'wrist_velocity':(world.n,2,6),
                    'wrist_joint_angles':(world.n,2,3)}[key]
@@ -531,7 +552,7 @@ def observations(value):
 
 
 def make_algorithm(obs, steps=24,action_size=20):
-    if action_size not in (20,26):raise ValueError('supported policy action sizes are20 or26')
+    if action_size not in (20,24,26):raise ValueError('supported policy action sizes are20,24 or26')
     policy = ActorCritic(obs,{'policy':['policy'],'critic':['policy']},action_size,
         actor_hidden_dims=[128,128],critic_hidden_dims=[128,128],activation='tanh',
         init_noise_std=math.exp(-1.2),noise_std_type='log').to(obs.device)
@@ -542,7 +563,8 @@ def make_algorithm(obs, steps=24,action_size=20):
         for layer in linear:
             torch.nn.init.orthogonal_(layer.weight,math.sqrt(2)); torch.nn.init.zeros_(layer.bias)
         torch.nn.init.orthogonal_(linear[-1].weight,.01 if network is policy.actor else 1.)
-    with torch.no_grad(): policy.actor[-1].bias[-2:] = math.atanh(-.4 if action_size==26 else -.95)
+    if action_size!=24:
+        with torch.no_grad(): policy.actor[-1].bias[-2:] = math.atanh(-.4 if action_size==26 else -.95)
     policy.actor.append(torch.nn.Tanh())
     minibatches = min(8,len(obs))
     algorithm = PPO(policy,num_learning_epochs=5,num_mini_batches=minibatches,
@@ -611,12 +633,64 @@ def training_budget_reached(args,iteration,timesteps,min_episodes):
     return timesteps>=args.timesteps
 
 
+def configure_surface_student_validation(algorithm, args, contract, *, saved=None, training_family=None):
+    """Resolve sticky opt-in validation and the cumulative diagnostic pilot.
+
+    Default training retains its freedom to explore. Strict checkpoints keep
+    their mode across resumes even when the CLI flag is omitted. Resume reports
+    cannot certify a checkpoint through the standalone BC-actor validator.
+    """
+    from .tabletop_surface_admission import validate_student_admission, validate_saved_admission
+    checkpoint = {} if saved is None else saved
+    if not isinstance(checkpoint, dict):
+        raise ValueError('saved checkpoint must be a dictionary')
+    requested = getattr(args, 'require_native_student_validation', False)
+    inherited = checkpoint.get('require_native_student_validation', False)
+    if type(requested) is not bool or type(inherited) is not bool:
+        raise ValueError('require_native_student_validation must be a boolean')
+    strict = requested or inherited
+    if strict and not getattr(args, 'surface_force_sharing', False):
+        raise ValueError('strict native student validation requires the surface task')
+    reports = getattr(args, 'surface_student_validation_report', [])
+    if saved is not None and reports:
+        raise ValueError('resume validation reports require exact saved-actor binding; '
+                         'standalone actor reports cannot admit a PPO checkpoint')
+    proof = checkpoint.get('surface_student_validation')
+    admitted = False
+    if reports:
+        actor_path = getattr(args, 'surface_student_actor', None)
+        if not actor_path:
+            raise ValueError('native validation reports require their exact surface student actor')
+        proof = validate_student_admission(actor_path, reports, contract, training_family=training_family)
+        admitted = True
+    elif strict and proof is not None:
+        proof = validate_saved_admission(proof, contract, training_family=training_family)
+        admitted = True
+    used = checkpoint.get('surface_student_diagnostic_updates', checkpoint.get('iteration', 0))
+    if type(used) is not int or used < 0:
+        raise ValueError('surface_student_diagnostic_updates must be a nonnegative integer')
+    if strict and not getattr(args, 'surface_student_eval_steps', 0):
+        from .tabletop_surface_student_budget import diagnostic_budget
+        used = diagnostic_budget(saved, getattr(args, 'max_iterations', None),
+            getattr(args, 'timesteps', None), getattr(args, 'episodes_per_env', None),
+            args.num_envs, args.rollout_steps or 24, admitted)
+    algorithm.require_native_student_validation = strict
+    algorithm.surface_student_diagnostic_updates = used
+    algorithm.surface_student_admitted = admitted
+    if proof is not None:
+        # Non-strict legacy evidence remains provenance, without admitting a run.
+        algorithm.surface_student_validation = copy.deepcopy(proof)
+    return proof
+
+
 def save_checkpoint(path, algorithm, contract, iteration, timesteps, env):
     payload=dict(version=VERSION,contract=contract,iteration=iteration,timesteps=timesteps,
         policy=algorithm.policy.state_dict(),optimizer=algorithm.optimizer.state_dict(),
         learning_rate=algorithm.learning_rate,episodes=env.episodes,successes=env.successes,
         recovered=env.recovered,reached_counts=env.reached_counts,transition_counts=env.transition_counts,
         torch_rng=torch.get_rng_state(),cuda_rng=torch.cuda.get_rng_state_all() if torch.cuda.is_available() else [])
+    payload['require_native_student_validation']=getattr(algorithm,'require_native_student_validation',False)
+    payload['surface_student_diagnostic_updates']=getattr(algorithm,'surface_student_diagnostic_updates',iteration)
     if hasattr(env,'combined_failure_resets'):
         payload['combined_failure_resets']=env.combined_failure_resets
     if hasattr(env,'joint_limit_resets'):
@@ -627,6 +701,12 @@ def save_checkpoint(path, algorithm, contract, iteration, timesteps, env):
         payload['numerical_resets']=env.numerical_resets
     if getattr(algorithm,'policy_action_recovery',None) is not None:
         payload['policy_action_recovery']=dict(algorithm.policy_action_recovery.counts)
+    if getattr(algorithm,'surface_imitation_metadata',None) is not None:
+        payload['surface_imitation']=dict(algorithm.surface_imitation_metadata)
+    if getattr(algorithm,'surface_imitation_optimizer',None) is not None:
+        payload['surface_imitation_optimizer']=algorithm.surface_imitation_optimizer.state_dict()
+    if getattr(algorithm,'surface_student_validation',None) is not None:
+        payload['surface_student_validation']=algorithm.surface_student_validation
     if hasattr(env,'close_completion_events'):
         payload['close_completion_event_index']=env.close_completion_events.event_index
     tmp=Path(str(path)+'.tmp'); torch.save(payload,tmp); os.replace(tmp,path)
@@ -679,6 +759,15 @@ def run_tensor_training(world, template, args, contract):
     if getattr(args,'free_wrist_grasp',False):
         from .tabletop_free_wrist_grasp import enable
         enable(task,device_world)
+    if getattr(args,'surface_force_sharing',False):
+        from .tabletop_surface_exploration import enable
+        enable(task,device_world)
+        if getattr(args,'surface_imitation_mode','legacy')=='stable_hold_v2':
+            from .tabletop_surface_exploration import enable_stable_hold_rewards
+            enable_stable_hold_rewards(task)
+        if getattr(args,'surface_contact_history',False):
+            from .tabletop_surface_contact_history import enable_contact_history
+            enable_contact_history(task)
     if getattr(args,'contact_effort_feedback',False):
         from .tabletop_contact_effort import ContactEffortFeedback
         task.contact_effort=ContactEffortFeedback(args.num_envs,args.device,effort_limit_nm=task.parameters.effort_limit_nm)
@@ -735,6 +824,9 @@ def run_tensor_training(world, template, args, contract):
         vertical_force_telemetry=VERTICAL_FORCE_CONTRACT)
     from .tabletop_tensor_env import OBJECT_DROP_RESET_CONTRACT
     contract['object_drop_reset']=dict(OBJECT_DROP_RESET_CONTRACT)
+    contract['native_sensor_readback']=dict(batched=bool(getattr(args,'native_sensor_batch',False)),
+        measurements='original_PhysX_normal_and_friction;independent_owner_snapshots',
+        physics_substep_sampling=True,force_measurement_mutation=False)
     if env.training_joint_limit:
         contract['training_joint_limit']=dict(TRAINING_JOINT_LIMIT_CONTRACT)
     if task.grasp_readiness is not None:
@@ -851,6 +943,10 @@ def run_tensor_training(world, template, args, contract):
     if getattr(task,'free_wrist_grasp',False):
         from .tabletop_free_wrist_grasp import apply_contract
         apply_contract(contract,task)
+    if getattr(task,'surface_force_sharing',False):
+        from .tabletop_surface_exploration import apply_contract
+        apply_contract(contract,task)
+        contract['end_support_scene']=getattr(world,'end_support_scene',None)
     # The caller's report holds this original dict. Publish the fully resolved
     # tensor contract there as well, including manual/probe/error exits.
     report_contract.clear()
@@ -866,13 +962,55 @@ def run_tensor_training(world, template, args, contract):
         from .tabletop_success_teacher import run_success_teacher
         return run_success_teacher(env,args,contract,obs)
 
+    if getattr(args,'surface_teacher_replay',None):
+        from .tabletop_surface_demonstrations import load_teacher_actions,collect_replay
+        if not getattr(task,'surface_force_sharing',False):raise ValueError('surface teacher replay requires surface task')
+        actions,source=load_teacher_actions(args.surface_teacher_replay)
+        write_json(args.output/'tensor_contract.json',contract)
+        result=collect_replay(env,obs['policy'],actions,contract,args.output,source_identity=source)
+        return dict(result,training_skipped=result['successful_replays']==0,
+                    grasp_qualified=result['successful_replays']>0)
     algorithm=make_algorithm(obs,steps,action_size=getattr(task,'action_size',20))
+    if getattr(args,'surface_noise_mode','legacy')=='holding_v2':
+        if not getattr(task,'surface_force_sharing',False):
+            raise ValueError('surface noise requires the 24D surface task')
+        from .tabletop_policy_noise import configure_surface_noise
+        contract['policy_noise']=dict(configure_surface_noise(algorithm))
+        report_contract.clear()
+        report_contract.update(contract)
+        publish_resolved_tensor_configuration(args.output,contract)
     policy_recovery=None
     if env.continuous_motion:
         from .tabletop_policy_recovery import PolicyActionRecovery
         policy_recovery=PolicyActionRecovery()
         algorithm.policy_action_recovery=policy_recovery
     actor_initialization=None
+    surface_imitation=None
+    surface_reset_family=None
+    if getattr(args,'surface_student_actor',None) or getattr(args,'surface_demonstrations',None):
+        if not getattr(task,'surface_force_sharing',False):raise ValueError('surface student task required')
+        from .tabletop_surface_imitation import load_actor,DemonstrationRegularizer
+        if getattr(args,'surface_student_actor',None):
+            actor_initialization=load_actor(algorithm,args.surface_student_actor,contract)
+        if getattr(args,'surface_demonstrations',None):
+            import hashlib
+            demo_path=Path(args.surface_demonstrations)
+            demo=torch.load(demo_path,map_location='cpu',weights_only=False)
+            stable_hold=getattr(args,'surface_imitation_mode','legacy')=='stable_hold_v2'
+            surface_imitation=DemonstrationRegularizer(demo,contract,device=args.device,
+                independent_optimizer=stable_hold,holding_weight=20. if stable_hold else 0.,
+                wrist_weight=4. if stable_hold else 1.)
+            surface_reset_family=demo.get('reset_family')
+            algorithm.surface_imitation_metadata=dict(dataset_sha256=hashlib.sha256(demo_path.read_bytes()).hexdigest(),
+                initial_weight=.1,decay=.995,batch_size=256,
+                update='separate_auxiliary_step_after_on_policy_PPO_update',
+                source='qualified_native_pre_action_observation_action_pairs')
+            if stable_hold:
+                surface_imitation.optimizer_for(algorithm)
+                algorithm.surface_imitation_metadata.update(decay=1.,holding_weight=20.,wrist_weight=4.,
+                    auxiliary_learning_rate=.001,
+                    weight_semantics='multiply_independent_Adam_learning_rate_not_its_gradient',
+                    update='independent_actor_adam_stable_hold_v2')
     if getattr(args,'actor_initialization',None):
         from .tabletop_behavior_cloning import load_actor_initialization
         actor_initialization=load_actor_initialization(algorithm,args.actor_initialization,contract)
@@ -894,11 +1032,14 @@ def run_tensor_training(world, template, args, contract):
         raise ValueError('potential shaping discount must match PPO gamma')
     iteration=timesteps=0
     close_event_index=0
+    saved=None
     if args.resume:
         saved=torch.load(args.resume,map_location=args.device,weights_only=False)
+        if saved.get('surface_imitation')!=getattr(algorithm,'surface_imitation_metadata',None):
+            raise ValueError('surface demonstration source/hyperparameters must match PPO resume')
         if saved['version']!=VERSION:
             raise ValueError('tensor checkpoint contract mismatch; legacy SB3 resume is unsupported')
-        changes=checkpoint_contract_changes(saved['contract'],contract)
+        changes=surface_checkpoint_contract_changes(saved['contract'],contract,surface_reset_family)
         if 'force_action_range_2_to_12' in changes:
             raise ValueError('tensor checkpoint contract mismatch; legacy force-action range is not resume-compatible')
         if changes:
@@ -916,6 +1057,10 @@ def run_tensor_training(world, template, args, contract):
             if set(changes)&{'contact_window_reward_v2','force_scoring_after_close_v3','force_progress_lift_milestones_v1'} else (saved['policy'],saved['optimizer']))
         algorithm.policy.load_state_dict(policy)
         algorithm.optimizer.load_state_dict(optimizer)
+        if surface_imitation is not None and surface_imitation.independent_optimizer:
+            if 'surface_imitation_optimizer' not in saved:
+                raise ValueError('stable-hold resume requires its independent teacher optimizer state')
+            surface_imitation.optimizer_for(algorithm).load_state_dict(saved['surface_imitation_optimizer'])
         previous_std=algorithm.policy.log_std.detach().exp().cpu().tolist()
         changed_noise=project_policy_noise(algorithm)
         write_json(args.output/'policy_noise_resume.json',dict(
@@ -941,9 +1086,20 @@ def run_tensor_training(world, template, args, contract):
             algorithm.policy_action_recovery=policy_recovery
         torch.set_rng_state(saved['torch_rng'].cpu())
         if saved['cuda_rng']: torch.cuda.set_rng_state_all([x.cpu() for x in saved['cuda_rng']])
+    proof=configure_surface_student_validation(algorithm,args,contract,saved=saved,
+        training_family=surface_reset_family)
+    if actor_initialization is not None and algorithm.surface_student_admitted:
+        actor_initialization['closed_loop_native_validation']=proof
     write_json(args.output/'tensor_contract.json',contract)
+    if getattr(args,'surface_student_eval_steps',0):
+        from .tabletop_surface_student_evaluation import evaluate
+        return evaluate(env,algorithm,args,contract,obs)
     write_json(args.output/'training_start.json',dict(
         resume_source=str(args.resume) if args.resume else None,actor_initialization=actor_initialization,
+        surface_imitation=getattr(algorithm,'surface_imitation_metadata',None),
+        require_native_student_validation=algorithm.require_native_student_validation,
+        surface_student_diagnostic_updates=algorithm.surface_student_diagnostic_updates,
+        surface_student_admitted=algorithm.surface_student_admitted,
         initial_iteration=iteration,initial_timesteps=timesteps,
         initial_episodes=int(env.episodes.sum()),initial_successes=int(env.successes.sum()),
         optimizer_state_entries=len(algorithm.optimizer.state),
@@ -1019,13 +1175,22 @@ def run_tensor_training(world, template, args, contract):
             collect_seconds=time.monotonic()-collect
             learning=time.monotonic()
             losses=algorithm.update()
+            imitation_metrics=None
+            if surface_imitation is not None:
+                schedule=algorithm.surface_imitation_metadata
+                imitation_metrics=surface_imitation.update(algorithm,iteration,
+                    initial_weight=schedule['initial_weight'],decay=schedule['decay'],batch_size=schedule['batch_size'])
             if str(args.device).startswith('cuda'): torch.cuda.synchronize()
             learn_seconds=time.monotonic()-learning
             if not all(math.isfinite(float(v)) for v in losses.values()):
                 raise RuntimeError('nonfinite PPO loss')
             iteration+=1; timesteps+=args.num_envs*steps
+            if algorithm.require_native_student_validation and not algorithm.surface_student_admitted:
+                algorithm.surface_student_diagnostic_updates+=1
             row=dict(status='training',backend=VERSION,num_envs=args.num_envs,
                 iteration=iteration,rollout_steps=steps,timesteps=timesteps,
+                require_native_student_validation=algorithm.require_native_student_validation,
+                surface_student_diagnostic_updates=algorithm.surface_student_diagnostic_updates,
                 collection_seconds=collect_seconds,learning_seconds=learn_seconds,
                 iteration_seconds=collect_seconds+learn_seconds,
                 transitions_per_second=args.num_envs*steps/(collect_seconds+learn_seconds),
@@ -1046,6 +1211,7 @@ def run_tensor_training(world, template, args, contract):
                 hand_load_mean_n=task.m['hand_object_loads'].mean(0).cpu().tolist(),
                 max_object_bottom_m=float(task.m['bottom'].max()),losses=losses,
                 learning_rate=algorithm.learning_rate,grasp_qualified=False)
+            if imitation_metrics is not None:row['surface_imitation']=imitation_metrics
             std=algorithm.policy.log_std.detach().exp()
             if getattr(task,'free_grasp_lift',False):
                 from .tabletop_free_grasp_lift import bilateral_contact
@@ -1068,9 +1234,9 @@ def run_tensor_training(world, template, args, contract):
                 row['force_direction_reposition']=bool(getattr(task,'force_direction_reposition',False))
                 adjustment=task.palm_reposition
                 row['reposition']=reposition_telemetry(adjustment)
-            row['policy_noise']=dict(POLICY_NOISE_CONTRACT)
+            row['policy_noise']=dict(contract.get('policy_noise',POLICY_NOISE_CONTRACT))
             row['vertical_contact_force']=env.vertical_force_stats.summary()
-            if getattr(task,'force_region',False):
+            if getattr(task,'force_region',False) and not getattr(task,'surface_force_sharing',False):
                 actual=task.m['hand_object_loads']
                 target=task.f_requested
                 valid_hand=task.m['contact_valid']
@@ -1082,6 +1248,25 @@ def run_tensor_training(world, template, args, contract):
                     row['force_control'][side+'_requested_mean_n']=float(target[:,i].mean())
                     row['force_control'][side+'_measured_mean_n']=float(actual[:,i].mean())
                     row['force_control'][side+'_error_mean_n']=float((target[:,i]-actual[:,i]).abs().mean())
+            if getattr(task,'surface_force_sharing',False):
+                from .tabletop_surface_exploration import allocation
+                surface=allocation(task)
+                row['surface_sharing']=dict(force_target_range_n=None,
+                    paired_fraction=float(surface['paired'].all(-1).double().mean()),
+                    balanced_fraction=float(surface['balanced'].all(-1).double().mean()),
+                    face_loads_mean_n=surface['face_loads'].mean(0).cpu().tolist(),
+                    face_counts_mean=surface['face_counts'].double().mean(0).cpu().tolist(),
+                    effective_digit_loads_mean_n=task.m['effective_pad_loads_n'].mean(0).cpu().tolist(),
+                    rejected_contact_loads_mean_n=task.m['rejected_contact_loads_n'].mean(0).cpu().tolist(),
+                    net_rod_lift_max_m=float((task.m['bottom']-task.surface_reference_bottom_m).max()))
+                for h,side in enumerate(('left','right')):
+                    for face in range(2):
+                        writer.add_scalar(f'surface_force/{side}/face{face}_n',float(surface['face_loads'][:,h,face].mean()),iteration)
+                    for d,name in enumerate(('thumb','index','middle','ring','little')):
+                        writer.add_scalar(f'effective_pad/{side}/{name}_n',float(task.m['effective_pad_loads_n'][:,h,d].mean()),iteration)
+                writer.add_scalar('surface_force/paired_fraction',row['surface_sharing']['paired_fraction'],iteration)
+                writer.add_scalar('surface_force/balanced_fraction',row['surface_sharing']['balanced_fraction'],iteration)
+                writer.add_scalar('surface_force/net_rod_lift_max_m',row['surface_sharing']['net_rod_lift_max_m'],iteration)
             row['lift_entry_force']=env.lift_entry_force_stats.summary()
             if hasattr(env,'close_completion_events'):
                 row['close_completion_event_index']=env.close_completion_events.event_index
@@ -1122,6 +1307,9 @@ def run_tensor_training(world, template, args, contract):
                 fps=row['transitions_per_second'],mean_step_reward=row['mean_step_reward'],
                 successes=row['successes'],episodes=row['episodes']).items(): writer.add_scalar(name,value,iteration)
             for name,value in losses.items(): writer.add_scalar('loss/'+name,value,iteration)
+            if imitation_metrics is not None:
+                for name,value in imitation_metrics.items():
+                    if isinstance(value,(int,float)):writer.add_scalar('teacher/'+name,value,iteration)
             if getattr(task,'free_grasp_lift',False):
                 writer.add_scalar('exploration/bilateral_contact_env_fraction',row['bilateral_contact_env_fraction'],iteration)
                 writer.add_scalar('exploration/max_actual_lift_m',max(0.,row['max_object_bottom_m']-.30),iteration)
@@ -1185,6 +1373,14 @@ def run_tensor_training(world, template, args, contract):
         try:
             writer.close()
         finally:
+            if getattr(task,'surface_force_sharing',False):
+                if device_world.surface_trace:
+                    torch.save({k:torch.stack([r[k] for r in device_world.surface_trace])
+                        for k in device_world.surface_trace[0]},args.output/'surface_physics.pt')
+                write_json(args.output/'effective_pad_atlas.json',device_world.pad_sampler.atlas)
+                if task.surface_redistribution is not False and task.surface_redistribution.model_trace:
+                    models=task.surface_redistribution.model_trace
+                    torch.save({k:torch.stack([r[k] for r in models]) for k in models[0]},args.output/'surface_contact_models.pt')
             final_telemetry=(env.close_completion_events.diagnostics()
                 if hasattr(env,'close_completion_events') else None)
             if stop is not None and final_telemetry!=stopped_telemetry:

@@ -39,7 +39,7 @@ def test_cli_launcher_failure_writes_terminal_monitor(tmp_path):
     assert guarded is not None, 'AppLauncher must be inside the terminal-status exception guard'
     def launch(_):raise RuntimeError('synthetic launcher failure')
     def write(path,value):path.write_text(json.dumps(value))
-    ns=dict(app=None,vec=None,report=dict(status='initializing'),args=SimpleNamespace(output=tmp_path),
+    ns=dict(app=None,vec=None,sim=None,report=dict(status='initializing'),args=SimpleNamespace(output=tmp_path),
             AppLauncher=launch,write_json=write,finalize_run=finalize_run,
             traceback=traceback,json=json)
     exec(compile(ast.Module(body=[guarded],type_ignores=[]),'<guarded launcher>','exec'),ns)
@@ -79,7 +79,7 @@ def test_cli_nonzero_system_exit_is_not_success(tmp_path):
         isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=='AppLauncher'
         for statement in node.body for n in ast.walk(statement)))
     def launch(_):raise SystemExit(7)
-    ns=dict(app=None,vec=None,report=dict(status='initializing'),args=SimpleNamespace(output=tmp_path),
+    ns=dict(app=None,vec=None,sim=None,report=dict(status='initializing'),args=SimpleNamespace(output=tmp_path),
             AppLauncher=launch,finalize_run=finalize_run,traceback=traceback,json=json)
     exec(compile(ast.Module(body=[guarded],type_ignores=[]),'<guarded launcher>','exec'),ns)
     monitor=json.loads((tmp_path/'monitor.json').read_text())
@@ -129,9 +129,45 @@ def test_cli_publishes_before_nonreturning_isaac_shutdown(tmp_path,monkeypatch):
     guarded=next(node for node in tree.body if isinstance(node,ast.Try) and any(
         isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=='AppLauncher'
         for statement in node.body for n in ast.walk(statement)))
-    ns=dict(app=SimpleNamespace(close=close),vec=SimpleNamespace(close=flush),
+    ns=dict(app=SimpleNamespace(close=close),vec=SimpleNamespace(close=flush),sim=None,
             report=dict(status='training_budget_complete'),args=SimpleNamespace(output=tmp_path),
             finalize_run=finalize_run,traceback=traceback,json=json)
     with pytest.raises(SystemExit,match='2'):
         exec(compile(ast.Module(body=guarded.finalbody,type_ignores=[]),'<final shutdown>','exec'),ns)
     assert observed==[2,'shutdown']
+
+
+def test_cli_releases_timeline_stop_callback_before_application_shutdown(tmp_path,monkeypatch):
+    import sys
+    import types
+    import traceback
+    from go2_pvcnn.control.dh116.tabletop_run_status import finalize_run
+    calls=[]
+    subscription={'active':True}
+    def clear_instance():
+        subscription['active']=False
+        calls.append('unsubscribe')
+    def close(**_):
+        # Installed IsaacLab stop callback renders forever while the stopped
+        # timeline remains subscribed. Model that failure without hanging pytest.
+        if subscription['active']:
+            raise RuntimeError('timeline stop callback would render forever')
+        calls.append('app_close')
+    def post_quit(code):
+        assert not subscription['active']
+        calls.append(('quit',code))
+    omni=types.ModuleType('omni');kit=types.ModuleType('omni.kit');kit_app=types.ModuleType('omni.kit.app')
+    kit_app.get_app=lambda:SimpleNamespace(post_quit=post_quit)
+    omni.kit=kit;kit.app=kit_app
+    for name,module in [('omni',omni),('omni.kit',kit),('omni.kit.app',kit_app)]:monkeypatch.setitem(sys.modules,name,module)
+    tree=ast.parse((ROOT/'scripts/train_dh116_tabletop_gpu_ppo.py').read_text())
+    guarded=next(node for node in tree.body if isinstance(node,ast.Try) and any(
+        isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=='AppLauncher'
+        for statement in node.body for n in ast.walk(statement)))
+    ns=dict(app=SimpleNamespace(close=close),vec=SimpleNamespace(close=lambda:calls.append('vec')),
+            sim=SimpleNamespace(clear_all_callbacks=lambda:calls.append('callbacks'),clear_instance=clear_instance),
+            report=dict(status='training_budget_complete'),args=SimpleNamespace(output=tmp_path),
+            finalize_run=finalize_run,traceback=traceback,json=json)
+    exec(compile(ast.Module(body=guarded.finalbody,type_ignores=[]),'<final shutdown>','exec'),ns)
+    assert calls==['vec','callbacks','unsubscribe',('quit',0),'app_close']
+    assert json.loads((tmp_path/'summary.json').read_text())['process_exit_code']==0

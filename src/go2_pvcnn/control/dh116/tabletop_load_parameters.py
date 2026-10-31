@@ -92,7 +92,7 @@ def _verify_velocity_readback(velocity, names, instances, passive_limit):
         raise ValueError('simulator velocity limits differ from selected active/passive limits')
 
 
-def physics_load_readback(hands, parameters=None, *, passive_velocity_limit_rad_s=None):
+def physics_load_readback(hands, parameters=None, *, passive_velocity_limit_rad_s=None, force_command_channels=None):
     """Actual PhysX views; compact samples plus all-instance drive validation."""
     from .linear_coupling import ACTIVE, JOINTS
     from .tabletop_palm_mount import JOINT_NAMES,CONTRACT as WRIST,ROTATION_CONTRACT
@@ -147,9 +147,11 @@ def physics_load_readback(hands, parameters=None, *, passive_velocity_limit_rad_
         torque_diagnostic='implicit PD estimate, not measured solver drive torque',
         contact_diagnostic='object-filtered normal forces on pads, not total contact wrench')
     if any('wrist_rotation' in hand for hand in result):
-        # Policy commands include force goals; those goals are not mechanical DOF.
+        # Force goals, if present, are policy channels rather than mechanical DOF.
         external=sum(len(_wrist_joint_ids(hand['joint_names'])[0])+len(_wrist_joint_ids(hand['joint_names'])[1]) for hand in result)
+        channels=len(result) if force_command_channels is None else int(force_command_channels)
+        if channels not in (0,len(result)):raise ValueError('unexpected force command channel count')
         report['dof_accounting']=dict(finger_active=len(ACTIVE)*len(result),
             finger_passive=(len(JOINTS)-len(ACTIVE))*len(result),external_wrist_drives=external,
-            policy_command_size=(len(ACTIVE)+1)*len(result)+external,force_command_channels=len(result))
+            policy_command_size=len(ACTIVE)*len(result)+external+channels,force_command_channels=channels)
     return report

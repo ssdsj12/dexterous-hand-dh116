@@ -169,6 +169,13 @@ def test_six_axis_readback_accepts_complete_set_and_reports_radians(passive_limi
     assert report['hardware_calibration_complete'] is False
 
 
+def test_surface_mode_readback_counts_motion_commands_without_force_channels():
+    hand, _ = readback_hand()
+    report = physics_load_readback([hand, hand], force_command_channels=0)
+    assert report['dof_accounting'] == dict(finger_active=12, finger_passive=10,
+        external_wrist_drives=12, policy_command_size=24, force_command_channels=0)
+
+
 @pytest.mark.parametrize('external', [mount.JOINT_NAMES[:1], ANGULAR,
     mount.JOINT_NAMES + ANGULAR[:1], mount.JOINT_NAMES + ANGULAR[:2]])
 @pytest.mark.parametrize('passive_limit', [None, 2.97])

@@ -45,6 +45,10 @@ def entry():
     parser.add_argument('--closure-margins',type=float,nargs='+',default=[.08,.18])
     parser.add_argument('--thumb-spreads',type=float,nargs='+',default=[-.2,0.,.2,.4,.6])
     parser.add_argument('--mimic-frequency',type=int,choices=(200,400),default=400)
+    parser.add_argument('--solve-articulation-contact-last',action='store_true',
+        help='test contact-last solver ordering; require physics readback before stepping')
+    parser.add_argument('--velocity-iterations',type=int,choices=(16,64),default=16,
+        help='explicit numerical convergence comparison; default unchanged')
     parser.add_argument('--device',choices=('cuda:0',),default='cuda:0')
     options=parser.parse_args()
     if options.output.exists():raise FileExistsError('preserve existing physical evidence')
@@ -254,7 +258,7 @@ def entry():
         '--load-profile','configs/dh116_load_profiles/v2_pressure_12n_instant_candidate.json',
         '--object-kind','solid_cylinder','--object-material','extreme_grip','--hand-material','grip_compliant',
         '--num-envs',str(len(cases)),'--rollout-steps','16','--max-iterations','1',
-        '--physics-hz','480','--mimic-frequency',str(options.mimic_frequency),'--solver-type','0','--position-iterations','64','--velocity-iterations','16',
+        '--physics-hz','480','--mimic-frequency',str(options.mimic_frequency),'--solver-type','0','--position-iterations','64','--velocity-iterations',str(options.velocity_iterations),
         '--reset-height-jitter-m','0','--cpu-threads','6','--headless','--device',options.device,
         '--direct-training','--tensor-pipeline','--training-episode-resets','--pressure-relief',
         '--grasp-controller','policy','--palm-transport','driven_carriage','--palm-exploration-axis','xyz',
@@ -263,6 +267,8 @@ def entry():
         '--vertical-force-reward-mode','continuous','--force-reward-start','downward_after_close',
         '--force-region-control','--phase-force-reward','--free-grasp-lift','--continuous-motion','--free-wrist-grasp',
         '--output',str(options.output),'--kit_args=--allow-root']
+    if options.solve_articulation_contact_last:
+        sys.argv.append('--solve-articulation-contact-last')
     runpy.run_path(sys.argv[0],run_name='__main__')
 
 

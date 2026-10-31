@@ -71,7 +71,9 @@ def _limited_step(action,rate,dt):
 
 def control(t,actions,live,dt):
     if not math.isfinite(dt) or dt<=0:raise ValueError('positive finite physics dt required')
-    if actions.shape!=(t.n,26):raise ValueError('expected N x 26 actions')
+    surface=getattr(t,'surface_force_sharing',False)
+    size=24 if surface else 26
+    if actions.shape!=(t.n,size):raise ValueError(f'expected N x {size} actions')
     actions=actions.to(t.command)
     from .linear_coupling import ACTIVE,MIMIC
     from .tabletop_pressure_relief import pressure_limited_target
@@ -80,6 +82,10 @@ def control(t,actions,live,dt):
     # Bounded follower correction is superimposed on the selected trajectory;
     # a finite error never becomes a wrist-motion admission test.
     for j,(_,master,ratio,_) in enumerate(MIMIC):
+        if getattr(t,'surface_policy_owned_targets',False):
+            # Physical native mimic remains active. Policy zero velocity must
+            # preserve its acquired grasp instead of moving the master target.
+            continue
         if getattr(t,'pinch_force_hold',False) and j<2:
             # The original passive drives still track their affine targets.
             # During explicit pinch/hold, do not undo the thumb/index force
@@ -88,15 +94,27 @@ def control(t,actions,live,dt):
         for h in range(2):
             k=6*h+ACTIVE.index(master);error=t.m['mimic_errors'][:,5*h+j]
             correction=(5.*error/ratio*dt).clamp(-ACTIVE_VELOCITY_LIMIT_RAD_S*dt,ACTIVE_VELOCITY_LIMIT_RAD_S*dt)
-            target[:,k]+=torch.where(error.abs()>=.012,correction,0.)
+            correct=error.abs()>=.012
+            teacher_digits=getattr(t,'teacher_force_controlled_digits',None)
+            if teacher_digits is not None:
+                correct &= ~teacher_digits[:,h,j]
+            target[:,k]+=torch.where(correct,correction,0.)
     q=t.m['q'];lead=CONTRACT['joint_target_lead_rad']
     target=target.maximum(q-lead).minimum(q+lead).maximum(t.low).minimum(t.high)
     target=t.command+(target-t.command).clamp(-ACTIVE_VELOCITY_LIMIT_RAD_S*dt,ACTIVE_VELOCITY_LIMIT_RAD_S*dt)
-    requested_force=2.+(actions[:,-2:]+1.)*5.
-    ceiling=torch.full_like(requested_force,(12.-t.parameters.deadband_n)/1.25)
-    applied,over=pressure_limited_target(t.command.reshape(t.n,2,6),target.reshape(t.n,2,6),
-        t.m['hand_object_loads'],ceiling,t.direction,dt,t.parameters.deadband_n)
-    applied=applied.flatten(1).maximum(t.low).minimum(t.high)
+    if surface:
+        if t.surface_redistribution is not False:
+            target=t.surface_redistribution.apply(target,t.command,t.m,dt,live,t.low,t.high)
+        target=t.command+(target-t.command).clamp(-ACTIVE_VELOCITY_LIMIT_RAD_S*dt,ACTIVE_VELOCITY_LIMIT_RAD_S*dt)
+        requested_force=torch.zeros_like(t.f_requested)
+        applied=target.maximum(t.low).minimum(t.high)
+        over=torch.zeros_like(t.pressure_limited)
+    else:
+        requested_force=2.+(actions[:,-2:]+1.)*5.
+        ceiling=torch.full_like(requested_force,(12.-t.parameters.deadband_n)/1.25)
+        applied,over=pressure_limited_target(t.command.reshape(t.n,2,6),target.reshape(t.n,2,6),
+            t.m['hand_object_loads'],ceiling,t.direction,dt,t.parameters.deadband_n)
+        applied=applied.flatten(1).maximum(t.low).minimum(t.high)
     t.command[live]=applied[live]
     lo=actions.new_tensor(CONTRACT['palm_lower_m']);hi=actions.new_tensor(CONTRACT['palm_upper_m'])
     palms=(w.palms+_limited_step(actions[:,12:18].reshape(t.n,2,3),.01,dt)).maximum(lo).minimum(hi)
@@ -123,15 +141,24 @@ def observe(t):
     pose[:,:,:3]/=.05
     velocities=m['wrist_velocity']/m['q'].new_tensor([.05,.05,.05,1.,1.,1.])
     joints=2*(t.command-t.low)/(t.high-t.low)-1
-    return torch.cat((pose.flatten(1),velocities.flatten(1),m['wrist_joint_angles'].flatten(1)/(math.pi/2),
+    parts=(pose.flatten(1),velocities.flatten(1),m['wrist_joint_angles'].flatten(1)/(math.pi/2),
         t.rotation_targets.flatten(1)/(math.pi/2),t.free_wrist_world.wrist_angles.flatten(1)/(math.pi/2),
-        t.free_wrist_world.palms.flatten(1)/.05,joints,t.actions,geometry_features(m)),1)
+        t.free_wrist_world.palms.flatten(1)/.05,joints,t.actions,geometry_features(m))
+    if getattr(t,'surface_force_sharing',False):
+        from .tabletop_surface_exploration import observation
+        parts+=(observation(t),)
+    return torch.cat(parts,1)
 
 
 def add_feedback(t,pieces,valid,dt):
     from .tabletop_dexhands_feedback import reward_rates
     pieces['lift']=torch.zeros_like(t.reward)
-    for name,rate in reward_rates(t.m,t.f_requested,t.actions,t.previous_actions).items():
+    if getattr(t,'surface_force_sharing',False):
+        from .tabletop_surface_exploration import reward_rates as surface_rates
+        rates=surface_rates(t)
+        pieces['force_tracking']=torch.zeros_like(t.reward)
+    else:rates=reward_rates(t.m,t.f_requested,t.actions,t.previous_actions)
+    for name,rate in rates.items():
         pieces[name]=torch.where(valid&(t.failure==0),rate*dt,0.)
 
 
