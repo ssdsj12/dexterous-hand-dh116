@@ -1,3 +1,11 @@
+## 2026-11-02 — `11-2` contract与确定性验证阶段
+
+- 新增严格24D动作合同和371D反馈合同，保留351D输入前缀、原尺度、时间对齐、无效数据中止和contract SHA。
+- 新增351D→371D独立checkpoint派生，保留actor/critic、PPO/Adam、RNG、计数；原checkpoint不覆盖。
+- 原生A/B各1800控制步：24D nominal/executed actions逐值一致，B的371D反馈20维全有限，351D前缀最大误差4.44e-16；A/B均0/2成功，未宣称Student已学会稳定抓取。
+- 新增单因子奖励消融配置和实际Student失败状态的24D DAgger标签池构建器，禁止Teacher servo进入Student执行。
+- 远端定向回归：`147 passed in 7.71s`。未开始4096环境长续训；下一阶段逐项原生消融并保存独立checkpoint、日志、reward config和contract SHA。
+
 ## 2026-11-01 — teacher/student修复、可复现4096 episode续训与11-1发布
 
 - 补齐原生student只读诊断，绑定actor/合同SHA和权重前后不变证明。新服二指teacher回放2/2成功；475轮student去噪16环境最大净升34.225–43.195mm，但最长保持0.250s、0成功，明确区分教师、BC和PPO证据。

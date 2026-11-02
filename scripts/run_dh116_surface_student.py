@@ -30,7 +30,15 @@ p.add_argument('--require-native-student-validation',action='store_true',default
 p.add_argument('--first-episode-only',action='store_true')
 p.add_argument('--stop-on-success',action='store_true')
 p.add_argument('--contact-history',action='store_true')
+p.add_argument('--surface-feedback',action='store_true')
+p.add_argument('--surface-feedback-telemetry',action='store_true')
 p.add_argument('--pregrasp-candidates',type=Path,default=root/'configs/dh116_training/effective_pad_triad_pregrasp_v1.json')
+p.add_argument('--pose-summary',type=Path,default=root/'configs/dh116_training/pose_reference.json',
+    help='explicit pose provenance; use the source checkpoint assets when running from a staging tree')
+p.add_argument('--load-profile',type=Path,default=root/'configs/dh116_load_profiles/v2_pressure_12n_instant_candidate.json',
+    help='explicit load-profile provenance; use the source checkpoint assets when running from a staging tree')
+p.add_argument('--grasp-initialization',type=Path,
+    help='reuse an authored initialization file when evaluating a checkpoint')
 p.add_argument('--candidate-index',type=int,default=0)
 p.add_argument('--resume',type=Path)
 p.add_argument('--eval-steps',type=int,default=0)
@@ -48,23 +56,28 @@ os.chdir(root)
 output=args.output.resolve();initial_path=output.with_name(output.name+'_initialization.json')
 if output.exists() or initial_path.exists():raise FileExistsError(output)
 output.parent.mkdir(parents=True,exist_ok=True)
-candidates=args.pregrasp_candidates.resolve()
-payload=json.loads(candidates.read_text());row=payload['candidates'][args.candidate_index]
-if not row['static_wrench']['static_feasible'] or payload['support_clearance_m']!=.06:
-    raise ValueError('validated static pregrasp/support configuration required')
-initial=json.loads((root/'configs/dh116_training/grasp_initialization_below_axis_2mm_v1.json').read_text())
-roots=torch.tensor(row['wrist_pose_w'],dtype=torch.float64);roots[:,2]-=.06
-initial.update(roots=roots.tolist(),grasp_command=row['active_angles'],
-    joint_positions=full_angles(torch.tensor(row['active_angles'],dtype=torch.float64).reshape(2,6)).tolist(),
-    surface_candidate=dict(geometry_only=True,qualified=False,requires_end_support_clearance_m=.06,
-        input_sha256=hashlib.sha256(candidates.read_bytes()).hexdigest()))
-initial_path.write_text(json.dumps(initial,indent=2))
+if args.grasp_initialization:
+    initial_path=args.grasp_initialization.resolve()
+else:
+    candidates=args.pregrasp_candidates.resolve()
+    payload=json.loads(candidates.read_text());row=payload['candidates'][args.candidate_index]
+    if not row['static_wrench']['static_feasible'] or payload['support_clearance_m']!=.06:
+        raise ValueError('validated static pregrasp/support configuration required')
+    initial=json.loads((root/'configs/dh116_training/grasp_initialization_below_axis_2mm_v1.json').read_text())
+    roots=torch.tensor(row['wrist_pose_w'],dtype=torch.float64);roots[:,2]-=.06
+    initial.update(roots=roots.tolist(),grasp_command=row['active_angles'],
+        joint_positions=full_angles(torch.tensor(row['active_angles'],dtype=torch.float64).reshape(2,6)).tolist(),
+        surface_candidate=dict(geometry_only=True,qualified=False,requires_end_support_clearance_m=.06,
+            input_sha256=hashlib.sha256(candidates.read_bytes()).hexdigest()))
+    initial_path.write_text(json.dumps(initial,indent=2))
 flags=(root/'scripts/smoke_dh116_surface_grasp.sh').read_text();prefix='exec bash scripts/python.sh '
 cmd=shlex.split(flags[flags.index(prefix)+len(prefix):].replace('\\\n',' '))
 for flag,value in (('--num-envs',args.num_envs),('--max-iterations',args.updates),
     ('--rollout-steps',args.rollout_steps),('--surface-diagnostic-steps',10000 if args.teacher_replay else 0),
     ('--grasp-initialization',initial_path),('--cpu-threads',2),('--output',output)):
     cmd[cmd.index(flag)+1]=str(value)
+cmd[cmd.index('--pose-summary')+1]=str(args.pose_summary.resolve())
+cmd[cmd.index('--load-profile')+1]=str(args.load_profile.resolve())
 if args.episodes_per_env is not None:
     index=cmd.index('--max-iterations');del cmd[index:index+2]
     cmd.extend(['--episodes-per-env',str(args.episodes_per_env)])
@@ -78,6 +91,8 @@ if args.mpc:cmd.append('--surface-mpc')
 if args.first_episode_only:cmd.append('--surface-student-first-episode-only')
 if args.stop_on_success:cmd.append('--surface-student-stop-on-success')
 if args.contact_history:cmd.append('--surface-contact-history')
+if args.surface_feedback:cmd.append('--surface-feedback')
+if args.surface_feedback_telemetry:cmd.append('--surface-feedback-telemetry')
 for report in args.validation_report:cmd.extend(['--surface-student-validation-report',str(report.resolve())])
 if args.require_native_student_validation:cmd.append('--require-native-student-validation')
 if args.imitation_mode!='legacy':

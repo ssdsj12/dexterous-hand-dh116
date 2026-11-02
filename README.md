@@ -1,3 +1,11 @@
+## 2026-11-02 — `11-2`：371D contract、派生checkpoint与确定性A/B验证
+
+本阶段先锁定24D动作合同：12个关节速度、6个世界平移速度、6个本体旋转速度，保留原尺度、60 Hz控制/480 Hz物理执行和原执行器限制。新增20维真实物理反馈时，371D只追加到原351D输入尾部；反馈按控制周期完成时间窗，遇到无效或未对齐数据直接让rollout失效。原351D checkpoint `tensor_ppo.pt` 的SHA256为`55d2a041cab933542f7c8f49b060e30d7f009467937396da1c4566c0b471c58a`，派生371D checkpoint单独保存，SHA256为`e096b0f4d76e84db281674b9cfd91f3d3770ca09f8cd70cc5bda0a4a70a30033`；原文件未覆盖，actor/critic、PPO/Adam状态、RNG和计数均保留。
+
+新主机原生确定性A/B各运行2环境、1800控制步。A使用原351D checkpoint并以只读反馈采集telemetry，B使用独立371D派生checkpoint并把20维反馈接入Student输入。两边nominal/executed 24D动作逐值一致，371D反馈形状为`(1800,2,20)`且全有限；351D观测前缀与B的前351维数值一致（最大误差`4.44e-16`）。两边均为0/2成功、hold 0s，说明这一步证明了输入扩展和动作合同保持，不能当作Student已经稳定抓取的证据。证据目录为远端`/root/hand/runs/deployment/11_2_contract/evidence/student_a_351_v5`和`student_b_371_v1`。
+
+代码已加入逐项奖励消融配置：`baseline`、`lift_delta`、`hold_milestone`、`slip`、`contact_break`、`support_margin`、`action_smoothness`，每次只能启用一个新因子并单独写入TensorBoard；加入DAgger失败状态数据集构建器，要求标签来自Student实际访问的失败状态、严格24D合同和contract SHA，Teacher不进入Student执行路径。已完成371D/派生checkpoint/反馈/奖励配置/DAgger单元回归`147 passed in 7.71s`。尚未进入4096环境长续训，也未把A/B结果写成抓取成功；下一步须逐项跑奖励原生消融，再对通过阶段保存独立checkpoint和原生结果。
+
 ## 2026-11-01 — `11-1`：teacher → student 迁移修复与续训
 
 已确认teacher在新服仍可2/2成功；原475轮student去噪对照16环境均抬过30mm，但最长只连续保持0.25s，0/16成功。原BC的低MSE不代表能闭环抓稳，不能把教师成功写成student成功。

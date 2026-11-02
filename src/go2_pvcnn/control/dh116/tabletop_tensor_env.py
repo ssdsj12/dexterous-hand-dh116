@@ -267,6 +267,9 @@ class TensorEnv:
         self.reset_substep[:] = 0
         self.substep = 0
         actions = t.begin_step(actions)
+        feedback=getattr(t,'surface_feedback',None) or getattr(t,'surface_feedback_telemetry',None)
+        feedback_live=(~t.done).clone() if feedback is not None else None
+        if feedback is not None:feedback.begin(t,w)
         velocity_penalty=torch.zeros(self.n,device=self.device,dtype=torch.float64)
         recovered = torch.zeros_like(self.pending)
         invalid = t.failure==FAILURE_CODES['invalid_action']
@@ -345,6 +348,10 @@ class TensorEnv:
                               if getattr(t,'phase_force_reward',False) else None))
             else:
                 t.consume(task_m,scoring_live,w.dt)
+            if feedback is not None:
+                feedback.sample(t,w,m,live,w.dt)
+                if bool((live&~feedback.sample_valid).any()):
+                    raise RuntimeError('invalid native 371D feedback; rollout aborted before PPO/BC update')
             raw_bad=live&invalid_physics
             if bool(raw_bad.any()):
                 t.failure[raw_bad]=FAILURE_CODES['nonfinite_state'];t.nonfinite |= raw_bad
@@ -429,7 +436,16 @@ class TensorEnv:
                 recovered |= candidate
                 self.pending |= newly_terminal
             self.phase_visits.scatter_(1,t.phase[:,None],True)
+        if feedback is not None:
+            feedback.finish(t,w)
+            if bool((feedback_live&~feedback.valid).any()):
+                raise RuntimeError('invalid completed 371D feedback interval; rollout aborted before PPO/BC update')
         obs,rewards,dones,extras = t.end_step()
+        if feedback is not None:
+            extras=dict(extras,surface_feedback=feedback.features().clone())
+        if getattr(t,'surface_force_sharing',False):
+            from .tabletop_surface_student_evaluation import diagnostic_snapshot
+            extras=dict(extras,surface_diagnostics=diagnostic_snapshot(t))
         extras=dict(extras,terms=dict(extras['terms'],velocity_excess=velocity_penalty.clone()))
         rewards, dones = rewards.clone(), dones.clone()
         if acquisition_before is not None:

@@ -26,7 +26,7 @@ def contact_style(control_mean_loads):
         mean_digit_load_n=x.mean(0).tolist())
 
 
-def load_teacher_actions(path):
+def load_teacher_actions(path, *, require_action_contract=False, action_audit=None):
     path=Path(path)
     data=torch.load(path,map_location='cpu',weights_only=False)
     metadata=data.get('metadata',{})
@@ -40,6 +40,19 @@ def load_teacher_actions(path):
     identity=dict(path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
         source_qualified=True,source_policy_observations_recorded=metadata.get('policy_observations_recorded',False),
         grasp_style=metadata.get('grasp_style','unknown'))
+    if require_action_contract:
+        from .tabletop_surface_contract import ACTION_CONTRACT
+        declared=metadata.get('action_contract')
+        if declared is None:
+            if action_audit is None:raise ValueError('explicit SHA-bound legacy action audit required')
+            audit=json.loads(Path(action_audit).read_text())
+            if audit.get('source_sha256')!=identity['sha256']:raise ValueError('Teacher action audit source SHA mismatch')
+            declared=audit.get('action_contract')
+            identity['action_audit_sha256']=hashlib.sha256(Path(action_audit).read_bytes()).hexdigest()
+        if declared!=ACTION_CONTRACT:raise ValueError('Teacher 24D action order/scale/frame contract mismatch')
+        identity['action_contract']=declared
+        identity['action_contract_sha256']=hashlib.sha256(json.dumps(declared,
+            sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
     samples=data.get('physics',{}).get('effective_pad_loads_n')
     if identity['grasp_style']=='unknown' and isinstance(samples,torch.Tensor) and samples.shape[1:]==(1,2,5) and len(samples)%8==0:
         identity['grasp_style']=contact_style(samples.reshape(-1,8,1,2,5).mean(1)[-300:,0])['style']

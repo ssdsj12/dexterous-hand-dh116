@@ -70,12 +70,15 @@ parser.add_argument('--contact-effort-feedback',action='store_true',help='bounde
 parser.add_argument('--teacher-search-cases',type=Path)
 parser.add_argument('--surface-teacher-replay',type=Path,
                     help='replay qualified 24D native actions through normal TensorEnv and collect student observations')
+parser.add_argument('--surface-action-audit',type=Path,help='explicit source-SHA-bound 24D semantics audit for legacy Teacher replay')
 parser.add_argument('--surface-student-actor',type=Path,
                     help='initialize only the 351D/24D surface student actor from its own BC artifact')
 parser.add_argument('--surface-imitation-mode',choices=('legacy','stable_hold_v2'),default='legacy',
                     help='explicit independent actor optimizer and persistent hold-aware teacher correction')
 parser.add_argument('--surface-noise-mode',choices=('legacy','holding_v2'),default='legacy',
                     help='explicit lower Gaussian sampling std for surface policies; physical action range unchanged')
+parser.add_argument('--surface-reward-profile',choices=('baseline','lift_delta','hold_milestone','slip','contact_break','support_margin','action_smoothness'),default='baseline',
+                    help='enable exactly one new native reward factor for staged ablation')
 parser.add_argument('--surface-contact-history',action='store_true',
                     help='explicit 401D input with causal native mean-force EMA and preceding-window max depth')
 parser.add_argument('--surface-student-validation-report',type=Path,action='append',default=[],
@@ -91,6 +94,8 @@ parser.add_argument('--surface-demonstrations',type=Path,
 parser.add_argument('--surface-student-eval-steps',type=int,default=0,
                     help='inference-only native student evaluation; requires surface student actor or PPO resume')
 parser.add_argument('--surface-mpc',action='store_true',help='inference-only local pad grip MPC; student owns wrist intent')
+parser.add_argument('--surface-feedback',action='store_true',help='opt-in strict 371D completed native feedback; requires derived checkpoint')
+parser.add_argument('--surface-feedback-telemetry',action='store_true',help='record the same native feedback for 351D A/B without changing policy inputs')
 parser.add_argument('--manual-control',action='store_true',help='interactive force/finger/wrist/lift controls; no PPO training')
 parser.add_argument('--teacher-episodes',type=int,default=1)
 parser.add_argument('--teacher-control-steps',type=int,default=1000)

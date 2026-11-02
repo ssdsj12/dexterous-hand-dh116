@@ -143,7 +143,8 @@ def evaluate(env,algorithm,args,contract,initial_obs):
             hold_paired=diag['hold_paired'].cpu().tolist(),
             condition_failure_counts={key:value.cpu().tolist() for key,value in failure_counts.items()},
             diagnostic_env_steps=steps*env.n,
-            diagnostic_sample_source='post_env_step_task_state;terminal_rows_may_be_reset;not_raw_substep_coverage',
+            diagnostic_sample_source=('terminal_preserved_pre_task_reset_control_snapshot'
+                if 'surface_diagnostics' in extra else 'post_env_step_task_state;terminal_rows_may_be_reset;not_raw_substep_coverage'),
             condition_failure_count_unit='sampled_control_steps_per_env',
             actor_unchanged=True if complete else None,
             policy_weights_before_sha256=weights_before,policy_weights_after_sha256=weights_after,
@@ -160,7 +161,7 @@ def evaluate(env,algorithm,args,contract,initial_obs):
         previous=obs['policy'].clone()
         value,reward,done,extra=env.step(actual)
         if mpc:mpc.observe_result(done)
-        diag=diagnostic_snapshot(env.task)
+        diag=extra['surface_diagnostics'] if 'surface_diagnostics' in extra else diagnostic_snapshot(env.task)
         max_lift=torch.maximum(max_lift,diag['net_lift_m'].clamp_min(0))
         max_hold=torch.maximum(max_hold,diag['hold_s'])
         max_drift=torch.maximum(max_drift,diag['drift_m'])
@@ -169,7 +170,10 @@ def evaluate(env,algorithm,args,contract,initial_obs):
             failure_counts[key]+=(~passed).long()
         rows.append(dict(observations=previous.cpu(),nominal_actions=nominal.cpu(),executed_actions=actual.cpu(),
             dones=done.cpu(),success=extra['success'].cpu(),failure=extra['failure'].cpu(),
-            net_lift_m=(env.task.m['bottom']-env.task.surface_reference_bottom_m).cpu()))
+            net_lift_m=diag['net_lift_m'].cpu(),hold_s=diag['hold_s'].cpu(),
+            drift_m=diag['drift_m'].cpu(),ordinary_fraction=diag['ordinary_fraction'].cpu(),
+            hold_paired=diag['hold_paired'].cpu(),hold_window_good=diag['hold_window_good'].cpu()))
+        if 'surface_feedback' in extra:rows[-1]['surface_feedback']=extra['surface_feedback'].cpu()
         obs=observations(value)
         actual_ticks=tick+1
         observed_stop=evaluation_stop(env.episodes,episodes,env.successes,successes,

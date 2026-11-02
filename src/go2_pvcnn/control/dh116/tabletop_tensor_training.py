@@ -761,6 +761,7 @@ def run_tensor_training(world, template, args, contract):
         enable(task,device_world)
     if getattr(args,'surface_force_sharing',False):
         from .tabletop_surface_exploration import enable
+        task.surface_reward_profile=getattr(args,'surface_reward_profile','baseline')
         enable(task,device_world)
         if getattr(args,'surface_imitation_mode','legacy')=='stable_hold_v2':
             from .tabletop_surface_exploration import enable_stable_hold_rewards
@@ -768,6 +769,14 @@ def run_tensor_training(world, template, args, contract):
         if getattr(args,'surface_contact_history',False):
             from .tabletop_surface_contact_history import enable_contact_history
             enable_contact_history(task)
+        if getattr(args,'surface_feedback',False) or getattr(args,'surface_feedback_telemetry',False):
+            from .tabletop_surface_feedback import SurfaceFeedback
+            if task.observe().shape[-1]!=351:
+                raise ValueError('371D feedback requires the exact original 351D observation prefix')
+            observer=SurfaceFeedback(task.n,task.device,dtype=task.command.dtype)
+            if getattr(args,'surface_feedback',False):task.surface_feedback=observer
+            else:task.surface_feedback_telemetry=observer
+            task.last_observation=task.observe().clone()
     if getattr(args,'contact_effort_feedback',False):
         from .tabletop_contact_effort import ContactEffortFeedback
         task.contact_effort=ContactEffortFeedback(args.num_envs,args.device,effort_limit_nm=task.parameters.effort_limit_nm)
@@ -965,7 +974,9 @@ def run_tensor_training(world, template, args, contract):
     if getattr(args,'surface_teacher_replay',None):
         from .tabletop_surface_demonstrations import load_teacher_actions,collect_replay
         if not getattr(task,'surface_force_sharing',False):raise ValueError('surface teacher replay requires surface task')
-        actions,source=load_teacher_actions(args.surface_teacher_replay)
+        actions,source=load_teacher_actions(args.surface_teacher_replay,
+            require_action_contract=getattr(args,'surface_feedback',False),
+            action_audit=getattr(args,'surface_action_audit',None))
         write_json(args.output/'tensor_contract.json',contract)
         result=collect_replay(env,obs['policy'],actions,contract,args.output,source_identity=source)
         return dict(result,training_skipped=result['successful_replays']==0,
@@ -976,6 +987,9 @@ def run_tensor_training(world, template, args, contract):
             raise ValueError('surface noise requires the 24D surface task')
         from .tabletop_policy_noise import configure_surface_noise
         contract['policy_noise']=dict(configure_surface_noise(algorithm))
+        if getattr(args,'surface_feedback',False):
+            from .tabletop_surface_contract import semantic_sha256
+            contract['surface_contract_sha256']=semantic_sha256(contract)
         report_contract.clear()
         report_contract.update(contract)
         publish_resolved_tensor_configuration(args.output,contract)
@@ -987,12 +1001,13 @@ def run_tensor_training(world, template, args, contract):
     actor_initialization=None
     surface_imitation=None
     surface_reset_family=None
-    if getattr(args,'surface_student_actor',None) or getattr(args,'surface_demonstrations',None):
+    evaluation_only=bool(getattr(args,'surface_student_eval_steps',0))
+    if getattr(args,'surface_student_actor',None) or (getattr(args,'surface_demonstrations',None) and not evaluation_only):
         if not getattr(task,'surface_force_sharing',False):raise ValueError('surface student task required')
         from .tabletop_surface_imitation import load_actor,DemonstrationRegularizer
         if getattr(args,'surface_student_actor',None):
             actor_initialization=load_actor(algorithm,args.surface_student_actor,contract)
-        if getattr(args,'surface_demonstrations',None):
+        if getattr(args,'surface_demonstrations',None) and not evaluation_only:
             import hashlib
             demo_path=Path(args.surface_demonstrations)
             demo=torch.load(demo_path,map_location='cpu',weights_only=False)
@@ -1035,11 +1050,16 @@ def run_tensor_training(world, template, args, contract):
     saved=None
     if args.resume:
         saved=torch.load(args.resume,map_location=args.device,weights_only=False)
-        if saved.get('surface_imitation')!=getattr(algorithm,'surface_imitation_metadata',None):
+        if not evaluation_only and saved.get('surface_imitation')!=getattr(algorithm,'surface_imitation_metadata',None):
             raise ValueError('surface demonstration source/hyperparameters must match PPO resume')
         if saved['version']!=VERSION:
             raise ValueError('tensor checkpoint contract mismatch; legacy SB3 resume is unsupported')
-        changes=surface_checkpoint_contract_changes(saved['contract'],contract,surface_reset_family)
+        if evaluation_only and getattr(task,'surface_force_sharing',False):
+            from .tabletop_surface_imitation import _check_contract
+            _check_contract(saved['contract'],contract)
+            changes=[]
+        else:
+            changes=surface_checkpoint_contract_changes(saved['contract'],contract,surface_reset_family)
         if 'force_action_range_2_to_12' in changes:
             raise ValueError('tensor checkpoint contract mismatch; legacy force-action range is not resume-compatible')
         if changes:
@@ -1072,7 +1092,7 @@ def run_tensor_training(world, template, args, contract):
         iteration,timesteps=saved['iteration'],saved['timesteps']
         close_event_index=int(saved.get('close_completion_event_index',0))
         for name in ('episodes','successes','recovered','reached_counts','transition_counts'):
-            getattr(env,name).copy_(saved[name])
+            if not evaluation_only:getattr(env,name).copy_(saved[name])
         if 'combined_failure_resets' in saved:
             env.combined_failure_resets.copy_(saved['combined_failure_resets'])
         if 'joint_limit_resets' in saved:

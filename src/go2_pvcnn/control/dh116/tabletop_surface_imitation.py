@@ -51,8 +51,13 @@ def _canonical_contract(contract):
             and contract.get('observation_version')==HISTORY_OBSERVATION_VERSION):
         from .tabletop_surface_contact_history import CONTRACT as HISTORY_CONTRACT
         history=contract.get('surface_contact_history')==HISTORY_CONTRACT
-    if not (legacy or history):
-        raise ValueError('surface contract requires explicit 351D or causal-history 401D observations')
+    feedback=False
+    if contract.get('observation_size')==371:
+        from .tabletop_surface_contract import validate_contract
+        validate_contract(contract)
+        feedback=True
+    if not (legacy or history or feedback):
+        raise ValueError('surface contract requires explicit 351D, feedback 371D or causal-history 401D observations')
     dimensions = [contract[key] for key in ('action_size', 'policy_command_size')
                   if key in contract]
     if not dimensions or any(value != 24 for value in dimensions):
@@ -226,7 +231,7 @@ def validate_dataset(data, contract=None):
 
 def make_actor(observation_size=351):
     """Return the bounded actor for an explicitly versioned surface input."""
-    if observation_size not in (351,401):raise ValueError('unsupported surface actor input size')
+    if observation_size not in (351,371,401):raise ValueError('unsupported surface actor input size')
     return nn.Sequential(nn.Linear(observation_size, 128), nn.Tanh(), nn.Linear(128, 128),
                          nn.Tanh(), nn.Linear(128, 24), nn.Tanh())
 

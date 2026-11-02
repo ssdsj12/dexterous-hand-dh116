@@ -225,6 +225,10 @@ class TensorTask:
         ids=torch.as_tensor(ids,device=self.device,dtype=torch.long)
         if getattr(self,'surface_contact_history',None) is not None:
             self.surface_contact_history.reset(ids)
+        if getattr(self,'surface_feedback',None) is not None:
+            self.surface_feedback.reset(ids)
+        if getattr(self,'surface_feedback_telemetry',None) is not None:
+            self.surface_feedback_telemetry.reset(ids)
         if hasattr(self,'surface_lift_success'):self.surface_lift_success.reset(ids)
         if hasattr(self,'surface_slip_tracking'):self.surface_slip_tracking.reset(ids)
         if hasattr(self,'policy_lift_hold'):self.policy_lift_hold.reset(ids)
@@ -245,6 +249,9 @@ class TensorTask:
                 value=torch.as_tensor(measurement[key],device=self.device,dtype=self.m[key].dtype)
                 value=value[ids] if value.shape==self.m[key].shape else value
                 self.m[key][ids]=value.bool() if key in ('contact_valid','contact_all_below_centerline') else value
+        if hasattr(self,'surface_reward_previous_bottom'):
+            self.surface_reward_previous_bottom[ids]=self.m['bottom'][ids]
+            self.surface_reward_previous_contact[ids]=False
         for value in self.terms.values(): value[ids]=0.
         if hasattr(self,'coordinated_control'):
             from .tabletop_coordinated_grasp import midpoint_coordinates
@@ -444,6 +451,8 @@ class TensorTask:
             parts+=(observe(self),)
         if getattr(self,'surface_contact_history',None) is not None:
             parts+=(self.surface_contact_history.features(),)
+        if getattr(self,'surface_feedback',None) is not None:
+            parts+=(self.surface_feedback.features(),)
         return torch.cat(parts,dim=1).float()
 
     def consume(self, measurement, live, dt, *, vertical_force_n=None, lift_vertical_force_n=None,

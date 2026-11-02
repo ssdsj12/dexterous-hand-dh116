@@ -78,7 +78,12 @@ def control(t,actions,live,dt):
     from .linear_coupling import ACTIVE,MIMIC
     from .tabletop_pressure_relief import pressure_limited_target
     w=t.free_wrist_world
-    target=t.command+actions[:,:12]*CONTRACT['joint_rate_rad_s']*dt
+    rates=CONTRACT
+    if surface:
+        from .tabletop_surface_contract import ACTION_CONTRACT
+        rates=dict(joint_rate_rad_s=ACTION_CONTRACT['joint_rate_rad_s'],
+            wrist_rate_m_s=ACTION_CONTRACT['translation_rate_m_s'],rotation_rate_rad_s=ACTION_CONTRACT['rotation_rate_rad_s'])
+    target=t.command+actions[:,:12]*rates['joint_rate_rad_s']*dt
     # Bounded follower correction is superimposed on the selected trajectory;
     # a finite error never becomes a wrist-motion admission test.
     for j,(_,master,ratio,_) in enumerate(MIMIC):
@@ -117,8 +122,8 @@ def control(t,actions,live,dt):
         applied=applied.flatten(1).maximum(t.low).minimum(t.high)
     t.command[live]=applied[live]
     lo=actions.new_tensor(CONTRACT['palm_lower_m']);hi=actions.new_tensor(CONTRACT['palm_upper_m'])
-    palms=(w.palms+_limited_step(actions[:,12:18].reshape(t.n,2,3),.01,dt)).maximum(lo).minimum(hi)
-    angles=(w.wrist_angles+_limited_step(actions[:,18:24].reshape(t.n,2,3),.5,dt)).clamp(-math.pi/2,math.pi/2)
+    palms=(w.palms+_limited_step(actions[:,12:18].reshape(t.n,2,3),rates['wrist_rate_m_s'],dt)).maximum(lo).minimum(hi)
+    angles=(w.wrist_angles+_limited_step(actions[:,18:24].reshape(t.n,2,3),rates['rotation_rate_rad_s'],dt)).clamp(-math.pi/2,math.pi/2)
     t.palm_targets[live]=palms[live];t.rotation_targets[live]=angles[live]
     t.palm_actions[live]=actions[:,12:18].reshape(t.n,2,3)[live]
     t.policy_stiffness[live]=10.
