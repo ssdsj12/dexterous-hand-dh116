@@ -33,6 +33,13 @@ p.add_argument('--episodes-per-style',type=int,default=128,
 p.add_argument('--rollout-steps',type=int,default=32)
 p.add_argument('--imitation-mode',choices=('legacy','stable_hold_v2'),default='legacy')
 p.add_argument('--noise-mode',choices=('legacy','holding_v2'),default='legacy')
+p.add_argument('--surface-feedback',action='store_true',
+    help='pass the validated 371D real-physics feedback contract to every native child')
+p.add_argument('--surface-feedback-telemetry',action='store_true',
+    help='collect 371D feedback telemetry without appending it to the policy input')
+p.add_argument('--surface-reward-profile',choices=('baseline','lift_progress','early_hold',
+    'contact_break','slip_relative','support_deficit'),default='baseline',
+    help='one staged reward profile for every child block; baseline keeps new terms disabled')
 p.add_argument('--contact-history',action='store_true')
 p.add_argument('--validation-report',type=Path,action='append',default=[])
 p.add_argument('--require-native-student-validation',action='store_true',default=False,
@@ -137,6 +144,10 @@ for block_index,label,episode_goal in blocks:
         '--rollout-steps',str(args.rollout_steps),'--demonstrations',str(library),
         '--pregrasp-candidates',str(templates[label]),
         '--imitation-mode',args.imitation_mode,'--noise-mode',args.noise_mode]
+    if args.surface_feedback:command.append('--surface-feedback')
+    if args.surface_feedback_telemetry:command.append('--surface-feedback-telemetry')
+    if args.surface_reward_profile!='baseline':
+        command.extend(['--surface-reward-profile',args.surface_reward_profile])
     command.extend(['--episodes-per-env',str(episode_goal)] if episode_goal is not None
                    else ['--updates',str(target)])
     command.extend(['--resume',str(checkpoint)] if checkpoint else ['--student-actor',str(args.student_actor.resolve())])
