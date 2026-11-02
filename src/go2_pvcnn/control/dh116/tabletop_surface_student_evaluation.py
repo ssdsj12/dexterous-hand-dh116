@@ -116,6 +116,7 @@ def evaluate(env,algorithm,args,contract,initial_obs):
     stop_on_success=bool(getattr(args,'surface_student_stop_on_success',False))
     actual_ticks=0;stop_reason='step_budget_exhausted'
     obs=initial_obs;rows=[];start=time.monotonic()
+    dagger_buffer=[];dagger_rows=[]
     max_lift=torch.zeros(env.n,device=env.device,dtype=torch.float64)
     max_hold=max_lift.clone()
     max_drift=max_lift.clone();failure_counts={}
@@ -137,6 +138,10 @@ def evaluate(env,algorithm,args,contract,initial_obs):
             observed_linear_speed_m_s=diag['linear_speed_m_s'].cpu().tolist(),
             observed_max_pad_depth_m=diag['max_pad_depth_m'].cpu().tolist(),
             observed_ordinary_fraction=diag['ordinary_fraction'].cpu().tolist(),
+            observed_actual_support_n=(diag['actual_support_n'].cpu().tolist()
+                if 'actual_support_n' in diag else None),
+            observed_actual_support_margin=(diag['actual_support_margin'].cpu().tolist()
+                if 'actual_support_margin' in diag else None),
             max_observed_drift_m=max_drift.cpu().tolist(),
             physical_eligible=diag['physical_eligible'].cpu().tolist(),
             hold_window_good=diag['hold_window_good'].cpu().tolist(),
@@ -159,7 +164,25 @@ def evaluate(env,algorithm,args,contract,initial_obs):
         nominal=policy.act_inference(obs).clamp(-1,1)
         actual=mpc.refine(nominal) if mpc else nominal
         previous=obs['policy'].clone()
+        if getattr(args,'surface_dagger_collect',False):
+            from .tabletop_surface_failure_teacher import correction
+            candidate=correction(env,actual)
+            dagger_buffer.append(dict(tick=tick,observations=previous.cpu(),
+                episodes=env.episodes.cpu().clone(),
+                student_actions=actual.cpu(),actions=candidate['actions'].cpu(),
+                valid=candidate['kinematically_valid'].cpu(),
+                snapshot={k:v.cpu() for k,v in candidate['snapshot'].items()}))
+            dagger_buffer=dagger_buffer[-30:]
         value,reward,done,extra=env.step(actual)
+        if getattr(args,'surface_dagger_collect',False):
+            for index in (extra['failure'].ne(0)&done).nonzero().flatten().tolist():
+                for source in dagger_buffer:
+                    if (bool(source['valid'][index])
+                            and source['episodes'][index]==dagger_buffer[-1]['episodes'][index]):
+                        dagger_rows.append(dict(tick=source['tick'],env=index,
+                            observation=source['observations'][index],action=source['actions'][index],
+                            student_action=source['student_actions'][index],
+                            snapshot={k:v[index] for k,v in source['snapshot'].items()}))
         if mpc:mpc.observe_result(done)
         diag=extra['surface_diagnostics'] if 'surface_diagnostics' in extra else diagnostic_snapshot(env.task)
         max_lift=torch.maximum(max_lift,diag['net_lift_m'].clamp_min(0))
@@ -174,6 +197,8 @@ def evaluate(env,algorithm,args,contract,initial_obs):
             drift_m=diag['drift_m'].cpu(),ordinary_fraction=diag['ordinary_fraction'].cpu(),
             hold_paired=diag['hold_paired'].cpu(),hold_window_good=diag['hold_window_good'].cpu()))
         if 'surface_feedback' in extra:rows[-1]['surface_feedback']=extra['surface_feedback'].cpu()
+        for key in ('actual_support_n','actual_support_margin'):
+            if key in diag:rows[-1][key]=diag[key].cpu()
         obs=observations(value)
         actual_ticks=tick+1
         observed_stop=evaluation_stop(env.episodes,episodes,env.successes,successes,
@@ -189,6 +214,13 @@ def evaluate(env,algorithm,args,contract,initial_obs):
         raise RuntimeError('student changed during inference-only evaluation')
     result=report(actual_ticks,complete=True)
     torch.save({key:torch.stack([row[key] for row in rows]) for key in rows[0]},output/'student_evaluation.pt')
+    if getattr(args,'surface_dagger_collect',False):
+        eval_sha=hashlib.sha256((output/'student_evaluation.pt').read_bytes()).hexdigest()
+        torch.save(dict(version='dh116-native-failure-correction-candidates-v1',
+            source_evaluation_sha256=eval_sha,contract_sha256=identity['contract_sha256'],
+            rows=dagger_rows,native_correction_qualified=False,executed_by_teacher=False,
+            admission='candidate_only_requires_separate_native_correction_validation'),
+            output/'surface_dagger_candidates.pt')
     write_progress(output/'student_evaluation.json',result)
     write_progress(output/'student_evaluation_progress.json',result)
     return result

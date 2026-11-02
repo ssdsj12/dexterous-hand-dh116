@@ -4,7 +4,9 @@
 
 新主机原生确定性A/B各运行2环境、1800控制步。A使用原351D checkpoint并以只读反馈采集telemetry，B使用独立371D派生checkpoint并把20维反馈接入Student输入。两边nominal/executed 24D动作逐值一致，371D反馈形状为`(1800,2,20)`且全有限；351D观测前缀与B的前351维数值一致（最大误差`4.44e-16`）。两边均为0/2成功、hold 0s，说明这一步证明了输入扩展和动作合同保持，不能当作Student已经稳定抓取的证据。证据目录为远端`/root/hand/runs/deployment/11_2_contract/evidence/student_a_351_v5`和`student_b_371_v1`。
 
-代码已加入逐项奖励消融配置：`baseline`、`lift_delta`、`hold_milestone`、`slip`、`contact_break`、`support_margin`、`action_smoothness`，每次只能启用一个新因子并单独写入TensorBoard；加入DAgger失败状态数据集构建器，要求标签来自Student实际访问的失败状态、严格24D合同和contract SHA，Teacher不进入Student执行路径。已完成371D/派生checkpoint/反馈/奖励配置/DAgger单元回归`147 passed in 7.71s`。尚未进入4096环境长续训，也未把A/B结果写成抓取成功；下一步须逐项跑奖励原生消融，再对通过阶段保存独立checkpoint和原生结果。
+371D Teacher又在普通TensorEnv独立回放通过2/2原生成功，1175控制步；与351D示范动作逐值一致，输入前缀最大误差2.22e-16。示范合同SHA最终化另存派生文件，原生样本和原件保留；Teacher结果不算Student成功。
+
+代码已加入逐项奖励消融配置：`baseline`、`lift_progress`、`early_hold`、`contact_break`、`slip_relative`、`support_deficit`。动作平滑继续沿用原有奖励和硬安全约束，不重复添加等价平方项。独立审查后修正奖励注册、baseline合同兼容、BC保留、真实物重/摩擦支撑、滑移、合同SHA和DAgger状态绑定；每次只替换一个奖励因子，原BC Adam保留。DAgger原生入口读取Student失败前真实状态和Jacobian，仅输出24D纠正候选；候选须另经原生纠正验证才可进入辅助BC。本轮直接相关回归190项及24个参数化子测试通过。完整状态单轮续训371→372已完成，新checkpoint全部tensor有限、PPO/BC Adam均更新，累计28147个episode、success仍0。第372轮确定性Student/纠正候选采集另行验证，尚未进入长训练或完成奖励原生消融；见[本次证据、命令与限制](docs/superpowers/reports/2026-11-02-371d-contract-validation.md)。
 
 ## 2026-11-01 — `11-1`：teacher → student 迁移修复与续训
 

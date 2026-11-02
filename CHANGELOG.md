@@ -4,7 +4,10 @@
 - 新增351D→371D独立checkpoint派生，保留actor/critic、PPO/Adam、RNG、计数；原checkpoint不覆盖。
 - 原生A/B各1800控制步：24D nominal/executed actions逐值一致，B的371D反馈20维全有限，351D前缀最大误差4.44e-16；A/B均0/2成功，未宣称Student已学会稳定抓取。
 - 新增单因子奖励消融配置和实际Student失败状态的24D DAgger标签池构建器，禁止Teacher servo进入Student执行。
-- 远端定向回归：`147 passed in 7.71s`。未开始4096环境长续训；下一阶段逐项原生消融并保存独立checkpoint、日志、reward config和contract SHA。
+- 独立审查后修复baseline合同兼容、奖励项注册、保留BC的单因子替换、SHA最终化、真实物重与摩擦支撑、接触中断和滑移记录。纠正标签绑定真实Student状态/episode/tick/env及SHA；未通过原生纠正验证的候选拒绝用于BC。
+- 新增只读原生纠正候选采集器和独立辅助BC消费者，共享保留BC Adam，不进入PPO storage。新增独立阶段checkpoint派生器，逐项验证原模型、PPO/BC Adam、RNG和计数均未改写。
+- 371D Teacher原生回放2/2成功，1175控制步；与351D示范动作逐值一致，观测前缀最大差2.22e-16。显式派生修正示范合同摘要，原样本及原件保留。
+- 本轮直接相关回归190项与24个参数化子测试通过；仅一次更新的完整状态续训371→372已完成，新checkpoint全部tensor有限、PPO/BC Adam均更新，累计28147episode、0success。第372轮确定性Student及纠正候选采集串行进行；奖励原生消融与安全纠正验证尚未完成，未开始4096环境长训练。详见[本次验证报告](docs/superpowers/reports/2026-11-02-371d-contract-validation.md)。
 
 ## 2026-11-01 — teacher/student修复、可复现4096 episode续训与11-1发布
 

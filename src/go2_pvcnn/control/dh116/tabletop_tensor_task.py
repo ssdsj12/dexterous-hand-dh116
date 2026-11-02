@@ -230,6 +230,7 @@ class TensorTask:
         if getattr(self,'surface_feedback_telemetry',None) is not None:
             self.surface_feedback_telemetry.reset(ids)
         if hasattr(self,'surface_lift_success'):self.surface_lift_success.reset(ids)
+        if hasattr(self,'surface_early_hold'):self.surface_early_hold.reset(ids)
         if hasattr(self,'surface_slip_tracking'):self.surface_slip_tracking.reset(ids)
         if hasattr(self,'policy_lift_hold'):self.policy_lift_hold.reset(ids)
         if hasattr(self,'palm_reposition'):self.palm_reposition.reset(ids)
@@ -249,9 +250,8 @@ class TensorTask:
                 value=torch.as_tensor(measurement[key],device=self.device,dtype=self.m[key].dtype)
                 value=value[ids] if value.shape==self.m[key].shape else value
                 self.m[key][ids]=value.bool() if key in ('contact_valid','contact_all_below_centerline') else value
-        if hasattr(self,'surface_reward_previous_bottom'):
-            self.surface_reward_previous_bottom[ids]=self.m['bottom'][ids]
-            self.surface_reward_previous_contact[ids]=False
+        if hasattr(self,'surface_reward_ablation'):
+            self.surface_reward_ablation.reset(ids,self.m['bottom'])
         for value in self.terms.values(): value[ids]=0.
         if hasattr(self,'coordinated_control'):
             from .tabletop_coordinated_grasp import midpoint_coordinates
@@ -651,6 +651,11 @@ class TensorTask:
                     m['wrist_pose'],m['effective_pad_loads_n'],m['effective_pad_vectors_w'],
                     m['effective_pad_depth_m'],m['rejected_contact_loads_n'].sum(-1),m['bottom'],
                     m['object_velocity'],active,dt)
+            if hasattr(self,'surface_early_hold'):
+                self.surface_early_hold.update(torch.cat((center,m['object_quat']),-1),
+                    m['wrist_pose'],m['effective_pad_loads_n'],m['effective_pad_vectors_w'],
+                    m['effective_pad_depth_m'],m['rejected_contact_loads_n'].sum(-1),m['bottom'],
+                    m['object_velocity'],active,dt)
             self.success_time[lift]=progress['duration'][lift]
             event=lift&progress['event']
         else:
@@ -776,7 +781,8 @@ class TensorTask:
                 unrestricted_load=getattr(self,'surface_force_sharing',False)))
         if getattr(self,'free_wrist_grasp',False):
             from .tabletop_free_wrist_grasp import add_feedback
-            add_feedback(self,pieces,valid,dt)
+            add_feedback(self,pieces,valid,dt,hand_lift_force_n=hand_lift_force_n,
+                         object_weight_n=object_weight_n)
         for name,value in pieces.items():
             self.terms[name][valid]+=value[valid]; self.reward[valid]+=value[valid]
         self.used[live]+=dt

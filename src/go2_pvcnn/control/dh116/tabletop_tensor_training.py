@@ -703,6 +703,8 @@ def save_checkpoint(path, algorithm, contract, iteration, timesteps, env):
         payload['policy_action_recovery']=dict(algorithm.policy_action_recovery.counts)
     if getattr(algorithm,'surface_imitation_metadata',None) is not None:
         payload['surface_imitation']=dict(algorithm.surface_imitation_metadata)
+    if getattr(algorithm,'surface_corrections_metadata',None) is not None:
+        payload['surface_corrections']=dict(algorithm.surface_corrections_metadata)
     if getattr(algorithm,'surface_imitation_optimizer',None) is not None:
         payload['surface_imitation_optimizer']=algorithm.surface_imitation_optimizer.state_dict()
     if getattr(algorithm,'surface_student_validation',None) is not None:
@@ -763,9 +765,13 @@ def run_tensor_training(world, template, args, contract):
         from .tabletop_surface_exploration import enable
         task.surface_reward_profile=getattr(args,'surface_reward_profile','baseline')
         enable(task,device_world)
-        if getattr(args,'surface_imitation_mode','legacy')=='stable_hold_v2':
+        if (getattr(args,'surface_imitation_mode','legacy')=='stable_hold_v2'
+                and getattr(args,'surface_reward_profile','baseline')=='baseline'):
             from .tabletop_surface_exploration import enable_stable_hold_rewards
             enable_stable_hold_rewards(task)
+        if task.surface_reward_profile!='baseline':
+            from .tabletop_surface_reward_ablation import enable as enable_ablation
+            enable_ablation(task)
         if getattr(args,'surface_contact_history',False):
             from .tabletop_surface_contact_history import enable_contact_history
             enable_contact_history(task)
@@ -956,6 +962,10 @@ def run_tensor_training(world, template, args, contract):
         from .tabletop_surface_exploration import apply_contract
         apply_contract(contract,task)
         contract['end_support_scene']=getattr(world,'end_support_scene',None)
+        if getattr(task,'surface_feedback',None) is not None:
+            from .tabletop_surface_contract import semantic_sha256,validate_contract
+            contract['surface_contract_sha256']=semantic_sha256(contract)
+            validate_contract(contract)
     # The caller's report holds this original dict. Publish the fully resolved
     # tensor contract there as well, including manual/probe/error exits.
     report_contract.clear()
@@ -1026,6 +1036,16 @@ def run_tensor_training(world, template, args, contract):
                     auxiliary_learning_rate=.001,
                     weight_semantics='multiply_independent_Adam_learning_rate_not_its_gradient',
                     update='independent_actor_adam_stable_hold_v2')
+    surface_corrections=None
+    if getattr(args,'surface_corrections',None):
+        if surface_imitation is None:raise ValueError('original demonstration BC must be retained')
+        from .tabletop_surface_dagger import CorrectiveRegularizer
+        import hashlib
+        pool_path=Path(args.surface_corrections)
+        pool=torch.load(pool_path,map_location='cpu',weights_only=False)
+        surface_corrections=CorrectiveRegularizer(pool,contract,args.device)
+        algorithm.surface_corrections_metadata=dict(dataset_sha256=hashlib.sha256(pool_path.read_bytes()).hexdigest(),
+            batch_size=32,update='after_PPO_and_original_BC;shared_retained_BC_Adam',ppo_storage_used=False)
     if getattr(args,'actor_initialization',None):
         from .tabletop_behavior_cloning import load_actor_initialization
         actor_initialization=load_actor_initialization(algorithm,args.actor_initialization,contract)
@@ -1052,6 +1072,8 @@ def run_tensor_training(world, template, args, contract):
         saved=torch.load(args.resume,map_location=args.device,weights_only=False)
         if not evaluation_only and saved.get('surface_imitation')!=getattr(algorithm,'surface_imitation_metadata',None):
             raise ValueError('surface demonstration source/hyperparameters must match PPO resume')
+        if not evaluation_only and saved.get('surface_corrections')!=getattr(algorithm,'surface_corrections_metadata',None):
+            raise ValueError('explicit stage derivation required to change corrective BC source')
         if saved['version']!=VERSION:
             raise ValueError('tensor checkpoint contract mismatch; legacy SB3 resume is unsupported')
         if evaluation_only and getattr(task,'surface_force_sharing',False):
@@ -1200,6 +1222,9 @@ def run_tensor_training(world, template, args, contract):
                 schedule=algorithm.surface_imitation_metadata
                 imitation_metrics=surface_imitation.update(algorithm,iteration,
                     initial_weight=schedule['initial_weight'],decay=schedule['decay'],batch_size=schedule['batch_size'])
+            if surface_corrections is not None:
+                correction_metrics=surface_corrections.update(algorithm,surface_imitation)
+                losses['corrective_bc']=correction_metrics['loss']
             if str(args.device).startswith('cuda'): torch.cuda.synchronize()
             learn_seconds=time.monotonic()-learning
             if not all(math.isfinite(float(v)) for v in losses.values()):

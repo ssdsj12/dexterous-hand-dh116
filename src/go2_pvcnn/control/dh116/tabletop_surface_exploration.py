@@ -5,15 +5,7 @@ from .tabletop_surface_force_sharing import surface_targets,CONTRACT as SHARING
 MEASUREMENT_KEYS=('effective_pad_loads_n','effective_pad_vectors_w','effective_pad_points_w',
     'effective_pad_valid','rejected_contact_loads_n','effective_pad_depth_m','pad_reference_points_w')
 REWARD_NAMES=('surface_between_faces','surface_within_faces','surface_missing_opposition','ordinary_collision')
-SURFACE_REWARD_PROFILES=('baseline','lift_delta','hold_milestone','slip','contact_break','support_margin','action_smoothness')
-SURFACE_REWARD_ABLATIONS={
-    'lift_delta':dict(term='surface_lift_delta',source='native_bottom_m_delta',gate='qualified_pad_contact',scale=60.,normalizer_m=.03),
-    'hold_milestone':dict(term='surface_hold_milestone',source='native_continuous_hold_duration',gate='qualified_pad_contact',scale=120.,target_s=5.),
-    'slip':dict(term='surface_slip_penalty',source='native_fixed_anchor_drift',gate='qualified_pad_contact_and_airborne',scale=-160.,normalizer_m=.0005),
-    'contact_break':dict(term='surface_contact_break',source='native_pad_contact_transition',gate='previous_qualified_contact',scale=-30.),
-    'support_margin':dict(term='surface_support_margin',source='native_vertical_support_minus_object_weight',gate='qualified_pad_contact',scale=2.),
-    'action_smoothness':dict(term='surface_action_smoothness',source='native_24d_action_delta',gate='valid_student_step',scale=-.5),
-}
+from .tabletop_surface_reward_ablation import PROFILES as SURFACE_REWARD_PROFILES
 STABLE_HOLD_REWARD_CONTRACT=dict(version='surface_stable_hold_reward_v2',
     lift_reward_contact_gate='opposed_effective_pads;ordinary_fraction<=0.05;depth<=0.0008m',
     hold_reward='120*(continuous_native_hold_s/5)^2_points_per_s',
@@ -34,9 +26,8 @@ def reward_ablation_contract(profile):
     profile=validate_reward_profile(profile)
     if profile=='baseline':
         return dict(version='surface_reward_ablation_v1',profile='baseline',enabled_terms=[])
-    spec=dict(SURFACE_REWARD_ABLATIONS[profile])
-    return dict(version='surface_reward_ablation_v1',profile=profile,enabled_terms=[spec['term']],
-        metric_source=spec['source'],gate=spec['gate'],scale=spec['scale'])
+    from .tabletop_surface_reward_ablation import ablation_contract
+    return ablation_contract(profile)
 
 
 def enable_stable_hold_rewards(t):
@@ -71,12 +62,19 @@ def validate_options(args):
         raise ValueError('surface noise configuration requires surface mode')
     imitation=getattr(args,'surface_imitation_mode','legacy')
     profile=validate_reward_profile(getattr(args,'surface_reward_profile','baseline'))
-    if profile!='baseline' and imitation!='legacy':
-        raise ValueError('surface reward ablation and stable-hold imitation must be validated in separate stages')
+    if getattr(args,'surface_corrections',None) and (profile!='baseline'
+            or imitation!='stable_hold_v2' or not getattr(args,'surface_feedback',False)):
+        raise ValueError('corrective BC is a separate 371D baseline stage before reward ablations')
+    if profile!='baseline' and (not getattr(args,'surface_feedback',False)
+            or imitation!='stable_hold_v2'):
+        raise ValueError('reward ablation requires validated 371D and the unchanged stable-hold BC baseline')
     if imitation!='legacy' and (not getattr(args,'surface_force_sharing',False)
             or not getattr(args,'surface_demonstrations',None)):
         raise ValueError('stable hold imitation requires native demonstrations and surface mode')
     evaluation=getattr(args,'surface_student_eval_steps',0)
+    if getattr(args,'surface_dagger_collect',False) and (not evaluation
+            or not getattr(args,'surface_feedback',False) or getattr(args,'surface_mpc',False)):
+        raise ValueError('DAgger collection requires deterministic pure Student 371D evaluation')
     if not isinstance(evaluation,int) or not 0<=evaluation<=3600:
         raise ValueError('surface student evaluation budget must be 0..3600 control steps')
     if getattr(args,'surface_mpc',False) and not evaluation:
@@ -142,8 +140,6 @@ def enable(t,w,*,redistribution=False):
         getattr(t,name).zero_();t._seed[name]=getattr(t,name)[0].clone()
     t.surface_reference_bottom_m=torch.as_tensor(getattr(w,'lift_reference_bottom_m',.30),device=t.device,dtype=t.command.dtype)
     t.surface_success_hold_s=5.
-    t.surface_reward_previous_bottom=t.m['bottom'].clone()
-    t.surface_reward_previous_contact=torch.zeros(t.n,dtype=torch.bool,device=t.device)
     from .tabletop_surface_success import SurfaceLiftSuccess
     t.surface_lift_success=SurfaceLiftSuccess(t.n,t.device,t.surface_reference_bottom_m,
         dtype=t.command.dtype)
@@ -232,29 +228,6 @@ def reward_rates(t):
         surface_within_faces=-2*a['within_imbalance'].mean(-1),
         surface_missing_opposition=-.5*((accepted>.05)&~paired).to(loads.dtype).mean(-1),
         ordinary_collision=collision)
-    profile=validate_reward_profile(getattr(t,'surface_reward_profile','baseline'))
-    if profile=='lift_delta':
-        delta=m['bottom']-t.surface_reward_previous_bottom
-        rates['surface_lift_delta']=60.*(delta/.03).clamp(0.,1.)*gate
-    elif profile=='hold_milestone':
-        duration=t.surface_lift_success.duration.clamp(0,5.)
-        rates['surface_hold_milestone']=120.*(duration/5.).square()*gate
-    elif profile=='slip':
-        tracker=getattr(t,'surface_slip_tracking',None)
-        drift=tracker.measured_drift_m if tracker is not None else torch.zeros_like(t.reward)
-        airborne=(m['bottom']>=t.surface_reference_bottom_m+.003).to(loads.dtype)
-        rates['surface_slip_penalty']=-160.*(drift/.0005).square().clamp(0,4)*gate*airborne
-    elif profile=='contact_break':
-        current=qualified_pad_contact(t)
-        rates['surface_contact_break']=-30.*(t.surface_reward_previous_contact&~current).to(loads.dtype)
-    elif profile=='support_margin':
-        _,support=verified_support(t,m.get('vertical_hand_force_n',torch.zeros((t.n,2),device=t.device,dtype=loads.dtype)))
-        weight=m.get('object_weight_n',torch.ones(t.n,device=t.device,dtype=loads.dtype)).reshape(t.n)
-        rates['surface_support_margin']=(support.sum(-1)-weight).clamp_min(0.)/weight.clamp_min(1e-6)*2.*gate
-    elif profile=='action_smoothness':
-        rates['surface_action_smoothness']=-.5*((t.actions-t.previous_actions)/2.).square().mean(-1)
-    t.surface_reward_previous_bottom.copy_(m['bottom'])
-    t.surface_reward_previous_contact.copy_(qualified_pad_contact(t))
     if stable_hold:
         duration=t.surface_lift_success.duration.clamp(0,5.)
         rates['surface_hold_progress']=120.*(duration/5.).square()*gate
@@ -268,8 +241,9 @@ def reward_rates(t):
 def apply_contract(c,t):
     if getattr(t,'surface_stable_hold_rewards',False):
         c['surface_training_objective']=dict(STABLE_HOLD_REWARD_CONTRACT)
-    c['surface_reward_ablation']=reward_ablation_contract(
-        getattr(t,'surface_reward_profile','baseline'))
+    if getattr(t,'surface_reward_profile','baseline')!='baseline':
+        from .tabletop_surface_reward_ablation import ablation_contract
+        c['surface_reward_ablation']=ablation_contract(t.surface_reward_profile)
     c.update(surface_force_sharing=dict(SHARING,action_size=24,stage_flow=None,pose_latch=False,
         redistribution=('soft_reward_only;policy_owns_joint_targets' if t.surface_redistribution is False
                         else 'bounded_joint_position_feedback;preserve_current_measured_total'),

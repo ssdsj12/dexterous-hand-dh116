@@ -155,7 +155,7 @@ def observe(t):
     return torch.cat(parts,1)
 
 
-def add_feedback(t,pieces,valid,dt):
+def add_feedback(t,pieces,valid,dt,*,hand_lift_force_n=None,object_weight_n=None):
     from .tabletop_dexhands_feedback import reward_rates
     pieces['lift']=torch.zeros_like(t.reward)
     if getattr(t,'surface_force_sharing',False):
@@ -165,6 +165,9 @@ def add_feedback(t,pieces,valid,dt):
     else:rates=reward_rates(t.m,t.f_requested,t.actions,t.previous_actions)
     for name,rate in rates.items():
         pieces[name]=torch.where(valid&(t.failure==0),rate*dt,0.)
+    if hasattr(t,'surface_reward_ablation'):
+        from .tabletop_surface_reward_ablation import apply_reward
+        apply_reward(t,pieces,valid&(t.failure==0),dt,hand_lift_force_n,object_weight_n)
 
 
 def apply_contract(contract,t):

@@ -445,7 +445,11 @@ class TensorEnv:
             extras=dict(extras,surface_feedback=feedback.features().clone())
         if getattr(t,'surface_force_sharing',False):
             from .tabletop_surface_student_evaluation import diagnostic_snapshot
-            extras=dict(extras,surface_diagnostics=diagnostic_snapshot(t))
+            diagnostics=diagnostic_snapshot(t)
+            if feedback is not None:
+                diagnostics.update(actual_support_n=feedback.features()[...,:2].clone()*10.,
+                    actual_support_margin=feedback.features()[...,2].clone())
+            extras=dict(extras,surface_diagnostics=diagnostics)
         extras=dict(extras,terms=dict(extras['terms'],velocity_excess=velocity_penalty.clone()))
         rewards, dones = rewards.clone(), dones.clone()
         if acquisition_before is not None:

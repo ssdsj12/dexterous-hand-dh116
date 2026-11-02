@@ -71,13 +71,15 @@ parser.add_argument('--teacher-search-cases',type=Path)
 parser.add_argument('--surface-teacher-replay',type=Path,
                     help='replay qualified 24D native actions through normal TensorEnv and collect student observations')
 parser.add_argument('--surface-action-audit',type=Path,help='explicit source-SHA-bound 24D semantics audit for legacy Teacher replay')
+parser.add_argument('--surface-dagger-collect',action='store_true',help='read-only native correction candidates at pre-failure Student states; no execution or BC admission')
+parser.add_argument('--surface-corrections',type=Path,help='separate native-validated corrective BC pool; never enters PPO storage')
 parser.add_argument('--surface-student-actor',type=Path,
                     help='initialize only the 351D/24D surface student actor from its own BC artifact')
 parser.add_argument('--surface-imitation-mode',choices=('legacy','stable_hold_v2'),default='legacy',
                     help='explicit independent actor optimizer and persistent hold-aware teacher correction')
 parser.add_argument('--surface-noise-mode',choices=('legacy','holding_v2'),default='legacy',
                     help='explicit lower Gaussian sampling std for surface policies; physical action range unchanged')
-parser.add_argument('--surface-reward-profile',choices=('baseline','lift_delta','hold_milestone','slip','contact_break','support_margin','action_smoothness'),default='baseline',
+parser.add_argument('--surface-reward-profile',choices=('baseline','lift_progress','early_hold','contact_break','slip_relative','support_deficit'),default='baseline',
                     help='enable exactly one new native reward factor for staged ablation')
 parser.add_argument('--surface-contact-history',action='store_true',
                     help='explicit 401D input with causal native mean-force EMA and preceding-window max depth')

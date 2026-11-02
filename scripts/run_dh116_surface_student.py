@@ -20,6 +20,9 @@ p.add_argument('--episodes-per-env',type=int,
     help='absolute completed-episode minimum for every env; replaces the update budget')
 p.add_argument('--rollout-steps',type=int,default=32)
 p.add_argument('--teacher-replay',type=Path)
+p.add_argument('--surface-action-audit',type=Path)
+p.add_argument('--surface-dagger-collect',action='store_true')
+p.add_argument('--surface-reward-profile',choices=('baseline','lift_progress','early_hold','contact_break','slip_relative','support_deficit'),default='baseline')
 p.add_argument('--student-actor',type=Path)
 p.add_argument('--demonstrations',type=Path)
 p.add_argument('--imitation-mode',choices=('legacy','stable_hold_v2'),default='legacy')
@@ -83,6 +86,7 @@ if args.episodes_per_env is not None:
     cmd.extend(['--episodes-per-env',str(args.episodes_per_env)])
 cmd.append('--native-sensor-batch')
 for value,flag in ((args.teacher_replay,'--surface-teacher-replay'),
+                   (args.surface_action_audit,'--surface-action-audit'),
                    (args.student_actor,'--surface-student-actor'),(args.demonstrations,'--surface-demonstrations'),
                    (args.resume,'--resume')):
     if value:cmd.extend([flag,str(value.resolve())])
@@ -93,11 +97,13 @@ if args.stop_on_success:cmd.append('--surface-student-stop-on-success')
 if args.contact_history:cmd.append('--surface-contact-history')
 if args.surface_feedback:cmd.append('--surface-feedback')
 if args.surface_feedback_telemetry:cmd.append('--surface-feedback-telemetry')
+if args.surface_dagger_collect:cmd.append('--surface-dagger-collect')
 for report in args.validation_report:cmd.extend(['--surface-student-validation-report',str(report.resolve())])
 if args.require_native_student_validation:cmd.append('--require-native-student-validation')
 if args.imitation_mode!='legacy':
     if not args.demonstrations:raise ValueError('stable hold imitation requires native demonstrations')
     cmd.extend(['--surface-imitation-mode',args.imitation_mode])
 cmd.extend(['--surface-noise-mode',args.noise_mode])
+if args.surface_reward_profile!='baseline':cmd.extend(['--surface-reward-profile',args.surface_reward_profile])
 print('SURFACE_STUDENT_LAUNCH',json.dumps(dict(command=cmd)),flush=True)
 os.execv('/bin/bash',['bash','scripts/python.sh',*cmd])

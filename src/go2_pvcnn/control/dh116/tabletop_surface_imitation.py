@@ -63,6 +63,16 @@ def _canonical_contract(contract):
     if not dimensions or any(value != 24 for value in dimensions):
         raise ValueError('surface contract requires 24D actions')
     canonical = {k: v for k, v in contract.items() if k not in _BATCH_FIELDS}
+    # validate_contract has checked the complete SHA above. Compare the actual
+    # normalized semantics below, not a digest of pre-normalized batch/noise.
+    if feedback:canonical.pop('surface_contract_sha256')
+    if 'surface_reward_ablation' in canonical:
+        from .tabletop_surface_reward_ablation import ablation_contract
+        ablation=canonical['surface_reward_ablation']
+        if ablation!=ablation_contract(ablation.get('profile')):
+            raise ValueError('unknown surface reward ablation contract')
+        # BC targets actuator commands only; PPO resume remains exact below.
+        canonical.pop('surface_reward_ablation')
     # BC never consumes replay rewards. This exact new training objective uses
     # unchanged observations/actions/physics and unchanged physical SUCCESS.
     from .tabletop_surface_exploration import STABLE_HOLD_REWARD_CONTRACT
