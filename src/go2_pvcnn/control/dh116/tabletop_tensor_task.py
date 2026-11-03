@@ -769,7 +769,7 @@ class TensorTask:
             if getattr(self,'surface_force_sharing',False):
                 from .tabletop_surface_exploration import allocation,verified_support
                 force_contacts=hand_mask&allocation(self)['paired']
-                phase_normal,phase_lift=verified_support(self,hand_lift_force_n)
+                phase_normal,phase_lift=verified_support(self,hand_lift_force_n,legacy=True)
                 phase_loads=m['effective_pad_loads_n'].sum(-1)
                 # Native pad contact has its own reward. The legacy all-link
                 # positive contact term would otherwise credit a hand back.

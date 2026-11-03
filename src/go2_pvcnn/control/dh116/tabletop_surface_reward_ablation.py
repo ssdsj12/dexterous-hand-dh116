@@ -84,7 +84,7 @@ class RewardAblation:
     @torch.no_grad()
     def update(self, *, bottom, qualified, early_window_good, early_duration, drift,
                relative_speed, support, weight, valid, dt, window_completed,
-               window_native_valid, slip_observable, smoothness):
+               window_native_valid, slip_observable, smoothness, milestone_valid=None):
         if not math.isfinite(dt) or dt <= 0:
             raise ValueError('positive physical dt required')
         valid = valid & torch.isfinite(bottom) & torch.isfinite(self.reference)
@@ -105,7 +105,11 @@ class RewardAblation:
         if MILESTONE in self.terms:
             levels = bottom.new_tensor(MILESTONE_SECONDS)
             reached = (early_duration[:, None] >= levels - 1e-12) & torch.isfinite(early_duration[:, None])
-            pulse = reached & ~self.milestone_paid & early[:, None]
+            milestone_window = early
+            if milestone_valid is not None:
+                milestone_window = (milestone_valid & torch.isfinite(bottom) & torch.isfinite(self.reference)
+                                    & window_completed & window_native_valid & early_window_good)
+            pulse = reached & ~self.milestone_paid & milestone_window[:, None]
             result[MILESTONE] = (pulse * bottom.new_tensor(MILESTONE_POINTS)).sum(-1)
             self.milestone_paid |= pulse
         if BREAK in self.terms:
@@ -188,12 +192,8 @@ def target_position(task, world):
 
 
 def accepted_support_n(measurement, whole_hand_lift_force):
-    vectors = measurement['effective_pad_vectors_w']
-    accepted = measurement['effective_pad_valid']
-    pad_normal_z = -torch.where(accepted, vectors[..., 2], 0.).sum(-1)
-    whole_hand_friction_z = whole_hand_lift_force - measurement['vertical_hand_force_n']
-    attributable = measurement['rejected_contact_loads_n'] <= 1e-6
-    return (pad_normal_z + torch.where(attributable, whole_hand_friction_z, 0.)).sum(-1)
+    from .tabletop_surface_exploration import support_components
+    return support_components(measurement, whole_hand_lift_force)[1].sum(-1)
 
 
 def _relative_tangent_speed(task):
@@ -216,7 +216,7 @@ def _relative_tangent_speed(task):
     return torch.where(weights > 0., tangent.norm(dim=-1) * weights, 0.).sum((1, 2)) / weights.sum((1, 2)).clamp_min(1e-8)
 
 
-def apply_reward(task, pieces, valid, dt, hand_lift_force_n, object_weight_n):
+def apply_reward(task, pieces, valid, dt, hand_lift_force_n, object_weight_n, *, milestone_valid=None):
     from .tabletop_surface_exploration import qualified_pad_contact
     reward = task.surface_reward_ablation
     if not reward.terms:
@@ -242,5 +242,6 @@ def apply_reward(task, pieces, valid, dt, hand_lift_force_n, object_weight_n):
         slip_observable=tracker.slip_observable if tracker is not None else no,
         relative_speed=_relative_tangent_speed(task) if MOTION in reward.terms else zero,
         support=support, weight=weight, valid=valid, dt=dt,
-        smoothness=task.surface_motion_cost if SMOOTH in reward.terms else zero)
+        smoothness=task.surface_motion_cost if SMOOTH in reward.terms else zero,
+        milestone_valid=milestone_valid)
     pieces.update(terms)

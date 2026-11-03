@@ -51,6 +51,9 @@ class SurfaceLiftSuccess:
             self.slip_observable = self._latched.clone()
             self.reward_drift_m = self._drift.clone()
             self._native_ok = self._ok.clone()
+            self._slip_contact = self._ok.clone()
+            self._slip_anchor = self._anchor.clone()
+            self._slip_latched = self._latched.clone()
 
     @property
     def duration(self):
@@ -86,6 +89,8 @@ class SurfaceLiftSuccess:
             self.window_native_valid[ids] = False
             self.slip_observable[ids] = False
             self.reward_drift_m[ids] = 0.
+            self._slip_anchor[ids] = 0.
+            self._slip_latched[ids] = False
             if self._elapsed > 0:
                 self._native_ok[ids] = False
 
@@ -129,6 +134,8 @@ class SurfaceLiftSuccess:
             self._ok &= physical
             if self.reward_diagnostics:
                 self._native_ok &= good
+                self._slip_contact &= (bottom >= self.reference_bottom_m + self.minimum_lift_m)
+                self._slip_contact &= (loads.sum(-1) > 0.).all(-1)
             self._elapsed += weight
             remaining -= weight
             if self._elapsed < self.period - 1e-12:
@@ -137,10 +144,12 @@ class SurfaceLiftSuccess:
             means = []
             for i in range(3):
                 mean = sum(weight * sample[i] for weight, sample in self._samples) / self._elapsed
-                mask = self._ok.reshape(self.n, *((1,) * (mean.ndim - 1)))
+                valid_mean = self._native_ok if self.reward_diagnostics else self._ok
+                mask = valid_mean.reshape(self.n, *((1,) * (mean.ndim - 1)))
                 means.append(torch.where(mask, mean, 0.))
             mean_load, mean_vectors, mean_ordinary = means
-            self._paired = surface_targets(mean_load, mean_vectors)['paired']
+            paired = surface_targets(mean_load, mean_vectors)['paired']
+            self._paired = paired & self._ok[:, None]
             normal = mean_load.sum((1, 2))
             physical_ok = (self._ok & self._paired.all(-1)
                            & (mean_ordinary / (mean_ordinary + normal).clamp_min(1e-12) <= .05 + 1e-12))
@@ -149,12 +158,17 @@ class SurfaceLiftSuccess:
             if self.reward_diagnostics:
                 self.window_completed = True
                 self.window_native_valid.copy_(self._native_ok)
-                # The pre-update anchor is still available when the real
-                # drift breaks Hold. Exclude rejected or reset samples.
-                self.slip_observable.copy_(self._ok & self._latched)
-                self.reward_drift_m.copy_(torch.where(self.slip_observable,
-                    (samples - self._anchor[None]).norm(dim=-1).amax((0, 2, 3)), 0.))
+                # A valid contact measurement can slip even at high speed.
+                # A lost contact or invalid sample ends this reward anchor.
+                contact = self._native_ok & self._slip_contact & paired.all(-1)
+                self.slip_observable.copy_(contact & self._slip_latched)
+                drift = (samples - self._slip_anchor[None]).norm(dim=-1).amax((0, 2, 3))
+                self.reward_drift_m.copy_(torch.where(self.slip_observable, drift, 0.))
+                reanchor = (~self.slip_observable | (drift > .0005))[:, None, None, None]
+                self._slip_anchor = torch.where(reanchor, samples[-1], self._slip_anchor)
+                self._slip_latched.copy_(contact)
                 self._native_ok.fill_(True)
+                self._slip_contact.fill_(True)
             samples = torch.where(self._ok[None, :, None, None, None], samples, 0.)
             previous = self._duration
             self._duration, self._anchor, self._latched, diag = hold_window_step(

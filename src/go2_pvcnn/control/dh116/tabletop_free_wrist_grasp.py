@@ -167,7 +167,10 @@ def add_feedback(t,pieces,valid,dt,*,hand_lift_force_n=None,object_weight_n=None
         pieces[name]=torch.where(valid&(t.failure==0),rate*dt,0.)
     if hasattr(t,'surface_reward_ablation'):
         from .tabletop_surface_reward_ablation import apply_reward
-        apply_reward(t,pieces,valid&~t.done,dt,hand_lift_force_n,object_weight_n)
+        # valid includes liveness on entry to this physical substep. Success
+        # may have become terminal while measuring its final Hold window.
+        apply_reward(t,pieces,valid&~t.done,dt,hand_lift_force_n,object_weight_n,
+                     milestone_valid=valid&(t.failure==0))
 
 
 def apply_contract(contract,t):

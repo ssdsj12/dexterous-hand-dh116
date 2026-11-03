@@ -167,18 +167,26 @@ def allocation(t):
     return surface_targets(m['effective_pad_loads_n'],m['effective_pad_vectors_w'],valid=m['effective_pad_valid'])
 
 
-def verified_support(t,whole_hand_lift_force):
-    """Normal on the rod from accepted pads; friction is not digit-resolved.
+def verified_support(t,whole_hand_lift_force,*,legacy=False):
+    return support_components(t.m,whole_hand_lift_force,legacy=legacy)
 
-    Whole-hand friction is attributable only when that hand has no rejected
-    object contacts. Mixed pad/back contacts conservatively get no friction
-    credit, while their actual physics and full-force diagnostics remain live.
+def support_components(m,whole_hand_lift_force,*,legacy=False):
+    """Signed object-side support bounded by the native whole-hand result.
+
+    Positive friction is credited only to exclusively accepted contacts.
+    Downward friction still reduces net support when attribution is mixed.
+    The legacy option preserves the established observation and baseline reward.
     """
-    m=t.m
-    normal=torch.minimum(-m['effective_pad_vectors_w'][...,2].sum(-1),m['vertical_hand_force_n'])
-    friction=whole_hand_lift_force-m['vertical_hand_force_n']
+    z=m['effective_pad_vectors_w'][...,2]
     attributable=m['rejected_contact_loads_n']<=1e-6
-    return normal,normal+torch.where(attributable,friction,0.)
+    if not legacy:
+        accepted=m['effective_pad_valid']
+        z=torch.where(accepted,z,0.)
+        attributable=attributable&accepted.any(-1)
+    normal=torch.minimum(-z.sum(-1),m['vertical_hand_force_n'])
+    friction=whole_hand_lift_force-m['vertical_hand_force_n']
+    support=normal+torch.where(attributable,friction,0. if legacy else friction.clamp_max(0.))
+    return normal,support if legacy else torch.minimum(support,whole_hand_lift_force)
 
 
 def qualified_pad_contact(t):

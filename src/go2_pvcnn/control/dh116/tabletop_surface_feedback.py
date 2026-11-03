@@ -212,7 +212,7 @@ class SurfaceFeedback:
         # raw object's signed normal/friction components, never task.m's cache.
         raw = SimpleNamespace(m=dict(effective_pad_vectors_w=clean_vectors,
             vertical_hand_force_n=clean_components[..., 0], rejected_contact_loads_n=clean_rejected))
-        _, support = verified_support(raw, clean_components.sum(-1))
+        _, support = verified_support(raw, clean_components.sum(-1), legacy=True)
         paired = surface_targets(clean_loads, clean_vectors, valid=clean_valid)['paired']
         normal = clean_loads.sum((1, 2))
         ordinary = clean_rejected.sum(-1)

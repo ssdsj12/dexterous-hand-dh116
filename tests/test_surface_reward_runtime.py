@@ -142,9 +142,10 @@ def test_anchor_diagnostics_keep_real_slip_in_failed_window_without_altering_suc
     data = scene()
     for drift in (0., .0006, .0001):
         data['object_pose'][:, 0] += drift
+        if drift == .0006:
+            data['object_velocity'][1, 0] = .031
         if drift == .0001:
             data['wrist_pose'][0, 0, 3:] = 0.
-            data['object_velocity'][1, 0] = .031
         updated = advance(tracker, data, 8)
         legacy = advance(original, data, 8)
         assert tracker.window_completed
@@ -154,8 +155,8 @@ def test_anchor_diagnostics_keep_real_slip_in_failed_window_without_altering_suc
             assert not tracker.window_good.any()
             assert tracker.slip_observable.all()
             assert tracker.reward_drift_m.tolist() == pytest.approx([.0006, .0006])
-    assert not tracker.slip_observable.any()
-    assert not tracker.reward_drift_m.any()
+    assert tracker.slip_observable.tolist() == [False, True]
+    assert tracker.reward_drift_m.tolist() == pytest.approx([0., .0001])
     advance(tracker, scene(), 1)
     assert not tracker.window_completed
 
@@ -184,7 +185,77 @@ def test_support_only_counts_accepted_normals_and_attributable_friction():
     m['rejected_contact_loads_n'][0, 1] = .1
     m['vertical_hand_force_n'].fill_(.4)
     lift = m['vertical_hand_force_n'] + torch.tensor([.1, -.2], dtype=torch.float64)
-    assert accepted_support_n(m, lift).tolist() == pytest.approx([.9, .7])
+    assert accepted_support_n(m, lift).tolist() == pytest.approx([.7, .7])
+
+
+def test_native_success_substep_pays_final_milestone_once_and_reset_clears_it():
+    from go2_pvcnn.control.dh116.tabletop_free_wrist_grasp import add_feedback
+    from go2_pvcnn.control.dh116.tabletop_surface_reward_ablation import enable
+    from test_surface_success import scene, advance
+    task = qualified_task()
+    task.surface_reward_profile = 'v3_milestone_only'
+    task.m['bottom'].fill_(.30)
+    enable(task)
+    tracker = task.surface_early_hold
+    data = scene()
+    task.m['bottom'].fill_(.331)
+    ready = torch.ones(2, dtype=torch.bool)
+    paid = task.surface_reward_ablation.milestone_paid
+    paid[:, :-1] = True
+    advance(tracker, data, 2399)
+    name = 'surface_hold_milestone'
+    pieces = {}
+    add_feedback(task, pieces, ready, 1/480)
+    assert not pieces[name].any()
+    task.success[0] = advance(tracker, data, 1)['event'][0]
+    task.failure[1] = 1
+    add_feedback(task, pieces, ready, 1/480)
+    assert pieces[name].tolist() == [5., 0.]
+    add_feedback(task, pieces, ~task.done, 1/480)
+    assert not pieces[name].any()
+    tracker.reset([0, 1])
+    task.surface_reward_ablation.reset([0, 1], task.m['bottom'])
+    task.success.zero_()
+    task.failure.zero_()
+    add_feedback(task, pieces, ready, 1/480)
+    assert not pieces[name].any() and not paid.any()
+    paid[:, :-1] = True
+    task.success.copy_(advance(tracker, data, 2400)['event'])
+    add_feedback(task, pieces, ready, 1/480)
+    assert pieces[name].tolist() == [5., 5.]
+
+
+def test_contact_loss_drops_slip_anchor_but_is_a_real_break_window():
+    from test_surface_success import scene, advance, helper
+    tracker = helper(reward_diagnostics=True)
+    data = scene()
+    advance(tracker, data, 48)
+    loads, vectors = data['loads'].clone(), data['vectors'].clone()
+    data['loads'][:, 0] = 0.
+    data['vectors'][:, 0] = 0.
+    data['object_pose'][:, 0] += .0008
+    advance(tracker, data)
+    assert tracker.window_native_valid.all() and not tracker.window_good.any()
+    assert not tracker.slip_observable.any() and not tracker.reward_drift_m.any()
+    data['loads'], data['vectors'] = loads, vectors
+    advance(tracker, data)
+    assert not tracker.slip_observable.any()
+    advance(tracker, data)
+    assert tracker.slip_observable.all() and not tracker.reward_drift_m.any()
+
+
+def test_support_credit_cannot_exceed_native_net_even_with_ordinary_contact():
+    from go2_pvcnn.control.dh116.tabletop_surface_reward_ablation import accepted_support_n
+    from go2_pvcnn.control.dh116.tabletop_surface_exploration import verified_support
+    task = qualified_task()
+    m = task.m
+    m['effective_pad_vectors_w'][:, :, 0, 2] = -1.
+    m['vertical_hand_force_n'].fill_(.4)
+    m['rejected_contact_loads_n'].fill_(.1)
+    lift = torch.tensor([[.1, 1.], [-.1, .4]], dtype=torch.float64)
+    _, support = verified_support(task, lift)
+    assert (support <= lift).all()
+    torch.testing.assert_close(accepted_support_n(m, lift), support.sum(-1))
 
 
 def test_relative_motion_uses_digit_body_velocity_projected_at_each_pad():
