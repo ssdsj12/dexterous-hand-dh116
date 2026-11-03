@@ -22,7 +22,7 @@ class SurfaceLiftSuccess:
     """
 
     def __init__(self, n, device, reference_bottom_m, dtype=torch.float64, control_period_s=1/60,
-                 minimum_lift_m=.03):
+                 minimum_lift_m=.03, reward_diagnostics=False):
         if isinstance(n, bool) or not isinstance(n, int) or n < 1:
             raise ValueError('positive environment count required')
         if not math.isfinite(control_period_s) or control_period_s <= 0:
@@ -44,6 +44,13 @@ class SurfaceLiftSuccess:
         self._drift = self._duration.clone()
         self._elapsed, self._samples = 0., []
         self._ok = torch.ones_like(self._latched)
+        self.reward_diagnostics = reward_diagnostics
+        if reward_diagnostics:
+            self.window_completed = False
+            self.window_native_valid = self._latched.clone()
+            self.slip_observable = self._latched.clone()
+            self.reward_drift_m = self._drift.clone()
+            self._native_ok = self._ok.clone()
 
     @property
     def duration(self):
@@ -52,6 +59,10 @@ class SurfaceLiftSuccess:
     @property
     def drift_m(self):
         return self._drift
+
+    @property
+    def window_good(self):
+        return self._window_good
 
     @property
     def measured_drift_m(self):
@@ -71,6 +82,12 @@ class SurfaceLiftSuccess:
         self._drift[ids] = 0
         if self._elapsed > 0:
             self._ok[ids] = False
+        if self.reward_diagnostics:
+            self.window_native_valid[ids] = False
+            self.slip_observable[ids] = False
+            self.reward_drift_m[ids] = 0.
+            if self._elapsed > 0:
+                self._native_ok[ids] = False
 
     @torch.no_grad()
     def update(self, object_pose, wrist_pose, loads, vectors, depth, ordinary,
@@ -101,11 +118,17 @@ class SurfaceLiftSuccess:
         points = rod_points_in_hands(clean_object, clean_wrist).clone()
         raw = (loads.clone(), vectors.clone(), ordinary.clone(), points)
         event, updated = torch.zeros_like(valid), False
+        if self.reward_diagnostics:
+            self.window_completed = False
+            if dt > self.period + 1e-12:
+                raise ValueError('reward diagnostics require at most one control period per sample')
         remaining = float(dt)
         while remaining > 1e-12:
             weight = min(remaining, self.period - self._elapsed)
             self._samples.append((weight, raw))
             self._ok &= physical
+            if self.reward_diagnostics:
+                self._native_ok &= good
             self._elapsed += weight
             remaining -= weight
             if self._elapsed < self.period - 1e-12:
@@ -123,6 +146,15 @@ class SurfaceLiftSuccess:
                            & (mean_ordinary / (mean_ordinary + normal).clamp_min(1e-12) <= .05 + 1e-12))
             self._physical_window_valid = physical_ok.clone()
             samples = torch.stack([sample[3] for _, sample in self._samples])
+            if self.reward_diagnostics:
+                self.window_completed = True
+                self.window_native_valid.copy_(self._native_ok)
+                # The pre-update anchor is still available when the real
+                # drift breaks Hold. Exclude rejected or reset samples.
+                self.slip_observable.copy_(self._ok & self._latched)
+                self.reward_drift_m.copy_(torch.where(self.slip_observable,
+                    (samples - self._anchor[None]).norm(dim=-1).amax((0, 2, 3)), 0.))
+                self._native_ok.fill_(True)
             samples = torch.where(self._ok[None, :, None, None, None], samples, 0.)
             previous = self._duration
             self._duration, self._anchor, self._latched, diag = hold_window_step(

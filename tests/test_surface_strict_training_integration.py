@@ -234,7 +234,8 @@ def test_multistyle_passes_initial_actor_reports_only_to_the_fresh_child(tmp_pat
         prefix.append(node)
     args = options(student_actor=tmp_path / 'actor.pt', num_envs=2, rollout_steps=32,
                    updates_per_style=4, imitation_mode='stable_hold_v2', noise_mode='holding_v2',
-                   contact_history=False, validation_report=[tmp_path / 'native.json'])
+                   contact_history=False, surface_feedback=True, surface_feedback_telemetry=True,
+                   surface_reward_profile='v3_lift_only', validation_report=[tmp_path / 'native.json'])
     for checkpoint in (None, tmp_path / 'saved.pt'):
         namespace = dict(args=args, checkpoint=checkpoint, blocks=[(0, 'pinch', None)],
                          current_min=0, iteration=4, output=tmp_path,
@@ -243,3 +244,6 @@ def test_multistyle_passes_initial_actor_reports_only_to_the_fresh_child(tmp_pat
         exec(compile(ast.fix_missing_locations(ast.Module(body=[segment], type_ignores=[])),
                      str(filename), 'exec'), namespace)
         assert ('--validation-report' in namespace['command']) is (checkpoint is None)
+        command = namespace['command']
+        assert '--surface-feedback' in command and '--surface-feedback-telemetry' in command
+        assert command[command.index('--surface-reward-profile') + 1] == 'v3_lift_only'

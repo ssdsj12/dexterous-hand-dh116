@@ -1,3 +1,22 @@
+## 2026-11-03 — `11-2` 奖励隔离与原生验证
+
+`baseline` 保留历史计分。`v3_reference` 使用相同计分作为有合同记录的实验起点，每个 `v3_*_only` 分支只改变一个奖励因素。高度组用合格物理高度高水位替换 `dex_lift` 和旧高度里程碑计分，旧观测状态照常更新。滑移按 60 Hz 完成窗口的有效固定锚漂移计分，Hold 失效的窗口仍可扣分。断触在两个完整窗口后触发，重新稳定 100 ms 后可再次触发。Early Hold 每回合最多 10 分，承托不足使用可归属的有符号接触力及原生物重，平滑项使用关节、手腕实际增量及安全投影后的命令偏差。旧递进 Profile 标记为 cumulative。
+
+定向回归 293 个测试和 24 个子测试通过。以下命令在隔离的 Isaac Python 环境执行。
+
+```bash
+OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 PYTHONPATH=src:. /opt/conda/envs/hand/bin/python -m pytest -q \
+  tests/test_surface_reward_runtime.py tests/test_surface_baseline_compatibility.py \
+  tests/test_surface_stable_hold_rewards.py tests/test_surface_success.py \
+  tests/test_surface_contract.py tests/test_surface_feedback.py tests/test_surface_checkpoint.py \
+  tests/test_surface_student_evaluation.py tests/test_surface_exploration.py \
+  tests/test_free_wrist_grasp.py tests/test_surface_strict_training_integration.py
+```
+
+离线重查三指 Teacher 的 10,176 个 Isaac 原始子步。两次原生成功的跟踪输出逐值一致，三次实测越过 0.5 mm 的滑移窗口均被扣分。
+
+第 902 轮纯 Student 原生对照用相同权重和种子，每组 2 环境、180 控制步。二指比较 reference、高度和平滑，三指比较 reference、滑移和承托。各抓法内的观测、动作和杆轨迹逐值一致。两种抓法净抬升均低于 0.001 mm，连续 Hold 为 0 s，观察期内完成回合和成功均为 0。原生证据在 `/root/hand/runs/deployment/11_2_reward_native_20261103`，各组独立记录配置、断点及合同 SHA。实际物理、24D 动作及 351D/371D 观测合同保持原定义，真实成功仍要求净升 30 mm、连续保持 5 s、固定锚相对滑移不超过 0.5 mm。短回放确认奖励接入，完整回合成功率与训练收益仍待小规模 PPO 对照。本轮未启动 4096 环境长训练。
+
 ## 2026-11-02 — `11-2`：371D contract、派生checkpoint与确定性A/B验证
 
 本阶段先锁定24D动作合同：12个关节速度、6个世界平移速度、6个本体旋转速度，保留原尺度、60 Hz控制/480 Hz物理执行和原执行器限制。新增20维真实物理反馈时，371D只追加到原351D输入尾部；反馈按控制周期完成时间窗，遇到无效或未对齐数据直接让rollout失效。原351D checkpoint `tensor_ppo.pt` 的SHA256为`55d2a041cab933542f7c8f49b060e30d7f009467937396da1c4566c0b471c58a`，派生371D checkpoint单独保存，SHA256为`e096b0f4d76e84db281674b9cfd91f3d3770ca09f8cd70cc5bda0a4a70a30033`；原文件未覆盖，actor/critic、PPO/Adam状态、RNG和计数均保留。

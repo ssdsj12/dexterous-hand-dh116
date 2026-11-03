@@ -17,6 +17,7 @@ from pathlib import Path
 
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'src'))
+from go2_pvcnn.control.dh116.tabletop_surface_reward_ablation import PROFILES
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--demonstrations',type=Path,required=True)
 source=p.add_mutually_exclusive_group(required=True)
@@ -37,14 +38,15 @@ p.add_argument('--surface-feedback',action='store_true',
     help='pass the validated 371D real-physics feedback contract to every native child')
 p.add_argument('--surface-feedback-telemetry',action='store_true',
     help='collect 371D feedback telemetry without appending it to the policy input')
-p.add_argument('--surface-reward-profile',choices=('baseline','lift_progress','early_hold',
-    'contact_break','slip_relative','support_deficit'),default='baseline',
-    help='one staged reward profile for every child block; baseline keeps new terms disabled')
+p.add_argument('--surface-reward-profile',choices=PROFILES,default='baseline',
+    help='reward profile forwarded to every native child; v3_*_only profiles isolate one factor')
 p.add_argument('--contact-history',action='store_true')
 p.add_argument('--validation-report',type=Path,action='append',default=[])
 p.add_argument('--require-native-student-validation',action='store_true',default=False,
     help='opt in to native admission or the cumulative diagnostic pilot; strict checkpoints stay strict')
 args=p.parse_args()
+if args.surface_reward_profile!='baseline' and (not args.surface_feedback or args.imitation_mode!='stable_hold_v2'):
+    p.error('reward profiles require --surface-feedback and --imitation-mode stable_hold_v2')
 if args.resume and args.validation_report:
     raise ValueError('resume validation reports require exact saved-actor binding; '
                      'use a checkpoint with validated admission evidence')
@@ -110,6 +112,8 @@ report=dict(status='initializing',num_envs=args.num_envs,styles=styles,cycles=ar
     current_output=None,current_block=None,current_style=None,current_episode_goal=None,
     current_iteration=iteration,latest_checkpoint=str(checkpoint) if checkpoint else None,
     imitation_mode=args.imitation_mode,noise_mode=args.noise_mode,
+    surface_feedback=args.surface_feedback,surface_feedback_telemetry=args.surface_feedback_telemetry,
+    surface_reward_profile=args.surface_reward_profile,
     require_native_student_validation=args.require_native_student_validation,
     validation_reports=[str(path.resolve()) for path in args.validation_report],
     reset_distribution='one_declared_style_per_native_block;auxiliary_imitation_balanced_each_update')

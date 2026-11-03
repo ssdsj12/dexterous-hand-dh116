@@ -290,10 +290,16 @@ class TensorEnv:
         for substep in range(1,w.decimation+1):
             self.substep = substep
             live = ~t.done
+            action_motion = getattr(t,'surface_action_motion',None)
+            if action_motion is not None:
+                from .tabletop_surface_reward_ablation import target_position
+                prior_target = target_position(t,w)
             if hasattr(self,'control_probe'):self.control_probe.before_step()
             allowed = t.control(actions,live,w.dt)
             if hasattr(self,'lift_gate_counts'):self.lift_gate_counts+=t.lift_diagnostic_masks.sum(0)
             m = w.advance(t,allowed,live)
+            if action_motion is not None:
+                action_motion.command(target_position(t,w)-prior_target,w.dt)
             invalid_physics=(~finite_physics(w,m) if self.continuous_motion else torch.zeros_like(live))
             scoring_live=live&~invalid_physics
             def scoring(value,fill=0.):

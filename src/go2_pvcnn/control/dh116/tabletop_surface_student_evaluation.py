@@ -120,6 +120,7 @@ def evaluate(env,algorithm,args,contract,initial_obs):
     max_lift=torch.zeros(env.n,device=env.device,dtype=torch.float64)
     max_hold=max_lift.clone()
     max_drift=max_lift.clone();failure_counts={}
+    reward_totals={}
     successes=env.successes.clone();episodes=env.episodes.clone()
 
     def report(steps, *, complete=False):
@@ -143,6 +144,7 @@ def evaluate(env,algorithm,args,contract,initial_obs):
             observed_actual_support_margin=(diag['actual_support_margin'].cpu().tolist()
                 if 'actual_support_margin' in diag else None),
             max_observed_drift_m=max_drift.cpu().tolist(),
+            reward_term_totals={key:value.cpu().tolist() for key,value in reward_totals.items()},
             physical_eligible=diag['physical_eligible'].cpu().tolist(),
             hold_window_good=diag['hold_window_good'].cpu().tolist(),
             hold_paired=diag['hold_paired'].cpu().tolist(),
@@ -174,6 +176,8 @@ def evaluate(env,algorithm,args,contract,initial_obs):
                 snapshot={k:v.cpu() for k,v in candidate['snapshot'].items()}))
             dagger_buffer=dagger_buffer[-30:]
         value,reward,done,extra=env.step(actual)
+        for key,term in extra.get('terms',{}).items():
+            reward_totals[key]=reward_totals.get(key,torch.zeros_like(term))+term
         if getattr(args,'surface_dagger_collect',False):
             for index in (extra['failure'].ne(0)&done).nonzero().flatten().tolist():
                 for source in dagger_buffer:

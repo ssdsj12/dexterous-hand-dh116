@@ -765,8 +765,7 @@ def run_tensor_training(world, template, args, contract):
         from .tabletop_surface_exploration import enable
         task.surface_reward_profile=getattr(args,'surface_reward_profile','baseline')
         enable(task,device_world)
-        if (getattr(args,'surface_imitation_mode','legacy')=='stable_hold_v2'
-                and getattr(args,'surface_reward_profile','baseline')=='baseline'):
+        if getattr(args,'surface_imitation_mode','legacy')=='stable_hold_v2':
             from .tabletop_surface_exploration import enable_stable_hold_rewards
             enable_stable_hold_rewards(task)
         if task.surface_reward_profile!='baseline':

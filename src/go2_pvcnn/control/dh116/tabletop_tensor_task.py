@@ -252,6 +252,10 @@ class TensorTask:
                 self.m[key][ids]=value.bool() if key in ('contact_valid','contact_all_below_centerline') else value
         if hasattr(self,'surface_reward_ablation'):
             self.surface_reward_ablation.reset(ids,self.m['bottom'])
+        if hasattr(self,'surface_early_hold'):
+            self.surface_early_hold.reference_bottom_m[ids]=self.m['bottom'][ids]
+        if hasattr(self,'surface_action_motion'):
+            self.surface_action_motion.reset(ids)
         for value in self.terms.values(): value[ids]=0.
         if hasattr(self,'coordinated_control'):
             from .tabletop_coordinated_grasp import midpoint_coordinates
@@ -539,6 +543,10 @@ class TensorTask:
         self.failure[bad]=FAILURE_CODES['nonfinite_state']; self.nonfinite|=bad
         self.reward[bad]-=25.; self.terms['failure'][bad]-=25.
         valid=live&finite
+        if hasattr(self,'surface_action_motion'):
+            from .tabletop_surface_reward_ablation import executed_position
+            self.surface_motion_cost=self.surface_action_motion.measure(
+                executed_position(before),executed_position(new),self.actions,valid,dt)
         if getattr(self,'surface_contact_history',None) is not None:
             self.surface_contact_history.update(new['effective_pad_loads_n'],new['effective_pad_vectors_w'],
                 new['effective_pad_depth_m'],dt)

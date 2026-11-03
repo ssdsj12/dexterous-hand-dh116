@@ -121,6 +121,35 @@ def fixture(directory, *, amsgrad=True, auxiliary='populated', named=False):
     return source, output, saved
 
 
+def test_reward_stage_derivation_preserves_full_state_and_source_files(tmp_path, monkeypatch):
+    from scripts import derive_dh116_surface_stage as stage
+    from go2_pvcnn.control.dh116.tabletop_surface_contract import validate_contract
+
+    old, source, _ = fixture(tmp_path)
+    old_bytes = old.read_bytes()
+    migration().derive_surface_checkpoint(old, source)
+    demonstrations = tmp_path / 'demo.pt'
+    torch.save({'synthetic': True}, demonstrations)
+    saved = torch.load(source, weights_only=False)
+    saved['surface_imitation']['dataset_sha256'] = hashlib.sha256(demonstrations.read_bytes()).hexdigest()
+    torch.save(saved, source)
+    source_bytes = source.read_bytes()
+    out = tmp_path / 'lift.pt'
+    monkeypatch.setattr(stage, 'validate_dataset', lambda data, contract: validate_contract(contract))
+    monkeypatch.setattr(sys, 'argv', ['derive', '--input', str(source),
+        '--demonstrations', str(demonstrations), '--reward-profile', 'v3_lift_only', '--output', str(out)])
+    stage.main()
+    after = torch.load(out, weights_only=False)
+    for key in saved.keys() - {'contract'}:
+        same(saved[key], after[key])
+    assert old.read_bytes() == old_bytes and source.read_bytes() == source_bytes
+    assert after['contract']['surface_reward_ablation']['disabled_legacy_terms'] == ['dex_lift', 'lift_milestone']
+    assert after['contract']['surface_contract_sha256'] != saved['contract']['surface_contract_sha256']
+    assert after['contract']['surface_contract'] == saved['contract']['surface_contract']
+    with pytest.raises(FileExistsError):
+        stage.main()
+
+
 def expected_state(saved):
     from go2_pvcnn.control.dh116.tabletop_surface_contract import bind_contract
     expected = copy.deepcopy(saved)
@@ -143,6 +172,8 @@ def expected_state(saved):
 @pytest.mark.parametrize('auxiliary', ['absent', 'empty', 'populated'])
 @pytest.mark.parametrize('named', [False, True])
 def test_full_state_and_exact_prefix_moments_preserved(tmp_path, amsgrad, auxiliary, named):
+    trainer_module = 'go2_pvcnn.control.dh116.tabletop_tensor_training'
+    trainer_before = sys.modules.get(trainer_module)
     source, output, saved = fixture(tmp_path, amsgrad=amsgrad, auxiliary=auxiliary, named=named)
     original = source.read_bytes()
     rng = torch.get_rng_state().clone()
@@ -163,7 +194,7 @@ def test_full_state_and_exact_prefix_moments_preserved(tmp_path, amsgrad, auxili
     assert manifest['new_contract_sha256'] == semantic_sha256(after['contract'])
     assert manifest == json.loads(output.with_suffix('.json').read_text())
     assert all(manifest['invariant_checks'].values())
-    assert 'go2_pvcnn.control.dh116.tabletop_tensor_training' not in sys.modules
+    assert sys.modules.get(trainer_module) is trainer_before
 
 
 def test_actor_critic_equivalence_and_real_adam_resume(tmp_path):

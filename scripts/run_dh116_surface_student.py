@@ -11,6 +11,7 @@ import argparse,hashlib,json,os,shlex,sys
 
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'src'))
+from go2_pvcnn.control.dh116.tabletop_surface_reward_ablation import PROFILES
 
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--output',type=Path,required=True)
@@ -22,7 +23,7 @@ p.add_argument('--rollout-steps',type=int,default=32)
 p.add_argument('--teacher-replay',type=Path)
 p.add_argument('--surface-action-audit',type=Path)
 p.add_argument('--surface-dagger-collect',action='store_true')
-p.add_argument('--surface-reward-profile',choices=('baseline','lift_progress','early_hold','contact_break','slip_relative','support_deficit'),default='baseline')
+p.add_argument('--surface-reward-profile',choices=PROFILES,default='baseline')
 p.add_argument('--student-actor',type=Path)
 p.add_argument('--demonstrations',type=Path)
 p.add_argument('--imitation-mode',choices=('legacy','stable_hold_v2'),default='legacy')

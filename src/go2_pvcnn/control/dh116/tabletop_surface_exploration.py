@@ -5,7 +5,7 @@ from .tabletop_surface_force_sharing import surface_targets,CONTRACT as SHARING
 MEASUREMENT_KEYS=('effective_pad_loads_n','effective_pad_vectors_w','effective_pad_points_w',
     'effective_pad_valid','rejected_contact_loads_n','effective_pad_depth_m','pad_reference_points_w')
 REWARD_NAMES=('surface_between_faces','surface_within_faces','surface_missing_opposition','ordinary_collision')
-from .tabletop_surface_reward_ablation import PROFILES as SURFACE_REWARD_PROFILES
+from .tabletop_surface_reward_ablation import PROFILES as SURFACE_REWARD_PROFILES, disabled_legacy_terms
 STABLE_HOLD_REWARD_CONTRACT=dict(version='surface_stable_hold_reward_v2',
     lift_reward_contact_gate='opposed_effective_pads;ordinary_fraction<=0.05;depth<=0.0008m',
     hold_reward='120*(continuous_native_hold_s/5)^2_points_per_s',
@@ -68,6 +68,10 @@ def validate_options(args):
     if profile!='baseline' and (not getattr(args,'surface_feedback',False)
             or imitation!='stable_hold_v2'):
         raise ValueError('reward ablation requires validated 371D and the unchanged stable-hold BC baseline')
+    from .tabletop_surface_reward_ablation import STAGE_TERMS, SUPPORT
+    if SUPPORT in STAGE_TERMS[profile] and not (
+            getattr(args,'vertical_force_reward',False) and getattr(args,'phase_force_reward',False)):
+        raise ValueError('support reward requires measured per-hand lift force and runtime weight')
     if imitation!='legacy' and (not getattr(args,'surface_force_sharing',False)
             or not getattr(args,'surface_demonstrations',None)):
         raise ValueError('stable hold imitation requires native demonstrations and surface mode')
@@ -235,6 +239,9 @@ def reward_rates(t):
         drift=tracker.measured_drift_m if tracker is not None else torch.zeros_like(t.reward)
         airborne=(m['bottom']>=t.surface_reference_bottom_m+.003).to(loads.dtype)
         rates['surface_slip_window']=-160.*(drift/.0005).square().clamp(0,4)*gate*airborne
+    for name in disabled_legacy_terms(getattr(t,'surface_reward_profile','baseline')):
+        if name in rates:
+            rates[name]=torch.zeros_like(t.reward)
     return rates
 
 

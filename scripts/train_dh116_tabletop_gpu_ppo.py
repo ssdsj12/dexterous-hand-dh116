@@ -9,6 +9,7 @@ import signal
 import traceback
 import time
 from go2_pvcnn.control.dh116.tabletop_training import write_json, canonical_contract
+from go2_pvcnn.control.dh116.tabletop_surface_reward_ablation import PROFILES
 from go2_pvcnn.control.dh116.tabletop_vec_config import (add_mimic_arguments,
     validate_mimic_options, add_protected_mimic_arguments, validate_protected_mimic_options)
 from go2_pvcnn.control.dh116.tabletop_adaptive_initialization import (
@@ -79,7 +80,7 @@ parser.add_argument('--surface-imitation-mode',choices=('legacy','stable_hold_v2
                     help='explicit independent actor optimizer and persistent hold-aware teacher correction')
 parser.add_argument('--surface-noise-mode',choices=('legacy','holding_v2'),default='legacy',
                     help='explicit lower Gaussian sampling std for surface policies; physical action range unchanged')
-parser.add_argument('--surface-reward-profile',choices=('baseline','lift_progress','early_hold','contact_break','slip_relative','support_deficit'),default='baseline',
+parser.add_argument('--surface-reward-profile',choices=PROFILES,default='baseline',
                     help='enable exactly one new native reward factor for staged ablation')
 parser.add_argument('--surface-contact-history',action='store_true',
                     help='explicit 401D input with causal native mean-force EMA and preceding-window max depth')
