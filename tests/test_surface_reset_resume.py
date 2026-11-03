@@ -28,3 +28,19 @@ def test_reset_family_resume_never_hides_physics_or_undeclared_seed_changes():
     with pytest.raises(ValueError):surface_checkpoint_contract_changes(saved,bad,family)
     bad=dict(current,close_seed_sha256='e'*64,grasp_initialization_sha256='e'*64)
     with pytest.raises(ValueError):surface_checkpoint_contract_changes(saved,bad,family)
+
+
+def test_feedback_reset_switch_rebinds_digest_without_mutating_source():
+    from go2_pvcnn.control.dh116.tabletop_surface_contract import ACTION_NAME, bind_contract
+    from go2_pvcnn.control.dh116.tabletop_tensor_training import surface_checkpoint_contract_changes
+
+    saved, current, family = contracts()
+    saved, current = [bind_contract(dict(c, action=ACTION_NAME)) for c in (saved, current)]
+    for member, contract in zip(family, (saved, current)):
+        member['contract'] = copy.deepcopy(contract)
+    original = copy.deepcopy(saved)
+    assert saved['surface_contract_sha256'] != current['surface_contract_sha256']
+    assert surface_checkpoint_contract_changes(saved, current, family) == ['surface_reset_family_switch']
+    assert saved == original
+    with pytest.raises(ValueError, match='SHA mismatch'):
+        surface_checkpoint_contract_changes(saved, dict(current, surface_contract_sha256='0'*64), family)

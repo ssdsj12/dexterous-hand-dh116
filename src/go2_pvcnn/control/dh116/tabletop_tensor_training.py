@@ -433,6 +433,9 @@ def surface_checkpoint_contract_changes(saved,current,reset_family=None):
         if candidate[name]!=current[name]:
             candidate[name]=current[name]
             if not changes:changes.append('surface_reset_family_switch')
+    if changes and 'surface_contract_sha256' in candidate:
+        from .tabletop_surface_contract import semantic_sha256
+        candidate['surface_contract_sha256']=semantic_sha256(candidate)
     return changes+checkpoint_contract_changes(candidate,current)
 
 
