@@ -1,3 +1,19 @@
+## 2026-11-04 — `11-3` 从零训练启动器快照
+
+归档当前训练使用的 `scripts/fresh_multistyle.py`。该脚本校验现有多抓法训练入口的 SHA256，允许随机初始化，并拒绝从命令行载入旧断点或 Student actor。快照保留部署主机上的 `/root/hand_reward_11_3_validation` 路径，使用前需有对应的训练源码与环境。
+
+本次读取的 Isaac 原生训练状态为二指第 983 次 PPO 更新、累计 85,753 个 episode，最慢的环境完成 17 个，真实 Student PPO 成功数为 0。该 run 从零启动，使用 4096 环境、371D 观测和 `support_deficit` 奖励配置，预算为每环境累计 2048 个 episode。每个抓法块以所有环境均完成至少 128 个回合为切换条件。训练仍在进行，下一步继续监测首次真实成功和抓法切换。
+
+本次离线核对确认 7 个训练代码与配置文件已与 GitHub 基线逐字节一致。启动器通过 Python 编译检查，`--help` 返回 0，`--resume unused.pt` 与 `--student-actor unused.pt` 均按预期退出 1。以下定向 CPU 回归通过 62 项，本次发布验证未启动额外的 Isaac 实例。
+
+```bash
+CUDA_VISIBLE_DEVICES='' PYTHONPATH=src:. PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 \
+  /opt/conda/envs/hand/bin/python -m pytest -q -p no:cacheprovider \
+  tests/test_dh116_contact_geometry.py tests/test_dh116_policy_control.py \
+  tests/test_surface_contract.py tests/test_surface_reset_resume.py \
+  tests/test_surface_strict_training_integration.py
+```
+
 ## 2026-11-03 — `11-3` 二指与三指续训
 
 从第 902 轮的只读断点派生 64 环境续训分支，继承模型、PPO 与 BC 优化器、随机数状态和累计步数，回合统计按新批次单独起算。预检完成二指第 903 轮、三指第 904 轮，两次均为原生 PPO 更新，原生成功计数为 0。修复已验证 reset 家族之间切换时的 371D 合同摘要更新。执行 `python -m pytest -q tests/test_surface_reset_resume.py tests/test_surface_contract.py tests/test_surface_strict_training_integration.py`，36 个测试通过。原第 902 轮断点的 SHA256 校验通过。

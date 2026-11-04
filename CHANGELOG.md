@@ -1,3 +1,9 @@
+## 2026-11-04 — `11-3` 从零训练启动器快照
+
+- 归档 4096 环境从零训练使用的 `scripts/fresh_multistyle.py`。它校验多抓法入口的 SHA256，并拒绝从命令行载入旧断点或 Student actor。快照依赖 README 所列的部署路径。
+- 发布前启动器通过 Python 编译检查。`--help` 返回 0，`--resume unused.pt` 与 `--student-actor unused.pt` 均按预期退出 1。README 所列的 `python -m pytest -q -p no:cacheprovider` 定向 CPU 回归通过 62 项。7 个对照代码和配置文件与分支基线逐字节一致。
+- 本次读取的原生训练状态为二指第 983 次 PPO 更新，累计 85,753 个 episode，最慢环境 17 个，真实 Student PPO 成功数为 0。继续监测首个成功及跨抓法切换。发布验证未启动额外的 Isaac 实例。
+
 ## 2026-11-03 — `11-3` 两种抓法续训
 
 - 切换已验证的 reset 家族时重新计算 371D 合同摘要，继续严格比较其余合同字段。36 个相关测试通过。
