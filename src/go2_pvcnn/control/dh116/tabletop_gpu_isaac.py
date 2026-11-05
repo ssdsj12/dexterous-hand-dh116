@@ -70,9 +70,9 @@ class GpuWorld:
             mesh.GetExtentAttr().Set([Gf.Vec3f(-1.),Gf.Vec3f(1.)])
             mesh.AddTranslateOp().Set(Gf.Vec3d(*center))
             mesh.AddScaleOp().Set(Gf.Vec3f(*scale))
-        self.origins = np.asarray(self.cloner.clone(source_prim_path=self.paths[0],
-            prim_paths=self.paths, replicate_physics=True, copy_from_source=False,
-            enable_env_ids=True))
+        from .tabletop_physics_cloning import clone_physics_environments
+        self.origins = np.asarray(clone_physics_environments(self.cloner,sim,self.paths,
+            mode=getattr(args,'physics_clone_mode','replicate')))
         # Keep the authored source wrappers alive, but use only these batched
         # wrappers for writes/reads after initialization.
         self.hands = [Articulation(h.cfg.replace(prim_path=f'/World/envs/env_.*/{side}Hand', spawn=None))

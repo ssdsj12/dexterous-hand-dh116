@@ -7,7 +7,7 @@ modes: --imitation-mode stable_hold_v2 --noise-mode holding_v2, with native
 --demonstrations and repeated --validation-report paths.
 """
 from pathlib import Path
-import argparse,hashlib,json,os,shlex,sys
+import argparse,hashlib,json,os,re,shlex,sys
 
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'src'))
@@ -50,6 +50,12 @@ p.add_argument('--vision-camera-batch-size',type=int,default=64)
 p.add_argument('--vision-ppo-microbatch-size',type=int,default=128)
 p.add_argument('--vision-inference-batch-size',type=int,default=128)
 p.add_argument('--vision-visibility-mode',choices=('all','batch'),default='all')
+p.add_argument('--vision-camera-mode',choices=('bounded','fixed'),default='bounded',
+    help='fixed: one stationary real camera per environment, without sequential camera reuse')
+p.add_argument('--physics-clone-mode',choices=('replicate','usd_parse'),default='replicate',
+    help='usd_parse loads original clone physics directly and explicitly filters environments')
+p.add_argument('--vision-resume-downsize',action='store_true',
+    help='explicitly convert a compatible 4096 visual checkpoint to fixed 2048/1024 environments')
 p.add_argument('--pose-summary',type=Path,default=root/'configs/dh116_training/pose_reference.json',
     help='explicit pose provenance; use the source checkpoint assets when running from a staging tree')
 p.add_argument('--load-profile',type=Path,default=root/'configs/dh116_load_profiles/v2_pressure_12n_instant_candidate.json',
@@ -67,8 +73,14 @@ if (not 2<=args.num_envs<=4096 or not 8<=args.rollout_steps<=128
     raise ValueError('explicit bounded environment/update/rollout budget required')
 if args.depth_coordinate_probe and not args.depth_camera_config:
     p.error('--depth-coordinate-probe requires --depth-camera-config')
+if args.vision_camera_mode!='bounded' and not args.vision_student:
+    p.error('--vision-camera-mode requires --vision-student')
+if args.vision_resume_downsize and (not args.vision_student or not args.resume or args.vision_camera_mode!='fixed'):
+    p.error('--vision-resume-downsize requires a fixed visual resume')
 if args.vision_student:
-    if not (1<=args.vision_camera_batch_size<=256 and 1<=args.vision_ppo_microbatch_size<=1024
+    if args.vision_camera_mode=='fixed' and (args.num_envs>2048 or args.vision_visibility_mode!='all'):
+        p.error('fixed cameras require at most 2048 environments with all scene roots visible')
+    if not ((args.vision_camera_mode=='fixed' or 1<=args.vision_camera_batch_size<=256) and 1<=args.vision_ppo_microbatch_size<=1024
             and 1<=args.vision_inference_batch_size<=1024):
         p.error('bounded camera/PPO/inference batch limits required')
     if (args.num_envs%2 or not args.depth_camera_config
@@ -109,6 +121,11 @@ if args.mixed_pregrasp_candidates:
     write_initialization(args.mixed_pregrasp_candidates, mixed_path)
 flags=(root/'scripts/smoke_dh116_surface_grasp.sh').read_text();prefix='exec bash scripts/python.sh '
 cmd=shlex.split(flags[flags.index(prefix)+len(prefix):].replace('\\\n',' '))
+if args.vision_student and args.vision_camera_mode=='fixed':
+    kit_index=next(i for i,value in enumerate(cmd) if value.startswith('--kit_args='))
+    cmd[kit_index],changed=re.subn(r'--/rtx/viewTile/limit=\d+',
+        f'--/rtx/viewTile/limit={args.num_envs}',cmd[kit_index])
+    if changed!=1:raise RuntimeError('fixed camera launch requires one explicit native view limit')
 for flag,value in (('--num-envs',args.num_envs),('--max-iterations',args.updates),
     ('--rollout-steps',args.rollout_steps),('--surface-diagnostic-steps',10000 if args.teacher_replay else 0),
     ('--grasp-initialization',initial_path),('--cpu-threads',2),('--output',output)):
@@ -119,6 +136,7 @@ if args.episodes_per_env is not None:
     index=cmd.index('--max-iterations');del cmd[index:index+2]
     cmd.extend(['--episodes-per-env',str(args.episodes_per_env)])
 cmd.append('--native-sensor-batch')
+cmd.extend(['--physics-clone-mode',args.physics_clone_mode])
 if args.depth_coordinate_probe:
     cmd.extend(['--depth-coordinate-probe','--enable_cameras',
                 '--depth-camera-config',str(args.depth_camera_config.resolve())])
@@ -128,7 +146,9 @@ if args.vision_student:
                 '--vision-camera-batch-size',str(args.vision_camera_batch_size),
                 '--vision-ppo-microbatch-size',str(args.vision_ppo_microbatch_size),
                 '--vision-inference-batch-size',str(args.vision_inference_batch_size),
-                '--vision-visibility-mode',args.vision_visibility_mode])
+                '--vision-visibility-mode',args.vision_visibility_mode,
+                '--vision-camera-mode',args.vision_camera_mode])
+    if args.vision_resume_downsize:cmd.append('--vision-resume-downsize')
 if args.mixed_pregrasp_candidates:
     cmd.extend(['--mixed-grasp-initialization',str(mixed_path)])
 for value,flag in ((args.teacher_replay,'--surface-teacher-replay'),

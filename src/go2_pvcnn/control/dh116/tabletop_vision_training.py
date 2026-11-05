@@ -25,7 +25,7 @@ def _write_json(path, value):
 
 def _contract(args, critic_contract):
     sha=lambda path: hashlib.sha256(Path(path).read_bytes()).hexdigest()
-    return dict(version=VERSION,actor_observation_size=POLICY_DIM,critic_observation_size=371,
+    contract=dict(version=VERSION,actor_observation_size=POLICY_DIM,critic_observation_size=371,
         actor_uses_privileged_state=False,critic_source='native_371D_training_only',
         actor_sources=['RGB-visible object pixels','optical depth','calibrated camera pose',
             'joint encoders','palm FK','previous issued action','sensor timing and validity'],
@@ -59,6 +59,11 @@ def _contract(args, critic_contract):
         primary_reset_sha256=sha(args.grasp_initialization),
         secondary_reset_sha256=sha(args.mixed_grasp_initialization),
         privileged_critic_contract=critic_contract)
+    if getattr(args,'vision_camera_mode','bounded')=='fixed':
+        contract.update(camera_mode='fixed_per_env',camera_batch_size=args.num_envs,
+            camera_batching='fixed_per_environment_real_RGBD',visibility_mode='all',
+            pinned_source_environment=None)
+    return contract
 
 
 def _observations(packet, device_world, previous_action, history, critic, reset_mask=None):
@@ -86,6 +91,8 @@ def _save(path, algorithm, contract, iteration, timesteps, env):
         learning_rate=algorithm.learning_rate,episodes=env.episodes,successes=env.successes,
         torch_rng=torch.get_rng_state(),
         cuda_rng=torch.cuda.get_rng_state_all() if torch.cuda.is_available() else [])
+    migration=getattr(algorithm,'vision_resume_migration',None)
+    if migration is not None:data['resume_migration']=migration
     temporary=Path(str(path)+'.tmp')
     torch.save(data,temporary)
     os.replace(temporary,path)
@@ -101,13 +108,19 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
     _write_json(output/'vision_student_contract.json',contract)
     native_camera=camera is None
     if camera is None:
-        from .tabletop_vision_batched_camera import BoundedVisionCamera
-        camera=BoundedVisionCamera(world,device_world,args.depth_camera_config,
-            width=args.vision_width,height=args.vision_height,num_points=128,
-            batch_size=getattr(args,'vision_camera_batch_size',64),
-            hide_inactive=getattr(args,'vision_visibility_mode','all')=='batch',
-            debug_output_dir=output/'camera_debug',
-            debug_env_ids=tuple(i for i in (3388,3450) if i<args.num_envs))
+        if getattr(args,'vision_camera_mode','bounded')=='fixed':
+            from .tabletop_vision_fixed_camera import FixedVisionCamera
+            camera=FixedVisionCamera(world,device_world,args.depth_camera_config,
+                width=args.vision_width,height=args.vision_height,num_points=128,
+                debug_output_dir=output/'camera_debug',debug_env_ids=(0,args.num_envs//2))
+        else:
+            from .tabletop_vision_batched_camera import BoundedVisionCamera
+            camera=BoundedVisionCamera(world,device_world,args.depth_camera_config,
+                width=args.vision_width,height=args.vision_height,num_points=128,
+                batch_size=getattr(args,'vision_camera_batch_size',64),
+                hide_inactive=getattr(args,'vision_visibility_mode','all')=='batch',
+                debug_output_dir=output/'camera_debug',
+                debug_env_ids=tuple(i for i in (3388,3450) if i<args.num_envs))
     history=SensorHistory(args.num_envs,device=args.device)
     previous=torch.zeros((args.num_envs,24),device=args.device)
     critic=env.reset()
@@ -160,8 +173,14 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
     iteration=timesteps=0
     if args.resume:
         saved=torch.load(args.resume,map_location=args.device,weights_only=False)
-        if saved.get('version')!=VERSION or saved.get('contract')!=contract:
+        if saved.get('version')!=VERSION:
             raise ValueError('visual resume requires the same visual actor/critic/camera/reset contract')
+        from .tabletop_vision_resume import prepare_visual_resume
+        saved=prepare_visual_resume(saved,contract,
+            allow_downsize=getattr(args,'vision_resume_downsize',False))
+        if saved.get('resume_migration') is not None:
+            algorithm.vision_resume_migration=saved['resume_migration']
+            _write_json(output/'resume_migration.json',saved['resume_migration'])
         algorithm.policy.load_state_dict(saved['policy'])
         algorithm.optimizer.load_state_dict(saved['optimizer'])
         algorithm.learning_rate=saved['learning_rate']

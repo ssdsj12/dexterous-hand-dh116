@@ -38,6 +38,9 @@ parser.add_argument('--vision-camera-batch-size',type=int,default=64)
 parser.add_argument('--vision-ppo-microbatch-size',type=int,default=128)
 parser.add_argument('--vision-inference-batch-size',type=int,default=128)
 parser.add_argument('--vision-visibility-mode',choices=('all','batch'),default='all')
+parser.add_argument('--vision-camera-mode',choices=('bounded','fixed'),default='bounded')
+parser.add_argument('--vision-resume-downsize',action='store_true')
+parser.add_argument('--physics-clone-mode',choices=('replicate','usd_parse'),default='replicate')
 parser.add_argument('--force-feedback', action='store_true',
                     help='PPO targets measured hand reaction load; lift requires stable measured contact')
 parser.add_argument('--full-hand-contact', action='store_true',
@@ -343,8 +346,14 @@ if args.mixed_grasp_initialization and (
         or args.require_native_student_validation or args.surface_student_validation_report
         or args.surface_corrections or args.actor_initialization):
     parser.error('mixed grasp reset requires even-sized headless 371D surface PPO resume with an update budget and demonstrations')
+if args.vision_camera_mode!='bounded' and not args.vision_student:
+    parser.error('--vision-camera-mode requires --vision-student')
+if args.vision_resume_downsize and (not args.vision_student or not args.resume or args.vision_camera_mode!='fixed'):
+    parser.error('--vision-resume-downsize requires a fixed visual resume')
 if args.vision_student:
-    if not (1<=args.vision_camera_batch_size<=256 and 1<=args.vision_ppo_microbatch_size<=1024
+    if args.vision_camera_mode=='fixed' and (args.num_envs>2048 or args.vision_visibility_mode!='all'):
+        parser.error('fixed cameras require at most 2048 environments and all-visible rendering')
+    if not ((args.vision_camera_mode=='fixed' or 1<=args.vision_camera_batch_size<=256) and 1<=args.vision_ppo_microbatch_size<=1024
             and 1<=args.vision_inference_batch_size<=1024):
         parser.error('bounded camera/PPO/inference batch limits required')
     if (not 2<=args.num_envs<=4096 or args.num_envs%2 or not args.mixed_grasp_initialization
@@ -568,6 +577,9 @@ try:
         sim.get_physics_context(), args.solve_articulation_contact_last)
     from go2_pvcnn.control.dh116.tabletop_gpu_isaac import GpuWorld
     world = GpuWorld(sim,args,layout,sources)
+    write_json(args.output/'physics_clone_initialization.json',dict(
+        mode=args.physics_clone_mode,num_envs=args.num_envs,
+        inter_environment_collision_filter='env_ids' if args.physics_clone_mode=='replicate' else 'explicit_USD_collision_groups'))
     if args.vision_student:
         from go2_pvcnn.control.dh116.tabletop_vision_batched_camera import prepare_bounded_visibility
         if args.vision_visibility_mode=='batch':
