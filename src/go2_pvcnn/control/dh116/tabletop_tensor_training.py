@@ -717,7 +717,7 @@ def save_checkpoint(path, algorithm, contract, iteration, timesteps, env):
     tmp=Path(str(path)+'.tmp'); torch.save(payload,tmp); os.replace(tmp,path)
 
 
-def run_tensor_training(world, template, args, contract):
+def run_tensor_training(world, template, args, contract, *, mixed_reset=None):
     from .tabletop_tensor_task import TensorTask, REWARD_VERSION, FAILURE_NAMES, measured_readiness_contract, CLOSE_DOWNWARD_PENALTY_CONTRACT
     from .tabletop_tensor_world import TensorWorld, ROOT_POSE_WRITE_CONTRACT
     from .tabletop_tensor_env import TensorEnv, VELOCITY_GUARD_CONTRACT, TERMINAL_RESET_CONTRACT, PHYSICS_PEAK_NAMES, LIVE_VELOCITY_GUARD_CONTRACT, TRAINING_JOINT_LIMIT_CONTRACT, BOUNDED_FAILURE_RESET_CONTRACT, JOINT_LIMIT_RESET_CONTRACT
@@ -768,7 +768,7 @@ def run_tensor_training(world, template, args, contract):
         from .tabletop_surface_exploration import enable
         task.surface_reward_profile=getattr(args,'surface_reward_profile','baseline')
         enable(task,device_world)
-        if getattr(args,'surface_imitation_mode','legacy')=='stable_hold_v2':
+        if getattr(args,'surface_imitation_mode','legacy')=='stable_hold_v2' or getattr(args,'vision_student',False):
             from .tabletop_surface_exploration import enable_stable_hold_rewards
             enable_stable_hold_rewards(task)
         if task.surface_reward_profile!='baseline':
@@ -813,11 +813,19 @@ def run_tensor_training(world, template, args, contract):
     env.lift_entry_force_stats=LiftEntryForceStats(args.device)
     obs=observations(env.reset())
     validation=validate_world_adapter(world,device_world,task)
+    if mixed_reset is not None:
+        from .tabletop_mixed_reset import install_mixed_reset
+        secondary_layout, secondary_seed, _ = mixed_reset
+        mixed_validation=install_mixed_reset(device_world,task,secondary_layout,secondary_seed)
+        write_json(args.output/'mixed_reset_validation.json',mixed_validation)
     obs=observations(env.reset())
     if getattr(args,'require_initial_below_axis',False):
         from .tabletop_initial_contact_check import validate_initial_contact
         write_json(args.output/'initial_contact_validation.json',validate_initial_contact(task.m))
     write_json(args.output/'tensor_world_validation.json',validation)
+    if getattr(args,'depth_coordinate_probe',False):
+        from .tabletop_depth_camera_probe import capture_depth_coordinates
+        return capture_depth_coordinates(world,device_world,task,args)
     steps=args.rollout_steps or 24
     from .tabletop_tensor_task import (POLICY_MIN_FORCE_N, POLICY_MAX_FORCE_N,
         POLICY_INITIAL_FORCE_ACTION_MEAN, POLICY_INITIAL_FORCE_TARGET_N,
@@ -975,6 +983,11 @@ def run_tensor_training(world, template, args, contract):
     if getattr(task,'free_wrist_grasp',False):
         publish_resolved_tensor_configuration(args.output,contract)
 
+    if getattr(args,'vision_student',False):
+        from .tabletop_vision_training import run_vision_training
+        write_json(args.output/'tensor_contract.json',contract)
+        return run_vision_training(world,device_world,task,env,args,contract)
+
     if getattr(args,'manual_control',False):
         from .tabletop_manual_control import run_manual_control
         write_json(args.output/'tensor_contract.json',contract)
@@ -1024,10 +1037,19 @@ def run_tensor_training(world, template, args, contract):
             demo_path=Path(args.surface_demonstrations)
             demo=torch.load(demo_path,map_location='cpu',weights_only=False)
             stable_hold=getattr(args,'surface_imitation_mode','legacy')=='stable_hold_v2'
-            surface_imitation=DemonstrationRegularizer(demo,contract,device=args.device,
+            surface_reset_family=demo.get('reset_family')
+            demo_contract=contract
+            if mixed_reset is not None:
+                from .tabletop_mixed_reset_contract import mixed_reset_contract, single_reset_contract
+                contract=mixed_reset_contract(contract,surface_reset_family,
+                    primary_label='pinch_thumb_index',secondary_label='tripod_thumb_index_middle',
+                    secondary_sha256=mixed_reset[2],num_envs=args.num_envs)
+                demo_contract=single_reset_contract(contract)
+                report_contract.update(contract)
+                publish_resolved_tensor_configuration(args.output,contract)
+            surface_imitation=DemonstrationRegularizer(demo,demo_contract,device=args.device,
                 independent_optimizer=stable_hold,holding_weight=20. if stable_hold else 0.,
                 wrist_weight=4. if stable_hold else 1.)
-            surface_reset_family=demo.get('reset_family')
             algorithm.surface_imitation_metadata=dict(dataset_sha256=hashlib.sha256(demo_path.read_bytes()).hexdigest(),
                 initial_weight=.1,decay=.995,batch_size=256,
                 update='separate_auxiliary_step_after_on_policy_PPO_update',
@@ -1082,6 +1104,11 @@ def run_tensor_training(world, template, args, contract):
             from .tabletop_surface_imitation import _check_contract
             _check_contract(saved['contract'],contract)
             changes=[]
+        elif 'mixed_reset' in saved['contract'] or 'mixed_reset' in contract:
+            from .tabletop_mixed_reset_contract import mixed_reset_resume_changes
+            if saved.get('require_native_student_validation') or saved.get('surface_student_validation'):
+                raise ValueError('mixed reset requires a checkpoint without native student admission constraints')
+            changes=mixed_reset_resume_changes(saved['contract'],contract,surface_reset_family)
         else:
             changes=surface_checkpoint_contract_changes(saved['contract'],contract,surface_reset_family)
         if 'force_action_range_2_to_12' in changes:
@@ -1148,6 +1175,10 @@ def run_tensor_training(world, template, args, contract):
         initial_episodes=int(env.episodes.sum()),initial_successes=int(env.successes.sum()),
         optimizer_state_entries=len(algorithm.optimizer.state),
         initial_policy_std=algorithm.policy.log_std.detach().exp().cpu().tolist()))
+    groups=contract.get('mixed_reset',{}).get('groups',[])
+    if groups:
+        initial_episodes=env.episodes.clone()
+        initial_successes=env.successes.clone()
     writer=SummaryWriter(str(args.output/'tensorboard'))
     if task.vertical_force_reward and task.skip_hold and not getattr(task,'free_grasp_lift',False):
         from .tabletop_vertical_force import CloseCompletionForceEvents
@@ -1314,6 +1345,22 @@ def run_tensor_training(world, template, args, contract):
                 writer.add_scalar('surface_force/paired_fraction',row['surface_sharing']['paired_fraction'],iteration)
                 writer.add_scalar('surface_force/balanced_fraction',row['surface_sharing']['balanced_fraction'],iteration)
                 writer.add_scalar('surface_force/net_rod_lift_max_m',row['surface_sharing']['net_rod_lift_max_m'],iteration)
+                if groups:
+                    net_lift=task.m['bottom']-task.surface_reference_bottom_m
+                    row['grasp_styles']={}
+                    start=0
+                    for group in groups:
+                        label=group['label']
+                        count=group['num_envs']
+                        slots=slice(start,start+count)
+                        start+=count
+                        metrics=dict(num_envs=count,
+                            episodes_since_launch=int((env.episodes[slots]-initial_episodes[slots]).sum()),
+                            successes_since_launch=int((env.successes[slots]-initial_successes[slots]).sum()),
+                            net_rod_lift_max_m=float(net_lift[slots].max()))
+                        row['grasp_styles'][label]=metrics
+                        for key,value in metrics.items():
+                            writer.add_scalar(f'grasp_style/{label}/{key}',value,iteration)
             row['lift_entry_force']=env.lift_entry_force_stats.summary()
             if hasattr(env,'close_completion_events'):
                 row['close_completion_event_index']=env.close_completion_events.event_index

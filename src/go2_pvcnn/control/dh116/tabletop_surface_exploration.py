@@ -66,7 +66,7 @@ def validate_options(args):
             or imitation!='stable_hold_v2' or not getattr(args,'surface_feedback',False)):
         raise ValueError('corrective BC is a separate 371D baseline stage before reward ablations')
     if profile!='baseline' and (not getattr(args,'surface_feedback',False)
-            or imitation!='stable_hold_v2'):
+            or (imitation!='stable_hold_v2' and not getattr(args,'vision_student',False))):
         raise ValueError('reward ablation requires validated 371D and the unchanged stable-hold BC baseline')
     from .tabletop_surface_reward_ablation import STAGE_TERMS, SUPPORT
     if SUPPORT in STAGE_TERMS[profile] and not (

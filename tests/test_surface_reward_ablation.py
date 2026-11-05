@@ -9,7 +9,7 @@ def test_reward_profiles_follow_documented_cumulative_stage_order():
     for profile in SURFACE_REWARD_PROFILES:
         contract = reward_ablation_contract(profile)
         assert contract['profile'] == profile
-        if profile == 'baseline': assert contract['enabled_terms'] == []
+        if profile in ('baseline','v3_reference'): assert contract['enabled_terms'] == []
         else: assert contract['enabled_terms']
     assert len(reward_ablation_contract('early_hold')['enabled_terms'])==3
     assert len(reward_ablation_contract('support_deficit')['enabled_terms'])==7

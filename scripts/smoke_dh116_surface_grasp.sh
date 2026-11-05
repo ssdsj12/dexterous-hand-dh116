@@ -16,4 +16,4 @@ exec bash scripts/python.sh scripts/train_dh116_tabletop_gpu_ppo.py \
  --vertical-force-reward-mode continuous --force-reward-start downward_after_close \
  --force-region-control --phase-force-reward --free-grasp-lift --continuous-motion --free-wrist-grasp \
  --surface-force-sharing --end-support-clearance-m .06 --surface-diagnostic-steps 512 \
- --output "runs/surface_smoke_${tag}" --kit_args=--allow-root
+ --output "runs/surface_smoke_${tag}" --kit_args="--allow-root --/renderer/activeGpu=3 --/renderer/multiGpu/enabled=false --/renderer/multiGpu/autoEnable=false --/physics/cudaDevice=0 --/plugins/carb.tasking.plugin/threadCount=32 --/rtx/viewTile/limit=256"

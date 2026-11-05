@@ -1,3 +1,12 @@
+## 2026-11-05 — `11-5` 视觉 Student 与 4096 环境容量
+
+- 接入前方 RGB-D、真实像素反投影、左右掌心坐标和四帧 PointNet actor。3844D actor 与 371D 特权 critic 分离；二指、三指各占一半物理环境，共享 PPO。旧特权 actor 和无同步图像的教师示范不自动迁入视觉训练。
+- 相机池分批覆盖全部环境，核验真实姿态和同一 render product 的时间戳。原生 AA Off 修复观察到的轮廓 RGB/depth 混合；64 环境 RGB-D 临时块保持数值逐位一致。默认场景全可见，避免逐步反复修改大量 USD visibility；可选 batch 模式单独绑定断点合同。
+- float32 rollout 存在 CPU pinned RAM；推理分块和加权梯度累积限制 CUDA 激活，保留 40 次逻辑 Adam step/PPO。精确 float64 CAD 高度计算分块，保留全部几何顶点。增加 reset/bind 定位信息并选用 Kit 32 工作线程。
+- 最终相关命令通过 1132 项测试、83 个 subtests，CPU 模式跳过 2 项 GPU 测试。另有 CAD 高度 CPU/GPU 14 项与实际 RGB-D 后处理逐位等价验证。命令、环境和容量实验边界见[验证报告](docs/superpowers/reports/2026-11-05-vision4096-validation.md)。
+- 本次 4096 原生结果：完成两次完整 32 步 PPO 更新，用时 423.29 / 424.65 s，共 262144 条 transition；两秒间隔的显存采样峰值为 19058 MiB（18.611 GiB），无 OOM，训练已继续第三轮。全部初始图像/物体有效，每环境 128 点，最差 P95 误差 0.390714 mm。原生 PPO successes 为 0，不把容量或高度门槛当作可靠抓取。
+- 视觉策略从零运行至累计 2048 次 PPO 更新；`collection_status.json` 与完成更新计数分开，严格合同恢复且断点原子保存。旧 64 环境第 43 轮模型及所有运行原件保留。下一步继续训练并独立监测二指/三指净抬升和首次原生成功。
+
 ## 2026-11-04 — `11-3` 从零训练启动器快照
 
 - 归档 4096 环境从零训练使用的 `scripts/fresh_multistyle.py`。它校验多抓法入口的 SHA256，并拒绝从命令行载入旧断点或 Student actor。快照依赖 README 所列的部署路径。

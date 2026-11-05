@@ -241,6 +241,8 @@ class TensorTask:
             if hasattr(self,name):getattr(self,name)[ids]=0.
         if self.shaping is not None:self.shaping.reset(ids)
         for key,value in self._seed.items(): getattr(self,key)[ids]=value
+        for key,value in getattr(self, "_per_env_reset_seed", {}).items():
+            getattr(self,key)[ids]=value[ids]
         for key in self.keys:
             value=torch.as_tensor(measurement[key],device=self.device,dtype=self.m[key].dtype)
             self.m[key][ids]=value[ids] if value.shape==self.m[key].shape else value

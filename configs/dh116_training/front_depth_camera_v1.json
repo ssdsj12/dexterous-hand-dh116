@@ -1,0 +1,32 @@
+{
+  "version": "dh116_front_depth_camera_v1",
+  "position_world_m": [
+    0.43,
+    -0.6,
+    1.1
+  ],
+  "target_world_m": [
+    0.48,
+    0,
+    0.43
+  ],
+  "world_up": [
+    0,
+    0,
+    1
+  ],
+  "resolution_wh": [
+    640,
+    480
+  ],
+  "horizontal_fov_degrees": 75,
+  "clipping_range_m": [
+    0.1,
+    2
+  ],
+  "depth_convention": "optical_axis_z_m",
+  "camera_optical_axes": "x_right_y_down_z_forward",
+  "world_units": "m",
+  "mount": "fixed_front_table_edge_negative_y",
+  "table_top_z_m": 0.3
+}

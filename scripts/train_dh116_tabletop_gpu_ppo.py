@@ -25,6 +25,19 @@ parser.add_argument('--adaptive-grasp', action='store_true',
                     help='PPO controls 12 finger targets, 6 palm offsets and 2 grip stiffness targets')
 parser.add_argument('--grasp-initialization', type=Path,
                     help='explicit authored geometry for fresh adaptive grasp training')
+parser.add_argument('--mixed-grasp-initialization',type=Path,
+                    help='fixed secondary grasp reset for the upper half of a shared PPO batch')
+parser.add_argument('--depth-coordinate-probe',action='store_true',
+                    help='capture depth and hand-local coordinates without training')
+parser.add_argument('--depth-camera-config',type=Path)
+parser.add_argument('--vision-student',action='store_true',
+                    help='RGB-D-only 3844D actor with training-only 371D critic')
+parser.add_argument('--vision-width',type=int,default=320)
+parser.add_argument('--vision-height',type=int,default=240)
+parser.add_argument('--vision-camera-batch-size',type=int,default=64)
+parser.add_argument('--vision-ppo-microbatch-size',type=int,default=128)
+parser.add_argument('--vision-inference-batch-size',type=int,default=128)
+parser.add_argument('--vision-visibility-mode',choices=('all','batch'),default='all')
 parser.add_argument('--force-feedback', action='store_true',
                     help='PPO targets measured hand reaction load; lift requires stable measured contact')
 parser.add_argument('--full-hand-contact', action='store_true',
@@ -319,6 +332,34 @@ if args.tensor_pipeline and (not args.full_hand_contact or not args.force_feedba
         or args.initialize_from or args.play_checkpoint or args.probe_only or args.startup_only
         or args.allow_env_expansion or args.resume_episode_progress):
     parser.error('--tensor-pipeline requires rigid full-hand force feedback, zero jitter, and training mode; legacy transfer is unsupported')
+if args.mixed_grasp_initialization and (
+        args.num_envs < 2 or args.num_envs % 2 or not args.adaptive_grasp
+        or not args.direct_training or not args.tensor_pipeline or not args.headless
+        or not args.free_wrist_grasp or not args.surface_force_sharing or not args.surface_feedback
+        or (not args.surface_demonstrations and not args.vision_student)
+        or (not args.resume and not args.depth_coordinate_probe and not args.vision_student) or args.max_iterations is None
+        or args.episodes_per_env is not None or args.surface_teacher_replay
+        or args.surface_student_actor or args.surface_student_eval_steps or args.surface_dagger_collect
+        or args.require_native_student_validation or args.surface_student_validation_report
+        or args.surface_corrections or args.actor_initialization):
+    parser.error('mixed grasp reset requires even-sized headless 371D surface PPO resume with an update budget and demonstrations')
+if args.vision_student:
+    if not (1<=args.vision_camera_batch_size<=256 and 1<=args.vision_ppo_microbatch_size<=1024
+            and 1<=args.vision_inference_batch_size<=1024):
+        parser.error('bounded camera/PPO/inference batch limits required')
+    if (not 2<=args.num_envs<=4096 or args.num_envs%2 or not args.mixed_grasp_initialization
+            or not args.depth_camera_config or args.depth_coordinate_probe
+            or args.surface_demonstrations or args.surface_student_actor
+            or args.surface_teacher_replay or args.teacher_search_cases
+            or args.surface_student_eval_steps or args.surface_corrections or args.surface_mpc
+            or args.manual_control or args.actor_initialization or args.initialize_from
+            or args.vision_width not in range(1,321) or args.vision_height not in range(1,241)):
+        parser.error('visual actor requires 2..4096 even mixed RGB-D scenes; privileged actor initialization/distillation modes are excluded')
+    args.enable_cameras=True
+if args.depth_coordinate_probe:
+    if not args.mixed_grasp_initialization or args.num_envs!=2 or not args.depth_camera_config or args.resume:
+        parser.error('depth coordinate capture requires two mixed scenes, camera config, and no checkpoint')
+    args.enable_cameras=True
 if args.full_hand_contact and (not args.force_feedback):
     parser.error('full-hand contact requires rigid-object force feedback')
 if args.joint_envelope and not args.full_hand_contact:
@@ -409,6 +450,11 @@ vec = None
 from go2_pvcnn.control.dh116.tabletop_run_status import finalize_run
 try:
     app = AppLauncher(args).app
+    if args.vision_student:
+        # Register sensor/time dependencies before any physics reset or stepping.
+        import omni.kit.app
+        omni.kit.app.get_app().get_extension_manager().set_extension_enabled_immediate(
+            'isaacsim.sensors.camera',True)
     import numpy as np
     import torch
     import isaaclab.sim as sim_utils
@@ -433,6 +479,12 @@ try:
     sources = {x['side']:x['path'] for x in manifest['sources'] if x['kind']=='dh116'}
     provenance = dict(pose_sha256=sha(args.pose_summary),source_sha256={s:sha(p) for s,p in sources.items()},
         physics_hz=args.physics_hz,control_hz=60,solver_type=args.solver_type,position_iterations=args.position_iterations)
+    mixed_reset = None
+    if args.mixed_grasp_initialization:
+        mixed_payload = json.loads(args.mixed_grasp_initialization.read_text())
+        mixed_layout, mixed_seed = adaptive_initialization(
+            mixed_payload, layout, provenance, object_radius_m=args.solid_cylinder_radius_m)
+        mixed_reset = (mixed_layout, mixed_seed, sha(args.mixed_grasp_initialization))
     if args.adaptive_grasp:
         layout, seed_state = adaptive_initialization(
             json.loads(args.grasp_initialization.read_text()),layout,provenance,
@@ -496,14 +548,32 @@ try:
             action='20D_piecewise_joint_envelope_palm_load_v1')
     contract = canonical_contract(contract)
     report['contract'] = contract
+    render_options={}
+    if args.vision_student:
+        render_options['render']=sim_utils.RenderCfg(antialiasing_mode='Off',enable_dlssg=False)
     sim = sim_utils.SimulationContext(sim_utils.SimulationCfg(dt=1/args.physics_hz,device=args.device,
         physx=sim_utils.PhysxCfg(solver_type=args.solver_type,
-            solve_articulation_contact_last=args.solve_articulation_contact_last)))
+            solve_articulation_contact_last=args.solve_articulation_contact_last),**render_options))
+    if args.vision_student:
+        import carb
+        sensor_settings=carb.settings.get_settings()
+        args.vision_render_readback=dict(antialiasing_mode='Off',
+            aa_op=sensor_settings.get_as_int('/rtx/post/aa/op'),
+            dlssg_enabled=sensor_settings.get_as_bool('/rtx-transient/dlssg/enabled'))
+        if args.vision_render_readback['aa_op']!=0 or args.vision_render_readback['dlssg_enabled']:
+            raise RuntimeError('sensor RGB/depth requires verified AA Off and DLSSG disabled')
+        write_json(args.output/'vision_render_settings.json',args.vision_render_readback)
     from go2_pvcnn.control.dh116.tabletop_solver_order import verify_solver_order
     report['articulation_solver_order_readback'] = verify_solver_order(
         sim.get_physics_context(), args.solve_articulation_contact_last)
     from go2_pvcnn.control.dh116.tabletop_gpu_isaac import GpuWorld
     world = GpuWorld(sim,args,layout,sources)
+    if args.vision_student:
+        from go2_pvcnn.control.dh116.tabletop_vision_batched_camera import prepare_bounded_visibility
+        if args.vision_visibility_mode=='batch':
+            prepare_bounded_visibility(world,batch_size=args.vision_camera_batch_size)
+        from go2_pvcnn.control.dh116.tabletop_vision_memory import memory_snapshot
+        memory_snapshot(args,'cloned_before_reset',world)
     if args.full_hand_contact:
         from go2_pvcnn.control.dh116.tabletop_object_contact import object_contact_contract
         contact_contract = object_contact_contract(world.object_contact_links)
@@ -530,9 +600,21 @@ try:
         light.func('/World/DemoLight',light)
         sim.set_camera_view(eye=np.array((1.1,-1.3,1.05))+world.origins[0],
                             target=np.array((.43,0.,.32))+world.origins[0])
-    sim.reset()
-    signal.signal(signal.SIGINT,signal.default_int_handler)
-    backends = world.bind(seed_state)
+    if args.vision_student:
+        import faulthandler
+        memory_snapshot(args,'immediately_before_reset',world)
+        faulthandler.dump_traceback_later(90,repeat=True)
+    try:
+        sim.reset()
+        if args.vision_student:
+            memory_snapshot(args,'reset_returned_before_bind',world)
+        signal.signal(signal.SIGINT,signal.default_int_handler)
+        backends = world.bind(seed_state)
+    finally:
+        if args.vision_student:
+            faulthandler.cancel_dump_traceback_later()
+    if args.vision_student:
+        memory_snapshot(args,'bound_after_reset',world)
     for backend in backends:
         backend.joint_envelope = args.joint_envelope_data
     counts = [0]*args.num_envs
@@ -686,7 +768,7 @@ try:
     elif args.tensor_pipeline:
         from go2_pvcnn.control.dh116.tabletop_tensor_training import run_tensor_training
         vec.reset()
-        report.update(run_tensor_training(world,envs[0],args,contract))
+        report.update(run_tensor_training(world,envs[0],args,contract,mixed_reset=mixed_reset))
     else:
         training,model=run_vector_training(vec,args.output,contract,timesteps=args.timesteps,
             eval_episodes=args.eval_episodes,checkpoint_every=args.checkpoint_every,seed=args.seed,
