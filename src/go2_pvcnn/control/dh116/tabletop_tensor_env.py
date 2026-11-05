@@ -134,6 +134,7 @@ class TensorEnv:
             or getattr(world,'continuous_motion',False) or getattr(args,'continuous_motion',False))
         self.world.continuous_motion=self.task.continuous_motion=self.continuous_motion
         self.n, self.device = world.n, world.device
+        self.palm_lift_telemetry = None
         self.recovery = recovery
         self.training_joint_limit = bool(training_joint_limit and recovery)
         self.physics_peaks=torch.zeros(4,device=self.device,dtype=torch.float64)
@@ -161,6 +162,13 @@ class TensorEnv:
         if fault_trace_path is not None:
             from .tabletop_physics_fault_trace import PhysicsFaultTrace
             self.fault_trace = PhysicsFaultTrace(fault_trace_path)
+
+    def enable_palm_lift_telemetry(self):
+        """Enable diagnostics; references begin at the next actual world reset."""
+        if self.palm_lift_telemetry is None:
+            from .tabletop_palm_lift_telemetry import PalmLiftTelemetry
+            self.palm_lift_telemetry = PalmLiftTelemetry(self.n, self.device)
+        return self.palm_lift_telemetry
 
     def training_joint_safe(self,m):
         if not self.training_joint_limit or self.continuous_motion:
@@ -240,6 +248,8 @@ class TensorEnv:
     def reset(self):
         ids = torch.arange(self.n,device=self.device)
         m = self.world.reset(ids)
+        if self.palm_lift_telemetry is not None:
+            self.palm_lift_telemetry.reset(ids,m)
         safe,_,_ = physical_guard(self.world,m)
         safe &= reset_velocity_safe(self.world)
         safe &= self.training_joint_safe(m)
@@ -258,6 +268,8 @@ class TensorEnv:
         from .tabletop_tensor_task import FAILURE_CODES
         from .tabletop_tensor_world import signed_hand_lift_vertical_force
         t, w = self.task, self.world
+        palm_lift = self.palm_lift_telemetry
+        if palm_lift is not None:palm_lift.begin_tick()
         acquisition_before = None
         if getattr(self, 'grasp_acquisition', False) and not getattr(t,'manual_lightweight',False):
             from .tabletop_grasp_acquisition import potential
@@ -280,6 +292,7 @@ class TensorEnv:
                 self.fail(invalid&self.pending,w.measure(),'post_reset_invalid_action')
             ids=invalid.nonzero().flatten()
             reset_m=w.reset(ids)
+            if palm_lift is not None:palm_lift.reset(ids,reset_m)
             safe=physical_guard(w,reset_m)[0]&reset_velocity_safe(w)&self.training_joint_safe(reset_m)
             safe &= self.state_valid(reset_m)
             if bool((invalid&~safe).any()):self.fail(invalid&~safe,reset_m,'immediate_reset_invalid_action')
@@ -298,6 +311,7 @@ class TensorEnv:
             allowed = t.control(actions,live,w.dt)
             if hasattr(self,'lift_gate_counts'):self.lift_gate_counts+=t.lift_diagnostic_masks.sum(0)
             m = w.advance(t,allowed,live)
+            if palm_lift is not None:palm_lift.observe(m,live)
             if action_motion is not None:
                 action_motion.command(target_position(t,w)-prior_target,w.dt)
             invalid_physics=(~finite_physics(w,m) if self.continuous_motion else torch.zeros_like(live))
@@ -432,6 +446,7 @@ class TensorEnv:
                         except (AttributeError,ValueError,RuntimeError) as error:
                             self.manual_last_failure['digit_contacts_error']=str(error)
                 reset_m = w.reset(ids)
+                if palm_lift is not None:palm_lift.reset(ids,reset_m)
                 self.velocity_exceedance_streak_s[ids]=0.
                 self.reset_substep[ids] = substep
                 reset_safe,_,_ = physical_guard(w,reset_m)
@@ -489,4 +504,6 @@ class TensorEnv:
             self.phase_visits[ids] = False
             self.phase_visits[ids,3 if getattr(t,'free_grasp_lift',False) else 1] = True
             obs = t.observe()
+        if palm_lift is not None:
+            extras=dict(extras,palm_lift_telemetry=palm_lift.snapshot())
         return obs,rewards,dones,extras

@@ -49,3 +49,28 @@ The current policy continues the prior 4096 visual actor at update5. Add `--resu
 `monitor.json` and `iterations.jsonl` describe completed optimizer updates. `collection_status.json` records current rollout progress without counting an unfinished update. `vision_student_ppo.pt` is committed atomically after complete updates. `initial_camera_observation.json`, `initial_camera_geometry_validation.json` and `vision_memory.jsonl` record sensor and capacity evidence. The independent initial GT geometry audit can abort invalid perception, but never changes actor inputs. Real success is counted only by native PPO `successes`, using the unchanged30mm /5s /.5mm criterion.
 
 The README and CHANGELOG contain this publication's actual native capacity and training results. A short memory test is not evidence of reliable grasping or completed2048-update learning.
+
+## Measured left/right palm lift diagnostics
+
+Visual training enables optional palm telemetry before the initial physical reset. A palm sample is the actual measured palm `base_link` body-link world Z minus that same hand's measured world Z immediately after its environment's most recent physical episode reset. The source is `wrist_pose` read back from the articulation body-link pose, not a commanded target, nominal reset seed, hand COM or object pose. Every selected physical reset refreshes its own reference; the later task bookkeeping reset does not replace it.
+
+For each completed optimizer update, `monitor.json` and `iterations.jsonl` include independent hand statistics in both `grasp_styles.pinch_thumb_index` and `grasp_styles.tripod_thumb_index_middle`. The pinch group covers global environment IDs `[0, N/2)` and the tripod group `[N/2, N)` for the supported even environment count `N`.
+
+| Fields in each grasp style | Meaning and range |
+|---|---|
+| `left_palm_lift_max_m`, `right_palm_lift_max_m` | Maximum signed displacement over that group's valid live physics substeps in the current rollout. Finite metres, with negative-only peaks preserved and no zero clamp. |
+| `left_palm_lift_last_mean_m`, `right_palm_lift_last_mean_m` | Mean of each valid environment's last valid hand sample in the current rollout, in signed metres. Samples need not be simultaneous or belong to the same episode. |
+| `left_palm_lift_max_env_id`, `right_palm_lift_max_env_id` | Global environment ID attaining the corresponding hand's peak, within that grasp group's range. Equal peaks select the first valid environment ID. |
+| `left_palm_lift_valid_envs`, `right_palm_lift_valid_envs` | Independent count of environments with at least one valid sample for that hand during the rollout, from `0` through the group's environment count. |
+
+Only live samples with a finite measured pose and finite physical-reset reference contribute. Terminal samples are captured before physical reset; subsequent substeps of that terminal environment are excluded until it becomes live again. A later invalid sample preserves the earlier valid sample. If a hand has no valid samples in the group, its maximum, last mean and peak environment ID are JSON `null`, and its valid count is `0`. Historical rows that lack these palm fields are **not recorded**; do not interpret them as zero displacement or infer values from commands. All palm maxima are scoped to the current rollout, not the entire run. Left and right peaks may occur in different environments and at different times, so they do not describe a paired-hand trajectory or establish grasp success.
+
+The top-level `palm_lift_measurement` metadata records source `measured_palm_body_link_world_z`, unit `m`, baseline `measured_after_physical_episode_reset`, maximum scope `rollout_live_physics_substeps` and last-mean scope `last_valid_sample_per_environment_in_rollout`.
+
+TensorBoard provides the following tags for each grasp-style `label` (`pinch_thumb_index` or `tripod_thumb_index_middle`):
+
+- `lift_mm/{label}/rod_peak`: existing `net_rod_lift_max_m` multiplied by `1000`; the rod's net-lift definition is unchanged.
+- `lift_mm/{label}/left_palm_peak` and `lift_mm/{label}/right_palm_peak`: the independent palm maxima multiplied by `1000`.
+- `lift_mm/{label}/left_palm_last_mean` and `lift_mm/{label}/right_palm_last_mean`: the last-sample means multiplied by `1000`.
+
+These tag values are already in millimetres. Missing palm values are skipped, and the existing `grasp_style/{label}/..._m` tags retain metres. This telemetry is diagnostic logging only: it does not enter the 3844D actor input, the 371D critic input, rewards, actions, success criteria or the model/checkpoint contract. Offline tests exercise the measurement and logging path; they do not establish native Isaac behaviour or successful grasping.

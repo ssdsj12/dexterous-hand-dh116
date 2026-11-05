@@ -123,6 +123,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                 debug_env_ids=tuple(i for i in (3388,3450) if i<args.num_envs))
     history=SensorHistory(args.num_envs,device=args.device)
     previous=torch.zeros((args.num_envs,24),device=args.device)
+    if hasattr(env,'enable_palm_lift_telemetry'):
+        env.enable_palm_lift_telemetry()
     critic=env.reset()
     packet=camera.sample()
     if native_camera:
@@ -219,6 +221,7 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
             failure_counts={}
             visible_fraction=0.
             peak_lift=torch.full((args.num_envs,),-torch.inf,device=args.device)
+            palm_peak=palm_last=palm_valid=None
             with torch.inference_mode():
                 for step in range(args.rollout_steps):
                     action=algorithm.act(obs)
@@ -234,6 +237,19 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                     if step_lift.shape!=(args.num_envs,) or not torch.isfinite(step_lift).all():
                         raise RuntimeError('invalid privileged net-lift diagnostic')
                     peak_lift=torch.maximum(peak_lift,step_lift)
+                    palms=extra.get('palm_lift_telemetry')
+                    if palms is not None:
+                        measured_peak=palms['peak_m'];measured_last=palms['last_m'];valid=palms['valid']
+                        if (measured_peak.shape!=(args.num_envs,2) or measured_last.shape!=measured_peak.shape
+                                or valid.shape!=measured_peak.shape or valid.dtype!=torch.bool):
+                            raise RuntimeError('invalid measured palm-lift diagnostic shape')
+                        if palm_peak is None:
+                            palm_peak=torch.full_like(measured_peak,-torch.inf)
+                            palm_last=torch.full_like(measured_last,torch.nan)
+                            palm_valid=torch.zeros_like(valid)
+                        palm_peak=torch.where(valid,torch.maximum(palm_peak,measured_peak),palm_peak)
+                        palm_last=torch.where(valid,measured_last,palm_last)
+                        palm_valid|=valid
                     if not bool(torch.isfinite(reward).all()):
                         raise RuntimeError('nonfinite reward during visual collection')
                     previous=issued.clone()
@@ -277,6 +293,10 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                     episodes_since_launch=int((env.episodes[slots]-baseline_episodes[slots]).sum()),
                     successes_since_launch=int((env.successes[slots]-baseline_successes[slots]).sum()),
                     net_rod_lift_max_m=float(net_lift[slots].max()))
+                if palm_peak is not None:
+                    from .tabletop_palm_lift_summary import summarize_palm_lift
+                    groups[group['label']].update(summarize_palm_lift(
+                        palm_peak,palm_last,palm_valid,start=slots.start,stop=slots.stop))
             row=dict(status='training',backend=VERSION,observation_mode='vision_sensor_only_actor',
                 privileged_actor_inputs=False,actor_observation_size=POLICY_DIM,
                 critic_observation_size=371,num_envs=args.num_envs,iteration=iteration,
@@ -297,6 +317,13 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                 camera_frame_first=packet.get('camera_frame_first'),camera_frame_last=packet.get('camera_frame_last'),
                 failures=failure_counts,iteration_seconds=duration,
                 elapsed_seconds=time.monotonic()-started)
+            if palm_peak is not None:
+                row['palm_lift_measurement']=dict(
+                    source='measured_palm_body_link_world_z',unit='m',
+                    baseline='measured_after_physical_episode_reset',
+                    max_scope='rollout_live_physics_substeps',
+                    last_mean_scope='last_valid_sample_per_environment_in_rollout',
+                    left_right_maxima_may_use_different_environments=True)
             if torch.cuda.is_available() and str(args.device).startswith('cuda'):
                 free,total=torch.cuda.mem_get_info()
                 row['torch_peak_allocated_gib']=torch.cuda.max_memory_allocated()/1024**3
@@ -316,7 +343,13 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                 writer.add_scalar(name,row[name],iteration)
             for label,metrics in groups.items():
                 for name,value in metrics.items():
-                    writer.add_scalar(f'grasp_style/{label}/{name}',value,iteration)
+                    if value is not None:
+                        writer.add_scalar(f'grasp_style/{label}/{name}',value,iteration)
+                writer.add_scalar(f'lift_mm/{label}/rod_peak',metrics['net_rod_lift_max_m']*1000.,iteration)
+                for side in ('left','right'):
+                    for suffix,tag in [('max_m','peak'),('last_mean_m','last_mean')]:
+                        value=metrics.get(f'{side}_palm_lift_{suffix}')
+                        if value is not None:writer.add_scalar(f'lift_mm/{label}/{side}_palm_{tag}',value*1000.,iteration)
             print('VISION_STUDENT_PPO_ITERATION',json.dumps(row),flush=True)
     except BaseException as error:
         row.update(status='interrupted' if isinstance(error,KeyboardInterrupt) else 'error',
