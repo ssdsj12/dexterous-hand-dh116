@@ -1,3 +1,22 @@
+## 2026-11-06 — 独立 Lift 修复分支：T0 与硬件审计
+
+本工作分支 `codex/dh116-lift-repair-20261106` 从 `11-5` 的 b42f1aa 派生。按用户实施文档，先冻结历史、审计真实传感来源，再升级PPO有界动作合同；当前GPU3训练继续运行，原始源码、物理参数、执行器限制和旧checkpoint保持。Actor仍为3844D、Critic371D；20D仅预留有来源/单位/时间/有效性的可选接口，不将native接触或成功监视器追加到Student。
+
+T0已冻结第1439次完整PPO更新：47644672 transitions、37680 episodes、原生successes0，checkpoint SHA256为 `d8d94faca22638584e10eb67ff55f9cfde904984c7232433ffd68f867ab5bda9`，80个tensor在CPU上均有限。完整策略链日志5+124+1310行、原始Git源码和运行服务器1207个源码/资源文件均保留校验副本，本机副本设为只读。第269/482/1328轮权重未发现，不能由日志补造。
+
+[硬件反馈审计](docs/superpowers/reports/2026-11-06-dh116-hardware-feedback-audit.md)已交付：厂家SDK有部分读数能力，但当前项目未证实实机数据接通；触觉/腕F/T/独立从动角均未确认，PhysX数据只属于仿真通路。设计与执行顺序见[设计](docs/superpowers/specs/2026-11-06-lift-repair-design.md)、[P0计划](docs/superpowers/plans/2026-11-06-lift-repair-p0.md)。
+
+本阶段在隔离服务器目录实际执行以下CPU基线，81项通过（13.63s）：
+
+```bash
+CUDA_VISIBLE_DEVICES='' PYTHONPATH=src PYTEST_DEBUG_TEMPROOT=/tmp PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 OMP_NUM_THREADS=2 \
+ /mnt/mydisk/xk/envs/dh116/bin/python -m pytest -p no:cacheprovider \
+ tests/test_vision_student.py tests/test_vision_ppo.py tests/test_vision_training.py tests/test_vision_resume.py \
+ tests/test_vision_palm_lift.py tests/test_palm_lift_summary.py tests/test_palm_lift_telemetry.py -q --tb=short
+```
+
+T1独立Squashed Gaussian合同正在实现；尚未运行修复版Isaac或宣称抓取成功。原生评估须等当前训练自然完成2048后串行执行。后续奖励逐因素消融、反馈接入、双手控制和重新训练均按验证门槛推进。以下为此前已发布阶段的记录。
+
 ## 2026-11-06 — `11-5`：定期高度汇报与当前视觉训练进度
 
 定期监控现在每次成功连接后都会汇报二指、三指的本轮物体净抬升、全视觉续训链历史最高值与 PPO 轮次，同时保留左右手掌的本轮实际位移及各自历史最高值。正常推进也发送高度表；单次 SSH 失败继续等下次确认，训练状态检查仍只读。字段、历史边界和汇报规则见[当前视觉训练监控说明](docs/dh116_visual_training_monitor.md)。定时任务保存在本机 Codex 中，仓库记录规则，拉取代码本身不会创建定时任务。
