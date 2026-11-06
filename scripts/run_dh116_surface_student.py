@@ -48,6 +48,8 @@ p.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gau
 p.add_argument('--vision-lift-reward-experiment',choices=('R0','R1','R2','R3','R4','R5'),default='R0')
 p.add_argument('--vision-warm-start-optimizer',choices=('preserve','reset'),default='preserve')
 p.add_argument('--vision-checkpoint-interval',type=int,default=10)
+p.add_argument('--vision-experiment-initial-state-audit',action='store_true')
+p.add_argument('--vision-experiment-initial-state-reference',type=Path)
 p.add_argument('--vision-width',type=int,default=320)
 p.add_argument('--vision-height',type=int,default=240)
 p.add_argument('--vision-camera-batch-size',type=int,default=64)
@@ -170,6 +172,9 @@ if args.vision_student:
                 '--vision-lift-reward-experiment',args.vision_lift_reward_experiment,
                 '--vision-warm-start-optimizer',args.vision_warm_start_optimizer,
                 '--vision-checkpoint-interval',str(args.vision_checkpoint_interval)])
+    if args.vision_experiment_initial_state_audit:cmd.append('--vision-experiment-initial-state-audit')
+    if args.vision_experiment_initial_state_reference:
+        cmd.extend(['--vision-experiment-initial-state-reference',str(args.vision_experiment_initial_state_reference.resolve())])
     if args.vision_resume_downsize:cmd.append('--vision-resume-downsize')
 if args.mixed_pregrasp_candidates:
     cmd.extend(['--mixed-grasp-initialization',str(mixed_path)])

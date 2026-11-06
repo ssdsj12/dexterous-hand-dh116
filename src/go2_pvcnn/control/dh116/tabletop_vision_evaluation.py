@@ -48,6 +48,17 @@ def _required_torque(payload,index):
     return (estimate.tolist(),limits.tolist(),diagnostic) if complete else (None,None,diagnostic)
 
 
+def _cpu_payload_snapshot(payload):
+    """Transfer each already-cloned physical batch once before row extraction.
+
+    Default blocking copies finish before Python reads any field. Keep tensor
+    dtype/shape/values and non-tensor metadata intact; never mutate the source
+    packet or change its pre-reset sampling clock and first-terminal ordering.
+    """
+    return {key: value.detach().cpu() if isinstance(value,torch.Tensor) else value
+            for key,value in payload.items()}
+
+
 class EvaluationTelemetryCollector:
     def __init__(self, manifest, *, checkpoint_sha256, min_trials_per_style=100):
         self.manifest=validate_manifest(manifest,min_trials_per_style=min_trials_per_style)
@@ -84,6 +95,7 @@ class EvaluationTelemetryCollector:
 
     def __call__(self, payload):
         if not self._begun: return
+        payload=_cpu_payload_snapshot(payload)
         def valid(key,i):
             value=payload.get(key)
             return value is not None and bool(value[i].all())

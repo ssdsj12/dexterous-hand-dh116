@@ -221,6 +221,15 @@ def validate_vision_action_options(args, *, reset_sha256=None):
     mode = getattr(args, 'vision_action_distribution', 'gaussian_clip')
     if mode not in ('gaussian_clip', 'tanh_gaussian'):
         raise ValueError('unknown vision action distribution')
+    initial_audit=getattr(args,'vision_experiment_initial_state_audit',False)
+    initial_reference=getattr(args,'vision_experiment_initial_state_reference',None)
+    if initial_reference and not initial_audit:
+        raise ValueError('initial-state reference requires initial-state audit')
+    if initial_audit and (mode!='tanh_gaussian' or not getattr(args,'vision_student',False)
+            or getattr(args,'vision_evaluation_checkpoint',None)):
+        raise ValueError('initial-state audit requires native v3 vision training')
+    if initial_reference and not getattr(args,'resume',None):
+        raise ValueError('initial-state audit reference requires an explicit resume source')
     from .tabletop_lift_reward_experiment import PROFILES
     profile=getattr(args,'vision_lift_reward_experiment','R0')
     if profile not in PROFILES:

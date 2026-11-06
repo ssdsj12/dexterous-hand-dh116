@@ -55,6 +55,23 @@ def _same(left, right):
     return left == right
 
 
+def _contract_json_view(contract):
+    """Normalize the one observed historical tuple in a JSON manifest view.
+
+    The original Torch contract and its typed state hash remain untouched.
+    Do not coerce arbitrary tuple fields, numbers, booleans or physical values.
+    """
+    value = deepcopy(contract)
+    critic = value.get('privileged_critic_contract', {}) if isinstance(value, dict) else {}
+    phase = critic.get('phase_force_reward') if isinstance(critic, dict) else None
+    if isinstance(phase, dict):
+        from .tabletop_phase_force_reward import CONTRACT
+        labels = phase.get('excluded_sources')
+        if type(labels) is tuple and _same(labels, CONTRACT['excluded_sources']):
+            phase['excluded_sources'] = list(labels)
+    return value
+
+
 def _state_sha256(value):
     digest = hashlib.sha256()
     def visit(item):
@@ -262,7 +279,8 @@ def retain_checkpoint_bundle(source_path, output_dir, *, provenance=None):
             raise FileExistsError('immutable iteration bundle conflict: '+str(bundle)) from None
         # Identical bytes may be presented through another source filename.
         # Retain the first provenance path without rewriting the immutable file.
-        comparable=dict(manifest,source_path=existing.get('source_path')) if isinstance(existing,dict) else None
+        comparable=dict(manifest,source_path=existing.get('source_path'),
+            contract=_contract_json_view(manifest['contract'])) if isinstance(existing,dict) else None
         if (not isinstance(existing,dict) or not isinstance(existing.get('source_path'),str)
                 or not existing['source_path'] or not _same(comparable,existing)):
             raise FileExistsError('immutable iteration bundle conflict: '+str(bundle)) from None

@@ -132,6 +132,12 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         if (getattr(args,'vision_warm_start_optimizer','preserve')=='reset'
                 and args.max_iterations<=saved['iteration']):
             raise ValueError('reset Adam warm-start requires at least one complete new update')
+    initial_audit=None
+    if getattr(args,'vision_experiment_initial_state_audit',False):
+        from .tabletop_vision_initial_state_audit import TrainingInitialStateAudit
+        initial_audit=TrainingInitialStateAudit(world,device_world,env,args,contract,
+            native_camera=camera is None,saved=saved,
+            source_resume_sha256=resume_sha256 if saved is not None else None)
     _write_json(output/'vision_student_contract.json',contract)
     native_camera=camera is None
     if camera is None:
@@ -153,7 +159,9 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
     if hasattr(env,'enable_palm_lift_telemetry'):
         env.enable_palm_lift_telemetry()
     critic=env.reset()
+    if initial_audit is not None:initial_audit.before_camera()
     packet=camera.sample()
+    if initial_audit is not None:initial_audit.after_camera()
     if native_camera:
         from .tabletop_vision_memory import memory_snapshot
         memory_snapshot(args,'initial_camera_sample',device_world.w)
@@ -192,6 +200,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                 output/'initial_camera_truth_validation.pt')
             raise
         _write_json(output/'initial_camera_geometry_validation.json',geometry)
+    # Resume references are checked before constructing PPO/Adam/storage.
+    if initial_audit is not None and saved is not None:initial_audit.finish(saved['policy'])
     obs=_observations(packet,device_world,previous,history,critic)
     maker=make_squashed_vision_algorithm if squashed else make_vision_algorithm
     algorithm=maker(obs,args.rollout_steps,device=args.device,
@@ -235,6 +245,9 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         torch.set_rng_state(saved['torch_rng'].cpu())
         if saved.get('cuda_rng') and (not squashed or torch.cuda.is_available()):
             torch.cuda.set_rng_state_all([state.cpu() for state in saved['cuda_rng']])
+    if initial_audit is not None:
+        if saved is None:initial_audit.finish(algorithm.policy.state_dict())
+        initial_audit.verify_loaded_policy(algorithm.policy.state_dict())
     start_metadata=dict(
         observation_mode='vision_sensor_only_actor',privileged_actor_inputs=False,
         initial_iteration=iteration,initial_timesteps=timesteps,

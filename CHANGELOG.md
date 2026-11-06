@@ -1,3 +1,12 @@
+## 2026-11-06 — 原生初态身份审计与真实断点选模兼容修复
+
+- 增加 opt-in 初态 sidecar：完整实际物理读回、camera 前后三个时钟、完整初始 policy SHA；保留/重置 Adam 的 reference 差异在 PPO 构造前拒绝。默认关闭，Actor/Critic/动作/物理合同不变。
+- 修复实际1439派生断点的 phase_force_reward.excluded_sources tuple→JSON list 往返；只规范化该已知标签字段，未知 tuple、布尔/数字/物理类型及.pt typed合同SHA仍严格，exact resume 不放宽。
+- 采集器在开始采样后使用 blocking 批量CPU快照；terminal、invalid、NA、12关节力矩和24D动作及 raw JSON 对照一致。纯Torch CUDA对照不计原生试验，也未测得新版原生加速倍率。
+- 单实例串行 Adam pilot 计划固定同源128环境、各64次新更新，完整保留每轮，只用预冻结1455/1471/1487/1503四候选及独立validation。真实129/1439评估完整证书通过前不得开始；原生结果仍待执行，不宣称退化解决。
+- 实际129模型原生冷初态每抓法100次已完成并独立重放854757条首terminal物理数据；两组成功0%，二指/三指最高净lift为0.005627/1.033019mm，slip为NA/coverage0。1439评估继续，不以历史峰值模型代替。
+- 最新完整CPU回归5141 passed，原96 failed/28 errors/49 skipped逐节点不变，91个subtests通过；新增235个T2节点全通过，较d796917新增40项全部通过。
+
 ## 2026-11-06 — T2评估、选模、warm-start与原生冒烟
 
 - 新增逐抓法100个独立冷初态、实际状态读回、视觉确定性推理和首terminal物理数据保存。native证据绑定checkpoint/manifest/相机/完整12D力矩估计与24D命令；缺测保持null，不能通过自报NA/报告flag取得认证。

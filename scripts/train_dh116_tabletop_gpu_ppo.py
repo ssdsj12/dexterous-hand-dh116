@@ -47,6 +47,8 @@ parser.add_argument('--vision-evaluation-max-control-steps',type=int,default=120
 parser.add_argument('--vision-lift-reward-experiment',choices=('R0','R1','R2','R3','R4','R5'),default='R0')
 parser.add_argument('--vision-warm-start-optimizer',choices=('preserve','reset'),default='preserve')
 parser.add_argument('--vision-checkpoint-interval',type=int,default=10)
+parser.add_argument('--vision-experiment-initial-state-audit',action='store_true')
+parser.add_argument('--vision-experiment-initial-state-reference',type=Path)
 parser.add_argument('--physics-clone-mode',choices=('replicate','usd_parse'),default='replicate')
 parser.add_argument('--force-feedback', action='store_true',
                     help='PPO targets measured hand reaction load; lift requires stable measured contact')

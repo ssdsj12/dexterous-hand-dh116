@@ -19,7 +19,7 @@ from .tabletop_evaluation_trials import (
     FirstTerminalAggregator, GRASP_STYLES, _digest, _sha256, _statistics, state_sha256, validate_manifest,
 )
 from .tabletop_vision_experiment_checkpoint import (
-    BUNDLE_VERSION, _json_bytes, _same, _state_sha256, _validate_completed, file_sha256,
+    BUNDLE_VERSION, _json_bytes, _same, _contract_json_view, _state_sha256, _validate_completed, file_sha256,
 )
 
 VERSION = 'dh116-native-validation-selection-v1'
@@ -62,7 +62,7 @@ def _bundle(path):
     _validate_completed(saved)
     _require(saved['iteration']==value.get('iteration') and saved['timesteps']==value.get('timesteps')
         and saved['learning_rate']==value.get('learning_rate')
-        and _same(saved['contract'],value.get('contract')),'checkpoint bundle metadata mismatch')
+        and _same(_contract_json_view(saved['contract']),value.get('contract')),'checkpoint bundle metadata mismatch')
     hashes=value.get('state_sha256',{})
     for name in ('policy','optimizer','torch_rng','cuda_rng'):
         _require(hashes.get(name)==_state_sha256(saved[name]),'checkpoint bundle state hash mismatch')
