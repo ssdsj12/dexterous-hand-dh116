@@ -1,3 +1,11 @@
+## 2026-11-06 — 独立 Lift 修复：T1 概率核心通过 CPU 验证
+
+独立 `tanh_gaussian` 核心保存 latent `z`、实际 `tanh(z)` 和变换后的 log probability，使用稳定 Jacobian、当前策略有界熵及精确 latent Normal KL。3844D actor / 371D critic / 24D 动作保持；新 actor 仅移除输出层的参数无关 Tanh，由分布执行一次 squash。CPU float32 rollout 保存 latent，微批按样本数加权，每个逻辑 minibatch 只执行一次梯度裁剪与 Adam，正常配置仍为每轮 40 次 Adam 更新。新指标与原三项 loss 分开，记录动作饱和、各维均值/标准差、概率一致性、KL、熵和裁剪前梯度范数。
+
+隔离服务器上新增及相关旧测试 **107 项通过**（根代理独立复跑 10.40s），规格审查与代码质量审查均通过。命令、边界与限制见 [T1 核心验证记录](docs/superpowers/reports/2026-11-06-lift-repair-t1-core-validation.md)。全仓库 CPU 测试收集得到 4831 项，另有 11 个旧测试文件因缺少 `open3d` / `elastica` / `co_sim` 无法加载，尚不能宣称全仓库通过。
+
+训练入口、v3 合同及显式派生恢复仍在集成；默认旧路径未切换，GPU3 原训练继续运行。尚未运行修复版 Isaac 或获得修复版抓取成功；固定模型原生回归等待现有训练自然完成第 2048 次更新。保持原物理参数、0.2 Nm 执行器限制与原生成功判据，尚未修改奖励、控制或 Actor 反馈输入。
+
 ## 2026-11-06 — 独立 Lift 修复分支：T0 与硬件审计
 
 本工作分支 `codex/dh116-lift-repair-20261106` 从 `11-5` 的 b42f1aa 派生。按用户实施文档，先冻结历史、审计真实传感来源，再升级PPO有界动作合同；当前GPU3训练继续运行，原始源码、物理参数、执行器限制和旧checkpoint保持。Actor仍为3844D、Critic371D；20D仅预留有来源/单位/时间/有效性的可选接口，不将native接触或成功监视器追加到Student。
