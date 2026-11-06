@@ -33,10 +33,15 @@ parser.add_argument('--depth-camera-config',type=Path)
 parser.add_argument('--vision-student',action='store_true',
                     help='RGB-D-only 3844D actor with training-only 371D critic')
 parser.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
+parser.add_argument('--vision-wrist-quaternion-preprocessing',
+                    choices=('raw','wrist_quaternion_hemisphere_v1'),default='raw',
+                    help='versioned opt-in actor quaternion sign canonicalization; old models remain raw')
 parser.add_argument('--vision-teacher-source',type=Path,
                     help='independent bounded real RGB-D Teacher supervision collection; no PPO')
 parser.add_argument('--vision-teacher-mpc',action='store_true',
                     help='training-only local finger MPC refines Teacher reference labels')
+parser.add_argument('--vision-teacher-mpc-profile',choices=('local_pad','absolute_reference','pressure_reference'),default='local_pad',
+                    help='explicit training-only MPC experiment; default preserves original local-pad MPC')
 parser.add_argument('--vision-teacher-max-control-steps',type=int,default=1300)
 parser.add_argument('--vision-teacher-raw-chunk-frames',type=int,default=16)
 parser.add_argument('--vision-width',type=int,default=320)

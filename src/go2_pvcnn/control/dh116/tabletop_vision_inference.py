@@ -49,7 +49,10 @@ def load_vision_inference(checkpoint, current_contract, *, device='cpu'):
     else: raise ValueError('unsupported visual inference checkpoint version')
     current = validate_evaluation_contract(saved['contract'], current_contract)
     with torch.random.fork_rng(devices=[]):
-        actor = VisionStudentActor()
+        preprocessing=saved['contract'].get('actor_wrist_quaternion_preprocessing','raw')
+        if saved['version']==LEGACY_VERSION and preprocessing!='raw':
+            raise ValueError('versioned quaternion preprocessing requires a derived v3 model')
+        actor = VisionStudentActor(wrist_quaternion_preprocessing=preprocessing)
         if saved['version'] == SQUASHED_VERSION: actor.action_net[-1] = nn.Identity()
         actor.load_state_dict({key[6:]: value for key,value in saved['policy'].items()
                                if key.startswith('actor.')}, strict=True)

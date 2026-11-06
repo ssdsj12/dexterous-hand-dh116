@@ -32,6 +32,63 @@ def test_collection_default_off_and_mpc_requires_teacher():
     validate_options(options())
 
 
+@pytest.mark.parametrize('changes',[
+    {'vision_teacher_mpc_profile':'unknown','vision_teacher_mpc':True},
+    {'vision_teacher_mpc_profile':'absolute_reference','vision_teacher_mpc':False},
+    {'vision_teacher_mpc_profile':'absolute_reference','vision_teacher_source':None},
+])
+def test_experimental_mpc_profile_requires_explicit_collection_opt_in(changes):
+    from go2_pvcnn.control.dh116.tabletop_vision_teacher_collection import validate_options
+    with pytest.raises(ValueError,match='profile|MPC'):
+        validate_options(options(**changes))
+
+
+def test_absolute_reference_factory_preserves_full_future_and_zero_pads_short_source(monkeypatch):
+    from go2_pvcnn.control.dh116 import tabletop_vision_teacher_collection as collection
+    from go2_pvcnn.control.dh116 import tabletop_vision_teacher_absolute_mpc as module
+    captured={}
+    def construct(env,source_sha,reference_actions):
+        captured.update(env=env,source_sha=source_sha,sequence=reference_actions.clone())
+        return captured
+    monkeypatch.setattr(module,'AbsoluteTeacherReferenceMPC',construct)
+    first=torch.arange(48,dtype=torch.float32).reshape(2,24)/100
+    second=torch.full((3,24),.3)
+    args=options(vision_teacher_mpc=True,vision_teacher_mpc_profile='absolute_reference')
+    args.device='cpu'
+    env=object()
+    result=collection._teacher_optimizer(env,args,{'source_sha256':'a'*64},
+        [{'actions':first},{'actions':second}])
+    assert result is captured and captured['env'] is env
+    assert captured['source_sha']=='a'*64 and captured['sequence'].shape==(2,3,24)
+    assert torch.equal(captured['sequence'][0,:2],first)
+    assert torch.equal(captured['sequence'][1],second)
+    assert torch.equal(captured['sequence'][0,2],torch.zeros(24))
+    captured['sequence'].zero_()
+    assert first.sum()>0 and second.sum()>0
+
+
+def test_pressure_profile_is_explicitly_supported_as_a_separate_experiment():
+    from go2_pvcnn.control.dh116.tabletop_vision_teacher_collection import validate_options
+    validate_options(options(vision_teacher_mpc=True,vision_teacher_mpc_profile='pressure_reference'))
+
+
+def test_pressure_factory_passes_actual_grasp_identity(monkeypatch):
+    from go2_pvcnn.control.dh116 import tabletop_vision_teacher_collection as collection
+    from go2_pvcnn.control.dh116 import tabletop_vision_teacher_pressure_mpc as module
+    captured={}
+    def construct(env,source_sha,reference_actions,*,grasp_styles):
+        captured.update(styles=grasp_styles,sequence=reference_actions.clone())
+        return captured
+    monkeypatch.setattr(module,'PressureTeacherReferenceMPC',construct)
+    args=options(vision_teacher_mpc=True,vision_teacher_mpc_profile='pressure_reference')
+    args.device='cpu'
+    styles=['pinch_thumb_index','tripod_thumb_index_middle']
+    references=[dict(actions=torch.zeros(2,24),grasp_style=s) for s in styles]
+    result=collection._teacher_optimizer(object(),args,{'source_sha256':'a'*64},references)
+    assert result is captured and captured['styles']==styles
+    assert captured['sequence'].shape==(2,2,24)
+
+
 def test_raw_chunks_are_bounded_exclusive_and_bind_frame_identity(tmp_path):
     from go2_pvcnn.control.dh116.tabletop_vision_teacher_collection import RawRGBDChunks
     sink=RawRGBDChunks(tmp_path/'raw',chunk_frames=2)

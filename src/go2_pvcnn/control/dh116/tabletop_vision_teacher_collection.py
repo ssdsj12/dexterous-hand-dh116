@@ -9,6 +9,12 @@ import torch
 
 
 def validate_options(args):
+    profile=getattr(args,'vision_teacher_mpc_profile','local_pad')
+    if profile not in ('local_pad','absolute_reference','pressure_reference'):
+        raise ValueError('unknown Teacher MPC profile')
+    if profile!='local_pad' and (not getattr(args,'vision_teacher_source',None)
+            or not getattr(args,'vision_teacher_mpc',False)):
+        raise ValueError('experimental Teacher MPC profile requires explicit source and MPC opt-in')
     source=getattr(args,'vision_teacher_source',None)
     if not source:
         if getattr(args,'vision_teacher_mpc',False):
@@ -82,6 +88,25 @@ def _choose_references(source,n):
     return [selected[style] for style in styles]
 
 
+def _teacher_optimizer(env,args,source,references):
+    if not args.vision_teacher_mpc:return None
+    if getattr(args,'vision_teacher_mpc_profile','local_pad')=='local_pad':
+        from .tabletop_vision_teacher_mpc import TeacherReferenceMPC
+        return TeacherReferenceMPC(env,source['source_sha256'])
+    from .tabletop_vision_teacher_absolute_mpc import AbsoluteTeacherReferenceMPC
+    # Unequal source lengths are explicitly zero-padded; the collector's alive
+    # mask still excludes exhausted sources from both issued labels and success.
+    length=max(len(item['actions']) for item in references)
+    sequence=torch.zeros(len(references),length,24,device=args.device)
+    for index,item in enumerate(references):
+        sequence[index,:len(item['actions'])]=item['actions'].to(sequence)
+    if getattr(args,'vision_teacher_mpc_profile','local_pad')=='pressure_reference':
+        from .tabletop_vision_teacher_pressure_mpc import PressureTeacherReferenceMPC
+        return PressureTeacherReferenceMPC(env,source['source_sha256'],sequence,
+            grasp_styles=[item['grasp_style'] for item in references])
+    return AbsoluteTeacherReferenceMPC(env,source['source_sha256'],sequence)
+
+
 @torch.no_grad()
 def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,camera=None):
     """Capture actions actually executed at the recorded pre-action visual state.
@@ -132,10 +157,7 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
             source='actual_native_cold_reset_before_camera')
         with (output/'initial_native_state.pt').open('xb') as stream:torch.save(initial,stream)
     if hasattr(env,'enable_palm_lift_telemetry'):env.enable_palm_lift_telemetry()
-    optimizer=None
-    if args.vision_teacher_mpc:
-        from .tabletop_vision_teacher_mpc import TeacherReferenceMPC
-        optimizer=TeacherReferenceMPC(env,source['source_sha256'])
+    optimizer=_teacher_optimizer(env,args,source,references)
     ended=torch.zeros(args.num_envs,dtype=torch.bool,device=args.device)
     recovered=ended.clone();accepted=ended.clone();observed_success=ended.clone()
     terminal_records={};rows=[];issued_rows=[];reference_rows=[];metadata=[]
@@ -164,9 +186,10 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                 reference[~alive]=0.
                 issued=reference.clone()
                 if optimizer is not None:
+                    options={} if getattr(args,'vision_teacher_mpc_profile','local_pad')=='local_pad' else {'alive':alive}
                     issued,detail=optimizer.refine(reference,context=dict(tick=tick,
                         physics_step=int(world.sim.current_time_step_index),
-                        simulation_time=float(world.sim.current_time),episode_id=list(range(args.num_envs))))
+                        simulation_time=float(world.sim.current_time),episode_id=list(range(args.num_envs))),**options)
                     issued[~alive]=0.
                     detail['recorded_env_ids']=alive.nonzero().flatten().cpu().tolist()
                     diagnostics.write(json.dumps(detail,allow_nan=False)+'\n')
@@ -264,6 +287,7 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
             visual_contract=contract,teacher_source_sha256=source['source_sha256'])
         successful=save_dataset(qualified,output/'successful_visual_supervision.pt')
     report=dict(status='completed',mode='teacher_reference_mpc' if optimizer else 'teacher_reference',
+        mpc_profile=getattr(args,'vision_teacher_mpc_profile','local_pad') if optimizer else None,
         source_sha256=source['source_sha256'],control_steps=tick+1,samples=len(rows),
         successful_episodes=len(success_ids),native_runtime_verified=genuine,
         native_successful_episodes=int(native_accepted.sum()) if genuine else 0,

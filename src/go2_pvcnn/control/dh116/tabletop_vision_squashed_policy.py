@@ -15,9 +15,9 @@ from .tabletop_squashed_gaussian import (
 
 
 class UnboundedVisionStudentActor(VisionStudentActor):
-    def __init__(self):
+    def __init__(self, *, wrist_quaternion_preprocessing='raw'):
         # Preserve the existing actor's initialization (which indexes [-2]).
-        super().__init__()
+        super().__init__(wrist_quaternion_preprocessing=wrist_quaternion_preprocessing)
         self.action_net[-1] = nn.Identity()
 
 
@@ -70,7 +70,8 @@ class SquashedVisionActorCritic(ActorCritic):
 
 
 def make_squashed_vision_algorithm(obs, steps, device='cpu', *,
-                                    microbatch_size=128, inference_batch_size=128):
+                                    microbatch_size=128, inference_batch_size=128,
+                                    wrist_quaternion_preprocessing='raw'):
     from .tabletop_vision_squashed_ppo import SquashedVisionPPO
 
     if (type(steps) is not int or steps < 1 or len(obs.batch_size) != 1
@@ -83,7 +84,7 @@ def make_squashed_vision_algorithm(obs, steps, device='cpu', *,
         actor_hidden_dims=[128,128], critic_hidden_dims=[128,128], activation='tanh',
         init_noise_std=.1, noise_std_type='log',
     )
-    policy.actor = UnboundedVisionStudentActor()
+    policy.actor = UnboundedVisionStudentActor(wrist_quaternion_preprocessing=wrist_quaternion_preprocessing)
     policy = policy.to(device)
     for layer in policy.critic:
         if isinstance(layer, nn.Linear):

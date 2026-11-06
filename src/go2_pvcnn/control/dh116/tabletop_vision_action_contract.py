@@ -113,6 +113,11 @@ def _validate_static_resume_contract(args, contract, reset_sha256):
     Candidate JSON is never mistaken for the physical initialization payload.
     """
     from .tabletop_vision_resume import _same
+    from .tabletop_vision_quaternion import validate_wrist_quaternion_preprocessing
+    requested=validate_wrist_quaternion_preprocessing(getattr(args,'vision_wrist_quaternion_preprocessing','raw'))
+    authored=validate_wrist_quaternion_preprocessing(contract.get('actor_wrist_quaternion_preprocessing','raw'))
+    if requested!=authored:
+        raise ValueError('visual resume incompatible wrist quaternion preprocessing contract')
     missing = object()
     def check(path, expected):
         current = contract
@@ -221,6 +226,10 @@ def validate_vision_action_options(args, *, reset_sha256=None):
     mode = getattr(args, 'vision_action_distribution', 'gaussian_clip')
     if mode not in ('gaussian_clip', 'tanh_gaussian'):
         raise ValueError('unknown vision action distribution')
+    from .tabletop_vision_quaternion import validate_wrist_quaternion_preprocessing
+    preprocessing=validate_wrist_quaternion_preprocessing(getattr(args,'vision_wrist_quaternion_preprocessing','raw'))
+    if preprocessing!='raw' and mode!='tanh_gaussian':
+        raise ValueError('versioned wrist quaternion preprocessing requires tanh_gaussian')
     initial_audit=getattr(args,'vision_experiment_initial_state_audit',False)
     initial_reference=getattr(args,'vision_experiment_initial_state_reference',None)
     if initial_reference and not initial_audit:

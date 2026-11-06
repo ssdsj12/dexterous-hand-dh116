@@ -19,6 +19,13 @@ def main(argv=None):
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--actor-initialization', choices=('source', 'reset_pointnet'), default='source',
                         help='source rejects an inactive encoder; explicit reset_pointnet reinitializes only that branch')
+    parser.add_argument('--wrist-quaternion-preprocessing',
+                        choices=('raw', 'wrist_quaternion_hemisphere_v1'), default='raw',
+                        help='explicit new BC actor input convention; raw preserves historical actors')
+    parser.add_argument('--startup-sampling-fraction', type=float, default=0.,
+                        help='canonical BC only: mix 0..0.5 training probability into startup rows')
+    parser.add_argument('--startup-control-steps', type=int, default=4,
+                        help='startup rows have tick below this positive control-step count')
     parser.add_argument('--heldout-source-trajectory', action='append', default=[],
                         help='whole independent source trajectory ID, repeatable')
     parser.add_argument('--allow-fit-only', action='store_true',
@@ -29,7 +36,10 @@ def main(argv=None):
     report = fit_supervision(args.source_checkpoint, args.dataset, args.output,
         steps=args.steps, batch_size=args.batch_size, learning_rate=args.learning_rate,
         seed=args.seed, heldout_trajectories=args.heldout_source_trajectory,
-        allow_fit_only=args.allow_fit_only, actor_initialization=args.actor_initialization)
+        allow_fit_only=args.allow_fit_only, actor_initialization=args.actor_initialization,
+        wrist_quaternion_preprocessing=args.wrist_quaternion_preprocessing,
+        startup_sampling_fraction=args.startup_sampling_fraction,
+        startup_control_steps=args.startup_control_steps)
     if args.warm_start_output:
         report = dict(fit=report, derivation=derive_supervised_checkpoint(
             args.output, args.warm_start_output))

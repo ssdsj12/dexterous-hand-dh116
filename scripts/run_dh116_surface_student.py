@@ -45,6 +45,8 @@ p.add_argument('--depth-camera-config',type=Path)
 p.add_argument('--vision-student',action='store_true',
     help='fresh RGB-D PointNet actor with privileged critic; legacy actor transfer is forbidden')
 p.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
+p.add_argument('--vision-wrist-quaternion-preprocessing',
+               choices=('raw','wrist_quaternion_hemisphere_v1'),default='raw')
 p.add_argument('--vision-lift-reward-experiment',choices=('R0','R1','R2','R3','R4','R5'),default='R0')
 p.add_argument('--vision-warm-start-optimizer',choices=('preserve','reset'),default='preserve')
 p.add_argument('--vision-checkpoint-interval',type=int,default=10)
@@ -169,6 +171,7 @@ if args.vision_student:
                 '--vision-visibility-mode',args.vision_visibility_mode,
                 '--vision-camera-mode',args.vision_camera_mode,
                 '--vision-action-distribution',args.vision_action_distribution,
+                '--vision-wrist-quaternion-preprocessing',args.vision_wrist_quaternion_preprocessing,
                 '--vision-lift-reward-experiment',args.vision_lift_reward_experiment,
                 '--vision-warm-start-optimizer',args.vision_warm_start_optimizer,
                 '--vision-checkpoint-interval',str(args.vision_checkpoint_interval)])

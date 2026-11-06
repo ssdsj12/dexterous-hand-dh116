@@ -67,6 +67,13 @@ def _contract(args, critic_contract):
         contract.update(camera_mode='fixed_per_env',camera_batch_size=args.num_envs,
             camera_batching='fixed_per_environment_real_RGBD',visibility_mode='all',
             pinned_source_environment=None)
+    from .tabletop_vision_quaternion import validate_wrist_quaternion_preprocessing
+    preprocessing=validate_wrist_quaternion_preprocessing(
+        getattr(args,'vision_wrist_quaternion_preprocessing','raw'))
+    if preprocessing!='raw':
+        if getattr(args,'vision_action_distribution','gaussian_clip')!='tanh_gaussian':
+            raise ValueError('versioned quaternion preprocessing requires tanh_gaussian')
+        contract['actor_wrist_quaternion_preprocessing']=preprocessing
     if getattr(args,'vision_action_distribution','gaussian_clip')=='tanh_gaussian':
         return upgrade_action_contract(contract)
     return contract
@@ -205,9 +212,12 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
     if initial_audit is not None and saved is not None:initial_audit.finish(saved['policy'])
     obs=_observations(packet,device_world,previous,history,critic)
     maker=make_squashed_vision_algorithm if squashed else make_vision_algorithm
+    actor_options={}
+    if squashed and contract.get('actor_wrist_quaternion_preprocessing','raw')!='raw':
+        actor_options['wrist_quaternion_preprocessing']=contract['actor_wrist_quaternion_preprocessing']
     algorithm=maker(obs,args.rollout_steps,device=args.device,
         microbatch_size=getattr(args,'vision_ppo_microbatch_size',128),
-        inference_batch_size=getattr(args,'vision_inference_batch_size',128))
+        inference_batch_size=getattr(args,'vision_inference_batch_size',128),**actor_options)
     if native_camera:
         from .tabletop_vision_memory import memory_snapshot
         memory_snapshot(args,'camera_and_PPO_ready',device_world.w)
