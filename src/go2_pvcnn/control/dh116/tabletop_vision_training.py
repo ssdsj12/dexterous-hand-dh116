@@ -12,6 +12,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 from .tabletop_vision_student import SensorHistory, make_vision_algorithm, POLICY_DIM
 from .tabletop_surface_contract import ACTION_CONTRACT
+from .tabletop_vision_squashed_policy import make_squashed_vision_algorithm
+from .tabletop_vision_action_contract import (upgrade_action_contract,
+    validate_squashed_checkpoint, validate_vision_action_options,
+    validate_new_visual_output, assert_finite_state)
 
 VERSION = 'dh116-vision-student-ppo-v2-bounded'
 
@@ -63,6 +67,8 @@ def _contract(args, critic_contract):
         contract.update(camera_mode='fixed_per_env',camera_batch_size=args.num_envs,
             camera_batching='fixed_per_environment_real_RGBD',visibility_mode='all',
             pinned_source_environment=None)
+    if getattr(args,'vision_action_distribution','gaussian_clip')=='tanh_gaussian':
+        return upgrade_action_contract(contract)
     return contract
 
 
@@ -86,13 +92,17 @@ def _observations(packet, device_world, previous_action, history, critic, reset_
 
 
 def _save(path, algorithm, contract, iteration, timesteps, env):
-    data=dict(version=VERSION,contract=contract,iteration=iteration,timesteps=timesteps,
+    data=dict(version=contract['version'],contract=contract,iteration=iteration,timesteps=timesteps,
         policy=algorithm.policy.state_dict(),optimizer=algorithm.optimizer.state_dict(),
         learning_rate=algorithm.learning_rate,episodes=env.episodes,successes=env.successes,
         torch_rng=torch.get_rng_state(),
-        cuda_rng=torch.cuda.get_rng_state_all() if torch.cuda.is_available() else [])
+        cuda_rng=torch.cuda.get_rng_state_all() if torch.cuda.is_available()
+            else getattr(algorithm,'vision_saved_cuda_rng',[]))
     migration=getattr(algorithm,'vision_resume_migration',None)
     if migration is not None:data['resume_migration']=migration
+    derivation=getattr(algorithm,'vision_action_derivation',None)
+    if derivation is not None:data['action_derivation']=derivation
+    if contract['version']!=VERSION:assert_finite_state(data)
     temporary=Path(str(path)+'.tmp')
     torch.save(data,temporary)
     os.replace(temporary,path)
@@ -104,7 +114,15 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         args=copy.copy(args)
         args.rollout_steps=24
     output=Path(args.output)
+    squashed=getattr(args,'vision_action_distribution','gaussian_clip')=='tanh_gaussian'
+    saved=None
+    if squashed:
+        validate_new_visual_output(output,preflight_path=getattr(args,'_vision_new_output',None))
+        validate_vision_action_options(args)
     contract=_contract(args,critic_contract)
+    if squashed and args.resume:
+        saved=validate_squashed_checkpoint(
+            torch.load(args.resume,map_location='cpu',weights_only=False),contract)
     _write_json(output/'vision_student_contract.json',contract)
     native_camera=camera is None
     if camera is None:
@@ -166,7 +184,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
             raise
         _write_json(output/'initial_camera_geometry_validation.json',geometry)
     obs=_observations(packet,device_world,previous,history,critic)
-    algorithm=make_vision_algorithm(obs,args.rollout_steps,device=args.device,
+    maker=make_squashed_vision_algorithm if squashed else make_vision_algorithm
+    algorithm=maker(obs,args.rollout_steps,device=args.device,
         microbatch_size=getattr(args,'vision_ppo_microbatch_size',128),
         inference_batch_size=getattr(args,'vision_inference_batch_size',128))
     if native_camera:
@@ -174,15 +193,21 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         memory_snapshot(args,'camera_and_PPO_ready',device_world.w)
     iteration=timesteps=0
     if args.resume:
-        saved=torch.load(args.resume,map_location=args.device,weights_only=False)
-        if saved.get('version')!=VERSION:
-            raise ValueError('visual resume requires the same visual actor/critic/camera/reset contract')
-        from .tabletop_vision_resume import prepare_visual_resume
-        saved=prepare_visual_resume(saved,contract,
-            allow_downsize=getattr(args,'vision_resume_downsize',False))
+        if not squashed:
+            saved=torch.load(args.resume,map_location=args.device,weights_only=False)
+            if saved.get('version')!=VERSION:
+                raise ValueError('visual resume requires the same visual actor/critic/camera/reset contract')
+            from .tabletop_vision_resume import prepare_visual_resume
+            saved=prepare_visual_resume(saved,contract,
+                allow_downsize=getattr(args,'vision_resume_downsize',False))
         if saved.get('resume_migration') is not None:
             algorithm.vision_resume_migration=saved['resume_migration']
             _write_json(output/'resume_migration.json',saved['resume_migration'])
+        if squashed:
+            algorithm.vision_saved_cuda_rng=saved['cuda_rng']
+            if saved.get('action_derivation') is not None:
+                algorithm.vision_action_derivation=saved['action_derivation']
+                _write_json(output/'action_derivation.json',saved['action_derivation'])
         algorithm.policy.load_state_dict(saved['policy'])
         algorithm.optimizer.load_state_dict(saved['optimizer'])
         algorithm.learning_rate=saved['learning_rate']
@@ -190,16 +215,22 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         for name in ('episodes','successes'):
             getattr(env,name).copy_(saved[name])
         torch.set_rng_state(saved['torch_rng'].cpu())
-        if saved.get('cuda_rng'):
+        if saved.get('cuda_rng') and (not squashed or torch.cuda.is_available()):
             torch.cuda.set_rng_state_all([state.cpu() for state in saved['cuda_rng']])
-    _write_json(output/'training_start.json',dict(
+    start_metadata=dict(
         observation_mode='vision_sensor_only_actor',privileged_actor_inputs=False,
         initial_iteration=iteration,initial_timesteps=timesteps,
         initial_episodes=int(env.episodes.sum()),initial_successes=int(env.successes.sum()),
         resume_source=str(args.resume) if args.resume else None,
         optimizer_state_entries=len(algorithm.optimizer.state),
         actor_observation_size=POLICY_DIM,critic_observation_size=371,
-        teacher_distillation=contract['teacher_distillation']))
+        teacher_distillation=contract['teacher_distillation'])
+    if squashed:
+        start_metadata.update(resume_environment_state='cold_reset_after_resume' if args.resume
+            else 'fresh_scene_reset',resume_restored_state=(
+                ['policy','Adam','learning_rate','Torch_RNG','counters'] if args.resume else []),
+            rng_coverage=contract['rng_coverage'])
+    _write_json(output/'training_start.json',start_metadata)
     # Save real sampled actor inputs separately from privileged critic state.
     torch.save(dict(policy=obs['policy'].detach().cpu(),contract=contract),
         output/'initial_visual_actor_inputs.pt')
@@ -211,7 +242,7 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
     if iteration>=args.max_iterations:
         _save(checkpoint,algorithm,contract,iteration,timesteps,env)
     started=time.monotonic()
-    row=dict(status='initializing_visual_policy',backend=VERSION,iteration=iteration,
+    row=dict(status='initializing_visual_policy',backend=contract['version'],iteration=iteration,
              iteration_budget=args.max_iterations,successes=int(env.successes.sum()))
     _write_json(output/'monitor.json',row)
     try:
@@ -227,8 +258,13 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                     action=algorithm.act(obs)
                     if not bool(torch.isfinite(action).all()):
                         raise RuntimeError('nonfinite visual action before physics')
-                    issued=action.clamp(-1,1)
-                    critic,reward,done,extra=env.step(issued)
+                    if squashed:
+                        if action.shape!=(args.num_envs,24) or not bool((action.abs()<=1).all()):
+                            raise ValueError('bounded visual action must be [N,24] within [-1,1] before physics')
+                        issued=action.clone()
+                    else:
+                        issued=action.clamp(-1,1)
+                    critic,reward,done,extra=env.step(issued.clone() if squashed else issued)
                     # Read the pre-task-reset diagnostic, including terminal samples.
                     step_lift=extra.get('surface_diagnostics',{}).get('net_lift_m')
                     if step_lift is None:
@@ -297,7 +333,7 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                     from .tabletop_palm_lift_summary import summarize_palm_lift
                     groups[group['label']].update(summarize_palm_lift(
                         palm_peak,palm_last,palm_valid,start=slots.start,stop=slots.stop))
-            row=dict(status='training',backend=VERSION,observation_mode='vision_sensor_only_actor',
+            row=dict(status='training',backend=contract['version'],observation_mode='vision_sensor_only_actor',
                 privileged_actor_inputs=False,actor_observation_size=POLICY_DIM,
                 critic_observation_size=371,num_envs=args.num_envs,iteration=iteration,
                 iteration_budget=args.max_iterations,rollout_steps=args.rollout_steps,
@@ -317,6 +353,11 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                 camera_frame_first=packet.get('camera_frame_first'),camera_frame_last=packet.get('camera_frame_last'),
                 failures=failure_counts,iteration_seconds=duration,
                 elapsed_seconds=time.monotonic()-started)
+            if squashed:
+                row['ppo_diagnostics']=copy.deepcopy(algorithm.last_update_diagnostics)
+                row['ppo_diagnostics']['post_update_latent_std_per_dim']=(
+                    algorithm.policy.log_std.detach().exp().cpu().tolist())
+                assert_finite_state(row['ppo_diagnostics'])
             if palm_peak is not None:
                 row['palm_lift_measurement']=dict(
                     source='measured_palm_body_link_world_z',unit='m',
@@ -341,6 +382,13 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
             for name in ('successes','episodes','mean_step_reward','object_visible_env_fraction',
                          'iteration_seconds','sampled_object_points_mean'):
                 writer.add_scalar(name,row[name],iteration)
+            if squashed:
+                for name,value in row['ppo_diagnostics'].items():
+                    if isinstance(value,list):
+                        for index,item in enumerate(value):
+                            writer.add_scalar(f'ppo_diagnostics/{name}/{index:02d}',item,iteration)
+                    else:
+                        writer.add_scalar(f'ppo_diagnostics/{name}',value,iteration)
             for label,metrics in groups.items():
                 for name,value in metrics.items():
                     if value is not None:

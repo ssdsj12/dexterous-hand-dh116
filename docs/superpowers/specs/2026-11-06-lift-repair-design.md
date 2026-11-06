@@ -12,6 +12,8 @@ Archived original Git source and user request as read-only local copies. Frozen 
 
 Actual visual weights269/482/1328 were not found and cannot be reconstructed from logs. Available comparable fixed-camera snapshots are129 and1439; snapshot5 has a different camera/count contract and is secondary context. Never label a surrogate or renamed current checkpoint as a missing historical model.
 
+The explicit v2-to-v3 warm start preserves deterministic `tanh(mean)` commands exactly for the same weights and sensor history. Before any learning, a deterministic native comparison of those two representations is an execution-parity check, not evidence of improved grasping. Diagnose earlier/later performance using actual129-versus1439 weights under the same prospective fixed manifest; evaluate learned v3 improvements only after a separately budgeted experiment.
+
 ## T1 distribution, storage and probability
 
 Selected architecture: an opt-in v3 squashed Gaussian alongside the unchanged v2 implementation. The new actor outputs unbounded latent mean; it has only one output squash in the distribution. Deterministic inference is tanh(mean), not E[tanh(Z)]. Removing the old parameter-free final Tanh preserves parameter keys but requires an explicit new model/distribution version.

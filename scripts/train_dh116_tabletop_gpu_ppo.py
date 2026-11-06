@@ -32,6 +32,7 @@ parser.add_argument('--depth-coordinate-probe',action='store_true',
 parser.add_argument('--depth-camera-config',type=Path)
 parser.add_argument('--vision-student',action='store_true',
                     help='RGB-D-only 3844D actor with training-only 371D critic')
+parser.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
 parser.add_argument('--vision-width',type=int,default=320)
 parser.add_argument('--vision-height',type=int,default=240)
 parser.add_argument('--vision-camera-batch-size',type=int,default=64)
@@ -214,6 +215,9 @@ parser.add_argument('--max-iterations', type=int, default=None,
                     help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+from go2_pvcnn.control.dh116.tabletop_vision_action_contract import validate_vision_action_options
+try:validate_vision_action_options(args)
+except ValueError as exc:parser.error(str(exc))
 from go2_pvcnn.control.dh116.tabletop_surface_exploration import validate_options as validate_surface_options
 try:validate_surface_options(args)
 except ValueError as exc:parser.error(str(exc))
@@ -445,6 +449,8 @@ try:
 except (ValueError, OSError, KeyError) as error:
     parser.error(str(error))
 args.output.mkdir(parents=True)
+if args.vision_student:
+    args._vision_new_output=str(args.output.resolve())
 write_json(args.output/'monitor.json',dict(status='initializing',num_envs=args.num_envs,
     timesteps=0,updates=0,object_kind=args.object_kind,
     episodes_per_env_target=None if args.max_iterations is not None else args.episodes_per_env,

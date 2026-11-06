@@ -1,3 +1,13 @@
+## 2026-11-06 — Lift 修复：T1 已实现并通过 CPU 验证，原生评估待执行
+
+独立分支 `codex/dh116-lift-repair-20261106` 已接入 `--vision-action-distribution tanh_gaussian`：保存 latent 和实际有界命令，使用正确变换概率、有界熵/KL与微批PPO，命令和动作历史不再额外clip。新模型使用独立v3合同；旧v2默认路径保留，只能通过显式离线工具派生warm start。完整权重、Adam、LR、已有Torch RNG和已知静态配置差异在写入/启动Kit前检查，原始文件及输出受保护，拒绝会反转PPO优化方向的maximize模式。
+
+最终定向CPU回归 **327项通过**（根代理独立复跑22.52s），规格复审和质量复审均PASS。完整CPU回归4906项及91个subtests通过；保留原96失败、28错误和49跳过，基线4801个节点状态逐项一致，新增278个节点全部通过。真实冻结1439轮断点离线派生保留原字段，四组历史视觉输入的确定性动作差为0；原件SHA不变。命令、文件差异及限制见[集成验证报告](docs/superpowers/reports/2026-11-06-lift-repair-t1-integration-validation.md)，不能把CPU测试当作原生抓取成功。
+
+Actor仍3844D、Critic371D。按[硬件审计](docs/superpowers/reports/2026-11-06-dh116-hardware-feedback-audit.md)，当前没有已证实接通的实机反馈通道，20D仅作带来源/单位/时序/有效性的可选接口设计；PhysX接触和成功监视器不追加到Student。原1207个源码/资源文件与冻结清单一致；2026-11-06 06:03 UTC原GPU3训练已完成1548/2048次更新，原生successes0，继续运行，未停止、重启或切换。
+
+同时准备了T2冷重置manifest和首terminal统计基础设施；生产schema每抓法至少100个独立float32状态，缺测值保留null和coverage，始终标为authored_unverified，未进行每抓法100次原生验证。完整视觉评估adapter、真实初态读回、验证选模/周期保留、奖励消融及修复版重新训练仍按后续门槛推进。没有证据表明Lift下降或稳定抓取已经解决。
+
 ## 2026-11-06 — 独立 Lift 修复：T1 概率核心通过 CPU 验证
 
 独立 `tanh_gaussian` 核心保存 latent `z`、实际 `tanh(z)` 和变换后的 log probability，使用稳定 Jacobian、当前策略有界熵及精确 latent Normal KL。3844D actor / 371D critic / 24D 动作保持；新 actor 仅移除输出层的参数无关 Tanh，由分布执行一次 squash。CPU float32 rollout 保存 latent，微批按样本数加权，每个逻辑 minibatch 只执行一次梯度裁剪与 Adam，正常配置仍为每轮 40 次 Adam 更新。新指标与原三项 loss 分开，记录动作饱和、各维均值/标准差、概率一致性、KL、熵和裁剪前梯度范数。

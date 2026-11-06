@@ -53,6 +53,43 @@
 
 仅在实物确认、驱动接通、单位标定、时间对齐和reset/断触测试通过后，才允许进入独立版本的Student输入。PhysX接触、物体GT、奖励和成功监视器不得进入该通路。20个数值并不包含掩码或age；未来观测维度需将元数据显式纳入新合同，不能挪用现有image/object有效位。
 
+### 20个候选值的逐字段来源设计
+
+下表展开的是可选接口的值列，不是新的 Actor 观测。左右列各自拥有元数据，不能只共享一个“20D有效”标志。当前硬件来源、采样频率和采集时间全部未确认；仿真480Hz采样/60Hz窗口不能写成硬件已经达到的速率。
+
+| 值列 | 名称 | 单位 | 当前实现来源及类别 | 将来实机接入所需证据 |
+|---|---|---|---|---|
+| 0,1 | left/right_support_n | N | accepted pad normal + attributable PhysX friction，simulation_privileged | 已标定接触力/方向/归属，或可信腕F/T加完整重力惯性补偿；无器件时无效 |
+| 2 | support_margin | weight_fraction | 仿真支撑减仿真物重，simulation_privileged | 可信载荷来源和实际支撑估计，明确 estimated，禁止物体GT |
+| 3 | support_imbalance | ratio | 仿真左右支撑计算，simulation_privileged | 两侧同一时间窗的有效支撑估计 |
+| 4,5 | left/right_paired | boolean | native 对向指腹判定，simulation_privileged | 真实接触位置/方向及接触几何，不由命令闭合推断 |
+| 6 | ordinary_fraction | ratio | rejected/accepted native load，simulation_privileged | 全手必要覆盖的接触传感，局部触觉不能证明无普通碰撞 |
+| 7 | pad_depth | m | PhysX manifold depth，simulation_privileged | 当前无实机等价通道；视觉间隙或触觉压强不得冒充穿透深度 |
+| 8 | anchor_drift | m | native 固定锚+物体真值，simulation_privileged | 稳定建立的视觉/触觉对应锚与不确定度、断触重建规则 |
+| 9 | slip_speed | m/s | 物体真值在手掌系的速度，simulation_privileged | 有时间对应的真实目标跟踪/触觉剪切估计 |
+| 10 | hold_duration | s | native success tracker，simulation_privileged | 独立真实传感稳定监视器，不能依赖奖励、成功标志或GT |
+| 11 | window_good | boolean | native success tracker，simulation_privileged | 同上，必须单独版本化其判定条件 |
+| 12,13 | left/right_pressure_limited | boolean | 现有仿真控制器限压标志，simulation_privileged | 真实驱动限流/限压状态的读取与协议定义；指令上限不是已触发状态 |
+| 14,15 | left/right_mimic_blocked | boolean | native blocking + 仿真从动角误差，simulation_privileged | 真实可观测的从动角或驱动故障证据；机械mimic公式不能充当测量 |
+| 16,17 | left/right_wrist_z_request | m/s | 提交动作14/17乘现有速度尺度，commanded | 控制器实际发出且带时间戳的指令，只能标 commanded |
+| 18,19 | left/right_wrist_z_increment | m | 实测模拟body-link窗口末减初，simulation_privileged | 外部承载机构真实编码器+标定/FK；DH116自身不能凭空提供世界位移 |
+
+候选接口版本暂称 `dh116-optional-feedback-packet-v1-design`，只用于未来独立传感适配器的设计。单个通道记录至少包含以下信息（缺少真实采集证据时保持示例的无效状态）：
+
+```json
+{
+  "name": "left_support_n", "value": null, "unit": "N",
+  "source_id": null, "source_kind": "unconfirmed", "hardware_verified": false,
+  "driver_version": null, "calibration_sha256": null,
+  "nominal_sample_hz": null, "measured_sample_hz": null,
+  "capture_timestamp_ns": null, "receive_timestamp_ns": null, "clock_domain": null,
+  "interval_start_ns": null, "interval_end_ns": null, "reset_epoch": null,
+  "valid": false, "invalid_reason": "hardware_and_driver_not_verified"
+}
+```
+
+采集时间和主机收到时间不能混用；只有 receive 时间时须明确来源并判定延迟/对齐能否接受。重置、过期、掉线、断触或单位/校准不明都会使对应通道无效。未来进入 Student 的字段必须通过单独白名单和新观测版本，当前没有把此 packet、20个值或模拟器反馈写入3844D输入。
+
 ## 接入验收证据
 
 每个将来启用的真实通道均需提交：左右手型号/序列号与固件、器件安装及覆盖清单、驱动/API版本、真实设备读数（与命令对照）、单位与标定、采样率/延迟/单调时间戳、掉线/过期处理、reset/断触时序，以及驱动估算与实测的区分。没有这些证据时维持未确认，不阻塞当前P0动作合同工作。

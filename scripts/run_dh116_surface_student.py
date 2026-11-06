@@ -44,6 +44,7 @@ p.add_argument('--depth-coordinate-probe',action='store_true',
 p.add_argument('--depth-camera-config',type=Path)
 p.add_argument('--vision-student',action='store_true',
     help='fresh RGB-D PointNet actor with privileged critic; legacy actor transfer is forbidden')
+p.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
 p.add_argument('--vision-width',type=int,default=320)
 p.add_argument('--vision-height',type=int,default=240)
 p.add_argument('--vision-camera-batch-size',type=int,default=64)
@@ -67,6 +68,9 @@ p.add_argument('--resume',type=Path)
 p.add_argument('--eval-steps',type=int,default=0)
 p.add_argument('--mpc',action='store_true')
 args=p.parse_args()
+from go2_pvcnn.control.dh116.tabletop_vision_action_contract import validate_vision_action_options
+try:validate_vision_action_options(args)
+except ValueError as exc:p.error(str(exc))
 if (not 2<=args.num_envs<=4096 or not 8<=args.rollout_steps<=128
         or (args.episodes_per_env is None and not 1<=args.updates<=2048)
         or (args.episodes_per_env is not None and args.episodes_per_env<1)):
@@ -98,9 +102,8 @@ output=args.output.resolve();initial_path=output.with_name(output.name+'_initial
 mixed_path=output.with_name(output.name+'_mixed_initialization.json')
 if output.exists() or initial_path.exists() or (args.mixed_pregrasp_candidates and mixed_path.exists()):
     raise FileExistsError(output)
-output.parent.mkdir(parents=True,exist_ok=True)
 
-def write_initialization(candidates, target):
+def initialization_payload(candidates):
     candidates=candidates.resolve()
     payload=json.loads(candidates.read_text());row=payload['candidates'][args.candidate_index]
     if not row['static_wrench']['static_feasible'] or payload['support_clearance_m']!=.06:
@@ -111,14 +114,26 @@ def write_initialization(candidates, target):
         joint_positions=full_angles(torch.tensor(row['active_angles'],dtype=torch.float64).reshape(2,6)).tolist(),
         surface_candidate=dict(geometry_only=True,qualified=False,requires_end_support_clearance_m=.06,
             input_sha256=hashlib.sha256(candidates.read_bytes()).hexdigest()))
-    target.write_text(json.dumps(initial,indent=2))
+    return json.dumps(initial,indent=2)
 
+initial_payload=mixed_payload=None
 if args.grasp_initialization:
     initial_path=args.grasp_initialization.resolve()
 else:
-    write_initialization(args.pregrasp_candidates, initial_path)
+    initial_payload=initialization_payload(args.pregrasp_candidates)
 if args.mixed_pregrasp_candidates:
-    write_initialization(args.mixed_pregrasp_candidates, mixed_path)
+    mixed_payload=initialization_payload(args.mixed_pregrasp_candidates)
+if args.vision_action_distribution=='tanh_gaussian':
+    # Validate the exact JSON bytes before creating either initialization file.
+    reset_sha256={}
+    for field,payload in [('primary_reset_sha256',initial_payload),
+                          ('secondary_reset_sha256',mixed_payload)]:
+        if payload is not None:reset_sha256[field]=hashlib.sha256(payload.encode('utf-8')).hexdigest()
+    try:validate_vision_action_options(args,reset_sha256=reset_sha256)
+    except ValueError as exc:p.error(str(exc))
+output.parent.mkdir(parents=True,exist_ok=True)
+if initial_payload is not None:initial_path.write_bytes(initial_payload.encode('utf-8'))
+if mixed_payload is not None:mixed_path.write_bytes(mixed_payload.encode('utf-8'))
 flags=(root/'scripts/smoke_dh116_surface_grasp.sh').read_text();prefix='exec bash scripts/python.sh '
 cmd=shlex.split(flags[flags.index(prefix)+len(prefix):].replace('\\\n',' '))
 if args.vision_student and args.vision_camera_mode=='fixed':
@@ -147,7 +162,8 @@ if args.vision_student:
                 '--vision-ppo-microbatch-size',str(args.vision_ppo_microbatch_size),
                 '--vision-inference-batch-size',str(args.vision_inference_batch_size),
                 '--vision-visibility-mode',args.vision_visibility_mode,
-                '--vision-camera-mode',args.vision_camera_mode])
+                '--vision-camera-mode',args.vision_camera_mode,
+                '--vision-action-distribution',args.vision_action_distribution])
     if args.vision_resume_downsize:cmd.append('--vision-resume-downsize')
 if args.mixed_pregrasp_candidates:
     cmd.extend(['--mixed-grasp-initialization',str(mixed_path)])
