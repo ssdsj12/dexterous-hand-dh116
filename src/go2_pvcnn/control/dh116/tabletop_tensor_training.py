@@ -999,6 +999,10 @@ def run_tensor_training(world, template, args, contract, *, mixed_reset=None):
         publish_resolved_tensor_configuration(args.output,contract)
 
     if getattr(args,'vision_student',False):
+        if getattr(args,'vision_teacher_source',None):
+            from .tabletop_vision_teacher_collection import run_teacher_collection
+            write_json(args.output/'tensor_contract.json',contract)
+            return run_teacher_collection(world,device_world,task,env,args,contract)
         if evaluation_collector is not None:
             from .tabletop_vision_evaluation import run_vision_evaluation
             return run_vision_evaluation(world,device_world,task,env,args,contract,

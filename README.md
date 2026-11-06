@@ -1,3 +1,17 @@
+## 2026-11-06 — Teacher参考与MPC监督的视觉Student
+
+新增独立的“Teacher参考动作 → 当前原生状态的局部MPC → 同步视觉示范 → Actor BC → 显式v3 warm-start”路径。保留Tanh Gaussian PPO、3844D感知Actor、371D训练Critic、24D动作、默认v2及原物理/执行器/30mm、5秒、0.5mm成功标准。MPC的仿真接触/Jacobian仅供训练专家生成标签，不追加到Student输入。
+
+MPC实际优化未来4步的12个手指命令，腕部12维跟随Teacher；它是局部pad运动学模型，尚无物体/摩擦/力动力学或抓取获取保证。数据保存pre-action真实RGB-D、四帧Actor输入、原参考和实际issued动作、frame/env/episode/物理时序与来源SHA。只有当前真实原生首回合成功、无recovery并通过抓法接触审计才可进入成功监督池；失败数据独立保留，CPU注入相机/环境不能取得原生资格。
+
+Student以单次`tanh(mu)`拟合实际issued24D，独立Adam只更新PointNet/Actor MLP；Critic、噪声、PPO Adam/LR/计数/RNG和历史模型保留，新BC及warm-start使用独立文件。Teacher/MPC动作不进入Student的PPO rollout，不混用Student log probability。四份历史Teacher回放只有两个原始轨迹来源，不能按相邻帧随机拆分宣称独立验证。
+
+本次Teacher二指4/4原生成功（最高31.620mm），三指0/4；原局部MPC二指0/4（最高12.489mm），失败标签被隔离。独立审计还发现来源1439的PointNet全死，初版BC只拟合本体信息；现新增显式`reset_pointnet`及独立BC v2，默认拒失活分支，必须验证真实梯度和点云对动作的影响。新BC100使6个PointNet tensor全部有梯度，MSE0.043277→0.001974，清点云动作差最大0.1392；不是抓取成功或独立验证集选模。
+
+新模型关闭Teacher/MPC后完成8环境180步原生推理，exit0、无无效测量，但0完整/8未完成episode。CPU回归、原生Teacher/MPC对照、两版实际BC及明确限制见[本次验证报告](docs/superpowers/reports/2026-11-06-visual-teacher-mpc-supervision-validation.md)。不启动长PPO，不宣称视觉Student可靠抓取或Lift退化已解决；PR #1继续Draft。下文为此前各阶段记录。
+
+最终完整CPU5356项及91个subtests通过；原96失败/28错误/49跳过逐节点保持，原5416节点无缺失/变化，新增113项全部通过。BC v2专项32项和独立复审通过；模型和原始运行数据不进入Git。
+
 ## 2026-11-06 — P0 接触诊断与真实源CAD几何筛选
 
 新增默认关闭的逐指腹原生接触诊断：左右10个pad的建立、持续、丢失与未知/终止censor事件，绑定env、episode、实际物理子步和时间，保存原始PhysX点/法向、缓冲归属和真实body pose。分别统计二指/三指、左右手和双手有效对向接触，区分7种原因；力矩明确为模拟估计，未知滑移不填0。保留Tanh Gaussian PPO、默认v2、3844D Actor、371D Critic、24D动作、原物理/限制和30mm/5秒/0.5mm标准。

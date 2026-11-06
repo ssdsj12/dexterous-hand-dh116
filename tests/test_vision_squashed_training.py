@@ -15,6 +15,25 @@ from go2_pvcnn.control.dh116 import tabletop_vision_training as training
 V3 = 'dh116-vision-student-ppo-v3-squashed-gaussian'
 
 
+def test_supervised_warmstart_provenance_survives_resume_and_save(tmp_path):
+    dw,task,env,args=setup(tmp_path)
+    run(dw,task,env,args)
+    source=args.output/'vision_student_ppo.pt'
+    saved=torch.load(source,weights_only=False)
+    derivation=dict(dataset_sha256='a'*64,warm_start_not_exact_resume=True,
+        physical_success_unverified=True)
+    saved['visual_supervision_derivation']=derivation
+    saved['visual_supervision_history']=[derivation]
+    torch.save(saved,source)
+    (tmp_path/'resumed').mkdir()
+    dw,task,env,new_args=setup(tmp_path/'resumed')
+    new_args.resume=source
+    run(dw,task,env,new_args)
+    result=torch.load(new_args.output/'vision_student_ppo.pt',weights_only=False)
+    assert result['visual_supervision_derivation']==derivation
+    assert result['visual_supervision_history']==[derivation]
+
+
 def setup(tmp_path, maximum=1):
     torch.set_num_threads(1)
     dw, task, env, args = fixture(tmp_path, maximum=maximum)

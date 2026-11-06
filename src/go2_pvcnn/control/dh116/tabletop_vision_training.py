@@ -102,7 +102,8 @@ def _save(path, algorithm, contract, iteration, timesteps, env):
     if migration is not None:data['resume_migration']=migration
     derivation=getattr(algorithm,'vision_action_derivation',None)
     if derivation is not None:data['action_derivation']=derivation
-    for name in ('experiment_projection','optimizer_reset_history','reward_experiment_derivation'):
+    for name in ('experiment_projection','optimizer_reset_history','reward_experiment_derivation',
+                 'visual_supervision_derivation','visual_supervision_history'):
         value=getattr(algorithm,'vision_'+name,None)
         if value is not None:data[name]=copy.deepcopy(value)
     if contract['version']!=VERSION:assert_finite_state(data)
@@ -224,7 +225,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
             _write_json(output/'resume_migration.json',saved['resume_migration'])
         if squashed:
             algorithm.vision_saved_cuda_rng=saved['cuda_rng']
-            for name in ('experiment_projection','optimizer_reset_history','reward_experiment_derivation'):
+            for name in ('experiment_projection','optimizer_reset_history','reward_experiment_derivation',
+                         'visual_supervision_derivation','visual_supervision_history'):
                 if name in saved:setattr(algorithm,'vision_'+name,copy.deepcopy(saved[name]))
             if saved.get('action_derivation') is not None:
                 algorithm.vision_action_derivation=saved['action_derivation']
@@ -263,7 +265,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                 ['policy']+(['Adam'] if warm_mode=='preserve' else [])+
                 ['learning_rate','Torch_RNG','counters'] if args.resume else []),
             rng_coverage=contract['rng_coverage'],optimizer_warm_start_mode=warm_mode)
-        for name in ('experiment_projection','optimizer_reset_history','reward_experiment_derivation'):
+        for name in ('experiment_projection','optimizer_reset_history','reward_experiment_derivation',
+                     'visual_supervision_derivation','visual_supervision_history'):
             value=getattr(algorithm,'vision_'+name,None)
             if value is not None:start_metadata[name]=copy.deepcopy(value)
     _write_json(output/'training_start.json',start_metadata)

@@ -1,3 +1,12 @@
+## 2026-11-06 — Teacher参考、MPC动作监督与独立视觉BC
+
+- 新增有限原生视觉Teacher采集模式，与PPO路径独立；记录同tick RGB-D、3844D历史、参考/实际issued24D、env/episode/物理时钟及来源。原始RGB-D默认关闭tap分块保存，失败/异常数据保留；首回合原生成功、无recovery和实际抓法审计后才能进入成功池，CPUfixture不能取得原生资格。
+- 新训练专家wrapper重用多步局部pad MPC，优化12指关节、保持Teacher腕部12维，逐环境记录实际body/COM/Jacobian快照SHA、激活、修正和回退。明确无完整物体/摩擦/力预测、非任意Student状态DAgger；旧inference MPC限制和原成功门槛保留。
+- 新独立Actor BC使用single-tanh bounded MSE和独立Adam/RNG，更新PointNet和action MLP，拒绝privileged输入和失败示范。按原轨迹分组heldout；无独立验证集必须显式fit-only。新版本BC不能直接当PPO恢复，显式派生新v3，逐值保留原Critic/log_std/PPO Adam/LR/计数/RNG及旧来源，后续save/resume保留监督历史。
+- 独立复审修复短参考动作结束后缺尾样本误入池，以及已有preflight trace偏移；成功示范严格核对terminal与完整记录长度。最终完整CPU5356 passed，原96 failed/28 errors/49 skipped及5416节点状态保持，113项新增全部通过；本次Teacher基线二指4/4、三指0/4（excess_force）。有限原生和实际学习证据、完整命令/已知限制见[验证报告](docs/superpowers/reports/2026-11-06-visual-teacher-mpc-supervision-validation.md)。无长PPO，不改变物理/执行器/观测动作合同，不宣称抓取可靠或退化解决；PR继续Draft。
+- 实际局部MPC二指0/4、峰12.489mm，未将失败MPC标签交给Student。实际BC审计发现1439 PointNet全部失活，旧v1只完成本体拟合，原件保留。新增独立BC v2、训练前失活拒绝、显式仅重置PointNet、私有CPU RNG及真实梯度/点云坐标敏感度门禁；不修改PPOv3架构/合同。
+- 实际BC v2完成100步，12个Actor tensor改变、6个PointNet tensor均有100步非零梯度；Critic/log_std/PPO Adam/LR/计数/RNG/完整合同逐值保持，初态SHA独立复核一致。8环境180步教师关闭原生推理正常，0无效测量、0完整episode；仅证明数值视觉分支与推理路径，不能称可靠抓取或每抓法100次验证。
+
 ## 2026-11-06 — P0接触证据与中心线几何筛选
 
 - 新增独立逐pad事件归约器和默认关闭的PhysX只读采集：保留原始点/法向、位置/法向分门控、env/episode/子步时序、建立/持续/丢失/censor、七原因、二指三指/左右手有效对向比例与coverage。坏力矩保留为未知和原始逐关节证据，不阻断独立接触记录；模拟力矩与无锚滑移不冒充实机测量。

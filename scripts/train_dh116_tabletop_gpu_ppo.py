@@ -33,6 +33,12 @@ parser.add_argument('--depth-camera-config',type=Path)
 parser.add_argument('--vision-student',action='store_true',
                     help='RGB-D-only 3844D actor with training-only 371D critic')
 parser.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
+parser.add_argument('--vision-teacher-source',type=Path,
+                    help='independent bounded real RGB-D Teacher supervision collection; no PPO')
+parser.add_argument('--vision-teacher-mpc',action='store_true',
+                    help='training-only local finger MPC refines Teacher reference labels')
+parser.add_argument('--vision-teacher-max-control-steps',type=int,default=1300)
+parser.add_argument('--vision-teacher-raw-chunk-frames',type=int,default=16)
 parser.add_argument('--vision-width',type=int,default=320)
 parser.add_argument('--vision-height',type=int,default=240)
 parser.add_argument('--vision-camera-batch-size',type=int,default=64)
@@ -385,6 +391,13 @@ if args.vision_student:
             or args.vision_width not in range(1,321) or args.vision_height not in range(1,241)):
         parser.error('visual actor requires 2..4096 even mixed RGB-D scenes; privileged actor initialization/distillation modes are excluded')
     args.enable_cameras=True
+from go2_pvcnn.control.dh116.tabletop_vision_teacher_collection import validate_options as validate_teacher_collection_options
+try:
+    validate_teacher_collection_options(args)
+    if args.vision_teacher_source and not args.vision_teacher_source.is_file():
+        raise ValueError('vision Teacher source must be an existing ordinary dataset file')
+except ValueError as error:
+    parser.error(str(error))
 if args.depth_coordinate_probe:
     if not args.mixed_grasp_initialization or args.num_envs!=2 or not args.depth_camera_config or args.resume:
         parser.error('depth coordinate capture requires two mixed scenes, camera config, and no checkpoint')
