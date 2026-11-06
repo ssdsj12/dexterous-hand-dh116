@@ -171,6 +171,14 @@ def validate_vision_evaluation_options(args):
     """Read-only pre-Kit validation; no exact-training-resume N guard applies."""
     checkpoint=getattr(args,'vision_evaluation_checkpoint',None)
     manifest_path=getattr(args,'vision_evaluation_manifest',None)
+    contact_flags=(getattr(args,'grasp_contact_diagnostics',False)
+                   or getattr(args,'grasp_contact_probe',False))
+    minimum=100
+    if contact_flags:
+        if not checkpoint:
+            raise ValueError('contact diagnostics require exclusive visual evaluation; cannot start PPO')
+        from .tabletop_grasp_contact_native import evaluation_minimum
+        minimum=evaluation_minimum(args)
     if not checkpoint:
         if manifest_path: raise ValueError('evaluation manifest requires evaluation checkpoint')
         return
@@ -197,10 +205,11 @@ def validate_vision_evaluation_options(args):
     from .tabletop_evaluation_trials import validate_manifest, _digest
     from .tabletop_vision_action_derivation import _validate_source
     from .tabletop_vision_action_contract import validate_squashed_checkpoint, _validate_static_resume_contract
-    value=validate_manifest(json.loads(Path(manifest_path).read_text()))
+    value=validate_manifest(json.loads(Path(manifest_path).read_text()),min_trials_per_style=minimum)
     if getattr(args,'seed',value['metadata']['seed'])!=value['metadata']['seed']:
         raise ValueError('native evaluation seed must match frozen manifest seed')
-    if getattr(args,'num_envs',None)!=len(value['trials']) or args.num_envs!=200:
+    if (getattr(args,'num_envs',None)!=len(value['trials'])
+            or (not getattr(args,'grasp_contact_probe',False) and args.num_envs!=200)):
         raise ValueError('native evaluation requires the frozen balanced 200-environment batch')
     saved=torch.load(checkpoint,map_location='cpu',weights_only=False)
     if saved.get('version')==LEGACY_VERSION: _validate_source(saved)

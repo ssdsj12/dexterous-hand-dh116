@@ -44,6 +44,10 @@ parser.add_argument('--vision-resume-downsize',action='store_true')
 parser.add_argument('--vision-evaluation-checkpoint',type=Path)
 parser.add_argument('--vision-evaluation-manifest',type=Path)
 parser.add_argument('--vision-evaluation-max-control-steps',type=int,default=1200)
+parser.add_argument('--grasp-contact-diagnostics',action='store_true',
+                    help='read-only raw PhysX pad diagnostics during inference-only visual evaluation')
+parser.add_argument('--grasp-contact-probe',action='store_true',
+                    help='historical observation smoke only: 2..16 envs, at most180 control steps; no PPO or candidate validation')
 parser.add_argument('--vision-lift-reward-experiment',choices=('R0','R1','R2','R3','R4','R5'),default='R0')
 parser.add_argument('--vision-warm-start-optimizer',choices=('preserve','reset'),default='preserve')
 parser.add_argument('--vision-checkpoint-interval',type=int,default=10)

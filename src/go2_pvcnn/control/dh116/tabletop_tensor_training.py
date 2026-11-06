@@ -827,7 +827,12 @@ def run_tensor_training(world, template, args, contract, *, mixed_reset=None):
         write_json(args.output/'mixed_reset_validation.json',mixed_validation)
     if evaluation_collector is not None:
         from .tabletop_vision_evaluation_reset import install_evaluation_reset
-        install_evaluation_reset(device_world,task,evaluation_collector.manifest)
+        minimum=100
+        if getattr(args,'grasp_contact_probe',False):
+            from .tabletop_grasp_contact_native import evaluation_minimum
+            minimum=evaluation_minimum(args)
+        install_evaluation_reset(device_world,task,evaluation_collector.manifest,
+                                 min_trials_per_style=minimum)
     obs=observations(env.reset())
     if getattr(args,'require_initial_below_axis',False):
         from .tabletop_initial_contact_check import validate_initial_contact

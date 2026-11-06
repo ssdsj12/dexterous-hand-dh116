@@ -157,9 +157,14 @@ class EvaluationTelemetryCollector:
 
 def prepare_vision_evaluation(device_world, task, env, args):
     """Attach inactive callback before any startup reset, then author final reset."""
-    manifest=validate_manifest(json.loads(Path(args.vision_evaluation_manifest).read_text()))
+    minimum=100
+    if getattr(args,'grasp_contact_probe',False):
+        from .tabletop_grasp_contact_native import evaluation_minimum
+        minimum=evaluation_minimum(args)
+    manifest=validate_manifest(json.loads(Path(args.vision_evaluation_manifest).read_text()),
+                               min_trials_per_style=minimum)
     collector=EvaluationTelemetryCollector(manifest,
-        checkpoint_sha256=file_sha256(args.vision_evaluation_checkpoint))
+        checkpoint_sha256=file_sha256(args.vision_evaluation_checkpoint),min_trials_per_style=minimum)
     env.enable_evaluation_telemetry(collector)
     return collector
 
@@ -180,6 +185,9 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
     from .tabletop_vision_student import SensorHistory
     from .tabletop_vision_training import _observations, _contract
     from .tabletop_vision_inference import load_vision_inference
+    if getattr(args,'grasp_contact_probe',False):
+        from .tabletop_grasp_contact_native import evaluation_minimum
+        min_trials_per_style=evaluation_minimum(args)
     output=validate_evaluation_output(args.output,args.vision_evaluation_checkpoint,
         args.vision_evaluation_manifest,precreated=getattr(args,'_vision_new_output',None))
     maximum=getattr(args,'vision_evaluation_max_control_steps',0)
@@ -252,6 +260,19 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
         format='gzip_jsonl',manifest_sha256=manifest_sha256(manifest,min_trials_per_style=min_trials_per_style),
         checkpoint_sha256=checkpoint_sha),allow_nan=False)+'\n')
     collector.attach_raw_sink(lambda row:raw_stream.write(json.dumps(row,allow_nan=False,separators=(',',':'))+'\n'))
+    contact_observer=None
+    if getattr(args,'grasp_contact_diagnostics',False):
+        if not native_camera:
+            raw_stream.close()
+            raise ValueError('contact evidence requires a real native camera/runtime')
+        from .tabletop_grasp_contact_native import NativeGraspContactObserver
+        contact_observer=NativeGraspContactObserver(device_world,env,manifest,output,
+            checkpoint_sha256=checkpoint_sha)
+        previous_callback=env.evaluation_telemetry.callback
+        def contact_callback(payload):
+            contact_observer.sample(payload)
+            previous_callback(payload)
+        env.evaluation_telemetry.callback=contact_callback
     collector.begin_trials()
     control_steps=0; error=None
     try:
@@ -267,6 +288,9 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
         error=f'{type(failure).__name__}: {failure}'
     finally:
         raw_stream.close()
+        if contact_observer is not None:
+            env.evaluation_telemetry.callback=previous_callback
+            contact_observer.finish(reason='evaluation_error' if error else 'bounded_evaluation_end')
     evidence['conditional_telemetry_samples']=dict(path=str(raw_path),sha256=file_sha256(raw_path))
     report=collector.summary()
     report.update(status=('not_completed' if error or report['incomplete_count']
@@ -287,7 +311,8 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
     genuine=(native_camera and type(device_world) is TensorWorld and type(env) is TensorEnv
         and type(world).__module__.endswith('tabletop_gpu_isaac')
         and hasattr(world,'sim') and type(world.sim).__module__.startswith('isaaclab.'))
-    if (genuine and report['status']=='completed' and report['conditional_telemetry_complete']
+    if (not getattr(args,'grasp_contact_probe',False)
+            and genuine and report['status']=='completed' and report['conditional_telemetry_complete']
             and _production_manifest_eligible(manifest,min_trials_per_style=min_trials_per_style)):
         certificate=dict(schema_version='dh116-native-visual-evaluation-certificate-v1',
             attestation_status='native_verified',execution='native_isaac_tensor_world',
