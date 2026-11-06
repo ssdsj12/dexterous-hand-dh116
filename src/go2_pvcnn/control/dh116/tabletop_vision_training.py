@@ -102,6 +102,9 @@ def _save(path, algorithm, contract, iteration, timesteps, env):
     if migration is not None:data['resume_migration']=migration
     derivation=getattr(algorithm,'vision_action_derivation',None)
     if derivation is not None:data['action_derivation']=derivation
+    for name in ('experiment_projection','optimizer_reset_history','reward_experiment_derivation'):
+        value=getattr(algorithm,'vision_'+name,None)
+        if value is not None:data[name]=copy.deepcopy(value)
     if contract['version']!=VERSION:assert_finite_state(data)
     temporary=Path(str(path)+'.tmp')
     torch.save(data,temporary)
@@ -116,13 +119,19 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
     output=Path(args.output)
     squashed=getattr(args,'vision_action_distribution','gaussian_clip')=='tanh_gaussian'
     saved=None
+    validate_vision_action_options(args)
     if squashed:
         validate_new_visual_output(output,preflight_path=getattr(args,'_vision_new_output',None))
-        validate_vision_action_options(args)
     contract=_contract(args,critic_contract)
     if squashed and args.resume:
+        resume_sha256=hashlib.sha256(Path(args.resume).read_bytes()).hexdigest()
         saved=validate_squashed_checkpoint(
             torch.load(args.resume,map_location='cpu',weights_only=False),contract)
+        if hashlib.sha256(Path(args.resume).read_bytes()).hexdigest()!=resume_sha256:
+            raise ValueError('warm-start source changed while loading')
+        if (getattr(args,'vision_warm_start_optimizer','preserve')=='reset'
+                and args.max_iterations<=saved['iteration']):
+            raise ValueError('reset Adam warm-start requires at least one complete new update')
     _write_json(output/'vision_student_contract.json',contract)
     native_camera=camera is None
     if camera is None:
@@ -205,6 +214,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
             _write_json(output/'resume_migration.json',saved['resume_migration'])
         if squashed:
             algorithm.vision_saved_cuda_rng=saved['cuda_rng']
+            for name in ('experiment_projection','optimizer_reset_history','reward_experiment_derivation'):
+                if name in saved:setattr(algorithm,'vision_'+name,copy.deepcopy(saved[name]))
             if saved.get('action_derivation') is not None:
                 algorithm.vision_action_derivation=saved['action_derivation']
                 _write_json(output/'action_derivation.json',saved['action_derivation'])
@@ -212,6 +223,13 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         algorithm.optimizer.load_state_dict(saved['optimizer'])
         algorithm.learning_rate=saved['learning_rate']
         iteration,timesteps=saved['iteration'],saved['timesteps']
+        if squashed and getattr(args,'vision_warm_start_optimizer','preserve')=='reset':
+            algorithm.optimizer.state.clear()
+            history_resets=copy.deepcopy(getattr(algorithm,'vision_optimizer_reset_history',[]))
+            history_resets.append(dict(iteration=iteration,source_sha256=resume_sha256,
+                source_path=str(args.resume),operation='clear_Adam_moments_and_steps_only',
+                policy_learning_rate_rng_and_counters_preserved=True))
+            algorithm.vision_optimizer_reset_history=history_resets
         for name in ('episodes','successes'):
             getattr(env,name).copy_(saved[name])
         torch.set_rng_state(saved['torch_rng'].cpu())
@@ -226,10 +244,15 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         actor_observation_size=POLICY_DIM,critic_observation_size=371,
         teacher_distillation=contract['teacher_distillation'])
     if squashed:
+        warm_mode=getattr(args,'vision_warm_start_optimizer','preserve')
         start_metadata.update(resume_environment_state='cold_reset_after_resume' if args.resume
             else 'fresh_scene_reset',resume_restored_state=(
-                ['policy','Adam','learning_rate','Torch_RNG','counters'] if args.resume else []),
-            rng_coverage=contract['rng_coverage'])
+                ['policy']+(['Adam'] if warm_mode=='preserve' else [])+
+                ['learning_rate','Torch_RNG','counters'] if args.resume else []),
+            rng_coverage=contract['rng_coverage'],optimizer_warm_start_mode=warm_mode)
+        for name in ('experiment_projection','optimizer_reset_history','reward_experiment_derivation'):
+            value=getattr(algorithm,'vision_'+name,None)
+            if value is not None:start_metadata[name]=copy.deepcopy(value)
     _write_json(output/'training_start.json',start_metadata)
     # Save real sampled actor inputs separately from privileged critic state.
     torch.save(dict(policy=obs['policy'].detach().cpu(),contract=contract),
@@ -374,6 +397,10 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                 row['gpu_memory_used_gib']=(total-free)/1024**3
             # Only a complete optimizer update commits policy and counters.
             _save(checkpoint,algorithm,contract,iteration,timesteps,env)
+            if squashed and (iteration%getattr(args,'vision_checkpoint_interval',10)==0
+                              or iteration==args.max_iterations):
+                from .tabletop_vision_experiment_checkpoint import retain_checkpoint_bundle
+                retain_checkpoint_bundle(checkpoint,output/'checkpoints')
             _write_json(output/'monitor.json',row)
             collection.update(phase='optimizer_complete',wall_unix_s=time.time())
             _write_json(output/'collection_status.json',collection)

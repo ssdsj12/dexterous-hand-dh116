@@ -135,6 +135,7 @@ class TensorEnv:
         self.world.continuous_motion=self.task.continuous_motion=self.continuous_motion
         self.n, self.device = world.n, world.device
         self.palm_lift_telemetry = None
+        self.evaluation_telemetry = None
         self.recovery = recovery
         self.training_joint_limit = bool(training_joint_limit and recovery)
         self.physics_peaks=torch.zeros(4,device=self.device,dtype=torch.float64)
@@ -169,6 +170,17 @@ class TensorEnv:
             from .tabletop_palm_lift_telemetry import PalmLiftTelemetry
             self.palm_lift_telemetry = PalmLiftTelemetry(self.n, self.device)
         return self.palm_lift_telemetry
+
+    def enable_evaluation_telemetry(self, callback):
+        """Opt in to privileged pre-reset substep batches; reset starts references."""
+        if not callable(callback):
+            raise TypeError('evaluation telemetry callback must be callable')
+        if self.evaluation_telemetry is None:
+            from .tabletop_evaluation_telemetry import EvaluationTelemetry
+            self.evaluation_telemetry = EvaluationTelemetry(self.n, self.device, callback)
+        else:
+            self.evaluation_telemetry.callback = callback
+        return self.evaluation_telemetry
 
     def training_joint_safe(self,m):
         if not self.training_joint_limit or self.continuous_motion:
@@ -250,6 +262,8 @@ class TensorEnv:
         m = self.world.reset(ids)
         if self.palm_lift_telemetry is not None:
             self.palm_lift_telemetry.reset(ids,m)
+        if self.evaluation_telemetry is not None:
+            self.evaluation_telemetry.reset(ids,m)
         safe,_,_ = physical_guard(self.world,m)
         safe &= reset_velocity_safe(self.world)
         safe &= self.training_joint_safe(m)
@@ -269,6 +283,11 @@ class TensorEnv:
         from .tabletop_tensor_world import signed_hand_lift_vertical_force
         t, w = self.task, self.world
         palm_lift = self.palm_lift_telemetry
+        evaluation = self.evaluation_telemetry
+        lift_experiment = getattr(getattr(t, 'surface_reward_ablation', None),
+                                  'lift_quality_experiment', None)
+        if evaluation is not None:
+            submitted_action = torch.as_tensor(actions, device=self.device).detach().clone()
         if palm_lift is not None:palm_lift.begin_tick()
         acquisition_before = None
         if getattr(self, 'grasp_acquisition', False) and not getattr(t,'manual_lightweight',False):
@@ -292,7 +311,9 @@ class TensorEnv:
                 self.fail(invalid&self.pending,w.measure(),'post_reset_invalid_action')
             ids=invalid.nonzero().flatten()
             reset_m=w.reset(ids)
+            if lift_experiment is not None:lift_experiment.capture_physical_reset(ids,reset_m['bottom'])
             if palm_lift is not None:palm_lift.reset(ids,reset_m)
+            if evaluation is not None:evaluation.reset(ids,reset_m)
             safe=physical_guard(w,reset_m)[0]&reset_velocity_safe(w)&self.training_joint_safe(reset_m)
             safe &= self.state_valid(reset_m)
             if bool((invalid&~safe).any()):self.fail(invalid&~safe,reset_m,'immediate_reset_invalid_action')
@@ -356,6 +377,7 @@ class TensorEnv:
                                       (limit_reset & self.recovery))
             task_m = dict(m,joint_failure=torch.where(joint_candidate & (m['joint_failure']==0),
                 FAILURE_CODES['joint_limit'],m['joint_failure']))
+            if evaluation is not None:evaluation_anchor = evaluation.capture_anchor(t)
             if t.vertical_force_reward:
                 # One current normal sample drives both close admission and its
                 # endpoint telemetry. Friction is used only in the lift channel.
@@ -421,6 +443,9 @@ class TensorEnv:
             # after termination. Validate the terminal state first, then reset
             # physics immediately, retaining the task snapshot until tick end.
             if hasattr(self,'control_probe'):self.control_probe.after_step(live,previous_phase)
+            if evaluation is not None:
+                evaluation.sample(t,w,m,live,w.dt,submitted_action,
+                    measurement_valid=finite_physics(w,m)&~t.nonfinite,anchor=evaluation_anchor)
             newly_terminal = live & t.done
             ids = newly_terminal.nonzero().flatten()
             if ids.numel():
@@ -446,7 +471,9 @@ class TensorEnv:
                         except (AttributeError,ValueError,RuntimeError) as error:
                             self.manual_last_failure['digit_contacts_error']=str(error)
                 reset_m = w.reset(ids)
+                if lift_experiment is not None:lift_experiment.capture_physical_reset(ids,reset_m['bottom'])
                 if palm_lift is not None:palm_lift.reset(ids,reset_m)
+                if evaluation is not None:evaluation.reset(ids,reset_m)
                 self.velocity_exceedance_streak_s[ids]=0.
                 self.reset_substep[ids] = substep
                 reset_safe,_,_ = physical_guard(w,reset_m)

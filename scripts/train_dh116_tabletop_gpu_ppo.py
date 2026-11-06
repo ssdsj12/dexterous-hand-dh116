@@ -41,6 +41,12 @@ parser.add_argument('--vision-inference-batch-size',type=int,default=128)
 parser.add_argument('--vision-visibility-mode',choices=('all','batch'),default='all')
 parser.add_argument('--vision-camera-mode',choices=('bounded','fixed'),default='bounded')
 parser.add_argument('--vision-resume-downsize',action='store_true')
+parser.add_argument('--vision-evaluation-checkpoint',type=Path)
+parser.add_argument('--vision-evaluation-manifest',type=Path)
+parser.add_argument('--vision-evaluation-max-control-steps',type=int,default=1200)
+parser.add_argument('--vision-lift-reward-experiment',choices=('R0','R1','R2','R3','R4','R5'),default='R0')
+parser.add_argument('--vision-warm-start-optimizer',choices=('preserve','reset'),default='preserve')
+parser.add_argument('--vision-checkpoint-interval',type=int,default=10)
 parser.add_argument('--physics-clone-mode',choices=('replicate','usd_parse'),default='replicate')
 parser.add_argument('--force-feedback', action='store_true',
                     help='PPO targets measured hand reaction load; lift requires stable measured contact')
@@ -215,6 +221,9 @@ parser.add_argument('--max-iterations', type=int, default=None,
                     help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+from go2_pvcnn.control.dh116.tabletop_vision_evaluation_contract import validate_vision_evaluation_options
+try:validate_vision_evaluation_options(args)
+except (ValueError,OSError) as exc:parser.error(str(exc))
 from go2_pvcnn.control.dh116.tabletop_vision_action_contract import validate_vision_action_options
 try:validate_vision_action_options(args)
 except ValueError as exc:parser.error(str(exc))
@@ -344,7 +353,8 @@ if args.mixed_grasp_initialization and (
         or not args.direct_training or not args.tensor_pipeline or not args.headless
         or not args.free_wrist_grasp or not args.surface_force_sharing or not args.surface_feedback
         or (not args.surface_demonstrations and not args.vision_student)
-        or (not args.resume and not args.depth_coordinate_probe and not args.vision_student) or args.max_iterations is None
+        or (not args.resume and not args.depth_coordinate_probe and not args.vision_student)
+        or (args.max_iterations is None and not args.vision_evaluation_checkpoint)
         or args.episodes_per_env is not None or args.surface_teacher_replay
         or args.surface_student_actor or args.surface_student_eval_steps or args.surface_dagger_collect
         or args.require_native_student_validation or args.surface_student_validation_report

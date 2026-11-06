@@ -259,6 +259,10 @@ def apply_contract(c,t):
     if getattr(t,'surface_reward_profile','baseline')!='baseline':
         from .tabletop_surface_reward_ablation import ablation_contract
         c['surface_reward_ablation']=ablation_contract(t.surface_reward_profile)
+    experiment=getattr(getattr(t,'surface_reward_ablation',None),'lift_quality_experiment',None)
+    if experiment is not None:
+        from .tabletop_lift_reward_experiment import experiment_contract
+        c['surface_lift_reward_experiment']=experiment_contract(experiment.profile)
     c.update(surface_force_sharing=dict(SHARING,action_size=24,stage_flow=None,pose_latch=False,
         redistribution=('soft_reward_only;policy_owns_joint_targets' if t.surface_redistribution is False
                         else 'bounded_joint_position_feedback;preserve_current_measured_total'),

@@ -155,7 +155,7 @@ def observe(t):
     return torch.cat(parts,1)
 
 
-def add_feedback(t,pieces,valid,dt,*,hand_lift_force_n=None,object_weight_n=None):
+def add_feedback(t,pieces,valid,dt,*,hand_lift_force_n=None,object_weight_n=None,physical_live=None):
     from .tabletop_dexhands_feedback import reward_rates
     pieces['lift']=torch.zeros_like(t.reward)
     if getattr(t,'surface_force_sharing',False):
@@ -170,7 +170,8 @@ def add_feedback(t,pieces,valid,dt,*,hand_lift_force_n=None,object_weight_n=None
         # valid includes liveness on entry to this physical substep. Success
         # may have become terminal while measuring its final Hold window.
         apply_reward(t,pieces,valid&~t.done,dt,hand_lift_force_n,object_weight_n,
-                     milestone_valid=valid&(t.failure==0))
+                     milestone_valid=valid&(t.failure==0),physical_valid=valid,
+                     physical_live=physical_live if physical_live is not None else valid)
 
 
 def apply_contract(contract,t):

@@ -1,3 +1,13 @@
+## 2026-11-06 — T2 基础设施与新版 PPO 原生冒烟
+
+面向 `11-5` 的 PR #1 保持 Draft。新增冷重置视觉评估、终止前物理记录、原生证据校验、独立验证集选模、完整 Checkpoint 周期保留、显式保留/重置 Adam warm-start 和独立 R0～R5 奖励实验合同。Actor3844D / Critic371D / 动作24D、物理参数和30mm/5秒/0.5mm成功标准保持；没有把未确认的实机传感反馈加入 Student。
+
+新版 `tanh_gaussian` 已在真实 Isaac 的16环境中完成1440、1441更新，保存后恢复完成1442；RGB-D有效率100%，log-probability重建最大误差约3.34e-6。另一次原生无更新恢复逐项保持策略、Adam、LR、CPU/CUDA RNG、计数和完整合同相等。原生successes仍0，这些结果只证明动作、采样、更新及保存恢复链路。
+
+本轮完整CPU回归5101项及91个subtests通过；原96失败、28错误、49跳过逐节点保持，4801个基线和5079个上阶段节点均无缺失/状态变化，本阶段新增195节点全通过。规格和质量复审已完成；不能将这些CPU结果当作原生抓取改善。
+
+用户后续明确授权原进程退出：先保留1750轮完整原模型（44897回合，successes0，SHA837791335e5f1c2153db763ed419381c708ec8b1f8ff2d4abfc6fa025aab249d），再正常SIGINT并核实GPU3释放；原模型仍保留，没有把1750称为完成2048。所有派生任务按单Isaac实例、独立代码快照及输出串行运行。实际129/1439模型的每抓法100初态配对评估正在执行，奖励消融/Adam有效性/验证选模结果尚待原生验证；不能宣称Lift退化已经解决。详见[本次原生进度与限制](docs/superpowers/reports/2026-11-06-native-stage2-progress.md)、[固定实验协议](docs/superpowers/plans/2026-11-06-native-experiment-protocol.md)。
+
 ## 2026-11-06 — Lift 修复：T1 已实现并通过 CPU 验证，原生评估待执行
 
 独立分支 `codex/dh116-lift-repair-20261106` 已接入 `--vision-action-distribution tanh_gaussian`：保存 latent 和实际有界命令，使用正确变换概率、有界熵/KL与微批PPO，命令和动作历史不再额外clip。新模型使用独立v3合同；旧v2默认路径保留，只能通过显式离线工具派生warm start。完整权重、Adam、LR、已有Torch RNG和已知静态配置差异在写入/启动Kit前检查，原始文件及输出受保护，拒绝会反转PPO优化方向的maximize模式。

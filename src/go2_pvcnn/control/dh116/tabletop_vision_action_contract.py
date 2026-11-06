@@ -155,6 +155,10 @@ def _validate_static_resume_contract(args, contract, reset_sha256):
         if field in reset_sha256: check(field,reset_sha256[field])
         elif getattr(args,name,None) is not None: check(field,sha(getattr(args,name)))
     critic = contract.get('privileged_critic_contract',{})
+    from .tabletop_lift_reward_experiment import experiment_contract
+    lift_profile=getattr(args,'vision_lift_reward_experiment','R0')
+    check('privileged_critic_contract.surface_lift_reward_experiment',
+          missing if lift_profile=='R0' else experiment_contract(lift_profile))
     # These values are authored CLI/config inputs, not PhysX-derived measurements.
     for name in ('physics_hz','solver_type','position_iterations','passive_velocity_limit_rad_s',
                  'env_spacing_m','reset_height_jitter_m'):
@@ -217,6 +221,22 @@ def validate_vision_action_options(args, *, reset_sha256=None):
     mode = getattr(args, 'vision_action_distribution', 'gaussian_clip')
     if mode not in ('gaussian_clip', 'tanh_gaussian'):
         raise ValueError('unknown vision action distribution')
+    from .tabletop_lift_reward_experiment import PROFILES
+    profile=getattr(args,'vision_lift_reward_experiment','R0')
+    if profile not in PROFILES:
+        raise ValueError('unknown isolated lift reward experiment')
+    if profile!='R0' and (mode!='tanh_gaussian' or
+            not getattr(args,'vision_student',True) or
+            getattr(args,'surface_reward_profile',None)!='support_deficit'):
+        raise ValueError('lift reward experiments require v3 visual PPO and support_deficit')
+    warm = getattr(args, 'vision_warm_start_optimizer', 'preserve')
+    if warm not in ('preserve', 'reset'):
+        raise ValueError('unknown visual optimizer warm-start mode')
+    interval = getattr(args, 'vision_checkpoint_interval', 10)
+    if type(interval) is not int or interval < 1:
+        raise ValueError('visual checkpoint interval must be a positive integer')
+    if warm == 'reset' and (mode != 'tanh_gaussian' or not getattr(args, 'resume', None)):
+        raise ValueError('reset Adam requires an explicit v3 tanh_gaussian warm-start checkpoint')
     if mode == 'gaussian_clip': return
     if not getattr(args, 'vision_student', True):
         raise ValueError('--vision-action-distribution tanh_gaussian requires --vision-student')
@@ -226,6 +246,9 @@ def validate_vision_action_options(args, *, reset_sha256=None):
         import torch
         saved=validate_squashed_checkpoint(torch.load(args.resume,map_location='cpu',weights_only=False))
         _validate_static_resume_contract(args,saved['contract'],reset_sha256 or {})
+        budget=getattr(args,'max_iterations',getattr(args,'updates',saved['iteration']+1))
+        if warm == 'reset' and budget <= saved['iteration']:
+            raise ValueError('reset Adam warm-start requires at least one complete new update')
 
 
 def validate_new_visual_output(output, *, preflight_path=None):
