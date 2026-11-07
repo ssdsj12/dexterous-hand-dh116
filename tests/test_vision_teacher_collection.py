@@ -89,6 +89,79 @@ def test_pressure_factory_passes_actual_grasp_identity(monkeypatch):
     assert captured['sequence'].shape==(2,2,24)
 
 
+def test_geometric_acquisition_requires_explicit_radius_and_collection_opt_in():
+    from go2_pvcnn.control.dh116.tabletop_vision_teacher_collection import validate_options
+    args=options(vision_teacher_mpc=True,vision_teacher_mpc_profile='pressure_geometry_acquire',
+        solid_cylinder_radius_m=.008,object_kind='solid_cylinder')
+    assert validate_options(args) is None
+    for changes in ({'vision_teacher_mpc':False},{'vision_teacher_source':None},
+            {'solid_cylinder_radius_m':None},{'solid_cylinder_radius_m':float('nan')},
+            {'solid_cylinder_radius_m':0.},{'object_kind':'hollow_straw'},{'object_kind':None}):
+        with pytest.raises(ValueError):validate_options(options(**dict(vars(args),**changes)))
+
+
+def test_geometry_factory_binds_explicit_object_geometry_and_source_without_changing_actions(monkeypatch):
+    import sys
+    from go2_pvcnn.control.dh116 import tabletop_vision_teacher_collection as collection
+    from go2_pvcnn.control.dh116 import tabletop_vision_teacher_absolute_mpc as absolute
+    captured={}
+    def construct(env,source_sha,reference_actions,*,grasp_styles,cylinder_radius_m,cylinder_length_m):
+        captured.update(env=env,source_sha=source_sha,sequence=reference_actions.clone(),
+            styles=grasp_styles,radius=cylinder_radius_m,length=cylinder_length_m)
+        return captured
+    module_name='go2_pvcnn.control.dh116.tabletop_vision_teacher_acquisition_mpc'
+    monkeypatch.setitem(sys.modules,module_name,SimpleNamespace(AcquisitionTeacherReferenceMPC=construct))
+    monkeypatch.setattr(absolute,'AbsoluteTeacherReferenceMPC',lambda *args,**kwargs: {'wrong_route':True})
+    args=options(vision_teacher_mpc=True,vision_teacher_mpc_profile='pressure_geometry_acquire',
+        solid_cylinder_radius_m=.008,object_kind='solid_cylinder')
+    args.device='cpu';env=object()
+    styles=['pinch_thumb_index','tripod_thumb_index_middle']
+    references=[dict(actions=torch.full((2+i,24),.1*(i+1)),grasp_style=s)
+        for i,s in enumerate(styles)]
+    result=collection._teacher_optimizer(env,args,{'source_sha256':'a'*64},references)
+    assert result is captured
+    assert captured['env'] is env and captured['source_sha']=='a'*64
+    assert captured['styles']==styles and captured['radius']==.008 and captured['length']==.5
+    assert torch.equal(captured['sequence'][0,:2],references[0]['actions'])
+    assert torch.equal(captured['sequence'][0,2],torch.zeros(24))
+    assert torch.equal(captured['sequence'][1],references[1]['actions'])
+
+
+def test_constrained_geometry_profile_has_the_same_explicit_geometry_admission():
+    from go2_pvcnn.control.dh116.tabletop_vision_teacher_collection import validate_options
+    args=options(vision_teacher_mpc=True,vision_teacher_mpc_profile='pressure_geometry_constrained',
+        solid_cylinder_radius_m=.008,object_kind='solid_cylinder')
+    assert validate_options(args) is None
+    for changes in ({'vision_teacher_mpc':False},{'vision_teacher_source':None},
+            {'solid_cylinder_radius_m':0.},{'object_kind':'hollow_straw'}):
+        with pytest.raises(ValueError):validate_options(options(**dict(vars(args),**changes)))
+
+
+def test_constrained_factory_selects_new_controller_and_preserves_source_sequence(monkeypatch):
+    import sys
+    from go2_pvcnn.control.dh116 import tabletop_vision_teacher_collection as collection
+    from go2_pvcnn.control.dh116 import tabletop_vision_teacher_absolute_mpc as absolute
+    captured={}
+    def construct(env,source_sha,reference_actions,*,grasp_styles,cylinder_radius_m,cylinder_length_m):
+        captured.update(env=env,sha=source_sha,actions=reference_actions.clone(),styles=grasp_styles,
+            radius=cylinder_radius_m,length=cylinder_length_m)
+        return captured
+    monkeypatch.setitem(sys.modules,'go2_pvcnn.control.dh116.tabletop_vision_teacher_constrained_mpc',
+        SimpleNamespace(ConstrainedAcquisitionTeacherReferenceMPC=construct))
+    monkeypatch.setattr(absolute,'AbsoluteTeacherReferenceMPC',lambda *args,**kwargs: {'wrong_route':True})
+    args=options(vision_teacher_mpc=True,vision_teacher_mpc_profile='pressure_geometry_constrained',
+        solid_cylinder_radius_m=.008,object_kind='solid_cylinder');args.device='cpu'
+    refs=[dict(actions=torch.full((2+i,24),.1*(i+1)),grasp_style=style)
+        for i,style in enumerate(['pinch_thumb_index','tripod_thumb_index_middle'])]
+    env=object();result=collection._teacher_optimizer(env,args,{'source_sha256':'a'*64},refs)
+    assert result is captured and captured['env'] is env and captured['sha']=='a'*64
+    assert captured['radius']==.008 and captured['length']==.5
+    assert captured['styles']==[item['grasp_style'] for item in refs]
+    assert torch.equal(captured['actions'][0,:2],refs[0]['actions'])
+    assert torch.equal(captured['actions'][0,2],torch.zeros(24))
+    assert torch.equal(captured['actions'][1],refs[1]['actions'])
+
+
 def test_raw_chunks_are_bounded_exclusive_and_bind_frame_identity(tmp_path):
     from go2_pvcnn.control.dh116.tabletop_vision_teacher_collection import RawRGBDChunks
     sink=RawRGBDChunks(tmp_path/'raw',chunk_frames=2)

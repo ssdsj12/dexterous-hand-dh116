@@ -40,9 +40,11 @@ parser.add_argument('--vision-teacher-source',type=Path,
                     help='independent bounded real RGB-D Teacher supervision collection; no PPO')
 parser.add_argument('--vision-teacher-mpc',action='store_true',
                     help='training-only local finger MPC refines Teacher reference labels')
-parser.add_argument('--vision-teacher-mpc-profile',choices=('local_pad','absolute_reference','pressure_reference'),default='local_pad',
+parser.add_argument('--vision-teacher-mpc-profile',choices=('local_pad','absolute_reference','pressure_reference','pressure_geometry_acquire','pressure_geometry_constrained'),default='local_pad',
                     help='explicit training-only MPC experiment; default preserves original local-pad MPC')
 parser.add_argument('--vision-teacher-max-control-steps',type=int,default=1300)
+parser.add_argument('--vision-teacher-hold-tail-control-steps',type=int,default=0,
+                    help='opt-in recorded zero-reference tail after the longest Teacher source; 0 preserves source cutoff')
 parser.add_argument('--vision-teacher-raw-chunk-frames',type=int,default=16)
 parser.add_argument('--vision-width',type=int,default=320)
 parser.add_argument('--vision-height',type=int,default=240)

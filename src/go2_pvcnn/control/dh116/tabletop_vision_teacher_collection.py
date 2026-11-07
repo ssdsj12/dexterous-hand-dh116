@@ -10,11 +10,23 @@ import torch
 
 def validate_options(args):
     profile=getattr(args,'vision_teacher_mpc_profile','local_pad')
-    if profile not in ('local_pad','absolute_reference','pressure_reference'):
+    tail=getattr(args,'vision_teacher_hold_tail_control_steps',0)
+    if type(tail) is not int or not 0<=tail<=1800:
+        raise ValueError('recorded Teacher tail requires an integer 0..1800 extra control steps')
+    if tail and (profile=='local_pad' or not getattr(args,'vision_teacher_source',None)
+            or not getattr(args,'vision_teacher_mpc',False)):
+        raise ValueError('recorded Teacher tail requires an explicit source and experimental MPC')
+    if profile not in ('local_pad','absolute_reference','pressure_reference','pressure_geometry_acquire',
+            'pressure_geometry_constrained'):
         raise ValueError('unknown Teacher MPC profile')
     if profile!='local_pad' and (not getattr(args,'vision_teacher_source',None)
             or not getattr(args,'vision_teacher_mpc',False)):
         raise ValueError('experimental Teacher MPC profile requires explicit source and MPC opt-in')
+    if profile in ('pressure_geometry_acquire','pressure_geometry_constrained'):
+        radius=getattr(args,'solid_cylinder_radius_m',None)
+        if (getattr(args,'object_kind',None)!='solid_cylinder'
+                or type(radius) not in (int,float) or not math.isfinite(radius) or radius<=0):
+            raise ValueError('geometric acquisition requires an explicit finite solid cylinder radius')
     source=getattr(args,'vision_teacher_source',None)
     if not source:
         if getattr(args,'vision_teacher_mpc',False):
@@ -100,6 +112,16 @@ def _teacher_optimizer(env,args,source,references):
     sequence=torch.zeros(len(references),length,24,device=args.device)
     for index,item in enumerate(references):
         sequence[index,:len(item['actions'])]=item['actions'].to(sequence)
+    if getattr(args,'vision_teacher_mpc_profile','local_pad')=='pressure_geometry_constrained':
+        from .tabletop_vision_teacher_constrained_mpc import ConstrainedAcquisitionTeacherReferenceMPC
+        return ConstrainedAcquisitionTeacherReferenceMPC(env,source['source_sha256'],sequence,
+            grasp_styles=[item['grasp_style'] for item in references],
+            cylinder_radius_m=args.solid_cylinder_radius_m,cylinder_length_m=.5)
+    if getattr(args,'vision_teacher_mpc_profile','local_pad')=='pressure_geometry_acquire':
+        from .tabletop_vision_teacher_acquisition_mpc import AcquisitionTeacherReferenceMPC
+        return AcquisitionTeacherReferenceMPC(env,source['source_sha256'],sequence,
+            grasp_styles=[item['grasp_style'] for item in references],
+            cylinder_radius_m=args.solid_cylinder_radius_m,cylinder_length_m=.5)
     if getattr(args,'vision_teacher_mpc_profile','local_pad')=='pressure_reference':
         from .tabletop_vision_teacher_pressure_mpc import PressureTeacherReferenceMPC
         return PressureTeacherReferenceMPC(env,source['source_sha256'],sequence,
@@ -162,7 +184,18 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
     recovered=ended.clone();accepted=ended.clone();observed_success=ended.clone()
     terminal_records={};rows=[];issued_rows=[];reference_rows=[];metadata=[]
     start=time.monotonic();mpc_active=mpc_changed=0
-    max_steps=min(args.vision_teacher_max_control_steps,max(len(item['actions']) for item in references))
+    source_lengths=[len(item['actions']) for item in references]
+    tail_steps=getattr(args,'vision_teacher_hold_tail_control_steps',0)
+    max_steps=min(args.vision_teacher_max_control_steps,max(source_lengths)+tail_steps)
+    reference_execution=None
+    if tail_steps:
+        reference_execution=dict(version='dh116-recorded-source-tail-v1',source_lengths=source_lengths,
+            extra_steps_after_longest_source=tail_steps,max_recorded_control_steps=max_steps,
+            after_source_reference='explicit_zero_24D_not_repeated_last_source_action',
+            expert='same_opted_in_closed_loop_mpc;all_issued_actions_recorded',
+            termination='unchanged_native_first_terminal_or_explicit_recording_budget',
+            source_sha256=source['source_sha256'],counts_as_student_success=False)
+        _exclusive_json(output/'recorded_reference_execution.json',reference_execution)
     diagnostics_path=output/'teacher_mpc_diagnostics.jsonl'
     physics_path=output/'teacher_native_physics.jsonl'
     failure=None
@@ -181,15 +214,20 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                             radius=getattr(args,'solid_cylinder_radius_m',.008),length=.5))
                 reference=torch.stack([item['actions'][min(tick,len(item['actions'])-1)]
                     for item in references]).to(device=args.device)
-                # Exhausted/ended trajectories execute zero, never repeat a terminal source action.
-                alive=~ended&torch.tensor([tick<len(item['actions']) for item in references],device=args.device)
-                reference[~alive]=0.
+                source_active=torch.tensor([tick<length for length in source_lengths],device=args.device)
+                # A tail is recorded explicitly and never repeats a terminal source action.
+                alive=~ended&(source_active|bool(tail_steps))
+                reference[~source_active|ended]=0.
+                phases=['source' if tick<length else 'recorded_zero_hold_tail' for length in source_lengths]
                 issued=reference.clone()
                 if optimizer is not None:
                     options={} if getattr(args,'vision_teacher_mpc_profile','local_pad')=='local_pad' else {'alive':alive}
-                    issued,detail=optimizer.refine(reference,context=dict(tick=tick,
+                    context=dict(tick=tick,
                         physics_step=int(world.sim.current_time_step_index),
-                        simulation_time=float(world.sim.current_time),episode_id=list(range(args.num_envs))),**options)
+                        simulation_time=float(world.sim.current_time),episode_id=list(range(args.num_envs)))
+                    if tail_steps:context.update(reference_phase=phases,
+                        reference_source_tick=[tick if tick<length else None for length in source_lengths])
+                    issued,detail=optimizer.refine(reference,context=context,**options)
                     issued[~alive]=0.
                     detail['recorded_env_ids']=alive.nonzero().flatten().cpu().tolist()
                     diagnostics.write(json.dumps(detail,allow_nan=False)+'\n')
@@ -206,13 +244,16 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                         grasp_style=item['grasp_style'],source_episode_id=item['source_episode_id'],
                         source_trajectory_id=item['source_trajectory_id'],
                         previous_action=previous[index].cpu().tolist()))
+                    if tail_steps:metadata[-1].update(reference_phase=phases[index],
+                        reference_source_tick=tick if tick<source_lengths[index] else None,
+                        reference_source_control_steps=source_lengths[index])
                 critic,reward,done,extra=env.step(issued.clone())
                 if optimizer is not None:optimizer.observe_result(done|~alive)
                 recovered|=~ended&extra['recovered'].bool()
                 first=done&~ended
                 first_success=first&extra['success'].bool()&(extra['failure']==0)&~recovered
                 observed_success|=first_success
-                # Do not qualify a short reference that succeeds during an unrecorded zero-action tail.
+                # Never qualify a prefix missing its executed tail; opt-in tails record every step.
                 accepted|=first_success&alive
                 # Data is read before reset from the TensorEnv's terminal diagnostics.
                 record=dict(tick=tick,physics_step=int(world.sim.current_time_step_index),
@@ -224,8 +265,10 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                 physics.write(json.dumps(record,allow_nan=False)+'\n')
                 for index in first.nonzero().flatten().cpu().tolist():
                     terminal_records[index]=dict(control_steps=tick+1,success=bool(first_success[index]),
-                        reference_sequence_complete=bool(alive[index]),
+                        reference_sequence_complete=bool(alive[index]&source_active[index]),
                         failure=int(extra['failure'][index]),recovered=bool(recovered[index]))
+                    if tail_steps:terminal_records[index].update(recorded_execution_complete=bool(alive[index]),
+                        terminal_reference_phase=phases[index],reference_source_exhausted=not bool(source_active[index]))
                 ended|=done
                 previous=issued.clone();previous[done]=0.
                 if (tick+1)%60==0 or bool(ended.all()) or tick+1==max_steps:
@@ -297,6 +340,7 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
         actor_observation_size=3844,critic_observation_size=371,action_size=24,
         ppo_updates=0,student_policy_trained=False,teacher_success_is_student_success=False,
         dagger_state_query_oracle=False,raw_rgbd_frames=raw.frames,elapsed_wall_s=time.monotonic()-start)
+    if reference_execution is not None:report['recorded_reference_execution']=reference_execution
     _exclusive_json(output/'teacher_collection_report.json',report)
     _write_json(output/'monitor.json',report)
     return dict(report,grasp_qualified=False)

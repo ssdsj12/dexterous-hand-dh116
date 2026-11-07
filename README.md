@@ -1,3 +1,17 @@
+## 2026-11-07 — 三指接触获取与约束MPC实验
+
+新增显式 `pressure_geometry_acquire` 和 `pressure_geometry_constrained` Teacher 专家实验。前者使用实测 body pose、源 USD 指腹和当前圆柱表面，为尚未承载的三指指腹生成有界几何目标；已有承载 pad 保留压力参考。后者只对违反原约束的 soft 提案求解可行替代轨迹，已可行解逐值保留。两者均优化12个指关节，Teacher腕部动作保持；局部几何预测不代表真实接触、力预测或抓取成功。
+
+第一轮完整原生实验 `geometry_acquisition_pilot_02` 已自然结束并经独立审计：二指保持 **4/4 成功**、最大净抬升 **31.627704 mm**；三指仍 **0/4**，最大净抬升仅 **0.006431 mm**，四个首回合均因 `object_dropped` 结束。实际480 Hz记录中，三指双手六个所需pad从未同时承载，接触保持仍未解决；失败数据不进入成功监督池。固定来源四环境回放不计作100个独立初态，也不是Student验证。
+
+对实际失败决策的逐步重放表明，六次永久几何停止对应的soft提案被拒，但相同约束下存在可行替代解；因此增加独立约束求解profile，保留原腕部、目标/权重、预算、永久停止、执行器和物理限制。新增默认关闭的 `--vision-teacher-hold-tail-control-steps`，显式记录来源结束后的零参考、实际MPC issued动作、RGB-D及首terminal；默认0沿用历史行为。尾段不延长原30秒episode超时、不重置失败回合，也不能把未记录动作计入合格标签。
+
+第二轮 `geometry_constrained_pilot_03` 使用同物理初态、seed42、原相机与源轨迹，已在独立目录完成1800控制步及8个完整首回合，独立审计exit0、无截断：二指仍 **4/4成功、最高31.627704 mm**；三指仍 **0/4、最高仅0.019719 mm**，两个在1092/1169步掉落，两个在原30秒限制下超时。1056个尾段样本全部核对零参考、实际动作和首终止，未产生尾段成功或三指合格标签。三指双手六pad加对向承载仅在两个环境各出现1个物理子步（2.083 ms），远未形成稳定保持；实际载荷和深度峰值增加，不能称抓取或Lift退化已解决。
+
+新求解器已消除早期误拒，完整审计核对524次求解调用、实际编码动作和45504个准入子步，执行限位违规为0。但后段仍存在固定法向点Jacobian模型的H4约束冲突；这只是局部模型的数值证据，不表示物理抓取不可达。CAD中心点间隙也不能等同于实际指腹接触状态，后续需改进接触与运动预测。已完成177项最终factory/tail/相关回归、261项求解器相关回归及六个真实失败快照检查；最终完整CPU5613 passed、原96 failed/28 errors/49 skipped、91个subtests通过，原5670节点不变，本次116新增全通过。未训练新Student，不能用CPU或专家接触片段替代Student成功。
+
+3844D Actor、371D Critic、24D动作、Tanh Gaussian/default v2、原物理/执行器和净30 mm、连续5 s、漂移0.5 mm成功标准保持。所有源模型和历史数据保留，没有启动长PPO或将仿真接触追加到Student。实现、命令、证据与未完成项见[本次验证报告](docs/superpowers/reports/2026-11-07-tripod-reacquisition-validation.md)。PR #1继续Draft，不合并。以下为此前阶段记录。
+
 ## 2026-11-06 — 接触MPC验证与视觉Student输入、启动拟合修复
 
 新增显式 `absolute_reference` / `pressure_reference` Teacher MPC 实验，以及 Actor 内部的 `wrist_quaternion_hemisphere_v1` 和独立 BC v3 启动采样选项。3844D Actor、371D Critic、24D动作、Tanh Gaussian PPO、原物理/执行器限制及30mm、连续5秒、0.5mm成功标准保持；默认v2与历史raw模型不静默切换预处理。仿真接触仅供训练专家使用，没有新增已接通实机反馈的声明。
