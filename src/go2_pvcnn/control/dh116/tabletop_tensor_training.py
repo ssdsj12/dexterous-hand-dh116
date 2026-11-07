@@ -999,6 +999,10 @@ def run_tensor_training(world, template, args, contract, *, mixed_reset=None):
         publish_resolved_tensor_configuration(args.output,contract)
 
     if getattr(args,'vision_student',False):
+        if getattr(args,'tripod_recovery_stage',None):
+            from .tabletop_tripod_staged_experiment import run_staged_tripod_experiment
+            write_json(args.output/'tensor_contract.json',contract)
+            return run_staged_tripod_experiment(world,device_world,task,env,args,contract)
         if getattr(args,'vision_teacher_source',None):
             from .tabletop_vision_teacher_collection import run_teacher_collection
             write_json(args.output/'tensor_contract.json',contract)

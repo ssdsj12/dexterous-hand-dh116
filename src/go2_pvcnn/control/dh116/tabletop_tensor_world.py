@@ -240,6 +240,15 @@ class TensorWorld:
         if sensors:
             reader=getattr(self,'native_sensor_reader',None)
             native_packet=reader(self) if reader is not None else None
+            if getattr(self,'capture_tripod_contact_evidence',False):
+                complete=(native_packet is not None
+                    and 'tripod_raw_contacts' in native_packet and 'tripod_raw_friction' in native_packet)
+                self.tripod_contact_snapshot=dict(complete=complete,
+                    valid_envs=(~native_packet['bad_env']).detach().clone() if complete
+                        else torch.zeros(self.n,device=self.device,dtype=torch.bool),
+                    tensor_world_physics_steps=getattr(self,'_physics_steps',0),
+                    raw_contacts=native_packet['tripod_raw_contacts'] if complete else None,
+                    raw_friction=native_packet['tripod_raw_friction'] if complete else None)
             if native_packet is None:
                 for sensor in w.sensors: sensor.update(self.dt,force_recompute=True)
                 vectors = torch.stack([s.data.force_matrix_w[:,0,0,:] for s in w.sensors],1).double()
@@ -379,6 +388,8 @@ class TensorWorld:
         return result
 
     def advance(self, task, allowed, live):
+        recovery=getattr(task,'tripod_recovery_runtime',None)
+        if recovery is not None:recovery.prepare_transport(self,task,allowed,live)
         policy_control = getattr(task,"policy_control",False)
         if hasattr(task,'policy_lift_hold') and not getattr(task,'manual_digit_force_balance',False):
             hold=task.policy_lift_hold
@@ -508,6 +519,7 @@ class TensorWorld:
                                      self.parameters.effort_limit_nm)
             hand.write_data_to_sim()
         # Physics/contact feedback still runs at physics_hz; present at 60 Hz.
+        if recovery is not None:recovery.after_native_submission(self,task,live)
         # Rendering every substep made a four-second close take minutes in GUI.
         self._physics_steps = getattr(self, '_physics_steps', 0) + 1
         interval = getattr(self,'render_interval_steps',getattr(self, 'decimation', max(1, round(1 / (60 * self.dt)))))
@@ -525,6 +537,9 @@ class TensorWorld:
 
     def reset(self, ids):
         if ids.numel()==0: return self.measure()
+        if hasattr(self,'tripod_contact_snapshot'):
+            from .tabletop_tripod_execution_guard import invalidate_native_contact_snapshot
+            invalidate_native_contact_snapshot(self,ids)
         if hasattr(self,'adapter_fault_bits'):self.adapter_fault_bits[ids]=0
         if hasattr(self,'transport_warning_mask'):self.transport_warning_mask[ids]=False
         if hasattr(self,'wrist_angles'):self.wrist_angles[ids]=0.
@@ -564,4 +579,6 @@ class TensorWorld:
             clear_reset_contacts(self.pad_measurements,ids)
             self.pad_measurements['effective_pad_bad_env'][ids]=self.pad_pose_bad_env[ids]
             measured.update(self.pad_measurements)
+        recovery=getattr(self,'tripod_recovery_runtime',None)
+        if recovery is not None:recovery.after_physical_reset(ids,measured)
         return measured

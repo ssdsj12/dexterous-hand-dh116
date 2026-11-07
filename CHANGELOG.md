@@ -1,3 +1,16 @@
+## 2026-11-07 — 右三指独立恢复、非线性区域与隔离原生 A
+
+- 新增每物理episode/env/hand/digit独立恢复与执行记账，保留1 mm/1 s/.5 s限制，拒绝回滚reset、预算重置和未提交候选收费。
+- 新增实际SDK全11关节/全链接校准FK、原USD真实指腹区域、34-hull与双手扫掠审核，分开DOUBLE逻辑积分、float32 SDK编码及真实接触。几何近似与无证书拒绝均明确记录，不更改物理碰撞或执行器。
+- 修复接触中途建立后旧接近动作继续执行却不记账，以及旧压力动作在接触丢失后成为无预算接近；每480 Hz切换动作来源并保留原退压。新增独立fresh pressure参考，未将旧MPC失败计数重置来扩大预算。
+- 新增完整raw ownership、actual SDK/cache核对、终止/reset/fatal证据、真实掌位移和固定锚点滑移；模拟力矩/命令/drive限制分开。A/B/C门槛不能由单帧、unknown、换锚或返回原位伪造；原支架/桌面载荷未知时不认证承托。
+- 分离物理episode接触历史与A阶段内的实际恢复证据；前缀已恢复事件不能提前通过A。逐子步补充实测区域间隙/法向见证、best gap、round和接触/预算状态，供独立重算0.5 s进展判据；不改变动作或预算。
+- 最新完整源码CPU回归：5917 passed/原96 failed/28 errors/49 skipped，91个subtests通过；5786个基线节点无状态变化，304新增全通过，共6090个节点，最终1334文件源码清单保持不变。此前A02快照的5883/270结果已被此回归取代；CPU不计原生抓取次数。
+- 独立 `stage_a_01` 在进入A控制前因桌面父Xform未直接带CollisionAPI而退出，0个A试验；只读修复为启用子碰撞体的世界边界并集，原边界与物理限制不变。3项定向及2项独立USD测试通过，01失败数据/源码保留。
+- `stage_a_02` 进入真实480 Hz物理子步后由操作者SIGINT结束，被独立审计标为censored/invalid evidence，而非A通过、失败或三指0/4：481逻辑控制、482物理区间、3856原始SDK子步、30840物理行，8个首episode均censored、0完整episode、0接近提交/预算消耗、0 Student/PPO。env4–7只有自然Tripod接触，阶段内0次REACQUIRING、固定阶段恢复、terminal或success。杆/腕未静止，角漂移0.0022–0.00328 rad高于0.001门槛，几何决策0；SIGINT flush顺序造成末8个诊断缺失，未补造reducer。B/C/D和Student不运行。
+- cooked readback 03/04均为reset-only探针，不构成A或抓取证据：03实际mesh getter计数272项全为0；04改用owner-first后各存储hull getter count=1，但272个hull全部未通过独立closed-convex拓扑验证，complete=false/censored、live attachment=false，未recook或替换几何。04无控制/物理/Teacher/PPO/Student，仅读取一次RGB-D。owner-first模块/测试SHA前缀`ddf703d...`/`e55cb...`；最新定向CPU52 passed/13.34s，完整CPU仍需在最新源码后重跑。
+- 新增显式独立stage A入口、单Isaac冻结启动和门禁；A02审计结果为censored/invalid，B/C/D仅有诊断门槛，未完成原生运行，未启动Student或长PPO。当前原生对象仍为原刚性圆柱代理，不能替代柔性线缆或实机验证。原生结果在[恢复验证报告](docs/superpowers/reports/2026-11-07-tripod-recovery-budget-validation.md)中独立更新。保持所有历史数据、二指路径、Tanh/v2、3844D/371D/24D、原物理和30mm/5秒/0.5mm，PR继续Draft、不合并。
+
 ## 2026-11-07 — 三指几何接触获取与约束求解
 
 - 增加显式Teacher-only几何获取profile：源CAD指腹/实测位姿、有限圆柱侧面、正间隙与朝向门禁、逐pad位移/时间/无进展累计预算和原生fault拒绝；已有承载pad保留压力控制。Teacher腕部不变，不修改Student/PPO/物理参数。

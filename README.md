@@ -1,3 +1,17 @@
+## 2026-11-07 — 右三指独立恢复与固定手腕原生 A 实验
+
+新增独立的逐指腹恢复状态机、双手全源几何非线性候选审核和每480 Hz实测诊断。每个物理episode/指腹保留1 mm接近命令与1 s尝试预算，0.5 s无实际进展停止本轮；接触闪烁、求解失败或恢复均不补充预算。实际post-guard SDK提交后才记账，控制步中途接触建立会撤销剩余接近动作，真实丢失也不能让旧压力速度变成无预算接近。压力保持按每个实测子步重建，不依赖旧MPC的永久停止计数。
+
+新增默认关闭的 `--tripod-recovery-stage A`，先重放原Pressure前缀，再冻结实测双腕和左指目标，仅测试右拇指/食指/中指。最新完整源码回归为5917 passed，原96 failed/28 errors/49 skipped保持，91个subtests通过；5786个基线节点状态无变化，304个新增全部通过，6090个节点的最终源码清单保持不变。此前A02快照的5883/270结果已被该完整源码回归取代；这些均不是原生抓取证据。
+
+首次原生启动 `stage_a_01` 在进入 A 控制前因桌面父Xform与子碰撞体的读取不匹配退出，**A试验数为0**。修复仅汇总启用的真实子碰撞体，保留原世界边界与碰撞限制；3项定向和2项独立USD测试通过，失败目录与冻结源码保留。
+
+独立 `stage_a_02` 随后进入真实480 Hz物理子步，但操作者以SIGINT结束，结果被独立审计标为 **censored/invalid evidence**，不能记作A通过、失败或三指0/4：481次逻辑控制、482个物理区间、3856个原始SDK子步，30,840条物理行，8个首episode均censored、0个完整episode、0次接近提交、0预算消耗，0 Student/PPO。env4–7只出现自然Tripod接触，阶段内0次REACQUIRING、0次固定阶段恢复、0 terminal/success。终止前杆/腕没有达到固定阶段的静止条件，实测角漂移约0.0022–0.00328 rad（门槛0.001），几何决策0次；SIGINT flush顺序导致末8个诊断缺失，未伪造汇总。A仍未取得资格，B/C/D及Student训练不启动。当前原生对象沿用原刚性圆柱代理，离线候选和探针不能替代柔性线缆或真实DH116硬件验证。
+
+后续 cooked readback 探针也只验证读取链路，不构成A或抓取结果：03在原生reset-only下272个mesh getter均为0；04使用owner-first读取后每个存储hull getter count=1，但272个hull全部未通过独立closed-convex拓扑核验，因而仍为complete=false/censored、live attachment=false，未recook或替换几何。两次均无控制、物理推进、Teacher/PPO/Student；04仅有一次RGB-D读取。对应owner-first模块/测试SHA前缀为 `ddf703d...` / `e55cb...`，完整CPU仍需在这批最新源码后重跑。
+
+所有历史模型/失败实验、二指成功路径、原物理/材料/执行器、3844D Actor/371D Critic/24D动作与30mm/5秒/0.5mm成功标准保持；不启动长PPO，PR #1保持Draft、不合并。完整来源、原生结果及限制见[本阶段恢复验证报告](docs/superpowers/reports/2026-11-07-tripod-recovery-budget-validation.md)。下文为先前阶段结果，不能冒充本次验证。
+
 ## 2026-11-07 — 三指接触获取与约束MPC实验
 
 新增显式 `pressure_geometry_acquire` 和 `pressure_geometry_constrained` Teacher 专家实验。前者使用实测 body pose、源 USD 指腹和当前圆柱表面，为尚未承载的三指指腹生成有界几何目标；已有承载 pad 保留压力参考。后者只对违反原约束的 soft 提案求解可行替代轨迹，已可行解逐值保留。两者均优化12个指关节，Teacher腕部动作保持；局部几何预测不代表真实接触、力预测或抓取成功。

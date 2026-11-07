@@ -230,6 +230,14 @@ class TensorEnv:
             total_exceedance_env_s=float(self.velocity_exceedance_steps.sum())*self.world.dt)
 
     def fail(self, mask, m, context):
+        # Opt-in staged experiments must preserve the fatal native substep
+        # before any reset or exception unwinds the collector. Legacy probes
+        # without this method and ordinary training retain the original path.
+        recorder=getattr(getattr(self,'control_probe',None),'on_physics_failure',None)
+        recording_error=None
+        if recorder is not None:
+            try:recorder(mask,m,context)
+            except Exception as error:recording_error=repr(error)
         ids = mask.nonzero().flatten()[:8]
         detail = dict(context=context,indices=ids.cpu().tolist(),
             task_done=self.task.done[ids].cpu().tolist(),
@@ -245,6 +253,7 @@ class TensorEnv:
             joint_position_rad=self.world.q[ids].cpu().tolist(),
             joint_velocity_rad_s=self.world.qd[ids].cpu().tolist(),
             joint_limits_rad=self.world.limits[ids].cpu().tolist())
+        if recording_error is not None:detail['staged_native_recording_error']=recording_error
         if self.fault_trace is not None:
             try:
                 self.fault_trace.write(ids,context)

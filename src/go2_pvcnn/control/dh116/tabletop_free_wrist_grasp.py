@@ -120,6 +120,9 @@ def control(t,actions,live,dt):
         applied,over=pressure_limited_target(t.command.reshape(t.n,2,6),target.reshape(t.n,2,6),
             t.m['hand_object_loads'],ceiling,t.direction,dt,t.parameters.deadband_n)
         applied=applied.flatten(1).maximum(t.low).minimum(t.high)
+    if getattr(t,'tripod_recovery_runtime',None) is not None:
+        from .tabletop_tripod_execution_guard import apply_post_guard_recovery
+        applied=apply_post_guard_recovery(t,applied,live,dt,actions)
     t.command[live]=applied[live]
     lo=actions.new_tensor(CONTRACT['palm_lower_m']);hi=actions.new_tensor(CONTRACT['palm_upper_m'])
     palms=(w.palms+_limited_step(actions[:,12:18].reshape(t.n,2,3),rates['wrist_rate_m_s'],dt)).maximum(lo).minimum(hi)

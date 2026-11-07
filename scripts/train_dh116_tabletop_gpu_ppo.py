@@ -40,6 +40,8 @@ parser.add_argument('--vision-teacher-source',type=Path,
                     help='independent bounded real RGB-D Teacher supervision collection; no PPO')
 parser.add_argument('--vision-teacher-mpc',action='store_true',
                     help='training-only local finger MPC refines Teacher reference labels')
+parser.add_argument('--tripod-recovery-stage',choices=('A',),
+                    help='independent bounded fixed-wrist right Tripod recovery; no PPO or qualified BC')
 parser.add_argument('--vision-teacher-mpc-profile',choices=('local_pad','absolute_reference','pressure_reference','pressure_geometry_acquire','pressure_geometry_constrained'),default='local_pad',
                     help='explicit training-only MPC experiment; default preserves original local-pad MPC')
 parser.add_argument('--vision-teacher-max-control-steps',type=int,default=1300)
@@ -240,6 +242,9 @@ parser.add_argument('--max-iterations', type=int, default=None,
                     help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+if args.tripod_recovery_stage:
+    from go2_pvcnn.control.dh116.tabletop_tripod_recovery_runtime import validate_staged_options
+    validate_staged_options(args)
 from go2_pvcnn.control.dh116.tabletop_vision_evaluation_contract import validate_vision_evaluation_options
 try:validate_vision_evaluation_options(args)
 except (ValueError,OSError) as exc:parser.error(str(exc))
