@@ -792,7 +792,7 @@ class TensorTask:
         if getattr(self,'free_wrist_grasp',False):
             from .tabletop_free_wrist_grasp import add_feedback
             add_feedback(self,pieces,valid,dt,hand_lift_force_n=hand_lift_force_n,
-                         object_weight_n=object_weight_n)
+                         object_weight_n=object_weight_n,physical_live=live)
         for name,value in pieces.items():
             self.terms[name][valid]+=value[valid]; self.reward[valid]+=value[valid]
         self.used[live]+=dt

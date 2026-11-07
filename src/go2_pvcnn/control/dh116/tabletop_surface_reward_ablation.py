@@ -80,6 +80,9 @@ class RewardAblation:
         self.armed[ids] = False
         self.invalid_windows[ids] = 0
         self.break_events[ids] = 0
+        experiment = getattr(self, 'lift_quality_experiment', None)
+        if experiment is not None:
+            experiment.reset(ids, bottom)
 
     @torch.no_grad()
     def update(self, *, bottom, qualified, early_window_good, early_duration, drift,
@@ -216,7 +219,8 @@ def _relative_tangent_speed(task):
     return torch.where(weights > 0., tangent.norm(dim=-1) * weights, 0.).sum((1, 2)) / weights.sum((1, 2)).clamp_min(1e-8)
 
 
-def apply_reward(task, pieces, valid, dt, hand_lift_force_n, object_weight_n, *, milestone_valid=None):
+def apply_reward(task, pieces, valid, dt, hand_lift_force_n, object_weight_n, *,
+                 milestone_valid=None, physical_valid=None, physical_live=None):
     from .tabletop_surface_exploration import qualified_pad_contact
     reward = task.surface_reward_ablation
     if not reward.terms:
@@ -245,3 +249,9 @@ def apply_reward(task, pieces, valid, dt, hand_lift_force_n, object_weight_n, *,
         smoothness=task.surface_motion_cost if SMOOTH in reward.terms else zero,
         milestone_valid=milestone_valid)
     pieces.update(terms)
+    experiment = getattr(reward, 'lift_quality_experiment', None)
+    if experiment is not None:
+        from .tabletop_lift_reward_experiment import add_lift_experiment_reward
+        add_lift_experiment_reward(task, pieces, experiment, tracker,
+            physical_valid if physical_valid is not None else valid, support, weight,
+            physical_dt=dt,physical_live=physical_live if physical_live is not None else valid)

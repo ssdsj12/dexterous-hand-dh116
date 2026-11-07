@@ -32,6 +32,20 @@ parser.add_argument('--depth-coordinate-probe',action='store_true',
 parser.add_argument('--depth-camera-config',type=Path)
 parser.add_argument('--vision-student',action='store_true',
                     help='RGB-D-only 3844D actor with training-only 371D critic')
+parser.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
+parser.add_argument('--vision-wrist-quaternion-preprocessing',
+                    choices=('raw','wrist_quaternion_hemisphere_v1'),default='raw',
+                    help='versioned opt-in actor quaternion sign canonicalization; old models remain raw')
+parser.add_argument('--vision-teacher-source',type=Path,
+                    help='independent bounded real RGB-D Teacher supervision collection; no PPO')
+parser.add_argument('--vision-teacher-mpc',action='store_true',
+                    help='training-only local finger MPC refines Teacher reference labels')
+parser.add_argument('--vision-teacher-mpc-profile',choices=('local_pad','absolute_reference','pressure_reference','pressure_geometry_acquire','pressure_geometry_constrained'),default='local_pad',
+                    help='explicit training-only MPC experiment; default preserves original local-pad MPC')
+parser.add_argument('--vision-teacher-max-control-steps',type=int,default=1300)
+parser.add_argument('--vision-teacher-hold-tail-control-steps',type=int,default=0,
+                    help='opt-in recorded zero-reference tail after the longest Teacher source; 0 preserves source cutoff')
+parser.add_argument('--vision-teacher-raw-chunk-frames',type=int,default=16)
 parser.add_argument('--vision-width',type=int,default=320)
 parser.add_argument('--vision-height',type=int,default=240)
 parser.add_argument('--vision-camera-batch-size',type=int,default=64)
@@ -40,6 +54,18 @@ parser.add_argument('--vision-inference-batch-size',type=int,default=128)
 parser.add_argument('--vision-visibility-mode',choices=('all','batch'),default='all')
 parser.add_argument('--vision-camera-mode',choices=('bounded','fixed'),default='bounded')
 parser.add_argument('--vision-resume-downsize',action='store_true')
+parser.add_argument('--vision-evaluation-checkpoint',type=Path)
+parser.add_argument('--vision-evaluation-manifest',type=Path)
+parser.add_argument('--vision-evaluation-max-control-steps',type=int,default=1200)
+parser.add_argument('--grasp-contact-diagnostics',action='store_true',
+                    help='read-only raw PhysX pad diagnostics during inference-only visual evaluation')
+parser.add_argument('--grasp-contact-probe',action='store_true',
+                    help='historical observation smoke only: 2..16 envs, at most180 control steps; no PPO or candidate validation')
+parser.add_argument('--vision-lift-reward-experiment',choices=('R0','R1','R2','R3','R4','R5'),default='R0')
+parser.add_argument('--vision-warm-start-optimizer',choices=('preserve','reset'),default='preserve')
+parser.add_argument('--vision-checkpoint-interval',type=int,default=10)
+parser.add_argument('--vision-experiment-initial-state-audit',action='store_true')
+parser.add_argument('--vision-experiment-initial-state-reference',type=Path)
 parser.add_argument('--physics-clone-mode',choices=('replicate','usd_parse'),default='replicate')
 parser.add_argument('--force-feedback', action='store_true',
                     help='PPO targets measured hand reaction load; lift requires stable measured contact')
@@ -214,6 +240,12 @@ parser.add_argument('--max-iterations', type=int, default=None,
                     help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+from go2_pvcnn.control.dh116.tabletop_vision_evaluation_contract import validate_vision_evaluation_options
+try:validate_vision_evaluation_options(args)
+except (ValueError,OSError) as exc:parser.error(str(exc))
+from go2_pvcnn.control.dh116.tabletop_vision_action_contract import validate_vision_action_options
+try:validate_vision_action_options(args)
+except ValueError as exc:parser.error(str(exc))
 from go2_pvcnn.control.dh116.tabletop_surface_exploration import validate_options as validate_surface_options
 try:validate_surface_options(args)
 except ValueError as exc:parser.error(str(exc))
@@ -340,7 +372,8 @@ if args.mixed_grasp_initialization and (
         or not args.direct_training or not args.tensor_pipeline or not args.headless
         or not args.free_wrist_grasp or not args.surface_force_sharing or not args.surface_feedback
         or (not args.surface_demonstrations and not args.vision_student)
-        or (not args.resume and not args.depth_coordinate_probe and not args.vision_student) or args.max_iterations is None
+        or (not args.resume and not args.depth_coordinate_probe and not args.vision_student)
+        or (args.max_iterations is None and not args.vision_evaluation_checkpoint)
         or args.episodes_per_env is not None or args.surface_teacher_replay
         or args.surface_student_actor or args.surface_student_eval_steps or args.surface_dagger_collect
         or args.require_native_student_validation or args.surface_student_validation_report
@@ -365,6 +398,13 @@ if args.vision_student:
             or args.vision_width not in range(1,321) or args.vision_height not in range(1,241)):
         parser.error('visual actor requires 2..4096 even mixed RGB-D scenes; privileged actor initialization/distillation modes are excluded')
     args.enable_cameras=True
+from go2_pvcnn.control.dh116.tabletop_vision_teacher_collection import validate_options as validate_teacher_collection_options
+try:
+    validate_teacher_collection_options(args)
+    if args.vision_teacher_source and not args.vision_teacher_source.is_file():
+        raise ValueError('vision Teacher source must be an existing ordinary dataset file')
+except ValueError as error:
+    parser.error(str(error))
 if args.depth_coordinate_probe:
     if not args.mixed_grasp_initialization or args.num_envs!=2 or not args.depth_camera_config or args.resume:
         parser.error('depth coordinate capture requires two mixed scenes, camera config, and no checkpoint')
@@ -445,6 +485,8 @@ try:
 except (ValueError, OSError, KeyError) as error:
     parser.error(str(error))
 args.output.mkdir(parents=True)
+if args.vision_student:
+    args._vision_new_output=str(args.output.resolve())
 write_json(args.output/'monitor.json',dict(status='initializing',num_envs=args.num_envs,
     timesteps=0,updates=0,object_kind=args.object_kind,
     episodes_per_env_target=None if args.max_iterations is not None else args.episodes_per_env,

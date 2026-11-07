@@ -121,6 +121,27 @@ class NativeSurfaceMPC:
         self.anchored[ids]=False
         self.stats['last_model_error']=str(error)
 
+    def _nominal_trajectory(self,ids,command,actions,lower,upper):
+        """Default local incremental intent; experimental experts may supply absolute references."""
+        return nominal_joint_trajectory(command,actions,self.horizon,lower,upper)
+
+    def _activation_mask(self,paired,bottom,reference,ids,valid):
+        """Default admission; overrides receive only finite measured rows."""
+        return paired&(bottom>=reference+.003)&(self.bad_predictions[ids]<3)
+
+    def _model_points(self,ids,hand,material,measured):
+        """Points used both in local predictions and in the shifted Jacobian."""
+        return material
+
+    def _target_trajectory(self,ids,points,targets,wrist_motion,target_points,valid):
+        """Return targets [N,H,2,D,3] and nonnegative weights [N,2,D]."""
+        weights=valid.to(points.dtype)/valid.sum(-1,keepdim=True).clamp_min(1)
+        return target_points,weights
+
+    def _plan(self,ids,**kwargs):
+        """Default planner call; privileged experimental adapters may constrain it."""
+        return self.planner.plan(**kwargs)
+
     def _refine_ids(self,ids,nominal,result,failed):
         """Batch the normal path; split unclassified exceptions down to their row.
 
@@ -164,7 +185,7 @@ class NativeSurfaceMPC:
             subset=SimpleNamespace(m=dict(effective_pad_loads_n=loads,
                 effective_pad_vectors_w=vectors,effective_pad_valid=valid))
             paired=allocation(subset)['paired'].all(-1)
-            active=paired&(bottom>=reference+.003)&(self.bad_predictions[ids]<3)
+            active=self._activation_mask(paired,bottom,reference,ids,valid)
             self.anchored[ids] &= active[:,None,None]
             ids=ids[active];valid=valid[active]
             if not ids.numel():return
@@ -207,7 +228,7 @@ class NativeSurfaceMPC:
             raw={key:value[healthy] for key,value in raw.items()}
             hand_data=[tuple(value[healthy] for value in row) for row in hand_data]
             q=raw['q'].to(command);command=raw['command'];actions=raw['actions']
-            planned=nominal_joint_trajectory(command,actions,self.horizon,lower,upper)
+            planned=self._nominal_trajectory(ids,command,actions,lower,upper)
             center=raw['relative']+raw['wrist_pose'][...,:3].mean(1)
             rod_rotation=_rotation(torch.cat((center,raw['object_quat']),-1))
             measured=raw['measured']
@@ -221,6 +242,7 @@ class NativeSurfaceMPC:
                 rod_local=(rod_rotation[:,None].transpose(-1,-2)@(measured[:,h]-center[:,None])[...,None]).squeeze(-1)
                 local_rod[:,h]=torch.where(capture[...,None],rod_local,local_rod[:,h])
                 material=(rotation@local_hand[:,h,...,None]).squeeze(-1)+poses[...,:3]
+                material=self._model_points(ids,h,material,measured[:,h])
                 hand_j=[]
                 for d in range(5):
                     hand_j.append(point_jacobian(native[:,d],material[:,d],com[:,d],self.folds[h].to(command)))
@@ -229,8 +251,8 @@ class NativeSurfaceMPC:
             targets=(rod_rotation[:,None,None]@local_rod[...,None]).squeeze(-1)+center[:,None,None]
             wrist_motion,target_points=wrist_point_trajectories(actions,raw['palms'],raw['angles'],
                 raw['seed'][...,3:],raw['roots'][...,:3],points,targets,center,self.horizon)
-            weights=valid.to(q.dtype)/valid.sum(-1,keepdim=True).clamp_min(1)
-            target,diag=self.planner.plan(q=q,command=command,nominal=planned,points=points,
+            target_points,weights=self._target_trajectory(ids,points,targets,wrist_motion,target_points,valid)
+            target,diag=self._plan(ids,q=q,command=command,nominal=planned,points=points,
                 jacobian=jac,target_points=target_points,wrist_motion=wrist_motion,
                 weights=weights,lower=lower,upper=upper,response=.5)
             proposed=action_from_joint_target(nominal[ids],command,target)

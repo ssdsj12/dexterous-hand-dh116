@@ -55,7 +55,8 @@ class SurfaceGripMPC:
              points: torch.Tensor, jacobian: torch.Tensor,
              target_points: torch.Tensor, wrist_motion: torch.Tensor,
              weights: torch.Tensor, lower: torch.Tensor, upper: torch.Tensor,
-             response: float = .5) -> tuple[torch.Tensor, dict]:
+             response: float = .5, *,
+             reference_radius: float | None = None) -> tuple[torch.Tensor, dict]:
         """Return (first_command[N,2,6], diagnostics) without mutating inputs.
 
         Shapes: q/command [N,2,6], nominal [N,H,2,6], points [N,2,D,3],
@@ -79,6 +80,13 @@ class SurfaceGripMPC:
         The clipped nominal candidate is always retained unless improved. A
         hand with no effective contacts follows that candidate exactly, even
         when smoothness alone would prefer a different student trajectory.
+
+        Optional reference_radius bounds every command against the corresponding
+        absolute nominal target. It is an opt-in training-expert trust region;
+        None preserves the original incremental runtime behavior. An unreachable
+        band raises ValueError for rate-limited caller fallback. Roundoff-sized
+        trust intersections (eight dtype epsilons per elapsed horizon step) collapse
+        inside the original physical/rate interval; those limits never expand.
 
         Diagnostics contain the whole command trajectory and H post-command
         predictions. Costs [N] sum the two independent per-hand costs [N,2].
@@ -112,6 +120,11 @@ class SurfaceGripMPC:
                 or not math.isfinite(response) or not 0 < response <= 1):
             raise ValueError("response must be finite in (0,1]")
         response = float(response)
+        if reference_radius is not None:
+            if (isinstance(reference_radius, bool) or not isinstance(reference_radius, Real)
+                    or not math.isfinite(reference_radius) or reference_radius <= 0):
+                raise ValueError("reference_radius must be finite and positive")
+            reference_radius = float(reference_radius)
 
         # Intersect in float64, then round *inward* to preserve authoritative
         # affine follower limits when float32 commands are later read as doubles.
@@ -134,9 +147,26 @@ class SurfaceGripMPC:
         def project(trajectory):
             previous = command
             feasible = []
-            for desired in trajectory.unbind(1):
-                previous = desired.clamp(torch.maximum(lo, previous - step),
-                                         torch.minimum(hi, previous + step))
+            for index, desired in enumerate(trajectory.unbind(1)):
+                physical_low = torch.maximum(lo, previous - step)
+                physical_high = torch.minimum(hi, previous + step)
+                low,high = physical_low,physical_high
+                if reference_radius is not None:
+                    low = torch.maximum(low, nominal[:, index] - reference_radius)
+                    high = torch.minimum(high, nominal[:, index] + reference_radius)
+                    conflict=low>high
+                    tolerance=8*(index+1)*torch.finfo(q.dtype).eps*torch.maximum(
+                        torch.ones_like(low),torch.maximum(low.abs(),high.abs()))
+                    if bool(((low-high>tolerance)|(physical_low>physical_high)).any()):
+                        raise ValueError("absolute reference trust region is unreachable within rate limits")
+                    # Eight native substep additions need not round identically
+                    # to one control-period addition. Repair only that numerical
+                    # trust gap, choosing a point inside the unexpanded physical
+                    # and rate bounds, rather than rejecting a feasible solve.
+                    collapsed=((low+high)*.5).clamp(physical_low,physical_high)
+                    low=torch.where(conflict,collapsed,low)
+                    high=torch.where(conflict,collapsed,high)
+                previous = desired.clamp(low, high)
                 feasible.append(previous)
             return torch.stack(feasible, 1)
 

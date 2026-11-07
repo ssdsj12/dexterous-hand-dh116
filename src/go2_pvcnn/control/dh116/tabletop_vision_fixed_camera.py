@@ -60,6 +60,13 @@ class FixedVisionCamera:
             device=self.device, dtype=torch.float32)[self.slot_order]
         self._last_frame = -1
         self._samples = 0
+        self._raw_frame_sink = None
+
+    def set_raw_frame_sink(self, sink):
+        """Opt-in evidence tap; owned sensor copies, no extra render or step."""
+        if sink is not None and not callable(sink):
+            raise ValueError('raw frame sink must be callable or None')
+        self._raw_frame_sink = sink
 
     def _check_frozen(self, expected_time, expected_step):
         if abs(float(self._sim.current_time) - expected_time) > 1e-9:
@@ -132,6 +139,15 @@ class FixedVisionCamera:
             num_points=self.num_points, min_depth_m=self.near, max_depth_m=self.far)
         self._check_frozen(time_before, step_before)
         self._check_fk(poses, hand_poses)
+        if self._raw_frame_sink is not None:
+            self._raw_frame_sink(dict(rgb=rgb.detach().cpu().clone(),
+                depth=depth.detach().cpu().clone(),K=self.K.detach().cpu().clone(),
+                T_world_camera=self.T_world_camera.detach().cpu().clone(),
+                hand_poses=poses.detach().cpu().clone(),frame_id=int(frame['frame_id']),
+                simulation_time=time_before,rendered_simulation_time=float(frame['simulation_time']),
+                physics_step=step_before))
+            self._check_frozen(time_before, step_before)
+            self._check_fk(poses, hand_poses)
         # Optional first-frame evidence only: real RGB-D/calibration plus the
         # current palm encoder/FK stand-in. No object pose, contact, or GT mask.
         if self._samples == 0 and self._debug_ids:

@@ -1,3 +1,102 @@
+## 2026-11-07 — 三指接触获取与约束MPC实验
+
+新增显式 `pressure_geometry_acquire` 和 `pressure_geometry_constrained` Teacher 专家实验。前者使用实测 body pose、源 USD 指腹和当前圆柱表面，为尚未承载的三指指腹生成有界几何目标；已有承载 pad 保留压力参考。后者只对违反原约束的 soft 提案求解可行替代轨迹，已可行解逐值保留。两者均优化12个指关节，Teacher腕部动作保持；局部几何预测不代表真实接触、力预测或抓取成功。
+
+第一轮完整原生实验 `geometry_acquisition_pilot_02` 已自然结束并经独立审计：二指保持 **4/4 成功**、最大净抬升 **31.627704 mm**；三指仍 **0/4**，最大净抬升仅 **0.006431 mm**，四个首回合均因 `object_dropped` 结束。实际480 Hz记录中，三指双手六个所需pad从未同时承载，接触保持仍未解决；失败数据不进入成功监督池。固定来源四环境回放不计作100个独立初态，也不是Student验证。
+
+对实际失败决策的逐步重放表明，六次永久几何停止对应的soft提案被拒，但相同约束下存在可行替代解；因此增加独立约束求解profile，保留原腕部、目标/权重、预算、永久停止、执行器和物理限制。新增默认关闭的 `--vision-teacher-hold-tail-control-steps`，显式记录来源结束后的零参考、实际MPC issued动作、RGB-D及首terminal；默认0沿用历史行为。尾段不延长原30秒episode超时、不重置失败回合，也不能把未记录动作计入合格标签。
+
+第二轮 `geometry_constrained_pilot_03` 使用同物理初态、seed42、原相机与源轨迹，已在独立目录完成1800控制步及8个完整首回合，独立审计exit0、无截断：二指仍 **4/4成功、最高31.627704 mm**；三指仍 **0/4、最高仅0.019719 mm**，两个在1092/1169步掉落，两个在原30秒限制下超时。1056个尾段样本全部核对零参考、实际动作和首终止，未产生尾段成功或三指合格标签。三指双手六pad加对向承载仅在两个环境各出现1个物理子步（2.083 ms），远未形成稳定保持；实际载荷和深度峰值增加，不能称抓取或Lift退化已解决。
+
+新求解器已消除早期误拒，完整审计核对524次求解调用、实际编码动作和45504个准入子步，执行限位违规为0。但后段仍存在固定法向点Jacobian模型的H4约束冲突；这只是局部模型的数值证据，不表示物理抓取不可达。CAD中心点间隙也不能等同于实际指腹接触状态，后续需改进接触与运动预测。已完成177项最终factory/tail/相关回归、261项求解器相关回归及六个真实失败快照检查；最终完整CPU5613 passed、原96 failed/28 errors/49 skipped、91个subtests通过，原5670节点不变，本次116新增全通过。未训练新Student，不能用CPU或专家接触片段替代Student成功。
+
+3844D Actor、371D Critic、24D动作、Tanh Gaussian/default v2、原物理/执行器和净30 mm、连续5 s、漂移0.5 mm成功标准保持。所有源模型和历史数据保留，没有启动长PPO或将仿真接触追加到Student。实现、命令、证据与未完成项见[本次验证报告](docs/superpowers/reports/2026-11-07-tripod-reacquisition-validation.md)。PR #1继续Draft，不合并。以下为此前阶段记录。
+
+## 2026-11-06 — 接触MPC验证与视觉Student输入、启动拟合修复
+
+新增显式 `absolute_reference` / `pressure_reference` Teacher MPC 实验，以及 Actor 内部的 `wrist_quaternion_hemisphere_v1` 和独立 BC v3 启动采样选项。3844D Actor、371D Critic、24D动作、Tanh Gaussian PPO、原物理/执行器限制及30mm、连续5秒、0.5mm成功标准保持；默认v2与历史raw模型不静默切换预处理。仿真接触仅供训练专家使用，没有新增已接通实机反馈的声明。
+
+BC100纯Student已完成固定清单的二指/三指各100个冷初态、1800控制步；独立重放1,503,649条原生物理样本，0无效测量，但两组均0/100成功、0双手有效对向接触，净抬升仅为数值沉降量级。实际输入审计确认等价腕部quaternion的符号变化会改变旧Actor动作，且原BC100在Teacher自身启动状态上也明显欠拟合；这两项证据不能用总体离线MSE或PointNet有梯度替代。
+
+`absolute_reference_pilot_v2` 已完成并通过独立二进制/时序/原生成功观察器审计：二指恢复4/4成功、最高净抬升31.627704mm；三指仍0/4，保持原 `excess_force` 失败判据。独立 `pressure_reference` 实验也已完整审计：二指仍4/4，三指全部越过旧约419步的过载失败时刻，但在684/938/783/864步因 `object_dropped` 结束，最高净抬升仅1.07533mm，仍0/4成功。接触建立/保持不足，没有合格三指标签；两项均为8环境固定来源回放，不是每抓法100个独立初态或Student成功。
+
+此前三份1000步离线拟合只有一个二指来源、无三指标签和独立heldout。显式将25%的采样混合权重分配给前4控制步后，启动MSE由均匀1000步的0.00449366降至0.0000122437，但全来源MSE增加3.97%，阶段切换误差仍存在；132项独立保护/采样核对通过。随后新Student候选已使用绝对参考MPC的合格4698帧（3355帧动作经MPC修正）完成1000步canonical BC及25%启动混合采样，101项独立检查与73项保护状态检查通过。来源仍只有一个二指轨迹、无三指标签/heldout；Critic、噪声、PPO Adam/LR/计数/RNG及原件保持，离线拟合不代表新Student成功。
+
+最终完整CPU结果为5497 passed、原96 failed/28 errors/49 skipped、91个subtests通过；5529个旧节点无缺失/状态变化，新增141项全通过，并非整个旧套件全绿。新候选纯Student评估（`student_mpc_canonical1000_100_per_style`）已完成200/200回合，独立审计exit0，原生执行证书与条件遥测完整性均核验通过，但二指/三指成功率仍均0/100，30mm达成与合格Hold均0。二指Lift P50/P90/P95/max为0.00388034/0.0111964/0.102051/24.537986mm；按全部5个pad统计的双侧对向接触在100回合均曾出现，但总时间占比仅0.7462%，100回合均丢失，共5765次。三指对应Lift为0.0000558165/0.0000843213/0.0001004292/0.0008006615mm，完全无双侧对向接触，滑移为NA。输入修复和启动拟合尚未解决稳定抓取；首批200个原生动作与CPU最大差1.19e-7及quaternion符号不变性复验只验证推理一致性，不另计原生试验。实际命令、来源、审计和限制见[本次接触MPC与Student验证报告](docs/superpowers/reports/2026-11-06-contact-aware-mpc-validation.md)。不启动长PPO，模型与原始运行数据不进入Git，PR #1继续Draft、未合并。以下历史记录保持原阶段语境。
+
+## 2026-11-06 — Teacher参考与MPC监督的视觉Student
+
+新增独立的“Teacher参考动作 → 当前原生状态的局部MPC → 同步视觉示范 → Actor BC → 显式v3 warm-start”路径。保留Tanh Gaussian PPO、3844D感知Actor、371D训练Critic、24D动作、默认v2及原物理/执行器/30mm、5秒、0.5mm成功标准。MPC的仿真接触/Jacobian仅供训练专家生成标签，不追加到Student输入。
+
+MPC实际优化未来4步的12个手指命令，腕部12维跟随Teacher；它是局部pad运动学模型，尚无物体/摩擦/力动力学或抓取获取保证。数据保存pre-action真实RGB-D、四帧Actor输入、原参考和实际issued动作、frame/env/episode/物理时序与来源SHA。只有当前真实原生首回合成功、无recovery并通过抓法接触审计才可进入成功监督池；失败数据独立保留，CPU注入相机/环境不能取得原生资格。
+
+Student以单次`tanh(mu)`拟合实际issued24D，独立Adam只更新PointNet/Actor MLP；Critic、噪声、PPO Adam/LR/计数/RNG和历史模型保留，新BC及warm-start使用独立文件。Teacher/MPC动作不进入Student的PPO rollout，不混用Student log probability。四份历史Teacher回放只有两个原始轨迹来源，不能按相邻帧随机拆分宣称独立验证。
+
+本次Teacher二指4/4原生成功（最高31.620mm），三指0/4；原局部MPC二指0/4（最高12.489mm），失败标签被隔离。独立审计还发现来源1439的PointNet全死，初版BC只拟合本体信息；现新增显式`reset_pointnet`及独立BC v2，默认拒失活分支，必须验证真实梯度和点云对动作的影响。新BC100使6个PointNet tensor全部有梯度，MSE0.043277→0.001974，清点云动作差最大0.1392；不是抓取成功或独立验证集选模。
+
+新模型关闭Teacher/MPC后完成8环境180步原生推理，exit0、无无效测量，但0完整/8未完成episode。CPU回归、原生Teacher/MPC对照、两版实际BC及明确限制见[本次验证报告](docs/superpowers/reports/2026-11-06-visual-teacher-mpc-supervision-validation.md)。不启动长PPO，不宣称视觉Student可靠抓取或Lift退化已解决；PR #1继续Draft。下文为此前各阶段记录。
+
+最终完整CPU5356项及91个subtests通过；原96失败/28错误/49跳过逐节点保持，原5416节点无缺失/变化，新增113项全部通过。BC v2专项32项和独立复审通过；模型和原始运行数据不进入Git。
+
+## 2026-11-06 — P0 接触诊断与真实源CAD几何筛选
+
+新增默认关闭的逐指腹原生接触诊断：左右10个pad的建立、持续、丢失与未知/终止censor事件，绑定env、episode、实际物理子步和时间，保存原始PhysX点/法向、缓冲归属和真实body pose。分别统计二指/三指、左右手和双手有效对向接触，区分7种原因；力矩明确为模拟估计，未知滑移不填0。保留Tanh Gaussian PPO、默认v2、3844D Actor、371D Critic、24D动作、原物理/限制和30mm/5秒/0.5mm标准。
+
+实际129/1439模型的同初态配对评估已完成：每模型每抓法100次，0 invalid，真实readback逐字节相同，全部原生成功均0。129三指62/100曾形成对向接触、1248次观测丢失；1439二指23/100、568次；其余两组从未形成有效对向接触。完整Lift P50/P90/P95、保持、接触物理时间占比及模拟力矩饱和见[本次验证报告](docs/superpowers/reports/2026-11-06-grasp-contact-geometry-validation.md)。
+
+沿中心线的候选搜索使用每手17个原USD hull、各自5个CAD指腹、原mimic/主动限位、完整线缆及self/interhand/桌面/原支架筛选和静态承托LP。02及原腕限位内扩大姿态的03搜索均为每组24候选、最多200次几何优化，二指/三指均0 accepted；几何前置条件不满足，未进入LP，未放宽阈值或把失败项送入闭环。所有几何结果native准入固定False，候选到原生source/scene/reset门禁仍待实现。当前原生对象仍为刚性圆柱代理，弯曲线仅离线proxy。
+
+完整CPU回归5243项及91个subtests通过，旧96失败/28错误/49跳过不变，原5314节点无缺失/状态变化，新增102项全通过。8环境120控制步原生历史观察冒烟已完成，逐pad接触记录有效；0个完整episode、不执行PPO、不计100次验证或抓取成功。长PPO排队已取消；课程训练、R0-R5/Adam对照及泛化仍未执行。PR #1继续保持Draft，尚未证明可靠抓取或Lift退化已解决。
+
+## 2026-11-06 — T2 基础设施与新版 PPO 原生冒烟（09:44 UTC快照）
+
+补充完善：新增默认关闭的原生训练初态审计，在相机前后保存全部环境真实 q/qd、手根与物体位姿/速度及三个物理时钟；Adam 对比须在第一次 PPO 更新前与同源 reference 匹配。修复真实1439轮合同中已知 tuple 字段经 JSON 保存后被选模误拒的问题，完整模型与 typed 合同哈希仍严格。评估诊断改为整批 blocking CPU 快照，CPU/CUDA 的终止记录和原始 JSON 对照一致；这些新增路径尚未取得原生对比结果，不能计入100次统计。
+
+面向 `11-5` 的 PR #1 保持 Draft。新增冷重置视觉评估、终止前物理记录、原生证据校验、独立验证集选模、完整 Checkpoint 周期保留、显式保留/重置 Adam warm-start 和独立 R0～R5 奖励实验合同。Actor3844D / Critic371D / 动作24D、物理参数和30mm/5秒/0.5mm成功标准保持；没有把未确认的实机传感反馈加入 Student。
+
+新版 `tanh_gaussian` 已在真实 Isaac 的16环境中完成1440、1441更新，保存后恢复完成1442；RGB-D有效率100%，log-probability重建最大误差约3.34e-6。另一次原生无更新恢复逐项保持策略、Adam、LR、CPU/CUDA RNG、计数和完整合同相等。原生successes仍0，这些结果只证明动作、采样、更新及保存恢复链路。
+
+最新完整CPU回归5141项及91个subtests通过；原96失败、28错误、49跳过逐节点保持，4801个基线和5079个上阶段节点均无缺失/状态变化，本阶段新增235节点全通过（比d796917再新增40个全部通过）。规格和质量复审已完成；不能将这些CPU结果当作原生抓取改善。
+
+用户后续明确授权原进程退出：先保留1750轮完整原模型（44897回合，successes0，SHA837791335e5f1c2153db763ed419381c708ec8b1f8ff2d4abfc6fa025aab249d），再正常SIGINT并核实GPU3释放；原模型仍保留，没有把1750称为完成2048。所有派生任务按单Isaac实例、独立代码快照及输出串行运行。实际129模型已完成每抓法100个原生冷初态并经完整raw重放核验：两组成功均0%，二指/三指最大净lift分别0.005627mm/1.033019mm；1439模型继续相同条件评估，奖励消融/Adam有效性/验证选模结果尚待原生验证；不能宣称Lift退化已经解决。详见[本次原生进度与限制](docs/superpowers/reports/2026-11-06-native-stage2-progress.md)、[固定实验协议](docs/superpowers/plans/2026-11-06-native-experiment-protocol.md)。
+
+## 2026-11-06 — Lift 修复：T1 已实现并通过 CPU 验证，原生评估待执行
+
+独立分支 `codex/dh116-lift-repair-20261106` 已接入 `--vision-action-distribution tanh_gaussian`：保存 latent 和实际有界命令，使用正确变换概率、有界熵/KL与微批PPO，命令和动作历史不再额外clip。新模型使用独立v3合同；旧v2默认路径保留，只能通过显式离线工具派生warm start。完整权重、Adam、LR、已有Torch RNG和已知静态配置差异在写入/启动Kit前检查，原始文件及输出受保护，拒绝会反转PPO优化方向的maximize模式。
+
+最终定向CPU回归 **327项通过**（根代理独立复跑22.52s），规格复审和质量复审均PASS。完整CPU回归4906项及91个subtests通过；保留原96失败、28错误和49跳过，基线4801个节点状态逐项一致，新增278个节点全部通过。真实冻结1439轮断点离线派生保留原字段，四组历史视觉输入的确定性动作差为0；原件SHA不变。命令、文件差异及限制见[集成验证报告](docs/superpowers/reports/2026-11-06-lift-repair-t1-integration-validation.md)，不能把CPU测试当作原生抓取成功。
+
+Actor仍3844D、Critic371D。按[硬件审计](docs/superpowers/reports/2026-11-06-dh116-hardware-feedback-audit.md)，当前没有已证实接通的实机反馈通道，20D仅作带来源/单位/时序/有效性的可选接口设计；PhysX接触和成功监视器不追加到Student。原1207个源码/资源文件与冻结清单一致；2026-11-06 06:03 UTC原GPU3训练已完成1548/2048次更新，原生successes0，继续运行，未停止、重启或切换。
+
+同时准备了T2冷重置manifest和首terminal统计基础设施；生产schema每抓法至少100个独立float32状态，缺测值保留null和coverage，始终标为authored_unverified，未进行每抓法100次原生验证。完整视觉评估adapter、真实初态读回、验证选模/周期保留、奖励消融及修复版重新训练仍按后续门槛推进。没有证据表明Lift下降或稳定抓取已经解决。
+
+## 2026-11-06 — 独立 Lift 修复：T1 概率核心通过 CPU 验证
+
+独立 `tanh_gaussian` 核心保存 latent `z`、实际 `tanh(z)` 和变换后的 log probability，使用稳定 Jacobian、当前策略有界熵及精确 latent Normal KL。3844D actor / 371D critic / 24D 动作保持；新 actor 仅移除输出层的参数无关 Tanh，由分布执行一次 squash。CPU float32 rollout 保存 latent，微批按样本数加权，每个逻辑 minibatch 只执行一次梯度裁剪与 Adam，正常配置仍为每轮 40 次 Adam 更新。新指标与原三项 loss 分开，记录动作饱和、各维均值/标准差、概率一致性、KL、熵和裁剪前梯度范数。
+
+隔离服务器上新增及相关旧测试 **107 项通过**（根代理独立复跑 10.40s），规格审查与代码质量审查均通过。命令、边界与限制见 [T1 核心验证记录](docs/superpowers/reports/2026-11-06-lift-repair-t1-core-validation.md)。全仓库 CPU 测试收集得到 4831 项，另有 11 个旧测试文件因缺少 `open3d` / `elastica` / `co_sim` 无法加载，尚不能宣称全仓库通过。
+
+训练入口、v3 合同及显式派生恢复仍在集成；默认旧路径未切换，GPU3 原训练继续运行。尚未运行修复版 Isaac 或获得修复版抓取成功；固定模型原生回归等待现有训练自然完成第 2048 次更新。保持原物理参数、0.2 Nm 执行器限制与原生成功判据，尚未修改奖励、控制或 Actor 反馈输入。
+
+## 2026-11-06 — 独立 Lift 修复分支：T0 与硬件审计
+
+本工作分支 `codex/dh116-lift-repair-20261106` 从 `11-5` 的 b42f1aa 派生。按用户实施文档，先冻结历史、审计真实传感来源，再升级PPO有界动作合同；当前GPU3训练继续运行，原始源码、物理参数、执行器限制和旧checkpoint保持。Actor仍为3844D、Critic371D；20D仅预留有来源/单位/时间/有效性的可选接口，不将native接触或成功监视器追加到Student。
+
+T0已冻结第1439次完整PPO更新：47644672 transitions、37680 episodes、原生successes0，checkpoint SHA256为 `d8d94faca22638584e10eb67ff55f9cfde904984c7232433ffd68f867ab5bda9`，80个tensor在CPU上均有限。完整策略链日志5+124+1310行、原始Git源码和运行服务器1207个源码/资源文件均保留校验副本，本机副本设为只读。第269/482/1328轮权重未发现，不能由日志补造。
+
+[硬件反馈审计](docs/superpowers/reports/2026-11-06-dh116-hardware-feedback-audit.md)已交付：厂家SDK有部分读数能力，但当前项目未证实实机数据接通；触觉/腕F/T/独立从动角均未确认，PhysX数据只属于仿真通路。设计与执行顺序见[设计](docs/superpowers/specs/2026-11-06-lift-repair-design.md)、[P0计划](docs/superpowers/plans/2026-11-06-lift-repair-p0.md)。
+
+本阶段在隔离服务器目录实际执行以下CPU基线，81项通过（13.63s）：
+
+```bash
+CUDA_VISIBLE_DEVICES='' PYTHONPATH=src PYTEST_DEBUG_TEMPROOT=/tmp PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 OMP_NUM_THREADS=2 \
+ /mnt/mydisk/xk/envs/dh116/bin/python -m pytest -p no:cacheprovider \
+ tests/test_vision_student.py tests/test_vision_ppo.py tests/test_vision_training.py tests/test_vision_resume.py \
+ tests/test_vision_palm_lift.py tests/test_palm_lift_summary.py tests/test_palm_lift_telemetry.py -q --tb=short
+```
+
+T1独立Squashed Gaussian合同正在实现；尚未运行修复版Isaac或宣称抓取成功。原生评估须等当前训练自然完成2048后串行执行。后续奖励逐因素消融、反馈接入、双手控制和重新训练均按验证门槛推进。以下为此前已发布阶段的记录。
+
 ## 2026-11-06 — `11-5`：定期高度汇报与当前视觉训练进度
 
 定期监控现在每次成功连接后都会汇报二指、三指的本轮物体净抬升、全视觉续训链历史最高值与 PPO 轮次，同时保留左右手掌的本轮实际位移及各自历史最高值。正常推进也发送高度表；单次 SSH 失败继续等下次确认，训练状态检查仍只读。字段、历史边界和汇报规则见[当前视觉训练监控说明](docs/dh116_visual_training_monitor.md)。定时任务保存在本机 Codex 中，仓库记录规则，拉取代码本身不会创建定时任务。
