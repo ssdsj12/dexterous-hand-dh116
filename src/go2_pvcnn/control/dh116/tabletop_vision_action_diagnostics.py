@@ -238,6 +238,14 @@ class PhysicsActionDiagnosticWriter:
     terminal_keys: set[tuple[int, int]] = field(default_factory=set)
     rows_written: int = 0
     terminal_rows: int = 0
+    reset_epoch: int = 0
+    last_timestamp_s: float | None = None
+    last_physics_step: int | None = None
+
+    def begin_reset(self) -> None:
+        """Start a new diagnostic reset epoch without reusing episode UIDs."""
+        self.reset_epoch += 1
+        self.terminal_keys.clear()
 
     def record_batch(
         self,
@@ -262,6 +270,10 @@ class PhysicsActionDiagnosticWriter:
             raise ValueError("physics diagnostic metadata must have shape (N,)")
         if not np.isfinite(times).all():
             raise ValueError("physics diagnostic timestamp must be finite")
+        if self.last_timestamp_s is not None and float(times.min()) < self.last_timestamp_s - 1e-12:
+            raise ValueError("physics diagnostic timestamp must be monotonic")
+        if self.last_physics_step is not None and int(steps.min()) < self.last_physics_step:
+            raise ValueError("physics diagnostic physics_step must be monotonic")
 
         def arr(name: str, shape: tuple[int, ...]) -> np.ndarray:
             value = np.asarray(audit[name], dtype=np.float64)
@@ -292,6 +304,7 @@ class PhysicsActionDiagnosticWriter:
             raise ValueError("projection_reasons must have length N")
         for i in range(n):
             key = (int(ids[i]), int(episodes[i]))
+            episode_uid = f"{self.reset_epoch}:{key[0]}:{key[1]}"
             is_terminal = bool(terminal[i])
             post_terminal_noop = key in self.terminal_keys and not is_terminal
             if is_terminal:
@@ -300,6 +313,7 @@ class PhysicsActionDiagnosticWriter:
             row = {
                 "env_id": key[0],
                 "episode_id": key[1],
+                "episode_uid": episode_uid,
                 "policy_step": int(policy_step),
                 "physics_step": int(steps[i]),
                 "timestamp_s": float(times[i]),
@@ -317,4 +331,6 @@ class PhysicsActionDiagnosticWriter:
             row.update({name: value[i].tolist() for name, value in fields.items()})
             self.stream.write(json.dumps(row, separators=(",", ":")) + "\n")
             self.rows_written += 1
+        self.last_timestamp_s = float(times.max())
+        self.last_physics_step = int(steps.max())
         self.stream.flush()

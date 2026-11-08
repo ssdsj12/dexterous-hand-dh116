@@ -11,6 +11,12 @@
 - 完成M0/M1/M2离线镜像消融：M0 L2 0.754994、M1 0.806492、M2 offline-only 0.296581；M2方向一致率0.833333。镜像回环自身四帧/点云/关节/掌位/quaternion/previous action误差全0。
 - 独立短原生回放输出32768条60Hz记录和262144条480Hz记录，未启动长PPO，未修改奖励或旧模型。详见[第二阶段诊断报告](docs/superpowers/reports/2026-11-08-vision1024-stage2-diagnostics.md)。
 
+## 2026-11-08 — 右掌偏置第三阶段 PPO分析与M2原生反事实
+
+- 对32768条policy记录完成按抓法/左右手的动作、log_std、advantage、returns、reward terms、接触载荷和相关性分析；二指/三指右掌Z均值为−0.263025/−0.322588，相关性弱且无terminal/failure样本，明确不作因果解释。
+- 新增M2独立原生预处理路径和动作逆变换，M0默认路径保持不变；同Checkpoint短回放中M2二指/三指净Lift为0.003487/0.014168mm、成功0、出现2次joint_limit，未证明可纳入部署合同。
+- 补强episode_uid、时间戳/physics_step单调性和terminal覆盖测试，诊断完整性专项10项通过。详见第三阶段PPO、M0/M2和完整性报告。
+
 ## 2026-11-07 — 右三指独立恢复、非线性区域与隔离原生 A
 
 - 新增每物理episode/env/hand/digit独立恢复与执行记账，保留1 mm/1 s/.5 s限制，拒绝回滚reset、预算重置和未提交候选收费。

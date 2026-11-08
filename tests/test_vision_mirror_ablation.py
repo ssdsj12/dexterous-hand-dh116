@@ -4,6 +4,8 @@ import pytest
 from go2_pvcnn.control.dh116.tabletop_vision_mirror_ablation import (
     MIRROR_MODES,
     evaluate_mirror_outputs,
+    m2_action_to_physics,
+    m2_observation_for_actor,
     mirror_action24,
     mirror_observation,
     mirror_observation_roundtrip_metrics,
@@ -53,6 +55,19 @@ def test_prepare_pair_has_explicit_m0_m1_m2_modes():
         assert original.shape == paired.shape == observation.shape
         assert metadata["mode"] == mode
         assert metadata["offline_only"] is (mode == "M2_full_mirror")
+
+
+def test_m2_native_wrapper_has_explicit_observation_and_action_inverse():
+    observation = _observations()
+    actor_input = m2_observation_for_actor(observation)
+    assert actor_input.shape == observation.shape
+    torch.testing.assert_close(
+        actor_input,
+        prepare_mirror_pair(observation, "M1_quaternion")[1],
+        atol=2e-6, rtol=0.,
+    )
+    action = torch.arange(48, dtype=torch.float32).reshape(2, 24) / 100.
+    torch.testing.assert_close(m2_action_to_physics(m2_action_to_physics(action)), action)
 
 
 def test_mirror_output_metrics_report_l2_direction_and_per_dimension_error():

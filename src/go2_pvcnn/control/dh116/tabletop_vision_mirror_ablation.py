@@ -93,6 +93,22 @@ def mirror_observation(observation: Any) -> torch.Tensor:
     return torch.stack([_mirror_frame(frames[:, index]) for index in range(HISTORY)], dim=1).flatten(1)
 
 
+def m2_observation_for_actor(observation: Any) -> torch.Tensor:
+    """Apply the explicit M2 actor-side preprocessing for an isolated experiment.
+
+    The raw sensor history is mirrored once, then quaternion signs are
+    canonicalized. This helper is never enabled by the normal training or
+    inference path; callers must pair it with :func:`m2_action_to_physics`.
+    """
+    value = _require_observation(observation)
+    return canonicalize_wrist_quaternion_history(mirror_observation(value))
+
+
+def m2_action_to_physics(action: Any) -> torch.Tensor:
+    """Map an M2 actor output back to the original physical action frame."""
+    return mirror_action24(action)
+
+
 def _observation_components(observation: torch.Tensor) -> dict[str, torch.Tensor]:
     frames = observation.reshape(-1, HISTORY, FRAME_DIM)
     point_end = 2 * POINTS * 3

@@ -99,6 +99,44 @@ def test_physics_writer_keeps_terminal_sample_authoritative(tmp_path):
     assert rows[2]["terminal_sample"] is False
 
 
+def test_physics_writer_episode_uid_changes_after_repeated_reset(tmp_path):
+    path = tmp_path / "physics.jsonl"
+    zeros23 = np.zeros((1, 2, 3), dtype=np.float64)
+    audit = dict(
+        raw_action24=np.zeros((1, 24)), requested_palm_target_m=zeros23,
+        pre_projection_palm_target_m=zeros23, projected_palm_target_m=zeros23,
+        final_sdk_palm_target_m=zeros23, actual_palm_pose_m=zeros23,
+        palm_displacement_m=zeros23, actual_palm_velocity_m_s=zeros23,
+        table_clearance_m=np.zeros((1, 2)), safe_z_m=np.zeros((1, 2)),
+        contact_loads_n=np.zeros((1, 2)), contact_valid=np.zeros((1, 2), dtype=bool),
+        projection_reasons=[0])
+    with path.open("w", encoding="utf-8") as stream:
+        writer = PhysicsActionDiagnosticWriter(stream)
+        writer.record_batch([0], [0], 0, [1], [0.1], [True], [False], audit)
+        writer.begin_reset()
+        writer.record_batch([0], [0], 0, [2], [0.2], [True], [False], audit)
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    assert rows[0]["episode_uid"] != rows[1]["episode_uid"]
+
+
+def test_physics_writer_rejects_nonmonotonic_physical_timestamps(tmp_path):
+    path = tmp_path / "physics.jsonl"
+    zeros23 = np.zeros((1, 2, 3), dtype=np.float64)
+    audit = dict(
+        raw_action24=np.zeros((1, 24)), requested_palm_target_m=zeros23,
+        pre_projection_palm_target_m=zeros23, projected_palm_target_m=zeros23,
+        final_sdk_palm_target_m=zeros23, actual_palm_pose_m=zeros23,
+        palm_displacement_m=zeros23, actual_palm_velocity_m_s=zeros23,
+        table_clearance_m=np.zeros((1, 2)), safe_z_m=np.zeros((1, 2)),
+        contact_loads_n=np.zeros((1, 2)), contact_valid=np.zeros((1, 2), dtype=bool),
+        projection_reasons=[0])
+    with path.open("w", encoding="utf-8") as stream:
+        writer = PhysicsActionDiagnosticWriter(stream)
+        writer.record_batch([0], [0], 0, [2], [0.2], [True], [False], audit)
+        with pytest.raises(ValueError, match="monotonic"):
+            writer.record_batch([0], [0], 0, [1], [0.1], [True], [False], audit)
+
+
 @pytest.mark.parametrize("bad", [np.zeros((2, 23)), np.full((2, 24), np.nan)])
 def test_bad_action_rejected(bad):
     with pytest.raises(ValueError):

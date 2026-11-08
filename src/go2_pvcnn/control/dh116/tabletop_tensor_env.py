@@ -297,7 +297,7 @@ class TensorEnv:
         self.diagnostic_episode_ids[:] = 0
         self._diagnostic_policy_step = 0
         if self.physics_action_diagnostics is not None:
-            self.physics_action_diagnostics.terminal_keys.clear()
+            self.physics_action_diagnostics.begin_reset()
         self.reset_substep[:] = 0
         self.substep = 0
         self.phase_visits[:] = False

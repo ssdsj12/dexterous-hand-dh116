@@ -99,6 +99,30 @@ def _observations(packet, device_world, previous_action, history, critic, reset_
     return TensorDict({'policy':policy,'critic':critic.float()},batch_size=[n],device=policy.device)
 
 
+def _mirror_preprocessing_metadata(mode):
+    if mode == 'm0_raw':
+        return dict(mode=mode,actor_observation_transform='identity',
+                    physical_action_transform='identity',offline_only=False,
+                    default_path=True)
+    if mode == 'm2_full_mirror':
+        return dict(mode=mode,
+                    actor_observation_transform='mirror_observation_then_quaternion_canonicalize',
+                    physical_action_transform='mirror_action24_inverse',
+                    inverse_is_involution=True,offline_only=False,
+                    default_path=False,checkpoint_contract_unchanged=True)
+    raise ValueError(f'unsupported vision mirror preprocessing: {mode}')
+
+
+def _apply_mirror_preprocessing(obs, mode):
+    metadata=_mirror_preprocessing_metadata(mode)
+    if mode == 'm0_raw':
+        return obs, metadata
+    from .tabletop_vision_mirror_ablation import m2_observation_for_actor
+    transformed=obs.clone()
+    transformed['policy']=m2_observation_for_actor(obs['policy'])
+    return transformed, metadata
+
+
 def _save(path, algorithm, contract, iteration, timesteps, env):
     data=dict(version=contract['version'],contract=contract,iteration=iteration,timesteps=timesteps,
         policy=algorithm.policy.state_dict(),optimizer=algorithm.optimizer.state_dict(),
@@ -126,6 +150,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         args=copy.copy(args)
         args.rollout_steps=24
     output=Path(args.output)
+    mirror_mode=getattr(args,'vision_mirror_preprocessing','m0_raw')
+    mirror_metadata=_mirror_preprocessing_metadata(mirror_mode)
     action_diagnostics=None
     diagnostic_episode_ids=None
     diagnostic_stream=None
@@ -232,7 +258,10 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         _write_json(output/'initial_camera_geometry_validation.json',geometry)
     # Resume references are checked before constructing PPO/Adam/storage.
     if initial_audit is not None and saved is not None:initial_audit.finish(saved['policy'])
-    obs=_observations(packet,device_world,previous,history,critic)
+    obs,mirror_metadata=_apply_mirror_preprocessing(
+        _observations(packet,device_world,previous,history,critic),mirror_mode)
+    start_metadata_mirror=mirror_metadata
+    _write_json(output/'vision_mirror_preprocessing.json',mirror_metadata)
     maker=make_squashed_vision_algorithm if squashed else make_vision_algorithm
     actor_options={}
     if squashed and contract.get('actor_wrist_quaternion_preprocessing','raw')!='raw':
@@ -301,6 +330,7 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                      'visual_supervision_derivation','visual_supervision_history'):
             value=getattr(algorithm,'vision_'+name,None)
             if value is not None:start_metadata[name]=copy.deepcopy(value)
+    start_metadata['mirror_preprocessing']=start_metadata_mirror
     _write_json(output/'training_start.json',start_metadata)
     # Save real sampled actor inputs separately from privileged critic state.
     torch.save(dict(policy=obs['policy'].detach().cpu(),contract=contract),
@@ -336,6 +366,9 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                         issued=action.clone()
                     else:
                         issued=action.clamp(-1,1)
+                    if mirror_mode == 'm2_full_mirror':
+                        from .tabletop_vision_mirror_ablation import m2_action_to_physics
+                        issued=m2_action_to_physics(issued)
                     if policy_diagnostics is not None:
                         transition=algorithm.transition
                         sigma=getattr(transition,'action_sigma',None)
@@ -425,7 +458,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                         camera_frame_last=packet.get('camera_frame_last'),
                         camera_batch_count=packet.get('render_batches'))
                     _write_json(output/'collection_status.json',collection)
-                    obs=_observations(packet,device_world,previous,history,critic,done)
+                    obs, _ = _apply_mirror_preprocessing(
+                        _observations(packet,device_world,previous,history,critic,done),mirror_mode)
                     algorithm.process_env_step(obs,reward,done,{})
                     reward_sum+=float(reward.mean())
                     visible_fraction+=float(packet['object_valid'].float().mean())
