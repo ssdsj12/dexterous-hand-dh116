@@ -42,3 +42,20 @@ def test_policy_diagnostics_reports_left_right_action_stats(tmp_path):
     assert summary["rows"] == 2
     assert summary["by_hand"]["left"]["action_mean"] == [0.] * 12
     assert summary["by_hand"]["right"]["action_std"] == [1.] * 12
+
+
+def test_policy_summary_uses_noncontiguous_left_right_action_contract(tmp_path):
+    recorder = VisionPolicyDiagnosticRecorder(tmp_path / "policy.jsonl")
+    action = np.arange(24, dtype=np.float64)[None, :]
+    recorder.record(
+        env_id=[0], episode_id=[0], iteration=1, policy_step=0,
+        timestamp_s=[0.], action24=action, latent_actions=None, latent_mean=None,
+        log_std=np.zeros((1, 24)), log_prob=[0.], value=[0.], advantage=[0.],
+        returns=[0.], reward=[0.], done=[False], reward_terms={},
+    )
+    summary = recorder.summary()
+    recorder.close()
+    assert summary["by_hand"]["left"]["action_mean"] == [
+        0., 1., 2., 3., 4., 5., 12., 13., 14., 18., 19., 20.]
+    assert summary["by_hand"]["right"]["action_mean"] == [
+        6., 7., 8., 9., 10., 11., 15., 16., 17., 21., 22., 23.]

@@ -14,6 +14,10 @@ from typing import Any, Mapping
 import numpy as np
 
 
+LEFT_ACTION_INDICES = np.array([0, 1, 2, 3, 4, 5, 12, 13, 14, 18, 19, 20])
+RIGHT_ACTION_INDICES = np.array([6, 7, 8, 9, 10, 11, 15, 16, 17, 21, 22, 23])
+
+
 def _vector(value: Any, n: int, name: str, *, dtype=np.float64) -> np.ndarray:
     result = np.asarray(value, dtype=dtype).reshape(-1)
     if result.shape != (n,) or not np.isfinite(result).all():
@@ -138,12 +142,12 @@ class VisionPolicyDiagnosticRecorder:
             "log_std_mean": log_std_mean.tolist(),
             "by_hand": {
                 "left": {
-                    "action_mean": action_mean[:12].tolist(),
-                    "action_std": action_std[:12].tolist(),
+                    "action_mean": action_mean[LEFT_ACTION_INDICES].tolist(),
+                    "action_std": action_std[LEFT_ACTION_INDICES].tolist(),
                 },
                 "right": {
-                    "action_mean": action_mean[12:24].tolist(),
-                    "action_std": action_std[12:24].tolist(),
+                    "action_mean": action_mean[RIGHT_ACTION_INDICES].tolist(),
+                    "action_std": action_std[RIGHT_ACTION_INDICES].tolist(),
                 },
             },
         }
