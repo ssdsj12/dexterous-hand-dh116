@@ -4,6 +4,8 @@
 
 确定性评估入口使用 `--vision-evaluation-checkpoint`、冻结的 200 例 manifest 和 `--paired-bias-arm`。M0 与 M2 逐个核对真实初态，右 Z 干预回放 M0 的其余 23 维动作。动作、物理子步和首个终止逐环境存档。详见[原生配对评估](docs/superpowers/reports/2026-11-08-vision1024-stage4-native-pair.md)和[关节越限的五组对照](docs/superpowers/reports/2026-11-08-vision1024-stage4-joint-limit.md)。
 
+四个确定性对照臂共用二指、三指各 100 个冷初态。M2 三指净抬升 P95 达到 0.401537 mm，同组 M0 为 0.074721 mm；三指越限由 12/100 升至 81/100，两种策略、两种抓法的原生成功数均为 0。保留 M0 默认合同。将 M0 的右掌 Z 置零使右掌末位移中位数由约 −4 mm 接近 0 mm，两组均未出现合格 Hold。
+
 ## 2026-11-08 — 视觉 Student 右掌不对称 P0 诊断
 
 本阶段先做逐环境动作链审计，不修改右手奖励、动作幅度、Actor结构或物理参数。`--vision-action-diagnostics` 为默认关闭的只读诊断开关，保存24D动作合同（`finger12|palm_translation6|rotation6`）、左右手请求/投影/最终SDK目标、实际掌位与速度、reset-relative坐标、env/episode/physics step/时间戳、净空、safe_z、接触载荷和有效接触。

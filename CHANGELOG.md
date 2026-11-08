@@ -1,8 +1,9 @@
 ## 2026-11-08 — 右掌偏置第四阶段
 
+- 200 对实测物理初态的完整回合评估显示，M2 三指净 Lift P95 为 0.401537 mm，81/100 例关节越限。M0 三指对应 0.074721 mm、12/100 例越限。两种抓法均无成功。固定其余 23 维动作的右 Z 干预结果、同调度回放对照、初帧点云匹配子集与滑移计数详见[原生配对报告](docs/superpowers/reports/2026-11-08-vision1024-stage4-native-pair.md)。
 - 增加 M2 历史动作回放、冷初态配对和固定左手的右 Z 干预。关节回放在物理 reset 前记录完整 articulation、SDK 主动目标与 Actor/执行动作。原轨迹两次越限均可复现。
 - 修正第三阶段报告里的终止次数和模型文件留存说明。奖励项相关性按各自有效样本计算，并核对 policy 与物理行的身份。第 1024、1025、1026 轮模型的同输入推理统计见[阶段报告](docs/superpowers/reports/2026-11-08-vision1024-stage4-ppo-bias.md)。
-- CPU 验证使用 `pytest -q tests/test_vision_eval*.py tests/test_evaluation_telemetry.py tests/test_dh116_tensor_env.py tests/test_joint_limit_replay.py tests/test_vision_action_diagnostics.py tests/test_vision_mirror_ablation.py tests/test_stage3_ppo_bias_analysis.py tests/test_vision_paired_bias_eval.py tests/test_vision_squashed*.py`。使用原 SHA 固定的 USD 资产后，测试快照中 279 项通过。
+- CPU 验证使用 `pytest -q tests/test_vision_eval*.py tests/test_evaluation_telemetry.py tests/test_dh116_tensor_env.py tests/test_joint_limit_replay.py tests/test_vision_action_diagnostics.py tests/test_vision_mirror_ablation.py tests/test_stage3_ppo_bias_analysis.py tests/test_vision_paired_bias_eval.py tests/test_vision_squashed*.py`。使用原 SHA 固定的 USD 资产和最终代码，281 项通过。
 
 ## 2026-11-08 — 视觉 Student 右掌不对称 P0 动作诊断
 

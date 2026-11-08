@@ -37,6 +37,14 @@ def check_replay(reference, observed, physical_end, *, zero_z):
     return n
 
 
+def mean_physical_z(actions, physics_steps):
+    """One mean per hand and trial, with partial final 60-Hz tick weighted correctly."""
+    steps=(physics_steps+7)//8
+    weights=np.full(steps,8,dtype=np.float64)
+    weights[-1]=physics_steps-8*(steps-1)
+    return np.average(actions[:steps,[14,17]],axis=0,weights=weights).tolist()
+
+
 class Arm:
     def __init__(self, folder):
         self.folder=Path(folder)
@@ -131,6 +139,7 @@ def compare(baseline, other, *, schedule=None):
                 b[:m,control.c[name]],o[:m,other.c[name]],equal_nan=True))
                 for name in ('lift_m','right_palm_dz_m','bilateral_opposed_contact','qualified_hold_s','slip_m')},
             full=full,common=both,baseline_return=control_row['task_return'],other_return=other_row['task_return'],
+            common_mean_physical_z=[mean_physical_z(arm.actions[:,i],m) for arm in (control,other)],
             baseline_success=control_row['first_terminal_success'],other_success=other_row['first_terminal_success'],
             baseline_failure=control_row['failure_reason'],other_failure=other_row['failure_reason']))
     groups={}
@@ -150,6 +159,7 @@ def compare(baseline, other, *, schedule=None):
             alternative_survived_longer=sum(r['baseline_steps']<r['alternative_steps'] for r in g),
             common_horizon_exact_lift_traces=sum(r['raw_value_exact_match_on_common_horizon']['lift_m'] for r in g),
             full=[summary(k,'full') for k in range(2)],common=[summary(k,'common') for k in range(2)],
+            common_mean_physical_z_left_right=np.mean([r['common_mean_physical_z'] for r in g],axis=0).tolist(),
             paired_lift_delta_mm=distribution([r['full'][1]['lift_mm']-r['full'][0]['lift_mm'] for r in g]),
             full_episode_return_delta=distribution([r['other_return']-r['baseline_return'] for r in g]),
             success_count=[sum(r[k+'_success'] for r in g) for k in ('baseline','other')],

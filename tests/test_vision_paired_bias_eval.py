@@ -2,7 +2,7 @@ import json
 import numpy as np
 import pytest
 import torch
-from tools.audit_vision_paired_bias import Arm, check_replay, compare
+from tools.audit_vision_paired_bias import Arm, check_replay, compare, mean_physical_z
 
 from go2_pvcnn.control.dh116.tabletop_vision_paired_bias import (
     neutralize_right_z, paired_identity, require_identical_pair, summarize_trials,
@@ -53,6 +53,13 @@ def test_intervention_checks_all_other_channels_and_zero_tail():
         check_replay(baseline, observed, 19, zero_z=True)
     baseline[0,17] = -.25
     assert check_replay(baseline,baseline.copy(),12,zero_z=False)==2
+
+
+def test_common_z_uses_physical_frame_and_partial_tick_weight():
+    actions=np.zeros((2,24),np.float32)
+    actions[0,14]=1.
+    actions[1,17]=-1.
+    assert mean_physical_z(actions,10)==pytest.approx([.8,-.2])
 
 
 def _write_pair_fixture(path, arm, end):
