@@ -41,8 +41,15 @@ parser.add_argument('--vision-mirror-preprocessing',
                     help='isolated visual actor preprocessing experiment; default preserves raw M0')
 parser.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
 parser.add_argument('--vision-m2-replay', type=Path, help='Replay an existing M2 diagnostic run without PPO')
+parser.add_argument('--bimanual-joint-tracking-audit', action='store_true',
+                    help='opt-in reset-before-terminal 480 Hz joint tracking evidence during replay')
+parser.add_argument('--bimanual-mapping-probe', action='store_true',
+                    help='exclusive small physical mapping perturbations instead of action replay')
+parser.add_argument('--bimanual-explicit-sdk-adapter', action='store_true',
+                    help='explicit Teacher regression of the versioned physical SDK mapping')
 parser.add_argument('--vision-replay-arm', choices=('recorded','neutral_fingers','neutral_rotation',
-                    'neutral_translation','omit_inverse'), default='recorded')
+                    'neutral_translation','omit_inverse','right_rotation_after240',
+                    'right_translation_after240'), default='recorded')
 parser.add_argument('--vision-wrist-quaternion-preprocessing',
                     choices=('raw','wrist_quaternion_hemisphere_v1'),default='raw',
                     help='versioned opt-in actor quaternion sign canonicalization; old models remain raw')
@@ -68,7 +75,7 @@ parser.add_argument('--vision-camera-mode',choices=('bounded','fixed'),default='
 parser.add_argument('--vision-resume-downsize',action='store_true')
 parser.add_argument('--vision-evaluation-checkpoint',type=Path)
 parser.add_argument('--vision-evaluation-manifest',type=Path)
-parser.add_argument('--paired-bias-arm', choices=('m0','m2','replay','right_z_zero'))
+parser.add_argument('--paired-bias-arm', choices=('m0','m2','replay','right_z_zero','z2','z3'))
 parser.add_argument('--paired-bias-reference', type=Path)
 parser.add_argument('--vision-evaluation-max-control-steps',type=int,default=1200)
 parser.add_argument('--grasp-contact-diagnostics',action='store_true',
@@ -259,6 +266,10 @@ if args.vision_m2_replay and (not args.vision_student or not args.tensor_pipelin
     parser.error('--vision-m2-replay requires an exclusive native visual tensor replay')
 if not args.vision_m2_replay and args.vision_replay_arm != 'recorded':
     parser.error('--vision-replay-arm requires --vision-m2-replay')
+if (args.bimanual_joint_tracking_audit or args.bimanual_mapping_probe) and not args.vision_m2_replay:
+    parser.error('bimanual native probes require exclusive --vision-m2-replay')
+if args.bimanual_explicit_sdk_adapter and not args.vision_teacher_source:
+    parser.error('explicit SDK adapter is restricted to independent Teacher regression')
 if args.tripod_recovery_stage:
     from go2_pvcnn.control.dh116.tabletop_tripod_recovery_runtime import validate_staged_options
     validate_staged_options(args)

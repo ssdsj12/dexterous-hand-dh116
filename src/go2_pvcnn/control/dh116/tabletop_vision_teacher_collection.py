@@ -141,6 +141,10 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
     from .tabletop_vision_student import SensorHistory
     from .tabletop_vision_supervision_dataset import load_teacher_reference_dataset,build_dataset,save_dataset
     validate_options(args)
+    adapter_difference = None
+    if getattr(args, 'bimanual_explicit_sdk_adapter', False):
+        from .tabletop_bimanual_experiment_runtime import install_explicit_sdk_adapter
+        adapter_difference = install_explicit_sdk_adapter(env, device_world, args.output)
     native_camera=camera is None
     genuine=False
     if native_camera:
@@ -340,6 +344,9 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
         actor_observation_size=3844,critic_observation_size=371,action_size=24,
         ppo_updates=0,student_policy_trained=False,teacher_success_is_student_success=False,
         dagger_state_query_oracle=False,raw_rgbd_frames=raw.frames,elapsed_wall_s=time.monotonic()-start)
+    if adapter_difference is not None:
+        report['physical_sdk_adapter_max_action_difference'] = adapter_difference[0]
+        env.bimanual_action_adapter = None
     if reference_execution is not None:report['recorded_reference_execution']=reference_execution
     _exclusive_json(output/'teacher_collection_report.json',report)
     _write_json(output/'monitor.json',report)

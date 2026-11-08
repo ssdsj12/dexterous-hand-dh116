@@ -26,6 +26,29 @@ class World:
         return self.m
 
 
+def test_explicit_adapter_runs_before_control_on_every_physics_substep():
+    t=TensorTask(template(),2,'cpu');w=World(t);e=TensorEnv(w,t)
+    calls=[]
+    control=t.control
+    def adapt(action):
+        calls.append(('adapter',w.tick))
+        issued=action.clone()
+        issued[:,0]=.1
+        return issued
+    def observe_control(action,live,dt):
+        calls.append(('control',w.tick,float(action[1,0])))
+        return control(action,live,dt)
+    e.bimanual_action_adapter=adapt
+    t.control=observe_control
+    e.step(torch.zeros((2,20)))
+    assert len(calls)==16
+    for tick in range(8):
+        assert calls[2*tick]==('adapter',tick)
+        assert calls[2*tick+1][:2]==('control',tick)
+        assert calls[2*tick+1][2]==pytest.approx(.1)
+    assert t.last_raw_action24.eq(0).all()
+
+
 def test_failed_transition_resets_only_once_and_keeps_terminal_penalty():
     t=TensorTask(template(),2,'cpu');w=World(t);e=TensorEnv(w,t)
     obs,r,d,extra=e.step(torch.zeros((2,20)))

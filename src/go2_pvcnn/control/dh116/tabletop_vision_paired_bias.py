@@ -68,21 +68,60 @@ def run_paired_arm(args, env, task, world, camera, history, obs, policy, readbac
         if arm in ('replay','right_z_zero'):
             reference=np.load(folder/'issued_actions.npy',mmap_mode='r')
     n=world.n
+    if world.hands[1].joint_names[world.w.ids[1][1]] != 'finger12':
+        raise ValueError('native right finger12 SDK active mapping mismatch')
     finished=np.zeros(n,dtype=bool)
     physical=[]
     outputs=[]
     rewards=np.zeros(n)
     baseline=world.roots[:,:,2].clone()
+    coordinated = arm in ('z2', 'z3')
+    if coordinated:
+        from .tabletop_bimanual_experiment_runtime import install_coordination
+        install_coordination(env, world, arm, output)
     # One batched transfer per physical substep. The live flag belongs to the
     # physics engine; the first-episode mask is applied separately in reduction.
     fields=('live','done','native_success','measurement_valid','lift_m','qualified_hold_s',
             'slip_m','slip_valid','bilateral_opposed_contact','contact_valid','failure',
             'right_palm_dz_m','physics_step','timestamp_s','lift_valid','qualified_hold_valid',
-            'slip_applicable','slip_reason_code')
+            'slip_applicable','slip_reason_code','left_palm_dz_m','palm_sync_error_m',
+            'left_tracking_error_rad','right_tracking_error_rad','left_load_n','right_load_n')
+    fields += ('right_finger12_tracking_error_rad','right_finger12_q_rad',
+               'right_finger12_qd_rad_s','right_finger12_sdk_target_rad','episode_id',
+               'right_finger12_sdk_target_readback_valid')
+    fields += ('policy_step',)
+    if coordinated:
+        fields += tuple(f'executed_action_{i}' for i in range(24))
+        fields += tuple(f'objective_{term}' for term in ('lift','contact','slip','joint','sync','total'))
+        fields += ('objective_valid','coordination_ready','cancel_upward_left','cancel_upward_right')
     def collect(packet):
         scalar = dict(failure=task.failure,right_palm_dz_m=world.roots[:,1,2]-baseline[:,1],
             physics_step=torch.full_like(task.failure,world._physics_steps),
             timestamp_s=torch.full_like(baseline[:,1],float(world.w.sim.current_time)))
+        dz = world.roots[:,:,2]-baseline
+        error = (world.commands.float().double()-task.m['q'].reshape(n,2,6)).abs().amax(-1)
+        scalar.update(left_palm_dz_m=dz[:,0],palm_sync_error_m=(dz[:,0]-dz[:,1]).abs(),
+            left_tracking_error_rad=error[:,0],right_tracking_error_rad=error[:,1],
+            left_load_n=task.m['hand_object_loads'][:,0],right_load_n=task.m['hand_object_loads'][:,1])
+        finger12 = world.hands[1].joint_names.index('finger12')
+        native_target = getattr(world.hands[1].data, 'joint_pos_target', None)
+        target12 = (native_target[:,finger12].double() if native_target is not None
+                    else world.commands[:,1,1].float().double())
+        scalar.update(right_finger12_tracking_error_rad=target12-world.q[:,1,finger12],
+            right_finger12_q_rad=world.q[:,1,finger12],right_finger12_qd_rad_s=world.qd[:,1,finger12],
+            right_finger12_sdk_target_rad=target12,episode_id=env.diagnostic_episode_ids,
+            right_finger12_sdk_target_readback_valid=torch.full_like(task.failure,native_target is not None))
+        scalar['policy_step'] = torch.full_like(task.failure, int(env._diagnostic_policy_step))
+        if coordinated:
+            scalar.update({f'executed_action_{i}':env.stage5_executed_action[:,i] for i in range(24)})
+            info = env.stage5_coordination_diagnostics
+            objective = info['objective']
+            scalar.update({f'objective_{term}':objective.get(term, torch.full_like(baseline[:,0],float('nan')))
+                           for term in ('lift','contact','slip','joint','sync','total')})
+            scalar.update(objective_valid=torch.full_like(task.failure, bool(objective)),
+                          coordination_ready=info['resume_ready'],
+                          cancel_upward_left=info['cancel_upward_target'][:,0],
+                          cancel_upward_right=info['cancel_upward_target'][:,1])
         physical.append(torch.stack([v.double() for v in
             [packet[k] if k in packet else scalar[k] for k in fields]],dim=1).cpu().numpy())
     prior=env.evaluation_telemetry.callback
@@ -90,7 +129,7 @@ def run_paired_arm(args, env, task, world, camera, history, obs, policy, readbac
     try:
         with torch.inference_mode():
             for tick in range(args.vision_evaluation_max_control_steps):
-                if arm=='m0': action=policy.act(obs)
+                if arm in ('m0','z2','z3'): action=policy.act(obs)
                 elif arm=='m2':
                     action=m2_action_to_physics(policy.act(m2_observation_for_actor(obs['policy'])))
                 else:
@@ -108,8 +147,8 @@ def run_paired_arm(args, env, task, world, camera, history, obs, policy, readbac
                 if tick%60==0:
                     print('PAIRED_PROGRESS',arm,tick+1,int(finished.sum()),flush=True)
                 if finished.all(): break
-                if arm in ('m0','m2'):
-                    previous=action.clone()
+                if arm in ('m0','m2','z2','z3'):
+                    previous=(env.stage5_executed_action if coordinated else action).clone()
                     previous[done.bool().reshape(n)]=0
                     obs=_observations(camera.sample(),world,previous,history,critic,reset_mask=done)
     except Exception as error:
@@ -125,6 +164,8 @@ def run_paired_arm(args, env, task, world, camera, history, obs, policy, readbac
         raise
     finally:
         env.evaluation_telemetry.callback=prior
+        if coordinated:
+            env.bimanual_action_adapter=None
     np.save(output/'issued_actions.npy',np.stack(outputs),allow_pickle=False)
     data=np.stack(physical)
     np.savez_compressed(output/'native_samples.npz',fields=fields,samples=data)
@@ -138,6 +179,7 @@ def run_paired_arm(args, env, task, world, camera, history, obs, policy, readbac
         final=live[-1]
         slips=live[:,6][live[:,7].astype(bool)]
         trials.append(dict(trial_id=trial['trial_id'],env_id=i,grasp_style=trial['grasp_style'],
+            episode_uid=f"{output.name}:{i}:{int(live[0,fields.index('episode_id')])}",
             terminal=bool(len(terminal)),valid=bool(live[:,[3,14,15]].all()),
             slip_applicable_samples=int(live[:,16].sum()),slip_valid_samples=len(slips),
             first_terminal_success=bool(final[2]),

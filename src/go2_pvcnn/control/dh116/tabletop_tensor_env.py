@@ -376,7 +376,11 @@ class TensorEnv:
                 from .tabletop_surface_reward_ablation import target_position
                 prior_target = target_position(t,w)
             if hasattr(self,'control_probe'):self.control_probe.before_step()
-            allowed = t.control(actions,live,w.dt)
+            physical_actions = actions
+            adapter = getattr(self, 'bimanual_action_adapter', None)
+            if adapter is not None:
+                physical_actions = adapter(actions)
+            allowed = t.control(physical_actions,live,w.dt)
             if hasattr(self,'lift_gate_counts'):self.lift_gate_counts+=t.lift_diagnostic_masks.sum(0)
             m = w.advance(t,allowed,live)
             if palm_lift is not None:palm_lift.observe(m,live)

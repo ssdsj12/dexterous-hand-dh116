@@ -4,6 +4,19 @@ import pytest
 import torch
 
 from go2_pvcnn.control.dh116.tabletop_joint_limit_replay import load_actions, replay_action
+from go2_pvcnn.control.dh116.tabletop_joint_limit_replay import late_replay_action
+
+
+@pytest.mark.parametrize('arm,section', [('right_rotation_after240',slice(21,24)),
+                                       ('right_translation_after240',slice(15,18))])
+def test_late_intervention_preserves_prefix_and_all_other_channels(arm,section):
+    action=torch.linspace(-.9,.9,48).reshape(2,24)
+    original=action.clone()
+    assert torch.equal(late_replay_action(action,arm,239),original)
+    expected=action.clone()
+    expected[:,section]=0
+    assert torch.equal(late_replay_action(action,arm,240),expected)
+    assert torch.equal(action,original)
 
 
 def test_replay_rejects_missing_environment_and_policy_step(tmp_path):

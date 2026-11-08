@@ -40,14 +40,26 @@ def replay_action(raw, arm):
     if arm == 'omit_inverse':
         return bounded
     issued = m2_action_to_physics(bounded)
-    if arm != 'recorded':
+    if arm not in ('recorded', 'right_rotation_after240', 'right_translation_after240'):
         part = {'neutral_fingers': slice(0, 12), 'neutral_translation': slice(12, 18),
                 'neutral_rotation': slice(18, 24)}[arm]
         issued[:, part] = 0
     return issued
 
 
+def late_replay_action(action, arm, completed_physics_steps):
+    section = {'right_rotation_after240': slice(21,24),
+               'right_translation_after240': slice(15,18)}[arm]
+    actual = action.clone()
+    if completed_physics_steps >= 240:
+        actual[:,section] = 0
+    return actual
+
+
 def run_joint_replay(world, env, args):
+    if getattr(args, 'bimanual_mapping_probe', False):
+        from .tabletop_bimanual_native_probe import run_mapping_probe
+        return run_mapping_probe(world, env, args)
     source = Path(args.vision_m2_replay)
     metadata = json.loads((source/'vision_mirror_preprocessing.json').read_text())
     if metadata.get('mode') != 'm2_full_mirror':
@@ -58,6 +70,10 @@ def run_joint_replay(world, env, args):
     output = Path(args.output)
     names = [list(hand.joint_names) for hand in world.hands]
     episodes = []
+    audit = None
+    if getattr(args, 'bimanual_joint_tracking_audit', False):
+        from .tabletop_bimanual_joint_tracking_audit import JointTrackingAuditWriter
+        audit = JointTrackingAuditWriter(output/'joint_tracking_480hz.jsonl')
     env.reset()
     fingerprint = hashlib.sha256()
     for value in (world.q, world.qd, world.roots, world.wp, world.wq, world.wv):
@@ -71,13 +87,23 @@ def run_joint_replay(world, env, args):
 
     def observe(e, m, live, terminal):
         selected = sorted(watched.union(terminal.nonzero().flatten().tolist()))
+        if audit is not None:
+            from .tabletop_bimanual_joint_tracking_audit import capture_joint_tracking
+            uids = [f'1:{i}:{int(e.diagnostic_episode_ids[i])}' for i in range(world.n)]
+            rows = capture_joint_tracking(world, m, env_ids=selected, episode_uids=uids,
+                policy_step=step, actor_raw24=raw, action_before_inverse24=raw.clamp(-1,1),
+                action_after_inverse24=getattr(e, 'stage5_replay_issued', issued),
+                live=live, terminal=terminal, failure_codes=e.task.failure)
+            for row in rows:
+                audit.append(row)
         for i in selected:
             uid = f'1:{i}:{int(e.diagnostic_episode_ids[i])}'
             row = dict(env_id=i, episode_uid=uid, policy_step=step, physics_step=world._physics_steps,
                        timestamp_s=float(world.w.sim.current_time), live=bool(live[i]),
                        terminal=bool(terminal[i]), failure=int(e.task.failure[i]),
                        actor_raw24=raw[i].tolist(), actor_bounded24=raw[i].clamp(-1,1).tolist(),
-                       physical_action24=issued[i].tolist(), active_q_rad=m['q'][i].tolist(),
+                       physical_action24=getattr(e, 'stage5_replay_issued', issued)[i].tolist(),
+                       active_q_rad=m['q'][i].tolist(),
                        sdk_active_target_rad=world.commands[i].float().tolist(),
                        sdk_wrist_angles_rad=world.wrist_angles[i].tolist(),
                        q=world.q[i].tolist(), limits=world.limits[i].tolist(),
@@ -90,6 +116,15 @@ def run_joint_replay(world, env, args):
 
     with (output/'joint_replay.jsonl').open('x') as stream:
         env.joint_replay_observer = observe
+        late = args.vision_replay_arm in ('right_rotation_after240','right_translation_after240')
+        if late:
+            if getattr(env, 'bimanual_action_adapter', None) is not None:
+                raise ValueError('late intervention requires an independent replay')
+            def late_intervention(action):
+                actual = late_replay_action(action, args.vision_replay_arm, world._physics_steps)
+                env.stage5_replay_issued=actual
+                return actual
+            env.bimanual_action_adapter=late_intervention
         try:
             with torch.inference_mode():
                 for step, raw in actions.items():
@@ -97,6 +132,10 @@ def run_joint_replay(world, env, args):
                     env.step(issued.to(world.device).clone())
         finally:
             env.joint_replay_observer = None
+            if late:
+                env.bimanual_action_adapter=None
+            if audit is not None:
+                audit.close()
     with (output/'joint_replay_summary.json').open('x') as stream:
         json.dump(summary, stream, allow_nan=False, indent=2)
     return dict(status='completed', replay_policy_steps=len(actions), terminal_count=len(episodes))

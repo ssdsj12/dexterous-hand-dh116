@@ -1,3 +1,9 @@
+## 2026-11-08 — 第五阶段物理映射与双手协同验证
+
+新增逐 480 Hz 的关节跟踪审计、左右独立 USD FK/Jacobian 适配器和独立 Z0～Z3 协调实验。T1 重放再次复现右 `finger12` 两次越限，合法目标与实际关节运动之间出现 0.052～0.055 rad 跟踪误差；隐式执行器力矩为仿真估算。T2 完成 53 组、8 环境微扰，左右指腹源 FK 对 SDK 位置最大误差 0.000354 / 0.000399 mm，右 `finger12` 正负方向各 8/8 正确。详见[关节审计](docs/superpowers/reports/2026-11-08-stage5-joint-tracking.md)和[物理映射报告](docs/superpowers/reports/2026-11-08-stage5-physical-mapping.md)。
+
+CPU 回归 299 项通过。Z0～Z3 的完整配对回合、末段单因素关节回放及 `pressure_geometry_constrained` Teacher + MPC 回归正在独立冻结目录中串行采集。Adapter 模型合同包含两手资产与源码 SHA，旧模型需显式派生合同才能接入。当前保留 M0 默认、M2 独立实验及 PR Draft；Student 训练资格依据适配器和 Teacher 原生回归结果判断。
+
 ## 2026-11-08 — 右掌动作偏置与原生关节越限
 
 原生回放复现了三指环境 932 和 799 的右手 `finger12` 越限。两条轨迹的 SDK 主动关节目标均在限内，实测角度在物理步 252 和 256 穿过下界保护线。五个回放组使用同一物理初态。固定输入重推三个实际 M0 Checkpoint 时，第 1024 轮已存在右掌 Z 负偏置。详见[物理终止记录](docs/superpowers/reports/2026-11-08-vision1024-stage4-native-terminal.md)和[分阶段 PPO 统计](docs/superpowers/reports/2026-11-08-vision1024-stage4-ppo-bias.md)。
