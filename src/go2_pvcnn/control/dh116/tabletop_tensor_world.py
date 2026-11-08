@@ -427,6 +427,10 @@ class TensorWorld:
             # real collision response and below-margin restoration remain.
             clearance_floor=.0003
         movement=constrain_palm_z_movement(movement,self.clearances,clearance_floor)
+        pre_projection_palm=self.palms+movement
+        safe_z_audit=torch.full((self.n,2),float('nan'),device=self.device,dtype=self.palms.dtype)
+        projection_reasons=torch.zeros((self.n,2),device=self.device,dtype=torch.long)
+        projection_reasons |= (movement.abs().amax(-1)>=(rate*self.dt)-1e-12).long()
         self.palms = torch.where((allowed&live)[:,None,None],
             torch.maximum(torch.minimum(self.palms+movement,palm_upper),palm_lower),self.palms)
         synchronized=getattr(task,'coordinated_control',torch.zeros_like(live))
@@ -448,6 +452,7 @@ class TensorWorld:
             # Restore the signed deficit so the target clears that link rather
             # than holding its already unsafe measured height.
             safe_z=measured_z-(self.clearances-clearance_floor)
+            safe_z_audit=safe_z.clone()
             per_hand_z=torch.maximum(self.palms[:,:,2],safe_z)
             shared_z=per_hand_z.amax(1,keepdim=True)
             if hasattr(task,'palm_reposition'):
@@ -478,6 +483,7 @@ class TensorWorld:
             # Close shares a safe exploration height. Lift retains each hand's
             # captured offset while applying its own measured clearance bound.
             projected_z=torch.where(synchronized[:,None],shared_z,per_hand_z)
+            projection_reasons |= (projected_z-self.palms[:,:,2]).abs().gt(1e-12).long()*2
             self.palms[:,:,2]=torch.where((safety_controlled&live)[:,None],projected_z,self.palms[:,:,2])
         self.gains = torch.where(live[:,None],(self.gains+self.parameters.stiffness_rate*self.dt)
                                 .clamp_max(self.parameters.stiffness_max),self.gains)
@@ -533,6 +539,37 @@ class TensorWorld:
         if getattr(self.w,'mounts',None) is not None and not getattr(self,'continuous_motion',False):
             from .tabletop_palm_mount import check_transport
             check_transport(self.hands,self.w.mounts,self.root_targets)
+        contact_valid_a=measurement.get('contact_valid',
+            torch.zeros((self.n,2),device=self.device,dtype=torch.bool))
+        if contact_valid_a.ndim==3:
+            contact_valid_a=contact_valid_a.any(-1)
+        elif contact_valid_a.ndim!=2:
+            contact_valid_a=torch.zeros((self.n,2),device=self.device,dtype=torch.bool)
+        # The task lift offset is a world-Z displacement. Do not broadcast it
+        # into X/Y, otherwise the audit would report a false fixed lateral SDK
+        # error even though the control target is unchanged.
+        reset_relative_base=self.root_seed[:,:,:3].clone()
+        reset_relative_base[:,:,2] += task.offset[:,None]
+        actual_palm_pose= (self.roots[:,:,:3]-reset_relative_base).detach().clone()
+        self.last_action_diagnostics=dict(
+            raw_action24=getattr(task,'last_raw_action24',torch.zeros((self.n,24),device=self.device)),
+            requested_palm_target_m=task.palm_targets.detach().clone(),
+            pre_projection_palm_target_m=pre_projection_palm.detach().clone(),
+            projected_palm_target_m=self.palms.detach().clone(),
+            final_sdk_palm_target_m=(self.root_targets[:,:,:3]-reset_relative_base).detach().clone(),
+            actual_palm_pose_m=actual_palm_pose,
+            palm_displacement_m=actual_palm_pose.clone(),
+            actual_palm_velocity_m_s=measurement.get('wrist_velocity',
+                torch.zeros((self.n,2,6),device=self.device))[:,:,:3].detach().clone(),
+            table_clearance_m=self.clearances.detach().clone(),
+            safe_z_m=safe_z_audit.detach().clone(),
+            projection_reasons=projection_reasons.detach().clone(),
+            contact_loads_n=measurement.get('hand_object_loads',
+                torch.zeros((self.n,2),device=self.device)).detach().clone(),
+            contact_valid=contact_valid_a.detach().clone(),
+            physics_step=int(self._physics_steps),
+            timestamp_s=float(self.w.sim.current_time),
+        )
         return measurement
 
     def reset(self, ids):

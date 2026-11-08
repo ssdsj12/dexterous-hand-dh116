@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import time
 
+import numpy as np
 import torch
 from tensordict import TensorDict
 from torch.utils.tensorboard import SummaryWriter
@@ -125,6 +126,14 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         args=copy.copy(args)
         args.rollout_steps=24
     output=Path(args.output)
+    action_diagnostics=None
+    diagnostic_episode_ids=None
+    diagnostic_stream=None
+    if getattr(args,'vision_action_diagnostics',False):
+        from .tabletop_vision_action_diagnostics import VisionActionDiagnosticRecorder
+        action_diagnostics=VisionActionDiagnosticRecorder()
+        diagnostic_episode_ids=torch.zeros(args.num_envs,dtype=torch.long)
+        diagnostic_stream=(output/'action_diagnostics.jsonl').open('x',encoding='utf-8')
     squashed=getattr(args,'vision_action_distribution','gaussian_clip')=='tanh_gaussian'
     saved=None
     validate_vision_action_options(args)
@@ -314,6 +323,30 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                     else:
                         issued=action.clamp(-1,1)
                     critic,reward,done,extra=env.step(issued.clone() if squashed else issued)
+                    if action_diagnostics is not None and hasattr(device_world,'last_action_diagnostics'):
+                        audit=device_world.last_action_diagnostics
+                        diagnostic_batch=action_diagnostics.record(
+                            env_id=torch.arange(args.num_envs).cpu().numpy(),
+                            episode_id=diagnostic_episode_ids.numpy(),
+                            physics_step=np.full(args.num_envs,int(audit['physics_step']),dtype=np.int64),
+                            timestamp_s=np.full(args.num_envs,float(audit['timestamp_s']),dtype=np.float64),
+                            raw_action24=audit['raw_action24'].detach().cpu().numpy(),
+                            requested_palm_target_m=audit['requested_palm_target_m'].detach().cpu().numpy(),
+                            pre_projection_palm_target_m=audit['pre_projection_palm_target_m'].detach().cpu().numpy(),
+                            projected_palm_target_m=audit['projected_palm_target_m'].detach().cpu().numpy(),
+                            final_sdk_palm_target_m=audit['final_sdk_palm_target_m'].detach().cpu().numpy(),
+                            actual_palm_pose_m=audit['actual_palm_pose_m'].detach().cpu().numpy(),
+                            palm_displacement_m=audit['palm_displacement_m'].detach().cpu().numpy(),
+                            actual_palm_velocity_m_s=audit['actual_palm_velocity_m_s'].detach().cpu().numpy(),
+                            table_clearance_m=audit['table_clearance_m'].detach().cpu().numpy(),
+                            safe_z_m=audit['safe_z_m'].detach().cpu().numpy(),
+                            contact_loads_n=audit['contact_loads_n'].detach().cpu().numpy(),
+                            contact_valid=audit['contact_valid'].detach().cpu().numpy(),
+                            projection_reasons=audit['projection_reasons'].detach().cpu().tolist())
+                        for diagnostic_row in diagnostic_batch['rows']:
+                            diagnostic_stream.write(json.dumps(diagnostic_row,separators=(',',':'))+'\n')
+                        diagnostic_stream.flush()
+                    diagnostic_episode_ids += done.detach().cpu().long()
                     # Read the pre-task-reset diagnostic, including terminal samples.
                     step_lift=extra.get('surface_diagnostics',{}).get('net_lift_m')
                     if step_lift is None:
@@ -414,6 +447,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                     max_scope='rollout_live_physics_substeps',
                     last_mean_scope='last_valid_sample_per_environment_in_rollout',
                     left_right_maxima_may_use_different_environments=True)
+            if action_diagnostics is not None:
+                row['action_diagnostics_summary']=action_diagnostics.summary()
             if torch.cuda.is_available() and str(args.device).startswith('cuda'):
                 free,total=torch.cuda.mem_get_info()
                 row['torch_peak_allocated_gib']=torch.cuda.max_memory_allocated()/1024**3
@@ -458,6 +493,11 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
         _write_json(output/'monitor.json',row)
         raise
     finally:
+        if action_diagnostics is not None:
+            if diagnostic_stream is not None:
+                diagnostic_stream.flush()
+                diagnostic_stream.close()
+            _write_json(output/'action_diagnostics_summary.json',action_diagnostics.summary())
         writer.close()
     row.update(status='training_budget_complete')
     _write_json(output/'monitor.json',row)
