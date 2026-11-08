@@ -300,6 +300,8 @@ class TensorEnv:
         raise RuntimeError(f'tensor physical safety failure: {detail}')
 
     def reset(self):
+        if getattr(self, 'cache_bimanual_slip', False):
+            self._bimanual_slip_packet = None
         ids = torch.arange(self.n,device=self.device)
         m = self.world.reset(ids)
         if self.palm_lift_telemetry is not None:
@@ -495,8 +497,11 @@ class TensorEnv:
             # physics immediately, retaining the task snapshot until tick end.
             if hasattr(self,'control_probe'):self.control_probe.after_step(live,previous_phase)
             if evaluation is not None:
-                evaluation.sample(t,w,m,live,w.dt,submitted_action,
+                physical_packet = evaluation.sample(t,w,m,live,w.dt,submitted_action,
                     measurement_valid=finite_physics(w,m)&~t.nonfinite,anchor=evaluation_anchor)
+                if getattr(self, 'cache_bimanual_slip', False):
+                    from .tabletop_bimanual_coordination import cache_native_slip_packet
+                    cache_native_slip_packet(self, physical_packet, w)
             newly_terminal = live & t.done
             if self.physics_action_diagnostics is not None:
                 self.record_physics_substep(w, live, newly_terminal, diagnostic_policy_step)

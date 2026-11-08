@@ -60,6 +60,56 @@ class CoordinationState:
     episode_id: torch.Tensor
 
 
+def cache_native_slip_packet(env, packet, world):
+    """Freeze pre-consume-anchor slip with its actual physical/episode identity.
+
+    EvaluationTelemetry computes this packet from the anchor captured before
+    consume. The success tracker may already have reanchored by the time the
+    next action is projected. This opt-in cache never changes that tracker or
+    the telemetry's independently preserved terminal snapshot.
+    """
+    if not getattr(env, 'cache_bimanual_slip', False):
+        return
+    names = ('live', 'measurement_valid', 'slip_m', 'slip_valid', 'slip_applicable')
+    values = {}
+    for name in names:
+        value = packet[name]
+        if (not isinstance(value, torch.Tensor) or value.shape != (world.n,)
+                or (not value.is_floating_point() if name == 'slip_m' else value.dtype != torch.bool)):
+            raise ValueError('one native telemetry slip value per environment required: '+name)
+        values[name] = value.detach().clone()
+    env._bimanual_slip_packet = dict(
+        episode_ids=env.diagnostic_episode_ids.detach().clone(),
+        physics_step=int(world._physics_steps), timestamp_s=float(world.w.sim.current_time),
+        **values)
+
+
+def _native_slip_state(world, task, env, raw_valid, live):
+    """Use only the preceding sample's packet, never an already reset anchor."""
+    telemetry = env.evaluation_telemetry
+    anchor = telemetry.capture_anchor(task)
+    # A known anchor without its matching native packet is unknown drift, not
+    # zero drift. A newly reset/unlatched anchor remains legitimate NA.
+    applicable = torch.zeros_like(live) if anchor is None else anchor[1].to(live) & live
+    valid = torch.zeros_like(live)
+    slip = world.roots.new_full((world.n,), float('nan'))
+    cached = getattr(env, '_bimanual_slip_packet', None)
+    if (not getattr(env, 'cache_bimanual_slip', False) or cached is None
+            or cached['physics_step'] != world._physics_steps
+            or cached['timestamp_s'] != float(world.w.sim.current_time)):
+        return slip, valid, applicable
+    matches = (cached['episode_ids'].to(env.diagnostic_episode_ids) == env.diagnostic_episode_ids)
+    matches &= cached['live'].to(live) & live
+    cached_slip = cached['slip_m'].to(slip)
+    cached_applicable = cached['slip_applicable'].to(live)
+    cached_valid = (cached['slip_valid'].to(live) & cached['measurement_valid'].to(live)
+                    & raw_valid & torch.isfinite(cached_slip) & (cached_slip >= 0))
+    applicable = torch.where(matches, cached_applicable, applicable)
+    valid = matches & cached_valid & applicable
+    slip = torch.where(valid, cached_slip, slip)
+    return slip, valid, applicable
+
+
 def coordination_state_from_native(world, task, env):
     """Read the current native simulation without filling missing contacts.
 
@@ -115,11 +165,7 @@ def coordination_state_from_native(world, task, env):
     raw_valid = (torch.isfinite(reference).all((1, 2)) & torch.isfinite(center).all(-1)
                  & torch.isfinite(com).all(-1)
                  & contact_valid.all(-1))
-    # _last intentionally preserves terminal evidence through no-op/reset. Read
-    # the current physical anchor instead of borrowing a previous episode's slip.
-    slip, slip_valid, _, applicable, _ = telemetry._slip(
-        m, raw_valid, (paired & contact_valid).all(-1), contact_valid.all(-1),
-        live, telemetry.capture_anchor(task))
+    slip, slip_valid, applicable = _native_slip_state(world, task, env, raw_valid, live)
     bottom = m['bottom'].to(reference)
     return CoordinationState(
         palm_world_m=reference[:, :, :3].clone(), palm_offset_m=measured,

@@ -116,10 +116,133 @@ def compact(row):
             if contacts['effective_pad_measurement_valid'] else None,
         right_wrist_world_translation_action=row['wrist_world_translation_action'][1],
         right_wrist_intrinsic_xyz_rotation_action=row['wrist_intrinsic_xyz_rotation_action'][1],
+        hand_object_load_n=row.get('hand_object_load_n'), wrist_tracking_guard=row.get('wrist_tracking_guard'),
         reconstructed_normal_contact_moment=row.get('reconstructed_normal_contact_moment'))
 
 
-def summarize(path, replay_path=None, moment_model=None):
+def passive_lower_stop_timeline(rows, replay):
+    """Order actual thumb follower, master and contact events in one episode."""
+    first = rows[0]
+    names = first['full_joint_names'][1]
+    finger13 = names.index('finger13')
+    identity = first['identity']
+    bounds = replay[identity['episode_uid'], identity['physics_step']]['limits'][1][finger13]
+    lower = bounds[0]
+    samples = []
+    for row in rows:
+        follower = next(entry for entry in row['passive_coupling'][1] if entry['follower'] == 'finger13')
+        samples.append(dict(**row['identity'], q12_rad=row['right_finger12']['position_rad'],
+            q13_rad=follower['measured_position_rad'], affine_q13_rad=follower['expected_position_rad'],
+            coupling_residual_rad=follower['position_residual_rad'],
+            thumb_load_n=row['contacts']['effective_pad_load_n'][1][0]
+                if row['contacts']['effective_pad_measurement_valid'] else None))
+    near = [sample for sample in samples if abs(sample['q13_rad']-lower) <= 1e-6]
+    first_near = near[0] if near else None
+    after = [sample for sample in samples if first_near is not None
+             and sample['physics_step'] >= first_near['physics_step']]
+    nominal = first['right_finger12']['nominal_lower_rad']
+    guard = first['right_finger12']['lower_guard_rad']
+    return dict(passive_joint_name='finger13', actual_sdk_joint_index=finger13,
+        nominal_bounds_rad=bounds, numerical_near_lower_band_rad=1e-6,
+        first_positive_thumb_contact=next((sample for sample in samples
+            if sample['thumb_load_n'] is not None and sample['thumb_load_n'] > 0), None),
+        first_thumb_contact_above_005n=next((sample for sample in samples
+            if sample['thumb_load_n'] is not None and sample['thumb_load_n'] > .05), None),
+        first_passive_near_lower=first_near,
+        subsequent_samples=len(after),
+        max_abs_passive_distance_from_lower_after_first_near_rad=max(
+            (abs(sample['q13_rad']-lower) for sample in after), default=None),
+        first_master_below_nominal_lower=next((sample for sample in samples if sample['q12_rad'] < nominal), None),
+        first_master_below_guard=next((sample for sample in samples if sample['q12_rad'] < guard), None),
+        terminal_sample=samples[-1],
+        interpretation='observed stop proximity and event order; passive constraint reaction and causality unmeasured')
+
+
+def compare_tracking_guard(baseline_path, observed_path, moment_model=None):
+    """Verify fixed finger requests and retain each hand's first pause context."""
+    def load(path):
+        groups = {}
+        for row in records(path):
+            if moment_model is not None:
+                row['reconstructed_normal_contact_moment'] = reconstruct_normal_contact_moment(row, moment_model)
+            groups.setdefault(row['identity']['episode_uid'], []).append(row)
+        return groups
+
+    baseline, observed = load(baseline_path), load(observed_path)
+    reports = []
+    for uid, original in baseline.items():
+        alternatives = {row['identity']['physics_step']: row for row in observed[uid]}
+        matched = [(row, alternatives[row['identity']['physics_step']]) for row in original
+                   if row['identity']['physics_step'] in alternatives]
+        if not matched or matched[0][0]['identity']['physics_step'] != original[0]['identity']['physics_step']:
+            raise ValueError('missing common initial physical sample')
+        common_steps = [row['identity']['physics_step'] for row, _ in matched]
+        if np.any(np.diff(common_steps) != 1):
+            raise ValueError('gap in common first-episode physical samples')
+        if len(matched) < len(original) and not observed[uid][-1]['terminal']:
+            raise ValueError('alternative truncated without a first terminal')
+        finger_error = max(np.max(np.abs(np.array(a.get('executed_physical_action24', a['action_after_inverse24'])[:12])
+            -np.array(b.get('executed_physical_action24', b['action_after_inverse24'])[:12]))) for a, b in matched)
+        actor_error = max(np.max(np.abs(np.array(a['actor_raw24'])-np.array(b['actor_raw24'])))
+            for a, b in matched)
+        sdk_error = max(abs(float(np.float32(a['right_finger12']['sdk_target_rad']))
+            -b['right_finger12']['sdk_target_rad']) for a, b in matched)
+        all_sdk_error = np.max(np.stack([np.abs(np.asarray(a['sdk_active_target_rad'], dtype=np.float32).astype(float)
+            -np.asarray(b['sdk_active_target_rad'], dtype=np.float32).astype(float)) for a, b in matched]), axis=(0, 2))
+        full_q_error = max(np.max(np.abs(np.asarray(a[hand+'_full_position_rad'])
+            -np.asarray(b[hand+'_full_position_rad']))) for a, b in matched for hand in ('left', 'right'))
+        pauses = []
+        for hand_index, side in enumerate(('left', 'right')):
+            rows = observed[uid]
+            paused = [row for row in rows if row.get('wrist_tracking_guard', {}).get('pause_hand', [False, False])[hand_index]]
+            first = paused[0] if paused else None
+            previous = alternatives.get(first['identity']['physics_step']-1) if first else None
+            before = None
+            if previous is not None:
+                names = previous['full_joint_names'][hand_index]
+                q = previous[side+'_full_position_rad']
+                actual = [q[names.index(name)] for name in previous['active_joint_names'][hand_index]]
+                target = previous['sdk_active_target_rad'][hand_index]
+                before = dict(identity=previous['identity'],
+                    max_active_tracking_error_rad=float(np.max(np.abs(np.array(actual)-np.array(target)))),
+                    max_mimic_residual_rad=max(abs(entry['position_residual_rad'])
+                        for entry in previous['passive_coupling'][hand_index]))
+            pauses.append(dict(hand=side, paused_sample_count=len(paused),
+                first_pause_identity=first['identity'] if first else None,
+                first_pause_previous_measured_sample=before))
+        first_pause_step = min((item['first_pause_identity']['physics_step'] for item in pauses
+            if item['first_pause_identity'] is not None), default=float('inf'))
+        prefix = [(a, b) for a, b in matched if b['identity']['physics_step'] < first_pause_step]
+        prefix_evidence = dict(common_samples=len(prefix),
+            measured_full_q_max_abs_difference_rad=max((np.max(np.abs(np.asarray(a[side+'_full_position_rad'])
+                -np.asarray(b[side+'_full_position_rad']))) for a, b in prefix for side in ('left', 'right')), default=None))
+        for key in ('actual_base_link_pose_w', 'hand_object_load_n'):
+            available = prefix and all(a.get(key) is not None and b.get(key) is not None for a, b in prefix)
+            prefix_evidence[key+'_max_abs_difference'] = float(max(np.max(np.abs(np.asarray(a[key])
+                -np.asarray(b[key]))) for a, b in prefix)) if available else None
+        reports.append(dict(episode_uid=uid, common_physics_samples=len(matched),
+            baseline_physics_samples=len(original), observed_physics_samples=len(observed[uid]),
+            actor_raw_max_abs_difference=float(actor_error), finger12d_request_max_abs_difference=float(finger_error),
+            right_finger12_float32_submission_max_abs_difference_rad=float(sdk_error),
+            per_hand_active6_float32_submission_max_abs_difference_rad=all_sdk_error.tolist(),
+            measured_full_q_max_abs_difference_rad=float(full_q_error),
+            common_prefix_before_first_observed_pause=prefix_evidence,
+            per_hand_pauses=pauses, original_terminal=bool(original[-1]['terminal']),
+            observed_terminal=bool(observed[uid][-1]['terminal']),
+            common_end_baseline=compact(matched[-1][0]), common_end_observed=compact(matched[-1][1]),
+            original_last=compact(original[-1]), observed_last=compact(observed[uid][-1])))
+    summary_files = [path.parent/'joint_replay_summary.json' for path in (baseline_path, observed_path)]
+    metadata = [json.loads(path.read_text()) for path in summary_files]
+    if metadata[0]['initial_state_sha256'] != metadata[1]['initial_state_sha256']:
+        raise ValueError('guard and baseline physical initial states differ')
+    if metadata[0]['source_policy_sha256'] != metadata[1]['source_policy_sha256']:
+        raise ValueError('guard and baseline original Actor tapes differ')
+    return dict(physical_initial_state_sha256=metadata[0]['initial_state_sha256'],
+        source_policy_sha256=metadata[0]['source_policy_sha256'], episodes=reports,
+        baseline_terminal_events=metadata[0]['terminal_events'], observed_terminal_events=metadata[1]['terminal_events'])
+
+
+def summarize(path, replay_path=None, moment_model=None, selected_steps=()):
     groups = {}
     for row in records(path):
         if moment_model is not None:
@@ -158,7 +281,8 @@ def summarize(path, replay_path=None, moment_model=None):
             reconstructed_normal_contact_moment_nm=scalar_stats(
                 row['reconstructed_normal_contact_moment']['normal_pad_moment_nm']
                 if row.get('reconstructed_normal_contact_moment', {}).get('valid') else None for row in rows),
-            terminal_sample=terminal[0] if terminal else None, last_eight_samples=trace[-8:]))
+            terminal_sample=terminal[0] if terminal else None, last_eight_samples=trace[-8:],
+            selected_physics_samples=[row for row in trace if row['physics_step'] in selected_steps]))
     target_crosscheck = None
     if replay_path is not None:
         replay = {(row['episode_uid'], row['physics_step']): row for row in records(replay_path)}
@@ -175,11 +299,14 @@ def summarize(path, replay_path=None, moment_model=None):
         target_crosscheck = dict(replay_source=str(replay_path), checked_rows=len(differences),
             all_float32_reconstructed_targets_match=all(submission_matches),
             max_integrated_double_vs_submitted_float32_rad=max(differences))
+        for episode in episodes:
+            episode['passive_lower_stop_timeline'] = passive_lower_stop_timeline(groups[episode['episode_uid']], replay)
     return dict(schema='dh116-stage5-joint-tracking-analysis-v1', source=str(path),
         source_sha256=hashlib.sha256(path.read_bytes()).hexdigest(), episodes=episodes,
         source_schemas=sorted({row['schema'] for rows in groups.values() for row in rows}),
         target_crosscheck=target_crosscheck,
         legacy_v1_target_caveat='v1 sdk_target_rad contains integrated pre-float32 world.commands; use float32 replay crosscheck',
+        legacy_v2_guard_boundary_caveat='guard schema v2 action_after_inverse24 contains post-guard execution; schema v3 records pure inverse and executed request separately',
         root_cause_proven=False,
         estimate_limitations=['implicit actuator torque is not hardware torque or actual solver drive torque',
             'pad normal impulse is derived from the current PhysX force report times physics dt',
@@ -193,6 +320,8 @@ if __name__ == '__main__':
     parser.add_argument('--replay', type=Path)
     parser.add_argument('--asset', type=Path, help='actual frozen dual-hand USD for normal-moment reconstruction')
     parser.add_argument('--asset-sha256', help='required exact native source USD SHA-256 when --asset is supplied')
+    parser.add_argument('--baseline', type=Path, help='original native T1 audit for exact finger-request/first-pause comparison')
+    parser.add_argument('--at-step', type=int, action='append', default=[], help='retain an additional keyed physics sample per episode')
     args = parser.parse_args()
     model = None
     if args.asset is not None:
@@ -202,7 +331,9 @@ if __name__ == '__main__':
         model = HandPhysicalKinematics.from_usd(args.asset, 'right')
     elif args.asset_sha256 is not None:
         raise ValueError('--asset required with --asset-sha256')
-    result = summarize(args.input, args.replay, model)
+    result = summarize(args.input, args.replay, model, args.at_step)
+    if args.baseline is not None:
+        result['guard_comparison'] = compare_tracking_guard(args.baseline, args.input, model)
     with args.output.open('x', encoding='utf-8') as stream:
         json.dump(result, stream, allow_nan=False, indent=2)
         stream.write('\n')

@@ -9,6 +9,9 @@ import torch
 
 
 def validate_options(args):
+    if getattr(args, 'bimanual_tripod_teacher_coordination_proof', None) is not None:
+        from .tabletop_bimanual_teacher_coordination import validate_tripod_coordination_options
+        validate_tripod_coordination_options(args)
     profile=getattr(args,'vision_teacher_mpc_profile','local_pad')
     tail=getattr(args,'vision_teacher_hold_tail_control_steps',0)
     if type(tail) is not int or not 0<=tail<=1800:
@@ -203,8 +206,23 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
     diagnostics_path=output/'teacher_mpc_diagnostics.jsonl'
     physics_path=output/'teacher_native_physics.jsonl'
     failure=None
+    teacher_audit = None
+    tripod_candidate = None
+    candidate_path = getattr(args, 'bimanual_tripod_teacher_coordination_proof', None)
+    supervision_eligible = torch.ones(args.num_envs, device=args.device, dtype=torch.bool)
     with diagnostics_path.open('x',encoding='utf-8') as diagnostics,physics_path.open('x',encoding='utf-8') as physics:
         try:
+            if getattr(args, 'bimanual_teacher_physics_audit', False) or candidate_path is not None:
+                from .tabletop_bimanual_teacher_audit import install_teacher_physics_audit
+                teacher_audit = install_teacher_physics_audit(env, device_world, output,
+                    enabled=True, native_runtime_verified=genuine)
+            if candidate_path is not None:
+                from .tabletop_bimanual_teacher_coordination import install_tripod_teacher_coordination
+                tripod_candidate = install_tripod_teacher_coordination(env, device_world, output,
+                    [item['grasp_style'] for item in references], candidate_path,
+                    expected_sha256=args._bimanual_tripod_proof_sha256)
+                supervision_eligible = torch.tensor(tripod_candidate.supervision_eligible,
+                    device=args.device, dtype=torch.bool)
             for tick in range(max_steps):
                 packet=camera.sample()
                 obs=_observations(packet,device_world,previous,history,critic,
@@ -239,7 +257,9 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                     mpc_changed+=sum(bool(row['changed']) for row in detail['per_env'] if alive[row['env']])
                 if issued.shape!=(args.num_envs,24) or not bool(torch.isfinite(issued).all()&(issued.abs()<=1).all()):
                     raise RuntimeError('Teacher/MPC issued action must be finite bounded canonical 24D')
-                for index in alive.nonzero().flatten().cpu().tolist():
+                # Modified tripod requests have no 60 Hz expert-label contract.
+                # Their source/480 Hz executed requests are diagnostic NPZ only.
+                for index in (alive & supervision_eligible).nonzero().flatten().cpu().tolist():
                     item=references[index]
                     rows.append(obs['policy'][index].detach().cpu().clone())
                     issued_rows.append(issued[index].cpu().clone());reference_rows.append(reference[index].cpu().clone())
@@ -251,6 +271,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                     if tail_steps:metadata[-1].update(reference_phase=phases[index],
                         reference_source_tick=tick if tick<source_lengths[index] else None,
                         reference_source_control_steps=source_lengths[index])
+                if teacher_audit is not None:
+                    teacher_audit.submit(issued, teacher_control_step=tick)
                 critic,reward,done,extra=env.step(issued.clone())
                 if optimizer is not None:optimizer.observe_result(done|~alive)
                 recovered|=~ended&extra['recovered'].bool()
@@ -289,7 +311,15 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
             failure=repr(error)
             raise
         finally:
-            camera.set_raw_frame_sink(None);raw.close()
+            try:
+                try:
+                    if tripod_candidate is not None:
+                        tripod_candidate.close(error=failure)
+                finally:
+                    if teacher_audit is not None:
+                        teacher_audit.finish(error=failure)
+            finally:
+                camera.set_raw_frame_sink(None);raw.close()
             if failure is not None:
                 _exclusive_json(output/'collection_failure.json',dict(error=failure,samples=len(rows),ppo_updates=0))
                 with (output/'partial_unqualified_samples.pt').open('xb') as stream:
@@ -313,6 +343,7 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
         accepted.zero_()  # Native successful labels need the independently recorded contact-style audit.
     if not genuine:
         accepted.zero_()  # CPU-injected cameras/worlds cannot qualify physical demonstrations.
+    accepted &= supervision_eligible
     episodes={str(index):dict(env_id=index,first_episode=True,success=bool(accepted[index]),
         recovered=bool(recovered[index]),native_physics=genuine,
         grasp_style=item['grasp_style'],source_trajectory_id=item['source_trajectory_id'],
@@ -320,7 +351,9 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
         terminal=terminal_records.get(index),native_contact_style_audit=style_audit.get(index,
             'not_audited_failed_or_incomplete_episode' if genuine else 'fixture_not_native'))
         for index,item in enumerate(references)}
-    dataset=build_dataset(torch.stack(rows),torch.stack(issued_rows),torch.stack(reference_rows),metadata,episodes,
+    used_episodes = {str(row['episode_id']) for row in metadata}
+    pool_episodes = {key: value for key, value in episodes.items() if key in used_episodes}
+    dataset=build_dataset(torch.stack(rows),torch.stack(issued_rows),torch.stack(reference_rows),metadata,pool_episodes,
         visual_contract=contract,teacher_source_sha256=source['source_sha256'],require_successful=False)
     # Always keep the failed/unfinished physical experiment separate from successful demonstrations.
     with (output/'all_executed_supervision.pt').open('xb') as stream:torch.save(dataset,stream)
@@ -345,8 +378,23 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
         ppo_updates=0,student_policy_trained=False,teacher_success_is_student_success=False,
         dagger_state_query_oracle=False,raw_rgbd_frames=raw.frames,elapsed_wall_s=time.monotonic()-start)
     if adapter_difference is not None:
-        report['physical_sdk_adapter_max_action_difference'] = adapter_difference[0]
+        report['physical_sdk_adapter_max_semantic_roundtrip_difference'] = adapter_difference[0]
+        report['physical_sdk_adapter_max_executed_action_difference'] = 0.
         env.bimanual_action_adapter = None
+    if teacher_audit is not None:
+        report['teacher_physics_audit'] = {
+            path.name: dict(path=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+            for path in teacher_audit.paths}
+    if tripod_candidate is not None:
+        report['tripod_coordination_candidate'] = dict(
+            proof_sha256=tripod_candidate.proof['sha256'],
+            modified_env_ids=tripod_candidate.mask.nonzero().flatten().tolist(),
+            native_physical_successes=int((native_accepted & tripod_candidate.mask).sum()) if genuine else 0,
+            observed_terminal_successes=int((native_accepted & tripod_candidate.mask).sum()),
+            supervision_qualified=False, source_requests_excluded_from_BC=True,
+            counts_as_student_success=False,
+            evidence={path.name: dict(path=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+                      for path in tripod_candidate.paths})
     if reference_execution is not None:report['recorded_reference_execution']=reference_execution
     _exclusive_json(output/'teacher_collection_report.json',report)
     _write_json(output/'monitor.json',report)

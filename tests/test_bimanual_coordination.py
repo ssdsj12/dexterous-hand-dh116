@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from go2_pvcnn.control.dh116.tabletop_bimanual_coordination import (
     BimanualCoordinator,
     CoordinationState,
+    cache_native_slip_packet,
     coordination_state_from_native,
     static_support_allocation,
 )
@@ -240,3 +241,121 @@ def test_native_builder_keeps_no_contact_unknown_slip_and_target_frame_offset():
     world.wq = roots.new_tensor([[0., 0., 0., 1.]])
     measured = coordination_state_from_native(world, task, env)
     assert measured.object_com_w.tolist()[0] == pytest.approx([-.001, 0., .06])
+
+
+def native_slip_fixture():
+    """Real native success/telemetry consumers around array-only SDK inputs."""
+    from go2_pvcnn.control.dh116.tabletop_evaluation_telemetry import EvaluationTelemetry
+    from go2_pvcnn.control.dh116.tabletop_surface_success import SurfaceLiftSuccess
+
+    s = state()
+    roots = torch.zeros(1, 2, 7, dtype=torch.float64)
+    roots[..., :3] = s.palm_world_m
+    roots[..., 2] = .08
+    roots[..., 3] = 1.
+    center = roots.new_tensor([[0., 0., .035]])
+    loads = roots.new_zeros(1, 2, 5)
+    loads[..., :2] = 1.
+    vectors = roots.new_zeros(1, 2, 5, 3)
+    vectors[..., 0, :] = roots.new_tensor([1., 0., -.5])
+    vectors[..., 1, :] = roots.new_tensor([-1., 0., -.5])
+    m = dict(effective_pad_loads_n=loads, effective_pad_vectors_w=vectors,
+        effective_pad_valid=torch.ones(1, 2, 5, dtype=torch.bool),
+        effective_pad_points_w=roots[..., None, :3].expand(1, 2, 5, 3).clone(),
+        effective_pad_depth_m=torch.zeros_like(loads),
+        rejected_contact_loads_n=roots.new_zeros(1, 2),
+        vertical_hand_force_n=roots.new_ones(1, 2), hand_clearance=roots.new_full((1, 2), .01),
+        bottom=roots.new_tensor([.035]), q=roots.new_zeros(1, 12),
+        mimic_errors=roots.new_zeros(1, 10), wrist_pose=roots.clone(),
+        object_relative=center-roots[..., :3].mean(1),
+        object_quat=roots.new_tensor([[1., 0., 0., 0.]]), object_velocity=roots.new_zeros(1, 6))
+    tracker = SurfaceLiftSuccess(1, 'cpu', 0., dtype=roots.dtype)
+    task = SimpleNamespace(m=m, command=m['q'].clone(), surface_lift_success=tracker,
+        done=torch.zeros(1, dtype=torch.bool), success=torch.zeros(1, dtype=torch.bool))
+    components = roots.new_zeros(1, 2, 2)
+    components[..., 0] = 1.
+    world = SimpleNamespace(n=1, roots=roots, palms=roots.new_zeros(1, 2, 3),
+        root_targets=roots.clone(), wp=center, vertical_components=components,
+        object_weight_n=roots.new_ones(1), _physics_steps=0,
+        w=SimpleNamespace(sim=SimpleNamespace(current_time=0.)),
+        wire=SimpleNamespace(data=SimpleNamespace(root_com_pos_w=center)))
+    telemetry = EvaluationTelemetry(1, 'cpu', lambda packet: None)
+    telemetry.reference_bottom_m[:] = 0.
+    env = SimpleNamespace(evaluation_telemetry=telemetry,
+        diagnostic_episode_ids=torch.zeros(1, dtype=torch.long), cache_bimanual_slip=True)
+
+    def consume_sample(dx=0.):
+        center[:, 0] += dx
+        m['object_relative'].copy_(center-roots[..., :3].mean(1))
+        anchor = telemetry.capture_anchor(task)
+        live = ~task.done
+        tracker.update(torch.cat((center, m['object_quat']), -1), m['wrist_pose'],
+            loads, vectors, m['effective_pad_depth_m'], m['rejected_contact_loads_n'].sum(-1),
+            m['bottom'], m['object_velocity'], live, 1/480)
+        world._physics_steps += 1
+        world.w.sim.current_time = world._physics_steps / 480
+        packet = telemetry.sample(task, world, m, live, 1/480, roots.new_zeros(1, 24),
+            measurement_valid=torch.ones_like(live), anchor=anchor)
+        cache_native_slip_packet(env, packet, world)
+        return packet
+
+    return env, world, task, consume_sample
+
+
+@pytest.mark.parametrize('mode', ['Z2', 'Z3'])
+def test_window_end_native_slip_survives_reanchor_and_pauses_next_ascent(mode):
+    env, world, task, consume = native_slip_fixture()
+    coordinator = BimanualCoordinator(1, mode=mode, resume_dwell_s=.02, target_lift_m=.04)
+    raw = actions()
+    raw[:, 17] = .4
+    for _ in range(15):
+        consume()
+        issued, info = coordinator.project(raw, coordination_state_from_native(world, task, env), dt_s=1/480)
+    assert info['resume_ready'].item() and issued[0, 17] > 0
+    packet = consume(dx=.0006)  # Eighth substep flushes and reanchors the native window.
+    assert packet['slip_m'].item() == pytest.approx(.0006)
+    measured = coordination_state_from_native(world, task, env)
+    assert measured.slip_m.item() == pytest.approx(.0006)
+    assert measured.slip_valid.item() and measured.slip_applicable.item()
+    issued, info = coordinator.project(raw, measured, dt_s=1/480)
+    assert not info['resume_ready'].item()
+    assert info['stable_s'].item() == 0.
+    assert info['cancel_upward_target'][0, 1]
+    assert issued[0, 17] == 0.
+
+
+def test_native_slip_cache_is_ignored_after_episode_reset_or_step_change():
+    env, world, task, consume = native_slip_fixture()
+    for _ in range(16):
+        consume()
+    env.diagnostic_episode_ids += 1
+    task.surface_lift_success.reset(torch.tensor([0]))
+    measured = coordination_state_from_native(world, task, env)
+    assert not measured.slip_applicable.item()
+    assert not measured.slip_valid.item() and torch.isnan(measured.slip_m).all()
+    for _ in range(8):
+        consume()
+    world._physics_steps += 1  # No packet belongs to this latest physical sample.
+    world.w.sim.current_time = world._physics_steps / 480
+    measured = coordination_state_from_native(world, task, env)
+    assert measured.slip_applicable.item()
+    assert not measured.slip_valid.item() and torch.isnan(measured.slip_m).all()
+
+
+def test_native_slip_cache_copies_fresh_packet_and_requires_exact_clock_and_live():
+    env, world, task, consume = native_slip_fixture()
+    for _ in range(16):
+        packet = consume()
+    packet['slip_m'][:] = .1
+    assert coordination_state_from_native(world, task, env).slip_m.item() == 0.
+    env._bimanual_slip_packet['live'][:] = False
+    measured = coordination_state_from_native(world, task, env)
+    assert measured.slip_applicable.item() and not measured.slip_valid.item()
+    consume()
+    world.w.sim.current_time += .001
+    measured = coordination_state_from_native(world, task, env)
+    assert measured.slip_applicable.item() and not measured.slip_valid.item()
+    before = env._bimanual_slip_packet
+    env.cache_bimanual_slip = False
+    cache_native_slip_packet(env, packet, world)
+    assert env._bimanual_slip_packet is before

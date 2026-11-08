@@ -76,3 +76,25 @@ CPU 合同回归命令为 `PYTHONPATH=src /mnt/mydisk/xk/envs/dh116/bin/python -
 原生入口为 `launch_native.py --root /mnt/mydisk/xk/dh116/runs/stage5_physical_mapping_20261108T0840Z --name t2_mapping_probe --mode probe`。实际命令、环境和源码 SHA 以启动清单为准。独立的 CPU USD 审计只加载 packaged USD 库，没有创建 Kit 或物理实例。
 
 本实验验证源 FK、实际 SDK 帧和小幅动作方向。持续受载、强接触下 joint12 跟踪、Teacher 4/4 回归和 Student 抓取成功有独立验收项；此处没有产生可计入 Teacher 或 Student 的成功回合。当前 adapter 保留精确 SDK 语义，原有关节保护没有放宽。
+
+## 完整重复探针的目标跟踪与身份校验
+
+首次探针将 `case` 单列存储，但 episode_uid 跨 case 重复使用。独立重复 `t2_mapping_probe_complete` 已将 case 纳入 episode_uid，同时补录 active SDK 提交目标、root 提交目标和内禀角目标。原数据保留。重复实验仍为 53 case × 8 环境、1,696 条完整 JSON 行，848 个 after 快照，424 个物理 episode_uid 和 848 个 episode/hand 组合。三指位置/法向误差的最大值与首次探针相同，未出现新增终止。
+
+新 JSONL SHA-256 为 `78c5ac596605d5d65243d39c67ca93127b467d5390911c2b236a52b83eedea9a`，统计文件为实验总目录下 `t2_mapping_complete_analysis.json`。逐 reset/after 配对检查全部保持相同 case、env、hand 和 episode_uid；每对间隔 32 个物理子步，时间差均为 0.06666667014360428 s。全文件的物理步和时间戳单调非递减，after 时间均严格晚于对应 reset。字段 `active_q_rad` 与独立按十一关节名字取出的实测主动 q 完全相同。
+
+此重复探针的 `sdk_active_target_rad` 来自 `world.commands.float()`，与控制器给 `set_joint_position_target` 的 float32 表达式相同。这里明确将它记录为**重建的 SDK 提交值**，没有声称它是 native articulation 目标缓存的独立读回。SDK 缓存读回与重建值的来源区分由 T1 schema v2 逐子步审计另外保存。下表统计所有 after 快照中的绝对“提交目标减实测角”误差，包含未扰动维度。
+
+| 手/关节 | P50 rad | P90 rad | P95 rad | max rad |
+|---|---:|---:|---:|---:|
+| 左全部主动关节 | 0 | 9.835e-7 | 0.000172734 | 0.000222325 |
+| 右全部主动关节 | 0 | 1.353e-6 | 0.000172690 | 0.000217915 |
+| 左 finger12 | 0 | 9.239e-7 | 0.000172883 | 0.000172943 |
+| 右 finger12 | 3.725e-9 | 9.034e-7 | 0.000171108 | 0.000172907 |
+
+| 手 | root 平移提交跟踪误差 P50 mm | P90 mm | P95 mm | max mm | root 姿态角误差 max rad |
+|---|---:|---:|---:|---:|---:|
+| 左 | 0 | 0.002988 | 0.003100 | 0.005249 | 0.001265 |
+| 右 | 0.000030 | 0.002981 | 0.003099 | 0.005232 | 0.001264 |
+
+root 姿态角误差来自实际 base quaternion 与 root 提交 quaternion 的相对旋转。两手小幅动作下存在相近驱动滞后，不能从该四步微扰外推强接触时的 finger12 最大误差或长期安全性。这些短探针采用同一物理初态模板重复 reset，424 个身份是独立物理 episode 身份，不能代替 Z0～Z3 的每抓法 100 个独立初态评估。

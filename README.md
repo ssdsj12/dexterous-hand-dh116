@@ -2,7 +2,11 @@
 
 新增逐 480 Hz 的关节跟踪审计、左右独立 USD FK/Jacobian 适配器和独立 Z0～Z3 协调实验。T1 重放再次复现右 `finger12` 两次越限，合法目标与实际关节运动之间出现 0.052～0.055 rad 跟踪误差；隐式执行器力矩为仿真估算。T2 完成 53 组、8 环境微扰，左右指腹源 FK 对 SDK 位置最大误差 0.000354 / 0.000399 mm，右 `finger12` 正负方向各 8/8 正确。详见[关节审计](docs/superpowers/reports/2026-11-08-stage5-joint-tracking.md)和[物理映射报告](docs/superpowers/reports/2026-11-08-stage5-physical-mapping.md)。
 
-CPU 回归 299 项通过。Z0～Z3 的完整配对回合、末段单因素关节回放及 `pressure_geometry_constrained` Teacher + MPC 回归正在独立冻结目录中串行采集。Adapter 模型合同包含两手资产与源码 SHA，旧模型需显式派生合同才能接入。当前保留 M0 默认、M2 独立实验及 PR Draft；Student 训练资格依据适配器和 Teacher 原生回归结果判断。
+Z0～Z3 已完成同一模型、初态和随机种子的二指/三指各100例配对：800个首回合全部有效，原生成功全部为0。置零右Z消除了约4 mm下沉，却未建立合格抓取；Z3三指关节越限由M0的12/100升至66/100，该协调候选不具备晋级资格。逐环境掌位峰值身份、接触、载荷、动作与跟踪统计见[双手干预报告](docs/superpowers/reports/2026-11-08-stage5-bimanual-interventions.md)。原生短窗中共同暂停双腕消除了两次旧越限，但其0.533秒结果不能替代完整回合安全证据。
+
+新增显式V4 Adapter模型绑定与推理前资产/源码/SDK合同核验，旧模型仍走原路径。Teacher专用480Hz审计分别保留请求、执行、实测关节与首终止，并保留重锚前的真实接触锚滑移；三指协调候选必须先通过二指Teacher回归门禁，修改后的三指动作不进入BC监督池。未来配对路径已修复结束环境被协调器重新驱动的问题；现有冻结Z3按首终止截断统计，未将后续尾段算作合格执行。
+
+完整CPU冻结快照为6136 passed、113 failed、48 skipped、25 errors，另91 subtests passed；相对`3f7fd69`，195个新增节点全通过、无新增回归，原有失败和外部依赖问题仍单列。包括后续三指下降接近修正在内，最新控制、模型与Teacher聚焦回归316项通过。`pressure_geometry_constrained` Teacher原路径与Adapter路径正在单实例串行验证，Student迁移仍按原生门禁执行。M0默认、M2独立、3844D/371D/24D和30mm/5s/0.5mm标准保持，PR继续Draft。见[总验证报告](docs/superpowers/reports/2026-11-08-stage5-native-validation.md)。
 
 ## 2026-11-08 — 右掌动作偏置与原生关节越限
 

@@ -41,15 +41,21 @@ parser.add_argument('--vision-mirror-preprocessing',
                     help='isolated visual actor preprocessing experiment; default preserves raw M0')
 parser.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
 parser.add_argument('--vision-m2-replay', type=Path, help='Replay an existing M2 diagnostic run without PPO')
+parser.add_argument('--vision-replay-watch-env', type=int, action='append', default=[],
+                    help='additional first-episode environment to record from replay start')
 parser.add_argument('--bimanual-joint-tracking-audit', action='store_true',
                     help='opt-in reset-before-terminal 480 Hz joint tracking evidence during replay')
 parser.add_argument('--bimanual-mapping-probe', action='store_true',
                     help='exclusive small physical mapping perturbations instead of action replay')
 parser.add_argument('--bimanual-explicit-sdk-adapter', action='store_true',
                     help='explicit Teacher regression of the versioned physical SDK mapping')
+parser.add_argument('--bimanual-teacher-physics-audit', action='store_true',
+                    help='opt-in Teacher/MPC 480 Hz first-episode pre-reset physical evidence')
+parser.add_argument('--bimanual-tripod-teacher-coordination-proof', type=Path,
+                    help='independent tripod Teacher coordination candidate gated by a verified T5 regression JSON')
 parser.add_argument('--vision-replay-arm', choices=('recorded','neutral_fingers','neutral_rotation',
                     'neutral_translation','omit_inverse','right_rotation_after240',
-                    'right_translation_after240'), default='recorded')
+                    'right_translation_after240','tracking_guard','tracking_guard_coupled'), default='recorded')
 parser.add_argument('--vision-wrist-quaternion-preprocessing',
                     choices=('raw','wrist_quaternion_hemisphere_v1'),default='raw',
                     help='versioned opt-in actor quaternion sign canonicalization; old models remain raw')
@@ -74,6 +80,8 @@ parser.add_argument('--vision-visibility-mode',choices=('all','batch'),default='
 parser.add_argument('--vision-camera-mode',choices=('bounded','fixed'),default='bounded')
 parser.add_argument('--vision-resume-downsize',action='store_true')
 parser.add_argument('--vision-evaluation-checkpoint',type=Path)
+parser.add_argument('--bimanual-checkpoint-adapter', action='store_true',
+                    help='explicit V4 physical-adapter checkpoint evaluation; plain M0 only, verified against native USD/SDK before action')
 parser.add_argument('--vision-evaluation-manifest',type=Path)
 parser.add_argument('--paired-bias-arm', choices=('m0','m2','replay','right_z_zero','z2','z3'))
 parser.add_argument('--paired-bias-reference', type=Path)
@@ -266,10 +274,15 @@ if args.vision_m2_replay and (not args.vision_student or not args.tensor_pipelin
     parser.error('--vision-m2-replay requires an exclusive native visual tensor replay')
 if not args.vision_m2_replay and args.vision_replay_arm != 'recorded':
     parser.error('--vision-replay-arm requires --vision-m2-replay')
+if args.vision_replay_watch_env and (not args.vision_m2_replay or
+        any(i < 0 or i >= args.num_envs for i in args.vision_replay_watch_env)):
+    parser.error('replay watch IDs require --vision-m2-replay and valid environment indices')
 if (args.bimanual_joint_tracking_audit or args.bimanual_mapping_probe) and not args.vision_m2_replay:
     parser.error('bimanual native probes require exclusive --vision-m2-replay')
 if args.bimanual_explicit_sdk_adapter and not args.vision_teacher_source:
     parser.error('explicit SDK adapter is restricted to independent Teacher regression')
+if args.bimanual_teacher_physics_audit and not args.vision_teacher_source:
+    parser.error('Teacher physical audit requires --vision-teacher-source')
 if args.tripod_recovery_stage:
     from go2_pvcnn.control.dh116.tabletop_tripod_recovery_runtime import validate_staged_options
     validate_staged_options(args)

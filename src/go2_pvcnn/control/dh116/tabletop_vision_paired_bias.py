@@ -78,7 +78,8 @@ def run_paired_arm(args, env, task, world, camera, history, obs, policy, readbac
     coordinated = arm in ('z2', 'z3')
     if coordinated:
         from .tabletop_bimanual_experiment_runtime import install_coordination
-        install_coordination(env, world, arm, output)
+        install_coordination(env, world, arm, output,
+            active_first_episode_mask=lambda: torch.as_tensor(~finished, device=world.device))
     # One batched transfer per physical substep. The live flag belongs to the
     # physics engine; the first-episode mask is applied separately in reduction.
     fields=('live','done','native_success','measurement_valid','lift_m','qualified_hold_s',
@@ -94,6 +95,8 @@ def run_paired_arm(args, env, task, world, camera, history, obs, policy, readbac
         fields += tuple(f'executed_action_{i}' for i in range(24))
         fields += tuple(f'objective_{term}' for term in ('lift','contact','slip','joint','sync','total'))
         fields += ('objective_valid','coordination_ready','cancel_upward_left','cancel_upward_right')
+        fields += ('wrist_guard_enabled','wrist_guard_paused_left','wrist_guard_paused_right',
+                   'wrist_rotation_cancel_left','wrist_rotation_cancel_right')
     def collect(packet):
         scalar = dict(failure=task.failure,right_palm_dz_m=world.roots[:,1,2]-baseline[:,1],
             physics_step=torch.full_like(task.failure,world._physics_steps),
@@ -122,6 +125,13 @@ def run_paired_arm(args, env, task, world, camera, history, obs, policy, readbac
                           coordination_ready=info['resume_ready'],
                           cancel_upward_left=info['cancel_upward_target'][:,0],
                           cancel_upward_right=info['cancel_upward_target'][:,1])
+            guard_info = info.get('tracking_guard')
+            unpaused = torch.zeros_like(task.failure)
+            scalar.update(wrist_guard_enabled=torch.full_like(task.failure,guard_info is not None),
+                wrist_guard_paused_left=guard_info['pause_hand'][:,0] if guard_info else unpaused,
+                wrist_guard_paused_right=guard_info['pause_hand'][:,1] if guard_info else unpaused,
+                wrist_rotation_cancel_left=guard_info['cancel_rotation'][:,0] if guard_info else unpaused,
+                wrist_rotation_cancel_right=guard_info['cancel_rotation'][:,1] if guard_info else unpaused)
         physical.append(torch.stack([v.double() for v in
             [packet[k] if k in packet else scalar[k] for k in fields]],dim=1).cpu().numpy())
     prior=env.evaluation_telemetry.callback
@@ -166,6 +176,8 @@ def run_paired_arm(args, env, task, world, camera, history, obs, policy, readbac
         env.evaluation_telemetry.callback=prior
         if coordinated:
             env.bimanual_action_adapter=None
+            env.cache_bimanual_slip=False
+            env._bimanual_slip_packet=None
     np.save(output/'issued_actions.npy',np.stack(outputs),allow_pickle=False)
     data=np.stack(physical)
     np.savez_compressed(output/'native_samples.npz',fields=fields,samples=data)

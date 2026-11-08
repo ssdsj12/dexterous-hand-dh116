@@ -228,3 +228,83 @@ def test_projection_never_changes_camera_physics_action_or_reward_hashes(tmp_pat
                and type(c['from']) is type(c['to']) for c in changes)
     assert not any('sensor_rendering' in c['path'] or 'resolution' in c['path']
                    or 'object_contact_material' in c['path'] for c in changes)
+
+
+def test_explicit_1024_projection_preserves_full_model_adam_rng_and_global_counts(tmp_path):
+    api=module();source,before=checkpoint(tmp_path,iteration=1024)
+    source_bytes=source.read_bytes();rng=torch.get_rng_state().clone()
+    output=tmp_path/'independent_n8'/'projected.pt'
+    report=api.project_experiment_checkpoint(source,output,num_envs=8,
+        expected_source_sha256=sha(source),expected_source_iteration=1024)
+    after=torch.load(output,map_location='cpu',weights_only=False)
+    for key in before:
+        if key not in ('contract','episodes','successes'):same(before[key],after[key])
+    assert after['iteration']==1024 and after['timesteps']==before['timesteps']
+    assert after['learning_rate']==before['learning_rate']
+    retained=[0,1,2,3,512,513,514,515]
+    for key in ('episodes','successes'):same(before[key][retained],after[key])
+    assert after['contract']['num_envs']==8
+    assert after['experiment_projection']['source_iteration']==1024
+    assert after['experiment_projection']['expected_source_iteration']==1024
+    assert report['experiment_projection']==after['experiment_projection']
+    assert report['version']==api.PROJECTION_VERSION=='dh116-visual-balanced-experiment-projection-v2'
+    assert source.read_bytes()==source_bytes and torch.equal(rng,torch.get_rng_state())
+    assert json.loads(output.with_suffix('.json').read_text())==report
+
+
+@pytest.mark.parametrize('expected',[1439,1023,0,-1,True,1024.,'1024',None])
+def test_wrong_or_invalid_source_iteration_is_rejected_before_directory_or_files(tmp_path,expected):
+    api=module();source,_=checkpoint(tmp_path,iteration=1024)
+    source_bytes=source.read_bytes();output=tmp_path/'not_created'/'invalid.pt'
+    with pytest.raises(ValueError,match='source iteration'):
+        api.project_experiment_checkpoint(source,output,num_envs=8,
+            expected_source_sha256=sha(source),expected_source_iteration=expected)
+    assert not output.parent.exists()
+    assert source.read_bytes()==source_bytes
+
+
+def test_1024_source_still_requires_explicit_iteration_and_pinned_sha(tmp_path):
+    api=module();source,_=checkpoint(tmp_path,iteration=1024)
+    output=tmp_path/'not_created'/'invalid.pt'
+    with pytest.raises(ValueError,match='source iteration'):
+        api.project_experiment_checkpoint(source,output,num_envs=8,expected_source_sha256=sha(source))
+    with pytest.raises(ValueError,match='SHA256'):
+        api.project_experiment_checkpoint(source,output,num_envs=8,
+            expected_source_sha256='a'*64,expected_source_iteration=1024)
+    assert not output.parent.exists()
+
+
+def test_new_projection_loader_keeps_historical_v1_metadata_compatible(tmp_path):
+    api=module();source,_=checkpoint(tmp_path);output=tmp_path/'projected.pt'
+    api.project_experiment_checkpoint(source,output,num_envs=8,expected_source_sha256=sha(source))
+    saved=torch.load(output,map_location='cpu',weights_only=False)
+    saved['experiment_projection']['version']='dh116-visual-balanced-experiment-projection-v1'
+    saved['experiment_projection'].pop('expected_source_iteration',None)
+    old=tmp_path/'historical_v1.pt';torch.save(saved,old)
+    original=old.read_bytes()
+    from go2_pvcnn.control.dh116.tabletop_vision_action_contract import validate_squashed_checkpoint
+    validate_squashed_checkpoint(saved,saved['contract'])
+    snapshot=api.retain_checkpoint_bundle(old,tmp_path/'snapshots')
+    retained=torch.load(snapshot['checkpoint_path'],map_location='cpu',weights_only=False)
+    same(retained,saved)
+    assert old.read_bytes()==original
+
+
+@pytest.mark.parametrize('source_iteration',[None,'1024'])
+def test_projection_cli_default_and_explicit_source_iteration(tmp_path,monkeypatch,capsys,source_iteration):
+    api=module();received={}
+    def project(source,output,**options):
+        received.update(options)
+        return {'expected_source_iteration':options['expected_source_iteration']}
+    monkeypatch.setattr(api,'project_experiment_checkpoint',project)
+    path=Path(__file__).resolve().parents[1]/'scripts/project_dh116_vision_experiment_checkpoint.py'
+    spec=importlib.util.spec_from_file_location('vision_experiment_projection_cli',path)
+    cli=importlib.util.module_from_spec(spec);spec.loader.exec_module(cli)
+    args=['--input',str(tmp_path/'source.pt'),'--output',str(tmp_path/'derived.pt'),
+          '--source-sha256','a'*64,'--num-envs','8']
+    if source_iteration is not None:args+=['--source-iteration',source_iteration]
+    report=cli.main(args)
+    expected=1439 if source_iteration is None else 1024
+    assert received['expected_source_iteration']==expected
+    assert received['expected_source_sha256']=='a'*64 and received['num_envs']==8
+    assert json.loads(capsys.readouterr().out)==report

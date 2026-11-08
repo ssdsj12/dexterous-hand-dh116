@@ -19,7 +19,7 @@ from .tabletop_vision_action_contract import (
 )
 from .tabletop_vision_resume import _differences
 
-PROJECTION_VERSION = 'dh116-visual-balanced-experiment-projection-v1'
+PROJECTION_VERSION = 'dh116-visual-balanced-experiment-projection-v2'
 BUNDLE_VERSION = 'dh116-visual-immutable-checkpoint-bundle-v1'
 STYLES = ('pinch_thumb_index', 'tripod_thumb_index_middle')
 _REFERENCES = ('privileged_critic_contract.success_bottom_m',
@@ -123,11 +123,13 @@ def _audit_batch_lists(value, n, path=''):
 
 
 def project_experiment_checkpoint(input_path, output_path, *, num_envs=16,
-                                  expected_source_sha256, target_contract=None):
-    """Exclusively derive N=8/16/128 from the audited frozen 1439 N=1024 v3.
+                                  expected_source_sha256, expected_source_iteration=1439,
+                                  target_contract=None):
+    """Derive N=8/16/128 from a SHA-pinned, completed N=1024 v3 snapshot.
 
-    The caller supplies the independently recorded source digest. A supplied
-    target contract is an assertion, never a source of new physical defaults.
+    The caller supplies the independently recorded source digest and expected
+    update. The historical default remains 1439. A supplied target contract is
+    an assertion, never a source of new physical defaults.
     Counts and physical reference rows retain the first N/2 of each style;
     global completed iterations/transitions and every model/Adam/RNG byte stay.
     """
@@ -139,14 +141,17 @@ def project_experiment_checkpoint(input_path, output_path, *, num_envs=16,
         if path.exists() or path.is_symlink():raise FileExistsError(path)
     if type(num_envs) is not int or num_envs not in (8,16,128):
         raise ValueError('explicit balanced experiment requires 8, 16 or 128 environments')
+    if type(expected_source_iteration) is not int or expected_source_iteration <= 0:
+        raise ValueError('expected source iteration must be a positive integer')
     digest = file_sha256(source)
     if digest != expected_source_sha256:
         raise ValueError('source checkpoint SHA256 differs from independently frozen input')
     saved = torch.load(source,map_location='cpu',weights_only=False)
     _validate_completed(saved)
     old = saved['contract']; n = old['num_envs']
-    if n != 1024 or saved['iteration'] != 1439:
-        raise ValueError('explicit experiment projection requires frozen 1439 / 1024 source')
+    if n != 1024 or saved['iteration'] != expected_source_iteration:
+        raise ValueError('explicit experiment projection requires expected source iteration '
+                         +str(expected_source_iteration)+' at num_envs=1024')
     if (old.get('camera_mode') != 'fixed_per_env' or old.get('camera_batch_size') != n
             or not _same(old.get('camera_resolution_wh'),[224,96])
             or old.get('groups') != [dict(label=s,num_envs=512) for s in STYLES]
@@ -190,6 +195,7 @@ def project_experiment_checkpoint(input_path, output_path, *, num_envs=16,
     result['experiment_projection'] = dict(version=PROJECTION_VERSION,
         status='explicit_offline_experiment_not_exact_source_resume',
         source_sha256=digest,source_version=saved['version'],source_iteration=saved['iteration'],
+        expected_source_iteration=expected_source_iteration,
         source_timesteps=saved['timesteps'],source_num_envs=n,target_num_envs=num_envs,
         retained_indices=indices,changes=changes,
         original_action_derivation=deepcopy(saved.get('action_derivation')),

@@ -1,2 +1,7 @@
 # USD exports are hash-pinned; preserve their generated trailing blank line.
 *.usda whitespace=-blank-at-eof
+# Byte-pinned asset/config/model contracts must survive Windows/Linux checkout.
+assets/**/*.usda text eol=lf
+configs/dh116_training/effective_pad_center_pregrasp_v1.json text eol=lf
+configs/dh116_training/effective_pad_triad_pregrasp_v1.json text eol=lf
+src/go2_pvcnn/control/dh116/tabletop_bimanual_physical_action_adapter.py text eol=lf

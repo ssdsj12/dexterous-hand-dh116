@@ -207,3 +207,21 @@ def test_native_base_pose_and_contact_point_have_independent_validity():
     row = capture(world, actions)
     assert row['contacts']['effective_pad_point_valid'][1][0] is False
     assert row['contacts']['effective_pad_measurement_valid'] is True
+
+
+def test_inverse_boundary_and_post_guard_execution_remain_distinct_and_inputs_unchanged():
+    world, inverse = native_arrays()
+    inverse[0, 15:18] = [.1, -.2, .3]
+    inverse[0, 21:24] = [.4, -.5, .6]
+    executed = inverse.copy()
+    executed[0, 15:18] = 0
+    executed[0, 21:24] = 0
+    original = inverse.copy()
+    row = capture(world, inverse, executed_action24=executed)
+    assert row['action_after_inverse24'][15:18] == [.1, -.2, .3]
+    assert row['executed_physical_action24'][15:18] == [0.] * 3
+    assert row['action_after_inverse24'][21:24] == [.4, -.5, .6]
+    assert row['wrist_world_translation_action'][1] == [0.] * 3
+    assert row['wrist_intrinsic_xyz_rotation_action'][1] == [0.] * 3
+    assert np.array_equal(inverse, original)
+    assert np.array_equal(executed[:, 0:12], inverse[:, 0:12])

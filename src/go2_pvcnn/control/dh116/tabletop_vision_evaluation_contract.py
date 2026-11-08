@@ -167,9 +167,25 @@ def validate_evaluation_output(output, checkpoint, manifest, *, precreated=None)
     return output
 
 
+def validate_physical_adapter_evaluation_mode(args):
+    """The V4 opt-in selects independent plain-M0 evaluation exclusively."""
+    enabled = bool(getattr(args, 'bimanual_checkpoint_adapter', False))
+    if enabled and (not getattr(args, 'vision_evaluation_checkpoint', None)
+            or any(getattr(args, key, None) for key in (
+                'paired_bias_arm', 'paired_bias_reference', 'vision_m2_replay',
+                'vision_teacher_source', 'surface_teacher_replay',
+                'bimanual_explicit_sdk_adapter', 'bimanual_joint_tracking_audit',
+                'bimanual_mapping_probe'))
+            or getattr(args, 'bimanual_tripod_teacher_coordination_proof', None)
+            or getattr(args, 'vision_mirror_preprocessing', 'm0_raw') != 'm0_raw'):
+        raise ValueError('V4 checkpoint adapter requires independent plain M0 evaluation, exclusive of paired/replay/Teacher')
+    return enabled
+
+
 def validate_vision_evaluation_options(args):
     """Read-only pre-Kit validation; no exact-training-resume N guard applies."""
     checkpoint=getattr(args,'vision_evaluation_checkpoint',None)
+    physical_adapter = validate_physical_adapter_evaluation_mode(args)
     manifest_path=getattr(args,'vision_evaluation_manifest',None)
     arm=getattr(args,'paired_bias_arm',None)
     reference=getattr(args,'paired_bias_reference',None)
@@ -212,7 +228,7 @@ def validate_vision_evaluation_options(args):
     import torch
     from .tabletop_evaluation_trials import validate_manifest, _digest
     from .tabletop_vision_action_derivation import _validate_source
-    from .tabletop_vision_action_contract import validate_squashed_checkpoint, _validate_static_resume_contract
+    from .tabletop_vision_action_contract import _validate_static_resume_contract
     value=validate_manifest(json.loads(Path(manifest_path).read_text()),min_trials_per_style=minimum)
     if getattr(args,'seed',value['metadata']['seed'])!=value['metadata']['seed']:
         raise ValueError('native evaluation seed must match frozen manifest seed')
@@ -220,8 +236,16 @@ def validate_vision_evaluation_options(args):
             or (not getattr(args,'grasp_contact_probe',False) and args.num_envs!=200)):
         raise ValueError('native evaluation requires the frozen balanced 200-environment batch')
     saved=torch.load(checkpoint,map_location='cpu',weights_only=False)
+    from .tabletop_bimanual_checkpoint_contract import (
+        VERSION as PHYSICAL_VERSION, ADAPTER_KEY, QUALIFICATION_KEY, unwrap_physical_adapter_checkpoint)
+    if saved.get('version') == PHYSICAL_VERSION:
+        saved = unwrap_physical_adapter_checkpoint(saved, allow_explicit=physical_adapter)
+    elif any(key in saved.get('contract', {}) for key in (ADAPTER_KEY, QUALIFICATION_KEY)):
+        raise ValueError('physical adapter metadata requires independent V4 version')
+    elif physical_adapter:
+        raise ValueError('checkpoint adapter opt-in requires an independently bound V4 checkpoint')
     if saved.get('version')==LEGACY_VERSION: _validate_source(saved)
-    elif saved.get('version')==SQUASHED_VERSION: validate_squashed_checkpoint(saved)
+    elif saved.get('version')==SQUASHED_VERSION: saved=unwrap_physical_adapter_checkpoint(saved)
     else: raise ValueError('unsupported visual evaluation version')
     source=saved['contract']; expected=evaluation_contract(source,args.num_envs)
     if (getattr(args,'vision_camera_mode','bounded')!='fixed' or

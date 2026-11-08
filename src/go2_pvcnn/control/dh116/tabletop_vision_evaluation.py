@@ -174,6 +174,40 @@ def _json(path,value):
         json.dump(value,stream,indent=2,allow_nan=False)
 
 
+def _verify_native_physical_adapter(policy, device_world):
+    """Check the actual spawned USDs and named SDK order once before act.
+
+    V4 preserves the existing SDK24 chart. Verification adds no per-substep
+    action conversion, physics write or force/control callback.
+    """
+    if not getattr(policy, 'requires_physical_adapter_verification', False):
+        return
+    from .linear_coupling import ACTIVE
+    from .tabletop_bimanual_physical_action_adapter import HandPhysicalKinematics, BimanualPhysicalActionAdapter
+    native = device_world.w
+    source_hands = native.source['hands']
+    if len(source_hands) != 2 or len(device_world.hands) != 2 or len(native.ids) != 2:
+        raise ValueError('V4 runtime requires both actual DH116 source hands')
+    models, joint_names, source_paths = {}, {}, {}
+    for hi, side in enumerate(('left', 'right')):
+        hand = device_world.hands[hi]
+        names = [hand.joint_names[index] for index in native.ids[hi]]
+        if names != list(ACTIVE) or hand.body_names.count('base_link') != 1:
+            raise ValueError('V4 runtime SDK active joint order or base link mismatch: ' + side)
+        spawn = source_hands[hi].cfg.spawn
+        path = getattr(spawn, 'usd_path', None)
+        if not path:
+            raise ValueError('V4 runtime requires the actual spawned source USD: ' + side)
+        source_paths[side] = str(path)
+        joint_names[side] = names
+        models[side] = HandPhysicalKinematics.from_usd(path, side)
+    actual = BimanualPhysicalActionAdapter(models).contract()
+    policy.verify_physical_adapter(actual)
+    policy.provenance['physical_action_adapter_runtime'] = dict(
+        source_assets=source_paths, sdk_active_joint_names=joint_names,
+        execution='original_SDK24_identity_mapping', additional_per_substep_hooks=0)
+
+
 def run_vision_evaluation(world, device_world, task, env, args, critic_contract, *,
                           collector=None, camera=None, min_trials_per_style=100):
     """Use camera.sample/SensorHistory/_observations; no training algorithm.
@@ -185,6 +219,8 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
     from .tabletop_vision_student import SensorHistory
     from .tabletop_vision_training import _observations, _contract
     from .tabletop_vision_inference import load_vision_inference
+    from .tabletop_vision_evaluation_contract import validate_physical_adapter_evaluation_mode
+    physical_adapter = validate_physical_adapter_evaluation_mode(args)
     if getattr(args,'grasp_contact_probe',False):
         from .tabletop_grasp_contact_native import evaluation_minimum
         min_trials_per_style=evaluation_minimum(args)
@@ -204,9 +240,11 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
     contract_args=copy(args)
     if contract_args.rollout_steps is None: contract_args.rollout_steps=24
     current=_contract(contract_args,critic_contract)
-    policy=load_vision_inference(args.vision_evaluation_checkpoint,current,device=args.device)
+    policy=load_vision_inference(args.vision_evaluation_checkpoint,current,device=args.device,
+                                 allow_physical_adapter=physical_adapter)
     if policy.checkpoint_sha256!=checkpoint_sha:
         raise ValueError('evaluation checkpoint changed during inference load')
+    _verify_native_physical_adapter(policy, device_world)
     source=policy.provenance['source_contract']
     if manifest['metadata']['camera_sha256']!=source['camera_config_sha256']:
         raise ValueError('manifest camera provenance mismatch')

@@ -22,7 +22,7 @@ from .linear_coupling import ACTIVE
 from .tabletop_surface_contract import ACTION_CONTRACT
 
 
-SCHEMA = 'dh116-bimanual-joint-tracking-substep-v2'
+SCHEMA = 'dh116-bimanual-joint-tracking-substep-v3'
 TORQUE_SOURCE = 'implicit_actuator_estimate_not_hardware_measurement'
 
 
@@ -113,7 +113,7 @@ def _mimic_rows(world, env_id, hand_index, positions, velocities):
 def capture_joint_tracking(world, measurement, *, env_ids, episode_uids, policy_step,
                            actor_raw24, action_before_inverse24, action_after_inverse24,
                            live, terminal, failure_codes, guard_tolerance_rad=.02,
-                           event_kind='physics'):
+                           event_kind='physics', executed_action24=None):
     """Return JSON-safe rows for explicitly selected global environment IDs.
 
     episode_uids, action arrays and flags are full-world batches. ``world.q``
@@ -123,6 +123,9 @@ def capture_joint_tracking(world, measurement, *, env_ids, episode_uids, policy_
     from the integrated double ``world.commands`` and marked as reconstructed.
     A mismatch between active order and the named contract records an invalid
     mapping and withholds the target comparison.
+    ``action_after_inverse24`` is the pure coordinate inverse boundary.
+    ``executed_action24`` is the separate post-projection physical request.
+    Omitting it means there is no intervening projection to distinguish.
     """
     if event_kind not in ('physics', 'reset'):
         raise ValueError('event_kind must be physics or reset')
@@ -134,6 +137,9 @@ def capture_joint_tracking(world, measurement, *, env_ids, episode_uids, policy_
                (actor_raw24, action_before_inverse24, action_after_inverse24)]
     if any(value.shape != (world.n, 24) or not np.isfinite(value).all() for value in actions):
         raise ValueError('three finite full-world N x 24 action boundaries required')
+    executed = actions[2] if executed_action24 is None else _array(executed_action24)
+    if executed.shape != (world.n, 24) or not np.isfinite(executed).all():
+        raise ValueError('finite full-world N x 24 executed physical request required')
     selected = list(env_ids)
     if len(set(selected)) != len(selected) or any(type(i) is not int or not 0 <= i < world.n for i in selected):
         raise ValueError('distinct valid global env_ids required')
@@ -177,10 +183,10 @@ def capture_joint_tracking(world, measurement, *, env_ids, episode_uids, policy_
         computed = [_native_field(hand, 'computed_torque', env_id, world.w.ids[h])
                     for h, hand in enumerate(world.hands)]
         rate = ACTION_CONTRACT['joint_rate_rad_s']
-        right_command = float(actions[2][env_id, 7])
-        command_nonzero = dict(fingers=bool(np.any(actions[2][env_id, :12] != 0)),
-            wrist_translation=bool(np.any(actions[2][env_id, 12:18] != 0)),
-            wrist_rotation=bool(np.any(actions[2][env_id, 18:24] != 0)))
+        right_command = float(executed[env_id, 7])
+        command_nonzero = dict(fingers=bool(np.any(executed[env_id, :12] != 0)),
+            wrist_translation=bool(np.any(executed[env_id, 12:18] != 0)),
+            wrist_rotation=bool(np.any(executed[env_id, 18:24] != 0)))
         roots = getattr(world, 'roots', None)
         base_poses = _array(roots)[env_id].copy() if roots is not None else None
         base_valid = [bool(base_poses is not None and base_poses.shape == (2, 7)
@@ -194,6 +200,7 @@ def capture_joint_tracking(world, measurement, *, env_ids, episode_uids, policy_
             terminal=bool(flags[1][env_id]), failure_code=int(flags[2][env_id]),
             actor_raw24=actions[0][env_id], action_before_inverse24=actions[1][env_id],
             action_after_inverse24=actions[2][env_id],
+            executed_physical_action24=executed[env_id],
             action_contract=ACTION_CONTRACT['version'],
             active_joint_names=mappings, joint_mapping_valid=valid_mapping,
             integrated_active_command_before_float32_rad=commands[env_id],
@@ -229,8 +236,8 @@ def capture_joint_tracking(world, measurement, *, env_ids, episode_uids, policy_
                 hardware_measured_torque_nm=None, actual_solver_drive_torque_nm=None),
             contacts=_contacts(world, env_id),
             hand_object_load_n=_optional_env(measurement, 'hand_object_loads', env_id),
-            wrist_world_translation_action=actions[2][env_id, 12:18].reshape(2, 3),
-            wrist_intrinsic_xyz_rotation_action=actions[2][env_id, 18:24].reshape(2, 3),
+            wrist_world_translation_action=executed[env_id, 12:18].reshape(2, 3),
+            wrist_intrinsic_xyz_rotation_action=executed[env_id, 18:24].reshape(2, 3),
             observed_signatures=dict(mapping_contract_mismatch=not valid_mapping,
                 legal_target_actual_guard_violation=bool(target_valid and (below or above)),
                 passive_coupling_residual_present=any(abs(v['position_residual_rad']) > .02
