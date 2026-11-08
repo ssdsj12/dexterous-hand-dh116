@@ -4,6 +4,8 @@
 
 目标来源更正：本次已保存TeacherAudit V1的目标来自IsaacLab用户命令缓存，旧`native_readback`字段不能证明PhysX后端目标。下文目标一致性和100%覆盖仅指该缓存；原实际q/qd、接触、物体运动、终止和成功不受此来源修正影响。未来V2分列真正backend读回，旧文件与资格证明不回写。
 
+T5成功Hold窗另作来源审查：`ordinary_fraction`是手—物接触中未被有效指腹接受的载荷比例，不是桌面/端支架反力。两臂每个二指成功窗的300个60Hz采样均为0，但各自env0的2400个480Hz样本中有798次左手拒接触载荷非零，最大0.000265674 N、瞬时比例最大0.0097035%；env1–3双手拒接触载荷为0。原件没有独立Wire—Table/EndSupport载荷或冲量，不能据此声称其绝对为0；已存杆底与静态支架顶的间隙仅作几何推断。独立派生审计为`t5_hold_load_source_audit01.json`，SHA `36805687fcd88376a4552bd8d07cf459173f8ac5b760a784d1a4c6cc579b3162`，保留8个成功窗的身份、时钟及输入SHA；不改原判据或成功统计。
+
 当前T6仅约束双腕，未接入逐指`TripodContactRecovery`，仍保留旧MPC在局部几何失败或无进展后永久停止恢复的缺口。
 
 | 组 | 抓法 | 原生成功 | Lift P50/P90/P95/max (mm) | Hold max (s) | 原生Hold锚滑移max (mm) | fresh接触锚滑移max (mm) | 首terminal |

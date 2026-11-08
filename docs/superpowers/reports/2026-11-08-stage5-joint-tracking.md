@@ -1,6 +1,6 @@
 # 第五阶段右 finger12 原生跟踪审计
 
-**目标来源更正：** 已保存schema v1的目标是`world.commands`的float64积分值，执行端才转float32；v2/v3优先读取的`hand.data.joint_pos_target`是IsaacLab用户命令缓存，缺失时才重建float32提交值。它们均不是PhysX后端drive目标。旧`native_readback`标志及图中的v3目标线应按缓存来源理解；原始文件、数字和SHA保留。后端目标未在旧run记录，不能用缓存证明提交链正确或排除后端差异。未来schema v4使用`root_physx_view.get_dof_position_targets()`并分列backend/cache/重建值，须另行原生复核。
+**目标来源更正：** 已保存schema v1的目标是`world.commands`的float64积分值，执行端才转float32；v2/v3优先读取的`hand.data.joint_pos_target`是IsaacLab用户命令缓存，缺失时才重建float32提交值。它们均不是PhysX后端drive目标。旧`native_readback`标志及图中的v3目标线应按缓存来源理解；原始文件、数字和SHA保留。后端目标未在旧run记录，不能用缓存证明提交链正确或排除后端差异。后续schema v4使用`root_physx_view.get_dof_position_targets()`并分列backend/cache/重建值，已在下节独立原生复核；旧v1～v3不倒授后端读回资格。
 
 本次 1024 环境、32 个策略步的独立 M2 原动作重放再次复现两次三指 `joint_limit`。两个环境均由右 `finger12` 实测角度越过原下界保护线触发。508 个存活物理子步的主动关节名称映射全部匹配，命令缓存目标均在原名义限位内。终止时模拟隐式执行器的正向力矩估算均为 +0.200000003 Nm，实测关节仍向下运动。该结果定位了缓存目标与实际运动的偏离，尚待后端读回区分提交链和受载跟踪。接触反力、被动联动与腕部运动各自的动力学贡献仍需干预实验识别。
 

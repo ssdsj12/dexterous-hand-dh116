@@ -39,7 +39,7 @@
 
 ## 结果状态
 
-为后续Student验证冻结新的200个独立 authored 初态（二指/三指各100），seed116507，manifest SHA为`28197144e00ca71e25a051934219744e27466cc21e4684a1f76e5c015b59b511`。与已有200例清单无身份重叠；仅在线缆XY与world Z yaw上施加有界扰动，保留Z、手根/关节/速度、相机和物理配置。此为同一reset族内的小扰动验证集，不是长度、质量、摩擦或柔性线缆泛化验证。初态尚须通过原生reset读回核验，不能将200个authored身份计为已经完成的200次原生评估。
+为后续Student验证冻结新的200个独立 authored 初态（二指/三指各100），seed116507，manifest SHA为`28197144e00ca71e25a051934219744e27466cc21e4684a1f76e5c015b59b511`。与已有200例清单无身份重叠；仅在线缆XY与world Z yaw上施加有界扰动，保留Z、手根/关节/速度、相机和物理配置。此为同一reset族内的小扰动验证集，不是长度、质量、摩擦或柔性线缆泛化验证。清单生成时仅为`authored_unverified`，该历史manifest元数据保持不变；后续实际原生reset读回核验及200个完整首回合结果见下文，不以authored身份本身授予原生资格。
 
 新增`bound_student_eval`独立入口，仅接受已合格完整V4，显式核验模型SHA、manifest、相机/物理身份及模型的raw/hemisphere预处理合同；等待单实例锁后再次核对输入SHA。它不添加paired arm、M2、Teacher或重放控制，原M0默认路径保持。
 
@@ -93,4 +93,6 @@
 
 证书只证明本轮conditional原生执行及数据完整性，不证明策略合格：`conditional_telemetry_complete=true`，旧严格`telemetry_complete/validation_complete/native_validation_complete`仍为false；合法无锚NA与原生证书分层处理。没有改标志宣称成功，也没有降低30 mm /5 s /0.5 mm标准。刚性圆柱代理结果不是柔性线缆或真实DH116硬件验证。
 
-本轮标准raw未保存失败码、显式policy/physics step及时间戳、完整SDK掌位链，不能按回合时长猜失败原因，或由物体高度回算左右掌位。每抓法100个非成功terminal的原因在本轮均未记录。将保持同一模型、同一200初态和超参数，在新的源码/目录中补被动诊断并独立复采；不将其算成400个独立初态，不回填旧文件或重新拟合验证集。
+本轮标准raw未保存失败码、显式policy/physics step及时间戳、完整SDK掌位链，不能按回合时长猜失败原因，或由物体高度回算左右掌位。每抓法100个非成功terminal的原因在本轮均未记录。后续已保持同一模型、同一200初态和超参数，在独立`t7_bc_diagnostics02`源码/目录完成被动诊断复采并退出0；不算400个独立初态，不回填旧文件或重新拟合验证集。
+
+新复测200个首episode仍二指/三指各0/100，逐trial11项汇总与标准臂相同。1353010个首有效物理样本已关联60Hz Actor、480Hz掌位/载荷/真实backend与cache、实际时钟和首terminal；失败二指excess_force/joint_limit/object_dropped/timeout为16/18/51/15，三指为40/7/53/0。二指掌峰值可达50mm而同刻物体净Lift接近0，不代表抓取。逐手分位、峰值env/UID/时刻、同环境完整轨迹及来源边界见[11-09执行链审计](2026-11-09-stage5-student-execution-audit.md)。
