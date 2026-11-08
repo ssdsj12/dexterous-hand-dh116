@@ -132,6 +132,8 @@ class TensorWorld:
         self.root_seed[:,:,:3] += self.origins[:,None]
         self.root_seed[:,:,:2] += self.t(world.seed['root_xy'])
         self.initial_offset = float(world.seed['root_offset'])
+        self.episode_reset_root_pose_m = self.root_seed[:,:,:3].clone()
+        self.episode_reset_root_pose_m[:,:,2] += self.initial_offset
         self.seed_q = []
         self.seed_qd = []
         for hi, hand in enumerate(self.hands):
@@ -545,18 +547,20 @@ class TensorWorld:
             contact_valid_a=contact_valid_a.any(-1)
         elif contact_valid_a.ndim!=2:
             contact_valid_a=torch.zeros((self.n,2),device=self.device,dtype=torch.bool)
-        # The task lift offset is a world-Z displacement. Do not broadcast it
-        # into X/Y, otherwise the audit would report a false fixed lateral SDK
-        # error even though the control target is unchanged.
-        reset_relative_base=self.root_seed[:,:,:3].clone()
-        reset_relative_base[:,:,2] += task.offset[:,None]
-        actual_palm_pose= (self.roots[:,:,:3]-reset_relative_base).detach().clone()
+        # Keep physical-reset-relative telemetry separate from the controller's
+        # dynamic lift-offset frame. The latter changes during Lift and cannot
+        # be used as the actual displacement baseline.
+        control_frame_base=self.root_seed[:,:,:3].clone()
+        control_frame_base[:,:,2] += task.offset[:,None]
+        control_frame_sdk_target=(self.root_targets[:,:,:3]-control_frame_base).detach().clone()
+        actual_palm_pose=(self.roots[:,:,:3]-self.episode_reset_root_pose_m).detach().clone()
         self.last_action_diagnostics=dict(
             raw_action24=getattr(task,'last_raw_action24',torch.zeros((self.n,24),device=self.device)),
             requested_palm_target_m=task.palm_targets.detach().clone(),
             pre_projection_palm_target_m=pre_projection_palm.detach().clone(),
             projected_palm_target_m=self.palms.detach().clone(),
-            final_sdk_palm_target_m=(self.root_targets[:,:,:3]-reset_relative_base).detach().clone(),
+            final_sdk_palm_target_m=(self.root_targets[:,:,:3]-self.episode_reset_root_pose_m).detach().clone(),
+            control_frame_sdk_target_m=control_frame_sdk_target,
             actual_palm_pose_m=actual_palm_pose,
             palm_displacement_m=actual_palm_pose.clone(),
             actual_palm_velocity_m_s=measurement.get('wrist_velocity',
@@ -611,6 +615,7 @@ class TensorWorld:
         self.contact_all_below_centerline[ids]=False; self.contact_count[ids]=0
         self.w.sim.physics_sim_view.update_articulations_kinematic()
         measured=self.refresh(sensors=False)
+        self.episode_reset_root_pose_m[ids]=self.roots[ids,:,:3].detach()
         if hasattr(self,'pad_measurements'):
             from .tabletop_surface_exploration import clear_reset_contacts
             clear_reset_contacts(self.pad_measurements,ids)

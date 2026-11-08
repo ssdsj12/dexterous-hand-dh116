@@ -33,6 +33,17 @@ def reset_relative_world_base(root_seed: Any, task_offset: Any) -> np.ndarray:
     return result
 
 
+def relative_palm_pose_m(actual_pose: Any, reset_pose: Any) -> np.ndarray:
+    """Return measured palm displacement from a fixed physical-reset pose."""
+    actual = np.asarray(actual_pose, dtype=np.float64)
+    reset = np.asarray(reset_pose, dtype=np.float64)
+    if actual.shape != reset.shape or actual.ndim != 3 or actual.shape[-1] != 3:
+        raise ValueError("actual_pose and reset_pose must have the same shape (N, 2, 3)")
+    if not np.isfinite(actual).all() or not np.isfinite(reset).all():
+        raise ValueError("actual_pose and reset_pose must be finite")
+    return actual - reset
+
+
 def _array(value: Any, shape: tuple[int, ...], name: str) -> np.ndarray:
     result = np.asarray(value, dtype=np.float64)
     if result.shape != shape or not np.isfinite(result).all():
@@ -128,6 +139,7 @@ class VisionActionDiagnosticRecorder:
         contact_valid: Any = None,
         projection_reasons: Any = None,
         palm_displacement_m: Any = None,
+        control_frame_sdk_target_m: Any = None,
     ) -> dict[str, Any]:
         """Record one timestamped batch; values are copied and never aliased."""
         action = np.asarray(raw_action24, dtype=np.float64)
@@ -149,6 +161,8 @@ class VisionActionDiagnosticRecorder:
         safe_z = _array(safe_z_m, (n, 2), "safe_z_m")
         displacement = arrays["actual_palm_pose_m"] if palm_displacement_m is None else _array(
             palm_displacement_m, (n, 2, 3), "palm_displacement_m")
+        control_sdk = arrays["final_sdk_palm_target_m"] if control_frame_sdk_target_m is None else _array(
+            control_frame_sdk_target_m, (n, 2, 3), "control_frame_sdk_target_m")
         loads = None if contact_loads_n is None else _array(contact_loads_n, (n, 2), "contact_loads_n")
         valid = None if contact_valid is None else np.asarray(contact_valid, dtype=bool)
         if valid is not None and valid.shape != (n, 2):
@@ -180,6 +194,7 @@ class VisionActionDiagnosticRecorder:
                 "actual_palm_pose_m": arrays["actual_palm_pose_m"][i].tolist(),
                 "actual_palm_velocity_m_s": arrays["actual_palm_velocity_m_s"][i].tolist(),
                 "palm_displacement_m": displacement[i].tolist(),
+                "control_frame_sdk_target_m": control_sdk[i].tolist(),
                 "table_clearance_m": clearance[i].tolist(),
                 "safe_z_m": safe_z[i].tolist(),
                 "contact_loads_n": None if loads is None else loads[i].tolist(),
@@ -199,7 +214,7 @@ class VisionActionDiagnosticRecorder:
             actions = np.asarray([row["action_split"][f"{hand}_palm_translation3"] for row in self.rows])
             pre = np.asarray([row["pre_projection_palm_target_m"][start] for row in self.rows])
             post = np.asarray([row["projected_palm_target_m"][start] for row in self.rows])
-            sdk = np.asarray([row["final_sdk_palm_target_m"][start] for row in self.rows])
+            sdk = np.asarray([row["control_frame_sdk_target_m"][start] for row in self.rows])
             loads = [row["contact_loads_n"][start] for row in self.rows
                      if row["contact_loads_n"] is not None]
             result["by_hand"][hand] = {

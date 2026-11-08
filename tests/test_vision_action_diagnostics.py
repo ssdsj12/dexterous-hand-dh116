@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 
 from go2_pvcnn.control.dh116.tabletop_vision_action_diagnostics import (
-    VisionActionDiagnosticRecorder, reset_relative_world_base, split_action24,
-    summarize_action24)
+    VisionActionDiagnosticRecorder, relative_palm_pose_m, reset_relative_world_base,
+    split_action24, summarize_action24)
 
 
 def test_reset_relative_world_base_adds_task_offset_only_to_z():
@@ -13,6 +13,14 @@ def test_reset_relative_world_base_adds_task_offset_only_to_z():
     expected = root_seed.copy()
     expected[:, :, 2] += offset[:, None]
     np.testing.assert_allclose(result, expected)
+
+
+def test_relative_palm_pose_uses_fixed_episode_reset_baseline():
+    reset_pose = np.array([[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]])
+    actual_pose = reset_pose.copy()
+    actual_pose[:, :, 2] += 0.02
+    np.testing.assert_allclose(relative_palm_pose_m(actual_pose, reset_pose),
+                               np.array([[[0., 0., .02], [0., 0., .02]]]))
 
 
 def test_split_action24_preserves_left_right_contract():

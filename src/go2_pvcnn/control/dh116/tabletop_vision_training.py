@@ -337,6 +337,7 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                             final_sdk_palm_target_m=audit['final_sdk_palm_target_m'].detach().cpu().numpy(),
                             actual_palm_pose_m=audit['actual_palm_pose_m'].detach().cpu().numpy(),
                             palm_displacement_m=audit['palm_displacement_m'].detach().cpu().numpy(),
+                            control_frame_sdk_target_m=audit['control_frame_sdk_target_m'].detach().cpu().numpy(),
                             actual_palm_velocity_m_s=audit['actual_palm_velocity_m_s'].detach().cpu().numpy(),
                             table_clearance_m=audit['table_clearance_m'].detach().cpu().numpy(),
                             safe_z_m=audit['safe_z_m'].detach().cpu().numpy(),
