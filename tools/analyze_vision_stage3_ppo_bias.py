@@ -17,7 +17,7 @@ STYLE_NAMES = {"pinch_thumb_index": "pinch", "tripod_thumb_index_middle": "tripo
 
 def _summary(values: np.ndarray) -> dict[str, Any]:
     values = np.asarray(values, dtype=np.float64)
-    flat = values.reshape(-1)
+    flat = values[np.isfinite(values)]
     return {
         "count": int(flat.size),
         "mean": float(np.mean(flat)) if flat.size else None,
@@ -48,6 +48,11 @@ def analyze(run: Path) -> dict[str, Any]:
     physics_rows = [json.loads(line) for line in (run / "action_diagnostics.jsonl").open()]
     if len(policy_rows) != len(physics_rows):
         raise RuntimeError(f"row count mismatch: policy={len(policy_rows)} action={len(physics_rows)}")
+    if not policy_rows:
+        raise ValueError("empty policy diagnostics")
+    for index, (policy, physics) in enumerate(zip(policy_rows, physics_rows)):
+        if any(policy[key] != physics[key] for key in ("env_id", "episode_id", "timestamp_s")):
+            raise ValueError(f"policy/physics identity mismatch at row {index}")
 
     env_ids = np.asarray([r["env_id"] for r in policy_rows], dtype=np.int64)
     style = _style(env_ids)
@@ -55,14 +60,14 @@ def analyze(run: Path) -> dict[str, Any]:
     log_std = np.asarray([r["log_std"] for r in policy_rows], dtype=np.float64)
     advantage = np.asarray([r["advantage"] for r in policy_rows], dtype=np.float64)
     returns = np.asarray([r["returns"] for r in policy_rows], dtype=np.float64)
-    values = np.asarray([r["value"] for r in policy_rows], dtype=np.float64)
+    critic_values = np.asarray([r["value"] for r in policy_rows], dtype=np.float64)
     rewards = np.asarray([r["reward"] for r in policy_rows], dtype=np.float64)
     done = np.asarray([r["done"] for r in policy_rows], dtype=bool)
     loads = np.asarray([r["contact_loads_n"] for r in physics_rows], dtype=np.float64) if "contact_loads_n" in physics_rows[0] else None
     valid = np.asarray([r["contact_valid"] for r in physics_rows], dtype=bool) if "contact_valid" in physics_rows[0] else None
     actual_pose = np.asarray([r["actual_palm_pose_m"] for r in physics_rows], dtype=np.float64)
     terms = sorted({name for row in policy_rows for name in row.get("reward_terms", {})})
-    term_arrays = {name: np.asarray([row.get("reward_terms", {}).get(name, 0.0) for row in policy_rows], dtype=np.float64)
+    term_arrays = {name: np.asarray([row.get("reward_terms", {}).get(name, np.nan) for row in policy_rows], dtype=np.float64)
                    for name in terms}
 
     result: dict[str, Any] = {
@@ -72,7 +77,7 @@ def analyze(run: Path) -> dict[str, Any]:
         "style_split": {name: int((style == name).sum()) for name in STYLE_NAMES},
         "action_contract": "finger12|palm_translation6|rotation6",
         "right_palm_z_action_index": RIGHT_PALM_Z,
-        "all_rows_same_policy_step": len({r["policy_step"] for r in policy_rows}) == 32,
+        "distinct_policy_steps": len({r["policy_step"] for r in policy_rows}),
         "by_style": {},
         "correlation_caveat": "Pearson correlations are descriptive associations in one final-checkpoint rollout; they do not establish causality.",
     }
@@ -94,7 +99,7 @@ def analyze(run: Path) -> dict[str, Any]:
             "ppo": {
                 "advantage": _summary(advantage[mask]),
                 "returns": _summary(returns[mask]),
-                "value": _summary(values[mask]),
+                "value": _summary(critic_values[mask]),
                 "reward": _summary(rewards[mask]),
                 "done_count": int(done[mask].sum()),
             },
@@ -102,10 +107,10 @@ def analyze(run: Path) -> dict[str, Any]:
             "correlations_with_right_palm_z_action": {
                 "advantage": _corr(actions[mask, RIGHT_PALM_Z], advantage[mask]),
                 "returns": _corr(actions[mask, RIGHT_PALM_Z], returns[mask]),
-                "value": _corr(actions[mask, RIGHT_PALM_Z], values[mask]),
+                "value": _corr(actions[mask, RIGHT_PALM_Z], critic_values[mask]),
                 "reward": _corr(actions[mask, RIGHT_PALM_Z], rewards[mask]),
-                **{f"reward_term:{name}": _corr(actions[mask, RIGHT_PALM_Z], values[mask])
-                   for name, values in term_arrays.items()},
+                **{f"reward_term:{name}": _corr(actions[mask, RIGHT_PALM_Z], term_samples[mask])
+                   for name, term_samples in term_arrays.items()},
             },
         }
         if loads is not None:

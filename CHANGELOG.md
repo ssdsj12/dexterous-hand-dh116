@@ -1,3 +1,9 @@
+## 2026-11-08 — 右掌偏置第四阶段
+
+- 增加 M2 历史动作回放、冷初态配对和固定左手的右 Z 干预。关节回放在物理 reset 前记录完整 articulation、SDK 主动目标与 Actor/执行动作。原轨迹两次越限均可复现。
+- 修正第三阶段报告里的终止次数和模型文件留存说明。奖励项相关性按各自有效样本计算，并核对 policy 与物理行的身份。第 1024、1025、1026 轮模型的同输入推理统计见[阶段报告](docs/superpowers/reports/2026-11-08-vision1024-stage4-ppo-bias.md)。
+- CPU 验证使用 `pytest -q tests/test_vision_eval*.py tests/test_evaluation_telemetry.py tests/test_dh116_tensor_env.py tests/test_joint_limit_replay.py tests/test_vision_action_diagnostics.py tests/test_vision_mirror_ablation.py tests/test_stage3_ppo_bias_analysis.py tests/test_vision_paired_bias_eval.py tests/test_vision_squashed*.py`。使用原 SHA 固定的 USD 资产后，测试快照中 279 项通过。
+
 ## 2026-11-08 — 视觉 Student 右掌不对称 P0 动作诊断
 
 - 新增默认关闭的 `--vision-action-diagnostics`，逐环境记录24D动作、左右手分量、episode/physics step/时间戳、请求目标、投影前后目标、最终 SDK 目标、实际掌位/速度、净空、safe_z、接触载荷与有效接触；诊断不改变控制、奖励或模型输入。

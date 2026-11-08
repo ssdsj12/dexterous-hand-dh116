@@ -192,6 +192,26 @@ class TensorEnv:
         self.physics_action_diagnostics = PhysicsActionDiagnosticWriter(stream)
         return self.physics_action_diagnostics
 
+    def record_physics_substep(self, w, live, terminal_now, diagnostic_policy_step):
+        audit = getattr(w, 'last_action_diagnostics', None)
+        if audit is None:
+            raise RuntimeError('physics action diagnostics require world audit state')
+        to_cpu = lambda value: value.detach().cpu().numpy() if torch.is_tensor(value) else value
+        audit_cpu = {
+            key: (value.detach().cpu().tolist() if key == 'projection_reasons' and torch.is_tensor(value)
+                  else to_cpu(value))
+            for key, value in audit.items()
+            if key not in ('physics_step', 'timestamp_s')}
+        self.physics_action_diagnostics.record_batch(
+            torch.arange(self.n, device=self.device).cpu().numpy(),
+            self.diagnostic_episode_ids.detach().cpu().numpy(),
+            diagnostic_policy_step,
+            np.full(self.n, int(audit['physics_step']), dtype=np.int64),
+            np.full(self.n, float(audit['timestamp_s']), dtype=np.float64),
+            live.detach().cpu().numpy(),
+            terminal_now.detach().cpu().numpy(),
+            dict(audit_cpu, failure_code=self.task.failure.detach().cpu().numpy()))
+
     def set_physics_diagnostic_policy_step(self, policy_step):
         self._diagnostic_policy_step = int(policy_step)
 
@@ -417,26 +437,6 @@ class TensorEnv:
                               if getattr(t,'phase_force_reward',False) else None))
             else:
                 t.consume(task_m,scoring_live,w.dt)
-            terminal_now = live & t.done
-            if self.physics_action_diagnostics is not None:
-                audit = getattr(w, 'last_action_diagnostics', None)
-                if audit is None:
-                    raise RuntimeError('physics action diagnostics require world audit state')
-                to_cpu = lambda value: value.detach().cpu().numpy() if torch.is_tensor(value) else value
-                audit_cpu = {
-                    key: (value.detach().cpu().tolist() if key == 'projection_reasons' and torch.is_tensor(value)
-                          else to_cpu(value))
-                    for key, value in audit.items()
-                    if key not in ('physics_step', 'timestamp_s')}
-                self.physics_action_diagnostics.record_batch(
-                    torch.arange(self.n, device=self.device).cpu().numpy(),
-                    self.diagnostic_episode_ids.detach().cpu().numpy(),
-                    diagnostic_policy_step,
-                    np.full(self.n, int(audit['physics_step']), dtype=np.int64),
-                    np.full(self.n, float(audit['timestamp_s']), dtype=np.float64),
-                    live.detach().cpu().numpy(),
-                    terminal_now.detach().cpu().numpy(),
-                    audit_cpu)
             if feedback is not None:
                 feedback.sample(t,w,m,live,w.dt)
                 if bool((live&~feedback.sample_valid).any()):
@@ -494,6 +494,10 @@ class TensorEnv:
                 evaluation.sample(t,w,m,live,w.dt,submitted_action,
                     measurement_valid=finite_physics(w,m)&~t.nonfinite,anchor=evaluation_anchor)
             newly_terminal = live & t.done
+            if self.physics_action_diagnostics is not None:
+                self.record_physics_substep(w, live, newly_terminal, diagnostic_policy_step)
+            if getattr(self, 'joint_replay_observer', None) is not None:
+                self.joint_replay_observer(self, m, live, newly_terminal)
             ids = newly_terminal.nonzero().flatten()
             if ids.numel():
                 if getattr(t,'manual_control',False):

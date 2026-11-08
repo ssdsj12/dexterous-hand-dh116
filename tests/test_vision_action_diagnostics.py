@@ -92,6 +92,8 @@ def test_physics_writer_keeps_terminal_sample_authoritative(tmp_path):
         writer.record_batch([0], [4], 7, [10], [0.1], [True], [False], audit)
         writer.record_batch([0], [4], 7, [11], [0.2], [True], [True], audit)
         writer.record_batch([0], [4], 7, [12], [0.3], [False], [False], audit)
+        with pytest.raises(ValueError, match="duplicate or inactive terminal"):
+            writer.record_batch([0], [4], 7, [13], [0.4], [False], [True], audit)
         assert writer.terminal_rows == 1
     rows = [json.loads(line) for line in path.read_text().splitlines()]
     assert rows[1]["terminal_sample"] is True

@@ -306,6 +306,8 @@ class PhysicsActionDiagnosticWriter:
             key = (int(ids[i]), int(episodes[i]))
             episode_uid = f"{self.reset_epoch}:{key[0]}:{key[1]}"
             is_terminal = bool(terminal[i])
+            if is_terminal and (not live[i] or key in self.terminal_keys):
+                raise ValueError("duplicate or inactive terminal sample")
             post_terminal_noop = key in self.terminal_keys and not is_terminal
             if is_terminal:
                 self.terminal_keys.add(key)
@@ -319,6 +321,7 @@ class PhysicsActionDiagnosticWriter:
                 "timestamp_s": float(times[i]),
                 "live_before_substep": bool(live[i]),
                 "terminal_sample": is_terminal,
+                "failure_code": int(audit["failure_code"][i]) if "failure_code" in audit else None,
                 "post_terminal_noop": post_terminal_noop,
                 "action24": action[i].tolist(),
                 "action_split": {k: v[i].tolist() for k, v in split_action24(action).items()},

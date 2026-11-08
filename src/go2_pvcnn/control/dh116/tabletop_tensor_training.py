@@ -999,6 +999,9 @@ def run_tensor_training(world, template, args, contract, *, mixed_reset=None):
         publish_resolved_tensor_configuration(args.output,contract)
 
     if getattr(args,'vision_student',False):
+        if getattr(args,'vision_m2_replay',None) is not None:
+            from .tabletop_joint_limit_replay import run_joint_replay
+            return run_joint_replay(device_world,env,args)
         if getattr(args,'tripod_recovery_stage',None):
             from .tabletop_tripod_staged_experiment import run_staged_tripod_experiment
             write_json(args.output/'tensor_contract.json',contract)

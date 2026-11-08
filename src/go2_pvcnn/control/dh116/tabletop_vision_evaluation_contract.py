@@ -171,6 +171,14 @@ def validate_vision_evaluation_options(args):
     """Read-only pre-Kit validation; no exact-training-resume N guard applies."""
     checkpoint=getattr(args,'vision_evaluation_checkpoint',None)
     manifest_path=getattr(args,'vision_evaluation_manifest',None)
+    arm=getattr(args,'paired_bias_arm',None)
+    reference=getattr(args,'paired_bias_reference',None)
+    if arm or reference:
+        if not arm or not checkpoint or bool(reference)!=(arm!='m0'):
+            raise ValueError('paired arms require evaluation checkpoint and all comparisons require an M0 reference')
+        if (getattr(args,'vision_mirror_preprocessing','m0_raw')!='m0_raw'
+                or getattr(args,'grasp_contact_probe',False) or getattr(args,'grasp_contact_diagnostics',False)):
+            raise ValueError('paired evaluation selects its own preprocessing and full native cohort')
     contact_flags=(getattr(args,'grasp_contact_diagnostics',False)
                    or getattr(args,'grasp_contact_probe',False))
     minimum=100

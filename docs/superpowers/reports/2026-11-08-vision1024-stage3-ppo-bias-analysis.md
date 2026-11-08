@@ -49,7 +49,7 @@
 
 `/mnt/mydisk/xk/dh116/runs/dh116_gpu3_stage3_shorttrain_m0_2updates_20261108T062146Z`
 
-该目录仅运行第1025和1026次更新，开启 `--vision-policy-diagnostics` 并按更新保存Checkpoint，未修改原模型。右掌Z统计为：
+该目录保留第 1025 和 1026 次更新的逐样本诊断和最终权重文件。两轮采样分别发生在相应优化器更新前。右掌 Z 统计如下。
 
 | 更新 | 均值 | 标准差 | log_std均值 | Advantage均值 | Returns均值 | Reward均值 |
 |---:|---:|---:|---:|---:|---:|---:|

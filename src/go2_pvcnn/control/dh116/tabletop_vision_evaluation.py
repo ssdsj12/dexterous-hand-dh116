@@ -253,6 +253,12 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
             history=history.frames.detach().cpu(),contract=current,
             sensor_packet={k:v.detach().cpu() for k,v in packet.items() if isinstance(v,torch.Tensor)}),stream)
     evidence['initial_visual_actor_inputs']=dict(path=str(actor_path),sha256=file_sha256(actor_path))
+    if getattr(args, 'paired_bias_arm', None):
+        if not native_camera or min_trials_per_style<100:
+            raise ValueError('paired experiment requires native camera and full cohort')
+        from .tabletop_vision_paired_bias import run_paired_arm
+        return run_paired_arm(args, env, task, device_world, camera, history, obs, policy,
+                              readback, manifest, checkpoint_sha, output)
     raw_path=output/'evaluation_conditional_telemetry_samples.jsonl.gz'
     # Millions of physical samples stay on disk, not in the Python heap.
     raw_stream=gzip.open(raw_path,'xt',encoding='utf-8',compresslevel=1)

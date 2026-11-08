@@ -40,6 +40,9 @@ parser.add_argument('--vision-mirror-preprocessing',
                     choices=('m0_raw','m2_full_mirror'),default='m0_raw',
                     help='isolated visual actor preprocessing experiment; default preserves raw M0')
 parser.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
+parser.add_argument('--vision-m2-replay', type=Path, help='Replay an existing M2 diagnostic run without PPO')
+parser.add_argument('--vision-replay-arm', choices=('recorded','neutral_fingers','neutral_rotation',
+                    'neutral_translation','omit_inverse'), default='recorded')
 parser.add_argument('--vision-wrist-quaternion-preprocessing',
                     choices=('raw','wrist_quaternion_hemisphere_v1'),default='raw',
                     help='versioned opt-in actor quaternion sign canonicalization; old models remain raw')
@@ -65,6 +68,8 @@ parser.add_argument('--vision-camera-mode',choices=('bounded','fixed'),default='
 parser.add_argument('--vision-resume-downsize',action='store_true')
 parser.add_argument('--vision-evaluation-checkpoint',type=Path)
 parser.add_argument('--vision-evaluation-manifest',type=Path)
+parser.add_argument('--paired-bias-arm', choices=('m0','m2','replay','right_z_zero'))
+parser.add_argument('--paired-bias-reference', type=Path)
 parser.add_argument('--vision-evaluation-max-control-steps',type=int,default=1200)
 parser.add_argument('--grasp-contact-diagnostics',action='store_true',
                     help='read-only raw PhysX pad diagnostics during inference-only visual evaluation')
@@ -249,6 +254,11 @@ parser.add_argument('--max-iterations', type=int, default=None,
                     help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+if args.vision_m2_replay and (not args.vision_student or not args.tensor_pipeline
+        or args.vision_evaluation_checkpoint or args.vision_teacher_source or args.tripod_recovery_stage):
+    parser.error('--vision-m2-replay requires an exclusive native visual tensor replay')
+if not args.vision_m2_replay and args.vision_replay_arm != 'recorded':
+    parser.error('--vision-replay-arm requires --vision-m2-replay')
 if args.tripod_recovery_stage:
     from go2_pvcnn.control.dh116.tabletop_tripod_recovery_runtime import validate_staged_options
     validate_staged_options(args)
