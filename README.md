@@ -6,7 +6,9 @@ Z0～Z3 已完成同一模型、初态和随机种子的二指/三指各100例�
 
 新增显式V4 Adapter模型绑定与推理前资产/源码/SDK合同核验，旧模型仍走原路径。Teacher专用480Hz审计分别保留请求、执行、实测关节与首终止，并保留重锚前的真实接触锚滑移；三指协调候选必须先通过二指Teacher回归门禁，修改后的三指动作不进入BC监督池。未来配对路径已修复结束环境被协调器重新驱动的问题；现有冻结Z3按首终止截断统计，未将后续尾段算作合格执行。
 
-完整CPU冻结快照为6136 passed、113 failed、48 skipped、25 errors，另91 subtests passed；相对`3f7fd69`，195个新增节点全通过、无新增回归，原有失败和外部依赖问题仍单列。包括后续三指下降接近修正在内，最新控制、模型与Teacher聚焦回归316项通过。`pressure_geometry_constrained` Teacher原路径与Adapter路径正在单实例串行验证，Student迁移仍按原生门禁执行。M0默认、M2独立、3844D/371D/24D和30mm/5s/0.5mm标准保持，PR继续Draft。见[总验证报告](docs/superpowers/reports/2026-11-08-stage5-native-validation.md)。
+本次Teacher原路径已重新完成：二指4/4成功、最高31.627704 mm、Hold5 s；三指0/4，右手对向接触仅1.7407%。Adapter对照仍在串行运行，尚未宣称整体回归通过。只读PointNet探针发现第1024轮源模型在已测200个原生初态和4698条二指同步样本上有效特征为0、坐标清零不改变动作；原run也未进行Teacher视觉蒸馏。新增独立V4评估入口和训练前冻结的200初态验证清单，旧模型不改写，详见[视觉迁移报告](docs/superpowers/reports/2026-11-08-stage5-visual-transfer.md)。
+
+完整CPU冻结快照为6136 passed、113 failed、48 skipped、25 errors，另91 subtests passed；相对`3f7fd69`，195个新增节点全通过、无新增回归，原有失败和外部依赖问题仍单列。包括后续三指下降接近修正、新评估入口和清单在内，最新控制、模型与Teacher聚焦回归359项通过。`pressure_geometry_constrained` Teacher原路径与Adapter路径正在单实例串行验证，Student迁移仍按原生门禁执行。M0默认、M2独立、3844D/371D/24D和30mm/5s/0.5mm标准保持，PR继续Draft。见[总验证报告](docs/superpowers/reports/2026-11-08-stage5-native-validation.md)。
 
 ## 2026-11-08 — 右掌动作偏置与原生关节越限
 

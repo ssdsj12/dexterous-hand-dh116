@@ -120,6 +120,30 @@ env 661 前 125 个物理子步的全部实测 full q、两手 base pose 和手�
 
 三份 v3 原始 JSONL 的 SHA-256 分别为原样 `1191f5193284378293a66cbbc3fcf38d55d7a275000e5e6adbf508b55edda5ce`、独立暂停 `0067e7776abd7f2147cb193d99ca1e3faa70cbcd5040ea55efacd9c27f2307a1`、共同暂停 `c97624377b4083cfd883e45604fbf8b3e44b9c8fa2b8ec701dea3584114b8f10`。分析件位于同一实验根目录的 `t1_recorded_boundary_compatibility01.json`、`t1_guard_trace661_analysis03.json`、`t1_guard_coupled_analysis02.json` 与 `t1_coupled_vs_independent01.json`。命令沿用上述离线分析接口，可追加 `--at-step 185 --at-step 252 --at-step 256` 保存同一物理时刻的完整具名比较样本。
 
+### 同环境原生轨迹图
+
+![env 799 与 932 的右 finger12 实测跟踪、SDK 目标及原关节保护线](figures/stage5_finger12_tracking.png)
+
+每个子图只使用标注的同一环境和首回合，曲线在该组首次 terminal 处终止。黑色 SDK 目标线仅在三组均有有效样本的共同窗口内、逐项一致性验证通过后绘制；env 932 的黑线止于步 252，不将原样 terminal 后的其他两组目标称为三组相同。实际角度与目标相差并不是目标越过下界。灰线为名义下界，红线为保留原容差后的原保护线。原样 env 799、932 的关节越限点分别标以叉号；共同暂停后的 env 799 在窗口末仍略低于名义下界，不能据图宣称理想跟踪已经恢复。
+
+![env 661 的右拇指及右全手载荷原生对照](figures/stage5_env661_contact_loads.png)
+
+阴影区为三组逐项一致的前 125 个物理子步，竖线分别标出步 126 首次左腕暂停和步 185 独立暂停组的 `excess_force`。30 N 红线只出现在右拇指单 link 载荷图；右全手是合计诊断，未给它套用单 link 保护线。独立暂停组在首次 terminal 截断，不将后续 no-op 当作有效接触数据。
+
+两图均来自 **Visual Student M2 已保存动作的 Isaac 原生回放**，腕部保护干预读取仿真特权状态；不是 Teacher/MPC 成功轨迹、不是硬件测量。256 个 480 Hz 子步只覆盖 0.533333 s，三组均没有合格抓取成功。绘图不改变控制器、奖励和物理参数。
+
+可使用已安装的 Matplotlib 复现，`--output-dir` 必须是新的派生目录，已有图片不会被覆盖：
+
+```bash
+/mnt/mydisk/xk/envs/dh116/bin/python tools/plot_stage5_joint_tracking.py \
+  ../t1_recorded_full_boundary/joint_tracking_480hz.jsonl \
+  ../t1_tracking_guard_trace661/joint_tracking_480hz.jsonl \
+  ../t1_tracking_guard_coupled/joint_tracking_480hz.jsonl \
+  --output-dir ../figures01
+```
+
+脚本逐项校验共同 SDK 目标、env 661 的共同载荷前缀、首回合身份与单调物理时钟，再绘图。PNG 的 `Description` 元数据保存三份输入的完整绝对路径、SHA-256 与数据分类；图像是可再生成的报告派生件，原始 JSONL 不随图上传。
+
 ## 第 240 物理步之后的单因素请求中和
 
 随后独立运行 `t1_rotation_late` 和 `t1_translation_late`，均为同一 1024 环境、32 个策略步的有限回放，退出码均为 0。前 240 个物理子步逐项执行原动作。从第 241 步起，前者仅将右手内禀旋转请求索引 21–23 置零，后者仅将右手世界平移请求索引 15–17 置零。它们没有主动取消先前已排队的位姿目标。
