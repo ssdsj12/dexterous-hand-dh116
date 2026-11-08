@@ -6,6 +6,12 @@ CPU镜像回环与动作切片测试通过；独立最终Checkpoint单更新回�
 
 详见右掌不对称审计报告。
 
+## 2026-11-08 — 右掌偏置第二阶段双层诊断
+
+新增默认关闭的60Hz policy/PPO和480Hz physics双层诊断。短原生回放保留每环境每policy step的24D动作、latent、log_std、log_prob、value、advantage、returns和全部reward terms，并按每个480Hz物理子步记录掌位、速度、接触载荷、clearance、safe_z、投影原因和最终SDK目标。terminal样本立即保存，后续no-op不会覆盖。
+
+离线M0/M1/M2镜像消融结果为 L2 0.754994/0.806492/0.296581，M2为`offline_only`，没有接入旧模型。独立短原生验证产生32768条60Hz记录和262144条480Hz记录，未启动长PPO。详见[第二阶段诊断报告](docs/superpowers/reports/2026-11-08-vision1024-stage2-diagnostics.md)。
+
 ## 2026-11-07 — 右三指独立恢复与固定手腕原生 A 实验
 
 新增独立的逐指腹恢复状态机、双手全源几何非线性候选审核和每480 Hz实测诊断。每个物理episode/指腹保留1 mm接近命令与1 s尝试预算，0.5 s无实际进展停止本轮；接触闪烁、求解失败或恢复均不补充预算。实际post-guard SDK提交后才记账，控制步中途接触建立会撤销剩余接近动作，真实丢失也不能让旧压力速度变成无预算接近。压力保持按每个实测子步重建，不依赖旧MPC的永久停止计数。

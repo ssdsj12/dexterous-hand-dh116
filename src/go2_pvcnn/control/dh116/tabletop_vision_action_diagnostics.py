@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+import json
 
 import numpy as np
 
@@ -227,3 +228,93 @@ class VisionActionDiagnosticRecorder:
                                          if loads else None),
             }
         return result
+
+
+@dataclass
+class PhysicsActionDiagnosticWriter:
+    """Stream one row for every 480 Hz substep without retaining the rollout."""
+
+    stream: Any
+    terminal_keys: set[tuple[int, int]] = field(default_factory=set)
+    rows_written: int = 0
+    terminal_rows: int = 0
+
+    def record_batch(
+        self,
+        env_id: Any,
+        episode_id: Any,
+        policy_step: int,
+        physics_step: Any,
+        timestamp_s: Any,
+        live: Any,
+        terminal: Any,
+        audit: dict[str, Any],
+    ) -> None:
+        """Write a physical-substep batch before any terminal reset/no-op step."""
+        ids = np.asarray(env_id)
+        episodes = np.asarray(episode_id)
+        steps = np.asarray(physics_step)
+        times = np.asarray(timestamp_s, dtype=np.float64)
+        live = np.asarray(live, dtype=bool)
+        terminal = np.asarray(terminal, dtype=bool)
+        n = ids.shape[0]
+        if any(value.shape != (n,) for value in (episodes, steps, times, live, terminal)):
+            raise ValueError("physics diagnostic metadata must have shape (N,)")
+        if not np.isfinite(times).all():
+            raise ValueError("physics diagnostic timestamp must be finite")
+
+        def arr(name: str, shape: tuple[int, ...]) -> np.ndarray:
+            value = np.asarray(audit[name], dtype=np.float64)
+            if value.shape != (n, *shape) or not np.isfinite(value).all():
+                raise ValueError(f"{name} must be finite with shape {(n, *shape)}")
+            return value
+
+        action = np.asarray(audit["raw_action24"], dtype=np.float64)
+        if action.shape != (n, ACTION_SIZE) or not np.isfinite(action).all():
+            raise ValueError("raw_action24 must be finite with shape (N, 24)")
+        fields = {
+            "requested_palm_target_m": arr("requested_palm_target_m", (2, 3)),
+            "pre_projection_palm_target_m": arr("pre_projection_palm_target_m", (2, 3)),
+            "projected_palm_target_m": arr("projected_palm_target_m", (2, 3)),
+            "final_sdk_palm_target_m": arr("final_sdk_palm_target_m", (2, 3)),
+            "actual_palm_pose_m": arr("actual_palm_pose_m", (2, 3)),
+            "palm_displacement_m": arr("palm_displacement_m", (2, 3)),
+            "actual_palm_velocity_m_s": arr("actual_palm_velocity_m_s", (2, 3)),
+        }
+        clearance = arr("table_clearance_m", (2,))
+        safe_z = arr("safe_z_m", (2,))
+        loads = arr("contact_loads_n", (2,))
+        valid = np.asarray(audit["contact_valid"], dtype=bool)
+        if valid.shape != (n, 2):
+            raise ValueError("contact_valid must have shape (N, 2)")
+        reasons = list(audit.get("projection_reasons", [None] * n))
+        if len(reasons) != n:
+            raise ValueError("projection_reasons must have length N")
+        for i in range(n):
+            key = (int(ids[i]), int(episodes[i]))
+            is_terminal = bool(terminal[i])
+            post_terminal_noop = key in self.terminal_keys and not is_terminal
+            if is_terminal:
+                self.terminal_keys.add(key)
+                self.terminal_rows += 1
+            row = {
+                "env_id": key[0],
+                "episode_id": key[1],
+                "policy_step": int(policy_step),
+                "physics_step": int(steps[i]),
+                "timestamp_s": float(times[i]),
+                "live_before_substep": bool(live[i]),
+                "terminal_sample": is_terminal,
+                "post_terminal_noop": post_terminal_noop,
+                "action24": action[i].tolist(),
+                "action_split": {k: v[i].tolist() for k, v in split_action24(action).items()},
+                "projection_reasons": reasons[i],
+                "contact_valid": valid[i].tolist(),
+                "table_clearance_m": clearance[i].tolist(),
+                "safe_z_m": safe_z[i].tolist(),
+                "contact_loads_n": loads[i].tolist(),
+            }
+            row.update({name: value[i].tolist() for name, value in fields.items()})
+            self.stream.write(json.dumps(row, separators=(",", ":")) + "\n")
+            self.rows_written += 1
+        self.stream.flush()

@@ -1,9 +1,11 @@
+import json
 import numpy as np
 import pytest
 
 from go2_pvcnn.control.dh116.tabletop_vision_action_diagnostics import (
-    VisionActionDiagnosticRecorder, relative_palm_pose_m, reset_relative_world_base,
-    split_action24, summarize_action24)
+    PhysicsActionDiagnosticWriter, VisionActionDiagnosticRecorder,
+    relative_palm_pose_m, reset_relative_world_base, split_action24,
+    summarize_action24)
 
 
 def test_reset_relative_world_base_adds_task_offset_only_to_z():
@@ -63,6 +65,38 @@ def test_recorder_keeps_env_episode_timestamp_and_projection():
     assert out["rows"][0]["palm_displacement_m"] == [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
     assert out["projection"]["projection_rate"][1][2] == .5
     assert recorder.summary()["by_hand"]["right"]["sdk_delta_abs_mean"][2] == 0.
+
+
+def test_physics_writer_keeps_terminal_sample_authoritative(tmp_path):
+    path = tmp_path / "physics.jsonl"
+    n = 1
+    zeros23 = np.zeros((n, 2, 3), dtype=np.float64)
+    action = np.zeros((n, 24), dtype=np.float64)
+    audit = dict(
+        raw_action24=action,
+        requested_palm_target_m=zeros23,
+        pre_projection_palm_target_m=zeros23,
+        projected_palm_target_m=zeros23,
+        final_sdk_palm_target_m=zeros23,
+        actual_palm_pose_m=zeros23,
+        palm_displacement_m=zeros23,
+        actual_palm_velocity_m_s=zeros23,
+        table_clearance_m=np.zeros((n, 2)),
+        safe_z_m=np.zeros((n, 2)),
+        contact_loads_n=np.zeros((n, 2)),
+        contact_valid=np.zeros((n, 2), dtype=bool),
+        projection_reasons=[0],
+    )
+    with path.open("w", encoding="utf-8") as stream:
+        writer = PhysicsActionDiagnosticWriter(stream)
+        writer.record_batch([0], [4], 7, [10], [0.1], [True], [False], audit)
+        writer.record_batch([0], [4], 7, [11], [0.2], [True], [True], audit)
+        writer.record_batch([0], [4], 7, [12], [0.3], [False], [False], audit)
+        assert writer.terminal_rows == 1
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    assert rows[1]["terminal_sample"] is True
+    assert rows[2]["post_terminal_noop"] is True
+    assert rows[2]["terminal_sample"] is False
 
 
 @pytest.mark.parametrize("bad", [np.zeros((2, 23)), np.full((2, 24), np.nan)])

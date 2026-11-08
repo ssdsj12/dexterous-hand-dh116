@@ -129,11 +129,24 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
     action_diagnostics=None
     diagnostic_episode_ids=None
     diagnostic_stream=None
+    physics_diagnostic_stream=None
+    policy_diagnostics=None
+    policy_rollout_episode_ids=None
     if getattr(args,'vision_action_diagnostics',False):
         from .tabletop_vision_action_diagnostics import VisionActionDiagnosticRecorder
         action_diagnostics=VisionActionDiagnosticRecorder()
         diagnostic_episode_ids=torch.zeros(args.num_envs,dtype=torch.long)
         diagnostic_stream=(output/'action_diagnostics.jsonl').open('x',encoding='utf-8')
+        physics_diagnostic_stream=(output/'physics_action_diagnostics.jsonl').open('x',encoding='utf-8')
+        if not hasattr(env,'enable_physics_action_diagnostics'):
+            raise RuntimeError('vision action diagnostics require TensorEnv physics telemetry')
+        env.enable_physics_action_diagnostics(physics_diagnostic_stream)
+    if getattr(args,'vision_policy_diagnostics',False):
+        from .tabletop_vision_policy_diagnostics import VisionPolicyDiagnosticRecorder
+        policy_diagnostics=VisionPolicyDiagnosticRecorder(output/'policy_ppo_diagnostics.jsonl')
+        if diagnostic_episode_ids is None:
+            diagnostic_episode_ids=torch.zeros(args.num_envs,dtype=torch.long)
+        policy_rollout_episode_ids=diagnostic_episode_ids
     squashed=getattr(args,'vision_action_distribution','gaussian_clip')=='tanh_gaussian'
     saved=None
     validate_vision_action_options(args)
@@ -311,6 +324,7 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
             visible_fraction=0.
             peak_lift=torch.full((args.num_envs,),-torch.inf,device=args.device)
             palm_peak=palm_last=palm_valid=None
+            policy_rollout_records=[]
             with torch.inference_mode():
                 for step in range(args.rollout_steps):
                     action=algorithm.act(obs)
@@ -322,7 +336,36 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                         issued=action.clone()
                     else:
                         issued=action.clamp(-1,1)
+                    if policy_diagnostics is not None:
+                        transition=algorithm.transition
+                        sigma=getattr(transition,'action_sigma',None)
+                        if sigma is None:
+                            raise RuntimeError('vision policy diagnostics require action_sigma')
+                        policy_rollout_records.append(dict(
+                            env_id=np.arange(args.num_envs,dtype=np.int64),
+                            episode_id=policy_rollout_episode_ids.detach().cpu().numpy().copy(),
+                            action24=transition.actions.detach().cpu().numpy().copy(),
+                            latent_actions=(getattr(transition,'latent_actions',None).detach().cpu().numpy().copy()
+                                            if getattr(transition,'latent_actions',None) is not None else None),
+                            latent_mean=transition.action_mean.detach().cpu().numpy().copy(),
+                            log_std=sigma.detach().cpu().numpy().copy(),
+                            log_prob=transition.actions_log_prob.detach().cpu().numpy().copy(),
+                            value=transition.values.detach().cpu().numpy().copy(),
+                            timestamp_s=float(getattr(getattr(getattr(device_world,'w',None),'sim',None),
+                                                      'current_time',time.time())),
+                        ))
+                    if physics_diagnostic_stream is not None:
+                        env.set_physics_diagnostic_policy_step(iteration*args.rollout_steps+step)
                     critic,reward,done,extra=env.step(issued.clone() if squashed else issued)
+                    if policy_diagnostics is not None:
+                        policy_rollout_records[-1]['timestamp_s']=float(getattr(
+                            getattr(getattr(device_world,'w',None),'sim',None),
+                            'current_time',policy_rollout_records[-1]['timestamp_s']))
+                        policy_rollout_records[-1]['reward']=reward.detach().cpu().numpy().copy()
+                        policy_rollout_records[-1]['done']=done.detach().cpu().numpy().copy()
+                        policy_rollout_records[-1]['reward_terms']={
+                            str(name): value.detach().cpu().numpy().copy()
+                            for name,value in extra.get('terms',{}).items()}
                     if action_diagnostics is not None and hasattr(device_world,'last_action_diagnostics'):
                         audit=device_world.last_action_diagnostics
                         diagnostic_batch=action_diagnostics.record(
@@ -347,7 +390,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                         for diagnostic_row in diagnostic_batch['rows']:
                             diagnostic_stream.write(json.dumps(diagnostic_row,separators=(',',':'))+'\n')
                         diagnostic_stream.flush()
-                    diagnostic_episode_ids += done.detach().cpu().long()
+                    if diagnostic_episode_ids is not None:
+                        diagnostic_episode_ids += done.detach().cpu().long()
                     # Read the pre-task-reset diagnostic, including terminal samples.
                     step_lift=extra.get('surface_diagnostics',{}).get('net_lift_m')
                     if step_lift is None:
@@ -392,6 +436,22 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                                 key=str(int(code))
                                 failure_counts[key]=failure_counts.get(key,0)+int(count)
                 algorithm.compute_returns(obs)
+            if policy_diagnostics is not None:
+                storage=algorithm.storage
+                for policy_step, record in enumerate(policy_rollout_records):
+                    policy_diagnostics.record(
+                        env_id=record['env_id'], episode_id=record['episode_id'],
+                        iteration=iteration+1,
+                        policy_step=iteration*args.rollout_steps+policy_step,
+                        timestamp_s=np.full(args.num_envs,record['timestamp_s'],dtype=np.float64),
+                        action24=record['action24'], latent_actions=record['latent_actions'],
+                        latent_mean=record['latent_mean'],
+                        log_std=np.log(np.maximum(record['log_std'],1e-12)),
+                        log_prob=record['log_prob'], value=record['value'],
+                        advantage=storage.advantages[policy_step].detach().cpu().numpy(),
+                        returns=storage.returns[policy_step].detach().cpu().numpy(),
+                        reward=record['reward'], done=record['done'],
+                        reward_terms=record['reward_terms'])
             collection.update(phase='optimizing',wall_unix_s=time.time())
             _write_json(output/'collection_status.json',collection)
             losses=algorithm.update()
@@ -450,6 +510,8 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                     left_right_maxima_may_use_different_environments=True)
             if action_diagnostics is not None:
                 row['action_diagnostics_summary']=action_diagnostics.summary()
+            if policy_diagnostics is not None:
+                row['policy_diagnostics_summary']=policy_diagnostics.summary()
             if torch.cuda.is_available() and str(args.device).startswith('cuda'):
                 free,total=torch.cuda.mem_get_info()
                 row['torch_peak_allocated_gib']=torch.cuda.max_memory_allocated()/1024**3
@@ -499,6 +561,12 @@ def run_vision_training(world, device_world, task, env, args, critic_contract, *
                 diagnostic_stream.flush()
                 diagnostic_stream.close()
             _write_json(output/'action_diagnostics_summary.json',action_diagnostics.summary())
+        if policy_diagnostics is not None:
+            policy_diagnostics.close()
+            _write_json(output/'policy_ppo_diagnostics_summary.json',policy_diagnostics.summary())
+        if physics_diagnostic_stream is not None:
+            physics_diagnostic_stream.flush()
+            physics_diagnostic_stream.close()
         writer.close()
     row.update(status='training_budget_complete')
     _write_json(output/'monitor.json',row)

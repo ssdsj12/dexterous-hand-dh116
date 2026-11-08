@@ -5,6 +5,12 @@
 - 第513轮Checkpoint与旧峰值的逐环境轨迹不存在，本阶段不声称完成513/1024因果对比，也不修改奖励或拆分Actor。详见右掌不对称审计报告。
 - 后续复核修正实际掌位基准：每个环境保存物理 reset 后实测掌位，控制器动态 lift offset 单独记录；修正后的独立单更新回放仍显示左右投影差值为0，未改变原训练。
 
+## 2026-11-08 — 右掌偏置第二阶段双层诊断与镜像消融
+
+- 新增默认关闭的60Hz policy/PPO诊断和480Hz physics诊断；terminal物理样本先保存，后续no-op不覆盖。记录latent、log_std、log_prob、value、advantage、returns、全部reward terms以及逐子步掌位/接触/投影数据。
+- 完成M0/M1/M2离线镜像消融：M0 L2 0.754994、M1 0.806492、M2 offline-only 0.296581；M2方向一致率0.833333。镜像回环自身四帧/点云/关节/掌位/quaternion/previous action误差全0。
+- 独立短原生回放输出32768条60Hz记录和262144条480Hz记录，未启动长PPO，未修改奖励或旧模型。详见[第二阶段诊断报告](docs/superpowers/reports/2026-11-08-vision1024-stage2-diagnostics.md)。
+
 ## 2026-11-07 — 右三指独立恢复、非线性区域与隔离原生 A
 
 - 新增每物理episode/env/hand/digit独立恢复与执行记账，保留1 mm/1 s/.5 s限制，拒绝回滚reset、预算重置和未提交候选收费。

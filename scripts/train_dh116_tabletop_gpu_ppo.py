@@ -34,6 +34,8 @@ parser.add_argument('--vision-student',action='store_true',
                     help='RGB-D-only 3844D actor with training-only 371D critic')
 parser.add_argument('--vision-action-diagnostics',action='store_true',
                     help='record per-environment 24D action, target projection and actual palm diagnostics')
+parser.add_argument('--vision-policy-diagnostics',action='store_true',
+                    help='record per-environment policy latent/logprob/PPO and reward-term diagnostics')
 parser.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
 parser.add_argument('--vision-wrist-quaternion-preprocessing',
                     choices=('raw','wrist_quaternion_hemisphere_v1'),default='raw',
