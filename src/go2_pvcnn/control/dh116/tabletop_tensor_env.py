@@ -192,7 +192,7 @@ class TensorEnv:
         self.physics_action_diagnostics = PhysicsActionDiagnosticWriter(stream)
         return self.physics_action_diagnostics
 
-    def record_physics_substep(self, w, live, terminal_now, diagnostic_policy_step):
+    def record_physics_substep(self, w, live, terminal_now, diagnostic_policy_step, measurement=None):
         audit = getattr(w, 'last_action_diagnostics', None)
         if audit is None:
             raise RuntimeError('physics action diagnostics require world audit state')
@@ -202,6 +202,9 @@ class TensorEnv:
                   else to_cpu(value))
             for key, value in audit.items()
             if key not in ('physics_step', 'timestamp_s')}
+        capture = getattr(self.physics_action_diagnostics, 'capture_measurement_sources', None)
+        if capture is not None:
+            capture(measurement)
         self.physics_action_diagnostics.record_batch(
             torch.arange(self.n, device=self.device).cpu().numpy(),
             self.diagnostic_episode_ids.detach().cpu().numpy(),
@@ -504,7 +507,7 @@ class TensorEnv:
                     cache_native_slip_packet(self, physical_packet, w)
             newly_terminal = live & t.done
             if self.physics_action_diagnostics is not None:
-                self.record_physics_substep(w, live, newly_terminal, diagnostic_policy_step)
+                self.record_physics_substep(w, live, newly_terminal, diagnostic_policy_step, measurement=m)
             if getattr(self, 'joint_replay_observer', None) is not None:
                 self.joint_replay_observer(self, m, live, newly_terminal)
             ids = newly_terminal.nonzero().flatten()

@@ -83,6 +83,8 @@ parser.add_argument('--vision-evaluation-checkpoint',type=Path)
 parser.add_argument('--bimanual-checkpoint-adapter', action='store_true',
                     help='explicit V4 physical-adapter checkpoint evaluation; plain M0 only, verified against native USD/SDK before action')
 parser.add_argument('--vision-evaluation-manifest',type=Path)
+parser.add_argument('--vision-evaluation-physics-audit',action='store_true',
+                    help='default-off independent Student evaluation request/480Hz/backend-target evidence; no control change')
 parser.add_argument('--paired-bias-arm', choices=('m0','m2','replay','right_z_zero','z2','z3'))
 parser.add_argument('--paired-bias-reference', type=Path)
 parser.add_argument('--vision-evaluation-max-control-steps',type=int,default=1200)

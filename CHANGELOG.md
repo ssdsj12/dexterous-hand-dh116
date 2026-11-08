@@ -5,9 +5,15 @@
 - Z0～Z3同源同初态各200首回合已完成：全部0成功；Z1消除下沉但没有合格抓取，Z3三指关节越限66/100，候选不晋级。共同暂停双腕在1024环境、0.533秒短窗消除原两次越限；独立暂停引入的env661过载与完整失败轨迹均保留，不将短窗当成完整抓取。
 - 增加V4独立模型绑定、源模型只读派生与运行时SDK/资产/源码精确核验。误标V2/V3但携带Adapter元数据的模型也明确拒绝，避免绕过显式验证。旧M0、Tanh和旧PPO路径保留。
 - 新增Teacher专用480Hz首终止审计，分离Teacher请求、SDK目标、实测关节、Hold窗口漂移与重锚前fresh接触锚滑移。T6三指候选以实际T5二指4/4证明和输入SHA为门禁，只修改三指行，保留合法下降接近、接触/跟踪失效时停止共同上升；其修改动作不作为BC标签。
-- 本次原Teacher路径与Adapter对照各完成8个首回合：每臂二指4/4、最高31.627704 mm、Hold5 s、Hold锚滑移最大0.079632 mm，三指各0/4。每臂84461条有效480Hz样本通过身份、时钟、动作对应与首终止冻结核验，SDK目标原生读回覆盖100%；T5通过，两臂10559条动作和主要物理状态一致，语义浮点往返与实际执行差明确区分。
+- 本次原Teacher路径与Adapter对照各完成8个首回合：每臂二指4/4、最高31.627704 mm、Hold5 s、Hold锚滑移最大0.079632 mm，三指各0/4。每臂84461条有效480Hz样本通过身份、时钟、动作对应与首终止冻结核验，SDK命令缓存目标读取覆盖100%（后端未记录）；T5通过，两臂10559条动作和主要物理状态一致，语义浮点往返与实际执行差明确区分。
 - 增加带原始输入SHA的关节跟踪/接触载荷图及视觉迁移报告。第1024轮源模型的PointNet在两组实际固定输入上输出零特征、对坐标清零不敏感；只报告已测输入，不伪造第513轮或训练起点因果证据。
 - 新增独立`bound_student_eval`入口与authored验证初态生成器，严格绑定V4、模型/清单SHA、相机、物理及预处理合同。修复冻结源码路径替换误改显式模型路径的问题，锁后复核实际child argv身份；新增篡改/路径冲突回归。生成的200个新初态与旧集不重叠，尚不计为原生验证。
+- 补充逐指恢复接入缺口与只读碰撞资格审查：当前T6只约束双腕，未完成剩余预算逐指恢复；旧272个cooked hull拓扑实际闭合，复合核验失败集中在近似合面一致性。原数值容差、cooking/资产及live资格均未改，不能用离线包络冒充已附着原生形状。
+- T6完成原生8首回合：二指4/4、请求/执行及SDK主动关节目标保持；三指0/4、最高0.002054 mm、六pad共承托0 s。右接触提高伴左接触退化，候选不晋级，95184个有效物理样本与首terminal独立核验通过。
+- T5/T6结束后完成独立二指BC1000次离线更新：显式恢复PointNet，MSE从0.039165852降至0.000195265，3844D/371D/24D、Tanh、Critic/PPO Adam/log_std/RNG保留。首轮200初态原生评估完成，两抓法均0/100，最高净Lift25.235939 /0.651073 mm。1353010条物理记录、200首terminal和0覆盖独立核验；失败码/逐手SDK链未存，不补造，准备同模型同初态被动诊断复采。无三指BC/DAgger/长PPO。
+- 更正旧目标读回来源：IsaacLab `data.joint_pos_target`为命令缓存，旧native字段不是PhysX后端证明；历史raw、4/4物理成功和旧资格原件保留。新增真后端getter与cache独立字段、V1～V4来源兼容分析，缺读回不再假通过，独立原生补证准备中。
+- 新T1独立原生补证完成：764条watch记录的双手full17真后端目标与cache一致，原M2两次越限实测轨迹重现，合法后端目标下仍发生实际跟踪越界。不是新Student/Teacher成功，不倒改旧缓存来源。
+- 新增默认关闭的`--vision-evaluation-physics-audit`：60/480Hz显式身份、实际或NA时钟、失败码、掌/关节/载荷及backend/cache分列、独立terminal和分块NPZ。新诊断SHA不混入原五项证据资格；仅按同次raw m判来源有效性，真0/False不误标、缺失不跨步泄漏。统一522 passed、1 skipped，39.46秒；控制/奖励和默认关闭路径保持，待原生重复采集。
 - 修复配对协调器在结束/新episode上继续驱动的问题：动态首回合mask同时限制coordinator、tracking guard和排队目标撤销，活动首回合逐值不变。原冻结Z3不重写，已完成报告仅取原首回合。
 - 完整CPU冻结快照6136 passed、113 failed、48 skipped、25 errors及91 subtests passed。对`3f7fd69`的195新增节点全通过、无新回归；37个旧失败状态恢复，旧113失败/25依赖或外部资产错误保留。修正CRLF导致的两处固定SHA误报，恢复漏同步测试，增加定点LF属性，物理值与保护保持。后续T6下降获取、新入口/清单及相关控制、模型和Teacher路径的最新聚焦回归359项通过，43.53秒。
 
@@ -47,7 +53,7 @@
 - 最新完整源码CPU回归：5917 passed/原96 failed/28 errors/49 skipped，91个subtests通过；5786个基线节点无状态变化，304新增全通过，共6090个节点，最终1334文件源码清单保持不变。此前A02快照的5883/270结果已被此回归取代；CPU不计原生抓取次数。
 - 独立 `stage_a_01` 在进入A控制前因桌面父Xform未直接带CollisionAPI而退出，0个A试验；只读修复为启用子碰撞体的世界边界并集，原边界与物理限制不变。3项定向及2项独立USD测试通过，01失败数据/源码保留。
 - `stage_a_02` 进入真实480 Hz物理子步后由操作者SIGINT结束，被独立审计标为censored/invalid evidence，而非A通过、失败或三指0/4：481逻辑控制、482物理区间、3856原始SDK子步、30840物理行，8个首episode均censored、0完整episode、0接近提交/预算消耗、0 Student/PPO。env4–7只有自然Tripod接触，阶段内0次REACQUIRING、固定阶段恢复、terminal或success。杆/腕未静止，角漂移0.0022–0.00328 rad高于0.001门槛，几何决策0；SIGINT flush顺序造成末8个诊断缺失，未补造reducer。B/C/D和Student不运行。
-- cooked readback 03/04均为reset-only探针，不构成A或抓取证据：03实际mesh getter计数272项全为0；04改用owner-first后各存储hull getter count=1，但272个hull全部未通过独立closed-convex拓扑验证，complete=false/censored、live attachment=false，未recook或替换几何。04无控制/物理/Teacher/PPO/Student，仅读取一次RGB-D。owner-first模块/测试SHA前缀`ddf703d...`/`e55cb...`；最新定向CPU52 passed/13.34s，完整CPU仍需在最新源码后重跑。
+- cooked readback 03/04均为reset-only探针，不构成A或抓取证据：03实际mesh getter计数272项全为0；04改用owner-first后各存储hull getter count=1，但272个hull全部未通过独立closed-convex复合验证，complete=false/censored、live attachment=false，未recook或替换几何。04无控制/物理/Teacher/PPO/Student，仅读取一次RGB-D。owner-first模块/测试SHA前缀`ddf703d...`/`e55cb...`；最新定向CPU52 passed/13.34s，完整CPU仍需在最新源码后重跑。
 - 新增显式独立stage A入口、单Isaac冻结启动和门禁；A02审计结果为censored/invalid，B/C/D仅有诊断门槛，未完成原生运行，未启动Student或长PPO。当前原生对象仍为原刚性圆柱代理，不能替代柔性线缆或实机验证。原生结果在[恢复验证报告](docs/superpowers/reports/2026-11-07-tripod-recovery-budget-validation.md)中独立更新。保持所有历史数据、二指路径、Tanh/v2、3844D/371D/24D、原物理和30mm/5秒/0.5mm，PR继续Draft、不合并。
 
 ## 2026-11-07 — 三指几何接触获取与约束求解

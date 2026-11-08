@@ -112,7 +112,7 @@ def plot(original, independent, coupled, output):
     figure.text(.5, .91, 'Isaac simulation readback | source: Visual Student M2 action tape | interventions: privileged wrist guards',
                 ha='center', fontsize=9)
     handles = [Line2D([], [], color=color, lw=2, label=label) for color, label in zip(COLORS, LABELS)]
-    handles += [Line2D([], [], color='#222222', ls=':', label='Identical SDK target (shared window)'),
+    handles += [Line2D([], [], color='#222222', ls=':', label='SDK command cache (shared window)'),
         Line2D([], [], color='#666666', ls='--', label='Nominal lower bound'),
         Line2D([], [], color='#b5232e', ls='-.', label='Existing lower guard')]
     figure.legend(handles=handles, loc='lower center', ncol=3, bbox_to_anchor=(.5, .055), frameon=False)

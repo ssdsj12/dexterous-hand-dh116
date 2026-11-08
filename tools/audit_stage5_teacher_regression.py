@@ -13,6 +13,10 @@ from pathlib import Path
 import numpy as np
 import torch
 
+TEACHER_V1 = 'dh116-teacher-480hz-first-episode-audit-v1'
+TEACHER_V2 = 'dh116-teacher-480hz-first-episode-audit-v2'
+ACTIVE = ('finger11', 'finger12', 'finger21', 'finger31', 'finger41', 'finger51')
+
 
 def digest(path):
     result = hashlib.sha256()
@@ -97,7 +101,114 @@ def stats(values):
         for key, percentile in (('p50', 50), ('p90', 90), ('p95', 95), ('maximum', 100))})
 
 
-def first_episode_metrics(series, columns, identity):
+def teacher_target_provenance(columns, audit_version=None):
+    inferred = TEACHER_V2 if 'command_cache_target_right_finger12_rad' in columns else TEACHER_V1
+    version = inferred if audit_version is None else audit_version
+    if version not in (TEACHER_V1, TEACHER_V2):
+        raise ValueError('unknown Teacher target audit version')
+    if version != inferred:
+        raise ValueError('Teacher target audit version disagrees with separate target columns')
+    if version == TEACHER_V2 and not all(name in columns for name in (
+            'right_sdk_target_finite', 'right_sdk_command_cache_readback',
+            'right_sdk_command_cache_finite', 'reconstructed_target_right_finger12_rad')):
+        raise ValueError('V2 target audit requires separated backend/cache provenance')
+    return dict(audit_version=version,
+        sdk_target_columns_source=('physx_backend_get_dof_position_targets' if version == TEACHER_V2
+            else 'legacy_IsaacLab_command_cache_or_reconstruction;not_PhysX_backend'),
+        command_cache_source='isaaclab_user_command_cache_joint_pos_target',
+        target_readback_is_not_actual_joint_position=True)
+
+
+def command_cache_target_matrix(series, columns, *, audit_version=None):
+    """Extract cache-to-cache comparison values, never substituting backend targets."""
+    provenance = teacher_target_provenance(columns, audit_version)
+    v2 = provenance['audit_version'] == TEACHER_V2
+    values, available, backend_available = [], [], 0
+    for side in ('left', 'right'):
+        prefix = 'command_cache_target' if v2 else 'sdk_target'
+        target = series[:, [columns[f'{prefix}_{side}_{name}_rad'] for name in ACTIVE]].copy()
+        flag = side + ('_sdk_command_cache_readback' if v2 else '_sdk_target_native_readback')
+        cache_present = series[:, columns[flag]] == 1 if flag in columns else np.zeros(len(series), dtype=bool)
+        target[~cache_present] = np.nan
+        available.append(cache_present)
+        values.append(target)
+        if v2:
+            backend_available += int(np.sum(series[:, columns[side+'_sdk_target_native_readback']] == 1))
+    result = np.concatenate(values, -1)
+    return dict(values=result, source=provenance['command_cache_source'], audit_version=provenance['audit_version'],
+        all_cache_targets_available_and_finite=bool(np.all(available) and np.isfinite(result).all()),
+        command_cache_readback_available_samples=int(np.sum(available)),
+        backend_readback_available_samples=backend_available)
+
+
+def validate_teacher_target_archive(data, summary):
+    """Cross-check V2 full DOF arrays, named active columns and frozen terminals."""
+    columns = {name: i for i, name in enumerate(data['fields'].tolist())}
+    provenance = teacher_target_provenance(columns, summary.get('version'))
+    result = dict(**provenance, full_backend_arrays_recorded=False,
+                  backend_readback_samples_by_hand={'left': 0, 'right': 0})
+    if provenance['audit_version'] == TEACHER_V1:
+        return result
+    expected_sources = dict(backend='physx_backend_get_dof_position_targets',
+                            command_cache='isaaclab_user_command_cache_joint_pos_target')
+    if any(summary.get('target_sources', {}).get(key) != source for key, source in expected_sources.items()):
+        raise ValueError('V2 full target source identity is missing or inconsistent')
+    samples = data['samples']
+    if samples.ndim != 3 or samples.shape[-1] != len(columns):
+        raise ValueError('V2 full target sample schema mismatch')
+    batches, n, _ = samples.shape
+    terminal_valid = data['terminal_valid']
+    live = samples[..., columns['live']] == 1
+    result.update(full_backend_arrays_recorded=True, full_target_dof_count_by_hand={},
+                  command_cache_readback_samples_by_hand={})
+    for side in ('left', 'right'):
+        key = f'joint_names_{side}'
+        if key not in data:
+            raise ValueError('V2 full target joint names are missing')
+        names = data[key].tolist()
+        if (not isinstance(names, list) or not names or len(set(names)) != len(names)
+                or not all(isinstance(name, str) and name for name in names)
+                or not all(name in names for name in ACTIVE)):
+            raise ValueError('V2 full target joint names are invalid')
+        result['full_target_dof_count_by_hand'][side] = len(names)
+        for prefix, active_prefix, flag_suffix, finite_suffix in (
+                ('backend_full_target', 'sdk_target', 'sdk_target_native_readback', 'sdk_target_finite'),
+                ('command_cache_full_target', 'command_cache_target', 'sdk_command_cache_readback', 'sdk_command_cache_finite'),
+                ('dof_types', None, None, None)):
+            key = f'{prefix}_{side}'
+            frozen_key = f'terminal_{key}'
+            if key not in data or frozen_key not in data:
+                raise ValueError('V2 full target arrays or frozen targets are missing: '+key)
+            full, frozen = data[key], data[frozen_key]
+            if full.shape != (batches, n, len(names)) or frozen.shape != (n, len(names)):
+                raise ValueError('V2 full target array shape mismatch: '+key)
+            if active_prefix is not None:
+                if full.dtype.kind != 'f':
+                    raise ValueError('V2 full target numeric dtype is invalid')
+                active = samples[..., [columns[f'{active_prefix}_{side}_{name}_rad'] for name in ACTIVE]]
+                if not np.array_equal(active, full[..., [names.index(name) for name in ACTIVE]], equal_nan=True):
+                    raise ValueError('V2 full/active target columns disagree: '+key)
+                present = samples[..., columns[f'{side}_{flag_suffix}']] == 1
+                finite = samples[..., columns[f'{side}_{finite_suffix}']] == 1
+                if (not np.array_equal(finite, present & np.isfinite(full).all(-1))
+                        or not np.isnan(full[~present]).all()):
+                    raise ValueError('V2 full target availability or finiteness disagrees: '+key)
+                count = int(np.sum(live & present))
+                destination = ('backend_readback_samples_by_hand' if prefix == 'backend_full_target'
+                               else 'command_cache_readback_samples_by_hand')
+                result[destination][side] = count
+            for env in np.flatnonzero(terminal_valid):
+                rows = np.flatnonzero(samples[:, env, columns['newly_terminal']] == 1)
+                if len(rows) != 1 or not np.array_equal(frozen[env], full[rows[0], env], equal_nan=True):
+                    raise ValueError('V2 frozen terminal target disagrees with first terminal: '+key)
+            if not np.isnan(frozen[~terminal_valid]).all():
+                raise ValueError('V2 terminal target manufactured for an unfinished episode: '+key)
+    return result
+
+
+def first_episode_metrics(series, columns, identity, *, audit_version=None):
+    provenance = teacher_target_provenance(columns, audit_version)
+    v2 = provenance['audit_version'] == TEACHER_V2
     terminals = np.flatnonzero(series[:, columns['newly_terminal']] == 1)
     end = int(terminals[0])+1 if len(terminals) else len(series)
     first = series[:end]
@@ -137,9 +248,22 @@ def first_episode_metrics(series, columns, identity):
         if fresh is not None and fresh_valid is not None and fresh_applicable is not None
         else np.zeros(len(first), dtype=bool))
     fresh_values = fresh[fresh_mask] if fresh is not None else np.array([])
-    error = values('sdk_target_right_finger12_rad')-values('actual_q_right_finger12_rad')
-    error = error[np.isfinite(error)]
+    def tracking(name, mask=None):
+        target = values(name)
+        error = target-values('actual_q_right_finger12_rad') if target is not None else np.array([])
+        if mask is not None:
+            error = error[mask]
+        error = error[np.isfinite(error)]
+        return dict(valid_samples=len(error), max_abs_rad=float(np.abs(error).max()) if len(error) else None,
+                    mean_abs_rad=float(np.abs(error).mean()) if len(error) else None)
     native_readback = values('right_sdk_target_native_readback')
+    cache_readback = values('right_sdk_command_cache_readback') if v2 else native_readback
+    native_count = int(np.sum(native_readback == 1)) if v2 and native_readback is not None else 0
+    cache_count = int(np.sum(cache_readback == 1)) if cache_readback is not None else 0
+    cache_name = 'command_cache_target_right_finger12_rad' if v2 else 'sdk_target_right_finger12_rad'
+    cache_mask = cache_readback == 1 if cache_readback is not None else np.zeros(len(first), dtype=bool)
+    reconstruction_name = 'reconstructed_target_right_finger12_rad' if v2 else 'sdk_target_right_finger12_rad'
+    reconstruction_mask = None if v2 else ~cache_mask
     terminal = bool(len(terminals))
     result = dict(identity)
     result.update(physical_samples=end, terminal_recorded=terminal,
@@ -156,10 +280,14 @@ def first_episode_metrics(series, columns, identity):
         fresh_contact_slip_valid_samples=len(fresh_values),
         fresh_contact_slip_applicable_samples=int(np.sum(fresh_applicable == 1)) if fresh_applicable is not None else None,
         fresh_contact_slip_source='fresh_same-substep_contact_anchor_diagnostic;separate_from_native_success_hold_window',
-        right_finger12_tracking=dict(valid_samples=len(error),
-            max_abs_rad=float(np.abs(error).max()) if len(error) else None,
-            mean_abs_rad=float(np.abs(error).mean()) if len(error) else None,
-            native_readback_samples=int(np.sum(native_readback == 1)) if native_readback is not None else None))
+        target_provenance=provenance,
+        right_finger12_tracking=dict(**tracking('sdk_target_right_finger12_rad'),
+            target_source=provenance['sdk_target_columns_source'],
+            native_readback_samples=native_count, command_cache_readback_samples=cache_count),
+        right_finger12_command_cache_tracking=dict(**tracking(cache_name, cache_mask),
+            target_source=provenance['command_cache_source']),
+        right_finger12_reconstructed_tracking=dict(**tracking(reconstruction_name, reconstruction_mask),
+            target_source='float32_submission_reconstruction;not_backend_or_cache'))
     pair_masks, pairs = [], []
     for hand in ('left', 'right'):
         valid = values(hand+'_contact_measurement_valid') == 1
@@ -201,6 +329,7 @@ class TeacherArm:
             self.samples = data['samples']
             self.terminals = data['terminal_samples']
             self.terminal_valid = data['terminal_valid']
+            self.target_archive = validate_teacher_target_archive(data, self.summary)
         n = self.summary['environments']
         if (self.samples.shape != (self.summary['physics_batches'], n, len(self.columns))
                 or self.terminals.shape != (n, len(self.columns)) or self.terminal_valid.shape != (n,)):
@@ -215,7 +344,8 @@ class TeacherArm:
         for identity in self.summary['episodes']:
             env = identity['env_id']
             episode = self.dataset['episodes'][str(identity['supervision_episode_id'])]
-            record = first_episode_metrics(self.samples[:, env], self.columns, identity)
+            record = first_episode_metrics(self.samples[:, env], self.columns, identity,
+                                           audit_version=self.summary.get('version'))
             record['grasp_style'] = episode['grasp_style']
             record['qualified_supervision_success'] = episode['success']
             record['recovered'] = episode['recovered']
@@ -263,6 +393,8 @@ class TeacherArm:
                     if any(row['fresh_contact_slip_applicable_samples'] is not None for row in rows) else None),
                 right_finger12_max_abs_error_rad=stats(row['right_finger12_tracking']['max_abs_rad'] for row in rows),
                 right_finger12_native_readback_samples=sum(row['right_finger12_tracking']['native_readback_samples'] or 0 for row in rows),
+                right_finger12_command_cache_readback_samples=sum(row['right_finger12_tracking']['command_cache_readback_samples'] for row in rows),
+                target_source_scopes=sorted({row['target_provenance']['sdk_target_columns_source'] for row in rows}),
                 terminal_failure_code_counts=dict(Counter(str(row['failure_code']) for row in rows if row['terminal_recorded'])))
             for hand in ('left', 'right', 'bilateral'):
                 contacts = [row[hand+'_contact'] for row in rows]
@@ -432,6 +564,10 @@ def audit(reference_folder, adapter_folder):
               and all(groups[arm].get(pinch, {}).get('first_episodes') == 4
                       and groups[arm][pinch]['completed_first_episodes'] == 4 for arm in ('reference', 'adapter')))
     return dict(version='dh116-stage5-teacher-regression-v1', source_kind='Teacher_or_MPC;never_Student',
+        target_provenance={key: teacher_target_provenance(arm.columns, arm.summary.get('version'))
+                           for key, arm in (('reference', reference), ('adapter', adapter))},
+        native_physics_PT_target_scope='historical_command_cache_fields_do_not_attest_PhysX_backend_getter',
+        target_archives=dict(reference=reference.target_archive, adapter=adapter.target_archive),
         native_runtime_attested_by_collector=dict(reference=reference.native, adapter=adapter.native),
         initial_state=initial, teacher_source_sha256=source_sha, actions=actions, physics=physics,
         paired_source_constraints=dict(same_initial_state=True, same_seed=True,

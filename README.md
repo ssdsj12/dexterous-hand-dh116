@@ -1,14 +1,20 @@
 ## 2026-11-08 — 第五阶段物理映射与双手协同验证
 
+目标来源更正：旧T1/TeacherAudit的命令/缓存不能当PhysX后端读回。新独立原生补证已确认两次finger12事件的后端目标合法且与cache一致，实际仍跟踪越界；仅覆盖所存3个watch环境和0.533秒窗口。原生Teacher成功仍有效，历史模型/数据和来源标签不回写。
+
 新增逐 480 Hz 的关节跟踪审计、左右独立 USD FK/Jacobian 适配器和独立 Z0～Z3 协调实验。T1 重放再次复现右 `finger12` 两次越限，合法目标与实际关节运动之间出现 0.052～0.055 rad 跟踪误差；隐式执行器力矩为仿真估算。T2 完成 53 组、8 环境微扰，左右指腹源 FK 对 SDK 位置最大误差 0.000354 / 0.000399 mm，右 `finger12` 正负方向各 8/8 正确。详见[关节审计](docs/superpowers/reports/2026-11-08-stage5-joint-tracking.md)和[物理映射报告](docs/superpowers/reports/2026-11-08-stage5-physical-mapping.md)。
 
 Z0～Z3 已完成同一模型、初态和随机种子的二指/三指各100例配对：800个首回合全部有效，原生成功全部为0。置零右Z消除了约4 mm下沉，却未建立合格抓取；Z3三指关节越限由M0的12/100升至66/100，该协调候选不具备晋级资格。逐环境掌位峰值身份、接触、载荷、动作与跟踪统计见[双手干预报告](docs/superpowers/reports/2026-11-08-stage5-bimanual-interventions.md)。原生短窗中共同暂停双腕消除了两次旧越限，但其0.533秒结果不能替代完整回合安全证据。
 
 新增显式V4 Adapter模型绑定与推理前资产/源码/SDK合同核验，旧模型仍走原路径。Teacher专用480Hz审计分别保留请求、执行、实测关节与首终止，并保留重锚前的真实接触锚滑移；三指协调候选必须先通过二指Teacher回归门禁，修改后的三指动作不进入BC监督池。未来配对路径已修复结束环境被协调器重新驱动的问题；现有冻结Z3按首终止截断统计，未将后续尾段算作合格执行。
 
-本次Teacher原路径和Adapter对照均已完成二指4/4成功、最高31.627704 mm、Hold5 s，T5门禁通过；两臂10559条动作和主要物理状态一致。三指两臂仍各0/4，右手对向接触仅1.7407%，独立协调候选继续验证。只读PointNet探针发现第1024轮源模型在已测200个原生初态和4698条二指同步样本上有效特征为0、坐标清零不改变动作；原run也未进行Teacher视觉蒸馏。新增独立V4评估入口和训练前冻结的200初态验证清单，旧模型不改写，详见[视觉迁移报告](docs/superpowers/reports/2026-11-08-stage5-visual-transfer.md)。
+本次Teacher原路径和Adapter对照均已完成二指4/4成功、最高31.627704 mm、Hold5 s，T5门禁通过；两臂10559条动作和主要物理状态一致。三指两臂仍各0/4；独立协调候选也已完整结束，二指4/4、三指0/4，右侧接触提高伴左侧退化，不能晋级，详见[T6对照报告](docs/superpowers/reports/2026-11-08-stage5-teacher-coordination.md)。
 
-完整CPU冻结快照为6136 passed、113 failed、48 skipped、25 errors，另91 subtests passed；相对`3f7fd69`，195个新增节点全通过、无新增回归，原有失败和外部依赖问题仍单列。包括后续三指下降接近修正、新评估入口和清单在内，最新控制、模型与Teacher聚焦回归359项通过。T5门禁已通过，独立三指候选正在单实例验证，Student迁移仍按原生门禁执行。M0默认、M2独立、3844D/371D/24D和30mm/5s/0.5mm标准保持，PR继续Draft。见[总验证报告](docs/superpowers/reports/2026-11-08-stage5-native-validation.md)。
+只读探针发现源模型PointNet在已测实际输入上特征为0，原run未做Teacher视觉蒸馏。本次二指BC1000次离线更新恢复坐标敏感性，MSE降至0.000195265；旧模型不改写，Critic/PPO状态保留。首轮200初态原生评估完成，两抓法均0/100，最高净Lift二指25.235939 mm、三指0.651073 mm，尚未通过30mm/5s/0.5mm标准。本次BC没有三指专家标签（源PPO曾混合训练）。标准评估缺失败码和完整逐手SDK链，正在独立补采；同模型、同200初态重复不算400个新初态，也不调参，详见[视觉迁移报告](docs/superpowers/reports/2026-11-08-stage5-visual-transfer.md)。
+
+本次200条原生冻结初始观测的只读前向中，旧模型点云敏感0/200、新模型200/200；这只证明初始坐标敏感性，不代表SDK运动或抓取成功。
+
+完整CPU冻结快照为6136 passed、113 failed、48 skipped、25 errors，另91 subtests passed；该快照相对`3f7fd69`的195个新增节点全通过、无新增回归，原有失败和依赖问题单列。后续真后端/完整日志修正的统一聚焦回归为522 passed、1 skipped，控制/奖励及reset parity通过。移动腕逐指恢复仍缺少几何资格，未绕过碰撞检查。M0默认、M2独立、3844D/371D/24D和30mm/5s/0.5mm标准保持，PR继续Draft。见[总验证报告](docs/superpowers/reports/2026-11-08-stage5-native-validation.md)。
 
 ## 2026-11-08 — 右掌动作偏置与原生关节越限
 
@@ -46,7 +52,7 @@ CPU镜像回环与动作切片测试通过；独立最终Checkpoint单更新回�
 
 独立 `stage_a_02` 随后进入真实480 Hz物理子步，但操作者以SIGINT结束，结果被独立审计标为 **censored/invalid evidence**，不能记作A通过、失败或三指0/4：481次逻辑控制、482个物理区间、3856个原始SDK子步，30,840条物理行，8个首episode均censored、0个完整episode、0次接近提交、0预算消耗，0 Student/PPO。env4–7只出现自然Tripod接触，阶段内0次REACQUIRING、0次固定阶段恢复、0 terminal/success。终止前杆/腕没有达到固定阶段的静止条件，实测角漂移约0.0022–0.00328 rad（门槛0.001），几何决策0次；SIGINT flush顺序导致末8个诊断缺失，未伪造汇总。A仍未取得资格，B/C/D及Student训练不启动。当前原生对象沿用原刚性圆柱代理，离线候选和探针不能替代柔性线缆或真实DH116硬件验证。
 
-后续 cooked readback 探针也只验证读取链路，不构成A或抓取结果：03在原生reset-only下272个mesh getter均为0；04使用owner-first读取后每个存储hull getter count=1，但272个hull全部未通过独立closed-convex拓扑核验，因而仍为complete=false/censored、live attachment=false，未recook或替换几何。两次均无控制、物理推进、Teacher/PPO/Student；04仅有一次RGB-D读取。对应owner-first模块/测试SHA前缀为 `ddf703d...` / `e55cb...`，完整CPU仍需在这批最新源码后重跑。
+后续 cooked readback 探针也只验证读取链路，不构成A或抓取结果：03在原生reset-only下272个mesh getter均为0；04使用owner-first读取后每个存储hull getter count=1，但272个hull全部未通过独立closed-convex复合核验，因而仍为complete=false/censored、live attachment=false，未recook或替换几何。两次均无控制、物理推进、Teacher/PPO/Student；04仅有一次RGB-D读取。对应owner-first模块/测试SHA前缀为 `ddf703d...` / `e55cb...`，完整CPU仍需在这批最新源码后重跑。
 
 所有历史模型/失败实验、二指成功路径、原物理/材料/执行器、3844D Actor/371D Critic/24D动作与30mm/5秒/0.5mm成功标准保持；不启动长PPO，PR #1保持Draft、不合并。完整来源、原生结果及限制见[本阶段恢复验证报告](docs/superpowers/reports/2026-11-07-tripod-recovery-budget-validation.md)。下文为先前阶段结果，不能冒充本次验证。
 

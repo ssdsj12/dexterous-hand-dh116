@@ -83,6 +83,94 @@ def test_first_terminal_retained_and_missing_anchor_slip_is_unknown():
     assert record['right_finger12_tracking']['native_readback_samples'] == 0
 
 
+def test_legacy_v1_native_flag_is_explicit_cache_provenance_and_not_backend_evidence():
+    rows, c = physical_fixture()
+    rows[:, c['right_sdk_target_native_readback']] = 1
+    record = module.first_episode_metrics(rows, c, {'env_id': 0, 'episode_id': 0})
+    assert record['right_finger12_tracking']['native_readback_samples'] == 0
+    assert record['right_finger12_tracking']['command_cache_readback_samples'] == 3
+    assert record['target_provenance']['sdk_target_columns_source'] == 'legacy_IsaacLab_command_cache_or_reconstruction;not_PhysX_backend'
+
+
+def v2_target_rows():
+    rows, columns = physical_fixture()
+    added = ['right_sdk_target_finite', 'right_sdk_command_cache_readback',
+             'right_sdk_command_cache_finite', 'command_cache_target_right_finger12_rad',
+             'reconstructed_target_right_finger12_rad']
+    for name in added:
+        columns[name] = len(columns)
+    rows = np.pad(rows, ((0, 0), (0, len(added))))
+    rows[:, columns['right_sdk_target_native_readback']] = 1
+    rows[:, columns['right_sdk_target_finite']] = 1
+    rows[:, columns['right_sdk_command_cache_readback']] = 1
+    rows[:, columns['right_sdk_command_cache_finite']] = 1
+    rows[:, columns['sdk_target_right_finger12_rad']] = .3
+    rows[:, columns['command_cache_target_right_finger12_rad']] = .9
+    rows[:, columns['reconstructed_target_right_finger12_rad']] = .21
+    return rows, columns
+
+
+def test_v2_backend_tracking_is_separate_from_cache_and_reconstructed_tracking():
+    rows, columns = v2_target_rows()
+    record = module.first_episode_metrics(rows, columns, {'env_id': 0, 'episode_id': 0})
+    assert record['right_finger12_tracking']['native_readback_samples'] == 3
+    assert record['right_finger12_tracking']['max_abs_rad'] == .3
+    assert record['right_finger12_tracking']['command_cache_readback_samples'] == 3
+    assert record['right_finger12_command_cache_tracking']['max_abs_rad'] == .9
+    assert record['right_finger12_reconstructed_tracking']['max_abs_rad'] == .21
+    assert record['target_provenance']['sdk_target_columns_source'] == 'physx_backend_get_dof_position_targets'
+
+
+def test_unknown_teacher_target_version_cannot_claim_a_known_target_source():
+    rows, columns = physical_fixture()
+    with pytest.raises(ValueError, match='target audit version'):
+        module.first_episode_metrics(rows, columns, {'env_id': 0, 'episode_id': 0}, audit_version='unknown')
+
+
+def actual_v2_writer_archive(tmp_path):
+    fixture_path = Path(__file__).with_name('test_bimanual_teacher_audit.py')
+    fixture_spec = importlib.util.spec_from_file_location('teacher_writer_fixture', fixture_path)
+    fixtures = importlib.util.module_from_spec(fixture_spec)
+    fixture_spec.loader.exec_module(fixtures)
+    env, world, measurement, _, _ = fixtures.full_target_fixture(tmp_path)
+    audit = fixtures.install_teacher_physics_audit(env, world, tmp_path, enabled=True)
+    audit.submit(torch.zeros(2, 24), teacher_control_step=0)
+    fixtures.fresh(audit)
+    audit.observe(env, measurement, torch.ones(2, dtype=torch.bool), torch.tensor([True, False]))
+    summary = audit.finish()
+    with np.load(tmp_path/'teacher_physics_audit.npz', allow_pickle=False) as raw:
+        data = {key: raw[key] for key in raw.files}
+    return data, summary
+
+
+def test_v2_consumer_checks_actual_writer_full_named_target_archives(tmp_path):
+    assert hasattr(module, 'validate_teacher_target_archive'), 'V2 full target archive reader required'
+    data, summary = actual_v2_writer_archive(tmp_path)
+    result = module.validate_teacher_target_archive(data, summary)
+    assert result['full_target_dof_count_by_hand'] == {'left': 17, 'right': 17}
+    assert result['backend_readback_samples_by_hand'] == {'left': 2, 'right': 2}
+    del data['backend_full_target_left']
+    with pytest.raises(ValueError, match='full target'):
+        module.validate_teacher_target_archive(data, summary)
+
+
+def test_v2_consumer_rejects_full_backend_active_column_disagreement(tmp_path):
+    assert hasattr(module, 'validate_teacher_target_archive'), 'V2 full target archive reader required'
+    data, summary = actual_v2_writer_archive(tmp_path)
+    index = data['joint_names_left'].tolist().index('finger12')
+    data['backend_full_target_left'][0, 0, index] += .01
+    with pytest.raises(ValueError, match='active target'):
+        module.validate_teacher_target_archive(data, summary)
+
+
+def test_v2_consumer_checks_full_target_terminal_freeze_not_only_old_scalar_row(tmp_path):
+    assert hasattr(module, 'validate_teacher_target_archive'), 'V2 full target archive reader required'
+    data, summary = actual_v2_writer_archive(tmp_path)
+    data['terminal_command_cache_full_target_left'][0, 0] += .01
+    with pytest.raises(ValueError, match='terminal target'):
+        module.validate_teacher_target_archive(data, summary)
+
+
 def test_physical_identity_switch_before_terminal_is_rejected():
     rows, c = physical_fixture()
     rows[1, c['episode_id']] = 1

@@ -20,9 +20,10 @@ import numpy as np
 
 from .linear_coupling import ACTIVE
 from .tabletop_surface_contract import ACTION_CONTRACT
+from .tabletop_joint_target_readback import read_joint_target_evidence
 
 
-SCHEMA = 'dh116-bimanual-joint-tracking-substep-v3'
+SCHEMA = 'dh116-bimanual-joint-tracking-substep-v4'
 TORQUE_SOURCE = 'implicit_actuator_estimate_not_hardware_measurement'
 
 
@@ -60,6 +61,19 @@ def _native_field(hand, name, env_id, joint_ids):
 def _optional_env(values, name, env_id):
     value = values.get(name)
     return None if value is None else _array(value)[env_id].copy()
+
+
+def _target_row(evidence, env_id):
+    result = {key: deepcopy(value) for key, value in evidence.items()
+              if key not in ('backend', 'command_cache', 'dof_types')}
+    for key in ('backend', 'command_cache', 'dof_types'):
+        data = evidence[key]
+        result[key] = {name: value for name, value in data.items()
+                       if name not in ('values', 'finite_env')}
+        values, valid = data['values'], data['finite_env']
+        result[key]['values'] = values[env_id].copy() if values is not None and env_id < len(values) else None
+        result[key]['finite_env'] = bool(valid[env_id]) if valid is not None and env_id < len(valid) else None
+    return result
 
 
 def _contacts(world, env_id):
@@ -118,9 +132,11 @@ def capture_joint_tracking(world, measurement, *, env_ids, episode_uids, policy_
 
     episode_uids, action arrays and flags are full-world batches. ``world.q``
     and ``world.qd`` must be the current native readback before physical reset.
-    Native ``hand.data.joint_pos_target`` supplies the submitted SDK target.
-    When unavailable, the exact float32 submission expression is reconstructed
-    from the integrated double ``world.commands`` and marked as reconstructed.
+    PhysX ``get_dof_position_targets`` is the backend readback. IsaacLab's
+    ``hand.data.joint_pos_target`` is a separate user-command cache. If both
+    are unavailable, the float32 submission expression is reconstructed from
+    double ``world.commands`` and marked as reconstructed. Only the backend
+    can set ``sdk_target_native_readback_valid``; none is an actual position.
     A mismatch between active order and the named contract records an invalid
     mapping and withholds the target comparison.
     ``action_after_inverse24`` is the pure coordinate inverse boundary.
@@ -152,6 +168,7 @@ def capture_joint_tracking(world, measurement, *, env_ids, episode_uids, policy_
     commands = _array(world.commands)
     if commands.shape != (world.n, 2, 6):
         raise ValueError('SDK target shape must be N x 2 x 6')
+    target_evidence = [read_joint_target_evidence(hand) for hand in world.hands]
     rows = []
     for env_id in selected:
         mappings = [[hand.joint_names[index] for index in world.w.ids[h]]
@@ -160,13 +177,25 @@ def capture_joint_tracking(world, measurement, *, env_ids, episode_uids, policy_
         sdk_targets = []
         sdk_target_sources = []
         sdk_target_native_valid = []
+        backend_targets, cache_targets = [], []
+        reconstruction = commands[env_id].astype(np.float32).astype(np.float64)
         for h, hand in enumerate(world.hands):
-            native_target = _native_field(hand, 'joint_pos_target', env_id, world.w.ids[h])
-            native_valid = native_target is not None and np.isfinite(native_target).all()
-            sdk_targets.append(native_target if native_valid else commands[env_id, h].astype(np.float32).astype(np.float64))
-            sdk_target_sources.append('native_articulation_data_joint_pos_target' if native_valid
+            selected_values = []
+            for key in ('backend', 'command_cache'):
+                item = target_evidence[h][key]
+                values = item['values']
+                selected_values.append(values[env_id, world.w.ids[h]].copy()
+                    if item['available'] and values is not None and env_id < len(values)
+                    and item['finite_env'][env_id] and valid_mapping else None)
+            native_target, cache_target = selected_values
+            backend_targets.append(native_target)
+            cache_targets.append(cache_target)
+            use_backend, use_cache = native_target is not None, cache_target is not None
+            sdk_targets.append(native_target if use_backend else cache_target if use_cache else reconstruction[h])
+            sdk_target_sources.append(target_evidence[h]['backend']['source'] if use_backend
+                else target_evidence[h]['command_cache']['source'] if use_cache
                 else 'float32_submission_reconstructed_from_integrated_command')
-            sdk_target_native_valid.append(bool(native_valid))
+            sdk_target_native_valid.append(bool(use_backend))
         actual_right_index = world.hands[1].joint_names.index('finger12')
         q = float(positions[env_id, 1, actual_right_index])
         qd = float(velocities[env_id, 1, actual_right_index])
@@ -206,6 +235,10 @@ def capture_joint_tracking(world, measurement, *, env_ids, episode_uids, policy_
             integrated_active_command_before_float32_rad=commands[env_id],
             sdk_active_target_rad=sdk_targets, sdk_target_sources=sdk_target_sources,
             sdk_target_native_readback_valid=sdk_target_native_valid,
+            physx_backend_active_target_rad=backend_targets,
+            isaaclab_command_cache_active_target_rad=cache_targets,
+            float32_submission_reconstruction_rad=reconstruction,
+            joint_target_evidence=[_target_row(value, env_id) for value in target_evidence],
             left_full_position_rad=positions[env_id, 0], right_full_position_rad=positions[env_id, 1],
             left_full_velocity_rad_s=velocities[env_id, 0], right_full_velocity_rad_s=velocities[env_id, 1],
             full_joint_names=[list(hand.joint_names) for hand in world.hands],

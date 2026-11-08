@@ -198,7 +198,7 @@ def test_main_child_argv_uses_the_exact_sha_verified_inputs(qualified, monkeypat
     monkeypatch.setattr(sys, 'argv', [str(SCRIPT), '--root', str(root), '--name', 'bound_eval',
         '--mode', 'bound_student_eval', '--vision-checkpoint', str(checkpoint),
         '--checkpoint-sha256', hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
-        '--vision-manifest', str(frozen)])
+        '--vision-manifest', str(frozen)] + (['--vision-evaluation-physics-audit'] if placement=='external' else []))
     if placement.startswith('modified_'):
         with pytest.raises(ValueError, match='changed while awaiting native lock'):
             module.main()
@@ -208,6 +208,7 @@ def test_main_child_argv_uses_the_exact_sha_verified_inputs(qualified, monkeypat
         module.main()
     assert stopped.value.code == 0 and len(captured) == 1
     child = captured[0]
+    assert ('--vision-evaluation-physics-audit' in child)==(placement=='external')
     actual_checkpoint = Path(child[child.index('--vision-evaluation-checkpoint')+1])
     actual_manifest = Path(child[child.index('--vision-evaluation-manifest')+1])
     assert actual_checkpoint == checkpoint.resolve()

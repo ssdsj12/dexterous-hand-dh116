@@ -83,7 +83,7 @@ CPU 合同回归命令为 `PYTHONPATH=src /mnt/mydisk/xk/envs/dh116/bin/python -
 
 新 JSONL SHA-256 为 `78c5ac596605d5d65243d39c67ca93127b467d5390911c2b236a52b83eedea9a`，统计文件为实验总目录下 `t2_mapping_complete_analysis.json`。逐 reset/after 配对检查全部保持相同 case、env、hand 和 episode_uid；每对间隔 32 个物理子步，时间差均为 0.06666667014360428 s。全文件的物理步和时间戳单调非递减，after 时间均严格晚于对应 reset。字段 `active_q_rad` 与独立按十一关节名字取出的实测主动 q 完全相同。
 
-此重复探针的 `sdk_active_target_rad` 来自 `world.commands.float()`，与控制器给 `set_joint_position_target` 的 float32 表达式相同。这里明确将它记录为**重建的 SDK 提交值**，没有声称它是 native articulation 目标缓存的独立读回。SDK 缓存读回与重建值的来源区分由 T1 schema v2 逐子步审计另外保存。下表统计所有 after 快照中的绝对“提交目标减实测角”误差，包含未扰动维度。
+此重复探针的 `sdk_active_target_rad` 来自 `world.commands.float()`，与控制器给 `set_joint_position_target` 的 float32 表达式相同。这里明确将它记录为**重建的 SDK 提交值**，没有声称它是 PhysX后端目标的独立读回。SDK 缓存读回与重建值的来源区分由 T1 schema v2 逐子步审计另外保存。下表统计所有 after 快照中的绝对“提交目标减实测角”误差，包含未扰动维度。
 
 | 手/关节 | P50 rad | P90 rad | P95 rad | max rad |
 |---|---:|---:|---:|---:|

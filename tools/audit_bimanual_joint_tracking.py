@@ -1,6 +1,7 @@
 """Summarize native T1 readback without starting Isaac or inferring causation."""
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 from pathlib import Path
@@ -24,6 +25,61 @@ def scalar_stats(values):
     return dict(valid_count=len(values), p50=float(np.percentile(values, 50)),
         p90=float(np.percentile(values, 90)), p95=float(np.percentile(values, 95)),
         min=float(values.min()), max=float(values.max()))
+
+
+def target_provenance(row, hand_index=1):
+    """Interpret historical labels without rewriting saved cache evidence."""
+    schema = row['schema']
+    prefix = 'dh116-bimanual-joint-tracking-substep-v'
+    if schema not in {prefix+str(i) for i in (1, 2, 3, 4)}:
+        raise ValueError('unsupported joint tracking target schema')
+    version = int(schema[-1])
+    sources = row.get('sdk_target_sources', [None, None])
+    recorded = sources[hand_index] or (row['right_finger12'].get('sdk_target_source') if hand_index == 1 else None)
+    flags = row.get('sdk_target_native_readback_valid', [False, False])
+    result = dict(recorded_source_label=recorded, recorded_native_flag=bool(flags[hand_index]),
+        interpreted_source=recorded, backend_readback_valid=False, backend_target_rad=None,
+        command_cache_target_rad=None, reconstructed_submission_target_rad=None,
+        backend_unavailable_reason='historical_schema_did_not_capture_PhysX_backend')
+    selected = row.get('sdk_active_target_rad', [None, None])[hand_index]
+    value = selected[1] if selected is not None else None
+    if version == 1:
+        result.update(interpreted_source='legacy_v1_integrated_command_before_float32',
+                      reconstructed_submission_target_rad=value)
+    elif version in (2, 3):
+        if recorded == 'native_articulation_data_joint_pos_target':
+            result.update(interpreted_source='isaaclab_user_command_cache_joint_pos_target', command_cache_target_rad=value)
+        elif recorded == 'float32_submission_reconstructed_from_integrated_command':
+            result['reconstructed_submission_target_rad'] = value
+        else:
+            result['interpreted_source'] = 'historical_target_source_unverified'
+    else:
+        for name, key in (('command_cache_target_rad', 'isaaclab_command_cache_active_target_rad'),
+                          ('reconstructed_submission_target_rad', 'float32_submission_reconstruction_rad')):
+            values = row.get(key, [None, None])[hand_index]
+            result[name] = values[1] if values is not None else None
+        try:
+            active = np.asarray(row['physx_backend_active_target_rad'][hand_index], dtype=float)
+            evidence = row['joint_target_evidence'][hand_index]
+            native = evidence['backend']
+            names = evidence['joint_names']
+            mapping = row['active_joint_names'][hand_index]
+            full = np.asarray(native['values'], dtype=float)
+            expected = ('finger11', 'finger12', 'finger21', 'finger31', 'finger41', 'finger51')
+            if (not flags[hand_index] or recorded != 'physx_backend_get_dof_position_targets'
+                    or native.get('source') != 'physx_backend_get_dof_position_targets'
+                    or native.get('available') is not True or native.get('finite_env') is not True
+                    or not row['joint_mapping_valid'] or tuple(mapping) != expected
+                    or names != row['full_joint_names'][hand_index] or len(set(names)) != len(names)
+                    or active.shape != (6,) or full.shape != (len(names),)
+                    or not np.isfinite(active).all() or not np.isfinite(full).all()
+                    or not np.array_equal(active, full[[names.index(name) for name in mapping]])):
+                raise ValueError('missing, inconsistent or invalid named backend evidence')
+            result.update(backend_readback_valid=True, backend_target_rad=float(active[1]),
+                          backend_unavailable_reason=None)
+        except (KeyError, TypeError, ValueError, IndexError) as error:
+            result['backend_unavailable_reason'] = str(error)
+    return result
 
 
 def reconstruct_normal_contact_moment(row, model):
@@ -107,6 +163,7 @@ def compact(row):
     return dict(**row['identity'], terminal=row['terminal'], failure_code=row['failure_code'],
         q_rad=finger['position_rad'], qd_rad_s=finger['velocity_rad_s'],
         target_rad=finger['sdk_target_rad'], error_rad=finger['target_minus_actual_rad'],
+        target_provenance=target_provenance(row),
         physical_command=finger['physical_normalized_velocity_command'],
         estimated_torque_nm=torque[1] if torque is not None else None,
         thumb_follower_residual_rad=mimic['position_residual_rad'] if mimic else None,
@@ -205,6 +262,7 @@ def compare_tracking_guard(baseline_path, observed_path, moment_model=None):
                 target = previous['sdk_active_target_rad'][hand_index]
                 before = dict(identity=previous['identity'],
                     max_active_tracking_error_rad=float(np.max(np.abs(np.array(actual)-np.array(target)))),
+                    target_provenance=target_provenance(previous, hand_index),
                     max_mimic_residual_rad=max(abs(entry['position_residual_rad'])
                         for entry in previous['passive_coupling'][hand_index]))
             pauses.append(dict(hand=side, paused_sample_count=len(paused),
@@ -223,6 +281,9 @@ def compare_tracking_guard(baseline_path, observed_path, moment_model=None):
         reports.append(dict(episode_uid=uid, common_physics_samples=len(matched),
             baseline_physics_samples=len(original), observed_physics_samples=len(observed[uid]),
             actor_raw_max_abs_difference=float(actor_error), finger12d_request_max_abs_difference=float(finger_error),
+            target_comparison_scope='selected_target_references_with_float32_promotion;not_PhysX_backend_attestation',
+            backend_readback_pairs=sum(target_provenance(a)['backend_readback_valid']
+                and target_provenance(b)['backend_readback_valid'] for a, b in matched),
             right_finger12_float32_submission_max_abs_difference_rad=float(sdk_error),
             per_hand_active6_float32_submission_max_abs_difference_rad=all_sdk_error.tolist(),
             measured_full_q_max_abs_difference_rad=float(full_q_error),
@@ -265,13 +326,31 @@ def summarize(path, replay_path=None, moment_model=None, selected_steps=()):
             raise ValueError('duplicate terminal')
         trace = [compact(row) for row in rows]
         finger_rows = [row['right_finger12'] for row in rows]
+        provenance = [target_provenance(row) for row in rows]
+        backend_errors = [abs(item['backend_target_rad']-finger['position_rad'])
+            for item, finger in zip(provenance, finger_rows)
+            if item['backend_readback_valid'] and finger['position_rad'] is not None]
+        all_backend_limits = (all(finger['nominal_lower_rad'] <= item['backend_target_rad'] <= finger['nominal_upper_rad']
+            for item, finger in zip(provenance, finger_rows))
+            if all(item['backend_readback_valid'] for item in provenance) else None)
+        coverage = {}
+        for hand_index, side in enumerate(('left', 'right')):
+            source = [target_provenance(row, hand_index) for row in rows]
+            valid = sum(item['backend_readback_valid'] for item in source)
+            coverage[side] = dict(valid_samples=valid, total_samples=len(source), complete=valid == len(source),
+                interpreted_source_counts=dict(Counter(item['interpreted_source'] for item in source)),
+                recorded_source_label_counts=dict(Counter(str(item['recorded_source_label']) for item in source)))
         errors = [abs(row['error_rad']) if row['error_rad'] is not None else None for row in trace]
         peak = max((row for row in trace if row['error_rad'] is not None),
                    key=lambda row: abs(row['error_rad']), default=None)
         episodes.append(dict(episode_uid=uid, env_id=rows[0]['identity']['env_id'],
             row_count=len(rows), first_identity=rows[0]['identity'], last_identity=rows[-1]['identity'],
             terminal_count=len(terminal), all_joint_mappings_valid=all(row['joint_mapping_valid'] for row in rows),
-            all_sdk_targets_within_nominal_limits=all(row['target_within_nominal_limits'] for row in finger_rows),
+            all_sdk_targets_within_nominal_limits=all_backend_limits,
+            sdk_target_limit_check_scope='right_finger12_PhysX_backend_only;null_without_complete_backend_coverage',
+            all_selected_target_references_within_nominal_limits=all(row['target_within_nominal_limits'] for row in finger_rows),
+            backend_target_readback=coverage,
+            backend_abs_tracking_error_rad=scalar_stats(backend_errors),
             q_min_rad=min(row['position_rad'] for row in finger_rows),
             qd_abs_rad_s=scalar_stats(abs(row['qd_rad_s']) if row['qd_rad_s'] is not None else None for row in trace),
             abs_tracking_error_rad=scalar_stats(errors), peak_tracking_error_sample=peak,
@@ -297,15 +376,18 @@ def summarize(path, replay_path=None, moment_model=None, selected_steps=()):
                 differences.append(abs(target-sdk_float))
                 submission_matches.append(float(np.float32(target)) == sdk_float)
         target_crosscheck = dict(replay_source=str(replay_path), checked_rows=len(differences),
+            comparison_scope='selected_target_reference_vs_saved_replay_submission;not_PhysX_backend_attestation',
             all_float32_reconstructed_targets_match=all(submission_matches),
             max_integrated_double_vs_submitted_float32_rad=max(differences))
         for episode in episodes:
             episode['passive_lower_stop_timeline'] = passive_lower_stop_timeline(groups[episode['episode_uid']], replay)
-    return dict(schema='dh116-stage5-joint-tracking-analysis-v1', source=str(path),
+    return dict(schema='dh116-stage5-joint-tracking-analysis-v2', source=str(path),
         source_sha256=hashlib.sha256(path.read_bytes()).hexdigest(), episodes=episodes,
         source_schemas=sorted({row['schema'] for rows in groups.values() for row in rows}),
         target_crosscheck=target_crosscheck,
         legacy_v1_target_caveat='v1 sdk_target_rad contains integrated pre-float32 world.commands; use float32 replay crosscheck',
+        legacy_v2_v3_target_caveat='native_articulation_data_joint_pos_target was an IsaacLab user-command cache label, not a PhysX backend readback; original labels/values remain recorded',
+        schema_v4_target_scope='backend,IsaacLab_command_cache,float32_reconstruction_are_independent;backend_getter_requires_its_own_values_and_validity',
         legacy_v2_guard_boundary_caveat='guard schema v2 action_after_inverse24 contains post-guard execution; schema v3 records pure inverse and executed request separately',
         root_cause_proven=False,
         estimate_limitations=['implicit actuator torque is not hardware torque or actual solver drive torque',

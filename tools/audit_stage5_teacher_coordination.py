@@ -9,7 +9,8 @@ import torch
 
 from audit_stage5_teacher_regression import (
     compare_initial_states, digest, first_episode_metrics, stats,
-    validate_teacher_regression_proof,
+    validate_teacher_regression_proof, command_cache_target_matrix, teacher_target_provenance,
+    validate_teacher_target_archive,
 )
 from audit_stage5_interventions import action_statistics, flag_statistics, numeric_statistics
 
@@ -84,14 +85,16 @@ def compare_pinch_execution(reference, candidate_source, candidate_executed, ref
         raise ValueError('pinch source/execution action shape mismatch')
     source_equal = reference.dtype == candidate_source.dtype and reference.tobytes() == candidate_source.tobytes()
     execution_equal = reference.dtype == candidate_executed.dtype and reference.tobytes() == candidate_executed.tobytes()
-    targets_equal = reference_targets.dtype == candidate_targets.dtype and reference_targets.tobytes() == candidate_targets.tobytes()
+    finite_targets = np.isfinite(reference_targets).all() and np.isfinite(candidate_targets).all()
+    targets_equal = bool(finite_targets and reference_targets.dtype == candidate_targets.dtype
+                         and reference_targets.tobytes() == candidate_targets.tobytes())
     return dict(verified=source_equal and execution_equal and targets_equal, common_physical_substeps=count,
         comparison_representation='exact_float64_diagnostic_promotion',
         source_requests_bitwise_equal=source_equal, actual_execution_requests_bitwise_equal=execution_equal,
         sdk_targets_bitwise_equal=targets_equal,
         source_max_abs_difference=float(np.max(np.abs(reference-candidate_source))),
         executed_request_max_abs_difference=float(np.max(np.abs(reference-candidate_executed))),
-        sdk_target_max_abs_difference_rad=float(np.max(np.abs(reference_targets-candidate_targets))))
+        sdk_target_max_abs_difference_rad=float(np.max(np.abs(reference_targets-candidate_targets))) if finite_targets else None)
 
 
 def style_summary(rows, *, genuine):
@@ -127,10 +130,11 @@ def load_physical(folder):
     with np.load(folder/'teacher_physics_audit.npz', allow_pickle=False) as data:
         columns = {name: i for i, name in enumerate(data['fields'].tolist())}
         samples, terminals, valid = data['samples'], data['terminal_samples'], data['terminal_valid']
+        target_archive = validate_teacher_target_archive(data, summary)
     records = []
     for identity in summary['episodes']:
         env = identity['env_id']
-        row = first_episode_metrics(samples[:, env], columns, identity)
+        row = first_episode_metrics(samples[:, env], columns, identity, audit_version=summary.get('version'))
         episode = report['episodes'][str(identity['supervision_episode_id'])]
         row.update(grasp_style=episode['grasp_style'], qualified_supervision_success=episode['success'])
         if bool(valid[env]) != row['terminal_recorded']:
@@ -138,7 +142,8 @@ def load_physical(folder):
         if row['terminal_recorded'] and samples[row['physical_samples']-1, env].tobytes() != terminals[env].tobytes():
             raise ValueError('candidate terminal physical sample overwritten')
         records.append(row)
-    return dict(folder=folder, report=report, summary=summary, samples=samples, columns=columns, records=records)
+    return dict(folder=folder, report=report, summary=summary, samples=samples, columns=columns,
+                records=records, target_archive=target_archive)
 
 
 def audit(candidate_folder, reference_folder):
@@ -185,7 +190,6 @@ def audit(candidate_folder, reference_folder):
     bc = candidate['columns']
     rc = reference['columns']
     requests = [rc[f'teacher_issued_action_{i}'] for i in range(24)]
-    targets = [f'sdk_target_{side}_{name}_rad' for side in ('left', 'right') for name in ACTIVE]
     preservation = []
     for record in candidate['records']:
         env, count = record['env_id'], record['physical_samples']
@@ -195,14 +199,21 @@ def audit(candidate_folder, reference_folder):
             if not np.array_equal(physical[:, bc[key]], diagnostic[:, c[key]]):
                 raise ValueError('candidate source/execution and actual physical clocks disagree')
         record['control_candidate'] = execution_metrics(diagnostic, c, source[:, env], executed[:, env], record, count)
-        right = (physical[:, bc['sdk_target_right_finger12_rad']]-physical[:, bc['actual_q_right_finger12_rad']])
-        record['right_finger12_sdk_error_mean_abs_rad'] = float(np.abs(right).mean())
+        record['right_finger12_sdk_error_mean_abs_rad'] = record['right_finger12_tracking']['mean_abs_rad']
+        record['right_finger12_sdk_error_source'] = record['right_finger12_tracking']['target_source']
         if env not in tripod_envs:
             ref_record = next(row for row in reference['records'] if row['env_id'] == env)
             prefix = min(count, ref_record['physical_samples'])
             baseline = reference['samples'][:prefix, env]
+            baseline_cache = command_cache_target_matrix(baseline, rc, audit_version=reference['summary'].get('version'))
+            candidate_cache = command_cache_target_matrix(physical[:prefix], bc, audit_version=candidate['summary'].get('version'))
             result = compare_pinch_execution(baseline[:, requests], source[:prefix, env], executed[:prefix, env],
-                baseline[:, [rc[name] for name in targets]], physical[:prefix, [bc[name] for name in targets]])
+                baseline_cache['values'], candidate_cache['values'])
+            result.update(target_comparison_source='isaaclab_user_command_cache_joint_pos_target;cache_to_cache_only',
+                backend_readback_available_samples=dict(reference=baseline_cache['backend_readback_available_samples'],
+                                                       candidate=candidate_cache['backend_readback_available_samples']),
+                command_cache_readback_available_samples=dict(reference=baseline_cache['command_cache_readback_available_samples'],
+                                                             candidate=candidate_cache['command_cache_readback_available_samples']))
             preservation.append(dict(env_id=env, **result))
     genuine = (candidate['report'].get('native_runtime_verified') is True
                and candidate['summary'].get('native_runtime_verified') is True)
@@ -212,6 +223,9 @@ def audit(candidate_folder, reference_folder):
         'tripod_teacher_coordination.npz', 'tripod_teacher_coordination_contract.json', 'initial_native_state.pt')
     hashes.update({name: digest(folder/name) for name in filenames})
     return dict(version='dh116-stage5-teacher-coordination-audit-v1', source='Teacher/MPC candidate;not Student',
+        target_provenance={key: teacher_target_provenance(arm['columns'], arm['summary'].get('version'))
+                           for key, arm in (('reference', reference), ('candidate', candidate))},
+        target_archives=dict(reference=reference['target_archive'], candidate=candidate['target_archive']),
         native_runtime_attested_by_collector=genuine, by_style=groups, physical_first_episodes=candidate['records'],
         initial_state_matches_T5=initial, T5_proof=proof_validation, candidate_contract=contract,
         BC_tripod_exclusion=pools, unchanged_pinch_actual_execution_comparison=preservation,

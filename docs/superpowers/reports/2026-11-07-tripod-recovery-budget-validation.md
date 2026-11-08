@@ -110,7 +110,7 @@ A02的独立重算/保护证据：reconciled audit SHA前缀 `c309bb8...`，raw 
 
 ### 其他探针与离线候选（不属于原生A）
 
-静态 source pregrasp candidate02 的离线全审计结果SHA前缀为 `d614...`，对应审计SHA前缀为 `4a7156...`；它只证明离线候选/几何审计路径，不能替代原生物理证据。Cook probe01 在 source-root 校验处 fail-closed；probe02 被过期gate preflight拒绝。probe03仅完成原生 reset 和一次RGB-D读取，实际mesh路径的精确getter对272项全为0，collector早于最终identity建立，`complete=false`、`live shape=false`，没有控制、PPO或可用原生RGB-D证据。probe04使用owner-first getter后每个存储hull count=1，但272个hull全部未通过独立closed-convex拓扑验证，仍为`complete=false/censored`、`live attachment=false`；没有recook或几何替换，仅一次RGB-D，无控制/物理/Teacher/PPO/Student。owner-first模块/测试SHA前缀为`ddf703d...`/`e55cb...`。探针问题不回写生产物理参数；完整CPU仍需覆盖最新owner/stage源码。
+静态 source pregrasp candidate02 的离线全审计结果SHA前缀为 `d614...`，对应审计SHA前缀为 `4a7156...`；它只证明离线候选/几何审计路径，不能替代原生物理证据。Cook probe01 在 source-root 校验处 fail-closed；probe02 被过期gate preflight拒绝。probe03仅完成原生 reset 和一次RGB-D读取，实际mesh路径的精确getter对272项全为0，collector早于最终identity建立，`complete=false`、`live shape=false`，没有控制、PPO或可用原生RGB-D证据。probe04使用owner-first getter后每个存储hull count=1，但272个hull全部未通过独立closed-convex复合验证，仍为`complete=false/censored`、`live attachment=false`；没有recook或几何替换，仅一次RGB-D，无控制/物理/Teacher/PPO/Student。owner-first模块/测试SHA前缀为`ddf703d...`/`e55cb...`。探针问题不回写生产物理参数；完整CPU仍需覆盖最新owner/stage源码。
 
 ## 原生隔离与后续状态
 

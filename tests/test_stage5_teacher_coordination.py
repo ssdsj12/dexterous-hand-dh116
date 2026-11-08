@@ -84,6 +84,43 @@ def test_physics_float64_request_record_matches_exact_promoted_float32_candidate
     assert result['comparison_representation'] == 'exact_float64_diagnostic_promotion'
 
 
+def test_identical_missing_sdk_targets_do_not_prove_target_preservation():
+    source = np.zeros((3, 24))
+    missing = np.full((3, 12), np.nan)
+    result = module.compare_pinch_execution(source, source, source, missing, missing)
+    assert not result['verified'] and not result['sdk_targets_bitwise_equal']
+    assert result['sdk_target_max_abs_difference_rad'] is None
+
+
+def test_cross_version_comparison_extracts_same_cache_source_and_never_backend_as_cache():
+    assert hasattr(module, 'command_cache_target_matrix'), 'version-aware cache-only target reader required'
+    old_names = [f'sdk_target_{side}_{name}_rad' for side in ('left', 'right') for name in module.ACTIVE]
+    old_names += [f'{side}_sdk_target_native_readback' for side in ('left', 'right')]
+    old_columns = {name: i for i, name in enumerate(old_names)}
+    legacy = np.full((3, len(old_names)), .2)
+    legacy[:, -2:] = 1
+    new_names = old_names + [name.replace('sdk_target_', 'command_cache_target_') for name in old_names[:12]]
+    new_names += ['left_sdk_command_cache_readback', 'right_sdk_command_cache_readback',
+                  'right_sdk_command_cache_finite', 'right_sdk_target_finite',
+                  'reconstructed_target_right_finger12_rad']
+    current = np.full((3, len(new_names)), .2)
+    current[:, :12] = .8  # backend differs, but its separate command cache is identical
+    for name in ('left_sdk_target_native_readback', 'right_sdk_target_native_readback',
+                 'left_sdk_command_cache_readback', 'right_sdk_command_cache_readback',
+                 'right_sdk_command_cache_finite', 'right_sdk_target_finite'):
+        current[:, new_names.index(name)] = 1
+    current_columns = {name: i for i, name in enumerate(new_names)}
+    old = module.command_cache_target_matrix(legacy, old_columns)
+    new = module.command_cache_target_matrix(current, current_columns)
+    np.testing.assert_array_equal(old['values'], new['values'])
+    assert old['backend_readback_available_samples'] == 0
+    assert new['backend_readback_available_samples'] == 6
+    legacy[0, old_columns['left_sdk_target_native_readback']] = 0
+    absent_cache = module.command_cache_target_matrix(legacy, old_columns)
+    assert np.isnan(absent_cache['values'][0, :6]).all()
+    assert not absent_cache['all_cache_targets_available_and_finite']
+
+
 def test_first_episode_clock_or_live_mismatch_is_rejected():
     rows, c, source, executed = execution_fixture()
     rows[1, c['live']] = 0

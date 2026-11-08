@@ -220,7 +220,9 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
     from .tabletop_vision_training import _observations, _contract
     from .tabletop_vision_inference import load_vision_inference
     from .tabletop_vision_evaluation_contract import validate_physical_adapter_evaluation_mode
+    from .tabletop_vision_evaluation_diagnostics import validate_evaluation_physics_diagnostics_options
     physical_adapter = validate_physical_adapter_evaluation_mode(args)
+    physics_audit_enabled=validate_evaluation_physics_diagnostics_options(args)
     if getattr(args,'grasp_contact_probe',False):
         from .tabletop_grasp_contact_native import evaluation_minimum
         min_trials_per_style=evaluation_minimum(args)
@@ -318,11 +320,17 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
             previous_callback(payload)
         env.evaluation_telemetry.callback=contact_callback
     collector.begin_trials()
-    control_steps=0; error=None
+    control_steps=0; error=None; physics_audit=None
     try:
+        if physics_audit_enabled:
+            from .tabletop_vision_evaluation_diagnostics import install_evaluation_physics_diagnostics
+            physics_audit=install_evaluation_physics_diagnostics(env,device_world,manifest,output,
+                enabled=True,checkpoint_sha256=checkpoint_sha,
+                manifest_sha256=manifest_sha256(manifest,min_trials_per_style=min_trials_per_style))
         with torch.inference_mode():
             while control_steps<maximum and collector.summary()['completed_count']<len(manifest['trials']):
                 action=policy.act(obs)
+                if physics_audit is not None:physics_audit.submit(action,policy_step=control_steps)
                 critic,_,done,_=env.step(action)
                 control_steps+=1
                 previous=action.clone(); previous[done]=0.
@@ -331,10 +339,14 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
     except Exception as failure:
         error=f'{type(failure).__name__}: {failure}'
     finally:
-        raw_stream.close()
-        if contact_observer is not None:
-            env.evaluation_telemetry.callback=previous_callback
-            contact_observer.finish(reason='evaluation_error' if error else 'bounded_evaluation_end')
+        try:
+            if physics_audit is not None:
+                physics_audit.finish(error=error)
+        finally:
+            raw_stream.close()
+            if contact_observer is not None:
+                env.evaluation_telemetry.callback=previous_callback
+                contact_observer.finish(reason='evaluation_error' if error else 'bounded_evaluation_end')
     evidence['conditional_telemetry_samples']=dict(path=str(raw_path),sha256=file_sha256(raw_path))
     report=collector.summary()
     report.update(status=('not_completed' if error or report['incomplete_count']
@@ -347,6 +359,12 @@ def run_vision_evaluation(world, device_world, task, env, args, critic_contract,
             canonical_sha256=manifest['metadata']['physics_sha256'],
             source_privileged_critic_contract_sha256=_digest(source['privileged_critic_contract']),
             execution_privileged_critic_contract_sha256=_digest(critic_contract)))
+    if physics_audit is not None:
+        path=output/'evaluation_action_diagnostics/summary.json'
+        if path.is_file():
+            report['optional_student_physics_diagnostics']=dict(path=str(path),sha256=file_sha256(path),
+                scope='separate_observer_evidence;not_qualified_by_original_five_evidence_validator',
+                native_qualification_issued_by_writer=False,new_independent_initial_states=0)
     if report['checkpoint_sha256_after']!=checkpoint_sha:
         raise RuntimeError('immutable evaluation checkpoint changed')
     report_path=output/'vision_evaluation_report.json'; _json(report_path,report)

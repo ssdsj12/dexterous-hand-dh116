@@ -175,15 +175,59 @@ def test_invalid_joint_measurement_never_reported_as_inside_guard():
     assert row['right_finger12']['joint_limit_observation'] == 'right_finger12_measurement_invalid'
 
 
-def test_sdk_readback_target_takes_priority_over_integrated_double_command():
+def test_sdk_cache_is_labelled_as_cache_and_not_promoted_to_backend_readback():
     world, actions = native_arrays()
     for hand in world.hands:
         hand.data.joint_pos_target = np.full((1, 11), .05, dtype=np.float32)
     row = capture(world, actions)
     assert row['right_finger12']['sdk_target_rad'] == float(np.float32(.05))
     assert row['right_finger12']['integrated_command_before_float32_rad'] == .04
-    assert row['right_finger12']['sdk_target_source'] == 'native_articulation_data_joint_pos_target'
+    assert row['right_finger12']['sdk_target_source'] == 'isaaclab_user_command_cache_joint_pos_target'
+    assert row['sdk_target_native_readback_valid'] == [False, False]
+    assert row['physx_backend_active_target_rad'] == [None, None]
+    assert row['isaaclab_command_cache_active_target_rad'][1][1] == float(np.float32(.05))
+
+
+def test_true_backend_target_has_priority_and_retains_independent_cache_and_reconstruction(tmp_path):
+    world, actions = native_arrays()
+    for h in world.hands:
+        h.data.joint_pos_target = np.full((1, 11), .05, dtype=np.float32)
+        h.root_physx_view = SimpleNamespace(
+            get_dof_position_targets=lambda: np.full((1, 11), .06, dtype=np.float32),
+            get_dof_types=lambda: np.zeros((1, 11), dtype=np.uint8))
+    row = capture(world, actions)
+    assert row['schema'] == 'dh116-bimanual-joint-tracking-substep-v4'
     assert row['sdk_target_native_readback_valid'] == [True, True]
+    assert row['right_finger12']['sdk_target_rad'] == float(np.float32(.06))
+    assert row['right_finger12']['sdk_target_source'] == 'physx_backend_get_dof_position_targets'
+    assert row['isaaclab_command_cache_active_target_rad'][1][1] == float(np.float32(.05))
+    assert row['float32_submission_reconstruction_rad'][1][1] == float(np.float32(.04))
+    assert len(row['joint_target_evidence'][1]['backend']['values']) == 11
+    assert row['joint_target_evidence'][1]['units_by_name']['finger12'] == 'rad'
+    with JointTrackingAuditWriter(tmp_path/'backend.jsonl') as writer:
+        writer.append(row)
+        world.hands[1].data.joint_pos_target[:] = .2
+        world.hands[1].root_physx_view.get_dof_position_targets = lambda: np.full((1, 11), .2, dtype=np.float32)
+        world._physics_steps += 1
+        world.w.sim.current_time += world.dt
+        late = capture(world, actions, live=[False], terminal=[False])
+        assert writer.append(late) is False
+        assert writer.terminal_rows['run:0:3']['right_finger12']['sdk_target_rad'] == float(np.float32(.06))
+        assert writer.terminal_rows['run:0:3']['joint_target_evidence'][1]['backend']['values'][0] == float(np.float32(.06))
+
+
+def test_backend_error_with_valid_cache_is_preserved_as_non_native():
+    world, actions = native_arrays()
+    def fail():
+        raise RuntimeError('native getter failed')
+    for h in world.hands:
+        h.data.joint_pos_target = np.full((1, 11), .05, dtype=np.float32)
+        h.root_physx_view = SimpleNamespace(get_dof_position_targets=fail)
+    row = capture(world, actions)
+    assert row['sdk_target_native_readback_valid'] == [False, False]
+    assert row['physx_backend_active_target_rad'] == [None, None]
+    assert 'native getter failed' in row['joint_target_evidence'][1]['backend']['error']
+    assert row['right_finger12']['sdk_target_source'] == 'isaaclab_user_command_cache_joint_pos_target'
 
 
 def test_missing_sdk_readback_uses_explicit_float32_submission_reconstruction():

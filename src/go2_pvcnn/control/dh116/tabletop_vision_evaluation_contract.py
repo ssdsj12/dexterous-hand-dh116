@@ -184,6 +184,8 @@ def validate_physical_adapter_evaluation_mode(args):
 
 def validate_vision_evaluation_options(args):
     """Read-only pre-Kit validation; no exact-training-resume N guard applies."""
+    from .tabletop_vision_evaluation_diagnostics import validate_evaluation_physics_diagnostics_options
+    validate_evaluation_physics_diagnostics_options(args)
     checkpoint=getattr(args,'vision_evaluation_checkpoint',None)
     physical_adapter = validate_physical_adapter_evaluation_mode(args)
     manifest_path=getattr(args,'vision_evaluation_manifest',None)

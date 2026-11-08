@@ -127,6 +127,7 @@ def main():
     parser.add_argument('--vision-checkpoint', type=Path)
     parser.add_argument('--checkpoint-sha256')
     parser.add_argument('--vision-manifest', type=Path)
+    parser.add_argument('--vision-evaluation-physics-audit',action='store_true')
     parser.add_argument('--watch-env', type=int, action='append', default=[])
     parser.add_argument('--replay-arm', default='recorded', choices=('recorded','right_rotation_after240',
                         'right_translation_after240','tracking_guard','tracking_guard_coupled'))
@@ -141,6 +142,8 @@ def main():
         parser.error('bound_student_eval requires --vision-checkpoint, --checkpoint-sha256 and --vision-manifest')
     if bound and (args.reference or args.watch_env or args.replay_arm != 'recorded'):
         parser.error('bound_student_eval excludes paired/replay options')
+    if args.vision_evaluation_physics_audit and not bound:
+        parser.error('--vision-evaluation-physics-audit is exclusive to bound_student_eval')
     if args.bimanual_teacher_physics_audit and not args.mode.startswith('teacher'):
         parser.error('--bimanual-teacher-physics-audit requires teacher or teacher_adapter mode')
     if Path(args.name).name != args.name or args.name in ('.', '..'):
@@ -218,6 +221,8 @@ def main():
                     str(args.bimanual_tripod_teacher_coordination_proof.resolve())]
     if (args.bimanual_teacher_physics_audit or candidate) and '--bimanual-teacher-physics-audit' not in command:
         command += ['--bimanual-teacher-physics-audit']
+    if args.vision_evaluation_physics_audit and '--vision-evaluation-physics-audit' not in command:
+        command += ['--vision-evaluation-physics-audit']
     files = {str(path.relative_to(source)): hashlib.sha256(path.read_bytes()).hexdigest()
              for path in source.rglob('*') if path.is_file() and path.suffix != '.pyc'}
     meta = dict(command=command, cwd=str(source), source_sha256=files, env=cfg['env'], mode=args.mode)

@@ -113,7 +113,7 @@ def test_terminal_is_frozen_before_noop_and_episode_identity_changes(tmp_path):
     assert not any('actor' in field.lower() or 'latent' in field.lower() for field in FIELDS)
 
 
-def test_sdk_target_readback_and_explicit_reconstruction_source_flag(tmp_path):
+def test_sdk_command_cache_does_not_claim_backend_readback_or_fill_backend_columns(tmp_path):
     env, world, m = fixture(tmp_path)
     del world.hands[0].data.joint_pos_target
     world.commands[:, 0] = .123456789
@@ -126,8 +126,13 @@ def test_sdk_target_readback_and_explicit_reconstruction_source_flag(tmp_path):
     fields = data['fields'].tolist()
     row = data['samples'][0, 0]
     assert row[fields.index('left_sdk_target_native_readback')] == 0
-    assert row[fields.index('right_sdk_target_native_readback')] == 1
-    assert row[fields.index('sdk_target_left_finger12_rad')] == float(np.float32(.123456789))
+    assert row[fields.index('right_sdk_target_native_readback')] == 0
+    assert row[fields.index('left_sdk_command_cache_readback')] == 0
+    assert row[fields.index('right_sdk_command_cache_readback')] == 1
+    assert np.isnan(row[fields.index('sdk_target_left_finger12_rad')])
+    assert np.isnan(row[fields.index('sdk_target_right_finger12_rad')])
+    assert row[fields.index('reconstructed_target_left_finger12_rad')] == float(np.float32(.123456789))
+    assert row[fields.index('command_cache_target_right_finger12_rad')] == float(np.float32(.21))
 
 
 def test_invalid_contacts_are_not_manufactured_and_observer_restores_on_error(tmp_path):
@@ -146,7 +151,7 @@ def test_invalid_contacts_are_not_manufactured_and_observer_restores_on_error(tm
     assert data['samples'][0, 0, fields.index('left_contact_measurement_valid')] == 0
 
 
-def test_nonfinite_native_target_is_preserved_with_truthful_source_flag(tmp_path):
+def test_nonfinite_command_cache_is_preserved_without_claiming_backend_readback(tmp_path):
     env, world, m = fixture(tmp_path)
     world.hands[1].data.joint_pos_target[0, JOINTS.index('finger12')] = float('nan')
     audit = install_teacher_physics_audit(env, world, tmp_path, enabled=True)
@@ -157,8 +162,127 @@ def test_nonfinite_native_target_is_preserved_with_truthful_source_flag(tmp_path
     data = np.load(tmp_path/'teacher_physics_audit.npz')
     fields = data['fields'].tolist()
     row = data['samples'][0, 0]
+    assert row[fields.index('right_sdk_target_native_readback')] == 0
+    assert row[fields.index('right_sdk_command_cache_readback')] == 1
+    assert row[fields.index('right_sdk_command_cache_finite')] == 0
+    assert np.isnan(row[fields.index('command_cache_target_right_finger12_rad')])
+
+
+def full_target_fixture(tmp_path):
+    env, world, measurement = fixture(tmp_path)
+    names = list(JOINTS) + ['wrist_x', 'wrist_y', 'wrist_z', 'wrist_roll', 'wrist_pitch', 'wrist_yaw']
+    per_hand = [names, list(reversed(names))]
+    backend, cache = [], []
+    hands = []
+    for hand_names in per_hand:
+        targets = np.full((2, 17), .3, dtype=np.float32)
+        targets[:, hand_names.index('wrist_z')] = .007
+        commands = np.full((2, 17), .9, dtype=np.float32)
+        types = np.array([[1 if name in ('wrist_x', 'wrist_y', 'wrist_z') else 0
+                           for name in hand_names]]*2, dtype=np.uint8)
+        view = SimpleNamespace(get_dof_position_targets=lambda targets=targets: targets,
+                               get_dof_types=lambda types=types: types)
+        hands.append(SimpleNamespace(joint_names=hand_names, root_physx_view=view,
+                                     data=SimpleNamespace(joint_pos_target=torch.from_numpy(commands))))
+        backend.append(targets)
+        cache.append(commands)
+    world.hands = hands
+    world.w.ids = [[hand_names.index(name) for name in ACTIVE] for hand_names in per_hand]
+    world.q = torch.full((2, 2, 17), .2, dtype=torch.float64)
+    world.qd = world.q*.1
+    return env, world, measurement, backend, cache
+
+
+def test_v2_separates_full_backend_cache_and_reconstructed_targets_in_actual_named_order(tmp_path):
+    env, world, m, backend, cache = full_target_fixture(tmp_path)
+    before = [value.clone() for value in (world.q, world.qd, world.roots, world.commands)]
+    audit = install_teacher_physics_audit(env, world, tmp_path, enabled=True)
+    audit.submit(torch.zeros(2, 24), teacher_control_step=0)
+    fresh(audit)
+    audit.observe(env, m, torch.ones(2, dtype=torch.bool), torch.tensor([True, False]))
+    summary = audit.finish()
+    assert summary['version'] == 'dh116-teacher-480hz-first-episode-audit-v2'
+    assert summary['target_sources']['backend'] == 'physx_backend_get_dof_position_targets'
+    assert summary['target_sources']['command_cache'] == 'isaaclab_user_command_cache_joint_pos_target'
+    assert summary['target_sources']['reconstructed'] == 'float32_submission_reconstructed_from_integrated_world.commands;active6_only'
+    assert summary['legacy_v1_target_scope'] == 'IsaacLab_command_cache_or_reconstruction;not_PhysX_backend_readback'
+    for actual, expected in zip((world.q, world.qd, world.roots, world.commands), before):
+        assert torch.equal(actual, expected)
+    data = np.load(tmp_path/'teacher_physics_audit.npz', allow_pickle=False)
+    fields = data['fields'].tolist()
+    row = data['samples'][0, 0]
+    assert row[fields.index('left_sdk_target_native_readback')] == 1
+    assert row[fields.index('left_sdk_target_finite')] == 1
+    assert row[fields.index('sdk_target_left_finger12_rad')] == float(np.float32(.3))
+    assert row[fields.index('command_cache_target_left_finger12_rad')] == float(np.float32(.9))
+    assert row[fields.index('reconstructed_target_left_finger12_rad')] == float(np.float32(.21))
+    for hi, side in enumerate(('left', 'right')):
+        assert data[f'joint_names_{side}'].tolist() == world.hands[hi].joint_names
+        np.testing.assert_array_equal(data[f'backend_full_target_{side}'][0], backend[hi])
+        np.testing.assert_array_equal(data[f'command_cache_full_target_{side}'][0], cache[hi])
+        assert data[f'backend_full_target_{side}'].shape == (1, 2, 17)
+        index = world.hands[hi].joint_names.index('wrist_z')
+        assert data[f'dof_types_{side}'][0, 0, index] == 1
+        assert summary['target_readback_statuses'][hi]['units_by_name']['wrist_z'] == 'm'
+        assert summary['target_readback_statuses'][hi]['units_by_name']['wrist_roll'] == 'rad'
+
+
+def test_backend_getter_failure_never_fills_backend_with_available_cache(tmp_path):
+    env, world, m, _, _ = full_target_fixture(tmp_path)
+    def fail():
+        raise RuntimeError('backend read failed')
+    world.hands[0].root_physx_view.get_dof_position_targets = fail
+    audit = install_teacher_physics_audit(env, world, tmp_path, enabled=True)
+    audit.submit(torch.zeros(2, 24), teacher_control_step=0)
+    fresh(audit)
+    audit.observe(env, m, torch.ones(2, dtype=torch.bool), torch.zeros(2, dtype=torch.bool))
+    summary = audit.finish()
+    data = np.load(tmp_path/'teacher_physics_audit.npz')
+    fields = data['fields'].tolist()
+    assert data['samples'][0, :, fields.index('left_sdk_target_native_readback')].tolist() == [0, 0]
+    assert data['samples'][0, :, fields.index('left_sdk_command_cache_readback')].tolist() == [1, 1]
+    assert np.isnan(data['backend_full_target_left']).all()
+    assert 'backend read failed' in summary['target_readback_statuses'][0]['backend']['error']
+
+
+def test_nonfinite_backend_keeps_raw_evidence_and_distinguishes_availability_from_finiteness(tmp_path):
+    env, world, m, backend, _ = full_target_fixture(tmp_path)
+    backend[1][0, world.hands[1].joint_names.index('finger12')] = np.nan
+    audit = install_teacher_physics_audit(env, world, tmp_path, enabled=True)
+    audit.submit(torch.zeros(2, 24), teacher_control_step=0)
+    fresh(audit)
+    audit.observe(env, m, torch.ones(2, dtype=torch.bool), torch.zeros(2, dtype=torch.bool))
+    audit.finish()
+    data = np.load(tmp_path/'teacher_physics_audit.npz')
+    fields = data['fields'].tolist()
+    row = data['samples'][0, 0]
     assert row[fields.index('right_sdk_target_native_readback')] == 1
+    assert row[fields.index('right_sdk_target_finite')] == 0
+    assert row[fields.index('right_sdk_command_cache_finite')] == 1
     assert np.isnan(row[fields.index('sdk_target_right_finger12_rad')])
+    assert row[fields.index('command_cache_target_right_finger12_rad')] == float(np.float32(.9))
+
+
+def test_full_target_terminal_snapshots_survive_noop_and_real_reset(tmp_path):
+    env, world, m, backend, cache = full_target_fixture(tmp_path)
+    expected_backend = backend[0][0].copy()
+    expected_cache = cache[0][0].copy()
+    audit = install_teacher_physics_audit(env, world, tmp_path, enabled=True)
+    audit.submit(torch.zeros(2, 24), teacher_control_step=0)
+    fresh(audit)
+    audit.observe(env, m, torch.ones(2, dtype=torch.bool), torch.tensor([True, False]))
+    backend[0][:] = 9.
+    cache[0][:] = 8.
+    env.diagnostic_episode_ids[0] += 1
+    world._physics_steps += 1
+    world.w.sim.current_time += 1/480
+    fresh(audit)
+    audit.observe(env, m, torch.ones(2, dtype=torch.bool), torch.zeros(2, dtype=torch.bool))
+    audit.finish()
+    data = np.load(tmp_path/'teacher_physics_audit.npz', allow_pickle=False)
+    np.testing.assert_array_equal(data['terminal_backend_full_target_left'][0], expected_backend)
+    np.testing.assert_array_equal(data['terminal_command_cache_full_target_left'][0], expected_cache)
+    np.testing.assert_array_equal(data['backend_full_target_left'][1, 0], np.full(17, 9.))
 
 
 def test_immutable_output_collision_leaves_prior_observer_untouched(tmp_path):
