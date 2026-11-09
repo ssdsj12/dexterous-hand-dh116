@@ -34,6 +34,7 @@ class AuxCaptureComponents:
     pairs: object
     metadata: object
     delivery_probe: object = None
+    filtered_metadata_provider: object = None
 
 
 def _require_clock_delta(after,before,steps):
@@ -94,7 +95,7 @@ def _serial(value):
 
 def _native_components(env,world,*,clock_reader,capacity_per_wire,
                        contact_delivery_probe_mode=None,contact_delivery_probe_order=0,
-                       delivery_clock_reader=None):
+                       delivery_clock_reader=None,capture_filtered_contact_metadata=False):
     """Use existing stage, SimulationView and reporters; no Apply/Set/step."""
     import carb
     import omni.usd
@@ -121,6 +122,16 @@ def _native_components(env,world,*,clock_reader,capacity_per_wire,
         static_view_policy='three low-level views; existing reporter/settings unchanged',
         capacity_per_wire=capacity_per_wire,
         qualification='observational prototype; static-filter/sign/frame/completeness unqualified')
+    if capture_filtered_contact_metadata:
+        from .tabletop_bimanual_mpc_filtered_contact_measurements import (
+            FilteredPairMetadataProvider,make_source_reader)
+        filtered=FilteredPairMetadataProvider(sensors=sensors,
+            wire_root_view=world.wire.root_physx_view,
+            clock_reader=lambda:tuple(clock_reader(i) for i in range(env.n)),
+            source_reader=make_source_reader(stage=stage,sensors=sensors,
+                stage_reader=lambda:omni.usd.get_context().get_stage()),enabled=True)
+        metadata['filtered_metadata_provider']=_identity(Path(inspect.getfile(type(filtered))))
+        return AuxCaptureComponents(provider,pairs,metadata,filtered_metadata_provider=filtered)
     if contact_delivery_probe_mode is None:
         return provider,pairs,metadata
     from .tabletop_bimanual_mpc_contact_delivery_probe import open_installed_delivery_probe
@@ -139,7 +150,12 @@ def _native_components(env,world,*,clock_reader,capacity_per_wire,
 class _AuxCapture:
     def __init__(self,env,world,output,*,run_uuid,native_runtime_verified=False,
                  component_factory=None,capacity_per_wire=64,
-                 contact_delivery_probe_mode=None,contact_delivery_probe_order=0):
+                 contact_delivery_probe_mode=None,contact_delivery_probe_order=0,
+                 capture_filtered_contact_metadata=False):
+        if type(capture_filtered_contact_metadata) is not bool:
+            raise ValueError('filtered metadata capture requires an explicit bool')
+        if capture_filtered_contact_metadata and contact_delivery_probe_mode is not None:
+            raise ValueError('filtered metadata and delivery require independent observer arms')
         if contact_delivery_probe_mode not in (None,'post_step_poll','full_report_callback'):
             raise ValueError('contact delivery probe mode must select one independent observer or None')
         if type(contact_delivery_probe_order) is not int or contact_delivery_probe_order<0:
@@ -172,6 +188,10 @@ class _AuxCapture:
         self.contact_delivery_probe_mode=contact_delivery_probe_mode
         self.contact_delivery_probe_order=contact_delivery_probe_order
         self.delivery_probe=None;self._delivery_summary=None;self.delivery_errors=[]
+        self.capture_filtered_contact_metadata=capture_filtered_contact_metadata
+        self.filtered_metadata_provider=None;self._filtered_previous=None
+        self._filtered_counts=dict(snapshots=0,valid_snapshots=0,invalid_snapshots=0)
+        self._filtered_archive_errors=[]
         self.native_runtime_verified=native_runtime_verified
         self.output=Path(output).resolve();self.output.mkdir(parents=True,exist_ok=False)
         self._stream=gzip.open(self.output/'aux_480hz.jsonl.gz','xt',encoding='utf-8',compresslevel=1)
@@ -187,6 +207,8 @@ class _AuxCapture:
                     options.update(contact_delivery_probe_mode=contact_delivery_probe_mode,
                         contact_delivery_probe_order=contact_delivery_probe_order,
                         delivery_clock_reader=self._delivery_clock)
+                if capture_filtered_contact_metadata:
+                    options['capture_filtered_contact_metadata']=True
                 components=_native_components(env,world,**options)
             else:
                 # Existing CPU factories keep their exact one-keyword contract.
@@ -194,6 +216,7 @@ class _AuxCapture:
             if isinstance(components,AuxCaptureComponents):
                 self.scene,self.pairs,self.metadata=components.scene,components.pairs,components.metadata
                 self.delivery_probe=components.delivery_probe
+                self.filtered_metadata_provider=components.filtered_metadata_provider
             elif isinstance(components,(tuple,list)) and len(components) in (3,4):
                 self.scene,self.pairs,self.metadata=components[:3]
                 if len(components)==4:self.delivery_probe=components[3]
@@ -204,6 +227,11 @@ class _AuxCapture:
             elif (self.delivery_probe is None or self.delivery_probe.enabled is not True
                     or self.delivery_probe.mode!=contact_delivery_probe_mode):
                 raise ValueError('supplied delivery probe must match the explicit mode')
+            if capture_filtered_contact_metadata:
+                if self.filtered_metadata_provider is None or self.filtered_metadata_provider.enabled is not True:
+                    raise ValueError('filtered metadata capture requires an enabled provider')
+            elif self.filtered_metadata_provider is not None:
+                raise ValueError('filtered metadata provider requires an explicit enabled capture')
             world.advance=self._advance_hook
             env.joint_replay_observer=self._observer_hook
         except Exception as error:
@@ -325,13 +353,24 @@ class _AuxCapture:
             native_success_qualification_issued=False,new_expert_qualification_issued=False,
             native_runtime_attestation_scope='runner only; not component or support qualification',
             source_role='legacy Teacher auxiliary observation; not Student input or control')
-        pair=None;samples=None;delivery=None
+        pair=None;samples=None;delivery=None;filtered=None;filtered_type=None
         try:
             pair=self.pairs.end_step(clocks[index],poll=True,
                 read_clock=lambda:self.clock_for_env(index),step_completed=True)
             self._pending=None
             if self.delivery_probe is not None:
                 delivery=self.delivery_probe.end_step(clocks[index],step_completed=True,poll_report=pair)
+            if self.filtered_metadata_provider is not None:
+                from .tabletop_bimanual_mpc_filtered_contact_provenance import FilteredPairSnapshot
+                filtered_type=FilteredPairSnapshot
+                filtered=self.filtered_metadata_provider.capture(clocks=clocks,previous=self._filtered_previous)
+                if (type(filtered) is not FilteredPairSnapshot or filtered.clocks!=clocks
+                        or any(value is not False for value in filtered.qualification.values())):
+                    raise ValueError('filtered metadata provider returned a different actual clock or qualification')
+                if filtered.metadata_binding_valid:
+                    if len(filtered.pairs)!=34*self.n:
+                        raise ValueError('filtered metadata pair count is incomplete')
+                    self._filtered_previous=filtered
             samples=self.scene.capture_batch(clocks=clocks,active=active)
             if len(samples)!=self.n or any(sample.clock!=clock for sample,clock in zip(samples,clocks)):
                 raise ValueError('scene provider returned a different actual episode/clock')
@@ -346,16 +385,23 @@ class _AuxCapture:
                 scene_samples=None,provider_partial_scene_raw=_serial(samples),
                 contact_report=_serial(pair),complete_measurement=False)
             if self.delivery_probe is not None:packet['contact_delivery_step']=_serial(delivery)
+            if self.capture_filtered_contact_metadata:
+                packet.update(filtered_pair_metadata=None,
+                    provider_partial_filtered_metadata=filtered.to_dict() if filtered_type is not None and type(filtered) is filtered_type else None)
             try:self._record(packet,active,terminals,c)
             except Exception as write_error:
-                if self.delivery_probe is None:raise
-                self.delivery_errors.append('partial frame write: '+repr(write_error))
+                if self.delivery_probe is None and not self.capture_filtered_contact_metadata:raise
+                if self.delivery_probe is not None:
+                    self.delivery_errors.append('partial frame write: '+repr(write_error))
+                if self.capture_filtered_contact_metadata:
+                    self._filtered_archive_errors.append('partial frame write: '+repr(write_error))
             self._finish_delivery_failure(error,'provider')
             raise
         packet.update(capture_status='complete_observation_only',provider_error=None,
             scene_samples=_serial(samples),contact_report=_serial(pair),
             complete_measurement=True)
         if self.delivery_probe is not None:packet['contact_delivery_step']=_serial(delivery)
+        if self.capture_filtered_contact_metadata:packet['filtered_pair_metadata']=filtered.to_dict()
         try:self._record(packet,active,terminals,c)
         except BaseException as error:
             self._finish_delivery_failure(error,'raw write')
@@ -382,6 +428,10 @@ class _AuxCapture:
             self.terminal_archive_only.update(terminal_ids)
             raise
         self.frames+=1;self._last_clock=clock
+        if self.capture_filtered_contact_metadata and packet.get('filtered_pair_metadata') is not None:
+            self._filtered_counts['snapshots']+=1
+            key='valid_snapshots' if packet['filtered_pair_metadata']['metadata_binding_valid'] else 'invalid_snapshots'
+            self._filtered_counts[key]+=1
         for i in range(self.n):
             if active[i]:self.counts[i]+=1
 
@@ -414,6 +464,12 @@ class _AuxCapture:
         summary['advance_source_chain']=self.advance_chain
         if self.contact_delivery_probe_mode is not None or self.delivery_probe is not None:
             summary['contact_delivery_probe']=self._delivery_summary
+        if self.capture_filtered_contact_metadata:
+            summary['filtered_contact_metadata']=dict(self._filtered_counts,
+                archive_errors=list(self._filtered_archive_errors),
+                scope='fresh resolved sensor/filter metadata only; no numeric contacts or force qualification',
+                native_success_qualification_issued=False,new_expert_qualification_issued=False,
+                planning_eligible=False,support_qualified=False,contact_values_qualified=False)
         with (self.output/'aux_capture_summary.json').open('x',encoding='utf-8') as stream:
             json.dump(summary,stream,indent=2,allow_nan=False)
         self._summary=summary

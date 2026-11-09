@@ -11,15 +11,16 @@ import torch
 
 def validate_options(args):
     model_capture = getattr(args, 'vision_mpc_model_capture', False)
+    filtered_capture = getattr(args, 'vision_mpc_filtered_contact_capture', False)
     delivery_probe = getattr(args, 'vision_mpc_contact_delivery_probe', None)
-    if type(model_capture) is not bool:
-        raise ValueError('MPC model capture requires an explicit boolean')
+    if type(model_capture) is not bool or type(filtered_capture) is not bool:
+        raise ValueError('MPC model and filtered-contact captures require explicit booleans')
     if delivery_probe is not None and (type(delivery_probe) is not str or
             delivery_probe not in ('post_step_poll','full_report_callback')):
         raise ValueError('unknown MPC contact delivery probe mode')
-    if model_capture or delivery_probe is not None:
-        if model_capture and delivery_probe is not None:
-            raise ValueError('MPC model capture and contact delivery probe require independent observer arms')
+    if model_capture or filtered_capture or delivery_probe is not None:
+        if sum((model_capture, filtered_capture, delivery_probe is not None))>1:
+            raise ValueError('MPC model, filtered-contact and delivery captures require independent observer arms')
         if not (getattr(args, 'vision_mpc_aux_capture', False) and
                 getattr(args, 'vision_mpc_state_capture', False)):
             raise ValueError('MPC experimental observers require auxiliary and primary state capture')
@@ -311,6 +312,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                 aux_options = {}
                 if getattr(args, 'vision_mpc_contact_delivery_probe', None) is not None:
                     aux_options['contact_delivery_probe_mode'] = args.vision_mpc_contact_delivery_probe
+                if getattr(args, 'vision_mpc_filtered_contact_capture', False):
+                    aux_options['capture_filtered_contact_metadata'] = True
                 mpc_aux_capture = install_mpc_aux_capture(env, device_world,
                     output/'mpc_aux_capture', enabled=True, run_uuid=sequence_run_uuid,
                     native_runtime_verified=genuine, **aux_options)

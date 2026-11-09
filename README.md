@@ -1,3 +1,11 @@
+## 2026-11-10 — Stage 7 新鲜接触路径配对验证
+
+新增默认关闭的F0元数据观测，读取原34个hand view实际sensor/filter路径、SDK/source/stage/view身份和逐getter时钟，按真实env/行绑定Wire，不用配置表达式补值。原控制器、Actor/Critic/24D动作与物理参数不变。
+
+独立1/16控制步Isaac短测均正常退出，8/128个物理帧及2176/34816条配对记录的闭合SHA、CRC、原Core/Aux动作/时钟关联与raw重算通过。所有回合均截断，无新增Teacher/Student成功。公开范围CPU实跑582 passed、1 CUDA-unavailable skip、223 subtests；正常量/摩擦数值、作用侧、承托、未来动力学和实时资格尚未取得。
+
+严格F0 v1在任一环境首terminal后拒绝继续，不能把短测当完整异步首回合资格；独立逐env退役/显式generation收据与数值接触观测仍在开发。默认Teacher、B3/PPO、3844D/371D/24D Tanh及30mm/5s/0.5mm保持，PR仍Draft。实际命令、SHA、失败边界和下一步见[验证报告](docs/superpowers/reports/2026-11-10-stage7-filtered-contact-metadata.md)。
+
 ## 2026-11-10 — Stage 7 完整关节读回与接触交付检查
 
 新增默认关闭的完整 articulation 读回与独立 480Hz 归档，保留实际关节/目标/驱动参数、当前 M/C/G 和逐字段来源/NA。修复实际 SDK enum wrapper“等值但不是同一对象”的识别问题后，左右手各17 DOF/23 links/22 joints已在独立原生采集中读回；Model16的128帧/1024条状态完整后审通过，44个当前字段各1024 valid，实际motor torque、隐式PD估算和未来候选动力学共6个字段继续NA。

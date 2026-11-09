@@ -1,3 +1,10 @@
+## 2026-11-10 — Stage 7 filtered-contact路径元数据
+
+- 新增F0实际nested sensor/filter path resolver与fresh provider，原34 sensors/现有Wire view逐getter owned/clock/source/view括号，默认关闭，未知/漂移保留raw并拒绝，不补numeric partner ID或force资格。
+- 新增独立有限 `--vision-mpc-filtered-contact-capture`，保留原state+aux/Teacher source-chain与原控制器；provider首错和secondary写错、首terminal、逆序清理分别保存。
+- 实际1/16控制步原生短测exit0，闭合后审分别8/128帧、2176/34816配对，failures0；所有回合截断，不计成功。公开范围独立CPU582 passed、1 skipped、223subtests；原始数据及源码前后SHA不变。
+- 已确认v1 previous-terminal严格边界会拒绝异步cohort后续帧；完整退役/epoch与数值接触仍未验证，不默清previous、不宣称新MPC/Student成功或实时能力。M0、原Teacher/PPO、3844D/371D/24D、物理/材料/限制与30mm/5s/0.5mm保持，PR继续Draft。见[原生验证报告](docs/superpowers/reports/2026-11-10-stage7-filtered-contact-metadata.md)。
+
 ## 2026-11-10 — Stage 7 只读完整关节观测与接触交付
 
 - 新增全articulation只读provider、默认关闭的Model capture与两种独立contact-delivery observer，保存实际issued24/480Hz时钟、SDK/source/单位/元数据和owned raw；不进入Student、不改控制或物理。

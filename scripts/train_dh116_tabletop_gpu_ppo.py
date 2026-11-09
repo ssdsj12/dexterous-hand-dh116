@@ -69,6 +69,8 @@ parser.add_argument('--vision-mpc-aux-capture', action='store_true',
                     help='opt-in read-only480Hz scene/contact-pair evidence alongside primary MPC state capture in the same legacy Teacher collection')
 parser.add_argument('--vision-mpc-model-capture', action='store_true',
                     help='isolated short read-only full-articulation measurement arm; requires primary and auxiliary captures, no PPO')
+parser.add_argument('--vision-mpc-filtered-contact-capture', action='store_true',
+                    help='isolated short read-only fresh sensor/filter metadata arm; no numeric contact or force qualification')
 parser.add_argument('--vision-mpc-contact-delivery-probe',
                     choices=('post_step_poll','full_report_callback'), default=None,
                     help='isolated short contact delivery observer arm; default off, no contact/frame qualification')
