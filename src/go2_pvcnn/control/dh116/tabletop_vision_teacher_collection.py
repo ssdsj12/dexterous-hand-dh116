@@ -10,6 +10,25 @@ import torch
 
 
 def validate_options(args):
+    model_capture = getattr(args, 'vision_mpc_model_capture', False)
+    delivery_probe = getattr(args, 'vision_mpc_contact_delivery_probe', None)
+    if type(model_capture) is not bool:
+        raise ValueError('MPC model capture requires an explicit boolean')
+    if delivery_probe is not None and (type(delivery_probe) is not str or
+            delivery_probe not in ('post_step_poll','full_report_callback')):
+        raise ValueError('unknown MPC contact delivery probe mode')
+    if model_capture or delivery_probe is not None:
+        if model_capture and delivery_probe is not None:
+            raise ValueError('MPC model capture and contact delivery probe require independent observer arms')
+        if not (getattr(args, 'vision_mpc_aux_capture', False) and
+                getattr(args, 'vision_mpc_state_capture', False)):
+            raise ValueError('MPC experimental observers require auxiliary and primary state capture')
+        if (type(getattr(args, 'num_envs', None)) is not int or
+                not 2<=args.num_envs<=8 or args.num_envs%2 or
+                type(getattr(args, 'vision_teacher_max_control_steps', None)) is not int or
+                not 1<=args.vision_teacher_max_control_steps<=180 or
+                getattr(args, 'vision_teacher_perturbation_manifest', None)):
+            raise ValueError('MPC experimental observers require independent 2..8-env short1..180-step unperturbed Teacher arms')
     if getattr(args, 'vision_mpc_aux_capture', False):
         if not getattr(args, 'vision_mpc_state_capture', False):
             raise ValueError('MPC auxiliary capture requires primary MPC state capture in the same legacy Teacher collection')
@@ -263,6 +282,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
     mpc_state_capture_report = None
     mpc_aux_capture = None
     mpc_aux_capture_report = None
+    mpc_model_capture = None
+    mpc_model_capture_report = None
     sequence_enabled = (sequence_context_sink is not None or
         bool(getattr(args, 'vision_sequence_context_sidecar', False)))
     sequence_run_uuid = str(uuid.uuid4()) if sequence_enabled or capture_mpc_state else None
@@ -287,8 +308,18 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                 from .tabletop_bimanual_mpc_aux_capture import install_mpc_aux_capture
                 # The sidecar first validates its original controller contract.
                 # Aux verifies that exact saved source chain before core wraps refresh.
+                aux_options = {}
+                if getattr(args, 'vision_mpc_contact_delivery_probe', None) is not None:
+                    aux_options['contact_delivery_probe_mode'] = args.vision_mpc_contact_delivery_probe
                 mpc_aux_capture = install_mpc_aux_capture(env, device_world,
                     output/'mpc_aux_capture', enabled=True, run_uuid=sequence_run_uuid,
+                    native_runtime_verified=genuine, **aux_options)
+            if getattr(args, 'vision_mpc_model_capture', False):
+                from .tabletop_bimanual_mpc_model_capture import install_mpc_model_capture
+                # This observer must precede core's refresh wrapper, and is
+                # removed before Aux/Sequence in exact reverse install order.
+                mpc_model_capture = install_mpc_model_capture(env, device_world,
+                    output/'mpc_model_capture', enabled=True, run_uuid=sequence_run_uuid,
                     native_runtime_verified=genuine)
             if capture_mpc_state:
                 from .tabletop_bimanual_mpc_capture import install_mpc_state_capture
@@ -366,6 +397,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                     mpc_state_capture.submit(issued, policy_step=tick)
                 if mpc_aux_capture is not None:
                     mpc_aux_capture.submit(issued, policy_step=tick)
+                if mpc_model_capture is not None:
+                    mpc_model_capture.submit(issued, policy_step=tick)
                 critic,reward,done,extra=env.step(issued.clone())
                 if sequence_capture is not None:
                     sequence_capture.finish_tick(done)
@@ -414,8 +447,12 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                     if mpc_state_capture is not None:
                         mpc_state_capture_report = mpc_state_capture.finish(error=failure)
                 finally:
-                    if mpc_aux_capture is not None:
-                        mpc_aux_capture_report = mpc_aux_capture.finish(error=failure)
+                    try:
+                        if mpc_model_capture is not None:
+                            mpc_model_capture_report = mpc_model_capture.finish(error=failure)
+                    finally:
+                        if mpc_aux_capture is not None:
+                            mpc_aux_capture_report = mpc_aux_capture.finish(error=failure)
             finally:
                 try:
                     if sequence_capture is not None:
@@ -527,6 +564,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
         report['mpc_state_capture']=mpc_state_capture_report
     if mpc_aux_capture_report is not None:
         report['mpc_aux_capture']=mpc_aux_capture_report
+    if mpc_model_capture_report is not None:
+        report['mpc_model_capture']=mpc_model_capture_report
     if perturbation is not None:
         report['teacher_perturbation'] = perturbation.summary()
         report['teacher_perturbation']['pool_scope'] = 'fresh_successful_pinch_first_episodes_only;tripod_outcomes_audit_only'

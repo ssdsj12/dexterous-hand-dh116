@@ -1,3 +1,11 @@
+## 2026-11-10 — Stage 7 只读完整关节观测与接触交付
+
+- 新增全articulation只读provider、默认关闭的Model capture与两种独立contact-delivery observer，保存实际issued24/480Hz时钟、SDK/source/单位/元数据和owned raw；不进入Student、不改控制或物理。
+- 修复等值但identity不同的实际SDK enum wrapper识别；保留原类型/协议与转换证据，未知、bool、fraction和不一致映射仍NA。原生source09 Model16后审通过128帧/1024状态，44字段各1024 valid，6个设计缺口保持NA；source08字段绑定失败与原raw不改。
+- callback在等记账锁前复制SDK buffer，独立保存orphan/late ledger；Sequence→Aux→Model→Core逆序清理，prior/getter/write错误保留原异常/首terminal，各archive不重复写入，Aux重复finish重试恢复所属hook。
+- 本发布范围独立CPU526 passed、1 skipped、147subtests；post-step与full-callback原生短测均exit0/归档检查通过，但full report仍空。所有短测回合均截断，不计任务失败率或成功；未授力/承托/未来动力学或60Hz资格。
+- M0、原Teacher/PPO/3844D/371D/24D Tanh、原物理/材料/执行器和30mm/5s/0.5mm保持。H8/恢复/载荷转移/正式100初态配对与新专家/Student仍待后续，PR保持Draft。详见[验证报告](docs/superpowers/reports/2026-11-10-stage7-articulation-contact-delivery.md)。
+
 ## 2026-11-10 — Stage 7 辅助接触测量与原 Teacher 完整回归
 
 - 新增实际 Cylinder/单位/COM/inertia 的 source-bound 读取、三个低层 Wire→静态表面 view、已安装 PhysX full report 来源与严格时钟/所有权记录；默认关闭，不加入 Actor 或改变原物理。

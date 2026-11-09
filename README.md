@@ -1,3 +1,11 @@
+## 2026-11-10 — Stage 7 完整关节读回与接触交付检查
+
+新增默认关闭的完整 articulation 读回与独立 480Hz 归档，保留实际关节/目标/驱动参数、当前 M/C/G 和逐字段来源/NA。修复实际 SDK enum wrapper“等值但不是同一对象”的识别问题后，左右手各17 DOF/23 links/22 joints已在独立原生采集中读回；Model16的128帧/1024条状态完整后审通过，44个当前字段各1024 valid，实际motor torque、隐式PD估算和未来候选动力学共6个字段继续NA。
+
+两个独立接触交付实验正常退出且归档检查通过：post-step callback128次但三向量全空；full-report subscription未收到callback，同步poll仍空。空报告不证明无接触或无桌/支架反力。保留source08 Model字段绑定失败及原始矩阵，未将旧NA回改为有效值。所有本次回合均为短预算截断，未增加Teacher或Student成功。
+
+本公开观测单元独立CPU回归526 passed、1 CUDA-unavailable skip、147 subtests。原M0、PPO v2/Tanh、3844D/371D/24D、四个原控制器、物理/材料/执行器与30mm/5s/0.5mm保持。采集为低速诊断，不授H8动力学、60Hz实时、合格接触/承托或专家资格；不启动B3/PPO，不替换默认Teacher，PR保持Draft。命令、SHA、失败和后续门槛见[原生读回报告](docs/superpowers/reports/2026-11-10-stage7-articulation-contact-delivery.md)。
+
 ## 2026-11-10 — Stage 7 场景/接触来源与完整首回合证据
 
 新增默认关闭的辅助测量：实际 composed Cylinder、COM/惯量、Wire→桌面/端支架的三个低层 view、PhysX contact report 来源检查，以及与原状态归档共享 issued24/时钟的只读 480 Hz 数据。仿真特权字段不进入 Student，原控制器和物理参数不变。

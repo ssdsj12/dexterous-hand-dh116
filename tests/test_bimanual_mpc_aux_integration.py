@@ -463,7 +463,7 @@ class AuxIntegrationTests(unittest.TestCase):
                 return {'capture':name}
             return close
         scope = dict(mpc_state_capture=NS(finish=finish('core', core_error)),
-            mpc_aux_capture=NS(finish=finish('aux', aux_error)), failure=failure,
+            mpc_aux_capture=NS(finish=finish('aux', aux_error)), mpc_model_capture=None, failure=failure,
             sequence_capture=NS(close=lambda:events.append(('sequence', None)),
                 write_unqualified=lambda *a, **kw:None), output=Path('cpu-fixture'),
             tripod_candidate=None, teacher_audit=None,

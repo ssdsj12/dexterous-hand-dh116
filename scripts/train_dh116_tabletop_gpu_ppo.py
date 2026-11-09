@@ -67,6 +67,11 @@ parser.add_argument('--vision-mpc-state-capture', action='store_true',
                     help='opt-in read-only480Hz privileged MPC state archive during independent legacy Teacher collection; no control change')
 parser.add_argument('--vision-mpc-aux-capture', action='store_true',
                     help='opt-in read-only480Hz scene/contact-pair evidence alongside primary MPC state capture in the same legacy Teacher collection')
+parser.add_argument('--vision-mpc-model-capture', action='store_true',
+                    help='isolated short read-only full-articulation measurement arm; requires primary and auxiliary captures, no PPO')
+parser.add_argument('--vision-mpc-contact-delivery-probe',
+                    choices=('post_step_poll','full_report_callback'), default=None,
+                    help='isolated short contact delivery observer arm; default off, no contact/frame qualification')
 parser.add_argument('--vision-teacher-perturbation-manifest', type=Path,
                     help='explicit native Teacher reset perturbations with actual readback and source lineage; no PPO')
 parser.add_argument('--vision-stage6-native-config', type=Path,

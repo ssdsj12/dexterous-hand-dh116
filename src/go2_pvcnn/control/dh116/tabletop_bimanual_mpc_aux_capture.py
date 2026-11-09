@@ -9,7 +9,7 @@ clocks; their actor pairs are not silently assigned to that representative env.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import fields, is_dataclass
+from dataclasses import dataclass, fields, is_dataclass
 import gzip
 import inspect
 import json
@@ -24,6 +24,16 @@ from .tabletop_bimanual_mpc_capture import (
 
 
 VERSION='dh116-mpc-aux-observation-v1'
+DELIVERY_VERSION='dh116-mpc-contact-delivery-observation-v1'
+
+
+@dataclass(frozen=True,slots=True)
+class AuxCaptureComponents:
+    """Explicit optional observer ownership; legacy CPU three-tuples still work."""
+    scene: object
+    pairs: object
+    metadata: object
+    delivery_probe: object = None
 
 
 def _require_clock_delta(after,before,steps):
@@ -82,7 +92,9 @@ def _serial(value):
     raise ValueError('auxiliary provider returned unsupported raw object: '+type(value).__name__)
 
 
-def _native_components(env,world,*,clock_reader,capacity_per_wire):
+def _native_components(env,world,*,clock_reader,capacity_per_wire,
+                       contact_delivery_probe_mode=None,contact_delivery_probe_order=0,
+                       delivery_clock_reader=None):
     """Use existing stage, SimulationView and reporters; no Apply/Set/step."""
     import carb
     import omni.usd
@@ -109,24 +121,41 @@ def _native_components(env,world,*,clock_reader,capacity_per_wire):
         static_view_policy='three low-level views; existing reporter/settings unchanged',
         capacity_per_wire=capacity_per_wire,
         qualification='observational prototype; static-filter/sign/frame/completeness unqualified')
-    return provider,pairs,metadata
+    if contact_delivery_probe_mode is None:
+        return provider,pairs,metadata
+    from .tabletop_bimanual_mpc_contact_delivery_probe import open_installed_delivery_probe
+    probe=open_installed_delivery_probe(enabled=True,source=source,
+        clock_reader=delivery_clock_reader or (lambda:clock_reader(0)),mode=contact_delivery_probe_mode,
+        order=contact_delivery_probe_order)
+    try:
+        metadata['delivery_probe_implementation']=_identity(Path(inspect.getfile(type(probe))))
+    except BaseException as error:
+        try:probe.close()
+        except BaseException as cleanup_error:raise error from cleanup_error
+        raise
+    return AuxCaptureComponents(provider,pairs,metadata,probe)
 
 
 class _AuxCapture:
     def __init__(self,env,world,output,*,run_uuid,native_runtime_verified=False,
-                 component_factory=None,capacity_per_wire=64):
+                 component_factory=None,capacity_per_wire=64,
+                 contact_delivery_probe_mode=None,contact_delivery_probe_order=0):
+        if contact_delivery_probe_mode not in (None,'post_step_poll','full_report_callback'):
+            raise ValueError('contact delivery probe mode must select one independent observer or None')
+        if type(contact_delivery_probe_order) is not int or contact_delivery_probe_order<0:
+            raise ValueError('contact delivery probe order must be a nonnegative integer')
         if type(native_runtime_verified) is not bool:
             raise ValueError('native flag must be an actual boolean')
         self.advance_chain='CPU fixture; no native source-chain attestation'
         if native_runtime_verified:
+            if component_factory is not None:
+                raise ValueError('native attestation excludes injected fixture factories')
             _native_attestation(env,world)
             from .tabletop_tensor_world import TensorWorld
             from .tabletop_tensor_task import TensorTask
             from .tabletop_vision_sequence_capture import SequenceContextCapture
             self.advance_chain=_validated_advance_chain(env,world,world_type=TensorWorld,
                 task_type=TensorTask,sequence_type=SequenceContextCapture)
-            if component_factory is not None:
-                raise ValueError('native attestation excludes injected fixture factories')
         if not isinstance(run_uuid,str) or not run_uuid:
             raise ValueError('actual shared capture run UUID required')
         if not native_runtime_verified and component_factory is None:
@@ -140,6 +169,9 @@ class _AuxCapture:
         self._policy=None;self._action=None;self._before=None;self._pending=None;self._last_clock=None
         self._finished=False;self._summary=None;self.frames=0;self.provider_errors=[]
         self.raw_write_errors=[];self.terminal_archive_only=set()
+        self.contact_delivery_probe_mode=contact_delivery_probe_mode
+        self.contact_delivery_probe_order=contact_delivery_probe_order
+        self.delivery_probe=None;self._delivery_summary=None;self.delivery_errors=[]
         self.native_runtime_verified=native_runtime_verified
         self.output=Path(output).resolve();self.output.mkdir(parents=True,exist_ok=False)
         self._stream=gzip.open(self.output/'aux_480hz.jsonl.gz','xt',encoding='utf-8',compresslevel=1)
@@ -150,10 +182,28 @@ class _AuxCapture:
         self._advance_hook=self.advance;self._observer_hook=self.observe
         try:
             if component_factory is None:
-                self.scene,self.pairs,self.metadata=_native_components(env,world,
-                    clock_reader=self.clock_for_env,capacity_per_wire=capacity_per_wire)
+                options=dict(clock_reader=self.clock_for_env,capacity_per_wire=capacity_per_wire)
+                if contact_delivery_probe_mode is not None:
+                    options.update(contact_delivery_probe_mode=contact_delivery_probe_mode,
+                        contact_delivery_probe_order=contact_delivery_probe_order,
+                        delivery_clock_reader=self._delivery_clock)
+                components=_native_components(env,world,**options)
             else:
-                self.scene,self.pairs,self.metadata=component_factory(clock_reader=self.clock_for_env)
+                # Existing CPU factories keep their exact one-keyword contract.
+                components=component_factory(clock_reader=self.clock_for_env)
+            if isinstance(components,AuxCaptureComponents):
+                self.scene,self.pairs,self.metadata=components.scene,components.pairs,components.metadata
+                self.delivery_probe=components.delivery_probe
+            elif isinstance(components,(tuple,list)) and len(components) in (3,4):
+                self.scene,self.pairs,self.metadata=components[:3]
+                if len(components)==4:self.delivery_probe=components[3]
+            else:raise ValueError('three legacy components or typed optional delivery probe required')
+            if contact_delivery_probe_mode is None:
+                if self.delivery_probe is not None:
+                    raise ValueError('delivery probe requires an explicit enabled mode')
+            elif (self.delivery_probe is None or self.delivery_probe.enabled is not True
+                    or self.delivery_probe.mode!=contact_delivery_probe_mode):
+                raise ValueError('supplied delivery probe must match the explicit mode')
             world.advance=self._advance_hook
             env.joint_replay_observer=self._observer_hook
         except Exception as error:
@@ -177,6 +227,13 @@ class _AuxCapture:
             policy_step=0 if self._policy is None else self._policy,
             reset_generation=ids[env_id],terminal=terminal,reset=False)
 
+    def _delivery_clock(self):
+        # Read an actual candidate receipt for the current representative. This
+        # selects a clock source only; no global actor pair is assigned to it.
+        index=self._pending
+        if index is None:index=next((i for i in range(self.n) if not self.closed[i]),0)
+        return self.clock_for_env(index)
+
     def submit(self,issued_action24,*,policy_step):
         if self._finished:raise ValueError('auxiliary capture finished')
         step=_integer(policy_step,'policy_step')
@@ -198,21 +255,35 @@ class _AuxCapture:
         if self._policy is None:raise ValueError('submit policy action before auxiliary physics capture')
         if self._pending is not None:raise ValueError('previous physical bracket still pending')
         candidates=[i for i in range(self.n) if not self.closed[i]]
-        if candidates:
-            i=candidates[0]
-            if self._ids()[i]!=self.initial_ids[i]:
-                raise ValueError('open first episode changed before terminal')
-            self._pending=i
-            self.pairs.begin_step(self.clock_for_env(i),dt_s=self.world.dt)
         try:
+            if candidates:
+                i=candidates[0]
+                if self._ids()[i]!=self.initial_ids[i]:
+                    raise ValueError('open first episode changed before terminal')
+                self._pending=i
+                before=self.clock_for_env(i)
+                self.pairs.begin_step(before,dt_s=self.world.dt)
+                if self.delivery_probe is not None:
+                    self.delivery_probe.begin_step(before,dt_s=self.world.dt)
             # Exact original call: no extra step, refresh, targets or settings.
             return self._original(*args,**kwargs)
         except BaseException as error:
-            if self._pending is not None:self.pairs.abort_step('original advance: '+repr(error))
+            try:
+                if self._pending is not None:self.pairs.abort_step('original advance: '+repr(error))
+            except Exception as cleanup_error:
+                if self.delivery_probe is None:raise
+                self.delivery_errors.append('pair abort: '+repr(cleanup_error))
             self._pending=None
+            self._finish_delivery_failure(error,'original advance')
             raise
 
     def observe(self,env,measurement,native_live,newly_terminal):
+        try:return self._observe(env,measurement,native_live,newly_terminal)
+        except BaseException as error:
+            self._finish_delivery_failure(error,'observer')
+            raise
+
+    def _observe(self,env,measurement,native_live,newly_terminal):
         if self._prior is not self._missing and self._prior is not None:
             self._prior(env,measurement,native_live,newly_terminal)
         actual_live=_mask(_plain(native_live),self.n,'actual_live')
@@ -220,7 +291,11 @@ class _AuxCapture:
         active=tuple(actual_live[i] and not self.closed[i] for i in range(self.n))
         terminals=tuple(actual_terminal[i] and active[i] for i in range(self.n))
         if not any(active):
-            if self._pending is not None:self.pairs.abort_step('no active first-cohort physical sample')
+            if self._pending is not None:
+                self.pairs.abort_step('no active first-cohort physical sample')
+                if self.delivery_probe is not None:
+                    self.delivery_probe.end_step(self.clock_for_env(self._pending),
+                        step_completed=False,poll_report=None)
             self._pending=None
             return
         if self._pending is None:raise ValueError('missing or duplicate physical bracket')
@@ -250,11 +325,13 @@ class _AuxCapture:
             native_success_qualification_issued=False,new_expert_qualification_issued=False,
             native_runtime_attestation_scope='runner only; not component or support qualification',
             source_role='legacy Teacher auxiliary observation; not Student input or control')
-        pair=None;samples=None
+        pair=None;samples=None;delivery=None
         try:
             pair=self.pairs.end_step(clocks[index],poll=True,
                 read_clock=lambda:self.clock_for_env(index),step_completed=True)
             self._pending=None
+            if self.delivery_probe is not None:
+                delivery=self.delivery_probe.end_step(clocks[index],step_completed=True,poll_report=pair)
             samples=self.scene.capture_batch(clocks=clocks,active=active)
             if len(samples)!=self.n or any(sample.clock!=clock for sample,clock in zip(samples,clocks)):
                 raise ValueError('scene provider returned a different actual episode/clock')
@@ -268,12 +345,28 @@ class _AuxCapture:
             packet.update(capture_status='provider_error',provider_error=message,
                 scene_samples=None,provider_partial_scene_raw=_serial(samples),
                 contact_report=_serial(pair),complete_measurement=False)
-            self._record(packet,active,terminals,c)
+            if self.delivery_probe is not None:packet['contact_delivery_step']=_serial(delivery)
+            try:self._record(packet,active,terminals,c)
+            except Exception as write_error:
+                if self.delivery_probe is None:raise
+                self.delivery_errors.append('partial frame write: '+repr(write_error))
+            self._finish_delivery_failure(error,'provider')
             raise
         packet.update(capture_status='complete_observation_only',provider_error=None,
             scene_samples=_serial(samples),contact_report=_serial(pair),
             complete_measurement=True)
-        self._record(packet,active,terminals,c)
+        if self.delivery_probe is not None:packet['contact_delivery_step']=_serial(delivery)
+        try:self._record(packet,active,terminals,c)
+        except BaseException as error:
+            self._finish_delivery_failure(error,'raw write')
+            raise
+
+    def _finish_delivery_failure(self,error,scope):
+        """Close owned observers on failure, without replacing the causal error."""
+        if self.delivery_probe is None:return
+        try:self.finish(error=scope+': '+repr(error))
+        except BaseException as cleanup_error:
+            self.delivery_errors.append('failure cleanup: '+repr(cleanup_error))
 
     def _record(self,packet,active,terminals,clock):
         packet=_raw_json_payload(packet)
@@ -319,13 +412,80 @@ class _AuxCapture:
             terminals=_identity(self.output/'terminal_snapshots.json'),
             components=getattr(self,'metadata',None),implementation=_identity(Path(__file__)))
         summary['advance_source_chain']=self.advance_chain
+        if self.contact_delivery_probe_mode is not None or self.delivery_probe is not None:
+            summary['contact_delivery_probe']=self._delivery_summary
         with (self.output/'aux_capture_summary.json').open('x',encoding='utf-8') as stream:
             json.dump(summary,stream,indent=2,allow_nan=False)
         self._summary=summary
         return summary
 
+    def _flush_delivery(self):
+        """Called only after probe close. Independent records include late/orphans.
+
+        These archives have global scope. Representative clocks remain candidate
+        receipts and never assign a global report to an environment or frame.
+        Each sink is attempted independently so a failed callback archive cannot
+        skip step diagnostics, terminal snapshots, raw close, or error summary.
+        """
+        probe=self.delivery_probe;errors=[]
+        summary=dict(version=DELIVERY_VERSION,run_uuid=self.run_uuid,
+            mode=self.contact_delivery_probe_mode,order=self.contact_delivery_probe_order,
+            callback_record_count=None,step_diagnostic_count=None,
+            callback_records_written=0,step_diagnostics_written=0,
+            callback_raw=None,step_raw=None,errors=list(self.delivery_errors),
+            global_scope='global reported actors; representative clocks are candidates, not env/frame joins',
+            clock_association=None,pair_env_association=None,native_attested=False,
+            planning_eligible=False,native_force_qualified=False,support_qualified=False,
+            expert_qualified=False,native_success_qualification_issued=False,
+            new_expert_qualification_issued=False)
+        for attribute,filename,count_key,written_key,identity_key,record_key in (
+                ('records','contact_delivery_callbacks.jsonl.gz','callback_record_count',
+                 'callback_records_written','callback_raw','receipt'),
+                ('step_diagnostics','contact_delivery_steps.jsonl.gz','step_diagnostic_count',
+                 'step_diagnostics_written','step_raw','diagnostic')):
+            path=self.output/filename
+            try:
+                records=() if probe is None else tuple(getattr(probe,attribute))
+                summary[count_key]=len(records)
+                with gzip.open(path,'xt',encoding='utf-8',compresslevel=1) as stream:
+                    for record in records:
+                        packet=dict(version=DELIVERY_VERSION,run_uuid=self.run_uuid,
+                            global_scope=summary['global_scope'],
+                            native_success_qualification_issued=False,
+                            new_expert_qualification_issued=False)
+                        packet[record_key]=_serial(record)
+                        stream.write(json.dumps(_raw_json_payload(packet),allow_nan=False,
+                            separators=(',',':'))+'\n')
+                        summary[written_key]+=1
+            except Exception as exc:
+                errors.append(exc);summary['errors'].append(filename+': '+repr(exc))
+            try:
+                if path.is_file():summary[identity_key]=_identity(path)
+            except Exception as exc:
+                errors.append(exc);summary['errors'].append(filename+' identity: '+repr(exc))
+        summary['subscription_active_after_close']=False if probe is None else probe.subscription_active
+        if probe is not None:
+            summary['probe_cleanup_errors']=list(probe.cleanup_errors)
+            summary['probe_installation_errors']=list(probe.installation_errors)
+        summary['archive_complete']=not errors and not summary['errors'] and not summary['subscription_active_after_close']
+        self._delivery_summary=summary
+        path=self.output/'contact_delivery_summary.json'
+        try:
+            with path.open('x',encoding='utf-8') as stream:
+                json.dump(summary,stream,indent=2,allow_nan=False)
+            # The main summary carries this identity; no recursive self hash.
+            self._delivery_summary=dict(summary,summary=_identity(path))
+        except Exception as exc:
+            errors.append(exc);summary['errors'].append('delivery summary: '+repr(exc))
+        return errors
+
     def finish(self,*,error=None):
-        if self._finished:return self._summary
+        if self._finished:
+            # Fail-fast finalization may run under an outer Core/Model hook.
+            # Retry only ownership-checked restoration after that owner unwinds;
+            # the already-closed resources and exclusive archives stay intact.
+            self._restore()
+            return self._summary
         errors=[]
         try:self._restore()
         except Exception as exc:errors.append(exc)
@@ -334,13 +494,27 @@ class _AuxCapture:
             except Exception as exc:errors.append(exc)
             finally:self._pending=None
             error=error or 'incomplete final physical bracket'
+        # Stop SDK callbacks before snapshotting any independent callback list
+        # or opening its archive. close itself releases even if archiving its
+        # unfinished bracket fails; later cleanup must still run.
+        if self.delivery_probe is not None:
+            try:self.delivery_probe.close()
+            except Exception as exc:
+                errors.append(exc);self.delivery_errors.append('probe close: '+repr(exc))
+        if self.contact_delivery_probe_mode is not None or self.delivery_probe is not None:
+            try:errors.extend(self._flush_delivery())
+            except Exception as exc:
+                errors.append(exc);self.delivery_errors.append('delivery flush: '+repr(exc))
         try:self._stream.close()
         except Exception as exc:errors.append(exc)
         messages=([str(error)] if error is not None else [])+[repr(exc) for exc in errors]
         # Exclusive archives are attempted only once even when finalization
         # fails. Cleanup errors invalidate evidence and never skip raw close.
         self._finished=True
-        result=self._write_summary('; '.join(messages) if messages else None)
+        try:result=self._write_summary('; '.join(messages) if messages else None)
+        except Exception as summary_error:
+            if errors:raise errors[0] from summary_error
+            raise
         if errors:raise errors[0]
         return result
 
