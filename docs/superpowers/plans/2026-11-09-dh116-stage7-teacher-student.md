@@ -46,6 +46,7 @@
 
 ## Commit 3 — New constrained horizon8 Teacher MPC
 
+- [x] Implement the independent eight-term objective arithmetic only, with explicit weights/source/units/masks/NA, current-constant versus candidate-dependent scope and no control wiring. Exact source14b2976664817ba2b6171da596d102105dfc9704726b1823601a02ee4972b2ab; independentCPU state+objective73passed41subtests0.38s,Native0. This does not complete the following H8/dynamics/solver/constraint tasks or confer action admission.
 - [ ] Add `tabletop_bimanual_mpc_dynamics.py`, `..._objective.py`, `..._constraints.py`, `..._solver.py`, `..._runtime.py`; test each as a separate responsibility. Reuse the actual24 action contract and shared control computation, each hand's measured full-joint FK/Jacobian, nonlinear contact-region and collision checks.
 - [ ] Horizon8 at60Hz predicts0.1333s with8 original480Hz substeps per control. Replan from fresh actual state and submit only the first validated action. Rigid cylinder prediction is explicitly rigid; real Cosserat/DeformX advance mutates true state and cannot be used as a fake reversible candidate oracle.
 - [ ] Record each raw/weighted geometry/contact/support/slip/bimanual/joint/smooth/risk cost, solver status/iterations/initial/final objective, all active constraints and infeasible reason. Use explicit experimental weights rather than claiming optimality.

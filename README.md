@@ -1,3 +1,7 @@
+## 2026-11-10 — Stage 7 八项MPC代价算术
+
+新增独立CPU八项cost计算，逐项记录raw/weighted、单位、来源、mask和NA；严格区分当前已测常量与候选相关预测。独立实跑73 passed、41 subtests，尚未接入原生控制，不是完整H8 MPC或抓取成功。原Teacher180步接触观测继续独立运行；默认控制、物理、3844D/371D/24D Tanh和成功标准不变。FK/J、动力学、求解/约束及正式抓取配对仍待完成，PR继续Draft。命令与边界见[算术验证报告](docs/superpowers/reports/2026-11-10-stage7-mpc-objective-arithmetic.md)。
+
 ## 2026-11-10 — Stage 7 接触数值与首回合退役观测
 
 新增默认关闭的v2首回合退役ledger与F1 normal/friction数值归档，复用原34 sensors、真实env/行/时钟与issued24，保留首terminal、独立NA和失败partial；旧v1/控制器/物理/Student输入保持。

@@ -1,3 +1,9 @@
+## 2026-11-10 — Stage 7 独立MPC目标算术
+
+- 新增geometry/contact/support/slip/bimanual/joint/smooth/risk八项独立CPU算术和逐项贡献，显式实验权重、候选digest、时钟/单位/mask/NA合同；缺值不补0，已测常量不冒充未来预测。
+- 独立state+objective实跑73 passed、41subtests、exit0；本次Native作业0。未生成或下发动作、未修改奖励/原控制器，不宣称H8、动力学、实时或任务资格。
+- 默认M0/Teacher、3844D/371D/24D、物理和成功标准保持；180步原Teacher观测仍运行，正式MPC/恢复/配对/新专家Student未完成，PR仍Draft。见[验证报告](docs/superpowers/reports/2026-11-10-stage7-mpc-objective-arithmetic.md)。
+
 ## 2026-11-10 — Stage 7 filtered-contact数值与epoch v2
 
 - 新增默认关闭的v2首回合逐env永久退役/显式generation收据；v1严格合同保留。仅完整归档成功后推进ledger，异常保留首terminal与同次partial，不把reset新回合混入首回合。
