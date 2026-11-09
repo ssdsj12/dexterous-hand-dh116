@@ -34,7 +34,7 @@ def comparison_dependencies():
         'tabletop_vision_student', 'tabletop_vision_point_activation', 'tabletop_vision_quaternion',
         'tabletop_vision_command_shadow', 'tabletop_command_kernels', 'tabletop_free_wrist_grasp',
         'tabletop_tensor_world', 'tabletop_surface_contract', 'tabletop_velocity_limits',
-        'linear_coupling', 'tabletop_vision_action_contract')
+        'linear_coupling', 'tabletop_vision_action_contract', 'tabletop_vision_stage7_event_reference')
     return {name: file_sha256(Path(__file__).with_name(name + '.py')) for name in names}
 
 
@@ -56,7 +56,7 @@ def _write_line(stream, value):
 
 
 def verify_inputs(config):
-    names = INPUT_NAMES + (('same_state_comparison_cache',) if 'same_state_comparison_cache' in config else ())
+    names = INPUT_NAMES + tuple(name for name in ('same_state_comparison_cache','event_reference') if name in config)
     for name in names:
         identity = config[name]
         if file_sha256(identity['path']) != identity['sha256']:
@@ -72,11 +72,15 @@ def load_native_config(path):
     if value.get('initial_state_tolerance', 0.) != 0.:
         raise ValueError('source reset uses exact readback; nonzero tolerance requires a separate reviewed contract')
     if value['mode'] == 'branch':
-        if value.get('event') not in ('CONTACT', 'LIFT_ONSET', 'HOLD'):
-            raise ValueError('recorded pre-action CONTACT/LIFT_ONSET/HOLD event required')
+        if value.get('event') not in ('PRE_CONTACT', 'CONTACT', 'LIFT_ONSET', 'HOLD'):
+            raise ValueError('recorded CONTACT/LIFT_ONSET/HOLD or bound Stage7 PRE_CONTACT event required')
+        if value['event'] == 'PRE_CONTACT' and 'event_reference' not in value:
+            raise ValueError('actual postphysics event reference required for PRE_CONTACT')
         if type(value.get('branch_steps')) is not int or value['branch_steps'] not in (1, 4, 16, 60):
             raise ValueError('Stage6 branch_steps must be 1, 4, 16 or 60')
-    names = INPUT_NAMES + (('same_state_comparison_cache',) if 'same_state_comparison_cache' in value else ())
+    if 'event_reference' in value and value['mode'] != 'branch':
+        raise ValueError('Stage7 event reference belongs only to an explicit diagnostic branch')
+    names = INPUT_NAMES + tuple(name for name in ('same_state_comparison_cache','event_reference') if name in value)
     for name in names:
         identity = value.get(name)
         if (not isinstance(identity, dict) or not isinstance(identity.get('path'), str)
@@ -87,8 +91,56 @@ def load_native_config(path):
         if not actual.is_absolute(): actual = path.parent / actual
         value[name] = dict(path=str(actual.resolve()), sha256=identity['sha256'].lower())
     verify_inputs(value)
+    if 'event_reference' in value:
+        _load_event_reference(value, required_event=value['event'])
     value['config_identity'] = dict(path=str(path), sha256=file_sha256(path))
     return value
+
+
+def _load_event_reference(config, *, required_event=None):
+    from .tabletop_vision_stage7_event_reference import load_event_reference, COMMON_INPUTS
+    return load_event_reference(config['event_reference'],
+        {name: config[name] for name in COMMON_INPUTS}, required_event=required_event)
+
+
+def apply_event_reference(cases, config):
+    """Attach separately proved diagnostic entry points without rewriting data.
+
+    PRE_CONTACT is one policy tick before the first actual postphysics contact,
+    whereas CONTACT remains the original observed pre-action boundary. No
+    predicate, timestamp or event reaches the Actor, controller or reward.
+    """
+    if 'event_reference' not in config:
+        return cases
+    facts = _load_event_reference(config, required_event=config.get('event'))
+    lookup = {}
+    for row in facts['cases']:
+        source = row['source']; key = tuple(source[name] for name in ('run_uuid','env_id','episode_uid'))
+        if key in lookup: raise ValueError('duplicate Stage7 event source identity')
+        lookup[key] = row
+    keys = {tuple(case[name] for name in ('run_uuid','env_id','episode_uid')) for case in cases}
+    if set(lookup) != keys: raise ValueError('event reference differs from actual source identities')
+    result = []
+    for case in cases:
+        key = tuple(case[name] for name in ('run_uuid','env_id','episode_uid'))
+        events = lookup[key]['events']
+        for name in ('CONTACT','LIFT_ONSET','HOLD'):
+            if events.get(name, {}).get('tick') != case['event_ticks'][name]:
+                raise ValueError('event reference cannot change original saved event: ' + name)
+        pre = events['PRE_CONTACT']; tick = pre.get('tick')
+        if pre.get('available') is True:
+            observed = pre.get('first_actual_post_contact', {}).get('policy_step')
+            if (type(tick) is not int or tick < 0 or tick >= len(case['actions'])
+                    or type(observed) is not int or observed <= 0 or tick != observed - 1):
+                raise ValueError('PRE_CONTACT requires an actual preceding source policy row')
+        elif tick is not None:
+            raise ValueError('unavailable PRE_CONTACT cannot name an execution tick')
+        updated = dict(case, event_ticks=dict(case['event_ticks'], PRE_CONTACT=tick),
+            event_sources=dict(case['event_sources'], PRE_CONTACT=dict(
+                source='actual_postphysics_reference_preceding_policy_row',
+                reference=config['event_reference'], facts=pre)))
+        result.append(updated)
+    return result
 
 
 def event_entry_ticks(events, *, trusted_lift_onset=False):
@@ -556,6 +608,7 @@ def run_stage6_native(world, device_world, task, env, args, critic_contract, *, 
     expected = torch.load(config['source_initial_state']['path'], map_location='cpu', weights_only=False)
     collection = json.loads(Path(config['source_collection_report']['path']).read_text(encoding='utf-8'))
     cases = source_cases(data, context, collection, dataset_sha256=config['teacher_dataset']['sha256'])
+    cases = apply_event_reference(cases, config)
     if expected.get('seed') != 42 or expected.get('source') != 'actual_native_cold_reset_before_camera':
         raise ValueError('actual original Teacher cold-reset state identity required')
     if config['mode'] == 'branch' and any(case['event_ticks'][config['event']] is None for case in cases):
@@ -632,6 +685,8 @@ def run_stage6_native(world, device_world, task, env, args, critic_contract, *, 
                 comparisons = _saved_teacher_comparisons(policy, data, context, cases, output)
                 comparisons['comparison_inputs'] = {name: config[name] for name in
                     ('checkpoint', 'teacher_dataset', 'sequence_context')}
+                if 'event_reference' in config:
+                    comparisons['comparison_inputs']['event_reference'] = config['event_reference']
                 comparisons['reused_offline_comparisons'] = False
             collector.begin(reset_clock=before_clock, reset_episode_ids=env.diagnostic_episode_ids)
             if genuine:
@@ -712,7 +767,7 @@ def run_stage6_native(world, device_world, task, env, args, critic_contract, *, 
         ppo_updates=0, new_expert_sources=0, heldout_generalization_test=False,
         production_evaluation_certificate_issued=False, inference_provenance=policy.provenance,
         execution_controller_contract=execution_controller,
-        inputs={name: config[name] for name in INPUT_NAMES},
+        inputs={name: config[name] for name in INPUT_NAMES + (('event_reference',) if 'event_reference' in config else ())},
         raw_physics=dict(path=str(raw_path), sha256=file_sha256(raw_path)))
     _json_new(output / 'stage6_native_report.json', report)
     if error: raise RuntimeError(error)

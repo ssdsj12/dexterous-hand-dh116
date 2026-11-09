@@ -70,7 +70,8 @@ def _json(path):
 def _inputs(value, parent):
     if not isinstance(value, dict) or not set(INPUTS) <= value.keys():
         raise ValueError('checkpoint/teacher_dataset/sequence_context identities required')
-    return {name: _checked(value[name], parent) for name in INPUTS}
+    names = INPUTS + (('event_reference',) if 'event_reference' in value else ())
+    return {name: _checked(value[name], parent) for name in names}
 
 
 def _dependencies(value):
@@ -187,7 +188,7 @@ def load_comparison_cache(identity, expected_config, *, implementation_sha256):
         raise ValueError('cache metadata differs from immutable native/offline source provenance')
     config_parent = Path(expected_config.get('config_identity', {}).get('path', str(parent))).parent
     if _inputs(expected_config, config_parent) != snapshot['inputs']:
-        raise ValueError('comparison cache belongs to different checkpoint/data/context paths or bytes')
+        raise ValueError('comparison cache belongs to different checkpoint/data/context/event-reference inputs or bytes')
     copied = _checked(metadata.get('cached_stream'), parent)
     if (Path(copied['path']) != parent / 'comparison_stream.jsonl.gz'
             or copied['sha256'] != snapshot['source_stream']['sha256']):

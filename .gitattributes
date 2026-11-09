@@ -11,3 +11,13 @@ src/go2_pvcnn/control/dh116/tabletop_free_wrist_grasp.py -text whitespace=cr-at-
 src/go2_pvcnn/control/dh116/tabletop_tensor_world.py -text whitespace=cr-at-eol
 src/go2_pvcnn/control/dh116/tabletop_command_kernels.py text eol=lf
 src/go2_pvcnn/control/dh116/tabletop_vision_command_shadow.py text eol=lf
+# Stage7 event references, comparison caches and finite-driver manifests bind
+# real implementation bytes; Windows checkout must not change their endings.
+scripts/run_dh116_stage7_evaluations.py text eol=lf
+src/go2_pvcnn/control/dh116/tabletop_vision_stage7_event_reference.py text eol=lf
+src/go2_pvcnn/control/dh116/tabletop_vision_branching_eval.py text eol=lf
+src/go2_pvcnn/control/dh116/tabletop_vision_comparison_cache.py text eol=lf
+src/go2_pvcnn/control/dh116/tabletop_vision_teacher_student_divergence.py text eol=lf
+src/go2_pvcnn/control/dh116/tabletop_vision_stage7_branch_summary.py text eol=lf
+src/go2_pvcnn/control/dh116/tabletop_vision_physical_divergence.py text eol=lf
+tests/test_stage7*.py text eol=lf

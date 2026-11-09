@@ -315,13 +315,79 @@ def _jsonl(path):
             yield row
 
 
-def load_native_run(files,*,dataset_id,context_id,calibration):
+def _branch_complete_tail_verifier(report,audit,audit_dir,job,cases,outcomes,policies,bridge,identities):
+    """A read-only exclusion requires explicit actual ownership, never zero alone."""
+    if (report.get('mode')!='branch' or report.get('status') not in ('completed','bounded_branch_completed')
+            or report.get('error') is not None or report.get('ppo_updates')!=0
+            or report.get('event') not in ('PRE_CONTACT','CONTACT','LIFT_ONSET','HOLD')
+            or type(report.get('branch_steps')) is not int or report['branch_steps'] not in (1,4,16,60)
+            or audit.get('array_field_semantics',{}).get('actor_request24')!='actual_issued_SDK24;join_policy_requests_action_owner'):
+        raise ValueError('explicit completed native branch ownership/horizon proof required')
+    end={}
+    for env,case in cases.items():
+        tick=case.get('event_entry_ticks',{}).get(report['event'])
+        if type(tick) is not int or tick<0:raise ValueError('actual per-environment branch event tick required')
+        end[env]=tick+report['branch_steps']
+    anchors={}
+    for (_,tick),row in policies.items():
+        anchor=row['clock_before_action']
+        if tick in anchors and anchors[tick]!=anchor:raise ValueError('global tick has inconsistent actual owned SDK/World anchors')
+        anchors[tick]=anchor
+    matches=[row for row in audit.get('files',[]) if Path(row.get('path',''))==audit_dir/'policy_requests.jsonl.gz']
+    if len(matches)!=1:raise ValueError('same actual audit manifest must bind one policy_requests ownership stream')
+    request_id=checked_identity(matches[0]);identities.append(request_id);requests={}
+    for line,row in enumerate(_jsonl(request_id['path']),1):
+        tick=row.get('policy_step')
+        if type(tick) is not int or tick<0 or tick in requests:raise ValueError('unique actual policy-request clock required')
+        requests[tick]=(row,line)
+    def prove(arrays,select,npz_id):
+        env=int(arrays['env_id'][select]);episode=int(arrays['episode_id'][select]);epoch=int(arrays['reset_epoch'][select])
+        tick=int(arrays['policy_step'][select]);world=int(arrays['physics_step'][select]);when=float(arrays['timestamp_s'][select])
+        uid=str(arrays['episode_uid'][select])
+        if (epoch!=0 or episode!=outcomes[env]['execution_episode_id'] or uid!=f'{job.name}:0:{env}:{episode}'
+                or (env,tick) in policies or tick<end[env] or tick>=max(end.values()) or tick not in requests or tick not in anchors):
+            raise ValueError('unowned branch tail lacks canonical first-episode identity or completed horizon')
+        packet,line=requests[tick];env_ids=np.asarray(packet.get('env_ids'));slots=np.flatnonzero(env_ids==env)
+        if env_ids.ndim!=1 or len(slots)!=1:raise ValueError('actual per-environment policy-request identity required')
+        slot=int(slots[0]);n=len(env_ids)
+        for field in ('episode_ids','episode_uids','action_owner','first_trial_eligible','request_finite'):
+            if not isinstance(packet.get(field),list) or len(packet[field])!=n:raise ValueError('complete named policy-request ownership required')
+        request=np.asarray(packet.get('actor_request24'),dtype=np.float64)
+        if (packet.get('source')!='actual_issued_SDK24_action' or packet.get('reset_epoch')!=0
+                or packet['episode_ids'][slot]!=episode or packet['episode_uids'][slot]!=uid
+                or packet['action_owner'][slot]!='branch_complete' or packet['first_trial_eligible'][slot] is not True
+                or packet['request_finite'][slot] is not True or request.shape!=(n,24)
+                or not np.isfinite(request[slot]).all() or np.count_nonzero(request[slot])):
+            raise ValueError('explicit actual branch_complete owner and zero24 request required;no inferred ownership')
+        flags=('actor_request24__available','actor_request24__finite','actor_request24__source_valid')
+        if (any(flag not in arrays or not bool(arrays[flag][select]) for flag in flags)
+                or not np.array_equal(np.asarray(arrays['actor_request24'][select],dtype=np.float64),request[slot])):
+            raise ValueError('unowned tail request differs from actual same-sample native diagnostic')
+        anchor=anchors[tick]
+        if (packet.get('submit_physics_step_available') is not True or packet.get('submit_timestamp_available') is not True
+                or packet.get('submit_timestamp_finite') is not True
+                or packet.get('physics_step_before_submit')!=anchor['physics_step']
+                or packet.get('timestamp_s_before_submit')!=anchor['timestamp_s']):
+            raise ValueError('branch_complete request does not match actual global owned policy World/SDK clock')
+        clock=bridge.verify_post(world,when,anchor)
+        return dict(env_id=env,execution_episode_uid=outcomes[env]['execution_episode_uid'],diagnostic_episode_uid=uid,
+            source_episode_uid=cases[env]['source_episode_uid'],reset_epoch=epoch,policy_step=tick,world_physics_step=world,
+            timestamp_s=when,substep=clock['substep'],sdk_physics_step=clock['derived_sdk_physics_step'],
+            sdk_physics_step_is_derived=True,sdk_step_source='actual_global_owned_policy_anchor;not_independent_getter',
+            action_owner='branch_complete',actual_issued_zero24=True,counted_as_Student_event=False,
+            unowned_terminal=bool(arrays['terminal'][select]),request_pointer=dict(**request_id,line=line),
+            diagnostic_pointer=dict(**npz_id,batch=select[0],env_index=select[1]))
+    return prove
+
+
+def load_native_run(files,*,dataset_id,context_id,calibration,verify_branch_complete_tail=False):
     """Join raw ownership/terminal evidence and actual named-DOF NPZ packets.
 
     The diagnostics UID namespace differs from the live/raw execution UID.
     They are bridged only by actual env/episode/reset/World step/timestamp,
     never by asserting their strings are equal or guessing an SDK getter read.
     """
+    if type(verify_branch_complete_tail) is not bool:raise ValueError('explicit boolean branch-tail verification required')
     identities=[checked_identity(files[name]) for name in ('report','audit_summary','policy_trace','reset_comparison')]
     report=_json(identities[0]['path']);audit=_json(identities[1]['path'])
     job=Path(identities[0]['path']).parent;audit_dir=job/'evaluation_action_diagnostics'
@@ -389,16 +455,19 @@ def load_native_run(files,*,dataset_id,context_id,calibration):
             if observed is None or observed['net_lift_m']!=reported_peak:raise ValueError('actual raw netlift peak differs from original native source-report maximum')
             observed.update(source_report_max_net_lift_m=reported_peak,matches_source_report_max_exactly=True)
         elif observed is not None:observed.update(source_report_max_net_lift_m=None,matches_source_report_max_exactly=None)
+    prove_tail=(_branch_complete_tail_verifier(report,audit,audit_dir,job,cases,outcomes,policies,bridge,identities)
+        if verify_branch_complete_tail else None)
+    excluded_tail=[];unowned_seen=set()
     status={side:[] for side in ('left','right')}
     for event in audit.get('source_events',[]):
         if event.get('kind')=='target_source_status' and event.get('hand') in status:
             status[event['hand']].append(event)
     for side in status:status[side].sort(key=lambda row:row['physics_step'])
-    paths=[]
+    paths=[];npz_identities={}
     for item in audit.get('files',[]):
         current=checked_identity(item);identities.append(current)
         if Path(current['path']).parent!=audit_dir:raise ValueError('native audit file belongs to another actual full job directory')
-        if Path(current['path']).suffix=='.npz':paths.append(current['path'])
+        if Path(current['path']).suffix=='.npz':paths.append(current['path']);npz_identities[current['path']]=current
     if not paths:raise ValueError('actual immutable named q/qd/backend NPZ files required')
     samples=[];seen=set();uid_bridges={};na_counts={};skipped=0
     for path in sorted(paths):
@@ -416,7 +485,10 @@ def load_native_run(files,*,dataset_id,context_id,calibration):
                     if (not bool(arrays['first_trial_eligible'][select]) or bool(arrays['after_first_trial_terminal'][select])
                             or not bool(arrays['live_before_substep'][select])):skipped+=1;continue
                     world=int(arrays['physics_step'][select]);when=float(arrays['timestamp_s'][select]);key=(env,world,when)
-                    if key not in raw:raise ValueError('diagnostic physical sample cannot bridge to exact raw World step/timestamp')
+                    if key not in raw:
+                        if prove_tail is None:raise ValueError('diagnostic physical sample cannot bridge to exact raw World step/timestamp')
+                        if key in unowned_seen:raise ValueError('duplicate unowned branch_complete physical identity')
+                        excluded_tail.append(prove_tail(arrays,select,npz_identities[path]));unowned_seen.add(key);continue
                     if key in seen:raise ValueError('duplicate diagnostic first-episode physical identity')
                     seen.add(key);row,policy,clock=raw[key];payload=row['payload']
                     episode=int(arrays['episode_id'][select]);epoch=int(arrays['reset_epoch'][select]);diagnostic_uid=str(arrays['episode_uid'][select])
@@ -477,12 +549,13 @@ def load_native_run(files,*,dataset_id,context_id,calibration):
             peak_report_reduction='finite raw lift_m matches original SourceTelemetryCollector maximum;valid-only peaks separately retained',
             execution_binding='same_actual_full_job_paths+checkpoint_SHA+writer_UID_namespace+exact_live_issued_action;not_just_shared_clock',
             skipped_ineligible_or_postterminal_diagnostics=skipped,independent_getter_clock_pair_available=False,
+            proven_unowned_branch_complete_samples=excluded_tail,branch_complete_tail_verification_enabled=verify_branch_complete_tail,
             native_backend_source='actual_PhysX_getter;not_command_cache',q_source='actual_TensorWorld_refresh_postphysical_before_terminal_reset',
             named_finger_units='ACTIVE names only;rotational DOF type0/rad;full17DOF contains wrist meters',
             palm_scope='palm_pose_w is legacy actual base_link;named palm_link position unavailable'))
 
 
-def save_physical_divergence(config_path,output_path):
+def save_physical_divergence(config_path,output_path,*,verify_branch_complete_tail=False):
     """Analyze completed recorded files; no simulator import or control writes.
 
     Input JSON binds dataset, context, qualified calibration, candidate and
@@ -496,6 +569,7 @@ def save_physical_divergence(config_path,output_path):
     from . import tabletop_vision_teacher_tracking_calibration as calibration_module
     from . import linear_coupling
     implementation=[file_identity(path) for path in (__file__,calibration_module.__file__,linear_coupling.__file__)]
+    if type(verify_branch_complete_tail) is not bool:raise ValueError('explicit boolean branch-tail verification required')
     config_id=file_identity(config_path);config=_json(config_id['path']);output=Path(output_path).absolute()
     if output.exists() or output.is_symlink():raise FileExistsError(output)
     if config.get('version')!='dh116-stage6-physical-repeat-analysis-inputs-v1':raise ValueError('explicit physical-repeat input schema required')
@@ -519,6 +593,7 @@ def save_physical_divergence(config_path,output_path):
     if len({row['path'] for row in repeat_ids})!=len(repeat_ids):raise ValueError('distinct actual native repeat report files required;copied references do not add samples')
     run_files={f'teacher_repeat_{i}':files for i,files in enumerate(repeat_files)};run_files['candidate']=config['candidate']
     native_reports={name:_json(checked_identity(files['report'])['path']) for name,files in run_files.items()}
+    if verify_branch_complete_tail and native_reports['candidate'].get('mode')!='branch':raise ValueError('branch-tail opt-in applies only to a branch candidate')
     for report in native_reports.values():
         for key in ('checkpoint','teacher_dataset','sequence_context','source_initial_state','source_collection_report'):
             identities.append(checked_identity(report.get('inputs',{}).get(key)))
@@ -530,7 +605,8 @@ def save_physical_divergence(config_path,output_path):
     repeated=[load_native_run(files,dataset_id=dataset_id,context_id=context_id,calibration=calibration) for files in repeat_files]
     if any(run['provenance']['mode']!='teacher-replay' or any(row['action_owner']!='teacher_replay' for row in run['samples']) for run in repeated):raise ValueError('reference repeats must actually be native Teacher-tape owned executions;not Student')
     matches=[i for i,files in enumerate(repeat_files) if files==config['candidate']]
-    candidate=(repeated[matches[0]] if matches else load_native_run(config['candidate'],dataset_id=dataset_id,context_id=context_id,calibration=calibration))
+    candidate=(repeated[matches[0]] if matches else load_native_run(config['candidate'],dataset_id=dataset_id,context_id=context_id,
+        calibration=calibration,verify_branch_complete_tail=verify_branch_complete_tail))
     for name,report in native_reports.items():
         contract=report.get('execution_controller_contract',{})
         for key in ('controller_source_sha256','action_contract_sha256'):
