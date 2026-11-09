@@ -424,6 +424,269 @@ def fit_actor(actor_state, observations, actions, *, steps=100, batch_size=64,
             pointnet_gradient_coverage=coverage)
 
 
+def sequence_command_weight(update):
+    """Zero through update 250, linear to .1 at 500; no control scale changes."""
+    if type(update) is not int or update < 0:
+        raise ValueError('sequence update must be a nonnegative integer')
+    return .1 * min(1., max(0., (update - 250) / 250))
+
+
+def _sequence_cpu(tree):
+    if isinstance(tree, torch.Tensor): return tree.detach().cpu().clone()
+    if isinstance(tree, dict): return {key: _sequence_cpu(value) for key, value in tree.items()}
+    if isinstance(tree, list): return [_sequence_cpu(value) for value in tree]
+    if isinstance(tree, tuple): return tuple(_sequence_cpu(value) for value in tree)
+    return deepcopy(tree)
+
+
+def _sequence_to(tree, device):
+    if isinstance(tree, torch.Tensor): return tree.detach().to(device)
+    if isinstance(tree, dict): return {key: _sequence_to(value, device) for key, value in tree.items()}
+    return tree
+
+
+def _sequence_probe(actor, dataset, step, device):
+    """Fixed saved event rows, parameter gradients and coordinate interventions.
+
+    Point permutations move both hands and their common mask together. Geometry
+    changes touch valid coordinates only; proprioception/history remain saved.
+    No probe samples from the training RNG or modifies model parameters.
+    """
+    events = {}
+    point_parameters = {name: value for name, value in actor.named_parameters() if name.startswith('point_net.')}
+    legal_rows = {i for window in dataset.windows for i in window['row_indices']}
+    for name, labels in dataset.event_labels.items():
+        indices = [i for i in labels.nonzero().flatten().tolist() if i in legal_rows][:4]
+        if not indices: continue
+        obs = dataset.data['observations'][indices].detach().to(device)
+        target = dataset.data['actions'][indices].detach().to(device)
+        frames = obs.reshape(-1, HISTORY, FRAME_DIM)
+        mask = frames[..., 768:896] > .5
+        layers, hooks = {}, []
+        def hook_for(key):
+            def capture(module, inputs, output):
+                selected = output.detach()[mask[:, :, None, :, None].expand_as(output)]
+                layers[key] = dict(abs_max=float(selected.abs().max()) if selected.numel() else 0.,
+                    nonzero_fraction=float((selected != 0).double().mean()) if selected.numel() else 0.,
+                    valid_elements=selected.numel())
+            return capture
+        for key, layer in actor.point_net.named_children():
+            hooks.append(layer.register_forward_hook(hook_for(key)))
+        try:
+            with torch.enable_grad():
+                predicted = actor(obs).tanh()
+                probe_loss = (predicted - target).square().mean()
+                gradients = torch.autograd.grad(probe_loss, tuple(point_parameters.values()), allow_unused=True)
+        finally:
+            for hook in hooks: hook.remove()
+        parameter_gradients = {}
+        for (key, _), gradient in zip(point_parameters.items(), gradients):
+            if gradient is not None and not bool(torch.isfinite(gradient).all()):
+                raise ValueError('nonfinite fixed-event PointNet probe gradient')
+            parameter_gradients[key] = dict(l2=0. if gradient is None else float(gradient.double().norm()),
+                abs_max=0. if gradient is None else float(gradient.abs().max()),
+                nonzero_elements=0 if gradient is None else int((gradient != 0).sum()))
+        with torch.no_grad():
+            zero = obs.clone(); zero.reshape(-1, HISTORY, FRAME_DIM)[..., :768] = 0.
+            permutation = torch.arange(127, -1, -1, device=device)
+            permuted = obs.clone(); perm_frames = permuted.reshape(-1, HISTORY, FRAME_DIM)
+            perm_frames[..., :768] = frames[..., :768].reshape(-1, HISTORY, 2, 128, 3)[:, :, :, permutation].flatten(2)
+            perm_frames[..., 768:896] = frames[..., 768:896][:, :, permutation]
+            geometry = obs.clone(); geometry_frames = geometry.reshape(-1, HISTORY, FRAME_DIM)
+            points = geometry_frames[..., :768].reshape(-1, HISTORY, 2, 128, 3)
+            points[..., 0] += mask[:, :, None, :].to(points) * .0001
+            base = predicted.detach()
+            changes = dict(zero_coordinates_max_action_delta=float((base - actor(zero).tanh()).abs().max()),
+                point_permutation_max_action_delta=float((base - actor(permuted).tanh()).abs().max()),
+                small_geometry_max_action_delta=float((base - actor(geometry).tanh()).abs().max()))
+        if any(not math.isfinite(value) for value in changes.values()):
+            raise ValueError('nonfinite fixed-event coordinate sensitivity probe')
+        valid_points = int(mask.sum()) * 2
+        last = layers[str(len(actor.point_net) - 1)]
+        dead = (valid_points > 0 and last['nonzero_fraction'] == 0.
+                and changes['zero_coordinates_max_action_delta'] == 0.
+                and changes['small_geometry_max_action_delta'] == 0.
+                and all(row['l2'] == 0. for row in parameter_gradients.values()))
+        events[name] = dict(row_indices=indices, valid_hand_point_count=valid_points,
+            layers=layers, pointnet_parameter_gradients=parameter_gradients,
+            dead_pointnet=dead, **changes)
+    visual_events = [event for event in events.values() if event['valid_hand_point_count'] > 0]
+    return dict(step=step, events=events,
+        all_valid_events_dead=bool(visual_events) and all(event['dead_pointnet'] for event in visual_events),
+        valid_visual_event_count=len(visual_events),
+        validation_scope='fixed_CPU_or_tensor_visual_probe_not_native_grasp')
+
+
+def _sequence_teacher_parity(batch, contract):
+    from .tabletop_vision_command_shadow import shadow_sequence
+    initial = {key: value[:, 0] for key, value in batch['controller_start'].items()}
+    with torch.no_grad():
+        targets = shadow_sequence(initial, batch['actions'], batch['physics_context'], contract,
+            physics_valid=batch['physics_valid'])
+    mask = batch['physics_valid'] & batch['valid'][..., None]
+    if not bool(mask.any()): raise ValueError('Teacher parity requires valid conditional command samples')
+    maximum = 0.
+    for key in ('finger', 'palm', 'wrist_angle'):
+        saved, unfolded = batch['teacher_targets'][key], targets[key]
+        if saved.dtype != torch.float64 or unfolded.dtype != torch.float64:
+            raise ValueError('Teacher parity requires original float64 targets; SDK casts are separate')
+        if saved.shape != unfolded.shape or not bool(torch.isfinite(unfolded).all()):
+            raise ValueError('Teacher shadow target shape/nonfinite parity failure')
+        difference = (saved - unfolded).abs().flatten(3).amax(-1)[mask]
+        maximum = max(maximum, float(difference.max()))
+    if maximum != 0.:
+        raise ValueError(f'Teacher shadow target parity failed: max float64 error {maximum}')
+    return targets, dict(passed=True, max_absolute_error=maximum,
+        physics_samples=int(mask.sum()), comparison='exact_float64_original_targets_not_SDK_float32')
+
+
+def fit_actor_sequences(actor_state, sequence_dataset, *, profile='B2', steps=3000,
+                        batch_sequences=4, learning_rate=1e-4, seed=116601,
+                        wrist_quaternion_preprocessing=RAW_WRIST_QUATERNIONS,
+                        point_activation='relu', device='cpu', controller_contract=None,
+                        checkpoint_interval=250, snapshot_callback=None,
+                        probe_interval=250, dead_patience=2, source_actor_kind='unbounded'):
+    """Independent actor-only sequence BC; the old ``fit_actor`` is unchanged.
+
+    Only unbounded latent actors are admitted, followed by exactly one tanh.
+    State dictionaries alone cannot distinguish a stateless final Tanh, so the
+    file workflow must pass the validated source output contract. No Critic,
+    log_std, PPO optimizer, source encoder reset or native simulator is used.
+    ``snapshot_callback`` receives CPU-owned actual state and last input batch.
+    """
+    from .tabletop_vision_sequence_dataset import SequenceDataset
+    from .tabletop_vision_sequence_losses import sequence_bc_loss
+    if source_actor_kind != 'unbounded':
+        raise ValueError('sequence fitting supports only explicit unbounded actors with a single output tanh')
+    if not isinstance(sequence_dataset, SequenceDataset):
+        raise ValueError('validated SequenceDataset required')
+    if profile not in ('B0', 'B1', 'B2', 'B3'):
+        raise ValueError('unknown sequence training profile')
+    expected_sampling = 'uniform' if profile == 'B0' else 'event'
+    if sequence_dataset.sampling_mode != expected_sampling:
+        raise ValueError(f'{profile} requires {expected_sampling} sequence sampling')
+    for name, value in (('steps', steps), ('batch_sequences', batch_sequences),
+                        ('checkpoint_interval', checkpoint_interval), ('probe_interval', probe_interval),
+                        ('dead_patience', dead_patience)):
+        if type(value) is not int or value < 1: raise ValueError(f'{name} must be a positive integer')
+    if (isinstance(learning_rate, bool) or not isinstance(learning_rate, (int, float))
+            or not math.isfinite(learning_rate) or learning_rate <= 0):
+        raise ValueError('sequence learning_rate must be finite positive')
+    if type(seed) is not int or not 0 <= seed < 2**63:
+        raise ValueError('sequence seed must be nonnegative int64')
+    validate_wrist_quaternion_preprocessing(wrist_quaternion_preprocessing)
+    if snapshot_callback is not None and not callable(snapshot_callback):
+        raise ValueError('snapshot_callback must be callable')
+    command_enabled = profile in ('B2', 'B3')
+    if command_enabled and (sequence_dataset.context is None or not isinstance(controller_contract, dict)):
+        raise ValueError('command training requires saved sequence context and controller_contract')
+    device = torch.device(device)
+    if device.type not in ('cpu', 'cuda'):
+        raise ValueError('sequence fitting requires CPU or CUDA tensors')
+    cuda_devices = [] if device.type == 'cpu' else [device.index if device.index is not None else torch.cuda.current_device()]
+    source_copy = _sequence_cpu(actor_state)
+    observation_sha = _tensor_sha256(sequence_dataset.data['observations'])
+    action_sha = _tensor_sha256(sequence_dataset.data['actions'])
+    with torch.random.fork_rng(devices=cuda_devices):
+        actor = UnboundedVisionStudentActor(wrist_quaternion_preprocessing=wrist_quaternion_preprocessing,
+            point_activation=point_activation)
+        actor.load_state_dict(deepcopy(actor_state), strict=True)
+        if any(not bool(torch.isfinite(value).all()) for value in actor.parameters()):
+            raise ValueError('sequence source actor must be finite')
+        actor.to(device)
+        optimizer = torch.optim.Adam(actor.parameters(), lr=float(learning_rate))
+        generator = torch.Generator(device='cpu').manual_seed(seed)
+        anchor_cpu = sequence_dataset.batch([0])
+        anchor = _sequence_to(anchor_cpu, device)
+        def action_metric():
+            with torch.no_grad():
+                output = actor(anchor['observations'].reshape(-1, POLICY_DIM)).tanh().reshape(*anchor['actions'].shape)
+                return float(sequence_bc_loss(output, anchor['actions'], anchor['valid'], command_weight=0.)[1]['action'])
+        loss_before = action_metric()
+        probes = [_sequence_probe(actor, sequence_dataset, 0, device)]
+        dead_count = int(probes[-1]['all_valid_events_dead'])
+        logs, total_valid, total_padding, gradient_max = [], 0, 0, 0.
+        status, parity = 'completed', None
+        if command_enabled:
+            # Deterministic independent preflight; it does not consume sampler RNG.
+            parity_windows = [0]
+            for event in sequence_dataset.event_labels:
+                selected = next((i for i, window in enumerate(sequence_dataset.windows) if event in window['events']), None)
+                if selected is not None and selected not in parity_windows: parity_windows.append(selected)
+            _, parity = _sequence_teacher_parity(_sequence_to(sequence_dataset.batch(parity_windows), device), controller_contract)
+            parity['checked_windows'] = len(parity_windows)
+        last_cpu = anchor_cpu
+        for update in range(steps):
+            last_cpu = sequence_dataset.sample_batch(batch_sequences, generator=generator)
+            batch = _sequence_to(last_cpu, device)
+            obs, expert, valid = batch['observations'], batch['actions'], batch['valid']
+            predicted = actor(obs.reshape(-1, POLICY_DIM)).tanh().reshape_as(expert)
+            weight = sequence_command_weight(update + 1) if command_enabled else 0.
+            delta_weight = .02 if profile == 'B3' else 0.
+            kwargs = dict(command_weight=weight, delta_weight=delta_weight)
+            if weight > 0:
+                from .tabletop_vision_command_shadow import shadow_sequence
+                teacher_targets, current_parity = _sequence_teacher_parity(batch, controller_contract)
+                initial = {key: value[:, 0] for key, value in batch['controller_start'].items()}
+                student_targets = shadow_sequence(initial, predicted, batch['physics_context'], controller_contract,
+                    physics_valid=batch['physics_valid'])
+                kwargs.update(pred_commands=student_targets, expert_commands=teacher_targets,
+                    physics_valid=batch['physics_valid'])
+                parity['physics_samples'] += current_parity['physics_samples']
+            total, metrics = sequence_bc_loss(predicted, expert, valid, **kwargs)
+            if not bool(torch.isfinite(total)): raise ValueError('nonfinite sequence BC loss')
+            optimizer.zero_grad(set_to_none=True)
+            total.backward()
+            point_gradients = {}
+            for name, value in actor.named_parameters():
+                if value.grad is not None and not bool(torch.isfinite(value.grad).all()):
+                    raise ValueError('nonfinite sequence actor gradient')
+                if name.startswith('point_net.'):
+                    point_gradients[name] = 0. if value.grad is None else float(value.grad.double().norm())
+            norm = float(torch.nn.utils.clip_grad_norm_(actor.parameters(), .5, error_if_nonfinite=True))
+            gradient_max = max(gradient_max, norm)
+            optimizer.step()
+            exposures = int(valid.sum()); total_valid += exposures
+            padding = valid.numel() - exposures; total_padding += padding
+            step = update + 1
+            logs.append(dict(step=step, loss=float(total.detach()), command_weight=weight,
+                delta_weight=delta_weight, valid_exposures=exposures, padding_exposures=padding,
+                cumulative_valid_exposures=total_valid, gradient_norm_before_clip=norm,
+                pointnet_parameter_gradient_l2=point_gradients,
+                **{name: float(value.detach()) for name, value in metrics.items()}))
+            if step % probe_interval == 0 or step == steps:
+                probes.append(_sequence_probe(actor, sequence_dataset, step, device))
+                dead_count = dead_count + 1 if probes[-1]['all_valid_events_dead'] else 0
+                if dead_count >= dead_patience: status = 'stopped_dead_pointnet'
+            checkpoint = step % checkpoint_interval == 0 or step == steps or status != 'completed'
+            if checkpoint and snapshot_callback is not None:
+                snapshot_callback(dict(step=step, status=status if status != 'completed' else ('completed' if step == steps else 'checkpoint'),
+                    actor=_sequence_cpu(actor.state_dict()), optimizer=_sequence_cpu(optimizer.state_dict()),
+                    sampling_rng=generator.get_state().clone(), input=_sequence_cpu(last_cpu),
+                    valid_exposures=total_valid, profile=profile, probes=_sequence_cpu(probes[-1])))
+            if status != 'completed': break
+        loss_after = action_metric()
+        source_immutable = (_same_state(source_copy, _sequence_cpu(actor_state))
+            and observation_sha == _tensor_sha256(sequence_dataset.data['observations'])
+            and action_sha == _tensor_sha256(sequence_dataset.data['actions']))
+        if not source_immutable: raise RuntimeError('sequence source actor or recorded dataset changed during fitting')
+        state, optimizer_state, rng_state = (_sequence_cpu(actor.state_dict()),
+            _sequence_cpu(optimizer.state_dict()), generator.get_state().clone())
+        return dict(actor=state, actor_state=state, optimizer=optimizer_state, optimizer_state=optimizer_state,
+            sampling_rng=rng_state, sampling_rng_state=rng_state, steps=len(logs), requested_steps=steps,
+            valid_exposures=total_valid, padding_exposures=total_padding, batch_sequences=batch_sequences,
+            sequence_length=16, seed=seed, learning_rate=float(learning_rate), profile=profile,
+            status=status, logs=logs, probes=probes, loss_before=loss_before, loss_after=loss_after,
+            loss_metric_scope='fixed_first_16_step_window_action_MSE_not_all_source_rows',
+            source_immutable=source_immutable, actor_initialization='source_no_reset',
+            optimized_parameters=sorted(actor_state), point_activation=point_activation,
+            actor_wrist_quaternion_preprocessing=wrist_quaternion_preprocessing,
+            source_actor_kind=source_actor_kind, output_tanh_count=1,
+            gradient_norm_max=gradient_max, teacher_shadow_parity=parity,
+            physical_success_unverified=True, native_success_claimed=False, ppo_updates_performed=0,
+            sequence_report=deepcopy(sequence_dataset.report))
+
+
 def _new_paths(output_path, inputs):
     output = Path(output_path).absolute()
     sidecar = output.with_suffix('.json')

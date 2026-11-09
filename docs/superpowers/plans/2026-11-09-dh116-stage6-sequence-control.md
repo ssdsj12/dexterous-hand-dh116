@@ -28,7 +28,7 @@
 - [x] Expose `shadow_step(command_state, action24, measured_context, controller_contract)` and `shadow_sequence(initial_command_state, actions, contexts, controller_contract)` using float64 shared pure functions and ACTION_CONTRACT scales. Return finger/palm/wrist_angle targets at every physical substep and branch masks.
 - [x] Add tests for finite limits, norm bounds, original guard order, inactive masks, accumulated commands, gradients, unsupported profiles and identical old-path output. Shadow never calls SDK or advances physics.
 - [x] Capture pre-action command state, pre-control measured packets and post-control original targets for all8 substeps, explicit clocks/UID and terminal truncation. Backend targets, cache and reconstruction remain separate. Context missingness is explicit.
-- [ ] Recollect native successful Teacher data into a new directory and compare Teacher shadow against recorded float64 targets and separately float32 native casts before enabling B2. Preserve old pools and labels byte-for-byte.
+- [x] Recollect native successful Teacher data into a new directory and compare Teacher shadow against recorded float64 targets and separately float32 native casts before enabling B2. Preserve old pools and labels byte-for-byte. Actual02:4698 rows,37584 live substeps,4638 full16 windows; strict current source SHA passed.
 
 ## Task 3 — Losses, BC training and model contracts (root with worker A)
 
@@ -37,8 +37,8 @@
 - [x] Test masked action MSE, adjacent valid delta-error MSE and SmoothL1 normalized finger(.01rad)/palm(.0005m)/rotation(.01rad) target losses. Verify masked values contribute no gradient and expert targets are detached; invalid/missing contexts reject command training.
 - [x] Keep old `fit_actor()` unchanged. Flatten true[B,L,3844], one tanh only for unbounded Actor, independent Adam, clip norm.5, private seed116601. Teacher/Student unfold their own commands against the same recorded feedback, not fake future dynamics or rewritten previous actions.
 - [x] Add activation modes relu(default) and leaky_relu_001(new explicit contract only), preserving3→32→64→64 and legacy outputs. Main E0/B0/B1/B2 all inherit current relu and hemisphere, no new encoder reset.
-- [ ] Train from verified c58 candidate,3000 updates,4×16 batches,1e−4 LR; B0 uniform action-only, B1 event action-only, B2 event action+command ramp0→.1 between250/500. Store actual valid exposure, model/optimizer/RNG every250. Run B3(delta.02) only after independent B2 improvement over B1.
-- [ ] Every250 probe START/CONTACT/LIFT_ONSET/HOLD activations, gradients, coordinate-zero/permutation/small-geometry interventions. Repeated dead encoder saves model+input and stops only that candidate; no hidden reset. No train-MSE best selection when fit_only.
+- [x] Train from verified c58 candidate,3000 updates,4×16 batches,1e−4 LR; B0 uniform action-only, B1 event action-only, B2 event action+command ramp0→.1 between250/500. Actual three finals each192000 valid/0padding; snapshot/optimizer/RNG every250. B3 remains gated on native improvement, not training loss.
+- [x] Every250 probe START/CONTACT/LIFT_ONSET/HOLD activations, gradients, coordinate-zero/permutation/small-geometry interventions. Actual final three models remain coordinate-sensitive; repeated-dead save/stop covered by tests. No hidden reset or train-MSE selection.
 
 ## Task 4 — Finite native branching/source/heldout entrypoints (root)
 

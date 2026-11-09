@@ -1,3 +1,9 @@
+## 2026-11-09 — Stage 6 实际序列BC模型
+
+- 新增masked动作、条件累计目标及可选delta损失，独立`fit_actor_sequences`使用真实4×16连续窗口、fresh BC Adam、单次Tanh和原观测；旧`fit_actor`保持。主B0/B1/B2不重置源Actor，Critic、log_std和原PPO状态保留。
+- 实际三组各3000更新、192,000有效曝光、0 padding，最终模型均保存并按预设最终更新报告，未按fit_only训练MSE选模。每250步检查固定事件的PointNet梯度及坐标干预，三组最终探针未失活。新增LeakyReLU仅允许显式新合同，主模型仍ReLU。
+- 新原生Teacher采集02二指4/4、三指0/4，当前源码SHA绑定的成功池通过37,584子步及4638窗口严格目标parity。独立实际CPU命令101 passed（16.86s）；模型SHA、预算、命令和边界见[实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。纯Student来源与分支评估在独立目录继续，没有新PPO或默认路径晋级，PR仍Draft。
+
 ## 2026-11-09 — Stage 6 条件展开与原生上下文验证
 
 - 抽取原finger/translation/rotation/clearance运算为共享纯函数；shadow只依赖录制反馈，各自累计Teacher与Student命令，不冒充物理模型。修复原slice-inplace造成的完整命令反传错误；独立旧源码160组合×16子步、97,280项逐位一致。

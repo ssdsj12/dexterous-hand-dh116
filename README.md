@@ -1,8 +1,8 @@
 ## 2026-11-09 — Stage 6 连续视觉监督与条件命令展开
 
-已实现16步连续数据、事件采样、共享原控制计算的可微命令展开、B0/B1/B2独立训练入口及原生来源/短分支入口。冻结CPU聚焦回归533项通过；原控制独立160组合、97,280次张量比较逐位一致。新采集01中二指Teacher/MPC为4/4、三指0/4；成功序列37,584个物理子步的float64、SDK cast、实际backend和cache分别一致，整回合累计误差为0。
+已实现16步连续数据、事件采样、共享原控制计算的可微命令展开，以及独立B0/B1/B2训练。三组现已分别完成3000次更新、192,000个有效样本曝光，padding为0，每250次保存实际模型与固定视觉探针；未按训练MSE选模。主模型继续使用ReLU、hemisphere和单次Tanh，旧BC/PPO路径保留。
 
-采集01与反向传播修复后的源码SHA不同，当前B2严格门禁拒绝混用；新版02正在独立采集同钟post-physics反馈。B0/B1/B2新模型和纯Student原生结果尚未产生，未启动新PPO。实际命令、SHA、原件和未通过门禁见[Stage6实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。3844D/371D/24D、M0、原Teacher及30mm/5s/0.5mm标准保留，PR仍Draft。
+新版采集02已自然结束：二指Teacher/MPC 4/4，三指0/4；4698条成功视觉记录、37,584个live物理子步的原目标、SDK cast、PhysX backend及cache分别误差0，4638个16步窗口也通过累计目标一致性。533项冻结聚焦CPU回归通过，本次训练/激活及旧BC相关检查另为101 passed。新的纯Student来源/短分支原生评估仍在运行，尚不宣称抓取改善；没有新PPO。实际命令、三个最终模型SHA及未通过门禁见[Stage6实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。3844D/371D/24D、M0、原Teacher及30mm/5s/0.5mm标准保留，PR仍Draft。
 
 ## 2026-11-09 — Student原生执行链复核完成
 

@@ -65,3 +65,47 @@ tests/test_free_wrist_grasp.py tests/test_dh116_tensor_world.py tests/test_surfa
 ```
 
 Git对4个controller来源文件做字节保留：新增模块固定LF，两个提取后的legacy模块保留实际混合换行。实际Git clean/filter→blob往返逐字节相等，没有改动正在运行的冻结文件。历史checkpoint/原件均保持；实际B0/B1/B2、来源闭环与首次物理分叉结果仍待后续填入，不以CPU训练fixture替代。
+
+## 提交3：当前源码原生池与实际三组BC
+
+以上01是保留的历史实验；本节记录新02与真实模型，不回填或复用01的资格。`teacher_sequence02`实际自然退出0，2623.21秒。二指env0/3在tick1173、env1/2在1174达到原生首成功，4/4；三指env6/7在1091/1168掉落，env4/5在1800原超时，0/4。没有恢复标签或三指成功数据进入BC。
+
+| 原件（均位于本实验根） | SHA256 / 实际检查 |
+|---|---|
+| `teacher_sequence02/teacher_collection_report.json` | `0388b03469350d76f3921279c544a5deb650a5f10b02b2d09e7f7308fc35ec82` |
+| `teacher_sequence02/successful_visual_supervision.pt` | `76a7d05ca6c84cedc45f9ed653dd7006d09f24a09deb3bb1710aa185442811bc` |
+| `teacher_sequence02/successful_sequence_context.pt` | `7cc6ea548d9c4d37c99360b9a7ce1cf5e4e16f3b2a6670f1cd74ea3e5277850f` |
+| 来源冻结manifest | `590e21419617619c4bbfd706b082d9c44fdf7f9cb51e14f64a94237487312103`；2837文件复核无变化 |
+| controller源码合同 | `dbb9a303993783b65f79dc169ed4cd592c1b16e3e629b9f2f90e573982ecdebb` |
+| 原生目标 / 整回合累计shadow | 4698成功记录、37584 live子步，float64、SDK cast、实际PhysX backend、cache各自最大误差0，missing0；每回合累计展开也为0 |
+| `prepared_sequence02/prepared.json` | 4638个完整16步窗口，593664次重叠窗口物理比较全部误差0；fit_only，只有一个参考来源族 |
+
+`prepare-data`实际输入为固定发现manifest、新02 report与训练前冻结的final200 manifest；解析到完整`prepared_sequence02_inputs.json`后再次硬核模型、资产、相机、观测预处理、数据及上下文SHA。旧发现manifest中的Stage5 launch只保留模型发现出处，不拿它的200环境配置当8环境来源场景；原生来源明确绑定`teacher_sequence02_launch.json`。
+
+实际批训练命令使用服务器环境Python，经`bash scripts/python.sh`运行有限CPU驱动`run_bc_batch01.py --source .../source --prepared .../prepared_sequence02/prepared.json --output .../bc_sequence02`，`CUDA_VISIBLE_DEVICES=''`、`DH116_NUM_THREADS=2`。驱动先冻结`bc_sequence02/frozen_source`，三组各2 CPU线程，固定seed116601、学习率1e-4、新BC Adam、梯度裁剪0.5、4×16批、3000更新；不是PPO或Isaac实例。共享条件shadow的实测CPU单次前反传0.351秒、GPU2为0.717秒，因此三组使用同一CPU后端。
+
+| 预设候选 | 最终实际文件（`bc_sequence02/`下） | SHA256 | 有效曝光 / padding |
+|---|---|---|---|
+| B0，均匀动作监督 | `B0/B0_update_03000_completed.pt` | `02f3d5f983e0315d8a0858699ad8cca2e3d088375826cd31f126179305c8855d` | 192000 / 0 |
+| B1，事件动作监督 | `B1/B1_update_03000_completed.pt` | `26bf92dc127bba9a809361397b5d6b6346d7aa245fec26077c05358597c894fd` | 192000 / 0 |
+| B2，事件动作及条件命令监督 | `B2/B2_update_03000_completed.pt` | `510c31239e7a08e5c58d6408eed77af71a1070690e2f72de2b5df8e5044ba8b8` | 192000 / 0 |
+
+三组均实际完成3000、每250保存Actor、独立BC Adam、采样RNG、最后训练输入和固定PointNet探针；B2命令权重在250轮前为0，500轮达到0.1。源c58 Actor继承，不重置，主候选仍为ReLU/hemisphere；仅派生Actor参数改变，Critic、探索log_std、原PPO Adam、LR、计数及原contract等逐项保持。原c58和历史模型保持只读。新激活合同仅支持显式`leaky_relu_001`独立派生，不给旧模型静默换激活。
+
+训练返回的`loss_before/loss_after`明确仅指固定首16步窗口动作MSE，不能当全部4698行的总体MSE。所有候选按预设最终3000轮送评；未用fit_only训练loss或历史峰值选最佳，也没有把本次BC3000写成PPO3000。
+
+最终START/CONTACT/LIFT_ONSET/HOLD四类固定合法视觉探针全部非dead；点云置零和0.1mm有效点扰动有响应，点排列干预保持不变。探针同时保存三层激活及各PointNet参数梯度。连续失活则保存模型/输入并只停该候选，真实三组没有触发该停止条件。视觉敏感性不授予抓取资格。
+
+本次提交范围实际CPU回归命令与结果：
+
+```bash
+CUDA_VISIBLE_DEVICES='' DH116_PYTHON=/mnt/mydisk/xk/envs/dh116/bin/python DH116_NUM_THREADS=2 \
+bash scripts/python.sh -m pytest tests/test_vision_sequence_losses.py tests/test_vision_sequence_training.py \
+tests/test_vision_point_activation.py tests/test_vision_supervised_bc.py \
+tests/test_vision_squashed_policy.py tests/test_vision_quaternion.py \
+-q -p pytest_mock -p no:cacheprovider --basetemp=/tmp/stage6-bc-commit3-20261109
+```
+
+**101 passed，16.86秒，exit0**。这不是与先前533项相加的独立总数。旧`fit_actor`与旧ReLU/Tanh/quaternion路径继续通过；合成masked损失/梯度测试和实际训练分别报告。
+
+原生来源和Teacher前缀短分支正在另一个冻结目录、同一Isaac实例锁下逐项执行。当前模型是fit_only候选，尚未通过来源纯Student闭环或独立测试，B3和短PPO门禁未开放。新最终200集仍是训练前冻结且尚未使用的authored_unverified清单，不能把它写成200次已验证。

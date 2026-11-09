@@ -81,6 +81,8 @@ def validate_squashed_checkpoint(saved, current_contract=None):
     contract = saved.get('contract')
     if not isinstance(contract, dict) or contract.get('version') != SQUASHED_VERSION:
         raise ValueError('visual resume requires the v3 action contract')
+    from .tabletop_vision_point_activation import point_activation_from_contract
+    point_activation_from_contract(contract)
     base = deepcopy(contract)
     base['version'] = LEGACY_VERSION
     for name in _ADDED: base.pop(name, None)

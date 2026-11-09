@@ -86,15 +86,18 @@ class SensorHistory:
 class VisionStudentActor(nn.Module):
     """Shared masked PointNet per hand, followed by a four-frame action MLP."""
 
-    def __init__(self, action_size=24, *, wrist_quaternion_preprocessing='raw'):
+    def __init__(self, action_size=24, *, wrist_quaternion_preprocessing='raw', point_activation='relu'):
         super().__init__()
         from .tabletop_vision_quaternion import validate_wrist_quaternion_preprocessing
         self.wrist_quaternion_preprocessing = validate_wrist_quaternion_preprocessing(wrist_quaternion_preprocessing)
         if action_size != 24:
             raise ValueError('vision student requires the existing 24D motion action')
+        from .tabletop_vision_point_activation import make_point_activation
+        self.point_activation = point_activation
         self.point_net = nn.Sequential(
-            nn.Linear(3, 32), nn.ReLU(), nn.Linear(32, 64), nn.ReLU(),
-            nn.Linear(64, 64), nn.ReLU(),
+            nn.Linear(3, 32), make_point_activation(point_activation),
+            nn.Linear(32, 64), make_point_activation(point_activation),
+            nn.Linear(64, 64), make_point_activation(point_activation),
         )
         self.action_net = nn.Sequential(
             nn.Linear(HISTORY * (2 * 64 + PROPRIO_DIM + 3), 128), nn.Tanh(),
