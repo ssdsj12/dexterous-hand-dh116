@@ -1,3 +1,9 @@
+## 2026-11-09 — Stage 6 序列数据构建
+
+- 新增SequenceDataset、START/CONTACT/LIFT_ONSET/HOLD事件与来源均衡采样，16步真实历史窗口不跨reset/terminal/缺测；短完整episode padding显式mask，恢复标签须独立资格。
+- 仅向原监督schema末尾添加sidecar验证/唯一身份联结，原validate_dataset行为不变。真实动作、previous_action、时间、8子步和SHA不一致不按行号拼接。
+- 数据及旧schema回归76 passed（5.10s），命令与局限见[实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。预冻结新200初态但原生次数仍0，Teacher上下文采集独立进行，尚未声明BC/Student成功。
+
 ## 2026-11-09 — Student原生执行链与逐手证据收口
 
 - 同V4模型、seed及200个初态的诊断复测退出0，二指/三指各0/100；Lift、Hold及逐trial11项已保存统计与首轮相同，不声称全轨迹逐位相同。新复测二指超力/越限/掉落/超时为16/18/51/15，三指为40/7/53/0，旧run失败码不回填。

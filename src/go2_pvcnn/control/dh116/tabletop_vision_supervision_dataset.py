@@ -265,3 +265,220 @@ def load_teacher_reference_dataset(path, critic_contract=None):
         action_contract=copy.deepcopy(ACTION_CONTRACT), episodes=episodes, references=references,
         independent_source_trajectory_count=len({record['source_trajectory_id'] for record in episodes}),
         native_success_revalidated=False, state_query_oracle=False)
+
+
+# Opt-in sequence sidecars are validated independently. The v1 validator above
+# intentionally keeps its original behavior and does not require these fields.
+SEQUENCE_CONTEXT_VERSION = 'dh116-sequence-context-v1'
+SEQUENCE_IDENTITY = ('run_uuid', 'env_id', 'episode_uid', 'tick')
+
+
+def _sequence_identity(row):
+    if not isinstance(row, dict):
+        raise ValueError('sequence identity requires metadata dictionaries')
+    for name in ('run_uuid', 'episode_uid'):
+        if not isinstance(row.get(name), str) or not row[name].strip():
+            raise ValueError(f'sequence identity requires explicit {name}')
+    for name in ('env_id', 'tick'):
+        _integer(row.get(name), name)
+    return tuple(row[name] for name in SEQUENCE_IDENTITY)
+
+
+def _context_tensor(value, name, shape, *, boolean=False, floating=True):
+    if not isinstance(value, torch.Tensor) or tuple(value.shape) != tuple(shape):
+        raise ValueError(f'{name} must have shape {list(shape)}')
+    if boolean:
+        if value.dtype != torch.bool:
+            raise ValueError(f'{name} must be boolean')
+    elif floating and not value.is_floating_point():
+        raise ValueError(f'{name} must be floating')
+    if value.layout != torch.strided or not bool(torch.isfinite(value).all()):
+        raise ValueError(f'{name} must be finite strided tensor')
+
+
+def _sequence_rows(samples):
+    if not isinstance(samples, dict):
+        raise ValueError('sequence samples must be named columns')
+    required = (*SEQUENCE_IDENTITY, 'policy_timestamp_s', 'first_physics_step',
+                'event_id', 'valid', 'terminal', 'actions', 'previous_action')
+    if any(name not in samples for name in required):
+        raise ValueError('sequence samples require identity, actions, clocks, terminal and valid columns')
+    try:
+        n = len(samples['tick'])
+        if n < 1 or any(len(samples[name]) != n for name in required):
+            raise ValueError('sequence sample columns must have equal nonzero length')
+    except TypeError as error:
+        raise ValueError('sequence sample columns must be arrays') from error
+    rows, identities = [], set()
+    for i in range(n):
+        row = {}
+        for name in required:
+            value = samples[name][i]
+            row[name] = value.item() if isinstance(value, torch.Tensor) and value.ndim == 0 else value
+        identity = _sequence_identity(row)
+        if identity in identities:
+            raise ValueError('duplicate sequence context identity')
+        identities.add(identity)
+        _integer(row['first_physics_step'], 'first_physics_step')
+        when = row['policy_timestamp_s']
+        if type(when) not in (int, float) or not math.isfinite(when) or when < 0:
+            raise ValueError('policy_timestamp_s must be finite nonnegative clock')
+        if type(row['valid']) is not bool or type(row['terminal']) is not bool:
+            raise ValueError('sequence valid and terminal must be boolean')
+        if not isinstance(row['event_id'], (str, int)) or isinstance(row['event_id'], bool):
+            raise ValueError('event_id must preserve the recorded event identity')
+        rows.append(row)
+    for name in ('actions', 'previous_action'):
+        _matrix(samples[name], f'samples.{name}', n, 24)
+    return rows
+
+
+def validate_sequence_context(context, *, dataset_sha256=None,
+                              controller_source_sha256=None, action_contract_sha256=None):
+    """Validate saved context only, without inventing feedback or native proof.
+
+    Hash arguments bind expected *file bytes*. Passing a dictionary alone cannot
+    discover the hash of its source file. ``join_sequence_context`` consequently
+    requires the independently computed dataset file SHA.
+    """
+    if not isinstance(context, dict) or context.get('version') != SEQUENCE_CONTEXT_VERSION:
+        raise ValueError(f'expected {SEQUENCE_CONTEXT_VERSION}')
+    canonical_action_sha = hashlib.sha256(_json(ACTION_CONTRACT).encode()).hexdigest()
+    for name, expected in (('dataset_sha256', dataset_sha256),
+                           ('controller_source_sha256', controller_source_sha256),
+                           ('action_contract_sha256', action_contract_sha256 or canonical_action_sha)):
+        actual = context.get(name)
+        if not _sha(actual) or (expected is not None and (not _sha(expected) or actual.lower() != expected.lower())):
+            raise ValueError(f'sequence {name} mismatch or invalid digest')
+    rows = _sequence_rows(context.get('samples'))
+    n = len(rows)
+    starts, physics, targets = (context.get(name) for name in
+                               ('controller_start', 'physics_context', 'teacher_targets'))
+    if not all(isinstance(value, dict) for value in (starts, physics, targets)):
+        raise ValueError('controller_start, physics_context and teacher_targets dictionaries required')
+    for name, tail in (('joint_command_rad', (12,)), ('palm_command_offset_m', (2, 3)),
+                       ('wrist_command_angle_rad', (2, 3))):
+        _context_tensor(starts.get(name), f'controller_start.{name}', (n, *tail))
+    for name, tail in (('finger', (12,)), ('palm', (2, 3)), ('wrist_angle', (2, 3))):
+        _context_tensor(targets.get(name), f'teacher_targets.{name}', (n, 8, *tail))
+    required = ('dt_s', 'measured_q_rad', 'measured_qd_rad_s', 'measured_root_pose',
+                'clearance_m', 'task_offset_m', 'live', 'allowed', 'joint_lower',
+                'joint_upper', 'active_controller_flags', 'source_valid')
+    if any(name not in physics for name in required):
+        raise ValueError('physics_context missing actual eight-substep controller feedback')
+    def check_tree(value, name):
+        if isinstance(value, dict):
+            for key, child in value.items(): check_tree(child, f'{name}.{key}')
+        elif (not isinstance(value, torch.Tensor) or value.ndim < 2
+              or tuple(value.shape[:2]) != (n, 8) or value.layout != torch.strided
+              or not bool(torch.isfinite(value).all())):
+            raise ValueError(f'{name} must preserve finite [S,8,...] recorded substeps')
+    check_tree(physics, 'physics_context')
+    for name in ('dt_s', 'task_offset_m'):
+        _context_tensor(physics[name], f'physics_context.{name}', (n, 8))
+    for name in ('measured_q_rad', 'measured_qd_rad_s', 'joint_lower', 'joint_upper'):
+        _context_tensor(physics[name], f'physics_context.{name}', (n, 8, 12))
+    _context_tensor(physics['clearance_m'], 'physics_context.clearance_m', (n, 8, 2))
+    _context_tensor(physics['measured_root_pose'], 'physics_context.measured_root_pose', (n, 8, 2, 7))
+    for name in ('live', 'allowed', 'source_valid'):
+        _context_tensor(physics[name], f'physics_context.{name}', (n, 8), boolean=True)
+    if not bool((physics['dt_s'] > 0).all()):
+        raise ValueError('physics dt_s must preserve positive actual substep clocks')
+    if not bool((physics['joint_lower'] <= physics['joint_upper']).all()):
+        raise ValueError('physics joint bounds are inverted')
+    events = context.get('events', {})
+    if not isinstance(events, dict):
+        raise ValueError('events must be recorded metadata columns')
+    for name in ('opposed_contact', 'native_hold_qualified', 'lift_onset', 'recovery_qualified'):
+        if name in events: _context_tensor(events[name], f'events.{name}', (n,), boolean=True)
+    for name, tail in (('mean_palm_vz_m_s', ()), ('measured_palm_velocity_m_s', (2, 3))):
+        if name in events: _context_tensor(events[name], f'events.{name}', (n, *tail))
+    return context
+
+
+def join_sequence_context(data, context, *, dataset_sha256,
+                          controller_source_sha256=None, action_contract_sha256=None):
+    """Join exact identities; missing/mismatched rows are invalid, never row-zipped.
+
+    Duplicate identities, malformed feedback and incorrect file hashes reject
+    the sidecar. Per-record mismatches remain explicit gaps in the sequence
+    index, rather than silently removing time or replacing context with zeros.
+    """
+    if not _sha(dataset_sha256):
+        raise ValueError('independently verified dataset_sha256 required')
+    validate_sequence_context(context, dataset_sha256=dataset_sha256,
+        controller_source_sha256=controller_source_sha256, action_contract_sha256=action_contract_sha256)
+    rows = _sequence_rows(context['samples'])
+    lookup = {_sequence_identity(row): i for i, row in enumerate(rows)}
+    metadata = data.get('sample_metadata')
+    if not isinstance(metadata, list) or len(metadata) != len(data.get('observations', [])):
+        raise ValueError('sequence data requires original sample_metadata and observations')
+    n = len(metadata)
+    _matrix(data.get('observations'), 'observations', n, POLICY_DIM)
+    _matrix(data.get('actions'), 'actions', n, 24)
+    indices = torch.full((n,), -1, dtype=torch.long)
+    valid = torch.zeros(n, dtype=torch.bool)
+    reasons, seen, prior = {}, set(), {}
+    for i, row in enumerate(metadata):
+        identity = _sequence_identity(row)
+        if identity in seen:
+            raise ValueError('duplicate sequence dataset identity')
+        seen.add(identity)
+        j = lookup.get(identity)
+        failures = []
+        if j is None:
+            reasons[i] = ['missing_identity']
+            continue
+        indices[i] = j
+        saved = rows[j]
+        physics = context['physics_context']
+        if not saved['valid'] or not bool((physics['source_valid'][j] | ~physics['live'][j]).all()):
+            failures.append('invalid_context')
+        if bool((~physics['live'][j, :-1] & physics['live'][j, 1:]).any()):
+            failures.append('substep_reset_boundary')
+        expected_time = row.get('policy_timestamp_s', row.get('simulation_time_s'))
+        expected_step = row.get('first_physics_step', row.get('physics_step'))
+        if (type(expected_time) not in (int, float) or not math.isfinite(expected_time)
+                or abs(saved['policy_timestamp_s'] - expected_time) > 1e-6):
+            failures.append('policy_timestamp_s')
+        original_time = row.get('simulation_time_s')
+        if (type(original_time) not in (int, float) or not math.isfinite(original_time)
+                or type(expected_time) not in (int, float) or abs(original_time - expected_time) > 1e-6):
+            failures.append('original_sensor_clock')
+        if type(expected_step) is not int or saved['first_physics_step'] != expected_step:
+            failures.append('first_physics_step')
+        if type(row.get('physics_step')) is not int or row['physics_step'] != expected_step:
+            failures.append('original_physics_clock')
+        expected_terminal = row.get('terminal')
+        if type(expected_terminal) is not bool or saved['terminal'] != expected_terminal:
+            failures.append('terminal')
+        episode = data.get('episodes', {}).get(str(row.get('episode_id')), {})
+        terminal_record = episode.get('terminal')
+        if isinstance(terminal_record, dict) and type(terminal_record.get('control_steps')) is int:
+            terminal_tick = terminal_record['control_steps'] - 1
+            if row['tick'] > terminal_tick or expected_terminal != (row['tick'] == terminal_tick):
+                failures.append('first_terminal_boundary')
+        issued = data['actions'][i].detach().cpu()
+        if not torch.equal(saved['actions'].detach().cpu(), issued):
+            failures.append('actions')
+        previous = row.get('previous_action')
+        if not isinstance(previous, (list, tuple)) or len(previous) != 24:
+            failures.append('previous_action_missing')
+        else:
+            previous = torch.as_tensor(previous, dtype=data['actions'].dtype)
+            saved_previous = saved['previous_action'].detach().cpu()
+            if not torch.equal(previous, saved_previous): failures.append('previous_action')
+            # The actual newest saved sensor frame, not a reconstructed history.
+            observation_previous = data['observations'][i, 3 * 961 + 934:3 * 961 + 958].detach().cpu().to(previous)
+            if not torch.equal(previous, observation_previous): failures.append('observation_previous_action')
+            old = prior.get(identity[:3])
+            if old is not None and row['tick'] == old[0] + 1:
+                if not torch.equal(previous, data['actions'][old[1]].detach().cpu().to(previous)):
+                    failures.append('actual_previous_action')
+            elif row['tick'] == 0 and not bool((previous == 0).all()):
+                failures.append('reset_previous_action')
+        prior[identity[:3]] = (row['tick'], i)
+        if failures: reasons[i] = failures
+        else: valid[i] = True
+    return dict(context_indices=indices, row_valid=valid, invalid_reasons=reasons,
+                validation_scope=_SCOPE, identity_fields=SEQUENCE_IDENTITY)
