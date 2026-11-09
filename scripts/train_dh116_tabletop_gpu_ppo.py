@@ -71,6 +71,10 @@ parser.add_argument('--vision-mpc-model-capture', action='store_true',
                     help='isolated short read-only full-articulation measurement arm; requires primary and auxiliary captures, no PPO')
 parser.add_argument('--vision-mpc-filtered-contact-capture', action='store_true',
                     help='isolated short read-only fresh sensor/filter metadata arm; no numeric contact or force qualification')
+parser.add_argument('--vision-mpc-filtered-contact-epoch-capture', action='store_true',
+                    help='explicit v2 first-cohort retirement history for fresh filtered metadata; no control or qualification')
+parser.add_argument('--vision-mpc-filtered-contact-values-capture', action='store_true',
+                    help='isolated read-only current sensor-side normal/friction observations; requires filtered metadata and epoch flags')
 parser.add_argument('--vision-mpc-contact-delivery-probe',
                     choices=('post_step_poll','full_report_callback'), default=None,
                     help='isolated short contact delivery observer arm; default off, no contact/frame qualification')

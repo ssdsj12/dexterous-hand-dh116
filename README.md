@@ -1,3 +1,11 @@
+## 2026-11-10 — Stage 7 接触数值与首回合退役观测
+
+新增默认关闭的v2首回合退役ledger与F1 normal/friction数值归档，复用原34 sensors、真实env/行/时钟与issued24，保留首terminal、独立NA和失败partial；旧v1/控制器/物理/Student输入保持。
+
+公开范围独立CPU实跑639 passed、1 CUDA-unavailable skip、238 subtests。epoch1、values1与values16三次原生短测均自然退出；8/8/128帧封存后审通过，数值两通道分别2176/34816 valid、NA为0，但非零观测均为0，不能当成接触承托或成功。全部回合截断，无真实terminal，异步退役完整原生资格仍待验证。180步接触建立观测窗口独立运行中，尚无结果。
+
+M0、默认Teacher、3844D/371D/24D Tanh与30mm/5s/0.5mm不变，不启动B3/PPO，PR仍Draft。H8、新Teacher100初态配对与新专家/Student尚未完成；实际命令、SHA及边界见[验证报告](docs/superpowers/reports/2026-11-10-stage7-filtered-contact-values.md)。
+
 ## 2026-11-10 — Stage 7 新鲜接触路径配对验证
 
 新增默认关闭的F0元数据观测，读取原34个hand view实际sensor/filter路径、SDK/source/stage/view身份和逐getter时钟，按真实env/行绑定Wire，不用配置表达式补值。原控制器、Actor/Critic/24D动作与物理参数不变。

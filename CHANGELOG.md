@@ -1,3 +1,10 @@
+## 2026-11-10 — Stage 7 filtered-contact数值与epoch v2
+
+- 新增默认关闭的v2首回合逐env永久退役/显式generation收据；v1严格合同保留。仅完整归档成功后推进ledger，异常保留首terminal与同次partial，不把reset新回合混入首回合。
+- F1复用原34 sensor views，保存实际配对normal/friction owned原始数组、来源/时钟/SDK行；两通道独立valid/NA，不补零、不将几何或可解析值当实际承托。
+- 公开范围实际639 passed、1 skipped、238subtests；epoch1/values1/values16自然exit0及封存后审通过，8/8/128帧、数值2176/34816 valid且NA0，非零观测均0。全部截断，未验证真实异步terminal、不增加任何任务成功；低速诊断不授60Hz能力。
+- 180步独立接触建立观测已显式启动，尚无结果。原控制/物理/24D Tanh/默认Teacher与成功标准保持，H8/恢复/载荷转移/100初态配对及新专家Student仍待完成，PR继续Draft。见[验证报告](docs/superpowers/reports/2026-11-10-stage7-filtered-contact-values.md)。
+
 ## 2026-11-10 — Stage 7 filtered-contact路径元数据
 
 - 新增F0实际nested sensor/filter path resolver与fresh provider，原34 sensors/现有Wire view逐getter owned/clock/source/view括号，默认关闭，未知/漂移保留raw并拒绝，不补numeric partner ID或force资格。

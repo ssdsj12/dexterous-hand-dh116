@@ -35,6 +35,7 @@ class AuxCaptureComponents:
     metadata: object
     delivery_probe: object = None
     filtered_metadata_provider: object = None
+    filtered_values_provider: object = None
 
 
 def _require_clock_delta(after,before,steps):
@@ -95,7 +96,8 @@ def _serial(value):
 
 def _native_components(env,world,*,clock_reader,capacity_per_wire,
                        contact_delivery_probe_mode=None,contact_delivery_probe_order=0,
-                       delivery_clock_reader=None,capture_filtered_contact_metadata=False):
+                       delivery_clock_reader=None,capture_filtered_contact_metadata=False,
+                       filtered_batch_clock_reader=None,capture_filtered_contact_values=False):
     """Use existing stage, SimulationView and reporters; no Apply/Set/step."""
     import carb
     import omni.usd
@@ -125,13 +127,28 @@ def _native_components(env,world,*,clock_reader,capacity_per_wire,
     if capture_filtered_contact_metadata:
         from .tabletop_bimanual_mpc_filtered_contact_measurements import (
             FilteredPairMetadataProvider,make_source_reader)
+        batch_reader=filtered_batch_clock_reader or (lambda:tuple(clock_reader(i) for i in range(env.n)))
+        source_reader=make_source_reader(stage=stage,sensors=sensors,
+            stage_reader=lambda:omni.usd.get_context().get_stage())
         filtered=FilteredPairMetadataProvider(sensors=sensors,
             wire_root_view=world.wire.root_physx_view,
-            clock_reader=lambda:tuple(clock_reader(i) for i in range(env.n)),
-            source_reader=make_source_reader(stage=stage,sensors=sensors,
-                stage_reader=lambda:omni.usd.get_context().get_stage()),enabled=True)
+            clock_reader=batch_reader,source_reader=source_reader,enabled=True)
         metadata['filtered_metadata_provider']=_identity(Path(inspect.getfile(type(filtered))))
-        return AuxCaptureComponents(provider,pairs,metadata,filtered_metadata_provider=filtered)
+        values=None
+        if capture_filtered_contact_values:
+            from pxr import UsdGeom,UsdPhysics
+            from .tabletop_bimanual_mpc_filtered_contact_values import FilteredPairValueProvider
+            def units_reader():
+                identity=source_reader()
+                return dict(stage_identity=identity['stage_identity'],
+                    meters_per_unit=UsdGeom.GetStageMetersPerUnit(stage),
+                    kilograms_per_unit=UsdPhysics.GetStageKilogramsPerUnit(stage),
+                    source='actual existing stage UsdGeom/UsdPhysics unit getters; no unit conversion')
+            values=FilteredPairValueProvider(sensors=sensors,clock_reader=batch_reader,
+                source_reader=source_reader,units_reader=units_reader,enabled=True,physics_dt=world.dt)
+            metadata['filtered_values_provider']=_identity(Path(inspect.getfile(type(values))))
+        return AuxCaptureComponents(provider,pairs,metadata,filtered_metadata_provider=filtered,
+            filtered_values_provider=values)
     if contact_delivery_probe_mode is None:
         return provider,pairs,metadata
     from .tabletop_bimanual_mpc_contact_delivery_probe import open_installed_delivery_probe
@@ -151,9 +168,15 @@ class _AuxCapture:
     def __init__(self,env,world,output,*,run_uuid,native_runtime_verified=False,
                  component_factory=None,capacity_per_wire=64,
                  contact_delivery_probe_mode=None,contact_delivery_probe_order=0,
-                 capture_filtered_contact_metadata=False):
-        if type(capture_filtered_contact_metadata) is not bool:
-            raise ValueError('filtered metadata capture requires an explicit bool')
+                 capture_filtered_contact_metadata=False,capture_filtered_contact_epoch=False,
+                 capture_filtered_contact_values=False):
+        if any(type(v) is not bool for v in (capture_filtered_contact_metadata,
+                capture_filtered_contact_epoch,capture_filtered_contact_values)):
+            raise ValueError('filtered metadata/epoch/values capture requires explicit bools')
+        if capture_filtered_contact_epoch and not capture_filtered_contact_metadata:
+            raise ValueError('contact epoch requires explicit filtered metadata capture')
+        if capture_filtered_contact_values and not capture_filtered_contact_epoch:
+            raise ValueError('filtered values require explicit contact epoch capture')
         if capture_filtered_contact_metadata and contact_delivery_probe_mode is not None:
             raise ValueError('filtered metadata and delivery require independent observer arms')
         if contact_delivery_probe_mode not in (None,'post_step_poll','full_report_callback'):
@@ -190,6 +213,12 @@ class _AuxCapture:
         self.delivery_probe=None;self._delivery_summary=None;self.delivery_errors=[]
         self.capture_filtered_contact_metadata=capture_filtered_contact_metadata
         self.filtered_metadata_provider=None;self._filtered_previous=None
+        self.capture_filtered_contact_epoch=capture_filtered_contact_epoch
+        self.capture_filtered_contact_values=capture_filtered_contact_values
+        self.filtered_values_provider=None;self._filtered_epoch=None;self._epoch_module=None
+        self._epoch_snapshots=0;self._epoch_archive_errors=[];self._values_archive_errors=[]
+        self._values_counts=dict(snapshots=0,valid_snapshots=0,invalid_snapshots=0,
+            active_normal_valid=0,active_normal_unavailable=0,active_friction_valid=0,active_friction_unavailable=0)
         self._filtered_counts=dict(snapshots=0,valid_snapshots=0,invalid_snapshots=0)
         self._filtered_archive_errors=[]
         self.native_runtime_verified=native_runtime_verified
@@ -209,6 +238,8 @@ class _AuxCapture:
                         delivery_clock_reader=self._delivery_clock)
                 if capture_filtered_contact_metadata:
                     options['capture_filtered_contact_metadata']=True
+                if capture_filtered_contact_epoch:options['filtered_batch_clock_reader']=self.clock_batch
+                if capture_filtered_contact_values:options['capture_filtered_contact_values']=True
                 components=_native_components(env,world,**options)
             else:
                 # Existing CPU factories keep their exact one-keyword contract.
@@ -217,6 +248,7 @@ class _AuxCapture:
                 self.scene,self.pairs,self.metadata=components.scene,components.pairs,components.metadata
                 self.delivery_probe=components.delivery_probe
                 self.filtered_metadata_provider=components.filtered_metadata_provider
+                self.filtered_values_provider=components.filtered_values_provider
             elif isinstance(components,(tuple,list)) and len(components) in (3,4):
                 self.scene,self.pairs,self.metadata=components[:3]
                 if len(components)==4:self.delivery_probe=components[3]
@@ -232,6 +264,15 @@ class _AuxCapture:
                     raise ValueError('filtered metadata capture requires an enabled provider')
             elif self.filtered_metadata_provider is not None:
                 raise ValueError('filtered metadata provider requires an explicit enabled capture')
+            if capture_filtered_contact_values:
+                if self.filtered_values_provider is None or self.filtered_values_provider.enabled is not True:
+                    raise ValueError('filtered values capture requires an enabled provider')
+            elif self.filtered_values_provider is not None:
+                raise ValueError('filtered values provider requires an explicit enabled capture')
+            if capture_filtered_contact_epoch:
+                from . import tabletop_bimanual_mpc_contact_epochs
+                self._epoch_module=tabletop_bimanual_mpc_contact_epochs
+                self.metadata=dict(self.metadata,contact_epoch_implementation=_identity(Path(tabletop_bimanual_mpc_contact_epochs.__file__)))
             world.advance=self._advance_hook
             env.joint_replay_observer=self._observer_hook
         except Exception as error:
@@ -254,6 +295,20 @@ class _AuxCapture:
             sdk_step=c['sdk_step'],sdk_time_s=c['sdk_time_s'],
             policy_step=0 if self._policy is None else self._policy,
             reset_generation=ids[env_id],terminal=terminal,reset=False)
+
+    def clock_batch(self):
+        """Fresh batch read, not cached clocks; copy IDs/done once per receipt."""
+        c=_clock(self.world);ids=self._ids()
+        done=_mask(_plain(self.env.task.done),self.n,'actual task terminal')
+        if len(ids)!=self.n:raise ValueError('actual diagnostic generation cohort changed')
+        result=tuple(SampleClock(run_uuid=self.run_uuid,env_id=i,
+            episode_uid=f'{self.run_uuid}:{i}:{ids[i]}',
+            world_step=c['world_step'],world_time_s=c['world_time_s'],
+            sdk_step=c['sdk_step'],sdk_time_s=c['sdk_time_s'],
+            policy_step=0 if self._policy is None else self._policy,
+            reset_generation=ids[i],terminal=done[i],reset=False) for i in range(self.n))
+        if _clock(self.world)!=c:raise ValueError('actual physical clock changed during batch clock acquisition')
+        return result
 
     def _delivery_clock(self):
         # Read an actual candidate receipt for the current representative. This
@@ -330,7 +385,7 @@ class _AuxCapture:
         ids=self._ids()
         if any(ids[i]!=self.initial_ids[i] for i in range(self.n) if active[i]):
             raise ValueError('first physical episode changed without terminal')
-        clocks=tuple(self.clock_for_env(i) for i in range(self.n))
+        clocks=self.clock_batch() if self.capture_filtered_contact_epoch else tuple(self.clock_for_env(i) for i in range(self.n))
         if any(clocks[i].terminal!=terminals[i] for i in range(self.n) if active[i]):
             raise ValueError('actual task terminal differs from pre-reset callback')
         c=_clock(self.world)
@@ -354,6 +409,7 @@ class _AuxCapture:
             native_runtime_attestation_scope='runner only; not component or support qualification',
             source_role='legacy Teacher auxiliary observation; not Student input or control')
         pair=None;samples=None;delivery=None;filtered=None;filtered_type=None
+        epoch_candidate=None;values=None;values_type=None
         try:
             pair=self.pairs.end_step(clocks[index],poll=True,
                 read_clock=lambda:self.clock_for_env(index),step_completed=True)
@@ -363,14 +419,45 @@ class _AuxCapture:
             if self.filtered_metadata_provider is not None:
                 from .tabletop_bimanual_mpc_filtered_contact_provenance import FilteredPairSnapshot
                 filtered_type=FilteredPairSnapshot
-                filtered=self.filtered_metadata_provider.capture(clocks=clocks,previous=self._filtered_previous)
+                # V1 history is unchanged. In v2 the explicit epoch ledger owns
+                # continuity; standalone F0 only validates each fresh read.
+                filtered=self.filtered_metadata_provider.capture(clocks=clocks,
+                    previous=None if self.capture_filtered_contact_epoch else self._filtered_previous)
                 if (type(filtered) is not FilteredPairSnapshot or filtered.clocks!=clocks
                         or any(value is not False for value in filtered.qualification.values())):
                     raise ValueError('filtered metadata provider returned a different actual clock or qualification')
                 if filtered.metadata_binding_valid:
                     if len(filtered.pairs)!=34*self.n:
                         raise ValueError('filtered metadata pair count is incomplete')
-                    self._filtered_previous=filtered
+                    if not self.capture_filtered_contact_epoch:self._filtered_previous=filtered
+            if self.capture_filtered_contact_epoch:
+                receipts=[]
+                if self._filtered_epoch is not None:
+                    old={v.env_id:v for v in self._filtered_epoch.metadata.clocks}
+                    for current in clocks:
+                        before=old[current.env_id]
+                        if self.closed[current.env_id] and (before.episode_uid,before.reset_generation)!=(current.episode_uid,current.reset_generation):
+                            receipts.append(self._epoch_module.RetiredGenerationReceipt(before,current,
+                                source='actual diagnostic_episode_ids readback at policy boundary in a retired slot; not a physical-reset callback timestamp'))
+                epoch_candidate=self._epoch_module.advance_contact_epoch(filtered,previous=self._filtered_epoch,
+                    actual_live=actual_live,actual_terminal=actual_terminal,cohort_live=active,
+                    retired_generation_receipts=tuple(receipts),
+                    liveness_source='actual pre-reset native_live/newly_terminal and first-cohort closed ledger')
+            if self.filtered_values_provider is not None:
+                from .tabletop_bimanual_mpc_filtered_contact_values import FilteredPairValuesSnapshot
+                values_type=FilteredPairValuesSnapshot
+                values=self.filtered_values_provider.capture(filtered,active_mask=active)
+                if (type(values) is not FilteredPairValuesSnapshot or values.clocks!=clocks
+                        or values.metadata_binding_fingerprint!=filtered.binding_fingerprint
+                        or any(v is not False for v in values.qualification.values())
+                        or values.capture_valid is not True or len(values.pairs)!=34*self.n
+                        or tuple(item.metadata_pair for item in values.pairs)!=filtered.pairs
+                        or any(field.clock!=item.metadata_pair.clock or field.env_id!=item.metadata_pair.clock.env_id
+                            or field.episode_uid!=item.metadata_pair.clock.episode_uid
+                            or (not active[field.env_id] and field.valid)
+                            or field.force_side!='NA' or field.frame!='world' or field.unit!='N'
+                            for item in values.pairs for field in (item.normal_sensor_side_world,item.friction_sensor_side_world))):
+                    raise ValueError('F1 values transaction invalid or different clock/metadata: '+repr(getattr(values,'errors',None)))
             samples=self.scene.capture_batch(clocks=clocks,active=active)
             if len(samples)!=self.n or any(sample.clock!=clock for sample,clock in zip(samples,clocks)):
                 raise ValueError('scene provider returned a different actual episode/clock')
@@ -388,6 +475,12 @@ class _AuxCapture:
             if self.capture_filtered_contact_metadata:
                 packet.update(filtered_pair_metadata=None,
                     provider_partial_filtered_metadata=filtered.to_dict() if filtered_type is not None and type(filtered) is filtered_type else None)
+            if self.capture_filtered_contact_epoch:
+                packet.update(filtered_contact_epoch=None,
+                    provider_partial_contact_epoch=None if epoch_candidate is None else epoch_candidate.to_dict())
+            if self.capture_filtered_contact_values:
+                packet.update(filtered_pair_values=None,
+                    provider_partial_filtered_values=values.to_dict() if values_type is not None and type(values) is values_type else None)
             try:self._record(packet,active,terminals,c)
             except Exception as write_error:
                 if self.delivery_probe is None and not self.capture_filtered_contact_metadata:raise
@@ -395,6 +488,8 @@ class _AuxCapture:
                     self.delivery_errors.append('partial frame write: '+repr(write_error))
                 if self.capture_filtered_contact_metadata:
                     self._filtered_archive_errors.append('partial frame write: '+repr(write_error))
+                if self.capture_filtered_contact_epoch:self._epoch_archive_errors.append('partial frame write: '+repr(write_error))
+                if self.capture_filtered_contact_values:self._values_archive_errors.append('partial frame write: '+repr(write_error))
             self._finish_delivery_failure(error,'provider')
             raise
         packet.update(capture_status='complete_observation_only',provider_error=None,
@@ -402,8 +497,14 @@ class _AuxCapture:
             complete_measurement=True)
         if self.delivery_probe is not None:packet['contact_delivery_step']=_serial(delivery)
         if self.capture_filtered_contact_metadata:packet['filtered_pair_metadata']=filtered.to_dict()
-        try:self._record(packet,active,terminals,c)
+        if self.capture_filtered_contact_epoch:packet['filtered_contact_epoch']=epoch_candidate.to_dict()
+        if self.capture_filtered_contact_values:packet['filtered_pair_values']=values.to_dict()
+        try:
+            self._record(packet,active,terminals,c)
+            if self.capture_filtered_contact_epoch:self._filtered_epoch=epoch_candidate
         except BaseException as error:
+            if self.capture_filtered_contact_epoch:self._epoch_archive_errors.append('frame write: '+repr(error))
+            if self.capture_filtered_contact_values:self._values_archive_errors.append('frame write: '+repr(error))
             self._finish_delivery_failure(error,'raw write')
             raise
 
@@ -432,6 +533,16 @@ class _AuxCapture:
             self._filtered_counts['snapshots']+=1
             key='valid_snapshots' if packet['filtered_pair_metadata']['metadata_binding_valid'] else 'invalid_snapshots'
             self._filtered_counts[key]+=1
+        if self.capture_filtered_contact_epoch and packet.get('filtered_contact_epoch') is not None:
+            self._epoch_snapshots+=1
+        if self.capture_filtered_contact_values and packet.get('filtered_pair_values') is not None:
+            data=packet['filtered_pair_values'];self._values_counts['snapshots']+=1
+            self._values_counts['valid_snapshots' if data['capture_valid'] else 'invalid_snapshots']+=1
+            for item in data['pairs']:
+                if not active[item['metadata_pair']['clock']['env_id']]:continue
+                for channel in ('normal','friction'):
+                    key='active_'+channel+('_valid' if item[channel+'_sensor_side_world']['valid'] else '_unavailable')
+                    self._values_counts[key]+=1
         for i in range(self.n):
             if active[i]:self.counts[i]+=1
 
@@ -470,6 +581,20 @@ class _AuxCapture:
                 scope='fresh resolved sensor/filter metadata only; no numeric contacts or force qualification',
                 native_success_qualification_issued=False,new_expert_qualification_issued=False,
                 planning_eligible=False,support_qualified=False,contact_values_qualified=False)
+        if self.capture_filtered_contact_epoch:
+            ledger=None if self._filtered_epoch is None else self._filtered_epoch.to_dict()
+            summary['filtered_contact_epoch']=dict(snapshots=self._epoch_snapshots,
+                last_receipt_sha256=None if ledger is None else ledger['receipt_sha256'],
+                first_terminals=[None]*self.n if ledger is None else ledger['first_terminals'],
+                archive_errors=list(self._epoch_archive_errors),
+                scope='explicit first-cohort archival metadata retirement; generation changes never grant eligibility',
+                native_attested=False,native_success_qualification_issued=False,new_expert_qualification_issued=False,
+                planning_eligible=False,support_qualified=False,force_sign_frame_qualified=False,contact_values_qualified=False)
+        if self.capture_filtered_contact_values:
+            summary['filtered_contact_values']=dict(self._values_counts,archive_errors=list(self._values_archive_errors),
+                native_success_qualification_issued=False,new_expert_qualification_issued=False,
+                planning_eligible=False,support_qualified=False,contact_values_qualified=False,
+                scope='independent sensor-side normal/friction observations; no ON_Wire/sign/support qualification')
         with (self.output/'aux_capture_summary.json').open('x',encoding='utf-8') as stream:
             json.dump(summary,stream,indent=2,allow_nan=False)
         self._summary=summary

@@ -11,7 +11,7 @@ from test_bimanual_mpc_aux_integration import (
 
 
 class ModelIntegrationTests(unittest.TestCase):
-    def lifecycle(self, *, model_enabled=True, probe=None, filtered=False, install_error=None,
+    def lifecycle(self, *, model_enabled=True, probe=None, filtered=False, epoch=False, values=False,install_error=None,
                   finish_error=None, core_install_error=None, core_finish_error=None):
         function = collector()
         start = next(i for i, node in enumerate(function.body)
@@ -49,7 +49,9 @@ class ModelIntegrationTests(unittest.TestCase):
         scope = dict(__package__=PACKAGE, uuid=uuid,
             args=NS(vision_sequence_context_sidecar=True,vision_mpc_model_capture=model_enabled,
                     vision_mpc_contact_delivery_probe=probe,
-                    vision_mpc_filtered_contact_capture=filtered), sequence_context_sink=None,
+                    vision_mpc_filtered_contact_capture=filtered,
+                    vision_mpc_filtered_contact_epoch_capture=epoch,
+                    vision_mpc_filtered_contact_values_capture=values), sequence_context_sink=None,
             capture_mpc_state=True,capture_mpc_aux=True,candidate_path=None,
             teacher_audit=None,tripod_candidate=None,env=object(),device_world=object(),task=object(),
             output=Path('cpu-fixture'),genuine=True,failure=None,
@@ -122,6 +124,17 @@ class ModelIntegrationTests(unittest.TestCase):
                 self.assertIs(options.get('capture_filtered_contact_metadata'),True)
             elif name=='core_install':
                 self.assertNotIn('capture_filtered_contact_metadata',options)
+
+    def test_epoch_and_values_are_forwarded_only_to_aux(self):
+        _,events,error=self.lifecycle(model_enabled=False,filtered=True,epoch=True,values=True)
+        self.assertIsNone(error)
+        for name,options in events:
+            if name=='aux_install':
+                self.assertIs(options.get('capture_filtered_contact_epoch'),True)
+                self.assertIs(options.get('capture_filtered_contact_values'),True)
+            elif name=='core_install':
+                self.assertNotIn('capture_filtered_contact_epoch',options)
+                self.assertNotIn('capture_filtered_contact_values',options)
 
     def test_all_three_observers_receive_identical_issued_action_before_physics(self):
         loop = next(node for node in ast.walk(collector())
