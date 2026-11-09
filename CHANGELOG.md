@@ -1,3 +1,10 @@
+## 2026-11-09 — Stage 6 条件展开与原生上下文验证
+
+- 抽取原finger/translation/rotation/clearance运算为共享纯函数；shadow只依赖录制反馈，各自累计Teacher与Student命令，不冒充物理模型。修复原slice-inplace造成的完整命令反传错误；独立旧源码160组合×16子步、97,280项逐位一致。
+- 新sidecar保存唯一身份、实际previous action、8子步pre-control反馈与真实目标，分开读PhysX backend与IsaacLab cache；terminal后inactive reset目标不参与原回合parity，缺测不补造。新增同钟post-physics q/qd及SDK clock资格接口。
+- 新采集01二指Teacher/MPC 4/4、三指0/4；4698条成功视觉动作、37,584物理位native目标一致，完整累计shadow误差为0。新版源码SHA不同而被当前训练门禁拒绝，独立02重新采集；没有更改旧数据或伪造兼容SHA。
+- 冻结CPU聚焦25文件533 passed（52.67s）；后续mode互斥检查11 passed。Git过滤往返验证4个来源绑定模块字节不变，避免跨平台换行破坏原生源码SHA。新BC与纯Student资格尚待实际训练及评估，原PPO不改、PR仍Draft。
+
 ## 2026-11-09 — Stage 6 序列数据构建
 
 - 新增SequenceDataset、START/CONTACT/LIFT_ONSET/HOLD事件与来源均衡采样，16步真实历史窗口不跨reset/terminal/缺测；短完整episode padding显式mask，恢复标签须独立资格。

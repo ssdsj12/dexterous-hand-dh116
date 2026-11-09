@@ -4,11 +4,18 @@ import json
 import math
 from pathlib import Path
 import time
+import uuid
 
 import torch
 
 
 def validate_options(args):
+    if getattr(args, 'vision_sequence_context_sidecar', False):
+        if not getattr(args, 'vision_teacher_source', None):
+            raise ValueError('sequence context sidecar requires fresh explicit Teacher collection; old traces cannot reconstruct it')
+        for name in ('bimanual_teacher_physics_audit', 'bimanual_tripod_teacher_coordination_proof'):
+            if getattr(args, name, None):
+                raise ValueError('sequence context excludes unsupported control wrapper --'+name.replace('_', '-'))
     if getattr(args, 'bimanual_tripod_teacher_coordination_proof', None) is not None:
         from .tabletop_bimanual_teacher_coordination import validate_tripod_coordination_options
         validate_tripod_coordination_options(args)
@@ -133,7 +140,8 @@ def _teacher_optimizer(env,args,source,references):
 
 
 @torch.no_grad()
-def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,camera=None):
+def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,camera=None,
+                           sequence_context_sink=None):
     """Capture actions actually executed at the recorded pre-action visual state.
 
     No RSL algorithm, optimizer, log probability or PPO storage is constructed.
@@ -210,6 +218,11 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
     tripod_candidate = None
     candidate_path = getattr(args, 'bimanual_tripod_teacher_coordination_proof', None)
     supervision_eligible = torch.ones(args.num_envs, device=args.device, dtype=torch.bool)
+    sequence_capture = None
+    unqualified_sequence_capture = None
+    sequence_enabled = (sequence_context_sink is not None or
+        bool(getattr(args, 'vision_sequence_context_sidecar', False)))
+    sequence_run_uuid = str(uuid.uuid4()) if sequence_enabled else None
     with diagnostics_path.open('x',encoding='utf-8') as diagnostics,physics_path.open('x',encoding='utf-8') as physics:
         try:
             if getattr(args, 'bimanual_teacher_physics_audit', False) or candidate_path is not None:
@@ -223,7 +236,14 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                     expected_sha256=args._bimanual_tripod_proof_sha256)
                 supervision_eligible = torch.tensor(tripod_candidate.supervision_eligible,
                     device=args.device, dtype=torch.bool)
+            if sequence_enabled:
+                from .tabletop_vision_sequence_capture import SequenceContextCapture
+                sequence_capture = SequenceContextCapture(task, device_world, sequence_context_sink,
+                    require_native_readback=genuine)
             for tick in range(max_steps):
+                if sequence_capture is not None:
+                    from .tabletop_vision_command_shadow import command_state
+                    sequence_start = command_state(task, device_world)
                 packet=camera.sample()
                 obs=_observations(packet,device_world,previous,history,critic,
                     reset_mask=ended if tick==0 else done)
@@ -268,12 +288,25 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                         grasp_style=item['grasp_style'],source_episode_id=item['source_episode_id'],
                         source_trajectory_id=item['source_trajectory_id'],
                         previous_action=previous[index].cpu().tolist()))
+                    if sequence_capture is not None:
+                        metadata[-1].update(run_uuid=sequence_run_uuid,
+                            episode_uid=f'{sequence_run_uuid}:{index}:first',
+                            policy_timestamp_s=float(world.sim.current_time),
+                            first_physics_step=int(world.sim.current_time_step_index), terminal=False)
                     if tail_steps:metadata[-1].update(reference_phase=phases[index],
                         reference_source_tick=tick if tick<source_lengths[index] else None,
                         reference_source_control_steps=source_lengths[index])
                 if teacher_audit is not None:
                     teacher_audit.submit(issued, teacher_control_step=tick)
+                if sequence_capture is not None:
+                    sequence_capture.begin_tick([row for row in metadata if row['tick'] == tick],
+                        issued, initial_state=sequence_start)
                 critic,reward,done,extra=env.step(issued.clone())
+                if sequence_capture is not None:
+                    sequence_capture.finish_tick(done)
+                    for row in reversed(metadata):
+                        if row['tick'] != tick:break
+                        row['terminal'] = bool(done[row['env_id']])
                 if optimizer is not None:optimizer.observe_result(done|~alive)
                 recovered|=~ended&extra['recovered'].bool()
                 first=done&~ended
@@ -311,6 +344,10 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
             failure=repr(error)
             raise
         finally:
+            if sequence_capture is not None:
+                sequence_capture.close()
+                unqualified_sequence_capture = sequence_capture.write_unqualified(
+                    output/'native_sequence_context_unqualified.pt', error=failure)
             try:
                 try:
                     if tripod_candidate is not None:
@@ -366,6 +403,11 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
             {key:value for key,value in episodes.items() if int(key) in success_ids},
             visual_contract=contract,teacher_source_sha256=source['source_sha256'])
         successful=save_dataset(qualified,output/'successful_visual_supervision.pt')
+    successful_sequence_context = None
+    if successful is not None and sequence_capture is not None:
+        successful_sequence_context = sequence_capture.finalize(
+            output/'successful_visual_supervision.pt', [metadata[i] for i in keep],
+            output/'successful_sequence_context.pt')
     report=dict(status='completed',mode='teacher_reference_mpc' if optimizer else 'teacher_reference',
         mpc_profile=getattr(args,'vision_teacher_mpc_profile','local_pad') if optimizer else None,
         source_sha256=source['source_sha256'],control_steps=tick+1,samples=len(rows),
@@ -377,6 +419,13 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
         actor_observation_size=3844,critic_observation_size=371,action_size=24,
         ppo_updates=0,student_policy_trained=False,teacher_success_is_student_success=False,
         dagger_state_query_oracle=False,raw_rgbd_frames=raw.frames,elapsed_wall_s=time.monotonic()-start)
+    if sequence_capture is not None:
+        report['successful_sequence_context'] = successful_sequence_context
+        report['sequence_context_collection'] = dict(enabled=True, run_uuid=sequence_run_uuid,
+            captured_policy_ticks=len(sequence_capture.records),
+            successful_sidecar_available=successful_sequence_context is not None,
+            no_historical_trace_reconstruction=True,
+            unqualified_native_capture=unqualified_sequence_capture)
     if adapter_difference is not None:
         report['physical_sdk_adapter_max_semantic_roundtrip_difference'] = adapter_difference[0]
         report['physical_sdk_adapter_max_executed_action_difference'] = 0.

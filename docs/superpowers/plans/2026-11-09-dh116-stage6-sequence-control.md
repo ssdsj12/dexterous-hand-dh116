@@ -14,29 +14,29 @@
 
 **Files:** new `src/go2_pvcnn/control/dh116/tabletop_vision_sequence_dataset.py`; add opt-in helpers to `tabletop_vision_supervision_dataset.py`; tests `tests/test_vision_sequence_dataset.py`.
 
-- [ ] Write and run failing tests for duplicate/missing `(run_uuid,env_id,episode_uid,tick)`, wrong issued/previous actions, nonmonotonic policy/physical clocks, reset/terminal/gap crossing and masked padding. Existing `validate_dataset()` must retain v1 behavior.
-- [ ] Implement `validate_sequence_context`, `join_sequence_context` and `SequenceDataset(data, context, dataset_sha256=..., sequence_length=16)`. Join by unique identity and verified data/source/action-contract SHA, not array positions. Preserve original observations/history.
-- [ ] Implement actual CONTACT false→true, START ticks0–3, actual qualified HOLD, and reliable reference event or opposed-contact plus three policy samples of measured mean palm vertical velocity >0.0005m/s for LIFT_ONSET. RECOVERY requires separate native qualification.
-- [ ] Implement source→episode→window sampling, 0.4 uniform/0.6 event mixture and supplied event weights. Every legal window has positive probability; missing classes renormalize. Same-source replay copies stay together; one group is fit_only.
-- [ ] Test exact probability normalization, deterministic private-generator sampling and untouched inputs. For present long successful episodes, use full16 windows so B0/B1/B2 each expose exactly64 valid samples/update; explicitly report any short padded-window exposure separately.
+- [x] Write and run failing tests for duplicate/missing `(run_uuid,env_id,episode_uid,tick)`, wrong issued/previous actions, nonmonotonic policy/physical clocks, reset/terminal/gap crossing and masked padding. Existing `validate_dataset()` must retain v1 behavior.
+- [x] Implement `validate_sequence_context`, `join_sequence_context` and `SequenceDataset(data, context, dataset_sha256=..., sequence_length=16)`. Join by unique identity and verified data/source/action-contract SHA, not array positions. Preserve original observations/history.
+- [x] Implement actual CONTACT false→true, START ticks0–3, actual qualified HOLD, and reliable reference event or opposed-contact plus three policy samples of measured mean palm vertical velocity >0.0005m/s for LIFT_ONSET. RECOVERY requires separate native qualification.
+- [x] Implement source→episode→window sampling, 0.4 uniform/0.6 event mixture and supplied event weights. Every legal window has positive probability; missing classes renormalize. Same-source replay copies stay together; one group is fit_only.
+- [x] Test exact probability normalization, deterministic private-generator sampling and untouched inputs. For present long successful episodes, use full16 windows so B0/B1/B2 each expose exactly64 valid samples/update; explicitly report any short padded-window exposure separately.
 
 ## Task 2 — Exact shared command shadow and native sidecar (worker B)
 
 **Files:** new `tabletop_vision_command_shadow.py`, sidecar capture helper; targeted extraction in `tabletop_tensor_world.py` and controller helpers; opt-in `sequence_context_sink` in `tabletop_vision_teacher_collection.py`; tests for the shared kernel, sidecar and old-path parity.
 
-- [ ] First reproduce and test the actual native command ordering: velocity integration, active profile corrections, measured-q lead clamp, joint limits, original slew/redistribution/pressure/final clamp; translation/rotation norm, target/transport/clearance/safe_z, allowed/live and seed intrinsic XYZ. Refuse unsupported callbacks rather than omit them.
-- [ ] Expose `shadow_step(command_state, action24, measured_context, controller_contract)` and `shadow_sequence(initial_command_state, actions, contexts, controller_contract)` using float64 shared pure functions and ACTION_CONTRACT scales. Return finger/palm/wrist_angle targets at every physical substep and branch masks.
-- [ ] Add tests for finite limits, norm bounds, original guard order, inactive masks, accumulated commands, gradients, unsupported profiles and identical old-path output. Shadow never calls SDK or advances physics.
-- [ ] Capture pre-action command state, pre-control measured packets and post-control original targets for all8 substeps, explicit clocks/UID and terminal truncation. Backend targets, cache and reconstruction remain separate. Context missingness is explicit.
+- [x] First reproduce and test the actual native command ordering: velocity integration, active profile corrections, measured-q lead clamp, joint limits, original slew/redistribution/pressure/final clamp; translation/rotation norm, target/transport/clearance/safe_z, allowed/live and seed intrinsic XYZ. Refuse unsupported callbacks rather than omit them.
+- [x] Expose `shadow_step(command_state, action24, measured_context, controller_contract)` and `shadow_sequence(initial_command_state, actions, contexts, controller_contract)` using float64 shared pure functions and ACTION_CONTRACT scales. Return finger/palm/wrist_angle targets at every physical substep and branch masks.
+- [x] Add tests for finite limits, norm bounds, original guard order, inactive masks, accumulated commands, gradients, unsupported profiles and identical old-path output. Shadow never calls SDK or advances physics.
+- [x] Capture pre-action command state, pre-control measured packets and post-control original targets for all8 substeps, explicit clocks/UID and terminal truncation. Backend targets, cache and reconstruction remain separate. Context missingness is explicit.
 - [ ] Recollect native successful Teacher data into a new directory and compare Teacher shadow against recorded float64 targets and separately float32 native casts before enabling B2. Preserve old pools and labels byte-for-byte.
 
 ## Task 3 — Losses, BC training and model contracts (root with worker A)
 
 **Files:** new `tabletop_vision_sequence_losses.py`; add independent `fit_actor_sequences` to `tabletop_vision_supervised_bc.py`; opt-in activation in `tabletop_vision_student.py`/`tabletop_vision_squashed_policy.py`; versioned contract/loading support; new tests.
 
-- [ ] Test masked action MSE, adjacent valid delta-error MSE and SmoothL1 normalized finger(.01rad)/palm(.0005m)/rotation(.01rad) target losses. Verify masked values contribute no gradient and expert targets are detached; invalid/missing contexts reject command training.
-- [ ] Keep old `fit_actor()` unchanged. Flatten true[B,L,3844], one tanh only for unbounded Actor, independent Adam, clip norm.5, private seed116601. Teacher/Student unfold their own commands against the same recorded feedback, not fake future dynamics or rewritten previous actions.
-- [ ] Add activation modes relu(default) and leaky_relu_001(new explicit contract only), preserving3→32→64→64 and legacy outputs. Main E0/B0/B1/B2 all inherit current relu and hemisphere, no new encoder reset.
+- [x] Test masked action MSE, adjacent valid delta-error MSE and SmoothL1 normalized finger(.01rad)/palm(.0005m)/rotation(.01rad) target losses. Verify masked values contribute no gradient and expert targets are detached; invalid/missing contexts reject command training.
+- [x] Keep old `fit_actor()` unchanged. Flatten true[B,L,3844], one tanh only for unbounded Actor, independent Adam, clip norm.5, private seed116601. Teacher/Student unfold their own commands against the same recorded feedback, not fake future dynamics or rewritten previous actions.
+- [x] Add activation modes relu(default) and leaky_relu_001(new explicit contract only), preserving3→32→64→64 and legacy outputs. Main E0/B0/B1/B2 all inherit current relu and hemisphere, no new encoder reset.
 - [ ] Train from verified c58 candidate,3000 updates,4×16 batches,1e−4 LR; B0 uniform action-only, B1 event action-only, B2 event action+command ramp0→.1 between250/500. Store actual valid exposure, model/optimizer/RNG every250. Run B3(delta.02) only after independent B2 improvement over B1.
 - [ ] Every250 probe START/CONTACT/LIFT_ONSET/HOLD activations, gradients, coordinate-zero/permutation/small-geometry interventions. Repeated dead encoder saves model+input and stops only that candidate; no hidden reset. No train-MSE best selection when fit_only.
 
@@ -54,9 +54,9 @@
 
 **Files:** `tabletop_bimanual_tracking_guard.py`, `tabletop_tripod_recovery_runtime.py`, `tabletop_tripod_execution_guard.py`, associated tests and explicit candidate runtime.
 
-- [ ] Preserve current default and right-only Stage A. Introduce explicit hand×digit indices and per-hand acquisition origins/cancellation/pressure masks, enabling right/left/both only by opt-in.
-- [ ] Test every env/episode/hand/digit's cumulative1mm/1s budget, .5s no-progress stop, no reset on flicker, native post-guard billing, mandatory release precedence and preserving bearing digits.
-- [ ] Missing-pad geometry uses that hand's actual FK/Jacobian/pad region and original nonlinear collision checks; numerical convergence never implies real contact. Keep actual cooked/live qualification gate closed when missing.
+- [x] Preserve current default and right-only Stage A. Introduce explicit hand×digit indices and per-hand acquisition origins/cancellation/pressure masks, enabling right/left/both only by opt-in.
+- [x] Test every env/episode/hand/digit's cumulative1mm/1s budget, .5s no-progress stop, no reset on flicker, native post-guard billing, mandatory release precedence and preserving bearing digits.
+- [x] Missing-pad geometry uses that hand's actual FK/Jacobian/pad region and original nonlinear collision checks; numerical convergence never implies real contact. Keep actual cooked/live qualification gate closed when missing.
 - [ ] Add separately qualified共同双腕pause state machine: per-joint Teacher-calibrated trigger=max(.01rad,1.5×P99.9),20ms q extrapolation warning, original terminal highest priority, measured-state reconnection, at least.05s recovery. Do not change safety thresholds or feed privileged guard into pure Student silently.
 - [ ] Run full original/unilateral-failure/共同pause first episodes and Teacher regression; report new overforce/left failure/deadlock. Fixed-wrist bilateral acquisition preserves stable pressure contacts. Contact-stable.2s, conditional load-transfer.5mm/s≤2mm then lift1→3mm/s and original30mm/5s success remain Teacher-only gates; moving-wrist recovery cannot bypass geometry.
 

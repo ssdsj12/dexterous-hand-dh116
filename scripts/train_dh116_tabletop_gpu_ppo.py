@@ -61,6 +61,8 @@ parser.add_argument('--vision-wrist-quaternion-preprocessing',
                     help='versioned opt-in actor quaternion sign canonicalization; old models remain raw')
 parser.add_argument('--vision-teacher-source',type=Path,
                     help='independent bounded real RGB-D Teacher supervision collection; no PPO')
+parser.add_argument('--vision-sequence-context-sidecar', action='store_true',
+                    help='opt-in Stage6 pre-control feedback and actual-target sidecar for native Teacher labels')
 parser.add_argument('--vision-teacher-mpc',action='store_true',
                     help='training-only local finger MPC refines Teacher reference labels')
 parser.add_argument('--tripod-recovery-stage',choices=('A',),
@@ -271,6 +273,8 @@ parser.add_argument('--max-iterations', type=int, default=None,
                     help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+if args.vision_sequence_context_sidecar and not args.vision_teacher_source:
+    parser.error('sequence context sidecars require independent native Teacher collection')
 if args.vision_m2_replay and (not args.vision_student or not args.tensor_pipeline
         or args.vision_evaluation_checkpoint or args.vision_teacher_source or args.tripod_recovery_stage):
     parser.error('--vision-m2-replay requires an exclusive native visual tensor replay')

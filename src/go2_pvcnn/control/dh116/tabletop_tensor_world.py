@@ -106,10 +106,8 @@ def constrain_palm_z_movement(movement, clearances, clearance_floor_m):
     """Keep palm descent above the configured floor without changing X/Y."""
     if not torch.isfinite(torch.as_tensor(clearance_floor_m)) or clearance_floor_m < 0:
         raise ValueError('clearance floor must be finite and nonnegative')
-    result=movement.clone()
-    result[:,:,2]=torch.maximum(result[:,:,2],
-        -(clearances-clearance_floor_m).clamp_min(0))
-    return result
+    z=torch.maximum(movement[:,:,2],-(clearances-clearance_floor_m).clamp_min(0))
+    return torch.cat((movement[:,:,:2],z[:,:,None]),dim=-1)
 
 
 class TensorWorld:
@@ -415,12 +413,6 @@ class TensorWorld:
             target = task.palm_actions*self.palm_limit
             palm_lower, palm_upper = -self.palm_limit, self.palm_limit
             rate = .002
-        movement = (target-self.palms).clamp(-rate*self.dt,rate*self.dt)
-        if policy_control:
-            # The physical transport guard measures Cartesian speed, not each
-            # axis independently. Diagonal commands must share one speed budget.
-            norm=movement.norm(dim=-1,keepdim=True).clamp_min(1e-12)
-            movement=movement*((rate*self.dt)/norm).clamp_max(1.)
         clearance_floor=getattr(task,'diagnostic_palm_descent_clearance_m',
                                 getattr(task,'palm_descent_clearance_m',.0021))
         if getattr(task,'pinch_force_hold',False):
@@ -428,13 +420,11 @@ class TensorWorld:
             # the hand is clear of the table. Keep the audited 0.3mm margin;
             # real collision response and below-margin restoration remain.
             clearance_floor=.0003
-        movement=constrain_palm_z_movement(movement,self.clearances,clearance_floor)
-        pre_projection_palm=self.palms+movement
+        from .tabletop_command_kernels import palm_transport, per_hand_safe_z
+        self.palms,pre_projection_palm,projection_reasons=palm_transport(
+            self.palms,target,self.clearances,clearance_floor,rate,self.dt,
+            palm_lower,palm_upper,allowed,live,vector_norm=policy_control)
         safe_z_audit=torch.full((self.n,2),float('nan'),device=self.device,dtype=self.palms.dtype)
-        projection_reasons=torch.zeros((self.n,2),device=self.device,dtype=torch.long)
-        projection_reasons |= (movement.abs().amax(-1)>=(rate*self.dt)-1e-12).long()
-        self.palms = torch.where((allowed&live)[:,None,None],
-            torch.maximum(torch.minimum(self.palms+movement,palm_upper),palm_lower),self.palms)
         synchronized=getattr(task,'coordinated_control',torch.zeros_like(live))
         if getattr(task,'palm_exploration_axis',None)=='z_down':
             synchronized=torch.ones_like(live)
@@ -449,13 +439,9 @@ class TensorWorld:
             # Roots are measured bases (including driven-carriage lag). Express
             # their safe heights in the exploration-offset frame of the *new*
             # common lift target, preserving the authored left/right root gap.
-            measured_z=self.roots[:,:,2]-self.root_seed[:,:,2]-task.offset[:,None]
-            # Finger motion can lower a hard link even with palm descent held.
-            # Restore the signed deficit so the target clears that link rather
-            # than holding its already unsafe measured height.
-            safe_z=measured_z-(self.clearances-clearance_floor)
+            per_hand_z,safe_z=per_hand_safe_z(self.palms,self.roots,self.root_seed,
+                task.offset,self.clearances,clearance_floor)
             safe_z_audit=safe_z.clone()
-            per_hand_z=torch.maximum(self.palms[:,:,2],safe_z)
             shared_z=per_hand_z.amax(1,keepdim=True)
             if hasattr(task,'palm_reposition'):
                 reposition=task.palm_reposition

@@ -1,6 +1,8 @@
-## 2026-11-09 — Stage 6 连续视觉监督实现
+## 2026-11-09 — Stage 6 连续视觉监督与条件命令展开
 
-已新增身份绑定的连续序列构建器：16步窗口、原始3844D四帧历史、真实接触事件采样及来源分组，旧v1数据校验保持。独立CPU数据/旧schema回归76项通过；这不是原生抓取。真实Teacher上下文在新目录采集，完整条件目标一致性通过前不启动B2；未启动新PPO。实际命令、输入/新验证集SHA和后续结果见[Stage6实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。M0、原Teacher及30mm/5s/0.5mm标准保留，PR仍Draft。
+已实现16步连续数据、事件采样、共享原控制计算的可微命令展开、B0/B1/B2独立训练入口及原生来源/短分支入口。冻结CPU聚焦回归533项通过；原控制独立160组合、97,280次张量比较逐位一致。新采集01中二指Teacher/MPC为4/4、三指0/4；成功序列37,584个物理子步的float64、SDK cast、实际backend和cache分别一致，整回合累计误差为0。
+
+采集01与反向传播修复后的源码SHA不同，当前B2严格门禁拒绝混用；新版02正在独立采集同钟post-physics反馈。B0/B1/B2新模型和纯Student原生结果尚未产生，未启动新PPO。实际命令、SHA、原件和未通过门禁见[Stage6实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。3844D/371D/24D、M0、原Teacher及30mm/5s/0.5mm标准保留，PR仍Draft。
 
 ## 2026-11-09 — Student原生执行链复核完成
 

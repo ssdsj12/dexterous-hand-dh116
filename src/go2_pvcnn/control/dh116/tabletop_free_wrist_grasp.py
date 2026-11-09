@@ -83,36 +83,16 @@ def control(t,actions,live,dt):
         from .tabletop_surface_contract import ACTION_CONTRACT
         rates=dict(joint_rate_rad_s=ACTION_CONTRACT['joint_rate_rad_s'],
             wrist_rate_m_s=ACTION_CONTRACT['translation_rate_m_s'],rotation_rate_rad_s=ACTION_CONTRACT['rotation_rate_rad_s'])
-    target=t.command+actions[:,:12]*rates['joint_rate_rad_s']*dt
-    # Bounded follower correction is superimposed on the selected trajectory;
-    # a finite error never becomes a wrist-motion admission test.
-    for j,(_,master,ratio,_) in enumerate(MIMIC):
-        if getattr(t,'surface_policy_owned_targets',False):
-            # Physical native mimic remains active. Policy zero velocity must
-            # preserve its acquired grasp instead of moving the master target.
-            continue
-        if getattr(t,'pinch_force_hold',False) and j<2:
-            # The original passive drives still track their affine targets.
-            # During explicit pinch/hold, do not undo the thumb/index force
-            # controller's master target to chase finite tracking deflection.
-            continue
-        for h in range(2):
-            k=6*h+ACTIVE.index(master);error=t.m['mimic_errors'][:,5*h+j]
-            correction=(5.*error/ratio*dt).clamp(-ACTIVE_VELOCITY_LIMIT_RAD_S*dt,ACTIVE_VELOCITY_LIMIT_RAD_S*dt)
-            correct=error.abs()>=.012
-            teacher_digits=getattr(t,'teacher_force_controlled_digits',None)
-            if teacher_digits is not None:
-                correct &= ~teacher_digits[:,h,j]
-            target[:,k]+=torch.where(correct,correction,0.)
-    q=t.m['q'];lead=CONTRACT['joint_target_lead_rad']
-    target=target.maximum(q-lead).minimum(q+lead).maximum(t.low).minimum(t.high)
-    target=t.command+(target-t.command).clamp(-ACTIVE_VELOCITY_LIMIT_RAD_S*dt,ACTIVE_VELOCITY_LIMIT_RAD_S*dt)
+    from .tabletop_command_kernels import finger_pre_guard, surface_final_guard, wrist_requested_targets
+    target=finger_pre_guard(t.command,actions,t.m['q'],t.m['mimic_errors'],t.low,t.high,dt,rates,
+        policy_owned=getattr(t,'surface_policy_owned_targets',False),
+        pinch_force_hold=getattr(t,'pinch_force_hold',False),
+        teacher_force_controlled_digits=getattr(t,'teacher_force_controlled_digits',None))
     if surface:
         if t.surface_redistribution is not False:
             target=t.surface_redistribution.apply(target,t.command,t.m,dt,live,t.low,t.high)
-        target=t.command+(target-t.command).clamp(-ACTIVE_VELOCITY_LIMIT_RAD_S*dt,ACTIVE_VELOCITY_LIMIT_RAD_S*dt)
+        target,applied=surface_final_guard(t.command,target,t.low,t.high,dt)
         requested_force=torch.zeros_like(t.f_requested)
-        applied=target.maximum(t.low).minimum(t.high)
         over=torch.zeros_like(t.pressure_limited)
     else:
         requested_force=2.+(actions[:,-2:]+1.)*5.
@@ -124,9 +104,7 @@ def control(t,actions,live,dt):
         from .tabletop_tripod_execution_guard import apply_post_guard_recovery
         applied=apply_post_guard_recovery(t,applied,live,dt,actions)
     t.command[live]=applied[live]
-    lo=actions.new_tensor(CONTRACT['palm_lower_m']);hi=actions.new_tensor(CONTRACT['palm_upper_m'])
-    palms=(w.palms+_limited_step(actions[:,12:18].reshape(t.n,2,3),rates['wrist_rate_m_s'],dt)).maximum(lo).minimum(hi)
-    angles=(w.wrist_angles+_limited_step(actions[:,18:24].reshape(t.n,2,3),rates['rotation_rate_rad_s'],dt)).clamp(-math.pi/2,math.pi/2)
+    palms,angles=wrist_requested_targets(w.palms,w.wrist_angles,actions,rates,dt)
     t.palm_targets[live]=palms[live];t.rotation_targets[live]=angles[live]
     t.palm_actions[live]=actions[:,12:18].reshape(t.n,2,3)[live]
     t.policy_stiffness[live]=10.
