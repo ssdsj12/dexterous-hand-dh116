@@ -69,6 +69,43 @@ def make_dataset(data, context=None, **kwargs):
     return module.SequenceDataset(data, context, dataset_sha256='d' * 64, **kwargs)
 
 
+def test_explicit_row_and_episode_source_groups_cannot_disagree():
+    data = fixture_data()
+    data['episodes']['0']['source_group_id'] = 'actual-parent-family'
+    for row in data['sample_metadata']:
+        row['source_group_id'] = 'incorrect-derived-family'
+    with pytest.raises(ValueError, match='source.group.*disagree|disagree.*source.group'):
+        make_dataset(data)
+
+
+def test_one_physical_episode_cannot_be_partitioned_into_multiple_source_groups():
+    data = fixture_data(lengths=(40,))
+    for i, row in enumerate(data['sample_metadata']):
+        row['source_group_id'] = 'same-episode-train' if i < 20 else 'same-episode-heldout'
+    with pytest.raises(ValueError, match='episode.*source.group|source.group.*episode'):
+        make_dataset(data, heldout_source_trajectory_ids=('same-episode-heldout',))
+
+
+@pytest.mark.parametrize('explicit_half', ['first', 'last'])
+def test_partial_explicit_lineage_cannot_split_a_physical_episode(explicit_half):
+    data = fixture_data(lengths=(40,))
+    for i, row in enumerate(data['sample_metadata']):
+        if (i < 20) == (explicit_half == 'first'):
+            row['source_group_id'] = 'different-parent-family'
+    with pytest.raises(ValueError, match='episode.*source.group|source.group.*episode'):
+        make_dataset(data, heldout_source_trajectory_ids=('different-parent-family',))
+
+
+def test_matching_explicit_parent_lineage_overrides_local_trajectory_name():
+    data = fixture_data()
+    data['episodes']['0']['source_group_id'] = 'actual-parent-family'
+    for row in data['sample_metadata']:
+        row['source_group_id'] = 'actual-parent-family'
+    indexed = make_dataset(data)
+    assert indexed.report['fit_only'] is True
+    assert {window['source_group'] for window in indexed.windows} == {'actual-parent-family'}
+
+
 def reorder_context(context, order):
     def take(value):
         if isinstance(value, dict): return {k: take(v) for k, v in value.items()}

@@ -10,6 +10,13 @@ import torch
 
 
 def validate_options(args):
+    if getattr(args, 'vision_teacher_perturbation_manifest', None):
+        if (not getattr(args, 'vision_teacher_source', None)
+                or not getattr(args, 'vision_teacher_mpc', False)
+                or getattr(args, 'vision_teacher_mpc_profile', None) != 'pressure_geometry_constrained'
+                or not getattr(args, 'vision_sequence_context_sidecar', False)
+                or [getattr(args, 'vision_width', None), getattr(args, 'vision_height', None)] != [224, 96]):
+            raise ValueError('Tier1 Teacher perturbation requires original constrained MPC, source, sidecar and 224x96 camera')
     if getattr(args, 'vision_sequence_context_sidecar', False):
         if not getattr(args, 'vision_teacher_source', None):
             raise ValueError('sequence context sidecar requires fresh explicit Teacher collection; old traces cannot reconstruct it')
@@ -185,7 +192,27 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
     if hasattr(device_world,'surface_trace_limit'):
         device_world.surface_trace_limit=max(device_world.surface_trace_limit,
             trace_offset+args.vision_teacher_max_control_steps*device_world.decimation)
-    critic=env.reset()
+    perturbation = None
+    def perturbation_clock():
+        return dict(physics_step=getattr(device_world,'_physics_steps',None),
+            sdk_physics_step=int(world.sim.current_time_step_index),timestamp_s=float(world.sim.current_time))
+    if getattr(args,'vision_teacher_perturbation_manifest',None):
+        from .tabletop_vision_teacher_perturbation import TeacherPerturbationSession
+        perturbation = TeacherPerturbationSession(args.vision_teacher_perturbation_manifest,
+            device_world,task,source,references,contract,output,native_runtime_verified=genuine,
+            camera_path=args.depth_camera_config)
+        try:
+            critic=env.reset()
+            perturbation.after_reset(perturbation_clock())
+        except Exception as error:
+            _exclusive_json(output/'failed_or_incomplete_pool.json',dict(
+                version='dh116-teacher-failed-incomplete-pool-v1',samples=0,dataset=None,
+                stage='original_final_reset_or_readback',error=repr(error),use='audit_only_not_BC_labels',
+                native_success_claimed=False,teacher_perturbation=perturbation.summary()))
+            camera.set_raw_frame_sink(None);raw.close()
+            raise
+    else:
+        critic=env.reset()
     if native_camera:
         initial=dict(q=device_world.q.detach().cpu().clone(),qd=device_world.qd.detach().cpu().clone(),
             command=task.command.detach().cpu().clone(),roots=device_world.roots.detach().cpu().clone(),
@@ -245,11 +272,13 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                     from .tabletop_vision_command_shadow import command_state
                     sequence_start = command_state(task, device_world)
                 packet=camera.sample()
+                if tick==0 and perturbation is not None:
+                    perturbation.validate_first_packet(packet,perturbation_clock())
                 obs=_observations(packet,device_world,previous,history,critic,
                     reset_mask=ended if tick==0 else done)
                 if tick==0 and not bool(packet['object_valid'].all()):
                     raise RuntimeError('native Teacher collection requires initially visible objects')
-                if tick==0 and native_camera:
+                if tick==0 and native_camera and perturbation is None:
                     from .tabletop_vision_audit import audit_initial_points
                     _exclusive_json(output/'initial_camera_geometry_validation.json',
                         audit_initial_points(packet,device_world,
@@ -293,6 +322,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                             episode_uid=f'{sequence_run_uuid}:{index}:first',
                             policy_timestamp_s=float(world.sim.current_time),
                             first_physics_step=int(world.sim.current_time_step_index), terminal=False)
+                    if perturbation is not None:
+                        metadata[-1].update(perturbation.sample_metadata(index))
                     if tail_steps:metadata[-1].update(reference_phase=phases[index],
                         reference_source_tick=tick if tick<source_lengths[index] else None,
                         reference_source_control_steps=source_lengths[index])
@@ -363,6 +394,13 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                     torch.save(dict(observations=rows,actions=issued_rows,reference_actions=reference_rows,
                         sample_metadata=metadata,error=failure,qualification=False,
                         last_action_execution_may_be_incomplete=True),stream)
+                if perturbation is not None:
+                    from .tabletop_vision_teacher_perturbation import file_identity
+                    _exclusive_json(output/'failed_or_incomplete_pool.json',dict(
+                        version='dh116-teacher-failed-incomplete-pool-v1',samples=len(rows),
+                        dataset=file_identity(output/'partial_unqualified_samples.pt'),error=failure,
+                        use='raw_audit_only_not_BC_labels',last_action_execution_may_be_incomplete=True,
+                        native_success_claimed=False,teacher_perturbation=perturbation.summary()))
     native_accepted=observed_success.clone()
     style_audit={}
     traces=getattr(device_world,'surface_trace',[])[trace_offset:]
@@ -381,6 +419,9 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
     if not genuine:
         accepted.zero_()  # CPU-injected cameras/worlds cannot qualify physical demonstrations.
     accepted &= supervision_eligible
+    if perturbation is not None:
+        from .tabletop_vision_teacher_perturbation import tier1_pinch_success_mask
+        accepted = tier1_pinch_success_mask(accepted,references)
     episodes={str(index):dict(env_id=index,first_episode=True,success=bool(accepted[index]),
         recovered=bool(recovered[index]),native_physics=genuine,
         grasp_style=item['grasp_style'],source_trajectory_id=item['source_trajectory_id'],
@@ -388,6 +429,10 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
         terminal=terminal_records.get(index),native_contact_style_audit=style_audit.get(index,
             'not_audited_failed_or_incomplete_episode' if genuine else 'fixture_not_native'))
         for index,item in enumerate(references)}
+    if perturbation is not None:
+        for index in range(len(references)):
+            episodes[str(index)].update(perturbation.sample_metadata(index))
+            episodes[str(index)]['teacher_perturbation_pool_eligible'] = references[index]['grasp_style']=='pinch_thumb_index'
     used_episodes = {str(row['episode_id']) for row in metadata}
     pool_episodes = {key: value for key, value in episodes.items() if key in used_episodes}
     dataset=build_dataset(torch.stack(rows),torch.stack(issued_rows),torch.stack(reference_rows),metadata,pool_episodes,
@@ -395,6 +440,11 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
     # Always keep the failed/unfinished physical experiment separate from successful demonstrations.
     with (output/'all_executed_supervision.pt').open('xb') as stream:torch.save(dataset,stream)
     success_ids=set(accepted.nonzero().flatten().cpu().tolist())
+    failed_pool = None
+    if perturbation is not None:
+        from .tabletop_vision_teacher_perturbation import save_failed_or_incomplete_pool
+        perturbation.verify_inputs()
+        failed_pool = save_failed_or_incomplete_pool(dataset,success_ids,output)
     keep=[i for i,row in enumerate(metadata) if row['env_id'] in success_ids]
     successful=None
     if keep:
@@ -426,6 +476,10 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
             successful_sidecar_available=successful_sequence_context is not None,
             no_historical_trace_reconstruction=True,
             unqualified_native_capture=unqualified_sequence_capture)
+    if perturbation is not None:
+        report['teacher_perturbation'] = perturbation.summary()
+        report['teacher_perturbation']['pool_scope'] = 'fresh_successful_pinch_first_episodes_only;tripod_outcomes_audit_only'
+        report['failed_or_incomplete_pool'] = failed_pool
     if adapter_difference is not None:
         report['physical_sdk_adapter_max_semantic_roundtrip_difference'] = adapter_difference[0]
         report['physical_sdk_adapter_max_executed_action_difference'] = 0.

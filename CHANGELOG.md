@@ -1,3 +1,9 @@
+## 2026-11-09 — Stage 6 专家初态扰动与来源隔离
+
+- 新增显式Tier1 Teacher manifest、真实reset/首相机包读回及成功二指/失败未完成分池。只改物体XY/yaw，原关节、手根、速度和double Task命令seed保持；不通过原evaluation的float32编码重写Teacher命令。原eval默认分支保留。
+- 加固显式row/episode来源lineage冲突及同episode跨train/heldout拒绝，保留legacy轨迹断点分段。独立对真实02池与BC冻结版本比较：4638窗口、事件、概率、1000次同seed抽样及prepared index全部exact。
+- 发布实际29job有限驱动的原字节实现和CPU测试。数据/训练/驱动范围125 passed（21.01s），Tier1与原Teacher/reset相关范围200 passed（22.74s），不是相加的原生次数。新扰动manifest已对真实c58/资产合同验证，尚未执行原生扰动或添加专家样本；原PPO及默认控制路径保持，PR仍Draft。
+
 ## 2026-11-09 — Stage 6 原生来源与短分支入口
 
 - 接入五命令CLI、绑定真实模型/场景/数据SHA的原生来源和Teacher前缀短分支；分别记录真实issued动作、首次数值偏离、任务物理事件及首terminal。Student launch移除Teacher/MPC/旧评估/M2参数，相机warmup与真实reset读回严格核对。

@@ -162,7 +162,16 @@ def install_evaluation_reset(world, task, manifest, *, min_trials_per_style=100)
     Nonzero carriage coordinates are rejected: native mount reset commands zero.
     """
     value=validate_manifest(manifest,min_trials_per_style=min_trials_per_style)
-    trials=value['trials']
+    _install_reset_trials(world,task,value['trials'])
+    return value
+
+
+def _install_reset_trials(world, task, trials, *, object_pose_only=False):
+    """Original buffer writer shared by separately validated reset protocols.
+
+    Callers must validate their own manifest; this core grants no evaluation,
+    success or native certificate. SDK writes still occur only in world.reset.
+    """
     if len(trials)!=world.n or task.n!=world.n: raise ValueError('manifest batch must equal native batch')
     if [r['grasp_style'] for r in trials] != [s for s in GRASP_STYLES for _ in range(world.n//2)]:
         raise ValueError('manifest must use balanced contiguous grasp groups')
@@ -190,6 +199,12 @@ def install_evaluation_reset(world, task, manifest, *, min_trials_per_style=100)
         wire[i]=torch.as_tensor(state['wire_pose'],device=wire.device,dtype=wire.dtype)
         wire[i,:3]+=world.origins[i]
         velocity[i]=torch.as_tensor(state['wire_velocity'],device=velocity.device,dtype=velocity.dtype)
+    if object_pose_only:
+        # Teacher perturbations preserve original double reset/command seeds.
+        # Only object XY and world-Z orientation are authored by that protocol.
+        world.seed_wire[:,:2].copy_(wire[:,:2])
+        world.seed_wire[:,3:].copy_(wire[:,3:])
+        return
     # Prepare every replacement before the first mutation.
     commands=torch.cat([q[h][:,world.w.ids[h]] for h in range(2)],1)
     replacements={}
@@ -201,7 +216,6 @@ def install_evaluation_reset(world, task, manifest, *, min_trials_per_style=100)
     for h in range(2): world.seed_q[h].copy_(q[h]); world.seed_qd[h].copy_(qd[h])
     world.root_seed.copy_(roots); world.seed_wire.copy_(wire); world.seed_velocity.copy_(velocity)
     task._per_env_reset_seed=replacements
-    return value
 
 
 def readback_evaluation_reset(world, manifest, *, min_trials_per_style=100, tolerance=2e-5):
@@ -211,8 +225,13 @@ def readback_evaluation_reset(world, manifest, *, min_trials_per_style=100, tole
     whose attributes resemble a TensorWorld. Certification belongs to runner.
     """
     value=validate_manifest(manifest,min_trials_per_style=min_trials_per_style)
+    return _readback_reset_trials(world,value['trials'],tolerance=tolerance)
+
+
+def _readback_reset_trials(world, trials, *, tolerance=2e-5):
+    """Original complete physical-state readback, without eval cohort semantics."""
     actual=[]; unique=set(); max_error=0.
-    for i,trial in enumerate(value['trials']):
+    for i,trial in enumerate(trials):
         roots=world.roots[i].clone(); roots[:,:3]-=world.origins[i]
         pose=torch.cat((world.wp[i]-world.origins[i],world.wq[i]))
         state=_physical_state(dict(joint_names=[list(h.joint_names) for h in world.hands],

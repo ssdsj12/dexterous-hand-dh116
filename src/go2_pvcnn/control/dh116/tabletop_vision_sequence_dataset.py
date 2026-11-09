@@ -22,6 +22,9 @@ def _episode_key(row):
 
 def _source_group(row, episode):
     # Explicit shared lineage overrides a derived trajectory's local name.
+    if ('source_group_id' in row and 'source_group_id' in episode
+            and row['source_group_id'] != episode['source_group_id']):
+        raise ValueError('row and episode source group identities disagree')
     source = row.get('source_group_id', episode.get('source_group_id', row.get('source_trajectory_id')))
     if not isinstance(source, str) or not source.strip():
         raise ValueError('each sequence needs an explicit source trajectory group')
@@ -65,7 +68,9 @@ class SequenceDataset:
                 controller_source_sha256=controller_source_sha256,
                 action_contract_sha256=action_contract_sha256)
         row_valid = torch.ones(n, dtype=torch.bool) if self.joined is None else self.joined['row_valid'].clone()
-        sources, episode_rows = {}, {}
+        sources, episode_rows, episode_groups = {}, {}, {}
+        preceding_groups = {}
+        source_rows, ended_episodes = set(), set()
         seen = set()
         for i, row in enumerate(metadata):
             if not isinstance(row, dict) or type(row.get('tick')) is not int or row['tick'] < 0:
@@ -83,8 +88,22 @@ class SequenceDataset:
                 raise ValueError('duplicate sequence dataset identity')
             seen.add(identity)
             sources[i] = _source_group(row, ep)
+            if key not in ended_episodes:
+                # Historical trajectory IDs may mark source discontinuities;
+                # explicit parent lineage must bind the whole physical episode.
+                preceding_groups.setdefault(key, set()).add(sources[i])
+                if ('source_group_id' in row or 'source_group_id' in ep or key in episode_groups):
+                    if len(preceding_groups[key]) != 1:
+                        raise ValueError('one physical episode cannot contain multiple source groups')
+                    episode_groups[key] = sources[i]
+                source_rows.add(i)
+                record = ep.get('terminal')
+                if (row.get('terminal') is True or (isinstance(record, dict)
+                        and type(record.get('control_steps')) is int
+                        and row['tick'] >= record['control_steps'] - 1)):
+                    ended_episodes.add(key)
             episode_rows.setdefault(key, []).append(i)
-        groups = set(sources.values())
+        groups = {sources[i] for i in source_rows}
         heldout = set(heldout_source_trajectory_ids)
         if heldout - groups:
             raise ValueError('unknown heldout source trajectory groups')

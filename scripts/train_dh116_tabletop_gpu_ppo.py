@@ -63,6 +63,8 @@ parser.add_argument('--vision-teacher-source',type=Path,
                     help='independent bounded real RGB-D Teacher supervision collection; no PPO')
 parser.add_argument('--vision-sequence-context-sidecar', action='store_true',
                     help='opt-in Stage6 pre-control feedback and actual-target sidecar for native Teacher labels')
+parser.add_argument('--vision-teacher-perturbation-manifest', type=Path,
+                    help='explicit native Teacher reset perturbations with actual readback and source lineage; no PPO')
 parser.add_argument('--vision-stage6-native-config', type=Path,
                     help='isolated finite Stage6 source/prefix-branch configuration; no PPO')
 parser.add_argument('--vision-teacher-mpc',action='store_true',
@@ -277,6 +279,8 @@ AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
 if args.vision_sequence_context_sidecar and not args.vision_teacher_source:
     parser.error('sequence context sidecars require independent native Teacher collection')
+if args.vision_teacher_perturbation_manifest and not args.vision_teacher_source:
+    parser.error('Teacher perturbation resets require independent native Teacher collection')
 if args.vision_stage6_native_config:
     if (not args.vision_student or not args.tensor_pipeline or args.vision_camera_mode != 'fixed'
             or args.vision_action_distribution != 'tanh_gaussian'

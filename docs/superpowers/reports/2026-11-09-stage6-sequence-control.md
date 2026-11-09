@@ -141,3 +141,41 @@ tests/test_vision_squashed_policy.py tests/test_vision_quaternion.py \
 完整saved-pool只读前向在4698个原始观测上得到总体动作MSE：E0 `0.00019526530494252625`，B0 `0.0000683884250602903`，B1 `0.000070870184078405`，B2 `0.00007078445551577331`。报告`offline_actor_pool_analysis/all4_analysis_v01/actual_all4/saved_actor_pool_report.json` SHA `aa54492a5c380beee4912e03928b22aac3391821228146b52ee42320e8b832a1`，包含24维、具名动作组及事件分层，输入/文件/RNG与全部非Actor模型状态前后不变。B1/B2的这点差异不构成B3或PPO晋级依据，也不能拿B0最低训练MSE替代原生选择。
 
 CPU命令分别实际执行：`pytest tests/test_vision_branching_eval.py -q -p pytest_mock -p no:cacheprovider`为39 passed；冻结batch/cache/entry组合91 passed。新增Teacher扰动参数隔离测试先得到3 failed/1 passed，补充Student launch剥离后，`pytest tests/test_stage6_workflow.py tests/test_stage6_workflow_integration.py -q -p pytest_mock -p no:cacheprovider --basetemp=/tmp/stage6-tier1-cli-green01`为**25 passed，13.29s**；均经同服务器`CUDA_VISIBLE_DEVICES='' DH116_PYTHON=... DH116_NUM_THREADS=2 bash scripts/python.sh`执行，不计原生验证。
+
+## 提交5：真实扰动专家入口与来源隔离（原生扩充仍待执行）
+
+新增`tabletop_vision_teacher_perturbation.py`。显式命令`python -m go2_pvcnn.control.dh116.tabletop_vision_teacher_perturbation --checkpoint <已核验c58实际文件> --primary-initialization <原primary文件> --secondary-initialization <原mixed文件> --teacher-source <原canonical Teacher文件> --output <新manifest.json> --seed 116603 --count-per-style 4`读取实际输入及SHA，生成独立8 mixed初态；XY各±0.5mm、world-Z yaw±1°，左乘实际物体四元数。两档不混用：Tier2在Tier1可重复成功之前明确拒绝。parent source group由原参考来源确定，run/seed/env不制造独立来源族。
+
+原生Teacher执行必须显式增加`--vision-teacher-perturbation-manifest <该manifest>`，保留原constrained MPC、224×96相机及sidecar。`TeacherPerturbationSession`在原最终reset之前安装对象pose缓冲、reset后完整读回，并在第一份真实相机包进入SensorHistory前再次核对全部物理状态、clock、有效率和原初始几何。未知/不一致输入拒绝，失败证据独立保存；不以合成fixture授予native资格。
+
+一个实际开发RED发现：直接复用原evaluation writer会将Task原double grasp command seed替换为float32编码关节q，虽只有约1e-8差，也不符合“仅扰动物体”。因此共享core的Teacher分支现在只写`seed_wire`的XY与四元数，原q/qd/root/velocity、Z及Task reset seed逐位保留。原evaluation公开wrapper仍运行原100例/抓法验证和原默认完整buffer写入顺序，未放宽reset或安全判据。
+
+每次仍由原Teacher/MPC真实闭环执行到原首terminal；原生成功、未recovered且实际接触抓法一致的二指才可进入本轮新增池。三指即使出现观察成功也单列，不能混入这份二指扩充池。失败/未完成的数据另写`failed_or_incomplete_supervision.pt`及manifest；异常中止也独立保存partial audit，不能当成功标签。实际source group、run UUID、env、episode UID、reset authored/readback SHA及原输入/producers SHA都有出处，不改观测、动作、previous history或物理标签。
+
+目前只完成真实输入的CPU manifest和冻结/启动草案验证，**扰动原生次数仍为0、尚无新增专家或重新拟合结果**。`tier1_entry_validation02/entry_validation.json`明确`isaac_imported=false,native_jobs_executed=0`。其实际manifest SHA为`f15dc7fce9b10a57d59bd236c50a5dd5d6b94983a494483b077b7f348886772c`，完整critic/physics/camera/两初始化SHA与真实Teacher02合同一致。2845文件的冻结manifest SHA为`a0be0c865a43356fa593c7c31eb27ae9798fef060c2996c9032555ef3fb5620a`；启动草案SHA为`b13e49037e50c89e1c4187d850a96e24c2301b1d14f52de931dca8e8b68dc00e`。该草案早于最后lineage加固，后续正式运行重新冻结，原草案不改写。
+
+显式来源lineage新增拒绝：row与episode都有`source_group_id`时不得冲突；同一物理episode不能前后绑定不同显式group，即使只后半段出现显式字段，也不能将前半段放train、后半段放heldout。纯legacy轨迹ID变化继续作为原窗口边界，原first-terminal后记录不制造新来源组。TDD先复现两个冲突被接受，再复现“后半段才声明group”的不对称漏洞，最终修复并通过旧窗口兼容。
+
+独立双namespace加载当前与实际BC冻结版本，在真实Teacher02上比较4638个窗口、segments、全部event labels、sampling probabilities、完整report、原prepared index以及1000次同seed采样，全部exact；data/context/index SHA前后不变，仍1来源fit_only。只读报告`lineage_actual_teacher02_readonly_comparison01.json` SHA `6306cccc486508a587b8f5400182e6df232292cc082d7326bd80614eb3e224ef`。因此新校验没有使既有真实BC输入变化，也没有回写其冻结源码或模型。
+
+有限native驱动现以`scripts/run_dh116_stage6_evaluations.py`进入仓库，与实际已执行`evaluation_driver01.py`字节SHA `fad4a09fc57ff62d6fee768dce57dc9c11907f597c57925c67be775455cec5ef`一致，配套`tests/test_stage6_evaluation_batch.py`。默认prepare/list不启动Isaac，显式execute才使用Linux pgrep/flock及当前GPU3 template白名单；output必须在source外，源码/driver变化会使旧plan拒绝。每个模型仍从实际completed报告选择唯一3000轮快照，不猜文件名或用loss选模。
+
+本次实际CPU命令均使用同服务器环境前缀：
+
+```bash
+# 数据、训练、旧schema与可发布的有限驱动；125 passed，21.01s，exit0
+pytest tests/test_vision_sequence_dataset.py tests/test_vision_sequence_training.py \
+tests/test_vision_supervision_dataset.py tests/test_stage6_workflow_integration.py \
+tests/test_stage6_evaluation_batch.py -q -p pytest_mock -p no:cacheprovider \
+--basetemp=/tmp/stage6-lineage-batch-green04
+
+# 扰动/原Teacher/reset、旧command与评估、回归；200 passed，22.74s，exit0
+pytest tests/test_vision_teacher_perturbation.py tests/test_vision_teacher_collection.py \
+tests/test_vision_evaluation_reset.py tests/test_vision_teacher_hold_tail.py \
+tests/test_vision_command_shadow.py tests/test_vision_evaluation_trials.py \
+tests/test_stage6_workflow.py tests/test_stage6_workflow_integration.py \
+tests/test_stage5_teacher_regression.py tests/test_vision_supervision_dataset.py \
+-q -p pytest_mock -p no:cacheprovider --basetemp=/tmp/stage6-tier1-commit5-cpu02
+```
+
+两组测试有重叠，均为CPU或纯USD fixture，不是325个原生验证。一次命令使用不存在的旧缩写测试名而未collect，随即用实际文件名纠正；没有把该退出算通过。原生四组来源任务、首次物理分叉、真实Tier1新专家及重训仍按实际结果分别收口，未启动新PPO。
