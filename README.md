@@ -12,6 +12,8 @@
 
 本次四来源纯Student的E0基线已实际结束：0/4成功，3掉落、1超力，四个首terminal及原始物理轨迹保留；B0/B1/B2继续按相同初态串行对照。Teacher重放4/4与E0纯Student0/4分别计数，尚不认定衰退已修复。
 
+固定腕三指恢复已支持显式left/both与N×2×3逐指状态，原A/right仍为默认范围；每episode累计1mm/1s及0.5s无进展预算不因接触闪断重置。新的双侧/旧恢复及有限驱动CPU检查79 passed。Stage B只代表固定腕资格，移动腕真实几何门禁、C/D/E及三指Student训练仍未开放；五项原生跟踪/恢复计划需单实例逐项验证。
+
 ## 2026-11-09 — Student原生执行链复核完成
 
 同模型、同seed、同200个初态的诊断复测已自然结束，二指/三指仍各0/100成功。逐480Hz真实backend/cache、掌位、动作、首terminal和原始物体遥测完成跨流核验；额外自动reset记录不计评估次数。二指两掌最高上移50 mm时物体仍接近原高度，掌位峰值不代表抓取。完整逐手分位、失败原因、峰值env/UID/时刻和同环境轨迹见[执行链审计](docs/superpowers/reports/2026-11-09-stage5-student-execution-audit.md)。

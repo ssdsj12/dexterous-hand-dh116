@@ -222,3 +222,27 @@ tests/test_full_episode_tracking_experiment.py tests/test_bimanual_tracking_guar
 | 3 | 983 | 7869 | 16.431250856956467 | excess_force |
 
 四个合格Hold都为0。此处不把峰值高度拼接成同一轨迹，也不根据summary回算峰值时刻；逐环境峰值argmax和首分叉将由真实raw后处理独立保存。完整同环境issued动作和480Hz轨迹均保留。B0/B1/B2尚在同一预设串行计划继续，不把未完成候选写成失败或成功。
+
+## 提交7：固定腕双侧恢复与可执行有限原生计划
+
+新增`tabletop_tripod_bilateral_recovery.py`，扩展`TripodRecoveryRuntime`及execution guard/staged entry的hand维。显式`--tripod-recovery-stage B --tripod-recovery-hands left|both`才打开双侧固定腕路径；默认仍是原A/right。左右主动关节数字分组为`(((0,1),(2,),(3,)),((6,7),(8,),(9,)))`。状态、获取原点、取消请求、压力保持及substep掩码按N×2×3维护，禁止用右手geometry或一个全局起点代替左手。
+
+每个真实episode/env/hand/digit独立累计最多1mm获准接近与1秒REACQUIRING有效时间，0.5秒无实际几何进展停止。接触闪断或短暂重建不补预算，稳定后停止消耗，耗尽锁定直到真实reset；reset完整清理。候选经原guard后，确认两手SDK写入完成的保留逻辑/编码目标，再提交预算；候选预测、求解收敛或cache本身不算真实接触。原强制卸载优先，真正承载的指腹保留原压力保持，不拿缺失指腹的恢复动作覆盖它。
+
+缺失pad使用该手实际源FK/Jacobian和真实pad区域，保留承载点的10倍正则、原关节/动作/速度限制和完整非线性碰撞审计。固定B还要求实测六pad连续接触至少0.2秒、测得腕部稳定、原诊断通过及当前真实快照零增量source-geometry审计，UNCERTIFIED明确拒绝。任何静态几何或接触通过都不是悬空保持，moving-wrist cooked/live资格依然关闭；C/D/E未执行，不能进三指BC或声称Student成功。teacher-only受限载荷转移/后续Lift辅助状态有CPU测试，未通过移动腕门禁则不执行。
+
+发布`scripts/run_dh116_stage6_tracking.py`，配置为独立的`tracking_original`、`tracking_unilateral`、`tracking_common`、`stage_A_right`、`stage_B_both`五项。每项保存独立源码freeze、输入/launcher SHA、process/output/exit及真实物理证据；使用原全局锁`/tmp/xk-dh116-stage4-native.lock`的LOCK_NB与pgrep，busy即拒绝，不等待排队、不启动第二个Isaac、不修改其他训练。默认prepare/list仅CPU工作，只有既有plan加显式`--execute`才能启动。源码/launcher继续变化则旧plan拒绝，需要新目录重新prepare；原件不覆盖。
+
+计划严格绑定实际Teacher02 launch及qualified标定v02，保留其原物理、材料、初始化、求解器与相机参数。五项草案已实际prepare，但当前**native_jobs_executed=0**；计划不等于原生结果。当前唯一原生owner继续四组来源/分支，结束并交还后才可执行这些实验。common原生结果、Teacher/MPC卸载priority、原A回归与新B/both接触能力分别报告，不能互相代替。
+
+本次实际CPU命令：
+
+```bash
+CUDA_VISIBLE_DEVICES='' DH116_PYTHON=/mnt/mydisk/xk/envs/dh116/bin/python DH116_NUM_THREADS=2 \
+bash scripts/python.sh -m pytest tests/test_stage6_bilateral_recovery.py \
+tests/test_stage6_tripod_entry.py tests/test_tripod_recovery_runtime.py \
+tests/test_tripod_stage_interrupt.py tests/test_stage6_tracking_batch.py \
+-q -p pytest_mock -p no:cacheprovider --basetemp=/tmp/stage6-bilateral-commit7-cpu01
+```
+
+**79 passed，9.24秒，exit0**，含旧恢复/A默认、左右预算、原guard后billing和五项launcher控制边界。此前launcher独立23项fixture也通过；不是再加23次或任何原生成功。本阶段没有修改4个来源controller字节，没有放宽碰撞、执行器或30mm/5s/0.5mm标准，PR继续Draft。

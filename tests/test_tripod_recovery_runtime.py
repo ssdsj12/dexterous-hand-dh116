@@ -127,7 +127,7 @@ def test_before_physics_switches_acquired_pad_to_fresh_pressure_without_budget_r
     r=m.TripodRecoveryRuntime.__new__(m.TripodRecoveryRuntime)
     r.active=True;r.pending=None;r.device='cpu';r.n=1;r.tick=437
     r.ledger=f;r.tripod=torch.tensor([True]);r.ended=torch.tensor([False])
-    r.acquisition_origins=torch.ones(1,3,dtype=torch.bool)
+    r.acquisition_origins=torch.zeros(1,2,3,dtype=torch.bool);r.acquisition_origins[:,1]=True
     r.t=NS(done=torch.tensor([False]),actions=torch.full((1,24),.1,dtype=torch.float64),
         command=torch.as_tensor(a['current_command']).reshape(1,12).clone())
     pads={key:torch.as_tensor(a[name])[None] for key,name in (
@@ -149,7 +149,7 @@ def test_before_physics_switches_acquired_pad_to_fresh_pressure_without_budget_r
     r.before_step()
     assert r.pressure_step_proposals=={0}
     assert r.t.actions[0,6:8].eq(0).all() and r.t.actions[0,9]==0
-    assert r.substep_action_origin[0,1]==2
+    assert r.substep_action_origin[0,1,1]==2
     assert torch.equal(r.requested_actions,r.t.actions)
     assert torch.equal(f.executed_approach_m,distance) and torch.equal(f.attempt_time_s,time)
 
@@ -192,14 +192,14 @@ def test_prior_fresh_action_is_revoked_when_next_substep_cannot_rebuild_model():
     r=m.TripodRecoveryRuntime.__new__(m.TripodRecoveryRuntime)
     r.active=True;r.pending=None;r.n=1;r.device='cpu';r.tick=437;r.last_before_step_tick=437
     r.ledger=api();observe(r.ledger,contact=True)
-    r.tripod=torch.tensor([True]);r.ended=torch.tensor([False]);r.acquisition_origins=torch.zeros(1,3,dtype=torch.bool)
-    r.substep_action_origin=torch.tensor([[0,2,0]])
-    r.pressure_mandatory_mask=torch.zeros(1,3,dtype=torch.bool)
+    r.tripod=torch.tensor([True]);r.ended=torch.tensor([False]);r.acquisition_origins=torch.zeros(1,2,3,dtype=torch.bool)
+    r.substep_action_origin=torch.tensor([[[0,0,0],[0,2,0]]])
+    r.pressure_mandatory_mask=torch.zeros(1,2,3,dtype=torch.bool)
     r.t=NS(done=torch.tensor([False]),actions=torch.zeros(1,24,dtype=torch.float64))
     r.t.actions[0,8]=-.004746512
     r.w=NS(pad_measurements={});r._settled=lambda _:False
     r.before_step()
-    assert r.t.actions[0,8]==0 and r.substep_action_origin[0,1]==3
+    assert r.t.actions[0,8]==0 and r.substep_action_origin[0,1,1]==3
     assert not r.pressure_step_proposals and not r.requested_actions[0,8]
 
 
@@ -208,9 +208,9 @@ def test_prior_mandatory_relief_cannot_be_silently_replaced_with_zero_outside_mo
     r=m.TripodRecoveryRuntime.__new__(m.TripodRecoveryRuntime)
     r.active=True;r.pending=None;r.n=1;r.device='cpu';r.tick=437;r.last_before_step_tick=437
     r.ledger=api();observe(r.ledger,contact=True)
-    r.tripod=torch.tensor([True]);r.ended=torch.tensor([False]);r.acquisition_origins=torch.zeros(1,3,dtype=torch.bool)
-    r.substep_action_origin=torch.tensor([[0,2,0]])
-    r.pressure_mandatory_mask=torch.tensor([[False,True,False]])
+    r.tripod=torch.tensor([True]);r.ended=torch.tensor([False]);r.acquisition_origins=torch.zeros(1,2,3,dtype=torch.bool)
+    r.substep_action_origin=torch.tensor([[[0,0,0],[0,2,0]]])
+    r.pressure_mandatory_mask=torch.tensor([[[False,False,False],[False,True,False]]])
     r.t=NS(done=torch.tensor([False]),actions=torch.zeros(1,24,dtype=torch.float64))
     r.t.actions[0,8]=-.01;r.w=NS(pad_measurements={});r._settled=lambda _:False
     with pytest.raises(RuntimeError,match='mandatory pressure relief lost model admission'):

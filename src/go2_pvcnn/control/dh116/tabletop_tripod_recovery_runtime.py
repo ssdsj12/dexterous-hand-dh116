@@ -18,13 +18,18 @@ from .tabletop_tripod_native_evidence import TripodNativeEvidenceBuilder
 from .tabletop_tripod_nonlinear_geometry import (GeometryThresholds,
     TripodNonlinearGeometry, audit_pad_region)
 from .tabletop_tripod_candidate_planner import TripodCandidatePlanner
+from .tabletop_tripod_bilateral_recovery import (HAND_DIGIT_ACTIVE_INDICES,
+    recovery_scope, BilateralTripodCandidatePlanner, HandTripodPressureHold)
 
 PREPARATION_TICKS = 437
 DT = 1 / 480
 
 
 def validate_staged_options(args):
-    if (getattr(args,'tripod_recovery_stage',None) != 'A'
+    stage=getattr(args,'tripod_recovery_stage',None)
+    hands=getattr(args,'tripod_recovery_hands','right')
+    if (stage not in ('A','B') or (stage=='A' and hands!='right')
+            or (stage=='B' and hands not in ('left','both'))
             or not getattr(args,'vision_teacher_source',None)
             or getattr(args,'vision_teacher_mpc',False) is not True
             or getattr(args,'vision_teacher_mpc_profile',None) != 'pressure_reference'
@@ -36,7 +41,7 @@ def validate_staged_options(args):
             or getattr(args,'resume',None) or getattr(args,'vision_evaluation_checkpoint',None)
             or getattr(args,'surface_mpc',False)
             or getattr(args,'vision_lift_reward_experiment','R0') != 'R0'):
-        raise ValueError('stage A requires isolated fixed-camera Teacher preparation, bounded 438..1200 controls; no PPO/resume/later stage')
+        raise ValueError('fixed-wrist A/right or explicit B/left|both requires isolated fixed-camera Teacher preparation, bounded 438..1200 controls; no PPO/resume/moving stage')
 
 
 def commit_submitted_targets(ledger, pending, world):
@@ -72,17 +77,25 @@ def cancel_inapplicable_substep_actions(task,ledger,tripod,acquisition_origins):
     control simply because a pad establishes contact halfway through it.
     Original, explicitly pressure-origin withdrawal is untouched.
     """
+    # Accept the historic helper input for old Stage A callers; runtime-owned
+    # state is always explicitly [N,2,3]. No left authority is inferred.
+    if acquisition_origins.shape==(ledger.n,3):
+        right=acquisition_origins
+        acquisition_origins=torch.zeros(ledger.n,2,3,device=right.device,dtype=right.dtype)
+        acquisition_origins[:,1]=right
     if (task.actions.shape!=(ledger.n,24) or tripod.shape!=(ledger.n,)
-            or tripod.dtype!=torch.bool or acquisition_origins.shape!=(ledger.n,3)
+            or tripod.dtype!=torch.bool or acquisition_origins.shape!=(ledger.n,2,3)
             or acquisition_origins.dtype!=torch.bool):
         raise ValueError('canonical per-substep action lineage required')
-    stop=acquisition_origins&tripod[:,None]&(ledger.state[:,1,:3]!=ledger.REACQUIRING)
+    scope=ledger.enabled_pad_mask[:,:,:3]&tripod[:,None,None]
+    stop=acquisition_origins&scope&(ledger.state[:,:,:3]!=ledger.REACQUIRING)
     # The converse transition matters too: a held pressure action cannot become
     # unbudgeted acquisition when its actual contact disappears mid-control.
-    stop|=(~acquisition_origins&tripod[:,None]
-           &~(ledger.contact_known[:,1,:3]&ledger.measured_contact[:,1,:3]))
-    for digit,group in enumerate(((6,7),(8,),(9,))):
-        for j in group:task.actions[stop[:,digit],j]=0.
+    stop|=(~acquisition_origins&scope
+           &~(ledger.contact_known[:,:,:3]&ledger.measured_contact[:,:,:3]))
+    for hand,groups in enumerate(HAND_DIGIT_ACTIVE_INDICES):
+        for digit,group in enumerate(groups):
+            for j in group:task.actions[stop[:,hand,digit],j]=0.
 
 
 def retire_completed_first_episode(ledger,ids,completed):
@@ -124,7 +137,7 @@ class TripodRecoveryRuntime:
     It grants no new distance/time budget. A truly moving wrist never passes
     the fixed-wrist geometry admission test merely because its command is0.
     """
-    def __init__(self,env,models,source_sha,output):
+    def __init__(self,env,models,source_sha,output,*,recovery_hands='right',recovery_stage=None):
         self.env,self.w,self.t=env,env.world,env.task
         self.n,self.device=self.w.n,self.w.device
         self.models=models;self.source_sha=source_sha
@@ -135,8 +148,11 @@ class TripodRecoveryRuntime:
         if styles.shape!=(self.n,) or styles.dtype!=torch.long:
             raise ValueError('actual mixed reset identity required')
         self.tripod=styles==1
-        enabled=torch.zeros(self.n,2,5,device=self.device,dtype=torch.bool)
-        enabled[self.tripod,1,:3]=True
+        enabled,self.finger_mask=recovery_scope(styles,recovery_hands)
+        self.recovery_hands=recovery_hands
+        self.stage=('A' if recovery_hands=='right' else 'B') if recovery_stage is None else recovery_stage
+        if self.stage not in ('A','B') or (self.stage=='A' and recovery_hands!='right'):
+            raise ValueError('legacy Stage A is right-only; bilateral fixed-wrist candidate uses explicit Stage B')
         self.ledger=TripodContactRecovery(self.n,self.device,enabled_pad_mask=enabled)
         self.builder=TripodNativeEvidenceBuilder(self.w,source_models=models)
         surfaces=['Table']+[s['name'] for s in (self.w.w.end_support_scene or {}).get('supports',[])]
@@ -153,12 +169,10 @@ class TripodRecoveryRuntime:
         self.control_issued_actions=self.requested_actions.clone()
         self.upstream_pressure_actions=self.requested_actions.clone()
         self.pressure_controllers={};self.pressure_step_proposals=set()
-        self.acquisition_origins=torch.zeros(self.n,3,device=self.device,dtype=torch.bool)
-        self.substep_action_origin=torch.zeros(self.n,3,device=self.device,dtype=torch.long)
+        self.acquisition_origins=torch.zeros(self.n,2,3,device=self.device,dtype=torch.bool)
+        self.substep_action_origin=torch.zeros(self.n,2,3,device=self.device,dtype=torch.long)
         self.last_before_step_tick=None;self.previous_fresh_mask=torch.zeros_like(self.acquisition_origins)
         self.pressure_mandatory_mask=torch.zeros_like(self.acquisition_origins)
-        self.finger_mask=torch.zeros(self.n,12,device=self.device,dtype=torch.bool)
-        self.finger_mask[self.tripod,6:10]=True
         self.executions=0;self.fixed_start=None;self.fixed_palms=None;self.fixed_angles=None
         self.stage_outcomes={};self.geometry_blocked={};self.last_capture_step=None
         self.terminal_ledgers={};self._step_live=None
@@ -166,10 +180,10 @@ class TripodRecoveryRuntime:
         self.fixed_offset=None;self.start_positions=None;self.fixed_left_commands=None
         self.env.control_probe=self
         self.w.tripod_recovery_runtime=self;self.t.tripod_recovery_runtime=self
-        self.t.tripod_recovery_stage='A';self.w.capture_tripod_contact_evidence=True
+        self.t.tripod_recovery_stage=self.stage;self.w.capture_tripod_contact_evidence=True
 
     def _write_physics(self,row):
-        row['experiment_phase']='fixed_wrist_A' if self.active else 'published_pressure_preparation'
+        row['experiment_phase']='fixed_wrist_'+self.stage if self.active else 'published_pressure_preparation'
         row['counts_as_student_success']=False
         self.physics.write(json.dumps(_safe_json(row),allow_nan=False,separators=(',',':'))+'\n')
 
@@ -181,11 +195,11 @@ class TripodRecoveryRuntime:
     def _capture(self,live,*,fatal=None,event_kind='physics'):
         false=torch.zeros(self.n,device=self.device,dtype=torch.bool)
         substep=0 if self.last_capture_step is None else int(self.env.substep)
-        return self.builder.capture(episode_ids=self.episode_ids,stage_id='A',
+        return self.builder.capture(episode_ids=self.episode_ids,stage_id=self.stage,
             control_step=self.tick,control_substep=substep if event_kind=='reset' else int(self.env.substep),
             live=live,terminal=(self.t.done&live) if event_kind=='physics' else false,
             fatal=false if fatal is None else fatal,native_success=self.t.success&live,
-            wrists_fixed=self.active,left_targets_fixed=self.active,
+            wrists_fixed=self.active,left_targets_fixed=self.active and self.recovery_hands=='right',
             object_external_force_applied=False,induced_disconnect=False,event_kind=event_kind)
 
     def after_physical_reset(self,ids,measurement):
@@ -211,11 +225,16 @@ class TripodRecoveryRuntime:
             # substep permission. Revoke it before attempting a new model. At a
             # new control begin_step has installed a new upstream action.
             same_control=getattr(self,'last_before_step_tick',None)==self.tick
-            self.previous_fresh_mask=(previous==2)&self.tripod[:,None]&same_control
-            for digit,group in enumerate(((6,7),(8,),(9,))):
-                for j in group:self.t.actions[self.previous_fresh_mask[:,digit],j]=0.
+            self.previous_fresh_mask=(previous==2)&self.tripod[:,None,None]&same_control
+            mandatory=getattr(self,'pressure_mandatory_mask',torch.zeros_like(self.acquisition_origins))
+            known_bearing=self.ledger.contact_known[:,:,:3]&self.ledger.measured_contact[:,:,:3]
+            if bool((self.previous_fresh_mask&mandatory&~known_bearing&~self.ended[:,None,None]).any()):
+                raise RuntimeError('fresh mandatory pressure relief lost actual contact admission; stopped before SDK submission')
+            for hand,groups in enumerate(HAND_DIGIT_ACTIVE_INDICES):
+                for digit,group in enumerate(groups):
+                    for j in group:self.t.actions[self.previous_fresh_mask[:,hand,digit],j]=0.
             self.substep_action_origin=torch.where(self.acquisition_origins,
-                torch.where(self.ledger.state[:,1,:3]==self.ledger.REACQUIRING,1,3),0)
+                torch.where(self.ledger.state[:,:,:3]==self.ledger.REACQUIRING,1,3),0)
             self.substep_action_origin[self.previous_fresh_mask]=3
             cancel_inapplicable_substep_actions(self.t,self.ledger,self.tripod,self.acquisition_origins)
             self.pressure_step_proposals=set()
@@ -230,40 +249,44 @@ class TripodRecoveryRuntime:
             if not self._settled(index):
                 mandatory=getattr(self,'pressure_mandatory_mask',torch.zeros_like(self.acquisition_origins))
                 if bool((self.previous_fresh_mask[index]&mandatory[index]
-                         &self.ledger.measured_contact[index,1,:3]).any()):
+                         &self.ledger.measured_contact[index,:,:3]).any()):
                     raise RuntimeError('fresh mandatory pressure relief lost model admission; stage A stopped before SDK submission')
                 continue
-            bearing=self.ledger.contact_known[index,1,:3]&self.ledger.measured_contact[index,1,:3]
-            if not bool(bearing.any()):continue
-            planner=self._planner(index)
-            if index not in self.pressure_controllers:self.pressure_controllers[index]=TripodPressureHold(planner)
-            plan=self.pressure_controllers[index].plan(**self._contexts(index),
-                current_command=self.t.command[index].reshape(2,6),
-                effective_pad_loads_n=m['effective_pad_loads_n'][index],
-                effective_pad_vectors_w=m['effective_pad_vectors_w'][index],
-                effective_pad_points_w_m=m['effective_pad_points_w'][index],
-                effective_pad_valid=m['effective_pad_valid'][index],
-                effective_pad_depth_m=m['effective_pad_depth_m'][index],
-                rejected_contact_loads_n=m['rejected_contact_loads_n'][index],
-                upstream_pressure_action24=self.upstream_pressure_actions[index],substeps=1)
-            self.decisions.write(json.dumps(_safe_json(dict(event_kind='fresh_pressure_proposal',
-                env_id=index,episode_id=int(self.episode_ids[index]),physics_step=self.w._physics_steps,
-                control_tick=self.tick,control_substep=int(self.env.substep),plan=plan)),
-                allow_nan=False,separators=(',',':'))+'\n')
-            if any(r['relief_blocked'] for r in plan['per_pad']):
-                raise RuntimeError('mandatory pressure relief not certified; stage A stopped before SDK submission')
-            if not hasattr(self,'pressure_mandatory_mask'):
-                self.pressure_mandatory_mask=torch.zeros_like(self.acquisition_origins)
-            self.pressure_mandatory_mask[index]=torch.tensor(
-                [r['mandatory_relief'] for r in plan['per_pad']],device=self.device,dtype=torch.bool)
-            for digit,group in enumerate(((6,7),(8,),(9,))):
-                if bool(bearing[digit]):
-                    self.t.actions[index,list(group)]=torch.as_tensor(
-                        plan['action24'][list(group)],device=self.device,dtype=self.t.actions.dtype)
-                    self.substep_action_origin[index,digit]=2 if plan['accepted'] else 3
-            if plan['accepted']:self.pressure_step_proposals.add(index)
-            if plan['reason']=='ACTUAL_SOURCE_GEOMETRY_UNCERTIFIED':
-                self.geometry_blocked[index]=plan.get('rejection_reasons',['PRESSURE_SOURCE_GEOMETRY_UNCERTIFIED'])
+            for hand,groups in enumerate(HAND_DIGIT_ACTIVE_INDICES):
+                bearing=(self.ledger.contact_known[index,hand,:3]&self.ledger.measured_contact[index,hand,:3]
+                    &self.ledger.enabled_pad_mask[index,hand,:3])
+                if not bool(bearing.any()):continue
+                planner=self._planner(index)
+                key=index if getattr(self,'recovery_hands','right')=='right' else (index,hand)
+                if key not in self.pressure_controllers:
+                    self.pressure_controllers[key]=(TripodPressureHold(planner) if hand==1 else HandTripodPressureHold(planner,hand))
+                plan=self.pressure_controllers[key].plan(**self._contexts(index),
+                    current_command=self.t.command[index].reshape(2,6),
+                    effective_pad_loads_n=m['effective_pad_loads_n'][index],
+                    effective_pad_vectors_w=m['effective_pad_vectors_w'][index],
+                    effective_pad_points_w_m=m['effective_pad_points_w'][index],
+                    effective_pad_valid=m['effective_pad_valid'][index],
+                    effective_pad_depth_m=m['effective_pad_depth_m'][index],
+                    rejected_contact_loads_n=m['rejected_contact_loads_n'][index],
+                    upstream_pressure_action24=self.upstream_pressure_actions[index],substeps=1)
+                self.decisions.write(json.dumps(_safe_json(dict(event_kind='fresh_pressure_proposal',hand=hand,
+                    env_id=index,episode_id=int(self.episode_ids[index]),physics_step=self.w._physics_steps,
+                    control_tick=self.tick,control_substep=int(self.env.substep),plan=plan)),
+                    allow_nan=False,separators=(',',':'))+'\n')
+                if any(r['relief_blocked'] for r in plan['per_pad']):
+                    raise RuntimeError('mandatory pressure relief not certified; stage stopped before SDK submission')
+                if not hasattr(self,'pressure_mandatory_mask'):
+                    self.pressure_mandatory_mask=torch.zeros_like(self.acquisition_origins)
+                self.pressure_mandatory_mask[index,hand]=torch.tensor(
+                    [r['mandatory_relief'] for r in plan['per_pad']],device=self.device,dtype=torch.bool)
+                for digit,group in enumerate(groups):
+                    if bool(bearing[digit]):
+                        self.t.actions[index,list(group)]=torch.as_tensor(
+                            plan['action24'][list(group)],device=self.device,dtype=self.t.actions.dtype)
+                        self.substep_action_origin[index,hand,digit]=2 if plan['accepted'] else 3
+                if plan['accepted']:self.pressure_step_proposals.add(index)
+                if plan['reason']=='ACTUAL_SOURCE_GEOMETRY_UNCERTIFIED':
+                    self.geometry_blocked[index]=plan.get('rejection_reasons',['PRESSURE_SOURCE_GEOMETRY_UNCERTIFIED'])
 
     def _contexts(self,index):
         p=self.last_batch['packets'][index];snap=self.last_batch['geometry_snapshots'][index]
@@ -300,7 +323,8 @@ class TripodRecoveryRuntime:
             limits=self.w.limits[index].detach().cpu().numpy()
             full=np.asarray([limits[h,self.builder.joint_ids[h]] for h in range(2)])
             geometry=TripodNonlinearGeometry(*self.models,self._scene(index),_thresholds())
-            self.planners[index]=TripodCandidatePlanner(geometry,
+            planner_type=TripodCandidatePlanner if getattr(self,'recovery_hands','right')=='right' else BilateralTripodCandidatePlanner
+            self.planners[index]=planner_type(geometry,
                 active_lower=self.t.low.reshape(2,6),active_upper=self.t.high.reshape(2,6),
                 full_lower=full[...,0],full_upper=full[...,1],max_candidates=1,
                 limit_sources=dict(active='unchanged task.low/high',full='actual TensorWorld original SDK limits by JOINTS',
@@ -317,6 +341,7 @@ class TripodRecoveryRuntime:
         self.fixed_angles=self.t.m['wrist_joint_angles'].clone()
         self.fixed_offset=self.t.offset.clone();self.start_positions=self.w.roots.clone()
         self.fixed_left_commands=self.t.command[:,:6].clone()
+        self.fixed_commands=self.t.command.clone()
         # A new stage reference does not reset physics, physical episode IDs,
         # any recovery budget, native success or reset-based net lift.
         for index in self.tripod.nonzero().flatten().tolist():
@@ -339,29 +364,37 @@ class TripodRecoveryRuntime:
         self.upstream_pressure_actions=pressure_actions.clone()
         if not self.active:
             self.control_issued_actions=issued.clone();self.requested_actions=issued.clone();return issued
-        issued[self.tripod,:6]=0.;issued[self.tripod,12:]=0.
+        hands=getattr(self,'recovery_hands','right')
+        if hands=='right':issued[self.tripod,:6]=0.
+        elif hands=='left':issued[self.tripod,6:12]=0.
+        issued[self.tripod,12:]=0.
         eligible=torch.zeros_like(self.ledger.enabled_pad_mask)
         for index in (self.tripod&~self.ended).nonzero().flatten().tolist():
             # Existing bearing-pad pressure actions, including withdrawal, are
             # retained. Only the missing digit's source velocity is replaced.
-            missing=self.ledger.contact_known[index,1,:3]&~self.ledger.measured_contact[index,1,:3]
-            for digit,group in enumerate(((6,7),(8,),(9,))):
-                if bool(missing[digit]):issued[index,list(group)]=0.
+            missing=(self.ledger.contact_known[index,:,:3]&~self.ledger.measured_contact[index,:,:3]
+                &self.ledger.enabled_pad_mask[index,:,:3])
+            for hand,groups in enumerate(HAND_DIGIT_ACTIVE_INDICES):
+                for digit,group in enumerate(groups):
+                    if bool(missing[hand,digit]):issued[index,list(group)]=0.
             if not self._settled(index):continue
             if not bool(missing.any()):continue
             planner=self._planner(index);context=self._contexts(index)
-            plan=planner.plan(**context,current_command=self.t.command[index].reshape(2,6),
-                missing_right=missing.detach().cpu().numpy(),
-                remaining_approach_m=(.001-self.ledger.executed_approach_m[index,1,:3]).clamp_min(0.),substeps=8)
+            kwargs=(dict(missing_right=missing[1].detach().cpu().numpy(),
+                remaining_approach_m=(.001-self.ledger.executed_approach_m[index,1,:3]).clamp_min(0.))
+                if hands=='right' else dict(missing_hands=missing.detach().cpu().numpy(),
+                    remaining_approach_m=(.001-self.ledger.executed_approach_m[index,:,:3]).clamp_min(0.)))
+            plan=planner.plan(**context,current_command=self.t.command[index].reshape(2,6),**kwargs,substeps=8)
             self.plans[index]=plan
             self.decisions.write(json.dumps(_safe_json(dict(env_id=index,episode_id=int(self.episode_ids[index]),
                 tick=self.tick,plan=plan)),allow_nan=False,separators=(',',':'))+'\n')
             if plan['accepted']:
-                for digit,group in enumerate(((6,7),(8,),(9,))):
-                    if bool(missing[digit]):
-                        issued[index,list(group)]=torch.as_tensor(plan['action24'][list(group)],device=self.device)
-                        eligible[index,1,digit]=True
-                        self.acquisition_origins[index,digit]=True
+                for hand,groups in enumerate(HAND_DIGIT_ACTIVE_INDICES):
+                    for digit,group in enumerate(groups):
+                        if bool(missing[hand,digit]):
+                            issued[index,list(group)]=torch.as_tensor(plan['action24'][list(group)],device=self.device)
+                            eligible[index,hand,digit]=True
+                            self.acquisition_origins[index,hand,digit]=True
             elif plan['reason']=='ACTUAL_SOURCE_GEOMETRY_UNCERTIFIED':
                 self.geometry_blocked[index]=plan['rejection_reasons']
         self.ledger.request_retry(episode_ids=self.episode_ids,control_tick=self.tick,
@@ -372,18 +405,22 @@ class TripodRecoveryRuntime:
         if not self.active:return packet['governed_target_rad']
         result=packet['governed_target_rad'].clone();request=torch.zeros_like(self.ledger.executed_approach_m)
         selected=self.tripod&packet['live']&~self.ended
-        if self.fixed_left_commands is not None and not torch.equal(
+        hands=getattr(self,'recovery_hands','right')
+        if hands=='right' and self.fixed_left_commands is not None and not torch.equal(
                 result[selected,:6],self.fixed_left_commands[selected]):
             raise RuntimeError('stage A left target changed by native guard; fixed-target experiment stopped')
+        if hands=='left' and not torch.equal(result[selected,6:12],self.fixed_commands[selected,6:12]):
+            raise RuntimeError('fixed non-recovery right target changed by native guard')
         for index in (self.tripod&packet['live']&~self.ended).nonzero().flatten().tolist():
             mask=packet['finger_mask'][index]
             # An exhausted/stopped/unknown missing pad receives no automatic
             # approach. Original bearing pressure cannot be changed by mask.
-            active=self.ledger.state[index,1,:3]==self.ledger.REACQUIRING
-            for digit,group in enumerate(((6,7),(8,),(9,))):
-                if not bool(active[digit]):
-                    for j in group:
-                        if bool(mask[j]):result[index,j]=packet['command_rad'][index,j]
+            active=(self.ledger.state[index,:,:3]==self.ledger.REACQUIRING)&self.ledger.enabled_pad_mask[index,:,:3]
+            for hand,groups in enumerate(HAND_DIGIT_ACTIVE_INDICES):
+                for digit,group in enumerate(groups):
+                    if not bool(active[hand,digit]):
+                        for j in group:
+                            if bool(mask[j]):result[index,j]=packet['command_rad'][index,j]
             changed=mask&(result[index]!=packet['command_rad'][index])
             pressure_proposal=index in self.pressure_step_proposals
             if not bool(changed.any()) and not pressure_proposal:continue
@@ -391,14 +428,18 @@ class TripodRecoveryRuntime:
             audit=planner.audit_commands(**self._contexts(index),
                 current_command=packet['command_rad'][index].reshape(2,6),
                 final_logical_command=result[index].reshape(2,6),final_next_command=result[index].reshape(2,6).float())
-            amounts=torch.as_tensor(audit['approach_command_m'],device=self.device,dtype=torch.float64)
+            if 'bilateral_approach_command_m' in audit:
+                amounts=torch.as_tensor(audit['bilateral_approach_command_m'],device=self.device,dtype=torch.float64)
+            else:
+                amounts=torch.zeros(2,3,device=self.device,dtype=torch.float64)
+                amounts[1]=torch.as_tensor(audit['approach_command_m'],device=self.device,dtype=torch.float64)
             amounts=torch.where(active,amounts,0.)
-            room=torch.minimum((.001-self.ledger.executed_approach_m[index,1,:3]).clamp_min(0.),
-                amounts.new_full((3,),.001*DT))
+            room=torch.minimum((.001-self.ledger.executed_approach_m[index,:,:3]).clamp_min(0.),
+                amounts.new_full((2,3),.001*DT))
             approved=bool(audit['accepted']) and bool((amounts<=room+1e-15).all())
             if pressure_proposal and not approved:
                 raise RuntimeError('combined post-native-guard pressure/acquisition target not certified; no SDK submission')
-            if approved:request[index,1,:3]=amounts
+            if approved:request[index,:,:3]=amounts
             else:result[index,mask]=packet['command_rad'][index,mask]
             self.decisions.write(json.dumps(_safe_json(dict(env_id=index,episode_id=int(self.episode_ids[index]),
                 tick=self.tick,physics_step=self.w._physics_steps,post_guard_approved=approved,audit=audit)),
@@ -432,6 +473,35 @@ class TripodRecoveryRuntime:
         world.wrist_angles[selected]=self.fixed_angles[selected]
         task.rotation_targets[selected]=self.fixed_angles[selected]
 
+    def fixed_stage_qualified(self):
+        """Stage B needs real stable bilateral contact AND current geometry.
+
+        Diagnostic contact alone never admits a source-uncertified state. This
+        checks the unchanged complete geometry certificate at actual snapshots,
+        with zero wrist/joint increment; it grants no moving-wrist permission.
+        Legacy Stage A retains its original diagnostic decision unchanged.
+        """
+        selected=self.tripod.nonzero().flatten().tolist()
+        if not self.active or not selected:return False
+        if not all(self.latest_rows.get(i,{}).get('stage_gate',{}).get('pass',False) for i in selected):return False
+        if self.stage=='A':return True
+        qualified=True
+        for index in selected:
+            row=self.latest_rows[index]
+            if bool(self.ended[index]) or not self._settled(index) or row.get('six_pad_contiguous_s',0.)<.2:
+                qualified=False;continue
+            context=self._contexts(index);planner=self._planner(index)
+            audit=planner.geometry.audit_state(context['snapshots'],np.zeros(6),left_delta=np.zeros(6),
+                bearing_mask=context['bearing_mask'],bearing_provenance=context['bearing_provenance'])
+            accepted=bool(audit['motion_safe'] and audit['audit_complete'])
+            if not accepted:
+                self.geometry_blocked[index]=audit['rejection_reasons'];qualified=False
+            self.decisions.write(json.dumps(_safe_json(dict(event_kind='fixed_B_contact_geometry_qualification',
+                env_id=index,episode_id=int(self.episode_ids[index]),physics_step=self.w._physics_steps,
+                tick=self.tick,accepted=accepted,audit=audit,moving_wrist_permission=False)),
+                allow_nan=False,separators=(',',':'))+'\n')
+        return qualified
+
     def after_native_submission(self,world,task,live):
         if self.pending is not None:
             commit_submitted_targets(self.ledger,self.pending,world)
@@ -452,16 +522,18 @@ class TripodRecoveryRuntime:
         signature=torch.full((*shape,6),float('nan'),device=self.device,dtype=torch.float64)
         if self.active:
             for index in (self.tripod&live&~self.ended).nonzero().flatten().tolist():
-                snap=batch['geometry_snapshots'][index][1]
-                if snap is None:continue
-                model=self.models[1];rod=self._scene(index)['rod']
-                for digit,name in enumerate(('thumb','index','middle')):
-                    patch=model.patches[name];s=next(s for s in model.shapes if s['body']==patch['body'])
-                    row=audit_pad_region(s['planes'],patch,snap['poses'][patch['body']],rod,
-                        contact_distance_m=.001,normal_cosine_min=.8);witness=row.get('witness')
-                    if row['complete'] and witness is not None:
-                        gap[index,1,digit]=max(0.,float(witness['distance_m']));good[index,1,digit]=True
-                        signature[index,1,digit]=torch.as_tensor(np.r_[witness['point_w_m'],witness['normal_w']],device=self.device)
+                for hand,model in enumerate(self.models):
+                    if not bool(self.ledger.enabled_pad_mask[index,hand,:3].any()):continue
+                    snap=batch['geometry_snapshots'][index][hand]
+                    if snap is None:continue
+                    rod=self._scene(index)['rod']
+                    for digit,name in enumerate(('thumb','index','middle')):
+                        patch=model.patches[name];s=next(s for s in model.shapes if s['body']==patch['body'])
+                        row=audit_pad_region(s['planes'],patch,snap['poses'][patch['body']],rod,
+                            contact_distance_m=.001,normal_cosine_min=.8);witness=row.get('witness')
+                        if row['complete'] and witness is not None:
+                            gap[index,hand,digit]=max(0.,float(witness['distance_m']));good[index,hand,digit]=True
+                            signature[index,hand,digit]=torch.as_tensor(np.r_[witness['point_w_m'],witness['normal_w']],device=self.device)
         m=self.w.pad_measurements;terminated=live&self.t.done
         if fatal is not None:terminated|=fatal
         self.ledger.observe_substep(episode_ids=self.episode_ids,physics_step=self.w._physics_steps,
@@ -489,8 +561,10 @@ class TripodRecoveryRuntime:
                     blocked_reason=self.ledger.blocked_reason[index])
                 p['requested_action24_this_substep']=self.requested_actions[index]
                 p['control_issued_action24']=self.control_issued_actions[index]
-                p['acquisition_origin_right_digits']=self.acquisition_origins[index]
-                p['action_origin_right_this_substep']=self.substep_action_origin[index]
+                p['acquisition_origin_hand_digits']=self.acquisition_origins[index]
+                p['action_origin_hand_this_substep']=self.substep_action_origin[index]
+                p['acquisition_origin_right_digits']=self.acquisition_origins[index,1]
+                p['action_origin_right_this_substep']=self.substep_action_origin[index,1]
                 p['action_origin_codes']={'legacy_pressure_or_hold':0,'acquisition':1,'fresh_pressure':2,'suppressed_hold':3}
                 row=self.diag.observe(p)
                 if row is not None:self.latest_rows[index]=row
@@ -545,7 +619,7 @@ class TripodRecoveryRuntime:
             self.ledger.cancel_reservation(self.pending['reservation_id']);self.pending=None
         self._drain()
         for stream in (self.physics,self.raw_physics,self.events,self.decisions,self.fk_trace):stream.flush();stream.close()
-        return dict(stage='A',native_diagnostic_summary=self.diag.summary(),
+        return dict(stage=self.stage,recovery_hands=self.recovery_hands,native_diagnostic_summary=self.diag.summary(),
             geometry_blocked=self.geometry_blocked,confirmed_approach_submissions=self.executions,
             actual_native_fk_comparison=self.fk_summary,
             per_environment={str(i):dict(episode_id=self.terminal_ledgers.get(i,{}).get('episode_id',int(self.episode_ids[i])),
@@ -553,5 +627,9 @@ class TripodRecoveryRuntime:
                 last_gate=self.latest_rows.get(i,{}).get('stage_gate'),
                 attempt_time_s=self.terminal_ledgers.get(i,{}).get('attempt_time_s',_plain(self.ledger.attempt_time_s[i])),
                 approved_approach_m=self.terminal_ledgers.get(i,{}).get('approved_approach_m',_plain(self.ledger.executed_approach_m[i]))) for i in range(self.n)},
-            counts_as_student_success=False,stages_B_C_D_E_executed=False,
+            counts_as_student_success=False,moving_wrist_executed=False,
+            stage_A_executed=self.stage=='A' and self.active,
+            stage_B_executed=self.stage=='B' and self.active,
+            stage_C_executed=False,stage_D_executed=False,stage_E_executed=False,
+            stages_B_C_D_E_executed=False,
             unresolved='source certificates conservative; prediction dynamics unvalidated; passive surface force coverage not connected')

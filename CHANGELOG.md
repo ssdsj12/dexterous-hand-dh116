@@ -1,3 +1,9 @@
+## 2026-11-09 — Stage 6 双侧固定腕恢复实现
+
+- 将Tripod恢复状态、获取原点、取消与压力掩码扩为N×2×3；逐物理episode/hand/digit累计1mm与1s，0.5s无实测进展停止，接触闪断不补预算。真实承载指腹走原压力保持，获准执行后按实际目标提交确认记账，几何预测不算真实接触。
+- 显式Stage B支持left/both，保留原A/right；各手使用自己的源FK/Jacobian/pad区域和原非线性碰撞/关节限制。Stage B静态资格不解锁移动腕，C/D/E仍关闭，不产生三指Student专家资格。
+- 发布`scripts/run_dh116_stage6_tracking.py`五项有限串行驱动，默认prepare不启动原生，显式execute检查完整SHA/原物理参数并独立freeze/LOCK_NB，busy即拒绝。本次5文件CPU实际79 passed（9.24s），原生A/B及三组完整跟踪结果仍待执行，PR保持Draft。
+
 ## 2026-11-09 — Stage 6 独立完整回合跟踪保护
 
 - 新增默认关闭的共同双腕暂停状态机与独立original/unilateral/common实验入口，实际PhysX后端目标与cache分开，保留原控制器F32→F64转换和原guard；原始Actor与privileged hybrid分别记录，不授予纯Student成功资格。

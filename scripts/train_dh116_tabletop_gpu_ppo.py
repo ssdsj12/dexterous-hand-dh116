@@ -71,8 +71,10 @@ parser.add_argument('--vision-tracking-experiment-config', type=Path,
                     help='explicit finite original/unilateral/common full-episode experiment; no PPO or promotion')
 parser.add_argument('--vision-teacher-mpc',action='store_true',
                     help='training-only local finger MPC refines Teacher reference labels')
-parser.add_argument('--tripod-recovery-stage',choices=('A',),
-                    help='independent bounded fixed-wrist right Tripod recovery; no PPO or qualified BC')
+parser.add_argument('--tripod-recovery-stage',choices=('A','B'),
+                    help='independent fixed-wrist Tripod experiment; A preserves right-only, B is explicit bilateral')
+parser.add_argument('--tripod-recovery-hands',choices=('right','left','both'),default='right',
+                    help='explicit fixed-wrist recovery hand scope; default preserves old right-only Stage A')
 parser.add_argument('--vision-teacher-mpc-profile',choices=('local_pad','absolute_reference','pressure_reference','pressure_geometry_acquire','pressure_geometry_constrained'),default='local_pad',
                     help='explicit training-only MPC experiment; default preserves original local-pad MPC')
 parser.add_argument('--vision-teacher-max-control-steps',type=int,default=1300)

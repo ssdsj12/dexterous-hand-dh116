@@ -1,4 +1,4 @@
-"""Independent native stage-A evidence runner, with no Student/PPO storage.
+"""Independent native fixed-wrist A/B runner, with no Student/PPO storage.
 
 This deliberately does not route into qualified BC/DAgger collection. Passing
 source geometry, Teacher or MPC experiments never counts as Student success.
@@ -99,6 +99,8 @@ def _verify_original_scene(world,device_world):
 @torch.no_grad()
 def run_staged_tripod_experiment(world,device_world,task,env,args,critic_contract):
     validate_staged_options(args)
+    stage=args.tripod_recovery_stage
+    hands=getattr(args,'tripod_recovery_hands','right')
     from .tabletop_tensor_world import TensorWorld
     from .tabletop_tensor_env import TensorEnv
     if not (type(device_world) is TensorWorld and type(env) is TensorEnv
@@ -121,16 +123,18 @@ def run_staged_tripod_experiment(world,device_world,task,env,args,critic_contrac
     models=_source_models()
     _write(output/'tripod_scene_readback.json',_verify_original_scene(world,device_world))
     _write(output/'vision_student_contract.json',_contract(args,critic_contract))
-    _write(output/'tripod_experiment_identity.json',dict(stage='A',native_type_check_passed=True,
+    _write(output/'tripod_experiment_identity.json',dict(stage=stage,recovery_hands=hands,native_type_check_passed=True,
         teacher_source_sha256=source['source_sha256'],source_hands=[m.spec['source_manifest'] for m in models],
         actor_size=3844,critic_size=371,action_size=24,ppo_updates=0,student_successes=0,
         preparation='published pressure_reference ticks0..436, no contact manipulation',
         fixed_wrist='actual SDK frame captured at437; target freeze plus measured settling',
+        fixed_wrist_recovery_only=True,moving_wrist_qualification_granted=False,
         native_success_thresholds=dict(net_lift_m=.03,hold_s=5.,slip_m=.0005),
         raw_physics_hz=480,control_hz=60,
         native_cold_reset_slots=args.num_envs,unique_randomized_initial_states_attested=False,
         counts_as_student_success=False,no_external_force=True,no_attachment=True,no_new_support=True))
-    runtime=TripodRecoveryRuntime(env,models,source['source_sha256'],output)
+    runtime=TripodRecoveryRuntime(env,models,source['source_sha256'],output,
+        recovery_hands=hands,recovery_stage=stage)
     raw=RawRGBDChunks(output/'raw_rgbd',chunk_frames=args.vision_teacher_raw_chunk_frames)
     camera=None;failure=None;result=None;first_terminal={};ticks=0;decision='recording_budget_reached'
     try:
@@ -176,28 +180,31 @@ def run_staged_tripod_experiment(world,device_world,task,env,args,critic_contrac
                     first_terminal[index]=dict(control_tick=tick,native_success=bool(extra['success'][index]),
                         failure_code=int(extra['failure'][index]),counts_as_student_success=False)
                 if runtime.active and len(runtime.geometry_blocked)==int(runtime.tripod.sum()):
-                    decision='stage_A_blocked_all_actual_source_geometry_uncertified';break
-                if runtime.active and all(runtime.latest_rows.get(i,{}).get('stage_gate',{}).get('pass',False)
-                        for i in runtime.tripod.nonzero().flatten().tolist()):
-                    decision='stage_A_passed_requires_independent_audit_before_B';break
-                if bool(runtime.ended[runtime.tripod].all()):decision='stage_A_first_native_episodes_terminated';break
+                    decision=f'stage_{stage}_blocked_all_actual_source_geometry_uncertified';break
+                if runtime.fixed_stage_qualified():
+                    decision=('stage_A_passed_requires_independent_audit_before_B' if stage=='A' else
+                        'stage_B_fixed_contact_qualified_requires_independent_audit_moving_wrists_not_run');break
+                if runtime.active and len(runtime.geometry_blocked)==int(runtime.tripod.sum()):
+                    decision=f'stage_{stage}_blocked_all_actual_source_geometry_uncertified';break
+                if bool(runtime.ended[runtime.tripod].all()):decision=f'stage_{stage}_first_native_episodes_terminated';break
                 if tick%20==0:
                     runtime.physics.flush();runtime.events.flush();runtime.decisions.flush();actions.flush()
-                    print(json.dumps(dict(stage='A',completed_controls=ticks,
+                    print(json.dumps(dict(stage=stage,recovery_hands=hands,completed_controls=ticks,
                         physics_steps=device_world._physics_steps,active=runtime.active,
                         confirmed_approach_submissions=runtime.executions)),flush=True)
     except BaseException as error:
         failure=repr(error)
-        decision='stage_A_interrupted' if isinstance(error,KeyboardInterrupt) else 'stage_A_exception'
+        decision=f'stage_{stage}_interrupted' if isinstance(error,KeyboardInterrupt) else f'stage_{stage}_exception'
         raise
     finally:
         try:result=runtime.close()
         finally:raw.close()
-        _write(output/'tripod_stage_report.json',dict(stage='A',decision=decision,failure=failure,
+        later=(dict(B='not_run_pending_A_and_independent_evidence',C='not_run_pending_B',D='not_run_pending_C',E='not_run_pending_native_A_B_C_D')
+            if stage=='A' else dict(C='not_run_fixed_wrists_only',D='not_run_fixed_wrists_only',E='not_run_no_qualified_tripod_expert'))
+        _write(output/'tripod_stage_report.json',dict(stage=stage,recovery_hands=hands,decision=decision,failure=failure,
             completed_controls=ticks,elapsed_wall_s=time.monotonic()-start,first_terminal=first_terminal,
             result=result,teacher_mpc_only=True,student_successes=0,ppo_updates=0,
-            later_stages=dict(B='not_run_pending_A_and_independent_evidence',
-                C='not_run_pending_B',D='not_run_pending_C',E='not_run_pending_native_A_B_C_D'),
+            later_stages=later,moving_wrist_qualification_granted=False,
             native_success_standard_unchanged=True))
-    return dict(mode='native_tripod_stage_A',ppo_updates=0,student_successes=0,
+    return dict(mode=f'native_tripod_stage_{stage}',recovery_hands=hands,ppo_updates=0,student_successes=0,
         stage_report=str(output/'tripod_stage_report.json'),decision=decision)

@@ -8,6 +8,7 @@ from __future__ import annotations
 import math
 
 import torch
+from .tabletop_tripod_bilateral_recovery import HAND_DIGIT_ACTIVE_INDICES
 
 
 def apply_post_guard_recovery(task, governed, live, dt_s, requested_action24):
@@ -35,8 +36,13 @@ def apply_post_guard_recovery(task, governed, live, dt_s, requested_action24):
             or styles.dtype!=torch.long or bool(((styles!=0)&(styles!=1)).any())):
         raise ValueError('verified native mixed style and recovery stage required for scope')
     authority=torch.zeros_like(requested_mask)
-    authority[:,6:10]=True
-    if stage!='A':authority[:,:4]=True
+    hands=getattr(runtime,'recovery_hands','right' if stage=='A' else 'both')
+    if hands not in ('right','left','both') or (stage=='A' and hands!='right'):
+        raise ValueError('legacy Stage A remains right-only; explicit bilateral stage required')
+    selected_hands=(0,1) if hands=='both' else (0,) if hands=='left' else (1,)
+    for hand in selected_hands:
+        for group in HAND_DIGIT_ACTIVE_INDICES[hand]:
+            for j in group:authority[:,j]=True
     authority &= (styles==1)[:,None]
     if bool((requested_mask&~authority).any()):
         raise ValueError('runtime finger scope exceeds native Tripod/stage authority')

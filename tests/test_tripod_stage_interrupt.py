@@ -12,8 +12,9 @@ import torch
     (ValueError('fixture reset failure'), 'stage_A_exception'),
     (SystemExit(2), 'stage_A_exception'),
 ])
+@pytest.mark.parametrize('stage,hands',[('A','right'),('B','left'),('B','both')])
 def test_interrupted_native_entry_preserves_failure_and_closes_evidence(
-        monkeypatch, tmp_path, exception, decision):
+        monkeypatch, tmp_path, exception, decision, stage, hands):
     runner = importlib.import_module('go2_pvcnn.control.dh116.tabletop_tripod_staged_experiment')
     tensor_world = importlib.import_module('go2_pvcnn.control.dh116.tabletop_tensor_world')
     tensor_env = importlib.import_module('go2_pvcnn.control.dh116.tabletop_tensor_env')
@@ -30,8 +31,8 @@ def test_interrupted_native_entry_preserves_failure_and_closes_evidence(
             raise exception
 
     class FixtureRuntime:
-        def __init__(self, *args):
-            pass
+        def __init__(self, *args, **kwargs):
+            assert kwargs['recovery_hands']==hands and kwargs['recovery_stage']==stage
 
         def close(self):
             closed.append('runtime')
@@ -61,7 +62,7 @@ def test_interrupted_native_entry_preserves_failure_and_closes_evidence(
     world.sim = fixture_sim
     task = NS(command=torch.zeros(8, 12), surface_policy_owned_targets=True,
               surface_redistribution=False)
-    args = NS(tripod_recovery_stage='A', vision_teacher_source='fixture.pt',
+    args = NS(tripod_recovery_stage=stage,tripod_recovery_hands=hands, vision_teacher_source='fixture.pt',
               vision_teacher_mpc=True, vision_teacher_mpc_profile='pressure_reference',
               vision_student=True, vision_action_distribution='tanh_gaussian',
               vision_camera_mode='fixed', num_envs=8, vision_teacher_max_control_steps=560,
@@ -73,7 +74,11 @@ def test_interrupted_native_entry_preserves_failure_and_closes_evidence(
                                            FixtureTensorEnv(), args, {})
     report = json.loads((tmp_path / 'tripod_stage_report.json').read_text())
     assert closed == ['runtime', 'raw']
-    assert report['decision'] == decision
+    assert report['decision'] == decision.replace('stage_A_',f'stage_{stage}_')
+    assert report['stage']==stage and report['recovery_hands']==hands
+    identity=json.loads((tmp_path/'tripod_experiment_identity.json').read_text())
+    assert identity['stage']==stage and identity['recovery_hands']==hands
+    assert report['later_stages']['C']==('not_run_pending_B' if stage=='A' else 'not_run_fixed_wrists_only')
     assert report['failure'] == repr(exception)
     assert report['completed_controls'] == 0 and report['first_terminal'] == {}
     assert report['student_successes'] == report['ppo_updates'] == 0
