@@ -179,3 +179,46 @@ tests/test_stage5_teacher_regression.py tests/test_vision_supervision_dataset.py
 ```
 
 两组测试有重叠，均为CPU或纯USD fixture，不是325个原生验证。一次命令使用不存在的旧缩写测试名而未collect，随即用实际文件名纠正；没有把该退出算通过。原生四组来源任务、首次物理分叉、真实Tier1新专家及重训仍按实际结果分别收口，未启动新PPO。
+
+## 提交6：独立共同暂停与完整回合证据入口
+
+新增`tabletop_bimanual_tracking_pause_runtime.py`和`tabletop_full_episode_tracking_experiment.py`，扩展guard但保持旧默认。显式`--vision-tracking-experiment-config`与PPO/Teacher/其它评估互斥，有限运行original、unilateral和common；source固定c58、原8环境seed42和30秒物理时限，不能当旧M2 env799/932/661的精确复现。候选不默认装入Student，也不改变3844D/371D/24D、物理或成功判据。
+
+共同暂停状态为NORMAL→PAUSE_REQUESTED→PAUSED→RESUME_PENDING→NORMAL/TERMINATED。实际跟踪误差取PhysX `root_physx_view.get_dof_position_targets()`减真实q，命令cache单独记录且不回退冒充backend。每关节触发阈值为`max(0.01rad,1.5×Teacher P99.9)`，另保留20ms外推预警；连续至少0.05秒误差及速度安全后才能恢复。原控制之后、原advance/transport之前在实际offset/seed intrinsic-XYZ图中取消排队双腕目标，再经fresh-action/rebase恢复，不把旧排队目标跳回。原强制卸载优先；普通保持无法表达时，advance前明确拒绝，保留pending证据，不伪造原task terminal。
+
+Teacher/MPC强制卸载priority接口尚未完成共同暂停晋级。当前Actor hybrid只允许经源码审计的`surface_policy_owned=true,redistribution=false,pinch_force_hold=false`且无其它callback的原profile，不能把负policy动作猜成mandatory release。未知callback/profile拒绝；原Teacher02的4/4成功不是共同暂停Teacher/MPC回归。完整原生保护实验尚未运行，不能宣称消除了历史越限或新增抓取能力。
+
+实测Actor F32输出按原Env begin_step规则转F64进入控制器/guard，未加gain/clamp/tanh。外层分别保存原始Actor、env请求、controller cast、投影/最终目标及实际位姿。独立execution UUID与真实diagnostic episode身份分开，首terminal立即冻结，后续reset/no-op不覆盖。旧日志`actual_palm_pose_m`实际测的是受驱动`base_link`/SDK腕掌根原点；新完整回合入口同时记录实际body-link姿态和具名palm_link，模型中没有该具名link时为NA，不用CAD中心或base冒充掌心。
+
+实际02v02跟踪标定原件为`teacher_sequence02_tracking_calibration_v02.json`，SHA `bbbca0656b94bfac0eeeddd1f7152fc2e41a092cb0381a9a8231a915c7933adc`。4个成功Teacher首回合共37584个live子步/手，合计12个主动关节各有37584个有效样本。原advance返回的post-physics q/qd在TensorEnv reset前，与实际backend getter按独立SDK index/time同钟关联；不是pre-control q减新目标，也不用cache。
+
+最初按metadata_time加名义1/480拟合同钟时，SDK报告时间存在每步约1.09e-10秒的累计表示差，原失败标定已保留为不合格。修复改为用全部9400个实际不同SDK step、重复step及policy anchors验证单一affine cadence/origin，仍使用8 ULP算术界而非放宽秒级误差：实际cadence `0.0020833334419876337`、origin0、最大残差0。SDK Python源码证明其报告时钟累加callback step_size；C++绑定的具体精度未独立证明，不声称改变了物理dt。原control dt始终是`1/480`，没有逐row单独调时钟来消除错位。该标定只是对真实原件的只读统计，没有安装控制器或启动Isaac。
+
+实际12维阈值rad为`[0.01,0.0119347053,0.0190166838,0.01,0.01,0.01,0.01,0.0122126748,0.0140647740,0.01,0.01,0.01]`。输入仍是本报告02成功dataset/context的原SHA。原失败标定、installed SDK源码证据和qualified版本均保留，不覆盖原件。
+
+完整回合实现额外一次policy tick只用于在不同浮点累计表示下观察原严格`>30s`超时，未延长task时限或给已结束首回合新动作权限。本阶段来源评估的实际F64审计已确认1800步足够，不因此修改或重启其冻结job。
+
+本次实际CPU命令：
+
+```bash
+CUDA_VISIBLE_DEVICES='' DH116_PYTHON=/mnt/mydisk/xk/envs/dh116/bin/python DH116_NUM_THREADS=2 \
+bash scripts/python.sh -m pytest tests/test_stage6_tracking_calibration.py \
+tests/test_stage6_common_tracking_pause.py tests/test_stage6_common_pause_runtime.py \
+tests/test_full_episode_tracking_experiment.py tests/test_bimanual_tracking_guard.py \
+-q -p pytest_mock -p no:cacheprovider --basetemp=/tmp/stage6-tracking-commit6-cpu01
+```
+
+**98 passed，13.16s，exit0**。此前双侧/跟踪12文件联合210 passed/53.30s的日志SHA `e8975694e3f35923e508c0371a0eaf645485ba984a39cf6ff3a4a5f6cf610c3b`另保留在`bilateral_validation/`；两者不相加，不计native成功。新三组完整物理结果、原Teacher/MPC共同暂停回归及移动腕资格仍分别待验证，默认M0和旧guard不变。
+
+### 当前来源任务实际结果：E0完整基线
+
+`native_sources01/jobs/source_E0`已自然退出0、status=completed，4个首terminal齐全，纯Student成功0/4，1349个policy步。report SHA `ce4f5369ef46fd0933dfde85219604ddcdf6fff36ca1230152f4b667cb83dc29`，raw physics SHA `c9d1e506111be96890a0f3046582e1559b0e7e028981f929874debfb69144f34`。执行UUID为`ee642205-8717-44d9-84ea-f53fc37e4252`，各episode UID为`<该UUID>:<env_id>:0`，与Teacher来源UID分开。
+
+| env_id | 首terminal policy tick（从0起） | World physics step | 实际timestamp_s | 原生失败 |
+|---|---:|---:|---:|---|
+| 0 | 1269 | 10159 | 21.202084439108148 | object_dropped |
+| 1 | 762 | 6099 | 12.743750664638355 | object_dropped |
+| 2 | 1348 | 10792 | 22.52083450788632 | object_dropped |
+| 3 | 983 | 7869 | 16.431250856956467 | excess_force |
+
+四个合格Hold都为0。此处不把峰值高度拼接成同一轨迹，也不根据summary回算峰值时刻；逐环境峰值argmax和首分叉将由真实raw后处理独立保存。完整同环境issued动作和480Hz轨迹均保留。B0/B1/B2尚在同一预设串行计划继续，不把未完成候选写成失败或成功。

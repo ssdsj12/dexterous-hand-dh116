@@ -6,7 +6,8 @@ the existing SDK chart. The caller applies them before ordinary control and
 all existing independent physical guards.
 """
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+import math
 import hashlib
 from pathlib import Path
 
@@ -131,7 +132,7 @@ def intrinsic_xyz_from_measured_pose(seed_wxyz, actual_wxyz, current_angles_rad,
     return torch.where(valid[...,None],candidate,current).clone(),valid,error
 
 
-def tracking_state_from_native(world,task):
+def tracking_state_from_native(world,task,*,actual_backend_target_rad=None):
     """Read actual SDK buffers, physical joint names and authored wrist seed.
 
     The next native target is root_seed + palm_target + current task.offset.
@@ -139,15 +140,27 @@ def tracking_state_from_native(world,task):
     """
     root=world.roots
     n=world.n
+    if actual_backend_target_rad is not None:
+        if (not isinstance(actual_backend_target_rad,torch.Tensor)
+                or actual_backend_target_rad.shape!=(n,12)
+                or not actual_backend_target_rad.is_floating_point()
+                or not bool(torch.isfinite(actual_backend_target_rad).all())):
+            raise ValueError('finite actual backend active target override [N,12] required')
     targets,sources=[],[]
     for hi,hand in enumerate(world.hands):
         ids=world.w.ids[hi]
         if tuple(hand.joint_names[i] for i in ids)!=ACTIVE:
             raise ValueError('native active joint names do not match the physical action contract')
-        native=getattr(hand.data,'joint_pos_target',None)
-        targets.append(native[:,ids].to(root) if native is not None else world.commands[:,hi].float().to(root))
-        sources.append('native_articulation_joint_pos_target' if native is not None
-                       else 'float32_submission_reconstructed')
+        if actual_backend_target_rad is not None:
+            targets.append(actual_backend_target_rad.reshape(n,2,6)[:,hi].to(root))
+            sources.append('physx_backend_get_dof_position_targets')
+        else:
+            # Legacy guard default is preserved. The independent Common pause
+            # path below supplies strict PhysX getter evidence instead.
+            native=getattr(hand.data,'joint_pos_target',None)
+            targets.append(native[:,ids].to(root) if native is not None else world.commands[:,hi].float().to(root))
+            sources.append('native_articulation_joint_pos_target' if native is not None
+                           else 'float32_submission_reconstructed')
     target=torch.stack(targets,1)
     actual=task.m['q'].reshape(n,2,6).to(root)
     measured_offset=root[:,:,:3]-world.root_seed[:,:,:3].to(root)
@@ -262,3 +275,198 @@ class BimanualTrackingGuard:
             measurement_timestamp_s=state.measurement_timestamp_s,
             native_targets_written=False,finger_requests_modified=False)
         return output,info
+
+
+class CommonTrackingPause:
+    """Independent finite teacher/hybrid candidate; existing profiles unchanged.
+
+    Inputs are backend target readback minus actual q, not a command cache.
+    The 20ms extrapolation is a warning only. Holds cancel queued drive targets
+    in the existing chart and must be installed before original world guards.
+    Mandatory release is the only finger request retained while paused.
+    """
+    NORMAL, PAUSE_REQUESTED, PAUSED, RESUME_PENDING, TERMINATED = range(5)
+
+    def __init__(self,n,*,teacher_error_p999_rad,enabled=False,max_pause_s=2.,safe_velocity_rad_s=.05):
+        p=teacher_error_p999_rad
+        if (type(n) is not int or n<1 or type(enabled) is not bool
+                or not isinstance(p,torch.Tensor) or p.shape!=(12,) or not p.is_floating_point()
+                or not bool(torch.isfinite(p).all()) or bool((p<0).any())
+                or not math.isfinite(max_pause_s) or max_pause_s<=.05
+                or not math.isfinite(safe_velocity_rad_s) or safe_velocity_rad_s<=0):
+            raise ValueError('positive finite pause contract and per-joint successful Teacher P99.9 required')
+        self.n,self.enabled=n,enabled
+        self.trigger_rad=torch.maximum(p.detach().clone()*1.5,p.new_full((12,),.01))
+        self.max_pause_s=max_pause_s;self.safe_velocity_rad_s=safe_velocity_rad_s
+        self.state=torch.zeros(n,device=p.device,dtype=torch.long)
+        self.safe_time_s=p.new_zeros(n);self.pause_time_s=p.new_zeros(n)
+        self.previous_error=p.new_zeros(n,12);self.previous_qd=p.new_zeros(n,12)
+        self._validator=BimanualTrackingGuard(n)
+        self._pose_projector=BimanualTrackingGuard(n,enabled=True,coupled_pause=True)
+
+    def reset(self,ids):
+        """Only a real episode reset can clear TERMINATED."""
+        self.state[ids]=self.NORMAL;self.safe_time_s[ids]=0.;self.pause_time_s[ids]=0.
+        self.previous_error[ids]=0.;self.previous_qd[ids]=0.
+
+    @torch.no_grad()
+    def project(self,action24,*,pose_state=None,backend_target_rad=None,measured_q_rad=None,
+                measured_qd_rad_s=None,joint_lower_rad=None,joint_upper_rad=None,
+                mandatory_release_mask=None,mandatory_wrist_release_mask=None,
+                overload=None,terminal=None,dt_s=1/480):
+        output,_=self._validator.project(action24)
+        empty=torch.zeros(self.n,2,device=output.device,dtype=torch.bool)
+        info=dict(version='dh116-independent-common-tracking-pause-v1',enabled=self.enabled,
+            state=self.state.clone(),pause_hand=empty,default_control_changed=False,
+            counts_as_student_success=False,original_guards_required=True,extrapolation_is_safety_proof=False)
+        if not self.enabled:return output,info
+        if (output.dtype!=self.trigger_rad.dtype or output.device!=self.trigger_rad.device
+                or type(dt_s) not in (int,float) or not math.isfinite(dt_s) or dt_s<=0):
+            raise ValueError('matching candidate dtype/device and finite positive dt required')
+        values=(backend_target_rad,measured_q_rad,measured_qd_rad_s)
+        for v in values:
+            if (not isinstance(v,torch.Tensor) or v.shape!=(self.n,12)
+                    or v.dtype!=output.dtype or v.device!=output.device or not bool(torch.isfinite(v).all())):
+                raise ValueError('finite actual backend target/q/qd [N,12] required')
+        lower,upper=joint_lower_rad,joint_upper_rad
+        for v in (lower,upper):
+            if (not isinstance(v,torch.Tensor) or v.shape not in ((12,),(self.n,12))
+                    or v.dtype!=output.dtype or v.device!=output.device or not bool(torch.isfinite(v).all())):
+                raise ValueError('finite original joint limits required')
+        if bool((lower>=upper).any()):raise ValueError('ordered original joint limits required')
+        for v,shape in ((mandatory_release_mask,(self.n,12)),(overload,(self.n,)),(terminal,(self.n,))):
+            if not isinstance(v,torch.Tensor) or v.shape!=shape or v.dtype!=torch.bool or v.device!=output.device:
+                raise ValueError('original mandatory-release/overload/terminal masks required')
+        if mandatory_wrist_release_mask is None:
+            mandatory_wrist_release_mask=empty.clone()
+        if (not isinstance(mandatory_wrist_release_mask,torch.Tensor)
+                or mandatory_wrist_release_mask.shape!=(self.n,2) or mandatory_wrist_release_mask.dtype!=torch.bool
+                or mandatory_wrist_release_mask.device!=output.device):
+            raise ValueError('original mandatory wrist-release mask [N,2] required')
+        self._validator._state(pose_state,output)
+        error=(backend_target_rad-measured_q_rad).abs()
+        predicted=measured_q_rad+measured_qd_rad_s*.02
+        limit_warning=(predicted<=lower)|(predicted>=upper)
+        legal=(backend_target_rad>=lower)&(backend_target_rad<=upper)
+        tracking_warning=(error>self.trigger_rad)&legal
+        warning=limit_warning.any(-1)|tracking_warning.any(-1)|overload|~legal.all(-1)
+        palm=pose_state.measured_palm_offset_m
+        chart_low=output.new_tensor(WRIST['palm_lower_m']);chart_high=output.new_tensor(WRIST['palm_upper_m'])
+        translation_known=(torch.isfinite(palm).all(-1)&(palm>=chart_low).all(-1)&(palm<=chart_high).all(-1))
+        _,rotation_known,_=intrinsic_xyz_from_measured_pose(pose_state.wrist_seed_pose_w[...,3:],
+            pose_state.actual_base_pose_w[...,3:],pose_state.current_wrist_angles_rad,pose_state.measured_wrist_angles_rad)
+        pose_known=(translation_known&rotation_known&torch.isfinite(pose_state.actual_base_pose_w).all(-1)
+            &torch.isfinite(pose_state.wrist_seed_pose_w).all(-1))
+        warning |= ~pose_known.all(-1)
+        old=self.state.clone()
+        self.state[(old==self.NORMAL)&warning]=self.PAUSE_REQUESTED
+        self.state[old==self.PAUSE_REQUESTED]=self.PAUSED
+        acceleration=(measured_qd_rad_s-self.previous_qd)/dt_s
+        toward_low=(measured_qd_rad_s<0)&(acceleration<0)
+        toward_high=(measured_qd_rad_s>0)&(acceleration>0)
+        margin_low=measured_q_rad-lower;margin_high=upper-measured_q_rad
+        accelerating_to_near_limit=(toward_low&(margin_low<=self.trigger_rad))|(toward_high&(margin_high<=self.trigger_rad))
+        safe=(error<self.trigger_rad*.5).all(-1)&(measured_qd_rad_s.abs()<=self.safe_velocity_rad_s).all(-1)
+        safe &= (~accelerating_to_near_limit.any(-1)&~limit_warning.any(-1)&~overload
+            &~mandatory_release_mask.any(-1)&~mandatory_wrist_release_mask.any(-1))
+        paused=(self.state==self.PAUSED)
+        self.safe_time_s=torch.where(paused&safe,self.safe_time_s+dt_s,torch.zeros_like(self.safe_time_s))
+        self.state[paused&(self.safe_time_s>=.05-1e-12)]=self.RESUME_PENDING
+        resume=(old==self.RESUME_PENDING)&safe&~warning
+        self.state[resume]=self.NORMAL
+        self.state[(old==self.RESUME_PENDING)&~resume]=self.PAUSED
+        hold=(self.state!=self.NORMAL)|resume
+        self.pause_time_s=torch.where(hold,self.pause_time_s+dt_s,torch.zeros_like(self.pause_time_s))
+        self.state[terminal|~pose_state.live|(self.pause_time_s>=self.max_pause_s)]=self.TERMINATED
+        hold=(self.state!=self.NORMAL)|resume
+        # Reuse the original pose-to-target chart and its original bounds.
+        proxy=replace(pose_state,active_tracking_error_rad=torch.where(hold[:,None],
+            output.new_full((self.n,2),1.),output.new_zeros(self.n,2)),mimic_error_rad=output.new_zeros(self.n,2))
+        _,pose_info=self._pose_projector.project(output,proxy)
+        pause_wrists=hold[:,None]&~mandatory_wrist_release_mask
+        unavailable=((pause_wrists&~pose_info['cancel_translation']).any(-1)
+            |(pause_wrists&~pose_info['cancel_rotation']).any(-1))
+        self.state[unavailable]=self.TERMINATED
+        output[:,12:18].reshape(self.n,2,3)[pause_wrists]=0.
+        output[:,18:24].reshape(self.n,2,3)[pause_wrists]=0.
+        pose_info['cancel_translation'] &= pause_wrists
+        pose_info['cancel_rotation'] &= pause_wrists
+        pose_info['pause_hand']=pause_wrists
+        output[:,:12]=torch.where(hold[:,None]&~mandatory_release_mask,torch.zeros_like(output[:,:12]),output[:,:12])
+        # Candidate timeout/unknown-pose termination withdraws its own motion
+        # authority, never an original mandatory unloading request. Only the
+        # original episode terminal/live decision can suppress every action.
+        output[terminal|~pose_state.live]=0.
+        growing=error>self.previous_error
+        self.previous_error=error.clone();self.previous_qd=measured_qd_rad_s.clone()
+        info.update(pose_info)
+        info.update(version='dh116-independent-common-tracking-pause-v1',state=self.state.clone(),
+            state_codes=dict(NORMAL=0,PAUSE_REQUESTED=1,PAUSED=2,RESUME_PENDING=3,TERMINATED=4),
+            trigger_rad=self.trigger_rad.clone(),tracking_error_rad=error,tracking_error_growing=growing,
+            margin_low_rad=margin_low,margin_high_rad=margin_high,q_pred_rad=predicted,
+            predicted_limit_warning=limit_warning,per_joint_tracking_warning=tracking_warning,
+            safe_dwell_s=self.safe_time_s.clone(),pause_elapsed_s=self.pause_time_s.clone(),
+            cancel_finger_closure=hold[:,None]&~mandatory_release_mask,mandatory_release_preserved=True,
+            require_fresh_action_after_resume=resume,counts_as_student_success=False,
+            finger_requests_modified=bool(hold.any()),default_control_changed=False,original_guards_required=True)
+        return output,info
+
+
+def read_common_pause_targets(world):
+    """Strict clock-bounded PhysX readback; IsaacLab caches are separate evidence."""
+    from .tabletop_joint_target_readback import read_joint_target_evidence,BACKEND_SOURCE
+    def clock():
+        sim=getattr(world.w,'sim',None)
+        step=getattr(sim,'current_time_step_index',None);when=getattr(sim,'current_time',None)
+        physics=getattr(world,'_physics_steps',None)
+        if step is None or when is None or physics is None or not math.isfinite(float(when)):
+            raise ValueError('actual SDK and TensorWorld target-readback clocks required')
+        return int(physics),int(step),float(when)
+    before=clock();evidence=[];backend=[];caches=[]
+    for hi,hand in enumerate(world.hands):
+        row=read_joint_target_evidence(hand);evidence.append(row)
+        native=row['backend'];ids=list(world.w.ids[hi])
+        if (not native['available'] or native['shape'][0]!=world.n
+                or not bool(native['finite_env'].all())):
+            raise ValueError('finite actual PhysX backend get_dof_position_targets readback required: '+str(native['error']))
+        if len(ids)!=6 or tuple(row['joint_names'][j] for j in ids)!=ACTIVE:
+            raise ValueError('PhysX backend target active names disagree with original action contract')
+        backend.append(torch.as_tensor(native['values'][:,ids]).clone())
+        cache=row['command_cache']
+        caches.append(torch.as_tensor(cache['values'][:,ids]).clone() if cache['available'] else None)
+    after=clock()
+    if before!=after:raise ValueError('SDK clock changed during actual PhysX target readback')
+    return dict(backend_active_rad=torch.stack(backend,1).reshape(world.n,12),
+        isaaclab_command_cache_active_rad=(torch.stack(caches,1).reshape(world.n,12)
+            if all(value is not None for value in caches) else None),
+        hands=evidence,target_source=BACKEND_SOURCE,
+        clock=dict(tensor_world_physics_step=after[0],sdk_physics_step=after[1],
+            sdk_timestamp_s=after[2],clock_aligned=True))
+
+
+def common_pause_feedback_from_native(world,task):
+    """Use actual PhysX targets for this independent candidate, never caches."""
+    readback=read_common_pause_targets(world)
+    target=readback['backend_active_rad'].to(task.m['q'])
+    pose=tracking_state_from_native(world,task,actual_backend_target_rad=target)
+    return dict(pose_state=pose,backend_target_rad=target,
+        measured_q_rad=task.m['q'].clone(),measured_qd_rad_s=task.m['qd'].clone(),
+        joint_lower_rad=task.low.clone(),joint_upper_rad=task.high.clone(),terminal=task.done.clone())
+
+
+def apply_common_pause_wrist_targets(world,task,info):
+    """Cancel both queued wrists before original velocity/collision guards.
+
+    Only target caches change; never physical roots or measured velocities.
+    Terminal/unloading decisions remain owned by original execution guards.
+    """
+    translation=info.get('cancel_translation');rotation=info.get('cancel_rotation')
+    if translation is None or rotation is None:return
+    for mask,value,targets in ((translation,info['hold_offset_m'],(world.palms,task.palm_targets)),
+                               (rotation,info['hold_intrinsic_xyz_rad'],(world.wrist_angles,task.rotation_targets))):
+        if mask.shape!=(world.n,2) or mask.dtype!=torch.bool:
+            raise ValueError('canonical bilateral cancellation mask required')
+        for target in targets:
+            if target.shape!=value.shape or target.device!=value.device or target.dtype!=value.dtype:
+                raise ValueError('original target chart dtype/device/shape required')
+            target[mask]=value[mask]

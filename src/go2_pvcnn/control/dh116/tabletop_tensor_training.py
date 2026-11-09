@@ -999,6 +999,10 @@ def run_tensor_training(world, template, args, contract, *, mixed_reset=None):
         publish_resolved_tensor_configuration(args.output,contract)
 
     if getattr(args,'vision_student',False):
+        if getattr(args,'vision_tracking_experiment_config',None):
+            from .tabletop_full_episode_tracking_experiment import run_full_episode_tracking_experiment
+            write_json(Path(args.output)/'tensor_contract.json',contract)
+            return run_full_episode_tracking_experiment(world,device_world,task,env,args,contract)
         if getattr(args,'vision_stage6_native_config',None):
             from .tabletop_vision_branching_eval import run_stage6_native
             write_json(args.output/'tensor_contract.json',contract)

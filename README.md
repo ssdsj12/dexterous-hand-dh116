@@ -8,6 +8,10 @@
 
 新增独立Tier1 Teacher扰动manifest入口，限制物体XY±0.5mm/yaw±1°，保持原关节、手根、速度及double命令seed；原生reset/相机读回通过后才使用第一帧。成功二指首回合、失败/未完成池和保守来源lineage分别保存，目前仅完成CPU与真实输入清单验证，扰动原生次数0。有限评估驱动也已以`scripts/run_dh116_stage6_evaluations.py`发布；完整命令、125/200项独立范围CPU结果和未通过门禁见[实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。
 
+共同暂停双腕现为默认关闭的独立完整回合实验：原Actor、单侧失败对照、共同暂停分开记录。阈值绑定真实Teacher同钟PhysX backend减post-physics q的P99.9；98项本次相关CPU检查通过，尚未完成这三个新原生回合。原Teacher/MPC强制卸载接口与移动腕资格仍未获准，不把新hybrid保护默认装入Student。
+
+本次四来源纯Student的E0基线已实际结束：0/4成功，3掉落、1超力，四个首terminal及原始物理轨迹保留；B0/B1/B2继续按相同初态串行对照。Teacher重放4/4与E0纯Student0/4分别计数，尚不认定衰退已修复。
+
 ## 2026-11-09 — Student原生执行链复核完成
 
 同模型、同seed、同200个初态的诊断复测已自然结束，二指/三指仍各0/100成功。逐480Hz真实backend/cache、掌位、动作、首terminal和原始物体遥测完成跨流核验；额外自动reset记录不计评估次数。二指两掌最高上移50 mm时物体仍接近原高度，掌位峰值不代表抓取。完整逐手分位、失败原因、峰值env/UID/时刻和同环境轨迹见[执行链审计](docs/superpowers/reports/2026-11-09-stage5-student-execution-audit.md)。

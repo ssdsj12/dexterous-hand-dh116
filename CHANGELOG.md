@@ -1,3 +1,9 @@
+## 2026-11-09 — Stage 6 独立完整回合跟踪保护
+
+- 新增默认关闭的共同双腕暂停状态机与独立original/unilateral/common实验入口，实际PhysX后端目标与cache分开，保留原控制器F32→F64转换和原guard；原始Actor与privileged hybrid分别记录，不授予纯Student成功资格。
+- 用实际Teacher02同钟post-physics q/qd标定每关节P99.9，qualified报告SHA `bbbca065…93adc`。按SDK实际报告时钟单一affine映射校验，原1/480控制dt不变，不逐行拟合消除错位。无法表达真实姿态保持或未知卸载profile明确拒绝。
+- 新完整回合入口记录独立UUID、首terminal、backend/cache、实际SDK/base及具名body位姿；legacy palm字段实际是base_link，未知palm_link不补造。当前5文件CPU实际98 passed（13.16s），新原生完整回合仍待串行验证，Teacher/MPC共同暂停晋级未通过，M0默认不变。
+
 ## 2026-11-09 — Stage 6 专家初态扰动与来源隔离
 
 - 新增显式Tier1 Teacher manifest、真实reset/首相机包读回及成功二指/失败未完成分池。只改物体XY/yaw，原关节、手根、速度和double Task命令seed保持；不通过原evaluation的float32编码重写Teacher命令。原eval默认分支保留。
