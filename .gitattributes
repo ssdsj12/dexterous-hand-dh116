@@ -21,3 +21,10 @@ src/go2_pvcnn/control/dh116/tabletop_vision_teacher_student_divergence.py text e
 src/go2_pvcnn/control/dh116/tabletop_vision_stage7_branch_summary.py text eol=lf
 src/go2_pvcnn/control/dh116/tabletop_vision_physical_divergence.py text eol=lf
 tests/test_stage7*.py text eol=lf
+# Stage7 capture/analysis provenance binds these exact implementation bytes.
+scripts/train_dh116_tabletop_gpu_ppo.py text eol=lf
+src/go2_pvcnn/control/dh116/tabletop_vision_teacher_collection.py text eol=lf
+src/go2_pvcnn/control/dh116/tabletop_bimanual_mpc_*.py text eol=lf
+tests/test_bimanual_mpc_*.py text eol=lf
+# Historical changelog bytes contain measured mixed endings; retain the tail.
+CHANGELOG.md -text whitespace=cr-at-eol

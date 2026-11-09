@@ -1,3 +1,11 @@
+## 2026-11-10 — Stage 7 辅助接触测量与原 Teacher 完整回归
+
+- 新增实际 Cylinder/单位/COM/inertia 的 source-bound 读取、三个低层 Wire→静态表面 view、已安装 PhysX full report 来源与严格时钟/所有权记录；默认关闭，不加入 Actor 或改变原物理。
+- 新增 `--vision-mpc-aux-capture`，与原 capture 共享 UUID/issued24/8 子步，首 terminal 独立保存；scene/raw/close 异常明确标记并完整清理。实际 source-chain 仅接纳原方法或精确的既有 Sequence 包装，不放松原 Shadow 合同。
+- 原 Teacher 实际1800控制步/14400物理帧/84461首回合状态/8个terminal；二指4/4、三指0/4（两drop、两timeout），关闭归档完整性通过。不是100不同初态或新Teacher/Student成功。
+- 独立 source06 CPU336 passed、1 skipped、93subtests；真实16步辅助冒烟exit0/128帧/1024状态，全8回合截断。记录并保留source05的初始化失败与修复，未在失败目录重试。
+- 端支架有非零raw观测，Table矩阵为零而不代表已证无反力；全局report为空，partner ID、合格support/sign/frame/completeness继续NA。H8、正式配对、新专家池与Student提升仍未完成；PR继续Draft，原默认/物理/24D合同/成功标准不变。详见[验证报告](docs/superpowers/reports/2026-11-10-stage7-mpc-contact-source-audit.md)。
+
 ## 2026-11-10 — Stage 7 统一状态与原生测量链
 
 - 新增不可变 Teacher MPC 状态及严格 provenance/NA/时钟合同，保留 Student 输入隔离。复用真实 backend target、原接触读取与 COM 点速度换算，不用命令缓存或整手载荷伪造逐指反馈。

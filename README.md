@@ -1,3 +1,13 @@
+## 2026-11-10 — Stage 7 场景/接触来源与完整首回合证据
+
+新增默认关闭的辅助测量：实际 composed Cylinder、COM/惯量、Wire→桌面/端支架的三个低层 view、PhysX contact report 来源检查，以及与原状态归档共享 issued24/时钟的只读 480 Hz 数据。仿真特权字段不进入 Student，原控制器和物理参数不变。
+
+原 Teacher 完整采集已自然结束：1800 控制步、14,400 物理帧、84,461 条首回合状态、8 个真实 terminal；二指 4/4，三指 0/4（两次掉落、两次超时）。关闭后的 raw/DTO/动作/时钟和 reset/no-op 隔离检查通过。仍是标称来源的副本，不是新 100 初态、新 MPC 或 Student 成功。
+
+独立 CPU 组合验证 336 passed、1 CUDA-unavailable skip、93 subtests。保留 source05 的真实 Shadow 初始化失败；修复来源明确的 Sequence→aux→state 链后，source06 的 16 步原生冒烟 exit0，128 帧/1024 状态及关闭归档完整性通过，8 个回合均为截断。端支架 raw view 有非零观测，但全局 contact report 为空，作用侧/符号/完整性和合格支撑仍未验证，不能补造 partner ID 或推断无反力。
+
+M0、旧 Teacher、3844D Actor/371D Critic/24D Tanh、原材料/执行器和30mm/5s/0.5mm不变。H8/恢复/载荷转移、正式配对和新 Student 训练仍受后续门槛约束；无默认 Teacher 替换或实时资格，PR保持Draft。实际命令、失败、SHA与后续缺口见[原生测量扩展报告](docs/superpowers/reports/2026-11-10-stage7-mpc-contact-source-audit.md)。
+
 ## 2026-11-10 — Stage 7 MPC 状态与原生只读测量
 
 统一 Teacher `MPCState`、实际测量桥和默认关闭的 `--vision-mpc-state-capture` 已实现。逐字段保存来源、单位、时钟、有效性及 env/episode；实际 backend 跟踪误差、COM 原点换算、raw 接触归属和首 terminal 隔离均单独校验，仿真特权字段不进入 Student。

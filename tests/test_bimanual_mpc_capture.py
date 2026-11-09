@@ -391,7 +391,7 @@ class CaptureArchiveTests(unittest.TestCase):
                 for x in ast.walk(ast.Module(body=n.finalbody,type_ignores=[]))))
         events=[]
         def fail(**kwargs):raise OSError('capture disk close failure')
-        scope=dict(mpc_state_capture=SimpleNamespace(finish=fail),failure=None,
+        scope=dict(mpc_state_capture=SimpleNamespace(finish=fail),mpc_aux_capture=None,failure=None,
             sequence_capture=SimpleNamespace(close=lambda:events.append('sequence'),
                 write_unqualified=lambda *a,**kw:None),output=self.path,
             tripod_candidate=None,teacher_audit=None,
