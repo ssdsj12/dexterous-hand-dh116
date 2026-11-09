@@ -246,3 +246,50 @@ tests/test_tripod_stage_interrupt.py tests/test_stage6_tracking_batch.py \
 ```
 
 **79 passed，9.24秒，exit0**，含旧恢复/A默认、左右预算、原guard后billing和五项launcher控制边界。此前launcher独立23项fixture也通过；不是再加23次或任何原生成功。本阶段没有修改4个来源controller字节，没有放宽碰撞、执行器或30mm/5s/0.5mm标准，PR继续Draft。
+
+## 本次上传：物理分叉、合并工具与接口修复
+
+新增`tabletop_vision_physical_divergence.py`及CLI `python -m go2_pvcnn.control.dh116.tabletop_vision_physical_divergence --config <显式输入清单> --output <新报告>`。原Teacher02同钟post q/backend与实际TeacherReplay01的37584个匹配样本中，具名12主动关节q、qd、真实backend、backend减post-q及base_link位置逐项exact，差异0。报告`physical_divergence_analysis/teacher02_E0_repeat_self_v01/physical_repeat_analysis.json` SHA `9419b35b29001e3753901f7b5ff75cedbf277aa4bd2643b7b9def287f8b3b734`保留；两本观察范围不是统计置信区间，也不是新独立初态。
+
+SDK policy anchors与实际World step/timestamp按8 ULP桥接，残差0；native NPZ没有独立getter前后SDK bracket字段，这项质量明确为NA，不推造时钟证书。原Teacher02另存的22张量surface trace虽有loads，却没有clock/UID/live/terminal，不能按行号回填post-contact。已预备再真实重放一次Teacher tape，以两本有完整身份的post-contact参考补足该范围；仍需等待当前四组source作业自然结束，不复用任何物理试验。原29项计划加1项额外重复基线，共30项预设作业，仍是同4个来源初态。
+
+分析器核对完整job目录的report/raw/live/reset及diagnostic summary/NPZ SHA、checkpoint、writer UID namespace和每条实际issued动作，拒绝同basename的其它job错配。原Teacher02参考按四组身份联结其live/source_valid掩码，inactive/terminal后suffix不能增加有效参考数。支持`native_teacher_repeats`列表；contact必须至少两本真实post valid/opposed样本才有重复范围，一本时保持NA。具名palm_link缺测不由base或CAD中心补造。
+
+E0 source分析原件为`physical_divergence_analysis/source_E0_vs_teacher02_replay01_v02/physical_repeat_analysis.json`，SHA `5909b0c633c41c69c9cd5b9d8d35c5e4b6136c59ab0d914908c8c294592ffe20`。执行UUID仍为`ee642205-8717-44d9-84ea-f53fc37e4252`，以下每行属于其自己的`<UUID>:<env>:0`轨迹，raw峰值与原report exact：
+
+| env | 物体净lift峰值mm | policy tick / 物理子步 | World step | 实际timestamp_s |
+|---|---:|---|---:|---:|
+| 0 | 13.461731079 | 623 / 6 | 4990 | 10.43333387747407 |
+| 1 | 16.094806845 | 725 / 4 | 5804 | 12.129167299252003 |
+| 2 | 2.847602920 | 876 / 8 | 7016 | 14.654167430941015 |
+| 3 | 0.310310490 | 281 / 5 | 2253 | 4.731250246753916 |
+
+首个显著跟踪偏离需同时超过具名关节实测重复max与Teacher标定trigger。env0/1/3是left.finger21，分别tick241/sub3、303/sub2、262/sub3，signed backend减post-q为0.0190284252/0.0190518498/0.0192252994 rad，trigger 0.0190166838；env2是right.finger21，tick257/sub1，0.0140913129 rad，trigger 0.0140647740。原始gzip行号、NPZ文件/索引、UID、实际动作与SHA见同目录`first_tracking_named_raw_pointers.json`。这些是先于最终失败的观察警戒偏离，不是已认定根因或新的控制/安全阈值；policy0微小数值差异和绝对contact loss分开报告。TeacherReplay本身也出现短暂contact loss后成功，不能把该绝对事件直接归因为Student。
+
+新增`tabletop_vision_sequence_pool_merge.py`，显式API `merge_native_success_pools(base_bundle,tier1_bundles,new_output)`及`--base/--tier1/--output`CLI。父report/data/context、原生首成功且未recovered的pinch、接触抓法、当前controller源码、相机/资产/动作合同和Tier1实际reset证据全部复核。拒绝重复UID/case、失败池和不支持的字段；原obs/actions/reference/history及raw四表逐位保留，仅本地episode_id重映射并附origin/parent身份，原run/env/episode_uid/tick不变。新data SHA绑定新context，完整L16 parity再验证，仍保守fit_only；输出是offline merge report，`new_native_trials=0`，不是一个伪造的Teacher原生报告。
+
+实际Teacher02父池只读验证报告`pool_merge_actual02_parent_validation01.json` SHA `9fac0e697b5fecb88c6256b5422bcba2fceaa66fcc7c9cf2070e3f358fdf8a5a`：4个合格pinch首回合、4698行、1来源族、4638窗口/593664重叠物理比较误差0，原件SHA未变。当前没有真实Tier1成功父池，因此真实merge及重训保持拒绝，尚无新增专家/派生训练结果。
+
+独立原生接口审查发现并先复现两个P1，再作最小修复：共同暂停的backend是NumPy/CPU读回，而live是CUDA，原`backend[live]`会崩溃；现只将比较侧掩码转CPU，原GPU控制live/目标/时钟不变。Tripod `prepare_transport`原未排除self.ended，首terminal后的reset slot可能被旧fixed_offset/angle检查或覆写；现只排除退休slot，A/right和B/both的活跃兄弟目标不变。RED的HEAD19638f5源码、GREEN快照、fixture、日志/XML均保留在`native_interface_p1_validation01/`，manifest SHA `e31d910ee260c53dabe23e1fbb52cd54a9103b0d177bd8e8524f36f00f0bbd7a`。这两条候选路径未用于正在运行的纯Student source，当前冻结作业和四个controller字节均未修改。
+
+本次上传前实际重新执行：
+
+```bash
+# 同服务器环境，CUDA_VISIBLE_DEVICES=''，DH116_NUM_THREADS=2，经bash scripts/python.sh
+pytest tests/test_stage6_physical_divergence.py tests/test_stage6_tracking_calibration.py \
+tests/test_vision_sequence_pool_merge.py tests/test_vision_sequence_dataset.py \
+tests/test_stage6_common_pause_runtime.py tests/test_full_episode_tracking_experiment.py \
+tests/test_stage6_tripod_retired_transport.py tests/test_tripod_recovery_runtime.py \
+tests/test_tripod_stage_interrupt.py tests/test_stage6_common_pause_cuda_readback.py \
+-q -p pytest_mock -p no:cacheprovider --basetemp=/tmp/stage6-upload-20261109-0634
+# 197 passed，2 skipped，40.95s，exit0
+
+# 另用CUDA_VISIBLE_DEVICES=2，其余环境相同
+pytest tests/test_stage6_common_pause_cuda_readback.py -q -p pytest_mock -p no:cacheprovider \
+--basetemp=/tmp/stage6-upload-cuda2-20261109-0635
+# 2 passed，3.69s，exit0
+```
+
+两项skip就是CPU环境没有执行CUDA用例，另一个命令确实在GPU2运行；SDK格式的读回仍是合成fixture，不是Isaac原生验证，没有启动第二个Isaac或操作GPU3。待发布8个源码/测试及4个controller的本机/服务器12文件SHA全部exact一致。未上传模型、raw数据、缓存、密钥或日志。
+
+上传时已确认B0 source也自然退出0、4个首terminal齐全、成功0/4。report SHA `6de690d95d6b13efd38842b3d660ebafa2b824aba99dd3277277fd9e1f68d1d6`：env0 tick1047 excess_force，env1 tick1600 object_dropped，env2 tick1025 excess_force，env3 tick917 object_dropped。当前唯一Isaac已进入B1，B1/B2尚未完成，不提前记为失败或成功。没有新PPO或默认模型晋级，PR保持Draft。

@@ -463,7 +463,7 @@ class TripodRecoveryRuntime:
 
     def prepare_transport(self,world,task,allowed,live):
         if not self.active:return
-        selected=self.tripod&live
+        selected=self.tripod&live&~self.ended
         if not torch.equal(task.offset[selected],self.fixed_offset[selected]):
             raise RuntimeError('stage A common lift offset changed')
         # Drive targets only. No SDK measured pose/velocity, object or forces

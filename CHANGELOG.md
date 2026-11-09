@@ -1,3 +1,9 @@
+## 2026-11-09 — Stage 6 证据分析、成功池合并与接口修复
+
+- 新增只读物理分叉分析，分别保存微小数值差异、超过实际Teacher重复范围/标定阈值的具名关节跟踪偏离、绝对任务事件和逐环境峰值UID/发生时刻。报告、checkpoint、完整job目录、diagnostic UID、issued动作和时钟严格绑定；未记录的post接触范围不补造。
+- 新增真实成功池合并工具，保留原观测/动作/历史和四组身份，只重映射本地episode ID；逐父验证原生成功、接触抓法、来源SHA、完整L16 parity，拒绝重复case或失败池，不伪装新Teacher原生报告。当前无真实Tier1成功输入，合并/重训门禁保持关闭。
+- 修复Common比较侧CPU backend使用CUDA live索引崩溃，以及Tripod firstterminal后reset slot被旧固定腕目标检查/覆写；不改原active控制或四个controller字节。实际最新CPU 197 passed、2 CUDA skip，另Torch CUDA2 2 passed。纯Student E0/B0各0/4、B1/B2未完成，原生实验继续单实例独立执行，PR继续Draft。
+
 ## 2026-11-09 — Stage 6 双侧固定腕恢复实现
 
 - 将Tripod恢复状态、获取原点、取消与压力掩码扩为N×2×3；逐物理episode/hand/digit累计1mm与1s，0.5s无实测进展停止，接触闪断不补预算。真实承载指腹走原压力保持，获准执行后按实际目标提交确认记账，几何预测不算真实接触。

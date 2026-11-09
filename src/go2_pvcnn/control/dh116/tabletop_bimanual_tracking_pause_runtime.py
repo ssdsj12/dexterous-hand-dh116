@@ -143,8 +143,10 @@ class CommonTrackingPauseRuntime:
             raise ValueError('actual SDK target-readback clock did not advance exactly one original substep')
         logical=world.commands.reshape(world.n,12).detach().clone()
         expected=logical.float()
+        # SDK evidence is an owned NumPy/CPU snapshot; control live stays native.
+        backend_live=live.detach().cpu()
         matched=(bool(live.any()) and torch.equal(logical[live],row['logical_command_after_pause_rad'][live])
-            and torch.equal(expected[live].detach().cpu().double(),backend[live].double()))
+            and torch.equal(expected[live].detach().cpu().double(),backend[backend_live].double()))
         row.update(physics_step_after=int(world._physics_steps),logical_command_submitted_rad=logical,
             sdk_expected_float32_rad=expected,backend_target_readback_after_advance_rad=backend,
             isaaclab_command_cache_after_advance_rad=readback['isaaclab_command_cache_active_rad'],

@@ -14,6 +14,8 @@
 
 固定腕三指恢复已支持显式left/both与N×2×3逐指状态，原A/right仍为默认范围；每episode累计1mm/1s及0.5s无进展预算不因接触闪断重置。新的双侧/旧恢复及有限驱动CPU检查79 passed。Stage B只代表固定腕资格，移动腕真实几何门禁、C/D/E及三指Student训练仍未开放；五项原生跟踪/恢复计划需单实例逐项验证。
 
+本次上传新增只读物理分叉分析与真实成功池合并工具，并修复共同暂停的CPU读回/CUDA掩码索引、Tripod已结束slot被旧目标覆写两项接口问题。最新检查197 passed、2 CUDA skip，另真实Torch CUDA2执行2 passed（SDK格式仍为合成fixture，非Isaac验证）。E0及B0纯Student来源均已完整0/4；B1进行中、B2待运行。Teacher/MPC成功继续单列，未宣称Lift修复或启动新PPO，PR仍Draft。
+
 ## 2026-11-09 — Student原生执行链复核完成
 
 同模型、同seed、同200个初态的诊断复测已自然结束，二指/三指仍各0/100成功。逐480Hz真实backend/cache、掌位、动作、首terminal和原始物体遥测完成跨流核验；额外自动reset记录不计评估次数。二指两掌最高上移50 mm时物体仍接近原高度，掌位峰值不代表抓取。完整逐手分位、失败原因、峰值env/UID/时刻和同环境轨迹见[执行链审计](docs/superpowers/reports/2026-11-09-stage5-student-execution-audit.md)。
