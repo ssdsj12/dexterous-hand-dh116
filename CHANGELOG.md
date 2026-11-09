@@ -1,3 +1,11 @@
+## 2026-11-10 — Stage 7 统一状态与原生测量链
+
+- 新增不可变 Teacher MPC 状态及严格 provenance/NA/时钟合同，保留 Student 输入隔离。复用真实 backend target、原接触读取与 COM 点速度换算，不用命令缓存或整手载荷伪造逐指反馈。
+- 新增默认关闭的原 Teacher 只读 480 Hz 采集：真实 issued24/8 子步关联、原 refresh receipt、首 terminal 关闭、cohort 与 actual mask 分开，invalid raw 非有限数据可恢复保存；异常时仍清理全部资源。
+- 独立 CPU 实测 185 passed、1 skipped、58 subtests。实际 8 环境/180 控制步采集 exit 0，11520 状态与1440物理帧完整对齐；全为截断、无 terminal，不授新 MPC、专家池或 Student 成功资格。完整旧 Teacher 首回合采集仍在执行。
+- 保留准备失败：child 输出目录误建、Git 资产清单旧路径。独立 runtime freeze 仅四个路径字符串重绑定，实际 USD SHA 和原源码/物理保持；启动器现在提前校验所有依赖。无证据的 support/反力/partner ID/硬件反馈仍 NA。
+- 原默认、PPO、3844D Actor/371D Critic/24D Tanh、物理/材料/执行器和30mm/5s/0.5mm不变。H8、恢复、载荷转移、完整保护及正式配对/新专家仍未完成，PR保持Draft；详见[报告](docs/superpowers/reports/2026-11-10-stage7-mpc-state-measurement.md)。
+
 ## 2026-11-10 — Stage 7 原生分叉证据与目标门禁
 
 - 完成 E0/B0/B1/B2 四组来源首回合及六时点比较，各 0/4；接触建立/保持、原标定跟踪与最终失败分别记录，微小数值差不直接归因。

@@ -159,6 +159,10 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
     from .tabletop_vision_student import SensorHistory
     from .tabletop_vision_supervision_dataset import load_teacher_reference_dataset,build_dataset,save_dataset
     validate_options(args)
+    capture_mpc_state = bool(getattr(args,'vision_mpc_state_capture',False))
+    if capture_mpc_state:
+        from .tabletop_bimanual_mpc_capture import validate_mpc_state_capture_options
+        validate_mpc_state_capture_options(args)
     adapter_difference = None
     if getattr(args, 'bimanual_explicit_sdk_adapter', False):
         from .tabletop_bimanual_experiment_runtime import install_explicit_sdk_adapter
@@ -173,6 +177,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
             and hasattr(world,'sim') and type(world.sim).__module__.startswith('isaaclab.'))
         if not genuine:
             raise ValueError('native Teacher supervision requires the genuine Isaac TensorWorld/TensorEnv')
+    if capture_mpc_state and not genuine:
+        raise ValueError('MPC state capture requires genuine native Isaac, not a supplied camera fixture')
     output=Path(args.output)
     source=load_teacher_reference_dataset(args.vision_teacher_source,critic_contract)
     references=_choose_references(source,args.num_envs)
@@ -247,6 +253,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
     supervision_eligible = torch.ones(args.num_envs, device=args.device, dtype=torch.bool)
     sequence_capture = None
     unqualified_sequence_capture = None
+    mpc_state_capture = None
+    mpc_state_capture_report = None
     sequence_enabled = (sequence_context_sink is not None or
         bool(getattr(args, 'vision_sequence_context_sidecar', False)))
     sequence_run_uuid = str(uuid.uuid4()) if sequence_enabled else None
@@ -267,6 +275,13 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                 from .tabletop_vision_sequence_capture import SequenceContextCapture
                 sequence_capture = SequenceContextCapture(task, device_world, sequence_context_sink,
                     require_native_readback=genuine)
+            if capture_mpc_state:
+                from .tabletop_bimanual_mpc_capture import install_mpc_state_capture
+                # Final cold reset is complete; bridge generation anchors must
+                # precede the first physical step, without another reset/update.
+                mpc_state_capture = install_mpc_state_capture(env, device_world,
+                    output/'mpc_state_capture', enabled=True,run_uuid=sequence_run_uuid,
+                    native_runtime_verified=genuine)
             for tick in range(max_steps):
                 if sequence_capture is not None:
                     from .tabletop_vision_command_shadow import command_state
@@ -332,6 +347,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                 if sequence_capture is not None:
                     sequence_capture.begin_tick([row for row in metadata if row['tick'] == tick],
                         issued, initial_state=sequence_start)
+                if mpc_state_capture is not None:
+                    mpc_state_capture.submit(issued, policy_step=tick)
                 critic,reward,done,extra=env.step(issued.clone())
                 if sequence_capture is not None:
                     sequence_capture.finish_tick(done)
@@ -375,19 +392,28 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
             failure=repr(error)
             raise
         finally:
-            if sequence_capture is not None:
-                sequence_capture.close()
-                unqualified_sequence_capture = sequence_capture.write_unqualified(
-                    output/'native_sequence_context_unqualified.pt', error=failure)
             try:
-                try:
-                    if tripod_candidate is not None:
-                        tripod_candidate.close(error=failure)
-                finally:
-                    if teacher_audit is not None:
-                        teacher_audit.finish(error=failure)
+                if mpc_state_capture is not None:
+                    mpc_state_capture_report = mpc_state_capture.finish(error=failure)
             finally:
-                camera.set_raw_frame_sink(None);raw.close()
+                try:
+                    if sequence_capture is not None:
+                        sequence_capture.close()
+                        unqualified_sequence_capture = sequence_capture.write_unqualified(
+                            output/'native_sequence_context_unqualified.pt', error=failure)
+                finally:
+                    try:
+                        try:
+                            if tripod_candidate is not None:
+                                tripod_candidate.close(error=failure)
+                        finally:
+                            if teacher_audit is not None:
+                                teacher_audit.finish(error=failure)
+                    finally:
+                        try:
+                            camera.set_raw_frame_sink(None)
+                        finally:
+                            raw.close()
             if failure is not None:
                 _exclusive_json(output/'collection_failure.json',dict(error=failure,samples=len(rows),ppo_updates=0))
                 with (output/'partial_unqualified_samples.pt').open('xb') as stream:
@@ -476,6 +502,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
             successful_sidecar_available=successful_sequence_context is not None,
             no_historical_trace_reconstruction=True,
             unqualified_native_capture=unqualified_sequence_capture)
+    if mpc_state_capture_report is not None:
+        report['mpc_state_capture']=mpc_state_capture_report
     if perturbation is not None:
         report['teacher_perturbation'] = perturbation.summary()
         report['teacher_perturbation']['pool_scope'] = 'fresh_successful_pinch_first_episodes_only;tripod_outcomes_audit_only'

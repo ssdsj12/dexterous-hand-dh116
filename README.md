@@ -1,3 +1,11 @@
+## 2026-11-10 — Stage 7 MPC 状态与原生只读测量
+
+统一 Teacher `MPCState`、实际测量桥和默认关闭的 `--vision-mpc-state-capture` 已实现。逐字段保存来源、单位、时钟、有效性及 env/episode；实际 backend 跟踪误差、COM 原点换算、raw 接触归属和首 terminal 隔离均单独校验，仿真特权字段不进入 Student。
+
+本次独立 CPU 验证 185 passed、1 CUDA-unavailable skip、58 subtests。实际 Isaac 短时采集已自然 exit 0：8 个混合环境、180 控制步、1440 物理帧和 11520 条状态，逐帧时钟/动作/raw 对齐。全部回合为截断、terminal 0，不能当作完整任务成功率。合格支撑、桌面/端支架反力等能力缺口仍为 NA；两次启动准备失败及修复也保留。
+
+原预算 1900 控制步的独立旧 Teacher 首回合采集正在执行，用于实际 terminal/no-op/reset 验证。新 H8 MPC、逐指恢复、载荷转移及正式二指/三指各 100 个不同初态仍待后续门禁；不启动新 Student PPO。M0、旧 Teacher、3844D/371D/24D Tanh、原物理和 30 mm/5 s/0.5 mm 标准保持，PR 继续 Draft。命令、SHA 和已知限制见[测量验证报告](docs/superpowers/reports/2026-11-10-stage7-mpc-state-measurement.md)。
+
 ## 2026-11-10 — Stage 7 首次物理分叉与目标选择
 
 第一证据单元完成：E0/B0/B1/B2 的真实来源首回合均 0/4、未达 30 mm、合格 Hold 为 0。两次 Teacher 重放各 4/4 单列，不计 Student。64 项逐次冷重置短切换及 64 项六时点后处理全部完成，共 256 个有界窗口、41,472 个 Student 实际物理子步，缺失 0；全部正常截断，不能当完整任务成功率或失败率。四来源仍是一个标称布局的副本，不是新 100 初态验收。

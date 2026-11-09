@@ -63,6 +63,8 @@ parser.add_argument('--vision-teacher-source',type=Path,
                     help='independent bounded real RGB-D Teacher supervision collection; no PPO')
 parser.add_argument('--vision-sequence-context-sidecar', action='store_true',
                     help='opt-in Stage6 pre-control feedback and actual-target sidecar for native Teacher labels')
+parser.add_argument('--vision-mpc-state-capture', action='store_true',
+                    help='opt-in read-only480Hz privileged MPC state archive during independent legacy Teacher collection; no control change')
 parser.add_argument('--vision-teacher-perturbation-manifest', type=Path,
                     help='explicit native Teacher reset perturbations with actual readback and source lineage; no PPO')
 parser.add_argument('--vision-stage6-native-config', type=Path,
@@ -485,6 +487,9 @@ if args.vision_student:
 from go2_pvcnn.control.dh116.tabletop_vision_teacher_collection import validate_options as validate_teacher_collection_options
 try:
     validate_teacher_collection_options(args)
+    if args.vision_mpc_state_capture:
+        from go2_pvcnn.control.dh116.tabletop_bimanual_mpc_capture import validate_mpc_state_capture_options
+        validate_mpc_state_capture_options(args)
     if args.vision_teacher_source and not args.vision_teacher_source.is_file():
         raise ValueError('vision Teacher source must be an existing ordinary dataset file')
 except ValueError as error:

@@ -298,8 +298,9 @@ class TripodNativeEvidenceBuilder:
                 native_success, wrists_fixed, left_targets_fixed, object_external_force_applied,
                 induced_disconnect, event_kind='physics'):
         w = self.world; n = w.n; clock = _clock(w)
-        if stage_id not in ('A', 'B', 'C', 'D', 'E') or event_kind not in ('physics', 'reset'):
-            raise ValueError('stage A..E and event kind physics/reset required')
+        # Neutral read-only state capture is not an A..E staged experiment.
+        if stage_id not in ('A', 'B', 'C', 'D', 'E', 'MPC_MEASUREMENT') or event_kind not in ('physics', 'reset'):
+            raise ValueError('stage A..E/MPC_MEASUREMENT and event kind physics/reset required')
         if type(control_step) is not int or control_step < 0 or type(control_substep) is not int or not (
                 0 <= control_substep <= 8 if event_kind == 'reset' else 1 <= control_substep <= 8):
             raise ValueError('explicit current control clock required')
@@ -309,12 +310,14 @@ class TripodNativeEvidenceBuilder:
         flags = {}
         for key, value in dict(live=live, terminal=terminal, fatal=fatal, native_success=native_success).items():
             value = _plain(value)
-            if not isinstance(value, list) or len(value) != n or any(type(v) is not bool for v in value):
+            unknown_allowed = stage_id == 'MPC_MEASUREMENT' and key in ('fatal', 'native_success')
+            if not isinstance(value, list) or len(value) != n or any(
+                    type(v) is not bool and not (unknown_allowed and v is None) for v in value):
                 raise ValueError('per-environment bool flag required: '+key)
             flags[key] = value
         for key, value in dict(wrists_fixed=wrists_fixed, left_targets_fixed=left_targets_fixed,
                 object_external_force_applied=object_external_force_applied, induced_disconnect=induced_disconnect).items():
-            if type(value) is not bool:
+            if type(value) is not bool and not (stage_id == 'MPC_MEASUREMENT' and value is None):
                 raise ValueError('explicit runner experiment flag required: '+key)
         # All quantities come from this refresh, before any terminal reset.
         cached_q, cached_qd, cached_poses = [_owned(getattr(w, k)) for k in ('q', 'qd', 'poses')]
