@@ -1,3 +1,9 @@
+## 2026-11-09 — Stage 6 原生来源与短分支入口
+
+- 接入五命令CLI、绑定真实模型/场景/数据SHA的原生来源和Teacher前缀短分支；分别记录真实issued动作、首次数值偏离、任务物理事件及首terminal。Student launch移除Teacher/MPC/旧评估/M2参数，相机warmup与真实reset读回严格核对。
+- 只读cache绑定输入及13个源码SHA，仅复用saved-observation前向和shadow；所有物理reset、前缀及terminal重新执行。实际Teacher tape重放4/4、37584样本、1175policy步，纯Student计数0，来源模型四组和24分支继续串行验证。
+- 同4698观测完整离线前向确认B0/B1/B2总体MSE下降，但B1/B2近似，不能据此晋级。当前entry/integration实际25 passed（13.29s），branch39 passed、冻结相关91 passed，非原生次数；完整命令、SHA及边界见[实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。默认路径/成功标准保持，PR仍Draft。
+
 ## 2026-11-09 — Stage 6 实际序列BC模型
 
 - 新增masked动作、条件累计目标及可选delta损失，独立`fit_actor_sequences`使用真实4×16连续窗口、fresh BC Adam、单次Tanh和原观测；旧`fit_actor`保持。主B0/B1/B2不重置源Actor，Critic、log_std和原PPO状态保留。

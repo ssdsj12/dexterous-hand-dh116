@@ -63,6 +63,8 @@ parser.add_argument('--vision-teacher-source',type=Path,
                     help='independent bounded real RGB-D Teacher supervision collection; no PPO')
 parser.add_argument('--vision-sequence-context-sidecar', action='store_true',
                     help='opt-in Stage6 pre-control feedback and actual-target sidecar for native Teacher labels')
+parser.add_argument('--vision-stage6-native-config', type=Path,
+                    help='isolated finite Stage6 source/prefix-branch configuration; no PPO')
 parser.add_argument('--vision-teacher-mpc',action='store_true',
                     help='training-only local finger MPC refines Teacher reference labels')
 parser.add_argument('--tripod-recovery-stage',choices=('A',),
@@ -275,6 +277,16 @@ AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
 if args.vision_sequence_context_sidecar and not args.vision_teacher_source:
     parser.error('sequence context sidecars require independent native Teacher collection')
+if args.vision_stage6_native_config:
+    if (not args.vision_student or not args.tensor_pipeline or args.vision_camera_mode != 'fixed'
+            or args.vision_action_distribution != 'tanh_gaussian'
+            or args.vision_mirror_preprocessing != 'm0_raw'
+            or any((args.resume, args.vision_teacher_source, args.vision_evaluation_checkpoint,
+                    args.vision_evaluation_manifest, args.vision_m2_replay, args.tripod_recovery_stage))):
+        parser.error('Stage6 native source/branch runs require exclusive fixed-camera M0 Tanh visual execution')
+    from go2_pvcnn.control.dh116.tabletop_vision_branching_eval import load_native_config
+    try: load_native_config(args.vision_stage6_native_config)
+    except (ValueError, OSError, KeyError) as exc: parser.error(str(exc))
 if args.vision_m2_replay and (not args.vision_student or not args.tensor_pipeline
         or args.vision_evaluation_checkpoint or args.vision_teacher_source or args.tripod_recovery_stage):
     parser.error('--vision-m2-replay requires an exclusive native visual tensor replay')

@@ -4,6 +4,8 @@
 
 新版采集02已自然结束：二指Teacher/MPC 4/4，三指0/4；4698条成功视觉记录、37,584个live物理子步的原目标、SDK cast、PhysX backend及cache分别误差0，4638个16步窗口也通过累计目标一致性。533项冻结聚焦CPU回归通过，本次训练/激活及旧BC相关检查另为101 passed。新的纯Student来源/短分支原生评估仍在运行，尚不宣称抓取改善；没有新PPO。实际命令、三个最终模型SHA及未通过门禁见[Stage6实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。3844D/371D/24D、M0、原Teacher及30mm/5s/0.5mm标准保留，PR仍Draft。
 
+五命令入口`python scripts/run_dh116_stage6.py --help`已接入：准备真实序列、训练独立候选、来源纯Student、Teacher前缀分支和独立heldout。实际Teacher tape冷重置重放刚完成4/4、37584物理样本，属于Teacher重复基线。物理实验仍逐项重新reset，缓存只复用SHA绑定的离线观测比较。新的纯Student完整结果及首次物理分叉尚待作业结束后报告，不能用训练MSE或前缀成功替代。
+
 ## 2026-11-09 — Student原生执行链复核完成
 
 同模型、同seed、同200个初态的诊断复测已自然结束，二指/三指仍各0/100成功。逐480Hz真实backend/cache、掌位、动作、首terminal和原始物体遥测完成跨流核验；额外自动reset记录不计评估次数。二指两掌最高上移50 mm时物体仍接近原高度，掌位峰值不代表抓取。完整逐手分位、失败原因、峰值env/UID/时刻和同环境轨迹见[执行链审计](docs/superpowers/reports/2026-11-09-stage5-student-execution-audit.md)。

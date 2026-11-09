@@ -109,3 +109,35 @@ tests/test_vision_squashed_policy.py tests/test_vision_quaternion.py \
 **101 passed，16.86秒，exit0**。这不是与先前533项相加的独立总数。旧`fit_actor`与旧ReLU/Tanh/quaternion路径继续通过；合成masked损失/梯度测试和实际训练分别报告。
 
 原生来源和Teacher前缀短分支正在另一个冻结目录、同一Isaac实例锁下逐项执行。当前模型是fit_only候选，尚未通过来源纯Student闭环或独立测试，B3和短PPO门禁未开放。新最终200集仍是训练前冻结且尚未使用的authored_unverified清单，不能把它写成200次已验证。
+
+## 提交4：原生来源/分支入口与真实Teacher重放基线
+
+已新增`tabletop_vision_branching_eval.py`、独立只读比较缓存和五命令入口。每个配置绑定实际模型/数据/context/report/真实初态路径与SHA。Student原生launch会删除Teacher、MPC、旧评估和M2参数，强制M0/Tanh；真实场景来自8环境seed42的02 launch，GPU3环境和Kit activeGpu3分别校验。`evaluate-source`从reset起只有Student控制；`diagnose-branch`每次真实冷重置，再重放Teacher prefix，Student接管1/4/16/60步。三种事件和四个来源分别报告，前缀先终止的case不能算完成Student分支。
+
+原模型发现launch与真正原生来源launch曾存在200环境/8环境配置差异；在首次启动前已通过测试及显式native-template修复，没有拿模型发现参数冒充来源重现。相机先构建、再真实冷重置，并逐字段核对q/qd/command/roots/物体位置/四元数/参考底高，以及相机warmup前后状态和SDK clock；不把pose写回当PhysX solver state恢复。
+
+60Hz记录实际issued及真实previous action，480Hz记录首terminal前实际物理payload和另存的后端/q/目标流。execution UUID、env和episode UID与Teacher来源身份分开。首terminal后退休环境，不覆盖其最终有效样本。Teacher前缀期间的未执行Student预测，只计同输入误差，不能作为实际动作第一次分叉。首次数值差异、绝对任务物理事件和对重复Teacher范围的分叉也分别保留，后者需要实际可用重复证据，不能由数值差异直接推断因果。
+
+只读cache仅复用同一saved Teacher observation上的前向/条件shadow结果；它绑定模型、dataset、context、原stream/report及13个实际实现模块SHA，CRC与JSON行完整性校验。每个原生job仍独立冷重置、执行完整前缀、采集480Hz物理和首terminal，`native_trials_reused=0`。代码/输入不符则拒绝，不靠缓存减少或伪造物理次数。
+
+冻结有限驱动`evaluation_driver01.py`的SHA为`fad4a09fc57ff62d6fee768dce57dc9c11907f597c57925c67be775455cec5ef`，原生代码为`evaluation_source01`，冻结2843文件。预设总表为1个实际Teacher tape重放、4个E0/B0/B1/B2纯来源任务，以及两臂E0/B2各3事件×4时长的24个短分支。仅实际完成的job计入结果；这一预设表不等于29项已通过。
+
+首项已实际自然退出0：
+
+| Teacher tape原生重放，`native_e0_replay01/jobs/teacher_replay_E0` | 实际结果 |
+|---|---|
+| report SHA256 | `133ccd86a7f8377f5a37172a28d9fdaad5d63eeff2c8494b1f6b3892ecd4b5c0` |
+| 首回合 / policy总步数 | 4/4原生成功，1175步；`pure_student_native_success_count=0` |
+| 实际UUID | `e4668000-6287-4883-8a3f-118d1f6f7708` |
+| env0 / 1 / 2 / 3净lift峰值 | 31.591481 / 31.537555 / 31.531521 / 31.627703 mm |
+| 逐环境合格Hold | 原5秒；浮点记录4.99999999999999s，使用原判据，未改容差 |
+| 有效480Hz样本 | 9392 / 9400 / 9400 / 9392，合计37584 |
+| raw physics SHA256 | `6b93602053ed81f994fddbbf3a798f406f6cdb39c68ad4b4448c64e32d9ea0e4` |
+
+该重放证明这四条Teacher tape在真实reset/相机路径下可以再现，仍是Teacher控制，不是Student或新独立初态成功。新纯来源/分支正在同一单实例锁下继续；没有中断其他训练或并行第二个Isaac。
+
+完整回合边界另外对冻结实际`TensorTask.elapsed`做原f64 masked累加审计：14400次原1/480累加后为30.00000000001039s，首次原`>30s`在physics14400/policy1800触发，现有来源循环可以观察该原超时。审计SHA为`dac894046fba52b14e7fbe01b026085ea21f9c652e988d76c964e6b121954609`；没有因收尾疑问修改时限、物理dt或重启原生job。
+
+完整saved-pool只读前向在4698个原始观测上得到总体动作MSE：E0 `0.00019526530494252625`，B0 `0.0000683884250602903`，B1 `0.000070870184078405`，B2 `0.00007078445551577331`。报告`offline_actor_pool_analysis/all4_analysis_v01/actual_all4/saved_actor_pool_report.json` SHA `aa54492a5c380beee4912e03928b22aac3391821228146b52ee42320e8b832a1`，包含24维、具名动作组及事件分层，输入/文件/RNG与全部非Actor模型状态前后不变。B1/B2的这点差异不构成B3或PPO晋级依据，也不能拿B0最低训练MSE替代原生选择。
+
+CPU命令分别实际执行：`pytest tests/test_vision_branching_eval.py -q -p pytest_mock -p no:cacheprovider`为39 passed；冻结batch/cache/entry组合91 passed。新增Teacher扰动参数隔离测试先得到3 failed/1 passed，补充Student launch剥离后，`pytest tests/test_stage6_workflow.py tests/test_stage6_workflow_integration.py -q -p pytest_mock -p no:cacheprovider --basetemp=/tmp/stage6-tier1-cli-green01`为**25 passed，13.29s**；均经同服务器`CUDA_VISIBLE_DEVICES='' DH116_PYTHON=... DH116_NUM_THREADS=2 bash scripts/python.sh`执行，不计原生验证。

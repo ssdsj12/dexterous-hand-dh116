@@ -44,7 +44,7 @@
 
 **Files:** new `tabletop_vision_branching_eval.py`, `scripts/run_dh116_stage6.py`, `configs/dh116/stage6_pinch_sequence_bc.yaml`; opt-in native training-script dispatch; tests.
 
-- [ ] Provide runnable `prepare-data`, `train-bc`, `diagnose-branch`, `evaluate-source`, `evaluate-heldout`. Manifests bind actual model/data paths and SHA, assets/camera/preprocessing/source version; no guessed filenames or overwrite.
+- [x] Provide runnable `prepare-data`, `train-bc`, `diagnose-branch`, `evaluate-source`, `evaluate-heldout`. Manifests bind actual model/data paths and SHA, assets/camera/preprocessing/source version; no guessed filenames or overwrite. Actual pure-source/branch outcomes remain separate pending checks below.
 - [ ] Source evaluation uses the4 actual successful pinch initial states and pure Student from reset to first terminal. No Teacher/phase/GT coordination after start. Report source reproduction, not generalization.
 - [ ] For CONTACT/LIFT_ONSET/HOLD ×1/4/16/60 steps, cold-reset and replay actual successful Teacher prefix before each branch, then Student. Separate first numeric divergence from task-related contact/tracking/slip/force/limit divergence against repeated Teacher range.
 - [ ] Freeze a new final manifest before training; previous200 remains regression only. Run fixed-source and independent native comparisons for E0/B0/B1/B2, with each model's results/first-terminal traces separate.
