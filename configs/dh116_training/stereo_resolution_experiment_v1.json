@@ -1,0 +1,49 @@
+{
+  "version": "dh116-stereo-resolution-experiment-v1",
+  "default_accuracy_profile": "configs/dh116_training/stereo_camera_640x480_v2.json",
+  "candidate_profiles": [
+    "configs/dh116_training/stereo_camera_v1.json",
+    "configs/dh116_training/stereo_camera_320x240_v2.json",
+    "configs/dh116_training/stereo_camera_640x360_v2.json",
+    "configs/dh116_training/stereo_camera_640x480_v2.json"
+  ],
+  "selected_resolution": null,
+  "native_runs": 0,
+  "native_measurements": "NA;no_accuracy_or_GPU_performance_claim",
+  "physical_rig": "same_T_world_left_right_and_0.08m_baseline",
+  "intrinsics": "native_rerender_fx=fy=W/(2*tan(75deg/2));cx=W/2;cy=H/2",
+  "resize_ablation": "explicit_resize_calibration_Kprime=diag(sx,sy,1)K;not_native_rerender",
+  "physics_hz": 480,
+  "control_hz": 60,
+  "calibration_readback_required": true,
+  "stereo_render": "2N simultaneous real_views_same_physics_state",
+  "image_processing_batch_size": 2,
+  "depth_image_processing_batch_size": 1,
+  "selection": "only_public_native_proof_verified_same_cohort_and_complete_threshold_pass;never_preselect_low_resolution",
+  "metric_names": [
+    "depth_mae_m",
+    "depth_rmse_m",
+    "depth_p95_m",
+    "wire_point_cloud_completeness",
+    "gpu_peak_allocated_bytes",
+    "gpu_peak_reserved_bytes",
+    "gpu_free_bytes",
+    "capture_ms",
+    "depth_ms",
+    "actor_ms",
+    "stereo_pairs_per_second"
+  ],
+  "missing_values": "NA;CPUfixture_GPU_zeros_are_not_measurements",
+  "thresholds": null,
+  "controlled_depth_overrides": {
+    "method": "blockmatch",
+    "block_size": 5,
+    "subpixel": true,
+    "image_processing_batch_size": 1
+  },
+  "integer_disparity_ablation": {
+    "subpixel": false,
+    "scope": "separate_algorithm_ablation_not_resolution_only_comparison"
+  },
+  "legacy_224_policy": "file_bytes_unchanged;controlled_comparison_uses_explicit_in_memory_depth_override_and_saves_actual_validation_config"
+}

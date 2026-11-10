@@ -20,6 +20,32 @@ def manifest():
     return json.loads(CONTRACT.read_text(encoding='utf-8'))
 
 
+def audit_ast_dump(node):
+    """The frozen dump was authored with Python 3.12's empty type_params field.
+
+    Python 3.10 has identical source semantics but omits this AST-schema field.
+    Add only missing empty fields on a private copy; keep raw-byte SHA and every
+    nonempty AST field/range check unchanged. Never drop real type parameters.
+    """
+    node = copy.deepcopy(node)
+    for child in ast.walk(node):
+        if isinstance(child, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and 'type_params' not in child._fields:
+            child.type_params = []
+            child._fields = child._fields + ('type_params',)
+    return ast.dump(node, include_attributes=False)
+
+
+def test_audit_ast_schema_is_identical_for_python310_and312_empty_fields():
+    native = ast.parse('class Example:\n    def f(self, x):\n        return x+1\n').body[0]
+    legacy = copy.deepcopy(native)
+    for child in ast.walk(legacy):
+        if isinstance(child, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            child._fields = tuple(field for field in child._fields if field != 'type_params')
+            if hasattr(child, 'type_params'):
+                del child.type_params
+    assert audit_ast_dump(native) == audit_ast_dump(legacy)
+
+
 def test_required_document_and_machine_contract_exist():
     assert DOC.is_file(), 'Phase 0 requires the human-readable 371-row audit'
     assert CONTRACT.is_file(), 'Phase 0 requires the executable per-dimension audit'
@@ -65,7 +91,7 @@ def test_source_byte_hashes_and_ast_ranges_are_bound_to_checkout():
                          and n.name == bound['name'] and n.lineno == bound['line_start']]
                 assert len(nodes) == 1, (path, bound)
                 assert nodes[0].end_lineno == bound['line_end']
-                digest = hashlib.sha256(ast.dump(nodes[0], include_attributes=False).encode()).hexdigest()
+                digest = hashlib.sha256(audit_ast_dump(nodes[0]).encode()).hexdigest()
                 assert digest == bound['ast_sha256']
 
 

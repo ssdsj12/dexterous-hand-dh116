@@ -121,3 +121,8 @@ $env:PYTHONDONTWRITEBYTECODE='1'
 Phase4/5期间peer review发现仅metadata的`native_qualified`字符串和64hex不能授予物理来源资格。先加RED断言，观察metadata-only错误开启force loss（0.5）；随后增加lazy公共gate `tabletop_stereo_promotion.verify_force_qualification(binding)`，真实proof/producer/native rawartifact路径及字节SHA须通过重读验证，否则force coverage始终0并返回blocked原因。推理Actor不导入该训练gate。
 
 CPU loss梯度正例仅monkeypatch proof verifier以隔离mask算术，不创建或宣称native proof。真实CPUfixture和metadata-only两条路径仍blocked。此前SHA表已更新至加固后源码/测试；本次依旧没有运行任何native力学资格实验。
+
+
+## Resolution v2后续兼容扩展
+
+用户后续授权主精度640×480；encoder/estimator/Actor增加image_processing_batch_size，None保留旧单次cat，显式batch保持GN/grad并使用train checkpoint，无resize。network候选batch2。该后续变更的20项新分辨率测试与完整102项联合CPU结果见`2026-11-10-stereo-resolution-v2.md`；不是原生验证。下表相关SHA同步为该兼容扩展后的文件。

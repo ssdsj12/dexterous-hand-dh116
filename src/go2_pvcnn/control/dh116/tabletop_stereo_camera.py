@@ -6,6 +6,8 @@ CPU reader injection is explicitly diagnostic and cannot grant native evidence.
 import copy
 import importlib
 import math
+import json
+from pathlib import Path
 import numpy as np
 import torch
 
@@ -20,7 +22,19 @@ def _array(value):
 
 class _NativeRGBPairReader:
     """Lazy Isaac 4.5 adapter; no render-depth annotator or task/world-state access."""
-    def __init__(self,sim,origins,calibration,device):
+    def __init__(self,sim,origins,calibration,device,*,max_readback_bytes=1024**3,allow_resource_override=False):
+        # Resource admission happens before creating any tiled render product.
+        origin_values=torch.as_tensor(origins,dtype=torch.float64).detach().cpu()
+        if origin_values.ndim!=2 or origin_values.shape[1]!=3 or not torch.isfinite(origin_values).all():
+            raise ValueError('finite camera origins [N,3] required')
+        if type(max_readback_bytes) is not int or max_readback_bytes<1:raise ValueError('positive camera readback resource limit required')
+        estimate=2*len(origin_values)*calibration.width*calibration.height*16
+        if estimate>max_readback_bytes and not allow_resource_override:
+            raise ValueError('2N full-resolution RGB readback exceeds resource limit; reduce num_envs or explicitly override')
+        self.resource_metadata=dict(real_camera_views=2*len(origin_values),resolution_wh=[calibration.width,calibration.height],
+            minimum_rgb_readback_bytes_estimate=estimate,max_readback_bytes=max_readback_bytes,
+            estimate_scope='RGBA8_plus_float32_RGB_only;renderer_assets_and_transient_overhead_not_measured',
+            hidden_downsample=False,gpu_memory_measured=False)
         from .tabletop_vision_camera import _CameraAxesDeviceMixin, numeric_slot_order
         kit=importlib.import_module('omni.kit.app')
         kit.get_app().get_extension_manager().set_extension_enabled_immediate('isaacsim.sensors.camera',True)
@@ -31,7 +45,7 @@ class _NativeRGBPairReader:
         core=importlib.import_module('isaacsim.core.nodes.bindings._isaacsim_core_nodes')
         from pxr import Gf, Usd, UsdGeom
         self.sim,self.calibration,self.device=sim,calibration,torch.device(device)
-        self.origins=torch.as_tensor(origins,dtype=torch.float64).cpu()
+        self.origins=origin_values
         if self.origins.ndim!=2 or self.origins.shape[1]!=3 or not torch.isfinite(self.origins).all():
             raise ValueError('finite camera origins [N,3] required')
         self.n=len(self.origins);self.count=2*self.n
@@ -118,10 +132,21 @@ class StereoCamera:
         self.sim=sim;self.origins=origins;self.last_frame=-1
 
     @classmethod
-    def from_native(cls,sim,origins,config_path,device='cuda'):
-        c=StereoCalibration.from_json(config_path)
-        reader=_NativeRGBPairReader(sim,origins,c,device)
-        return cls(c,reader,sim=sim,origins=origins)
+    def from_native(cls,sim,origins,config_path,device='cuda',*,depth_config=None,
+                    max_width=None,max_height=None,max_readback_bytes=None,allow_resource_override=False):
+        from .tabletop_stereo_resolution import validate_resolution,DEFAULT_MAX_WIDTH,DEFAULT_MAX_HEIGHT
+        config=json.loads(Path(config_path).read_text(encoding='utf-8'))
+        c=StereoCalibration.from_dict(config)
+        resources=config.get('resource_limits',{})
+        override=allow_resource_override or resources.get('allow_resource_override',False)
+        validate_resolution(c.width,c.height,max_width=resources.get('max_width',DEFAULT_MAX_WIDTH) if max_width is None else max_width,
+            max_height=resources.get('max_height',DEFAULT_MAX_HEIGHT) if max_height is None else max_height,allow_resource_override=override)
+        if depth_config is None:depth_config=config
+        estimator=StereoDepth.from_config(depth_config)
+        reader=_NativeRGBPairReader(sim,origins,c,device,
+            max_readback_bytes=resources.get('max_readback_bytes',1024**3) if max_readback_bytes is None else max_readback_bytes,
+            allow_resource_override=override)
+        return cls(c,reader,depth_estimator=estimator,sim=sim,origins=origins)
 
     @torch.no_grad()
     def sample(self,*,identity):
@@ -152,7 +177,7 @@ class StereoCamera:
             if ('frame_id' in row and row['frame_id']!=frame) or ('calibration_sha256' in row and row['calibration_sha256']!=c.sha256):
                 raise ValueError('caller stereo identity frame/calibration mismatch')
             row.update(frame_id=frame,calibration_sha256=c.sha256)
-        c.validate_readback(packet['K_left'],packet['K_right'],packet['T_world_left'],packet['T_world_right'],origins=self.origins)
+        readback_diagnostics=c.validate_readback(packet['K_left'],packet['K_right'],packet['T_world_left'],packet['T_world_right'],origins=self.origins)
         if before is not None and float(self.sim.current_time)!=before:raise RuntimeError('camera read advanced physics time')
         depth=self.depth_estimator.compute(left,right,c)
         self.last_frame=frame
@@ -161,4 +186,7 @@ class StereoCamera:
             K_left=torch.as_tensor(packet['K_left']).clone(),K_right=torch.as_tensor(packet['K_right']).clone(),
             T_world_left=torch.as_tensor(packet['T_world_left']).clone(),T_world_right=torch.as_tensor(packet['T_world_right']).clone(),
             native_evidence=isinstance(self.reader,_NativeRGBPairReader) and packet.get('native_evidence') is True,
-            render_timing=copy.deepcopy(packet.get('render_timing')),render_passes=attempt+1)
+            render_timing=copy.deepcopy(packet.get('render_timing')),render_passes=attempt+1,
+            depth_resource_metadata=copy.deepcopy(getattr(self.depth_estimator,'last_resource_metadata',None)),
+            calibration_readback_residuals=readback_diagnostics,
+            camera_resource_metadata=copy.deepcopy(getattr(self.reader,'resource_metadata',None)))

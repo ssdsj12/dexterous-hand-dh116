@@ -78,6 +78,14 @@ class StereoCalibration:
         return hashlib.sha256(json.dumps(self.to_dict(),sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
 
     def validate_readback(self,K_left,K_right,T_world_left,T_world_right,origins=None):
+        # SDK focal/aperture getters may each be float32 even though the
+        # authored/readback K is assembled in float64. Account for two relative
+        # float32 rounding contributions in K only, not physical transforms.
+        intrinsic_rtol=2*torch.finfo(torch.float32).eps
+        diagnostics=dict(intrinsic_atol_px=1e-5,intrinsic_rtol=intrinsic_rtol,
+            extrinsic_atol=1e-5,extrinsic_rtol=0.,max_intrinsic_residual_px=0.,
+            max_translation_residual_m=0.,max_rotation_matrix_residual=0.,
+            scope='numerical_SDK_lens_readback_only;not_native_accuracy_qualification')
         shift=None if origins is None else torch.as_tensor(origins,dtype=torch.float64).cpu()
         if shift is not None and (shift.ndim!=2 or shift.shape[1]!=3 or not torch.isfinite(shift).all()):
             raise ValueError('invalid calibration origins')
@@ -88,8 +96,50 @@ class StereoCalibration:
                 expected=expected[None].repeat(len(shift),1,1)
                 if name.startswith('T_'):expected[:,:3,3]+=shift
             elif actual.ndim==3:expected=expected[None].expand_as(actual)
-            if actual.shape!=expected.shape or not torch.allclose(actual,expected,atol=1e-5,rtol=0.):
+            relative=intrinsic_rtol if name.startswith('K_') else 0.
+            if actual.numel()==0 or actual.shape!=expected.shape or not torch.allclose(actual,expected,atol=1e-5,rtol=relative):
                 raise ValueError('camera calibration readback mismatch: '+name)
+            difference=(actual-expected).abs()
+            if name.startswith('K_'):
+                diagnostics['max_intrinsic_residual_px']=max(diagnostics['max_intrinsic_residual_px'],float(difference.max()))
+            else:
+                diagnostics['max_translation_residual_m']=max(diagnostics['max_translation_residual_m'],float(difference[...,:3,3].max()))
+                diagnostics['max_rotation_matrix_residual']=max(diagnostics['max_rotation_matrix_residual'],float(difference[...,:3,:3].max()))
+        return diagnostics
+
+
+def rerender_calibration(calibration,width,height,*,horizontal_fov_degrees=75.,**resource_limits):
+    """New camera authoring at the same optical rig, not an image resize.
+
+    A fixed horizontal FOV with square pixels changes vertical FOV when the
+    aspect ratio changes. The optical transforms and physical baseline stay
+    exactly those of the input calibration.
+    """
+    from .tabletop_stereo_resolution import validate_resolution
+    validate_resolution(width,height,**resource_limits)
+    if not isinstance(calibration,StereoCalibration):raise TypeError('StereoCalibration required')
+    if not math.isfinite(horizontal_fov_degrees) or not 0<horizontal_fov_degrees<180:
+        raise ValueError('horizontal field of view must be in (0,180) degrees')
+    fx=width/(2*math.tan(math.radians(horizontal_fov_degrees)/2))
+    data=calibration.to_dict();data.update(width=width,height=height)
+    k=[[fx,0.,width/2],[0.,fx,height/2],[0.,0.,1.]]
+    data.update(K_left=k,K_right=k)
+    return StereoCalibration.from_dict(data)
+
+
+def resize_calibration(calibration,width,height,**resource_limits):
+    """Calibration for a real image resize: K'=diag(sx,sy,1)K, same T/B.
+
+    Pixel centres use u+.5/v+.5, so this continuous coordinate scaling needs
+    no extra half-pixel shift. This helper does not resize an image itself.
+    """
+    from .tabletop_stereo_resolution import validate_resolution
+    validate_resolution(width,height,**resource_limits)
+    if not isinstance(calibration,StereoCalibration):raise TypeError('StereoCalibration required')
+    scale=torch.diag(torch.tensor([width/calibration.width,height/calibration.height,1.],dtype=torch.float64))
+    data=calibration.to_dict();data.update(width=width,height=height,
+        K_left=(scale@calibration.K_left).tolist(),K_right=(scale@calibration.K_right).tolist())
+    return StereoCalibration.from_dict(data)
 
 
 def rectify_rgb(left,right,calibration,*,return_masks=False):
