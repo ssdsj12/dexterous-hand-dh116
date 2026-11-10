@@ -1,3 +1,11 @@
+## 2026-11-10 — 双目 RGB Teacher–Student：Phase 0 审计
+
+在独立分支 `codex/dh116-stereo-privileged-dagger` 完成[371D逐维状态](docs/stereo_privileged_state_contract.md)、[24D动作](docs/stereo_action_contract.md)和[奖励](docs/privileged_teacher_reward_audit.md)审计。当前371D为153+106+92+20；旧3844D RGB-D输入不等于双目RGB输入，历史261D/26D Teacher合同不能直接作为新Teacher资格。
+
+本次CPU组合覆盖真实observe/控制器算术、奖励dt/覆盖与成功门槛，没有启动Isaac或训练。528个原有源码、脚本和配置逐文件SHA不变，`11-10`仍指向`6cee7418`，没有读写历史Checkpoint。最终测试数、完整命令、来源SHA及尚未资格的support/feedback见[审计报告](docs/superpowers/reports/2026-11-10-stereo-phase0-audit.md)。
+
+用户已授权按[Phase0～7计划](docs/superpowers/plans/2026-11-10-stereo-privileged-dagger-implementation.md)持续实施。下一步新增独立privileged PPO Teacher和R0奖励透传；R1/R2支撑资格、Teacher原生成功及正式DAgger晋级仍须独立验证。PR保持Draft。
+
 ## 2026-11-10 — CUDA 12.8 最终目标与独立安装计划
 
 按用户最新要求，最终扩展固定以当前 Python 3.10.12 / Torch 2.7.0+cu128 / **CUDA 12.8 / SM89** 重新编译，不用现有 12.2/12.4 代替。只读复核仍未找到 12.8 Toolkit；拟新增用户目录 `/mnt/mydisk/xk/toolchains/cuda-12.8.0`，不替换 Driver、原 Runtime、Python/Torch/Isaac 或已有 Toolkit。
