@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 1：独立 privileged PPO Teacher
+
+新增371D→256→256 Teacher Actor/Critic、24D saved-latent Tanh Gaussian PPO、独立Actor BC、独占Checkpoint及三份CLI。R0逐值复用原任务奖励，不改旧控制器/模型。集成CPU **49 passed，exit0**，包括合成更新、保存/恢复与terminal保留；不是原生训练或抓取成功。
+
+[Phase1集成报告](docs/superpowers/reports/2026-11-10-stereo-phase1-integration.md)列出命令、文件及原生入口限制。所有native执行仍须显式opt-in，Teacher成功资格、R1/R2物理来源及正式DAgger门槛未通过。继续开发隔离的双目/估计/蒸馏模块，PR保持Draft。
+
 ## 2026-11-10 — 双目 RGB Teacher–Student：Phase 0 审计
 
 在独立分支 `codex/dh116-stereo-privileged-dagger` 完成[371D逐维状态](docs/stereo_privileged_state_contract.md)、[24D动作](docs/stereo_action_contract.md)和[奖励](docs/privileged_teacher_reward_audit.md)审计。当前371D为153+106+92+20；旧3844D RGB-D输入不等于双目RGB输入，历史261D/26D Teacher合同不能直接作为新Teacher资格。

@@ -1,0 +1,10 @@
+{
+  "version": "dh116-privileged-teacher-reward-v1",
+  "profile": "teacher_r1_geometry",
+  "enabled": false,
+  "explicit_opt_in_required": true,
+  "qualification_required": "SHA_bound_native_geometry_report_matching_current_action_and_state_contracts",
+  "geometry_progress": {"coefficient": 1.0, "normalization": "qualified_geometry_potential_difference", "dt_scaling": false, "validity": "explicit_per_environment_mask;NA_never_zero_measurement"},
+  "status": "disabled_until_geometry_source_qualification",
+  "native_success": "unchanged_30mm_5s_0.5mm"
+}

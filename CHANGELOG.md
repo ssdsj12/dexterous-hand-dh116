@@ -1,3 +1,10 @@
+## 2026-11-10 — Stereo Phase 1：独立 Teacher 软件路径
+
+- 新增独立371D privileged Teacher/PPO/reward/dataset/checkpoint、配置和collect/train/evaluate入口；新run独占目录和动作/状态/source SHA，不覆盖原模型。
+- 原生桥只替换新进程最终训练callback，复用原Task/World/Env和成功判据；default不启动，raw capture不授force/support/native资格。
+- CPU集成49 passed in6.10s，exit0；合成update/resume/terminal不是Isaac验证。成功专家池新增原始证据门控，R1/R2无资格不启用，R2未完成因子明确保留。
+- 原生Teacher、双目准确度与Student闭环仍待验收；隔离后续开发继续，PR保持Draft。详见Phase1集成报告。
+
 ## 2026-11-10 — Stereo Phase 0：状态、动作与奖励审计
 
 - 新增371行状态映射、24行动作合同、奖励公式/系数/dt/重复风险审计和机器JSON；关键21份源码/报告精确SHA、全部528份原源码/脚本/配置保持。
