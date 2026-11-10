@@ -97,7 +97,8 @@ def _serial(value):
 def _native_components(env,world,*,clock_reader,capacity_per_wire,
                        contact_delivery_probe_mode=None,contact_delivery_probe_order=0,
                        delivery_clock_reader=None,capture_filtered_contact_metadata=False,
-                       filtered_batch_clock_reader=None,capture_filtered_contact_values=False):
+                       filtered_batch_clock_reader=None,capture_filtered_contact_values=False,
+                       capture_passive_pair_values=False,passive_batch_clock_reader=None):
     """Use existing stage, SimulationView and reporters; no Apply/Set/step."""
     import carb
     import omni.usd
@@ -124,6 +125,18 @@ def _native_components(env,world,*,clock_reader,capacity_per_wire,
         static_view_policy='three low-level views; existing reporter/settings unchanged',
         capacity_per_wire=capacity_per_wire,
         qualification='observational prototype; static-filter/sign/frame/completeness unqualified')
+    if capture_passive_pair_values:
+        from pxr import UsdGeom,UsdPhysics
+        from .tabletop_bimanual_mpc_passive_pair_values import PassivePairObserver,make_passive_source_reader
+        source_reader=make_passive_source_reader(stage=stage,bundle=views,stage_reader=lambda:omni.usd.get_context().get_stage())
+        def passive_units():
+            identity=source_reader()
+            return dict(stage_identity=identity['stage_identity'],meters_per_unit=UsdGeom.GetStageMetersPerUnit(stage),
+                kilograms_per_unit=UsdPhysics.GetStageKilogramsPerUnit(stage),source='actual existing stage UsdGeom/UsdPhysics unit getters; no conversion')
+        provider.passive_pair_observer=PassivePairObserver(bundle=views,
+            clock_reader=passive_batch_clock_reader or (lambda:tuple(clock_reader(i) for i in range(env.n))),
+            source_reader=source_reader,units_reader=passive_units,enabled=True,physics_dt=world.dt)
+        metadata['passive_pair_provider']=_identity(Path(inspect.getfile(type(provider.passive_pair_observer))))
     if capture_filtered_contact_metadata:
         from .tabletop_bimanual_mpc_filtered_contact_measurements import (
             FilteredPairMetadataProvider,make_source_reader)
@@ -169,10 +182,12 @@ class _AuxCapture:
                  component_factory=None,capacity_per_wire=64,
                  contact_delivery_probe_mode=None,contact_delivery_probe_order=0,
                  capture_filtered_contact_metadata=False,capture_filtered_contact_epoch=False,
-                 capture_filtered_contact_values=False):
+                 capture_filtered_contact_values=False,capture_passive_pair_values=False):
         if any(type(v) is not bool for v in (capture_filtered_contact_metadata,
-                capture_filtered_contact_epoch,capture_filtered_contact_values)):
+                capture_filtered_contact_epoch,capture_filtered_contact_values,capture_passive_pair_values)):
             raise ValueError('filtered metadata/epoch/values capture requires explicit bools')
+        if capture_passive_pair_values and (capture_filtered_contact_metadata or contact_delivery_probe_mode is not None):
+            raise ValueError('passive pair capture requires an independent observer arm')
         if capture_filtered_contact_epoch and not capture_filtered_contact_metadata:
             raise ValueError('contact epoch requires explicit filtered metadata capture')
         if capture_filtered_contact_values and not capture_filtered_contact_epoch:
@@ -221,6 +236,10 @@ class _AuxCapture:
             active_normal_valid=0,active_normal_unavailable=0,active_friction_valid=0,active_friction_unavailable=0)
         self._filtered_counts=dict(snapshots=0,valid_snapshots=0,invalid_snapshots=0)
         self._filtered_archive_errors=[]
+        self.capture_passive_pair_values=capture_passive_pair_values
+        self._passive_archive_errors=[]
+        self._passive_counts=dict(snapshots=0,valid_snapshots=0,invalid_snapshots=0,
+            active_normal_valid=0,active_normal_unavailable=0,active_friction_valid=0,active_friction_unavailable=0)
         self.native_runtime_verified=native_runtime_verified
         self.output=Path(output).resolve();self.output.mkdir(parents=True,exist_ok=False)
         self._stream=gzip.open(self.output/'aux_480hz.jsonl.gz','xt',encoding='utf-8',compresslevel=1)
@@ -240,6 +259,7 @@ class _AuxCapture:
                     options['capture_filtered_contact_metadata']=True
                 if capture_filtered_contact_epoch:options['filtered_batch_clock_reader']=self.clock_batch
                 if capture_filtered_contact_values:options['capture_filtered_contact_values']=True
+                if capture_passive_pair_values:options.update(capture_passive_pair_values=True,passive_batch_clock_reader=self.clock_batch)
                 components=_native_components(env,world,**options)
             else:
                 # Existing CPU factories keep their exact one-keyword contract.
@@ -253,6 +273,10 @@ class _AuxCapture:
                 self.scene,self.pairs,self.metadata=components[:3]
                 if len(components)==4:self.delivery_probe=components[3]
             else:raise ValueError('three legacy components or typed optional delivery probe required')
+            passive=getattr(self.scene,'passive_pair_observer',None)
+            if capture_passive_pair_values:
+                if passive is None or passive.enabled is not True:raise ValueError('passive pair capture requires an enabled Scene sidecar')
+            elif passive is not None:raise ValueError('passive sidecar requires explicit capture flag')
             if contact_delivery_probe_mode is None:
                 if self.delivery_probe is not None:
                     raise ValueError('delivery probe requires an explicit enabled mode')
@@ -409,7 +433,7 @@ class _AuxCapture:
             native_runtime_attestation_scope='runner only; not component or support qualification',
             source_role='legacy Teacher auxiliary observation; not Student input or control')
         pair=None;samples=None;delivery=None;filtered=None;filtered_type=None
-        epoch_candidate=None;values=None;values_type=None
+        epoch_candidate=None;values=None;values_type=None;passive=None;passive_type=None;scene_attempted=False
         try:
             pair=self.pairs.end_step(clocks[index],poll=True,
                 read_clock=lambda:self.clock_for_env(index),step_completed=True)
@@ -458,11 +482,24 @@ class _AuxCapture:
                             or field.force_side!='NA' or field.frame!='world' or field.unit!='N'
                             for item in values.pairs for field in (item.normal_sensor_side_world,item.friction_sensor_side_world))):
                     raise ValueError('F1 values transaction invalid or different clock/metadata: '+repr(getattr(values,'errors',None)))
+            if self.capture_passive_pair_values:
+                from .tabletop_bimanual_mpc_passive_pair_values import PassivePairSnapshot
+                passive_type=PassivePairSnapshot
+                self.scene.last_passive_pair_snapshot=None
+            scene_attempted=True
             samples=self.scene.capture_batch(clocks=clocks,active=active)
             if len(samples)!=self.n or any(sample.clock!=clock for sample,clock in zip(samples,clocks)):
                 raise ValueError('scene provider returned a different actual episode/clock')
             if _clock(self.world)!=c:
                 raise ValueError('physical clock changed during auxiliary provider readback')
+            if self.capture_passive_pair_values:
+                passive=self.scene.last_passive_pair_snapshot
+                if (type(passive) is not passive_type or passive.clocks!=clocks or passive.capture_valid is not True
+                        or len(passive.pairs)!=3*self.n or any(v is not False for v in passive.qualification.values())
+                        or any(p.actor_id is not None or p.partner_body_id is not None
+                            or p.normal_sensor_side_world.force_side!='NA' or p.friction_sensor_side_world.force_side!='NA'
+                            or (not active[p.clock.env_id] and (p.normal_sensor_side_world.valid or p.friction_sensor_side_world.valid)) for p in passive.pairs)):
+                    raise ValueError('passive pair transaction invalid or different actual clock/source: '+repr(getattr(passive,'errors',None)))
         except Exception as error:
             # A copied contact receipt and real terminal must survive a later
             # provider failure. This partial frame is explicitly unusable for
@@ -481,15 +518,22 @@ class _AuxCapture:
             if self.capture_filtered_contact_values:
                 packet.update(filtered_pair_values=None,
                     provider_partial_filtered_values=values.to_dict() if values_type is not None and type(values) is values_type else None)
+            if self.capture_passive_pair_values:
+                if passive is None and scene_attempted:passive=getattr(self.scene,'last_passive_pair_snapshot',None)
+                packet.update(passive_pair_values=None,
+                    provider_partial_passive_pair_values=passive.to_dict() if passive_type is not None and type(passive) is passive_type else None,
+                    provider_partial_passive_pair_raw=_serial(getattr(self.scene.passive_pair_observer,'last_partial',None)) if scene_attempted else None,
+                    passive_finish_error=getattr(self.scene,'last_passive_pair_error',None) if scene_attempted else None)
             try:self._record(packet,active,terminals,c)
             except Exception as write_error:
-                if self.delivery_probe is None and not self.capture_filtered_contact_metadata:raise
+                if self.delivery_probe is None and not self.capture_filtered_contact_metadata and not self.capture_passive_pair_values:raise
                 if self.delivery_probe is not None:
                     self.delivery_errors.append('partial frame write: '+repr(write_error))
                 if self.capture_filtered_contact_metadata:
                     self._filtered_archive_errors.append('partial frame write: '+repr(write_error))
                 if self.capture_filtered_contact_epoch:self._epoch_archive_errors.append('partial frame write: '+repr(write_error))
                 if self.capture_filtered_contact_values:self._values_archive_errors.append('partial frame write: '+repr(write_error))
+                if self.capture_passive_pair_values:self._passive_archive_errors.append('partial frame write: '+repr(write_error))
             self._finish_delivery_failure(error,'provider')
             raise
         packet.update(capture_status='complete_observation_only',provider_error=None,
@@ -499,12 +543,14 @@ class _AuxCapture:
         if self.capture_filtered_contact_metadata:packet['filtered_pair_metadata']=filtered.to_dict()
         if self.capture_filtered_contact_epoch:packet['filtered_contact_epoch']=epoch_candidate.to_dict()
         if self.capture_filtered_contact_values:packet['filtered_pair_values']=values.to_dict()
+        if self.capture_passive_pair_values:packet['passive_pair_values']=passive.to_dict()
         try:
             self._record(packet,active,terminals,c)
             if self.capture_filtered_contact_epoch:self._filtered_epoch=epoch_candidate
         except BaseException as error:
             if self.capture_filtered_contact_epoch:self._epoch_archive_errors.append('frame write: '+repr(error))
             if self.capture_filtered_contact_values:self._values_archive_errors.append('frame write: '+repr(error))
+            if self.capture_passive_pair_values:self._passive_archive_errors.append('frame write: '+repr(error))
             self._finish_delivery_failure(error,'raw write')
             raise
 
@@ -543,6 +589,15 @@ class _AuxCapture:
                 for channel in ('normal','friction'):
                     key='active_'+channel+('_valid' if item[channel+'_sensor_side_world']['valid'] else '_unavailable')
                     self._values_counts[key]+=1
+        if self.capture_passive_pair_values:
+            data=packet.get('passive_pair_values') or packet.get('provider_partial_passive_pair_values')
+            if data is not None:
+                self._passive_counts['snapshots']+=1
+                self._passive_counts['valid_snapshots' if data['capture_valid'] else 'invalid_snapshots']+=1
+                for item in data['pairs']:
+                    if not active[item['clock']['env_id']]:continue
+                    for channel in ('normal','friction'):
+                        self._passive_counts['active_'+channel+('_valid' if item[channel+'_sensor_side_world']['valid'] else '_unavailable')]+=1
         for i in range(self.n):
             if active[i]:self.counts[i]+=1
 
@@ -595,6 +650,11 @@ class _AuxCapture:
                 native_success_qualification_issued=False,new_expert_qualification_issued=False,
                 planning_eligible=False,support_qualified=False,contact_values_qualified=False,
                 scope='independent sensor-side normal/friction observations; no ON_Wire/sign/support qualification')
+        if self.capture_passive_pair_values:
+            summary['passive_pair_values']=dict(self._passive_counts,archive_errors=list(self._passive_archive_errors),
+                native_attested=False,force_sign_frame_qualified=False,support_qualified=False,planning_eligible=False,
+                native_success_qualification_issued=False,new_expert_qualification_issued=False,
+                scope='existing three passive-view sensor-side observations; no ON_Wire sign or support qualification')
         with (self.output/'aux_capture_summary.json').open('x',encoding='utf-8') as stream:
             json.dump(summary,stream,indent=2,allow_nan=False)
         self._summary=summary

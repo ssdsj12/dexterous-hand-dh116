@@ -1,3 +1,15 @@
+## 2026-11-10 发布进度 — A：三路被动接触观测侧车（默认关闭）（仅CPU）
+
+- [x] 复用现有Wire→桌面/两端支架视图，新增默认关闭的只读采集接线；保留实际路径、每getter时钟/来源和独立normal/friction原值及NA。不创建World/view，不改变原控制或support字段。
+- [x] 本次独立Linux CPU主验证：1471 passed, 3 skipped, 246 subtests passed in 307.60s (0:05:07)；exit0，Native作业0，公开测试文件60个。本机完整组合失败与独立PRIVATE parity审查另记；各组是同一主验证组合的子集，不另相加。
+- [ ] 对应Native来源/接入/校准及真实任务验收尚未完成。
+
+正常量先own再读摩擦；所有行的count/start、容量、重叠仍严格检查，仅按真实Wire行选择活跃非reset载荷。保留首terminal、退休代及失败partial，不以空报告、未知摩擦或numeric ID缺失填造反力/资格。
+
+M0、默认Teacher、3844D Actor、371D Critic、24D Tanh Gaussian及原物理/材料/执行器/关节保护和30mm/5s/0.5mm成功标准保持。PR继续Draft，不合并，不开放新专家池或B3/PPO迁移。
+
+本节不将下方完整H8/恢复/正式验收任务标成完成。见[本次组合报告](../reports/2026-11-10-stage7-upload-cpu-components.md)。
+
 ## 2026-11-10 发布进度 — 双手接触状态与原预算委托（仅CPU、未Native接入）
 
 - [x] 7状态包含正式CONTACT_CANDIDATE；未知slip/opposition独立NA，selected reset预检并隔离兄弟，首terminal不被no-op覆盖。原20ms仅pressure/recovery稳定，不是双侧0.2s或任务成功。

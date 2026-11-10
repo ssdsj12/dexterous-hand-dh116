@@ -158,7 +158,7 @@ class AuxIntegrationTests(unittest.TestCase):
             execute([validation], dict(args=options(vision_mpc_state_capture=False),
                 parser=Parser(), validate_teacher_collection_options=self.validation()), CLI)
 
-    def setup_capture(self, *, enabled=True, sidecar=False, install_core_error=None,
+    def setup_capture(self, *, enabled=True, sidecar=False, passive=False, install_core_error=None,
                       lifecycle=False, events=None):
         function = collector()
         initialization = next(index for index, node in enumerate(function.body)
@@ -189,7 +189,7 @@ class AuxIntegrationTests(unittest.TestCase):
                    prefix + 'tabletop_vision_sequence_capture':
                    NS(SequenceContextCapture=lambda *a, **kw:NS(name='sequence'))}
         scope = dict(__package__=PACKAGE, uuid=uuid,
-            args=NS(vision_sequence_context_sidecar=sidecar), sequence_context_sink=None,
+            args=NS(vision_sequence_context_sidecar=sidecar,vision_mpc_passive_pair_values=passive), sequence_context_sink=None,
             capture_mpc_state=enabled, capture_mpc_aux=enabled, candidate_path=None,
             teacher_audit=None, tripod_candidate=None, env=object(), device_world=object(), task=object(),
             output=Path('cpu-fixture'), genuine=True, failure=None,
@@ -222,6 +222,13 @@ class AuxIntegrationTests(unittest.TestCase):
         self.assertTrue(auxiliary[4]['run_uuid'])
         self.assertEqual(str(uuid.UUID(auxiliary[4]['run_uuid'])), auxiliary[4]['run_uuid'])
         self.assertEqual(auxiliary[4]['run_uuid'], scope['sequence_run_uuid'])
+
+    def test_passive_flag_is_forwarded_only_for_explicit_auxiliary_observer(self):
+        _,events,_=self.setup_capture(sidecar=True,passive=True)
+        self.assertIs(events[0][4]['capture_passive_pair_values'],True)
+        self.assertNotIn('capture_passive_pair_values',events[1][4])
+        _,events,_=self.setup_capture(sidecar=True)
+        self.assertNotIn('capture_passive_pair_values',events[0][4])
 
     def test_capture_is_installed_after_final_reset_and_before_first_step(self):
         calls = [node for node in ast.walk(collector()) if isinstance(node, ast.Call)]

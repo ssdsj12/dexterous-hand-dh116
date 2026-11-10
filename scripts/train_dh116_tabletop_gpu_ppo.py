@@ -77,6 +77,8 @@ parser.add_argument('--vision-mpc-filtered-contact-epoch-capture', action='store
                     help='explicit v2 first-cohort retirement history for fresh filtered metadata; no control or qualification')
 parser.add_argument('--vision-mpc-filtered-contact-values-capture', action='store_true',
                     help='isolated read-only current sensor-side normal/friction observations; requires filtered metadata and epoch flags')
+parser.add_argument('--vision-mpc-passive-pair-values', action='store_true',
+                    help='default-off isolated read-only taps of existing Wire-to-table/end-support views; no support qualification')
 parser.add_argument('--vision-mpc-contact-delivery-probe',
                     choices=('post_step_poll','full_report_callback'), default=None,
                     help='isolated short contact delivery observer arm; default off, no contact/frame qualification')

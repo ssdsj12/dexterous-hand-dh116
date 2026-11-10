@@ -212,7 +212,13 @@ def _field(clock, name, value=None, *, reason=None, kind='measured', source='sce
         contact_basis=spec.contact_basis if spec else 'not_applicable')
 
 
-def _owned(buffers, *, normal, n, capacity):
+def _owned(buffers, *, normal, n, capacity, active_mask=None):
+    # Optional audit selection never weakens full-batch ownership/capacity checks.
+    # Inactive result rows are analysis-only NaN placeholders, not measured zero.
+    if active_mask is not None:
+        active_mask=tuple(active_mask)
+        if len(active_mask)!=n or any(type(v) is not bool for v in active_mask):
+            raise ValueError('one actual payload-selection bool per sensor row required')
     size = 6 if normal else 4
     if len(buffers) != size:
         raise ValueError(f'expected {size}-tuple')
@@ -235,6 +241,8 @@ def _owned(buffers, *, normal, n, capacity):
         if occupied.intersection(slots):
             raise ValueError('owned intervals overlap between sensor/filter cells')
         occupied.update(slots)
+        if active_mask is not None and not active_mask[i]:
+            result.append(np.full(3,np.nan));continue
         for value in buffers[:-2]:
             if not np.isfinite(value[start:start+count]).all():
                 raise ValueError('nonfinite owned contact data')
@@ -248,17 +256,21 @@ def _owned(buffers, *, normal, n, capacity):
     return np.asarray(result)
 
 
-def _contact_observation(view, *, wires, filters, dt, read, si_units):
+def _contact_observation(view, *, wires, filters, dt, read, si_units, passive_tap=None):
     out = dict(observed_data_available=False, normal_available=False, friction_available=False,
         static_filter_support_qualified=False, on_object_sign_frame_qualified=False,
         upstream_overflow_absence_attested=False, partner_body_id=None,
         qualification_missing_reason='Native static-filter delivery, ON_OBJECT sign/frame and upstream completeness unverified')
     try:
+        def obtain(name,function):
+            return function() if passive_tap is None else passive_tap(name,function)
+        def actual_metadata():
+            return {name: _plain(getattr(view,name)) for name in (
+                'sensor_count','filter_count','max_contact_data_count','sensor_paths','filter_paths')}
         # Preserve the actual getter structures. Expected paths never replace readback.
-        metadata = read('metadata', lambda: {name: _plain(getattr(view, name)) for name in (
-            'sensor_count', 'filter_count', 'max_contact_data_count', 'sensor_paths', 'filter_paths')})
+        metadata = read('metadata', lambda: obtain('metadata',actual_metadata))
         out['metadata'] = metadata
-        if read('check', view.check) is not True:
+        if read('check', lambda: obtain('check',view.check)) is not True:
             raise ValueError('contact view check failed; stop/play lifecycle may have invalidated it')
         n = len(wires); cap = metadata['max_contact_data_count']
         actual_filters = metadata['filter_paths']
@@ -273,9 +285,9 @@ def _contact_observation(view, *, wires, filters, dt, read, si_units):
         errors = []
         matrix = normal = friction = None
         for name, function in (
-                ('matrix', lambda: _array(view.get_contact_force_matrix(dt=dt))),
-                ('normal', lambda: tuple(_array(v) for v in view.get_contact_data(dt=dt))),
-                ('friction', lambda: tuple(_array(v) for v in view.get_friction_data(dt=dt)))):
+                ('matrix', lambda: _array(obtain('matrix',lambda:view.get_contact_force_matrix(dt=dt)))),
+                ('normal', lambda: tuple(_array(v) for v in obtain('normal',lambda:view.get_contact_data(dt=dt)))),
+                ('friction', lambda: tuple(_array(v) for v in obtain('friction',lambda:view.get_friction_data(dt=dt))))):
             try:
                 value = read(name, function)
                 # normal ownership is copied before the friction getter can run.
@@ -287,6 +299,8 @@ def _contact_observation(view, *, wires, filters, dt, read, si_units):
                 raise
             except Exception as exc:
                 errors.append(f'{name}: {type(exc).__name__}: {exc}')
+        if passive_tap is not None:
+            read('metadata_after',lambda:obtain('metadata_after',actual_metadata))
         if not si_units:
             raise ValueError('backend unit normalization unproven for non-SI/unknown stage units; raw only')
         try:
@@ -328,7 +342,7 @@ class SceneMeasurementProvider:
     Rebuild provider and views after stop/play; no cached values are replayed.
     """
     def __init__(self, *, scene, rigid_body_view, clock_reader, contact_views=None,
-                 enabled=False, physics_dt=1/480):
+                 enabled=False, physics_dt=1/480, passive_pair_observer=None):
         if type(enabled) is not bool or not callable(clock_reader):
             raise ValueError('explicit bool enabled and actual clock reader required')
         if not math.isfinite(physics_dt) or not math.isclose(physics_dt, 1/480, rel_tol=0., abs_tol=1e-12):
@@ -341,6 +355,9 @@ class SceneMeasurementProvider:
         self._paths = None
         self._batch_clocks = None
         self._batch_cache = None
+        self.passive_pair_observer=passive_pair_observer
+        self.last_passive_pair_snapshot=None
+        self.last_passive_pair_error=None
 
     def capture_batch(self, *, clocks, active=None):
         """Own full-view getters once, then select immutable per-env fields.
@@ -367,17 +384,31 @@ class SceneMeasurementProvider:
         previous = dict(self._previous)
         self._batch_clocks = tuple(c for c, live in zip(clocks, active) if live and not c.reset)
         self._batch_cache = {}
+        self.last_passive_pair_snapshot=None;self.last_passive_pair_error=None
+        observer=self.passive_pair_observer;begun=False
         try:
+            if observer is not None and observer.enabled:
+                begun=observer.begin(clocks=clocks,active_mask=active)
             return tuple(self.capture(clock=c, active=live) for c, live in zip(clocks, active))
         except Exception:
             self._previous = previous
             self.last_sample = None
             raise
         finally:
-            self._batch_clocks = self._batch_cache = None
+            try:
+                if begun:
+                    import sys
+                    unwinding=sys.exc_info()[0] is not None
+                    try:self.last_passive_pair_snapshot=observer.finish()
+                    except Exception as error:
+                        self.last_passive_pair_error=repr(error)
+                        if not unwinding:raise
+            finally:self._batch_clocks = self._batch_cache = None
 
     def capture(self, *, clock, active=True):
         self.last_sample = None
+        if self.passive_pair_observer is not None and self.passive_pair_observer.enabled and self._batch_clocks is None:
+            raise ValueError('passive sidecar requires explicit full capture_batch')
         if not isinstance(clock, SampleClock) or type(active) is not bool:
             raise ValueError('SampleClock and bool active required')
         reason = 'provider disabled' if not self.enabled else ('inactive slot' if not active else 'reset snapshot' if clock.reset else None)
@@ -449,6 +480,8 @@ class SceneMeasurementProvider:
             raise ValueError('passive view source binding mismatch')
         record = read('composed_stage', lambda: _plain(self.scene.snapshot(expected_path)))
         raw['scene'] = record
+        if self.passive_pair_observer is not None and self.passive_pair_observer.enabled:
+            self.passive_pair_observer.observe_scene(clock.env_id,record)
         if record.get('wire_path') != expected_path or not record.get('stage_identity'):
             raise ValueError('actual composed stage/Wire binding missing')
         # Installed TensorAPI does not establish normalization for non-SI stages.
@@ -530,10 +563,13 @@ class SceneMeasurementProvider:
             if any(expected_filters[s] != bundle.filter_paths[s][env_index] for s in SURFACES):
                 raise ValueError('actual composed collider mapping changed')
             for s in SURFACES:
+                options={}
+                if self.passive_pair_observer is not None and self.passive_pair_observer.enabled:
+                    options['passive_tap']=lambda name,fn,s=s:self.passive_pair_observer.read(s,name,bundle.views[s],fn)
                 raw['passive_views'][s] = _contact_observation(bundle.views[s], wires=paths,
                     filters=bundle.filter_paths[s], dt=self.physics_dt,
                     si_units=si_units,
-                    read=lambda name, fn, s=s: read(s+'.'+name, fn))
+                    read=lambda name, fn, s=s: read(s+'.'+name, fn),**options)
         except ValueError as exc:
             contact_reason += '; '+str(exc)
         for name in _FIELD_META:

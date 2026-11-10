@@ -15,12 +15,13 @@ def validate_options(args):
     filtered_capture = getattr(args, 'vision_mpc_filtered_contact_capture', False)
     epoch_capture = getattr(args, 'vision_mpc_filtered_contact_epoch_capture', False)
     values_capture = getattr(args, 'vision_mpc_filtered_contact_values_capture', False)
+    passive_capture = getattr(args, 'vision_mpc_passive_pair_values', False)
     delivery_probe = getattr(args, 'vision_mpc_contact_delivery_probe', None)
     if type(descriptor_capture) is not bool:
         raise ValueError('MPC model descriptor capture requires an explicit boolean')
     if descriptor_capture and not model_capture:
         raise ValueError('MPC model descriptor requires explicit original model capture')
-    if any(type(v) is not bool for v in (model_capture,filtered_capture,epoch_capture,values_capture)):
+    if any(type(v) is not bool for v in (model_capture,filtered_capture,epoch_capture,values_capture,passive_capture)):
         raise ValueError('MPC model and filtered-contact/epoch/values captures require explicit booleans')
     if epoch_capture and not filtered_capture:
         raise ValueError('MPC contact epoch requires explicit filtered metadata capture')
@@ -29,8 +30,8 @@ def validate_options(args):
     if delivery_probe is not None and (type(delivery_probe) is not str or
             delivery_probe not in ('post_step_poll','full_report_callback')):
         raise ValueError('unknown MPC contact delivery probe mode')
-    if model_capture or filtered_capture or delivery_probe is not None:
-        if sum((model_capture, filtered_capture, delivery_probe is not None))>1:
+    if model_capture or filtered_capture or passive_capture or delivery_probe is not None:
+        if sum((model_capture, filtered_capture, passive_capture, delivery_probe is not None))>1:
             raise ValueError('MPC model, filtered-contact and delivery captures require independent observer arms')
         if not (getattr(args, 'vision_mpc_aux_capture', False) and
                 getattr(args, 'vision_mpc_state_capture', False)):
@@ -329,6 +330,8 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                     aux_options['capture_filtered_contact_epoch'] = True
                 if getattr(args, 'vision_mpc_filtered_contact_values_capture', False):
                     aux_options['capture_filtered_contact_values'] = True
+                if getattr(args, 'vision_mpc_passive_pair_values', False):
+                    aux_options['capture_passive_pair_values'] = True
                 mpc_aux_capture = install_mpc_aux_capture(env, device_world,
                     output/'mpc_aux_capture', enabled=True, run_uuid=sequence_run_uuid,
                     native_runtime_verified=genuine, **aux_options)
