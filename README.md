@@ -1,3 +1,7 @@
+## 2026-11-10 — Stage 7 mounted descriptor 与17D运动学预览
+
+新增默认关闭的只读descriptor接口与左右独立完整17D FK/J假设，保留各自真实关节轴、被动状态、来源和NA。独立source12 CPU实跑769 passed、1 skip、238 subtests；本单元新增Native作业0，实际FK/J校准仍待单实例原生验证，不能用于控制准入。原Teacher/物理/3844D/371D/24D Tanh和成功标准不变，PR继续Draft。详见[实现及验证边界](docs/superpowers/reports/2026-11-10-stage7-mounted-model-cpu.md)。
+
 ## 2026-11-10 — Stage 7 八项MPC代价算术
 
 新增独立CPU八项cost计算，逐项记录raw/weighted、单位、来源、mask和NA；严格区分当前已测常量与候选相关预测。独立实跑73 passed、41 subtests，尚未接入原生控制，不是完整H8 MPC或抓取成功。原Teacher180步接触观测继续独立运行；默认控制、物理、3844D/371D/24D Tanh和成功标准不变。FK/J、动力学、求解/约束及正式抓取配对仍待完成，PR继续Draft。命令与边界见[算术验证报告](docs/superpowers/reports/2026-11-10-stage7-mpc-objective-arithmetic.md)。

@@ -11,10 +11,15 @@ import torch
 
 def validate_options(args):
     model_capture = getattr(args, 'vision_mpc_model_capture', False)
+    descriptor_capture = getattr(args, 'vision_mpc_model_descriptor_capture', False)
     filtered_capture = getattr(args, 'vision_mpc_filtered_contact_capture', False)
     epoch_capture = getattr(args, 'vision_mpc_filtered_contact_epoch_capture', False)
     values_capture = getattr(args, 'vision_mpc_filtered_contact_values_capture', False)
     delivery_probe = getattr(args, 'vision_mpc_contact_delivery_probe', None)
+    if type(descriptor_capture) is not bool:
+        raise ValueError('MPC model descriptor capture requires an explicit boolean')
+    if descriptor_capture and not model_capture:
+        raise ValueError('MPC model descriptor requires explicit original model capture')
     if any(type(v) is not bool for v in (model_capture,filtered_capture,epoch_capture,values_capture)):
         raise ValueError('MPC model and filtered-contact/epoch/values captures require explicit booleans')
     if epoch_capture and not filtered_capture:
@@ -331,9 +336,12 @@ def run_teacher_collection(world,device_world,task,env,args,critic_contract,*,ca
                 from .tabletop_bimanual_mpc_model_capture import install_mpc_model_capture
                 # This observer must precede core's refresh wrapper, and is
                 # removed before Aux/Sequence in exact reverse install order.
+                model_options = {}
+                if getattr(args, 'vision_mpc_model_descriptor_capture', False):
+                    model_options['capture_model_descriptor'] = True
                 mpc_model_capture = install_mpc_model_capture(env, device_world,
                     output/'mpc_model_capture', enabled=True, run_uuid=sequence_run_uuid,
-                    native_runtime_verified=genuine)
+                    native_runtime_verified=genuine, **model_options)
             if capture_mpc_state:
                 from .tabletop_bimanual_mpc_capture import install_mpc_state_capture
                 # Final cold reset is complete; bridge generation anchors must

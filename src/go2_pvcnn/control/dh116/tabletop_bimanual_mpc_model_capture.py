@@ -85,6 +85,34 @@ def _native_provider(env, world, *, clock_reader):
         source_identity_policy='actual stage root/session layers, stage units, actual articulation path, active view wrapper file SHA256')
 
 
+def _native_descriptor_provider(env,world,*,clock_reader,articulation_provider):
+    """Reuse the existing stage/SimulationView; never create or update a view."""
+    import omni.usd
+    from .tabletop_bimanual_mpc_model_descriptor import MountedModelDescriptorProvider
+    stage=omni.usd.get_context().get_stage()
+    if stage is None:raise ValueError('actual existing composed stage required for descriptor')
+    if len(world.hands)!=2:raise ValueError('actual existing left/right hand pair required for descriptor')
+    hands=dict(zip(('left','right'),world.hands))
+    if any(articulation_provider.hands.get(side) is not hand for side,hand in hands.items()):
+        raise ValueError('descriptor must reuse the original articulation provider hands')
+    # TensorWorld retains its original GpuWorld as w; sim already owns this
+    # SimulationView. Do not use cfg gravity or create another tensor view.
+    scene_view=world.w.sim.physics_sim_view
+    def stage_reader():
+        if world.w.sim.physics_sim_view is not scene_view:
+            raise RuntimeError('actual World scene view changed; rebuild descriptor provider')
+        if len(world.hands)!=2 or any(actual is not expected for actual,expected in zip(world.hands,hands.values())):
+            raise RuntimeError('actual World hand collection changed; rebuild descriptor provider')
+        return omni.usd.get_context().get_stage()
+    provider=MountedModelDescriptorProvider(stage=stage,stage_reader=stage_reader,
+        hands=hands,scene_view=scene_view,clock_reader=clock_reader,
+        source_reader=articulation_provider.source_reader,enabled=True)
+    return provider,dict(descriptor_provider_source=_identity(Path(inspect.getfile(type(provider)))),
+        scene_view_python_identity=id(scene_view),scene_view_python_type=type(scene_view).__module__+'.'+type(scene_view).__qualname__,
+        scene_view_source=_identity(Path(inspect.getfile(type(scene_view)))),
+        source_scope='existing composed stage and SimulationContext.physics_sim_view; no frame, dynamics or Native qualification')
+
+
 def _file_identity(path):
     try:
         return _identity(path)
@@ -93,15 +121,22 @@ def _file_identity(path):
 
 
 class _ModelCapture:
-    def __init__(self,env,world,output,*,run_uuid,native_runtime_verified=False,provider_factory=None):
+    def __init__(self,env,world,output,*,run_uuid,native_runtime_verified=False,provider_factory=None,
+                 capture_model_descriptor=False,descriptor_provider_factory=None):
+        if type(capture_model_descriptor) is not bool:
+            raise ValueError('descriptor capture requires an explicit boolean')
+        if descriptor_provider_factory is not None and not capture_model_descriptor:
+            raise ValueError('descriptor factory requires explicit descriptor capture')
         if type(native_runtime_verified) is not bool:
             raise ValueError('native flag must be an actual boolean')
         if native_runtime_verified:
             _native_attestation(env,world)
-            if provider_factory is not None:
+            if provider_factory is not None or descriptor_provider_factory is not None:
                 raise ValueError('native attestation excludes injected fixture factories')
         elif provider_factory is None:
             raise ValueError('CPU fixture requires explicit provider factory; genuine attestation required for SDK acquisition')
+        if capture_model_descriptor and not native_runtime_verified and descriptor_provider_factory is None:
+            raise ValueError('CPU descriptor capture requires an explicit descriptor provider factory')
         if not isinstance(run_uuid,str) or not run_uuid:
             raise ValueError('actual shared capture run UUID required')
         if type(env.n) is not int or env.n < 1:
@@ -117,6 +152,10 @@ class _ModelCapture:
         self.terminal_archive_only=set(); self._policy=None; self._action=None
         self._before=None; self._last_clock=None; self._finished=False; self._summary=None
         self.native_runtime_verified=native_runtime_verified
+        self.capture_model_descriptor=capture_model_descriptor;self.descriptor_provider=None
+        self.descriptor_errors=[]
+        self.descriptor_counts=dict(snapshots=0,collection_valid_samples=0,collection_unavailable_samples=0,
+            structure_valid_samples=0,structure_unavailable_samples=0)
         self._missing=object(); self._prior=getattr(env,'joint_replay_observer',self._missing)
         self._observer_hook=self.observe; self._stream=None
         self.output=Path(output).resolve(); self.output.mkdir(parents=True,exist_ok=False)
@@ -126,6 +165,13 @@ class _ModelCapture:
                 self.provider,self.metadata=_native_provider(env,world,clock_reader=self.clock_for_env)
             else:
                 self.provider,self.metadata=provider_factory(clock_reader=self.clock_for_env)
+            if capture_model_descriptor:
+                factory=_native_descriptor_provider if descriptor_provider_factory is None else descriptor_provider_factory
+                options=dict(clock_reader=self.clock_for_env,articulation_provider=self.provider)
+                if descriptor_provider_factory is None:
+                    self.descriptor_provider,descriptor_metadata=factory(env,world,**options)
+                else:self.descriptor_provider,descriptor_metadata=factory(**options)
+                self.metadata=dict(self.metadata or {},descriptor_capture=descriptor_metadata)
             env.joint_replay_observer=self._observer_hook
         except BaseException as error:
             try:
@@ -200,6 +246,9 @@ class _ModelCapture:
             native_runtime_attestation_scope='runner only; not dynamics, support, motor or hardware qualification',
             capture_status='capture_pending',complete_measurement=False,terminal_measurement_valid=False,
             **_QUALIFICATION)
+        if self.capture_model_descriptor:
+            packet.update(descriptor_samples=None,descriptor_error=None,descriptor_partial_raw=None,
+                descriptor_partial_encoding_error=None,descriptor_partial_unavailable_reason=None)
         # Only validated actual terminals may be pinned. An upstream observer
         # failure must not erase these receipts before Model acquires anything.
         terminal_ids=[i for i,t in enumerate(terminals) if t]
@@ -245,6 +294,41 @@ class _ModelCapture:
                           complete_measurement=False,terminal_measurement_valid=False)
             self._record_invalid(packet,active,terminal_ids,c,error)
             raise
+        if self.capture_model_descriptor:
+            descriptor_samples=None
+            try:
+                # Clear the partial channel even for CPU fixtures; only this
+                # invocation's owned evidence can accompany its exception.
+                self.descriptor_provider.last_partial=None
+                descriptor_samples=tuple(self.descriptor_provider.capture_batch(clocks=clocks,
+                    articulation_samples=samples,active_mask=active))
+                from .tabletop_bimanual_mpc_model_descriptor import MountedModelDescriptorSample
+                if (len(descriptor_samples)!=self.n or any(not isinstance(s,MountedModelDescriptorSample) or s.clock!=clock
+                        for s,clock in zip(descriptor_samples,clocks))):
+                    raise ValueError('descriptor provider returned different actual episode/clock or sample type')
+                if any(self.clock_for_env(i)!=clocks[i] for i,a in enumerate(active) if a):
+                    raise ValueError('actual descriptor source clock/episode changed during readback')
+                if any(type(s.structure_valid) is not bool or type(s.collection_valid) is not bool
+                        or any(value is not False for value in s.qualification.values()) for s in descriptor_samples):
+                    raise ValueError('descriptor observation cannot issue qualification or invalid validity flags')
+                descriptor_serialized=_serial(descriptor_samples)
+            except Exception as error:
+                message=repr(error);self.descriptor_errors.append(message)
+                partial=None;encoding_error=None
+                try:
+                    partial=_serial(descriptor_samples if descriptor_samples is not None else self.descriptor_provider.last_partial)
+                    json.dumps(partial,allow_nan=True)
+                except Exception as exc:partial=None;encoding_error=repr(exc)
+                packet.update(capture_status='descriptor_error',provider_error=None,model_samples=serialized,
+                    descriptor_samples=None,descriptor_error=message,descriptor_partial_raw=partial,
+                    descriptor_partial_encoding_error=encoding_error,
+                    descriptor_partial_unavailable_reason=(None if partial is not None else
+                        'same-transaction descriptor partial could not be encoded' if encoding_error else
+                        'descriptor provider failed before exposing same-transaction owned evidence'),
+                    complete_measurement=False,terminal_measurement_valid=False)
+                self._record_invalid(packet,active,terminal_ids,c,error)
+                raise
+            packet['descriptor_samples']=descriptor_serialized
         packet.update(capture_status='complete_observation_only',provider_error=None,model_samples=serialized,
                       complete_measurement=True,terminal_measurement_valid=True)
         self._record(packet,active,terminal_ids,c,complete=True)
@@ -274,6 +358,12 @@ class _ModelCapture:
             self.frames+=1
             for i,a in enumerate(active):
                 if a:self.counts[i]+=1
+            if self.capture_model_descriptor:
+                self.descriptor_counts['snapshots']+=1
+                for sample,a in zip(packet['descriptor_samples'],active):
+                    if a:
+                        for name in ('collection','structure'):
+                            self.descriptor_counts[name+('_valid_samples' if sample[name+'_valid'] else '_unavailable_samples')]+=1
 
     def _restore(self):
         if getattr(self.env,'joint_replay_observer',None) is self._observer_hook:
@@ -301,6 +391,10 @@ class _ModelCapture:
             raw=_file_identity(self.output/'model_480hz.jsonl.gz'),terminals=_file_identity(terminal_path),
             components=_serial(getattr(self,'metadata',None)),implementation=_identity(Path(__file__)),
             **_QUALIFICATION)
+        if self.capture_model_descriptor:
+            summary['descriptor_capture']=dict(self.descriptor_counts,error_frames=len(self.descriptor_errors),
+                errors=list(self.descriptor_errors),scope='current descriptor observations only; validity is not dynamics, frame, planning or Native qualification',
+                **_QUALIFICATION)
         with (self.output/'model_capture_summary.json').open('x',encoding='utf-8') as stream:
             json.dump(summary,stream,indent=2,allow_nan=False)
         self._summary=summary
@@ -318,7 +412,7 @@ class _ModelCapture:
             if self._stream is not None:self._stream.close()
         except BaseException as exc:
             errors.append(exc)
-        messages=([str(error)] if error is not None else [])+self.prior_observer_errors+self.provider_errors+self.raw_write_errors+[repr(e) for e in errors]
+        messages=([str(error)] if error is not None else [])+self.prior_observer_errors+self.provider_errors+self.raw_write_errors+self.descriptor_errors+[repr(e) for e in errors]
         failure='; '.join(messages) if messages else None
         if failure:
             for packet in self.terminals.values():

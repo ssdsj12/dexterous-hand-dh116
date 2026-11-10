@@ -31,6 +31,7 @@ def options(**changes):
         solid_cylinder_radius_m=.008, num_envs=8, vision_teacher_max_control_steps=16,
         vision_teacher_raw_chunk_frames=16, vision_mpc_state_capture=True,
         vision_mpc_aux_capture=True, vision_mpc_model_capture=False,
+        vision_mpc_model_descriptor_capture=False,
         vision_mpc_contact_delivery_probe=None, vision_mpc_filtered_contact_capture=False,
         vision_mpc_filtered_contact_epoch_capture=False,vision_mpc_filtered_contact_values_capture=False)
     values.update(changes)
@@ -51,7 +52,7 @@ class ExperimentalOptionsTests(unittest.TestCase):
         return scope['validate_options']
 
     def test_flags_are_explicit_default_off_and_probe_choices_closed(self):
-        flags = {'--vision-mpc-model-capture', '--vision-mpc-contact-delivery-probe',
+        flags = {'--vision-mpc-model-capture', '--vision-mpc-model-descriptor-capture','--vision-mpc-contact-delivery-probe',
                  '--vision-mpc-filtered-contact-capture','--vision-mpc-filtered-contact-epoch-capture',
                  '--vision-mpc-filtered-contact-values-capture'}
         tree = ast.parse(CLI.read_text(encoding='utf-8'))
@@ -59,17 +60,19 @@ class ExperimentalOptionsTests(unittest.TestCase):
                  and isinstance(node.value, ast.Call) and node.value.args
                  and isinstance(node.value.args[0], ast.Constant)
                  and node.value.args[0].value in flags]
-        self.assertEqual(len(nodes), 5)
+        self.assertEqual(len(nodes), 6)
         parser = argparse.ArgumentParser()
         execute(nodes, dict(parser=parser), CLI)
         defaults = parser.parse_args([])
         self.assertIs(defaults.vision_mpc_model_capture, False)
+        self.assertIs(defaults.vision_mpc_model_descriptor_capture,False)
         self.assertIsNone(defaults.vision_mpc_contact_delivery_probe)
         self.assertIs(defaults.vision_mpc_filtered_contact_capture, False)
         self.assertIs(defaults.vision_mpc_filtered_contact_epoch_capture,False)
         self.assertIs(defaults.vision_mpc_filtered_contact_values_capture,False)
         self.assertTrue(parser.parse_args(['--vision-mpc-filtered-contact-capture']).vision_mpc_filtered_contact_capture)
         self.assertTrue(parser.parse_args(['--vision-mpc-model-capture']).vision_mpc_model_capture)
+        self.assertTrue(parser.parse_args(['--vision-mpc-model-descriptor-capture']).vision_mpc_model_descriptor_capture)
         for mode in ('post_step_poll', 'full_report_callback'):
             args = parser.parse_args(['--vision-mpc-contact-delivery-probe', mode])
             self.assertEqual(args.vision_mpc_contact_delivery_probe, mode)
@@ -113,6 +116,14 @@ class ExperimentalOptionsTests(unittest.TestCase):
         for values in (False,True):
             self.assertIsNone(validate(options(vision_mpc_filtered_contact_capture=True,
                 vision_mpc_filtered_contact_epoch_capture=True,vision_mpc_filtered_contact_values_capture=values)))
+
+    def test_descriptor_requires_original_model_capture_before_teacher_or_kit(self):
+        validate=self.validate()
+        for source in (NS(vision_mpc_model_descriptor_capture=True),options(vision_mpc_model_descriptor_capture=True),
+                options(vision_mpc_model_descriptor_capture=1),options(vision_mpc_model_descriptor_capture=True,
+                    vision_mpc_model_capture=True,vision_mpc_aux_capture=False)):
+            with self.assertRaisesRegex(ValueError,'descriptor|auxiliary'):validate(source)
+        self.assertIsNone(validate(options(vision_mpc_model_capture=True,vision_mpc_model_descriptor_capture=True)))
 
     def test_experiments_keep_small_finite_legacy_teacher_route(self):
         validate = self.validate()

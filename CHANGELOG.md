@@ -1,3 +1,9 @@
+## 2026-11-10 — Stage 7 mounted model CPU preview
+
+- 新增默认关闭的现有stage/hand/scene只读descriptor，保存完整17D/23link/22joint布局及原始新getter、属性来源、时钟、失败partial；原model capture关闭时合同保持。
+- 新增左右独立完整关节FK/J数学假设，不反射复制关节轴、不用affine mimic填被动状态、不执行控制；来源与坐标假设显式绑定。
+- 独立source12 CPU769 passed、1 skip、238 subtests；新增Native0，实际FK/J和未来动力学/控制仍未验证。原控制/物理/模型/成功标准保持，PR Draft。见[报告](docs/superpowers/reports/2026-11-10-stage7-mounted-model-cpu.md)。
+
 ## 2026-11-10 — Stage 7 独立MPC目标算术
 
 - 新增geometry/contact/support/slip/bimanual/joint/smooth/risk八项独立CPU算术和逐项贡献，显式实验权重、候选digest、时钟/单位/mask/NA合同；缺值不补0，已测常量不冒充未来预测。

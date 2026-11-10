@@ -11,7 +11,7 @@ from test_bimanual_mpc_aux_integration import (
 
 
 class ModelIntegrationTests(unittest.TestCase):
-    def lifecycle(self, *, model_enabled=True, probe=None, filtered=False, epoch=False, values=False,install_error=None,
+    def lifecycle(self, *, model_enabled=True, descriptor=False,probe=None, filtered=False, epoch=False, values=False,install_error=None,
                   finish_error=None, core_install_error=None, core_finish_error=None):
         function = collector()
         start = next(i for i, node in enumerate(function.body)
@@ -48,6 +48,7 @@ class ModelIntegrationTests(unittest.TestCase):
                 NS(install_mpc_state_capture=install('core', core_install_error, core_finish_error))}
         scope = dict(__package__=PACKAGE, uuid=uuid,
             args=NS(vision_sequence_context_sidecar=True,vision_mpc_model_capture=model_enabled,
+                    vision_mpc_model_descriptor_capture=descriptor,
                     vision_mpc_contact_delivery_probe=probe,
                     vision_mpc_filtered_contact_capture=filtered,
                     vision_mpc_filtered_contact_epoch_capture=epoch,
@@ -82,6 +83,16 @@ class ModelIntegrationTests(unittest.TestCase):
         self.assertNotIn('model_install',[name for name,_ in events])
         self.assertNotIn('model_finish',[name for name,_ in events])
         self.assertIsNone(scope['mpc_model_capture'])
+
+    def test_descriptor_opt_in_is_forwarded_only_to_the_original_model_owner(self):
+        _,events,error=self.lifecycle(descriptor=True)
+        self.assertIsNone(error)
+        for name,options in events:
+            if name=='model_install':self.assertIs(options.get('capture_model_descriptor'),True)
+            else:self.assertNotIn('capture_model_descriptor',options)
+        _,events,error=self.lifecycle()
+        self.assertIsNone(error)
+        self.assertTrue(all('capture_model_descriptor' not in options for _,options in events))
 
     def test_model_install_failure_preserves_original_error_and_finishes_aux(self):
         failure = OSError('model install')
