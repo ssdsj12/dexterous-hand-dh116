@@ -8,6 +8,8 @@ DEFAULT_MAX_WIDTH=2048
 DEFAULT_MAX_HEIGHT=1536
 METRIC_KEYS=('depth_mae_m','depth_rmse_m','depth_p95_m','wire_point_cloud_completeness',
     'gpu_peak_allocated_bytes','gpu_peak_reserved_bytes','gpu_free_bytes','capture_ms','depth_ms','actor_ms')
+WIRE_DEPTH_KEYS=('wire_depth_mae_m','wire_depth_rmse_m','wire_depth_p95_m',
+    'wire_depth_validity_coverage','wire_depth_count')
 
 
 def validate_resolution(width,height,*,max_width=DEFAULT_MAX_WIDTH,max_height=DEFAULT_MAX_HEIGHT,
@@ -64,7 +66,10 @@ def compare_resolution_results(reports,*,thresholds=None):
         if not isinstance(report,dict):raise ValueError('resolution report dictionary or JSON path required')
         width,height=validate_resolution(report.get('width'),report.get('height'),allow_resource_override=True)
         row=dict(width=width,height=height,metrics={k:None for k in METRIC_KEYS},
+            wire_depth_metrics={k:None for k in WIRE_DEPTH_KEYS},
             stereo_pairs_per_second=None,qualified=False,measurements_verified=False,cohort_sha256=None,sample_count=None,
+            capture_depth_pairs_per_second=None,
+            capture_depth_throughput_scope='capture_plus_depth_only;excludes_Actor_and_physics;not_used_for_selection',
             rgb_candidate_point_cloud_completeness=None,gpu_device_used_bytes=None,
             blocked_reasons=[],accuracy_source='NA',performance_source='NA')
         binding=None
@@ -82,6 +87,7 @@ def compare_resolution_results(reports,*,thresholds=None):
             row['measurements_verified']=True;row['accuracy_source']='verified_native_raw_stereo_proof'
             if not row['qualified']:row['blocked_reasons'].append('measured_native_accuracy_did_not_pass_qualification_thresholds')
             metrics=binding.get('metrics',{})
+            row['wire_depth_metrics']={key:_number(metrics.get(key)) for key in WIRE_DEPTH_KEYS}
             for dst,src in (('depth_mae_m','mae_m'),('depth_rmse_m','rmse_m'),('depth_p95_m','p95_m'),
                             ('wire_point_cloud_completeness','wire_point_cloud_completeness')):
                 row['metrics'][dst]=_number(metrics.get(src))
@@ -99,6 +105,9 @@ def compare_resolution_results(reports,*,thresholds=None):
                 else:row['performance_source']='verified_native_cuda_artifact'
                 times=[row['metrics'][key] for key in ('capture_ms','depth_ms','actor_ms')]
                 batch=_number(performance.get('batch_size'),positive=True)
+                capture_depth=[row['metrics'][key] for key in ('capture_ms','depth_ms')]
+                if batch is not None and all(value is not None for value in capture_depth) and sum(capture_depth)>0:
+                    row['capture_depth_pairs_per_second']=1000*batch/sum(capture_depth)
                 if batch is not None and all(value is not None for value in times) and sum(times)>0:
                     row['stereo_pairs_per_second']=1000*batch/sum(times)
             else:row['blocked_reasons'].append('native_GPU_and_timing_proof_unavailable')

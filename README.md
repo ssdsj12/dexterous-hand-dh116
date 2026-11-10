@@ -1,3 +1,11 @@
+## 2026-11-10 — 双目Phase0～7隔离实现与原生分辨率实测
+
+已落地371D/24D/奖励审计、独立Teacher PPO、同步双RGB/亚像素深度、时序Actor与状态估计、BC、在线DAgger、Student PPO/actor-only推理、冷初态与原始证据验收软件。**这是实现及测试进度，尚未完成新Teacher/Student抓取验收。** 原生产源码、控制器、物理参数和历史Checkpoint不变。
+
+最终相关CPU回归：Windows **564 passed / 1 skipped，75.44s**；服务器现有Python3.10.12/Torch2.7cu128 **565 passed / 1 skipped，67.68s**，均exit0。之后执行10次独立原生相机配置采集：四分辨率与front/roll20对照，2环境、每次4计量帧，480Hz/60Hz不变，无模型训练。采集及重读验证通过，**深度精度资格全部未通过，未选最终分辨率**。640×480 roll20/block9的wire MAE7.978mm、正确3D点完整率46.05%，有效覆盖93.87%不能当作正确完整率；Actor延迟与完整训练吞吐仍未测。
+
+[完整实施/命令/限制](docs/superpowers/reports/2026-11-10-stereo-phase0-7-integration.md) · [原生分辨率结果](docs/superpowers/reports/2026-11-10-stereo-native-resolution-final.md) · [修改文件清单](docs/stereo_phase0_7_file_inventory.md) · [readiness账本](docs/contracts/stereo_phase0_7_readiness.json)。下一步是深度精度与force/support真实来源接线，再做新Teacher/Student独立原生验收；BC/DAgger正式晋级保持关闭。独立分支 `codex/dh116-stereo-privileged-dagger`，PR保持Draft，不合并。下列同日条目保留各阶段当时的测试快照，以本条和最终报告为最新结果。
+
 ## 2026-11-10 — R1/R2隔离因子与可用监督补全
 
 实现四类R1几何势能改善及R2承载/恢复/负载/执行目标变化因子；候选默认关闭，缺几何承载份额不补50/50，原R0不改。native runtime增加逐维核验的24个SDK关节监督，以及当前实测FK下的左右掌局部可见点；force、隐藏几何与未确认硬件仍无资格。

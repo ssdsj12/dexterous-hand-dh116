@@ -1,5 +1,7 @@
 # Stereo resolution v2：主精度640×480与subpixel/资源合同
 
+> 本文是该软件阶段的历史快照，以下native=0指当时开发冻结时点。后续10次实际原生采集、失败精度与未选型结论已记录在[最终原生报告](2026-11-10-stereo-native-resolution-final.md)和[集成报告](2026-11-10-stereo-phase0-7-integration.md)，不能将旧NA表当作当前测试结果。
+
 状态：新增多分辨率配置、真正重建K/resize K两个独立接口、streaming subpixel匹配与可配置图像处理batch；CPU软件验证已运行，**native runs=0**。640×480是新的主精度默认配置，不是已通过精度或吞吐资格的选型结论。旧224×96配置字节完整保留；没有修改原控制、480Hz physics/60Hz control、reward或成功判据，没有安装依赖、启动Isaac/GPU、训练或提交Git。
 
 ## 分辨率与几何

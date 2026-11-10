@@ -1,0 +1,835 @@
+{
+  "version": "dh116-stereo-phase0-7-readiness-v1",
+  "as_of_date": "2026-11-10",
+  "scope": "software_delivery_and_measurement_status;not_a_native_qualification_artifact",
+  "base_commit": "6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b",
+  "branch": "codex/dh116-stereo-privileged-dagger",
+  "head_before_final_document_commit": "a8d19ee014339edf96131cfa06673aabb7b2d96e",
+  "status_axes": {
+    "implemented": "source/interface availability;pending factories listed separately",
+    "CPU": "software/numerical tests only;not physical evidence",
+    "native_capture": "actual acquisition and immutable-source measurement verification",
+    "physical_qualified": "requires task/source/accuracy-specific native gates;not implied by other axes"
+  },
+  "summary": {
+    "implemented": "Phase0-7 independent software paths present;known unfinished native factories/gates remain",
+    "CPU": "passed_on_both_platforms",
+    "native_capture": "10_verified_camera_configuration_runs",
+    "physical_qualified": false,
+    "native_accuracy_qualified_runs": 0,
+    "selected_resolution": null,
+    "teacher_student_training_started": false,
+    "formal_BC_DAgger_admission": "blocked",
+    "actor_latency_ms": null,
+    "complete_training_throughput": null
+  },
+  "CPU": {
+    "windows": {
+      "passed": 564,
+      "skipped": 1,
+      "duration_s": 75.44,
+      "exit_code": 0,
+      "CUDA_VISIBLE_DEVICES": "",
+      "Isaac_imports": [],
+      "evidence_report": "docs/superpowers/reports/2026-11-10-stereo-phase0-7-integration.md"
+    },
+    "server": {
+      "passed": 565,
+      "skipped": 1,
+      "duration_s": 67.68,
+      "exit_code": 0,
+      "python": "3.10.12",
+      "torch": "2.7.0+cu128",
+      "CUDA_VISIBLE_DEVICES": "",
+      "Isaac_imports": [],
+      "dependencies_installed_or_upgraded": false,
+      "evidence_report": "docs/superpowers/reports/2026-11-10-stereo-phase0-7-integration.md"
+    },
+    "counting_note": "overlapping platform suites;do_not_add_test_counts;optional_dependency_paths_differ"
+  },
+  "native_capture": {
+    "completed_configuration_runs": 10,
+    "measurements_verified_runs": 10,
+    "accuracy_qualified_runs": 0,
+    "experiments": {
+      "old_rig": 4,
+      "front_v3": 4,
+      "front_roll20_block5_and_block9": 2
+    },
+    "environments_per_run": 2,
+    "measurement_frames_per_run": 4,
+    "warmup_frames_per_run": 2,
+    "seed": 116,
+    "physics_hz": 480,
+    "control_hz": 60,
+    "action_owner": "diagnostic_zero",
+    "actor_package_used": false,
+    "is_grasp_success_evaluation": false,
+    "is_100_independent_trials_per_style": false,
+    "summary_artifact": "docs/contracts/stereo_native_resolution_results.json",
+    "summary_sha256": "e216463b4b311e06b823c132b3fe73c79eb7de98bddd08ec6aeea4893e8fa63b",
+    "report": "docs/superpowers/reports/2026-11-10-stereo-native-resolution-final.md",
+    "raw_images_logs_models_and_SDK_snapshots_uploaded": false,
+    "qualification_note": "verified measurements are not accuracy qualification;offline SGBM reprocessing is not an extra native capture"
+  },
+  "phases": [
+    {
+      "phase": 0,
+      "implemented": "状态371D、canonical24D、奖励和原源码审计",
+      "CPU": "passed",
+      "native_capture": "not_applicable",
+      "physical_qualified": "not_applicable"
+    },
+    {
+      "phase": 1,
+      "implemented": "独立privileged Teacher PPO、checkpoint与R0；R1/R2纯算术因子",
+      "CPU": "passed",
+      "native_capture": "not_run_for_teacher_policy",
+      "physical_qualified": "not_evaluated"
+    },
+    {
+      "phase": 2,
+      "implemented": "同步双RGB、标定、深度、点云、分辨率/构图/roll实验与公共重读",
+      "CPU": "passed",
+      "native_capture": "10_measurements_verified",
+      "physical_qualified": "accuracy_failed"
+    },
+    {
+      "phase": 3,
+      "implemented": "共享GN-ResNet18、stereo attention、时序估计及masked losses",
+      "CPU": "passed",
+      "native_capture": "not_run_for_trained_estimator",
+      "physical_qualified": "not_evaluated"
+    },
+    {
+      "phase": 4,
+      "implemented": "同步Teacher采集、成功池门控、独立BC与来源holdout",
+      "CPU": "passed",
+      "native_capture": "not_run_for_qualified_demonstrations_or_BC",
+      "physical_qualified": "not_evaluated"
+    },
+    {
+      "phase": 5,
+      "implemented": "Student访问状态实时Teacher查询、owner切换、DAgger聚合/独立Adam",
+      "CPU": "passed",
+      "native_capture": "not_run_for_formal_DAgger",
+      "physical_qualified": "not_evaluated"
+    },
+    {
+      "phase": 6,
+      "implemented": "asymmetric Student PPO、保存恢复、Actor-only导出/rawRGB推理",
+      "CPU": "passed",
+      "native_capture": "not_run_for_Student_policy_or_training",
+      "physical_qualified": "not_evaluated"
+    },
+    {
+      "phase": 7,
+      "implemented": "冷初态runner、逐480Hz重算、Wilson统计与heldout晋级门槛",
+      "CPU": "passed",
+      "native_capture": "100_per_style_trials_not_run",
+      "physical_qualified": "not_evaluated"
+    }
+  ],
+  "pending": [
+    {
+      "id": "stereo_accuracy",
+      "status": "measured_failed",
+      "required": "fix and independently remeasure depth tails/occlusion/visible geometry without relaxing thresholds"
+    },
+    {
+      "id": "force_support_factories",
+      "status": "not_qualified",
+      "required": "real measured-source factory with ON_OBJECT side,SI units,frame,partner/per-digit attribution and external-force/attachment audit"
+    },
+    {
+      "id": "R1_R2_native_factories",
+      "status": "not_implemented",
+      "required": "actual native geometry/support measurement factory and per-term source/tick binding;CPU arithmetic alone is insufficient"
+    },
+    {
+      "id": "independent_geometry_gate",
+      "status": "known_interface_gap",
+      "required": "independent geometry evidence gate;current geometry admission over-requires a complete successful episode/force proof"
+    },
+    {
+      "id": "qualified_teacher_demonstrations",
+      "status": "not_evaluated",
+      "required": "new frozen Teacher full first episodes and actual native success before successful BC pool admission"
+    },
+    {
+      "id": "native_BC_DAgger_PPO",
+      "status": "not_started",
+      "required": "Teacher/stereo gates before formal collection/BC/online DAgger,then bounded Student PPO update/resume validation"
+    },
+    {
+      "id": "estimator_accuracy",
+      "status": "not_evaluated",
+      "required": "heldout observable geometry/state accuracy;unqualified force/internal/hidden labels remain invalid"
+    },
+    {
+      "id": "depth_auxiliary_decoder",
+      "status": "not_implemented",
+      "required": "real depth prediction head and qualified target supervision before nonzero depth-loss weight"
+    },
+    {
+      "id": "training_source_closure",
+      "status": "pending",
+      "required": "register complete immutable training data/model ancestry and physical-initial-condition holdout before formal promotion"
+    },
+    {
+      "id": "model_throughput_and_deployment",
+      "status": "not_evaluated",
+      "required": "actual Actor latency,complete training memory/throughput and independent native Student/hardware acceptance"
+    }
+  ],
+  "task_evaluation": {
+    "styles": [
+      "pinch_thumb_index",
+      "tripod_thumb_index_middle"
+    ],
+    "required_independent_trials_per_style": 100,
+    "teacher": {
+      "status": "not_evaluated",
+      "trials_per_style": null,
+      "successes_per_style": null,
+      "success_rate": null,
+      "wilson_95": null
+    },
+    "student": {
+      "status": "not_evaluated",
+      "trials_per_style": null,
+      "successes_per_style": null,
+      "success_rate": null,
+      "wilson_95": null
+    },
+    "note": "not_evaluated means no measured denominator;do_not_publish_as_0_of_100",
+    "success_contract": {
+      "net_lift_m": 0.03,
+      "hold_s": 5.0,
+      "fixed_anchor_slip_m": 0.0005,
+      "other_native_gates": "unchanged"
+    }
+  },
+  "preservation": {
+    "protected_original_source_script_config_count": 528,
+    "raw_sha256_mismatches": [],
+    "old_11_10_ref": "6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b",
+    "legacy224_raw_sha256": "f5c53f5c9d3042ee0ce97453a3420dda3ecb7417469d7362be20604b0171d494",
+    "old_controller_physics_and_historical_checkpoints_overwritten": false
+  },
+  "file_inventory": {
+    "path": "docs/stereo_phase0_7_file_inventory.md",
+    "method": "git diff --name-status --no-renames BASE -- src scripts configs tests docs;plus git ls-files --others --exclude-standard in same scopes",
+    "excluded": [
+      "artifacts/**",
+      "root README.md/CHANGELOG.md (maintained separately)"
+    ],
+    "counts_by_category": {
+      "src": {
+        "total": 43,
+        "added": 43,
+        "modified": 0,
+        "deleted": 0
+      },
+      "scripts": {
+        "total": 16,
+        "added": 16,
+        "modified": 0,
+        "deleted": 0
+      },
+      "configs": {
+        "total": 26,
+        "added": 26,
+        "modified": 0,
+        "deleted": 0
+      },
+      "tests": {
+        "total": 31,
+        "added": 31,
+        "modified": 0,
+        "deleted": 0
+      },
+      "docs": {
+        "total": 25,
+        "added": 25,
+        "modified": 0,
+        "deleted": 0
+      }
+    },
+    "total": 141,
+    "pending_owner_report_paths_at_generation": [],
+    "files": [
+      {
+        "path": "configs/dh116_training/privileged_teacher_ppo_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/privileged_teacher_reward_r0.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/privileged_teacher_reward_r1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/privileged_teacher_reward_r2.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/privileged_teacher_shaping_candidates_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_bc_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_camera_320x240_v2.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_camera_640x360_v2.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_camera_640x480_v2.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_camera_front_224x96_v3.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_camera_front_320x240_v3.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_camera_front_640x360_v3.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_camera_front_640x480_v3.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_camera_front_roll20_640x480_block5_experiment_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_camera_front_roll20_640x480_block9_experiment_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_camera_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_dagger_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_native_task_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_network_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_resolution_experiment_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_state_estimator_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_student_ppo_accuracy640_v2.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_student_ppo_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_tripod_reset_20261105_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_validation_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/stereo_trial_evaluation_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/contracts/privileged_teacher_reward_contract.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/contracts/stereo_action_contract.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/contracts/stereo_native_resolution_results.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/contracts/stereo_phase0_7_readiness.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/contracts/stereo_phase0_source_manifest.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/contracts/stereo_privileged_state_contract.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/privileged_teacher_phase1_report.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/privileged_teacher_reward_audit.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/stereo_action_contract.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/stereo_phase0_7_file_inventory.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/stereo_privileged_state_contract.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/plans/2026-11-10-stereo-privileged-dagger-implementation.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-bootstrap-snapshot02.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-cold-trials.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-native-resolution-final.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-phase0-7-integration.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-phase0-audit.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-phase1-integration.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-phase2.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-phase3.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-phase4.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-phase5.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-phase6.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-phase7.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-resolution-v2.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/admit_dh116_stereo_candidates.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/benchmark_dh116_stereo_resolution.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/collect_dh116_privileged_expert.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/collect_dh116_stereo_teacher.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/evaluate_dh116_privileged_teacher.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/evaluate_dh116_stereo_depth.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/evaluate_dh116_stereo_trials.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/export_dh116_stereo_student.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/infer_dh116_stereo_rgb.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/probe_dh116_stereo_camera.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/register_dh116_stereo_training_lineage.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/run_dh116_stereo_dagger.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/run_dh116_stereo_student.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/train_dh116_privileged_teacher.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/train_dh116_stereo_bc.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/train_dh116_stereo_student.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_privileged_checkpoint.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_privileged_cli.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_privileged_dataset.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_privileged_evaluation.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_privileged_ppo.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_privileged_reward.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_privileged_shaping.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_privileged_teacher.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_bc.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_calibration.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_camera.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_camera_cli.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_checkpoint.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_contract.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_dagger.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_dagger_dataset.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_dagger_trainer.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_depth.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_encoder.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_evaluation.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_framing.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_geometry.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_inference.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_losses.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_native.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_observation.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_perception.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_preprocessing.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_promotion.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_reference.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_resolution.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_resolution_benchmark.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_rig_experiments.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_runtime.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_state_estimator.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_student_cli.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_student_ppo.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_supervision_dataset.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_teacher_collector.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_temporal.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_training_cli.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_training_lineage.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_validation.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/phase0_state_contract_fixture.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_privileged_cli.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_privileged_shaping.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_privileged_teacher.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_bc_mode.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_camera_cli.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_collection.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_dagger.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_estimator.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_evaluation.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_framing.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_geometry.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_inference.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_native_bootstrap.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_opencv.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_perception.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_preprocessing.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_resolution.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_resolution_benchmark.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_rig_experiments.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_runtime.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_runtime_contract.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_student_cli.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_student_ppo.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_training_cli.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_training_lineage.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_trials.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_privileged_teacher_reward_audit.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_stereo_action_contract_audit.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_stereo_phase0_source_freeze.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_stereo_privileged_state_contract_audit.py",
+        "relative_to_base_status": "added"
+      }
+    ]
+  },
+  "publication": {
+    "new_branch_only": true,
+    "base_branch": "11-10",
+    "PR_intent": "Draft",
+    "merge_authorized": false,
+    "qualification_authority": false
+  }
+}

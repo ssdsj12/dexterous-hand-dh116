@@ -16,6 +16,7 @@ import re
 import torch
 
 AUDITED_CAMERA_VIEW_SHA256='58557bbcb900574a4b9858c13e9e479b96fd5dfe09d872b07d5c010cca64d99e'
+AUDITED_INSTANCE_ANNOTATOR_SHA256='756dbfb4f262e623606bcbff2ddb315be723cf371e7a72983493d7e9977ddd56'
 
 
 def validate_reference_timing(pair,reference,*,native=False):
@@ -35,14 +36,21 @@ def validate_reference_timing(pair,reference,*,native=False):
             if any(actual[key]!=timing.get(key) for key in keys):raise ValueError('raw render clock does not reproduce timing metadata')
 
 
-def resolve_wire_instance_mask(ids,info,wire_prim_paths,*,path_validator=None):
+def resolve_wire_instance_mask(ids,info,wire_prim_paths,*,path_validator=None,
+                               wire_render_prim_paths=None,reference_valid=None):
     """Resolve actual instance-ID prim paths, never substring/class/colour labels.
 
     Unknown metadata is an explicit unavailable reference. Native callers supply
     an actual USD stage validator; CPU/offline callers can validate archived path
     readback. Each environment is matched only against its own real Wire root.
     """
-    failed=lambda reason:dict(mask=None,id_to_path={},per_env_wire_ids=[],stage_validated_paths=[],blocked_reasons=[reason])
+    mapping={};background=set();validated=set();renderer_namespaces={};ignored=[];unresolved=[]
+    def result(mask=None,reason=None,per_env=None,complete=False):
+        return dict(mask=mask,id_to_path=mapping,per_env_wire_ids=per_env or [],
+            stage_validated_paths=sorted(validated),blocked_reasons=[] if reason is None else [reason],
+            background_ids=sorted(background),non_wire_renderer_instance_namespaces=renderer_namespaces,
+            unresolved_ids=unresolved,unresolved_ids_outside_reference_validity=ignored,wire_inventory_complete=complete)
+    failed=lambda reason:result(reason=reason)
     if not isinstance(ids,torch.Tensor) or ids.ndim!=3 or ids.dtype not in (torch.int32,torch.int64):
         return failed('instance_ids_must_be_signed_integer_BHW')
     if (not isinstance(wire_prim_paths,(list,tuple)) or len(wire_prim_paths)!=len(ids)
@@ -53,12 +61,25 @@ def resolve_wire_instance_mask(ids,info,wire_prim_paths,*,path_validator=None):
     if any(not valid_path(root) for root in wire_prim_paths):return failed('actual_wire_root_is_not_absolute_USD_prim_path')
     if path_validator is not None and any(not path_validator(root) for root in wire_prim_paths):
         return failed('actual_wire_root_missing_from_USD_stage_readback')
+    validated.update(wire_prim_paths)
+    inventory=wire_render_prim_paths
+    if inventory is not None:
+        if (not isinstance(inventory,list) or len(inventory)!=len(ids)
+                or any(not isinstance(paths,list) or not paths for paths in inventory)):
+            return failed('complete_per_environment_actual_Wire_render_geometry_inventory_required')
+        for root,paths in zip(wire_prim_paths,inventory):
+            if (len(set(paths))!=len(paths) or any(not valid_path(path) or not (path==root or path.startswith(root+'/'))
+                    or (path_validator is not None and not path_validator(path)) for path in paths)):
+                return failed('Wire_render_geometry_inventory_not_actual_stage_descendants')
+            validated.update(paths)
+        if (not isinstance(reference_valid,torch.Tensor) or reference_valid.shape!=ids.shape
+                or reference_valid.dtype!=torch.bool or reference_valid.device!=ids.device):
+            return failed('actual_optical_Z_reference_validity_required_for_instance_inventory')
     labels=info.get('idToLabels') if isinstance(info,dict) else None
     if isinstance(labels,str):
         try:labels=json.loads(labels)
         except ValueError:return failed('unsupported_idToLabels_JSON')
     if not isinstance(labels,dict):return failed('unsupported_instance_info_format_missing_idToLabels')
-    mapping={};background=set();unknown=set();validated=set(wire_prim_paths)
     for key,value in labels.items():
         if isinstance(key,bool) or not re.fullmatch('[0-9]+',str(key)):return failed('unsupported_instance_ID_key')
         number=int(key)
@@ -66,22 +87,39 @@ def resolve_wire_instance_mask(ids,info,wire_prim_paths,*,path_validator=None):
             if value=='BACKGROUND' and number==0:background.add(number);continue
             if value.lstrip().startswith('{'):
                 try:value=json.loads(value)
-                except ValueError:unknown.add(number);continue
+                except ValueError:continue
         path=value.get('primPath') if isinstance(value,dict) else value
-        if not valid_path(path):unknown.add(number);continue
-        if path_validator is not None and not path_validator(path):unknown.add(number);continue
+        if not valid_path(path):
+            # The audited fast annotator returns renderer instance-token paths.
+            # An explicit non-Wire renderer namespace is not an unknown ID.
+            # With complete actual Wire inventory, it may be excluded without
+            # pretending that its synthetic token is a real USD prim. Never
+            # infer a Wire ID or strip a suffix to certify Wire geometry.
+            match=re.fullmatch(r'(.+)\.proto_mesh_id[0-9]+',path) if isinstance(path,str) else None
+            base=match[1] if match is not None else None
+            if (inventory is None or not valid_path(base)
+                    or any(base==root or base.startswith(root+'/') for root in wire_prim_paths)):
+                continue
+            renderer_namespaces[number]=base
+            continue
+        if path_validator is not None and not path_validator(path):continue
         mapping[number]=path;validated.add(path)
     seen=set(torch.unique(ids).detach().cpu().tolist())
-    if any(value not in mapping and value not in background for value in seen):
-        return failed('visible_instance_ID_has_no_unambiguous_stage_validated_prim_path')
+    unresolved=sorted(value for value in seen if value not in mapping and value not in background and value not in renderer_namespaces)
+    for value in unresolved:
+        if inventory is None or bool(((ids==value)&reference_valid).any()):
+            return failed('visible_instance_ID_has_no_unambiguous_stage_validated_prim_path')
+        ignored.append(value)  # Explicitly unresolved, NOT guessed background.
     per_env=[];mask=torch.zeros_like(ids,dtype=torch.bool)
     for env,root in enumerate(wire_prim_paths):
         owned=[key for key,path in mapping.items() if path==root or path.startswith(root+'/')]
         if not owned:return failed('Wire_prim_not_resolved_to_instance_ID_for_environment_'+str(env))
+        if inventory is not None and any(not any(path==mapping[key] or path.startswith(mapping[key]+'/')
+                for key in owned) for path in inventory[env]):
+            return failed('actual_Wire_render_geometry_missing_from_instance_label_map_for_environment_'+str(env))
         per_env.append(sorted(owned))
         mask[env]=torch.isin(ids[env],torch.tensor(owned,device=ids.device,dtype=ids.dtype))
-    return dict(mask=mask,id_to_path=mapping,per_env_wire_ids=per_env,
-                stage_validated_paths=sorted(validated),blocked_reasons=[])
+    return result(mask=mask,per_env=per_env,complete=inventory is not None)
 
 
 class _NativeValidationDepthReader:
@@ -98,6 +136,11 @@ class _NativeValidationDepthReader:
         self.wire_prim_paths=list(wire_prim_paths) if wire_prim_paths is not None else None
         class DeviceSafeDepthView(_CameraAxesDeviceMixin,base):pass
         rep=importlib.import_module('omni.replicator.core')
+        annotator=Path(inspect.getfile(importlib.import_module('omni.replicator.core.scripts.annotators_default'))).resolve()
+        annotator_sha=hashlib.sha256(annotator.read_bytes()).hexdigest()
+        if annotator_sha!=AUDITED_INSTANCE_ANNOTATOR_SHA256:
+            raise ValueError('unaudited renderer instance annotator source')
+        self.sdk_instance_source_artifact=dict(path=str(annotator),sha256=annotator_sha)
         for name in ('sim','calibration','device','origins','n','count','Usd','UsdGeom','stage'):
             setattr(self,name,getattr(rgb,name))
         self.core=rgb.core
@@ -110,6 +153,17 @@ class _NativeValidationDepthReader:
         self.reference=rep.AnnotatorRegistry.get_annotator('ReferenceTime',device='cpu')
         self.times=rep.AnnotatorRegistry.get_annotator('IsaacReadTimes',device='cpu')
         self.reference.attach([self.view.get_render_product_path()]);self.times.attach([self.view.get_render_product_path()])
+
+    def _wire_render_geometry(self):
+        if self.wire_prim_paths is None:return None
+        result=[]
+        for path in self.wire_prim_paths:
+            root=self.stage.GetPrimAtPath(path)
+            if not root.IsValid():return None
+            # Actual USD renderable geometry, not names/seed/GT object pixels.
+            result.append(sorted(str(prim.GetPath()) for prim in self.Usd.PrimRange(root)
+                if prim.IsA(self.UsdGeom.Gprim) and self.UsdGeom.Imageable(prim).ComputeVisibility()!=self.UsdGeom.Tokens.invisible))
+        return result
 
     def read(self):
         from .tabletop_stereo_camera import _NativeRGBPairReader
@@ -141,13 +195,17 @@ class _NativeValidationDepthReader:
         # Reuse only the camera-calibration readback method against THIS depth
         # CameraView; it never reads object state or RGB-D actor features.
         _NativeRGBPairReader._readback(self)
+        inventory=self._wire_render_geometry()
+        reference_valid=torch.isfinite(depth[:,0])&(depth[:,0]>0)
         resolution=resolve_wire_instance_mask(segmentation[:,0],segmentation_info,self.wire_prim_paths,
-            path_validator=lambda path:self.stage.GetPrimAtPath(path).IsValid()) if segmentation is not None else None
+            path_validator=lambda path:self.stage.GetPrimAtPath(path).IsValid(),
+            wire_render_prim_paths=inventory,reference_valid=reference_valid) if segmentation is not None and inventory is not None else None
         return dict(depth_left_m=depth[:,0].float(),depth_right_m=depth[:,1].float(),
             frame_id=before['frame_id'],simulation_time=before['simulation_time'],calibration_sha256=c.sha256,
             render_timing=before,sdk_camera_view_source_artifact=self.sdk_source_artifact,
+            sdk_instance_annotator_source_artifact=self.sdk_instance_source_artifact,
             raw_instance_ids=None if segmentation is None else segmentation[:,0],raw_instance_info=segmentation_info,
-            wire_prim_paths=self.wire_prim_paths,wire_instance_resolution=resolution,
+            wire_prim_paths=self.wire_prim_paths,wire_render_prim_paths=inventory,wire_instance_resolution=resolution,
             segmentation_blocked_reason=segmentation_error)
 
 
@@ -183,8 +241,10 @@ class ValidationDepthReference:
             wire_mask_blocked_reasons=resolution.get('blocked_reasons',[value.get('segmentation_blocked_reason') or 'instance_reference_unavailable']),
             raw_instance_ids=value.get('raw_instance_ids'),raw_instance_info=copy.deepcopy(value.get('raw_instance_info')),
             wire_prim_paths=copy.deepcopy(value.get('wire_prim_paths')),
+            wire_render_prim_paths=copy.deepcopy(value.get('wire_render_prim_paths')),
             wire_instance_resolution=resolution,actual_wire_path_source='RigidObject.root_physx_view.prim_paths' if native else 'cpu_fixture',
             render_timing=copy.deepcopy(value.get('render_timing')),
+            sdk_instance_annotator_source_artifact=copy.deepcopy(value.get('sdk_instance_annotator_source_artifact')),
             sdk_camera_view_source_artifact=copy.deepcopy(value.get('sdk_camera_view_source_artifact')))
 
 
@@ -197,9 +257,9 @@ def archive_instance_reference(reference,path):
     if reference.get('raw_instance_ids') is None:return None
     names=('source_scope','frame_id','simulation_time','calibration_sha256','render_timing',
            'raw_instance_ids','raw_instance_info','wire_prim_paths','actual_wire_path_source',
-           'sdk_camera_view_source_artifact')
+           'sdk_camera_view_source_artifact','sdk_instance_annotator_source_artifact','wire_render_prim_paths')
     raw={key:copy.deepcopy(reference.get(key)) for key in names}
-    raw.update(version='dh116-wire-instance-reference-v1',validation_only=True,
+    raw.update(version='dh116-wire-instance-reference-v2',validation_only=True,reference_valid=reference['valid'].clone(),
         stage_validated_paths=copy.deepcopy(reference.get('wire_instance_resolution',{}).get('stage_validated_paths',[])))
     path=Path(path)
     with path.open('xb') as stream:torch.save(raw,stream)
@@ -235,7 +295,7 @@ def compare_reference(pair,reference):
     candidate_den=good_ref&candidate if isinstance(candidate,torch.Tensor) else torch.zeros_like(valid)
     candidate_count=int(candidate_den.sum())
     candidate_valid=valid&candidate_den
-    wire=reference.get('wire_reference_mask');wire_total=wire_reconstructed=None
+    wire=reference.get('wire_reference_mask');wire_total=wire_reconstructed=None;wire_error=None;wire_count=None
     wire_reason='no_resolved_independent_instance_reference'
     if isinstance(wire,torch.Tensor):
         if wire.shape!=valid.shape or wire.dtype!=torch.bool:raise ValueError('wire instance reference mask shape/dtype mismatch')
@@ -248,6 +308,7 @@ def compare_reference(pair,reference):
         distance=(truth-reconstructed).norm(dim=-1)
         wire_total=int((wire&good_ref).sum())
         wire_reconstructed=int((wire&valid&(distance<=.005)).sum())
+        wire_error=(estimate[wire&valid]-target[wire&valid]).float();wire_count=len(wire_error)
         wire_reason=None if wire_total else 'no_reference_visible_wire_points'
     return dict(depth_mae_m=float(error.abs().mean()) if count else None,
         depth_rmse_m=float(error.square().mean().sqrt()) if count else None,
@@ -259,5 +320,9 @@ def compare_reference(pair,reference):
         candidate_mask_source=reference.get('candidate_mask_source'),
         wire_point_cloud_completeness=wire_reconstructed/wire_total if wire_total else None,
         wire_reference_visible_points=wire_total,wire_reconstructed_points=wire_reconstructed,
+        wire_depth_mae_m=float(wire_error.abs().mean()) if wire_count else None,
+        wire_depth_rmse_m=float(wire_error.square().mean().sqrt()) if wire_count else None,
+        wire_depth_p95_m=float(wire_error.abs().quantile(.95)) if wire_count else None,
+        wire_depth_count=wire_count,wire_depth_validity_coverage=wire_count/wire_total if wire_total else None,
         wire_completeness_scope='dense_reference_visible_wire_pixels;not_hidden_entire_object',
         wire_completeness_reason=wire_reason)

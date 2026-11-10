@@ -10,6 +10,37 @@ import pytest
 from go2_pvcnn.control.dh116 import tabletop_stereo_native as native
 
 
+def test_default_authored_bootstrap_passes_original_surface_preflight_without_demo_replay():
+    from go2_pvcnn.control.dh116.tabletop_surface_exploration import validate_options
+    spec = json.loads((Path(__file__).resolve().parents[1]/'configs/dh116_training/stereo_native_task_v1.json').read_text())
+    values = {}
+    arguments = spec['arguments']
+    for index, token in enumerate(arguments):
+        if token.startswith('--'):
+            name, separator, value = token[2:].partition('=')
+            if not separator:
+                value = arguments[index+1] if index+1<len(arguments) and not arguments[index+1].startswith('--') else True
+            values[name.replace('-','_')] = value
+    args = types.SimpleNamespace(**values)
+    validate_options(args)  # actual production preflight, no Isaac import
+    assert args.vision_student and args.surface_feedback
+    assert getattr(args,'surface_imitation_mode','legacy') == 'legacy'
+    assert not getattr(args,'surface_demonstrations',None)
+    root = Path(__file__).resolve().parents[1]
+    assert getattr(args,'depth_camera_config',None), 'unchanged visual routing requires a read-only camera config'
+    assert (root/args.depth_camera_config).is_file()
+    assert getattr(args,'mixed_grasp_initialization',None), 'actual secondary reset is required by the original visual route'
+    assert spec['grasp_styles'] == ['pinch_thumb_index','tripod_thumb_index_middle']
+    from go2_pvcnn.control.dh116.tabletop_adaptive_initialization import adaptive_initialization
+    from go2_pvcnn.control.dh116.tabletop_stereo_contract import file_sha256
+    primary = json.loads((root/args.grasp_initialization).read_text())
+    secondary = json.loads((root/args.mixed_grasp_initialization).read_text())
+    assert primary['roots'] != secondary['roots']
+    assert primary['wire_pose'] == secondary['wire_pose']
+    adaptive_initialization(secondary, dict(hand_roots={},active_joints={}), primary['source_contract'])
+    assert file_sha256(root/args.mixed_grasp_initialization) == spec['secondary_reset_source']['sha256']
+
+
 @pytest.fixture
 def bootstrap(tmp_path, monkeypatch):
     root = tmp_path / 'cpu_launcher'

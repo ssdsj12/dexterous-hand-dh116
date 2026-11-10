@@ -299,25 +299,31 @@ def stereo_metric_gate(metrics,limits):
 def _verified_wire_mask(reference,base,shape):
     """Re-resolve each env's archived actual instance IDs against stage paths."""
     import torch
-    from .tabletop_stereo_reference import resolve_wire_instance_mask,AUDITED_CAMERA_VIEW_SHA256
+    from .tabletop_stereo_reference import resolve_wire_instance_mask,AUDITED_CAMERA_VIEW_SHA256,AUDITED_INSTANCE_ANNOTATOR_SHA256
     wire=reference.get('wire_reference_mask')
     if wire is None:return None
     if reference.get('wire_mask_source_scope')!='native_resolved_instance_id':
         raise ValueError('wire completeness requires native resolved instance-ID readback')
     _,path=_artifact(reference.get('wire_mask_source_artifact'),base)
     raw=torch.load(path,map_location='cpu',weights_only=False)
-    if (not isinstance(raw,dict) or raw.get('version')!='dh116-wire-instance-reference-v1'
+    if (not isinstance(raw,dict) or raw.get('version')!='dh116-wire-instance-reference-v2'
             or raw.get('source_scope')!='native' or raw.get('validation_only') is not True
             or raw.get('actual_wire_path_source')!='RigidObject.root_physx_view.prim_paths'
             or any(raw.get(k)!=reference.get(k) for k in ('frame_id','simulation_time','calibration_sha256','render_timing'))):
         raise ValueError('native instance reference source/alignment mismatch')
     sdk=raw.get('sdk_camera_view_source_artifact');_artifact(sdk,path.parent)
     if sdk.get('sha256')!=AUDITED_CAMERA_VIEW_SHA256:raise ValueError('instance-ID SDK source is not audited')
+    annotator=raw.get('sdk_instance_annotator_source_artifact');_artifact(annotator,path.parent)
+    if annotator.get('sha256')!=AUDITED_INSTANCE_ANNOTATOR_SHA256:raise ValueError('renderer-instance annotator mapping source is not audited')
     ids=raw.get('raw_instance_ids');paths=raw.get('stage_validated_paths')
     if not isinstance(ids,torch.Tensor) or ids.shape!=shape or not isinstance(paths,list):
         raise ValueError('raw instance IDs/actual stage validation readback unavailable')
+    optical=raw.get('reference_valid')
+    if not isinstance(optical,torch.Tensor) or not torch.equal(optical,reference['valid']):
+        raise ValueError('instance unresolved-pixel eligibility differs from actual optical-Z validity')
+    if raw.get('wire_render_prim_paths') is None:raise ValueError('actual Wire render-geometry inventory unavailable')
     resolved=resolve_wire_instance_mask(ids,raw.get('raw_instance_info'),raw.get('wire_prim_paths'),
-        path_validator=lambda value:value in paths)
+        path_validator=lambda value:value in paths,wire_render_prim_paths=raw['wire_render_prim_paths'],reference_valid=optical)
     truth=resolved['mask']
     if truth is None:raise ValueError('actual instance map cannot resolve per-environment Wire roots: '+repr(resolved['blocked_reasons']))
     if not isinstance(wire,torch.Tensor) or wire.shape!=truth.shape or wire.dtype!=torch.bool or not torch.equal(wire,truth):
@@ -356,7 +362,7 @@ def _measure_stereo_evidence(proof):
             or len(references)!=len(frames) or p.get('sample_count')!=len(frames) or origins is None):
         raise ValueError('complete same-frame RGB/reference and native environment-origin readback required')
     errors=[];valid_pixels=0;reference_pixels=0;last=-1;last_time=-1.
-    candidate_total=0;candidate_reconstructed=0;wire_total=0;wire_reconstructed=0;wire_unavailable=[];wire_frames=0
+    candidate_total=0;candidate_reconstructed=0;wire_total=0;wire_reconstructed=0;wire_unavailable=[];wire_frames=0;wire_errors=[]
     estimator=StereoDepth(**validation.get('depth_estimator',{}))
     for packet,reference_binding in zip(frames,references):
         if packet.get('native_evidence') is not True or packet.get('depth_source')!='computed_from_left_right_RGB':
@@ -406,6 +412,8 @@ def _measure_stereo_evidence(proof):
             candidate_total+=int((candidate&eligible).sum());candidate_reconstructed+=int((candidate&joint).sum())
         if reference.get('wire_mask_source_artifact') is not None:
             _process_output(p,base,reference['wire_mask_source_artifact'],binding_base=reference_path.parent)
+        if reference.get('sdk_instance_annotator_source_artifact') is not None:
+            _process_output(p,base,reference['sdk_instance_annotator_source_artifact'],binding_base=reference_path.parent)
         wire=_verified_wire_mask(reference,reference_path.parent,eligible.shape)
         if wire is not None:
             wire_frames+=1
@@ -417,9 +425,11 @@ def _measure_stereo_evidence(proof):
             distance=(true_points-estimated).norm(dim=-1)
             wire_total+=int((wire&eligible).sum())
             wire_reconstructed+=int((wire&joint&(distance<=limits.get('wire_point_tolerance_m',.005))).sum())
+            wire_errors.extend((actual['depth_m'][wire&joint]-target[wire&joint]).double().tolist())
         else:wire_unavailable.extend(reference.get('wire_mask_blocked_reasons',['instance_reference_unavailable']))
         last,last_time=frame,when
     values=np.asarray(errors)
+    wire_values=np.asarray(wire_errors);wire_complete=wire_frames==len(frames)
     metrics=dict(mae_m=float(np.abs(values).mean()) if len(values) else None,
                  rmse_m=float(np.sqrt(np.square(values).mean())) if len(values) else None,
                  p95_m=float(np.quantile(np.abs(values),.95)) if len(values) else None,
@@ -428,6 +438,11 @@ def _measure_stereo_evidence(proof):
                  wire_point_cloud_completeness=wire_reconstructed/wire_total if wire_total and not wire_unavailable else None,
                  wire_point_cloud_completeness_observed_subset=wire_reconstructed/wire_total if wire_total else None,
                  wire_reference_frame_coverage=wire_frames/len(frames),
+                 wire_depth_mae_m=float(np.abs(wire_values).mean()) if len(wire_values) and wire_complete else None,
+                 wire_depth_rmse_m=float(np.sqrt(np.square(wire_values).mean())) if len(wire_values) and wire_complete else None,
+                 wire_depth_p95_m=float(np.quantile(np.abs(wire_values),.95)) if len(wire_values) and wire_complete else None,
+                 wire_depth_count=len(wire_values) if wire_complete else None,
+                 wire_depth_validity_coverage=len(wire_values)/wire_total if wire_total and wire_complete else None,
                  wire_reference_visible_points=wire_total,wire_reconstructed_points=wire_reconstructed,
                  wire_completeness_blocked_reasons=sorted(set(wire_unavailable)),
                  wire_completeness_sampling='dense_reference_visible_wire_pixels;not_hidden_entire_object')

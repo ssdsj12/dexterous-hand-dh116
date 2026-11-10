@@ -1,3 +1,10 @@
+## 2026-11-10 — Stereo原生接线、构图与分辨率测量收尾
+
+- 仅修正新增native配置：原launcher预检所需的真实三指reset、camera路由和无旧demo的启动参数；原guard、稳定Hold reward和旧控制路径保持。增加front四分辨率及独立roll20/window5与9实验，不改变默认旧rig。
+- 修复实际SDK instance-ID/光轴深度验证，逐env实际Wire mesh清单与未知有限深度fail-closed；旧v1材料不升级。保存producer退出、源码/配置/参考artifact SHA，区分测量可验证与accuracy资格。
+- 最终Windows相关CPU564 passed/1 skipped（75.44s）、现有服务器Python3.10/Torch2.7 CPU565 passed/1 skipped（67.68s），均exit0。10次实际相机配置采集exit0及重读通过，但accuracy全部未达标；≤5mm正确3D点完整率与有效覆盖分列，最终resolution未选择。完整命令、逐文件清单、指标、失败和剩余门槛见集成/原生报告。
+- 保留原528份生产文件raw SHA与历史Checkpoint；无模型训练、无原生Teacher/Student成功声明、不降低30mm/5s/0.5mm。force/support工厂、独立geometry资格、Teacher/Student每抓法100初态及完整训练吞吐待验证；PR保持Draft，不合并。以下同日记录为阶段历史快照。
+
 ## 2026-11-10 — 隔离shaping与实际SDK监督/手内坐标接线
 
 - 实现R1四类与R2五类纯测量因子，默认关，signed support deficit只计一次；几何派生目标份额不强制左右等载。native工厂/独立geometry资格未完成，来源不合格拒绝启用。

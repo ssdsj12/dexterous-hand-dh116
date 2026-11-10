@@ -184,13 +184,15 @@ def main(mode='probe', argv=None):
             frames.append(pair)
             if reference is not None:
                 reference=cpu(reference);references.append(reference)
-                sdk=reference.get('sdk_camera_view_source_artifact')
-                if isinstance(sdk,dict):
-                    snapshot=run/'native_sdk_camera_view_source.py'
-                    if not snapshot.exists():
-                        with snapshot.open('xb') as stream:stream.write(Path(sdk['path']).read_bytes())
-                    if file_sha256(snapshot)!=sdk['sha256']:raise ValueError('SDK camera source changed during capture')
-                    reference['sdk_camera_view_source_artifact']={'path':str(snapshot),'sha256':sdk['sha256']}
+                for key,filename in (('sdk_camera_view_source_artifact','native_sdk_camera_view_source.py'),
+                        ('sdk_instance_annotator_source_artifact','native_sdk_instance_annotator_source.py')):
+                    sdk=reference.get(key)
+                    if isinstance(sdk,dict):
+                        snapshot=run/filename
+                        if not snapshot.exists():
+                            with snapshot.open('xb') as stream:stream.write(Path(sdk['path']).read_bytes())
+                        if file_sha256(snapshot)!=sdk['sha256']:raise ValueError('SDK reference source changed during capture')
+                        reference[key]={'path':str(snapshot),'sha256':sdk['sha256']}
                 reference['wire_mask_source_artifact']=archive_instance_reference(reference,
                     run/f'wire_instance_reference_{len(references)-1:04d}.pt')
                 with (run/f'depth_reference_{len(references)-1:04d}.pt').open('xb') as stream:torch.save(reference,stream)

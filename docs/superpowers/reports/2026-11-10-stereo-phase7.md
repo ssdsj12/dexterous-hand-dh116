@@ -1,6 +1,6 @@
 # Phase 7：逐回合统计、原始证据与晋级门槛
 
-本阶段新增隔离的统计/验收软件、配置与CPU测试；**本轮native作业数为0**。没有通过任何CPU fixture授予Teacher、Stereo、力学来源、Student或部署资格。当前NativeBridge记录的是runtime capture unqualified，force/support仍NA，因此正式门槛拒绝是预期结果。所有原物理参数、原控制器和原成功算法保持不变。
+本阶段新增隔离的统计/验收软件、配置与CPU测试；初始代码开发冻结时native作业数为0。下文早期native0描述均指该开发阶段，随后由root显式执行的实际640×480采集及reference v2修复见文末附录。没有通过任何CPU fixture授予Teacher、Stereo、力学来源、Student或部署资格。当前NativeBridge记录的是runtime capture unqualified，force/support仍NA，因此正式任务门槛仍拒绝。所有原物理参数、原控制器和原成功算法保持不变。
 
 ## 实现与使用边界
 
@@ -110,3 +110,19 @@ Actor吞吐需要另加同calibration的 `--actor-package`。不带execute-nativ
 当前未接通的实际资格逐项为：没有运行任何native采集/benchmark；Bridge raw rows仍是source_scope=unqualified，force_source_qualified/support_source_qualified=False，external support/upforce/attachment为NA；完整ON_OBJECT/逐指partner/tangential/external/authored-force审计source尚未产生；没有真实instance-ID info格式与depth误差/GPU/Actor计时数据；没有本次checkpoint每抓法100实际独立首回合与完整训练来源登记。因此Teacher、formal DAgger、force supervision与部署仍blocked/pending，并非只差一次成功事件。上述读取、测量、晋级正向代码路径均已实现，CPU正例仅证明schema/算术/控制流，不授native资格。本轮native结果始终为0。
 
 最近CPU：evaluation 28项与benchmark/reference 22项，连同camera CLI、resolution、lineage、原528source freeze的fresh组合为81 passed/exit0；真实SurfaceLiftSuccess回归复现2400步后duration=4.999999999999988/event=True并验证首7条pending窗口不会误拒。全仓最后集成由root记录。
+
+## Reference v2：真实instance-ID schema修复与Wire ROI误差
+
+root随后在冻结source `/tmp/dh116-stereo-20261110T114000Z/snapshot` 显式执行native benchmark。只读核查的640×480结果位于 `native_resolution_04/640x480_verified_result.json`，SHA256 `139d05fb45fb43471d00a22306ace57391545903a3e86ebb3800cb05ffaffb85`。公共measurement记录 `measurements_verified=true, qualified=false`：global MAE=47.1807mm、RMSE=95.4598mm、P95=180.9252mm；wire completeness=NA，RGB candidate完整率=19.4558%，Actor latency=NA。这些是明确不合格的真实结果，不用RGB候选替代wire，也没有降低global gate阈值。其余旧分辨率结果由root保存汇总；本次子agent仅CPU读取已完成文件，没有另启native。
+
+真实首帧 `depth_reference_0000.pt` SHA为 `55e2286209ef2c2b4331d4d6c6d1717cbca5746d1b8a246c29d7fdc6ecdfb62b`；独立 `wire_instance_reference_0000.pt` SHA为 `ac7263910684709cb7dec3642c119e7635b611fafe159c4a7a6c7d43a9f40a07`。实际schema是int key到absolute renderer path的 `idToLabels` 字典，包含6→`/World/envs/env_0/Wire/geometry/mesh`、1→env_1的同级Wire mesh；actual RigidObject roots也分别正确。首帧自属Wire ROI像素为env0 2765、env1 2637，env0图另能看到env1的Wire，不能跨env广播。四帧21..24中每帧均有473187个ID0像素，全部optical-Z无效，没有任何finite-depth/ROI像素。ID0未提供label；这里**不宣称它已由fast annotator证明是BACKGROUND**。
+
+旧parser拒绝整帧的原因是未映射ID0和手部 `.../mesh.proto_mesh_id0` renderer token不能作为真实USD prim验证。只读审查的SDK `annotators_default.py` SHA为 `756dbfb4f262e623606bcbff2ddb315be723cf371e7a72983493d7e9977ddd56`，973..1006行把 `instance_id_segmentation_fast` 定义为renderer instance-ID/token-map调试输出；不能套用其它semantic annotator的0=BACKGROUND示例。该SDK源现在与CameraView源一起真实校验并归档。
+
+新采集写 `dh116-wire-instance-reference-v2`：独立记录actualWire根的可见USD Gprim渲染几何清单、每项stage存在读回、完整raw IDs/map和同frame optical-Z validity。每个Wire渲染几何都必须有明确、真实stage验证的Wire label归属，才认为inventory完整。只有完整inventory存在时，已明确映射到非Wire绝对renderer namespace的精确 `.proto_mesh_idN` token可以排除；保留原token/namespace，不把它冒充真实USD prim，也绝不通过去后缀猜Wire ID。没有label的ID在任何有效optical-Z像素出现都继续NA；仅完全处于无效光学reference区时记录为unresolved-outside-validity，不能改称已识别背景。缺Wire label、Wire自身仅有不明proto token、缺stage几何或未知finite ID均fail closed。
+
+promotion重读v2 raw artifact并重新解析inventory/map/validity，验证SDK annotator源与外部process completion产物清单；必须与实际reference.valid一致。旧v1 artifact的stage清单为空，保留原样，**不能补写或事后升级资格**。root须在新source freeze和独立run下重新采集四profile，才可能得到新的wire实测。
+
+公共measurement额外返回 `wire_depth_mae_m`、`wire_depth_rmse_m`、`wire_depth_p95_m`、`wire_depth_count`、`wire_depth_validity_coverage`，均来自同一已验证raw-ID Wire mask的reference-visible ROI；completeness仍是可见渲染Wire像素对应3D点在既定5mm容差内的重建率，不补遮挡线段、不声称完整隐形几何。global depth指标和原验收政策完全不变。comparison仅透传经过公共measurement验证的Wire ROI值，不读caller自报值，也没有用新ROI字段暗中改变selection标准。
+
+本修复先观察6项新测试RED，再实现并运行完整目标组：最新reference/benchmark、evaluation、cameraCLI、resolution及原528源冻结检查 **83 passed，exit0（10.36s）**。CPU测试覆盖真实schema形态、逐env归属、unknown finite ID、缺Wire label、Wire proto、无关synthetic nonWire token、缺stage路径、旧证据不得升级以及Wire ROI独立误差。v2代码尚未native执行，不把这些CPU正例记作新的native采集或资格。

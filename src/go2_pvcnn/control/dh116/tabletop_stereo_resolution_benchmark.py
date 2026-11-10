@@ -67,10 +67,13 @@ def _source_freeze(config):
 
 def run_resolution_benchmark(configs,output,*,seed=116,num_envs=2,frames=4,image_processing_batch_size=1,
                              actor_package=None,warmup_frames=2,execute_native=False,enabled=False,runner=None,
-                             selection_thresholds=None):
+                             selection_thresholds=None,controlled_depth=True):
     require_opt_in(enabled)
+    if type(controlled_depth) is not bool:raise ValueError('explicit controlled_depth boolean required')
     if not configs or min(num_envs,frames,image_processing_batch_size)<1 or warmup_frames<0:
         raise ValueError('explicit positive benchmark budgets required')
+    from .tabletop_stereo_depth import StereoDepth
+    estimator_policy='controlled_blockmatch5_subpixel' if controlled_depth else 'profile_estimator'
     calibrations=[StereoCalibration.from_json(path) for path in configs]
     sizes=[(c.width,c.height) for c in calibrations]
     if len(set(sizes))!=len(sizes):raise ValueError('resolution configs must be unique')
@@ -78,15 +81,21 @@ def run_resolution_benchmark(configs,output,*,seed=116,num_envs=2,frames=4,image
     plan=[]
     for path,c in zip(configs,calibrations):
         label=f'{c.width}x{c.height}'
+        profile_depth=StereoDepth.from_config(json.loads(Path(path).read_text(encoding='utf-8'))).to_config()
+        resolved_depth=dict(profile_depth,image_processing_batch_size=image_processing_batch_size)
+        if controlled_depth:resolved_depth.update(method='blockmatch',block_size=5,subpixel=True)
         frozen=_source_freeze(path)
         write_json_new(run/'source_freezes'/f'{label}.json',dict(source_sha256=frozen,config_sha256=file_sha256(path)))
         plan.append(dict(width=c.width,height=c.height,label=label,config_path=str(Path(path).resolve()),
             config_sha256=file_sha256(path),calibration_sha256=c.sha256,
+            profile_depth_estimator=profile_depth,resolved_depth_estimator=resolved_depth,
             command=benchmark_command(path,run/label,seed=seed,num_envs=num_envs,frames=frames,
-                image_processing_batch_size=image_processing_batch_size,actor_package=actor_package,warmup_frames=warmup_frames),
+                image_processing_batch_size=image_processing_batch_size,actor_package=actor_package,warmup_frames=warmup_frames,
+                controlled_depth=controlled_depth),
             source_freeze=frozen))
     write_json_new(run/'benchmark_plan.json',dict(version='dh116-stereo-resolution-benchmark-v1',
         execute_native=execute_native,seed=seed,serial_subprocesses=True,plans=plan,
+        controlled_depth=controlled_depth,estimator_policy=estimator_policy,
         native_started=False,actor_package_sha256=file_sha256(actor_package) if actor_package else None))
     rows=[];actual_captures=0;actual_jobs=0;attempts=0
     for item in plan:
@@ -149,11 +158,14 @@ def run_resolution_benchmark(configs,output,*,seed=116,num_envs=2,frames=4,image
         row['metrics'].update(verified['metrics'])
         row['metrics']['rgb_candidate_point_cloud_completeness']=verified['rgb_candidate_point_cloud_completeness']
         row['metrics']['gpu_device_used_bytes']=verified.get('gpu_device_used_bytes')
-        for key in ('measurements_verified','qualified','blocked_reasons','stereo_pairs_per_second','cohort_sha256','sample_count'):
+        row['wire_depth_metrics']=verified.get('wire_depth_metrics')
+        for key in ('measurements_verified','qualified','blocked_reasons','stereo_pairs_per_second',
+                    'capture_depth_pairs_per_second','capture_depth_throughput_scope','cohort_sha256','sample_count'):
             row[key]=verified[key]
         row['selected']=comparison['selected_resolution']==[row['width'],row['height']]
         write_json_new(run/f"{row['width']}x{row['height']}_verified_result.json",row)
     result=dict(version='dh116-stereo-resolution-benchmark-v1',native_jobs_started=actual_jobs,native_captures_completed=actual_captures,
+        controlled_depth=controlled_depth,estimator_policy=estimator_policy,
         subprocess_attempts=attempts,source_scope='native_runtime_capture_unqualified' if actual_captures else 'unqualified',
         resolutions=rows,selected_resolution=comparison['selected_resolution'],comparison=comparison,
         limitation='raw capture/reference/performance evidence must pass common verification; RGB candidate completeness is not GT; missing Actor latency is NA')
@@ -170,17 +182,21 @@ def main(argv=None):
     parser.add_argument('--frames',type=int,default=4);parser.add_argument('--warmup-frames',type=int,default=2)
     parser.add_argument('--image-processing-batch-size',type=int,default=1)
     parser.add_argument('--actor-package',type=Path)
+    parser.add_argument('--profile-estimator',action='store_true',
+        help='use each profile method/block/subpixel unchanged; default controls all profiles to blockmatch5/subpixel')
     parser.add_argument('--selection-thresholds',type=Path,help='explicit JSON threshold policy; omitted means no final resolution selection')
     parser.add_argument('--enable-experiment',action='store_true');parser.add_argument('--execute-native',action='store_true')
     parser.add_argument('--check-config',action='store_true')
     args=parser.parse_args(argv)
     if args.check_config:
-        print(json.dumps(dict(validated=True,native_started=False,resolutions=[
+        print(json.dumps(dict(validated=True,native_started=False,controlled_depth=not args.profile_estimator,
+            estimator_policy='profile_estimator' if args.profile_estimator else 'controlled_blockmatch5_subpixel',resolutions=[
             [StereoCalibration.from_json(path).width,StereoCalibration.from_json(path).height] for path in args.configs])))
         return 0
     if args.output is None:parser.error('explicit new --output required')
     result=run_resolution_benchmark(args.configs,args.output,seed=args.seed,num_envs=args.num_envs,frames=args.frames,
         warmup_frames=args.warmup_frames,image_processing_batch_size=args.image_processing_batch_size,
         actor_package=args.actor_package,enabled=args.enable_experiment,execute_native=args.execute_native,
+        controlled_depth=not args.profile_estimator,
         selection_thresholds=json.loads(args.selection_thresholds.read_text(encoding='utf-8')) if args.selection_thresholds else None)
     print(json.dumps(result,indent=2));return 0 if all(row['exit_code'] in (None,0) for row in result['resolutions']) else 1

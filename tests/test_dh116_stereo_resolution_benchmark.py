@@ -131,6 +131,62 @@ def test_benchmark_dry_run_preserves_plan_without_launching_or_fake_actor_timing
     with pytest.raises(FileExistsError):run_resolution_benchmark([config],tmp_path/'bench',execute_native=False,enabled=True)
 
 
+@pytest.mark.parametrize('controlled_depth', [True, False])
+def test_benchmark_explicit_estimator_policy_preserves_profile_bytes_and_records_actual_overrides(tmp_path, controlled_depth):
+    root=Path(__file__).resolve().parents[1]
+    profile=json.loads((root/'configs/dh116_training/stereo_camera_front_640x480_v3.json').read_text())
+    profile['depth_estimator'].update(method='sgbm',block_size=11,subpixel=False)
+    config=tmp_path/'sgbm_window11.json';config.write_text(json.dumps(profile))
+    before=config.read_bytes()
+    output=tmp_path/'benchmark'
+    result=run_resolution_benchmark([config],output,enabled=True,controlled_depth=controlled_depth,
+        image_processing_batch_size=3)
+    plan=json.loads((output/'benchmark_plan.json').read_text())
+    item=plan['plans'][0]
+    assert ('--controlled-depth' in item['command']) is controlled_depth
+    assert plan['controlled_depth'] is controlled_depth
+    assert plan['estimator_policy']==('controlled_blockmatch5_subpixel' if controlled_depth else 'profile_estimator')
+    original=item['profile_depth_estimator'];resolved=item['resolved_depth_estimator']
+    assert (original['method'],original['block_size'],original['subpixel'])==('sgbm',11,False)
+    assert (resolved['method'],resolved['block_size'],resolved['subpixel']) == (
+        ('blockmatch',5,True) if controlled_depth else ('sgbm',11,False))
+    assert resolved['image_processing_batch_size']==3
+    assert config.read_bytes()==before
+    assert result['native_jobs_started']==0 and result['selected_resolution'] is None
+
+
+def test_benchmark_cli_profile_estimator_is_explicit_and_default_stays_controlled(tmp_path, capsys):
+    from go2_pvcnn.control.dh116.tabletop_stereo_resolution_benchmark import main
+    root=Path(__file__).resolve().parents[1]
+    config=root/'configs/dh116_training/stereo_camera_front_640x480_v3.json'
+    for profile_estimator in (False,True):
+        output=tmp_path/str(profile_estimator)
+        arguments=['--configs',str(config),'--output',str(output),'--enable-experiment']
+        if profile_estimator:arguments.append('--profile-estimator')
+        assert main(arguments)==0
+        assert json.loads(capsys.readouterr().out)['native_jobs_started']==0
+        plan=json.loads((output/'benchmark_plan.json').read_text())
+        assert ('--controlled-depth' in plan['plans'][0]['command']) is (not profile_estimator)
+
+
+def test_capture_plus_depth_throughput_uses_verified_timing_without_actor_and_never_selects(monkeypatch):
+    from go2_pvcnn.control.dh116 import tabletop_stereo_resolution as comparison
+    verified=dict(measurements_verified=True,qualified=False,source_scope='native',width=640,height=480,
+        metrics={},performance=dict(source_scope='native',measurement_device='cuda',batch_size=2,
+            capture_ms=4.,depth_ms=6.,actor_ms=None,gpu_peak_allocated_bytes=8,gpu_peak_reserved_bytes=16))
+    # Public-proof arithmetic substitution only; no test qualifies native data.
+    monkeypatch.setattr(comparison,'_verified_stereo',lambda proof:verified)
+    result=comparison.compare_resolution_results([dict(width=640,height=480,source_scope='native',schema_only=False,
+        stereo_qualification='CPU_arithmetic_substitute_for_public_verifier')])
+    row=result['resolutions'][0]
+    assert row['capture_depth_pairs_per_second']==200.
+    assert row['stereo_pairs_per_second'] is None and result['selected_resolution'] is None
+    assert row['capture_depth_throughput_scope']=='capture_plus_depth_only;excludes_Actor_and_physics;not_used_for_selection'
+    unknown=comparison.compare_resolution_results([dict(width=640,height=480,source_scope='cpu_fixture',schema_only=True,
+        capture_ms=0.,depth_ms=0.,capture_depth_pairs_per_second=999.)])['resolutions'][0]
+    assert unknown['capture_depth_pairs_per_second'] is None
+
+
 def test_native_failure_retains_separate_stdout_stderr_and_never_becomes_success(tmp_path):
     root=Path(__file__).resolve().parents[1]
     config=root/'configs/dh116_training/stereo_camera_v1.json'
@@ -212,3 +268,73 @@ def test_instance_reference_accepts_explicit_json_prim_path_and_requires_stage_r
     ids=torch.tensor([[[7]]])
     assert resolve_wire_instance_mask(ids,info,['/World/wire'],path_validator=lambda p:True)['mask'].all()
     assert resolve_wire_instance_mask(ids,info,['/World/wire'],path_validator=lambda p:False)['mask'] is None
+
+
+def native_instance_schema_fixture():
+    """Observed SDK label format, with synthetic pixels; no native proof."""
+    roots=['/World/envs/env_0/Wire','/World/envs/env_1/Wire']
+    wire=[root+'/geometry/mesh' for root in roots]
+    hand=[f'/World/envs/env_{i}/leftHand/finger22/visuals/mesh' for i in range(2)]
+    info={'idToLabels':{6:wire[0],1:wire[1],35:hand[0]+'.proto_mesh_id0',76:hand[1]+'.proto_mesh_id0'}}
+    ids=torch.tensor([[[0,6,35,1]],[[0,1,76,6]]])
+    reference_valid=torch.tensor([[[False,True,True,True]],[[False,True,True,True]]])
+    paths=set(roots+wire+hand)
+    return roots,wire,hand,info,ids,reference_valid,paths
+
+
+def test_actual_renderer_schema_uses_verified_wire_inventory_without_guessing_missing_id_zero():
+    roots,wire,hand,info,ids,valid,paths=native_instance_schema_fixture()
+    result=resolve_wire_instance_mask(ids,info,roots,path_validator=lambda p:p in paths,
+        wire_render_prim_paths=[[wire[0]],[wire[1]]],reference_valid=valid)
+    assert result['mask'].tolist()==[[[False,True,False,False]],[[False,True,False,False]]]
+    assert result['unresolved_ids_outside_reference_validity']==[0]
+    assert result['background_ids']==[]  # No guessed BACKGROUND label for ID0.
+    assert result['non_wire_renderer_instance_namespaces'][35]==hand[0]
+    assert result['wire_inventory_complete'] is True
+
+
+@pytest.mark.parametrize('fault',['unknown_finite','missing_wire_label','wire_proto','unverified_wire_geometry'])
+def test_wire_inventory_still_rejects_unattributed_finite_pixels_or_unresolved_wire_geometry(fault):
+    roots,wire,hand,info,ids,valid,paths=native_instance_schema_fixture()
+    if fault=='unknown_finite':valid[0,0,0]=True
+    if fault=='missing_wire_label':del info['idToLabels'][6]
+    if fault=='wire_proto':info['idToLabels'][6]=wire[0]+'.proto_mesh_id0'
+    if fault=='unverified_wire_geometry':paths.remove(wire[0])
+    result=resolve_wire_instance_mask(ids,info,roots,path_validator=lambda p:p in paths,
+        wire_render_prim_paths=[[wire[0]],[wire[1]]],reference_valid=valid)
+    assert result['mask'] is None and result['blocked_reasons']
+
+
+def test_unrelated_mapped_renderer_proto_is_not_certified_as_a_USD_prim_or_unknown_Wire():
+    roots,wire,hand,info,ids,valid,paths=native_instance_schema_fixture()
+    paths.difference_update(hand)
+    result=resolve_wire_instance_mask(ids,info,roots,path_validator=lambda p:p in paths,
+        wire_render_prim_paths=[[wire[0]],[wire[1]]],reference_valid=valid)
+    assert result['mask'] is not None and result['wire_inventory_complete'] is True
+    assert set(result['non_wire_renderer_instance_namespaces'])=={35,76}
+    assert all(path not in result['stage_validated_paths'] for path in hand)
+
+
+def test_wire_roi_depth_error_uses_only_resolved_visible_wire_pixels():
+    p=packet();p['K_left']=torch.eye(3)
+    ref=ValidationDepthReference(DepthReader()).read(p)
+    wire=torch.zeros_like(ref['valid']);wire[...,:2]=True
+    ref.update(wire_reference_mask=wire,wire_mask_source_scope='cpu_resolved_instance_id')
+    p['depth_m'][...,:2]+= .02
+    result=compare_reference(p,ref)
+    assert result['wire_depth_mae_m']==pytest.approx(.02)
+    assert result['wire_depth_rmse_m']==pytest.approx(.02)
+    assert result['wire_depth_p95_m']==pytest.approx(.02)
+    assert result['wire_depth_count']==8
+    assert result['wire_depth_validity_coverage']==1.
+    assert result['depth_mae_m']<result['wire_depth_mae_m']
+
+
+def test_previous_instance_artifact_without_stage_inventory_cannot_be_upgraded(tmp_path):
+    from go2_pvcnn.control.dh116.tabletop_stereo_promotion import _verified_wire_mask
+    raw=tmp_path/'old_reference.pt'
+    torch.save({'version':'dh116-wire-instance-reference-v1','stage_validated_paths':[]},raw)
+    ref={'wire_reference_mask':torch.ones(1,1,1,dtype=torch.bool),
+        'wire_mask_source_scope':'native_resolved_instance_id',
+        'wire_mask_source_artifact':{'path':str(raw),'sha256':hashlib.sha256(raw.read_bytes()).hexdigest()}}
+    with pytest.raises(ValueError,match='source|alignment'):_verified_wire_mask(ref,tmp_path,(1,1,1))

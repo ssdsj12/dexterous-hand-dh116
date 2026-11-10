@@ -4,6 +4,8 @@
 
 **Goal:** Implement an independent trainable privileged PPO Teacher, synchronized stereo RGB perception, temporal state estimation, BC, genuinely online DAgger, asymmetric Student PPO, and evidence-based evaluation.
 
+Execution record: Phase0–7 implementation commits and per-phase tests now exist. The original checklist below is the initial plan, not a physical qualification ledger. See [the integration report](../reports/2026-11-10-stereo-phase0-7-integration.md) for actual implementation, tests, source protection and still-closed native gates. The user's later resolution requirement makes 640×480 the main accuracy profile while preserving 224×96 as a test baseline.
+
 **Architecture:** Keep every original controller, checkpoint, RGB-D observation, reward and physical success implementation unchanged. New modules use a versioned shared canonical 24D action digest and the audited 371D layout. Native scene construction is delegated to the existing explicit launcher in an isolated process; only the training callback is substituted, never the controller. Student input objects reject privileged fields. Native evidence gates control training admission and promotion separately from CPU implementation readiness.
 
 **Tech Stack:** Existing Python/PyTorch; NumPy geometry; optional existing OpenCV StereoSGBM; pure PyTorch ResNet18 and Transformer; existing Tanh Gaussian arithmetic. No dependency installation or environment upgrade.
