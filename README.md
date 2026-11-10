@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 2：同步RGB、深度与坐标软件路径
+
+新增两台真实RGB相机的独立采集入口、标定读回、纯Torch视差基线/可选SGBM、显式无效掩码、world→实际palm FK变换和仅RGB可见线缆骨架提取。CPU组合 **43 passed，exit0**；相机原生采集和实际精度尚未验证。
+
+224×96/80mm基线下整数视差在0.5～0.8m距离约21～55mm/px，不能称为精细抓取精度。遮挡/分叉/无纹理不填仿真真值；SGBM及原生标定须单独验证。[Phase2报告](docs/superpowers/reports/2026-11-10-stereo-phase2.md)与`probe_dh116_stereo_camera.py`、`evaluate_dh116_stereo_depth.py`明确区分CPU检查、native probe和离线参考误差。
+
 ## 2026-11-10 — Stereo Phase 1：独立 privileged PPO Teacher
 
 新增371D→256→256 Teacher Actor/Critic、24D saved-latent Tanh Gaussian PPO、独立Actor BC、独占Checkpoint及三份CLI。R0逐值复用原任务奖励，不改旧控制器/模型。集成CPU **49 passed，exit0**，包括合成更新、保存/恢复与terminal保留；不是原生训练或抓取成功。

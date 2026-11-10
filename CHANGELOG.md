@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 2：RGB-only stereo独立模块
+
+- 新增标定、同步双RGB采集、视差/深度、坐标变换与验证模块；RGB-only原生reader不读取rendered depth，不推进物理。
+- 增加RGB可见骨架/弧长点顺序提取，分叉/断开/缺深度拒绝，不补隐藏几何。新增probe和depth-reference CLI，默认不运行native。
+- geometry+CLI+perception CPU组合43 passed in4.78s，exit0；实际标定、亚像素精度、原生性能和抓取均未验证。整数视差深度分辨率限制明确保留，PR继续Draft。
+
 ## 2026-11-10 — Stereo Phase 1：独立 Teacher 软件路径
 
 - 新增独立371D privileged Teacher/PPO/reward/dataset/checkpoint、配置和collect/train/evaluate入口；新run独占目录和动作/状态/source SHA，不覆盖原模型。
