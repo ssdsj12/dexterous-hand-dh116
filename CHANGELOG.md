@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 6：Student PPO与独立raw RGB执行
+
+- 新asymmetric PPO严格分离typed传感历史Actor与371D Critic，复用Tanh Gaussian/24D动作；独立保存policy/Adam/RNG/LR与actor-only导出。
+- 接通真实采集/BC/DAgger/PPO/独立RGB CLI；模型绑定calibration、matcher及源SHA，原始GT不进入Actor。训练源登记缺闭包则禁止正式heldout晋级。
+- Windows CPU463 passed/1 optional module skipped，exit0；服务器首次CPU6失败已保留日志并修复打包/AST兼容后重跑。尚无原生训练或Student成功，PR保持Draft。
+
 ## 2026-11-10 — Stereo Phase 5：真正在线DAgger
 
 - Student实际step访问状态上查询Teacher；整动作owner选择、append-only池、独立Adam与PPO隔离。

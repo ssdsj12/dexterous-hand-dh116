@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 6：独立Student PPO与RGB推理
+
+新增双目Actor/371D privileged Critic的独立asymmetric PPO、完整优化断点、actor-only导出与raw左右RGB独立推理。BC→DAgger→PPO保留实际数据/模型文件SHA和预处理合同；换matcher/分辨率不能静默套用旧模型。训练来源登记在raw文件关闭后进行，不把导出或BC loss视为部署资格。
+
+本轮CPU集成463 passed、1 optional OpenCV module skipped（72.90s，exit0）；部署/来源/优化相关44项组合通过。服务器首轮CPU458通过、6失败已定位为快照路径/文档和跨Python AST审计问题，正在新冻结快照重跑；未升级环境、未开始native训练。详见[Phase6报告](docs/superpowers/reports/2026-11-10-stereo-phase6.md)。新raw RGB路径尚无原生深度/抓取资格，原3844D路径不变，PR保持Draft。
+
 ## 2026-11-10 — Stereo Phase 5：在线DAgger
 
 新增Student访问状态上的实时Teacher查询、逐环境整24D owner切换、append-only聚合和独立BC更新。D4为Student执行，Teacher仅标注；D0参考及失败状态不能冒充成功BC示范，也不写入PPO on-policy storage。
