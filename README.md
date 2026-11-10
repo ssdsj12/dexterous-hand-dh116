@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 5：在线DAgger
+
+新增Student访问状态上的实时Teacher查询、逐环境整24D owner切换、append-only聚合和独立BC更新。D4为Student执行，Teacher仅标注；D0参考及失败状态不能冒充成功BC示范，也不写入PPO on-policy storage。
+
+本轮8项DAgger协议测试纳入450项CPU集成并通过（exit0）；[Phase5报告](docs/superpowers/reports/2026-11-10-stereo-phase5.md)记录接口与边界。正式DAgger仍需要新Teacher和双目原生资格，尚未运行；后续继续Student PPO与独立推理接线，PR保持Draft。
+
 ## 2026-11-10 — Stereo Phase 4：同步采集与独立BC
 
 新增严格pre-action对齐采集、带来源/有效性掩码的数据集、按实际初态分组的holdout及独立Adam BC。成功示范准入需要本次完整原生回合证据，不能用历史Teacher成功给新轨迹授信；BC保持原PPO storage隔离。加载推理模型后的BC会临时启用训练/图像分块反传，并恢复原模式。

@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 5：真正在线DAgger
+
+- Student实际step访问状态上查询Teacher；整动作owner选择、append-only池、独立Adam与PPO隔离。
+- D0、失败访问状态和成功示范分开；无原生Teacher资格时不执行正式第一步。
+- 8项DAgger协议测试包含于本轮450项CPU通过组合；原生DAgger与Student任务成功仍待验证，PR保持Draft。
+
 ## 2026-11-10 — Stereo Phase 4：pre-action采集与独立BC
 
 - 新增Teacher采集协议、版本化supervision dataset、来源分组holdout、独立BC与训练模式/分块反传回归。
