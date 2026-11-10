@@ -1,3 +1,15 @@
+## 2026-11-10 发布进度 — D：承托转移八阶段请求状态机（仅CPU）
+
+- [x] 新增未接SDK的APPROACH/CLOSE/STABILIZE/LOAD_TRANSFER/LIFT/AIRBORNE_HOLD/RECOVERY/FAILED状态机。0.2s实测双侧对向稳定及有源object-following后，才建议0.5mm/s、累计请求曝光上限2mm的转移。
+- [x] 本次独立Linux CPU主验证：1471 passed, 3 skipped, 246 subtests passed in 307.60s (0:05:07)；exit0，Native作业0，公开测试文件60个。本机完整组合失败与独立PRIVATE parity审查另记；各组是同一主验证组合的子集，不另相加。
+- [ ] 对应Native来源/接入/校准及真实任务验收尚未完成。
+
+2mm是请求账而非实际位移；Lift默认1mm/s，至3mm/s需独立证据。缺测/丢接触请求原measured hold、pressure恢复/卸载，zero24不冒充安全保持；原observer成功仅保留来源，首terminal/no-op/reset时钟隔离，不自授任务成功。
+
+M0、默认Teacher、3844D Actor、371D Critic、24D Tanh Gaussian及原物理/材料/执行器/关节保护和30mm/5s/0.5mm成功标准保持。PR继续Draft，不合并，不开放新专家池或B3/PPO迁移。
+
+本节不将下方完整H8/恢复/正式验收任务标成完成。见[本次组合报告](../reports/2026-11-10-stage7-upload-cpu-components.md)。
+
 ## 2026-11-10 发布进度 — C：局部力驱动响应与批量FK数学预览（仅CPU）
 
 - [x] 新增完整17D局部implicit capped force-PD数学响应及批量mounted FK，左右手按各自SDK行、关节轴和单位计算。NONE/零cap驱动与缺参数分开，未知量不补0，原始M不对称化、不加单位惯量或完美mimic。

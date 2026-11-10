@@ -170,3 +170,16 @@ CPU组合包含此前模块及本次全部候选；本报告只按下方逐次�
 | `tests/test_bimanual_mpc_local_response.py` | `229d923bdf8557340c804654d0dc9568899d627236ab457bcf6ee02d4336ee44` |
 | `src/go2_pvcnn/control/dh116/tabletop_bimanual_mpc_batch_kinematics.py` | `db6af694a8761e7ea8a7e0a1c40ba6f0f0084a0c2d462099ac4e5094584cc5a0` |
 | `tests/test_bimanual_mpc_batch_kinematics.py` | `41401ab8ffc9c47df17cd8cdd6dffbab9ef83c5519606ac6f2c4adbe13610169` |
+
+## Published scope D — 承托转移八阶段请求状态机
+
+新增未接SDK的APPROACH/CLOSE/STABILIZE/LOAD_TRANSFER/LIFT/AIRBORNE_HOLD/RECOVERY/FAILED状态机。0.2s实测双侧对向稳定及有源object-following后，才建议0.5mm/s、累计请求曝光上限2mm的转移。
+
+2mm是请求账而非实际位移；Lift默认1mm/s，至3mm/s需独立证据。缺测/丢接触请求原measured hold、pressure恢复/卸载，zero24不冒充安全保持；原observer成功仅保留来源，首terminal/no-op/reset时钟隔离，不自授任务成功。
+
+本次提交限定2个公共code/tests和4个文档文件，共6文件；下列代码SHA取自同一次闭合CPU source map。新增Native验证0，不增加成功次数或规划/执行资格。
+
+| 公共code/tests | SHA256 |
+| --- | --- |
+| `src/go2_pvcnn/control/dh116/tabletop_bimanual_load_transfer.py` | `f7a1d42ae7c4f2bf56813f502e893781c80f196f000c9c71e86fdebcb7755fb2` |
+| `tests/test_bimanual_load_transfer.py` | `1fc0dcd297a9a62d90ea42b3acd843f1067833c7d2e950322d2ce99037a1634f` |
