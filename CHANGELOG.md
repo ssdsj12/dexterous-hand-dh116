@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 4：pre-action采集与独立BC
+
+- 新增Teacher采集协议、版本化supervision dataset、来源分组holdout、独立BC与训练模式/分块反传回归。
+- 完整成功池要求本次原生raw proof；CPU/候选数据不能授成功资格，不修改旧控制与Checkpoint。
+- 本次组合450 passed in61.80s；补充BC/运行组合19 passed/1 optional module skipped in18.02s，均exit0。原生采集、独立Student抓取仍pending；详见Phase4报告，PR保持Draft。
+
 ## 2026-11-10 — Stereo Phase 3：隔离Stereo Transformer Actor
 
 - 新增真实共享GN-ResNet18/双目cross-attention/时序Transformer、多head估计、typed SensorHistory、SO(3)及masked losses；不改变旧3844D输入。

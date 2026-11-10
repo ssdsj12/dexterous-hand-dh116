@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 4：同步采集与独立BC
+
+新增严格pre-action对齐采集、带来源/有效性掩码的数据集、按实际初态分组的holdout及独立Adam BC。成功示范准入需要本次完整原生回合证据，不能用历史Teacher成功给新轨迹授信；BC保持原PPO storage隔离。加载推理模型后的BC会临时启用训练/图像分块反传，并恢复原模式。
+
+本次全链CPU回归450 passed（61.80s，exit0）；随后BC/运行集成19 passed、1 optional OpenCV module skipped（18.02s，exit0）。这些是软件fixture与合同测试，没有启动Isaac或取得抓取资格。详见[Phase4报告](docs/superpowers/reports/2026-11-10-stereo-phase4.md)。下一步在线DAgger与native验证仍独立推进，PR保持Draft。
+
 ## 2026-11-10 — Stereo Phase 3：共享视觉编码与时序状态估计
 
 新增共享GN-ResNet18、双目cross-attention、四帧Transformer、geometry/contact/force-proxy/slip/371D估计heads与24D Actor。Actor只接收严格的双目传感历史；状态监督按逐维来源mask排除NA，force须重读原始资格证据，默认无效。
