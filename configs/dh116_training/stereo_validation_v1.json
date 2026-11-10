@@ -1,0 +1,36 @@
+{
+  "version": "dh116-stereo-validation-v1",
+  "enabled_by_default": false,
+  "source_scope_default": "unqualified",
+  "minimum_independent_initials_per_style": 100,
+  "styles": ["pinch_thumb_index", "tripod_thumb_index_middle"],
+  "success_thresholds": {
+    "net_lift_m": 0.03,
+    "continuous_hold_s": 5.0,
+    "formal_anchor_slip_m": 0.0005,
+    "physics_hz": 480,
+    "control_hz": 60
+  },
+  "stereo_limits": {
+    "max_mae_m": 0.005,
+    "max_rmse_m": 0.01,
+    "min_coverage": 0.5,
+    "min_valid_pixels": 1000,
+    "min_frames": 2
+  },
+  "depth_estimator": {
+    "method": "blockmatch",
+    "min_disparity": 1,
+    "max_disparity": 64,
+    "block_size": 5,
+    "min_depth_m": 0.2,
+    "max_depth_m": 1.2,
+    "lr_tolerance_px": 1.0,
+    "texture_threshold": 0.001,
+    "uniqueness_threshold": 0.05
+  },
+  "scope": "Software validation policy only; no native result or task precision claim. Integer SAD baseline may fail these stereo limits.",
+  "formal_slip_source": "surface_lift_success_30mm_5s_0.5mm",
+  "force_source_policy": "NA blocks physical promotion; metadata or arbitrary bytes cannot grant qualification",
+  "heldout_policy": "Actual physical initial-state hashes and source episode groups must be disjoint from training; clone retries never inflate the independent denominator"
+}

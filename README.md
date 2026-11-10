@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 7：冷初态评估与原始证据晋级
+
+新增每种抓法至少100实际独立初态的冷试验runner、逐480Hz回合重算、Teacher/Student分别统计、独立heldout最佳模型选择及公共晋级门槛。原生terminal在reset前保留；不接受summary成功flag、clone峰值或手填训练初态清单授信。缺force/support来源、外力/附件审计或完整训练来源登记时继续阻断正式DAgger/部署。
+
+修复新bootstrap对原launcher成功SystemExit的处理，恢复callback返回与完成报告；18项真实runpy CPU回归及关联164项通过（16.23s，exit0），原launcher/单实例锁不变。[Phase7报告](docs/superpowers/reports/2026-11-10-stereo-phase7.md)、[冷试验报告](docs/superpowers/reports/2026-11-10-stereo-cold-trials.md)逐项列出pending；当前尚无本新架构原生资格。下一步补完可独立的奖励因子并重新冻结验证，再测试分辨率；PR保持Draft。
+
 ## 2026-11-10 — Stereo Phase 6：独立Student PPO与RGB推理
 
 新增双目Actor/371D privileged Critic的独立asymmetric PPO、完整优化断点、actor-only导出与raw左右RGB独立推理。BC→DAgger→PPO保留实际数据/模型文件SHA和预处理合同；换matcher/分辨率不能静默套用旧模型。训练来源登记在raw文件关闭后进行，不把导出或BC loss视为部署资格。

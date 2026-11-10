@@ -39,7 +39,8 @@ def test_exact_pre_action_alignment_rejects_every_identity_mismatch(changes):
 
 def test_invalid_time_and_boolean_integer_rejected():
     for changes in (dict(env_id=True), dict(simulation_timestamp=float('nan')),
-                    dict(physics_tick_start=9, physics_tick_end=8)):
+                    dict(physics_tick_start=9, physics_tick_end=8),
+                    dict(episode_policy_tick=True), dict(trial_episode_index=-1)):
         with pytest.raises(ValueError):
             module().validate_identity(identity(**changes))
 

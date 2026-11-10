@@ -84,7 +84,7 @@ def test_pre_reset_terminal_observer_preserves_last_live_sample_across_noops(tmp
     bridge.task = SimpleNamespace(failure=torch.tensor([7]),
         surface_lift_success=SimpleNamespace(drift_m=torch.tensor([.0001]),
             duration=torch.tensor([0.]), window_good=torch.tensor([False])),
-        surface_reference_bottom_m=torch.tensor([.36]),
+        surface_reference_bottom_m=torch.tensor(.36),
         m={'bottom': torch.tensor([.361]), 'q': torch.zeros(1, 12), 'qd': torch.zeros(1, 12)},
         command=torch.zeros(1, 12))
     bridge.palm_poses = lambda: torch.zeros(1, 2, 7)
@@ -105,3 +105,42 @@ def test_pre_reset_terminal_observer_preserves_last_live_sample_across_noops(tmp
     assert record['physics_step'] == 8 and record['terminal']
     assert record['support_qualification'] is None
     assert record['evidence_scope'] == 'native_runtime_capture_unqualified'
+
+
+def test_cold_trial_metadata_never_moves_physics_and_episode_clocks_are_unique():
+    from go2_pvcnn.control.dh116.tabletop_stereo_native import NativeTensorBridge
+    from go2_pvcnn.control.dh116.tabletop_stereo_contract import EpisodeIdentities
+    bridge = NativeTensorBridge.__new__(NativeTensorBridge)
+    bridge.n = 2; bridge.policy_tick = 0; bridge._in_step = False
+    bridge.identities = EpisodeIdentities(2, run_uuid='cpu-cold-fixture')
+    bridge._seen_trial_ids = set(); bridge._cold_trials = None
+    bridge._trial_reset_counts = [0,0]
+    bridge._initial_conditions = {}; bridge._initial_sha = {}; bridge._initial_clock = {}
+    bridge._initial_policy_tick = {}
+    bridge.world = SimpleNamespace(sim=SimpleNamespace(current_time=0.))
+    wp = torch.tensor([[0.,0.,.36],[1.,0.,.36]])
+    bridge.device_world = SimpleNamespace(origins=torch.tensor([[0.,0.,0.],[1.,0.,0.]]),
+        wp=wp.clone(), wq=torch.tensor([[1.,0.,0.,0.]]).expand(2,-1), wv=torch.zeros(2,6), _physics_steps=0)
+    palms = torch.zeros(2,2,7); palms[:,:,3] = 1.
+    palms[1,:,:3] += torch.tensor([1.,0.,0.])
+    bridge.palm_poses = lambda: palms.clone()
+    styles = ['pinch_thumb_index','tripod_thumb_index_middle']
+    trials = [dict(trial_id=f'fixture-{i}', grasp_style=style) for i,style in enumerate(styles)]
+    bridge.bind_cold_trials(trials)
+    assert torch.equal(bridge.device_world.wp,wp)  # metadata hook is not a reset writer
+    measurement = dict(q=torch.zeros(2,12),qd=torch.zeros(2,12))
+    bridge._physical_reset(torch.tensor([0,1]), measurement)
+    first = bridge.pre_action_identities('a'*64)
+    assert [row['episode_policy_tick'] for row in first] == [0,0]
+    assert [row['trial_episode_index'] for row in first] == [1,1]
+    assert first[0]['physical_initial_condition_sha256'] == first[1]['physical_initial_condition_sha256']
+    bridge.policy_tick = 5; bridge._in_step = True
+    bridge.world.sim.current_time = 48/480; bridge.device_world._physics_steps = 48
+    bridge._physical_reset(torch.tensor([0]), measurement)
+    bridge._in_step = False; bridge.policy_tick = 6
+    after = bridge.pre_action_identities('a'*64)
+    assert after[0]['episode_uid'] != first[0]['episode_uid']
+    assert after[0]['episode_policy_tick'] == 0 and after[0]['trial_episode_index'] == 2
+    assert after[0]['source_episode_group'] == 'fixture-0'
+    with pytest.raises(ValueError,match='unvisited'):
+        bridge.bind_cold_trials(trials)

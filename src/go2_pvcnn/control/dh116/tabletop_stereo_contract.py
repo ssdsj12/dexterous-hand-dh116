@@ -10,6 +10,8 @@ import math
 from pathlib import Path
 import uuid
 
+import numpy as np
+
 from .tabletop_surface_contract import ACTION_CONTRACT
 
 VERSION = 'dh116-stereo-rgb-teacher-student-v1'
@@ -44,6 +46,51 @@ def require_sha(value, name='SHA256'):
 
 def action_sha256():
     return digest(ACTION_CONTRACT)
+
+
+def physical_initial_sha256(initial):
+    """Actual state identity, 10um/10urad quantization; exclude clone origin/seed.
+
+    This is numerical distinctness at a declared tolerance, not a guarantee of
+    broad task diversity. The producer must supply real reset readback.
+    """
+    if not isinstance(initial, dict):
+        raise ValueError('actual physical initial condition required')
+    sizes = {'object_pose': (7,), 'palm_pose': (2, 7), 'joint_position': (12,),
+        'joint_velocity': (12,), 'object_velocity': (6,)}
+    result = {}
+    for name, shape in sizes.items():
+        try:
+            value = np.asarray(initial[name], dtype=float).copy()
+        except (KeyError, ValueError, TypeError) as error:
+            raise ValueError('missing physical initial ' + name) from error
+        if value.shape != shape or not np.isfinite(value).all():
+            raise ValueError('invalid physical initial ' + name)
+        result[name] = value
+    if initial.get('coordinate_frame') == 'world':
+        origin = np.asarray(initial.get('environment_origin'), dtype=float)
+        if origin.shape != (3,) or not np.isfinite(origin).all():
+            raise ValueError('physical initial world origin required')
+        result['object_pose'][:3] -= origin
+        result['palm_pose'][:, :3] -= origin
+    elif initial.get('coordinate_frame') != 'environment_local':
+        raise ValueError('physical initial coordinate frame required')
+    for pose in [result['object_pose'], *result['palm_pose']]:
+        q = pose[3:]; length = np.linalg.norm(q)
+        if length <= 1e-12:
+            raise ValueError('physical initial quaternion invalid')
+        q /= length
+        significant = np.flatnonzero(np.abs(q) > 1e-12)
+        if len(significant) and q[significant[0]] < 0:
+            q *= -1
+    value = {key: np.rint(array/1e-5).astype(np.int64).tolist() for key, array in result.items()}
+    if 'physical_parameters' in initial:
+        parameters = initial['physical_parameters']
+        allowed = {'mass_kg', 'friction', 'young_modulus_pa', 'damping', 'geometry_sha256', 'material_sha256'}
+        if not isinstance(parameters, dict) or not set(parameters) <= allowed:
+            raise ValueError('only declared physical parameters may affect independent initial-state identity')
+        value['physical_parameters'] = parameters
+    return digest(value)
 
 
 def state_contract(path=None):
@@ -104,6 +151,9 @@ def validate_identity(row):
             raise ValueError(f'nonempty {key} required')
     for key in ('env_id', 'reset_id', 'policy_tick', 'physics_tick_start', 'physics_tick_end', 'frame_id'):
         if type(row[key]) is not int or row[key] < 0:
+            raise ValueError(f'{key} must be a nonnegative integer')
+    for key in ('episode_policy_tick', 'trial_episode_index'):
+        if key in row and (type(row[key]) is not int or row[key] < 0):
             raise ValueError(f'{key} must be a nonnegative integer')
     if row['physics_tick_start'] > row['physics_tick_end']:
         raise ValueError('invalid physics tick range')

@@ -15,7 +15,7 @@ import sys
 import torch
 
 from .tabletop_stereo_contract import (
-    ROOT, EpisodeIdentities, file_sha256, require_opt_in, write_json_new,
+    ROOT, STYLES, EpisodeIdentities, file_sha256, require_opt_in, write_json_new, physical_initial_sha256,
 )
 from .tabletop_surface_contract import validate_contract as validate_surface
 
@@ -63,6 +63,7 @@ def _json_safe(value):
 
 class NativeTensorBridge:
     """Read actual named links/encoders and preserve terminal samples before reset."""
+    evidence_scope = 'native_runtime_capture_unqualified'
     def __init__(self, world, device_world, task, env, args, contract, *, output):
         validate_surface(contract)
         if task.observe().shape != (env.n, 371) or getattr(task, 'action_size', None) != 24:
@@ -76,6 +77,25 @@ class NativeTensorBridge:
         self.policy_tick = 0
         self.previous_issued = torch.zeros(self.n, 24, device=self.device)
         self._terminal_rows, self._last_live_rows = {}, {}
+        self._initial_conditions, self._initial_sha, self._initial_clock = {}, {}, {}
+        self._initial_policy_tick = {}
+        self._in_step = False
+        self._cold_trials, self._trial_reset_counts = None, [0]*self.n
+        self._seen_trial_ids = set()
+        self.runtime_descriptor = None
+        self._headers_written = set()
+        self.execution_owner = 'teacher'
+        self.action_owners = ['teacher'] * self.n
+        self.checkpoint_sha256 = None
+        styles = getattr(args, '_stereo_grasp_styles', ['pinch_thumb_index'])
+        if len(styles) == 2:
+            if not getattr(args, 'mixed_grasp_initialization', None) or self.n % 2:
+                raise ValueError('bilateral style labels require the actual mixed reset initializer')
+            self.grasp_styles = [styles[0]]*(self.n//2) + [styles[1]]*(self.n//2)
+        elif len(styles) == 1:
+            self.grasp_styles = styles * self.n
+        else:
+            raise ValueError('one real reset style or an explicit two-style mixed reset required')
         self._raw = (self.output / 'native_physics.jsonl').open('x', encoding='utf-8')
         self._palm_ids = []
         for hand in device_world.hands:
@@ -92,7 +112,16 @@ class NativeTensorBridge:
             observation_source='unchanged_TensorTask.observe',
             physics_evidence='runtime_capture_not_automatic_qualification',
             force_qualification=None, hardware_feedback_qualification=None))
-        env.enable_evaluation_telemetry(self._capture)
+        from .tabletop_evaluation_telemetry import EvaluationTelemetry
+        owner = self
+
+        class StereoEvidenceObserver(EvaluationTelemetry):
+            def reset(observer, ids, measurement):
+                super().reset(ids, measurement)
+                owner._physical_reset(ids, measurement)
+
+        # Independent diagnostic subclass only: no Task/World/Env control patch.
+        env.evaluation_telemetry = StereoEvidenceObserver(self.n, self.device, self._capture)
         self.critic = self.reset()
 
     def close(self):
@@ -100,13 +129,64 @@ class NativeTensorBridge:
         self._raw.close()
 
     def reset(self):
-        self.identities.reset(list(range(self.n)))
         self.previous_issued.zero_()
-        self._terminal_rows.clear()
         self.critic = self.env.reset().detach().float().clone()
         if self.critic.shape != (self.n, 371) or not torch.isfinite(self.critic).all():
             raise RuntimeError('invalid native reset observation')
         return self.critic
+
+    def _physical_reset(self, ids, measurement):
+        """Observe the actual reset callback, before another physical substep."""
+        indices = ids.detach().cpu().tolist()
+        self.identities.reset(indices)
+        w = self.device_world
+        palms = self.palm_poses()
+        for i in indices:
+            uid = self.identities.uid(i)
+            self._trial_reset_counts[i] += 1
+            initial = _json_safe(dict(coordinate_frame='world', environment_origin=w.origins[i],
+                object_pose=torch.cat((w.wp[i], w.wq[i])), object_velocity=w.wv[i],
+                palm_pose=palms[i], joint_position=measurement['q'][i],
+                joint_velocity=measurement['qd'][i]))
+            self._initial_conditions[uid] = initial
+            self._initial_sha[uid] = physical_initial_sha256(initial)
+            self._initial_clock[uid] = (int(w._physics_steps), float(self.world.sim.current_time))
+            self._initial_policy_tick[uid] = self.policy_tick + int(self._in_step)
+
+    def bind_cold_trials(self, trials):
+        """Bind already-audited reset-buffer trials; this method moves no body."""
+        if self._in_step or not isinstance(trials, list) or len(trials) != self.n:
+            raise ValueError('one declared cold trial per slot at a control boundary required')
+        names = [row.get('trial_id') if isinstance(row, dict) else None for row in trials]
+        if (any(not isinstance(name, str) or not name for name in names)
+                or len(set(names)) != len(names) or set(names) & self._seen_trial_ids
+                or any(row.get('grasp_style') not in STYLES for row in trials)):
+            raise ValueError('unique unvisited cold trial IDs and real grasp style labels required')
+        self._cold_trials = [dict(row) for row in trials]
+        self._trial_reset_counts = [0]*self.n
+        self._seen_trial_ids.update(names)
+        self.grasp_styles = [row['grasp_style'] for row in trials]
+
+    def set_runtime_descriptor(self, descriptor):
+        """Freeze evidence about the actual driver before this episode starts."""
+        if not isinstance(descriptor, dict):
+            raise ValueError('explicit runtime descriptor required')
+        value = json.loads(json.dumps(descriptor, allow_nan=False))
+        current_uids = {self.identities.uid(i) for i in range(self.n)}
+        if self.runtime_descriptor != value and current_uids & self._headers_written:
+            raise ValueError('runtime descriptor cannot change after an episode has physical evidence')
+        self.runtime_descriptor = value
+
+    def set_execution_context(self, *, owner, checkpoint_sha256=None):
+        if owner not in ('teacher', 'student', 'dagger', 'bc', 'mpc', 'diagnostic_zero'):
+            raise ValueError('explicit independent execution category required')
+        self.execution_owner = owner
+        self.checkpoint_sha256 = checkpoint_sha256
+
+    def set_action_owners(self, owners):
+        if len(owners) != self.n or any(owner not in ('teacher', 'student', 'diagnostic_zero') for owner in owners):
+            raise ValueError('one explicit complete action owner per environment required')
+        self.action_owners = list(owners)
 
     def palm_poses(self):
         return torch.stack([hand.data.body_link_pose_w[:, i] for hand, (_, i) in
@@ -127,7 +207,13 @@ class NativeTensorBridge:
         return [dict(run_uuid=self.identities.run_uuid, env_id=i,
             episode_uid=self.identities.uid(i), reset_id=self.identities.reset_ids[i],
             policy_tick=self.policy_tick, physics_tick_start=tick, physics_tick_end=tick,
-            simulation_timestamp=timestamp, calibration_sha256=calibration_sha256)
+            simulation_timestamp=timestamp, calibration_sha256=calibration_sha256,
+            physical_initial_condition_sha256=self._initial_sha[self.identities.uid(i)],
+            source_episode_group=(self._cold_trials[i]['trial_id'] if self._cold_trials else self.identities.uid(i)),
+            episode_policy_tick=self.policy_tick-self._initial_policy_tick[self.identities.uid(i)],
+            trial_episode_index=self._trial_reset_counts[i],
+            trial_id=self._cold_trials[i]['trial_id'] if self._cold_trials else None,
+            grasp_style=self.grasp_styles[i])
             for i in range(self.n)]
 
     def _capture(self, packet):
@@ -136,6 +222,23 @@ class NativeTensorBridge:
         live = packet['live'].nonzero().flatten().tolist()
         for i in live:
             key = self.identities.uid(i)
+            reference = torch.as_tensor(task.surface_reference_bottom_m,
+                device=task.m['bottom'].device).expand(self.n)[i]
+            if hasattr(self, '_headers_written') and key not in self._headers_written:
+                initial_tick, initial_time = self._initial_clock[key]
+                header = dict(kind='episode_start', run_uuid=self.identities.run_uuid,
+                    env_id=i, episode_uid=key, reset_id=self.identities.reset_ids[i],
+                    source_scope='unqualified', owner=self.execution_owner,
+                    grasp_style=self.grasp_styles[i], checkpoint_sha256=self.checkpoint_sha256,
+                    source_episode_group=self._cold_trials[i]['trial_id'] if self._cold_trials else key,
+                    trial_id=self._cold_trials[i]['trial_id'] if self._cold_trials else None,
+                    physical_initial_condition=self._initial_conditions[key],
+                    initial_measurement_valid=True, physical_initial_condition_source='actual_sdk_readback',
+                    initial_physics_step=initial_tick, initial_timestamp=initial_time,
+                    first_episode=self._trial_reset_counts[i] == 1, resumed=False, recovered=False,
+                    runtime=self.runtime_descriptor)
+                self._raw.write(json.dumps(header, allow_nan=False, separators=(',', ':')) + '\n')
+                self._headers_written.add(key)
             row = dict(run_uuid=self.identities.run_uuid, env_id=i, episode_uid=key,
                 reset_id=self.identities.reset_ids[i], policy_tick=self.policy_tick,
                 physics_step=int(w._physics_steps), timestamp=float(self.world.sim.current_time),
@@ -147,13 +250,47 @@ class NativeTensorBridge:
                 actor_issued_action=packet['action'][i],
                 formal_drift_m=tracker.drift_m[i], formal_hold_s=tracker.duration[i],
                 formal_window_good=tracker.window_good[i],
-                object_net_lift_m=task.m['bottom'][i] - task.surface_reference_bottom_m[i],
+                object_net_lift_m=task.m['bottom'][i] - reference,
                 actual_palm_pose=self.palm_poses()[i],
                 active_joint_position=task.m['q'][i], active_joint_velocity=task.m['qd'][i],
                 target_joint_position=task.command[i],
                 effective_pad_loads_n=task.m.get('effective_pad_loads_n', [None]*self.n)[i],
                 rejected_contact_loads_n=task.m.get('rejected_contact_loads_n', [None]*self.n)[i],
                 force_qualification=None, support_qualification=None)
+            row.update(kind='sample', source_scope='unqualified',
+                owner=getattr(self, 'execution_owner', 'teacher'),
+                action_owner=getattr(self, 'action_owners', ['teacher']*self.n)[i],
+                grasp_style=getattr(self, 'grasp_styles', ['pinch_thumb_index']*self.n)[i],
+                measurement_valid=bool(packet['measurement_valid'][i]),
+                contact_valid=bool(packet.get('contact_valid', torch.zeros(self.n, dtype=torch.bool))[i]),
+                bilateral_opposed_contact=bool(packet.get('bilateral_opposed_contact', torch.zeros(self.n, dtype=torch.bool))[i]),
+                formal_tracker_source='surface_lift_success_30mm_5s_0.5mm',
+                formal_tracker_valid=bool(getattr(tracker, '_physical_window_valid',
+                    torch.zeros(self.n, dtype=torch.bool))[i]),
+                formal_window_completed=abs(float(getattr(tracker, '_elapsed', 1.))) < 1e-10,
+                formal_window_good=bool(tracker.window_good[i]),
+                formal_anchor_latched=bool(getattr(tracker, '_latched',
+                    torch.zeros(self.n, dtype=torch.bool))[i]),
+                formal_drift_source='last_completed_window_max_over_raw_pose_points',
+                force_source_qualified=False, support_source_qualified=False,
+                external_support_force_n=None, external_upward_force_n=None, attachment_count=None,
+                checkpoint_sha256=getattr(self, 'checkpoint_sha256', None))
+            row['runtime'] = getattr(self, 'runtime_descriptor', None)
+            formal_keys = ('object_relative', 'object_quat', 'wrist_pose', 'effective_pad_loads_n',
+                'effective_pad_vectors_w', 'effective_pad_depth_m', 'rejected_contact_loads_n', 'object_velocity')
+            if all(name in task.m for name in formal_keys):
+                wrist = task.m['wrist_pose'][i]
+                row.update(formal_object_pose_w=torch.cat((task.m['object_relative'][i]
+                        + wrist[..., :3].mean(0), task.m['object_quat'][i])),
+                    formal_wrist_pose_w=wrist,
+                    formal_pad_loads_n=task.m['effective_pad_loads_n'][i],
+                    formal_pad_vectors_w=task.m['effective_pad_vectors_w'][i],
+                    formal_pad_depth_m=task.m['effective_pad_depth_m'][i],
+                    formal_rejected_load_n=task.m['rejected_contact_loads_n'][i].sum(),
+                    formal_object_bottom_m=task.m['bottom'][i],
+                    formal_object_velocity=task.m['object_velocity'][i],
+                    formal_reference_bottom_m=reference,
+                    formal_task_active=bool(packet['measurement_valid'][i]) and int(task.failure[i]) == 0)
             row = _json_safe(row)
             if key in self._terminal_rows:
                 raise RuntimeError('live sample after terminal for unchanged episode identity')
@@ -168,13 +305,16 @@ class NativeTensorBridge:
                 or bool((issued_actions.abs() > 1).any())):
             raise ValueError('finite normalized canonical issued actions required')
         before = self.pre_action_identities('0'*64)
-        obs, reward, done, extra = self.env.step(issued_actions)
+        self._in_step = True
+        try:
+            obs, reward, done, extra = self.env.step(issued_actions)
+        finally:
+            self._in_step = False
         for i in done.nonzero().flatten().tolist():
             if before[i]['episode_uid'] not in self._terminal_rows:
                 raise RuntimeError('terminal lacks a preserved pre-reset 480Hz native sample')
         self.previous_issued.copy_(issued_actions)
         self.previous_issued[done] = 0
-        self.identities.reset(done.nonzero().flatten().tolist())
         self.policy_tick += 1
         self.critic = obs.detach().float().clone()
         return self.critic, reward.detach().float(), done, extra
@@ -200,15 +340,19 @@ def launch_native(callback, *, native_arguments, output, num_envs=2, seed=116,
     output = Path(output).resolve()
     output.mkdir(exist_ok=False)
     result = {}
+    callback_completed = False
 
     def isolated_callback(world, device_world, task, env, args, contract, **unused):
+        nonlocal callback_completed
+        args._stereo_grasp_styles = spec.get('grasp_styles', ['pinch_thumb_index'])
         bridge = NativeTensorBridge(world, device_world, task, env, args, contract, output=output)
         try:
             value = callback(bridge)
             result.update(value)
-            return value
         finally:
             bridge.close()
+        callback_completed = True
+        return value
 
     with native_instance_lock():
         # Import after the native wrapper has established the actual environment.
@@ -220,9 +364,15 @@ def launch_native(callback, *, native_arguments, output, num_envs=2, seed=116,
             sys.argv = [str(ROOT / 'scripts/train_dh116_tabletop_gpu_ppo.py'), *arguments,
                 '--num-envs', str(num_envs), '--seed', str(seed), '--rollout-steps', str(rollout_steps),
                 '--max-iterations', '1', '--output', str(output / 'scene')]
-            runpy.run_path(sys.argv[0], run_name='__main__')
-            if not result:
-                raise RuntimeError('native training callback was not reached')
+            try:
+                runpy.run_path(sys.argv[0], run_name='__main__')
+            except SystemExit as error:
+                # The unchanged launcher exits after its cleanup/publication.
+                # Noninteger exit payloads represent failures even when == 0.
+                if error.code is not None and (type(error.code) is not int or error.code != 0):
+                    raise
+            if not callback_completed:
+                raise RuntimeError('native training callback was not completed')
         finally:
             module.run_vision_training, sys.argv = original, old_argv
             os.chdir(old_cwd)

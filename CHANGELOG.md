@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 7：cold trials与raw proof gates
+
+- 新增双抓法平衡冷试验、真实初态去重、逐480Hz正式tracker回放、raw来源/训练heldout闭包与独立模型选择；继续区分CPU、native capture及物理资格。
+- 新bootstrap只接受原launcher正常退出且callback完成，非零/异常保留失败。18项真实runpy回归、关联164项组合通过，未改原launcher或单实例锁。
+- 原生force/support/external/attachment来源、100独立初态成功和最终Student验收未取得；明确pending，不晋级、不合并。
+
 ## 2026-11-10 — Stereo Phase 6：Student PPO与独立raw RGB执行
 
 - 新asymmetric PPO严格分离typed传感历史Actor与371D Critic，复用Tanh Gaussian/24D动作；独立保存policy/Adam/RNG/LR与actor-only导出。
