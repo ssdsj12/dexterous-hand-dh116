@@ -34,7 +34,7 @@ def reset_world():
     hands=[NS(reset=noop,write_joint_state_to_sim=noop,write_root_velocity_to_sim=noop,
         set_joint_position_target=noop,write_joint_stiffness_to_sim=noop,write_data_to_sim=noop,
         actuators={'active':NS(stiffness=torch.zeros(2,6))}) for _ in range(2)]
-    return NS(n=2,device='cpu',hands=hands,seed_q=[torch.zeros(2,6)]*2,
+    world=NS(n=2,device='cpu',hands=hands,seed_q=[torch.zeros(2,6)]*2,
         seed_qd=[torch.zeros(2,6)]*2,root_seed=torch.zeros(2,2,7),initial_offset=0.,write_root_pose=noop,
         w=NS(ids=[list(range(6))]*2,sensors=[NS(reset=noop)],
             sim=NS(physics_sim_view=NS(update_articulations_kinematic=noop))),
@@ -46,18 +46,37 @@ def reset_world():
         contact_center_w=torch.ones(2,2,3),contact_normal_w=torch.ones(2,2,3),
         contact_normal_load_n=torch.ones(2,2),contact_valid=torch.ones(2,2,dtype=torch.bool),
         contact_all_below_centerline=torch.ones(2,2,dtype=torch.bool),contact_count=torch.ones(2,2,dtype=torch.long),
-        refresh=lambda sensors=False:{'fresh_pose':True},_physics_steps=7,
+        episode_reset_root_pose_m=torch.full((2,2,3),-9.,dtype=torch.float64),
+        refresh_calls=[],_physics_steps=7,
         tripod_contact_snapshot=dict(complete=True,valid_envs=torch.ones(2,dtype=torch.bool)))
+    world.roots=torch.zeros(2,2,7,dtype=torch.float64)
+    world.roots[:,:,:3]=-1.;world.roots[:,:,3]=1.
+    def refresh(sensors=True):
+        world.refresh_calls.append(sensors)
+        # Real refresh replaces roots with the freshly read root/base-link pose.
+        world.roots=torch.tensor([[[.01,.02,.03,1.,0.,0.,0.],[.04,.05,.06,1.,0.,0.,0.]],
+            [[.11,.12,.13,1.,0.,0.,0.],[.14,.15,.16,1.,0.,0.,0.]]],dtype=torch.float64)
+        return {'fresh_pose':True}
+    world.refresh=refresh
+    return world
 
 
 def test_actual_reset_notifies_runtime_after_fresh_read_and_snapshot_invalidation():
     world=reset_world();rows=[]
+    old_roots=world.roots.clone();old_baseline=world.episode_reset_root_pose_m.clone()
     def observed(ids,m):
-        rows.append((ids.clone(),m,world.commands.clone(),world.tripod_contact_snapshot))
+        rows.append((ids.clone(),m,world.commands.clone(),world.tripod_contact_snapshot,
+            world.episode_reset_root_pose_m.clone(),world.roots.clone()))
     world.tripod_recovery_runtime=NS(after_physical_reset=observed)
     TensorWorld.reset(world,torch.tensor([1]))
     assert len(rows)==1 and rows[0][0].tolist()==[1] and rows[0][1]['fresh_pose']
     assert rows[0][3]['valid_envs'].tolist()==[True,False]
+    assert world.refresh_calls==[False]
+    baseline,fresh_roots=rows[0][4:]
+    assert torch.equal(baseline[1],fresh_roots[1,:,:3])
+    assert not torch.equal(baseline[1],old_roots[1,:,:3])
+    assert not torch.equal(baseline[1],world.root_seed[1,:,:3])
+    assert torch.equal(baseline[0],old_baseline[0])
 
 
 def test_empty_reset_does_not_replenish_any_runtime_budget():

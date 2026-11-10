@@ -1,3 +1,10 @@
+## 2026-11-10 — Stage 7 B：H8原命令桥接与约束诊断
+
+- 新增未接控制的64子步命令假设与固定13项约束报告，复用原共享kernel和真实左右SDK命名映射。每手12个直接目标不冒充17D实际响应；反馈冻结/外推必须显式声明。
+- 重放原有typed命令诊断、保留当前SDK限位/速度/lead来源与混合单位；物体、接触、碰撞和完整原控制等缺口仍NA/UNCERTIFIED，feasible=False、action=None。同步更新旧生命周期测试夹具，不改变生产控制器。
+- 本次独立Linux CPU主验证：1471 passed, 3 skipped, 246 subtests passed in 307.60s (0:05:07)；exit0，Native作业0，公开测试文件60个。本机完整组合失败与独立PRIVATE parity审查另记；各组是同一主验证组合的子集，不另相加。
+- M0、默认Teacher、3844D Actor、371D Critic、24D Tanh Gaussian及原物理/材料/执行器/关节保护和30mm/5s/0.5mm成功标准保持。PR继续Draft，不合并，不开放新专家池或B3/PPO迁移。 [本次组合报告](docs/superpowers/reports/2026-11-10-stage7-upload-cpu-components.md)
+
 ## 2026-11-10 — Stage 7 A：三路被动接触观测侧车（默认关闭）
 
 - 复用现有Wire→桌面/两端支架视图，新增默认关闭的只读采集接线；保留实际路径、每getter时钟/来源和独立normal/friction原值及NA。不创建World/view，不改变原控制或support字段。

@@ -139,3 +139,19 @@ CPU组合包含此前模块及本次全部候选；本报告只按下方逐次�
 | `tests/test_bimanual_mpc_passive_pair_aux_integration.py` | `c4bd380fcacb83cdfbda7660f1816e9fbb965ce4bfe21caf06d0897568940968` |
 | `tests/test_bimanual_mpc_experimental_options.py` | `2dabb4e56fad22716f7cc598ea4f4d5ddc7c88ce28824eba34be32463b96be47` |
 | `tests/test_bimanual_mpc_aux_integration.py` | `5699aab8300db1f7202023a7d870d4f56e8abfc9cb97acb1c9607e85aacd7318` |
+
+## Published scope B — H8原命令桥接与约束诊断
+
+新增未接控制的64子步命令假设与固定13项约束报告，复用原共享kernel和真实左右SDK命名映射。每手12个直接目标不冒充17D实际响应；反馈冻结/外推必须显式声明。
+
+重放原有typed命令诊断、保留当前SDK限位/速度/lead来源与混合单位；物体、接触、碰撞和完整原控制等缺口仍NA/UNCERTIFIED，feasible=False、action=None。同步更新旧生命周期测试夹具，不改变生产控制器。
+
+本次提交限定5个公共code/tests和4个文档文件，共9文件；下列代码SHA取自同一次闭合CPU source map。新增Native验证0，不增加成功次数或规划/执行资格。
+
+| 公共code/tests | SHA256 |
+| --- | --- |
+| `src/go2_pvcnn/control/dh116/tabletop_bimanual_mpc_command_bridge.py` | `defecb85332f8737abb939cf95b3d0bbe1b6a2ebb276cd167c239959d8846730` |
+| `tests/test_bimanual_mpc_command_bridge.py` | `31ec1d05aa8baccf8a290bf72a98f8e0d759e67a586b5a52866fc11775cedec0` |
+| `src/go2_pvcnn/control/dh116/tabletop_bimanual_mpc_constraints.py` | `00b8220300570fe9a779ead9cf6b5f0a738280504f609846ea23da14d3d9da97` |
+| `tests/test_bimanual_mpc_constraints.py` | `ed493903ffd3a566a4634349572df2e63fab2cac25c0b81d55beb9bcca9dba11` |
+| `tests/test_tripod_native_lifecycle.py` | `42de1790f34b32c7bec6f30ba706e585c39685a22f30c9b2b500355f0c17e3e8` |
