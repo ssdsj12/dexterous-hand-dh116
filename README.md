@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 3：共享视觉编码与时序状态估计
+
+新增共享GN-ResNet18、双目cross-attention、四帧Transformer、geometry/contact/force-proxy/slip/371D估计heads与24D Actor。Actor只接收严格的双目传感历史；状态监督按逐维来源mask排除NA，force须重读原始资格证据，默认无效。
+
+[Phase3报告](docs/superpowers/reports/2026-11-10-stereo-phase3.md)记录27项CPU单测；随后含collection/DAgger/BC/runtime的集成组合 **51 passed，exit0**。这些是软件/梯度验证，原生估计精度和Student抓取未验证。图像处理可分批，224×96不作为上限；640×480主精度配置与亚像素扩展独立进行。
+
 ## 2026-11-10 — Stereo Phase 2：同步RGB、深度与坐标软件路径
 
 新增两台真实RGB相机的独立采集入口、标定读回、纯Torch视差基线/可选SGBM、显式无效掩码、world→实际palm FK变换和仅RGB可见线缆骨架提取。CPU组合 **43 passed，exit0**；相机原生采集和实际精度尚未验证。

@@ -1,3 +1,9 @@
+## 2026-11-10 — Stereo Phase 3：隔离Stereo Transformer Actor
+
+- 新增真实共享GN-ResNet18/双目cross-attention/时序Transformer、多head估计、typed SensorHistory、SO(3)及masked losses；不改变旧3844D输入。
+- 原始证据不足的force监督failclosed；peer发现的metadata-only资格漏洞已补，正式gate重开raw artifacts。
+- Phase3单测27通过；含collection、DAgger、BC CLI及runtime后续集成组合51 passed in11.98s，exit0，未启动native/未授任务成功。按用户补充分辨率支持图像分批，原生精度及资源测试待完整链路后进行。
+
 ## 2026-11-10 — Stereo Phase 2：RGB-only stereo独立模块
 
 - 新增标定、同步双RGB采集、视差/深度、坐标变换与验证模块；RGB-only原生reader不读取rendered depth，不推进物理。

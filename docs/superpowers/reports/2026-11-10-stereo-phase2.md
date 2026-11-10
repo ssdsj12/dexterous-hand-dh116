@@ -55,4 +55,3 @@ $env:PYTHONDONTWRITEBYTECODE='1'
 Root集成新增 `tabletop_stereo_camera_cli.py`、`tabletop_stereo_perception.py`、probe/evaluate两个CLI与对应CPU测试。RGB颜色候选经delete-only thinning、非分叉连通拓扑和实际视差反投影产生128个可见弧长点；遮挡不补全，端点跨帧一致性只作候选身份，未取得原生身份资格。此规则不是任意线缆通用分割模型。
 
 组合命令：`python -B -m pytest -q -p no:cacheprovider tests/test_dh116_stereo_geometry.py tests/test_dh116_stereo_camera_cli.py tests/test_dh116_stereo_perception.py`（PYTHONPATH=src，CUDA关闭，现有CPU环境）。实际结果 **43 passed in4.78s，exit0**。测试为CPU synthetic/reference算术；原生采集0次。`python scripts/probe_dh116_stereo_camera.py --check-config`仅验证配置，不启动Isaac。
-

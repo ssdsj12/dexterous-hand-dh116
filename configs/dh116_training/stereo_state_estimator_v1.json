@@ -1,0 +1,84 @@
+{
+  "schema_version": "dh116-stereo-state-estimator-v1",
+  "state_contract_path": "docs/contracts/stereo_privileged_state_contract.json",
+  "state_contract_file_sha256": "a7af9f3f214a646f2f95dce45aa4744f378488de34237431c914bd4137b2ee86",
+  "state_contract_semantic_sha256": "679cec85a6a99366467a52f953ffd4138b3556d0baa569609779df218ea4ee5a",
+  "state_size": 371,
+  "head_shapes": {
+    "privileged_state": [
+      371
+    ],
+    "geometry": [
+      128,
+      3
+    ],
+    "velocity": [
+      128,
+      3
+    ],
+    "deformation": [
+      128
+    ],
+    "contact_logits": [
+      2,
+      3
+    ],
+    "force_proxy": [
+      2,
+      3
+    ],
+    "slip_logits": [
+      2
+    ],
+    "slip_velocity": [
+      2
+    ]
+  },
+  "head_weights": {
+    "privileged_state": 1.0,
+    "geometry": 1.0,
+    "velocity": 1.0,
+    "deformation": 1.0,
+    "contact_logits": 1.0,
+    "force_proxy": 1.0,
+    "slip_logits": 1.0,
+    "slip_velocity": 1.0
+  },
+  "weights_status": "engineering_candidates_not_holdout_calibrated",
+  "state_loss": "per_dimension_source_masked_Huber_except_SO3_groups",
+  "rotation_loss": "SO3_geodesic_q_sign_invariant",
+  "all_invalid": "differentiable_zero_loss;zero_coverage",
+  "state_sources": "all_required_validity_keys_per_dimension;missing_key_false;NA_always_false",
+  "force": {
+    "default_valid": false,
+    "units": "N",
+    "coordinate_frame": "accepted_pad_normal",
+    "sign_convention": "compressive_positive_on_object",
+    "digits": [
+      "thumb",
+      "index",
+      "middle"
+    ],
+    "required_masks": [
+      "source_valid",
+      "contact_valid",
+      "attributable"
+    ],
+    "required_metadata": [
+      "source_sha256",
+      "units",
+      "coordinate_frame",
+      "partner_attribution",
+      "per_digit_source",
+      "sign_convention",
+      "evidence_scope",
+      "proof_path",
+      "proof_sha256"
+    ],
+    "evidence_scope_required": "native_qualified",
+    "cpu_fixture": "blocked;schema_arithmetic_tests_not_native_qualification",
+    "hardware_tactile_input": false,
+    "verification": "tabletop_stereo_promotion.verify_force_qualification;reopen_producer_and_native_raw_proof_bytes"
+  },
+  "native_validation": "pending"
+}
