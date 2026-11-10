@@ -368,20 +368,28 @@ class FakeLayer:
 
 
 class FakeAttr:
-    def __init__(self,name,record): self.name,self.record=name,record
+    def __init__(self,name,record,stage=None): self.name,self.record,self.stage=name,record,stage
     def GetName(self): return self.name
     def Get(self): return deepcopy(self.record['value'])
     def HasAuthoredValueOpinion(self): return self.record.get('authored',True)
-    def GetPropertyStack(self): return [NS(layer=FakeLayer(),path='/source.'+self.name)]
+    def GetPropertyStack(self,time):
+        if self.stage is not None:
+            self.stage.stack_calls.append(('attribute',self.name,time))
+            assert time is self.stage.default_time,'the same explicit Default TimeCode is required'
+        return [NS(layer=FakeLayer(),path='/source.'+self.name)]
     def GetResolveInfo(self): return NS(GetSource=lambda:'Default')
 
 
 class FakeRel:
-    def __init__(self,name,targets): self.name,self.targets=name,targets
+    def __init__(self,name,targets,stage=None): self.name,self.targets,self.stage=name,targets,stage
     def GetName(self): return self.name
     def GetTargets(self): return self.targets[:]
     def HasAuthoredTargets(self): return True
-    def GetPropertyStack(self): return [NS(layer=FakeLayer(),path='/source.'+self.name)]
+    def GetPropertyStack(self,time):
+        if self.stage is not None:
+            self.stage.stack_calls.append(('relationship',self.name,time))
+            assert time is self.stage.default_time,'the same explicit Default TimeCode is required'
+        return [NS(layer=FakeLayer(),path='/source.'+self.name)]
 
 
 class FakePrim:
@@ -393,8 +401,8 @@ class FakePrim:
     def IsValid(self): return True
     def IsInstanceProxy(self): return False
     def GetAppliedSchemas(self): return self.record.get('applied_schemas',[])[:]
-    def GetAttributes(self): return [FakeAttr(k,v) for k,v in self.record.get('attributes',{}).items()]
-    def GetRelationships(self): return [FakeRel(k,v) for k,v in self.record.get('relationships',{}).items()]
+    def GetAttributes(self): return [FakeAttr(k,v,self.stage) for k,v in self.record.get('attributes',{}).items()]
+    def GetRelationships(self): return [FakeRel(k,v,self.stage) for k,v in self.record.get('relationships',{}).items()]
     def GetRelationship(self,name):
         return next((r for r in self.GetRelationships() if r.GetName()==name),None)
     def IsA(self,schema):
@@ -410,6 +418,7 @@ class FakeJoint:
 
 class FakeStage:
     def __init__(self,g):
+        self.default_time=object();self.default_calls=0;self.stack_calls=[]
         self.nodes={}
         for row in g['links']+g['joints']+g['world_attachments']+g['inactive_joints']:
             row=deepcopy(row)
@@ -432,8 +441,58 @@ def fake_usd_facade():
         XformCache=lambda:NS(GetLocalToWorldTransform=lambda p:np.eye(4)),
         Xformable=lambda p:NS(GetLocalTransformation=lambda:np.eye(4),GetResetXformStack=lambda:False))
     physics=NS(Joint=FakeJoint,Scene='SceneSchema',GetStageKilogramsPerUnit=lambda s:1.)
-    facade=m.ComposedUSDStageFacade(usd_geom=geom,usd_physics=physics)
-    return NS(m=m,b=b,g=g,stage=stage,facade=facade)
+    def default():stage.default_calls+=1;return stage.default_time
+    core=NS(TimeCode=NS(Default=default))
+    facade=m.ComposedUSDStageFacade(usd_geom=geom,usd_physics=physics,usd_core=core)
+    return NS(m=m,b=b,g=g,stage=stage,facade=facade,core=core)
+
+
+def test_property_stacks_use_one_shared_explicit_default_timecode_for_both_property_types():
+    f=fake_usd_facade();g=f.facade.capture(f.stage,f.b)
+    assert len(g['joints'])==22,[(r['path'],r['attributes'].get('physics:jointEnabled')) for r in g['inactive_joints']]
+    assert f.stage.default_calls==1
+    assert {kind for kind,_,_ in f.stage.stack_calls}=={'attribute','relationship'}
+    assert all(time is f.stage.default_time for _,_,time in f.stage.stack_calls)
+    assert all(r['attributes']['physics:jointEnabled']['available'] is True for r in g['joints'])
+    assert all(r['relationships']['physics:body0']['available'] is True for r in g['joints'])
+    graph=f.m.assemble_mounted_graph(g,f.b)
+    assert len(graph['links'])==23 and len(graph['joints'])==22 and len(graph['inactive_joints'])==1
+
+
+@pytest.mark.parametrize('kind',['attribute','relationship'])
+def test_property_stack_failure_remains_raw_na_after_explicit_default_read(monkeypatch,kind):
+    f=fake_usd_facade();cls=FakeAttr if kind=='attribute' else FakeRel;original=cls.GetPropertyStack
+    target='physics:jointEnabled' if kind=='attribute' else 'physics:body0'
+    def failed(self,time):
+        assert time is f.stage.default_time
+        if self.name==target:raise RuntimeError('synthetic unresolved property stack provenance')
+        return original(self,time)
+    monkeypatch.setattr(cls,'GetPropertyStack',failed);g=f.facade.capture(f.stage,f.b)
+    row=(g['inactive_joints'] if kind=='attribute' else g['joints'])[0]
+    record=row['attributes'][target] if kind=='attribute' else row['relationships'][target]
+    assert record['available'] is False and record['property_stack']==[]
+    assert record['error']=='RuntimeError: synthetic unresolved property stack provenance'
+    assert record['value' if kind=='attribute' else 'targets'] is None
+    if kind=='attribute':
+        assert not g['joints']
+        with pytest.raises(ValueError):f.m.assemble_mounted_graph(g,f.b)
+    else:
+        # Preserve the existing coverage boundary: actual flat targets survive
+        # an unavailable provenance record, without inventing a stack/default.
+        assert row['body0'] and len(g['joints'])==22
+
+
+def test_usd_default_timecode_is_lazy_and_failure_is_not_replaced_with_numeric_time():
+    m=api()
+    class Bomb:
+        def __getattribute__(self,name):raise AssertionError('constructor touched USD core: '+name)
+    facade=m.ComposedUSDStageFacade(usd_core=Bomb())
+    assert facade.usd_geom is None and facade.usd_physics is None
+    f=fake_usd_facade();error=RuntimeError('synthetic Default TimeCode unavailable')
+    def failed():raise error
+    f.facade.usd_core=NS(TimeCode=NS(Default=failed))
+    with pytest.raises(RuntimeError) as caught:f.facade.capture(f.stage,f.b)
+    assert caught.value is error and f.stage.stack_calls==[]
 
 
 def test_injected_usd_facade_collects_full_graph_defaults_and_inactive_root():

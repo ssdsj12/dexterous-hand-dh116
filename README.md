@@ -1,3 +1,7 @@
+## 2026-11-10 — Stage 7 原生 descriptor 失败定位与 USD ABI 修复
+
+首次 descriptor 原生短测自然退出，但8帧、64条样本全部结构不可用；封存完整性审计通过，不能称为FK/J验证通过。已定位到当前USD绑定要求 `GetPropertyStack(Usd.TimeCode.Default())`，仅修补Attribute/Relationship调用，原失败数据保留。独立source16 CPU实跑1364 passed、3 skipped、238 subtests；修复版原生复测仅已准备，尚未执行。固定腕双侧恢复实验仍单独运行，MPC/Student无新增成功。命令、SHA与边界见[失败与修复报告](docs/superpowers/reports/2026-11-10-stage7-descriptor-usd-abi.md)。
+
 ## 2026-11-10 — Stage 7 mounted descriptor 与17D运动学预览
 
 新增默认关闭的只读descriptor接口与左右独立完整17D FK/J假设，保留各自真实关节轴、被动状态、来源和NA。独立source12 CPU实跑769 passed、1 skip、238 subtests；本单元新增Native作业0，实际FK/J校准仍待单实例原生验证，不能用于控制准入。原Teacher/物理/3844D/371D/24D Tanh和成功标准不变，PR继续Draft。详见[实现及验证边界](docs/superpowers/reports/2026-11-10-stage7-mounted-model-cpu.md)。

@@ -452,14 +452,17 @@ class ComposedUSDStageFacade:
     quaternion/unit conversion occurs.  Unknown schema fields remain raw/NA.
     """
 
-    def __init__(self,*,usd_geom=None,usd_physics=None):
-        self.usd_geom,self.usd_physics=usd_geom,usd_physics
+    def __init__(self,*,usd_geom=None,usd_physics=None,usd_core=None):
+        self.usd_geom,self.usd_physics,self.usd_core=usd_geom,usd_physics,usd_core
 
     def capture(self,stage,binding):
-        geom,physics=self.usd_geom,self.usd_physics
-        if geom is None or physics is None:
-            from pxr import UsdGeom, UsdPhysics
-            geom,physics=UsdGeom,UsdPhysics
+        geom,physics,usd=self.usd_geom,self.usd_physics,self.usd_core
+        if geom is None or physics is None or usd is None:
+            from pxr import Usd, UsdGeom, UsdPhysics
+            geom=UsdGeom if geom is None else geom
+            physics=UsdPhysics if physics is None else physics
+            usd=Usd if usd is None else usd
+        default_time=usd.TimeCode.Default()
         layers={}
         def layer_record(layer):
             key=layer.identifier
@@ -478,7 +481,7 @@ class ComposedUSDStageFacade:
                 if not a: raise ValueError('attribute is not present in actual schema/composition')
                 v=a.Get()
                 if v is None: raise ValueError('attribute has no resolved value')
-                stack=[dict(layer=layer_record(s.layer),path=str(s.path)) for s in a.GetPropertyStack()]
+                stack=[dict(layer=layer_record(s.layer),path=str(s.path)) for s in a.GetPropertyStack(default_time)]
                 return dict(value=value(v),available=True,authored=bool(a.HasAuthoredValueOpinion()),
                     property_stack=stack,resolve_source=str(a.GetResolveInfo().GetSource()),error=None)
             except Exception as exc:
@@ -487,7 +490,7 @@ class ComposedUSDStageFacade:
             try:
                 return dict(targets=[str(p) for p in rel.GetTargets()],available=True,
                     authored=bool(rel.HasAuthoredTargets()),
-                    property_stack=[dict(layer=layer_record(s.layer),path=str(s.path)) for s in rel.GetPropertyStack()],error=None)
+                    property_stack=[dict(layer=layer_record(s.layer),path=str(s.path)) for s in rel.GetPropertyStack(default_time)],error=None)
             except Exception as exc:
                 return dict(targets=None,available=False,authored=None,property_stack=[],error=type(exc).__name__+': '+str(exc))
         def row(prim):

@@ -1,3 +1,10 @@
+## 2026-11-10 — Stage 7 descriptor 显式 USD TimeCode
+
+- 修补当前安装USD绑定的 `GetPropertyStack` ABI：每次capture取得一个Default TimeCode，Attribute和Relationship共享它；不改属性Get、结构/关节判据、时钟、NA或默认关闭行为。
+- 首次原生descriptor采集8帧/64条全部结构NA，封存审计通过；真实异常是缺少TimeCode参数。没有instance-proxy问题证据，不改变遍历或jointEnabled规则，原失败原件保留。
+- 修复版独立source16 CPU1364 passed、3 skipped、238 subtests；原生复测已准备但尚未执行，FK/J未校准。固定腕双侧恢复为另一独立旧控制路径实验，不计作本修补或新wrapper验证。
+- 原Teacher、物理、执行器、3844D/371D/24D Tanh与30mm/5s/0.5mm保持；PR继续Draft。见[原生失败与CPU修复报告](docs/superpowers/reports/2026-11-10-stage7-descriptor-usd-abi.md)。
+
 ## 2026-11-10 — Stage 7 mounted model CPU preview
 
 - 新增默认关闭的现有stage/hand/scene只读descriptor，保存完整17D/23link/22joint布局及原始新getter、属性来源、时钟、失败partial；原model capture关闭时合同保持。
