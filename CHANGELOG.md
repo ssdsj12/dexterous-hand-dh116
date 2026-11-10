@@ -1,3 +1,10 @@
+## 2026-11-10 — J0/J1源合同、分区误差与原始数据根因分析
+
+- 新增评估专用error diagnostics/geometry/CLI、原始数据交叉绑定和52张真实可视化；同像素固定reference分母、P50/P90/P95、NA、拒绝重叠/互斥及saved/replay四象限分开，右实例GT缺失不伪造。
+- 定位Block9亚像素偏移、低纹理窗口混合、SGBM自洽坏尾及虚高confidence；实际extractor在12首帧env观测全部0/128 token。保持baseline matcher与既有控制逻辑不变；离线counterfactual不是算法晋级。
+- 新增31项诊断/几何测试，保存RED/GREEN；最终Windows595 passed/1 skipped、server596 passed/1 skipped，均exit0。已有10run重分析完成57.223s，新增native0，158输入/来源SHA均未变，保护528文件不变。
+- 更新J0/J1报告、153项当前文件清单、机器readiness及J2具体计划。accuracy/物理/部署qualification仍false，Teacher/Student未训练；按本轮任务范围不push、不merge、不启动J2算法改造或新Isaac实验。
+
 ## 2026-11-10 — Stereo原生接线、构图与分辨率测量收尾
 
 - 仅修正新增native配置：原launcher预检所需的真实三指reset、camera路由和无旧demo的启动参数；原guard、稳定Hold reward和旧控制路径保持。增加front四分辨率及独立roll20/window5与9实验，不改变默认旧rig。

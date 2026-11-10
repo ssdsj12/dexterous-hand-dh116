@@ -21,29 +21,32 @@
     "teacher_student_training_started": false,
     "formal_BC_DAgger_admission": "blocked",
     "actor_latency_ms": null,
-    "complete_training_throughput": null
+    "complete_training_throughput": null,
+    "accuracy_qualified": false,
+    "physical_task_qualified": false,
+    "deployment_qualified": false
   },
   "CPU": {
     "windows": {
-      "passed": 564,
+      "passed": 595,
       "skipped": 1,
-      "duration_s": 75.44,
+      "duration_s": 80.43,
       "exit_code": 0,
       "CUDA_VISIBLE_DEVICES": "",
       "Isaac_imports": [],
-      "evidence_report": "docs/superpowers/reports/2026-11-10-stereo-phase0-7-integration.md"
+      "evidence_report": "docs/superpowers/reports/2026-11-10-stereo-j1-error-diagnostics.md"
     },
     "server": {
-      "passed": 565,
+      "passed": 596,
       "skipped": 1,
-      "duration_s": 67.68,
+      "duration_s": 70.27,
       "exit_code": 0,
       "python": "3.10.12",
       "torch": "2.7.0+cu128",
       "CUDA_VISIBLE_DEVICES": "",
       "Isaac_imports": [],
       "dependencies_installed_or_upgraded": false,
-      "evidence_report": "docs/superpowers/reports/2026-11-10-stereo-phase0-7-integration.md"
+      "evidence_report": "docs/superpowers/reports/2026-11-10-stereo-j1-error-diagnostics.md"
     },
     "counting_note": "overlapping platform suites;do_not_add_test_counts;optional_dependency_paths_differ"
   },
@@ -226,14 +229,14 @@
     ],
     "counts_by_category": {
       "src": {
-        "total": 43,
-        "added": 43,
+        "total": 46,
+        "added": 46,
         "modified": 0,
         "deleted": 0
       },
       "scripts": {
-        "total": 16,
-        "added": 16,
+        "total": 17,
+        "added": 17,
         "modified": 0,
         "deleted": 0
       },
@@ -244,19 +247,19 @@
         "deleted": 0
       },
       "tests": {
-        "total": 31,
-        "added": 31,
+        "total": 33,
+        "added": 33,
         "modified": 0,
         "deleted": 0
       },
       "docs": {
-        "total": 25,
-        "added": 25,
+        "total": 31,
+        "added": 31,
         "modified": 0,
         "deleted": 0
       }
     },
-    "total": 141,
+    "total": 153,
     "pending_owner_report_paths_at_generation": [],
     "files": [
       {
@@ -372,6 +375,10 @@
         "relative_to_base_status": "added"
       },
       {
+        "path": "docs/contracts/stereo_j1_error_diagnostics_summary.json",
+        "relative_to_base_status": "added"
+      },
+      {
         "path": "docs/contracts/stereo_native_resolution_results.json",
         "relative_to_base_status": "added"
       },
@@ -408,6 +415,14 @@
         "relative_to_base_status": "added"
       },
       {
+        "path": "docs/superpowers/plans/2026-11-10-stereo-j0-j1-diagnostics.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/plans/2026-11-10-stereo-j2-evidence-driven-perception.md",
+        "relative_to_base_status": "added"
+      },
+      {
         "path": "docs/superpowers/plans/2026-11-10-stereo-privileged-dagger-implementation.md",
         "relative_to_base_status": "added"
       },
@@ -417,6 +432,18 @@
       },
       {
         "path": "docs/superpowers/reports/2026-11-10-stereo-cold-trials.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-j0-latest-source-audit.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-j1-error-diagnostics.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-10-stereo-j1-matcher-rootcause.md",
         "relative_to_base_status": "added"
       },
       {
@@ -465,6 +492,10 @@
       },
       {
         "path": "scripts/admit_dh116_stereo_candidates.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "scripts/analyze_dh116_stereo_errors.py",
         "relative_to_base_status": "added"
       },
       {
@@ -604,6 +635,18 @@
         "relative_to_base_status": "added"
       },
       {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_error_cli.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_error_diagnostics.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_error_geometry.py",
+        "relative_to_base_status": "added"
+      },
+      {
         "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_evaluation.py",
         "relative_to_base_status": "added"
       },
@@ -732,6 +775,14 @@
         "relative_to_base_status": "added"
       },
       {
+        "path": "tests/test_dh116_stereo_error_diagnostics.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_error_geometry.py",
+        "relative_to_base_status": "added"
+      },
+      {
         "path": "tests/test_dh116_stereo_estimator.py",
         "relative_to_base_status": "added"
       },
@@ -823,13 +874,91 @@
         "path": "tests/test_stereo_privileged_state_contract_audit.py",
         "relative_to_base_status": "added"
       }
-    ]
+    ],
+    "as_of": "J0_J1_local_delivery;original_Phase0_7_inventory_was_141_at_7c80878"
   },
   "publication": {
     "new_branch_only": true,
     "base_branch": "11-10",
     "PR_intent": "Draft",
     "merge_authorized": false,
-    "qualification_authority": false
+    "qualification_authority": false,
+    "current_invocation": "local_changes_only;no_push_or_merge"
+  },
+  "phase0_7_CPU_snapshot": {
+    "windows": {
+      "passed": 564,
+      "skipped": 1,
+      "duration_s": 75.44,
+      "exit_code": 0,
+      "CUDA_VISIBLE_DEVICES": "",
+      "Isaac_imports": [],
+      "evidence_report": "docs/superpowers/reports/2026-11-10-stereo-phase0-7-integration.md"
+    },
+    "server": {
+      "passed": 565,
+      "skipped": 1,
+      "duration_s": 67.68,
+      "exit_code": 0,
+      "python": "3.10.12",
+      "torch": "2.7.0+cu128",
+      "CUDA_VISIBLE_DEVICES": "",
+      "Isaac_imports": [],
+      "dependencies_installed_or_upgraded": false,
+      "evidence_report": "docs/superpowers/reports/2026-11-10-stereo-phase0-7-integration.md"
+    },
+    "counting_note": "overlapping platform suites;do_not_add_test_counts;optional_dependency_paths_differ"
+  },
+  "head_before_j0_j1_work": "7c808781ebd2cf969ca08776a83a65e3a2834582",
+  "current_task_execution": {
+    "task_document": {
+      "path": "D:/download/DH116_Current_Branch_Detailed_Codex_Tasks.md",
+      "lines": 786,
+      "sha256": "14a1373d7c430286942ae309b8f70453083c434885323945c807a0b9359c8e5c"
+    },
+    "invocation_scope": "J0_and_J1_only_per_task_section_11;no_J2_algorithm_changes_or_native_training",
+    "J0": {
+      "implemented": true,
+      "cpu_verified": true,
+      "source_audit_passed": true,
+      "protected_528_hashes_unchanged": true,
+      "report": "docs/superpowers/reports/2026-11-10-stereo-j0-latest-source-audit.md"
+    },
+    "J1": {
+      "implemented": true,
+      "cpu_verified": true,
+      "existing_native_capture_reanalysis_verified": true,
+      "new_native_capture_count": 0,
+      "accuracy_qualified": false,
+      "physical_task_qualified": false,
+      "deployment_qualified": false,
+      "completed_existing_runs": 10,
+      "env_frame_observations": 80,
+      "figures": 52,
+      "saved_replay_validity_mismatches": 0,
+      "original_bindings_rehashed": 158,
+      "all_original_hashes_unchanged": true,
+      "report": "docs/superpowers/reports/2026-11-10-stereo-j1-error-diagnostics.md",
+      "matcher_report": "docs/superpowers/reports/2026-11-10-stereo-j1-matcher-rootcause.md",
+      "processed_result": "docs/contracts/stereo_j1_error_diagnostics_summary.json",
+      "right_wire_instance_ground_truth": null,
+      "reference_visibility": "right_depth_geometric_proxy_only",
+      "runtime_point_extractor": {
+        "first_frame_env_observations": 12,
+        "valid_tokens_per_observation": 0,
+        "token_capacity": 128,
+        "reason": "ambiguous_or_branched_visible_skeleton"
+      },
+      "source_curve_qualification": "visible_surface_proxy;most_strict_curvature_unavailable"
+    },
+    "J2": {
+      "status": "planned_not_implemented",
+      "plan": "docs/superpowers/plans/2026-11-10-stereo-j2-evidence-driven-perception.md"
+    },
+    "J3_to_J10": "pending_sequential_execution_and_original_native_source_accuracy_task_gates",
+    "no_automatic_push": true,
+    "merged": false,
+    "teacher_training_started": false,
+    "dagger_started": false
   }
 }

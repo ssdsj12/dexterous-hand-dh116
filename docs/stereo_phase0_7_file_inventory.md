@@ -1,5 +1,7 @@
 # Stereo Phase0～7 文件清单与验收状态
 
+> 最新J0/J1五目录总数为153项，见文末增量和readiness完整file_inventory；前文141项表为`7c80878`的Phase0～7历史快照。
+
 本清单按原base `6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b` 对比当前已提交、未提交与未跟踪文件，范围为 `src/`、`scripts/`、`configs/`、`tests/`、`docs/`；排除 `artifacts/`。根目录 README/CHANGELOG 由本次发布单独维护，不计入五目录统计。新增文件即使在HEAD后继续修改，相对原base仍记为新增。
 
 实现、CPU验证、原生采集、物理资格是四个不同状态。当前未开始Teacher/Student训练，未选定最终resolution，未完成新Teacher或Student物理任务验收。机器账本见 [readiness JSON](contracts/stereo_phase0_7_readiness.json)，[集成报告](superpowers/reports/2026-11-10-stereo-phase0-7-integration.md)和[原生结果](superpowers/reports/2026-11-10-stereo-native-resolution-final.md)保留详细命令、实测指标、失败及限制。
@@ -188,3 +190,22 @@ git ls-files --others --exclude-standard -- src scripts configs tests docs
 ```
 
 本清单列明包括自身和readiness JSON。processed native指标与artifact地址可公开；原始RGB、深度、日志、模型、SDK源码快照及私有归档不进入此清单或Git index。上传或Draft PR不授予模型、深度或物理任务资格。
+
+## J0/J1 增量（2026-11-10）
+
+前文141项是`7c80878`阶段快照；本轮当前完整五目录清单为153项，机器readiness的file_inventory已同步。以下为J0/J1新增文件，原Phase0～7模块复用。
+
+- [docs/contracts/stereo_j1_error_diagnostics_summary.json](../docs/contracts/stereo_j1_error_diagnostics_summary.json)
+- [docs/superpowers/plans/2026-11-10-stereo-j0-j1-diagnostics.md](../docs/superpowers/plans/2026-11-10-stereo-j0-j1-diagnostics.md)
+- [docs/superpowers/plans/2026-11-10-stereo-j2-evidence-driven-perception.md](../docs/superpowers/plans/2026-11-10-stereo-j2-evidence-driven-perception.md)
+- [docs/superpowers/reports/2026-11-10-stereo-j0-latest-source-audit.md](../docs/superpowers/reports/2026-11-10-stereo-j0-latest-source-audit.md)
+- [docs/superpowers/reports/2026-11-10-stereo-j1-error-diagnostics.md](../docs/superpowers/reports/2026-11-10-stereo-j1-error-diagnostics.md)
+- [docs/superpowers/reports/2026-11-10-stereo-j1-matcher-rootcause.md](../docs/superpowers/reports/2026-11-10-stereo-j1-matcher-rootcause.md)
+- [scripts/analyze_dh116_stereo_errors.py](../scripts/analyze_dh116_stereo_errors.py)
+- [src/go2_pvcnn/control/dh116/tabletop_stereo_error_cli.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_error_cli.py)
+- [src/go2_pvcnn/control/dh116/tabletop_stereo_error_diagnostics.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_error_diagnostics.py)
+- [src/go2_pvcnn/control/dh116/tabletop_stereo_error_geometry.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_error_geometry.py)
+- [tests/test_dh116_stereo_error_diagnostics.py](../tests/test_dh116_stereo_error_diagnostics.py)
+- [tests/test_dh116_stereo_error_geometry.py](../tests/test_dh116_stereo_error_geometry.py)
+
+修改已有文档：README.md、CHANGELOG.md、本清单与readiness JSON；不修改原matcher、控制器或物理参数。原生新增0，准确率/物理/部署资格继续false；本轮不push。

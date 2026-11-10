@@ -1,3 +1,13 @@
+## 2026-11-10 — J0/J1：最新分支审计与深度根因实证
+
+按新786行任务书第11节，本轮只执行J0/J1：以GitHub最新`7c80878`为基线复核readiness/保护合同，新增评估专用分区诊断CLI、局部几何分桶和31项测试，重读已有10次native capture；没有重建Phase0～7、改变matcher/物理/控制/成功门槛或开始训练。
+
+最终CPU：Windows **595 passed / 1 skipped，80.43s**；服务器现有Python3.10/Torch2.7cu128 **596 passed / 1 skipped，70.27s**，均exit0。已有40 batch frames/80 env-frame重分析生成52张真实图；saved/replay validity mismatch=0，158条原输入/来源绑定SHA末尾复核均未变。新增native次数0，accuracy/物理/部署资格仍false，未选最终分辨率，正式BC/DAgger仍blocked。
+
+关键定位：Block9大量正确整数winner被负向亚像素偏移推过5mm；SGBM坏尾包含LR=0的自洽错配，confidence=1实际只是范围标志；当前金色fixture颜色阈值准确，但实际WirePointExtractor在12个环境观测均0/128 token，严格数字骨架拓扑另有阻断。K/T、光轴Z与半像素约定内部一致，未用改标定/缩ROI降低误差。
+
+[J0审计/gap matrix](docs/superpowers/reports/2026-11-10-stereo-j0-latest-source-audit.md) · [J1完整诊断/命令/限制](docs/superpowers/reports/2026-11-10-stereo-j1-error-diagnostics.md) · [逐像素根因](docs/superpowers/reports/2026-11-10-stereo-j1-matcher-rootcause.md) · [J2代码与测试计划](docs/superpowers/plans/2026-11-10-stereo-j2-evidence-driven-perception.md)。本轮不自动push/merge，Draft PR保持；下文为先前阶段快照。
+
 ## 2026-11-10 — 双目Phase0～7隔离实现与原生分辨率实测
 
 已落地371D/24D/奖励审计、独立Teacher PPO、同步双RGB/亚像素深度、时序Actor与状态估计、BC、在线DAgger、Student PPO/actor-only推理、冷初态与原始证据验收软件。**这是实现及测试进度，尚未完成新Teacher/Student抓取验收。** 原生产源码、控制器、物理参数和历史Checkpoint不变。
