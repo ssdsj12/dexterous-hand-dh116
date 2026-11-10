@@ -155,3 +155,18 @@ CPU组合包含此前模块及本次全部候选；本报告只按下方逐次�
 | `src/go2_pvcnn/control/dh116/tabletop_bimanual_mpc_constraints.py` | `00b8220300570fe9a779ead9cf6b5f0a738280504f609846ea23da14d3d9da97` |
 | `tests/test_bimanual_mpc_constraints.py` | `ed493903ffd3a566a4634349572df2e63fab2cac25c0b81d55beb9bcca9dba11` |
 | `tests/test_tripod_native_lifecycle.py` | `42de1790f34b32c7bec6f30ba706e585c39685a22f30c9b2b500355f0c17e3e8` |
+
+## Published scope C — 局部力驱动响应与批量FK数学预览
+
+新增完整17D局部implicit capped force-PD数学响应及批量mounted FK，左右手按各自SDK行、关节轴和单位计算。NONE/零cap驱动与缺参数分开，未知量不补0，原始M不对称化、不加单位惯量或完美mimic。
+
+未来17D targets/load是显式假设，驱动、接触、补偿符号及真实响应未校准；error_tube=None。批量/标量数学一致不代表原生几何、物理精度、实时deadline或动作准入。
+
+本次提交限定4个公共code/tests和4个文档文件，共8文件；下列代码SHA取自同一次闭合CPU source map。新增Native验证0，不增加成功次数或规划/执行资格。
+
+| 公共code/tests | SHA256 |
+| --- | --- |
+| `src/go2_pvcnn/control/dh116/tabletop_bimanual_mpc_local_response.py` | `7eef77c5b89225ca74f1b0d61b478610a3f34092f4a79df1014f833b4b4995ad` |
+| `tests/test_bimanual_mpc_local_response.py` | `229d923bdf8557340c804654d0dc9568899d627236ab457bcf6ee02d4336ee44` |
+| `src/go2_pvcnn/control/dh116/tabletop_bimanual_mpc_batch_kinematics.py` | `db6af694a8761e7ea8a7e0a1c40ba6f0f0084a0c2d462099ac4e5094584cc5a0` |
+| `tests/test_bimanual_mpc_batch_kinematics.py` | `41401ab8ffc9c47df17cd8cdd6dffbab9ef83c5519606ac6f2c4adbe13610169` |

@@ -1,3 +1,15 @@
+## 2026-11-10 发布进度 — C：局部力驱动响应与批量FK数学预览（仅CPU）
+
+- [x] 新增完整17D局部implicit capped force-PD数学响应及批量mounted FK，左右手按各自SDK行、关节轴和单位计算。NONE/零cap驱动与缺参数分开，未知量不补0，原始M不对称化、不加单位惯量或完美mimic。
+- [x] 本次独立Linux CPU主验证：1471 passed, 3 skipped, 246 subtests passed in 307.60s (0:05:07)；exit0，Native作业0，公开测试文件60个。本机完整组合失败与独立PRIVATE parity审查另记；各组是同一主验证组合的子集，不另相加。
+- [ ] 对应Native来源/接入/校准及真实任务验收尚未完成。
+
+未来17D targets/load是显式假设，驱动、接触、补偿符号及真实响应未校准；error_tube=None。批量/标量数学一致不代表原生几何、物理精度、实时deadline或动作准入。
+
+M0、默认Teacher、3844D Actor、371D Critic、24D Tanh Gaussian及原物理/材料/执行器/关节保护和30mm/5s/0.5mm成功标准保持。PR继续Draft，不合并，不开放新专家池或B3/PPO迁移。
+
+本节不将下方完整H8/恢复/正式验收任务标成完成。见[本次组合报告](../reports/2026-11-10-stage7-upload-cpu-components.md)。
+
 ## 2026-11-10 发布进度 — B：H8原命令桥接与约束诊断（仅CPU）
 
 - [x] 新增未接控制的64子步命令假设与固定13项约束报告，复用原共享kernel和真实左右SDK命名映射。每手12个直接目标不冒充17D实际响应；反馈冻结/外推必须显式声明。
