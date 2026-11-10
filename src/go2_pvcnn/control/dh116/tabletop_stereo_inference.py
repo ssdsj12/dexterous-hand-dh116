@@ -15,6 +15,7 @@ from .tabletop_stereo_checkpoint import load_deployment_actor
 from .tabletop_stereo_depth import StereoDepth
 from .tabletop_stereo_observation import SensorBatch, StereoHistory
 from .tabletop_stereo_perception import WirePointExtractor
+from .tabletop_stereo_geometry import world_to_palms
 from .tabletop_stereo_contract import ROOT, file_sha256, require_opt_in, write_json_new
 from .tabletop_stereo_preprocessing import require_raw_processing
 
@@ -39,6 +40,7 @@ class StereoRGBStudentRunner:
             raise ValueError('positive image freshness limit required')
         self.max_image_age_s = float(max_image_age_s)
         self._frame, self._timestamp = -1, None
+        self.last_visible_geometry = None
         self.package_sha256 = file_sha256(actor_package)
 
     @torch.no_grad()
@@ -82,6 +84,13 @@ class StereoRGBStudentRunner:
         actions = self.actor.deterministic(history)
         if actions.shape != (self.num_envs, 24) or not torch.isfinite(actions).all() or (actions.abs() > 1).any():
             raise RuntimeError('Actor violated canonical normalized 24D action bounds')
+        # Derived sensor geometry for consumers/diagnostics; no simulator truth
+        # or fixed reset pose, and no change to the Actor's world-frame input.
+        self.last_visible_geometry = dict(points_world_m=points['points_world'].detach().clone(),
+            points_palms_m=world_to_palms(points['points_world'], p[:,24:38].reshape(self.num_envs,2,7)).detach().clone(),
+            point_valid=points['point_valid'].detach().clone(), frame_id=frame_id,
+            simulation_timestamp=float(left_timestamp_s),
+            source='RGB_stereo_and_current_measured_palm_FK', calibration_sha256=self.calibration.sha256)
         self._frame, self._timestamp = frame_id, float(left_timestamp_s)
         return dict(actions24=actions.detach().clone(), frame_id=frame_id,
             simulation_timestamp=float(left_timestamp_s), image_age_s=float(age),
@@ -89,6 +98,7 @@ class StereoRGBStudentRunner:
             visible_wire_point_count=points['point_valid'].sum(1),
             actor_package_sha256=self.package_sha256, calibration_sha256=self.calibration.sha256,
             camera_config_sha256=self.camera_config_sha256,
+            inference_source_sha256=file_sha256(__file__),
             processing_sha256=self.processing['processing_sha256'],
             teacher_executed=False, critic_executed=False, simulator_input_used=False,
             depth_source='computed_from_synchronized_left_right_RGB', native_task_qualified=False)

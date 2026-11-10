@@ -168,6 +168,11 @@ def train_student(environment,config,*,output,updates,calibration_sha256,checkpo
         if raw_path not in source_paths:source_paths.append(raw_path)
     training_provenance.update(source_inventory_complete=False,
         source_inventory_scope='registration_after_native_close_required;not_native_or_heldout_qualification')
+    training_provenance['runtime_source_artifacts'] = [
+        dict(path=str(Path(__file__).with_name(name).resolve()),
+             sha256=file_sha256(Path(__file__).with_name(name)))
+        for name in ('tabletop_stereo_student_cli.py', 'tabletop_stereo_native.py',
+                     'tabletop_stereo_runtime.py', 'tabletop_privileged_reward.py')]
     trainer.training_provenance=training_provenance
     write_json_new(output/'resolved_config.json',config)
     write_json_new(output/'student_contract.json',contract)

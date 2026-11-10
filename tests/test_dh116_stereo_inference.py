@@ -69,6 +69,24 @@ def test_raw_rgb_only_runner_computes_depth_and_bounds_action(tmp_path):
     assert int(runner.history._valid.sum()) == 1
 
 
+def test_visible_wire_points_use_current_measured_fk_for_both_palms(tmp_path):
+    package, config = files(tmp_path)
+    runner = StereoRGBStudentRunner(package, config)
+    points = torch.full((1,128,3), float('nan')); points[0,0] = torch.tensor([1.,3.,3.])
+    valid = torch.zeros(1,128,dtype=torch.bool); valid[0,0] = True
+    runner.extractor.extract = lambda *a,**k: dict(points_world=points.clone(),point_valid=valid.clone())
+    observation = raw()
+    observation['proprio'][0,24:31] = torch.tensor([1.,2.,3.,2**-.5,0.,0.,2**-.5])
+    observation['proprio'][0,31:38] = torch.tensor([-1.,0.,1.,1.,0.,0.,0.])
+    runner.from_mapping(observation)
+    geometry = runner.last_visible_geometry
+    torch.testing.assert_close(geometry['points_palms_m'][0,0,0],torch.tensor([1.,0.,0.]),atol=1e-6,rtol=0.)
+    torch.testing.assert_close(geometry['points_palms_m'][0,1,0],torch.tensor([2.,3.,2.]),atol=1e-6,rtol=0.)
+    assert not torch.isfinite(geometry['points_palms_m'][:,:,1:]).any()
+    assert geometry['point_valid'].sum() == 1 and geometry['frame_id'] == 1
+    assert geometry['source'] == 'RGB_stereo_and_current_measured_palm_FK'
+
+
 @pytest.mark.parametrize('change', [dict(right_timestamp_s=.001), dict(now_timestamp_s=.1)])
 def test_unsynchronized_and_stale_images_cannot_use_truth_fallback(tmp_path, change):
     package, config = files(tmp_path); runner = StereoRGBStudentRunner(package, config)

@@ -51,11 +51,24 @@ def _qualification(provenance, key, expected_identity):
         'force_side', 'force_units', 'force_frame', 'partner_attribution', 'per_digit_source')
     if any(not proof.get(field) for field in required):
         raise ValueError('qualification report lacks measured source: ' + key)
+    if key == 'support':
+        binding = entry.get('force_qualification')
+        if not isinstance(binding, dict):
+            raise ValueError('raw per-contact force qualification binding required; metadata cannot qualify support')
+        from .tabletop_stereo_promotion import verify_force_qualification
+        verify_force_qualification(binding)
+    else:
+        binding = entry.get('qualification_evidence')
+        if not isinstance(binding, (dict, str)):
+            raise ValueError('raw native geometry qualification evidence required; metadata is insufficient')
+        from .tabletop_stereo_promotion import verify_native_episode
+        verify_native_episode(binding, expected_identity=expected_identity)
     return entry
 
 
 def compose_native_reward(native_reward, native_terms, *, profile='teacher_r0_existing',
-                          shaping=None, provenance=None, dt=None, expected_identity=None):
+                          shaping=None, provenance=None, dt=None, expected_identity=None,
+                          shaping_measurements=None, shaping_config=None):
     if profile not in PROFILES:
         raise ValueError('unknown privileged Teacher reward profile')
     if (not isinstance(native_reward, torch.Tensor) or native_reward.ndim != 1
@@ -83,7 +96,35 @@ def compose_native_reward(native_reward, native_terms, *, profile='teacher_r0_ex
     if not torch.allclose(total, native_reward, atol=1e-5, rtol=1e-5):
         raise ValueError('native reward term sum does not close to native total')
     reward = native_reward.clone()
-    if profile != 'teacher_r0_existing':
+    typed_shaping=shaping_measurements is not None or shaping_config is not None
+    if typed_shaping:
+        if profile=='teacher_r0_existing':raise ValueError('R0 cannot opt into additional shaping; select an explicit qualified profile')
+        if shaping is not None:raise ValueError('one geometry reward owner required; generic potentials and typed factors cannot be combined')
+        _qualification(provenance,'geometry',expected_identity)
+        from .tabletop_privileged_shaping import ShapingMeasurements,geometry_terms,support_terms
+        if type(shaping_measurements) is not ShapingMeasurements:
+            raise ValueError('typed shaping measurements required')
+        measured=shaping_measurements
+        additions=geometry_terms(measured.geometry_before,measured.geometry_after,measured.context,
+            shaping_config,existing_owners=tuple(native_terms))
+        if profile=='teacher_r2_support_recovery':
+            _qualification(provenance,'support',expected_identity)
+            additions.update(support_terms(measured.support_before,measured.support_after,measured.support_context,
+                shaping_config,dt=dt,existing_owners=tuple(native_terms)))
+            support=measured.support_after.upward_support_n
+            ctx=measured.support_context
+            # Preserve the existing signed support-deficit owner/formula below.
+            # Unknown channels remain NA/false, never a whole-hand broadcast.
+            shaping=dict(support_n=support.value.sum((1,2)),weight_n=ctx.weight_n.value,
+                support_valid=support.valid.all((1,2))&ctx.weight_n.valid&ctx.base.transition_valid
+                    &ctx.base.same_episode&ctx.base.phase_active)
+        for name,item in additions.items():
+            _number(item['per_env_contribution'],native_reward,'typed shaping contribution '+name)
+            if item['valid_mask'].shape!=native_reward.shape or item['valid_mask'].device!=native_reward.device:
+                raise ValueError('typed shaping validity must match native per-environment reward')
+            terms['teacher_'+name]=item
+            reward=reward+item['per_env_contribution']
+    if profile != 'teacher_r0_existing' and not typed_shaping:
         _qualification(provenance, 'geometry', expected_identity)
         if not isinstance(shaping, dict):
             raise ValueError('qualified geometry measurements required')
@@ -106,7 +147,7 @@ def compose_native_reward(native_reward, native_terms, *, profile='teacher_r0_ex
             total_contribution=contribution.detach().sum())
         reward = reward + contribution
     if profile == 'teacher_r2_support_recovery':
-        _qualification(provenance, 'support', expected_identity)
+        if not typed_shaping:_qualification(provenance, 'support', expected_identity)
         if any('support_deficit' in key for key in native_terms):
             raise ValueError('support deficit overlaps existing native reward; select one audited owner')
         if isinstance(dt, bool) or not isinstance(dt, (float, int)) or not math.isfinite(dt) or dt <= 0:
@@ -128,6 +169,7 @@ def compose_native_reward(native_reward, native_terms, *, profile='teacher_r0_ex
             valid_mask=mask.detach().clone(), source=provenance['support'],
             per_env_contribution=contribution.detach().clone(), total_contribution=contribution.detach().sum())
         reward = reward + contribution
+    if typed_shaping and not bool(torch.isfinite(reward).all()):raise ValueError('typed shaping/native reward sum overflow; finite per-environment total required')
     return reward, dict(version=VERSION, profile=profile, terms=terms,
         native_contribution=native_reward.detach().clone(), total_contribution=reward.detach().clone(),
         all_env_total=reward.detach().sum(), qualification='native_sources_require_separate_qualification')

@@ -5,6 +5,10 @@
   "explicit_opt_in_required": true,
   "qualification_required": "SHA_bound_native_geometry_report_matching_current_action_and_state_contracts",
   "geometry_progress": {"coefficient": 1.0, "normalization": "qualified_geometry_potential_difference", "dt_scaling": false, "validity": "explicit_per_environment_mask;NA_never_zero_measurement"},
+  "typed_candidate_config": "configs/dh116_training/privileged_teacher_shaping_candidates_v1.json",
+  "typed_factor_software": "implemented_four_geometry_potential_differences;explicit_typed_API_only",
+  "native_measurement_factory": "pending",
+  "dedicated_geometry_qualification": "pending;legacy_geometry_gate_still_requires_complete_native_episode_including_force",
   "status": "disabled_until_geometry_source_qualification",
   "native_success": "unchanged_30mm_5s_0.5mm"
 }

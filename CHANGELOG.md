@@ -1,3 +1,9 @@
+## 2026-11-10 — 隔离shaping与实际SDK监督/手内坐标接线
+
+- 实现R1四类与R2五类纯测量因子，默认关，signed support deficit只计一次；几何派生目标份额不强制左右等载。native工厂/独立geometry资格未完成，来源不合格拒绝启用。
+- runtime逐环境逐维核对SDK q/qd，仅0:24打开state监督；实际FK将RGB-derived worldpoints转左右掌坐标，invalid保留NaN，不作为GT输入。
+- 冻结全组Windows CPU528 passed/1 skipped、服务器现有Python3.10/Torch2.7 CPU529 passed/1 skipped，均exit0；原528生产源文件SHA不变。随后开始短相机实验，不训练或更换原模型，物理资格仍另验。
+
 ## 2026-11-10 — 多分辨率/亚像素与跨环境审计适配
 
 - 新增320×240/640×360/640×480配置，默认主精度VGA；224×96保留原字节。资源batch/env可调，K随尺寸更新，流式视差与浮点LR一致性，不隐藏缩图。
