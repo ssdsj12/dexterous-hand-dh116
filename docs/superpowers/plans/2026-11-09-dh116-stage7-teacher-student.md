@@ -1,3 +1,13 @@
+## 2026-11-10 发布进度 — H8 完整17D运动学外推（仅CPU、未Native接入）
+
+- [x] 完整17D含被动行，左右各用自己的mounted FK；区间速度逐步积分，缺失/无效数据不补0，不把目标当实测响应。
+- [x] 独立immutable source15组合CPU实跑1360 passed、3 CUDA-unavailable skips、238 subtests；本单元39项是其中子集，不另相加。该证书对应immutable source15，不把当前工作树其它改动自动算入。
+- [ ] 动作响应模型、未来物体/接触/驱动、完整约束/求解器、单实例原生校准与正式配对仍待完成。
+
+边界：本单元未Native接入；既有B使用原恢复路径，D1的ABI元数据NA也不能算FK/J通过。不宣称完整MPC、新成功、专家晋级或B3/PPO许可；原默认Teacher、3844D/371D/24D与30mm/5s/0.5mm保持，PR保持Draft。
+
+本节仅记录该子单元进展，不把下方原计划的完整H8/恢复/正式验收门槛标成完成。命令与SHA见[独立报告](../reports/2026-11-10-stage7-h8-kinematic-cpu.md)。
+
 # DH116 Stage 7 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Preserve the ongoing native process and use the checkboxes to record actual outcomes.

@@ -1,3 +1,9 @@
+## 2026-11-10 — Stage 7 H8 完整17D运动学外推
+
+新增独立、未接线的双手完整17D运动学核心：8个60Hz控制周期展开为64个480Hz子步，显式速度预测与当前q/qd、来源、候选摘要分开。常速外推与候选无关，不能提供动作响应、物体/接触/驱动预测或控制准入。
+
+独立immutable source15组合CPU实跑1360 passed、3 CUDA-unavailable skips、238 subtests；本单元39项是其中子集，不另相加。本单元未Native接入；既有B使用原恢复路径，D1的ABI元数据NA也不能算FK/J通过。不宣称完整MPC、新成功、专家晋级或B3/PPO许可；原默认Teacher、3844D/371D/24D与30mm/5s/0.5mm保持，PR保持Draft。详见[实现与验证边界](docs/superpowers/reports/2026-11-10-stage7-h8-kinematic-cpu.md)。
+
 ## 2026-11-10 — Stage 7 原生 descriptor 失败定位与 USD ABI 修复
 
 首次 descriptor 原生短测自然退出，但8帧、64条样本全部结构不可用；封存完整性审计通过，不能称为FK/J验证通过。已定位到当前USD绑定要求 `GetPropertyStack(Usd.TimeCode.Default())`，仅修补Attribute/Relationship调用，原失败数据保留。独立source16 CPU实跑1364 passed、3 skipped、238 subtests；修复版原生复测仅已准备，尚未执行。固定腕双侧恢复实验仍单独运行，MPC/Student无新增成功。命令、SHA与边界见[失败与修复报告](docs/superpowers/reports/2026-11-10-stage7-descriptor-usd-abi.md)。
