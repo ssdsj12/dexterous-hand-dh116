@@ -106,10 +106,8 @@ def constrain_palm_z_movement(movement, clearances, clearance_floor_m):
     """Keep palm descent above the configured floor without changing X/Y."""
     if not torch.isfinite(torch.as_tensor(clearance_floor_m)) or clearance_floor_m < 0:
         raise ValueError('clearance floor must be finite and nonnegative')
-    result=movement.clone()
-    result[:,:,2]=torch.maximum(result[:,:,2],
-        -(clearances-clearance_floor_m).clamp_min(0))
-    return result
+    z=torch.maximum(movement[:,:,2],-(clearances-clearance_floor_m).clamp_min(0))
+    return torch.cat((movement[:,:,:2],z[:,:,None]),dim=-1)
 
 
 class TensorWorld:
@@ -132,6 +130,8 @@ class TensorWorld:
         self.root_seed[:,:,:3] += self.origins[:,None]
         self.root_seed[:,:,:2] += self.t(world.seed['root_xy'])
         self.initial_offset = float(world.seed['root_offset'])
+        self.episode_reset_root_pose_m = self.root_seed[:,:,:3].clone()
+        self.episode_reset_root_pose_m[:,:,2] += self.initial_offset
         self.seed_q = []
         self.seed_qd = []
         for hi, hand in enumerate(self.hands):
@@ -240,6 +240,15 @@ class TensorWorld:
         if sensors:
             reader=getattr(self,'native_sensor_reader',None)
             native_packet=reader(self) if reader is not None else None
+            if getattr(self,'capture_tripod_contact_evidence',False):
+                complete=(native_packet is not None
+                    and 'tripod_raw_contacts' in native_packet and 'tripod_raw_friction' in native_packet)
+                self.tripod_contact_snapshot=dict(complete=complete,
+                    valid_envs=(~native_packet['bad_env']).detach().clone() if complete
+                        else torch.zeros(self.n,device=self.device,dtype=torch.bool),
+                    tensor_world_physics_steps=getattr(self,'_physics_steps',0),
+                    raw_contacts=native_packet['tripod_raw_contacts'] if complete else None,
+                    raw_friction=native_packet['tripod_raw_friction'] if complete else None)
             if native_packet is None:
                 for sensor in w.sensors: sensor.update(self.dt,force_recompute=True)
                 vectors = torch.stack([s.data.force_matrix_w[:,0,0,:] for s in w.sensors],1).double()
@@ -379,6 +388,8 @@ class TensorWorld:
         return result
 
     def advance(self, task, allowed, live):
+        recovery=getattr(task,'tripod_recovery_runtime',None)
+        if recovery is not None:recovery.prepare_transport(self,task,allowed,live)
         policy_control = getattr(task,"policy_control",False)
         if hasattr(task,'policy_lift_hold') and not getattr(task,'manual_digit_force_balance',False):
             hold=task.policy_lift_hold
@@ -402,12 +413,6 @@ class TensorWorld:
             target = task.palm_actions*self.palm_limit
             palm_lower, palm_upper = -self.palm_limit, self.palm_limit
             rate = .002
-        movement = (target-self.palms).clamp(-rate*self.dt,rate*self.dt)
-        if policy_control:
-            # The physical transport guard measures Cartesian speed, not each
-            # axis independently. Diagonal commands must share one speed budget.
-            norm=movement.norm(dim=-1,keepdim=True).clamp_min(1e-12)
-            movement=movement*((rate*self.dt)/norm).clamp_max(1.)
         clearance_floor=getattr(task,'diagnostic_palm_descent_clearance_m',
                                 getattr(task,'palm_descent_clearance_m',.0021))
         if getattr(task,'pinch_force_hold',False):
@@ -415,9 +420,11 @@ class TensorWorld:
             # the hand is clear of the table. Keep the audited 0.3mm margin;
             # real collision response and below-margin restoration remain.
             clearance_floor=.0003
-        movement=constrain_palm_z_movement(movement,self.clearances,clearance_floor)
-        self.palms = torch.where((allowed&live)[:,None,None],
-            torch.maximum(torch.minimum(self.palms+movement,palm_upper),palm_lower),self.palms)
+        from .tabletop_command_kernels import palm_transport, per_hand_safe_z
+        self.palms,pre_projection_palm,projection_reasons=palm_transport(
+            self.palms,target,self.clearances,clearance_floor,rate,self.dt,
+            palm_lower,palm_upper,allowed,live,vector_norm=policy_control)
+        safe_z_audit=torch.full((self.n,2),float('nan'),device=self.device,dtype=self.palms.dtype)
         synchronized=getattr(task,'coordinated_control',torch.zeros_like(live))
         if getattr(task,'palm_exploration_axis',None)=='z_down':
             synchronized=torch.ones_like(live)
@@ -432,12 +439,9 @@ class TensorWorld:
             # Roots are measured bases (including driven-carriage lag). Express
             # their safe heights in the exploration-offset frame of the *new*
             # common lift target, preserving the authored left/right root gap.
-            measured_z=self.roots[:,:,2]-self.root_seed[:,:,2]-task.offset[:,None]
-            # Finger motion can lower a hard link even with palm descent held.
-            # Restore the signed deficit so the target clears that link rather
-            # than holding its already unsafe measured height.
-            safe_z=measured_z-(self.clearances-clearance_floor)
-            per_hand_z=torch.maximum(self.palms[:,:,2],safe_z)
+            per_hand_z,safe_z=per_hand_safe_z(self.palms,self.roots,self.root_seed,
+                task.offset,self.clearances,clearance_floor)
+            safe_z_audit=safe_z.clone()
             shared_z=per_hand_z.amax(1,keepdim=True)
             if hasattr(task,'palm_reposition'):
                 reposition=task.palm_reposition
@@ -467,6 +471,7 @@ class TensorWorld:
             # Close shares a safe exploration height. Lift retains each hand's
             # captured offset while applying its own measured clearance bound.
             projected_z=torch.where(synchronized[:,None],shared_z,per_hand_z)
+            projection_reasons |= (projected_z-self.palms[:,:,2]).abs().gt(1e-12).long()*2
             self.palms[:,:,2]=torch.where((safety_controlled&live)[:,None],projected_z,self.palms[:,:,2])
         self.gains = torch.where(live[:,None],(self.gains+self.parameters.stiffness_rate*self.dt)
                                 .clamp_max(self.parameters.stiffness_max),self.gains)
@@ -508,6 +513,7 @@ class TensorWorld:
                                      self.parameters.effort_limit_nm)
             hand.write_data_to_sim()
         # Physics/contact feedback still runs at physics_hz; present at 60 Hz.
+        if recovery is not None:recovery.after_native_submission(self,task,live)
         # Rendering every substep made a four-second close take minutes in GUI.
         self._physics_steps = getattr(self, '_physics_steps', 0) + 1
         interval = getattr(self,'render_interval_steps',getattr(self, 'decimation', max(1, round(1 / (60 * self.dt)))))
@@ -521,10 +527,46 @@ class TensorWorld:
         if getattr(self.w,'mounts',None) is not None and not getattr(self,'continuous_motion',False):
             from .tabletop_palm_mount import check_transport
             check_transport(self.hands,self.w.mounts,self.root_targets)
+        contact_valid_a=measurement.get('contact_valid',
+            torch.zeros((self.n,2),device=self.device,dtype=torch.bool))
+        if contact_valid_a.ndim==3:
+            contact_valid_a=contact_valid_a.any(-1)
+        elif contact_valid_a.ndim!=2:
+            contact_valid_a=torch.zeros((self.n,2),device=self.device,dtype=torch.bool)
+        # Keep physical-reset-relative telemetry separate from the controller's
+        # dynamic lift-offset frame. The latter changes during Lift and cannot
+        # be used as the actual displacement baseline.
+        control_frame_base=self.root_seed[:,:,:3].clone()
+        control_frame_base[:,:,2] += task.offset[:,None]
+        control_frame_sdk_target=(self.root_targets[:,:,:3]-control_frame_base).detach().clone()
+        actual_palm_pose=(self.roots[:,:,:3]-self.episode_reset_root_pose_m).detach().clone()
+        self.last_action_diagnostics=dict(
+            raw_action24=getattr(task,'last_raw_action24',torch.zeros((self.n,24),device=self.device)),
+            requested_palm_target_m=task.palm_targets.detach().clone(),
+            pre_projection_palm_target_m=pre_projection_palm.detach().clone(),
+            projected_palm_target_m=self.palms.detach().clone(),
+            final_sdk_palm_target_m=(self.root_targets[:,:,:3]-self.episode_reset_root_pose_m).detach().clone(),
+            control_frame_sdk_target_m=control_frame_sdk_target,
+            actual_palm_pose_m=actual_palm_pose,
+            palm_displacement_m=actual_palm_pose.clone(),
+            actual_palm_velocity_m_s=measurement.get('wrist_velocity',
+                torch.zeros((self.n,2,6),device=self.device))[:,:,:3].detach().clone(),
+            table_clearance_m=self.clearances.detach().clone(),
+            safe_z_m=safe_z_audit.detach().clone(),
+            projection_reasons=projection_reasons.detach().clone(),
+            contact_loads_n=measurement.get('hand_object_loads',
+                torch.zeros((self.n,2),device=self.device)).detach().clone(),
+            contact_valid=contact_valid_a.detach().clone(),
+            physics_step=int(self._physics_steps),
+            timestamp_s=float(self.w.sim.current_time),
+        )
         return measurement
 
     def reset(self, ids):
         if ids.numel()==0: return self.measure()
+        if hasattr(self,'tripod_contact_snapshot'):
+            from .tabletop_tripod_execution_guard import invalidate_native_contact_snapshot
+            invalidate_native_contact_snapshot(self,ids)
         if hasattr(self,'adapter_fault_bits'):self.adapter_fault_bits[ids]=0
         if hasattr(self,'transport_warning_mask'):self.transport_warning_mask[ids]=False
         if hasattr(self,'wrist_angles'):self.wrist_angles[ids]=0.
@@ -559,9 +601,12 @@ class TensorWorld:
         self.contact_all_below_centerline[ids]=False; self.contact_count[ids]=0
         self.w.sim.physics_sim_view.update_articulations_kinematic()
         measured=self.refresh(sensors=False)
+        self.episode_reset_root_pose_m[ids]=self.roots[ids,:,:3].detach()
         if hasattr(self,'pad_measurements'):
             from .tabletop_surface_exploration import clear_reset_contacts
             clear_reset_contacts(self.pad_measurements,ids)
             self.pad_measurements['effective_pad_bad_env'][ids]=self.pad_pose_bad_env[ids]
             measured.update(self.pad_measurements)
+        recovery=getattr(self,'tripod_recovery_runtime',None)
+        if recovery is not None:recovery.after_physical_reset(ids,measured)
         return measured

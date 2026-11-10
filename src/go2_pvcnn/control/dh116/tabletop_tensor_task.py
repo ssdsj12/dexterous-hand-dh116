@@ -281,6 +281,9 @@ class TensorTask:
             self.close_grasp_hold.reset(invalid.nonzero(as_tuple=True)[0])
         self.reward[invalid]=-25.; self.terms['failure'][invalid]=-25.
         self.actions=torch.where(invalid[:,None],torch.zeros_like(actions),actions)
+        # Optional P0 audit input. This is a detached copy of the actor output
+        # before task decoding; it never participates in control or gradients.
+        self.last_raw_action24=self.actions.detach().clone()
         return self.actions
 
     def grip_force_ready(self,loads,*,lifting=False):
@@ -792,7 +795,7 @@ class TensorTask:
         if getattr(self,'free_wrist_grasp',False):
             from .tabletop_free_wrist_grasp import add_feedback
             add_feedback(self,pieces,valid,dt,hand_lift_force_n=hand_lift_force_n,
-                         object_weight_n=object_weight_n)
+                         object_weight_n=object_weight_n,physical_live=live)
         for name,value in pieces.items():
             self.terms[name][valid]+=value[valid]; self.reward[valid]+=value[valid]
         self.used[live]+=dt

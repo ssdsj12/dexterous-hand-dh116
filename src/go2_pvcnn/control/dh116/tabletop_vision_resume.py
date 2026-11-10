@@ -37,6 +37,8 @@ def _integer(value, name):
 def _validate_contract(contract):
     if not isinstance(contract, dict):
         raise ValueError("visual resume requires a visual contract dictionary")
+    from .tabletop_vision_quaternion import validate_wrist_quaternion_preprocessing
+    validate_wrist_quaternion_preprocessing(contract.get('actor_wrist_quaternion_preprocessing','raw'))
     required = dict(version=VERSION, actor_observation_size=3844,
         critic_observation_size=371, actor_uses_privileged_state=False,
         point_cloud_shape=[2, 128, 3], history_frames=4,

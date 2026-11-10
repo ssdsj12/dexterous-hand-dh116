@@ -92,6 +92,8 @@ def read_native_sensors(world):
                ('get_contact_force_matrix','get_contact_data','get_friction_data')) for view in views):
         return None
     matrices=[v.get_contact_force_matrix(dt=world.dt) for v in views]
+    capture=bool(getattr(world,'capture_tripod_contact_evidence',False))
+    captured_raw=[]
     raw=[]
     for view in views:
         values=view.get_contact_data(dt=world.dt)
@@ -101,7 +103,16 @@ def read_native_sensors(world):
             values=tuple(x.clone() if i>=4 and isinstance(x,torch.Tensor) else x
                 for i,x in enumerate(values))
         raw.append(values)
-    friction=[v.get_friction_data(dt=world.dt) for v in views]
+        if capture:
+            captured_raw.append(tuple(x.clone() for x in values)
+                if isinstance(values,(tuple,list)) and all(isinstance(x,torch.Tensor) for x in values) else None)
+    friction=[];captured_friction=[]
+    for view in views:
+        values=view.get_friction_data(dt=world.dt)
+        friction.append(values)
+        if capture:
+            captured_friction.append(tuple(x.clone() for x in values)
+                if isinstance(values,(tuple,list)) and all(isinstance(x,torch.Tensor) for x in values) else None)
     if any(not isinstance(v,(tuple,list)) for v in (*raw,*friction)):
         return None
     layout=_layout(raw,friction,matrices,n)
@@ -130,5 +141,8 @@ def read_native_sensors(world):
     bad |= ~torch.isfinite(vectors).all((0,2))
     def ordered(value):
         return value.transpose(0,1).reshape(n,2,17,3).double()
-    return dict(raw_contacts=[tuple(v) for v in raw],vectors=ordered(vectors),
+    result=dict(raw_contacts=[tuple(v) for v in raw],vectors=ordered(vectors),
                 friction=ordered(friction_sum),contact_positions=ordered(contact_positions),bad_env=bad)
+    if capture:
+        result.update(tripod_raw_contacts=captured_raw,tripod_raw_friction=captured_friction)
+    return result

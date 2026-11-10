@@ -774,6 +774,9 @@ def run_tensor_training(world, template, args, contract, *, mixed_reset=None):
         if task.surface_reward_profile!='baseline':
             from .tabletop_surface_reward_ablation import enable as enable_ablation
             enable_ablation(task)
+        if getattr(args,'vision_lift_reward_experiment','R0')!='R0':
+            from .tabletop_lift_reward_experiment import install_lift_reward_experiment
+            install_lift_reward_experiment(task,args.vision_lift_reward_experiment)
         if getattr(args,'surface_contact_history',False):
             from .tabletop_surface_contact_history import enable_contact_history
             enable_contact_history(task)
@@ -811,6 +814,10 @@ def run_tensor_training(world, template, args, contract, *, mixed_reset=None):
     from .tabletop_vertical_force import VerticalForceStats, LiftEntryForceStats, CONTRACT as VERTICAL_FORCE_CONTRACT
     env.vertical_force_stats=VerticalForceStats(args.device)
     env.lift_entry_force_stats=LiftEntryForceStats(args.device)
+    evaluation_collector=None
+    if getattr(args,'vision_evaluation_checkpoint',None):
+        from .tabletop_vision_evaluation import prepare_vision_evaluation
+        evaluation_collector=prepare_vision_evaluation(device_world,task,env,args)
     obs=observations(env.reset())
     validation=validate_world_adapter(world,device_world,task)
     if mixed_reset is not None:
@@ -818,6 +825,14 @@ def run_tensor_training(world, template, args, contract, *, mixed_reset=None):
         secondary_layout, secondary_seed, _ = mixed_reset
         mixed_validation=install_mixed_reset(device_world,task,secondary_layout,secondary_seed)
         write_json(args.output/'mixed_reset_validation.json',mixed_validation)
+    if evaluation_collector is not None:
+        from .tabletop_vision_evaluation_reset import install_evaluation_reset
+        minimum=100
+        if getattr(args,'grasp_contact_probe',False):
+            from .tabletop_grasp_contact_native import evaluation_minimum
+            minimum=evaluation_minimum(args)
+        install_evaluation_reset(device_world,task,evaluation_collector.manifest,
+                                 min_trials_per_style=minimum)
     obs=observations(env.reset())
     if getattr(args,'require_initial_below_axis',False):
         from .tabletop_initial_contact_check import validate_initial_contact
@@ -984,6 +999,29 @@ def run_tensor_training(world, template, args, contract, *, mixed_reset=None):
         publish_resolved_tensor_configuration(args.output,contract)
 
     if getattr(args,'vision_student',False):
+        if getattr(args,'vision_tracking_experiment_config',None):
+            from .tabletop_full_episode_tracking_experiment import run_full_episode_tracking_experiment
+            write_json(Path(args.output)/'tensor_contract.json',contract)
+            return run_full_episode_tracking_experiment(world,device_world,task,env,args,contract)
+        if getattr(args,'vision_stage6_native_config',None):
+            from .tabletop_vision_branching_eval import run_stage6_native
+            write_json(args.output/'tensor_contract.json',contract)
+            return run_stage6_native(world,device_world,task,env,args,contract)
+        if getattr(args,'vision_m2_replay',None) is not None:
+            from .tabletop_joint_limit_replay import run_joint_replay
+            return run_joint_replay(device_world,env,args)
+        if getattr(args,'tripod_recovery_stage',None):
+            from .tabletop_tripod_staged_experiment import run_staged_tripod_experiment
+            write_json(args.output/'tensor_contract.json',contract)
+            return run_staged_tripod_experiment(world,device_world,task,env,args,contract)
+        if getattr(args,'vision_teacher_source',None):
+            from .tabletop_vision_teacher_collection import run_teacher_collection
+            write_json(args.output/'tensor_contract.json',contract)
+            return run_teacher_collection(world,device_world,task,env,args,contract)
+        if evaluation_collector is not None:
+            from .tabletop_vision_evaluation import run_vision_evaluation
+            return run_vision_evaluation(world,device_world,task,env,args,contract,
+                collector=evaluation_collector)
         from .tabletop_vision_training import run_vision_training
         write_json(args.output/'tensor_contract.json',contract)
         return run_vision_training(world,device_world,task,env,args,contract)

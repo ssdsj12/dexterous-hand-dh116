@@ -1,0 +1,48 @@
+experiment:
+  name: stage6_pinch_sequence_bc
+  base_commit: 26f1bbcc5a0e596da55c5d89896befcb5622cda7
+  style: pinch_thumb_index
+  default_control_path: M0
+inputs:
+  checkpoint_manifest: stage6_inputs.json
+  teacher_dataset_manifest: stage6_teacher_inputs.json
+  expected_actor_dim: 3844
+  expected_critic_dim: 371
+  expected_action_dim: 24
+sequence:
+  length: 16
+  batch_sequences: 4
+  cross_episode: false
+  cross_gap: false
+  terminal_padding: masked
+sampling:
+  uniform_fraction: 0.4
+  event_fraction: 0.6
+  source_balanced: true
+  event_weights: {START: 0.10, CONTACT: 0.35, LIFT_ONSET: 0.35, HOLD: 0.20}
+training:
+  profile: B2
+  updates: 3000
+  learning_rate: 0.0001
+  max_grad_norm: 0.5
+  checkpoint_interval: 250
+  seed: 116601
+  mixed_precision: false
+loss:
+  action_mse: 1.0
+  command_weight: 0.1
+  command_warmup_start: 250
+  command_warmup_end: 500
+  delta_weight: 0.0
+  finger_scale_rad: 0.01
+  palm_scale_m: 0.0005
+  wrist_angle_scale_rad: 0.01
+model:
+  architecture: existing_four_frame_pointnet_mlp
+  point_activation: relu
+  quaternion_preprocessing: inherited
+  add_privileged_actor_inputs: false
+runtime:
+  one_isaac_instance: true
+  preserve_original_runs: true
+  overwrite_checkpoint: false

@@ -1,4 +1,5 @@
 """GPU task stepping with isolated terminal resets and independent safety guards."""
+import numpy as np
 import torch
 
 PHYSICS_PEAK_NAMES=('link_force_n','active_joint_speed_rad_s','all_joint_speed_rad_s','mimic_error_rad')
@@ -135,6 +136,10 @@ class TensorEnv:
         self.world.continuous_motion=self.task.continuous_motion=self.continuous_motion
         self.n, self.device = world.n, world.device
         self.palm_lift_telemetry = None
+        self.evaluation_telemetry = None
+        self.physics_action_diagnostics = None
+        self._diagnostic_policy_step = 0
+        self.diagnostic_episode_ids = torch.zeros(self.n, dtype=torch.long, device=self.device)
         self.recovery = recovery
         self.training_joint_limit = bool(training_joint_limit and recovery)
         self.physics_peaks=torch.zeros(4,device=self.device,dtype=torch.float64)
@@ -169,6 +174,49 @@ class TensorEnv:
             from .tabletop_palm_lift_telemetry import PalmLiftTelemetry
             self.palm_lift_telemetry = PalmLiftTelemetry(self.n, self.device)
         return self.palm_lift_telemetry
+
+    def enable_evaluation_telemetry(self, callback):
+        """Opt in to privileged pre-reset substep batches; reset starts references."""
+        if not callable(callback):
+            raise TypeError('evaluation telemetry callback must be callable')
+        if self.evaluation_telemetry is None:
+            from .tabletop_evaluation_telemetry import EvaluationTelemetry
+            self.evaluation_telemetry = EvaluationTelemetry(self.n, self.device, callback)
+        else:
+            self.evaluation_telemetry.callback = callback
+        return self.evaluation_telemetry
+
+    def enable_physics_action_diagnostics(self, stream):
+        """Enable default-off streaming diagnostics for every physical substep."""
+        from .tabletop_vision_action_diagnostics import PhysicsActionDiagnosticWriter
+        self.physics_action_diagnostics = PhysicsActionDiagnosticWriter(stream)
+        return self.physics_action_diagnostics
+
+    def record_physics_substep(self, w, live, terminal_now, diagnostic_policy_step, measurement=None):
+        audit = getattr(w, 'last_action_diagnostics', None)
+        if audit is None:
+            raise RuntimeError('physics action diagnostics require world audit state')
+        to_cpu = lambda value: value.detach().cpu().numpy() if torch.is_tensor(value) else value
+        audit_cpu = {
+            key: (value.detach().cpu().tolist() if key == 'projection_reasons' and torch.is_tensor(value)
+                  else to_cpu(value))
+            for key, value in audit.items()
+            if key not in ('physics_step', 'timestamp_s')}
+        capture = getattr(self.physics_action_diagnostics, 'capture_measurement_sources', None)
+        if capture is not None:
+            capture(measurement)
+        self.physics_action_diagnostics.record_batch(
+            torch.arange(self.n, device=self.device).cpu().numpy(),
+            self.diagnostic_episode_ids.detach().cpu().numpy(),
+            diagnostic_policy_step,
+            np.full(self.n, int(audit['physics_step']), dtype=np.int64),
+            np.full(self.n, float(audit['timestamp_s']), dtype=np.float64),
+            live.detach().cpu().numpy(),
+            terminal_now.detach().cpu().numpy(),
+            dict(audit_cpu, failure_code=self.task.failure.detach().cpu().numpy()))
+
+    def set_physics_diagnostic_policy_step(self, policy_step):
+        self._diagnostic_policy_step = int(policy_step)
 
     def training_joint_safe(self,m):
         if not self.training_joint_limit or self.continuous_motion:
@@ -218,6 +266,14 @@ class TensorEnv:
             total_exceedance_env_s=float(self.velocity_exceedance_steps.sum())*self.world.dt)
 
     def fail(self, mask, m, context):
+        # Opt-in staged experiments must preserve the fatal native substep
+        # before any reset or exception unwinds the collector. Legacy probes
+        # without this method and ordinary training retain the original path.
+        recorder=getattr(getattr(self,'control_probe',None),'on_physics_failure',None)
+        recording_error=None
+        if recorder is not None:
+            try:recorder(mask,m,context)
+            except Exception as error:recording_error=repr(error)
         ids = mask.nonzero().flatten()[:8]
         detail = dict(context=context,indices=ids.cpu().tolist(),
             task_done=self.task.done[ids].cpu().tolist(),
@@ -233,6 +289,7 @@ class TensorEnv:
             joint_position_rad=self.world.q[ids].cpu().tolist(),
             joint_velocity_rad_s=self.world.qd[ids].cpu().tolist(),
             joint_limits_rad=self.world.limits[ids].cpu().tolist())
+        if recording_error is not None:detail['staged_native_recording_error']=recording_error
         if self.fault_trace is not None:
             try:
                 self.fault_trace.write(ids,context)
@@ -246,10 +303,14 @@ class TensorEnv:
         raise RuntimeError(f'tensor physical safety failure: {detail}')
 
     def reset(self):
+        if getattr(self, 'cache_bimanual_slip', False):
+            self._bimanual_slip_packet = None
         ids = torch.arange(self.n,device=self.device)
         m = self.world.reset(ids)
         if self.palm_lift_telemetry is not None:
             self.palm_lift_telemetry.reset(ids,m)
+        if self.evaluation_telemetry is not None:
+            self.evaluation_telemetry.reset(ids,m)
         safe,_,_ = physical_guard(self.world,m)
         safe &= reset_velocity_safe(self.world)
         safe &= self.training_joint_safe(m)
@@ -258,6 +319,10 @@ class TensorEnv:
         self.task.reset(ids,m)
         self.velocity_exceedance_streak_s[ids]=0.
         self.pending[:] = False
+        self.diagnostic_episode_ids[:] = 0
+        self._diagnostic_policy_step = 0
+        if self.physics_action_diagnostics is not None:
+            self.physics_action_diagnostics.begin_reset()
         self.reset_substep[:] = 0
         self.substep = 0
         self.phase_visits[:] = False
@@ -268,7 +333,13 @@ class TensorEnv:
         from .tabletop_tensor_task import FAILURE_CODES
         from .tabletop_tensor_world import signed_hand_lift_vertical_force
         t, w = self.task, self.world
+        diagnostic_policy_step = int(self._diagnostic_policy_step)
         palm_lift = self.palm_lift_telemetry
+        evaluation = self.evaluation_telemetry
+        lift_experiment = getattr(getattr(t, 'surface_reward_ablation', None),
+                                  'lift_quality_experiment', None)
+        if evaluation is not None:
+            submitted_action = torch.as_tensor(actions, device=self.device).detach().clone()
         if palm_lift is not None:palm_lift.begin_tick()
         acquisition_before = None
         if getattr(self, 'grasp_acquisition', False) and not getattr(t,'manual_lightweight',False):
@@ -292,7 +363,9 @@ class TensorEnv:
                 self.fail(invalid&self.pending,w.measure(),'post_reset_invalid_action')
             ids=invalid.nonzero().flatten()
             reset_m=w.reset(ids)
+            if lift_experiment is not None:lift_experiment.capture_physical_reset(ids,reset_m['bottom'])
             if palm_lift is not None:palm_lift.reset(ids,reset_m)
+            if evaluation is not None:evaluation.reset(ids,reset_m)
             safe=physical_guard(w,reset_m)[0]&reset_velocity_safe(w)&self.training_joint_safe(reset_m)
             safe &= self.state_valid(reset_m)
             if bool((invalid&~safe).any()):self.fail(invalid&~safe,reset_m,'immediate_reset_invalid_action')
@@ -308,7 +381,11 @@ class TensorEnv:
                 from .tabletop_surface_reward_ablation import target_position
                 prior_target = target_position(t,w)
             if hasattr(self,'control_probe'):self.control_probe.before_step()
-            allowed = t.control(actions,live,w.dt)
+            physical_actions = actions
+            adapter = getattr(self, 'bimanual_action_adapter', None)
+            if adapter is not None:
+                physical_actions = adapter(actions)
+            allowed = t.control(physical_actions,live,w.dt)
             if hasattr(self,'lift_gate_counts'):self.lift_gate_counts+=t.lift_diagnostic_masks.sum(0)
             m = w.advance(t,allowed,live)
             if palm_lift is not None:palm_lift.observe(m,live)
@@ -356,6 +433,7 @@ class TensorEnv:
                                       (limit_reset & self.recovery))
             task_m = dict(m,joint_failure=torch.where(joint_candidate & (m['joint_failure']==0),
                 FAILURE_CODES['joint_limit'],m['joint_failure']))
+            if evaluation is not None:evaluation_anchor = evaluation.capture_anchor(t)
             if t.vertical_force_reward:
                 # One current normal sample drives both close admission and its
                 # endpoint telemetry. Friction is used only in the lift channel.
@@ -421,7 +499,17 @@ class TensorEnv:
             # after termination. Validate the terminal state first, then reset
             # physics immediately, retaining the task snapshot until tick end.
             if hasattr(self,'control_probe'):self.control_probe.after_step(live,previous_phase)
+            if evaluation is not None:
+                physical_packet = evaluation.sample(t,w,m,live,w.dt,submitted_action,
+                    measurement_valid=finite_physics(w,m)&~t.nonfinite,anchor=evaluation_anchor)
+                if getattr(self, 'cache_bimanual_slip', False):
+                    from .tabletop_bimanual_coordination import cache_native_slip_packet
+                    cache_native_slip_packet(self, physical_packet, w)
             newly_terminal = live & t.done
+            if self.physics_action_diagnostics is not None:
+                self.record_physics_substep(w, live, newly_terminal, diagnostic_policy_step, measurement=m)
+            if getattr(self, 'joint_replay_observer', None) is not None:
+                self.joint_replay_observer(self, m, live, newly_terminal)
             ids = newly_terminal.nonzero().flatten()
             if ids.numel():
                 if getattr(t,'manual_control',False):
@@ -446,7 +534,9 @@ class TensorEnv:
                         except (AttributeError,ValueError,RuntimeError) as error:
                             self.manual_last_failure['digit_contacts_error']=str(error)
                 reset_m = w.reset(ids)
+                if lift_experiment is not None:lift_experiment.capture_physical_reset(ids,reset_m['bottom'])
                 if palm_lift is not None:palm_lift.reset(ids,reset_m)
+                if evaluation is not None:evaluation.reset(ids,reset_m)
                 self.velocity_exceedance_streak_s[ids]=0.
                 self.reset_substep[ids] = substep
                 reset_safe,_,_ = physical_guard(w,reset_m)
@@ -483,6 +573,8 @@ class TensorEnv:
             extras = dict(extras, terms=dict(extras['terms'], grasp_acquisition=acquisition.clone()))
         self.returns += rewards
         self.episodes += dones.long()
+        self.diagnostic_episode_ids += dones.long()
+        self._diagnostic_policy_step += 1
         self.successes += (dones&t.success).long()
         self.recovered += recovered.long()
         self.last_episode_returns = torch.where(dones,self.returns,self.last_episode_returns)

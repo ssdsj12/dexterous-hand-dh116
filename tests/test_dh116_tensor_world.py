@@ -72,7 +72,7 @@ def test_signed_hand_normal_vertical_force_rejects_malformed_or_nonfinite_compon
 def palm_world():
     """Exercise the real target/advance path without creating a PhysX instance."""
     from test_dh116_root_pose_writes import world
-    w=world();w.n=3;w.dt=1/480
+    w=world();w.n=3;w.dt=1/480;w.device=torch.device('cpu')
     w.palm_limit=torch.tensor([.003,.003,.004],dtype=torch.float64)
     w.palms=torch.zeros((3,2,3),dtype=torch.float64)
     w.clearances=torch.full((3,2),.003,dtype=torch.float64)
@@ -83,16 +83,28 @@ def palm_world():
     # offsets, not an attempt to overwrite the authored hand geometry.
     w.root_seed[:,:,2]=torch.tensor([.429,.419],dtype=torch.float64)
     w.root_targets=w.root_seed.clone();w.roots=w.root_seed.clone()
+    w.episode_reset_root_pose_m=w.roots[:,:,:3].clone()
     w.commands=torch.zeros((3,2,6),dtype=torch.float64)
-    w.refresh=lambda: None
+    # Advance always produces native diagnostic readbacks. This fixture keeps
+    # driven-body positions unchanged to exercise transport lag, while supplying
+    # the current measurement fields consumed by the diagnostic observer.
+    w.refresh=lambda: dict(
+        wrist_pose=w.roots.clone(),wrist_velocity=torch.zeros((3,2,6),dtype=torch.float64),
+        contact_valid=torch.zeros((3,2),dtype=torch.bool),
+        hand_object_loads=torch.zeros((3,2),dtype=torch.float64))
+    sim=SimpleNamespace(current_time=0.)
+    def step(**kwargs):
+        sim.current_time+=w.dt
+    sim.step=step
     w.w=SimpleNamespace(ids=[list(range(6))]*2,args=SimpleNamespace(headless=True),
-                        sim=SimpleNamespace(step=lambda **kw: None))
+                        sim=sim)
     for hand in w.hands:
         hand.set_joint_position_target=lambda *a,**kw: None
         hand.write_joint_stiffness_to_sim=lambda *a,**kw: None
         hand.write_data_to_sim=lambda: None
         hand.actuators={'active':SimpleNamespace(stiffness=torch.zeros((3,6)))}
     task=SimpleNamespace(palm_actions=torch.zeros((3,2,3),dtype=torch.float64),
+        palm_targets=torch.zeros((3,2,3),dtype=torch.float64),
         offset=torch.zeros(3,dtype=torch.float64),command=torch.zeros((3,12),dtype=torch.float64),
         coordinated_control=torch.ones(3,dtype=torch.bool),palm_descent_clearance_m=.0003)
     return w,task

@@ -32,6 +32,74 @@ parser.add_argument('--depth-coordinate-probe',action='store_true',
 parser.add_argument('--depth-camera-config',type=Path)
 parser.add_argument('--vision-student',action='store_true',
                     help='RGB-D-only 3844D actor with training-only 371D critic')
+parser.add_argument('--vision-action-diagnostics',action='store_true',
+                    help='record per-environment 24D action, target projection and actual palm diagnostics')
+parser.add_argument('--vision-policy-diagnostics',action='store_true',
+                    help='record per-environment policy latent/logprob/PPO and reward-term diagnostics')
+parser.add_argument('--vision-mirror-preprocessing',
+                    choices=('m0_raw','m2_full_mirror'),default='m0_raw',
+                    help='isolated visual actor preprocessing experiment; default preserves raw M0')
+parser.add_argument('--vision-action-distribution',choices=('gaussian_clip','tanh_gaussian'),default='gaussian_clip')
+parser.add_argument('--vision-m2-replay', type=Path, help='Replay an existing M2 diagnostic run without PPO')
+parser.add_argument('--vision-replay-watch-env', type=int, action='append', default=[],
+                    help='additional first-episode environment to record from replay start')
+parser.add_argument('--bimanual-joint-tracking-audit', action='store_true',
+                    help='opt-in reset-before-terminal 480 Hz joint tracking evidence during replay')
+parser.add_argument('--bimanual-mapping-probe', action='store_true',
+                    help='exclusive small physical mapping perturbations instead of action replay')
+parser.add_argument('--bimanual-explicit-sdk-adapter', action='store_true',
+                    help='explicit Teacher regression of the versioned physical SDK mapping')
+parser.add_argument('--bimanual-teacher-physics-audit', action='store_true',
+                    help='opt-in Teacher/MPC 480 Hz first-episode pre-reset physical evidence')
+parser.add_argument('--bimanual-tripod-teacher-coordination-proof', type=Path,
+                    help='independent tripod Teacher coordination candidate gated by a verified T5 regression JSON')
+parser.add_argument('--vision-replay-arm', choices=('recorded','neutral_fingers','neutral_rotation',
+                    'neutral_translation','omit_inverse','right_rotation_after240',
+                    'right_translation_after240','tracking_guard','tracking_guard_coupled'), default='recorded')
+parser.add_argument('--vision-wrist-quaternion-preprocessing',
+                    choices=('raw','wrist_quaternion_hemisphere_v1'),default='raw',
+                    help='versioned opt-in actor quaternion sign canonicalization; old models remain raw')
+parser.add_argument('--vision-teacher-source',type=Path,
+                    help='independent bounded real RGB-D Teacher supervision collection; no PPO')
+parser.add_argument('--vision-sequence-context-sidecar', action='store_true',
+                    help='opt-in Stage6 pre-control feedback and actual-target sidecar for native Teacher labels')
+parser.add_argument('--vision-mpc-state-capture', action='store_true',
+                    help='opt-in read-only480Hz privileged MPC state archive during independent legacy Teacher collection; no control change')
+parser.add_argument('--vision-mpc-aux-capture', action='store_true',
+                    help='opt-in read-only480Hz scene/contact-pair evidence alongside primary MPC state capture in the same legacy Teacher collection')
+parser.add_argument('--vision-mpc-model-capture', action='store_true',
+                    help='isolated short read-only full-articulation measurement arm; requires primary and auxiliary captures, no PPO')
+parser.add_argument('--vision-mpc-model-descriptor-capture', action='store_true',
+                    help='default-off current composed mounted-tree descriptor readback; requires model capture, no dynamics or planning qualification')
+parser.add_argument('--vision-mpc-filtered-contact-capture', action='store_true',
+                    help='isolated short read-only fresh sensor/filter metadata arm; no numeric contact or force qualification')
+parser.add_argument('--vision-mpc-filtered-contact-epoch-capture', action='store_true',
+                    help='explicit v2 first-cohort retirement history for fresh filtered metadata; no control or qualification')
+parser.add_argument('--vision-mpc-filtered-contact-values-capture', action='store_true',
+                    help='isolated read-only current sensor-side normal/friction observations; requires filtered metadata and epoch flags')
+parser.add_argument('--vision-mpc-passive-pair-values', action='store_true',
+                    help='default-off isolated read-only taps of existing Wire-to-table/end-support views; no support qualification')
+parser.add_argument('--vision-mpc-contact-delivery-probe',
+                    choices=('post_step_poll','full_report_callback'), default=None,
+                    help='isolated short contact delivery observer arm; default off, no contact/frame qualification')
+parser.add_argument('--vision-teacher-perturbation-manifest', type=Path,
+                    help='explicit native Teacher reset perturbations with actual readback and source lineage; no PPO')
+parser.add_argument('--vision-stage6-native-config', type=Path,
+                    help='isolated finite Stage6 source/prefix-branch configuration; no PPO')
+parser.add_argument('--vision-tracking-experiment-config', type=Path,
+                    help='explicit finite original/unilateral/common full-episode experiment; no PPO or promotion')
+parser.add_argument('--vision-teacher-mpc',action='store_true',
+                    help='training-only local finger MPC refines Teacher reference labels')
+parser.add_argument('--tripod-recovery-stage',choices=('A','B'),
+                    help='independent fixed-wrist Tripod experiment; A preserves right-only, B is explicit bilateral')
+parser.add_argument('--tripod-recovery-hands',choices=('right','left','both'),default='right',
+                    help='explicit fixed-wrist recovery hand scope; default preserves old right-only Stage A')
+parser.add_argument('--vision-teacher-mpc-profile',choices=('local_pad','absolute_reference','pressure_reference','pressure_geometry_acquire','pressure_geometry_constrained'),default='local_pad',
+                    help='explicit training-only MPC experiment; default preserves original local-pad MPC')
+parser.add_argument('--vision-teacher-max-control-steps',type=int,default=1300)
+parser.add_argument('--vision-teacher-hold-tail-control-steps',type=int,default=0,
+                    help='opt-in recorded zero-reference tail after the longest Teacher source; 0 preserves source cutoff')
+parser.add_argument('--vision-teacher-raw-chunk-frames',type=int,default=16)
 parser.add_argument('--vision-width',type=int,default=320)
 parser.add_argument('--vision-height',type=int,default=240)
 parser.add_argument('--vision-camera-batch-size',type=int,default=64)
@@ -40,6 +108,24 @@ parser.add_argument('--vision-inference-batch-size',type=int,default=128)
 parser.add_argument('--vision-visibility-mode',choices=('all','batch'),default='all')
 parser.add_argument('--vision-camera-mode',choices=('bounded','fixed'),default='bounded')
 parser.add_argument('--vision-resume-downsize',action='store_true')
+parser.add_argument('--vision-evaluation-checkpoint',type=Path)
+parser.add_argument('--bimanual-checkpoint-adapter', action='store_true',
+                    help='explicit V4 physical-adapter checkpoint evaluation; plain M0 only, verified against native USD/SDK before action')
+parser.add_argument('--vision-evaluation-manifest',type=Path)
+parser.add_argument('--vision-evaluation-physics-audit',action='store_true',
+                    help='default-off independent Student evaluation request/480Hz/backend-target evidence; no control change')
+parser.add_argument('--paired-bias-arm', choices=('m0','m2','replay','right_z_zero','z2','z3'))
+parser.add_argument('--paired-bias-reference', type=Path)
+parser.add_argument('--vision-evaluation-max-control-steps',type=int,default=1200)
+parser.add_argument('--grasp-contact-diagnostics',action='store_true',
+                    help='read-only raw PhysX pad diagnostics during inference-only visual evaluation')
+parser.add_argument('--grasp-contact-probe',action='store_true',
+                    help='historical observation smoke only: 2..16 envs, at most180 control steps; no PPO or candidate validation')
+parser.add_argument('--vision-lift-reward-experiment',choices=('R0','R1','R2','R3','R4','R5'),default='R0')
+parser.add_argument('--vision-warm-start-optimizer',choices=('preserve','reset'),default='preserve')
+parser.add_argument('--vision-checkpoint-interval',type=int,default=10)
+parser.add_argument('--vision-experiment-initial-state-audit',action='store_true')
+parser.add_argument('--vision-experiment-initial-state-reference',type=Path)
 parser.add_argument('--physics-clone-mode',choices=('replicate','usd_parse'),default='replicate')
 parser.add_argument('--force-feedback', action='store_true',
                     help='PPO targets measured hand reaction load; lift requires stable measured contact')
@@ -214,6 +300,55 @@ parser.add_argument('--max-iterations', type=int, default=None,
                     help='stop after this many completed PPO updates; takes priority over episode/timestep budgets')
 AppLauncher.add_app_launcher_args(parser)
 args = parser.parse_args()
+if args.vision_sequence_context_sidecar and not args.vision_teacher_source:
+    parser.error('sequence context sidecars require independent native Teacher collection')
+if args.vision_teacher_perturbation_manifest and not args.vision_teacher_source:
+    parser.error('Teacher perturbation resets require independent native Teacher collection')
+if args.vision_tracking_experiment_config:
+    if (not args.vision_student or not args.tensor_pipeline or args.vision_camera_mode != 'fixed'
+            or args.vision_action_distribution != 'tanh_gaussian'
+            or args.vision_mirror_preprocessing != 'm0_raw'
+            or any((args.resume, args.vision_teacher_source, args.vision_evaluation_checkpoint,
+                    args.vision_evaluation_manifest, args.vision_m2_replay, args.tripod_recovery_stage,
+                    args.vision_stage6_native_config, args.vision_sequence_context_sidecar))):
+        parser.error('full-episode tracking requires an exclusive fixed-camera M0 Tanh visual experiment')
+    from go2_pvcnn.control.dh116.tabletop_full_episode_tracking_experiment import load_tracking_config
+    try: load_tracking_config(args.vision_tracking_experiment_config)
+    except (ValueError, OSError, KeyError) as exc: parser.error(str(exc))
+if args.vision_stage6_native_config:
+    if (not args.vision_student or not args.tensor_pipeline or args.vision_camera_mode != 'fixed'
+            or args.vision_action_distribution != 'tanh_gaussian'
+            or args.vision_mirror_preprocessing != 'm0_raw'
+            or any((args.resume, args.vision_teacher_source, args.vision_evaluation_checkpoint,
+                    args.vision_evaluation_manifest, args.vision_m2_replay, args.tripod_recovery_stage,
+                    args.vision_tracking_experiment_config))):
+        parser.error('Stage6 native source/branch runs require exclusive fixed-camera M0 Tanh visual execution')
+    from go2_pvcnn.control.dh116.tabletop_vision_branching_eval import load_native_config
+    try: load_native_config(args.vision_stage6_native_config)
+    except (ValueError, OSError, KeyError) as exc: parser.error(str(exc))
+if args.vision_m2_replay and (not args.vision_student or not args.tensor_pipeline
+        or args.vision_evaluation_checkpoint or args.vision_teacher_source or args.tripod_recovery_stage):
+    parser.error('--vision-m2-replay requires an exclusive native visual tensor replay')
+if not args.vision_m2_replay and args.vision_replay_arm != 'recorded':
+    parser.error('--vision-replay-arm requires --vision-m2-replay')
+if args.vision_replay_watch_env and (not args.vision_m2_replay or
+        any(i < 0 or i >= args.num_envs for i in args.vision_replay_watch_env)):
+    parser.error('replay watch IDs require --vision-m2-replay and valid environment indices')
+if (args.bimanual_joint_tracking_audit or args.bimanual_mapping_probe) and not args.vision_m2_replay:
+    parser.error('bimanual native probes require exclusive --vision-m2-replay')
+if args.bimanual_explicit_sdk_adapter and not args.vision_teacher_source:
+    parser.error('explicit SDK adapter is restricted to independent Teacher regression')
+if args.bimanual_teacher_physics_audit and not args.vision_teacher_source:
+    parser.error('Teacher physical audit requires --vision-teacher-source')
+if args.tripod_recovery_stage:
+    from go2_pvcnn.control.dh116.tabletop_tripod_recovery_runtime import validate_staged_options
+    validate_staged_options(args)
+from go2_pvcnn.control.dh116.tabletop_vision_evaluation_contract import validate_vision_evaluation_options
+try:validate_vision_evaluation_options(args)
+except (ValueError,OSError) as exc:parser.error(str(exc))
+from go2_pvcnn.control.dh116.tabletop_vision_action_contract import validate_vision_action_options
+try:validate_vision_action_options(args)
+except ValueError as exc:parser.error(str(exc))
 from go2_pvcnn.control.dh116.tabletop_surface_exploration import validate_options as validate_surface_options
 try:validate_surface_options(args)
 except ValueError as exc:parser.error(str(exc))
@@ -340,7 +475,8 @@ if args.mixed_grasp_initialization and (
         or not args.direct_training or not args.tensor_pipeline or not args.headless
         or not args.free_wrist_grasp or not args.surface_force_sharing or not args.surface_feedback
         or (not args.surface_demonstrations and not args.vision_student)
-        or (not args.resume and not args.depth_coordinate_probe and not args.vision_student) or args.max_iterations is None
+        or (not args.resume and not args.depth_coordinate_probe and not args.vision_student)
+        or (args.max_iterations is None and not args.vision_evaluation_checkpoint)
         or args.episodes_per_env is not None or args.surface_teacher_replay
         or args.surface_student_actor or args.surface_student_eval_steps or args.surface_dagger_collect
         or args.require_native_student_validation or args.surface_student_validation_report
@@ -365,6 +501,16 @@ if args.vision_student:
             or args.vision_width not in range(1,321) or args.vision_height not in range(1,241)):
         parser.error('visual actor requires 2..4096 even mixed RGB-D scenes; privileged actor initialization/distillation modes are excluded')
     args.enable_cameras=True
+from go2_pvcnn.control.dh116.tabletop_vision_teacher_collection import validate_options as validate_teacher_collection_options
+try:
+    validate_teacher_collection_options(args)
+    if args.vision_mpc_state_capture:
+        from go2_pvcnn.control.dh116.tabletop_bimanual_mpc_capture import validate_mpc_state_capture_options
+        validate_mpc_state_capture_options(args)
+    if args.vision_teacher_source and not args.vision_teacher_source.is_file():
+        raise ValueError('vision Teacher source must be an existing ordinary dataset file')
+except ValueError as error:
+    parser.error(str(error))
 if args.depth_coordinate_probe:
     if not args.mixed_grasp_initialization or args.num_envs!=2 or not args.depth_camera_config or args.resume:
         parser.error('depth coordinate capture requires two mixed scenes, camera config, and no checkpoint')
@@ -445,6 +591,8 @@ try:
 except (ValueError, OSError, KeyError) as error:
     parser.error(str(error))
 args.output.mkdir(parents=True)
+if args.vision_student:
+    args._vision_new_output=str(args.output.resolve())
 write_json(args.output/'monitor.json',dict(status='initializing',num_envs=args.num_envs,
     timesteps=0,updates=0,object_kind=args.object_kind,
     episodes_per_env_target=None if args.max_iterations is not None else args.episodes_per_env,

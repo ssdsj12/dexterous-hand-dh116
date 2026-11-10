@@ -174,3 +174,31 @@ def test_debug_defaults_to_no_writes_and_rejects_invalid_ids(module,monkeypatch,
     for ids in ((0,1,2),(12,),(-1,),(1,1)):
         with pytest.raises(ValueError,match='debug'):
             make(module,monkeypatch,tmp_path,n=12,debug_output_dir=tmp_path/'debug',debug_env_ids=ids)
+
+
+def test_optional_raw_sink_receives_owned_same_frame_sensor_buffers(module,monkeypatch,tmp_path):
+    cam,created,state,sim=make(module,monkeypatch,tmp_path,n=12)
+    frames=[]
+    cam.set_raw_frame_sink(frames.append)
+    packet=cam.sample()
+    assert len(frames)==1 and sim.renders==8
+    raw=frames[0]
+    assert raw['rgb'].shape==(12,7,9,3) and raw['depth'].shape==(12,7,9,1)
+    assert raw['frame_id']==packet['frame_id'] and raw['physics_step']==60
+    assert raw['simulation_time']==packet['simulation_time']
+    assert torch.allclose(raw['depth'][:,0,0,0],.8+torch.arange(12)*.0001)
+    assert set(raw)=={'rgb','depth','K','T_world_camera','hand_poses','frame_id',
+        'simulation_time','rendered_simulation_time','physics_step'}
+    raw['hand_poses'].fill_(99.)
+    assert not bool((state.roots==99).any())
+    cam.set_raw_frame_sink(None)
+    cam.sample()
+    assert len(frames)==1
+
+
+def test_raw_sink_cannot_advance_physics(module,monkeypatch,tmp_path):
+    cam,_,_,sim=make(module,monkeypatch,tmp_path)
+    def invalid(_):sim.current_time_step_index+=1
+    cam.set_raw_frame_sink(invalid)
+    with pytest.raises(RuntimeError,match='physics step'):
+        cam.sample()

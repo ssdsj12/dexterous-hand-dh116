@@ -1,3 +1,298 @@
+## 2026-11-10 — Stage 7 D：承托转移八阶段请求状态机
+
+- 新增未接SDK的APPROACH/CLOSE/STABILIZE/LOAD_TRANSFER/LIFT/AIRBORNE_HOLD/RECOVERY/FAILED状态机。0.2s实测双侧对向稳定及有源object-following后，才建议0.5mm/s、累计请求曝光上限2mm的转移。
+- 2mm是请求账而非实际位移；Lift默认1mm/s，至3mm/s需独立证据。缺测/丢接触请求原measured hold、pressure恢复/卸载，zero24不冒充安全保持；原observer成功仅保留来源，首terminal/no-op/reset时钟隔离，不自授任务成功。
+- 本次独立Linux CPU主验证：1471 passed, 3 skipped, 246 subtests passed in 307.60s (0:05:07)；exit0，Native作业0，公开测试文件60个。本机完整组合失败与独立PRIVATE parity审查另记；各组是同一主验证组合的子集，不另相加。
+- M0、默认Teacher、3844D Actor、371D Critic、24D Tanh Gaussian及原物理/材料/执行器/关节保护和30mm/5s/0.5mm成功标准保持。PR继续Draft，不合并，不开放新专家池或B3/PPO迁移。 [本次组合报告](docs/superpowers/reports/2026-11-10-stage7-upload-cpu-components.md)
+
+## 2026-11-10 — Stage 7 C：局部力驱动响应与批量FK数学预览
+
+- 新增完整17D局部implicit capped force-PD数学响应及批量mounted FK，左右手按各自SDK行、关节轴和单位计算。NONE/零cap驱动与缺参数分开，未知量不补0，原始M不对称化、不加单位惯量或完美mimic。
+- 未来17D targets/load是显式假设，驱动、接触、补偿符号及真实响应未校准；error_tube=None。批量/标量数学一致不代表原生几何、物理精度、实时deadline或动作准入。
+- 本次独立Linux CPU主验证：1471 passed, 3 skipped, 246 subtests passed in 307.60s (0:05:07)；exit0，Native作业0，公开测试文件60个。本机完整组合失败与独立PRIVATE parity审查另记；各组是同一主验证组合的子集，不另相加。
+- M0、默认Teacher、3844D Actor、371D Critic、24D Tanh Gaussian及原物理/材料/执行器/关节保护和30mm/5s/0.5mm成功标准保持。PR继续Draft，不合并，不开放新专家池或B3/PPO迁移。 [本次组合报告](docs/superpowers/reports/2026-11-10-stage7-upload-cpu-components.md)
+
+## 2026-11-10 — Stage 7 B：H8原命令桥接与约束诊断
+
+- 新增未接控制的64子步命令假设与固定13项约束报告，复用原共享kernel和真实左右SDK命名映射。每手12个直接目标不冒充17D实际响应；反馈冻结/外推必须显式声明。
+- 重放原有typed命令诊断、保留当前SDK限位/速度/lead来源与混合单位；物体、接触、碰撞和完整原控制等缺口仍NA/UNCERTIFIED，feasible=False、action=None。同步更新旧生命周期测试夹具，不改变生产控制器。
+- 本次独立Linux CPU主验证：1471 passed, 3 skipped, 246 subtests passed in 307.60s (0:05:07)；exit0，Native作业0，公开测试文件60个。本机完整组合失败与独立PRIVATE parity审查另记；各组是同一主验证组合的子集，不另相加。
+- M0、默认Teacher、3844D Actor、371D Critic、24D Tanh Gaussian及原物理/材料/执行器/关节保护和30mm/5s/0.5mm成功标准保持。PR继续Draft，不合并，不开放新专家池或B3/PPO迁移。 [本次组合报告](docs/superpowers/reports/2026-11-10-stage7-upload-cpu-components.md)
+
+## 2026-11-10 — Stage 7 A：三路被动接触观测侧车（默认关闭）
+
+- 复用现有Wire→桌面/两端支架视图，新增默认关闭的只读采集接线；保留实际路径、每getter时钟/来源和独立normal/friction原值及NA。不创建World/view，不改变原控制或support字段。
+- 正常量先own再读摩擦；所有行的count/start、容量、重叠仍严格检查，仅按真实Wire行选择活跃非reset载荷。保留首terminal、退休代及失败partial，不以空报告、未知摩擦或numeric ID缺失填造反力/资格。
+- 本次独立Linux CPU主验证：1471 passed, 3 skipped, 246 subtests passed in 307.60s (0:05:07)；exit0，Native作业0，公开测试文件60个。本机完整组合失败与独立PRIVATE parity审查另记；各组是同一主验证组合的子集，不另相加。
+- M0、默认Teacher、3844D Actor、371D Critic、24D Tanh Gaussian及原物理/材料/执行器/关节保护和30mm/5s/0.5mm成功标准保持。PR继续Draft，不合并，不开放新专家池或B3/PPO迁移。 [本次组合报告](docs/superpowers/reports/2026-11-10-stage7-upload-cpu-components.md)
+
+## 2026-11-10 — Stage 7 双手接触状态与原预算委托
+
+- 新增独立、未接线的双手接触状态wrapper，区分真实接触与几何候选、未知接触与LOST，显式支持pinch/tripod必需指。原1mm/1s/0.5s恢复预算与reserve/commit顺序委托既有ledger，接触闪断不补预算。
+- 7状态包含正式CONTACT_CANDIDATE；未知slip/opposition独立NA，selected reset预检并隔离兄弟，首terminal不被no-op覆盖。原20ms仅pressure/recovery稳定，不是双侧0.2s或任务成功。
+- 独立immutable source15组合CPU实跑1360 passed、3 CUDA-unavailable skips、238 subtests；本单元27项是其中子集，不另相加。
+- 本单元未Native接入；既有B使用原恢复路径，D1的ABI元数据NA也不能算FK/J通过。不宣称完整MPC、新成功、专家晋级或B3/PPO许可；原默认Teacher、3844D/371D/24D与30mm/5s/0.5mm保持，PR保持Draft。详见[独立报告](docs/superpowers/reports/2026-11-10-stage7-bimanual-contact-runtime-cpu.md)。
+
+## 2026-11-10 — Stage 7 H8 完整17D运动学外推
+
+- 新增独立、未接线的双手完整17D运动学核心：8个60Hz控制周期展开为64个480Hz子步，显式速度预测与当前q/qd、来源、候选摘要分开。常速外推与候选无关，不能提供动作响应、物体/接触/驱动预测或控制准入。
+- 完整17D含被动行，左右各用自己的mounted FK；区间速度逐步积分，缺失/无效数据不补0，不把目标当实测响应。
+- 独立immutable source15组合CPU实跑1360 passed、3 CUDA-unavailable skips、238 subtests；本单元39项是其中子集，不另相加。
+- 本单元未Native接入；既有B使用原恢复路径，D1的ABI元数据NA也不能算FK/J通过。不宣称完整MPC、新成功、专家晋级或B3/PPO许可；原默认Teacher、3844D/371D/24D与30mm/5s/0.5mm保持，PR保持Draft。详见[独立报告](docs/superpowers/reports/2026-11-10-stage7-h8-kinematic-cpu.md)。
+
+## 2026-11-10 — Stage 7 descriptor 显式 USD TimeCode
+
+- 修补当前安装USD绑定的 `GetPropertyStack` ABI：每次capture取得一个Default TimeCode，Attribute和Relationship共享它；不改属性Get、结构/关节判据、时钟、NA或默认关闭行为。
+- 首次原生descriptor采集8帧/64条全部结构NA，封存审计通过；真实异常是缺少TimeCode参数。没有instance-proxy问题证据，不改变遍历或jointEnabled规则，原失败原件保留。
+- 修复版独立source16 CPU1364 passed、3 skipped、238 subtests；原生复测已准备但尚未执行，FK/J未校准。固定腕双侧恢复为另一独立旧控制路径实验，不计作本修补或新wrapper验证。
+- 原Teacher、物理、执行器、3844D/371D/24D Tanh与30mm/5s/0.5mm保持；PR继续Draft。见[原生失败与CPU修复报告](docs/superpowers/reports/2026-11-10-stage7-descriptor-usd-abi.md)。
+
+## 2026-11-10 — Stage 7 mounted model CPU preview
+
+- 新增默认关闭的现有stage/hand/scene只读descriptor，保存完整17D/23link/22joint布局及原始新getter、属性来源、时钟、失败partial；原model capture关闭时合同保持。
+- 新增左右独立完整关节FK/J数学假设，不反射复制关节轴、不用affine mimic填被动状态、不执行控制；来源与坐标假设显式绑定。
+- 独立source12 CPU769 passed、1 skip、238 subtests；新增Native0，实际FK/J和未来动力学/控制仍未验证。原控制/物理/模型/成功标准保持，PR Draft。见[报告](docs/superpowers/reports/2026-11-10-stage7-mounted-model-cpu.md)。
+
+## 2026-11-10 — Stage 7 独立MPC目标算术
+
+- 新增geometry/contact/support/slip/bimanual/joint/smooth/risk八项独立CPU算术和逐项贡献，显式实验权重、候选digest、时钟/单位/mask/NA合同；缺值不补0，已测常量不冒充未来预测。
+- 独立state+objective实跑73 passed、41subtests、exit0；本次Native作业0。未生成或下发动作、未修改奖励/原控制器，不宣称H8、动力学、实时或任务资格。
+- 默认M0/Teacher、3844D/371D/24D、物理和成功标准保持；180步原Teacher观测仍运行，正式MPC/恢复/配对/新专家Student未完成，PR仍Draft。见[验证报告](docs/superpowers/reports/2026-11-10-stage7-mpc-objective-arithmetic.md)。
+
+## 2026-11-10 — Stage 7 filtered-contact数值与epoch v2
+
+- 新增默认关闭的v2首回合逐env永久退役/显式generation收据；v1严格合同保留。仅完整归档成功后推进ledger，异常保留首terminal与同次partial，不把reset新回合混入首回合。
+- F1复用原34 sensor views，保存实际配对normal/friction owned原始数组、来源/时钟/SDK行；两通道独立valid/NA，不补零、不将几何或可解析值当实际承托。
+- 公开范围实际639 passed、1 skipped、238subtests；epoch1/values1/values16自然exit0及封存后审通过，8/8/128帧、数值2176/34816 valid且NA0，非零观测均0。全部截断，未验证真实异步terminal、不增加任何任务成功；低速诊断不授60Hz能力。
+- 180步独立接触建立观测已显式启动，尚无结果。原控制/物理/24D Tanh/默认Teacher与成功标准保持，H8/恢复/载荷转移/100初态配对及新专家Student仍待完成，PR继续Draft。见[验证报告](docs/superpowers/reports/2026-11-10-stage7-filtered-contact-values.md)。
+
+## 2026-11-10 — Stage 7 filtered-contact路径元数据
+
+- 新增F0实际nested sensor/filter path resolver与fresh provider，原34 sensors/现有Wire view逐getter owned/clock/source/view括号，默认关闭，未知/漂移保留raw并拒绝，不补numeric partner ID或force资格。
+- 新增独立有限 `--vision-mpc-filtered-contact-capture`，保留原state+aux/Teacher source-chain与原控制器；provider首错和secondary写错、首terminal、逆序清理分别保存。
+- 实际1/16控制步原生短测exit0，闭合后审分别8/128帧、2176/34816配对，failures0；所有回合截断，不计成功。公开范围独立CPU582 passed、1 skipped、223subtests；原始数据及源码前后SHA不变。
+- 已确认v1 previous-terminal严格边界会拒绝异步cohort后续帧；完整退役/epoch与数值接触仍未验证，不默清previous、不宣称新MPC/Student成功或实时能力。M0、原Teacher/PPO、3844D/371D/24D、物理/材料/限制与30mm/5s/0.5mm保持，PR继续Draft。见[原生验证报告](docs/superpowers/reports/2026-11-10-stage7-filtered-contact-metadata.md)。
+
+## 2026-11-10 — Stage 7 只读完整关节观测与接触交付
+
+- 新增全articulation只读provider、默认关闭的Model capture与两种独立contact-delivery observer，保存实际issued24/480Hz时钟、SDK/source/单位/元数据和owned raw；不进入Student、不改控制或物理。
+- 修复等值但identity不同的实际SDK enum wrapper识别；保留原类型/协议与转换证据，未知、bool、fraction和不一致映射仍NA。原生source09 Model16后审通过128帧/1024状态，44字段各1024 valid，6个设计缺口保持NA；source08字段绑定失败与原raw不改。
+- callback在等记账锁前复制SDK buffer，独立保存orphan/late ledger；Sequence→Aux→Model→Core逆序清理，prior/getter/write错误保留原异常/首terminal，各archive不重复写入，Aux重复finish重试恢复所属hook。
+- 本发布范围独立CPU526 passed、1 skipped、147subtests；post-step与full-callback原生短测均exit0/归档检查通过，但full report仍空。所有短测回合均截断，不计任务失败率或成功；未授力/承托/未来动力学或60Hz资格。
+- M0、原Teacher/PPO/3844D/371D/24D Tanh、原物理/材料/执行器和30mm/5s/0.5mm保持。H8/恢复/载荷转移/正式100初态配对与新专家/Student仍待后续，PR保持Draft。详见[验证报告](docs/superpowers/reports/2026-11-10-stage7-articulation-contact-delivery.md)。
+
+## 2026-11-10 — Stage 7 辅助接触测量与原 Teacher 完整回归
+
+- 新增实际 Cylinder/单位/COM/inertia 的 source-bound 读取、三个低层 Wire→静态表面 view、已安装 PhysX full report 来源与严格时钟/所有权记录；默认关闭，不加入 Actor 或改变原物理。
+- 新增 `--vision-mpc-aux-capture`，与原 capture 共享 UUID/issued24/8 子步，首 terminal 独立保存；scene/raw/close 异常明确标记并完整清理。实际 source-chain 仅接纳原方法或精确的既有 Sequence 包装，不放松原 Shadow 合同。
+- 原 Teacher 实际1800控制步/14400物理帧/84461首回合状态/8个terminal；二指4/4、三指0/4（两drop、两timeout），关闭归档完整性通过。不是100不同初态或新Teacher/Student成功。
+- 独立 source06 CPU336 passed、1 skipped、93subtests；真实16步辅助冒烟exit0/128帧/1024状态，全8回合截断。记录并保留source05的初始化失败与修复，未在失败目录重试。
+- 端支架有非零raw观测，Table矩阵为零而不代表已证无反力；全局report为空，partner ID、合格support/sign/frame/completeness继续NA。H8、正式配对、新专家池与Student提升仍未完成；PR继续Draft，原默认/物理/24D合同/成功标准不变。详见[验证报告](docs/superpowers/reports/2026-11-10-stage7-mpc-contact-source-audit.md)。
+
+## 2026-11-10 — Stage 7 统一状态与原生测量链
+
+- 新增不可变 Teacher MPC 状态及严格 provenance/NA/时钟合同，保留 Student 输入隔离。复用真实 backend target、原接触读取与 COM 点速度换算，不用命令缓存或整手载荷伪造逐指反馈。
+- 新增默认关闭的原 Teacher 只读 480 Hz 采集：真实 issued24/8 子步关联、原 refresh receipt、首 terminal 关闭、cohort 与 actual mask 分开，invalid raw 非有限数据可恢复保存；异常时仍清理全部资源。
+- 独立 CPU 实测 185 passed、1 skipped、58 subtests。实际 8 环境/180 控制步采集 exit 0，11520 状态与1440物理帧完整对齐；全为截断、无 terminal，不授新 MPC、专家池或 Student 成功资格。完整旧 Teacher 首回合采集仍在执行。
+- 保留准备失败：child 输出目录误建、Git 资产清单旧路径。独立 runtime freeze 仅四个路径字符串重绑定，实际 USD SHA 和原源码/物理保持；启动器现在提前校验所有依赖。无证据的 support/反力/partner ID/硬件反馈仍 NA。
+- 原默认、PPO、3844D Actor/371D Critic/24D Tanh、物理/材料/执行器和30mm/5s/0.5mm不变。H8、恢复、载荷转移、完整保护及正式配对/新专家仍未完成，PR保持Draft；详见[报告](docs/superpowers/reports/2026-11-10-stage7-mpc-state-measurement.md)。
+
+## 2026-11-10 — Stage 7 原生分叉证据与目标门禁
+
+- 完成 E0/B0/B1/B2 四组来源首回合及六时点比较，各 0/4；接触建立/保持、原标定跟踪与最终失败分别记录，微小数值差不直接归因。
+- 完成 64 次真实冷重置短切换、64 项后处理和 256 个 Student 窗口；41,472 个实际 Student 子步、635,392 个 Teacher 前缀子步分开，缺失 0。全部窗口正常截断，未提供 Student 独立成功或新泛化初态资格。
+- 以最终 SHA 绑定原生执行、独立进程/锁/原件交接与完整聚合附件；显式保留 event owner、UID、原始指针、诊断锚和原生成功锚区别。HOLD/60 的 B1/B2 四环境原生有效窗口均中断，不能以接触存在或继承高度替代合格保持。
+- 当前无闭环目标赢家；B0 控制组、B1 事件诊断基线、B2 条件命令消融均保留，B3/PPO 与默认 Teacher 晋级继续关闭。独立 CPU 310 passed 与原生、Teacher/Student 成功分别报告；提交前仅清理一个测试行尾空格，AST 相同，定向 Linux 锁测试 1 passed/1 cache warning；首次 CPU01 快照失败及 hygiene_cpu01 复制元数据失败均保留。
+- 原默认/PPO 路径、3844D/371D/24D Tanh、物理/材料/执行器及 30 mm/5 s/0.5 mm 保持；后续接触测量、MPC、共同暂停完整回合和二指/三指各 100 个不同初态正式配对仍待完成，PR 仍 Draft。实际命令和限制见[Stage 7 报告](docs/superpowers/reports/2026-11-09-stage7-teacher-student-divergence.md)。
+
+## 2026-11-09 — Stage 6 证据分析、成功池合并与接口修复
+
+- 新增只读物理分叉分析，分别保存微小数值差异、超过实际Teacher重复范围/标定阈值的具名关节跟踪偏离、绝对任务事件和逐环境峰值UID/发生时刻。报告、checkpoint、完整job目录、diagnostic UID、issued动作和时钟严格绑定；未记录的post接触范围不补造。
+- 新增真实成功池合并工具，保留原观测/动作/历史和四组身份，只重映射本地episode ID；逐父验证原生成功、接触抓法、来源SHA、完整L16 parity，拒绝重复case或失败池，不伪装新Teacher原生报告。当前无真实Tier1成功输入，合并/重训门禁保持关闭。
+- 修复Common比较侧CPU backend使用CUDA live索引崩溃，以及Tripod firstterminal后reset slot被旧固定腕目标检查/覆写；不改原active控制或四个controller字节。实际最新CPU 197 passed、2 CUDA skip，另Torch CUDA2 2 passed。纯Student E0/B0各0/4、B1/B2未完成，原生实验继续单实例独立执行，PR继续Draft。
+
+## 2026-11-09 — Stage 6 双侧固定腕恢复实现
+
+- 将Tripod恢复状态、获取原点、取消与压力掩码扩为N×2×3；逐物理episode/hand/digit累计1mm与1s，0.5s无实测进展停止，接触闪断不补预算。真实承载指腹走原压力保持，获准执行后按实际目标提交确认记账，几何预测不算真实接触。
+- 显式Stage B支持left/both，保留原A/right；各手使用自己的源FK/Jacobian/pad区域和原非线性碰撞/关节限制。Stage B静态资格不解锁移动腕，C/D/E仍关闭，不产生三指Student专家资格。
+- 发布`scripts/run_dh116_stage6_tracking.py`五项有限串行驱动，默认prepare不启动原生，显式execute检查完整SHA/原物理参数并独立freeze/LOCK_NB，busy即拒绝。本次5文件CPU实际79 passed（9.24s），原生A/B及三组完整跟踪结果仍待执行，PR保持Draft。
+
+## 2026-11-09 — Stage 6 独立完整回合跟踪保护
+
+- 新增默认关闭的共同双腕暂停状态机与独立original/unilateral/common实验入口，实际PhysX后端目标与cache分开，保留原控制器F32→F64转换和原guard；原始Actor与privileged hybrid分别记录，不授予纯Student成功资格。
+- 用实际Teacher02同钟post-physics q/qd标定每关节P99.9，qualified报告SHA `bbbca065…93adc`。按SDK实际报告时钟单一affine映射校验，原1/480控制dt不变，不逐行拟合消除错位。无法表达真实姿态保持或未知卸载profile明确拒绝。
+- 新完整回合入口记录独立UUID、首terminal、backend/cache、实际SDK/base及具名body位姿；legacy palm字段实际是base_link，未知palm_link不补造。当前5文件CPU实际98 passed（13.16s），新原生完整回合仍待串行验证，Teacher/MPC共同暂停晋级未通过，M0默认不变。
+
+## 2026-11-09 — Stage 6 专家初态扰动与来源隔离
+
+- 新增显式Tier1 Teacher manifest、真实reset/首相机包读回及成功二指/失败未完成分池。只改物体XY/yaw，原关节、手根、速度和double Task命令seed保持；不通过原evaluation的float32编码重写Teacher命令。原eval默认分支保留。
+- 加固显式row/episode来源lineage冲突及同episode跨train/heldout拒绝，保留legacy轨迹断点分段。独立对真实02池与BC冻结版本比较：4638窗口、事件、概率、1000次同seed抽样及prepared index全部exact。
+- 发布实际29job有限驱动的原字节实现和CPU测试。数据/训练/驱动范围125 passed（21.01s），Tier1与原Teacher/reset相关范围200 passed（22.74s），不是相加的原生次数。新扰动manifest已对真实c58/资产合同验证，尚未执行原生扰动或添加专家样本；原PPO及默认控制路径保持，PR仍Draft。
+
+## 2026-11-09 — Stage 6 原生来源与短分支入口
+
+- 接入五命令CLI、绑定真实模型/场景/数据SHA的原生来源和Teacher前缀短分支；分别记录真实issued动作、首次数值偏离、任务物理事件及首terminal。Student launch移除Teacher/MPC/旧评估/M2参数，相机warmup与真实reset读回严格核对。
+- 只读cache绑定输入及13个源码SHA，仅复用saved-observation前向和shadow；所有物理reset、前缀及terminal重新执行。实际Teacher tape重放4/4、37584样本、1175policy步，纯Student计数0，来源模型四组和24分支继续串行验证。
+- 同4698观测完整离线前向确认B0/B1/B2总体MSE下降，但B1/B2近似，不能据此晋级。当前entry/integration实际25 passed（13.29s），branch39 passed、冻结相关91 passed，非原生次数；完整命令、SHA及边界见[实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。默认路径/成功标准保持，PR仍Draft。
+
+## 2026-11-09 — Stage 6 实际序列BC模型
+
+- 新增masked动作、条件累计目标及可选delta损失，独立`fit_actor_sequences`使用真实4×16连续窗口、fresh BC Adam、单次Tanh和原观测；旧`fit_actor`保持。主B0/B1/B2不重置源Actor，Critic、log_std和原PPO状态保留。
+- 实际三组各3000更新、192,000有效曝光、0 padding，最终模型均保存并按预设最终更新报告，未按fit_only训练MSE选模。每250步检查固定事件的PointNet梯度及坐标干预，三组最终探针未失活。新增LeakyReLU仅允许显式新合同，主模型仍ReLU。
+- 新原生Teacher采集02二指4/4、三指0/4，当前源码SHA绑定的成功池通过37,584子步及4638窗口严格目标parity。独立实际CPU命令101 passed（16.86s）；模型SHA、预算、命令和边界见[实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。纯Student来源与分支评估在独立目录继续，没有新PPO或默认路径晋级，PR仍Draft。
+
+## 2026-11-09 — Stage 6 条件展开与原生上下文验证
+
+- 抽取原finger/translation/rotation/clearance运算为共享纯函数；shadow只依赖录制反馈，各自累计Teacher与Student命令，不冒充物理模型。修复原slice-inplace造成的完整命令反传错误；独立旧源码160组合×16子步、97,280项逐位一致。
+- 新sidecar保存唯一身份、实际previous action、8子步pre-control反馈与真实目标，分开读PhysX backend与IsaacLab cache；terminal后inactive reset目标不参与原回合parity，缺测不补造。新增同钟post-physics q/qd及SDK clock资格接口。
+- 新采集01二指Teacher/MPC 4/4、三指0/4；4698条成功视觉动作、37,584物理位native目标一致，完整累计shadow误差为0。新版源码SHA不同而被当前训练门禁拒绝，独立02重新采集；没有更改旧数据或伪造兼容SHA。
+- 冻结CPU聚焦25文件533 passed（52.67s）；后续mode互斥检查11 passed。Git过滤往返验证4个来源绑定模块字节不变，避免跨平台换行破坏原生源码SHA。新BC与纯Student资格尚待实际训练及评估，原PPO不改、PR仍Draft。
+
+## 2026-11-09 — Stage 6 序列数据构建
+
+- 新增SequenceDataset、START/CONTACT/LIFT_ONSET/HOLD事件与来源均衡采样，16步真实历史窗口不跨reset/terminal/缺测；短完整episode padding显式mask，恢复标签须独立资格。
+- 仅向原监督schema末尾添加sidecar验证/唯一身份联结，原validate_dataset行为不变。真实动作、previous_action、时间、8子步和SHA不一致不按行号拼接。
+- 数据及旧schema回归76 passed（5.10s），命令与局限见[实施记录](docs/superpowers/reports/2026-11-09-stage6-sequence-control.md)。预冻结新200初态但原生次数仍0，Teacher上下文采集独立进行，尚未声明BC/Student成功。
+
+## 2026-11-09 — Student原生执行链与逐手证据收口
+
+- 同V4模型、seed及200个初态的诊断复测退出0，二指/三指各0/100；Lift、Hold及逐trial11项已保存统计与首轮相同，不声称全轨迹逐位相同。新复测二指超力/越限/掉落/超时为16/18/51/15，三指为40/7/53/0，旧run失败码不回填。
+- 450个关闭块与2183个完整terminal快照独立核验，正式评估仅取200首episode的1353010条物理记录；额外1983次终止不计独立评估。实际clock、UID、Actor24与首终止跨流核对通过，真实backend/cache和17DOF单位覆盖完整，来源与旧缓存证据分开。
+- 保存四组掌峰值的env/episode_uid/step/time，以及env45/104/136同环境双手完整动作轨迹。二指掌50mm时物体净Lift接近0，不将掌位抬高当抓取；各组掌位分位、每维动作、载荷及跟踪误差见[独立报告](docs/superpowers/reports/2026-11-09-stage5-student-execution-audit.md)。
+- 补T5成功窗的载荷来源边界：ordinary是手物拒接触，桌/支架反力缺测；修正数处旧进度语句，历史模型/数据/资格原件不改。522 passed、1 skipped的源码检查保持；本次仅整理已完成原生数据与文档，不启动新PPO或三指迁移，PR仍Draft。
+
+## 2026-11-08 — 第五阶段物理映射与协同实验实现
+
+- 新增 `tabletop_bimanual_joint_tracking_audit.py`，在原生终止后、物理 reset 前保存三处动作边界、SDK 目标来源、q/qd、被动联动、仿真估算力矩、指腹载荷及同子步推导冲量。T1 独立重放复现两次右 finger12 越限，证据与未知动力学贡献分别保留。
+- 新增左右独立物理动作适配器，读取各自源 USD 完整关节树、实际 base/palm 位姿和主动/被动耦合。源 FK、解析/有限差分及 53 组原生微扰已验证，原 SDK 24D 语义往返保持一致。Adapter 版本、资产和源码 SHA 进入显式合同。
+- Z0～Z3同源同初态各200首回合已完成：全部0成功；Z1消除下沉但没有合格抓取，Z3三指关节越限66/100，候选不晋级。共同暂停双腕在1024环境、0.533秒短窗消除原两次越限；独立暂停引入的env661过载与完整失败轨迹均保留，不将短窗当成完整抓取。
+- 增加V4独立模型绑定、源模型只读派生与运行时SDK/资产/源码精确核验。误标V2/V3但携带Adapter元数据的模型也明确拒绝，避免绕过显式验证。旧M0、Tanh和旧PPO路径保留。
+- 新增Teacher专用480Hz首终止审计，分离Teacher请求、SDK目标、实测关节、Hold窗口漂移与重锚前fresh接触锚滑移。T6三指候选以实际T5二指4/4证明和输入SHA为门禁，只修改三指行，保留合法下降接近、接触/跟踪失效时停止共同上升；其修改动作不作为BC标签。
+- 本次原Teacher路径与Adapter对照各完成8个首回合：每臂二指4/4、最高31.627704 mm、Hold5 s、Hold锚滑移最大0.079632 mm，三指各0/4。每臂84461条有效480Hz样本通过身份、时钟、动作对应与首终止冻结核验，SDK命令缓存目标读取覆盖100%（后端未记录）；T5通过，两臂10559条动作和主要物理状态一致，语义浮点往返与实际执行差明确区分。
+- 增加带原始输入SHA的关节跟踪/接触载荷图及视觉迁移报告。第1024轮源模型的PointNet在两组实际固定输入上输出零特征、对坐标清零不敏感；只报告已测输入，不伪造第513轮或训练起点因果证据。
+- 新增独立`bound_student_eval`入口与authored验证初态生成器，严格绑定V4、模型/清单SHA、相机、物理及预处理合同。修复冻结源码路径替换误改显式模型路径的问题，锁后复核实际child argv身份；新增篡改/路径冲突回归。生成时200个authored初态不计原生；后续实际读回、标准评估及同集诊断复测均已独立记录。
+- 补充逐指恢复接入缺口与只读碰撞资格审查：当前T6只约束双腕，未完成剩余预算逐指恢复；旧272个cooked hull拓扑实际闭合，复合核验失败集中在近似合面一致性。原数值容差、cooking/资产及live资格均未改，不能用离线包络冒充已附着原生形状。
+- T6完成原生8首回合：二指4/4、请求/执行及SDK主动关节目标保持；三指0/4、最高0.002054 mm、六pad共承托0 s。右接触提高伴左接触退化，候选不晋级，95184个有效物理样本与首terminal独立核验通过。
+- T5/T6结束后完成独立二指BC1000次离线更新：显式恢复PointNet，MSE从0.039165852降至0.000195265，3844D/371D/24D、Tanh、Critic/PPO Adam/log_std/RNG保留。首轮200初态原生评估完成，两抓法均0/100，最高净Lift25.235939 /0.651073 mm。1353010条物理记录、200首terminal和0覆盖独立核验；失败码/逐手SDK链未存，不补造，后续同模型同初态被动诊断复采已完成，见11-09报告。无三指BC/DAgger/长PPO。
+- 更正旧目标读回来源：IsaacLab `data.joint_pos_target`为命令缓存，旧native字段不是PhysX后端证明；历史raw、4/4物理成功和旧资格原件保留。新增真后端getter与cache独立字段、V1～V4来源兼容分析，缺读回不再假通过；T1独立原生补证见下一条，TeacherAudit V2尚未取得独立原生验证。
+- 新T1独立原生补证完成：764条watch记录的双手full17真后端目标与cache一致，原M2两次越限实测轨迹重现，合法后端目标下仍发生实际跟踪越界。不是新Student/Teacher成功，不倒改旧缓存来源。
+- 新增默认关闭的`--vision-evaluation-physics-audit`：60/480Hz显式身份、实际或NA时钟、失败码、掌/关节/载荷及backend/cache分列、独立terminal和分块NPZ。新诊断SHA不混入原五项证据资格；仅按同次raw m判来源有效性，真0/False不误标、缺失不跨步泄漏。统一522 passed、1 skipped，39.46秒；控制/奖励和默认关闭路径保持，后续原生复测结果见11-09记录。
+- 修复配对协调器在结束/新episode上继续驱动的问题：动态首回合mask同时限制coordinator、tracking guard和排队目标撤销，活动首回合逐值不变。原冻结Z3不重写，已完成报告仅取原首回合。
+- 完整CPU冻结快照6136 passed、113 failed、48 skipped、25 errors及91 subtests passed。对`3f7fd69`的195新增节点全通过、无新回归；37个旧失败状态恢复，旧113失败/25依赖或外部资产错误保留。修正CRLF导致的两处固定SHA误报，恢复漏同步测试，增加定点LF属性，物理值与保护保持。后续T6下降获取、新入口/清单及相关控制、模型和Teacher路径的当时聚焦回归359项通过，43.53秒。
+
+## 2026-11-08 — 右掌偏置第四阶段
+
+- 200 对实测物理初态的完整回合评估显示，M2 三指净 Lift P95 为 0.401537 mm，81/100 例关节越限。M0 三指对应 0.074721 mm、12/100 例越限。两种抓法均无成功。固定其余 23 维动作的右 Z 干预结果、同调度回放对照、初帧点云匹配子集与滑移计数详见[原生配对报告](docs/superpowers/reports/2026-11-08-vision1024-stage4-native-pair.md)。
+- 增加 M2 历史动作回放、冷初态配对和固定左手的右 Z 干预。关节回放在物理 reset 前记录完整 articulation、SDK 主动目标与 Actor/执行动作。原轨迹两次越限均可复现。
+- 修正第三阶段报告里的终止次数和模型文件留存说明。奖励项相关性按各自有效样本计算，并核对 policy 与物理行的身份。第 1024、1025、1026 轮模型的同输入推理统计见[阶段报告](docs/superpowers/reports/2026-11-08-vision1024-stage4-ppo-bias.md)。
+- CPU 验证使用 `pytest -q tests/test_vision_eval*.py tests/test_evaluation_telemetry.py tests/test_dh116_tensor_env.py tests/test_joint_limit_replay.py tests/test_vision_action_diagnostics.py tests/test_vision_mirror_ablation.py tests/test_stage3_ppo_bias_analysis.py tests/test_vision_paired_bias_eval.py tests/test_vision_squashed*.py`。使用原 SHA 固定的 USD 资产和最终代码，281 项通过。
+
+## 2026-11-08 — 视觉 Student 右掌不对称 P0 动作诊断
+
+- 新增默认关闭的 `--vision-action-diagnostics`，逐环境记录24D动作、左右手分量、episode/physics step/时间戳、请求目标、投影前后目标、最终 SDK 目标、实际掌位/速度、净空、safe_z、接触载荷与有效接触；诊断不改变控制、奖励或模型输入。
+- 独立最终 Checkpoint 单更新回放记录32768条逐环境样本；右掌原始Z动作均值−0.289、左掌−0.047，左右安全投影前后差值和投影比例均为0。当前证据指向左右初始化/策略非等变，不把投影或奖励修改认定为根因。
+- 第513轮Checkpoint与旧峰值的逐环境轨迹不存在，本阶段不声称完成513/1024因果对比，也不修改奖励或拆分Actor。详见右掌不对称审计报告。
+- 后续复核修正实际掌位基准：每个环境保存物理 reset 后实测掌位，控制器动态 lift offset 单独记录；修正后的独立单更新回放仍显示左右投影差值为0，未改变原训练。
+
+## 2026-11-08 — 右掌偏置第二阶段双层诊断与镜像消融
+
+- 新增默认关闭的60Hz policy/PPO诊断和480Hz physics诊断；terminal物理样本先保存，后续no-op不覆盖。记录latent、log_std、log_prob、value、advantage、returns、全部reward terms以及逐子步掌位/接触/投影数据。
+- 完成M0/M1/M2离线镜像消融：M0 L2 0.754994、M1 0.806492、M2 offline-only 0.296581；M2方向一致率0.833333。镜像回环自身四帧/点云/关节/掌位/quaternion/previous action误差全0。
+- 独立短原生回放输出32768条60Hz记录和262144条480Hz记录，未启动长PPO，未修改奖励或旧模型。详见[第二阶段诊断报告](docs/superpowers/reports/2026-11-08-vision1024-stage2-diagnostics.md)。
+
+## 2026-11-08 — 右掌偏置第三阶段 PPO分析与M2原生反事实
+
+- 对32768条policy记录完成按抓法/左右手的动作、log_std、advantage、returns、reward terms、接触载荷和相关性分析；二指/三指右掌Z均值为−0.263025/−0.322588，相关性弱且无terminal/failure样本，明确不作因果解释。
+- 新增M2独立原生预处理路径和动作逆变换，M0默认路径保持不变；同Checkpoint短回放中M2二指/三指净Lift为0.003487/0.014168mm、成功0、出现2次joint_limit，未证明可纳入部署合同。
+- 补强episode_uid、时间戳/physics_step单调性和terminal覆盖测试，诊断完整性专项10项通过。详见第三阶段PPO、M0/M2和完整性报告。
+
+## 2026-11-07 — 右三指独立恢复、非线性区域与隔离原生 A
+
+- 新增每物理episode/env/hand/digit独立恢复与执行记账，保留1 mm/1 s/.5 s限制，拒绝回滚reset、预算重置和未提交候选收费。
+- 新增实际SDK全11关节/全链接校准FK、原USD真实指腹区域、34-hull与双手扫掠审核，分开DOUBLE逻辑积分、float32 SDK编码及真实接触。几何近似与无证书拒绝均明确记录，不更改物理碰撞或执行器。
+- 修复接触中途建立后旧接近动作继续执行却不记账，以及旧压力动作在接触丢失后成为无预算接近；每480 Hz切换动作来源并保留原退压。新增独立fresh pressure参考，未将旧MPC失败计数重置来扩大预算。
+- 新增完整raw ownership、actual SDK/cache核对、终止/reset/fatal证据、真实掌位移和固定锚点滑移；模拟力矩/命令/drive限制分开。A/B/C门槛不能由单帧、unknown、换锚或返回原位伪造；原支架/桌面载荷未知时不认证承托。
+- 分离物理episode接触历史与A阶段内的实际恢复证据；前缀已恢复事件不能提前通过A。逐子步补充实测区域间隙/法向见证、best gap、round和接触/预算状态，供独立重算0.5 s进展判据；不改变动作或预算。
+- 最新完整源码CPU回归：5917 passed/原96 failed/28 errors/49 skipped，91个subtests通过；5786个基线节点无状态变化，304新增全通过，共6090个节点，最终1334文件源码清单保持不变。此前A02快照的5883/270结果已被此回归取代；CPU不计原生抓取次数。
+- 独立 `stage_a_01` 在进入A控制前因桌面父Xform未直接带CollisionAPI而退出，0个A试验；只读修复为启用子碰撞体的世界边界并集，原边界与物理限制不变。3项定向及2项独立USD测试通过，01失败数据/源码保留。
+- `stage_a_02` 进入真实480 Hz物理子步后由操作者SIGINT结束，被独立审计标为censored/invalid evidence，而非A通过、失败或三指0/4：481逻辑控制、482物理区间、3856原始SDK子步、30840物理行，8个首episode均censored、0完整episode、0接近提交/预算消耗、0 Student/PPO。env4–7只有自然Tripod接触，阶段内0次REACQUIRING、固定阶段恢复、terminal或success。杆/腕未静止，角漂移0.0022–0.00328 rad高于0.001门槛，几何决策0；SIGINT flush顺序造成末8个诊断缺失，未补造reducer。B/C/D和Student不运行。
+- cooked readback 03/04均为reset-only探针，不构成A或抓取证据：03实际mesh getter计数272项全为0；04改用owner-first后各存储hull getter count=1，但272个hull全部未通过独立closed-convex复合验证，complete=false/censored、live attachment=false，未recook或替换几何。04无控制/物理/Teacher/PPO/Student，仅读取一次RGB-D。owner-first模块/测试SHA前缀`ddf703d...`/`e55cb...`；最新定向CPU52 passed/13.34s，完整CPU仍需在最新源码后重跑。
+- 新增显式独立stage A入口、单Isaac冻结启动和门禁；A02审计结果为censored/invalid，B/C/D仅有诊断门槛，未完成原生运行，未启动Student或长PPO。当前原生对象仍为原刚性圆柱代理，不能替代柔性线缆或实机验证。原生结果在[恢复验证报告](docs/superpowers/reports/2026-11-07-tripod-recovery-budget-validation.md)中独立更新。保持所有历史数据、二指路径、Tanh/v2、3844D/371D/24D、原物理和30mm/5秒/0.5mm，PR继续Draft、不合并。
+
+## 2026-11-07 — 三指几何接触获取与约束求解
+
+- 增加显式Teacher-only几何获取profile：源CAD指腹/实测位姿、有限圆柱侧面、正间隙与朝向门禁、逐pad位移/时间/无进展累计预算和原生fault拒绝；已有承载pad保留压力控制。Teacher腕部不变，不修改Student/PPO/物理参数。
+- 完成第一轮8环境固定来源原生回放及独立物理/资产/初态/动作/RGB-D审计：二指4/4、最高31.627704 mm；三指0/4、最高0.006431 mm，四个首回合均掉落。双手六个所需pad未同时承载；不把低压力、运动学预测或接触片段当成功。
+- 六个真实停止快照证实被拒的soft提案存在合规替代解，增加独立 `pressure_geometry_constrained` profile，仅修复不可行提案，逐值保留已可行解；记录完整求解输入、H4轨迹、原始代价/约束及float32实际编码首动作验证。原几何模块冻结，原预算/永久停止和压力限制不变。
+- 增加默认关闭的有界零参考记录尾段，保存全部实际专家动作与同步传感数据，保留原first-terminal与成功池完整长度门禁；默认历史路径保持。第二轮完成1800控制步/10559样本、8首回合完整、0截断，独立原生审计exit0：二指4/4、最高31.627704 mm；三指0/4、最高0.019719 mm，2掉落/2原超时。1056尾段样本全部验证，尾段成功0；三指六pad加对向仅两个环境各1个480-Hz子步，实际载荷/深度峰增加，稳定抓取仍未解决。
+- 完整审核524次求解调用、全H4/编码动作和45504准入子步，执行限位违规0。后段固定法向局部模型的H4冲突具有独立数值证据，不能扩大成物理不可达；CAD中心点间隙不等于接触判据。最终完整CPU5613 passed/原96 failed/28 errors/49 skipped/91 passing subtests；原5670节点不变，116新增全通过。另有177项最终相关回归、261项求解器相关回归及6真实快照检查通过。没有新Student训练或三指合格标签。
+- README和[本次验证报告](docs/superpowers/reports/2026-11-07-tripod-reacquisition-validation.md)同步；所有原模型、运行数据和失败证据保留在Git外，原3844D/371D/24D、Tanh Gaussian/default v2及30 mm/5 s/0.5 mm标准不变。未启动长PPO，PR保持Draft。
+
+## 2026-11-06 — 接触MPC与quaternion、启动采样的分阶段验证
+
+- 新增显式绝对参考与压力参考Teacher MPC；前者限制累计参考偏移，后者从实际承载pad建立压力几何目标，并保留原关节、速率和实测lead边界。独立复审修复480Hz累加舍入导致的虚假不可达，以及未知法向保持约束覆盖lead边界的问题。默认局部MPC、物理限制和30mm/连续5秒/0.5mm成功标准不变，模型不声称预测真实力或摩擦动力学。
+- 完成BC100纯Student二指/三指各100个固定冷初态、1800控制步与1,503,649条原生样本独立审计：0无效测量，两组均0成功、0双手有效对向接触，抬升仅为数值沉降。确认旧Actor对等价腕部quaternion符号敏感及启动状态欠拟合；新增显式actor预处理合同、BC v3和默认关闭的启动采样，3844D/371D/24D、Tanh PPO及历史raw路径保持，静态恢复和推理核对模式。
+- 两项MPC完整独立审计通过：`absolute_reference_pilot_v2` 二指4/4成功、最高31.627704mm，三指0/4且仍为原 `excess_force`；`pressure_reference` 二指仍4/4，三指越过旧约419步过载时刻，但在684/938/783/864步全部 `object_dropped`，最高1.07533mm、成功0/4。接触建立/保持仍不足，三指失败标签不入成功池；这些8环境回放不计作100独立初态或Student成功。
+- 实际raw1000、canonical1000、canonical1000_startup25仍为单二指来源、无三指标签/heldout的离线拟合。`f=0.25`启动混合采样将前4步MSE从0.00449366降至0.0000122437，全来源MSE同时增加3.97%；132项保护状态/采样核对通过。启动分布绑定训练子集、来源SHA、算法及真实RNG；默认零比例保持原 `torch.randint` 路径，失败示范不进入成功池。
+- 新候选已用绝对参考MPC合格4698帧（3355帧动作修正）完成1000步canonical BC及25%启动混合采样，101项独立检查与73项保护状态检查通过；仍为单二指来源、无三指标签/heldout。纯Student已完成200/200回合，独立审计exit0，原生执行证书与条件遥测完整性核验通过；两组仍均0/100成功，30mm达成与合格Hold均0。二指Lift P50/P90/P95/max为0.00388034/0.0111964/0.102051/24.537986mm；按全部5个pad统计的双侧对向接触在100回合均曾出现，时间占比仅0.7462%，100回合均丢失、共5765次。三指对应Lift为0.0000558165/0.0000843213/0.0001004292/0.0008006615mm，无双侧对向接触、滑移NA；稳定抓取尚未解决。首批200原生动作与CPU最大差1.19e-7及符号不变性复验不另计原生试验。最终完整CPU5497 passed/原96 failed/28 errors/49 skipped/91 passing subtests，5529旧节点不变、141新增全通过。命令及边界见[本次验证报告](docs/superpowers/reports/2026-11-06-contact-aware-mpc-validation.md)。无长PPO或实机反馈成功声明，模型/原始运行数据不上传Git，PR #1仍为Draft、未合并。
+
+## 2026-11-06 — Teacher参考、MPC动作监督与独立视觉BC
+
+- 新增有限原生视觉Teacher采集模式，与PPO路径独立；记录同tick RGB-D、3844D历史、参考/实际issued24D、env/episode/物理时钟及来源。原始RGB-D默认关闭tap分块保存，失败/异常数据保留；首回合原生成功、无recovery和实际抓法审计后才能进入成功池，CPUfixture不能取得原生资格。
+- 新训练专家wrapper重用多步局部pad MPC，优化12指关节、保持Teacher腕部12维，逐环境记录实际body/COM/Jacobian快照SHA、激活、修正和回退。明确无完整物体/摩擦/力预测、非任意Student状态DAgger；旧inference MPC限制和原成功门槛保留。
+- 新独立Actor BC使用single-tanh bounded MSE和独立Adam/RNG，更新PointNet和action MLP，拒绝privileged输入和失败示范。按原轨迹分组heldout；无独立验证集必须显式fit-only。新版本BC不能直接当PPO恢复，显式派生新v3，逐值保留原Critic/log_std/PPO Adam/LR/计数/RNG及旧来源，后续save/resume保留监督历史。
+- 独立复审修复短参考动作结束后缺尾样本误入池，以及已有preflight trace偏移；成功示范严格核对terminal与完整记录长度。最终完整CPU5356 passed，原96 failed/28 errors/49 skipped及5416节点状态保持，113项新增全部通过；本次Teacher基线二指4/4、三指0/4（excess_force）。有限原生和实际学习证据、完整命令/已知限制见[验证报告](docs/superpowers/reports/2026-11-06-visual-teacher-mpc-supervision-validation.md)。无长PPO，不改变物理/执行器/观测动作合同，不宣称抓取可靠或退化解决；PR继续Draft。
+- 实际局部MPC二指0/4、峰12.489mm，未将失败MPC标签交给Student。实际BC审计发现1439 PointNet全部失活，旧v1只完成本体拟合，原件保留。新增独立BC v2、训练前失活拒绝、显式仅重置PointNet、私有CPU RNG及真实梯度/点云坐标敏感度门禁；不修改PPOv3架构/合同。
+- 实际BC v2完成100步，12个Actor tensor改变、6个PointNet tensor均有100步非零梯度；Critic/log_std/PPO Adam/LR/计数/RNG/完整合同逐值保持，初态SHA独立复核一致。8环境180步教师关闭原生推理正常，0无效测量、0完整episode；仅证明数值视觉分支与推理路径，不能称可靠抓取或每抓法100次验证。
+
+## 2026-11-06 — P0接触证据与中心线几何筛选
+
+- 新增独立逐pad事件归约器和默认关闭的PhysX只读采集：保留原始点/法向、位置/法向分门控、env/episode/子步时序、建立/持续/丢失/censor、七原因、二指三指/左右手有效对向比例与coverage。坏力矩保留为未知和原始逐关节证据，不阻断独立接触记录；模拟力矩与无锚滑移不冒充实机测量。
+- 新增源CAD中心线候选生成、独立五指atlas、完整17hull/线缆/self/interhand/table/支架检查与静态LP。seed必须与刚体中心线/COM/轴/长度一致；几何结果不能自签原生准入。02及原腕限位内扩展姿态的03各24候选、200步优化均0 accepted，几何前置失败而未进入LP；全部拒因保留，未闭环执行失败候选。
+- 完成实际129/1439同初态配对审计，每模型每抓法100个原生冷初态、0 invalid、readback相同。原生成功全0；保存Lift分位数、接触时间/丢失、模拟力矩饱和、Hold和缺失滑移边界，不冒充历史peak。
+- 新增102项测试全通过；完整CPU5243 passed/96 failed/28 errors/49 skipped/91 subtests，旧5314节点状态完全保持。独立规格复审已修复两项几何P1和两项诊断P2。8环境120控制步原生历史观察采集完成，0完整episode、无PPO更新/生产证书，不作新抓取成功证据。
+- 按本次P0优先要求取消尚未启动的R0 Adam排队任务；长PPO、课程、单因素消融和泛化未启动。所有历史数据与模型保留，原合同/物理/执行器/成功标准保留。README及[验证报告](docs/superpowers/reports/2026-11-06-grasp-contact-geometry-validation.md)同步，PR继续Draft。
+
+## 2026-11-06 — 原生初态身份审计与真实断点选模兼容修复
+
+- 增加 opt-in 初态 sidecar：完整实际物理读回、camera 前后三个时钟、完整初始 policy SHA；保留/重置 Adam 的 reference 差异在 PPO 构造前拒绝。默认关闭，Actor/Critic/动作/物理合同不变。
+- 修复实际1439派生断点的 phase_force_reward.excluded_sources tuple→JSON list 往返；只规范化该已知标签字段，未知 tuple、布尔/数字/物理类型及.pt typed合同SHA仍严格，exact resume 不放宽。
+- 采集器在开始采样后使用 blocking 批量CPU快照；terminal、invalid、NA、12关节力矩和24D动作及 raw JSON 对照一致。纯Torch CUDA对照不计原生试验，也未测得新版原生加速倍率。
+- 单实例串行 Adam pilot 计划固定同源128环境、各64次新更新，完整保留每轮，只用预冻结1455/1471/1487/1503四候选及独立validation。真实129/1439评估完整证书通过前不得开始；原生结果仍待执行，不宣称退化解决。
+- 实际129模型原生冷初态每抓法100次已完成并独立重放854757条首terminal物理数据；两组成功0%，二指/三指最高净lift为0.005627/1.033019mm，slip为NA/coverage0。1439评估继续，不以历史峰值模型代替。
+- 最新完整CPU回归5141 passed，原96 failed/28 errors/49 skipped逐节点不变，91个subtests通过；新增235个T2节点全通过，较d796917新增40项全部通过。
+
+## 2026-11-06 — T2评估、选模、warm-start与原生冒烟
+
+- 新增逐抓法100个独立冷初态、实际状态读回、视觉确定性推理和首terminal物理数据保存。native证据绑定checkpoint/manifest/相机/完整12D力矩估计与24D命令；缺测保持null，不能通过自报NA/报告flag取得认证。
+- 显式小规模模型投影和reward-only派生保持源文件；周期/最终完整v3 checkpoint不可变保留，原生独立validation选模保留全部候选，successes0不产生best-success模型。
+- 增加保留/重置Adam选项，实际加载后复核reset更新预算；保存reset、投影和奖励派生来源。新增R0～R5独立reward合同，正项保留严格物理资格，下降项覆盖真实terminal并正确隔断无效测量；物理reset瞬时基线与inactive tail分开处理。R0默认不变。
+- 真实16环境Isaac完成1440/1441两次更新，另进程恢复完成1442；RGB-D有效率100%，最大logp重建误差3.34e-6，原生无更新恢复的完整模型/Adam/LR/RNG/计数逐项相等。successes0，不作抓取改善结论。
+- 用户明确授权原进程退出后，先冻结1750轮完整原模型，再正常SIGINT、确认GPU3释放并结束旧监控。1750不是2048预算完成；129/1439原件仍在。配对100次/抓法评估正在单实例串行执行，奖励消融及选模原生结果仍待完成。
+- 本轮完整CPU回归5101项及91个subtests通过，原96失败/28错误/49跳过逐节点保持；本阶段新增195节点全通过，原1207源码/资源文件SHA无变化。规格/质量复审PASS。命令和限制见[本次报告](docs/superpowers/reports/2026-11-06-native-stage2-progress.md)；原始模型、原始运行日志和新实验模型均不上传Git。PR #1继续面向11-5，保持Draft、未合并。
+
+## 2026-11-06 — T1训练集成、恢复保护与明确的验证边界
+
+- 新增独立v3显式选项及离线v2派生工具；保留默认v2、3844D actor / 371D critic / 24D动作。记录有界动作概率、熵/KL、饱和率和梯度诊断，不把仿真20D反馈追加到Actor。
+- 恢复和派生共用完整policy/Adam/noise/RNG校验；静态相机/初态/物理/奖励配置进行字段新增、缺失和数值双向比较，在写入/启动Kit前拒绝不兼容请求。源checkpoint和旧输出受保护，禁止maximize反向优化PPO。
+- 最终327项定向CPU回归通过；规格、质量复审PASS。完整CPU回归4906项及91个subtests通过，原96失败/28错误/49跳过逐项保持；新增278节点全通过，无旧节点缺失或状态变化。实际1439轮原件SHA不变，派生状态逐项保留，真实历史视觉输入确定性动作差0；详见本轮验证报告，不声称旧测试全部通过。
+- 新增T2 authored冷重置与首terminal统计工具，43项CPU测试通过；尚无原生认证或100次真实验证。20字段硬件来源/单位/时间/有效性设计补全；真实传感接通状态仍未确认。
+- 原训练与1207个源码/资源文件保持，未修改奖励、物理或0.2Nm上限；当前只发布实现与CPU证据，原生配对评估和后续实验等待现有训练自然完成2048后继续。
+
+## 2026-11-06 — T1 有界动作概率与微批 PPO 核心
+
+- 新增独立 Squashed Gaussian 策略与 PPO；rollout 同时保存 latent、实际有界动作和对应 log probability，不从饱和动作逆推 latent。稳定 Jacobian、当前策略有界熵及 Normal KL 有明确概率语义。
+- 保留 3844D actor / 371D critic / 24D 物理动作与默认旧训练路径。按样本数累积微批梯度，保留正常配置 40 次逻辑 Adam 更新；有限性保护、单样本和尾批纳入测试。
+- 新增 frozen logp、KL、饱和率、各维动作统计和梯度诊断，与旧 loss 返回值分开。107 项新旧 CPU 测试通过，独立规格/质量审查通过；全仓库收集的 11 个旧依赖错误单独记录。
+- 入口版本化和显式 warm-start 集成尚未完成；没有修复版原生仿真或稳定抓取证据。原训练、历史 checkpoint、奖励、物理和执行器上限均不变。
+
+## 2026-11-06 — 独立修复准备、T0和硬件来源审计
+
+- 在独立codex修复分支/服务器副本开展工作；原11-5与正在运行的GPU3训练不变。
+- 保存第1439轮完整断点、80个有限tensor及完整链日志；源码与资源保留SHA256/只读副本。未发现269/482/1328历史模型，明确记录缺失。
+- 完成USD/URDF/ROS/SDK/服务器接口审计；未证实实机传感通道，Actor3844/Critic371保持，native20D不进入Student。
+- 隔离CPU基线81项通过；T1按新版本tanh动作合同推进，旧rawGaussian+clip不被误称为天然无效的概率比。尚无修复版原生成功证据；原生评估等待当前实例自然完成。
+
 ## 2026-11-06 — `11-5` 当前训练进度与定期高度表
 
 - 更新定期监控说明：每次成功检查都汇报二指/三指本轮及历史最高物体净抬升，保留左右掌本轮/历史最高实际位移和峰值 PPO 轮次；连接失败、停滞、原生首次成功及完成处理保持明确边界。

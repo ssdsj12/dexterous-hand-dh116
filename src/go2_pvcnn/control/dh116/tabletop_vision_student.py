@@ -86,13 +86,18 @@ class SensorHistory:
 class VisionStudentActor(nn.Module):
     """Shared masked PointNet per hand, followed by a four-frame action MLP."""
 
-    def __init__(self, action_size=24):
+    def __init__(self, action_size=24, *, wrist_quaternion_preprocessing='raw', point_activation='relu'):
         super().__init__()
+        from .tabletop_vision_quaternion import validate_wrist_quaternion_preprocessing
+        self.wrist_quaternion_preprocessing = validate_wrist_quaternion_preprocessing(wrist_quaternion_preprocessing)
         if action_size != 24:
             raise ValueError('vision student requires the existing 24D motion action')
+        from .tabletop_vision_point_activation import make_point_activation
+        self.point_activation = point_activation
         self.point_net = nn.Sequential(
-            nn.Linear(3, 32), nn.ReLU(), nn.Linear(32, 64), nn.ReLU(),
-            nn.Linear(64, 64), nn.ReLU(),
+            nn.Linear(3, 32), make_point_activation(point_activation),
+            nn.Linear(32, 64), make_point_activation(point_activation),
+            nn.Linear(64, 64), make_point_activation(point_activation),
         )
         self.action_net = nn.Sequential(
             nn.Linear(HISTORY * (2 * 64 + PROPRIO_DIM + 3), 128), nn.Tanh(),
@@ -107,6 +112,9 @@ class VisionStudentActor(nn.Module):
     def forward(self, observation):
         if observation.ndim != 2 or observation.shape[-1] != POLICY_DIM:
             raise ValueError(f'vision policy observations must have shape [N,{POLICY_DIM}]')
+        if self.wrist_quaternion_preprocessing != 'raw':
+            from .tabletop_vision_quaternion import canonicalize_wrist_quaternion_history
+            observation = canonicalize_wrist_quaternion_history(observation)
         frames = observation.reshape(-1, HISTORY, FRAME_DIM)
         point_end = 2 * POINTS * 3
         mask_end = point_end + POINTS
