@@ -1,3 +1,29 @@
+## 2026-11-10 — CUDA 12.8 最终目标与独立安装计划
+
+按用户最新要求，最终扩展固定以当前 Python 3.10.12 / Torch 2.7.0+cu128 / **CUDA 12.8 / SM89** 重新编译，不用现有 12.2/12.4 代替。只读复核仍未找到 12.8 Toolkit；拟新增用户目录 `/mnt/mydisk/xk/toolchains/cuda-12.8.0`，不替换 Driver、原 Runtime、Python/Torch/Isaac 或已有 Toolkit。
+
+已制定[独立安装与源码准入计划](docs/superpowers/plans/2026-11-10-cuda128-isolated-toolkit.md)和[官方组件计划锁文件](docs/source/deformx_cuda128_toolchain_plan.lock.json)：选择 12.8.0（nvcc 12.8.61），33个用户态归档逐包SHA锁定，排除6个Driver/内核/服务组件。仅使用新目录，避免全局CUDA链接和loader变更；若需管理员操作，先给出命令及影响，等待确认。
+
+**未安装、未构建、未原生验证。** 源码准入仍阻塞：现有Windows GitHub身份已确认是 `ssdsj12`，需维护者开放指定CUDA提交及嵌套依赖或提供完整可核验源码。未再次重试已返回404的后端，未擅自修改认证或原训练；PR保持Draft。
+
+本次发布前静态核验：`git diff --check`、6个拟发布文件的凭据模式扫描与本次新增相对链接检查、33项计划锁和官方manifest逐项对照通过；这些检查不等于安装、编译或Isaac验证。原始审计产物、运行日志、缓存和模型不上传。
+
+## 2026-11-10 — DeformX 服务器补查：源码身份与安装来源
+
+按当前服务器 `/mnt/mydisk/xk/dh116` 补查真实源码、Git 根、gitlink、子模块和认证：找到 19 份旧 PyElastica/co_sim vendored 源码，没有找到可核验的目标 CUDA 后端；主项目没有 gitlink 或 `.gitmodules`，不能把空的 submodule status 输出当作安装成功。服务器 `gh` 未登录、Git HTTPS 无可用凭据、GitHub SSH 22 端口超时；与此前 Windows 凭据的 404 分开记录，没有重复下载已拒绝的后端。
+
+实测解释器为 `/mnt/mydisk/xk/envs/dh116/bin/python`（3.10.12），由 `activate.sh` 指定并通过原 wrapper 显式验证。发现 **Isaac Lab distribution=0.54.4，而源码根 VERSION=2.3.2**；源码无 Git 元数据，不能据此认定官方未修改版本。包安装器为 uv，Lab 为本地 editable；Sim 部分包明确来自本地 wheel，其余历史下载来源未记录。
+
+该阶段只记录实测环境，不升级或替换；后续用户已明确最终编译使用独立 CUDA 12.8，现有12.2/12.4仅作为基线保留。没有修改原 vendor、控制器、模型或训练，没有构建/原生 GPU/PhysX/抓取验收。详见[服务器补查报告](docs/superpowers/reports/2026-11-10-deformx-server-source-access.md)，其中列出解除源码阻塞所需材料。
+
+## 2026-11-10 — DeformX GPU 原环境适配：源码与工具链审计
+
+已锁定指定上游 `8f32ad7`、CUDA gitlink `96b8514` 与官方资产 revision `9ef440fa`；629 个已取得源码文件通过 Git blob SHA 重验。经服务器现有 `scripts/python.sh`，426 个 Python 文件在实际 Python 3.10.12 上通过语法编译检查；3 个最小资产文件通过 SHA 校验，USD/NPZ 可读取。没有启动 Isaac 或将这些检查计为 GPU/物理验证。
+
+**CUDA 后端源码不可访问仍是明确阻塞**：上游后端处于需权限的 release preview，Windows 现有凭据访问返回 404；服务器现有认证另行核验，不混用身份。现有 Torch 为 2.7.0+cu128，找到的 Toolkit 为 12.2/12.4，仅作为保留基线；最终构建按顶部计划使用独立 CUDA12.8，源码及SDK验收前不编译。完整 `ropesim.isaac_bridge`、cp310 CUDA 构建、双向 PhysX 接触及 DH116 抓取均未完成。没有升级环境、修改控制器/策略/checkpoint 或覆盖原 `vendor/DeformX`。
+
+实际命令、版本差异、接口与单位风险、资产清单及下一步见[兼容性与验证报告](docs/superpowers/reports/2026-11-10-deformx-gpu-compatibility.md)。PR 保持 Draft，不合并。
+
 ## 2026-11-10 — Stage 7 D：承托转移八阶段请求状态机
 
 新增未接SDK的APPROACH/CLOSE/STABILIZE/LOAD_TRANSFER/LIFT/AIRBORNE_HOLD/RECOVERY/FAILED状态机。0.2s实测双侧对向稳定及有源object-following后，才建议0.5mm/s、累计请求曝光上限2mm的转移。

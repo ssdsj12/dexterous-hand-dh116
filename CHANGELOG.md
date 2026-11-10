@@ -1,3 +1,27 @@
+## 2026-11-10 — CUDA 12.8 独立工具链计划（尚未安装或编译）
+
+- 固定最终CUDA12.8 / cp310 / Torch2.7cu128 / SM89，不再将12.2/12.4作为最终编译候选。只读复核59个路径模式及实际nvcc，仍只发现12.2.91、12.4.99；拟用用户目录可写但未进行创建/链接测试。
+- 新增[执行计划](docs/superpowers/plans/2026-11-10-cuda128-isolated-toolkit.md)与[官方归档锁文件](docs/source/deformx_cuda128_toolchain_plan.lock.json)。优先12.8.0官方redistrib，33个用户态归档/4,273,865,956压缩字节，逐归档SHA/版本固定，显式排除6个Driver/内核/服务组件；不直接运行全量安装或盲目flatten。
+- 源码门禁优先：安全确认现有Windows GitHub身份为ssdsj12，未重试private后端404；仍需维护者授权精确提交及嵌套源码或完整归档。不在源码缺失时执行configure/try_compile/Solver build。
+- 计划限制仅新目录、单次构建进程、明确12.8 headers/libs/SM89及Python解释器；保护Torch实际runtime选择，禁止全局loader/CUDA链接/现有包替换。runfile备选的系统写入及管理员影响须先审阅确认，不自动sudo。
+- 本次仅路径/文档/metadata核查和计划验证，没有Toolkit二进制下载、安装、编译、GPU/PhysX/Isaac验证或训练操作；不宣称修复或抓取成功，PR继续Draft。
+- 上传前实际执行`git diff --check`、6个拟发布文件凭据模式/本次新增相对链接检查、33项lock与已保存官方manifest逐项对照，均通过；不上传artifacts、原始日志、缓存或模型。这是文档与计划发布，不是原生适配完成。
+
+## 2026-11-10 — DeformX 服务器源码与安装来源补查
+
+- 只读检查实际 `/mnt/mydisk/xk/dh116`、项目副本、vendor/third_party、Git HEAD/gitlink/子模块；19 份旧源码都不是独立 CUDA 仓库，目标 commit 和嵌套依赖无法核验，未用旧后端替代。保留搜索范围及未覆盖项。
+- 区分 Windows 与服务器认证：服务器 gh 未登录，Git HTTPS lookup 无凭据，当前无 SSH agent/已配置 identity，GitHub 22/TCP 超时；不把网络失败认定为仓库权限拒绝，不重复下载已返回 404 的后端，不输出认证材料。
+- 核实际解释器、uv 安装器、Sim 本地 wheel / 未记录来源和 Lab editable 路径；明确 distribution 0.54.4、源码 VERSION 2.3.2 与未知 Git commit 的区别。继续以实际文件 SHA 审接口，不升级、降级或替换环境。
+- 更新[服务器补查报告](docs/superpowers/reports/2026-11-10-deformx-server-source-access.md)、README 和前份报告的执行口径；完整CUDA源码到位后，在当前Python/Torch与独立12.8 SDK合同下审查编译兼容性。没有新接入代码、CUDA 构建、Isaac/GPU 物理验证或抓取成功；原训练/模型/vendor/控制器保持。
+
+## 2026-11-10 — DeformX GPU 原环境兼容性审计（原生构建尚未开始）
+
+- 固定指定主库 `8f32ad7`、CPU 子模块 `a5cfaf6`、不可访问的 CUDA gitlink `96b8514` 与官方 HF 资产 `9ef440fa`；629 个已取得源码文件重验 Git blob SHA，未以部分源码冒充 recursive clone。
+- 通过实际服务器原启动器执行 426 个 Python 文件的 3.10.12 语法检查，0 失败；独立保存最小资产，3/3 数据文件 SHA 校验通过，USD 骨架/网格与 NPZ 数据可读。语法和资产读取不是 CUDA 编译、GPU 求解或抓取成功。
+- 审计实际 Lab/PhysX 源码及上游 demos，记录 link/CoM、wxyz/xyzw、force/impulse 单位、反力提交顺序和一个 exchange 延迟等边界。尚未凭猜测实现或接通新 Adapter。
+- 已确认源码阻塞：CUDA preview 源码当前不可访问；另记录版本差异——实际 Python 为 3.10.12 而非 3.10.20，现成 nvcc 为 12.2/12.4 而非初始清单的 12.8，尚未判定编译兼容性。未升级依赖、未编译/启动 Isaac、未修改原 vendor、控制器、Teacher/MPC/Student/PPO、历史模型或成功标准。
+- 该轮补查保留服务器实际环境；用户随后已明确最终采用独立CUDA12.8，不以12.2/12.4替代，也不升级原环境。当前执行合同以最上方12.8计划为准。详细命令、结果、未完成验收及继续条件见[独立报告](docs/superpowers/reports/2026-11-10-deformx-gpu-compatibility.md)；PR 继续 Draft。
+
 ## 2026-11-10 — Stage 7 D：承托转移八阶段请求状态机
 
 - 新增未接SDK的APPROACH/CLOSE/STABILIZE/LOAD_TRANSFER/LIFT/AIRBORNE_HOLD/RECOVERY/FAILED状态机。0.2s实测双侧对向稳定及有源object-following后，才建议0.5mm/s、累计请求曝光上限2mm的转移。
