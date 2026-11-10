@@ -1,3 +1,13 @@
+## 2026-11-10 发布进度 — 双手接触状态与原预算委托（仅CPU、未Native接入）
+
+- [x] 7状态包含正式CONTACT_CANDIDATE；未知slip/opposition独立NA，selected reset预检并隔离兄弟，首terminal不被no-op覆盖。原20ms仅pressure/recovery稳定，不是双侧0.2s或任务成功。
+- [x] 独立immutable source15组合CPU实跑1360 passed、3 CUDA-unavailable skips、238 subtests；本单元27项是其中子集，不另相加。该证书对应immutable source15，不把当前工作树其它改动自动算入。
+- [ ] 与实际控制/采集的接线、真实slip/opposition来源及原生恢复/双侧接触持续性验证仍待完成。
+
+边界：本单元未Native接入；既有B使用原恢复路径，D1的ABI元数据NA也不能算FK/J通过。不宣称完整MPC、新成功、专家晋级或B3/PPO许可；原默认Teacher、3844D/371D/24D与30mm/5s/0.5mm保持，PR保持Draft。
+
+本节仅记录该子单元进展，不把下方原计划的完整H8/恢复/正式验收门槛标成完成。命令与SHA见[独立报告](../reports/2026-11-10-stage7-bimanual-contact-runtime-cpu.md)。
+
 ## 2026-11-10 发布进度 — H8 完整17D运动学外推（仅CPU、未Native接入）
 
 - [x] 完整17D含被动行，左右各用自己的mounted FK；区间速度逐步积分，缺失/无效数据不补0，不把目标当实测响应。
