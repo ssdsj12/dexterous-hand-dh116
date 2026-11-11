@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from .tabletop_stereo_encoder import StereoEncoder, position_encoding
+from .tabletop_stereo_encoder import StereoEncoder, PalmPointEncoder, position_encoding
 from .tabletop_stereo_observation import StereoHistoryBatch
 from .tabletop_stereo_temporal import StereoTemporal
 from .tabletop_vision_command_shadow import action_contract_sha256 as canonical_action_sha256
@@ -17,8 +17,12 @@ HEAD_SHAPES = dict(privileged_state=(371,),geometry=(128,3),velocity=(128,3),
 
 
 class StereoStateEstimator(nn.Module):
-    def __init__(self,embed_dim=128,history=4,num_heads=4,num_layers=2,image_processing_batch_size=None):
+    def __init__(self,embed_dim=128,history=4,num_heads=4,num_layers=2,image_processing_batch_size=None,
+                 point_coordinate_mode='world',task_state_metadata=False):
         super().__init__()
+        if point_coordinate_mode not in ('world','palms'):raise ValueError('world or palms point coordinates required')
+        self.point_coordinate_mode=point_coordinate_mode
+        self.task_state_metadata=bool(task_state_metadata or point_coordinate_mode=='palms')
         self.embed_dim,self.history=embed_dim,history
         self.encoder=StereoEncoder(embed_dim,num_heads,image_processing_batch_size)
         self.depth_project=nn.Linear(5,embed_dim)
@@ -34,6 +38,9 @@ class StereoStateEstimator(nn.Module):
         self.spatial_norm=nn.LayerNorm(embed_dim)
         self.temporal=StereoTemporal(embed_dim,history,num_heads,num_layers)
         self.heads=nn.ModuleDict({name:nn.Linear(embed_dim,math.prod(shape)) for name,shape in HEAD_SHAPES.items()})
+        # Opt-in parameters are created after all legacy parameters, preserving
+        # the baseline state_dict and random initialization order in world mode.
+        if point_coordinate_mode=='palms':self.palm_point_encoder=PalmPointEncoder(embed_dim)
 
     def _spatial(self,h):
         b,t=h.history_valid.shape;n=b*t;d=self.embed_dim
@@ -61,9 +68,19 @@ class StereoStateEstimator(nn.Module):
         points=torch.where(point_mask[:,:,None],h.points_world.flatten(0,1),0.)
         point_tokens=self.point_project(points)+self.frame_embedding[1]
         point_tokens=point_tokens+position_encoding(torch.linspace(0,1,128,device=left.device),d)[None]
+        if self.point_coordinate_mode=='palms':
+            point_tokens,point_mask=self.palm_point_encoder(h.points_left_palm.flatten(0,1),
+                h.points_right_palm.flatten(0,1),
+                (h.point_valid_left & h.point_valid & h.history_valid[:,:,None]).flatten(0,1)&pair[:,None],
+                (h.point_valid_right & h.point_valid & h.history_valid[:,:,None]).flatten(0,1)&pair[:,None],
+                h.point_confidence.flatten(0,1))
         # Point ordinal IDs preserve upstream arc-length identity; they do not
         # infer topology or claim cross-frame correspondence of an unordered set.
         proprio=torch.where(active[:,None],h.proprio.flatten(0,1),0.)
+        if self.point_coordinate_mode=='palms':
+            proprio=proprio.clone()
+            origin=.5*(proprio[:,24:27]+proprio[:,31:34])
+            proprio[:,24:27]-=origin;proprio[:,31:34]-=origin
         timing=torch.stack((torch.where(active,h.dt.flatten(),0.),
                             torch.where(active,h.image_age.flatten(),0.)),-1)
         query=self.proprio_project(torch.cat((proprio,timing),-1))+self.frame_embedding[2]
@@ -83,25 +100,52 @@ class StereoStateEstimator(nn.Module):
         latent=self.temporal(frames,history.history_valid,history.dt,history.image_age)
         result={'latent':latent}
         result.update({name:head(latent).reshape(len(history),*HEAD_SHAPES[name]) for name,head in self.heads.items()})
+        if self.task_state_metadata:
+            valid=history.history_valid[:,-1] & history.image_valid[:,-1].all(-1) & history.point_valid[:,-1].any(-1)
+            result['state_valid']=valid[:,None].expand(-1,371)
+            result['state_uncertainty']=torch.ones_like(result['privileged_state'])
+        if self.point_coordinate_mode=='palms':
+            mask=history.point_valid[:,-1]
+            p=torch.where(mask[...,None],history.points_world[:,-1],0.)
+            result['world_auxiliary']=(self.point_project(p)*mask[...,None]).sum(1)/mask.sum(1,keepdim=True).clamp_min(1)
         return result
 
 
 class StereoStudentActor(nn.Module):
     """Unbounded mu24 and latent std; use existing saved-latent Gaussian math."""
-    def __init__(self,estimator=None,*,embed_dim=128,action_contract_sha256=None,image_processing_batch_size=None):
+    def __init__(self,estimator=None,*,embed_dim=128,action_contract_sha256=None,image_processing_batch_size=None,
+                 input_mode='latent',task_state_config=None):
         super().__init__()
+        if input_mode not in ('latent','estimated_task_state','hybrid'):raise ValueError('invalid Actor input mode')
+        self.input_mode=input_mode
+        from copy import deepcopy
+        self.task_state_config=deepcopy(task_state_config or {})
         expected=canonical_action_sha256()
         if action_contract_sha256 is not None and action_contract_sha256!=expected:
             raise ValueError('canonical action contract SHA256 mismatch')
         self.action_contract_sha256=expected
         self.estimator=StereoStateEstimator(embed_dim=embed_dim,image_processing_batch_size=image_processing_batch_size) if estimator is None else estimator
         if not isinstance(self.estimator,StereoStateEstimator): raise TypeError('StereoStateEstimator required')
-        self.action_net=nn.Sequential(nn.Linear(self.estimator.embed_dim,128),nn.Tanh(),nn.Linear(128,24))
+        size=self.estimator.embed_dim
+        if input_mode!='latent':
+            from .tabletop_stereo_task_state_adapter import TaskStateAdapter
+            self.task_state_adapter=TaskStateAdapter(**(task_state_config or {}))
+            self.estimator.task_state_metadata=True
+            size=self.task_state_adapter.feature_size+(size if input_mode=='hybrid' else 0)
+        self.action_net=nn.Sequential(nn.Linear(size,128),nn.Tanh(),nn.Linear(128,24))
         nn.init.orthogonal_(self.action_net[-1].weight,.01);nn.init.zeros_(self.action_net[-1].bias)
         self.log_std=nn.Parameter(torch.full((24,),math.log(.1)))
 
     def latent_mean(self,history):
-        return self.action_net(self.estimator(history)['latent'])
+        estimates=self.estimator(history)
+        features=estimates['latent']
+        if self.input_mode!='latent':
+            # Auxiliary absolute-world geometry is never a task-state bypass.
+            selected={key:value for key,value in estimates.items() if key!='world_auxiliary'}
+            task=self.task_state_adapter(selected,history)
+            features=task['actor_features']
+            if self.input_mode=='hybrid':features=torch.cat((estimates['latent'],features),-1)
+        return self.action_net(features)
 
     def forward(self,history):
         return self.latent_mean(history)

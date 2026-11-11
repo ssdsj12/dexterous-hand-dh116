@@ -1,11 +1,36 @@
 """Strict deployable stereo observations; no task, Teacher or critic input."""
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, field
 
 import torch
 
 
 SENSOR_FIELDS = ('left_rgb', 'right_rgb', 'depth_m', 'depth_valid', 'depth_confidence',
-                 'points_world', 'point_valid', 'proprio', 'dt', 'image_age', 'image_valid')
+                 'points_world', 'point_valid', 'proprio', 'dt', 'image_age', 'image_valid',
+                 'points_left_palm','points_right_palm','point_valid_left','point_valid_right','point_confidence')
+
+
+def _populate_palms(batch):
+    """Compatibility inputs derive local geometry only from the same measured FK.
+
+    Default confidence is an availability indicator, not a calibrated matching
+    probability. Native/inference pipelines supply actual RGB-derived scores.
+    """
+    if any(getattr(batch,key) is None for key in ('points_left_palm','points_right_palm',
+            'point_valid_left','point_valid_right')):
+        from .tabletop_stereo_geometry import world_to_palms
+        prefix=batch.points_world.shape[:-2]
+        pose=batch.proprio[...,24:38].reshape(-1,2,7).clone()
+        history=getattr(batch,'history_valid',None)
+        if history is not None:
+            inactive=~history.flatten()
+            pose[inactive]=0.;pose[inactive,:,3]=1.
+        local=world_to_palms(batch.points_world.reshape(-1,128,3),pose).reshape(*prefix,2,128,3)
+        for index,hand in enumerate(('left','right')):
+            mask=batch.point_valid & torch.isfinite(local[...,index,:,:]).all(-1)
+            if getattr(batch,'point_valid_'+hand) is None:setattr(batch,'point_valid_'+hand,mask)
+            if getattr(batch,'points_'+hand+'_palm') is None:
+                setattr(batch,'points_'+hand+'_palm',torch.where(mask[...,None],local[...,index,:,:],float('nan')))
+    if batch.point_confidence is None:batch.point_confidence=batch.point_valid.float()
 
 
 def _validate(values, *, history_valid=None):
@@ -21,10 +46,12 @@ def _validate(values, *, history_valid=None):
     shapes = dict(left_rgb=(*prefix,3,h,w), right_rgb=(*prefix,3,h,w),
         depth_m=(*prefix,h,w), depth_valid=(*prefix,h,w), depth_confidence=(*prefix,h,w),
         points_world=(*prefix,128,3), point_valid=(*prefix,128), proprio=(*prefix,62),
+        points_left_palm=(*prefix,128,3),points_right_palm=(*prefix,128,3),
+        point_valid_left=(*prefix,128),point_valid_right=(*prefix,128),point_confidence=(*prefix,128),
         dt=prefix, image_age=prefix, image_valid=(*prefix,2))
     for name, shape in shapes.items():
         value = values[name]
-        dtype = torch.bool if name in ('depth_valid','point_valid','image_valid') else torch.float32
+        dtype = torch.bool if name in ('depth_valid','point_valid','image_valid','point_valid_left','point_valid_right') else torch.float32
         if tuple(value.shape) != tuple(shape) or value.dtype != dtype or value.device != left.device:
             raise ValueError(f'{name} must have shape {shape}, dtype {dtype}, device {left.device}')
     active = torch.ones(prefix, dtype=torch.bool, device=left.device)
@@ -55,6 +82,13 @@ def _validate(values, *, history_valid=None):
     point_valid = values['point_valid'] & active[...,None]
     if bool((point_valid & ~torch.isfinite(values['points_world']).all(-1)).any()):
         raise ValueError('valid world points must be finite')
+    for hand in ('left','right'):
+        valid=values['point_valid_'+hand] & point_valid
+        if bool((valid & ~torch.isfinite(values['points_'+hand+'_palm']).all(-1)).any()):
+            raise ValueError('valid palm-local points require finite observed world geometry')
+    confidence=values['point_confidence']
+    if bool((point_valid & (~torch.isfinite(confidence)|(confidence<0)|(confidence>1))).any()):
+        raise ValueError('valid point confidence must be finite in [0,1]')
 
 
 class _TensorBatch:
@@ -105,8 +139,16 @@ class SensorBatch(_TensorBatch):
     dt: torch.Tensor
     image_age: torch.Tensor
     image_valid: torch.Tensor
+    points_left_palm: torch.Tensor = field(default=None,kw_only=True)
+    points_right_palm: torch.Tensor = field(default=None,kw_only=True)
+    point_valid_left: torch.Tensor = field(default=None,kw_only=True)
+    point_valid_right: torch.Tensor = field(default=None,kw_only=True)
+    point_confidence: torch.Tensor = field(default=None,kw_only=True)
 
     def __post_init__(self):
+        try:_populate_palms(self)
+        except (RuntimeError,IndexError,AttributeError) as error:
+            raise ValueError('invalid sensor shape while deriving palm coordinates') from error
         self.validate()
 
     def validate(self):

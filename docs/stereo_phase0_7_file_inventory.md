@@ -1,3 +1,54 @@
+# Stereo 运行链路最新文件清单
+
+本轮相对已审查 HEAD `9bfee426363527190011dbca164c104a00cbc999`，五目录共 **40** 项变动；相对原 `11-10` base `6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b` 的累计五目录 **199** 项。README/CHANGELOG 另计；artifacts、原始日志、图像、模型不列入发布范围。
+
+本轮1030/1030通过（Windows/server；分别1/2跳过）。只有短时未训练Actor执行与有界Teacher更新，没有物理成功资格。旧528保护文件、原控制与成功标准保留；所有历史统计保留在下文。
+
+|相对审查HEAD|文件|
+|---|---|
+|added|[configs/dh116_training/stereo_native_deformable_rod_v1.json](../configs/dh116_training/stereo_native_deformable_rod_v1.json)|
+|modified|[configs/dh116_training/stereo_native_task_v1.json](../configs/dh116_training/stereo_native_task_v1.json)|
+|added|[configs/dh116_training/stereo_student_estimated_task_state_palms640_v3.json](../configs/dh116_training/stereo_student_estimated_task_state_palms640_v3.json)|
+|added|[configs/dh116_training/stereo_student_hybrid_palms640_v3.json](../configs/dh116_training/stereo_student_hybrid_palms640_v3.json)|
+|added|[configs/dh116_training/stereo_student_latent_palms640_v3.json](../configs/dh116_training/stereo_student_latent_palms640_v3.json)|
+|modified|[docs/contracts/stereo_phase0_7_readiness.json](../docs/contracts/stereo_phase0_7_readiness.json)|
+|added|[docs/contracts/stereo_runtime_repair_validation_summary.json](../docs/contracts/stereo_runtime_repair_validation_summary.json)|
+|modified|[docs/stereo_phase0_7_file_inventory.md](../docs/stereo_phase0_7_file_inventory.md)|
+|added|[docs/superpowers/plans/2026-11-11-stereo-runtime-repair.md](../docs/superpowers/plans/2026-11-11-stereo-runtime-repair.md)|
+|added|[docs/superpowers/reports/2026-11-11-stereo-runtime-repair.md](../docs/superpowers/reports/2026-11-11-stereo-runtime-repair.md)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_privileged_cli.py](../src/go2_pvcnn/control/dh116/tabletop_privileged_cli.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_privileged_ppo.py](../src/go2_pvcnn/control/dh116/tabletop_privileged_ppo.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_checkpoint.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_checkpoint.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_depth.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_depth.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_encoder.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_encoder.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_inference.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_inference.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_native.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_native.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_observation.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_observation.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_perception.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_perception.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_preprocessing.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_preprocessing.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py)|
+|added|[src/go2_pvcnn/control/dh116/tabletop_stereo_rod_state.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_rod_state.py)|
+|added|[src/go2_pvcnn/control/dh116/tabletop_stereo_rollout_storage.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_rollout_storage.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_runtime.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_runtime.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_state_estimator.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_state_estimator.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_student_cli.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_student_cli.py)|
+|modified|[src/go2_pvcnn/control/dh116/tabletop_stereo_student_ppo.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_student_ppo.py)|
+|added|[src/go2_pvcnn/control/dh116/tabletop_stereo_task_state_adapter.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_task_state_adapter.py)|
+|added|[src/go2_pvcnn/control/dh116/tabletop_stereo_wire_tracking.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_wire_tracking.py)|
+|added|[tests/test_dh116_stereo_runtime_actor_modes.py](../tests/test_dh116_stereo_runtime_actor_modes.py)|
+|added|[tests/test_dh116_stereo_runtime_integration.py](../tests/test_dh116_stereo_runtime_integration.py)|
+|added|[tests/test_dh116_stereo_runtime_palms.py](../tests/test_dh116_stereo_runtime_palms.py)|
+|added|[tests/test_dh116_stereo_runtime_pyramid_modes.py](../tests/test_dh116_stereo_runtime_pyramid_modes.py)|
+|added|[tests/test_dh116_stereo_runtime_rod_identity.py](../tests/test_dh116_stereo_runtime_rod_identity.py)|
+|added|[tests/test_dh116_stereo_runtime_rollout_storage.py](../tests/test_dh116_stereo_runtime_rollout_storage.py)|
+|added|[tests/test_dh116_stereo_runtime_task_state.py](../tests/test_dh116_stereo_runtime_task_state.py)|
+|added|[tests/test_dh116_stereo_runtime_teacher_identity.py](../tests/test_dh116_stereo_runtime_teacher_identity.py)|
+|added|[tests/test_dh116_stereo_runtime_wire_tracking.py](../tests/test_dh116_stereo_runtime_wire_tracking.py)|
+|modified|[tests/test_dh116_stereo_student_ppo.py](../tests/test_dh116_stereo_student_ppo.py)|
+
+## 历史清单（保留当时状态）
+
 # Stereo Phase0～7 文件清单与验收状态
 
 > 最新J2-B五目录总数为179项；当前CPU Windows885/1skip、server886/1skip。前文141/153/166项为各阶段历史快照，完整最新逐文件清单见readiness与文末增量。

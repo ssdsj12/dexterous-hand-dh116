@@ -23,6 +23,13 @@ def normalize_network_config(config=None):
     for name, default in dict(embed_dim=128, history=4, num_heads=4, num_layers=2, dropout=0.).items():
         value.setdefault(name, default)
     value.setdefault('image_processing_batch_size', None)
+    value.setdefault('actor_input_mode','latent')
+    value.setdefault('point_coordinate_mode','world')
+    value.setdefault('task_state_config',{})
+    if value['actor_input_mode'] not in ('latent','estimated_task_state','hybrid'):
+        raise ValueError('invalid Actor input mode')
+    if value['point_coordinate_mode'] not in ('world','palms') or not isinstance(value['task_state_config'],dict):
+        raise ValueError('explicit point coordinate mode and task-state config required')
     batch_size = value['image_processing_batch_size']
     if batch_size is not None and (type(batch_size) is not int or batch_size < 1):
         raise ValueError('image_processing_batch_size must be a positive integer or None')
@@ -52,23 +59,29 @@ def normalize_network_config(config=None):
 def make_stereo_actor(network_config=None):
     config = normalize_network_config(network_config)
     estimator = StereoStateEstimator(**{name: config[name] for name in
-        ('embed_dim', 'history', 'num_heads', 'num_layers', 'image_processing_batch_size')})
+        ('embed_dim', 'history', 'num_heads', 'num_layers', 'image_processing_batch_size','point_coordinate_mode')})
     if 'image_resolution_wh' in config:
         width, height = config['image_resolution_wh']
         def check_resolution(module, arguments):
             if tuple(arguments[0].left_rgb.shape[-2:]) != (height, width):
                 raise ValueError('RGB history resolution differs from network/calibration contract')
         estimator.register_forward_pre_hook(check_resolution)
-    return StereoStudentActor(estimator, action_contract_sha256=action_sha256())
+    return StereoStudentActor(estimator, action_contract_sha256=action_sha256(),
+        input_mode=config['actor_input_mode'],task_state_config=config['task_state_config'])
 
 
-def history_to_tree(history):
-    """Own sensor arrays; neutralize only explicitly masked NA, never add truth."""
+def history_to_tree(history, *, owned=True):
+    """Own/neutralize legacy arrays, or expose validated input for pool capture.
+
+    ``owned=False`` avoids cloning a full visual history; the indexed storage
+    capture hook immediately takes ownership of each new exact sensor frame.
+    """
     if isinstance(history, dict):
         history = StereoHistoryBatch.from_mapping(history)
     if type(history) is not StereoHistoryBatch:
         raise TypeError('only exact StereoHistoryBatch sensor input is accepted')
     history.validate()
+    if not owned: return history.as_dict()
     result = {key: value.detach().clone() for key, value in history.as_dict().items()}
     active = result['history_valid']
     depth = result['depth_valid'] & active[:, :, None, None]
@@ -76,6 +89,10 @@ def history_to_tree(history):
     for key in ('depth_m', 'depth_confidence'):
         result[key] = torch.where(depth, result[key], 0.)
     result['points_world'] = torch.where(point[:, :, :, None], result['points_world'], 0.)
+    for hand in ('left','right'):
+        mask=result['point_valid_'+hand] & point
+        result['points_'+hand+'_palm']=torch.where(mask[...,None],result['points_'+hand+'_palm'],0.)
+    result['point_confidence']=torch.where(point,result['point_confidence'],0.)
     return result
 
 
@@ -121,7 +138,20 @@ def make_student_trainer(config, num_envs, device='cpu', rollout_steps=None):
         raise ValueError('Student actor input must be stereo sensor history only')
     model = StereoAsymmetricPolicy(config.get('network'))
     steps = config.get('rollout_steps', 32) if rollout_steps is None else rollout_steps
-    trainer = PPOTrainer(model, PPOConfig(**config.get('ppo', {})), rollout_steps=steps, num_envs=num_envs, device=device)
+    storage_mode=config.get('rollout_storage','indexed_frames')
+    if storage_mode not in ('indexed_frames','legacy'):
+        raise ValueError('rollout_storage must be indexed_frames or legacy')
+    max_visual_batch=config.get('max_visual_batch',1)
+    if type(max_visual_batch) is not int or max_visual_batch<1:
+        raise ValueError('max_visual_batch must be a positive integer')
+    actor_storage=None
+    if storage_mode=='indexed_frames':
+        from .tabletop_stereo_rollout_storage import IndexedStereoRolloutStorage
+        actor_storage=IndexedStereoRolloutStorage(max_visual_batch=max_visual_batch)
+    trainer = PPOTrainer(model, PPOConfig(**config.get('ppo', {})), rollout_steps=steps, num_envs=num_envs,
+        device=device,actor_storage=actor_storage,
+        max_visual_batch=max_visual_batch if actor_storage is not None else None)
+    trainer.rollout_storage_mode=storage_mode
     trainer.student_config = deepcopy(config)
     trainer.auxiliary_bc = None
     # Config opt-in alone cannot attach an unqualified dataset or alter storage.

@@ -1,5 +1,7 @@
 {
   "version": "dh116-stereo-native-bootstrap-v1",
+  "task_kind": "rigid_proxy",
+  "physical_object_kind": "solid_cylinder",
   "source": "scripts/smoke_dh116_surface_grasp.sh",
   "control_path": "unchanged TensorWorld/TensorTask/TensorEnv; new final training callback only",
   "grasp_styles": ["pinch_thumb_index", "tripod_thumb_index_middle"],

@@ -4,6 +4,7 @@ No native job runs on import or with --check-config. Local CPU tests of this
 module do not qualify a Teacher, an expert dataset or a successful grasp.
 """
 import argparse
+from copy import deepcopy
 from dataclasses import asdict
 import json
 from pathlib import Path
@@ -18,6 +19,7 @@ from .tabletop_privileged_teacher import PrivilegedTeacher
 from .tabletop_privileged_ppo import PPOConfig, PPOTrainer
 from .tabletop_privileged_checkpoint import build_identity, save_checkpoint, load_checkpoint
 from .tabletop_privileged_reward import compose_native_reward
+from .tabletop_squashed_gaussian import squashed_entropy,latent_gaussian_kl
 
 
 def load_config(path):
@@ -36,13 +38,38 @@ def load_config(path):
     return value, config
 
 
-def training_identity(config, bridge_contract):
+def training_identity(config, bridge_contract, task_identity=None):
     from .tabletop_surface_contract import semantic_sha256
     source = {name: file_sha256(Path(__file__).with_name(name + '.py')) for name in (
         'tabletop_privileged_teacher', 'tabletop_privileged_ppo', 'tabletop_privileged_reward',
         'tabletop_privileged_dataset', 'tabletop_privileged_checkpoint')}
     source['native_task_contract'] = semantic_sha256(bridge_contract)
+    if task_identity is not None:source['native_task_identity']=digest(task_identity)
     return build_identity(config, state_contract_sha256=digest(state_contract()), source_sha256=source)
+
+
+_ACTION_GROUPS=dict(left_fingers=(0,6),right_fingers=(6,12),left_translation=(12,15),
+    right_translation=(15,18),left_rotation=(18,21),right_rotation=(21,24))
+
+
+def _same_tree(a,b):
+    if isinstance(a,torch.Tensor):return isinstance(b,torch.Tensor) and torch.equal(a,b)
+    if isinstance(a,dict):return isinstance(b,dict) and a.keys()==b.keys() and all(_same_tree(a[k],b[k]) for k in a)
+    if isinstance(a,(list,tuple)):return type(a)==type(b) and len(a)==len(b) and all(_same_tree(x,y) for x,y in zip(a,b))
+    return a==b
+
+
+def _checkpoint_readback(path,trainer,identity):
+    """Read into a disposable PPO instance; never perturb collection RNG."""
+    candidate=PPOTrainer(deepcopy(trainer.model),trainer.config,rollout_steps=trainer.rollout_steps,
+        num_envs=trainer.num_envs,device=trainer.device)
+    load_checkpoint(path,candidate,identity,history_reset='clear',restore_rng=False)
+    report=dict(checkpoint_sha256=file_sha256(path),policy_equal=_same_tree(trainer.model.state_dict(),candidate.model.state_dict()),
+        optimizer_equal=_same_tree(trainer.optimizer.state_dict(),candidate.optimizer.state_dict()),
+        counters_equal=trainer.counters==candidate.counters,policy_version_equal=trainer.policy_version==candidate.policy_version)
+    if not all(report[k] for k in ('policy_equal','optimizer_equal','counters_equal','policy_version_equal')):
+        raise RuntimeError('Teacher checkpoint readback differs from saved policy/Adam/counters')
+    return report
 
 
 def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=None,
@@ -52,7 +79,7 @@ def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=Non
     model = PrivilegedTeacher(**config['model'])
     trainer = PPOTrainer(model, ppo_config, rollout_steps=config['rollout_steps'],
         num_envs=bridge.n, device=bridge.device)
-    identity = training_identity(ppo_config, bridge.contract)
+    identity = training_identity(ppo_config, bridge.contract,getattr(bridge,'task_identity',None))
     if checkpoint is not None:
         load_checkpoint(checkpoint, trainer, identity, history_reset='clear')
     if expert_dataset is not None:
@@ -67,37 +94,105 @@ def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=Non
     elif bc_steps:
         raise ValueError('qualified expert dataset required for BC warm start')
     write_json_new(output / 'model_identity.json', identity)
+    if getattr(bridge,'task_identity',None) is not None:
+        write_json_new(output / 'task_identity.json',bridge.task_identity)
     write_json_new(output / 'resolved_config.json', config)
-    save_checkpoint(output / f'teacher_update_{trainer.counters["updates"]:06d}.pt',
+    initial_checkpoint = output / f'teacher_update_{trainer.counters["updates"]:06d}.pt'
+    save_checkpoint(initial_checkpoint,
         trainer, identity, history_reset='clear')
+    native_identity = callable(getattr(bridge, 'bind_teacher_checkpoint', None))
+    if native_identity:
+        bridge.bind_teacher_checkpoint(initial_checkpoint)
     obs = bridge.critic
     started = time.monotonic()
     with (output / 'iterations.jsonl').open('x', encoding='utf-8') as log:
         for update_index in range(updates):
             term_totals = {}
+            stats={k:torch.zeros(24,dtype=torch.float64) for k in ('sum','square','noise_square','std_sum','saturation')}
+            count=0;closure=0.;joint_failures=0;failure_samples=0
+            group_entropy={name:0. for name in _ACTION_GROUPS}
+            policy_samples=[]
             for _ in range(config['rollout_steps']):
+                if native_identity:
+                    bridge.teacher_pre_action_identities()
+                    obs = bridge.critic.clone()
                 sample = trainer.collect_step(obs, obs)
+                action_cpu=sample['actions'].detach().cpu().double()
+                noise=action_cpu-sample['latent_mean'].detach().cpu().double().tanh()
+                stats['sum']+=action_cpu.sum(0);stats['square']+=action_cpu.square().sum(0)
+                stats['noise_square']+=noise.square().sum(0)
+                stats['std_sum']+=sample['latent_std'].detach().cpu().double().expand_as(action_cpu).sum(0)
+                stats['saturation']+=(action_cpu.abs()>=.999).double().sum(0);count+=len(action_cpu)
+                policy_samples.append((obs.detach().cpu().clone(),sample['latent_mean'].detach().cpu().clone(),
+                    sample['latent_std'].detach().cpu().clone()))
+                # Existing sampled epsilon gives a diagnostic current-policy MC
+                # entropy estimate without drawing from or changing PPO RNG.
+                for name,(lo,hi) in _ACTION_GROUPS.items():
+                    mu=sample['latent_mean'][:,lo:hi];std_=sample['latent_std'][:,lo:hi]
+                    epsilon=(sample['latent_actions'][:,lo:hi]-mu)/std_
+                    group_entropy[name]+=float(squashed_entropy(mu,std_,epsilon).sum())
+                if native_identity:
+                    with torch.no_grad():
+                        mean_action = model.deterministic(obs)
+                    bridge.set_teacher_action_diagnostics(sampled_action=sample['actions'],
+                        mean_action=mean_action, issued_action=sample['actions'])
                 next_obs, reward, done, extra = bridge.step(sample['actions'])
+                original_reward=reward.clone()
                 reward, trace = compose_native_reward(reward, {
                     k: v.float() for k, v in extra['terms'].items()}, profile=config['reward_profile'])
                 for name, term in trace['terms'].items():
                     term_totals[name] = term_totals.get(name, 0.) + float(term['total_contribution'])
+                closure=max(closure,float((reward-original_reward).abs().max()))
+                if 'failure' in extra:
+                    joint_failures+=int((extra['failure']==3).sum());failure_samples+=len(extra['failure'])
                 with torch.no_grad():
                     next_value = model.value(next_obs)
                 trainer.record_step(reward, done, next_value, executed_actions=sample['actions'],
                     collection_token=sample['collection_token'])
                 obs = next_obs
             metrics = trainer.update()
+            group_kl={name:0. for name in _ACTION_GROUPS}
+            with torch.no_grad():
+                for observation,old_mu,old_std in policy_samples:
+                    new_mu=model.latent_mean(observation.to(bridge.device))
+                    new_std=model.log_std.exp().expand_as(new_mu)
+                    old_mu,old_std=old_mu.to(new_mu),old_std.to(new_mu)
+                    for name,(lo,hi) in _ACTION_GROUPS.items():
+                        group_kl[name]+=float(latent_gaussian_kl(old_mu[:,lo:hi],old_std[:,lo:hi],
+                            new_mu[:,lo:hi],new_std[:,lo:hi]).sum())
             update = trainer.counters['updates']
+            mean=stats['sum']/count;std=(stats['square']/count-mean.square()).clamp_min(0).sqrt()
+            noise_rms=(stats['noise_square']/count).sqrt();latent_std=stats['std_sum']/count
+            action_diagnostics=dict(execution_mode='sampled_on_policy',issued_equals_sampled=True,
+                sampled_action_mean24=mean.tolist(),sampled_action_std24=std.tolist(),
+                sampled_minus_mean_rms24=noise_rms.tolist(),latent_std24=latent_std.tolist(),
+                saturation_fraction24=(stats['saturation']/count).tolist(),
+                joint_limit_failure_fraction=joint_failures/failure_samples if failure_samples else None,
+                final_old_to_new_kl=sum(group_kl.values())/count,
+                entropy_definition='collection-policy MC from already sampled epsilon; no additional RNG draw',
+                kl_definition='exact Normal(old||final_updated_policy) on collected states; distinct from optimizer mean KL',
+                actual_execution_evidence='native/native_physics.jsonl' if native_identity else None,
+                groups={name:dict(indices=list(range(lo,hi)),sampled_mean=mean[lo:hi].tolist(),
+                    sampled_std=std[lo:hi].tolist(),noise_rms=noise_rms[lo:hi].tolist(),latent_std=latent_std[lo:hi].tolist(),
+                    sampled_tanh_entropy=group_entropy[name]/count,final_old_to_new_kl=group_kl[name]/count,
+                    normalized_saturation_fraction=(stats['saturation'][lo:hi]/count).tolist(),
+                    native_joint_limit_hand_attribution=None)
+                    for name,(lo,hi) in _ACTION_GROUPS.items()})
             row = dict(update=update, **metrics, reward_term_totals=term_totals,
                 native_successes=int(bridge.env.successes.sum()),
                 completed_episodes=int(bridge.env.episodes.sum()),
                 elapsed_wall_s=time.monotonic() - started,
+                action_diagnostics=action_diagnostics,reward_diagnostics=dict(profile=config['reward_profile'],
+                    r0_closure_max_abs=closure,reward_owner='native_env_once'),
                 qualification='pending_independent_full_episode_validation')
+            if native_identity or update % checkpoint_interval == 0 or update_index == updates - 1:
+                current_checkpoint = output / f'teacher_update_{update:06d}.pt'
+                save_checkpoint(current_checkpoint, trainer, identity, history_reset='clear')
+                row['checkpoint_roundtrip']=_checkpoint_readback(current_checkpoint,trainer,identity)
+                if native_identity and update_index < updates - 1:
+                    bridge.bind_teacher_checkpoint(current_checkpoint)
             log.write(json.dumps(row, allow_nan=False) + '\n')
             log.flush()
-            if update % checkpoint_interval == 0 or update_index == updates - 1:
-                save_checkpoint(output / f'teacher_update_{update:06d}.pt', trainer, identity, history_reset='clear')
     return dict(status='independent_teacher_updates_completed', updates=trainer.counters['updates'],
         checkpoint_family='privileged_teacher_only', native_grasp_qualification=False)
 
@@ -107,7 +202,7 @@ def _policy_for_evaluation(bridge, config, ppo_config, checkpoint):
     # on a disposable trainer with its declared storage geometry, then use only
     # deterministic model inference at the current env count.
     payload = torch.load(checkpoint, map_location='cpu', weights_only=False)
-    identity = training_identity(ppo_config, bridge.contract)
+    identity = training_identity(ppo_config, bridge.contract,getattr(bridge,'task_identity',None))
     trainer = PPOTrainer(PrivilegedTeacher(**config['model']), ppo_config,
         rollout_steps=payload.get('rollout_steps', config['rollout_steps']),
         num_envs=payload.get('num_envs', bridge.n), device=bridge.device)
@@ -118,15 +213,21 @@ def _policy_for_evaluation(bridge, config, ppo_config, checkpoint):
 
 @torch.no_grad()
 def collect_or_evaluate(bridge, config, ppo_config, *, checkpoint, output, max_steps, collect=False):
+    checkpoint_sha256 = file_sha256(checkpoint)
     model, identity = _policy_for_evaluation(bridge, config, ppo_config, checkpoint)
     output = Path(output)
+    bridge.bind_teacher_checkpoint(checkpoint)
+    if bridge.checkpoint_sha256 != checkpoint_sha256:
+        raise ValueError('Teacher checkpoint bytes changed between policy load and native identity binding')
     initial = [bridge.identities.uid(i) for i in range(bridge.n)]
     completed, rows = set(), []
     for _ in range(max_steps):
+        before = bridge.teacher_pre_action_identities()
         obs = bridge.critic.clone()
-        before = bridge.pre_action_identities('0'*64)
         sample = model.sample(obs) if collect else None
         action = model.deterministic(obs)
+        bridge.set_teacher_action_diagnostics(sampled_action=sample['actions'] if sample is not None else None,
+            mean_action=action, issued_action=action)
         next_obs, reward, done, extra = bridge.step(action)
         if collect:
             for i in range(bridge.n):
@@ -136,7 +237,8 @@ def collect_or_evaluate(bridge, config, ppo_config, *, checkpoint, output, max_s
                         teacher_latent_std=sample['latent_std'][i].cpu(),
                         teacher_sampled_action=sample['actions'][i].cpu(),
                         teacher_mean_action=action[i].cpu(), actually_issued_action=action[i].cpu(),
-                        applied_action_source='native_physics.jsonl;not_assumed_equal_to_actor',
+                        applied_action=None,
+                        applied_action_source='native/native_physics.jsonl:controller_and_SDK_targets;normalized_applied_action_unavailable',
                         reward=float(reward[i]), terminal=bool(done[i]),
                         native_success=bool(extra['success'][i]), failure_code=int(extra['failure'][i])))
         completed.update(done.nonzero().flatten().tolist())
@@ -149,7 +251,8 @@ def collect_or_evaluate(bridge, config, ppo_config, *, checkpoint, output, max_s
                 identity=identity, samples=rows, terminal_rows=terminal,
                 successful_expert_pool=False, qualification='requires_independent_native_evidence_review'), stream)
     report = dict(status='bounded_teacher_collection' if collect else 'bounded_teacher_evaluation',
-        checkpoint_sha256=file_sha256(checkpoint), identity=identity,
+        checkpoint_sha256=checkpoint_sha256, identity=identity,
+        calibration_sha256=bridge.camera.calibration.sha256,
         environments=bridge.n, first_episodes_complete=sum(t is not None for t in terminal),
         native_successes=sum(bool(t and t['native_success']) for t in terminal),
         steps=bridge.policy_tick, terminated_before_budget=len(completed) == bridge.n,
@@ -169,6 +272,8 @@ def main(mode='train', argv=None):
     parser.add_argument('--rollout-steps', type=int)
     parser.add_argument('--updates', type=int, default=1)
     parser.add_argument('--checkpoint', '--resume', dest='checkpoint', type=Path)
+    parser.add_argument('--camera-config', type=Path,
+        default=ROOT / 'configs/dh116_training/stereo_camera_640x480_v2.json')
     parser.add_argument('--expert-dataset', type=Path)
     parser.add_argument('--bc-steps', type=int, default=0)
     parser.add_argument('--checkpoint-interval', type=int, default=10)
@@ -205,6 +310,9 @@ def main(mode='train', argv=None):
     from .tabletop_stereo_native import launch_native
 
     def callback(bridge):
+        from .tabletop_stereo_camera import StereoCamera
+        bridge.bind_camera(StereoCamera.from_native(bridge.world.sim, bridge.device_world.origins,
+            args.camera_config, device=bridge.device))
         if mode == 'train':
             return train_teacher(bridge, config, ppo, output=run, updates=args.updates,
                 checkpoint=args.checkpoint, expert_dataset=args.expert_dataset, bc_steps=args.bc_steps,

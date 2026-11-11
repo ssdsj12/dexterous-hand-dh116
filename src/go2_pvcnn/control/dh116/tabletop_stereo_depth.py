@@ -12,7 +12,8 @@ class StereoDepth:
     def __init__(self, *, method='blockmatch', min_disparity=1, max_disparity=64,
                  block_size=5,min_depth_m=.2,max_depth_m=1.2,lr_tolerance_px=1.,
                  texture_threshold=.001,uniqueness_threshold=.05,rectify=False,
-                 subpixel=False,image_processing_batch_size=1,reliability=None,photometric_verification=None):
+                 subpixel=False,image_processing_batch_size=1,reliability=None,photometric_verification=None,
+                 pyramid_mode=None):
         if (method not in ('blockmatch','sgbm','reliable_sad','census','zncc','gradient','coarse_to_fine') or type(min_disparity) is not int or type(max_disparity) is not int
                 or min_disparity<1 or max_disparity<=min_disparity or type(block_size) is not int
                 or block_size<3 or block_size%2!=1 or not 0<min_depth_m<max_depth_m
@@ -21,6 +22,13 @@ class StereoDepth:
                 or type(subpixel) is not bool or (image_processing_batch_size is not None
                     and (type(image_processing_batch_size) is not int or image_processing_batch_size<1))):
             raise ValueError('invalid stereo depth configuration')
+        if method == 'coarse_to_fine':
+            pyramid_mode = 'audit' if pyramid_mode is None else pyramid_mode
+            if pyramid_mode not in ('audit', 'accelerated'):
+                raise ValueError('pyramid_mode must be audit or accelerated')
+        elif pyramid_mode is not None:
+            raise ValueError('pyramid_mode requires coarse_to_fine method')
+        self.pyramid_mode = pyramid_mode
         self.method=method;self.min_disparity=min_disparity;self.max_disparity=max_disparity
         self.block_size=block_size;self.near=min_depth_m;self.far=max_depth_m
         self.lr=lr_tolerance_px;self.texture=texture_threshold;self.uniqueness=uniqueness_threshold;self.rectify=rectify
@@ -60,6 +68,8 @@ class StereoDepth:
         if self.reliability is not None:
             result['reliability']=dict(self.reliability)
             result['photometric_verification']=self.photometric_verification
+        if self.pyramid_mode is not None:
+            result['pyramid_mode'] = self.pyramid_mode
         return result
 
     def _texture(self,gray):
@@ -252,7 +262,8 @@ class StereoDepth:
             if self.method=='coarse_to_fine':
                 from .tabletop_stereo_pyramid import match_pyramid
                 def run(a,b,sign,ma,mb):
-                    return match_pyramid(a,b,sign,calibration=calibration,a_valid=ma,b_valid=mb,**kwargs)
+                    return match_pyramid(a,b,sign,calibration=calibration,a_valid=ma,b_valid=mb,
+                        pyramid_mode=self.pyramid_mode,**kwargs)
             else:
                 from .tabletop_stereo_matching_costs import match_cost
                 def run(a,b,sign,ma,mb):
@@ -311,6 +322,8 @@ class StereoDepth:
         if 'refinement' in left_trace:diagnostics['refinement']=left_trace['refinement']
         for name in ('pyramid','metric','subpixel_policy','resource_metadata'):
             if name in left_trace:diagnostics[name]=left_trace[name]
+        if self.pyramid_mode is not None:
+            diagnostics['pyramid_right'] = right_trace['pyramid']
         return dict(depth_m=torch.where(valid,z,missing),disparity_px=torch.where(valid,dl,missing),
                     valid=valid,occlusion=occlusion,confidence=torch.where(valid,confidence,0.),diagnostics=diagnostics)
 
@@ -348,4 +361,6 @@ class StereoDepth:
             cached_cost_state_planes=6 if self.method=='blockmatch' else None,
             configured_disparity_range=[self.min_disparity,self.max_disparity],
             gpu_memory_measured=False,gpu_peak_allocated_bytes=None,gpu_peak_reserved_bytes=None)
+        if self.pyramid_mode is not None:
+            self.last_resource_metadata['pyramid_mode'] = self.pyramid_mode
         return result

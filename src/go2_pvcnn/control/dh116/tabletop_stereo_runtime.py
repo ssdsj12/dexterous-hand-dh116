@@ -12,7 +12,7 @@ import torch
 from .tabletop_stereo_camera import StereoCamera
 from .tabletop_stereo_contract import state_contract
 from .tabletop_stereo_observation import SensorBatch, StereoHistory
-from .tabletop_stereo_perception import WirePointExtractor
+from .tabletop_stereo_perception import WirePointExtractor, TrackedWirePointExtractor
 from .tabletop_stereo_geometry import world_to_palms
 from .tabletop_stereo_teacher_collector import PreActionState, StepResult
 from .tabletop_stereo_preprocessing import processing_contract
@@ -29,8 +29,11 @@ class NativeStereoEnvironment:
         self.preprocessing = processing_contract(camera_config)
         self.camera = StereoCamera.from_native(bridge.world.sim, bridge.device_world.origins,
             camera_config, device=self.device)
+        if callable(getattr(bridge,'bind_camera',None)):bridge.bind_camera(self.camera)
+        else:bridge.camera=self.camera
         self.history = StereoHistory(self.n, history, device=self.device)
-        self.extractor = WirePointExtractor()
+        self.extractor = (WirePointExtractor() if self.preprocessing['perception']['algorithm']=='warm_colour_visible_simple_path_ZhangSuen_v1'
+            else TrackedWirePointExtractor())
         self._cached = None
         self._pending_reset = torch.ones(self.n, device=self.device, dtype=torch.bool)
         self.bridge.set_execution_context(owner=owner, checkpoint_sha256=checkpoint_sha256)
@@ -110,19 +113,24 @@ class NativeStereoEnvironment:
             identity['observation_preprocessor'] = self.preprocessing
             identity['observation_preprocessor_sha256'] = self.preprocessing['processing_sha256']
         pair = self.camera.sample(identity=identities)
+        extraction_kwargs=dict(reset_mask=self._pending_reset)
+        if isinstance(self.extractor,TrackedWirePointExtractor):
+            extraction_kwargs.update(timestamp=[row['simulation_timestamp'] for row in pair['identity']],
+                point_confidence=pair['confidence'])
         extraction = self.extractor.extract(pair['left_rgb'], pair['depth_m'], pair['valid'],
-            pair['K_left'], pair['T_world_left'], reset_mask=self._pending_reset)
+            pair['K_left'], pair['T_world_left'], **extraction_kwargs)
+        if 'timestamp_anomaly' in extraction:self._pending_reset|=extraction['timestamp_anomaly']
         h, w = pair['left_rgb'].shape[-2:]
         sensor = SensorBatch(left_rgb=pair['left_rgb'].float(), right_rgb=pair['right_rgb'].float(),
             depth_m=pair['depth_m'].float(), depth_valid=pair['valid'],
             depth_confidence=pair['confidence'].float(),
             points_world=extraction['points_world'].float(), point_valid=extraction['point_valid'],
+            point_confidence=extraction.get('confidence',extraction['point_valid'].float()).float(),
             proprio=self.bridge.proprioception(), dt=torch.full((self.n,), 1/60, device=self.device),
             image_age=torch.zeros(self.n, device=self.device),
             image_valid=torch.ones(self.n, 2, device=self.device, dtype=torch.bool))
-        # Diagnostic coordinates of OBSERVED RGB/stereo points, using the exact
-        # same FK sample already given to the Actor. These are not simulator
-        # object geometry or qualified supervision targets. World input stays.
+        # These SAME measured-FK local coordinates are also typed Actor inputs;
+        # they are observed geometry, not simulator nodes or qualified labels.
         palms=sensor.proprio[:,24:38].reshape(self.n,2,7)
         local_points=world_to_palms(sensor.points_world,palms)
         local_valid=sensor.point_valid[:,None,:].expand(-1,2,-1).clone()&torch.isfinite(local_points).all(-1)
@@ -151,6 +159,9 @@ class NativeStereoEnvironment:
             label_validity={'stereo_disparity_px': pair['valid'].clone()},
             state_sources=sources, force_qualification=None).validate()
         self.last_visible_geometry={key:(value.clone() if isinstance(value,torch.Tensor) else value) for key,value in geometry.items()}
+        self.last_visible_geometry['wire_tracking']={key:(value.clone() if isinstance(value,torch.Tensor) else value)
+            for key,value in extraction.items() if key not in ('points_world','point_valid','xyz','valid')}
+        pair['wire_tracking']=self.last_visible_geometry['wire_tracking']
         pair.update({key:(value.clone() if isinstance(value,torch.Tensor) else value) for key,value in geometry.items()})
         self.last_camera_packet = pair
         return self._cached.clone()

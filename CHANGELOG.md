@@ -1,3 +1,15 @@
+## 2026-11-11 — Stereo 运行链路修复发布
+
+发布基线为 `9bfee426363527190011dbca164c104a00cbc999`。修复 RGB 二维拓扑与独立可见片段、TaskStateAdapter 到 Actor、左右掌局部点编码、真实 Teacher 身份和动作标签；保留旧路径，新增独立 latent/task-state/hybrid 配置。高分辨率 PPO 改为唯一帧池与有界 minibatch，粗到细区分默认 audit 与显式 accelerated。
+
+最终 CPU 回归：Windows **1030 passed / 1 skipped**（153.36s），服务器 **1030 passed / 2 skipped**（180.92s），均 exit0。完成 2/8/16/32 环境的 CPU/GPU 帧池测量、三模式 2env×4step 原生配对、Teacher 2env×1update 及 deterministic mean 采集诊断。原始二指0点失败被保留；逐分量拒绝修复后的同帧复放恢复4点，三指9点。详细原生复验见报告。
+
+这些是运行链路证据：Teacher/Student 没有取得成功资格，三模式未训练，深度完整率仍待验证；tiny Teacher batch KL偏高，同一episode跨多update的checkpoint切换边界仍需补齐。rigid_proxy明确标识，deformable_rod仅严格状态接口，真实后端未接通。528保护文件与30mm/5s/0.5mm标准不变，本阶段训练范围为短时诊断，发布目标为 Draft PR #2 的开发分支。
+
+上传前在 CPU 环境执行 pytest -q -p no:cacheprovider @tests，@tests 为 PowerShell 展开的全部 tests/test_dh116_stereo_runtime_*.py 和 tests/test_dh116_stereo_student_ppo.py。176 项通过，用时 23.78 秒。
+
+[完整报告](docs/superpowers/reports/2026-11-11-stereo-runtime-repair.md) · [机器摘要](docs/contracts/stereo_runtime_repair_validation_summary.json) · [readiness](docs/contracts/stereo_phase0_7_readiness.json) · [文件清单](docs/stereo_phase0_7_file_inventory.md)。以下为历史记录。
+
 ## 2026-11-11 — 按用户授权上传J2-A/J2-B
 
 本次发布现有开发分支的J2-A（`a5a15fb`）与J2-B（`3cc5c12`）代码、独立配置、测试、报告和readiness；沿用[Draft PR #2](https://github.com/ssdsj12/dexterous-hand-dh116/pull/2)，保持Draft且不合并11-10。最新完整CPU回归885/886与48解析案例为上一阶段已执行证据；本次上传前另执行63项cost/integration检查，63 passed（20.36s，exit0）。528保护文件和1131份服务器已测源码SHA复核一致，未运行新Isaac/GPU实验或训练。

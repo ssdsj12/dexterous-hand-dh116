@@ -16,7 +16,7 @@ VERSION='dh116-stereo-processing-v1'
 
 
 def _sources():
-    names=('depth','perception','geometry','preprocessing','matcher_candidates','matching_costs','pyramid')
+    names=('depth','perception','geometry','preprocessing','matcher_candidates','matching_costs','pyramid','wire_tracking')
     return {f'tabletop_stereo_{name}.py':hashlib.sha256(Path(__file__).with_name(
         f'tabletop_stereo_{name}.py').read_bytes()).hexdigest() for name in names}
 
@@ -29,6 +29,8 @@ def processing_contract(camera_config):
     depth.pop('image_processing_batch_size',None)
     for key in ('min_depth_m','max_depth_m','lr_tolerance_px','texture_threshold','uniqueness_threshold'):
         depth[key]=float(depth[key])
+    tracking=config.get('wire_tracking_mode','normalized_visible_components')
+    if tracking not in ('legacy','normalized_visible_components'):raise ValueError('explicit supported wire tracking mode required')
     result=dict(version=VERSION,calibration_sha256=calibration.sha256,
         image_resolution_wh=[calibration.width,calibration.height],depth_estimator=depth,
         rgb=dict(channel_order='RGB',layout='NCHW',range=[0.,1.],dtype='float32',
@@ -37,12 +39,12 @@ def processing_contract(camera_config):
             optical_axes='+X_right,+Y_down,+Z_forward',transform='T_world_left_times_optical_point',
             calibration_rectified=calibration.rectified,rectification='explicit_only;no_hidden_rectify',
             missing='NaN_with_false_validity;no_simulator_or_rendered_depth_fallback'),
-        perception=dict(algorithm='warm_colour_visible_simple_path_ZhangSuen_v1',point_count=128,
+        perception=dict(algorithm='warm_colour_visible_simple_path_ZhangSuen_v1' if tracking=='legacy' else 'normalized_visible_components_tracking_v2',point_count=128,
             thresholds=dict(red_over_green=1.07,green_over_blue=1.1,minimum_red=.12),
             thinning_max_iterations=128,identity_motion_limit_m=.005,
-            ordering='observed_visible_arc_length;dominant_world_axis_endpoint_orientation',
-            temporal_identity='endpoint_consistency_diagnostic;not_native_identity_qualification',
-            missing_or_branched='invalid_tokens;never_invent_hidden_segments'),
+            ordering='observed_visible_arc_length;dominant_world_axis_endpoint_orientation' if tracking=='legacy' else 'component_metric_arc_when_complete;2D_arc_partial_depth;temporal_orientation',
+            temporal_identity='endpoint_consistency_diagnostic;not_native_identity_qualification' if tracking=='legacy' else 'endpoint_tangent_curvature_arc_prediction;ambiguous_unknown;not_material_point_identity',
+            missing_or_branched='invalid_tokens;never_invent_hidden_segments' if tracking=='legacy' else 'RGB_path_before_depth;reliable_components_separate;never_bridge_hidden_or_branched_segments'),
         source_sha256=_sources(),resource_fields_excluded=['image_processing_batch_size'],
         native_qualified=False)
     result['processing_sha256']=digest(result)

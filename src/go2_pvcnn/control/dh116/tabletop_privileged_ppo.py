@@ -75,10 +75,11 @@ def _finite(name, value):
 
 class OnPolicyRollout:
     """Only PPOTrainer owns its write capability; no external transition add API."""
-    def __init__(self, rollout_steps, num_envs, *, session_id, policy_version, capability):
+    def __init__(self, rollout_steps, num_envs, *, session_id, policy_version, capability, actor_storage=None):
         self.rollout_steps, self.num_envs = rollout_steps, num_envs
         self.session_id, self.policy_version = session_id, policy_version
         self._capability, self._rows = capability, []
+        self.actor_storage = actor_storage
 
     def __len__(self):
         return len(self._rows)
@@ -96,13 +97,21 @@ class OnPolicyRollout:
             raise ValueError('collection session/policy version mismatch')
         self._rows.append(row)
 
-    def batch(self):
+    def batch(self, *, resolve_actor=False):
+        """Return owned ledger tensors; indexed actor inputs stay compact.
+
+        ``resolve_actor=True`` is an explicit CPU diagnostic convenience and
+        can materialize an entire rollout. PPO updates never request it.
+        """
         if not self._rows:
             raise RuntimeError('empty rollout')
         # Return owned clones so consumers cannot alter the update ledger.
         names = ('actor_obs', 'critic_obs', 'actions', 'latent_actions', 'old_log_prob',
             'old_mu', 'old_std', 'values', 'rewards', 'done', 'next_value', 'bootstrap_mask')
-        return {name: _tree(_join([row[name] for row in self._rows]), lambda t: t.detach().clone()) for name in names}
+        result = {name: _tree(_join([row[name] for row in self._rows]), lambda t: t.detach().clone()) for name in names}
+        if resolve_actor and self.actor_storage is not None:
+            result['actor_obs'] = self.actor_storage.resolve(result['actor_obs'], 'cpu')
+        return result
 
     def returns_and_advantages(self, config):
         if not self.full:
@@ -119,12 +128,20 @@ class OnPolicyRollout:
 
 
 class PPOTrainer:
-    def __init__(self, model, config=None, *, rollout_steps=32, num_envs=1, device='cpu'):
+    def __init__(self, model, config=None, *, rollout_steps=32, num_envs=1, device='cpu',
+                 actor_storage=None, max_visual_batch=None):
         if any(type(v) is not int or v < 1 for v in (rollout_steps, num_envs)):
             raise ValueError('positive integer rollout_steps/num_envs required')
         self.config = config or PPOConfig()
         self.model, self.device = model.to(device), torch.device(device)
         self.rollout_steps, self.num_envs = rollout_steps, num_envs
+        self.actor_storage = actor_storage
+        if actor_storage is not None and any(not callable(getattr(actor_storage,key,None)) for key in ('capture','resolve','reset')):
+            raise TypeError('actor_storage requires capture/resolve/reset hooks')
+        self.max_visual_batch = (getattr(actor_storage,'max_visual_batch',None)
+                                 if max_visual_batch is None else max_visual_batch)
+        if self.max_visual_batch is not None and (type(self.max_visual_batch) is not int or self.max_visual_batch<1):
+            raise ValueError('max_visual_batch must be a positive integer or None')
         if model.log_std.shape != (24,):
             raise ValueError('generic policy must expose 24D log_std')
         self.optimizer = torch.optim.Adam(model.parameters(), lr=self.config.lr)
@@ -135,8 +152,23 @@ class PPOTrainer:
         self.project_noise()
 
     def _new_rollout(self):
+        if self.actor_storage is not None: self.actor_storage.reset()
         self.rollout = OnPolicyRollout(self.rollout_steps, self.num_envs,
-            session_id=self.session_id, policy_version=self.policy_version, capability=self._capability)
+            session_id=self.session_id, policy_version=self.policy_version, capability=self._capability,
+            actor_storage=self.actor_storage)
+
+    def _actor_input(self, value):
+        return (_device(value,self.device) if self.actor_storage is None else
+                self.actor_storage.resolve(value,self.device))
+
+    def _visual_chunks(self, indices):
+        return indices.split(self.max_visual_batch or len(indices))
+
+    def _actor_mean(self, actor_obs, count):
+        # Collection reconstructs only each bounded actor batch. No old latent
+        # stands in for raw sensor input in any collection or update forward.
+        return torch.cat([self.model.latent_mean(self._actor_input(_index(actor_obs,indices)))
+            for indices in self._visual_chunks(torch.arange(count))],0)
 
     @property
     def clean_boundary(self):
@@ -166,12 +198,15 @@ class PPOTrainer:
             if value.ndim < 2 or value.shape[0] != self.num_envs:
                 raise ValueError('batched actor observation count mismatch')
             return value
-        _tree(actor_obs, check)
+        if self.actor_storage is None: _tree(actor_obs, check)
         _finite('critic observation', critic_obs)
         if critic_obs.shape != (self.num_envs, 371):
             raise ValueError('critic observations must be [N,371]')
-        owned_actor, owned_critic = _cpu(actor_obs), _cpu(critic_obs)
-        mu = self.model.latent_mean(_device(owned_actor, self.device))
+        owned_actor = _cpu(actor_obs) if self.actor_storage is None else self.actor_storage.capture(actor_obs)
+        if self.actor_storage is not None and owned_actor.shape != (self.num_envs,):
+            raise ValueError('indexed actor observation count mismatch')
+        owned_critic = _cpu(critic_obs)
+        mu = self._actor_mean(owned_actor,self.num_envs)
         _finite('latent mean', mu)
         if mu.shape != (self.num_envs, 24):
             raise ValueError('policy latent mean must be [N,24]')
@@ -229,27 +264,28 @@ class PPOTrainer:
 
     @torch.no_grad()
     def _check_frozen_policy(self, batch):
-        mu = self.model.latent_mean(_device(batch['actor_obs'], self.device))
-        std = self.model.log_std.exp().expand_as(mu)
-        z = batch['latent_actions'].to(self.device)
-        actual = squashed_log_prob(z, mu, std)
-        for name, current, old in (('mean', mu, batch['old_mu']), ('std', std, batch['old_std']),
-                ('likelihood', actual, batch['old_log_prob'])):
-            if not torch.allclose(current.cpu(), old, atol=2e-5, rtol=2e-5):
-                raise RuntimeError('on-policy frozen ' + name + ' changed before PPO update')
-        value = self.model.value(batch['critic_obs'].to(self.device))
-        if not torch.allclose(value.cpu(), batch['values'], atol=2e-5, rtol=2e-5):
-            raise RuntimeError('critic policy changed during on-policy rollout')
-        # Check on the collection device; CPU/GPU tanh kernels may round differently.
-        if not torch.equal(z.tanh().cpu(), batch['actions']):
-            raise RuntimeError('saved action/latent sample mismatch')
+        for indices in self._visual_chunks(torch.arange(len(batch['values']))):
+            mu = self.model.latent_mean(self._actor_input(_index(batch['actor_obs'],indices)))
+            std = self.model.log_std.exp().expand_as(mu)
+            z = batch['latent_actions'][indices].to(self.device)
+            actual = squashed_log_prob(z, mu, std)
+            for name, current, old in (('mean',mu,batch['old_mu'][indices]),('std',std,batch['old_std'][indices]),
+                    ('likelihood',actual,batch['old_log_prob'][indices])):
+                if not torch.allclose(current.cpu(),old,atol=2e-5,rtol=2e-5):
+                    raise RuntimeError('on-policy frozen '+name+' changed before PPO update')
+            value = self.model.value(batch['critic_obs'][indices].to(self.device))
+            if not torch.allclose(value.cpu(),batch['values'][indices],atol=2e-5,rtol=2e-5):
+                raise RuntimeError('critic policy changed during on-policy rollout')
+            # CPU/GPU tanh kernels may round differently; check collection device.
+            if not torch.equal(z.tanh().cpu(),batch['actions'][indices]):
+                raise RuntimeError('saved action/latent sample mismatch')
 
     def update(self):
         if self._pending is not None:
             raise RuntimeError('cannot update with pending transition')
         if not self.rollout.full:
             raise RuntimeError('complete nonempty rollout required')
-        batch = self.rollout.batch()
+        batch = self.rollout.batch(resolve_actor=False)
         self._check_frozen_policy(batch)
         returns, advantage = self.rollout.returns_and_advantages(self.config)
         advantage = ((advantage - advantage.mean()) / advantage.std(unbiased=False).clamp_min(1e-8)).detach()
@@ -257,37 +293,44 @@ class PPOTrainer:
         aggregate = dict(policy_loss=0., value_loss=0., entropy=0., kl=0.)
         for _ in range(self.config.epochs):
             for indices in torch.randperm(total).tensor_split(min(total, self.config.minibatches)):
-                actor_obs = _device(_index(batch['actor_obs'], indices), self.device)
-                critic_obs = batch['critic_obs'][indices].to(self.device)
-                mu = self.model.latent_mean(actor_obs)
-                std = self.model.log_std.exp().expand_as(mu)
-                z = batch['latent_actions'][indices].to(self.device)
-                log_prob = squashed_log_prob(z, mu, std)
-                old_log = batch['old_log_prob'][indices].to(self.device)
-                ratio = (log_prob - old_log).exp()
-                adv = advantage[indices].to(self.device)
-                policy_loss = -torch.minimum(ratio * adv,
-                    ratio.clamp(1-self.config.clip, 1+self.config.clip) * adv).mean()
-                value = self.model.value(critic_obs)
-                old_value = batch['values'][indices].to(self.device)
-                target = returns[indices].to(self.device)
-                clipped_value = old_value + (value-old_value).clamp(-self.config.clip, self.config.clip)
-                value_loss = torch.maximum((value-target).square(), (clipped_value-target).square()).mean()
-                entropy = squashed_entropy(mu, std, torch.randn_like(mu)).mean()
-                loss = policy_loss + self.config.value_coef * value_loss - self.config.entropy_coef * entropy
-                _finite('PPO loss', loss)
                 self.optimizer.zero_grad(set_to_none=True)
-                loss.backward()
+                # Keep one entropy draw and one optimizer/clip step per original
+                # minibatch. Weighted chunk means give the same PPO objective,
+                # including a final short chunk, without a whole visual batch.
+                entropy_noise=torch.randn(len(indices),24,device=self.device,dtype=batch['old_mu'].dtype)
+                offset=0
+                for chunk in self._visual_chunks(indices):
+                    actor_obs=self._actor_input(_index(batch['actor_obs'],chunk))
+                    mu=self.model.latent_mean(actor_obs)
+                    std=self.model.log_std.exp().expand_as(mu)
+                    z=batch['latent_actions'][chunk].to(self.device)
+                    log_prob=squashed_log_prob(z,mu,std)
+                    old_log=batch['old_log_prob'][chunk].to(self.device)
+                    ratio=(log_prob-old_log).exp()
+                    adv=advantage[chunk].to(self.device)
+                    policy_loss=-torch.minimum(ratio*adv,
+                        ratio.clamp(1-self.config.clip,1+self.config.clip)*adv).mean()
+                    value=self.model.value(batch['critic_obs'][chunk].to(self.device))
+                    old_value=batch['values'][chunk].to(self.device)
+                    target=returns[chunk].to(self.device)
+                    clipped_value=old_value+(value-old_value).clamp(-self.config.clip,self.config.clip)
+                    value_loss=torch.maximum((value-target).square(),(clipped_value-target).square()).mean()
+                    entropy=squashed_entropy(mu,std,entropy_noise[offset:offset+len(chunk)]).mean()
+                    weight=len(chunk)/len(indices)
+                    loss=policy_loss+self.config.value_coef*value_loss-self.config.entropy_coef*entropy
+                    _finite('PPO loss',loss)
+                    (loss*weight).backward()
+                    with torch.no_grad():
+                        kl=latent_gaussian_kl(batch['old_mu'][chunk].to(self.device),
+                            batch['old_std'][chunk].to(self.device),mu,std).mean()
+                    for name,item in (('policy_loss',policy_loss),('value_loss',value_loss),('entropy',entropy),('kl',kl)):
+                        aggregate[name]+=float(item.detach())*weight
+                    offset+=len(chunk)
+                    del actor_obs,mu,std,loss
                 norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.max_grad_norm,
                     error_if_nonfinite=True)
                 self.optimizer.step()
                 self.project_noise()
-                with torch.no_grad():
-                    kl = latent_gaussian_kl(batch['old_mu'][indices].to(self.device),
-                        batch['old_std'][indices].to(self.device), mu, std).mean()
-                for name, value in (('policy_loss', policy_loss), ('value_loss', value_loss),
-                        ('entropy', entropy), ('kl', kl)):
-                    aggregate[name] += float(value.detach())
                 count += 1
         self.policy_version += 1
         self.counters['updates'] += 1

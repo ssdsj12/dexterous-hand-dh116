@@ -5,6 +5,7 @@ module substitutes only its final training callback in the current process.
 It never patches a task/control/physics method or a historical artifact.
 """
 from contextlib import contextmanager
+from copy import deepcopy
 import importlib
 import json
 import os
@@ -15,9 +16,49 @@ import sys
 import torch
 
 from .tabletop_stereo_contract import (
-    ROOT, STYLES, EpisodeIdentities, file_sha256, require_opt_in, write_json_new, physical_initial_sha256,
+    ROOT, STYLES, EpisodeIdentities, digest, file_sha256, require_opt_in, write_json_new, physical_initial_sha256,
+    require_sha, validate_identity,
 )
 from .tabletop_surface_contract import validate_contract as validate_surface
+
+
+def native_task_identity(spec):
+    """Resolve authored task identity from the same object argument the launcher uses."""
+    if not isinstance(spec, dict) or spec.get('version') != 'dh116-stereo-native-bootstrap-v1':
+        raise ValueError('versioned native task bootstrap configuration required')
+    arguments = spec.get('arguments')
+    if not isinstance(arguments, list) or not all(isinstance(arg, str) for arg in arguments):
+        raise ValueError('explicit immutable native launcher arguments required')
+    object_kinds = []
+    for index, token in enumerate(arguments):
+        if token.startswith('--object-kind='):
+            object_kinds.append(token.split('=', 1)[1])
+        elif token == '--object-kind':
+            object_kinds.append(arguments[index + 1] if index + 1 < len(arguments) else None)
+    if len(object_kinds) > 1:
+        raise ValueError('duplicate --object-kind arguments have ambiguous physical identity')
+
+    kind = spec.get('task_kind', 'rigid_proxy')
+    if kind == 'rigid_proxy':
+        object_kind = object_kinds[0] if object_kinds else 'solid_cylinder'
+        if object_kind not in ('solid_cylinder', 'hollow_straw'):
+            raise ValueError('rigid_proxy requires solid_cylinder or hollow_straw --object-kind')
+        if spec.get('physical_object_kind', object_kind) != object_kind:
+            raise ValueError('physical_object_kind does not match actual --object-kind')
+        source = 'rigid_body_sdk_pose_velocity'
+    elif kind == 'deformable_rod':
+        if spec.get('physical_object_kind') != 'cosserat_rod' or object_kinds:
+            raise ValueError('deformable_rod requires cosserat_rod with no rigid --object-kind')
+        object_kind = 'cosserat_rod'
+        source = 'cosserat_solver_node_readback'
+    else:
+        raise ValueError('task_kind must be rigid_proxy or deformable_rod')
+
+    identity = dict(version='dh116-stereo-native-task-identity-v1', task_kind=kind,
+        physical_object_kind=object_kind, state_source=source, rod_state_available=False,
+        task_profile_sha256=digest(spec))
+    identity['task_identity_sha256'] = digest(identity)
+    return identity
 
 
 @contextmanager
@@ -70,6 +111,18 @@ class NativeTensorBridge:
             raise ValueError('exact audited 371D/24D native task required')
         if getattr(device_world, 'decimation', None) != 8 or abs(float(device_world.dt) - 1/480) > 1e-12:
             raise ValueError('unchanged 480Hz physics / 60Hz control required')
+        object_kind = getattr(args, 'object_kind', 'solid_cylinder')
+        identity = getattr(args, '_stereo_task_identity', None)
+        if identity is None:
+            identity = native_task_identity(dict(version='dh116-stereo-native-bootstrap-v1',
+                arguments=['--object-kind', object_kind]))
+            identity['task_profile_sha256'] = None
+            identity['task_identity_sha256'] = digest({key: val for key, val in identity.items()
+                if key != 'task_identity_sha256'})
+        if (identity['task_kind'] != 'rigid_proxy' or identity['physical_object_kind'] != object_kind
+                or identity['rod_state_available'] is not False):
+            raise ValueError('actual TensorTask launcher object does not match rigid_proxy task identity')
+        self._task_identity = deepcopy(identity)
         self.world, self.device_world, self.task, self.env = world, device_world, task, env
         self.args, self.contract, self.output = args, contract, Path(output)
         self.n, self.device = env.n, torch.device(env.device)
@@ -87,6 +140,10 @@ class NativeTensorBridge:
         self.execution_owner = 'teacher'
         self.action_owners = ['teacher'] * self.n
         self.checkpoint_sha256 = None
+        self.camera = None
+        self._teacher_checkpoint = None
+        self._teacher_pre_action = None
+        self._teacher_actions = None
         styles = getattr(args, '_stereo_grasp_styles', ['pinch_thumb_index'])
         if len(styles) == 2:
             if not getattr(args, 'mixed_grasp_initialization', None) or self.n % 2:
@@ -111,7 +168,7 @@ class NativeTensorBridge:
             palm_fk_links=[name for name, _ in self._palm_ids],
             observation_source='unchanged_TensorTask.observe',
             physics_evidence='runtime_capture_not_automatic_qualification',
-            force_qualification=None, hardware_feedback_qualification=None))
+            force_qualification=None, hardware_feedback_qualification=None, **self._task_binding()))
         from .tabletop_evaluation_telemetry import EvaluationTelemetry
         owner = self
 
@@ -127,6 +184,16 @@ class NativeTensorBridge:
     def close(self):
         self._raw.flush()
         self._raw.close()
+
+    @property
+    def task_identity(self):
+        return deepcopy(getattr(self, '_task_identity', None))
+
+    def _task_binding(self):
+        identity = self.task_identity
+        if identity is None:
+            return {}  # Compatibility for schema-only bridges that bypass __init__.
+        return dict(task_identity=identity, task_identity_sha256=identity['task_identity_sha256'])
 
     def reset(self):
         self.previous_issued.zero_()
@@ -188,6 +255,97 @@ class NativeTensorBridge:
             raise ValueError('one explicit complete action owner per environment required')
         self.action_owners = list(owners)
 
+    def bind_camera(self, camera):
+        """Bind the real camera object; configuration hashes are not readbacks."""
+        calibration = require_sha(getattr(getattr(camera, 'calibration', None), 'sha256', None),
+            'native calibration SHA256')
+        if calibration == '0'*64 or not callable(getattr(camera, 'sample', None)):
+            raise ValueError('nonzero native camera calibration and synchronized reader required')
+        if self._in_step:
+            raise ValueError('camera binding requires a control boundary')
+        self.camera = camera
+        self._teacher_pre_action = None
+        self._teacher_actions = None
+
+    def bind_teacher_checkpoint(self, checkpoint):
+        """Hash saved policy bytes before any physical Teacher action."""
+        if (getattr(self, '_teacher_checkpoint', None) is None
+                and any(self.identities.uid(i) in self._headers_written for i in range(self.n))):
+            raise ValueError('Teacher checkpoint must be bound before episode physical evidence starts')
+        self.bind_camera(getattr(self, 'camera', None))
+        path = Path(checkpoint).resolve(strict=True)
+        sha = require_sha(file_sha256(path), 'native Teacher checkpoint SHA256')
+        if sha == '0'*64:
+            raise ValueError('nonzero actual Teacher checkpoint SHA256 required')
+        self.set_execution_context(owner='teacher', checkpoint_sha256=sha)
+        self.set_action_owners(['teacher']*self.n)
+        self._teacher_checkpoint = path
+
+    def _validate_teacher_binding(self):
+        if (self.execution_owner != 'teacher' or self.action_owners != ['teacher']*self.n
+                or file_sha256(self._teacher_checkpoint) != self.checkpoint_sha256):
+            raise ValueError('Teacher checkpoint/execution identity changed after binding')
+        calibration = require_sha(self.camera.calibration.sha256, 'native calibration SHA256')
+        if calibration == '0'*64:
+            raise ValueError('nonzero actual native calibration required')
+        return calibration
+
+    def teacher_pre_action_identities(self):
+        """Use the camera-returned frame identity and compare every live clock."""
+        if getattr(self, '_teacher_checkpoint', None) is None:
+            raise ValueError('actual Teacher checkpoint identity must be bound before capture')
+        calibration = self._validate_teacher_binding()
+        requested = self.pre_action_identities(calibration)
+        previous_frame = self.camera.last_frame
+        packet = self.camera.sample(identity=deepcopy(requested))
+        actual = packet.get('identity')
+        frame = packet.get('frame_id')
+        if (not isinstance(actual, list) or len(actual) != self.n
+                or type(frame) is not int or frame < 0 or frame <= previous_frame
+                or packet.get('calibration_sha256') != calibration):
+            raise ValueError('actual camera frame/calibration identity required')
+        current = self.pre_action_identities(calibration)
+        for i, row in enumerate(actual):
+            validate_identity(row)
+            if (row['frame_id'] != frame or packet.get('simulation_time') != row['simulation_timestamp']
+                    or any(row.get(key) != value for key, value in requested[i].items())
+                    or current[i] != requested[i]):
+                raise ValueError('camera identity must be exactly aligned with live Teacher pre-action state')
+            row['checkpoint_sha256'] = self.checkpoint_sha256
+        self._teacher_pre_action = deepcopy(actual)
+        self._teacher_actions = None
+        return deepcopy(actual)
+
+    def set_teacher_action_diagnostics(self, *, sampled_action, mean_action, issued_action):
+        if getattr(self, '_teacher_pre_action', None) is None:
+            raise ValueError('aligned Teacher pre-action identity required before diagnostics')
+        values = dict(teacher_sampled_action=sampled_action, teacher_mean_action=mean_action,
+            actually_issued_action=issued_action)
+        for value in values.values():
+            if (value is not None and (not isinstance(value, torch.Tensor) or value.shape != (self.n, 24)
+                    or not bool(torch.isfinite(value).all()) or bool((value.abs() > 1).any()))):
+                raise ValueError('finite normalized Teacher action diagnostics required')
+        if mean_action is None or issued_action is None:
+            raise ValueError('explicit Teacher mean and actually issued actions required')
+        self._teacher_actions = {key: None if value is None else value.detach().clone()
+            for key, value in values.items()}
+
+    def _teacher_capture_identity(self, i, packet):
+        """Verify telemetry really belongs to this action before writing raw rows."""
+        if not self._in_step or self._teacher_actions is None:
+            raise ValueError('Teacher raw identity requires an active aligned action')
+        row = self._teacher_pre_action[i]
+        if (row['episode_uid'] != self.identities.uid(i) or row['reset_id'] != self.identities.reset_ids[i]
+                or row['policy_tick'] != self.policy_tick
+                or row['checkpoint_sha256'] != self.checkpoint_sha256
+                or row['calibration_sha256'] != self.camera.calibration.sha256
+                or int(self.device_world._physics_steps) <= row['physics_tick_start']
+                or float(self.world.sim.current_time) <= row['simulation_timestamp']
+                or not torch.equal(packet['action'][i], self._teacher_actions['actually_issued_action'][i])):
+            raise ValueError('native raw sample identity/action differs from bound Teacher execution')
+        return dict(calibration_sha256=row['calibration_sha256'], frame_id=row['frame_id'],
+            checkpoint_sha256=row['checkpoint_sha256'], pre_action_identity=deepcopy(row))
+
     def palm_poses(self):
         return torch.stack([hand.data.body_link_pose_w[:, i] for hand, (_, i) in
             zip(self.device_world.hands, self._palm_ids)], 1).detach().float().clone()
@@ -213,7 +371,7 @@ class NativeTensorBridge:
             episode_policy_tick=self.policy_tick-self._initial_policy_tick[self.identities.uid(i)],
             trial_episode_index=self._trial_reset_counts[i],
             trial_id=self._cold_trials[i]['trial_id'] if self._cold_trials else None,
-            grasp_style=self.grasp_styles[i])
+            grasp_style=self.grasp_styles[i], **self._task_binding())
             for i in range(self.n)]
 
     def _capture(self, packet):
@@ -222,6 +380,8 @@ class NativeTensorBridge:
         live = packet['live'].nonzero().flatten().tolist()
         for i in live:
             key = self.identities.uid(i)
+            teacher_identity = (self._teacher_capture_identity(i, packet)
+                if getattr(self, '_teacher_checkpoint', None) is not None else {})
             reference = torch.as_tensor(task.surface_reference_bottom_m,
                 device=task.m['bottom'].device).expand(self.n)[i]
             if hasattr(self, '_headers_written') and key not in self._headers_written:
@@ -236,7 +396,9 @@ class NativeTensorBridge:
                     initial_measurement_valid=True, physical_initial_condition_source='actual_sdk_readback',
                     initial_physics_step=initial_tick, initial_timestamp=initial_time,
                     first_episode=self._trial_reset_counts[i] == 1, resumed=False, recovered=False,
-                    runtime=self.runtime_descriptor)
+                    runtime=self.runtime_descriptor, policy_tick=self.policy_tick)
+                header.update(self._task_binding())
+                header.update(teacher_identity)
                 self._raw.write(json.dumps(header, allow_nan=False, separators=(',', ':')) + '\n')
                 self._headers_written.add(key)
             row = dict(run_uuid=self.identities.run_uuid, env_id=i, episode_uid=key,
@@ -276,6 +438,19 @@ class NativeTensorBridge:
                 external_support_force_n=None, external_upward_force_n=None, attachment_count=None,
                 checkpoint_sha256=getattr(self, 'checkpoint_sha256', None))
             row['runtime'] = getattr(self, 'runtime_descriptor', None)
+            row.update(self._task_binding())
+            if teacher_identity:
+                row.update(teacher_identity)
+                row.update({name: None if value is None else value[i]
+                    for name, value in self._teacher_actions.items()})
+                sdk = [getattr(hand.data, 'joint_pos_target', None) for hand in w.hands]
+                sdk = (torch.cat([value[:, ids] for value, ids in zip(sdk, w.w.ids)], -1)[i]
+                    if all(value is not None for value in sdk) else None)
+                row.update(applied_action=None,
+                    applied_action_source='normalized_applied_action_unavailable;native_controller_and_SDK_readback',
+                    applied_targets=dict(controller_joint_command_rad=task.command[i],
+                        actual_sdk_joint_target_rad=sdk,
+                        source='pre_reset_physics_sample;not_normalized_applied_action'))
             formal_keys = ('object_relative', 'object_quat', 'wrist_pose', 'effective_pad_loads_n',
                 'effective_pad_vectors_w', 'effective_pad_depth_m', 'rejected_contact_loads_n', 'object_velocity')
             if all(name in task.m for name in formal_keys):
@@ -296,6 +471,8 @@ class NativeTensorBridge:
                 raise RuntimeError('live sample after terminal for unchanged episode identity')
             self._raw.write(json.dumps(row, allow_nan=False, separators=(',', ':')) + '\n')
             self._last_live_rows[key] = row
+            if teacher_identity:
+                self._teacher_step_rows[i] = row
             if row['terminal']:
                 self._terminal_rows[key] = row
         self._raw.flush()
@@ -304,12 +481,34 @@ class NativeTensorBridge:
         if (issued_actions.shape != (self.n, 24) or not torch.isfinite(issued_actions).all()
                 or bool((issued_actions.abs() > 1).any())):
             raise ValueError('finite normalized canonical issued actions required')
-        before = self.pre_action_identities('0'*64)
+        strict_teacher = getattr(self, '_teacher_checkpoint', None) is not None
+        if strict_teacher:
+            calibration = self._validate_teacher_binding()
+            if self._teacher_pre_action is None:
+                raise ValueError('aligned Teacher pre-action identity required before physical action')
+            current = self.pre_action_identities(calibration)
+            if any(any(row.get(key) != value for key, value in now.items())
+                    for row, now in zip(self._teacher_pre_action, current)):
+                raise ValueError('Teacher pre-action identity became stale before physical action')
+            if (self._teacher_actions is None
+                    or not torch.equal(issued_actions, self._teacher_actions['actually_issued_action'])):
+                raise ValueError('Teacher action diagnostics must match actually issued action')
+            before = deepcopy(self._teacher_pre_action)
+            self._teacher_step_rows = {}
+        else:
+            camera = getattr(self, 'camera', None)
+            calibration = getattr(getattr(camera, 'calibration', None), 'sha256', None)
+            before = self.pre_action_identities(calibration)
         self._in_step = True
         try:
             obs, reward, done, extra = self.env.step(issued_actions)
         finally:
             self._in_step = False
+        if strict_teacher:
+            if len(self._teacher_step_rows) != self.n:
+                raise RuntimeError('Teacher execution lacks actual aligned native raw identity samples')
+            self._teacher_pre_action = None
+            self._teacher_actions = None
         for i in done.nonzero().flatten().tolist():
             if before[i]['episode_uid'] not in self._terminal_rows:
                 raise RuntimeError('terminal lacks a preserved pre-reset 480Hz native sample')
@@ -325,11 +524,11 @@ def launch_native(callback, *, native_arguments, output, num_envs=2, seed=116,
     """Execute via scripts/python.sh on server; callback owns only new models."""
     require_opt_in(enabled)
     spec = json.loads(Path(native_arguments).read_text(encoding='utf-8'))
-    if spec.get('version') != 'dh116-stereo-native-bootstrap-v1':
-        raise ValueError('versioned native task bootstrap configuration required')
-    arguments = spec.get('arguments')
-    if not isinstance(arguments, list) or not all(isinstance(x, str) for x in arguments):
-        raise ValueError('explicit immutable native launcher arguments required')
+    identity = native_task_identity(spec)
+    if identity['task_kind'] == 'deformable_rod':
+        raise RuntimeError('deformable_rod requires an independent Cosserat/DeformX launcher and verified '
+            'node state provider; this TensorTask launcher only implements rigid_proxy')
+    arguments = spec['arguments']
     forbidden = {'--resume', '--initialize-from', '--vision-teacher-source', '--surface-mpc',
         '--vision-evaluation-checkpoint', '--vision-m2-replay', '--surface-corrections'}
     if any(x.split('=', 1)[0] in forbidden for x in arguments):
@@ -345,6 +544,7 @@ def launch_native(callback, *, native_arguments, output, num_envs=2, seed=116,
     def isolated_callback(world, device_world, task, env, args, contract, **unused):
         nonlocal callback_completed
         args._stereo_grasp_styles = spec.get('grasp_styles', ['pinch_thumb_index'])
+        args._stereo_task_identity = deepcopy(identity)
         bridge = NativeTensorBridge(world, device_world, task, env, args, contract, output=output)
         try:
             value = callback(bridge)

@@ -208,17 +208,57 @@ class _Metric:
 @torch.no_grad()
 def match_cost(a, b, sign, *, method, min_disparity, max_disparity, block_size,
                subpixel, uniqueness_threshold, texture_threshold, a_valid=None,
-               b_valid=None, prior=None, search_radius=2):
+               b_valid=None, prior=None, search_radius=2, search_mask=None,
+               prune_search=False, count_search=False):
     """Return (disparity, confidence, good, trace), all tensor planes [B,H,W].
 
     Invalid disparities remain NaN and invalid confidence is zero. A nonfinite
     local prior has no candidates; local_failed requests upper-layer fallback.
     Mask arguments are RAW masks, not pre-eroded matching-center masks.
     Global bounds include zero for pyramid levels; depth callers reject d<=0.
+    search_mask limits candidate centers and does not erase neighboring pixels
+    from their patches. Opt-in pruning limits the integer plane loop to the
+    feasible prior range and skips planes without eligible centers. Pruned
+    searches always return their work counters. Full scans report them only
+    with count_search=True.
     """
     _validate(a, b, sign, method, min_disparity, max_disparity, block_size,
               subpixel, uniqueness_threshold, texture_threshold,
               a_valid, b_valid, prior, search_radius)
+    if type(prune_search) is not bool or type(count_search) is not bool:
+        raise ValueError('prune_search and count_search must be bool')
+    count_search |= prune_search
+    if search_mask is None:
+        search_mask = torch.ones_like(a, dtype=torch.bool)
+    if (not isinstance(search_mask, torch.Tensor) or search_mask.shape != a.shape
+            or search_mask.dtype != torch.bool or search_mask.device != a.device):
+        raise ValueError('search_mask requires bool [B,H,W] on the image device')
+    if prune_search and len(a) > 1:
+        # Pruning decisions and actual plane counts are per image. A wide
+        # prior in one environment cannot silently expand another's search.
+        def image(value, i):
+            return None if value is None else value[i:i+1]
+
+        parts = [match_cost(a[i:i+1], b[i:i+1], sign, method=method,
+                            min_disparity=min_disparity, max_disparity=max_disparity,
+                            block_size=block_size, subpixel=subpixel,
+                            uniqueness_threshold=uniqueness_threshold,
+                            texture_threshold=texture_threshold,
+                            a_valid=image(a_valid, i), b_valid=image(b_valid, i),
+                            prior=image(prior, i), search_radius=search_radius,
+                            search_mask=image(search_mask, i), prune_search=True)
+                 for i in range(len(a))]
+
+        def join(values):
+            first = values[0]
+            if isinstance(first, torch.Tensor):
+                return torch.cat(values)
+            if isinstance(first, dict):
+                return {key: join([v[key] for v in values]) for key in first}
+            return first
+
+        return tuple(join(values) for values in zip(*parts))
+
     av = torch.isfinite(a) & (torch.ones_like(a, dtype=torch.bool) if a_valid is None else a_valid)
     bv = torch.isfinite(b) & (torch.ones_like(b, dtype=torch.bool) if b_valid is None else b_valid)
     # All subsequent arithmetic sees finite placeholders; support excludes them.
@@ -227,20 +267,46 @@ def match_cost(a, b, sign, *, method, min_disparity, max_disparity, block_size,
     stop = min(max_disparity, a.shape[-1] - 1)
     infinity = torch.full_like(a, float('inf'))
     best, winner = infinity.clone(), torch.full_like(a, float('nan'))
+    integer_candidates = torch.zeros_like(a, dtype=torch.int32) if count_search else None
+    fractional_candidates = torch.zeros_like(integer_candidates) if count_search else None
+    integer_plane_calls = 0
+    fractional_plane_calls = 0
 
     def eligible(d):
         if prior is None:
-            return torch.ones_like(av)
-        return torch.isfinite(prior) & ((prior - d).abs() <= search_radius)
+            return search_mask
+        return search_mask & torch.isfinite(prior) & ((prior - d).abs() <= search_radius)
 
-    for d in range(min_disparity, stop + 1):
-        cost = torch.where(eligible(d), metric.integer_cost(d), infinity)
+    low, high = min_disparity, stop
+    if prune_search:
+        if prior is None:
+            if not bool(search_mask.any()):
+                high = low - 1
+        else:
+            viable_prior = prior[search_mask & torch.isfinite(prior)]
+            if viable_prior.numel():
+                low = max(low, math.ceil(float(viable_prior.min()) - search_radius))
+                high = min(high, math.floor(float(viable_prior.max()) + search_radius))
+            else:
+                high = low - 1
+
+    def integer_planes():
+        nonlocal integer_plane_calls
+        for d in range(low, high + 1):
+            candidates = eligible(d)
+            if prune_search and not bool(candidates.any()):
+                continue
+            if count_search:
+                integer_candidates.add_(candidates)
+            integer_plane_calls += 1
+            yield d, torch.where(candidates, metric.integer_cost(d), infinity)
+
+    for d, cost in integer_planes():
         win = cost < best
         best, winner = torch.where(win, cost, best), torch.where(win, float(d), winner)
     far = infinity.clone()
     neighbors = [infinity.clone() for _ in range(5)]
-    for d in range(min_disparity, stop + 1):
-        cost = torch.where(eligible(d), metric.integer_cost(d), infinity)
+    for d, cost in integer_planes():
         far = torch.minimum(far, torch.where((winner - d).abs() >= 2, cost, infinity))
         for index, offset in enumerate((-2, -1, 0, 1, 2)):
             neighbors[index] = torch.where(winner + offset == d, cost, neighbors[index])
@@ -265,14 +331,25 @@ def match_cost(a, b, sign, *, method, min_disparity, max_disparity, block_size,
     fractional_best, fractional_minus, fractional_plus, fractional_far = (infinity.clone() for _ in range(4))
     fractional_offset = torch.zeros_like(a)
     fractional_tie = torch.zeros_like(av)
-    if subpixel:
-        selected = torch.full_like(a, 6, dtype=torch.int64)
-        tie_count = torch.zeros_like(selected)
+
+    def fractional_planes():
+        nonlocal fractional_plane_calls
         for index in range(13):
             offset = (index - 6) * .125
             candidate = winner + offset
-            allowed = ((candidate >= min_disparity) & (candidate <= stop) & eligible(candidate))
-            cost = torch.where(allowed & integer_good, metric.fractional_cost(winner, offset), infinity)
+            allowed = ((candidate >= min_disparity) & (candidate <= stop)
+                       & eligible(candidate) & integer_good)
+            if prune_search and not bool(allowed.any()):
+                continue
+            if count_search:
+                fractional_candidates.add_(allowed)
+            fractional_plane_calls += 1
+            yield index, torch.where(allowed, metric.fractional_cost(winner, offset), infinity)
+
+    if subpixel:
+        selected = torch.full_like(a, 6, dtype=torch.int64)
+        tie_count = torch.zeros_like(selected)
+        for index, cost in fractional_planes():
             win = cost < fractional_best
             tie = torch.isfinite(cost) & (cost == fractional_best)
             tie_count = torch.where(win, torch.ones_like(tie_count), tie_count + tie.to(tie_count.dtype))
@@ -280,11 +357,7 @@ def match_cost(a, b, sign, *, method, min_disparity, max_disparity, block_size,
             replace = win | (tie & closer)
             selected = torch.where(replace, index, selected)
             fractional_best = torch.minimum(fractional_best, cost)
-        for index in range(13):
-            offset = (index - 6) * .125
-            candidate = winner + offset
-            allowed = ((candidate >= min_disparity) & (candidate <= stop) & eligible(candidate))
-            cost = torch.where(allowed & integer_good, metric.fractional_cost(winner, offset), infinity)
+        for index, cost in fractional_planes():
             fractional_minus = torch.where(selected == index + 1, cost, fractional_minus)
             fractional_plus = torch.where(selected == index - 1, cost, fractional_plus)
             fractional_far = torch.minimum(fractional_far, torch.where((selected - index).abs() >= 4, cost, infinity))
@@ -323,4 +396,14 @@ def match_cost(a, b, sign, *, method, min_disparity, max_disparity, block_size,
                                confidence_kind='relative_cost_margin', confidence_is_probability=False,
                                implementation='experimental_pytorch_streaming',
                                gpu_memory_measured=False))
+    if count_search:
+        integer_calls = torch.full((len(a),), integer_plane_calls, dtype=torch.int64, device=a.device)
+        fractional_calls = torch.full_like(integer_calls, fractional_plane_calls)
+        plane_pixels = a.shape[-2] * a.shape[-1]
+        trace['search_statistics'] = dict(
+            integer_candidates=integer_candidates, fractional_candidates=fractional_candidates,
+            integer_plane_calls=integer_calls, fractional_plane_calls=fractional_calls,
+            integer_cost_evaluations=integer_calls * plane_pixels,
+            fractional_cost_evaluations=fractional_calls * plane_pixels,
+            total_cost_evaluations=(integer_calls + fractional_calls) * plane_pixels)
     return disparity, integer_confidence, good, trace

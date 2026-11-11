@@ -14,7 +14,7 @@ from .tabletop_stereo_calibration import StereoCalibration
 from .tabletop_stereo_checkpoint import load_deployment_actor
 from .tabletop_stereo_depth import StereoDepth
 from .tabletop_stereo_observation import SensorBatch, StereoHistory
-from .tabletop_stereo_perception import WirePointExtractor
+from .tabletop_stereo_perception import WirePointExtractor, TrackedWirePointExtractor
 from .tabletop_stereo_geometry import world_to_palms
 from .tabletop_stereo_contract import ROOT, file_sha256, require_opt_in, write_json_new
 from .tabletop_stereo_preprocessing import require_raw_processing
@@ -34,7 +34,8 @@ class StereoRGBStudentRunner:
         config = json.loads(Path(camera_config).read_text(encoding='utf-8'))
         self.depth = StereoDepth.from_config(config)
         self.history = StereoHistory(num_envs, self.actor.network_config['history'], device=device)
-        self.extractor = WirePointExtractor()
+        self.extractor = (WirePointExtractor() if self.processing['perception']['algorithm']=='warm_colour_visible_simple_path_ZhangSuen_v1'
+            else TrackedWirePointExtractor())
         self.num_envs, self.device = num_envs, torch.device(device)
         if max_image_age_s <= 0:
             raise ValueError('positive image freshness limit required')
@@ -43,6 +44,11 @@ class StereoRGBStudentRunner:
         self.last_visible_geometry = None
         self.package_sha256 = file_sha256(actor_package)
 
+    def _clear_temporal_state(self):
+        self.history.reset(torch.ones(self.num_envs,device=self.device,dtype=torch.bool))
+        self.extractor=type(self.extractor)()
+        self.last_visible_geometry=None
+
     @torch.no_grad()
     def step(self, left_rgb, right_rgb, proprio, *, left_timestamp_s, right_timestamp_s,
              frame_id, now_timestamp_s, reset_mask=None):
@@ -50,14 +56,18 @@ class StereoRGBStudentRunner:
         if (type(frame_id) is not int or frame_id <= self._frame
                 or any(type(v) not in (int, float) or not math.isfinite(v) for v in
                     (left_timestamp_s, right_timestamp_s, now_timestamp_s))):
+            self._clear_temporal_state()
             raise ValueError('fresh frame ID and finite camera timestamps required')
         if abs(left_timestamp_s-right_timestamp_s) > 1e-9:
+            self._clear_temporal_state()
             raise ValueError('left/right RGB must represent the same physical time')
         age = now_timestamp_s-left_timestamp_s
         if age < 0 or age > self.max_image_age_s:
+            self._clear_temporal_state()
             raise ValueError('stale/future RGB pair; no truth fallback or silent timing change')
         dt = 1/60 if self._timestamp is None else left_timestamp_s-self._timestamp
         if dt <= 0:
+            self._clear_temporal_state()
             raise ValueError('camera simulation/physical timestamp must increase')
         def rgb(value):
             if not isinstance(value, torch.Tensor) or value.dtype not in (torch.float32, torch.uint8):
@@ -72,11 +82,16 @@ class StereoRGBStudentRunner:
         else:
             reset_mask = reset_mask.to(self.device)
         depth = self.depth.compute(left, right, self.calibration)
+        extraction_kwargs=dict(reset_mask=reset_mask)
+        if isinstance(self.extractor,TrackedWirePointExtractor):
+            extraction_kwargs.update(timestamp=left_timestamp_s,point_confidence=depth['confidence'])
         points = self.extractor.extract(left, depth['depth_m'], depth['valid'],
-            self.calibration.K_left, self.calibration.T_world_left, reset_mask=reset_mask)
+            self.calibration.K_left, self.calibration.T_world_left, **extraction_kwargs)
+        if 'timestamp_anomaly' in points: reset_mask=reset_mask|points['timestamp_anomaly']
         sensor = SensorBatch(left_rgb=left, right_rgb=right, depth_m=depth['depth_m'],
             depth_valid=depth['valid'], depth_confidence=depth['confidence'],
             points_world=points['points_world'], point_valid=points['point_valid'], proprio=p,
+            point_confidence=points.get('confidence',points['point_valid'].float()),
             dt=torch.full((self.num_envs,), dt, device=self.device, dtype=torch.float32),
             image_age=torch.full((self.num_envs,), age, device=self.device, dtype=torch.float32),
             image_valid=torch.ones(self.num_envs, 2, device=self.device, dtype=torch.bool))
@@ -84,13 +99,14 @@ class StereoRGBStudentRunner:
         actions = self.actor.deterministic(history)
         if actions.shape != (self.num_envs, 24) or not torch.isfinite(actions).all() or (actions.abs() > 1).any():
             raise RuntimeError('Actor violated canonical normalized 24D action bounds')
-        # Derived sensor geometry for consumers/diagnostics; no simulator truth
-        # or fixed reset pose, and no change to the Actor's world-frame input.
+        # Same measured local geometry is available to the optional palms Actor.
         self.last_visible_geometry = dict(points_world_m=points['points_world'].detach().clone(),
             points_palms_m=world_to_palms(points['points_world'], p[:,24:38].reshape(self.num_envs,2,7)).detach().clone(),
             point_valid=points['point_valid'].detach().clone(), frame_id=frame_id,
             simulation_timestamp=float(left_timestamp_s),
             source='RGB_stereo_and_current_measured_palm_FK', calibration_sha256=self.calibration.sha256)
+        self.last_visible_geometry['wire_tracking']={key:(value.detach().clone() if isinstance(value,torch.Tensor) else value)
+            for key,value in points.items() if key not in ('points_world','point_valid','xyz','valid')}
         self._frame, self._timestamp = frame_id, float(left_timestamp_s)
         return dict(actions24=actions.detach().clone(), frame_id=frame_id,
             simulation_timestamp=float(left_timestamp_s), image_age_s=float(age),

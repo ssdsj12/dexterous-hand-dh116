@@ -16,6 +16,30 @@ def _norm(channels):
     return nn.GroupNorm(min(32,channels//2),channels)
 
 
+class PalmPointEncoder(nn.Module):
+    """Shared observed-point weights, separate hand IDs, no world-origin input."""
+    def __init__(self,embed_dim=128):
+        super().__init__()
+        self.project=nn.Linear(3,embed_dim)
+        self.hand_embedding=nn.Parameter(torch.empty(2,embed_dim))
+        nn.init.normal_(self.hand_embedding,std=.02)
+
+    def forward(self,left,right,left_valid,right_valid,confidence):
+        if (left.shape!=right.shape or left.ndim!=3 or left.shape[1:]!=(128,3)
+                or left_valid.shape!=left.shape[:2] or right_valid.shape!=left_valid.shape
+                or left_valid.dtype!=torch.bool or right_valid.dtype!=torch.bool
+                or confidence.shape!=left_valid.shape):
+            raise ValueError('two128-point palm views, boolean masks and confidence required')
+        tokens=[];masks=[]
+        for index,(points,valid) in enumerate(((left,left_valid),(right,right_valid))):
+            valid=valid & torch.isfinite(points).all(-1) & torch.isfinite(confidence) & (confidence>0)
+            p=torch.where(valid[...,None],points,0.)
+            t=self.project(p)+self.hand_embedding[index]
+            t=t+position_encoding(torch.linspace(0,1,128,device=p.device),t.shape[-1])[None]
+            tokens.append(torch.where(valid[...,None],t,0.));masks.append(valid)
+        return torch.cat(tokens,1),torch.cat(masks,1)
+
+
 class BasicBlock(nn.Module):
     expansion=1
     def __init__(self, in_channels, channels, stride=1):

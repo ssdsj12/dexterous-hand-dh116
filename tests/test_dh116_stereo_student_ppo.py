@@ -48,7 +48,7 @@ def test_asymmetric_student_real_encoder_gradients_and_critic_isolation():
     assert not torch.equal(engine.model.value(critic), engine.model.value(critic*10))
     sampled = engine.collect_step(actor_tree, critic)
     engine.record_step(torch.ones(1), torch.tensor([False]), torch.zeros(1), executed_actions=sampled['actions'])
-    batch = engine.rollout.batch()
+    batch = engine.rollout.batch(resolve_actor=True)
     assert batch['actor_obs']['depth_valid'].dtype == torch.bool
     assert batch['actor_obs']['history_valid'].dtype == torch.bool
     assert 'privileged_state' not in batch['actor_obs']

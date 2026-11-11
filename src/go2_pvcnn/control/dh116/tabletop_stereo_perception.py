@@ -123,3 +123,10 @@ class WirePointExtractor:
             rejection_reason=reasons, source='RGB_colour_visible_skeleton_and_stereo_only',
             correspondence_scope='visible_endpoint_consistency_not_native_identity_qualification',
             centerline_qualification=None)
+
+
+# Frozen comparator: callers must opt into the observed-component tracker.
+LegacyWirePointExtractor = WirePointExtractor
+_legacy_visible_path = _visible_path
+
+from .tabletop_stereo_wire_tracking import TrackedWirePointExtractor  # noqa: E402,F401

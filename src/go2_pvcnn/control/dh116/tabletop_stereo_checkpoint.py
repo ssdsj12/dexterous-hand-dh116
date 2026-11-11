@@ -52,13 +52,14 @@ def tensor_state_sha256(state):
 
 
 def _source_sha():
-    names = ('checkpoint', 'student_ppo', 'state_estimator', 'observation', 'encoder', 'temporal', 'contract')
+    names = ('checkpoint', 'student_ppo', 'state_estimator', 'observation', 'encoder', 'temporal', 'contract',
+        'task_state_adapter','geometry')
     return {f'tabletop_stereo_{name}.py': hashlib.sha256(Path(__file__).with_name(
         f'tabletop_stereo_{name}.py').read_bytes()).hexdigest() for name in names}
 
 
 def _training_source_sha():
-    names = ('tabletop_privileged_ppo.py', 'tabletop_squashed_gaussian.py')
+    names = ('tabletop_privileged_ppo.py', 'tabletop_squashed_gaussian.py', 'tabletop_stereo_rollout_storage.py')
     return {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in names}
 
 
@@ -95,6 +96,9 @@ def _actor_contract(contract, network, *, training_provenance=None):
 def _validate_actor_contract(value, network, calibration):
     if not isinstance(value, dict) or value.get('version') != ACTOR_CONTRACT_VERSION:
         raise ValueError('independent actor input contract version required')
+    from .tabletop_stereo_contract import state_contract
+    if value.get('state_schema_sha256')!=digest(state_contract()):
+        raise ValueError('current371 schema differs from actor package field semantics')
     if (value.get('input_keys') != list(INPUT_KEYS) or value.get('actor_input') != 'StereoHistoryBatch_only'
             or value.get('action_size') != 24 or value.get('action_contract_sha256') != action_sha256()):
         raise ValueError('actor input/action contract mismatch; truth keys forbidden')
@@ -274,6 +278,9 @@ def save_actor_package(path,actor,contract,*,network_config):
     network=normalize_network_config(network_config)
     if normalize_network_config(contract['config'].get('network'))!=network:
         raise ValueError('BC/DAgger actor network config differs from complete source contract')
+    if (actor.input_mode!=network['actor_input_mode'] or actor.task_state_config!=network['task_state_config']
+            or actor.estimator.point_coordinate_mode!=network['point_coordinate_mode']):
+        raise ValueError('actor field/coordinate configuration semantics differ from export contract')
     # Constructing the topology validator must not perturb ongoing training RNG.
     with torch.random.fork_rng(devices=[]): candidate=make_stereo_actor(network)
     state=_cpu(actor.state_dict());_validate_state(state,candidate)
