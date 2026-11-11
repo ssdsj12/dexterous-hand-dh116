@@ -88,7 +88,7 @@ def test_real_blockmatch_known_disparity_without_depth_input():
     torch.testing.assert_close(disparity,torch.full_like(disparity,4.))
     depth=result['depth_m'][:,4:-4,12:-12][inner]
     torch.testing.assert_close(depth,torch.full_like(depth,.8))
-    assert all(v.shape==(1,32,64) for v in result.values())
+    assert all(result[key].shape==(1,32,64) for key in ('depth_m','disparity_px','valid','occlusion','confidence'))
     assert result['valid'].dtype==torch.bool
     assert torch.isnan(result['depth_m'][~result['valid']]).all()
 

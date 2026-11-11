@@ -1,6 +1,6 @@
 # Stereo Phase0～7 文件清单与验收状态
 
-> 最新J0/J1五目录总数为153项，见文末增量和readiness完整file_inventory；前文141项表为`7c80878`的Phase0～7历史快照。
+> 最新J2-A五目录总数为166项，见文末增量和readiness完整file_inventory；J0/J1为153项，前文141项表为`7c80878`的Phase0～7历史快照。下方早期状态表亦为该历史快照；当前CPU结果为Windows751 passed/1 skipped、服务器752 passed/1 skipped。
 
 本清单按原base `6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b` 对比当前已提交、未提交与未跟踪文件，范围为 `src/`、`scripts/`、`configs/`、`tests/`、`docs/`；排除 `artifacts/`。根目录 README/CHANGELOG 由本次发布单独维护，不计入五目录统计。新增文件即使在HEAD后继续修改，相对原base仍记为新增。
 
@@ -209,3 +209,23 @@ git ls-files --others --exclude-standard -- src scripts configs tests docs
 - [tests/test_dh116_stereo_error_geometry.py](../tests/test_dh116_stereo_error_geometry.py)
 
 修改已有文档：README.md、CHANGELOG.md、本清单与readiness JSON；不修改原matcher、控制器或物理参数。原生新增0，准确率/物理/部署资格继续false；本轮不push。
+
+## J2-A 增量（2026-11-11）
+
+最新五目录清单为166项，readiness包含当前逐文件清单。新增文件：
+
+- [configs/dh116_training/stereo_matcher_five_cost_j2a_failure_v1.json](../configs/dh116_training/stereo_matcher_five_cost_j2a_failure_v1.json)
+- [configs/dh116_training/stereo_matcher_reliable_sad_j2a_v1.json](../configs/dh116_training/stereo_matcher_reliable_sad_j2a_v1.json)
+- [docs/contracts/stereo_j2a_validation_summary.json](../docs/contracts/stereo_j2a_validation_summary.json)
+- [docs/superpowers/plans/2026-11-11-stereo-j2a-matcher-contract.md](../docs/superpowers/plans/2026-11-11-stereo-j2a-matcher-contract.md)
+- [docs/superpowers/reports/2026-11-11-stereo-j2a-matcher-contract.md](../docs/superpowers/reports/2026-11-11-stereo-j2a-matcher-contract.md)
+- [src/go2_pvcnn/control/dh116/tabletop_stereo_matcher_candidates.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_matcher_candidates.py)
+- [tests/stereo_j2a_analytic_fixtures.py](../tests/stereo_j2a_analytic_fixtures.py)
+- [tests/stereo_j2a_legacy_oracle.py](../tests/stereo_j2a_legacy_oracle.py)
+- [tests/test_dh116_stereo_j2a_analytic.py](../tests/test_dh116_stereo_j2a_analytic.py)
+- [tests/test_dh116_stereo_j2a_contract.py](../tests/test_dh116_stereo_j2a_contract.py)
+- [tests/test_dh116_stereo_j2a_integration.py](../tests/test_dh116_stereo_j2a_integration.py)
+- [tests/test_dh116_stereo_j2a_reliability.py](../tests/test_dh116_stereo_j2a_reliability.py)
+- [tests/test_dh116_stereo_j2a_safety.py](../tests/test_dh116_stereo_j2a_safety.py)
+
+修改已有depth/诊断/preprocessing/source绑定和一个旧测试的五Tensor shape枚举；另更新README、CHANGELOG、readiness与本清单。原528保护文件不变；不训练、不新native、不push。软件通过与原生精度/物理资格严格分开。

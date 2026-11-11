@@ -1,0 +1,29 @@
+{
+  "version": "dh116-stereo-j2a-candidate-v1",
+  "algorithm": "SAD integer proposal + independently validated subpixel refinement",
+  "enabled_by_default": false,
+  "native_qualified": false,
+  "depth_estimator": {
+    "method": "reliable_sad",
+    "min_disparity": 8,
+    "max_disparity": 192,
+    "block_size": 9,
+    "min_depth_m": 0.2,
+    "max_depth_m": 1.2,
+    "lr_tolerance_px": 1.0,
+    "texture_threshold": 0.001,
+    "uniqueness_threshold": 0.05,
+    "rectify": false,
+    "subpixel": true,
+    "image_processing_batch_size": 1,
+    "photometric_verification": true,
+    "reliability": {
+      "min_curvature": 0.000001,
+      "fit_tolerance": 0.25,
+      "absolute_fit_tolerance": 0.05,
+      "mode_margin": 0.05,
+      "fallback": "integer"
+    }
+  },
+  "qualification_scope": "CPU analytic software candidate only;not a camera calibration or training configuration"
+}

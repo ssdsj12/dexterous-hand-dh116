@@ -1,3 +1,11 @@
+## 2026-11-11 — J2-A：matcher合同与可靠亚像素候选
+
+本轮按任务书第十六节完成J2-A：旧默认SAD五Tensor通过全图逐值回归；SGBM的0/1兼容confidence明确为有效性标志，真实遮挡和不可观测的内部拒绝项标为NA。新增显式启用的`reliable_sad`、五成本验证、独立图像空间分数验证及单频重复纹理拒绝；原控制、物理参数、模型和Checkpoint不变。
+
+新增J2-A组合 **156 passed（29.86s）**；最终相关全组Windows **751 passed / 1 skipped（115.60s）**，服务器现有Python3.10/Torch2.7cu128 **752 passed / 1 skipped（78.03s）**，均exit0。实际命令、源码冻结SHA和失败证据见[独立验证报告](docs/superpowers/reports/2026-11-11-stereo-j2a-matcher-contract.md)。旧J1 Pixel A仅做保存图像的离线crop检查，深度误差7.218→2.681mm；不能代表全场景或新原生精度。
+
+解析遮挡边缘仍有27个错误有效点，一般重复纹理鲁棒性也未证明。**本轮无新Isaac/GPU实验、无训练、无push/merge**；原10run深度精度、物理任务和部署资格继续未通过，正式BC/DAgger仍blocked。下一工作包J2-B待执行，不能以本次软件通过提前晋级。[机器摘要](docs/contracts/stereo_j2a_validation_summary.json) · [readiness](docs/contracts/stereo_phase0_7_readiness.json) · [文件清单](docs/stereo_phase0_7_file_inventory.md)。下文保留历史阶段结果。
+
 ## 2026-11-11 — 发布J0/J1诊断版本
 
 按用户明确上传指令，将本地`33d73d3`的J0/J1代码、测试、报告及readiness发布到现有开发分支，继续保持[PR #2](https://github.com/ssdsj12/dexterous-hand-dh116/pull/2)为Draft，不合并`11-10`。本次发布复核：31项诊断/几何CPU测试通过（9.75s，exit0）；528份原保护文件不变，1111份源码/测试与此前服务器完整回归冻结版本一致，52份派生图SHA匹配。

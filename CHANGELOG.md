@@ -1,3 +1,11 @@
+## 2026-11-11 — J2-A合同、可靠亚像素和安全回归（本地）
+
+- 保留默认SAD数值和原12字段配置；新增mask别名、能力元数据与逐项拒绝原因。SGBM confidence保留兼容数值但不再表达质量概率，内部不可用项为NA。
+- 新增opt-in `reliable_sad`，采用五成本模型、独立fractional photometric验证和单频重复纹理证据；失败五成本配置独立保留。修复NaN邻居LR绕过、无效RGB影响边界proxy及非正视差换算，来源SHA进入processing合同，旧包不静默迁移。
+- `pytest -q -p no:cacheprovider`的五份J2-A测试组合156 passed（29.86s）；最终相关全组Windows751 passed/1 skipped（115.60s）、服务器752 passed/1 skipped（78.03s），均exit0、未导入Isaac。完整选择与命令见J2-A独立报告。
+- 保存Pixel A离线crop误差7.218→2.681mm及解析遮挡27个错误有效点；不冒充全wire精度或原生抓取成功。同步更新README、readiness、166项五目录清单和机器验证摘要；保留RED/GREEN原件于本地artifacts，不上传raw、日志、归档或模型。
+- 原528保护文件、控制/物理/执行器/Checkpoint和30mm/5s/0.5mm标准不变。未运行新native/GPU/训练，不push、不merge，PR保持Draft；J2-B与原生精度验证待后续工作包。
+
 ## 2026-11-11 — 按明确指令发布J0/J1至现有Draft PR
 
 - 发布诊断实现`33d73d3`、完整报告/readiness与J2实施计划；保留原分支、Checkpoint和未达标状态，不合并、不训练、不新增native capture。

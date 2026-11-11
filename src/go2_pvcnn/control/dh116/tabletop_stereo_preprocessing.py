@@ -16,7 +16,7 @@ VERSION='dh116-stereo-processing-v1'
 
 
 def _sources():
-    names=('depth','perception','geometry','preprocessing')
+    names=('depth','perception','geometry','preprocessing','matcher_candidates')
     return {f'tabletop_stereo_{name}.py':hashlib.sha256(Path(__file__).with_name(
         f'tabletop_stereo_{name}.py').read_bytes()).hexdigest() for name in names}
 

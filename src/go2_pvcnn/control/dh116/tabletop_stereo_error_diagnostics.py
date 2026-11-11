@@ -169,36 +169,20 @@ def replay_depth_conditions(left_rgb,right_rgb,calibration,config):
     on this device, checked against the saved native validity by the caller.
     """
     from .tabletop_stereo_depth import StereoDepth
-    matcher=StereoDepth(**config)
-    left=left_rgb.mean(1).float();right=right_rgb.mean(1).float()
     if not calibration.rectified:raise ValueError('rectified raw diagnostic inputs required')
-    n,h,w=left.shape;r=matcher.block_size//2
-    support=F.avg_pool2d(torch.ones_like(left)[:,None],matcher.block_size,1,r)[:,0]>=1.
-    if matcher.method=='blockmatch':
-        dl,cl,gl=matcher._match(left,right,-1,support,support)
-        dr,cr,gr=matcher._match(right,left,1,support,support)
-    else:
-        dl,dr=matcher._sgbm(left,right)
-        gl=(dl>=matcher.min_disparity)&(dl<=matcher.max_disparity)
-        gr=(dr>=matcher.min_disparity)&(dr<=matcher.max_disparity)
-        cl=gl.float();cr=gr.float()
-    x=torch.arange(w,device=left.device,dtype=dl.dtype)[None,None,:].expand_as(dl)
-    right_texture=matcher._texture(right);left_texture=matcher._texture(left)
-    other,other_valid=matcher.sample_horizontal(dr,x-dl,gr&right_texture&support)
-    other_confidence,confidence_valid=matcher.sample_horizontal(cr,x-dl,gr)
-    inconsistent=(dl-other).abs()>matcher.lr
-    occlusion=~other_valid|~confidence_valid|inconsistent
-    confidence=torch.minimum(cl,other_confidence)
-    z=float(calibration.K_left[0,0])*calibration.baseline_m/dl.clamp_min(1e-8)
-    valid=gl&~occlusion&left_texture&support&(confidence>=matcher.uniqueness)&torch.isfinite(z)&(z>=matcher.near)&(z<=matcher.far)
-    valid[:,:r]=False;valid[:,-r:]=False;valid[:,:,:r]=False;valid[:,:,-r:]=False
-    reasons=dict(matcher_support_or_subpixel_rejection=~gl,
-        low_texture_left=~left_texture,right_support_or_texture_rejection=~other_valid,
-        left_right_inconsistent=other_valid&confidence_valid&inconsistent,
-        uniqueness_rejection=(confidence<matcher.uniqueness) if matcher.method=='blockmatch' else None,
-        out_of_depth_range=~torch.isfinite(z)|(z<matcher.near)|(z>matcher.far),
-        occlusion_composite=occlusion,patch_border_rejection=~support,
-        depth_edge_rejection=None)
-    return dict(valid=valid,reasons=reasons,raw_disparity_px=dl,raw_confidence=confidence,
+    matcher=StereoDepth(**config)
+    result=matcher.compute(left_rgb,right_rgb,calibration)
+    diagnostic=result['diagnostics'];r=diagnostic['reasons']
+    # Keep existing J1 report keys while consuming the actual runtime matcher
+    # predicates, including opt-in candidate refinement, in exactly one path.
+    reasons=dict(matcher_support_or_subpixel_rejection=r['left_matcher_rejected'],
+        low_texture_left=r['low_texture_left'],right_support_or_texture_rejection=r['right_sample_unavailable'],
+        left_right_inconsistent=r['left_right_inconsistent'],uniqueness_rejection=r['uniqueness'],
+        out_of_depth_range=r['depth_range'],occlusion_composite=r['occlusion_composite'],
+        patch_border_rejection=r['patch_border'],depth_edge_rejection=None,
+        low_texture_right=r['low_texture_right'],search_boundary=r['search_boundary'],
+        subpixel_rejected=r['subpixel_rejected'],true_occlusion=r['true_occlusion'])
+    return dict(valid=result['valid'],reasons=reasons,raw_disparity_px=diagnostic['raw_disparity_px'],
+        raw_confidence=diagnostic['raw_confidence'],matcher_diagnostics=diagnostic,
         scope='offline_replay_existing_baseline;not_saved_native_rejection_trace',
-        uniqueness_scope='OpenCV_internal_rejection_not_separately_exposed' if matcher.method=='sgbm' else 'raw_top2_SAD_margin')
+        uniqueness_scope='OpenCV_internal_rejection_not_separately_exposed' if matcher.method=='sgbm' else diagnostic['uniqueness_scope'])

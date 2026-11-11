@@ -31,7 +31,8 @@ def implementation_identity():
     import importlib.metadata
     import platform
     names=('tabletop_stereo_error_cli','tabletop_stereo_error_diagnostics','tabletop_stereo_error_geometry',
-        'tabletop_stereo_depth','tabletop_stereo_calibration','tabletop_stereo_geometry','tabletop_stereo_perception')
+        'tabletop_stereo_depth','tabletop_stereo_calibration','tabletop_stereo_geometry','tabletop_stereo_perception',
+        'tabletop_stereo_matcher_candidates')
     sources={}
     for name in names:
         path=Path(importlib.import_module('.'+name,__package__).__file__).resolve()
