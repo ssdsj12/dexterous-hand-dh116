@@ -152,8 +152,10 @@ def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=Non
                 if native_identity:
                     with torch.no_grad():
                         mean_action = model.deterministic(obs)
+                    policy_audit = ({k: sample[k] for k in ('latent_mean', 'latent_std', 'latent_actions')}
+                        if record_diagnostic_rollout else None)
                     bridge.set_teacher_action_diagnostics(sampled_action=sample['actions'],
-                        mean_action=mean_action, issued_action=sample['actions'])
+                        mean_action=mean_action, issued_action=sample['actions'], policy_audit=policy_audit)
                 next_obs, reward, done, extra = bridge.step(sample['actions'])
                 original_reward=reward.clone()
                 reward, trace = compose_native_reward(reward, {
@@ -320,7 +322,7 @@ def main(mode='train', argv=None):
     parser.add_argument('--bc-steps', type=int, default=0)
     parser.add_argument('--checkpoint-interval', type=int, default=10)
     parser.add_argument('--record-diagnostic-rollout', action='store_true',
-        help='save private pre-optimizer tensors/RNG for an explicit 2-env, 32/128-step, 1-update diagnosis')
+        help='save private pre-optimizer tensors/RNG and live 480Hz joint evidence for a bounded 2-env diagnosis')
     parser.add_argument('--max-control-steps', type=int, default=1200)
     parser.add_argument('--native-task-config', type=Path,
         default=ROOT / 'configs/dh116_training/stereo_native_task_v1.json')

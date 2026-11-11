@@ -1,3 +1,7 @@
+## 2026-11-11 — Teacher128 关节动作审计
+
+历史五次 `joint_limit` 均观察到右 `finger12` 实测角度跨过硬保护线，SDK 目标保持在名义限位附近或以内。新增有界诊断的逐 480 Hz 全关节动作证据，原生复验待批准。旧 MPC 专家数据缺少同一 pre-action 的 371D，特权 Actor 初始化需同步重采。[验证报告](docs/superpowers/reports/2026-11-11-teacher128-joint-limit-audit.md)
+
 ## 2026-11-11 — 双目状态监督多初态准入
 
 现有状态监督入口可读取绑定 SHA256 的多来源清单，并按物理初态和采集族分配 train、validation、test。历史数据回读为 8 行、2 个初态，只有 6 行 Center XYZ 标签。正式训练继续阻断。[验证报告](docs/superpowers/reports/2026-11-11-stereo-state-multicohort.md)

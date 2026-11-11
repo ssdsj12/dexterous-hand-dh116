@@ -350,7 +350,8 @@ class NativeTensorBridge:
         self._teacher_actions = None
         return deepcopy(actual)
 
-    def set_teacher_action_diagnostics(self, *, sampled_action, mean_action, issued_action):
+    def set_teacher_action_diagnostics(self, *, sampled_action, mean_action, issued_action,
+                                       policy_audit=None):
         if getattr(self, '_teacher_pre_action', None) is None:
             raise ValueError('aligned Teacher pre-action identity required before diagnostics')
         values = dict(teacher_sampled_action=sampled_action, teacher_mean_action=mean_action,
@@ -361,6 +362,19 @@ class NativeTensorBridge:
                 raise ValueError('finite normalized Teacher action diagnostics required')
         if mean_action is None or issued_action is None:
             raise ValueError('explicit Teacher mean and actually issued actions required')
+        self._teacher_policy_audit = None
+        if policy_audit is not None:
+            fields = {'latent_mean', 'latent_std', 'latent_actions'}
+            if (not isinstance(policy_audit, dict) or set(policy_audit) != fields
+                    or any(not isinstance(v, torch.Tensor) or v.shape != (self.n, 24)
+                        or not bool(torch.isfinite(v).all()) for v in policy_audit.values())
+                    or not bool((policy_audit['latent_std'] > 0).all())
+                    or sampled_action is None
+                    or not torch.allclose(policy_audit['latent_actions'].tanh(), sampled_action)
+                    or not torch.allclose(policy_audit['latent_mean'].tanh(), mean_action)):
+                raise ValueError('joint action audit requires actual aligned 24D policy distribution and sample')
+            self._teacher_policy_audit = {key: value.detach().clone()
+                for key, value in policy_audit.items()}
         self._teacher_actions = {key: None if value is None else value.detach().clone()
             for key, value in values.items()}
 
@@ -541,6 +555,13 @@ class NativeTensorBridge:
                 pressure_limited = getattr(task, 'pressure_limited', None)
                 row['joint_pressure_limited'] = None if pressure_limited is None else pressure_limited[i]
                 row['joint_safety_projection'] = None
+                policy_audit = getattr(self, '_teacher_policy_audit', None)
+                if policy_audit is not None:
+                    from .tabletop_privileged_action_audit import TeacherJointActionAudit
+                    if not hasattr(self, '_teacher_joint_audit'):
+                        self._teacher_joint_audit = TeacherJointActionAudit(w)
+                    row['action_audit'] = self._teacher_joint_audit.capture(
+                        w, task, self.env, i, row, policy_audit)
             formal_keys = ('object_relative', 'object_quat', 'wrist_pose', 'effective_pad_loads_n',
                 'effective_pad_vectors_w', 'effective_pad_depth_m', 'rejected_contact_loads_n', 'object_velocity')
             if all(name in task.m for name in formal_keys):
@@ -600,6 +621,7 @@ class NativeTensorBridge:
                 raise RuntimeError('Teacher execution lacks actual aligned native raw identity samples')
             self._teacher_pre_action = None
             self._teacher_actions = None
+            self._teacher_policy_audit = None
         for i in done.nonzero().flatten().tolist():
             if before[i]['episode_uid'] not in self._terminal_rows:
                 raise RuntimeError('terminal lacks a preserved pre-reset 480Hz native sample')

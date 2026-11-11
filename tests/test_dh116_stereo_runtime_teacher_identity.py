@@ -87,6 +87,67 @@ def checkpoint(tmp_path):
     return path
 
 
+def test_teacher_action_audit_binds_policy_and_same_live_physics(bridge, tmp_path):
+    w = bridge.device_world
+    w.q = torch.full((1, 2, 6), .2)
+    w.qd = torch.full_like(w.q, .1)
+    w.limits = torch.stack((torch.zeros_like(w.q), torch.ones_like(w.q)), -1)
+    for hand in w.hands:
+        hand.joint_names = ['finger11', 'finger12', 'finger21', 'finger31', 'finger41', 'finger51']
+        hand.root_physx_view = SimpleNamespace(
+            get_dof_max_velocities=lambda: torch.full((1, 6), .3))
+    bridge.bind_teacher_checkpoint(checkpoint(tmp_path))
+    bridge.teacher_pre_action_identities()
+    latent = torch.full((1, 24), -.25)
+    action = latent.tanh()
+    bridge.set_teacher_action_diagnostics(sampled_action=action, mean_action=action,
+        issued_action=action, policy_audit=dict(latent_mean=latent,
+            latent_std=torch.full_like(latent, .1), latent_actions=latent))
+    bridge.step(action)
+    rows = [json.loads(s) for s in (tmp_path / 'native_physics.jsonl').read_text().splitlines()]
+    samples = [row for row in rows if row['kind'] == 'sample']
+    assert [row['physics_step'] for row in samples] == list(range(1, 9))
+    for row in samples:
+        audit = row['action_audit']
+        assert audit['sampled_latent'] == latent[0].tolist()
+        assert audit['issued_action'] == row['actually_issued_action']
+        assert len(audit['joints']) == 12
+        joint = audit['joints'][7]
+        assert (joint['hand'], joint['joint'], joint['action_index']) == ('right', 'finger12', 7)
+        assert joint['controller_target'] == pytest.approx(.61)
+        assert joint['sdk_target'] == pytest.approx(.72)
+
+
+def test_action_audit_maps_intrinsic_wrist_rotation_but_preserves_translation_frame(bridge):
+    from go2_pvcnn.control.dh116.tabletop_palm_mount import ANGULAR_JOINT_NAMES, JOINT_NAMES
+    from go2_pvcnn.control.dh116.tabletop_privileged_action_audit import TeacherJointActionAudit
+
+    w = bridge.device_world
+    w.q = torch.zeros((1, 2, 12))
+    w.qd = torch.zeros_like(w.q)
+    w.limits = torch.stack((-torch.ones_like(w.q), torch.ones_like(w.q)), -1)
+    w.w.mounts = [SimpleNamespace(ids=[6, 7, 8], angular_ids=[9, 10, 11])]*2
+    w.wrist_angles = torch.full((1, 2, 3), .12)
+    w.root_targets = torch.zeros((1, 2, 7))
+    bridge.task.free_wrist_grasp = True
+    for hand in w.hands:
+        hand.joint_names = ['finger11', 'finger12', 'finger21', 'finger31', 'finger41', 'finger51',
+            *JOINT_NAMES, *ANGULAR_JOINT_NAMES]
+        hand.data.joint_pos_target = torch.full((1, 12), .15)
+    action = torch.zeros(1, 24)
+    row = dict(failure_code=0, teacher_mean_action=action[0],
+        teacher_sampled_action=action[0], actually_issued_action=action[0])
+    audit = TeacherJointActionAudit(w).capture(w, bridge.task, bridge.env, 0, row,
+        dict(latent_mean=action, latent_std=action+1, latent_actions=action))
+    joints = {v['joint']: v for v in audit['joints'] if v['hand'] == 'right'}
+    assert joints['wrist_x']['action_index'] is None
+    assert joints['wrist_x']['controller_target'] is None
+    assert joints['wrist_x']['sdk_target'] == pytest.approx(.15)
+    assert joints['wrist_roll']['action_index'] == 21
+    assert joints['wrist_roll']['controller_target'] == pytest.approx(.12)
+    assert joints['wrist_roll']['sdk_target'] == pytest.approx(.15)
+
+
 class DistinctTeacher:
     def sample(self, obs):
         return dict(actions=torch.full((len(obs), 24), -.3),
