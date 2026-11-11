@@ -3176,6 +3176,26 @@
       "log_sha256": "1efbdca00147f5ffefa95c3be9e59d673a8eff663f253bcc3bdf6dbb31659e64",
       "report": "docs/superpowers/reports/2026-11-11-stereo-depth-auxiliary-diagnostic.md",
       "native_qualification": false
+    },
+    "orchestration.windows-relay-only": {
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "977c3e9432086363d67ee1188b55aa68c167a230769e78664e8be185930a9665",
+      "tested_head": "538c10b907c471aefbb10fbdb5c47155f9028857",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-windows-relay-publication-policy.md",
+      "native_qualification": false
     }
   }
 }

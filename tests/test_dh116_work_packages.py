@@ -149,59 +149,85 @@ def test_local_publisher_acknowledges_code_then_manifest_without_new_commit(repo
     metadata = repo.accept_relay_receipt(receipt)
     assert metadata['attestation_only'] is True and repo.remote_head() == pending['commit']
     repo.push_verified(metadata['parent'], metadata['commit'])
+    tracking = 'refs/remotes/origin/' + scheduler.BRANCH
+    git(repo.root, 'update-ref', tracking, pending['parent'])
     plan = repo.relay_plan()
     repo.accept_relay_receipt({**plan, 'remote_head': plan['head'], 'draft': True, 'merged': False})
     assert repo.pending() == [] and repo.head() == repo.remote_head() == metadata['commit']
+    assert git(repo.root, 'rev-parse', tracking) == metadata['commit']
     release, = json.loads((repo.root / scheduler.MANIFEST).read_text())['releases']
     assert release['commit'] == pending['commit'] and release['verification_route'] == 'local_git_relay'
 
 
-def test_unavailable_remote_defers_local_package_without_attestation(repo, monkeypatch):
-    from urllib.error import URLError
+@pytest.fixture
+def relay_cli(repo, monkeypatch):
+    def no_network(*args, **kwargs):
+        pytest.fail('Ubuntu scheduler attempted GitHub access')
 
-    initial = repo.head()
-
-    def disconnected(*args, **kwargs):
-        raise URLError('TLS hostname verification failed')
-
-    monkeypatch.undo()
-    monkeypatch.setattr(scheduler.Repository, 'verify_local_target', lambda self: None)
-    monkeypatch.setattr(scheduler, 'urlopen', disconnected)
+    monkeypatch.setattr(scheduler.Repository, 'verify_target', no_network)
+    monkeypatch.setattr(scheduler.Repository, 'remote_head', no_network)
+    monkeypatch.setattr(scheduler.Repository, 'push_verified', no_network)
     monkeypatch.setattr(scheduler, '__file__', str(repo.root / 'scripts' / 'run_dh116_work_packages.py'))
-    assert scheduler.main(['--run', '--limit', '1']) == 0
-    receipt, = repo.pending()
-    assert repo.head() == receipt['commit']
-    assert repo.remote_head() == initial
+    return repo
+
+
+def test_relay_cli_plan_uses_only_local_tracking_ref(relay_cli, capsys):
+    assert scheduler.main(['--plan']) == 0
+    plan = json.loads(capsys.readouterr().out)
+    assert plan['publication_route'] == 'windows_relay'
+    assert plan['last_verified_remote'] == relay_cli.head()
+
+
+def test_relay_cli_run_commits_to_queue_without_github_access(relay_cli):
+    initial = relay_cli.head()
+    assert scheduler.main(['--run']) == 0
+    receipt, = relay_cli.pending()
+    assert relay_cli.head() == receipt['commit']
+    assert git(relay_cli.root, 'rev-parse', 'refs/remotes/origin/' + scheduler.BRANCH) == initial
     assert receipt['passed'] == 1 and receipt['remote_verified'] is False
-    assert json.loads((repo.root / scheduler.MANIFEST).read_text())['releases'] == []
+    assert json.loads((relay_cli.root / scheduler.MANIFEST).read_text())['releases'] == []
 
 
-def test_reachable_invalid_pr_does_not_fall_back_to_local_package(repo, monkeypatch):
-    initial = repo.head()
-
-    def wrong_pr(self):
-        raise RuntimeError('expected open Draft PR #2 targeting 11-10')
-
-    monkeypatch.setattr(scheduler.Repository, 'verify_target', wrong_pr)
-    monkeypatch.setattr(scheduler, '__file__', str(repo.root / 'scripts' / 'run_dh116_work_packages.py'))
-    with pytest.raises(RuntimeError, match='expected open Draft PR'):
-        scheduler.main(['--run', '--limit', '1'])
-    assert repo.head() == initial and repo.pending() == []
-
-
-def test_unavailable_remote_rejects_local_commits_outside_pending_queue(repo, monkeypatch):
-    from urllib.error import URLError
-
-    git(repo.root, 'commit', '-qm', 'independent local change', '--allow-empty')
-
-    def disconnected(self):
-        raise URLError('network disconnected')
-
-    monkeypatch.setattr(scheduler.Repository, 'verify_target', disconnected)
-    monkeypatch.setattr(scheduler, '__file__', str(repo.root / 'scripts' / 'run_dh116_work_packages.py'))
+def test_relay_cli_rejects_local_commits_outside_pending_queue(relay_cli):
+    git(relay_cli.root, 'commit', '-qm', 'independent local change', '--allow-empty')
     with pytest.raises(RuntimeError, match='last verified remote'):
-        scheduler.main(['--run', '--limit', '1'])
-    assert repo.pending() == []
+        scheduler.main(['--run'])
+    assert relay_cli.pending() == []
+
+
+def test_relay_cli_resume_reports_queued_work_without_flushing(relay_cli, capsys):
+    result = relay_cli.run_tests('wp1', relay_cli.registry()['packages']['wp1'])
+    pending = relay_cli.publish('wp1', result, defer=True)
+    capsys.readouterr()
+    assert scheduler.main(['--resume']) == 0
+    status = json.loads(capsys.readouterr().out)
+    assert status['publication_route'] == 'windows_relay'
+    assert status['pending_publications'] == 1
+    assert relay_cli.pending() == [pending]
+
+
+def test_relay_cli_resume_rejects_direct_publication_journal(relay_cli):
+    saved = {'kind': 'package'}
+    write_json(relay_cli.journal, saved)
+    with pytest.raises(RuntimeError, match='Windows relay'):
+        scheduler.main(['--resume'])
+    assert json.loads(relay_cli.journal.read_text()) == saved
+
+
+def test_relay_cli_resume_completes_interrupted_local_commit(relay_cli, monkeypatch):
+    result = relay_cli.run_tests('wp1', relay_cli.registry()['packages']['wp1'])
+    def interrupted(*args, **kwargs):
+        raise RuntimeError('interrupted local commit')
+
+    with monkeypatch.context() as attempt:
+        attempt.setattr(scheduler.Repository, '_commit_transaction', interrupted)
+        with pytest.raises(RuntimeError, match='interrupted local commit'):
+            relay_cli.publish('wp1', result, defer=True)
+    assert relay_cli.journal.exists()
+    assert scheduler.main(['--resume']) == 0
+    assert not relay_cli.journal.exists()
+    receipt, = relay_cli.pending()
+    assert relay_cli.head() == receipt['commit']
 
 
 def test_native_student_task_gates_do_not_require_a_solver_for_rigid_runs():

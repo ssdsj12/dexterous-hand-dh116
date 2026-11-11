@@ -1,4 +1,4 @@
-"""Run bounded DH116 CPU work packages and verify their GitHub publication."""
+"""Run DH116 CPU work packages and stage verified Windows relay publication."""
 
 from __future__ import annotations
 
@@ -15,11 +15,11 @@ import re
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile, mkdtemp
-from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 
 BRANCH = 'codex/dh116-stereo-privileged-dagger'
+TRACKING_REF = f'refs/remotes/origin/{BRANCH}'
 PROJECT = 'ssdsj12/dexterous-hand-dh116'
 BASE_SHA = '6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b'
 REGISTRY = 'docs/contracts/dh116_work_package_registry.json'
@@ -262,21 +262,13 @@ class Repository:
         return dict(**counts, exit_code=code, command=['python', *command],
                     log=str(path), log_sha256=file_hash(path), tested_head=tested_head)
 
-    def plan(self, *, local_only=False):
+    def local_tracking_head(self):
+        return self.git('for-each-ref', '--format=%(objectname)', TRACKING_REF).strip() or None
+
+    def plan(self):
         self.verify_local_target()
-        local, remote = self.head(), None
-        problem = 'local-only mode' if local_only else None
-        unreachable = False
-        if not local_only:
-            try:
-                self.verify_target()
-                remote = self.remote_head()
-            except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired) as error:
-                problem = str(error)
-                unreachable = (isinstance(error, (URLError, TimeoutError, subprocess.TimeoutExpired))
-                               and not isinstance(error, HTTPError))
-        return dict(branch=BRANCH, head=local, remote_head=remote, aligned=local == remote,
-                    remote_problem=problem, remote_unreachable=unreachable,
+        return dict(branch=BRANCH, head=self.head(), publication_route='windows_relay',
+                    last_verified_remote=self.local_tracking_head(),
                     working_tree=self.git('status', '--short').splitlines(),
                     resume_pending=self.journal.exists(), pending_publications=len(self.pending()),
                     **work_queue(self.registry()['packages']))
@@ -459,6 +451,11 @@ class Repository:
         verified = [dict(item, remote_verified=True, verification_route='local_git_relay')
                     for item in pending if not item.get('attestation_only')]
         if not verified:
+            previous = self.local_tracking_head()
+            head = expected['head']
+            if previous is not None and previous != head:
+                self.git('merge-base', '--is-ancestor', previous, head)
+            self.git('update-ref', TRACKING_REF, head, previous or '0' * 40)
             self.outbox.unlink()
             return dict(remote_verified=True, head=expected['head'], pending_publications=0)
         manifest = json.loads((self.root / MANIFEST).read_text(encoding='utf-8'))
@@ -534,43 +531,43 @@ def main(argv=None):
     parser.add_argument('--file', action='append', default=[])
     parser.add_argument('--limit', type=int, default=1)
     parser.add_argument('--jobs', type=int, default=2)
-    parser.add_argument('--github-ip', help='Optional per-command GitHub IPv4 address with TLS validation')
     parser.add_argument('--local-only', action='store_true',
-                        help='Run and commit on Ubuntu, leaving verified pushes pending')
+                        help='Compatibility option; the scheduler always queues commits for Windows publication')
     parser.add_argument('--evidence-dir', type=Path, help='Separate private directory for logs and recovery journal')
     args = parser.parse_args(argv)
     if not 1 <= args.limit <= 12 or not 1 <= args.jobs <= 4 or bool(args.file) != bool(args.prepared):
         parser.error('use 1..12 packages and 1..4 CPU jobs; --prepared needs explicit --file paths')
-    repo = Repository(Path(__file__).resolve().parents[1], github_ip=args.github_ip,
-                      evidence_dir=args.evidence_dir)
+    repo = Repository(Path(__file__).resolve().parents[1], evidence_dir=args.evidence_dir)
     if args.relay_plan:
         print(json_text(repo.relay_plan()), end='')
         return 0
     if not (args.run or args.prepared or args.resume or args.relay_ack):
-        print(json_text(repo.plan(local_only=args.local_only)), end='')
+        print(json_text(repo.plan()), end='')
         return 0
     with publication_lock(repo.private):
         if args.relay_ack:
             print(json_text(repo.accept_relay_receipt(json.load(sys.stdin))), end='')
             return 0
         if args.resume:
-            if args.local_only and (not repo.journal.exists()
-                    or json.loads(repo.journal.read_text(encoding='utf-8'))['kind'] not in {'deferred_package', 'relay_manifest'}):
-                raise RuntimeError('local-only resume requires an interrupted local package commit')
+            if not repo.journal.exists():
+                pending = repo.pending()
+                if not pending:
+                    raise RuntimeError('no interrupted local commit or queued Windows publication')
+                print(json_text(dict(publication_route='windows_relay',
+                                     pending_publications=len(pending), head=repo.head())), end='')
+                return 0
+            kind = json.loads(repo.journal.read_text(encoding='utf-8'))['kind']
+            if kind not in {'deferred_package', 'relay_manifest'}:
+                raise RuntimeError('direct publication journal retained; use Windows relay for publication')
             repo.resume()
             return 0
-        plan = repo.plan(local_only=args.local_only)
-        defer = args.local_only or plan['remote_unreachable']
-        if plan['resume_pending'] or (not defer and (not plan['aligned'] or plan['pending_publications'])):
-            raise RuntimeError('restore branch agreement or resume the interrupted publication: '
-                               + str(plan['remote_problem'] or 'pending publication'))
-        if plan['remote_unreachable']:
-            pending = repo.pending()
-            anchor = pending[-1]['commit'] if pending else repo.git(
-                'for-each-ref', '--format=%(objectname)', f'refs/remotes/origin/{BRANCH}').strip()
-            if anchor != plan['head']:
-                raise RuntimeError('local HEAD differs from the last verified remote or deferred queue')
-            print(f'GitHub unreachable, deferring publication: {plan["remote_problem"]}', file=sys.stderr)
+        plan = repo.plan()
+        if plan['resume_pending']:
+            raise RuntimeError('resume the interrupted local commit before starting another work package')
+        pending = repo.pending()
+        anchor = pending[-1]['commit'] if pending else plan['last_verified_remote']
+        if anchor != plan['head']:
+            raise RuntimeError('local HEAD differs from the last verified remote or deferred queue')
         repo.verify_protection()
         if args.prepared:
             if args.prepared not in plan['needs_prepared_changes']:
@@ -588,7 +585,7 @@ def main(argv=None):
             result = repo.run_tests(args.prepared, package)
             if before != {name: file_hash(repo.root / name) for name in owned}:
                 raise RuntimeError('prepared source changed while tests ran')
-            repo.publish(args.prepared, result, sorted(owned), defer=defer)
+            repo.publish(args.prepared, result, sorted(owned), defer=True)
             return 0 if result['exit_code'] == 0 else 2
         repo.require_scope(set())
         failed = False
@@ -602,7 +599,7 @@ def main(argv=None):
                 futures = [pool.submit(repo.run_tests, name, packages[name]) for name in wave]
                 results = [future.result() for future in futures]
             for name, result in zip(wave, results):
-                repo.publish(name, result, defer=defer)
+                repo.publish(name, result, defer=True)
                 failed |= result['exit_code'] != 0
                 remaining -= 1
         print(json_text(work_queue(repo.registry()['packages'])), end='')

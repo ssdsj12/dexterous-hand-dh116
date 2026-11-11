@@ -1,3 +1,7 @@
+## 2026-11-12 — Ubuntu 提交与 Windows 发布中转
+
+Ubuntu 调度器只保存待发布提交，Windows 推送并读回后登记清单。22 项 CPU 回归通过。[报告](docs/superpowers/reports/2026-11-12-windows-relay-publication-policy.md)
+
 ## 2026-11-11 — 双目 RGB 光轴深度辅助头
 
 Ubuntu 65 项 CPU 回归通过。历史 VGA 复放通过左右 RGB 梯度检查，右图缺少独立标签。[报告](docs/superpowers/reports/2026-11-11-stereo-depth-auxiliary-diagnostic.md)
