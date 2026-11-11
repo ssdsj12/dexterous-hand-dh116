@@ -17,4 +17,4 @@
 
 ## 开发和发布位置
 
-Ubuntu 任务 Worktree 是开发、Python 测试和提交环境。本机只中转已经验证的 Git 提交到 GitHub，使用裸仓库，无需 Windows 工作区。历史 Checkpoint 和原始数据通过服务器原路径只读引用。
+Ubuntu 任务 Worktree 用于开发、测试、提交和发布。GitHub 无法完成 TLS 验证或认证时，使用 Ubuntu 待发布队列保留提交，待远端核验后写入发布清单。历史 Checkpoint 和原始数据通过服务器原路径只读引用。

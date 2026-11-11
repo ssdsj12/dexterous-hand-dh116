@@ -61,7 +61,8 @@
       "title": "双目深度置信度与真实对应校准",
       "executor": "gated",
       "dependencies": [
-        "wp1.rgb-native"
+        "wp1.rgb-native",
+        "wp1.confidence-offline"
       ],
       "status": "blocked",
       "reason": "缺左右同步 Native ID 与独立校准 cohort"
@@ -154,7 +155,8 @@
       "title": "MPC 371D 和 24D 原生同步重采",
       "executor": "gated",
       "dependencies": [
-        "wp3.cpu-contract"
+        "wp3.cpu-contract",
+        "wp3.mpc-sync-prepare"
       ],
       "status": "blocked",
       "reason": "独立采集审批及合格原生数据缺失"
@@ -222,7 +224,8 @@
       "title": "逐 contact 来源、外部支撑和滑移资格",
       "executor": "gated",
       "dependencies": [
-        "wp4.shutdown-native"
+        "wp4.shutdown-native",
+        "wp4.source-audit"
       ],
       "status": "blocked",
       "reason": "待逐指 A/B、单位、作用侧和动力学实测，R1/R2 关闭"
@@ -367,7 +370,8 @@
       "executor": "gated",
       "dependencies": [
         "wp6.bc-dagger-ppo",
-        "wp5.solver-native"
+        "wp5.solver-native",
+        "wp6.independent-proof"
       ],
       "status": "blocked",
       "reason": "每种抓法各需至少 100 个独立初态，原生预算待批准"
@@ -438,6 +442,81 @@
           "tests/test_dh116_stereo_cold_candidate_admission.py"
         ]
       }
+    },
+    "wp6.independent-proof": {
+      "title": "Student 独立动作、时钟和物理任务身份",
+      "executor": "prepared",
+      "dependencies": [
+        "wp6.deployment-isolation"
+      ],
+      "tests": [
+        "tests/test_dh116_stereo_trials.py",
+        "tests/test_dh116_stereo_evaluation.py",
+        "tests/test_dh116_stereo_student_cli.py",
+        "tests/test_dh116_stereo_inference.py",
+        "tests/test_dh116_stereo_cold_candidate_admission.py"
+      ],
+      "status": "passed",
+      "last_result": {
+        "status": "passed",
+        "passed": 92,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "log_sha256": "5494a9ffb461965b1206565d36faab3d003650806a7c2be860a57b58a6921420",
+        "tested_head": "5a7eeb41c3d2f4efed98541ad76c375f9a1ee1d2",
+        "report": "docs/superpowers/reports/2026-11-11-stereo-student-independent-proof.md",
+        "native_qualification": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_trials.py",
+          "tests/test_dh116_stereo_evaluation.py",
+          "tests/test_dh116_stereo_student_cli.py",
+          "tests/test_dh116_stereo_inference.py",
+          "tests/test_dh116_stereo_cold_candidate_admission.py"
+        ]
+      }
+    },
+    "wp1.confidence-offline": {
+      "title": "双目候选置信度分组校准审计",
+      "executor": "prepared",
+      "dependencies": [
+        "wp1.sample-retention"
+      ],
+      "tests": [
+        "tests/test_dh116_stereo_wire_sample_retention.py",
+        "tests/test_dh116_stereo_wire_correspondence.py"
+      ],
+      "status": "pending"
+    },
+    "wp3.mpc-sync-prepare": {
+      "title": "准备 MPC 371D 与实际 24D 同步采集",
+      "executor": "prepared",
+      "dependencies": [
+        "wp3.cpu-contract"
+      ],
+      "tests": [
+        "tests/test_dh116_privileged_action_audit.py",
+        "tests/test_dh116_stereo_runtime_teacher_identity.py"
+      ],
+      "status": "pending"
+    },
+    "wp4.source-audit": {
+      "title": "验证 PhysX 逐接触来源与条件方向",
+      "executor": "prepared",
+      "dependencies": [
+        "wp4.cpu-contract"
+      ],
+      "tests": [
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_stereo_shutdown_validation.py"
+      ],
+      "status": "pending"
     }
   }
 }

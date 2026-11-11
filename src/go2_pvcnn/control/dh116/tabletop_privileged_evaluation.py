@@ -169,9 +169,12 @@ def evaluate_cold_trials(bridge,policy,manifest,output,*,max_control_steps=1200,
                 complete=torch.zeros(bridge.n,device=bridge.device,dtype=torch.bool)
                 first=[None]*bridge.n;steps=[0]*bridge.n
                 for _ in range(max_control_steps):
+                    pre_inference=_clock(bridge)
                     if owner=='teacher':observation=bridge.critic.detach().clone()
                     else:
                         observation=observation_callback()
+                        if _clock(bridge)!=pre_inference:
+                            raise RuntimeError('Student observation callback advanced the physical or policy clock')
                         if type(observation) is not StereoHistoryBatch:raise TypeError('Student callback must return sensor StereoHistoryBatch only')
                         observation.validate()
                     try:device=next(policy.parameters()).device
@@ -184,8 +187,14 @@ def evaluate_cold_trials(bridge,policy,manifest,output,*,max_control_steps=1200,
                     action=action.to(bridge.device).clone();action[complete]=0.
                     action_owners=['diagnostic_zero' if bool(complete[i]) else owner for i in range(bridge.n)]
                     if hasattr(bridge,'set_action_owners'):bridge.set_action_owners(action_owners)
-                    before=_clock(bridge);result=(bridge.step if step_callback is None else step_callback)(action)
+                    before=_clock(bridge)
+                    if owner=='student' and before!=pre_inference:
+                        raise RuntimeError('Student inference or action ownership advanced the physical or policy clock')
+                    # Keep the Actor output separate from callback-owned storage.
+                    result=(bridge.step if step_callback is None else step_callback)(action.clone())
                     from .tabletop_stereo_teacher_collector import StepResult
+                    if owner=='student' and type(result) is not StepResult:
+                        raise TypeError('Student execution requires StepResult with exact issued action evidence')
                     if type(result) is StepResult:
                         if (not isinstance(result.issued_actions,torch.Tensor) or result.issued_actions.dtype!=action.dtype
                                 or not torch.equal(result.issued_actions.to(action.device),action)):
@@ -231,6 +240,10 @@ def evaluate_cold_trials(bridge,policy,manifest,output,*,max_control_steps=1200,
         raw_480hz_source=str(Path(bridge.output)/'native_physics.jsonl') if hasattr(bridge,'output') else None,
         source_scope='native_runtime_capture_unqualified' if native else 'cpu_fixture',schema_only=schema_only,
         limitation='cold authored reset/readback and first terminals; separate raw qualification gate remains mandatory')
+    if native:
+        identity=bridge.task_identity
+        report.update(task_identity=identity,task_kind=identity['task_kind'],
+                      task_identity_sha256=identity['task_identity_sha256'])
     write_json_new(output/'trial_evaluation.json',report)
     return report
 

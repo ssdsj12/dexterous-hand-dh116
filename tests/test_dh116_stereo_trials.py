@@ -238,3 +238,36 @@ def test_teacher_manifest_freezing_binds_original_base_and_two_compatible_templa
     changed=copy.deepcopy(base);changed['object_contact_material']['dynamic_friction']=.9
     with pytest.raises(ValueError,match='original native task contract'):
         api().freeze_teacher_cold_manifest(checkpoint,changed,*initials,tmp_path/'wrong.json',seed=116,wrist_joint_names=())
+
+
+@pytest.mark.parametrize('failure', ('tuple', 'mutated_action', 'observation_advanced'))
+def test_independent_student_requires_unchanged_issued_action_and_clock(tmp_path, failure):
+    from test_dh116_stereo_estimator import sensor
+    from go2_pvcnn.control.dh116.tabletop_stereo_observation import StereoHistory
+    from go2_pvcnn.control.dh116.tabletop_stereo_teacher_collector import StepResult
+
+    bridge = FixtureBridge()
+    history = StereoHistory(2).update(sensor())
+
+    class Student:
+        def deterministic(self, observation):
+            return torch.zeros(2, 24)
+
+    def observe():
+        if failure == 'observation_advanced':
+            bridge._physics_steps += 1
+        return history.clone()
+
+    def step(action):
+        if failure == 'tuple':
+            return bridge.step(action)
+        if failure == 'mutated_action':
+            action[0, 7] = .5
+        _, reward, done, info = bridge.step(action)
+        return StepResult(None, reward, done, info, action)
+
+    match = {'tuple':'StepResult', 'mutated_action':'issued action', 'observation_advanced':'advanced'}[failure]
+    with pytest.raises((RuntimeError, TypeError, ValueError), match=match):
+        api().evaluate_cold_trials(bridge, Student(), manifest(1), tmp_path/'student',
+            owner='student', minimum_per_style=1, schema_only=True, max_control_steps=2,
+            observation_callback=observe, step_callback=step)

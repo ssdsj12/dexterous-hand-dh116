@@ -2983,6 +2983,30 @@
         "tests/test_dh116_stereo_state_supervision.py",
         "tests/test_dh116_stereo_cold_candidate_admission.py"
       ]
+    },
+    "wp6.independent-proof": {
+      "status": "passed",
+      "passed": 92,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "log_sha256": "5494a9ffb461965b1206565d36faab3d003650806a7c2be860a57b58a6921420",
+      "tested_head": "5a7eeb41c3d2f4efed98541ad76c375f9a1ee1d2",
+      "report": "docs/superpowers/reports/2026-11-11-stereo-student-independent-proof.md",
+      "native_qualification": false,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_trials.py",
+        "tests/test_dh116_stereo_evaluation.py",
+        "tests/test_dh116_stereo_student_cli.py",
+        "tests/test_dh116_stereo_inference.py",
+        "tests/test_dh116_stereo_cold_candidate_admission.py"
+      ]
     }
   }
 }

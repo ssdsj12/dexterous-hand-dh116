@@ -298,3 +298,57 @@ def test_real_surface_tracker_2400_raw_steps_accepts_float_hold_and_pending_firs
     prefix=copy.deepcopy(raw[:9]);prefix[-1]['formal_tracker_valid']=False
     tampered=evaluate_records(prefix,provenance={'source_scope':'cpu_fixture'})
     assert 'formal_window_physical_validity_source_mismatch' in tampered['episodes'][0]['reasons']
+
+
+def test_student_task_evidence_rejects_cross_task_samples_and_flexible_claims():
+    from go2_pvcnn.control.dh116.tabletop_stereo_contract import digest
+    from go2_pvcnn.control.dh116.tabletop_stereo_promotion import _student_task_identity
+
+    def bound(kind, obj, source, rod):
+        identity = dict(version='dh116-stereo-native-task-identity-v1', task_kind=kind,
+            physical_object_kind=obj, state_source=source, rod_state_available=rod, task_profile_sha256='e'*64)
+        identity['task_identity_sha256'] = digest(identity)
+        return dict(task_identity=identity, task_identity_sha256=identity['task_identity_sha256'])
+
+    cylinder = bound('rigid_proxy', 'solid_cylinder', 'rigid_body_sdk_pose_velocity', False)
+    straw = bound('rigid_proxy', 'hollow_straw', 'rigid_body_sdk_pose_velocity', False)
+    flexible = bound('deformable_rod', 'cosserat_rod', 'cosserat_solver_node_readback', True)
+    assert _student_task_identity(cylinder, [dict(cylinder)]) == cylinder['task_identity']
+    with pytest.raises(ValueError, match='task identity'):
+        _student_task_identity(cylinder, [dict(straw)])
+    with pytest.raises(ValueError, match='rigid_proxy'):
+        _student_task_identity(flexible, [dict(flexible)])
+    with pytest.raises(ValueError, match='task identity'):
+        _student_task_identity(cylinder, [{}])
+
+
+@pytest.mark.parametrize('failure, message', [
+    ('declared_flexible', 'declare rigid_proxy'),
+    ('mixed', 'mixes raw task'),
+    ('duplicate', 'initial condition repeated'),
+])
+def test_student_report_requires_one_task_and_unique_physical_initials(tmp_path, monkeypatch, failure, message):
+    from go2_pvcnn.control.dh116 import tabletop_stereo_promotion as promotion
+
+    report = dict(owner='student', checkpoint_sha256='1'*64, validation_split='heldout',
+                  task_kind='rigid_proxy', task_identity_sha256='a'*64)
+    if failure == 'declared_flexible':
+        report['task_kind'] = 'deformable_rod'
+    runtime = dict(teacher_execution_enabled=False, mpc_enabled=False, critic_deployed=False,
+        privileged_actor_inputs=False, critic_training=False, actor_input_source='stereo_RGB_and_proprio_only',
+        depth_source='computed_from_synchronized_left_right_RGB', model_checkpoint_sha256='1'*64)
+    episodes = [
+        dict(owner='student', checkpoint_sha256='1'*64, task_identity=dict(task_kind='rigid_proxy',
+            task_identity_sha256='a'*64), actor_runtime_samples_verified=True, runtime=runtime,
+            physical_initial_condition_sha256=key*64, source_episode_group=key, grasp_style=style)
+        for key, style in [('b', 'pinch_thumb_index'), ('c', 'tripod_thumb_index_middle')]
+    ]
+    if failure == 'mixed':
+        episodes[1]['task_identity']['task_identity_sha256'] = 'd'*64
+    if failure == 'duplicate':
+        episodes[1]['physical_initial_condition_sha256'] = episodes[0]['physical_initial_condition_sha256']
+    monkeypatch.setattr(promotion, '_report_episodes', lambda _: (report, episodes, tmp_path))
+    monkeypatch.setattr(promotion, 'training_partition', lambda *_args, **_kwargs: dict(
+        physical_initial_condition_sha256=set(), source_episode_groups=set()))
+    with pytest.raises(ValueError, match=message):
+        promotion.verify_student_qualification(report, '1'*64)

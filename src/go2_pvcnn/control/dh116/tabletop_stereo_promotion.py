@@ -189,6 +189,26 @@ def verify_force_qualification(binding):
         raise ValueError('native force evidence unavailable or malformed') from error
 
 
+def _student_task_identity(header,samples):
+    identity=header.get('task_identity')
+    if not isinstance(identity,dict) or identity.get('version')!='dh116-stereo-native-task-identity-v1':
+        raise ValueError('raw Student task identity required')
+    binding=require_sha(identity.get('task_identity_sha256'),'Student task identity SHA')
+    body={key:value for key,value in identity.items() if key!='task_identity_sha256'}
+    profile=require_sha(identity.get('task_profile_sha256'),'Student task profile SHA')
+    if profile=='0'*64 or binding!=digest(body) or header.get('task_identity_sha256')!=binding:
+        raise ValueError('raw Student task identity or task profile mismatch')
+    if (identity.get('task_kind')!='rigid_proxy'
+            or identity.get('physical_object_kind') not in ('solid_cylinder','hollow_straw')
+            or identity.get('state_source')!='rigid_body_sdk_pose_velocity'
+            or identity.get('rod_state_available') is not False):
+        raise ValueError('current native Student proof producer supports rigid_proxy only')
+    if not samples or any(row.get('task_identity')!=identity or row.get('task_identity_sha256')!=binding
+                          for row in samples):
+        raise ValueError('raw Student task identity changed or is missing in physical samples')
+    return copy.deepcopy(identity)
+
+
 def _verify_episode(proof,*,expected_identity=None,subject=None,require_success=True):
     p,base=_read_object(proof)
     if p.get('version')!='dh116-native-episode-proof-v1':raise ValueError('versioned native episode proof required')
@@ -204,6 +224,9 @@ def _verify_episode(proof,*,expected_identity=None,subject=None,require_success=
     if (header.get('kind')!='episode_start' or header.get('initial_measurement_valid') is not True
             or header.get('physical_initial_condition_source')!='actual_sdk_readback'):
         raise ValueError('actual SDK initial readback evidence required; seed/config is insufficient')
+    live_samples=[row for row in rows if row.get('kind','sample')=='sample' and row.get('live',True)]
+    if result['owner']=='student':
+        result['task_identity']=_student_task_identity(header,live_samples)
     if p.get('sample_count')!=result['sample_count']:raise ValueError('native episode raw sample_count mismatch')
     if subject is not None:
         expected={'owner':subject} if isinstance(subject,str) else subject
@@ -217,7 +240,7 @@ def _verify_episode(proof,*,expected_identity=None,subject=None,require_success=
     verified_force=verify_force_qualification(force)
     fields=('run_uuid','env_id','episode_uid','reset_id','physics_step')
     coverage={tuple(row[k] for k in fields):row for row in verified_force['sample_coverage']}
-    for sample in [row for row in rows if row.get('kind','sample')=='sample' and row.get('live',True)]:
+    for sample in live_samples:
         source=coverage.get(tuple(sample[k] for k in fields))
         if source is None or any(sample.get(key)!=source.get(key) for key in ('timestamp','external_support_force_n','external_upward_force_n','attachment_count')):
             raise ValueError('native force evidence is not aligned to this exact episode/480Hz sample')
@@ -231,7 +254,7 @@ def _verify_episode(proof,*,expected_identity=None,subject=None,require_success=
                   proof_sha256=digest(p),checkpoint_sha256=p.get('checkpoint_sha256'),force_binding=verified_force,
                   runtime=copy.deepcopy(header.get('runtime')),
                   actor_runtime_samples_verified=(isinstance(header.get('runtime'),dict) and all(
-                      row.get('runtime')==header['runtime'] for row in rows if row.get('kind','sample')=='sample' and row.get('live',True))))
+                      row.get('runtime')==header['runtime'] for row in live_samples)))
     return result
 
 
@@ -529,12 +552,21 @@ def _verify_student_qualification(report,checkpoint_sha256,styles=STYLES):
     r,episodes,base=_report_episodes(report)
     if r.get('owner')!='student' or r.get('checkpoint_sha256')!=checkpoint_sha256 or r.get('validation_split')!='heldout':
         raise ValueError('independent heldout Student checkpoint report required')
+    if r.get('task_kind')!='rigid_proxy':
+        raise ValueError('independent Student report must declare rigid_proxy for this proof producer')
+    task_sha=require_sha(r.get('task_identity_sha256'),'Student report task identity SHA')
+    initials=[episode['physical_initial_condition_sha256'] for episode in episodes]
+    if len(set(initials))!=len(initials):
+        raise ValueError('Student physical initial condition repeated across acceptance episodes')
     required=dict(teacher_execution_enabled=False,mpc_enabled=False,critic_deployed=False,
                   privileged_actor_inputs=False,critic_training=False,actor_input_source='stereo_RGB_and_proprio_only',
                   depth_source='computed_from_synchronized_left_right_RGB')
     partition=training_partition(r,base=base)
     training_initials=partition['physical_initial_condition_sha256'];training_groups=partition['source_episode_groups']
     for episode in episodes:
+        task=episode.get('task_identity') or {}
+        if task.get('task_kind')!='rigid_proxy' or task.get('task_identity_sha256')!=task_sha:
+            raise ValueError('Student report mixes raw task identities')
         runtime=episode.get('runtime') or {}
         if (episode['owner']!='student' or episode.get('checkpoint_sha256')!=checkpoint_sha256
                 or episode.get('actor_runtime_samples_verified') is not True or any(runtime.get(k)!=v for k,v in required.items())):
@@ -554,7 +586,7 @@ def _verify_student_qualification(report,checkpoint_sha256,styles=STYLES):
             raise ValueError('Student needs100 measured independent heldout initial conditions per grasp')
         if not any(e['qualified_success'] for e in subset):raise ValueError('no qualified Student-only success for grasp')
     return dict(qualified=True,owner='student',checkpoint_sha256=checkpoint_sha256,
-                action_contract_sha256=action_sha256(),state_contract_sha256=digest(state_contract()),report_sha256=digest(r))
+                task_kind='rigid_proxy',task_identity_sha256=task_sha,action_contract_sha256=action_sha256(),state_contract_sha256=digest(state_contract()),report_sha256=digest(r))
 
 
 def verify_student_qualification(report,checkpoint_sha256,styles=STYLES):
