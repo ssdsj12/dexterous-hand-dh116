@@ -3113,6 +3113,26 @@
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-wp2.metric-integrity.md",
       "native_qualification": false
+    },
+    "wp5.source-payload": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_cuda_source.py"
+      ],
+      "log_sha256": "fdc57898f3dd7a31086b5da9638d84873b9414527ba7e659872333d1a6da5938",
+      "tested_head": "d1cdc9a465bc968ee4c2fd25cc18241d68d9384d",
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-wp5.source-payload.md",
+      "native_qualification": false
     }
   }
 }

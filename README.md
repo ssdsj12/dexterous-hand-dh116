@@ -1,3 +1,7 @@
+## 2026-11-11 — DeformX 固定源码实际载荷预检
+
+CPU `passed`，通过 7 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp5.source-payload.md)。
+
 ## 2026-11-11 — 状态监督残差及不确定度完整性
 
 CPU `passed`，通过 18 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp2.metric-integrity.md)。
