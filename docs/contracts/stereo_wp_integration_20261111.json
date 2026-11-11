@@ -1,0 +1,154 @@
+{
+  "version": "dh116-stereo-wp-preflight-v1",
+  "baseline": "ae307a55917519138b6da5179e8254ce2e9a7c8f",
+  "branch": "codex/dh116-stereo-privileged-dagger",
+  "publication_authorized_for_this_round": true,
+  "merged": false,
+  "reports": {
+    "overview": "docs/superpowers/reports/2026-11-11-stereo-wp-integration.md",
+    "WP1": "docs/superpowers/reports/2026-11-11-stereo-wp1-native-label-segmentation.md",
+    "WP1_preflight": "docs/superpowers/reports/2026-11-11-stereo-wp1-tail-preflight.md",
+    "WP2": "docs/superpowers/reports/2026-11-11-stereo-wp2-training-modes.md",
+    "cold8_plan": "docs/superpowers/reports/2026-11-11-stereo-cold8-preflight-plan.md",
+    "WP3": "docs/superpowers/reports/2026-11-11-wp3-teacher-guarded128.md",
+    "WP4": "docs/superpowers/reports/2026-11-11-wp4-physx-contact-sources.md",
+    "WP5": "docs/superpowers/reports/2026-11-11-wp5-solver-availability.md"
+  },
+  "final_cpu": {
+    "windows": {
+      "passed": 1147,
+      "skipped": 1,
+      "seconds": 174.53,
+      "log_sha256": "11d537d8b32e5a2a6ff5339e95f83d87a5c96e783b8ed21ea24afe521841c4a7"
+    },
+    "server": {
+      "passed": 1147,
+      "skipped": 2,
+      "seconds": 152.2,
+      "log_sha256": "084a328f62e91ed57569ffa986274f78a5c3dd11e75ac228f81493c1a44cf07c"
+    },
+    "native_modules_imported": []
+  },
+  "protected_sha256_files_unchanged": 528,
+  "tested_source_script_config_files": 1183,
+  "server_snapshot": {
+    "path": "/tmp/dh116-stereo-wp-final-preflight-v03/snapshot",
+    "archive_sha256": "434bb289031e267f2da92caf067097b23b31b6c53b1af94712b22feb330536b0",
+    "manifest_sha256": "fab9451a7be5decf9e5f484aa62ecfadb8bcd623f8db05d7ce3fae71a6eade6e"
+  },
+  "WP1": {
+    "source": "existing_native_capture_offline_replay",
+    "sampled_pixels": 768,
+    "tail_records": 48,
+    "unique_tail_env_pixel_positions": 12,
+    "independent_physical_initials": 2,
+    "valid_points_per_frame": [
+      96,
+      96
+    ],
+    "correct_points_5mm": [
+      91,
+      89
+    ],
+    "reference_denominators": [
+      2009,
+      2054
+    ],
+    "correct_3d_completeness": [
+      0.04529616724738676,
+      0.0433300876338851
+    ],
+    "historical_stored_component_id": "not_recorded",
+    "historical_metric_track_id": "not_recorded",
+    "sampled_pixel_lineage_verified": true,
+    "default_promoted": false,
+    "new_native_capture_count": 0,
+    "segmentation_deployment_qualified": false
+  },
+  "WP2": {
+    "mode": "diagnostic_fit",
+    "rows": 8,
+    "verified_geometry_rows": 6,
+    "supervised_indices": [
+      61,
+      62,
+      63
+    ],
+    "independent_initials": 2,
+    "checkpoint_sha256": "4bc8c94a1fe8095e599e122fd99ad77277aab2bbdda29df184ecaa5126befa49",
+    "formal_training": false,
+    "generalization_qualified": false,
+    "uncertainty_calibrated": false,
+    "cold8_source_connection_fixed": true,
+    "new_native_capture_count": 0
+  },
+  "WP3": {
+    "exit_code": 0,
+    "run": "/tmp/dh116-wp3-teacher128-v02/teacher_diagnostic",
+    "num_envs": 2,
+    "steps": 128,
+    "updates": 1,
+    "physical_samples": 2030,
+    "transitions": 256,
+    "completed_failure_episodes": 5,
+    "open_episodes": 2,
+    "successes": 0,
+    "final_exact_kl": 0.01991748809814453,
+    "minibatch_accepted": 15,
+    "minibatch_attempted": 16,
+    "raw_sha256": "470e8c5d0f24b2cf97c1664ea26dbd566aa58969677d0b3f64660ff22e2d6ffc",
+    "checkpoint_sha256": "c1735e5f112b7f10ff4dacf00b2ac547728cea82a08d5b051e5b78cca84a9999"
+  },
+  "WP4": {
+    "existing_bounded_calibration_runs": 2,
+    "steps_each": 240,
+    "complete_jsonl": true,
+    "continuous_clock": true,
+    "cleanup_intervention_each": "verified-own-process SIGTERM after sampling completed",
+    "natural_exit_verified": false,
+    "cleanup_fix_cpu_tested": true,
+    "cleanup_fix_native_retested": false,
+    "native_pair_qualification": false,
+    "R2": false,
+    "force_proxy": false
+  },
+  "WP5": {
+    "actual_cuda_solver_found": false,
+    "ropesim_installed": false,
+    "cuda_toolkit_12_8_found": false,
+    "bidirectional_coupling": false
+  },
+  "WP6": {
+    "successful_expert_pool": false,
+    "formal_BC": false,
+    "formal_DAgger": false,
+    "formal_student_PPO": false
+  },
+  "cold8": {
+    "authorization": "user_declined_for_this_round_wait_for_future_approval",
+    "authored_initials": 8,
+    "actual_initials_validated": 0,
+    "maximum_samples": 32,
+    "plan": "docs/superpowers/reports/2026-11-11-stereo-cold8-preflight-plan.md",
+    "all_native_prechecks_passed": false
+  },
+  "tests_scope": "CPU software and source checks; not physical qualification",
+  "publication_20261111": {
+    "user_authorized": true,
+    "target_branch": "codex/dh116-stereo-privileged-dagger",
+    "base_head": "ae307a55917519138b6da5179e8254ce2e9a7c8f",
+    "pr_number": 2,
+    "keep_draft": true,
+    "merge_authorized": false,
+    "new_native_capture_authorized": false,
+    "prepublication_cpu": {
+      "passed": 84,
+      "seconds": 11.56,
+      "exit_code": 0,
+      "log_sha256": "7064f7fcb8f81b853676dcb2fd72473f5d7aa6be63e9c6c712473d8bd76d7000"
+    },
+    "verified_source_files": 1183,
+    "protected_files_unchanged": 528,
+    "scope": "source_config_tests_processed_reports_only;raw_models_logs_excluded"
+  }
+}

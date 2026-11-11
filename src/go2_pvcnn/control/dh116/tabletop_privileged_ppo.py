@@ -2,6 +2,9 @@
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 import math
+import random
+
+import numpy as np
 import uuid
 
 import torch
@@ -314,6 +317,20 @@ class PPOTrainer:
 
         policy = deepcopy(self.model.state_dict())
         optimizer = deepcopy(self.optimizer.state_dict())
+        # The transaction starts after the minibatch permutation/entropy draw.
+        # Rejected candidates must not consume RNG via optimizer hooks or a
+        # future stochastic forward during the exact-KL audit.
+        rng = dict(torch=torch.get_rng_state().clone(), python=random.getstate(),
+            numpy=deepcopy(np.random.get_state()),
+            cuda=torch.cuda.get_rng_state_all() if torch.cuda.is_initialized() else None)
+        def rollback():
+            self.model.load_state_dict(policy)
+            self.optimizer.load_state_dict(deepcopy(optimizer))
+            torch.set_rng_state(rng['torch'])
+            random.setstate(rng['python'])
+            np.random.set_state(rng['numpy'])
+            if rng['cuda'] is not None:
+                torch.cuda.set_rng_state_all(rng['cuda'])
         all_rows = torch.arange(len(batch['values']))
         attempts = []
         for attempt in range(self.config.kl_backtrack_steps + 1):
@@ -324,17 +341,15 @@ class PPOTrainer:
                 self.project_noise()
                 kl = self._minibatch_exact_kl(batch, all_rows)
             except Exception:
-                self.model.load_state_dict(policy)
-                self.optimizer.load_state_dict(optimizer)
+                rollback()
                 raise
             attempts.append(dict(lr=lr, exact_full_rollout_kl=kl))
             if kl <= self.config.target_kl:
                 self.optimizer.param_groups[0]['lr'] = self.config.lr
                 return lr, attempts
-            self.model.load_state_dict(policy)
-            # Adam tensors in load_state_dict can alias input tensors on the
-            # current device. Keep the rollback snapshot private across trials.
-            self.optimizer.load_state_dict(deepcopy(optimizer))
+            # load_state_dict can alias Adam input tensors; rollback uses a
+            # fresh copy so the private snapshot survives multiple attempts.
+            rollback()
         return None, attempts
 
     def update(self):
@@ -347,11 +362,12 @@ class PPOTrainer:
         returns, advantage = self.rollout.returns_and_advantages(self.config)
         advantage = ((advantage - advantage.mean()) / advantage.std(unbiased=False).clamp_min(1e-8)).detach()
         total = len(advantage)
-        trace = []
+        trace, epoch_trace = [], []
         early_stopped = False
         accepted_updates, optimized_samples = 0, 0
         aggregate = dict(policy_loss=0., value_loss=0., entropy=0., kl=0.)
         for epoch in range(self.config.epochs):
+            epoch_start = len(trace)
             minibatches = torch.randperm(total).tensor_split(min(total, self.config.minibatches))
             for minibatch, indices in enumerate(minibatches):
                 self.optimizer.zero_grad(set_to_none=True)
@@ -415,6 +431,21 @@ class PPOTrainer:
                 if target is not None and not guard_attempts and post_kl > target:
                     early_stopped = True
                     break
+            epoch_rows = trace[epoch_start:]
+            epoch_samples = sum(row['samples'] for row in epoch_rows)
+            # Exact KL is deterministic for the supported Teacher/Student
+            # models. Entropy below is explicitly the pre-step MC estimate,
+            # sample weighted, not a claimed exact post-epoch Tanh entropy.
+            epoch_trace.append(dict(policy_epoch_index=epoch,
+                attempted_minibatches=len(epoch_rows),
+                accepted_minibatches=sum(row['accepted_lr'] is not None for row in epoch_rows),
+                exact_full_rollout_kl=self._minibatch_exact_kl(batch, torch.arange(total)),
+                sample_weighted_pre_step_entropy=sum(row['entropy']*row['samples'] for row in epoch_rows)/epoch_samples,
+                early_stopped=early_stopped,
+                action_groups={name:dict(indices=list(range(lo,hi)),
+                    log_std=self.model.log_std.detach().cpu()[lo:hi].tolist(),
+                    latent_std=self.model.log_std.detach().cpu().exp()[lo:hi].tolist())
+                    for name,lo,hi in (('fingers12',0,12),('translation6',12,18),('rotation6',18,24))}))
             if early_stopped:
                 break
         if accepted_updates:
@@ -425,4 +456,5 @@ class PPOTrainer:
             for key, value in aggregate.items()}, samples=total,
             optimized_samples=optimized_samples, minibatch_updates=accepted_updates,
             policy_version=self.policy_version, target_kl=self.config.target_kl,
-            early_stopped=early_stopped, frozen_policy_check=frozen_check, minibatch_trace=trace)
+            early_stopped=early_stopped, frozen_policy_check=frozen_check, minibatch_trace=trace,
+            epoch_trace=epoch_trace)

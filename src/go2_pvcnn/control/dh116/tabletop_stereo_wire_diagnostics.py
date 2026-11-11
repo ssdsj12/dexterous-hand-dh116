@@ -71,9 +71,9 @@ def wire_intersections(wire, stereo, sampled, reasons):
 
 
 @torch.no_grad()
-def audit_wire_frame(frame, prediction, extracted, calibration, reference, *, block_size, near, far, finger=None):
+def audit_wire_frame(frame, prediction, extracted, calibration, reference, *, block_size, near, far, finger=None, wire_mask=None):
     """Use same-frame validation references only for scoring and occlusion audit."""
-    wire = wire_colour_mask(frame['left_rgb'])
+    wire = wire_colour_mask(frame['left_rgb']) if wire_mask is None else wire_mask
     depth = prediction['depth_m']
     accepted = prediction['valid'] & torch.isfinite(depth) & (depth > 0)
     sampled = torch.zeros_like(wire)

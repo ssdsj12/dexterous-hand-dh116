@@ -18,10 +18,12 @@ HEAD_SHAPES = dict(privileged_state=(371,),geometry=(128,3),velocity=(128,3),
 
 class StereoStateEstimator(nn.Module):
     def __init__(self,embed_dim=128,history=4,num_heads=4,num_layers=2,image_processing_batch_size=None,
-                 point_coordinate_mode='world',task_state_metadata=False):
+                 point_coordinate_mode='world',task_state_metadata=False,point_source_encoding=False):
         super().__init__()
         if point_coordinate_mode not in ('world','palms'):raise ValueError('world or palms point coordinates required')
         self.point_coordinate_mode=point_coordinate_mode
+        if point_source_encoding and point_coordinate_mode!='palms':raise ValueError('source encoding requires palm-local point coordinates')
+        self.point_source_encoding=bool(point_source_encoding)
         self.task_state_metadata=bool(task_state_metadata or point_coordinate_mode=='palms')
         self.embed_dim,self.history=embed_dim,history
         self.encoder=StereoEncoder(embed_dim,num_heads,image_processing_batch_size)
@@ -40,7 +42,7 @@ class StereoStateEstimator(nn.Module):
         self.heads=nn.ModuleDict({name:nn.Linear(embed_dim,math.prod(shape)) for name,shape in HEAD_SHAPES.items()})
         # Opt-in parameters are created after all legacy parameters, preserving
         # the baseline state_dict and random initialization order in world mode.
-        if point_coordinate_mode=='palms':self.palm_point_encoder=PalmPointEncoder(embed_dim)
+        if point_coordinate_mode=='palms':self.palm_point_encoder=PalmPointEncoder(embed_dim,point_source_encoding=point_source_encoding)
 
     def _spatial(self,h):
         b,t=h.history_valid.shape;n=b*t;d=self.embed_dim
@@ -73,7 +75,7 @@ class StereoStateEstimator(nn.Module):
                 h.points_right_palm.flatten(0,1),
                 (h.point_valid_left & h.point_valid & h.history_valid[:,:,None]).flatten(0,1)&pair[:,None],
                 (h.point_valid_right & h.point_valid & h.history_valid[:,:,None]).flatten(0,1)&pair[:,None],
-                h.point_confidence.flatten(0,1))
+                h.point_confidence.flatten(0,1),h.point_provenance.flatten(0,1))
         # Point ordinal IDs preserve upstream arc-length identity; they do not
         # infer topology or claim cross-frame correspondence of an unordered set.
         proprio=torch.where(active[:,None],h.proprio.flatten(0,1),0.)

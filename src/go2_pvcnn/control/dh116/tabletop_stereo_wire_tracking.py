@@ -204,7 +204,7 @@ class TrackedWirePointExtractor:
     """
     def __init__(self, *, point_count=128, identity_motion_limit_m=.005,
                  max_timestamp_gap_s=.5, association_margin=.15, point_sampling='centerline',
-                 ribbon_radius_px=1):
+                 ribbon_radius_px=1, observed_surface_capacity=None):
         if (not isinstance(point_count, int) or not 2 <= point_count <= 128
                 or not math.isfinite(identity_motion_limit_m) or identity_motion_limit_m <= 0
                 or not math.isfinite(max_timestamp_gap_s) or max_timestamp_gap_s <= 0
@@ -215,6 +215,12 @@ class TrackedWirePointExtractor:
         if (type(ribbon_radius_px) is not int or not 1 <= ribbon_radius_px <= 3
                 or point_sampling == 'centerline' and ribbon_radius_px != 1):
             raise ValueError('ribbon radius must be 1..3 pixels in observed_ribbon mode')
+        if observed_surface_capacity is None:
+            observed_surface_capacity=point_count//4 if point_sampling=='observed_ribbon' else 0
+        if (type(observed_surface_capacity) is not int or observed_surface_capacity < 0
+                or observed_surface_capacity > point_count-2 or (point_sampling=='centerline' and observed_surface_capacity)):
+            raise ValueError('measured surface capacity must retain at least two centerline slots')
+        self.observed_surface_capacity=observed_surface_capacity
         self.point_count = point_count
         self.point_sampling = point_sampling
         self.ribbon_radius_px = ribbon_radius_px
@@ -224,6 +230,8 @@ class TrackedWirePointExtractor:
         self._history = None
         self._times = None
         self._next_id = 0
+        self._image_history = None
+        self._next_image_id = 0
 
     def _associate(self, descriptors, old, now):
         """Mutual unambiguous endpoint/tangent/curvature/arc/history matching."""
@@ -284,7 +292,7 @@ class TrackedWirePointExtractor:
 
     @torch.no_grad()
     def extract(self, left_rgb, depth_m, depth_valid, K_left, T_world_left, *,
-                reset_mask=None, timestamp=None, point_confidence=None):
+                reset_mask=None, timestamp=None, point_confidence=None, wire_mask=None):
         if (left_rgb.ndim != 4 or left_rgb.shape[1] != 3 or not left_rgb.is_floating_point()
                 or depth_m.shape != left_rgb.shape[:1] + left_rgb.shape[2:]
                 or depth_valid.shape != depth_m.shape or depth_valid.dtype != torch.bool
@@ -302,6 +310,7 @@ class TrackedWirePointExtractor:
                 raise ValueError('point_confidence requires finite [B,H,W] in [0,1]')
         if self._history is None:
             self._history, self._times = [[] for _ in range(n)], [None] * n
+            self._image_history = [[] for _ in range(n)]
         if len(self._history) != n:
             raise ValueError('point extractor batch size changed; construct a new instance')
         if timestamp is None:
@@ -315,7 +324,9 @@ class TrackedWirePointExtractor:
             times = time_tensor.tolist()
 
         # Build and validate all RGB topology before looking up any depth.
-        candidate = wire_colour_mask(left_rgb)
+        candidate = wire_colour_mask(left_rgb) if wire_mask is None else wire_mask
+        if candidate.shape != depth_m.shape or candidate.dtype != torch.bool or candidate.device != device:
+            raise ValueError('RGB-derived wire_mask must be boolean aligned [B,H,W]')
         image_paths, reasons, rejected_components = [], [], []
         for mask in candidate.cpu().numpy():
             paths, reason, rejected = _paths_from_mask(mask)
@@ -329,6 +340,7 @@ class TrackedWirePointExtractor:
         visibility = torch.zeros_like(valid)
         component_id = torch.full(shape, -1, device=device, dtype=torch.long)
         track_id = torch.full_like(component_id, -1)
+        image_track_id = torch.full_like(component_id, -1)
         depth_segment_id = torch.full_like(component_id, -1)
         provenance = torch.zeros(shape, device=device, dtype=torch.uint8)
         pixels = torch.full((*shape, 2), -1, device=device, dtype=torch.long)
@@ -345,7 +357,7 @@ class TrackedWirePointExtractor:
         component_count = torch.tensor([len(p) for p in image_paths], device=device, dtype=torch.long)
         rejected_count = torch.tensor([len(rows) for rows in rejected_components], device=device, dtype=torch.long)
         sampling_arc_space = [[] for _ in range(n)]
-        surface_capacity = self.point_count // 4 if self.point_sampling == 'observed_ribbon' else 0
+        surface_capacity = self.observed_surface_capacity
         centerline_capacity = self.point_count - surface_capacity
         for env, paths in enumerate(image_paths):
             now, previous_time = times[env], self._times[env]
@@ -354,11 +366,13 @@ class TrackedWirePointExtractor:
             anomaly[env] = bad_time
             if bool(reset_mask[env]) or bad_time:
                 self._history[env] = []
+                self._image_history[env] = []
             if not math.isfinite(now):
                 now = 0.
             self._times[env] = now
             if not bool(topology_valid[env]):
                 self._history[env] = []
+                self._image_history[env] = []
                 continue
             curves = []
             for path in paths:
@@ -366,6 +380,29 @@ class TrackedWirePointExtractor:
                 curve = world[env, pixel[:, 0], pixel[:, 1]]
                 good = torch.isfinite(curve).all(-1)
                 curves.append((pixel, curve, good))
+            # Independently associate complete 2D visible fragments, even when
+            # stereo depth has holes. Image IDs never populate metric track_id.
+            image_descriptors = []
+            for path in paths:
+                p2 = torch.as_tensor(path, dtype=torch.float32)
+                # Scale image pixels into the existing association metric solely
+                # for image matching; no value is exported as a metric 3D point.
+                p3 = torch.cat((p2, torch.zeros(len(p2), 1)), -1) * (self.identity_motion_limit_m / 4.)
+                image_descriptors.append(_descriptor(p3, torch.ones(len(p3), dtype=torch.bool)))
+            # Keep old metric track numbering and state untouched.
+            metric_counter = self._next_id
+            self._next_id = self._next_image_id
+            image_matches = self._associate(image_descriptors, self._image_history[env], now)
+            self._next_image_id, self._next_id = self._next_id, metric_counter
+            image_history = []
+            for descriptor, (_, identity, reverse) in zip(image_descriptors, image_matches):
+                if identity < 0 or descriptor is None:
+                    continue
+                oriented = _reverse_descriptor(descriptor) if reverse else descriptor
+                prior = next((t for t in self._image_history[env] if t['id'] == identity), None)
+                velocity = torch.zeros(2, 3) if prior is None else (oriented['endpoints'] - prior['endpoints']) / (now-prior['time'])
+                image_history.append(dict(**oriented, id=identity, time=now, velocity=velocity))
+            self._image_history[env] = image_history
             descriptors = [_descriptor(curve, good) for _, curve, good in curves]
             old = self._history[env]
             matches = self._associate(descriptors, old, now)
@@ -423,6 +460,7 @@ class TrackedWirePointExtractor:
                 provenance[env, dest] = 1  # observed centerline 2D sample, possibly no depth
                 component_id[env, dest] = component
                 track_id[env, dest] = identity
+                image_track_id[env, dest] = image_matches[component][1]
                 pixels[env, dest] = pixel[indices]
                 arc_length[env, dest] = metric_arc[indices]
                 arc_length_px[env, dest] = torch.as_tensor(pixel_arc, device=device, dtype=dtype)[indices]
@@ -455,7 +493,7 @@ class TrackedWirePointExtractor:
                     component_id=component_id, depth_segment_id=depth_segment_id,
                     arc_length=arc_length, arc_length_m=arc_length, arc_length_px=arc_length_px,
                     tangent=tangent, confidence=confidence, visibility=visibility,
-                    track_id=track_id, point_pixels=pixels, point_provenance=provenance,
+                    track_id=track_id, image_track_id=image_track_id, point_pixels=pixels, point_provenance=provenance,
                     topology_valid=topology_valid,
                     temporal_identity_valid=temporal_valid, timestamp_anomaly=anomaly,
                     visible_component_count=component_count, sampling_truncated=truncated,
@@ -464,6 +502,6 @@ class TrackedWirePointExtractor:
                     sampling_arc_space=sampling_arc_space,
                     visible_arc_length_m=lengths, metric_arc_complete=metric_complete,
                     full_cable_observed=torch.zeros_like(temporal_valid), rejection_reason=reasons,
-                    source='RGB_colour_visible_components_and_stereo_only',
+                    source='RGB_colour_visible_components_and_stereo_only' if wire_mask is None else 'explicit_RGB_segmentation_and_stereo_only',
                     correspondence_scope='conservative_visible_component_sensor_tracks_not_material_point_identity',
                     centerline_qualification=None)

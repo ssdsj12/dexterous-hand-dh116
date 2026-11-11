@@ -240,7 +240,7 @@ class StereoDepth:
         return dl,dr
 
     @torch.no_grad()
-    def _compute_batch(self,left_rgb,right_rgb,calibration,left_valid,right_valid):
+    def _compute_batch(self,left_rgb,right_rgb,calibration,left_valid,right_valid,wire_masks=None):
         left=left_rgb.mean(1).float();right=right_rgb.mean(1).float()
         masks=[];raw_masks=[]
         for mask in (left_valid,right_valid):
@@ -259,8 +259,8 @@ class StereoDepth:
                 dl,cl,gl,left_trace=self._matched(left,right,-1,masks[0],masks[1])
                 dr,cr,gr,right_trace=self._matched(right,left,1,masks[1],masks[0])
         elif self.method in WIRE_METHODS:
-            lm = wire_colour_mask(left_rgb) & raw_masks[0]
-            rm = wire_colour_mask(right_rgb) & raw_masks[1]
+            lm = (wire_colour_mask(left_rgb) if wire_masks is None else wire_masks[0]) & raw_masks[0]
+            rm = (wire_colour_mask(right_rgb) if wire_masks is None else wire_masks[1]) & raw_masks[1]
             options = dict(method=self.method, low=self.min_disparity, high=self.max_disparity,
                            block=self.block_size, texture=self.texture,
                            uniqueness=self.uniqueness, subpixel=self.subpixel)
@@ -344,8 +344,13 @@ class StereoDepth:
                     valid=valid,occlusion=occlusion,confidence=torch.where(valid,confidence,0.),diagnostics=diagnostics)
 
     @torch.no_grad()
-    def compute(self,left_rgb,right_rgb,calibration,*,left_valid=None,right_valid=None):
+    def compute(self,left_rgb,right_rgb,calibration,*,left_valid=None,right_valid=None,wire_masks=None):
         validate_images(left_rgb,right_rgb,calibration)
+        if wire_masks is not None:
+            if (self.method not in WIRE_METHODS or len(wire_masks) != 2 or any(
+                    not isinstance(mask, torch.Tensor) or mask.shape != left_rgb[:,0].shape
+                    or mask.dtype != torch.bool or mask.device != left_rgb.device for mask in wire_masks)):
+                raise ValueError('both aligned RGB-derived segmentation masks required for wire methods')
         if not calibration.rectified:
             raise ValueError('unrectified stereo: call rectify_rgb explicitly and use its returned rectified calibration for depth AND world geometry')
         n=len(left_rgb)
@@ -358,7 +363,8 @@ class StereoDepth:
         for start in range(0,n,batch):
             stop=min(n,start+batch)
             chunks.append(self._compute_batch(left_rgb[start:stop],right_rgb[start:stop],calibration,
-                None if left_valid is None else left_valid[start:stop],None if right_valid is None else right_valid[start:stop]))
+                None if left_valid is None else left_valid[start:stop],None if right_valid is None else right_valid[start:stop],
+                None if wire_masks is None else tuple(mask[start:stop] for mask in wire_masks)))
         result={key:torch.cat([chunk[key] for chunk in chunks],0)
             for key in ('depth_m','disparity_px','valid','occlusion','confidence')}
         def merge(values):

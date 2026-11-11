@@ -53,7 +53,7 @@ def tensor_state_sha256(state):
 
 def _source_sha():
     names = ('checkpoint', 'student_ppo', 'state_estimator', 'observation', 'encoder', 'temporal', 'contract',
-        'task_state_adapter','geometry')
+        'task_state_adapter','geometry','wire_segmentation')
     return {f'tabletop_stereo_{name}.py': hashlib.sha256(Path(__file__).with_name(
         f'tabletop_stereo_{name}.py').read_bytes()).hexdigest() for name in names}
 
@@ -279,7 +279,8 @@ def save_actor_package(path,actor,contract,*,network_config):
     if normalize_network_config(contract['config'].get('network'))!=network:
         raise ValueError('BC/DAgger actor network config differs from complete source contract')
     if (actor.input_mode!=network['actor_input_mode'] or actor.task_state_config!=network['task_state_config']
-            or actor.estimator.point_coordinate_mode!=network['point_coordinate_mode']):
+            or actor.estimator.point_coordinate_mode!=network['point_coordinate_mode']
+            or actor.estimator.point_source_encoding!=network.get('point_source_encoding',False)):
         raise ValueError('actor field/coordinate configuration semantics differ from export contract')
     # Constructing the topology validator must not perturb ongoing training RNG.
     with torch.random.fork_rng(devices=[]): candidate=make_stereo_actor(network)

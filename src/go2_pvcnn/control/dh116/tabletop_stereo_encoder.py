@@ -18,13 +18,17 @@ def _norm(channels):
 
 class PalmPointEncoder(nn.Module):
     """Shared observed-point weights, separate hand IDs, no world-origin input."""
-    def __init__(self,embed_dim=128):
+    def __init__(self,embed_dim=128,point_source_encoding=False):
         super().__init__()
         self.project=nn.Linear(3,embed_dim)
         self.hand_embedding=nn.Parameter(torch.empty(2,embed_dim))
         nn.init.normal_(self.hand_embedding,std=.02)
+        self.point_source_encoding=point_source_encoding
+        if point_source_encoding:
+            from .tabletop_stereo_wire_segmentation import WireSourceEncoder
+            self.source_encoder=WireSourceEncoder(embed_dim)
 
-    def forward(self,left,right,left_valid,right_valid,confidence):
+    def forward(self,left,right,left_valid,right_valid,confidence,provenance=None):
         if (left.shape!=right.shape or left.ndim!=3 or left.shape[1:]!=(128,3)
                 or left_valid.shape!=left.shape[:2] or right_valid.shape!=left_valid.shape
                 or left_valid.dtype!=torch.bool or right_valid.dtype!=torch.bool
@@ -34,7 +38,12 @@ class PalmPointEncoder(nn.Module):
         for index,(points,valid) in enumerate(((left,left_valid),(right,right_valid))):
             valid=valid & torch.isfinite(points).all(-1) & torch.isfinite(confidence) & (confidence>0)
             p=torch.where(valid[...,None],points,0.)
-            t=self.project(p)+self.hand_embedding[index]
+            if self.point_source_encoding:
+                if provenance is None:raise ValueError('explicit point provenance required by source-aware Actor')
+                encoded=self.source_encoder(p,valid,provenance)
+                valid=encoded['centerline_valid'] | encoded['observed_surface_valid']
+                t=encoded['tokens']+self.hand_embedding[index]
+            else:t=self.project(p)+self.hand_embedding[index]
             t=t+position_encoding(torch.linspace(0,1,128,device=p.device),t.shape[-1])[None]
             tokens.append(torch.where(valid[...,None],t,0.));masks.append(valid)
         return torch.cat(tokens,1),torch.cat(masks,1)

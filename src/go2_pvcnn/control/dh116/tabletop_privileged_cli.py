@@ -90,8 +90,8 @@ def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=Non
                   expert_dataset=None, bc_steps=0, checkpoint_interval=10,
                   record_diagnostic_rollout=False):
     """Train only the independent model using the unchanged env.step reward."""
-    if record_diagnostic_rollout and (bridge.n, config['rollout_steps'], updates) != (2, 32, 1):
-        raise ValueError('diagnostic rollout recording requires 2 environments, 32 steps and 1 update')
+    if record_diagnostic_rollout and (bridge.n != 2 or config['rollout_steps'] not in (32,128) or updates != 1):
+        raise ValueError('diagnostic rollout recording requires 2 environments, 32 or 128 steps and 1 update')
     output = Path(output)
     model = PrivilegedTeacher(**config['model'])
     trainer = PPOTrainer(model, ppo_config, rollout_steps=config['rollout_steps'],
@@ -200,6 +200,12 @@ def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=Non
                 entropy_definition='collection-policy MC from already sampled epsilon; no additional RNG draw',
                 kl_definition='exact Normal(old||final_updated_policy) on collected states; distinct from optimizer mean KL',
                 actual_execution_evidence='native/native_physics.jsonl' if native_identity else None,
+                semantic_groups={name:dict(indices=list(range(lo,hi)),
+                    sampled_mean=mean[lo:hi].tolist(),sampled_std=std[lo:hi].tolist(),
+                    latent_std=latent_std[lo:hi].tolist(),
+                    final_log_std=model.log_std.detach().cpu()[lo:hi].tolist(),
+                    normalized_saturation_fraction=(stats['saturation'][lo:hi]/count).tolist())
+                    for name,lo,hi in (('fingers12',0,12),('translation6',12,18),('rotation6',18,24))},
                 groups={name:dict(indices=list(range(lo,hi)),sampled_mean=mean[lo:hi].tolist(),
                     sampled_std=std[lo:hi].tolist(),noise_rms=noise_rms[lo:hi].tolist(),latent_std=latent_std[lo:hi].tolist(),
                     sampled_tanh_entropy=group_entropy[name]/count,final_old_to_new_kl=group_kl[name]/count,
@@ -314,7 +320,7 @@ def main(mode='train', argv=None):
     parser.add_argument('--bc-steps', type=int, default=0)
     parser.add_argument('--checkpoint-interval', type=int, default=10)
     parser.add_argument('--record-diagnostic-rollout', action='store_true',
-        help='save private pre-optimizer tensors/RNG for an explicit 2-env, 32-step, 1-update diagnosis')
+        help='save private pre-optimizer tensors/RNG for an explicit 2-env, 32/128-step, 1-update diagnosis')
     parser.add_argument('--max-control-steps', type=int, default=1200)
     parser.add_argument('--native-task-config', type=Path,
         default=ROOT / 'configs/dh116_training/stereo_native_task_v1.json')
@@ -332,8 +338,8 @@ def main(mode='train', argv=None):
             args.updates, args.checkpoint_interval, args.max_control_steps)) or args.bc_steps < 0:
         parser.error('positive environment/rollout/update/checkpoint/step budgets required')
     if args.record_diagnostic_rollout and (mode != 'train' or
-            (args.num_envs, config['rollout_steps'], args.updates) != (2, 32, 1)):
-        parser.error('diagnostic rollout recording requires train with 2 environments, 32 steps and 1 update')
+            (args.num_envs != 2 or config['rollout_steps'] not in (32,128) or args.updates != 1)):
+        parser.error('diagnostic rollout recording requires train with 2 environments, 32 or 128 steps and 1 update')
     if args.check_config:
         print(json.dumps(dict(mode=mode, validated=True, native_started=False,
             ppo=asdict(ppo), config=config), indent=2))

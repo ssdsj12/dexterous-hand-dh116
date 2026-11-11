@@ -200,11 +200,16 @@ class _NativeValidationDepthReader:
         resolution=resolve_wire_instance_mask(segmentation[:,0],segmentation_info,self.wire_prim_paths,
             path_validator=lambda path:self.stage.GetPrimAtPath(path).IsValid(),
             wire_render_prim_paths=inventory,reference_valid=reference_valid) if segmentation is not None and inventory is not None else None
+        right_resolution=resolve_wire_instance_mask(segmentation[:,1],segmentation_info,self.wire_prim_paths,
+            path_validator=lambda path:self.stage.GetPrimAtPath(path).IsValid(),
+            wire_render_prim_paths=inventory,reference_valid=torch.isfinite(depth[:,1])&(depth[:,1]>0)) if segmentation is not None and inventory is not None else None
         return dict(depth_left_m=depth[:,0].float(),depth_right_m=depth[:,1].float(),
             frame_id=before['frame_id'],simulation_time=before['simulation_time'],calibration_sha256=c.sha256,
             render_timing=before,sdk_camera_view_source_artifact=self.sdk_source_artifact,
             sdk_instance_annotator_source_artifact=self.sdk_instance_source_artifact,
             raw_instance_ids=None if segmentation is None else segmentation[:,0],raw_instance_info=segmentation_info,
+            right_raw_instance_ids=None if segmentation is None else segmentation[:,1],right_raw_instance_info=segmentation_info,
+            right_wire_instance_resolution=right_resolution,
             wire_prim_paths=self.wire_prim_paths,wire_render_prim_paths=inventory,wire_instance_resolution=resolution,
             segmentation_blocked_reason=segmentation_error)
 
@@ -231,6 +236,7 @@ class ValidationDepthReference:
         from .tabletop_vision_camera import brown_mask
         candidate=brown_mask(pair['left_rgb'].permute(0,2,3,1),float_rgb_is_255=False)
         resolution=value.get('wire_instance_resolution') or {}
+        right_resolution=value.get('right_wire_instance_resolution') or {}
         return dict(version='dh116-stereo-depth-reference-v1',source_scope='native' if native else 'cpu_fixture',
             validation_only=True,reference_used_as_actor_input=False,source_units='optical_axis_z_m',
             reference_source='rendered_depth_validation_only',frame_id=value['frame_id'],
@@ -240,6 +246,10 @@ class ValidationDepthReference:
             wire_reference_mask=resolution.get('mask'),wire_mask_source_scope=('native_resolved_instance_id' if native else 'cpu_resolved_instance_id') if resolution.get('mask') is not None else 'unresolved',
             wire_mask_blocked_reasons=resolution.get('blocked_reasons',[value.get('segmentation_blocked_reason') or 'instance_reference_unavailable']),
             raw_instance_ids=value.get('raw_instance_ids'),raw_instance_info=copy.deepcopy(value.get('raw_instance_info')),
+            right_raw_instance_ids=value.get('right_raw_instance_ids'),right_raw_instance_info=copy.deepcopy(value.get('right_raw_instance_info')),
+            right_wire_instance_resolution=right_resolution,right_wire_reference_mask=right_resolution.get('mask'),
+            right_wire_mask_blocked_reasons=right_resolution.get('blocked_reasons',['right_instance_reference_unavailable']),
+            right_valid=(torch.isfinite(right)&(right>0)).clone(),
             wire_prim_paths=copy.deepcopy(value.get('wire_prim_paths')),
             wire_render_prim_paths=copy.deepcopy(value.get('wire_render_prim_paths')),
             wire_instance_resolution=resolution,actual_wire_path_source='RigidObject.root_physx_view.prim_paths' if native else 'cpu_fixture',
@@ -256,7 +266,8 @@ def archive_instance_reference(reference,path):
     """
     if reference.get('raw_instance_ids') is None:return None
     names=('source_scope','frame_id','simulation_time','calibration_sha256','render_timing',
-           'raw_instance_ids','raw_instance_info','wire_prim_paths','actual_wire_path_source',
+           'raw_instance_ids','raw_instance_info','right_raw_instance_ids','right_raw_instance_info',
+           'right_wire_instance_resolution','right_wire_reference_mask','right_valid','wire_prim_paths','actual_wire_path_source',
            'sdk_camera_view_source_artifact','sdk_instance_annotator_source_artifact','wire_render_prim_paths')
     raw={key:copy.deepcopy(reference.get(key)) for key in names}
     raw.update(version='dh116-wire-instance-reference-v2',validation_only=True,reference_valid=reference['valid'].clone(),

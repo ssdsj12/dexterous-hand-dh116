@@ -21,6 +21,16 @@ BC_VERSION = 'dh116-stereo-rgb-bc-artifact-v1'
 CANDIDATE_VERSION = 'dh116-stereo-teacher-candidate-records-v1'
 
 
+def _load_frozen_teacher(bridge, config, ppo, checkpoint, expected_sha256):
+    from .tabletop_privileged_cli import _policy_for_evaluation
+    if file_sha256(checkpoint) != expected_sha256:
+        raise ValueError('Teacher checkpoint changed before policy load')
+    result = _policy_for_evaluation(bridge, config, ppo, checkpoint)
+    if file_sha256(checkpoint) != expected_sha256:
+        raise ValueError('Teacher checkpoint changed during policy load')
+    return result
+
+
 def _formal_collection_admission(teacher_proof, teacher_checkpoint, stereo_proof, camera_config):
     from .tabletop_stereo_promotion import require_teacher_qualification, verify_stereo_qualification
     from .tabletop_stereo_calibration import StereoCalibration
@@ -238,6 +248,120 @@ def collect_candidate_reference(environment, teacher, steps):
     return records
 
 
+@torch.no_grad()
+def collect_cold_candidate_reference(environment, teacher, manifest, *, output,
+                                     steps_per_initial=4, minimum_per_style=4, schema_only=False,
+                                     checkpoint_path=None):
+    """Bounded unqualified candidates on existing cold-reset kernels.
+
+    Small cohorts are diagnostic data, never the >=100/style success evaluator.
+    Its schema planner is reused without weakening that evaluator's native gate.
+    """
+    from .tabletop_privileged_evaluation import (
+        prepare_cold_trial_batches, _native_bridge, _staging_reset_state, _save_reset_buffers,
+        _restore_reset_buffers, _policy_digest, _clock, _json as json_tree,
+        _install_reset_trials, _readback_reset_trials,
+    )
+    from .tabletop_vision_evaluation_contract import evaluation_physics_sha256
+    bridge = environment.bridge
+    if type(schema_only) is not bool or type(steps_per_initial) is not int or steps_per_initial < 1:
+        raise ValueError('explicit schema scope and positive per-initial step budget required')
+    if not schema_only and not _native_bridge(bridge):
+        raise ValueError('candidate native capture requires the actual NativeTensorBridge')
+    if not schema_only and checkpoint_path is None:
+        raise ValueError('cold candidate capture requires the actual frozen Teacher checkpoint file')
+    if checkpoint_path is not None and file_sha256(checkpoint_path) != bridge.checkpoint_sha256:
+        raise ValueError('Teacher checkpoint changed before cold capture')
+    plan = prepare_cold_trial_batches(manifest,bridge.n,minimum_per_style=minimum_per_style,schema_only=True)
+    meta = plan['manifest']['metadata']
+    if (meta['source_sha256'] != bridge.checkpoint_sha256
+            or meta['camera_sha256'] != environment.camera.calibration.sha256
+            or meta['physics_sha256'] != evaluation_physics_sha256(bridge.contract)):
+        raise ValueError('cold candidate manifest checkpoint/camera/physics identity differs')
+    stage, task = _staging_reset_state(bridge.device_world,bridge.task)
+    for chunk in plan['batches']:
+        _install_reset_trials(stage,task,chunk)
+    immutable = {str(Path(manifest).resolve()):file_sha256(manifest)} if isinstance(manifest,(str,Path)) else {}
+    output = new_run(output)
+    write_json_new(output/'manifest.json',plan['manifest'])
+    saved = _save_reset_buffers(bridge.device_world,bridge.task)
+    source = _policy_digest(teacher)
+    context = digest(bridge.contract)
+    records, batches, seen_initials, seen_uids = [], [], set(), set()
+    was_training = teacher.training
+    teacher.eval()
+    try:
+        for index,chunk in enumerate(plan['batches']):
+            _install_reset_trials(bridge.device_world,bridge.task,chunk)
+            bridge.bind_cold_trials(deepcopy(chunk))
+            bridge.reset()
+            readback = _readback_reset_trials(bridge.device_world,chunk)
+            write_json_new(output/f'reset_readback_{index:04d}.json',json_tree(readback))
+            clock = _clock(bridge)
+            environment.clear_sensor_history()
+            before = environment.snapshot()
+            if _clock(bridge) != clock:
+                raise RuntimeError('cold candidate sensor capture advanced physical time')
+            identities = before.identities
+            initials = [row['physical_initial_condition_sha256'] for row in identities]
+            uids = [row['episode_uid'] for row in identities]
+            if (len(set(initials)) != bridge.n or set(initials) & seen_initials
+                    or len(set(uids)) != bridge.n or set(uids) & seen_uids):
+                raise ValueError('duplicate actual initial state or episode UID in cold candidate cohort')
+            if any(row['source_episode_group'] != trial['trial_id'] for row,trial in zip(identities,chunk)):
+                raise ValueError('cold candidate source groups differ from manifest trial IDs')
+            seen_initials.update(initials); seen_uids.update(uids)
+            batch = dict(batch_index=index,initial_identities=json_tree(identities),
+                actual_readback_sha256=file_sha256(output/f'reset_readback_{index:04d}.json'),
+                completed_control_steps=0,stopped_on_terminal=False)
+            batches.append(batch)
+            for _ in range(steps_per_initial):
+                if [row['episode_uid'] for row in environment.snapshot().identities] != uids:
+                    raise RuntimeError('unexpected reset before collecting original cold episode')
+                part = collect_candidate_reference(environment,teacher,1)
+                records.extend(part)
+                batch['completed_control_steps'] += 1
+                if any(bool(row['done'].any()) for row in part):
+                    batch['stopped_on_terminal'] = True
+                    break
+            write_json_new(output/f'batch_{index:04d}.json',batch)
+        if source != _policy_digest(teacher) or context != digest(bridge.contract):
+            raise RuntimeError('cold collection changed frozen Teacher or base physical contract')
+        if any(file_sha256(path) != sha for path,sha in immutable.items()):
+            raise RuntimeError('cold collection manifest changed during capture')
+        if checkpoint_path is not None and file_sha256(checkpoint_path) != bridge.checkpoint_sha256:
+            raise RuntimeError('Teacher checkpoint changed during cold capture')
+    except BaseException as exc:
+        partial_artifact = None
+        if records:
+            partial = output/'partial_candidates.pt'
+            # A distinct format makes normal read_candidate/admit_candidates
+            # reject this failed cohort, while retaining the original tensors.
+            with partial.open('xb') as stream:
+                torch.save(dict(version='dh116-stereo-teacher-failed-partial-v1',status='failed_incomplete',
+                    records=records,teacher_checkpoint_sha256=bridge.checkpoint_sha256,
+                    manifest_sha256=plan['manifest_sha256'],batches=batches,candidate_only=True,
+                    complete_cohort=False,native_qualified=False,successful_demonstration_pool=False),stream)
+            partial_artifact = dict(path=str(partial.resolve()),sha256=file_sha256(partial))
+        write_json_new(output/'failure.json',dict(error_type=type(exc).__name__,error=str(exc),
+            batches=batches,records_collected=len(records),native_qualified=False,
+            partial_candidates_artifact=partial_artifact,status='failed_incomplete'))
+        raise
+    finally:
+        _restore_reset_buffers(bridge.device_world,bridge.task,saved)
+        teacher.train(was_training)
+        if hasattr(bridge,'_raw'):
+            bridge._raw.flush()
+    report = dict(version='dh116-stereo-cold-candidate-capture-v1',manifest_sha256=plan['manifest_sha256'],
+        minimum_per_style=minimum_per_style,steps_per_initial=steps_per_initial,batches=batches,
+        independent_actual_initials=len(seen_initials),samples=sum(len(row['identities']) for row in records),
+        checkpoint_sha256=bridge.checkpoint_sha256,calibration_sha256=environment.camera.calibration.sha256,
+        native_execution_performed=not schema_only,native_qualified=False,successful_demonstration_pool=False,
+        reset_buffers_restored=True,formal_success_evaluation=False)
+    write_json_new(output/'cohort_report.json',report)
+    return records,report
+
+
 def admit_candidates(candidate_path, qualification, output):
     from .tabletop_stereo_supervision_dataset import build_dataset, save_dataset
     from .tabletop_stereo_promotion import require_teacher_qualification
@@ -361,6 +485,8 @@ def main(mode='bc', argv=None):
     parser.add_argument('--candidate-only', action='store_true')
     parser.add_argument('--state-reference', action='store_true',
         help='archive independent same-frame depth and Wire instance IDs in candidate-only Teacher collection')
+    parser.add_argument('--cold-trial-manifest', type=Path)
+    parser.add_argument('--cold-minimum-per-style', type=int, default=4)
     parser.add_argument('--schema-only', action='store_true')
     parser.add_argument('--check-config', action='store_true')
     parser.add_argument('--enable-experiment', action='store_true')
@@ -368,7 +494,27 @@ def main(mode='bc', argv=None):
     args = parser.parse_args(argv)
     if args.state_reference and (mode != 'collect' or not args.candidate_only):
         parser.error('--state-reference requires candidate-only Teacher collection')
+    if args.cold_trial_manifest and (mode != 'collect' or not args.candidate_only or not args.state_reference):
+        parser.error('cold trials require candidate-only Teacher collection with --state-reference')
     config = _json(args.config)
+    cold_plan = None
+    if args.cold_trial_manifest:
+        from .tabletop_privileged_evaluation import prepare_cold_trial_batches
+        if (config.get('schema_version') != 'dh116-stereo-cold-candidate-v1'
+                or config.get('candidate_only') is not True
+                or (args.num_envs,args.steps,args.cold_minimum_per_style) != (
+                    config.get('batch_size'),config.get('steps_per_initial'),config.get('count_per_style'))
+                or args.camera_config.resolve() != (ROOT/config['camera_config']).resolve()):
+            raise ValueError('cold capture requires its exact bounded diagnostic config/budgets/camera')
+        cold_plan = prepare_cold_trial_batches(args.cold_trial_manifest,args.num_envs,
+            minimum_per_style=args.cold_minimum_per_style,schema_only=True)
+        if len(cold_plan['manifest']['trials']) != 2*config['count_per_style']:
+            raise ValueError('cold capture manifest exceeds exact bounded initial count')
+        from .tabletop_stereo_calibration import StereoCalibration
+        if cold_plan['manifest']['metadata']['camera_sha256'] != StereoCalibration.from_json(args.camera_config).sha256:
+            raise ValueError('cold capture manifest calibration differs from selected camera')
+        if args.teacher_checkpoint and cold_plan['manifest']['metadata']['source_sha256'] != file_sha256(args.teacher_checkpoint):
+            raise ValueError('cold capture manifest differs from actual Teacher checkpoint SHA')
     if mode == 'bc' and config.get('schema_version') != 'dh116-stereo-bc-v1':
         parser.error('versioned stereo BC config required')
     if mode == 'dagger' and config.get('schema_version') != 'dh116-stereo-dagger-v1':
@@ -376,7 +522,12 @@ def main(mode='bc', argv=None):
     if any(v < 1 for v in (args.steps, args.batch_size, args.epochs, args.rounds, args.num_envs)):
         parser.error('positive execution budgets required')
     if args.check_config:
-        print(json.dumps(dict(mode=mode, validated=True, native_started=False, config=config)))
+        checked = dict(mode=mode, validated=True, native_started=False, config=config)
+        if args.cold_trial_manifest:
+            plan = cold_plan
+            checked.update(cold_trials=len(plan['manifest']['trials']),cold_batches=len(plan['batches']),
+                manifest_sha256=plan['manifest_sha256'],native_qualified=False)
+        print(json.dumps(checked))
         return 0
     require_opt_in(args.enable_experiment)
     if args.output is None:
@@ -412,27 +563,36 @@ def main(mode='bc', argv=None):
     if mode == 'dagger' and args.actor_package is None:
         parser.error('online DAgger requires an independent Student actor package')
     run = new_run(args.output)
-    from .tabletop_privileged_cli import load_config, _policy_for_evaluation
+    from .tabletop_privileged_cli import load_config
     from .tabletop_stereo_native import launch_native
     from .tabletop_stereo_runtime import NativeStereoEnvironment
     teacher_config, ppo = load_config(args.teacher_config)
 
     def callback(bridge):
-        teacher, _ = _policy_for_evaluation(bridge, teacher_config, ppo, args.teacher_checkpoint)
+        teacher, _ = _load_frozen_teacher(bridge, teacher_config, ppo, args.teacher_checkpoint, teacher_sha)
         environment = NativeStereoEnvironment(bridge, args.camera_config,
             owner='dagger' if mode == 'dagger' else 'teacher', checkpoint_sha256=teacher_sha,
             capture_state_reference=args.state_reference)
         if mode == 'collect':
-            records = collect_candidate_reference(environment, teacher, args.steps)
+            cohort = None
+            if args.cold_trial_manifest:
+                records,cohort = collect_cold_candidate_reference(environment,teacher,args.cold_trial_manifest,
+                    output=run/'cold_initials',steps_per_initial=args.steps,minimum_per_style=args.cold_minimum_per_style,
+                    checkpoint_path=args.teacher_checkpoint)
+            else:
+                records = collect_candidate_reference(environment, teacher, args.steps)
+            if file_sha256(args.teacher_checkpoint) != teacher_sha:
+                raise RuntimeError('Teacher checkpoint changed during collection')
             payload = dict(version=CANDIDATE_VERSION, teacher_checkpoint_sha256=teacher_sha,
                 teacher_checkpoint_path=str(args.teacher_checkpoint.resolve()), records=records,
                 candidate_only=True, successful_demonstration_pool=False,
+                cold_cohort=cohort,
                 qualification='requires_this_collection_own_complete_raw_success_proofs')
             with (run / 'stereo_teacher_candidates.pt').open('xb') as stream:
                 torch.save(payload, stream)
             report = dict(status='teacher_candidate_reference_collected', steps=args.steps,
                 samples=sum(len(r['identities']) for r in records), native_qualified=False,
-                successful_demonstration_pool=False)
+                successful_demonstration_pool=False,cold_cohort=cohort)
         else:
             from .tabletop_stereo_checkpoint import load_deployment_actor
             student = load_deployment_actor(args.actor_package,

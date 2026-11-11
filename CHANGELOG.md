@@ -1,3 +1,29 @@
+## 2026-11-11 — 按明确指令发布WP增量与采集预检
+
+本次按用户“更新到github”指令，将基于 `ae307a5` 的代码、独立配置、测试、处理后指标和预检报告发布到 `codex/dh116-stereo-privileged-dagger`，保留 Draft PR #2，不合并。新的8初态同步采集仍未获批准，本次发布不启动Isaac或训练。
+
+发布前复验7份新增核心测试：**84 passed，11.56s，exit0**。1183份源码/脚本/配置/测试与已完成双平台1147项完整回归的冻结版本逐字节一致，528份旧保护文件不变。此次复验不重复计作新原生结果。原始图像、物理日志、模型和私有归档不加入Git。
+
+本次包含真实RGB分割及point-source路径、三模式中心状态监督、Teacher KL事务与诊断、冷Reset同步证据准入和失败保存、PhysX来源/关闭诊断及768点尾部审计。Stereo精度、自然退出修复原生复验、逐contact来源与成功Teacher仍未通过；R2、Force Proxy、正式BC/DAgger保持关闭。最终测试和限制见[整合报告](docs/superpowers/reports/2026-11-11-stereo-wp-integration.md)、[readiness](docs/contracts/stereo_phase0_7_readiness.json)和[待批准采集计划](docs/superpowers/reports/2026-11-11-stereo-cold8-preflight-plan.md)。
+
+```text
+python -m pytest -q -p no:cacheprovider tests/test_dh116_stereo_cold_candidate_admission.py tests/test_dh116_stereo_candidate_cold_trials.py tests/test_dh116_stereo_contact_calibration.py tests/test_dh116_stereo_wire_tail_audit.py tests/test_dh116_stereo_state_training_modes.py tests/test_dh116_stereo_wire_segmentation.py tests/test_dh116_teacher_wp3.py
+```
+
+以下“未上传/不push”说明保留为预检阶段的历史快照；本条明确上传授权只改变发布范围，不改变实验授权或晋级状态。
+
+## 2026-11-11 — WP1–WP6增量与8初态采集预检查（未上传）
+
+以远端 `ae307a5` 为基线，保留已有架构。新增native-ID监督的双RGB分割、中心线/实测表面来源编码、右侧参考归档与逐点尾部审计；三种状态监督模式实际完成中心61–63的CPU诊断拟合。修复候选采集冷Reset读取、跨链初态身份、Checkpoint双检及失败样本保留。默认相机、371D/24D与原物理成功标准未变。
+
+Roll20同cohort复放为二指91/96、三指89/96个正确点，固定分母2009/2054，完整率4.53%/4.33%。这是采样覆盖改进，尾部仍14–22mm；分割实际接入仍失败，历史片段ID未记录，不能授部署或跟踪资格。真实6行中心标签的训练内MAE为5.395/1.522/4.258mm，没有独立validation/test。
+
+Teacher已完成本轮2env×128steps×1update原生R0诊断：256transition、5个joint_limit终止、成功0，受保护最终KL0.019917488。PhysX左拇指几何标定两次各240步完整，但退出需要采样后定向SIGTERM；修复代码经过CPU验证，尚待原生自然退出复验，pair来源未资格化。CUDA solver仍不可用，R2/Force Proxy、正式BC/DAgger/Student PPO保持关闭。
+
+最终CPU：Windows **1147 passed / 1 skipped**（174.53s）；服务器现有Python3.10/Torch2.7 **1147 passed / 2 skipped**（152.2s），均exit0、无Isaac导入，统计不相加。528保护文件SHA不变。用户本轮明确暂不采集新的8初态、不push/merge，PR保持Draft。
+
+[总报告](docs/superpowers/reports/2026-11-11-stereo-wp-integration.md) · [逐点预检](docs/superpowers/reports/2026-11-11-stereo-wp1-tail-preflight.md) · [待批准8初态计划](docs/superpowers/reports/2026-11-11-stereo-cold8-preflight-plan.md) · [readiness](docs/contracts/stereo_phase0_7_readiness.json) · [本轮文件清单](docs/stereo_wp_20261111_file_inventory.md)。以下保留历史阶段记录。
+
 ## 2026-11-11 — 双目点云、状态监督与 Teacher PPO 验证
 
 本次更新以 085f6b8 为基线。Roll20 保存帧采用轮廓匹配和连通表面采样后，每帧二指 31/32 点、三指 30/32 点在 5 mm 内。正确点完整率分别为 1.54% 和 1.46%，三指光轴深度 P95 为 11.92 mm。该配置仍用于独立实验。

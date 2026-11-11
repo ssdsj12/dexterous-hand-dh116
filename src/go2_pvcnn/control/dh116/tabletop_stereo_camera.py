@@ -143,6 +143,8 @@ class StereoCamera:
             max_height=resources.get('max_height',DEFAULT_MAX_HEIGHT) if max_height is None else max_height,allow_resource_override=override)
         if depth_config is None:depth_config=config
         estimator=StereoDepth.from_config(depth_config)
+        from .tabletop_stereo_wire_segmentation import configured_segmentation_depth
+        estimator=configured_segmentation_depth(estimator,config,device)
         reader=_NativeRGBPairReader(sim,origins,c,device,
             max_readback_bytes=resources.get('max_readback_bytes',1024**3) if max_readback_bytes is None else max_readback_bytes,
             allow_resource_override=override)

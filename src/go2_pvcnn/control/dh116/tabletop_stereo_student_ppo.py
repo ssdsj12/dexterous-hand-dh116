@@ -25,6 +25,8 @@ def normalize_network_config(config=None):
     value.setdefault('image_processing_batch_size', None)
     value.setdefault('actor_input_mode','latent')
     value.setdefault('point_coordinate_mode','world')
+    value.setdefault('point_source_encoding',False)
+    if type(value['point_source_encoding']) is not bool:raise ValueError('point_source_encoding must be bool')
     value.setdefault('task_state_config',{})
     if value['actor_input_mode'] not in ('latent','estimated_task_state','hybrid'):
         raise ValueError('invalid Actor input mode')
@@ -59,7 +61,7 @@ def normalize_network_config(config=None):
 def make_stereo_actor(network_config=None):
     config = normalize_network_config(network_config)
     estimator = StereoStateEstimator(**{name: config[name] for name in
-        ('embed_dim', 'history', 'num_heads', 'num_layers', 'image_processing_batch_size','point_coordinate_mode')})
+        ('embed_dim', 'history', 'num_heads', 'num_layers', 'image_processing_batch_size','point_coordinate_mode','point_source_encoding')})
     if 'image_resolution_wh' in config:
         width, height = config['image_resolution_wh']
         def check_resolution(module, arguments):

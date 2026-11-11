@@ -120,6 +120,55 @@ def validate_expert_dataset(payload, *, expected_identity):
     return payload
 
 
+def audit_expert_compatibility(payload, *, expected_identity):
+    """Read-only audit; matching tensor widths never qualifies expert success.
+
+    Legacy visual supervision can contain canonical 24D actions, but its 3844D
+    RGB-D history is not a recoverable 371D pre-action privileged state. No
+    inferred state conversion or relabeling of old qualification is performed.
+    """
+    blockers = []
+    if not isinstance(payload, dict) or not isinstance(expected_identity, dict):
+        raise ValueError('expert payload and target identity dictionaries required')
+    observations, actions = payload.get('observations'), payload.get('actions')
+    obs_shape = list(observations.shape) if isinstance(observations, torch.Tensor) else None
+    action_shape = list(actions.shape) if isinstance(actions, torch.Tensor) else None
+    if (obs_shape is None or len(obs_shape) != 2 or obs_shape[1] != 371
+            or not observations.is_floating_point() or not bool(torch.isfinite(observations).all())):
+        blockers.append('missing_pre_action_privileged_371')
+    if (action_shape is None or len(action_shape) != 2 or action_shape[1] != 24
+            or not actions.is_floating_point() or not bool(torch.isfinite(actions).all())
+            or bool((actions.abs() > 1).any()) or obs_shape is None or action_shape[0] != obs_shape[0]):
+        blockers.append('missing_aligned_bounded_actions24')
+    declared = payload.get('identity', {})
+    declared = declared if isinstance(declared, dict) else {}
+    action_sha = declared.get('action_contract_sha256')
+    legacy = payload.get('visual_contract', {})
+    if action_sha is None and isinstance(legacy, dict) and isinstance(legacy.get('action_contract'), dict):
+        action_sha = hashlib.sha256(json.dumps(legacy['action_contract'], sort_keys=True,
+            separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+    canonical = hashlib.sha256(json.dumps(ACTION_CONTRACT, sort_keys=True,
+        separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+    action_match = action_sha == canonical == expected_identity.get('action_contract_sha256')
+    state_match = (_sha(expected_identity.get('state_contract_sha256'))
+        and declared.get('state_contract_sha256') == expected_identity['state_contract_sha256'])
+    if not action_match: blockers.append('missing_or_mismatched_action_contract')
+    if not state_match: blockers.append('missing_or_mismatched_state_contract')
+    admitted, rejection = False, None
+    try:
+        validate_expert_dataset(payload, expected_identity=expected_identity)
+        admitted = True
+    except (ValueError, OSError, KeyError, TypeError) as error:
+        rejection = str(error)
+        blockers.append('native_success_dataset_admission_failed')
+    return dict(version='dh116-privileged-expert-compatibility-audit-v1',
+        source_version=payload.get('version'), observations_shape=obs_shape,
+        actions_shape=action_shape, action_contract_matches=action_match,
+        state_contract_matches=state_match, bc_admitted=admitted,
+        blockers=blockers, admission_error=rejection,
+        requires_recollection=not admitted, transforms_applied=False)
+
+
 class ActorBCTrainer:
     def __init__(self, model, *, lr=3e-4, ppo_trainer=None):
         self.model, self.ppo_trainer = model, ppo_trainer

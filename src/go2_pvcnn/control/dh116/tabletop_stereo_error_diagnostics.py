@@ -18,9 +18,9 @@ def _aligned(*values):
 
 def distribution(values):
     v=values.detach().double().flatten();v=v[torch.isfinite(v)]
-    if not len(v):return dict(count=0,mean=None,p50=None,p90=None,p95=None,max=None)
+    if not len(v):return dict(count=0,mean=None,p50=None,p90=None,p95=None,p99=None,max=None)
     return dict(count=len(v),mean=float(v.mean()),
-        **{f'p{q}':float(v.quantile(q/100)) for q in (50,90,95)},max=float(v.max()))
+        **{f'p{q}':float(v.quantile(q/100)) for q in (50,90,95,99)},max=float(v.max()))
 
 
 def region_metrics(prediction,reference,predicted_valid,reference_valid,region,K,*,disparity=None):
@@ -47,11 +47,12 @@ def region_metrics(prediction,reference,predicted_valid,reference_valid,region,K
         intersection_count=count,prediction_coverage=count/denominator if denominator else None,
         mae_m=d['mean'],rmse_m=float(signed.square().mean().sqrt()) if count else None,
         signed_bias_m=float(signed.mean()) if count else None,
-        **{key+'_m':d[key] for key in ('p50','p90','p95','max')},
+        **{key+'_m':d[key] for key in ('p50','p90','p95','p99','max')},
         correct_3d_points_5mm=int((spatial<=.005).sum()),
         correct_3d_point_completeness_5mm=float((spatial<=.005).sum())/denominator if denominator else None,
         correct_z_completeness_5mm=float((absolute<=.005).sum())/denominator if denominator else None,
-        point_error_3d_m=distribution(spatial))
+        point_error_3d_m=distribution(spatial),
+        point_error_3d_rmse_m=float(spatial.square().mean().sqrt()) if count else None)
     if disparity is not None:
         _aligned(prediction,disparity)
         values=disparity[joint].double();values=values[torch.isfinite(values)]

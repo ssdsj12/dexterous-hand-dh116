@@ -16,7 +16,7 @@ VERSION='dh116-stereo-processing-v1'
 
 
 def _sources():
-    names=('depth','perception','geometry','preprocessing','matcher_candidates','matching_costs','pyramid','wire_tracking','wire_matching')
+    names=('depth','perception','geometry','preprocessing','matcher_candidates','matching_costs','pyramid','wire_tracking','wire_matching','wire_segmentation')
     return {f'tabletop_stereo_{name}.py':hashlib.sha256(Path(__file__).with_name(
         f'tabletop_stereo_{name}.py').read_bytes()).hexdigest() for name in names}
 
@@ -38,6 +38,8 @@ def processing_contract(camera_config):
     if (type(ribbon_radius_px) is not int or not 1 <= ribbon_radius_px <= 3
             or point_sampling == 'centerline' and ribbon_radius_px != 1):
         raise ValueError('ribbon radius must be 1..3 pixels in observed_ribbon mode')
+    surface_capacity=config.get('wire_observed_surface_capacity',32 if point_sampling=='observed_ribbon' else 0)
+    if type(surface_capacity) is not int or not 0<=surface_capacity<=126 or (point_sampling=='centerline' and surface_capacity):raise ValueError('invalid observed surface capacity')
     result=dict(version=VERSION,calibration_sha256=calibration.sha256,
         image_resolution_wh=[calibration.width,calibration.height],depth_estimator=depth,
         rgb=dict(channel_order='RGB',layout='NCHW',range=[0.,1.],dtype='float32',
@@ -47,7 +49,7 @@ def processing_contract(camera_config):
             calibration_rectified=calibration.rectified,rectification='explicit_only;no_hidden_rectify',
             missing='NaN_with_false_validity;no_simulator_or_rendered_depth_fallback'),
         perception=dict(algorithm='warm_colour_visible_simple_path_ZhangSuen_v1' if tracking=='legacy' else 'normalized_visible_components_tracking_v2',point_count=128,
-            point_sampling=point_sampling, ribbon_radius_px=ribbon_radius_px,
+            point_sampling=point_sampling, ribbon_radius_px=ribbon_radius_px, observed_surface_capacity=surface_capacity,
             thresholds=dict(red_over_green=1.07,green_over_blue=1.1,minimum_red=.12),
             thinning_max_iterations=128,identity_motion_limit_m=.005,
             ordering='observed_visible_arc_length;dominant_world_axis_endpoint_orientation' if tracking=='legacy' else 'component_metric_arc_when_complete;2D_arc_partial_depth;temporal_orientation',
@@ -55,6 +57,16 @@ def processing_contract(camera_config):
             missing_or_branched='invalid_tokens;never_invent_hidden_segments' if tracking=='legacy' else 'RGB_path_before_depth;reliable_components_separate;never_bridge_hidden_or_branched_segments'),
         source_sha256=_sources(),resource_fields_excluded=['image_processing_batch_size'],
         native_qualified=False)
+    segmentation=config.get('wire_segmentation')
+    if segmentation is not None:
+        from .tabletop_stereo_contract import require_sha
+        if tracking=='legacy' or depth['method'] not in ('wire_census','wire_zncc','wire_silhouette'):
+            raise ValueError('RGB segmentation requires tracked wire matcher')
+        if segmentation.get('diagnostic_only') is not True:
+            raise ValueError('learned wire segmentation remains diagnostic only')
+        result['perception']['segmentation']=dict(checkpoint_sha256=require_sha(segmentation.get('checkpoint_sha256'), 'segmentation checkpoint'),
+            diagnostic_only=True, source='learned_left_right_RGB', native_qualified=False)
+        result['perception']['thresholds']=None
     result['processing_sha256']=digest(result)
     return result
 

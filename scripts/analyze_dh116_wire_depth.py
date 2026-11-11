@@ -18,7 +18,11 @@ def main(argv=None):
     parser.add_argument('--proof', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--threads', type=int, default=2)
+    parser.add_argument('--segmentation-checkpoint', type=Path)
+    parser.add_argument('--max-frames', type=int)
+    parser.add_argument('--methods', nargs='+')
     args = parser.parse_args(argv)
+    if args.max_frames is not None and args.max_frames < 1:parser.error('positive max-frames required')
     if args.threads < 1:
         parser.error('--threads must be positive')
     torch.set_num_threads(args.threads)
@@ -39,10 +43,35 @@ def main(argv=None):
     for name, (_, radius) in ribbons.items():
         trackers[name] = TrackedWirePointExtractor(point_sampling='observed_ribbon', ribbon_radius_px=radius)
     estimators = {name: StereoDepth(**options) for name, options in settings.items()}
-    for index, (frame, reference) in enumerate(zip(capture['frames'], references)):
+    segmenter = None
+    if args.segmentation_checkpoint is not None:
+        from go2_pvcnn.control.dh116.tabletop_stereo_wire_segmentation import StereoWireSegmentation, segmentation_masks
+        payload = torch.load(args.segmentation_checkpoint, map_location='cpu', weights_only=False)
+        if payload.get('contract', {}).get('version') != 'dh116-wire-segmentation-diagnostic-v1':
+            raise ValueError('explicit segmentation diagnostic checkpoint required')
+        segmenter = StereoWireSegmentation(payload['width']).eval()
+        segmenter.load_state_dict(payload['model'], strict=True)
+        result['segmentation_checkpoint_sha256'] = file_sha256(args.segmentation_checkpoint)
+        result['segmentation_qualification'] = 'same_cohort_diagnostic_not_generalization_or_deployment'
+        for name, method in [('learned_silhouette', 'wire_silhouette'), ('learned_zncc', 'wire_zncc')]:
+            trackers[name] = TrackedWirePointExtractor(point_sampling='observed_ribbon', ribbon_radius_px=3)
+            estimators[name] = StereoDepth(**dict(config, method=method, subpixel=method != 'wire_silhouette'))
+    if args.methods:
+        if any(name not in trackers for name in args.methods):parser.error('unknown method or missing segmentation checkpoint')
+        selected=set(args.methods)
+        selected.update(ribbons[name][0] for name in args.methods if name in ribbons)
+        trackers={name:value for name,value in trackers.items() if name in selected}
+    result['executed_methods']=list(trackers)
+    result['available_frame_count']=len(capture['frames'])
+    limit=args.max_frames or len(capture['frames'])
+    for index, (frame, reference) in enumerate(zip(capture['frames'][:limit], references[:limit])):
         record = dict(frame_id=frame['frame_id'], simulation_time=frame['simulation_time'], methods={})
         finger = _label_masks(reference, frame)['finger']
         predictions = {}
+        learned_masks = None
+        if segmenter is not None:
+            with torch.no_grad():
+                learned_masks, _ = segmentation_masks(segmenter(frame['left_rgb'], frame['right_rgb']), diagnostic_only=True)
         for name, tracker in trackers.items():
             if name in ribbons:
                 base, _ = ribbons[name]
@@ -51,16 +80,18 @@ def main(argv=None):
             else:
                 matcher = estimators[name]
                 start = time.perf_counter()
-                prediction = matcher.compute(frame['left_rgb'], frame['right_rgb'], calibration)
+                prediction = matcher.compute(frame['left_rgb'], frame['right_rgb'], calibration,
+                    wire_masks=learned_masks if name.startswith('learned_') else None)
                 elapsed = time.perf_counter() - start
                 if any(base == name for base, _ in ribbons.values()):
                     predictions[name] = prediction
             extracted = tracker.extract(frame['left_rgb'], prediction['depth_m'], prediction['valid'],
                 frame.get('K_left', calibration.K_left), frame.get('T_world_left', calibration.T_world_left),
                 timestamp=[row['simulation_timestamp'] for row in frame['identity']],
-                point_confidence=prediction['confidence'])
+                point_confidence=prediction['confidence'], wire_mask=learned_masks[0] if name.startswith('learned_') else None)
             maps, rows = audit_wire_frame(frame, prediction, extracted, calibration, reference,
-                                          block_size=matcher.block_size, near=matcher.near, far=matcher.far, finger=finger)
+                                          block_size=matcher.block_size, near=matcher.near, far=matcher.far, finger=finger,
+                wire_mask=learned_masks[0] if name.startswith('learned_') else None)
             maps.update(stereo_depth_m=prediction['depth_m'], disparity_px=prediction['disparity_px'],
                         tracker_point_pixels=extracted['point_pixels'], tracker_point_valid=extracted['point_valid'],
                         tracker_point_provenance=extracted['point_provenance'],

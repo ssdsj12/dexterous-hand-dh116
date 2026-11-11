@@ -6,7 +6,7 @@ import torch
 
 SENSOR_FIELDS = ('left_rgb', 'right_rgb', 'depth_m', 'depth_valid', 'depth_confidence',
                  'points_world', 'point_valid', 'proprio', 'dt', 'image_age', 'image_valid',
-                 'points_left_palm','points_right_palm','point_valid_left','point_valid_right','point_confidence')
+                 'points_left_palm','points_right_palm','point_valid_left','point_valid_right','point_confidence','point_provenance')
 
 
 def _populate_palms(batch):
@@ -31,6 +31,7 @@ def _populate_palms(batch):
             if getattr(batch,'points_'+hand+'_palm') is None:
                 setattr(batch,'points_'+hand+'_palm',torch.where(mask[...,None],local[...,index,:,:],float('nan')))
     if batch.point_confidence is None:batch.point_confidence=batch.point_valid.float()
+    if batch.point_provenance is None:batch.point_provenance=torch.zeros_like(batch.point_valid,dtype=torch.uint8)
 
 
 def _validate(values, *, history_valid=None):
@@ -47,13 +48,14 @@ def _validate(values, *, history_valid=None):
         depth_m=(*prefix,h,w), depth_valid=(*prefix,h,w), depth_confidence=(*prefix,h,w),
         points_world=(*prefix,128,3), point_valid=(*prefix,128), proprio=(*prefix,62),
         points_left_palm=(*prefix,128,3),points_right_palm=(*prefix,128,3),
-        point_valid_left=(*prefix,128),point_valid_right=(*prefix,128),point_confidence=(*prefix,128),
+        point_valid_left=(*prefix,128),point_valid_right=(*prefix,128),point_confidence=(*prefix,128),point_provenance=(*prefix,128),
         dt=prefix, image_age=prefix, image_valid=(*prefix,2))
     for name, shape in shapes.items():
         value = values[name]
-        dtype = torch.bool if name in ('depth_valid','point_valid','image_valid','point_valid_left','point_valid_right') else torch.float32
+        dtype = torch.bool if name in ('depth_valid','point_valid','image_valid','point_valid_left','point_valid_right') else torch.uint8 if name == 'point_provenance' else torch.float32
         if tuple(value.shape) != tuple(shape) or value.dtype != dtype or value.device != left.device:
             raise ValueError(f'{name} must have shape {shape}, dtype {dtype}, device {left.device}')
+    if bool((values['point_provenance'] > 2).any()):raise ValueError('unknown point provenance code')
     active = torch.ones(prefix, dtype=torch.bool, device=left.device)
     if history_valid is not None:
         if (history_valid.shape != prefix or history_valid.dtype != torch.bool
@@ -97,6 +99,7 @@ class _TensorBatch:
     @classmethod
     def from_mapping(cls, value):
         expected = {f.name for f in fields(cls)}
+        if isinstance(value,dict) and 'point_provenance' not in value:value=dict(value,point_provenance=None)
         if not isinstance(value, dict) or set(value) != expected:
             raise ValueError('unknown or missing sensor fields; privileged inputs are forbidden')
         return cls(**value)
@@ -144,6 +147,7 @@ class SensorBatch(_TensorBatch):
     point_valid_left: torch.Tensor = field(default=None,kw_only=True)
     point_valid_right: torch.Tensor = field(default=None,kw_only=True)
     point_confidence: torch.Tensor = field(default=None,kw_only=True)
+    point_provenance: torch.Tensor = field(default=None,kw_only=True)
 
     def __post_init__(self):
         try:_populate_palms(self)

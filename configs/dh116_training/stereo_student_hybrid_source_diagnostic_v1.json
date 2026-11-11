@@ -1,0 +1,71 @@
+{
+  "version": "dh116-stereo-student-ppo-config-v2",
+  "actor_input": "StereoHistoryBatch_only",
+  "critic_observation_size": 371,
+  "action_size": 24,
+  "network": {
+    "embed_dim": 128,
+    "history": 4,
+    "num_heads": 4,
+    "num_layers": 2,
+    "dropout": 0.0,
+    "points": 128,
+    "proprio": 62,
+    "action_size": 24,
+    "image_resolution_wh": [
+      640,
+      480
+    ],
+    "image_processing_batch_size": 2,
+    "actor_input_mode": "hybrid",
+    "point_coordinate_mode": "palms",
+    "task_state_config": {
+      "allowlist": null,
+      "source_qualification": {
+        "source_valid": true,
+        "identity_aligned": true,
+        "timestamp_valid": true,
+        "proprio_source_confirmed": true,
+        "visibility_valid": true,
+        "correspondence_valid": true,
+        "contact_valid": true,
+        "feedback.valid": false,
+        "tracker_window_valid": false
+      }
+    },
+    "point_source_encoding": true
+  },
+  "ppo": {
+    "gamma": 0.995,
+    "lam": 0.95,
+    "clip": 0.2,
+    "lr": 0.0003,
+    "epochs": 5,
+    "minibatches": 8,
+    "entropy_coef": 0.005,
+    "value_coef": 0.5,
+    "max_grad_norm": 0.5,
+    "min_std": 0.001,
+    "max_std": 0.3
+  },
+  "rollout_steps": 32,
+  "reward_profile": "teacher_r0_existing",
+  "reward_operation": "same_audited_native_task_reward_once;no_new_success_definition",
+  "auxiliary_bc": {
+    "enabled": false,
+    "weight": 0.0,
+    "optimizer": "independent_actor_optimizer",
+    "schedule": "disabled_until_explicit_qualified_attachment",
+    "ppo_storage_insertion": false
+  },
+  "history_reset": "clear",
+  "depth_source": "computed_from_synchronized_left_right_RGB",
+  "checkpoint_version": "dh116-stereo-rgb-student-checkpoint-v1",
+  "deployment": "actor_only;no_privileged_critic_teacher_or_simulator_input",
+  "old_3844_observation_reinterpreted": false,
+  "native_validation": "pending_independent_paired_evaluation",
+  "rollout_storage": "indexed_frames",
+  "experiment_id": "stereo_hybrid_palms_source_aware_diagnostic_v1",
+  "source_gate_note": "Configuration enables candidate deployment fields, not native qualification. Per-sample validity remains mandatory. Joint-position requires audited known_config normalization limits; otherwise masked. Force and deformation extensions require their own source and unit/frame contracts and are not enabled by this preset.",
+  "max_visual_batch": 1
+}

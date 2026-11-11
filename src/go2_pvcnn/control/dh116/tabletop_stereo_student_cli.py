@@ -148,7 +148,7 @@ def train_student(environment,config,*,output,updates,calibration_sha256,checkpo
     elif actor_package is not None:
         actor=load_deployment_actor(actor_package,expected_calibration_sha256=calibration_sha256)
         for key in ('embed_dim','history','num_heads','num_layers','dropout','actor_input_mode',
-                    'point_coordinate_mode','task_state_config'):
+                    'point_coordinate_mode','task_state_config','point_source_encoding'):
             if actor.network_config[key]!=trainer.model.network_config[key]:
                 raise ValueError('actor-package warm start network semantics mismatch: '+key)
         if actor.deployment_contract['state_schema_sha256']!=contract['state_schema_sha256']:

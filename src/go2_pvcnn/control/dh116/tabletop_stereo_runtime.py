@@ -10,12 +10,18 @@ from pathlib import Path
 import torch
 
 from .tabletop_stereo_camera import StereoCamera
-from .tabletop_stereo_contract import state_contract
+from .tabletop_stereo_contract import state_contract, digest
 from .tabletop_stereo_observation import SensorBatch, StereoHistory
 from .tabletop_stereo_perception import WirePointExtractor, TrackedWirePointExtractor
 from .tabletop_stereo_geometry import world_to_palms
 from .tabletop_stereo_teacher_collector import PreActionState, StepResult
 from .tabletop_stereo_preprocessing import processing_contract
+
+
+def state_reference_stem(output, policy_tick, identities):
+    """A cold reset can render a new epoch at an already archived policy tick."""
+    epoch = digest([row['episode_uid'] for row in identities])[:16]
+    return Path(output) / f'state_reference_{policy_tick:06d}_{epoch}'
 
 
 class NativeStereoEnvironment:
@@ -35,7 +41,8 @@ class NativeStereoEnvironment:
         self.history = StereoHistory(self.n, history, device=self.device)
         self.extractor = (WirePointExtractor() if self.preprocessing['perception']['algorithm']=='warm_colour_visible_simple_path_ZhangSuen_v1'
             else TrackedWirePointExtractor(point_sampling=self.preprocessing['perception']['point_sampling'],
-                ribbon_radius_px=self.preprocessing['perception']['ribbon_radius_px']))
+                ribbon_radius_px=self.preprocessing['perception']['ribbon_radius_px'],
+                observed_surface_capacity=self.preprocessing['perception']['observed_surface_capacity']))
         self._state_reference_reader = None
         if capture_state_reference:
             if owner != 'teacher' or not isinstance(self.extractor, TrackedWirePointExtractor):
@@ -130,14 +137,14 @@ class NativeStereoEnvironment:
         extraction_kwargs=dict(reset_mask=self._pending_reset)
         if isinstance(self.extractor,TrackedWirePointExtractor):
             extraction_kwargs.update(timestamp=[row['simulation_timestamp'] for row in pair['identity']],
-                point_confidence=pair['confidence'])
+                point_confidence=pair['confidence'], wire_mask=pair.get('wire_mask'))
         extraction = self.extractor.extract(pair['left_rgb'], pair['depth_m'], pair['valid'],
             pair['K_left'], pair['T_world_left'], **extraction_kwargs)
         state_label_metadata = {}
         if reference is not None:
             from .tabletop_stereo_contract import file_sha256
             from .tabletop_stereo_reference import archive_instance_reference
-            stem = self.bridge.output / f'state_reference_{self.bridge.policy_tick:06d}'
+            stem = state_reference_stem(self.bridge.output,self.bridge.policy_tick,identities)
             reference['wire_mask_source_artifact'] = archive_instance_reference(reference, stem.with_suffix('.ids.pt'))
             path = stem.with_suffix('.pt')
             with path.open('xb') as stream:
@@ -154,6 +161,7 @@ class NativeStereoEnvironment:
             depth_confidence=pair['confidence'].float(),
             points_world=extraction['points_world'].float(), point_valid=extraction['point_valid'],
             point_confidence=extraction.get('confidence',extraction['point_valid'].float()).float(),
+            point_provenance=extraction.get('point_provenance'),
             proprio=self.bridge.proprioception(), dt=torch.full((self.n,), 1/60, device=self.device),
             image_age=torch.zeros(self.n, device=self.device),
             image_valid=torch.ones(self.n, 2, device=self.device, dtype=torch.bool))

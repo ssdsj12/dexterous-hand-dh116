@@ -33,10 +33,13 @@ class StereoRGBStudentRunner:
         self.camera_config_sha256 = file_sha256(camera_config)
         config = json.loads(Path(camera_config).read_text(encoding='utf-8'))
         self.depth = StereoDepth.from_config(config)
+        from .tabletop_stereo_wire_segmentation import configured_segmentation_depth
+        self.depth = configured_segmentation_depth(self.depth,config,device)
         self.history = StereoHistory(num_envs, self.actor.network_config['history'], device=device)
         self.extractor = (WirePointExtractor() if self.processing['perception']['algorithm']=='warm_colour_visible_simple_path_ZhangSuen_v1'
             else TrackedWirePointExtractor(point_sampling=self.processing['perception']['point_sampling'],
-                ribbon_radius_px=self.processing['perception']['ribbon_radius_px']))
+                ribbon_radius_px=self.processing['perception']['ribbon_radius_px'],
+                observed_surface_capacity=self.processing['perception']['observed_surface_capacity']))
         self.num_envs, self.device = num_envs, torch.device(device)
         if max_image_age_s <= 0:
             raise ValueError('positive image freshness limit required')
@@ -48,7 +51,7 @@ class StereoRGBStudentRunner:
     def _clear_temporal_state(self):
         self.history.reset(torch.ones(self.num_envs,device=self.device,dtype=torch.bool))
         self.extractor=(TrackedWirePointExtractor(point_sampling=self.extractor.point_sampling,
-                        ribbon_radius_px=self.extractor.ribbon_radius_px)
+                        ribbon_radius_px=self.extractor.ribbon_radius_px,observed_surface_capacity=self.extractor.observed_surface_capacity)
                         if isinstance(self.extractor, TrackedWirePointExtractor) else type(self.extractor)())
         self.last_visible_geometry=None
 
@@ -87,7 +90,7 @@ class StereoRGBStudentRunner:
         depth = self.depth.compute(left, right, self.calibration)
         extraction_kwargs=dict(reset_mask=reset_mask)
         if isinstance(self.extractor,TrackedWirePointExtractor):
-            extraction_kwargs.update(timestamp=left_timestamp_s,point_confidence=depth['confidence'])
+            extraction_kwargs.update(timestamp=left_timestamp_s,point_confidence=depth['confidence'],wire_mask=depth.get('wire_mask'))
         points = self.extractor.extract(left, depth['depth_m'], depth['valid'],
             self.calibration.K_left, self.calibration.T_world_left, **extraction_kwargs)
         if 'timestamp_anomaly' in points: reset_mask=reset_mask|points['timestamp_anomaly']
@@ -95,6 +98,7 @@ class StereoRGBStudentRunner:
             depth_valid=depth['valid'], depth_confidence=depth['confidence'],
             points_world=points['points_world'], point_valid=points['point_valid'], proprio=p,
             point_confidence=points.get('confidence',points['point_valid'].float()),
+            point_provenance=points.get('point_provenance'),
             dt=torch.full((self.num_envs,), dt, device=self.device, dtype=torch.float32),
             image_age=torch.full((self.num_envs,), age, device=self.device, dtype=torch.float32),
             image_valid=torch.ones(self.num_envs, 2, device=self.device, dtype=torch.bool))

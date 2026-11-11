@@ -8,7 +8,7 @@ import random
 
 import torch
 
-from .tabletop_stereo_contract import file_sha256, new_run, physical_initial_sha256, require_sha, write_json_new
+from .tabletop_stereo_contract import digest, file_sha256, new_run, physical_initial_sha256, require_sha, write_json_new
 from .tabletop_stereo_losses import StereoEstimationLoss, masked_bce, masked_smooth_l1, quaternion_geodesic_loss
 from .tabletop_stereo_observation import StereoHistoryBatch
 from .tabletop_stereo_state_estimator import HEAD_SHAPES, StereoStateEstimator
@@ -25,6 +25,7 @@ HEADS = {
     'force_proxy': (None, ('force_proxy',)),
 }
 PARTITIONS = ('train', 'validation', 'test')
+TRAINING_MODES = ('schema_test', 'diagnostic_fit', 'formal_training')
 SOURCE_KEYS = ('source_valid', 'identity_aligned', 'timestamp_valid', 'visibility_valid', 'correspondence_valid')
 _ENCODERS_ONLY = 'simulation_SDK_encoder_readback_only'
 
@@ -40,7 +41,8 @@ def audit_candidate_fields(rows=()):
             target = _targets(row, name, loss).get('privileged_state')
             if target is not None:
                 counts += target[1]
-        if row['extra_labels'].get('training_label_source_scope') == _ENCODERS_ONLY:
+        if (row['extra_labels'].get('training_label_source_scope') == _ENCODERS_ONLY
+                or row['extra_labels'].get('direct_readback_source_scope') == _ENCODERS_ONLY):
             direct[:24] += row['privileged_valid'][:24]
     fields = []
     for index in adapter.field_indices:
@@ -103,7 +105,31 @@ def split_estimator_rows(rows, *, seed=116):
     return dict(result, status='ready')
 
 
-def _raw_bindings(path, rows, checkpoint):
+def _check_reset_readback_header(initial, binding):
+    """Link native episode metadata to the same cold-reset object's SI state.
+
+    Environment origins are translations, so world XYZ velocities need no
+    subtraction/rotation. Root poses are not palms and full-joint vectors are
+    not active12; neither is compared by positional coincidence here.
+    """
+    actual, tolerance = binding['physical_state'], binding['tolerance']
+    pose = torch.as_tensor(initial['object_pose'],dtype=torch.float64).clone()
+    velocity = torch.as_tensor(initial['object_velocity'],dtype=torch.float64)
+    if initial['coordinate_frame'] == 'world':
+        pose[:3] -= torch.as_tensor(initial['environment_origin'],dtype=torch.float64)
+    elif initial['coordinate_frame'] != 'environment_local':
+        raise ValueError('cold reset readback/header coordinate frame unknown')
+    expected = torch.as_tensor(actual['wire_pose'],dtype=torch.float64)
+    expected_velocity = torch.as_tensor(actual['wire_velocity'],dtype=torch.float64)
+    q, target_q = pose[3:]/pose[3:].norm(), expected[3:]/expected[3:].norm()
+    quaternion_error = min(float((q-target_q).abs().max()),float((q+target_q).abs().max()))
+    if (float((pose[:3]-expected[:3]).abs().max()) > tolerance
+            or quaternion_error > tolerance
+            or float((velocity-expected_velocity).abs().max()) > tolerance):
+        raise ValueError('native episode object pose/velocity differs from same-env cold reset readback')
+
+
+def _raw_bindings(path, rows, checkpoint, *, cold_readbacks=None):
     wanted = {identity_key(row['identity']):row for row in rows}
     wanted_clocks = {(*key[:4],row['identity']['physics_tick_end']):row for key,row in wanted.items()}
     matches, same_clock, headers = {}, {}, {}
@@ -154,6 +180,10 @@ def _raw_bindings(path, rows, checkpoint):
                 or header.get('source_episode_group') != row['identity']['source_episode_group']
                 or physical_initial_sha256(header.get('physical_initial_condition')) != row['identity']['physical_initial_condition_sha256']):
             raise ValueError('candidate initial group does not match measured native reset state')
+        if cold_readbacks is not None:
+            if key[:4] not in cold_readbacks:
+                raise ValueError('native episode lacks bound cold reset readback')
+            _check_reset_readback_header(header['physical_initial_condition'],cold_readbacks[key[:4]])
     return same_clock
 
 
@@ -240,11 +270,108 @@ def _admit_rigid_labels(row, exact, *, wire_observed, temporal_observed):
             verified[68:71] = exact[68:71]
     row['verified_canonical_native'] = verified
     if bool(verified.any()):
+        if row['extra_labels'].get('training_label_source_scope') == _ENCODERS_ONLY:
+            row['extra_labels']['direct_readback_source_scope'] = _ENCODERS_ONLY
         row['privileged_valid'] = row['privileged_valid'] | verified
         for key in SOURCE_KEYS:
             existing = row['state_sources'].get(key,torch.zeros_like(verified))
             row['state_sources'][key] = existing | verified
         row['extra_labels']['training_label_source_scope'] = 'independently_matched_rigid_state_readback'
+
+
+def _validate_cold_candidate_rows(payload, rows, raw):
+    """Only diagnostic candidates may contain explicitly bounded cold resets.
+
+    Formal BC/DAgger validate_rows and complete-success gates are unchanged.
+    A boolean reset exception is insufficient: bind every epoch to the saved
+    manifest, exclusive cohort report and actual reset-readback artifacts.
+    """
+    from .tabletop_privileged_evaluation import prepare_cold_trial_batches
+    cohort = payload['cold_cohort']
+    root = Path(raw).resolve().parent.parent/'cold_initials'
+    paths = [root/'manifest.json', root/'cohort_report.json']
+    original = {path:file_sha256(path) for path in paths}
+    saved = json.loads(paths[1].read_text(encoding='utf-8'))
+    if (saved != cohort or cohort.get('version') != 'dh116-stereo-cold-candidate-capture-v1'
+            or cohort.get('native_execution_performed') is not True
+            or any(cohort.get(key) is not False for key in ('native_qualified','successful_demonstration_pool','formal_success_evaluation'))
+            or cohort.get('reset_buffers_restored') is not True):
+        raise ValueError('cold candidate needs its intact, nonqualified bounded cohort report')
+    batches = cohort.get('batches', [])
+    if not batches or not batches[0].get('initial_identities'):
+        raise ValueError('cold candidate initial identities absent')
+    count = len(batches[0]['initial_identities'])
+    plan = prepare_cold_trial_batches(paths[0],count,minimum_per_style=cohort['minimum_per_style'],schema_only=True)
+    meta = plan['manifest']['metadata']
+    checkpoint, calibration = payload['teacher_checkpoint_sha256'],rows[0]['identity']['calibration_sha256']
+    if (plan['manifest_sha256'] != cohort.get('manifest_sha256') or len(plan['batches']) != len(batches)
+            or meta['source_sha256'] != checkpoint or cohort.get('checkpoint_sha256') != checkpoint
+            or meta['camera_sha256'] != calibration or cohort.get('calibration_sha256') != calibration
+            or cohort.get('samples') != len(rows)):
+        raise ValueError('cold candidate manifest, checkpoint, calibration or sample count differs')
+    epochs = defaultdict(list)
+    for row in rows:
+        if row['mode'] != 'teacher_candidate_reference' or row['action_owner'] != 'teacher':
+            raise ValueError('bounded cold resets are diagnostic Teacher candidates only')
+        epochs[identity_key(row['identity'])[:4]].append(row)
+    seen, initials, readbacks = set(), set(), {}
+    for index,(batch,trials) in enumerate(zip(batches,plan['batches'])):
+        steps = batch.get('completed_control_steps')
+        if (batch.get('batch_index') != index or type(steps) is not int
+                or not 1 <= steps <= cohort['steps_per_initial'] or len(batch.get('initial_identities',[])) != count):
+            raise ValueError('cold candidate batch step budget/identity count differs')
+        readpath = root/f'reset_readback_{index:04d}.json'
+        original[readpath] = require_sha(batch['actual_readback_sha256'])
+        if file_sha256(readpath) != original[readpath]:
+            raise ValueError('cold candidate reset readback SHA mismatch')
+        readback = json.loads(readpath.read_text(encoding='utf-8'))
+        tolerance = readback.get('writer_match_tolerance')
+        if (readback.get('physics_steps_advanced') != 0 or len(readback.get('actual_states',[])) != count
+                or type(tolerance) not in (int,float) or not 0 < tolerance <= 2e-5
+                or not 0 <= readback.get('max_abs_writer_readback_error',float('inf')) <= tolerance):
+            raise ValueError('cold candidate needs complete matching reset readback without physics advance')
+        last_done = False
+        for slot,(initial,trial,actual) in enumerate(zip(batch['initial_identities'],trials,readback['actual_states'])):
+            key = identity_key(initial)[:4]
+            segment = epochs.get(key, [])
+            initial_sha = require_sha(initial.get('physical_initial_condition_sha256'))
+            if (initial['env_id'] != slot or key in seen or initial_sha in initials or len(segment) != steps or not segment
+                    or segment[0]['identity'] != initial or initial['source_episode_group'] != trial['trial_id']
+                    or initial.get('trial_id') != trial['trial_id'] or initial.get('grasp_style') != trial['grasp_style']
+                    or actual.get('trial_id') != trial['trial_id'] or actual.get('authored_state_sha256') != trial['state_sha256']):
+                raise ValueError('cold candidate epoch differs from unique manifest/readback initial identity')
+            for name in ('joint_positions','joint_velocities','roots','root_velocities','wire_pose','wire_velocity'):
+                observed = torch.as_tensor(actual['physical_state'][name],dtype=torch.float64)
+                authored = torch.as_tensor(trial['physical_state'][name],dtype=torch.float64)
+                if (observed.shape != authored.shape or not torch.isfinite(observed).all()
+                        or float((observed-authored).abs().max()) > tolerance):
+                    raise ValueError('cold candidate actual reset state differs from authored manifest')
+            history = StereoHistoryBatch(**segment[0]['history']).validate()
+            if int(history.history_valid.sum()) != 1 or not bool((history.proprio[0,-1,38:] == 0).all()):
+                raise ValueError('cold candidate reset contains prior-episode history or action')
+            validate_rows(segment,contract={'calibration_sha256':calibration},schema_only=False)
+            last_done |= bool(segment[-1]['done'])
+            seen.add(key);initials.add(initial_sha)
+            readbacks[key] = dict(physical_state=actual['physical_state'],tolerance=tolerance)
+        if bool(batch.get('stopped_on_terminal')) != last_done or (not last_done and steps != cohort['steps_per_initial']):
+            raise ValueError('cold candidate batch must stop exactly at terminal or explicit bounded horizon')
+    if set(epochs) != seen or len(initials) != cohort.get('independent_actual_initials'):
+        raise ValueError('cold candidate has unbound episodes or duplicate initial states')
+    previous = {}
+    for row in rows:
+        identity = row['identity'];key = (identity['run_uuid'],identity['env_id'])
+        old = previous.get(key)
+        if old is not None:
+            before = old['identity']
+            if (identity['policy_tick'] <= before['policy_tick'] or identity['frame_id'] <= before['frame_id']
+                    or identity['simulation_timestamp'] <= before['simulation_timestamp']
+                    or identity['physics_tick_start'] < old['execution']['physics_tick_end']
+                    or (identity['episode_uid'] != before['episode_uid'] and identity['reset_id'] <= before['reset_id'])):
+                raise ValueError('cold candidate global execution clocks/reset IDs are not ordered')
+        previous[key] = row
+    if any(file_sha256(path) != sha for path,sha in original.items()):
+        raise ValueError('cold candidate identity artifacts changed during admission')
+    return readbacks
 
 
 def read_candidate(path, *, raw, sha256, raw_sha256):
@@ -261,11 +388,15 @@ def read_candidate(path, *, raw, sha256, raw_sha256):
     rows = rows_from_records(payload['records'])
     if not rows or any(row['action_owner'] != 'teacher' for row in rows):
         raise ValueError('nonempty Teacher-owned candidate rows required')
-    validate_rows(rows, contract={'calibration_sha256': rows[0]['identity']['calibration_sha256']}, schema_only=False)
+    cold_readbacks = None
+    if payload.get('cold_cohort') is not None:
+        cold_readbacks = _validate_cold_candidate_rows(payload,rows,raw)
+    else:
+        validate_rows(rows, contract={'calibration_sha256': rows[0]['identity']['calibration_sha256']}, schema_only=False)
     for row in rows:
         if row['extra_labels'].get('training_label_evidence_scope') != 'native_runtime_capture_unqualified':
             raise ValueError('candidate lacks measured label-source provenance')
-    same_clock = _raw_bindings(raw, rows, checkpoint)
+    same_clock = _raw_bindings(raw, rows, checkpoint, cold_readbacks=cold_readbacks)
     previous, cache = {},{}
     for row in rows:
         identity = row['identity']
@@ -467,7 +598,40 @@ def _metrics(model, rows, labels, indices, split, batch_size, device, criterion,
         report[key] = dict(mae=float(numbers.mean()), rmse=float(numbers.square().mean().sqrt()),
             p95=float(numbers.quantile(.95)), valid_count=len(numbers), valid_coverage=len(numbers)/total,
             total_label_slots=total, unit=unit)
+        if key in ('371:61', '371:62', '371:63'):
+            # These original contract coordinates are relative center / 0.05 m.
+            report[key].update(physical_mae_m=report[key]['mae']*.05,
+                physical_rmse_m=report[key]['rmse']*.05, physical_p95_m=report[key]['p95']*.05)
     return dict(mean_batch_loss=sum(losses)/len(losses) if losses else None, outputs=report), residuals
+
+
+def _optimize_head(model, rows, labels, indices, *, epochs, batch_size, device, lr, criterion):
+    """Shared masked optimization for diagnostic and grouped formal training."""
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    updates = []
+    model.train()
+    for epoch in range(epochs):
+        for start in range(0, len(indices), batch_size):
+            chunk = indices[start:start+batch_size]
+            history, targets = _batch(rows, labels, chunk, device)
+            optimizer.zero_grad(set_to_none=True)
+            value, _ = _prediction_loss(model(history), targets, criterion)
+            value.backward()
+            gradient = torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True)
+            output_gradients = {key: math.sqrt(sum(float(p.grad.detach().square().sum())
+                for p in model.heads[key].parameters() if p.grad is not None)) for key in targets}
+            encoder_gradient = math.sqrt(sum(float(p.grad.detach().square().sum())
+                for p in model.encoder.parameters() if p.grad is not None))
+            unselected_max = None
+            if 'privileged_state' in targets:
+                selected = targets['privileged_state'][1].any(0)
+                grad = model.heads['privileged_state'].weight.grad
+                unselected_max = float(grad[~selected].abs().max()) if (~selected).any() else 0.
+            optimizer.step()
+            updates.append(dict(epoch=epoch, row_indices=chunk, loss=float(value.detach()),
+                gradient_norm=float(gradient), output_head_gradient_norm=output_gradients,
+                encoder_gradient_norm=encoder_gradient, unsupervised_output_gradient_max=unselected_max))
+    return updates
 
 
 def fit_state_heads(model, rows, split, *, epochs, batch_size, device='cpu', lr=3e-4):
@@ -491,22 +655,9 @@ def fit_state_heads(model, rows, split, *, epochs, batch_size, device='cpu', lr=
         indices = [i for i in split['train_indices'] if labels[i]]
         # Fresh optimizer state prevents prior-stage Adam momentum from
         # updating masked rows of the shared 371D projection.
-        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         trained[name] = labels
-        record['optimization'] = []
-        model.train()
-        for _ in range(epochs):
-            for start in range(0, len(indices), batch_size):
-                history, targets = _batch(rows, labels, indices[start:start+batch_size], device)
-                optimizer.zero_grad(set_to_none=True)
-                value, _ = _prediction_loss(model(history), targets, criterion)
-                value.backward()
-                gradient = torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True)
-                output_gradients = {key: math.sqrt(sum(float(p.grad.detach().square().sum())
-                    for p in model.heads[key].parameters() if p.grad is not None)) for key in targets}
-                optimizer.step()
-                record['optimization'].append(dict(loss=float(value.detach()), gradient_norm=float(gradient),
-                                                     output_head_gradient_norm=output_gradients))
+        record['optimization'] = _optimize_head(model, rows, labels, indices, epochs=epochs,
+            batch_size=batch_size, device=device, lr=lr, criterion=criterion)
     for name, labels in trained.items():
         record = admission[name]
         record['splits'] = {}
@@ -527,8 +678,96 @@ def fit_state_heads(model, rows, split, *, epochs, batch_size, device='cpu', lr=
     return admission
 
 
+def run_training_mode(model, rows, *, mode='formal_training', epochs=1, batch_size=4, device='cpu', lr=3e-4, seed=116):
+    """Separate schema, in-sample real-label debugging and grouped training.
+
+    CLI callers first reopen candidate/raw/reference SHA bindings with read_candidate.
+    This lower-level tensor function is also exercised with explicit CPU fixtures.
+    A diagnostic fit never opens an Actor, expert, uncertainty or deployment gate.
+    """
+    if mode not in TRAINING_MODES:
+        raise ValueError('unknown state training mode')
+    if not rows or min(epochs, batch_size) < 1 or not math.isfinite(lr) or lr <= 0:
+        raise ValueError('nonempty rows and positive finite training settings required')
+    split = split_estimator_rows(rows, seed=seed)
+    heads = inspect_heads(rows, split)
+    report = dict(mode=mode, rows=len(rows), split=split, heads=heads, state_training_started=False,
+        generalization_qualified=False, actor_deployment_qualified=False, uncertainty_calibrated=False,
+        successful_demonstration_pool=False)
+    if mode == 'schema_test':
+        for row in rows:
+            StereoHistoryBatch(**row['history']).validate()
+            if row['privileged'].shape != (371,) or row['privileged_valid'].shape != (371,):
+                raise ValueError('original 371D target and mask required')
+        for head in heads.values():
+            head.update(enabled=False, reason='schema_test_no_optimization')
+        return dict(report, status='schema_validated')
+    if mode == 'formal_training':
+        if split['status'] != 'ready':
+            return dict(report, status=split['status'])
+        heads = fit_state_heads(model, rows, split, epochs=epochs, batch_size=batch_size, device=device, lr=lr)
+        trained = any(x['enabled'] for x in heads.values())
+        return dict(report, heads=heads, status='formal_state_fit_completed' if trained else 'blocked_state_supervision',
+                    state_training_started=trained)
+    criterion = StereoEstimationLoss()
+    labels = []
+    audit = []
+    for i, row in enumerate(rows):
+        data = {}
+        if (isinstance(row.get('verified_canonical_native'), torch.Tensor)
+                and row['extra_labels'].get('training_label_source_scope') == 'independently_matched_rigid_state_readback'):
+            target = _targets(row, 'geometry', criterion).get('privileged_state')
+            if target is not None:
+                values, mask = target
+                mask = mask.clone()
+                mask[:61] = False
+                mask[64:] = False
+                if mask.any():
+                    data['privileged_state'] = values, mask
+                    audit.append(dict(row_index=i, identity=row['identity'], indices=[61,62,63],
+                        valid=mask[61:64].tolist(), unit='m', normalization='relative_center / 0.05 m',
+                        coordinate_frame='world_axes_relative_to_mean_of_left_and_right_wrist_origins',
+                        target_normalized=[float(v) if ok else None for v,ok in zip(values[61:64],mask[61:64])],
+                        target_m=[float(v)*.05 if ok else None for v,ok in zip(values[61:64],mask[61:64])]))
+        labels.append(data)
+    indices = [i for i, data in enumerate(labels) if data]
+    for head in heads.values():
+        head.update(enabled=False, reason='diagnostic_center_xyz_only', optimization=None, splits=None,
+                    uncertainty_calibration=None)
+    if not indices:
+        return dict(report, status='blocked_no_verified_center_labels')
+    model.to(device)
+    record = heads['geometry']
+    record.update(enabled=True, reason=None, eligible_rows=len(indices),
+        supervised_indices=torch.stack([labels[i]['privileged_state'][1] for i in indices]).any(0).nonzero().flatten().tolist(),
+        metrics_scope='in_sample_diagnostic_only', label_audit=audit,
+        eligible_by_split=dict(train=len(indices),validation=0,test=0),
+        uncertainty_calibration=dict(calibrated=False, radius=None, reason='no_independent_validation_in_diagnostic_fit'))
+    record['before_fit'], _ = _metrics(model, rows, labels, indices, split, batch_size, device, criterion, 'geometry')
+    record['optimization'] = _optimize_head(model, rows, labels, indices, epochs=epochs,
+        batch_size=batch_size, device=device, lr=lr, criterion=criterion)
+    metrics, _ = _metrics(model, rows, labels, indices, split, batch_size, device, criterion, 'geometry')
+    record['splits'] = dict(train=metrics, validation=None, test=None)
+    report['split'] = dict(split, diagnostic_fit_indices=indices, diagnostic_split='in_sample_only_no_holdouts')
+    return dict(report, status='diagnostic_fit_completed', state_training_started=True)
+
+
+def read_training_config(path):
+    value = json.loads(Path(path).read_text(encoding='utf-8'))
+    allowed = {'mode','epochs','batch_size','lr','seed','image_processing_batch_size'}
+    settings = value.get('settings')
+    if (value.get('version') != 'dh116-stereo-state-training-mode-v1' or not isinstance(settings,dict)
+            or not set(settings) <= allowed or settings.get('mode') not in TRAINING_MODES):
+        raise ValueError('explicit training mode and allowed configuration settings required')
+    return settings
+
+
 def main(argv=None):
+    config_parser = ArgumentParser(add_help=False)
+    config_parser.add_argument('--config', type=Path)
+    config_args, _ = config_parser.parse_known_args(argv)
     parser = ArgumentParser(description=__doc__)
+    parser.add_argument('--config', type=Path)
     parser.add_argument('--candidate', type=Path, required=True)
     parser.add_argument('--candidate-sha256', required=True)
     parser.add_argument('--raw', type=Path, required=True)
@@ -538,23 +777,34 @@ def main(argv=None):
     parser.add_argument('--batch-size', type=int, default=4)
     parser.add_argument('--seed', type=int, default=116)
     parser.add_argument('--device', default='cpu')
+    parser.add_argument('--mode', choices=TRAINING_MODES, default='formal_training')
+    parser.add_argument('--lr', type=float, default=3e-4)
+    parser.add_argument('--image-processing-batch-size', type=int, default=1)
+    if config_args.config:
+        parser.set_defaults(**read_training_config(config_args.config))
     args = parser.parse_args(argv)
     if min(args.epochs, args.batch_size) < 1:
         parser.error('positive epochs and batch size required')
     rows = read_candidate(args.candidate, raw=args.raw, sha256=args.candidate_sha256, raw_sha256=args.raw_sha256)
-    split = split_estimator_rows(rows, seed=args.seed)
-    heads = inspect_heads(rows, split)
     out = new_run(args.output)
     torch.manual_seed(args.seed)
-    trained = any(value['enabled'] for value in heads.values())
-    if trained:
-        model = StereoStateEstimator(history=rows[0]['history']['history_valid'].shape[1], point_coordinate_mode='palms')
-        heads = fit_state_heads(model, rows, split, epochs=args.epochs, batch_size=args.batch_size, device=args.device)
+    model = StereoStateEstimator(history=rows[0]['history']['history_valid'].shape[1], point_coordinate_mode='palms',
+        image_processing_batch_size=args.image_processing_batch_size)
+    report = run_training_mode(model, rows, mode=args.mode, epochs=args.epochs, batch_size=args.batch_size,
+        device=args.device, seed=args.seed, lr=args.lr)
+    if report['state_training_started']:
         with (out/'state_estimator.pt').open('xb') as stream:
-            torch.save(dict(estimator=model.cpu().state_dict(), trained_heads=[k for k,v in heads.items() if v['enabled']],
+            torch.save(dict(version='dh116-stereo-state-fit-v2', mode=args.mode,
+                            estimator=model.cpu().state_dict(), trained_heads=[k for k,v in report['heads'].items() if v['enabled']],
+                            generalization_qualified=False, actor_deployment_qualified=False,
+                            successful_demonstration_pool=False,
+                            state_contract_sha256=TaskStateAdapter().state_contract_sha256,
+                            model_config=dict(embed_dim=128,num_layers=2,history=model.history,point_coordinate_mode='palms'),
                             candidate_sha256=args.candidate_sha256, raw_sha256=args.raw_sha256), stream)
-    report = dict(status='offline_state_estimator_trained' if trained else 'blocked_state_supervision',
-        candidate_sha256=args.candidate_sha256, raw_sha256=args.raw_sha256, rows=len(rows), split=split,
-        heads=heads, state_training_started=trained, successful_demonstration_pool=False)
+        report['checkpoint_sha256'] = file_sha256(out/'state_estimator.pt')
+    report.update(candidate_sha256=args.candidate_sha256, raw_sha256=args.raw_sha256,
+        source_scope='verified_native_capture_replayed_offline', seed=args.seed, lr=args.lr,
+        implementation_sha256=file_sha256(Path(__file__)), epochs=args.epochs, batch_size=args.batch_size,
+        config_sha256=file_sha256(args.config) if args.config else None)
     write_json_new(out/'state_supervision_report.json', report)
-    return 0 if trained else 2
+    return 0 if report['state_training_started'] or args.mode == 'schema_test' else 2
