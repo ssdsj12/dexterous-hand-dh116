@@ -1,3 +1,7 @@
+## 2026-11-11 — Ubuntu 工作包调度
+
+Ubuntu 工作区负责开发、CPU 验证与提交。本机只负责 GitHub 中转。调度器和中断恢复验证 14 项通过，原生任务与依赖安装按独立批准门槛执行。[执行计划](docs/superpowers/plans/DH116_AUTONOMOUS_EXECUTION_MASTER_PLAN.md)
+
 ## 2026-11-11 — PhysX 复验申请
 
 既有冻结快照和服务器预检已重新核对。申请范围为单实例顺序两轮、每轮 240 步的自然关闭与重启，原生执行待批准。正式 BC、DAgger、Student PPO 及 Solver 构建继续阻断。[审批前复核](docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md)

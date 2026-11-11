@@ -1,0 +1,248 @@
+{
+  "version": 1,
+  "baseline": "3c80166da75fb5496701c9f3ff673296c5db5615",
+  "branch": "codex/dh116-stereo-privileged-dagger",
+  "protection": {
+    "inventory": "/home/xk/.local/share/dh116-autonomous-3c80166/protected-ubuntu.json",
+    "inventory_sha256": "fb6b58cfd2fe86408eb498a4390ecda35df2221d7198ca3a01ff59f86dea05ec",
+    "count": 528,
+    "checkpoints": {
+      "/tmp/dh116-wp3-teacher128-v02/teacher_diagnostic/teacher_update_000000.pt": "ec5831ac4de039e5e77e2ee4a3420497a0c103a2a5966a1a73662d4997966511",
+      "/tmp/dh116-wp3-teacher128-v02/teacher_diagnostic/teacher_update_000001.pt": "c1735e5f112b7f10ff4dacf00b2ac547728cea82a08d5b051e5b78cca84a9999"
+    }
+  },
+  "packages": {
+    "wp1.sample-retention": {
+      "title": "保留双目原色采样与候选分池",
+      "executor": "prepared",
+      "dependencies": [],
+      "status": "pending",
+      "tests": [
+        "tests/test_dh116_stereo_wire_correspondence.py",
+        "tests/test_dh116_stereo_wire_depth.py",
+        "tests/test_dh116_stereo_wire_geometry.py",
+        "tests/test_dh116_stereo_wire_tail_audit.py"
+      ]
+    },
+    "wp1.rgb-native": {
+      "title": "左右原生 RGB 与实例 ID 同步资格",
+      "executor": "gated",
+      "dependencies": [
+        "wp1.sample-retention"
+      ],
+      "status": "blocked",
+      "reason": "8 初态同步采集需独立批准"
+    },
+    "wp1.calibration": {
+      "title": "双目深度置信度与真实对应校准",
+      "executor": "gated",
+      "dependencies": [
+        "wp1.rgb-native"
+      ],
+      "status": "blocked",
+      "reason": "缺左右同步 Native ID 与独立校准 cohort"
+    },
+    "wp2.mode-gates": {
+      "title": "区分状态监督的离线与原生资格模式",
+      "executor": "prepared",
+      "dependencies": [],
+      "status": "pending",
+      "tests": [
+        "tests/test_dh116_stereo_state_multicohort.py",
+        "tests/test_dh116_stereo_state_training_modes.py",
+        "tests/test_dh116_stereo_state_supervision.py",
+        "tests/test_dh116_stereo_cold_candidate_admission.py"
+      ]
+    },
+    "wp2.qualified-labels": {
+      "title": "分阶段状态监督与不确定度资格",
+      "executor": "gated",
+      "dependencies": [
+        "wp2.mode-gates",
+        "wp1.calibration",
+        "wp4.contact-native",
+        "wp5.solver-native"
+      ],
+      "status": "blocked",
+      "reason": "缺独立几何、材料、接触与不确定度资格数据"
+    },
+    "wp3.cpu-contract": {
+      "title": "复核 Teacher 动作合同与 PPO 回滚",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "pending",
+      "tests": [
+        "tests/test_dh116_privileged_action_audit.py",
+        "tests/test_dh116_privileged_teacher.py",
+        "tests/test_dh116_privileged_cli.py",
+        "tests/test_dh116_stereo_runtime_teacher_identity.py",
+        "tests/test_dh116_teacher_wp3.py"
+      ]
+    },
+    "wp3.mpc-native": {
+      "title": "MPC 371D 和 24D 原生同步重采",
+      "executor": "gated",
+      "dependencies": [
+        "wp3.cpu-contract"
+      ],
+      "status": "blocked",
+      "reason": "独立采集审批及合格原生数据缺失"
+    },
+    "wp3.actor-bc-r0": {
+      "title": "Teacher Actor-only BC 和原生 R0",
+      "executor": "gated",
+      "dependencies": [
+        "wp3.mpc-native",
+        "wp4.contact-native"
+      ],
+      "status": "blocked",
+      "reason": "无兼容专家数据，原生训练需批准"
+    },
+    "wp3.frozen-eval": {
+      "title": "冻结 Teacher 的二指三指验收",
+      "executor": "gated",
+      "dependencies": [
+        "wp3.actor-bc-r0"
+      ],
+      "status": "blocked",
+      "reason": "缺合格冻结 Teacher 与独立原生初态"
+    },
+    "wp4.cpu-contract": {
+      "title": "复核 PhysX 接触证据与退出合同",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "pending",
+      "tests": [
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_stereo_shutdown_validation.py"
+      ]
+    },
+    "wp4.shutdown-native": {
+      "title": "PhysX 原生自然退出及第二实例",
+      "executor": "gated",
+      "dependencies": [
+        "wp4.cpu-contract"
+      ],
+      "status": "blocked",
+      "reason": "2×240 步单实例原生复验待批准"
+    },
+    "wp4.contact-native": {
+      "title": "逐 contact 来源、外部支撑和滑移资格",
+      "executor": "gated",
+      "dependencies": [
+        "wp4.shutdown-native"
+      ],
+      "status": "blocked",
+      "reason": "待逐指 A/B、单位、作用侧和动力学实测，R1/R2 关闭"
+    },
+    "wp5.cpu-source-check": {
+      "title": "复核 DeformX CUDA 源码资格检查器",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "pending",
+      "tests": [
+        "tests/test_dh116_deformx_cuda_source.py"
+      ]
+    },
+    "wp5.source": {
+      "title": "取得 DeformX 固定源码和许可证",
+      "executor": "gated",
+      "dependencies": [
+        "wp5.cpu-source-check"
+      ],
+      "status": "blocked",
+      "reason": "缺固定提交、递归子模块、CUDA kernel、bindings 和许可证"
+    },
+    "wp5.build": {
+      "title": "独立 Toolkit 12.8 与 SM89 编译",
+      "executor": "gated",
+      "dependencies": [
+        "wp5.source"
+      ],
+      "status": "blocked",
+      "reason": "需源码资格和依赖安装批准"
+    },
+    "wp5.solver-native": {
+      "title": "Cosserat 静动杆和双向耦合",
+      "executor": "gated",
+      "dependencies": [
+        "wp5.build",
+        "wp4.contact-native"
+      ],
+      "status": "blocked",
+      "reason": "缺真实编译求解器和原生反作用力证据"
+    },
+    "wp6.deployment-isolation": {
+      "title": "验证三种 Actor 的独立双目部署",
+      "executor": "prepared",
+      "dependencies": [],
+      "status": "pending",
+      "tests": [
+        "tests/test_dh116_stereo_inference.py",
+        "tests/test_dh116_stereo_runtime_actor_modes.py",
+        "tests/test_dh116_stereo_student_ppo.py"
+      ]
+    },
+    "wp6.cpu-admission": {
+      "title": "复核 Student 成功池与自有 rollout",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "pending",
+      "tests": [
+        "tests/test_dh116_stereo_bc_mode.py",
+        "tests/test_dh116_stereo_dagger.py",
+        "tests/test_dh116_stereo_cold_candidate_admission.py"
+      ]
+    },
+    "wp6.bc-dagger-ppo": {
+      "title": "Student 正式 BC、DAgger 与 PPO",
+      "executor": "gated",
+      "dependencies": [
+        "wp6.deployment-isolation",
+        "wp6.cpu-admission",
+        "wp3.frozen-eval",
+        "wp2.qualified-labels"
+      ],
+      "status": "blocked",
+      "reason": "缺成功 Teacher 和合格感知，正式训练需批准"
+    },
+    "wp6.native-final": {
+      "title": "刚性代理和柔性任务独立验收",
+      "executor": "gated",
+      "dependencies": [
+        "wp6.bc-dagger-ppo",
+        "wp5.solver-native"
+      ],
+      "status": "blocked",
+      "reason": "每种抓法各需至少 100 个独立初态，原生预算待批准"
+    },
+    "bootstrap.scheduler": {
+      "title": "验证工作包调度、恢复与发布收据",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "passed",
+      "tests": [
+        "tests/test_dh116_work_packages.py"
+      ],
+      "last_result": {
+        "status": "passed",
+        "passed": 14,
+        "failed": 0,
+        "exit_code": 0,
+        "report": "docs/superpowers/reports/2026-11-11-dh116-autonomous-bootstrap.md",
+        "native_qualification": false,
+        "log_sha256": "e679e61e5e6c4c2845ce4daf136e9aee62ad97d650f371249fc44736fa8726eb",
+        "tested_head": "3c80166da75fb5496701c9f3ff673296c5db5615",
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py"
+        ]
+      }
+    }
+  }
+}

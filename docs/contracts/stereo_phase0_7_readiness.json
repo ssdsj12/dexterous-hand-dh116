@@ -2783,5 +2783,26 @@
     "verified_source_files": 1183,
     "protected_files_unchanged": 528,
     "scope": "source_config_tests_processed_reports_only;raw_models_logs_excluded"
+  },
+  "autonomous_work_packages": {
+    "bootstrap.scheduler": {
+      "status": "passed",
+      "passed": 14,
+      "failed": 0,
+      "exit_code": 0,
+      "report": "docs/superpowers/reports/2026-11-11-dh116-autonomous-bootstrap.md",
+      "native_qualification": false,
+      "log_sha256": "e679e61e5e6c4c2845ce4daf136e9aee62ad97d650f371249fc44736fa8726eb",
+      "tested_head": "3c80166da75fb5496701c9f3ff673296c5db5615",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_work_packages.py"
+      ]
+    }
   }
 }
