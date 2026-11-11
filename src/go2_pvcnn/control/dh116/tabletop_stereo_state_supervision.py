@@ -734,11 +734,19 @@ def _geometry_stages(labels):
 
 def calibrate_residuals(group_errors, *, coverage=.95):
     """Split-conformal radius using per-group max residuals as observations."""
-    scores = sorted(max(errors) for errors in group_errors.values() if len(errors))
+    if not 0 < coverage < 1:
+        raise ValueError('nominal calibration coverage must be in (0, 1)')
+    if any(not math.isfinite(error) or error < 0
+           for errors in group_errors.values() for error in errors):
+        raise ValueError('finite nonnegative calibration residuals required')
+    scores = sorted(max(errors) for errors in group_errors.values() if errors)
     rank = math.ceil((len(scores)+1)*coverage)
-    calibrated = 1 <= rank <= len(scores)
+    calibrated = rank <= len(scores)
+    reason = None
+    if not calibrated:
+        reason = 'insufficient_independent_validation_groups' if scores else 'no_validation_residuals'
     return dict(calibrated=calibrated, independent_validation_groups=len(scores),
-        nominal_coverage=coverage, radius=scores[rank-1] if calibrated else None,
+        nominal_coverage=coverage, radius=scores[rank-1] if calibrated else None, reason=reason,
         method='split_conformal_group_max_abs_residual')
 
 
@@ -789,8 +797,14 @@ def _prediction_loss(prediction, targets, criterion):
             pred = pred.sigmoid()
         else:
             terms.append(masked_smooth_l1(pred, target, scalar))
-        errors[key] = torch.where(scalar, (pred-target).abs(), float('nan')).detach().flatten(1)
-    return sum(terms), errors
+        residual = (pred.detach()-target).abs()
+        errors[key] = torch.where(scalar, residual, float('nan')).flatten(1)
+    loss = sum(terms)
+    if not bool(torch.isfinite(loss)):
+        raise ValueError('nonfinite supervised state loss')
+    if any(bool(torch.isinf(values).any()) for values in errors.values()):
+        raise ValueError('nonfinite supervised state residual')
+    return loss, errors
 
 
 def _metrics(model, rows, labels, indices, split, batch_size, device, criterion, head, *, stage=None):
@@ -898,10 +912,11 @@ def _formal_metrics(record, model, rows, labels, split, batch_size, device, crit
     record['training_rows'] = record['splits']['train']['supervised_rows']
     record['training_independent_groups'] = record['splits']['train']['independent_supervised_groups']
     record['uncertainty_calibration'] = {}
-    for key, groups in residuals['validation'].items():
-        result = calibrate_residuals(groups)
-        result['unit'] = record['splits']['validation']['outputs'][key]['unit']
-        test = [max(x) for x in residuals['test'].get(key, {}).values() if x]
+    for key, output in record['splits']['validation']['outputs'].items():
+        result = calibrate_residuals(residuals['validation'].get(key, {}))
+        result['unit'] = output['unit']
+        test = [max(errors) for errors in residuals['test'].get(key, {}).values() if errors]
+        result['independent_test_groups'] = len(test)
         result['test_group_coverage'] = (sum(x <= result['radius'] for x in test)/len(test)
                                           if test and result['calibrated'] else None)
         record['uncertainty_calibration'][key] = result

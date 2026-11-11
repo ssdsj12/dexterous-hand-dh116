@@ -3093,6 +3093,26 @@
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-wp3.mpc-sync-prepare.md",
       "native_qualification": false
+    },
+    "wp2.metric-integrity": {
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_state_supervision.py"
+      ],
+      "log_sha256": "e87acd915a4a9537c3d4a395d232b5839ed39afbcf836790532f65e6be681b02",
+      "tested_head": "914424f8ae809fc16d091eb2230defd6a06fe797",
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-wp2.metric-integrity.md",
+      "native_qualification": false
     }
   }
 }

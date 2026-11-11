@@ -1,3 +1,7 @@
+## 2026-11-11 — 状态监督残差及不确定度完整性
+
+CPU `passed`，通过 18 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp2.metric-integrity.md)。
+
 ## 2026-11-11 — 准备 MPC 371D 与实际 24D 同步采集
 
 CPU `passed`，通过 50 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp3.mpc-sync-prepare.md)。

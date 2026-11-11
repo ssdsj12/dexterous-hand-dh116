@@ -190,3 +190,54 @@ def test_estimator_training_uses_only_supervised_head_and_grouped_heldouts():
     assert stats['optimization'][0]['gradient_norm'] > 0
     assert stats['splits']['test']['outputs']['privileged_state']['valid_count'] == 1
     assert stats['uncertainty_calibration']['privileged_state']['radius'] is None
+
+
+def test_supervised_metric_arithmetic_rejects_nonfinite_loss_from_finite_inputs():
+    supervision = module('state_supervision')
+    value = torch.finfo(torch.float32).max
+    predictions = torch.full((1, 2), value)
+    labels = torch.full_like(predictions, -value)
+    valid = torch.ones_like(predictions, dtype=torch.bool)
+    with pytest.raises(ValueError, match='nonfinite supervised state loss'):
+        supervision._prediction_loss(
+            {'velocity': predictions}, {'velocity': (labels, valid)}, None
+        )
+
+
+def test_formal_reports_uncalibrated_output_when_validation_labels_absent(monkeypatch):
+    supervision = module('state_supervision')
+    evidence = {
+        'train': {'371:61': {0: [.3]}, '371:62': {0: [.7]}},
+        'validation': {'371:61': {1: [.1]}},
+        'test': {'371:61': {2: [.2]}, '371:62': {2: [.4]}},
+    }
+
+    def metrics(_model, _rows, _labels, indices, *_args, **_kwargs):
+        part = supervision.PARTITIONS[indices[0]]
+        return {
+            'supervised_rows': 1,
+            'independent_supervised_groups': 1,
+            'outputs': {'371:61': {'unit': 'normalized'}, '371:62': {'unit': 'normalized'}},
+        }, evidence[part]
+
+    monkeypatch.setattr(supervision, '_metrics', metrics)
+    split = {part + '_indices': [i] for i, part in enumerate(supervision.PARTITIONS)}
+    record = {}
+    supervision._formal_metrics(record, None, None, None, split, 1, 'cpu', None, 'geometry')
+    result = record['uncertainty_calibration']
+    assert result['371:62']['calibrated'] is False
+    assert result['371:62']['radius'] is None
+    assert result['371:62']['independent_validation_groups'] == 0
+    assert result['371:62']['independent_test_groups'] == 1
+    assert result['371:62']['test_group_coverage'] is None
+    assert result['371:62']['reason'] == 'no_validation_residuals'
+    assert result['371:61']['reason'] == 'insufficient_independent_validation_groups'
+
+
+@pytest.mark.parametrize('residual', [float('nan'), float('inf'), -.2])
+def test_calibration_rejects_invalid_residual_instead_of_selecting_radius(residual):
+    supervision = module('state_supervision')
+    groups = {i: [.1] for i in range(20)}
+    groups[0].append(residual)
+    with pytest.raises(ValueError, match='finite nonnegative calibration residuals'):
+        supervision.calibrate_residuals(groups)
