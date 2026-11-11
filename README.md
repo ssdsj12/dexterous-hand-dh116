@@ -1,3 +1,7 @@
+## 2026-11-11 — 复核 Student 成功池与自有 rollout
+
+CPU `passed`，通过 22 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp6.cpu-admission.md)。
+
 ## 2026-11-11 — 复核 DeformX CUDA 源码资格检查器
 
 CPU `passed`，通过 2 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp5.cpu-source-check.md)。

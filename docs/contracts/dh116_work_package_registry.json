@@ -321,12 +321,34 @@
       "title": "复核 Student 成功池与自有 rollout",
       "executor": "pytest",
       "dependencies": [],
-      "status": "pending",
+      "status": "passed",
       "tests": [
         "tests/test_dh116_stereo_bc_mode.py",
         "tests/test_dh116_stereo_dagger.py",
         "tests/test_dh116_stereo_cold_candidate_admission.py"
-      ]
+      ],
+      "last_result": {
+        "passed": 22,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_bc_mode.py",
+          "tests/test_dh116_stereo_dagger.py",
+          "tests/test_dh116_stereo_cold_candidate_admission.py"
+        ],
+        "log_sha256": "dd7b58730466294bbbac9c6ae3488ddae45dadd6d7953d8408c801fb06d20a79",
+        "tested_head": "d0993eddc54e11e3b1e9c59ad49a1fbf1cd4ddcc",
+        "status": "passed",
+        "report": "docs/superpowers/reports/dh116-managed-wp6.cpu-admission.md",
+        "native_qualification": false
+      }
     },
     "wp6.bc-dagger-ppo": {
       "title": "Student 正式 BC、DAgger 与 PPO",
