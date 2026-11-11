@@ -24,6 +24,16 @@ def state_reference_stem(output, policy_tick, identities):
     return Path(output) / f'state_reference_{policy_tick:06d}_{epoch}'
 
 
+def wire_reference_labels(extraction, *, tracked):
+    labels = dict(state_wire_point_pixels=extraction['point_pixels'].clone(),
+                  state_wire_track_ids=extraction['track_id'].clone())
+    if tracked:
+        from .tabletop_stereo_wire_geometry import WirePointGeometry
+        geometry = WirePointGeometry.from_extraction(extraction)
+        labels['state_wire_geometry'] = {key:value.clone() for key,value in geometry.as_dict().items()}
+    return labels
+
+
 class NativeStereoEnvironment:
     evidence_scope = 'native_runtime_capture_unqualified'
 
@@ -152,8 +162,8 @@ class NativeStereoEnvironment:
             artifact = dict(path=str(path.resolve()),sha256=file_sha256(path))
             for identity in pair['identity']:
                 identity['state_reference_artifact'] = artifact.copy()
-            state_label_metadata.update(state_wire_point_pixels=extraction['point_pixels'].clone(),
-                                        state_wire_track_ids=extraction['track_id'].clone())
+            state_label_metadata.update(wire_reference_labels(extraction,
+                tracked=isinstance(self.extractor, TrackedWirePointExtractor)))
             if reference.get('source_scope') == 'native':
                 state_label_metadata['state_synchronization'] = [
                     state_supervision_binding(identity, reference, artifact['sha256'])

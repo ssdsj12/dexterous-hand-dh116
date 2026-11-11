@@ -1,3 +1,7 @@
+## 2026-11-11 — 线缆点来源与时序身份
+
+候选记录新增逐点几何、有效性、来源和分段轨迹旁路。96 项 CPU 通过，两个历史 cohort 各四帧复放一致。原色轮廓 91/89 与软引导 67/65 个正确 Roll20 点均为表面来源，三维中心线时序资格仍待证。[验证报告](docs/superpowers/reports/2026-11-11-stereo-wire-geometry-sources.md)
+
 ## 2026-11-11 — 143D 同步证据与分阶段准入
 
 补充同帧参考旁路身份、冷 8 诊断限制、连续中心线 Velocity 门槛和逐阶段训练、误差与有效覆盖报告。136 项 CPU 回归通过。历史 8 行、2 个独立初态上只拟合 6 行 Center XYZ，未建立泛化或不确定度校准。正式模式按预期退出 2。[验证报告](docs/superpowers/reports/2026-11-11-stereo-state-stage-admission.md)

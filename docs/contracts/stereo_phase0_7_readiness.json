@@ -2702,6 +2702,17 @@
     "uncertainty_calibrated": false,
     "new_native_capture_count": 0
   },
+  "wire_geometry_sources_98ba1fb": {
+    "report": "docs/superpowers/reports/2026-11-11-stereo-wire-geometry-sources.md",
+    "cpu_tests_passed": 96,
+    "historical_frames_replayed": {"front": 4, "roll20": 4},
+    "roll20_default_surface_correct_per_frame": {"pinch": 91, "tripod": 89},
+    "roll20_guided_surface_correct_per_frame": {"pinch": 67, "tripod": 65},
+    "roll20_correct_centerline_per_frame": 0,
+    "verified_3d_centerline_temporal_tracks": 0,
+    "material_node_identity_verified": false,
+    "native_sidecar_retest": "pending_approval"
+  },
   "publication_workflow": {
     "policy": "AGENTS.md",
     "repository": "ssdsj12/dexterous-hand-dh116",

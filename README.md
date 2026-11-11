@@ -1,3 +1,7 @@
+## 2026-11-11 — 线缆点来源与时序身份
+
+按点区分中心线、实测表面及未知槽，保持缺深度时的二维路径。历史 Roll20 正确点全部来自实测表面，未观测到稳定的 3D 中心线轨迹。新候选逐点旁路通过 CPU 回归，原生复验待批准。[验证报告](docs/superpowers/reports/2026-11-11-stereo-wire-geometry-sources.md)
+
 ## 2026-11-11 — 143D 同步证据与分阶段准入
 
 同步候选绑定原生参考身份和左右实例 ID 的可用性。冷 8 只进入诊断，Velocity 需要同一已核验中心线 track 和连续物理时钟。历史数据仅有 6 行中心标签，单轮 CPU 诊断完成，正式状态训练仍阻断。[验证报告](docs/superpowers/reports/2026-11-11-stereo-state-stage-admission.md)
