@@ -332,6 +332,53 @@ def colour_anchor_fallback(baseline, soft, colour_masks):
     return result
 
 
+def retain_wire_sample_slots(baseline, candidate, *, surface_start):
+    """Reserve all original slots and propose new surfaces in unused capacity.
+
+    The inputs are two tracker outputs on the same colour-mask topology. A
+    proposed surface needs a distinct measured pixel on a baseline component.
+    The candidate pool remains separate even when no output slot is available.
+    This sensor-only function does not use reference labels or admit a policy.
+    """
+    from .tabletop_stereo_wire_geometry import PointSource, WirePointGeometry
+
+    if not isinstance(baseline, WirePointGeometry) or not isinstance(candidate, WirePointGeometry):
+        raise TypeError('typed baseline and candidate wire geometry required')
+    if baseline.valid.shape != candidate.valid.shape or baseline.valid.device != candidate.valid.device:
+        raise ValueError('baseline and candidate geometry must be aligned')
+    slots = baseline.valid.shape[1]
+    if (type(surface_start) is not int or not 0 <= surface_start <= slots
+            or bool((baseline.source_type[:, :surface_start] == PointSource.OBSERVED_SURFACE).any())
+            or bool((baseline.source_type[:, surface_start:] == PointSource.CENTERLINE).any())):
+        raise ValueError('invalid baseline centerline/surface slot partition')
+    pool = torch.zeros_like(candidate.valid)
+    proposed_from = torch.full_like(baseline.component_id, -1)
+    result = {name: value.clone() for name, value in baseline.as_dict().items()}
+    candidate_fields = candidate.as_dict()
+    for env in range(len(pool)):
+        visible = baseline.visibility[env]
+        reserved = {tuple(p) for p in baseline.point_pixels[env, visible].tolist()}
+        components = set(baseline.component_id[env, visible].tolist())
+        surface = candidate.valid[env] & (candidate.source_type[env] == PointSource.OBSERVED_SURFACE)
+        new_slots = []
+        for slot, pixel, component in zip(surface.nonzero().flatten().tolist(),
+                candidate.point_pixels[env, surface].tolist(), candidate.component_id[env, surface].tolist()):
+            pixel = tuple(pixel)
+            if component in components and pixel not in reserved:
+                reserved.add(pixel)
+                new_slots.append(slot)
+        pool[env, new_slots] = True
+        free = (~visible[surface_start:]).nonzero().flatten() + surface_start
+        count = min(len(free), len(new_slots))
+        if count:
+            source = torch.tensor(new_slots[:count], device=free.device)
+            destination = free[:count]
+            proposed_from[env, destination] = source
+            for name, value in result.items():
+                value[env, destination] = candidate_fields[name][env, source]
+    return WirePointGeometry(**result), pool, proposed_from
+
+
 def native_visibility(left_z, right_z, left_wire_valid, calibration, *,
                       right_wire=None, right_known=None):
     """Classify only verified right surfaces; missing labels remain unknown."""

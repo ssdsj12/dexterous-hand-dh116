@@ -11,9 +11,10 @@ from go2_pvcnn.control.dh116.tabletop_stereo_depth import StereoDepth
 from go2_pvcnn.control.dh116.tabletop_stereo_error_cli import load_capture
 from go2_pvcnn.control.dh116.tabletop_stereo_wire_correspondence import (
     SoftWireCorrespondence, colour_anchor_fallback, score_native_correspondence,
-    segmentation_evidence, silhouette_point_trace,
+    segmentation_evidence, silhouette_point_trace, retain_wire_sample_slots,
 )
 from go2_pvcnn.control.dh116.tabletop_stereo_wire_diagnostics import audit_wire_frame, wire_intersections
+from go2_pvcnn.control.dh116.tabletop_stereo_wire_geometry import WirePointGeometry
 from go2_pvcnn.control.dh116.tabletop_stereo_wire_matching import wire_colour_mask
 from go2_pvcnn.control.dh116.tabletop_stereo_wire_segmentation import StereoWireSegmentation
 from go2_pvcnn.control.dh116.tabletop_stereo_wire_tail_audit import tail_geometry
@@ -96,6 +97,28 @@ def accurate_wire_depth(prediction, reference, calibration, matcher):
     return measured, accurate
 
 
+def retention_labels(candidate, pool, proposed_from, measured, accurate, fallback):
+    """Apply the immutable 5 mm criterion after sensor-only sampling."""
+    environment, slot = pool.nonzero(as_tuple=True)
+    y, x = candidate.point_pixels[environment, slot].unbind(-1)
+    label = torch.full_like(candidate.source_type, -1, dtype=torch.int8)
+    labels = accurate[environment, y, x].to(torch.int8).masked_fill(~measured[environment, y, x], -1)
+    label[environment, slot] = labels
+    depth_source = torch.zeros_like(candidate.source_type)
+    depth_source[environment, slot] = 1 + fallback[environment, y, x].to(torch.uint8)
+    proposed = proposed_from >= 0
+    proposed_labels = label.gather(1, proposed_from.clamp_min(0)).masked_fill(~proposed, -1)
+    rows = [dict(candidate_pool_size=int(pool[i].sum()),
+                 candidate_pool_within_5mm=int((label[i] == 1).sum()),
+                 candidate_pool_above_5mm=int((label[i] == 0).sum()),
+                 candidate_pool_without_reference=int((pool[i] & (label[i] == -1)).sum()),
+                 proposed_slots=int(proposed[i].sum()),
+                 proposed_slots_within_5mm=int((proposed_labels[i] == 1).sum()),
+                 promoted_slots=0) for i in range(len(pool))]
+    return dict(candidate_reference_label_5mm=label, candidate_depth_source=depth_source,
+                proposed_reference_label_5mm=proposed_labels), rows
+
+
 @torch.no_grad()
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
@@ -107,6 +130,8 @@ def main(argv=None):
     parser.add_argument('--threads', type=int, default=2)
     parser.add_argument('--colour-anchor-fallback', action='store_true',
                         help='compare an additional opt-in colour-anchored soft fallback')
+    parser.add_argument('--retain-baseline-samples', action='store_true',
+                        help='audit an opt-in sensor-only proposal with original sample slots reserved')
     args = parser.parse_args(argv)
     if args.threads < 1:
         parser.error('positive thread count required')
@@ -132,6 +157,8 @@ def main(argv=None):
     methods = ['legacy_colour', 'legacy_hard', 'full_patch_unguided', 'full_patch_guided']
     if args.colour_anchor_fallback:
         methods.append('colour_anchor_fallback')
+    if args.retain_baseline_samples:
+        methods.append('colour_anchor_retained')
     trackers = {method: TrackedWirePointExtractor(point_sampling='observed_ribbon',
                 ribbon_radius_px=3, observed_surface_capacity=96)
                 for method in methods}
@@ -143,6 +170,10 @@ def main(argv=None):
                   tail_fixture_sha256=file_sha256(args.tail_fixture) if args.tail_fixture else None,
                   reference_sha256=[row['sha256'] for row in proof['reference_artifacts']],
                   rgb_patch_masked=False, reference_used_by_matcher=False, frames=[])
+    if args.retain_baseline_samples:
+        result['baseline_retention'] = dict(reference_used_for_selection=False,
+            candidate_5mm_label_is_offline_only=True, deployable=False,
+            candidate_depth_sources={0:'outside_pool', 1:'legacy_dense_not_sampled', 2:'rgb_soft_fallback'})
     for index, (frame, reference) in enumerate(zip(capture['frames'], references)):
         left, right = frame['left_rgb'], frame['right_rgb']
         views = segmentation_evidence(segmenter(left, right))
@@ -166,6 +197,7 @@ def main(argv=None):
         previous = None
         guided = None
         baseline_correct = None
+        baseline_geometry = None
         colour_masks = (wire_colour_mask(left), wire_colour_mask(right))
         for name, tracker in trackers.items():
             start = time.perf_counter()
@@ -176,7 +208,7 @@ def main(argv=None):
             elif name == 'legacy_hard':
                 prediction = legacy.compute(left, right, calibration, wire_masks=masks)
                 candidate = masks[0]
-            elif name == 'colour_anchor_fallback':
+            elif name in ('colour_anchor_fallback', 'colour_anchor_retained'):
                 prediction = colour_anchor_fallback(previous, guided, colour_masks)
                 candidate = colour_masks[0]
             else:
@@ -191,6 +223,13 @@ def main(argv=None):
                 frame.get('K_left', calibration.K_left), frame.get('T_world_left', calibration.T_world_left),
                 timestamp=[row['simulation_timestamp'] for row in frame['identity']],
                 point_confidence=prediction['confidence'], wire_mask=candidate)
+            if args.retain_baseline_samples and name == 'legacy_colour':
+                baseline_geometry = WirePointGeometry.from_extraction(points)
+            if name == 'colour_anchor_retained':
+                proposed_geometry = WirePointGeometry.from_extraction(points)
+                retained, pool, proposed_from = retain_wire_sample_slots(
+                    baseline_geometry, proposed_geometry, surface_start=32)
+                points = dict(point_pixels=retained.point_pixels, **retained.sensor_fields())
             maps, metrics = audit_wire_frame(frame, prediction, points, calibration, reference,
                 block_size=legacy.block_size, near=legacy.near, far=legacy.far, wire_mask=candidate)
             scores, visibility = score_native_correspondence(frame, reference, calibration, prediction, masks,
@@ -220,14 +259,25 @@ def main(argv=None):
                 point_pixels=points['point_pixels'], visibility=visibility,
                 first_reject_code=maps['first_reject_code'], rejection_flags=prediction['diagnostics']['reasons'],
                 fixed_native_first_reject_code=native_maps['first_reject_code'])
-            if name == 'colour_anchor_fallback':
+            if name in ('colour_anchor_fallback', 'colour_anchor_retained'):
                 archive['methods'][name]['baseline_depth_preserved'] = prediction['diagnostics']['baseline_depth_preserved']
                 archive['methods'][name]['soft_fallback_depth'] = prediction['diagnostics']['soft_fallback_depth']
             frame_record['methods'][name] = dict(elapsed_s=elapsed, environments=metrics)
+            if name == 'colour_anchor_retained':
+                if any(row['retained_correct'] != row['baseline_correct'] for row in transitions):
+                    raise RuntimeError('baseline sample slot retention regressed a correct point')
+                labels, retention_rows = retention_labels(proposed_geometry, pool, proposed_from,
+                    measured, accurate, prediction['diagnostics']['soft_fallback_depth'])
+                for entry, retention_row in zip(metrics, retention_rows):
+                    entry['baseline_slot_retention'] = retention_row
+                archive['methods'][name]['baseline_slot_retention'] = dict(
+                    baseline_geometry=baseline_geometry.as_dict(), candidate_geometry=proposed_geometry.as_dict(),
+                    proposed_geometry=retained.as_dict(), candidate_pool_mask=pool,
+                    proposed_from_candidate_slot=proposed_from, **labels)
             if positions:
                 if name.startswith('full_patch'):
                     traces = prediction['diagnostics']['point_traces']
-                elif name == 'colour_anchor_fallback':
+                elif name in ('colour_anchor_fallback', 'colour_anchor_retained'):
                     traces = {key: (guided['diagnostics']['point_traces'][key]
                                     if prediction['diagnostics']['soft_fallback_depth'][key]
                                     else silhouette_point_trace(left, right, colour_masks, key, legacy, previous))

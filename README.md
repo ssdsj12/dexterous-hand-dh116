@@ -1,3 +1,7 @@
+## 2026-11-11 — 保留双目原色采样与候选分池
+
+CPU `passed`，通过 36 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp1.sample-retention.md)。
+
 ## 2026-11-11 — Ubuntu 工作包调度
 
 Ubuntu 工作区负责开发、CPU 验证与提交。本机只负责 GitHub 中转。调度器和中断恢复验证 14 项通过，原生任务与依赖安装按独立批准门槛执行。[执行计划](docs/superpowers/plans/DH116_AUTONOMOUS_EXECUTION_MASTER_PLAN.md)

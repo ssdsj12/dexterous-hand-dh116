@@ -2803,6 +2803,30 @@
         "no:cacheprovider",
         "tests/test_dh116_work_packages.py"
       ]
+    },
+    "wp1.sample-retention": {
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_wire_correspondence.py",
+        "tests/test_dh116_stereo_wire_depth.py",
+        "tests/test_dh116_stereo_wire_geometry.py",
+        "tests/test_dh116_stereo_wire_sample_retention.py",
+        "tests/test_dh116_stereo_wire_tail_audit.py"
+      ],
+      "log_sha256": "18c05275f08db4e18273f2c61af5c06f8e652a6c246683a714e58ad565822b80",
+      "tested_head": "e2b41b64a0c2b129643b79a315d736faf4fff310",
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-wp1.sample-retention.md",
+      "native_qualification": false
     }
   }
 }
