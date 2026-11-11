@@ -1,3 +1,7 @@
+## 2026-11-11 — 双目线缆对应复放
+
+增加保留完整 RGB 窗口的软引导匹配、逐帧对应和拒绝证据、原始 12 处整数视差固定回归。37 项 CPU 测试通过，Front 和 Roll20 各四帧复放均正常结束。预测 hard mask 的覆盖断层已复现，软引导恢复部分有效点，固定尾部仍失败，真实左右对应待合格右原生 ID。[验证报告](docs/superpowers/reports/2026-11-11-stereo-wire-correspondence.md)
+
 ## 2026-11-11 — Teacher128 关节动作审计
 
 有界 Teacher 诊断增加 24D 分布和实际动作、全部关节的位置与速度、控制目标及越限证据。87 项 CPU 回归通过。历史 2,030 个物理子步和 256 次策略转移复核出五次右 `finger12` 实测位置越限，原生成功为 0。新增采集的原生复验和 MPC 的 371D 同步重采待批准。[验证报告](docs/superpowers/reports/2026-11-11-teacher128-joint-limit-audit.md)

@@ -2641,6 +2641,19 @@
     "full_articulation_native_retest": "pending_approval",
     "mpc_371d_pre_action_supervision": "blocked_pending_synchronized_recollection"
   },
+  "wire_correspondence_20261111": {
+    "report": "docs/superpowers/reports/2026-11-11-stereo-wire-correspondence.md",
+    "cpu_tests_passed": 37,
+    "offline_replayed_frames": {"front": 4, "roll20": 4},
+    "roll20_soft_guided_correct_points_per_frame": {"pinch": 67, "tripod": 65},
+    "roll20_fixed_tail_above_5mm": 48,
+    "roll20_fixed_tail_total": 48,
+    "right_native_instance_ids_available": false,
+    "true_correspondence_accuracy": null,
+    "qualification": "blocked",
+    "default_processing_changed": false,
+    "new_native_capture_count": 0
+  },
   "publication_workflow": {
     "policy": "AGENTS.md",
     "repository": "ssdsj12/dexterous-hand-dh116",

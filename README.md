@@ -1,3 +1,7 @@
+## 2026-11-11 — 双目线缆对应复放
+
+原始左右 RGB 的完整匹配窗口保留纹理，分割概率只提供有界代价。两组历史捕获复放均恢复有效点，Roll20 软引导二指/三指正确点为 67/65，原色轮廓为 91/89。固定 48 条尾部仍全部超过 5 mm，历史捕获缺右侧原生 ID，候选保持 `blocked`。[验证报告](docs/superpowers/reports/2026-11-11-stereo-wire-correspondence.md)
+
 ## 2026-11-11 — Teacher128 关节动作审计
 
 历史五次 `joint_limit` 均观察到右 `finger12` 实测角度跨过硬保护线，SDK 目标保持在名义限位附近或以内。新增有界诊断的逐 480 Hz 全关节动作证据，原生复验待批准。旧 MPC 专家数据缺少同一 pre-action 的 371D，特权 Actor 初始化需同步重采。[验证报告](docs/superpowers/reports/2026-11-11-teacher128-joint-limit-audit.md)
