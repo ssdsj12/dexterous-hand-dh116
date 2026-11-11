@@ -1,3 +1,7 @@
+## 2026-11-11 — 双目匹配固定像素与采样归因
+
+归档左右三类概率和固定尾部的双向代价。Roll20 软引导遗漏了仍有正确深度的原基线点，二指 83 个、三指 76 个。原色锚定补测仍低于原色基线，48 条固定尾部全数超 5 mm，候选保持 `blocked`。[复放报告](docs/superpowers/reports/2026-11-11-stereo-wire-point-traces.md)
+
 ## 2026-11-11 — Teacher128 同状态动作复盘
 
 原 Checkpoint 对 256 条同一 371D 状态重算 mean 和 std。五次越限都发生在右 `finger12` 的实测位置，噪声没有一致方向。旧 MPC 缺同一状态的 371D，当前可配对数为 0，Actor-only BC 继续阻断。[复盘报告](docs/superpowers/reports/2026-11-11-teacher128-paired-action-replay.md)

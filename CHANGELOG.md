@@ -1,3 +1,7 @@
+## 2026-11-11 — 双目匹配固定像素与采样归因
+
+增加逐视图三类概率、可见与实际 mask 覆盖统计、联合参考和固定双向代价回归。41 项 CPU 通过，Front/Roll20 各四帧复放完成。候选改善部分覆盖，Roll20 准确点数仍低于原色，缺真实右 ID 的资格保持阻断。[复放报告](docs/superpowers/reports/2026-11-11-stereo-wire-point-traces.md)
+
 ## 2026-11-11 — Teacher128 同状态动作复盘
 
 新增同身份 Teacher sample/mean 比较、逐关节首越线及跟踪误差、MPC 371D/24D 配对拒绝证据。94 项 CPU 通过，五次历史位置终止的实际力学原因仍待原生复验。旧 MPC 无可配对 371D，噪声与 BC 策略保持原样。[复盘报告](docs/superpowers/reports/2026-11-11-teacher128-paired-action-replay.md)

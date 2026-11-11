@@ -2725,6 +2725,19 @@
     "actor_only_bc": "blocked_missing_mpc_371d_pre_action_states",
     "tracking_error_mechanism": "pending_native_contact_and_full_articulation_evidence"
   },
+  "wire_point_traces_98ba1fb": {
+    "report": "docs/superpowers/reports/2026-11-11-stereo-wire-point-traces.md",
+    "cpu_tests_passed": 41,
+    "historical_frames_replayed": {"front": 4, "roll20": 4},
+    "roll20_fixed_tail_above_5mm": 48,
+    "roll20_fixed_tail_total": 48,
+    "roll20_guided_original_correct_pixels_omitted_by_sampling": {"pinch": 83, "tripod": 76},
+    "roll20_colour_anchor_correct_points_per_frame": {"pinch": 73, "tripod": 64},
+    "right_native_instance_supervision_verified": false,
+    "true_correspondence_accuracy": null,
+    "qualification": "blocked",
+    "default_processing_changed": false
+  },
   "publication_workflow": {
     "policy": "AGENTS.md",
     "repository": "ssdsj12/dexterous-hand-dh116",
