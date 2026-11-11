@@ -492,7 +492,29 @@
         "tests/test_dh116_stereo_wire_sample_retention.py",
         "tests/test_dh116_stereo_wire_correspondence.py"
       ],
-      "status": "pending"
+      "status": "passed",
+      "last_result": {
+        "passed": 26,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_confidence_audit.py",
+          "tests/test_dh116_stereo_wire_correspondence.py",
+          "tests/test_dh116_stereo_wire_sample_retention.py"
+        ],
+        "log_sha256": "4dc732ba881ce9d7b8d9a76a084949ceadc67b925ab50d36be6930590c32f2fb",
+        "tested_head": "7f649fa810acb609108146f632b0a5f7e50e5391",
+        "status": "passed",
+        "report": "docs/superpowers/reports/dh116-managed-wp1.confidence-offline.md",
+        "native_qualification": false
+      }
     },
     "wp3.mpc-sync-prepare": {
       "title": "准备 MPC 371D 与实际 24D 同步采集",

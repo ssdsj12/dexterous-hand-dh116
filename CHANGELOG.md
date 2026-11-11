@@ -1,3 +1,7 @@
+## 2026-11-11 — 双目候选置信度分组校准审计
+
+CPU `passed`，通过 26 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp1.confidence-offline.md)。
+
 ## 2026-11-11 — Student 独立评估证据
 
 Student 冷评估核对实际发出 24D、传感与推理时钟及逐样本任务身份。Ubuntu 92 项 CPU 回归通过，原生验收待资格与审批。[报告](docs/superpowers/reports/2026-11-11-stereo-student-independent-proof.md)
