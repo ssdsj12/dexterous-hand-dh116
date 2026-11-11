@@ -28,6 +28,8 @@ PARTITIONS = ('train', 'validation', 'test')
 TRAINING_MODES = ('schema_test', 'diagnostic_fit', 'formal_training')
 SOURCE_KEYS = ('source_valid', 'identity_aligned', 'timestamp_valid', 'visibility_valid', 'correspondence_valid')
 _ENCODERS_ONLY = 'simulation_SDK_encoder_readback_only'
+DATASET_VERSION = 'dh116-stereo-state-dataset-v1'
+_CENTER_XYZ = slice(61, 64)
 
 
 def audit_candidate_fields(rows=()):
@@ -93,7 +95,12 @@ def split_estimator_rows(rows, *, seed=116):
     groups = defaultdict(list)
     for i in range(len(rows)):
         groups[find(i)].append(i)
-    components = sorted(groups.values())
+    def component_identity(indices):
+        identities = (rows[i]['identity'] for i in indices)
+        return sorted({(item['physical_initial_condition_sha256'], item['source_episode_group'])
+                       for item in identities})
+
+    components = sorted(groups.values(), key=component_identity)
     result = dict(independent_groups=len(components), group_for_row={i:k for k, rows in enumerate(components) for i in rows},
                   **{name+'_indices': [] for name in PARTITIONS})
     if len(components) < 3:
@@ -396,6 +403,7 @@ def read_candidate(path, *, raw, sha256, raw_sha256):
     for row in rows:
         if row['extra_labels'].get('training_label_evidence_scope') != 'native_runtime_capture_unqualified':
             raise ValueError('candidate lacks measured label-source provenance')
+        row['source_teacher_checkpoint_sha256'] = checkpoint
     same_clock = _raw_bindings(raw, rows, checkpoint, cold_readbacks=cold_readbacks)
     previous, cache = {},{}
     for row in rows:
@@ -411,6 +419,111 @@ def read_candidate(path, *, raw, sha256, raw_sha256):
     if file_sha256(path) != sha256 or file_sha256(raw) != raw_sha256:
         raise ValueError('state-supervision source changed while reading')
     return rows
+
+
+def _dataset_observation_binding(row):
+    """Check archived processing identity without requiring today's source SHA."""
+    from .tabletop_stereo_contract import validate_identity
+    from .tabletop_stereo_depth import StereoDepth
+    from .tabletop_stereo_preprocessing import VERSION as PROCESSING_VERSION
+
+    identity = validate_identity(row['identity'])
+    if row['privileged_identity'] != identity:
+        raise ValueError('privileged and camera pre-action binding differs')
+    if identity['physics_tick_start'] != identity['physics_tick_end']:
+        raise ValueError('dataset requires one pre-action physical tick')
+    calibration = identity['calibration_sha256']
+    if calibration == '0'*64:
+        raise ValueError('nonzero camera calibration SHA required')
+    reference = identity.get('state_reference_artifact')
+    if (not isinstance(reference, dict) or not reference.get('path')
+            or require_sha(reference.get('sha256'), 'reference SHA') == '0'*64):
+        raise ValueError('same-frame label-only reference binding required')
+    processing = identity.get('observation_preprocessor')
+    if not isinstance(processing, dict) or processing.get('version') != PROCESSING_VERSION:
+        raise ValueError('archived RGB processing contract required')
+    sha = require_sha(identity.get('observation_preprocessor_sha256'), 'RGB processing SHA')
+    if processing.get('processing_sha256') != sha or digest({
+            key: value for key, value in processing.items() if key != 'processing_sha256'}) != sha:
+        raise ValueError('archived processing SHA mismatch')
+    history = row['history']
+    width, height = history['left_rgb'].shape[-1], history['left_rgb'].shape[-2]
+    if (processing.get('calibration_sha256') != calibration
+            or processing.get('image_resolution_wh') != [width, height]):
+        raise ValueError('archived RGB processing calibration or resolution differs')
+    sources = processing.get('source_sha256')
+    if (processing.get('native_qualified') is not False or not isinstance(sources, dict)
+            or require_sha(sources.get('tabletop_stereo_depth.py'), 'RGB depth processing source SHA') == '0'*64
+            or processing.get('geometry', {}).get('missing') !=
+            'NaN_with_false_validity;no_simulator_or_rendered_depth_fallback'):
+        raise ValueError('RGB depth processing provenance lacks no-reference-input contract')
+    depth_config = processing.get('depth_estimator')
+    if not isinstance(depth_config, dict) or not isinstance(depth_config.get('method'), str):
+        raise ValueError('archived RGB depth processing method required')
+    try:
+        StereoDepth.from_config(depth_config)
+    except (TypeError, ValueError) as error:
+        raise ValueError('unsupported archived RGB depth processing contract') from error
+    valid = history['depth_valid'][0, -1]
+    disparity = row['extra_labels'].get('stereo_disparity_px')
+    recorded = row['label_validity'].get('stereo_disparity_px')
+    if (not isinstance(disparity, torch.Tensor) or disparity.shape != valid.shape
+            or not disparity.is_floating_point() or not isinstance(recorded, torch.Tensor)
+            or recorded.dtype != torch.bool or not torch.equal(recorded, valid)
+            or not bool((torch.isfinite(disparity[valid]) & (disparity[valid] > 0)).all())):
+        raise ValueError('RGB disparity and depth validity binding differs')
+    return calibration, sha, tuple(history['left_rgb'].shape[1:])
+
+
+def read_candidate_dataset(manifest, *, expected_sha256):
+    """Load immutable native candidate/ledger pairs and keep physical holdouts global."""
+    manifest = Path(manifest).resolve(strict=True)
+    expected = require_sha(expected_sha256, 'dataset manifest SHA')
+    if file_sha256(manifest) != expected:
+        raise ValueError('dataset manifest SHA mismatch')
+    payload = json.loads(manifest.read_text(encoding='utf-8'))
+    if (not isinstance(payload, dict) or set(payload) != {'version', 'sources'}
+            or payload['version'] != DATASET_VERSION
+            or not isinstance(payload['sources'], list) or not payload['sources']):
+        raise ValueError('versioned state dataset manifest with nonempty source pairs required')
+    rows, source_audit = [], []
+    source_digests, seen_runs = set(), set()
+    dataset_contract = None
+    for source in payload['sources']:
+        if (not isinstance(source, dict) or set(source) != {'candidate','candidate_sha256','raw','raw_sha256'}
+                or any(not isinstance(source[key], str) or not source[key] for key in ('candidate', 'raw'))):
+            raise ValueError('candidate/raw paths and SHA bindings required')
+        candidate_sha = require_sha(source['candidate_sha256'], 'candidate SHA')
+        raw_sha = require_sha(source['raw_sha256'], 'raw ledger SHA')
+        if candidate_sha in source_digests or raw_sha in source_digests or candidate_sha == raw_sha:
+            raise ValueError('duplicate dataset source bytes')
+        source_digests.update((candidate_sha, raw_sha))
+        cohort = read_candidate(manifest.parent/source['candidate'], raw=manifest.parent/source['raw'],
+                                sha256=candidate_sha, raw_sha256=raw_sha)
+        runs, physical_initials = set(), set()
+        for row in cohort:
+            binding = _dataset_observation_binding(row)
+            if dataset_contract is None:
+                dataset_contract = binding
+            if binding != dataset_contract:
+                raise ValueError('dataset sources must share calibration, processing and history shape')
+            identity = row['identity']
+            runs.add(identity['run_uuid'])
+            physical_initials.add(identity['physical_initial_condition_sha256'])
+        if seen_runs & runs:
+            raise ValueError('duplicate capture run across candidate bundles')
+        seen_runs.update(runs)
+        rows.extend(cohort)
+        checkpoint = require_sha(cohort[0]['source_teacher_checkpoint_sha256'], 'Teacher checkpoint SHA')
+        source_audit.append(dict(candidate_sha256=candidate_sha, raw_sha256=raw_sha,
+            teacher_checkpoint_sha256=checkpoint, rows=len(cohort), run_uuids=sorted(runs),
+            physical_initial_condition_sha256=sorted(physical_initials)))
+    if file_sha256(manifest) != expected:
+        raise ValueError('dataset manifest changed during admission')
+    calibration, processing, _ = dataset_contract
+    return rows, dict(manifest_sha256=expected, sources=source_audit, calibration_sha256=calibration,
+        observation_preprocessor_sha256=processing, source_scope='verified_native_capture_replayed_offline',
+        successful_demonstration_pool=False)
 
 
 def _targets(row, name, loss):
@@ -475,17 +588,38 @@ def _targets(row, name, loss):
 
 def inspect_heads(rows, split):
     criterion = StereoEstimationLoss()
-    result = {}
-    for name in HEADS:
-        eligible = [bool(_targets(row, name, criterion)) for row in rows]
-        counts = {part: sum(eligible[i] for i in split[part+'_indices']) for part in PARTITIONS}
-        enabled = all(counts.values())
-        result[name] = dict(enabled=enabled, eligible_rows=sum(eligible), eligible_by_split=counts,
-            reason=None if enabled else 'missing_verified_force_source_or_group' if name == 'force_proxy' else
-            'no_synchronized_source_qualified_labels' if not any(eligible) else 'missing_qualified_labels_in_one_or_more_independent_splits')
-        if not enabled:
-            result[name].update(optimization=None, splits=None, uncertainty_calibration=None)
+    return {name:_admission(name, [_targets(row, name, criterion) for row in rows], split) for name in HEADS}
+
+
+def _admission(name, labels, split):
+    eligible = [bool(label) for label in labels]
+    counts = {part: sum(eligible[i] for i in split[part+'_indices']) for part in PARTITIONS}
+    enabled = all(counts.values())
+    result = dict(enabled=enabled, eligible_rows=sum(eligible), eligible_by_split=counts,
+        reason=None if enabled else 'missing_verified_force_source_or_group' if name == 'force_proxy' else
+        'no_synchronized_source_qualified_labels' if not any(eligible) else
+        'missing_qualified_labels_in_one_or_more_independent_splits')
+    if not enabled:
+        result.update(optimization=None, splits=None, uncertainty_calibration=None)
     return result
+
+
+def _geometry_stages(labels):
+    center_rows, wire_rows = [], []
+    for label in labels:
+        center, wire = {}, {key: value for key, value in label.items() if key != 'privileged_state'}
+        if 'privileged_state' in label:
+            target, valid = label['privileged_state']
+            center_valid = torch.zeros_like(valid)
+            center_valid[_CENTER_XYZ] = valid[_CENTER_XYZ]
+            wire_valid = valid & ~center_valid
+            if center_valid.any():
+                center['privileged_state'] = target, center_valid
+            if wire_valid.any():
+                wire['privileged_state'] = target, wire_valid
+        center_rows.append(center)
+        wire_rows.append(wire)
+    return {'center_xyz':center_rows, 'wire_geometry':wire_rows}
 
 
 def calibrate_residuals(group_errors, *, coverage=.95):
@@ -649,15 +783,43 @@ def fit_state_heads(model, rows, split, *, epochs, batch_size, device='cpu', lr=
     trained = {}
     for name in HEADS:
         record = admission[name]
-        if not record['enabled']:
+        if not record['enabled'] and name != 'geometry':
             continue
         labels = [_targets(row, name, criterion) for row in rows]
-        indices = [i for i in split['train_indices'] if labels[i]]
-        # Fresh optimizer state prevents prior-stage Adam momentum from
-        # updating masked rows of the shared 371D projection.
-        trained[name] = labels
-        record['optimization'] = _optimize_head(model, rows, labels, indices, epochs=epochs,
-            batch_size=batch_size, device=device, lr=lr, criterion=criterion)
+        if name == 'geometry':
+            stages = _geometry_stages(labels)
+            record['stages'] = {key:_admission(key, stage, split) for key, stage in stages.items()}
+            record['enabled'] = any(stage['enabled'] for stage in record['stages'].values())
+            if not record['enabled']:
+                record.update(reason='no_geometry_stage_with_independent_labels', optimization=None,
+                              splits=None, uncertainty_calibration=None)
+                continue
+            optimized = []
+            merged_labels = [{} for _ in rows]
+            for key, stage_labels in stages.items():
+                stage = record['stages'][key]
+                if not stage['enabled']:
+                    continue
+                indices = [i for i in split['train_indices'] if stage_labels[i]]
+                stage['optimization'] = _optimize_head(model, rows, stage_labels, indices, epochs=epochs,
+                    batch_size=batch_size, device=device, lr=lr, criterion=criterion)
+                masks = [label['privileged_state'][1] for label in stage_labels if 'privileged_state' in label]
+                stage['supervised_indices'] = torch.stack(masks).any(0).nonzero().flatten().tolist() if masks else []
+                optimized.extend(stage['optimization'])
+                for combined, label in zip(merged_labels, stage_labels):
+                    for field, (target, mask) in label.items():
+                        if field in combined:
+                            mask = combined[field][1] | mask
+                        combined[field] = target, mask
+            trained[name] = merged_labels
+            record['optimization'] = optimized
+        else:
+            indices = [i for i in split['train_indices'] if labels[i]]
+            # Fresh Adam state prevents prior-stage momentum from updating
+            # masked rows of the shared privileged-state projection.
+            trained[name] = labels
+            record['optimization'] = _optimize_head(model, rows, labels, indices, epochs=epochs,
+                batch_size=batch_size, device=device, lr=lr, criterion=criterion)
     for name, labels in trained.items():
         record = admission[name]
         record['splits'] = {}
@@ -703,12 +865,19 @@ def run_training_mode(model, rows, *, mode='formal_training', epochs=1, batch_si
             head.update(enabled=False, reason='schema_test_no_optimization')
         return dict(report, status='schema_validated')
     if mode == 'formal_training':
+        criterion = StereoEstimationLoss()
+        geometry_labels = [_targets(row, 'geometry', criterion) for row in rows]
+        stages = {**{key:_admission(key, labels, split) for key, labels in
+            _geometry_stages(geometry_labels).items()},
+            **{key:value for key,value in heads.items() if key != 'geometry'}}
         if split['status'] != 'ready':
-            return dict(report, status=split['status'])
+            return dict(report, status=split['status'], stages=stages)
         heads = fit_state_heads(model, rows, split, epochs=epochs, batch_size=batch_size, device=device, lr=lr)
+        stages.update(heads['geometry'].get('stages', {}))
+        stages.update({key:value for key,value in heads.items() if key != 'geometry'})
         trained = any(x['enabled'] for x in heads.values())
         return dict(report, heads=heads, status='formal_state_fit_completed' if trained else 'blocked_state_supervision',
-                    state_training_started=trained)
+                    state_training_started=trained, stages=stages)
     criterion = StereoEstimationLoss()
     labels = []
     audit = []
@@ -768,10 +937,13 @@ def main(argv=None):
     config_args, _ = config_parser.parse_known_args(argv)
     parser = ArgumentParser(description=__doc__)
     parser.add_argument('--config', type=Path)
-    parser.add_argument('--candidate', type=Path, required=True)
-    parser.add_argument('--candidate-sha256', required=True)
-    parser.add_argument('--raw', type=Path, required=True)
-    parser.add_argument('--raw-sha256', required=True)
+    sources = parser.add_mutually_exclusive_group(required=True)
+    sources.add_argument('--candidate', type=Path)
+    sources.add_argument('--dataset-manifest', type=Path)
+    parser.add_argument('--dataset-manifest-sha256')
+    parser.add_argument('--candidate-sha256')
+    parser.add_argument('--raw', type=Path)
+    parser.add_argument('--raw-sha256')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--epochs', type=int, default=1)
     parser.add_argument('--batch-size', type=int, default=4)
@@ -785,7 +957,19 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if min(args.epochs, args.batch_size) < 1:
         parser.error('positive epochs and batch size required')
-    rows = read_candidate(args.candidate, raw=args.raw, sha256=args.candidate_sha256, raw_sha256=args.raw_sha256)
+    single_source = (args.raw, args.candidate_sha256, args.raw_sha256)
+    if args.dataset_manifest is not None:
+        if not args.dataset_manifest_sha256 or any(single_source):
+            parser.error('dataset manifest requires its SHA and excludes single-source arguments')
+        rows, evidence = read_candidate_dataset(args.dataset_manifest, expected_sha256=args.dataset_manifest_sha256)
+        provenance = dict(dataset_manifest_sha256=evidence['manifest_sha256'], dataset_sources=evidence['sources'],
+                          calibration_sha256=evidence['calibration_sha256'],
+                          observation_preprocessor_sha256=evidence['observation_preprocessor_sha256'])
+    else:
+        if not all(single_source) or args.dataset_manifest_sha256 is not None:
+            parser.error('candidate requires --raw, --candidate-sha256 and --raw-sha256')
+        rows = read_candidate(args.candidate, raw=args.raw, sha256=args.candidate_sha256, raw_sha256=args.raw_sha256)
+        provenance = dict(candidate_sha256=args.candidate_sha256, raw_sha256=args.raw_sha256)
     out = new_run(args.output)
     torch.manual_seed(args.seed)
     model = StereoStateEstimator(history=rows[0]['history']['history_valid'].shape[1], point_coordinate_mode='palms',
@@ -800,10 +984,9 @@ def main(argv=None):
                             successful_demonstration_pool=False,
                             state_contract_sha256=TaskStateAdapter().state_contract_sha256,
                             model_config=dict(embed_dim=128,num_layers=2,history=model.history,point_coordinate_mode='palms'),
-                            candidate_sha256=args.candidate_sha256, raw_sha256=args.raw_sha256), stream)
+                            **provenance), stream)
         report['checkpoint_sha256'] = file_sha256(out/'state_estimator.pt')
-    report.update(candidate_sha256=args.candidate_sha256, raw_sha256=args.raw_sha256,
-        source_scope='verified_native_capture_replayed_offline', seed=args.seed, lr=args.lr,
+    report.update(**provenance, source_scope='verified_native_capture_replayed_offline', seed=args.seed, lr=args.lr,
         implementation_sha256=file_sha256(Path(__file__)), epochs=args.epochs, batch_size=args.batch_size,
         config_sha256=file_sha256(args.config) if args.config else None)
     write_json_new(out/'state_supervision_report.json', report)

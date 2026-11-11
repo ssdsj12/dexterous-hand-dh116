@@ -2620,6 +2620,17 @@
       "scope": "source_config_tests_processed_reports_only;raw_models_logs_excluded"
     }
   },
+  "state_multicohort_20261111": {
+    "report": "docs/superpowers/reports/2026-11-11-stereo-state-multicohort.md",
+    "dataset_manifest_supported": true,
+    "cpu_tests_passed": 99,
+    "reopened_historical_rows": 8,
+    "independent_physical_initials": 2,
+    "center_xyz_labeled_rows": 6,
+    "other_stage_labeled_rows": 0,
+    "formal_training": "blocked_insufficient_independent_groups",
+    "new_native_capture_count": 0
+  },
   "publication_workflow": {
     "policy": "AGENTS.md",
     "repository": "ssdsj12/dexterous-hand-dh116",

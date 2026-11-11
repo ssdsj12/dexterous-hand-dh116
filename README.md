@@ -1,3 +1,7 @@
+## 2026-11-11 — 双目状态监督多初态准入
+
+现有状态监督入口可读取绑定 SHA256 的多来源清单，并按物理初态和采集族分配 train、validation、test。历史数据回读为 8 行、2 个初态，只有 6 行 Center XYZ 标签。正式训练继续阻断。[验证报告](docs/superpowers/reports/2026-11-11-stereo-state-multicohort.md)
+
 ## 2026-11-11 — 按工作包持续发布
 
 每个完成验证的独立工作包自动提交并推送至 `codex/dh116-stereo-privileged-dagger`，随后核对 GitHub 远端提交和 Draft PR #2。失败工作包保留本地日志并发布必要的诊断与 `blocked` 状态。原生实验继续遵循独立批准门槛，8 初态同步采集仍待批准。[工作流程](AGENTS.md) · [readiness](docs/contracts/stereo_phase0_7_readiness.json)
