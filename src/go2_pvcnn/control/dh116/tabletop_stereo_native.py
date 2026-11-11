@@ -142,6 +142,8 @@ class NativeTensorBridge:
         self.checkpoint_sha256 = None
         self.camera = None
         self._teacher_checkpoint = None
+        self._teacher_policy_version = None
+        self._teacher_epoch_by_episode = {}
         self._teacher_pre_action = None
         self._teacher_actions = None
         styles = getattr(args, '_stereo_grasp_styles', ['pinch_thumb_index'])
@@ -255,6 +257,26 @@ class NativeTensorBridge:
             raise ValueError('one explicit complete action owner per environment required')
         self.action_owners = list(owners)
 
+    def bind_stereo_candidate_frame(self, packet, identities):
+        """Bind the already sampled stereo frame to the next Teacher-owned step."""
+        if (self._in_step or self.execution_owner != 'teacher'
+                or getattr(self, '_teacher_checkpoint', None) is not None):
+            raise ValueError('candidate stereo binding requires the independent Teacher collector')
+        calibration = require_sha(self.camera.calibration.sha256, 'native calibration SHA')
+        checkpoint = require_sha(self.checkpoint_sha256, 'candidate Teacher checkpoint SHA')
+        frame = packet.get('frame_id')
+        if (calibration == '0'*64 or checkpoint == '0'*64
+                or packet.get('calibration_sha256') != calibration
+                or type(frame) is not int or frame < 0 or frame != self.camera.last_frame
+                or packet.get('identity') != identities or len(identities) != self.n):
+            raise ValueError('candidate camera packet identity is absent or stale')
+        for row, actual in zip(identities,self.pre_action_identities(calibration)):
+            validate_identity(row)
+            if (row['frame_id'] != frame or row['simulation_timestamp'] != packet.get('simulation_time')
+                    or any(row.get(key) != value for key,value in actual.items())):
+                raise ValueError('candidate camera frame does not match the live control boundary')
+        self._stereo_candidate_pre_action = deepcopy(identities)
+
     def bind_camera(self, camera):
         """Bind the real camera object; configuration hashes are not readbacks."""
         calibration = require_sha(getattr(getattr(camera, 'calibration', None), 'sha256', None),
@@ -267,8 +289,15 @@ class NativeTensorBridge:
         self._teacher_pre_action = None
         self._teacher_actions = None
 
-    def bind_teacher_checkpoint(self, checkpoint):
+    def bind_teacher_checkpoint(self, checkpoint, *, policy_version=None):
         """Hash saved policy bytes before any physical Teacher action."""
+        if policy_version is not None and (type(policy_version) is not int or policy_version < 0):
+            raise ValueError('nonnegative integer Teacher policy version required')
+        if getattr(self, '_teacher_pre_action', None) is not None:
+            raise ValueError('cannot change Teacher policy epoch during a pending pre-action frame')
+        previous_version = getattr(self, '_teacher_policy_version', None)
+        if previous_version is not None and (policy_version is None or policy_version <= previous_version):
+            raise ValueError('Teacher policy epoch must advance at the next clean control boundary')
         if (getattr(self, '_teacher_checkpoint', None) is None
                 and any(self.identities.uid(i) in self._headers_written for i in range(self.n))):
             raise ValueError('Teacher checkpoint must be bound before episode physical evidence starts')
@@ -280,6 +309,9 @@ class NativeTensorBridge:
         self.set_execution_context(owner='teacher', checkpoint_sha256=sha)
         self.set_action_owners(['teacher']*self.n)
         self._teacher_checkpoint = path
+        self._teacher_policy_version = policy_version
+        if not hasattr(self, '_teacher_epoch_by_episode'):
+            self._teacher_epoch_by_episode = {}
 
     def _validate_teacher_binding(self):
         if (self.execution_owner != 'teacher' or self.action_owners != ['teacher']*self.n
@@ -312,6 +344,8 @@ class NativeTensorBridge:
                     or current[i] != requested[i]):
                 raise ValueError('camera identity must be exactly aligned with live Teacher pre-action state')
             row['checkpoint_sha256'] = self.checkpoint_sha256
+            if self._teacher_policy_version is not None:
+                row['policy_version'] = self._teacher_policy_version
         self._teacher_pre_action = deepcopy(actual)
         self._teacher_actions = None
         return deepcopy(actual)
@@ -343,8 +377,34 @@ class NativeTensorBridge:
                 or float(self.world.sim.current_time) <= row['simulation_timestamp']
                 or not torch.equal(packet['action'][i], self._teacher_actions['actually_issued_action'][i])):
             raise ValueError('native raw sample identity/action differs from bound Teacher execution')
-        return dict(calibration_sha256=row['calibration_sha256'], frame_id=row['frame_id'],
+        result = dict(calibration_sha256=row['calibration_sha256'], frame_id=row['frame_id'],
             checkpoint_sha256=row['checkpoint_sha256'], pre_action_identity=deepcopy(row))
+        if self._teacher_policy_version is not None:
+            if row.get('policy_version') != self._teacher_policy_version:
+                raise ValueError('native raw sample differs from bound Teacher policy epoch')
+            result['policy_version'] = self._teacher_policy_version
+        return result
+
+    def _record_teacher_policy_epoch(self, i, identity):
+        """Append one epoch boundary for a real first use without rewriting episode_start."""
+        version = identity.get('policy_version')
+        if version is None:
+            return
+        before = identity['pre_action_identity']
+        uid, sha = before['episode_uid'], identity['checkpoint_sha256']
+        previous = self._teacher_epoch_by_episode.get(uid)
+        if previous == (version, sha):
+            return
+        event = dict(kind='teacher_policy_epoch_start', run_uuid=self.identities.run_uuid, env_id=i,
+            episode_uid=uid, reset_id=before['reset_id'], policy_tick=before['policy_tick'],
+            first_physics_step=int(self.device_world._physics_steps),
+            previous_policy_version=previous[0] if previous is not None else None,
+            previous_checkpoint_sha256=previous[1] if previous is not None else None,
+            **identity)
+        path = self.output / 'teacher_policy_epochs.jsonl'
+        with path.open('a' if self._teacher_epoch_by_episode else 'x', encoding='utf-8') as stream:
+            stream.write(json.dumps(event, allow_nan=False, separators=(',', ':')) + '\n')
+        self._teacher_epoch_by_episode[uid] = (version, sha)
 
     def palm_poses(self):
         return torch.stack([hand.data.body_link_pose_w[:, i] for hand, (_, i) in
@@ -382,6 +442,15 @@ class NativeTensorBridge:
             key = self.identities.uid(i)
             teacher_identity = (self._teacher_capture_identity(i, packet)
                 if getattr(self, '_teacher_checkpoint', None) is not None else {})
+            candidate = getattr(self, '_stereo_candidate_pre_action', None)
+            candidate_identity = {}
+            if candidate is not None:
+                before = candidate[i]
+                if (before['episode_uid'] != key or before['policy_tick'] != self.policy_tick
+                        or self.execution_owner != 'teacher' or self.action_owners[i] != 'teacher'):
+                    raise ValueError('native candidate execution no longer matches the bound stereo frame')
+                candidate_identity = dict(frame_id=before['frame_id'],
+                    calibration_sha256=before['calibration_sha256'], pre_action_identity=deepcopy(before))
             reference = torch.as_tensor(task.surface_reference_bottom_m,
                 device=task.m['bottom'].device).expand(self.n)[i]
             if hasattr(self, '_headers_written') and key not in self._headers_written:
@@ -399,6 +468,7 @@ class NativeTensorBridge:
                     runtime=self.runtime_descriptor, policy_tick=self.policy_tick)
                 header.update(self._task_binding())
                 header.update(teacher_identity)
+                header.update(candidate_identity)
                 self._raw.write(json.dumps(header, allow_nan=False, separators=(',', ':')) + '\n')
                 self._headers_written.add(key)
             row = dict(run_uuid=self.identities.run_uuid, env_id=i, episode_uid=key,
@@ -439,7 +509,9 @@ class NativeTensorBridge:
                 checkpoint_sha256=getattr(self, 'checkpoint_sha256', None))
             row['runtime'] = getattr(self, 'runtime_descriptor', None)
             row.update(self._task_binding())
+            row.update(candidate_identity)
             if teacher_identity:
+                self._record_teacher_policy_epoch(i, teacher_identity)
                 row.update(teacher_identity)
                 row.update({name: None if value is None else value[i]
                     for name, value in self._teacher_actions.items()})
@@ -451,6 +523,24 @@ class NativeTensorBridge:
                     applied_targets=dict(controller_joint_command_rad=task.command[i],
                         actual_sdk_joint_target_rad=sdk,
                         source='pre_reset_physics_sample;not_normalized_applied_action'))
+                # Palm projection has actual before/after telemetry. The joint
+                # controller provides accepted targets and a pressure mask, but
+                # no unconstrained/projected joint pair at this sample boundary.
+                diagnostics = getattr(w, 'last_action_diagnostics', None)
+                if (isinstance(diagnostics, dict)
+                        and diagnostics.get('physics_step') == row['physics_step']
+                        and diagnostics.get('timestamp_s') == row['timestamp']
+                        and all(name in diagnostics for name in ('pre_projection_palm_target_m',
+                            'projected_palm_target_m', 'projection_reasons'))):
+                    row['palm_safety_projection'] = {
+                        name: diagnostics[name][i] for name in ('pre_projection_palm_target_m',
+                            'projected_palm_target_m', 'projection_reasons')
+                    }
+                else:
+                    row['palm_safety_projection'] = None
+                pressure_limited = getattr(task, 'pressure_limited', None)
+                row['joint_pressure_limited'] = None if pressure_limited is None else pressure_limited[i]
+                row['joint_safety_projection'] = None
             formal_keys = ('object_relative', 'object_quat', 'wrist_pose', 'effective_pad_loads_n',
                 'effective_pad_vectors_w', 'effective_pad_depth_m', 'rejected_contact_loads_n', 'object_velocity')
             if all(name in task.m for name in formal_keys):
@@ -504,6 +594,7 @@ class NativeTensorBridge:
             obs, reward, done, extra = self.env.step(issued_actions)
         finally:
             self._in_step = False
+            self._stereo_candidate_pre_action = None
         if strict_teacher:
             if len(self._teacher_step_rows) != self.n:
                 raise RuntimeError('Teacher execution lacks actual aligned native raw identity samples')

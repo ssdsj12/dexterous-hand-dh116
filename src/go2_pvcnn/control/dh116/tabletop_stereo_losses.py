@@ -110,6 +110,8 @@ class StereoEstimationLoss(nn.Module):
         allowed=[r.get('deployment_allowed') is True and r.get('loss_type')!='none'
             and r.get('supervision_status')!='NA' and r.get('student_source')!='unobservable' for r in rows]
         self.register_buffer('state_allowed',torch.tensor(allowed,dtype=torch.bool))
+        self.register_buffer('state_classification', torch.tensor(
+            [r['loss_type']=='classification' for r in rows], dtype=torch.bool), persistent=False)
         self.required={key:[r['index'] for r in rows if key in r.get('required_validity_keys',[])]
             for key in {k for r in rows for k in r.get('required_validity_keys',[])}}
         self.rotations=self.state_contract.get('rotation_groups',[])

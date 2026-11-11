@@ -1,4 +1,5 @@
 """On-policy tanh PPO with owned samples and separate actor/critic observations."""
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 import math
 import uuid
@@ -23,11 +24,21 @@ class PPOConfig:
     max_grad_norm: float = .5
     min_std: float = .001
     max_std: float = .3
+    target_kl: float | None = None
+    kl_backtrack_steps: int = 0
 
     def __post_init__(self):
         for name, value in asdict(self).items():
+            if name == 'target_kl' and value is None:
+                continue
             if isinstance(value, bool) or not isinstance(value, (float, int)) or not math.isfinite(value):
                 raise ValueError('finite numeric PPO config required: ' + name)
+        if self.target_kl is not None and self.target_kl <= 0:
+            raise ValueError('positive target_kl required')
+        if type(self.kl_backtrack_steps) is not int or not 0 <= self.kl_backtrack_steps <= 4:
+            raise ValueError('kl_backtrack_steps must be an integer from 0 through 4')
+        if self.kl_backtrack_steps and self.target_kl is None:
+            raise ValueError('kl_backtrack_steps requires target_kl')
         if not (0 <= self.gamma <= 1 and 0 <= self.lam <= 1 and 0 < self.clip < 1
                 and self.lr > 0 and self.entropy_coef >= 0 and self.value_coef >= 0
                 and self.max_grad_norm > 0 and 0 < self.min_std <= self.max_std):
@@ -264,21 +275,67 @@ class PPOTrainer:
 
     @torch.no_grad()
     def _check_frozen_policy(self, batch):
+        errors = dict(mean=0., std=0., log_probability=0., value=0.)
         for indices in self._visual_chunks(torch.arange(len(batch['values']))):
             mu = self.model.latent_mean(self._actor_input(_index(batch['actor_obs'],indices)))
             std = self.model.log_std.exp().expand_as(mu)
             z = batch['latent_actions'][indices].to(self.device)
             actual = squashed_log_prob(z, mu, std)
             for name, current, old in (('mean',mu,batch['old_mu'][indices]),('std',std,batch['old_std'][indices]),
-                    ('likelihood',actual,batch['old_log_prob'][indices])):
+                    ('log_probability',actual,batch['old_log_prob'][indices])):
+                errors[name] = max(errors[name], float((current.cpu() - old).abs().max()))
                 if not torch.allclose(current.cpu(),old,atol=2e-5,rtol=2e-5):
-                    raise RuntimeError('on-policy frozen '+name+' changed before PPO update')
+                    label = 'likelihood' if name == 'log_probability' else name
+                    raise RuntimeError('on-policy frozen '+label+' changed before PPO update')
             value = self.model.value(batch['critic_obs'][indices].to(self.device))
+            errors['value'] = max(errors['value'], float((value.cpu() - batch['values'][indices]).abs().max()))
             if not torch.allclose(value.cpu(),batch['values'][indices],atol=2e-5,rtol=2e-5):
                 raise RuntimeError('critic policy changed during on-policy rollout')
             # CPU/GPU tanh kernels may round differently; check collection device.
             if not torch.equal(z.tanh().cpu(),batch['actions'][indices]):
                 raise RuntimeError('saved action/latent sample mismatch')
+        return {f'max_abs_{key}_error': value for key, value in errors.items()}
+
+    @torch.no_grad()
+    def _minibatch_exact_kl(self, batch, indices):
+        total = 0.
+        for chunk in self._visual_chunks(indices):
+            mu = self.model.latent_mean(self._actor_input(_index(batch['actor_obs'], chunk)))
+            std = self.model.log_std.exp().expand_as(mu)
+            total += float(latent_gaussian_kl(batch['old_mu'][chunk].to(self.device),
+                batch['old_std'][chunk].to(self.device), mu, std).clamp_min(0.).sum())
+        return total / len(indices)
+
+    def _optimizer_step(self, batch):
+        if not self.config.kl_backtrack_steps:
+            self.optimizer.step()
+            self.project_noise()
+            return self.config.lr, []
+
+        policy = deepcopy(self.model.state_dict())
+        optimizer = deepcopy(self.optimizer.state_dict())
+        all_rows = torch.arange(len(batch['values']))
+        attempts = []
+        for attempt in range(self.config.kl_backtrack_steps + 1):
+            lr = self.config.lr * 0.1 ** attempt
+            self.optimizer.param_groups[0]['lr'] = lr
+            try:
+                self.optimizer.step()
+                self.project_noise()
+                kl = self._minibatch_exact_kl(batch, all_rows)
+            except Exception:
+                self.model.load_state_dict(policy)
+                self.optimizer.load_state_dict(optimizer)
+                raise
+            attempts.append(dict(lr=lr, exact_full_rollout_kl=kl))
+            if kl <= self.config.target_kl:
+                self.optimizer.param_groups[0]['lr'] = self.config.lr
+                return lr, attempts
+            self.model.load_state_dict(policy)
+            # Adam tensors in load_state_dict can alias input tensors on the
+            # current device. Keep the rollback snapshot private across trials.
+            self.optimizer.load_state_dict(deepcopy(optimizer))
+        return None, attempts
 
     def update(self):
         if self._pending is not None:
@@ -286,19 +343,25 @@ class PPOTrainer:
         if not self.rollout.full:
             raise RuntimeError('complete nonempty rollout required')
         batch = self.rollout.batch(resolve_actor=False)
-        self._check_frozen_policy(batch)
+        frozen_check = self._check_frozen_policy(batch)
         returns, advantage = self.rollout.returns_and_advantages(self.config)
         advantage = ((advantage - advantage.mean()) / advantage.std(unbiased=False).clamp_min(1e-8)).detach()
-        total, count = len(advantage), 0
+        total = len(advantage)
+        trace = []
+        early_stopped = False
+        accepted_updates, optimized_samples = 0, 0
         aggregate = dict(policy_loss=0., value_loss=0., entropy=0., kl=0.)
-        for _ in range(self.config.epochs):
-            for indices in torch.randperm(total).tensor_split(min(total, self.config.minibatches)):
+        for epoch in range(self.config.epochs):
+            minibatches = torch.randperm(total).tensor_split(min(total, self.config.minibatches))
+            for minibatch, indices in enumerate(minibatches):
                 self.optimizer.zero_grad(set_to_none=True)
                 # Keep one entropy draw and one optimizer/clip step per original
                 # minibatch. Weighted chunk means give the same PPO objective,
                 # including a final short chunk, without a whole visual batch.
                 entropy_noise=torch.randn(len(indices),24,device=self.device,dtype=batch['old_mu'].dtype)
                 offset=0
+                metrics = dict.fromkeys(aggregate, 0.)
+                sampled_approx_kl, ratio_clipped_fraction = 0., 0.
                 for chunk in self._visual_chunks(indices):
                     actor_obs=self._actor_input(_index(batch['actor_obs'],chunk))
                     mu=self.model.latent_mean(actor_obs)
@@ -306,7 +369,8 @@ class PPOTrainer:
                     z=batch['latent_actions'][chunk].to(self.device)
                     log_prob=squashed_log_prob(z,mu,std)
                     old_log=batch['old_log_prob'][chunk].to(self.device)
-                    ratio=(log_prob-old_log).exp()
+                    log_ratio=log_prob-old_log
+                    ratio=log_ratio.exp()
                     adv=advantage[chunk].to(self.device)
                     policy_loss=-torch.minimum(ratio*adv,
                         ratio.clamp(1-self.config.clip,1+self.config.clip)*adv).mean()
@@ -323,18 +387,42 @@ class PPOTrainer:
                     with torch.no_grad():
                         kl=latent_gaussian_kl(batch['old_mu'][chunk].to(self.device),
                             batch['old_std'][chunk].to(self.device),mu,std).mean()
+                        sampled_approx_kl += float((torch.expm1(log_ratio) - log_ratio).mean()) * weight
+                        ratio_clipped_fraction += float(((ratio - 1.).abs() > self.config.clip).float().mean()) * weight
                     for name,item in (('policy_loss',policy_loss),('value_loss',value_loss),('entropy',entropy),('kl',kl)):
-                        aggregate[name]+=float(item.detach())*weight
+                        metrics[name]+=float(item.detach())*weight
                     offset+=len(chunk)
                     del actor_obs,mu,std,loss
                 norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.max_grad_norm,
                     error_if_nonfinite=True)
-                self.optimizer.step()
-                self.project_noise()
-                count += 1
-        self.policy_version += 1
-        self.counters['updates'] += 1
+                accepted_lr, guard_attempts = self._optimizer_step(batch)
+                target = self.config.target_kl
+                post_kl = (None if target is None or accepted_lr is None
+                    else self._minibatch_exact_kl(batch, indices))
+                trace.append(dict(epoch=epoch, minibatch=minibatch, samples=len(indices),
+                    pre_step_exact_kl=metrics['kl'], post_step_exact_kl=post_kl,
+                    sampled_approx_kl=sampled_approx_kl, entropy=metrics['entropy'],
+                    probability_ratio_clip_fraction=ratio_clipped_fraction,
+                    gradient_norm_before_clip=float(norm), accepted_lr=accepted_lr,
+                    kl_guard_attempts=guard_attempts))
+                if accepted_lr is None:
+                    early_stopped = True
+                    break
+                accepted_updates += 1
+                optimized_samples += len(indices)
+                for name, value in metrics.items():
+                    aggregate[name] += value
+                if target is not None and not guard_attempts and post_kl > target:
+                    early_stopped = True
+                    break
+            if early_stopped:
+                break
+        if accepted_updates:
+            self.policy_version += 1
+            self.counters['updates'] += 1
         self._new_rollout()
-        return dict({key: value/count for key, value in aggregate.items()}, samples=total,
-            optimized_samples=total*self.config.epochs, minibatch_updates=count,
-            policy_version=self.policy_version)
+        return dict({key: value/accepted_updates if accepted_updates else None
+            for key, value in aggregate.items()}, samples=total,
+            optimized_samples=optimized_samples, minibatch_updates=accepted_updates,
+            policy_version=self.policy_version, target_kl=self.config.target_kl,
+            early_stopped=early_stopped, frozen_policy_check=frozen_check, minibatch_trace=trace)

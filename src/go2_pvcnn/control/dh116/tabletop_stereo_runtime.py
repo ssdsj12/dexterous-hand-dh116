@@ -21,7 +21,8 @@ from .tabletop_stereo_preprocessing import processing_contract
 class NativeStereoEnvironment:
     evidence_scope = 'native_runtime_capture_unqualified'
 
-    def __init__(self, bridge, camera_config, *, history=4, owner='student', checkpoint_sha256=None):
+    def __init__(self, bridge, camera_config, *, history=4, owner='student', checkpoint_sha256=None,
+                 capture_state_reference=False):
         self.bridge = bridge
         self.evidence_scope = getattr(bridge, 'evidence_scope', 'unqualified')
         self.n, self.device = bridge.n, bridge.device
@@ -33,7 +34,15 @@ class NativeStereoEnvironment:
         else:bridge.camera=self.camera
         self.history = StereoHistory(self.n, history, device=self.device)
         self.extractor = (WirePointExtractor() if self.preprocessing['perception']['algorithm']=='warm_colour_visible_simple_path_ZhangSuen_v1'
-            else TrackedWirePointExtractor())
+            else TrackedWirePointExtractor(point_sampling=self.preprocessing['perception']['point_sampling'],
+                ribbon_radius_px=self.preprocessing['perception']['ribbon_radius_px']))
+        self._state_reference_reader = None
+        if capture_state_reference:
+            if owner != 'teacher' or not isinstance(self.extractor, TrackedWirePointExtractor):
+                raise ValueError('state reference requires Teacher collection and tracked wire point pixels')
+            from .tabletop_stereo_reference import ValidationDepthReference
+            paths = list(bridge.device_world.wire.root_physx_view.prim_paths)
+            self._state_reference_reader = ValidationDepthReference.from_camera(self.camera, paths)
         self._cached = None
         self._pending_reset = torch.ones(self.n, device=self.device, dtype=torch.bool)
         self.bridge.set_execution_context(owner=owner, checkpoint_sha256=checkpoint_sha256)
@@ -112,13 +121,32 @@ class NativeStereoEnvironment:
         for identity in identities:
             identity['observation_preprocessor'] = self.preprocessing
             identity['observation_preprocessor_sha256'] = self.preprocessing['processing_sha256']
-        pair = self.camera.sample(identity=identities)
+        reference = None
+        if getattr(self,'_state_reference_reader',None) is not None:
+            from .tabletop_stereo_reference import capture_validation_pair
+            pair, reference, _ = capture_validation_pair(self.camera,self._state_reference_reader,identities)
+        else:
+            pair = self.camera.sample(identity=identities)
         extraction_kwargs=dict(reset_mask=self._pending_reset)
         if isinstance(self.extractor,TrackedWirePointExtractor):
             extraction_kwargs.update(timestamp=[row['simulation_timestamp'] for row in pair['identity']],
                 point_confidence=pair['confidence'])
         extraction = self.extractor.extract(pair['left_rgb'], pair['depth_m'], pair['valid'],
             pair['K_left'], pair['T_world_left'], **extraction_kwargs)
+        state_label_metadata = {}
+        if reference is not None:
+            from .tabletop_stereo_contract import file_sha256
+            from .tabletop_stereo_reference import archive_instance_reference
+            stem = self.bridge.output / f'state_reference_{self.bridge.policy_tick:06d}'
+            reference['wire_mask_source_artifact'] = archive_instance_reference(reference, stem.with_suffix('.ids.pt'))
+            path = stem.with_suffix('.pt')
+            with path.open('xb') as stream:
+                torch.save(reference,stream)
+            artifact = dict(path=str(path.resolve()),sha256=file_sha256(path))
+            for identity in pair['identity']:
+                identity['state_reference_artifact'] = artifact.copy()
+            state_label_metadata.update(state_wire_point_pixels=extraction['point_pixels'].clone(),
+                                        state_wire_track_ids=extraction['track_id'].clone())
         if 'timestamp_anomaly' in extraction:self._pending_reset|=extraction['timestamp_anomaly']
         h, w = pair['left_rgb'].shape[-2:]
         sensor = SensorBatch(left_rgb=pair['left_rgb'].float(), right_rgb=pair['right_rgb'].float(),
@@ -155,7 +183,8 @@ class NativeStereoEnvironment:
             privileged_identities=[dict(row) for row in pair['identity']],
             extra_labels={'stereo_disparity_px': pair['disparity_px'].clone(),
                 'training_label_source_scope':'simulation_SDK_encoder_readback_only',
-                'training_label_evidence_scope':self.evidence_scope,'hardware_feedback_qualified':False,**geometry},
+                'training_label_evidence_scope':self.evidence_scope,'hardware_feedback_qualified':False,**geometry,
+                **state_label_metadata},
             label_validity={'stereo_disparity_px': pair['valid'].clone()},
             state_sources=sources, force_qualification=None).validate()
         self.last_visible_geometry={key:(value.clone() if isinstance(value,torch.Tensor) else value) for key,value in geometry.items()}
@@ -184,6 +213,9 @@ class NativeStereoEnvironment:
     @torch.no_grad()
     def step(self, issued_actions):
         before = self.snapshot()
+        if (getattr(self.bridge, 'execution_owner', None) == 'teacher'
+                and getattr(self.bridge, '_teacher_checkpoint', None) is None):
+            self.bridge.bind_stereo_candidate_frame(self.last_camera_packet, before.identities)
         start = int(self.bridge.device_world._physics_steps)
         start_time = float(self.bridge.world.sim.current_time)
         critic, reward, done, extra = self.bridge.step(issued_actions)

@@ -35,7 +35,8 @@ class StereoRGBStudentRunner:
         self.depth = StereoDepth.from_config(config)
         self.history = StereoHistory(num_envs, self.actor.network_config['history'], device=device)
         self.extractor = (WirePointExtractor() if self.processing['perception']['algorithm']=='warm_colour_visible_simple_path_ZhangSuen_v1'
-            else TrackedWirePointExtractor())
+            else TrackedWirePointExtractor(point_sampling=self.processing['perception']['point_sampling'],
+                ribbon_radius_px=self.processing['perception']['ribbon_radius_px']))
         self.num_envs, self.device = num_envs, torch.device(device)
         if max_image_age_s <= 0:
             raise ValueError('positive image freshness limit required')
@@ -46,7 +47,9 @@ class StereoRGBStudentRunner:
 
     def _clear_temporal_state(self):
         self.history.reset(torch.ones(self.num_envs,device=self.device,dtype=torch.bool))
-        self.extractor=type(self.extractor)()
+        self.extractor=(TrackedWirePointExtractor(point_sampling=self.extractor.point_sampling,
+                        ribbon_radius_px=self.extractor.ribbon_radius_px)
+                        if isinstance(self.extractor, TrackedWirePointExtractor) else type(self.extractor)())
         self.last_visible_geometry=None
 
     @torch.no_grad()

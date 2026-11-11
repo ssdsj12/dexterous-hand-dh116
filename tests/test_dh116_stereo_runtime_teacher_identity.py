@@ -191,6 +191,19 @@ def test_training_saves_and_binds_actual_initial_checkpoint_before_first_rollout
     assert sample1['checkpoint_sha256'] == hashlib.sha256((tmp_path / 'teacher_update_000001.pt').read_bytes()).hexdigest()
     assert sample0['checkpoint_sha256'] != sample1['checkpoint_sha256']
     assert sample0['teacher_sampled_action'] == sample0['actually_issued_action']
+    events = [json.loads(line) for line in (tmp_path / 'teacher_policy_epochs.jsonl').read_text().splitlines()]
+    assert len([row for row in rows if row['kind'] == 'episode_start']) == 1
+    assert len(events) == 2
+    for version, (event, sample) in enumerate(zip(events, (sample0, sample1))):
+        assert event['kind'] == 'teacher_policy_epoch_start'
+        assert event['policy_version'] == sample['policy_version'] == version
+        assert event['episode_uid'] == sample['episode_uid'] == sample0['episode_uid']
+        assert event['reset_id'] == sample['reset_id'] == sample0['reset_id']
+        assert event['checkpoint_sha256'] == sample['checkpoint_sha256']
+        assert event['pre_action_identity'] == sample['pre_action_identity']
+    assert events[0]['previous_policy_version'] is None
+    assert events[1]['previous_policy_version'] == 0
+    assert events[1]['previous_checkpoint_sha256'] == sample0['checkpoint_sha256']
 
 
 

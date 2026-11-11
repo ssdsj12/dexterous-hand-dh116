@@ -103,7 +103,8 @@ class StereoStateEstimator(nn.Module):
         if self.task_state_metadata:
             valid=history.history_valid[:,-1] & history.image_valid[:,-1].all(-1) & history.point_valid[:,-1].any(-1)
             result['state_valid']=valid[:,None].expand(-1,371)
-            result['state_uncertainty']=torch.ones_like(result['privileged_state'])
+            # The adapter encodes missing uncertainty separately. No calibrated
+            # uncertainty head is part of this estimator.
         if self.point_coordinate_mode=='palms':
             mask=history.point_valid[:,-1]
             p=torch.where(mask[...,None],history.points_world[:,-1],0.)

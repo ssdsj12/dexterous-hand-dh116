@@ -4,6 +4,88 @@
   "scope": "software_delivery_and_measurement_status;not_a_native_qualification_artifact",
   "base_commit": "6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b",
   "branch": "codex/dh116-stereo-privileged-dagger",
+  "stereo_reliability_20261111": {
+    "reviewed_head": "085f6b8d96891b7c975c6382412e629d18e896b3",
+    "publication_authorized_for_this_round": true,
+    "release_review_target": "Draft PR #2",
+    "pre_push_cpu": {"passed": 93, "skipped": 0, "seconds": 6.34, "exit_code": 0},
+    "report": "docs/superpowers/reports/2026-11-11-stereo-reliability.md",
+    "final_cpu": {
+      "windows": {"passed": 1063, "skipped": 1, "seconds": 258.05, "exit_code": 0},
+      "server": {"passed": 1063, "skipped": 2, "seconds": 146.55, "exit_code": 0},
+      "isaac_modules_imported": [],
+      "protected_sha256_files_unchanged": 528
+    },
+    "wire_depth": {
+      "scope": "CPU replay of two previously captured native stereo configurations",
+      "environment_frames": 16,
+      "per_method_metric_rows": 112,
+      "pixel_maps": 56,
+      "front640_baseline_correct_5mm": [0, 0],
+      "front640_silhouette_ribbon3_correct_5mm": [6, 0],
+      "roll20_silhouette_ribbon3_points": [32, 32],
+      "roll20_silhouette_ribbon3_correct_5mm": [31, 30],
+      "roll20_fixed_reference_counts": [2009, 2054],
+      "accuracy_qualified": false,
+      "default_promoted": false,
+      "report": "docs/superpowers/reports/2026-11-11-stereo-wire-depth-reliability.md"
+    },
+    "state_supervision": {
+      "field_audit": "docs/contracts/stereo_task_state_143_field_audit.json",
+      "field_count": 143,
+      "direct_sensor_or_action_history": 48,
+      "vision_candidates": 95,
+      "vision_candidates_without_verified_teacher_labels_in_available_data": 92,
+      "actor_modes_cpu_verified": ["latent", "estimated_task_state", "hybrid"],
+      "offline_entry_implemented": true,
+      "archived_teacher_rows": 8,
+      "archived_teacher_independent_initial_groups": 2,
+      "archived_teacher_rows_with_rgb_and_field_masks": 0,
+      "bounded_native_reference_candidate": {
+        "process_exit_code": 0,
+        "environments": 2,
+        "steps": 4,
+        "rows": 8,
+        "live_physics_samples": 64,
+        "independent_initial_groups": 2,
+        "raw_verified_geometry_indices": [61, 62, 63],
+        "raw_verified_geometry_rows": 6,
+        "raw_verified_velocity_rows": 0,
+        "split_admission": "blocked_insufficient_independent_groups"
+      },
+      "native_supervised_training_started": false,
+      "heads_trained_on_native_labels": [],
+      "report": "docs/superpowers/reports/2026-11-11-stereo-state-supervision.md"
+    },
+    "teacher_ppo": {
+      "bounded_native_runs": 2,
+      "environments_per_run": 2,
+      "control_steps_per_run": 32,
+      "ppo_updates_per_run": 1,
+      "policy_transitions_per_run": 64,
+      "live_physics_samples_per_run": 506,
+      "policy_epoch_cross_update_cpu_verified": true,
+      "checkpoint_roundtrip_native_verified": true,
+      "kl_target": 0.02,
+      "early_stop_only_final_kl": 5.845236484892666,
+      "guarded_final_kl": 0.01997226942330599,
+      "native_grasp_successes": 0,
+      "formal_training_admitted": false,
+      "report": "docs/superpowers/reports/2026-11-11-dh116-teacher-ppo-stability.md"
+    },
+    "contact_and_solver": {
+      "historical_per_contact_source_replay_verified": true,
+      "R2_enabled": false,
+      "force_proxy_qualified": false,
+      "true_deformable_bidirectional_coupling_verified": false,
+      "report": "docs/superpowers/reports/2026-11-11-stereo-contact-source-blockers.md"
+    },
+    "dagger": {
+      "admission": "blocked_by_teacher_and_stereo_data",
+      "formal_BC_DAgger_or_Student_PPO_started": false,
+      "existing_gate_related_cpu_passed": 38
+    }
+  },
   "head_before_final_document_commit": "a8d19ee014339edf96131cfa06673aabb7b2d96e",
   "status_axes": {
     "implemented": "source/interface availability;pending factories listed separately",

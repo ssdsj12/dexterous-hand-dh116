@@ -41,6 +41,96 @@ def fill(engine, steps=None):
             torch.zeros(engine.num_envs), executed_actions=sample['actions'])
 
 
+def test_exact_post_step_kl_stops_before_the_next_minibatch():
+    ppo = module('ppo')
+    config = ppo.PPOConfig(epochs=3, minibatches=3, lr=.01, target_kl=.001)
+    engine = ppo.PPOTrainer(teacher(), config, rollout_steps=3, num_envs=2)
+    fill(engine)
+    result = engine.update()
+    trace = result['minibatch_trace']
+    assert len(trace) == result['minibatch_updates'] == 1
+    assert result['optimized_samples'] == trace[0]['samples'] == 2
+    assert result['early_stopped'] and result['target_kl'] == .001
+    assert trace[0]['pre_step_exact_kl'] == pytest.approx(0., abs=1e-6)
+    assert trace[0]['post_step_exact_kl'] > config.target_kl
+    assert trace[0]['sampled_approx_kl'] == pytest.approx(0., abs=1e-6)
+    assert result['frozen_policy_check']['max_abs_log_probability_error'] < 1e-5
+    assert engine.clean_boundary and engine.policy_version == 1
+
+
+def test_legacy_ppo_budget_is_unchanged_and_minibatch_trace_is_complete():
+    engine = trainer(steps=3, environments=2, epochs=2, minibatches=4)
+    fill(engine)
+    result = engine.update()
+    trace = result['minibatch_trace']
+    assert not result['early_stopped'] and result['target_kl'] is None
+    assert len(trace) == 8 and sum(row['samples'] for row in trace) == 12
+    assert all(math.isfinite(row['entropy']) for row in trace)
+    assert all(row['post_step_exact_kl'] is None for row in trace)
+    assert result['kl'] == pytest.approx(sum(row['pre_step_exact_kl'] for row in trace)/len(trace))
+
+
+def test_transactional_guard_backtracks_and_only_accepts_full_rollout_within_target():
+    ppo = module('ppo')
+    config = ppo.PPOConfig(epochs=1, minibatches=2, lr=.01, target_kl=.002, kl_backtrack_steps=3)
+    engine = ppo.PPOTrainer(teacher(), config, rollout_steps=3, num_envs=2)
+    fill(engine)
+    batch = engine.rollout.batch()
+    result = engine.update()
+    assert result['minibatch_updates'] > 0
+    first = result['minibatch_trace'][0]
+    assert first['kl_guard_attempts'][0]['exact_full_rollout_kl'] > config.target_kl
+    assert 0 < first['accepted_lr'] < config.lr
+    assert first['kl_guard_attempts'][-1]['exact_full_rollout_kl'] <= config.target_kl
+    assert engine._minibatch_exact_kl(batch, torch.arange(6)) <= config.target_kl
+    assert engine.optimizer.param_groups[0]['lr'] == config.lr
+
+
+def test_transactional_guard_rejects_without_mutating_policy_adam_or_version():
+    ppo = module('ppo')
+    config = ppo.PPOConfig(epochs=1, minibatches=2, lr=.01, target_kl=1e-12, kl_backtrack_steps=1)
+    engine = ppo.PPOTrainer(teacher(), config, rollout_steps=3, num_envs=2)
+    fill(engine)
+    model_before = copy.deepcopy(engine.model.state_dict())
+    adam_before = copy.deepcopy(engine.optimizer.state_dict())
+    result = engine.update()
+    assert result['early_stopped'] and result['minibatch_updates'] == result['optimized_samples'] == 0
+    assert len(result['minibatch_trace'][0]['kl_guard_attempts']) == 2
+    assert result['minibatch_trace'][0]['accepted_lr'] is None
+    assert engine.clean_boundary and engine.policy_version == engine.counters['updates'] == 0
+    assert engine.optimizer.state_dict() == adam_before
+    for name, value in engine.model.state_dict().items():
+        torch.testing.assert_close(value, model_before[name], rtol=0., atol=0.)
+
+
+def test_rejected_guard_attempts_restore_existing_adam_moments_and_step_counts():
+    from dataclasses import replace
+
+    engine = trainer(steps=3, environments=2, epochs=1, minibatches=2)
+    fill(engine)
+    assert engine.update()['minibatch_updates'] == 2
+    engine.config = replace(engine.config, target_kl=1e-14, kl_backtrack_steps=2)
+    fill(engine)
+    model_before = copy.deepcopy(engine.model.state_dict())
+    adam_before = copy.deepcopy(engine.optimizer.state_dict())
+    result = engine.update()
+    assert result['minibatch_updates'] == 0
+    assert engine.policy_version == engine.counters['updates'] == 1
+    adam_after = engine.optimizer.state_dict()
+    assert adam_after['param_groups'] == adam_before['param_groups']
+    for key, entry in adam_before['state'].items():
+        for name, tensor in entry.items():
+            torch.testing.assert_close(adam_after['state'][key][name], tensor, rtol=0., atol=0.)
+    for name, value in engine.model.state_dict().items():
+        torch.testing.assert_close(value, model_before[name], rtol=0., atol=0.)
+
+
+@pytest.mark.parametrize('invalid', [0., -.1, float('inf'), True, '0.02'])
+def test_ppo_kl_target_rejects_invalid_values(invalid):
+    with pytest.raises(ValueError, match='target_kl'):
+        module('ppo').PPOConfig(target_kl=invalid)
+
+
 def test_teacher_topology_distribution_and_separate_critic():
     model = teacher()
     actor = [m for m in model.actor if isinstance(m, nn.Linear)]

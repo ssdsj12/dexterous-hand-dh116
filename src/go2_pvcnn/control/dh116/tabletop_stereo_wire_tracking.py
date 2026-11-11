@@ -5,12 +5,14 @@ association hypothesis, not a simulator/material-point identity qualification.
 Metric arc coordinates restart after a depth hole; pixel arc retains the complete
 observed image path. Neither coordinate interpolates a hidden 3D segment.
 """
+from collections import deque
 import math
 
 import numpy as np
 import torch
 
 from .tabletop_stereo_geometry import backproject, transform_points
+from .tabletop_stereo_wire_matching import wire_colour_mask
 
 
 def normalized_visible_paths(skeleton):
@@ -168,6 +170,29 @@ def _reverse_descriptor(descriptor):
                 length=descriptor['length'])
 
 
+def _ribbon_pixels(paths, foreground, measured, radius):
+    """Measured pixels reachable within a bounded walk on their RGB component."""
+    height, width = measured.shape
+    selected = []
+    for component, path in enumerate(paths):
+        seen = {tuple(pixel) for pixel in path}
+        frontier = deque((tuple(pixel), index, 0) for index, pixel in enumerate(path))
+        while frontier:
+            (y, x), index, distance = frontier.popleft()
+            if distance == radius:
+                continue
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    yy, xx = int(y + dy), int(x + dx)
+                    if (0 <= yy < height and 0 <= xx < width and foreground[yy, xx]
+                            and (yy, xx) not in seen):
+                        seen.add((yy, xx))
+                        frontier.append(((yy, xx), index, distance + 1))
+                        if measured[yy, xx]:
+                            selected.append((component, index, yy, xx))
+    return sorted(selected)
+
+
 class TrackedWirePointExtractor:
     """Sensor-only visible fragments; fixed-capacity tokens with explicit masks.
 
@@ -178,13 +203,21 @@ class TrackedWirePointExtractor:
     [B,H,W] in [0,1]; it is copied only at valid observed depth pixels.
     """
     def __init__(self, *, point_count=128, identity_motion_limit_m=.005,
-                 max_timestamp_gap_s=.5, association_margin=.15):
+                 max_timestamp_gap_s=.5, association_margin=.15, point_sampling='centerline',
+                 ribbon_radius_px=1):
         if (not isinstance(point_count, int) or not 2 <= point_count <= 128
                 or not math.isfinite(identity_motion_limit_m) or identity_motion_limit_m <= 0
                 or not math.isfinite(max_timestamp_gap_s) or max_timestamp_gap_s <= 0
                 or not math.isfinite(association_margin) or association_margin <= 0):
             raise ValueError('2..128 samples and positive finite tracking limits required')
+        if point_sampling not in ('centerline', 'observed_ribbon'):
+            raise ValueError('wire point sampling must be centerline or observed_ribbon')
+        if (type(ribbon_radius_px) is not int or not 1 <= ribbon_radius_px <= 3
+                or point_sampling == 'centerline' and ribbon_radius_px != 1):
+            raise ValueError('ribbon radius must be 1..3 pixels in observed_ribbon mode')
         self.point_count = point_count
+        self.point_sampling = point_sampling
+        self.ribbon_radius_px = ribbon_radius_px
         self.identity_motion_limit_m = float(identity_motion_limit_m)
         self.max_timestamp_gap_s = float(max_timestamp_gap_s)
         self.association_margin = float(association_margin)
@@ -282,8 +315,7 @@ class TrackedWirePointExtractor:
             times = time_tensor.tolist()
 
         # Build and validate all RGB topology before looking up any depth.
-        candidate = ((left_rgb[:, 0] > 1.07 * left_rgb[:, 1])
-                     & (left_rgb[:, 1] > 1.1 * left_rgb[:, 2]) & (left_rgb[:, 0] > .12))
+        candidate = wire_colour_mask(left_rgb)
         image_paths, reasons, rejected_components = [], [], []
         for mask in candidate.cpu().numpy():
             paths, reason, rejected = _paths_from_mask(mask)
@@ -298,6 +330,7 @@ class TrackedWirePointExtractor:
         component_id = torch.full(shape, -1, device=device, dtype=torch.long)
         track_id = torch.full_like(component_id, -1)
         depth_segment_id = torch.full_like(component_id, -1)
+        provenance = torch.zeros(shape, device=device, dtype=torch.uint8)
         pixels = torch.full((*shape, 2), -1, device=device, dtype=torch.long)
         arc_length = world.new_full(shape, float('nan'))
         arc_length_px = world.new_full(shape, float('nan'))
@@ -312,6 +345,8 @@ class TrackedWirePointExtractor:
         component_count = torch.tensor([len(p) for p in image_paths], device=device, dtype=torch.long)
         rejected_count = torch.tensor([len(rows) for rows in rejected_components], device=device, dtype=torch.long)
         sampling_arc_space = [[] for _ in range(n)]
+        surface_capacity = self.point_count // 4 if self.point_sampling == 'observed_ribbon' else 0
+        centerline_capacity = self.point_count - surface_capacity
         for env, paths in enumerate(image_paths):
             now, previous_time = times[env], self._times[env]
             bad_time = (not math.isfinite(now) or (previous_time is not None
@@ -334,7 +369,7 @@ class TrackedWirePointExtractor:
             descriptors = [_descriptor(curve, good) for _, curve, good in curves]
             old = self._history[env]
             matches = self._associate(descriptors, old, now)
-            budgets = _budgets(paths, self.point_count)
+            budgets = _budgets(paths, centerline_capacity)
             truncated[env] = any(budget < len(path) for budget, path in zip(budgets, paths))
             history, cursor, next_segment = [], 0, 0
             all_matched = bool(paths)
@@ -385,6 +420,7 @@ class TrackedWirePointExtractor:
                 xyz[env, dest] = curve[indices]
                 valid[env, dest] = good[indices]
                 visibility[env, dest] = True
+                provenance[env, dest] = 1  # observed centerline 2D sample, possibly no depth
                 component_id[env, dest] = component
                 track_id[env, dest] = identity
                 pixels[env, dest] = pixel[indices]
@@ -398,13 +434,29 @@ class TrackedWirePointExtractor:
                     chosen = pixel[indices]
                     confidence[env, dest] = point_confidence[env, chosen[:, 0], chosen[:, 1]] * good[indices]
                 cursor += count
+            if surface_capacity:
+                measured = (candidate[env] & torch.isfinite(world[env]).all(-1)).cpu().numpy()
+                surface = _ribbon_pixels(paths, candidate[env].cpu().numpy(), measured, self.ribbon_radius_px)
+                if surface:
+                    indices = np.linspace(0, len(surface) - 1, min(surface_capacity, len(surface))).astype(int)
+                    rows = torch.as_tensor([surface[i] for i in indices], device=device)
+                    y, x = rows[:, 2], rows[:, 3]
+                    dest = slice(centerline_capacity, centerline_capacity + len(rows))
+                    xyz[env, dest] = world[env, y, x]
+                    valid[env, dest] = visibility[env, dest] = True
+                    pixels[env, dest] = rows[:, 2:]
+                    component_id[env, dest] = rows[:, 0]
+                    provenance[env, dest] = 2  # measured surface, not assigned centerline/track
+                    confidence[env, dest] = 1. if point_confidence is None else point_confidence[env, y, x]
+                    truncated[env] |= len(surface) > surface_capacity
             self._history[env] = history
             temporal_valid[env] = all_matched
         return dict(points_world=xyz, point_valid=valid, xyz=xyz, valid=valid,
                     component_id=component_id, depth_segment_id=depth_segment_id,
                     arc_length=arc_length, arc_length_m=arc_length, arc_length_px=arc_length_px,
                     tangent=tangent, confidence=confidence, visibility=visibility,
-                    track_id=track_id, point_pixels=pixels, topology_valid=topology_valid,
+                    track_id=track_id, point_pixels=pixels, point_provenance=provenance,
+                    topology_valid=topology_valid,
                     temporal_identity_valid=temporal_valid, timestamp_anomaly=anomaly,
                     visible_component_count=component_count, sampling_truncated=truncated,
                     all_visible_components_simple=topology_valid & (rejected_count == 0),

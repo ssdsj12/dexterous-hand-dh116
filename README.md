@@ -1,3 +1,15 @@
+## 2026-11-11 — 双目点云、状态监督与 Teacher PPO 验证
+
+本次更新以 085f6b8 为基线。Roll20 保存帧采用轮廓匹配和连通表面采样后，每帧二指 31/32 点、三指 30/32 点在 5 mm 内。正确点完整率分别为 1.54% 和 1.46%，三指光轴深度 P95 为 11.92 mm。该配置仍用于独立实验。
+
+完成 143D 逐字段审计及三种 Actor 模式的 CPU 验证。新的 2 环境、4 步原生候选采集核验出 6 条相对中心 XYZ 标签。两个独立初态不足以完成三路划分，状态估计器训练仍待合格数据。两次独立的 2 环境、32 步、1 更新 Teacher 原生诊断均以 0 次抓取成功结束。在同一个 0.02 KL 目标下，回滚及学习率回退将最终 KL 从 5.84524 降至 0.01997，Checkpoint 回读一致。R2 和正式 BC/DAgger/Student PPO 的准入仍待验证。
+
+本阶段完整 CPU 回归在 Windows 和服务器各通过 1063 项，分别跳过 1 项和 2 项。上传前执行以下 CPU 回归，93 项通过，用时 6.34 秒。
+
+    python -m pytest -q -p no:cacheprovider tests/test_dh116_stereo_wire_depth.py tests/test_dh116_stereo_state_supervision.py tests/test_dh116_privileged_teacher.py tests/test_dh116_privileged_cli.py tests/test_dh116_stereo_runtime_teacher_identity.py
+
+发布范围包括源码、配置、测试、字段审计和报告。原始测量、模型及日志保存在私有证据目录。[总报告](docs/superpowers/reports/2026-11-11-stereo-reliability.md) · [readiness](docs/contracts/stereo_phase0_7_readiness.json)
+
 ## 2026-11-11 — Stereo 运行链路修复发布
 
 发布基线为 `9bfee426363527190011dbca164c104a00cbc999`。修复 RGB 二维拓扑与独立可见片段、TaskStateAdapter 到 Actor、左右掌局部点编码、真实 Teacher 身份和动作标签；保留旧路径，新增独立 latent/task-state/hybrid 配置。高分辨率 PPO 改为唯一帧池与有界 minibatch，粗到细区分默认 audit 与显式 accelerated。

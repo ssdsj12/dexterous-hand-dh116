@@ -25,6 +25,12 @@ _KNOWN_KEYS = {'joint_lower','joint_upper','reset_joint_reference',
                'grip_drive_stiffness','wrist_reset_xyz'}
 
 
+def field_history_frames(row):
+    """Number of valid frames required by a canonical field's runtime gate."""
+    return 2 if (row['estimator_head'] in ('velocity_head','slip_head')
+                 or row['block'].startswith('interval_')) else 1
+
+
 class TaskStateAdapter(nn.Module):
     """Select declared fields in schema index order and preserve autograd.
 
@@ -191,7 +197,7 @@ class TaskStateAdapter(nn.Module):
             if visual:
                 value = prediction[:,index]
                 mask = mask & pair & observed & supplied[:,index]
-                if row['estimator_head'] in ('velocity_head','slip_head') or row['block'].startswith('interval_'):
+                if field_history_frames(row) == 2:
                     mask=mask & ((history.history_valid & history.image_valid.all(-1)).sum(-1)>=2)
                 if row['block'] == 'object_quaternion':
                     mask = mask & (prediction[:,64:68].norm(dim=-1)>1e-8)
@@ -306,6 +312,7 @@ class TaskStateAdapter(nn.Module):
             state_contract_file_sha256=self.state_contract_sha256,field_order=tuple(f['semantic_name'] for f in fields),
             feature_layout=('values','valid','uncertainty'),
             evidence_scope='runtime_configuration_not_native_qualification',
-            uncertainty_policy='invalid/unknown sentinel 1; numerical zero is never a missing-value claim')
-        return dict(values=value,valid=valid,uncertainty=uncertainty,metadata=metadata,
+            uncertainty_policy='sentinel 1 is unknown; no calibrated uncertainty supplied by the estimator',
+            missing_value_policy='NA in values; neutral finite encoding only in masked actor_features')
+        return dict(values=torch.where(valid,value,float('nan')),valid=valid,uncertainty=uncertainty,metadata=metadata,
                     actor_features=torch.cat((value,valid.to(value.dtype),uncertainty),-1))

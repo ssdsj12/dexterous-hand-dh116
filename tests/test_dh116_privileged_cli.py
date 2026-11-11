@@ -52,6 +52,55 @@ def test_native_teacher_loop_updates_saves_and_recovers_without_touching_source(
     assert len((first / 'iterations.jsonl').read_text().splitlines()) == 2
 
 
+def test_bounded_teacher_diagnostic_records_frozen_inputs_and_terminal_bootstrap(tmp_path):
+    config, _ = cli.load_config(CONFIG)
+    bridge = CPUFixtureBridge()
+    real_step = bridge.step
+    def with_terminal(action):
+        obs, reward, done, extra = real_step(action)
+        if float(obs[0, 0]) < .0015:
+            done[0] = True
+        return obs, reward, done, extra
+    bridge.step = with_terminal
+    result = cli.train_teacher(bridge, config, cli.PPOConfig(epochs=1, minibatches=8, target_kl=.02),
+        output=tmp_path, updates=1, record_diagnostic_rollout=True)
+    assert result['updates'] == 1
+    saved = torch.load(tmp_path / 'diagnostic_rollout.pt', weights_only=False)
+    batch = saved['batch']
+    assert batch['actor_obs'].shape == (64, 371)
+    assert batch['old_mu'].shape == batch['latent_actions'].shape == (64, 24)
+    assert batch['old_log_prob'].shape == (64,)
+    assert saved['returns'][0] == batch['rewards'][0]
+    assert batch['done'][0] and not batch['bootstrap_mask'][0]
+    assert saved['initial_checkpoint_sha256'] == cli.file_sha256(tmp_path / 'teacher_update_000000.pt')
+    assert saved['rng']['torch'].dtype == torch.uint8
+    row = json.loads((tmp_path / 'iterations.jsonl').read_text())
+    assert row['action_diagnostics']['normalized_action_clipping_fraction'] == 0.
+    assert row['action_diagnostics']['joint_safety_projection'] is None
+    assert row['gae_diagnostics']['terminal_bootstrap_count'] == 0
+    assert row['gae_diagnostics']['terminal_count'] == 1
+
+
+def test_diagnostic_capture_rejects_larger_budget_before_writes(tmp_path):
+    config, ppo = cli.load_config(CONFIG)
+    with pytest.raises(ValueError, match='diagnostic rollout.*2 environments'):
+        cli.train_teacher(CPUFixtureBridge(), config, ppo, output=tmp_path, updates=2,
+            record_diagnostic_rollout=True)
+    assert not list(tmp_path.iterdir())
+
+
+def test_teacher_no_accepted_optimizer_step_preserves_initial_checkpoint_and_reports_rejection(tmp_path):
+    config, _ = cli.load_config(CONFIG)
+    config['rollout_steps'] = 2
+    ppo = cli.PPOConfig(epochs=1, minibatches=2, lr=.01, target_kl=1e-12, kl_backtrack_steps=1)
+    result = cli.train_teacher(CPUFixtureBridge(), config, ppo, output=tmp_path, updates=1)
+    assert result['status'] == 'teacher_optimizer_update_rejected'
+    assert result['updates'] == 0
+    assert [path.name for path in tmp_path.glob('teacher_update_*.pt')] == ['teacher_update_000000.pt']
+    row = json.loads((tmp_path / 'iterations.jsonl').read_text())
+    assert row['update'] == 0 and not row['optimizer_update_accepted']
+
+
 def test_cli_config_inspection_does_not_start_isaac_or_create_run(tmp_path, capsys):
     target = tmp_path / 'forbidden'
     assert cli.main('train', ['--config', str(CONFIG), '--output', str(target), '--check-config']) == 0

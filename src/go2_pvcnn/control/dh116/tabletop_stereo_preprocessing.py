@@ -16,7 +16,7 @@ VERSION='dh116-stereo-processing-v1'
 
 
 def _sources():
-    names=('depth','perception','geometry','preprocessing','matcher_candidates','matching_costs','pyramid','wire_tracking')
+    names=('depth','perception','geometry','preprocessing','matcher_candidates','matching_costs','pyramid','wire_tracking','wire_matching')
     return {f'tabletop_stereo_{name}.py':hashlib.sha256(Path(__file__).with_name(
         f'tabletop_stereo_{name}.py').read_bytes()).hexdigest() for name in names}
 
@@ -31,6 +31,13 @@ def processing_contract(camera_config):
         depth[key]=float(depth[key])
     tracking=config.get('wire_tracking_mode','normalized_visible_components')
     if tracking not in ('legacy','normalized_visible_components'):raise ValueError('explicit supported wire tracking mode required')
+    point_sampling=config.get('wire_point_sampling','centerline')
+    if point_sampling not in ('centerline','observed_ribbon') or (tracking == 'legacy' and point_sampling != 'centerline'):
+        raise ValueError('observed_ribbon requires normalized visible component tracking')
+    ribbon_radius_px=config.get('wire_ribbon_radius_px',1)
+    if (type(ribbon_radius_px) is not int or not 1 <= ribbon_radius_px <= 3
+            or point_sampling == 'centerline' and ribbon_radius_px != 1):
+        raise ValueError('ribbon radius must be 1..3 pixels in observed_ribbon mode')
     result=dict(version=VERSION,calibration_sha256=calibration.sha256,
         image_resolution_wh=[calibration.width,calibration.height],depth_estimator=depth,
         rgb=dict(channel_order='RGB',layout='NCHW',range=[0.,1.],dtype='float32',
@@ -40,6 +47,7 @@ def processing_contract(camera_config):
             calibration_rectified=calibration.rectified,rectification='explicit_only;no_hidden_rectify',
             missing='NaN_with_false_validity;no_simulator_or_rendered_depth_fallback'),
         perception=dict(algorithm='warm_colour_visible_simple_path_ZhangSuen_v1' if tracking=='legacy' else 'normalized_visible_components_tracking_v2',point_count=128,
+            point_sampling=point_sampling, ribbon_radius_px=ribbon_radius_px,
             thresholds=dict(red_over_green=1.07,green_over_blue=1.1,minimum_red=.12),
             thinning_max_iterations=128,identity_motion_limit_m=.005,
             ordering='observed_visible_arc_length;dominant_world_axis_endpoint_orientation' if tracking=='legacy' else 'component_metric_arc_when_complete;2D_arc_partial_depth;temporal_orientation',

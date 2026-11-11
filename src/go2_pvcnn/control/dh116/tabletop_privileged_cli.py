@@ -72,9 +72,26 @@ def _checkpoint_readback(path,trainer,identity):
     return report
 
 
+def _write_diagnostic_rollout(output, trainer, checkpoint):
+    """Record the frozen training inputs and RNG before the first optimizer step."""
+    returns, advantages = trainer.rollout.returns_and_advantages(trainer.config)
+    artifact = dict(version='dh116-privileged-bounded-diagnostic-rollout-v1',
+        config=asdict(trainer.config), policy_version=trainer.policy_version,
+        initial_checkpoint_file=checkpoint.name, initial_checkpoint_sha256=file_sha256(checkpoint),
+        layout='step_major_then_environment', rollout_steps=trainer.rollout_steps, num_envs=trainer.num_envs,
+        batch=trainer.rollout.batch(), returns=returns, advantages=advantages,
+        rng=dict(torch=torch.get_rng_state(),
+            cuda=torch.cuda.get_rng_state_all() if torch.cuda.is_initialized() else []))
+    with (output / 'diagnostic_rollout.pt').open('xb') as stream:
+        torch.save(artifact, stream)
+
+
 def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=None,
-                  expert_dataset=None, bc_steps=0, checkpoint_interval=10):
+                  expert_dataset=None, bc_steps=0, checkpoint_interval=10,
+                  record_diagnostic_rollout=False):
     """Train only the independent model using the unchanged env.step reward."""
+    if record_diagnostic_rollout and (bridge.n, config['rollout_steps'], updates) != (2, 32, 1):
+        raise ValueError('diagnostic rollout recording requires 2 environments, 32 steps and 1 update')
     output = Path(output)
     model = PrivilegedTeacher(**config['model'])
     trainer = PPOTrainer(model, ppo_config, rollout_steps=config['rollout_steps'],
@@ -102,7 +119,7 @@ def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=Non
         trainer, identity, history_reset='clear')
     native_identity = callable(getattr(bridge, 'bind_teacher_checkpoint', None))
     if native_identity:
-        bridge.bind_teacher_checkpoint(initial_checkpoint)
+        bridge.bind_teacher_checkpoint(initial_checkpoint, policy_version=trainer.policy_version)
     obs = bridge.critic
     started = time.monotonic()
     with (output / 'iterations.jsonl').open('x', encoding='utf-8') as log:
@@ -110,6 +127,7 @@ def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=Non
             term_totals = {}
             stats={k:torch.zeros(24,dtype=torch.float64) for k in ('sum','square','noise_square','std_sum','saturation')}
             count=0;closure=0.;joint_failures=0;failure_samples=0
+            terminal_count = 0
             group_entropy={name:0. for name in _ACTION_GROUPS}
             policy_samples=[]
             for _ in range(config['rollout_steps']):
@@ -147,9 +165,15 @@ def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=Non
                     joint_failures+=int((extra['failure']==3).sum());failure_samples+=len(extra['failure'])
                 with torch.no_grad():
                     next_value = model.value(next_obs)
+                    # The native task ends the episode on success/failure,
+                    # including its task timeout. next_obs can already be reset.
+                    next_value = next_value.masked_fill(done, 0.)
+                terminal_count += int(done.sum())
                 trainer.record_step(reward, done, next_value, executed_actions=sample['actions'],
-                    collection_token=sample['collection_token'])
+                    bootstrap_mask=~done, collection_token=sample['collection_token'])
                 obs = next_obs
+            if record_diagnostic_rollout:
+                _write_diagnostic_rollout(output, trainer, initial_checkpoint)
             metrics = trainer.update()
             group_kl={name:0. for name in _ACTION_GROUPS}
             with torch.no_grad():
@@ -167,6 +191,10 @@ def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=Non
                 sampled_action_mean24=mean.tolist(),sampled_action_std24=std.tolist(),
                 sampled_minus_mean_rms24=noise_rms.tolist(),latent_std24=latent_std.tolist(),
                 saturation_fraction24=(stats['saturation']/count).tolist(),
+                normalized_action_clipping_fraction=0.,
+                normalized_action_clipping_source='issued sample equals bounded tanh sample; any out-of-range command is rejected',
+                joint_safety_projection=None,
+                joint_safety_projection_source='pre_projection_joint_target_not_exposed; native raw accepted/SDK targets and pressure mask are separate',
                 joint_limit_failure_fraction=joint_failures/failure_samples if failure_samples else None,
                 final_old_to_new_kl=sum(group_kl.values())/count,
                 entropy_definition='collection-policy MC from already sampled epsilon; no additional RNG draw',
@@ -179,18 +207,26 @@ def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=Non
                     native_joint_limit_hand_attribution=None)
                     for name,(lo,hi) in _ACTION_GROUPS.items()})
             row = dict(update=update, **metrics, reward_term_totals=term_totals,
+                optimizer_update_accepted=metrics['minibatch_updates'] > 0,
+                gae_diagnostics=dict(terminal_count=terminal_count, terminal_bootstrap_count=0,
+                    terminal_timeout_semantics='task_timeout_is_terminal', reset_observation_bootstrap=False),
                 native_successes=int(bridge.env.successes.sum()),
                 completed_episodes=int(bridge.env.episodes.sum()),
                 elapsed_wall_s=time.monotonic() - started,
                 action_diagnostics=action_diagnostics,reward_diagnostics=dict(profile=config['reward_profile'],
                     r0_closure_max_abs=closure,reward_owner='native_env_once'),
                 qualification='pending_independent_full_episode_validation')
+            if not row['optimizer_update_accepted']:
+                log.write(json.dumps(row, allow_nan=False) + '\n')
+                log.flush()
+                return dict(status='teacher_optimizer_update_rejected', updates=update,
+                    checkpoint_family='privileged_teacher_only', native_grasp_qualification=False)
             if native_identity or update % checkpoint_interval == 0 or update_index == updates - 1:
                 current_checkpoint = output / f'teacher_update_{update:06d}.pt'
                 save_checkpoint(current_checkpoint, trainer, identity, history_reset='clear')
                 row['checkpoint_roundtrip']=_checkpoint_readback(current_checkpoint,trainer,identity)
                 if native_identity and update_index < updates - 1:
-                    bridge.bind_teacher_checkpoint(current_checkpoint)
+                    bridge.bind_teacher_checkpoint(current_checkpoint, policy_version=trainer.policy_version)
             log.write(json.dumps(row, allow_nan=False) + '\n')
             log.flush()
     return dict(status='independent_teacher_updates_completed', updates=trainer.counters['updates'],
@@ -277,6 +313,8 @@ def main(mode='train', argv=None):
     parser.add_argument('--expert-dataset', type=Path)
     parser.add_argument('--bc-steps', type=int, default=0)
     parser.add_argument('--checkpoint-interval', type=int, default=10)
+    parser.add_argument('--record-diagnostic-rollout', action='store_true',
+        help='save private pre-optimizer tensors/RNG for an explicit 2-env, 32-step, 1-update diagnosis')
     parser.add_argument('--max-control-steps', type=int, default=1200)
     parser.add_argument('--native-task-config', type=Path,
         default=ROOT / 'configs/dh116_training/stereo_native_task_v1.json')
@@ -293,6 +331,9 @@ def main(mode='train', argv=None):
     if any(type(v) is not int or v < 1 for v in (args.num_envs, config['rollout_steps'],
             args.updates, args.checkpoint_interval, args.max_control_steps)) or args.bc_steps < 0:
         parser.error('positive environment/rollout/update/checkpoint/step budgets required')
+    if args.record_diagnostic_rollout and (mode != 'train' or
+            (args.num_envs, config['rollout_steps'], args.updates) != (2, 32, 1)):
+        parser.error('diagnostic rollout recording requires train with 2 environments, 32 steps and 1 update')
     if args.check_config:
         print(json.dumps(dict(mode=mode, validated=True, native_started=False,
             ppo=asdict(ppo), config=config), indent=2))
@@ -316,7 +357,7 @@ def main(mode='train', argv=None):
         if mode == 'train':
             return train_teacher(bridge, config, ppo, output=run, updates=args.updates,
                 checkpoint=args.checkpoint, expert_dataset=args.expert_dataset, bc_steps=args.bc_steps,
-                checkpoint_interval=args.checkpoint_interval)
+                checkpoint_interval=args.checkpoint_interval, record_diagnostic_rollout=args.record_diagnostic_rollout)
         return collect_or_evaluate(bridge, config, ppo, checkpoint=args.checkpoint,
             output=run, max_steps=args.max_control_steps, collect=mode == 'collect')
 

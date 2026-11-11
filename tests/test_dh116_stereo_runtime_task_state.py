@@ -50,7 +50,7 @@ def test_declared_order_selects_schema_fields_instead_of_concatenating_371():
     assert state.input_size == 3*len(indices)
     assert output['actor_features'].shape == (2,state.input_size)
     assert output['valid'].dtype == torch.bool
-    torch.testing.assert_close(output['actor_features'], torch.cat((output['values'],
+    torch.testing.assert_close(output['actor_features'], torch.cat((torch.where(output['valid'],output['values'],0.),
         output['valid'].float(), output['uncertainty']), -1))
     for index in indices:
         row = SCHEMA['dimensions'][index]
@@ -99,7 +99,7 @@ def test_masks_are_fail_closed_per_sample_and_uncertainty_never_claims_zero_erro
     state = adapter()
     result = state(estimates(),history())
     assert not result['valid'].any()
-    assert result['values'].eq(0).all() and result['uncertainty'].eq(1).all()
+    assert result['values'].isnan().all() and result['uncertainty'].eq(1).all()
     state = adapter(source_qualification=qualifications())
     pred = estimates()
     pred['state_valid'] = torch.ones(2,371,dtype=torch.bool)
@@ -107,7 +107,7 @@ def test_masks_are_fail_closed_per_sample_and_uncertainty_never_claims_zero_erro
     pred['state_uncertainty'] = torch.full((2,371),.3,requires_grad=True)
     result = state(pred,history()); col = state.field_indices.index(61)
     assert result['valid'][:,col].tolist() == [False,True]
-    assert result['values'][0,col] == 0 and result['uncertainty'][0,col] == 1
+    assert result['values'][0,col].isnan() and result['uncertainty'][0,col] == 1
     assert result['uncertainty'][1,col] == .3
     result['actor_features'].sum().backward()
     assert pred['privileged_state'].grad[0,61] == 0
@@ -127,7 +127,7 @@ def test_contact_classification_is_probability_with_validity_separate_from_conta
         assert result['valid'][:,col].all() and result['values'][:,col].eq(.5).all()
     for index in (151,152):
         col = state.field_indices.index(index)
-        assert not result['valid'][:,col].any() and result['values'][:,col].eq(0).all()
+        assert not result['valid'][:,col].any() and result['values'][:,col].isnan().all()
     for index in (355,356):
         col = state.field_indices.index(index)
         torch.testing.assert_close(result['values'][:,col],pred['privileged_state'][:,index])
@@ -193,7 +193,7 @@ def test_declared_reset_xyz_does_not_qualify_palm_to_wrist_root_transform():
     h.proprio[:,-1,24:27]=torch.tensor([1.05,2.1,3.15])
     h.proprio[:,-1,31:34]=torch.tensor([4.2,5.25,6.3])
     pred=estimates(); result=state(pred,h)
-    assert not result['valid'].any() and result['values'].eq(0).all()
+    assert not result['valid'].any() and result['values'].isnan().all()
     assert not result['values'].requires_grad
 
 
@@ -243,7 +243,7 @@ def test_force_proxy_needs_actual_raw_verified_source_not_qualified_metadata():
     pred=estimates(); pred['force_proxy']=torch.ones(2,2,3,requires_grad=True)
     result=state(pred,history())
     assert not result['valid'][:,-6:].any()
-    assert result['values'][:,-6:].eq(0).all()
+    assert result['values'][:,-6:].isnan().all()
     assert 'force' in result['metadata']['blocked_reasons']['force_proxy']
     declaration=qualifications()
     declaration['force_proxy']={'evidence_scope':'native_qualified','source_sha256':'a'*64}

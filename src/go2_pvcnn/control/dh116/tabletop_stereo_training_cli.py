@@ -359,11 +359,15 @@ def main(mode='bc', argv=None):
     parser.add_argument('--stage', choices=('D1','D2','D3','D4'), default='D4')
     parser.add_argument('--device', default='cpu')
     parser.add_argument('--candidate-only', action='store_true')
+    parser.add_argument('--state-reference', action='store_true',
+        help='archive independent same-frame depth and Wire instance IDs in candidate-only Teacher collection')
     parser.add_argument('--schema-only', action='store_true')
     parser.add_argument('--check-config', action='store_true')
     parser.add_argument('--enable-experiment', action='store_true')
     parser.add_argument('--execute-native', action='store_true')
     args = parser.parse_args(argv)
+    if args.state_reference and (mode != 'collect' or not args.candidate_only):
+        parser.error('--state-reference requires candidate-only Teacher collection')
     config = _json(args.config)
     if mode == 'bc' and config.get('schema_version') != 'dh116-stereo-bc-v1':
         parser.error('versioned stereo BC config required')
@@ -416,7 +420,8 @@ def main(mode='bc', argv=None):
     def callback(bridge):
         teacher, _ = _policy_for_evaluation(bridge, teacher_config, ppo, args.teacher_checkpoint)
         environment = NativeStereoEnvironment(bridge, args.camera_config,
-            owner='dagger' if mode == 'dagger' else 'teacher', checkpoint_sha256=teacher_sha)
+            owner='dagger' if mode == 'dagger' else 'teacher', checkpoint_sha256=teacher_sha,
+            capture_state_reference=args.state_reference)
         if mode == 'collect':
             records = collect_candidate_reference(environment, teacher, args.steps)
             payload = dict(version=CANDIDATE_VERSION, teacher_checkpoint_sha256=teacher_sha,

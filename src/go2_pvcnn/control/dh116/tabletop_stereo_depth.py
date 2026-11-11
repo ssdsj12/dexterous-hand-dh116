@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 
 from .tabletop_stereo_validation import validate_images
+from .tabletop_stereo_wire_matching import METHODS as WIRE_METHODS, match_wire, wire_colour_mask
 
 
 class StereoDepth:
@@ -14,7 +15,7 @@ class StereoDepth:
                  texture_threshold=.001,uniqueness_threshold=.05,rectify=False,
                  subpixel=False,image_processing_batch_size=1,reliability=None,photometric_verification=None,
                  pyramid_mode=None):
-        if (method not in ('blockmatch','sgbm','reliable_sad','census','zncc','gradient','coarse_to_fine') or type(min_disparity) is not int or type(max_disparity) is not int
+        if (method not in ('blockmatch','sgbm','reliable_sad','census','zncc','gradient','coarse_to_fine') + WIRE_METHODS or type(min_disparity) is not int or type(max_disparity) is not int
                 or min_disparity<1 or max_disparity<=min_disparity or type(block_size) is not int
                 or block_size<3 or block_size%2!=1 or not 0<min_depth_m<max_depth_m
                 or not all(math.isfinite(x) for x in (min_depth_m,max_depth_m,lr_tolerance_px,texture_threshold,uniqueness_threshold))
@@ -28,6 +29,8 @@ class StereoDepth:
                 raise ValueError('pyramid_mode must be audit or accelerated')
         elif pyramid_mode is not None:
             raise ValueError('pyramid_mode requires coarse_to_fine method')
+        if method == 'wire_silhouette' and subpixel:
+            raise ValueError('wire_silhouette requires integer observed-mask correspondence')
         self.pyramid_mode = pyramid_mode
         self.method=method;self.min_disparity=min_disparity;self.max_disparity=max_disparity
         self.block_size=block_size;self.near=min_depth_m;self.far=max_depth_m
@@ -255,6 +258,14 @@ class StereoDepth:
             else:
                 dl,cl,gl,left_trace=self._matched(left,right,-1,masks[0],masks[1])
                 dr,cr,gr,right_trace=self._matched(right,left,1,masks[1],masks[0])
+        elif self.method in WIRE_METHODS:
+            lm = wire_colour_mask(left_rgb) & raw_masks[0]
+            rm = wire_colour_mask(right_rgb) & raw_masks[1]
+            options = dict(method=self.method, low=self.min_disparity, high=self.max_disparity,
+                           block=self.block_size, texture=self.texture,
+                           uniqueness=self.uniqueness, subpixel=self.subpixel)
+            dl,cl,gl,left_trace=match_wire(left,right,lm,rm,-1,**options)
+            dr,cr,gr,right_trace=match_wire(right,left,rm,lm,1,**options)
         elif self.method in ('census','zncc','gradient','coarse_to_fine'):
             kwargs=dict(min_disparity=self.min_disparity,max_disparity=self.max_disparity,
                 block_size=self.block_size,subpixel=self.subpixel,
@@ -293,6 +304,11 @@ class StereoDepth:
         right_texture_at_left,right_texture_inside=self.sample_horizontal(right_texture.float(),xr,torch.ones_like(gr))
         patch_border=~masks[0]
         patch_border[:,:radius]=True;patch_border[:,-radius:]=True;patch_border[:,:,:radius]=True;patch_border[:,:,-radius:]=True
+        subpixel_rejected = None if self.method == 'sgbm' else torch.zeros_like(gl)
+        # Wire fractional refinement is optional. A retained integer match
+        # can fail a later consistency gate without failing subpixel refinement.
+        if self.subpixel and self.method not in ('sgbm',) + WIRE_METHODS:
+            subpixel_rejected = ~left_trace['refinement_valid']
         reasons=dict(low_texture_left=~left_texture,
             low_texture_right=right_texture_inside&(right_texture_at_left<1-1e-6),
             search_boundary=left_trace['search_boundary'],
@@ -300,7 +316,7 @@ class StereoDepth:
             uniqueness=(confidence<self.uniqueness) if self.method!='sgbm' else None,
             occlusion_composite=occlusion,true_occlusion=None,
             depth_range=~disparity_valid|~torch.isfinite(z)|(z<self.near)|(z>self.far),
-            subpixel_rejected=(~left_trace['refinement_valid'] if self.subpixel else torch.zeros_like(gl)) if self.method!='sgbm' else None,
+            subpixel_rejected=subpixel_rejected,
             patch_border=patch_border,out_of_right_view=~right_texture_inside,
             left_matcher_rejected=~gl,right_sample_unavailable=~other_valid)
         if 'refinement' in left_trace:
@@ -312,7 +328,7 @@ class StereoDepth:
             confidence_is_probability=False,quality_confidence_available=self.method!='sgbm',
             true_occlusion_available=False,refinement_scope='OpenCV_internal_not_exposed' if self.method=='sgbm' else 'wrapper_rgb_cost_refinement',
             wrapper_refinement_applied=self.subpixel and self.method!='sgbm',reasons=reasons,
-            uniqueness_scope='OpenCV_internal_not_exposed' if self.method=='sgbm' else 'separated_integer_modes' if self.method in ('census','zncc','gradient','coarse_to_fine') or self.method=='reliable_sad' and self.subpixel else 'adjacent_top2_cost_margin',
+            uniqueness_scope='OpenCV_internal_not_exposed' if self.method=='sgbm' else 'separated_integer_modes' if self.method in ('census','zncc','gradient','coarse_to_fine') + WIRE_METHODS or self.method=='reliable_sad' and self.subpixel else 'adjacent_top2_cost_margin',
             raw_disparity_px=dl,raw_confidence=confidence,
             candidate_enabled=self.method not in ('blockmatch','sgbm'),
             rgb_boundary_proxy=dict(minimum_gray_gradient=.02,maximum_to_mean_gradient_ratio=8.,window_px=self.block_size),
@@ -320,7 +336,7 @@ class StereoDepth:
             periodicity_scope='single_tone_recurrence_and_separated_integer_modes;not_proof_all_repeated_patterns_absent',
             rgb_boundary_proxy_scope='gradient_concentration_only;not_semantic_background_or_occlusion_truth')
         if 'refinement' in left_trace:diagnostics['refinement']=left_trace['refinement']
-        for name in ('pyramid','metric','subpixel_policy','resource_metadata'):
+        for name in ('pyramid','metric','subpixel_policy','resource_metadata','optional_refinement_used'):
             if name in left_trace:diagnostics[name]=left_trace[name]
         if self.pyramid_mode is not None:
             diagnostics['pyramid_right'] = right_trace['pyramid']
@@ -363,4 +379,7 @@ class StereoDepth:
             gpu_memory_measured=False,gpu_peak_allocated_bytes=None,gpu_peak_reserved_bytes=None)
         if self.pyramid_mode is not None:
             self.last_resource_metadata['pyramid_mode'] = self.pyramid_mode
+        if self.method in WIRE_METHODS:
+            self.last_resource_metadata.update(disparity_planes_in_memory=None,
+                sparse_center_cost_tiles=True)
         return result

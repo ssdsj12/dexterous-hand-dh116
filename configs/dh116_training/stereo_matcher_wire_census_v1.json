@@ -1,0 +1,23 @@
+{
+  "version": "dh116-stereo-wire-matcher-v1",
+  "enabled_by_default": false,
+  "native_qualified": false,
+  "experiment": {
+    "candidate": "wire_census",
+    "comparison_scope": "same RGB/calibration/reference;method is the single changed factor"
+  },
+  "depth_estimator": {
+    "method": "wire_census",
+    "min_disparity": 8,
+    "max_disparity": 192,
+    "block_size": 5,
+    "min_depth_m": 0.2,
+    "max_depth_m": 1.2,
+    "lr_tolerance_px": 1.0,
+    "texture_threshold": 0.001,
+    "uniqueness_threshold": 0.05,
+    "rectify": false,
+    "subpixel": true,
+    "image_processing_batch_size": 1
+  }
+}
