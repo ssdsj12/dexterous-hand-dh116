@@ -1,3 +1,7 @@
+## 2026-11-11 — 按工作包持续发布
+
+每个完成验证的独立工作包自动提交并推送至 `codex/dh116-stereo-privileged-dagger`，随后核对 GitHub 远端提交和 Draft PR #2。失败工作包保留本地日志并发布必要的诊断与 `blocked` 状态。原生实验继续遵循独立批准门槛，8 初态同步采集仍待批准。[工作流程](AGENTS.md) · [readiness](docs/contracts/stereo_phase0_7_readiness.json)
+
 ## 2026-11-11 — 按明确指令发布WP增量与采集预检
 
 本次按用户“更新到github”指令，将基于 `ae307a5` 的代码、独立配置、测试、处理后指标和预检报告发布到 `codex/dh116-stereo-privileged-dagger`，保留 Draft PR #2，不合并。新的8初态同步采集仍未获批准，本次发布不启动Isaac或训练。

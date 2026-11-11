@@ -2620,6 +2620,19 @@
       "scope": "source_config_tests_processed_reports_only;raw_models_logs_excluded"
     }
   },
+  "publication_workflow": {
+    "policy": "AGENTS.md",
+    "repository": "ssdsj12/dexterous-hand-dh116",
+    "target_branch": "codex/dh116-stereo-privileged-dagger",
+    "read_only_baseline_branch": "11-10",
+    "pr_number": 2,
+    "keep_draft": true,
+    "merge_authorized": false,
+    "auto_commit_and_push_per_work_package": true,
+    "verify_remote_commit_and_contents": true,
+    "native_experiment_approval_separate": true,
+    "cold8_capture_authorized": false
+  },
   "latest_publication": {
     "user_authorized": true,
     "target_branch": "codex/dh116-stereo-privileged-dagger",

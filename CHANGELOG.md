@@ -1,3 +1,13 @@
+## 2026-11-11 — 按工作包持续发布
+
+将用户对独立工作包的持续提交和推送授权写入 `AGENTS.md`。README 和 readiness 同步记录目标开发分支、远端核验、失败证据保留和 Draft PR 规则。此工作包仅更新发布流程文档与状态记录，下一项原生工作仍是待独立批准的 8 初态同步采集。
+
+CPU 回归 84 项通过，15.07 秒，退出码 0。本次无 Isaac 原生验证、采集或训练。
+
+```text
+python -m pytest -q -p no:cacheprovider tests/test_dh116_stereo_cold_candidate_admission.py tests/test_dh116_stereo_candidate_cold_trials.py tests/test_dh116_stereo_contact_calibration.py tests/test_dh116_stereo_wire_tail_audit.py tests/test_dh116_stereo_state_training_modes.py tests/test_dh116_stereo_wire_segmentation.py tests/test_dh116_teacher_wp3.py
+```
+
 ## 2026-11-11 — 按明确指令发布WP增量与采集预检
 
 本次按用户“更新到github”指令，将基于 `ae307a5` 的代码、独立配置、测试、处理后指标和预检报告发布到 `codex/dh116-stereo-privileged-dagger`，保留 Draft PR #2，不合并。新的8初态同步采集仍未获批准，本次发布不启动Isaac或训练。
