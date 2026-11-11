@@ -1,3 +1,7 @@
+## 2026-11-11 — PhysX 复验申请
+
+既有冻结快照和服务器预检已重新核对。申请范围为单实例顺序两轮、每轮 240 步的自然关闭与重启，原生执行待批准。正式 BC、DAgger、Student PPO 及 Solver 构建继续阻断。[审批前复核](docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md)
+
 ## 2026-11-11 — 双目匹配固定像素与采样归因
 
 归档左右三类概率和固定尾部的双向代价。Roll20 软引导遗漏了仍有正确深度的原基线点，二指 83 个、三指 76 个。原色锚定补测仍低于原色基线，48 条固定尾部全数超 5 mm，候选保持 `blocked`。[复放报告](docs/superpowers/reports/2026-11-11-stereo-wire-point-traces.md)

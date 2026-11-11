@@ -2738,6 +2738,21 @@
     "qualification": "blocked",
     "default_processing_changed": false
   },
+  "physx_preflight_98ba1fb": {
+    "report": "docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md",
+    "cpu_tests_passed": 72,
+    "frozen_snapshot_files_rechecked": 1293,
+    "server_preflight_passed": true,
+    "native_trials_completed": 0,
+    "approved_for_native_execution": false,
+    "requested_sequential_trials": 2,
+    "requested_physics_steps_per_trial": 240,
+    "natural_shutdown_verified": false,
+    "restart_verified": false,
+    "r2_enabled": false,
+    "solver_source": "blocked_missing_complete_cuda_solver_checkout",
+    "formal_training": "blocked"
+  },
   "publication_workflow": {
     "policy": "AGENTS.md",
     "repository": "ssdsj12/dexterous-hand-dh116",

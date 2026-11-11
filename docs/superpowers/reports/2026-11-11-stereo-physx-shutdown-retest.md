@@ -23,3 +23,15 @@ sha256sum --quiet -c ../shutdown-source.sha256 && \
 ```
 
 只有两轮自然完成后才读取 `shutdown_retest_passed.json`。这个标定不授予逐 contact、双手接触、R2 或 Force Proxy 资格。完整双手接触实验继续等待自然退出通过和独立批准。
+
+## 以 `98ba1fb` 为基线的审批前复核
+
+复用原验证器和冻结副本。重新校验 1,293 个文件及清单 SHA `7e5aee5f71ab3c0808d1818b37fcfa185654f5424abed89f70f9b3f5dca15dce`，运行默认预检与 `native_instance_lock()` 检查均退出 0。预定输出 `/tmp/dh116-stereo-shutdown-20261111-run` 尚不存在。检查时 GPU 3 为 RTX 4090，使用 7 MiB 且无计算进程，其他 GPU 有计算进程。实际启动前仍须再查单实例、GPU 和源码身份。服务器预检的 `isaac_started=false`，本轮完成原生试验 0 次。
+
+申请范围仅为 GPU 3 的两个顺序左拇指标定，每轮 240 个 480 Hz 物理步、600 秒自然退出限时。第一轮失败即停在证据保存，第二实例只在第一轮自然退出及证据校验全部通过后启动。单指后续来源、左右手和双手接触、外部支撑实验各按独立范围安排。逐 contact 数据未来须逐条核验 body A/B、partner、force 或 impulse、dt、on-object 方向、normal/tangential 和外部支撑。缺少逐指来源时为 NA，R2 继续关闭。
+
+Windows CPU 相关回归 72 项通过，0 失败，20.54 秒，包含关闭、接触证据和既有训练准入。Teacher128 两份历史 Checkpoint 的 SHA 均与记录一致。BC、DAgger、Student PPO 继续阻断。Solver 独立构建仍缺固定提交的完整后端源码，复查 `nvcc` 仍为 12.2 和 12.4。
+
+```text
+python -m pytest -q -p no:cacheprovider tests/test_dh116_stereo_shutdown_validation.py tests/test_dh116_stereo_contact_calibration.py tests/test_dh116_stereo_bc_mode.py tests/test_dh116_stereo_dagger.py tests/test_dh116_stereo_student_ppo.py
+```

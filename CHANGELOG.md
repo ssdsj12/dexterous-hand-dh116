@@ -1,3 +1,7 @@
+## 2026-11-11 — PhysX 复验申请
+
+复查原有关闭验证器的冻结快照、GPU、单实例和输出路径，72 项关闭及训练准入 CPU 回归通过。记录原生申请预算、失败停止条件和逐 contact 资格边界。无新原生实验。[审批前复核](docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md)
+
 ## 2026-11-11 — 双目匹配固定像素与采样归因
 
 增加逐视图三类概率、可见与实际 mask 覆盖统计、联合参考和固定双向代价回归。41 项 CPU 通过，Front/Roll20 各四帧复放完成。候选改善部分覆盖，Roll20 准确点数仍低于原色，缺真实右 ID 的资格保持阻断。[复放报告](docs/superpowers/reports/2026-11-11-stereo-wire-point-traces.md)
