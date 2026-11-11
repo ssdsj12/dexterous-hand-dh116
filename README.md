@@ -1,3 +1,7 @@
+## 2026-11-11 — PhysX 自然关闭预检
+
+独立脚本验证 240 步完整采样、回调释放、所属 SimulationContext 清理、自然退出与顺序重启。41 项 CPU 测试和服务器预检通过，原生复验待批准。[执行计划](docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md)
+
 ## 2026-11-11 — 双目线缆对应复放
 
 原始左右 RGB 的完整匹配窗口保留纹理，分割概率只提供有界代价。两组历史捕获复放均恢复有效点，Roll20 软引导二指/三指正确点为 67/65，原色轮廓为 91/89。固定 48 条尾部仍全部超过 5 mm，历史捕获缺右侧原生 ID，候选保持 `blocked`。[验证报告](docs/superpowers/reports/2026-11-11-stereo-wire-correspondence.md)

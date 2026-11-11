@@ -7,7 +7,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
+import signal
 import sys
 import traceback
 
@@ -15,6 +17,18 @@ import traceback
 def _write(path, value):
     with Path(path).open('x', encoding='utf-8') as stream:
         json.dump(value, stream, indent=2, allow_nan=False)
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def _install_sigterm_monitor(output):
+    def interrupted(signum, _frame):
+        _write(output/'external_signal.json', dict(pid=os.getpid(), signal=signal.Signals(signum).name))
+        raise SystemExit(128+signum)
+
+    previous = signal.signal(signal.SIGTERM, interrupted)
+    _write(output/'sigterm_monitor.json', dict(pid=os.getpid(), installed_after_app_launch=True))
+    return previous
 
 
 def run(args):
@@ -34,7 +48,10 @@ def run(args):
         sim=None
         full_subscription=None
         ordinary_subscription=None
+        previous_sigterm=None
         try:
+            if args.monitor_sigterm:
+                previous_sigterm=_install_sigterm_monitor(args.output)
             import isaaclab.sim as sim_utils
             import omni.usd
             import omni.physics.tensors as tensors
@@ -136,15 +153,25 @@ def run(args):
                     rows.append(row)
                     stream.write(json.dumps(row,allow_nan=False)+'\n')
                     stream.flush()
+                os.fsync(stream.fileno())
             summary=summarize_pair_calibration(rows,object_path=obj,expected_partner=finger,inventory=inventory)
             summary['sampling_complete']=True
+            summary['raw_fsync_complete']=True
             summary['process_exit_verified']=False
             summary['raw_sha256']=hashlib.sha256((args.output/'raw_contact_480hz.jsonl').read_bytes()).hexdigest()
             _write(args.output/'summary.json',summary)
         finally:
-            full_subscription=None
-            ordinary_subscription=None
-            close_calibration_app(app,args.output,simulation=sim)
+            try:
+                subscribed = dict(full=full_subscription is not None, ordinary=ordinary_subscription is not None)
+                full_subscription=None
+                ordinary_subscription=None
+                _write(args.output/'callbacks_released.json', subscribed)
+            finally:
+                try:
+                    close_calibration_app(app,args.output,simulation=sim)
+                finally:
+                    if previous_sigterm is not None:
+                        signal.signal(signal.SIGTERM, previous_sigterm)
 
 
 def main(argv=None):
@@ -153,6 +180,7 @@ def main(argv=None):
     parser.add_argument('--enable-full-report-processing',action='store_true')
     parser.add_argument('--full-contact-callback',action='store_true')
     parser.add_argument('--ordinary-contact-callback',action='store_true')
+    parser.add_argument('--monitor-sigterm',action='store_true')
     parser.add_argument('--side',choices=('left','right'),required=True)
     parser.add_argument('--steps',type=int,default=240)
     parser.add_argument('--output',type=Path,required=True)

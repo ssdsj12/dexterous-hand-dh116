@@ -2654,6 +2654,18 @@
     "default_processing_changed": false,
     "new_native_capture_count": 0
   },
+  "physx_shutdown_retest_20261111": {
+    "report": "docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md",
+    "cpu_tests_passed": 41,
+    "server_preflight_passed": true,
+    "native_retest": "pending_approval",
+    "native_trials_completed": 0,
+    "natural_shutdown_verified": false,
+    "restart_verified": false,
+    "dual_hand_contact_qualification": "blocked",
+    "r2_enabled": false,
+    "force_proxy_qualified": false
+  },
   "publication_workflow": {
     "policy": "AGENTS.md",
     "repository": "ssdsj12/dexterous-hand-dh116",

@@ -1,3 +1,7 @@
+## 2026-11-11 — PhysX 自然关闭预检
+
+新增顺序 240 步关停与重启验证、JSONL fsync、回调释放与 SIGTERM 证据。41 项 CPU 测试和服务器冻结副本预检通过。原生复验待批准，完整双手接触资格保持阻断。[执行计划](docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md)
+
 ## 2026-11-11 — 双目线缆对应复放
 
 增加保留完整 RGB 窗口的软引导匹配、逐帧对应和拒绝证据、原始 12 处整数视差固定回归。37 项 CPU 测试通过，Front 和 Roll20 各四帧复放均正常结束。预测 hard mask 的覆盖断层已复现，软引导恢复部分有效点，固定尾部仍失败，真实左右对应待合格右原生 ID。[验证报告](docs/superpowers/reports/2026-11-11-stereo-wire-correspondence.md)
