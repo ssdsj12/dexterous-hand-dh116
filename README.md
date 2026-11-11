@@ -1,3 +1,7 @@
+## 2026-11-11 — Teacher128 同状态动作复盘
+
+原 Checkpoint 对 256 条同一 371D 状态重算 mean 和 std。五次越限都发生在右 `finger12` 的实测位置，噪声没有一致方向。旧 MPC 缺同一状态的 371D，当前可配对数为 0，Actor-only BC 继续阻断。[复盘报告](docs/superpowers/reports/2026-11-11-teacher128-paired-action-replay.md)
+
 ## 2026-11-11 — 线缆点来源与时序身份
 
 按点区分中心线、实测表面及未知槽，保持缺深度时的二维路径。历史 Roll20 正确点全部来自实测表面，未观测到稳定的 3D 中心线轨迹。新候选逐点旁路通过 CPU 回归，原生复验待批准。[验证报告](docs/superpowers/reports/2026-11-11-stereo-wire-geometry-sources.md)

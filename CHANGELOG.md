@@ -1,3 +1,7 @@
+## 2026-11-11 — Teacher128 同状态动作复盘
+
+新增同身份 Teacher sample/mean 比较、逐关节首越线及跟踪误差、MPC 371D/24D 配对拒绝证据。94 项 CPU 通过，五次历史位置终止的实际力学原因仍待原生复验。旧 MPC 无可配对 371D，噪声与 BC 策略保持原样。[复盘报告](docs/superpowers/reports/2026-11-11-teacher128-paired-action-replay.md)
+
 ## 2026-11-11 — 线缆点来源与时序身份
 
 候选记录新增逐点几何、有效性、来源和分段轨迹旁路。96 项 CPU 通过，两个历史 cohort 各四帧复放一致。原色轮廓 91/89 与软引导 67/65 个正确 Roll20 点均为表面来源，三维中心线时序资格仍待证。[验证报告](docs/superpowers/reports/2026-11-11-stereo-wire-geometry-sources.md)

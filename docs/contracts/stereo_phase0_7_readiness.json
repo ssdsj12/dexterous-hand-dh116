@@ -2713,6 +2713,18 @@
     "material_node_identity_verified": false,
     "native_sidecar_retest": "pending_approval"
   },
+  "teacher_paired_action_replay_98ba1fb": {
+    "report": "docs/superpowers/reports/2026-11-11-teacher128-paired-action-replay.md",
+    "cpu_tests_passed": 94,
+    "paired_teacher_policy_states": 256,
+    "replayed_physics_substeps": 2030,
+    "independent_physical_initials": 2,
+    "right_finger12_position_limit_terminals": 5,
+    "mpc_same_state_pairs": 0,
+    "native_teacher_successes": 0,
+    "actor_only_bc": "blocked_missing_mpc_371d_pre_action_states",
+    "tracking_error_mechanism": "pending_native_contact_and_full_articulation_evidence"
+  },
   "publication_workflow": {
     "policy": "AGENTS.md",
     "repository": "ssdsj12/dexterous-hand-dh116",
