@@ -1,0 +1,11 @@
+{
+  "version": "dh116-stereo-state-training-mode-v1",
+  "settings": {
+    "mode": "offline_qualified_training",
+    "epochs": 1,
+    "batch_size": 4,
+    "seed": 116,
+    "lr": 0.0003,
+    "image_processing_batch_size": 1
+  }
+}

@@ -111,7 +111,7 @@ def test_separate_mode_configs_cannot_override_qualification(tmp_path):
     from pathlib import Path
     supervision = module('state_supervision')
     root = Path(__file__).resolve().parents[1]
-    for mode in ('schema_test','diagnostic_fit','formal_training'):
+    for mode in (*supervision.TRAINING_MODES, 'formal_training'):
         config = supervision.read_training_config(root/'configs/dh116_training'/('stereo_state_'+mode+'_v1.json'))
         assert config['mode'] == mode
     wrong = tmp_path/'wrong.json'

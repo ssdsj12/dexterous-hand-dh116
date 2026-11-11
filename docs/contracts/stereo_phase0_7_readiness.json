@@ -2827,6 +2827,29 @@
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-wp1.sample-retention.md",
       "native_qualification": false
+    },
+    "wp2.mode-gates": {
+      "passed": 49,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_cold_candidate_admission.py",
+        "tests/test_dh116_stereo_state_multicohort.py",
+        "tests/test_dh116_stereo_state_supervision.py",
+        "tests/test_dh116_stereo_state_training_modes.py"
+      ],
+      "log_sha256": "de9edae521934d39f3e36d521ff5b3f1dec3e38d98264d9e383d074aca6e9b84",
+      "tested_head": "25a0d3b6a0fa0d5db2f2a12b1775ef9ee7f2f6e6",
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-wp2.mode-gates.md",
+      "native_qualification": false
     }
   }
 }

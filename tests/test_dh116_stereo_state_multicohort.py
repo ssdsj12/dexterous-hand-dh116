@@ -138,3 +138,107 @@ def test_formal_training_separates_center_from_other_geometry():
     assert list(report['stages']) == ['center_xyz','wire_geometry','velocity','deformation','contact','slip','force_proxy']
     assert report['stages']['center_xyz']['supervised_indices'] == [61,62,63]
     assert [name for name, entry in report['stages'].items() if entry['enabled']] == ['center_xyz']
+
+
+def test_named_offline_mode_requires_reopened_manifest_and_never_promotes(tmp_path, monkeypatch):
+    manifest, _, _ = _dataset(tmp_path, monkeypatch, [
+        ('a','family-1','run-a'), ('b','family-2','run-b'), ('c','family-3','run-c')])
+    rows, _ = _read(manifest)
+    report = state.run_training_mode(estimator(), rows, mode='offline_qualified_training')
+    assert report['status'] == 'blocked_missing_verified_dataset_manifest'
+    assert report['state_training_started'] is False
+    output = tmp_path/'offline'
+    assert state.main(['--dataset-manifest', str(manifest), '--dataset-manifest-sha256', file_sha256(manifest),
+        '--output', str(output), '--mode', 'offline_qualified_training']) == 0
+    report = json.loads((output/'state_supervision_report.json').read_text(encoding='utf-8'))
+    assert report['status'] == 'offline_qualified_state_fit_completed'
+    assert report['native_stereo_source_qualified'] is False
+    assert report['actor_deployment_qualified'] is False
+    assert report['generalization_qualified'] is False
+
+
+def test_named_native_mode_missing_proof_does_not_train_or_fall_back(tmp_path, monkeypatch):
+    manifest, _, _ = _dataset(tmp_path, monkeypatch, [
+        ('a','family-1','run-a'), ('b','family-2','run-b'), ('c','family-3','run-c')])
+    output = tmp_path/'native'
+    assert state.main(['--dataset-manifest', str(manifest), '--dataset-manifest-sha256', file_sha256(manifest),
+        '--output', str(output), '--mode', 'native_qualified_training']) == 2
+    report = json.loads((output/'state_supervision_report.json').read_text(encoding='utf-8'))
+    assert report['status'] == 'blocked_missing_native_stereo_proof'
+    assert report['state_training_started'] is False
+    assert not (output/'state_estimator.pt').exists()
+
+
+def test_native_mode_rejects_claims_and_cross_processing_proofs(tmp_path, monkeypatch):
+    from go2_pvcnn.control.dh116 import tabletop_stereo_promotion as promotion
+    from go2_pvcnn.control.dh116 import tabletop_stereo_preprocessing as processing
+    manifest, _, _ = _dataset(tmp_path, monkeypatch, [
+        ('a','family-1','run-a'), ('b','family-2','run-b'), ('c','family-3','run-c')])
+    config = tmp_path/'camera.json'
+    config.write_text('{}')
+    proof = tmp_path/'proof.json'
+    proof.write_text(json.dumps(dict(qualified=True,
+        calibration_artifact=dict(path=config.name, sha256=file_sha256(config)))))
+    def reject_unverified(_):
+        raise ValueError('fixture must not qualify as native')
+    monkeypatch.setattr(promotion, 'verify_stereo_qualification', reject_unverified)
+    args = ['--dataset-manifest', str(manifest), '--dataset-manifest-sha256', file_sha256(manifest),
+        '--mode', 'native_qualified_training', '--native-stereo-proof', str(proof),
+        '--native-stereo-proof-sha256', file_sha256(proof)]
+    first = tmp_path/'native_rejected'
+    assert state.main([*args, '--output', str(first)]) == 2
+    rejected = json.loads((first/'state_supervision_report.json').read_text(encoding='utf-8'))
+    assert rejected['status'] == 'blocked_native_stereo_proof'
+    assert 'must not qualify' in rejected['qualification']['detail']
+    monkeypatch.setattr(promotion, 'verify_stereo_qualification', lambda _: dict(
+        qualified=True, measurements_verified=True, source_scope='native',
+        calibration_sha256='c'*64, depth_estimator_config={'method':'wire_silhouette'}))
+    monkeypatch.setattr(processing, 'processing_contract', lambda _: dict(
+        calibration_sha256='c'*64, processing_sha256='9'*64, depth_estimator={'method':'wire_silhouette'}))
+    second = tmp_path/'native_mismatched'
+    assert state.main([*args, '--output', str(second)]) == 2
+    mismatch = json.loads((second/'state_supervision_report.json').read_text(encoding='utf-8'))
+    assert mismatch['status'] == 'blocked_native_stereo_proof'
+    assert 'processing' in mismatch['qualification']['detail']
+    assert not (second/'state_estimator.pt').exists()
+
+
+def test_native_mode_binds_verified_source_and_preserves_model_gates(tmp_path, monkeypatch):
+    # The verifier's result is a CPU fixture for admission wiring only.
+    from go2_pvcnn.control.dh116 import tabletop_stereo_promotion as promotion
+    from go2_pvcnn.control.dh116 import tabletop_stereo_preprocessing as processing
+    manifest, _, _ = _dataset(tmp_path, monkeypatch, [
+        ('a','family-1','run-a'), ('b','family-2','run-b'), ('c','family-3','run-c')])
+    _, evidence = _read(manifest)
+    config = tmp_path/'camera.json'
+    config.write_text('{}')
+    proof = tmp_path/'proof.json'
+    proof.write_text(json.dumps(dict(calibration_artifact=dict(
+        path=config.name, sha256=file_sha256(config)))))
+    monkeypatch.setattr(promotion, 'verify_stereo_qualification', lambda _: dict(
+        qualified=True, measurements_verified=True, source_scope='native',
+        calibration_sha256=evidence['calibration_sha256'],
+        depth_estimator_config={'method':'wire_silhouette','image_processing_batch_size':2}))
+    monkeypatch.setattr(processing, 'processing_contract', lambda _: dict(
+        calibration_sha256=evidence['calibration_sha256'],
+        processing_sha256=evidence['observation_preprocessor_sha256'],
+        depth_estimator={'method':'wire_silhouette'}))
+    out = tmp_path/'native'
+    args = ['--dataset-manifest', str(manifest), '--dataset-manifest-sha256', file_sha256(manifest),
+        '--mode', 'native_qualified_training', '--native-stereo-proof', str(proof)]
+    assert state.main([*args, '--native-stereo-proof-sha256', file_sha256(proof), '--output', str(out)]) == 0
+    report = json.loads((out/'state_supervision_report.json').read_text(encoding='utf-8'))
+    assert report['status'] == 'native_qualified_state_fit_completed'
+    assert report['fit_execution_scope'] == 'offline_tensor_optimization'
+    assert report['native_stereo_source_qualified'] is True
+    assert report['generalization_qualified'] is False
+    assert report['actor_deployment_qualified'] is False
+    model = torch.load(out/'state_estimator.pt', map_location='cpu', weights_only=True)
+    assert model['qualification']['native_stereo_proof_sha256'] == file_sha256(proof)
+    assert model['successful_demonstration_pool'] is False
+
+    bad_out = tmp_path/'bad_sha'
+    assert state.main([*args, '--native-stereo-proof-sha256', 'f'*64, '--output', str(bad_out)]) == 2
+    rejected = json.loads((bad_out/'state_supervision_report.json').read_text(encoding='utf-8'))
+    assert rejected['status'] == 'blocked_native_stereo_proof'
+    assert 'SHA mismatch' in rejected['qualification']['detail']

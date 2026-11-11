@@ -1,6 +1,7 @@
 """Offline state-only training on native synchronized Teacher candidates."""
 from argparse import ArgumentParser
 from collections import defaultdict
+from dataclasses import dataclass
 import json
 import math
 from pathlib import Path
@@ -25,7 +26,9 @@ HEADS = {
     'force_proxy': (None, ('force_proxy',)),
 }
 PARTITIONS = ('train', 'validation', 'test')
-TRAINING_MODES = ('schema_test', 'diagnostic_fit', 'formal_training')
+QUALIFIED_TRAINING_MODES = ('offline_qualified_training', 'native_qualified_training')
+TRAINING_MODES = ('schema_test', 'diagnostic_fit', *QUALIFIED_TRAINING_MODES)
+_MODE_CHOICES = (*TRAINING_MODES, 'formal_training')
 SOURCE_KEYS = ('source_valid', 'identity_aligned', 'timestamp_valid', 'visibility_valid', 'correspondence_valid')
 _ENCODERS_ONLY = 'simulation_SDK_encoder_readback_only'
 DATASET_VERSION = 'dh116-stereo-state-dataset-v1'
@@ -559,6 +562,63 @@ def read_candidate_dataset(manifest, *, expected_sha256):
         successful_demonstration_pool=False)
 
 
+@dataclass(frozen=True)
+class _StateTrainingAdmission:
+    rows: list
+    mode: str
+    evidence: dict
+    blocked: str | None = None
+
+
+def _verify_native_training_source(path, sha, evidence):
+    from .tabletop_stereo_preprocessing import processing_contract
+    from .tabletop_stereo_promotion import _artifact, verify_stereo_qualification
+
+    path = Path(path).resolve(strict=True)
+    if file_sha256(path) != require_sha(sha, 'native stereo proof SHA'):
+        raise ValueError('native stereo proof SHA mismatch')
+    proof = json.loads(path.read_text(encoding='utf-8'))
+    result = verify_stereo_qualification(path)
+    if (result.get('qualified') is not True or result.get('measurements_verified') is not True
+            or result.get('source_scope') != 'native'):
+        raise ValueError('verified native stereo measurements required')
+    camera, _ = _artifact(proof.get('calibration_artifact'), path.parent)
+    processing = processing_contract(json.loads(camera))
+    measured_depth = dict(result['depth_estimator_config'])
+    measured_depth.pop('image_processing_batch_size', None)
+    if (result.get('calibration_sha256') != evidence['calibration_sha256']
+            or processing['calibration_sha256'] != evidence['calibration_sha256']
+            or processing['processing_sha256'] != evidence['observation_preprocessor_sha256']
+            or processing['depth_estimator'] != measured_depth):
+        raise ValueError('native stereo proof calibration or processing differs from the training data')
+    if file_sha256(path) != sha:
+        raise ValueError('native stereo proof changed during validation')
+    return dict(native_stereo_proof_sha256=sha, native_stereo_source_qualified=True)
+
+
+def read_qualified_training_dataset(manifest, *, expected_sha256, mode, native_stereo_proof=None,
+                                    native_stereo_proof_sha256=None):
+    if mode not in QUALIFIED_TRAINING_MODES:
+        raise ValueError('explicit qualified state training mode required')
+    if mode != 'native_qualified_training' and (native_stereo_proof is not None or native_stereo_proof_sha256 is not None):
+        raise ValueError('native stereo proof is only accepted in native-qualified mode')
+    rows, evidence = read_candidate_dataset(manifest, expected_sha256=expected_sha256)
+    qualification = dict(dataset_manifest_sha256=evidence['manifest_sha256'],
+                         native_stereo_source_qualified=False)
+    blocked = None
+    if mode == 'native_qualified_training':
+        if native_stereo_proof is None or native_stereo_proof_sha256 is None:
+            blocked = 'blocked_missing_native_stereo_proof'
+        else:
+            try:
+                qualification.update(_verify_native_training_source(
+                    native_stereo_proof, native_stereo_proof_sha256, evidence))
+            except (OSError, ValueError, TypeError, KeyError) as error:
+                blocked = 'blocked_native_stereo_proof'
+                qualification['detail'] = str(error)
+    return rows, evidence, _StateTrainingAdmission(rows, mode, qualification, blocked)
+
+
 def _targets(row, name, loss):
     """Select a head's supervised coordinates; never turn sensor estimates into truth."""
     labels = row.get('extra_labels') or {}
@@ -913,14 +973,15 @@ def fit_state_heads(model, rows, split, *, epochs, batch_size, device='cpu', lr=
     return admission
 
 
-def run_training_mode(model, rows, *, mode='formal_training', epochs=1, batch_size=4, device='cpu', lr=3e-4, seed=116):
+def run_training_mode(model, rows, *, mode='formal_training', epochs=1, batch_size=4, device='cpu', lr=3e-4,
+                      seed=116, admission=None):
     """Separate schema, in-sample real-label debugging and grouped training.
 
     CLI callers first reopen candidate/raw/reference SHA bindings with read_candidate.
     This lower-level tensor function is also exercised with explicit CPU fixtures.
     A diagnostic fit never opens an Actor, expert, uncertainty or deployment gate.
     """
-    if mode not in TRAINING_MODES:
+    if mode not in _MODE_CHOICES:
         raise ValueError('unknown state training mode')
     if not rows or min(epochs, batch_size) < 1 or not math.isfinite(lr) or lr <= 0:
         raise ValueError('nonempty rows and positive finite training settings required')
@@ -937,22 +998,37 @@ def run_training_mode(model, rows, *, mode='formal_training', epochs=1, batch_si
         for head in heads.values():
             head.update(enabled=False, reason='schema_test_no_optimization')
         return dict(report, status='schema_validated')
-    if mode == 'formal_training':
+    if mode in (*QUALIFIED_TRAINING_MODES, 'formal_training'):
         criterion = StereoEstimationLoss()
         geometry_labels = [_targets(row, 'geometry', criterion) for row in rows]
         stages = {**_geometry_admission(_geometry_stages(geometry_labels), split),
             **{key:value for key,value in heads.items() if key != 'geometry'}}
+        blocked = None
+        if mode in QUALIFIED_TRAINING_MODES:
+            report.update(fit_execution_scope='offline_tensor_optimization', native_stereo_source_qualified=False)
+            if not (isinstance(admission, _StateTrainingAdmission) and admission.rows is rows
+                    and admission.mode == mode):
+                blocked = 'blocked_missing_verified_dataset_manifest'
+            else:
+                report['qualification'] = admission.evidence.copy()
+                report['native_stereo_source_qualified'] = admission.evidence['native_stereo_source_qualified']
+                blocked = admission.blocked
         if any(row.get('dataset_usage') == 'diagnostic_only_cold_cohort' for row in rows):
+            blocked = 'blocked_diagnostic_only_cold_cohort'
+        if blocked:
             for record in (*heads.values(), *stages.values()):
-                _disable_stage(record, 'diagnostic_only_cold_cohort')
-            return dict(report, status='blocked_diagnostic_only_cold_cohort', stages=stages)
+                _disable_stage(record, blocked.removeprefix('blocked_'))
+            return dict(report, status=blocked, stages=stages)
         if split['status'] != 'ready':
             return dict(report, status=split['status'], stages=stages)
         heads = fit_state_heads(model, rows, split, epochs=epochs, batch_size=batch_size, device=device, lr=lr)
         stages.update(heads['geometry'].get('stages', {}))
         stages.update({key:value for key,value in heads.items() if key != 'geometry'})
         trained = any(x['enabled'] for x in heads.values())
-        return dict(report, heads=heads, status='formal_state_fit_completed' if trained else 'blocked_state_supervision',
+        completed = {'formal_training':'formal_state_fit_completed',
+            'offline_qualified_training':'offline_qualified_state_fit_completed',
+            'native_qualified_training':'native_qualified_state_fit_completed'}
+        return dict(report, heads=heads, status=completed[mode] if trained else 'blocked_state_supervision',
                     state_training_started=trained, stages=stages)
     criterion = StereoEstimationLoss()
     labels = []
@@ -1005,7 +1081,7 @@ def read_training_config(path):
     allowed = {'mode','epochs','batch_size','lr','seed','image_processing_batch_size'}
     settings = value.get('settings')
     if (value.get('version') != 'dh116-stereo-state-training-mode-v1' or not isinstance(settings,dict)
-            or not set(settings) <= allowed or settings.get('mode') not in TRAINING_MODES):
+            or not set(settings) <= allowed or settings.get('mode') not in _MODE_CHOICES):
         raise ValueError('explicit training mode and allowed configuration settings required')
     return settings
 
@@ -1028,7 +1104,9 @@ def main(argv=None):
     parser.add_argument('--batch-size', type=int, default=4)
     parser.add_argument('--seed', type=int, default=116)
     parser.add_argument('--device', default='cpu')
-    parser.add_argument('--mode', choices=TRAINING_MODES, default='formal_training')
+    parser.add_argument('--mode', choices=_MODE_CHOICES, default='formal_training')
+    parser.add_argument('--native-stereo-proof', type=Path)
+    parser.add_argument('--native-stereo-proof-sha256')
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--image-processing-batch-size', type=int, default=1)
     if config_args.config:
@@ -1036,11 +1114,23 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if min(args.epochs, args.batch_size) < 1:
         parser.error('positive epochs and batch size required')
+    if (args.native_stereo_proof is None) != (args.native_stereo_proof_sha256 is None):
+        parser.error('native stereo proof path and SHA must be supplied together')
+    if args.native_stereo_proof is not None and args.mode != 'native_qualified_training':
+        parser.error('native stereo proof requires native-qualified mode')
+    if args.mode in QUALIFIED_TRAINING_MODES and args.dataset_manifest is None:
+        parser.error('qualified state training requires a SHA-bound dataset manifest')
+    admission = None
     single_source = (args.raw, args.candidate_sha256, args.raw_sha256)
     if args.dataset_manifest is not None:
         if not args.dataset_manifest_sha256 or any(single_source):
             parser.error('dataset manifest requires its SHA and excludes single-source arguments')
-        rows, evidence = read_candidate_dataset(args.dataset_manifest, expected_sha256=args.dataset_manifest_sha256)
+        if args.mode in QUALIFIED_TRAINING_MODES:
+            rows, evidence, admission = read_qualified_training_dataset(
+                args.dataset_manifest, expected_sha256=args.dataset_manifest_sha256, mode=args.mode,
+                native_stereo_proof=args.native_stereo_proof, native_stereo_proof_sha256=args.native_stereo_proof_sha256)
+        else:
+            rows, evidence = read_candidate_dataset(args.dataset_manifest, expected_sha256=args.dataset_manifest_sha256)
         provenance = dict(dataset_manifest_sha256=evidence['manifest_sha256'], dataset_sources=evidence['sources'],
                           calibration_sha256=evidence['calibration_sha256'],
                           observation_preprocessor_sha256=evidence['observation_preprocessor_sha256'])
@@ -1054,7 +1144,9 @@ def main(argv=None):
     model = StereoStateEstimator(history=rows[0]['history']['history_valid'].shape[1], point_coordinate_mode='palms',
         image_processing_batch_size=args.image_processing_batch_size)
     report = run_training_mode(model, rows, mode=args.mode, epochs=args.epochs, batch_size=args.batch_size,
-        device=args.device, seed=args.seed, lr=args.lr)
+        device=args.device, seed=args.seed, lr=args.lr, admission=admission)
+    if 'qualification' in report:
+        provenance['qualification'] = report['qualification']
     if report['state_training_started']:
         with (out/'state_estimator.pt').open('xb') as stream:
             torch.save(dict(version='dh116-stereo-state-fit-v2', mode=args.mode,
