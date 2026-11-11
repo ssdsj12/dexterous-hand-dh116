@@ -1,3 +1,7 @@
+## 2026-11-11 — 正式训练准入复核
+
+42 项 CPU 回归核对已有成功池、DAgger 准入、Student 自有 PPO rollout 及候选隔离。Teacher128 诊断证据留在诊断范围。正式 BC、DAgger 和 Student PPO 继续阻断。[准入复核](docs/superpowers/reports/2026-11-11-stereo-formal-training-admission.md)
+
 ## 2026-11-11 — DeformX CUDA 来源复查
 
 新增只读 CUDA 源码清单检查并通过 2 项 CPU 测试。服务器复查缺少完整目标仓库及 CUDA Toolkit 12.8，编译、GPU 求解和双向耦合均待解除阻断。[来源复查](docs/superpowers/reports/2026-11-11-stereo-deformx-source-recheck.md)

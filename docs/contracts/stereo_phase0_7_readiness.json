@@ -2678,6 +2678,17 @@
     "build_verified": false,
     "bidirectional_coupling_verified": false
   },
+  "formal_training_admission_20261111": {
+    "report": "docs/superpowers/reports/2026-11-11-stereo-formal-training-admission.md",
+    "cpu_tests_passed": 42,
+    "complete_successful_teacher_episodes": 0,
+    "teacher128_success_pool_admitted": false,
+    "stereo_qualified": false,
+    "formal_bc": "blocked",
+    "formal_dagger": "blocked",
+    "formal_student_ppo": "blocked",
+    "native_training_started": false
+  },
   "publication_workflow": {
     "policy": "AGENTS.md",
     "repository": "ssdsj12/dexterous-hand-dh116",

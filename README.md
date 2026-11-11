@@ -1,3 +1,7 @@
+## 2026-11-11 — 正式训练准入复核
+
+42 项 CPU 准入回归通过。Teacher 仍缺完整成功回合，双目正确点完整率尚未合格，正式 BC、DAgger 和 Student PPO 保持 `blocked`。[准入复核](docs/superpowers/reports/2026-11-11-stereo-formal-training-admission.md)
+
 ## 2026-11-11 — DeformX CUDA 来源复查
 
 服务器 19 个候选目录仍无目标 CUDA 求解器独立仓库。新增只读候选核验工具，检查指定提交、子模块和实际源文件。构建与双向耦合继续 `blocked`。[来源复查](docs/superpowers/reports/2026-11-11-stereo-deformx-source-recheck.md)
