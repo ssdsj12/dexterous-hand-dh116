@@ -2917,6 +2917,26 @@
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-wp4.cpu-contract.md",
       "native_qualification": false
+    },
+    "wp5.cpu-source-check": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_cuda_source.py"
+      ],
+      "log_sha256": "e4083fe9e4460d574f7457091b53ead8da9062ae08a9bb4ccda3fb2e698522cc",
+      "tested_head": "f2e97e7af7b62dc7c15a2e9c27b30e60f32f4bd4",
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-wp5.cpu-source-check.md",
+      "native_qualification": false
     }
   }
 }

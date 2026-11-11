@@ -231,10 +231,30 @@
       "title": "复核 DeformX CUDA 源码资格检查器",
       "executor": "pytest",
       "dependencies": [],
-      "status": "pending",
+      "status": "passed",
       "tests": [
         "tests/test_dh116_deformx_cuda_source.py"
-      ]
+      ],
+      "last_result": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "e4083fe9e4460d574f7457091b53ead8da9062ae08a9bb4ccda3fb2e698522cc",
+        "tested_head": "f2e97e7af7b62dc7c15a2e9c27b30e60f32f4bd4",
+        "status": "passed",
+        "report": "docs/superpowers/reports/dh116-managed-wp5.cpu-source-check.md",
+        "native_qualification": false
+      }
     },
     "wp5.source": {
       "title": "取得 DeformX 固定源码和许可证",
