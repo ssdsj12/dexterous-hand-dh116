@@ -989,7 +989,7 @@
     "PR_intent": "Draft",
     "merge_authorized": false,
     "qualification_authority": false,
-    "current_invocation": "J2B_local_only;no_push_merge_native_training",
+    "current_invocation": "user_authorized_J2A_J2B_publication_to_existing_Draft_PR",
     "previous_invocation": "local_changes_only;no_push_or_merge",
     "authorized_release": {
       "date_utc": "2026-11-11",
@@ -1006,7 +1006,22 @@
       "physical_task_qualified": false,
       "deployment_qualified": false
     },
-    "previous_invocation_before_J2A": "explicit_user_requested_GitHub_release_2026-11-11;Draft_preserved;no_merge"
+    "previous_invocation_before_J2A": "explicit_user_requested_GitHub_release_2026-11-11;Draft_preserved;no_merge",
+    "implementation_commits": [
+      "a5a15fb779ee39e0d637f53cb931fe335ea394e5",
+      "3cc5c129c71dc06be721039908dd643e7d8af8d4"
+    ],
+    "keep_PR_Draft": true,
+    "pre_push_checks": {
+      "passed": 63,
+      "duration_s": 20.36,
+      "exit_code": 0,
+      "protected_source_SHA_unchanged": 528,
+      "server_executed_source_SHA_unchanged": 1131,
+      "new_native_runs": 0,
+      "new_training_runs": 0
+    },
+    "post_push_verification_policy": "remote_branch_and_PR_head_must_equal_local_HEAD;receipt_kept_privately"
   },
   "phase0_7_CPU_snapshot": {
     "windows": {
@@ -1055,8 +1070,9 @@
     },
     "next_work_package": "J2-C native-ID constrained segmentation;not_yet_executed",
     "training_started": false,
-    "no_push": true,
-    "no_merge": true
+    "no_push": false,
+    "no_merge": true,
+    "publication_authorization": "explicit_user_request_upload_github"
   },
   "history": {
     "J0_J1_before_J2A": {
@@ -1143,6 +1159,31 @@
       "no_push": true,
       "no_merge": true,
       "training_started": false
+    },
+    "J2B_local_before_authorized_publication": {
+      "invocation_scope": "J2-B_continuation_authorized_by_user",
+      "J2B": {
+        "implemented": true,
+        "CPU_verified": true,
+        "listed_analytic_gate_passed": true,
+        "methods": [
+          "census",
+          "coarse_to_fine",
+          "gradient",
+          "zncc"
+        ],
+        "new_pytest_cases": 134,
+        "new_native_capture_count": 0,
+        "native_accuracy_qualified": false,
+        "physical_task_qualified": false,
+        "deployment_qualified": false,
+        "report": "docs/superpowers/reports/2026-11-11-stereo-j2b-matching-candidates.md",
+        "evidence": "docs/contracts/stereo_j2b_validation_summary.json"
+      },
+      "next_work_package": "J2-C native-ID constrained segmentation;not_yet_executed",
+      "training_started": false,
+      "no_push": true,
+      "no_merge": true
     }
   },
   "J0_J1_CPU_snapshot": {

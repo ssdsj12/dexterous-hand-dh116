@@ -1,3 +1,9 @@
+## 2026-11-11 — 按用户授权上传J2-A/J2-B
+
+本次发布现有开发分支的J2-A（`a5a15fb`）与J2-B（`3cc5c12`）代码、独立配置、测试、报告和readiness；沿用[Draft PR #2](https://github.com/ssdsj12/dexterous-hand-dh116/pull/2)，保持Draft且不合并11-10。最新完整CPU回归885/886与48解析案例为上一阶段已执行证据；本次上传前另执行63项cost/integration检查，63 passed（20.36s，exit0）。528保护文件和1131份服务器已测源码SHA复核一致，未运行新Isaac/GPU实验或训练。
+
+原10run深度精度、物理抓取及部署资格仍未通过；下一工作包J2-C尚未执行。原始图像、运行日志、模型、缓存和私有归档不提交。推送后核对远端分支与Draft PR的HEAD SHA一致；下文保留各阶段当时未推送的历史记录。
+
 ## 2026-11-11 — J2-B：四种独立匹配候选
 
 新增显式Census/Hamming、ZNCC、中心梯度L1与.25/.5/1粗到细候选；独立配置/SHA，完整RAW支持、同指标亚像素与全range审计，不覆盖旧默认SAD或模型。新增134项回归纳入最终相关组：Windows885 passed/1 skipped（149.97s）、server886 passed/1 skipped（140.38s），均exit0、无Isaac导入。48个固定解析case通过列出门槛；四候选标准coverage全100%、最大视差P95 .0250001px，Census存在极少坏尾，不能只看P95。
