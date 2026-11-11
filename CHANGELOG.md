@@ -1,3 +1,7 @@
+## 2026-11-11 — 准备 MPC 371D 与实际 24D 同步采集
+
+CPU `passed`，通过 50 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp3.mpc-sync-prepare.md)。
+
 ## 2026-11-11 — GitHub 传输失败时保留 Ubuntu 工作包
 
 Ubuntu 调度器在 GitHub 连接异常时保留已测试提交。17 项 CPU 回归通过。[报告](docs/superpowers/reports/2026-11-11-work-package-publication-defer.md)

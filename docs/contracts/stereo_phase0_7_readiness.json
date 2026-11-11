@@ -3071,6 +3071,28 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-11-work-package-publication-defer.md",
       "native_qualification": false
+    },
+    "wp3.mpc-sync-prepare": {
+      "passed": 50,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_privileged_action_audit.py",
+        "tests/test_dh116_stereo_runtime_teacher_identity.py",
+        "tests/test_mpc_privileged_capture.py"
+      ],
+      "log_sha256": "d9cb57db97e750bad1e222a9a65a830a40a89b39d260aa791551bae8b5a30e90",
+      "tested_head": "c0bf7ef510e44ec9ce32026738354d503442f5c6",
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-wp3.mpc-sync-prepare.md",
+      "native_qualification": false
     }
   }
 }
