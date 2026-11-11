@@ -660,6 +660,42 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "977c3e9432086363d67ee1188b55aa68c167a230769e78664e8be185930a9665",
+      "tested_head": "538c10b907c471aefbb10fbdb5c47155f9028857",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-windows-relay-publication-policy.md",
+      "native_qualification": false,
+      "package": "orchestration.windows-relay-only",
+      "commit": "71781d2e6a7fb39e10452afda4752a45ce262d14",
+      "parent": "538c10b907c471aefbb10fbdb5c47155f9028857",
+      "files": [
+        "AGENTS.md",
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/plans/DH116_AUTONOMOUS_EXECUTION_MASTER_PLAN.md",
+        "docs/superpowers/reports/2026-11-12-windows-relay-publication-policy.md",
+        "scripts/run_dh116_work_packages.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
