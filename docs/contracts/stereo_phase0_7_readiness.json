@@ -2850,6 +2850,28 @@
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-wp2.mode-gates.md",
       "native_qualification": false
+    },
+    "wp6.deployment-isolation": {
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_inference.py",
+        "tests/test_dh116_stereo_runtime_actor_modes.py",
+        "tests/test_dh116_stereo_student_ppo.py"
+      ],
+      "log_sha256": "dbe521125ef8bb9ee2fad31cf76e4a423e101a66dd0c43ac717a8e65cd0c85f5",
+      "tested_head": "3bc2014f165592263b6887ea098ff7ccc17cb0b7",
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-wp6.deployment-isolation.md",
+      "native_qualification": false
     }
   }
 }

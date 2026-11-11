@@ -5,48 +5,128 @@ drivers remain responsible for validated encoder/FK input and the unchanged
 24D controller/safety contract; this module does not issue hardware commands.
 """
 import argparse
+from copy import deepcopy
+import hashlib
+import io
 import json
+import math
 from pathlib import Path
 
 import torch
 
 from .tabletop_stereo_calibration import StereoCalibration
-from .tabletop_stereo_checkpoint import load_deployment_actor
+from .tabletop_stereo_checkpoint import (
+    DEPLOYMENT_VERSION, _validate_actor_contract, _validate_state, tensor_state_sha256,
+)
 from .tabletop_stereo_depth import StereoDepth
 from .tabletop_stereo_observation import SensorBatch, StereoHistory
 from .tabletop_stereo_perception import WirePointExtractor, TrackedWirePointExtractor
 from .tabletop_stereo_geometry import world_to_palms
-from .tabletop_stereo_contract import ROOT, file_sha256, require_opt_in, write_json_new
+from .tabletop_stereo_contract import ROOT, file_sha256, require_opt_in, require_sha, write_json_new
 from .tabletop_stereo_preprocessing import require_raw_processing
+from .tabletop_stereo_student_ppo import make_stereo_actor
 
 
 RAW_FIELDS = {'left_rgb', 'right_rgb', 'proprio', 'left_timestamp_s', 'right_timestamp_s',
               'frame_id', 'now_timestamp_s'}
 
 
+def _tensor_snapshot(path, *, expected_sha256=None, label):
+    data = Path(path).read_bytes()
+    sha = hashlib.sha256(data).hexdigest()
+    if expected_sha256 is not None and sha != require_sha(expected_sha256, label + ' SHA'):
+        raise ValueError(label + ' SHA mismatch')
+    return torch.load(io.BytesIO(data), map_location='cpu', weights_only=True), sha
+
+
+def _load_standalone_actor(path, calibration, *, expected_sha256=None):
+    """Use the unchanged v1 contract and validate the same bytes used by inference."""
+    payload, sha = _tensor_snapshot(path, expected_sha256=expected_sha256, label='Actor package')
+    if not isinstance(payload, dict) or payload.get('version') != DEPLOYMENT_VERSION:
+        raise ValueError('independent stereo deployment version required; legacy visual3844 forbidden')
+    allowed = {'version', 'actor', 'actor_sha256', 'actor_contract', 'network_config',
+               'calibration_sha256', 'preprocessor'}
+    if set(payload) != allowed:
+        raise ValueError('actor-only package must contain no critic/Teacher/optimizer/env')
+    contract, network = payload['actor_contract'], payload['network_config']
+    if payload['calibration_sha256'] != calibration:
+        raise ValueError('deployment calibration SHA mismatch')
+    _validate_actor_contract(contract, network, calibration)
+    if payload['preprocessor'] != contract['preprocessor']:
+        raise ValueError('preprocessor contract mismatch')
+    if payload['actor_sha256'] != tensor_state_sha256(payload['actor']):
+        raise ValueError('actor tensor SHA mismatch')
+    with torch.random.fork_rng(devices=[]):
+        actor = make_stereo_actor(network)
+    _validate_state(payload['actor'], actor)
+    actor.load_state_dict(payload['actor'], strict=True)
+    actor.deployment_contract = deepcopy(contract)
+    actor.network_config = deepcopy(network)
+    actor.calibration_sha256 = calibration
+    actor.deployment_package_artifact = dict(path=str(Path(path).resolve()), sha256=sha)
+    return actor.eval()
+
+
+def _configure_standalone_segmentation(depth, config, device):
+    options = config.get('wire_segmentation')
+    if options is None:
+        return depth
+    from .tabletop_stereo_wire_matching import METHODS
+    from .tabletop_stereo_wire_segmentation import StereoWireSegmentation, segmentation_masks
+
+    if options.get('diagnostic_only') is not True or depth.method not in METHODS:
+        raise ValueError('diagnostic segmentation requires an existing sparse wire matcher')
+    expected_sha = require_sha(options.get('checkpoint_sha256'), 'segmentation checkpoint SHA')
+    payload, sha = _tensor_snapshot(options['checkpoint_path'], expected_sha256=expected_sha,
+                                   label='segmentation checkpoint')
+    contract = payload.get('contract', {}) if isinstance(payload, dict) else {}
+    if (not isinstance(contract, dict) or contract.get('version') != 'dh116-wire-segmentation-diagnostic-v1'
+            or contract.get('source') != 'native_instance_id'):
+        raise ValueError('native-instance trained segmentation contract required')
+    with torch.random.fork_rng(devices=[]):
+        segmenter = StereoWireSegmentation(payload['width'])
+    _validate_state(payload['model'], segmenter)
+    segmenter.load_state_dict(payload['model'], strict=True)
+    segmenter.to(device).eval()
+
+    class LearnedMaskDepth:
+        def __getattr__(self, key):
+            return getattr(depth, key)
+
+        @torch.no_grad()
+        def compute(self, left, right, calibration, **kwargs):
+            masks, audit = segmentation_masks(segmenter(left, right), diagnostic_only=True)
+            result = depth.compute(left, right, calibration, wire_masks=masks, **kwargs)
+            result.update(wire_mask=masks[0], wire_mask_right=masks[1],
+                          segmentation_identity=dict(checkpoint_sha256=sha, **audit))
+            return result
+
+    return LearnedMaskDepth()
+
+
 class StereoRGBStudentRunner:
-    def __init__(self, actor_package, camera_config, *, num_envs=1, device='cpu', max_image_age_s=1/60):
-        self.calibration = StereoCalibration.from_json(camera_config)
-        self.actor = load_deployment_actor(actor_package,
-            expected_calibration_sha256=self.calibration.sha256).to(device).eval()
-        self.processing = require_raw_processing(self.actor.deployment_contract, camera_config)
-        self.camera_config_sha256 = file_sha256(camera_config)
-        config = json.loads(Path(camera_config).read_text(encoding='utf-8'))
-        self.depth = StereoDepth.from_config(config)
-        from .tabletop_stereo_wire_segmentation import configured_segmentation_depth
-        self.depth = configured_segmentation_depth(self.depth,config,device)
+    def __init__(self, actor_package, camera_config, *, num_envs=1, device='cpu', max_image_age_s=1/60,
+                 expected_actor_package_sha256=None):
+        data = Path(camera_config).read_bytes()
+        config = json.loads(data.decode('utf-8'))
+        self.calibration = StereoCalibration.from_dict(config)
+        self.actor = _load_standalone_actor(actor_package, self.calibration.sha256,
+            expected_sha256=expected_actor_package_sha256).to(device)
+        self.processing = require_raw_processing(self.actor.deployment_contract, config)
+        self.camera_config_sha256 = hashlib.sha256(data).hexdigest()
+        self.depth = _configure_standalone_segmentation(StereoDepth.from_config(config), config, device)
         self.history = StereoHistory(num_envs, self.actor.network_config['history'], device=device)
         self.extractor = (WirePointExtractor() if self.processing['perception']['algorithm']=='warm_colour_visible_simple_path_ZhangSuen_v1'
             else TrackedWirePointExtractor(point_sampling=self.processing['perception']['point_sampling'],
                 ribbon_radius_px=self.processing['perception']['ribbon_radius_px'],
                 observed_surface_capacity=self.processing['perception']['observed_surface_capacity']))
         self.num_envs, self.device = num_envs, torch.device(device)
-        if max_image_age_s <= 0:
+        if type(max_image_age_s) not in (int, float) or not math.isfinite(max_image_age_s) or max_image_age_s <= 0:
             raise ValueError('positive image freshness limit required')
         self.max_image_age_s = float(max_image_age_s)
         self._frame, self._timestamp = -1, None
         self.last_visible_geometry = None
-        self.package_sha256 = file_sha256(actor_package)
+        self.package_sha256 = self.actor.deployment_package_artifact['sha256']
 
     def _clear_temporal_state(self):
         self.history.reset(torch.ones(self.num_envs,device=self.device,dtype=torch.bool))
@@ -58,7 +138,6 @@ class StereoRGBStudentRunner:
     @torch.no_grad()
     def step(self, left_rgb, right_rgb, proprio, *, left_timestamp_s, right_timestamp_s,
              frame_id, now_timestamp_s, reset_mask=None):
-        import math
         if (type(frame_id) is not int or frame_id <= self._frame
                 or any(type(v) not in (int, float) or not math.isfinite(v) for v in
                     (left_timestamp_s, right_timestamp_s, now_timestamp_s))):
@@ -123,7 +202,8 @@ class StereoRGBStudentRunner:
             camera_config_sha256=self.camera_config_sha256,
             inference_source_sha256=file_sha256(__file__),
             processing_sha256=self.processing['processing_sha256'],
-            teacher_executed=False, critic_executed=False, simulator_input_used=False,
+            action_owner='student', teacher_executed=False, mpc_executed=False, critic_executed=False,
+            simulator_input_used=False,
             depth_source='computed_from_synchronized_left_right_RGB', native_task_qualified=False)
 
     def from_mapping(self, raw, *, reset_mask=None):
@@ -135,6 +215,7 @@ class StereoRGBStudentRunner:
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--actor-package', type=Path, required=True)
+    parser.add_argument('--actor-package-sha256')
     parser.add_argument('--rgb-frame', type=Path, required=True)
     parser.add_argument('--camera-config', type=Path, default=ROOT / 'configs/dh116_training/stereo_camera_640x480_v2.json')
     parser.add_argument('--output', type=Path, required=True)
@@ -146,7 +227,8 @@ def main(argv=None):
     if not isinstance(raw, dict) or set(raw) != RAW_FIELDS:
         raise ValueError('versioned raw RGB/proprio frame required; depth/privileged tensors are not accepted')
     runner = StereoRGBStudentRunner(args.actor_package, args.camera_config,
-        num_envs=len(raw['left_rgb']), device=args.device)
+        num_envs=len(raw['left_rgb']), device=args.device,
+        expected_actor_package_sha256=args.actor_package_sha256)
     result = runner.from_mapping(raw)
     result = {k: v.detach().cpu().tolist() if isinstance(v, torch.Tensor) else v for k, v in result.items()}
     write_json_new(args.output, result)

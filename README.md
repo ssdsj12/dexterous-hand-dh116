@@ -1,3 +1,7 @@
+## 2026-11-11 — 验证三种 Actor 的独立双目部署
+
+CPU `passed`，通过 47 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp6.deployment-isolation.md)。
+
 ## 2026-11-11 — 区分状态监督的离线与原生资格模式
 
 CPU `passed`，通过 49 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp2.mode-gates.md)。
