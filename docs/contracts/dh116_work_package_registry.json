@@ -739,6 +739,53 @@
         "report": "docs/superpowers/reports/2026-11-11-rigid-deformable-scheduling-gates.md",
         "native_qualification": false
       }
+    },
+    "wp1.depth-auxiliary-diagnostic": {
+      "title": "双目 RGB 光轴深度辅助头",
+      "executor": "prepared",
+      "dependencies": [
+        "wp1.sample-retention"
+      ],
+      "tests": [
+        "tests/test_dh116_stereo_depth_auxiliary.py",
+        "tests/test_dh116_stereo_estimator.py",
+        "tests/test_dh116_stereo_wire_segmentation.py",
+        "tests/test_dh116_stereo_confidence_audit.py"
+      ],
+      "status": "passed",
+      "last_result": {
+        "status": "passed",
+        "passed": 65,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_depth_auxiliary.py",
+          "tests/test_dh116_stereo_estimator.py",
+          "tests/test_dh116_stereo_wire_segmentation.py",
+          "tests/test_dh116_stereo_confidence_audit.py"
+        ],
+        "tested_head": "3e50850a1f72ca7bd37b344aab5f27f8a9fc2fb4",
+        "log_sha256": "1efbdca00147f5ffefa95c3be9e59d673a8eff663f253bcc3bdf6dbb31659e64",
+        "report": "docs/superpowers/reports/2026-11-11-stereo-depth-auxiliary-diagnostic.md",
+        "native_qualification": false
+      }
+    },
+    "wp1.depth-auxiliary-native": {
+      "title": "独立双目深度辅助训练与资格验证",
+      "executor": "gated",
+      "dependencies": [
+        "wp1.depth-auxiliary-diagnostic",
+        "wp1.rgb-native"
+      ],
+      "status": "blocked",
+      "reason": "缺独立左右原生参考、线缆覆盖证据及正式训练批准"
     }
   }
 }

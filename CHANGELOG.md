@@ -1,3 +1,7 @@
+## 2026-11-11 — 双目 RGB 光轴深度辅助头
+
+Ubuntu 65 项 CPU 回归通过。历史 VGA 复放通过左右 RGB 梯度检查，右图缺少独立标签。[报告](docs/superpowers/reports/2026-11-11-stereo-depth-auxiliary-diagnostic.md)
+
 ## 2026-11-11 — 独立排期刚性代理和柔性 Cosserat 验收
 
 刚性代理与柔性 Cosserat 各有原生验收依赖。Ubuntu 19 项 CPU 回归通过。[报告](docs/superpowers/reports/2026-11-11-rigid-deformable-scheduling-gates.md)
