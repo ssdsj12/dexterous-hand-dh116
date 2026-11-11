@@ -154,3 +154,51 @@ def test_local_publisher_acknowledges_code_then_manifest_without_new_commit(repo
     assert repo.pending() == [] and repo.head() == repo.remote_head() == metadata['commit']
     release, = json.loads((repo.root / scheduler.MANIFEST).read_text())['releases']
     assert release['commit'] == pending['commit'] and release['verification_route'] == 'local_git_relay'
+
+
+def test_unavailable_remote_defers_local_package_without_attestation(repo, monkeypatch):
+    from urllib.error import URLError
+
+    initial = repo.head()
+
+    def disconnected(*args, **kwargs):
+        raise URLError('TLS hostname verification failed')
+
+    monkeypatch.undo()
+    monkeypatch.setattr(scheduler.Repository, 'verify_local_target', lambda self: None)
+    monkeypatch.setattr(scheduler, 'urlopen', disconnected)
+    monkeypatch.setattr(scheduler, '__file__', str(repo.root / 'scripts' / 'run_dh116_work_packages.py'))
+    assert scheduler.main(['--run', '--limit', '1']) == 0
+    receipt, = repo.pending()
+    assert repo.head() == receipt['commit']
+    assert repo.remote_head() == initial
+    assert receipt['passed'] == 1 and receipt['remote_verified'] is False
+    assert json.loads((repo.root / scheduler.MANIFEST).read_text())['releases'] == []
+
+
+def test_reachable_invalid_pr_does_not_fall_back_to_local_package(repo, monkeypatch):
+    initial = repo.head()
+
+    def wrong_pr(self):
+        raise RuntimeError('expected open Draft PR #2 targeting 11-10')
+
+    monkeypatch.setattr(scheduler.Repository, 'verify_target', wrong_pr)
+    monkeypatch.setattr(scheduler, '__file__', str(repo.root / 'scripts' / 'run_dh116_work_packages.py'))
+    with pytest.raises(RuntimeError, match='expected open Draft PR'):
+        scheduler.main(['--run', '--limit', '1'])
+    assert repo.head() == initial and repo.pending() == []
+
+
+def test_unavailable_remote_rejects_local_commits_outside_pending_queue(repo, monkeypatch):
+    from urllib.error import URLError
+
+    git(repo.root, 'commit', '-qm', 'independent local change', '--allow-empty')
+
+    def disconnected(self):
+        raise URLError('network disconnected')
+
+    monkeypatch.setattr(scheduler.Repository, 'verify_target', disconnected)
+    monkeypatch.setattr(scheduler, '__file__', str(repo.root / 'scripts' / 'run_dh116_work_packages.py'))
+    with pytest.raises(RuntimeError, match='last verified remote'):
+        scheduler.main(['--run', '--limit', '1'])
+    assert repo.pending() == []

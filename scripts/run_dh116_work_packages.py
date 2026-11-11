@@ -15,6 +15,7 @@ import re
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile, mkdtemp
+from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 
@@ -265,14 +266,18 @@ class Repository:
         self.verify_local_target()
         local, remote = self.head(), None
         problem = 'local-only mode' if local_only else None
+        unreachable = False
         if not local_only:
             try:
                 self.verify_target()
                 remote = self.remote_head()
             except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired) as error:
                 problem = str(error)
+                unreachable = (isinstance(error, (URLError, TimeoutError, subprocess.TimeoutExpired))
+                               and not isinstance(error, HTTPError))
         return dict(branch=BRANCH, head=local, remote_head=remote, aligned=local == remote,
-                    remote_problem=problem, working_tree=self.git('status', '--short').splitlines(),
+                    remote_problem=problem, remote_unreachable=unreachable,
+                    working_tree=self.git('status', '--short').splitlines(),
                     resume_pending=self.journal.exists(), pending_publications=len(self.pending()),
                     **work_queue(self.registry()['packages']))
 
@@ -555,9 +560,17 @@ def main(argv=None):
             repo.resume()
             return 0
         plan = repo.plan(local_only=args.local_only)
-        if plan['resume_pending'] or (not args.local_only and (not plan['aligned'] or plan['pending_publications'])):
+        defer = args.local_only or plan['remote_unreachable']
+        if plan['resume_pending'] or (not defer and (not plan['aligned'] or plan['pending_publications'])):
             raise RuntimeError('restore branch agreement or resume the interrupted publication: '
                                + str(plan['remote_problem'] or 'pending publication'))
+        if plan['remote_unreachable']:
+            pending = repo.pending()
+            anchor = pending[-1]['commit'] if pending else repo.git(
+                'for-each-ref', '--format=%(objectname)', f'refs/remotes/origin/{BRANCH}').strip()
+            if anchor != plan['head']:
+                raise RuntimeError('local HEAD differs from the last verified remote or deferred queue')
+            print(f'GitHub unreachable, deferring publication: {plan["remote_problem"]}', file=sys.stderr)
         repo.verify_protection()
         if args.prepared:
             if args.prepared not in plan['needs_prepared_changes']:
@@ -575,7 +588,7 @@ def main(argv=None):
             result = repo.run_tests(args.prepared, package)
             if before != {name: file_hash(repo.root / name) for name in owned}:
                 raise RuntimeError('prepared source changed while tests ran')
-            repo.publish(args.prepared, result, sorted(owned), defer=args.local_only)
+            repo.publish(args.prepared, result, sorted(owned), defer=defer)
             return 0 if result['exit_code'] == 0 else 2
         repo.require_scope(set())
         failed = False
@@ -589,7 +602,7 @@ def main(argv=None):
                 futures = [pool.submit(repo.run_tests, name, packages[name]) for name in wave]
                 results = [future.result() for future in futures]
             for name, result in zip(wave, results):
-                repo.publish(name, result, defer=args.local_only)
+                repo.publish(name, result, defer=defer)
                 failed |= result['exit_code'] != 0
                 remaining -= 1
         print(json_text(work_queue(repo.registry()['packages'])), end='')

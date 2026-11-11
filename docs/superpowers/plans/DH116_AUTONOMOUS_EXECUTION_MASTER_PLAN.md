@@ -8,8 +8,8 @@
 4. 并行优先推进 WP1 原色采样槽保留、WP2 训练模式及来源门槛、WP3 Teacher 离线合同与 WP4 PhysX 来源回归、WP5 Solver 来源、WP6 Actor-only 部署验证。新算法由独立工作区实际编写、测试并交给调度器，注册表中的已有 CPU 配方负责验证当前源码。
 5. 原生同步采集、长时间训练、依赖安装和物理修改须独立批准。先准备单实例 PhysX 自然退出，后续接触资格依据逐 contact 的 A/B、作用侧、单位、切法向和外部支撑证据。MPC 371D/24D 同步重采是 Actor-only BC 的前置条件。真实 Solver 仓库、许可证和独立 Toolkit 12.8/SM89 构建是柔性任务验证的前置条件。正式 Teacher、BC/DAgger/Student PPO、最终原生验收逐级按证据晋级。
 
-## Ubuntu 工作区与本机发布
+## Ubuntu 工作区与发布
 
 Ubuntu 集成 Worktree 为 `/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/integration`。同目录下 `autowp1` 至 `autowp6` 分别使用 `codex/dh116-autowpN-20261111`。只在任务分支开发，经 CPU 验证后按明确文件范围接入集成分支。原始 Checkpoint 和原始数据按既有路径只读引用。
 
-本机只进行 GitHub 发布，使用无工作区的裸仓库导入已提交的 Ubuntu Git 对象。依次推送、fetch 和核验提交、树 SHA、文件清单及 Draft PR。当前 Ubuntu 上的 CPU 运行用 `--local-only --evidence-dir /home/xk/.local/share/dh116-autonomous-3c80166/evidence` 形成待发布队列。远端验证结果回填发布清单，且发布清单本身也经过远端读回。
+Ubuntu 调度器在 GitHub 可达时依次推送和 fetch 核验提交及 Draft PR。连接或 TLS 验证失败时，只有 HEAD 匹配 origin 的本地跟踪记录或待发布队列尾部，才继续运行 CPU 工作包并将提交存入待发布队列。证书校验错误保留原样。远端可达但 PR、分支或提交身份不符时阻断发布。GitHub 恢复后使用 `--resume --evidence-dir /home/xk/.local/share/dh116-autonomous-3c80166/evidence` 补发。发布清单只记录已读回的提交。

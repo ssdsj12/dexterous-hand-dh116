@@ -109,7 +109,8 @@
         "wp2.mode-gates",
         "wp1.calibration",
         "wp4.contact-native",
-        "wp5.solver-native"
+        "wp5.solver-native",
+        "wp2.metric-integrity"
       ],
       "status": "blocked",
       "reason": "缺独立几何、材料、接触与不确定度资格数据"
@@ -263,7 +264,8 @@
       "title": "取得 DeformX 固定源码和许可证",
       "executor": "gated",
       "dependencies": [
-        "wp5.cpu-source-check"
+        "wp5.cpu-source-check",
+        "wp5.source-payload"
       ],
       "status": "blocked",
       "reason": "缺固定提交、递归子模块、CUDA kernel、bindings 和许可证"
@@ -561,6 +563,53 @@
         "report": "docs/superpowers/reports/dh116-managed-wp4.source-audit.md",
         "native_qualification": false
       }
+    },
+    "orchestration.offline-publication": {
+      "title": "GitHub 传输失败时保留 Ubuntu 工作包",
+      "executor": "prepared",
+      "dependencies": [],
+      "tests": [
+        "tests/test_dh116_work_packages.py"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "ad183169ce36c1ff1ed56e021261a3dcd269834c11b91ef84cea332d81b5d928",
+        "tested_head": "d4da7c102fd96062b81a62b978bbf0911d7d6bba",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-11-work-package-publication-defer.md",
+        "native_qualification": false
+      }
+    },
+    "wp2.metric-integrity": {
+      "title": "状态监督残差及不确定度完整性",
+      "executor": "prepared",
+      "dependencies": [],
+      "tests": [
+        "tests/test_dh116_stereo_state_supervision.py"
+      ],
+      "status": "pending"
+    },
+    "wp5.source-payload": {
+      "title": "DeformX 固定源码实际载荷预检",
+      "executor": "prepared",
+      "dependencies": [],
+      "tests": [
+        "tests/test_dh116_deformx_cuda_source.py"
+      ],
+      "status": "pending"
     }
   }
 }

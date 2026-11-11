@@ -3051,6 +3051,26 @@
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-wp4.source-audit.md",
       "native_qualification": false
+    },
+    "orchestration.offline-publication": {
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "ad183169ce36c1ff1ed56e021261a3dcd269834c11b91ef84cea332d81b5d928",
+      "tested_head": "d4da7c102fd96062b81a62b978bbf0911d7d6bba",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-11-work-package-publication-defer.md",
+      "native_qualification": false
     }
   }
 }
