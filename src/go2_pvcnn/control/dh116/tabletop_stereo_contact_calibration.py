@@ -7,6 +7,8 @@ attachments, or a success episode. No simulator is imported by this module.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from pathlib import Path
 import struct
@@ -221,22 +223,140 @@ def _tensor_components(tensor):
     return dict(normal=normal_force,friction=tangential,total=normal_force+tangential)
 
 
+def _validate_polled_ranges(headers, entries, offset_key, count_key):
+    if not isinstance(entries, list):
+        raise ValueError('structured poll requires complete raw arrays')
+    ranges = []
+    for header in headers:
+        offset, count = header.get(offset_key), header.get(count_key)
+        if type(offset) is not int or type(count) is not int:
+            raise ValueError('polled range offsets and counts must be integers')
+        if min(offset, count) < 0 or offset + count > len(entries):
+            raise ValueError('polled range ownership outside raw arrays')
+        if count:
+            ranges.append((offset, offset + count))
+    end = 0
+    for first, last in sorted(ranges):
+        if first < end:
+            raise ValueError('polled contact range ownership overlap')
+        if first > end:
+            raise ValueError('unowned polled contact array entries')
+        end = last
+    if end != len(entries):
+        raise ValueError('unowned polled contact array entries')
+
+
+def _world_vector(value):
+    vector = np.asarray(value, dtype=float)
+    if vector.shape != (3,) or not np.isfinite(vector).all():
+        raise ValueError('polled impulse or normal must be a finite world vector')
+    return vector
+
+
 def _report_pairs(row):
-    raw=row.get('full_report')
+    raw = row.get('full_report')
     if raw is None:
         # Legacy v02 rows copied friction once onto their first contact point.
         return row.get('pair_reports',[])
-    result=[]
-    for h in raw['headers']:
-        contacts=raw['contacts'][h['contact_data_offset']:h['contact_data_offset']+h['num_contact_data']]
-        anchors=raw['friction_anchors'][h['friction_anchors_offset']:h['friction_anchors_offset']+h['num_friction_anchors_data']]
-        result.append(dict(h,impulse=np.asarray([c['impulse'] for c in contacts]).reshape(-1,3).sum(0).tolist(),
-            friction_impulses=[a['impulse'] for a in anchors],contacts=contacts))
+    headers = raw.get('headers')
+    if not isinstance(headers, list) or not all(isinstance(header, dict) for header in headers):
+        raise ValueError('structured poll requires its complete header array')
+    points, anchors = raw.get('contacts'), raw.get('friction_anchors')
+    _validate_polled_ranges(headers, points, 'contact_data_offset', 'num_contact_data')
+    _validate_polled_ranges(headers, anchors, 'friction_anchors_offset', 'num_friction_anchors_data')
+    result = []
+    for h in headers:
+        contacts = points[h['contact_data_offset']:h['contact_data_offset']+h['num_contact_data']]
+        friction = anchors[h['friction_anchors_offset']:h['friction_anchors_offset']+h['num_friction_anchors_data']]
+        contact_impulses = [_world_vector(c['impulse']) for c in contacts]
+        for c in contacts:
+            if 'normal' in c:
+                _world_vector(c['normal'])
+        result.append(dict(h, impulse=sum(contact_impulses, np.zeros(3)).tolist(),
+            friction_impulses=[_world_vector(anchor['impulse']).tolist() for anchor in friction],
+            contacts=contacts))
     return result
+
+
+def _prim_path(value):
+    return isinstance(value, str) and value.startswith('/') and len(value) > 1
+
+
+def _polled_source_audit(frames, object_path, collider_by_actor, inventory):
+    """Compare only owned, identity-matched polled pairs. Side remains hypothetical."""
+    details, residuals, stages = [], {}, set()
+    counts = dict(legacy_flattened_steps=0, empty_structured_poll_steps=0,
+                  identity_matched_header_count=0, object_unclassified_contact_header_count=0)
+    for row, reports, expected in frames:
+        if row.get('full_report') is None:
+            counts['legacy_flattened_steps'] += 1
+            continue
+        if not reports:
+            counts['empty_structured_poll_steps'] += 1
+            continue
+        dt, pairs, unclassified, unidentified = row['dt'], [], [], 0
+        for header in reports:
+            actors = (header.get('actor0'), header.get('actor1'))
+            colliders = (header.get('collider0'), header.get('collider1'))
+            stage_id = header.get('stage_id')
+            if not all(_prim_path(actor) for actor in actors):
+                unidentified += 1
+            if object_path not in actors:
+                continue
+            side = actors.index(object_path)
+            if (actors[0] == actors[1] or set(actors) != set(collider_by_actor)
+                    or not all(_prim_path(collider) and collider_by_actor[actor] == collider
+                               for actor, collider in zip(actors, colliders))
+                    or type(stage_id) is not int or stage_id < 0
+                    or inventory.get('stage_id', stage_id) != stage_id):
+                unclassified.append(actors[1-side] if _prim_path(actors[1-side]) else None)
+                continue
+            stages.add(stage_id)
+            contact = _world_vector(header['impulse'])
+            friction = np.asarray(header['friction_impulses'], dtype=float).reshape(-1, 3).sum(0)
+            raw = dict(contact_only=contact, friction_only=friction, contact_plus_friction=contact+friction)
+            sign = 1 if side == 0 else -1
+            pairs.append(dict(
+                body_a=dict(actor=actors[0], collider=colliders[0]),
+                body_b=dict(actor=actors[1], collider=colliders[1]),
+                stage_id=stage_id, object_actor_index=side,
+                raw_impulse_world_n_s={k:v.tolist() for k,v in raw.items()},
+                force_on_object_world_n_if_raw_on_actor0={k:(sign*v/dt).tolist() for k,v in raw.items()},
+                force_on_object_world_n_if_raw_on_actor1={k:(-sign*v/dt).tolist() for k,v in raw.items()},
+                force_on_object_verified_world_n=None))
+        counts['identity_matched_header_count'] += len(pairs)
+        counts['object_unclassified_contact_header_count'] += len(unclassified)
+        orders = {p['object_actor_index'] for p in pairs}
+        eligible = len(orders) == 1 and not unclassified and not unidentified
+        if eligible and any(np.linalg.norm(p['raw_impulse_world_n_s'][k]) > 1e-12
+                            for p in pairs for k in ('contact_only', 'friction_only')):
+            order = f'object_actor{next(iter(orders))}'
+            for hypothesis in ('impulse_on_actor0', 'impulse_on_actor1'):
+                sign = 1 if order.endswith(hypothesis[-1]) else -1
+                for name in ('contact_only', 'friction_only', 'contact_plus_friction'):
+                    vector = sum((np.asarray(p['raw_impulse_world_n_s'][name]) for p in pairs), np.zeros(3))
+                    samples = residuals.setdefault(order, {}).setdefault(name, {}).setdefault(hypothesis, [])
+                    samples.append(float(np.linalg.norm(expected - sign * vector)))
+        details.append(dict(physics_step=row['physics_step'], sdk_step=row.get('sdk_step'),
+                            timestamp_s=row['timestamp'], dt_s=dt, pairs=pairs,
+                            unclassified_object_partners=unclassified,
+                            unidentified_header_count=unidentified,
+                            momentum_comparison_eligible=eligible))
+    hypotheses = {order:{kind:{side:_summary(values) for side,values in items.items()}
+                         for kind,items in variants.items()} for order,variants in residuals.items()}
+    return dict(**counts, steps=details, observed_stage_ids=sorted(stages),
+                sign_hypotheses_by_actor_order=hypotheses if len(stages) <= 1 else {},
+                multi_stage_fit_blocked=len(stages) > 1,
+                impulse_scope='reported_impulse_channel_conditional_force_equals_impulse_over_physical_dt',
+                combined_channel_scope='contact_plus_friction_is_unqualified_and_may_double_count',
+                force_on_object_verified_world_n=None, external_support_free=None, attachment_free=None)
 
 
 def summarize_pair_calibration(rows, *, object_path, expected_partner, inventory):
     """Compare competing impulse hypotheses; no automatic source qualification."""
+    if (not _prim_path(object_path) or not _prim_path(expected_partner)
+            or object_path == expected_partner):
+        raise ValueError('two distinct actor prim paths are required')
     prior_step,prior_time=-1,-math.inf
     counts=dict(nonzero_tensor_steps=0,nonzero_report_steps=0,unmatched_pair_records=0,
                 unmatched_collider_records=0,capacity_boundary_steps=0)
@@ -246,6 +366,7 @@ def summarize_pair_calibration(rows, *, object_path, expected_partner, inventory
     orders,tensor_residual,dt_errors={},[],[]
     pair_records=0
     callback_counts={}
+    polled_frames=[]
     expected_colliders={inventory.get('object_collider'),inventory.get('finger_collider')}
     colliders_known=None not in expected_colliders and len(expected_colliders)==2
     collider_by_actor={object_path:inventory.get('object_collider'), expected_partner:inventory.get('finger_collider')}
@@ -276,15 +397,21 @@ def summarize_pair_calibration(rows, *, object_path, expected_partner, inventory
             back=_tensor_components(row['reverse_tensor'])
             for name in reverse:reverse[name].append(float(np.linalg.norm((components[name]+back[name])*dt)))
         contact_sum,friction_sum=np.zeros(3),np.zeros(3)
-        matched=False
-        for report in _report_pairs(row):
-            actors=(report['actor0'],report['actor1'])
+        matched = False
+        object_unclassified = False
+        reports = _report_pairs(row)
+        polled_frames.append((row, reports, expected))
+        for report in reports:
+            actors=(report.get('actor0'),report.get('actor1'))
             if set(actors)!={object_path,expected_partner}:
                 counts['unmatched_pair_records']+=1
+                object_unclassified |= object_path in actors or not all(_prim_path(actor) for actor in actors)
+                continue
+            if colliders_known and any(report.get(f'collider{side}')!=collider_by_actor[actor] for side,actor in enumerate(actors)):
+                counts['unmatched_collider_records']+=1
+                object_unclassified = True
                 continue
             pair_records+=1;matched=True
-            if colliders_known and any(report[f'collider{side}']!=collider_by_actor[actor] for side,actor in enumerate(actors)):
-                counts['unmatched_collider_records']+=1
             order='object_actor0' if actors[0]==object_path else 'object_actor1'
             orders[order]=orders.get(order,0)+1
             contact=np.asarray(report['impulse']);friction=np.asarray(report.get('friction_impulses',[])).reshape(-1,3).sum(0)
@@ -309,6 +436,7 @@ def summarize_pair_calibration(rows, *, object_path, expected_partner, inventory
                 projections['friction_tangent'].append(float(np.linalg.norm(friction-along*normal)))
         if matched and (np.linalg.norm(contact_sum)>1e-12 or np.linalg.norm(friction_sum)>1e-12):
             counts['nonzero_report_steps']+=1
+        if matched and not object_unclassified and (np.linalg.norm(contact_sum)>1e-12 or np.linalg.norm(friction_sum)>1e-12):
             for name,vector in (('contact_only',contact_sum),('friction_only',friction_sum),('contact_plus_friction',contact_sum+friction_sum)):
                 variants[name]['plus'].append(float(np.linalg.norm(expected-vector)))
                 variants[name]['minus'].append(float(np.linalg.norm(expected+vector)))
@@ -320,7 +448,8 @@ def summarize_pair_calibration(rows, *, object_path, expected_partner, inventory
     if not colliders_known or counts['unmatched_collider_records']:blockers.append('collider_identity_not_verified')
     blockers+=['contact_impulse_vs_friction_semantics_not_qualified','DH116_articulation_contacts_not_qualified_by_rigid_pair',
                'external_support_and_attachment_per_episode_not_qualified']
-    hypothesis={name:{sign:_summary(v) for sign,v in values.items()} for name,values in variants.items()} if len(orders)==1 else None
+    hypothesis = ({name:{sign:_summary(v) for sign,v in values.items()} for name,values in variants.items()}
+                  if len(orders)==1 and any(v for values in variants.values() for v in values.values()) else None)
     actor_ok=bool(pair_records and not counts['unmatched_pair_records'])
     collider_ok=bool(actor_ok and colliders_known and not counts['unmatched_collider_records'])
     return dict(scope='isolated_rigid_contact_calibration',frames=len(rows),**counts,
@@ -334,4 +463,31 @@ def summarize_pair_calibration(rows, *, object_path, expected_partner, inventory
         friction_projection_basis='normalized_sum_of_contact_normals_diagnostic_not_unique_anchor_normal',
         reverse_tensor_action_reaction_n_s={k:_summary(v) for k,v in reverse.items()},
         tensor_sensor_side_momentum_residual_n_s=_summary(tensor_residual),dt_scaling_error_n=_summary(dt_errors),
-        inventory=inventory,R2_qualified=False,force_proxy_qualified=False,blockers=blockers)
+        polled_source_audit=_polled_source_audit(polled_frames, object_path, collider_by_actor, inventory),
+        inventory=inventory,R1_qualified=False,R2_qualified=False,force_proxy_qualified=False,blockers=blockers)
+
+
+def audit_archived_contact_sources(raw_path, inventory_path, stage_path, *,
+                                   raw_sha256, inventory_sha256, object_path, expected_partner):
+    """Replay immutable calibration evidence without Isaac or qualification."""
+    raw_path, inventory_path, stage_path = map(Path, (raw_path, inventory_path, stage_path))
+    raw, inventory_bytes, stage = (p.read_bytes() for p in (raw_path, inventory_path, stage_path))
+    raw_hash, inventory_hash, stage_hash = (hashlib.sha256(blob).hexdigest()
+                                           for blob in (raw, inventory_bytes, stage))
+    if raw_hash != raw_sha256 or inventory_hash != inventory_sha256:
+        raise ValueError('raw ledger or inventory SHA256 does not match the independent pin')
+    def reject_constant(token):
+        raise ValueError(f'nonfinite archived JSON token: {token}')
+
+    inventory = json.loads(inventory_bytes, parse_constant=reject_constant)
+    if inventory.get('stage_sha256') != stage_hash:
+        raise ValueError('stage SHA256 does not match the pinned inventory')
+    if not raw.endswith(b'\n'):
+        raise ValueError('contact JSONL archive is empty or lacks a final newline')
+    rows = [json.loads(line, parse_constant=reject_constant) for line in raw.splitlines()]
+    if not all(isinstance(row, dict) and type(row.get('physics_step')) is int for row in rows):
+        raise ValueError('contact JSONL requires per-step records')
+    return dict(source_artifact=dict(raw_sha256=raw_hash, inventory_sha256=inventory_hash,
+                                    stage_sha256=stage_hash),
+                summary=summarize_pair_calibration(rows, object_path=object_path,
+                                                   expected_partner=expected_partner, inventory=inventory))

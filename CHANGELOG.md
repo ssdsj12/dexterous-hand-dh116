@@ -1,3 +1,7 @@
+## 2026-11-11 — 验证 PhysX 逐接触来源与条件方向
+
+CPU `passed`，通过 50 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp4.source-audit.md)。
+
 ## 2026-11-11 — 双目候选置信度分组校准审计
 
 CPU `passed`，通过 26 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp1.confidence-offline.md)。

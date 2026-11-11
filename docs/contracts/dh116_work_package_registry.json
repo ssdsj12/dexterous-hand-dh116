@@ -538,7 +538,29 @@
         "tests/test_dh116_stereo_contact_calibration.py",
         "tests/test_dh116_stereo_shutdown_validation.py"
       ],
-      "status": "pending"
+      "status": "passed",
+      "last_result": {
+        "passed": 50,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_physx_polled_contact_audit.py",
+          "tests/test_dh116_stereo_contact_calibration.py",
+          "tests/test_dh116_stereo_shutdown_validation.py"
+        ],
+        "log_sha256": "9f0c52ac67fed603aa55c128afd35d6c8e83faf5a6c876244eb0f0b817bda8d5",
+        "tested_head": "f29c9c811b5006ae79916d07687e737924f9a209",
+        "status": "passed",
+        "report": "docs/superpowers/reports/dh116-managed-wp4.source-audit.md",
+        "native_qualification": false
+      }
     }
   }
 }
