@@ -143,7 +143,7 @@ class NativeStereoEnvironment:
         state_label_metadata = {}
         if reference is not None:
             from .tabletop_stereo_contract import file_sha256
-            from .tabletop_stereo_reference import archive_instance_reference
+            from .tabletop_stereo_reference import archive_instance_reference, state_supervision_binding
             stem = state_reference_stem(self.bridge.output,self.bridge.policy_tick,identities)
             reference['wire_mask_source_artifact'] = archive_instance_reference(reference, stem.with_suffix('.ids.pt'))
             path = stem.with_suffix('.pt')
@@ -154,6 +154,10 @@ class NativeStereoEnvironment:
                 identity['state_reference_artifact'] = artifact.copy()
             state_label_metadata.update(state_wire_point_pixels=extraction['point_pixels'].clone(),
                                         state_wire_track_ids=extraction['track_id'].clone())
+            if reference.get('source_scope') == 'native':
+                state_label_metadata['state_synchronization'] = [
+                    state_supervision_binding(identity, reference, artifact['sha256'])
+                    for identity in pair['identity']]
         if 'timestamp_anomaly' in extraction:self._pending_reset|=extraction['timestamp_anomaly']
         h, w = pair['left_rgb'].shape[-2:]
         sensor = SensorBatch(left_rgb=pair['left_rgb'].float(), right_rgb=pair['right_rgb'].float(),

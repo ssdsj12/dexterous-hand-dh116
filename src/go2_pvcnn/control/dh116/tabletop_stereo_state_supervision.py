@@ -238,6 +238,8 @@ def _verified_visible_tracks(row, root, cache):
     identity = row['identity']
     artifact = identity.get('state_reference_artifact')
     if not isinstance(artifact,dict):
+        if row['extra_labels'].get('state_synchronization') is not None:
+            raise ValueError('candidate state synchronization evidence requires a native reference artifact')
         return False,set()
     path = Path(artifact['path']).resolve(strict=True)
     if path.parent != root or file_sha256(path) != require_sha(artifact['sha256']):
@@ -254,17 +256,45 @@ def _verified_visible_tracks(row, root, cache):
     if (ref['frame_id'] != identity['frame_id'] or ref['simulation_time'] != identity['simulation_timestamp']
             or ref['calibration_sha256'] != identity['calibration_sha256']):
         raise ValueError('candidate state reference frame/clock/calibration differs')
+    labels = row['extra_labels']
+    synchronized = labels.get('state_synchronization')
+    if synchronized is not None:
+        from .tabletop_stereo_reference import state_supervision_binding
+        if synchronized != state_supervision_binding(identity, ref, artifact['sha256']):
+            raise ValueError('candidate state synchronization evidence differs from the reference')
     if wire is None:
         return False,set()
     env = identity['env_id']
-    history, labels = row['history'], row['extra_labels']
+    history = row['history']
     point_valid = history['point_valid'][0,-1]
     verified = _observed_wire_points(labels.get('state_wire_point_pixels'),point_valid,
         history['depth_m'][0,-1],history['depth_valid'][0,-1],ref['depth_m'][env],wire[env]&ref['valid'][env])
     tracks = labels.get('state_wire_track_ids')
-    visible_tracks = set(tracks[verified & (tracks>=0)].tolist()) if (
-        isinstance(tracks,torch.Tensor) and tracks.shape == verified.shape) else set()
+    provenance = history.get('point_provenance')
+    visible_tracks = set()
+    if (synchronized is not None and isinstance(tracks,torch.Tensor) and tracks.dtype == torch.long
+            and tracks.shape == verified.shape and isinstance(provenance,torch.Tensor)
+            and provenance[0,-1].shape == verified.shape):
+        # Only tracked centerline samples represent a temporal line feature.
+        visible_tracks = set(tracks[verified & (provenance[0,-1] == 1) & (tracks >= 0)].tolist())
     return bool(verified.any()),visible_tracks
+
+
+def _temporal_support(previous, current, previous_tracks, tracks):
+    if previous is None or bool(previous['done']) or not (previous_tracks & tracks):
+        return False
+    prior = previous['identity']
+    if (identity_key(prior)[:4] != identity_key(current)[:4]
+            or prior['calibration_sha256'] != current['calibration_sha256']
+            or prior.get('observation_preprocessor_sha256') != current.get('observation_preprocessor_sha256')):
+        return False
+    execution = previous['execution']
+    return (prior['policy_tick']+1 == current['policy_tick'] and prior['frame_id'] < current['frame_id']
+            and current['physics_tick_end'] == prior['physics_tick_end']+8 == execution['physics_tick_end']
+            and math.isclose(current['simulation_timestamp'], execution['simulation_timestamp_end'],
+                             rel_tol=0, abs_tol=1e-8)
+            and math.isclose(current['simulation_timestamp']-prior['simulation_timestamp'], 1/60,
+                             rel_tol=0, abs_tol=1e-8))
 
 
 def _admit_rigid_labels(row, exact, *, wire_observed, temporal_observed):
@@ -398,6 +428,9 @@ def read_candidate(path, *, raw, sha256, raw_sha256):
     cold_readbacks = None
     if payload.get('cold_cohort') is not None:
         cold_readbacks = _validate_cold_candidate_rows(payload,rows,raw)
+        if payload['cold_cohort']['independent_actual_initials'] <= 8:
+            for row in rows:
+                row['dataset_usage'] = 'diagnostic_only_cold_cohort'
     else:
         validate_rows(rows, contract={'calibration_sha256': rows[0]['identity']['calibration_sha256']}, schema_only=False)
     for row in rows:
@@ -411,11 +444,11 @@ def read_candidate(path, *, raw, sha256, raw_sha256):
         episode = identity_key(identity)[:4]
         clock = (*episode,identity['physics_tick_end'])
         observed, tracks = _verified_visible_tracks(row,Path(raw).resolve().parent,cache)
-        prior_tick, prior_tracks = previous.get(episode,(-2,set()))
-        consecutive = prior_tick+1 == identity['policy_tick'] and bool(tracks & prior_tracks)
+        prior_row, prior_tracks = previous.get(episode,(None,set()))
+        consecutive = _temporal_support(prior_row, identity, prior_tracks, tracks)
         exact = _verified_canonical_label_mask(row,same_clock.get(clock))
         _admit_rigid_labels(row,exact,wire_observed=observed,temporal_observed=consecutive)
-        previous[episode] = identity['policy_tick'],tracks
+        previous[episode] = row,tracks if bool(exact[61:64].all()) else set()
     if file_sha256(path) != sha256 or file_sha256(raw) != raw_sha256:
         raise ValueError('state-supervision source changed while reading')
     return rows
@@ -594,14 +627,31 @@ def inspect_heads(rows, split):
 def _admission(name, labels, split):
     eligible = [bool(label) for label in labels]
     counts = {part: sum(eligible[i] for i in split[part+'_indices']) for part in PARTITIONS}
+    groups = {part: len({split['group_for_row'][i] for i in split[part+'_indices'] if eligible[i]})
+              for part in PARTITIONS}
     enabled = all(counts.values())
     result = dict(enabled=enabled, eligible_rows=sum(eligible), eligible_by_split=counts,
+        eligible_independent_groups=len({split['group_for_row'][i] for i, valid in enumerate(eligible) if valid}),
+        eligible_independent_groups_by_split=groups,
+        training_rows=0, training_independent_groups=0,
         reason=None if enabled else 'missing_verified_force_source_or_group' if name == 'force_proxy' else
         'no_synchronized_source_qualified_labels' if not any(eligible) else
         'missing_qualified_labels_in_one_or_more_independent_splits')
     if not enabled:
         result.update(optimization=None, splits=None, uncertainty_calibration=None)
     return result
+
+
+def _disable_stage(record, reason):
+    record.update(enabled=False, reason=reason, optimization=None,
+                  splits=None, uncertainty_calibration=None)
+
+
+def _geometry_admission(labels, split):
+    stages = {name:_admission(name, values, split) for name,values in labels.items()}
+    if not stages['center_xyz']['enabled'] and stages['wire_geometry']['enabled']:
+        _disable_stage(stages['wire_geometry'], 'center_xyz_stage_not_ready')
+    return stages
 
 
 def _geometry_stages(labels):
@@ -683,7 +733,7 @@ def _prediction_loss(prediction, targets, criterion):
     return sum(terms), errors
 
 
-def _metrics(model, rows, labels, indices, split, batch_size, device, criterion, head):
+def _metrics(model, rows, labels, indices, split, batch_size, device, criterion, head, *, stage=None):
     residuals = defaultdict(lambda: defaultdict(list))
     losses = []
     model.eval()
@@ -699,17 +749,25 @@ def _metrics(model, rows, labels, indices, split, batch_size, device, criterion,
                 for i, row in enumerate(chunk):
                     group = split['group_for_row'][row]
                     valid = torch.isfinite(values[i])
+                    if not bool(valid.any()):
+                        continue
                     residuals[key][group].extend(values[i][valid].tolist())
                     if key == 'privileged_state':
                         for col, error in zip(valid.nonzero().flatten().tolist(),values[i][valid].tolist()):
                             residuals['371:'+str(col)][group].append(error)
     canonical, extras = HEADS[head]
+    if stage == 'center_xyz':
+        extras = ()
     widths = {key: math.prod(HEAD_SHAPES[key]) for key in extras}
     units = {'force_proxy':'N', 'rotation_rad':'rad', 'privileged_state':'normalized contract components'}
     if canonical:
         rotation_blocks = {i for group in criterion.rotations for i in range(*group['slice'])}
         fields = [i for i, row in enumerate(criterion.state_contract['dimensions'])
                   if row['estimator_head'] == canonical and bool(criterion.state_allowed[i])]
+        if stage == 'center_xyz':
+            fields = [i for i in fields if 61 <= i < 64]
+        elif stage == 'wire_geometry':
+            fields = [i for i in fields if not 61 <= i < 64]
         widths['privileged_state'] = len(set(fields) - rotation_blocks)
         widths['rotation_rad'] = sum(all(i in fields for i in range(*group['slice'])) for group in criterion.rotations)
         for i in sorted(set(fields)-rotation_blocks):
@@ -736,7 +794,10 @@ def _metrics(model, rows, labels, indices, split, batch_size, device, criterion,
             # These original contract coordinates are relative center / 0.05 m.
             report[key].update(physical_mae_m=report[key]['mae']*.05,
                 physical_rmse_m=report[key]['rmse']*.05, physical_p95_m=report[key]['p95']*.05)
-    return dict(mean_batch_loss=sum(losses)/len(losses) if losses else None, outputs=report), residuals
+    supervised = [i for i in indices if labels[i]]
+    return dict(mean_batch_loss=sum(losses)/len(losses) if losses else None, outputs=report,
+        evaluated_rows=len(indices), supervised_rows=len(supervised),
+        independent_supervised_groups=len({split['group_for_row'][i] for i in supervised})), residuals
 
 
 def _optimize_head(model, rows, labels, indices, *, epochs, batch_size, device, lr, criterion):
@@ -768,10 +829,32 @@ def _optimize_head(model, rows, labels, indices, *, epochs, batch_size, device, 
     return updates
 
 
+def _formal_metrics(record, model, rows, labels, split, batch_size, device, criterion, head, *, stage=None):
+    record['splits'] = {}
+    residuals = {}
+    for part in PARTITIONS:
+        record['splits'][part], residuals[part] = _metrics(model, rows, labels, split[part+'_indices'],
+            split, batch_size, device, criterion, head, stage=stage)
+    record['training_rows'] = record['splits']['train']['supervised_rows']
+    record['training_independent_groups'] = record['splits']['train']['independent_supervised_groups']
+    record['uncertainty_calibration'] = {}
+    for key, groups in residuals['validation'].items():
+        result = calibrate_residuals(groups)
+        result['unit'] = record['splits']['validation']['outputs'][key]['unit']
+        test = [max(x) for x in residuals['test'].get(key, {}).values() if x]
+        result['test_group_coverage'] = (sum(x <= result['radius'] for x in test)/len(test)
+                                          if test and result['calibrated'] else None)
+        record['uncertainty_calibration'][key] = result
+
+
 def fit_state_heads(model, rows, split, *, epochs, batch_size, device='cpu', lr=3e-4):
     """Train only enabled ordered stages. Keep shared representation and learned heads."""
     criterion = StereoEstimationLoss()
     admission = inspect_heads(rows, split)
+    if any(row.get('dataset_usage') == 'diagnostic_only_cold_cohort' for row in rows):
+        for record in admission.values():
+            _disable_stage(record, 'diagnostic_only_cold_cohort')
+        return admission
     if not any(head['enabled'] for head in admission.values()):
         return admission
     parts = [split[key+'_indices'] for key in PARTITIONS]
@@ -781,6 +864,7 @@ def fit_state_heads(model, rows, split, *, epochs, batch_size, device='cpu', lr=
         raise ValueError('state estimator split overlaps a physical initial/source group')
     model.to(device)
     trained = {}
+    trained_geometry_stages = {}
     for name in HEADS:
         record = admission[name]
         if not record['enabled'] and name != 'geometry':
@@ -788,7 +872,7 @@ def fit_state_heads(model, rows, split, *, epochs, batch_size, device='cpu', lr=
         labels = [_targets(row, name, criterion) for row in rows]
         if name == 'geometry':
             stages = _geometry_stages(labels)
-            record['stages'] = {key:_admission(key, stage, split) for key, stage in stages.items()}
+            record['stages'] = _geometry_admission(stages, split)
             record['enabled'] = any(stage['enabled'] for stage in record['stages'].values())
             if not record['enabled']:
                 record.update(reason='no_geometry_stage_with_independent_labels', optimization=None,
@@ -803,6 +887,7 @@ def fit_state_heads(model, rows, split, *, epochs, batch_size, device='cpu', lr=
                 indices = [i for i in split['train_indices'] if stage_labels[i]]
                 stage['optimization'] = _optimize_head(model, rows, stage_labels, indices, epochs=epochs,
                     batch_size=batch_size, device=device, lr=lr, criterion=criterion)
+                trained_geometry_stages[key] = stage_labels
                 masks = [label['privileged_state'][1] for label in stage_labels if 'privileged_state' in label]
                 stage['supervised_indices'] = torch.stack(masks).any(0).nonzero().flatten().tolist() if masks else []
                 optimized.extend(stage['optimization'])
@@ -821,22 +906,10 @@ def fit_state_heads(model, rows, split, *, epochs, batch_size, device='cpu', lr=
             record['optimization'] = _optimize_head(model, rows, labels, indices, epochs=epochs,
                 batch_size=batch_size, device=device, lr=lr, criterion=criterion)
     for name, labels in trained.items():
-        record = admission[name]
-        record['splits'] = {}
-        residuals = {}
-        for part in PARTITIONS:
-            metrics, residual = _metrics(model, rows, labels, split[part+'_indices'], split,
-                                         batch_size, device, criterion, name)
-            record['splits'][part] = metrics
-            residuals[part] = residual
-        record['uncertainty_calibration'] = {}
-        for key, groups in residuals['validation'].items():
-            result = calibrate_residuals(groups)
-            result['unit'] = record['splits']['validation']['outputs'][key]['unit']
-            test = [max(x) for x in residuals['test'].get(key, {}).values() if x]
-            result['test_group_coverage'] = (sum(x <= result['radius'] for x in test)/len(test)
-                                              if test and result['calibrated'] else None)
-            record['uncertainty_calibration'][key] = result
+        _formal_metrics(admission[name], model, rows, labels, split, batch_size, device, criterion, name)
+    for key, labels in trained_geometry_stages.items():
+        _formal_metrics(admission['geometry']['stages'][key], model, rows, labels, split,
+                        batch_size, device, criterion, 'geometry', stage=key)
     return admission
 
 
@@ -867,9 +940,12 @@ def run_training_mode(model, rows, *, mode='formal_training', epochs=1, batch_si
     if mode == 'formal_training':
         criterion = StereoEstimationLoss()
         geometry_labels = [_targets(row, 'geometry', criterion) for row in rows]
-        stages = {**{key:_admission(key, labels, split) for key, labels in
-            _geometry_stages(geometry_labels).items()},
+        stages = {**_geometry_admission(_geometry_stages(geometry_labels), split),
             **{key:value for key,value in heads.items() if key != 'geometry'}}
+        if any(row.get('dataset_usage') == 'diagnostic_only_cold_cohort' for row in rows):
+            for record in (*heads.values(), *stages.values()):
+                _disable_stage(record, 'diagnostic_only_cold_cohort')
+            return dict(report, status='blocked_diagnostic_only_cold_cohort', stages=stages)
         if split['status'] != 'ready':
             return dict(report, status=split['status'], stages=stages)
         heads = fit_state_heads(model, rows, split, epochs=epochs, batch_size=batch_size, device=device, lr=lr)
@@ -908,14 +984,17 @@ def run_training_mode(model, rows, *, mode='formal_training', epochs=1, batch_si
     model.to(device)
     record = heads['geometry']
     record.update(enabled=True, reason=None, eligible_rows=len(indices),
+        training_rows=len(indices), training_independent_groups=len({split['group_for_row'][i] for i in indices}),
         supervised_indices=torch.stack([labels[i]['privileged_state'][1] for i in indices]).any(0).nonzero().flatten().tolist(),
         metrics_scope='in_sample_diagnostic_only', label_audit=audit,
         eligible_by_split=dict(train=len(indices),validation=0,test=0),
         uncertainty_calibration=dict(calibrated=False, radius=None, reason='no_independent_validation_in_diagnostic_fit'))
-    record['before_fit'], _ = _metrics(model, rows, labels, indices, split, batch_size, device, criterion, 'geometry')
+    record['before_fit'], _ = _metrics(model, rows, labels, indices, split, batch_size, device, criterion, 'geometry',
+                                       stage='center_xyz')
     record['optimization'] = _optimize_head(model, rows, labels, indices, epochs=epochs,
         batch_size=batch_size, device=device, lr=lr, criterion=criterion)
-    metrics, _ = _metrics(model, rows, labels, indices, split, batch_size, device, criterion, 'geometry')
+    metrics, _ = _metrics(model, rows, labels, indices, split, batch_size, device, criterion, 'geometry',
+                          stage='center_xyz')
     record['splits'] = dict(train=metrics, validation=None, test=None)
     report['split'] = dict(split, diagnostic_fit_indices=indices, diagnostic_split='in_sample_only_no_holdouts')
     return dict(report, status='diagnostic_fit_completed', state_training_started=True)

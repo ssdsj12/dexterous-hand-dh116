@@ -2689,6 +2689,19 @@
     "formal_student_ppo": "blocked",
     "native_training_started": false
   },
+  "state_stage_admission_98ba1fb": {
+    "report": "docs/superpowers/reports/2026-11-11-stereo-state-stage-admission.md",
+    "cpu_tests_passed": 136,
+    "historical_rows": 8,
+    "historical_independent_initials": 2,
+    "center_xyz_diagnostic_training_rows": 6,
+    "center_xyz_diagnostic_epochs": 1,
+    "other_head_eligible_rows": 0,
+    "cold8_diagnostic_only": true,
+    "formal_training": "blocked_insufficient_independent_groups",
+    "uncertainty_calibrated": false,
+    "new_native_capture_count": 0
+  },
   "publication_workflow": {
     "policy": "AGENTS.md",
     "repository": "ssdsj12/dexterous-hand-dh116",

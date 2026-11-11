@@ -290,6 +290,30 @@ def capture_validation_pair(camera,reference,identity,*,max_attempts=8):
     raise RuntimeError('same-frame independent reference unavailable; failed pairs='+repr(failures))
 
 
+def state_supervision_binding(identity, reference, reference_sha256):
+    """Bind a native label-only reference to the RGB and pre-action sample."""
+    from .tabletop_stereo_contract import require_sha
+
+    keys = ('frame_id', 'reset_id', 'physics_tick_start', 'physics_tick_end',
+            'simulation_timestamp', 'calibration_sha256')
+    if (identity['frame_id'] != reference.get('frame_id')
+            or identity['simulation_timestamp'] != reference.get('simulation_time')
+            or identity['calibration_sha256'] != reference.get('calibration_sha256')
+            or identity['physics_tick_start'] != identity['physics_tick_end']):
+        raise ValueError('same-frame native state reference binding required')
+    if (reference.get('source_scope') != 'native' or reference.get('validation_only') is not True
+            or reference.get('reference_used_as_actor_input') is not False
+            or reference.get('source_units') != 'optical_axis_z_m'):
+        raise ValueError('independent native optical-Z reference is label-only')
+    sha = require_sha(reference_sha256, 'native state reference SHA')
+    if sha == '0'*64:
+        raise ValueError('nonzero native state reference SHA required')
+    return dict(version='dh116-state-synchronization-v1', **{key:identity[key] for key in keys},
+        depth_input_source='rgb_stereo', reference_role='labels_and_audit_only',
+        reference_sha256=sha, left_native_ids_available=isinstance(reference.get('raw_instance_ids'),torch.Tensor),
+        right_native_ids_available=isinstance(reference.get('right_raw_instance_ids'),torch.Tensor))
+
+
 def compare_reference(pair,reference):
     """Error arithmetic; visible-wire completeness uses an explicit ID mask."""
     for key in ('frame_id','simulation_time','calibration_sha256'):

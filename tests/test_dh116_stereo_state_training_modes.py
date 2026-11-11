@@ -52,6 +52,7 @@ def test_diagnostic_fit_two_groups_has_real_gradient_only_on_center_xyz():
     assert report['uncertainty_calibrated'] is False
     geometry = report['heads']['geometry']
     assert geometry['supervised_indices'] == [61, 62, 63]
+    assert geometry['training_rows'] == 4 and geometry['training_independent_groups'] == 2
     assert geometry['optimization'][0]['gradient_norm'] > 0
     assert geometry['optimization'][0]['encoder_gradient_norm'] > 0
     assert geometry['optimization'][0]['unsupervised_output_gradient_max'] == 0
@@ -129,3 +130,54 @@ def test_admitting_geometry_preserves_existing_direct_encoder_audit():
     audit = supervision.audit_candidate_fields([row])
     assert all(x['direct_readback_samples'] == 1 for x in audit['fields'] if x['index'] < 24)
     assert all(x['supervision_samples'] == 1 for x in audit['fields'] if x['index'] in (61,62,63))
+
+
+def test_eight_cold_initials_cannot_enter_formal_fit_even_with_valid_center_labels():
+    rows = center_rows()
+    cohort = []
+    for index in range(8):
+        row = copy.deepcopy(rows[index % len(rows)])
+        row['identity'].update(physical_initial_condition_sha256=hex(index+1)[2:]*64,
+                               source_episode_group=f'cold-{index}')
+        row['dataset_usage'] = 'diagnostic_only_cold_cohort'
+        cohort.append(row)
+    model = estimator()
+    before = copy.deepcopy(model.state_dict())
+    report = module('state_supervision').run_training_mode(model, cohort, mode='formal_training')
+    assert report['status'] == 'blocked_diagnostic_only_cold_cohort'
+    assert report['split']['independent_groups'] == 8
+    assert not report['state_training_started']
+    assert report['stages']['center_xyz']['eligible_independent_groups'] == 8
+    assert all(torch.equal(value, model.state_dict()[key]) for key, value in before.items())
+
+
+def test_velocity_needs_contiguous_native_clocks_and_the_same_centerline_track():
+    supervision = module('state_supervision')
+    prior = dict(identity=dict(run_uuid='run', env_id=0, episode_uid='epoch', reset_id=3,
+        policy_tick=10, frame_id=200, physics_tick_end=80, simulation_timestamp=80/480,
+        calibration_sha256='c'*64, observation_preprocessor_sha256='b'*64),
+        execution=dict(physics_tick_end=88, simulation_timestamp_end=88/480), done=False)
+    current = dict(prior['identity'], policy_tick=11, frame_id=203, physics_tick_end=88,
+                   simulation_timestamp=88/480)
+    assert supervision._temporal_support(prior, current, {5}, {5})
+    assert not supervision._temporal_support(prior, current, {4}, {5})
+    assert not supervision._temporal_support(prior, dict(current, physics_tick_end=89), {5}, {5})
+    assert not supervision._temporal_support(prior, dict(current, reset_id=4), {5}, {5})
+    assert not supervision._temporal_support(prior, dict(current, frame_id=200), {5}, {5})
+    assert not supervision._temporal_support(dict(prior, done=True), current, {5}, {5})
+
+
+def test_state_reference_binding_is_same_clock_and_label_only():
+    reference = module('reference')
+    identity = dict(frame_id=12, reset_id=2, physics_tick_start=16, physics_tick_end=16,
+                    simulation_timestamp=16/480, calibration_sha256='a'*64)
+    proof = dict(frame_id=12, simulation_time=16/480, calibration_sha256='a'*64,
+                 raw_instance_ids=torch.zeros((1, 3, 4), dtype=torch.long),
+                 right_raw_instance_ids=None, source_scope='native', validation_only=True,
+                 reference_used_as_actor_input=False, source_units='optical_axis_z_m')
+    binding = reference.state_supervision_binding(identity, proof, 'd'*64)
+    assert binding['depth_input_source'] == 'rgb_stereo'
+    assert binding['reference_role'] == 'labels_and_audit_only'
+    assert binding['left_native_ids_available'] and not binding['right_native_ids_available']
+    with pytest.raises(ValueError, match='same-frame'):
+        reference.state_supervision_binding(identity, dict(proof, frame_id=13), 'd'*64)

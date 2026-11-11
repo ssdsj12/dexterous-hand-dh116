@@ -1,3 +1,7 @@
+## 2026-11-11 — 143D 同步证据与分阶段准入
+
+补充同帧参考旁路身份、冷 8 诊断限制、连续中心线 Velocity 门槛和逐阶段训练、误差与有效覆盖报告。136 项 CPU 回归通过。历史 8 行、2 个独立初态上只拟合 6 行 Center XYZ，未建立泛化或不确定度校准。正式模式按预期退出 2。[验证报告](docs/superpowers/reports/2026-11-11-stereo-state-stage-admission.md)
+
 ## 2026-11-11 — 正式训练准入复核
 
 42 项 CPU 回归核对已有成功池、DAgger 准入、Student 自有 PPO rollout 及候选隔离。Teacher128 诊断证据留在诊断范围。正式 BC、DAgger 和 Student PPO 继续阻断。[准入复核](docs/superpowers/reports/2026-11-11-stereo-formal-training-admission.md)

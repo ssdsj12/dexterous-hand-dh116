@@ -1,3 +1,7 @@
+## 2026-11-11 — 143D 同步证据与分阶段准入
+
+同步候选绑定原生参考身份和左右实例 ID 的可用性。冷 8 只进入诊断，Velocity 需要同一已核验中心线 track 和连续物理时钟。历史数据仅有 6 行中心标签，单轮 CPU 诊断完成，正式状态训练仍阻断。[验证报告](docs/superpowers/reports/2026-11-11-stereo-state-stage-admission.md)
+
 ## 2026-11-11 — 正式训练准入复核
 
 42 项 CPU 准入回归通过。Teacher 仍缺完整成功回合，双目正确点完整率尚未合格，正式 BC、DAgger 和 Student PPO 保持 `blocked`。[准入复核](docs/superpowers/reports/2026-11-11-stereo-formal-training-admission.md)
