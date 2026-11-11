@@ -1,3 +1,9 @@
+## 2026-11-11 — 按明确指令发布J0/J1至现有Draft PR
+
+- 发布诊断实现`33d73d3`、完整报告/readiness与J2实施计划；保留原分支、Checkpoint和未达标状态，不合并、不训练、不新增native capture。
+- 本次执行`pytest -q -p no:cacheprovider tests/test_dh116_stereo_error_diagnostics.py tests/test_dh116_stereo_error_geometry.py`：31 passed，9.75s，exit0。完整性脚本核验528保护文件、1111份服务器已测源码/测试及52图SHA；`git diff --check`通过。
+- 595/596完整回归与10run重分析是2026-11-10历史验证，本次不重复计作新物理证据。公开范围仅代码/测试/文档/处理后指标；排除raw图像、日志、模型、缓存、密钥和归档。
+
 ## 2026-11-10 — J0/J1源合同、分区误差与原始数据根因分析
 
 - 新增评估专用error diagnostics/geometry/CLI、原始数据交叉绑定和52张真实可视化；同像素固定reference分母、P50/P90/P95、NA、拒绝重叠/互斥及saved/replay四象限分开，右实例GT缺失不伪造。

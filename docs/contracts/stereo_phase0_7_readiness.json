@@ -883,7 +883,23 @@
     "PR_intent": "Draft",
     "merge_authorized": false,
     "qualification_authority": false,
-    "current_invocation": "local_changes_only;no_push_or_merge"
+    "current_invocation": "explicit_user_requested_GitHub_release_2026-11-11;Draft_preserved;no_merge",
+    "previous_invocation": "local_changes_only;no_push_or_merge",
+    "authorized_release": {
+      "date_utc": "2026-11-11",
+      "diagnostic_code_commit": "33d73d37c2189af07d0f4df7c9b8ddf0a7d6178d",
+      "pr_url": "https://github.com/ssdsj12/dexterous-hand-dh116/pull/2",
+      "focused_CPU_tests": {
+        "passed": 31,
+        "skipped": 0,
+        "duration_s": 9.75,
+        "exit_code": 0
+      },
+      "new_native_runs": 0,
+      "accuracy_qualified": false,
+      "physical_task_qualified": false,
+      "deployment_qualified": false
+    }
   },
   "phase0_7_CPU_snapshot": {
     "windows": {
