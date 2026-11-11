@@ -1,3 +1,7 @@
+## 2026-11-11 — 复核 Teacher 动作合同与 PPO 回滚
+
+CPU `passed`，通过 94 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp3.cpu-contract.md)。
+
 ## 2026-11-11 — 验证三种 Actor 的独立双目部署
 
 CPU `passed`，通过 47 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp6.deployment-isolation.md)。

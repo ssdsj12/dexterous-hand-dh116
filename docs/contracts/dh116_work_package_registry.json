@@ -117,14 +117,38 @@
       "title": "复核 Teacher 动作合同与 PPO 回滚",
       "executor": "pytest",
       "dependencies": [],
-      "status": "pending",
+      "status": "passed",
       "tests": [
         "tests/test_dh116_privileged_action_audit.py",
         "tests/test_dh116_privileged_teacher.py",
         "tests/test_dh116_privileged_cli.py",
         "tests/test_dh116_stereo_runtime_teacher_identity.py",
         "tests/test_dh116_teacher_wp3.py"
-      ]
+      ],
+      "last_result": {
+        "passed": 94,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_privileged_action_audit.py",
+          "tests/test_dh116_privileged_teacher.py",
+          "tests/test_dh116_privileged_cli.py",
+          "tests/test_dh116_stereo_runtime_teacher_identity.py",
+          "tests/test_dh116_teacher_wp3.py"
+        ],
+        "log_sha256": "04e61d1ae8bf12fb6bdc60d0f4ab75da95bcfdf9c49a34bfa023ce6642f32ef9",
+        "tested_head": "f2e97e7af7b62dc7c15a2e9c27b30e60f32f4bd4",
+        "status": "passed",
+        "report": "docs/superpowers/reports/dh116-managed-wp3.cpu-contract.md",
+        "native_qualification": false
+      }
     },
     "wp3.mpc-native": {
       "title": "MPC 371D 和 24D 原生同步重采",
