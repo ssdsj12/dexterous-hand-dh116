@@ -13,7 +13,7 @@ class StereoDepth:
                  block_size=5,min_depth_m=.2,max_depth_m=1.2,lr_tolerance_px=1.,
                  texture_threshold=.001,uniqueness_threshold=.05,rectify=False,
                  subpixel=False,image_processing_batch_size=1,reliability=None,photometric_verification=None):
-        if (method not in ('blockmatch','sgbm','reliable_sad') or type(min_disparity) is not int or type(max_disparity) is not int
+        if (method not in ('blockmatch','sgbm','reliable_sad','census','zncc','gradient','coarse_to_fine') or type(min_disparity) is not int or type(max_disparity) is not int
                 or min_disparity<1 or max_disparity<=min_disparity or type(block_size) is not int
                 or block_size<3 or block_size%2!=1 or not 0<min_depth_m<max_depth_m
                 or not all(math.isfinite(x) for x in (min_depth_m,max_depth_m,lr_tolerance_px,texture_threshold,uniqueness_threshold))
@@ -245,6 +245,20 @@ class StereoDepth:
             else:
                 dl,cl,gl,left_trace=self._matched(left,right,-1,masks[0],masks[1])
                 dr,cr,gr,right_trace=self._matched(right,left,1,masks[1],masks[0])
+        elif self.method in ('census','zncc','gradient','coarse_to_fine'):
+            kwargs=dict(min_disparity=self.min_disparity,max_disparity=self.max_disparity,
+                block_size=self.block_size,subpixel=self.subpixel,
+                uniqueness_threshold=self.uniqueness,texture_threshold=self.texture)
+            if self.method=='coarse_to_fine':
+                from .tabletop_stereo_pyramid import match_pyramid
+                def run(a,b,sign,ma,mb):
+                    return match_pyramid(a,b,sign,calibration=calibration,a_valid=ma,b_valid=mb,**kwargs)
+            else:
+                from .tabletop_stereo_matching_costs import match_cost
+                def run(a,b,sign,ma,mb):
+                    return match_cost(a,b,sign,method=self.method,a_valid=ma,b_valid=mb,**kwargs)
+            dl,cl,gl,left_trace=run(left,right,-1,raw_masks[0],raw_masks[1])
+            dr,cr,gr,right_trace=run(right,left,1,raw_masks[1],raw_masks[0])
         else:
             dl,dr=self._sgbm(left,right)
             gl=(dl>=self.min_disparity)&(dl<=self.max_disparity);gr=(dr>=self.min_disparity)&(dr<=self.max_disparity)
@@ -280,18 +294,23 @@ class StereoDepth:
             left_matcher_rejected=~gl,right_sample_unavailable=~other_valid)
         if 'refinement' in left_trace:
             reasons['repeated_texture']=left_trace['refinement']['repeated_texture_rejected']
+        for name,value in left_trace.get('reasons',{}).items():
+            reasons['candidate_'+name]=value
         diagnostics=dict(version='dh116-stereo-matcher-diagnostics-v1',method=self.method,
             confidence_kind='compatibility_validity_indicator' if self.method=='sgbm' else 'relative_cost_margin',
             confidence_is_probability=False,quality_confidence_available=self.method!='sgbm',
             true_occlusion_available=False,refinement_scope='OpenCV_internal_not_exposed' if self.method=='sgbm' else 'wrapper_rgb_cost_refinement',
             wrapper_refinement_applied=self.subpixel and self.method!='sgbm',reasons=reasons,
-            uniqueness_scope='OpenCV_internal_not_exposed' if self.method=='sgbm' else 'separated_integer_modes' if self.method=='reliable_sad' and self.subpixel else 'adjacent_top2_cost_margin',
+            uniqueness_scope='OpenCV_internal_not_exposed' if self.method=='sgbm' else 'separated_integer_modes' if self.method in ('census','zncc','gradient','coarse_to_fine') or self.method=='reliable_sad' and self.subpixel else 'adjacent_top2_cost_margin',
             raw_disparity_px=dl,raw_confidence=confidence,
-            candidate_enabled=self.method=='reliable_sad',
+            candidate_enabled=self.method not in ('blockmatch','sgbm'),
             rgb_boundary_proxy=dict(minimum_gray_gradient=.02,maximum_to_mean_gradient_ratio=8.,window_px=self.block_size),
+            rgb_boundary_proxy_applied=self.method=='reliable_sad' and self.subpixel,
             periodicity_scope='single_tone_recurrence_and_separated_integer_modes;not_proof_all_repeated_patterns_absent',
             rgb_boundary_proxy_scope='gradient_concentration_only;not_semantic_background_or_occlusion_truth')
         if 'refinement' in left_trace:diagnostics['refinement']=left_trace['refinement']
+        for name in ('pyramid','metric','subpixel_policy','resource_metadata'):
+            if name in left_trace:diagnostics[name]=left_trace[name]
         return dict(depth_m=torch.where(valid,z,missing),disparity_px=torch.where(valid,dl,missing),
                     valid=valid,occlusion=occlusion,confidence=torch.where(valid,confidence,0.),diagnostics=diagnostics)
 
@@ -324,8 +343,8 @@ class StereoDepth:
         self.last_resource_metadata=dict(method=self.method,subpixel=self.subpixel,
             image_processing_batch_size=batch,processed_images=n,input_resolution_wh=[calibration.width,calibration.height],
             output_resolution_wh=[calibration.width,calibration.height],hidden_image_resize=False,
-            cost_volume_allocated=False if self.method in ('blockmatch','reliable_sad') else None,
-            disparity_planes_in_memory=1 if self.method in ('blockmatch','reliable_sad') else None,
+            cost_volume_allocated=False if self.method!='sgbm' else None,
+            disparity_planes_in_memory=1 if self.method!='sgbm' else None,
             cached_cost_state_planes=6 if self.method=='blockmatch' else None,
             configured_disparity_range=[self.min_disparity,self.max_disparity],
             gpu_memory_measured=False,gpu_peak_allocated_bytes=None,gpu_peak_reserved_bytes=None)

@@ -1,6 +1,6 @@
 # Stereo Phase0～7 文件清单与验收状态
 
-> 最新J2-A五目录总数为166项，见文末增量和readiness完整file_inventory；J0/J1为153项，前文141项表为`7c80878`的Phase0～7历史快照。下方早期状态表亦为该历史快照；当前CPU结果为Windows751 passed/1 skipped、服务器752 passed/1 skipped。
+> 最新J2-B五目录总数为179项；当前CPU Windows885/1skip、server886/1skip。前文141/153/166项为各阶段历史快照，完整最新逐文件清单见readiness与文末增量。
 
 本清单按原base `6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b` 对比当前已提交、未提交与未跟踪文件，范围为 `src/`、`scripts/`、`configs/`、`tests/`、`docs/`；排除 `artifacts/`。根目录 README/CHANGELOG 由本次发布单独维护，不计入五目录统计。新增文件即使在HEAD后继续修改，相对原base仍记为新增。
 
@@ -229,3 +229,21 @@ git ls-files --others --exclude-standard -- src scripts configs tests docs
 - [tests/test_dh116_stereo_j2a_safety.py](../tests/test_dh116_stereo_j2a_safety.py)
 
 修改已有depth/诊断/preprocessing/source绑定和一个旧测试的五Tensor shape枚举；另更新README、CHANGELOG、readiness与本清单。原528保护文件不变；不训练、不新native、不push。软件通过与原生精度/物理资格严格分开。
+
+## J2-B 增量（2026-11-11）
+
+- [configs/dh116_training/stereo_matcher_census_j2b_v1.json](../configs/dh116_training/stereo_matcher_census_j2b_v1.json)
+- [configs/dh116_training/stereo_matcher_coarse_to_fine_j2b_v1.json](../configs/dh116_training/stereo_matcher_coarse_to_fine_j2b_v1.json)
+- [configs/dh116_training/stereo_matcher_gradient_j2b_v1.json](../configs/dh116_training/stereo_matcher_gradient_j2b_v1.json)
+- [configs/dh116_training/stereo_matcher_zncc_j2b_v1.json](../configs/dh116_training/stereo_matcher_zncc_j2b_v1.json)
+- [docs/contracts/stereo_j2b_validation_summary.json](../docs/contracts/stereo_j2b_validation_summary.json)
+- [docs/superpowers/plans/2026-11-11-stereo-j2b-matching-candidates.md](../docs/superpowers/plans/2026-11-11-stereo-j2b-matching-candidates.md)
+- [docs/superpowers/reports/2026-11-11-stereo-j2b-matching-candidates.md](../docs/superpowers/reports/2026-11-11-stereo-j2b-matching-candidates.md)
+- [src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py)
+- [src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py](../src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py)
+- [tests/test_dh116_stereo_j2b_analytic.py](../tests/test_dh116_stereo_j2b_analytic.py)
+- [tests/test_dh116_stereo_j2b_costs.py](../tests/test_dh116_stereo_j2b_costs.py)
+- [tests/test_dh116_stereo_j2b_integration.py](../tests/test_dh116_stereo_j2b_integration.py)
+- [tests/test_dh116_stereo_j2b_pyramid.py](../tests/test_dh116_stereo_j2b_pyramid.py)
+
+另新增matching_costs/pyramid两个生产模块，修改depth/preprocessing/error producer接线及来源绑定；README/CHANGELOG/readiness同步更新。528保护文件不变，无新native/训练/push；软件与解析资格不等于物理或部署资格。

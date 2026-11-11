@@ -1,0 +1,24 @@
+{
+  "version": "dh116-stereo-matcher-j2b-v1",
+  "enabled_by_default": false,
+  "native_qualified": false,
+  "experiment": {
+    "candidate": "census",
+    "comparison_scope": "same RGB/calibration/reference;method is the single changed factor",
+    "qualification": "software_candidate_only;not_native_accuracy_or_task_success"
+  },
+  "depth_estimator": {
+    "method": "census",
+    "min_disparity": 8,
+    "max_disparity": 192,
+    "block_size": 9,
+    "min_depth_m": 0.2,
+    "max_depth_m": 1.2,
+    "lr_tolerance_px": 1.0,
+    "texture_threshold": 0.001,
+    "uniqueness_threshold": 0.05,
+    "rectify": false,
+    "subpixel": true,
+    "image_processing_batch_size": 1
+  }
+}

@@ -1,3 +1,9 @@
+## 2026-11-11 — J2-B：四种独立匹配候选
+
+新增显式Census/Hamming、ZNCC、中心梯度L1与.25/.5/1粗到细候选；独立配置/SHA，完整RAW支持、同指标亚像素与全range审计，不覆盖旧默认SAD或模型。新增134项回归纳入最终相关组：Windows885 passed/1 skipped（149.97s）、server886 passed/1 skipped（140.38s），均exit0、无Isaac导入。48个固定解析case通过列出门槛；四候选标准coverage全100%、最大视差P95 .0250001px，Census存在极少坏尾，不能只看P95。
+
+这只是软件/解析证据。原10run native accuracy、物理与部署资格不变，GPU/完整吞吐未测；粗到细全range审计不宣称加速。无新Isaac、训练、push或merge。下一工作包J2-C，J2-F同原始数据比较与J3仍待执行。[完整报告/实际命令/失败记录](docs/superpowers/reports/2026-11-11-stereo-j2b-matching-candidates.md) · [readiness](docs/contracts/stereo_phase0_7_readiness.json)。以下保留阶段历史。
+
 ## 2026-11-11 — J2-A合同、可靠亚像素和安全回归（本地）
 
 - 保留默认SAD数值和原12字段配置；新增mask别名、能力元数据与逐项拒绝原因。SGBM confidence保留兼容数值但不再表达质量概率，内部不可用项为NA。

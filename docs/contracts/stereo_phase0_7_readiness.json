@@ -25,29 +25,30 @@
     "accuracy_qualified": false,
     "physical_task_qualified": false,
     "deployment_qualified": false,
-    "J2A_software_gate_passed": true
+    "J2A_software_gate_passed": true,
+    "J2B_software_and_listed_analytic_passed": true
   },
   "CPU": {
     "windows": {
-      "passed": 751,
+      "passed": 885,
       "skipped": 1,
-      "duration_s": 115.6,
+      "duration_s": 149.97,
       "exit_code": 0,
       "CUDA_VISIBLE_DEVICES": "",
       "Isaac_imports": [],
-      "evidence_report": "docs/superpowers/reports/2026-11-11-stereo-j2a-matcher-contract.md"
+      "evidence_report": "docs/superpowers/reports/2026-11-11-stereo-j2b-matching-candidates.md"
     },
     "server": {
-      "passed": 752,
+      "passed": 886,
       "skipped": 1,
-      "duration_s": 78.03,
+      "duration_s": 140.38,
       "exit_code": 0,
       "python": "3.10.12",
       "torch": "2.7.0+cu128",
       "CUDA_VISIBLE_DEVICES": "",
       "Isaac_imports": [],
       "dependencies_installed_or_upgraded": false,
-      "evidence_report": "docs/superpowers/reports/2026-11-11-stereo-j2a-matcher-contract.md"
+      "evidence_report": "docs/superpowers/reports/2026-11-11-stereo-j2b-matching-candidates.md"
     },
     "counting_note": "overlapping platform suites;do_not_add_test_counts;optional_dependency_paths_differ"
   },
@@ -230,8 +231,8 @@
     ],
     "counts_by_category": {
       "src": {
-        "total": 47,
-        "added": 47,
+        "total": 49,
+        "added": 49,
         "modified": 0,
         "deleted": 0
       },
@@ -242,25 +243,25 @@
         "deleted": 0
       },
       "configs": {
-        "total": 28,
-        "added": 28,
+        "total": 32,
+        "added": 32,
         "modified": 0,
         "deleted": 0
       },
       "tests": {
-        "total": 40,
-        "added": 40,
+        "total": 44,
+        "added": 44,
         "modified": 0,
         "deleted": 0
       },
       "docs": {
-        "total": 34,
-        "added": 34,
+        "total": 37,
+        "added": 37,
         "modified": 0,
         "deleted": 0
       }
     },
-    "total": 166,
+    "total": 179,
     "pending_owner_report_paths_at_generation": [],
     "files": [
       {
@@ -332,11 +333,27 @@
         "relative_to_base_status": "added"
       },
       {
+        "path": "configs/dh116_training/stereo_matcher_census_j2b_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_matcher_coarse_to_fine_j2b_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
         "path": "configs/dh116_training/stereo_matcher_five_cost_j2a_failure_v1.json",
         "relative_to_base_status": "added"
       },
       {
+        "path": "configs/dh116_training/stereo_matcher_gradient_j2b_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
         "path": "configs/dh116_training/stereo_matcher_reliable_sad_j2a_v1.json",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "configs/dh116_training/stereo_matcher_zncc_j2b_v1.json",
         "relative_to_base_status": "added"
       },
       {
@@ -392,6 +409,10 @@
         "relative_to_base_status": "added"
       },
       {
+        "path": "docs/contracts/stereo_j2b_validation_summary.json",
+        "relative_to_base_status": "added"
+      },
+      {
         "path": "docs/contracts/stereo_native_resolution_results.json",
         "relative_to_base_status": "added"
       },
@@ -441,6 +462,10 @@
       },
       {
         "path": "docs/superpowers/plans/2026-11-11-stereo-j2a-matcher-contract.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/plans/2026-11-11-stereo-j2b-matching-candidates.md",
         "relative_to_base_status": "added"
       },
       {
@@ -509,6 +534,10 @@
       },
       {
         "path": "docs/superpowers/reports/2026-11-11-stereo-j2a-matcher-contract.md",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "docs/superpowers/reports/2026-11-11-stereo-j2b-matching-candidates.md",
         "relative_to_base_status": "added"
       },
       {
@@ -692,6 +721,10 @@
         "relative_to_base_status": "added"
       },
       {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py",
+        "relative_to_base_status": "added"
+      },
+      {
         "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_native.py",
         "relative_to_base_status": "added"
       },
@@ -709,6 +742,10 @@
       },
       {
         "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_promotion.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py",
         "relative_to_base_status": "added"
       },
       {
@@ -856,6 +893,22 @@
         "relative_to_base_status": "added"
       },
       {
+        "path": "tests/test_dh116_stereo_j2b_analytic.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_j2b_costs.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_j2b_integration.py",
+        "relative_to_base_status": "added"
+      },
+      {
+        "path": "tests/test_dh116_stereo_j2b_pyramid.py",
+        "relative_to_base_status": "added"
+      },
+      {
         "path": "tests/test_dh116_stereo_native_bootstrap.py",
         "relative_to_base_status": "added"
       },
@@ -928,7 +981,7 @@
         "relative_to_base_status": "added"
       }
     ],
-    "as_of": "J2-A_current_delivery;original_141_and_J1_153_are_historical"
+    "as_of": "J2-B_current_delivery"
   },
   "publication": {
     "new_branch_only": true,
@@ -936,7 +989,7 @@
     "PR_intent": "Draft",
     "merge_authorized": false,
     "qualification_authority": false,
-    "current_invocation": "J2A_local_only;user_task_forbids_push_merge_native_training",
+    "current_invocation": "J2B_local_only;no_push_merge_native_training",
     "previous_invocation": "local_changes_only;no_push_or_merge",
     "authorized_release": {
       "date_utc": "2026-11-11",
@@ -981,38 +1034,29 @@
   },
   "head_before_j0_j1_work": "7c808781ebd2cf969ca08776a83a65e3a2834582",
   "current_task_execution": {
-    "task_document": {
-      "path": "C:/Users/xk/.codex/attachments/cc102720-1c0e-46a1-a5ca-6b53d4d70764/已粘贴的文本.txt",
-      "lines": 455,
-      "sha256": "d4497f4a56e705b37f5f4bad6b75449378f1fa41396f3887be22f83712d01d68"
-    },
-    "invocation_scope": "J2-A_only_per_section_16",
-    "J2A": {
+    "invocation_scope": "J2-B_continuation_authorized_by_user",
+    "J2B": {
       "implemented": true,
-      "cpu_verified": true,
-      "software_gate_passed": true,
-      "legacy_default_5tensor_bitwise_unchanged": true,
-      "default_SAD_config_unchanged": true,
-      "candidate_enabled_by_default": false,
-      "new_method": "reliable_sad",
+      "CPU_verified": true,
+      "listed_analytic_gate_passed": true,
+      "methods": [
+        "census",
+        "coarse_to_fine",
+        "gradient",
+        "zncc"
+      ],
+      "new_pytest_cases": 134,
       "new_native_capture_count": 0,
-      "saved_pixel_A_offline_crop_checked": true,
-      "accuracy_qualified": false,
+      "native_accuracy_qualified": false,
       "physical_task_qualified": false,
       "deployment_qualified": false,
-      "report": "docs/superpowers/reports/2026-11-11-stereo-j2a-matcher-contract.md",
-      "evidence": "docs/contracts/stereo_j2a_validation_summary.json",
-      "native_GPU_and_performance_validation": "not_run",
-      "known_accepted_occluder_edge_errors": 27
+      "report": "docs/superpowers/reports/2026-11-11-stereo-j2b-matching-candidates.md",
+      "evidence": "docs/contracts/stereo_j2b_validation_summary.json"
     },
-    "J2B": {
-      "status": "pending_next_work_package;not_executed_in_J2A",
-      "plan": "docs/superpowers/plans/2026-11-10-stereo-j2-evidence-driven-perception.md"
-    },
-    "J2C_to_final": "pending_sequential_software_and_source_native_qualification_gates",
+    "next_work_package": "J2-C native-ID constrained segmentation;not_yet_executed",
+    "training_started": false,
     "no_push": true,
-    "no_merge": true,
-    "training_started": false
+    "no_merge": true
   },
   "history": {
     "J0_J1_before_J2A": {
@@ -1065,6 +1109,40 @@
       "merged": false,
       "teacher_training_started": false,
       "dagger_started": false
+    },
+    "J2A_before_J2B": {
+      "task_document": {
+        "path": "C:/Users/xk/.codex/attachments/cc102720-1c0e-46a1-a5ca-6b53d4d70764/已粘贴的文本.txt",
+        "lines": 455,
+        "sha256": "d4497f4a56e705b37f5f4bad6b75449378f1fa41396f3887be22f83712d01d68"
+      },
+      "invocation_scope": "J2-A_only_per_section_16",
+      "J2A": {
+        "implemented": true,
+        "cpu_verified": true,
+        "software_gate_passed": true,
+        "legacy_default_5tensor_bitwise_unchanged": true,
+        "default_SAD_config_unchanged": true,
+        "candidate_enabled_by_default": false,
+        "new_method": "reliable_sad",
+        "new_native_capture_count": 0,
+        "saved_pixel_A_offline_crop_checked": true,
+        "accuracy_qualified": false,
+        "physical_task_qualified": false,
+        "deployment_qualified": false,
+        "report": "docs/superpowers/reports/2026-11-11-stereo-j2a-matcher-contract.md",
+        "evidence": "docs/contracts/stereo_j2a_validation_summary.json",
+        "native_GPU_and_performance_validation": "not_run",
+        "known_accepted_occluder_edge_errors": 27
+      },
+      "J2B": {
+        "status": "pending_next_work_package;not_executed_in_J2A",
+        "plan": "docs/superpowers/plans/2026-11-10-stereo-j2-evidence-driven-perception.md"
+      },
+      "J2C_to_final": "pending_sequential_software_and_source_native_qualification_gates",
+      "no_push": true,
+      "no_merge": true,
+      "training_started": false
     }
   },
   "J0_J1_CPU_snapshot": {
