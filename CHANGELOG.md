@@ -1,3 +1,7 @@
+## 2026-11-11 — 复核 PhysX 接触证据与退出合同
+
+CPU `passed`，通过 41 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp4.cpu-contract.md)。
+
 ## 2026-11-11 — 复核 Teacher 动作合同与 PPO 回滚
 
 CPU `passed`，通过 94 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp3.cpu-contract.md)。

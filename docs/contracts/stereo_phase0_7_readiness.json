@@ -2896,6 +2896,27 @@
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-wp3.cpu-contract.md",
       "native_qualification": false
+    },
+    "wp4.cpu-contract": {
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_stereo_shutdown_validation.py"
+      ],
+      "log_sha256": "98fe7265cd7cbfb34535b92b63571a451e8a694686ff6edaac692c0333640d11",
+      "tested_head": "f2e97e7af7b62dc7c15a2e9c27b30e60f32f4bd4",
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-wp4.cpu-contract.md",
+      "native_qualification": false
     }
   }
 }
