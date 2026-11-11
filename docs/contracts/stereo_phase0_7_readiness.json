@@ -2666,6 +2666,18 @@
     "r2_enabled": false,
     "force_proxy_qualified": false
   },
+  "deformx_source_recheck_20261111": {
+    "report": "docs/superpowers/reports/2026-11-11-stereo-deformx-source-recheck.md",
+    "cpu_tests_passed": 2,
+    "project_roots_checked": 22,
+    "candidate_directories_checked": 19,
+    "target_commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
+    "source": "blocked_missing_complete_cuda_solver_checkout",
+    "nvcc_versions_found": ["12.2.91", "12.4.99"],
+    "cuda_toolkit_12_8_found": false,
+    "build_verified": false,
+    "bidirectional_coupling_verified": false
+  },
   "publication_workflow": {
     "policy": "AGENTS.md",
     "repository": "ssdsj12/dexterous-hand-dh116",

@@ -1,3 +1,7 @@
+## 2026-11-11 — DeformX CUDA 来源复查
+
+服务器 19 个候选目录仍无目标 CUDA 求解器独立仓库。新增只读候选核验工具，检查指定提交、子模块和实际源文件。构建与双向耦合继续 `blocked`。[来源复查](docs/superpowers/reports/2026-11-11-stereo-deformx-source-recheck.md)
+
 ## 2026-11-11 — PhysX 自然关闭预检
 
 独立脚本验证 240 步完整采样、回调释放、所属 SimulationContext 清理、自然退出与顺序重启。41 项 CPU 测试和服务器预检通过，原生复验待批准。[执行计划](docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md)

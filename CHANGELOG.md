@@ -1,3 +1,7 @@
+## 2026-11-11 — DeformX CUDA 来源复查
+
+新增只读 CUDA 源码清单检查并通过 2 项 CPU 测试。服务器复查缺少完整目标仓库及 CUDA Toolkit 12.8，编译、GPU 求解和双向耦合均待解除阻断。[来源复查](docs/superpowers/reports/2026-11-11-stereo-deformx-source-recheck.md)
+
 ## 2026-11-11 — PhysX 自然关闭预检
 
 新增顺序 240 步关停与重启验证、JSONL fsync、回调释放与 SIGTERM 证据。41 项 CPU 测试和服务器冻结副本预检通过。原生复验待批准，完整双手接触资格保持阻断。[执行计划](docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md)
