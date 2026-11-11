@@ -1,3 +1,7 @@
+## 2026-11-11 — Ubuntu 状态合同审计
+
+兼容旧 v1 配置的两个已审计字节表示，继续记录实际原始 SHA。集成 CPU 82 项通过，原合同与 Checkpoint 未修改。
+
 ## 2026-11-11 — 复核 Student 成功池与自有 rollout
 
 CPU `passed`，通过 22 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp6.cpu-admission.md)。

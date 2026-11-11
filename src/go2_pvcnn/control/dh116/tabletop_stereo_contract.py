@@ -44,6 +44,26 @@ def require_sha(value, name='SHA256'):
     return value
 
 
+# The estimator v1 config was pinned from a CRLF checkout. Its committed LF
+# counterpart is the only permitted alternate, with identical non-EOL bytes.
+_ESTIMATOR_STATE_V1_CRLF = 'a7af9f3f214a646f2f95dce45aa4744f378488de34237431c914bd4137b2ee86'
+_ESTIMATOR_STATE_V1_LF = '9f145cf8e68b1dfe8e2c7464ec5fc0cb00e81a2707115c2fe148ab49d77bbb62'
+
+
+def verify_estimator_state_contract_file(path, expected_sha256):
+    """Check the v1 config's file pin and return the actual raw-byte SHA.
+
+    The exception applies only to the published v1 CRLF pin on its audited LF
+    checkout. Checkpoint identities still bind their actual bytes.
+    """
+    expected_sha256 = require_sha(expected_sha256, 'state contract file SHA256')
+    actual = file_sha256(path)
+    pinned = expected_sha256 == _ESTIMATOR_STATE_V1_CRLF
+    if not pinned or actual not in (_ESTIMATOR_STATE_V1_CRLF, _ESTIMATOR_STATE_V1_LF):
+        raise ValueError('state contract file SHA256 mismatch')
+    return actual
+
+
 def action_sha256():
     return digest(ACTION_CONTRACT)
 

@@ -399,6 +399,45 @@
           "tests/test_dh116_work_packages.py"
         ]
       }
+    },
+    "wp2.ubuntu-contract-audit": {
+      "title": "Ubuntu 371D 合同字节验证",
+      "executor": "prepared",
+      "dependencies": [
+        "wp2.mode-gates"
+      ],
+      "tests": [
+        "tests/test_dh116_stereo_estimator.py",
+        "tests/test_dh116_stereo_state_multicohort.py",
+        "tests/test_dh116_stereo_state_training_modes.py",
+        "tests/test_dh116_stereo_state_supervision.py",
+        "tests/test_dh116_stereo_cold_candidate_admission.py"
+      ],
+      "status": "passed",
+      "last_result": {
+        "status": "passed",
+        "passed": 82,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "tested_head": "d0daa1cb492953859d4dbaeca8dbe70549c14618",
+        "log_sha256": "3e57839a443196e06dbf594b578f42ad485df94858a177285d503767c7c086ba",
+        "report": "docs/superpowers/reports/2026-11-11-stereo-ubuntu-contract-byte-pin.md",
+        "native_qualification": false,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_estimator.py",
+          "tests/test_dh116_stereo_state_multicohort.py",
+          "tests/test_dh116_stereo_state_training_modes.py",
+          "tests/test_dh116_stereo_state_supervision.py",
+          "tests/test_dh116_stereo_cold_candidate_admission.py"
+        ]
+      }
     }
   }
 }

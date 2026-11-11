@@ -330,8 +330,44 @@ def test_versioned_configs_bind_canonical_action_and_exact_state_contract():
     assert network['backbone']['pretrained'] is False and network['dropout']==0.
     assert state['force']['default_valid'] is False
     assert state['force']['coordinate_frame']=='accepted_pad_normal'
-    raw=(ROOT/state['state_contract_path']).read_bytes()
-    assert state['state_contract_file_sha256']==hashlib.sha256(raw).hexdigest()
+    path=ROOT/state['state_contract_path']
+    actual=module('contract').verify_estimator_state_contract_file(
+        path, state['state_contract_file_sha256'])
+    assert actual==hashlib.sha256(path.read_bytes()).hexdigest()
     assert m.StereoEstimationLoss(expected_contract_sha256=state['state_contract_semantic_sha256'])
     with pytest.raises(ValueError,match='SHA'):
         m.StereoEstimationLoss(expected_contract_sha256='0'*64)
+
+
+@pytest.mark.parametrize('variant', ('lf', 'crlf', 'mixed', 'extra_space', 'mutated_field'))
+def test_estimator_state_contract_only_accepts_audited_checkout_bytes(tmp_path, variant):
+    import hashlib
+    from go2_pvcnn.control.dh116.tabletop_stereo_contract import verify_estimator_state_contract_file
+
+    state=json.loads((ROOT/'configs/dh116_training/stereo_state_estimator_v1.json').read_text())
+    expected=state['state_contract_file_sha256']
+    lf=(ROOT/state['state_contract_path']).read_bytes().replace(b'\r\n', b'\n')
+    variants={
+        'lf': lf,
+        'crlf': lf.replace(b'\n', b'\r\n'),
+        'mixed': lf.replace(b'\n', b'\r\n', 1),
+        'extra_space': lf + b' ',
+        'mutated_field': lf.replace(b'371', b'372', 1),
+    }
+    path=tmp_path/'state.json'
+    raw=variants[variant]
+    path.write_bytes(raw)
+    if variant in ('lf', 'crlf'):
+        assert verify_estimator_state_contract_file(path, expected)==hashlib.sha256(raw).hexdigest()
+    else:
+        with pytest.raises(ValueError, match='state contract file SHA256 mismatch'):
+            verify_estimator_state_contract_file(path, expected)
+
+
+def test_estimator_state_contract_does_not_accept_unknown_pin(tmp_path):
+    from go2_pvcnn.control.dh116.tabletop_stereo_contract import verify_estimator_state_contract_file
+
+    path=tmp_path/'state.json'
+    path.write_bytes((ROOT/'docs/contracts/stereo_privileged_state_contract.json').read_bytes())
+    with pytest.raises(ValueError, match='state contract file SHA256 mismatch'):
+        verify_estimator_state_contract_file(path, 'a'*64)
