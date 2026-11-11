@@ -3133,6 +3133,26 @@
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-wp5.source-payload.md",
       "native_qualification": false
+    },
+    "orchestration.native-gate-split": {
+      "status": "passed",
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "tested_head": "3e50850a1f72ca7bd37b344aab5f27f8a9fc2fb4",
+      "log_sha256": "d00e324e0060dea4be197c3de3cba9f0954fe018ea7fbf6879d30e2d0e0ad449",
+      "report": "docs/superpowers/reports/2026-11-11-rigid-deformable-scheduling-gates.md",
+      "native_qualification": false
     }
   }
 }

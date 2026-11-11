@@ -110,7 +110,8 @@
         "wp1.calibration",
         "wp4.contact-native",
         "wp5.solver-native",
-        "wp2.metric-integrity"
+        "wp2.metric-integrity",
+        "wp2.rigid-qualified-labels"
       ],
       "status": "blocked",
       "reason": "缺独立几何、材料、接触与不确定度资格数据"
@@ -166,8 +167,7 @@
       "title": "Teacher Actor-only BC 和原生 R0",
       "executor": "gated",
       "dependencies": [
-        "wp3.mpc-native",
-        "wp4.contact-native"
+        "wp3.mpc-native"
       ],
       "status": "blocked",
       "reason": "无兼容专家数据，原生训练需批准"
@@ -176,7 +176,8 @@
       "title": "冻结 Teacher 的二指三指验收",
       "executor": "gated",
       "dependencies": [
-        "wp3.actor-bc-r0"
+        "wp3.actor-bc-r0",
+        "wp4.contact-native"
       ],
       "status": "blocked",
       "reason": "缺合格冻结 Teacher 与独立原生初态"
@@ -356,13 +357,13 @@
       }
     },
     "wp6.bc-dagger-ppo": {
-      "title": "Student 正式 BC、DAgger 与 PPO",
+      "title": "刚性代理 Student 正式 BC、DAgger 与 PPO",
       "executor": "gated",
       "dependencies": [
         "wp6.deployment-isolation",
         "wp6.cpu-admission",
         "wp3.frozen-eval",
-        "wp2.qualified-labels"
+        "wp2.rigid-qualified-labels"
       ],
       "status": "blocked",
       "reason": "缺成功 Teacher 和合格感知，正式训练需批准"
@@ -371,12 +372,11 @@
       "title": "刚性代理和柔性任务独立验收",
       "executor": "gated",
       "dependencies": [
-        "wp6.bc-dagger-ppo",
-        "wp5.solver-native",
-        "wp6.independent-proof"
+        "wp6.rigid-native-final",
+        "wp6.deformable-native-final"
       ],
       "status": "blocked",
-      "reason": "每种抓法各需至少 100 个独立初态，原生预算待批准"
+      "reason": "刚性代理与柔性 Cosserat 两条原生验收均待完成"
     },
     "bootstrap.scheduler": {
       "title": "验证工作包调度、恢复与发布收据",
@@ -618,7 +618,9 @@
     "wp2.metric-integrity": {
       "title": "状态监督残差及不确定度完整性",
       "executor": "prepared",
-      "dependencies": [],
+      "dependencies": [
+        "wp2.mode-gates"
+      ],
       "tests": [
         "tests/test_dh116_stereo_state_supervision.py"
       ],
@@ -647,7 +649,9 @@
     "wp5.source-payload": {
       "title": "DeformX 固定源码实际载荷预检",
       "executor": "prepared",
-      "dependencies": [],
+      "dependencies": [
+        "wp5.cpu-source-check"
+      ],
       "tests": [
         "tests/test_dh116_deformx_cuda_source.py"
       ],
@@ -670,6 +674,69 @@
         "tested_head": "d1cdc9a465bc968ee4c2fd25cc18241d68d9384d",
         "status": "passed",
         "report": "docs/superpowers/reports/dh116-managed-wp5.source-payload.md",
+        "native_qualification": false
+      }
+    },
+    "wp2.rigid-qualified-labels": {
+      "title": "刚性代理状态字段与独立初态监督资格",
+      "executor": "gated",
+      "dependencies": [
+        "wp2.mode-gates",
+        "wp2.metric-integrity",
+        "wp1.calibration"
+      ],
+      "status": "blocked",
+      "reason": "缺刚性任务独立物理初态和实际启用字段的合格监督；未验证字段保持关闭"
+    },
+    "wp6.rigid-native-final": {
+      "title": "刚性代理 Student 独立原生验收",
+      "executor": "gated",
+      "dependencies": [
+        "wp6.bc-dagger-ppo",
+        "wp6.independent-proof"
+      ],
+      "status": "blocked",
+      "reason": "缺合格刚性代理 Student；二指和三指各需 100 个独立初态并批准原生预算"
+    },
+    "wp6.deformable-native-final": {
+      "title": "柔性 Cosserat Student 独立原生验收",
+      "executor": "gated",
+      "dependencies": [
+        "wp5.solver-native",
+        "wp2.qualified-labels",
+        "wp6.independent-proof"
+      ],
+      "status": "blocked",
+      "reason": "缺真实柔性后端、独立柔性 Teacher/Student 和逐任务原生证据"
+    },
+    "orchestration.native-gate-split": {
+      "title": "独立排期刚性代理和柔性 Cosserat 验收",
+      "executor": "prepared",
+      "dependencies": [
+        "orchestration.offline-publication"
+      ],
+      "tests": [
+        "tests/test_dh116_work_packages.py"
+      ],
+      "status": "passed",
+      "last_result": {
+        "status": "passed",
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "tested_head": "3e50850a1f72ca7bd37b344aab5f27f8a9fc2fb4",
+        "log_sha256": "d00e324e0060dea4be197c3de3cba9f0954fe018ea7fbf6879d30e2d0e0ad449",
+        "report": "docs/superpowers/reports/2026-11-11-rigid-deformable-scheduling-gates.md",
         "native_qualification": false
       }
     }

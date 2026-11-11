@@ -1,3 +1,7 @@
+## 2026-11-11 — 独立排期刚性代理和柔性 Cosserat 验收
+
+刚性代理与柔性 Cosserat 各有原生验收依赖。Ubuntu 19 项 CPU 回归通过。[报告](docs/superpowers/reports/2026-11-11-rigid-deformable-scheduling-gates.md)
+
 ## 2026-11-11 — DeformX 固定源码实际载荷预检
 
 CPU `passed`，通过 7 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp5.source-payload.md)。

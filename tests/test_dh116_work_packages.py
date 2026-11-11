@@ -202,3 +202,34 @@ def test_unavailable_remote_rejects_local_commits_outside_pending_queue(repo, mo
     with pytest.raises(RuntimeError, match='last verified remote'):
         scheduler.main(['--run', '--limit', '1'])
     assert repo.pending() == []
+
+
+def test_native_student_task_gates_do_not_require_a_solver_for_rigid_runs():
+    root = Path(scheduler.__file__).resolve().parents[1]
+    packages = scheduler.Repository(root).registry()['packages']
+
+    def dependencies(package):
+        direct = packages[package]['dependencies']
+        return set(direct).union(*(dependencies(name) for name in direct))
+
+    rigid = dependencies('wp6.rigid-native-final')
+    assert 'wp2.rigid-qualified-labels' in rigid
+    assert 'wp6.independent-proof' in rigid
+    assert 'wp3.frozen-eval' in rigid
+    assert 'wp5.solver-native' not in rigid
+    assert 'wp5.solver-native' in dependencies('wp6.deformable-native-final')
+    assert 'wp2.qualified-labels' in dependencies('wp6.deformable-native-final')
+    assert set(packages['wp6.native-final']['dependencies']) == {
+        'wp6.rigid-native-final', 'wp6.deformable-native-final',
+    }
+    for name in ('wp6.rigid-native-final', 'wp6.deformable-native-final'):
+        assert packages[name]['executor'] == 'gated'
+
+
+def test_r0_training_does_not_require_r1_r2_contact_qualification():
+    root = Path(scheduler.__file__).resolve().parents[1]
+    packages = scheduler.Repository(root).registry()['packages']
+    assert 'wp3.mpc-native' in packages['wp3.actor-bc-r0']['dependencies']
+    assert 'wp4.contact-native' not in packages['wp3.actor-bc-r0']['dependencies']
+    assert packages['wp3.actor-bc-r0']['executor'] == 'gated'
+    assert 'wp4.contact-native' in packages['wp3.frozen-eval']['dependencies']
