@@ -83,7 +83,7 @@
       "failure": null,
       "failure_reasons": [],
       "grasp_qualified": false,
-      "physics_rows": 240,
+      "physics_rows": 238,
       "rod_uid": "rod0",
       "sample_validation_passed": true,
       "scope": "one_thumb_original_articulation_calibration",
@@ -92,7 +92,11 @@
       "zero_contact_window_passed": true
     },
     "line_counts": {
-      "physics.jsonl": 240
+      "physics.jsonl": 238
+    },
+    "physics_clock": {
+      "ledger": "physics.jsonl",
+      "setup_steps": 2
     },
     "result_file": "result.json"
   },

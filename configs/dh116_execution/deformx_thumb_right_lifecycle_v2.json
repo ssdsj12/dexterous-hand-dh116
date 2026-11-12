@@ -92,7 +92,7 @@
       "failure_reasons": [],
       "grasp_qualified": false,
       "native_hull_sha256": "62615e9350789c8f4ccd319c2c78cbd584830a56e0a2b9ed39cc61d57b8c9c29",
-      "physics_rows": 240,
+      "physics_rows": 238,
       "registered_pad_slot": 0,
       "rod_uid": "rod0",
       "sample_validation_passed": true,
@@ -104,7 +104,11 @@
       "zero_contact_window_passed": true
     },
     "line_counts": {
-      "physics.jsonl": 240
+      "physics.jsonl": 238
+    },
+    "physics_clock": {
+      "ledger": "physics.jsonl",
+      "setup_steps": 2
     },
     "result_file": "result.json"
   },

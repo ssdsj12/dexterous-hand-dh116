@@ -19,12 +19,185 @@ def test_bounded_target_and_one_exchange_lag():
         command_at_step(q0, endpoint * 2, step=49, side="left")
 
 
+def test_thumb_sdk_clock_charges_setup_before_bounded_measurement():
+    from scripts.verify_dh116_deformx_thumb_contact import reset_thumb_physics, step_thumb_physics
+
+    class FakeSim:
+        current_time_step_index = 0
+        reset_steps = 2
+        next_step_ticks = 1
+        playing = True
+
+        def reset(self):
+            self.current_time_step_index += self.reset_steps
+
+        def is_playing(self):
+            return self.playing
+
+        def step(self, *, render):
+            assert not render
+            self.current_time_step_index += self.next_step_ticks
+
+    sim = FakeSim()
+    assert reset_thumb_physics(sim) == (0, 2)
+    for expected in range(2, 240):
+        assert step_thumb_physics(sim, expected, budget_end=240) == expected + 1
+    with pytest.raises(RuntimeError, match="budget"):
+        step_thumb_physics(sim, 240, budget_end=240)
+    assert sim.current_time_step_index == 240
+
+    sim = FakeSim()
+    sim.reset_steps = 3
+    with pytest.raises(RuntimeError, match="setup"):
+        reset_thumb_physics(sim)
+    sim = FakeSim()
+    sim.current_time_step_index = 1
+    with pytest.raises(RuntimeError, match="setup"):
+        reset_thumb_physics(sim)
+
+    sim = FakeSim()
+    reset_thumb_physics(sim)
+    sim.next_step_ticks = 2
+    with pytest.raises(RuntimeError, match="clock"):
+        step_thumb_physics(sim, 2, budget_end=240)
+    sim.next_step_ticks = 1
+    with pytest.raises(RuntimeError, match="clock"):
+        step_thumb_physics(sim, 3, budget_end=240)
+    sim.playing = False
+    with pytest.raises(RuntimeError, match="timeline"):
+        step_thumb_physics(sim, 4, budget_end=240)
+    assert sim.current_time_step_index == 4
+
+
 def test_wrench_evidence_refuses_wrong_exchange_clock():
     base = {"phase_step": 1, "sdk_step": 8, "rod_substep": 12, "sdk_time_s": 8 / 480,
             "applied_wrench_com_w": [0.] * 6, "rod_on_hand_com_w": [0.] * 6,
             "pair_force_residual_n": 0., "failure": None}
     with pytest.raises(ValueError, match="clock"):
         schedule_summary([base, {**base, "phase_step": 2, "sdk_step": 10, "rod_substep": 24}])
+
+
+def test_thumb_summary_counts_238_measured_rows_without_rescaling_motion():
+    start = np.zeros(6)
+    end = np.array([0., .09, 0., 0., 0., 0.])
+    target, action = command_at_step(start, end, step=238, side="left")
+    old_final_target, old_final_action = command_at_step(start, end, step=240, side="left")
+    assert np.array_equal(target, old_final_target)
+    assert np.array_equal(action, old_final_action)
+
+    rows, previous = [], [0.] * 6
+    for phase in range(1, 241):
+        force = [0., 0., .01, 0., 0., 0.] if phase >= 173 else [0.] * 6
+        rows.append({"phase_step": phase, "sdk_step": phase + 2, "rod_substep": phase * 12,
+                     "sdk_time_s": (phase + 2) / 480, "applied_wrench_com_w": previous,
+                     "rod_on_hand_com_w": force, "pair_force_residual_n": 0., "failure": None})
+        previous = force
+    assert schedule_summary(rows[:238])["sample_validation_passed"] is True
+    assert schedule_summary(rows)["sample_validation_passed"] is False
+
+
+def test_right_preflight_requires_receipt_and_steps_mean_total(tmp_path):
+    from types import SimpleNamespace
+
+    from scripts.verify_dh116_deformx_thumb_contact import preflight
+
+    with pytest.raises(ValueError, match="240 total"):
+        preflight(SimpleNamespace(steps=238, side="left"), tmp_path)
+    with pytest.raises(ValueError, match="qualified left scheduler receipt"):
+        preflight(SimpleNamespace(steps=240, side="right", left_scheduler_receipt=None,
+                                  left_evidence=tmp_path), tmp_path)
+
+
+@pytest.mark.parametrize("scenario", ["complete", "run_failed", "late_tick", "cannot_freeze"])
+def test_thumb_shutdown_freezes_before_clock_release_and_stop_update(tmp_path, monkeypatch, scenario):
+    import sys
+    from types import ModuleType, SimpleNamespace
+
+    from go2_pvcnn.control.dh116 import tabletop_stereo_contact_calibration as calibration
+    from scripts import verify_dh116_deformx_thumb_contact as probe
+
+    sequence = []
+    playing = True
+
+    class Settings:
+        enabled = True
+
+        def get(self, path):
+            if path == "/app/fastShutdown":
+                return False
+            assert path == "/app/player/playSimulations"
+            return self.enabled
+
+        def set_bool(self, path, value):
+            assert path == "/app/player/playSimulations" and value is False
+            sequence.append("freeze")
+            if scenario != "cannot_freeze":
+                self.enabled = value
+
+    settings = Settings()
+
+    class Simulation:
+        def __init__(self, config):
+            pass
+
+        @property
+        def current_time_step_index(self):
+            assert not settings.enabled
+            sequence.append("read_clock")
+            return 241 if scenario == "late_tick" else 240
+
+        @classmethod
+        def clear_instance(cls):
+            assert not settings.enabled
+            sequence.append("clear")
+
+    def stop():
+        nonlocal playing
+        assert not settings.enabled
+        sequence.append("stop")
+        playing = False
+
+    def update():
+        assert not settings.enabled and not playing
+        sequence.append("update")
+
+    def close(app, output):
+        assert not settings.enabled and not playing
+        sequence.append("close")
+
+    def run(*args):
+        sequence.append("run")
+        if scenario == "run_failed":
+            raise RuntimeError("physics run failed")
+        return {"physics_clock": {"sdk_final_step": 240, "sdk_last_measurement_step": 240}}
+
+    def install(name, **attributes):
+        module = ModuleType(name)
+        module.__dict__.update(attributes)
+        monkeypatch.setitem(sys.modules, name, module)
+        return module
+
+    install("carb", settings=install("carb.settings", get_settings=lambda: settings))
+    install("isaaclab", sim=install("isaaclab.sim", SimulationContext=Simulation,
+                                   SimulationCfg=lambda **kw: kw, PhysxCfg=lambda **kw: kw))
+    install("isaacsim.core.simulation_manager", SimulationManager=SimpleNamespace(get_physics_sim_view=lambda: None))
+    install("omni", timeline=install("omni.timeline", get_timeline_interface=lambda: SimpleNamespace(stop=stop)))
+    monkeypatch.setattr(calibration, "close_calibration_app", close)
+    monkeypatch.setattr(probe, "_run", run)
+    monkeypatch.setattr(probe, "_collect_owned_references", lambda *_: None)
+    ownership = SimpleNamespace(watch=lambda *a, **kw: None, event=lambda *a, **kw: None, checkpoint=lambda *_: None)
+    app = SimpleNamespace(update=update)
+    args = SimpleNamespace(output=tmp_path, device="cuda:0")
+    if scenario == "complete":
+        probe._run_thumb_probe(app, args, {}, None, None, ownership)
+    else:
+        reason = {"run_failed": "physics run failed", "late_tick": "shutdown clock", "cannot_freeze": "freeze"}
+        with pytest.raises(RuntimeError, match=reason[scenario]):
+            probe._run_thumb_probe(app, args, {}, None, None, ownership)
+    if scenario == "cannot_freeze":
+        assert "update" not in sequence and "close" not in sequence
+    else:
+        assert sequence == ["run", "freeze", "read_clock", "clear", "stop", "freeze", "update", "freeze", "close"]
 
 
 def test_owned_release_checkpoint_observes_collected_callback_cycle(tmp_path):
@@ -71,9 +244,14 @@ def test_scheduler_left_receipt_requires_outer_zero_and_locked_ledger(tmp_path):
     output.mkdir(parents=True)
     log = attempt / "native.log"
     log.write_text("test only")
-    (output / "physics.jsonl").write_text("{}\n" * 240)
+    clock = dict(sdk_initial_step=0, sdk_after_setup_step=2, sdk_first_measurement_step=3,
+                 sdk_last_measurement_step=240, sdk_final_step=240, setup_steps=2,
+                 measured_steps=238, total_steps=240)
+    ledger = "".join(json.dumps({"phase_step": step, "sdk_step": step + 2}) + "\n" for step in range(1, 239))
+    (output / "physics.jsonl").write_text(ledger)
     (output / "result.json").write_text(json.dumps(
-        {"side": "left", "sample_validation_passed": True, "physics_rows": 240, "failure_reasons": []}))
+        {"side": "left", "sample_validation_passed": True, "physics_rows": 238, "failure_reasons": [],
+         "physics_clock": clock}))
     (output / "shutdown_complete.json").write_text('{"close_returned": true}')
     names = ("physics.jsonl", "result.json", "shutdown_complete.json")
     outer = {"outer_exit_code": 0, "native_lock_observed": True, "log_sha256": digest(log)}
@@ -86,7 +264,7 @@ def test_scheduler_left_receipt_requires_outer_zero_and_locked_ledger(tmp_path):
     receipt.write_text(json.dumps({
         **outer, "executor": "native_bounded", "native_execution_performed": True,
         "native_qualification": True, "output": str(output), "code_config_sha256": fingerprint,
-        "command_spec_sha256": "c" * 64, "ledger_counts": {"physics.jsonl": 240},
+        "command_spec_sha256": "c" * 64, "ledger_counts": {"physics.jsonl": 238}, "physics_clock": clock,
         "artifact_sha256": {name: digest(output/name) for name in names},
     }))
     receipt_hash = digest(receipt)
@@ -98,6 +276,13 @@ def test_scheduler_left_receipt_requires_outer_zero_and_locked_ledger(tmp_path):
     (output / "physics.jsonl").write_text('{"different": true}\n' * 240)
     with pytest.raises(ValueError, match="SHA256"):
         left_output_from_scheduler_receipt(receipt, receipt_hash)
+    (output / "physics.jsonl").write_text(ledger)
+    historical = json.loads(receipt.read_text())
+    historical["ledger_counts"]["physics.jsonl"] = 240
+    historical.pop("physics_clock")
+    receipt.write_text(json.dumps(historical))
+    with pytest.raises(ValueError, match="ledger count"):
+        left_output_from_scheduler_receipt(receipt, digest(receipt))
 
 
 def test_right_thumb_recipe_binds_real_right_identity():
@@ -148,9 +333,12 @@ def test_right_thumb_recipe_binds_real_right_identity():
     assert expected["registered_pad_slot"] == 0
     assert expected["thumb_action_index"] == 7
     assert action["action_contract"]["joint_order"][expected["thumb_action_index"]] == "right.finger12"
-    assert expected["physics_rows"] == 240 and expected["sample_validation_passed"] is True
+    assert expected["physics_rows"] == 238 and expected["sample_validation_passed"] is True
     assert expected["failure_reasons"] == [] and expected["failure"] is None
-    assert right["validator"]["line_counts"] == {"physics.jsonl": 240}
+    assert right["budget"]["physics_steps"] == 240
+    for spec in (left, right):
+        assert spec["validator"]["line_counts"] == {"physics.jsonl": 238}
+        assert spec["validator"]["physics_clock"] == {"ledger": "physics.jsonl", "setup_steps": 2}
 
 
 def test_right_thumb_runtime_identity_rejects_left_action_or_wrong_pad():

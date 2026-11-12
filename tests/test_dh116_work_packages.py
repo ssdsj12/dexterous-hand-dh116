@@ -288,6 +288,65 @@ def test_native_validator_requires_physical_records_and_scope(repo, monkeypatch)
 
 
 
+def test_native_budget_clock_requires_setup_and_measured_steps_to_reconcile(repo, tmp_path):
+    native_fixture(repo)
+    package = repo.registry()['packages']['native']
+    spec_path = repo.root / package['command_spec']
+    spec = json.loads(spec_path.read_text())
+    spec['budget']['physics_steps'] = 240
+    spec['validator']['line_counts']['physics.jsonl'] = 238
+    spec['validator']['physics_clock'] = dict(ledger='physics.jsonl', setup_steps=2)
+    write_json(spec_path, spec)
+    assert repo.native_recipe(package)['spec']['budget']['physics_steps'] == 240
+
+    clock = dict(sdk_initial_step=0, sdk_after_setup_step=2, sdk_first_measurement_step=3,
+                 sdk_last_measurement_step=240, sdk_final_step=240, setup_steps=2,
+                 measured_steps=238, total_steps=240)
+    out = tmp_path / 'physical'
+    out.mkdir()
+
+    def write_result(rows, **changes):
+        write_json(out / 'summary.json', dict(qualified=True, physics_clock={**clock, **changes}))
+        (out / 'physics.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in rows))
+
+    rows = [dict(phase_step=step, sdk_step=step + 2) for step in range(1, 239)]
+    write_result(rows)
+    assert scheduler.validate_native_artifacts(spec, out)['physics_clock'] == clock
+    write_result(rows + [dict(phase_step=239, sdk_step=241), dict(phase_step=240, sdk_step=242)])
+    with pytest.raises(ValueError, match='budget'):
+        scheduler.validate_native_artifacts(spec, out)
+    write_result(rows, sdk_final_step=241)
+    with pytest.raises(ValueError, match='budget'):
+        scheduler.validate_native_artifacts(spec, out)
+    write_result(rows[:72] + [dict(phase_step=73, sdk_step=76)] + rows[73:])
+    with pytest.raises(ValueError, match='clock'):
+        scheduler.validate_native_artifacts(spec, out)
+
+    spec['validator']['line_counts']['physics.jsonl'] = 240
+    write_json(spec_path, spec)
+    with pytest.raises(ValueError, match='budget'):
+        repo.native_recipe(package)
+
+
+def test_budget_clock_new_recipe_cannot_reuse_previous_approval_or_result(repo, monkeypatch):
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    original_approval = native_approval(repo)
+    old_path, old = record_qualified_left(repo, monkeypatch, original_approval)
+
+    package = repo.registry()['packages']['native']
+    spec_path = repo.root / package['command_spec']
+    spec = json.loads(spec_path.read_text())
+    spec['budget']['physics_steps'] = 3
+    spec['validator']['physics_clock'] = dict(ledger='physics.jsonl', setup_steps=2)
+    write_json(spec_path, spec)
+    plan = repo.native_plan(approval=original_approval)
+    assert plan['native_ready'] == [] and plan['native_qualified'] == []
+    assert plan['blockers']['native']['kind'] == 'waiting_approval'
+    assert plan['native_identities']['native']['code_config_sha256'] != old['code_config_sha256']
+    assert scheduler.file_hash(old_path) == old['result_sha256']
+
+
 @pytest.mark.parametrize('tamper_before_resume', [False, True])
 def test_native_publication_interrupt_resumes_without_a_second_launch(relay_cli, monkeypatch, tamper_before_resume):
     repo = relay_cli

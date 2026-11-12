@@ -293,6 +293,23 @@ def native_artifact(output, relative):
     return resolved
 
 
+def validate_native_physics_clock(result, clock_rows, *, setup_steps, total_steps):
+    measured = total_steps - setup_steps
+    expected = dict(sdk_initial_step=0, sdk_after_setup_step=setup_steps,
+                    sdk_first_measurement_step=setup_steps + 1, sdk_last_measurement_step=total_steps,
+                    sdk_final_step=total_steps, setup_steps=setup_steps,
+                    measured_steps=measured, total_steps=total_steps)
+    clock = result.get('physics_clock')
+    if (not isinstance(clock, dict) or clock.keys() != expected.keys()
+            or any(type(clock[key]) is not int or clock[key] != value for key, value in expected.items())
+            or len(clock_rows) != measured):
+        raise ValueError('native physics budget counters differ from frozen setup and total steps')
+    for step, (phase, sdk_step) in enumerate(clock_rows, 1):
+        if type(phase) is not int or type(sdk_step) is not int or (phase, sdk_step) != (step, setup_steps + step):
+            raise ValueError('native physics clock must advance once per measured row after setup')
+    return clock
+
+
 def validate_native_artifacts(spec, output):
     """Reopen artifact bytes independently of any producer completion marker."""
     validator = spec['validator']
@@ -306,20 +323,28 @@ def validate_native_artifacts(spec, output):
             actual = actual[part]
         if type(actual) is not type(expected) or actual != expected:
             raise ValueError(f'native validator field differs: {selector}')
-    counts = {}
+    counts, clock_rows = {}, []
+    physics_clock = validator.get('physics_clock')
     for name, expected in validator['line_counts'].items():
         with native_artifact(output, name).open(encoding='utf-8') as stream:
             count = 0
             for line in stream:
-                if not line.endswith('\n') or not isinstance(json.loads(line), dict):
+                row = json.loads(line)
+                if not line.endswith('\n') or not isinstance(row, dict):
                     raise ValueError(f'native ledger must contain complete JSON object rows: {name}')
+                if physics_clock and name == physics_clock['ledger']:
+                    clock_rows.append((row.get('phase_step'), row.get('sdk_step')))
                 count += 1
                 if count > expected:
                     raise ValueError(f'native ledger exceeds declared budget: {name}')
         if count != expected:
             raise ValueError(f'native ledger count differs: {name}')
         counts[name] = count
-    return dict(artifact_sha256=artifacts, ledger_counts=counts)
+    evidence = dict(artifact_sha256=artifacts, ledger_counts=counts)
+    if physics_clock:
+        evidence['physics_clock'] = validate_native_physics_clock(
+            result, clock_rows, setup_steps=physics_clock['setup_steps'], total_steps=spec['budget']['physics_steps'])
+    return evidence
 
 
 def native_file_lock(path, *, acquire=True):
@@ -378,15 +403,24 @@ def native_recipe(repo, package):
                    for key, (low, high) in NATIVE_BUDGET.items())):
         raise ValueError('native budget is incomplete or outside bounded limits')
     validator = spec['validator']
-    if (not isinstance(validator, dict) or validator.keys() != {'result_file', 'equals', 'artifacts', 'line_counts'}
+    validator_required = {'result_file', 'equals', 'artifacts', 'line_counts'}
+    if (not isinstance(validator, dict) or not validator_required <= validator.keys() <= validator_required | {'physics_clock'}
             or not isinstance(validator['artifacts'], list) or not validator['artifacts']
             or not isinstance(validator['equals'], dict) or not validator['equals']
             or not isinstance(validator['line_counts'], dict)
             or not set(validator['line_counts']) <= set(validator['artifacts'])
             or validator['result_file'] not in validator['artifacts']
-            or any(type(v) is not int or v < 1 or v > 480 for v in validator['line_counts'].values())
-            or budget['physics_steps'] and budget['physics_steps'] not in validator['line_counts'].values()):
+            or any(type(v) is not int or v < 1 or v > 480 for v in validator['line_counts'].values())):
         raise ValueError('native validator must bind scoped result fields and exact physical ledger rows')
+    if 'physics_clock' in validator:
+        clock = validator['physics_clock']
+        if (not isinstance(clock, dict) or clock.keys() != {'ledger', 'setup_steps'}
+                or not isinstance(clock['ledger'], str) or clock['ledger'] not in validator['line_counts']
+                or type(clock['setup_steps']) is not int or not 0 <= clock['setup_steps'] < budget['physics_steps']
+                or clock['setup_steps'] + validator['line_counts'][clock['ledger']] != budget['physics_steps']):
+            raise ValueError('native physics budget must include setup and all measured ledger rows')
+    elif budget['physics_steps'] and budget['physics_steps'] not in validator['line_counts'].values():
+        raise ValueError('native validator must bind exact physical ledger rows')
     for value in validator['artifacts']:
         native_relative_path(value)
     environment = spec.get('environment', {})

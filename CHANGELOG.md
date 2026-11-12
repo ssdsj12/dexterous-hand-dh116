@@ -1,3 +1,7 @@
+## 2026-11-12 — 拇指初始化及收尾总物理步预算修复
+
+修复总物理步漏计：240总额=2初始化+238测量，并在注销时钟前冻结物理推进。原484步失败预算证据保留，新指纹只通过CPU、待新冻结审批，未原生重跑。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-total-physics-budget.md)
+
 ## 2026-11-12 — Teacher与Hold预算显式计入初始化阶段
 
 保留v1计数兼容，新增v2独立配置；Teacher 512行与评估2880行仅为测量阶段，setup及总额未验证时保留null并禁止scope晋级。5秒Hold仍至少2400物理步，所有草案均需独立批准。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-12-deformable-task-budget-v2.md)

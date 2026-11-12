@@ -16,10 +16,11 @@ import numpy as np
 from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, JOINTS, MIMIC, active_limits, expand
 from go2_pvcnn.control.dh116.tabletop_deformable_rod_bridge import NativeOwnershipTrace
 from go2_pvcnn.control.dh116.tabletop_deformable_rod_contact import (
-    DT, MOVE_STEPS, RADIUS_M, STEPS, SUBSTEPS, ZERO_STEPS, command_at_step, min_grid_distance,
-    plan_thumb_approach, schedule_summary,
+    DT, MEASURED_STEPS, MOVE_STEPS, RADIUS_M, SETUP_STEPS, STEPS, SUBSTEPS, ZERO_STEPS, command_at_step,
+    min_grid_distance, plan_thumb_approach, schedule_summary,
 )
 from scripts.bake_dh116_deformx_pad_sdfs import checked_bytes, checked_json
+from scripts.run_dh116_work_packages import validate_native_physics_clock
 from scripts.verify_dh116_cooked_convex_hulls_native import _sources
 from scripts.verify_dh116_deformx_rigid_bridge import rotation_wxyz, wrench_at_com, write_json
 
@@ -59,20 +60,28 @@ def left_output_from_scheduler_receipt(receipt_path, expected_sha):
     checked_bytes(attempt / "native.log", outer["log_sha256"])
     digests = receipt["artifact_sha256"]
     ledger = checked_bytes(output / "physics.jsonl", digests["physics.jsonl"])
-    if receipt["ledger_counts"] != {"physics.jsonl": STEPS} or ledger.count(b"\n") != STEPS:
+    if receipt["ledger_counts"] != {"physics.jsonl": MEASURED_STEPS} or ledger.count(b"\n") != MEASURED_STEPS:
         raise ValueError("left scheduler ledger count differs")
     result = checked_json(output / "result.json", digests["result.json"])
     marker = checked_json(output / "shutdown_complete.json", digests["shutdown_complete.json"])
     if (result["side"] != "left" or result["sample_validation_passed"] is not True
-            or result["physics_rows"] != STEPS or result["failure_reasons"]
+            or result["physics_rows"] != MEASURED_STEPS or result["failure_reasons"]
             or marker["close_returned"] is not True):
         raise ValueError("right requires qualified left contact and shutdown")
+    clock_rows = [(row.get("phase_step"), row.get("sdk_step")) for row in map(json.loads, ledger.splitlines())]
+    clock = validate_native_physics_clock(result, clock_rows, setup_steps=SETUP_STEPS, total_steps=STEPS)
+    if receipt.get("physics_clock") != clock:
+        raise ValueError("left scheduler receipt lacks qualified physics budget counters")
     return output
 
 
 def preflight(args, project):
     if args.steps != STEPS:
-        raise ValueError("exact authorization is 240 measured physics rows per side")
+        raise ValueError("expected 240 total PhysX steps per side, including setup")
+    if args.side == "right":
+        if args.left_scheduler_receipt is None:
+            raise ValueError("right-thumb launch requires a qualified left scheduler receipt")
+        left_output_from_scheduler_receipt(args.left_scheduler_receipt, args.left_receipt_sha256)
     lock_path = project / "docs/contracts/dh116_deformx_pad_sdf_evidence_lock.json"
     lock = json.loads(lock_path.read_text())
     sources = _sources(project)
@@ -96,17 +105,8 @@ def preflight(args, project):
     if (pad["gpu_row_sha256"] != lock["gpu_rows"][key]
             or row["clock"] != result["clock"] or not row["sdk_body"]["sdk_rigid_body_found"]):
         raise ValueError("SDF does not bind the actual GPU pad identity")
-    if args.side == "right":
-        if args.left_scheduler_receipt is not None:
-            left_output_from_scheduler_receipt(args.left_scheduler_receipt, args.left_receipt_sha256)
-        else:
-            if args.left_evidence is None or (args.left_evidence / "exit_code").read_text().strip() != "0":
-                raise ValueError("right-thumb launch requires left process exit 0")
-            prior = json.loads((args.left_evidence / "native/result.json").read_text())
-            marker = json.loads((args.left_evidence / "native/shutdown_complete.json").read_text())
-            if prior["side"] != "left" or not prior["sample_validation_passed"] or not marker["close_returned"]:
-                raise ValueError("right-thumb launch requires validated left contact and shutdown")
     contract = {"source_usd": sources[args.side], "side": args.side, "steps": STEPS,
+                "setup_steps": SETUP_STEPS, "measured_steps": MEASURED_STEPS,
                 "baked_sdf_sha256": pad["sdf_file_sha256"], "native_hull_sha256": lock["gpu_rows"][key],
                 "backend_files": lock["backend_files"], "thumb_link": _THUMB}
     return contract, path, row
@@ -140,6 +140,32 @@ def _pose_matrix(p, q):
 def _collect_owned_references(ownership, phase):
     gc.collect()
     ownership.checkpoint(phase)
+
+
+def reset_thumb_physics(sim):
+    before = sim.current_time_step_index
+    if before != 0:
+        raise RuntimeError(f"unexpected PhysX setup start clock: {before}")
+    sim.reset()
+    after = sim.current_time_step_index
+    if after - before != SETUP_STEPS:
+        raise RuntimeError(f"unexpected PhysX setup clock: {before} -> {after}")
+    return before, after
+
+
+def step_thumb_physics(sim, expected_sdk_step, *, budget_end):
+    before = sim.current_time_step_index
+    if before != expected_sdk_step:
+        raise RuntimeError(f"unexpected PhysX clock before measurement: {before}, expected {expected_sdk_step}")
+    if before >= budget_end:
+        raise RuntimeError("PhysX budget exhausted before measurement")
+    if not sim.is_playing():
+        raise RuntimeError("PhysX timeline stopped before measurement")
+    sim.step(render=False)
+    after = sim.current_time_step_index
+    if after != before + 1:
+        raise RuntimeError(f"unexpected PhysX clock advance during measurement: {before} -> {after}")
+    return after
 
 
 def _run(sim, args, contract, sdf_path, capture, ownership):
@@ -185,7 +211,8 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
     stage = sim.stage
     install_hand_mimic(stage, path)
     configure_mimic_compliance(stage, path, 400., 1.)
-    sim.reset()
+    sdk_initial, sdk_setup_end = reset_thumb_physics(sim)
+    budget_end = sdk_initial + contract["steps"]
     hand.reset()
     view = hand.root_physx_view
     composer = hand.permanent_wrench_composer
@@ -266,7 +293,7 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
     rows, previous = [], np.zeros(6)
     failures = []
     with (args.output / "physics.jsonl").open("x", encoding="utf-8") as log:
-        for step in range(1, STEPS+1):
+        for step in range(1, contract["measured_steps"] + 1):
             before = snapshot()
             q_target, action = command_at_step(q0, endpoint, step=step, side=args.side)
             hand.set_joint_position_target(torch.as_tensor(q_target[None], dtype=torch.float32, device=device),
@@ -280,7 +307,7 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
                             rot @ host(composer.composed_torque_as_torch[0, body])]
             hand.write_data_to_sim()
             sdk_target = host(view.get_dof_position_targets()[0])
-            sim.step(render=False)
+            sdk_step = step_thumb_physics(sim, sdk_setup_end + step - 1, budget_end=budget_end)
             hand.update(DT)
             after = snapshot()
             pos, quat = mesh_pose(after)
@@ -300,7 +327,7 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
             if not np.allclose(sdk_target[active], q_target, atol=1e-7, rtol=0):
                 failure = failure or "sdk_target_mismatch"
             row = {
-                "phase_step": step, "sdk_step": int(sim.current_time_step_index), "sdk_time_s": float(sim.current_time),
+                "phase_step": step, "sdk_step": sdk_step, "sdk_time_s": float(sim.current_time),
                 "rod_substep": step*SUBSTEPS, "dt_s": DT, "side": args.side, "rod_uid": "rod0",
                 "body_path": body_path, "mesh_index": slot,
                 "canonical_action24": action.tolist(), "sdk_joint_target_rad": sdk_target.tolist(),
@@ -332,6 +359,13 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
     composer.reset()
     torch.cuda.synchronize(device)
     summary = schedule_summary(rows)
+    sdk_final = sim.current_time_step_index
+    summary["physics_clock"] = {
+        "sdk_initial_step": sdk_initial, "sdk_after_setup_step": sdk_setup_end,
+        "sdk_first_measurement_step": rows[0]["sdk_step"], "sdk_last_measurement_step": rows[-1]["sdk_step"],
+        "sdk_final_step": sdk_final, "setup_steps": sdk_setup_end - sdk_initial,
+        "measured_steps": len(rows), "total_steps": sdk_final - sdk_initial,
+    }
     action_index = verify_thumb_ledger_identity(rows, side=args.side, body_path=body_path, slot=slot)
     summary.update(side=args.side, scope="one_thumb_original_articulation_calibration",
                    peak_force_n=max((np.linalg.norm(r["rod_on_hand_link_w"][:3]) for r in rows), default=0),
@@ -349,6 +383,68 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
     return summary
 
 
+def _freeze_kit_physics(settings):
+    key = "/app/player/playSimulations"
+    settings.set_bool(key, False)
+    if settings.get(key) is not False:
+        raise RuntimeError("failed to freeze Kit physics before shutdown")
+
+
+def _run_thumb_probe(app, args, contract, sdf_path, capture, ownership):
+    import carb.settings
+
+    settings = carb.settings.get_settings()
+    sim = result = None
+    try:
+        import isaaclab.sim as sim_utils
+        from isaacsim.core.simulation_manager import SimulationManager
+
+        if settings.get("/app/fastShutdown") is not False:
+            raise RuntimeError("expected natural teardown")
+        sim = sim_utils.SimulationContext(sim_utils.SimulationCfg(
+            dt=DT, render_interval=1, device=args.device, gravity=(0., 0., 0.),
+            physx=sim_utils.PhysxCfg(solver_type=0)))
+        ownership.watch("simulation", sim, owner="probe", release="clear then STOP", callbacks=True)
+        result = _run(sim, args, contract, sdf_path, capture, ownership)
+        write_json(args.output / "result.json", result)
+    except Exception:
+        write_json(args.output / "failure.json", {"traceback": traceback.format_exc()})
+        raise
+    finally:
+        from go2_pvcnn.control.dh116.tabletop_stereo_contact_calibration import close_calibration_app
+
+        try:
+            _freeze_kit_physics(settings)
+            if sim is not None:
+                import omni.timeline
+
+                final_step = sim.current_time_step_index
+                clock = result["physics_clock"] if result is not None else None
+                matches = clock is None or final_step == clock["sdk_final_step"] == clock["sdk_last_measurement_step"]
+                ownership.event("SDK shutdown clock frozen", sdk_final_step=final_step,
+                                last_measured_sdk_step=clock["sdk_last_measurement_step"] if clock else None,
+                                matches_measurement=matches if clock else None)
+                type(sim).clear_instance()
+                sim = None
+                gc.collect()
+                timeline = omni.timeline.get_timeline_interface()
+                timeline.stop()
+                _freeze_kit_physics(settings)
+                app.update()
+                del timeline
+                released = SimulationManager.get_physics_sim_view() is None
+                ownership.event("SDK STOP", manager_view_released=released)
+                if not released:
+                    raise RuntimeError("owned SimulationManager view survived STOP")
+                _collect_owned_references(ownership, "before app close")
+                if not matches:
+                    raise RuntimeError(f"PhysX shutdown clock advanced to {final_step} after the last measured step")
+        finally:
+            _freeze_kit_physics(settings)
+            close_calibration_app(app, args.output)
+            ownership.checkpoint("app.close returned, outer exit pending")
+
+
 def main():
     from isaaclab.app import AppLauncher
 
@@ -357,12 +453,10 @@ def main():
     parser.add_argument("--ropesim-python", type=Path, required=True)
     parser.add_argument("--sdf-dir", type=Path, required=True)
     parser.add_argument("--capture-dir", type=Path, required=True)
-    left = parser.add_mutually_exclusive_group()
-    left.add_argument("--left-evidence", type=Path)
-    left.add_argument("--left-scheduler-receipt", type=Path)
+    parser.add_argument("--left-scheduler-receipt", type=Path)
     parser.add_argument("--left-receipt-sha256")
     parser.add_argument("--side", choices=("left", "right"), required=True)
-    parser.add_argument("--steps", type=int, default=STEPS)
+    parser.add_argument("--steps", type=int, default=STEPS, help="total PhysX steps including SDK setup")
     parser.add_argument("--execute-native", action="store_true")
     AppLauncher.add_app_launcher_args(parser)
     args = parser.parse_args()
@@ -380,44 +474,7 @@ def main():
     with native_instance_lock():
         app = AppLauncher(args, fast_shutdown=False).app
         faulthandler.enable(file=sys.__stderr__, all_threads=True)
-        sim = None
-        try:
-            import carb.settings
-            import isaaclab.sim as sim_utils
-            from isaacsim.core.simulation_manager import SimulationManager
-
-            if carb.settings.get_settings().get("/app/fastShutdown") is not False:
-                raise RuntimeError("expected natural teardown")
-            sim = sim_utils.SimulationContext(sim_utils.SimulationCfg(
-                dt=DT, render_interval=1, device=args.device, gravity=(0., 0., 0.),
-                physx=sim_utils.PhysxCfg(solver_type=0)))
-            ownership.watch("simulation", sim, owner="probe", release="clear then STOP", callbacks=True)
-            result = _run(sim, args, contract, sdf_path, capture, ownership)
-            write_json(args.output / "result.json", result)
-        except Exception:
-            write_json(args.output / "failure.json", {"traceback": traceback.format_exc()})
-            raise
-        finally:
-            from go2_pvcnn.control.dh116.tabletop_stereo_contact_calibration import close_calibration_app
-
-            try:
-                if sim is not None:
-                    import omni.timeline
-                    type(sim).clear_instance()
-                    sim = None
-                    gc.collect()
-                    timeline = omni.timeline.get_timeline_interface()
-                    timeline.stop()
-                    app.update()
-                    del timeline
-                    released = SimulationManager.get_physics_sim_view() is None
-                    ownership.event("SDK STOP", manager_view_released=released)
-                    if not released:
-                        raise RuntimeError("owned SimulationManager view survived STOP")
-                    _collect_owned_references(ownership, "before app close")
-            finally:
-                close_calibration_app(app, args.output)
-                ownership.checkpoint("app.close returned, outer exit pending")
+        _run_thumb_probe(app, args, contract, sdf_path, capture, ownership)
 
 
 if __name__ == "__main__":

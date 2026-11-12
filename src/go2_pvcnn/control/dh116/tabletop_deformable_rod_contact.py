@@ -6,6 +6,8 @@ import numpy as np
 DT = 1 / 480
 SUBSTEPS = 12
 STEPS = 240
+SETUP_STEPS = 2
+MEASURED_STEPS = STEPS - SETUP_STEPS
 ZERO_STEPS = 48
 MOVE_STEPS = 160
 VELOCITY_LIMIT = .3
@@ -99,6 +101,6 @@ def schedule_summary(rows):
         "physics_rows": len(rows), "zero_contact_window_passed": zero,
         "contact_steps_after_zero": later_contacts, "max_pair_force_residual_n": residual,
         "failure_reasons": failures,
-        "sample_validation_passed": (len(rows) == STEPS and zero and later_contacts >= 3
+        "sample_validation_passed": (len(rows) == MEASURED_STEPS and zero and later_contacts >= 3
                                      and residual is not None and residual <= 3e-4 and not failures),
     }
