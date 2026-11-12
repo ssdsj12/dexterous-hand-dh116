@@ -4614,6 +4614,56 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 59,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_deformx_bridge_lifecycle.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "bab82dbb052948be37b3f6cb2d11af3021dffaa5c73798bf715ec2bb75d82f1a",
+      "tested_head": "a7232f7e0667801bbdda7d2ce07b90f3b49d028f",
+      "native_execution_performed": true,
+      "native_qualification": false,
+      "qualification_scope": "contact_lifecycle_evidence_audit_with_budget_noncompliance",
+      "actual_total_physics_steps": 484,
+      "approved_total_physics_steps": 480,
+      "measured_ledger_rows": 480,
+      "unlogged_setup_physics_steps": 4,
+      "budget_compliance": false,
+      "left_exit_code": 0,
+      "right_exit_code": 0,
+      "left_contact_steps": 68,
+      "right_contact_steps": 68,
+      "left_receipt_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+      "right_receipt_sha256": "cf0a8211b25539e816b102dbbb9f7b7ace3262f401bf7ded527a4cf2ecb2b8e1",
+      "grasp_qualified": false,
+      "teacher_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md",
+      "report_source_commit": "4f7b3ffa57e7d41a20ce74c5ccbbf22d6e722809",
+      "package": "flex.f4-thumb-paired-native-audit",
+      "commit": "d5d91ca13459bcc5fbc204bfe7a93dae5aa6f01d",
+      "parent": "a7232f7e0667801bbdda7d2ce07b90f3b49d028f",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
