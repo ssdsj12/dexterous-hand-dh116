@@ -5742,6 +5742,68 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 62,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_wireseg_legacy_import.py",
+        "tests/test_dh116_wireseg_checkpoint_resume.py",
+        "tests/test_dh116_wireseg_overfit_diagnostic.py",
+        "tests/test_dh116_wireseg_pretraining.py",
+        "tests/test_dh116_wireseg_blob_relay.py"
+      ],
+      "log_sha256": "c44e279ca15c11c8f44286900885b60c10dadb486293b1ae599c334f57ef23cf",
+      "tested_head": "eee7716103265e931c80c2190c68e85ebf66104f",
+      "stage": "cpu_verified",
+      "native_qualification": false,
+      "real_training_updates": 0,
+      "native_execution_performed": false,
+      "scope": "wireseg_legacy_diagnostic_import_and_continuation",
+      "complete_blobs": 9,
+      "total_blobs": 148,
+      "new_exact_pairs": 360,
+      "supervised_center_crop": 294,
+      "unsupervised_center_crop": 66,
+      "admission_sha256": "0f0f14263c4d50d05eed289e6c9388aa91980c30a7384992eae1ba287164bee0",
+      "subset_manifest_sha256": "84ce17fc28c99b46762d414003fe8b7b57a5351760c84d8526344ce24fbf60f8",
+      "sample_ledger_sha256": "5a108c58d4f9b606bffbfbfc686c180501cf275b727b1b237e1e8543935c7c22",
+      "seg_import_sha256": "776603d4b7008734ec25f157fb84a82411ebb78e18588c58281db5376d55fe0e",
+      "depth_import_sha256": "1d22ce17a31177af013c0b945a042de9cc04792549a99bcbe12c477711fd5a30",
+      "historical_bitwise_equivalence": false,
+      "generalization_qualified": false,
+      "stereo_qualified": false,
+      "remaining_blockers": [
+        "new_bounded_diagnostic_training_approval",
+        "heldout_accuracy_not_qualified",
+        "stereo_native_data_not_qualified"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-wireseg-legacy-diagnostic-import.md",
+      "report_source_commit": "4894f5fd874dcf209e5bfcdc52c35c275b15af55",
+      "package": "flex.wireseg-legacy-diagnostic-continuation",
+      "commit": "e0262caff8baf58b7a23f955c000a0850d4be5aa",
+      "parent": "eee7716103265e931c80c2190c68e85ebf66104f",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-wireseg-legacy-diagnostic-import.md",
+        "scripts/continue_dh116_wireseg_legacy.py",
+        "scripts/import_dh116_wireseg_legacy.py",
+        "tests/test_dh116_wireseg_legacy_import.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
