@@ -82,6 +82,7 @@ class PreActionCapture:
         self.environments = environments
         self.max_steps = max_steps
         self.samples = []
+        self.completed_clock = None
         self._current = None
 
     def observe(self, state, task, clock):
@@ -130,6 +131,7 @@ def capture_environment(env, recorder, read_clock):
         if not _same_clock(after, sample.clock, SUBSTEPS):
             raise ValueError('original TensorEnv step did not preserve the eight-substep clock')
         recorder.samples.append(sample)
+        recorder.completed_clock = after
         recorder.observe(result[0], env.task, after)
         return result
 

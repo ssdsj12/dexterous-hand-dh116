@@ -1,3 +1,7 @@
+## 2026-11-12 — MPC 371D 原生同步账本持久化
+
+真实旧 64 行回放逐位恢复 371D、24D 和掩码。新版可选账本供未来执行，现有运行沿用冻结源码。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-durable-371d-transition-journal.md)
+
 ## 2026-11-12 — 将 Teacher R0 绑定到原 T5 原生物理合同
 
 完整 T5 的实际张量合同与历史成功 T5 相同。新增只读派生与原生回调严格身份检查。 Ubuntu CPU 回归 85 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-native-contract-binding.md)

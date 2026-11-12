@@ -1,6 +1,7 @@
 """Preflight or explicitly run a bounded, independent MPC capture on the Ubuntu host."""
 
 import argparse
+from contextlib import nullcontext
 import json
 import os
 from pathlib import Path
@@ -136,9 +137,10 @@ def preflight(plan_path, expected_sha, output, *, t5_first_episodes=None):
         qualified_for_bc=False, **capture)
 
 
-def run_native(arguments, inputs, plan):
+def run_native(arguments, inputs, plan, *, transition_journal=None):
     from go2_pvcnn.control.dh116 import tabletop_vision_teacher_collection as collection
     from go2_pvcnn.control.dh116.tabletop_bimanual_mpc_capture import _clock
+    from go2_pvcnn.control.dh116.tabletop_mpc_capture_journal import capture_journal
     from go2_pvcnn.control.dh116.tabletop_stereo_native import native_instance_lock
     from go2_pvcnn.control.dh116.tabletop_surface_contract import validate_contract
 
@@ -150,10 +152,26 @@ def run_native(arguments, inputs, plan):
         validate_contract(contract)
         recorder = PreActionCapture(args.num_envs, args.vision_teacher_max_control_steps,
                                     t5_first_episodes=plan.get('capture_scope') == 't5_first_episodes')
-        with capture_environment(env, recorder, lambda: _clock(device_world)):
-            report = original(world, device_world, task, env, args, contract, **kwargs)
-        check_inputs(inputs)
-        result = finish_capture(args.output, recorder, contract, run_plan=plan)
+        journal_context = (capture_journal(transition_journal, recorder.environments, recorder.max_steps)
+                           if transition_journal is not None else nullcontext())
+        with journal_context as writer:
+            if writer is not None:
+                previous_sink = kwargs.get('sequence_context_sink')
+
+                def journal_sink(record):
+                    writer.append(recorder.samples[-1], recorder.completed_clock, record)
+                    if previous_sink is not None:
+                        previous_sink(record)
+
+                kwargs['sequence_context_sink'] = journal_sink
+            with capture_environment(env, recorder, lambda: _clock(device_world)):
+                report = original(world, device_world, task, env, args, contract, **kwargs)
+            check_inputs(inputs)
+            result = finish_capture(args.output, recorder, contract, run_plan=plan)
+            if writer is not None:
+                writer.finish(result)
+        if transition_journal is not None:
+            result['forensic_transition_journal'] = file_identity(transition_journal)
         return dict(report, mpc_privileged_pre_action_capture=result)
 
     with native_instance_lock():
@@ -183,6 +201,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--t5-first-episodes', type=Path,
                         help='replay the SHA-pinned historical T5 Teacher launch for up to 1800 steps')
+    parser.add_argument('--transition-journal', type=Path,
+                        help='fsync an exact private transition ledger to a new file in a 0700 directory')
     parser.add_argument('--execute-native', action='store_true')
     args = parser.parse_args()
     output = args.output.resolve()
@@ -190,10 +210,16 @@ def main():
         raise ValueError('output must be a new directory under an existing experiment parent')
     arguments, inputs, plan = preflight(args.baseline_plan, args.baseline_plan_sha256, output,
                                         t5_first_episodes=args.t5_first_episodes)
+    if args.transition_journal is not None:
+        if (args.transition_journal.exists() or args.transition_journal.is_symlink()
+                or not args.transition_journal.parent.is_dir()
+                or args.transition_journal.parent.stat().st_mode & 0o077):
+            raise ValueError('transition journal must be a new file in an existing private directory')
     if args.execute_native:
         if Path(sys.executable) != NATIVE_PYTHON or os.environ.get('DH116_PYTHON') != str(NATIVE_PYTHON):
             raise RuntimeError('native capture requires scripts/python.sh with the project Ubuntu interpreter')
-        print(json.dumps(run_native(arguments, inputs, plan), allow_nan=False))
+        print(json.dumps(run_native(arguments, inputs, plan, transition_journal=args.transition_journal),
+                         allow_nan=False))
     else:
         print(json.dumps(plan, indent=2, allow_nan=False))
 
