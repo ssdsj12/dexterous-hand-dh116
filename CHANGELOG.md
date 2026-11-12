@@ -1,3 +1,7 @@
+## 2026-11-12 — 握式局部可达性有限差分复查
+
+原碰撞验证后两手最大指腹间距改善至左 1.899、右 0.950 mm。12 个候选均未通过完整握式筛选。 Ubuntu CPU 回归 219 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wrap-local-fd.md)
+
 ## 2026-11-12 — 原生 T5 碰撞实例与 Wire SDK 来源核验
 
 核验 76 个启用碰撞体的身份与 256 条接触记录。该 Python SDK 写入路径未观测到调用，完整回合力学资格仍待验证。 Ubuntu CPU 回归 99 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-proxy-sdk-native-results.md)

@@ -4352,6 +4352,38 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-teacher-t5-proxy-sdk-native-results.md",
       "report_source_commit": "7dd7fb369782e92107c246f5c45a88db19dec182"
+    },
+    "wp3.teacher-wrap-local-fd": {
+      "passed": 219,
+      "failed": 0,
+      "skipped": 3,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_wrap_preflight.py",
+        "tests/test_surface_success.py",
+        "tests/test_multifinger_monitor.py"
+      ],
+      "log_sha256": "2b928fded036398f877bede0856ef9c4c537dfe9cb5a3a50e4a13430359f906f",
+      "tested_head": "1a6b0086c3d13acc5ca771c7d4066a4a1bc64eb7",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "qualification_scope": "cpu_fixed_patch_linearization_and_exact_cad_replay",
+      "proposals_per_hand": 6,
+      "minimum_worst_digit_gap_mm": {
+        "left": 1.8993,
+        "right": 0.9499
+      },
+      "eligible_bilateral_wrap_seeds": 0,
+      "raw_audit_sha256": "183a70c0aa7db7270004d6c8b7f6a12a90de5889698704a65a6aef5cec97734e",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-wrap-local-fd.md",
+      "report_source_commit": "2101d8dd7dd3c99b3b91ff00569464aa5353f28c"
     }
   }
 }
