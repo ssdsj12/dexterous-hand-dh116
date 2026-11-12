@@ -70,6 +70,56 @@ def wire_intersections(wire, stereo, sampled, reasons):
     return maps, rows
 
 
+def _pixel_bounds(mask):
+    pixels = mask.nonzero()
+    if not len(pixels):
+        return None
+    return [*pixels.amin(dim=0).tolist(), *pixels.amax(dim=0).tolist()]
+
+
+def _span_fraction(support, reference, axis):
+    if support is None or reference is None:
+        return None
+    reference_span = reference[axis + 2] - reference[axis]
+    return (support[axis + 2] - support[axis]) / reference_span if reference_span else None
+
+
+def _reconstruction_evidence(dense, sparse, accepted, sampled, fixed, slots):
+    """Use resolved wire pixels for 5 mm scoring and report unscored support separately."""
+    reference_count = dense['reference_valid_count']
+    dense_scored = dense['intersection_count']
+    sparse_scored = sparse['intersection_count']
+    sparse_pixels = int(sampled.sum())
+    reference_bounds = _pixel_bounds(fixed)
+    dense_bounds = _pixel_bounds(accepted & fixed)
+    sparse_bounds = _pixel_bounds(sampled & fixed)
+    return dict(
+        version='wire_reconstruction_evidence_v1',
+        error_contract='same_pixel_euclidean_3d_at_most_5mm',
+        reference_visible_wire_pixels=reference_count,
+        dense=dict(accepted_matcher_pixels=int(accepted.sum()),
+                   scored_roi_pixels=dense_scored,
+                   unscored_roi_pixels=dense['predicted_valid_count'] - dense_scored,
+                   correct_pixels_5mm=dense['correct_3d_points_5mm'],
+                   precision_5mm=dense['correct_3d_points_5mm'] / dense_scored if dense_scored else None,
+                   reference_recall_5mm=dense['correct_3d_point_completeness_5mm']),
+        sparse=dict(slot_capacity=slots, accepted_unique_pixels=sparse_pixels,
+                    scored_unique_pixels=sparse_scored, unscored_unique_pixels=sparse_pixels - sparse_scored,
+                    correct_pixels_5mm=sparse['correct_3d_points_5mm'],
+                    point_precision_5mm=sparse['correct_3d_points_5mm'] / sparse_scored if sparse_scored else None,
+                    sampled_correct_pixel_contribution=sparse['correct_3d_point_completeness_5mm'],
+                    contribution_upper_bound=min(slots, reference_count) / reference_count if reference_count else None),
+        image_spatial_support=dict(
+            scope='scored_left_image_pixels; bounding_spans_do_not_measure_holes_or_hidden_surface',
+            reference_bounds_yxyx=reference_bounds,
+            dense_scored_bounds_yxyx=dense_bounds,
+            sparse_scored_bounds_yxyx=sparse_bounds,
+            dense_scored_row_span_fraction=_span_fraction(dense_bounds, reference_bounds, 0),
+            dense_scored_column_span_fraction=_span_fraction(dense_bounds, reference_bounds, 1),
+            sparse_scored_row_span_fraction=_span_fraction(sparse_bounds, reference_bounds, 0),
+            sparse_scored_column_span_fraction=_span_fraction(sparse_bounds, reference_bounds, 1)))
+
+
 @torch.no_grad()
 def audit_wire_frame(frame, prediction, extracted, calibration, reference, *, block_size, near, far, finger=None, wire_mask=None):
     """Use same-frame validation references only for scoring and occlusion audit."""
@@ -132,8 +182,13 @@ def audit_wire_frame(frame, prediction, extracted, calibration, reference, *, bl
         def score(valid, roi):
             return region_metrics(depth[select], target[select], valid[select], target_valid[select],
                                   roi[select], calibration.K_left)
+        dense = score(accepted, native_wire)
+        sparse = score(sampled, native_wire)
         row['native_reference_metrics'] = dict(
-            dense_depth=score(accepted, native_wire), sampled_points=score(sampled, native_wire),
+            dense_depth=dense, sampled_points=sparse,
+            reconstruction_evidence=_reconstruction_evidence(
+                dense, sparse, accepted[i], sampled[i], target_valid[i] & native_wire[i],
+                extracted['point_valid'].shape[1]),
             centerline_band_depth=score(accepted, native_wire & band),
             candidate_precision=int((native_wire[i] & wire[i]).sum()) / row['wire_candidate_count']
             if row['wire_candidate_count'] else None,

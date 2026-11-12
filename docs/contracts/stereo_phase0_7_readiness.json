@@ -3273,6 +3273,31 @@
           "wp6.deformable-native-final": "等待真实柔性后端，保留原状态和证据"
         }
       }
+    },
+    "wp1.reconstruction-metric-evidence": {
+      "passed": 56,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_wire_sample_retention.py",
+        "tests/test_dh116_stereo_wire_correspondence.py",
+        "tests/test_dh116_stereo_wire_depth.py",
+        "tests/test_dh116_stereo_wire_geometry.py",
+        "tests/test_dh116_stereo_wire_tail_audit.py",
+        "tests/test_dh116_stereo_error_diagnostics.py"
+      ],
+      "log_sha256": "3fb52de09323badf1d4c20c3fbf4c5637588f6c43eb8828321a486e88673a8bd",
+      "tested_head": "5dd97653b33e9f13820c6c061b7b0c4dcdaf6e3b",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-stereo-reconstruction-metric-evidence.md",
+      "native_qualification": false
     }
   }
 }

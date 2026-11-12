@@ -79,3 +79,78 @@ def test_candidate_reference_label_records_unobserved_and_never_promotes():
     assert rows[0]['candidate_pool_without_reference'] == 1
     assert rows[0]['proposed_slots'] == 3 and rows[0]['proposed_slots_within_5mm'] == 1
     assert rows[0]['promoted_slots'] == 0
+
+
+def _audit_reconstruction(depth, accepted, reference_depth, reference_valid, wire, points):
+    from types import SimpleNamespace
+
+    from go2_pvcnn.control.dh116.tabletop_stereo_wire_diagnostics import audit_wire_frame
+
+    frame = dict(left_rgb=torch.zeros(1, 3, *wire.shape[-2:]), identity=[dict(env_id=0)])
+    prediction = dict(depth_m=depth, valid=accepted, diagnostics=dict(reasons={}))
+    reference = dict(depth_m=reference_depth, valid=reference_valid, wire_reference_mask=wire,
+                     wire_mask_source_scope='native_resolved_instance_id',
+                     wire_instance_resolution=dict(wire_inventory_complete=True))
+    calibration = SimpleNamespace(K_left=torch.tensor([[100., 0., 4.], [0., 100., 2.5], [0., 0., 1.]]),
+                                  baseline_m=.08)
+    return audit_wire_frame(frame, prediction, points, calibration, reference,
+                            block_size=3, near=.2, far=1.5, wire_mask=wire)
+
+
+def test_offline_reconstruction_distinguishes_dense_sparse_and_fixed_denominators():
+    depth = torch.ones(1, 5, 8)
+    depth[0, 2, 2] += .01
+    wire = torch.zeros_like(depth, dtype=torch.bool)
+    wire[0, 2, 1:7] = True
+    accepted = wire.clone()
+    accepted[0, 2, 6] = False
+    reference_valid = wire.clone()
+    reference_valid[0, 2, 5] = False
+    points = dict(point_pixels=torch.tensor([[(2, 1), (2, 2), (2, 5), (-1, -1)]]),
+                  point_valid=torch.tensor([[True, True, True, False]]),
+                  point_provenance=torch.tensor([[2, 2, 2, 0]]))
+
+    _, (row,) = _audit_reconstruction(depth, accepted, torch.ones_like(depth), reference_valid, wire, points)
+    native = row['native_reference_metrics']
+    metrics = native['reconstruction_evidence']
+    assert metrics['dense']['precision_5mm'] == pytest.approx(3/4)
+    assert metrics['dense']['reference_recall_5mm'] == pytest.approx(3/5)
+    assert metrics['dense']['unscored_roi_pixels'] == 1
+    assert metrics['sparse']['point_precision_5mm'] == pytest.approx(1/2)
+    assert metrics['sparse']['scored_unique_pixels'] == 2
+    assert metrics['sparse']['unscored_unique_pixels'] == 1
+    assert metrics['sparse']['sampled_correct_pixel_contribution'] == pytest.approx(1/5)
+    assert metrics['sparse']['contribution_upper_bound'] == pytest.approx(4/5)
+    assert native['sampled_points']['correct_3d_point_completeness_5mm'] == pytest.approx(1/5)
+    assert metrics['image_spatial_support']['sparse_scored_column_span_fraction'] == pytest.approx(1/5)
+    assert metrics['image_spatial_support']['sparse_scored_row_span_fraction'] is None
+
+
+def test_reference_mutation_changes_score_without_changing_retained_slots_or_sensor_maps():
+    baseline = geometry([1, 1, 0, 2, 0, 0], [(2, 2), (2, 3), (-1, -1), (2, 1), (-1, -1), (-1, -1)],
+                        [False, True, False, True, False, False], [0, 0, -1, 0, -1, -1])
+    candidate = candidate_geometry()
+    depth = torch.ones(1, 5, 8)
+    wire = torch.zeros_like(depth, dtype=torch.bool)
+    wire[0, 2, 1:6] = True
+    first_ref = torch.ones_like(depth)
+    changed_ref = first_ref.clone()
+    changed_ref[0, 2, 5] += .1
+
+    def run(reference):
+        retained, pool, slots = retain_wire_sample_slots(baseline, candidate, surface_start=3)
+        points = dict(point_pixels=retained.point_pixels, **retained.sensor_fields())
+        maps, (row,) = _audit_reconstruction(depth, wire, reference, wire, wire, points)
+        return retained, pool, slots, maps, row['native_reference_metrics']['reconstruction_evidence']
+
+    kept, pool, slots, maps, metrics = run(first_ref)
+    changed, changed_pool, changed_slots, changed_maps, changed_metrics = run(changed_ref)
+    for name, values in kept.as_dict().items():
+        torch.testing.assert_close(values, changed.as_dict()[name], rtol=0, atol=0, equal_nan=True)
+    assert torch.equal(pool, changed_pool)
+    assert torch.equal(slots, changed_slots)
+    assert slots[0, 4] == 4
+    for key in ('wire_mask', 'wire_left_depth_valid', 'wire_3d_point_valid', 'first_reject_code'):
+        assert torch.equal(maps[key], changed_maps[key])
+    assert metrics['sparse']['point_precision_5mm'] == 1
+    assert changed_metrics['sparse']['point_precision_5mm'] == pytest.approx(2/3)

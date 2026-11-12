@@ -1,3 +1,7 @@
+## 2026-11-12 — 现有刚性任务的密集和稀疏双目指标
+
+56 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-stereo-reconstruction-metric-evidence.md)
+
 ## 2026-11-12 — 现有刚性任务完整闭环（复用原环境，不重新建模）
 
 默认调度目标选择现有 `solid_cylinder` 闭环，柔性后端延期。27 项 Ubuntu CPU 回归通过。[报告](docs/superpowers/reports/2026-11-12-existing-solid-cylinder-execution-scope.md)
