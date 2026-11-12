@@ -4877,6 +4877,33 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-deformx-cooked-hull-device-parity.md",
       "report_source_commit": "a45e2e85c9428e4ddc2360737f0226793c5ef425"
+    },
+    "flex.f5-wireseg-proxy-throughput": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_wireseg_blob_relay.py"
+      ],
+      "log_sha256": "3bb6430ae0194f1241f42185a292676102510092091d376e1507df39d19559d5",
+      "tested_head": "103af372ec9d6db02365a2f645d524c3a41db1d4",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "verified_blobs": 2,
+      "verified_depth_shards": 2,
+      "blob_bytes": 22972279,
+      "windows_transfer_seconds": 224.7768653,
+      "audit_sha256": "3ac01a75d5c3dc2beb221e4cba0dfba1d57290f3f1faeaeeac709ea04dbf03b2",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-proxy-transport.md",
+      "report_source_commit": "5e3df0a61b48a4b2062548c05ae6783eaf145114"
     }
   }
 }

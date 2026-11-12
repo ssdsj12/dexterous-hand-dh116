@@ -3487,7 +3487,7 @@
         "flex.f5-wireseg-ingestion"
       ],
       "status": "blocked",
-      "reason": "Windows 分块续传已端到端核验，Ubuntu 官方 blob 完整数 1/148、深度分片 1/100。正式训练需要完整数据和持出评估。"
+      "reason": "完整 blob 2/148、深度分片 2/100。第二个小分片约 0.102 MB/s，需持续稳定传输再做原始 RGB 配对和训练。"
     },
     "flex.f0-source-lock": {
       "title": "DeformX 主仓库与递归源码锁定",
@@ -4584,6 +4584,68 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-deformx-cooked-hull-device-parity.md",
         "report_source_commit": "a45e2e85c9428e4ddc2360737f0226793c5ef425"
+      }
+    },
+    "flex.f5-wireseg-proxy-throughput": {
+      "title": "第二个 WireSeg 深度分片和实测速率",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f5-wireseg-resumable-relay"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "3bb6430ae0194f1241f42185a292676102510092091d376e1507df39d19559d5",
+        "tested_head": "103af372ec9d6db02365a2f645d524c3a41db1d4",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "verified_blobs": 2,
+        "verified_depth_shards": 2,
+        "blob_bytes": 22972279,
+        "windows_transfer_seconds": 224.7768653,
+        "audit_sha256": "3ac01a75d5c3dc2beb221e4cba0dfba1d57290f3f1faeaeeac709ea04dbf03b2",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-proxy-transport.md",
+        "report_source_commit": "5e3df0a61b48a4b2062548c05ae6783eaf145114"
+      },
+      "last_result": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "3bb6430ae0194f1241f42185a292676102510092091d376e1507df39d19559d5",
+        "tested_head": "103af372ec9d6db02365a2f645d524c3a41db1d4",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "verified_blobs": 2,
+        "verified_depth_shards": 2,
+        "blob_bytes": 22972279,
+        "windows_transfer_seconds": 224.7768653,
+        "audit_sha256": "3ac01a75d5c3dc2beb221e4cba0dfba1d57290f3f1faeaeeac709ea04dbf03b2",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-proxy-transport.md",
+        "report_source_commit": "5e3df0a61b48a4b2062548c05ae6783eaf145114"
       }
     }
   },
