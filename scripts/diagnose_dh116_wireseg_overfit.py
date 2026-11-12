@@ -3,6 +3,8 @@
 
 import argparse
 import json
+import math
+import random
 import time
 from itertools import islice
 from pathlib import Path
@@ -12,9 +14,13 @@ import torch
 from torch.nn import functional as F
 
 from scripts.pretrain_dh116_wireseg import (
-    verified_sources, prepare_depth, read_subset, training_sample, save_training,
+    verified_sources, prepare_depth, read_subset, training_sample,
 )
 from scripts.relay_wireseg_blobs import digest_file
+from scripts.wireseg_checkpoint_state import (
+    audit_checkpoint, canonical_sha256, capture_rng, read_checkpoint, require_v2_state, restore_diagnostic_checkpoint,
+    restore_rng, save_diagnostic_checkpoint,
+)
 from go2_pvcnn.control.dh116.tabletop_wireseg_pretraining import (
     load_wireseg_sample, WireSegPretrainer, pretraining_losses,
 )
@@ -139,73 +145,141 @@ def evaluate(model, samples, view, size, device, baseline):
                 constant_depth_metrics=constant_result)
 
 
+def sample_identity(sample):
+    return dict(file_name=sample.file_name, family=sample.scene_family, pair_sha256=sample.pair_sha256)
+
+
+def diagnostic_training_config(args, mode, device):
+    scripts = Path(__file__).resolve().parent
+    source = scripts.parent / "src/go2_pvcnn/control/dh116"
+    implementation = (
+        scripts / "diagnose_dh116_wireseg_overfit.py", scripts / "pretrain_dh116_wireseg.py",
+        scripts / "wireseg_checkpoint_state.py", source / "tabletop_wireseg_pretraining.py",
+        source / "tabletop_stereo_encoder.py",
+    )
+    return dict(mode=mode, device=str(device), model="WireSegPretrainer", optimizer="AdamW",
+                learning_rate=args.learning_rate, size=args.size, seed=args.seed, optimization_view="center",
+                sampler="fixed_order_cyclic_v1", torch_version=str(torch.__version__), numpy_version=np.__version__,
+                torch_threads=torch.get_num_threads(), deterministic=torch.are_deterministic_algorithms_enabled(),
+                cuda_version=torch.version.cuda if device.type == "cuda" else None,
+                implementation_sha256={path.name: digest_file(path) for path in implementation})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset-root", type=Path, required=True)
-    parser.add_argument("--subset-manifest", type=Path, required=True)
-    parser.add_argument("--validation-manifest", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--dataset-root", type=Path)
+    parser.add_argument("--subset-manifest", type=Path)
+    parser.add_argument("--validation-manifest", type=Path)
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--samples", type=int, default=16)
-    parser.add_argument("--steps", type=int, default=128)
+    parser.add_argument("--steps", type=int, default=128, help="maximum new optimizer updates per head")
     parser.add_argument("--wall-seconds", type=int, default=300)
     parser.add_argument("--size", type=int, default=192)
     parser.add_argument("--learning-rate", type=float, default=.0003)
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--seed", type=int, default=116)
     parser.add_argument("--heads", nargs="+", choices=("seg-only", "depth-only"), default=["seg-only", "depth-only"])
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument("--audit-checkpoint", type=Path, help="read metadata and list strict-resume gaps")
+    action.add_argument("--resume", type=Path, help="resume a complete v2 checkpoint into a new output")
+    parser.add_argument("--resume-sha256", help="SHA256 of the source checkpoint bytes")
     args = parser.parse_args()
+    if args.audit_checkpoint is not None:
+        if args.resume_sha256 is not None:
+            parser.error("--resume-sha256 requires --resume")
+        print(json.dumps(audit_checkpoint(args.audit_checkpoint), indent=2))
+        return
+    if not all((args.dataset_root, args.subset_manifest, args.validation_manifest, args.output)):
+        parser.error("training requires dataset root, both manifests and a new output directory")
     if not (8 <= args.samples <= 16 and 1 <= args.steps <= 512 and 32 <= args.size <= 256
-            and 1 <= args.wall_seconds <= 600):
-        parser.error("bounded diagnostic: 8-16 images, <=512 steps/head, size32-256, <=600s/head")
-    args.output.mkdir(parents=True, exist_ok=False)
+            and 1 <= args.wall_seconds <= 600 and 0 <= args.seed <= 2**32 - 1
+            and math.isfinite(args.learning_rate) and args.learning_rate > 0):
+        parser.error("bounded diagnostic: 8-16 images, <=512 steps/head, size32-256, <=600s/head, valid seed and LR")
+    if len(set(args.heads)) != len(args.heads):
+        parser.error("diagnostic heads must be unique")
+    if (args.resume is None) != (args.resume_sha256 is None) or args.resume is not None and len(args.heads) != 1:
+        parser.error("strict resume requires one explicit --heads value, --resume and --resume-sha256")
+    if args.output.exists() or args.output.is_symlink():
+        raise FileExistsError(args.output)
+    source_state = source_sha = None
+    if args.resume is not None:
+        source_state, source_sha = read_checkpoint(args.resume, args.resume_sha256)
+        require_v2_state(source_state)
     catalogue_sha, names = verified_sources(args.dataset_root)
     members = prepare_depth(args.dataset_root, names, True)
     train_rows = list(islice(read_subset(args.dataset_root, args.subset_manifest, names, catalogue_sha, "train"),
                              args.samples))
     train = [load_wireseg_sample(row, args.dataset_root / "metric_depth_npy", depth_members=members)
              for row in train_rows]
-    identities = validate_fixed_cohort([dict(file_name=s.file_name, family=s.scene_family,
-                                            pair_sha256=s.pair_sha256) for s in train])
+    identities = validate_fixed_cohort([sample_identity(sample) for sample in train])
     validation = [load_wireseg_sample(row, args.dataset_root / "metric_depth_npy", depth_members=members)
                   for row in read_subset(args.dataset_root, args.validation_manifest, names, catalogue_sha, "validation")]
     if {s.file_name for s in train} & {s.file_name for s in validation}:
         raise ValueError("train/validation identity leakage")
     baseline = constant_depth([s.depth_m[s.depth_valid] for s in train])
-    contract = dict(source_sha256=digest_file(Path(__file__)), kind="wireseg-fixed-cohort-overfit-v1", fresh_model=True, strict_resume=False,
-                    source_catalogue_sha256=catalogue_sha, subset_sha256=digest_file(args.subset_manifest),
-                    validation_sha256=digest_file(args.validation_manifest), identities=identities,
+    dataset_manifest = dict(source_catalogue_sha256=catalogue_sha, subset_sha256=digest_file(args.subset_manifest),
+                            validation_sha256=digest_file(args.validation_manifest), training_cohort=identities,
+                            validation_cohort=[sample_identity(sample) for sample in validation])
+    contract = dict(source_sha256=digest_file(Path(__file__)), kind="wireseg-fixed-cohort-overfit-v2",
+                    fresh_model=source_state is None, strict_resume=source_state is not None,
+                    resume_checkpoint_sha256=source_sha, dataset_manifest_sha256=canonical_sha256(dataset_manifest),
+                    source_catalogue_sha256=catalogue_sha, subset_sha256=dataset_manifest["subset_sha256"],
+                    validation_sha256=dataset_manifest["validation_sha256"], identities=identities,
                     size=args.size, optimization_view="center", learning_rate=args.learning_rate,
                     seed=args.seed, max_updates_per_head=args.steps, wall_seconds_per_head=args.wall_seconds,
                     labels_unit="metre_from_pinned_dataset", depth_semantics="source_metric_depth_not_assumed_optical_z",
                     real_test_used=False, stereo_qualified=False, policy_qualified=False,
                     generalization_qualified=False)
-    (args.output / "frozen_cohort.json").write_text(json.dumps(contract, indent=2) + "\n")
     result = dict(contract=contract, heads={})
     device = torch.device(args.device)
+    if device.type == "cuda" and device.index is None:
+        device = torch.device("cuda", torch.cuda.current_device())
     for mode in args.heads:
-        head_dir = args.output / mode
-        head_dir.mkdir()
+        training_config = diagnostic_training_config(args, mode, device)
+        head_contract = {**contract, "mode": mode, "training_config_sha256": canonical_sha256(training_config)}
+        supervised = [has_supervision(make_view(sample, "center", args.size, device), mode) for sample in train]
+        if not any(supervised):
+            raise ValueError("fixed cohort has no valid labels for requested head")
+        random.seed(args.seed)
+        np.random.seed(args.seed)
         torch.manual_seed(args.seed)
         model = WireSegPretrainer().to(device)
         optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
+        steps, visits = [], []
+        if source_state is not None:
+            steps, visits = restore_diagnostic_checkpoint(
+                source_state, model, optimizer, device, dataset_manifest, training_config, supervised)
+            source_state = None
+        if mode == args.heads[0]:
+            args.output.mkdir(parents=True, exist_ok=False)
+            (args.output / "frozen_cohort.json").write_text(json.dumps(contract, indent=2) + "\n")
+        head_dir = args.output / mode
+        head_dir.mkdir()
         if device.type == "cuda":
             torch.cuda.reset_peak_memory_stats(device)
+        rng_before_evaluation = capture_rng(device)
         before = {view: evaluate(model, train, view, args.size, device, baseline)
                   for view in ("center", "full_field_resize")}
-        steps, start, skipped = [], time.monotonic(), 0
-        if not any(has_supervision(make_view(s, "center", args.size, device), mode) for s in train):
-            raise ValueError("fixed cohort has no valid labels for requested head")
+        restore_rng(rng_before_evaluation, device)
+        initial_step, initial_visit = len(steps), len(visits)
+        start, skipped = time.monotonic(), 0
         with (head_dir / "updates.jsonl").open("x") as stream:
-            for index in range(args.steps * len(train)):
-                if len(steps) >= args.steps or time.monotonic() - start >= args.wall_seconds:
+            for index in range(initial_visit, initial_visit + args.steps * len(train)):
+                if len(steps) - initial_step >= args.steps or time.monotonic() - start >= args.wall_seconds:
                     break
-                sample = train[index % len(train)]
+                sample_index = index % len(train)
+                sample = train[sample_index]
+                visit = dict(visit=index + 1, file_name=sample.file_name,
+                             pair_sha256=sample.pair_sha256, updated=supervised[sample_index])
                 model.train()
                 rgb, masks, depth, valid = make_view(sample, "center", args.size, device)
-                if not has_supervision((rgb, masks, depth, valid), mode):
+                if has_supervision((rgb, masks, depth, valid), mode) != visit["updated"]:
+                    raise ValueError("fixed cohort supervision changed during a visit")
+                if not visit["updated"]:
                     skipped += 1
-                    stream.write(json.dumps(dict(visit=index+1, file_name=sample.file_name,
-                        updated=False, reason="no_valid_depth_label", updates_completed=len(steps))) + "\n")
+                    visits.append(visit)
+                    stream.write(json.dumps(dict(visit, reason="no_valid_depth_label",
+                                                 updates_completed=len(steps))) + "\n")
                     stream.flush()
                     continue
                 optimizer.zero_grad(set_to_none=True)
@@ -218,29 +292,34 @@ def main():
                 if not torch.isfinite(grad_norm) or grad_norm <= 0:
                     raise ValueError("zero or nonfinite diagnostic gradient")
                 optimizer.step()
-                record = dict(update=len(steps)+1, visit=index+1, updated=True, file_name=sample.file_name,
-                              pair_sha256=sample.pair_sha256, loss=float(loss.detach()),
+                record = dict(visit, update=len(steps) + 1, loss=float(loss.detach()),
                               grad_norm=float(grad_norm), empty_mask=not bool(masks.any()),
-                              elapsed_s=time.monotonic()-start)
+                              elapsed_s=time.monotonic() - start)
+                visits.append(visit)
                 steps.append(record)
                 stream.write(json.dumps(record, allow_nan=False) + "\n")
                 stream.flush()
         optimization_wall_s = time.monotonic()-start
-        save_training(head_dir / "diagnostic.pt", model, optimizer, device,
-                      {**contract, "mode": mode}, steps, {"rgb_updates": len(steps)})
+        save_diagnostic_checkpoint(head_dir / "diagnostic.pt", model, optimizer, device,
+                                   head_contract, dataset_manifest, training_config, steps, visits)
         after = {view: evaluate(model, train, view, args.size, device, baseline)
                  for view in ("center", "full_field_resize")}
         heldout = {view: evaluate(model, validation, view, args.size, device, baseline)
                    for view in ("center", "full_field_resize")}
         result["heads"][mode] = dict(before=before, after=after, validation=heldout,
-            completed_updates=len(steps), skipped_unlabelled_visits=skipped, optimization_wall_s=optimization_wall_s,
+            completed_updates=len(steps) - initial_step, global_step=len(steps),
+            visits_completed=len(visits), skipped_unlabelled_visits=skipped, optimization_wall_s=optimization_wall_s,
+            training_config_sha256=head_contract["training_config_sha256"],
             max_allocated_bytes=torch.cuda.max_memory_allocated(device) if device.type == "cuda" else None,
             checkpoint_sha256=digest_file(head_dir / "diagnostic.pt"),
-            checkpoint=str(head_dir / "diagnostic.pt"), loss_first=steps[0]["loss"] if steps else None,
-            loss_last=steps[-1]["loss"] if steps else None, stop_reason="budget" if len(steps)==args.steps else "wall_clock")
+            checkpoint=str(head_dir / "diagnostic.pt"),
+            loss_first=steps[initial_step]["loss"] if len(steps) > initial_step else None,
+            loss_last=steps[-1]["loss"] if len(steps) > initial_step else None,
+            stop_reason="budget" if len(steps) - initial_step == args.steps else "wall_clock")
         (args.output / "result.json").write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
         del optimizer, model
     print(json.dumps({m: {"completed_updates": r["completed_updates"],
+                         "global_step": r["global_step"],
                          "train_iou": r["after"]["center"]["visible_iou"],
                          "train_depth": r["after"]["center"]["depth"]}
                       for m,r in result["heads"].items()}))
