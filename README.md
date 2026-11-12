@@ -1,3 +1,7 @@
+## 2026-11-12 — MPC 371D 同钟数值与来源校验
+
+旧短程原生的 64 行均实证 204/371 个字段，新增独立旁路，保留 167 个未资格字段。 Ubuntu CPU 回归 31 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md)
+
 ## 2026-11-12 — Teacher 原生回调产物持久化
 
 训练、采集和冻结 Teacher 评估在应用关闭前写入并同步回执。外层退出仍以独立监督记录为准。 Ubuntu CPU 回归 82 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-callback-durable-completion.md)

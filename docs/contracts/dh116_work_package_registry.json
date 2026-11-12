@@ -246,7 +246,7 @@
         "wp4.shutdown-native"
       ],
       "status": "blocked",
-      "reason": "原 T5 8×1800 采集入口和真实输入预检已完成。待预算批准、完整原生首回合、371D 来源有效性及成功轨迹证明。",
+      "reason": "获批的原 T5 8×1800 正在执行。历史 64 条旁路证实 204/371 个逐字段值，剩余 167 个需独立来源证据。",
       "last_native_attempt": {
         "report": "docs/superpowers/reports/2026-11-12-mpc-sync-v02-native-evidence.md",
         "status": "passed_bounded_sync_diagnostic",
@@ -2055,6 +2055,72 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-teacher-callback-durable-completion.md",
         "report_source_commit": "123eb8834692a906c8c7c4a7de5d6759d23d6013"
+      }
+    },
+    "wp3.mpc-observation-value-proof": {
+      "title": "MPC 371D 同钟数值与来源校验",
+      "executor": "gated",
+      "dependencies": [
+        "wp3.mpc-sync32-native-diagnostic"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 31,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_mpc_observation_validity.py",
+          "tests/test_mpc_privileged_capture.py"
+        ],
+        "log_sha256": "5174774f954f8fda5743bd62070674c2e56f742a9e17e6eeeac0d54668233e95",
+        "tested_head": "a6dee62f9f31e01ed590dd608abec7305311f6c0",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "qualification_scope": "archived_native_value_source_proof_only",
+        "native_archive_rows": 64,
+        "exact_fields_per_row": 204,
+        "unqualified_fields_per_row": 167,
+        "qualified_for_bc": false,
+        "proof_sha256": "0744cae536bd2f557674cc45c2e9ff8f3700b57b6bde24abbe87c541dbf067bd",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md",
+        "report_source_commit": "b64e81f8f65eeb92410c2cb8d31adcf30cf853f8"
+      },
+      "last_result": {
+        "passed": 31,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_mpc_observation_validity.py",
+          "tests/test_mpc_privileged_capture.py"
+        ],
+        "log_sha256": "5174774f954f8fda5743bd62070674c2e56f742a9e17e6eeeac0d54668233e95",
+        "tested_head": "a6dee62f9f31e01ed590dd608abec7305311f6c0",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "qualification_scope": "archived_native_value_source_proof_only",
+        "native_archive_rows": 64,
+        "exact_fields_per_row": 204,
+        "unqualified_fields_per_row": 167,
+        "qualified_for_bc": false,
+        "proof_sha256": "0744cae536bd2f557674cc45c2e9ff8f3700b57b6bde24abbe87c541dbf067bd",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md",
+        "report_source_commit": "b64e81f8f65eeb92410c2cb8d31adcf30cf853f8"
       }
     }
   },

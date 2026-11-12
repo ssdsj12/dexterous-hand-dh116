@@ -3788,6 +3788,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-teacher-callback-durable-completion.md",
       "report_source_commit": "123eb8834692a906c8c7c4a7de5d6759d23d6013"
+    },
+    "wp3.mpc-observation-value-proof": {
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_mpc_observation_validity.py",
+        "tests/test_mpc_privileged_capture.py"
+      ],
+      "log_sha256": "5174774f954f8fda5743bd62070674c2e56f742a9e17e6eeeac0d54668233e95",
+      "tested_head": "a6dee62f9f31e01ed590dd608abec7305311f6c0",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "archived_native_value_source_proof_only",
+      "native_archive_rows": 64,
+      "exact_fields_per_row": 204,
+      "unqualified_fields_per_row": 167,
+      "qualified_for_bc": false,
+      "proof_sha256": "0744cae536bd2f557674cc45c2e9ff8f3700b57b6bde24abbe87c541dbf067bd",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md",
+      "report_source_commit": "b64e81f8f65eeb92410c2cb8d31adcf30cf853f8"
     }
   }
 }
