@@ -4736,6 +4736,41 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-flexible-f3-teardown-isolation.md",
       "report_source_commit": "69645d1a3d7a1f146ddfe64ba57ac1e5065ea33b"
+    },
+    "flex.f5-wireseg-resumable-relay": {
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_wireseg_blob_relay.py",
+        "tests/test_dh116_wireseg_pretraining.py",
+        "tests/test_dh116_stereo_wire_segmentation.py",
+        "tests/test_dh116_stereo_depth_auxiliary.py"
+      ],
+      "log_sha256": "a92da502416186572bdd7c37683c1842f935861f7e9e5652d5af1dce286d1805",
+      "tested_head": "b69ae36eb8aab6f1a9cd5ddad355d65cb0b69fa1",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "qualification_scope": "pinned_catalogue_transfer_and_one_complete_depth_blob",
+      "verified_blobs": 1,
+      "catalogue_blobs": 148,
+      "verified_depth_shards": 1,
+      "depth_arrays": 360,
+      "verified_range_count": 6,
+      "original_rgb_pairs_from_shard": 0,
+      "additional_training_updates": 0,
+      "full_blob_sha256": "a3b12e0269c626e2c6983cc861f46eaa3c3ae53b543338ba4f8eba9d12c352c5",
+      "audit_sha256": "e6272929d5b85e7d4085af1430c02107361feeaa97c08758accfbe06be3f3178",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-resumable-relay.md",
+      "report_source_commit": "932354d4287c4ce0629d11b955f25f84de61cf81"
     }
   }
 }

@@ -3,56 +3,29 @@
 
 import argparse
 from collections import Counter
-import hashlib
 import json
 from pathlib import Path
 
 import numpy as np
 import torch
 
+from scripts.relay_wireseg_blobs import cache_path, read_catalogue, verify_blob
 from go2_pvcnn.control.dh116.tabletop_wireseg_pretraining import (
-    WIRESEG_REPOSITORY, WIRESEG_REVISION, WireSegPretrainer, extract_depth_shard,
+    WIRESEG_REVISION, WireSegPretrainer, extract_depth_shard,
     load_wireseg_sample, pretraining_losses, sample_split,
 )
 
-
-WIRESEG_BLOB_CATALOGUE_SHA256 = "569022f7f5c1985cba7eedb6cd563619a55417001e60f81fabff1cdb5b68f7ac"
-
-
 def verified_sources(root):
-    path = root / "hf_revision_manifest.json"
-    raw = path.read_bytes()
-    manifest = json.loads(raw)
-    if manifest["id"] != WIRESEG_REPOSITORY or manifest["sha"] != WIRESEG_REVISION:
-        raise ValueError("HF manifest must identify the pinned WireSeg revision")
-    names, catalogue = {}, []
-    for entry in manifest["siblings"]:
-        relative = Path(entry["rfilename"])
-        if relative.is_absolute() or ".." in relative.parts:
-            raise ValueError("invalid HF source path")
-        name = relative.as_posix()
-        if (not name.startswith(("data/", "real/", "depth/"))
-                or not name.endswith((".parquet", ".tar.gz"))):
-            continue
-        catalogue.append((name, entry["size"], entry["lfs"]["sha256"]))
-        path = (root / relative).resolve()
-        if not path.is_relative_to(root):
-            raise ValueError("HF source path escapes the cache")
+    manifest_sha, blobs = read_catalogue(root / "hf_revision_manifest.json")
+    names = {}
+    for name, blob in blobs.items():
+        path = cache_path(root, name)
         if not path.is_file():
             continue
-        with path.open("rb") as file:
-            digest = hashlib.sha256()
-            for chunk in iter(lambda: file.read(4 * 1024**2), b""):
-                digest.update(chunk)
-        if path.stat().st_size != entry["size"] or digest.hexdigest() != entry["lfs"]["sha256"]:
+        if not verify_blob(path, blob):
             raise ValueError(f"HF blob checksum or size mismatch: {name}")
-        if name in names:
-            raise ValueError(f"duplicate HF source identity: {name}")
-        names[name] = digest.hexdigest()
-    canonical = json.dumps(sorted(catalogue), separators=(",", ":")).encode()
-    if hashlib.sha256(canonical).hexdigest() != WIRESEG_BLOB_CATALOGUE_SHA256:
-        raise ValueError("HF blob catalogue differs from the pinned release")
-    return hashlib.sha256(raw).hexdigest(), names
+        names[name] = blob.sha256
+    return manifest_sha, names
 
 
 def wireseg_rows(root, names, split=None):

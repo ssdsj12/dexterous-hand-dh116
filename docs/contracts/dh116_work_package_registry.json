@@ -3487,7 +3487,7 @@
         "flex.f5-wireseg-ingestion"
       ],
       "status": "blocked",
-      "reason": "约 97.3 GB 主数据未完成逐 blob 校验，持出集评估及正式批量训练待完整数据和训练预算。"
+      "reason": "Windows 分块续传已端到端核验，Ubuntu 官方 blob 完整数 1/148、深度分片 1/100。正式训练需要完整数据和持出评估。"
     },
     "flex.f0-source-lock": {
       "title": "DeformX 主仓库与递归源码锁定",
@@ -4260,6 +4260,84 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-deformx-assets-f6.md",
         "report_source_commit": "ffa960904d9b983e4b764f66cf48689eae13aacf"
+      }
+    },
+    "flex.f5-wireseg-resumable-relay": {
+      "title": "WireSeg 分块续传与首个完整深度分片",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f5-wireseg-ingestion"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 40,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_blob_relay.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_stereo_wire_segmentation.py",
+          "tests/test_dh116_stereo_depth_auxiliary.py"
+        ],
+        "log_sha256": "a92da502416186572bdd7c37683c1842f935861f7e9e5652d5af1dce286d1805",
+        "tested_head": "b69ae36eb8aab6f1a9cd5ddad355d65cb0b69fa1",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "pinned_catalogue_transfer_and_one_complete_depth_blob",
+        "verified_blobs": 1,
+        "catalogue_blobs": 148,
+        "verified_depth_shards": 1,
+        "depth_arrays": 360,
+        "verified_range_count": 6,
+        "original_rgb_pairs_from_shard": 0,
+        "additional_training_updates": 0,
+        "full_blob_sha256": "a3b12e0269c626e2c6983cc861f46eaa3c3ae53b543338ba4f8eba9d12c352c5",
+        "audit_sha256": "e6272929d5b85e7d4085af1430c02107361feeaa97c08758accfbe06be3f3178",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-resumable-relay.md",
+        "report_source_commit": "932354d4287c4ce0629d11b955f25f84de61cf81"
+      },
+      "last_result": {
+        "passed": 40,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_blob_relay.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_stereo_wire_segmentation.py",
+          "tests/test_dh116_stereo_depth_auxiliary.py"
+        ],
+        "log_sha256": "a92da502416186572bdd7c37683c1842f935861f7e9e5652d5af1dce286d1805",
+        "tested_head": "b69ae36eb8aab6f1a9cd5ddad355d65cb0b69fa1",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "pinned_catalogue_transfer_and_one_complete_depth_blob",
+        "verified_blobs": 1,
+        "catalogue_blobs": 148,
+        "verified_depth_shards": 1,
+        "depth_arrays": 360,
+        "verified_range_count": 6,
+        "original_rgb_pairs_from_shard": 0,
+        "additional_training_updates": 0,
+        "full_blob_sha256": "a3b12e0269c626e2c6983cc861f46eaa3c3ae53b543338ba4f8eba9d12c352c5",
+        "audit_sha256": "e6272929d5b85e7d4085af1430c02107361feeaa97c08758accfbe06be3f3178",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-resumable-relay.md",
+        "report_source_commit": "932354d4287c4ce0629d11b955f25f84de61cf81"
       }
     }
   },

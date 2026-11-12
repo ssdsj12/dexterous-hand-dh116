@@ -1,3 +1,7 @@
+## 2026-11-12 — WireSeg 分块续传与首个完整深度分片
+
+Windows 续传 6 块，Ubuntu 完整校验 22,541,803 字节官方分片并读取 360 个深度数组，未增加训练更新。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-resumable-relay.md)
+
 ## 2026-11-12 — F3 DeformX 与 PhysX 完整桥接自然关闭
 
 A–E 均自然退出 0，两轮独立完整桥接各 240 步且与旧物理账本逐字节一致。原关闭路径的单一触发项尚未隔离。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-teardown-isolation.md)
