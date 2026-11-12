@@ -1,3 +1,7 @@
+## 2026-11-12 — P5 frozen-policy regression follows preserved float32 contract
+
+首次合并回归 356 通过/1 失败已保留。CPU 同策略 2/4 批量复算的 logprob 舍入差为1.907e-6，新测试1e-6与原2e-5冻结检查不一致；改为调用原校验并验证策略参数和历史似然篡改均被拒绝。PPO源码、阈值和物理标准没有修改。 Ubuntu CPU 回归 9 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-ppo-frozen-likelihood-test.md)
+
 ## 2026-11-12 — P5 isolated structured PPO runtime and checkpoint CPU verification
 
 无相机柔性 Teacher 使用独立 CPU 结构化 rollout/Checkpoint 入口，直接继承旧 PPO update、GAE、KL 和 Adam 回滚，旧源文件 SHA 不变。合成数据完成更新及恢复等价测试；不代表真实 Teacher 训练或抓取成功。Pinch/Tripod/Power 原生门槛保持关闭，当前相机失败不阻断这一准备工作。 Ubuntu CPU 回归 170 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-privileged-ppo-runtime-cpu.md)

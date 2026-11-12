@@ -13,6 +13,7 @@ from go2_pvcnn.control.dh116.tabletop_deformable_privileged_teacher import (
 )
 from go2_pvcnn.control.dh116.tabletop_privileged_ppo import PPOConfig, PPOTrainer
 from go2_pvcnn.control.dh116.tabletop_privileged_teacher import PrivilegedTeacher
+from go2_pvcnn.control.dh116.tabletop_squashed_gaussian import squashed_log_prob
 from test_dh116_deformable_privileged_teacher import config_path, inputs
 
 
@@ -73,9 +74,31 @@ def test_owned_tree_batches_terminal_gae_and_full_update():
     torch.testing.assert_close(trainer.rollout.batch()["critic_obs"]["rod_nodes"][:2], old_nodes)
     returns, _ = trainer.rollout.returns_and_advantages(trainer.config)
     torch.testing.assert_close(returns[:2], torch.tensor([1., 2. + 3. * trainer.config.gamma]))
+    batch = trainer.rollout.batch()
+    with torch.no_grad():
+        mean = trainer.model.latent_mean(batch["actor_obs"])
+        std = trainer.model.log_std.exp().expand_as(mean)
+        log_prob = squashed_log_prob(batch["latent_actions"], mean, std)
+    # Collection evaluates two rows at a time. The inherited frozen audit
+    # can evaluate all four, so apply its actual FP32 comparison contract.
+    torch.testing.assert_close(log_prob, batch["old_log_prob"], atol=2e-5, rtol=2e-5)
+    audit = trainer._check_frozen_policy(batch)
+    with torch.no_grad():
+        bias = trainer.model.actor_head.bias
+        original_bias = bias.clone()
+        try:
+            bias.add_(.01)
+            with pytest.raises(RuntimeError, match="frozen mean"):
+                trainer._check_frozen_policy(batch)
+        finally:
+            bias.copy_(original_bias)
+    changed = trainer.rollout.batch()
+    changed["old_log_prob"][0] += .01
+    with pytest.raises(RuntimeError, match="frozen likelihood"):
+        trainer._check_frozen_policy(changed)
     metrics = trainer.update()
     assert metrics["samples"] == 4 and metrics["minibatch_updates"] == 1
-    assert metrics["frozen_policy_check"]["max_abs_log_probability_error"] < 1e-6
+    assert metrics["frozen_policy_check"] == audit
     assert trainer.counters == {"environment_steps": 4, "updates": 1}
     for name in ("actor_rod", "critic_rod"):
         assert any(not torch.equal(param, initial[key]) for key, param in trainer.model.state_dict().items()

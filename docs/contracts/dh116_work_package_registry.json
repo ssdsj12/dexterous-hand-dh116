@@ -8552,6 +8552,74 @@
         "report": "docs/superpowers/reports/2026-11-12-flexible-privileged-ppo-runtime-cpu.md",
         "report_source_commit": "019895c9d0149dbc0d97d3b1451873c3e558ffe6"
       }
+    },
+    "flex.flexible-ppo-frozen-likelihood-test": {
+      "title": "P5 frozen-policy regression follows preserved float32 contract",
+      "executor": "gated",
+      "dependencies": [
+        "flex.flexible-teacher-structured-runtime"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformable_privileged_ppo.py"
+        ],
+        "log_sha256": "0068e4965c40a94fa66300e4bfd9b5d7051f38e4bd5c11afd5215a45e95311c8",
+        "tested_head": "d7fdecaa980eecdc8d9de331d57577d242373788",
+        "stage": "cpu_verified",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "physics_steps": 0,
+        "ppo_updates": 0,
+        "evaluation_episodes": 0,
+        "initial_failed_log_sha256": "290d7b78aaf8610c212d6fe43c09d982037e33970503477be9ac5f839985ef14",
+        "unchanged_legacy_audit_atol": 2e-05,
+        "unchanged_legacy_audit_rtol": 2e-05,
+        "base_ppo_source_sha256": "f0a96f4f8c9548b5153d004013bef9d77b97250aa0bc43272626cffb15416854",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-ppo-frozen-likelihood-test.md",
+        "report_source_commit": "66ad08b236793433c22200397ae656ecf6ce988a"
+      },
+      "last_result": {
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformable_privileged_ppo.py"
+        ],
+        "log_sha256": "0068e4965c40a94fa66300e4bfd9b5d7051f38e4bd5c11afd5215a45e95311c8",
+        "tested_head": "d7fdecaa980eecdc8d9de331d57577d242373788",
+        "stage": "cpu_verified",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "physics_steps": 0,
+        "ppo_updates": 0,
+        "evaluation_episodes": 0,
+        "initial_failed_log_sha256": "290d7b78aaf8610c212d6fe43c09d982037e33970503477be9ac5f839985ef14",
+        "unchanged_legacy_audit_atol": 2e-05,
+        "unchanged_legacy_audit_rtol": 2e-05,
+        "base_ppo_source_sha256": "f0a96f4f8c9548b5153d004013bef9d77b97250aa0bc43272626cffb15416854",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-ppo-frozen-likelihood-test.md",
+        "report_source_commit": "66ad08b236793433c22200397ae656ecf6ce988a"
+      }
     }
   },
   "execution_target": {
