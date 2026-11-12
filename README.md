@@ -1,3 +1,7 @@
+## 2026-11-12 — DH116 实际指腹碰撞几何预检
+
+从实际 USD 解析双手 10 个闭合指腹碰撞网格，复现上游跳过 CollisionAPI 所在 Xform 的问题。PhysX cooked hull 和动态加载仍待验证。 Ubuntu CPU 回归 8 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-dh116-colliders-f4.md)
+
 ## 2026-11-12 — 官方 DeformX drop/hang 资产和轨迹审计
 
 Ubuntu 审计 109 个原始文件、72 个线缆 USD、4 个场景与 6 份轨迹；原生渲染待独立验证。 Ubuntu CPU 回归 11 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-assets-f6.md)

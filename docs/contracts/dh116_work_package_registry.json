@@ -3567,7 +3567,7 @@
         "flex.f3-isaac-rigid"
       ],
       "status": "blocked",
-      "reason": "需完成单刚体后逐级验证单指、单手、双手及同杆反作用。"
+      "reason": "已解析实际 10 个指腹碰撞网格。单刚体验证通过后，需核对 PhysX cooked convex hull，再显式 add_mesh 并逐级验证单指、单手和双手同杆反作用。"
     },
     "flex.f7-synchronized-data": {
       "title": "双目与柔性物理状态同步数据",
@@ -3815,6 +3815,75 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-deformx-assets-f6.md",
         "report_source_commit": "eb6b8b6b64e3f3050e86a78cf870d725a3116341"
+      }
+    },
+    "flex.f4-dh116-collider-offline": {
+      "title": "DH116 实际指腹碰撞几何预检",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f0-source-lock",
+        "flex.f1-cuda-build"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 8,
+        "failed": 0,
+        "skipped": 1,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_colliders.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "048db60015dd1bd6aaaae5cc8725f5af081ba83d443d0045b916fd985766ae16",
+        "tested_head": "5556b96b08547783ebd570fd4ad86d133964bc6d",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "actual_dh116_usd_distal_collision_geometry_cpu_audit",
+        "distal_colliders": 10,
+        "upstream_rejected": 10,
+        "adapted_closed_meshes": 10,
+        "cooked_physx_hull_verified": false,
+        "dual_hand_same_rod_native_verified": false,
+        "audit_sha256": "3a68a5ba96e2ec7c96ddcf3e25d9e1bc7382b6d5808c5bcf72f9e89f26c8853e",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-dh116-colliders-f4.md",
+        "report_source_commit": "256d302d7082eb9a01b0afeac8c77f1b0e5ca606"
+      },
+      "last_result": {
+        "passed": 8,
+        "failed": 0,
+        "skipped": 1,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_colliders.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "048db60015dd1bd6aaaae5cc8725f5af081ba83d443d0045b916fd985766ae16",
+        "tested_head": "5556b96b08547783ebd570fd4ad86d133964bc6d",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "actual_dh116_usd_distal_collision_geometry_cpu_audit",
+        "distal_colliders": 10,
+        "upstream_rejected": 10,
+        "adapted_closed_meshes": 10,
+        "cooked_physx_hull_verified": false,
+        "dual_hand_same_rod_native_verified": false,
+        "audit_sha256": "3a68a5ba96e2ec7c96ddcf3e25d9e1bc7382b6d5808c5bcf72f9e89f26c8853e",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-dh116-colliders-f4.md",
+        "report_source_commit": "256d302d7082eb9a01b0afeac8c77f1b0e5ca606"
       }
     }
   },
