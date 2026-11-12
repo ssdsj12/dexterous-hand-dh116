@@ -6109,6 +6109,45 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-independent-budget-proof.md",
       "report_source_commit": "47e5a8277c3cd371655bc72f2bb735d9fa966161"
+    },
+    "flex.flexible-task-r0-contract": {
+      "passed": 172,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformable_grasp_task.py",
+        "tests/test_dh116_deformable_task_budget.py",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_deformx_bridge_lifecycle.py",
+        "tests/test_lift_hold_window.py",
+        "tests/test_dh116_stereo_runtime_rod_identity.py",
+        "tests/test_stereo_action_contract_audit.py",
+        "tests/test_stereo_privileged_state_contract_audit.py",
+        "tests/test_privileged_teacher_reward_audit.py"
+      ],
+      "log_sha256": "eebd2302e85c8c864a957e208cd43caa53cd0973959ff65042ece4955b3253a1",
+      "tested_head": "53bf6acce1f21584e5ecf1606041dc01d31d47c5",
+      "stage": "cpu_verified",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "physics_steps": 0,
+      "ppo_updates": 0,
+      "evaluation_episodes": 0,
+      "remaining_blockers": [
+        "free-rod native parameters and external support",
+        "SDK reset and common371 binding",
+        "native R0 coefficients and measurement qualification"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-dual-hand-task-r0-cpu.md",
+      "report_source_commit": "8511a78b6ee716a0380f5808b25293807e96ad27"
     }
   }
 }

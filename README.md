@@ -1,3 +1,7 @@
+## 2026-11-12 — P1/P4 free-rod task, reset and R0 source contract
+
+新增自由杆独立任务合同，复用原 DH116/USD/24D/371D；逐物理步 Reset、材料锚滑移、连续 Hold 和十项 R0 统计可 CPU 验证。原生未知参数与奖励系数保留 NA，training_reward 关闭，未启动抓取或训练。 Ubuntu CPU 回归 172 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-dual-hand-task-r0-cpu.md)
+
 ## 2026-11-12 — 右拇指与柔性杆原生接触
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md)。

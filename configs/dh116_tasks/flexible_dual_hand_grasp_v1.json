@@ -1,0 +1,199 @@
+{
+  "version": "dh116-flexible-dual-hand-grasp-v1",
+  "task_kind": "deformable_rod",
+  "scope": "no_camera_cpu_task_contract",
+  "native_execution_enabled": false,
+  "sources": {
+    "action": {
+      "path": "docs/contracts/stereo_action_contract.json",
+      "sha256": "8640c14af42e2c4af9c3763fd409919928f0de5d63edca9f050abdd6da38194e"
+    },
+    "state": {
+      "path": "docs/contracts/stereo_privileged_state_contract.json",
+      "sha256": "9f145cf8e68b1dfe8e2c7464ec5fc0cb00e81a2707115c2fe148ab49d77bbb62"
+    },
+    "pose_reference": {
+      "path": "configs/dh116_training/pose_reference.json",
+      "sha256": "da3d5a6fdd5e8bb4f5db1911a3659ad3b2b92c2fb99511e4ccbc055d3600512e"
+    },
+    "rigid_task_reference": {
+      "path": "configs/dh116_training/stereo_native_task_v1.json",
+      "sha256": "2bd172450eb6b900cc14f22b204762f2cdd4aa3d129b7b78c5573c482fd3093b"
+    },
+    "original_asset_manifest": {
+      "path": "assets/fixed_dual_panda_dh116_v1/manifest.json",
+      "sha256": "9698b16e526087f62c5da32f5e78ef13d5b4467e081c942db89227ba73d34048"
+    },
+    "backend_lock": {
+      "path": "docs/contracts/dh116_deformx_backend_lock.json",
+      "sha256": "c63243520cc62e7ee19575f4d40cc1b3ee21b8a52c3914e32f2ee95a98e9bb01"
+    },
+    "pad_lock": {
+      "path": "docs/contracts/dh116_deformx_pad_sdf_evidence_lock.json",
+      "sha256": "acca227b59b1d2e43f02db8d9b3218e96f1ae64412ee28337b95e2c9e2c7bc1f"
+    },
+    "hand_material": {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_material.py",
+      "sha256": "4874308850de6391df2816a175fa543d7cee255eeb6cccb36c0012fb0c8e1e88"
+    }
+  },
+  "contracts": {
+    "action": {
+      "size": 24,
+      "version": "dh116-surface-motion24-v1",
+      "contract_sha256": "498cebedfe520cc2f6593b32776581c3da826ba95e4db441b7938d29176c55d9"
+    },
+    "state": {
+      "size": 371,
+      "version": "dh116-surface-sharing-feedback-371-v1"
+    }
+  },
+  "backend": {
+    "name": "DeformX",
+    "commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
+    "extension_sha256": "c47942c4b15b3dfedc47212e71f8193825c0347df3c1d73fb76b648f7bdedb53",
+    "standalone_sdf_registration_sha256": "db5d75e780082640a29ae94ab010052dc19a354d574b6d82cf331bf1414355ab"
+  },
+  "scene": {
+    "physics_hz": 480,
+    "control_hz": 60,
+    "table_center_m": [
+      0.6,
+      0.0,
+      0.25
+    ],
+    "table_size_m": [
+      0.8,
+      1.2,
+      0.1
+    ],
+    "table_top_m": 0.3,
+    "original_palm_transport": "driven_carriage",
+    "original_hand_material_preset": "grip_compliant",
+    "original_hand_usd_sha256": {
+      "left": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+      "right": "37ff2a3a724778696f96732f713c0b55c01cc96de0f1c35d4c7e8a7fd7532f71"
+    },
+    "base_dofs": null,
+    "self_collision_enabled": null,
+    "rod_self_collision_enabled": null,
+    "table_collision_enabled": null,
+    "rod_table_collision_enabled": null,
+    "table_material": null,
+    "original_hand_material_contract": {
+      "profile": "grip_compliant_pads_v1",
+      "static_friction": 1.0,
+      "dynamic_friction": 0.8,
+      "restitution": 0.0,
+      "friction_combine_mode": "max",
+      "restitution_combine_mode": "min",
+      "scope": "all_hand_colliders",
+      "calibration": "training_assumption_not_measured",
+      "pad_compliance": {
+        "links": [
+          "finger14_link",
+          "finger23_link",
+          "finger33_link",
+          "finger43_link",
+          "finger53_link"
+        ],
+        "stiffness_n_m": 10000.0,
+        "damping_n_s_m": 30.0,
+        "calibration": "simulation_estimate_not_force_displacement_calibrated"
+      }
+    }
+  },
+  "rod": {
+    "rods_per_env": 1,
+    "pinned_node_ids": [],
+    "gravity_world_m_s2": null,
+    "length_m": null,
+    "radius_m": null,
+    "mass_kg": null,
+    "density_kg_m3": null,
+    "young_modulus_pa": null,
+    "shear_modulus_pa": null,
+    "bend_stiffness_n_m2": null,
+    "damping": null,
+    "friction_static": null,
+    "friction_dynamic": null,
+    "node_count": null,
+    "solver_substeps_per_physics_step": null,
+    "native_parameter_source_sha256": null
+  },
+  "grasps": {
+    "pinch": {
+      "required_pads": {
+        "left": [
+          "finger14_link",
+          "finger23_link"
+        ],
+        "right": [
+          "finger14_link",
+          "finger23_link"
+        ]
+      },
+      "native_reset_source_sha256": null,
+      "material_anchor_rest_m": null
+    },
+    "tripod": {
+      "required_pads": {
+        "left": [
+          "finger14_link",
+          "finger23_link",
+          "finger33_link"
+        ],
+        "right": [
+          "finger14_link",
+          "finger23_link",
+          "finger33_link"
+        ]
+      },
+      "native_reset_source_sha256": null,
+      "material_anchor_rest_m": null
+    },
+    "power": {
+      "required_pads": {
+        "left": [
+          "finger14_link",
+          "finger23_link",
+          "finger33_link",
+          "finger43_link",
+          "finger53_link"
+        ],
+        "right": [
+          "finger14_link",
+          "finger23_link",
+          "finger33_link",
+          "finger43_link",
+          "finger53_link"
+        ]
+      },
+      "native_reset_source_sha256": null,
+      "material_anchor_rest_m": null
+    }
+  },
+  "success": {
+    "net_lift_m": 0.03,
+    "hold_s": 5.0,
+    "max_slip_m": 0.0005,
+    "external_support_allowed": false
+  },
+  "reward": {
+    "profile": "flexible_r0",
+    "r2_enabled": false,
+    "coefficient_source": null,
+    "coefficients": {
+      "approach_progress": null,
+      "required_contact": null,
+      "contact_persistence": null,
+      "grasp_geometry": null,
+      "lift_progress": null,
+      "hold_progress": null,
+      "material_anchor_slip": null,
+      "joint_limit": null,
+      "instability": null,
+      "external_support_violation": null
+    }
+  }
+}
