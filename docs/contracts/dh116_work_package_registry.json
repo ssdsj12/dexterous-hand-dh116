@@ -4504,7 +4504,7 @@
         "flex.f6-derived-render-preflight"
       ],
       "status": "blocked",
-      "reason": "Drop 渲染完整，解释器 GC SIGSEGV 导致外层 139，hang 尚未启动。待定位 native teardown。"
+      "reason": "Drop 已生成全部输出，冻结 GDB 栈定位 AppWindow Python 绑定经 Carb 进入 Py_FinalizeEx。待原生自然退出和 hang 验证。"
     },
     "flex.f4-cooked-hull-device-parity": {
       "title": "实际 PhysX CPU/GPU 凸包逐指配对",
@@ -4646,6 +4646,72 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-proxy-transport.md",
         "report_source_commit": "5e3df0a61b48a4b2062548c05ae6783eaf145114"
+      }
+    },
+    "flex.f6-appwindow-backtrace": {
+      "title": "F6 渲染自然退出崩溃 C++ 回溯",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-render-diagnostic"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 2,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_render_smoke.py",
+          "tests/test_dh116_deformx_asset_dependencies.py"
+        ],
+        "log_sha256": "8e519133b93fba30abbf88ba031b86d338867d355ba4e8f4b496a5d8e3961935",
+        "tested_head": "aaef96708ff88cd2b986ed01e5704f5c032a43b3",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "qualification_scope": "debugger_native_appwindow_stack_only",
+        "first_signal": "SIGSEGV",
+        "app_close_returned": true,
+        "debugger_outer_code": 255,
+        "unmodified_native_outer_code": 139,
+        "hang_native_performed": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-render-appwindow-backtrace.md",
+        "report_source_commit": "df145f6417c6aaaf37d0fa10419388587705199e"
+      },
+      "last_result": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 2,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_render_smoke.py",
+          "tests/test_dh116_deformx_asset_dependencies.py"
+        ],
+        "log_sha256": "8e519133b93fba30abbf88ba031b86d338867d355ba4e8f4b496a5d8e3961935",
+        "tested_head": "aaef96708ff88cd2b986ed01e5704f5c032a43b3",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "qualification_scope": "debugger_native_appwindow_stack_only",
+        "first_signal": "SIGSEGV",
+        "app_close_returned": true,
+        "debugger_outer_code": 255,
+        "unmodified_native_outer_code": 139,
+        "hang_native_performed": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-render-appwindow-backtrace.md",
+        "report_source_commit": "df145f6417c6aaaf37d0fa10419388587705199e"
       }
     }
   },

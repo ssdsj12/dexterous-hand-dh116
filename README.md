@@ -1,3 +1,7 @@
+## 2026-11-12 — F6 渲染自然退出崩溃 C++ 回溯
+
+冻结 drop 入口的 GDB 首次 SIGSEGV 栈指向 AppWindow Python 绑定与 Carb，独立于 F3 PhysX Tensor。 Ubuntu CPU 回归 3 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-render-appwindow-backtrace.md)
+
 ## 2026-11-12 — 第二个 WireSeg 深度分片和实测速率
 
 Ubuntu 完整 blob 现为 2/148。第二个 22.97 MB 官方分片在 Windows 用时 224.78 秒，正式预训练继续待完整数据。 Ubuntu CPU 回归 7 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-proxy-transport.md)
