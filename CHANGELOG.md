@@ -1,3 +1,7 @@
+## 2026-11-12 — 原生 PhysX 读取 10 个 DH116 指腹凸包
+
+实际 PhysX CPU 读回全部 10 个指腹的 cooked convex hull，外层自然退出 0。GPU 烘焙一致性仍待验证。 原生入口的生命周期调用与 F3 新入口分离，修复集成导入回归。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-hull-native.md)
+
 ## 2026-11-12 — WireSeg 分块续传与首个完整深度分片
 
 Windows 续传 6 块，Ubuntu 完整校验 22,541,803 字节官方分片并读取 360 个深度数组，未增加训练更新。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-resumable-relay.md)

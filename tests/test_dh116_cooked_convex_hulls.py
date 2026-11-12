@@ -55,3 +55,39 @@ def test_geometric_estimate_and_surface_comparison_have_explicit_provenance():
     metrics = compare_surfaces(_TETRA, _FACES, vertices, faces, samples=16)
     assert metrics["sampled_symmetric_hausdorff_m"] == pytest.approx(0, abs=1e-12)
     assert metrics["volume_delta_m3"] == pytest.approx(0)
+
+
+def test_native_query_preserves_zero_and_error_independently():
+    class Cooking:
+        def get_nb_convex_mesh_data(self, path):
+            if path == "/unsupported":
+                raise RuntimeError("path does not map to a physics shape")
+            return 0
+
+        def request_convex_collision_representation(self, *, stage_id, collision_prim_id,
+                                                    run_asynchronously, on_result):
+            if collision_prim_id == 1:
+                raise RuntimeError("request could not parse proxy owner")
+            on_result("not_ready", [])
+
+    result = query_physx_hulls(Cooking(), ("/unsupported", "/zero"), stage_id=7,
+                               encode_path={"/unsupported": 1, "/zero": 2}.__getitem__,
+                               valid_result="ok", simulation_running=True)
+    assert result["/unsupported"]["live_simulation_cooked"]["hulls"] is None
+    assert "does not map" in result["/unsupported"]["live_simulation_cooked"]["error"]
+    assert "parse proxy" in result["/unsupported"]["requested_cooking"]["error"]
+    assert result["/zero"]["live_simulation_cooked"]["hulls"] == []
+    assert result["/zero"]["requested_cooking"]["callback_status"] == "not_ready"
+
+
+def test_asymmetric_frame_calibration_fails_closed_on_ambiguous_coordinates():
+    from scripts.verify_dh116_cooked_convex_hulls_native import classify_reference_frame
+
+    link = _TETRA @ np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]]) + [0.5, 0.2, 0.3]
+    world = link + [5, 6, 7]
+    targets = {"mesh_local": _TETRA, "link_local": link, "world": world}
+    for frame, points in targets.items():
+        result = classify_reference_frame(points[::-1], targets)
+        assert result["confirmed_frame"] == frame
+    assert classify_reference_frame(link, {"mesh_local": link, "link_local": link})["confirmed_frame"] is None
+    assert classify_reference_frame(world + 1, targets)["confirmed_frame"] is None

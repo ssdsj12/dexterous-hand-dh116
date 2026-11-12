@@ -54,31 +54,42 @@ def query_physx_hulls(cooking, paths, *, stage_id, encode_path, valid_result, si
     """Capture both PhysX channels. A request result is separate from a live shape."""
     result = {}
     for path in dict.fromkeys(paths):
+        live = {"hulls": None, "coordinate_frame": "unconfirmed",
+                "readback_attempted": simulation_running}
         if simulation_running:
-            count = cooking.get_nb_convex_mesh_data(path)
-            if count < 0:
-                raise ValueError("invalid live convex shape count")
-            live = [decode_cooked_hull(cooking.get_convex_mesh_data(path, i)) for i in range(count)]
-        else:
-            live = None
-        requested = []
+            try:
+                count = cooking.get_nb_convex_mesh_data(path)
+                if count < 0:
+                    raise ValueError("invalid live convex shape count")
+                live["reported_count"] = count
+                live["hulls"] = [decode_cooked_hull(cooking.get_convex_mesh_data(path, i))
+                                 for i in range(count)]
+            except (RuntimeError, TypeError, ValueError) as exc:
+                live["error"] = f"{type(exc).__name__}: {exc}"
+        requests = []
 
         def on_result(status, convexes):
-            requested.append((status, [decode_cooked_hull(c) for c in convexes] if status == valid_result else []))
+            request = {"callback_status": str(status), "hulls": []}
+            if status == valid_result:
+                try:
+                    request["hulls"] = [decode_cooked_hull(c) for c in convexes]
+                except (TypeError, ValueError) as exc:
+                    request["hulls"] = None
+                    request["error"] = f"{type(exc).__name__}: {exc}"
+            requests.append(request)
 
-        cooking.request_convex_collision_representation(
-            stage_id=stage_id, collision_prim_id=encode_path(path),
-            run_asynchronously=False, on_result=on_result,
-        )
-        if len(requested) != 1:
-            raise RuntimeError("synchronous PhysX cooking must return one callback")
-        status, hulls = requested[0]
-        result[path] = {
-            "live_simulation_cooked": {"hulls": live, "coordinate_frame": "unconfirmed",
-                                       "readback_attempted": simulation_running},
-            "requested_cooking": {"hulls": hulls, "callback_status": str(status),
-                                  "coordinate_frame": "unconfirmed_for_dh116_instance_proxy"},
-        }
+        request = {"hulls": None, "coordinate_frame": "unconfirmed_for_dh116_instance_proxy"}
+        try:
+            cooking.request_convex_collision_representation(
+                stage_id=stage_id, collision_prim_id=encode_path(path),
+                run_asynchronously=False, on_result=on_result,
+            )
+            if len(requests) != 1:
+                raise RuntimeError(f"synchronous PhysX cooking returned {len(requests)} callbacks")
+            request.update(requests[0])
+        except (RuntimeError, TypeError, ValueError) as exc:
+            request["error"] = f"{type(exc).__name__}: {exc}"
+        result[path] = {"live_simulation_cooked": live, "requested_cooking": request}
     return result
 
 

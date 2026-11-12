@@ -4771,6 +4771,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-resumable-relay.md",
       "report_source_commit": "932354d4287c4ce0629d11b955f25f84de61cf81"
+    },
+    "flex.f4-cooked-hull-native": {
+      "passed": 13,
+      "failed": 0,
+      "skipped": 1,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_cooked_convex_hulls.py",
+        "tests/test_dh116_flexible_colliders.py",
+        "tests/test_dh116_deformx_cuda_source.py"
+      ],
+      "log_sha256": "56d5fe3a57776a795672af42f4c9eebacf8ab5ec290d393792c0b14e5c5f7b39",
+      "tested_head": "de583e4a8247b66267f4db32196a60245fb8798a",
+      "native_execution_performed": true,
+      "native_qualification": true,
+      "qualification_scope": "original_dh116_pad_physx_cpu_cooked_hull_readback_only",
+      "outer_exit_code": 0,
+      "actual_cooked_pads": 10,
+      "min_vertices": 28,
+      "max_vertices": 36,
+      "gpu_cooking_parity_verified": false,
+      "sdf_baked": false,
+      "comparison_sha256": "4ae7385f6a711da63aaa06e1db4d840b078e2e894141e596d88564280d33f07d",
+      "integrated_lifecycle_import_regression_fixed": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-deformx-cooked-hull-native.md",
+      "report_source_commit": "0c6f1ec8b83acac63489a11125436f4ba9703c22"
     }
   }
 }
