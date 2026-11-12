@@ -1,3 +1,7 @@
+## 2026-11-12 — WireSeg 完整固定清单监督域与误差复核
+
+完成原16 train/128 heldout、288个视图的只读CPU复核，精确复用16个已完成视图。25.92秒/exit0、模型权重不变；128个持出中心视图全部差于训练常数基线，线缆ROI MAE 0.141680m 对比0.087620m。监督域差异与误差统计加权已区分，未假定唯一因果；无法重建的pooled P95保持NA。 发布前独立审查补齐helper/聚合实现/脚本SHA缓存绑定；原结果保持不变，另存事后身份核验凭据。 Ubuntu CPU 回归 77 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-full-manifest-loss-domains.md)
+
 ## 2026-11-12 — 自由杆单手 Pinch 实际运行入口与独立退出验收
 
 新增真实自由杆、重力、有限桌面、五个独立原 pad SDF 和反作用力写回入口。240 SDK tick 候选包含全部初始化；异常持有链、worker 重入和独立多pad退出审计均有故障回归。材料为显式 P0 系数候选，非实测；完整371D/R0/抓取资格仍未成立，未启动原生。 首次集成回归因裸Python未加载pxr在收集阶段退出2，完整失败日志保留；改由现有scripts/python.sh加载USD路径后重新验证。 Ubuntu CPU 回归 156 项通过。[报告](docs/superpowers/reports/2026-11-12-free-pinch-physical-runtime.md)
