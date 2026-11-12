@@ -1,3 +1,7 @@
+## 2026-11-12 — Camera C3 isolated lifecycle
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c3.md)。
+
 ## 2026-11-12 — P5 independent Pinch Tripod Power privileged rod models
 
 三种抓法使用独立模型身份与 Checkpoint namespace，原 371D common 加独立 masked 材料节点分支，复用 24D Tanh Gaussian；原 PPO/CLI 未改。尚未接原生或训练，不能称为 Teacher 成功；相机和 MPC BC 均不是永久前置。 Ubuntu CPU 回归 153 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-privileged-teacher-model-cpu.md)
