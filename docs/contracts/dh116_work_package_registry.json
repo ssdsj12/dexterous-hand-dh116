@@ -3487,7 +3487,7 @@
         "flex.f5-wireseg-ingestion"
       ],
       "status": "blocked",
-      "reason": "完整 blob 2/148、深度分片 2/100。第二个小分片约 0.102 MB/s，需持续稳定传输再做原始 RGB 配对和训练。"
+      "reason": "已核验5/148 blob，固定16样本分割/深度各128次诊断已执行；深度仍不及训练常数基线，持出与全视场精度未合格。完整下载独立续传，不阻断无相机Teacher。"
     },
     "flex.f0-source-lock": {
       "title": "DeformX 主仓库与递归源码锁定",
@@ -5966,6 +5966,88 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-dh116-continuous-regression.md",
         "report_source_commit": "f1fe9b1d80eccf3b5173d76ebdb79d0cf4f7d486"
+      }
+    },
+    "flex.f5-wireseg-fixed16-diagnostic": {
+      "title": "WireSeg 固定16样本分割与深度诊断",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f5-wireseg-paired-heldout-depth"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 25,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_overfit_diagnostic.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "5a8458c9bf09a83eda2c8689d9891164c65eb890e6ce27f54109cc73bb95d945",
+        "tested_head": "eb31c793d60cb50eb8d6dd2e06bae2f15c5bd8d5",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "fixed16_offline_head_diagnostics_only",
+        "seg_updates": 128,
+        "depth_updates": 128,
+        "train_samples": 16,
+        "heldout_samples": 128,
+        "seg_train_iou": 0.5361921023623749,
+        "seg_validation_iou": 0.18294473613953902,
+        "depth_train_mae_m": 0.1250431402476471,
+        "depth_validation_roi_mae_m": 0.14167325908066025,
+        "stereo_qualified": false,
+        "policy_qualified": false,
+        "generalization_qualified": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-fixed16-overfit-diagnostic.md",
+        "report_source_commit": "2253e3ab0d66d3b1f15f017d5a40424a3ae22c67",
+        "whitespace_only_release_normalization": true
+      },
+      "last_result": {
+        "passed": 25,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_overfit_diagnostic.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "5a8458c9bf09a83eda2c8689d9891164c65eb890e6ce27f54109cc73bb95d945",
+        "tested_head": "eb31c793d60cb50eb8d6dd2e06bae2f15c5bd8d5",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "fixed16_offline_head_diagnostics_only",
+        "seg_updates": 128,
+        "depth_updates": 128,
+        "train_samples": 16,
+        "heldout_samples": 128,
+        "seg_train_iou": 0.5361921023623749,
+        "seg_validation_iou": 0.18294473613953902,
+        "depth_train_mae_m": 0.1250431402476471,
+        "depth_validation_roi_mae_m": 0.14167325908066025,
+        "stereo_qualified": false,
+        "policy_qualified": false,
+        "generalization_qualified": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-fixed16-overfit-diagnostic.md",
+        "report_source_commit": "2253e3ab0d66d3b1f15f017d5a40424a3ae22c67",
+        "whitespace_only_release_normalization": true
       }
     }
   },

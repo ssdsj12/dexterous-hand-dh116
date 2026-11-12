@@ -1,3 +1,7 @@
+## 2026-11-12 — WireSeg 固定16样本分割与深度诊断
+
+复用verified subset，独立完成128次分割和128次深度诊断；保留空mask与无深度失败证据。分别报告全视场、中央裁剪及线缆ROI，深度仍逊于训练常数基线，未授予Stereo/策略资格。 Ubuntu CPU 回归 25 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-fixed16-overfit-diagnostic.md)
+
 ## 2026-11-12 — 隔离 CPU 测试租约与原生执行
 
 CPU fixture 改用私有锁。组合 OpenUSD CPU 回归 85 项通过，两次 V0 原生 SIGSEGV 继续归档。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-dh116-continuous-regression.md)
