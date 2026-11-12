@@ -3703,6 +3703,38 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-teacher-bc-r0-frozen-chain.md",
       "report_source_commit": "c0b5745d2fd55630398b21cc7af46a653fbf7ec7"
+    },
+    "wp4.teacher-task-contact-probe": {
+      "passed": 71,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_task_contact.py",
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_physx_polled_contact_audit.py",
+        "tests/test_dh116_stereo_shutdown_validation.py"
+      ],
+      "log_sha256": "b0fc37a0d4c8fa14c8cc258f53a0222b5f209d711e64c4dd31886b9192cb9d8c",
+      "tested_head": "6b01b9f66bde90a09849f72ae8644c5897f07859",
+      "native_qualification": false,
+      "native_execution_performed": true,
+      "qualification_scope": "late_readback_diagnostic_and_early_readback_cpu_only",
+      "baseline_physical_steps": 256,
+      "baseline_pair_headers": 0,
+      "baseline_tensor_nonzero_rows": 394,
+      "baseline_exit_code": 0,
+      "baseline_raw_sha256": "0e6d8c485a8e43fd00e7b57e236597ed59bb06aaca29cb72f7fb87d8015b4788",
+      "retest_pending": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-task-contact-probe.md",
+      "report_source_commit": "cc6f3235dfc046e3ee43200315d64b9eacb59da9"
     }
   }
 }

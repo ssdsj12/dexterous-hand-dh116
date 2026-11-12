@@ -1,3 +1,7 @@
+## 2026-11-12 — 现有刚性 Teacher 任务逐接触读回探针
+
+晚于首次 reset 的探针实测记录 256 个物理步，结构化报告仍为空。新版启用时点前移，待单实例原生复验。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-task-contact-probe.md)
+
 ## 2026-11-12 — Teacher Actor-only BC、R0 与冻结验收入口
 
 新增 SHA 绑定的 Actor-only BC、R0 恢复与冻结验收预检，短程 MPC 归档通过拒绝测试。 Ubuntu CPU 回归 75 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-bc-r0-frozen-chain.md)
