@@ -1,3 +1,7 @@
+## 2026-11-12 — C5 telemetry hook 所有权对照与正常退出采样
+
+新增单变量 C5：在 C4 配置下提前释放已存在的 telemetry hook pair，并准备自然 finalize/崩溃完整栈与 maps。根因假设未证实，原生尚未运行；旧 C0–C4 和调度源码不变。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md)
+
 ## 2026-11-12 — P0-P6 bounded continuation evidence and recovery point
 
 本批四次原生调用：左右拇指预算合规、C3 自然退出，C4 SIGSEGV 保留栈和动态库映射且不重试。共 480 SDK 步/476 实测行/5712 杆子步，真实 PPO 与完整抓取回合均为 0。无相机 Teacher 结构化 CPU 更新/恢复已验证，WireSeg 8/148 入库；自由杆抓取、正式相机采集和真实训练仍按各自证据门控。原生批准额度已用完，已保存恢复点。 Ubuntu CPU 回归 357 项通过。[报告](docs/superpowers/reports/2026-11-12-continuation-p0-p6-batch-closeout.md)

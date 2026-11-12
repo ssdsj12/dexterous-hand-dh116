@@ -8794,6 +8794,104 @@
         "report": "docs/superpowers/reports/2026-11-12-continuation-p0-p6-batch-closeout.md",
         "report_source_commit": "c24f93cd8ba22142c46025d2da4b8e735403a91f"
       }
+    },
+    "flex.f6-camera-c5-ownership-preparation": {
+      "title": "C5 telemetry hook 所有权对照与正常退出采样",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-camera-c3-c4-native-audit"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_camera_c5_ownership.py",
+          "tests/test_dh116_simulation_app_lifecycle.py",
+          "tests/test_dh116_render_capture_boundary.py"
+        ],
+        "log_sha256": "4217ddd3eddf9641cc0dd0f0dd02d7f2415a22deebb62ed7e44b6e39d4e0223e",
+        "tested_head": "b2de6ec4a0e1879b55052b84e0a2a412d7a0cf7c",
+        "stage": "cpu_verified",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "scope": "camera_c5_ownership_preparation",
+        "command_spec_sha256": "b2111b376320ba4dfb4babd302034e77a0de12678f080d5386903ff335855322",
+        "code_config_sha256": "94ffe53d74185ef49725924b95d0d9497953e21c081723a7ecddf57be952fc6d",
+        "remaining_blockers": [
+          "exact_fingerprint_native_authorization",
+          "actual_C5_lifecycle_result"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md",
+        "report_source_commit": "ba97c0168e4eaea50c2cf2aa4585238a49769f48"
+      },
+      "last_result": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_camera_c5_ownership.py",
+          "tests/test_dh116_simulation_app_lifecycle.py",
+          "tests/test_dh116_render_capture_boundary.py"
+        ],
+        "log_sha256": "4217ddd3eddf9641cc0dd0f0dd02d7f2415a22deebb62ed7e44b6e39d4e0223e",
+        "tested_head": "b2de6ec4a0e1879b55052b84e0a2a412d7a0cf7c",
+        "stage": "cpu_verified",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "scope": "camera_c5_ownership_preparation",
+        "command_spec_sha256": "b2111b376320ba4dfb4babd302034e77a0de12678f080d5386903ff335855322",
+        "code_config_sha256": "94ffe53d74185ef49725924b95d0d9497953e21c081723a7ecddf57be952fc6d",
+        "remaining_blockers": [
+          "exact_fingerprint_native_authorization",
+          "actual_C5_lifecycle_result"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md",
+        "report_source_commit": "ba97c0168e4eaea50c2cf2aa4585238a49769f48"
+      }
+    },
+    "flex.f6-camera-c5": {
+      "title": "Camera C5 telemetry holder lifecycle",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f6-camera-c5-ownership-preparation"
+      ],
+      "status": "pending",
+      "command_spec": "configs/dh116_execution/deformx_camera_c5.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "camera_c5_telemetry_hook_lifecycle",
+      "dependency_scopes": {},
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_camera_c5_ownership.py",
+        "tests/test_dh116_simulation_app_lifecycle.py",
+        "tests/test_dh116_render_capture_boundary.py"
+      ],
+      "stage": "prepared_waiting_exact_native_approval",
+      "reason": "C5 ownership hypothesis remains unverified; separate 180s/0 physics/0 PPO exact approval required",
+      "blocker_kind": "approval_required",
+      "scheduler_entrypoint": "scripts/run_dh116_camera_c5_work_packages.py"
     }
   },
   "execution_target": {
