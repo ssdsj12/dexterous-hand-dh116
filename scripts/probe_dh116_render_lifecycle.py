@@ -5,6 +5,7 @@ import argparse
 from contextlib import ExitStack
 import gc
 import hashlib
+from io import BytesIO
 import json
 from pathlib import Path
 import traceback
@@ -34,6 +35,9 @@ FULL_PRODUCTS = {
     "isaac_times": "IsaacReadTimes",
 }
 MARKER = "/World/DH116LifecycleMarker"
+STANDALONE_RESOLUTION = (96, 64)
+PLANE_OPTICAL_Z_M = 1.98
+DEPTH_AUDIT_TOLERANCE_M = .002
 
 
 def _sha(data):
@@ -74,26 +78,96 @@ def _attached(stack, rep, path, width, height, channels):
     return annotators
 
 
-def _read_products(readers, width, height):
-    read = lambda key: readers[key].get_data(device="cpu", do_array_copy=True)
-    rgb = np.asarray(read("rgb"))
+def _rgb_image(value, width, height):
+    rgb = np.asarray(value)
     if rgb.shape not in ((height, width, 3), (height, width, 4)) or rgb.dtype != np.uint8:
         raise ValueError("native RGB geometry or encoding differs")
+    return rgb
+
+
+def _scalar_image(value, width, height, name, dtypes):
+    image = np.asarray(value)
+    if image.dtype not in dtypes or image.shape not in ((height, width), (height, width, 1)):
+        raise ValueError(f"{name} has wrong native geometry or dtype: {image.shape} {image.dtype}")
+    return image if image.ndim == 2 else image[..., 0]
+
+
+def _depth_valid(image):
+    return np.isfinite(image) & (image > 0)
+
+
+def _read_products(readers, width, height):
+    read = lambda key: readers[key].get_data(device="cpu", do_array_copy=True)
+    rgb = _rgb_image(read("rgb"), width, height)
     if "radial_distance_m" not in readers:
         return {"rgb": rgb}
-    radial, optical = (np.asarray(read(key)).reshape(height, width)
+    radial, optical = (_scalar_image(read(key), width, height, key, (np.float32,))
                        for key in ("radial_distance_m", "optical_z_m"))
     packet = read("native_instance_id")
-    ids = np.asarray(packet["data"])
-    if ids.dtype.kind not in "iu" or ids.dtype.itemsize != 4:
-        raise ValueError("native ID annotator must provide 32-bit integers")
+    ids = _scalar_image(packet["data"], width, height, "native_instance_id", (np.int32, np.uint32))
     return {
         "rgb": rgb, "radial_distance_m": radial, "optical_z_m": optical,
-        "depth_valid": np.isfinite(optical) & (optical > 0),
-        "native_instance_id": ids.view(np.uint32).reshape(height, width),
+        "radial_valid": _depth_valid(radial), "depth_valid": _depth_valid(optical),
+        "native_instance_id": ids.view(np.uint32),
         "idToLabels": {str(key): value for key, value in packet["info"]["idToLabels"].items()},
     }
 
+
+def _depth_diagnostics(products, intrinsics, plane):
+    radial, optical = products["radial_distance_m"], products["optical_z_m"]
+    diagnostics = audit_depth_pair(radial, optical, intrinsics)
+    tolerance = DEPTH_AUDIT_TOLERANCE_M
+    if diagnostics["p95_abs_error_m"] > tolerance:
+        raise ValueError("native radial-to-optical Z audit exceeds 2 mm")
+    if plane is not None and (
+        diagnostics["center_p95_abs_error_m"] is None or diagnostics["edge_p95_abs_error_m"] is None
+        or max(diagnostics["center_p95_abs_error_m"], diagnostics["edge_p95_abs_error_m"]) > tolerance
+        or abs(float(np.median(optical[products["depth_valid"]])) - plane) > tolerance
+    ):
+        raise ValueError("known fronto-parallel target depth failed")
+    return diagnostics
+
+
+def _audit_saved_products(path, camera, width, height, plane):
+    raw = path.read_bytes()
+    if _sha(raw) != camera["capture_sha256"]:
+        raise ValueError("capture NPZ digest mismatch")
+    intrinsics = np.asarray(camera["camera_intrinsics"], dtype=np.float64)
+    if _state_sha([intrinsics]) != camera["camera_intrinsics_sha256"]:
+        raise ValueError("camera intrinsics digest mismatch")
+    with np.load(BytesIO(raw), allow_pickle=False) as products:
+        _rgb_image(products["rgb"], width, height)
+        for name, dtypes in (("radial_distance_m", (np.float32,)), ("optical_z_m", (np.float32,)),
+                             ("native_instance_id", (np.uint32,))):
+            image = products[name]
+            if image.ndim != 2:
+                raise ValueError(f"capture artifact {name} must have canonical image axes")
+            _scalar_image(image, width, height, name, dtypes)
+        for depth, mask in (("radial_distance_m", "radial_valid"), ("optical_z_m", "depth_valid")):
+            valid = products[mask]
+            if valid.dtype != np.bool_ or not np.array_equal(valid, _depth_valid(products[depth])):
+                raise ValueError(f"capture {mask} differs from its depth channel")
+        _depth_diagnostics(products, intrinsics, plane)
+
+
+def _audit_render_clock(record, sides):
+    clocks = record["camera_render_clocks"]
+    render_clock = record["render_clock"]
+    state = record["state"]
+    trace = record["physical_state_trace"]
+    if (set(trace) != {"before_render", "before_read", "after_read"}
+            or not {"physics_tick", "rod_step", "state_sha256", "simulation_time"}.issubset(state)
+            or any(phase != state for phase in trace.values())):
+        raise ValueError("capture boundary physical state changed across camera capture")
+    if (set(clocks) != sides or len(render_clock) != 5 or type(render_clock[0]) is not int
+            or type(render_clock[-1]) not in (float, int) or not np.isfinite(render_clock[-1])
+            or not abs(render_clock[-1] - state["simulation_time"]) <= 1e-5):
+        raise ValueError("capture boundary clocks do not identify the same rendered physical state")
+    for camera in clocks.values():
+        previous = camera["before_render"]
+        if (len(previous) != len(render_clock) or type(previous[0]) is not int or previous[0] >= render_clock[0]
+                or camera["before_read"] != render_clock or camera["after_read"] != render_clock):
+            raise ValueError("capture boundary contains stale or different camera read clocks")
 
 def _author_camera(stage, path, k, optical, width, height):
     from pxr import Gf, UsdGeom
@@ -119,20 +193,22 @@ def _author_camera(stage, path, k, optical, width, height):
     return measured
 
 
-def _capture_pair(output, label, snapshot, render, cameras, matrices, width, height, *, plane=None):
-    before_warmup = snapshot()
-    for _ in range(8):
-        render()
-        if snapshot() != before_warmup:
-            raise ValueError("capture boundary warmup advanced the frozen physical state")
-        try:
-            for reader in cameras.values():
-                _clock(reader)
-        except ValueError:
-            continue
-        break
-    else:
-        raise RuntimeError("native camera clocks remained unavailable after 8 render-only warmups")
+def _capture_pair(output, label, snapshot, render, cameras, matrices, width, height, *,
+                  plane=None, warmup=True):
+    if warmup:
+        before_warmup = snapshot()
+        for _ in range(8):
+            render()
+            if snapshot() != before_warmup:
+                raise ValueError("capture boundary warmup advanced the frozen physical state")
+            try:
+                for reader in cameras.values():
+                    _clock(reader)
+            except ValueError:
+                continue
+            break
+        else:
+            raise RuntimeError("native camera clocks remained unavailable after 8 render-only warmups")
 
     result = capture_at_boundary(
         snapshot, render, lambda side: _clock(cameras[side]),
@@ -145,16 +221,7 @@ def _capture_pair(output, label, snapshot, render, cameras, matrices, width, hei
     metrics = {}
     for side, products in result["captures"].items():
         k = matrices[side]
-        radial, optical = products["radial_distance_m"], products["optical_z_m"]
-        diagnostics = audit_depth_pair(radial, optical, k)
-        if diagnostics["p95_abs_error_m"] > .002:
-            raise ValueError("native radial-to-optical Z audit exceeds 2 mm")
-        if plane is not None and (
-            diagnostics["center_p95_abs_error_m"] is None or diagnostics["edge_p95_abs_error_m"] is None
-            or max(diagnostics["center_p95_abs_error_m"], diagnostics["edge_p95_abs_error_m"]) > .002
-            or abs(float(np.median(optical[products["depth_valid"]])) - plane) > .002
-        ):
-            raise ValueError("known fronto-parallel target depth failed")
+        diagnostics = _depth_diagnostics(products, k, plane)
         arrays = {key: value for key, value in products.items() if isinstance(value, np.ndarray)}
         path = output / f"{label}-{side}.npz"
         np.savez(path, **arrays)
@@ -162,11 +229,14 @@ def _capture_pair(output, label, snapshot, render, cameras, matrices, width, hei
             **diagnostics,
             "capture_sha256": _sha(path.read_bytes()),
             "idToLabels": products["idToLabels"],
+            "camera_intrinsics": k.tolist(),
             "camera_intrinsics_sha256": _state_sha([k]),
             "depth_model": "pinhole_native_distance_to_camera_and_distance_to_image_plane",
         }
     _write_json(output / f"{label}-boundary.json", {
         "state": state, "render_clock": result["render_clock"], "cameras": metrics,
+        "camera_render_clocks": result["camera_render_clocks"],
+        "physical_state_trace": result["physical_state_trace"],
         "capture_synchronization_verified": True, "depth_semantics_verified": True,
     })
     return result
@@ -183,7 +253,7 @@ def _standalone_capture(app, context, case, output):
         raise RuntimeError("could not create the independent camera probe stage")
     UsdGeom.SetStageMetersPerUnit(stage, 1.0)
     UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
-    width, height = 96, 64
+    width, height = STANDALONE_RESOLUTION
     k = np.array([[80., 0., width / 2], [0., 80., height / 2], [0., 0., 1.]])
     camera = "/World/ProbeCamera"
     k = _author_camera(stage, camera, k, np.diag([1., -1., -1., 1.]), width, height)
@@ -212,7 +282,7 @@ def _standalone_capture(app, context, case, output):
             else:
                 render = lambda: rep.orchestrator.step(rt_subframes=1, pause_timeline=True, delta_time=0.)
                 _capture_pair(output, "plane", snapshot, render, {"single": reader},
-                              {"single": k}, width, height, plane=1.98)
+                              {"single": k}, width, height, plane=PLANE_OPTICAL_Z_M)
         finally:
             if case != "V1":
                 rep.orchestrator.stop()
@@ -327,7 +397,8 @@ def _task_capture(bridge, calibration, output):
         if bool(done.any()):
             raise RuntimeError("task probe terminated before the second capture boundary")
         set_marker(.02)
-        second = _capture_pair(output, "post_zero_action", snapshot, sim.render, cameras, matrices, width, height)
+        second = _capture_pair(output, "post_zero_action", snapshot, sim.render, cameras, matrices, width, height,
+                               warmup=False)
     before, after = first["state"], second["state"]
     if (after["physics_tick"] <= before["physics_tick"] or after["sdk_step"] <= before["sdk_step"]
             or after["physics_state_sha256"] == before["physics_state_sha256"]
@@ -398,13 +469,19 @@ def audit_record(output, case, outer_exit):
                 record = json.loads((output / f"{label}-boundary.json").read_text())
                 if set(record["cameras"]) != sides:
                     raise ValueError("capture boundary missing camera sides")
-                if any(_sha((output / f"{label}-{side}.npz").read_bytes())
-                       != record["cameras"][side]["capture_sha256"] for side in sides):
-                    raise ValueError("capture NPZ digest mismatch")
-                if not record["capture_synchronization_verified"] or not record["depth_semantics_verified"]:
+                if case == "V4" and record["state"]["calibration_sha256"] != plan["calibration_sha256"]:
+                    raise ValueError("task capture calibration identity differs")
+                _audit_render_clock(record, sides)
+                width, height = STANDALONE_RESOLUTION if case == "V3" else plan["capture_resolution"]
+                plane = PLANE_OPTICAL_Z_M if case == "V3" else None
+                for side in sides:
+                    _audit_saved_products(output / f"{label}-{side}.npz", record["cameras"][side],
+                                          width, height, plane)
+                if (record["capture_synchronization_verified"] is not True
+                        or record["depth_semantics_verified"] is not True):
                     raise ValueError("capture boundary does not carry both source readback verdicts")
             artifact_ok = synchronized = depth = True
-    except (OSError, KeyError, ValueError) as error:
+    except (OSError, KeyError, TypeError, ValueError) as error:
         errors.append(str(error))
 
     return {
@@ -449,6 +526,7 @@ def main():
     plan = {
         "case": args.case, "headless_experience": options["experience"],
         "calibration_sha256": calibration.sha256 if args.case == "V4" else None,
+        "capture_resolution": [calibration.width, calibration.height] if args.case == "V4" else None,
         "task_config_sha256": _sha(args.native_task.read_bytes()) if args.case == "V4" else None,
         "step_budget": 1 if args.case == "V4" else 0,
         "capture_budget": 2 if args.case == "V4" else int(args.case != "V0"),

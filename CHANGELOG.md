@@ -1,3 +1,7 @@
+## 2026-11-12 — P3 AppWindow ownership and stereo raw-archive verification
+
+旧 C0/C1/C2 栈定位到 IAppWindow Python 包装对象释放的虚调用，具体持有者仍待原生对照。新增 C4 单变量配方，并修复采集换轴与原始归档重核验；C3/C4 尚未授权或运行，相机资格仍关闭。 Ubuntu CPU 回归 83 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-appwindow-ownership-and-capture-audit.md)
+
 ## 2026-11-12 — P1/P4 free-rod task, reset and R0 source contract
 
 新增自由杆独立任务合同，复用原 DH116/USD/24D/371D；逐物理步 Reset、材料锚滑移、连续 Hold 和十项 R0 统计可 CPU 验证。原生未知参数与奖励系数保留 NA，training_reward 关闭，未启动抓取或训练。 Ubuntu CPU 回归 172 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-dual-hand-task-r0-cpu.md)

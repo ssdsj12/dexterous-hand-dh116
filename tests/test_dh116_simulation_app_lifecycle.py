@@ -125,3 +125,27 @@ def test_all_camera_control_recipes_pin_same_debugger():
         assert recipe["inputs"]["/usr/bin/gdb"] == gdb_sha
     assert recipes["C1"]["inputs"] == recipes["C2"]["inputs"]
     assert recipes["C1"]["environment"] == recipes["C2"]["environment"]
+    c4 = recipes["C4"]
+    assert c4["budget"] == recipes["C1"]["budget"]
+    assert c4["validator"]["equals"]["appwindow_extension_enabled"] is True
+    assert c4["validator"]["equals"]["autocreate_appwindow_setting"] is False
+    assert c4["validator"]["equals"]["default_appwindow_present"] is False
+
+
+
+def test_c4_changes_only_automatic_default_appwindow_setting():
+    c1, experience = probe.launch_options("C1")
+    c4, c4_experience = probe.launch_options("C4")
+    expected = {**c1, "extra_args": [*c1["extra_args"], "--/exts/omni.appwindow/autocreateAppWindow=false"]}
+    assert c4 == expected and c4_experience == experience
+
+
+def test_default_appwindow_readback_preserves_unavailable_observation(monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.delitem(sys.modules, "omni.appwindow", raising=False)
+    assert probe._default_appwindow_present() is None
+    monkeypatch.setitem(sys.modules, "omni.appwindow", SimpleNamespace(get_default_app_window=lambda: None))
+    assert probe._default_appwindow_present() is False
+    monkeypatch.setitem(sys.modules, "omni.appwindow", SimpleNamespace(get_default_app_window=object))
+    assert probe._default_appwindow_present() is True

@@ -7771,6 +7771,122 @@
         "report": "docs/superpowers/reports/2026-11-12-flexible-dual-hand-task-r0-cpu.md",
         "report_source_commit": "8511a78b6ee716a0380f5808b25293807e96ad27"
       }
+    },
+    "flex.f6-camera-ownership-capture-audit": {
+      "title": "P3 AppWindow ownership and stereo raw-archive verification",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-camera-current-fault-audit"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 83,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_simulation_app_lifecycle.py",
+          "tests/test_dh116_render_capture_boundary.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "8a7246ce44dd7dbf30a46d48863fbf174abd9474d83ace1d4826bcd1e21b2656",
+        "tested_head": "094baf9c0c5af65e9d4b95edf524098f32617dd4",
+        "stage": "cpu_verified",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "physics_steps": 0,
+        "ppo_updates": 0,
+        "evaluation_episodes": 0,
+        "remaining_blockers": [
+          "C3/C4 frozen native lifecycle authorization",
+          "task stereo synchronized natural exit"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-camera-appwindow-ownership-and-capture-audit.md",
+        "report_source_commit": "edde03b9b9da5a2fef71f3eedde0288d0dff593c"
+      },
+      "last_result": {
+        "passed": 83,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_simulation_app_lifecycle.py",
+          "tests/test_dh116_render_capture_boundary.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "8a7246ce44dd7dbf30a46d48863fbf174abd9474d83ace1d4826bcd1e21b2656",
+        "tested_head": "094baf9c0c5af65e9d4b95edf524098f32617dd4",
+        "stage": "cpu_verified",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "physics_steps": 0,
+        "ppo_updates": 0,
+        "evaluation_episodes": 0,
+        "remaining_blockers": [
+          "C3/C4 frozen native lifecycle authorization",
+          "task stereo synchronized natural exit"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-camera-appwindow-ownership-and-capture-audit.md",
+        "report_source_commit": "edde03b9b9da5a2fef71f3eedde0288d0dff593c"
+      }
+    },
+    "flex.f6-camera-c3": {
+      "title": "Camera C3 isolated lifecycle",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f6-camera-ownership-capture-audit"
+      ],
+      "status": "pending",
+      "command_spec": "configs/dh116_execution/deformx_camera_c3.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "camera_c3_isolated_lifecycle",
+      "dependency_scopes": {},
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_simulation_app_lifecycle.py"
+      ],
+      "stage": "native_ready",
+      "reason": "CPU frozen; requires exact recipe/code authorization; no native run performed"
+    },
+    "flex.f6-camera-c4": {
+      "title": "Camera C4 isolated lifecycle",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f6-camera-ownership-capture-audit"
+      ],
+      "status": "pending",
+      "command_spec": "configs/dh116_execution/deformx_camera_c4.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "camera_c4_isolated_lifecycle",
+      "dependency_scopes": {},
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_simulation_app_lifecycle.py"
+      ],
+      "stage": "native_ready",
+      "reason": "CPU frozen; requires exact recipe/code authorization; no native run performed"
     }
   },
   "execution_target": {

@@ -16,19 +16,29 @@ def capture_at_boundary(snapshot, render_once, read_clock, readers):
     render_once()
     current = {side: read_clock(side) for side in readers}
     clock = next(iter(current.values()))
-    if (any(not isinstance(stamp, tuple) or not stamp for stamp in (*previous.values(), *current.values()))
+    if (not isinstance(clock, tuple) or not clock
+            or any(not isinstance(stamp, tuple) or not stamp or len(stamp) != len(clock)
+            for stamp in (*previous.values(), *current.values()))
             or any(stamp != clock or stamp[0] <= previous[side][0] for side, stamp in current.items())):
         raise ValueError("capture boundary render epoch is stale or differs by camera")
-    if snapshot() != before:
+    before_read = deepcopy(snapshot())
+    if before_read != before:
         raise ValueError("capture boundary state changed during render")
     captures = {
         side: {key: value.copy() if isinstance(value, np.ndarray) else deepcopy(value)
                for key, value in read().items()}
         for side, read in readers.items()
     }
-    if any(read_clock(side) != clock for side in readers) or snapshot() != before:
+    after = {side: read_clock(side) for side in readers}
+    after_read = deepcopy(snapshot())
+    if any(stamp != clock for stamp in after.values()) or after_read != before:
         raise ValueError("capture boundary state or render clock changed during readback")
-    return {"state": before, "render_clock": clock, "captures": captures}
+    timings = {side: {"before_render": previous[side], "before_read": current[side], "after_read": after[side]}
+               for side in readers}
+    return {
+        "state": before, "render_clock": clock, "camera_render_clocks": timings, "captures": captures,
+        "physical_state_trace": {"before_render": before, "before_read": before_read, "after_read": after_read},
+    }
 
 
 def pinhole_radial_to_z(radial_distance_m, intrinsics):

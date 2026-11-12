@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded C0–C3 lifecycle controls for the installed Isaac Sim 4.5 launcher."""
+"""Bounded C0–C4 lifecycle controls for the installed Isaac Sim 4.5 launcher."""
 
 import argparse
 import faulthandler
@@ -12,7 +12,7 @@ import sys
 import time
 
 
-CASES = ("C0", "C1", "C2", "C3")
+CASES = ("C0", "C1", "C2", "C3", "C4")
 KIT_ROOT = Path("/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5")
 RENDERING_KIT = KIT_ROOT / "isaaclab.python.headless.rendering.kit"
 NO_CAMERA_KIT = KIT_ROOT / "isaaclab.python.headless.kit"
@@ -22,6 +22,7 @@ KIT_SHA256 = {
 }
 INSTANCE_LOCK = Path("/tmp/dh116-isaac-single-instance.lock")
 ORCHESTRATOR_ENABLED = "/exts/omni.replicator.core/Orchestrator/enabled"
+AUTOCREATE_APPWINDOW = "/exts/omni.appwindow/autocreateAppWindow"
 ENVIRONMENT_KEYS = (
     "DISPLAY", "WAYLAND_DISPLAY", "CUDA_VISIBLE_DEVICES", "LD_LIBRARY_PATH",
     "PYTHONPATH", "CARB_APP_PATH", "ISAAC_PATH", "EXP_PATH",
@@ -47,6 +48,8 @@ def launch_options(case):
         raise ValueError(f"installed Kit SHA256 differs: {experience}")
     config["create_new_stage"] = case == "C2"
     config["extra_args"] = [f"--{ORCHESTRATOR_ENABLED}=true", "--/app/settings/persistent=false"]
+    if case == "C4":
+        config["extra_args"].append(f"--{AUTOCREATE_APPWINDOW}=false")
     return config, {"experience": str(experience)}
 
 
@@ -133,6 +136,12 @@ def _kit_package():
     return {"path": str(path.resolve()), "sha256": sha256(path), **fields}
 
 
+def _default_appwindow_present():
+    # Read the SDK default pointer without importing or retaining a window wrapper.
+    module = sys.modules.get("omni.appwindow")
+    return None if module is None else module.get_default_app_window() is not None
+
+
 def _native_snapshot(app, case, phase):
     import carb.settings
 
@@ -143,7 +152,7 @@ def _native_snapshot(app, case, phase):
     settings = carb.settings.get_settings()
     isaac_root = Path(sys.modules["isaacsim"].__file__).resolve().parent
     version_file = isaac_root / "VERSION"
-    return {
+    snapshot = {
         "case": case,
         "phase": phase,
         "monotonic_ns": time.monotonic_ns(),
@@ -163,6 +172,13 @@ def _native_snapshot(app, case, phase):
         "mapped_runtime_libraries": mapped_runtime_libraries(Path("/proc/self/maps").read_text().splitlines()),
         **_scene_snapshot(),
     }
+    if case == "C4":
+        snapshot.update(
+            appwindow_extension_enabled=manager.is_extension_enabled("omni.appwindow"),
+            autocreate_appwindow_setting=settings.get(AUTOCREATE_APPWINDOW),
+            default_appwindow_present=_default_appwindow_present(),
+        )
+    return snapshot
 
 
 def run_lifecycle(app, case, output, *, snapshot=_native_snapshot):
