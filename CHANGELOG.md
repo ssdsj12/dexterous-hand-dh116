@@ -1,3 +1,7 @@
+## 2026-11-12 — 左右拇指接触账本与预算偏差复核
+
+左右接触及自然exit0证据有效，但每侧另有2初始化PhysX步，总484超批准480共4步；已撤回预算合规资格并保留原回执。未重跑、未扩预算，不能算抓取或Teacher成功。 Ubuntu CPU 回归 59 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md)
+
 ## 2026-11-12 — 相机C0到C2当前故障栈与原生对照
 
 三次独立相机生命周期对照均在app.close返回后SIGSEGV，记录同次C++栈与动态库映射；审计完成但自然退出和相机资格未通过。未重复失败版本，C3未运行。 Ubuntu CPU 回归 19 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c0-c2-current-native.md)

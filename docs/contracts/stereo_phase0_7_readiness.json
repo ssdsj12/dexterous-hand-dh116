@@ -2644,8 +2644,14 @@
   "wire_correspondence_20261111": {
     "report": "docs/superpowers/reports/2026-11-11-stereo-wire-correspondence.md",
     "cpu_tests_passed": 37,
-    "offline_replayed_frames": {"front": 4, "roll20": 4},
-    "roll20_soft_guided_correct_points_per_frame": {"pinch": 67, "tripod": 65},
+    "offline_replayed_frames": {
+      "front": 4,
+      "roll20": 4
+    },
+    "roll20_soft_guided_correct_points_per_frame": {
+      "pinch": 67,
+      "tripod": 65
+    },
     "roll20_fixed_tail_above_5mm": 48,
     "roll20_fixed_tail_total": 48,
     "right_native_instance_ids_available": false,
@@ -2673,7 +2679,10 @@
     "candidate_directories_checked": 19,
     "target_commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
     "source": "blocked_missing_complete_cuda_solver_checkout",
-    "nvcc_versions_found": ["12.2.91", "12.4.99"],
+    "nvcc_versions_found": [
+      "12.2.91",
+      "12.4.99"
+    ],
     "cuda_toolkit_12_8_found": false,
     "build_verified": false,
     "bidirectional_coupling_verified": false
@@ -2705,9 +2714,18 @@
   "wire_geometry_sources_98ba1fb": {
     "report": "docs/superpowers/reports/2026-11-11-stereo-wire-geometry-sources.md",
     "cpu_tests_passed": 96,
-    "historical_frames_replayed": {"front": 4, "roll20": 4},
-    "roll20_default_surface_correct_per_frame": {"pinch": 91, "tripod": 89},
-    "roll20_guided_surface_correct_per_frame": {"pinch": 67, "tripod": 65},
+    "historical_frames_replayed": {
+      "front": 4,
+      "roll20": 4
+    },
+    "roll20_default_surface_correct_per_frame": {
+      "pinch": 91,
+      "tripod": 89
+    },
+    "roll20_guided_surface_correct_per_frame": {
+      "pinch": 67,
+      "tripod": 65
+    },
     "roll20_correct_centerline_per_frame": 0,
     "verified_3d_centerline_temporal_tracks": 0,
     "material_node_identity_verified": false,
@@ -2728,11 +2746,20 @@
   "wire_point_traces_98ba1fb": {
     "report": "docs/superpowers/reports/2026-11-11-stereo-wire-point-traces.md",
     "cpu_tests_passed": 41,
-    "historical_frames_replayed": {"front": 4, "roll20": 4},
+    "historical_frames_replayed": {
+      "front": 4,
+      "roll20": 4
+    },
     "roll20_fixed_tail_above_5mm": 48,
     "roll20_fixed_tail_total": 48,
-    "roll20_guided_original_correct_pixels_omitted_by_sampling": {"pinch": 83, "tripod": 76},
-    "roll20_colour_anchor_correct_points_per_frame": {"pinch": 73, "tripod": 64},
+    "roll20_guided_original_correct_pixels_omitted_by_sampling": {
+      "pinch": 83,
+      "tripod": 76
+    },
+    "roll20_colour_anchor_correct_points_per_frame": {
+      "pinch": 73,
+      "tripod": 64
+    },
     "right_native_instance_supervision_verified": false,
     "true_correspondence_accuracy": null,
     "qualification": "blocked",
@@ -5122,7 +5149,7 @@
       "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe",
       "batch_id": "eb31c79-thumb-once",
       "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle",
-      "native_qualification": true,
+      "native_qualification": false,
       "native_execution_performed": true,
       "command_spec_sha256": "8b5a3a4efed8ad69295100ed5946935f779112cc3c023b8213f3936118621f30",
       "code_config_sha256": "4c750dc69cd92fe3962caca7751d9e91876f668a19114c862316ad24dfe93786",
@@ -5168,8 +5195,16 @@
         "log_sha256": "c6d88cabd45bb56945545a34b3ad0da1cbc47318e073e6e98e913c682037a2b9",
         "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe"
       },
-      "status": "passed",
-      "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md"
+      "status": "blocked",
+      "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md",
+      "reason": "本批每侧240条接触账本另有2个SDK真实初始化步，实际242/侧、合计484，超出批准480共4步。接触及自然退出技术证据保留，预算合规资格撤回；修复后需新冻结指纹/另行批准，不得重跑旧版本。",
+      "budget_compliance": false,
+      "contact_and_exit_evidence_valid": true,
+      "actual_setup_physics_steps": 2,
+      "actual_measured_physics_steps": 240,
+      "actual_total_physics_steps": 242,
+      "approved_total_physics_steps": 240,
+      "audit_report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md"
     },
     "flex.f6-camera-lifecycle-tools": {
       "passed": 13,
@@ -5612,7 +5647,7 @@
       "tested_head": "81f3c543912c50dcb248382472c652430131d64f",
       "batch_id": "eb31c79-thumb-once",
       "qualification_scope": "dh116_right_thumb_deformx_contact_lifecycle",
-      "native_qualification": true,
+      "native_qualification": false,
       "native_execution_performed": true,
       "command_spec_sha256": "086d7570166384ec9e42a5541f14b7fa87f1529ef96c1b0b5dffb61ba5ae3125",
       "code_config_sha256": "2dd86aa61e8a753ac24ef3bd467be0ae53dddb3f1de60dd9e2e68e95fa9d0475",
@@ -5659,8 +5694,16 @@
         "log_sha256": "943dd783f8d80033ee226551f801c6e0de929c357e188cd418776fabcfde389e",
         "tested_head": "81f3c543912c50dcb248382472c652430131d64f"
       },
-      "status": "passed",
-      "report": "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md"
+      "status": "blocked",
+      "report": "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md",
+      "reason": "本批每侧240条接触账本另有2个SDK真实初始化步，实际242/侧、合计484，超出批准480共4步。接触及自然退出技术证据保留，预算合规资格撤回；修复后需新冻结指纹/另行批准，不得重跑旧版本。",
+      "budget_compliance": false,
+      "contact_and_exit_evidence_valid": true,
+      "actual_setup_physics_steps": 2,
+      "actual_measured_physics_steps": 240,
+      "actual_total_physics_steps": 242,
+      "approved_total_physics_steps": 240,
+      "audit_report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md"
     },
     "flex.f6-camera-c0": {
       "executor": "native_bounded",
@@ -5873,6 +5916,44 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-camera-c0-c2-current-native.md",
       "report_source_commit": "01bdb4a98cb7253dd63e63e14f29d2ed64ac74e2"
+    },
+    "flex.f4-thumb-paired-native-audit": {
+      "passed": 59,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_deformx_bridge_lifecycle.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "bab82dbb052948be37b3f6cb2d11af3021dffaa5c73798bf715ec2bb75d82f1a",
+      "tested_head": "a7232f7e0667801bbdda7d2ce07b90f3b49d028f",
+      "native_execution_performed": true,
+      "native_qualification": false,
+      "qualification_scope": "contact_lifecycle_evidence_audit_with_budget_noncompliance",
+      "actual_total_physics_steps": 484,
+      "approved_total_physics_steps": 480,
+      "measured_ledger_rows": 480,
+      "unlogged_setup_physics_steps": 4,
+      "budget_compliance": false,
+      "left_exit_code": 0,
+      "right_exit_code": 0,
+      "left_contact_steps": 68,
+      "right_contact_steps": 68,
+      "left_receipt_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+      "right_receipt_sha256": "cf0a8211b25539e816b102dbbb9f7b7ace3262f401bf7ded527a4cf2ecb2b8e1",
+      "grasp_qualified": false,
+      "teacher_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md",
+      "report_source_commit": "4f7b3ffa57e7d41a20ce74c5ccbbf22d6e722809"
     }
   }
 }

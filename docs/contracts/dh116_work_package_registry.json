@@ -3675,7 +3675,7 @@
         "flex.f4-bimanual-contact-native"
       ],
       "status": "blocked",
-      "reason": "10 个真实 PhysX CPU/GPU 凸包一致且实际完成 Warp CUDA SDF 和显式单杆注册。待接入活跃 articulation 时钟与单指真实姿态/反作用力，随后单手和双手同杆。"
+      "reason": "真实左右单拇指分别完成接触及自然exit0，但本批SDK setup漏计，总484超过480；原接触证据保留，预算修复待验证。单手多指、双手同杆与自由杆重力抓取尚无资格。"
     },
     "flex.f7-synchronized-data": {
       "title": "双目与柔性物理状态同步数据",
@@ -5011,7 +5011,7 @@
         "flex.f3-isaac-rigid",
         "flex.f4-cooked-pad-sdf"
       ],
-      "status": "passed",
+      "status": "blocked",
       "last_native_attempt": {
         "executor": "native_bounded",
         "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe",
@@ -5079,6 +5079,60 @@
           "max_force_n": 0.0473053,
           "max_pair_force_residual_n": 0,
           "independent_validator_sha256": "72601a242b72646e0bf0e9bbb2b96308fd227fd0d0d2d526bcb368d50e564ef3"
+        },
+        {
+          "executor": "native_bounded",
+          "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe",
+          "batch_id": "eb31c79-thumb-once",
+          "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle",
+          "native_qualification": true,
+          "native_execution_performed": true,
+          "command_spec_sha256": "8b5a3a4efed8ad69295100ed5946935f779112cc3c023b8213f3936118621f30",
+          "code_config_sha256": "4c750dc69cd92fe3962caca7751d9e91876f668a19114c862316ad24dfe93786",
+          "launch_argv_sha256": "c1ccd5bf06710c0b07c939a5cc5d302fd963d31e78f3484ee9d5e613ffb27b62",
+          "debugger": "gdb_on_segv",
+          "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
+          "debugger_wrapper_sha256": "19cb75a7b1f5963a88a606fc796ee0d4a6efb6591432a028df1cd1ddaac56c08",
+          "exit_code": 0,
+          "outer_exit_code": 0,
+          "log_sha256": "fb7e09836db2a8ddd8405d230c53cfdf1dff3599869e53570e9bf5742fdbd7c7",
+          "duration_seconds": 35.348927012993954,
+          "native_lock_observed": true,
+          "debugger_status_verified": true,
+          "debugger_backtrace_captured": false,
+          "debugger_inferior_exit_code": 0,
+          "debugger_inferior_signal": null,
+          "artifact_sha256": {
+            "plan.json": "8181f68e4aca6954c54c8d71e50eec853f6530c144c3980bb970a603e06d3c8f",
+            "physics.jsonl": "e3ff29b703f29474222ecfd033eeba97a6ac2ad7e36be6713fd5e6653d6faf7b",
+            "result.json": "e42fe05956551585a770f8d6f97f7a48d1bb36142ed12cb3953306de9653d476",
+            "ownership.jsonl": "3a5c0fad3c35da2db73be52f2c481a3229f98f96c2ccd63bef84aae7342aa846",
+            "shutdown_complete.json": "e505ec9622a098139613b5ca4257f11ba02f73c71cadf1b4f431a5fb76614fbb"
+          },
+          "ledger_counts": {
+            "physics.jsonl": 240
+          },
+          "result_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+          "native_physics_validated": true,
+          "cpu_regression": {
+            "passed": 6,
+            "failed": 0,
+            "skipped": 0,
+            "exit_code": 0,
+            "command": [
+              "python",
+              "-m",
+              "pytest",
+              "-q",
+              "-p",
+              "no:cacheprovider",
+              "tests/test_dh116_deformx_thumb_contact.py"
+            ],
+            "log_sha256": "c6d88cabd45bb56945545a34b3ad0da1cbc47318e073e6e98e913c682037a2b9",
+            "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe"
+          },
+          "status": "passed",
+          "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md"
         }
       ],
       "command_spec": "configs/dh116_execution/deformx_thumb_left_lifecycle_v2.json",
@@ -5107,7 +5161,7 @@
         "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe",
         "batch_id": "eb31c79-thumb-once",
         "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle",
-        "native_qualification": true,
+        "native_qualification": false,
         "native_execution_performed": true,
         "command_spec_sha256": "8b5a3a4efed8ad69295100ed5946935f779112cc3c023b8213f3936118621f30",
         "code_config_sha256": "4c750dc69cd92fe3962caca7751d9e91876f668a19114c862316ad24dfe93786",
@@ -5153,9 +5207,18 @@
           "log_sha256": "c6d88cabd45bb56945545a34b3ad0da1cbc47318e073e6e98e913c682037a2b9",
           "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe"
         },
-        "status": "passed",
-        "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md"
-      }
+        "status": "blocked",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md",
+        "reason": "本批每侧240条接触账本另有2个SDK真实初始化步，实际242/侧、合计484，超出批准480共4步。接触及自然退出技术证据保留，预算合规资格撤回；修复后需新冻结指纹/另行批准，不得重跑旧版本。",
+        "budget_compliance": false,
+        "contact_and_exit_evidence_valid": true,
+        "actual_setup_physics_steps": 2,
+        "actual_measured_physics_steps": 240,
+        "actual_total_physics_steps": 242,
+        "approved_total_physics_steps": 240,
+        "audit_report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md"
+      },
+      "reason": "本批每侧240条接触账本另有2个SDK真实初始化步，实际242/侧、合计484，超出批准480共4步。接触及自然退出技术证据保留，预算合规资格撤回；修复后需新冻结指纹/另行批准，不得重跑旧版本。"
     },
     "flex.f4-right-contact-native": {
       "title": "右拇指与柔性杆原生接触",
@@ -5165,7 +5228,7 @@
         "flex.f4-cooked-pad-sdf",
         "flex.f4-left-contact-native"
       ],
-      "status": "passed",
+      "status": "blocked",
       "command_spec": "configs/dh116_execution/deformx_thumb_right_lifecycle_v2.json",
       "requires_approval": true,
       "resource_class": "isaac_single_gpu",
@@ -5251,7 +5314,7 @@
         "tested_head": "81f3c543912c50dcb248382472c652430131d64f",
         "batch_id": "eb31c79-thumb-once",
         "qualification_scope": "dh116_right_thumb_deformx_contact_lifecycle",
-        "native_qualification": true,
+        "native_qualification": false,
         "native_execution_performed": true,
         "command_spec_sha256": "086d7570166384ec9e42a5541f14b7fa87f1529ef96c1b0b5dffb61ba5ae3125",
         "code_config_sha256": "2dd86aa61e8a753ac24ef3bd467be0ae53dddb3f1de60dd9e2e68e95fa9d0475",
@@ -5298,9 +5361,75 @@
           "log_sha256": "943dd783f8d80033ee226551f801c6e0de929c357e188cd418776fabcfde389e",
           "tested_head": "81f3c543912c50dcb248382472c652430131d64f"
         },
-        "status": "passed",
-        "report": "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md"
-      }
+        "status": "blocked",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md",
+        "reason": "本批每侧240条接触账本另有2个SDK真实初始化步，实际242/侧、合计484，超出批准480共4步。接触及自然退出技术证据保留，预算合规资格撤回；修复后需新冻结指纹/另行批准，不得重跑旧版本。",
+        "budget_compliance": false,
+        "contact_and_exit_evidence_valid": true,
+        "actual_setup_physics_steps": 2,
+        "actual_measured_physics_steps": 240,
+        "actual_total_physics_steps": 242,
+        "approved_total_physics_steps": 240,
+        "audit_report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md"
+      },
+      "native_attempt_history": [
+        {
+          "executor": "native_bounded",
+          "tested_head": "81f3c543912c50dcb248382472c652430131d64f",
+          "batch_id": "eb31c79-thumb-once",
+          "qualification_scope": "dh116_right_thumb_deformx_contact_lifecycle",
+          "native_qualification": true,
+          "native_execution_performed": true,
+          "command_spec_sha256": "086d7570166384ec9e42a5541f14b7fa87f1529ef96c1b0b5dffb61ba5ae3125",
+          "code_config_sha256": "2dd86aa61e8a753ac24ef3bd467be0ae53dddb3f1de60dd9e2e68e95fa9d0475",
+          "dependency_receipt_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+          "launch_argv_sha256": "b93ea31f49e8e4b1c612480683723b1e61b48256ee6b93e1f48fa51e8019ec6a",
+          "debugger": "gdb_on_segv",
+          "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
+          "debugger_wrapper_sha256": "2dfa5ff7ccd4039ffce6e4a965100486e0dc102fcd446d67fb472e68266c104c",
+          "exit_code": 0,
+          "outer_exit_code": 0,
+          "log_sha256": "9205bbe362dba1aa5c03d15358fe44232c902f8d7847f46228bb28585ba3c651",
+          "duration_seconds": 35.321002338896506,
+          "native_lock_observed": true,
+          "debugger_status_verified": true,
+          "debugger_backtrace_captured": false,
+          "debugger_inferior_exit_code": 0,
+          "debugger_inferior_signal": null,
+          "artifact_sha256": {
+            "plan.json": "14f06c55845c214e0dac0557dd6a6e17b2befc6c39db5169a86597dc8afd89e6",
+            "physics.jsonl": "b4f3b81c2ac2e34f24437838d0f4e79d91a023b8c57c00583fbc7ef88276bd87",
+            "result.json": "d4ec9f5b8251ade2edf9210f208f0c7e4f7916a967308fcb9d86cad34cc6b7e3",
+            "ownership.jsonl": "6e8bff8a56094f5168626e5ba87e948724f3823aa2b38939eacd8ebc988c6831",
+            "shutdown_complete.json": "eb92e194faec959a094ea7b56020a40cb3330fd91a5e20a0ea747b4b8effab6e"
+          },
+          "ledger_counts": {
+            "physics.jsonl": 240
+          },
+          "result_sha256": "cf0a8211b25539e816b102dbbb9f7b7ace3262f401bf7ded527a4cf2ecb2b8e1",
+          "native_physics_validated": true,
+          "cpu_regression": {
+            "passed": 6,
+            "failed": 0,
+            "skipped": 0,
+            "exit_code": 0,
+            "command": [
+              "python",
+              "-m",
+              "pytest",
+              "-q",
+              "-p",
+              "no:cacheprovider",
+              "tests/test_dh116_deformx_thumb_contact.py"
+            ],
+            "log_sha256": "943dd783f8d80033ee226551f801c6e0de929c357e188cd418776fabcfde389e",
+            "tested_head": "81f3c543912c50dcb248382472c652430131d64f"
+          },
+          "status": "passed",
+          "report": "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md"
+        }
+      ],
+      "reason": "本批每侧240条接触账本另有2个SDK真实初始化步，实际242/侧、合计484，超出批准480共4步。接触及自然退出技术证据保留，预算合规资格撤回；修复后需新冻结指纹/另行批准，不得重跑旧版本。"
     },
     "flex.f4-single-hand-contact-native": {
       "title": "单手与柔性杆对向承托",
@@ -5309,7 +5438,7 @@
         "flex.f4-right-contact-native"
       ],
       "status": "blocked",
-      "reason": "需同一真实杆的单手多指对向接触。"
+      "reason": "单拇指接触技术证据已取得但本批初始化步预算不合规；单手多指对向接触需要独立任务和新预算。"
     },
     "flex.f4-bimanual-contact-native": {
       "title": "双手与同一柔性杆接触",
@@ -5318,7 +5447,7 @@
         "flex.f4-single-hand-contact-native"
       ],
       "status": "blocked",
-      "reason": "需双手共同作用同一 rod UID 和独立材料位置的原生证据。"
+      "reason": "需双手共同作用同一自由rod UID、真实重力、外部支撑审计和独立预算；本批仅独立零g双端固定单拇指标定。"
     },
     "flex.f7-physics-state": {
       "title": "无相机柔性状态、动作与 Reset",
@@ -7111,6 +7240,90 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-camera-c0-c2-current-native.md",
         "report_source_commit": "01bdb4a98cb7253dd63e63e14f29d2ed64ac74e2"
+      }
+    },
+    "flex.f4-thumb-paired-native-audit": {
+      "title": "左右拇指接触账本与预算偏差复核",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-paired-thumb-recipes"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 59,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "bab82dbb052948be37b3f6cb2d11af3021dffaa5c73798bf715ec2bb75d82f1a",
+        "tested_head": "a7232f7e0667801bbdda7d2ce07b90f3b49d028f",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "qualification_scope": "contact_lifecycle_evidence_audit_with_budget_noncompliance",
+        "actual_total_physics_steps": 484,
+        "approved_total_physics_steps": 480,
+        "measured_ledger_rows": 480,
+        "unlogged_setup_physics_steps": 4,
+        "budget_compliance": false,
+        "left_exit_code": 0,
+        "right_exit_code": 0,
+        "left_contact_steps": 68,
+        "right_contact_steps": 68,
+        "left_receipt_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+        "right_receipt_sha256": "cf0a8211b25539e816b102dbbb9f7b7ace3262f401bf7ded527a4cf2ecb2b8e1",
+        "grasp_qualified": false,
+        "teacher_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md",
+        "report_source_commit": "4f7b3ffa57e7d41a20ce74c5ccbbf22d6e722809"
+      },
+      "last_result": {
+        "passed": 59,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "bab82dbb052948be37b3f6cb2d11af3021dffaa5c73798bf715ec2bb75d82f1a",
+        "tested_head": "a7232f7e0667801bbdda7d2ce07b90f3b49d028f",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "qualification_scope": "contact_lifecycle_evidence_audit_with_budget_noncompliance",
+        "actual_total_physics_steps": 484,
+        "approved_total_physics_steps": 480,
+        "measured_ledger_rows": 480,
+        "unlogged_setup_physics_steps": 4,
+        "budget_compliance": false,
+        "left_exit_code": 0,
+        "right_exit_code": 0,
+        "left_contact_steps": 68,
+        "right_contact_steps": 68,
+        "left_receipt_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+        "right_receipt_sha256": "cf0a8211b25539e816b102dbbb9f7b7ace3262f401bf7ded527a4cf2ecb2b8e1",
+        "grasp_qualified": false,
+        "teacher_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md",
+        "report_source_commit": "4f7b3ffa57e7d41a20ce74c5ccbbf22d6e722809"
       }
     }
   },
