@@ -3671,7 +3671,8 @@
       "dependencies": [
         "flex.f3-isaac-rigid",
         "flex.f4-dh116-collider-offline",
-        "flex.f4-cooked-pad-sdf"
+        "flex.f4-cooked-pad-sdf",
+        "flex.f4-bimanual-contact-native"
       ],
       "status": "blocked",
       "reason": "10 个真实 PhysX CPU/GPU 凸包一致且实际完成 Warp CUDA SDF 和显式单杆注册。待接入活跃 articulation 时钟与单指真实姿态/反作用力，随后单手和双手同杆。"
@@ -3680,28 +3681,29 @@
       "title": "双目与柔性物理状态同步数据",
       "executor": "gated",
       "dependencies": [
-        "flex.f4-dh116-same-rod",
-        "flex.f5-wireseg-pretraining",
-        "flex.f6-assets-audit",
-        "flex.f6-render-native"
+        "flex.f7-physics-state",
+        "flex.f7-stereo-capture"
       ],
       "status": "blocked",
-      "reason": "需同杆物理链路、资产和视觉预训练证据。"
+      "reason": "汇总柔性物理状态和同步视觉数据的独立证据。"
     },
     "flex.f8-three-teachers": {
       "title": "Pinch、Tripod 与 Power 特权 Teacher",
       "executor": "gated",
       "dependencies": [
-        "flex.f7-synchronized-data"
+        "flex.f8-pinch",
+        "flex.f8-tripod",
+        "flex.f8-power"
       ],
       "status": "blocked",
-      "reason": "需真实柔性状态、逐指力资格和独立训练证据。"
+      "reason": "汇总 Pinch、Tripod、Power 独立训练及原生验收证据。"
     },
     "flex.f9-three-students": {
       "title": "三种抓法的 BC、DAgger 与 Student PPO",
       "executor": "gated",
       "dependencies": [
-        "flex.f8-three-teachers"
+        "flex.f8-three-teachers",
+        "flex.f7-synchronized-data"
       ],
       "status": "blocked",
       "reason": "需合格原生 Teacher 与同步双目数据。"
@@ -5001,6 +5003,194 @@
         "report": "docs/superpowers/reports/2026-11-12-flexible-f3-integrated-rigid-entry.md",
         "report_source_commit": "b969c3cad0849d244d71ef40d5826ef784c79265"
       }
+    },
+    "flex.f4-left-contact-native": {
+      "title": "左拇指与柔性杆原生接触",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f3-isaac-rigid",
+        "flex.f4-cooked-pad-sdf"
+      ],
+      "status": "blocked",
+      "reason": "需原 articulation 的真实单指接触账本、双侧 wrench 与自然退出。"
+    },
+    "flex.f4-right-contact-native": {
+      "title": "右拇指与柔性杆原生接触",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f3-isaac-rigid",
+        "flex.f4-cooked-pad-sdf",
+        "flex.f4-left-contact-native"
+      ],
+      "status": "blocked",
+      "reason": "需独立右手 body 身份与镜像侧反作用力原生验证。"
+    },
+    "flex.f4-single-hand-contact-native": {
+      "title": "单手与柔性杆对向承托",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-right-contact-native"
+      ],
+      "status": "blocked",
+      "reason": "需同一真实杆的单手多指对向接触。"
+    },
+    "flex.f4-bimanual-contact-native": {
+      "title": "双手与同一柔性杆接触",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-single-hand-contact-native"
+      ],
+      "status": "blocked",
+      "reason": "需双手共同作用同一 rod UID 和独立材料位置的原生证据。"
+    },
+    "flex.f7-physics-state": {
+      "title": "无相机柔性状态、动作与 Reset",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-dh116-same-rod"
+      ],
+      "status": "blocked",
+      "reason": "需真实手关节及杆状态、原 24D 动作、Reset、GAE 终止和 R0 逐步闭环。"
+    },
+    "flex.f6-camera-lifecycle": {
+      "title": "独立任务相机生命周期阶梯",
+      "executor": "gated",
+      "dependencies": [],
+      "status": "blocked",
+      "reason": "需同一 Kit 下从空启动、单 product、RGB 到多 annotator 的自然退出及同步证据。"
+    },
+    "flex.f7-task-camera-native": {
+      "title": "当前柔性任务双目同钟相机",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-camera-lifecycle",
+        "flex.f4-dh116-same-rod"
+      ],
+      "status": "blocked",
+      "reason": "需当前柔性任务相机两轮自然关闭、标定与双目多模态同钟。"
+    },
+    "flex.f7-stereo-capture": {
+      "title": "柔性任务同步双目采集",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-physics-state",
+        "flex.f7-task-camera-native"
+      ],
+      "status": "blocked",
+      "reason": "需同一 pre-action 时钟绑定视觉、真实物理状态与实际动作。"
+    },
+    "flex.f5-wireseg-subset": {
+      "title": "可验证 WireSeg RGB 子集与视觉诊断",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f5-wireseg-ingestion"
+      ],
+      "status": "blocked",
+      "reason": "需一个完整 train RGB/Mask LFS 以及独立验证身份。"
+    },
+    "flex.f5-wireseg-full": {
+      "title": "完整 WireSeg 扩展基准",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f5-wireseg-subset"
+      ],
+      "status": "blocked",
+      "reason": "需完整锁定视觉源文件与正式训练预算。"
+    },
+    "flex.f8-pinch": {
+      "title": "Pinch 无相机 R0 特权 Teacher",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-physics-state"
+      ],
+      "status": "blocked",
+      "reason": "需 Pinch 接触可达性、对应 R0 奖励资格与独立有界诊断证据。"
+    },
+    "flex.f8-tripod": {
+      "title": "Tripod 无相机 R0 特权 Teacher",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-physics-state"
+      ],
+      "status": "blocked",
+      "reason": "需 Tripod 接触可达性、对应 R0 奖励资格与独立有界诊断证据。"
+    },
+    "flex.f8-power": {
+      "title": "Power 无相机 R0 特权 Teacher",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-physics-state"
+      ],
+      "status": "blocked",
+      "reason": "需 Power 接触可达性、对应 R0 奖励资格与独立有界诊断证据。"
+    },
+    "flex.execution-dependency-split": {
+      "title": "拆分柔性物理、双目采集与逐抓法 Teacher 资格",
+      "executor": "prepared",
+      "dependencies": [],
+      "status": "passed",
+      "tests": [
+        "tests/test_dh116_flexible_execution_dependencies.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "last_native_attempt": {
+        "passed": 30,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_execution_dependencies.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "d5a94c2eb5da5a9bcb579d6432f163bcc14c7578474e265f54afcde9c3b70b00",
+        "tested_head": "546130fe756d2a979d6dbf1fc6426eb25b759438",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "physics_and_stereo_separated": true,
+        "teacher_modes": [
+          "pinch",
+          "tripod",
+          "power"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-physics-stereo-dependencies.md",
+        "report_source_commit": "3d8972a66a028825b714b5581585beb01c86dba8"
+      },
+      "last_result": {
+        "passed": 30,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_execution_dependencies.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "d5a94c2eb5da5a9bcb579d6432f163bcc14c7578474e265f54afcde9c3b70b00",
+        "tested_head": "546130fe756d2a979d6dbf1fc6426eb25b759438",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "physics_and_stereo_separated": true,
+        "teacher_modes": [
+          "pinch",
+          "tripod",
+          "power"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-physics-stereo-dependencies.md",
+        "report_source_commit": "3d8972a66a028825b714b5581585beb01c86dba8"
+      }
     }
   },
   "execution_target": {
@@ -5008,7 +5198,9 @@
     "package": "flex.f10-actor-only",
     "deferred": {
       "wp6.rigid-native-final": "保留 solid_cylinder 作为独立回归，不是柔性闭环依赖。",
-      "wp6.deformable-native-final": "旧的总验收入口保留，其后端和验收由柔性工作包逐级提供实际证据。"
+      "wp6.deformable-native-final": "旧的总验收入口保留，其后端和验收由柔性工作包逐级提供实际证据。",
+      "flex.f5-wireseg-full": "独立视觉基准；可用 --scope all 查询。",
+      "flex.f6-render-native": "旧 drop/hang 生成器独立记录；可用 --scope all 查询。"
     }
   }
 }

@@ -1,3 +1,7 @@
+## 2026-11-12 — 拆分柔性物理、双目采集与逐抓法 Teacher 资格
+
+无相机 Teacher 分抓法依赖物理资格，双目采集和 WireSeg 单独推进。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-physics-stereo-dependencies.md)
+
 ## 2026-11-12 — 原 F3 刚体命令的集成原生复验
 
 集成分支原命令 240 条物理样本、外层自然退出 0，账本与 E/E2 精确一致。 Ubuntu CPU 回归 6 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-integrated-rigid-entry.md)

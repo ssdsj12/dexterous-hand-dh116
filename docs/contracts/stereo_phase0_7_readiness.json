@@ -5059,6 +5059,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-flexible-f3-integrated-rigid-entry.md",
       "report_source_commit": "b969c3cad0849d244d71ef40d5826ef784c79265"
+    },
+    "flex.execution-dependency-split": {
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_flexible_execution_dependencies.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "d5a94c2eb5da5a9bcb579d6432f163bcc14c7578474e265f54afcde9c3b70b00",
+      "tested_head": "546130fe756d2a979d6dbf1fc6426eb25b759438",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "physics_and_stereo_separated": true,
+      "teacher_modes": [
+        "pinch",
+        "tripod",
+        "power"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-physics-stereo-dependencies.md",
+      "report_source_commit": "3d8972a66a028825b714b5581585beb01c86dba8"
     }
   }
 }

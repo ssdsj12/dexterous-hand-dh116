@@ -319,21 +319,23 @@ def test_repository_default_selects_flexible_deformx_and_preserves_rigid_regress
     assert {
         "flex.f0-source-lock", "flex.f1-cuda-build", "flex.f2-standalone-gpu",
         "flex.f3-isaac-rigid", "flex.f4-dh116-collider-offline",
-        "flex.f4-dh116-same-rod", "flex.f5-wireseg-ingestion",
-        "flex.f5-wireseg-pretraining", "flex.f6-assets-audit",
-        "flex.f7-synchronized-data", "flex.f8-three-teachers",
+        "flex.f4-dh116-same-rod", "flex.f6-camera-lifecycle",
+        "flex.f7-synchronized-data", "flex.f7-physics-state", "flex.f7-stereo-capture",
+        "flex.f8-pinch", "flex.f8-tripod", "flex.f8-power", "flex.f8-three-teachers",
         "flex.f9-three-students", "flex.f10-actor-only",
     } <= set(scoped)
     assert "wp6.rigid-native-final" in description["deferred"]
     assert "wp6.rigid-native-final" in registry["packages"]
 
 
-def test_flexible_capture_gates_follow_render_and_native_cooked_sdf_evidence():
+def test_flexible_capture_gates_follow_task_camera_and_native_cooked_sdf_evidence():
     root = Path(scheduler.__file__).resolve().parents[1]
     registry = scheduler.Repository(root).registry()
     packages = registry["packages"]
     scoped, _ = scheduler.execution_scope(registry)
     assert "flex.f4-cooked-pad-sdf" in packages["flex.f4-dh116-same-rod"]["dependencies"]
-    assert "flex.f6-render-native" in packages["flex.f7-synchronized-data"]["dependencies"]
+    assert set(packages["flex.f7-stereo-capture"]["dependencies"]) == {
+        "flex.f7-task-camera-native", "flex.f7-physics-state"}
     assert {"flex.f4-cooked-hull-device-parity", "flex.f4-cooked-pad-sdf",
-            "flex.f6-derived-render-preflight", "flex.f6-render-native"} <= set(scoped)
+            "flex.f4-left-contact-native", "flex.f4-right-contact-native"} <= set(scoped)
+    assert {"flex.f5-wireseg-pretraining", "flex.f6-render-native"}.isdisjoint(scoped)
