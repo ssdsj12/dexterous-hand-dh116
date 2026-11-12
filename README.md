@@ -1,3 +1,7 @@
+## 2026-11-12 — 实际指腹烘焙设置和 PhysX 凸包读回入口
+
+独立核对 10 个实际 USD 指腹的 cooking schema、坐标和离线凸包估计，确认已安装 PhysX 查询入口。 Ubuntu CPU 回归 11 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-hull-audit.md)
+
 ## 2026-11-12 — 单 PhysX 刚体双向传力及关闭失败诊断
 
 240 个原生步核对单刚体力和力矩交换。物理证据可复现，PhysX 插件在 Python 终结时报 SIGSEGV，F3 自然退出仍 blocked。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-rigid-bridge-native.md)

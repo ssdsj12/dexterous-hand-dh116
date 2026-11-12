@@ -4032,6 +4032,70 @@
         "report": "docs/superpowers/reports/2026-11-12-flexible-f3-rigid-bridge-native.md",
         "report_source_commit": "51bc7a6f9ae288351c1e67e5cde8209502f24db6"
       }
+    },
+    "flex.f4-cooked-hull-audit": {
+      "title": "实际指腹烘焙设置和 PhysX 凸包读回入口",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-dh116-collider-offline"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 11,
+        "failed": 0,
+        "skipped": 1,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_cooked_convex_hulls.py",
+          "tests/test_dh116_flexible_colliders.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "7bd82448ca413bf38c627cf11338f92525d1be1059b047c6da839de84da7d5d1",
+        "tested_head": "f008e6eefa3bb645225350d2b289899d7c9cf836",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "authored_pads": 10,
+        "offline_estimates": 10,
+        "direct_physx_hulls_verified": 0,
+        "audit_sha256": "3e579900f9f530df4942c8e25b8c4839a19dd4a21e1931bcd48ea18689274274",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-cooked-hull-audit.md",
+        "report_source_commit": "4944f0795352887ef22560f12301d23d8ec23317"
+      },
+      "last_result": {
+        "passed": 11,
+        "failed": 0,
+        "skipped": 1,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_cooked_convex_hulls.py",
+          "tests/test_dh116_flexible_colliders.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "7bd82448ca413bf38c627cf11338f92525d1be1059b047c6da839de84da7d5d1",
+        "tested_head": "f008e6eefa3bb645225350d2b289899d7c9cf836",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "authored_pads": 10,
+        "offline_estimates": 10,
+        "direct_physx_hulls_verified": 0,
+        "audit_sha256": "3e579900f9f530df4942c8e25b8c4839a19dd4a21e1931bcd48ea18689274274",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-cooked-hull-audit.md",
+        "report_source_commit": "4944f0795352887ef22560f12301d23d8ec23317"
+      }
     }
   },
   "execution_target": {
