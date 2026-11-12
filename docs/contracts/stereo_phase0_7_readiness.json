@@ -6409,6 +6409,46 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-flexible-hold-clock-and-slip-reference-review-fix.md",
       "report_source_commit": "55ecd748462a0b45f251e31451b41d7d186877ff"
+    },
+    "flex.f6-camera-c3-c4-native-audit": {
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_simulation_app_lifecycle.py",
+        "tests/test_dh116_render_capture_boundary.py"
+      ],
+      "log_sha256": "f175ffe03b456c9f5ea513d048e4bc8f1b3319666c05d14be2abc265ac26dcbe",
+      "tested_head": "f5863fc3fbd56a10985142be6bb36d3de7a8a050",
+      "stage": "cpu_verified",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "physics_steps": 0,
+      "ppo_updates": 0,
+      "evaluation_episodes": 0,
+      "audited_native_cases": {
+        "C3": {
+          "outer_exit_code": 0,
+          "native_scope": "camera_c3_isolated_lifecycle",
+          "receipt_sha256": "c0c48203d13e7de5416fca42d9a8d40096c588d8ca9eef5aa858f733c4a24f42"
+        },
+        "C4": {
+          "outer_exit_code": 255,
+          "signal": 11,
+          "receipt_sha256": "7ef892c4dc65ea85168e167b023ec5d07c496f7aed12f99911d45238de5c05d6"
+        }
+      },
+      "audit_sha256": "f953921955af541d3849fc0bfd863f0123f4bfdb093d0f3538e823dad8053576",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-camera-c3-c4-native-stack-audit.md",
+      "report_source_commit": "aabe29a6b8229fab371a7f5f5e399e4dffa9bf96"
     }
   }
 }

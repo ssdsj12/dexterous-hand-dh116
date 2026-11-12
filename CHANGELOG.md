@@ -1,3 +1,7 @@
+## 2026-11-12 — P3 current C3 C4 native exit and stack audit
+
+授权 C3/C4 各运行一次：C3 26.84 秒、outer/GDB 自然 0；C4 54.81 秒、outer255/SIGSEGV11。C4 默认窗口确实关闭，当前首故障为 _extensions+0x1e445，不能套用 C1 的 _appwindow 首帧。两格 0 物理步/0 PPO，不重试；渲染路径仍未资格化。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c3-c4-native-stack-audit.md)
+
 ## 2026-11-12 — P4 measured Hold duration and immutable slip references
 
 进一步关闭 CPU 成功候选边界：Hold 需真实时间跨度满 5 秒且连续 2400 间隔，4.999760 秒反例拒绝；左右材料与切向参考 UID/来源冻结至 Reset，缺测不延续 Hold。原生资格仍待实际自由杆测量。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-hold-clock-and-slip-reference-review-fix.md)
