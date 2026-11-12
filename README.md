@@ -1,3 +1,7 @@
+## 2026-11-12 — 原 T5 合同的特权 PPO Teacher 原生单更新
+
+2×32 原生完成 1 次 R0 PPO 更新，Checkpoint 与 Adam 读回一致，完整成功回合 0。 Ubuntu CPU 回归 65 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-native-r0-update1.md)
+
 ## 2026-11-12 — 记录 GPU 任务早期接触读回失败并恢复默认探针
 
 早期启用报告读回导致 GPU reset 索引与缓冲区设备不一致。保留失败证据并恢复原探针默认。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-task-contact-early-readback-failure.md)

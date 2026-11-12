@@ -4067,6 +4067,42 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-teacher-task-contact-early-readback-failure.md",
       "report_source_commit": "3e6b6c4f1d9005d5cc7d535374aedd6a5300e99f"
+    },
+    "wp3.teacher-t5-native-r0-update1": {
+      "passed": 65,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_t5_binding.py",
+        "tests/test_dh116_privileged_teacher.py",
+        "tests/test_dh116_privileged_cli.py",
+        "tests/test_dh116_teacher_warm_start.py"
+      ],
+      "log_sha256": "3675c4d29515d81b6615ecc61f0f26ecf198e4dd50358e0668068a705e7d671f",
+      "tested_head": "d192030d12c6988314b525f2176a48425bf93238",
+      "native_qualification": false,
+      "native_execution_performed": true,
+      "qualification_scope": "bounded_r0_execution_checkpoint_only",
+      "environments": 2,
+      "rollout_steps": 32,
+      "ppo_updates": 1,
+      "policy_transitions": 64,
+      "physical_samples": 512,
+      "exact_kl": 0.008503958396613599,
+      "checkpoint_sha256": "71ea209f6710db9edc9457e5ed3bfde8cecc9daede4e0dd5eff0167e905e6638",
+      "completed_episodes": 0,
+      "native_successes": 0,
+      "outer_exit_code": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-t5-native-r0-update1.md",
+      "report_source_commit": "047c85b6a45d8874bb7d72184604eec5e92936c5"
     }
   }
 }
