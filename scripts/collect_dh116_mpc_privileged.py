@@ -151,7 +151,8 @@ def run_native(arguments, inputs, plan, *, transition_journal=None):
         nonlocal result
         validate_contract(contract)
         recorder = PreActionCapture(args.num_envs, args.vision_teacher_max_control_steps,
-                                    t5_first_episodes=plan.get('capture_scope') == 't5_first_episodes')
+                                    t5_first_episodes=plan.get('capture_scope') == 't5_first_episodes',
+                                    capture_internal=plan.get('capture_internal_source', False))
         journal_context = (capture_journal(transition_journal, recorder.environments, recorder.max_steps)
                            if transition_journal is not None else nullcontext())
         with journal_context as writer:
@@ -201,6 +202,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--t5-first-episodes', type=Path,
                         help='replay the SHA-pinned historical T5 Teacher launch for up to 1800 steps')
+    parser.add_argument('--capture-internal-source', action='store_true',
+                        help='keep separately scoped raw simulator control and feedback sources')
     parser.add_argument('--transition-journal', type=Path,
                         help='fsync an exact private transition ledger to a new file in a 0700 directory')
     parser.add_argument('--execute-native', action='store_true')
@@ -210,6 +213,8 @@ def main():
         raise ValueError('output must be a new directory under an existing experiment parent')
     arguments, inputs, plan = preflight(args.baseline_plan, args.baseline_plan_sha256, output,
                                         t5_first_episodes=args.t5_first_episodes)
+    if args.capture_internal_source:
+        plan['capture_internal_source'] = True
     if args.transition_journal is not None:
         if (args.transition_journal.exists() or args.transition_journal.is_symlink()
                 or not args.transition_journal.parent.is_dir()

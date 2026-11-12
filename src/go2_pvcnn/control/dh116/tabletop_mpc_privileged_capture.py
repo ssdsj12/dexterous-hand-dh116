@@ -11,6 +11,9 @@ from pathlib import Path
 import torch
 
 from .tabletop_surface_contract import ACTION_CONTRACT, validate_contract
+from .tabletop_mpc_internal_source_capture import (
+    SCOPE as INTERNAL_SOURCE_SCOPE, capture_internal_sources, internal_source_masks, select_internal_row,
+)
 
 
 VERSION = 'dh116-native-mpc-privileged-capture-v1'
@@ -66,12 +69,13 @@ class PreActionSample:
     valid: torch.Tensor
     action: torch.Tensor
     clock: dict
+    internal_source: dict | None = None
 
 
 class PreActionCapture:
     """Keep original values even where an independent validity source is absent."""
 
-    def __init__(self, environments, max_steps, *, t5_first_episodes=False):
+    def __init__(self, environments, max_steps, *, t5_first_episodes=False, capture_internal=False):
         if type(environments) is not int or environments not in (2, 4, 6, 8):
             raise ValueError('use 2 to 8 even native environments')
         if t5_first_episodes and (environments != 8 or max_steps != 1800):
@@ -83,9 +87,10 @@ class PreActionCapture:
         self.max_steps = max_steps
         self.samples = []
         self.completed_clock = None
+        self.capture_internal = capture_internal
         self._current = None
 
-    def observe(self, state, task, clock):
+    def observe(self, state, task, clock, *, after_reset=False):
         observed = _tensor(state, (self.environments, 371), 'canonical 371D TensorEnv observation')
         q, qd = task.m['q'], task.m['qd']
         # These are the first 24 fields of the original observe() with no running normalization.
@@ -96,16 +101,17 @@ class PreActionCapture:
             raise ValueError('measured q/qd does not match the canonical joint layout')
         valid = torch.zeros_like(observed, dtype=torch.bool)
         valid[:, :24] = torch.isclose(observed[:, :24], expected, atol=1e-6, rtol=1e-6)
-        self._current = observed, valid, _valid_clock(clock)
+        source = capture_internal_sources(task, self.environments, after_reset=after_reset) if self.capture_internal else None
+        self._current = observed, valid, _valid_clock(clock), source
 
     def prepare(self, action, clock):
         if self._current is None or len(self.samples) >= self.max_steps:
             raise ValueError('missing pre-action state or capture budget exceeded')
-        state, valid, before = self._current
+        state, valid, before, source = self._current
         if not _same_clock(clock, before):
             raise ValueError('physics advanced after the recorded pre-action observation')
         action = _tensor(action, (self.environments, 24), 'canonical 24D issued action', bounded=True)
-        return PreActionSample(state, valid, action, before)
+        return PreActionSample(state, valid, action, before, source)
 
 
 @contextmanager
@@ -115,12 +121,17 @@ def capture_environment(env, recorder, read_clock):
     originals = {key: vars(env)[key] for key in ('reset', 'step') if key in vars(env)}
     saw_reset = False
 
+    def observe(state, clock, *, after_reset=False):
+        recorder.observe(state, env.task, clock, after_reset=after_reset)
+        if recorder.capture_internal and not _same_clock(read_clock(), clock):
+            raise ValueError('physical clock advanced during internal source readback')
+
     def reset():
         nonlocal saw_reset
         if saw_reset:
             raise ValueError('a second whole-environment reset would reuse first-episode identities')
         state = original_reset()
-        recorder.observe(state, env.task, read_clock())
+        observe(state, read_clock(), after_reset=True)
         saw_reset = True
         return state
 
@@ -132,7 +143,7 @@ def capture_environment(env, recorder, read_clock):
             raise ValueError('original TensorEnv step did not preserve the eight-substep clock')
         recorder.samples.append(sample)
         recorder.completed_clock = after
-        recorder.observe(result[0], env.task, after)
+        observe(result[0], after)
         return result
 
     env.reset, env.step = reset, step
@@ -157,6 +168,11 @@ def join_execution(samples, visual, physical_path, *, run_uuid):
     expected = {}
     states, masks = [], []
     records = []
+    captured_internal = [sample.internal_source is not None for sample in samples]
+    if any(captured_internal) and not all(captured_internal):
+        raise ValueError('incomplete native internal source capture')
+    internal = []
+    cached_internal_masks = {}
     camera_frames = {}
     for index, row in enumerate(metadata):
         tick, env_id = _index(row['tick'], 'tick'), _index(row['env_id'], 'env_id')
@@ -179,6 +195,13 @@ def join_execution(samples, visual, physical_path, *, run_uuid):
         result_row['camera_episode_uid'] = row.get('episode_uid')
         states.append(sample.state[env_id])
         masks.append(sample.valid[env_id])
+        if sample.internal_source is not None:
+            if sample.internal_source['after_reset'] is not (tick == 0):
+                raise ValueError('native internal source boundary differs from pre-action tick')
+            if tick not in cached_internal_masks:
+                cached_internal_masks[tick] = internal_source_masks(sample.state, sample.internal_source)
+            internal.append(dict(raw_source=select_internal_row(sample.internal_source, env_id),
+                **{name: values[env_id] for name, values in cached_internal_masks[tick].items()}))
         records.append(result_row)
         expected[key] = sample, result_row
     latest = {}
@@ -224,11 +247,19 @@ def join_execution(samples, visual, physical_path, *, run_uuid):
         count, terminal = latest.get(key, (0, False))
         if not terminal and count != SUBSTEPS:
             raise ValueError('complete 480Hz evidence missing for issued action')
+    proof = {}
+    if internal:
+        proof = dict(internal_source_scope=INTERNAL_SOURCE_SCOPE,
+            internal_source_records=[row['raw_source'] for row in internal],
+            internal_state_value_valid=torch.stack([row['internal_state_value_valid'] for row in internal]),
+            reset_feedback_initialization_value_valid=torch.stack([
+                row['reset_feedback_initialization_value_valid'] for row in internal]),
+            force_contact_qualification=False)
     return dict(version=VERSION, observations=torch.stack(states), privileged_valid=torch.stack(masks),
                 actions=issued, reference_actions=references, sample_metadata=records, run_uuid=run_uuid,
                 action_owner=ACTION_OWNER, action_contract=ACTION_CONTRACT,
                 qualified_for_bc=False, new_expert_qualification_issued=False,
-                counts_as_Student_success=False)
+                counts_as_Student_success=False, **proof)
 
 
 def bind_camera_frames(directory, rows, environments):
@@ -367,8 +398,12 @@ def _write_outcome_archives(output, archive, report, terminals, environments):
         rows = [metadata[index] for index in indexes]
         partition = dict(archive, sample_metadata=rows, first_episode_outcome=status,
                          source_row_indices=indexes)
-        for name in ('observations', 'privileged_valid', 'actions', 'reference_actions'):
-            partition[name] = archive[name][indexes]
+        for name in ('observations', 'privileged_valid', 'actions', 'reference_actions',
+                     'internal_state_value_valid', 'reset_feedback_initialization_value_valid'):
+            if name in archive:
+                partition[name] = archive[name][indexes]
+        if 'internal_source_records' in archive:
+            partition['internal_source_records'] = [archive['internal_source_records'][i] for i in indexes]
         with path.open('xb') as stream:
             torch.save(partition, stream)
         files[status] = dict(archive=file_identity(path), rows=len(rows),

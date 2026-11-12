@@ -1,3 +1,7 @@
+## 2026-11-12 — MPC 内部控制状态与 reset 初始化来源
+
+新增隔离的同钟内部状态来源旁路。真实 T5 输入预检通过，实际字段资格待新的原生采集。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-internal-state-source-preflight.md)
+
 ## 2026-11-12 — MPC 371D 原生同步账本持久化
 
 真实旧 64 行回放逐位恢复 371D、24D 和掩码。新版可选账本供未来执行，现有运行沿用冻结源码。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-durable-371d-transition-journal.md)
