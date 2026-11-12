@@ -1,3 +1,7 @@
+## 2026-11-12 — 原 T5 MPC 完整首回合采集预检
+
+真实 T5 参数及 10 个来源 SHA 预检通过，归档按完整成功、失败与未结束回合分流。完整原生预算待独立批准。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-t5-first-episode-capture-preflight.md)
+
 ## 2026-11-12 — PhysX GPU 接触报告读回与左右拇指标定
 
 原生左右隔离标定分别读出 37、43 个可识别接触 pair headers。任务逐指、外部承托及附着资格仍需单独验证。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-12-physx-gpu-contact-report-readback.md)

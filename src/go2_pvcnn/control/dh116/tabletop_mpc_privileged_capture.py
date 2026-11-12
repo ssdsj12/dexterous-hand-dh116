@@ -71,11 +71,14 @@ class PreActionSample:
 class PreActionCapture:
     """Keep original values even where an independent validity source is absent."""
 
-    def __init__(self, environments, max_steps):
+    def __init__(self, environments, max_steps, *, t5_first_episodes=False):
         if type(environments) is not int or environments not in (2, 4, 6, 8):
             raise ValueError('use 2 to 8 even native environments')
-        if type(max_steps) is not int or not 1 <= max_steps <= 180:
-            raise ValueError('use at most 180 policy steps')
+        if t5_first_episodes and (environments != 8 or max_steps != 1800):
+            raise ValueError('T5 capture requires exactly 8 environments and a 1800-step cap')
+        max_budget = 1800 if t5_first_episodes else 180
+        if type(max_steps) is not int or not 1 <= max_steps <= max_budget:
+            raise ValueError(f'use at most {max_budget} policy steps')
         self.environments = environments
         self.max_steps = max_steps
         self.samples = []
@@ -281,6 +284,96 @@ def bind_camera_frames(directory, rows, environments):
     return file_identity(manifest_path)
 
 
+def read_terminal_snapshots(path, native_identity):
+    identity = file_identity(path)
+    if (native_identity['path'] != str(path.resolve())
+            or native_identity['sha256'] != identity['sha256']):
+        raise ValueError('original native first-episode terminal archive has changed')
+    return json.loads(path.read_text(encoding='utf-8')), identity
+
+
+def partition_first_episodes(archive, report, terminals, *, environments):
+    """Cross-check the native collector's first-episode outcomes against the joined ledger."""
+    rows = archive['sample_metadata']
+    episodes = report['episodes']
+    expected_keys = {str(env) for env in range(environments)}
+    if (set(episodes) != expected_keys or not set(terminals) <= expected_keys
+            or report['status'] != 'completed' or report['mode'] != 'teacher_reference_mpc'
+            or report['mpc_profile'] != 'pressure_geometry_constrained'
+            or report['native_runtime_verified'] is not True or report['ppo_updates'] != 0
+            or report['samples'] != len(rows)):
+        raise ValueError('matching completed original native MPC collection required')
+    max_ticks = _index(report['control_steps'], 'native collection steps')
+    by_env = [[] for _ in range(environments)]
+    for index, row in enumerate(rows):
+        env_id = _index(row['env_id'], 'joined environment')
+        if env_id >= environments:
+            raise ValueError('joined environment is absent from the collection')
+        by_env[env_id].append(index)
+    result = {key: [] for key in ('successful', 'failed', 'incomplete')}
+    native_successes = 0
+    for env_id, indexes in enumerate(by_env):
+        episode = episodes[str(env_id)]
+        terminal = episode['terminal']
+        physical = terminals.get(str(env_id))
+        count = max_ticks if terminal is None else _index(terminal['control_steps'], 'terminal control steps')
+        if (episode['env_id'] != env_id or episode['first_episode'] is not True
+                or episode['native_physics'] is not True or type(episode['success']) is not bool
+                or not 1 <= count <= max_ticks or len(indexes) != count
+                or (terminal is None) != (physical is None)):
+            raise ValueError('incomplete or inconsistent first-episode coverage')
+        selected = [rows[index] for index in indexes]
+        uid = selected[0]['episode_uid']
+        if (not uid or any(row['tick'] != tick or row['episode_id'] != env_id
+                or row['episode_uid'] != uid or row['grasp_style'] != episode['grasp_style']
+                or row['terminal_in_interval'] is not (terminal is not None and tick == count - 1)
+                for tick, row in enumerate(selected))):
+            raise ValueError('first-episode tick, outcome, style, or identity differs')
+        if physical is not None:
+            clock = physical['state']['clock']
+            if (physical['run_uuid'] != archive['run_uuid'] or physical['env_id'] != env_id
+                    or physical['episode_uid'] != uid or clock['terminal'] is not True
+                    or physical['action_owner'] != ACTION_OWNER
+                    or physical['counts_as_Student_success'] is not False
+                    or physical['issued_action24'] != archive['actions'][indexes[-1]].tolist()
+                    or clock['policy_step'] != count - 1
+                    or clock['sdk_step'] != selected[-1]['last_physics_step']):
+                raise ValueError('physical terminal does not match the joined final issued action')
+        if episode['success']:
+            style_audit = episode['native_contact_style_audit']
+            if (terminal is None or terminal['success'] is not True or terminal['failure'] != 0
+                    or terminal['recovered'] is not False or episode['recovered'] is not False
+                    or terminal['recorded_execution_complete'] is not True
+                    or not isinstance(style_audit, dict) or style_audit.get('style') != episode['grasp_style']):
+                raise ValueError('native success lacks a complete audited success terminal')
+            status = 'successful'
+            native_successes += 1
+        else:
+            status = 'incomplete' if terminal is None else 'failed'
+        result[status].extend(indexes)
+    if report['successful_episodes'] != native_successes:
+        raise ValueError('native successful first-episode count disagrees with its audit')
+    return {status: sorted(indexes) for status, indexes in result.items()}
+
+
+def _write_outcome_archives(output, archive, report, terminals, environments):
+    partitions = partition_first_episodes(archive, report, terminals, environments=environments)
+    metadata = archive['sample_metadata']
+    files = {}
+    for status, indexes in partitions.items():
+        path = output / f'mpc_{status}_first_episodes_unqualified.pt'
+        rows = [metadata[index] for index in indexes]
+        partition = dict(archive, sample_metadata=rows, first_episode_outcome=status,
+                         source_row_indices=indexes)
+        for name in ('observations', 'privileged_valid', 'actions', 'reference_actions'):
+            partition[name] = archive[name][indexes]
+        with path.open('xb') as stream:
+            torch.save(partition, stream)
+        files[status] = dict(archive=file_identity(path), rows=len(rows),
+                             episodes=len({row['episode_uid'] for row in rows}))
+    return files
+
+
 def finish_capture(output, recorder, contract, *, run_plan):
     """Write a separate, nonexpert artifact only after the genuine archives agree."""
     validate_contract(contract)
@@ -318,7 +411,18 @@ def finish_capture(output, recorder, contract, *, run_plan):
         action_scope='canonical actually issued TensorEnv command; SDK targets are separate native evidence',
         validity_source='TensorEnv joint q/qd prefix independently checked against task.m; other fields unqualified')
     target = output / 'mpc_privileged_pre_action_unqualified.pt'
+    outcomes = {}
+    if run_plan.get('capture_scope') == 't5_first_episodes':
+        terminal_path = raw_dir / 'terminal_snapshots.json'
+        terminals, terminal_identity = read_terminal_snapshots(terminal_path, summary['terminals'])
+        report_path = output / 'teacher_collection_report.json'
+        report = json.loads(report_path.read_text(encoding='utf-8'))
+        archive.update(legacy_collection_report=file_identity(report_path),
+                       physical_terminal_archive=terminal_identity)
+        outcomes['first_episode_outcomes'] = _write_outcome_archives(
+            output, archive, report, terminals, recorder.environments)
     with target.open('xb') as stream:
         torch.save(archive, stream)
     return dict(archive=file_identity(target), rows=len(archive['sample_metadata']),
-                valid_fields=archive['privileged_valid'].sum(dim=0).tolist(), qualified_for_bc=False)
+                valid_fields=archive['privileged_valid'].sum(dim=0).tolist(), qualified_for_bc=False,
+                **outcomes)

@@ -236,3 +236,107 @@ def test_joint_validity_compares_physical_float64_to_observation_float32():
     assert not sample.valid[1, 12]
     assert sample.valid[:, :24].sum().item() == 47
     assert not sample.valid[:, 24:].any()
+
+
+def test_reviewed_t5_first_episode_preflight_keeps_control_inputs(tmp_path, monkeypatch):
+    import scripts.collect_dh116_mpc_privileged as cli
+
+    bound_inputs = {}
+    for flag in cli.INPUTS:
+        f = tmp_path / flag[2:]
+        f.write_text(flag)
+        bound_inputs[flag] = dict(path=str(f), sha256=cli.file_identity(f)['sha256'])
+    legacy = [flag for flag in sorted(cli.FLAGS)
+              if flag not in ('--vision-sequence-context-sidecar', '--vision-mpc-state-capture')]
+    historical_tokens = [
+        *legacy, *(f'{k}={v}' for k, v in cli.REQUIRED.items()),
+        *(f'{k}={v["path"]}' for k, v in bound_inputs.items()),
+        '--bimanual-teacher-physics-audit', '--num-envs=8', '--vision-teacher-max-control-steps=1900',
+        '--vision-teacher-hold-tail-control-steps=600', '--seed=42', '--kit_args=--allow-root',
+        '--output=historical',
+    ]
+    historical = tmp_path / 't5_teacher_reference_launch.json'
+    historical.write_text(json.dumps(dict(mode='teacher', command=[
+        'bash', '/archive/scripts/python.sh', '/archive/scripts/train_dh116_tabletop_gpu_ppo.py',
+        *historical_tokens])))
+    monkeypatch.setattr(cli, 'T5_LAUNCH_SHA256', cli.file_identity(historical)['sha256'])
+    source = tmp_path / 'command.json'
+    source.write_text(json.dumps(dict(version='dh116-stage7-private-native-state-launch-v1',
+        command=['bash', 'scripts/python.sh', 'scripts/train_dh116_tabletop_gpu_ppo.py',
+            *legacy, '--vision-sequence-context-sidecar', '--vision-mpc-state-capture',
+            *(f'{k}={v}' for k, v in cli.REQUIRED.items()),
+            *(f'{k}={v["path"]}' for k, v in bound_inputs.items())],
+        bound_inputs=bound_inputs, bound_asset_dependencies=[])))
+    new = tmp_path / 'new'
+    args, _inputs, plan = cli.preflight(source, cli.file_identity(source)['sha256'], new,
+                                       t5_first_episodes=historical)
+    assert set(args) == ((set(historical_tokens) - {'--output=historical',
+        '--vision-teacher-max-control-steps=1900', '--bimanual-teacher-physics-audit'}) |
+        {f'--output={new}', '--vision-teacher-max-control-steps=1800',
+         '--vision-sequence-context-sidecar', '--vision-mpc-state-capture'})
+    assert plan['environments'] == 8 and plan['max_policy_steps'] == 1800
+    assert plan['capture_scope'] == 't5_first_episodes' and not plan['qualified_for_bc']
+    assert PreActionCapture(8, 1800, t5_first_episodes=True).max_steps == 1800
+    with pytest.raises(ValueError, match='180'):
+        PreActionCapture(8, 1800)
+    with pytest.raises(ValueError):
+        PreActionCapture(2, 1800, t5_first_episodes=True)
+    historical.write_text(historical.read_text() + ' ')
+    with pytest.raises(ValueError, match='T5.*SHA'):
+        cli.preflight(source, cli.file_identity(source)['sha256'], new,
+                      t5_first_episodes=historical)
+
+
+@pytest.mark.parametrize('fault', [None, 'raw_terminal', 'unaudited_success', 'missing_policy_tick', 'raw_tick'])
+def test_first_episode_partition_uses_native_outcome_and_complete_join(fault):
+    from go2_pvcnn.control.dh116.tabletop_mpc_privileged_capture import partition_first_episodes
+
+    style = ('pinch_thumb_index', 'tripod_thumb_index_middle', 'pinch_thumb_index')
+    rows = [dict(env_id=env, episode_uid=f'run:{env}:0', episode_id=env, tick=tick,
+                 physical_substeps=8, last_physics_step=18 + 8 * (tick + 1),
+                 terminal_in_interval=bool(tick == 1 and env in (0, 1)), grasp_style=style[env])
+            for tick in range(2) for env in range(3)]
+    report = dict(mode='teacher_reference_mpc', mpc_profile='pressure_geometry_constrained',
+                  status='completed', native_runtime_verified=True, successful_episodes=1,
+                  control_steps=2, samples=6, ppo_updates=0,
+                  episodes={str(env): dict(env_id=env, first_episode=True, native_physics=True,
+                      success=env == 0, recovered=False, grasp_style=style[env],
+                      terminal=(dict(control_steps=2, success=env == 0, failure=0 if env == 0 else 7,
+                                     recovered=False, recorded_execution_complete=True) if env < 2 else None),
+                      native_contact_style_audit=dict(style=style[env]) if env == 0 else {})
+                      for env in range(3)})
+    terminals = {str(env): dict(env_id=env, run_uuid='run', episode_uid=f'run:{env}:0',
+                 action_owner='legacy_teacher_mpc', issued_action24=[0.] * 24,
+                 counts_as_Student_success=False, state=dict(clock=dict(policy_step=1, sdk_step=34, terminal=True)))
+                 for env in range(2)}
+    if fault == 'raw_terminal':
+        terminals.pop('1')
+    if fault == 'unaudited_success':
+        report['episodes']['0']['native_contact_style_audit'] = {}
+    if fault == 'missing_policy_tick':
+        rows.pop(0)
+        report['samples'] -= 1
+    if fault == 'raw_tick':
+        terminals['0']['state']['clock']['sdk_step'] += 1
+    archive = dict(run_uuid='run', sample_metadata=rows, actions=torch.zeros(len(rows), 24))
+    if fault:
+        with pytest.raises(ValueError):
+            partition_first_episodes(archive, report, terminals, environments=3)
+    else:
+        expected = {'successful': [0, 3], 'failed': [1, 4], 'incomplete': [2, 5]}
+        assert partition_first_episodes(archive, report, terminals, environments=3) == expected
+
+
+
+def test_native_terminal_identity_matches_existing_archive_format(tmp_path):
+    from go2_pvcnn.control.dh116.tabletop_mpc_privileged_capture import (
+        file_identity, read_terminal_snapshots,
+    )
+
+    path = tmp_path / 'terminal_snapshots.json'
+    path.write_text('{}')
+    native_identity = dict(path=str(path.resolve()), sha256=file_identity(path)['sha256'])
+    assert read_terminal_snapshots(path, native_identity) == ({}, file_identity(path))
+    path.write_text('{"2":{}}')
+    with pytest.raises(ValueError, match='has changed'):
+        read_terminal_snapshots(path, native_identity)
