@@ -125,3 +125,65 @@ def test_independently_resolved_right_source_and_calibrated_range_are_enforced()
     reference["right_wire_instance_resolution"]["wire_inventory_complete"] = False
     with pytest.raises(ValueError, match="independently resolved"):
         native_depth_targets(frame, reference)
+
+
+def test_cpu_replay_uses_explicit_bounded_updates_and_keeps_unlabelled_head_fixed(tmp_path, monkeypatch):
+    import hashlib
+    import json
+    from types import SimpleNamespace
+
+    from scripts import diagnose_dh116_stereo_depth_auxiliary as diagnostic
+
+    frame, reference = sample()
+    frame.update(native_evidence=True, render_passes=1, identity=[{"env_id": 0}],
+                 depth_m=torch.full((1, 33, 65), float("nan")),
+                 valid=torch.zeros((1, 33, 65), dtype=torch.bool))
+    proof = tmp_path / "proof.json"
+    proof.write_text("{}")
+    digest = hashlib.sha256(proof.read_bytes()).hexdigest()
+    proof_metadata = {
+        "capture_artifact": {"sha256": "b" * 64},
+        "reference_artifacts": [{"sha256": "c" * 64}],
+        "cohort_sha256": "d" * 64,
+    }
+    monkeypatch.setattr(diagnostic, "load_capture", lambda _: (
+        {"frames": [frame]}, [reference], SimpleNamespace(sha256=frame["calibration_sha256"]),
+        {"min_depth_m": 0.2, "max_depth_m": 1.2}, proof_metadata,
+    ))
+    common = ["--proof", str(proof), "--proof-sha256", digest]
+    default_path = tmp_path / "default.json"
+    assert diagnostic.main([*common, "--output", str(default_path)]) == 0
+    default = json.loads(default_path.read_bytes())
+    assert default["optimizer_updates"] == 0 and "optimization" not in default
+
+    fit_path = tmp_path / "fit.json"
+    assert diagnostic.main([*common, "--output", str(fit_path), "--optimizer-steps", "2"]) == 0
+    fit = json.loads(fit_path.read_bytes())
+    assert fit["optimizer_updates"] == 2
+    assert fit["checkpoint_saved"] is False and fit["deployment_qualified"] is False
+    assert fit["reference_used_as_input"] is False and fit["native_physics_steps"] == 0
+    assert fit["environments"][0]["left"]["supervised_samples"] == 6
+    assert fit["environments"][0]["right"]["supervised_samples"] == 0
+    result = fit["optimization"]
+    assert result["scope"] == "same_archived_frame_optimizer_diagnostic"
+    assert len(result["same_frame_loss_m"]) == 3
+    assert result["same_frame_loss_m"][0] == pytest.approx(default["loss_m"])
+    assert result["same_frame_loss_m"][-1] < result["same_frame_loss_m"][0]
+    assert result["head_parameter_max_abs_change"]["left"] > 0
+    assert result["head_parameter_max_abs_change"]["right"] == 0
+    assert result["shared_backbone_first_parameter_max_abs_change"] > 0
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["default.json", "fit.json", "proof.json"]
+
+
+def test_cpu_replay_rejects_over_budget_before_loading_proof(monkeypatch, tmp_path, capsys):
+    from scripts import diagnose_dh116_stereo_depth_auxiliary as diagnostic
+
+    def invalid_lookup(_):
+        pytest.fail("over-budget CLI must fail before accessing proof")
+
+    monkeypatch.setattr(diagnostic, "file_sha256", invalid_lookup)
+    with pytest.raises(SystemExit) as error:
+        diagnostic.main(["--proof", str(tmp_path/"unused.json"), "--proof-sha256", "a"*64,
+                         "--output", str(tmp_path/"no.json"), "--optimizer-steps", "9"])
+    assert error.value.code == 2
+    assert "optimizer steps must be between 0 and 8" in capsys.readouterr().err

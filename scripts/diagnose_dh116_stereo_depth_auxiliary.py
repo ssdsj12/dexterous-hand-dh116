@@ -27,12 +27,65 @@ def _metrics(predicted, reference, valid):
     }
 
 
+def _optimize_archived_frame(model, left, right, image_valid, target, mask, steps):
+    """Fit the same CPU frame for a fixed diagnostic budget without persisting weights."""
+    sides = ("left", "right")
+    supervised = mask.any(dim=(0, 2, 3)).tolist()
+    parameters = list(model.encoder.parameters())
+    heads = [tuple(head.parameters()) for head in model.project_depth]
+    before = [[parameter.detach().clone() for parameter in head] for head in heads]
+    backbone = next(model.encoder.backbone.parameters())
+    before_backbone = backbone.detach().clone()
+    for has_labels, head in zip(supervised, heads, strict=True):
+        if has_labels:
+            parameters.extend(head)
+    learning_rate = 0.01
+    optimizer = torch.optim.SGD(parameters, lr=learning_rate)
+    losses = []
+    for _ in range(steps):
+        model.zero_grad(set_to_none=True)
+        prediction = model(left, right, image_valid)
+        loss = depth_auxiliary_loss(prediction, target)
+        if not torch.isfinite(loss):
+            raise ValueError("non-finite depth auxiliary diagnostic loss")
+        losses.append(float(loss.detach()))
+        loss.backward()
+        optimizer.step()
+    with torch.no_grad():
+        final = model(left, right, image_valid)
+        losses.append(float(depth_auxiliary_loss(final, target)))
+        head_changes = {
+            side: max(float((p - old).abs().max()) for p, old in zip(head, initial, strict=True))
+            for side, head, initial in zip(sides, heads, before, strict=True)
+        }
+        final_mask = final.valid & target.valid
+        return {
+            "scope": "same_archived_frame_optimizer_diagnostic",
+            "optimizer": "SGD",
+            "learning_rate": learning_rate,
+            "same_frame_loss_m": losses,
+            "head_parameter_max_abs_change": head_changes,
+            "shared_backbone_first_parameter_max_abs_change": float((backbone - before_backbone).abs().max()),
+            "post_update_environments": [
+                {
+                    side: _metrics(final.depth_m[index, view], target.depth_m[index, view], final_mask[index, view])
+                    for view, side in enumerate(sides)
+                }
+                for index in range(len(left))
+            ],
+        }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--proof", type=Path, required=True)
     parser.add_argument("--proof-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--optimizer-steps", type=int, default=0,
+                        help="optional same-frame CPU diagnostic updates, 0–8, without saving a model")
     args = parser.parse_args(argv)
+    if not 0 <= args.optimizer_steps <= 8:
+        parser.error("optimizer steps must be between 0 and 8")
     if file_sha256(args.proof) != args.proof_sha256:
         raise ValueError("capture proof SHA mismatch")
     capture, references, calibration, config, proof = load_capture(args.proof)
@@ -48,7 +101,8 @@ def main(argv=None):
     model = StereoDepthAuxiliary(encoder, **depth_range).eval()
     left = frame["left_rgb"].detach().requires_grad_()
     right = frame["right_rgb"].detach().requires_grad_()
-    prediction = model(left, right, torch.ones((len(left), 2), dtype=torch.bool))
+    image_valid = torch.ones((len(left), 2), dtype=torch.bool)
+    prediction = model(left, right, image_valid)
     target = native_depth_targets(frame, references[0], **depth_range)
     loss = depth_auxiliary_loss(prediction, target)
     loss.backward()
@@ -88,6 +142,11 @@ def main(argv=None):
             for index, identity in enumerate(frame["identity"])
         ],
     }
+    if args.optimizer_steps:
+        report["mode"] = "archived_native_reference_cpu_optimizer_diagnostic"
+        report["optimization"] = _optimize_archived_frame(
+            model, left.detach(), right.detach(), image_valid, target, mask, args.optimizer_steps)
+        report["optimizer_updates"] = args.optimizer_steps
     with args.output.open("x", encoding="utf-8") as output:
         json.dump(report, output, indent=2, allow_nan=False)
         output.write("\n")

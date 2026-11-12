@@ -3368,6 +3368,29 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-stereo-segmentation-mask-policy.md",
       "native_qualification": false
+    },
+    "wp1.depth-auxiliary-optimizer": {
+      "passed": 71,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_depth_auxiliary.py",
+        "tests/test_dh116_stereo_estimator.py",
+        "tests/test_dh116_stereo_wire_segmentation.py",
+        "tests/test_dh116_stereo_confidence_audit.py"
+      ],
+      "log_sha256": "05194ef91c767888c239f0a2d3ce8d6902d2e734871061ae9ce2b375f78b4058",
+      "tested_head": "9e1e7a807fde37950bc566703e49762b01687c21",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-stereo-depth-auxiliary-optimizer-diagnostic.md",
+      "native_qualification": false
     }
   }
 }

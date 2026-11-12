@@ -1,3 +1,7 @@
+## 2026-11-12 — 复用双目深度辅助头的有界监督优化
+
+71 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-stereo-depth-auxiliary-optimizer-diagnostic.md)
+
 ## 2026-11-12 — 双目分割按已验证的 Head 能力构建候选
 
 68 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-stereo-segmentation-mask-policy.md)
