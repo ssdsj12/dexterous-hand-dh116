@@ -6,7 +6,8 @@
     "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.rendering.kit",
     "--output",
     "{output}",
-    "--execute-native"
+    "--execute-native",
+    "--no-sdk-default-stage"
   ],
   "budget": {
     "environments": 1,
@@ -23,6 +24,7 @@
   },
   "inputs": {
     "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.simulation_app/isaacsim/simulation_app/simulation_app.py": "840ad13fcb3b4d8e10457809d42180b0fd807951a3e3cc153c832363fbef0bb2",
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.simulation_app/isaacsim/simulation_app/utils.py": "86dbe230f5854aa5e242381e344098369796d8479e3951088353678bdb7cd60f",
     "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/annotators.py": "8f46bc0140f1b97516b9237caa5ed960a1da7027d6d2f339eb1f4143c531324e",
     "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/orchestrator.py": "9cb3b98c0851c64a18f8e0fd2745172dd0bb08e4ae83c111a45b77be8153d599",
     "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.kit": "b4a60880219827b4843f3ec3d6f9cbad8028c1c9df588a89c1796a60b8030a92",
@@ -40,14 +42,18 @@
   "validator": {
     "artifacts": [
       "plan.json",
+      "sdk_default_stage.json",
       "app_close_returned.json"
     ],
     "equals": {
-      "app_close_returned": true,
-      "process_exit_verified": false
+      "before_probe_stage_creation": true,
+      "case": "V0",
+      "effective_create_new_stage": false,
+      "requested_create_new_stage": false,
+      "sdk_default_stage_present": false
     },
     "line_counts": {},
-    "result_file": "app_close_returned.json"
+    "result_file": "sdk_default_stage.json"
   },
   "version": 1
 }

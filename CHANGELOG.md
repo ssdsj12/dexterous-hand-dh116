@@ -1,3 +1,7 @@
+## 2026-11-12 — 相机退出隔离 SDK 默认场景
+
+V0 首次运行仍由 SDK 隐式创建场景。隔离 create_new_stage 变量并读取实际 stage 状态。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-12-render-no-sdk-default-stage.md)
+
 ## 2026-11-12 — WireSeg 配对深度持出评估
 
 新深度分片通过完整 SHA 校验。128 张独立持出图报告配对深度误差。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-paired-heldout-depth.md)

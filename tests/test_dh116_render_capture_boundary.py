@@ -86,3 +86,20 @@ def test_verified_artifacts_and_app_close_cannot_qualify_exit139():
         artifact_integrity=False, synchronized=False, optical_depth=False,
         app_close_returned=True, outer_exit_code=0,
     )["process_exit_verified"]
+
+
+def test_sdk_default_stage_option_only_changes_one_launch_config_key(tmp_path, monkeypatch):
+    import hashlib
+
+    from scripts import probe_dh116_render_lifecycle as probe
+    from scripts import run_dh116_deformx_render_smoke as smoke
+
+    kit = tmp_path / "isaaclab.python.headless.rendering.kit"
+    kit.write_bytes(b"fixed experience fixture")
+    monkeypatch.setattr(smoke, "HEADLESS_RENDERING_EXPERIENCE_SHA256",
+                        hashlib.sha256(kit.read_bytes()).hexdigest())
+    baseline, options = probe.standalone_launch_options(kit, False)
+    changed, changed_options = probe.standalone_launch_options(kit, True)
+    assert changed == {**baseline, "create_new_stage": False}
+    assert options == changed_options
+    assert "create_new_stage" not in baseline

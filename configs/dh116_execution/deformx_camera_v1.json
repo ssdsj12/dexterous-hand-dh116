@@ -6,7 +6,8 @@
     "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.rendering.kit",
     "--output",
     "{output}",
-    "--execute-native"
+    "--execute-native",
+    "--no-sdk-default-stage"
   ],
   "budget": {
     "environments": 1,
@@ -41,7 +42,8 @@
     "artifacts": [
       "plan.json",
       "app_close_returned.json",
-      "probe_stage.usda"
+      "probe_stage.usda",
+      "sdk_default_stage.json"
     ],
     "equals": {
       "app_close_returned": true,

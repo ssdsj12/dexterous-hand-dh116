@@ -5843,6 +5843,64 @@
         "report": "docs/superpowers/reports/2026-11-12-wireseg-paired-heldout-depth.md",
         "report_source_commit": "23ebba82d4dc616eaf66477e3a8c72ab0ad2039e"
       }
+    },
+    "flex.f6-camera-no-default-stage": {
+      "title": "相机退出隔离 SDK 默认场景",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-camera-native-recipes"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_render_capture_boundary.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "c2987f8eeddcf782c924574b138d7967cf0903610e2849774e8e6dbe1655b19d",
+        "tested_head": "9638a1f1b33a4a1e3d92655c762a2d476ce81f59",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "prior_render_outer_exit_code": -11,
+        "single_config_change": "create_new_stage=false",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-render-no-sdk-default-stage.md",
+        "report_source_commit": "2a353872ce9c8322cd28eec4fa65cfe7c8c47c74"
+      },
+      "last_result": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_render_capture_boundary.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "c2987f8eeddcf782c924574b138d7967cf0903610e2849774e8e6dbe1655b19d",
+        "tested_head": "9638a1f1b33a4a1e3d92655c762a2d476ce81f59",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "prior_render_outer_exit_code": -11,
+        "single_config_change": "create_new_stage=false",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-render-no-sdk-default-stage.md",
+        "report_source_commit": "2a353872ce9c8322cd28eec4fa65cfe7c8c47c74"
+      }
     }
   },
   "execution_target": {

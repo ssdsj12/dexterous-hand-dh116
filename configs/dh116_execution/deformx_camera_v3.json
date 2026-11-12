@@ -6,7 +6,8 @@
     "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.rendering.kit",
     "--output",
     "{output}",
-    "--execute-native"
+    "--execute-native",
+    "--no-sdk-default-stage"
   ],
   "budget": {
     "environments": 1,
@@ -43,7 +44,8 @@
       "app_close_returned.json",
       "probe_stage.usda",
       "plane-boundary.json",
-      "plane-single.npz"
+      "plane-single.npz",
+      "sdk_default_stage.json"
     ],
     "equals": {
       "cameras.single.depth_model": "pinhole_native_distance_to_camera_and_distance_to_image_plane",

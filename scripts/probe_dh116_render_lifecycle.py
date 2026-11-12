@@ -220,12 +220,19 @@ def _standalone_capture(app, context, case, output):
     app.update()
 
 
-def _standalone(case, experience, output):
+def standalone_launch_options(experience, no_sdk_default_stage):
+    config, options = app_launch_options(experience)
+    config["extra_args"] = [*config["extra_args"], "--enable", "isaacsim.core.nodes"]
+    if no_sdk_default_stage:
+        config["create_new_stage"] = False
+    return config, options
+
+
+def _standalone(case, experience, output, *, no_sdk_default_stage):
     from go2_pvcnn.control.dh116.tabletop_stereo_native import native_instance_lock
     from isaacsim import SimulationApp
 
-    config, options = app_launch_options(experience)
-    config["extra_args"] = [*config["extra_args"], "--enable", "isaacsim.core.nodes"]
+    config, options = standalone_launch_options(experience, no_sdk_default_stage)
     with native_instance_lock():
         app = SimulationApp(config, **options)
         try:
@@ -234,6 +241,16 @@ def _standalone(case, experience, output):
 
             if carb.settings.get_settings().get_as_bool("/app/fastShutdown"):
                 raise RuntimeError("unexpected fast shutdown mode")
+            if no_sdk_default_stage:
+                effective = app.config.get("create_new_stage")
+                stage_present = bool(omni.usd.get_context().get_stage())
+                _write_json(output / "sdk_default_stage.json", {
+                    "case": case, "requested_create_new_stage": False,
+                    "effective_create_new_stage": effective, "sdk_default_stage_present": stage_present,
+                    "before_probe_stage_creation": True,
+                })
+                if effective is not False or stage_present:
+                    raise RuntimeError("SDK default stage suppression did not take effect")
             if case != "V0":
                 _standalone_capture(app, omni.usd.get_context(), case, output)
         finally:
@@ -411,9 +428,13 @@ def main():
     parser.add_argument("--native-task", type=Path,
                         default=ROOT / "configs/dh116_training/stereo_native_task_v1.json")
     parser.add_argument("--execute-native", action="store_true")
+    parser.add_argument("--no-sdk-default-stage", action="store_true",
+                        help="V0–V3 only: suppress SimulationApp's default empty stage")
     parser.add_argument("--audit-outer-exit", type=Path,
                         help="audit existing output against an independently recorded child exit code")
     args = parser.parse_args()
+    if args.no_sdk_default_stage and args.case == "V4":
+        parser.error("--no-sdk-default-stage does not change the V4 task bootstrap")
     if args.audit_outer_exit is not None:
         if args.execute_native:
             parser.error("--audit-outer-exit cannot be combined with --execute-native")
@@ -433,6 +454,8 @@ def main():
         "capture_budget": 2 if args.case == "V4" else int(args.case != "V0"),
         "legacy_generator_used": False,
     }
+    if args.no_sdk_default_stage:
+        plan["requested_create_new_stage"] = False
     if not args.execute_native:
         print(json.dumps(plan, indent=2, sort_keys=True))
         return
@@ -442,7 +465,8 @@ def main():
         if args.case == "V4":
             _run_task(output, args, calibration)
         else:
-            _standalone(args.case, args.experience, output)
+            _standalone(args.case, args.experience, output,
+                        no_sdk_default_stage=args.no_sdk_default_stage)
     except Exception:
         _write_json(output / "failure.json", {"traceback": traceback.format_exc()})
         raise
