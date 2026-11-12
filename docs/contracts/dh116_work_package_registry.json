@@ -5011,43 +5011,60 @@
         "flex.f3-isaac-rigid",
         "flex.f4-cooked-pad-sdf"
       ],
-      "status": "blocked",
+      "status": "passed",
       "last_native_attempt": {
         "executor": "native_bounded",
-        "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe",
-        "batch_id": "eb31c79-thumb-once",
+        "tested_head": "3f065c7eb44ce597d8fd38f3d7726df5944cc231",
+        "batch_id": "continuation-p0-corrected-once",
         "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle",
         "native_qualification": true,
         "native_execution_performed": true,
-        "command_spec_sha256": "8b5a3a4efed8ad69295100ed5946935f779112cc3c023b8213f3936118621f30",
-        "code_config_sha256": "4c750dc69cd92fe3962caca7751d9e91876f668a19114c862316ad24dfe93786",
-        "launch_argv_sha256": "c1ccd5bf06710c0b07c939a5cc5d302fd963d31e78f3484ee9d5e613ffb27b62",
+        "command_spec_sha256": "1beb31b45c63aa1fb60eeb2a63652ea9009088d40d2c6ece7389d72207013d73",
+        "code_config_sha256": "0918aca3f52b88c3fe24fb6d3d457eed81d9f8cb5f272125f9e453debc7b69fb",
+        "launch_argv_sha256": "96e0c524c080c9802b9727d09b7297d11e4c075c619dc2f9e4c247fbdc385a15",
         "debugger": "gdb_on_segv",
         "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
-        "debugger_wrapper_sha256": "19cb75a7b1f5963a88a606fc796ee0d4a6efb6591432a028df1cd1ddaac56c08",
+        "debugger_wrapper_sha256": "a1d18d1751890659a303dab574697cfcd49eafa773df04f5cb2ecf6b0e2afc1b",
         "exit_code": 0,
         "outer_exit_code": 0,
-        "log_sha256": "fb7e09836db2a8ddd8405d230c53cfdf1dff3599869e53570e9bf5742fdbd7c7",
-        "duration_seconds": 35.348927012993954,
+        "log_sha256": "412be78388c5748411521b30f33d0e957ee989dee415ce9f54e50cd643705684",
+        "duration_seconds": 32.02661002299283,
         "native_lock_observed": true,
         "debugger_status_verified": true,
         "debugger_backtrace_captured": false,
         "debugger_inferior_exit_code": 0,
         "debugger_inferior_signal": null,
         "artifact_sha256": {
-          "plan.json": "8181f68e4aca6954c54c8d71e50eec853f6530c144c3980bb970a603e06d3c8f",
-          "physics.jsonl": "e3ff29b703f29474222ecfd033eeba97a6ac2ad7e36be6713fd5e6653d6faf7b",
-          "result.json": "e42fe05956551585a770f8d6f97f7a48d1bb36142ed12cb3953306de9653d476",
-          "ownership.jsonl": "3a5c0fad3c35da2db73be52f2c481a3229f98f96c2ccd63bef84aae7342aa846",
-          "shutdown_complete.json": "e505ec9622a098139613b5ca4257f11ba02f73c71cadf1b4f431a5fb76614fbb"
+          "plan.json": "2d0f5d2725737e38e3fa11f960fa59e5db913cf699aedb9405169483b9c290a1",
+          "physics.jsonl": "c20be91cfcb8e4b7855863244fa1582d68275d33e812c9e78cd83bb143fc66b8",
+          "result.json": "97f2c3e4ca2cf5d477bdc65baf242ac18fd540666ea9f11034c954e36dc4a784",
+          "ownership.jsonl": "3802e2297b3973beabcca293692dbb44307a058592012638d9f2ef3226c6726f",
+          "shutdown_complete.json": "3c7e94596f424fc209b0283d77768d40c42eef8427da58f014d5f0ec21d6648f"
         },
         "ledger_counts": {
-          "physics.jsonl": 240
+          "physics.jsonl": 238
         },
-        "result_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+        "physics_clock": {
+          "sdk_initial_step": 0,
+          "sdk_after_setup_step": 2,
+          "sdk_first_measurement_step": 3,
+          "sdk_last_measurement_step": 240,
+          "sdk_final_step": 240,
+          "setup_steps": 2,
+          "measured_steps": 238,
+          "total_steps": 240
+        },
+        "physics_budget": {
+          "initialization_physics_steps": 2,
+          "warmup_physics_steps": 0,
+          "measurement_physics_steps": 238,
+          "other_physics_advancing_steps": 0,
+          "total_physics_steps": 240
+        },
+        "result_sha256": "460ce27e089ae3178b912dd22e72286122c4eee4d11769b154ef27051d0dd6ca",
         "native_physics_validated": true,
         "cpu_regression": {
-          "passed": 6,
+          "passed": 25,
           "failed": 0,
           "skipped": 0,
           "exit_code": 0,
@@ -5060,8 +5077,8 @@
             "no:cacheprovider",
             "tests/test_dh116_deformx_thumb_contact.py"
           ],
-          "log_sha256": "c6d88cabd45bb56945545a34b3ad0da1cbc47318e073e6e98e913c682037a2b9",
-          "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe"
+          "log_sha256": "af1e065f149be7662a01db8294a73db38b17a92b3733caf81afb6f1b6851cdb5",
+          "tested_head": "3f065c7eb44ce597d8fd38f3d7726df5944cc231"
         },
         "status": "passed",
         "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md"
@@ -5158,40 +5175,57 @@
       ],
       "last_result": {
         "executor": "native_bounded",
-        "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe",
-        "batch_id": "eb31c79-thumb-once",
+        "tested_head": "3f065c7eb44ce597d8fd38f3d7726df5944cc231",
+        "batch_id": "continuation-p0-corrected-once",
         "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle",
-        "native_qualification": false,
+        "native_qualification": true,
         "native_execution_performed": true,
-        "command_spec_sha256": "8b5a3a4efed8ad69295100ed5946935f779112cc3c023b8213f3936118621f30",
-        "code_config_sha256": "4c750dc69cd92fe3962caca7751d9e91876f668a19114c862316ad24dfe93786",
-        "launch_argv_sha256": "c1ccd5bf06710c0b07c939a5cc5d302fd963d31e78f3484ee9d5e613ffb27b62",
+        "command_spec_sha256": "1beb31b45c63aa1fb60eeb2a63652ea9009088d40d2c6ece7389d72207013d73",
+        "code_config_sha256": "0918aca3f52b88c3fe24fb6d3d457eed81d9f8cb5f272125f9e453debc7b69fb",
+        "launch_argv_sha256": "96e0c524c080c9802b9727d09b7297d11e4c075c619dc2f9e4c247fbdc385a15",
         "debugger": "gdb_on_segv",
         "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
-        "debugger_wrapper_sha256": "19cb75a7b1f5963a88a606fc796ee0d4a6efb6591432a028df1cd1ddaac56c08",
+        "debugger_wrapper_sha256": "a1d18d1751890659a303dab574697cfcd49eafa773df04f5cb2ecf6b0e2afc1b",
         "exit_code": 0,
         "outer_exit_code": 0,
-        "log_sha256": "fb7e09836db2a8ddd8405d230c53cfdf1dff3599869e53570e9bf5742fdbd7c7",
-        "duration_seconds": 35.348927012993954,
+        "log_sha256": "412be78388c5748411521b30f33d0e957ee989dee415ce9f54e50cd643705684",
+        "duration_seconds": 32.02661002299283,
         "native_lock_observed": true,
         "debugger_status_verified": true,
         "debugger_backtrace_captured": false,
         "debugger_inferior_exit_code": 0,
         "debugger_inferior_signal": null,
         "artifact_sha256": {
-          "plan.json": "8181f68e4aca6954c54c8d71e50eec853f6530c144c3980bb970a603e06d3c8f",
-          "physics.jsonl": "e3ff29b703f29474222ecfd033eeba97a6ac2ad7e36be6713fd5e6653d6faf7b",
-          "result.json": "e42fe05956551585a770f8d6f97f7a48d1bb36142ed12cb3953306de9653d476",
-          "ownership.jsonl": "3a5c0fad3c35da2db73be52f2c481a3229f98f96c2ccd63bef84aae7342aa846",
-          "shutdown_complete.json": "e505ec9622a098139613b5ca4257f11ba02f73c71cadf1b4f431a5fb76614fbb"
+          "plan.json": "2d0f5d2725737e38e3fa11f960fa59e5db913cf699aedb9405169483b9c290a1",
+          "physics.jsonl": "c20be91cfcb8e4b7855863244fa1582d68275d33e812c9e78cd83bb143fc66b8",
+          "result.json": "97f2c3e4ca2cf5d477bdc65baf242ac18fd540666ea9f11034c954e36dc4a784",
+          "ownership.jsonl": "3802e2297b3973beabcca293692dbb44307a058592012638d9f2ef3226c6726f",
+          "shutdown_complete.json": "3c7e94596f424fc209b0283d77768d40c42eef8427da58f014d5f0ec21d6648f"
         },
         "ledger_counts": {
-          "physics.jsonl": 240
+          "physics.jsonl": 238
         },
-        "result_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+        "physics_clock": {
+          "sdk_initial_step": 0,
+          "sdk_after_setup_step": 2,
+          "sdk_first_measurement_step": 3,
+          "sdk_last_measurement_step": 240,
+          "sdk_final_step": 240,
+          "setup_steps": 2,
+          "measured_steps": 238,
+          "total_steps": 240
+        },
+        "physics_budget": {
+          "initialization_physics_steps": 2,
+          "warmup_physics_steps": 0,
+          "measurement_physics_steps": 238,
+          "other_physics_advancing_steps": 0,
+          "total_physics_steps": 240
+        },
+        "result_sha256": "460ce27e089ae3178b912dd22e72286122c4eee4d11769b154ef27051d0dd6ca",
         "native_physics_validated": true,
         "cpu_regression": {
-          "passed": 6,
+          "passed": 25,
           "failed": 0,
           "skipped": 0,
           "exit_code": 0,
@@ -5204,21 +5238,12 @@
             "no:cacheprovider",
             "tests/test_dh116_deformx_thumb_contact.py"
           ],
-          "log_sha256": "c6d88cabd45bb56945545a34b3ad0da1cbc47318e073e6e98e913c682037a2b9",
-          "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe"
+          "log_sha256": "af1e065f149be7662a01db8294a73db38b17a92b3733caf81afb6f1b6851cdb5",
+          "tested_head": "3f065c7eb44ce597d8fd38f3d7726df5944cc231"
         },
-        "status": "blocked",
-        "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md",
-        "reason": "本批每侧240条接触账本另有2个SDK真实初始化步，实际242/侧、合计484，超出批准480共4步。接触及自然退出技术证据保留，预算合规资格撤回；修复后需新冻结指纹/另行批准，不得重跑旧版本。",
-        "budget_compliance": false,
-        "contact_and_exit_evidence_valid": true,
-        "actual_setup_physics_steps": 2,
-        "actual_measured_physics_steps": 240,
-        "actual_total_physics_steps": 242,
-        "approved_total_physics_steps": 240,
-        "audit_report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md"
-      },
-      "reason": "本批每侧240条接触账本另有2个SDK真实初始化步，实际242/侧、合计484，超出批准480共4步。接触及自然退出技术证据保留，预算合规资格撤回；修复后需新冻结指纹/另行批准，不得重跑旧版本。"
+        "status": "passed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md"
+      }
     },
     "flex.f4-right-contact-native": {
       "title": "右拇指与柔性杆原生接触",

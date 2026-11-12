@@ -1,3 +1,7 @@
+## 2026-11-12 — 左拇指与柔性杆原生接触
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md)。
+
 ## 2026-11-12 — P0 corrected thumb clock and contact proof
 
 修正配方显式计入初始化与测量，独立重读 SDK/rod 时钟、接触节点和关闭记录；每侧 240 步、串行最多 480 步，尚未执行新的原生复验。历史超预算证据保留，Pinch/Tripod/Power 不获资格。 Ubuntu CPU 回归 78 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-independent-budget-proof.md)
