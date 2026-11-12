@@ -1,3 +1,7 @@
+## 2026-11-12 — PhysX v3 原生自然退出与全新实例重启
+
+原生两轮均完整记录 240 个 480 Hz 物理步，并自然退出码 0。该结果仅授予关闭与重启资格。 Ubuntu CPU 回归 65 项通过。[报告](docs/superpowers/reports/2026-11-12-physx-v3-native-shutdown-pass.md)
+
 ## 2026-11-12 — 复用双目深度辅助头的有界监督优化
 
 71 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-stereo-depth-auxiliary-optimizer-diagnostic.md)

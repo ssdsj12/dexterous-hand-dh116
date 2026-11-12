@@ -3391,6 +3391,42 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-stereo-depth-auxiliary-optimizer-diagnostic.md",
       "native_qualification": false
+    },
+    "wp4.shutdown-native": {
+      "passed": 65,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_shutdown_validation.py",
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_physx_polled_contact_audit.py"
+      ],
+      "log_sha256": "cb5a70f85a5cd2ba73229a1c9280fc07d5c1ea4e0d339df9dd4cbcf57c97d189",
+      "tested_head": "b2f5d84ff5e3f9d87d5cd24ba55a3f4edb6f8ca6",
+      "native_qualification": true,
+      "qualification_scope": "isolated_physx_shutdown_restart_only",
+      "native_instances": 2,
+      "physical_hz": 480,
+      "physical_steps_per_instance": 240,
+      "initial_raw_sha256": "ad645bc234f72298171164be456004bf8a76611517af7aa7d15c5c8966a50116",
+      "restart_raw_sha256": "3e57bafa1c372d0eed5185b8cada41cb982c2aa09cbc2fd8f8f0d985f85ac003",
+      "verification_marker_sha256": "a33ec3726252a3ac08607fc4b0825e02291679a5f7dbf7b6032472b8476c46c3",
+      "child_exit_codes": [
+        0,
+        0
+      ],
+      "outer_exit_code": 0,
+      "contact_source_qualified": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-physx-v3-native-shutdown-pass.md",
+      "report_source_commit": "281417d09672f5c5a357f7daf509d67ff8b3118a"
     }
   }
 }
