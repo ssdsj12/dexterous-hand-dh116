@@ -6224,6 +6224,39 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "status": "passed",
+      "stage": "cpu_verified",
+      "report": "docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md",
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "tested_head": "0477b66bceddf0048550864c4fd12e566135fa8d",
+      "log_sha256": "a8a4097bc7aa0fd53df7649dd32cf731b5ac80c8907ceac64577ea8712ff39ec",
+      "red_log_sha256": "0c2948663c8008b4a26fe9abf5d8dd7a6c7678e59001db4cb6b0c82ad8e02045",
+      "real_gdb_fixture": true,
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_failures_retained": 2,
+      "audit_sha256": "ca49b493330aebd6f0a933340c39c08493e22468177dd0bb1c2dba98bc6f6095",
+      "package": "flex.f6-camera-c5-debugger-output-binding",
+      "commit": "7e02ed81332ea7368904c10f7cc13bb1b064061a",
+      "parent": "0477b66bceddf0048550864c4fd12e566135fa8d",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_c5_pinch_native_outcome.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md",
+        "scripts/dh116_camera_c5_debugger.py",
+        "scripts/run_dh116_camera_c5_work_packages.py",
+        "tests/test_dh116_camera_c5_ownership.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
