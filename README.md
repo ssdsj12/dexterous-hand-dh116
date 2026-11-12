@@ -1,3 +1,7 @@
+## 2026-11-12 — Free rod left Pinch contact candidate only
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-free-pinch-left-candidate-native.md)。
+
 ## 2026-11-12 — Camera C5 telemetry holder lifecycle
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c5.md)。

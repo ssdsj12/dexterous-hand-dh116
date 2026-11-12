@@ -6937,6 +6937,53 @@
       },
       "status": "failed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f6-camera-c5.md"
+    },
+    "flex.f4-free-pinch-left-candidate-native": {
+      "executor": "native_bounded",
+      "tested_head": "1e2ab725cdbccdea7e6210fa4dfe29caeac27420",
+      "batch_id": "continuation-free-pinch-once",
+      "qualification_scope": "free_pinch_contact_candidate_only",
+      "native_qualification": false,
+      "native_execution_performed": true,
+      "command_spec_sha256": "49084203742e4ff3487eeb1305fde2a342204edc06ecd34d7b4157bec38685d4",
+      "code_config_sha256": "d0ec5e2f6146c82e637331acd8dac173fd46cc80425e769578d36e7ce98273de",
+      "launch_argv_sha256": "f16319e98610ca3b18833b17388cf34c88ee173837e7f6389eab13d30d9cd5df",
+      "debugger": "gdb_on_segv",
+      "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
+      "debugger_wrapper_sha256": "d82ebcad98ced60614a140f60dad4316d54b18df9858cfbe845c04cb66f6da9a",
+      "exit_code": 255,
+      "outer_exit_code": 255,
+      "log_sha256": "8fa58be7b169b0d3218b4b49ef67d38f5674479b3ba6b98c09d016d853bb91b7",
+      "duration_seconds": 33.041884151054546,
+      "native_lock_observed": true,
+      "debugger_status_verified": true,
+      "debugger_backtrace_captured": true,
+      "debugger_inferior_exit_code": null,
+      "debugger_inferior_signal": 11,
+      "blocker_kind": "failed_native",
+      "result_sha256": "601652996a62e791edb49b0b75f3d4815be36090903308872ad919a319bacefb",
+      "native_physics_validated": false,
+      "cpu_regression": {
+        "passed": 39,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_scheduler.py",
+          "tests/test_deformable_grasp_runtime.py",
+          "tests/test_dh116_contact_material.py"
+        ],
+        "log_sha256": "30f2445797d9b081efaa312ded2d65a4ea6cf8957e046bb7e1a8eb2b9cc0e998",
+        "tested_head": "1e2ab725cdbccdea7e6210fa4dfe29caeac27420"
+      },
+      "status": "failed",
+      "report": "docs/superpowers/reports/dh116-managed-flex.f4-free-pinch-left-candidate-native.md"
     }
   }
 }
