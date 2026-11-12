@@ -1,3 +1,7 @@
+## 2026-11-12 — 10 个原生凸包 GPU SDF 烘焙与显式注册
+
+10 个实际凸包使用 1 mm 体素烘焙并在同一 RopeBatch 注册；未推进物理或验证接触力。 Ubuntu CPU 回归 17 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-pad-sdf-registration.md)
+
 ## 2026-11-12 — F6 渲染自然退出崩溃 C++ 回溯
 
 冻结 drop 入口的 GDB 首次 SIGSEGV 栈指向 AppWindow Python 绑定与 Carb，独立于 F3 PhysX Tensor。 Ubuntu CPU 回归 3 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-render-appwindow-backtrace.md)
