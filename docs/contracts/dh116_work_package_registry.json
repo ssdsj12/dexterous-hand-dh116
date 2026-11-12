@@ -3409,6 +3409,85 @@
         "report": "docs/superpowers/reports/2026-11-12-teacher-wrap-local-fd.md",
         "report_source_commit": "2101d8dd7dd3c99b3b91ff00569464aa5353f28c"
       }
+    },
+    "flex.f5-wireseg-ingestion": {
+      "title": "WireSeg-36K 数据接入与单目诊断",
+      "executor": "gated",
+      "dependencies": [],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 33,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_stereo_wire_segmentation.py",
+          "tests/test_dh116_stereo_depth_auxiliary.py"
+        ],
+        "log_sha256": "b9a22e520212468f8e952ee6f8a4e429a9002c22e1d487dcaf3f53c09ea15d58",
+        "tested_head": "4ef3faca8550a6c6280a05f4622a91bf5deb2bf1",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "bounded_actual_wireseg_rows_and_monocular_cpu_optimization",
+        "hf_revision": "1dadc86f4e988a015cd9fd02b6dfd16c11c9c40b",
+        "full_download_verified": false,
+        "actual_rows": 4,
+        "actual_metric_depth_pairs": 2,
+        "actual_segmentation_steps": 1,
+        "metric_depth_training_steps": 0,
+        "audit_sha256": "62caa30ef0ff4b1d63e4d6808afff410f1939ab00f4b76fc56ca4bf7d51a2fb8",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-ingestion.md",
+        "report_source_commit": "8b93c96cc6dd253b48f6b31230b4e8c67c9c36b1"
+      },
+      "last_result": {
+        "passed": 33,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_stereo_wire_segmentation.py",
+          "tests/test_dh116_stereo_depth_auxiliary.py"
+        ],
+        "log_sha256": "b9a22e520212468f8e952ee6f8a4e429a9002c22e1d487dcaf3f53c09ea15d58",
+        "tested_head": "4ef3faca8550a6c6280a05f4622a91bf5deb2bf1",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "bounded_actual_wireseg_rows_and_monocular_cpu_optimization",
+        "hf_revision": "1dadc86f4e988a015cd9fd02b6dfd16c11c9c40b",
+        "full_download_verified": false,
+        "actual_rows": 4,
+        "actual_metric_depth_pairs": 2,
+        "actual_segmentation_steps": 1,
+        "metric_depth_training_steps": 0,
+        "audit_sha256": "62caa30ef0ff4b1d63e4d6808afff410f1939ab00f4b76fc56ca4bf7d51a2fb8",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-ingestion.md",
+        "report_source_commit": "8b93c96cc6dd253b48f6b31230b4e8c67c9c36b1"
+      }
+    },
+    "flex.f5-wireseg-pretraining": {
+      "title": "WireSeg-36K 正式预训练与独立评估",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f5-wireseg-ingestion"
+      ],
+      "status": "blocked",
+      "reason": "约 97.3 GB 主数据未完成逐 blob 校验，持出集评估及正式批量训练待完整数据和训练预算。"
     }
   },
   "execution_target": {

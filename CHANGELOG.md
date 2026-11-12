@@ -1,3 +1,7 @@
+## 2026-11-12 — WireSeg-36K 数据接入与单目诊断
+
+柔性主线 F5 的数据读取及共享视觉骨干诊断已验证。现有证据为 4 张样本、2 对深度与 1 次 CPU 分割更新。 Ubuntu CPU 回归 33 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-ingestion.md)
+
 ## 2026-11-12 — 握式局部可达性有限差分复查
 
 原碰撞验证后两手最大指腹间距改善至左 1.899、右 0.950 mm。12 个候选均未通过完整握式筛选。 Ubuntu CPU 回归 219 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wrap-local-fd.md)
