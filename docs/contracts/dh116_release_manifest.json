@@ -4816,6 +4816,55 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 78,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "946fd91d1c467c529df3bd8e1c430946f8a8cfbc79bd4be87069b42dc0de94ba",
+      "tested_head": "2ef7f90ed9af9039dd32fb197063040ae11996f3",
+      "stage": "cpu_verified",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "physics_steps": 0,
+      "ppo_updates": 0,
+      "evaluation_episodes": 0,
+      "remaining_blockers": [
+        "corrected SHA-bound batch authorization",
+        "native budget/contact/shutdown validation"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-independent-budget-proof.md",
+      "report_source_commit": "47e5a8277c3cd371655bc72f2bb735d9fa966161",
+      "package": "flex.f4-independent-budget-proof",
+      "commit": "0b053b2991587e9332731fd99e45adbeb829626b",
+      "parent": "2ef7f90ed9af9039dd32fb197063040ae11996f3",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_execution/deformx_thumb_left_lifecycle_v2.json",
+        "configs/dh116_execution/deformx_thumb_right_lifecycle_v2.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-deformx-thumb-independent-budget-proof.md",
+        "scripts/run_dh116_work_packages.py",
+        "scripts/verify_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
