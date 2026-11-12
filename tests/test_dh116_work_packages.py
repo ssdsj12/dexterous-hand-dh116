@@ -259,3 +259,53 @@ def test_r0_training_does_not_require_r1_r2_contact_qualification():
     assert 'wp4.contact-native' not in packages['wp3.actor-bc-r0']['dependencies']
     assert packages['wp3.actor-bc-r0']['executor'] == 'gated'
     assert 'wp4.contact-native' in packages['wp3.frozen-eval']['dependencies']
+
+
+@pytest.fixture
+def scoped_relay(relay_cli):
+    registry = relay_cli.registry()
+    packages = registry['packages']
+    packages['solver'] = dict(packages['wp1'], title='Build future solver')
+    packages['rigid'] = dict(title='Existing rigid acceptance', executor='gated',
+                             status='blocked', dependencies=['wp1'], reason='needs native evidence')
+    packages['flexible'] = dict(title='Future flexible acceptance', executor='gated',
+                                status='blocked', dependencies=['solver'])
+    registry['execution_target'] = dict(name='现有刚性任务完整闭环（复用原环境，不重新建模）',
+                                        package='rigid', deferred={'solver': 'future CUDA backend',
+                                                                     'flexible': 'future task'})
+    write_json(relay_cli.root / scheduler.REGISTRY, registry)
+    git(relay_cli.root, 'add', scheduler.REGISTRY)
+    git(relay_cli.root, 'commit', '-qm', 'configure scope')
+    git(relay_cli.root, 'update-ref', scheduler.TRACKING_REF, relay_cli.head())
+    return relay_cli
+
+
+def test_current_plan_keeps_future_solver_out_of_rigid_queue(scoped_relay, capsys):
+    assert scheduler.main(['--plan']) == 0
+    current = json.loads(capsys.readouterr().out)
+    assert current['execution_target']['package'] == 'rigid'
+    assert current['ready'] == ['wp1']
+    assert current['blocked'] == {'rigid': 'needs native evidence'}
+    assert current['deferred'] == {'solver': 'future CUDA backend', 'flexible': 'future task'}
+
+    assert scheduler.main(['--plan', '--scope', 'all']) == 0
+    full = json.loads(capsys.readouterr().out)
+    assert full['ready'] == ['wp1', 'solver']
+    assert 'flexible' in full['blocked']
+
+
+def test_scoped_run_never_executes_ready_future_solver(scoped_relay):
+    assert scheduler.main(['--run', '--limit', '3']) == 0
+    assert [entry['package'] for entry in scoped_relay.pending()] == ['wp1']
+    assert scoped_relay.registry()['packages']['solver']['status'] == 'pending'
+
+
+@pytest.mark.parametrize('deferred', [{'wp1': 'cannot exclude a real dependency'},
+                                     {'unknown': 'not registered'},
+                                     {'solver': '   '}])
+def test_registry_rejects_invalid_scope_without_hiding_dependencies(scoped_relay, deferred):
+    registry = scoped_relay.registry()
+    registry['execution_target']['deferred'] = deferred
+    write_json(scoped_relay.root / scheduler.REGISTRY, registry)
+    with pytest.raises(ValueError, match='deferred'):
+        scoped_relay.registry()

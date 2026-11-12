@@ -52,7 +52,8 @@
       "title": "左右原生 RGB 与实例 ID 同步资格",
       "executor": "gated",
       "dependencies": [
-        "wp1.sample-retention"
+        "wp1.sample-retention",
+        "wp4.shutdown-native"
       ],
       "status": "blocked",
       "reason": "8 初态同步采集需独立批准"
@@ -158,7 +159,8 @@
       "executor": "gated",
       "dependencies": [
         "wp3.cpu-contract",
-        "wp3.mpc-sync-prepare"
+        "wp3.mpc-sync-prepare",
+        "wp4.shutdown-native"
       ],
       "status": "blocked",
       "reason": "独立采集审批及合格原生数据缺失"
@@ -720,7 +722,8 @@
       "executor": "gated",
       "dependencies": [
         "wp6.bc-dagger-ppo",
-        "wp6.independent-proof"
+        "wp6.independent-proof",
+        "orchestration.existing-rigid-scope"
       ],
       "status": "blocked",
       "reason": "缺合格刚性代理 Student；二指和三指各需 100 个独立初态并批准原生预算"
@@ -914,6 +917,63 @@
         "report": "docs/superpowers/reports/2026-11-12-physx-sampling-handle-lifetime.md",
         "native_qualification": false
       }
+    },
+    "orchestration.existing-rigid-scope": {
+      "title": "现有刚性任务完整闭环（复用原环境，不重新建模）",
+      "executor": "prepared",
+      "dependencies": [
+        "orchestration.native-gate-split"
+      ],
+      "tests": [
+        "tests/test_dh116_work_packages.py"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 27,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "8e576034ac639d3762bc886fe7cb973a0ac88d317ce8eb50d9d50a0c4f209e0a",
+        "tested_head": "75d337e8c2c5c7a21d60e96992b41df2ef7cc185",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-existing-solid-cylinder-execution-scope.md",
+        "native_qualification": false,
+        "execution_target": {
+          "name": "现有刚性任务完整闭环（复用原环境，不重新建模）",
+          "package": "wp6.rigid-native-final",
+          "deferred": {
+            "wp5.cpu-source-check": "等待真实柔性后端，保留原状态和证据",
+            "wp5.source-payload": "等待真实柔性后端，保留原状态和证据",
+            "wp5.source": "等待真实柔性后端，保留原状态和证据",
+            "wp5.build": "等待真实柔性后端，保留原状态和证据",
+            "wp5.solver-native": "等待真实柔性后端，保留原状态和证据",
+            "wp2.qualified-labels": "等待真实柔性后端，保留原状态和证据",
+            "wp6.deformable-native-final": "等待真实柔性后端，保留原状态和证据"
+          }
+        }
+      }
+    }
+  },
+  "execution_target": {
+    "name": "现有刚性任务完整闭环（复用原环境，不重新建模）",
+    "package": "wp6.rigid-native-final",
+    "deferred": {
+      "wp5.cpu-source-check": "等待真实柔性后端，保留原状态和证据",
+      "wp5.source-payload": "等待真实柔性后端，保留原状态和证据",
+      "wp5.source": "等待真实柔性后端，保留原状态和证据",
+      "wp5.build": "等待真实柔性后端，保留原状态和证据",
+      "wp5.solver-native": "等待真实柔性后端，保留原状态和证据",
+      "wp2.qualified-labels": "等待真实柔性后端，保留原状态和证据",
+      "wp6.deformable-native-final": "等待真实柔性后端，保留原状态和证据"
     }
   }
 }

@@ -105,6 +105,42 @@ def work_queue(packages):
     return dict(ready=ready, needs_prepared_changes=prepared, blocked=blocked)
 
 
+def execution_scope(registry):
+    packages = registry['packages']
+    if 'execution_target' not in registry:
+        return packages, {}
+    target = registry['execution_target']
+    if (not isinstance(target, dict) or target.keys() != {'name', 'package', 'deferred'}
+            or not isinstance(target['name'], str) or not target['name'].strip()
+            or not isinstance(target['package'], str) or target['package'] not in packages):
+        raise ValueError('execution_target requires a name and registered package')
+    deferred = target['deferred']
+    if (not isinstance(deferred, dict) or any(name not in packages or not isinstance(reason, str)
+            or not reason.strip() for name, reason in deferred.items())):
+        raise ValueError('execution_target deferred entries require a registered package and reason')
+
+    required = set()
+    remaining = [target['package']]
+    while remaining:
+        name = remaining.pop()
+        if name not in required:
+            required.add(name)
+            remaining.extend(packages[name]['dependencies'])
+    overlap = required.intersection(deferred)
+    if overlap:
+        raise ValueError('execution_target cannot omit deferred dependencies: ' + ', '.join(sorted(overlap)))
+    scoped = {name: package for name, package in packages.items() if name in required}
+    return scoped, dict(execution_target=dict(name=target['name'], package=target['package'],
+                        status=packages[target['package']]['status']), deferred=deferred)
+
+
+def scoped_queue(registry, scope='current'):
+    if scope == 'all':
+        return work_queue(registry['packages'])
+    packages, description = execution_scope(registry)
+    return dict(**description, **work_queue(packages))
+
+
 def readiness_text(path, package_id, entry):
     text = path.read_bytes().decode('utf-8').rstrip()
     payload = json.loads(text)
@@ -194,6 +230,7 @@ class Repository:
                     or not isinstance(package.get('title'), str) or '\n' in package['title']):
                 raise ValueError(f'invalid work-package definition: {name}')
         check_dependencies(data['packages'])
+        execution_scope(data)
         return data
 
     def require_scope(self, expected, *, allow_staged=False):
@@ -265,13 +302,13 @@ class Repository:
     def local_tracking_head(self):
         return self.git('for-each-ref', '--format=%(objectname)', TRACKING_REF).strip() or None
 
-    def plan(self):
+    def plan(self, *, scope='current'):
         self.verify_local_target()
         return dict(branch=BRANCH, head=self.head(), publication_route='windows_relay',
                     last_verified_remote=self.local_tracking_head(),
                     working_tree=self.git('status', '--short').splitlines(),
                     resume_pending=self.journal.exists(), pending_publications=len(self.pending()),
-                    **work_queue(self.registry()['packages']))
+                    **scoped_queue(self.registry(), scope))
 
     def pending(self):
         if not self.outbox.exists():
@@ -528,6 +565,8 @@ def main(argv=None):
     modes.add_argument('--resume', action='store_true')
     modes.add_argument('--relay-plan', action='store_true')
     modes.add_argument('--relay-ack', action='store_true', help='Read verified local publisher receipt from stdin')
+    parser.add_argument('--scope', choices=('current', 'all'), default='current',
+                        help='select the configured target or all registered work packages')
     parser.add_argument('--file', action='append', default=[])
     parser.add_argument('--limit', type=int, default=1)
     parser.add_argument('--jobs', type=int, default=2)
@@ -542,7 +581,7 @@ def main(argv=None):
         print(json_text(repo.relay_plan()), end='')
         return 0
     if not (args.run or args.prepared or args.resume or args.relay_ack):
-        print(json_text(repo.plan()), end='')
+        print(json_text(repo.plan(scope=args.scope)), end='')
         return 0
     with publication_lock(repo.private):
         if args.relay_ack:
@@ -561,7 +600,7 @@ def main(argv=None):
                 raise RuntimeError('direct publication journal retained; use Windows relay for publication')
             repo.resume()
             return 0
-        plan = repo.plan()
+        plan = repo.plan(scope=args.scope)
         if plan['resume_pending']:
             raise RuntimeError('resume the interrupted local commit before starting another work package')
         pending = repo.pending()
@@ -591,8 +630,9 @@ def main(argv=None):
         failed = False
         remaining = args.limit
         while remaining:
-            packages = repo.registry()['packages']
-            wave = work_queue(packages)['ready'][:min(remaining, args.jobs)]
+            registry = repo.registry()
+            packages = registry['packages']
+            wave = scoped_queue(registry, args.scope)['ready'][:min(remaining, args.jobs)]
             if not wave:
                 break
             with ThreadPoolExecutor(max_workers=len(wave)) as pool:
@@ -602,7 +642,7 @@ def main(argv=None):
                 repo.publish(name, result, defer=True)
                 failed |= result['exit_code'] != 0
                 remaining -= 1
-        print(json_text(work_queue(repo.registry()['packages'])), end='')
+        print(json_text(scoped_queue(repo.registry(), args.scope)), end='')
         return 2 if failed else 0
 
 

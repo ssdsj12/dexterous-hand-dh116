@@ -1,3 +1,7 @@
+## 2026-11-12 — 现有刚性任务完整闭环（复用原环境，不重新建模）
+
+默认调度目标选择现有 `solid_cylinder` 闭环，柔性后端延期。27 项 Ubuntu CPU 回归通过。[报告](docs/superpowers/reports/2026-11-12-existing-solid-cylinder-execution-scope.md)
+
 ## 2026-11-12 — PhysX 标定句柄释放与退出崩溃诊断
 
 v2 首轮 240 步完整，close 返回后子进程 SIGSEGV。隔离入口补齐句柄释放和崩溃诊断，65 项 CPU 回归通过。[软件报告](docs/superpowers/reports/2026-11-12-physx-sampling-handle-lifetime.md) · [原生证据](docs/superpowers/reports/2026-11-12-physx-v2-native-exit-crash.md)
