@@ -1,3 +1,7 @@
+## 2026-11-12 — Camera C5 telemetry holder lifecycle
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c5.md)。
+
 ## 2026-11-12 — 长时续任务第二批恢复点
 
 六个独立源码工作包已完成发布，最终隔离回归458项通过、0失败/跳过。自由杆候选与C5均未原生执行；深度精度仍不合格，Teacher/Student未越过准入门槛。[完整状态和恢复计划](docs/superpowers/reports/2026-11-12-continuation-batch2-progress-and-recovery.md)。
