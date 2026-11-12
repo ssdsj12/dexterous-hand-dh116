@@ -1,3 +1,7 @@
+## 2026-11-12 — 隔离 CUDA 12.8 与 cp310/SM89 扩展
+
+固定 cp310 和 CUDA 12.8.61 两次构建成功，实际产物均有 SM89 设备代码。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f1-cuda-build.md)
+
 ## 2026-11-12 — DeformX 主仓库与递归源码锁定
 
 柔性主线锁定上游主仓库与 CPU/CUDA 两个精确子模块，原刚性环境作为独立回归。 Ubuntu CPU 回归 9 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f0-deformx-source-lock.md)

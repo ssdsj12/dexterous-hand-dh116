@@ -469,8 +469,8 @@
       "dependencies": [
         "wp5.source"
       ],
-      "status": "blocked",
-      "reason": "需源码资格和依赖安装批准"
+      "status": "passed",
+      "reason": "由 flex.f1-cuda-build 完成隔离 CUDA 12.8 构建及 SM89 读回。"
     },
     "wp5.solver-native": {
       "title": "Cosserat 静动杆和双向耦合",
@@ -3613,7 +3613,67 @@
       "dependencies": [
         "flex.f0-source-lock"
       ],
-      "status": "blocked"
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_cuda_source.py",
+          "tests/test_dh116_deformx_cuda_build.py",
+          "tests/test_dh116_deformx_sdk_prepare.py"
+        ],
+        "log_sha256": "b5357ec45f9aef928be612036b65a8d07243fc61a140c8db3f10347b6da3edb5",
+        "tested_head": "a48a19933e4509c8710204add6418ef295d7c819",
+        "build_verified": true,
+        "toolkit_release": "12.8.0",
+        "architecture": "89",
+        "source_commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
+        "extension_sha256": "c47942c4b15b3dfedc47212e71f8193825c0347df3c1d73fb76b648f7bdedb53",
+        "replay_extension_sha256": "ea07c29341fcac91236b2d9065f7d7b8ee5e21cc69adbf181fa211fdaa9d44d3",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f1-cuda-build.md",
+        "report_source_commit": "14ce7a075bfc7647633c9a8c112f6df335def76b"
+      },
+      "last_result": {
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_cuda_source.py",
+          "tests/test_dh116_deformx_cuda_build.py",
+          "tests/test_dh116_deformx_sdk_prepare.py"
+        ],
+        "log_sha256": "b5357ec45f9aef928be612036b65a8d07243fc61a140c8db3f10347b6da3edb5",
+        "tested_head": "a48a19933e4509c8710204add6418ef295d7c819",
+        "build_verified": true,
+        "toolkit_release": "12.8.0",
+        "architecture": "89",
+        "source_commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
+        "extension_sha256": "c47942c4b15b3dfedc47212e71f8193825c0347df3c1d73fb76b648f7bdedb53",
+        "replay_extension_sha256": "ea07c29341fcac91236b2d9065f7d7b8ee5e21cc69adbf181fa211fdaa9d44d3",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f1-cuda-build.md",
+        "report_source_commit": "14ce7a075bfc7647633c9a8c112f6df335def76b"
+      }
     },
     "flex.f2-standalone-gpu": {
       "title": "Standalone CUDA 静态、动力学与接触验证",

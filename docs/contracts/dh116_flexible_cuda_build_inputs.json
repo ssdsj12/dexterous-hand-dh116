@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "toolkit_release": "12.8.0",
+  "target": {
+    "nvcc": "12.8.61",
+    "sm": "89",
+    "python": "3.10.12",
+    "torch": "2.7.0+cu128"
+  },
+  "nvidia_channel": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0",
+  "nvidia_packages": {
+    "cuda-cccl_linux-64": {
+      "file": "cuda-cccl_linux-64-12.8.55-0.conda",
+      "size": 1057371,
+      "sha256": "1190c722c22c43bf471e390080584b8538b075a9d9fa9260de5b0eaecb680147",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/linux-64/cuda-cccl_linux-64-12.8.55-0.conda"
+    },
+    "cuda-nvcc-tools": {
+      "file": "cuda-nvcc-tools-12.8.61-0.conda",
+      "size": 25659785,
+      "sha256": "cd4d1d19f7ceb62d2f62c67d6c7f0a90704541bbe96b11df8965be47bc298df8",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/linux-64/cuda-nvcc-tools-12.8.61-0.conda"
+    },
+    "cuda-nvvm-impl": {
+      "file": "cuda-nvvm-impl-12.8.61-0.conda",
+      "size": 21791070,
+      "sha256": "5e13fcabbce4065fd5eb2349d895976f66e8094e83c9f5b26089c85f435e7287",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/linux-64/cuda-nvvm-impl-12.8.61-0.conda"
+    },
+    "cuda-nvvm-tools": {
+      "file": "cuda-nvvm-tools-12.8.61-0.conda",
+      "size": 24658023,
+      "sha256": "845b227110157886df2ac9bb01f79c3613072cab5ceb1dd37bb32d410d7b211d",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/linux-64/cuda-nvvm-tools-12.8.61-0.conda"
+    },
+    "cuda-crt-dev_linux-64": {
+      "file": "cuda-crt-dev_linux-64-12.8.61-0.conda",
+      "size": 84381,
+      "sha256": "35a997dab3c150f6cd8809c0c6f829e336a0a78bd845cb933c383d665541824d",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/noarch/cuda-crt-dev_linux-64-12.8.61-0.conda"
+    },
+    "cuda-cudart-dev_linux-64": {
+      "file": "cuda-cudart-dev_linux-64-12.8.57-0.conda",
+      "size": 381218,
+      "sha256": "6b01605d3c03b823e7bc4a32e7b97d97ce2805bf84b6b8be2a2f4764efc2bae0",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/noarch/cuda-cudart-dev_linux-64-12.8.57-0.conda"
+    },
+    "cuda-cudart-static_linux-64": {
+      "file": "cuda-cudart-static_linux-64-12.8.57-0.conda",
+      "size": 964740,
+      "sha256": "b60530afb13548fbbf0a4eb95cde8a97b2906115fe8da55b658d99dc7dfca79e",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/noarch/cuda-cudart-static_linux-64-12.8.57-0.conda"
+    },
+    "cuda-cudart_linux-64": {
+      "file": "cuda-cudart_linux-64-12.8.57-0.conda",
+      "size": 190526,
+      "sha256": "173090e5fb4f535a5156e1e8df9bbfc6178be57363c320ee99726a349d06f326",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/noarch/cuda-cudart_linux-64-12.8.57-0.conda"
+    },
+    "cuda-driver-dev_linux-64": {
+      "file": "cuda-driver-dev_linux-64-12.8.57-0.conda",
+      "size": 31655,
+      "sha256": "e81741e66f37f534fb41c70305e24ef9dd23b9955fdb6ad185bebe2d00bdabe0",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/noarch/cuda-driver-dev_linux-64-12.8.57-0.conda"
+    },
+    "cuda-nvcc-dev_linux-64": {
+      "file": "cuda-nvcc-dev_linux-64-12.8.61-0.conda",
+      "size": 13179818,
+      "sha256": "50a8fed902ef454a27407bd8b847509075982865ad86bfd7abd757b509e0a7ea",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/noarch/cuda-nvcc-dev_linux-64-12.8.61-0.conda"
+    },
+    "cuda-cuobjdump": {
+      "file": "cuda-cuobjdump-12.8.55-0.conda",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/linux-64/cuda-cuobjdump-12.8.55-0.conda",
+      "size": 227559,
+      "sha256": "9e51d546a635330c4e70405f128f90d38e0a01f5a5587b6b7ef4408b12a73e71"
+    },
+    "cuda-nvdisasm": {
+      "file": "cuda-nvdisasm-12.8.55-0.conda",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/linux-64/cuda-nvdisasm-12.8.55-0.conda",
+      "size": 5118577,
+      "sha256": "2d6ba587b8b780ac9dd7e49016f2a243ab18e8f8885ec9ea32388308af5390b0"
+    },
+    "cuda-crt-tools": {
+      "file": "cuda-crt-tools-12.8.61-0.conda",
+      "size": 19255,
+      "sha256": "c74949541ce6fe4de8419edb45045028a593c723e663a159c56c98329bd7a86f",
+      "url": "https://conda.anaconda.org/nvidia/label/cuda-12.8.0/linux-64/cuda-crt-tools-12.8.61-0.conda"
+    }
+  },
+  "isolated_build_tools_wheels": [
+    {
+      "file": "cmake-3.31.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "1c8b05df0602365da91ee6a3336fe57525b137706c4ab5675498f662ae1dbcec"
+    },
+    {
+      "file": "ninja-1.11.1.4-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.whl",
+      "sha256": "096487995473320de7f65d622c3f1d16c3ad174797602218ca8c967f51ec38a0"
+    },
+    {
+      "file": "pybind11-2.13.6-py3-none-any.whl",
+      "sha256": "237c41e29157b962835d356b370ededd57594a26d5894a795960f0047cb5caf5"
+    }
+  ]
+}
