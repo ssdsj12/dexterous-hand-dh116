@@ -733,6 +733,43 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 65,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_shutdown_validation.py",
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_physx_polled_contact_audit.py"
+      ],
+      "log_sha256": "5e7b95ce0dab766ad414ae149fc5a031074456e28f019cb4aae4494a20d1abc5",
+      "tested_head": "a88ebafa273bf3ded1b05dbfb4d8310dc32b5bf8",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-physx-sampling-handle-lifetime.md",
+      "native_qualification": false,
+      "package": "wp4.sampling-handle-lifetime",
+      "commit": "a1ec20f96461bd9ff8130d1823b8039eea31d695",
+      "parent": "a88ebafa273bf3ded1b05dbfb4d8310dc32b5bf8",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-physx-sampling-handle-lifetime.md",
+        "docs/superpowers/reports/2026-11-12-physx-v2-native-exit-crash.md",
+        "scripts/calibrate_dh116_stereo_contacts.py",
+        "tests/test_dh116_stereo_shutdown_validation.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
