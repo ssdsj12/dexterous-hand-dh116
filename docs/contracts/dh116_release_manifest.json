@@ -3937,6 +3937,57 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_wireseg_overfit_diagnostic.py",
+        "tests/test_dh116_wireseg_pretraining.py",
+        "tests/test_dh116_wireseg_blob_relay.py"
+      ],
+      "log_sha256": "5a8458c9bf09a83eda2c8689d9891164c65eb890e6ce27f54109cc73bb95d945",
+      "tested_head": "eb31c793d60cb50eb8d6dd2e06bae2f15c5bd8d5",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "qualification_scope": "fixed16_offline_head_diagnostics_only",
+      "seg_updates": 128,
+      "depth_updates": 128,
+      "train_samples": 16,
+      "heldout_samples": 128,
+      "seg_train_iou": 0.5361921023623749,
+      "seg_validation_iou": 0.18294473613953902,
+      "depth_train_mae_m": 0.1250431402476471,
+      "depth_validation_roi_mae_m": 0.14167325908066025,
+      "stereo_qualified": false,
+      "policy_qualified": false,
+      "generalization_qualified": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-wireseg-fixed16-overfit-diagnostic.md",
+      "report_source_commit": "2253e3ab0d66d3b1f15f017d5a40424a3ae22c67",
+      "whitespace_only_release_normalization": true,
+      "package": "flex.f5-wireseg-fixed16-diagnostic",
+      "commit": "a2238efcdee471ee2bf207a9c796afbe66f42725",
+      "parent": "eb31c793d60cb50eb8d6dd2e06bae2f15c5bd8d5",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-wireseg-fixed16-overfit-diagnostic.md",
+        "scripts/diagnose_dh116_wireseg_overfit.py",
+        "tests/test_dh116_wireseg_overfit_diagnostic.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
