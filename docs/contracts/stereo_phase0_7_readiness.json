@@ -6379,6 +6379,36 @@
       },
       "status": "failed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f6-camera-c4.md"
+    },
+    "flex.flexible-task-hold-slip-reference": {
+      "passed": 51,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformable_grasp_task.py",
+        "tests/test_dh116_deformable_task_budget.py",
+        "tests/test_lift_hold_window.py",
+        "tests/test_dh116_deformable_privileged_teacher.py"
+      ],
+      "log_sha256": "ab36a82a6935effbad9ee1b85f4cbd4f8841459ef13e8fa25289627ac8f1bd06",
+      "tested_head": "13486e961902ef0b6e7a6e3fca1291840ffe7f5b",
+      "stage": "cpu_verified",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "physics_steps": 0,
+      "ppo_updates": 0,
+      "evaluation_episodes": 0,
+      "review_negative_cases": 8,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-hold-clock-and-slip-reference-review-fix.md",
+      "report_source_commit": "55ecd748462a0b45f251e31451b41d7d186877ff"
     }
   }
 }

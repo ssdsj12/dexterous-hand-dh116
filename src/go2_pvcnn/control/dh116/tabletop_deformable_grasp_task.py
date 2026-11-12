@@ -17,6 +17,10 @@ VERSION = "dh116-flexible-dual-hand-grasp-v1"
 SIDES = ("left", "right")
 GRASPS = ("pinch", "tripod", "power")
 RESET_HOOKS = ("rod", "joint", "controller", "filter", "contact", "camera_history")
+_SLIP_REFERENCE_FIELDS = {
+    "material": ("material_reference_uid", "material_s_m", "material_uncertainty_m"),
+    "tangential": ("tangential_reference_uid", "tangential_slip_m", "tangential_uncertainty_m"),
+}
 R0_TERMS = {
     "approach_progress": ("m", 1),
     "required_contact": ("fraction", 1),
@@ -197,8 +201,9 @@ def _contact(measurements, side, rod_uid, material_length):
     value, source = _sample(measurements, side)
     if value is None:
         return None, source
-    _exact_keys(value, ("rod_uid", "pads", "opposed", "material_s_m", "material_uncertainty_m",
-                        "tangential_slip_m", "tangential_uncertainty_m"), f"{side} contact")
+    _exact_keys(value, ("rod_uid", "pads", "opposed",
+                        *(name for fields in _SLIP_REFERENCE_FIELDS.values() for name in fields)),
+                f"{side} contact")
     if value["rod_uid"] != rod_uid:
         raise ValueError("both hands must measure the same rod UID")
     pads = value["pads"]
@@ -209,9 +214,16 @@ def _contact(measurements, side, rod_uid, material_length):
     if opposed and len(pads) < 2:
         raise ValueError(f"{side} opposed contact needs at least two measured pads")
     measurements = {}
-    for field in ("material_s_m", "material_uncertainty_m", "tangential_slip_m", "tangential_uncertainty_m"):
-        val = value[field]
-        measurements[field] = None if val is None else _finite_number(val, f"{side}.{field}")
+    for uid_field, scalar_field, uncertainty_field in _SLIP_REFERENCE_FIELDS.values():
+        uid = value[uid_field]
+        if uid is not None and (not isinstance(uid, str) or not uid.strip()):
+            raise ValueError(f"{side}.{uid_field} must be a nonempty reference UID")
+        if uid is None and any(value[field] is not None for field in (scalar_field, uncertainty_field)):
+            raise ValueError(f"{side}.{scalar_field} requires a fixed reference UID")
+        measurements[uid_field] = uid
+        for field in (scalar_field, uncertainty_field):
+            val = value[field]
+            measurements[field] = None if val is None else _finite_number(val, f"{side}.{field}")
     if measurements["material_s_m"] is not None and measurements["material_s_m"] > material_length:
         raise ValueError(f"{side} material station is outside the rest rod")
     return dict(pads=pads, opposed=opposed, **measurements), source
@@ -252,10 +264,12 @@ class FlexibleGraspEpisode:
         self.required = {side: frozenset(task["grasps"][grasp]["required_pads"][side]) for side in SIDES}
         self.grasp = grasp
         self.backend_sha256 = task["backend"]["extension_sha256"]
-        self.dt = 1. / task["scene"]["physics_hz"]
+        self.physics_hz = task["scene"]["physics_hz"]
+        self.dt = 1. / self.physics_hz
         self.table_top_m = task["scene"]["table_top_m"]
         self.lift_target_m = task["success"]["net_lift_m"]
-        self.hold_target_steps = round(task["success"]["hold_s"] / self.dt)
+        self.hold_target_s = task["success"]["hold_s"]
+        self.hold_target_steps = round(self.hold_target_s / self.dt)
         self.slip_limit_m = task["success"]["max_slip_m"]
         self.coefficients = dict(task["reward"]["coefficients"])
         if diagnostic_coefficients is not None:
@@ -312,7 +326,9 @@ class FlexibleGraspEpisode:
         self.radius, self.radius_source = radius, radius_source
         self.initial_median_z, self.initial_min_z = float(np.median(z)), float(np.min(z))
         self.approach = self.material_anchor = self.rod_stride = None
-        self.hold_steps, self.best_lift = 0, 0.
+        self.slip_references = {side: {} for side in SIDES}
+        self.hold_start = None
+        self.hold_steps, self.hold_s, self.best_lift = 0, 0., 0.
         self.phase = "approach"
         self.previous_bilateral = False
         self.prohibited_support_latched = False
@@ -345,8 +361,28 @@ class FlexibleGraspEpisode:
                                     time, abs_tol=1e-9, rel_tol=0.)):
             raise ValueError("measurement identity differs from this rod physics sample")
 
+    def _bind_slip_references(self, contacts_with_sources):
+        references = {side: self.slip_references[side].copy() for side in SIDES}
+        for side, (contact, source) in zip(SIDES, contacts_with_sources):
+            if contact is None:
+                continue
+            for kind, (uid_field, _, _) in _SLIP_REFERENCE_FIELDS.items():
+                uid = contact[uid_field]
+                if uid is None:
+                    continue
+                binding = (uid, source)
+                previous = references[side].setdefault(kind, binding)
+                if binding != previous:
+                    self.active = False
+                    raise ValueError(f"{side} {kind} slip reference or source changed; reset required")
+        material_uids = {items["material"][0] for items in references.values() if "material" in items}
+        if len(material_uids) > 1:
+            self.active = False
+            raise ValueError("both hands must use the same material arclength reference UID; reset required")
+        return references
+
     def _slip(self, contacts, bilateral):
-        """Use fixed rest arclength and independently reported pad tangential slip."""
+        """Measure rest-station drift and tangential displacement from a fixed pad anchor."""
         anchor = self.material_anchor
         if not bilateral or any(contact[field] is None for contact in contacts
                 for field in ("material_s_m", "material_uncertainty_m")):
@@ -384,6 +420,7 @@ class FlexibleGraspEpisode:
         self._measurement_identity(measurements, clock)
         contacts_with_sources = [_contact(measurements, side, self.identity[2], float(self.rest_lengths.sum()))
                                  for side in SIDES]
+        references = self._bind_slip_references(contacts_with_sources)
         contacts, sources = zip(*contacts_with_sources)
         contact_source = _source(*sources)
         contact_known = all(contact is not None for contact in contacts)
@@ -440,10 +477,24 @@ class FlexibleGraspEpisode:
                  and not joint_limit and stable
                  and slip_ok is True and min_surface > self.table_top_m
                  and min(body_lift, min_lift) >= self.lift_target_m)
-        # The first good endpoint starts the window. Only a consecutive pair
-        # establishes one complete physics interval of observed hold.
-        hold_steps = min(self.hold_steps + 1, self.hold_target_steps) if holds and self.phase == "hold" else 0
-        hold_progress = None if not hold_known else float(hold_steps > self.hold_steps) * self.dt
+        # The first good endpoint freezes the measured time origin. Require
+        # both complete intervals and the observed duration without a tolerance.
+        hold_start = None
+        hold_steps, hold_s = 0, 0.
+        if holds:
+            hold_start = self.hold_start
+            if hold_start is None:
+                hold_start = (clock[0], clock[2])
+            else:
+                hold_steps = min(self.hold_steps + 1, self.hold_target_steps)
+                start_step, start_time = hold_start
+                hold_s = clock[2] - start_time
+                # Exact tick/hz timestamp representations identify the same
+                # rational clock and avoid float cancellation at the boundary.
+                if start_time == start_step / self.physics_hz and clock[2] == clock[0] / self.physics_hz:
+                    hold_s = (clock[0] - start_step) / self.physics_hz
+        hold_progress = None if not hold_known else max(
+            0., min(hold_s, self.hold_target_s) - min(self.hold_s, self.hold_target_s))
         lift_source = _source(self.rod_source, self.radius_source, contact_source, support_source)
         raw = {
             "approach_progress": (approach_progress, _source(approach_source, self.approach and self.approach[1])),
@@ -462,7 +513,9 @@ class FlexibleGraspEpisode:
         previous_phase = self.phase
         self.phase = "hold" if holds else "lift" if bilateral else "grasp" if coverage else "approach"
         self.approach = (approach, approach_source) if approach is not None else None
-        self.hold_steps, self.best_lift = hold_steps, best
+        self.hold_start = hold_start
+        self.hold_steps, self.hold_s, self.best_lift = hold_steps, hold_s, best
+        self.slip_references = references
         self.previous_bilateral = bilateral
         self.prohibited_support_latched = prohibited_support_latched
         terms, term_stats = {}, {}
@@ -482,6 +535,12 @@ class FlexibleGraspEpisode:
                     blocked_terms=[name for name, row in terms.items() if row["contribution"] is None],
                     body_net_lift_m=body_lift, min_node_net_lift_m=min_lift, min_surface_z_m=min_surface,
                     material_anchor_slip_m=material_slip, tangential_slip_m=tangential_slip,
-                    hold_steps=hold_steps, hold_s=hold_steps * self.dt, hold_valid=hold_known,
+                    hold_steps=hold_steps, hold_s=hold_s, hold_valid=hold_known,
+                    hold_start_physics_step=hold_start[0] if hold_start is not None else None,
+                    hold_start_timestamp_s=hold_start[1] if hold_start is not None else None,
+                    slip_references={side: {kind: dict(uid=uid, source=source)
+                                            for kind, (uid, source) in items.items()}
+                                     for side, items in references.items()},
                     prohibited_support_latched=prohibited_support_latched,
-                    success_candidate=hold_steps == self.hold_target_steps, native_qualification=False)
+                    success_candidate=hold_steps == self.hold_target_steps and hold_s >= self.hold_target_s,
+                    native_qualification=False)

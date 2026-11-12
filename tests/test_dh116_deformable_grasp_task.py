@@ -93,7 +93,9 @@ def signals(task, *, step=1, uid="ep-0", reset_id=0, shift=0., loss=False, suppo
         values[side] = measurement({"rod_uid": "rod0",
             "pads": [] if loss and side == "right" else task["grasps"]["pinch"]["required_pads"][side],
             "opposed": not (loss and side == "right"), "material_s_m": station,
+            "material_reference_uid": f"{uid}/rod0/rest-arclength",
             "material_uncertainty_m": .00001, "tangential_slip_m": 0.,
+            "tangential_reference_uid": f"{uid}/rod0/{side}/fixed-pad-anchor",
             "tangential_uncertainty_m": .00001})
     return values
 
@@ -281,3 +283,100 @@ def test_released_prohibited_support_cannot_qualify_lift_in_same_episode(task, f
     assert after_reset["hold_steps"] == 2400
     assert not after_reset["prohibited_support_latched"]
     assert after_reset["native_qualification"] is False
+
+
+def test_hold_requires_five_observed_seconds_in_addition_to_2400_intervals(task):
+    episode, _ = begin(task)
+    dt = 1 / 480 - 1e-7
+    for step in range(1, 2402):
+        state, observed = snapshot(task, step, dz=.035), signals(task, step=step)
+        state["rod_snapshot"]["timestamp_s"] = step * dt
+        observed["sample_identity"]["timestamp_s"] = step * dt
+        result = episode.step(state, observed)
+    assert result["hold_steps"] == 2400
+    assert not result["success_candidate"]
+    assert result["hold_s"] == pytest.approx(4.999760)
+    assert result["hold_start_timestamp_s"] == dt
+
+    step = 2402
+    state, observed = snapshot(task, step, dz=.035), signals(task, step=step)
+    state["rod_snapshot"]["timestamp_s"] = step * dt
+    observed["sample_identity"]["timestamp_s"] = step * dt
+    result = episode.step(state, observed)
+    assert result["success_candidate"] and result["hold_s"] > 5.
+
+
+def test_slip_source_switch_rejects_episode_and_requires_reset(task):
+    episode, hooks = begin(task)
+    first = episode.step(snapshot(task, 1, dz=.035), signals(task))
+    assert first["phase"] == "hold"
+    changed = signals(task, step=2)
+    changed["left"]["source"] = "different_contact_provider"
+    with pytest.raises(ValueError, match="reference or source changed"):
+        episode.step(snapshot(task, 2, dz=.035), changed)
+    with pytest.raises(RuntimeError, match="reset"):
+        episode.step(snapshot(task, 2, dz=.035), signals(task, step=2))
+
+    episode.reset(hooks, lambda: (snapshot(task, 0, uid="ep-1", reset_id=1), measurement(.005)))
+    refreshed = signals(task, uid="ep-1", reset_id=1)
+    refreshed["left"]["source"] = "different_contact_provider"
+    data = episode.step(snapshot(task, 1, uid="ep-1", reset_id=1, dz=.035), refreshed)
+    assert data["hold_steps"] == 0 and data["phase"] == "hold"
+    assert data["slip_references"]["left"]["material"]["source"] == "different_contact_provider"
+
+
+@pytest.mark.parametrize("field", ["material_reference_uid", "tangential_reference_uid"])
+def test_same_slip_source_cannot_change_reference_uid_without_reset(task, field):
+    episode, _ = begin(task)
+    episode.step(snapshot(task, 1, dz=.035), signals(task))
+    changed = signals(task, step=2)
+    changed["right"]["value"][field] = "other_anchor"
+    with pytest.raises(ValueError, match="reference or source changed"):
+        episode.step(snapshot(task, 2, dz=.035), changed)
+    with pytest.raises(RuntimeError, match="reset"):
+        episode.step(snapshot(task, 2, dz=.035), signals(task, step=2))
+
+
+def test_missing_slip_reference_is_not_credited_and_does_not_reanchor(task):
+    episode, _ = begin(task)
+    first = episode.step(snapshot(task, 1, dz=.035), signals(task))
+    unknown = signals(task, step=2)
+    unknown["left"]["value"].update(tangential_reference_uid=None, tangential_slip_m=None,
+                                     tangential_uncertainty_m=None)
+    second = episode.step(snapshot(task, 2, dz=.035), unknown)
+    assert second["hold_steps"] == 0 and not second["hold_valid"]
+    assert second["hold_start_timestamp_s"] is None
+    assert second["slip_references"] == first["slip_references"]
+    third = episode.step(snapshot(task, 3, dz=.035), signals(task, step=3))
+    assert third["hold_steps"] == 0 and third["phase"] == "hold"
+    assert third["slip_references"] == first["slip_references"]
+
+
+def test_numeric_slip_requires_reference_uid(task):
+    episode, _ = begin(task)
+    unbound = signals(task)
+    unbound["left"]["value"]["tangential_reference_uid"] = None
+    with pytest.raises(ValueError, match="requires a fixed reference UID"):
+        episode.step(snapshot(task, 1, dz=.035), unbound)
+
+
+def test_hold_exact_native_lattice_at_nonzero_start_counts_five_seconds(task):
+    episode, hooks = begin(task)
+    start = 1446
+    episode.reset(hooks, lambda: (snapshot(task, start - 1, uid="ep-1", reset_id=1), measurement(.005)))
+    for step in range(start, start + 2401):
+        result = episode.step(snapshot(task, step, uid="ep-1", reset_id=1, dz=.035),
+                              signals(task, step=step, uid="ep-1", reset_id=1))
+    assert result["hold_start_timestamp_s"] == start / 480
+    assert result["hold_steps"] == 2400 and result["hold_s"] == 5.
+    assert result["success_candidate"]
+
+
+def test_both_hands_must_share_one_material_chart(task):
+    episode, _ = begin(task)
+    different_chart = signals(task)
+    different_chart["right"]["value"]["material_reference_uid"] = "other-rest-arclength"
+    with pytest.raises(ValueError, match="same material arclength reference UID"):
+        episode.step(snapshot(task, 1, dz=.035), different_chart)
+    with pytest.raises(RuntimeError, match="reset"):
+        episode.step(snapshot(task, 1, dz=.035), signals(task))
