@@ -714,7 +714,8 @@
       "dependencies": [
         "wp2.mode-gates",
         "wp2.metric-integrity",
-        "wp1.calibration"
+        "wp1.calibration",
+        "wp2.rigid-sdk-velocity"
       ],
       "status": "blocked",
       "reason": "缺刚性任务独立物理初态和实际启用字段的合格监督；未验证字段保持关闭"
@@ -1035,6 +1036,45 @@
         "tested_head": "31fa6dca461e4bec244962f225b29ffdb3c0fea5",
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-right-finger12-event-windows.md",
+        "native_qualification": false
+      }
+    },
+    "wp2.rigid-sdk-velocity": {
+      "title": "现有 solid_cylinder 同钟 SDK 线速度监督",
+      "executor": "prepared",
+      "dependencies": [
+        "wp2.metric-integrity"
+      ],
+      "tests": [
+        "tests/test_dh116_stereo_state_training_modes.py",
+        "tests/test_dh116_stereo_state_supervision.py",
+        "tests/test_dh116_stereo_cold_candidate_admission.py",
+        "tests/test_dh116_stereo_state_multicohort.py",
+        "tests/test_dh116_stereo_runtime_task_state.py"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 72,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_state_training_modes.py",
+          "tests/test_dh116_stereo_state_supervision.py",
+          "tests/test_dh116_stereo_cold_candidate_admission.py",
+          "tests/test_dh116_stereo_state_multicohort.py",
+          "tests/test_dh116_stereo_runtime_task_state.py"
+        ],
+        "log_sha256": "faaece95d635086413207c394daa392c4d72646860ed190c2545906b408b7c76",
+        "tested_head": "f904a4c65e8a52ff24323a3bc6b7c099b32b9c89",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-rigid-sdk-state-supervision.md",
         "native_qualification": false
       }
     }

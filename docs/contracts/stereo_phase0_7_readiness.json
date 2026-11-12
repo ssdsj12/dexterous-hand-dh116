@@ -3319,6 +3319,30 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-right-finger12-event-windows.md",
       "native_qualification": false
+    },
+    "wp2.rigid-sdk-velocity": {
+      "passed": 72,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_state_training_modes.py",
+        "tests/test_dh116_stereo_state_supervision.py",
+        "tests/test_dh116_stereo_cold_candidate_admission.py",
+        "tests/test_dh116_stereo_state_multicohort.py",
+        "tests/test_dh116_stereo_runtime_task_state.py"
+      ],
+      "log_sha256": "faaece95d635086413207c394daa392c4d72646860ed190c2545906b408b7c76",
+      "tested_head": "f904a4c65e8a52ff24323a3bc6b7c099b32b9c89",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-rigid-sdk-state-supervision.md",
+      "native_qualification": false
     }
   }
 }

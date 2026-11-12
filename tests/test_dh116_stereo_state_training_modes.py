@@ -151,7 +151,7 @@ def test_eight_cold_initials_cannot_enter_formal_fit_even_with_valid_center_labe
     assert all(torch.equal(value, model.state_dict()[key]) for key, value in before.items())
 
 
-def test_velocity_needs_contiguous_native_clocks_and_the_same_centerline_track():
+def test_rigid_motion_needs_consecutive_visible_frames_without_a_material_track():
     supervision = module('state_supervision')
     prior = dict(identity=dict(run_uuid='run', env_id=0, episode_uid='epoch', reset_id=3,
         policy_tick=10, frame_id=200, physics_tick_end=80, simulation_timestamp=80/480,
@@ -159,12 +159,69 @@ def test_velocity_needs_contiguous_native_clocks_and_the_same_centerline_track()
         execution=dict(physics_tick_end=88, simulation_timestamp_end=88/480), done=False)
     current = dict(prior['identity'], policy_tick=11, frame_id=203, physics_tick_end=88,
                    simulation_timestamp=88/480)
-    assert supervision._temporal_support(prior, current, {5}, {5})
-    assert not supervision._temporal_support(prior, current, {4}, {5})
-    assert not supervision._temporal_support(prior, dict(current, physics_tick_end=89), {5}, {5})
-    assert not supervision._temporal_support(prior, dict(current, reset_id=4), {5}, {5})
-    assert not supervision._temporal_support(prior, dict(current, frame_id=200), {5}, {5})
-    assert not supervision._temporal_support(dict(prior, done=True), current, {5}, {5})
+    def observed(previous, now, previous_visible=True, visible=True):
+        return supervision._rigid_motion_observed(previous, now,
+            previous_wire_observed=previous_visible, wire_observed=visible)
+    assert observed(prior, current)
+    assert not observed(prior, current, previous_visible=False)
+    assert not observed(prior, current, visible=False)
+    assert not observed(prior, dict(current, physics_tick_end=89))
+    assert not observed(prior, dict(current, reset_id=4))
+    assert not observed(prior, dict(current, frame_id=200))
+    assert not observed(dict(prior, done=True), current)
+
+
+def test_rigid_sdk_velocity_matches_bound_readback_without_pose_and_masks_unobservable_angular():
+    from go2_pvcnn.control.dh116.tabletop_stereo_contract import digest
+
+    supervision = module('state_supervision')
+    row = center_rows()[0]
+    row['identity'].update(run_uuid='capture', env_id=1, episode_uid='epoch', reset_id=3,
+                           physics_tick_end=88, simulation_timestamp=88/480,calibration_sha256='c'*64)
+    row['privileged'][68:74] = torch.tensor([1.,-2.,3.,.4,.5,.6])
+    row['history']['history_valid'][:,-2:] = True
+    row['history']['image_valid'][:,-2:] = True
+    keys = {k:row['identity'][k] for k in ('run_uuid','env_id','episode_uid','reset_id')}
+    task = dict(version='dh116-stereo-native-task-identity-v1', task_kind='rigid_proxy',
+                physical_object_kind='solid_cylinder', state_source='rigid_body_sdk_pose_velocity',
+                rod_state_available=False, task_profile_sha256='a'*64)
+    task['task_identity_sha256'] = digest(task)
+    header = dict(**keys, task_identity=task, task_identity_sha256=task['task_identity_sha256'])
+    raw = dict(**header, kind='sample', measurement_valid=True, terminal=False,
+               physics_step=88, timestamp=88/480, calibration_sha256='c'*64,
+               formal_object_velocity=[.1,-.2,.3,.4,.5,.6])
+    exact = supervision._verified_canonical_label_mask(row, raw, episode_header=header)
+    assert exact.nonzero().flatten().tolist() == list(range(68,74))
+    for suspect in (dict(raw, physics_step=87), dict(raw, reset_id=4),
+                    dict(raw, terminal=True), dict(raw, task_identity_sha256='b'*64),
+                    dict(raw, formal_object_velocity=[1,-2,3,4,5,6])):
+        assert not supervision._verified_canonical_label_mask(row,suspect,episode_header=header).any()
+    assert not supervision._verified_canonical_label_mask(row,raw,episode_header={}).any()
+    supervision._admit_rigid_labels(row, exact, wire_observed=True, temporal_observed=True)
+    criterion = module('losses').StereoEstimationLoss()
+    _, valid = supervision._targets(row,'velocity',criterion)['privileged_state']
+    assert valid.nonzero().flatten().tolist() == [68,69,70]
+
+
+def test_rigid_velocity_metrics_report_original_physical_scale():
+    supervision = module('state_supervision')
+    row = center_rows()[0]
+    target = torch.zeros(371)
+    target[68:71] = torch.tensor([1.,2.,3.])
+    valid = torch.zeros(371,dtype=torch.bool)
+    valid[68:71] = True
+
+    class FixedPrediction(torch.nn.Module):
+        def forward(self, batch):
+            return {'privileged_state':torch.zeros(1,371)}
+
+    report, _ = supervision._metrics(FixedPrediction(), [row], [{'privileged_state':(target,valid)}],
+        [0], {'group_for_row':{0:0}}, 1, 'cpu', module('losses').StereoEstimationLoss(), 'velocity')
+    outputs = report['outputs']
+    assert outputs['371:68']['physical_errors'] == pytest.approx({'mae':.1,'rmse':.1,'p95':.1})
+    assert outputs['371:68']['physical_unit'] == 'm/s'
+    assert outputs['371:70']['physical_errors']['mae'] == pytest.approx(.3)
+    assert outputs['371:71']['mae'] is None
 
 
 def test_state_reference_binding_is_same_clock_and_label_only():

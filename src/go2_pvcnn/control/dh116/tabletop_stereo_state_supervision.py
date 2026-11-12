@@ -33,6 +33,8 @@ SOURCE_KEYS = ('source_valid', 'identity_aligned', 'timestamp_valid', 'visibilit
 _ENCODERS_ONLY = 'simulation_SDK_encoder_readback_only'
 DATASET_VERSION = 'dh116-stereo-state-dataset-v1'
 _CENTER_XYZ = slice(61, 64)
+_RIGID_LINEAR_VELOCITY = slice(68, 71)
+_RIGID_ROOT_VELOCITY = slice(68, 74)
 
 
 def audit_candidate_fields(rows=()):
@@ -194,29 +196,62 @@ def _raw_bindings(path, rows, checkpoint, *, cold_readbacks=None):
             if key[:4] not in cold_readbacks:
                 raise ValueError('native episode lacks bound cold reset readback')
             _check_reset_readback_header(header['physical_initial_condition'],cold_readbacks[key[:4]])
-    return same_clock
+    return same_clock, headers
 
 
-def _verified_canonical_label_mask(row, readback):
-    """Verify the implemented rigid geometry/velocity labels against raw SI readback."""
-    valid = torch.zeros(371,dtype=torch.bool)
-    if (readback is None or readback.get('measurement_valid') is not True
-            or readback.get('terminal') is True
-            or readback.get('timestamp') != row['identity']['simulation_timestamp']):
-        return valid
-    pose, wrist, velocity = (readback.get(key) for key in ('formal_object_pose_w','formal_wrist_pose_w','formal_object_velocity'))
+def _solid_cylinder_sdk_source(readback, episode_header):
+    task = episode_header.get('task_identity')
+    if (not isinstance(task, dict) or readback.get('task_identity') != task
+            or task.get('version') != 'dh116-stereo-native-task-identity-v1'
+            or task.get('task_kind') != 'rigid_proxy'
+            or task.get('physical_object_kind') != 'solid_cylinder'
+            or task.get('state_source') != 'rigid_body_sdk_pose_velocity'
+            or task.get('rod_state_available') is not False):
+        return False
     try:
-        pose, wrist, velocity = (torch.as_tensor(x,dtype=torch.float64) for x in (pose,wrist,velocity))
-    except (ValueError,TypeError,RuntimeError):
+        binding = require_sha(task.get('task_identity_sha256'), 'raw rigid task identity SHA')
+        profile = require_sha(task.get('task_profile_sha256'), 'raw rigid task profile SHA')
+        body = {name: value for name, value in task.items() if name != 'task_identity_sha256'}
+        return (profile != '0'*64 and digest(body) == binding
+                and episode_header.get('task_identity_sha256') == binding
+                and readback.get('task_identity_sha256') == binding)
+    except (ValueError, TypeError):
+        return False
+
+
+def _readback_tensor(readback, name, shape):
+    try:
+        result = torch.as_tensor(readback.get(name), dtype=torch.float64)
+    except (ValueError, TypeError, RuntimeError, OverflowError):
+        return None
+    return result if result.shape == shape and bool(torch.isfinite(result).all()) else None
+
+
+def _verified_canonical_label_mask(row, readback, *, episode_header):
+    """Verify same-clock canonical fields in the native SI ledger."""
+    valid = torch.zeros(371,dtype=torch.bool)
+    identity = row['identity']
+    if (readback is None or readback.get('kind') != 'sample'
+            or readback.get('measurement_valid') is not True or readback.get('terminal') is not False
+            or readback.get('physics_step') != identity['physics_tick_end']
+            or readback.get('timestamp') != identity['simulation_timestamp']
+            or readback.get('calibration_sha256') != identity['calibration_sha256']
+            or any(readback.get(key) != identity[key]
+                   for key in ('run_uuid','env_id','episode_uid','reset_id'))):
         return valid
-    if pose.shape == (7,) and wrist.shape == (2,7):
+    pose = _readback_tensor(readback,'formal_object_pose_w',(7,))
+    wrist = _readback_tensor(readback,'formal_wrist_pose_w',(2,7))
+    if (pose is not None and wrist is not None and bool(pose[3:].norm() > 1e-8)
+            and bool((wrist[:,3:].norm(dim=-1) > 1e-8).all())):
         expected = (pose[:3]-wrist[:,:3].mean(0))/.05
-        valid[61:64] = torch.isfinite(expected) & torch.isclose(row['privileged'][61:64].double(), expected, atol=1e-5,rtol=1e-5)
-    if velocity.shape == (6,):
-        expected = velocity/velocity.new_tensor([.1,.1,.1,1.,1.,1.])
-        valid[68:74] = torch.isfinite(expected) & torch.isclose(row['privileged'][68:74].double(), expected, atol=1e-5,rtol=1e-5)
-    # Orientation, arbitrary pad geometry, contact, deformation and slip
-    # have no independently verified label source in this native collector.
+        valid[_CENTER_XYZ] = torch.isfinite(expected) & torch.isclose(
+            row['privileged'][_CENTER_XYZ].double(), expected, atol=1e-5,rtol=1e-5)
+    if _solid_cylinder_sdk_source(readback, episode_header):
+        velocity = _readback_tensor(readback,'formal_object_velocity',(6,))
+        if velocity is not None:
+            expected = velocity/velocity.new_tensor([.1,.1,.1,1.,1.,1.])
+            valid[_RIGID_ROOT_VELOCITY] = torch.isfinite(expected) & torch.isclose(
+                row['privileged'][_RIGID_ROOT_VELOCITY].double(), expected, atol=1e-5,rtol=1e-5)
     return valid
 
 
@@ -236,14 +271,14 @@ def _observed_wire_points(pixels, point_valid, depth, depth_valid, optical, wire
     return result
 
 
-def _verified_visible_tracks(row, root, cache):
+def _verified_wire_observation(row, root, cache):
     from .tabletop_stereo_promotion import _verified_wire_mask
     identity = row['identity']
     artifact = identity.get('state_reference_artifact')
     if not isinstance(artifact,dict):
         if row['extra_labels'].get('state_synchronization') is not None:
             raise ValueError('candidate state synchronization evidence requires a native reference artifact')
-        return False,set()
+        return False
     path = Path(artifact['path']).resolve(strict=True)
     if path.parent != root or file_sha256(path) != require_sha(artifact['sha256']):
         raise ValueError('candidate state reference differs from native artifact binding')
@@ -266,25 +301,20 @@ def _verified_visible_tracks(row, root, cache):
         if synchronized != state_supervision_binding(identity, ref, artifact['sha256']):
             raise ValueError('candidate state synchronization evidence differs from the reference')
     if wire is None:
-        return False,set()
+        return False
     env = identity['env_id']
     history = row['history']
+    if not bool(history['history_valid'][0,-1] and history['image_valid'][0,-1].all()):
+        return False
     point_valid = history['point_valid'][0,-1]
     verified = _observed_wire_points(labels.get('state_wire_point_pixels'),point_valid,
         history['depth_m'][0,-1],history['depth_valid'][0,-1],ref['depth_m'][env],wire[env]&ref['valid'][env])
-    tracks = labels.get('state_wire_track_ids')
-    provenance = history.get('point_provenance')
-    visible_tracks = set()
-    if (synchronized is not None and isinstance(tracks,torch.Tensor) and tracks.dtype == torch.long
-            and tracks.shape == verified.shape and isinstance(provenance,torch.Tensor)
-            and provenance[0,-1].shape == verified.shape):
-        # Only tracked centerline samples represent a temporal line feature.
-        visible_tracks = set(tracks[verified & (provenance[0,-1] == 1) & (tracks >= 0)].tolist())
-    return bool(verified.any()),visible_tracks
+    return bool(verified.any())
 
 
-def _temporal_support(previous, current, previous_tracks, tracks):
-    if previous is None or bool(previous['done']) or not (previous_tracks & tracks):
+def _rigid_motion_observed(previous, current, *, previous_wire_observed, wire_observed):
+    """Consecutive visible rigid-object snapshots; no material track is a label."""
+    if previous is None or bool(previous['done']) or not (previous_wire_observed and wire_observed):
         return False
     prior = previous['identity']
     if (identity_key(prior)[:4] != identity_key(current)[:4]
@@ -304,10 +334,11 @@ def _admit_rigid_labels(row, exact, *, wire_observed, temporal_observed):
     """Open a label only when exact physical readback and the independent view agree."""
     verified = torch.zeros_like(exact)
     if wire_observed:
-        verified[61:64] = exact[61:64]
+        verified[_CENTER_XYZ] = exact[_CENTER_XYZ]
         if temporal_observed:
-            # A symmetric cylinder does not independently expose angular motion.
-            verified[68:71] = exact[68:71]
+            # The SDK supplies a rigid-body target, not a per-point track.
+            # The symmetric cylinder has no qualified angular observability.
+            verified[_RIGID_LINEAR_VELOCITY] = exact[_RIGID_LINEAR_VELOCITY]
     row['verified_canonical_native'] = verified
     if bool(verified.any()):
         if row['extra_labels'].get('training_label_source_scope') == _ENCODERS_ONLY:
@@ -440,18 +471,19 @@ def read_candidate(path, *, raw, sha256, raw_sha256):
         if row['extra_labels'].get('training_label_evidence_scope') != 'native_runtime_capture_unqualified':
             raise ValueError('candidate lacks measured label-source provenance')
         row['source_teacher_checkpoint_sha256'] = checkpoint
-    same_clock = _raw_bindings(raw, rows, checkpoint, cold_readbacks=cold_readbacks)
+    same_clock, headers = _raw_bindings(raw, rows, checkpoint, cold_readbacks=cold_readbacks)
     previous, cache = {},{}
     for row in rows:
         identity = row['identity']
         episode = identity_key(identity)[:4]
         clock = (*episode,identity['physics_tick_end'])
-        observed, tracks = _verified_visible_tracks(row,Path(raw).resolve().parent,cache)
-        prior_row, prior_tracks = previous.get(episode,(None,set()))
-        consecutive = _temporal_support(prior_row, identity, prior_tracks, tracks)
-        exact = _verified_canonical_label_mask(row,same_clock.get(clock))
+        observed = _verified_wire_observation(row,Path(raw).resolve().parent,cache)
+        prior_row, prior_observed = previous.get(episode,(None,False))
+        consecutive = _rigid_motion_observed(prior_row, identity,
+            previous_wire_observed=prior_observed, wire_observed=observed)
+        exact = _verified_canonical_label_mask(row,same_clock.get(clock),episode_header=headers[episode])
         _admit_rigid_labels(row,exact,wire_observed=observed,temporal_observed=consecutive)
-        previous[episode] = row,tracks if bool(exact[61:64].all()) else set()
+        previous[episode] = row,observed
     if file_sha256(path) != sha256 or file_sha256(raw) != raw_sha256:
         raise ValueError('state-supervision source changed while reading')
     return rows
@@ -868,6 +900,13 @@ def _metrics(model, rows, labels, indices, split, batch_size, device, criterion,
             # These original contract coordinates are relative center / 0.05 m.
             report[key].update(physical_mae_m=report[key]['mae']*.05,
                 physical_rmse_m=report[key]['rmse']*.05, physical_p95_m=report[key]['p95']*.05)
+        if key.startswith('371:'):
+            index = int(key.split(':',1)[1])
+            if _RIGID_ROOT_VELOCITY.start <= index < _RIGID_ROOT_VELOCITY.stop:
+                linear = index < _RIGID_LINEAR_VELOCITY.stop
+                scale = .1 if linear else 1.
+                report[key].update(physical_unit='m/s' if linear else 'rad/s',
+                    physical_errors={metric:report[key][metric]*scale for metric in ('mae','rmse','p95')})
     supervised = [i for i in indices if labels[i]]
     return dict(mean_batch_loss=sum(losses)/len(losses) if losses else None, outputs=report,
         evaluated_rows=len(indices), supervised_rows=len(supervised),

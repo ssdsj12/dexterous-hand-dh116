@@ -78,7 +78,7 @@ def test_full_cold8_candidate_ledger_accepts_only_bound_diagnostic_reset(tmp_pat
     path,raw=cold_payload(tmp_path)
     # Source resolver is isolated here. This test validates complete rows/raw/reset
     # admission, not optical/instance labels or actual Isaac execution.
-    monkeypatch.setattr(state,'_verified_visible_tracks',lambda *a:(False,set()))
+    monkeypatch.setattr(state,'_verified_wire_observation',lambda *a:False)
     rows=state.read_candidate(path,raw=raw,sha256=file_sha256(path),raw_sha256=file_sha256(raw))
     assert len(rows)==32 and state.split_estimator_rows(rows)['independent_groups']==8
     assert all(not row['verified_canonical_native'].any() for row in rows)
@@ -89,7 +89,7 @@ def test_full_cold8_candidate_ledger_accepts_only_bound_diagnostic_reset(tmp_pat
 @pytest.mark.parametrize('damage',['no_report','modified_readback','wrong_initial','extra_episode','missing_record'])
 def test_cold_reset_candidate_admission_fails_closed(tmp_path,monkeypatch,damage):
     path,raw=cold_payload(tmp_path)
-    monkeypatch.setattr(state,'_verified_visible_tracks',lambda *a:(False,set()))
+    monkeypatch.setattr(state,'_verified_wire_observation',lambda *a:False)
     payload=torch.load(path,weights_only=True)
     if damage=='no_report':(tmp_path/'cold_initials/cohort_report.json').unlink()
     elif damage=='modified_readback':(tmp_path/'cold_initials/reset_readback_0001.json').write_text('{}')
@@ -139,7 +139,7 @@ def test_self_consistent_wrong_native_header_cannot_detach_from_reset_readback(t
     torch.save(payload,path)
     raw.write_text(''.join(json.dumps(row)+'\n' for row in ledger))
     (tmp_path/'cold_initials/cohort_report.json').write_text(json.dumps(payload['cold_cohort']))
-    monkeypatch.setattr(state,'_verified_visible_tracks',lambda *a:(False,set()))
+    monkeypatch.setattr(state,'_verified_wire_observation',lambda *a:False)
     with pytest.raises(ValueError,match='reset readback'):
         state.read_candidate(path,raw=raw,sha256=file_sha256(path),raw_sha256=file_sha256(raw))
 
@@ -155,7 +155,7 @@ def test_reset_readback_header_compares_world_origin_and_quaternion_sign_correct
             pose[:3]=[a+b for a,b in zip(pose[:3],origin)]
             pose[3:]=[-x for x in pose[3:]]
     raw.write_text(''.join(json.dumps(row)+'\n' for row in ledger))
-    monkeypatch.setattr(state,'_verified_visible_tracks',lambda *a:(False,set()))
+    monkeypatch.setattr(state,'_verified_wire_observation',lambda *a:False)
     assert len(state.read_candidate(path,raw=raw,sha256=file_sha256(path),raw_sha256=file_sha256(raw)))==32
 
 
@@ -172,6 +172,6 @@ def test_consistently_swapped_environment_slot_is_rejected(tmp_path,monkeypatch)
         if 'pre_action_identity' in row:row['pre_action_identity']['env_id']=row['env_id']
     torch.save(payload,path);raw.write_text(''.join(json.dumps(row)+'\n' for row in ledger))
     (tmp_path/'cold_initials/cohort_report.json').write_text(json.dumps(payload['cold_cohort']))
-    monkeypatch.setattr(state,'_verified_visible_tracks',lambda *a:(False,set()))
+    monkeypatch.setattr(state,'_verified_wire_observation',lambda *a:False)
     with pytest.raises(ValueError,match='initial identity'):
         state.read_candidate(path,raw=raw,sha256=file_sha256(path),raw_sha256=file_sha256(raw))
