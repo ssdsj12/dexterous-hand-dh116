@@ -3009,6 +3009,86 @@
         "report": "docs/superpowers/reports/2026-11-12-teacher-t5-wire-tensor-native-results.md",
         "report_source_commit": "0b0b9a4a37b3a388048398e85aedccb17a8095cb"
       }
+    },
+    "wp3.teacher-wrap-geometry-preflight": {
+      "title": "握式 Teacher 整手包握几何预检",
+      "executor": "gated",
+      "dependencies": [
+        "wp3.teacher-t5-native-contract-binding"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 234,
+        "failed": 0,
+        "skipped": 3,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_teacher_wrap_preflight.py",
+          "tests/test_surface_success.py",
+          "tests/test_multifinger_monitor.py",
+          "tests/test_dh116_stereo_trials.py"
+        ],
+        "log_sha256": "a84e77fa5c0d258ce4c98d67a695d6d85220684dfe0247ab6a70deef4c78ed81",
+        "tested_head": "4efbdef477575f3f424049891b47b7f204ac70ca",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "qualification_scope": "geometry_only_wrap_seed_audit",
+        "archived_candidate_pairs": 8,
+        "cpu_search_starts_per_hand": 8,
+        "cpu_iteration_limit": 48,
+        "eligible_bimanual_wrap_seeds": 0,
+        "geometry_search_sha256": "95dac9d1b207f30aa226b95826ea19bc83fef99898413b266415b8f8b28ad1d7",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-teacher-wrap-geometry-preflight.md",
+        "report_source_commit": "7db130e50f503a4c29fa0476ab9df0c38200612a"
+      },
+      "last_result": {
+        "passed": 234,
+        "failed": 0,
+        "skipped": 3,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_teacher_wrap_preflight.py",
+          "tests/test_surface_success.py",
+          "tests/test_multifinger_monitor.py",
+          "tests/test_dh116_stereo_trials.py"
+        ],
+        "log_sha256": "a84e77fa5c0d258ce4c98d67a695d6d85220684dfe0247ab6a70deef4c78ed81",
+        "tested_head": "4efbdef477575f3f424049891b47b7f204ac70ca",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "qualification_scope": "geometry_only_wrap_seed_audit",
+        "archived_candidate_pairs": 8,
+        "cpu_search_starts_per_hand": 8,
+        "cpu_iteration_limit": 48,
+        "eligible_bimanual_wrap_seeds": 0,
+        "geometry_search_sha256": "95dac9d1b207f30aa226b95826ea19bc83fef99898413b266415b8f8b28ad1d7",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-teacher-wrap-geometry-preflight.md",
+        "report_source_commit": "7db130e50f503a4c29fa0476ab9df0c38200612a"
+      }
+    },
+    "wp3.teacher-wrap-native": {
+      "title": "现有 solid_cylinder 握式 Teacher 原生评估",
+      "executor": "gated",
+      "dependencies": [
+        "wp3.teacher-wrap-geometry-preflight",
+        "wp3.teacher-t5-native-contract-binding"
+      ],
+      "status": "blocked",
+      "reason": "暂无原场景双手五指包握有效初态；训练和原生评估未启动。"
     }
   },
   "execution_target": {

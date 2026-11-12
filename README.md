@@ -1,3 +1,7 @@
+## 2026-11-12 — 握式 Teacher 整手包握几何预检
+
+握式按双手各五指包握预检，8 个历史候选和有界 CPU 搜索未得到可用初态。 Ubuntu CPU 回归 234 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wrap-geometry-preflight.md)
+
 ## 2026-11-12 — T5 原生 PPO Teacher 的对象侧接触验证
 
 实际 R0 update-1 在 T5 的短窗完成 128 个物理步，双侧力闭合，端支架均持续承载。 Ubuntu CPU 回归 19 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-wire-tensor-native-results.md)
