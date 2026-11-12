@@ -1,3 +1,7 @@
+## 2026-11-12 — 官方最小SimulationApp生命周期
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c0.md)。
+
 ## 2026-11-12 — 右拇指与柔性杆原生接触
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md)。
