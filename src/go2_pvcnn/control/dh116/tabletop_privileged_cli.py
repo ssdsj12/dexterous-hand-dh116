@@ -382,8 +382,12 @@ def main(mode='train', argv=None):
         input_config_sha256=file_sha256(args.config), native_task_config_sha256=file_sha256(args.native_task_config),
         new_model_only=True, old_models_modified=False))
     from .tabletop_stereo_native import launch_native
+    from .tabletop_privileged_t5_binding import verify_runtime_contract
+    native_spec = json.loads(args.native_task_config.read_text(encoding='utf-8'))
 
     def callback(bridge):
+        if 'teacher_t5_binding' in native_spec:
+            verify_runtime_contract(bridge.contract, native_spec)
         from .tabletop_stereo_camera import StereoCamera
         bridge.bind_camera(StereoCamera.from_native(bridge.world.sim, bridge.device_world.origins,
             args.camera_config, device=bridge.device))

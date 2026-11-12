@@ -3874,6 +3874,38 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md",
       "report_source_commit": "741bfd6814445608ad9b482ef576fdd7270ef655"
+    },
+    "wp3.teacher-t5-native-contract-binding": {
+      "passed": 85,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_t5_binding.py",
+        "tests/test_dh116_teacher_expert_assembly.py",
+        "tests/test_dh116_teacher_warm_start.py",
+        "tests/test_dh116_stereo_trials.py",
+        "tests/test_dh116_privileged_cli.py",
+        "tests/test_dh116_privileged_teacher.py"
+      ],
+      "log_sha256": "4a39b31dfeb9b3e3ff113946e297d0e97929b81d09ea7e62a4b313430c0fe3bb",
+      "tested_head": "38d2b152c907ba93b8972c6eaaaa25b54ed9e025",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "native_observed_t5_identity_cpu_binding_only",
+      "input_hash_count": 10,
+      "t5_tensor_contract_file_sha256": "eda0b7e316a493997192ffec9abd8b5648c826a265d817774dd9117c734ec551",
+      "t5_surface_semantic_sha256": "cc7d9f525f6ebeb04ff97a2ad0ba9afac02767f897ff3f14558c33c1ae56a0d6",
+      "derived_config_sha256": "56cef9f2f811918a070fefd9dc766ca9626410ee02b4a118e49773fba43e4aba",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-t5-native-contract-binding.md",
+      "report_source_commit": "567c1d99605d844aa0df13c03e645f1382a3cc50"
     }
   }
 }

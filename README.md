@@ -1,3 +1,7 @@
+## 2026-11-12 — 将 Teacher R0 绑定到原 T5 原生物理合同
+
+完整 T5 的实际张量合同与历史成功 T5 相同。新增只读派生与原生回调严格身份检查。 Ubuntu CPU 回归 85 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-native-contract-binding.md)
+
 ## 2026-11-12 — MPC 完整上一动作窗口的腕部字段校验
 
 62 条真实非 reset 行的 4 个腕部窗口字段逐值吻合，reset 行保留未测窗口。 Ubuntu CPU 回归 50 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md)

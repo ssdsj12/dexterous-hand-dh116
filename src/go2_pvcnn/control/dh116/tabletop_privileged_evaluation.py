@@ -442,6 +442,8 @@ def main(argv=None):
     new_run(args.output)
     def callback(bridge):
         if args.owner=='teacher':
+            from .tabletop_privileged_t5_binding import verify_runtime_contract
+            verify_runtime_contract(bridge.contract, json.loads(args.native_task_config.read_text(encoding='utf-8')))
             from .tabletop_privileged_cli import load_config, _policy_for_evaluation, write_native_callback_completion
             selected_config, selected_ppo = (teacher_config, ppo) if teacher_config is not None else load_config(args.teacher_config)
             frozen = None
