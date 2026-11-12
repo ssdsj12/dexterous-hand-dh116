@@ -1401,6 +1401,81 @@
         "report": "docs/superpowers/reports/2026-11-12-mpc-sync-v02-native-evidence.md",
         "report_source_commit": "6e2526bfe0a1483a5a913b2007514c06e8c007e9"
       }
+    },
+    "wp3.finger12-pairing-preflight": {
+      "title": "右手 finger12 同初态三路配对预检",
+      "executor": "gated",
+      "dependencies": [
+        "wp3.finger12-event-windows",
+        "wp3.mpc-sync32-native-diagnostic"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 41,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_privileged_action_audit.py",
+          "tests/test_mpc_privileged_capture.py",
+          "tests/test_dh116_stereo_candidate_cold_trials.py"
+        ],
+        "log_sha256": "dae160f8bcb18d5092fce9923e18a8ad0da21065f66122c2cfb55d9ac41f3380",
+        "tested_head": "8c37b7c143caaec232496f852b83ad8128d192af",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "qualification_scope": "archived_state_comparability_preflight_only",
+        "matched_complete_three_way_initial_conditions": 0,
+        "native_pairing_runs": 0,
+        "causal_root_qualified": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-finger12-native-pairing-preflight.md",
+        "report_source_commit": "56f86d69fe36a9f9209103a9a04939122dd4dd4c"
+      },
+      "last_result": {
+        "passed": 41,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_privileged_action_audit.py",
+          "tests/test_mpc_privileged_capture.py",
+          "tests/test_dh116_stereo_candidate_cold_trials.py"
+        ],
+        "log_sha256": "dae160f8bcb18d5092fce9923e18a8ad0da21065f66122c2cfb55d9ac41f3380",
+        "tested_head": "8c37b7c143caaec232496f852b83ad8128d192af",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "qualification_scope": "archived_state_comparability_preflight_only",
+        "matched_complete_three_way_initial_conditions": 0,
+        "native_pairing_runs": 0,
+        "causal_root_qualified": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-finger12-native-pairing-preflight.md",
+        "report_source_commit": "56f86d69fe36a9f9209103a9a04939122dd4dd4c"
+      }
+    },
+    "wp3.finger12-native-paired": {
+      "title": "右手 finger12 同初态原生三路诊断",
+      "executor": "gated",
+      "dependencies": [
+        "wp3.finger12-pairing-preflight",
+        "wp4.shutdown-native"
+      ],
+      "status": "blocked",
+      "reason": "待共享冷初态入口与三路 2 env pilot 的独立预算，缺完整同初态终止证据。"
     }
   },
   "execution_target": {

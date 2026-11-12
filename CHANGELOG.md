@@ -1,3 +1,7 @@
+## 2026-11-12 — 右手 finger12 同初态三路配对预检
+
+旧 Teacher 与新 Cold8 的实测初态交集为 0。预检记录了 MPC 近邻状态、测量缺口与三路配对预算。 Ubuntu CPU 回归 41 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-native-pairing-preflight.md)
+
 ## 2026-11-12 — 原 MPC 371D／24D 短程原生同步诊断
 
 修复同钟记录器的 dtype 错误。原 MPC 复验取得 64 条状态／动作记录和 512 条环境级物理样本，完整成功回合为 0。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-sync-v02-native-evidence.md)
