@@ -1,5 +1,6 @@
 """Separate, CPU-testable DH116 flexible Teacher model contract."""
 
+from copy import deepcopy
 import hashlib
 import json
 import math
@@ -199,6 +200,7 @@ class DeformablePrivilegedTeacher(PrivilegedTeacher):
         if identity["config_semantic_sha256"] != digest(config):
             raise ValueError("flexible Teacher config and model identity differ")
         self.backend_sha256 = identity["backend_sha256"]
+        self._model_identity = deepcopy(identity)
         width = config["model"]["rod_hidden"]
         self.actor = self.actor[:-1]
         self.critic = self.critic[:-1]
@@ -206,6 +208,10 @@ class DeformablePrivilegedTeacher(PrivilegedTeacher):
         self.critic_rod = _MaterialEncoder(width)
         self.actor_head = nn.Linear(256 + 2 * width, ACTION_SIZE)
         self.critic_head = nn.Linear(256 + 2 * width, 1)
+
+    @property
+    def model_identity(self):
+        return deepcopy(self._model_identity)
 
     def pack(self, common, rod_snapshot, common_identity, node_valid):
         common = _observation(common)

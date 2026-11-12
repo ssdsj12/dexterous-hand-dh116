@@ -8463,6 +8463,95 @@
         "report": "docs/superpowers/reports/2026-11-12-camera-c3-c4-native-stack-audit.md",
         "report_source_commit": "aabe29a6b8229fab371a7f5f5e399e4dffa9bf96"
       }
+    },
+    "flex.flexible-teacher-structured-runtime": {
+      "title": "P5 isolated structured PPO runtime and checkpoint CPU verification",
+      "executor": "gated",
+      "dependencies": [
+        "flex.flexible-teacher-model-contract",
+        "flex.flexible-task-hold-slip-reference"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 170,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformable_privileged_ppo.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_deformable_grasp_task.py",
+          "tests/test_dh116_privileged_teacher.py",
+          "tests/test_dh116_stereo_runtime_rod_identity.py",
+          "tests/test_stereo_action_contract_audit.py",
+          "tests/test_stereo_privileged_state_contract_audit.py"
+        ],
+        "log_sha256": "43f169d2adb67f43193f401845e2f3b3c0d8766bf387c36d9384df28b5037fb7",
+        "tested_head": "f4fe60f7b2af66e561b3d3718fffdef4a62e0afe",
+        "stage": "cpu_verified",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "physics_steps": 0,
+        "ppo_updates": 0,
+        "evaluation_episodes": 0,
+        "synthetic_cpu_updates_only": true,
+        "base_ppo_source_sha256": "f0a96f4f8c9548b5153d004013bef9d77b97250aa0bc43272626cffb15416854",
+        "remaining_blockers": [
+          "native same-free-rod hand contact and reset qualification",
+          "runtime material gravity and common371/R0 source binding",
+          "separate native training budget and gate",
+          "CPU-only structured runtime, native CLI not routed"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-privileged-ppo-runtime-cpu.md",
+        "report_source_commit": "019895c9d0149dbc0d97d3b1451873c3e558ffe6"
+      },
+      "last_result": {
+        "passed": 170,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformable_privileged_ppo.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_deformable_grasp_task.py",
+          "tests/test_dh116_privileged_teacher.py",
+          "tests/test_dh116_stereo_runtime_rod_identity.py",
+          "tests/test_stereo_action_contract_audit.py",
+          "tests/test_stereo_privileged_state_contract_audit.py"
+        ],
+        "log_sha256": "43f169d2adb67f43193f401845e2f3b3c0d8766bf387c36d9384df28b5037fb7",
+        "tested_head": "f4fe60f7b2af66e561b3d3718fffdef4a62e0afe",
+        "stage": "cpu_verified",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "physics_steps": 0,
+        "ppo_updates": 0,
+        "evaluation_episodes": 0,
+        "synthetic_cpu_updates_only": true,
+        "base_ppo_source_sha256": "f0a96f4f8c9548b5153d004013bef9d77b97250aa0bc43272626cffb15416854",
+        "remaining_blockers": [
+          "native same-free-rod hand contact and reset qualification",
+          "runtime material gravity and common371/R0 source binding",
+          "separate native training budget and gate",
+          "CPU-only structured runtime, native CLI not routed"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-privileged-ppo-runtime-cpu.md",
+        "report_source_commit": "019895c9d0149dbc0d97d3b1451873c3e558ffe6"
+      }
     }
   },
   "execution_target": {
