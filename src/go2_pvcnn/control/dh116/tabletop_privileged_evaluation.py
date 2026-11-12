@@ -442,7 +442,7 @@ def main(argv=None):
     new_run(args.output)
     def callback(bridge):
         if args.owner=='teacher':
-            from .tabletop_privileged_cli import load_config,_policy_for_evaluation
+            from .tabletop_privileged_cli import load_config, _policy_for_evaluation, write_native_callback_completion
             selected_config, selected_ppo = (teacher_config, ppo) if teacher_config is not None else load_config(args.teacher_config)
             frozen = None
             if args.trained_checkpoint_sha256 is not None:
@@ -450,8 +450,17 @@ def main(argv=None):
                     selected_config, selected_ppo, contract=bridge.contract, task_identity=bridge.task_identity)
                 write_json_new(args.output / 'frozen_teacher_checkpoint.json', frozen)
             policy,_=_policy_for_evaluation(bridge,selected_config,selected_ppo,args.checkpoint)
-            return evaluate_cold_trials(bridge,policy,args.manifest,args.output/'trials',owner='teacher',
+            trials = args.output / 'trials'
+            result = evaluate_cold_trials(bridge,policy,args.manifest,trials,owner='teacher',
                 checkpoint_path=args.checkpoint,max_control_steps=budget,minimum_per_style=minimum)
+            artifacts = [trials / name for name in ('trial_evaluation.json', 'control_intervals.jsonl',
+                'frozen_manifest.json', 'base_contract_binding.json')]
+            artifacts.extend(trials.glob('batch_*/reset_readback.json'))
+            artifacts.extend([bridge.output / 'native_physics.jsonl', bridge.output / 'native_task_contract.json'])
+            if frozen is not None:
+                artifacts.append(args.output / 'frozen_teacher_checkpoint.json')
+            write_native_callback_completion(args.output, result, artifacts)
+            return result
         from .tabletop_stereo_calibration import StereoCalibration
         from .tabletop_stereo_checkpoint import load_deployment_actor
         from .tabletop_stereo_runtime import NativeStereoEnvironment

@@ -3760,6 +3760,34 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-teacher-expert-assembly.md",
       "report_source_commit": "9b4d292751691e9bca32a7fbd5eca29fe9e00619"
+    },
+    "wp3.teacher-callback-durable-completion": {
+      "passed": 82,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_expert_assembly.py",
+        "tests/test_dh116_teacher_warm_start.py",
+        "tests/test_dh116_stereo_trials.py",
+        "tests/test_dh116_privileged_cli.py",
+        "tests/test_dh116_privileged_teacher.py"
+      ],
+      "log_sha256": "5951329c524e133a23e7a14ffb8c6379a306013289506cda1e44e245ccac3fd0",
+      "tested_head": "64e0989653c07acd078091dd254d7da31bc4ff42",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "callback_completion_cpu_regression_only",
+      "outer_process_exit_still_separately_verified": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-callback-durable-completion.md",
+      "report_source_commit": "123eb8834692a906c8c7c4a7de5d6759d23d6013"
     }
   }
 }

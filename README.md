@@ -1,3 +1,7 @@
+## 2026-11-12 — Teacher 原生回调产物持久化
+
+训练、采集和冻结 Teacher 评估在应用关闭前写入并同步回执。外层退出仍以独立监督记录为准。 Ubuntu CPU 回归 82 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-callback-durable-completion.md)
+
 ## 2026-11-12 — Teacher 原生成功专家数据装配器
 
 装配器逐行核验完整 371D、实际 issued 24D 和原生证据。当前未产生合格 BC 专家包。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-expert-assembly.md)

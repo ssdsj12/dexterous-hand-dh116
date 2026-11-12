@@ -197,3 +197,48 @@ def test_cold_trial_metadata_never_moves_physics_and_episode_clocks_are_unique()
     assert after[0]['source_episode_group'] == 'fixture-0'
     with pytest.raises(ValueError,match='unvisited'):
         bridge.bind_cold_trials(trials)
+
+
+def test_native_completion_is_durable_before_launcher_can_exit(tmp_path, monkeypatch):
+    from go2_pvcnn.control.dh116 import tabletop_stereo_camera as camera
+    from go2_pvcnn.control.dh116 import tabletop_stereo_native as native
+
+    output = tmp_path / 'run'
+    monkeypatch.setattr(camera.StereoCamera, 'from_native', lambda *args, **kwargs: object())
+
+    def train(bridge, *args, **kwargs):
+        run = kwargs['output']
+        (run / 'teacher_update_000001.pt').write_bytes(b'CPU fixture')
+        (run / 'iterations.jsonl').write_text('{}\n')
+        (run / 'model_identity.json').write_text('{}')
+        (run / 'resolved_config.json').write_text('{}')
+        return dict(status='fixture_callback', native_grasp_qualification=False)
+
+    def early_exit(callback, *, output, **kwargs):
+        output.mkdir()
+        (output / 'native_physics.jsonl').write_text('{}\n')
+        callback(SimpleNamespace(output=output, bind_camera=lambda camera: None,
+            world=SimpleNamespace(sim=None), device_world=SimpleNamespace(origins=None), device='cpu'))
+        result = json.loads((output.parent / 'completion.json').read_text())
+        assert result['status'] == 'fixture_callback'
+        assert result['completion_scope'] == 'native_callback_finished_before_app_close'
+        assert result['outer_exit_verified'] is False
+        assert 'native/native_physics.jsonl' in result['fsynced_artifacts']
+        raise SystemExit(0)
+
+    monkeypatch.setattr(cli, 'train_teacher', train)
+    monkeypatch.setattr(native, 'launch_native', early_exit)
+    with pytest.raises(SystemExit) as stopped:
+        cli.main('train', ['--config', str(CONFIG), '--output', str(output), '--enable-experiment', '--execute-native'])
+    assert stopped.value.code == 0
+
+
+def test_callback_receipt_cannot_claim_external_exit_or_ignore_missing_artifact(tmp_path):
+    receipt = tmp_path / 'completion.json'
+    with pytest.raises(FileNotFoundError):
+        cli.write_native_callback_completion(tmp_path, {}, [tmp_path / 'not_created.json'])
+    assert not receipt.exists()
+    sample = tmp_path / 'completed.json'
+    sample.write_text('{}')
+    cli.write_native_callback_completion(tmp_path, {'outer_exit_verified': True}, [sample])
+    assert json.loads(receipt.read_text())['outer_exit_verified'] is False

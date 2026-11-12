@@ -7,6 +7,7 @@ import argparse
 from copy import deepcopy
 from dataclasses import asdict
 import json
+import os
 from pathlib import Path
 import time
 
@@ -307,6 +308,30 @@ def collect_or_evaluate(bridge, config, ppo_config, *, checkpoint, output, max_s
     return report
 
 
+def write_native_callback_completion(output, result, artifacts):
+    """Persist callback evidence before the native launcher starts App close."""
+    output = Path(output).resolve(strict=True)
+    paths = sorted({Path(path).resolve(strict=True) for path in artifacts})
+    parents = {output}
+    for path in paths:
+        if not path.is_relative_to(output):
+            raise ValueError('callback completion evidence must belong to the new run')
+        with path.open('rb') as stream:
+            os.fsync(stream.fileno())
+        parents.add(path.parent)
+    receipt = output / 'completion.json'
+    write_json_new(receipt, {**result, 'completion_scope': 'native_callback_finished_before_app_close',
+        'outer_exit_verified': False, 'fsynced_artifacts': [str(path.relative_to(output)) for path in paths]})
+    with receipt.open('rb') as stream:
+        os.fsync(stream.fileno())
+    for parent in parents:
+        descriptor = os.open(parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+
+
 def main(mode='train', argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', type=Path, required=True)
@@ -363,14 +388,28 @@ def main(mode='train', argv=None):
         bridge.bind_camera(StereoCamera.from_native(bridge.world.sim, bridge.device_world.origins,
             args.camera_config, device=bridge.device))
         if mode == 'train':
-            return train_teacher(bridge, config, ppo, output=run, updates=args.updates,
+            result = train_teacher(bridge, config, ppo, output=run, updates=args.updates,
                 checkpoint=args.checkpoint, expert_dataset=args.expert_dataset, bc_steps=args.bc_steps,
                 checkpoint_interval=args.checkpoint_interval, record_diagnostic_rollout=args.record_diagnostic_rollout)
-        return collect_or_evaluate(bridge, config, ppo, checkpoint=args.checkpoint,
-            output=run, max_steps=args.max_control_steps, collect=mode == 'collect')
+            artifacts = [run / name for name in ('model_identity.json', 'resolved_config.json', 'iterations.jsonl')]
+            artifacts.extend(run.glob('teacher_update_*.pt'))
+            for name in ('diagnostic_rollout.pt', 'expert_bc_optimizer.pt', 'task_identity.json'):
+                if (run / name).is_file():
+                    artifacts.append(run / name)
+        else:
+            result = collect_or_evaluate(bridge, config, ppo, checkpoint=args.checkpoint,
+                output=run, max_steps=args.max_control_steps, collect=mode == 'collect')
+            artifacts = [run / 'teacher_evaluation.json']
+            if mode == 'collect':
+                artifacts.append(run / 'privileged_candidate_trajectories.pt')
+        artifacts.extend([run / 'launch.json', bridge.output / 'native_physics.jsonl'])
+        for name in ('native_task_contract.json', 'teacher_policy_epochs.jsonl'):
+            if (bridge.output / name).is_file():
+                artifacts.append(bridge.output / name)
+        write_native_callback_completion(run, result, artifacts)
+        return result
 
-    result = launch_native(callback, native_arguments=args.native_task_config,
+    launch_native(callback, native_arguments=args.native_task_config,
         output=run / 'native', num_envs=args.num_envs, seed=args.seed,
         rollout_steps=config['rollout_steps'], enabled=True)
-    write_json_new(run / 'completion.json', result)
     return 0
