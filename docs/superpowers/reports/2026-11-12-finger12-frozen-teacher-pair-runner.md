@@ -30,3 +30,15 @@ mean 启动前读取 sampled 的 `completion.json`，同时核对首态绑定、
 
 1. 保留现有 Teacher checkpoint 的路线需要在当前 exact task contract 下采集新原生成功的同期动作轨迹。用现有 `tabletop_surface_demo_library.merge_datasets` 依据真实来源建立 reset family，并要求 `load_teacher_reference_dataset` 对实际三路继承合同都接受。以同一冻结初态和真实执行旁路验证原 `_teacher_optimizer` 的 reference、alive、tick 和 `observe_result` 边界。
 2. 保留历史 MPC 的路线可基于历史 T5 的合格物理参数、传感器读回方式及复用原 MPC，使用独立的新 Teacher checkpoint。该新 checkpoint 从训练、保存到评估都绑定实际 legacy TensorEnv 合同。先用真实 2 环境回读核对 reset family、控制器和物理摘要，再进行 4 步三路 pilot，最后运行 128 步因果诊断。该路线的结论只适用于新 Teacher；现有 update-0/1 和历史越限归档保留为独立证据。
+
+## v02 原生启动失败及修复
+
+实际 sampled 4 步 pilot 在执行策略动作前退出码 2。实测继承合同中唯一差异是观测归档的 `rollout_steps=32` 与启动器的 `rollout_steps=4`。原始日志 SHA `f730e2a92efa658700ab72018a0a4a52c28cdf91d5c8d6655d38e77d12dc761f`。原生冻结模型身份检查继续使用完整未改动合同。
+
+启动器现在沿用实测合同的 32 步配置，诊断回调仍独立限制 4 或 128 个控制步。原生回调返回前 flush/fsync 真实 480 Hz 账本、首态绑定、输入记录和 `completion.json`，外层自然退出证据继续由 supervisor 单独记录。CPU 回归增加到 55 项通过，日志 SHA `f3305967ace4567b1b556f81116ba0d4a02f7ccff39873c0d0149f71ab934c2c`。修复后的实际预检确认 32/4 两个预算，待独立原生复验。
+
+## v03 原生合同编码核验
+
+v03 sampled 启动在首个动作前退出码 2，日志 SHA `4e80bf0816633b441db118afb206ee1714c3689ed75a2051569d94aa17964ba8`。冻结目录中的 6 个输入 SHA 全部匹配。v03 的实际归档继承合同和任务身份与 Cold8 归档的 canonical JSON 逐字一致。先前使用 Python 原始容器相等性检查，运行时 tuple 会与 JSON 读回的 list 不等，即使持久化语义相同。
+
+回调现逐字段比较 canonical JSON，不移除任何字段。真实限位数值变化、任务身份变化和输入文件改写分别拒绝。CPU 回归 56 项通过，日志 SHA `3018a198298de5b4e842f35a0df965513d1f67aabddb66e4a03fa824531b1d88`。v02、v03 结果目录和退出证据均保留，修复仍待独立原生复验。

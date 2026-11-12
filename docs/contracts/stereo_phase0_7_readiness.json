@@ -4137,6 +4137,46 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-teacher-wire-tensor-native-results.md",
       "report_source_commit": "8a64564964b456e2a99549a030c631c2ca82c5d3"
+    },
+    "wp3.finger12-frozen-teacher-native-v04": {
+      "passed": 56,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_pair_diagnostic.py",
+        "tests/test_dh116_stereo_runtime_teacher_identity.py",
+        "tests/test_dh116_privileged_action_audit.py",
+        "tests/test_dh116_stereo_candidate_cold_trials.py"
+      ],
+      "log_sha256": "052e4944402e5d8b6662925471ea360e5319720f0bc567f4ab97613ebf7e4eb1",
+      "tested_head": "a36e930afa8a923b2c317562d643cbba832f2201",
+      "native_qualification": false,
+      "native_execution_performed": true,
+      "qualification_scope": "matched_native_teacher_two_arm_diagnostic_only",
+      "native_runs": 4,
+      "outer_exit_codes": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "exact_bound_physical_rows": 1222,
+      "sampled_terminal_tick": 269,
+      "mean_terminal_tick": 273,
+      "tripod_completed_episodes": 0,
+      "ppo_updates": 0,
+      "causal_root_qualified": false,
+      "independent_metrics_sha256": "fef0fe09363c35122d5ede3bcb7edc1c4966a4df4a818e7ed9dc840bf674bb2c",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-native-v04.md",
+      "report_source_commit": "7c12ad066b3331a82dbb1b625ff4cb3eced29b0c"
     }
   }
 }

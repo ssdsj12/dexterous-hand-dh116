@@ -150,3 +150,97 @@ def test_mean_start_requires_completed_sampled_native_artifacts_and_exact_hashes
     completion.write_text(json.dumps(report))
     with pytest.raises(ValueError, match='owner'):
         load_completed_sampled_start(start)
+
+
+def test_native_launcher_keeps_observed_rollout_and_writes_receipt_before_app_close(tmp_path, monkeypatch):
+    import json
+    from types import SimpleNamespace
+
+    from go2_pvcnn.control.dh116 import tabletop_stereo_native, tabletop_stereo_camera
+    from go2_pvcnn.control.dh116 import tabletop_privileged_cli
+    from go2_pvcnn.control.dh116 import tabletop_teacher_pair_diagnostic as diagnostic
+    from go2_pvcnn.control.dh116.tabletop_stereo_contract import file_sha256
+    from go2_pvcnn.control.dh116.tabletop_vision_evaluation_contract import evaluation_physics_sha256
+
+    def write_json(name, payload):
+        path = tmp_path/name
+        path.write_text(json.dumps(payload))
+        return path
+
+    spec = dict(version='dh116-stereo-native-bootstrap-v1', arguments=['--object-kind', 'solid_cylinder'])
+    task = tabletop_stereo_native.native_task_identity(spec)
+    native = dict(rollout_steps=32, settings={'sdk_joint_axis': (0.0, 0.0, 1.0)})
+    observed = write_json('observed.json', dict(inherited_contract=native, task_identity=task))
+    checkpoint = tmp_path/'teacher.pt'
+    checkpoint.write_bytes(b'teacher')
+    trials = manifest(1)
+    trials['metadata'].update(source_sha256=file_sha256(checkpoint),
+        physics_sha256=evaluation_physics_sha256(native))
+    monkeypatch.setattr(tabletop_privileged_cli, 'load_config', lambda _: ({'model': {}}, None))
+    monkeypatch.setattr(tabletop_privileged_cli, '_policy_for_evaluation', lambda *a: (None, None))
+    monkeypatch.setattr(diagnostic, 'check_frozen_teacher', lambda *a: None)
+    camera = SimpleNamespace(calibration=SimpleNamespace(sha256=trials['metadata']['camera_sha256']))
+    monkeypatch.setattr(tabletop_stereo_camera.StereoCamera, 'from_native', lambda *a,**k: camera)
+    output = tmp_path/'execution'
+
+    def run_arm(bridge, model, plan, checkpoint, run, **kwargs):
+        assert plan['policy_steps_budget'] == 4
+        for name in ('start_binding.json','teacher_pre_action.pt'):
+            (run/name).write_bytes(name.encode())
+        return dict(status='bounded_frozen_teacher_diagnostic', policy_steps=4)
+
+    monkeypatch.setattr(diagnostic, '_run_arm', run_arm)
+
+    def launch(callback, **kwargs):
+        assert kwargs['rollout_steps'] == 32
+        path = kwargs['output']
+        path.mkdir()
+        raw = path/'native_physics.jsonl'
+        with raw.open('w') as stream:
+            bridge = SimpleNamespace(contract=native, task_identity=task, _raw=stream,
+                world=SimpleNamespace(sim=None), device_world=SimpleNamespace(origins=None),
+                device='cpu', camera=camera, bind_camera=lambda _: None)
+            stream.write('{}\n')
+            callback(bridge)
+            receipt = json.loads((output/'completion.json').read_text())
+            assert receipt['raw_480hz_sha256'] == file_sha256(raw)
+            assert receipt['start_binding_sha256'] == file_sha256(output/'start_binding.json')
+            assert receipt['policy_steps'] == 4 and receipt['outer_process_verified'] is False
+            # Protected launcher may end the interpreter as part of App close.
+            raise SystemExit(0)
+
+    monkeypatch.setattr(tabletop_stereo_native, 'launch_native', launch)
+    args = ['--mode','teacher_sampled','--config',str(write_json('config.json',{})),
+        '--checkpoint',str(checkpoint),'--native-task-config',str(write_json('task.json',spec)),
+        '--camera-config',str(write_json('camera.json',{})), '--observed-native-contract',str(observed),
+        '--manifest',str(write_json('manifest.json',trials)),
+        '--trials',*[row['trial_id'] for row in trials['trials']], '--steps','4',
+        '--output',str(output), '--enable-experiment','--execute-native','--seed',str(trials['metadata']['seed'])]
+    with pytest.raises(SystemExit, match='0'):
+        diagnostic.main(args)
+    assert (output/'completion.json').is_file()
+
+
+def test_native_binding_rejects_value_changes_but_accepts_serialized_sequence_type(tmp_path):
+    from types import SimpleNamespace
+
+    from go2_pvcnn.control.dh116.tabletop_stereo_contract import file_sha256
+    from go2_pvcnn.control.dh116.tabletop_teacher_pair_diagnostic import verify_native_launch_binding
+
+    bridge = SimpleNamespace(contract={'limits': (0.001, 2.97)}, task_identity={'kind': 'rigid_proxy'})
+    observed = {'inherited_contract': {'limits': [0.001, 2.97]}, 'task_identity': {'kind': 'rigid_proxy'}}
+    source = tmp_path/'source.json'
+    source.write_text('{}')
+    inputs = {source:file_sha256(source)}
+    verify_native_launch_binding(bridge, observed, inputs)
+    bridge.contract = {'limits': (0.001, 2.98)}
+    with pytest.raises(RuntimeError, match='inherited native contract'):
+        verify_native_launch_binding(bridge, observed, inputs)
+    bridge.contract = {'limits': (0.001, 2.97)}
+    bridge.task_identity = {'kind': 'deformable_rod'}
+    with pytest.raises(RuntimeError, match='native task identity'):
+        verify_native_launch_binding(bridge, observed, inputs)
+    bridge.task_identity = {'kind': 'rigid_proxy'}
+    source.write_text('{"changed":true}')
+    with pytest.raises(RuntimeError, match='immutable launch input changed.*source.json'):
+        verify_native_launch_binding(bridge, observed, inputs)

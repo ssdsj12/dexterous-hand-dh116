@@ -1,6 +1,7 @@
 """Bounded Teacher inference and exact physical-start comparison."""
 import argparse
 import json
+import os
 from pathlib import Path
 
 import torch
@@ -10,7 +11,7 @@ from .tabletop_privileged_evaluation import (
     _native_bridge, _policy_digest, _restore_reset_buffers, _save_reset_buffers,
     _staging_reset_state, prepare_cold_trial_batches,
 )
-from .tabletop_stereo_contract import digest, file_sha256, new_run, require_sha, write_json_new
+from .tabletop_stereo_contract import canonical_json, digest, file_sha256, new_run, require_sha, write_json_new
 from .tabletop_vision_evaluation_contract import evaluation_physics_sha256
 from .tabletop_vision_evaluation_reset import _install_reset_trials, _readback_reset_trials
 
@@ -84,7 +85,7 @@ def compare_start_bindings(*arms):
 
 
 def load_completed_sampled_start(path):
-    """Require a naturally completed sampled-arm artifact set before pairing."""
+    """Require the sampled callback's complete artifact set before pairing."""
     if path.name != 'start_binding.json':
         raise ValueError('sampled start binding filename must be start_binding.json')
     start = json.loads(path.read_text(encoding='utf-8'))
@@ -229,6 +230,17 @@ def _run_arm(bridge, model, plan, checkpoint, output, *, mode, expected_start):
         native_grasp_qualified=False, causal_root_qualified=False)
 
 
+def verify_native_launch_binding(bridge, observed, inputs):
+    """Match the exact on-disk native JSON semantics, including every field."""
+    if canonical_json(bridge.contract) != canonical_json(observed['inherited_contract']):
+        raise RuntimeError('inherited native contract differs from observed contract')
+    if canonical_json(bridge.task_identity) != canonical_json(observed['task_identity']):
+        raise RuntimeError('native task identity differs from observed task identity')
+    for path, expected in inputs.items():
+        if file_sha256(path) != expected:
+            raise RuntimeError(f'immutable launch input changed: {path}')
+
+
 def main(argv=None):
     from .tabletop_privileged_cli import _policy_for_evaluation, load_config
     from .tabletop_privileged_teacher import PrivilegedTeacher
@@ -263,6 +275,9 @@ def main(argv=None):
     if task != observed['task_identity']:
         raise ValueError('native task config differs from the recorded task identity')
     physical = evaluation_physics_sha256(observed['inherited_contract'])
+    launcher_rollout_steps = observed['inherited_contract'].get('rollout_steps')
+    if type(launcher_rollout_steps) is not int or launcher_rollout_steps < 1:
+        raise ValueError('observed native contract must bind the original launcher rollout_steps')
     inputs = {path:file_sha256(path) for path in (
         args.config, args.checkpoint, args.native_task_config, args.camera_config,
         args.observed_native_contract, args.manifest)}
@@ -277,7 +292,8 @@ def main(argv=None):
         check_mpc_reference(args.check_mpc_reference, args.mpc_source_sha256, observed['inherited_contract'])
     if not args.execute_native:
         print(json.dumps(dict(mode=args.mode, plan=plan, native_started=False,
-            checkpoint_sha256=inputs[args.checkpoint], controller_contract_verified_at_native_start=False,
+            checkpoint_sha256=inputs[args.checkpoint], launcher_rollout_steps=launcher_rollout_steps,
+            controller_contract_verified_at_native_start=False,
             mpc_reference_compatible=True if args.check_mpc_reference is not None else None)))
         return 0
     if args.output is None or not args.enable_experiment:
@@ -294,14 +310,13 @@ def main(argv=None):
         expected = load_completed_sampled_start(sampled)
     run = new_run(args.output)
     write_json_new(run / 'preflight.json', dict(mode=args.mode, plan=plan,
-        immutable_inputs={str(path):sha for path,sha in inputs.items()}, ppo_updates=0))
+        immutable_inputs={str(path):sha for path,sha in inputs.items()}, ppo_updates=0,
+        launcher_rollout_steps=launcher_rollout_steps))
 
     def callback(bridge):
         from .tabletop_stereo_camera import StereoCamera
 
-        if (bridge.contract != observed['inherited_contract'] or bridge.task_identity != observed['task_identity']
-                or any(file_sha256(path) != sha for path,sha in inputs.items())):
-            raise RuntimeError('observed contract or immutable launch input changed')
+        verify_native_launch_binding(bridge, observed, inputs)
         bridge.bind_camera(StereoCamera.from_native(bridge.world.sim, bridge.device_world.origins,
             args.camera_config, device=bridge.device))
         if bridge.camera.calibration.sha256 != calibration:
@@ -310,15 +325,35 @@ def main(argv=None):
         # Model construction and camera setup can touch RNG. Seed the sampling
         # boundary explicitly after both, before the authored first reset.
         torch.manual_seed(args.seed)
-        return _run_arm(bridge, model, plan, args.checkpoint, run,
+        result = _run_arm(bridge, model, plan, args.checkpoint, run,
             mode=args.mode, expected_start=expected)
+        if any(file_sha256(path) != sha for path,sha in inputs.items()):
+            raise RuntimeError('immutable input changed during bounded diagnosis')
+        # Publish complete callback evidence before handing control to the
+        # protected launcher's application-close path. Its outer exit status is
+        # measured independently by the process supervisor.
+        bridge._raw.flush()
+        artifacts = dict(start_binding_sha256=run / 'start_binding.json',
+            raw_480hz_sha256=run / 'native/native_physics.jsonl',
+            pre_action_sha256=run / 'teacher_pre_action.pt')
+        for key,path in artifacts.items():
+            with path.open('rb') as stream:
+                os.fsync(stream.fileno())
+            result[key] = file_sha256(path)
+        result.update(outer_process_verified=False,
+            launcher_rollout_steps=launcher_rollout_steps)
+        completion = run / 'completion.json'
+        write_json_new(completion, result)
+        with completion.open('rb') as stream:
+            os.fsync(stream.fileno())
+        for directory in (run / 'native', run):
+            fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+        return result
 
-    result = launch_native(callback, native_arguments=args.native_task_config, output=run / 'native',
-        num_envs=2, seed=args.seed, rollout_steps=args.steps, enabled=True)
-    result.update(start_binding_sha256=file_sha256(run / 'start_binding.json'),
-        raw_480hz_sha256=file_sha256(run / 'native/native_physics.jsonl'),
-        pre_action_sha256=file_sha256(run / 'teacher_pre_action.pt'))
-    if any(file_sha256(path) != sha for path,sha in inputs.items()):
-        raise RuntimeError('immutable input changed during bounded diagnosis')
-    write_json_new(run / 'completion.json', result)
+    launch_native(callback, native_arguments=args.native_task_config, output=run / 'native',
+        num_envs=2, seed=args.seed, rollout_steps=launcher_rollout_steps, enabled=True)
     return 0
