@@ -1,3 +1,7 @@
+## 2026-11-12 — 原 GPU 任务 Wire 对象侧接触与支撑读回
+
+原 GPU 路径完成 128 个连续物理步，双侧接触力互相抵消。短窗的两个端支架持续承载，完整回合支撑资格仍未通过。 Ubuntu CPU 回归 80 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wire-tensor-native-results.md)
+
 ## 2026-11-12 — 原 T5 合同的特权 PPO Teacher 原生单更新
 
 2×32 原生完成 1 次 R0 PPO 更新，Checkpoint 与 Adam 读回一致，完整成功回合 0。 Ubuntu CPU 回归 65 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-native-r0-update1.md)

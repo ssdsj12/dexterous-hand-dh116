@@ -4103,6 +4103,40 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-teacher-t5-native-r0-update1.md",
       "report_source_commit": "047c85b6a45d8874bb7d72184604eec5e92936c5"
+    },
+    "wp4.teacher-wire-gpu-tensor-native-probe": {
+      "passed": 80,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_wire_tensor_probe.py",
+        "tests/test_dh116_teacher_task_contact.py",
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_physx_polled_contact_audit.py",
+        "tests/test_dh116_stereo_shutdown_validation.py"
+      ],
+      "log_sha256": "c43e5e21bb90cd97e6521e68808e3d9379fb09e11cbc870026268d50bee10b68",
+      "tested_head": "84eaada3355ad0ad5f7462453f43a991afbcb35e",
+      "native_qualification": false,
+      "native_execution_performed": true,
+      "qualification_scope": "bounded_native_gpu_tensor_pair_observability_only",
+      "physical_steps": 128,
+      "aligned_environment_rows": 256,
+      "raw_sha256": "bdfb000f3a6986d06cffe5660e994787f99f12899df114ac5c5e3a0e7e6cabfb",
+      "independent_audit_sha256": "f96216609afd7cde5430c54a5aa88fb715072eb911e86daff77b2f272520dae5",
+      "outer_exit_code": 0,
+      "external_support_qualified": false,
+      "force_qualified": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-wire-tensor-native-results.md",
+      "report_source_commit": "8a64564964b456e2a99549a030c631c2ca82c5d3"
     }
   }
 }
