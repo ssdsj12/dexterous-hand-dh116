@@ -4177,6 +4177,38 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-native-v04.md",
       "report_source_commit": "7c12ad066b3331a82dbb1b625ff4cb3eced29b0c"
+    },
+    "wp4.teacher-t5-wire-gpu-tensor-native": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_wire_tensor_probe.py",
+        "tests/test_dh116_teacher_t5_binding.py",
+        "tests/test_dh116_privileged_cli.py"
+      ],
+      "log_sha256": "b968db81fde81a20fbf765754fd9874dd5f5a6cf91a4a5b1fd3d7287f99ef58e",
+      "tested_head": "ac3a201bc01e0e4b76f746f9535eaa7bf139e772",
+      "native_qualification": false,
+      "native_execution_performed": true,
+      "qualification_scope": "bounded_object_tensor_observability_in_t5_ppo_teacher_only",
+      "outer_exit_code": 0,
+      "physical_steps": 128,
+      "aligned_environment_rows": 256,
+      "reciprocal_normal_residual_max_n": 5.960464477539063e-08,
+      "aggregate_normal_residual_max_n": 2.46e-07,
+      "external_support_qualified": false,
+      "independent_audit_sha256": "87eff980ae943a15b8da3c59f776ece15202a882997f7fad6addcd87493e0486",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-t5-wire-tensor-native-results.md",
+      "report_source_commit": "0b0b9a4a37b3a388048398e85aedccb17a8095cb"
     }
   }
 }

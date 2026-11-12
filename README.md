@@ -1,3 +1,7 @@
+## 2026-11-12 — T5 原生 PPO Teacher 的对象侧接触验证
+
+实际 R0 update-1 在 T5 的短窗完成 128 个物理步，双侧力闭合，端支架均持续承载。 Ubuntu CPU 回归 19 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-wire-tensor-native-results.md)
+
 ## 2026-11-12 — 冻结 Teacher 同初态原生 sampled／mean 复验
 
 修复原生合同编码与回执。四次运行均退出 0，采样和 mean 均复现合法目标下的同一右 finger12 越限。 Ubuntu CPU 回归 56 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-native-v04.md)
