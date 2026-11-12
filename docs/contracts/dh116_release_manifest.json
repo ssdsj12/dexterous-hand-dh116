@@ -5693,6 +5693,55 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 44,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_camera_c5_ownership.py",
+        "tests/test_dh116_simulation_app_lifecycle.py",
+        "tests/test_dh116_render_capture_boundary.py"
+      ],
+      "log_sha256": "4217ddd3eddf9641cc0dd0f0dd02d7f2415a22deebb62ed7e44b6e39d4e0223e",
+      "tested_head": "b2de6ec4a0e1879b55052b84e0a2a412d7a0cf7c",
+      "stage": "cpu_verified",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "scope": "camera_c5_ownership_preparation",
+      "command_spec_sha256": "b2111b376320ba4dfb4babd302034e77a0de12678f080d5386903ff335855322",
+      "code_config_sha256": "94ffe53d74185ef49725924b95d0d9497953e21c081723a7ecddf57be952fc6d",
+      "remaining_blockers": [
+        "exact_fingerprint_native_authorization",
+        "actual_C5_lifecycle_result"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md",
+      "report_source_commit": "ba97c0168e4eaea50c2cf2aa4585238a49769f48",
+      "package": "flex.f6-camera-c5-ownership-preparation",
+      "commit": "dc7faa01b0b932030f375e3720fb38ef04c5c480",
+      "parent": "b2de6ec4a0e1879b55052b84e0a2a412d7a0cf7c",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_execution/deformx_camera_c5.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md",
+        "scripts/dh116_camera_c5_debugger.py",
+        "scripts/probe_dh116_camera_c5_ownership.py",
+        "scripts/run_dh116_camera_c5_work_packages.py",
+        "tests/test_dh116_camera_c5_ownership.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
