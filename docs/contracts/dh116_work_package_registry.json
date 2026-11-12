@@ -55,8 +55,89 @@
         "wp1.sample-retention",
         "wp4.shutdown-native"
       ],
-      "status": "blocked",
-      "reason": "8 初态同步采集需独立批准"
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 63,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_candidate_cold_trials.py",
+          "tests/test_dh116_stereo_cold_candidate_admission.py",
+          "tests/test_dh116_stereo_state_supervision.py",
+          "tests/test_dh116_stereo_runtime_teacher_identity.py"
+        ],
+        "log_sha256": "c5314e122b7d76f690c6de676fb42095c5aff70dc5068e58eafd25ac1eb6a523",
+        "tested_head": "0af53ca0faaeb1a655106e87ca33d72be5757a82",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "qualification_scope": "synchronized_candidate_capture_only",
+        "native_instances": 1,
+        "physical_hz": 480,
+        "policy_hz": 60,
+        "initials_by_style": {
+          "pinch": 4,
+          "tripod": 4
+        },
+        "synchronized_rows": 32,
+        "physical_samples": 256,
+        "outer_exit_code": 0,
+        "raw_sha256": "b4d34bacf2dea7175d8339432de38e96c26d47da5105f353449102c25593a64b",
+        "candidate_sha256": "1366bf862643c0c7ecd629e785da27cdb4c5e01087dc23b04b74e8cf937678c8",
+        "calibration_sha256": "02fabb87c548cd982728dac5d6357ca08327258514269b163e880427b2556700",
+        "checkpoint_sha256": "c1735e5f112b7f10ff4dacf00b2ac547728cea82a08d5b051e5b78cca84a9999",
+        "successful_demonstration_pool": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-stereo-cold8-native-capture.md",
+        "report_source_commit": "8e7627a943fa6da8e02de7bd78e7615a9eff1b96"
+      },
+      "last_result": {
+        "passed": 63,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_candidate_cold_trials.py",
+          "tests/test_dh116_stereo_cold_candidate_admission.py",
+          "tests/test_dh116_stereo_state_supervision.py",
+          "tests/test_dh116_stereo_runtime_teacher_identity.py"
+        ],
+        "log_sha256": "c5314e122b7d76f690c6de676fb42095c5aff70dc5068e58eafd25ac1eb6a523",
+        "tested_head": "0af53ca0faaeb1a655106e87ca33d72be5757a82",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "qualification_scope": "synchronized_candidate_capture_only",
+        "native_instances": 1,
+        "physical_hz": 480,
+        "policy_hz": 60,
+        "initials_by_style": {
+          "pinch": 4,
+          "tripod": 4
+        },
+        "synchronized_rows": 32,
+        "physical_samples": 256,
+        "outer_exit_code": 0,
+        "raw_sha256": "b4d34bacf2dea7175d8339432de38e96c26d47da5105f353449102c25593a64b",
+        "candidate_sha256": "1366bf862643c0c7ecd629e785da27cdb4c5e01087dc23b04b74e8cf937678c8",
+        "calibration_sha256": "02fabb87c548cd982728dac5d6357ca08327258514269b163e880427b2556700",
+        "checkpoint_sha256": "c1735e5f112b7f10ff4dacf00b2ac547728cea82a08d5b051e5b78cca84a9999",
+        "successful_demonstration_pool": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-stereo-cold8-native-capture.md",
+        "report_source_commit": "8e7627a943fa6da8e02de7bd78e7615a9eff1b96"
+      }
     },
     "wp1.calibration": {
       "title": "双目深度置信度与真实对应校准",
@@ -68,7 +149,7 @@
         "wp1.segmentation-mask-policy"
       ],
       "status": "blocked",
-      "reason": "缺左右同步 Native ID 与独立校准 cohort"
+      "reason": "8 初态同步候选证据已回读，待独立深度误差和置信度资格验证。"
     },
     "wp2.mode-gates": {
       "title": "区分状态监督的离线与原生资格模式",

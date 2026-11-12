@@ -1,3 +1,7 @@
+## 2026-11-12 — 8 初态双目同步采集
+
+二指、三指各完成 4 个独立物理初态，合计 32 条同钟双目与状态动作候选样本。正式训练资格待独立验证。 Ubuntu CPU 回归 63 项通过。[报告](docs/superpowers/reports/2026-11-12-stereo-cold8-native-capture.md)
+
 ## 2026-11-12 — PhysX v3 原生自然退出与全新实例重启
 
 原生两轮均完整记录 240 个 480 Hz 物理步，并自然退出码 0。该结果仅授予关闭与重启资格。 Ubuntu CPU 回归 65 项通过。[报告](docs/superpowers/reports/2026-11-12-physx-v3-native-shutdown-pass.md)
