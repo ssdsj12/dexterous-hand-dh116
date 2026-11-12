@@ -1,0 +1,54 @@
+{
+  "argv": [
+    "--case",
+    "V1",
+    "--experience",
+    "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.rendering.kit",
+    "--output",
+    "{output}",
+    "--execute-native"
+  ],
+  "budget": {
+    "environments": 1,
+    "gpu_index": 3,
+    "min_disk_free_bytes": 1073741824,
+    "min_gpu_free_mib": 4096,
+    "physics_steps": 0,
+    "timeout_seconds": 180,
+    "updates": 0
+  },
+  "entrypoint": "scripts/probe_dh116_render_lifecycle.py",
+  "environment": {
+    "DH116_NUM_THREADS": "2"
+  },
+  "inputs": {
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.simulation_app/isaacsim/simulation_app/simulation_app.py": "840ad13fcb3b4d8e10457809d42180b0fd807951a3e3cc153c832363fbef0bb2",
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/annotators.py": "8f46bc0140f1b97516b9237caa5ed960a1da7027d6d2f339eb1f4143c531324e",
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/orchestrator.py": "9cb3b98c0851c64a18f8e0fd2745172dd0bb08e4ae83c111a45b77be8153d599",
+    "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.kit": "b4a60880219827b4843f3ec3d6f9cbad8028c1c9df588a89c1796a60b8030a92",
+    "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.rendering.kit": "978bd89e90f2ca00b32805a70dd0a15c5b8b48edeb42cd042f8eb679d33fa4ea"
+  },
+  "source_files": [
+    "scripts/run_dh116_deformx_render_smoke.py",
+    "scripts/audit_dh116_deformx_assets.py",
+    "src/go2_pvcnn/control/dh116/tabletop_stereo_capture_boundary.py",
+    "src/go2_pvcnn/control/dh116/tabletop_stereo_calibration.py",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_camera.py",
+    "src/go2_pvcnn/control/dh116/tabletop_stereo_native.py",
+    "configs/dh116_training/stereo_camera_front_224x96_v3.json"
+  ],
+  "validator": {
+    "artifacts": [
+      "plan.json",
+      "app_close_returned.json",
+      "probe_stage.usda"
+    ],
+    "equals": {
+      "app_close_returned": true,
+      "process_exit_verified": false
+    },
+    "line_counts": {},
+    "result_file": "app_close_returned.json"
+  },
+  "version": 1
+}

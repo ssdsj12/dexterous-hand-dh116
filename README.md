@@ -1,3 +1,7 @@
+## 2026-11-12 — 任务相机 V0–V3 有界原生配方
+
+四格按实际外层退出递进，V3 同一渲染读取全部模态。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-12-bounded-camera-recipes.md)
+
 ## 2026-11-12 — 带授权、预算和证据的原生调度
 
 原生执行依赖可核验证据、批次授权、单实例资源锁和外层退出，恢复时保留既有回执。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-native-bounded-scheduler.md)

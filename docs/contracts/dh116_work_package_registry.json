@@ -5066,11 +5066,29 @@
       "reason": "需真实手关节及杆状态、原 24D 动作、Reset、GAE 终止和 R0 逐步闭环。"
     },
     "flex.f6-camera-lifecycle": {
-      "title": "独立任务相机生命周期阶梯",
-      "executor": "gated",
-      "dependencies": [],
-      "status": "blocked",
-      "reason": "需同一 Kit 下从空启动、单 product、RGB 到多 annotator 的自然退出及同步证据。"
+      "title": "同一帧 RGB、径向深度、Optical-Z 与实例 ID",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f6-camera-v2"
+      ],
+      "status": "pending",
+      "command_spec": "configs/dh116_execution/deformx_camera_v3.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "camera_single_multimodal_sync_lifecycle",
+      "dependency_scopes": {
+        "flex.f6-camera-v2": {
+          "scope": "camera_single_rgb_lifecycle",
+          "native": true
+        }
+      },
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_render_capture_boundary.py"
+      ]
     },
     "flex.f7-task-camera-native": {
       "title": "当前柔性任务双目同钟相机",
@@ -5388,6 +5406,136 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-native-bounded-scheduler.md",
         "report_source_commit": "6f2be3cbec02d143c9f0fea55dbefb6b006dd7e9"
+      }
+    },
+    "flex.f6-camera-v0": {
+      "title": "空渲染 Kit 生命周期",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f6-camera-lifecycle-tools"
+      ],
+      "status": "pending",
+      "command_spec": "configs/dh116_execution/deformx_camera_v0.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "camera_empty_lifecycle",
+      "dependency_scopes": {},
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_render_capture_boundary.py"
+      ]
+    },
+    "flex.f6-camera-v1": {
+      "title": "单相机 Render Product 生命周期",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f6-camera-v0"
+      ],
+      "status": "pending",
+      "command_spec": "configs/dh116_execution/deformx_camera_v1.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "camera_single_product_lifecycle",
+      "dependency_scopes": {
+        "flex.f6-camera-v0": {
+          "scope": "camera_empty_lifecycle",
+          "native": true
+        }
+      },
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_render_capture_boundary.py"
+      ]
+    },
+    "flex.f6-camera-v2": {
+      "title": "单相机 RGB 生命周期",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f6-camera-v1"
+      ],
+      "status": "pending",
+      "command_spec": "configs/dh116_execution/deformx_camera_v2.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "camera_single_rgb_lifecycle",
+      "dependency_scopes": {
+        "flex.f6-camera-v1": {
+          "scope": "camera_single_product_lifecycle",
+          "native": true
+        }
+      },
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_render_capture_boundary.py"
+      ]
+    },
+    "flex.f6-camera-native-recipes": {
+      "title": "任务相机有界原生配方",
+      "executor": "prepared",
+      "dependencies": [
+        "flex.native-bounded-scheduler"
+      ],
+      "status": "passed",
+      "tests": [
+        "tests/test_dh116_render_capture_boundary.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "last_native_attempt": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_render_capture_boundary.py",
+          "tests/test_dh116_work_packages.py",
+          "tests/test_dh116_flexible_execution_dependencies.py"
+        ],
+        "log_sha256": "c3b01fe3da9e114d6d1a7084f1b9ef27e85d4d9a9a75d70c4bc97e1222dfac8a",
+        "tested_head": "709f8a29a5a568652a566d87f81f7ea3ae3ee2ea",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-bounded-camera-recipes.md",
+        "report_source_commit": "3f43b843e2d41b1c9df2dad5f4f003774ba89027"
+      },
+      "last_result": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_render_capture_boundary.py",
+          "tests/test_dh116_work_packages.py",
+          "tests/test_dh116_flexible_execution_dependencies.py"
+        ],
+        "log_sha256": "c3b01fe3da9e114d6d1a7084f1b9ef27e85d4d9a9a75d70c4bc97e1222dfac8a",
+        "tested_head": "709f8a29a5a568652a566d87f81f7ea3ae3ee2ea",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-bounded-camera-recipes.md",
+        "report_source_commit": "3f43b843e2d41b1c9df2dad5f4f003774ba89027"
       }
     }
   },

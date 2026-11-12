@@ -5183,6 +5183,30 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-native-bounded-scheduler.md",
       "report_source_commit": "6f2be3cbec02d143c9f0fea55dbefb6b006dd7e9"
+    },
+    "flex.f6-camera-native-recipes": {
+      "passed": 49,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_render_capture_boundary.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dh116_flexible_execution_dependencies.py"
+      ],
+      "log_sha256": "c3b01fe3da9e114d6d1a7084f1b9ef27e85d4d9a9a75d70c4bc97e1222dfac8a",
+      "tested_head": "709f8a29a5a568652a566d87f81f7ea3ae3ee2ea",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-bounded-camera-recipes.md",
+      "report_source_commit": "3f43b843e2d41b1c9df2dad5f4f003774ba89027"
     }
   }
 }
