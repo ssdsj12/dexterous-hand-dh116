@@ -5706,6 +5706,51 @@
       },
       "status": "failed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f6-camera-c0.md"
+    },
+    "flex.f6-camera-c1": {
+      "executor": "native_bounded",
+      "tested_head": "44d6ef56cd3ab9ca7a6fe261d65b8922cd9c1dcf",
+      "batch_id": "eb31c79-camera-once",
+      "qualification_scope": "camera_empty_render_lifecycle",
+      "native_qualification": false,
+      "native_execution_performed": true,
+      "command_spec_sha256": "b9e2ae59cc1c96eeb25ecd999228083d191dd2dd84262bef9f5470d374da0b0a",
+      "code_config_sha256": "d23fe888c6217dd22848d35f871d7c1cb32777cb0ae195e3942a8aa9b216568a",
+      "launch_argv_sha256": "cd9cc8817bc1ec8f2a53b6ec8a8835a60d64cfd34327a69116f5b842269c62f0",
+      "debugger": "gdb_on_segv",
+      "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
+      "debugger_wrapper_sha256": "30539681ad1fd87bd5a08ec479f753e5fc105a44639ff1520d5f39c9ecf5898c",
+      "exit_code": 255,
+      "outer_exit_code": 255,
+      "log_sha256": "c8d6f1f1c5c192c52f56dae05578107fe39a416610ff7a6654f86b378ecc867f",
+      "duration_seconds": 54.36997618898749,
+      "native_lock_observed": true,
+      "debugger_status_verified": true,
+      "debugger_backtrace_captured": true,
+      "debugger_inferior_exit_code": null,
+      "debugger_inferior_signal": 11,
+      "blocker_kind": "failed_native",
+      "result_sha256": "3f62c161845530fb672e5f6f62ec0171005d2b98d97bce456a656641932d310e",
+      "native_physics_validated": false,
+      "cpu_regression": {
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_simulation_app_lifecycle.py"
+        ],
+        "log_sha256": "4326a6149a721258a65f0bb6017df2bef4fecac91560bf07f2f16de8517a5865",
+        "tested_head": "44d6ef56cd3ab9ca7a6fe261d65b8922cd9c1dcf"
+      },
+      "status": "failed",
+      "report": "docs/superpowers/reports/dh116-managed-flex.f6-camera-c1.md"
     }
   }
 }
