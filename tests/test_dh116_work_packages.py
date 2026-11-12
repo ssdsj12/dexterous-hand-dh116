@@ -131,6 +131,230 @@ def test_local_commits_keep_remote_receipts_pending_until_readback(repo):
     assert remote_receipt['commit'] == receipt['commit'] and remote_receipt['remote_verified'] is True
 
 
+def native_fixture(repo, exit_code=0):
+    entry = repo.root / 'scripts' / 'native_fixture.py'
+    entry.parent.mkdir(exist_ok=True)
+    entry.write_text(
+        'import json, sys\nfrom pathlib import Path\n'
+        'p = Path(sys.argv[-1]); p.mkdir()\n'
+        '(p / "summary.json").write_text(json.dumps({"qualified": True}))\n'
+        '(p / "physics.jsonl").write_text("{}\\n")\n'
+        f'raise SystemExit({exit_code})\n', encoding='utf-8')
+    wrapper = repo.root / 'scripts' / 'python.sh'
+    wrapper.write_text('exec "$DH116_PYTHON" "$@"\n', encoding='utf-8')
+    spec_path = 'configs/dh116_execution/fixture.json'
+    write_json(repo.root / spec_path, dict(
+        version=1, entrypoint='scripts/native_fixture.py', argv=['--output', '{output}'],
+        source_files=[], budget=dict(gpu_index=3, timeout_seconds=3, min_gpu_free_mib=1,
+            min_disk_free_bytes=1, physics_steps=1, environments=1, updates=0),
+        validator=dict(result_file='summary.json', equals={'qualified': True},
+                       artifacts=['summary.json', 'physics.jsonl'], line_counts={'physics.jsonl': 1})))
+    native = dict(status='blocked', blocker_kind='waiting_dependency', executor='native_bounded',
+        title='Native fixture', dependencies=['wp1'], command_spec=spec_path,
+        requires_approval=True, resource_class='isaac_single_gpu', evidence_scope='fixture_native_only',
+        dependency_scopes={'wp1': dict(scope='fixture_input', native=True)},
+        retry_policy=dict(max_attempts_per_code_config=1, retry_requires_change=True))
+    data = repo.registry()
+    data['version'] = 2
+    data['packages']['native'] = native
+    write_json(repo.root / scheduler.REGISTRY, data)
+    return native
+
+
+def native_dependency_pass(repo):
+    data = repo.registry()
+    data['packages']['wp1'].update(status='passed', last_result=dict(
+        native_qualification=True, native_execution_performed=True, qualification_scope='fixture_input',
+        outer_exit_code=0))
+    write_json(repo.root / scheduler.REGISTRY, data)
+
+
+def native_approval(repo):
+    recipe = repo.native_recipe(repo.registry()['packages']['native'])
+    return dict(version=1, batch_id='test-batch', output_root=str(repo.private / 'native-output'),
+                packages={'native': {key: recipe[key] for key in (
+                    'command_spec_sha256', 'code_config_sha256')}})
+
+
+def test_native_dependency_scope_and_approval_are_recomputed(repo):
+    native_fixture(repo)
+    assert repo.native_plan()['blockers']['native']['kind'] == 'waiting_dependency'
+    native_dependency_pass(repo)
+    assert repo.native_plan()['blockers']['native']['kind'] == 'waiting_approval'
+    assert repo.native_plan(approval=native_approval(repo))['native_ready'] == ['native']
+    data = repo.registry()
+    data['packages']['wp1']['last_result']['native_qualification'] = False
+    write_json(repo.root / scheduler.REGISTRY, data)
+    assert repo.native_plan(approval=native_approval(repo))['blockers']['native']['kind'] == 'waiting_dependency'
+
+
+def test_native_failure_artifacts_cannot_override_real_exit_or_enable_retry(repo, monkeypatch):
+    native_fixture(repo, exit_code=139)
+    native_dependency_pass(repo)
+    approval = native_approval(repo)
+    monkeypatch.setattr(repo, 'native_resource_blocker', lambda *_: None)
+    monkeypatch.setattr(repo, 'native_lock_observed', lambda *_: True)
+    intent = repo.register_native_attempt('native', approval)
+    result = repo.run_native_worker(intent)
+    assert result['outer_exit_code'] == 139
+    assert result['native_qualification'] is False
+    assert Path(result['output'], 'summary.json').is_file()
+    assert repo.native_plan(approval=approval)['blockers']['native']['kind'] == 'failed_native'
+    assert repo.native_plan(approval=approval)['native_ready'] == []
+    entry = repo.root / 'scripts/native_fixture.py'
+    entry.write_text(entry.read_text().replace('SystemExit(139)', 'SystemExit(0)'))
+    assert repo.native_plan(approval=approval)['blockers']['native']['kind'] == 'waiting_approval'
+    assert repo.native_plan(approval=native_approval(repo))['native_ready'] == ['native']
+
+
+def test_native_completion_receipt_survives_without_reexecution(repo, monkeypatch):
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    approval = native_approval(repo)
+    monkeypatch.setattr(repo, 'native_resource_blocker', lambda *_: None)
+    monkeypatch.setattr(repo, 'native_lock_observed', lambda *_: True)
+    intent = repo.register_native_attempt('native', approval)
+    result = repo.run_native_worker(intent)
+    assert result['native_qualification'] is True
+    assert result['qualification_scope'] == 'fixture_native_only'
+    assert repo.native_plan()['native_results']['native']['result_sha256'] == result['result_sha256']
+    with pytest.raises(RuntimeError, match='receipt'):
+        repo.run_native_worker(intent)
+    assert repo.native_plan(approval=approval)['native_ready'] == []
+
+
+def test_native_busy_does_not_consume_attempt_and_cpu_stays_ready(repo, monkeypatch):
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    data = repo.registry()
+    data['packages']['cpu'] = dict(status='pending', executor='pytest', dependencies=[], title='CPU')
+    write_json(repo.root / scheduler.REGISTRY, data)
+    approval = native_approval(repo)
+    monkeypatch.setattr(repo, 'native_resource_blocker', lambda *_: 'held global lock')
+    intent = repo.register_native_attempt('native', approval)
+    result = repo.run_native_worker(intent)
+    assert result['blocker_kind'] == 'waiting_resource'
+    assert scheduler.scoped_queue(repo.registry())['ready'] == ['cpu']
+    assert repo.native_plan(approval=approval)['native_ready'] == ['native']
+
+
+def test_native_validator_requires_physical_records_and_scope(repo, monkeypatch):
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    recipe = repo.native_recipe(repo.registry()['packages']['native'])
+    out = repo.private / 'validator'
+    out.mkdir(parents=True)
+    (out / 'summary.json').write_text('{"qualified": true}')
+    (out / 'physics.jsonl').write_text('[]\n')
+    with pytest.raises(ValueError, match='object'):
+        scheduler.validate_native_artifacts(recipe['spec'], out)
+
+
+
+def test_native_publication_interrupt_resumes_without_a_second_launch(relay_cli, monkeypatch):
+    repo = relay_cli
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    git(repo.root, 'add', '--', 'scripts', 'configs', scheduler.REGISTRY)
+    git(repo.root, 'commit', '-qm', 'approved fixture recipe')
+    git(repo.root, 'update-ref', scheduler.TRACKING_REF, repo.head())
+    approval = native_approval(repo)
+    monkeypatch.setattr(repo, 'native_resource_blocker', lambda *_: None)
+    monkeypatch.setattr(repo, 'native_lock_observed', lambda *_: True)
+    result = repo.run_native_worker(repo.register_native_attempt('native', approval))
+    with monkeypatch.context() as failed:
+        def interrupted(*args, **kwargs):
+            raise RuntimeError('local publication interrupted')
+        failed.setattr(scheduler.Repository, '_commit_transaction', interrupted)
+        with pytest.raises(RuntimeError, match='publication interrupted'):
+            repo.publish_native('native', result)
+    assert repo.journal.exists()
+    assert scheduler.main(['--resume']) == 0
+    assert not repo.journal.exists()
+    recorded = repo.registry()['packages']['native']['last_result']
+    assert recorded['native_qualification'] is True
+    assert recorded['result_sha256'] == result['result_sha256']
+    assert 'output' not in recorded
+    assert repo.native_plan(approval=approval)['native_ready'] == []
+    assert len(list(repo.native_attempts('native', result['code_config_sha256']))) == 1
+
+
+def test_elapsed_budget_preserves_real_child_output_but_blocks_qualification(repo, monkeypatch):
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    path = repo.root / 'configs/dh116_execution/fixture.json'
+    spec = json.loads(path.read_text())
+    spec['budget']['timeout_seconds'] = 1
+    write_json(path, spec)
+    entry = repo.root / 'scripts/native_fixture.py'
+    entry.write_text('import time; time.sleep(1.08)\n' + entry.read_text())
+    approval = native_approval(repo)
+    monkeypatch.setattr(repo, 'native_resource_blocker', lambda *_: None)
+    monkeypatch.setattr(repo, 'native_lock_observed', lambda *_: True)
+    result = repo.run_native_worker(repo.register_native_attempt('native', approval))
+    assert result['outer_exit_code'] == 0 and result['duration_seconds'] > 1
+    assert result['native_qualification'] is False
+    assert Path(result['output'], 'summary.json').exists()
+    assert repo.native_plan(approval=approval)['blockers']['native']['kind'] == 'failed_native'
+
+
+def test_resource_blocker_leaves_cli_cpu_execution_available(relay_cli, monkeypatch):
+    repo = relay_cli
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    registry = repo.registry()
+    registry['packages']['cpu'] = dict(status='pending', executor='pytest', dependencies=[],
+                                       title='Independent CPU', tests=['tests/test_fixture.py'])
+    write_json(repo.root / scheduler.REGISTRY, registry)
+    git(repo.root, 'add', '--', 'scripts', 'configs', scheduler.REGISTRY)
+    git(repo.root, 'commit', '-qm', 'CPU plus native recipe')
+    git(repo.root, 'update-ref', scheduler.TRACKING_REF, repo.head())
+    approved = repo.private / 'approval.json'
+    write_json(approved, native_approval(repo))
+    monkeypatch.setattr(scheduler.Repository, 'native_resource_blocker', lambda *_: 'global lock is held')
+    monkeypatch.setattr(scheduler.Repository, 'start_native',
+                        lambda *_: pytest.fail('busy native package launched a second process'))
+    assert scheduler.main(['--run', '--limit', '2', '--native-approval', str(approved)]) == 0
+    assert repo.registry()['packages']['cpu']['status'] == 'passed'
+    assert repo.native_plan(approval=native_approval(repo), probe_resources=True)['blockers']['native']['kind'] == (
+        'waiting_resource')
+
+
+@pytest.mark.skipif(not Path('/proc/locks').is_file(), reason='Linux lock owner visibility required')
+def test_observes_shared_flock_from_real_process_group(repo, monkeypatch, tmp_path):
+    import sys
+    lock = tmp_path / 'native.lock'
+    monkeypatch.setattr(scheduler, 'NATIVE_LOCK', lock)
+    command = [sys.executable, '-c',
+        'import fcntl, sys; f = open(sys.argv[1], "a+b"); '
+        'fcntl.flock(f, fcntl.LOCK_EX); print("ready", flush=True); sys.stdin.readline()',
+        str(lock)]
+    with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True,
+                          start_new_session=True) as child:
+        assert child.stdout.readline().strip() == 'ready'
+        try:
+            assert repo.native_lock_observed(child.pid)
+        finally:
+            child.stdin.write('done\n')
+            child.stdin.flush()
+    assert child.returncode == 0
+
+
+
+def test_duplicate_hidden_worker_cannot_overwrite_same_intent(repo, monkeypatch):
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    approval = native_approval(repo)
+    monkeypatch.setattr(repo, 'native_resource_blocker', lambda *_: None)
+    intent = repo.register_native_attempt('native', approval)
+    monkeypatch.setattr(repo, '_native_child', lambda *_: pytest.fail('duplicate worker launched a child'))
+    with scheduler.native_file_lock(intent.parent / 'worker.lock'):
+        with pytest.raises(BlockingIOError):
+            repo.run_native_worker(intent)
+    assert not intent.with_name('receipt.json').exists()
+
+
+
 def test_scope_does_not_accept_unstaged_renames_or_tracked_private_assets(repo):
     old = repo.root / 'tests' / 'test_fixture.py'
     old.rename(old.with_name('test_moved.py'))

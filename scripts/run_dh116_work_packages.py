@@ -1,4 +1,4 @@
-"""Run DH116 CPU work packages and stage verified Windows relay publication."""
+"""Run DH116 CPU and bounded native work packages with Windows relay publication."""
 
 from __future__ import annotations
 
@@ -12,8 +12,10 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import re
+import shutil
 import subprocess
 import sys
+import time
 from tempfile import NamedTemporaryFile, mkdtemp
 from urllib.request import urlopen
 
@@ -88,6 +90,8 @@ def work_queue(packages):
     check_dependencies(packages)
     ready, prepared, blocked = [], [], {}
     for name, package in packages.items():
+        if package['executor'] == 'native_bounded':
+            continue
         if package['status'] == 'passed':
             continue
         if package['status'] in {'blocked', 'failed'} or package['executor'] == 'gated':
@@ -141,6 +145,15 @@ def scoped_queue(registry, scope='current'):
     return dict(**description, **work_queue(packages))
 
 
+def effective_queue(registry, scope, native):
+    """Do not let a stale published native label release a CPU dependant."""
+    qualified = set(native['native_qualified'])
+    packages = {name: (dict(package, status='pending') if package['executor'] == 'native_bounded'
+                      and name not in qualified else package)
+                for name, package in registry['packages'].items()}
+    return scoped_queue(dict(registry, packages=packages), scope)
+
+
 def readiness_text(path, package_id, entry):
     text = path.read_bytes().decode('utf-8').rstrip()
     payload = json.loads(text)
@@ -155,6 +168,196 @@ def readiness_text(path, package_id, entry):
         return text[:start] + new + text[start+consumed:] + '\n'
     prefix = text[:-1].rstrip()
     return prefix + (',' if payload.keys() - {key} else '') + '\n' + token + new + '\n}\n'
+
+
+NATIVE_SCOPE = 'isaac_single_gpu'
+NATIVE_LOCK = Path('/tmp/dh116-isaac-single-instance.lock')
+NATIVE_SCHEDULER_LOCK = Path('/tmp/dh116-native-bounded-scheduler.lock')
+SHA256 = re.compile(r'^[0-9a-f]{64}$')
+NATIVE_RETRY = {'max_attempts_per_code_config': 1, 'retry_requires_change': True}
+NATIVE_BUDGET = {
+    'gpu_index': (0, 63), 'timeout_seconds': (1, 900), 'min_gpu_free_mib': (1, 1000000),
+    'min_disk_free_bytes': (1, 10**13), 'physics_steps': (0, 240),
+    'environments': (1, 2), 'updates': (0, 1),
+}
+
+
+def native_relative_path(value):
+    path = PurePosixPath(value)
+    if (not path.parts or path.is_absolute() or '..' in path.parts or value != path.as_posix()
+            or '\\' in value or ':' in value):
+        raise ValueError(f'invalid native relative path: {value!r}')
+    return path
+
+
+def native_artifact(output, relative):
+    path = output / native_relative_path(relative)
+    resolved = path.resolve(strict=True)
+    if resolved != path or not resolved.is_file():
+        raise ValueError(f'expected regular native artifact: {relative}')
+    return resolved
+
+
+def validate_native_artifacts(spec, output):
+    """Reopen artifact bytes independently of any producer completion marker."""
+    validator = spec['validator']
+    artifacts = {name: file_hash(native_artifact(output, name)) for name in validator['artifacts']}
+    result = json.loads(native_artifact(output, validator['result_file']).read_text(encoding='utf-8'))
+    for selector, expected in validator['equals'].items():
+        actual = result
+        for part in selector.split('.'):
+            if not isinstance(actual, dict) or part not in actual:
+                raise ValueError(f'native validator missing result field: {selector}')
+            actual = actual[part]
+        if type(actual) is not type(expected) or actual != expected:
+            raise ValueError(f'native validator field differs: {selector}')
+    counts = {}
+    for name, expected in validator['line_counts'].items():
+        with native_artifact(output, name).open(encoding='utf-8') as stream:
+            count = 0
+            for line in stream:
+                if not line.endswith('\n') or not isinstance(json.loads(line), dict):
+                    raise ValueError(f'native ledger must contain complete JSON object rows: {name}')
+                count += 1
+                if count > expected:
+                    raise ValueError(f'native ledger exceeds declared budget: {name}')
+        if count != expected:
+            raise ValueError(f'native ledger count differs: {name}')
+        counts[name] = count
+    return dict(artifact_sha256=artifacts, ledger_counts=counts)
+
+
+def native_file_lock(path, *, acquire=True):
+    """Open the shared Linux lock with the existing native launcher's mode."""
+    import fcntl
+
+    stream = path.open('a+b')
+    try:
+        if acquire:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BaseException:
+        stream.close()
+        raise
+    return stream
+
+
+def native_recipe(repo, package):
+    name = package.get('command_spec', '')
+    path = repo.root / native_relative_path(name)
+    if not name.startswith('configs/dh116_execution/') or not name.endswith('.json'):
+        raise ValueError('native command spec must be in configs/dh116_execution')
+    if path.resolve(strict=True) != path or not path.is_file():
+        raise ValueError('native command spec must be a regular local file')
+    raw = path.read_bytes()
+    spec = json.loads(raw)
+    required = {'version', 'entrypoint', 'argv', 'source_files', 'budget', 'validator'}
+    if spec.get('version') != 1 or not required <= spec.keys() <= required | {'inputs', 'environment'}:
+        raise ValueError('invalid native command spec keys or version')
+    entrypoint = spec['entrypoint']
+    if not isinstance(entrypoint, str) or not release_path(entrypoint).startswith('scripts/') or not entrypoint.endswith('.py'):
+        raise ValueError('native entrypoint must be a local Python script')
+    args = spec['argv']
+    if (not isinstance(args, list) or any(not isinstance(arg, str) or not arg or '\x00' in arg or '\n' in arg
+            or '{' in arg and arg != '{output}' or '}' in arg and arg != '{output}' for arg in args)
+            or args.count('{output}') != 1 or args.count('--output') != 1
+            or args.index('{output}') == 0 or args[args.index('{output}') - 1] != '--output'
+            or any(arg.startswith('--output=') for arg in args)):
+        raise ValueError('native argv requires one explicit --output {output}')
+    budget = spec['budget']
+    if (not isinstance(budget, dict) or set(budget) != set(NATIVE_BUDGET)
+            or any(type(budget[key]) is not int or not low <= budget[key] <= high
+                   for key, (low, high) in NATIVE_BUDGET.items())):
+        raise ValueError('native budget is incomplete or outside bounded limits')
+    validator = spec['validator']
+    if (not isinstance(validator, dict) or validator.keys() != {'result_file', 'equals', 'artifacts', 'line_counts'}
+            or not isinstance(validator['artifacts'], list) or not validator['artifacts']
+            or not isinstance(validator['equals'], dict) or not validator['equals']
+            or not isinstance(validator['line_counts'], dict)
+            or not set(validator['line_counts']) <= set(validator['artifacts'])
+            or validator['result_file'] not in validator['artifacts']
+            or any(type(v) is not int or v < 1 or v > 480 for v in validator['line_counts'].values())
+            or budget['physics_steps'] and budget['physics_steps'] not in validator['line_counts'].values()):
+        raise ValueError('native validator must bind scoped result fields and exact physical ledger rows')
+    for value in validator['artifacts']:
+        native_relative_path(value)
+    environment = spec.get('environment', {})
+    if (not isinstance(environment, dict) or not set(environment) <= {'LD_LIBRARY_PATH', 'DH116_NUM_THREADS'}
+            or any(not isinstance(v, str) or '\x00' in v or '\n' in v for v in environment.values())
+            or 'LD_LIBRARY_PATH' in environment and any(not Path(v).is_absolute()
+                for v in environment['LD_LIBRARY_PATH'].split(os.pathsep))
+            or 'DH116_NUM_THREADS' in environment and (not environment['DH116_NUM_THREADS'].isdigit()
+                or not 1 <= int(environment['DH116_NUM_THREADS']) <= 64)):
+        raise ValueError('unsupported native environment override')
+    source_files = spec['source_files']
+    if not isinstance(source_files, list):
+        raise ValueError('native source_files must be a list')
+    files = {'scripts/python.sh', entrypoint, *(release_path(value) for value in source_files),
+             *(release_path(value) for value in package.get('tests', ()))}
+    scheduler_file = 'scripts/run_dh116_work_packages.py'
+    if (repo.root / scheduler_file).is_file():
+        files.add(scheduler_file)
+    identity = {}
+    for relative in sorted(files):
+        source = repo.root / relative
+        if source.resolve(strict=True) != source or not source.is_file():
+            raise ValueError(f'invalid native source: {relative}')
+        identity[relative] = file_hash(source)
+    inputs = spec.get('inputs', {})
+    if not isinstance(inputs, dict):
+        raise ValueError('native inputs must map absolute files to SHA256')
+    for value, expected in inputs.items():
+        path = Path(value)
+        if (not path.is_absolute() or not isinstance(expected, str) or not SHA256.fullmatch(expected)
+                or file_hash(path) != expected):
+            raise ValueError(f'native input digest unavailable or differs: {value}')
+    spec_digest = hashlib.sha256(raw).hexdigest()
+    digest = hashlib.sha256(json.dumps(dict(spec=spec_digest, source=identity), sort_keys=True).encode()).hexdigest()
+    return dict(spec=spec, command_spec_sha256=spec_digest, code_config_sha256=digest)
+
+
+def native_approval(approval, repo):
+    if approval is None:
+        return None
+    if (not isinstance(approval, dict) or approval.keys() != {'version', 'batch_id', 'output_root', 'packages'}
+            or approval['version'] != 1 or not isinstance(approval['batch_id'], str)
+            or not ID.fullmatch(approval['batch_id']) or not isinstance(approval['packages'], dict)):
+        raise ValueError('versioned native execution batch approval required')
+    output = Path(approval['output_root'])
+    if (not output.is_absolute() or output.resolve() != output or repo.root.is_relative_to(output)
+            or output.is_relative_to(repo.root) and not output.is_relative_to(repo.root / 'artifacts')):
+        raise ValueError('approved native output root must be private and separate from source')
+    for name, approved in approval['packages'].items():
+        if (not ID.fullmatch(name) or not isinstance(approved, dict)
+                or set(approved) != {'command_spec_sha256', 'code_config_sha256'}
+                or any(not isinstance(v, str) or not SHA256.fullmatch(v) for v in approved.values())):
+            raise ValueError('native batch requires exact package code and command spec SHA256')
+    return approval
+
+
+def resource_blocker(kind, reason):
+    return dict(kind=kind, reason=reason)
+
+
+def native_dependency_blockers(packages, package, qualified):
+    waiting = []
+    for dep in package['dependencies']:
+        candidate = qualified.get(dep) or packages[dep].get('last_result', {})
+        required = package['dependency_scopes'].get(dep)
+        if dep not in qualified and (packages[dep]['status'] != 'passed'
+                                    or packages[dep]['executor'] == 'native_bounded'):
+            waiting.append(dep)
+            continue
+        if required is None:
+            continue
+        if (candidate.get('qualification_scope') != required['scope']
+                or required['native'] and (
+                    candidate.get('native_qualification') is not True
+                    or candidate.get('native_execution_performed') is not True
+                    or not (candidate.get('outer_exit_code') == 0 or
+                            candidate.get('outer_exit_codes') and all(code == 0 for code in candidate['outer_exit_codes']))
+                )):
+            waiting.append(dep)
+    return waiting
 
 
 class Repository:
@@ -221,14 +424,26 @@ class Repository:
 
     def registry(self):
         data = json.loads((self.root / REGISTRY).read_text(encoding='utf-8'))
-        if data.get('version') != 1 or not isinstance(data.get('packages'), dict):
+        if data.get('version') not in {1, 2} or not isinstance(data.get('packages'), dict):
             raise ValueError('versioned work-package registry required')
         for name, package in data['packages'].items():
             if (not ID.fullmatch(name) or package['status'] not in {'pending', 'blocked', 'failed', 'passed'}
-                    or package['executor'] not in {'pytest', 'prepared', 'gated'}
+                    or package['executor'] not in {'pytest', 'prepared', 'gated', 'native_bounded'}
                     or not isinstance(package['dependencies'], list)
                     or not isinstance(package.get('title'), str) or '\n' in package['title']):
                 raise ValueError(f'invalid work-package definition: {name}')
+            if package['executor'] == 'native_bounded':
+                scopes = package.get('dependency_scopes', {})
+                if (package.get('requires_approval') is not True or package.get('resource_class') != NATIVE_SCOPE
+                        or not isinstance(package.get('evidence_scope'), str) or not package['evidence_scope']
+                        or not isinstance(package.get('command_spec'), str)
+                        or package.get('retry_policy') != NATIVE_RETRY
+                        or not isinstance(scopes, dict) or not scopes.keys() <= set(package['dependencies'])
+                        or any(not isinstance(value, dict) or value.keys() != {'scope', 'native'}
+                            or not isinstance(value['scope'], str) or not value['scope']
+                            or type(value['native']) is not bool for value in scopes.values())):
+                    raise ValueError(f'invalid bounded native work package: {name}')
+                package.setdefault('dependency_scopes', {})
         check_dependencies(data['packages'])
         execution_scope(data)
         return data
@@ -299,16 +514,305 @@ class Repository:
         return dict(**counts, exit_code=code, command=['python', *command],
                     log=str(path), log_sha256=file_hash(path), tested_head=tested_head)
 
+    def native_recipe(self, package):
+        return native_recipe(self, package)
+
+    def native_attempts(self, name, fingerprint):
+        root = self.private / 'native-attempts' / name / fingerprint
+        for directory in sorted(root.glob('attempt-*')):
+            intent = directory / 'intent.json'
+            receipt = directory / 'receipt.json'
+            if not intent.is_file():
+                continue
+            if not receipt.is_file():
+                yield dict(pending=True, intent=str(intent))
+                continue
+            result = json.loads(receipt.read_text(encoding='utf-8'))
+            if result.get('blocker_kind') != 'waiting_resource':
+                yield dict(result, result_sha256=file_hash(receipt))
+
+    def native_resource_blocker(self, recipe, output_root, worker=False):
+        budget = recipe['spec']['budget']
+        try:
+            if not worker:
+                with native_file_lock(NATIVE_SCHEDULER_LOCK):
+                    pass
+            with native_file_lock(NATIVE_LOCK):
+                pass
+            parent = output_root
+            while not parent.exists():
+                parent = parent.parent
+            if shutil.disk_usage(parent).free < budget['min_disk_free_bytes']:
+                return 'native output disk free bytes below approved minimum'
+            gpu = str(budget['gpu_index'])
+            free = subprocess.check_output(['nvidia-smi', '-i', gpu, '--query-gpu=memory.free',
+                                            '--format=csv,noheader,nounits'], text=True, timeout=8)
+            if int(free.strip()) < budget['min_gpu_free_mib']:
+                return 'GPU memory below approved minimum'
+            processes = subprocess.check_output(['nvidia-smi', '-i', gpu, '--query-compute-apps=pid',
+                                                 '--format=csv,noheader,nounits'], text=True, timeout=8)
+            if processes.strip():
+                return 'GPU already has an active compute process'
+            # Cover a manual legacy Isaac job even when its launcher did not acquire the shared lock.
+            legacy = {'kit', 'isaacsim', 'train_dh116_tabletop_gpu_ppo.py',
+                      'collect_dh116_hand_only_mpc_isaac.py'}
+            for file in Path('/proc').glob('[0-9]*/cmdline'):
+                try:
+                    args = file.read_bytes().split(b'\0')
+                except (FileNotFoundError, PermissionError, ProcessLookupError):
+                    continue
+                if any(Path(arg.decode(errors='replace')).name in legacy for arg in args if arg):
+                    return 'another Isaac process exists'
+        except BlockingIOError:
+            return 'shared Isaac native lock or scheduler reservation is occupied'
+        except (OSError, ValueError, subprocess.SubprocessError):
+            return 'unable to verify native GPU or disk resources'
+        return None
+
+    def native_lock_observed(self, process_group):
+        """Verify the actual child, rather than the scheduler, holds the shared lock."""
+        try:
+            stat = NATIVE_LOCK.stat()
+            for line in Path('/proc/locks').read_text(encoding='utf-8').splitlines():
+                fields = line.split()
+                if len(fields) < 8 or fields[1:4] != ['FLOCK', 'ADVISORY', 'WRITE']:
+                    continue
+                major, minor, inode = fields[5].split(':')
+                if (int(major, 16), int(minor, 16), int(inode)) != (
+                        os.major(stat.st_dev), os.minor(stat.st_dev), stat.st_ino):
+                    continue
+                try:
+                    return os.getpgid(int(fields[4])) == process_group
+                except ProcessLookupError:
+                    return False
+        except (OSError, ValueError):
+            return False
+        return False
+
+    def native_plan(self, *, approval=None, scope='current', probe_resources=False):
+        approval = native_approval(approval, self)
+        registry = self.registry()
+        selected = registry['packages'] if scope == 'all' else execution_scope(registry)[0]
+        ready, blockers, recipes, pending_results, qualified = [], {}, {}, {}, {}
+        identities = {}
+        for name, package in selected.items():
+            if package['executor'] != 'native_bounded':
+                continue
+            try:
+                recipe = self.native_recipe(package)
+            except (OSError, ValueError, TypeError, KeyError) as error:
+                blockers[name] = resource_blocker('external_data', str(error))
+                continue
+            fingerprint = recipe['code_config_sha256']
+            identities[name] = {k: recipe[k] for k in ('command_spec_sha256', 'code_config_sha256')}
+            recipes[name] = recipe
+            current = package.get('last_result', {})
+            attempts = list(self.native_attempts(name, fingerprint))
+            if len(attempts) > 1:
+                raise RuntimeError(f'multiple native attempts consumed for identical code/config: {name}')
+            if current.get('code_config_sha256') == fingerprint:
+                if current.get('native_qualification') is True and package['status'] == 'passed':
+                    qualified[name] = current
+                else:
+                    blockers[name] = resource_blocker(package.get('blocker_kind', 'failed_native'),
+                                                      'same code/config already completed without qualification')
+                continue
+            if attempts:
+                result = attempts[0]
+                if result.get('pending'):
+                    overdue = Path(result['intent']).with_name('overdue.json').is_file()
+                    reason = ('elapsed budget exceeded; child still owns its reservation'
+                              if overdue else 'attempt in progress or interrupted; no duplicate launch')
+                    blockers[name] = resource_blocker('waiting_resource', reason)
+                else:
+                    pending_results[name] = result
+                    if result.get('native_qualification') is True:
+                        qualified[name] = result
+                    else:
+                        blockers[name] = resource_blocker('failed_native', 'identical code/config has retained failure evidence')
+        # A previously passed native package is usable only while all its scoped
+        # inputs remain qualified. This also covers a private result awaiting publication.
+        changed = True
+        while changed:
+            stale = [name for name in qualified
+                     if native_dependency_blockers(registry['packages'], selected[name], qualified)]
+            changed = bool(stale)
+            for name in stale:
+                qualified.pop(name)
+                pending_results.pop(name, None)
+                blockers[name] = resource_blocker('waiting_dependency', 'native prerequisite evidence is no longer current')
+        for name in list(pending_results):
+            if native_dependency_blockers(registry['packages'], selected[name], qualified):
+                pending_results.pop(name)
+                blockers[name] = resource_blocker('waiting_dependency', 'retained result awaits current prerequisite evidence')
+        for name, recipe in recipes.items():
+            if name in qualified or name in blockers or name in pending_results:
+                continue
+            package = selected[name]
+            waiting = native_dependency_blockers(registry['packages'], package, qualified)
+            blocker = package.get('blocker_kind')
+            previous = package.get('last_result', {}).get('code_config_sha256')
+            if waiting:
+                blockers[name] = resource_blocker('waiting_dependency', 'waiting for evidence: ' + ', '.join(waiting))
+            elif blocker in {'unsupported_case', 'external_data'}:
+                blockers[name] = resource_blocker(blocker, package.get('reason', 'native case is unavailable'))
+            elif blocker in {'failed_native', 'failed_test'} and not previous:
+                blockers[name] = resource_blocker(blocker, 'historical failure has no code/config identity; review evidence')
+            elif not approval or approval['packages'].get(name) != identities[name]:
+                blockers[name] = resource_blocker('waiting_approval', 'no batch approval for exact code/config and command')
+            else:
+                reason = self.native_resource_blocker(recipe, Path(approval['output_root'])) if probe_resources else None
+                if reason:
+                    blockers[name] = resource_blocker('waiting_resource', reason)
+                else:
+                    ready.append(name)
+        return dict(native_ready=ready, blockers=blockers, native_identities=identities,
+                    native_results=pending_results, native_qualified=sorted(qualified))
+
+    def register_native_attempt(self, name, approval):
+        approval = native_approval(approval, self)
+        if name not in self.native_plan(approval=approval, scope='all')['native_ready']:
+            raise RuntimeError('native package is blocked, consumed, or unapproved')
+        package = self.registry()['packages'][name]
+        recipe = self.native_recipe(package)
+        fingerprint = recipe['code_config_sha256']
+        base = self.private / 'native-attempts' / name / fingerprint
+        base.mkdir(parents=True, exist_ok=True)
+        directory = Path(mkdtemp(prefix='attempt-', dir=base))
+        output = Path(approval['output_root']) / name / directory.name / 'native'
+        intent = directory / 'intent.json'
+        atomic_write(intent, json_text(dict(package=name, head=self.head(), output=str(output),
+                    approval=approval, command_spec_sha256=recipe['command_spec_sha256'],
+                    code_config_sha256=fingerprint)))
+        return intent
+
+    def run_native_worker(self, intent_path):
+        intent_path = Path(intent_path).resolve(strict=True)
+        if intent_path.name != 'intent.json' or not intent_path.is_relative_to(self.private / 'native-attempts'):
+            raise ValueError('native worker requires a registered private intent')
+        with native_file_lock(intent_path.parent / 'worker.lock'):
+            return self._run_registered_native_worker(intent_path)
+
+    def _run_registered_native_worker(self, intent_path):
+        path = intent_path.parent
+        intent = json.loads(intent_path.read_text(encoding='utf-8'))
+        name = intent['package']
+        approval = native_approval(intent['approval'], self)
+        packages = self.registry()['packages']
+        package = packages[name]
+        recipe = self.native_recipe(package)
+        identity = {k: recipe[k] for k in ('command_spec_sha256', 'code_config_sha256')}
+        output_root = Path(approval['output_root'])
+        output = output_root / name / path.name / 'native'
+        if (self.head() != intent['head'] or identity != approval['packages'].get(name)
+                or any(intent[k] != v for k, v in identity.items()) or str(output) != intent['output']
+                or path.parent != self.private / 'native-attempts' / name / identity['code_config_sha256']):
+            raise RuntimeError('native worker intent no longer matches approved code/config')
+        if native_dependency_blockers(packages, package,
+                {key: packages[key].get('last_result', {})
+                 for key in self.native_plan(scope='all')['native_qualified']}):
+            raise RuntimeError('native worker dependency evidence no longer qualifies')
+        receipt = path / 'receipt.json'
+        if receipt.exists() or (path / 'running.json').exists():
+            raise RuntimeError('native attempt already has a receipt or durable running marker')
+        result = dict(executor='native_bounded', tested_head=intent['head'], batch_id=approval['batch_id'],
+                      qualification_scope=package['evidence_scope'], native_qualification=False,
+                      native_execution_performed=False, output=str(output), **identity)
+        try:
+            lease = native_file_lock(NATIVE_SCHEDULER_LOCK)
+        except BlockingIOError:
+            lease = None
+        if lease is None:
+            result.update(blocker_kind='waiting_resource', reason='another scheduler owns native reservation')
+        else:
+            with lease:
+                if receipt.exists() or (path / 'running.json').exists():
+                    raise RuntimeError('native attempt already has a receipt or durable running marker')
+                reason = self.native_resource_blocker(recipe, output_root, True)
+                if reason:
+                    result.update(blocker_kind='waiting_resource', reason=reason)
+                else:
+                    try:
+                        self._native_child(path, recipe['spec'], output, result)
+                    except (OSError, ValueError, subprocess.SubprocessError):
+                        result.update(blocker_kind='failed_native', reason='native worker failed to execute or finish',
+                                      log_sha256=file_hash(path / 'native.log'))
+        atomic_write(receipt, json_text(result))
+        return dict(result, result_sha256=file_hash(receipt))
+
+    def _native_child(self, path, spec, output, result):
+        budget = spec['budget']
+        if output.resolve() != output:
+            raise ValueError('native output path escapes the approved private root')
+        output.parent.mkdir(parents=True, exist_ok=False)
+        command = ['bash', 'scripts/python.sh', spec['entrypoint'],
+                   *(str(output) if arg == '{output}' else arg for arg in spec['argv'])]
+        env = {**os.environ, **spec.get('environment', {}), 'DH116_PYTHON': sys.executable,
+               'CUDA_VISIBLE_DEVICES': str(budget['gpu_index']), 'PYTHONDONTWRITEBYTECODE': '1'}
+        log = path / 'native.log'
+        started = time.monotonic()
+        observed = False
+        with log.open('xb') as stream:
+            atomic_write(path / 'running.json', json_text(dict(
+                worker_pid=os.getpid(), started_unix_s=time.time(), timeout_seconds=budget['timeout_seconds'])))
+            with subprocess.Popen(command, cwd=self.root, env=env, stdin=subprocess.DEVNULL,
+                                  stdout=stream, stderr=subprocess.STDOUT, start_new_session=True) as child:
+                while child.poll() is None and time.monotonic() - started <= budget['timeout_seconds']:
+                    observed |= self.native_lock_observed(child.pid)
+                    time.sleep(0.05)
+                if child.poll() is None:
+                    atomic_write(path / 'overdue.json', json_text(dict(
+                        worker_pid=os.getpid(), child_pid=child.pid, budget_seconds=budget['timeout_seconds'])))
+                code = child.wait()
+            stream.flush()
+            os.fsync(stream.fileno())
+        seconds = time.monotonic() - started
+        result.update(native_execution_performed=True, exit_code=code, outer_exit_code=code,
+                      log_sha256=file_hash(log), duration_seconds=round(seconds, 3), native_lock_observed=observed)
+        atomic_write(path / 'outer_exit.json', json_text({
+            key: result[key] for key in ('outer_exit_code', 'duration_seconds', 'log_sha256', 'native_lock_observed')
+        }))
+        if code != 0 or not observed or seconds > budget['timeout_seconds']:
+            result.update(blocker_kind='failed_native',
+                          reason='outer process failure, missing shared lock evidence, or elapsed budget exceeded')
+            return
+        try:
+            artifacts = validate_native_artifacts(spec, output)
+        except (OSError, ValueError, TypeError) as error:
+            result.update(blocker_kind='failed_native', reason=f'independent validator rejected evidence: {error}')
+            return
+        result.update(native_qualification=True, **artifacts)
+
+    def start_native(self, name, approval):
+        intent = self.register_native_attempt(name, approval)
+        budget = self.native_recipe(self.registry()['packages'][name])['spec']['budget']
+        with (intent.parent / 'worker.log').open('xb') as log:
+            worker = subprocess.Popen([sys.executable, str(Path(__file__).resolve()),
+                '--native-worker', str(intent), '--evidence-dir', str(self.private)], cwd=self.root,
+                stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        try:
+            worker.wait(timeout=budget['timeout_seconds'])
+        except subprocess.TimeoutExpired:
+            # The native recipe enforces its physics/update budget itself.
+            # Keep the worker's reservation and evidence; do not signal Isaac.
+            return None
+        receipt = intent.parent / 'receipt.json'
+        if not receipt.is_file():
+            return None
+        return dict(json.loads(receipt.read_text(encoding='utf-8')), result_sha256=file_hash(receipt))
+
     def local_tracking_head(self):
         return self.git('for-each-ref', '--format=%(objectname)', TRACKING_REF).strip() or None
 
-    def plan(self, *, scope='current'):
+    def plan(self, *, scope='current', approval=None, probe_resources=False):
         self.verify_local_target()
+        registry = self.registry()
+        native = self.native_plan(approval=approval, scope=scope, probe_resources=probe_resources)
         return dict(branch=BRANCH, head=self.head(), publication_route='windows_relay',
                     last_verified_remote=self.local_tracking_head(),
                     working_tree=self.git('status', '--short').splitlines(),
                     resume_pending=self.journal.exists(), pending_publications=len(self.pending()),
-                    **scoped_queue(self.registry(), scope))
+                    **effective_queue(registry, scope, native), **native)
 
     def pending(self):
         if not self.outbox.exists():
@@ -363,6 +867,20 @@ class Repository:
             self.push_verified(parent, head)
         return head, sorted(changed)
 
+    def publish_native(self, name, result):
+        current = self.native_plan(scope='all')['native_results'].get(name)
+        if result != current:
+            raise RuntimeError('native publication must bind the durable independently validated receipt')
+        package = self.registry()['packages'][name]
+        cpu = self.run_tests(name, package) if package.get('tests') else None
+        summary = dict(result)
+        summary['native_physics_validated'] = result['native_qualification']
+        if cpu is not None:
+            summary['cpu_regression'] = {k: v for k, v in cpu.items() if k != 'log'}
+            if cpu['exit_code'] != 0:
+                summary.update(native_qualification=False, blocker_kind='failed_test')
+        return self.publish(name, summary, defer=True)
+
     def publish(self, name, result, prepared=(), *, defer=False):
         if self.journal.exists():
             raise RuntimeError('resume the pending publication first')
@@ -378,31 +896,59 @@ class Repository:
                 raise RuntimeError('local and remote HEAD must agree before publication')
         self.require_scope(set(prepared))
         self.verify_protection()
-        if result['tested_head'] != parent and self.git('diff', '--name-only', result['tested_head'], parent, '--',
-                                                        'src', 'scripts', 'tests', 'configs').strip():
+        native = result.get('executor') == 'native_bounded'
+        if native:
+            durable = self.native_plan(scope='all')['native_results'].get(name)
+            if (not defer or prepared or durable is None
+                    or any(result.get(key) != durable[key] for key in durable if key != 'native_qualification')
+                    or result.get('native_qualification') is True and not durable['native_qualification']):
+                raise RuntimeError('native publication requires the unchanged approved recipe and Windows relay')
+        elif result['tested_head'] != parent and self.git('diff', '--name-only', result['tested_head'], parent, '--',
+                                                          'src', 'scripts', 'tests', 'configs').strip():
             raise RuntimeError('code changed after the CPU verification wave')
         registry = self.registry()
         package = registry['packages'][name]
-        status = 'passed' if result['exit_code'] == 0 else 'failed'
+        passed = result.get('native_qualification') is True if native else result['exit_code'] == 0
+        status = 'passed' if passed else 'failed'
         report = f'docs/superpowers/reports/dh116-managed-{name}.md'
-        entry = {key: value for key, value in result.items() if key != 'log'}
-        entry.update(status=status, report=report, native_qualification=False)
+        if native:
+            private_fields = {'log', 'output', 'reason'}
+            entry = {key: value for key, value in result.items() if key not in private_fields}
+            entry.update(status=status, report=report)
+            package['last_native_attempt'] = entry
+            if passed:
+                package.pop('reason', None)
+                package.pop('blocker_kind', None)
+            else:
+                package['blocker_kind'] = result.get('blocker_kind', 'failed_native')
+                package['reason'] = 'native or CPU qualification failed; durable evidence retained outside Git'
+            report_text = (f'# {package["title"]}\n\n'
+                           f'基线 `{result["tested_head"]}`。原生范围 `{result["qualification_scope"]}`，'
+                           f'状态 `{status}`，外层退出码 `{result.get("outer_exit_code")}`。'
+                           f'独立私有回执 SHA256 `{result["result_sha256"]}`。\n\n'
+                           f'代码与配置 SHA256 `{result["code_config_sha256"]}`。'
+                           '范围以独立产物校验和进程退出为准。原始日志留在 Ubuntu 私有证据目录。\n')
+            label = '原生'
+        else:
+            entry = {key: value for key, value in result.items() if key != 'log'}
+            entry.update(status=status, report=report, native_qualification=False)
+            if not passed:
+                package['reason'] = 'CPU regression did not pass; evidence retained outside Git'
+            followups = [key for key, item in registry['packages'].items() if name in item['dependencies']]
+            report_text = (f'# {package["title"]}\n\n'
+                           f'基线 `{result["tested_head"]}`。CPU 状态 `{status}`，通过 {result["passed"]} 项，'
+                           f'失败 {result["failed"]} 项，跳过 {result["skipped"]} 项，退出码 {result["exit_code"]}。'
+                           '此项不授予原生或训练资格。\n\n'
+                           f'命令 `{" ".join(result["command"])}`。私有日志 SHA256 `{result["log_sha256"]}`。'
+                           f'后继工作包 {", ".join(followups) or "按登记表继续就绪任务"}。\n')
+            if not passed:
+                report_text += '\nCPU 配方未通过，保留原始日志与本地代码，依赖任务暂停。\n'
+            label = f'CPU 回归 {result["passed"]} 项通过'
         package['status'] = status
         package['last_result'] = entry
-        if status == 'failed':
-            package['reason'] = 'CPU regression did not pass; evidence retained outside Git'
-        followups = [key for key, item in registry['packages'].items() if name in item['dependencies']]
-        report_text = (f'# {package["title"]}\n\n'
-                       f'基线 `{result["tested_head"]}`。CPU 状态 `{status}`，通过 {result["passed"]} 项，'
-                       f'失败 {result["failed"]} 项，跳过 {result["skipped"]} 项，退出码 {result["exit_code"]}。'
-                       '此项不授予原生或训练资格。\n\n'
-                       f'命令 `{" ".join(result["command"])}`。私有日志 SHA256 `{result["log_sha256"]}`。'
-                       f'后继工作包 {", ".join(followups) or "按登记表继续就绪任务"}。\n')
-        if status == 'failed':
-            report_text += '\nCPU 配方未通过，保留原始日志与本地代码，依赖任务暂停。\n'
         date = datetime.now(timezone.utc).date().isoformat()
         note = (f'## {date} — {package["title"]}\n\n'
-                f'CPU `{status}`，通过 {result["passed"]} 项。详细结果见[报告]({report})。\n\n')
+                f'{label}，状态 `{status}`。详细结果见[报告]({report})。\n\n')
         writes = {REGISTRY: json_text(registry), report: report_text,
                   READINESS: readiness_text(self.root / READINESS, name, entry)}
         for doc in ('README.md', 'CHANGELOG.md'):
@@ -563,11 +1109,13 @@ def main(argv=None):
     modes.add_argument('--run', action='store_true')
     modes.add_argument('--prepared', metavar='PACKAGE')
     modes.add_argument('--resume', action='store_true')
+    modes.add_argument('--native-worker', type=Path, help=argparse.SUPPRESS)
     modes.add_argument('--relay-plan', action='store_true')
     modes.add_argument('--relay-ack', action='store_true', help='Read verified local publisher receipt from stdin')
     parser.add_argument('--scope', choices=('current', 'all'), default='current',
                         help='select the configured target or all registered work packages')
     parser.add_argument('--file', action='append', default=[])
+    parser.add_argument('--native-approval', type=Path, help='private exact native batch approval JSON')
     parser.add_argument('--limit', type=int, default=1)
     parser.add_argument('--jobs', type=int, default=2)
     parser.add_argument('--local-only', action='store_true',
@@ -577,11 +1125,22 @@ def main(argv=None):
     if not 1 <= args.limit <= 12 or not 1 <= args.jobs <= 4 or bool(args.file) != bool(args.prepared):
         parser.error('use 1..12 packages and 1..4 CPU jobs; --prepared needs explicit --file paths')
     repo = Repository(Path(__file__).resolve().parents[1], evidence_dir=args.evidence_dir)
+    approval = None
+    if args.native_approval is not None:
+        approval_path = args.native_approval.resolve(strict=True)
+        if approval_path.is_relative_to(repo.root) and not approval_path.is_relative_to(repo.root / 'artifacts'):
+            raise ValueError('native batch approval must stay outside published source')
+        approval = native_approval(json.loads(approval_path.read_text(encoding='utf-8')), repo)
+    if args.native_worker:
+        repo.verify_local_target()
+        print(json_text(repo.run_native_worker(args.native_worker)), end='', flush=True)
+        return 0
     if args.relay_plan:
         print(json_text(repo.relay_plan()), end='')
         return 0
     if not (args.run or args.prepared or args.resume or args.relay_ack):
-        print(json_text(repo.plan(scope=args.scope)), end='')
+        print(json_text(repo.plan(scope=args.scope, approval=approval,
+                                  probe_resources=approval is not None)), end='')
         return 0
     with publication_lock(repo.private):
         if args.relay_ack:
@@ -591,6 +1150,11 @@ def main(argv=None):
             if not repo.journal.exists():
                 pending = repo.pending()
                 if not pending:
+                    native = repo.native_plan(approval=approval, scope=args.scope)
+                    if native['native_results'] or any(value['kind'] == 'waiting_resource'
+                            for value in native['blockers'].values()):
+                        print(json_text(native), end='')
+                        return 0
                     raise RuntimeError('no interrupted local commit or queued Windows publication')
                 print(json_text(dict(publication_route='windows_relay',
                                      pending_publications=len(pending), head=repo.head())), end='')
@@ -600,7 +1164,7 @@ def main(argv=None):
                 raise RuntimeError('direct publication journal retained; use Windows relay for publication')
             repo.resume()
             return 0
-        plan = repo.plan(scope=args.scope)
+        plan = repo.plan(scope=args.scope, approval=approval)
         if plan['resume_pending']:
             raise RuntimeError('resume the interrupted local commit before starting another work package')
         pending = repo.pending()
@@ -629,21 +1193,39 @@ def main(argv=None):
         repo.require_scope(set())
         failed = False
         remaining = args.limit
+        considered = set()
         while remaining:
             registry = repo.registry()
             packages = registry['packages']
-            wave = scoped_queue(registry, args.scope)['ready'][:min(remaining, args.jobs)]
-            if not wave:
-                break
-            with ThreadPoolExecutor(max_workers=len(wave)) as pool:
-                futures = [pool.submit(repo.run_tests, name, packages[name]) for name in wave]
-                results = [future.result() for future in futures]
-            for name, result in zip(wave, results):
-                repo.publish(name, result, defer=True)
-                failed |= result['exit_code'] != 0
-                remaining -= 1
-        print(json_text(scoped_queue(repo.registry(), args.scope)), end='')
+            native = repo.native_plan(approval=approval, scope=args.scope, probe_resources=approval is not None)
+            wave = effective_queue(registry, args.scope, native)['ready'][:min(remaining, args.jobs)]
+            if wave:
+                with ThreadPoolExecutor(max_workers=len(wave)) as pool:
+                    futures = [pool.submit(repo.run_tests, name, packages[name]) for name in wave]
+                    results = [future.result() for future in futures]
+                for name, result in zip(wave, results):
+                    repo.publish(name, result, defer=True)
+                    failed |= result['exit_code'] != 0
+                    remaining -= 1
+                continue
+            retained = native['native_results']
+            if retained:
+                name, result = next(iter(retained.items()))
+            else:
+                name = next((key for key in native['native_ready'] if key not in considered), None)
+                if name is None:
+                    break
+                considered.add(name)
+                result = repo.start_native(name, approval)
+                if result is None or result.get('blocker_kind') == 'waiting_resource':
+                    continue
+            receipt = repo.publish_native(name, result)
+            failed |= receipt['status'] != 'passed'
+            remaining -= 1
+        native = repo.native_plan(approval=approval, scope=args.scope, probe_resources=approval is not None)
+        print(json_text(dict(**effective_queue(repo.registry(), args.scope, native), **native)), end='')
         return 2 if failed else 0
+
 
 
 if __name__ == '__main__':

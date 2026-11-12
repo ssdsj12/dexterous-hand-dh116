@@ -5159,6 +5159,30 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-render-lifecycle-isolation-c.md",
       "report_source_commit": "a482b37f267075bed1c68952685d1e3228cbb452"
+    },
+    "flex.native-bounded-scheduler": {
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dh116_flexible_execution_dependencies.py"
+      ],
+      "log_sha256": "57e9d01878acd9cc10614972162a26d94b4fb67ad46acc2ba1b850f1bf614ed5",
+      "tested_head": "103cf0419eb155144cee1492bba5798ca4b0aaf1",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "linux_child_receipts_verified": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-native-bounded-scheduler.md",
+      "report_source_commit": "6f2be3cbec02d143c9f0fea55dbefb6b006dd7e9"
     }
   }
 }

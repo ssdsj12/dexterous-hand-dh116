@@ -1,3 +1,7 @@
+## 2026-11-12 — 带授权、预算和证据的原生调度
+
+原生执行依赖可核验证据、批次授权、单实例资源锁和外层退出，恢复时保留既有回执。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-native-bounded-scheduler.md)
+
 ## 2026-11-12 — 任务相机单次渲染与自然退出诊断入口
 
 同一渲染读回双侧模态，验证物理时钟与深度语义，保留独立退出判据。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-render-lifecycle-isolation-c.md)
