@@ -246,7 +246,15 @@
         "wp4.shutdown-native"
       ],
       "status": "blocked",
-      "reason": "独立采集审批及合格原生数据缺失"
+      "reason": "2×32 同钟诊断已通过。现有旁路仅独立核验 24 个状态字段，0 个完整首回合。完整专家采集仍需通过逐字段资格和独立原生预算。",
+      "last_native_attempt": {
+        "report": "docs/superpowers/reports/2026-11-12-mpc-sync-v02-native-evidence.md",
+        "status": "passed_bounded_sync_diagnostic",
+        "rows": 64,
+        "completed_episodes": 0,
+        "qualified_for_bc": false,
+        "native_qualification": false
+      }
     },
     "wp3.actor-bc-r0": {
       "title": "Teacher Actor-only BC 和原生 R0",
@@ -1308,6 +1316,90 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-stereo-depth-auxiliary-optimizer-diagnostic.md",
         "native_qualification": false
+      }
+    },
+    "wp3.mpc-sync32-native-diagnostic": {
+      "title": "原 MPC 371D／24D 短程原生同步诊断",
+      "executor": "gated",
+      "dependencies": [
+        "wp3.cpu-contract",
+        "wp3.mpc-sync-prepare",
+        "wp4.shutdown-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 30,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_mpc_privileged_capture.py",
+          "tests/test_dh116_privileged_action_audit.py"
+        ],
+        "log_sha256": "d14a532b6cdbdc9328d0133fe94bcd7a9136d64ccbb0a35272cedbdcb75905d9",
+        "tested_head": "1e2a45ac6a8f4966b55919f0f4b9be288cbf9f2d",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "qualification_scope": "mpc_sync32_diagnostic_only",
+        "native_instances": 1,
+        "environments": 2,
+        "policy_steps": 32,
+        "environment_physics_samples": 512,
+        "verified_privileged_fields": 24,
+        "unqualified_privileged_fields": 347,
+        "completed_episodes": 0,
+        "native_successes": 0,
+        "qualified_for_bc": false,
+        "outer_exit_code": 0,
+        "frozen_source_commit": "8fad3724d9d9cdff962e0a42ec38cb319e2c5873",
+        "archive_sha256": "5f9a419049121a61caa451a03878c6d5be673f94b2fa98b28bf6bca56d0fdfed",
+        "raw_sha256": "ea69e89c1fb04ad2aac67d194283ba341aaee48ed9c2b883d4e23662a88cba22",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-mpc-sync-v02-native-evidence.md",
+        "report_source_commit": "6e2526bfe0a1483a5a913b2007514c06e8c007e9"
+      },
+      "last_result": {
+        "passed": 30,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_mpc_privileged_capture.py",
+          "tests/test_dh116_privileged_action_audit.py"
+        ],
+        "log_sha256": "d14a532b6cdbdc9328d0133fe94bcd7a9136d64ccbb0a35272cedbdcb75905d9",
+        "tested_head": "1e2a45ac6a8f4966b55919f0f4b9be288cbf9f2d",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "qualification_scope": "mpc_sync32_diagnostic_only",
+        "native_instances": 1,
+        "environments": 2,
+        "policy_steps": 32,
+        "environment_physics_samples": 512,
+        "verified_privileged_fields": 24,
+        "unqualified_privileged_fields": 347,
+        "completed_episodes": 0,
+        "native_successes": 0,
+        "qualified_for_bc": false,
+        "outer_exit_code": 0,
+        "frozen_source_commit": "8fad3724d9d9cdff962e0a42ec38cb319e2c5873",
+        "archive_sha256": "5f9a419049121a61caa451a03878c6d5be673f94b2fa98b28bf6bca56d0fdfed",
+        "raw_sha256": "ea69e89c1fb04ad2aac67d194283ba341aaee48ed9c2b883d4e23662a88cba22",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-mpc-sync-v02-native-evidence.md",
+        "report_source_commit": "6e2526bfe0a1483a5a913b2007514c06e8c007e9"
       }
     }
   },

@@ -211,3 +211,28 @@ def test_raw_rgbd_frame_binds_calibration_to_the_same_pre_action_clock(tmp_path,
         bind_camera_frames(tmp_path, rows, 2)
         assert len(rows[0]['camera_calibration_sha256']) == 64
         assert rows[0]['raw_rgbd_chunk_sha256'] == sha
+
+
+def test_joint_validity_compares_physical_float64_to_observation_float32():
+    env = Env()
+    for name in ('low', 'high'):
+        setattr(env.task, name, getattr(env.task, name).double())
+    env.task.m['q'] = torch.full((2, 12), .123456789, dtype=torch.float64)
+    env.task.m['qd'] = torch.full((2, 12), .043212345, dtype=torch.float64)
+    env.current[:, :12] = (2 * (env.task.m['q'] - env.task.low) /
+                           (env.task.high - env.task.low) - 1).float()
+    env.current[:, 12:24] = (env.task.m['qd'] / .3).float()
+    env.current[1, 12] += .002
+    original = env.current.clone()
+    recorder = PreActionCapture(2, 1)
+    with capture_environment(env, recorder, lambda: clock(env.physical_step)):
+        assert env.reset() is env.current
+        env.step(torch.zeros(2, 24))
+
+    sample, = recorder.samples
+    assert torch.equal(sample.state, original)
+    assert sample.state.dtype is torch.float32
+    assert env.task.m['q'].dtype is torch.float64
+    assert not sample.valid[1, 12]
+    assert sample.valid[:, :24].sum().item() == 47
+    assert not sample.valid[:, 24:].any()

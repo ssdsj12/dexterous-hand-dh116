@@ -86,7 +86,8 @@ class PreActionCapture:
         q, qd = task.m['q'], task.m['qd']
         # These are the first 24 fields of the original observe() with no running normalization.
         expected = torch.cat((2 * (q - task.low) / (task.high - task.low) - 1, qd / .3), dim=1)
-        expected = expected.detach().cpu()
+        # TensorEnv rounds its normalized observation to the exported dtype.
+        expected = expected.detach().to(device=observed.device, dtype=observed.dtype)
         if expected.shape != observed[:, :24].shape:
             raise ValueError('measured q/qd does not match the canonical joint layout')
         valid = torch.zeros_like(observed, dtype=torch.bool)

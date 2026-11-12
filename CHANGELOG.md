@@ -1,3 +1,7 @@
+## 2026-11-12 — 原 MPC 371D／24D 短程原生同步诊断
+
+修复同钟记录器的 dtype 错误。原 MPC 复验取得 64 条状态／动作记录和 512 条环境级物理样本，完整成功回合为 0。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-sync-v02-native-evidence.md)
+
 ## 2026-11-12 — 8 初态双目同步采集
 
 二指、三指各完成 4 个独立物理初态，合计 32 条同钟双目与状态动作候选样本。正式训练资格待独立验证。 Ubuntu CPU 回归 63 项通过。[报告](docs/superpowers/reports/2026-11-12-stereo-cold8-native-capture.md)
