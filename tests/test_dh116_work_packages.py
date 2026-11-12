@@ -357,6 +357,148 @@ def test_duplicate_hidden_worker_cannot_overwrite_same_intent(repo, monkeypatch)
 
 
 
+def right_recipe_fixture(repo):
+    data = repo.registry()
+    left = data['packages']['native']
+    right = dict(left, title='Right fixture', command_spec='configs/dh116_execution/right.json',
+                 dependencies=['native'], dependency_scopes={'native': dict(scope='fixture_native_only', native=True)},
+                 evidence_scope='right_fixture_only')
+    spec = json.loads((repo.root / left['command_spec']).read_text())
+    spec['dependency_receipt'] = dict(package='native', qualification_scope='fixture_native_only')
+    spec['argv'] = ['--left-scheduler-receipt', '{left_scheduler_receipt}',
+                    '--left-receipt-sha256', '{left_receipt_sha256}', *spec['argv']]
+    write_json(repo.root / right['command_spec'], spec)
+    data['packages']['right'] = right
+    write_json(repo.root / scheduler.REGISTRY, data)
+    return right
+
+
+def record_qualified_left(repo, monkeypatch, approval):
+    monkeypatch.setattr(repo, 'native_resource_blocker', lambda *_: None)
+    monkeypatch.setattr(repo, 'native_lock_observed', lambda *_: True)
+    intent = repo.register_native_attempt('native', approval)
+    result = repo.run_native_worker(intent)
+    data = repo.registry()
+    data['packages']['native'].update(status='passed', last_result={
+        key: value for key, value in result.items() if key != 'output'})
+    write_json(repo.root / scheduler.REGISTRY, data)
+    return intent.with_name('receipt.json'), result
+
+
+def test_native_receipt_binding_resolves_frozen_left_and_reuses_after_reopen(repo, monkeypatch):
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    right = right_recipe_fixture(repo)
+    approval = native_approval(repo)
+    recipe = repo.native_recipe(right)
+    approval['packages']['right'] = {key: recipe[key] for key in ('command_spec_sha256', 'code_config_sha256')}
+    assert repo.native_plan(approval=approval)['blockers']['right']['kind'] == 'waiting_dependency'
+    receipt_path, result = record_qualified_left(repo, monkeypatch, approval)
+
+    resumed = scheduler.Repository(repo.root, evidence_dir=repo.private)
+    assert resumed.native_plan(approval=approval)['native_ready'] == ['right']
+    intent = resumed.register_native_attempt('right', approval)
+    bound = json.loads(intent.read_text())['dependency_receipt']
+    assert bound == dict(package='native', qualification_scope='fixture_native_only',
+                         path=str(receipt_path), sha256=result['result_sha256'])
+    monkeypatch.setattr(resumed, 'native_resource_blocker', lambda *_: None)
+    monkeypatch.setattr(resumed, 'native_lock_observed', lambda *_: True)
+    right_result = resumed.run_native_worker(intent)
+    assert right_result['native_qualification'] is True
+    assert right_result['dependency_receipt_sha256'] == result['result_sha256']
+    argv = json.loads(intent.with_name('launch_argv.json').read_text())['argv']
+    assert argv[argv.index('--left-scheduler-receipt') + 1] == str(receipt_path)
+    assert argv[argv.index('--left-receipt-sha256') + 1] == result['result_sha256']
+    assert len(list(resumed.native_attempts('native', result['code_config_sha256']))) == 1
+    assert resumed.native_plan(approval=approval)['native_qualified'] == ['native', 'right']
+
+    Path(result['output'], 'physics.jsonl').write_text('{"tampered": true}\n')
+    invalidated = resumed.native_plan(approval=approval)
+    assert invalidated['native_qualified'] == ['native']
+    assert invalidated['blockers']['right']['kind'] == 'waiting_dependency'
+    assert 'right' not in invalidated['native_results']
+    assert intent.with_name('receipt.json').exists()
+
+
+@pytest.mark.parametrize('tamper', ['receipt', 'outer_exit_139', 'close_only', 'ledger'])
+def test_native_receipt_binding_rejects_tampered_or_close_only_left(repo, monkeypatch, tamper):
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    right = right_recipe_fixture(repo)
+    approval = native_approval(repo)
+    recipe = repo.native_recipe(right)
+    approval['packages']['right'] = {key: recipe[key] for key in ('command_spec_sha256', 'code_config_sha256')}
+    path, result = record_qualified_left(repo, monkeypatch, approval)
+    intent = repo.register_native_attempt('right', approval)
+    if tamper == 'receipt':
+        path.write_text(path.read_text() + '\n')
+    elif tamper == 'outer_exit_139':
+        outer = path.with_name('outer_exit.json')
+        value = json.loads(outer.read_text())
+        write_json(outer, dict(value, outer_exit_code=139))
+    elif tamper == 'close_only':
+        path.with_name('outer_exit.json').unlink()
+    else:
+        Path(result['output'], 'physics.jsonl').write_text('{"tampered": true}\n')
+    with pytest.raises((ValueError, RuntimeError, OSError)):
+        repo.run_native_worker(intent)
+    assert not intent.with_name('launch_argv.json').exists()
+
+
+
+@pytest.mark.skipif(not Path('/usr/bin/gdb').is_file(), reason='Linux debugger unavailable')
+@pytest.mark.parametrize('crash', [False, True, 'after_recovered_sigbus'])
+def test_native_debugger_preserves_argv_lock_and_real_inferior_status(repo, monkeypatch, crash):
+    native_fixture(repo)
+    native_dependency_pass(repo)
+    monkeypatch.setattr(repo, 'native_resource_blocker', lambda *_: None)
+    lock = repo.private / 'debugger-native.lock'
+    monkeypatch.setattr(scheduler, 'NATIVE_LOCK', lock)
+    spec_path = repo.root / 'configs/dh116_execution/fixture.json'
+    spec = json.loads(spec_path.read_text())
+    spec.update(debugger='gdb_on_segv', inputs={'/usr/bin/gdb': scheduler.file_hash(Path('/usr/bin/gdb'))})
+    spec['argv'] = ['--fixture-words', 'two words and "quoted text"', *spec['argv']]
+    write_json(spec_path, spec)
+    entry = repo.root / spec['entrypoint']
+    source = (
+        'import fcntl, json, resource, sys, time\n'
+        'resource.setrlimit(resource.RLIMIT_CORE, (0, 0))\n'
+        f'lock = open({str(lock)!r}, "a+b")\n'
+        'fcntl.flock(lock, fcntl.LOCK_EX)\n'
+        f'assert sys.argv[1:3] == {spec["argv"][:2]!r}\n'
+        'time.sleep(0.25)\n'
+    ) + entry.read_text()
+    if crash:
+        source = source.replace('raise SystemExit(0)', 'import ctypes; ctypes.string_at(0)')
+    if crash == 'after_recovered_sigbus':
+        source = ('import signal\n'
+                  'signal.signal(signal.SIGBUS, lambda *_: print("SIGBUS handled", flush=True))\n'
+                  'signal.raise_signal(signal.SIGBUS)\n') + source
+    entry.write_text(source)
+    approval = native_approval(repo)
+    intent = repo.register_native_attempt('native', approval)
+    result = repo.run_native_worker(intent)
+    assert result['native_lock_observed'] is True
+    assert result['debugger_inferior_exit_code'] == (None if crash else 0)
+    assert result['debugger_inferior_signal'] == (11 if crash else None)
+    assert result['native_qualification'] is (not bool(crash))
+    if crash:
+        assert result['outer_exit_code'] != 0
+        assert result['debugger_backtrace_captured'] is True
+        log = intent.with_name('native.log').read_text()
+        assert 'DH116_GDB_COMMAND thread apply all bt 20' in log
+        assert 'Shared Object Library' in log
+        assert 'Mapped address spaces' in log
+        assert 'DH116_GDB_COMMAND_ERROR' not in log
+        assert 'DH116_GDB_FATAL_BACKTRACE SIGSEGV' in log
+        if crash == 'after_recovered_sigbus':
+            assert log.index('DH116_GDB_FATAL_BACKTRACE SIGBUS') < log.index('SIGBUS handled')
+            assert log.index('SIGBUS handled') < log.index('DH116_GDB_FATAL_BACKTRACE SIGSEGV')
+    else:
+        assert result['outer_exit_code'] == 0
+
+
+
 def test_scope_does_not_accept_unstaged_renames_or_tracked_private_assets(repo):
     old = repo.root / 'tests' / 'test_fixture.py'
     old.rename(old.with_name('test_moved.py'))

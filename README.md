@@ -1,3 +1,7 @@
+## 2026-11-12 — 原生前置回执绑定与同次崩溃栈
+
+右侧命令从真实已验证左侧回执解析路径和SHA，恢复复用前置；真实GDB对照保留外层255和inferior SIGSEGV，逐次捕获栈与映射，不改成成功。 Ubuntu CPU 回归 52 项通过。[报告](docs/superpowers/reports/2026-11-12-native-receipt-binding.md)
+
 ## 2026-11-12 — WireSeg 固定16样本分割与深度诊断
 
 复用verified subset，独立完成128次分割和128次深度诊断；保留空mask与无深度失败证据。分别报告全视场、中央裁剪及线缆ROI，深度仍逊于训练常数基线，未授予Stereo/策略资格。 Ubuntu CPU 回归 25 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-fixed16-overfit-diagnostic.md)

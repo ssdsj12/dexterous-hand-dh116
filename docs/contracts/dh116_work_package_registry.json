@@ -6049,6 +6049,72 @@
         "report_source_commit": "2253e3ab0d66d3b1f15f017d5a40424a3ae22c67",
         "whitespace_only_release_normalization": true
       }
+    },
+    "flex.native-receipt-binding": {
+      "title": "原生前置回执绑定与同次崩溃栈",
+      "executor": "gated",
+      "dependencies": [
+        "flex.native-bounded-scheduler"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 52,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py",
+          "tests/test_dh116_flexible_execution_dependencies.py",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "3797057bf2037d24f929521c0fa72b3a2e68b955b8c3d759e8d309de2410d411",
+        "tested_head": "2370b4d1b9714508bc798f3403f876306430be0c",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "scoped_receipt_binding_and_cpu_debugger_regressions",
+        "gdb_normal_exit": 0,
+        "gdb_sigsegv_outer_exit": 255,
+        "gdb_sigsegv_inferior_signal": 11,
+        "prior_receipt_tamper_rejected": true,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-native-receipt-binding.md",
+        "report_source_commit": "8b1ad8c443f744e1dd1df6a5cf57ec23f1d9fad9"
+      },
+      "last_result": {
+        "passed": 52,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py",
+          "tests/test_dh116_flexible_execution_dependencies.py",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "3797057bf2037d24f929521c0fa72b3a2e68b955b8c3d759e8d309de2410d411",
+        "tested_head": "2370b4d1b9714508bc798f3403f876306430be0c",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "scoped_receipt_binding_and_cpu_debugger_regressions",
+        "gdb_normal_exit": 0,
+        "gdb_sigsegv_outer_exit": 255,
+        "gdb_sigsegv_inferior_signal": 11,
+        "prior_receipt_tamper_rejected": true,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-native-receipt-binding.md",
+        "report_source_commit": "8b1ad8c443f744e1dd1df6a5cf57ec23f1d9fad9"
+      }
     }
   },
   "execution_target": {

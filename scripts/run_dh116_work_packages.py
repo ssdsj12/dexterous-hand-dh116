@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -175,11 +176,105 @@ NATIVE_LOCK = Path('/tmp/dh116-isaac-single-instance.lock')
 NATIVE_SCHEDULER_LOCK = Path('/tmp/dh116-native-bounded-scheduler.lock')
 SHA256 = re.compile(r'^[0-9a-f]{64}$')
 NATIVE_RETRY = {'max_attempts_per_code_config': 1, 'retry_requires_change': True}
+NATIVE_RECEIPT_ARGS = {
+    '{left_scheduler_receipt}': '--left-scheduler-receipt',
+    '{left_receipt_sha256}': '--left-receipt-sha256',
+}
 NATIVE_BUDGET = {
     'gpu_index': (0, 63), 'timeout_seconds': (1, 900), 'min_gpu_free_mib': (1, 1000000),
     'min_disk_free_bytes': (1, 10**13), 'physics_steps': (0, 240),
     'environments': (1, 2), 'updates': (0, 1),
 }
+
+
+GDB = '/usr/bin/gdb'
+GDB_STATUS = 'DH116_GDB_INFERIOR_STATUS '
+GDB_BACKTRACE = 'DH116_GDB_FATAL_BACKTRACE'
+GDB_COMMANDS = """set pagination off
+set debuginfod enabled off
+set auto-load off
+set print thread-events off
+handle SIGSEGV stop print pass
+handle SIGBUS stop print pass
+python
+import gdb
+import json
+
+def trace_fatal(event):
+    if isinstance(event, gdb.SignalEvent) and event.stop_signal in ("SIGSEGV", "SIGBUS"):
+        gdb.write("DH116_GDB_FATAL_BACKTRACE " + event.stop_signal + "\\n")
+        for command in ("bt 32", "thread apply all bt 20", "info sharedlibrary", "info proc mappings"):
+            gdb.write("DH116_GDB_COMMAND " + command + "\\n")
+            try:
+                gdb.execute(command)
+            except gdb.error as error:
+                gdb.write("DH116_GDB_COMMAND_ERROR " + str(error) + "\\n")
+
+def status_variable(name):
+    value = gdb.parse_and_eval(name)
+    return None if str(value) == "void" else int(value)
+
+gdb.events.stop.connect(trace_fatal)
+end
+run
+python
+while gdb.selected_inferior().pid:
+    gdb.execute("continue")
+gdb.write("DH116_GDB_INFERIOR_STATUS " + json.dumps({
+    "exit_code": status_variable("$_exitcode"),
+    "signal": status_variable("$_exitsignal"),
+}) + "\\n")
+end
+"""
+
+
+def native_debugger_wrapper(path, result):
+    """Keep python.sh's interpreter probes outside GDB and forward the actual argv."""
+    commands = path / 'debugger.gdb'
+    atomic_write(commands, GDB_COMMANDS)
+    wrapper = path / 'debugger-python'
+    interpreter = shlex.quote(sys.executable)
+    atomic_write(wrapper, f"""#!/usr/bin/env bash
+if [[ "${{1:-}}" == -c ]]; then
+    exec {interpreter} "$@"
+fi
+exec {GDB} -nx -q --batch --return-child-result -x {shlex.quote(str(commands))} --args {interpreter} "$@"
+""")
+    wrapper.chmod(0o700)
+    result.update(debugger='gdb_on_segv', debugger_script_sha256=file_hash(commands),
+                  debugger_wrapper_sha256=file_hash(wrapper))
+    return str(wrapper)
+
+
+def debugger_status(log):
+    status, traced = None, False
+    with log.open(encoding='utf-8', errors='replace') as stream:
+        for line in stream:
+            if line.startswith(GDB_BACKTRACE):
+                traced = True
+            if line.startswith(GDB_STATUS):
+                try:
+                    status = json.loads(line[len(GDB_STATUS):])
+                except ValueError:
+                    status = None
+    if (not isinstance(status, dict) or status.keys() != {'exit_code', 'signal'}
+            or sum(type(v) is int for v in status.values()) != 1
+            or any(v is not None and type(v) is not int for v in status.values())):
+        return dict(debugger_status_verified=False, debugger_backtrace_captured=traced)
+    return dict(debugger_status_verified=True, debugger_backtrace_captured=traced,
+                debugger_inferior_exit_code=status['exit_code'], debugger_inferior_signal=status['signal'])
+
+
+def process_is_descendant(pid, ancestor):
+    """Only follow the live Linux parent chain of a debugger's lock holder."""
+    for _ in range(32):
+        if pid == ancestor:
+            return True
+        if pid <= 1:
+            return False
+        stat = Path(f'/proc/{pid}/stat').read_text(encoding='utf-8')
+        pid = int(stat.rsplit(')', 1)[1].split()[1])
+    return False
 
 
 def native_relative_path(value):
@@ -251,18 +346,32 @@ def native_recipe(repo, package):
     raw = path.read_bytes()
     spec = json.loads(raw)
     required = {'version', 'entrypoint', 'argv', 'source_files', 'budget', 'validator'}
-    if spec.get('version') != 1 or not required <= spec.keys() <= required | {'inputs', 'environment'}:
+    if spec.get('version') != 1 or not required <= spec.keys() <= required | {'inputs', 'environment', 'dependency_receipt', 'debugger'}:
         raise ValueError('invalid native command spec keys or version')
     entrypoint = spec['entrypoint']
     if not isinstance(entrypoint, str) or not release_path(entrypoint).startswith('scripts/') or not entrypoint.endswith('.py'):
         raise ValueError('native entrypoint must be a local Python script')
+    binding = spec.get('dependency_receipt')
+    placeholders = {'{output}': '--output'}
+    if binding is not None:
+        if (not isinstance(binding, dict) or binding.keys() != {'package', 'qualification_scope'}
+                or not isinstance(binding['package'], str) or not ID.fullmatch(binding['package'])
+                or binding['package'] not in package['dependencies']
+                or not isinstance(binding['qualification_scope'], str) or not binding['qualification_scope']
+                or package.get('dependency_scopes', {}).get(binding['package']) != {
+                    'scope': binding['qualification_scope'], 'native': True}):
+            raise ValueError('receipt binding must reference a declared scoped native dependency')
+        placeholders.update(NATIVE_RECEIPT_ARGS)
     args = spec['argv']
     if (not isinstance(args, list) or any(not isinstance(arg, str) or not arg or '\x00' in arg or '\n' in arg
-            or '{' in arg and arg != '{output}' or '}' in arg and arg != '{output}' for arg in args)
-            or args.count('{output}') != 1 or args.count('--output') != 1
-            or args.index('{output}') == 0 or args[args.index('{output}') - 1] != '--output'
-            or any(arg.startswith('--output=') for arg in args)):
-        raise ValueError('native argv requires one explicit --output {output}')
+            or ('{' in arg or '}' in arg) and arg not in placeholders for arg in args)):
+        raise ValueError('native argv permits only explicit approved placeholders')
+    for token, flag in placeholders.items():
+        if (args.count(token) != 1 or args.count(flag) != 1 or args.index(token) == 0
+                or args[args.index(token) - 1] != flag or any(arg.startswith(flag + '=') for arg in args)):
+            raise ValueError(f'native argv requires one explicit {flag} {token}')
+    if binding is None and any(arg.split('=', 1)[0] in NATIVE_RECEIPT_ARGS.values() for arg in args):
+        raise ValueError('receipt arguments must be bound to a scheduler dependency')
     budget = spec['budget']
     if (not isinstance(budget, dict) or set(budget) != set(NATIVE_BUDGET)
             or any(type(budget[key]) is not int or not low <= budget[key] <= high
@@ -305,6 +414,8 @@ def native_recipe(repo, package):
     inputs = spec.get('inputs', {})
     if not isinstance(inputs, dict):
         raise ValueError('native inputs must map absolute files to SHA256')
+    if 'debugger' in spec and (spec['debugger'] != 'gdb_on_segv' or GDB not in inputs):
+        raise ValueError('native debugger requires gdb_on_segv and the pinned installed GDB digest')
     for value, expected in inputs.items():
         path = Path(value)
         if (not path.is_absolute() or not isinstance(expected, str) or not SHA256.fullmatch(expected)
@@ -517,6 +628,57 @@ class Repository:
     def native_recipe(self, package):
         return native_recipe(self, package)
 
+    def resolve_native_dependency_receipt(self, binding, packages):
+        """Locate the published producer's exact private receipt and revalidate its bytes."""
+        producer = binding['package']
+        scope = binding['qualification_scope']
+        package = packages[producer]
+        published = package.get('last_result', {})
+        recipe = self.native_recipe(package)
+        identity = {key: recipe[key] for key in ('command_spec_sha256', 'code_config_sha256')}
+        expected = published.get('result_sha256', '')
+        if (package['executor'] != 'native_bounded' or package['status'] != 'passed'
+                or published.get('native_qualification') is not True
+                or published.get('qualification_scope') != scope or not isinstance(expected, str)
+                or not SHA256.fullmatch(expected) or any(published.get(k) != v for k, v in identity.items())):
+            raise ValueError('producer lacks a current published qualified scheduler receipt')
+        base = self.private / 'native-attempts' / producer / identity['code_config_sha256']
+        matches = [path for path in base.glob('attempt-*/receipt.json')
+                   if path.resolve() == path and file_hash(path) == expected]
+        if len(matches) != 1:
+            raise ValueError('producer receipt is missing, ambiguous, or has been modified')
+        path, = matches
+        attempt = path.parent
+        receipt = json.loads(path.read_text(encoding='utf-8'))
+        intent = json.loads(native_artifact(attempt, 'intent.json').read_text(encoding='utf-8'))
+        outer = json.loads(native_artifact(attempt, 'outer_exit.json').read_text(encoding='utf-8'))
+        approved = native_approval(intent['approval'], self)
+        output = Path(approved['output_root']) / producer / attempt.name / 'native'
+        if (intent.get('package') != producer or intent.get('output') != str(output)
+                or receipt.get('output') != str(output) or output.resolve(strict=True) != output
+                or receipt.get('executor') != 'native_bounded'
+                or receipt.get('native_execution_performed') is not True
+                or receipt.get('native_qualification') is not True or receipt.get('qualification_scope') != scope
+                or approved['packages'].get(producer) != identity
+                or receipt.get('tested_head') != intent.get('head') or receipt.get('batch_id') != approved['batch_id']
+                or any(intent.get(k) != v or receipt.get(k) != v for k, v in identity.items())):
+            raise ValueError('producer receipt identity does not match the scheduled dependency')
+        if (any(type(item.get('outer_exit_code')) is not int or item['outer_exit_code'] != 0
+                or item.get('native_lock_observed') is not True for item in (outer, receipt))
+                or outer.get('log_sha256') != receipt.get('log_sha256')
+                or file_hash(native_artifact(attempt, 'native.log')) != receipt.get('log_sha256')):
+            raise ValueError('producer requires independent natural exit zero and native lock evidence')
+        if recipe['spec'].get('debugger') == 'gdb_on_segv':
+            debug = debugger_status(native_artifact(attempt, 'native.log'))
+            if (not debug['debugger_status_verified'] or debug.get('debugger_inferior_exit_code') != 0
+                    or debug.get('debugger_inferior_signal') is not None
+                    or any(item.get(k) != v for item in (outer, receipt) for k, v in debug.items())):
+                raise ValueError('producer debugger evidence lacks independent inferior exit zero')
+        evidence = validate_native_artifacts(recipe['spec'], output)
+        if any(receipt.get(k) != v for k, v in evidence.items()):
+            raise ValueError('producer artifacts or measured ledger differ from the qualified receipt')
+        return dict(package=producer, qualification_scope=scope, path=str(path), sha256=expected)
+
     def native_attempts(self, name, fingerprint):
         root = self.private / 'native-attempts' / name / fingerprint
         for directory in sorted(root.glob('attempt-*')):
@@ -569,7 +731,7 @@ class Repository:
             return 'unable to verify native GPU or disk resources'
         return None
 
-    def native_lock_observed(self, process_group):
+    def native_lock_observed(self, process_group, debugger=False):
         """Verify the actual child, rather than the scheduler, holds the shared lock."""
         try:
             stat = NATIVE_LOCK.stat()
@@ -582,7 +744,9 @@ class Repository:
                         os.major(stat.st_dev), os.minor(stat.st_dev), stat.st_ino):
                     continue
                 try:
-                    return os.getpgid(int(fields[4])) == process_group
+                    owner = int(fields[4])
+                    return (os.getpgid(owner) == process_group
+                            or debugger and process_is_descendant(owner, process_group))
                 except ProcessLookupError:
                     return False
         except (OSError, ValueError):
@@ -630,12 +794,31 @@ class Repository:
                         qualified[name] = result
                     else:
                         blockers[name] = resource_blocker('failed_native', 'identical code/config has retained failure evidence')
+        binding_checks = {}
+
+        def binding_error(name):
+            binding = recipes[name]['spec'].get('dependency_receipt')
+            if binding is None:
+                return None
+            if name not in binding_checks:
+                try:
+                    bound = self.resolve_native_dependency_receipt(binding, registry['packages'])
+                    result = qualified.get(name)
+                    error = ('qualified result binds a different producer receipt'
+                             if result is not None and result.get('dependency_receipt_sha256') != bound['sha256']
+                             else None)
+                except (OSError, ValueError, KeyError, TypeError) as exc:
+                    error = str(exc)
+                binding_checks[name] = error
+            return binding_checks[name]
+
         # A previously passed native package is usable only while all its scoped
         # inputs remain qualified. This also covers a private result awaiting publication.
         changed = True
         while changed:
             stale = [name for name in qualified
-                     if native_dependency_blockers(registry['packages'], selected[name], qualified)]
+                     if (native_dependency_blockers(registry['packages'], selected[name], qualified)
+                         or binding_error(name))]
             changed = bool(stale)
             for name in stale:
                 qualified.pop(name)
@@ -658,7 +841,11 @@ class Repository:
                 blockers[name] = resource_blocker(blocker, package.get('reason', 'native case is unavailable'))
             elif blocker in {'failed_native', 'failed_test'} and not previous:
                 blockers[name] = resource_blocker(blocker, 'historical failure has no code/config identity; review evidence')
-            elif not approval or approval['packages'].get(name) != identities[name]:
+            elif error := binding_error(name):
+                blockers[name] = resource_blocker('waiting_dependency', error)
+            if name in blockers:
+                continue
+            if not approval or approval['packages'].get(name) != identities[name]:
                 blockers[name] = resource_blocker('waiting_approval', 'no batch approval for exact code/config and command')
             else:
                 reason = self.native_resource_blocker(recipe, Path(approval['output_root'])) if probe_resources else None
@@ -681,9 +868,12 @@ class Repository:
         directory = Path(mkdtemp(prefix='attempt-', dir=base))
         output = Path(approval['output_root']) / name / directory.name / 'native'
         intent = directory / 'intent.json'
-        atomic_write(intent, json_text(dict(package=name, head=self.head(), output=str(output),
-                    approval=approval, command_spec_sha256=recipe['command_spec_sha256'],
-                    code_config_sha256=fingerprint)))
+        state = dict(package=name, head=self.head(), output=str(output), approval=approval,
+                     command_spec_sha256=recipe['command_spec_sha256'], code_config_sha256=fingerprint)
+        binding = recipe['spec'].get('dependency_receipt')
+        if binding is not None:
+            state['dependency_receipt'] = self.resolve_native_dependency_receipt(binding, self.registry()['packages'])
+        atomic_write(intent, json_text(state))
         return intent
 
     def run_native_worker(self, intent_path):
@@ -712,12 +902,18 @@ class Repository:
                 {key: packages[key].get('last_result', {})
                  for key in self.native_plan(scope='all')['native_qualified']}):
             raise RuntimeError('native worker dependency evidence no longer qualifies')
+        binding = recipe['spec'].get('dependency_receipt')
+        bound = self.resolve_native_dependency_receipt(binding, packages) if binding is not None else None
+        if intent.get('dependency_receipt') != bound:
+            raise RuntimeError('producer receipt changed after native attempt registration')
         receipt = path / 'receipt.json'
         if receipt.exists() or (path / 'running.json').exists():
             raise RuntimeError('native attempt already has a receipt or durable running marker')
         result = dict(executor='native_bounded', tested_head=intent['head'], batch_id=approval['batch_id'],
                       qualification_scope=package['evidence_scope'], native_qualification=False,
                       native_execution_performed=False, output=str(output), **identity)
+        if bound is not None:
+            result['dependency_receipt_sha256'] = bound['sha256']
         try:
             lease = native_file_lock(NATIVE_SCHEDULER_LOCK)
         except BlockingIOError:
@@ -733,22 +929,33 @@ class Repository:
                     result.update(blocker_kind='waiting_resource', reason=reason)
                 else:
                     try:
-                        self._native_child(path, recipe['spec'], output, result)
+                        if bound is not None and bound != self.resolve_native_dependency_receipt(binding, packages):
+                            raise RuntimeError('producer receipt changed before native launch')
+                        self._native_child(path, recipe['spec'], output, result, bound=bound)
                     except (OSError, ValueError, subprocess.SubprocessError):
                         result.update(blocker_kind='failed_native', reason='native worker failed to execute or finish',
                                       log_sha256=file_hash(path / 'native.log'))
         atomic_write(receipt, json_text(result))
         return dict(result, result_sha256=file_hash(receipt))
 
-    def _native_child(self, path, spec, output, result):
+    def _native_child(self, path, spec, output, result, *, bound=None):
         budget = spec['budget']
         if output.resolve() != output:
             raise ValueError('native output path escapes the approved private root')
         output.parent.mkdir(parents=True, exist_ok=False)
+        tokens = {'{output}': str(output)}
+        if bound is not None:
+            tokens.update({'{left_scheduler_receipt}': bound['path'], '{left_receipt_sha256}': bound['sha256']})
         command = ['bash', 'scripts/python.sh', spec['entrypoint'],
-                   *(str(output) if arg == '{output}' else arg for arg in spec['argv'])]
+                   *(tokens.get(arg, arg) for arg in spec['argv'])]
+        launch_record = path / 'launch_argv.json'
+        atomic_write(launch_record, json_text(dict(argv=command, dependency_receipt=bound)))
+        result['launch_argv_sha256'] = file_hash(launch_record)
         env = {**os.environ, **spec.get('environment', {}), 'DH116_PYTHON': sys.executable,
                'CUDA_VISIBLE_DEVICES': str(budget['gpu_index']), 'PYTHONDONTWRITEBYTECODE': '1'}
+        debugger = spec.get('debugger') == 'gdb_on_segv'
+        if debugger:
+            env['DH116_PYTHON'] = native_debugger_wrapper(path, result)
         log = path / 'native.log'
         started = time.monotonic()
         observed = False
@@ -758,7 +965,7 @@ class Repository:
             with subprocess.Popen(command, cwd=self.root, env=env, stdin=subprocess.DEVNULL,
                                   stdout=stream, stderr=subprocess.STDOUT, start_new_session=True) as child:
                 while child.poll() is None and time.monotonic() - started <= budget['timeout_seconds']:
-                    observed |= self.native_lock_observed(child.pid)
+                    observed |= self.native_lock_observed(child.pid, debugger)
                     time.sleep(0.05)
                 if child.poll() is None:
                     atomic_write(path / 'overdue.json', json_text(dict(
@@ -769,10 +976,16 @@ class Repository:
         seconds = time.monotonic() - started
         result.update(native_execution_performed=True, exit_code=code, outer_exit_code=code,
                       log_sha256=file_hash(log), duration_seconds=round(seconds, 3), native_lock_observed=observed)
+        debug_status = debugger_status(log) if debugger else {}
+        result.update(debug_status)
         atomic_write(path / 'outer_exit.json', json_text({
-            key: result[key] for key in ('outer_exit_code', 'duration_seconds', 'log_sha256', 'native_lock_observed')
+            **{key: result[key] for key in ('outer_exit_code', 'duration_seconds', 'log_sha256', 'native_lock_observed')},
+            **debug_status,
         }))
-        if code != 0 or not observed or seconds > budget['timeout_seconds']:
+        debugger_failed = debugger and (not result['debugger_status_verified']
+                                        or result.get('debugger_inferior_exit_code') != 0
+                                        or result.get('debugger_inferior_signal') is not None)
+        if code != 0 or not observed or seconds > budget['timeout_seconds'] or debugger_failed:
             result.update(blocker_kind='failed_native',
                           reason='outer process failure, missing shared lock evidence, or elapsed budget exceeded')
             return
