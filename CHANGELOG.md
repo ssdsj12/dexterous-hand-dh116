@@ -1,3 +1,7 @@
+## 2026-11-12 — F6 drop 原生渲染与关闭诊断
+
+Drop 已产出 RGB、径向深度、Native ID 和 composed USD，外层退出仍为 139，hang 待实际验证。 Ubuntu CPU 回归 14 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-render-smoke-f6.md)
+
 ## 2026-11-12 — 原生 PhysX 读取 10 个 DH116 指腹凸包
 
 实际 PhysX CPU 读回全部 10 个指腹的 cooked convex hull，外层自然退出 0。GPU 烘焙一致性仍待验证。 原生入口的生命周期调用与 F3 新入口分离，修复集成导入回归。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-hull-native.md)

@@ -4414,6 +4414,97 @@
         "report": "docs/superpowers/reports/2026-11-12-deformx-cooked-hull-native.md",
         "report_source_commit": "0c6f1ec8b83acac63489a11125436f4ba9703c22"
       }
+    },
+    "flex.f6-render-diagnostic": {
+      "title": "F6 drop 原生渲染与关闭诊断",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-derived-render-preflight"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 14,
+        "failed": 0,
+        "skipped": 3,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_render_smoke.py",
+          "tests/test_dh116_deformx_asset_dependencies.py",
+          "tests/test_dh116_deformx_assets_audit.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "2ee60f3134dd69b7c767c00079d0f339c4aed916025f15377d1fd2d58c137935",
+        "tested_head": "468d4da1475aa8a873334bc6b5a483a09dacbeb8",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "qualification_scope": "single_camera_drop_capture_with_failed_isaac_teardown",
+        "drop_render_artifacts_complete": true,
+        "positive_depth_pixels": 798833,
+        "wire_ids": 2,
+        "unresolved_composed_stage_assets": 0,
+        "outer_exit_codes": [
+          139,
+          139,
+          139
+        ],
+        "hang_native_performed": false,
+        "audit_sha256": "233939b34b2413405a0fcaad1de8f1030852175a0cb5af3f503d2590a10aba71",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-render-smoke-f6.md",
+        "report_source_commit": "e9f5af25668510f5a55af3ef1d739d5b8902824d"
+      },
+      "last_result": {
+        "passed": 14,
+        "failed": 0,
+        "skipped": 3,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_render_smoke.py",
+          "tests/test_dh116_deformx_asset_dependencies.py",
+          "tests/test_dh116_deformx_assets_audit.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "2ee60f3134dd69b7c767c00079d0f339c4aed916025f15377d1fd2d58c137935",
+        "tested_head": "468d4da1475aa8a873334bc6b5a483a09dacbeb8",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "qualification_scope": "single_camera_drop_capture_with_failed_isaac_teardown",
+        "drop_render_artifacts_complete": true,
+        "positive_depth_pixels": 798833,
+        "wire_ids": 2,
+        "unresolved_composed_stage_assets": 0,
+        "outer_exit_codes": [
+          139,
+          139,
+          139
+        ],
+        "hang_native_performed": false,
+        "audit_sha256": "233939b34b2413405a0fcaad1de8f1030852175a0cb5af3f503d2590a10aba71",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-render-smoke-f6.md",
+        "report_source_commit": "e9f5af25668510f5a55af3ef1d739d5b8902824d"
+      }
+    },
+    "flex.f6-render-native": {
+      "title": "F6 drop/hang 两个原生渲染及自然关闭",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-derived-render-preflight"
+      ],
+      "status": "blocked",
+      "reason": "Drop 渲染完整，解释器 GC SIGSEGV 导致外层 139，hang 尚未启动。待定位 native teardown。"
     }
   },
   "execution_target": {
