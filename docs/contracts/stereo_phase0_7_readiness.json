@@ -5032,6 +5032,33 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-deformx-headless-experience-f6.md",
       "report_source_commit": "84f43b6e724d2c23a5672a5a4e325a07571495ef"
+    },
+    "flex.f3-integrated-rigid-entry": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_bridge_lifecycle.py",
+        "tests/test_dh116_deformx_rigid_bridge.py"
+      ],
+      "log_sha256": "2c74781560d9b77662946a06816fc3615b8619d49214a4ad88a2bab70a7ff2ce",
+      "tested_head": "2ce54c5253e3a232dfb3550d86050eca79635f27",
+      "native_execution_performed": true,
+      "native_qualification": true,
+      "qualification_scope": "integrated_original_rigid_cli_240_step_lifecycle",
+      "physical_steps": 240,
+      "outer_exit_code": 0,
+      "raw_ledger_sha256": "ae3934bd61f2a98ef8d267f102c1c2a48e17326dd5372294d171a1908d97e206",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-f3-integrated-rigid-entry.md",
+      "report_source_commit": "b969c3cad0849d244d71ef40d5826ef784c79265"
     }
   }
 }

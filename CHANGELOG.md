@@ -1,3 +1,7 @@
+## 2026-11-12 — 原 F3 刚体命令的集成原生复验
+
+集成分支原命令 240 条物理样本、外层自然退出 0，账本与 E/E2 精确一致。 Ubuntu CPU 回归 6 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-integrated-rigid-entry.md)
+
 ## 2026-11-12 — Drop 与 hang 两种原生渲染的精简配置对照
 
 Drop/hang 各有一帧完整原生 RGB、径向深度、Native ID 和 composed USD，精简配置下两轮仍外层 139。 Ubuntu CPU 回归 15 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-headless-experience-f6.md)
