@@ -2239,6 +2239,52 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 219,
+      "failed": 0,
+      "skipped": 3,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_wrap_preflight.py",
+        "tests/test_surface_success.py",
+        "tests/test_multifinger_monitor.py"
+      ],
+      "log_sha256": "15a2c1bf5e5d3f6ec1952269e238e8e76a12e3cbc7cb851492213e1a88fe2a9a",
+      "tested_head": "d3916cc80f17ebfd133d8a289abb4e47d676967b",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "bounded_cpu_wrap_seed_search_only",
+      "starts_per_hand": 16,
+      "max_iterations_per_start": 144,
+      "minimum_worst_digit_gap_mm": {
+        "left": 3.1996,
+        "right": 1.6353
+      },
+      "original_gap_threshold_mm": 0.8,
+      "eligible_bilateral_wrap_seeds": 0,
+      "raw_search_sha256": "e5e040251c218dc90d198721b316b0a2e0bb4fec4c60b1f373de518ba8146c39",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-wrap-diverse-wrist-search.md",
+      "report_source_commit": "33322b329d81862046116bfe8380b36ae71735e5",
+      "package": "wp3.teacher-wrap-diverse-wrist-search",
+      "commit": "e85ae526a91dfb5822614e7049204056055e9a7c",
+      "parent": "d3916cc80f17ebfd133d8a289abb4e47d676967b",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-teacher-wrap-diverse-wrist-search.md"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
