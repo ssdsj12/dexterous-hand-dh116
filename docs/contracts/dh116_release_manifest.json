@@ -4865,6 +4865,173 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "executor": "native_bounded",
+      "tested_head": "3f065c7eb44ce597d8fd38f3d7726df5944cc231",
+      "batch_id": "continuation-p0-corrected-once",
+      "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle",
+      "native_qualification": true,
+      "native_execution_performed": true,
+      "command_spec_sha256": "1beb31b45c63aa1fb60eeb2a63652ea9009088d40d2c6ece7389d72207013d73",
+      "code_config_sha256": "0918aca3f52b88c3fe24fb6d3d457eed81d9f8cb5f272125f9e453debc7b69fb",
+      "launch_argv_sha256": "96e0c524c080c9802b9727d09b7297d11e4c075c619dc2f9e4c247fbdc385a15",
+      "debugger": "gdb_on_segv",
+      "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
+      "debugger_wrapper_sha256": "a1d18d1751890659a303dab574697cfcd49eafa773df04f5cb2ecf6b0e2afc1b",
+      "exit_code": 0,
+      "outer_exit_code": 0,
+      "log_sha256": "412be78388c5748411521b30f33d0e957ee989dee415ce9f54e50cd643705684",
+      "duration_seconds": 32.02661002299283,
+      "native_lock_observed": true,
+      "debugger_status_verified": true,
+      "debugger_backtrace_captured": false,
+      "debugger_inferior_exit_code": 0,
+      "debugger_inferior_signal": null,
+      "artifact_sha256": {
+        "plan.json": "2d0f5d2725737e38e3fa11f960fa59e5db913cf699aedb9405169483b9c290a1",
+        "physics.jsonl": "c20be91cfcb8e4b7855863244fa1582d68275d33e812c9e78cd83bb143fc66b8",
+        "result.json": "97f2c3e4ca2cf5d477bdc65baf242ac18fd540666ea9f11034c954e36dc4a784",
+        "ownership.jsonl": "3802e2297b3973beabcca293692dbb44307a058592012638d9f2ef3226c6726f",
+        "shutdown_complete.json": "3c7e94596f424fc209b0283d77768d40c42eef8427da58f014d5f0ec21d6648f"
+      },
+      "ledger_counts": {
+        "physics.jsonl": 238
+      },
+      "physics_clock": {
+        "sdk_initial_step": 0,
+        "sdk_after_setup_step": 2,
+        "sdk_first_measurement_step": 3,
+        "sdk_last_measurement_step": 240,
+        "sdk_final_step": 240,
+        "setup_steps": 2,
+        "measured_steps": 238,
+        "total_steps": 240
+      },
+      "physics_budget": {
+        "initialization_physics_steps": 2,
+        "warmup_physics_steps": 0,
+        "measurement_physics_steps": 238,
+        "other_physics_advancing_steps": 0,
+        "total_physics_steps": 240
+      },
+      "result_sha256": "460ce27e089ae3178b912dd22e72286122c4eee4d11769b154ef27051d0dd6ca",
+      "native_physics_validated": true,
+      "cpu_regression": {
+        "passed": 25,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "af1e065f149be7662a01db8294a73db38b17a92b3733caf81afb6f1b6851cdb5",
+        "tested_head": "3f065c7eb44ce597d8fd38f3d7726df5944cc231"
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md",
+      "package": "flex.f4-left-contact-native",
+      "commit": "fa5bbbd3c87a997aae3048f48f36e23e367d1753",
+      "parent": "3f065c7eb44ce597d8fd38f3d7726df5944cc231",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
+    },
+    {
+      "executor": "native_bounded",
+      "tested_head": "fa5bbbd3c87a997aae3048f48f36e23e367d1753",
+      "batch_id": "continuation-p0-corrected-once",
+      "qualification_scope": "dh116_right_thumb_deformx_contact_lifecycle",
+      "native_qualification": true,
+      "native_execution_performed": true,
+      "command_spec_sha256": "2fcbf8b7d42711f42db4a7f2f84237d4084b85db77ef558070782c51f02da6cc",
+      "code_config_sha256": "51144337a568425e2ac4c7d4c1c90421f156e21bf28907d23c2b3ae222703889",
+      "dependency_receipt_sha256": "460ce27e089ae3178b912dd22e72286122c4eee4d11769b154ef27051d0dd6ca",
+      "launch_argv_sha256": "06e6e4b1a8bcc796997c33b54ba34f51415d5d371d001b19051596c5fb978e68",
+      "debugger": "gdb_on_segv",
+      "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
+      "debugger_wrapper_sha256": "42a77816c6adae4504c58a703d2b8f076c5a4d3af741ce26080cdfbfdddde842",
+      "exit_code": 0,
+      "outer_exit_code": 0,
+      "log_sha256": "d15372ceb0280b27fae85e0d896a390520cd8a2f46164f379405382ace41278f",
+      "duration_seconds": 33.070744476048276,
+      "native_lock_observed": true,
+      "debugger_status_verified": true,
+      "debugger_backtrace_captured": false,
+      "debugger_inferior_exit_code": 0,
+      "debugger_inferior_signal": null,
+      "artifact_sha256": {
+        "plan.json": "7ae31bf7a2ca0884e1cc269a0957ac55ea211d6acb9bf206c986506455b43b6c",
+        "physics.jsonl": "49de6b2697354753c07579070547e1c7d8c0c2067003b77f3cde066b07a0cd6b",
+        "result.json": "cf0241576794d3fe44ba4d7f63ada719cd3205d3ee45cf14642346317fb0a80a",
+        "ownership.jsonl": "1b3f5eabd11c19c164ed72828e09ea560dee6a1b1d82bf87e6f2ca5a96088c9d",
+        "shutdown_complete.json": "0fb2e97b683c6edd758c1ef8a67caaee698fa2b1fc2e2d58b6eecfb2869ade39"
+      },
+      "ledger_counts": {
+        "physics.jsonl": 238
+      },
+      "physics_clock": {
+        "sdk_initial_step": 0,
+        "sdk_after_setup_step": 2,
+        "sdk_first_measurement_step": 3,
+        "sdk_last_measurement_step": 240,
+        "sdk_final_step": 240,
+        "setup_steps": 2,
+        "measured_steps": 238,
+        "total_steps": 240
+      },
+      "physics_budget": {
+        "initialization_physics_steps": 2,
+        "warmup_physics_steps": 0,
+        "measurement_physics_steps": 238,
+        "other_physics_advancing_steps": 0,
+        "total_physics_steps": 240
+      },
+      "result_sha256": "8007694e7b4424de4743f6ccd6660c85479b3540506647db725a34fa246a179f",
+      "native_physics_validated": true,
+      "cpu_regression": {
+        "passed": 25,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "4495e1e84fbe16bf5ce103944e1a2f5dfc3e3ec8282e9fb043c9b963db1c2fd2",
+        "tested_head": "fa5bbbd3c87a997aae3048f48f36e23e367d1753"
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md",
+      "package": "flex.f4-right-contact-native",
+      "commit": "22210b4993ca88fc1a668bc331306e20550ba0f4",
+      "parent": "fa5bbbd3c87a997aae3048f48f36e23e367d1753",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
