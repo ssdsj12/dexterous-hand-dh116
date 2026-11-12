@@ -184,6 +184,8 @@ def save_training(path, model, optimizer, device, contract, steps, counts):
 def validate(model, rows, depth_root, depth_members, crop, device):
     model.eval()
     count, metrics, intersection, union = Counter(), Counter(), 0, 0
+    depth_errors = []
+    total_pixels = 0
     for row in rows:
         sample = load_wireseg_sample(row, depth_root, depth_members=depth_members)
         rgb, masks, depth, valid = training_sample(sample, crop, device)
@@ -196,9 +198,23 @@ def validate(model, rows, depth_root, depth_members, crop, device):
         union += int((predicted | target).sum())
         count["rgb"] += 1
         count["nonempty_crop_masks"] += bool(len(masks))
+        total_pixels += target.numel()
         count["depth_supervised"] += int(valid is not None and bool(valid.any()))
+        if valid is not None and valid.any():
+            error = (result["metric_depth"][valid] - depth[valid]).abs()
+            if not torch.isfinite(error).all():
+                raise ValueError("nonfinite prediction on valid WireSeg depth pixels")
+            depth_errors.append(error.cpu().numpy())
+    depth_metrics = None
+    if depth_errors:
+        errors = np.concatenate(depth_errors)
+        depth_metrics = dict(valid_pixels=errors.size, coverage=errors.size / total_pixels,
+                             mae_m=float(errors.mean(dtype=np.float64)),
+                             rmse_m=float(np.sqrt(np.square(errors, dtype=np.float64).mean())),
+                             p95_m=float(np.percentile(errors, 95)))
     return {"counts": dict(count), "visible_iou": intersection / union if union else None,
-            "mean_loss": {name: total / count["rgb"] for name, total in metrics.items()}}
+            "mean_loss": {name: total / count["rgb"] for name, total in metrics.items()},
+            "depth_metrics": depth_metrics}
 
 
 def train(root, names, output, args, manifest_sha, depth_members):

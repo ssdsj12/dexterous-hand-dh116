@@ -190,3 +190,28 @@ def test_wireseg_resume_preserves_adam_steps_and_deterministic_update(tmp_path):
     assert (step, rows, counts) == (1, [{'file_name': 'row1'}], {'rgb': 1})
     update(resumed, resumed_adam)
     assert all(torch.equal(left, right) for left, right in zip(model.parameters(), resumed.parameters()))
+
+
+def test_wireseg_heldout_depth_metrics_exclude_invalid_pixels(monkeypatch, tmp_path):
+    from scripts import pretrain_dh116_wireseg as cli
+    from types import SimpleNamespace
+
+    class Prediction:
+        def eval(self):
+            return self
+
+        def __call__(self, rgb):
+            return {'visible': torch.ones(1, 2, 2),
+                    'metric_depth': torch.tensor([[[2.0, 10.0], [2.0, 2.0]]])}
+
+    sample = SimpleNamespace(
+        rgb=np.zeros((2, 2, 3), dtype=np.uint8),
+        instance_masks=np.ones((1, 2, 2), dtype=bool),
+        depth_m=np.asarray([[1., 0.], [3., np.nan]], dtype=np.float32),
+        depth_valid=np.asarray([[True, False], [True, False]]),
+    )
+    monkeypatch.setattr(cli, 'load_wireseg_sample', lambda *a, **kw: sample)
+    monkeypatch.setattr(cli, 'pretraining_losses', lambda *a, **kw: {'total': torch.tensor(0.)})
+    result = cli.validate(Prediction(), [{}], tmp_path, set(), 32, 'cpu')
+    assert result['depth_metrics'] == {'valid_pixels': 2, 'coverage': 0.5,
+                                      'mae_m': 1.0, 'rmse_m': 1.0, 'p95_m': 1.0}

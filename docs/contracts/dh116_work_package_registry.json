@@ -5779,6 +5779,70 @@
         "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-scheduler-preflight.md",
         "report_source_commit": "022972a601e9b86a4412a8537b33e9214d5dcb92"
       }
+    },
+    "flex.f5-wireseg-paired-heldout-depth": {
+      "title": "WireSeg 配对深度持出评估",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f5-wireseg-subset"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "74d0485beaa3d11ac4649ef5856e4bb5167cf9e855b72f5c12c5c58e9a785f07",
+        "tested_head": "9b0e4b2f5ecab4d963996a837285aa3590f3ae0a",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "heldout_samples": 128,
+        "complete_source_blobs": 5,
+        "full_download_complete": false,
+        "depth_mae_m": 1.0034694660089878,
+        "depth_p95_m": 1.2133169054985047,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-paired-heldout-depth.md",
+        "report_source_commit": "23ebba82d4dc616eaf66477e3a8c72ab0ad2039e"
+      },
+      "last_result": {
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "74d0485beaa3d11ac4649ef5856e4bb5167cf9e855b72f5c12c5c58e9a785f07",
+        "tested_head": "9b0e4b2f5ecab4d963996a837285aa3590f3ae0a",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "heldout_samples": 128,
+        "complete_source_blobs": 5,
+        "full_download_complete": false,
+        "depth_mae_m": 1.0034694660089878,
+        "depth_p95_m": 1.2133169054985047,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-paired-heldout-depth.md",
+        "report_source_commit": "23ebba82d4dc616eaf66477e3a8c72ab0ad2039e"
+      }
     }
   },
   "execution_target": {

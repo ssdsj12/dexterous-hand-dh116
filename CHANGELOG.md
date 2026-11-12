@@ -1,3 +1,7 @@
+## 2026-11-12 — WireSeg 配对深度持出评估
+
+新深度分片通过完整 SHA 校验。128 张独立持出图报告配对深度误差。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-paired-heldout-depth.md)
+
 ## 2026-11-12 — 左拇指资源释放变体与有界配方
 
 保留首轮退出失败；原生复验只改变对象释放顺序，右侧入口核验左侧外层回执和账本。 Ubuntu CPU 回归 47 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-scheduler-preflight.md)
