@@ -4712,6 +4712,56 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 68,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dh116_deformx_bridge_lifecycle.py"
+      ],
+      "log_sha256": "c25b95c40836b7c569e3b8741c61df52a4bd4f4e4ebea4b28c3a575ba1c82a5a",
+      "tested_head": "fa6e644a4bf97af0dc55e81ba5a60fcf25895ddc",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "qualification_scope": "cpu_total_physics_budget_and_cleanup_guard_only",
+      "total_physics_steps_per_env": 240,
+      "setup_physics_steps_per_env": 2,
+      "measured_physics_steps_per_env": 238,
+      "physics_during_cleanup_disabled": true,
+      "old_approval_accepted": false,
+      "additional_native_runs": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-total-physics-budget.md",
+      "report_source_commit": "bb6269ecd657959cfc8b5d0da161bf16d72866f0",
+      "package": "flex.f4-thumb-total-physics-budget",
+      "commit": "d266d021f7e75265e100352f6ab906314fe6fc94",
+      "parent": "fa6e644a4bf97af0dc55e81ba5a60fcf25895ddc",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_execution/deformx_thumb_left_lifecycle_v2.json",
+        "configs/dh116_execution/deformx_thumb_right_lifecycle_v2.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-deformx-thumb-total-physics-budget.md",
+        "scripts/run_dh116_work_packages.py",
+        "scripts/verify_dh116_deformx_thumb_contact.py",
+        "src/go2_pvcnn/control/dh116/tabletop_deformable_rod_contact.py",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
