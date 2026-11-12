@@ -3967,6 +3967,34 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-mpc-internal-state-source-preflight.md",
       "report_source_commit": "a1bb4557de8b569402d673b6adc8fa2fb66832f5"
+    },
+    "wp3.mpc-teacher-provenance-preflight": {
+      "passed": 53,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_mpc_teacher_proof_preflight.py",
+        "tests/test_dh116_teacher_expert_assembly.py",
+        "tests/test_dh116_privileged_teacher.py"
+      ],
+      "log_sha256": "75d2882db344e583bcf88bbb6c4f71f71c76eeaa993443a34e39f1feb62aa594",
+      "tested_head": "54ff4138c01e471dfbc0376aea60de031bb641c3",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "legacy_mpc_provenance_preflight_only",
+      "audit_during_active_run_policy_steps": 780,
+      "assembly_ready_episodes": 0,
+      "audit_sha256": "0336fa744f61179778152be329c05da203d75fa135d65336bcb2fc6d96ee70df",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-mpc-teacher-provenance-preflight.md",
+      "report_source_commit": "d16e4657c595a6c253a71047022af93f26ebea2c"
     }
   }
 }

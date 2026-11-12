@@ -1,3 +1,7 @@
+## 2026-11-12 — MPC 成功轨迹进入 Teacher 的原生证据预检
+
+只读入口实测读取三类原生日志，分开记录任务成功、正式证据与专家装配资格。 Ubuntu CPU 回归 53 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-teacher-provenance-preflight.md)
+
 ## 2026-11-12 — MPC 内部控制状态与 reset 初始化来源
 
 新增隔离的同钟内部状态来源旁路。真实 T5 输入预检通过，实际字段资格待新的原生采集。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-internal-state-source-preflight.md)
