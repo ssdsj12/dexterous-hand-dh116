@@ -1,3 +1,7 @@
+## 2026-11-12 — 标定与Teacher回合预算边界
+
+独立校验控制步、480Hz物理步、环境数、ledger行数与墙钟。2环境32控制步需512行，5秒Hold至少2400步/环境；零重力双端固定只能标定。示例未接执行、不扩大本轮480步授权。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-deformable-task-budget-boundary.md)
+
 ## 2026-11-12 — 相机官方最小App与stage单变量对照
 
 新增独立C0最小App、C1无stage渲染、C2单变量默认stage对照；均同一GDB保留现场栈和库映射。C3仅备选配置，本轮不启动。无相机物理不依赖此链。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c0-c3-lifecycle-controls.md)

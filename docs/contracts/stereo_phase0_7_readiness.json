@@ -5510,6 +5510,34 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-camera-c0-c3-lifecycle-controls.md",
       "report_source_commit": "9ab2e9d0120bc31fe9f9d3102a9a1c806c774f12"
+    },
+    "flex.deformable-task-budget-boundaries": {
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformable_task_budget.py",
+        "tests/test_dh116_deformx_bridge_lifecycle.py"
+      ],
+      "log_sha256": "9d33c8640dbbf31be16f695b885c13586520e5c5c5afe98b9fade87344640ab6",
+      "tested_head": "da332d344f874cd6df4398a08edb2b881c5b4eec",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "qualification_scope": "cpu_configuration_budget_boundaries_only",
+      "teacher_runtime_connected": false,
+      "teacher_update_example_physics_rows": 512,
+      "minimum_hold_physics_steps_per_env": 2400,
+      "requires_separate_native_approval": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-deformable-task-budget-boundary.md",
+      "report_source_commit": "96515b2a0397fb48f82ad03f053fbf6509f726c6"
     }
   }
 }

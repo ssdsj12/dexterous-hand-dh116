@@ -6342,6 +6342,70 @@
         "tests/test_dh116_simulation_app_lifecycle.py"
       ],
       "reason": "独立生命周期对照；不依赖其他相机对照通过，不授予同步采集资格。"
+    },
+    "flex.deformable-task-budget-boundaries": {
+      "title": "标定与Teacher回合预算边界",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-paired-thumb-recipes"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 13,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformable_task_budget.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py"
+        ],
+        "log_sha256": "9d33c8640dbbf31be16f695b885c13586520e5c5c5afe98b9fade87344640ab6",
+        "tested_head": "da332d344f874cd6df4398a08edb2b881c5b4eec",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "cpu_configuration_budget_boundaries_only",
+        "teacher_runtime_connected": false,
+        "teacher_update_example_physics_rows": 512,
+        "minimum_hold_physics_steps_per_env": 2400,
+        "requires_separate_native_approval": true,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformable-task-budget-boundary.md",
+        "report_source_commit": "96515b2a0397fb48f82ad03f053fbf6509f726c6"
+      },
+      "last_result": {
+        "passed": 13,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformable_task_budget.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py"
+        ],
+        "log_sha256": "9d33c8640dbbf31be16f695b885c13586520e5c5c5afe98b9fade87344640ab6",
+        "tested_head": "da332d344f874cd6df4398a08edb2b881c5b4eec",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "cpu_configuration_budget_boundaries_only",
+        "teacher_runtime_connected": false,
+        "teacher_update_example_physics_rows": 512,
+        "minimum_hold_physics_steps_per_env": 2400,
+        "requires_separate_native_approval": true,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformable-task-budget-boundary.md",
+        "report_source_commit": "96515b2a0397fb48f82ad03f053fbf6509f726c6"
+      }
     }
   },
   "execution_target": {
