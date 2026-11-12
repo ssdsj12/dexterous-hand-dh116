@@ -21,6 +21,8 @@ else:
 
 
 UPSTREAM = "04f6a11eb4d832df761f631cf6ce1bc00da75eb1"
+HEADLESS_RENDERING_EXPERIENCE_SHA256 = "978bd89e90f2ca00b32805a70dd0a15c5b8b48edeb42cd042f8eb679d33fa4ea"
+_ORCHESTRATOR_ENABLED = "/exts/omni.replicator.core/Orchestrator/enabled"
 CASES = {
     0: ("usd/rod_drop_multi_2_plane.usdc", "wires_traj_data/drop_n2_100.npz"),
     3: ("usd/rod_hang_flying.usdc", "wires_traj_data/hang_n2_100.npz"),
@@ -131,6 +133,18 @@ def _capture_stage(stage, output):
     })
 
 
+def app_launch_options(experience):
+    config = {"headless": True, "fast_shutdown": False}
+    if experience is None:
+        return config, {}
+    experience = Path(experience).resolve(strict=True)
+    if _sha256(experience) != HEADLESS_RENDERING_EXPERIENCE_SHA256:
+        raise ValueError("headless rendering experience digest mismatch")
+    # Keep the default launcher semantics for capture and preference persistence.
+    config["extra_args"] = [f"--{_ORCHESTRATOR_ENABLED}=true", "--/app/settings/persistent=false"]
+    return config, {"experience": str(experience)}
+
+
 def _preflight(args):
     source = args.upstream.resolve(strict=True)
     head = subprocess.check_output(
@@ -160,7 +174,7 @@ def _preflight(args):
         raise ValueError("output must be independent of source and prepared assets")
     if output.exists() or args.output.is_symlink():
         raise FileExistsError(output)
-    return source, assets, output, {
+    plan = {
         "variant": args.variant,
         "frame": 0,
         "seed": 42,
@@ -171,6 +185,11 @@ def _preflight(args):
         "prepared_manifest_sha256": _sha256(manifest_path),
         "upstream_commit": head,
     }
+    if args.headless_rendering_experience is not None:
+        _, options = app_launch_options(args.headless_rendering_experience)
+        plan["headless_rendering_experience"] = options["experience"]
+        plan["headless_rendering_experience_sha256"] = HEADLESS_RENDERING_EXPERIENCE_SHA256
+    return source, assets, output, plan
 
 
 def _run(source, assets, output, plan):
@@ -251,9 +270,26 @@ def _run(source, assets, output, plan):
     with native_instance_lock():
         output.mkdir(parents=True)
         _write_json(output / "render_plan.json", plan)
-        app = SimulationApp({"headless": True, "fast_shutdown": False})
+        experience = plan.get("headless_rendering_experience")
+        config, options = app_launch_options(experience)
+        app = SimulationApp(config, **options)
         generator = None
         try:
+            if experience is not None:
+                import carb.settings
+
+                manager = app.app.get_extension_manager()
+                replicator = manager.get_enabled_extension_id("omni.replicator.core")
+                settings = carb.settings.get_settings()
+                ready = bool(replicator and settings.get_as_bool(_ORCHESTRATOR_ENABLED))
+                _write_json(output / "render_experience_readiness.json", {
+                    "replicator_extension": replicator,
+                    "orchestrator_enabled": settings.get_as_bool(_ORCHESTRATOR_ENABLED),
+                    "preference_persistence": settings.get_as_bool("/app/settings/persistent"),
+                    "capture_ready": ready,
+                })
+                if not ready:
+                    raise RuntimeError("headless rendering experience did not enable capture")
             generator = EvidenceGenerator(app, cfg)
             generator.run([0], RenderConfig(do_seg=True, do_depth=True, seed=42, accum_steps=1,
                                             accum_subframes=1, frame_end=0))
@@ -289,6 +325,7 @@ def main():
     parser.add_argument("--upstream", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--variant", type=int, choices=CASES, required=True)
+    parser.add_argument("--headless-rendering-experience", type=Path)
     parser.add_argument("--execute-native", action="store_true")
     args = parser.parse_args()
     source, assets, output, plan = _preflight(args)

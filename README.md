@@ -1,3 +1,7 @@
+## 2026-11-12 — Drop 与 hang 两种原生渲染的精简配置对照
+
+Drop/hang 各有一帧完整原生 RGB、径向深度、Native ID 和 composed USD，精简配置下两轮仍外层 139。 Ubuntu CPU 回归 15 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-headless-experience-f6.md)
+
 ## 2026-11-12 — 将原生渲染与实际凸包 SDF 纳入柔性采集依赖
 
 原生单指和同杆路径依赖实际凸包 SDF，F7 同步采集依赖 F6 原生关闭验收。 Ubuntu CPU 回归 29 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-f6-gate-wiring.md)

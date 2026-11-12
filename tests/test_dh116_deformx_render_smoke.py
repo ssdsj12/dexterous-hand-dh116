@@ -70,3 +70,31 @@ def test_annotation_owns_stable_render_product_path_on_exception():
         ("attach", product.path), ("step", {"rt_subframes": 1}), ("update",),
         ("detach", product.path),
     ]
+
+
+def test_headless_experience_keeps_capture_orchestrator_and_original_app_flags(tmp_path, monkeypatch):
+    import hashlib
+
+    from scripts import run_dh116_deformx_render_smoke as smoke
+
+    assert hasattr(smoke, "app_launch_options")
+    kit = tmp_path / "isaaclab.python.headless.rendering.kit"
+    kit.write_bytes(b"pinned experience fixture")
+    monkeypatch.setattr(smoke, "HEADLESS_RENDERING_EXPERIENCE_SHA256",
+                        hashlib.sha256(kit.read_bytes()).hexdigest())
+
+    base, base_kwargs = smoke.app_launch_options(None)
+    assert base == {"headless": True, "fast_shutdown": False}
+    assert base_kwargs == {}
+    config, kwargs = smoke.app_launch_options(kit)
+    assert kwargs == {"experience": str(kit)}
+    assert config == {
+        **base,
+        "extra_args": [
+            "--/exts/omni.replicator.core/Orchestrator/enabled=true",
+            "--/app/settings/persistent=false",
+        ],
+    }
+    kit.write_bytes(b"unverified experience")
+    with pytest.raises(ValueError, match="experience digest mismatch"):
+        smoke.app_launch_options(kit)

@@ -4506,7 +4506,7 @@
         "flex.f6-derived-render-preflight"
       ],
       "status": "blocked",
-      "reason": "Drop 已生成全部输出，冻结 GDB 栈定位 AppWindow Python 绑定经 Carb 进入 Py_FinalizeEx。待原生自然退出和 hang 验证。"
+      "reason": "Drop 0 与 hang 3 均已产出全部原生渲染文件。两轮 App.close 后解释器 GC 外层 139，GDB 栈指向 AppWindow/Carb。精简配置仍复现，生命周期资格待修复。"
     },
     "flex.f4-cooked-hull-device-parity": {
       "title": "实际 PhysX CPU/GPU 凸包逐指配对",
@@ -4854,6 +4854,90 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-flexible-f3-f6-gate-wiring.md",
         "report_source_commit": "f1c01df6d02296247d6e01085c9694c86396064c"
+      }
+    },
+    "flex.f6-headless-experience-render": {
+      "title": "Drop 与 hang 两种原生渲染的精简配置对照",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-appwindow-backtrace"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 15,
+        "failed": 0,
+        "skipped": 3,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_render_smoke.py",
+          "tests/test_dh116_deformx_asset_dependencies.py",
+          "tests/test_dh116_deformx_assets_audit.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "f04eeb9b0a427a969896fca057a1125bf5e07ae0991735e3dbaf5219d25a7556",
+        "tested_head": "3e29c6df6b4d95bdcf28a1936d766d7d1987303a",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "qualification_scope": "two_single_camera_native_render_products_with_unqualified_shutdown",
+        "verified_render_variants": [
+          0,
+          3
+        ],
+        "external_natural_exit_codes": [
+          139,
+          139
+        ],
+        "stage_dependency_unresolved": 0,
+        "hang_finite_positive_depth": 27937,
+        "hang_audit_sha256": "b86066e677ddb57387317ba1faf974935470c1ee311317492c29ca207a86910e",
+        "appwindow_removed": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-headless-experience-f6.md",
+        "report_source_commit": "84f43b6e724d2c23a5672a5a4e325a07571495ef"
+      },
+      "last_result": {
+        "passed": 15,
+        "failed": 0,
+        "skipped": 3,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_render_smoke.py",
+          "tests/test_dh116_deformx_asset_dependencies.py",
+          "tests/test_dh116_deformx_assets_audit.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "f04eeb9b0a427a969896fca057a1125bf5e07ae0991735e3dbaf5219d25a7556",
+        "tested_head": "3e29c6df6b4d95bdcf28a1936d766d7d1987303a",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "qualification_scope": "two_single_camera_native_render_products_with_unqualified_shutdown",
+        "verified_render_variants": [
+          0,
+          3
+        ],
+        "external_natural_exit_codes": [
+          139,
+          139
+        ],
+        "stage_dependency_unresolved": 0,
+        "hang_finite_positive_depth": 27937,
+        "hang_audit_sha256": "b86066e677ddb57387317ba1faf974935470c1ee311317492c29ca207a86910e",
+        "appwindow_removed": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-headless-experience-f6.md",
+        "report_source_commit": "84f43b6e724d2c23a5672a5a4e325a07571495ef"
       }
     }
   },
