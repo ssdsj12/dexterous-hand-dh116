@@ -1,3 +1,7 @@
+## 2026-11-12 — 空渲染 Kit 生命周期
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-v0.md)。
+
 ## 2026-11-12 — 相机退出隔离 SDK 默认场景
 
 V0 首次运行仍由 SDK 隐式创建场景。隔离 create_new_stage 变量并读取实际 stage 状态。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-12-render-no-sdk-default-stage.md)

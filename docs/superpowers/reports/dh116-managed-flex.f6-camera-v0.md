@@ -1,5 +1,5 @@
 # 空渲染 Kit 生命周期
 
-基线 `50f04b1e2d3db1327da5ddc115f907037b845f32`。原生范围 `camera_empty_lifecycle`，状态 `failed`，外层退出码 `-11`。独立私有回执 SHA256 `69203a17076eb2d32b0daddeb291ca114e8883d260304483380737ab76316df3`。
+基线 `aaaa97e8528538225cd09e3975cf0e4e98158dac`。原生范围 `camera_empty_lifecycle`，状态 `failed`，外层退出码 `-11`。独立私有回执 SHA256 `b7cb3e18c3fb663b94600204da160180aad73ddb5c70eca0c2280379bcbfad60`。
 
-代码与配置 SHA256 `87635455706e7ae5a49124350b8b0e9060e16e6ca5ef3fd84979688ecfa511fb`。范围以独立产物校验和进程退出为准。原始日志留在 Ubuntu 私有证据目录。
+代码与配置 SHA256 `b6f7848ff4ee24fd5e7aceab5f881f7f58c301793b6f7b2e16be1ff3c5a90955`。范围以独立产物校验和进程退出为准。原始日志留在 Ubuntu 私有证据目录。
