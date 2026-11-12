@@ -2,6 +2,7 @@
 import argparse
 import gzip
 import json
+import os
 from pathlib import Path
 
 import torch
@@ -11,7 +12,7 @@ from go2_pvcnn.control.dh116.tabletop_privileged_cli import (
 )
 from go2_pvcnn.control.dh116.tabletop_stereo_contract import ROOT, file_sha256, new_run, write_json_new
 from go2_pvcnn.control.dh116.tabletop_stereo_native import launch_native
-from go2_pvcnn.control.dh116.tabletop_teacher_wire_tensor_probe import WireTensorProbe
+from go2_pvcnn.control.dh116.tabletop_teacher_wire_tensor_probe import WireRootForceTap, WireTensorProbe
 
 
 def main(argv=None):
@@ -65,7 +66,7 @@ def main(argv=None):
         observer = bridge.env.evaluation_telemetry
         original = observer.callback
         path = run/'wire_tensor_probe_480hz.jsonl.gz'
-        rows = valid = 0
+        rows = valid = associated = unmatched_older = 0
         previous = None
         errors = {}
 
@@ -73,9 +74,11 @@ def main(argv=None):
             sim = bridge.world.sim
             return (int(bridge.device_world._physics_steps), int(sim.current_time_step_index), float(sim.current_time))
 
-        with gzip.open(path, 'xt', encoding='utf-8') as stream:
+        tap = WireRootForceTap(bridge.device_world.wire.root_physx_view, clock)
+        unmatched_path = run/'wire_root_sdk_force_unassociated.json'
+        with gzip.open(path, 'xt', encoding='utf-8') as stream, tap.install():
             def capture(packet):
-                nonlocal rows, valid, previous
+                nonlocal rows, valid, previous, associated, unmatched_older
                 world_step, sdk_step, time = clock()
                 if previous is not None and (world_step != previous[0]+1 or sdk_step != previous[1]+1
                         or abs(time-previous[2]-1/480) > 1e-7):
@@ -85,6 +88,11 @@ def main(argv=None):
                     envs=[dict(env_id=i, episode_uid=bridge.identities.uid(i), terminal=bool(packet['done'][i]))
                           for i, live in enumerate(packet['live'].tolist()) if live],
                     force_qualification=False, external_support_qualification=False)
+                if bridge.device_world.wire.root_physx_view is not tap.view:
+                    raise RuntimeError('actual Wire root view changed during diagnostic SDK write tap')
+                row['wire_root_sdk_write_audit'] = tap.observed_step((world_step, sdk_step, time))
+                associated += len(row['wire_root_sdk_write_audit']['associated_calls'])
+                unmatched_older += len(row['wire_root_sdk_write_audit']['unmatched_older_calls'])
                 try:
                     row['readback'] = probe.sample()
                     valid += 1
@@ -105,11 +113,20 @@ def main(argv=None):
                     output=run, max_steps=args.policy_steps)
             finally:
                 observer.callback = original
+                write_json_new(unmatched_path, dict(unassociated_calls=tap.unassociated_calls,
+                    observed_calls=tap.count, external_wrench_absence_proven=False))
+                with unmatched_path.open('rb') as receipt:
+                    os.fsync(receipt.fileno())
+        if tap.count != associated + unmatched_older + len(tap.unassociated_calls):
+            raise RuntimeError('Wire root SDK audit write count did not reconcile')
         result = dict(outcome, native_tensor_observation_only=True, tensor_probe_physical_steps=rows,
             tensor_probe_complete_steps=valid, tensor_probe_errors=errors, force_qualification=False,
-            external_support_qualification=False, native_grasp_qualification=False)
+            external_support_qualification=False, native_grasp_qualification=False,
+            wire_root_sdk_force_calls=tap.count, wire_root_sdk_force_associated=associated,
+            wire_root_sdk_force_unmatched_older=unmatched_older,
+            wire_root_sdk_force_unassociated=len(tap.unassociated_calls))
         write_native_callback_completion(run, result, [run/'wire_tensor_probe_plan.json', inventory,
-            path, run/'teacher_evaluation.json', bridge.output/'native_physics.jsonl',
+            path, unmatched_path, run/'teacher_evaluation.json', bridge.output/'native_physics.jsonl',
             bridge.output/'native_task_contract.json'])
         return result
 

@@ -1,5 +1,7 @@
 """Read-only Wire-side contact Tensor views in an existing CUDA simulation."""
+from contextlib import contextmanager
 from numbers import Integral
+from unittest.mock import patch
 
 import numpy as np
 
@@ -99,10 +101,123 @@ def net_residual(net, groups):
         net_contains_friction=None, unknown_partner_coverage_qualified=False, upstream_overflow_excluded=False)
 
 
+def inspect_instance_proxy_collisions(stage, *, usd, physics, physx, covered_actors, covered_colliders):
+    """Read active composed shapes, including instance-proxy descendants."""
+    collisions, forces, joints = [], [], []
+    for prim in stage.Traverse(usd.TraverseInstanceProxies()):
+        path = str(prim.GetPath())
+        schemas = list(prim.GetAppliedSchemas())
+        kind = str(prim.GetTypeName())
+        if prim.HasAPI(physics.CollisionAPI):
+            actor = prim
+            while actor and not actor.HasAPI(physics.RigidBodyAPI):
+                actor = actor.GetParent()
+            actor_path = str(actor.GetPath()) if actor else None
+            collisions.append(dict(path=path, actor_path=actor_path,
+                instance_proxy=bool(prim.IsInstanceProxy()),
+                collision_enabled=physics.CollisionAPI(prim).GetCollisionEnabledAttr().Get(),
+                expected_filter_route=actor_path in covered_actors or path in covered_colliders,
+                source_layers=[str(spec.layer.identifier) for spec in prim.GetPrimStack()]))
+        force_schemas = [schema for schema in schemas if schema.startswith('PhysxForce')]
+        if force_schemas or prim.HasAPI(physx.PhysxForceAPI):
+            forces.append(dict(path=path, schemas=force_schemas, instance_proxy=bool(prim.IsInstanceProxy())))
+        if prim.IsA(physics.Joint) or 'attachment' in kind.lower() or any('attachment' in schema.lower() for schema in schemas):
+            joints.append(dict(path=path, type=kind, instance_proxy=bool(prim.IsInstanceProxy()),
+                relationships={rel.GetName(): [str(target) for target in rel.GetTargets()]
+                               for rel in prim.GetRelationships() if rel.GetTargets()}))
+    unlisted = sorted(item['path'] for item in collisions
+                      if item['collision_enabled'] is not False and not item['expected_filter_route'])
+    return dict(collision_prims=collisions, enabled_or_unknown_unlisted_collision_prim_paths=unlisted,
+        authored_force_prims=forces, attachment_and_joint_prims=joints,
+        instance_proxy_traversal_used=True, external_source_complete=False)
+
+
+class WireRootForceTap:
+    """Observe calls to the exact existing Wire root Python SDK method."""
+    _method = 'apply_forces_and_torques_at_position'
+    _args = ('force_data', 'torque_data', 'position_data', 'indices', 'is_global')
+
+    def __init__(self, view, clock):
+        self.view = view
+        self.clock = clock
+        self.actors = list(view.prim_paths)
+        self.unassociated_calls = []
+        self.count = 0
+
+    @staticmethod
+    def _values(value):
+        if value is None:
+            return None
+        try:
+            array = _array(value)
+            if array.dtype.kind not in 'bifu':
+                return dict(values=None, error='non-numeric SDK argument dtype')
+            good = bool(np.isfinite(array).all())
+            return dict(values=array.tolist() if good else None,
+                        shape=list(array.shape), dtype=str(array.dtype), finite=good,
+                        source_device=str(getattr(value, 'device', 'host')))
+        except Exception as error:
+            return dict(values=None, error=type(error).__name__ + ': ' + str(error))
+
+    def _payload(self, values):
+        tensors = {name: self._values(values.get(name)) for name in self._args[:-1]}
+        flag = values.get('is_global')
+        tensors['is_global'] = flag if type(flag) is bool else None
+        return tensors
+
+    @contextmanager
+    def install(self):
+        original = getattr(self.view, self._method)
+
+        def observed(*args, **kwargs):
+            values = dict(zip(self._args, args))
+            values.update(kwargs)
+            self.count += 1
+            before = list(self.clock())
+            row = dict(sequence=self.count, before=before, **self._payload(values))
+            indices = row.get('indices')
+            row['target_actor_paths'] = None
+            if indices is not None and indices.get('values') is not None:
+                selected = np.asarray(indices['values']).reshape(-1).tolist()
+                if all(type(index) is int and 0 <= index < len(self.actors) for index in selected):
+                    row['target_actor_paths'] = [self.actors[index] for index in selected]
+            try:
+                result = original(*args, **kwargs)
+            except BaseException as error:
+                row.update(outcome='raised', error=type(error).__name__ + ': ' + str(error))
+                raise
+            else:
+                row['outcome'] = 'returned'
+                return result
+            finally:
+                row.update(after=list(self.clock()), after_payload=self._payload(values))
+                self.unassociated_calls.append(row)
+
+        with patch.object(self.view, self._method, observed):
+            yield self
+
+    def observed_step(self, step):
+        world_step, sdk_step, time = step
+        associated, older, later = [], [], []
+        for row in self.unassociated_calls:
+            before = row['before']
+            if before[1] >= sdk_step:
+                later.append(row)
+            elif (before == row['after'] and before[1] == sdk_step-1
+                  and before[0] in (world_step-1, world_step) and abs(time-before[2]-1/480) <= 1e-7):
+                associated.append(row)
+            else:
+                older.append(row)
+        self.unassociated_calls = later
+        return dict(associated_calls=associated, unmatched_older_calls=older,
+            scope='exact_Wire_root_physx_view_Python_apply_forces_and_torques_at_position_only',
+            external_wrench_absence_proven=False)
+
+
 class WireTensorProbe:
     """Post-reset, opt-in views on the original Torch CUDA SimulationView."""
     def __init__(self, bridge, stage, settings, *, capacity_per_wire=256):
-        from pxr import PhysxSchema, UsdPhysics
+        from pxr import PhysxSchema, Usd, UsdPhysics
         from .tabletop_teacher_task_contact import probe_inventory
 
         world = bridge.device_world
@@ -135,13 +250,13 @@ class WireTensorProbe:
         _check_routing(self.net, self.wires, [[] for _ in self.wires])
 
         inventory = probe_inventory(bridge, stage, UsdPhysics, PhysxSchema)
-        covered = {actor for row in self.hand_filters for actor in row}
-        covered.update(path for row in self.passive.filter_paths.values() for path in row)
-        covered.update(self.wires)
-        unlisted = sorted(path for path in inventory['collision_prims']
-                          if not any(path == candidate or path.startswith(candidate+'/') for candidate in covered))
+        covered = {actor for row in self.hand_filters for actor in row} | set(self.wires)
+        colliders = {path for row in self.passive.filter_paths.values() for path in row}
+        proxy_inventory = inspect_instance_proxy_collisions(stage, usd=Usd, physics=UsdPhysics, physx=PhysxSchema,
+            covered_actors=covered, covered_colliders=colliders)
         self.inventory = dict(inventory, wire_actors=self.wires, hand_actors_per_wire=self.hand_filters,
-            exact_passive_colliders=dict(self.passive.filter_paths), unlisted_collision_prim_paths=unlisted,
+            exact_passive_colliders=dict(self.passive.filter_paths), instance_proxy_inventory=proxy_inventory,
+            unlisted_collision_prim_paths=proxy_inventory['enabled_or_unknown_unlisted_collision_prim_paths'],
             device_ordinal=sim_view.device_ordinal, normal_and_friction_api_scope='installed PhysX tensors',
             external_source_complete=False, no_usd_or_setting_write=True)
 

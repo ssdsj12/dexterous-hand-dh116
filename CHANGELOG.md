@@ -1,3 +1,7 @@
+## 2026-11-12 — 原生 T5 碰撞实例与 Wire SDK 来源核验
+
+核验 76 个启用碰撞体的身份与 256 条接触记录。该 Python SDK 写入路径未观测到调用，完整回合力学资格仍待验证。 Ubuntu CPU 回归 99 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-proxy-sdk-native-results.md)
+
 ## 2026-11-12 — 二指三指独立首终止原生配对
 
 二指退出后继续观测三指。相同实测冷初态下，冻结 Teacher 的 sampled 和 mean 均出现右 finger12 合法目标下位置越限。 Ubuntu CPU 回归 46 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-per-slot-tripod-native.md)
