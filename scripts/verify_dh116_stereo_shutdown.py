@@ -99,6 +99,11 @@ def verify_trial(root):
             or not all(isinstance(t, (float, int)) and math.isfinite(t) for t in timestamps)
             or timestamps != sorted(timestamps)):
         raise ValueError('launcher_exit.json: clean outer process exit evidence missing')
+    mode = read_record(root, 'shutdown_mode.json')
+    if (mode.get('setting') != '/app/fastShutdown'
+            or mode.get('effective_fast_shutdown') is not False
+            or type(mode.get('pid')) is not int or mode['pid'] != child['pid']):
+        raise ValueError('shutdown_mode.json: effective non-fast shutdown readback from child required')
     return dict(physics_steps=STEPS, raw_sha256=sha, episode_uid=identity, pid=child['pid'])
 
 

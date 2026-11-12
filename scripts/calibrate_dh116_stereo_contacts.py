@@ -31,6 +31,24 @@ def _install_sigterm_monitor(output):
     return previous
 
 
+def _launch_calibration_app(launcher):
+    launch=argparse.Namespace(headless=True, device='cuda:0', enable_cameras=False,
+        kit_args='--/renderer/activeGpu=3 --/renderer/multiGpu/enabled=false '
+                 '--/renderer/multiGpu/autoEnable=false --/physics/cudaDevice=0 '
+                 '--/plugins/carb.tasking.plugin/threadCount=32')
+    # Isaac Sim 4.5 fast shutdown can exit before close() returns to Python.
+    return launcher(launch, fast_shutdown=False).app
+
+
+def _record_shutdown_mode(output, settings):
+    setting='/app/fastShutdown'
+    effective=settings.get(setting)
+    if effective is not False:
+        raise RuntimeError(f'{setting} must read back as False after AppLauncher, got {effective!r}')
+    _write(output/'shutdown_mode.json', dict(pid=os.getpid(), setting=setting,
+        effective_fast_shutdown=effective))
+
+
 def run(args):
     from go2_pvcnn.control.dh116.tabletop_stereo_contract import ROOT
     from go2_pvcnn.control.dh116.tabletop_stereo_native import native_instance_lock
@@ -40,11 +58,7 @@ def run(args):
     import numpy as np
     with native_instance_lock():
         from isaaclab.app import AppLauncher
-        launch=argparse.Namespace(headless=True, device='cuda:0', enable_cameras=False,
-            kit_args='--/renderer/activeGpu=3 --/renderer/multiGpu/enabled=false '
-                     '--/renderer/multiGpu/autoEnable=false --/physics/cudaDevice=0 '
-                     '--/plugins/carb.tasking.plugin/threadCount=32')
-        app=AppLauncher(launch).app
+        app=_launch_calibration_app(AppLauncher)
         sim=None
         full_subscription=None
         ordinary_subscription=None
@@ -57,10 +71,12 @@ def run(args):
             import omni.physics.tensors as tensors
             from omni.physx import get_physx_simulation_interface
             from pxr import UsdGeom, UsdPhysics, PhysxSchema, Gf, Vt, PhysicsSchemaTools
+            import carb
+            settings=carb.settings.get_settings()
+            _record_shutdown_mode(args.output, settings)
             sim=sim_utils.SimulationContext(sim_utils.SimulationCfg(dt=1/480,device='cuda:0',
                 gravity=(0.,0.,-9.81),physx=sim_utils.PhysxCfg(solver_type=0)))
-            import carb
-            reporting=configure_report_processing(carb.settings.get_settings(),enable=args.enable_full_report_processing)
+            reporting=configure_report_processing(settings,enable=args.enable_full_report_processing)
             stage=omni.usd.get_context().get_stage()
             UsdGeom.SetStageMetersPerUnit(stage, 1.)
             UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)

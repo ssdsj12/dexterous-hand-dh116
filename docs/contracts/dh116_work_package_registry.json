@@ -217,10 +217,22 @@
       "title": "PhysX 原生自然退出及第二实例",
       "executor": "gated",
       "dependencies": [
-        "wp4.cpu-contract"
+        "wp4.cpu-contract",
+        "wp4.shutdown-launch-mode"
       ],
       "status": "blocked",
-      "reason": "2×240 步单实例原生复验待批准"
+      "reason": "首轮完成 240 步但缺少关闭返回标记。已修复快速关闭配置，独立原生复验待批准",
+      "last_native_attempt": {
+        "status": "failed_shutdown_evidence",
+        "report": "docs/superpowers/reports/2026-11-12-physx-non-fast-shutdown-recovery.md",
+        "completed_steps": 240,
+        "physical_hz": 480,
+        "raw_sha256": "f8caa8d94bcd2f7fefe300ebf94c01b32e12a391caaf062875a6dc8eab487a7e",
+        "child_exit_code": 0,
+        "outer_exit_code": 1,
+        "restart_launched": false,
+        "native_qualification": false
+      }
     },
     "wp4.contact-native": {
       "title": "逐 contact 来源、外部支撑和滑移资格",
@@ -815,6 +827,41 @@
         "tested_head": "538c10b907c471aefbb10fbdb5c47155f9028857",
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-windows-relay-publication-policy.md",
+        "native_qualification": false
+      }
+    },
+    "wp4.shutdown-launch-mode": {
+      "title": "PhysX 标定关闭模式与子进程读回",
+      "executor": "prepared",
+      "dependencies": [
+        "wp4.cpu-contract"
+      ],
+      "tests": [
+        "tests/test_dh116_stereo_shutdown_validation.py",
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_physx_polled_contact_audit.py"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 61,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_shutdown_validation.py",
+          "tests/test_dh116_stereo_contact_calibration.py",
+          "tests/test_dh116_physx_polled_contact_audit.py"
+        ],
+        "log_sha256": "1a30eff240fb21386b3a1e3c59b7d3e269a18289c588879cc240cc0ac3eb4c1b",
+        "tested_head": "25d7b7af4578c17da774762c5e357da0957e9434",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-physx-non-fast-shutdown-recovery.md",
         "native_qualification": false
       }
     }

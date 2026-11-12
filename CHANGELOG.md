@@ -1,3 +1,7 @@
+## 2026-11-12 — PhysX 标定关闭模式与子进程读回
+
+首轮 240 步完整，关闭返回标记缺失。隔离入口修复并通过 61 项 CPU 回归，原生资格待复验。[报告](docs/superpowers/reports/2026-11-12-physx-non-fast-shutdown-recovery.md)
+
 ## 2026-11-12 — Ubuntu 提交与 Windows 发布中转
 
 Ubuntu 调度器只保存待发布提交，Windows 推送并读回后登记清单。22 项 CPU 回归通过。[报告](docs/superpowers/reports/2026-11-12-windows-relay-publication-policy.md)

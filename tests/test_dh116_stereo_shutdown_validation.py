@@ -1,11 +1,14 @@
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+from scripts import calibrate_dh116_stereo_contacts as calibration
 from scripts.verify_dh116_stereo_shutdown import verify_trial
 
 
@@ -32,6 +35,8 @@ def evidence(tmp_path):
     write_json(tmp_path, 'launcher_exit.json', dict(pid=123, exit_code=0, timed_out=False,
                signals_sent=[], started_unix_s=9, exited_unix_s=12))
     write_json(tmp_path, 'sigterm_monitor.json', dict(pid=123, installed_after_app_launch=True))
+    write_json(tmp_path, 'shutdown_mode.json', dict(
+        pid=123, setting='/app/fastShutdown', effective_fast_shutdown=False))
     return tmp_path
 
 
@@ -41,7 +46,7 @@ def test_accepts_continuous_durable_sampling_and_child_exit(evidence):
 
 @pytest.mark.parametrize('name', ['summary.json', 'callbacks_released.json',
                                   'simulation_context_cleared.json', 'shutdown_complete.json',
-                                  'launcher_exit.json', 'sigterm_monitor.json'])
+                                  'launcher_exit.json', 'sigterm_monitor.json', 'shutdown_mode.json'])
 def test_missing_evidence_cannot_pass(evidence, name):
     (evidence / name).unlink()
     with pytest.raises(ValueError, match=name):
@@ -100,3 +105,47 @@ def test_native_launch_requires_explicit_approval_flag(tmp_path):
                             text=True, capture_output=True, check=True)
     assert json.loads(result.stdout)['mode'] == 'preflight'
     assert not output.exists()
+
+
+def test_calibration_uses_public_non_fast_app_launcher_configuration():
+    app = object()
+
+    def launcher(args, **config):
+        assert args.headless is True and args.device == 'cuda:0'
+        assert config.get('fast_shutdown') is False
+        return SimpleNamespace(app=app)
+
+    assert calibration._launch_calibration_app(launcher) is app
+
+
+@pytest.mark.parametrize('effective', [False, True, None, 0])
+def test_calibration_records_only_literal_false_from_kit_settings(tmp_path, effective):
+    def read_setting(name):
+        assert name == '/app/fastShutdown'
+        return effective
+
+    settings = SimpleNamespace(get=read_setting)
+    marker = tmp_path / 'shutdown_mode.json'
+    if effective is False:
+        calibration._record_shutdown_mode(tmp_path, settings)
+        assert json.loads(marker.read_text()) == dict(
+            pid=os.getpid(), setting='/app/fastShutdown', effective_fast_shutdown=False)
+    else:
+        with pytest.raises(RuntimeError, match='/app/fastShutdown'):
+            calibration._record_shutdown_mode(tmp_path, settings)
+        assert not marker.exists()
+
+
+@pytest.mark.parametrize('changed', [
+    dict(pid=321),
+    dict(pid='123'),
+    dict(setting='/app/otherSetting'),
+    dict(effective_fast_shutdown=True),
+    dict(effective_fast_shutdown=0),
+])
+def test_shutdown_mode_must_be_read_back_false_by_the_same_child(evidence, changed):
+    marker = dict(pid=123, setting='/app/fastShutdown', effective_fast_shutdown=False)
+    marker.update(changed)
+    write_json(evidence, 'shutdown_mode.json', marker)
+    with pytest.raises(ValueError, match='shutdown_mode.json'):
+        verify_trial(evidence)
