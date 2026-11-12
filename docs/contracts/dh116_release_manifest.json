@@ -770,6 +770,54 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "8e576034ac639d3762bc886fe7cb973a0ac88d317ce8eb50d9d50a0c4f209e0a",
+      "tested_head": "75d337e8c2c5c7a21d60e96992b41df2ef7cc185",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-existing-solid-cylinder-execution-scope.md",
+      "native_qualification": false,
+      "execution_target": {
+        "name": "现有刚性任务完整闭环（复用原环境，不重新建模）",
+        "package": "wp6.rigid-native-final",
+        "deferred": {
+          "wp5.cpu-source-check": "等待真实柔性后端，保留原状态和证据",
+          "wp5.source-payload": "等待真实柔性后端，保留原状态和证据",
+          "wp5.source": "等待真实柔性后端，保留原状态和证据",
+          "wp5.build": "等待真实柔性后端，保留原状态和证据",
+          "wp5.solver-native": "等待真实柔性后端，保留原状态和证据",
+          "wp2.qualified-labels": "等待真实柔性后端，保留原状态和证据",
+          "wp6.deformable-native-final": "等待真实柔性后端，保留原状态和证据"
+        }
+      },
+      "package": "orchestration.existing-rigid-scope",
+      "commit": "1e572cc1106869fe01ea42203d227721aec933cd",
+      "parent": "75d337e8c2c5c7a21d60e96992b41df2ef7cc185",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/plans/DH116_AUTONOMOUS_EXECUTION_MASTER_PLAN.md",
+        "docs/superpowers/reports/2026-11-12-existing-solid-cylinder-execution-scope.md",
+        "scripts/run_dh116_work_packages.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
