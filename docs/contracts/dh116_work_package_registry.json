@@ -5116,8 +5116,71 @@
       "dependencies": [
         "flex.f5-wireseg-ingestion"
       ],
-      "status": "blocked",
-      "reason": "需一个完整 train RGB/Mask LFS 以及独立验证身份。"
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "7dd99032cad256392050fa1ebe50f149ce0f2c787d8b9d5e1ae942458a1259c4",
+        "tested_head": "515a97f96b4ac3bc060f872987da1e957e26f5e6",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "mode": "wireseg_cpu_subsets_diagnostic",
+        "train_rgb_lfs_sha256": "9ad438f849cf5718a11abac5e40b4d77c17d559b76c24e285458aa0479493af6",
+        "validation_rgb_lfs_sha256": "bf983007bc3c087a0f9b48edba2ddd04f0398c3cf595e98c90e517ef8eee3ca3",
+        "seg_only_steps": 160,
+        "validation_samples": 128,
+        "heldout_visible_iou": 0.1270534349223926,
+        "matched_depth_rows": 360,
+        "seg_depth_steps": 16,
+        "full_download_complete": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-verified-rgb-subset.md",
+        "report_source_commit": "3f6b92deda77b6c1fb3f835ccc919c28b460059c"
+      },
+      "last_result": {
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "7dd99032cad256392050fa1ebe50f149ce0f2c787d8b9d5e1ae942458a1259c4",
+        "tested_head": "515a97f96b4ac3bc060f872987da1e957e26f5e6",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "mode": "wireseg_cpu_subsets_diagnostic",
+        "train_rgb_lfs_sha256": "9ad438f849cf5718a11abac5e40b4d77c17d559b76c24e285458aa0479493af6",
+        "validation_rgb_lfs_sha256": "bf983007bc3c087a0f9b48edba2ddd04f0398c3cf595e98c90e517ef8eee3ca3",
+        "seg_only_steps": 160,
+        "validation_samples": 128,
+        "heldout_visible_iou": 0.1270534349223926,
+        "matched_depth_rows": 360,
+        "seg_depth_steps": 16,
+        "full_download_complete": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-verified-rgb-subset.md",
+        "report_source_commit": "3f6b92deda77b6c1fb3f835ccc919c28b460059c"
+      }
     },
     "flex.f5-wireseg-full": {
       "title": "完整 WireSeg 扩展基准",

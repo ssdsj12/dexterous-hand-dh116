@@ -128,3 +128,65 @@ def test_cli_rejects_claimed_revision_with_wrong_blob_catalogue(tmp_path):
                                 "siblings": []}), encoding="utf-8")
     with pytest.raises(ValueError, match="blob catalogue"):
         verified_sources(tmp_path)
+
+
+def test_wireseg_subset_rejects_unverified_sources_and_wrong_split(monkeypatch, tmp_path):
+    from scripts import pretrain_dh116_wireseg as cli
+
+    train_blob = 'data/train-a.parquet'
+    validation_blob = 'data/train-b.parquet'
+    blobs = {train_blob: 'a' * 64, validation_blob: 'b' * 64}
+    train_row = dict(file_name='flying_wire/2_cable/1.png', scene_family='flying_wire')
+    val_row = dict(file_name='wire_on_plane/2_cable/2.png', scene_family='wire_on_plane')
+
+    def rows(root, names, split, *, include_source=False, metadata_only=False):
+        for name, row in ((train_blob, train_row), (validation_blob, val_row)):
+            if name in names and module().sample_split(row['scene_family']) == split:
+                yield (name, row) if include_source else row
+
+    monkeypatch.setattr(cli, 'wireseg_rows', rows)
+    subset = cli.make_subset(tmp_path, blobs, 'f' * 64, 'train', 1)
+    path = tmp_path / 'subset.json'
+    path.write_text(json.dumps(subset))
+    assert list(cli.read_subset(tmp_path, path, blobs, 'f' * 64, 'train')) == [train_row]
+    with pytest.raises(ValueError, match='split'):
+        list(cli.read_subset(tmp_path, path, blobs, 'f' * 64, 'validation'))
+    with pytest.raises(ValueError, match='verified'):
+        list(cli.read_subset(tmp_path, path, {}, 'f' * 64, 'train'))
+
+
+def test_wireseg_resume_requires_the_same_mode_and_subset(tmp_path):
+    from scripts import pretrain_dh116_wireseg as cli
+
+    path = tmp_path / 'resume.pt'
+    contract = {'mode': 'seg-only', 'train_subset_sha256': 'a' * 64}
+    torch.save({'contract': contract}, path)
+    with pytest.raises(ValueError, match='contract'):
+        cli.restore_training(path, {'mode': 'seg-depth'}, None, None, torch.device('cpu'))
+
+
+def test_wireseg_resume_preserves_adam_steps_and_deterministic_update(tmp_path):
+    from scripts import pretrain_dh116_wireseg as cli
+
+    model = torch.nn.Linear(2, 1)
+    adam = torch.optim.AdamW(model.parameters(), lr=0.01)
+    device = torch.device('cpu')
+    contract = {'mode': 'seg-only', 'train_subset_sha256': 'a' * 64}
+    model.transfer_state = lambda: {}
+    x = torch.ones((1, 2))
+
+    def update(net, optimizer):
+        optimizer.zero_grad(set_to_none=True)
+        net(x * torch.rand_like(x)).square().sum().backward()
+        optimizer.step()
+
+    update(model, adam)
+    path = tmp_path / 'resume.pt'
+    cli.save_training(path, model, adam, device, contract, [{'file_name': 'row1'}], {'rgb': 1})
+    update(model, adam)
+    resumed = torch.nn.Linear(2, 1)
+    resumed_adam = torch.optim.AdamW(resumed.parameters(), lr=0.01)
+    step, rows, counts = cli.restore_training(path, contract, resumed, resumed_adam, device)
+    assert (step, rows, counts) == (1, [{'file_name': 'row1'}], {'rgb': 1})
+    update(resumed, resumed_adam)
+    assert all(torch.equal(left, right) for left, right in zip(model.parameters(), resumed.parameters()))

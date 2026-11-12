@@ -1,3 +1,7 @@
+## 2026-11-12 — WireSeg 原始 RGB 子集续训与独立验证
+
+两份原始 RGB LFS 复核通过。seg-only 续到 160 步，另完成 16 步精确配对深度诊断。 Ubuntu CPU 回归 17 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-verified-rgb-subset.md)
+
 ## 2026-11-12 — 空渲染 Kit 生命周期
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-v0.md)。
