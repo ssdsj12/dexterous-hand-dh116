@@ -60,12 +60,13 @@ def processing_contract(camera_config):
     segmentation=config.get('wire_segmentation')
     if segmentation is not None:
         from .tabletop_stereo_contract import require_sha
+        from .tabletop_stereo_wire_segmentation import MASK_POLICY_VERSION, configured_segmentation_mask_policy
         if tracking=='legacy' or depth['method'] not in ('wire_census','wire_zncc','wire_silhouette'):
             raise ValueError('RGB segmentation requires tracked wire matcher')
-        if segmentation.get('diagnostic_only') is not True:
-            raise ValueError('learned wire segmentation remains diagnostic only')
+        policy = configured_segmentation_mask_policy(segmentation)
         result['perception']['segmentation']=dict(checkpoint_sha256=require_sha(segmentation.get('checkpoint_sha256'), 'segmentation checkpoint'),
-            diagnostic_only=True, source='learned_left_right_RGB', native_qualified=False)
+            diagnostic_only=True, source='learned_left_right_RGB', native_qualified=False,
+            mask_policy=policy, mask_policy_version=MASK_POLICY_VERSION)
         result['perception']['thresholds']=None
     result['processing_sha256']=digest(result)
     return result

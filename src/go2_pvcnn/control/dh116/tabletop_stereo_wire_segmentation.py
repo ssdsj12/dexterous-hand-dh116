@@ -3,12 +3,19 @@
 Native instance IDs are training targets only. Occluded wire is not inferred
 from an instance mask of visible surfaces. No default/old Actor is changed.
 """
+import hashlib
+import io
+from pathlib import Path
+
 import torch
 from torch import nn
 import torch.nn.functional as F
 
 
 HEADS = ('visible_wire', 'occluded_wire', 'unknown_instance')
+VIEWS = ('left', 'right')
+MASK_POLICY_VERSION = 'dh116-wire-mask-policy-v1'
+MASK_POLICIES = ('visible_proposal', 'legacy_visible_and_unknown', 'qualified_reliability_filter')
 
 
 class StereoWireSegmentation(nn.Module):
@@ -155,18 +162,72 @@ class WireSourceEncoder(nn.Module):
                     material_node_valid=torch.zeros_like(valid), source_contract='image_centerline_or_measured_surface_v1')
 
 
+def _validate_head_capabilities(capabilities):
+    from .tabletop_stereo_contract import require_sha
+
+    if capabilities is None:
+        return {}
+    allowed_heads = {view + '.' + head for view in VIEWS for head in HEADS}
+    if not isinstance(capabilities, dict) or not capabilities.keys() <= allowed_heads:
+        raise ValueError('per-view segmentation head capabilities required')
+    for key, record in capabilities.items():
+        if not isinstance(record, dict):
+            raise ValueError('segmentation head capability record required: ' + key)
+        for field in ('supervised', 'heldout_evaluated', 'runtime_veto_allowed'):
+            if field in record and type(record[field]) is not bool:
+                raise ValueError(f'{key}.{field} must be boolean')
+        if record.get('heldout_evaluated') or 'heldout_evidence_sha256' in record:
+            sha = require_sha(record.get('heldout_evidence_sha256'), key + ' held-out evidence')
+            if sha == '0'*64:
+                raise ValueError(key + ' held-out evidence requires nonzero SHA256')
+        if record.get('runtime_veto_allowed') and (
+                not key.endswith('.unknown_instance')
+                or record.get('semantics') != 'renderer_id_resolution'
+                or record.get('supervised') is not True or record.get('heldout_evaluated') is not True):
+            raise ValueError('unknown reliability veto requires explicit semantics, labels and held-out evidence')
+    return capabilities
+
+
 def segmentation_masks(output, *, qualified_views=(False, False), diagnostic_only=False,
-                       visible_threshold=.5, unknown_threshold=.5):
-    """Never silently deploy a left-only fitted model as a qualified stereo head."""
-    if len(qualified_views) != 2 or (not all(qualified_views) and not diagnostic_only):
-        raise ValueError('both segmentation views must be qualified before deployment')
+                       visible_threshold=.5, unknown_threshold=.5, mask_policy='visible_proposal',
+                       head_capabilities=None):
+    """Build RGB-only proposals using evidence-qualified, versioned head decisions."""
+    if mask_policy not in MASK_POLICIES:
+        raise ValueError('unsupported segmentation mask_policy')
+    if type(diagnostic_only) is not bool:
+        raise ValueError('diagnostic_only must be boolean')
+    if not isinstance(qualified_views, (list, tuple)) or len(qualified_views) != len(VIEWS) or any(
+            type(value) is not bool for value in qualified_views):
+        raise ValueError('boolean qualification for both views required')
     if not 0 < visible_threshold < 1 or not 0 < unknown_threshold < 1:
         raise ValueError('finite probabilities required')
+
+    capabilities = _validate_head_capabilities(head_capabilities)
+    visible_qualified = []
+    for view, qualified in zip(VIEWS, qualified_views):
+        visible = capabilities.get(view + '.visible_wire', {})
+        visible_qualified.append(qualified and visible.get('supervised') is True
+                                 and visible.get('heldout_evaluated') is True)
+    if mask_policy == 'legacy_visible_and_unknown' and not diagnostic_only:
+        raise ValueError('legacy segmentation mask is restricted to diagnostic replay')
+    if not diagnostic_only and not all(visible_qualified):
+        raise ValueError('both visible segmentation heads must be qualified before deployment')
+
+    unknown_veto = [mask_policy == 'legacy_visible_and_unknown'] * len(VIEWS)
+    if mask_policy == 'qualified_reliability_filter':
+        unknown_veto = [qualified and capabilities.get(view + '.unknown_instance', {}).get(
+            'runtime_veto_allowed') is True for view, qualified in zip(VIEWS, visible_qualified)]
+        if not any(unknown_veto):
+            raise ValueError('qualified reliability filter requires a qualified view and unknown head')
+
     probabilities = output['logits'].sigmoid()
-    visible = (probabilities[:, :, 0] >= visible_threshold) & (probabilities[:, :, 2] < unknown_threshold)
-    # The unsupervised occlusion logit has no authority to fill missing depth.
-    return (visible[:, 0], visible[:, 1]), dict(deployment_qualified=all(qualified_views),
-        diagnostic_only=diagnostic_only, occlusion_head_used=False, probability_calibrated=False)
+    masks = tuple((probabilities[:, index, 0] >= visible_threshold) &
+                  (probabilities[:, index, 2] < unknown_threshold if veto else True)
+                  for index, veto in enumerate(unknown_veto))
+    return masks, dict(deployment_qualified=not diagnostic_only and all(visible_qualified),
+        diagnostic_only=diagnostic_only, occlusion_head_used=False, probability_calibrated=False,
+        mask_policy=mask_policy, mask_policy_version=MASK_POLICY_VERSION,
+        unknown_veto_views=unknown_veto, visible_qualified_views=visible_qualified)
 
 
 class SegmentedWireReconstruction(nn.Module):
@@ -177,10 +238,12 @@ class SegmentedWireReconstruction(nn.Module):
         self.source_encoder = WireSourceEncoder(width)
 
     def forward(self, left, right, calibration, *, qualified_views=(False, False),
-                diagnostic_only=False, timestamp=None, reset_mask=None):
+                diagnostic_only=False, timestamp=None, reset_mask=None,
+                mask_policy='visible_proposal', head_capabilities=None):
         prediction = self.segmenter(left, right)
         masks, admission = segmentation_masks(prediction, qualified_views=qualified_views,
-                                              diagnostic_only=diagnostic_only)
+                                              diagnostic_only=diagnostic_only, mask_policy=mask_policy,
+                                              head_capabilities=head_capabilities)
         depth = self.depth.compute(left, right, calibration, wire_masks=masks)
         points = self.tracker.extract(left, depth['depth_m'], depth['valid'],
             calibration.K_left, calibration.T_world_left, wire_mask=masks[0],
@@ -190,37 +253,55 @@ class SegmentedWireReconstruction(nn.Module):
                     source_encoding=encoding, admission=admission)
 
 
+def configured_segmentation_mask_policy(options):
+    if not isinstance(options, dict) or options.get('diagnostic_only') is not True:
+        raise ValueError('segmentation currently supports explicit diagnostic_only, not qualified deployment')
+    policy = options.get('mask_policy')
+    if policy not in MASK_POLICIES:
+        raise ValueError('explicit supported segmentation mask_policy required')
+    return policy
+
+
 def configured_segmentation_depth(depth, config, device):
-    """Used by native camera and independent RGB inference, explicit opt-in only."""
+    """Shared opt-in diagnostic for native camera and independent RGB inference."""
     options = config.get('wire_segmentation')
     if options is None:
         return depth
-    from .tabletop_stereo_contract import file_sha256
+    from .tabletop_stereo_checkpoint import _validate_state
+    from .tabletop_stereo_contract import require_sha
     from .tabletop_stereo_wire_matching import METHODS
-    if options.get('diagnostic_only') is not True:
-        raise ValueError('segmentation currently supports explicit diagnostic_only, not qualified deployment')
-    path = options['checkpoint_path']
-    sha = file_sha256(path)
-    if sha != options['checkpoint_sha256'] or sha == '0'*64:
-        raise ValueError('segmentation checkpoint SHA mismatch')
+
+    policy = configured_segmentation_mask_policy(options)
     if depth.method not in METHODS:
         raise ValueError('learned segmentation requires existing sparse wire matcher')
-    payload = torch.load(path, map_location=device, weights_only=False)
-    contract = payload.get('contract', {})
-    if (contract.get('version') != 'dh116-wire-segmentation-diagnostic-v1'
+    expected = require_sha(options.get('checkpoint_sha256'), 'segmentation checkpoint SHA')
+    data = Path(options['checkpoint_path']).read_bytes()
+    sha = hashlib.sha256(data).hexdigest()
+    if sha != expected or sha == '0'*64:
+        raise ValueError('segmentation checkpoint SHA mismatch')
+    payload = torch.load(io.BytesIO(data), map_location='cpu', weights_only=True)
+    contract = payload.get('contract', {}) if isinstance(payload, dict) else {}
+    if (not isinstance(contract, dict) or contract.get('version') != 'dh116-wire-segmentation-diagnostic-v1'
             or contract.get('source') != 'native_instance_id'):
         raise ValueError('native-instance trained segmentation contract required')
-    model = StereoWireSegmentation(payload['width']).to(device).eval()
+    capabilities = _validate_head_capabilities(contract.get('head_capabilities'))
+    qualified_views = contract.get('qualified_views', (False, False))
+    with torch.random.fork_rng(devices=[]):
+        model = StereoWireSegmentation(payload['width'])
+    _validate_state(payload['model'], model)
     model.load_state_dict(payload['model'], strict=True)
+    model.to(device).eval()
 
     class LearnedMaskDepth:
         def __getattr__(self, key):
             return getattr(depth, key)
 
         @torch.no_grad()
-        def compute(self, left, right, calibration, **kwargs):
-            masks, audit = segmentation_masks(model(left, right), diagnostic_only=True)
-            result = depth.compute(left, right, calibration, wire_masks=masks, **kwargs)
+        def compute(self, left, right, calibration, *, left_valid=None, right_valid=None):
+            masks, audit = segmentation_masks(model(left, right), diagnostic_only=True, mask_policy=policy,
+                                              qualified_views=qualified_views, head_capabilities=capabilities)
+            result = depth.compute(left, right, calibration, wire_masks=masks,
+                                   left_valid=left_valid, right_valid=right_valid)
             result.update(wire_mask=masks[0], wire_mask_right=masks[1],
                           segmentation_identity=dict(checkpoint_sha256=sha, **audit))
             return result

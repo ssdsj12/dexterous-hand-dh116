@@ -33,7 +33,7 @@ def files(tmp_path, *, legacy_depth=False, automatic_depth=False, mode='latent',
         weights = tmp_path/'segmentation.pt'
         torch.save(dict(model=StereoWireSegmentation(8).state_dict(), width=8, optimizer={},
             contract=dict(version='dh116-wire-segmentation-diagnostic-v1', source='native_instance_id')), weights)
-        cfg['wire_segmentation'] = dict(diagnostic_only=True, checkpoint_path=str(weights),
+        cfg['wire_segmentation'] = dict(diagnostic_only=True, mask_policy='visible_proposal', checkpoint_path=str(weights),
             checkpoint_sha256=hashlib.sha256(weights.read_bytes()).hexdigest())
         cfg['depth_estimator'].update(method='wire_silhouette', subpixel=False)
     config = tmp_path/'camera.json'; config.write_text(json.dumps(cfg))
@@ -283,3 +283,21 @@ def test_stale_pair_cannot_bypass_freshness_with_nan_limit(tmp_path):
     package, config = files(tmp_path)
     with pytest.raises(ValueError, match='freshness limit'):
         StereoRGBStudentRunner(package, config, max_image_age_s=float('nan'))
+
+
+def test_actor_processing_binds_explicit_diagnostic_segmentation_policy(tmp_path):
+    package, config_path = files(tmp_path, segmentation=True)
+    config = json.loads(config_path.read_text())
+    segmentation = processing_contract(config)['perception']['segmentation']
+    assert segmentation['mask_policy'] == 'visible_proposal'
+    runner = StereoRGBStudentRunner(package, config_path)
+    observation = raw()
+    depth = runner.depth.compute(observation['left_rgb'], observation['right_rgb'], runner.calibration)
+    assert depth['segmentation_identity']['mask_policy'] == 'visible_proposal'
+    config['wire_segmentation']['mask_policy'] = 'legacy_visible_and_unknown'
+    with pytest.raises(ValueError, match='processing differs'):
+        from go2_pvcnn.control.dh116.tabletop_stereo_preprocessing import require_raw_processing
+        require_raw_processing(runner.actor.deployment_contract, config)
+    config['wire_segmentation'].pop('mask_policy')
+    with pytest.raises(ValueError, match='explicit.*mask_policy'):
+        processing_contract(config)

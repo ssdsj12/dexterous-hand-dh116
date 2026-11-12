@@ -25,6 +25,7 @@ from .tabletop_stereo_geometry import world_to_palms
 from .tabletop_stereo_contract import ROOT, file_sha256, require_opt_in, require_sha, write_json_new
 from .tabletop_stereo_preprocessing import require_raw_processing
 from .tabletop_stereo_student_ppo import make_stereo_actor
+from .tabletop_stereo_wire_segmentation import configured_segmentation_depth
 
 
 RAW_FIELDS = {'left_rgb', 'right_rgb', 'proprio', 'left_timestamp_s', 'right_timestamp_s',
@@ -67,43 +68,6 @@ def _load_standalone_actor(path, calibration, *, expected_sha256=None):
     return actor.eval()
 
 
-def _configure_standalone_segmentation(depth, config, device):
-    options = config.get('wire_segmentation')
-    if options is None:
-        return depth
-    from .tabletop_stereo_wire_matching import METHODS
-    from .tabletop_stereo_wire_segmentation import StereoWireSegmentation, segmentation_masks
-
-    if options.get('diagnostic_only') is not True or depth.method not in METHODS:
-        raise ValueError('diagnostic segmentation requires an existing sparse wire matcher')
-    expected_sha = require_sha(options.get('checkpoint_sha256'), 'segmentation checkpoint SHA')
-    payload, sha = _tensor_snapshot(options['checkpoint_path'], expected_sha256=expected_sha,
-                                   label='segmentation checkpoint')
-    contract = payload.get('contract', {}) if isinstance(payload, dict) else {}
-    if (not isinstance(contract, dict) or contract.get('version') != 'dh116-wire-segmentation-diagnostic-v1'
-            or contract.get('source') != 'native_instance_id'):
-        raise ValueError('native-instance trained segmentation contract required')
-    with torch.random.fork_rng(devices=[]):
-        segmenter = StereoWireSegmentation(payload['width'])
-    _validate_state(payload['model'], segmenter)
-    segmenter.load_state_dict(payload['model'], strict=True)
-    segmenter.to(device).eval()
-
-    class LearnedMaskDepth:
-        def __getattr__(self, key):
-            return getattr(depth, key)
-
-        @torch.no_grad()
-        def compute(self, left, right, calibration, **kwargs):
-            masks, audit = segmentation_masks(segmenter(left, right), diagnostic_only=True)
-            result = depth.compute(left, right, calibration, wire_masks=masks, **kwargs)
-            result.update(wire_mask=masks[0], wire_mask_right=masks[1],
-                          segmentation_identity=dict(checkpoint_sha256=sha, **audit))
-            return result
-
-    return LearnedMaskDepth()
-
-
 class StereoRGBStudentRunner:
     def __init__(self, actor_package, camera_config, *, num_envs=1, device='cpu', max_image_age_s=1/60,
                  expected_actor_package_sha256=None):
@@ -114,7 +78,7 @@ class StereoRGBStudentRunner:
             expected_sha256=expected_actor_package_sha256).to(device)
         self.processing = require_raw_processing(self.actor.deployment_contract, config)
         self.camera_config_sha256 = hashlib.sha256(data).hexdigest()
-        self.depth = _configure_standalone_segmentation(StereoDepth.from_config(config), config, device)
+        self.depth = configured_segmentation_depth(StereoDepth.from_config(config), config, device)
         self.history = StereoHistory(num_envs, self.actor.network_config['history'], device=device)
         self.extractor = (WirePointExtractor() if self.processing['perception']['algorithm']=='warm_colour_visible_simple_path_ZhangSuen_v1'
             else TrackedWirePointExtractor(point_sampling=self.processing['perception']['point_sampling'],

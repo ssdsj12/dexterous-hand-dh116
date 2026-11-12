@@ -17,7 +17,7 @@ def segmentation_evidence(output):
     """Keep both RGB views and three logits distinct from physical visibility."""
     from .tabletop_stereo_wire_segmentation import segmentation_masks
 
-    masks, _ = segmentation_masks(output, diagnostic_only=True)
+    masks, _ = segmentation_masks(output, diagnostic_only=True, mask_policy='legacy_visible_and_unknown')
     probabilities = output['logits'].sigmoid()
     result = {}
     for index, side in enumerate(('left', 'right')):

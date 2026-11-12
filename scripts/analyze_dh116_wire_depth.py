@@ -71,7 +71,8 @@ def main(argv=None):
         learned_masks = None
         if segmenter is not None:
             with torch.no_grad():
-                learned_masks, _ = segmentation_masks(segmenter(frame['left_rgb'], frame['right_rgb']), diagnostic_only=True)
+                learned_masks, _ = segmentation_masks(segmenter(frame['left_rgb'], frame['right_rgb']),
+                    diagnostic_only=True, mask_policy='legacy_visible_and_unknown')
         for name, tracker in trackers.items():
             if name in ribbons:
                 base, _ = ribbons[name]

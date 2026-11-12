@@ -143,7 +143,7 @@ def test_runtime_segmentation_checkpoint_identity_and_opt_in(tmp_path):
     path = tmp_path/'seg.pt'
     torch.save(dict(model=model.state_dict(), width=8, contract=dict(version='dh116-wire-segmentation-diagnostic-v1',
         qualified_views=[False,False], source='native_instance_id')), path)
-    config = dict(wire_segmentation=dict(checkpoint_path=str(path), checkpoint_sha256=file_sha256(path), diagnostic_only=True))
+    config = dict(wire_segmentation=dict(checkpoint_path=str(path), checkpoint_sha256=file_sha256(path), diagnostic_only=True, mask_policy='visible_proposal'))
     depth = StereoDepth(method='wire_census', min_disparity=5, max_disparity=9, block_size=5, subpixel=False)
     wrapper = configured_segmentation_depth(depth, config, 'cpu')
     left, right, calibration, _ = wire_scene()
@@ -151,6 +151,12 @@ def test_runtime_segmentation_checkpoint_identity_and_opt_in(tmp_path):
     assert result['wire_mask'].shape == left[:, 0].shape
     assert result['segmentation_identity']['checkpoint_sha256'] == file_sha256(path)
     assert not result['segmentation_identity']['deployment_qualified']
+    assert result['segmentation_identity']['mask_policy'] == 'visible_proposal'
+    with pytest.raises(TypeError):
+        wrapper.compute(left, right, calibration, reference_depth=torch.ones_like(left[:, 0]))
+    old = dict(wire_segmentation={k: v for k, v in config['wire_segmentation'].items() if k != 'mask_policy'})
+    with pytest.raises(ValueError, match='explicit.*mask_policy'):
+        configured_segmentation_depth(depth, old, 'cpu')
     config['wire_segmentation']['diagnostic_only'] = False
     with pytest.raises(ValueError, match='diagnostic'):
         configured_segmentation_depth(depth, config, 'cpu')
@@ -207,3 +213,66 @@ def test_native_reference_retains_right_instance_ids_and_separate_resolution(tmp
     saved = torch.load(binding['path'], weights_only=False)
     assert torch.equal(saved['right_raw_instance_ids'], ref['right_raw_instance_ids'])
     assert saved['right_raw_instance_info'] == ref['right_raw_instance_info']
+
+
+def test_visible_proposal_preserves_visible_pixels_when_unknown_is_high():
+    from go2_pvcnn.control.dh116.tabletop_stereo_wire_segmentation import segmentation_masks
+    logits = torch.full((1, 2, 3, 1, 2), -10.)
+    logits[:, :, 0, 0, 0] = 10.
+    original, audit = segmentation_masks(dict(logits=logits), diagnostic_only=True)
+    logits[:, :, 2] = 10.
+    modified, _ = segmentation_masks(dict(logits=logits), diagnostic_only=True)
+    assert all(torch.equal(before, after) for before, after in zip(original, modified))
+    assert modified[0].tolist() == [[[True, False]]]
+    assert audit['mask_policy'] == 'visible_proposal'
+    assert audit['unknown_veto_views'] == [False, False]
+
+
+def test_legacy_unknown_veto_is_an_explicit_diagnostic_replay():
+    from go2_pvcnn.control.dh116.tabletop_stereo_wire_segmentation import segmentation_masks
+    logits = torch.full((1, 2, 3, 1, 2), 10.)
+    output = dict(logits=logits)
+    legacy, audit = segmentation_masks(output, diagnostic_only=True, mask_policy='legacy_visible_and_unknown')
+    assert not any(mask.any() for mask in legacy)
+    assert audit['unknown_veto_views'] == [True, True]
+    assert not audit['deployment_qualified']
+    with pytest.raises(ValueError, match='diagnostic'):
+        segmentation_masks(output, qualified_views=(True, True), mask_policy='legacy_visible_and_unknown')
+
+
+def test_reliability_veto_needs_evidence_for_the_individual_view_and_head():
+    from go2_pvcnn.control.dh116.tabletop_stereo_wire_segmentation import segmentation_masks
+    output = dict(logits=torch.full((1, 2, 3, 1, 2), 10.))
+    kwargs = dict(qualified_views=(True, True), diagnostic_only=True, mask_policy='qualified_reliability_filter')
+    qualified = dict(supervised=True, heldout_evaluated=True, heldout_evidence_sha256='a'*64)
+    unknown = dict(qualified, semantics='renderer_id_resolution', runtime_veto_allowed=True)
+    capabilities = {
+        'left.visible_wire': qualified, 'right.visible_wire': qualified,
+        'left.unknown_instance': unknown,
+        'right.unknown_instance': dict(unknown, heldout_evaluated=False, runtime_veto_allowed=False),
+    }
+    masks, audit = segmentation_masks(output, head_capabilities=capabilities, **kwargs)
+    assert not masks[0].any() and masks[1].all()
+    assert audit['unknown_veto_views'] == [True, False]
+    assert not audit['deployment_qualified']
+    with pytest.raises(ValueError, match='reliability'):
+        segmentation_masks(output, **kwargs)
+    invalid = dict(capabilities, **{'left.unknown_instance': dict(unknown, supervised='false')})
+    with pytest.raises(ValueError, match='supervised'):
+        segmentation_masks(output, head_capabilities=invalid, **kwargs)
+
+
+def test_bilateral_deployment_requires_visible_head_evidence():
+    from go2_pvcnn.control.dh116.tabletop_stereo_wire_segmentation import segmentation_masks
+    output = dict(logits=torch.full((1, 2, 3, 1, 2), 10.))
+    with pytest.raises(ValueError, match='qualified'):
+        segmentation_masks(output, qualified_views=(True, True))
+    qualified = dict(supervised=True, heldout_evaluated=True, heldout_evidence_sha256='a'*64)
+    masks, audit = segmentation_masks(output, qualified_views=(True, True),
+        head_capabilities={'left.visible_wire': qualified, 'right.visible_wire': qualified})
+    assert all(mask.all() for mask in masks)
+    assert audit['deployment_qualified']
+    invalid = dict(qualified, heldout_evidence_sha256='0'*64)
+    with pytest.raises(ValueError, match='nonzero'):
+        segmentation_masks(output, qualified_views=(True, True),
+            head_capabilities={'left.visible_wire': invalid, 'right.visible_wire': qualified})

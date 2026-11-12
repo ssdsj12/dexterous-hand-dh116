@@ -1,3 +1,7 @@
+## 2026-11-12 — 双目分割按已验证的 Head 能力构建候选
+
+68 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-stereo-segmentation-mask-policy.md)
+
 ## 2026-11-12 — 现有 solid_cylinder 同钟 SDK 线速度监督
 
 72 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-rigid-sdk-state-supervision.md)

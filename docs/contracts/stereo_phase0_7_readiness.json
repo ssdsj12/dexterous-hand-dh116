@@ -3343,6 +3343,31 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-rigid-sdk-state-supervision.md",
       "native_qualification": false
+    },
+    "wp1.segmentation-mask-policy": {
+      "passed": 68,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_wire_segmentation.py",
+        "tests/test_dh116_stereo_inference.py",
+        "tests/test_dh116_stereo_wire_correspondence.py",
+        "tests/test_dh116_stereo_wire_depth.py",
+        "tests/test_dh116_stereo_depth_auxiliary.py",
+        "tests/test_dh116_stereo_wire_sample_retention.py"
+      ],
+      "log_sha256": "280da87a6e8b1c030b887fb901eb5457f6f39f13431382dee7b7fbefeeab8fd1",
+      "tested_head": "4c166a370f1748954420cba709bfc0df933f8b06",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-stereo-segmentation-mask-policy.md",
+      "native_qualification": false
     }
   }
 }
