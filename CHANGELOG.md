@@ -1,3 +1,7 @@
+## 2026-11-12 — 真实 DH116 左拇指接触账本与关闭诊断
+
+左拇指 240 步真实物理账本记录 68 个接触步。外层退出 139，原生资格待修复，右侧保持待验证。 Ubuntu CPU 回归 7 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-left-thumb-contact-native.md)
+
 ## 2026-11-12 — 拆分柔性物理、双目采集与逐抓法 Teacher 资格
 
 无相机 Teacher 分抓法依赖物理资格，双目采集和 WireSeg 单独推进。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-physics-stereo-dependencies.md)

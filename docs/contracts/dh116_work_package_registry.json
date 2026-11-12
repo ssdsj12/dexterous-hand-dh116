@@ -5012,7 +5012,20 @@
         "flex.f4-cooked-pad-sdf"
       ],
       "status": "blocked",
-      "reason": "需原 articulation 的真实单指接触账本、双侧 wrench 与自然退出。"
+      "reason": "实际接触已记录，外层 139，尚未通过自然退出资格。",
+      "last_native_attempt": {
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "outer_exit_code": 139,
+        "physics_rows": 240,
+        "contact_ticks": 68,
+        "status": "failed_native",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-left-thumb-contact-native.md",
+        "report_source_commit": "853bfcb3d37d0a8ee22cbf26a77468e7f0e32d85",
+        "max_force_n": 0.0473053,
+        "max_pair_force_residual_n": 0,
+        "independent_validator_sha256": "72601a242b72646e0bf0e9bbb2b96308fd227fd0d0d2d526bcb368d50e564ef3"
+      }
     },
     "flex.f4-right-contact-native": {
       "title": "右拇指与柔性杆原生接触",
@@ -5190,6 +5203,71 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-flexible-physics-stereo-dependencies.md",
         "report_source_commit": "3d8972a66a028825b714b5581585beb01c86dba8"
+      }
+    },
+    "flex.f4-left-contact-diagnostic-source": {
+      "title": "真实 DH116 左拇指接触账本与关闭诊断",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f3-isaac-rigid",
+        "flex.f4-cooked-pad-sdf"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 1,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py",
+          "tests/test_dh116_deformx_pad_sdf.py",
+          "tests/test_dh116_cooked_hull_device_parity.py",
+          "tests/test_dh116_flexible_colliders.py"
+        ],
+        "log_sha256": "922dad42aea66e33bab3211321e96687830ed8f5a1c78b863a6a0032cbfbc357",
+        "tested_head": "a7e4c482e635700e17e2d33a49d80a77f1f0747a",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "outer_exit_code": 139,
+        "physics_rows": 240,
+        "contact_ticks": 68,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-left-thumb-contact-native.md",
+        "report_source_commit": "853bfcb3d37d0a8ee22cbf26a77468e7f0e32d85"
+      },
+      "last_result": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 1,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py",
+          "tests/test_dh116_deformx_pad_sdf.py",
+          "tests/test_dh116_cooked_hull_device_parity.py",
+          "tests/test_dh116_flexible_colliders.py"
+        ],
+        "log_sha256": "922dad42aea66e33bab3211321e96687830ed8f5a1c78b863a6a0032cbfbc357",
+        "tested_head": "a7e4c482e635700e17e2d33a49d80a77f1f0747a",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "outer_exit_code": 139,
+        "physics_rows": 240,
+        "contact_ticks": 68,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-left-thumb-contact-native.md",
+        "report_source_commit": "853bfcb3d37d0a8ee22cbf26a77468e7f0e32d85"
       }
     }
   },
