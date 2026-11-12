@@ -3564,7 +3564,8 @@
       "title": "原 DH116 Collider 与双手同杆力学验证",
       "executor": "gated",
       "dependencies": [
-        "flex.f3-isaac-rigid"
+        "flex.f3-isaac-rigid",
+        "flex.f4-dh116-collider-offline"
       ],
       "status": "blocked",
       "reason": "已解析实际 10 个指腹碰撞网格。单刚体验证通过后，需核对 PhysX cooked convex hull，再显式 add_mesh 并逐级验证单指、单手和双手同杆反作用。"
@@ -3885,19 +3886,78 @@
         "report": "docs/superpowers/reports/2026-11-12-deformx-dh116-colliders-f4.md",
         "report_source_commit": "256d302d7082eb9a01b0afeac8c77f1b0e5ca606"
       }
+    },
+    "flex.mainline-selection": {
+      "title": "将默认开发目标切换为 DeformX 柔性线缆",
+      "status": "passed",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f0-source-lock"
+      ],
+      "last_native_attempt": {
+        "passed": 28,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "c6e3fdaa354e700aa8d77ab461b179e71984863fb91aaab525c7c5da713c9cab",
+        "tested_head": "346e297fa85de19959cab0176dc0a599ee391d47",
+        "execution_target": "flex.f10-actor-only",
+        "grasp_modes": [
+          "pinch",
+          "tripod",
+          "power"
+        ],
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-execution-target.md",
+        "report_source_commit": "50035f8d4e011e3eb636963b8b4d5a71b63c33fe"
+      },
+      "last_result": {
+        "passed": 28,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "c6e3fdaa354e700aa8d77ab461b179e71984863fb91aaab525c7c5da713c9cab",
+        "tested_head": "346e297fa85de19959cab0176dc0a599ee391d47",
+        "execution_target": "flex.f10-actor-only",
+        "grasp_modes": [
+          "pinch",
+          "tripod",
+          "power"
+        ],
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-execution-target.md",
+        "report_source_commit": "50035f8d4e011e3eb636963b8b4d5a71b63c33fe"
+      }
     }
   },
   "execution_target": {
-    "name": "现有刚性任务完整闭环（复用原环境，不重新建模）",
-    "package": "wp6.rigid-native-final",
+    "name": "DeformX 柔性线缆三种抓法闭环",
+    "package": "flex.f10-actor-only",
     "deferred": {
-      "wp5.cpu-source-check": "等待真实柔性后端，保留原状态和证据",
-      "wp5.source-payload": "等待真实柔性后端，保留原状态和证据",
-      "wp5.source": "等待真实柔性后端，保留原状态和证据",
-      "wp5.build": "等待真实柔性后端，保留原状态和证据",
-      "wp5.solver-native": "等待真实柔性后端，保留原状态和证据",
-      "wp2.qualified-labels": "等待真实柔性后端，保留原状态和证据",
-      "wp6.deformable-native-final": "等待真实柔性后端，保留原状态和证据"
+      "wp6.rigid-native-final": "保留 solid_cylinder 作为独立回归，不是柔性闭环依赖。",
+      "wp6.deformable-native-final": "旧的总验收入口保留，其后端和验收由柔性工作包逐级提供实际证据。"
     }
   }
 }

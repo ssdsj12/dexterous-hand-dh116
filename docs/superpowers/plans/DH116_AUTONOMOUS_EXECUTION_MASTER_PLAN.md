@@ -8,11 +8,13 @@
 4. 并行优先推进 WP1 原色采样槽保留、WP2 训练模式及来源门槛、WP3 Teacher 离线合同与 WP4 PhysX 来源回归、WP5 Solver 来源、WP6 Actor-only 部署验证。新算法由独立工作区实际编写、测试并交给调度器，注册表中的已有 CPU 配方负责验证当前源码。
 5. 原生同步采集、长时间训练、依赖安装和物理修改须独立批准。先准备单实例 PhysX 自然退出，后续接触资格依据逐 contact 的 A/B、作用侧、单位、切法向和外部支撑证据。MPC 371D/24D 同步重采是 Actor-only BC 的前置条件。真实 Solver 仓库、许可证和独立 Toolkit 12.8/SM89 构建是柔性任务验证的前置条件。正式 Teacher、BC/DAgger/Student PPO、最终原生验收逐级按证据晋级。
 
-## 现有刚性任务完整闭环（复用原环境，不重新建模）
+## DeformX 柔性线缆三种抓法闭环
 
-调度器的当前目标是 `wp6.rigid-native-final`。默认 `--plan` 和 `--run` 选择该目标及真实依赖，`--plan --scope all` 查看总验收和未来任务。被延期的柔性工作包保留原状态、依赖和证据。同步原生采集等待关闭和重启验证通过，之后仍按各自的独立批准范围运行。
+自 2026-11-12 起，默认 `--plan` 和 `--run` 选择 `flex.f10-actor-only` 及其实际依赖。F0 固定源码，F1 构建，F2 验证 standalone GPU，F3 验证单刚体双向耦合。F4 依据 DH116 原始碰撞几何逐级验证单指、单手和双手接触同一根杆。F5 视觉数据和 F6 资产可独立推进。
 
-沿用现有 `solid_cylinder` 配置、USD、物理参数、动作合同和圆柱资产。Teacher 成功、Student BC、DAgger 及 Student 独立验收均在这个环境完成。柔性后端可用后增加 Cosserat 任务并迁移同一学习架构。
+F7 生成时钟一致的柔性状态和双目数据，F8 分别训练 Pinch、Tripod、Power 特权 Teacher，F9 验证三个 Student 的 BC、DAgger 和 PPO，F10 验收 Actor-only。保留 371D 公共合同、canonical 24D Tanh Gaussian 和原生阈值。新增柔性状态使用独立版本。力学来源未经原生验证时保持 R2 和部署力反馈关闭。
+
+`--plan --scope all` 查看旧任务和完整回归。原 `solid_cylinder` 配置、USD、物理参数、Checkpoint、动作合同和验收证据继续作为独立刚性回归。它的训练状态独立于柔性流程。
 
 ## Ubuntu 开发与 Windows 发布
 

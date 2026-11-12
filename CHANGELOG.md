@@ -1,3 +1,7 @@
+## 2026-11-12 — 将默认开发目标切换为 DeformX 柔性线缆
+
+默认调度覆盖柔性 F0–F10 和离线依赖。原 solid_cylinder 仍可独立回归。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-execution-target.md)
+
 ## 2026-11-12 — DH116 实际指腹碰撞几何预检
 
 从实际 USD 解析双手 10 个闭合指腹碰撞网格，复现上游跳过 CollisionAPI 所在 Xform 的问题。PhysX cooked hull 和动态加载仍待验证。 Ubuntu CPU 回归 8 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-dh116-colliders-f4.md)

@@ -4568,6 +4568,34 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-deformx-dh116-colliders-f4.md",
       "report_source_commit": "256d302d7082eb9a01b0afeac8c77f1b0e5ca606"
+    },
+    "flex.mainline-selection": {
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "c6e3fdaa354e700aa8d77ab461b179e71984863fb91aaab525c7c5da713c9cab",
+      "tested_head": "346e297fa85de19959cab0176dc0a599ee391d47",
+      "execution_target": "flex.f10-actor-only",
+      "grasp_modes": [
+        "pinch",
+        "tripod",
+        "power"
+      ],
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-execution-target.md",
+      "report_source_commit": "50035f8d4e011e3eb636963b8b4d5a71b63c33fe"
     }
   }
 }

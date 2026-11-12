@@ -309,3 +309,20 @@ def test_registry_rejects_invalid_scope_without_hiding_dependencies(scoped_relay
     write_json(scoped_relay.root / scheduler.REGISTRY, registry)
     with pytest.raises(ValueError, match='deferred'):
         scoped_relay.registry()
+
+
+def test_repository_default_selects_flexible_deformx_and_preserves_rigid_regression():
+    root = Path(scheduler.__file__).resolve().parents[1]
+    registry = scheduler.Repository(root).registry()
+    scoped, description = scheduler.execution_scope(registry)
+    assert description["execution_target"]["package"] == "flex.f10-actor-only"
+    assert {
+        "flex.f0-source-lock", "flex.f1-cuda-build", "flex.f2-standalone-gpu",
+        "flex.f3-isaac-rigid", "flex.f4-dh116-collider-offline",
+        "flex.f4-dh116-same-rod", "flex.f5-wireseg-ingestion",
+        "flex.f5-wireseg-pretraining", "flex.f6-assets-audit",
+        "flex.f7-synchronized-data", "flex.f8-three-teachers",
+        "flex.f9-three-students", "flex.f10-actor-only",
+    } == set(scoped)
+    assert "wp6.rigid-native-final" in description["deferred"]
+    assert "wp6.rigid-native-final" in registry["packages"]
