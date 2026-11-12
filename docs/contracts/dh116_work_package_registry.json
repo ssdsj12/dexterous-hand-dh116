@@ -3670,7 +3670,8 @@
       "executor": "gated",
       "dependencies": [
         "flex.f3-isaac-rigid",
-        "flex.f4-dh116-collider-offline"
+        "flex.f4-dh116-collider-offline",
+        "flex.f4-cooked-pad-sdf"
       ],
       "status": "blocked",
       "reason": "10 个真实 PhysX CPU/GPU 凸包一致且实际完成 Warp CUDA SDF 和显式单杆注册。待接入活跃 articulation 时钟与单指真实姿态/反作用力，随后单手和双手同杆。"
@@ -3681,7 +3682,8 @@
       "dependencies": [
         "flex.f4-dh116-same-rod",
         "flex.f5-wireseg-pretraining",
-        "flex.f6-assets-audit"
+        "flex.f6-assets-audit",
+        "flex.f6-render-native"
       ],
       "status": "blocked",
       "reason": "需同杆物理链路、资产和视觉预训练证据。"
@@ -4796,6 +4798,62 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-deformx-cooked-pad-sdf-registration.md",
         "report_source_commit": "aaa08a48602285071ee39a971101779794eb3165"
+      }
+    },
+    "flex.f3-f6-gate-wiring": {
+      "title": "将原生渲染与实际凸包 SDF 纳入柔性采集依赖",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "flex.f3-isaac-rigid",
+        "flex.f4-cooked-pad-sdf",
+        "flex.f6-derived-render-preflight"
+      ],
+      "last_native_attempt": {
+        "passed": 29,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "83b4679ee85655327d4211472d917f7bd9937dbf2425a2b5c0dd7201be1d159c",
+        "tested_head": "205b32d48fa472aef1adce3cca87c1a917a48ac4",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "gate_dependencies_verified": true,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f3-f6-gate-wiring.md",
+        "report_source_commit": "f1c01df6d02296247d6e01085c9694c86396064c"
+      },
+      "last_result": {
+        "passed": 29,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "83b4679ee85655327d4211472d917f7bd9937dbf2425a2b5c0dd7201be1d159c",
+        "tested_head": "205b32d48fa472aef1adce3cca87c1a917a48ac4",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "gate_dependencies_verified": true,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f3-f6-gate-wiring.md",
+        "report_source_commit": "f1c01df6d02296247d6e01085c9694c86396064c"
       }
     }
   },

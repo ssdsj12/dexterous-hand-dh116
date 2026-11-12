@@ -12,7 +12,7 @@
 
 自 2026-11-12 起，默认 `--plan` 和 `--run` 选择 `flex.f10-actor-only` 及其实际依赖。F0 固定源码，F1 构建，F2 验证 standalone GPU，F3 验证单刚体双向耦合。F4 依据 DH116 原始碰撞几何逐级验证单指、单手和双手接触同一根杆。F5 视觉数据和 F6 资产可独立推进。
 
-F7 生成时钟一致的柔性状态和双目数据，F8 分别训练 Pinch、Tripod、Power 特权 Teacher，F9 验证三个 Student 的 BC、DAgger 和 PPO，F10 验收 Actor-only。保留 371D 公共合同、canonical 24D Tanh Gaussian 和原生阈值。新增柔性状态使用独立版本。力学来源未经原生验证时保持 R2 和部署力反馈关闭。
+F4 原生单指和双手实验使用已核验的实际凸包 SDF。F7 依赖 F6 的两个场景原生渲染及自然退出，才生成时钟一致的柔性状态和双目数据，F8 分别训练 Pinch、Tripod、Power 特权 Teacher，F9 验证三个 Student 的 BC、DAgger 和 PPO，F10 验收 Actor-only。保留 371D 公共合同、canonical 24D Tanh Gaussian 和原生阈值。新增柔性状态使用独立版本。力学来源未经原生验证时保持 R2 和部署力反馈关闭。
 
 `--plan --scope all` 查看旧任务和完整回归。原 `solid_cylinder` 配置、USD、物理参数、Checkpoint、动作合同和验收证据继续作为独立刚性回归。它的训练状态独立于柔性流程。
 

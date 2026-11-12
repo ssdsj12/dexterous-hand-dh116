@@ -4971,6 +4971,29 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-deformx-cooked-pad-sdf-registration.md",
       "report_source_commit": "aaa08a48602285071ee39a971101779794eb3165"
+    },
+    "flex.f3-f6-gate-wiring": {
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "83b4679ee85655327d4211472d917f7bd9937dbf2425a2b5c0dd7201be1d159c",
+      "tested_head": "205b32d48fa472aef1adce3cca87c1a917a48ac4",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "gate_dependencies_verified": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-f3-f6-gate-wiring.md",
+      "report_source_commit": "f1c01df6d02296247d6e01085c9694c86396064c"
     }
   }
 }

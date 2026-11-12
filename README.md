@@ -1,3 +1,7 @@
+## 2026-11-12 — 将原生渲染与实际凸包 SDF 纳入柔性采集依赖
+
+原生单指和同杆路径依赖实际凸包 SDF，F7 同步采集依赖 F6 原生关闭验收。 Ubuntu CPU 回归 29 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-f6-gate-wiring.md)
+
 ## 2026-11-12 — 10 个原生凸包 GPU SDF 烘焙与显式注册
 
 10 个实际凸包使用 1 mm 体素烘焙并在同一 RopeBatch 注册；未推进物理或验证接触力。 Ubuntu CPU 回归 17 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-pad-sdf-registration.md)
