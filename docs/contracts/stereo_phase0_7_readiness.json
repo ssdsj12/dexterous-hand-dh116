@@ -5653,41 +5653,58 @@
     },
     "flex.f4-right-contact-native": {
       "executor": "native_bounded",
-      "tested_head": "81f3c543912c50dcb248382472c652430131d64f",
-      "batch_id": "eb31c79-thumb-once",
+      "tested_head": "fa5bbbd3c87a997aae3048f48f36e23e367d1753",
+      "batch_id": "continuation-p0-corrected-once",
       "qualification_scope": "dh116_right_thumb_deformx_contact_lifecycle",
-      "native_qualification": false,
+      "native_qualification": true,
       "native_execution_performed": true,
-      "command_spec_sha256": "086d7570166384ec9e42a5541f14b7fa87f1529ef96c1b0b5dffb61ba5ae3125",
-      "code_config_sha256": "2dd86aa61e8a753ac24ef3bd467be0ae53dddb3f1de60dd9e2e68e95fa9d0475",
-      "dependency_receipt_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
-      "launch_argv_sha256": "b93ea31f49e8e4b1c612480683723b1e61b48256ee6b93e1f48fa51e8019ec6a",
+      "command_spec_sha256": "2fcbf8b7d42711f42db4a7f2f84237d4084b85db77ef558070782c51f02da6cc",
+      "code_config_sha256": "51144337a568425e2ac4c7d4c1c90421f156e21bf28907d23c2b3ae222703889",
+      "dependency_receipt_sha256": "460ce27e089ae3178b912dd22e72286122c4eee4d11769b154ef27051d0dd6ca",
+      "launch_argv_sha256": "06e6e4b1a8bcc796997c33b54ba34f51415d5d371d001b19051596c5fb978e68",
       "debugger": "gdb_on_segv",
       "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
-      "debugger_wrapper_sha256": "2dfa5ff7ccd4039ffce6e4a965100486e0dc102fcd446d67fb472e68266c104c",
+      "debugger_wrapper_sha256": "42a77816c6adae4504c58a703d2b8f076c5a4d3af741ce26080cdfbfdddde842",
       "exit_code": 0,
       "outer_exit_code": 0,
-      "log_sha256": "9205bbe362dba1aa5c03d15358fe44232c902f8d7847f46228bb28585ba3c651",
-      "duration_seconds": 35.321002338896506,
+      "log_sha256": "d15372ceb0280b27fae85e0d896a390520cd8a2f46164f379405382ace41278f",
+      "duration_seconds": 33.070744476048276,
       "native_lock_observed": true,
       "debugger_status_verified": true,
       "debugger_backtrace_captured": false,
       "debugger_inferior_exit_code": 0,
       "debugger_inferior_signal": null,
       "artifact_sha256": {
-        "plan.json": "14f06c55845c214e0dac0557dd6a6e17b2befc6c39db5169a86597dc8afd89e6",
-        "physics.jsonl": "b4f3b81c2ac2e34f24437838d0f4e79d91a023b8c57c00583fbc7ef88276bd87",
-        "result.json": "d4ec9f5b8251ade2edf9210f208f0c7e4f7916a967308fcb9d86cad34cc6b7e3",
-        "ownership.jsonl": "6e8bff8a56094f5168626e5ba87e948724f3823aa2b38939eacd8ebc988c6831",
-        "shutdown_complete.json": "eb92e194faec959a094ea7b56020a40cb3330fd91a5e20a0ea747b4b8effab6e"
+        "plan.json": "7ae31bf7a2ca0884e1cc269a0957ac55ea211d6acb9bf206c986506455b43b6c",
+        "physics.jsonl": "49de6b2697354753c07579070547e1c7d8c0c2067003b77f3cde066b07a0cd6b",
+        "result.json": "cf0241576794d3fe44ba4d7f63ada719cd3205d3ee45cf14642346317fb0a80a",
+        "ownership.jsonl": "1b3f5eabd11c19c164ed72828e09ea560dee6a1b1d82bf87e6f2ca5a96088c9d",
+        "shutdown_complete.json": "0fb2e97b683c6edd758c1ef8a67caaee698fa2b1fc2e2d58b6eecfb2869ade39"
       },
       "ledger_counts": {
-        "physics.jsonl": 240
+        "physics.jsonl": 238
       },
-      "result_sha256": "cf0a8211b25539e816b102dbbb9f7b7ace3262f401bf7ded527a4cf2ecb2b8e1",
+      "physics_clock": {
+        "sdk_initial_step": 0,
+        "sdk_after_setup_step": 2,
+        "sdk_first_measurement_step": 3,
+        "sdk_last_measurement_step": 240,
+        "sdk_final_step": 240,
+        "setup_steps": 2,
+        "measured_steps": 238,
+        "total_steps": 240
+      },
+      "physics_budget": {
+        "initialization_physics_steps": 2,
+        "warmup_physics_steps": 0,
+        "measurement_physics_steps": 238,
+        "other_physics_advancing_steps": 0,
+        "total_physics_steps": 240
+      },
+      "result_sha256": "8007694e7b4424de4743f6ccd6660c85479b3540506647db725a34fa246a179f",
       "native_physics_validated": true,
       "cpu_regression": {
-        "passed": 6,
+        "passed": 25,
         "failed": 0,
         "skipped": 0,
         "exit_code": 0,
@@ -5700,19 +5717,11 @@
           "no:cacheprovider",
           "tests/test_dh116_deformx_thumb_contact.py"
         ],
-        "log_sha256": "943dd783f8d80033ee226551f801c6e0de929c357e188cd418776fabcfde389e",
-        "tested_head": "81f3c543912c50dcb248382472c652430131d64f"
+        "log_sha256": "4495e1e84fbe16bf5ce103944e1a2f5dfc3e3ec8282e9fb043c9b963db1c2fd2",
+        "tested_head": "fa5bbbd3c87a997aae3048f48f36e23e367d1753"
       },
-      "status": "blocked",
-      "report": "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md",
-      "reason": "本批每侧240条接触账本另有2个SDK真实初始化步，实际242/侧、合计484，超出批准480共4步。接触及自然退出技术证据保留，预算合规资格撤回；修复后需新冻结指纹/另行批准，不得重跑旧版本。",
-      "budget_compliance": false,
-      "contact_and_exit_evidence_valid": true,
-      "actual_setup_physics_steps": 2,
-      "actual_measured_physics_steps": 240,
-      "actual_total_physics_steps": 242,
-      "approved_total_physics_steps": 240,
-      "audit_report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md"
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md"
     },
     "flex.f6-camera-c0": {
       "executor": "native_bounded",
