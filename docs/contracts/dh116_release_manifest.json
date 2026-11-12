@@ -1263,6 +1263,59 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_stereo_shutdown_validation.py",
+        "tests/test_dh116_physx_polled_contact_audit.py"
+      ],
+      "log_sha256": "8dcd7e449e2b727e3f96bbbdb39ca9c66f9c18dce0ba136e353519bc953b333f",
+      "tested_head": "9c7058fd4874c5b34098f32713e4afa3a5f76df3",
+      "native_qualification": false,
+      "native_execution_performed": true,
+      "qualification_scope": "isolated_left_right_thumb_pairs_only",
+      "physics_steps_per_instance": 240,
+      "outer_exit_codes": [
+        0,
+        0
+      ],
+      "resolved_pair_headers_by_side": {
+        "left": 37,
+        "right": 43
+      },
+      "r1_qualified": false,
+      "r2_qualified": false,
+      "left_raw_sha256": "9ad911494f4d84296cb743b979d4294b1600491cafaf405daeaf2e55e10f2f85",
+      "right_raw_sha256": "57fb5018546a15c1bc312663b73534fb8e192a47c5e5955910da174f00586b30",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-physx-gpu-contact-report-readback.md",
+      "report_source_commit": "8a01cd38e638d6ef8bfa2dbb26e3a8343489a566",
+      "package": "wp4.gpu-contact-report-readback",
+      "commit": "5a07cd0ada6b2f593a05695e6ff274bdad51bf9e",
+      "parent": "9c7058fd4874c5b34098f32713e4afa3a5f76df3",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-physx-gpu-contact-report-readback.md",
+        "scripts/calibrate_dh116_stereo_contacts.py",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_contact_calibration.py",
+        "tests/test_dh116_stereo_contact_calibration.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
