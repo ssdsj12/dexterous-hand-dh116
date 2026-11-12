@@ -152,3 +152,53 @@ def test_hash_bound_file_audit_retains_original_and_exclusive_output(tmp_path):
     assert file_identity(a) == a_id and file_identity(s) == s_id
     with pytest.raises(ValueError, match='new'):
         audit_files(a, a_id['sha256'], s, s_id['sha256'], output)
+
+
+@pytest.mark.parametrize('fault', [None, 'missing', 'bad_clock', 'inactive', 'terminal', 'reset_boundary'])
+def test_wrist_interval_requires_previous_issued_action_and_eight_native_samples(fault):
+    from go2_pvcnn.control.dh116.tabletop_mpc_observation_validity import audit_observation_mask
+
+    archive, sequence = _fixture()
+    first, second = sequence['policy_records']
+    a = archive['sample_metadata'][0]
+    archive['actions'][0, 14] = .25
+    first['samples']['actions'][0, 14] = .25
+    second['samples']['previous_action'][0][14] = .25
+    archive['observations'][1, 215+14] = .25
+    archive['observations'][1, 367:371] = torch.tensor([.25, 0., 1., -2.])
+    a['physical_substeps'] = 8
+    a['last_physics_step'] = a['physics_step'] + 8
+    endpoint = first['raw_measured_packets'][0]['wrist_pose'].clone()
+    endpoint[0, :, 2] = torch.tensor([.001, -.002], dtype=endpoint.dtype)
+    second['raw_measured_packets'] = [dict(second['raw_measured_packets'][0], wrist_pose=endpoint)]
+    first['post_physics_feedback'] = [
+        dict(first['post_physics_feedback'][0], sdk_physics_step=a['physics_step']+k,
+             backend_readback_sdk_physics_step=a['physics_step']+k,
+             sdk_timestamp_s=a['simulation_time_s']+k/480,
+             backend_readback_sdk_timestamp_s=a['simulation_time_s']+k/480,
+             measured_root_pose=endpoint) for k in range(1, 9)]
+    first['physics_context']['live'] = torch.ones(2, 8, dtype=torch.bool)
+    first['physics_context']['source_valid'] = torch.ones(2, 8, dtype=torch.bool)
+    first['physics_context']['dt_s'] = torch.full((2, 8), 1/480, dtype=torch.float64)
+    if fault == 'missing':
+        first['post_physics_feedback'].pop(4)
+    if fault == 'bad_clock':
+        first['post_physics_feedback'][3]['sdk_physics_step'] += 1
+    if fault == 'inactive':
+        first['physics_context']['live'][0, 3] = False
+    if fault == 'terminal':
+        a['terminal_in_interval'] = True
+        first['samples']['terminal'][0] = True
+    if fault == 'reset_boundary':
+        archive['sample_metadata'][1]['reset_generation'] = 1
+    if fault in ('terminal','reset_boundary'):
+        with pytest.raises(ValueError, match='prior'):
+            audit_observation_mask(archive, sequence)
+    else:
+        mask = audit_observation_mask(archive, sequence)
+        assert not mask[0, 367:371].any()
+        if fault:
+            assert not mask[1, 367:371].any()
+        else:
+            assert mask[1, 367:371].all()
+        assert not mask[:, 351:367].any()

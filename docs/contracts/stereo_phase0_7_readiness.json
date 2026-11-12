@@ -3844,6 +3844,36 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-pair-runner.md",
       "report_source_commit": "55e0e8059de12d86813440c85d3b5f124f47946c"
+    },
+    "wp3.mpc-observation-wrist-interval-proof": {
+      "passed": 50,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_mpc_observation_validity.py",
+        "tests/test_mpc_privileged_capture.py",
+        "tests/test_dh116_privileged_action_audit.py"
+      ],
+      "log_sha256": "1099d8c1e058dcb1855714d4520e6dbc76f15130edcf882ffdc5fa2f752f3d01",
+      "tested_head": "315f6fb7603552048bb146283d49e873bf2bab99",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "archived_wrist_interval_values_only",
+      "source_rows": 64,
+      "verified_non_reset_rows": 62,
+      "additional_fields": 4,
+      "proof_sha256": "46aad98236260dc62ca21c99b95aa88e8b46109b4f8dbab9de97d20953e40edb",
+      "qualified_for_bc": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md",
+      "report_source_commit": "741bfd6814445608ad9b482ef576fdd7270ef655"
     }
   }
 }

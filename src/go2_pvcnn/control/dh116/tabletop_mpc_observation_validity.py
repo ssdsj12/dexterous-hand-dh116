@@ -33,6 +33,8 @@ GROUPS = {
     (215, 239): 'issued_prior_action_or_original_reset_zero',
     (239, 251): 'sdk_fk_legacy_pad_cylinder_geometry',
     (321, 351): 'sdk_fk_all_digit_reference_points_relative_to_object',
+    (367, 369): 'previous_issued_wrist_z_action_with_eight_native_readbacks',
+    (369, 371): 'previous_interval_native_wrist_z_end_minus_start',
 }
 
 
@@ -58,6 +60,42 @@ def _validate_sources(archive, sidecar):
         raise ValueError('canonical sidecar rows and finite 371D/24D tensors required')
 
 
+def _aligned_post(post, i, step, timestamp):
+    return (post['source'] == 'original_advance_returned_refresh_before_TensorEnv_terminal_reset'
+            and post['native_runtime_verified'] is True and post['clock_aligned'] is True
+            and bool(post['source_valid'][i]) and post['sdk_physics_step'] == step
+            and post['backend_readback_sdk_physics_step'] == step
+            and post['backend_readback_sdk_timestamp_s'] == post['sdk_timestamp_s']
+            and math.isclose(post['sdk_timestamp_s'], timestamp, abs_tol=1e-7, rel_tol=0))
+
+
+def _prior_interval(prior, prior_record, current_row, current_record, env):
+    row, issued = prior
+    post = prior_record['post_physics_feedback']
+    step = row['physics_step']
+    context = prior_record['physics_context']
+    if (row.get('physical_substeps') != 8 or row.get('last_physics_step') != step + 8
+            or current_row['physics_step'] != step + 8 or len(post) != 8
+            or context['live'][env].shape != (8,) or not context['live'][env].all()
+            or context['source_valid'][env].shape != (8,) or not context['source_valid'][env].all()):
+        return None
+    dt = context['dt_s'][env]
+    if (dt.shape != (8,) or not torch.allclose(dt, torch.full_like(dt, 1 / 480), rtol=0, atol=1e-9)):
+        return None
+    start = prior_record['raw_measured_packets'][0]['wrist_pose'][env]
+    finish = current_record['raw_measured_packets'][0]['wrist_pose'][env]
+    for k, packet in enumerate(post, 1):
+        if not _aligned_post(packet, env, step + k, row['simulation_time_s'] + k / 480):
+            return None
+        measured_pose = packet['measured_root_pose'][env]
+        if measured_pose.shape != (2, 7) or not torch.isfinite(measured_pose).all():
+            return None
+    if (start.shape != (2, 7) or not torch.isfinite(start).all() or not torch.equal(measured_pose, finish)):
+        return None
+    # Every contributing sample has the same held command and physical duration.
+    return issued[[14, 17]], (measured_pose[:, 2] - start[:, 2]) / .001
+
+
 def _bind(record, row, action, run_uuid):
     sample = record['samples']
     tick, i = row['tick'], row['env_id']
@@ -76,12 +114,7 @@ def _bind(record, row, action, run_uuid):
             or not torch.equal(sample['actions'][i], action)
             or bool(sample['terminal'][i]) != row['terminal_in_interval']
             or not sample['valid'][i] or not context['source_valid'][i, 0] or not context['live'][i, 0]
-            or post['source'] != 'original_advance_returned_refresh_before_TensorEnv_terminal_reset'
-            or post['native_runtime_verified'] is not True or post['clock_aligned'] is not True
-            or not post['source_valid'][i] or post['sdk_physics_step'] != step + 1
-            or post['backend_readback_sdk_physics_step'] != post['sdk_physics_step']
-            or post['backend_readback_sdk_timestamp_s'] != post['sdk_timestamp_s']
-            or not math.isclose(post['sdk_timestamp_s'] - now, 1 / 480, abs_tol=1e-7, rel_tol=0)):
+            or not _aligned_post(post, i, step + 1, now + 1 / 480)):
         raise ValueError('sidecar native identity, clock, feedback, terminal or issued action differs')
     return sample
 
@@ -166,4 +199,10 @@ def audit_observation_mask(archive, sidecar):
             if candidate.shape != obs[start:stop].shape:
                 raise ValueError('sidecar field shape disagrees with the canonical 371D block')
             mask[index, start:stop] = torch.isfinite(candidate) & candidate.eq(obs[start:stop])
+        if tick > 0:
+            interval = _prior_interval(prior, records[tick - 1], row, record, env)
+            if interval is not None:
+                candidate = torch.cat([value.to(obs) for value in interval])
+                mask[index, 367:371] = torch.isfinite(candidate) & candidate.eq(obs[367:371])
+        # The reset feature buffer starts at zero and has no preceding interval.
     return mask
