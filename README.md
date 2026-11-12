@@ -1,3 +1,7 @@
+## 2026-11-12 — 单 PhysX 刚体双向传力及关闭失败诊断
+
+240 个原生步核对单刚体力和力矩交换。物理证据可复现，PhysX 插件在 Python 终结时报 SIGSEGV，F3 自然退出仍 blocked。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-rigid-bridge-native.md)
+
 ## 2026-11-12 — 将默认开发目标切换为 DeformX 柔性线缆
 
 默认调度覆盖柔性 F0–F10 和离线依赖。原 solid_cylinder 仍可独立回归。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-execution-target.md)
