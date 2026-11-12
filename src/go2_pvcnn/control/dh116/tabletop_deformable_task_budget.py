@@ -3,10 +3,13 @@
 import math
 import re
 
-from .tabletop_deformable_rod_contact import DT, STEPS, SUBSTEPS
+from .tabletop_deformable_rod_contact import DT, SUBSTEPS
 
 
 VERSION = "dh116-deformable-task-budget-v1"
+SETUP_AWARE_VERSION = "dh116-deformable-task-budget-v2"
+THUMB_TOTAL_PHYSICS_STEPS = 240
+THUMB_SETUP_PHYSICS_STEPS = 2
 PHYSICS_HZ = round(1 / DT)
 CONTROL_HZ = 60
 HOLD_CONTROL_STEPS = 5 * CONTROL_HZ
@@ -28,9 +31,20 @@ def _optional_sha256(value, label):
 
 
 def plan_flexible_experiment(config):
-    """Count rows per environment and across the planned deformable-rod run."""
-    if config.get("version") != VERSION or config.get("task_kind") != "deformable_rod":
+    """Count measured rows and, when declared, setup and total physics steps."""
+    version = config.get("version")
+    if version not in (VERSION, SETUP_AWARE_VERSION) or config.get("task_kind") != "deformable_rod":
         raise ValueError("expected the independent deformable_rod budget contract")
+    setup_aware = version == SETUP_AWARE_VERSION
+    setup_key = "setup_physics_steps_per_env"
+    setup_steps = None
+    if setup_aware:
+        if setup_key not in config:
+            raise ValueError(f"{setup_key} must be an explicit count or null")
+        if config[setup_key] is not None:
+            setup_steps = _count(config, setup_key)
+    elif setup_key in config:
+        raise ValueError(f"{setup_key} requires the v2 budget contract")
     if _count(config, "physics_hz") != PHYSICS_HZ or _count(config, "control_hz") != CONTROL_HZ:
         raise ValueError("expected the 480 Hz physical and 60 Hz control clocks")
     phase = config.get("phase")
@@ -40,7 +54,8 @@ def plan_flexible_experiment(config):
     approach = _count(config, "approach_control_steps")
     hold = _count(config, "hold_control_steps")
     rollout = _count(config, "rollout_control_steps")
-    calibration_steps = _count(config, "calibration_physics_steps")
+    calibration_key = "calibration_measured_physics_steps" if setup_aware else "calibration_physics_steps"
+    calibration_steps = _count(config, calibration_key)
     physics = config["physics"]
     support = config["external_support"]
     gravity = physics["gravity_world_m_s2"]
@@ -57,8 +72,14 @@ def plan_flexible_experiment(config):
     support_source = _optional_sha256(support["measurement_source_sha256"], "external support")
     calibration = phase == "contact_calibration"
     if calibration:
-        if (environments, updates, approach, hold, rollout, calibration_steps) != (1, 0, 0, 0, 0, STEPS):
-            raise ValueError("contact calibration requires one environment and exactly 240 physics steps")
+        if (environments, updates, approach, hold, rollout) != (1, 0, 0, 0, 0):
+            raise ValueError("contact calibration requires one environment with no control steps or updates")
+        if setup_aware:
+            measured_steps = THUMB_TOTAL_PHYSICS_STEPS - THUMB_SETUP_PHYSICS_STEPS
+            if (setup_steps, calibration_steps) != (THUMB_SETUP_PHYSICS_STEPS, measured_steps):
+                raise ValueError("v2 contact calibration requires 2 setup and 238 measured physics steps")
+        elif calibration_steps != THUMB_TOTAL_PHYSICS_STEPS:
+            raise ValueError("v1 contact calibration describes 240 measured-phase physics steps")
         if gravity != [0, 0, 0] or pins != [0, 20] or solver_substeps != SUBSTEPS:
             raise ValueError("contact calibration requires the known zero-gravity, two-pin setup")
         if support["policy"] != "calibration_pinned_endpoints":
@@ -85,8 +106,12 @@ def plan_flexible_experiment(config):
 
     decimation = PHYSICS_HZ // CONTROL_HZ
     controls = rollout + approach + hold
-    physical = calibration_steps + controls * decimation
-    return {
+    measured = calibration_steps + controls * decimation
+    total = None if setup_steps is None else setup_steps + measured
+    measured_solver_steps = None if solver_substeps is None else measured * solver_substeps
+    plan = {
+        "budget_contract_version": version,
+        "budget_basis": "phase_only_setup_unaccounted" if total is None else "total_including_setup",
         "phase": phase,
         "task_kind": "deformable_rod",
         "calibration_only": calibration,
@@ -94,16 +119,24 @@ def plan_flexible_experiment(config):
         "updates": updates,
         "wall_seconds": wall_seconds,
         "control_steps_per_env": controls,
-        "physics_steps_per_env": physical,
+        "measured_physics_steps_per_env": measured,
+        "setup_physics_steps_per_env": setup_steps,
+        "total_physics_steps_per_env": total,
+        "total_physics_steps_across_envs": None if total is None else total * environments,
         "hold_physics_steps_per_env": hold * decimation,
-        "total_physics_rows": physical * environments,
-        "solver_substeps_per_env": None if solver_substeps is None else physical * solver_substeps,
+        "total_measured_ledger_rows": measured * environments,
+        "measured_solver_substeps_per_env": measured_solver_steps,
         "physics_config_validation": "configured_values_validated",
         "physical_source_sha256": physical_source,
         "external_support_measurement_sha256": support_source,
-        "requires_separate_native_approval": not calibration,
+        "requires_separate_native_approval": True,
         "native_qualification": False,
     }
+    if not setup_aware:
+        # Historical aliases describe only the measured phase and its ledger.
+        plan.update(physics_steps_per_env=measured, total_physics_rows=measured * environments,
+                    solver_substeps_per_env=measured_solver_steps)
+    return plan
 
 
 def require_grasp_evidence_scope(plan):
@@ -112,5 +145,7 @@ def require_grasp_evidence_scope(plan):
         raise ValueError("grasp evidence requires an independent frozen deformable-rod evaluation")
     if not plan.get("physical_source_sha256") or not plan.get("external_support_measurement_sha256"):
         raise ValueError("grasp evidence requires locked physical and external support measurement sources")
-    if plan.get("solver_substeps_per_env") is None:
+    if plan.get("measured_solver_substeps_per_env") is None:
         raise ValueError("grasp evidence requires a locked solver substep budget")
+    if plan.get("setup_physics_steps_per_env") is None:
+        raise ValueError("grasp evidence planning requires an explicit setup physics budget")

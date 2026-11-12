@@ -7325,6 +7325,80 @@
         "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md",
         "report_source_commit": "4f7b3ffa57e7d41a20ce74c5ccbbf22d6e722809"
       }
+    },
+    "flex.deformable-task-budget-v2": {
+      "title": "Teacher与Hold预算显式计入初始化阶段",
+      "executor": "gated",
+      "dependencies": [
+        "flex.deformable-task-budget-boundaries"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformable_task_budget.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py"
+        ],
+        "log_sha256": "387865f562d7f3475f2da8f2681c5075ce5a2238a2afd234b7628c6afdd6da5a",
+        "tested_head": "b5b0833ee2afa6c723be8db23b6789814db908a2",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "cpu_budget_planning_only",
+        "v1_preserved": true,
+        "unverified_setup_is_null": true,
+        "all_plans_require_approval": true,
+        "hold_physics_steps_minimum_per_env": 2400,
+        "teacher_measured_rows_example": 512,
+        "evaluation_measured_rows_example": 2880,
+        "teacher_total_physics_budget": null,
+        "evaluation_total_physics_budget": null,
+        "runtime_connected": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformable-task-budget-v2.md",
+        "report_source_commit": "4b0447adee86b533071a433afa20f23900e0cf80"
+      },
+      "last_result": {
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformable_task_budget.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py"
+        ],
+        "log_sha256": "387865f562d7f3475f2da8f2681c5075ce5a2238a2afd234b7628c6afdd6da5a",
+        "tested_head": "b5b0833ee2afa6c723be8db23b6789814db908a2",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "cpu_budget_planning_only",
+        "v1_preserved": true,
+        "unverified_setup_is_null": true,
+        "all_plans_require_approval": true,
+        "hold_physics_steps_minimum_per_env": 2400,
+        "teacher_measured_rows_example": 512,
+        "evaluation_measured_rows_example": 2880,
+        "teacher_total_physics_budget": null,
+        "evaluation_total_physics_budget": null,
+        "runtime_connected": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformable-task-budget-v2.md",
+        "report_source_commit": "4b0447adee86b533071a433afa20f23900e0cf80"
+      }
     }
   },
   "execution_target": {
