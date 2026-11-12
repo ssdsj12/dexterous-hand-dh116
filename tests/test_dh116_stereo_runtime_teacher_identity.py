@@ -328,3 +328,31 @@ def test_checkpoint_bytes_cannot_change_between_model_load_and_identity_binding(
         cli.collect_or_evaluate(bridge, {}, None, checkpoint=path, output=tmp_path,
             max_steps=1, collect=True)
     assert bridge.physical_calls == 0
+
+
+def test_deterministic_finger12_audit_has_full_native_joints_and_no_fabricated_latent(bridge, tmp_path):
+    w = bridge.device_world
+    w.q = torch.full((1, 2, 7), .2)
+    w.qd = torch.full_like(w.q, .1)
+    w.limits = torch.stack((torch.zeros_like(w.q), torch.ones_like(w.q)), -1)
+    for hand in w.hands:
+        hand.joint_names = ['finger11', 'finger12', 'finger21', 'finger31', 'finger41', 'finger51', 'finger13']
+        hand.root_physx_view = SimpleNamespace(get_dof_max_velocities=lambda: torch.full((1, 7), .3))
+    bridge.bind_teacher_checkpoint(checkpoint(tmp_path))
+    bridge.teacher_pre_action_identities()
+    latent = torch.full((1, 24), -.25)
+    action = latent.tanh()
+    bridge.set_teacher_action_diagnostics(sampled_action=None, mean_action=action,
+        issued_action=action, diagnostic_mode='teacher_mean', policy_audit=dict(
+            latent_mean=latent, latent_std=torch.full_like(latent, .1), latent_actions=None))
+    bridge.step(action)
+    rows = [json.loads(line) for line in (tmp_path / 'native_physics.jsonl').read_text().splitlines()]
+    samples = [row for row in rows if row['kind'] == 'sample']
+    assert len(samples) == 8
+    for row in samples:
+        audit = row['action_audit']
+        assert audit['execution_mode'] == 'teacher_mean'
+        assert audit['sampled_latent'] is None and audit['sampled_action'] is None
+        assert audit['issued_action'] == audit['actor_mean']
+        assert len(audit['joints']) == 14
+        assert sum(j['joint_role'] == 'passive_finger' for j in audit['joints']) == 2

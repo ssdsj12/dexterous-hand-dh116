@@ -3646,6 +3646,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-mpc-t5-first-episode-capture-preflight.md",
       "report_source_commit": "d4ec2a5ddb124b7e2618cdaf9af1e3380d03a63b"
+    },
+    "wp3.finger12-frozen-teacher-pair-runner": {
+      "passed": 53,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_pair_diagnostic.py",
+        "tests/test_dh116_stereo_runtime_teacher_identity.py",
+        "tests/test_dh116_privileged_action_audit.py",
+        "tests/test_dh116_stereo_candidate_cold_trials.py"
+      ],
+      "log_sha256": "7fc2ee1522aeadd342d49a6b1a84260943c2ebcace68481fbfb862f14d2b4fd8",
+      "tested_head": "afc03e2377fb8eb4b6cb5c955c50f7c6cb1ac35e",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "frozen_teacher_two_arm_preflight_only",
+      "preflight_sha256": "addf674a99a87d2fd8c0bf3c44f1a7ee0aa8479b3d1367a41eb6623b0838c1b9",
+      "native_pairing_runs": 0,
+      "legacy_mpc_compatible": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-pair-runner.md",
+      "report_source_commit": "bbf65f7b7de6e30f0f876cdb3c5e5c9c699b5785"
     }
   }
 }

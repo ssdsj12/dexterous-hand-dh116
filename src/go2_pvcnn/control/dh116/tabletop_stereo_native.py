@@ -351,7 +351,7 @@ class NativeTensorBridge:
         return deepcopy(actual)
 
     def set_teacher_action_diagnostics(self, *, sampled_action, mean_action, issued_action,
-                                       policy_audit=None):
+                                       policy_audit=None, diagnostic_mode=None):
         if getattr(self, '_teacher_pre_action', None) is None:
             raise ValueError('aligned Teacher pre-action identity required before diagnostics')
         values = dict(teacher_sampled_action=sampled_action, teacher_mean_action=mean_action,
@@ -362,19 +362,35 @@ class NativeTensorBridge:
                 raise ValueError('finite normalized Teacher action diagnostics required')
         if mean_action is None or issued_action is None:
             raise ValueError('explicit Teacher mean and actually issued actions required')
-        self._teacher_policy_audit = None
+        if diagnostic_mode not in (None, 'teacher_sampled', 'teacher_mean'):
+            raise ValueError('unknown Teacher diagnostic mode')
+        if diagnostic_mode is not None and policy_audit is None:
+            raise ValueError('paired diagnostic mode requires the frozen policy distribution')
+        if diagnostic_mode == 'teacher_sampled' and (sampled_action is None
+                or not torch.equal(sampled_action, issued_action)):
+            raise ValueError('sampled diagnostic requires the actually issued sample')
+        if diagnostic_mode == 'teacher_mean' and (sampled_action is not None
+                or not torch.equal(mean_action, issued_action)):
+            raise ValueError('mean diagnostic requires the actually issued mean and no sample')
+        captured_policy = None
         if policy_audit is not None:
             fields = {'latent_mean', 'latent_std', 'latent_actions'}
+            deterministic = diagnostic_mode == 'teacher_mean'
             if (not isinstance(policy_audit, dict) or set(policy_audit) != fields
-                    or any(not isinstance(v, torch.Tensor) or v.shape != (self.n, 24)
-                        or not bool(torch.isfinite(v).all()) for v in policy_audit.values())
+                    or any(not isinstance(policy_audit[key], torch.Tensor)
+                        or policy_audit[key].shape != (self.n, 24)
+                        or not bool(torch.isfinite(policy_audit[key]).all())
+                        for key in (fields-{'latent_actions'} if deterministic else fields))
                     or not bool((policy_audit['latent_std'] > 0).all())
-                    or sampled_action is None
-                    or not torch.allclose(policy_audit['latent_actions'].tanh(), sampled_action)
+                    or (deterministic and policy_audit['latent_actions'] is not None)
+                    or (not deterministic and (sampled_action is None
+                        or not torch.allclose(policy_audit['latent_actions'].tanh(), sampled_action)))
                     or not torch.allclose(policy_audit['latent_mean'].tanh(), mean_action)):
-                raise ValueError('joint action audit requires actual aligned 24D policy distribution and sample')
-            self._teacher_policy_audit = {key: value.detach().clone()
+                raise ValueError('joint action audit requires actual aligned 24D policy distribution and action')
+            captured_policy = {key: None if value is None else value.detach().clone()
                 for key, value in policy_audit.items()}
+        self._teacher_policy_audit = captured_policy
+        self._teacher_action_diagnostic_mode = diagnostic_mode
         self._teacher_actions = {key: None if value is None else value.detach().clone()
             for key, value in values.items()}
 
@@ -561,7 +577,8 @@ class NativeTensorBridge:
                     if not hasattr(self, '_teacher_joint_audit'):
                         self._teacher_joint_audit = TeacherJointActionAudit(w)
                     row['action_audit'] = self._teacher_joint_audit.capture(
-                        w, task, self.env, i, row, policy_audit)
+                        w, task, self.env, i, row, policy_audit,
+                        diagnostic_mode=getattr(self, '_teacher_action_diagnostic_mode', None))
             formal_keys = ('object_relative', 'object_quat', 'wrist_pose', 'effective_pad_loads_n',
                 'effective_pad_vectors_w', 'effective_pad_depth_m', 'rejected_contact_loads_n', 'object_velocity')
             if all(name in task.m for name in formal_keys):

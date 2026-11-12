@@ -105,7 +105,7 @@ class TeacherJointActionAudit:
             read = getattr(getattr(hand, 'root_physx_view', None), 'get_dof_max_velocities', None)
             self.velocity_limits.append(None if not callable(read) else read().detach().cpu().clone())
 
-    def capture(self, world, task, env, i, row, policy):
+    def capture(self, world, task, env, i, row, policy, *, diagnostic_mode=None):
         from .linear_coupling import MIMIC
         from .tabletop_palm_mount import ANGULAR_JOINT_NAMES, JOINT_NAMES
         from .tabletop_tensor_env import JOINT_LIMIT_RESET_CONTRACT, TRAINING_JOINT_LIMIT_CONTRACT
@@ -166,15 +166,17 @@ class TeacherJointActionAudit:
         projected = None if projection is None else bool((
             (projection['pre_projection_palm_target_m']-projection['projected_palm_target_m']).abs()
             > 1e-9).any())
+        provenance = {} if diagnostic_mode is None else dict(execution_mode=diagnostic_mode)
+        latent = policy['latent_actions']
         return dict(version='dh116-privileged-action-audit-v1', joints=joints,
             sample_source='actual_pre_reset_physics_substep',
             velocity_limit_source=[None if v is None else
                 'PhysX.get_dof_max_velocities_cached_at_first_audited_substep' for v in self.velocity_limits],
             controller_wrist_world_target_m=None if world_target is None else world_target[i, :, :3],
             actor_mean=row['teacher_mean_action'], latent_mean=policy['latent_mean'][i],
-            latent_std=policy['latent_std'][i], sampled_latent=policy['latent_actions'][i],
+            latent_std=policy['latent_std'][i], sampled_latent=None if latent is None else latent[i],
             sampled_action=row['teacher_sampled_action'], issued_action=row['actually_issued_action'],
-            **classify_joint_evidence(joints, failure_code=row['failure_code'], projection=projected))
+            **provenance, **classify_joint_evidence(joints, failure_code=row['failure_code'], projection=projected))
 
 
 def summarize_joint_terminals(rows):

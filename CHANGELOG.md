@@ -1,3 +1,7 @@
+## 2026-11-12 — 冻结 Teacher sampled／mean 同初态配对入口
+
+真实 update-0 与同一双抓法初态通过 CPU 预检。旧 MPC reset family 和 native readback 不匹配，三路资格仍待验证。 Ubuntu CPU 回归 53 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-pair-runner.md)
+
 ## 2026-11-12 — 原 T5 MPC 完整首回合采集预检
 
 真实 T5 参数及 10 个来源 SHA 预检通过，归档按完整成功、失败与未结束回合分流。完整原生预算待独立批准。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-t5-first-episode-capture-preflight.md)
