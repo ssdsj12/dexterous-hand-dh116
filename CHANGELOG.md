@@ -1,3 +1,7 @@
+## 2026-11-12 — 握式多腕姿原几何补充搜索
+
+原有边界下每手 16 个不同起点，最接近的两手最大指腹间距仍高于原筛选线，握式保持待有效初态。 Ubuntu CPU 回归 219 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wrap-diverse-wrist-search.md)
+
 ## 2026-11-12 — 握式 Teacher 整手包握几何预检
 
 握式按双手各五指包握预检，8 个历史候选和有界 CPU 搜索未得到可用初态。 Ubuntu CPU 回归 234 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wrap-geometry-preflight.md)
