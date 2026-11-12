@@ -1,3 +1,7 @@
+## 2026-11-12 — Standalone CUDA 静态、动力学与接触验证
+
+RTX 4090 独立求解器 36 项通过，保留 1 项上游高刚度限制 xfail。静态平台读回双侧力和力矩。 Ubuntu CPU 回归 12 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f2-standalone-gpu.md)
+
 ## 2026-11-12 — 隔离 CUDA 12.8 与 cp310/SM89 扩展
 
 固定 cp310 和 CUDA 12.8.61 两次构建成功，实际产物均有 SM89 设备代码。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f1-cuda-build.md)

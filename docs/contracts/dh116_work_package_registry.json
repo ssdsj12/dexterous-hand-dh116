@@ -480,7 +480,7 @@
         "wp4.contact-native"
       ],
       "status": "blocked",
-      "reason": "缺真实编译求解器和原生反作用力证据"
+      "reason": "standalone CUDA 通过 flex.f2-standalone-gpu；待 PhysX 和 DH116 双手同杆原生反作用力。"
     },
     "wp6.deployment-isolation": {
       "title": "验证三种 Actor 的独立双目部署",
@@ -3681,7 +3681,69 @@
       "dependencies": [
         "flex.f1-cuda-build"
       ],
-      "status": "blocked"
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_cuda_build.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "af47203cb685588895b016a924bc88b0ddd15f48b786444c2344dfaf5a9cfa9e",
+        "tested_head": "d72f2e5ec51840b3bdd033288b7342d8306b5c25",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "qualification_scope": "standalone_cuda_not_isaac",
+        "solver_executed": true,
+        "gpu_passed": 36,
+        "gpu_xfailed": 1,
+        "gpu_unexpected_failures": 0,
+        "outer_exit_code": 0,
+        "max_force_reciprocity_residual_n": 2.384185791015625e-07,
+        "audit_sha256": "85bd4b464c4ce27eff5453766adf520d6efabf53087f155c509b7b140dbfaf18",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f2-standalone-gpu.md",
+        "report_source_commit": "513e61585ac7cb595f1fac36be68aab50b4ea470"
+      },
+      "last_result": {
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_cuda_build.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "af47203cb685588895b016a924bc88b0ddd15f48b786444c2344dfaf5a9cfa9e",
+        "tested_head": "d72f2e5ec51840b3bdd033288b7342d8306b5c25",
+        "native_execution_performed": true,
+        "native_qualification": false,
+        "qualification_scope": "standalone_cuda_not_isaac",
+        "solver_executed": true,
+        "gpu_passed": 36,
+        "gpu_xfailed": 1,
+        "gpu_unexpected_failures": 0,
+        "outer_exit_code": 0,
+        "max_force_reciprocity_residual_n": 2.384185791015625e-07,
+        "audit_sha256": "85bd4b464c4ce27eff5453766adf520d6efabf53087f155c509b7b140dbfaf18",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f2-standalone-gpu.md",
+        "report_source_commit": "513e61585ac7cb595f1fac36be68aab50b4ea470"
+      }
     },
     "flex.f6-assets-audit": {
       "title": "官方 DeformX drop/hang 资产和轨迹审计",
