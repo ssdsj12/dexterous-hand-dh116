@@ -2,6 +2,7 @@
 """One original DH116 thumb and one locked flexible rod, with bounded native evidence."""
 
 import argparse
+import faulthandler
 import gc
 import hashlib
 import json
@@ -26,6 +27,47 @@ from scripts.verify_dh116_deformx_rigid_bridge import rotation_wxyz, wrench_at_c
 _SDF_SUMMARY_SHA = "db5d75e780082640a29ae94ab010052dc19a354d574b6d82cf331bf1414355ab"
 _GPU_RESULT_SHA = "2de331289145d4be824243db0eeb64b796f24a92cee7b93ee61a37244e9bbde5"
 _THUMB = "finger14_link"
+
+
+def left_output_from_scheduler_receipt(receipt_path, expected_sha):
+    """Reopen the scheduler-owned outer process and qualified output evidence."""
+    receipt_path = receipt_path.resolve(strict=True)
+    attempt = receipt_path.parent
+    if (receipt_path.name != "receipt.json" or not attempt.name.startswith("attempt-")
+            or attempt.parent.parent.name != "flex.f4-left-contact-native"
+            or attempt.parent.parent.parent.name != "native-attempts"):
+        raise ValueError("left receipt must belong to the scheduler's left-thumb attempt")
+    if expected_sha is None:
+        raise ValueError("expected scheduler receipt SHA256 is required")
+    receipt = checked_json(receipt_path, expected_sha)
+    intent = json.loads((attempt / "intent.json").read_text())
+    outer = json.loads((attempt / "outer_exit.json").read_text())
+    output = Path(receipt["output"])
+    if (receipt["executor"] != "native_bounded" or receipt["native_execution_performed"] is not True
+            or receipt["native_qualification"] is not True or intent["package"] != attempt.parent.parent.name
+            or not output.is_absolute() or output.resolve(strict=True) != output
+            or (output.name, output.parent.name, output.parent.parent.name)
+               != ("native", attempt.name, intent["package"])
+            or intent["output"] != receipt["output"]
+            or intent["code_config_sha256"] != attempt.parent.name
+            or any(intent[key] != receipt[key] for key in ("code_config_sha256", "command_spec_sha256"))):
+        raise ValueError("left scheduler receipt lacks qualified attempt identity")
+    if (type(outer["outer_exit_code"]) is not int or outer["outer_exit_code"] != 0
+            or receipt["outer_exit_code"] != 0 or outer["native_lock_observed"] is not True
+            or receipt["native_lock_observed"] is not True or outer["log_sha256"] != receipt["log_sha256"]):
+        raise ValueError("left scheduler attempt requires independently recorded outer exit 0")
+    checked_bytes(attempt / "native.log", outer["log_sha256"])
+    digests = receipt["artifact_sha256"]
+    ledger = checked_bytes(output / "physics.jsonl", digests["physics.jsonl"])
+    if receipt["ledger_counts"] != {"physics.jsonl": STEPS} or ledger.count(b"\n") != STEPS:
+        raise ValueError("left scheduler ledger count differs")
+    result = checked_json(output / "result.json", digests["result.json"])
+    marker = checked_json(output / "shutdown_complete.json", digests["shutdown_complete.json"])
+    if (result["side"] != "left" or result["sample_validation_passed"] is not True
+            or result["physics_rows"] != STEPS or result["failure_reasons"]
+            or marker["close_returned"] is not True):
+        raise ValueError("right requires qualified left contact and shutdown")
+    return output
 
 
 def preflight(args, project):
@@ -55,12 +97,15 @@ def preflight(args, project):
             or row["clock"] != result["clock"] or not row["sdk_body"]["sdk_rigid_body_found"]):
         raise ValueError("SDF does not bind the actual GPU pad identity")
     if args.side == "right":
-        if args.left_evidence is None or (args.left_evidence / "exit_code").read_text().strip() != "0":
-            raise ValueError("right-thumb launch requires left process exit 0")
-        prior = json.loads((args.left_evidence / "native/result.json").read_text())
-        marker = json.loads((args.left_evidence / "native/shutdown_complete.json").read_text())
-        if prior["side"] != "left" or not prior["sample_validation_passed"] or not marker["close_returned"]:
-            raise ValueError("right-thumb launch requires validated left contact and shutdown")
+        if args.left_scheduler_receipt is not None:
+            left_output_from_scheduler_receipt(args.left_scheduler_receipt, args.left_receipt_sha256)
+        else:
+            if args.left_evidence is None or (args.left_evidence / "exit_code").read_text().strip() != "0":
+                raise ValueError("right-thumb launch requires left process exit 0")
+            prior = json.loads((args.left_evidence / "native/result.json").read_text())
+            marker = json.loads((args.left_evidence / "native/shutdown_complete.json").read_text())
+            if prior["side"] != "left" or not prior["sample_validation_passed"] or not marker["close_returned"]:
+                raise ValueError("right-thumb launch requires validated left contact and shutdown")
     contract = {"source_usd": sources[args.side], "side": args.side, "steps": STEPS,
                 "baked_sdf_sha256": pad["sdf_file_sha256"], "native_hull_sha256": lock["gpu_rows"][key],
                 "backend_files": lock["backend_files"], "thumb_link": _THUMB}
@@ -72,6 +117,11 @@ def _pose_matrix(p, q):
     transform[:3, :3] = rotation_wxyz(q)
     transform[:3, 3] = p
     return transform
+
+
+def _collect_owned_references(ownership, phase):
+    gc.collect()
+    ownership.checkpoint(phase)
 
 
 def _run(sim, args, contract, sdf_path, capture, ownership):
@@ -270,6 +320,10 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
                    standalone_sdf_sha256=contract["baked_sdf_sha256"], rod_uid="rod0",
                    body_path=body_path, failure=failures[0] if failures else None,
                    outer_exit_verified=False, grasp_qualified=False)
+    # Match the qualified F3 ownership order: drop the probe-owned solver and
+    # view references before the SDK STOP callback and App teardown.
+    del snapshot, mesh_pose, thumb_pose, fk, f, t, rope, composer, view, hand
+    _collect_owned_references(ownership, "owned hand and solver references dropped")
     return summary
 
 
@@ -281,7 +335,10 @@ def main():
     parser.add_argument("--ropesim-python", type=Path, required=True)
     parser.add_argument("--sdf-dir", type=Path, required=True)
     parser.add_argument("--capture-dir", type=Path, required=True)
-    parser.add_argument("--left-evidence", type=Path)
+    left = parser.add_mutually_exclusive_group()
+    left.add_argument("--left-evidence", type=Path)
+    left.add_argument("--left-scheduler-receipt", type=Path)
+    parser.add_argument("--left-receipt-sha256")
     parser.add_argument("--side", choices=("left", "right"), required=True)
     parser.add_argument("--steps", type=int, default=STEPS)
     parser.add_argument("--execute-native", action="store_true")
@@ -300,6 +357,7 @@ def main():
     ownership = NativeOwnershipTrace(args.output / "ownership.jsonl")
     with native_instance_lock():
         app = AppLauncher(args, fast_shutdown=False).app
+        faulthandler.enable(file=sys.__stderr__, all_threads=True)
         sim = None
         try:
             import carb.settings
@@ -334,6 +392,7 @@ def main():
                     ownership.event("SDK STOP", manager_view_released=released)
                     if not released:
                         raise RuntimeError("owned SimulationManager view survived STOP")
+                    _collect_owned_references(ownership, "before app close")
             finally:
                 close_calibration_app(app, args.output)
                 ownership.checkpoint("app.close returned, outer exit pending")

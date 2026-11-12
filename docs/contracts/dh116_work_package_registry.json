@@ -5006,13 +5006,13 @@
     },
     "flex.f4-left-contact-native": {
       "title": "左拇指与柔性杆原生接触",
-      "executor": "gated",
+      "executor": "native_bounded",
       "dependencies": [
         "flex.f3-isaac-rigid",
         "flex.f4-cooked-pad-sdf"
       ],
-      "status": "blocked",
-      "reason": "实际接触已记录，外层 139，尚未通过自然退出资格。",
+      "status": "pending",
+      "reason": "首轮外层 139 已归档；新版仅变更资源释放顺序，准备独立有界复验。",
       "last_native_attempt": {
         "native_execution_performed": true,
         "native_qualification": false,
@@ -5025,7 +5025,44 @@
         "max_force_n": 0.0473053,
         "max_pair_force_residual_n": 0,
         "independent_validator_sha256": "72601a242b72646e0bf0e9bbb2b96308fd227fd0d0d2d526bcb368d50e564ef3"
-      }
+      },
+      "native_attempt_history": [
+        {
+          "native_execution_performed": true,
+          "native_qualification": false,
+          "outer_exit_code": 139,
+          "physics_rows": 240,
+          "contact_ticks": 68,
+          "status": "failed_native",
+          "report": "docs/superpowers/reports/2026-11-12-deformx-left-thumb-contact-native.md",
+          "report_source_commit": "853bfcb3d37d0a8ee22cbf26a77468e7f0e32d85",
+          "max_force_n": 0.0473053,
+          "max_pair_force_residual_n": 0,
+          "independent_validator_sha256": "72601a242b72646e0bf0e9bbb2b96308fd227fd0d0d2d526bcb368d50e564ef3"
+        }
+      ],
+      "command_spec": "configs/dh116_execution/deformx_thumb_left_lifecycle_v2.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "dh116_left_thumb_deformx_contact_lifecycle",
+      "dependency_scopes": {
+        "flex.f3-isaac-rigid": {
+          "scope": "isolated_single_rigid_bridge_240_step_lifecycle_only",
+          "native": true
+        },
+        "flex.f4-cooked-pad-sdf": {
+          "scope": "standalone_cuda_sdf_and_single_rod_mesh_registration_without_steps",
+          "native": false
+        }
+      },
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_deformx_thumb_contact.py"
+      ],
+      "blocker_kind": "waiting_approval"
     },
     "flex.f4-right-contact-native": {
       "title": "右拇指与柔性杆原生接触",
@@ -5675,6 +5712,72 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-bounded-camera-recipes.md",
         "report_source_commit": "3f43b843e2d41b1c9df2dad5f4f003774ba89027"
+      }
+    },
+    "flex.f4-thumb-teardown-recipe": {
+      "title": "左拇指资源释放变体与有界配方",
+      "executor": "prepared",
+      "dependencies": [
+        "flex.native-bounded-scheduler"
+      ],
+      "status": "passed",
+      "tests": [
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_deformx_bridge_lifecycle.py"
+      ],
+      "last_native_attempt": {
+        "passed": 47,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_flexible_execution_dependencies.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "1643572251a92b868d4f09a2ccccb2309c2df3f43766c235db78dff419826b02",
+        "tested_head": "0ff11cdef41586f28747cb459afb055117210188",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "code_config_sha256": "2477d57d19c91ee28fffdb07f0e76b737e47af4fda5172fb0a297364cc92c01c",
+        "left_first_outer_exit": 139,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-scheduler-preflight.md",
+        "report_source_commit": "022972a601e9b86a4412a8537b33e9214d5dcb92"
+      },
+      "last_result": {
+        "passed": 47,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_flexible_execution_dependencies.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "1643572251a92b868d4f09a2ccccb2309c2df3f43766c235db78dff419826b02",
+        "tested_head": "0ff11cdef41586f28747cb459afb055117210188",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "code_config_sha256": "2477d57d19c91ee28fffdb07f0e76b737e47af4fda5172fb0a297364cc92c01c",
+        "left_first_outer_exit": 139,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-scheduler-preflight.md",
+        "report_source_commit": "022972a601e9b86a4412a8537b33e9214d5dcb92"
       }
     }
   },

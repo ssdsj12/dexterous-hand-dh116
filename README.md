@@ -1,3 +1,7 @@
+## 2026-11-12 — 左拇指资源释放变体与有界配方
+
+保留首轮退出失败；原生复验只改变对象释放顺序，右侧入口核验左侧外层回执和账本。 Ubuntu CPU 回归 47 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-scheduler-preflight.md)
+
 ## 2026-11-12 — WireSeg 原始 RGB 子集续训与独立验证
 
 两份原始 RGB LFS 复核通过。seg-only 续到 160 步，另完成 16 步精确配对深度诊断。 Ubuntu CPU 回归 17 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-verified-rgb-subset.md)

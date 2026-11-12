@@ -5276,6 +5276,33 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-wireseg-verified-rgb-subset.md",
       "report_source_commit": "3f6b92deda77b6c1fb3f835ccc919c28b460059c"
+    },
+    "flex.f4-thumb-teardown-recipe": {
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_deformx_bridge_lifecycle.py",
+        "tests/test_dh116_flexible_execution_dependencies.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "1643572251a92b868d4f09a2ccccb2309c2df3f43766c235db78dff419826b02",
+      "tested_head": "0ff11cdef41586f28747cb459afb055117210188",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "code_config_sha256": "2477d57d19c91ee28fffdb07f0e76b737e47af4fda5172fb0a297364cc92c01c",
+      "left_first_outer_exit": 139,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-scheduler-preflight.md",
+      "report_source_commit": "022972a601e9b86a4412a8537b33e9214d5dcb92"
     }
   }
 }
