@@ -1,3 +1,7 @@
+## 2026-11-12 — Camera C4 isolated lifecycle
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c4.md)。
+
 ## 2026-11-12 — Camera C3 isolated lifecycle
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c3.md)。
