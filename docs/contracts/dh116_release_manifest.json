@@ -6055,6 +6055,59 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "status": "passed",
+      "stage": "cpu_verified",
+      "scope": "bounded_batch_recovery_not_project_completion",
+      "passed": 458,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "tested_head": "1988eeb76349c0b68d90acfb1df2178c0f1ce248",
+      "cpu_evidence_sha256": "de998f2e45c27d8225343d57dfb8866fb357d4a0a7e8e9ef31daa0553178f55b",
+      "recovery_sha256": "cef8f7d2fb906c2938196a0e24f4c8663fddde6b0c16647fa18aeac47efee2b5",
+      "report": "docs/superpowers/reports/2026-11-12-continuation-batch2-progress-and-recovery.md",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "training_updates": 0,
+      "formal_teacher_qualified": false,
+      "formal_student_qualified": false,
+      "remaining_blockers": [
+        "exact_C5_and_free_Pinch_native_approval",
+        "wireseg_accuracy_below_constant",
+        "full_371_reset_R0_physical_binding",
+        "qualified_teacher_and_synchronized_stereo"
+      ],
+      "package": "flex.continuation-second-batch-closeout",
+      "commit": "446cb07a36cae0a6449a8d2557b2cd735c7fa199",
+      "parent": "1988eeb76349c0b68d90acfb1df2178c0f1ce248",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_continuation_batch2_recovery.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-continuation-batch2-progress-and-recovery.md"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
+    },
+    {
+      "stage": "documentation_clarification",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "physics_steps": 0,
+      "cpu_code_unchanged": true,
+      "cpu_evidence_sha256": "de998f2e45c27d8225343d57dfb8866fb357d4a0a7e8e9ef31daa0553178f55b",
+      "package": "flex.continuation-second-batch-closeout",
+      "commit": "1d90d485146b522fe3bcc75bf673b86500ffe232",
+      "parent": "446cb07a36cae0a6449a8d2557b2cd735c7fa199",
+      "files": [
+        "docs/superpowers/reports/2026-11-12-continuation-batch2-progress-and-recovery.md"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
