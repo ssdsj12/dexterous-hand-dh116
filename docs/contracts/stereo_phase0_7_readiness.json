@@ -5450,6 +5450,34 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-native-receipt-binding.md",
       "report_source_commit": "8b1ad8c443f744e1dd1df6a5cf57ec23f1d9fad9"
+    },
+    "flex.f4-paired-thumb-recipes": {
+      "passed": 56,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_deformx_bridge_lifecycle.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "733c1619c7a68f7a1b7d494b1dcd49f9452439004faca127b6263f43a84ce065",
+      "tested_head": "d34aa4eaa0e26fd05116e099c0fb46d8a3478f49",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "qualification_scope": "paired_recipe_and_cpu_identity_checks_only",
+      "right_action_index": 7,
+      "right_body_path": "/World/DeformXThumb/rightHand/finger14_link",
+      "contact_calibration_only": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-right-lifecycle-preflight.md",
+      "report_source_commit": "67f63d7d5692984e53ea72955487a5dc8c7dc31d"
     }
   }
 }

@@ -16,7 +16,7 @@ import numpy as np
 from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, JOINTS, MIMIC, active_limits, expand
 from go2_pvcnn.control.dh116.tabletop_deformable_rod_bridge import NativeOwnershipTrace
 from go2_pvcnn.control.dh116.tabletop_deformable_rod_contact import (
-    DT, RADIUS_M, STEPS, SUBSTEPS, command_at_step, min_grid_distance,
+    DT, MOVE_STEPS, RADIUS_M, STEPS, SUBSTEPS, ZERO_STEPS, command_at_step, min_grid_distance,
     plan_thumb_approach, schedule_summary,
 )
 from scripts.bake_dh116_deformx_pad_sdfs import checked_bytes, checked_json
@@ -110,6 +110,24 @@ def preflight(args, project):
                 "baked_sdf_sha256": pad["sdf_file_sha256"], "native_hull_sha256": lock["gpu_rows"][key],
                 "backend_files": lock["backend_files"], "thumb_link": _THUMB}
     return contract, path, row
+
+
+def verify_thumb_ledger_identity(rows, *, side, body_path, slot):
+    """Bind the measured pad, rod, and canonical finger12 command to this side."""
+    action_index = {"left": 1, "right": 7}[side]
+    if body_path != f"/World/DeformXThumb/{side}Hand/{_THUMB}" or slot != 0:
+        raise ValueError("wrong measured pad identity")
+    for row in rows:
+        if (row["side"], row["body_path"], row["mesh_index"], row["rod_uid"]) != (
+                side, body_path, slot, "rod0"):
+            raise ValueError("thumb ledger has mismatched pad identity")
+        action = np.asarray(row["canonical_action24"])
+        moving = ZERO_STEPS < row["phase_step"] <= ZERO_STEPS + MOVE_STEPS
+        expected = [action_index] if moving else []
+        if (action.shape != (24,) or not np.isfinite(action).all()
+                or np.flatnonzero(action).tolist() != expected):
+            raise ValueError("thumb ledger has mismatched canonical action")
+    return action_index
 
 
 def _pose_matrix(p, q):
@@ -314,10 +332,14 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
     composer.reset()
     torch.cuda.synchronize(device)
     summary = schedule_summary(rows)
+    action_index = verify_thumb_ledger_identity(rows, side=args.side, body_path=body_path, slot=slot)
     summary.update(side=args.side, scope="one_thumb_original_articulation_calibration",
                    peak_force_n=max((np.linalg.norm(r["rod_on_hand_link_w"][:3]) for r in rows), default=0),
                    peak_torque_nm=max((np.linalg.norm(r["rod_on_hand_com_w"][3:]) for r in rows), default=0),
                    standalone_sdf_sha256=contract["baked_sdf_sha256"], rod_uid="rod0",
+                   source_usd_sha256=contract["source_usd"]["sha256"],
+                   native_hull_sha256=contract["native_hull_sha256"],
+                   registered_pad_slot=slot, thumb_action_index=action_index,
                    body_path=body_path, failure=failures[0] if failures else None,
                    outer_exit_verified=False, grasp_qualified=False)
     # Match the qualified F3 ownership order: drop the probe-owned solver and

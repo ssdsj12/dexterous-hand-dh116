@@ -98,3 +98,80 @@ def test_scheduler_left_receipt_requires_outer_zero_and_locked_ledger(tmp_path):
     (output / "physics.jsonl").write_text('{"different": true}\n' * 240)
     with pytest.raises(ValueError, match="SHA256"):
         left_output_from_scheduler_receipt(receipt, receipt_hash)
+
+
+def test_right_thumb_recipe_binds_real_right_identity():
+    import hashlib
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    execution = root / "configs/dh116_execution"
+    right = json.loads((execution / "deformx_thumb_right_lifecycle_v2.json").read_text())
+    left = json.loads((execution / "deformx_thumb_left_lifecycle_v2.json").read_text())
+    action = json.loads((root / "docs/contracts/stereo_action_contract.json").read_text())
+    lock = json.loads((root / "docs/contracts/dh116_deformx_pad_sdf_evidence_lock.json").read_text())
+    assets = root / "assets/fixed_dual_panda_dh116_v1"
+    manifest = json.loads((assets / "manifest.json").read_text())
+    original = next(row for row in manifest["sources"] if row["kind"] == "dh116" and row["side"] == "right")
+    source = assets / "dependencies" / Path(original["path"]).name
+    assert hashlib.sha256(source.read_bytes()).hexdigest() == original["sha256"]
+    inputs_by_filename = {Path(name).name: digest for name, digest in right["inputs"].items()}
+
+    argv = right["argv"]
+    assert right["entrypoint"] == left["entrypoint"]
+    assert argv[argv.index("--side") + 1] == "right"
+    assert argv[argv.index("--steps") + 1] == "240"
+    assert argv[argv.index("--device") + 1] == "cuda:0"
+    assert argv[argv.index("--left-scheduler-receipt") + 1] == "{left_scheduler_receipt}"
+    assert argv[argv.index("--left-receipt-sha256") + 1] == "{left_receipt_sha256}"
+    assert "--left-evidence" not in argv
+    assert right["dependency_receipt"] == {
+        "package": "flex.f4-left-contact-native",
+        "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle",
+    }
+    assert right["budget"] == left["budget"]
+    assert right["debugger"] == left["debugger"] == "gdb_on_segv"
+    assert len(right["inputs"]["/usr/bin/gdb"]) == 64
+    assert right["inputs"]["/usr/bin/gdb"] == left["inputs"]["/usr/bin/gdb"]
+    assert "left_finger14_link.json" not in inputs_by_filename
+    assert "left.finger14_link.npz" not in inputs_by_filename
+    assert inputs_by_filename[source.name] == original["sha256"]
+    assert inputs_by_filename["right_finger14_link.json"] == lock["gpu_rows"]["right.finger14_link"]
+    expected = right["validator"]["equals"]
+    assert expected["side"] == "right"
+    assert expected["body_path"] == "/World/DeformXThumb/rightHand/finger14_link"
+    assert expected["source_usd_sha256"] == original["sha256"]
+    assert expected["native_hull_sha256"] == lock["gpu_rows"]["right.finger14_link"]
+    assert expected["standalone_sdf_sha256"] == inputs_by_filename["right.finger14_link.npz"]
+    assert expected["standalone_sdf_sha256"] != left["validator"]["equals"]["standalone_sdf_sha256"]
+    assert expected["registered_pad_slot"] == 0
+    assert expected["thumb_action_index"] == 7
+    assert action["action_contract"]["joint_order"][expected["thumb_action_index"]] == "right.finger12"
+    assert expected["physics_rows"] == 240 and expected["sample_validation_passed"] is True
+    assert expected["failure_reasons"] == [] and expected["failure"] is None
+    assert right["validator"]["line_counts"] == {"physics.jsonl": 240}
+
+
+def test_right_thumb_runtime_identity_rejects_left_action_or_wrong_pad():
+    from scripts.verify_dh116_deformx_thumb_contact import verify_thumb_ledger_identity
+
+    start = np.zeros(6)
+    endpoint = np.array([0., -.09, 0., 0., 0., 0.])
+    path = "/World/DeformXThumb/rightHand/finger14_link"
+    rows = [
+        {"phase_step": step, "canonical_action24": command_at_step(start, endpoint, step=step, side="right")[1],
+         "side": "right", "body_path": path, "mesh_index": 0, "rod_uid": "rod0"}
+        for step in range(1, 241)
+    ]
+    assert verify_thumb_ledger_identity(rows, side="right", body_path=path, slot=0) == 7
+
+    left_action = command_at_step(start, endpoint, step=49, side="left")[1]
+    with pytest.raises(ValueError, match="canonical action"):
+        verify_thumb_ledger_identity(
+            [*rows[:48], {**rows[48], "canonical_action24": left_action}, *rows[49:]],
+            side="right", body_path=path, slot=0,
+        )
+    for change in ({"mesh_index": 1}, {"body_path": path.replace("rightHand", "leftHand")}, {"rod_uid": "rod1"}):
+        with pytest.raises(ValueError, match="pad identity"):
+            verify_thumb_ledger_identity([*rows[:-1], {**rows[-1], **change}], side="right", body_path=path, slot=0)

@@ -1,3 +1,7 @@
+## 2026-11-12 — 左右拇指独立身份配方与单次取证
+
+右侧锁定独立USD、SDF、link、slot和canonical action7；左右使用相同GDB取证，保持v2物理与释放逻辑。本轮预算左240后右240，两者均0update，右必须通过实际左回执资格门控。 Ubuntu CPU 回归 56 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-right-lifecycle-preflight.md)
+
 ## 2026-11-12 — 原生前置回执绑定与同次崩溃栈
 
 右侧命令从真实已验证左侧回执解析路径和SHA，恢复复用前置；真实GDB对照保留外层255和inferior SIGSEGV，逐次捕获栈与映射，不改成成功。 Ubuntu CPU 回归 52 项通过。[报告](docs/superpowers/reports/2026-11-12-native-receipt-binding.md)

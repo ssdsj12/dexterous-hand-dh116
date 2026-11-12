@@ -26,6 +26,7 @@
     "timeout_seconds": 180,
     "updates": 0
   },
+  "debugger": "gdb_on_segv",
   "entrypoint": "scripts/verify_dh116_deformx_thumb_contact.py",
   "environment": {
     "DH116_NUM_THREADS": "2",
@@ -43,7 +44,8 @@
     "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flexible-f1-20261112-883RS4/sdk/lib64/libcudart.so.12": "3de79bdf8165cfd0f27aed3c6f4c98dd6aa9b9b676036b9362491fe070854f07",
     "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.kit": "b4a60880219827b4843f3ec3d6f9cbad8028c1c9df588a89c1796a60b8030a92",
     "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/integration/assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
-    "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/integration/assets/fixed_dual_panda_dh116_v1/manifest.json": "9698b16e526087f62c5da32f5e78ef13d5b4467e081c942db89227ba73d34048"
+    "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/integration/assets/fixed_dual_panda_dh116_v1/manifest.json": "9698b16e526087f62c5da32f5e78ef13d5b4467e081c942db89227ba73d34048",
+    "/usr/bin/gdb": "a6222ff0f450ca040e3479c04fdb7d0f1e0cabb099688270e720b7115d933c3d"
   },
   "source_files": [
     "docs/contracts/dh116_deformx_pad_sdf_evidence_lock.json",

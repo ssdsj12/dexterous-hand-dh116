@@ -5066,14 +5066,40 @@
     },
     "flex.f4-right-contact-native": {
       "title": "右拇指与柔性杆原生接触",
-      "executor": "gated",
+      "executor": "native_bounded",
       "dependencies": [
         "flex.f3-isaac-rigid",
         "flex.f4-cooked-pad-sdf",
         "flex.f4-left-contact-native"
       ],
-      "status": "blocked",
-      "reason": "需独立右手 body 身份与镜像侧反作用力原生验证。"
+      "status": "pending",
+      "reason": "已冻结独立右侧配方；仅在本轮左侧实际自然退出和接触资格通过后由真实receipt绑定执行。",
+      "command_spec": "configs/dh116_execution/deformx_thumb_right_lifecycle_v2.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "dh116_right_thumb_deformx_contact_lifecycle",
+      "dependency_scopes": {
+        "flex.f4-left-contact-native": {
+          "scope": "dh116_left_thumb_deformx_contact_lifecycle",
+          "native": true
+        },
+        "flex.f3-isaac-rigid": {
+          "scope": "isolated_single_rigid_bridge_240_step_lifecycle_only",
+          "native": true
+        },
+        "flex.f4-cooked-pad-sdf": {
+          "scope": "standalone_cuda_sdf_and_single_rod_mesh_registration_without_steps",
+          "native": false
+        }
+      },
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_deformx_thumb_contact.py"
+      ],
+      "blocker_kind": "waiting_dependency"
     },
     "flex.f4-single-hand-contact-native": {
       "title": "单手与柔性杆对向承托",
@@ -6114,6 +6140,71 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-native-receipt-binding.md",
         "report_source_commit": "8b1ad8c443f744e1dd1df6a5cf57ec23f1d9fad9"
+      }
+    },
+    "flex.f4-paired-thumb-recipes": {
+      "title": "左右拇指独立身份配方与单次取证",
+      "executor": "gated",
+      "dependencies": [
+        "flex.native-receipt-binding",
+        "flex.f4-thumb-teardown-recipe"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 56,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "733c1619c7a68f7a1b7d494b1dcd49f9452439004faca127b6263f43a84ce065",
+        "tested_head": "d34aa4eaa0e26fd05116e099c0fb46d8a3478f49",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "paired_recipe_and_cpu_identity_checks_only",
+        "right_action_index": 7,
+        "right_body_path": "/World/DeformXThumb/rightHand/finger14_link",
+        "contact_calibration_only": true,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-right-lifecycle-preflight.md",
+        "report_source_commit": "67f63d7d5692984e53ea72955487a5dc8c7dc31d"
+      },
+      "last_result": {
+        "passed": 56,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_work_packages.py"
+        ],
+        "log_sha256": "733c1619c7a68f7a1b7d494b1dcd49f9452439004faca127b6263f43a84ce065",
+        "tested_head": "d34aa4eaa0e26fd05116e099c0fb46d8a3478f49",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "paired_recipe_and_cpu_identity_checks_only",
+        "right_action_index": 7,
+        "right_body_path": "/World/DeformXThumb/rightHand/finger14_link",
+        "contact_calibration_only": true,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-right-lifecycle-preflight.md",
+        "report_source_commit": "67f63d7d5692984e53ea72955487a5dc8c7dc31d"
       }
     }
   },
