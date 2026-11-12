@@ -1,3 +1,7 @@
+## 2026-11-12 — WireSeg 旧断点独立诊断恢复与第九个官方数据块
+
+旧断点可在独立诊断格式中恢复 model/Adam/Torch RNG 与真实 sampler，并支持后续完整当前 RNG 链式续点；未知历史信息仍为 unknown，strict v2 不接受。新增 360 个官方精确 RGB-depth 配对，完整块 9/148。本轮真实训练 0 更新、原生 0 次。 Ubuntu CPU 回归 62 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-legacy-diagnostic-import.md)
+
 ## 2026-11-12 — C5 telemetry hook 所有权对照与正常退出采样
 
 新增单变量 C5：在 C4 配置下提前释放已存在的 telemetry hook pair，并准备自然 finalize/崩溃完整栈与 maps。根因假设未证实，原生尚未运行；旧 C0–C4 和调度源码不变。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md)

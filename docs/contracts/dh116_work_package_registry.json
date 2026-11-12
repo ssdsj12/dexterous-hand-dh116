@@ -3487,7 +3487,9 @@
         "flex.f5-wireseg-ingestion"
       ],
       "status": "blocked",
-      "reason": "已核验 8/148 官方 blob。新深度 360/360 精确配对，中心 192 裁剪 292 有效、68 无标签。旧第128轮断点缺严格恢复字段，新v2 CPU恢复通过。保留旧清单，本批无真实训练。"
+      "reason": "Audited legacy import and chained diagnostic runner available; new real-data diagnostic needs <=16 updates/120s optimization soft deadline with separately approved 180s outer +30s safe-save scope. Historical heldout quality remains unqualified; no new updates performed.",
+      "blocker_kind": "approval_and_data_qualification",
+      "diagnostic_preparation_package": "flex.wireseg-legacy-diagnostic-continuation"
     },
     "flex.f0-source-lock": {
       "title": "DeformX 主仓库与递归源码锁定",
@@ -5632,7 +5634,8 @@
         "flex.f5-wireseg-subset"
       ],
       "status": "blocked",
-      "reason": "需完整锁定视觉源文件与正式训练预算。"
+      "reason": "9/148 official blobs verified; new depth21 supplies 360 exact official monocular pairs. Full transfer incomplete; verified subset work remains independent.",
+      "blocker_kind": "external_data"
     },
     "flex.f8-pinch": {
       "title": "Pinch 无相机 R0 特权 Teacher",
@@ -8892,6 +8895,109 @@
       "reason": "C5 ownership hypothesis remains unverified; separate 180s/0 physics/0 PPO exact approval required",
       "blocker_kind": "approval_required",
       "scheduler_entrypoint": "scripts/run_dh116_camera_c5_work_packages.py"
+    },
+    "flex.wireseg-legacy-diagnostic-continuation": {
+      "title": "WireSeg 旧断点独立诊断恢复与第九个官方数据块",
+      "executor": "gated",
+      "dependencies": [
+        "flex.wireseg-strict-resume",
+        "flex.f5-wireseg-paired-heldout-depth"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 62,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_legacy_import.py",
+          "tests/test_dh116_wireseg_checkpoint_resume.py",
+          "tests/test_dh116_wireseg_overfit_diagnostic.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "c44e279ca15c11c8f44286900885b60c10dadb486293b1ae599c334f57ef23cf",
+        "tested_head": "eee7716103265e931c80c2190c68e85ebf66104f",
+        "stage": "cpu_verified",
+        "native_qualification": false,
+        "real_training_updates": 0,
+        "native_execution_performed": false,
+        "scope": "wireseg_legacy_diagnostic_import_and_continuation",
+        "complete_blobs": 9,
+        "total_blobs": 148,
+        "new_exact_pairs": 360,
+        "supervised_center_crop": 294,
+        "unsupervised_center_crop": 66,
+        "admission_sha256": "0f0f14263c4d50d05eed289e6c9388aa91980c30a7384992eae1ba287164bee0",
+        "subset_manifest_sha256": "84ce17fc28c99b46762d414003fe8b7b57a5351760c84d8526344ce24fbf60f8",
+        "sample_ledger_sha256": "5a108c58d4f9b606bffbfbfc686c180501cf275b727b1b237e1e8543935c7c22",
+        "seg_import_sha256": "776603d4b7008734ec25f157fb84a82411ebb78e18588c58281db5376d55fe0e",
+        "depth_import_sha256": "1d22ce17a31177af013c0b945a042de9cc04792549a99bcbe12c477711fd5a30",
+        "historical_bitwise_equivalence": false,
+        "generalization_qualified": false,
+        "stereo_qualified": false,
+        "remaining_blockers": [
+          "new_bounded_diagnostic_training_approval",
+          "heldout_accuracy_not_qualified",
+          "stereo_native_data_not_qualified"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-legacy-diagnostic-import.md",
+        "report_source_commit": "4894f5fd874dcf209e5bfcdc52c35c275b15af55"
+      },
+      "last_result": {
+        "passed": 62,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_legacy_import.py",
+          "tests/test_dh116_wireseg_checkpoint_resume.py",
+          "tests/test_dh116_wireseg_overfit_diagnostic.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "c44e279ca15c11c8f44286900885b60c10dadb486293b1ae599c334f57ef23cf",
+        "tested_head": "eee7716103265e931c80c2190c68e85ebf66104f",
+        "stage": "cpu_verified",
+        "native_qualification": false,
+        "real_training_updates": 0,
+        "native_execution_performed": false,
+        "scope": "wireseg_legacy_diagnostic_import_and_continuation",
+        "complete_blobs": 9,
+        "total_blobs": 148,
+        "new_exact_pairs": 360,
+        "supervised_center_crop": 294,
+        "unsupervised_center_crop": 66,
+        "admission_sha256": "0f0f14263c4d50d05eed289e6c9388aa91980c30a7384992eae1ba287164bee0",
+        "subset_manifest_sha256": "84ce17fc28c99b46762d414003fe8b7b57a5351760c84d8526344ce24fbf60f8",
+        "sample_ledger_sha256": "5a108c58d4f9b606bffbfbfc686c180501cf275b727b1b237e1e8543935c7c22",
+        "seg_import_sha256": "776603d4b7008734ec25f157fb84a82411ebb78e18588c58281db5376d55fe0e",
+        "depth_import_sha256": "1d22ce17a31177af013c0b945a042de9cc04792549a99bcbe12c477711fd5a30",
+        "historical_bitwise_equivalence": false,
+        "generalization_qualified": false,
+        "stereo_qualified": false,
+        "remaining_blockers": [
+          "new_bounded_diagnostic_training_approval",
+          "heldout_accuracy_not_qualified",
+          "stereo_native_data_not_qualified"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-legacy-diagnostic-import.md",
+        "report_source_commit": "4894f5fd874dcf209e5bfcdc52c35c275b15af55"
+      }
     }
   },
   "execution_target": {
