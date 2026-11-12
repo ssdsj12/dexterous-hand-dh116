@@ -5,6 +5,7 @@ This is NOT a full articulated hand or validation of R2/Force Proxy.
 """
 from __future__ import annotations
 import argparse
+import faulthandler
 import hashlib
 import json
 import os
@@ -12,6 +13,7 @@ from pathlib import Path
 import signal
 import sys
 import traceback
+from types import SimpleNamespace
 
 
 def _write(path, value):
@@ -37,7 +39,11 @@ def _launch_calibration_app(launcher):
                  '--/renderer/multiGpu/autoEnable=false --/physics/cudaDevice=0 '
                  '--/plugins/carb.tasking.plugin/threadCount=32')
     # Isaac Sim 4.5 fast shutdown can exit before close() returns to Python.
-    return launcher(launch, fast_shutdown=False).app
+    app=launcher(launch, fast_shutdown=False).app
+    # AppLauncher installs its own handlers. Keep Python fatal diagnostics
+    # on the inherited stderr after Kit closes and until process exit.
+    faulthandler.enable(file=sys.__stderr__, all_threads=True)
+    return app
 
 
 def _record_shutdown_mode(output, settings):
@@ -47,6 +53,48 @@ def _record_shutdown_mode(output, settings):
         raise RuntimeError(f'{setting} must read back as False after AppLauncher, got {effective!r}')
     _write(output/'shutdown_mode.json', dict(pid=os.getpid(), setting=setting,
         effective_fast_shutdown=effective))
+
+
+class _SamplingHandles:
+    def __init__(self):
+        self.full_subscription=None
+        self.ordinary_subscription=None
+        self.callbacks=None
+        self.contact=None
+        self.reverse=None
+        self.rigid_view=None
+        self.view=None
+        self.source=None
+        self.settings=None
+        self.scene=SimpleNamespace()
+
+
+def _close_calibration_trial(handles, app, output, simulation, close):
+    subscribed = dict(full=handles.full_subscription is not None,
+                      ordinary=handles.ordinary_subscription is not None)
+    handles.full_subscription=None
+    handles.ordinary_subscription=None
+    try:
+        _write(output/'callbacks_released.json', subscribed)
+    finally:
+        handles.callbacks=None
+        handles.contact=None
+        handles.reverse=None
+        handles.rigid_view=None
+        try:
+            if handles.view is not None and handles.view.is_valid:
+                handles.view.invalidate()
+        except BaseException as error:
+            # Preserve the traceback locations while dropping the failed
+            # operation's frame locals before unloading Kit plugins.
+            traceback.clear_frames(error.__traceback__)
+            raise
+        finally:
+            handles.view=None
+            handles.source=None
+            handles.settings=None
+            handles.scene=None
+            close(app, output, simulation=simulation)
 
 
 def run(args):
@@ -60,8 +108,7 @@ def run(args):
         from isaaclab.app import AppLauncher
         app=_launch_calibration_app(AppLauncher)
         sim=None
-        full_subscription=None
-        ordinary_subscription=None
+        handles=_SamplingHandles()
         previous_sigterm=None
         try:
             if args.monitor_sigterm:
@@ -72,99 +119,99 @@ def run(args):
             from omni.physx import get_physx_simulation_interface
             from pxr import UsdGeom, UsdPhysics, PhysxSchema, Gf, Vt, PhysicsSchemaTools
             import carb
-            settings=carb.settings.get_settings()
-            _record_shutdown_mode(args.output, settings)
+            handles.settings=carb.settings.get_settings()
+            _record_shutdown_mode(args.output, handles.settings)
             sim=sim_utils.SimulationContext(sim_utils.SimulationCfg(dt=1/480,device='cuda:0',
                 gravity=(0.,0.,-9.81),physx=sim_utils.PhysxCfg(solver_type=0)))
-            reporting=configure_report_processing(settings,enable=args.enable_full_report_processing)
-            stage=omni.usd.get_context().get_stage()
-            UsdGeom.SetStageMetersPerUnit(stage, 1.)
-            UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
+            reporting=configure_report_processing(handles.settings,enable=args.enable_full_report_processing)
+            handles.scene.stage=omni.usd.get_context().get_stage()
+            UsdGeom.SetStageMetersPerUnit(handles.scene.stage, 1.)
+            UsdGeom.SetStageUpAxis(handles.scene.stage, UsdGeom.Tokens.z)
             side='L' if args.side=='left' else 'R'
             mesh=ROOT/f'resources/manufacturer/DH116V2.0_URDF_MJCF_Files/DH116-V2.0-{side}/meshes/finger14_link.STL'
             triangles=read_binary_stl(mesh)
             vertices=triangles.reshape(-1,3)
             finger='/World/Finger14'
             obj='/World/CalibrationObject'
-            body=UsdGeom.Xform.Define(stage,finger).GetPrim()
-            rigid=UsdPhysics.RigidBodyAPI.Apply(body)
-            rigid.CreateKinematicEnabledAttr(True)
-            shape=UsdGeom.Mesh.Define(stage,finger+'/collision')
-            shape.CreatePointsAttr(Vt.Vec3fArray.FromNumpy(vertices))
-            shape.CreateFaceVertexCountsAttr([3]*len(triangles))
-            shape.CreateFaceVertexIndicesAttr(list(range(len(vertices))))
-            UsdPhysics.CollisionAPI.Apply(shape.GetPrim())
-            UsdPhysics.MeshCollisionAPI.Apply(shape.GetPrim()).CreateApproximationAttr('convexHull')
+            handles.scene.body=UsdGeom.Xform.Define(handles.scene.stage,finger).GetPrim()
+            handles.scene.rigid=UsdPhysics.RigidBodyAPI.Apply(handles.scene.body)
+            handles.scene.rigid.CreateKinematicEnabledAttr(True)
+            handles.scene.shape=UsdGeom.Mesh.Define(handles.scene.stage,finger+'/collision')
+            handles.scene.shape.CreatePointsAttr(Vt.Vec3fArray.FromNumpy(vertices))
+            handles.scene.shape.CreateFaceVertexCountsAttr([3]*len(triangles))
+            handles.scene.shape.CreateFaceVertexIndicesAttr(list(range(len(vertices))))
+            UsdPhysics.CollisionAPI.Apply(handles.scene.shape.GetPrim())
+            UsdPhysics.MeshCollisionAPI.Apply(handles.scene.shape.GetPrim()).CreateApproximationAttr('convexHull')
             # An isolated source-calibration geometry. Original task assets,
             # materials, actuators, controllers and checkpoints are not touched.
-            sphere=UsdGeom.Sphere.Define(stage,obj)
+            handles.scene.sphere=UsdGeom.Sphere.Define(handles.scene.stage,obj)
             radius=.004
             center=(vertices.min(axis=0)+vertices.max(axis=0))/2
             center[2]=vertices[:,2].max()+radius+.003
-            sphere.CreateRadiusAttr(radius)
-            sphere.AddTranslateOp().Set(Gf.Vec3d(*map(float,center)))
-            UsdPhysics.CollisionAPI.Apply(sphere.GetPrim())
-            dynamic=UsdPhysics.RigidBodyAPI.Apply(sphere.GetPrim())
-            dynamic.CreateVelocityAttr(Gf.Vec3f(.02,0.,0.))
-            UsdPhysics.MassAPI.Apply(sphere.GetPrim()).CreateMassAttr(.02)
-            rigid_ext=PhysxSchema.PhysxRigidBodyAPI.Apply(sphere.GetPrim())
-            rigid_ext.CreateLinearDampingAttr(0.)
-            rigid_ext.CreateAngularDampingAttr(0.)
-            for prim in (body,sphere.GetPrim()):
-                PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr(0.)
+            handles.scene.sphere.CreateRadiusAttr(radius)
+            handles.scene.sphere.AddTranslateOp().Set(Gf.Vec3d(*map(float,center)))
+            UsdPhysics.CollisionAPI.Apply(handles.scene.sphere.GetPrim())
+            handles.scene.dynamic=UsdPhysics.RigidBodyAPI.Apply(handles.scene.sphere.GetPrim())
+            handles.scene.dynamic.CreateVelocityAttr(Gf.Vec3f(.02,0.,0.))
+            UsdPhysics.MassAPI.Apply(handles.scene.sphere.GetPrim()).CreateMassAttr(.02)
+            handles.scene.rigid_ext=PhysxSchema.PhysxRigidBodyAPI.Apply(handles.scene.sphere.GetPrim())
+            handles.scene.rigid_ext.CreateLinearDampingAttr(0.)
+            handles.scene.rigid_ext.CreateAngularDampingAttr(0.)
+            for handles.scene.prim in (handles.scene.body,handles.scene.sphere.GetPrim()):
+                PhysxSchema.PhysxContactReportAPI.Apply(handles.scene.prim).CreateThresholdAttr(0.)
             usd=args.output/'calibration_scene.usda'
-            stage.Export(str(usd))
+            handles.scene.stage.Export(str(usd))
             inventory=dict(scope='isolated_actual_thumb_mesh_fixed_mount_not_articulated_hand',
                 episode_uid=calibration_episode_uid(args.output,args.side),
                 reporting=reporting,
                 callback_channels_requested=dict(full=args.full_contact_callback,ordinary=args.ordinary_contact_callback),
                 side=args.side, object_collider=obj, finger_collider=finger+'/collision', mesh_path=str(mesh), mesh_sha256=hashlib.sha256(mesh.read_bytes()).hexdigest(),
                 stage_sha256=hashlib.sha256(usd.read_bytes()).hexdigest(),
-                meters_per_unit=UsdGeom.GetStageMetersPerUnit(stage), dt_s=1/480,
-                collisions=[str(p.GetPath()) for p in stage.Traverse() if p.HasAPI(UsdPhysics.CollisionAPI)],
-                joints=[str(p.GetPath()) for p in stage.Traverse() if p.IsA(UsdPhysics.Joint)],
-                authored_force_attributes=[str(a.GetPath()) for p in stage.Traverse() for a in p.GetAttributes()
+                meters_per_unit=UsdGeom.GetStageMetersPerUnit(handles.scene.stage), dt_s=1/480,
+                collisions=[str(p.GetPath()) for p in handles.scene.stage.Traverse() if p.HasAPI(UsdPhysics.CollisionAPI)],
+                joints=[str(p.GetPath()) for p in handles.scene.stage.Traverse() if p.IsA(UsdPhysics.Joint)],
+                authored_force_attributes=[str(a.GetPath()) for p in handles.scene.stage.Traverse() for a in p.GetAttributes()
                     if a.HasAuthoredValueOpinion() and any(s in a.GetName().lower() for s in ('force','attachment'))],
                 gravity_m_s2=[0.,0.,-9.81], original_task_modified=False)
             _write(args.output/'inventory.json',inventory)
-            source=get_physx_simulation_interface()
+            handles.source=get_physx_simulation_interface()
             def decode(raw):
                 return decode_contact_report(raw,path_decoder=PhysicsSchemaTools.intToSdfPath)
-            callbacks=ContactReportReceiptBuffer(
+            handles.callbacks=ContactReportReceiptBuffer(
                 clock_reader=lambda:(sim.current_time_step_index,sim.current_time),
                 path_decoder=PhysicsSchemaTools.intToSdfPath)
             def full_callback(*raw):
-                callbacks.record('full',raw)
+                handles.callbacks.record('full',raw)
             def ordinary_callback(*raw):
-                callbacks.record('ordinary',raw)
+                handles.callbacks.record('ordinary',raw)
             if args.full_contact_callback:
-                full_subscription=source.subscribe_full_contact_report_events(full_callback)
+                handles.full_subscription=handles.source.subscribe_full_contact_report_events(full_callback)
             if args.ordinary_contact_callback:
-                ordinary_subscription=source.subscribe_contact_report_events(ordinary_callback)
+                handles.ordinary_subscription=handles.source.subscribe_contact_report_events(ordinary_callback)
             sim.reset()
-            view=tensors.create_simulation_view('torch')
-            view.set_subspace_roots('/')
-            contact=view.create_rigid_contact_view(obj,[finger],max_contact_data_count=64)
-            reverse=view.create_rigid_contact_view(finger,[obj],max_contact_data_count=64)
-            rigid_view=view.create_rigid_body_view(obj)
-            mass=float(rigid_view.get_masses().detach().cpu().reshape(-1)[0])
+            handles.view=tensors.create_simulation_view('torch')
+            handles.view.set_subspace_roots('/')
+            handles.contact=handles.view.create_rigid_contact_view(obj,[finger],max_contact_data_count=64)
+            handles.reverse=handles.view.create_rigid_contact_view(finger,[obj],max_contact_data_count=64)
+            handles.rigid_view=handles.view.create_rigid_body_view(obj)
+            mass=float(handles.rigid_view.get_masses().detach().cpu().reshape(-1)[0])
             rows=[]
             with (args.output/'raw_contact_480hz.jsonl').open('x',encoding='utf-8') as stream:
                 for step in range(1,args.steps+1):
-                    before=rigid_view.get_velocities().detach().cpu().reshape(-1,6)[0,:3].tolist()
-                    callbacks.begin_step(step)
+                    before=handles.rigid_view.get_velocities().detach().cpu().reshape(-1,6)[0,:3].tolist()
+                    handles.callbacks.begin_step(step)
                     try:
                         sim.step(render=False)
                     finally:
-                        callbacks.end_step()
-                    after=rigid_view.get_velocities().detach().cpu().reshape(-1,6)[0,:3].tolist()
+                        handles.callbacks.end_step()
+                    after=handles.rigid_view.get_velocities().detach().cpu().reshape(-1,6)[0,:3].tolist()
                     row=dict(env_id=0,episode_uid=inventory['episode_uid'],policy_step=None,
                         physics_step=step,sdk_step=int(sim.current_time_step_index),timestamp=float(sim.current_time),
                         dt=1/480,mass_kg=mass,gravity_m_s2=[0.,0.,-9.81],velocity_before=before,velocity_after=after,
-                        pose=rigid_view.get_transforms().detach().cpu().tolist(),
-                        tensor=capture_tensor_pair(contact,dt=1/480),
-                        reverse_tensor=capture_tensor_pair(reverse,dt=1/480),
-                        full_report=decode(source.get_full_contact_report()),callback_receipts=callbacks.drain(),
+                        pose=handles.rigid_view.get_transforms().detach().cpu().tolist(),
+                        tensor=capture_tensor_pair(handles.contact,dt=1/480),
+                        reverse_tensor=capture_tensor_pair(handles.reverse,dt=1/480),
+                        full_report=decode(handles.source.get_full_contact_report()),callback_receipts=handles.callbacks.drain(),
                         report_processing_settings=dict(disable_contact_processing=carb.settings.get_settings().get('/physics/disableContactProcessing')))
                     rows.append(row)
                     stream.write(json.dumps(row,allow_nan=False)+'\n')
@@ -178,16 +225,10 @@ def run(args):
             _write(args.output/'summary.json',summary)
         finally:
             try:
-                subscribed = dict(full=full_subscription is not None, ordinary=ordinary_subscription is not None)
-                full_subscription=None
-                ordinary_subscription=None
-                _write(args.output/'callbacks_released.json', subscribed)
+                _close_calibration_trial(handles, app, args.output, sim, close_calibration_app)
             finally:
-                try:
-                    close_calibration_app(app,args.output,simulation=sim)
-                finally:
-                    if previous_sigterm is not None:
-                        signal.signal(signal.SIGTERM, previous_sigterm)
+                if previous_sigterm is not None:
+                    signal.signal(signal.SIGTERM, previous_sigterm)
 
 
 def main(argv=None):

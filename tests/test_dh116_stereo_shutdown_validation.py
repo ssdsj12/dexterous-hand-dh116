@@ -1,8 +1,10 @@
+import faulthandler
 import hashlib
 import json
 import os
 import subprocess
 import sys
+import weakref
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -107,15 +109,23 @@ def test_native_launch_requires_explicit_approval_flag(tmp_path):
     assert not output.exists()
 
 
-def test_calibration_uses_public_non_fast_app_launcher_configuration():
+def test_calibration_uses_non_fast_launcher_and_enables_fatal_diagnostics(monkeypatch):
     app = object()
+    events = []
 
     def launcher(args, **config):
         assert args.headless is True and args.device == 'cuda:0'
         assert config.get('fast_shutdown') is False
+        events.append('launch')
         return SimpleNamespace(app=app)
 
+    def enable(*, file, all_threads):
+        assert file is sys.__stderr__ and all_threads is True
+        events.append('fatal_diagnostics')
+
+    monkeypatch.setattr(faulthandler, 'enable', enable)
     assert calibration._launch_calibration_app(launcher) is app
+    assert events == ['launch', 'fatal_diagnostics']
 
 
 @pytest.mark.parametrize('effective', [False, True, None, 0])
@@ -149,3 +159,47 @@ def test_shutdown_mode_must_be_read_back_false_by_the_same_child(evidence, chang
     write_json(evidence, 'shutdown_mode.json', marker)
     with pytest.raises(ValueError, match='shutdown_mode.json'):
         verify_trial(evidence)
+
+
+@pytest.mark.parametrize('view_mode', ['valid', 'invalid', 'failure', 'absent'])
+def test_owned_sampling_handles_release_before_app_close(tmp_path, view_mode):
+    handles = calibration._SamplingHandles()
+    events = []
+    refs = {}
+    app, sim = object(), object()
+
+    class Handle:
+        pass
+
+    def give(owner, name, handle):
+        setattr(owner, name, handle)
+        refs[name] = weakref.ref(handle)
+
+    class View:
+        is_valid = view_mode != 'invalid'
+
+        def invalidate(self):
+            events.append('invalidate')
+            assert all(refs[name]() is None for name in (
+                'full_subscription', 'ordinary_subscription', 'contact', 'reverse', 'rigid_view'))
+            if view_mode == 'failure':
+                raise RuntimeError('view invalidation failed')
+
+    for name in ('full_subscription', 'ordinary_subscription', 'contact', 'reverse', 'rigid_view', 'source', 'settings'):
+        give(handles, name, Handle())
+    give(handles.scene, 'stage', Handle())
+    if view_mode != 'absent':
+        give(handles, 'view', View())
+
+    def close(actual_app, output, *, simulation):
+        assert actual_app is app and output == tmp_path and simulation is sim
+        assert all(ref() is None for ref in refs.values())
+        assert json.loads((tmp_path / 'callbacks_released.json').read_text()) == dict(full=True, ordinary=True)
+        events.append('close')
+
+    if view_mode == 'failure':
+        with pytest.raises(RuntimeError, match='view invalidation failed'):
+            calibration._close_calibration_trial(handles, app, tmp_path, sim, close)
+    else:
+        calibration._close_calibration_trial(handles, app, tmp_path, sim, close)
+    assert events == (['invalidate'] if view_mode in ('valid', 'failure') else []) + ['close']

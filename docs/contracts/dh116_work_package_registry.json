@@ -218,21 +218,36 @@
       "executor": "gated",
       "dependencies": [
         "wp4.cpu-contract",
-        "wp4.shutdown-launch-mode"
+        "wp4.shutdown-launch-mode",
+        "wp4.sampling-handle-lifetime"
       ],
       "status": "blocked",
-      "reason": "首轮完成 240 步但缺少关闭返回标记。已修复快速关闭配置，独立原生复验待批准",
+      "reason": "v2 首轮 240 步及 close 返回通过，但子进程 SIGSEGV，原生资格待独立复验",
       "last_native_attempt": {
-        "status": "failed_shutdown_evidence",
-        "report": "docs/superpowers/reports/2026-11-12-physx-non-fast-shutdown-recovery.md",
+        "status": "failed_process_exit",
+        "report": "docs/superpowers/reports/2026-11-12-physx-v2-native-exit-crash.md",
         "completed_steps": 240,
         "physical_hz": 480,
-        "raw_sha256": "f8caa8d94bcd2f7fefe300ebf94c01b32e12a391caaf062875a6dc8eab487a7e",
-        "child_exit_code": 0,
+        "raw_sha256": "b2c5f0a6501b397136cd2ed6b08be66590446b399e94363f8de4c5e2dd5a7164",
+        "child_exit_code": -11,
         "outer_exit_code": 1,
+        "app_close_returned": true,
         "restart_launched": false,
         "native_qualification": false
-      }
+      },
+      "native_attempt_history": [
+        {
+          "status": "failed_shutdown_evidence",
+          "report": "docs/superpowers/reports/2026-11-12-physx-non-fast-shutdown-recovery.md",
+          "completed_steps": 240,
+          "physical_hz": 480,
+          "raw_sha256": "f8caa8d94bcd2f7fefe300ebf94c01b32e12a391caaf062875a6dc8eab487a7e",
+          "child_exit_code": 0,
+          "outer_exit_code": 1,
+          "restart_launched": false,
+          "native_qualification": false
+        }
+      ]
     },
     "wp4.contact-native": {
       "title": "逐 contact 来源、外部支撑和滑移资格",
@@ -862,6 +877,41 @@
         "tested_head": "25d7b7af4578c17da774762c5e357da0957e9434",
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-physx-non-fast-shutdown-recovery.md",
+        "native_qualification": false
+      }
+    },
+    "wp4.sampling-handle-lifetime": {
+      "title": "PhysX 标定句柄释放与退出崩溃诊断",
+      "executor": "prepared",
+      "dependencies": [
+        "wp4.shutdown-launch-mode"
+      ],
+      "tests": [
+        "tests/test_dh116_stereo_shutdown_validation.py",
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_physx_polled_contact_audit.py"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 65,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_shutdown_validation.py",
+          "tests/test_dh116_stereo_contact_calibration.py",
+          "tests/test_dh116_physx_polled_contact_audit.py"
+        ],
+        "log_sha256": "5e7b95ce0dab766ad414ae149fc5a031074456e28f019cb4aae4494a20d1abc5",
+        "tested_head": "a88ebafa273bf3ded1b05dbfb4d8310dc32b5bf8",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-physx-sampling-handle-lifetime.md",
         "native_qualification": false
       }
     }
