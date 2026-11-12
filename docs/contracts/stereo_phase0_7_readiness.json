@@ -3995,6 +3995,48 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-mpc-teacher-provenance-preflight.md",
       "report_source_commit": "d16e4657c595a6c253a71047022af93f26ebea2c"
+    },
+    "wp3.mpc-t5-first-episode-native": {
+      "passed": 54,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_mpc_privileged_capture.py",
+        "tests/test_mpc_observation_validity.py",
+        "tests/test_dh116_mpc_teacher_proof_preflight.py",
+        "tests/test_dh116_privileged_action_audit.py"
+      ],
+      "log_sha256": "ec874c7e13789680451f25297dd2875ef429ecffe34afb443e1a35b395b13f10",
+      "tested_head": "87484fc10070276d1870d830dd0fd0fecd427c38",
+      "native_qualification": false,
+      "native_execution_performed": true,
+      "qualification_scope": "legacy_mpc_task_success_and_synchronization_only",
+      "environments": 8,
+      "completed_policy_steps": 1800,
+      "completed_first_episodes": 8,
+      "mpc_native_success_by_style": {
+        "pinch": 4,
+        "tripod": 0
+      },
+      "ppo_updates": 0,
+      "synced_rows": 10559,
+      "bound_480hz_substeps": 84461,
+      "full_cpu_valid_columns": 204,
+      "full_cpu_any_valid_columns": 208,
+      "bc_ready_episodes": 0,
+      "outer_exit_code": 0,
+      "archive_sha256": "bc3043c14ace766980123b08daa5b2dc180d7baa756a58ed88aef33bfe4981fe",
+      "external_advisory_audit_sha256": "53fed7957d65c81281df6f1e4ca085b39b53e20efce4a1ba8bd34c15ae4a39ce",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-mpc-t5-first-episode-native-evidence.md",
+      "report_source_commit": "ea71db970d643d363774a89c535b2afaa7bcc388"
     }
   }
 }

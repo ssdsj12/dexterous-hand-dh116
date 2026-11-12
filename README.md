@@ -1,3 +1,7 @@
+## 2026-11-12 — 原 T5 MPC 八个首回合原生采集
+
+原生二指 4/4、三指 0/4，10,559 条状态／动作配对，全部首回合已分区。正式 BC 准入为 0。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-t5-first-episode-native-evidence.md)
+
 ## 2026-11-12 — MPC 成功轨迹进入 Teacher 的原生证据预检
 
 只读入口实测读取三类原生日志，分开记录任务成功、正式证据与专家装配资格。 Ubuntu CPU 回归 53 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-teacher-provenance-preflight.md)
