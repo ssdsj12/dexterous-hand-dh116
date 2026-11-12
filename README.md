@@ -1,3 +1,7 @@
+## 2026-11-12 — 空渲染 Kit 生命周期
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-v0.md)。
+
 ## 2026-11-12 — 任务相机 V0–V3 有界原生配方
 
 四格按实际外层退出递进，V3 同一渲染读取全部模态。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-12-bounded-camera-recipes.md)

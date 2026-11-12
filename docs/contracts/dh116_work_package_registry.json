@@ -5414,7 +5414,7 @@
       "dependencies": [
         "flex.f6-camera-lifecycle-tools"
       ],
-      "status": "pending",
+      "status": "failed",
       "command_spec": "configs/dh116_execution/deformx_camera_v0.json",
       "requires_approval": true,
       "resource_class": "isaac_single_gpu",
@@ -5426,7 +5426,83 @@
       },
       "tests": [
         "tests/test_dh116_render_capture_boundary.py"
-      ]
+      ],
+      "last_native_attempt": {
+        "executor": "native_bounded",
+        "tested_head": "50f04b1e2d3db1327da5ddc115f907037b845f32",
+        "batch_id": "camera-v0-v3-546130f",
+        "qualification_scope": "camera_empty_lifecycle",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "command_spec_sha256": "4ffcbc9b79c82cdccb3b3897cbd7f40ca943d904d483529d9b7d33c23ea6081e",
+        "code_config_sha256": "87635455706e7ae5a49124350b8b0e9060e16e6ca5ef3fd84979688ecfa511fb",
+        "exit_code": -11,
+        "outer_exit_code": -11,
+        "log_sha256": "8a570ee5dd34b8084d556d94b679ce501c2eeea6e85aabdc85065063dd3e13d8",
+        "duration_seconds": 43.818,
+        "native_lock_observed": true,
+        "blocker_kind": "failed_native",
+        "result_sha256": "69203a17076eb2d32b0daddeb291ca114e8883d260304483380737ab76316df3",
+        "native_physics_validated": false,
+        "cpu_regression": {
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "tests/test_dh116_render_capture_boundary.py"
+          ],
+          "log_sha256": "deeedbceb6551d064276f830b72205a3dbd47337f27ffa20e85e73b21cddb66e",
+          "tested_head": "50f04b1e2d3db1327da5ddc115f907037b845f32"
+        },
+        "status": "failed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f6-camera-v0.md"
+      },
+      "blocker_kind": "failed_native",
+      "reason": "native or CPU qualification failed; durable evidence retained outside Git",
+      "last_result": {
+        "executor": "native_bounded",
+        "tested_head": "50f04b1e2d3db1327da5ddc115f907037b845f32",
+        "batch_id": "camera-v0-v3-546130f",
+        "qualification_scope": "camera_empty_lifecycle",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "command_spec_sha256": "4ffcbc9b79c82cdccb3b3897cbd7f40ca943d904d483529d9b7d33c23ea6081e",
+        "code_config_sha256": "87635455706e7ae5a49124350b8b0e9060e16e6ca5ef3fd84979688ecfa511fb",
+        "exit_code": -11,
+        "outer_exit_code": -11,
+        "log_sha256": "8a570ee5dd34b8084d556d94b679ce501c2eeea6e85aabdc85065063dd3e13d8",
+        "duration_seconds": 43.818,
+        "native_lock_observed": true,
+        "blocker_kind": "failed_native",
+        "result_sha256": "69203a17076eb2d32b0daddeb291ca114e8883d260304483380737ab76316df3",
+        "native_physics_validated": false,
+        "cpu_regression": {
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "tests/test_dh116_render_capture_boundary.py"
+          ],
+          "log_sha256": "deeedbceb6551d064276f830b72205a3dbd47337f27ffa20e85e73b21cddb66e",
+          "tested_head": "50f04b1e2d3db1327da5ddc115f907037b845f32"
+        },
+        "status": "failed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f6-camera-v0.md"
+      }
     },
     "flex.f6-camera-v1": {
       "title": "单相机 Render Product 生命周期",
