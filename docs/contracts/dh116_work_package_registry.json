@@ -480,7 +480,7 @@
         "wp4.contact-native"
       ],
       "status": "blocked",
-      "reason": "真实单刚体双向传力已记录；Isaac 自然退出和 DH116 双手同杆接触尚待资格。"
+      "reason": "CUDA 与单刚体 DeformX–PhysX 双向物理和自然退出已通过，DH116 双手同杆接触仍待资格。"
     },
     "wp6.deployment-isolation": {
       "title": "验证三种 Actor 的独立双目部署",
@@ -3557,13 +3557,112 @@
       "dependencies": [
         "flex.f2-standalone-gpu"
       ],
-      "status": "blocked",
-      "reason": "两路共 240 步实际双向力验证成立，app.close 后 PhysX Tensor 在 Py_FinalizeEx 崩溃，外层 139。需取得自然退出和再启动资格。",
+      "status": "passed",
       "last_native_attempt": {
-        "status": "physics_evidence_passed_lifecycle_failed",
-        "report": "docs/superpowers/reports/2026-11-12-flexible-f3-rigid-bridge-native.md",
-        "exit_code": 139,
-        "native_qualification": false
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_deformx_rigid_bridge.py",
+          "tests/test_dh116_stereo_shutdown_validation.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "2714332e08bf58a017c904c8c3ce6969340af41112cc38508ca22ef1f97eb2b0",
+        "tested_head": "acd741d8672daefaad68860edb85433f26aa6877",
+        "native_execution_performed": true,
+        "native_qualification": true,
+        "qualification_scope": "isolated_single_rigid_bridge_240_step_lifecycle_only",
+        "isolation_groups": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "outer_exit_codes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "full_native_trials": 2,
+        "physical_steps_per_full_trial": 240,
+        "shutdown_restarted_verified": true,
+        "old_outer_exit_code": 139,
+        "unique_causal_substep_proven": false,
+        "force_ledger_matches_old": true,
+        "raw_ledger_sha256": "ae3934bd61f2a98ef8d267f102c1c2a48e17326dd5372294d171a1908d97e206",
+        "dh116_hand_qualified": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f3-teardown-isolation.md",
+        "report_source_commit": "69645d1a3d7a1f146ddfe64ba57ac1e5065ea33b"
+      },
+      "native_attempt_history": [
+        {
+          "status": "physics_evidence_passed_lifecycle_failed",
+          "report": "docs/superpowers/reports/2026-11-12-flexible-f3-rigid-bridge-native.md",
+          "exit_code": 139,
+          "native_qualification": false
+        }
+      ],
+      "last_result": {
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_deformx_rigid_bridge.py",
+          "tests/test_dh116_stereo_shutdown_validation.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "2714332e08bf58a017c904c8c3ce6969340af41112cc38508ca22ef1f97eb2b0",
+        "tested_head": "acd741d8672daefaad68860edb85433f26aa6877",
+        "native_execution_performed": true,
+        "native_qualification": true,
+        "qualification_scope": "isolated_single_rigid_bridge_240_step_lifecycle_only",
+        "isolation_groups": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "outer_exit_codes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "full_native_trials": 2,
+        "physical_steps_per_full_trial": 240,
+        "shutdown_restarted_verified": true,
+        "old_outer_exit_code": 139,
+        "unique_causal_substep_proven": false,
+        "force_ledger_matches_old": true,
+        "raw_ledger_sha256": "ae3934bd61f2a98ef8d267f102c1c2a48e17326dd5372294d171a1908d97e206",
+        "dh116_hand_qualified": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f3-teardown-isolation.md",
+        "report_source_commit": "69645d1a3d7a1f146ddfe64ba57ac1e5065ea33b"
       }
     },
     "flex.f4-dh116-same-rod": {
@@ -3574,7 +3673,7 @@
         "flex.f4-dh116-collider-offline"
       ],
       "status": "blocked",
-      "reason": "已解析实际 10 个指腹碰撞网格。单刚体验证通过后，需核对 PhysX cooked convex hull，再显式 add_mesh 并逐级验证单指、单手和双手同杆反作用。"
+      "reason": "单刚体自然退出及重启已通过。先核对 10 个指腹真实 cooked hull 的坐标来源，再进行受控单指 SDF 注册、反作用力及双手同杆验证。"
     },
     "flex.f7-synchronized-data": {
       "title": "双目与柔性物理状态同步数据",

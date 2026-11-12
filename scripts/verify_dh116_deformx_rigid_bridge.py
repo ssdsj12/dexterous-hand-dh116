@@ -2,14 +2,11 @@
 """Bounded native validation of a DeformX rod and one isolated rigid body."""
 
 import argparse
-import faulthandler
-import gc
 import hashlib
 import json
 import os
 from pathlib import Path
 import sys
-import traceback
 
 import numpy as np
 
@@ -79,7 +76,7 @@ def write_json(path, data):
         os.fsync(file.fileno())
 
 
-def run_phases(sim, args):
+def run_phases(sim, args, *, control_only=False, ownership=None):
     import importlib.metadata
     import torch
     import isaaclab.sim as sim_utils
@@ -107,6 +104,14 @@ def run_phases(sim, args):
     body = scene["body"]
     device = torch.device(args.device)
     composer = body.permanent_wrench_composer
+    if ownership is not None:
+        ownership.watch("scene", scene, owner="probe", release="drop references")
+        ownership.watch("body", body, owner="InteractiveScene", release="asset STOP callback",
+                        callbacks=True, composer=True)
+        ownership.watch("body_tensor_view", body.root_physx_view, owner="RigidObject",
+                        release="asset STOP callback / drop references", gpu_view=True)
+        ownership.watch("composer", composer, owner="RigidObject", release="reset then drop references",
+                        gpu_view=True, composer=True)
     node_count, segment, radius = 21, 0.025, 0.00635
 
     def numpy(value):
@@ -126,8 +131,9 @@ def run_phases(sim, args):
                      rotate @ numpy(composer.composed_torque_as_torch[0, 0])]
 
     phases = {}
+    phase_specs = (("control", False),) if control_only else (("control", False), ("dynamic", True))
     with (args.output / "physics.jsonl").open("x", encoding="utf-8") as ledger:
-        for name, reaction in (("control", False), ("dynamic", True)):
+        for name, reaction in phase_specs:
             scene.reset()
             initial = body.data.default_root_state.clone()
             body.write_root_pose_to_sim(initial[:, :7])
@@ -154,6 +160,11 @@ def run_phases(sim, args):
             bridge = RopeColliders(rope, scene, [ColliderSpec(
                 "body", dynamic=reaction, mu_s=0.8, mu_k=0.7, spacing=0.005, margin=0.03,
             )])
+            if ownership is not None:
+                ownership.watch(name + "_rope", rope, owner="probe", release="drop RopeBatch",
+                                gpu_view=True)
+                ownership.watch(name + "_colliders", bridge, owner="probe",
+                                release="drop RopeColliders before RopeBatch", gpu_view=True)
             rope.enable_contact_forces(True)
             bridge.sync_poses(reset_env_ids=torch.tensor([0], device=device))
             root = torch.tensor(pos[:1], dtype=torch.float32, device=device)
@@ -207,7 +218,16 @@ def run_phases(sim, args):
                            peak_object_torque_nm=float(max(np.linalg.norm(row["object_wrench_com_w"][3:]) for row in rows)),
                            mass_kg=mass, inertia_com_kgm2=inertia.tolist())
             phases[name] = summary
+            torch.cuda.synchronize(device)
+            composer.reset()
+            if ownership is not None:
+                ownership.event("ledger fsynced and exclusive composer reset", phase_name=name)
             del bridge, rope
+            if ownership is not None:
+                ownership.checkpoint(name + " bridge and solver references dropped")
+    if control_only:
+        return dict(scope="bridge_without_reaction", steps=args.steps_per_phase, phases=phases,
+                    bidirectional_rigid_body_passed=False, dh116_hand_qualified=False)
     control, dynamic = phases["control"], phases["dynamic"]
     if (not np.allclose(control["initial_body_link_w"], dynamic["initial_body_link_w"], atol=1e-7, rtol=0)
             or not np.allclose(control["initial_rod_tip_w"], dynamic["initial_rod_tip_w"], atol=1e-7, rtol=0)
@@ -248,66 +268,15 @@ def main():
         parser.error("pinned ropesim extension and bridge digests must match")
     args.output.mkdir(parents=True, exist_ok=False)
     sys.path.insert(0, str(backend))
-    from go2_pvcnn.control.dh116.tabletop_stereo_native import native_instance_lock
-
-    with native_instance_lock():
-        native_run(args, AppLauncher)
+    native_run(args, AppLauncher)
 
 
 def native_run(args, launcher):
-    app = launcher(args, fast_shutdown=False).app
-    faulthandler.enable(file=sys.__stderr__, all_threads=True)
-    simulation = None
-    try:
-        import carb.settings
-        import isaaclab.sim as sim_utils
+    """Run the original CLI through the verified complete bridge lifecycle."""
+    from scripts.verify_dh116_deformx_bridge_teardown import launch_one
 
-        shutdown_mode = carb.settings.get_settings().get("/app/fastShutdown")
-        if shutdown_mode is not False:
-            raise RuntimeError("Isaac app must allow natural shutdown")
-        write_json(args.output / "shutdown_mode.json", {"fast_shutdown": shutdown_mode})
-        simulation = sim_utils.SimulationContext(sim_utils.SimulationCfg(
-            dt=DT, render_interval=1, device=args.device, gravity=(0.0, 0.0, 0.0),
-        ))
-        write_json(args.output / "result.json", run_phases(simulation, args))
-    except Exception:
-        write_json(args.output / "failure.json", {"exception": traceback.format_exc()})
-        raise
-    finally:
-        from go2_pvcnn.control.dh116.tabletop_stereo_contact_calibration import close_calibration_app
-
-        if simulation is None:
-            close_calibration_app(app, args.output)
-        else:
-            release_owned_native_view(app, simulation, args.output)
-
-
-def release_owned_native_view(app, simulation, output):
-    import omni.timeline
-    from isaacsim.core.simulation_manager import SimulationManager
-    from go2_pvcnn.control.dh116.tabletop_stereo_contact_calibration import close_calibration_app
-
-    cls = type(simulation)
-    if cls.instance() is not simulation:
-        raise RuntimeError("expected the probe-owned SimulationContext")
-    # Clear the Lab STOP hook first, then dispatch the SDK STOP event so the
-    # SimulationManager releases its tensor view while its plugin is live.
-    cls.clear_instance()
-    del simulation
-    gc.collect()
-    timeline = omni.timeline.get_timeline_interface()
-    try:
-        timeline.stop()
-        app.update()
-        if SimulationManager.get_physics_sim_view() is not None:
-            raise RuntimeError("owned SDK simulation view survived STOP")
-        write_json(output / "simulation_context_cleared.json", {
-            "public_api": "SimulationContext.clear_instance then timeline.stop",
-            "simulation_manager_tensor_view_released": True,
-        })
-    finally:
-        del timeline
-        close_calibration_app(app, output)
+    args.group = "E"
+    launch_one(args, launcher)
 
 
 if __name__ == "__main__":

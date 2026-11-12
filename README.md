@@ -1,3 +1,7 @@
+## 2026-11-12 — F3 DeformX 与 PhysX 完整桥接自然关闭
+
+A–E 均自然退出 0，两轮独立完整桥接各 240 步且与旧物理账本逐字节一致。原关闭路径的单一触发项尚未隔离。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-teardown-isolation.md)
+
 ## 2026-11-12 — 官方 drop/hang DomeLight 派生修复
 
 四个派生 USD 只更新 DomeLight 纹理。76 个 USD 复审无未解析依赖，原始 109 个文件哈希一致。 Ubuntu CPU 回归 11 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-assets-f6.md)

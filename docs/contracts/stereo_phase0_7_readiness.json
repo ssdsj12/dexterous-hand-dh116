@@ -4687,6 +4687,55 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-deformx-assets-f6.md",
       "report_source_commit": "ffa960904d9b983e4b764f66cf48689eae13aacf"
+    },
+    "flex.f3-isaac-rigid": {
+      "passed": 43,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_bridge_lifecycle.py",
+        "tests/test_dh116_deformx_rigid_bridge.py",
+        "tests/test_dh116_stereo_shutdown_validation.py",
+        "tests/test_dh116_deformx_cuda_source.py"
+      ],
+      "log_sha256": "2714332e08bf58a017c904c8c3ce6969340af41112cc38508ca22ef1f97eb2b0",
+      "tested_head": "acd741d8672daefaad68860edb85433f26aa6877",
+      "native_execution_performed": true,
+      "native_qualification": true,
+      "qualification_scope": "isolated_single_rigid_bridge_240_step_lifecycle_only",
+      "isolation_groups": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "outer_exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "full_native_trials": 2,
+      "physical_steps_per_full_trial": 240,
+      "shutdown_restarted_verified": true,
+      "old_outer_exit_code": 139,
+      "unique_causal_substep_proven": false,
+      "force_ledger_matches_old": true,
+      "raw_ledger_sha256": "ae3934bd61f2a98ef8d267f102c1c2a48e17326dd5372294d171a1908d97e206",
+      "dh116_hand_qualified": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-f3-teardown-isolation.md",
+      "report_source_commit": "69645d1a3d7a1f146ddfe64ba57ac1e5065ea33b"
     }
   }
 }
