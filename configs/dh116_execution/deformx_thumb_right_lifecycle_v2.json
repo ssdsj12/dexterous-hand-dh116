@@ -107,8 +107,24 @@
       "physics.jsonl": 238
     },
     "physics_clock": {
+      "budget": {
+        "initialization_physics_steps": 2,
+        "measurement_physics_steps": 238,
+        "other_physics_advancing_steps": 0,
+        "total_physics_steps": 240,
+        "warmup_physics_steps": 0
+      },
+      "close_marker": "shutdown_complete.json",
       "ledger": "physics.jsonl",
-      "setup_steps": 2
+      "ownership_ledger": "ownership.jsonl",
+      "rod_node_count": 21,
+      "rod_substeps_per_step": 12,
+      "row_equals": {
+        "body_path": "/World/DeformXThumb/rightHand/finger14_link",
+        "mesh_index": 0,
+        "rod_uid": "rod0",
+        "side": "right"
+      }
     },
     "result_file": "result.json"
   },

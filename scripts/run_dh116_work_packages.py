@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import hashlib
 import ipaddress
 import json
+import math
 import os
 from pathlib import Path, PurePosixPath
 import re
@@ -293,21 +294,88 @@ def native_artifact(output, relative):
     return resolved
 
 
-def validate_native_physics_clock(result, clock_rows, *, setup_steps, total_steps):
-    measured = total_steps - setup_steps
+def native_physics_budget(*, initialization_physics_steps, warmup_physics_steps,
+                          measurement_physics_steps, other_physics_advancing_steps):
+    counts = dict(initialization_physics_steps=initialization_physics_steps,
+                  warmup_physics_steps=warmup_physics_steps,
+                  measurement_physics_steps=measurement_physics_steps,
+                  other_physics_advancing_steps=other_physics_advancing_steps)
+    if any(type(value) is not int or value < 0 for value in counts.values()):
+        raise ValueError('native physics budget requires nonnegative integer phase counts')
+    return dict(counts, total_physics_steps=sum(counts.values()))
+
+
+def validate_native_physics_clock(result, clock_rows, *, setup_steps, total_steps, warmup_steps=0, other_steps=0):
+    measurement_start = setup_steps + warmup_steps
+    measurement_end = total_steps - other_steps
+    measured = measurement_end - measurement_start
     expected = dict(sdk_initial_step=0, sdk_after_setup_step=setup_steps,
-                    sdk_first_measurement_step=setup_steps + 1, sdk_last_measurement_step=total_steps,
+                    sdk_first_measurement_step=measurement_start + 1, sdk_last_measurement_step=measurement_end,
                     sdk_final_step=total_steps, setup_steps=setup_steps,
                     measured_steps=measured, total_steps=total_steps)
     clock = result.get('physics_clock')
     if (not isinstance(clock, dict) or clock.keys() != expected.keys()
             or any(type(clock[key]) is not int or clock[key] != value for key, value in expected.items())
             or len(clock_rows) != measured):
-        raise ValueError('native physics budget counters differ from frozen setup and total steps')
+        raise ValueError('native physics budget counters differ from frozen phase counts')
     for step, (phase, sdk_step) in enumerate(clock_rows, 1):
-        if type(phase) is not int or type(sdk_step) is not int or (phase, sdk_step) != (step, setup_steps + step):
+        if type(phase) is not int or type(sdk_step) is not int or (phase, sdk_step) != (step, measurement_start + step):
             raise ValueError('native physics clock must advance once per measured row after setup')
     return clock
+
+
+def _validate_native_contact_row(row, clock):
+    phase, substep = row.get('phase_step'), row.get('rod_substep')
+    if type(phase) is not int or type(substep) is not int or substep != phase * clock['rod_substeps_per_step']:
+        raise ValueError('native rod clock differs from the measured phase')
+    for field, expected in clock['row_equals'].items():
+        if field not in row or type(row[field]) is not type(expected) or row[field] != expected:
+            raise ValueError(f'native contact pair identity differs: {field}')
+    forces = row.get('rod_node_contact_forces_w')
+    ids = row.get('contact_node_ids')
+    if (not isinstance(forces, list) or len(forces) != clock['rod_node_count']
+            or not isinstance(ids, list) or any(type(index) is not int for index in ids)):
+        raise ValueError('native contact node ledger is incomplete')
+    contact_ids = []
+    for index, vector in enumerate(forces):
+        try:
+            valid = (isinstance(vector, list) and len(vector) == 3
+                     and all(type(value) in (int, float) and math.isfinite(value) for value in vector))
+        except OverflowError:
+            valid = False
+        if not valid:
+            raise ValueError('native contact node force must be a finite world vector')
+        if math.hypot(*vector) > 1e-5:
+            contact_ids.append(index)
+    if ids != contact_ids:
+        raise ValueError('native contact node IDs differ from their measured forces')
+    return bool(ids)
+
+
+def _validate_native_physics_shutdown(output, clock, counters):
+    marker = json.loads(native_artifact(output, clock['close_marker']).read_text(encoding='utf-8'))
+    if (not isinstance(marker, dict) or marker.get('close_returned') is not True
+            or marker.get('process_exit_verified') is not False
+            or 'pending_simulation_callback_error' not in marker or marker['pending_simulation_callback_error'] is not None):
+        raise ValueError('native App close must return with no pending callback error')
+    phases = ('SDK shutdown clock frozen', 'SDK STOP', 'app.close returned, outer exit pending')
+    observed = []
+    with native_artifact(output, clock['ownership_ledger']).open(encoding='utf-8') as stream:
+        for line in stream:
+            row = json.loads(line)
+            if not line.endswith('\n') or not isinstance(row, dict):
+                raise ValueError('native shutdown ledger must contain complete JSON object rows')
+            if row.get('phase') in phases:
+                observed.append(row)
+    if (tuple(row['phase'] for row in observed) != phases
+            or observed[0].get('matches_measurement') is not True
+            or observed[0].get('play_simulations') is not False
+            or type(observed[0].get('sdk_final_step')) is not int
+            or observed[0]['sdk_final_step'] != counters['sdk_final_step']
+            or type(observed[0].get('last_measured_sdk_step')) is not int
+            or observed[0]['last_measured_sdk_step'] != counters['sdk_last_measurement_step']
+            or observed[1].get('manager_view_released') is not True):
+        raise ValueError('native shutdown clock, STOP, and App close ownership evidence differ')
 
 
 def validate_native_artifacts(spec, output):
@@ -325,6 +393,8 @@ def validate_native_artifacts(spec, output):
             raise ValueError(f'native validator field differs: {selector}')
     counts, clock_rows = {}, []
     physics_clock = validator.get('physics_clock')
+    detailed_budget = physics_clock.get('budget') if physics_clock else None
+    has_contact = False
     for name, expected in validator['line_counts'].items():
         with native_artifact(output, name).open(encoding='utf-8') as stream:
             count = 0
@@ -334,6 +404,8 @@ def validate_native_artifacts(spec, output):
                     raise ValueError(f'native ledger must contain complete JSON object rows: {name}')
                 if physics_clock and name == physics_clock['ledger']:
                     clock_rows.append((row.get('phase_step'), row.get('sdk_step')))
+                    if detailed_budget is not None:
+                        has_contact |= _validate_native_contact_row(row, physics_clock)
                 count += 1
                 if count > expected:
                     raise ValueError(f'native ledger exceeds declared budget: {name}')
@@ -341,7 +413,27 @@ def validate_native_artifacts(spec, output):
             raise ValueError(f'native ledger count differs: {name}')
         counts[name] = count
     evidence = dict(artifact_sha256=artifacts, ledger_counts=counts)
-    if physics_clock:
+    if detailed_budget is not None:
+        counters = validate_native_physics_clock(
+            result, clock_rows, setup_steps=detailed_budget['initialization_physics_steps'],
+            warmup_steps=detailed_budget['warmup_physics_steps'],
+            other_steps=detailed_budget['other_physics_advancing_steps'],
+            total_steps=spec['budget']['physics_steps'])
+        measured_start = counters['sdk_first_measurement_step'] - 1
+        actual_budget = native_physics_budget(
+            initialization_physics_steps=counters['sdk_after_setup_step'] - counters['sdk_initial_step'],
+            warmup_physics_steps=measured_start - counters['sdk_after_setup_step'],
+            measurement_physics_steps=counters['sdk_last_measurement_step'] - measured_start,
+            other_physics_advancing_steps=counters['sdk_final_step'] - counters['sdk_last_measurement_step'])
+        claimed = result.get('physics_budget')
+        if (actual_budget != detailed_budget or not isinstance(claimed, dict) or claimed != actual_budget
+                or any(type(value) is not int for value in claimed.values())):
+            raise ValueError('native physics budget evidence differs from independently measured phase counts')
+        if not has_contact:
+            raise ValueError('native contact pair has no measured contact nodes')
+        _validate_native_physics_shutdown(output, physics_clock, counters)
+        evidence.update(physics_clock=counters, physics_budget=actual_budget)
+    elif physics_clock:
         evidence['physics_clock'] = validate_native_physics_clock(
             result, clock_rows, setup_steps=physics_clock['setup_steps'], total_steps=spec['budget']['physics_steps'])
     return evidence
@@ -359,6 +451,41 @@ def native_file_lock(path, *, acquire=True):
         stream.close()
         raise
     return stream
+
+
+def _validate_native_physics_recipe(clock, validator, budget, args):
+    if (not isinstance(clock, dict) or not isinstance(clock.get('ledger'), str)
+            or clock['ledger'] not in validator['line_counts']):
+        raise ValueError('native physics budget must bind a measured ledger')
+    measured = validator['line_counts'][clock['ledger']]
+    if clock.keys() == {'ledger', 'setup_steps'}:
+        if (type(clock['setup_steps']) is not int or clock['setup_steps'] < 0
+                or clock['setup_steps'] + measured != budget['physics_steps']):
+            raise ValueError('native physics budget must include setup and all measured ledger rows')
+        return
+    required = {'ledger', 'budget', 'rod_substeps_per_step', 'rod_node_count', 'row_equals', 'close_marker', 'ownership_ledger'}
+    if (clock.keys() != required or not isinstance(clock['budget'], dict)
+            or type(clock['rod_substeps_per_step']) is not int or clock['rod_substeps_per_step'] <= 0
+            or type(clock['rod_node_count']) is not int or clock['rod_node_count'] <= 0
+            or not isinstance(clock['row_equals'], dict)
+            or clock['row_equals'].keys() != {'side', 'body_path', 'rod_uid', 'mesh_index'}
+            or any(type(clock['row_equals'][field]) is not str or not clock['row_equals'][field]
+                   for field in ('side', 'body_path', 'rod_uid'))
+            or type(clock['row_equals']['mesh_index']) is not int or clock['row_equals']['mesh_index'] < 0
+            or any(not isinstance(clock[field], str) or clock[field] not in validator['artifacts']
+                   for field in ('close_marker', 'ownership_ledger'))):
+        raise ValueError('native physics recipe must bind the rod, contact pair and shutdown artifacts')
+    phase_counts = dict(clock['budget'])
+    stated_total = phase_counts.pop('total_physics_steps', None)
+    try:
+        total = native_physics_budget(**phase_counts)['total_physics_steps']
+    except TypeError as error:
+        raise ValueError('native physics budget must declare each phase') from error
+    if (type(stated_total) is not int or total != stated_total or total != budget['physics_steps']
+            or measured != phase_counts['measurement_physics_steps']
+            or args.count('--steps') != 1 or any(arg.startswith('--steps=') for arg in args)
+            or args[args.index('--steps') + 1:args.index('--steps') + 2] != [str(total)]):
+        raise ValueError('native physics budget must equal the measured ledger and the total --steps argument')
 
 
 def native_recipe(repo, package):
@@ -413,12 +540,7 @@ def native_recipe(repo, package):
             or any(type(v) is not int or v < 1 or v > 480 for v in validator['line_counts'].values())):
         raise ValueError('native validator must bind scoped result fields and exact physical ledger rows')
     if 'physics_clock' in validator:
-        clock = validator['physics_clock']
-        if (not isinstance(clock, dict) or clock.keys() != {'ledger', 'setup_steps'}
-                or not isinstance(clock['ledger'], str) or clock['ledger'] not in validator['line_counts']
-                or type(clock['setup_steps']) is not int or not 0 <= clock['setup_steps'] < budget['physics_steps']
-                or clock['setup_steps'] + validator['line_counts'][clock['ledger']] != budget['physics_steps']):
-            raise ValueError('native physics budget must include setup and all measured ledger rows')
+        _validate_native_physics_recipe(validator['physics_clock'], validator, budget, args)
     elif budget['physics_steps'] and budget['physics_steps'] not in validator['line_counts'].values():
         raise ValueError('native validator must bind exact physical ledger rows')
     for value in validator['artifacts']:

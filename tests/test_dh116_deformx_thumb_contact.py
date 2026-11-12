@@ -230,6 +230,95 @@ def test_owned_release_checkpoint_observes_collected_callback_cycle(tmp_path):
     assert last["python_liveness"] == {"probe": False}
 
 
+_THUMB_TEST_BUDGET = dict(initialization_physics_steps=2, warmup_physics_steps=0,
+                          measurement_physics_steps=238, other_physics_advancing_steps=0,
+                          total_physics_steps=240)
+
+
+def _write_thumb_budget_evidence(output, side):
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    path = root / "configs" / "dh116_execution" / f"deformx_thumb_{side}_lifecycle_v2.json"
+    spec = json.loads(path.read_text())
+    clock = dict(sdk_initial_step=0, sdk_after_setup_step=2, sdk_first_measurement_step=3,
+                 sdk_last_measurement_step=240, sdk_final_step=240, setup_steps=2,
+                 measured_steps=238, total_steps=240)
+    body = f"/World/DeformXThumb/{side}Hand/finger14_link"
+    rows = [dict(phase_step=step, sdk_step=step + 2, rod_substep=step * 12, side=side, body_path=body,
+                 rod_uid="rod0", mesh_index=0, contact_node_ids=[10] if step >= 173 else [],
+                 rod_node_contact_forces_w=[[0., 0., .05 if step >= 173 and i == 10 else 0.] for i in range(21)])
+            for step in range(1, 239)]
+    ownership = [
+        dict(phase="SDK shutdown clock frozen", sdk_final_step=240, last_measured_sdk_step=240,
+             matches_measurement=True, play_simulations=False),
+        dict(phase="SDK STOP", manager_view_released=True),
+        dict(phase="app.close returned, outer exit pending"),
+    ]
+    result = {**spec["validator"]["equals"], "physics_clock": clock, "physics_budget": _THUMB_TEST_BUDGET}
+    marker = dict(close_returned=True, process_exit_verified=False, pending_simulation_callback_error=None)
+    (output / "result.json").write_text(json.dumps(result))
+    (output / "physics.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+    (output / "ownership.jsonl").write_text("".join(json.dumps(row) + "\n" for row in ownership))
+    (output / "shutdown_complete.json").write_text(json.dumps(marker))
+    (output / "plan.json").write_text("{}")
+    return spec, rows, ownership
+
+
+@pytest.mark.parametrize(("side", "tamper", "error"), [
+    ("left", "rod_substep", "rod clock"),
+    ("right", "side", "contact pair"),
+    ("left", "body_path", "contact pair"),
+    ("right", "rod_uid", "contact pair"),
+    ("left", "mesh_index", "contact pair"),
+    ("right", "contact_node_ids", "contact node"),
+    ("left", "ownership", "shutdown"),
+    ("right", "close", "App close"),
+    ("left", "truncated", "complete"),
+    ("right", "budget", "budget"),
+])
+def test_thumb_scheduler_checks_raw_budget_rod_pair_and_close_evidence(tmp_path, side, tamper, error):
+    import json
+
+    from scripts.run_dh116_work_packages import validate_native_artifacts
+
+    spec, rows, ownership = _write_thumb_budget_evidence(tmp_path, side)
+    if tamper in rows[-1]:
+        rows[-1][tamper] = {
+            "rod_substep": 2868, "side": "left", "body_path": "/wrong/link", "rod_uid": "rod1",
+            "mesh_index": 1, "contact_node_ids": [8],
+        }[tamper]
+        (tmp_path / "physics.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+    elif tamper == "ownership":
+        ownership[0]["sdk_final_step"] += 1
+        (tmp_path / "ownership.jsonl").write_text("".join(json.dumps(row) + "\n" for row in ownership))
+    elif tamper == "close":
+        (tmp_path / "shutdown_complete.json").write_text('{"close_returned": false}')
+    elif tamper == "truncated":
+        ledger = tmp_path / "physics.jsonl"
+        ledger.write_text(ledger.read_text().rstrip("\n"))
+    else:
+        result = tmp_path / "result.json"
+        value = json.loads(result.read_text())
+        value["physics_budget"]["other_physics_advancing_steps"] = 1
+        result.write_text(json.dumps(value))
+    with pytest.raises(ValueError, match=error):
+        validate_native_artifacts(spec, tmp_path)
+
+
+@pytest.mark.parametrize("side", ["left", "right"])
+def test_thumb_scheduler_accepts_complete_cpu_evidence_for_each_side(tmp_path, side):
+    from scripts.run_dh116_work_packages import validate_native_artifacts
+
+    spec, _, _ = _write_thumb_budget_evidence(tmp_path, side)
+    result = validate_native_artifacts(spec, tmp_path)
+    assert result["physics_budget"] == _THUMB_TEST_BUDGET
+    assert result["physics_clock"]["sdk_final_step"] == 240
+    assert result["ledger_counts"] == {"physics.jsonl": 238}
+    assert set(result["artifact_sha256"]) == set(spec["validator"]["artifacts"])
+
+
 def test_scheduler_left_receipt_requires_outer_zero_and_locked_ledger(tmp_path):
     import hashlib
     import json
@@ -242,46 +331,46 @@ def test_scheduler_left_receipt_requires_outer_zero_and_locked_ledger(tmp_path):
     attempt.mkdir(parents=True)
     output = tmp_path / "outputs" / "flex.f4-left-contact-native" / "attempt-test" / "native"
     output.mkdir(parents=True)
+    from pathlib import Path
+
+    from scripts.run_dh116_work_packages import validate_native_artifacts
+
     log = attempt / "native.log"
-    log.write_text("test only")
-    clock = dict(sdk_initial_step=0, sdk_after_setup_step=2, sdk_first_measurement_step=3,
-                 sdk_last_measurement_step=240, sdk_final_step=240, setup_steps=2,
-                 measured_steps=238, total_steps=240)
-    ledger = "".join(json.dumps({"phase_step": step, "sdk_step": step + 2}) + "\n" for step in range(1, 239))
-    (output / "physics.jsonl").write_text(ledger)
-    (output / "result.json").write_text(json.dumps(
-        {"side": "left", "sample_validation_passed": True, "physics_rows": 238, "failure_reasons": [],
-         "physics_clock": clock}))
-    (output / "shutdown_complete.json").write_text('{"close_returned": true}')
-    names = ("physics.jsonl", "result.json", "shutdown_complete.json")
-    outer = {"outer_exit_code": 0, "native_lock_observed": True, "log_sha256": digest(log)}
+    log.write_text('DH116_GDB_INFERIOR_STATUS {"exit_code": 0, "signal": null}\n')
+    spec, rows, _ = _write_thumb_budget_evidence(output, "left")
+    recipe = Path(__file__).resolve().parents[1] / "configs/dh116_execution/deformx_thumb_left_lifecycle_v2.json"
+    recipe_sha = digest(recipe)
+    outer = {"outer_exit_code": 0, "native_lock_observed": True, "log_sha256": digest(log),
+             "debugger_status_verified": True, "debugger_backtrace_captured": False,
+             "debugger_inferior_exit_code": 0, "debugger_inferior_signal": None}
     (attempt / "outer_exit.json").write_text(json.dumps(outer))
-    (attempt / "intent.json").write_text(json.dumps({
-        "package": "flex.f4-left-contact-native", "output": str(output),
-        "code_config_sha256": fingerprint, "command_spec_sha256": "c" * 64,
-    }))
+    intent = {"package": "flex.f4-left-contact-native", "output": str(output),
+              "code_config_sha256": fingerprint, "command_spec_sha256": recipe_sha}
+    (attempt / "intent.json").write_text(json.dumps(intent))
     receipt = attempt / "receipt.json"
     receipt.write_text(json.dumps({
         **outer, "executor": "native_bounded", "native_execution_performed": True,
         "native_qualification": True, "output": str(output), "code_config_sha256": fingerprint,
-        "command_spec_sha256": "c" * 64, "ledger_counts": {"physics.jsonl": 238}, "physics_clock": clock,
-        "artifact_sha256": {name: digest(output/name) for name in names},
+        "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle",
+        "command_spec_sha256": recipe_sha, **validate_native_artifacts(spec, output),
     }))
     receipt_hash = digest(receipt)
     assert left_output_from_scheduler_receipt(receipt, receipt_hash) == output
-    (attempt / "outer_exit.json").write_text(json.dumps({**outer, "outer_exit_code": 139}))
-    with pytest.raises(ValueError, match="outer"):
-        left_output_from_scheduler_receipt(receipt, receipt_hash)
+    for change in ({"outer_exit_code": 139}, {"native_lock_observed": False}):
+        (attempt / "outer_exit.json").write_text(json.dumps({**outer, **change}))
+        with pytest.raises(ValueError, match="outer"):
+            left_output_from_scheduler_receipt(receipt, receipt_hash)
     (attempt / "outer_exit.json").write_text(json.dumps(outer))
-    (output / "physics.jsonl").write_text('{"different": true}\n' * 240)
-    with pytest.raises(ValueError, match="SHA256"):
+    with (output / "physics.jsonl").open("a") as stream:
+        stream.write(json.dumps(rows[-1]))
+    with pytest.raises(ValueError, match="complete"):
         left_output_from_scheduler_receipt(receipt, receipt_hash)
-    (output / "physics.jsonl").write_text(ledger)
+    _write_thumb_budget_evidence(output, "left")
     historical = json.loads(receipt.read_text())
-    historical["ledger_counts"]["physics.jsonl"] = 240
-    historical.pop("physics_clock")
+    historical["command_spec_sha256"] = "c" * 64
+    (attempt / "intent.json").write_text(json.dumps({**intent, "command_spec_sha256": "c" * 64}))
     receipt.write_text(json.dumps(historical))
-    with pytest.raises(ValueError, match="ledger count"):
+    with pytest.raises(ValueError, match="current budget-qualified recipe"):
         left_output_from_scheduler_receipt(receipt, digest(receipt))
 
 
@@ -336,9 +425,16 @@ def test_right_thumb_recipe_binds_real_right_identity():
     assert expected["physics_rows"] == 238 and expected["sample_validation_passed"] is True
     assert expected["failure_reasons"] == [] and expected["failure"] is None
     assert right["budget"]["physics_steps"] == 240
-    for spec in (left, right):
+    for side, spec in (("left", left), ("right", right)):
         assert spec["validator"]["line_counts"] == {"physics.jsonl": 238}
-        assert spec["validator"]["physics_clock"] == {"ledger": "physics.jsonl", "setup_steps": 2}
+        clock = spec["validator"]["physics_clock"]
+        assert clock["ledger"] == "physics.jsonl"
+        assert clock["budget"] == _THUMB_TEST_BUDGET
+        assert clock["rod_substeps_per_step"] == 12 and clock["rod_node_count"] == 21
+        assert clock["row_equals"] == {"side": side, "rod_uid": "rod0", "mesh_index": 0,
+                                       "body_path": f"/World/DeformXThumb/{side}Hand/finger14_link"}
+        assert clock["close_marker"] == "shutdown_complete.json"
+        assert clock["ownership_ledger"] == "ownership.jsonl"
 
 
 def test_right_thumb_runtime_identity_rejects_left_action_or_wrong_pad():

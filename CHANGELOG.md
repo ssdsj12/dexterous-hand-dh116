@@ -1,3 +1,7 @@
+## 2026-11-12 — P0 corrected thumb clock and contact proof
+
+修正配方显式计入初始化与测量，独立重读 SDK/rod 时钟、接触节点和关闭记录；每侧 240 步、串行最多 480 步，尚未执行新的原生复验。历史超预算证据保留，Pinch/Tripod/Power 不获资格。 Ubuntu CPU 回归 78 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-independent-budget-proof.md)
+
 ## 2026-11-12 — 本批原生结果、127项集成回归及预算恢复点
 
 127项最终集成CPU回归通过；原生左右接触与自然退出证据保留但484/480预算不合规，C0/C1/C2原生均失败。新预算修复仅CPU通过，未再执行；恢复点和剩余门槛已保存。 Ubuntu CPU 回归 127 项通过。[报告](docs/superpowers/reports/2026-11-12-eb31c79-batch-closeout.md)

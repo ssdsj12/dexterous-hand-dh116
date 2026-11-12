@@ -20,7 +20,7 @@ from go2_pvcnn.control.dh116.tabletop_deformable_rod_contact import (
     min_grid_distance, plan_thumb_approach, schedule_summary,
 )
 from scripts.bake_dh116_deformx_pad_sdfs import checked_bytes, checked_json
-from scripts.run_dh116_work_packages import validate_native_physics_clock
+from scripts.run_dh116_work_packages import debugger_status, native_physics_budget, validate_native_artifacts
 from scripts.verify_dh116_cooked_convex_hulls_native import _sources
 from scripts.verify_dh116_deformx_rigid_bridge import rotation_wxyz, wrench_at_com, write_json
 
@@ -28,6 +28,7 @@ from scripts.verify_dh116_deformx_rigid_bridge import rotation_wxyz, wrench_at_c
 _SDF_SUMMARY_SHA = "db5d75e780082640a29ae94ab010052dc19a354d574b6d82cf331bf1414355ab"
 _GPU_RESULT_SHA = "2de331289145d4be824243db0eeb64b796f24a92cee7b93ee61a37244e9bbde5"
 _THUMB = "finger14_link"
+_LEFT_SCOPE = "dh116_left_thumb_deformx_contact_lifecycle"
 
 
 def left_output_from_scheduler_receipt(receipt_path, expected_sha):
@@ -45,7 +46,8 @@ def left_output_from_scheduler_receipt(receipt_path, expected_sha):
     outer = json.loads((attempt / "outer_exit.json").read_text())
     output = Path(receipt["output"])
     if (receipt["executor"] != "native_bounded" or receipt["native_execution_performed"] is not True
-            or receipt["native_qualification"] is not True or intent["package"] != attempt.parent.parent.name
+            or receipt["native_qualification"] is not True or receipt.get("qualification_scope") != _LEFT_SCOPE
+            or intent["package"] != attempt.parent.parent.name
             or not output.is_absolute() or output.resolve(strict=True) != output
             or (output.name, output.parent.name, output.parent.parent.name)
                != ("native", attempt.name, intent["package"])
@@ -54,29 +56,33 @@ def left_output_from_scheduler_receipt(receipt_path, expected_sha):
             or any(intent[key] != receipt[key] for key in ("code_config_sha256", "command_spec_sha256"))):
         raise ValueError("left scheduler receipt lacks qualified attempt identity")
     if (type(outer["outer_exit_code"]) is not int or outer["outer_exit_code"] != 0
-            or receipt["outer_exit_code"] != 0 or outer["native_lock_observed"] is not True
+            or type(receipt["outer_exit_code"]) is not int or receipt["outer_exit_code"] != 0
+            or outer["native_lock_observed"] is not True
             or receipt["native_lock_observed"] is not True or outer["log_sha256"] != receipt["log_sha256"]):
         raise ValueError("left scheduler attempt requires independently recorded outer exit 0")
-    checked_bytes(attempt / "native.log", outer["log_sha256"])
-    digests = receipt["artifact_sha256"]
-    ledger = checked_bytes(output / "physics.jsonl", digests["physics.jsonl"])
-    if receipt["ledger_counts"] != {"physics.jsonl": MEASURED_STEPS} or ledger.count(b"\n") != MEASURED_STEPS:
-        raise ValueError("left scheduler ledger count differs")
-    result = checked_json(output / "result.json", digests["result.json"])
-    marker = checked_json(output / "shutdown_complete.json", digests["shutdown_complete.json"])
-    if (result["side"] != "left" or result["sample_validation_passed"] is not True
-            or result["physics_rows"] != MEASURED_STEPS or result["failure_reasons"]
-            or marker["close_returned"] is not True):
-        raise ValueError("right requires qualified left contact and shutdown")
-    clock_rows = [(row.get("phase_step"), row.get("sdk_step")) for row in map(json.loads, ledger.splitlines())]
-    clock = validate_native_physics_clock(result, clock_rows, setup_steps=SETUP_STEPS, total_steps=STEPS)
-    if receipt.get("physics_clock") != clock:
-        raise ValueError("left scheduler receipt lacks qualified physics budget counters")
+    log = attempt / "native.log"
+    checked_bytes(log, outer["log_sha256"])
+    recipe = Path(__file__).resolve().parents[1] / "configs/dh116_execution/deformx_thumb_left_lifecycle_v2.json"
+    raw = recipe.read_bytes()
+    if receipt["command_spec_sha256"] != hashlib.sha256(raw).hexdigest():
+        raise ValueError("left scheduler receipt must use the current budget-qualified recipe SHA256")
+    spec = json.loads(raw)
+    if spec.get("debugger") == "gdb_on_segv":
+        debug = debugger_status(log)
+        if (not debug["debugger_status_verified"] or debug.get("debugger_inferior_exit_code") != 0
+                or debug.get("debugger_inferior_signal") is not None
+                or any(item.get(key) != value for item in (receipt, outer) for key, value in debug.items())):
+            raise ValueError("left scheduler receipt lacks a naturally exited GDB inferior")
+    evidence = validate_native_artifacts(spec, output)
+    if any(receipt.get(key) != value for key, value in evidence.items()):
+        raise ValueError("left scheduler receipt artifact SHA256 or measured budget evidence differs")
     return output
 
 
 def preflight(args, project):
-    if args.steps != STEPS:
+    budget = native_physics_budget(initialization_physics_steps=SETUP_STEPS, warmup_physics_steps=0,
+                                   measurement_physics_steps=MEASURED_STEPS, other_physics_advancing_steps=0)
+    if args.steps != budget["total_physics_steps"]:
         raise ValueError("expected 240 total PhysX steps per side, including setup")
     if args.side == "right":
         if args.left_scheduler_receipt is None:
@@ -105,8 +111,9 @@ def preflight(args, project):
     if (pad["gpu_row_sha256"] != lock["gpu_rows"][key]
             or row["clock"] != result["clock"] or not row["sdk_body"]["sdk_rigid_body_found"]):
         raise ValueError("SDF does not bind the actual GPU pad identity")
-    contract = {"source_usd": sources[args.side], "side": args.side, "steps": STEPS,
-                "setup_steps": SETUP_STEPS, "measured_steps": MEASURED_STEPS,
+    contract = {"source_usd": sources[args.side], "side": args.side, "steps": budget["total_physics_steps"],
+                "setup_steps": budget["initialization_physics_steps"],
+                "measured_steps": budget["measurement_physics_steps"], "physics_budget": budget,
                 "baked_sdf_sha256": pad["sdf_file_sha256"], "native_hull_sha256": lock["gpu_rows"][key],
                 "backend_files": lock["backend_files"], "thumb_link": _THUMB}
     return contract, path, row
@@ -292,6 +299,7 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
     })
     rows, previous = [], np.zeros(6)
     failures = []
+    rod_substep = 0
     with (args.output / "physics.jsonl").open("x", encoding="utf-8") as log:
         for step in range(1, contract["measured_steps"] + 1):
             before = snapshot()
@@ -313,6 +321,7 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
             pos, quat = mesh_pose(after)
             rope.set_mesh_poses(slot, pos, quat, teleport=False)
             rope.step_free(DT, SUBSTEPS)
+            rod_substep += SUBSTEPS
             node_pos = host(torch.as_tensor(rope.positions())[0])
             node_force = np.asarray(rope.contact_forces()[0], dtype=float)
             hand_wrench = np.asarray(rope.mesh_wrenches()[0, slot], dtype=float)
@@ -328,7 +337,7 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
                 failure = failure or "sdk_target_mismatch"
             row = {
                 "phase_step": step, "sdk_step": sdk_step, "sdk_time_s": float(sim.current_time),
-                "rod_substep": step*SUBSTEPS, "dt_s": DT, "side": args.side, "rod_uid": "rod0",
+                "rod_substep": rod_substep, "dt_s": DT, "side": args.side, "rod_uid": "rod0",
                 "body_path": body_path, "mesh_index": slot,
                 "canonical_action24": action.tolist(), "sdk_joint_target_rad": sdk_target.tolist(),
                 "pre_state": {k: v.tolist() for k, v in before.items()},
@@ -366,6 +375,14 @@ def _run(sim, args, contract, sdf_path, capture, ownership):
         "sdk_final_step": sdk_final, "setup_steps": sdk_setup_end - sdk_initial,
         "measured_steps": len(rows), "total_steps": sdk_final - sdk_initial,
     }
+    measurement_start = rows[0]["sdk_step"] - 1
+    measurement_end = rows[-1]["sdk_step"]
+    summary["physics_budget"] = native_physics_budget(
+        initialization_physics_steps=sdk_setup_end - sdk_initial,
+        warmup_physics_steps=measurement_start - sdk_setup_end,
+        measurement_physics_steps=measurement_end - measurement_start,
+        other_physics_advancing_steps=sdk_final - measurement_end,
+    )
     action_index = verify_thumb_ledger_identity(rows, side=args.side, body_path=body_path, slot=slot)
     summary.update(side=args.side, scope="one_thumb_original_articulation_calibration",
                    peak_force_n=max((np.linalg.norm(r["rod_on_hand_link_w"][:3]) for r in rows), default=0),
@@ -423,7 +440,7 @@ def _run_thumb_probe(app, args, contract, sdf_path, capture, ownership):
                 matches = clock is None or final_step == clock["sdk_final_step"] == clock["sdk_last_measurement_step"]
                 ownership.event("SDK shutdown clock frozen", sdk_final_step=final_step,
                                 last_measured_sdk_step=clock["sdk_last_measurement_step"] if clock else None,
-                                matches_measurement=matches if clock else None)
+                                matches_measurement=matches if clock else None, play_simulations=False)
                 type(sim).clear_instance()
                 sim = None
                 gc.collect()

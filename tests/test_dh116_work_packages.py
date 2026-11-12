@@ -328,6 +328,36 @@ def test_native_budget_clock_requires_setup_and_measured_steps_to_reconcile(repo
         repo.native_recipe(package)
 
 
+def test_detailed_native_recipe_freezes_all_phases_and_total_cli_steps(repo):
+    native_fixture(repo)
+    package = repo.registry()['packages']['native']
+    spec_path = repo.root / package['command_spec']
+    spec = json.loads(spec_path.read_text())
+    spec['budget']['physics_steps'] = 240
+    spec['argv'] += ['--steps', '240']
+    validator = spec['validator']
+    validator['line_counts']['physics.jsonl'] = 238
+    validator['artifacts'] += ['shutdown_complete.json', 'ownership.jsonl']
+    validator['physics_clock'] = dict(
+        ledger='physics.jsonl',
+        budget=dict(initialization_physics_steps=2, warmup_physics_steps=0, measurement_physics_steps=238,
+                    other_physics_advancing_steps=0, total_physics_steps=240),
+        rod_substeps_per_step=12, rod_node_count=21,
+        row_equals=dict(side='left', body_path='/link', rod_uid='rod0', mesh_index=0),
+        close_marker='shutdown_complete.json', ownership_ledger='ownership.jsonl')
+    write_json(spec_path, spec)
+    assert repo.native_recipe(package)['spec']['budget']['physics_steps'] == 240
+    spec['argv'] += ['--steps=241']
+    write_json(spec_path, spec)
+    with pytest.raises(ValueError, match='total --steps'):
+        repo.native_recipe(package)
+    spec['argv'].pop()
+    del validator['physics_clock']['budget']['warmup_physics_steps']
+    write_json(spec_path, spec)
+    with pytest.raises(ValueError, match='declare each phase'):
+        repo.native_recipe(package)
+
+
 def test_budget_clock_new_recipe_cannot_reuse_previous_approval_or_result(repo, monkeypatch):
     native_fixture(repo)
     native_dependency_pass(repo)

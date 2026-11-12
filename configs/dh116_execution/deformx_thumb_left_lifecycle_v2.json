@@ -84,19 +84,37 @@
       "failure_reasons": [],
       "grasp_qualified": false,
       "physics_rows": 238,
+      "registered_pad_slot": 0,
       "rod_uid": "rod0",
       "sample_validation_passed": true,
       "scope": "one_thumb_original_articulation_calibration",
       "side": "left",
       "standalone_sdf_sha256": "bfa26827982cd871f084c2d6cf3f276831f06b9d66732dd177000e1a46071af2",
+      "thumb_action_index": 1,
       "zero_contact_window_passed": true
     },
     "line_counts": {
       "physics.jsonl": 238
     },
     "physics_clock": {
+      "budget": {
+        "initialization_physics_steps": 2,
+        "measurement_physics_steps": 238,
+        "other_physics_advancing_steps": 0,
+        "total_physics_steps": 240,
+        "warmup_physics_steps": 0
+      },
+      "close_marker": "shutdown_complete.json",
       "ledger": "physics.jsonl",
-      "setup_steps": 2
+      "ownership_ledger": "ownership.jsonl",
+      "rod_node_count": 21,
+      "rod_substeps_per_step": 12,
+      "row_equals": {
+        "body_path": "/World/DeformXThumb/leftHand/finger14_link",
+        "mesh_index": 0,
+        "rod_uid": "rod0",
+        "side": "left"
+      }
     },
     "result_file": "result.json"
   },
