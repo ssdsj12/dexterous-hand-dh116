@@ -1,3 +1,7 @@
+## 2026-11-12 — 右拇指与柔性杆原生接触
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md)。
+
 ## 2026-11-12 — 左拇指与柔性杆原生接触
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md)。

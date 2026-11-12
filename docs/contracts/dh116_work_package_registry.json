@@ -5165,8 +5165,7 @@
         "flex.f4-cooked-pad-sdf",
         "flex.f4-left-contact-native"
       ],
-      "status": "pending",
-      "reason": "已冻结独立右侧配方；仅在本轮左侧实际自然退出和接触资格通过后由真实receipt绑定执行。",
+      "status": "passed",
       "command_spec": "configs/dh116_execution/deformx_thumb_right_lifecycle_v2.json",
       "requires_approval": true,
       "resource_class": "isaac_single_gpu",
@@ -5192,7 +5191,116 @@
       "tests": [
         "tests/test_dh116_deformx_thumb_contact.py"
       ],
-      "blocker_kind": "waiting_dependency"
+      "last_native_attempt": {
+        "executor": "native_bounded",
+        "tested_head": "81f3c543912c50dcb248382472c652430131d64f",
+        "batch_id": "eb31c79-thumb-once",
+        "qualification_scope": "dh116_right_thumb_deformx_contact_lifecycle",
+        "native_qualification": true,
+        "native_execution_performed": true,
+        "command_spec_sha256": "086d7570166384ec9e42a5541f14b7fa87f1529ef96c1b0b5dffb61ba5ae3125",
+        "code_config_sha256": "2dd86aa61e8a753ac24ef3bd467be0ae53dddb3f1de60dd9e2e68e95fa9d0475",
+        "dependency_receipt_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+        "launch_argv_sha256": "b93ea31f49e8e4b1c612480683723b1e61b48256ee6b93e1f48fa51e8019ec6a",
+        "debugger": "gdb_on_segv",
+        "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
+        "debugger_wrapper_sha256": "2dfa5ff7ccd4039ffce6e4a965100486e0dc102fcd446d67fb472e68266c104c",
+        "exit_code": 0,
+        "outer_exit_code": 0,
+        "log_sha256": "9205bbe362dba1aa5c03d15358fe44232c902f8d7847f46228bb28585ba3c651",
+        "duration_seconds": 35.321002338896506,
+        "native_lock_observed": true,
+        "debugger_status_verified": true,
+        "debugger_backtrace_captured": false,
+        "debugger_inferior_exit_code": 0,
+        "debugger_inferior_signal": null,
+        "artifact_sha256": {
+          "plan.json": "14f06c55845c214e0dac0557dd6a6e17b2befc6c39db5169a86597dc8afd89e6",
+          "physics.jsonl": "b4f3b81c2ac2e34f24437838d0f4e79d91a023b8c57c00583fbc7ef88276bd87",
+          "result.json": "d4ec9f5b8251ade2edf9210f208f0c7e4f7916a967308fcb9d86cad34cc6b7e3",
+          "ownership.jsonl": "6e8bff8a56094f5168626e5ba87e948724f3823aa2b38939eacd8ebc988c6831",
+          "shutdown_complete.json": "eb92e194faec959a094ea7b56020a40cb3330fd91a5e20a0ea747b4b8effab6e"
+        },
+        "ledger_counts": {
+          "physics.jsonl": 240
+        },
+        "result_sha256": "cf0a8211b25539e816b102dbbb9f7b7ace3262f401bf7ded527a4cf2ecb2b8e1",
+        "native_physics_validated": true,
+        "cpu_regression": {
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "tests/test_dh116_deformx_thumb_contact.py"
+          ],
+          "log_sha256": "943dd783f8d80033ee226551f801c6e0de929c357e188cd418776fabcfde389e",
+          "tested_head": "81f3c543912c50dcb248382472c652430131d64f"
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md"
+      },
+      "last_result": {
+        "executor": "native_bounded",
+        "tested_head": "81f3c543912c50dcb248382472c652430131d64f",
+        "batch_id": "eb31c79-thumb-once",
+        "qualification_scope": "dh116_right_thumb_deformx_contact_lifecycle",
+        "native_qualification": true,
+        "native_execution_performed": true,
+        "command_spec_sha256": "086d7570166384ec9e42a5541f14b7fa87f1529ef96c1b0b5dffb61ba5ae3125",
+        "code_config_sha256": "2dd86aa61e8a753ac24ef3bd467be0ae53dddb3f1de60dd9e2e68e95fa9d0475",
+        "dependency_receipt_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+        "launch_argv_sha256": "b93ea31f49e8e4b1c612480683723b1e61b48256ee6b93e1f48fa51e8019ec6a",
+        "debugger": "gdb_on_segv",
+        "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
+        "debugger_wrapper_sha256": "2dfa5ff7ccd4039ffce6e4a965100486e0dc102fcd446d67fb472e68266c104c",
+        "exit_code": 0,
+        "outer_exit_code": 0,
+        "log_sha256": "9205bbe362dba1aa5c03d15358fe44232c902f8d7847f46228bb28585ba3c651",
+        "duration_seconds": 35.321002338896506,
+        "native_lock_observed": true,
+        "debugger_status_verified": true,
+        "debugger_backtrace_captured": false,
+        "debugger_inferior_exit_code": 0,
+        "debugger_inferior_signal": null,
+        "artifact_sha256": {
+          "plan.json": "14f06c55845c214e0dac0557dd6a6e17b2befc6c39db5169a86597dc8afd89e6",
+          "physics.jsonl": "b4f3b81c2ac2e34f24437838d0f4e79d91a023b8c57c00583fbc7ef88276bd87",
+          "result.json": "d4ec9f5b8251ade2edf9210f208f0c7e4f7916a967308fcb9d86cad34cc6b7e3",
+          "ownership.jsonl": "6e8bff8a56094f5168626e5ba87e948724f3823aa2b38939eacd8ebc988c6831",
+          "shutdown_complete.json": "eb92e194faec959a094ea7b56020a40cb3330fd91a5e20a0ea747b4b8effab6e"
+        },
+        "ledger_counts": {
+          "physics.jsonl": 240
+        },
+        "result_sha256": "cf0a8211b25539e816b102dbbb9f7b7ace3262f401bf7ded527a4cf2ecb2b8e1",
+        "native_physics_validated": true,
+        "cpu_regression": {
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "tests/test_dh116_deformx_thumb_contact.py"
+          ],
+          "log_sha256": "943dd783f8d80033ee226551f801c6e0de929c357e188cd418776fabcfde389e",
+          "tested_head": "81f3c543912c50dcb248382472c652430131d64f"
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md"
+      }
     },
     "flex.f4-single-hand-contact-native": {
       "title": "单手与柔性杆对向承托",
