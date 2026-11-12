@@ -2285,6 +2285,65 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 46,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_pair_diagnostic.py",
+        "tests/test_dh116_stereo_runtime_teacher_identity.py",
+        "tests/test_dh116_privileged_action_audit.py"
+      ],
+      "log_sha256": "5382de7fa93689546b169b3a5aba96d51ecdbe8ee8d683953a8ff468d88bf158",
+      "tested_head": "976e5ab345b42e8eb0e502ed252012976c447e15",
+      "native_execution_performed": true,
+      "native_qualification": false,
+      "qualification_scope": "bounded_frozen_teacher_first_terminal_pair",
+      "outer_exit_codes": [
+        0,
+        0
+      ],
+      "aligned_480hz_rows": 1166,
+      "pinch_native_successes": 0,
+      "tripod_native_successes": 0,
+      "first_episode_count_by_style": {
+        "pinch": 2,
+        "tripod": 2
+      },
+      "tripod_terminal_physics_steps": {
+        "sampled": 314,
+        "mean": 310
+      },
+      "checkpoint_sha256": "ec5831ac4de039e5e77e2ee4a3420497a0c103a2a5966a1a73662d4997966511",
+      "raw_audit_sha256": "2606afaf41760be0ed24e07b2ac9de827846244a84243b1c64feb13c591884ef",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-finger12-per-slot-tripod-native.md",
+      "report_source_commit": "b01cfe86296ac551add2400f22133ae11ae5a599",
+      "package": "wp3.finger12-native-per-slot-tripod",
+      "commit": "907b1b8a980e8b481e8740090a1add48e3d0718f",
+      "parent": "976e5ab345b42e8eb0e502ed252012976c447e15",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-pair-runner.md",
+        "docs/superpowers/reports/2026-11-12-finger12-per-slot-tripod-native.md",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_native.py",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_pair_diagnostic.py",
+        "tests/test_dh116_stereo_runtime_teacher_identity.py",
+        "tests/test_dh116_teacher_pair_diagnostic.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
