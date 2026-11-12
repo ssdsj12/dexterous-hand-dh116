@@ -4416,6 +4416,34 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-ingestion.md",
       "report_source_commit": "8b93c96cc6dd253b48f6b31230b4e8c67c9c36b1"
+    },
+    "flex.f0-source-lock": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_source_lock.py",
+        "tests/test_dh116_deformx_cuda_source.py"
+      ],
+      "log_sha256": "505772f5d7b42ca9103baa9db05b5d2d917d28b950881f2624bb14f08bf3361a",
+      "tested_head": "26e01cb39bdb263cad0e901376ca49094f7c6273",
+      "source_locked": true,
+      "backend_commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
+      "upstream_parent_commit": "04f6a11eb4d832df761f631cf6ce1bc00da75eb1",
+      "cpu_commit": "a5cfaf60c4a1aa707ed94bdd07641de1a90ae650",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "lock_verification_sha256": "837297090288d819930d82a66a98e334d1bb4205d923e0979640b5d00258e6d3",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-f0-deformx-source-lock.md",
+      "report_source_commit": "20f513921e8d60341d4c895041340450373480c3"
     }
   }
 }

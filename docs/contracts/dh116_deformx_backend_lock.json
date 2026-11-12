@@ -1,0 +1,65 @@
+{
+  "schema_version": "dh116-deformx-backend-lock-v1",
+  "parent_ref": "refs/heads/main",
+  "cuda_backend_path": "Cosserat-Rod-Solver-CUDA",
+  "repositories": [
+    {
+      "path": ".",
+      "url": "https://github.com/DeformX/DeformX.git",
+      "commit": "04f6a11eb4d832df761f631cf6ce1bc00da75eb1",
+      "tree": "4bf758ce0210f62e7de2aed0c0f0e11408e63a55",
+      "licenses": {
+        "LICENSE": "MIT"
+      },
+      "file_sha256": {
+        ".gitmodules": "24ae81618a25c76e09012d7bb5fd0f7c9963ec3a910def7180b591def52971a6",
+        "LICENSE": "32b5f5240febe208773662087929256b03ad9b6fbade65678abafb201d834f83",
+        "docs/GPU_VALIDATION.md": "b75aa6f01ebeacc6cbe3d56aef793ec218c2da36551ed01c053993aae4d08c8d"
+      }
+    },
+    {
+      "path": "Cosserat-Rod-Solver-CUDA",
+      "url": "https://github.com/DeformX/Cosserat-Rod-Solver-CUDA.git",
+      "commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
+      "tree": "1b093a5518e2c07657ba7a070b305c4f84a6e3b4",
+      "licenses": {
+        "LICENSE": "GPL-3.0-or-later",
+        "third_party/yarnball/LICENSE.md": "GPL-3.0"
+      },
+      "file_sha256": {
+        "CMakeLists.txt": "da8ec068dfa488738b260ffe10e0ba29df0181d844a1fb49bc89aa3ae18cfa38",
+        "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+        "README.md": "0a6f34c5284a0dac1155176d47cfca7cd0a589f9baebfbf5f18ea4801e5d7808",
+        "csrc/batch.cu": "52b6af4d3e488e74ba157f49d707c7ab80d57598ed45ad8a9d85a73194e102dc",
+        "csrc/bindings.cpp": "bef01b78f992cb8124d928780b2fe9aa3750341adc980cd7b3da7114a3b50095",
+        "csrc/sdf.cu": "2e8b8aebe1f70bc6a7357e131c42078b39a1daa3f695d2e0b6fa4b771b60c32e",
+        "pyproject.toml": "7cc70efde97ec810ed42b5e42980188ea0f7654931f507cb379eedf91f8885b1",
+        "ropesim/__init__.py": "adc864e6bed274b88a0b15f44dcf8c2628cae5d6913518d147d5d8b4ac0d8419",
+        "ropesim/isaac_bridge.py": "7a593ec2b56f4115e3c04ebe5cd6969294c7047ec8c577012bfcb3c1bf649eae",
+        "ropesim/sdf.py": "493ee1a8500614a1b6c27318bbbd7cad6731ddfc1c357b1f3853e055d9346e1d",
+        "third_party/yarnball/KittenEngine/KittenEngine/KittenGpuLBVH/lbvh.cu": "654f227744e5cb3b81627c3f35ccdf5daecf5bddbe128d74ccbe33f4fe9224ce",
+        "third_party/yarnball/KittenEngine/KittenEngine/KittenGpuLBVH/lbvh.cuh": "4f38fb191acfce9a36dd407429aae75ada5ff7f635cf10d2e2b158c54bb425d6",
+        "third_party/yarnball/KittenEngine/YarnBall/YarnBall.cu": "06af0339837c196cc8f716b6095b50e5409cbe7544c01d9da8a9067f0b801e68",
+        "third_party/yarnball/KittenEngine/YarnBall/sim/collision.cu": "a78450034bf9c103925fee195d07e358fdf465bc6f4038cabc0d273547e44abe",
+        "third_party/yarnball/KittenEngine/YarnBall/sim/contact.cuh": "d01eb87be13af9f8b62c33ce93d9b4da2108be164ba5c1839dc8cb7f9fc5dfd7",
+        "third_party/yarnball/KittenEngine/YarnBall/sim/cosserat.cu": "7c9151c1c4df64c4735b7df69de605d030bbbb99e8b9638095ef99fb3dbddb03",
+        "third_party/yarnball/KittenEngine/YarnBall/sim/iteration.cu": "3d5633ef184f350be9e0698b92862e4907e8cce8d1732d6658bf656643083095",
+        "third_party/yarnball/LICENSE.md": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+        "third_party/yarnball/VENDOR.md": "288318d74745055d11b627a79f9ecb4b3b9bdbd6691a12b9dc767a7d42fa030d"
+      }
+    },
+    {
+      "path": "PyElastica-Mesh",
+      "url": "https://github.com/DeformX/PyElastica-Mesh.git",
+      "commit": "a5cfaf60c4a1aa707ed94bdd07641de1a90ae650",
+      "tree": "5f726be88c4feb8561b6f4794df798ad39669343",
+      "licenses": {
+        "LICENSE": "MIT"
+      },
+      "file_sha256": {
+        "LICENSE": "348d6804dbf90a406d9c37aa7c3df8e1a7909158e3aef0cbd27e9169a1482b77",
+        "pyproject.toml": "c5c90c14d58955e96ce7d4658a200d5dd5479df8b40ea7c478ec5f85314cfae7"
+      }
+    }
+  ]
+}

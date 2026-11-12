@@ -460,8 +460,8 @@
         "wp5.cpu-source-check",
         "wp5.source-payload"
       ],
-      "status": "blocked",
-      "reason": "缺固定提交、递归子模块、CUDA kernel、bindings 和许可证"
+      "status": "passed",
+      "reason": "由柔性工作包 flex.f0-source-lock 完成官方递归源码核验。"
     },
     "wp5.build": {
       "title": "独立 Toolkit 12.8 与 SM89 编译",
@@ -3488,6 +3488,146 @@
       ],
       "status": "blocked",
       "reason": "约 97.3 GB 主数据未完成逐 blob 校验，持出集评估及正式批量训练待完整数据和训练预算。"
+    },
+    "flex.f0-source-lock": {
+      "title": "DeformX 主仓库与递归源码锁定",
+      "executor": "gated",
+      "dependencies": [],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_source_lock.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "505772f5d7b42ca9103baa9db05b5d2d917d28b950881f2624bb14f08bf3361a",
+        "tested_head": "26e01cb39bdb263cad0e901376ca49094f7c6273",
+        "source_locked": true,
+        "backend_commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
+        "upstream_parent_commit": "04f6a11eb4d832df761f631cf6ce1bc00da75eb1",
+        "cpu_commit": "a5cfaf60c4a1aa707ed94bdd07641de1a90ae650",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "lock_verification_sha256": "837297090288d819930d82a66a98e334d1bb4205d923e0979640b5d00258e6d3",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f0-deformx-source-lock.md",
+        "report_source_commit": "20f513921e8d60341d4c895041340450373480c3"
+      },
+      "last_result": {
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_source_lock.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "505772f5d7b42ca9103baa9db05b5d2d917d28b950881f2624bb14f08bf3361a",
+        "tested_head": "26e01cb39bdb263cad0e901376ca49094f7c6273",
+        "source_locked": true,
+        "backend_commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
+        "upstream_parent_commit": "04f6a11eb4d832df761f631cf6ce1bc00da75eb1",
+        "cpu_commit": "a5cfaf60c4a1aa707ed94bdd07641de1a90ae650",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "lock_verification_sha256": "837297090288d819930d82a66a98e334d1bb4205d923e0979640b5d00258e6d3",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-flexible-f0-deformx-source-lock.md",
+        "report_source_commit": "20f513921e8d60341d4c895041340450373480c3"
+      }
+    },
+    "flex.f3-isaac-rigid": {
+      "title": "DeformX 与 Isaac 单刚体双向耦合",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f2-standalone-gpu"
+      ],
+      "status": "blocked",
+      "reason": "需要单实例物理验证和自然退出证据。"
+    },
+    "flex.f4-dh116-same-rod": {
+      "title": "原 DH116 Collider 与双手同杆力学验证",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f3-isaac-rigid"
+      ],
+      "status": "blocked",
+      "reason": "需完成单刚体后逐级验证单指、单手、双手及同杆反作用。"
+    },
+    "flex.f7-synchronized-data": {
+      "title": "双目与柔性物理状态同步数据",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-dh116-same-rod",
+        "flex.f5-wireseg-pretraining",
+        "flex.f6-assets-audit"
+      ],
+      "status": "blocked",
+      "reason": "需同杆物理链路、资产和视觉预训练证据。"
+    },
+    "flex.f8-three-teachers": {
+      "title": "Pinch、Tripod 与 Power 特权 Teacher",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-synchronized-data"
+      ],
+      "status": "blocked",
+      "reason": "需真实柔性状态、逐指力资格和独立训练证据。"
+    },
+    "flex.f9-three-students": {
+      "title": "三种抓法的 BC、DAgger 与 Student PPO",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-three-teachers"
+      ],
+      "status": "blocked",
+      "reason": "需合格原生 Teacher 与同步双目数据。"
+    },
+    "flex.f10-actor-only": {
+      "title": "柔性 Actor-only 部署与三种抓法独立验收",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f9-three-students"
+      ],
+      "status": "blocked",
+      "reason": "需冻结 Student 并完成每种抓法至少 100 个独立初态。"
+    },
+    "flex.f1-cuda-build": {
+      "title": "隔离 CUDA 12.8 与 cp310/SM89 扩展",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f0-source-lock"
+      ],
+      "status": "blocked"
+    },
+    "flex.f2-standalone-gpu": {
+      "title": "Standalone CUDA 静态、动力学与接触验证",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f1-cuda-build"
+      ],
+      "status": "blocked"
+    },
+    "flex.f6-assets-audit": {
+      "title": "官方 DeformX drop/hang 资产和轨迹审计",
+      "executor": "gated",
+      "dependencies": [],
+      "status": "blocked"
     }
   },
   "execution_target": {
