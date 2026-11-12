@@ -1,3 +1,7 @@
+## 2026-11-12 — 原生成功结果恢复与发布二次核验
+
+恢复与发布均重新核对原始outer_exit、共享锁、日志及物理产物；外层139、ledger篡改、发布中断后篡改均拒绝，保留失败及已消耗指纹。 Ubuntu CPU 回归 57 项通过。[报告](docs/superpowers/reports/2026-11-12-native-receipt-binding.md)
+
 ## 2026-11-12 — 标定与Teacher回合预算边界
 
 独立校验控制步、480Hz物理步、环境数、ledger行数与墙钟。2环境32控制步需512行，5秒Hold至少2400步/环境；零重力双端固定只能标定。示例未接执行、不扩大本轮480步授权。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-deformable-task-budget-boundary.md)

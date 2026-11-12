@@ -642,42 +642,59 @@ class Repository:
                 or published.get('qualification_scope') != scope or not isinstance(expected, str)
                 or not SHA256.fullmatch(expected) or any(published.get(k) != v for k, v in identity.items())):
             raise ValueError('producer lacks a current published qualified scheduler receipt')
-        base = self.private / 'native-attempts' / producer / identity['code_config_sha256']
+        path = self._verified_native_receipt(producer, scope, recipe, expected)
+        return dict(package=producer, qualification_scope=scope, path=str(path), sha256=expected)
+
+    def _verified_native_receipt(self, name, scope, recipe, expected):
+        identity = {key: recipe[key] for key in ('command_spec_sha256', 'code_config_sha256')}
+        base = self.private / 'native-attempts' / name / identity['code_config_sha256']
         matches = [path for path in base.glob('attempt-*/receipt.json')
                    if path.resolve() == path and file_hash(path) == expected]
         if len(matches) != 1:
-            raise ValueError('producer receipt is missing, ambiguous, or has been modified')
+            raise ValueError('native receipt is missing, ambiguous, or has been modified')
         path, = matches
         attempt = path.parent
-        receipt = json.loads(path.read_text(encoding='utf-8'))
+        raw = path.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != expected:
+            raise ValueError('native receipt changed during verification')
+        receipt = json.loads(raw)
         intent = json.loads(native_artifact(attempt, 'intent.json').read_text(encoding='utf-8'))
         outer = json.loads(native_artifact(attempt, 'outer_exit.json').read_text(encoding='utf-8'))
         approved = native_approval(intent['approval'], self)
-        output = Path(approved['output_root']) / producer / attempt.name / 'native'
-        if (intent.get('package') != producer or intent.get('output') != str(output)
+        output = Path(approved['output_root']) / name / attempt.name / 'native'
+        if (intent.get('package') != name or intent.get('output') != str(output)
                 or receipt.get('output') != str(output) or output.resolve(strict=True) != output
                 or receipt.get('executor') != 'native_bounded'
                 or receipt.get('native_execution_performed') is not True
                 or receipt.get('native_qualification') is not True or receipt.get('qualification_scope') != scope
-                or approved['packages'].get(producer) != identity
+                or approved['packages'].get(name) != identity
                 or receipt.get('tested_head') != intent.get('head') or receipt.get('batch_id') != approved['batch_id']
                 or any(intent.get(k) != v or receipt.get(k) != v for k, v in identity.items())):
-            raise ValueError('producer receipt identity does not match the scheduled dependency')
+            raise ValueError('native receipt identity does not match its scheduled attempt')
+        if recipe['spec'].get('dependency_receipt') is not None and (
+                not isinstance(intent.get('dependency_receipt'), dict)
+                or receipt.get('dependency_receipt_sha256') != intent['dependency_receipt'].get('sha256')):
+            raise ValueError('native receipt differs from the scheduled dependency binding')
+        seconds = outer.get('duration_seconds')
+        if (type(seconds) not in (int, float) or not 0 < seconds <= recipe['spec']['budget']['timeout_seconds']
+                or receipt.get('duration_seconds') != seconds):
+            raise ValueError('native attempt exceeded its elapsed budget or elapsed evidence differs')
         if (any(type(item.get('outer_exit_code')) is not int or item['outer_exit_code'] != 0
                 or item.get('native_lock_observed') is not True for item in (outer, receipt))
+                or type(receipt.get('exit_code')) is not int or receipt['exit_code'] != 0
                 or outer.get('log_sha256') != receipt.get('log_sha256')
                 or file_hash(native_artifact(attempt, 'native.log')) != receipt.get('log_sha256')):
-            raise ValueError('producer requires independent natural exit zero and native lock evidence')
+            raise ValueError('native receipt requires independent natural exit zero and native lock evidence')
         if recipe['spec'].get('debugger') == 'gdb_on_segv':
             debug = debugger_status(native_artifact(attempt, 'native.log'))
             if (not debug['debugger_status_verified'] or debug.get('debugger_inferior_exit_code') != 0
                     or debug.get('debugger_inferior_signal') is not None
                     or any(item.get(k) != v for item in (outer, receipt) for k, v in debug.items())):
-                raise ValueError('producer debugger evidence lacks independent inferior exit zero')
+                raise ValueError('native debugger evidence lacks independent inferior exit zero')
         evidence = validate_native_artifacts(recipe['spec'], output)
         if any(receipt.get(k) != v for k, v in evidence.items()):
-            raise ValueError('producer artifacts or measured ledger differ from the qualified receipt')
-        return dict(package=producer, qualification_scope=scope, path=str(path), sha256=expected)
+            raise ValueError('native artifacts or measured ledger differ from the qualified receipt')
+        return path
 
     def native_attempts(self, name, fingerprint):
         root = self.private / 'native-attempts' / name / fingerprint
@@ -794,6 +811,14 @@ class Repository:
                         qualified[name] = result
                     else:
                         blockers[name] = resource_blocker('failed_native', 'identical code/config has retained failure evidence')
+        for name, result in list(qualified.items()):
+            try:
+                self._verified_native_receipt(name, selected[name]['evidence_scope'],
+                                              recipes[name], result['result_sha256'])
+            except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+                qualified.pop(name)
+                pending_results.pop(name, None)
+                blockers[name] = resource_blocker('failed_native', f'native receipt failed revalidation: {error}')
         binding_checks = {}
 
         def binding_error(name):
@@ -975,7 +1000,7 @@ class Repository:
             os.fsync(stream.fileno())
         seconds = time.monotonic() - started
         result.update(native_execution_performed=True, exit_code=code, outer_exit_code=code,
-                      log_sha256=file_hash(log), duration_seconds=round(seconds, 3), native_lock_observed=observed)
+                      log_sha256=file_hash(log), duration_seconds=seconds, native_lock_observed=observed)
         debug_status = debugger_status(log) if debugger else {}
         result.update(debug_status)
         atomic_write(path / 'outer_exit.json', json_text({
@@ -1179,6 +1204,14 @@ class Repository:
         state = json.loads(self.journal.read_text(encoding='utf-8'))
         if state['kind'] in {'deferred_package', 'relay_manifest'}:
             self.verify_local_target()
+            evidence = state['evidence']
+            if (state['kind'] == 'deferred_package' and evidence.get('executor') == 'native_bounded'
+                    and evidence.get('native_qualification') is True):
+                name = state['package']
+                plan = self.native_plan(scope='all')
+                current = plan['native_results'].get(name) or self.registry()['packages'][name].get('last_result', {})
+                if name not in plan['native_qualified'] or current.get('result_sha256') != evidence['result_sha256']:
+                    raise RuntimeError('native publication evidence failed revalidation during resume')
             commit, files = self._commit_transaction(state, push=False)
             receipt = {**state['evidence'], 'package': state['package'], 'commit': commit,
                        'parent': state['parent'], 'files': files, 'remote_verified': False}

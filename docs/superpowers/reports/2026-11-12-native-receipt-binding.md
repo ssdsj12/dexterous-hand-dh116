@@ -25,3 +25,9 @@ The CPU fixtures confer software test coverage. Native thumb qualification requi
 ## Budget categories for future recipes
 
 Keep the approved left and conditional right contact recipes at 240 physics ticks, one environment and zero updates. A lifecycle smoke recipe can declare a zero or short physics budget. A reset smoke recipe can declare an explicit number of resets and physics ticks. A future Teacher diagnostic should declare environments, rollout steps, control rates, physics ticks and ledger rows separately. At 60 Hz control and 480 Hz physics, 32 policy steps require 256 ticks per environment before any declared warm-up. A full Hold evaluation needs at least 2,400 physics ticks for the Hold interval alone, plus approach and Lift. Those purposes need separately frozen recipes and their own authorization. This change leaves the current budget limits intact.
+
+## Own-receipt revalidation on recovery
+
+The scheduler reuses the same independent validation for its own successful receipts before planning dependent execution or publication. It compares the receipt with the scheduled intent, actual outer status, elapsed budget, shared lock, log and physical artifacts. A deferred native publication journal checks the same qualification when resumed. Rejected evidence stays at the original location and the attempted fingerprint stays consumed.
+
+CPU regressions first reproduced three acceptance errors: claiming qualification after an independently recorded outer exit of 139, changing the physical ledger after a genuine success, and changing the ledger after a publication interruption. All three are now rejected. The full scheduler and thumb CPU regression passed 54 tests in 15.37 seconds.

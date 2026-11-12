@@ -6406,6 +6406,68 @@
         "report": "docs/superpowers/reports/2026-11-12-deformable-task-budget-boundary.md",
         "report_source_commit": "96515b2a0397fb48f82ad03f053fbf6509f726c6"
       }
+    },
+    "flex.native-receipt-integrity": {
+      "title": "原生成功结果恢复与发布二次核验",
+      "executor": "gated",
+      "dependencies": [
+        "flex.native-receipt-binding"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 57,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py",
+          "tests/test_dh116_flexible_execution_dependencies.py",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "86701dfa33c0236fe82f6ae774a3c2641aa48505f2ff202392f2633a0e69b04f",
+        "tested_head": "c97660d8bb1a85303aaae412af95dea135b0f222",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "cpu_receipt_integrity_regressions",
+        "tamper_rejected_before_publication": true,
+        "interrupted_publication_revalidated": true,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-native-receipt-binding.md",
+        "report_source_commit": "84bfe93b8e358f03a4d7918dec96073b262f66c3"
+      },
+      "last_result": {
+        "passed": 57,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_work_packages.py",
+          "tests/test_dh116_flexible_execution_dependencies.py",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "86701dfa33c0236fe82f6ae774a3c2641aa48505f2ff202392f2633a0e69b04f",
+        "tested_head": "c97660d8bb1a85303aaae412af95dea135b0f222",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "qualification_scope": "cpu_receipt_integrity_regressions",
+        "tamper_rejected_before_publication": true,
+        "interrupted_publication_revalidated": true,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-native-receipt-binding.md",
+        "report_source_commit": "84bfe93b8e358f03a4d7918dec96073b262f66c3"
+      }
     }
   },
   "execution_target": {

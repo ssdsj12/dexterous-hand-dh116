@@ -225,6 +225,41 @@ def test_native_completion_receipt_survives_without_reexecution(repo, monkeypatc
     assert repo.native_plan(approval=approval)['native_ready'] == []
 
 
+@pytest.mark.parametrize('changed', ['claimed_success_after_exit_139', 'own_ledger'])
+def test_native_resume_revalidates_own_receipt_before_qualification(repo, monkeypatch, changed):
+    exit_code = 139 if changed == 'claimed_success_after_exit_139' else 0
+    native_fixture(repo, exit_code=exit_code)
+    native_dependency_pass(repo)
+    approval = native_approval(repo)
+    monkeypatch.setattr(repo, 'native_resource_blocker', lambda *_: None)
+    monkeypatch.setattr(repo, 'native_lock_observed', lambda *_: True)
+    intent = repo.register_native_attempt('native', approval)
+    original = repo.run_native_worker(intent)
+    receipt = intent.with_name('receipt.json')
+    if exit_code:
+        rewritten = json.loads(receipt.read_text())
+        rewritten.update(native_qualification=True, outer_exit_code=0, exit_code=0)
+        rewritten.pop('blocker_kind')
+        rewritten.pop('reason')
+        recipe = repo.native_recipe(repo.registry()['packages']['native'])
+        rewritten.update(scheduler.validate_native_artifacts(recipe['spec'], Path(original['output'])))
+        write_json(receipt, rewritten)
+    else:
+        Path(original['output'], 'physics.jsonl').write_text('{"changed": true}\n')
+    bytes_before = receipt.read_bytes()
+
+    resumed = scheduler.Repository(repo.root, evidence_dir=repo.private)
+    plan = resumed.native_plan(approval=approval)
+    assert plan['native_qualified'] == []
+    assert plan['native_ready'] == []
+    assert plan['blockers']['native']['kind'] == 'failed_native'
+    assert 'native' not in plan['native_results']
+    forged = dict(json.loads(bytes_before), result_sha256=scheduler.file_hash(receipt))
+    with pytest.raises(RuntimeError, match='durable independently validated receipt'):
+        resumed.publish_native('native', forged)
+    assert receipt.read_bytes() == bytes_before
+
+
 def test_native_busy_does_not_consume_attempt_and_cpu_stays_ready(repo, monkeypatch):
     native_fixture(repo)
     native_dependency_pass(repo)
@@ -253,7 +288,8 @@ def test_native_validator_requires_physical_records_and_scope(repo, monkeypatch)
 
 
 
-def test_native_publication_interrupt_resumes_without_a_second_launch(relay_cli, monkeypatch):
+@pytest.mark.parametrize('tamper_before_resume', [False, True])
+def test_native_publication_interrupt_resumes_without_a_second_launch(relay_cli, monkeypatch, tamper_before_resume):
     repo = relay_cli
     native_fixture(repo)
     native_dependency_pass(repo)
@@ -271,6 +307,14 @@ def test_native_publication_interrupt_resumes_without_a_second_launch(relay_cli,
         with pytest.raises(RuntimeError, match='publication interrupted'):
             repo.publish_native('native', result)
     assert repo.journal.exists()
+    if tamper_before_resume:
+        previous = repo.head()
+        Path(result['output'], 'physics.jsonl').write_text('{"changed": true}\n')
+        with pytest.raises(RuntimeError, match='native publication evidence failed revalidation'):
+            scheduler.main(['--resume'])
+        assert repo.head() == previous and repo.journal.exists()
+        assert repo.pending() == []
+        return
     assert scheduler.main(['--resume']) == 0
     assert not repo.journal.exists()
     recorded = repo.registry()['packages']['native']['last_result']
@@ -414,7 +458,8 @@ def test_native_receipt_binding_resolves_frozen_left_and_reuses_after_reopen(rep
 
     Path(result['output'], 'physics.jsonl').write_text('{"tampered": true}\n')
     invalidated = resumed.native_plan(approval=approval)
-    assert invalidated['native_qualified'] == ['native']
+    assert invalidated['native_qualified'] == []
+    assert invalidated['blockers']['native']['kind'] == 'failed_native'
     assert invalidated['blockers']['right']['kind'] == 'waiting_dependency'
     assert 'right' not in invalidated['native_results']
     assert intent.with_name('receipt.json').exists()
