@@ -1,3 +1,7 @@
+## 2026-11-12 — WireSeg第三个RGB分片完整核验
+
+完整核验6/148 blobs；新增800条data_center只属test家族，精确配对深度0条，未训练或授予视觉资格。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-sixth-blob-verified.md)
+
 ## 2026-11-12 — 同渲染experience默认stage对照
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c2.md)。

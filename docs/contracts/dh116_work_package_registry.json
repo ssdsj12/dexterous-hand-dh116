@@ -3487,7 +3487,7 @@
         "flex.f5-wireseg-ingestion"
       ],
       "status": "blocked",
-      "reason": "已核验5/148 blob，固定16样本分割/深度各128次诊断已执行；深度仍不及训练常数基线，持出与全视场精度未合格。完整下载独立续传，不阻断无相机Teacher。"
+      "reason": "已核验6/148 blob；固定16样本分割/深度各128次诊断已执行，持出深度仍不及常数基线。新增800条data_center为独立test，无精确配对深度，不能加入训练。完整下载独立续传，不阻断无相机Teacher。"
     },
     "flex.f0-source-lock": {
       "title": "DeformX 主仓库与递归源码锁定",
@@ -6941,6 +6941,78 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-native-receipt-binding.md",
         "report_source_commit": "84bfe93b8e358f03a4d7918dec96073b262f66c3"
+      }
+    },
+    "flex.f5-wireseg-sixth-blob": {
+      "title": "WireSeg第三个RGB分片完整核验",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f5-wireseg-resumable-relay"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_blob_relay.py",
+          "tests/test_dh116_wireseg_pretraining.py"
+        ],
+        "log_sha256": "a9bbe0880cfecc4a954bf57fd5f797e2d1ada6f84d7d9da3ad2fb0892d904f92",
+        "tested_head": "3120e87cceb5b57c9058d58b4fc055f610deae94",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "verified_blobs": 6,
+        "catalogue_blobs": 148,
+        "actual_rows": 800,
+        "source_family": "data_center",
+        "split": "test",
+        "exact_depth_pairs": 0,
+        "new_training_updates": 0,
+        "blob_sha256": "17ddf17fe837d17027780dda78a916b4874403c3be0e320cb95d06977d207018",
+        "transfer_receipt_sha256": "35c8b39ee7c9073b5de106d6821f2e68a519d88afdbde2e33b9d7b74ad5fa1d4",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-sixth-blob-verified.md",
+        "report_source_commit": "4715848142563c38f24f8d71ef7dc408f36e96e6"
+      },
+      "last_result": {
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_blob_relay.py",
+          "tests/test_dh116_wireseg_pretraining.py"
+        ],
+        "log_sha256": "a9bbe0880cfecc4a954bf57fd5f797e2d1ada6f84d7d9da3ad2fb0892d904f92",
+        "tested_head": "3120e87cceb5b57c9058d58b4fc055f610deae94",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "verified_blobs": 6,
+        "catalogue_blobs": 148,
+        "actual_rows": 800,
+        "source_family": "data_center",
+        "split": "test",
+        "exact_depth_pairs": 0,
+        "new_training_updates": 0,
+        "blob_sha256": "17ddf17fe837d17027780dda78a916b4874403c3be0e320cb95d06977d207018",
+        "transfer_receipt_sha256": "35c8b39ee7c9073b5de106d6821f2e68a519d88afdbde2e33b9d7b74ad5fa1d4",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-sixth-blob-verified.md",
+        "report_source_commit": "4715848142563c38f24f8d71ef7dc408f36e96e6"
       }
     }
   },
