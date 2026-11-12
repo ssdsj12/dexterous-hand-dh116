@@ -139,8 +139,8 @@ def test_plain_scheduler_cannot_launch_c5_without_its_capture(tmp_path):
 def test_gdb_normal_and_crash_capture_full_maps_without_native_run(tmp_path, monkeypatch):
     script = ROOT / "scripts/dh116_camera_c5_debugger.py"
     assert script.is_file(), "C5 GDB capture missing"
-    source = importlib.import_module("scripts.dh116_camera_c5_debugger").GDB_COMMANDS.split("\npython\n", 1)[1].split("\nend\n", 1)[0]
     output = tmp_path / "native"
+    source = importlib.import_module("scripts.dh116_camera_c5_debugger").render_gdb_commands(output).split("\npython\n", 1)[1].split("\nend\n", 1)[0]
     output.mkdir()
     (output / "before_app_close.json").write_text('{"case": "C5"}')
     (output / "app_close_returned.json").write_text('{"app_close_returned": true}')
@@ -153,7 +153,6 @@ def test_gdb_normal_and_crash_capture_full_maps_without_native_run(tmp_path, mon
     fake = SimpleNamespace(Breakpoint=Breakpoint, SignalEvent=SignalEvent,
         events=SimpleNamespace(stop=SimpleNamespace(connect=callbacks.append)),
         selected_inferior=lambda: SimpleNamespace(pid=os.getpid()),
-        parameter=lambda name: 'probe.py --output ' + str(output) + ' --execute-native',
         write=log.append, execute=commands.append, error=RuntimeError)
     monkeypatch.setitem(sys.modules, "gdb", fake)
     scope = {}
@@ -174,7 +173,7 @@ def test_gdb_normal_and_crash_capture_full_maps_without_native_run(tmp_path, mon
 def test_gdb_failure_is_not_success_evidence(tmp_path, monkeypatch):
     script = ROOT / "scripts/dh116_camera_c5_debugger.py"
     assert script.is_file(), "C5 GDB capture missing"
-    source = importlib.import_module("scripts.dh116_camera_c5_debugger").GDB_COMMANDS.split("\npython\n", 1)[1].split("\nend\n", 1)[0]
+    source = importlib.import_module("scripts.dh116_camera_c5_debugger").render_gdb_commands(tmp_path).split("\npython\n", 1)[1].split("\nend\n", 1)[0]
     class Breakpoint:
         def __init__(self, *args, **kwargs):
             pass
@@ -183,7 +182,6 @@ def test_gdb_failure_is_not_success_evidence(tmp_path, monkeypatch):
     fake = SimpleNamespace(Breakpoint=Breakpoint, SignalEvent=type("SignalEvent", (), {}),
         events=SimpleNamespace(stop=SimpleNamespace(connect=lambda fn: None)),
         selected_inferior=lambda: SimpleNamespace(pid=os.getpid()),
-        parameter=lambda name: "probe.py --output " + str(tmp_path),
         write=lambda line: None, execute=fail, error=RuntimeError)
     monkeypatch.setitem(sys.modules, "gdb", fake)
     scope = {}
@@ -213,17 +211,19 @@ def test_c5_recipe_requires_normal_capture_and_unchanged_c4_config():
 
 def test_c5_wrapper_uses_versioned_capture_without_editing_base(monkeypatch):
     from scripts import run_dh116_camera_c5_work_packages as wrapper
-    original = wrapper.scheduler.GDB_COMMANDS
-    # monkeypatch restores the shared module after this test.
-    monkeypatch.setattr(wrapper.scheduler, "GDB_COMMANDS", original)
+    original = wrapper.scheduler.native_debugger_wrapper
+    original_commands = wrapper.scheduler.GDB_COMMANDS
+
     def check():
-        assert wrapper.scheduler.GDB_COMMANDS == importlib.import_module("scripts.dh116_camera_c5_debugger").GDB_COMMANDS
+        assert wrapper.scheduler.native_debugger_wrapper.func is wrapper.write_c5_debugger
+        assert wrapper.scheduler.GDB_COMMANDS == original_commands
         return 17
+
     monkeypatch.setattr(wrapper.scheduler, "main", check)
     entry_before = wrapper.scheduler.__file__
     assert wrapper.main() == 17
     assert wrapper.scheduler.__file__ == entry_before
-    assert wrapper.scheduler.GDB_COMMANDS == original
+    assert wrapper.scheduler.native_debugger_wrapper is original
 
 
 def test_real_worker_subprocess_keeps_c5_capture_root_and_private_directory(tmp_path):
@@ -257,6 +257,11 @@ Repository.verify_local_target = lambda self: None
     attempt.mkdir(parents=True)
     intent = attempt / "intent.json"
     intent.write_text("{}")
+    capture_output = private / "native output"
+    (attempt / "launch_argv.json").write_text(json.dumps({
+        "argv": ["bash", "scripts/python.sh", "fixture.py", "--output", str(capture_output)],
+        "dependency_receipt": None,
+    }))
     parent = """
 import json
 import os
@@ -288,7 +293,47 @@ raise SystemExit(wrapper.main())
     assert child["worker_private"] == report["parent_private"] == str(private)
     assert child["worker_entry"] == str(scripts / "run_dh116_camera_c5_work_packages.py")
     assert child["worker_cli_entry"] == child["worker_entry"]
-    expected = importlib.import_module("scripts.dh116_camera_c5_debugger").GDB_COMMANDS
+    expected = importlib.import_module("scripts.dh116_camera_c5_debugger").render_gdb_commands(capture_output)
     assert child["captured_commands"] == expected
     assert "set environment DH116_CAMERA_C5_GDB 1" in child["captured_commands"]
     assert "DH116_GDB_NORMAL_FINALIZE_BACKTRACE" in child["captured_commands"]
+
+
+@pytest.mark.skipif(not Path("/usr/bin/gdb").is_file(), reason="requires the Linux GDB executable")
+@pytest.mark.parametrize("fatal", [False, True])
+def test_real_gdb_preserves_capture_and_status_with_launcher_args(tmp_path, monkeypatch, fatal):
+    from scripts import run_dh116_camera_c5_work_packages as wrapper
+
+    output = tmp_path / "capture output"
+    output.mkdir()
+    (output / "before_app_close.json").write_text('{"case":"C5"}')
+    (output / "app_close_returned.json").write_text('{"app_close_returned":true}')
+    fixture = tmp_path / "fixture.py"
+    fixture.write_text(
+        "import os, resource, signal\n"
+        "resource.setrlimit(resource.RLIMIT_CORE, (0, 0))\n"
+        + ("os.kill(os.getpid(), signal.SIGSEGV)\n" if fatal else "print('CPU fixture')\n")
+    )
+    argv = [str(fixture), "--output", str(output)]
+    (tmp_path / "launch_argv.json").write_text(
+        json.dumps({"argv": ["bash", "scripts/python.sh", *argv], "dependency_receipt": None})
+    )
+    def run_fixture():
+        debugger = wrapper.scheduler.native_debugger_wrapper(tmp_path, {})
+        return subprocess.run([debugger, *argv], capture_output=True, text=True, timeout=25)
+
+    monkeypatch.setattr(wrapper.scheduler, "main", run_fixture)
+    result = wrapper.main()
+    log = tmp_path / "fixture.log"
+    log.write_text(result.stdout + result.stderr)
+    phase = "fatal_1" if fatal else "finalize"
+    assert (output / f"gdb_{phase}.json").is_file(), log.read_text()
+    capture = json.loads((output / f"gdb_{phase}.json").read_text())
+    assert capture["all_commands_succeeded"], capture
+    assert "[stack]" in (output / f"gdb_{phase}.maps").read_text()
+    status = wrapper.scheduler.debugger_status(log)
+    assert status["debugger_status_verified"]
+    assert status["debugger_inferior_exit_code"] == (None if fatal else 0)
+    assert status["debugger_inferior_signal"] == (11 if fatal else None)
+    assert status["debugger_backtrace_captured"] == fatal
+    assert (result.returncode == 0) == (not fatal)

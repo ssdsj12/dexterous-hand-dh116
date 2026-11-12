@@ -13,13 +13,11 @@ import gdb
 import json
 import os
 from pathlib import Path
-import shlex
 
+output = None  # Bound from the scheduler launch record before GDB starts.
 fatal_count = 0
 
 def capture(phase):
-    args = shlex.split(gdb.parameter("args"))
-    output = Path(args[args.index("--output") + 1])
     pid = gdb.selected_inferior().pid
     errors = []
     maps_bytes = 0
@@ -59,6 +57,8 @@ def capture(phase):
             os.fsync(stream.fileno())
     except OSError as error:
         gdb.write("DH116_GDB_COMMAND_ERROR receipt: " + str(error) + "\n")
+        return False
+    return result["all_commands_succeeded"]
 
 class FinalizeBreakpoint(gdb.Breakpoint):
     def stop(self):
@@ -73,8 +73,9 @@ def trace_fatal(event):
     global fatal_count
     if isinstance(event, gdb.SignalEvent) and event.stop_signal in ("SIGSEGV", "SIGBUS"):
         fatal_count += 1
-        gdb.write("DH116_GDB_FATAL_BACKTRACE " + event.stop_signal + "\n")
-        capture("fatal_" + str(fatal_count))
+        gdb.write("DH116_GDB_FATAL_SIGNAL " + event.stop_signal + "\n")
+        if capture("fatal_" + str(fatal_count)):
+            gdb.write("DH116_GDB_FATAL_BACKTRACE " + event.stop_signal + "\n")
 
 def status_variable(name):
     value = gdb.parse_and_eval(name)
@@ -92,3 +93,8 @@ gdb.write("DH116_GDB_INFERIOR_STATUS " + json.dumps({
 }) + "\n")
 end
 '''
+
+
+def render_gdb_commands(output):
+    """Bind the artifact directory independently of GDB's inferior args parameter."""
+    return GDB_COMMANDS.replace("output = None", f"output = Path({str(output)!r})", 1)

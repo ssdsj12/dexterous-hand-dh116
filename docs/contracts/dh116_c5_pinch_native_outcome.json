@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "base_head": "960268e25eb14a2122020c7e4ec9db3ed2e51a60",
+  "approved_batch_completed": true,
+  "attempts": 2,
+  "new_isaac_physics_steps": 3,
+  "ppo_updates": 0,
+  "complete_episodes": 0,
+  "data": {
+    "c5": {
+      "outer": {
+        "outer_exit_code": 1,
+        "duration_seconds": 89.25754671602044,
+        "log_sha256": "e9f0e85790f52b73c3b1cb5f98c0d8444bb330fe76a137aa643e0a67f4e5bfb4",
+        "native_lock_observed": true,
+        "debugger_status_verified": false,
+        "debugger_backtrace_captured": true
+      },
+      "receipt_sha256": "86a862c38fd4e0f0d251f7ab0ca61c3730560b5c02af3a223bce70d0c2a7558e",
+      "release_applied": false,
+      "gdb_artifacts": [],
+      "saved_proc_maps_sha256": {
+        "after_app_close.maps": "a73a15aea92d5dfb7dd6d49b5ed89ec6d12c7cdccec7173e6f6b3dd4cedeed77",
+        "before_hook_release.maps": "672c789a26f049f27467e6528d3d4a628c15386337a300395560bd02e11ee309",
+        "before_explicit_update.maps": "595e2936dd3f78cc77f8bb48156de8c920c966cb94e5428e7b27a15b744f475b"
+      }
+    },
+    "pinch": {
+      "outer": {
+        "outer_exit_code": 255,
+        "duration_seconds": 33.041884151054546,
+        "log_sha256": "8fa58be7b169b0d3218b4b49ef67d38f5674479b3ba6b98c09d016d853bb91b7",
+        "native_lock_observed": true,
+        "debugger_status_verified": true,
+        "debugger_backtrace_captured": true,
+        "debugger_inferior_exit_code": null,
+        "debugger_inferior_signal": 11
+      },
+      "receipt_sha256": "601652996a62e791edb49b0b75f3d4815be36090903308872ad919a319bacefb",
+      "result": {
+        "scope": "one_hand_free_rod_pinch_contact_candidate_not_grasp_qualification",
+        "side": "left",
+        "rod_uid": "rod0",
+        "native_execution_performed": true,
+        "grasp_qualified": false,
+        "full_state371_bound": false,
+        "failure": "mimic_error",
+        "physics_rows": 1,
+        "wrench_opposition_candidate_observed": false,
+        "physics_clock": {
+          "sdk_initial_step": 0,
+          "sdk_after_setup_step": 2,
+          "sdk_first_measurement_step": 3,
+          "sdk_last_measurement_step": 3,
+          "sdk_final_step": 3,
+          "setup_steps": 2,
+          "measured_steps": 1,
+          "total_steps": 3
+        },
+        "physics_budget": {
+          "initialization_physics_steps": 2,
+          "warmup_physics_steps": 0,
+          "measurement_physics_steps": 1,
+          "other_physics_advancing_steps": 0,
+          "total_physics_steps": 3
+        },
+        "code_config_sha256": "e43cdadcbf7d5a02b7b0def7abe79c0dce5c56d5720f10e9fa3349e48a02e217",
+        "outer_exit_verified": false
+      },
+      "row_sha256": "0c8062301e82b3127b0c49aadc5fdfd0096310f27d00a1f9c9a2f552216a20d1",
+      "max_sdk_q_jump_rad": 0.4809551388025284,
+      "max_sdk_speed_rad_s": 85.4345703125,
+      "frame0": {
+        "module": "libomni.physx.tensors.plugin.so",
+        "file_offset_hex": "0x59718"
+      },
+      "pad_pre_step_geometry_screen": {
+        "finger14_link": {
+          "pre_mesh_low_z_minus_table_top_m": 0.0024008111474933397,
+          "overlap_xy_aabb": true,
+          "vertex_inside_table_box": false
+        },
+        "finger23_link": {
+          "pre_mesh_low_z_minus_table_top_m": -3.909526620395065e-05,
+          "overlap_xy_aabb": true,
+          "vertex_inside_table_box": true
+        },
+        "finger33_link": {
+          "pre_mesh_low_z_minus_table_top_m": -0.017057945237955188,
+          "overlap_xy_aabb": true,
+          "vertex_inside_table_box": true
+        },
+        "finger43_link": {
+          "pre_mesh_low_z_minus_table_top_m": -0.04115304707750246,
+          "overlap_xy_aabb": true,
+          "vertex_inside_table_box": true
+        },
+        "finger53_link": {
+          "pre_mesh_low_z_minus_table_top_m": -0.0633406323490341,
+          "overlap_xy_aabb": true,
+          "vertex_inside_table_box": true
+        }
+      },
+      "zero_issued_action_and_rod_wrenches": true
+    },
+    "scope": "read-only evidence and distal pad authored mesh screen, no PhysX contact-pair proof"
+  },
+  "attempt_receipt_commits": {
+    "flex.f6-camera-c5": "1e2ab725cdbccdea7e6210fa4dfe29caeac27420",
+    "flex.f4-free-pinch-left-candidate-native": "5c5482e816f553e8691e52f7bb6dcf83d5096974"
+  },
+  "actual_scheduler_commands": {
+    "flex.f6-camera-c5": "DH116_PYTHON=/mnt/mydisk/xk/envs/dh116/bin/python DH116_NUM_THREADS=2 bash scripts/python.sh scripts/run_dh116_camera_c5_work_packages.py --run --scope all --native-approval /home/xk/.local/share/dh116-autonomous-3c80166/evidence/approved-c5-pinch-20261112-v9l5ajv3/c5-approval.json --limit 1 --jobs 1 --local-only --evidence-dir /home/xk/.local/share/dh116-autonomous-3c80166/evidence",
+    "flex.f4-free-pinch-left-candidate-native": "DH116_PYTHON=/mnt/mydisk/xk/envs/dh116/bin/python DH116_NUM_THREADS=2 bash scripts/python.sh scripts/run_dh116_pinch_work_packages.py --run --scope all --native-approval '/home/xk/.local/share/dh116-autonomous-3c80166/evidence/approved-c5-pinch-20261112-v9l5ajv3/pinch-approval.json' --limit 1 --jobs 1 --local-only --evidence-dir /home/xk/.local/share/dh116-autonomous-3c80166/evidence"
+  },
+  "cpu_debugger_repair": {
+    "status": "passed",
+    "stage": "cpu_verified",
+    "report": "docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md",
+    "passed": 47,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "tested_head": "0477b66bceddf0048550864c4fd12e566135fa8d",
+    "log_sha256": "a8a4097bc7aa0fd53df7649dd32cf731b5ac80c8907ceac64577ea8712ff39ec",
+    "red_log_sha256": "0c2948663c8008b4a26fe9abf5d8dd7a6c7678e59001db4cb6b0c82ad8e02045",
+    "real_gdb_fixture": true,
+    "native_execution_performed": false,
+    "native_qualification": false,
+    "actual_native_failures_retained": 2,
+    "audit_sha256": "ca49b493330aebd6f0a933340c39c08493e22468177dd0bb1c2dba98bc6f6095"
+  },
+  "new_c5_code_config_sha256": "96b31bac7e06a083591d2ef88a9118dd23c2bd0253c46d7923613c0959ffbfcc",
+  "next_native_approved": false,
+  "protected_files": 528,
+  "protected_checkpoints": 2,
+  "private_evidence": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/approved-c5-pinch-20261112-v9l5ajv3"
+}

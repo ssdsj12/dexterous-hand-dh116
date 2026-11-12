@@ -1,3 +1,7 @@
+## 2026-11-12 — C5 与自由杆 Pinch 单次诊断
+
+两次原生均未通过。C5 缺少目标 holder，Pinch 在第 3 SDK 步触发 mimic 保护。GDB 输出路径修复通过 47 项 CPU 回归。[结果与恢复点](docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md)
+
 ## 2026-11-12 — Free rod left Pinch contact candidate only
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-free-pinch-left-candidate-native.md)。

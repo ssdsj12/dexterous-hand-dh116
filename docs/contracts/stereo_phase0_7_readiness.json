@@ -6936,7 +6936,9 @@
         "tested_head": "960268e25eb14a2122020c7e4ec9db3ed2e51a60"
       },
       "status": "failed",
-      "report": "docs/superpowers/reports/dh116-managed-flex.f6-camera-c5.md"
+      "report": "docs/superpowers/reports/dh116-managed-flex.f6-camera-c5.md",
+      "reason": "Actual C5 run had no telemetry holder. Capture bug was corrected in CPU fixtures, but this configuration cannot test holder release. Original failure remains retained.",
+      "diagnostic_report": "docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md"
     },
     "flex.f4-free-pinch-left-candidate-native": {
       "executor": "native_bounded",
@@ -6983,7 +6985,38 @@
         "tested_head": "1e2ab725cdbccdea7e6210fa4dfe29caeac27420"
       },
       "status": "failed",
-      "report": "docs/superpowers/reports/dh116-managed-flex.f4-free-pinch-left-candidate-native.md"
+      "report": "docs/superpowers/reports/dh116-managed-flex.f4-free-pinch-left-candidate-native.md",
+      "reason": "Native stopped at SDK step 3 with mimic_error before nonzero action or rod wrench. Authored pad meshes intersect table at the starting pose. Post-close PhysX tensor SIGSEGV was separately captured.",
+      "diagnostic_report": "docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md"
+    },
+    "flex.f6-camera-c5-debugger-output-binding": {
+      "status": "passed",
+      "stage": "cpu_verified",
+      "report": "docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md",
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "tested_head": "0477b66bceddf0048550864c4fd12e566135fa8d",
+      "log_sha256": "a8a4097bc7aa0fd53df7649dd32cf731b5ac80c8907ceac64577ea8712ff39ec",
+      "red_log_sha256": "0c2948663c8008b4a26fe9abf5d8dd7a6c7678e59001db4cb6b0c82ad8e02045",
+      "real_gdb_fixture": true,
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_failures_retained": 2,
+      "audit_sha256": "ca49b493330aebd6f0a933340c39c08493e22468177dd0bb1c2dba98bc6f6095"
+    },
+    "flex.f4-single-hand-contact-native": {
+      "status": "blocked",
+      "reason": "The free-rod left Pinch candidate stopped at first measurement and has no qualified contact. Prepare a nonintersecting pose and diagnose tensor teardown before new native scope.",
+      "native_qualification": false,
+      "diagnostic_report": "docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md"
+    },
+    "flex.f7-task-camera-native": {
+      "status": "blocked",
+      "reason": "C5 lacked its target holder and crashed during finalization. CPU-only debugger capture fix does not qualify stereo synchronization or natural exit.",
+      "native_qualification": false,
+      "diagnostic_report": "docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md"
     }
   }
 }

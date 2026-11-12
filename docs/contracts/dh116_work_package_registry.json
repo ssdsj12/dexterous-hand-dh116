@@ -5491,7 +5491,7 @@
         "flex.f4-right-contact-native"
       ],
       "status": "blocked",
-      "reason": "Free Pinch real runtime and independent worker audit are CPU verified; one-hand candidate has not run. Candidate execution alone cannot establish full grasp/material-anchor/371D/R0 qualification.",
+      "reason": "The free-rod left Pinch candidate stopped at first measurement and has no qualified contact. Prepare a nonintersecting pose and diagnose tensor teardown before new native scope.",
       "blocker_kind": "native_evidence_required",
       "preparation_package": "flex.f4-free-pinch-runtime-preparation"
     },
@@ -5546,7 +5546,7 @@
         "flex.f4-dh116-same-rod"
       ],
       "status": "blocked",
-      "reason": "C3 headless/no-camera lifecycle passed; C4 rendering path SIGSEGV in _extensions after app.close. Task stereo synchronization/natural exit remain unqualified; no repeat authorized."
+      "reason": "C5 lacked its target holder and crashed during finalization. CPU-only debugger capture fix does not qualify stereo synchronization or natural exit."
     },
     "flex.f7-stereo-capture": {
       "title": "柔性任务同步双目采集",
@@ -8895,8 +8895,8 @@
         "tests/test_dh116_render_capture_boundary.py"
       ],
       "stage": "prepared_waiting_exact_native_approval",
-      "reason": "native or CPU qualification failed; durable evidence retained outside Git",
-      "blocker_kind": "failed_native",
+      "reason": "Actual C5 run had no telemetry holder. Capture bug was corrected in CPU fixtures, but this configuration cannot test holder release. Original failure remains retained.",
+      "blocker_kind": "unsupported_case",
       "scheduler_entrypoint": "scripts/run_dh116_camera_c5_work_packages.py",
       "superseded_unexecuted_fingerprints": [
         "94ffe53d74185ef49725924b95d0d9497953e21c081723a7ecddf57be952fc6d"
@@ -9420,7 +9420,7 @@
         "tests/test_dh116_contact_material.py"
       ],
       "stage": "prepared_waiting_exact_native_approval",
-      "reason": "native or CPU qualification failed; durable evidence retained outside Git",
+      "reason": "Native stopped at SDK step 3 with mimic_error before nonzero action or rod wrench. Authored pad meshes intersect table at the starting pose. Post-close PhysX tensor SIGSEGV was separately captured.",
       "blocker_kind": "failed_native",
       "scheduler_entrypoint": "scripts/run_dh116_pinch_work_packages.py",
       "last_native_attempt": {
@@ -9671,6 +9671,31 @@
           "full_371_reset_R0_physical_binding",
           "qualified_teacher_and_synchronized_stereo"
         ]
+      }
+    },
+    "flex.f6-camera-c5-debugger-output-binding": {
+      "title": "Bind C5 GDB output using the scheduler launch record",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "flex.f6-camera-c5-worker-boundary"
+      ],
+      "last_result": {
+        "status": "passed",
+        "stage": "cpu_verified",
+        "report": "docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md",
+        "passed": 47,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "tested_head": "0477b66bceddf0048550864c4fd12e566135fa8d",
+        "log_sha256": "a8a4097bc7aa0fd53df7649dd32cf731b5ac80c8907ceac64577ea8712ff39ec",
+        "red_log_sha256": "0c2948663c8008b4a26fe9abf5d8dd7a6c7678e59001db4cb6b0c82ad8e02045",
+        "real_gdb_fixture": true,
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_failures_retained": 2,
+        "audit_sha256": "ca49b493330aebd6f0a933340c39c08493e22468177dd0bb1c2dba98bc6f6095"
       }
     }
   },
