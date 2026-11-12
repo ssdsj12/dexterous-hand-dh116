@@ -4557,6 +4557,63 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_simulation_app_lifecycle.py",
+        "tests/test_dh116_render_capture_boundary.py"
+      ],
+      "log_sha256": "8f03f7125e059f7cba7fcb6e97c7284e42713f26c9bc54dbb69a3bafadd65148",
+      "tested_head": "d875a932908107eca92eb588468120fccdeff87c",
+      "native_execution_performed": true,
+      "native_qualification": false,
+      "qualification_scope": "same_attempt_crash_evidence_audit_only",
+      "cases_executed": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "outer_exit_codes": [
+        255,
+        255,
+        255
+      ],
+      "inferior_signals": [
+        11,
+        11,
+        11
+      ],
+      "first_fault_module": "_appwindow",
+      "first_fault_file_offset": "0x15e55",
+      "cases_native_qualified": 0,
+      "physical_steps": 0,
+      "teacher_updates": 0,
+      "c3_executed": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-camera-c0-c2-current-native.md",
+      "report_source_commit": "01bdb4a98cb7253dd63e63e14f29d2ed64ac74e2",
+      "package": "flex.f6-camera-current-fault-audit",
+      "commit": "d4dad93fb2612cbeb98c56781ec5a761cbb59d76",
+      "parent": "d875a932908107eca92eb588468120fccdeff87c",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-camera-c0-c2-current-native.md"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
