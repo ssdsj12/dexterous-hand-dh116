@@ -70,7 +70,11 @@ def test_bounded_teacher_diagnostic_records_frozen_inputs_and_terminal_bootstrap
     assert batch['actor_obs'].shape == (64, 371)
     assert batch['old_mu'].shape == batch['latent_actions'].shape == (64, 24)
     assert batch['old_log_prob'].shape == (64,)
-    assert saved['returns'][0] == batch['rewards'][0]
+    # Terminal return is (reward - value) + value in float32 GAE.
+    # Account for one cancellation ULP without admitting terminal bootstrap.
+    rounding = torch.finfo(batch['rewards'].dtype).eps * (
+        batch['values'][0].abs() + batch['rewards'][0].abs())
+    torch.testing.assert_close(saved['returns'][0], batch['rewards'][0], rtol=0., atol=float(rounding))
     assert batch['done'][0] and not batch['bootstrap_mask'][0]
     assert saved['initial_checkpoint_sha256'] == cli.file_sha256(tmp_path / 'teacher_update_000000.pt')
     assert saved['rng']['torch'].dtype == torch.uint8

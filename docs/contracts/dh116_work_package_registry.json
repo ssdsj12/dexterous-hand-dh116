@@ -263,7 +263,7 @@
         "wp3.mpc-native"
       ],
       "status": "blocked",
-      "reason": "无兼容专家数据，原生训练需批准"
+      "reason": "Actor-only BC 到 R0 的严格入口已实现。待完整 MPC 同步首回合、有效 371D 与原生成功证据。"
     },
     "wp3.frozen-eval": {
       "title": "冻结 Teacher 的二指三指验收",
@@ -1796,6 +1796,70 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-pair-runner.md",
         "report_source_commit": "bbf65f7b7de6e30f0f876cdb3c5e5c9c699b5785"
+      }
+    },
+    "wp3.teacher-bc-r0-frozen-preflight": {
+      "title": "Teacher Actor-only BC、R0 与冻结验收入口",
+      "executor": "gated",
+      "dependencies": [
+        "wp3.cpu-contract"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 75,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_teacher_warm_start.py",
+          "tests/test_dh116_stereo_trials.py",
+          "tests/test_dh116_privileged_cli.py",
+          "tests/test_dh116_privileged_teacher.py"
+        ],
+        "log_sha256": "397436a86d7946e5f7ca9807e34795b61c207104630586788e7d5323f9db2e58",
+        "tested_head": "8744af94a7b14e09a1c443eaade861e1c66d036e",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "qualification_scope": "teacher_training_and_frozen_evaluation_cpu_preflight_only",
+        "short_mpc_archive_admitted": false,
+        "qualified_teacher": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-teacher-bc-r0-frozen-chain.md",
+        "report_source_commit": "c0b5745d2fd55630398b21cc7af46a653fbf7ec7"
+      },
+      "last_result": {
+        "passed": 75,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_teacher_warm_start.py",
+          "tests/test_dh116_stereo_trials.py",
+          "tests/test_dh116_privileged_cli.py",
+          "tests/test_dh116_privileged_teacher.py"
+        ],
+        "log_sha256": "397436a86d7946e5f7ca9807e34795b61c207104630586788e7d5323f9db2e58",
+        "tested_head": "8744af94a7b14e09a1c443eaade861e1c66d036e",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "qualification_scope": "teacher_training_and_frozen_evaluation_cpu_preflight_only",
+        "short_mpc_archive_admitted": false,
+        "qualified_teacher": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-teacher-bc-r0-frozen-chain.md",
+        "report_source_commit": "c0b5745d2fd55630398b21cc7af46a653fbf7ec7"
       }
     }
   },

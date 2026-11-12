@@ -7,6 +7,7 @@ controller, material, actuator limit or success tolerance is projected away.
 import argparse
 import copy
 import hashlib
+import io
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -289,6 +290,56 @@ def derive_policy_trial_manifest(source_manifest,source_checkpoint,target_checkp
     return result
 
 
+def inspect_trained_teacher_checkpoint(path, checkpoint_sha256, config, ppo, *, contract=None, task_identity=None):
+    """Authenticate the frozen artifact and distinguish BC initialization from PPO."""
+    from dataclasses import asdict
+    from .tabletop_privileged_checkpoint import VERSION as CHECKPOINT_VERSION, _finite_tree, _validate_adam
+    from .tabletop_privileged_cli import training_identity
+    from .tabletop_privileged_teacher import PrivilegedTeacher
+
+    require_sha(checkpoint_sha256, 'reviewed R0 checkpoint SHA256')
+    raw = Path(path).read_bytes()
+    if hashlib.sha256(raw).hexdigest() != checkpoint_sha256:
+        raise ValueError('frozen Teacher checkpoint SHA256 differs from the reviewed artifact')
+    payload = torch.load(io.BytesIO(raw), map_location='cpu', weights_only=False)
+    if not isinstance(payload, dict) or payload.get('version') != CHECKPOINT_VERSION:
+        raise ValueError('versioned privileged Teacher PPO checkpoint required')
+    counters = payload.get('counters')
+    if (not isinstance(counters, dict) or type(counters.get('updates')) is not int or counters['updates'] < 1
+            or type(payload.get('policy_version')) is not int or payload['policy_version'] < counters['updates']):
+        raise ValueError('frozen evaluation requires accepted PPO updates after any Actor BC')
+    environments, rollout = payload.get('num_envs'), payload.get('rollout_steps')
+    if (type(environments) is not int or environments < 1 or type(rollout) is not int or rollout < 1
+            or type(counters.get('environment_steps')) is not int
+            or counters['environment_steps'] < environments * rollout * counters['updates']):
+        raise ValueError('frozen PPO checkpoint has incomplete owned rollout counters')
+    identity = payload.get('identity', {})
+    if (not isinstance(identity, dict) or identity.get('ppo_config') != asdict(ppo)
+            or ppo.target_kl is None or config.get('reward_profile') != 'teacher_r0_existing'
+            or identity.get('observation_size') != 371 or identity.get('action_size') != 24):
+        raise ValueError('frozen checkpoint must match the KL-guarded 371D/24D R0 configuration')
+    if contract is not None and identity != training_identity(ppo, contract, task_identity):
+        raise ValueError('frozen checkpoint does not match the actual native R0 contract')
+    optimizer, policy = payload.get('optimizer'), payload.get('policy')
+    if (not isinstance(optimizer, dict) or not isinstance(optimizer.get('state'), dict)
+            or not isinstance(policy, dict)):
+        raise ValueError('trained PPO checkpoint requires complete Adam and policy state')
+    with torch.random.fork_rng(devices=[]):
+        model = PrivilegedTeacher(**config['model'])
+    _finite_tree(policy)
+    _finite_tree(optimizer)
+    _validate_adam(optimizer, model, ppo, counters['updates'])
+    try:
+        model.load_state_dict(policy, strict=True)
+    except (TypeError, RuntimeError) as error:
+        raise ValueError('frozen checkpoint policy topology differs from Teacher config') from error
+    return dict(checkpoint_sha256=checkpoint_sha256, ppo_updates=counters['updates'],
+        ppo_environment_steps=counters['environment_steps'], policy_version=payload['policy_version'],
+        ppo_training_environments=environments, ppo_rollout_steps=rollout,
+        physics_sha256=evaluation_physics_sha256(contract) if contract is not None else None,
+        native_grasp_qualification=False)
+
+
 def freeze_teacher_cold_manifest(checkpoint,base_contract,primary_initialization,secondary_initialization,
                                  output,*,seed,split='test',count_per_style=100,camera_sha256='0'*64,
                                  wrist_joint_names=('wrist_x','wrist_y','wrist_z','wrist_roll','wrist_pitch','wrist_yaw')):
@@ -338,6 +389,8 @@ def main(argv=None):
     parser.add_argument('--config',type=Path,default=ROOT/'configs/stereo_trial_evaluation_v1.json')
     parser.add_argument('--manifest',type=Path)
     parser.add_argument('--checkpoint',type=Path)
+    parser.add_argument('--trained-checkpoint-sha256',
+        help='require an authenticated Teacher checkpoint with accepted R0 PPO updates')
     parser.add_argument('--output',type=Path)
     parser.add_argument('--owner',choices=('teacher','student'),default='teacher')
     parser.add_argument('--batch-size','--num-envs',dest='batch_size',type=int)
@@ -361,11 +414,24 @@ def main(argv=None):
         raise ValueError('at least100 trials/style, explicit small resource batch and positive step budget required')
     checked=dict(version=VERSION,status='configuration_checked',owner=args.owner,batch_size=batch,
         minimum_per_style=minimum,max_control_steps=budget,native_execution_performed=False,native_qualified=False)
+    teacher_config = ppo = None
+    if args.trained_checkpoint_sha256 is not None:
+        if args.owner != 'teacher' or args.checkpoint is None or args.manifest is None:
+            raise ValueError('trained checkpoint verification requires Teacher owner, checkpoint and held-out manifest')
+        from .tabletop_privileged_cli import load_config
+        teacher_config, ppo = load_config(args.teacher_config)
+        checked['frozen_ppo_checkpoint'] = inspect_trained_teacher_checkpoint(args.checkpoint,
+            args.trained_checkpoint_sha256, teacher_config, ppo)
     if args.manifest is not None:
         plan=prepare_cold_trial_batches(args.manifest,batch,minimum_per_style=minimum)
         checked.update(manifest_sha256=plan['manifest_sha256'],trials=len(plan['manifest']['trials']),batch_count=len(plan['batches']))
-        if args.checkpoint is not None and plan['manifest']['metadata']['source_sha256']!=file_sha256(args.checkpoint):
+        metadata = plan['manifest']['metadata']
+        if args.checkpoint is not None and metadata['source_sha256']!=file_sha256(args.checkpoint):
             raise ValueError('evaluation checkpoint differs from explicitly bound manifest policy source')
+        if args.trained_checkpoint_sha256 is not None:
+            from .tabletop_stereo_calibration import StereoCalibration
+            if metadata['split'] != 'test' or metadata['camera_sha256'] != StereoCalibration.from_json(args.camera_config).sha256:
+                raise ValueError('frozen Teacher needs a test split bound to the declared evaluation calibration')
     else:checked['manifest_required_for_execution']=True
     if args.check_config or not args.execute_native:
         print(json.dumps(checked,indent=2));return 0
@@ -377,8 +443,13 @@ def main(argv=None):
     def callback(bridge):
         if args.owner=='teacher':
             from .tabletop_privileged_cli import load_config,_policy_for_evaluation
-            teacher_config,ppo=load_config(args.teacher_config)
-            policy,_=_policy_for_evaluation(bridge,teacher_config,ppo,args.checkpoint)
+            selected_config, selected_ppo = (teacher_config, ppo) if teacher_config is not None else load_config(args.teacher_config)
+            frozen = None
+            if args.trained_checkpoint_sha256 is not None:
+                frozen = inspect_trained_teacher_checkpoint(args.checkpoint, args.trained_checkpoint_sha256,
+                    selected_config, selected_ppo, contract=bridge.contract, task_identity=bridge.task_identity)
+                write_json_new(args.output / 'frozen_teacher_checkpoint.json', frozen)
+            policy,_=_policy_for_evaluation(bridge,selected_config,selected_ppo,args.checkpoint)
             return evaluate_cold_trials(bridge,policy,args.manifest,args.output/'trials',owner='teacher',
                 checkpoint_path=args.checkpoint,max_control_steps=budget,minimum_per_style=minimum)
         from .tabletop_stereo_calibration import StereoCalibration

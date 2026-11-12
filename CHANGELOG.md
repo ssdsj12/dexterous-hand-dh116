@@ -1,3 +1,7 @@
+## 2026-11-12 — Teacher Actor-only BC、R0 与冻结验收入口
+
+新增 SHA 绑定的 Actor-only BC、R0 恢复与冻结验收预检，短程 MPC 归档通过拒绝测试。 Ubuntu CPU 回归 75 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-bc-r0-frozen-chain.md)
+
 ## 2026-11-12 — 冻结 Teacher sampled／mean 同初态配对入口
 
 真实 update-0 与同一双抓法初态通过 CPU 预检。旧 MPC reset family 和 native readback 不匹配，三路资格仍待验证。 Ubuntu CPU 回归 53 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-pair-runner.md)
