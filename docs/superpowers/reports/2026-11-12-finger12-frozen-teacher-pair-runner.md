@@ -21,3 +21,12 @@ bash scripts/python.sh -m pytest -q -p no:cacheprovider \
   tests/test_dh116_privileged_action_audit.py \
   tests/test_dh116_stereo_candidate_cold_trials.py
 ```
+
+## Sampled 回合完成证据与三路接入条件
+
+mean 启动前读取 sampled 的 `completion.json`，同时核对首态绑定、原生 480 Hz 账本、策略输入产物的文件 SHA256。账本必须存在两个真实首回合的身份和实际 Teacher sampled 动作 owner。若 sampled 在写入 `start_binding.json` 后失败，mean 在启动前拒绝。CPU 回归增加到 54 项通过，日志 SHA `9be56d303ebc1556d9ba78012e8f25e609c8354858f5fc7f4405df25b23a51d4`。
+
+原 loader 可在历史 T5 的实际 `tensor_contract.json` 下加载同一 MPC 语料，二指、三指两个参考均存在。T5 合同中的 `native_sensor_readback.batched=true` 与当前 Teacher 的 `false` 不同。两个原 Teacher checkpoint 内的 `native_task_contract` 均为 `5bd521d7a2922ea52b1925b26a0546544b7abc399268af19a589507c100c8786`，实际 T5 对应 `cc7d9f525f6ebeb04ff97a2ad0ba9afac02767f897ff3f14558c33c1ae56a0d6`。两条可独立验证的接入路线如下。
+
+1. 保留现有 Teacher checkpoint 的路线需要在当前 exact task contract 下采集新原生成功的同期动作轨迹。用现有 `tabletop_surface_demo_library.merge_datasets` 依据真实来源建立 reset family，并要求 `load_teacher_reference_dataset` 对实际三路继承合同都接受。以同一冻结初态和真实执行旁路验证原 `_teacher_optimizer` 的 reference、alive、tick 和 `observe_result` 边界。
+2. 保留历史 MPC 的路线可基于历史 T5 的合格物理参数、传感器读回方式及复用原 MPC，使用独立的新 Teacher checkpoint。该新 checkpoint 从训练、保存到评估都绑定实际 legacy TensorEnv 合同。先用真实 2 环境回读核对 reset family、控制器和物理摘要，再进行 4 步三路 pilot，最后运行 128 步因果诊断。该路线的结论只适用于新 Teacher；现有 update-0/1 和历史越限归档保留为独立证据。

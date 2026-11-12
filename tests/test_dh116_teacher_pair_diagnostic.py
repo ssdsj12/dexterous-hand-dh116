@@ -104,3 +104,49 @@ def test_cpu_preflight_preserves_identity_and_does_not_require_cuda_rng_device(t
     assert result == identity
     with pytest.raises(ValueError, match='identity'):
         check_frozen_teacher(file, model, ppo, {'native': False}, task)
+
+
+def test_mean_start_requires_completed_sampled_native_artifacts_and_exact_hashes(tmp_path):
+    import json
+    from go2_pvcnn.control.dh116.tabletop_stereo_contract import file_sha256
+    from go2_pvcnn.control.dh116.tabletop_teacher_pair_diagnostic import load_completed_sampled_start
+    start = tmp_path/'start_binding.json'
+    episodes = ['sampled:0:1', 'sampled:1:1']
+    starts = []
+    for trial in manifest(1)['trials']:
+        state = trial['physical_state']
+        starts.append(dict(trial_id=trial['trial_id'], physical_state=state,
+            readback_state_sha256=state_sha256(state)))
+    start.write_text(json.dumps(dict(mode='teacher_sampled', episode_uids=episodes,
+        checkpoint_sha256='3'*64, calibration_sha256='2'*64,
+        policy_steps_budget=4, reset_readback={'actual_states':starts})))
+    with pytest.raises(FileNotFoundError):
+        load_completed_sampled_start(start)
+    native = tmp_path/'native'
+    native.mkdir()
+    raw = native/'native_physics.jsonl'
+    records = [dict(kind='episode_start', episode_uid=uid, owner='teacher',
+        env_id=index, checkpoint_sha256='3'*64, calibration_sha256='2'*64,
+        first_episode=True, trial_id=starts[index]['trial_id'],
+        initial_measurement_valid=True) for index,uid in enumerate(episodes)]
+    records += [dict(kind='sample', episode_uid=uid, owner='teacher',
+        action_owner='teacher', action_audit={'execution_mode':'teacher_sampled'}) for uid in episodes]
+    raw.write_text(''.join(json.dumps(row)+'\n' for row in records))
+    state = tmp_path/'teacher_pre_action.pt'
+    state.write_bytes(b'archived pre-action data')
+    completion = tmp_path/'completion.json'
+    report = dict(status='bounded_frozen_teacher_diagnostic', mode='teacher_sampled',
+        native_execution_performed=True, policy_steps=1, ppo_updates=0,
+        start_binding_sha256=file_sha256(start), raw_480hz_sha256=file_sha256(raw),
+        pre_action_sha256=file_sha256(state))
+    completion.write_text(json.dumps(report))
+    assert load_completed_sampled_start(start)['episode_uids'] == episodes
+    raw.write_text(raw.read_text()+'\n')
+    with pytest.raises(ValueError, match='SHA256'):
+        load_completed_sampled_start(start)
+    records[-1]['action_owner'] = 'mpc'
+    raw.write_text(''.join(json.dumps(row)+'\n' for row in records))
+    report['raw_480hz_sha256'] = file_sha256(raw)
+    completion.write_text(json.dumps(report))
+    with pytest.raises(ValueError, match='owner'):
+        load_completed_sampled_start(start)

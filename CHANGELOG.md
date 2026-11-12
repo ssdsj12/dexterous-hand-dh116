@@ -1,3 +1,7 @@
+## 2026-11-12 — 冻结 Teacher mean 配对的 sampled 完成证据
+
+mean 启动前校验 sampled 回执、原生账本和动作身份。旧 Teacher Checkpoint 与历史 T5 场景仍不可互换。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-pair-runner.md)
+
 ## 2026-11-12 — MPC 371D 同钟数值与来源校验
 
 旧短程原生的 64 行均实证 204/371 个字段，新增独立旁路，保留 167 个未资格字段。 Ubuntu CPU 回归 31 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md)

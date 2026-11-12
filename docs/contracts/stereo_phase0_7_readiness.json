@@ -3817,6 +3817,33 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md",
       "report_source_commit": "b64e81f8f65eeb92410c2cb8d31adcf30cf853f8"
+    },
+    "wp3.finger12-sampled-completion-gate": {
+      "passed": 54,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_pair_diagnostic.py",
+        "tests/test_dh116_stereo_runtime_teacher_identity.py",
+        "tests/test_dh116_privileged_action_audit.py",
+        "tests/test_dh116_stereo_candidate_cold_trials.py"
+      ],
+      "log_sha256": "852848b954cfe9c27ad38a5d3f137f14ad946dc3b40a075e080acb33edf65b89",
+      "tested_head": "a67b56ab80e9cdb276b44d39f5a6e448fbb69ffc",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "preflight_pair_evidence_gate_only",
+      "same_contract_mpc_and_old_teacher": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-pair-runner.md",
+      "report_source_commit": "55e0e8059de12d86813440c85d3b5f124f47946c"
     }
   }
 }

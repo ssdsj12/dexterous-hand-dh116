@@ -83,6 +83,53 @@ def compare_start_bindings(*arms):
         native_grasp_qualified=False, causal_root_qualified=False)
 
 
+def load_completed_sampled_start(path):
+    """Require a naturally completed sampled-arm artifact set before pairing."""
+    if path.name != 'start_binding.json':
+        raise ValueError('sampled start binding filename must be start_binding.json')
+    start = json.loads(path.read_text(encoding='utf-8'))
+    completion = json.loads(path.with_name('completion.json').read_text(encoding='utf-8'))
+    steps = completion.get('policy_steps')
+    if (start.get('mode') != 'teacher_sampled'
+            or completion.get('status') != 'bounded_frozen_teacher_diagnostic'
+            or completion.get('mode') != 'teacher_sampled'
+            or completion.get('native_execution_performed') is not True
+            or completion.get('ppo_updates') != 0 or type(steps) is not int
+            or not 0 < steps <= start['policy_steps_budget']):
+        raise ValueError('completed bounded native sampled arm with no PPO required')
+    raw = path.parent / 'native/native_physics.jsonl'
+    evidence = dict(start_binding_sha256=path, raw_480hz_sha256=raw,
+        pre_action_sha256=path.with_name('teacher_pre_action.pt'))
+    if any(file_sha256(file) != completion.get(key) for key, file in evidence.items()):
+        raise ValueError('sampled start and complete native artifacts must match their recorded SHA256')
+    slots = dict(zip(start['episode_uids'], enumerate(_initials(start)), strict=True))
+    if len(slots) != 2:
+        raise ValueError('two distinct sampled first episode identities required')
+    headers, samples = set(), set()
+    with raw.open(encoding='utf-8') as stream:
+        for line in stream:
+            row = json.loads(line)
+            uid = row.get('episode_uid')
+            if uid not in slots or row.get('owner') != 'teacher':
+                raise ValueError('sampled raw ledger contains a foreign episode or owner')
+            if row['kind'] == 'episode_start':
+                slot, (trial, _) = slots[uid]
+                if (uid in headers or row.get('env_id') != slot or row.get('trial_id') != trial
+                        or row.get('first_episode') is not True or row.get('initial_measurement_valid') is not True
+                        or row.get('checkpoint_sha256') != start['checkpoint_sha256']
+                        or row.get('calibration_sha256') != start['calibration_sha256']):
+                    raise ValueError('sampled raw episode start disagrees with paired initial identity')
+                headers.add(uid)
+            elif (row['kind'] != 'sample' or uid not in headers or row.get('action_owner') != 'teacher'
+                    or row.get('action_audit', {}).get('execution_mode') != 'teacher_sampled'):
+                raise ValueError('sampled raw ledger lacks the correct action owner and issued mode')
+            else:
+                samples.add(uid)
+    if samples != set(slots):
+        raise ValueError('sampled raw ledger lacks physical evidence from both first episodes')
+    return start
+
+
 def check_frozen_teacher(path, model, ppo, native_contract, task_identity):
     """Inspect the immutable actor on CPU without restoring CUDA RNG or Adam."""
     from .tabletop_privileged_checkpoint import VERSION
@@ -239,8 +286,12 @@ def main(argv=None):
         parser.error('mean native arm requires the sampled native start binding')
     expected = None
     if args.expect_start is not None:
-        inputs[args.expect_start] = file_sha256(args.expect_start)
-        expected = json.loads(args.expect_start.read_text(encoding='utf-8'))
+        sampled = args.expect_start
+        for path in (sampled, sampled.with_name('completion.json'),
+                     sampled.with_name('teacher_pre_action.pt'),
+                     sampled.parent / 'native/native_physics.jsonl'):
+            inputs[path] = file_sha256(path)
+        expected = load_completed_sampled_start(sampled)
     run = new_run(args.output)
     write_json_new(run / 'preflight.json', dict(mode=args.mode, plan=plan,
         immutable_inputs={str(path):sha for path,sha in inputs.items()}, ppo_updates=0))
@@ -264,7 +315,8 @@ def main(argv=None):
 
     result = launch_native(callback, native_arguments=args.native_task_config, output=run / 'native',
         num_envs=2, seed=args.seed, rollout_steps=args.steps, enabled=True)
-    result.update(raw_480hz_sha256=file_sha256(run / 'native/native_physics.jsonl'),
+    result.update(start_binding_sha256=file_sha256(run / 'start_binding.json'),
+        raw_480hz_sha256=file_sha256(run / 'native/native_physics.jsonl'),
         pre_action_sha256=file_sha256(run / 'teacher_pre_action.pt'))
     if any(file_sha256(path) != sha for path,sha in inputs.items()):
         raise RuntimeError('immutable input changed during bounded diagnosis')
