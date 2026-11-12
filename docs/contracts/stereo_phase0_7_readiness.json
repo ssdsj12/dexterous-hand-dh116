@@ -5129,6 +5129,36 @@
       "max_force_n": 0.0473053,
       "max_pair_force_residual_n": 0,
       "independent_validator_sha256": "72601a242b72646e0bf0e9bbb2b96308fd227fd0d0d2d526bcb368d50e564ef3"
+    },
+    "flex.f6-camera-lifecycle-tools": {
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_render_capture_boundary.py",
+        "tests/test_dh116_deformx_render_smoke.py"
+      ],
+      "log_sha256": "d2189d8335dda68cf114773ae086311713fd24e124e0dfd7df92cbb65d14612d",
+      "tested_head": "f702e0a2dcf6e7497d973847a9a28333168569b2",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "case_preflights": [
+        "V0",
+        "V1",
+        "V2",
+        "V3",
+        "V4"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-render-lifecycle-isolation-c.md",
+      "report_source_commit": "a482b37f267075bed1c68952685d1e3228cbb452"
     }
   }
 }

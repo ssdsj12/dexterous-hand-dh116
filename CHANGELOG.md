@@ -1,3 +1,7 @@
+## 2026-11-12 — 任务相机单次渲染与自然退出诊断入口
+
+同一渲染读回双侧模态，验证物理时钟与深度语义，保留独立退出判据。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-render-lifecycle-isolation-c.md)
+
 ## 2026-11-12 — 真实 DH116 左拇指接触账本与关闭诊断
 
 左拇指 240 步真实物理账本记录 68 个接触步。外层退出 139，原生资格待修复，右侧保持待验证。 Ubuntu CPU 回归 7 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-left-thumb-contact-native.md)
