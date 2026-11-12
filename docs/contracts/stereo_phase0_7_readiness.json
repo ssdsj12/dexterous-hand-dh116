@@ -3533,6 +3533,52 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-finger12-native-pairing-preflight.md",
       "report_source_commit": "56f86d69fe36a9f9209103a9a04939122dd4dd4c"
+    },
+    "wp2.cold8-state-depth-diagnostic": {
+      "passed": 55,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_state_supervision.py",
+        "tests/test_dh116_stereo_depth_auxiliary.py",
+        "tests/test_dh116_stereo_cold_candidate_admission.py",
+        "tests/test_dh116_stereo_wire_segmentation.py"
+      ],
+      "log_sha256": "b73ed0583a94a865e6e2fc886ad45dfa6a6ce485eef324fc54850e4c4b93eec0",
+      "tested_head": "0c7b8f9b582e430ab9401258d039ec76fcb8f8f8",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "archived_native_label_and_cpu_depth_holdout_only",
+      "valid_center_rows_by_style": {
+        "pinch": 12,
+        "tripod": 12
+      },
+      "valid_linear_velocity_rows_by_style": {
+        "pinch": 12,
+        "tripod": 12
+      },
+      "valid_orientation_rows": 0,
+      "depth_training_groups": 2,
+      "depth_training_right_labels": 0,
+      "depth_holdout_groups": 8,
+      "depth_cpu_optimizer_steps": 2,
+      "depth_coarse_grid_wire_p95_mm": {
+        "pinch_left": 36.611,
+        "pinch_right": 199.194,
+        "tripod_left": 45.028,
+        "tripod_right": 233.288
+      },
+      "formal_training_qualified": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-stereo-cold8-state-depth-diagnostic.md",
+      "report_source_commit": "b51026ad65816ad59b09252b43509f2b77dfc963"
     }
   }
 }

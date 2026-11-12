@@ -149,7 +149,7 @@
         "wp1.segmentation-mask-policy"
       ],
       "status": "blocked",
-      "reason": "8 初态同步候选证据已回读，待独立深度误差和置信度资格验证。"
+      "reason": "Cold8 已完成独立 RGB/Optical-Z 持出诊断，匹配尾部误差仍超限；需要独立准确率和置信度资格。"
     },
     "wp2.mode-gates": {
       "title": "区分状态监督的离线与原生资格模式",
@@ -879,7 +879,7 @@
         "wp2.rigid-sdk-velocity"
       ],
       "status": "blocked",
-      "reason": "缺刚性任务独立物理初态和实际启用字段的合格监督；未验证字段保持关闭"
+      "reason": "Cold8 各抓法 12 条 Center XYZ 与线速度标签，物体位移约 1e-8 m，完整姿态标签为 0；需要独立动态初态和逐字段资格。"
     },
     "wp6.rigid-native-final": {
       "title": "刚性代理 Student 独立原生验收",
@@ -980,7 +980,7 @@
         "wp1.depth-auxiliary-optimizer"
       ],
       "status": "blocked",
-      "reason": "缺独立左右原生参考、线缆覆盖证据及正式训练批准"
+      "reason": "历史 2 初态仅有左侧监督，Cold8 8 初态持出后粗网格误差仍超限。需要双侧独立合格监督与验证。"
     },
     "orchestration.windows-relay-only": {
       "title": "Ubuntu 提交与 Windows 发布中转",
@@ -1476,6 +1476,108 @@
       ],
       "status": "blocked",
       "reason": "待共享冷初态入口与三路 2 env pilot 的独立预算，缺完整同初态终止证据。"
+    },
+    "wp2.cold8-state-depth-diagnostic": {
+      "title": "Cold8 状态标签与独立深度持出诊断",
+      "executor": "gated",
+      "dependencies": [
+        "wp1.rgb-native",
+        "wp2.rigid-sdk-velocity",
+        "wp1.depth-auxiliary-optimizer"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 55,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_state_supervision.py",
+          "tests/test_dh116_stereo_depth_auxiliary.py",
+          "tests/test_dh116_stereo_cold_candidate_admission.py",
+          "tests/test_dh116_stereo_wire_segmentation.py"
+        ],
+        "log_sha256": "b73ed0583a94a865e6e2fc886ad45dfa6a6ce485eef324fc54850e4c4b93eec0",
+        "tested_head": "0c7b8f9b582e430ab9401258d039ec76fcb8f8f8",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "qualification_scope": "archived_native_label_and_cpu_depth_holdout_only",
+        "valid_center_rows_by_style": {
+          "pinch": 12,
+          "tripod": 12
+        },
+        "valid_linear_velocity_rows_by_style": {
+          "pinch": 12,
+          "tripod": 12
+        },
+        "valid_orientation_rows": 0,
+        "depth_training_groups": 2,
+        "depth_training_right_labels": 0,
+        "depth_holdout_groups": 8,
+        "depth_cpu_optimizer_steps": 2,
+        "depth_coarse_grid_wire_p95_mm": {
+          "pinch_left": 36.611,
+          "pinch_right": 199.194,
+          "tripod_left": 45.028,
+          "tripod_right": 233.288
+        },
+        "formal_training_qualified": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-stereo-cold8-state-depth-diagnostic.md",
+        "report_source_commit": "b51026ad65816ad59b09252b43509f2b77dfc963"
+      },
+      "last_result": {
+        "passed": 55,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_state_supervision.py",
+          "tests/test_dh116_stereo_depth_auxiliary.py",
+          "tests/test_dh116_stereo_cold_candidate_admission.py",
+          "tests/test_dh116_stereo_wire_segmentation.py"
+        ],
+        "log_sha256": "b73ed0583a94a865e6e2fc886ad45dfa6a6ce485eef324fc54850e4c4b93eec0",
+        "tested_head": "0c7b8f9b582e430ab9401258d039ec76fcb8f8f8",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "qualification_scope": "archived_native_label_and_cpu_depth_holdout_only",
+        "valid_center_rows_by_style": {
+          "pinch": 12,
+          "tripod": 12
+        },
+        "valid_linear_velocity_rows_by_style": {
+          "pinch": 12,
+          "tripod": 12
+        },
+        "valid_orientation_rows": 0,
+        "depth_training_groups": 2,
+        "depth_training_right_labels": 0,
+        "depth_holdout_groups": 8,
+        "depth_cpu_optimizer_steps": 2,
+        "depth_coarse_grid_wire_p95_mm": {
+          "pinch_left": 36.611,
+          "pinch_right": 199.194,
+          "tripod_left": 45.028,
+          "tripod_right": 233.288
+        },
+        "formal_training_qualified": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-stereo-cold8-state-depth-diagnostic.md",
+        "report_source_commit": "b51026ad65816ad59b09252b43509f2b77dfc963"
+      }
     }
   },
   "execution_target": {

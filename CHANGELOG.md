@@ -1,3 +1,7 @@
+## 2026-11-12 — Cold8 状态标签与独立深度持出诊断
+
+两种抓法各有 12 条 Center XYZ 和 12 条线速度监督；独立持出证据仍不足以授予动态泛化与双目精度资格。 Ubuntu CPU 回归 55 项通过。[报告](docs/superpowers/reports/2026-11-12-stereo-cold8-state-depth-diagnostic.md)
+
 ## 2026-11-12 — 右手 finger12 同初态三路配对预检
 
 旧 Teacher 与新 Cold8 的实测初态交集为 0。预检记录了 MPC 近邻状态、测量缺口与三路配对预算。 Ubuntu CPU 回归 41 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-native-pairing-preflight.md)
