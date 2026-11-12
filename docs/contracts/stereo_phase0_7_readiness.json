@@ -4505,6 +4505,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-flexible-f2-standalone-gpu.md",
       "report_source_commit": "513e61585ac7cb595f1fac36be68aab50b4ea470"
+    },
+    "flex.f6-assets-audit": {
+      "passed": 11,
+      "failed": 0,
+      "skipped": 1,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_assets_audit.py",
+        "tests/test_dh116_deformx_cuda_source.py"
+      ],
+      "log_sha256": "7707d14a1ab85a01f5cb7553aa838bd37fbcc075e253ed6f93dfb88de7270398",
+      "tested_head": "4531860798726da5564d24fcbe7d88d139a82d39",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "qualification_scope": "pinned_drop_hang_asset_subset_and_cpu_readback",
+      "hf_revision": "9ef440fa263dcd9b39689c97860f1d94d599bc5a",
+      "assets": 109,
+      "bytes": 176253735,
+      "wire_usd_count": 72,
+      "scene_usd_count": 4,
+      "trajectories": 6,
+      "unexpected_unresolved_references": 0,
+      "authored_dormant_dome_refs": 4,
+      "audit_sha256": "7d4c69c8bffccffe938c19130e513d2488a61c8fe254f84694a4ab2a9013837a",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-deformx-assets-f6.md",
+      "report_source_commit": "eb6b8b6b64e3f3050e86a78cf870d725a3116341"
     }
   }
 }

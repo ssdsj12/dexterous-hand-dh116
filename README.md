@@ -1,3 +1,7 @@
+## 2026-11-12 — 官方 DeformX drop/hang 资产和轨迹审计
+
+Ubuntu 审计 109 个原始文件、72 个线缆 USD、4 个场景与 6 份轨迹；原生渲染待独立验证。 Ubuntu CPU 回归 11 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-assets-f6.md)
+
 ## 2026-11-12 — Standalone CUDA 静态、动力学与接触验证
 
 RTX 4090 独立求解器 36 项通过，保留 1 项上游高刚度限制 xfail。静态平台读回双侧力和力矩。 Ubuntu CPU 回归 12 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f2-standalone-gpu.md)
