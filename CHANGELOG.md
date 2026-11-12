@@ -1,3 +1,7 @@
+## 2026-11-12 — 实际 PhysX CPU/GPU 凸包逐指配对
+
+两次独立原生退出 0，全部 10 个实际指腹有向多边形一致、顶点最大差值 0 m。 Ubuntu CPU 回归 15 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-hull-device-parity.md)
+
 ## 2026-11-12 — F6 drop 原生渲染与关闭诊断
 
 Drop 已产出 RGB、径向深度、Native ID 和 composed USD，外层退出仍为 139，hang 待实际验证。 Ubuntu CPU 回归 14 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-render-smoke-f6.md)

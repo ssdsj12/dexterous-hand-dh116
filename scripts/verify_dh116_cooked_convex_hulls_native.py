@@ -11,6 +11,7 @@ import traceback
 import numpy as np
 
 from go2_pvcnn.control.dh116.deformx_dh116_colliders import DISTAL_PAD_LINKS, read_pad_triangles
+from scripts.audit_dh116_cooked_hull_device_parity import physics_device_matches
 from scripts.audit_dh116_cooked_convex_hulls import (
     compare_surfaces, geometric_hull_estimate, read_native_pad_hulls,
 )
@@ -155,7 +156,23 @@ def _record_pads(stage, physx, hands, output, clock):
     return rows
 
 
-def _run(sim, output, sources, steps):
+def _physics_device(physx, requested):
+    from isaacsim.core.simulation_manager import SimulationManager
+
+    view = SimulationManager.get_physics_sim_view()
+    if view is None:
+        raise RuntimeError("live PhysX tensor view is absent")
+    return {
+        "requested_device": requested,
+        "manager_device": SimulationManager.get_physics_sim_device(),
+        "tensor_device_ordinal": int(view.device_ordinal),
+        "gpu_dynamics_enabled": bool(SimulationManager.is_gpu_dynamics_enabled()),
+        "broadphase": str(SimulationManager.get_broadphase_type()),
+        "physx_device_override": int(physx.get_overwrite_gpu_setting()),
+    }
+
+
+def _run(sim, output, sources, steps, requested_device):
     import omni.usd
     from omni.physx import get_physx_interface
     from pxr import UsdGeom
@@ -172,12 +189,17 @@ def _run(sim, output, sources, steps):
     index_after = int(sim.current_time_step_index)
     if index_after - index_before != steps or index_after > 10:
         raise RuntimeError(f"native step budget mismatch: {index_before} -> {index_after}")
+    physics_device = _physics_device(physx, requested_device)
+    write_json(output / "physics_device.json", physics_device)
+    if not physics_device_matches(physics_device):
+        raise RuntimeError(f"PhysX device evidence differs from the requested backend: {physics_device}")
     clock = {"physics_step": index_after, "dt_s": _DT, "steps_commanded": steps}
     reference = _reference(stage, physx, body, mesh, simulation_running=True)
     write_json(output / "reference.json", {"clock": clock, **reference})
     rows = _record_pads(stage, physx, hands, output, clock)
     write_json(output / "result.json", {
         "scope": "bounded_physx_cooked_geometry_readback", "clock": clock, "source_usds": sources,
+        "physics_device": physics_device,
         "reference_frame_calibration": reference["calibration"], "pad_rows": len(rows),
         "sdk_pad_bodies_found": sum(row.get("sdk_body", {}).get("sdk_rigid_body_found", False) for row in rows),
         "pads_with_live_hulls": sum(any(query["live_simulation_cooked"]["hulls"]
@@ -308,7 +330,7 @@ def main():
             sim = sim_utils.SimulationContext(sim_utils.SimulationCfg(
                 dt=_DT, device=args.device, gravity=(0.0, 0.0, 0.0),
             ))
-            _run(sim, args.output, sources, args.steps)
+            _run(sim, args.output, sources, args.steps, args.device)
         except Exception:
             write_json(args.output / "failure.json", {"exception": traceback.format_exc()})
             raise

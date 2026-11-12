@@ -4841,6 +4841,42 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-deformx-render-smoke-f6.md",
       "report_source_commit": "e9f5af25668510f5a55af3ef1d739d5b8902824d"
+    },
+    "flex.f4-cooked-hull-device-parity": {
+      "passed": 15,
+      "failed": 0,
+      "skipped": 1,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_cooked_hull_device_parity.py",
+        "tests/test_dh116_cooked_convex_hulls.py",
+        "tests/test_dh116_flexible_colliders.py",
+        "tests/test_dh116_deformx_cuda_source.py"
+      ],
+      "log_sha256": "ccb1fc14e018a842c9b45db74a72c733a60ac170fc85039f23cc09e0f92eb4b6",
+      "tested_head": "95fc4c996695929ac5449fa2a79b1f8c68cf8286",
+      "native_execution_performed": true,
+      "native_qualification": true,
+      "qualification_scope": "original_pad_physx_cpu_gpu_cooked_geometry_parity_only",
+      "native_exit_codes": [
+        0,
+        0
+      ],
+      "actual_paired_pads": 10,
+      "cpu_tensor_ordinal": -1,
+      "gpu_tensor_ordinal": 0,
+      "max_matched_vertex_delta_m": 0,
+      "sdf_baked": false,
+      "comparison_sha256": "aa424c5c444ad4e1020d744f1941a20380b105e8155e81f9af1510e7d7d1b7c4",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-deformx-cooked-hull-device-parity.md",
+      "report_source_commit": "a45e2e85c9428e4ddc2360737f0226793c5ef425"
     }
   }
 }
