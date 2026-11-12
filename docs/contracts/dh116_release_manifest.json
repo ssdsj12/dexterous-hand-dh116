@@ -2344,6 +2344,58 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 99,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_wire_tensor_probe.py",
+        "tests/test_dh116_teacher_task_contact.py",
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_stereo_shutdown_validation.py",
+        "tests/test_dh116_stereo_runtime_teacher_identity.py"
+      ],
+      "log_sha256": "610e9acdc0a69c4d392be20c5562434c5b75205181b176b0f70a1a525d54887e",
+      "tested_head": "e0251d270632acb44230f3fd94bc9c8d380cd1bc",
+      "native_execution_performed": true,
+      "native_qualification": false,
+      "qualification_scope": "bounded_exact_t5_wire_collision_inventory_and_one_sdk_writer",
+      "outer_exit_code": 0,
+      "physical_steps": 128,
+      "aligned_env_rows": 256,
+      "enabled_collision_shapes": 76,
+      "instance_proxies": 68,
+      "unresolved_enabled_collision_paths": 0,
+      "wire_root_sdk_calls": 0,
+      "measured_trajectory_matches_prior_probe": true,
+      "raw_audit_sha256": "4501c6e5b4526d0f7a3b4ff462b08de99c2764bb2607ab7564088eb40d27bb94",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-t5-proxy-sdk-native-results.md",
+      "report_source_commit": "7dd7fb369782e92107c246f5c45a88db19dec182",
+      "package": "wp4.teacher-t5-proxy-sdk-force-inventory",
+      "commit": "d57502734551467953dd85acdfb6fff77609332f",
+      "parent": "e0251d270632acb44230f3fd94bc9c8d380cd1bc",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-teacher-t5-proxy-sdk-native-results.md",
+        "docs/superpowers/reports/2026-11-12-teacher-wire-proxy-sdk-source-audit.md",
+        "scripts/collect_dh116_teacher_wire_tensor_probe.py",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_wire_tensor_probe.py",
+        "tests/test_dh116_teacher_wire_tensor_probe.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
