@@ -6679,6 +6679,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-wireseg-legacy-diagnostic-import.md",
       "report_source_commit": "4894f5fd874dcf209e5bfcdc52c35c275b15af55"
+    },
+    "flex.f6-camera-c5-worker-boundary": {
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_camera_c5_ownership.py",
+        "tests/test_dh116_simulation_app_lifecycle.py",
+        "tests/test_dh116_render_capture_boundary.py"
+      ],
+      "log_sha256": "90fb48fd5c05bbf33e0ae0a3f8f3c0c96da1610e3e4aa810aa5a7c4fddbc80d5",
+      "tested_head": "546e9feff107558bff76474e26bf4cea37700018",
+      "stage": "cpu_verified",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "scope": "camera_c5_worker_boundary",
+      "command_spec_sha256": "b2111b376320ba4dfb4babd302034e77a0de12678f080d5386903ff335855322",
+      "code_config_sha256": "c9a7e7ec6effcb72a59b97b22138dd568a31579e057d18a8258be2451f4f42aa",
+      "superseded_unexecuted_code_config_sha256": "94ffe53d74185ef49725924b95d0d9497953e21c081723a7ecddf57be952fc6d",
+      "remaining_blockers": [
+        "new_exact_fingerprint_authorization",
+        "actual_C5_lifecycle_result"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md",
+      "report_source_commit": "98457a5f95b63e98f23984f30f4ad27e30c2fe24"
     }
   }
 }

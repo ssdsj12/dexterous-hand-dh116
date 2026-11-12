@@ -43,12 +43,24 @@ SDK omni/ext/_extensions.pyi 177–202 行将 subscribe_to_extension_enable 返�
 
 实际 **44 passed，0 failed，3.67 秒**：C5 14 项，旧生命周期与边界 30 项。GDB 回调在 CPU 替身下执行，覆盖正常/信号采样和错误记录；没有启动 GDB，不记为实际调试器或 Isaac 验证。git diff --check 通过。528 份保护文件与两份历史 Checkpoint SHA 均符合既有清单；SDK/物理源码未改。
 
-## 冻结与待批准预算
+## Worker 入口修正（替代旧批准身份）
+
+根代理在尚未执行时发现：原调度器 Repository.start_native 通过自己的 __file__ 路径启动新的 native worker；旧 C5 入口只在父进程替换 GDB_COMMANDS，worker 仍进入原调度器，缺少 C5 环境标记与正常退出采样。这是执行缺口，前述 44 项测试没有覆盖真实子进程边界。
+
+**旧 code/config SHA-256 94ffe53d74185ef49725924b95d0d9497953e21c081723a7ecddf57be952fc6d 及其待批准请求已 superseded，禁止执行。** 已发布 dc7faa0 对应的旧请求必须由新指纹替代；没有消耗任何 C5 原生尝试。
+
+最小修复仅修改 C5 wrapper：确认 wrapper 与原调度器位于同一 scripts 目录，调用原 main 期间临时把原模块 __file__ 指向 C5 wrapper，并选择 C5 GDB 命令。这样 start_native 的真实子进程重新进入 C5 wrapper，子进程再次安装采样命令；仓库根目录不变，evidence-dir 仍由原调度器显式传递。main 返回或抛错时恢复父进程模块状态。旧原调度器、探针和 C0–C4 配方均未改。
+
+新增测试在临时目录复制调度器及 C5 文件，只替换 native worker 的实际原生执行体和 Git 目标检查；真实 start_native、真实 subprocess、worker CLI 参数解析、根路径推导和 native_debugger_wrapper 都执行。stub 保存实际生成的 debugger.gdb，核对父子 PID 不同、真实 child sys.argv[0] 为 C5 wrapper、父子仓库及含空格的独立证据路径一致，且 C5 环境标记、正常 finalize 采样和全部 GDB 命令逐字节一致。该测试没有运行 GDB 或 Isaac。
+
+修复前实际观察失败：worker_entry 为 run_dh116_work_packages.py；修复后同一三文件测试命令 **45 passed，0 failed，3.25 秒**（C5 15 项＋旧 30 项）。git diff --check 与 528＋2 保护核验通过。此前“真实 GDB/Isaac 尚未验证”的限制仍成立。
+
+## 当前冻结与待批准预算
 
 配方 configs/dh116_execution/deformx_camera_c5.json：
 
 - command spec SHA-256：b2111b376320ba4dfb4babd302034e77a0de12678f080d5386903ff335855322
-- code/config SHA-256：94ffe53d74185ef49725924b95d0d9497953e21c081723a7ecddf57be952fc6d
+- code/config SHA-256：c9a7e7ec6effcb72a59b97b22138dd568a31579e057d18a8258be2451f4f42aa
 - 上述身份使用本报告命令所列三份 package tests；调度器按源码集合排序。注册须使用相同测试集合，其他更改后须重新冻结。
 - SDK 源码、接口 stub 和 ELF 输入 SHA 已加入配方。telemetry_helpers：b0c0ce45b8a1603a1b978382f3a93b0b7e9505d8ee9003e824b6c30055609a31；_extensions ELF：695ea005b3a39a433c13a4f589ed137a51b604a9563b6bfc031b6216d9a075a6。
 

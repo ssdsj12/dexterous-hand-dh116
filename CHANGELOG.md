@@ -1,3 +1,7 @@
+## 2026-11-12 — C5 原生 worker 保留独立采样入口
+
+修复 C5 父进程设置丢失于后台 worker 的执行缺口；真实 CPU 子进程回归确认 worker 进入相同专用入口、保留 GDB 命令和证据路径。旧 94ffe… 指纹与未执行审批作废；没有消耗原生次数。 Ubuntu CPU 回归 45 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md)
+
 ## 2026-11-12 — WireSeg 旧断点独立诊断恢复与第九个官方数据块
 
 旧断点可在独立诊断格式中恢复 model/Adam/Torch RNG 与真实 sampler，并支持后续完整当前 RNG 链式续点；未知历史信息仍为 unknown，strict v2 不接受。新增 360 个官方精确 RGB-depth 配对，完整块 9/148。本轮真实训练 0 更新、原生 0 次。 Ubuntu CPU 回归 62 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-legacy-diagnostic-import.md)

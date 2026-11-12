@@ -220,4 +220,75 @@ def test_c5_wrapper_uses_versioned_capture_without_editing_base(monkeypatch):
         assert wrapper.scheduler.GDB_COMMANDS == importlib.import_module("scripts.dh116_camera_c5_debugger").GDB_COMMANDS
         return 17
     monkeypatch.setattr(wrapper.scheduler, "main", check)
+    entry_before = wrapper.scheduler.__file__
     assert wrapper.main() == 17
+    assert wrapper.scheduler.__file__ == entry_before
+    assert wrapper.scheduler.GDB_COMMANDS == original
+
+
+def test_real_worker_subprocess_keeps_c5_capture_root_and_private_directory(tmp_path):
+    """Run start_native and the actual worker CLI, stubbing only native work."""
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "__init__.py").touch()
+    for name in ("run_dh116_camera_c5_work_packages.py", "dh116_camera_c5_debugger.py"):
+        (scripts / name).write_bytes((ROOT / "scripts" / name).read_bytes())
+    source = (ROOT / "scripts/run_dh116_work_packages.py").read_text()
+    stub = """
+def _cpu_worker(self, intent):
+    result = {}
+    native_debugger_wrapper(intent.parent, result)
+    result.update(worker_root=str(self.root), worker_private=str(self.private),
+                  worker_pid=os.getpid(), worker_entry=str(Path(__file__).resolve()),
+                  worker_cli_entry=str(Path(sys.argv[0]).resolve()),
+                  captured_commands=(intent.parent / 'debugger.gdb').read_text())
+    atomic_write(intent.parent / 'receipt.json', json_text(result))
+    return result
+Repository.run_native_worker = _cpu_worker
+Repository.verify_local_target = lambda self: None
+"""
+    marker = "if __name__ == '__main__':"
+    assert source.count(marker) == 1
+    # Only the native body is replaced in this private CPU fixture. start_native,
+    # argument parsing, root derivation, and debugger wrapper remain real code.
+    (scripts / "run_dh116_work_packages.py").write_text(source.replace(marker, stub + "\n" + marker))
+    private = tmp_path / "separate evidence"
+    attempt = private / "attempt"
+    attempt.mkdir(parents=True)
+    intent = attempt / "intent.json"
+    intent.write_text("{}")
+    parent = """
+import json
+import os
+from pathlib import Path
+from scripts import run_dh116_camera_c5_work_packages as wrapper
+scheduler = wrapper.scheduler
+repo = scheduler.Repository(Path.cwd(), evidence_dir=Path.cwd() / 'separate evidence')
+intent = repo.private / 'attempt' / 'intent.json'
+repo.register_native_attempt = lambda name, approval: intent
+repo.registry = lambda: {'packages': {'fixture': {}}}
+repo.native_recipe = lambda package: {'spec': {'budget': {'timeout_seconds': 10}}}
+def parent_main():
+    result = repo.start_native('fixture', {})
+    print(json.dumps({'parent_root': str(repo.root), 'parent_private': str(repo.private),
+                      'parent_pid': os.getpid(), 'child': result}))
+    return 0
+scheduler.main = parent_main
+raise SystemExit(wrapper.main())
+"""
+    env = {**os.environ, "PYTHONPATH": str(tmp_path), "PYTHONDONTWRITEBYTECODE": "1",
+           "CUDA_VISIBLE_DEVICES": ""}
+    completed = subprocess.run([sys.executable, "-c", parent], cwd=tmp_path, env=env,
+                               check=True, capture_output=True, text=True, timeout=20)
+    report = json.loads(completed.stdout)
+    child = report["child"]
+    assert child is not None
+    assert child["worker_pid"] != report["parent_pid"]
+    assert child["worker_root"] == report["parent_root"] == str(tmp_path)
+    assert child["worker_private"] == report["parent_private"] == str(private)
+    assert child["worker_entry"] == str(scripts / "run_dh116_camera_c5_work_packages.py")
+    assert child["worker_cli_entry"] == child["worker_entry"]
+    expected = importlib.import_module("scripts.dh116_camera_c5_debugger").GDB_COMMANDS
+    assert child["captured_commands"] == expected
+    assert "set environment DH116_CAMERA_C5_GDB 1" in child["captured_commands"]
+    assert "DH116_GDB_NORMAL_FINALIZE_BACKTRACE" in child["captured_commands"]
