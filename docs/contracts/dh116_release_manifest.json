@@ -3414,6 +3414,49 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_flexible_execution_dependencies.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "d5a94c2eb5da5a9bcb579d6432f163bcc14c7578474e265f54afcde9c3b70b00",
+      "tested_head": "546130fe756d2a979d6dbf1fc6426eb25b759438",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "physics_and_stereo_separated": true,
+      "teacher_modes": [
+        "pinch",
+        "tripod",
+        "power"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-physics-stereo-dependencies.md",
+      "report_source_commit": "3d8972a66a028825b714b5581585beb01c86dba8",
+      "package": "flex.execution-dependency-split",
+      "commit": "120eb7a45f9ee29b3863786e0cbd0d0c557c2888",
+      "parent": "546130fe756d2a979d6dbf1fc6426eb25b759438",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-flexible-physics-stereo-dependencies.md",
+        "tests/test_dh116_flexible_execution_dependencies.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
