@@ -5011,20 +5011,60 @@
         "flex.f3-isaac-rigid",
         "flex.f4-cooked-pad-sdf"
       ],
-      "status": "pending",
-      "reason": "首轮外层 139 已归档；新版仅变更资源释放顺序，准备独立有界复验。",
+      "status": "passed",
       "last_native_attempt": {
+        "executor": "native_bounded",
+        "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe",
+        "batch_id": "eb31c79-thumb-once",
+        "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle",
+        "native_qualification": true,
         "native_execution_performed": true,
-        "native_qualification": false,
-        "outer_exit_code": 139,
-        "physics_rows": 240,
-        "contact_ticks": 68,
-        "status": "failed_native",
-        "report": "docs/superpowers/reports/2026-11-12-deformx-left-thumb-contact-native.md",
-        "report_source_commit": "853bfcb3d37d0a8ee22cbf26a77468e7f0e32d85",
-        "max_force_n": 0.0473053,
-        "max_pair_force_residual_n": 0,
-        "independent_validator_sha256": "72601a242b72646e0bf0e9bbb2b96308fd227fd0d0d2d526bcb368d50e564ef3"
+        "command_spec_sha256": "8b5a3a4efed8ad69295100ed5946935f779112cc3c023b8213f3936118621f30",
+        "code_config_sha256": "4c750dc69cd92fe3962caca7751d9e91876f668a19114c862316ad24dfe93786",
+        "launch_argv_sha256": "c1ccd5bf06710c0b07c939a5cc5d302fd963d31e78f3484ee9d5e613ffb27b62",
+        "debugger": "gdb_on_segv",
+        "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
+        "debugger_wrapper_sha256": "19cb75a7b1f5963a88a606fc796ee0d4a6efb6591432a028df1cd1ddaac56c08",
+        "exit_code": 0,
+        "outer_exit_code": 0,
+        "log_sha256": "fb7e09836db2a8ddd8405d230c53cfdf1dff3599869e53570e9bf5742fdbd7c7",
+        "duration_seconds": 35.348927012993954,
+        "native_lock_observed": true,
+        "debugger_status_verified": true,
+        "debugger_backtrace_captured": false,
+        "debugger_inferior_exit_code": 0,
+        "debugger_inferior_signal": null,
+        "artifact_sha256": {
+          "plan.json": "8181f68e4aca6954c54c8d71e50eec853f6530c144c3980bb970a603e06d3c8f",
+          "physics.jsonl": "e3ff29b703f29474222ecfd033eeba97a6ac2ad7e36be6713fd5e6653d6faf7b",
+          "result.json": "e42fe05956551585a770f8d6f97f7a48d1bb36142ed12cb3953306de9653d476",
+          "ownership.jsonl": "3a5c0fad3c35da2db73be52f2c481a3229f98f96c2ccd63bef84aae7342aa846",
+          "shutdown_complete.json": "e505ec9622a098139613b5ca4257f11ba02f73c71cadf1b4f431a5fb76614fbb"
+        },
+        "ledger_counts": {
+          "physics.jsonl": 240
+        },
+        "result_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+        "native_physics_validated": true,
+        "cpu_regression": {
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "tests/test_dh116_deformx_thumb_contact.py"
+          ],
+          "log_sha256": "c6d88cabd45bb56945545a34b3ad0da1cbc47318e073e6e98e913c682037a2b9",
+          "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe"
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md"
       },
       "native_attempt_history": [
         {
@@ -5062,7 +5102,60 @@
       "tests": [
         "tests/test_dh116_deformx_thumb_contact.py"
       ],
-      "blocker_kind": "waiting_approval"
+      "last_result": {
+        "executor": "native_bounded",
+        "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe",
+        "batch_id": "eb31c79-thumb-once",
+        "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle",
+        "native_qualification": true,
+        "native_execution_performed": true,
+        "command_spec_sha256": "8b5a3a4efed8ad69295100ed5946935f779112cc3c023b8213f3936118621f30",
+        "code_config_sha256": "4c750dc69cd92fe3962caca7751d9e91876f668a19114c862316ad24dfe93786",
+        "launch_argv_sha256": "c1ccd5bf06710c0b07c939a5cc5d302fd963d31e78f3484ee9d5e613ffb27b62",
+        "debugger": "gdb_on_segv",
+        "debugger_script_sha256": "43e796fa5426f16f896e148554ab66232861b4af02a303deb44bfb1bbdab8c30",
+        "debugger_wrapper_sha256": "19cb75a7b1f5963a88a606fc796ee0d4a6efb6591432a028df1cd1ddaac56c08",
+        "exit_code": 0,
+        "outer_exit_code": 0,
+        "log_sha256": "fb7e09836db2a8ddd8405d230c53cfdf1dff3599869e53570e9bf5742fdbd7c7",
+        "duration_seconds": 35.348927012993954,
+        "native_lock_observed": true,
+        "debugger_status_verified": true,
+        "debugger_backtrace_captured": false,
+        "debugger_inferior_exit_code": 0,
+        "debugger_inferior_signal": null,
+        "artifact_sha256": {
+          "plan.json": "8181f68e4aca6954c54c8d71e50eec853f6530c144c3980bb970a603e06d3c8f",
+          "physics.jsonl": "e3ff29b703f29474222ecfd033eeba97a6ac2ad7e36be6713fd5e6653d6faf7b",
+          "result.json": "e42fe05956551585a770f8d6f97f7a48d1bb36142ed12cb3953306de9653d476",
+          "ownership.jsonl": "3a5c0fad3c35da2db73be52f2c481a3229f98f96c2ccd63bef84aae7342aa846",
+          "shutdown_complete.json": "e505ec9622a098139613b5ca4257f11ba02f73c71cadf1b4f431a5fb76614fbb"
+        },
+        "ledger_counts": {
+          "physics.jsonl": 240
+        },
+        "result_sha256": "7a7696b3e22e4e90b3a8902220adef2838a6b3c9df9e537f1c13689ad7a8da06",
+        "native_physics_validated": true,
+        "cpu_regression": {
+          "passed": 6,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "tests/test_dh116_deformx_thumb_contact.py"
+          ],
+          "log_sha256": "c6d88cabd45bb56945545a34b3ad0da1cbc47318e073e6e98e913c682037a2b9",
+          "tested_head": "0764fb95e1a2cb99c3a851385d0cd26c75139ffe"
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md"
+      }
     },
     "flex.f4-right-contact-native": {
       "title": "右拇指与柔性杆原生接触",

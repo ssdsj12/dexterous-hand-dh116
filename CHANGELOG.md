@@ -1,3 +1,7 @@
+## 2026-11-12 — 左拇指与柔性杆原生接触
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md)。
+
 ## 2026-11-12 — 原生成功结果恢复与发布二次核验
 
 恢复与发布均重新核对原始outer_exit、共享锁、日志及物理产物；外层139、ledger篡改、发布中断后篡改均拒绝，保留失败及已消耗指纹。 Ubuntu CPU 回归 57 项通过。[报告](docs/superpowers/reports/2026-11-12-native-receipt-binding.md)
