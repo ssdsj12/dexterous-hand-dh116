@@ -901,7 +901,7 @@
         "wp6.independent-proof"
       ],
       "status": "blocked",
-      "reason": "缺真实柔性后端、独立柔性 Teacher/Student 和逐任务原生证据"
+      "reason": "Real CUDA solver and bilateral single-thumb calibration exist; qualified free-rod bimanual task, separate flexible Teacher/Student and final native evidence are still missing."
     },
     "orchestration.native-gate-split": {
       "title": "独立排期刚性代理和柔性 Cosserat 验收",
@@ -4511,7 +4511,7 @@
         "flex.f6-derived-render-preflight"
       ],
       "status": "blocked",
-      "reason": "本批官方最小C0、no-stage C1、默认stage C2均app.close返回后在Py_FinalizeEx的AppWindow相同偏移SIGSEGV；当前栈和动态库映射已保存，回调/对象所有权根因仍待验证。原任务相机未取得自然退出资格。"
+      "reason": "C3 headless/no-camera natural exit passed; C4 rendered lifecycle SIG11 in _extensions after app.close (outer255). C5 telemetry ownership/worker fix is CPU verified and awaits exact new approval; task stereo remains unqualified."
     },
     "flex.f4-cooked-hull-device-parity": {
       "title": "实际 PhysX CPU/GPU 凸包逐指配对",
@@ -9452,6 +9452,41 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-wireseg-full-manifest-loss-domains.md",
         "report_source_commit": "aacabb1397b814ca37cbdcb888182743cd2849d4"
+      }
+    },
+    "flex.continuation-second-batch-closeout": {
+      "title": "Continuation batch2 tested recovery and release",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-camera-c5-worker-boundary",
+        "flex.f4-free-pinch-runtime-preparation",
+        "flex.wireseg-full-manifest-loss-domains",
+        "flex.wireseg-legacy-diagnostic-continuation"
+      ],
+      "status": "passed",
+      "last_result": {
+        "status": "passed",
+        "stage": "cpu_verified",
+        "scope": "bounded_batch_recovery_not_project_completion",
+        "passed": 458,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "tested_head": "1988eeb76349c0b68d90acfb1df2178c0f1ce248",
+        "cpu_evidence_sha256": "de998f2e45c27d8225343d57dfb8866fb357d4a0a7e8e9ef31daa0553178f55b",
+        "recovery_sha256": "cef8f7d2fb906c2938196a0e24f4c8663fddde6b0c16647fa18aeac47efee2b5",
+        "report": "docs/superpowers/reports/2026-11-12-continuation-batch2-progress-and-recovery.md",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "training_updates": 0,
+        "formal_teacher_qualified": false,
+        "formal_student_qualified": false,
+        "remaining_blockers": [
+          "exact_C5_and_free_Pinch_native_approval",
+          "wireseg_accuracy_below_constant",
+          "full_371_reset_R0_physical_binding",
+          "qualified_teacher_and_synchronized_stereo"
+        ]
       }
     }
   },

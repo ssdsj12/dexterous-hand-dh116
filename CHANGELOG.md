@@ -1,3 +1,7 @@
+## 2026-11-12 — 长时续任务第二批恢复点
+
+六个独立源码工作包已完成发布，最终隔离回归458项通过、0失败/跳过。自由杆候选与C5均未原生执行；深度精度仍不合格，Teacher/Student未越过准入门槛。[完整状态和恢复计划](docs/superpowers/reports/2026-11-12-continuation-batch2-progress-and-recovery.md)。
+
 ## 2026-11-12 — WireSeg 完整固定清单监督域与误差复核
 
 完成原16 train/128 heldout、288个视图的只读CPU复核，精确复用16个已完成视图。25.92秒/exit0、模型权重不变；128个持出中心视图全部差于训练常数基线，线缆ROI MAE 0.141680m 对比0.087620m。监督域差异与误差统计加权已区分，未假定唯一因果；无法重建的pooled P95保持NA。 发布前独立审查补齐helper/聚合实现/脚本SHA缓存绑定；原结果保持不变，另存事后身份核验凭据。 Ubuntu CPU 回归 77 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-full-manifest-loss-domains.md)

@@ -6868,6 +6868,30 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-wireseg-full-manifest-loss-domains.md",
       "report_source_commit": "aacabb1397b814ca37cbdcb888182743cd2849d4"
+    },
+    "flex.continuation-second-batch-closeout": {
+      "status": "passed",
+      "stage": "cpu_verified",
+      "scope": "bounded_batch_recovery_not_project_completion",
+      "passed": 458,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "tested_head": "1988eeb76349c0b68d90acfb1df2178c0f1ce248",
+      "cpu_evidence_sha256": "de998f2e45c27d8225343d57dfb8866fb357d4a0a7e8e9ef31daa0553178f55b",
+      "recovery_sha256": "cef8f7d2fb906c2938196a0e24f4c8663fddde6b0c16647fa18aeac47efee2b5",
+      "report": "docs/superpowers/reports/2026-11-12-continuation-batch2-progress-and-recovery.md",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "training_updates": 0,
+      "formal_teacher_qualified": false,
+      "formal_student_qualified": false,
+      "remaining_blockers": [
+        "exact_C5_and_free_Pinch_native_approval",
+        "wireseg_accuracy_below_constant",
+        "full_371_reset_R0_physical_binding",
+        "qualified_teacher_and_synchronized_stereo"
+      ]
     }
   }
 }
