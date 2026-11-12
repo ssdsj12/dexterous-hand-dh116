@@ -1,3 +1,7 @@
+## 2026-11-12 — WireSeg 旧深度模型只读误差归因
+
+对原深度/分割模型做 4 train＋4 heldout 的只读 CPU 推理，32 条记录，外层 7.31 秒/exit 0，模型权重不变。深度模型仍差于训练常数基线；监督域差与预测范围压缩得到小 cohort 证据，未认定唯一因果。先继续 loss/标签域审计，不盲目追加训练。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-readonly-depth-error-attribution.md)
+
 ## 2026-11-12 — C5 原生 worker 保留独立采样入口
 
 修复 C5 父进程设置丢失于后台 worker 的执行缺口；真实 CPU 子进程回归确认 worker 进入相同专用入口、保留 GDB 命令和证据路径。旧 94ffe… 指纹与未执行审批作废；没有消耗原生次数。 Ubuntu CPU 回归 45 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md)

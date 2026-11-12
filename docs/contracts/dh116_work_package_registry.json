@@ -3487,9 +3487,10 @@
         "flex.f5-wireseg-ingestion"
       ],
       "status": "blocked",
-      "reason": "Audited legacy import and chained diagnostic runner available; new real-data diagnostic needs <=16 updates/120s optimization soft deadline with separately approved 180s outer +30s safe-save scope. Historical heldout quality remains unqualified; no new updates performed.",
-      "blocker_kind": "approval_and_data_qualification",
-      "diagnostic_preparation_package": "flex.wireseg-legacy-diagnostic-continuation"
+      "reason": "Readonly 4+4 cohort confirms old depth worse than constant even on train wire pixels. Audit full manifests wire/background support and per-image loss versus pixel metrics before new optimizer budget; no automatic extra updates.",
+      "blocker_kind": "depth_accuracy_diagnostic",
+      "diagnostic_preparation_package": "flex.wireseg-legacy-diagnostic-continuation",
+      "diagnostic_evidence_package": "flex.wireseg-depth-error-attribution"
     },
     "flex.f0-source-lock": {
       "title": "DeformX 主仓库与递归源码锁定",
@@ -9074,6 +9075,116 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md",
         "report_source_commit": "98457a5f95b63e98f23984f30f4ad27e30c2fe24"
+      }
+    },
+    "flex.wireseg-depth-error-attribution": {
+      "title": "WireSeg 旧深度模型只读误差归因",
+      "executor": "gated",
+      "dependencies": [
+        "flex.wireseg-legacy-diagnostic-continuation"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 67,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_depth_error_audit.py",
+          "tests/test_dh116_wireseg_legacy_import.py",
+          "tests/test_dh116_wireseg_checkpoint_resume.py",
+          "tests/test_dh116_wireseg_overfit_diagnostic.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "42db25fae530b28258707c861e7ce3c31c95a64fddb2a49b63a18508797d2fb8",
+        "tested_head": "5459f319a02f814ee63e460cb5557681ce70b944",
+        "stage": "cpu_verified_and_offline_inference",
+        "native_qualification": false,
+        "real_training_updates": 0,
+        "native_execution_performed": false,
+        "scope": "wireseg_readonly_depth_attribution",
+        "cohort_train": 4,
+        "cohort_heldout": 4,
+        "inference_records": 32,
+        "network_input_resolution": [
+          192,
+          192
+        ],
+        "full_field_is_resized": true,
+        "process_exit_code": 0,
+        "process_seconds": 7.31,
+        "weights_unchanged": true,
+        "result_sha256": "d999d36f61a15ba9135b795ab6065a353724fcbbc2bb7ac07ae9b91387eb0a70",
+        "process_receipt_sha256": "2210581704173724353da9fb1318b0594e6ea274ace0f39b71495c305814a334",
+        "heldout_center_mae_m": 0.156147,
+        "heldout_center_constant_mae_m": 0.104036,
+        "heldout_center_wire_roi_mae_m": 0.146727,
+        "generalization_qualified": false,
+        "remaining_blockers": [
+          "training_and_evaluation_label_domain_audit",
+          "heldout_depth_quality_below_constant_baseline"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-readonly-depth-error-attribution.md",
+        "report_source_commit": "0475ebf62ef0e96dcf775c81aec979d5338de35b"
+      },
+      "last_result": {
+        "passed": 67,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_depth_error_audit.py",
+          "tests/test_dh116_wireseg_legacy_import.py",
+          "tests/test_dh116_wireseg_checkpoint_resume.py",
+          "tests/test_dh116_wireseg_overfit_diagnostic.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "42db25fae530b28258707c861e7ce3c31c95a64fddb2a49b63a18508797d2fb8",
+        "tested_head": "5459f319a02f814ee63e460cb5557681ce70b944",
+        "stage": "cpu_verified_and_offline_inference",
+        "native_qualification": false,
+        "real_training_updates": 0,
+        "native_execution_performed": false,
+        "scope": "wireseg_readonly_depth_attribution",
+        "cohort_train": 4,
+        "cohort_heldout": 4,
+        "inference_records": 32,
+        "network_input_resolution": [
+          192,
+          192
+        ],
+        "full_field_is_resized": true,
+        "process_exit_code": 0,
+        "process_seconds": 7.31,
+        "weights_unchanged": true,
+        "result_sha256": "d999d36f61a15ba9135b795ab6065a353724fcbbc2bb7ac07ae9b91387eb0a70",
+        "process_receipt_sha256": "2210581704173724353da9fb1318b0594e6ea274ace0f39b71495c305814a334",
+        "heldout_center_mae_m": 0.156147,
+        "heldout_center_constant_mae_m": 0.104036,
+        "heldout_center_wire_roi_mae_m": 0.146727,
+        "generalization_qualified": false,
+        "remaining_blockers": [
+          "training_and_evaluation_label_domain_audit",
+          "heldout_depth_quality_below_constant_baseline"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-wireseg-readonly-depth-error-attribution.md",
+        "report_source_commit": "0475ebf62ef0e96dcf775c81aec979d5338de35b"
       }
     }
   },
