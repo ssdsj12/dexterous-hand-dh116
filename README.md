@@ -1,3 +1,7 @@
+## 2026-11-12 — 记录 GPU 任务早期接触读回失败并恢复默认探针
+
+早期启用报告读回导致 GPU reset 索引与缓冲区设备不一致。保留失败证据并恢复原探针默认。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-task-contact-early-readback-failure.md)
+
 ## 2026-11-12 — 原 T5 MPC 八个首回合原生采集
 
 原生二指 4/4、三指 0/4，10,559 条状态／动作配对，全部首回合已分区。正式 BC 准入为 0。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-t5-first-episode-native-evidence.md)

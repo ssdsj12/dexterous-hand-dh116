@@ -4037,6 +4037,36 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-mpc-t5-first-episode-native-evidence.md",
       "report_source_commit": "ea71db970d643d363774a89c535b2afaa7bcc388"
+    },
+    "wp4.teacher-task-contact-early-readback-failure": {
+      "passed": 74,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_task_contact.py",
+        "tests/test_dh116_stereo_contact_calibration.py",
+        "tests/test_dh116_physx_polled_contact_audit.py",
+        "tests/test_dh116_stereo_shutdown_validation.py"
+      ],
+      "log_sha256": "1ff9550decaffd1ca6d6c6b49a8772fc3cb84b2bbd19688023ba53716f014129",
+      "tested_head": "cda0761680cbf77319d9e0cc0d3118a47720aeb6",
+      "native_qualification": false,
+      "native_execution_performed": true,
+      "qualification_scope": "failed_early_readback_diagnostic_and_cpu_default_fix",
+      "native_attempt_status": "failed_pre_physics",
+      "outer_exit_code": 2,
+      "physical_rows": 0,
+      "raw_launcher_sha256": "b01446be810946f6f599ddbf5ec15692fc15815c34f1adcad85ad0905c914367",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-task-contact-early-readback-failure.md",
+      "report_source_commit": "3e6b6c4f1d9005d5cc7d535374aedd6a5300e99f"
     }
   }
 }

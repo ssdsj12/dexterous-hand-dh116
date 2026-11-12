@@ -13,7 +13,7 @@ from go2_pvcnn.control.dh116.tabletop_stereo_contact_calibration import configur
 from go2_pvcnn.control.dh116.tabletop_stereo_contract import ROOT, file_sha256, new_run, write_json_new
 from go2_pvcnn.control.dh116.tabletop_stereo_native import launch_native
 from go2_pvcnn.control.dh116.tabletop_teacher_task_contact import (
-    install_probe_world, probe_inventory, route_object_reports)
+    install_probe_world, momentum_comparison, probe_inventory, route_object_reports)
 
 
 def main(argv=None):
@@ -22,6 +22,7 @@ def main(argv=None):
     parser.add_argument('--checkpoint', type=Path, required=True)
     parser.add_argument('--checkpoint-sha256', required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--readback-timing', choices=('post-reset','pre-reset'), default='post-reset')
     parser.add_argument('--execute-native', action='store_true')
     args = parser.parse_args(argv)
     if file_sha256(args.checkpoint) != args.checkpoint_sha256:
@@ -31,7 +32,7 @@ def main(argv=None):
         parser.error('independent new output required')
     plan = dict(environments=2, policy_steps=32, physics_hz=480,
                 checkpoint_sha256=args.checkpoint_sha256, independent_probe_only=True,
-                training=False, force_qualification=False)
+                training=False, force_qualification=False, readback_timing=args.readback_timing)
     if not args.execute_native:
         print(json.dumps(plan, indent=2))
         return
@@ -51,7 +52,10 @@ def main(argv=None):
             camera_path, device=bridge.device))
         settings = carb.settings.get_settings()
         inventory = probe_inventory(bridge, omni.usd.get_context().get_stage(), UsdPhysics, PhysxSchema)
-        inventory['reporting_before_first_reset'] = bridge.world.contact_probe_before_reset
+        inventory['reporting_before_first_reset'] = getattr(bridge.world, 'contact_probe_before_reset', None)
+        if args.readback_timing == 'post-reset':
+            inventory['reporting_after_first_reset_enable'] = configure_report_processing(
+                settings, enable=True, enable_readback=True)
         inventory['reporting_after_reset'] = {
             'disable_contact_processing': settings.get('/physics/disableContactProcessing'),
             'suppress_readback': settings.get('/physics/suppressReadback'),
@@ -64,6 +68,13 @@ def main(argv=None):
         original = observer.callback
         rows = 0
         last_step = None
+        wire = bridge.device_world.wire.root_physx_view
+        mass = wire.get_masses().detach().cpu().reshape(bridge.n).tolist()
+        gravity = bridge.world.sim.cfg.gravity
+        dt = float(bridge.device_world.dt)
+        previous_velocity = {
+            bridge.identities.uid(i): velocity for i, velocity in enumerate(
+                wire.get_velocities().detach().cpu().reshape(bridge.n, 6)[:, :3].tolist())}
         with (run/'contact_probe_480hz.jsonl').open('x', encoding='utf-8') as stream:
             def capture(packet):
                 nonlocal rows, last_step
@@ -80,10 +91,20 @@ def main(argv=None):
                     raise RuntimeError('native contact getter changed the sample clock')
                 pairs = route_object_reports(raw, objects=inventory['objects'], digits=inventory['digits'])
                 live = [i for i, value in enumerate(packet['live'].tolist()) if value]
+                com_velocities = wire.get_velocities().detach().cpu().reshape(bridge.n, 6)[:, :3].tolist()
+                momentum = {}
+                for i in live:
+                    uid = bridge.identities.uid(i)
+                    before = previous_velocity.get(uid)
+                    after = com_velocities[i]
+                    momentum[i] = None if before is None else momentum_comparison(
+                        pairs[i], before=before, after=after, mass_kg=mass[i],
+                        gravity_world_m_s2=gravity, dt_s=dt)
+                    previous_velocity[uid] = after
                 row = dict(physics_step=step, sdk_step=sdk_step, timestamp=time,
                     run_uuid=bridge.identities.run_uuid, policy_tick=bridge.policy_tick,
                     episode_uid={i:bridge.identities.uid(i) for i in live},
-                    pairs=pairs, full_report=raw, force_qualification=False)
+                    pairs=pairs, full_report=raw, momentum_comparison=momentum, force_qualification=False)
                 stream.write(json.dumps(row, allow_nan=False, separators=(',', ':'))+'\n')
                 original(packet)
                 last_step = step
@@ -106,6 +127,12 @@ def main(argv=None):
             os.fsync(receipt.fileno())
         return result
 
+    native_options = dict(native_arguments=ROOT/'configs/dh116_training/stereo_native_task_v1.json',
+        output=run/'native', num_envs=2, seed=116, rollout_steps=32, enabled=True)
+    if args.readback_timing == 'post-reset':
+        launch_native(collect, **native_options)
+        return
+
     import isaaclab.app as app_module
 
     with ExitStack() as stack:
@@ -121,8 +148,7 @@ def main(argv=None):
                     carb.settings.get_settings(), enable=True, enable_readback=True))
 
         stack.enter_context(patch.object(app_module, 'AppLauncher', ContactProbeLauncher))
-        launch_native(collect, native_arguments=ROOT/'configs/dh116_training/stereo_native_task_v1.json',
-            output=run/'native', num_envs=2, seed=116, rollout_steps=32, enabled=True)
+        launch_native(collect, **native_options)
 
 
 if __name__ == '__main__':

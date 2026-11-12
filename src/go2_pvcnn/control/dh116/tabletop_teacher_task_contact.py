@@ -1,6 +1,10 @@
 """Same-step task contact diagnostics from independent PhysX report readback."""
 from __future__ import annotations
 
+import math
+
+import numpy as np
+
 from .tabletop_stereo_contact_calibration import _report_pairs
 
 
@@ -30,7 +34,7 @@ def route_object_reports(report, *, objects, digits):
                 partner_scope=scope, digit=digit[1:] if scope == 'same_environment_digit' else None,
                 contact_data_offset=pair['contact_data_offset'],
                 friction_anchors_offset=pair['friction_anchors_offset'],
-                source_normal_impulse_world_n_s=[point['impulse'] for point in pair['contacts']],
+                source_contact_impulse_world_n_s=[point['impulse'] for point in pair['contacts']],
                 source_friction_impulse_world_n_s=pair['friction_impulses'],
                 object_force_world_n=None))
     return by_env
@@ -94,3 +98,25 @@ def install_probe_world(stack, gpu_isaac, configure_readback):
             super().__init__(*args, **kwargs)
 
     stack.enter_context(patch.object(gpu_isaac, 'GpuWorld', ContactProbeWorld))
+
+
+def momentum_comparison(pairs, *, before, after, mass_kg, gravity_world_m_s2, dt_s):
+    """Compare both report sign hypotheses against measured COM momentum."""
+    velocity_before, velocity_after, gravity = [
+        np.asarray(value, dtype=float) for value in (before, after, gravity_world_m_s2)]
+    if (not math.isfinite(mass_kg) or mass_kg <= 0 or not math.isfinite(dt_s) or dt_s <= 0
+            or any(v.shape != (3,) or not np.isfinite(v).all() for v in (
+                velocity_before, velocity_after, gravity))):
+        raise ValueError('finite actual COM velocities, mass, gravity and positive dt required')
+    measured = mass_kg * (velocity_after - velocity_before - dt_s * gravity)
+    contact, friction = np.zeros(3), np.zeros(3)
+    for pair in pairs:
+        sign = (1, -1)[pair['object_actor_index']]
+        contact += sign * np.asarray(pair['source_contact_impulse_world_n_s']).reshape(-1, 3).sum(0)
+        friction += sign * np.asarray(pair['source_friction_impulse_world_n_s']).reshape(-1, 3).sum(0)
+    inferred = contact + friction
+    return dict(non_gravity_impulse_world_n_s=measured.tolist(),
+        actor0_contact_impulse_world_n_s=contact.tolist(), actor0_friction_impulse_world_n_s=friction.tolist(),
+        raw_on_actor0_residual_n_s=float(np.linalg.norm(measured-inferred)),
+        raw_on_actor1_residual_n_s=float(np.linalg.norm(measured+inferred)),
+        source_qualified=False)
