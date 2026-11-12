@@ -1,0 +1,55 @@
+{
+  "argv": [
+    "--case",
+    "C3",
+    "--output",
+    "{output}",
+    "--execute-native"
+  ],
+  "budget": {
+    "environments": 1,
+    "gpu_index": 3,
+    "min_disk_free_bytes": 1073741824,
+    "min_gpu_free_mib": 4096,
+    "physics_steps": 0,
+    "timeout_seconds": 180,
+    "updates": 0
+  },
+  "debugger": "gdb_on_segv",
+  "entrypoint": "scripts/probe_dh116_simulation_app_lifecycle.py",
+  "environment": {
+    "DH116_NUM_THREADS": "2"
+  },
+  "inputs": {
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/VERSION": "ae03a4157cfcbea2052862857e805daf1d4ab73c3ef5fa8bda59c90b84522f9d",
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.simulation_app/isaacsim/simulation_app/simulation_app.py": "840ad13fcb3b4d8e10457809d42180b0fd807951a3e3cc153c832363fbef0bb2",
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.simulation_app/isaacsim/simulation_app/utils.py": "86dbe230f5854aa5e242381e344098369796d8479e3951088353678bdb7cd60f",
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/PACKAGE-INFO.yaml": "77e4b2cd910ea83a51fcb3dbfe3fc6e9b7c7e8e641c190e4d10b035a7b395f89",
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/plugins/libomni.kit.app.plugin.so": "cbadd48220baa507190414ce09300513c3de046e20afc573fc321078cbcd80b5",
+    "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.kit": "b4a60880219827b4843f3ec3d6f9cbad8028c1c9df588a89c1796a60b8030a92",
+    "/usr/bin/gdb": "a6222ff0f450ca040e3479c04fdb7d0f1e0cabb099688270e720b7115d933c3d"
+  },
+  "source_files": [],
+  "validator": {
+    "artifacts": [
+      "plan.json",
+      "before_explicit_update.json",
+      "before_app_close.json",
+      "app_close_returned.json"
+    ],
+    "equals": {
+      "case": "C3",
+      "effective_create_new_stage": false,
+      "effective_experience": "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.kit",
+      "effective_experience_sha256": "b4a60880219827b4843f3ec3d6f9cbad8028c1c9df588a89c1796a60b8030a92",
+      "fast_shutdown": false,
+      "headless": true,
+      "kit_package.commit": "d02c707b20b56088d49fa5d47df9b4a2d2b9dc86",
+      "phase": "before_app_close",
+      "stage_present": false
+    },
+    "line_counts": {},
+    "result_file": "before_app_close.json"
+  },
+  "version": 1
+}

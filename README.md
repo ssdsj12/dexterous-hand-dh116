@@ -1,3 +1,7 @@
+## 2026-11-12 — 相机官方最小App与stage单变量对照
+
+新增独立C0最小App、C1无stage渲染、C2单变量默认stage对照；均同一GDB保留现场栈和库映射。C3仅备选配置，本轮不启动。无相机物理不依赖此链。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c0-c3-lifecycle-controls.md)
+
 ## 2026-11-12 — 左右拇指独立身份配方与单次取证
 
 右侧锁定独立USD、SDF、link、slot和canonical action7；左右使用相同GDB取证，保持v2物理与释放逻辑。本轮预算左240后右240，两者均0update，右必须通过实际左回执资格门控。 Ubuntu CPU 回归 56 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-right-lifecycle-preflight.md)

@@ -5478,6 +5478,38 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-deformx-thumb-right-lifecycle-preflight.md",
       "report_source_commit": "67f63d7d5692984e53ea72955487a5dc8c7dc31d"
+    },
+    "flex.f6-camera-c0-c3-controls": {
+      "passed": 66,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_simulation_app_lifecycle.py",
+        "tests/test_dh116_render_capture_boundary.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "17ec8a9782f76830c3fdfe4de49fa50f917f76c5f7742020308c8d74e16641c0",
+      "tested_head": "9d3d66ef230a6874ded72b42d125933a6fa5c0fc",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "qualification_scope": "camera_lifecycle_control_source_cpu_only",
+      "cases_prepared": [
+        "C0",
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "c3_scheduled": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-camera-c0-c3-lifecycle-controls.md",
+      "report_source_commit": "9ab2e9d0120bc31fe9f9d3102a9a1c806c774f12"
     }
   }
 }
