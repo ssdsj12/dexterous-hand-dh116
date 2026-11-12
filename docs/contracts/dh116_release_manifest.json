@@ -1807,6 +1807,53 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 54,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_mpc_internal_source_capture.py",
+        "tests/test_mpc_capture_journal.py",
+        "tests/test_mpc_privileged_capture.py",
+        "tests/test_dh116_privileged_action_audit.py"
+      ],
+      "log_sha256": "48bad5e3d9f6d5fbb867fc6cb6b074dea4ce62379649b70815a195658a121127",
+      "tested_head": "a5a2d46249826c89328161553fa5a1c4b6c75234",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "internal_source_capture_cpu_preflight_only",
+      "non_force_internal_candidate_fields": 45,
+      "reset_sentinel_candidate_fields": 4,
+      "force_controller_fields_still_masked": 10,
+      "real_input_preflight_sha256": "9b79c9b5043774e2f282ab475f84b5f8bec90a7d42df21d956ed21760e7a855c",
+      "qualified_for_bc": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-mpc-internal-state-source-preflight.md",
+      "report_source_commit": "a1bb4557de8b569402d673b6adc8fa2fb66832f5",
+      "package": "wp3.mpc-internal-state-source-preflight",
+      "commit": "05f980374675b26f8ec57d40cdc25582b19701ff",
+      "parent": "a5a2d46249826c89328161553fa5a1c4b6c75234",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-mpc-internal-state-source-preflight.md",
+        "scripts/collect_dh116_mpc_privileged.py",
+        "src/go2_pvcnn/control/dh116/tabletop_mpc_internal_source_capture.py",
+        "src/go2_pvcnn/control/dh116/tabletop_mpc_privileged_capture.py",
+        "tests/test_mpc_internal_source_capture.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
