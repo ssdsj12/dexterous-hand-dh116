@@ -203,3 +203,40 @@ def test_mpc_pairing_requires_exact_full_state_and_measurement_mask():
     mpc['privileged_valid'][0, 17] = False
     mpc['observations'][1, 17] = .01
     assert compare_mpc_archive(mpc, rows, rollout)['paired_policy_states'] == 0
+
+
+def test_right_finger12_event_windows_keep_observed_boundaries_and_gaps():
+    from go2_pvcnn.control.dh116.tabletop_privileged_action_audit import finger12_event_windows
+
+    def row(step, position, *, episode='a', terminal=False):
+        action = [0.] * 24
+        action[7] = -.2
+        return dict(kind='sample', run_uuid='fixture', env_id=0, episode_uid=episode, policy_tick=step//8,
+                    physics_step=step, timestamp=step/480, terminal=terminal, failure_code=3 if terminal else 0,
+                    action_audit=dict(joints=[finger(position)], issued_action=action))
+    rows = [row(1, .03), row(2, .01), row(3, 0.), row(5, -.014, terminal=True), row(6, .001, episode='b')]
+    first, second = finger12_event_windows(rows)
+    assert first['episode_uid'] == 'a'
+    assert second['episode_uid'] == 'b'
+    assert second['events']['hard_guard_crossing'] is None
+    assert second['events']['near_nominal'] is None
+    events = first['events']
+    assert events['near_nominal']['physics_step'] == 2
+    assert events['inside_hard_tolerance']['physics_step'] == 3
+    crossing = events['hard_guard_crossing']
+    assert crossing['physics_step'] == 5
+    assert crossing['missing_before_physics_steps'] == [4]
+    assert crossing['missing_after_physics_steps'] == [6, 7, 8, 9]
+    assert [sample['physics_step'] for sample in crossing['samples']] == [1, 2, 3, 5]
+    assert crossing['samples'][-1]['issued_action'][7] == -.2
+    assert crossing['samples'][-1]['joint']['legal_target_tracking_departure'] is True
+
+
+def test_right_finger12_event_window_rejects_mismapped_joint():
+    from go2_pvcnn.control.dh116.tabletop_privileged_action_audit import finger12_event_windows
+
+    row = dict(kind='sample', run_uuid='fixture', env_id=0, episode_uid='a', policy_tick=1,
+               physics_step=8, timestamp=8/480, terminal=True, failure_code=3,
+               action_audit=dict(joints=[dict(finger(-.02), action_index=1)]))
+    with pytest.raises(ValueError, match='canonical'):
+        finger12_event_windows([row])

@@ -1,3 +1,7 @@
+## 2026-11-12 — Teacher 右手 finger12 下限事件窗口
+
+29 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-right-finger12-event-windows.md)
+
 ## 2026-11-12 — 现有刚性任务的密集和稀疏双目指标
 
 56 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-stereo-reconstruction-metric-evidence.md)

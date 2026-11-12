@@ -3298,6 +3298,27 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-stereo-reconstruction-metric-evidence.md",
       "native_qualification": false
+    },
+    "wp3.finger12-event-windows": {
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_privileged_action_audit.py",
+        "tests/test_mpc_privileged_capture.py"
+      ],
+      "log_sha256": "8e8fe63a84fe0fd53f11c922e9f708ea07d691db066f7a1a0062a2573e9c3c90",
+      "tested_head": "31fa6dca461e4bec244962f225b29ffdb3c0fea5",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-right-finger12-event-windows.md",
+      "native_qualification": false
     }
   }
 }

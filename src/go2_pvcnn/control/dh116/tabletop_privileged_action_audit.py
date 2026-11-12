@@ -223,6 +223,64 @@ def summarize_joint_terminals(rows):
     return sorted(terminals, key=lambda row: (row['physics_step'], row['env_id']))
 
 
+def finger12_event_windows(rows):
+    """Report first observed right-finger lower-limit events, with same-episode samples."""
+    stages = ('near_nominal', 'inside_hard_tolerance', 'hard_guard_crossing')
+    radius, proximity_rad = 4, .005
+    episodes, previous = {}, {}
+    for row in rows:
+        if row.get('kind') != 'sample':
+            continue
+        key = (row['run_uuid'], row['env_id'], row['episode_uid'])
+        step, timestamp = row['physics_step'], row['timestamp']
+        prior = previous.get(key)
+        if (type(step) is not int or step < 0 or _finite(timestamp) is None
+                or (prior is not None and (prior['terminal'] or step <= prior['physics_step']
+                                           or timestamp <= prior['timestamp']))):
+            raise ValueError('invalid physical chronology in finger12 event windows')
+        previous[key] = row
+        audit = row.get('action_audit') or {}
+        selected = [joint for joint in audit.get('joints', [])
+                    if (joint['hand'], joint['joint']) == ('right', 'finger12')]
+        if not selected:
+            continue
+        if len(selected) != 1 or selected[0]['action_index'] != 7 or selected[0]['position_unit'] != 'rad':
+            raise ValueError('right finger12 must match canonical radian action index 7')
+        joint, = selected
+        episodes.setdefault(key, {})[step] = dict(physics_step=step, timestamp=timestamp,
+            policy_tick=row['policy_tick'], terminal=row['terminal'], failure_code=row['failure_code'],
+            issued_action=audit.get('issued_action', row.get('actually_issued_action')), joint=joint)
+
+    output = []
+    for (run, env, episode), samples in episodes.items():
+        events = dict.fromkeys(stages)
+        for step, sample in samples.items():
+            joint = sample['joint']
+            position, lower, tolerance = map(_finite,
+                (joint['position'], joint['lower_limit'], joint['hard_guard_tolerance']))
+            if None in (position, lower, tolerance) or tolerance < 0:
+                continue
+            margin = position - lower
+            if 0 <= margin <= proximity_rad:
+                stage = 'near_nominal'
+            elif -tolerance <= margin < 0:
+                stage = 'inside_hard_tolerance'
+            elif margin < -tolerance:
+                stage = 'hard_guard_crossing'
+            else:
+                continue
+            if events[stage] is not None:
+                continue
+            before, after = range(max(0, step-radius), step), range(step+1, step+radius+1)
+            events[stage] = dict(physics_step=step, lower_margin_rad=margin,
+                samples=[samples[index] for index in range(before.start, after.stop) if index in samples],
+                missing_before_physics_steps=[index for index in before if index not in samples],
+                missing_after_physics_steps=[index for index in after if index not in samples])
+        output.append(dict(run_uuid=run, env_id=env, episode_uid=episode, action_index=7,
+            window_radius_physics_steps=radius, nominal_proximity_rad=proximity_rad, events=events))
+    return output
+
+
 def legacy_teacher128_rows(rows, scene, rollout):
     """Join preserved historical evidence, retaining the scene exemplar scope."""
     import torch
@@ -509,6 +567,8 @@ def main(argv=None):
     parser.add_argument('--rollout', type=Path)
     parser.add_argument('--teacher-checkpoint', type=Path, help='exact collection checkpoint for CPU mean replay')
     parser.add_argument('--mpc', type=Path, action='append', default=[], help='read-only MPC action artifact audit')
+    parser.add_argument('--finger12-event-windows', action='store_true',
+                        help='include observed right finger12 lower-limit event windows')
     parser.add_argument('--output', required=True, type=Path)
     args = parser.parse_args(argv)
     if bool(args.scene_summary) != bool(args.rollout):
@@ -544,11 +604,13 @@ def main(argv=None):
                 payload = torch.load(BytesIO(content), map_location='cpu', weights_only=True)
                 comparisons['mpc'].append(dict(file=path.name, sha256=hashlib.sha256(content).hexdigest(),
                     **compare_mpc_archive(payload, rows, rollout)))
+    result = dict(source=source, evidence=evidence,
+        samples=sum(r.get('kind') == 'sample' for r in rows),
+        joint_limit_terminals=summarize_joint_terminals(rows), action_comparisons=comparisons)
+    if args.finger12_event_windows:
+        result['finger12_position_event_windows'] = finger12_event_windows(rows)
     with args.output.open('x', encoding='utf-8') as stream:
-        json.dump(dict(source=source, evidence=evidence,
-            samples=sum(r.get('kind') == 'sample' for r in rows),
-            joint_limit_terminals=summarize_joint_terminals(rows), action_comparisons=comparisons), stream,
-            indent=2, allow_nan=False)
+        json.dump(result, stream, indent=2, allow_nan=False)
 
 
 if __name__ == '__main__':

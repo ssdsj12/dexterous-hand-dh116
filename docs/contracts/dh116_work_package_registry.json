@@ -180,7 +180,8 @@
       "executor": "gated",
       "dependencies": [
         "wp3.actor-bc-r0",
-        "wp4.contact-native"
+        "wp4.contact-native",
+        "wp3.finger12-event-windows"
       ],
       "status": "blocked",
       "reason": "缺合格冻结 Teacher 与独立原生初态"
@@ -1001,6 +1002,39 @@
         "tested_head": "5dd97653b33e9f13820c6c061b7b0c4dcdaf6e3b",
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-stereo-reconstruction-metric-evidence.md",
+        "native_qualification": false
+      }
+    },
+    "wp3.finger12-event-windows": {
+      "title": "Teacher 右手 finger12 下限事件窗口",
+      "executor": "prepared",
+      "dependencies": [
+        "wp3.cpu-contract"
+      ],
+      "tests": [
+        "tests/test_dh116_privileged_action_audit.py",
+        "tests/test_mpc_privileged_capture.py"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 29,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_privileged_action_audit.py",
+          "tests/test_mpc_privileged_capture.py"
+        ],
+        "log_sha256": "8e8fe63a84fe0fd53f11c922e9f708ea07d691db066f7a1a0062a2573e9c3c90",
+        "tested_head": "31fa6dca461e4bec244962f225b29ffdb3c0fea5",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-right-finger12-event-windows.md",
         "native_qualification": false
       }
     }
