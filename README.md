@@ -1,3 +1,7 @@
+## 2026-11-12 — P5 independent Pinch Tripod Power privileged rod models
+
+三种抓法使用独立模型身份与 Checkpoint namespace，原 371D common 加独立 masked 材料节点分支，复用 24D Tanh Gaussian；原 PPO/CLI 未改。尚未接原生或训练，不能称为 Teacher 成功；相机和 MPC BC 均不是永久前置。 Ubuntu CPU 回归 153 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-privileged-teacher-model-cpu.md)
+
 ## 2026-11-12 — P4 retain prohibited lift assistance until episode reset
 
 交叉审查复现并修复 4 类误判：已知支撑违规不能被其他 NA 掩盖；外力、附着或非法外部支撑一旦出现，本 episode 不得取得 Lift/Hold 成功候选。正常接近阶段桌面接触不锁存，Reset 清理记录。原生与训练资格仍关闭。 Ubuntu CPU 回归 36 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-grasp-support-review-fix.md)

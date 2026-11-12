@@ -6247,6 +6247,42 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-flexible-grasp-support-review-fix.md",
       "report_source_commit": "a46f1d652e1d0f5064b625e7ab1e37c2b7d7f162"
+    },
+    "flex.flexible-teacher-model-contract": {
+      "passed": 153,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformable_privileged_teacher.py",
+        "tests/test_dh116_deformable_grasp_task.py",
+        "tests/test_dh116_privileged_teacher.py",
+        "tests/test_dh116_stereo_runtime_rod_identity.py",
+        "tests/test_stereo_action_contract_audit.py",
+        "tests/test_stereo_privileged_state_contract_audit.py"
+      ],
+      "log_sha256": "a2c7c2cf28c4e21038416345022aff701698a0ed38148402340cee697f220bfd",
+      "tested_head": "c52b9dc0a61e00df65e806c96a84c00bd6c8e097",
+      "stage": "cpu_verified",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "physics_steps": 0,
+      "ppo_updates": 0,
+      "evaluation_episodes": 0,
+      "remaining_blockers": [
+        "native same-rod contact/reset/R0/371D source qualification",
+        "opt-in structured critic PPO and checkpoint runtime integration",
+        "separate bounded training authorization"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-privileged-teacher-model-cpu.md",
+      "report_source_commit": "54e8086cbf060af91e950f56409d88976b5c3c6b"
     }
   }
 }
