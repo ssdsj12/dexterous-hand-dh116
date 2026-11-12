@@ -329,3 +329,29 @@ def test_calibration_episode_identity_includes_unique_run_directory(tmp_path):
     assert uid(first,'left')!=uid(second,'left')
     assert uid(first,'left')==uid(first,'left')
     assert uid(first,'left')!=uid(first,'right')
+
+
+@pytest.mark.parametrize('accept_readback', [True, False])
+def test_explicit_report_readback_is_verified_and_kept_separate(accept_readback):
+    from go2_pvcnn.control.dh116.tabletop_stereo_contact_calibration import configure_report_processing
+
+    class Settings:
+        values = {'/physics/disableContactProcessing': True, '/physics/suppressReadback': True}
+
+        def get(self, key):
+            return self.values[key]
+
+        def set_bool(self, key, value):
+            if key != '/physics/suppressReadback' or accept_readback:
+                self.values[key] = value
+
+    settings = Settings()
+    if not accept_readback:
+        with pytest.raises(RuntimeError, match='suppressReadback'):
+            configure_report_processing(settings, enable=True, enable_readback=True)
+    else:
+        result = configure_report_processing(settings, enable=True, enable_readback=True)
+        assert result['suppress_readback_before'] is True
+        assert result['suppress_readback'] is False
+        assert result['readback_requested'] is True
+        assert result['physical_solver_or_original_task_modified'] is False

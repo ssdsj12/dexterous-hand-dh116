@@ -123,7 +123,8 @@ def run(args):
             _record_shutdown_mode(args.output, handles.settings)
             sim=sim_utils.SimulationContext(sim_utils.SimulationCfg(dt=1/480,device='cuda:0',
                 gravity=(0.,0.,-9.81),physx=sim_utils.PhysxCfg(solver_type=0)))
-            reporting=configure_report_processing(handles.settings,enable=args.enable_full_report_processing)
+            reporting=configure_report_processing(handles.settings,enable=args.enable_full_report_processing,
+                enable_readback=args.enable_contact_report_readback)
             handles.scene.stage=omni.usd.get_context().get_stage()
             UsdGeom.SetStageMetersPerUnit(handles.scene.stage, 1.)
             UsdGeom.SetStageUpAxis(handles.scene.stage, UsdGeom.Tokens.z)
@@ -189,6 +190,8 @@ def run(args):
             if args.ordinary_contact_callback:
                 handles.ordinary_subscription=handles.source.subscribe_contact_report_events(ordinary_callback)
             sim.reset()
+            if args.enable_contact_report_readback and handles.settings.get('/physics/suppressReadback') is not False:
+                raise RuntimeError('physics reset suppressed explicitly requested contact readback')
             handles.view=tensors.create_simulation_view('torch')
             handles.view.set_subspace_roots('/')
             handles.contact=handles.view.create_rigid_contact_view(obj,[finger],max_contact_data_count=64)
@@ -212,7 +215,9 @@ def run(args):
                         tensor=capture_tensor_pair(handles.contact,dt=1/480),
                         reverse_tensor=capture_tensor_pair(handles.reverse,dt=1/480),
                         full_report=decode(handles.source.get_full_contact_report()),callback_receipts=handles.callbacks.drain(),
-                        report_processing_settings=dict(disable_contact_processing=carb.settings.get_settings().get('/physics/disableContactProcessing')))
+                        report_processing_settings=dict(
+                            disable_contact_processing=handles.settings.get('/physics/disableContactProcessing'),
+                            suppress_readback=handles.settings.get('/physics/suppressReadback')))
                     rows.append(row)
                     stream.write(json.dumps(row,allow_nan=False)+'\n')
                     stream.flush()
@@ -235,6 +240,8 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--execute-native',action='store_true')
     parser.add_argument('--enable-full-report-processing',action='store_true')
+    parser.add_argument('--enable-contact-report-readback',action='store_true',
+        help='Isolated calibration only: request the existing PhysX GPU-to-CPU report readback')
     parser.add_argument('--full-contact-callback',action='store_true')
     parser.add_argument('--ordinary-contact-callback',action='store_true')
     parser.add_argument('--monitor-sigterm',action='store_true')

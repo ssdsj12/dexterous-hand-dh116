@@ -1,3 +1,7 @@
+## 2026-11-12 — PhysX GPU 接触报告读回与左右拇指标定
+
+原生左右隔离标定分别读出 37、43 个可识别接触 pair headers。任务逐指、外部承托及附着资格仍需单独验证。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-12-physx-gpu-contact-report-readback.md)
+
 ## 2026-11-12 — Cold8 状态标签与独立深度持出诊断
 
 两种抓法各有 12 条 Center XYZ 和 12 条线速度监督；独立持出证据仍不足以授予动态泛化与双目精度资格。 Ubuntu CPU 回归 55 项通过。[报告](docs/superpowers/reports/2026-11-12-stereo-cold8-state-depth-diagnostic.md)

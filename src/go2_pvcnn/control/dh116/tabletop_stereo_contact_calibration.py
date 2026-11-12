@@ -41,16 +41,22 @@ def read_binary_stl(path):
     return vertices
 
 
-def configure_report_processing(settings, *, enable=False):
-    """Match installed ContactSensor's reporter flag in this isolated rig only."""
+def configure_report_processing(settings, *, enable=False, enable_readback=False):
+    """Allow an isolated calibration to test the GPU contact readback setting."""
     key='/physics/disableContactProcessing'
+    readback_key='/physics/suppressReadback'
     before=settings.get(key)
+    readback_before=settings.get(readback_key)
     if enable:
         settings.set_bool(key,False)
+    if enable_readback:
+        settings.set_bool(readback_key,False)
+    readback=settings.get(readback_key)
+    if enable_readback and readback is not False:
+        raise RuntimeError(f'{readback_key} must read back as False for this trial')
     return dict(key=key,before=before,after=settings.get(key),modified=bool(enable),
-                suppress_readback=settings.get('/physics/suppressReadback'),
-                physical_solver_or_original_task_modified=False)
-
+                suppress_readback=readback,suppress_readback_before=readback_before,
+                readback_requested=bool(enable_readback),physical_solver_or_original_task_modified=False)
 
 def _snapshot(view, method, dt):
     values = [_copy(value) for value in getattr(view, method)(dt=dt)]

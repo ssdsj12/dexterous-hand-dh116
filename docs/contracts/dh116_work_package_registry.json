@@ -422,7 +422,7 @@
         "wp4.source-audit"
       ],
       "status": "blocked",
-      "reason": "待逐指 A/B、单位、作用侧和动力学实测，R1/R2 关闭"
+      "reason": "左右隔离拇指标定已找到可观测 GPU 接触报告。现有 solid_cylinder 仍需逐指 partner 映射、外部支撑、施力、附着及逐步时钟核验。"
     },
     "wp5.cpu-source-check": {
       "title": "复核 DeformX CUDA 源码资格检查器",
@@ -1577,6 +1577,91 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-stereo-cold8-state-depth-diagnostic.md",
         "report_source_commit": "b51026ad65816ad59b09252b43509f2b77dfc963"
+      }
+    },
+    "wp4.gpu-contact-report-readback": {
+      "title": "PhysX GPU 接触报告读回与左右拇指标定",
+      "executor": "gated",
+      "dependencies": [
+        "wp4.shutdown-native",
+        "wp4.cpu-contract"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 67,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_contact_calibration.py",
+          "tests/test_dh116_stereo_shutdown_validation.py",
+          "tests/test_dh116_physx_polled_contact_audit.py"
+        ],
+        "log_sha256": "8dcd7e449e2b727e3f96bbbdb39ca9c66f9c18dce0ba136e353519bc953b333f",
+        "tested_head": "9c7058fd4874c5b34098f32713e4afa3a5f76df3",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "qualification_scope": "isolated_left_right_thumb_pairs_only",
+        "physics_steps_per_instance": 240,
+        "outer_exit_codes": [
+          0,
+          0
+        ],
+        "resolved_pair_headers_by_side": {
+          "left": 37,
+          "right": 43
+        },
+        "r1_qualified": false,
+        "r2_qualified": false,
+        "left_raw_sha256": "9ad911494f4d84296cb743b979d4294b1600491cafaf405daeaf2e55e10f2f85",
+        "right_raw_sha256": "57fb5018546a15c1bc312663b73534fb8e192a47c5e5955910da174f00586b30",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-physx-gpu-contact-report-readback.md",
+        "report_source_commit": "8a01cd38e638d6ef8bfa2dbb26e3a8343489a566"
+      },
+      "last_result": {
+        "passed": 67,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_contact_calibration.py",
+          "tests/test_dh116_stereo_shutdown_validation.py",
+          "tests/test_dh116_physx_polled_contact_audit.py"
+        ],
+        "log_sha256": "8dcd7e449e2b727e3f96bbbdb39ca9c66f9c18dce0ba136e353519bc953b333f",
+        "tested_head": "9c7058fd4874c5b34098f32713e4afa3a5f76df3",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "qualification_scope": "isolated_left_right_thumb_pairs_only",
+        "physics_steps_per_instance": 240,
+        "outer_exit_codes": [
+          0,
+          0
+        ],
+        "resolved_pair_headers_by_side": {
+          "left": 37,
+          "right": 43
+        },
+        "r1_qualified": false,
+        "r2_qualified": false,
+        "left_raw_sha256": "9ad911494f4d84296cb743b979d4294b1600491cafaf405daeaf2e55e10f2f85",
+        "right_raw_sha256": "57fb5018546a15c1bc312663b73534fb8e192a47c5e5955910da174f00586b30",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-physx-gpu-contact-report-readback.md",
+        "report_source_commit": "8a01cd38e638d6ef8bfa2dbb26e3a8343489a566"
       }
     }
   },
