@@ -240,3 +240,44 @@ def test_median_lift_cannot_hide_a_rod_end_at_its_initial_height(task):
     assert result["min_node_net_lift_m"] == 0.
     assert result["phase"] == "lift" and result["hold_steps"] == 0
     assert result["terms"]["lift_progress"]["raw"] == 0.
+
+
+def test_known_support_violation_survives_other_unknown_support_flags(task):
+    episode, _ = begin(task)
+    values = signals(task, include_external=False)
+    values["authored_force"] = measurement(True, "force_audit")
+    result = episode.step(snapshot(task, 1, dz=.035), values)
+    term = result["terms"]["external_support_violation"]
+    assert term["valid"] and term["raw"] == 1.
+    assert "force_audit" in term["source"]
+    assert result["prohibited_support_latched"]
+    assert result["hold_steps"] == 0 and not result["success_candidate"]
+
+
+@pytest.mark.parametrize("flag", ["authored_force", "attachment", "external_support"])
+def test_released_prohibited_support_cannot_qualify_lift_in_same_episode(task, flag):
+    episode, hooks = begin(task)
+    values = signals(task)
+    values[flag] = measurement(True)
+    first = episode.step(snapshot(task, 1, dz=.035), values)
+    assert first["terms"]["external_support_violation"]["raw"] == 1.
+    for step in range(2, 2403):
+        result = episode.step(snapshot(task, step, dz=.035), signals(task, step=step))
+    assert not result["success_candidate"]
+    assert result["hold_steps"] == 0 and result["prohibited_support_latched"]
+    assert result["terms"]["lift_progress"]["raw"] == 0.
+    assert result["terms"]["external_support_violation"]["raw"] == 0.
+    assert result["term_stats"]["external_support_violation"]["episode_sum"] == 1.
+
+    episode.reset(hooks, lambda: (snapshot(task, 0, uid="ep-1", reset_id=1), measurement(.005)))
+    table = signals(task, uid="ep-1", reset_id=1, loss=True)
+    table["table_contact"] = measurement(True)
+    approach = episode.step(snapshot(task, 1, uid="ep-1", reset_id=1), table)
+    assert not approach["prohibited_support_latched"]
+    for step in range(2, 2403):
+        after_reset = episode.step(snapshot(task, step, uid="ep-1", reset_id=1, dz=.035),
+                                   signals(task, step=step, uid="ep-1", reset_id=1))
+    assert after_reset["success_candidate"]
+    assert after_reset["hold_steps"] == 2400
+    assert not after_reset["prohibited_support_latched"]
+    assert after_reset["native_qualification"] is False

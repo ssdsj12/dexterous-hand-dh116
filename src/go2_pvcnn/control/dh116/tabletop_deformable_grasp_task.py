@@ -315,6 +315,7 @@ class FlexibleGraspEpisode:
         self.hold_steps, self.best_lift = 0, 0.
         self.phase = "approach"
         self.previous_bilateral = False
+        self.prohibited_support_latched = False
         self.stats = {name: _TermStats() for name in R0_TERMS}
         self.active = True
 
@@ -411,8 +412,18 @@ class FlexibleGraspEpisode:
         support_source = _source(*support_sources)
         joint_limit, joint_source = flags["joint_limit"]
         stable, stability_source = flags["stable"]
-        support_known = all(value is not None for value in support_values)
-        support_violation = None if not support_known else any(support_values)
+        if any(value is True for value in support_values):
+            support_violation = True
+        elif all(value is False for value in support_values):
+            support_violation = False
+        else:
+            support_violation = None
+        support_known = support_violation is not None
+        # Table contact can be normal before pickup. External assistance
+        # contaminates lift provenance for the rest of this episode.
+        prohibited_support_latched = self.prohibited_support_latched or any(
+            flags[name][0] is True for name in ("external_support", "authored_force", "attachment")
+        )
         body_lift = float(np.median(z)) - self.initial_median_z
         min_lift = float(np.min(z)) - self.initial_min_z
         min_surface = None if self.radius is None else float(np.min(z)) - self.radius
@@ -420,12 +431,13 @@ class FlexibleGraspEpisode:
         lift_progress = None
         best = self.best_lift
         if eligible_lift:
-            if bilateral and not support_violation and min_surface > self.table_top_m:
+            if bilateral and not prohibited_support_latched and not support_violation and min_surface > self.table_top_m:
                 best = max(best, min(self.lift_target_m, body_lift, min_lift))
             lift_progress = best - self.best_lift
         hold_known = (eligible_lift and joint_limit is not None and stable is not None
                       and (not bilateral or slip_ok is not None))
-        holds = (hold_known and bilateral and not support_violation and not joint_limit and stable
+        holds = (hold_known and bilateral and not prohibited_support_latched and not support_violation
+                 and not joint_limit and stable
                  and slip_ok is True and min_surface > self.table_top_m
                  and min(body_lift, min_lift) >= self.lift_target_m)
         # The first good endpoint starts the window. Only a consecutive pair
@@ -452,6 +464,7 @@ class FlexibleGraspEpisode:
         self.approach = (approach, approach_source) if approach is not None else None
         self.hold_steps, self.best_lift = hold_steps, best
         self.previous_bilateral = bilateral
+        self.prohibited_support_latched = prohibited_support_latched
         terms, term_stats = {}, {}
         for name, (value, source) in raw.items():
             unit, sign = R0_TERMS[name]
@@ -470,4 +483,5 @@ class FlexibleGraspEpisode:
                     body_net_lift_m=body_lift, min_node_net_lift_m=min_lift, min_surface_z_m=min_surface,
                     material_anchor_slip_m=material_slip, tangential_slip_m=tangential_slip,
                     hold_steps=hold_steps, hold_s=hold_steps * self.dt, hold_valid=hold_known,
+                    prohibited_support_latched=prohibited_support_latched,
                     success_candidate=hold_steps == self.hold_target_steps, native_qualification=False)

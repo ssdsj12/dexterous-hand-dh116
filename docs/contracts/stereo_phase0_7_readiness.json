@@ -6218,6 +6218,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-wireseg-strict-checkpoint-resume.md",
       "report_source_commit": "093ca8ab4849fc8edb5c86a0f2fc643abae6b394"
+    },
+    "flex.flexible-task-support-provenance": {
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformable_grasp_task.py",
+        "tests/test_dh116_deformable_task_budget.py",
+        "tests/test_lift_hold_window.py"
+      ],
+      "log_sha256": "d1e0dc03ae5d0f3eadfffe83bf1d555c1b949cdce3be655eb50d90baa29a2913",
+      "tested_head": "075db84acff969e4712e24ed98c001adbe5fec84",
+      "stage": "cpu_verified",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "physics_steps": 0,
+      "ppo_updates": 0,
+      "evaluation_episodes": 0,
+      "review_negative_cases": 4,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-flexible-grasp-support-review-fix.md",
+      "report_source_commit": "a46f1d652e1d0f5064b625e7ab1e37c2b7d7f162"
     }
   }
 }

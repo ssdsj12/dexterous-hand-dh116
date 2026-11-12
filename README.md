@@ -1,3 +1,7 @@
+## 2026-11-12 — P4 retain prohibited lift assistance until episode reset
+
+交叉审查复现并修复 4 类误判：已知支撑违规不能被其他 NA 掩盖；外力、附着或非法外部支撑一旦出现，本 episode 不得取得 Lift/Hold 成功候选。正常接近阶段桌面接触不锁存，Reset 清理记录。原生与训练资格仍关闭。 Ubuntu CPU 回归 36 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-grasp-support-review-fix.md)
+
 ## 2026-11-12 — P2 WireSeg exact resume and verified paired subset
 
 新增 strict v2 断点，校验模型/Adam/RNG/含跳过样本的 sampler/global step/数据与配置 SHA，旧断点原样保留并拒绝伪严格恢复。新增 2 个完整官方分片，360 个精确单目 RGB-depth 配对；缓存 8/148，未启动真实训练。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-strict-checkpoint-resume.md)
