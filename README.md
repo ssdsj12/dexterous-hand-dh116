@@ -1,3 +1,7 @@
+## 2026-11-12 — 同渲染experience默认stage对照
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c2.md)。
+
 ## 2026-11-12 — 独立无stage渲染生命周期
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c1.md)。
