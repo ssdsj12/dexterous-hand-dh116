@@ -1,3 +1,7 @@
+## 2026-11-12 — 隔离 CPU 测试租约与原生执行
+
+CPU fixture 改用私有锁。组合 OpenUSD CPU 回归 85 项通过，两次 V0 原生 SIGSEGV 继续归档。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-dh116-continuous-regression.md)
+
 ## 2026-11-12 — 空渲染 Kit 生命周期
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-v0.md)。

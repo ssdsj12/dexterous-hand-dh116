@@ -47,6 +47,8 @@ def write_json(path, data):
 
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
+    monkeypatch.setattr(scheduler, 'NATIVE_SCHEDULER_LOCK', tmp_path / 'scheduler.lock')
+    monkeypatch.setattr(scheduler, 'NATIVE_LOCK', tmp_path / 'isaac.lock')
     root = tmp_path / 'work'
     remote = tmp_path / 'remote'
     root.mkdir()

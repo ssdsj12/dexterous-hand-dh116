@@ -5356,6 +5356,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-render-no-sdk-default-stage.md",
       "report_source_commit": "2a353872ce9c8322cd28eec4fa65cfe7c8c47c74"
+    },
+    "flex.scheduler-fixture-lock-isolation": {
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dh116_flexible_execution_dependencies.py"
+      ],
+      "log_sha256": "6d06aadc35fe8b6836959b1fff8a291b9a581bfeda0a16c9847e7ab0e38e9e0c",
+      "tested_head": "0f39b0560bd32a1cd62c5c9471cf02eabc2d995c",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "combined_openusd_cpu_passed": 85,
+      "prior_parallel_cpu_fixture_failed": 4,
+      "render_v0_exit_codes": [
+        -11,
+        -11
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-dh116-continuous-regression.md",
+      "report_source_commit": "f1fe9b1d80eccf3b5173d76ebdb79d0cf4f7d486"
     }
   }
 }
