@@ -3735,6 +3735,31 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-teacher-task-contact-probe.md",
       "report_source_commit": "cc6f3235dfc046e3ee43200315d64b9eacb59da9"
+    },
+    "wp3.teacher-expert-assembly": {
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_expert_assembly.py",
+        "tests/test_dh116_teacher_warm_start.py"
+      ],
+      "log_sha256": "b20cd41c03428493fad36bfeeb07d205a4f82bd2c1a614e49cc41d0e07319c04",
+      "tested_head": "49b7cd757248abe21edea59524669a2fbbc47575",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "qualification_scope": "expert_assembly_validation_only",
+      "qualified_expert_packs": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-teacher-expert-assembly.md",
+      "report_source_commit": "9b4d292751691e9bca32a7fbd5eca29fe9e00619"
     }
   }
 }

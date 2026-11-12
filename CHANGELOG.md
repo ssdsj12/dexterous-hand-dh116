@@ -1,3 +1,7 @@
+## 2026-11-12 — Teacher 原生成功专家数据装配器
+
+装配器逐行核验完整 371D、实际 issued 24D 和原生证据。当前未产生合格 BC 专家包。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-expert-assembly.md)
+
 ## 2026-11-12 — 现有刚性 Teacher 任务逐接触读回探针
 
 晚于首次 reset 的探针实测记录 256 个物理步，结构化报告仍为空。新版启用时点前移，待单实例原生复验。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-task-contact-probe.md)
