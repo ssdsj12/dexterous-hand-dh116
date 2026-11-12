@@ -1,0 +1,75 @@
+{
+  "version": "dh116-free-pinch-candidate-v1",
+  "scope": "one_hand_free_rod_pinch_contact_candidate_not_grasp_qualification",
+  "side": "left",
+  "physics_hz": 480,
+  "control_hz": 60,
+  "setup_steps": 2,
+  "measured_steps": 238,
+  "rod": {
+    "linear_density_kg_m": 0.065,
+    "axial_stiffness_n": 800.0,
+    "bend_stiffness_n_m2": 0.018,
+    "radius_m": 0.005,
+    "gravity_world_m_s2": [
+      0.0,
+      0.0,
+      -9.81
+    ],
+    "pinned_node_ids": [],
+    "solver_substeps": 12,
+    "solver_iterations": 8,
+    "damping": 1e-06,
+    "drag": 0.2,
+    "drag_quad": 0.0,
+    "drag_quad_t": 0.0,
+    "self_collision": false,
+    "mu_s": 0.5,
+    "mu_k": 0.4,
+    "v_slip_m_s": 0.001,
+    "kappa": 2.0
+  },
+  "material_status": "explicit_candidate_inherits_P0_solver_coefficients_not_measured_task_material",
+  "hand": {
+    "material_profile": "grip_compliant",
+    "self_collision": false,
+    "fixed_base": true,
+    "active_stiffness": 10.0,
+    "active_damping": 0.2,
+    "active_effort_limit_nm": 0.15,
+    "mimic_stiffness": 400.0,
+    "mimic_damping": 1.0
+  },
+  "table": {
+    "sdf_spacing_m": 0.005,
+    "sdf_margin_m": 0.025,
+    "mu_s": 0.5,
+    "mu_k": 0.4,
+    "material_status": "explicit_candidate_contact_pair_coefficients_not_measured"
+  },
+  "action": {
+    "zero_steps": 48,
+    "move_steps": 160,
+    "thumb_velocity_normalized": 0.25,
+    "index_velocity_normalized": 0.25
+  },
+  "assumptions": [
+    "P0 EA and EI are independent solver coefficients, not a measured isotropic rod.",
+    "DeformX SDF contact uses its own kappa law; PhysX pad compliance is not transferred.",
+    "Fixed-base single hand candidate supports contact discovery only, no palm Lift.",
+    "Only five captured original distal pads have locked DeformX SDFs; other hand links are not rod colliders.",
+    "Rod self-collision stays disabled as in P0; hand self-collision stays disabled.",
+    "Global Rod contact coefficients apply to the table; per-pad pair friction uses max with original hand friction."
+  ],
+  "sources": {
+    "configs/dh116_training/pose_reference.json": "da3d5a6fdd5e8bb4f5db1911a3659ad3b2b92c2fb99511e4ccbc055d3600512e",
+    "docs/contracts/stereo_action_contract.json": "8640c14af42e2c4af9c3763fd409919928f0de5d63edca9f050abdd6da38194e",
+    "docs/contracts/stereo_privileged_state_contract.json": "9f145cf8e68b1dfe8e2c7464ec5fc0cb00e81a2707115c2fe148ab49d77bbb62",
+    "docs/contracts/dh116_deformx_backend_lock.json": "c63243520cc62e7ee19575f4d40cc1b3ee21b8a52c3914e32f2ee95a98e9bb01",
+    "docs/contracts/dh116_deformx_pad_sdf_evidence_lock.json": "acca227b59b1d2e43f02db8d9b3218e96f1ae64412ee28337b95e2c9e2c7bc1f",
+    "scripts/verify_dh116_deformx_thumb_contact.py": "d41ed1428afd44cb29f8b1de91475ea7b499a679c6ee7a056226c9939e86505a",
+    "src/go2_pvcnn/control/dh116/tabletop_material.py": "4874308850de6391df2816a175fa543d7cee255eeb6cccb36c0012fb0c8e1e88",
+    "src/go2_pvcnn/control/dh116/linear_coupling.py": "168e30634c2e240fbaecd225766b52a1f2a3c87afafc8c2a7b5a23dfcb1afe93",
+    "src/go2_pvcnn/control/dh116/tabletop_velocity_limits.py": "91e054800154f396afd07e0ed96971765ce9a7debf9cd1abd247c0e54fc48b0b"
+  }
+}

@@ -1,3 +1,7 @@
+## 2026-11-12 — 自由杆单手 Pinch 实际运行入口与独立退出验收
+
+新增真实自由杆、重力、有限桌面、五个独立原 pad SDF 和反作用力写回入口。240 SDK tick 候选包含全部初始化；异常持有链、worker 重入和独立多pad退出审计均有故障回归。材料为显式 P0 系数候选，非实测；完整371D/R0/抓取资格仍未成立，未启动原生。 首次集成回归因裸Python未加载pxr在收集阶段退出2，完整失败日志保留；改由现有scripts/python.sh加载USD路径后重新验证。 Ubuntu CPU 回归 156 项通过。[报告](docs/superpowers/reports/2026-11-12-free-pinch-physical-runtime.md)
+
 ## 2026-11-12 — WireSeg 旧深度模型只读误差归因
 
 对原深度/分割模型做 4 train＋4 heldout 的只读 CPU 推理，32 条记录，外层 7.31 秒/exit 0，模型权重不变。深度模型仍差于训练常数基线；监督域差与预测范围压缩得到小 cohort 证据，未认定唯一因果。先继续 loss/标签域审计，不盲目追加训练。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-readonly-depth-error-attribution.md)
