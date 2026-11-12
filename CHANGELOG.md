@@ -1,3 +1,7 @@
+## 2026-11-12 — P0-P6 bounded continuation evidence and recovery point
+
+本批四次原生调用：左右拇指预算合规、C3 自然退出，C4 SIGSEGV 保留栈和动态库映射且不重试。共 480 SDK 步/476 实测行/5712 杆子步，真实 PPO 与完整抓取回合均为 0。无相机 Teacher 结构化 CPU 更新/恢复已验证，WireSeg 8/148 入库；自由杆抓取、正式相机采集和真实训练仍按各自证据门控。原生批准额度已用完，已保存恢复点。 Ubuntu CPU 回归 357 项通过。[报告](docs/superpowers/reports/2026-11-12-continuation-p0-p6-batch-closeout.md)
+
 ## 2026-11-12 — P5 frozen-policy regression follows preserved float32 contract
 
 首次合并回归 356 通过/1 失败已保留。CPU 同策略 2/4 批量复算的 logprob 舍入差为1.907e-6，新测试1e-6与原2e-5冻结检查不一致；改为调用原校验并验证策略参数和历史似然篡改均被拒绝。PPO源码、阈值和物理标准没有修改。 Ubuntu CPU 回归 9 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-ppo-frozen-likelihood-test.md)

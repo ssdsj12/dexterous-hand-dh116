@@ -6519,6 +6519,87 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-12-flexible-ppo-frozen-likelihood-test.md",
       "report_source_commit": "66ad08b236793433c22200397ae656ecf6ce988a"
+    },
+    "flex.continuation-p0-p6-batch-closeout": {
+      "passed": 357,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dh116_deformable_grasp_task.py",
+        "tests/test_dh116_deformable_task_budget.py",
+        "tests/test_dh116_deformx_bridge_lifecycle.py",
+        "tests/test_lift_hold_window.py",
+        "tests/test_dh116_stereo_runtime_rod_identity.py",
+        "tests/test_stereo_action_contract_audit.py",
+        "tests/test_stereo_privileged_state_contract_audit.py",
+        "tests/test_privileged_teacher_reward_audit.py",
+        "tests/test_dh116_wireseg_checkpoint_resume.py",
+        "tests/test_dh116_wireseg_overfit_diagnostic.py",
+        "tests/test_dh116_wireseg_pretraining.py",
+        "tests/test_dh116_wireseg_blob_relay.py",
+        "tests/test_dh116_simulation_app_lifecycle.py",
+        "tests/test_dh116_render_capture_boundary.py",
+        "tests/test_dh116_deformable_privileged_teacher.py",
+        "tests/test_dh116_privileged_teacher.py",
+        "tests/test_dh116_deformable_privileged_ppo.py"
+      ],
+      "log_sha256": "bc5594410e2ab3d588284d8845f4a371bc21f7d2b0a27cfe5557bffb78e8bcdc",
+      "tested_head": "28b6984b75444d9de4282d9e38c8df02d44f52a1",
+      "stage": "cpu_verified",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "physics_steps": 0,
+      "ppo_updates": 0,
+      "evaluation_episodes": 0,
+      "batch_actual_totals": {
+        "native_attempts": 4,
+        "native_diagnostics_passed": 3,
+        "native_diagnostics_failed": 1,
+        "sdk_physics_steps": 480,
+        "measured_ledger_rows": 476,
+        "rod_substeps": 5712,
+        "ppo_updates": 0,
+        "full_grasp_evaluation_episodes": 0,
+        "new_real_training_updates": 0,
+        "remaining_authorized_native_attempts": 0
+      },
+      "code_integration_commit": "5f5398cb2083c60315f7e9cc8bee0b33cf115c52",
+      "state": {
+        "P0": "native_passed_calibration_only",
+        "P1": "blocked",
+        "P2": "cpu_verified_legacy_resume_blocked",
+        "P3": "C3_native_passed_C4_failed",
+        "P4": "cpu_verified_native_blocked",
+        "P5Pinch": "cpu_verified_native_blocked",
+        "P5Tripod": "cpu_verified_native_blocked",
+        "P5Power": "cpu_verified_native_blocked",
+        "P6": "blocked"
+      },
+      "raw_evidence_sha256": {
+        "p0_batch": "410cfc4fd5a61351b49ea6209a14c1d2d5b2260c80c02888dae2ad7fda369956",
+        "camera_audit": "f953921955af541d3849fc0bfd863f0123f4bfdb093d0f3538e823dad8053576",
+        "new_dataset_manifest": "dafdda5a62a35b401872dd11ead4219888c0928cc7032fcb0bdcc87bb2eab524"
+      },
+      "initial_combined_regression": {
+        "passed": 356,
+        "failed": 1,
+        "exit_code": 1,
+        "log_sha256": "290d7b78aaf8610c212d6fe43c09d982037e33970503477be9ac5f839985ef14",
+        "failure": "new float32 frozen log probability test asserted <1e-6 while inherited contract remains atol/rtol=2e-5",
+        "native_retried": false
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-continuation-p0-p6-batch-closeout.md",
+      "report_source_commit": "c24f93cd8ba22142c46025d2da4b8e735403a91f"
     }
   }
 }

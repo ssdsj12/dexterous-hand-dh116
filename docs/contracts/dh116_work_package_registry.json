@@ -3487,7 +3487,7 @@
         "flex.f5-wireseg-ingestion"
       ],
       "status": "blocked",
-      "reason": "已核验6/148 blob；固定16样本分割/深度各128次诊断已执行，持出深度仍不及常数基线。新增800条data_center为独立test，无精确配对深度，不能加入训练。完整下载独立续传，不阻断无相机Teacher。"
+      "reason": "已核验 8/148 官方 blob。新深度 360/360 精确配对，中心 192 裁剪 292 有效、68 无标签。旧第128轮断点缺严格恢复字段，新v2 CPU恢复通过。保留旧清单，本批无真实训练。"
     },
     "flex.f0-source-lock": {
       "title": "DeformX 主仓库与递归源码锁定",
@@ -3675,7 +3675,7 @@
         "flex.f4-bimanual-contact-native"
       ],
       "status": "blocked",
-      "reason": "真实左右单拇指分别完成接触及自然exit0，但本批SDK setup漏计，总484超过480；原接触证据保留，预算修复待验证。单手多指、双手同杆与自由杆重力抓取尚无资格。"
+      "reason": "修正版左右单拇指标定各 240 SDK 步并自然退出 0，预算合规。历史 484 步证据仍标记超额。自由杆真实重力、单手多指、双手同杆不同材料位置及外部支撑审计尚无原生资格。"
     },
     "flex.f7-synchronized-data": {
       "title": "双目与柔性物理状态同步数据",
@@ -5488,7 +5488,7 @@
         "flex.f4-right-contact-native"
       ],
       "status": "blocked",
-      "reason": "单拇指接触技术证据已取得但本批初始化步预算不合规；单手多指对向接触需要独立任务和新预算。"
+      "reason": "两侧单拇指标定预算与生命周期已通过，场景为固定端零重力。独立自由杆任务单手 Pinch 对向接触仍需真实证据及新预算。"
     },
     "flex.f4-bimanual-contact-native": {
       "title": "双手与同一柔性杆接触",
@@ -8619,6 +8619,180 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-12-flexible-ppo-frozen-likelihood-test.md",
         "report_source_commit": "66ad08b236793433c22200397ae656ecf6ce988a"
+      }
+    },
+    "flex.continuation-p0-p6-batch-closeout": {
+      "title": "P0-P6 bounded continuation evidence and recovery point",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-camera-c3-c4-native-audit",
+        "flex.flexible-teacher-structured-runtime",
+        "flex.wireseg-strict-resume",
+        "flex.flexible-task-hold-slip-reference",
+        "flex.flexible-ppo-frozen-likelihood-test"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 357,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py",
+          "tests/test_dh116_work_packages.py",
+          "tests/test_dh116_deformable_grasp_task.py",
+          "tests/test_dh116_deformable_task_budget.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_lift_hold_window.py",
+          "tests/test_dh116_stereo_runtime_rod_identity.py",
+          "tests/test_stereo_action_contract_audit.py",
+          "tests/test_stereo_privileged_state_contract_audit.py",
+          "tests/test_privileged_teacher_reward_audit.py",
+          "tests/test_dh116_wireseg_checkpoint_resume.py",
+          "tests/test_dh116_wireseg_overfit_diagnostic.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py",
+          "tests/test_dh116_simulation_app_lifecycle.py",
+          "tests/test_dh116_render_capture_boundary.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_privileged_teacher.py",
+          "tests/test_dh116_deformable_privileged_ppo.py"
+        ],
+        "log_sha256": "bc5594410e2ab3d588284d8845f4a371bc21f7d2b0a27cfe5557bffb78e8bcdc",
+        "tested_head": "28b6984b75444d9de4282d9e38c8df02d44f52a1",
+        "stage": "cpu_verified",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "physics_steps": 0,
+        "ppo_updates": 0,
+        "evaluation_episodes": 0,
+        "batch_actual_totals": {
+          "native_attempts": 4,
+          "native_diagnostics_passed": 3,
+          "native_diagnostics_failed": 1,
+          "sdk_physics_steps": 480,
+          "measured_ledger_rows": 476,
+          "rod_substeps": 5712,
+          "ppo_updates": 0,
+          "full_grasp_evaluation_episodes": 0,
+          "new_real_training_updates": 0,
+          "remaining_authorized_native_attempts": 0
+        },
+        "code_integration_commit": "5f5398cb2083c60315f7e9cc8bee0b33cf115c52",
+        "state": {
+          "P0": "native_passed_calibration_only",
+          "P1": "blocked",
+          "P2": "cpu_verified_legacy_resume_blocked",
+          "P3": "C3_native_passed_C4_failed",
+          "P4": "cpu_verified_native_blocked",
+          "P5Pinch": "cpu_verified_native_blocked",
+          "P5Tripod": "cpu_verified_native_blocked",
+          "P5Power": "cpu_verified_native_blocked",
+          "P6": "blocked"
+        },
+        "raw_evidence_sha256": {
+          "p0_batch": "410cfc4fd5a61351b49ea6209a14c1d2d5b2260c80c02888dae2ad7fda369956",
+          "camera_audit": "f953921955af541d3849fc0bfd863f0123f4bfdb093d0f3538e823dad8053576",
+          "new_dataset_manifest": "dafdda5a62a35b401872dd11ead4219888c0928cc7032fcb0bdcc87bb2eab524"
+        },
+        "initial_combined_regression": {
+          "passed": 356,
+          "failed": 1,
+          "exit_code": 1,
+          "log_sha256": "290d7b78aaf8610c212d6fe43c09d982037e33970503477be9ac5f839985ef14",
+          "failure": "new float32 frozen log probability test asserted <1e-6 while inherited contract remains atol/rtol=2e-5",
+          "native_retried": false
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-continuation-p0-p6-batch-closeout.md",
+        "report_source_commit": "c24f93cd8ba22142c46025d2da4b8e735403a91f"
+      },
+      "last_result": {
+        "passed": 357,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_thumb_contact.py",
+          "tests/test_dh116_work_packages.py",
+          "tests/test_dh116_deformable_grasp_task.py",
+          "tests/test_dh116_deformable_task_budget.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_lift_hold_window.py",
+          "tests/test_dh116_stereo_runtime_rod_identity.py",
+          "tests/test_stereo_action_contract_audit.py",
+          "tests/test_stereo_privileged_state_contract_audit.py",
+          "tests/test_privileged_teacher_reward_audit.py",
+          "tests/test_dh116_wireseg_checkpoint_resume.py",
+          "tests/test_dh116_wireseg_overfit_diagnostic.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py",
+          "tests/test_dh116_simulation_app_lifecycle.py",
+          "tests/test_dh116_render_capture_boundary.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_privileged_teacher.py",
+          "tests/test_dh116_deformable_privileged_ppo.py"
+        ],
+        "log_sha256": "bc5594410e2ab3d588284d8845f4a371bc21f7d2b0a27cfe5557bffb78e8bcdc",
+        "tested_head": "28b6984b75444d9de4282d9e38c8df02d44f52a1",
+        "stage": "cpu_verified",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "physics_steps": 0,
+        "ppo_updates": 0,
+        "evaluation_episodes": 0,
+        "batch_actual_totals": {
+          "native_attempts": 4,
+          "native_diagnostics_passed": 3,
+          "native_diagnostics_failed": 1,
+          "sdk_physics_steps": 480,
+          "measured_ledger_rows": 476,
+          "rod_substeps": 5712,
+          "ppo_updates": 0,
+          "full_grasp_evaluation_episodes": 0,
+          "new_real_training_updates": 0,
+          "remaining_authorized_native_attempts": 0
+        },
+        "code_integration_commit": "5f5398cb2083c60315f7e9cc8bee0b33cf115c52",
+        "state": {
+          "P0": "native_passed_calibration_only",
+          "P1": "blocked",
+          "P2": "cpu_verified_legacy_resume_blocked",
+          "P3": "C3_native_passed_C4_failed",
+          "P4": "cpu_verified_native_blocked",
+          "P5Pinch": "cpu_verified_native_blocked",
+          "P5Tripod": "cpu_verified_native_blocked",
+          "P5Power": "cpu_verified_native_blocked",
+          "P6": "blocked"
+        },
+        "raw_evidence_sha256": {
+          "p0_batch": "410cfc4fd5a61351b49ea6209a14c1d2d5b2260c80c02888dae2ad7fda369956",
+          "camera_audit": "f953921955af541d3849fc0bfd863f0123f4bfdb093d0f3538e823dad8053576",
+          "new_dataset_manifest": "dafdda5a62a35b401872dd11ead4219888c0928cc7032fcb0bdcc87bb2eab524"
+        },
+        "initial_combined_regression": {
+          "passed": 356,
+          "failed": 1,
+          "exit_code": 1,
+          "log_sha256": "290d7b78aaf8610c212d6fe43c09d982037e33970503477be9ac5f839985ef14",
+          "failure": "new float32 frozen log probability test asserted <1e-6 while inherited contract remains atol/rtol=2e-5",
+          "native_retried": false
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-continuation-p0-p6-batch-closeout.md",
+        "report_source_commit": "c24f93cd8ba22142c46025d2da4b8e735403a91f"
       }
     }
   },
