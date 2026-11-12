@@ -16,6 +16,7 @@ from .tabletop_vision_evaluation_contract import evaluation_physics_sha256
 from .tabletop_vision_evaluation_reset import _install_reset_trials, _readback_reset_trials
 
 TEACHER_MODES = ('teacher_sampled', 'teacher_mean')
+STOP_MODES = ('first_batch_terminal', 'per_slot_first_terminal')
 BINDING_FIELDS = ('physics_sha256', 'calibration_sha256', 'checkpoint_sha256',
     'controller_sha256', 'pre_action_371_sha256', 'runtime_seed_sha256', 'clock',
     'policy_steps_budget', 'seed')
@@ -78,6 +79,8 @@ def compare_start_bindings(*arms):
         for field in BINDING_FIELDS:
             if first[field] != arm[field]:
                 raise ValueError(f'paired diagnostic start differs: {field}')
+        if first.get('episode_stop', STOP_MODES[0]) != arm.get('episode_stop', STOP_MODES[0]):
+            raise ValueError('paired diagnostic start differs: episode_stop')
         if initial != _initials(arm):
             raise ValueError('paired diagnostic initial readback state differs')
     return dict(matching_full_physical_readbacks=len(initial), compared_arms=[arm['mode'] for arm in arms],
@@ -167,7 +170,8 @@ def _tensor_digest(value):
 
 
 @torch.no_grad()
-def _run_arm(bridge, model, plan, checkpoint, output, *, mode, expected_start):
+def _run_arm(bridge, model, plan, checkpoint, output, *, mode, expected_start,
+             episode_stop=STOP_MODES[0]):
     from .tabletop_vision_command_shadow import command_state, controller_contract, measured_context
 
     if not _native_bridge(bridge) or bridge.n != 2:
@@ -183,6 +187,7 @@ def _run_arm(bridge, model, plan, checkpoint, output, *, mode, expected_start):
     before_model = _policy_digest(model)
     samples = []
     terminals = {}
+    active = live.clone()
     try:
         _install_reset_trials(world, task, plan['trials'])
         bridge.bind_cold_trials(plan['trials'])
@@ -190,7 +195,7 @@ def _run_arm(bridge, model, plan, checkpoint, output, *, mode, expected_start):
         physical = _readback_reset_trials(world, plan['trials'])
         bindings = bridge.teacher_pre_action_identities()
         uids = [row['episode_uid'] for row in bindings]
-        start = dict(mode=mode, checkpoint_sha256=bridge.checkpoint_sha256, episode_uids=uids,
+        start = dict(mode=mode, episode_stop=episode_stop, checkpoint_sha256=bridge.checkpoint_sha256, episode_uids=uids,
             seed=plan['seed'], policy_steps_budget=plan['policy_steps_budget'],
             reset_readback=physical, authored_manifest_sha256=plan['manifest_sha256'],
             physics_sha256=evaluation_physics_sha256(bridge.contract),
@@ -209,13 +214,29 @@ def _run_arm(bridge, model, plan, checkpoint, output, *, mode, expected_start):
                 bindings = bridge.teacher_pre_action_identities()
             observation = bridge.critic.detach().clone()
             command = frozen_teacher_command(model, observation, mode=mode)
+            command['issued_action'] = command['issued_action'].clone()
+            command['issued_action'][~active] = 0
             bridge.set_teacher_action_diagnostics(diagnostic_mode=mode, **command)
             _, _, done, _ = bridge.step(command['issued_action'])
-            samples.append(dict(identities=bindings, observations=observation.cpu(),
-                issued_action=command['issued_action'].detach().cpu(), done=done.cpu().clone()))
-            if bool(done.any()):
-                terminals = {uid: bridge._terminal_rows[uid] for uid in uids if uid in bridge._terminal_rows}
-                break
+            first_done = done & active
+            observations = observation.cpu()
+            sample_identities = bindings
+            if episode_stop == STOP_MODES[1]:
+                live_slots = active.cpu().tolist()
+                observations = [value if is_live else None
+                    for value,is_live in zip(observations,live_slots)]
+                sample_identities = [identity if is_live else None
+                    for identity,is_live in zip(bindings,live_slots)]
+            samples.append(dict(identities=sample_identities, observations=observations,
+                issued_action=command['issued_action'].detach().cpu(), done=first_done.cpu(),
+                active_first_episode=active.cpu().clone(), action_owners=list(bridge.action_owners)))
+            finished = {slot:uids[slot] for slot in first_done.nonzero().flatten().tolist()}
+            if finished:
+                terminals.update({uid:bridge._terminal_rows[uid] for uid in finished.values()})
+                active &= ~first_done
+                if episode_stop == STOP_MODES[0] or not bool(active.any()):
+                    break
+                bridge.retire_teacher_diagnostic_slots(finished)
         if _policy_digest(model) != before_model:
             raise RuntimeError('frozen Teacher policy parameters changed during diagnosis')
     finally:
@@ -225,7 +246,9 @@ def _run_arm(bridge, model, plan, checkpoint, output, *, mode, expected_start):
             observation_scope='raw inherited 371D; per-field supervision is not qualified by this capture'), stream)
     return dict(status='bounded_frozen_teacher_diagnostic', mode=mode, pairing=pairing,
         policy_steps=len(samples), first_episode_terminals=terminals,
-        stopped_at_first_batch_terminal=bool(terminals), ppo_updates=0,
+        episode_stop=episode_stop,
+        stopped_at_first_batch_terminal=bool(terminals) and episode_stop == STOP_MODES[0],
+        completed_first_episode_slots=len(terminals), ppo_updates=0,
         reset_buffers_restored=True, native_execution_performed=True,
         native_grasp_qualified=False, causal_root_qualified=False)
 
@@ -258,6 +281,7 @@ def main(argv=None):
     parser.add_argument('--seed', type=int, default=116)
     parser.add_argument('--steps', type=int, choices=(4,128), required=True)
     parser.add_argument('--expect-start', type=Path)
+    parser.add_argument('--episode-stop', choices=STOP_MODES, default=STOP_MODES[0])
     parser.add_argument('--check-mpc-reference', type=Path)
     parser.add_argument('--mpc-source-sha256')
     parser.add_argument('--output', type=Path)
@@ -291,7 +315,7 @@ def main(argv=None):
     if args.check_mpc_reference is not None:
         check_mpc_reference(args.check_mpc_reference, args.mpc_source_sha256, observed['inherited_contract'])
     if not args.execute_native:
-        print(json.dumps(dict(mode=args.mode, plan=plan, native_started=False,
+        print(json.dumps(dict(mode=args.mode, plan=plan, episode_stop=args.episode_stop, native_started=False,
             checkpoint_sha256=inputs[args.checkpoint], launcher_rollout_steps=launcher_rollout_steps,
             controller_contract_verified_at_native_start=False,
             mpc_reference_compatible=True if args.check_mpc_reference is not None else None)))
@@ -309,7 +333,7 @@ def main(argv=None):
             inputs[path] = file_sha256(path)
         expected = load_completed_sampled_start(sampled)
     run = new_run(args.output)
-    write_json_new(run / 'preflight.json', dict(mode=args.mode, plan=plan,
+    write_json_new(run / 'preflight.json', dict(mode=args.mode, plan=plan, episode_stop=args.episode_stop,
         immutable_inputs={str(path):sha for path,sha in inputs.items()}, ppo_updates=0,
         launcher_rollout_steps=launcher_rollout_steps))
 
@@ -326,7 +350,7 @@ def main(argv=None):
         # boundary explicitly after both, before the authored first reset.
         torch.manual_seed(args.seed)
         result = _run_arm(bridge, model, plan, args.checkpoint, run,
-            mode=args.mode, expected_start=expected)
+            mode=args.mode, expected_start=expected, episode_stop=args.episode_stop)
         if any(file_sha256(path) != sha for path,sha in inputs.items()):
             raise RuntimeError('immutable input changed during bounded diagnosis')
         # Publish complete callback evidence before handing control to the

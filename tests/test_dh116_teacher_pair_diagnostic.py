@@ -60,6 +60,10 @@ def test_pairing_checks_actually_read_full_joint_and_root_hashes_and_control_con
     a = dict(binding, mode='teacher_sampled', episode_uids=['sample:0','sample:1'])
     b = deepcopy(dict(binding, mode='teacher_mean', episode_uids=['mean:0','mean:1']))
     assert compare_start_bindings(a,b)['matching_full_physical_readbacks'] == 2
+    b['episode_stop'] = 'per_slot_first_terminal'
+    with pytest.raises(ValueError, match='episode_stop'):
+        compare_start_bindings(a,b)
+    del b['episode_stop']
     b['reset_readback']['actual_states'][0]['physical_state']['joint_velocities'][0][2] += 0.01
     with pytest.raises(ValueError, match='readback'):
         compare_start_bindings(a,b)

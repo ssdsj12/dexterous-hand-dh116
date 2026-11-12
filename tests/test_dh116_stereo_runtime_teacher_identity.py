@@ -1,5 +1,6 @@
 """CPU tests execute the actual bridge/Teacher loop; no physical qualification."""
 import hashlib
+from copy import deepcopy
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -32,37 +33,38 @@ class ClockCamera:
 
 
 @pytest.fixture
-def bridge(tmp_path):
+def bridge(tmp_path, request):
+    n = getattr(request, "param", 1)
     value = NativeTensorBridge.__new__(NativeTensorBridge)
-    value.n, value.device, value.policy_tick = 1, torch.device('cpu'), 0
-    value.identities = EpisodeIdentities(1, run_uuid='CPU-teacher-identity')
-    value.critic = torch.zeros(1, 371)
-    value.previous_issued = torch.zeros(1, 24)
+    value.n, value.device, value.policy_tick = n, torch.device('cpu'), 0
+    value.identities = EpisodeIdentities(n, run_uuid='CPU-teacher-identity')
+    value.critic = torch.zeros(n, 371)
+    value.previous_issued = torch.zeros(n, 24)
     value._terminal_rows, value._last_live_rows = {}, {}
     value._headers_written = set()
-    value._initial_conditions = {value.identities.uid(0): {'source': 'CPU fixture'}}
-    value._initial_sha = {value.identities.uid(0): 'c'*64}
-    value._initial_clock = {value.identities.uid(0): (0, 0.)}
-    value._initial_policy_tick = {value.identities.uid(0): 0}
+    value._initial_conditions = {value.identities.uid(i): {'source': 'CPU fixture'} for i in range(n)}
+    value._initial_sha = {value.identities.uid(i): 'c'*64 for i in range(n)}
+    value._initial_clock = {value.identities.uid(i): (0, 0.) for i in range(n)}
+    value._initial_policy_tick = {value.identities.uid(i): 0 for i in range(n)}
     value._in_step = False
-    value._cold_trials, value._trial_reset_counts = None, [1]
-    value.grasp_styles = ['pinch_thumb_index']
+    value._cold_trials, value._trial_reset_counts = None, [1]*n
+    value.grasp_styles = ['pinch_thumb_index']*n
     value.runtime_descriptor = None
-    value.execution_owner, value.action_owners = 'teacher', ['teacher']
+    value.execution_owner, value.action_owners = 'teacher', ['teacher']*n
     value.checkpoint_sha256 = None
     value.output = tmp_path
     value._raw = (tmp_path / 'native_physics.jsonl').open('x', encoding='utf-8')
     value.world = SimpleNamespace(sim=SimpleNamespace(current_time=0.))
-    data = SimpleNamespace(joint_pos_target=torch.full((1, 6), .72))
+    data = SimpleNamespace(joint_pos_target=torch.full((n, 6), .72))
     value.device_world = SimpleNamespace(_physics_steps=0, hands=[SimpleNamespace(data=data)]*2,
         w=SimpleNamespace(ids=[list(range(6))]*2))
-    value.task = SimpleNamespace(failure=torch.tensor([0]),
-        surface_lift_success=SimpleNamespace(drift_m=torch.tensor([.0001]),
-            duration=torch.tensor([0.]), window_good=torch.tensor([False])),
+    value.task = SimpleNamespace(failure=torch.tensor([0]*n),
+        surface_lift_success=SimpleNamespace(drift_m=torch.tensor([.0001]*n),
+            duration=torch.tensor([0.]*n), window_good=torch.tensor([False]*n)),
         surface_reference_bottom_m=torch.tensor(.36),
-        m={'bottom': torch.tensor([.361]), 'q': torch.zeros(1, 12), 'qd': torch.zeros(1, 12)},
-        command=torch.full((1, 12), .61))
-    value.palm_poses = lambda: torch.zeros(1, 2, 7)
+        m={'bottom': torch.tensor([.361]*n), 'q': torch.zeros(n, 12), 'qd': torch.zeros(n, 12)},
+        command=torch.full((n, 12), .61))
+    value.palm_poses = lambda: torch.zeros(n, 2, 7)
     value.physical_calls = 0
 
     def step(action):
@@ -70,12 +72,12 @@ def bridge(tmp_path):
         for _ in range(8):
             value.device_world._physics_steps += 1
             value.world.sim.current_time = value.device_world._physics_steps / 480
-            value._capture(dict(live=torch.tensor([True]), done=torch.tensor([False]),
-                native_success=torch.tensor([False]), action=action.clone(), dt_s=1/480,
-                measurement_valid=torch.tensor([True])))
-        return value.critic.clone(), torch.zeros(1), torch.tensor([False]), dict(
-            success=torch.tensor([False]), failure=torch.tensor([0]), terms={'fixture': torch.zeros(1)})
-    value.env = SimpleNamespace(step=step, successes=torch.zeros(1), episodes=torch.zeros(1))
+            value._capture(dict(live=torch.tensor([True]*n), done=torch.tensor([False]*n),
+                native_success=torch.tensor([False]*n), action=action.clone(), dt_s=1/480,
+                measurement_valid=torch.tensor([True]*n)))
+        return value.critic.clone(), torch.zeros(n), torch.tensor([False]*n), dict(
+            success=torch.tensor([False]*n), failure=torch.tensor([0]*n), terms={'fixture': torch.zeros(n)})
+    value.env = SimpleNamespace(step=step, successes=torch.zeros(n), episodes=torch.zeros(n))
     value.camera = ClockCamera(value)
     yield value
     value.close()
@@ -356,3 +358,61 @@ def test_deterministic_finger12_audit_has_full_native_joints_and_no_fabricated_l
         assert audit['issued_action'] == audit['actor_mean']
         assert len(audit['joints']) == 14
         assert sum(j['joint_role'] == 'passive_finger' for j in audit['joints']) == 2
+
+
+@pytest.mark.parametrize('bridge', [2], indirect=True)
+def test_retiring_first_terminal_preserves_other_slot_and_suppresses_reset_episode(bridge, tmp_path):
+    w = bridge.device_world
+    w.q = torch.full((2, 2, 7), .2)
+    w.qd = torch.full_like(w.q, .1)
+    w.limits = torch.stack((torch.zeros_like(w.q), torch.ones_like(w.q)), -1)
+    for hand in w.hands:
+        hand.joint_names = ['finger11','finger12','finger21','finger31','finger41','finger51','finger13']
+        hand.data.joint_pos_target = torch.full((2, 7), .72)
+        hand.root_physx_view = SimpleNamespace(get_dof_max_velocities=lambda: torch.full((2, 7), .3))
+    bridge.bind_teacher_checkpoint(checkpoint(tmp_path))
+    initial = [bridge.identities.uid(i) for i in range(2)]
+    action = torch.full((2, 24), .1)
+    policy = dict(latent_mean=action.atanh(), latent_std=torch.full_like(action,.1), latent_actions=None)
+
+    def native_step(command):
+        first = bridge.policy_tick == 0
+        assert first or torch.equal(command[0], torch.zeros(24))
+        done = torch.tensor([True, not first])
+        w._physics_steps += 1
+        bridge.world.sim.current_time = w._physics_steps / 480
+        bridge._capture(dict(live=torch.ones(2,dtype=torch.bool), done=done,
+            native_success=torch.zeros(2,dtype=torch.bool), action=command, dt_s=1/480,
+            measurement_valid=torch.ones(2,dtype=torch.bool)))
+        for i in done.nonzero().flatten().tolist():
+            bridge.identities.reset([i])
+            uid = bridge.identities.uid(i)
+            bridge._initial_conditions[uid] = {'source':'auto reset'}
+            bridge._initial_sha[uid] = 'd'*64
+            bridge._initial_clock[uid] = (w._physics_steps, bridge.world.sim.current_time)
+            bridge._initial_policy_tick[uid] = bridge.policy_tick+1
+        return bridge.critic.clone(), torch.zeros(2), done, {}
+
+    bridge.env.step = native_step
+    with pytest.raises(ValueError, match='terminal'):
+        bridge.retire_teacher_diagnostic_slots({0:initial[0]})
+    bridge.teacher_pre_action_identities()
+    bridge.set_teacher_action_diagnostics(sampled_action=None, mean_action=action, issued_action=action,
+        diagnostic_mode='teacher_mean', policy_audit=policy)
+    bridge.step(action)
+    first_terminal = deepcopy(bridge._terminal_rows[initial[0]])
+    bridge.retire_teacher_diagnostic_slots({0:initial[0]})
+    bridge.teacher_pre_action_identities()
+    with pytest.raises(ValueError, match='zero'):
+        bridge.set_teacher_action_diagnostics(sampled_action=None, mean_action=action, issued_action=action,
+            diagnostic_mode='teacher_mean', policy_audit=policy)
+    issued = action.clone()
+    issued[0].zero_()
+    bridge.set_teacher_action_diagnostics(sampled_action=None, mean_action=action, issued_action=issued,
+        diagnostic_mode='teacher_mean', policy_audit=policy)
+    bridge.step(issued)
+    rows = [json.loads(line) for line in (tmp_path/'native_physics.jsonl').read_text().splitlines()]
+    assert {r['episode_uid'] for r in rows} == set(initial)
+    assert [(r['env_id'],r['terminal']) for r in rows if r['kind']=='sample'] == [(0,True),(1,False),(1,True)]
+    assert bridge._terminal_rows[initial[0]] == first_terminal
+    assert bridge._terminal_rows[initial[1]]['action_owner'] == 'teacher'

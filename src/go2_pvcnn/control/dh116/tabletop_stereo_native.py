@@ -313,8 +313,31 @@ class NativeTensorBridge:
         if not hasattr(self, '_teacher_epoch_by_episode'):
             self._teacher_epoch_by_episode = {}
 
+    def retire_teacher_diagnostic_slots(self, terminal_uids):
+        """Exclude confirmed first-episode terminals from later diagnostic rows."""
+        if (self._in_step or getattr(self, '_teacher_pre_action', None) is not None
+                or getattr(self, '_teacher_checkpoint', None) is None):
+            raise ValueError('retirement requires a terminal at the closed diagnostic control boundary')
+        retired = getattr(self, '_retired_teacher_diagnostic_slots', set())
+        previous = getattr(self, '_teacher_step_rows', {})
+        for slot, uid in terminal_uids.items():
+            row = previous.get(slot)
+            if (slot in retired or row is None or row['episode_uid'] != uid
+                    or row is not self._terminal_rows.get(uid)
+                    or row.get('action_audit', {}).get('execution_mode') not in ('teacher_sampled', 'teacher_mean')):
+                raise ValueError('retirement requires the just-observed first diagnostic terminal')
+        self._retired_teacher_diagnostic_slots = retired | set(terminal_uids)
+        self.set_action_owners(['diagnostic_zero' if slot in self._retired_teacher_diagnostic_slots
+            else 'teacher' for slot in range(self.n)])
+
+    def _active_teacher_slots(self):
+        retired = getattr(self, '_retired_teacher_diagnostic_slots', set())
+        return [slot for slot in range(self.n) if slot not in retired]
+
     def _validate_teacher_binding(self):
-        if (self.execution_owner != 'teacher' or self.action_owners != ['teacher']*self.n
+        active = self._active_teacher_slots()
+        owners = ['teacher' if slot in active else 'diagnostic_zero' for slot in range(self.n)]
+        if (self.execution_owner != 'teacher' or self.action_owners != owners
                 or file_sha256(self._teacher_checkpoint) != self.checkpoint_sha256):
             raise ValueError('Teacher checkpoint/execution identity changed after binding')
         calibration = require_sha(self.camera.calibration.sha256, 'native calibration SHA256')
@@ -366,11 +389,15 @@ class NativeTensorBridge:
             raise ValueError('unknown Teacher diagnostic mode')
         if diagnostic_mode is not None and policy_audit is None:
             raise ValueError('paired diagnostic mode requires the frozen policy distribution')
+        retired = sorted(getattr(self, '_retired_teacher_diagnostic_slots', set()))
+        if retired and (diagnostic_mode is None or bool(issued_action[retired].any())):
+            raise ValueError('retired Teacher diagnostic slots require explicit zero commands')
+        active = self._active_teacher_slots()
         if diagnostic_mode == 'teacher_sampled' and (sampled_action is None
-                or not torch.equal(sampled_action, issued_action)):
+                or not torch.equal(sampled_action[active], issued_action[active])):
             raise ValueError('sampled diagnostic requires the actually issued sample')
         if diagnostic_mode == 'teacher_mean' and (sampled_action is not None
-                or not torch.equal(mean_action, issued_action)):
+                or not torch.equal(mean_action[active], issued_action[active])):
             raise ValueError('mean diagnostic requires the actually issued mean and no sample')
         captured_policy = None
         if policy_audit is not None:
@@ -468,7 +495,10 @@ class NativeTensorBridge:
         w, task = self.device_world, self.task
         tracker = task.surface_lift_success
         live = packet['live'].nonzero().flatten().tolist()
+        retired = getattr(self, '_retired_teacher_diagnostic_slots', set())
         for i in live:
+            if i in retired:
+                continue
             key = self.identities.uid(i)
             teacher_identity = (self._teacher_capture_identity(i, packet)
                 if getattr(self, '_teacher_checkpoint', None) is not None else {})
@@ -634,13 +664,14 @@ class NativeTensorBridge:
             self._in_step = False
             self._stereo_candidate_pre_action = None
         if strict_teacher:
-            if len(self._teacher_step_rows) != self.n:
+            if set(self._teacher_step_rows) != set(self._active_teacher_slots()):
                 raise RuntimeError('Teacher execution lacks actual aligned native raw identity samples')
             self._teacher_pre_action = None
             self._teacher_actions = None
             self._teacher_policy_audit = None
+        retired = getattr(self, '_retired_teacher_diagnostic_slots', set())
         for i in done.nonzero().flatten().tolist():
-            if before[i]['episode_uid'] not in self._terminal_rows:
+            if i not in retired and before[i]['episode_uid'] not in self._terminal_rows:
                 raise RuntimeError('terminal lacks a preserved pre-reset 480Hz native sample')
         self.previous_issued.copy_(issued_actions)
         self.previous_issued[done] = 0

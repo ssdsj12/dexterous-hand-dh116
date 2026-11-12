@@ -1,3 +1,7 @@
+## 2026-11-12 — 二指三指独立首终止原生配对
+
+二指退出后继续观测三指。相同实测冷初态下，冻结 Teacher 的 sampled 和 mean 均出现右 finger12 合法目标下位置越限。 Ubuntu CPU 回归 46 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-per-slot-tripod-native.md)
+
 ## 2026-11-12 — 握式多腕姿原几何补充搜索
 
 原有边界下每手 16 个不同起点，最接近的两手最大指腹间距仍高于原筛选线，握式保持待有效初态。 Ubuntu CPU 回归 219 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wrap-diverse-wrist-search.md)
