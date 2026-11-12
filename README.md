@@ -1,3 +1,7 @@
+## 2026-11-12 — 官方 drop/hang DomeLight 派生修复
+
+四个派生 USD 只更新 DomeLight 纹理。76 个 USD 复审无未解析依赖，原始 109 个文件哈希一致。 Ubuntu CPU 回归 11 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-assets-f6.md)
+
 ## 2026-11-12 — 实际指腹烘焙设置和 PhysX 凸包读回入口
 
 独立核对 10 个实际 USD 指腹的 cooking schema、坐标和离线凸包估计，确认已安装 PhysX 查询入口。 Ubuntu CPU 回归 11 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-hull-audit.md)

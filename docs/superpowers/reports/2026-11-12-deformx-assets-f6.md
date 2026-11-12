@@ -41,3 +41,29 @@ DH116_PYTHON=/mnt/mydisk/xk/envs/dh116/bin/python \
 私有证据目录 `/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flex-f6-assets-audit-WUUmwa`。源文件、HDRI 和审计日志保存在 Ubuntu 缓存或私有证据目录。528 个保护文件及 2 个历史 Checkpoint 通过核验。
 
 后续渲染冒烟使用固定 DeformX 的 `dataset_generator/drop_hang/cli.py`，以 `DEFORMX_ASSET_ROOT` 指向核验缓存，分别检查 drop variant 0 和 hang variant 3 各一帧，原生运行应单 Isaac 实例且独立输出。现有 USD 骨架和轨迹用于渲染资产及初态来源。Cosserat 材料节点、时间同步、接触力、DH116 观测、实际 24D 动作和训练标签需要后续运行证据。
+
+## 派生 DomeLight 覆盖复验
+
+`scripts/prepare_dh116_deformx_render_scene.py` 将固定清单完整复制到新目录，对四个派生模板的 `/root/env_light.inputs:texture:file` 根层默认值单独写入 `../background/boiler_room_4k.hdr`。原四个模板以字节副本保存在 `original-scenes/`。派生模板保留原相对目录布局，使未修改的资产引用仍然解析到派生副本。恢复指定属性到原值后，重新读取的整个 USD 层序列化与原层一致。
+
+对原始缓存前后各校验 109 个文件。对 76 个派生 USD 重跑 OpenUSD 依赖审计，根外、未解析和未解析 DomeLight 条目均为 0。原始模板仍各有一个未解析的 DomeLight 纹理，相关记录保留。派生模板相机数量按 2、4、8 杆 drop 和 hang 顺序分别为 40、60、60、40。派生审计保留了网格、骨架、Z-up 和 1 m/单位检查。六个轨迹 NPZ 按原字节复制。
+
+| 证据 | Ubuntu 实测 |
+|---|---|
+| 派生目录 | `/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/f6-render-checked-Nmc1SI/prepared` |
+| 派生 manifest SHA256 | `96d05ba470c1b6b54e751dabaeab19c8633c971857bcb2c022bae09cd57b8285` |
+| OpenUSD CPU 准备日志 SHA256 | `04279d6c4cade3ed54c9543536bd2ea780cf9dddb616bdba3e58ec609d52b42e` |
+| Ubuntu CPU 回归 | 16 通过、0 失败，日志 SHA256 `9a8f48e36f4bbca977bbabc2fa98a5f39fa703fa8c8834373e1fe2f1448fbf52` |
+
+```bash
+export DH116_PYTHON=/mnt/mydisk/xk/envs/dh116/bin/python PYTHONDONTWRITEBYTECODE=1
+export DH116_NUM_THREADS=2 CUDA_VISIBLE_DEVICES=
+bash scripts/python.sh scripts/prepare_dh116_deformx_render_scene.py \
+  --asset-root /mnt/mydisk/xk/integrations/dh116-flex-f6-9ef440fa/snapshot \
+  --lock docs/contracts/dh116_deformx_assets_lock.json --output "$independent_prepared_path"
+bash scripts/python.sh -m pytest -q -p no:cacheprovider \
+  tests/test_dh116_deformx_asset_dependencies.py tests/test_dh116_deformx_assets_audit.py \
+  tests/test_dh116_deformx_cuda_source.py tests/test_dh116_deformx_source_lock.py
+```
+
+本工作包未启动 Isaac，`native_render_verified=false`。后续原生窗口使用固定主仓库 `04f6a11eb4d832df761f631cf6ce1bc00da75eb1` 的 drop/hang 生成器、`DEFORMX_ASSET_ROOT=<独立派生目录>/assets`、variant 0 和 3 各 frame 0、seed 42、每帧 1 个相机以及 1×1 累积。两个进程顺序执行，各自保留 composed stage、图像和自然退出证据。

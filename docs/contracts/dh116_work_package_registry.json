@@ -4096,6 +4096,72 @@
         "report": "docs/superpowers/reports/2026-11-12-deformx-cooked-hull-audit.md",
         "report_source_commit": "4944f0795352887ef22560f12301d23d8ec23317"
       }
+    },
+    "flex.f6-derived-render-preflight": {
+      "title": "官方 drop/hang DomeLight 派生修复",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f6-assets-audit"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 11,
+        "failed": 0,
+        "skipped": 3,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_asset_dependencies.py",
+          "tests/test_dh116_deformx_assets_audit.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "2d0525e941a65397f6122ce56a69468878228afbfc5c82cdd4bffcdbe89af7d9",
+        "tested_head": "25962a8f7d12fb319e67e1afbc2568c22ae44054",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "assets_verified": 109,
+        "usd_dependencies_rechecked": 76,
+        "dome_light_overrides": 4,
+        "unresolved_derived_dependencies": 0,
+        "derived_audit_sha256": "96d05ba470c1b6b54e751dabaeab19c8633c971857bcb2c022bae09cd57b8285",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-assets-f6.md",
+        "report_source_commit": "ffa960904d9b983e4b764f66cf48689eae13aacf"
+      },
+      "last_result": {
+        "passed": 11,
+        "failed": 0,
+        "skipped": 3,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_asset_dependencies.py",
+          "tests/test_dh116_deformx_assets_audit.py",
+          "tests/test_dh116_deformx_cuda_source.py"
+        ],
+        "log_sha256": "2d0525e941a65397f6122ce56a69468878228afbfc5c82cdd4bffcdbe89af7d9",
+        "tested_head": "25962a8f7d12fb319e67e1afbc2568c22ae44054",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "assets_verified": 109,
+        "usd_dependencies_rechecked": 76,
+        "dome_light_overrides": 4,
+        "unresolved_derived_dependencies": 0,
+        "derived_audit_sha256": "96d05ba470c1b6b54e751dabaeab19c8633c971857bcb2c022bae09cd57b8285",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-12-deformx-assets-f6.md",
+        "report_source_commit": "ffa960904d9b983e4b764f66cf48689eae13aacf"
+      }
     }
   },
   "execution_target": {
