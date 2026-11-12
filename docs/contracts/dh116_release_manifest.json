@@ -5916,6 +5916,75 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 156,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_scheduler.py",
+        "tests/test_deformable_grasp_runtime.py",
+        "tests/test_dh116_deformable_grasp_task.py",
+        "tests/test_dh116_deformable_task_budget.py",
+        "tests/test_dh116_deformx_thumb_contact.py",
+        "tests/test_dh116_contact_material.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "2266d838ea217c674ab4ab257f2a162f6d933f6e6ce2f11e7f506761c2b98eb0",
+      "tested_head": "dc6163b5d5988947649d1ec0f8097c9456aec3db",
+      "stage": "cpu_verified",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "scope": "free_pinch_physical_runtime_preparation",
+      "candidate_code_config_sha256": "e43cdadcbf7d5a02b7b0def7abe79c0dce5c56d5720f10e9fa3349e48a02e217",
+      "command_spec_sha256": "49084203742e4ff3487eeb1305fde2a342204edc06ecd34d7b4157bec38685d4",
+      "code_config_sha256": "d0ec5e2f6146c82e637331acd8dac173fd46cc80425e769578d36e7ce98273de",
+      "teacher_admission": false,
+      "full_state371_bound": false,
+      "grasp_qualified": false,
+      "r2_enabled": false,
+      "remaining_blockers": [
+        "new_exact_single_hand_native_approval",
+        "measured_task_material_not_established",
+        "per_material_anchor_and_contact_normal_not_qualified",
+        "full_371_reset_R0_binding"
+      ],
+      "integration_initial_failure": {
+        "exit_code": 2,
+        "kind": "pytest_collection_launcher_missing_usd_path",
+        "log_sha256": "e687ea2c010e4c5060c5ea44ace5d4ec3b09c7c1b980742a21e973ca23d10e15",
+        "resolution": "Use existing scripts/python.sh with DH116_PYTHON; no environment installation or code workaround"
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-12-free-pinch-physical-runtime.md",
+      "report_source_commit": "760b95e18a1d620600cc946424c5789f1c766244",
+      "package": "flex.f4-free-pinch-runtime-preparation",
+      "commit": "e6caa7280e6b4ded01d33122d62108e6acfb26ae",
+      "parent": "dc6163b5d5988947649d1ec0f8097c9456aec3db",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_execution/deformx_pinch_left_candidate_v1.json",
+        "configs/dh116_tasks/flexible_pinch_candidate_v1.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-12-free-pinch-physical-runtime.md",
+        "scripts/run_dh116_pinch_work_packages.py",
+        "scripts/verify_dh116_deformx_pinch_contact.py",
+        "src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_runtime.py",
+        "tests/test_deformable_grasp_runtime.py",
+        "tests/test_dh116_contact_material.py",
+        "tests/test_dh116_pinch_scheduler.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
