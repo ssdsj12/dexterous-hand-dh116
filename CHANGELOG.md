@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性实测字段 Teacher 独立断点
+
+独立格式保存 CPU 诊断策略和 Adam/RNG，合成 PPO 续跑精确一致；原 Checkpoint 实现字节和指纹保留。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-measured-checkpoint-cpu.md)
+
 ## 2026-11-13 — 柔性 Teacher 独立实测状态投影
 
 独立 CPU 派生模型只选择原 371D 账本里已接线的 66 项，加真实结构的杆节点输入。合成数据只验现有 PPO 兼容，原模型、Checkpoint 和原生准入保留。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-measured-common-teacher-cpu.md)

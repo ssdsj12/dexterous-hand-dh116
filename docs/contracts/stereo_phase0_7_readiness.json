@@ -8746,6 +8746,37 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-flexible-measured-common-teacher-cpu.md",
       "report_source_commit": "722e5c3a435d73bac176eb3dc70420aa86121770"
+    },
+    "flex.f7-measured-common-checkpoint-cpu": {
+      "passed": 44,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_flexible_measured_checkpoint.py",
+        "tests/test_dh116_flexible_measured_common_teacher.py",
+        "tests/test_dh116_deformable_privileged_ppo.py",
+        "tests/test_dh116_deformable_privileged_teacher.py",
+        "tests/test_dh116_deformable_rollout_admission.py"
+      ],
+      "log_sha256": "66218bc5c62b7528e1f2b869ea551adc31484a23cc949459db0a24b906b389f1",
+      "tested_head": "d9d97a0d081785cb8ab915b18ca77bb93fa85525",
+      "stage": "cpu_verified_independent_measured_checkpoint",
+      "scope": "independent_flexible_teacher_cpu_fixture_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "independent_log_sha256": "f4fe6f7aec0e5026b6bf6b8fe3c29d827679ec7bc63112c7ca8ba34eb585818b",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-measured-checkpoint-cpu.md",
+      "report_source_commit": "11449b5d82f09a6b244f513a0d32307fd4da5395"
     }
   }
 }
