@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch独立相对初始姿态非线性验证
+
+独立相对X/Z姿态保留完整FK/原碰撞；119次CPU端点测量仍未通过，局部约束非光滑时停止。111项CPU回归通过，未创建新原生配方或启动PPO。 Ubuntu CPU 回归 111 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-relative-orientation.md)
+
 ## 2026-11-13 — 右Pinch原始凸包杆段距离独立证明
 
 独立4变量QP只提法向，完整883顶点/40原始杆段支撑重算；段3/4可行距离上界仍低于半径，不能用放宽净空修复。54项CPU通过，无新原生/PPO或配方。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-13-polyline-closest-support.md)

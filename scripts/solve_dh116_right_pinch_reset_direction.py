@@ -57,8 +57,8 @@ def local_pass(measure,center,lo,hi,trust_radius=.5):
     if not np.isfinite(trust_radius) or not .005<=trust_radius<=.5:raise ValueError("frozen finite local trust radius required")
     center=np.asarray(center,float);lo=np.asarray(lo,float);hi=np.asarray(hi,float)
     n=len(center)
-    if n not in (4,6,7) or any(x.shape!=(n,) or not np.isfinite(x).all() for x in (center,lo,hi)):
-        raise ValueError("four, six or seven finite domain coordinates required")
+    if n not in (4,6,7,9) or any(x.shape!=(n,) or not np.isfinite(x).all() for x in (center,lo,hi)):
+        raise ValueError("four, six, seven or nine finite domain coordinates required")
     if np.any(center-.002<lo-1e-12) or np.any(center+.002>hi+1e-12):raise ValueError("FD neighborhood leaves frozen box")
     count=0
     def query(x):

@@ -12687,6 +12687,45 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-polyline-closest-support.md",
       "report_source_commit": "0a878b2e00a9c74c1f0121f8105c6e05379a386c"
+    },
+    "flex.f8-right-pinch-relative-orientation-cpu": {
+      "passed": 111,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_right_pinch_relative_orientation.py",
+        "tests/test_dh116_right_pinch_reset_direction.py",
+        "tests/test_dh116_right_pinch_measured_direction.py",
+        "tests/test_dh116_polyline_closest_support.py",
+        "tests/test_dh116_polyline_support_certificate.py",
+        "tests/test_dh116_pinch_closure_margin.py",
+        "tests/test_dh116_pinch_rod_axis_clearance.py",
+        "tests/test_dh116_pinch_segment_geometry.py"
+      ],
+      "log_sha256": "d86bde9070d70508134adc7d6e84e482ee75d94c29969567baf5fec91f197f5e",
+      "tested_head": "b3ba69674e748aa917bfbd9f00a9568da0cf6d7e",
+      "kind": "cpu_relative_reset_counterfactual",
+      "cpu_full_passed": 111,
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "static_path_passed": false,
+      "geometry_blocked": true,
+      "endpoint_measurements": 119,
+      "max_endpoint_budget": 246,
+      "audit_result": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/right-relative-reset-20261113-9shn7ze3/run01/result.json",
+      "audit_sha256": "532c6461b1ed30dd59b316b5e2718ef57a1ad9ba7ed3f47d17f50620fed86f86",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-right-pinch-relative-orientation.md",
+      "report_source_commit": "10b1d488aacf4702cb73c46981d3b1f52be13027"
     }
   }
 }
