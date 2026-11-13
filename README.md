@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch独立原生入口与退出校验
+
+新入口使用右侧真实USD/SDF/动作及已验证静态路径，独立绑定退出校验；CPU完整232测量步及terminal验证，原保护保持。原生未执行，不授予Teacher资格。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-native-owned.md)
+
 ## 2026-11-13 — 右Pinch原24D动作与逐步执行目标合同
 
 232个理想跟踪CPU步与原控制函数对齐；新增独立逐步目标校验，保留原关节、Mimic、桌面和接触保护。CPU结果不冒充SDK读回，未执行原生或PPO。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-action-contract.md)

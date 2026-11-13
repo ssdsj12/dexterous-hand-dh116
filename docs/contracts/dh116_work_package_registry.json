@@ -23035,6 +23035,106 @@
         "report": "docs/superpowers/reports/2026-11-13-right-pinch-action-contract.md",
         "report_source_commit": "495c79328b5ed57cd9928979839dd7c57355a8ca"
       }
+    },
+    "flex.f8-right-pinch-owned-contact-cpu": {
+      "title": "右Pinch独立原生入口与退出校验",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-right-pinch-action-contract-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 37,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_right_owned_worker.py",
+          "tests/test_dh116_right_owned_owner.py",
+          "tests/test_dh116_right_approach_contract.py",
+          "tests/test_dh116_right_approach_geometry.py"
+        ],
+        "log_sha256": "aaf7052e9fe5fc1294c1a89ca3805ad88aec421ed9b6558642aba9f4af4a72bb",
+        "tested_head": "55bb5f6c5be38678bc10d53b198c02f81232cb3c",
+        "kind": "cpu_right_owned_native_preparation",
+        "cpu_full_passed": 37,
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "native_recipe_prepared": true,
+        "native_execution_performed": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-right-pinch-native-owned.md",
+        "report_source_commit": "08896992c3e4873ca18c2775f222f33f7995d30b",
+        "precommit_recovery": "immutable prior transaction saved; actual recipe loading test added"
+      },
+      "last_result": {
+        "passed": 37,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_right_owned_worker.py",
+          "tests/test_dh116_right_owned_owner.py",
+          "tests/test_dh116_right_approach_contract.py",
+          "tests/test_dh116_right_approach_geometry.py"
+        ],
+        "log_sha256": "aaf7052e9fe5fc1294c1a89ca3805ad88aec421ed9b6558642aba9f4af4a72bb",
+        "tested_head": "55bb5f6c5be38678bc10d53b198c02f81232cb3c",
+        "kind": "cpu_right_owned_native_preparation",
+        "cpu_full_passed": 37,
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "native_recipe_prepared": true,
+        "native_execution_performed": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-right-pinch-native-owned.md",
+        "report_source_commit": "08896992c3e4873ca18c2775f222f33f7995d30b",
+        "precommit_recovery": "immutable prior transaction saved; actual recipe loading test added"
+      }
+    },
+    "flex.f8-right-pinch-owned-contact-native": {
+      "title": "右Pinch独立234步接近原生诊断",
+      "executor": "native_bounded",
+      "status": "blocked",
+      "reason": "Frozen new recipe requires standing-approval fingerprint binding and available exclusive GPU3 lock.",
+      "dependencies": [
+        "flex.f8-right-pinch-owned-contact-cpu",
+        "flex.f7-native-parameter-task-native"
+      ],
+      "dependency_scopes": {
+        "flex.f7-native-parameter-task-native": {
+          "scope": "exact_2_setup_plus_16_native_parameter_task_endpoints_only",
+          "native": true
+        }
+      },
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/deformx_right_pinch_owned_contact_v1.json",
+      "evidence_scope": "right_owned_pinch_2_setup_232_guarded_contact_diagnostic_only",
+      "tests": [
+        "tests/test_dh116_right_owned_worker.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_right_pinch_owned_work_packages.py"
     }
   },
   "execution_target": {
