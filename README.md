@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch独立表面配准与穿桌候选拒绝
+
+右手自身USD/FK/SDF独立配准103次CPU测量，三个初值均导致掌根穿桌约118mm；93项回归通过但几何不通过，未生成原生配方。 Ubuntu CPU 回归 93 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-surface-registration.md)
+
 ## 2026-11-13 — 右Pinch非光滑候选与完整非线性验算分离
 
 定位有余量SDF方向导数跳变，opt-in仅调整LP提案，全部原约束仍非线性验证。41次CPU测量四候选均失败，未创建原生配方；122项CPU回归通过，Teacher仍未准入。 Ubuntu CPU 回归 122 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-nonsmooth-proposal.md)
