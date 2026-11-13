@@ -1,3 +1,7 @@
+## 2026-11-14 — Tripod 起点连续节点 SDF 核验
+
+原独立Tripod起点205条pad/node路径与48个连续插值分段全部保留；三指参考最小间隙1.770638/1.747874/2.615555mm，原桌面2.403620mm，解除粗SDF包络误拒。闭合端点碰撞仍blocked，无新原生/训练。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-vertical-sdf-reference.md)
+
 ## 2026-11-14 — 实际双手接触与固定材料标记对应误差
 
 真实178个同钟手指接触候选全部保留，124个同节点截面残差>0.5mm，右食指最大1.339164mm；右拇指固定标记端点位移0.640657mm仍非合格滑移。1933条手接触缺同子步director明确NA。只读数据，无新原生/训练。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-material-correspondence.md)
