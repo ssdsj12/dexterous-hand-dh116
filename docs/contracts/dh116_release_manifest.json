@@ -12340,6 +12340,61 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "executor": "native_bounded",
+      "tested_head": "e2ca1ccf99785447a936797b12eb4d6307a605a9",
+      "batch_id": "parameter-getters-zero-step-once-20261113",
+      "qualification_scope": "zero_step_parameter_getter_only",
+      "native_qualification": true,
+      "native_execution_performed": true,
+      "command_spec_sha256": "8339551f8c5329d6786c16099cec85ac8e61f02f414e137caaba7a4da55d9319",
+      "code_config_sha256": "ca509b7593c281b093e51ce078f17dbb25b58d1795b0fbd2c0640dbaddb0f63c",
+      "launch_argv_sha256": "0cf448dd1056880ab1749006828377aea129a0a6ecb4d8b29f6323c8294a85ab",
+      "exit_code": 0,
+      "outer_exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "duration_seconds": 2.897244447027333,
+      "native_lock_observed": true,
+      "artifact_sha256": {
+        "plan.json": "ea37cbf251e578852b0132be8190e986682b2407ad66f8fda44125ce70933892",
+        "raw_parameters.json": "77a5e8a9847da54252c77dd79ff5be85e170d9f1b73128237de3c9a4a38fef0a",
+        "result.json": "8baecdab53aaea478903303fc6d26ec8553907a376284e55faee9b2026b49ce4"
+      },
+      "ledger_counts": {},
+      "result_sha256": "85f0b6e89c25eaf9f8e8d3d003eab1bc91cd7b2376459f969b0b66b79ee63ad5",
+      "native_physics_validated": true,
+      "cpu_regression": {
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_parameter_probe.py"
+        ],
+        "log_sha256": "cebb456c38a552b109d96f199a2fd398ce357182d04dc8ae2101249974c06040",
+        "tested_head": "e2ca1ccf99785447a936797b12eb4d6307a605a9"
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-flex.f7-native-parameter-getters-native.md",
+      "package": "flex.f7-native-parameter-getters-native",
+      "commit": "cd9496b4b91872fa7d409598ee8e44b6cd606d61",
+      "parent": "e2ca1ccf99785447a936797b12eb4d6307a605a9",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/dh116-managed-flex.f7-native-parameter-getters-native.md"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
