@@ -11910,6 +11910,76 @@
         "report": "docs/superpowers/reports/2026-11-13-flexible-pair-contact-diagnostics.md",
         "report_source_commit": "1ba50c86b23ccfbe678e62a08a86bb13aab49248"
       }
+    },
+    "flex.f7-teacher-policy-owner-source-cpu": {
+      "title": "Teacher 原策略 owner 动作与目标来源",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-mount-view-path-identity-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 118,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_teacher_policy_owner_source.py",
+          "tests/test_dh116_teacher_mounted_wrist_source.py",
+          "tests/test_dh116_teacher_preaction_readback.py",
+          "tests/test_dh116_deformable_bimanual_step.py"
+        ],
+        "log_sha256": "d59d82a49f88aad8b908665f0bfd746bc28107f083a01ce4d81dfe9b510ac1d8",
+        "tested_head": "5e6d860c5bd31f10a8be681518b77174931b493c",
+        "stage": "cpu_verified_original_policy_owner",
+        "scope": "teacher_policy_owned_command_action_cpu",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "isolated_fields": 36,
+        "fixture_sha256": "c2e0f477061a9e1948e44da0c5f005de05d9bac19b9570d21bff13ca0469379a",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-teacher-policy-owner-source.md",
+        "report_source_commit": "ff9382e3683a889c3c9ea54f65fde7e0b54db66e"
+      },
+      "last_result": {
+        "passed": 118,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_teacher_policy_owner_source.py",
+          "tests/test_dh116_teacher_mounted_wrist_source.py",
+          "tests/test_dh116_teacher_preaction_readback.py",
+          "tests/test_dh116_deformable_bimanual_step.py"
+        ],
+        "log_sha256": "d59d82a49f88aad8b908665f0bfd746bc28107f083a01ce4d81dfe9b510ac1d8",
+        "tested_head": "5e6d860c5bd31f10a8be681518b77174931b493c",
+        "stage": "cpu_verified_original_policy_owner",
+        "scope": "teacher_policy_owned_command_action_cpu",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "isolated_fields": 36,
+        "fixture_sha256": "c2e0f477061a9e1948e44da0c5f005de05d9bac19b9570d21bff13ca0469379a",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-teacher-policy-owner-source.md",
+        "report_source_commit": "ff9382e3683a889c3c9ea54f65fde7e0b54db66e"
+      }
     }
   },
   "execution_target": {

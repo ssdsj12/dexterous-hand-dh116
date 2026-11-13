@@ -1,3 +1,7 @@
+## 2026-11-13 — Teacher 原策略 owner 动作与目标来源
+
+按实际 TensorTask owner 和动作时序核对原目标与上一接纳 24D action，共 36 项独立字段。尚未接入柔性环境。 Ubuntu CPU 回归 118 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-policy-owner-source.md)
+
 ## 2026-11-13 — 逐指腹接触对与同子步加载诊断
 
 对账逐对力、杆节点和 mesh 力矩，报告同时加载、材料节点和桌面 SDF。滑移、外部支撑与有效对向接触维持未知。 Ubuntu CPU 回归 73 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-pair-contact-diagnostics.md)
