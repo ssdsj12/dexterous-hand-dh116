@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch 有界非线性几何候选的实际接受与拒绝
+
+一次330状态CPU复算保留三次实际改善、拒绝三次不合格候选；左右食指进入静态SDF谓词，拇指仍有正间隙。不增加原生步、不安装Reset、不授予Teacher资格。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-trust-region.md)
+
 ## 2026-11-13 — 真实双手动作区间的目标与实测响应对齐
 
 只读16条既有实测行，四个指关节在16.67ms内实际增量约为SDK目标增量33–34%，四个已存指腹SDF间隙下降但仍为正。0手杆pair，7872条杆桌子步pair；静态手桌来源保留NA。未新增原生、FK/SDF计算或训练。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-closure-readback.md)
