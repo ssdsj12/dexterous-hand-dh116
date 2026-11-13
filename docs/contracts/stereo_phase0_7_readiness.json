@@ -7017,6 +7017,24 @@
       "reason": "C5 lacked its target holder and crashed during finalization. CPU-only debugger capture fix does not qualify stereo synchronization or natural exit.",
       "native_qualification": false,
       "diagnostic_report": "docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md"
+    },
+    "flex.f7-force-aggregate-evidence": {
+      "stage": "cpu_verified",
+      "passed": 121,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "physics_steps": 0,
+      "ppo_updates": 0,
+      "log_sha256": "e4b9cf6f1799a82810a4c1021429f69cdfe7536f5516c90c1359dff6ddf3e9f8",
+      "red_log_sha256": "d12d3135b314dfb7342fd46c130b2644fb1ec0074a40131ce5b14ba50569e0d7",
+      "real_row_audit_sha256": "7c2678a8ba60c70a6f2e29d3fffd3b71a38c872e918627502f2a2a12a5473423",
+      "contact_pair_available": false,
+      "r2_enabled": false,
+      "native_qualification": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-deformable-force-evidence.md",
+      "tested_head": "7e98f864fc09aec09e1500a5359d994846c25850"
     }
   }
 }

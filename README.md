@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性杆力反馈来源与聚合证据校验
+
+锁定 DeformX 的逐节点合力、逐 mesh 净力矩现可独立审计；contact pair、外部支撑和材料滑移保持未资格化。 [报告](docs/superpowers/reports/2026-11-13-deformable-force-evidence.md)
+
 ## 2026-11-12 — C5 与自由杆 Pinch 单次诊断
 
 两次原生均未通过。C5 缺少目标 holder，Pinch 在第 3 SDK 步触发 mimic 保护。GDB 输出路径修复通过 47 项 CPU 回归。[结果与恢复点](docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md)
