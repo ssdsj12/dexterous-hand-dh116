@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 同杆零动作 2+8 原生诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-native.md)。
+
 ## 2026-11-13 — 双手 Pinch 精确 2+8 原生配方准备
 
 封装独立同杆诊断，精确 2+8、1 环境、0 PPO。保留旧关节与腕部 2.1 mm 保护，支持原两个 SDK articulation 标识。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-native-preflight.md)
