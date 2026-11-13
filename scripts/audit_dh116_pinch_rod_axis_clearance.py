@@ -179,7 +179,7 @@ def endpoint_sdf(grids,poses,nodes):
                 native_contact_observed=False)
 
 
-def audit_side(g,parent,grids,nodes,result,progress):
+def audit_side(g,parent,grids,nodes,result,progress,*,angle_selector=None,check_contact_path=False):
     q,d=validate_parent(parent)
     layout=g["reference"]["reference_layout"]
     top=layout["table_center"][2]+layout["table_size"][2]/2
@@ -210,7 +210,9 @@ def audit_side(g,parent,grids,nodes,result,progress):
             side_result["original_samples"].append(row);progress(dict(side=g["side"],phase="original",**row))
     coefficients=np.concatenate(coeff)
     intervals=feasible_intervals(coefficients,[-ANGLE_LIMIT_RAD,ANGLE_LIMIT_RAD])
-    angle=choose_angle(intervals)
+    selection=None if angle_selector is None else angle_selector(coefficients,intervals)
+    angle=choose_angle(intervals) if selection is None else selection["angle_rad"]
+    if selection is not None:side_result["angle_selection"]=selection
     side_result.update(analytic_constraint_count=len(coefficients),feasible_angle_intervals_rad=intervals,
                        original_continuous_table_lower_m=old_min,selected_angle_rad=angle)
     original_fk=fk_poses(g,parent["base_pose_wxyz"],q+d)
@@ -240,7 +242,7 @@ def audit_side(g,parent,grids,nodes,result,progress):
                 value=rod_support_lower(v,nodes)-remainder
                 others[key]=min(others.get(key,float("inf")),value);row["non_target_lower_m"][key]=value
             if index==0:initial[key]=envelope_support(v,layout,.005)["surface_gap_lower_bound_m"]
-        if index in (0,SAMPLES-1):
+        if check_contact_path or index in (0,SAMPLES-1):
             row["node_sdf"]=endpoint_sdf(grids,fk_poses(g,pose,state),nodes)
         with _commit_row_without_alarm():
             side_result["rotated_samples"].append(row);progress(dict(side=g["side"],phase="rotated",**row))
@@ -259,7 +261,7 @@ def audit_side(g,parent,grids,nodes,result,progress):
         "Table-safe roll does not repair an initially missing node/pad contact or non-target collision."]
 
 
-def run(project,result,progress):
+def run(project,result,progress,*,angle_selector=None,check_contact_path=False):
     parents=load_parents();nodes,native=archived_nodes()
     result.update(parent_sources=dict(left=dict(path=str(LEFT),sha256=LEFT_SHA),
         right=dict(path=str(RIGHT),sha256=RIGHT_SHA,candidate_id=RIGHT_ID)),
@@ -275,7 +277,7 @@ def run(project,result,progress):
         g=load_geometry(project,side=side)
         if g["source_sha256"]!=parent["source_sha256"]:raise ValueError("independent side source SHA mismatch")
         grids,bindings=grids_for(g,summary)
-        audit_side(g,parent,grids,nodes,result,progress)
+        audit_side(g,parent,grids,nodes,result,progress,angle_selector=angle_selector,check_contact_path=check_contact_path)
         result["sides"][side]["sdf_bindings"]=bindings
     result["status"]="complete"
 

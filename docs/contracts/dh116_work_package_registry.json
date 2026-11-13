@@ -20948,6 +20948,86 @@
         "report": "docs/superpowers/reports/2026-11-13-pinch-rod-axis-clearance.md",
         "report_source_commit": "6d8c2f019001ed1f64d46da68b037d3c04493906"
       }
+    },
+    "flex.f7-pinch-rod-axis-margin-cpu": {
+      "title": "Pinch杆轴Reset最大净空与161点深度检查",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-pinch-rod-axis-clearance-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 98,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_rod_axis_margin.py",
+          "tests/test_dh116_pinch_rod_axis_clearance.py",
+          "tests/test_dh116_pinch_closure_margin.py",
+          "tests/test_dh116_pinch_dynamic_fk.py",
+          "tests/test_dh116_measured_closure_geometry.py"
+        ],
+        "log_sha256": "6e2dd4993fc52d4afb1fc8cced9b4ffc872c5d2a9fe47612ebd0c09c3ea1b579",
+        "tested_head": "ee8c21fc2b627280712d23f194f0d84d15e66ae4",
+        "kind": "cpu_static_max_margin_and_full_target_depth",
+        "cpu_full_passed": 98,
+        "full_log": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/evidence-rod-axis-margin-20261113-Pz4lNR/pytest.log",
+        "comparison": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/evidence-rod-axis-margin-20261113-Pz4lNR/run01/result.json",
+        "comparison_sha256": "d1fc5b21cd2ed0d3e9d4c17e5cc56eff1259a13dc6558942c052c668f9d1c03b",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "geometry_states": 644,
+        "left_static_geometry_passed": true,
+        "right_static_geometry_passed": false,
+        "native_ready": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-rod-axis-margin.md",
+        "report_source_commit": "bc53156048c2a1555a9e8ac52b6c34228fef5a48"
+      },
+      "last_result": {
+        "passed": 98,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_rod_axis_margin.py",
+          "tests/test_dh116_pinch_rod_axis_clearance.py",
+          "tests/test_dh116_pinch_closure_margin.py",
+          "tests/test_dh116_pinch_dynamic_fk.py",
+          "tests/test_dh116_measured_closure_geometry.py"
+        ],
+        "log_sha256": "6e2dd4993fc52d4afb1fc8cced9b4ffc872c5d2a9fe47612ebd0c09c3ea1b579",
+        "tested_head": "ee8c21fc2b627280712d23f194f0d84d15e66ae4",
+        "kind": "cpu_static_max_margin_and_full_target_depth",
+        "cpu_full_passed": 98,
+        "full_log": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/evidence-rod-axis-margin-20261113-Pz4lNR/pytest.log",
+        "comparison": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/evidence-rod-axis-margin-20261113-Pz4lNR/run01/result.json",
+        "comparison_sha256": "d1fc5b21cd2ed0d3e9d4c17e5cc56eff1259a13dc6558942c052c668f9d1c03b",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "geometry_states": 644,
+        "left_static_geometry_passed": true,
+        "right_static_geometry_passed": false,
+        "native_ready": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-rod-axis-margin.md",
+        "report_source_commit": "bc53156048c2a1555a9e8ac52b6c34228fef5a48"
+      }
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch杆轴Reset最大净空与161点深度检查
+
+98项CPU回归通过；644状态、每侧24次代数二分将左手连续桌面净空提高至2.111213mm，161目标点指腹深度未超过0.3mm。右侧仍不满足接触/非目标/对向条件。旧最小改动模式保留；无新增物理/PPO，Teacher0/3。 Ubuntu CPU 回归 98 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-rod-axis-margin.md)
+
 ## 2026-11-13 — Pinch绕杆轴初态与连续桌面净空
 
 86项CPU回归通过；644状态有界审计找到左侧-0.965°杆轴Reset候选，连续桌面净空2.100079mm、预测双指SDF为-0.208/-0.251mm。余量仅0.079µm，尚未原生资格；右侧离散接触和非目标几何仍阻断。无新增物理/PPO，Teacher0/3。 Ubuntu CPU 回归 86 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-rod-axis-clearance.md)
