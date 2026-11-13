@@ -10819,6 +10819,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-pinch-trust-region.md",
       "report_source_commit": "cf877be1fbea7f16d35d78699997fbf2e5f5e4cb"
+    },
+    "flex.f7-dual-pinch-director-endpoints-cpu": {
+      "passed": 102,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_pinch_director_postexit.py",
+        "tests/test_dh116_dual_pinch_director_worker.py",
+        "tests/test_dh116_material_director_readback.py"
+      ],
+      "log_sha256": "b24f9a7b8817708052a57b0960bfab14f92097c6886b9e2f56940e621ea59399",
+      "tested_head": "577a51dc15ea162dd5208787cb0edb4c6abe49f9",
+      "kind": "cpu_sdk_doubles_complete_entry_and_postexit_audit",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "command_spec_sha256": "4aa87632c42e273c3c52a8abb9e20cfa5e9f10ffc1b0623656b0b514c5d89dea",
+      "code_config_sha256": "abfae81f2cc9bfad7cb1698ad88afd5f9aeb8a89f87861fbd436c6defc16cf74",
+      "worker_code_config_sha256": "cefdcc8b7c84c7b67bd0e142eba80acd511ce2632540e9abe8b8a7b980f34796",
+      "physical_steps_proposed": 18,
+      "complete_cpu_tests": 110,
+      "complete_cpu_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/director-final-release-cpu-krCAzd/tests.log",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-pinch-director-preflight.md",
+      "report_source_commit": "04029f76d1d1729311ac8f79b589a45819e419af"
     }
   }
 }
