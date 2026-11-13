@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch 完整非线性约束初姿有限求解
+
+54项CPU回归通过；808/866完整几何状态，左16迭代上限、右200查询上限均保留。左SDF两指负间隙仍不满足0.1mm预检余量，右拇指0.233784mm未接触。未生成原生配方，未改变物理/动作/保护，Teacher仍0/3。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-direct-nonlinear-reset.md)
+
 ## 2026-11-13 — Pinch 横向掌位偏航闭合联合求解
 
 69项CPU回归通过；306/306完整FK/SDF状态。右拇指间隙从0.438482降至0.339444mm仍未接触，左侧硬净空失败未采用；不生成原生配方、不改变保护，Teacher仍未晋级。 Ubuntu CPU 回归 69 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-coupled-lateral-reset.md)
