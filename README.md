@@ -1,3 +1,7 @@
+## 2026-11-13 — Power 固定根闭合连续界
+
+独立核对五个原 Power 候选的关节余量、可用动作时间与实际碰撞包络，解析支撑平面给出连续下界。局部候选均未通过，无原生配方。 Ubuntu CPU 回归 35 项通过。[报告](docs/superpowers/reports/2026-11-13-power-continuous-closure-constraints.md)
+
 ## 2026-11-13 — 双手 Pinch 同杆 Reset 提案
 
 左右静态连续净空 2.101095 / 2.112018 mm，均过原策略门，独立手包络沿杆轴至少相隔 295.679 mm。实际同杆 Reset 与接触仍未验证。 Ubuntu CPU 回归 31 项通过。[报告](docs/superpowers/reports/2026-11-13-paired-pinch-reset-preflight.md)

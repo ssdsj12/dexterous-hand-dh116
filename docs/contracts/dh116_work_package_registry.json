@@ -13320,6 +13320,78 @@
         "report": "docs/superpowers/reports/2026-11-13-paired-pinch-reset-preflight.md",
         "report_source_commit": "4116bf9b6207163d20aca6b0d1fdd31622da0e9d"
       }
+    },
+    "flex.f8-power-closure-constraints-cpu": {
+      "title": "Power 固定根闭合连续界",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-tripod-proximal-targeted-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 35,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_power_closure_constraints.py",
+          "tests/test_dh116_flexible_style_pose_preparation.py",
+          "tests/test_dh116_flexible_power_pose_preflight.py"
+        ],
+        "log_sha256": "4845e8f1482129e29a8afdce220212d9da4593d51d2210898e550d6e29a876c7",
+        "tested_head": "71c30f5155967666ad60e19dff6a59cdc638ddec",
+        "stage": "cpu_verified_power_continuous_constraint_audit",
+        "scope": "power_five_frozen_roots_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "candidate_count": 5,
+        "pairable": false,
+        "result_sha256": "e28cdede01fa938a357b2b2cdfbf780658bf1176eabfc4ccb9ccb97a10232307",
+        "evidence_replay_sha256": "94d6b9869a0ee21b2f7ce2455e494a4a5ab3daa292a69f146cef88b6811f12f5",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-power-continuous-closure-constraints.md",
+        "report_source_commit": "74c7d08ebe904fc0ff3b5ce882721de870f7f4c1"
+      },
+      "last_result": {
+        "passed": 35,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_power_closure_constraints.py",
+          "tests/test_dh116_flexible_style_pose_preparation.py",
+          "tests/test_dh116_flexible_power_pose_preflight.py"
+        ],
+        "log_sha256": "4845e8f1482129e29a8afdce220212d9da4593d51d2210898e550d6e29a876c7",
+        "tested_head": "71c30f5155967666ad60e19dff6a59cdc638ddec",
+        "stage": "cpu_verified_power_continuous_constraint_audit",
+        "scope": "power_five_frozen_roots_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "candidate_count": 5,
+        "pairable": false,
+        "result_sha256": "e28cdede01fa938a357b2b2cdfbf780658bf1176eabfc4ccb9ccb97a10232307",
+        "evidence_replay_sha256": "94d6b9869a0ee21b2f7ce2455e494a4a5ab3daa292a69f146cef88b6811f12f5",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-power-continuous-closure-constraints.md",
+        "report_source_commit": "74c7d08ebe904fc0ff3b5ce882721de870f7f4c1"
+      }
     }
   },
   "execution_target": {
