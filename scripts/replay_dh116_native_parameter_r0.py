@@ -59,7 +59,7 @@ def check_radius_packet(packet,rod):
         raise ValueError("raw radius/provenance differs")
     return expected
 
-def replay():
+def replay(*,approach_reader=None):
     receipt=json.loads(read_pinned(RECEIPT,RECEIPT_SHA))
     if (receipt["qualification_scope"]!="exact_2_setup_plus_16_native_parameter_task_endpoints_only"
             or receipt["outer_exit_code"]!=0 or receipt["debugger_inferior_signal"] is not None
@@ -87,18 +87,26 @@ def replay():
     budget["physics"]["solver_substeps_per_physics_step"]=12
     weights={name:float(i+1) for i,name in enumerate(R0_TERMS)}
     reports={}
-    for mode in ("original","applicability_v2"):
+    approach_samples=[]
+    modes=("original","applicability_v2") + (("applicability_v2_with_measured_approach",) if approach_reader is not None else ())
+    for mode in modes:
         observer=PhysicalR0Diagnostic(task,"pinch",env_id=0,budget_config=budget,
             diagnostic_coefficients=weights,backend_artifact=BACKEND,backend_sha256=BACKEND_SHA,
             radius_sample=dict(value=radius["value"],source=source))
-        if mode=="applicability_v2":
+        if mode.startswith("applicability_v2"):
             # Explicitly isolated offline observer; no monkeypatch/default path.
             adapted=deepcopy(task);adapted["backend"]["extension_sha256"]=BACKEND_SHA
             observer._reducer=ApplicableR0ControlStep(adapted,"pinch",env_id=0,budget_config=budget,
                                                       diagnostic_coefficients=weights)
         for entry in rows[1:]:
             operation,payload=entry["operation"],entry["payload"]
-            if operation in ("reset","physical"):observer.record(payload)
+            if operation in ("reset","physical"):
+                auxiliary=None
+                if operation=="physical" and mode=="applicability_v2_with_measured_approach":
+                    measured=approach_reader.capture(payload["exchange"])
+                    auxiliary=measured["auxiliary"]
+                    approach_samples.append(measured)
+                observer.record(payload,auxiliary=auxiliary)
             elif operation=="begin":observer.begin(**payload)
             elif operation=="end":observer.end(payload)
         reports[mode]=observer.report()
@@ -114,8 +122,10 @@ def replay():
         measured_physical_rows=16,controls=controls,
         per_step=[dict(identity={k:r["r0"][k] for k in ("env_id","episode_uid","reset_id","physics_step","rod_tick","timestamp_s")},
             terms=r["r0"]["terms"],blocked_terms=r["r0"]["blocked_terms"])
-            for c in reports["applicability_v2"]["controls"] for r in c["physical_rows"]],
-        missing_sources=["measured_reset_approach_distance","per_step_approach_distance",
+            for c in reports[modes[-1]]["controls"] for r in c["physical_rows"]],
+        approach_samples=approach_samples,
+        missing_sources=["measured_reset_approach_distance",
+                         *(["per_step_approach_distance"] if approach_reader is None else []),
                          "qualified_stability_predicate","positive_bilateral_opposition",
                          "fixed_material_anchor_and_tangential_slip","hand_table_contact_source"],
         raw_hand_rod_pair_samples=sum(p["mesh_name"].startswith(("left.","right.")) for p in pairs),
@@ -127,9 +137,14 @@ def replay():
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output",type=Path,required=True)
+    parser.add_argument("--measured-approach",action="store_true",help="opt-in actual measured Pinch SDF source, no reset fill")
     args=parser.parse_args(argv)
     if args.output.exists() or args.output.is_symlink():parser.error("preserve existing output")
-    result=replay()
+    reader=None
+    if args.measured_approach:
+        from go2_pvcnn.control.dh116.tabletop_r0_measured_approach import MeasuredPinchApproach
+        reader=MeasuredPinchApproach(ROOT)
+    result=replay(approach_reader=reader)
     native=[n for n in sys.modules if n.split(".")[0] in ("omni","isaacsim","isaaclab","ropesim","warp")]
     if native:raise RuntimeError("offline boundary crossed: "+str(native))
     args.output.parent.mkdir(parents=True,exist_ok=True)

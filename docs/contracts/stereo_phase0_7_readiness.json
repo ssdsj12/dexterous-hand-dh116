@@ -11860,6 +11860,46 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-flexible-r0-applicability.md",
       "report_source_commit": "4c0b11c45f44b4595d8dc70cd02c1aeeab98827b"
+    },
+    "flex.f7-r0-measured-approach-cpu": {
+      "passed": 51,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_r0_measured_approach.py",
+        "tests/test_dh116_native_parameter_r0_replay.py",
+        "tests/test_dh116_r0_applicability.py",
+        "tests/test_dh116_r0_applicability_history.py"
+      ],
+      "log_sha256": "0c2b98917cf6bec9fabad85dee89a642d8630153176b97f8f1e7ef889c20610c",
+      "tested_head": "57d5ae744a05288160c10ffc25f9a318fac7c7ee",
+      "kind": "cpu_regression_and_readonly_same_cohort_geometry_replay",
+      "cpu_full_passed": 101,
+      "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/r0-approach-regression-KHOk3j/pytest.log",
+      "comparison": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/r0-measured-approach-final-rDfrsA/comparison.json",
+      "comparison_sha256": "a856c2927ca4101ccaac2bf58e81f3ab3b57b42e77b16a3184cdb923d9d035a3",
+      "receipt_sha256": "f0767fc970b02d0e4024f57558982eb01bd3c7c6a9698e2289adef71f4974901",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "r0_native_qualified": false,
+      "measured_distances": 16,
+      "valid_differences": 15,
+      "second_control_approach_m": 1.081894151866436e-05,
+      "remaining_second_control_blocked_terms": [
+        "hold_progress",
+        "instability"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-r0-measured-approach.md",
+      "report_source_commit": "c84543d560263103b80de542724028fc4187e612"
     }
   }
 }

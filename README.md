@@ -1,3 +1,7 @@
+## 2026-11-13 — 实测指腹/柔性杆几何接入 R0 接近进度
+
+101项CPU回归通过；同一原生账本16个实际SDF距离形成15次合法增量。第二控制周期接近平均0.010819mm，阻断剩hold/instability；Reset基准仍NA，手指杆接触仍0，新物理步/PPO0，Teacher0/3。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-13-r0-measured-approach.md)
+
 ## 2026-11-13 — R0 适用域与实测 Reset 接近基准独立修复
 
 131项不同CPU回归通过；真实18步账本只读复放，已核验17个原生参数包。诊断R0阻断4→3，滑移原始值仍NA；稳定性、接近和保持来源仍缺失，Teacher0/3，新物理步/PPO0。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-applicability.md)
