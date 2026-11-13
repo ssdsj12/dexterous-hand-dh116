@@ -1,3 +1,7 @@
+## 2026-11-14 — 同一episode双手接触与Reset相对跟踪实测审计
+
+新原生234步、166.29秒自然退出0，四必需指腹同载荷85.9375ms；全程桌面承托，0抓取/Teacher成功。只读诊断保存同episode实际Reset基准与峰值身份，未再推进物理。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-owned-native-contact.md)
+
 ## 2026-11-13 — 双手同杆Pinch独立234步原生诊断
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-bilateral-owned-pinch-native.md)。
