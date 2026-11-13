@@ -21028,6 +21028,107 @@
         "report": "docs/superpowers/reports/2026-11-13-pinch-rod-axis-margin.md",
         "report_source_commit": "bc53156048c2a1555a9e8ac52b6c34228fef5a48"
       }
+    },
+    "flex.f7-pinch-margin-contact-cpu": {
+      "title": "左Pinch最大净空初态独立234步接触配方",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-pinch-rod-axis-margin-cpu",
+        "flex.f7-native-parameter-task-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 75,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_margin_contact.py",
+          "tests/test_dh116_pinch_margin_contact_worker.py",
+          "tests/test_dh116_pinch_margin_contact_owner.py",
+          "tests/test_dh116_native_parameter_task_worker.py",
+          "tests/test_dh116_measured_closure_geometry.py"
+        ],
+        "log_sha256": "2c4772ca61854706c189a8eb2fa224c2c3b305120a174e4576dbce85c557de20",
+        "tested_head": "e7c8e459aa262053521d1d5bf3e4f56d624881a0",
+        "kind": "cpu_bounded_contact_owner",
+        "cpu_full_passed": 75,
+        "full_log": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/pinch-margin-full.log",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_ready": false,
+        "worker_code_config_sha256": "be2863aa0e00f87d1115f1458466c61df71bc12826fb842964bef2fad806b677",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-margin-contact-preparation.md",
+        "report_source_commit": "79730c31b52b79606bf1e9ee9fd5582bbb5c6087"
+      },
+      "last_result": {
+        "passed": 75,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_margin_contact.py",
+          "tests/test_dh116_pinch_margin_contact_worker.py",
+          "tests/test_dh116_pinch_margin_contact_owner.py",
+          "tests/test_dh116_native_parameter_task_worker.py",
+          "tests/test_dh116_measured_closure_geometry.py"
+        ],
+        "log_sha256": "2c4772ca61854706c189a8eb2fa224c2c3b305120a174e4576dbce85c557de20",
+        "tested_head": "e7c8e459aa262053521d1d5bf3e4f56d624881a0",
+        "kind": "cpu_bounded_contact_owner",
+        "cpu_full_passed": 75,
+        "full_log": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/pinch-margin-full.log",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_ready": false,
+        "worker_code_config_sha256": "be2863aa0e00f87d1115f1458466c61df71bc12826fb842964bef2fad806b677",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-margin-contact-preparation.md",
+        "report_source_commit": "79730c31b52b79606bf1e9ee9fd5582bbb5c6087"
+      }
+    },
+    "flex.f7-pinch-margin-contact-native": {
+      "title": "左Pinch最大净空初态单次原生接触诊断",
+      "executor": "native_bounded",
+      "status": "blocked",
+      "reason": "新冻结配方由本轮持续授权绑定后执行，不复用旧预算",
+      "dependencies": [
+        "flex.f7-pinch-margin-contact-cpu",
+        "flex.f7-native-parameter-task-native"
+      ],
+      "dependency_scopes": {
+        "flex.f7-native-parameter-task-native": {
+          "scope": "exact_2_setup_plus_16_native_parameter_task_endpoints_only",
+          "native": true
+        }
+      },
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/deformx_pinch_margin_contact_v1.json",
+      "evidence_scope": "left_pinch_margin_2_setup_232_guarded_contact_diagnostic_only",
+      "tests": [
+        "tests/test_dh116_pinch_margin_contact_worker.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_pinch_margin_contact_work_packages.py"
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## 2026-11-13 — 左Pinch最大净空初态独立234步接触配方
+
+75项CPU回归通过；新234步=2初始化+48静置+160左指闭合+24保持，GPU3/1环境/0PPO/180秒。原右手/自由杆/物理/旧18步路径不变；原生尚未执行，Teacher0/3。 Ubuntu CPU 回归 75 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-margin-contact-preparation.md)
+
 ## 2026-11-13 — Pinch杆轴Reset最大净空与161点深度检查
 
 98项CPU回归通过；644状态、每侧24次代数二分将左手连续桌面净空提高至2.111213mm，161目标点指腹深度未超过0.3mm。右侧仍不满足接触/非目标/对向条件。旧最小改动模式保留；无新增物理/PPO，Teacher0/3。 Ubuntu CPU 回归 98 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-rod-axis-margin.md)
