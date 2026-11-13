@@ -18162,6 +18162,74 @@
         "report": "docs/superpowers/reports/2026-11-13-pinch-spread-axial-direction.md",
         "report_source_commit": "6e3fdebcb55a836c9eb32fe100b64e515ca2cd5f"
       }
+    },
+    "flex.f7-dual-pinch-closure-readback-cpu": {
+      "title": "真实双手动作区间的目标与实测响应对齐",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-pinch-guarded-closure-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 30,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_pinch_closure_readback.py",
+          "tests/test_dh116_dual_hand_evidence_journal.py"
+        ],
+        "log_sha256": "550ea67f0f4845af0616c651225f0e176bda5c210c5a2a4bf1b3e6780c948cde",
+        "tested_head": "b3957c4f2cdbd36531c3983a16035b6452b3d391",
+        "kind": "archived_native_ledger_cpu_readback_only",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "measurement_rows": 16,
+        "new_sdf_calculations": 0,
+        "result_sha256": "aa0a34ac373da7170e462e87d22e0b0f32635965143db829cfa8ceab6782afe3",
+        "preservation_sha256": "e7659d0d617402fc063687b87f58ce44a4ab265d078a1bbce620a7e08297041d",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-pinch-closure-readback.md",
+        "report_source_commit": "f5e32a4c56a92170f4f1b589221dc322f8b4556e"
+      },
+      "last_result": {
+        "passed": 30,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_pinch_closure_readback.py",
+          "tests/test_dh116_dual_hand_evidence_journal.py"
+        ],
+        "log_sha256": "550ea67f0f4845af0616c651225f0e176bda5c210c5a2a4bf1b3e6780c948cde",
+        "tested_head": "b3957c4f2cdbd36531c3983a16035b6452b3d391",
+        "kind": "archived_native_ledger_cpu_readback_only",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "measurement_rows": 16,
+        "new_sdf_calculations": 0,
+        "result_sha256": "aa0a34ac373da7170e462e87d22e0b0f32635965143db829cfa8ceab6782afe3",
+        "preservation_sha256": "e7659d0d617402fc063687b87f58ce44a4ab265d078a1bbce620a7e08297041d",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-pinch-closure-readback.md",
+        "report_source_commit": "f5e32a4c56a92170f4f1b589221dc322f8b4556e"
+      }
     }
   },
   "execution_target": {
