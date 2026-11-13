@@ -127,51 +127,90 @@ def capture_parameters(runtime,*,sim,backend,expected_clock,device):
         _require(base.mass_readback==masses and all(
             np.isclose(base.parameter_readback[k],v,rtol=1e-6,atol=1e-10)
             for k,v in parameters.items()),"constructor getter cache differs from current native read")
-        fields={
-            "mass_kg":_field(masses["mass_kg"],"kg","scalar","native_getter_derived","sum(1/RopeBatch.inv_masses)",native=True),
-            "node_count":_field(int(rope.verts_per_rope),"count","scalar","native_getter","RopeBatch.verts_per_rope",native=True),
-            "pinned_node_ids":_field([],"node_index","material","native_getter_derived","strictly positive finite RopeBatch.inv_masses",native=True),
-            "fixed_root_orientation":_field(False,"boolean","material","native_getter","RopeBatch.fixed_root_orientation",native=True),
-            "length_m":_field(float(rest.astype(float).sum()),"m","material_rest","constructor_derived_not_native_readback",
-                              "sum(norm(diff(float32 constructor nodes)))"),
-        }
-        configured=(
-            ("radius_m","radius_m","m","scalar"),("gravity_world_m_s2","gravity_world_m_s2","m/s^2","world"),
-            ("linear_density_kg_m","linear_density_kg_m","kg/m","material"),
-            ("axial_stiffness_n","axial_stiffness_n","N","material"),
-            ("bend_stiffness_n_m2","bend_stiffness_n_m2","N*m^2","material"),
-            ("global_friction_static","mu_s","dimensionless","solver_global_contact"),
-            ("global_friction_dynamic","mu_k","dimensionless","solver_global_contact"),
-            ("solver_substeps_per_physics_step","solver_substeps","count","clock"),
-        )
-        for name,key,unit,frame in configured:
-            fields[name]=_field(rod[key],unit,frame,"source_locked_configuration_not_native_readback",
-                               CONFIG+":rod."+key)
-        for name,value in parameters.items():
-            fields[name]=_field(value,"count" if name=="num_itr" else "solver_coefficient_units_unqualified",
-                "scalar","native_getter","RopeBatch."+name,native=True)
-        for name,unit,reason in (
-            ("density_kg_m3","kg/m^3","no volume-density getter; independent linear-density simulation coefficient"),
-            ("young_modulus_pa","Pa","independent EA/EI do not identify an isotropic material"),
-            ("shear_modulus_pa","Pa","no independently exposed shear modulus")):
-            fields[name]=_field(None,unit,"material","unavailable",reason)
-        hand=hand_material_contract(cfg["hand"]["material_profile"])["hand_contact_material"]
-        pair_config={side+"."+pad:dict(mu_s=max(rod["mu_s"],hand["static_friction"]),
-            mu_k=max(rod["mu_k"],hand["dynamic_friction"]),native_readback=False,
-            provenance="source_locked_add_mesh_configuration_not_native_readback",
-            source="FreeRodRuntime/DualHandRodRuntime add_mesh arguments")
-            for side in ("left","right") for pad in PADS}
-        pair_config["table"]=dict(mu_s=cfg["table"]["mu_s"],mu_k=cfg["table"]["mu_k"],
-            native_readback=False,provenance="source_locked_add_mesh_configuration_not_native_readback",
-            source="FreeRodRuntime table add_mesh arguments")
-        return dict(version=VERSION,identity=deepcopy(expected),sources=basis,fields=fields,
-            configured=cfg,configured_contact_pairs=pair_config,
-            constructor_nodes_m=nodes.tolist(),constructor_rest_lengths_m=rest.tolist(),
-            node_inverse_masses_kg_inv=inv.tolist(),mass_readback=masses,current_native_parameters=parameters,
-            material_status=cfg["material_status"],material_identified=False,
-            synchronization="default CUDA stream synchronized before and after owned host getter copies",
-            exclusive_owner_read_phase_required=True,configuration_proves_native_getter_value=False,
-            native_qualification=False,teacher_admission=False,reward_radius_sample=None,
-            new_physics_steps=0,new_solver_steps=0,ppo_updates=0)
+        return _owned_packet(expected,basis,cfg,nodes,rest,inv,masses,parameters,int(rope.verts_per_rope))
     finally:
         runtime=sim=backend=base=rope=boundary=None
+
+
+def _owned_packet(expected,basis,cfg,nodes,rest,inv,masses,parameters,node_count):
+    rod=cfg['rod']
+    fields={
+        "mass_kg":_field(masses["mass_kg"],"kg","scalar","native_getter_derived","sum(1/RopeBatch.inv_masses)",native=True),
+        "node_count":_field(node_count,"count","scalar","native_getter","RopeBatch.verts_per_rope",native=True),
+        "pinned_node_ids":_field([],"node_index","material","native_getter_derived","strictly positive finite RopeBatch.inv_masses",native=True),
+        "fixed_root_orientation":_field(False,"boolean","material","native_getter","RopeBatch.fixed_root_orientation",native=True),
+        "length_m":_field(float(rest.astype(float).sum()),"m","material_rest","constructor_derived_not_native_readback",
+                          "sum(norm(diff(float32 constructor nodes)))"),
+    }
+    configured=(
+        ("radius_m","radius_m","m","scalar"),("gravity_world_m_s2","gravity_world_m_s2","m/s^2","world"),
+        ("linear_density_kg_m","linear_density_kg_m","kg/m","material"),
+        ("axial_stiffness_n","axial_stiffness_n","N","material"),
+        ("bend_stiffness_n_m2","bend_stiffness_n_m2","N*m^2","material"),
+        ("global_friction_static","mu_s","dimensionless","solver_global_contact"),
+        ("global_friction_dynamic","mu_k","dimensionless","solver_global_contact"),
+        ("solver_substeps_per_physics_step","solver_substeps","count","clock"),
+    )
+    for name,key,unit,frame in configured:
+        fields[name]=_field(rod[key],unit,frame,"source_locked_configuration_not_native_readback",
+                           CONFIG+":rod."+key)
+    for name,value in parameters.items():
+        fields[name]=_field(value,"count" if name=="num_itr" else "solver_coefficient_units_unqualified",
+            "scalar","native_getter","RopeBatch."+name,native=True)
+    for name,unit,reason in (
+        ("density_kg_m3","kg/m^3","no volume-density getter; independent linear-density simulation coefficient"),
+        ("young_modulus_pa","Pa","independent EA/EI do not identify an isotropic material"),
+        ("shear_modulus_pa","Pa","no independently exposed shear modulus")):
+        fields[name]=_field(None,unit,"material","unavailable",reason)
+    hand=hand_material_contract(cfg["hand"]["material_profile"])["hand_contact_material"]
+    pair_config={side+"."+pad:dict(mu_s=max(rod["mu_s"],hand["static_friction"]),
+        mu_k=max(rod["mu_k"],hand["dynamic_friction"]),native_readback=False,
+        provenance="source_locked_add_mesh_configuration_not_native_readback",
+        source="FreeRodRuntime/DualHandRodRuntime add_mesh arguments")
+        for side in ("left","right") for pad in PADS}
+    pair_config["table"]=dict(mu_s=cfg["table"]["mu_s"],mu_k=cfg["table"]["mu_k"],
+        native_readback=False,provenance="source_locked_add_mesh_configuration_not_native_readback",
+        source="FreeRodRuntime table add_mesh arguments")
+    return dict(version=VERSION,identity=deepcopy(expected),sources=basis,fields=fields,
+        configured=cfg,configured_contact_pairs=pair_config,
+        constructor_nodes_m=nodes.tolist(),constructor_rest_lengths_m=rest.tolist(),
+        node_inverse_masses_kg_inv=inv.tolist(),mass_readback=masses,current_native_parameters=parameters,
+        material_status=cfg["material_status"],material_identified=False,
+        synchronization="default CUDA stream synchronized before and after owned host getter copies",
+        exclusive_owner_read_phase_required=True,configuration_proves_native_getter_value=False,
+        native_qualification=False,teacher_admission=False,reward_radius_sample=None,
+        new_physics_steps=0,new_solver_steps=0,ppo_updates=0)
+
+def validate_packet(packet,*,identity,constructor_nodes):
+    """Disk-only reconstruction from source-locked inputs, never a GPU read."""
+    _require(isinstance(packet,dict),"owned parameter packet required")
+    expected=_clock(lambda:identity)
+    _require(expected==identity and packet["identity"]==expected,
+             "parameter identity differs from actual endpoint")
+    basis=source_basis()
+    _require(packet["sources"]==basis,"parameter source basis differs")
+    cfg=json.loads((ROOT/CONFIG).read_text())
+    _require(packet["configured"]==cfg,"parameter constructor configuration differs")
+    nodes=np.asarray(constructor_nodes)
+    _require(nodes.shape==(41,3) and nodes.dtype==np.float32 and np.isfinite(nodes).all(),
+             "actual finite float32 reset constructor nodes required")
+    rest=np.linalg.norm(np.diff(nodes,axis=0),axis=1)
+    _require(np.all(rest>0),"positive constructor segments required")
+    inv=np.asarray(packet["node_inverse_masses_kg_inv"])
+    _require(inv.shape==(1,41) and inv.dtype.kind=="f","owned floating inverse masses required")
+    masses=verify_mass_readback(inv,lumped_masses(nodes,cfg["rod"]["linear_density_kg_m"]))
+    parameters=packet["current_native_parameters"]
+    _require(set(parameters)==set(GETTERS),"exact native getter set required")
+    for name,value in parameters.items():
+        wanted=cfg["rod"]["solver_iterations" if name=="num_itr" else name]
+        _require(type(value) in (int,float) and math.isfinite(value)
+            and (type(value) is int and value==wanted if name=="num_itr"
+                 else np.isclose(value,wanted,rtol=1e-6,atol=1e-10)),
+            "finite matching raw native getter required: "+name)
+    canonical=_owned_packet(expected,basis,cfg,nodes,rest,inv,masses,parameters,41)
+    _require(json.dumps(packet,sort_keys=True,separators=(",",":"),allow_nan=False)
+        ==json.dumps(canonical,sort_keys=True,separators=(",",":"),allow_nan=False),
+        "parameter packet fields, units, unknowns or provenance differ from raw source reconstruction")
+    return dict(version=VERSION,parameter_readback_valid=True,field_count=len(canonical["fields"]),
+        mass_kg=masses["mass_kg"],configured_radius_m=cfg["rod"]["radius_m"],
+        material_identified=False,teacher_admission=False,native_qualification=False)

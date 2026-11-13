@@ -18914,6 +18914,110 @@
         "report": "docs/superpowers/reports/2026-11-13-flexible-parameter-provenance-readback.md",
         "report_source_commit": "3a15c0ae5f66125d5aad89bc395f684457ab76f3"
       }
+    },
+    "flex.f7-dual-pinch-parameter-readback-cpu": {
+      "title": "双手 Pinch 参数来源同钟原生读回准备",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-pinch-director-endpoints-native",
+        "flex.f7-parameter-provenance-readback-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 74,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_parameter_packet_validation.py",
+          "tests/test_flexible_parameter_readback.py",
+          "tests/test_dh116_dual_pinch_parameter_postexit.py",
+          "tests/test_dh116_dual_pinch_parameter_worker.py"
+        ],
+        "log_sha256": "80a0759d2879b78b43d49e7d6b680fafa2ae7b7a18a35807f62843c9b1df982c",
+        "tested_head": "89c8c0cb7b31ed08bd7809ae53895766d9236693",
+        "kind": "cpu_sdk_doubles_parameter_endpoints_and_postexit",
+        "cpu_full_passed": 164,
+        "cpu_full_failed": 0,
+        "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/parameter-native-release-Te1IWv/pytest.log",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "command_spec_sha256": "2ee09c8653d90a76e836a46ff90f337c141f248425ede1a22d2dd63fc81be819",
+        "code_config_sha256": "7d7887f3739f97a593ea52fed72c5d052aabcf31c1f66fcfd246862986525f4c",
+        "worker_code_config_sha256": "0387fe143472ddb96a62dbe0eca4bb96e94c38a5f19cd79beddcf4281b6bc89d",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-pinch-native-parameter-preflight.md",
+        "report_source_commit": "2d5383996894196fcee5e7bf8e33fb0f872e6ae1"
+      },
+      "last_result": {
+        "passed": 74,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_parameter_packet_validation.py",
+          "tests/test_flexible_parameter_readback.py",
+          "tests/test_dh116_dual_pinch_parameter_postexit.py",
+          "tests/test_dh116_dual_pinch_parameter_worker.py"
+        ],
+        "log_sha256": "80a0759d2879b78b43d49e7d6b680fafa2ae7b7a18a35807f62843c9b1df982c",
+        "tested_head": "89c8c0cb7b31ed08bd7809ae53895766d9236693",
+        "kind": "cpu_sdk_doubles_parameter_endpoints_and_postexit",
+        "cpu_full_passed": 164,
+        "cpu_full_failed": 0,
+        "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/parameter-native-release-Te1IWv/pytest.log",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "command_spec_sha256": "2ee09c8653d90a76e836a46ff90f337c141f248425ede1a22d2dd63fc81be819",
+        "code_config_sha256": "7d7887f3739f97a593ea52fed72c5d052aabcf31c1f66fcfd246862986525f4c",
+        "worker_code_config_sha256": "0387fe143472ddb96a62dbe0eca4bb96e94c38a5f19cd79beddcf4281b6bc89d",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-pinch-native-parameter-preflight.md",
+        "report_source_commit": "2d5383996894196fcee5e7bf8e33fb0f872e6ae1"
+      }
+    },
+    "flex.f7-dual-pinch-parameter-readback-native": {
+      "title": "双手 Pinch 参数来源单次原生端点读回",
+      "executor": "native_bounded",
+      "status": "pending",
+      "dependencies": [
+        "flex.f7-dual-pinch-parameter-readback-cpu",
+        "flex.f7-dual-pinch-director-endpoints-native"
+      ],
+      "dependency_scopes": {
+        "flex.f7-dual-pinch-director-endpoints-native": {
+          "scope": "exact_2_setup_plus_16_material_director_endpoints_only",
+          "native": true
+        }
+      },
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/deformx_dual_pinch_parameter_readback_v1.json",
+      "evidence_scope": "exact_2_setup_plus_16_parameter_provenance_endpoints_only",
+      "tests": [
+        "tests/test_dh116_dual_pinch_parameter_worker.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_dual_pinch_parameter_work_packages.py"
     }
   },
   "execution_target": {
