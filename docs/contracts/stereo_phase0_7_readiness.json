@@ -11380,6 +11380,41 @@
       "next": "coupled palm placement and bounded finger closure",
       "report": "docs/superpowers/reports/2026-11-13-pinch-yaw-convex-witness.md",
       "report_source_commit": "062a4a943e0bdba98910b7b0553ead5a70fd821e"
+    },
+    "flex.f7-pinch-coupled-lateral-reset-cpu": {
+      "passed": 69,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_coupled_lateral.py",
+        "tests/test_dh116_pinch_static_yaw.py",
+        "tests/test_dh116_pinch_trust_region.py",
+        "tests/test_dh116_pinch_spread_axial_direction.py"
+      ],
+      "log_sha256": "6ff83d32dd48330a19c9e5c2090628c7926390f9d7eadda99d9f874d3ca84fb0",
+      "tested_head": "4433fa41ff0a7898c04d3b46485bb94ab54c6e59",
+      "kind": "cpu_bounded_coupled_fk_sdf_search",
+      "status": "passed",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "candidate_qualified": false,
+      "geometry_states": 306,
+      "left_accepted_directions": 0,
+      "right_accepted_directions": 1,
+      "right_thumb_gap_mm": 0.33944426104426384,
+      "result_path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/pinch-coupled-lateral-20261113-MIOUYp/run01/result.json",
+      "result_sha256": "d6032b457debc9f1962dfe556a1367e1fd38afc463d1f901292a0fa46cd9f157",
+      "next": "separate bounded direct nonlinear constrained geometry solve",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-coupled-lateral-reset.md",
+      "report_source_commit": "311c19c43de42a45d028eb611e32f84a4f4887ee"
     }
   }
 }

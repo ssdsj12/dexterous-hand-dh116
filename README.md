@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch 横向掌位偏航闭合联合求解
+
+69项CPU回归通过；306/306完整FK/SDF状态。右拇指间隙从0.438482降至0.339444mm仍未接触，左侧硬净空失败未采用；不生成原生配方、不改变保护，Teacher仍未晋级。 Ubuntu CPU 回归 69 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-coupled-lateral-reset.md)
+
 ## 2026-11-13 — Pinch 已存偏航候选凸包重叠证据
 
 56项CPU回归通过，16/16已存候选独立重建；10个源凸包重叠上界证据，6个仍不能判定；不冒充PhysX碰撞/真实接触，不产生新候选或原生配方，Teacher未晋级。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-yaw-convex-witness.md)
