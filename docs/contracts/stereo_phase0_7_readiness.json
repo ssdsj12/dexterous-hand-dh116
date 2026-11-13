@@ -7634,6 +7634,37 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-deformable-bimanual-step-cpu.md",
       "report_source_commit": "8f40d8d3f04d81678461b635f6ad9f5fb67458f7"
+    },
+    "flex.f7-wrist-table-projection-cpu": {
+      "passed": 104,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_flexible_wrist_projection.py",
+        "tests/test_dh116_deformable_bimanual_step.py",
+        "tests/test_free_wrist_grasp.py",
+        "tests/test_free_wrist_mount.py",
+        "tests/test_surface_contract.py"
+      ],
+      "log_sha256": "0bc7e7e22f9fde227ade18a25474c22709d4c3b7e124876e11afeb169277b861",
+      "tested_head": "3481c7626417f623faa1f7397cf759918d8e8afe",
+      "stage": "cpu_verified_original_projection",
+      "scope": "flexible_wrist_table_guard_cpu_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "table_clearance_floor_m": 0.0021,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-wrist-projection.md",
+      "report_source_commit": "8f501e59e6f544c4830f62e848f4a51f259ea774"
     }
   }
 }

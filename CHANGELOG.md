@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性双手腕部原桌面安全投影
+
+复用原 2.1 mm 净空、腕速度约束、内禀旋转及撤回不安全下压目标。场景全手净空与原生执行仍待接入。 Ubuntu CPU 回归 104 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-wrist-projection.md)
+
 ## 2026-11-13 — 双手 24D 控制边界与 PhysX 目标读回
 
 使用原关节和腕部动作语义，核验左右实例、实际目标、SDK 和杆时钟。原桌面投影接入和原生执行仍待验证。 Ubuntu CPU 回归 174 项通过。[报告](docs/superpowers/reports/2026-11-13-deformable-bimanual-step-cpu.md)
