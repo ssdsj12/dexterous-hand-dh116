@@ -1,3 +1,7 @@
+## 2026-11-13 — PhysX 生命周期两格原生结果
+
+两格 app.close 返回；GDB 全线程捕获失败且退出码 1，资源保留证据已复核。[报告](docs/superpowers/reports/2026-11-13-physx-lifetime-native-contrast.md)
+
 ## 2026-11-13 — PhysX 所有权生命周期 explicit 原生对照
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-explicit-native.md)。

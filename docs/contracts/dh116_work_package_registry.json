@@ -10700,6 +10700,54 @@
         "status": "failed",
         "report": "docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-explicit-native.md"
       }
+    },
+    "flex.f4-physx-lifetime-contrast-audit": {
+      "title": "PhysX 生命周期两格原生证据复核",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-physx-lifetime-probes-cpu"
+      ],
+      "status": "passed",
+      "last_result": {
+        "status": "passed",
+        "scope": "archived_native_contrast_reanalysis",
+        "stage": "failed_lifecycle_evidence_verified",
+        "report": "docs/superpowers/reports/2026-11-13-physx-lifetime-native-contrast.md",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "source_native_cases": {
+          "registry": {
+            "receipt_sha256": "b3c1ae0d41bc568fcee80bd5085315ed4e270a3ab19741ca793a44ad47a316c4",
+            "log_sha256": "633ed561ef21e7943ffa70ee5fce0441d935a8292530a49be9bff1129a9a95fc",
+            "before_app_close_refs_sha256": "2748f6a7eb74e3c81307ac9dd3c9f0e0b0084fed21dfe9f6cdd5796a67fd15df",
+            "gdb_finalize_maps_sha256": "2c9f2e5047a7a19fdcca3cf9085a5dcd6630e743f39423102b01e2088afca28d",
+            "actual_initialization_steps": 2,
+            "actual_measurement_steps": 0,
+            "ppo_updates": 0,
+            "outer_exit_code": 1,
+            "inferior_exit_code": null,
+            "duration_seconds": 55.80948185699526,
+            "all_owned_weakrefs_alive": true,
+            "app_close_returned": true
+          },
+          "explicit": {
+            "receipt_sha256": "cc9f9ce4653055bcba072095a5c46a19cf17022e9e4a85e44a708a2e11dbaee8",
+            "log_sha256": "c0bff4b875d9b26f6fb17bd2233f2450b7b4d7395ef08f7d403ae49388cc286a",
+            "before_app_close_refs_sha256": "f75601b7072249ae48adff77aae11c798278e7c9838da729af7679831961e934",
+            "gdb_finalize_maps_sha256": "861e81d580e70d8c5193f153af019d5b6bb314d48ae996bcff5ac53dd9a94f42",
+            "actual_initialization_steps": 2,
+            "actual_measurement_steps": 0,
+            "ppo_updates": 0,
+            "outer_exit_code": 1,
+            "inferior_exit_code": null,
+            "duration_seconds": 57.60949617391452,
+            "all_owned_weakrefs_alive": true,
+            "app_close_returned": true
+          }
+        },
+        "added_physics_steps": 0,
+        "added_ppo_updates": 0
+      }
     }
   },
   "execution_target": {
