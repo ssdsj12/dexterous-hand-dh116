@@ -1,3 +1,7 @@
+## 2026-11-13 — WireSeg depth18 精确配对与双任务恢复预检
+
+完整分片达到 10/148，depth18 新增 360 对；分割与深度断点各 128 次历史更新，实际新增优化更新为 0。 Ubuntu CPU 回归 84 项通过。[报告](docs/superpowers/reports/2026-11-13-wireseg-paired-download-separate-resume-preflight.md)
+
 ## 2026-11-13 — 柔性杆力反馈来源与聚合证据校验
 
 锁定 DeformX 的逐节点合力、逐 mesh 净力矩现可独立审计；contact pair、外部支撑和材料滑移保持未资格化。 [报告](docs/superpowers/reports/2026-11-13-deformable-force-evidence.md)

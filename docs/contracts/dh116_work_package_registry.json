@@ -5637,7 +5637,7 @@
         "flex.f5-wireseg-subset"
       ],
       "status": "blocked",
-      "reason": "9/148 official blobs verified; new depth21 supplies 360 exact official monocular pairs. Full transfer incomplete; verified subset work remains independent.",
+      "reason": "10/148 verified official shards; depth18 adds 360 exact pairs. Full download incomplete and independent of Teacher.",
       "blocker_kind": "external_data"
     },
     "flex.f8-pinch": {
@@ -9722,6 +9722,93 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-13-deformable-force-evidence.md",
         "tested_head": "7e98f864fc09aec09e1500a5359d994846c25850"
+      }
+    },
+    "flex.wireseg-paired-depth18-resume-preflight": {
+      "title": "WireSeg depth18 精确配对与双任务恢复预检",
+      "executor": "gated",
+      "dependencies": [
+        "flex.wireseg-legacy-diagnostic-continuation",
+        "flex.wireseg-full-manifest-loss-domains"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 84,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_resume_preflight.py",
+          "tests/test_dh116_wireseg_loss_domains.py",
+          "tests/test_dh116_wireseg_depth_error_audit.py",
+          "tests/test_dh116_wireseg_legacy_import.py",
+          "tests/test_dh116_wireseg_checkpoint_resume.py",
+          "tests/test_dh116_wireseg_overfit_diagnostic.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "8f365f27eb7db0f25e00e4886073b1bd23055161b66a3bad8ef6e66ce042cf87",
+        "tested_head": "647036cf267a06a9b2b698aed57a2fb80118b76d",
+        "stage": "cpu_verified_and_offline_data_admission",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "real_training_updates": 0,
+        "scope": "wireseg_depth18_exact_pair_and_separate_read_only_resume",
+        "dataset_complete_blobs": 10,
+        "added_exact_pairs": 360,
+        "preflight_exit_code": 0,
+        "preflight_seconds": 8.92,
+        "preflight_sha256": "2a37a6d1891201d2c6b4241ee3b77f64944e9a447a8b5af89d5a3d1369b9f9a6",
+        "admission_receipt_sha256": "8fd78fde30879441e7fc2230f072bba0630accd85e515c7530e4f78172eb8430",
+        "manifest_sha256": "6b0cc32edd28a232f9b2e3db784b117c820569841601e1f66eba4904214e99c7",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-wireseg-paired-download-separate-resume-preflight.md",
+        "report_source_commit": "dc0178ea8f45be6ca9d03bb5f648393cd7e14e39"
+      },
+      "last_result": {
+        "passed": 84,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_resume_preflight.py",
+          "tests/test_dh116_wireseg_loss_domains.py",
+          "tests/test_dh116_wireseg_depth_error_audit.py",
+          "tests/test_dh116_wireseg_legacy_import.py",
+          "tests/test_dh116_wireseg_checkpoint_resume.py",
+          "tests/test_dh116_wireseg_overfit_diagnostic.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "8f365f27eb7db0f25e00e4886073b1bd23055161b66a3bad8ef6e66ce042cf87",
+        "tested_head": "647036cf267a06a9b2b698aed57a2fb80118b76d",
+        "stage": "cpu_verified_and_offline_data_admission",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "real_training_updates": 0,
+        "scope": "wireseg_depth18_exact_pair_and_separate_read_only_resume",
+        "dataset_complete_blobs": 10,
+        "added_exact_pairs": 360,
+        "preflight_exit_code": 0,
+        "preflight_seconds": 8.92,
+        "preflight_sha256": "2a37a6d1891201d2c6b4241ee3b77f64944e9a447a8b5af89d5a3d1369b9f9a6",
+        "admission_receipt_sha256": "8fd78fde30879441e7fc2230f072bba0630accd85e515c7530e4f78172eb8430",
+        "manifest_sha256": "6b0cc32edd28a232f9b2e3db784b117c820569841601e1f66eba4904214e99c7",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-wireseg-paired-download-separate-resume-preflight.md",
+        "report_source_commit": "dc0178ea8f45be6ca9d03bb5f648393cd7e14e39"
       }
     }
   },
