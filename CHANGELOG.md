@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手物理 Episode 链路
+
+双手 Reset、杆快照和 480/60 Hz 交换已接到同一 CPU 验证入口。保留初始净空拒绝、原保护终止与单样本时钟身份。 Ubuntu CPU 回归 96 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-physical-episode.md)
+
 ## 2026-11-13 — PhysX 到 DeformX 位姿交接
 
 PhysX 前进后，读取新指腹位姿并校验 DeformX 仍处于前一边界；跳步、换 episode 或陈旧读取会拒绝交换。已接通 CPU 双手八步回归。 Ubuntu CPU 回归 92 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-clock-handoff.md)

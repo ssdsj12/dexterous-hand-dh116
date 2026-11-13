@@ -8295,6 +8295,40 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-dual-hand-clock-handoff.md",
       "report_source_commit": "90dca0b47d2f300f312286e978edc3d115dbc333"
+    },
+    "flex.f7-dual-hand-physical-episode-cpu": {
+      "passed": 96,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_hand_episode.py",
+        "tests/test_dh116_dual_hand_clock_handoff.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_dh116_flexible_rod_boundary.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_flexible_live_geometry.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_deformable_bimanual_step.py"
+      ],
+      "log_sha256": "119f5fa0c07a0f9b3da128271db8a4702adf5e19c42d1f770f9904ef1f3fd9e7",
+      "tested_head": "b08ffe99f2caa72055a0e0be17bac0560fee3f39",
+      "stage": "cpu_verified_physical_episode",
+      "scope": "dual_hand_reset_and_exchange_cpu",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "independent_log_sha256": "66860c9075c3209b242c5476c2886a01f091a0175af091b0f86314d317649fe4",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-hand-physical-episode.md",
+      "report_source_commit": "c7ee7abe04fd8227ec3797138e5dc25e2eae7a22"
     }
   }
 }
