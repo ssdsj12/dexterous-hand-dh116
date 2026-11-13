@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch 初态展开角与沿杆位置的非线性可达性核验
+
+同原生节点的150状态CPU检查改善了首态及全路径净空，但完整FK/SDF否决了两侧LP预测接触。未生成原生配方、未更改物理/速度/限位；下一步采用实际约束改善验证的有界信赖域，不扩大动作。原生0步/PPO0更新。 Ubuntu CPU 回归 59 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-spread-axial-direction.md)
+
 ## 2026-11-13 — 绑定真实 DeformX API 的材料方向端点读回
 
 复用已存在RopeBatch.quaternions与positions，明确CUDA默认流同步、owned拷贝、reset/episode时钟和40段+padding。RopeBatch没有rest_lengths getter，构造来源与native未知分开；端点不冒称子步材料滑移，本包0原生步、0训练更新。 Ubuntu CPU 回归 111 项通过。[报告](docs/superpowers/reports/2026-11-13-material-director-endpoint-readback.md)
