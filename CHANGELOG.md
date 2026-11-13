@@ -1,3 +1,7 @@
+## 2026-11-13 — Power 掌位与六主动关节联合几何
+
+90 次有界 CPU 查询。拟合改善的姿态仍违反桌面和五指门，保留拒绝证据，无可用 Power Reset。 Ubuntu CPU 回归 60 项通过。[报告](docs/superpowers/reports/2026-11-13-power-joint-palm-direction.md)
+
 ## 2026-11-13 — 柔性杆接触方向与材料节点分辨率
 
 以原 solver 逐子步法向、力和接触点诊断方向。约 12.5 mm 节点间距不能支持 0.5 mm 真实材料滑移验证，未知项保留。 Ubuntu CPU 回归 162 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-pair-source-basis.md)

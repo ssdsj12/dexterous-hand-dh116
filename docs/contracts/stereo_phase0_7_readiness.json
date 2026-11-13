@@ -8993,6 +8993,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-flexible-pair-source-basis.md",
       "report_source_commit": "125fb09185035135869416dcc1c9fdbb3120ed96"
+    },
+    "flex.f8-power-joint-palm-direction-cpu": {
+      "passed": 60,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_power_joint_palm_direction.py",
+        "tests/test_dh116_tripod_joint_root_direction.py",
+        "tests/test_dh116_power_closure_constraints.py",
+        "tests/test_dh116_flexible_style_pose_preparation.py"
+      ],
+      "log_sha256": "b61d8f4d5cc6eb439df0bd8dad44800e0c01de3226b8f2f36451cb8164cf3629",
+      "tested_head": "6057a951681567d01d2bac5e49deab0d237256ff",
+      "stage": "cpu_verified_power_local_joint_palm_direction",
+      "scope": "power_bounded_geometry_cpu_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "residual_evaluations": 90,
+      "pairable": false,
+      "result_sha256": "9f27c11856b12ebdb8ec47f1be552255fd4fb4d2e1664516a2373e5173af9ef7",
+      "evidence_replay_sha256": "40732b7dd081f5b84cbe20beeef26f15c65cc72db0e1e3414732ffec75e99d4e",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-power-joint-palm-direction.md",
+      "report_source_commit": "561be2673fe08577771c1515344b307fa252f20e"
     }
   }
 }
