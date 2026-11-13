@@ -1,3 +1,7 @@
+## 2026-11-13 — 左固定底座 Pinch v4 配方与退出审计
+
+冻结左侧节点 SDF 闭合、精度归约、回执和原生退出审计。使用旧单手材料与保护，CPU通过后在已有授权上执行一次原生复验。 Ubuntu CPU 回归 121 项通过。[报告](docs/superpowers/reports/2026-11-13-single-left-pinch-v4-preparation.md)
+
 ## 2026-11-13 — 双手 Pinch 八子步完整动作接线
 
 覆盖实际双手 builder 到完整八子步、非零手指动作、SDK回读、反作用力交接、失败证据及原 2.1 mm 保护。 Ubuntu CPU 回归 38 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-eight-tick-cpu.md)

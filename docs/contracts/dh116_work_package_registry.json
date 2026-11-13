@@ -14620,6 +14620,113 @@
         "report": "docs/superpowers/reports/2026-11-13-dual-pinch-eight-tick-cpu.md",
         "report_source_commit": "c8f7ecebd6034a270c952fa66c54ff614ffbb97a"
       }
+    },
+    "flex.f4-pinch-left-v4-cpu": {
+      "title": "左固定底座 Pinch v4 配方与退出审计",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-simulation-owner-cleanup-cpu",
+        "flex.f4-pinch-closure-margin-cpu",
+        "flex.f4-pinch-force-precision-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 121,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_v4_worker.py",
+          "tests/test_dh116_pinch_v4_audit.py",
+          "tests/test_dh116_pinch_force_precision.py",
+          "tests/test_simulation_owner_cleanup.py",
+          "tests/test_dh116_pinch_v3.py",
+          "tests/test_dh116_pinch_v2.py"
+        ],
+        "log_sha256": "c40d4685f4ec6e21ae797b7e7b4ad06acb8b885df2a59d25f6f53107f497b08a",
+        "tested_head": "bbe4efa332a83e143a632c3b060fbb8f0ce06712",
+        "scope": "single_left_fixed_base_free_rod_v4_preparation_cpu",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "physics_steps": 0,
+        "optimizer_updates": 0,
+        "command_spec_sha256": "740e52700102e5d90a6367b14a272aca9a3a0fbcde5ee5901169573f68d91fa5",
+        "code_config_sha256": "d7f87b161b3283a31ffe8a7befbbce0050f7d6bcc4b1473020e2e117067847cc",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-single-left-pinch-v4-preparation.md",
+        "report_source_commit": "97f26b8016b028c85b65caaf0eae0fa4f9ea3c11"
+      },
+      "last_result": {
+        "passed": 121,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_v4_worker.py",
+          "tests/test_dh116_pinch_v4_audit.py",
+          "tests/test_dh116_pinch_force_precision.py",
+          "tests/test_simulation_owner_cleanup.py",
+          "tests/test_dh116_pinch_v3.py",
+          "tests/test_dh116_pinch_v2.py"
+        ],
+        "log_sha256": "c40d4685f4ec6e21ae797b7e7b4ad06acb8b885df2a59d25f6f53107f497b08a",
+        "tested_head": "bbe4efa332a83e143a632c3b060fbb8f0ce06712",
+        "scope": "single_left_fixed_base_free_rod_v4_preparation_cpu",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "physics_steps": 0,
+        "optimizer_updates": 0,
+        "command_spec_sha256": "740e52700102e5d90a6367b14a272aca9a3a0fbcde5ee5901169573f68d91fa5",
+        "code_config_sha256": "d7f87b161b3283a31ffe8a7befbbce0050f7d6bcc4b1473020e2e117067847cc",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-single-left-pinch-v4-preparation.md",
+        "report_source_commit": "97f26b8016b028c85b65caaf0eae0fa4f9ea3c11"
+      }
+    },
+    "flex.f4-pinch-left-v4-native": {
+      "title": "左 Pinch v4 固定底座实测闭合和原生退出",
+      "dependencies": [
+        "flex.f4-pinch-left-v4-cpu",
+        "flex.f4-physx-lifetime-frame-v2-native",
+        "flex.f7-deformx-pair-capture-v2-native"
+      ],
+      "executor": "native_bounded",
+      "status": "pending",
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/deformx_pinch_left_candidate_v4.json",
+      "evidence_scope": "single_left_fixed_base_free_rod_measured_node_contact_v4",
+      "dependency_scopes": {
+        "flex.f4-physx-lifetime-frame-v2-native": {
+          "scope": "physx_lifetime_frame_detachment_v2_only",
+          "native": true
+        },
+        "flex.f7-deformx-pair-capture-v2-native": {
+          "scope": "one_free_rod_one_table_sdf_pair_capture_calibration_v2",
+          "native": true
+        }
+      },
+      "tests": [
+        "tests/test_dh116_pinch_v4_worker.py",
+        "tests/test_dh116_pinch_v4_audit.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_pinch_work_packages_v4.py"
     }
   },
   "execution_target": {
