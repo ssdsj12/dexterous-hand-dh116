@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性杆接触方向与材料节点分辨率
+
+以原 solver 逐子步法向、力和接触点诊断方向。约 12.5 mm 节点间距不能支持 0.5 mm 真实材料滑移验证，未知项保留。 Ubuntu CPU 回归 162 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-pair-source-basis.md)
+
 ## 2026-11-13 — 左 Pinch v3 原生账本重放
 
 原生 v3 已完成 240 SDK 步，全部接触为杆与桌面。独立重放确认微小物理残差及旧 FP32/FP64 一致性失败。保留外层 exit 1 与 SimulationContext 存活证据。 Ubuntu CPU 回归 31 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-v3-native-ledger-replay.md)

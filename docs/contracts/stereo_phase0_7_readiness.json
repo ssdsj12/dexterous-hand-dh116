@@ -8957,6 +8957,42 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-pinch-v3-native-ledger-replay.md",
       "report_source_commit": "a24d4179ce46c8407c96d5d936821aebd0f2eba8"
+    },
+    "flex.f7-pair-source-basis-cpu": {
+      "passed": 162,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_deformable_pair_source_basis.py",
+        "tests/test_dh116_flexible_pair_contact_diagnostics.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_deformable_r0_replay.py",
+        "tests/test_dh116_flexible_rod_boundary.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_deformable_grasp_task.py",
+        "tests/test_dh116_deformable_control_step.py"
+      ],
+      "log_sha256": "9cbee97e672a10914469f274d020a91543f342de2b56393a936e6b97782ce755",
+      "tested_head": "c4d8d1c6dea95862ae51cda1f26f8ac5b7c854d0",
+      "stage": "cpu_verified_pair_source_geometry",
+      "scope": "solver_pair_direction_diagnostics_cpu",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "actual_source_audit_sha256": "a92102ffd70272e297ce718b2d60cae487022fb5789b09b4e116b8a849dc392f",
+      "independent_log_sha256": "7032d25967c976e3fb0e0dadd9b122318fc34d114e4014f6c2694a34d8331eb4",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-pair-source-basis.md",
+      "report_source_commit": "125fb09185035135869416dcc1c9fdbb3120ed96"
     }
   }
 }
