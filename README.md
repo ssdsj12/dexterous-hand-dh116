@@ -1,3 +1,7 @@
+## 2026-11-13 — 独立左手Tripod234步原生接近与静置准入
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-tripod-owned-contact-native.md)。
+
 ## 2026-11-14 — Tripod live quiet admission and original24D native preparation
 
 Independent left Tripod234-step preparation:2setup+8quiet+200approach+24observe; original24D/guards retained, right identity independent. Actual quiet admission blocks motion and preserves terminal rows; synthetic full-owner and failure replay passed. No new native or PPO execution in this preparation package. Ubuntu CPU 回归 109 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-live-preparation.md)
