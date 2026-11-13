@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch实测闭合方向与非目标几何阻断
+
+SDK234右手实测锚定；24定向端点+161完整路径+一次源凸包QP。固定腕闭合不能形成双指接触，source finger13候选几何重叠；未生成原生配方，未增加动作上限，Teacher0/3。 Ubuntu CPU 回归 77 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-measured-direction.md)
+
 ## 2026-11-13 — 左Pinch234步原生账本独立复审与来源修复
 
 原生234/234步自然exit0、无保护失败；修复旧version路由与跨Worktree来源路径后，只读完整账本复审通过。左双指同时接触85.9375ms，原failed回执不改，Teacher0/3。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-segment-postexit-reaudit.md)

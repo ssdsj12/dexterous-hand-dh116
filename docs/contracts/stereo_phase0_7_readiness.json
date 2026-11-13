@@ -12532,6 +12532,45 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-pinch-segment-postexit-reaudit.md",
       "report_source_commit": "caaaca3094d055d65915739c8e814359e6d1cee0"
+    },
+    "flex.f8-right-pinch-measured-direction-cpu": {
+      "passed": 77,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_right_pinch_measured_direction.py",
+        "tests/test_dh116_polyline_support_certificate.py",
+        "tests/test_dh116_pinch_closure_margin.py",
+        "tests/test_dh116_pinch_rod_axis_clearance.py",
+        "tests/test_dh116_pinch_segment_geometry.py"
+      ],
+      "log_sha256": "f59860ca34f43bafd424e333ea773bac468a3c4e5fa356ff2a3b0713b2539515",
+      "tested_head": "68983aacee09b80b10f87085f7ac1034000866fb",
+      "kind": "measured_native_geometry_cpu_diagnostic",
+      "cpu_full_passed": 77,
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "static_path_passed": false,
+      "geometry_blocked": true,
+      "source_native_sdk_step": 234,
+      "source_ledger_sha256": "170b9bc8090eeb3f4291ce4102335eabbcb1d49892e333d1aa5b4ac4d9585fdf",
+      "audit_result": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/right-pinch-failed-path-20261113-0z8_jdc8/run01/result.json",
+      "audit_sha256": "2894befba70c78b506178c3a0b3bd95086d40eaf1d6fe951b77c4b5f38e48735",
+      "diagnostic_endpoint_evaluations": 24,
+      "full_path_samples": 161,
+      "source_hull_qp_calls": 1,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-right-pinch-measured-direction.md",
+      "report_source_commit": "495ff48945d6ce53b6078d20165c7a8fe65c5e21"
     }
   }
 }
