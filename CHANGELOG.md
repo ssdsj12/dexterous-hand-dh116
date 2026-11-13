@@ -1,3 +1,7 @@
+## 2026-11-14 — Tripod 节点对齐闭合与数值边界修复
+
+边界安全dogbox312次查询：三节点SDF+47.051/-10.337/+38.202μm；finger22/finger32已证明分离，但finger13负可行上界-51.706μm、桌面差6.080μm、原几何对向门未通过。0原生/训练，Tripod继续blocked，不以残差改善授予资格。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-node-closure.md)
+
 ## 2026-11-14 — Tripod 起点连续节点 SDF 核验
 
 原独立Tripod起点205条pad/node路径与48个连续插值分段全部保留；三指参考最小间隙1.770638/1.747874/2.615555mm，原桌面2.403620mm，解除粗SDF包络误拒。闭合端点碰撞仍blocked，无新原生/训练。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-vertical-sdf-reference.md)

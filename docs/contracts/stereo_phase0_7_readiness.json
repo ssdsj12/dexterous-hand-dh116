@@ -13677,6 +13677,48 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-tripod-vertical-sdf-reference.md",
       "report_source_commit": "0a97f988029ad58fbf185beaa6990cfa5b9de4ea"
+    },
+    "flex.f8-tripod-node-closure-cpu": {
+      "passed": 58,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_tripod_node_closure.py",
+        "tests/test_tripod_node_solver_boundary.py",
+        "tests/test_tripod_node_closure_actual.py",
+        "tests/test_dh116_tripod_joint_root_direction.py",
+        "tests/test_dh116_tripod_sdf_constrained_direction.py",
+        "tests/test_sdf_segment_extrema.py"
+      ],
+      "log_sha256": "aab81d66be378f9d544e01cedb57a38366c767796c5a5aca3253271db244357d",
+      "tested_head": "728cdf86b4b9dc3f12835b6c65186c3874654c45",
+      "kind": "bounded_cpu_tripod_node_closure",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_qualified": false,
+      "teacher_admission": false,
+      "reset_verified": false,
+      "initial_failed_queries": 484,
+      "corrected_geometry_queries": 312,
+      "extra_witness_queries": 3,
+      "endpoint_pass_count": 0,
+      "solver_converged": false,
+      "best_is_jacobian_probe": true,
+      "finger13_feasible_gap_upper_m": -5.1705660961549626e-05,
+      "minimum_table_gap_m": 0.0020939198625266053,
+      "audit_result": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/tripod-node-closure-20261114-run02/result.json",
+      "audit_sha256": "f0e36fb782299ee48e41e9282f5c6943563c1aef51332e15201ef6981772e339",
+      "witness_sha256": "0b156293f517c3a201d5f43c1c2d55ca327a0ad1056e0c29151b8d14a3f13f36",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-tripod-node-closure.md",
+      "report_source_commit": "49dcb9a16fc497fbd4d08188cdae41c2df49d825"
     }
   }
 }
