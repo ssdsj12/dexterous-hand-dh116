@@ -24868,6 +24868,103 @@
         "report": "docs/superpowers/reports/2026-11-14-tripod-original-sdk-path.md",
         "report_source_commit": "afcd9b9ac8b648af8f90241bb5b48dac35f69d50"
       }
+    },
+    "flex.f7-actual-quiet-window-cpu": {
+      "title": "Measured Pinch quiet windows and cross-grasp admission separation",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-tripod-sdk-path-cpu",
+        "flex.f8-bilateral-owned-pinch-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_rod_quiet_window.py",
+          "tests/test_rod_quiet_window_actual.py",
+          "tests/test_tripod_sdk_path.py",
+          "tests/test_tripod_sdk_actual.py",
+          "tests/test_tripod_sdk_required_contact_guard.py",
+          "tests/test_dh116_deformable_bimanual_step.py"
+        ],
+        "log_sha256": "71368de15c826ae2f20a2a624c27f46b6b453c93925e6f9d311696849ed9be66",
+        "tested_head": "725c907edc99a8dd073da05a41557a64c9924470",
+        "kind": "actual_native_ledger_quiet_windows_readonly",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_reset_qualified": false,
+        "teacher_admission": false,
+        "tripod_admission": false,
+        "power_admission": false,
+        "original_physical_samples": 232,
+        "windows": [
+          8,
+          16,
+          24,
+          32,
+          48
+        ],
+        "result_sha256": "d283ee366cdb32ebce9967be73934e1fd3ea00baa3201ad604287aa8f3a572d2",
+        "original_ledger_sha256": "d53b446425640fbbbf59ba952c52ec84ff952f0eca8b539131f9197bc899158d",
+        "max_node_speed_m_s": 3.832923802692624e-05,
+        "stage_change": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-actual-rod-quiet-windows.md",
+        "report_source_commit": "f560775fb839123fd5189bb3ccfea5d2375c489e"
+      },
+      "last_result": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_rod_quiet_window.py",
+          "tests/test_rod_quiet_window_actual.py",
+          "tests/test_tripod_sdk_path.py",
+          "tests/test_tripod_sdk_actual.py",
+          "tests/test_tripod_sdk_required_contact_guard.py",
+          "tests/test_dh116_deformable_bimanual_step.py"
+        ],
+        "log_sha256": "71368de15c826ae2f20a2a624c27f46b6b453c93925e6f9d311696849ed9be66",
+        "tested_head": "725c907edc99a8dd073da05a41557a64c9924470",
+        "kind": "actual_native_ledger_quiet_windows_readonly",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_reset_qualified": false,
+        "teacher_admission": false,
+        "tripod_admission": false,
+        "power_admission": false,
+        "original_physical_samples": 232,
+        "windows": [
+          8,
+          16,
+          24,
+          32,
+          48
+        ],
+        "result_sha256": "d283ee366cdb32ebce9967be73934e1fd3ea00baa3201ad604287aa8f3a572d2",
+        "original_ledger_sha256": "d53b446425640fbbbf59ba952c52ec84ff952f0eca8b539131f9197bc899158d",
+        "max_node_speed_m_s": 3.832923802692624e-05,
+        "stage_change": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-actual-rod-quiet-windows.md",
+        "report_source_commit": "f560775fb839123fd5189bb3ccfea5d2375c489e"
+      }
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## 2026-11-14 — Measured Pinch quiet windows and cross-grasp admission separation
+
+Read-only analysis of immutable232-sample Pinch ledger: zero-action windows8/16/24/32/48, measured max node speed0.038329238mm/s, all table-loaded, no hand load. Distinct SI joint units and complete clock/identity checks. Supports investigating234-step new Tripod design, not a new recipe or admission; no new SDK/PPO steps. Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-actual-rod-quiet-windows.md)
+
 ## 2026-11-14 — Original 24D Tripod target mapping and bounded stage accounting
 
 Both intrinsic-linear and geodesic-knot target paths pass bounded CPU geometry with original controller kernels, float32 SDK target reconstruction and required cooked-pad guards. Minimum motion is 200 steps; unchanged setup/quiet/hold yields274, exceeding240. No native action, actual tracking, contact, Reset or Teacher qualification. Ubuntu CPU 回归 117 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-original-sdk-path.md)
