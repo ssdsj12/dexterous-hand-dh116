@@ -1,3 +1,7 @@
+## 2026-11-13 — PhysX 构造 frame 引用释放与原生复验准备
+
+保留同一物理初始化，仅清理构造帧持有的局部引用并使用全线程暂停取证。新单次原生指纹待批准。 Ubuntu CPU 回归 135 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-lifetime-frame-v2.md)
+
 ## 2026-11-13 — Teacher 371D 原腕部状态来源
 
 按原 WXYZ、COM 速度、内禀关节角和 reset seed 接入 32 个腕部通道。CPU 中两手共 66/371，未绑定通道仍有 305 个。 Ubuntu CPU 回归 139 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md)

@@ -11262,6 +11262,116 @@
         "report": "docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md",
         "report_source_commit": "4684d89ef38cdad4a91cfa3dfc7fba527489aa5e"
       }
+    },
+    "flex.f4-physx-lifetime-frame-v2-cpu": {
+      "title": "PhysX 构造 frame 引用释放与原生复验准备",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-physx-gdb-all-stop-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 135,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_physx_lifetime_frame_v2.py",
+          "tests/test_dh116_physx_lifetime_debugger_stopped.py",
+          "tests/test_dh116_physx_lifetime_probe.py",
+          "tests/test_dh116_physx_lifetime_validation.py",
+          "tests/test_dh116_physx_lifetime_scheduler.py",
+          "tests/test_dh116_physx_tensor_lifetime.py",
+          "tests/test_deformable_grasp_runtime.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_pinch_scheduler.py",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "745a9bccb8f5d474fddf9cbbba8f758a792e1326d0e53d4b5d71c5b03961688c",
+        "tested_head": "b73cd85a3ebd8eddffa54120f44378300034fefd",
+        "stage": "cpu_verified_native_recipe_frozen",
+        "scope": "physx_builder_frame_detachment_cpu",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "pending_native_recipe": {
+          "command_spec_sha256": "48c5869e4de32eea0ca30fa35b062f920c8df752176b1733167dba36a8e06936",
+          "code_config_sha256": "5c5654de8d08a9a96a989d0a811f4411db8ded8c99b4ac40e5f7ee04c4e599c6"
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-physx-lifetime-frame-v2.md",
+        "report_source_commit": "5d471fc75dc17538f2c75a881ce2e6cd56e57632"
+      },
+      "last_result": {
+        "passed": 135,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_physx_lifetime_frame_v2.py",
+          "tests/test_dh116_physx_lifetime_debugger_stopped.py",
+          "tests/test_dh116_physx_lifetime_probe.py",
+          "tests/test_dh116_physx_lifetime_validation.py",
+          "tests/test_dh116_physx_lifetime_scheduler.py",
+          "tests/test_dh116_physx_tensor_lifetime.py",
+          "tests/test_deformable_grasp_runtime.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_pinch_scheduler.py",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "745a9bccb8f5d474fddf9cbbba8f758a792e1326d0e53d4b5d71c5b03961688c",
+        "tested_head": "b73cd85a3ebd8eddffa54120f44378300034fefd",
+        "stage": "cpu_verified_native_recipe_frozen",
+        "scope": "physx_builder_frame_detachment_cpu",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "pending_native_recipe": {
+          "command_spec_sha256": "48c5869e4de32eea0ca30fa35b062f920c8df752176b1733167dba36a8e06936",
+          "code_config_sha256": "5c5654de8d08a9a96a989d0a811f4411db8ded8c99b4ac40e5f7ee04c4e599c6"
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-physx-lifetime-frame-v2.md",
+        "report_source_commit": "5d471fc75dc17538f2c75a881ce2e6cd56e57632"
+      }
+    },
+    "flex.f4-physx-lifetime-frame-v2-native": {
+      "title": "PhysX 构造 frame 释放 v2 单次原生",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f4-physx-lifetime-frame-v2-cpu"
+      ],
+      "status": "blocked",
+      "command_spec": "configs/dh116_execution/physx_lifetime_frame_explicit_v2.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "physx_lifetime_frame_detachment_v2_only",
+      "dependency_scopes": {},
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_physx_lifetime_frame_v2.py",
+        "tests/test_dh116_physx_lifetime_debugger_stopped.py"
+      ],
+      "stage": "prepared_waiting_exact_native_approval",
+      "reason": "New frozen recipe tests cleanup of retained builder frame with corrected GDB capture.",
+      "scheduler_entrypoint": "scripts/run_dh116_physx_lifetime_frame_work_packages_v2.py"
     }
   },
   "execution_target": {
