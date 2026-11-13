@@ -13849,6 +13849,47 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-actual-rod-quiet-windows.md",
       "report_source_commit": "f560775fb839123fd5189bb3ccfea5d2375c489e"
+    },
+    "flex.f8-tripod-owned-native-cpu": {
+      "passed": 109,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_tripod_live_plan.py",
+        "tests/test_tripod_quiet_gate.py",
+        "tests/test_tripod_projection_scope.py",
+        "tests/test_tripod_exchange_admission.py",
+        "tests/test_tripod_native_scope.py",
+        "tests/test_tripod_full_owner.py",
+        "tests/test_tripod_worker.py",
+        "tests/test_dh116_bilateral_owned_contract.py",
+        "tests/test_dh116_bilateral_owned_geometry.py",
+        "tests/test_dh116_bilateral_owned_worker.py",
+        "tests/test_rod_quiet_window.py"
+      ],
+      "log_sha256": "4a891d56d4e58fc7fdea2f9832c58b7935af5f8e73a4237101f466518d75fee9",
+      "tested_head": "cf0f65f2978db2f8a63e48b1bbc21c217b2f35e0",
+      "kind": "isolated_tripod_live_quiet_native_preparation_cpu",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_qualified": false,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "recipe_sha256": "9a226954121beff9c2d459c523dbafe24531ceb6913c730b5b7f761a7d833990",
+      "worker_code_config_sha256": "331a427dbf059516a7aad8950948c93bd71ea3ebbaca805c284df4bd422a96f1",
+      "profile_sha256": "58a4d07cded53517b6e307d347ef6a33d866655ef3d7bcf292aefd5d25b7a3e7",
+      "pending_native": true,
+      "scope": "CPU owner fixture not native physics",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-tripod-live-preparation.md",
+      "report_source_commit": "569b1f51aa0653fc093c60ba8e59b72089179c8e"
     }
   }
 }

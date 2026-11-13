@@ -1,3 +1,7 @@
+## 2026-11-14 — Tripod live quiet admission and original24D native preparation
+
+Independent left Tripod234-step preparation:2setup+8quiet+200approach+24observe; original24D/guards retained, right identity independent. Actual quiet admission blocks motion and preserves terminal rows; synthetic full-owner and failure replay passed. No new native or PPO execution in this preparation package. Ubuntu CPU 回归 109 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-live-preparation.md)
+
 ## 2026-11-14 — Measured Pinch quiet windows and cross-grasp admission separation
 
 Read-only analysis of immutable232-sample Pinch ledger: zero-action windows8/16/24/32/48, measured max node speed0.038329238mm/s, all table-loaded, no hand load. Distinct SI joint units and complete clock/identity checks. Supports investigating234-step new Tripod design, not a new recipe or admission; no new SDK/PPO steps. Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-actual-rod-quiet-windows.md)
