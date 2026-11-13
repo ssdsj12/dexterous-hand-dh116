@@ -1,3 +1,7 @@
+## 2026-11-13 — Reset实际读回补齐R0接近基准
+
+144项CPU回归通过；从实际Reset getter数据重建基准，两个控制周期均8/8有效接近样本，首步实测负差值保留。未新增物理步/PPO，hold/instability仍阻断，真实手杆pair0，Teacher0/3。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-r0-reset-measured-approach.md)
+
 ## 2026-11-13 — 实测指腹/柔性杆几何接入 R0 接近进度
 
 101项CPU回归通过；同一原生账本16个实际SDF距离形成15次合法增量。第二控制周期接近平均0.010819mm，阻断剩hold/instability；Reset基准仍NA，手指杆接触仍0，新物理步/PPO0，Teacher0/3。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-13-r0-measured-approach.md)

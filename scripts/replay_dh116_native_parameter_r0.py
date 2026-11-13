@@ -59,7 +59,20 @@ def check_radius_packet(packet,rod):
         raise ValueError("raw radius/provenance differs")
     return expected
 
-def replay(*,approach_reader=None):
+class _ResetBoundApplicableR0(ApplicableR0ControlStep):
+    """Only the explicit historical-replay mode binds this recorded baseline."""
+    def __init__(self,*args,reset_approach,**kwargs):
+        super().__init__(*args,**kwargs)
+        self._recorded_reset_approach=deepcopy(reset_approach)
+
+    def reset(self,reset_hooks,read_after_reset):
+        return super().reset(reset_hooks,read_after_reset,
+                             reset_approach=deepcopy(self._recorded_reset_approach))
+
+
+def replay(*,approach_reader=None,include_reset_approach=False):
+    if include_reset_approach and approach_reader is None:
+        raise ValueError("measured reset requires the actual geometry source")
     receipt=json.loads(read_pinned(RECEIPT,RECEIPT_SHA))
     if (receipt["qualification_scope"]!="exact_2_setup_plus_16_native_parameter_task_endpoints_only"
             or receipt["outer_exit_code"]!=0 or receipt["debugger_inferior_signal"] is not None
@@ -87,25 +100,38 @@ def replay(*,approach_reader=None):
     budget["physics"]["solver_substeps_per_physics_step"]=12
     weights={name:float(i+1) for i,name in enumerate(R0_TERMS)}
     reports={}
-    approach_samples=[]
+    # Compute each actual source once; the two opt-in modes consume the same
+    # owned endpoint values. No reset or first-step substitution is performed.
+    approach_samples=([approach_reader.capture(event["exchange"]) for event in physical]
+                      if approach_reader is not None else [])
+    reset_approach_sample=(approach_reader.capture_reset(reset_event["reset"],p0)
+                           if include_reset_approach else None)
     modes=("original","applicability_v2") + (("applicability_v2_with_measured_approach",) if approach_reader is not None else ())
+    if include_reset_approach:
+        modes+=("applicability_v2_with_measured_reset_approach",)
     for mode in modes:
+        measured_index=0
         observer=PhysicalR0Diagnostic(task,"pinch",env_id=0,budget_config=budget,
             diagnostic_coefficients=weights,backend_artifact=BACKEND,backend_sha256=BACKEND_SHA,
             radius_sample=dict(value=radius["value"],source=source))
         if mode.startswith("applicability_v2"):
             # Explicitly isolated offline observer; no monkeypatch/default path.
             adapted=deepcopy(task);adapted["backend"]["extension_sha256"]=BACKEND_SHA
-            observer._reducer=ApplicableR0ControlStep(adapted,"pinch",env_id=0,budget_config=budget,
-                                                      diagnostic_coefficients=weights)
+            reducer=(_ResetBoundApplicableR0 if mode=="applicability_v2_with_measured_reset_approach"
+                     else ApplicableR0ControlStep)
+            extra=({"reset_approach":reset_approach_sample["reset_approach"]}
+                   if mode=="applicability_v2_with_measured_reset_approach" else {})
+            observer._reducer=reducer(adapted,"pinch",env_id=0,budget_config=budget,
+                                      diagnostic_coefficients=weights,**extra)
         for entry in rows[1:]:
             operation,payload=entry["operation"],entry["payload"]
             if operation in ("reset","physical"):
                 auxiliary=None
-                if operation=="physical" and mode=="applicability_v2_with_measured_approach":
-                    measured=approach_reader.capture(payload["exchange"])
-                    auxiliary=measured["auxiliary"]
-                    approach_samples.append(measured)
+                if operation=="physical" and mode in (
+                        "applicability_v2_with_measured_approach",
+                        "applicability_v2_with_measured_reset_approach"):
+                    auxiliary=deepcopy(approach_samples[measured_index]["auxiliary"])
+                    measured_index+=1
                 observer.record(payload,auxiliary=auxiliary)
             elif operation=="begin":observer.begin(**payload)
             elif operation=="end":observer.end(payload)
@@ -123,8 +149,8 @@ def replay(*,approach_reader=None):
         per_step=[dict(identity={k:r["r0"][k] for k in ("env_id","episode_uid","reset_id","physics_step","rod_tick","timestamp_s")},
             terms=r["r0"]["terms"],blocked_terms=r["r0"]["blocked_terms"])
             for c in reports[modes[-1]]["controls"] for r in c["physical_rows"]],
-        approach_samples=approach_samples,
-        missing_sources=["measured_reset_approach_distance",
+        approach_samples=approach_samples,reset_approach_sample=reset_approach_sample,
+        missing_sources=[*(["measured_reset_approach_distance"] if not include_reset_approach else []),
                          *(["per_step_approach_distance"] if approach_reader is None else []),
                          "qualified_stability_predicate","positive_bilateral_opposition",
                          "fixed_material_anchor_and_tangential_slip","hand_table_contact_source"],
@@ -138,13 +164,17 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output",type=Path,required=True)
     parser.add_argument("--measured-approach",action="store_true",help="opt-in actual measured Pinch SDF source, no reset fill")
+    parser.add_argument("--measured-reset-approach",action="store_true",
+        help="also derive the baseline from actual recorded reset getter buffers; requires --measured-approach")
     args=parser.parse_args(argv)
+    if args.measured_reset_approach and not args.measured_approach:
+        parser.error("--measured-reset-approach requires --measured-approach")
     if args.output.exists() or args.output.is_symlink():parser.error("preserve existing output")
     reader=None
     if args.measured_approach:
         from go2_pvcnn.control.dh116.tabletop_r0_measured_approach import MeasuredPinchApproach
         reader=MeasuredPinchApproach(ROOT)
-    result=replay(approach_reader=reader)
+    result=replay(approach_reader=reader,include_reset_approach=args.measured_reset_approach)
     native=[n for n in sys.modules if n.split(".")[0] in ("omni","isaacsim","isaaclab","ropesim","warp")]
     if native:raise RuntimeError("offline boundary crossed: "+str(native))
     args.output.parent.mkdir(parents=True,exist_ok=True)
