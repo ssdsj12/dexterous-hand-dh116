@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 单动作区间原生执行与失败记录准备
+
+保留原物理与守卫，修复包装递归和旁路读取异常丢失物理样本。冻结2+8+8一次手指动作，实际源几何逐步复算、终止行先保存、自然退出独立核验；本包原生0步、PPO0更新，尚未授予Teacher或抓取资格。 Ubuntu CPU 回归 101 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-guarded-closure-preflight.md)
+
 ## 2026-11-13 — 同钟双手闭合几何实测与失败保护
 
 新增23-link与17DOF同钟实测入口及无SDK复算；保留2.1mm净空、关节、Mimic、力和腕部保护。CPU double覆盖全部profile状态及读回失败，原生执行0步，尚未授予闭合或Teacher资格。 Ubuntu CPU 回归 95 项通过。[报告](docs/superpowers/reports/2026-11-13-measured-closure-geometry.md)

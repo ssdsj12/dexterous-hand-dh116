@@ -17461,6 +17461,105 @@
         "report": "docs/superpowers/reports/2026-11-13-measured-closure-geometry.md",
         "report_source_commit": "582af6aa1f52d1e12822a69933032650aedb054d"
       }
+    },
+    "flex.f7-dual-pinch-guarded-closure-cpu": {
+      "title": "双手 Pinch 单动作区间原生执行与失败记录准备",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-pinch-zero-interval-v4-native",
+        "flex.f7-measured-closure-geometry-cpu",
+        "flex.f7-dual-pinch-readback-profile-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 101,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_pinch_closure_interval.py",
+          "tests/test_dh116_dual_pinch_closure_postexit.py",
+          "tests/test_dh116_dual_pinch_closure_worker.py"
+        ],
+        "log_sha256": "c1f7566b2aad9594ed0de9445e083ffec1983ac5766e4fc1adb574175a0c9f34",
+        "tested_head": "a4a5af8b2328c1290ef8511adf3146504f73ccbc",
+        "kind": "cpu_sdk_doubles_complete_entry_and_postexit_audit",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "command_spec_sha256": "8c377e2e7aae5539597f9df08ee38a9a0ac7319f7bef98affa25976a02b8c200",
+        "code_config_sha256": "74f8378ee4648f30c8ecb2ba8f0aa5f2caf9ef396a8e49b9c532cbf44ff7fad6",
+        "worker_code_config_sha256": "4e6dd4284c433253cddbab4c1ed610501dc13155f6e2e0d2756d50458389b463",
+        "physical_steps_proposed": 18,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-pinch-guarded-closure-preflight.md",
+        "report_source_commit": "90a35a3"
+      },
+      "last_result": {
+        "passed": 101,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_pinch_closure_interval.py",
+          "tests/test_dh116_dual_pinch_closure_postexit.py",
+          "tests/test_dh116_dual_pinch_closure_worker.py"
+        ],
+        "log_sha256": "c1f7566b2aad9594ed0de9445e083ffec1983ac5766e4fc1adb574175a0c9f34",
+        "tested_head": "a4a5af8b2328c1290ef8511adf3146504f73ccbc",
+        "kind": "cpu_sdk_doubles_complete_entry_and_postexit_audit",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "command_spec_sha256": "8c377e2e7aae5539597f9df08ee38a9a0ac7319f7bef98affa25976a02b8c200",
+        "code_config_sha256": "74f8378ee4648f30c8ecb2ba8f0aa5f2caf9ef396a8e49b9c532cbf44ff7fad6",
+        "worker_code_config_sha256": "4e6dd4284c433253cddbab4c1ed610501dc13155f6e2e0d2756d50458389b463",
+        "physical_steps_proposed": 18,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-pinch-guarded-closure-preflight.md",
+        "report_source_commit": "90a35a3"
+      }
+    },
+    "flex.f7-dual-pinch-guarded-closure-native": {
+      "title": "双手 Pinch 单次受保护手指动作原生读回",
+      "executor": "native_bounded",
+      "status": "pending",
+      "dependencies": [
+        "flex.f7-dual-pinch-guarded-closure-cpu",
+        "flex.f7-dual-pinch-zero-interval-v4-native"
+      ],
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/deformx_dual_pinch_guarded_closure_v1.json",
+      "evidence_scope": "dual_pinch_same_free_rod_one_guarded_finger_action_interval",
+      "dependency_scopes": {
+        "flex.f7-dual-pinch-zero-interval-v4-native": {
+          "scope": "dual_pinch_same_free_rod_reset_zero_interval_v4",
+          "native": true
+        }
+      },
+      "tests": [
+        "tests/test_dh116_dual_pinch_closure_worker.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_dual_pinch_closure_work_packages.py"
     }
   },
   "execution_target": {
