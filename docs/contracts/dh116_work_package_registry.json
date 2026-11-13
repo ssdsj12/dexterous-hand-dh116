@@ -5647,7 +5647,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "Independent left Pinch pose CPU passes table and commanded approach screen. Both hands native contact/reset/R0 and lifetime qualification still needed."
+      "reason": "Left Pinch CPU geometry passed and separate lifetime/pair calibration qualified; right Pinch only strict endpoint, continuous path rejected. Same-rod/reset/state/R0 still pending."
     },
     "flex.f8-tripod": {
       "title": "Tripod 无相机 R0 特权 Teacher",
@@ -12295,6 +12295,83 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-13-flexible-live-geometry.md",
         "report_source_commit": "ed11c2db7b6c55bc167e31812e580dc11a8ae7b8"
+      }
+    },
+    "flex.f8-right-pinch-closure-screen-cpu": {
+      "title": "右手 Pinch 独立闭合筛查",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-pinch-cooked-initial-geometry",
+        "flex.f8-tripod-power-pose-preparation"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 38,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_right_pinch_closure_screen.py",
+          "tests/test_dh116_flexible_style_pose_preparation.py",
+          "tests/test_dh116_pinch_initial_table_clearance.py",
+          "tests/test_dh116_flexible_power_pose_preflight.py"
+        ],
+        "log_sha256": "7f52a63b869076b0d31acfce7fec0463e7f924cf6f70e06ccb14f24cf6b15788",
+        "tested_head": "a8c79ee937d185c51651f80655f41f03c99e7705",
+        "stage": "cpu_verified_right_geometry_screen",
+        "scope": "right_pinch_independent_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "candidate_count": 450,
+        "coarse_pass_count": 10,
+        "strict_endpoint_pass_count": 1,
+        "continuous_pass_count": 0,
+        "evidence_replay_sha256": "b7271772de568bf2c39365a9f74cc0854fc5660339e20e1b520856c950198bb9",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-right-pinch-closure-screen.md",
+        "report_source_commit": "5b8d068aa2f72e1123d53850a5c282649d2bf70a"
+      },
+      "last_result": {
+        "passed": 38,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_right_pinch_closure_screen.py",
+          "tests/test_dh116_flexible_style_pose_preparation.py",
+          "tests/test_dh116_pinch_initial_table_clearance.py",
+          "tests/test_dh116_flexible_power_pose_preflight.py"
+        ],
+        "log_sha256": "7f52a63b869076b0d31acfce7fec0463e7f924cf6f70e06ccb14f24cf6b15788",
+        "tested_head": "a8c79ee937d185c51651f80655f41f03c99e7705",
+        "stage": "cpu_verified_right_geometry_screen",
+        "scope": "right_pinch_independent_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "candidate_count": 450,
+        "coarse_pass_count": 10,
+        "strict_endpoint_pass_count": 1,
+        "continuous_pass_count": 0,
+        "evidence_replay_sha256": "b7271772de568bf2c39365a9f74cc0854fc5660339e20e1b520856c950198bb9",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-right-pinch-closure-screen.md",
+        "report_source_commit": "5b8d068aa2f72e1123d53850a5c282649d2bf70a"
       }
     }
   },

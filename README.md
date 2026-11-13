@@ -1,3 +1,7 @@
+## 2026-11-13 — 右手 Pinch 独立闭合筛查
+
+450 个右侧候选完成，唯一严格端点候选在连续 finger13 近端净空门被拒，保留失败和断点证据。 Ubuntu CPU 回归 38 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-closure-screen.md)
+
 ## 2026-11-13 — DeformX 逐接触对 CUDA 校准 v2
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-deformx-pair-capture-v2-native.md)。
