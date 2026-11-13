@@ -1,3 +1,7 @@
+## 2026-11-13 — 真实Pinch相向接触连续时间重算
+
+原234步账本重放为2784子步：左两指相向载荷连续85.9375ms，右无接触，桌面全程承托。100项CPU回归通过；未赋予稳定/滑移/Teacher资格，无新原生或PPO。 Ubuntu CPU 回归 100 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-contact-timeline.md)
+
 ## 2026-11-13 — 右Pinch独立相对初始姿态非线性验证
 
 独立相对X/Z姿态保留完整FK/原碰撞；119次CPU端点测量仍未通过，局部约束非光滑时停止。111项CPU回归通过，未创建新原生配方或启动PPO。 Ubuntu CPU 回归 111 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-relative-orientation.md)

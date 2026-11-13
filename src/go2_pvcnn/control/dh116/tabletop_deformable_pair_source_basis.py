@@ -4,6 +4,7 @@ Normals point out of the obstacle; forces act on the rod. A pair point is the
 node-sphere surface point x - R*n, not a measured continuous material anchor.
 """
 import hashlib
+from copy import deepcopy
 from itertools import combinations, product
 import json
 import math
@@ -231,3 +232,165 @@ def analyze_rod_pair_basis(row,*,grasp,radius_sample,max_comparisons=65536):
     result.update(boundary_identity=identity,original_pair_diagnostics=counts,
         reconstructed_raw_capacity_is_exact_stored_row_count_not_original_buffer_capacity=True)
     return result
+
+
+class ContactTimeline:
+    """Bounded same-episode observation of actual pair packets.
+
+    Candidate signs are geometric diagnostics. No R0 label, physical stability,
+    force-closure qualification or fixed-material slip is manufactured here.
+    """
+
+    def __init__(self, *, grasp, radius_sample, max_physics_rows=240):
+        from .deformx_dh116_colliders import collider_plan
+        if type(max_physics_rows) is not int or not 1 <= max_physics_rows <= 240:
+            raise ValueError("bounded contact timeline requires 1..240 physics rows")
+        _radius(radius_sample)
+        self.radius_sample = dict(radius_sample)
+        self.grasp = grasp
+        self.required = {side: tuple(spec["bodies"]) for side, spec in
+                         zip(("left", "right"), collider_plan(grasp)["specs"])}
+        self.max_physics_rows = max_physics_rows
+        self.rows = []
+        self._last = None
+        self._substeps = None
+
+    def record(self, row, *, action_identity):
+        from .tabletop_deformable_solver_clock import solver_clock_matches
+        if self._last is not None and self._last["physics_rows"] >= self.max_physics_rows:
+            raise ValueError("contact timeline physics-row budget exhausted")
+        # Original validator reopens all raw vectors and reconciles independent
+        # aggregate buffers BEFORE any timeline state is committed.
+        basis = analyze_rod_pair_basis(row, grasp=self.grasp, radius_sample=self.radius_sample)
+        identity = basis["boundary_identity"]
+        if (not isinstance(action_identity, dict)
+                or any(action_identity.get(k) != v for k, v in identity.items())
+                or any(type(action_identity.get(k)) is not int or action_identity[k] < 0
+                       for k in ("policy_step", "substep"))
+                or action_identity["substep"] >= 8):
+            raise ValueError("actual action and physical identity must agree")
+        if self._last is not None:
+            last = self._last
+            for key in ("run_uuid", "env_id", "episode_uid", "reset_id", "rod_uid"):
+                if identity[key] != last[key]:
+                    raise ValueError("new episode requires independent timeline")
+            if (identity["physics_step"] != last["physics_step"] + 1
+                    or not solver_clock_matches(last["solver_time_s"], identity["solver_time_s"], steps=1)
+                    or (action_identity["policy_step"], action_identity["substep"]) !=
+                       (last["policy_step"] + (last["substep"] == 7), (last["substep"] + 1) % 8)):
+                raise ValueError("non-contiguous actual action/physics/solver clock")
+        substeps = (basis["original_pair_diagnostics"]["substeps"]
+                    if basis["substeps"] is not None else self._substeps)
+        # An absent first packet cannot establish solver sampling resolution.
+        if substeps is None:
+            raise ValueError("first timeline packet must establish solver substeps")
+        if (self._substeps is not None and substeps != self._substeps
+                or identity["rod_tick"] < substeps
+                or (self._last is not None and identity["rod_tick"] != self._last["rod_tick"] + substeps)):
+            raise ValueError("solver tick interval changed")
+        slots = row["mesh_names"]
+        packet = row.get("rod_mesh_contact_pairs")
+        groups = [[] for _ in range(substeps)]
+        if packet is not None:
+            for p in packet["pairs"]:
+                groups[p["substep"]].append(p)
+        output = []
+        for sub in range(substeps):
+            pairs = groups[sub]
+            comparisons = None if basis["substeps"] is None else basis["substeps"][sub]["comparisons"]
+            pads = None
+            if packet is not None:
+                pads = {}
+                for name in slots:
+                    selected = [p for p in pairs if p["mesh_name"] == name]
+                    loaded = [p for p in selected if
+                              np.dot(p["force_on_rod_world_n"], p["outward_normal_world"]) > MIN_NORMAL_FORCE_N]
+                    pads[name] = dict(
+                        loaded=bool(loaded), raw_pairs=len(selected),
+                        loaded_node_ids=sorted(p["node_index"] for p in loaded),
+                        normal_load_n=float(sum(np.dot(p["force_on_rod_world_n"], p["outward_normal_world"])
+                                                for p in loaded)),
+                        force_on_rod_world_n=np.sum([p["force_on_rod_world_n"] for p in selected],
+                                                   axis=0).tolist() if selected else [0., 0., 0.])
+            hands = {}
+            for side in ("left", "right"):
+                required = self.required[side]
+                all_loaded = None if pads is None else all(pads[side+"."+p]["loaded"] for p in required)
+                sign_candidate = None
+                if all_loaded is False:
+                    sign_candidate = False
+                elif all_loaded is True:
+                    # A thumb/opposing-finger graph in this SAME substep.
+                    # Different node stations remain in comparisons, never
+                    # silently interpreted as one material cross-section.
+                    results = []
+                    for digit in required[1:]:
+                        pair_names = {side+"."+required[0], side+"."+digit}
+                        flags = [c["geometric_opposition_sign_candidate"] for c in comparisons
+                                 if c["side"] == side and set(c["pad_names"]) == pair_names]
+                        results.append(True if any(f is True for f in flags) else
+                                       None if not flags or any(f is None for f in flags) else False)
+                    sign_candidate = False if any(f is False for f in results) else (
+                        True if all(f is True for f in results) else None)
+                hands[side] = dict(required_pads=list(required), all_required_loaded=all_loaded,
+                                   opposition_sign_candidate=sign_candidate)
+            event_identity = dict(identity, policy_step=action_identity["policy_step"],
+                substep=action_identity["substep"], solver_substep=sub,
+                solver_tick=identity["rod_tick"]-substeps+sub+1,
+                # This is an explicit ideal clock derived from the source SDK
+                # interval; raw float solver_time_s remains a boundary getter.
+                reconstructed_sdk_substep_end_s=(identity["physics_step"]-1+(sub+1)/substeps)*DT)
+            output.append(dict(identity=event_identity, substep_dt_s=DT/substeps,
+                source_scope="validated_pair_signed_direction_diagnostic_only",
+                pads=pads, hands=hands, comparisons=comparisons,
+                table_loaded=None if pads is None else pads["table"]["loaded"],
+                effective_opposed_contact=None, stable=None, material_anchor_slip=None))
+        # Commit a complete, successfully validated interval atomically.
+        self.rows.extend(output)
+        self._substeps = substeps
+        self._last = dict(action_identity, physics_rows=1 if self._last is None else self._last["physics_rows"]+1)
+        return deepcopy(output)
+
+    def summary(self):
+        def stats(values):
+            first = last = None
+            count = unknown = longest = current = intervals = 0
+            for value, event in zip(values, self.rows):
+                if value is True:
+                    count += 1
+                    if current == 0:
+                        intervals += 1
+                    current += 1
+                    longest = max(longest, current)
+                    first = first or event["identity"]
+                    last = event["identity"]
+                else:
+                    current = 0
+                    unknown += value is None
+            return dict(true_substeps=count, unknown_substeps=unknown,
+                        false_substeps=len(values)-count-unknown,
+                        observed_true_duration_s=count*DT/self._substeps if self._substeps else 0.,
+                        longest_interval_s=longest*DT/self._substeps if self._substeps else 0.,
+                        true_interval_count=intervals, interval_count_includes_open_tail=True,
+                        first_true=deepcopy(first), last_true=deepcopy(last))
+        metrics = {}
+        for side in ("left", "right"):
+            for key in ("all_required_loaded", "opposition_sign_candidate"):
+                metrics[side+"."+key] = stats([r["hands"][side][key] for r in self.rows])
+            for pad in PADS:
+                metrics[side+"."+pad] = stats([None if r["pads"] is None else
+                                               r["pads"][side+"."+pad]["loaded"] for r in self.rows])
+        metrics["table_loaded"] = stats([r["table_loaded"] for r in self.rows])
+        both = []
+        for row in self.rows:
+            vals = [row["hands"][side]["all_required_loaded"] for side in ("left", "right")]
+            both.append(False if any(v is False for v in vals) else
+                        True if all(v is True for v in vals) else None)
+        metrics["bilateral_required_loaded"] = stats(both)
+        return dict(version="dh116-actual-pair-contact-timeline-v1", grasp=self.grasp,
+            physics_rows=0 if self._last is None else self._last["physics_rows"],
+            solver_substep_rows=len(self.rows), metrics=metrics,
+            comparison_count=sum(len(r["comparisons"] or []) for r in self.rows),
+            effective_opposed_contact=None, stable=None, material_anchor_slip=None,
+            teacher_admission=False, native_qualified=False, new_physics_steps=0,
+            ppo_updates=0, training_reward=None, actual_hold_success=None)
