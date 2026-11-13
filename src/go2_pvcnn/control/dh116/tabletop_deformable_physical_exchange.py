@@ -21,7 +21,8 @@ from .tabletop_task import joint_safety_failure
 class FlexiblePhysicalExchange:
     """Preserve the previous measured rod reaction through the next SDK write."""
 
-    def __init__(self, sim, rod, bindings, *, root_seed_w, read_geometry, physics_budget_end):
+    def __init__(self, sim, rod, bindings, *, root_seed_w, read_geometry,
+                 physics_budget_end, read_geometry_after_sdk=None):
         clock = rod.clock()
         if (clock["clock_valid"] is not True or clock["rod_tick"] != 0
                 or clock["reset_id"] < 1 or clock["physics_step"] != sim.current_time_step_index
@@ -52,7 +53,11 @@ class FlexiblePhysicalExchange:
         self._device = devices.pop()
         self._sim, self._rod, self._bindings = sim, rod, tuple(bindings)
         self._seed = root_seed_w.detach().cpu().double().clone()
+        if (not callable(read_geometry)
+                or (read_geometry_after_sdk is not None and not callable(read_geometry_after_sdk))):
+            raise ValueError("geometry callbacks must be callable")
         self._read_geometry = read_geometry
+        self._read_geometry_after_sdk = read_geometry_after_sdk
         self._end = physics_budget_end
         self._control = 0
         self._closed = False
@@ -72,8 +77,14 @@ class FlexiblePhysicalExchange:
             raise ValueError("live rod and SDK identity or clock changed")
         return [{**clock, "policy_step": self._control, "substep": substep}]
 
-    def _geometry(self, expected):
-        row = deepcopy(self._read_geometry())
+    def _geometry(self, expected, *, previous_rod_clock=None):
+        if previous_rod_clock is not None and self._read_geometry_after_sdk is not None:
+            row = deepcopy(self._read_geometry_after_sdk(deepcopy(previous_rod_clock)))
+            if (not isinstance(row, dict) or row.get("geometry_phase") != "sdk_complete_rod_pending"
+                    or row.get("rod_source_physics_step") != previous_rod_clock["physics_step"]):
+                raise ValueError("explicit preceding rod clock and handoff geometry phase required")
+        else:
+            row = deepcopy(self._read_geometry())
         if (not isinstance(row, dict) or type(row.get("physics_step")) is not int
                 or row["physics_step"] != expected or self._sim.current_time_step_index != expected):
             raise ValueError("geometry must be measured on the current physical step")
@@ -127,10 +138,15 @@ class FlexiblePhysicalExchange:
             projected_root_poses=projection["projected_root_poses"],
             projected_angles=projection["projected_angles"],
             projection_source=projection["projection_source"])
+        previous_rod_clock = self._rod.clock()
+        if any(pre.get(key) != value for key, value in previous_rod_clock.items()):
+            raise ValueError("rod clock changed during the action submission")
         sdk = step_thumb_physics(self._sim, expected, budget_end=self._end)
         for binding in self._bindings:
             binding.hand.update(DT)
-        after = self._geometry(sdk)
+        after = self._geometry(sdk, previous_rod_clock=previous_rod_clock)
+        if self._rod.clock() != previous_rod_clock:
+            raise ValueError("rod clock changed during the SDK-to-rod handoff")
         rod_row = self._rod.step(after["pad_poses"], after["centers_of_mass"], physics_step=sdk)
         action_row = connection.finish(self._bindings, read_clock=read_clock)
         guard_failure = self._guard_failure(action_row["post"]["hands"], rod_row["hand_wrenches_com_world"])

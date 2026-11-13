@@ -1,3 +1,7 @@
+## 2026-11-13 — PhysX 到 DeformX 位姿交接
+
+PhysX 前进后，读取新指腹位姿并校验 DeformX 仍处于前一边界；跳步、换 episode 或陈旧读取会拒绝交换。已接通 CPU 双手八步回归。 Ubuntu CPU 回归 92 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-clock-handoff.md)
+
 ## 2026-11-13 — 双手同杆原地 Reset 事务
 
 核对同一根杆的 Reset 身份、双手实际关节与目标读回，并保留未知力学字段。四项既有 root pose fixture 失败已独立复现。实际 PhysX Reset 和 R0 仍待验证。 Ubuntu CPU 回归 312 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-reset-cpu.md)

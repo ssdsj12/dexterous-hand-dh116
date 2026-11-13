@@ -48,10 +48,19 @@ class LiveGeometryReader:
                             or self._ids[index][3][i] != pad["prim_path"]):
                         raise ValueError("inspected pad link identity differs")
 
-    def _clock(self):
+    def _clock(self, previous_rod_clock=None):
         row = deepcopy(self._read_clock())
-        if (row["clock_valid"] is not True or row["physics_step"] != self._sim.current_time_step_index
-                or not math.isclose(float(self._sim.current_time), row["physics_step"] * DT,
+        sdk_step = self._sim.current_time_step_index
+        if row["clock_valid"] is not True or type(row["physics_step"]) is not int:
+            raise ValueError("live geometry requires a valid rod clock")
+        if previous_rod_clock is None:
+            expected_sdk_step = row["physics_step"]
+        else:
+            if row != previous_rod_clock:
+                raise ValueError("rod clock changed before the SDK-to-rod handoff")
+            expected_sdk_step = row["physics_step"] + 1
+        if (sdk_step != expected_sdk_step
+                or not math.isclose(float(self._sim.current_time), sdk_step * DT,
                                     abs_tol=2e-7, rel_tol=0)):
             raise ValueError("live geometry SDK clock differs")
         return row
@@ -66,7 +75,17 @@ class LiveGeometryReader:
         return id(view), tuple(view.prim_paths), names, paths
 
     def __call__(self):
-        before = self._clock()
+        return self._read()
+
+    def read_after_sdk_step(self, previous_rod_clock):
+        """Read new hand poses while the rod still owns its preceding boundary."""
+        if not isinstance(previous_rod_clock, dict):
+            raise ValueError("explicit preceding rod clock required")
+        return self._read(deepcopy(previous_rod_clock))
+
+    def _read(self, previous_rod_clock=None):
+        before = self._clock(previous_rod_clock)
+        sdk_step = self._sim.current_time_step_index
         all_poses, base_poses, pad_poses, centers = [], [], {}, {}
         for index, b in enumerate(self._bindings):
             if self._identity(b) != self._ids[index]:
@@ -88,13 +107,16 @@ class LiveGeometryReader:
                     xyz = wxyz[0, i, :3].copy()
                     pad_poses[name] = xyz, xyzw[0, i, 3:].astype(float)
                     centers[name] = xyz + rotation_wxyz(wxyz[0, i, 3:]) @ local_com[0, i, :3]
-        if self._clock() != before or any(self._identity(b) != self._ids[i]
+        if self._clock(previous_rod_clock) != before or any(self._identity(b) != self._ids[i]
                                           for i, b in enumerate(self._bindings)):
             raise ValueError("live geometry clock or link identity changed during readback")
         clearances, lowest = collision_clearance(np.stack(all_poses, axis=1), self._shapes)
         if not np.isfinite(clearances).all():
             raise ValueError("nonfinite full-hand clearance")
-        return dict(physics_step=before["physics_step"], root_poses_w=torch.from_numpy(np.array([base_poses])),
+        return dict(physics_step=sdk_step, rod_source_physics_step=before["physics_step"],
+                    geometry_phase=("synchronized" if previous_rod_clock is None
+                                    else "sdk_complete_rod_pending"),
+                    root_poses_w=torch.from_numpy(np.array([base_poses])),
                     clearance_m=torch.from_numpy(clearances), pad_poses=pad_poses,
                     centers_of_mass=centers, lowest_shape_index=lowest,
                     source="same_clock_physx_link_transforms_local_com_and_original_collision_envelopes",
