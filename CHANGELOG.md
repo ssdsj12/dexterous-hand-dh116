@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性 Teacher 独立实测状态投影
+
+独立 CPU 派生模型只选择原 371D 账本里已接线的 66 项，加真实结构的杆节点输入。合成数据只验现有 PPO 兼容，原模型、Checkpoint 和原生准入保留。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-measured-common-teacher-cpu.md)
+
 ## 2026-11-13 — 双手柔性 Episode 的 R0 账本重放
 
 重放核对关节、实际 SDK 目标、杆包和逐接触数据，记录原 R0 的可用性。首步接近、有效对向接触和材料锚滑移缺失均保留 NA。 Ubuntu CPU 回归 306 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-replay-cpu.md)

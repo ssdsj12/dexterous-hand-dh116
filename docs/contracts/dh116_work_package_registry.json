@@ -13493,6 +13493,84 @@
         "report": "docs/superpowers/reports/2026-11-13-flexible-r0-replay-cpu.md",
         "report_source_commit": "c220108ba2fcb7fe2a81e9f64e5b69a19c1648c3"
       }
+    },
+    "flex.f7-measured-common-teacher-cpu": {
+      "title": "柔性 Teacher 独立实测状态投影",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-hand-episode-common-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_measured_common_teacher.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_deformable_privileged_ppo.py",
+          "tests/test_dh116_deformable_rollout_admission.py",
+          "tests/test_dh116_flexible_episode_common.py"
+        ],
+        "log_sha256": "6da375a9b33a61b625d62136f5782e30d64cd696ff358a8379e24a948c8bbf8d",
+        "tested_head": "1ba8dfd075520bdb7bd81ebbaa8fdce0dc860629",
+        "stage": "cpu_verified_measured_common_model",
+        "scope": "independent_flexible_teacher_cpu_fixture_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "cpu_fixture_optimizer_updates": 1,
+        "common_ledger_size": 371,
+        "derived_model_common_inputs": 66,
+        "action_size": 24,
+        "independent_log_sha256": "8ff93c39b1790f6994759715efc4e785273d7006c07b931474e11e11c26a6216",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-measured-common-teacher-cpu.md",
+        "report_source_commit": "722e5c3a435d73bac176eb3dc70420aa86121770"
+      },
+      "last_result": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_measured_common_teacher.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_deformable_privileged_ppo.py",
+          "tests/test_dh116_deformable_rollout_admission.py",
+          "tests/test_dh116_flexible_episode_common.py"
+        ],
+        "log_sha256": "6da375a9b33a61b625d62136f5782e30d64cd696ff358a8379e24a948c8bbf8d",
+        "tested_head": "1ba8dfd075520bdb7bd81ebbaa8fdce0dc860629",
+        "stage": "cpu_verified_measured_common_model",
+        "scope": "independent_flexible_teacher_cpu_fixture_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "cpu_fixture_optimizer_updates": 1,
+        "common_ledger_size": 371,
+        "derived_model_common_inputs": 66,
+        "action_size": 24,
+        "independent_log_sha256": "8ff93c39b1790f6994759715efc4e785273d7006c07b931474e11e11c26a6216",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-measured-common-teacher-cpu.md",
+        "report_source_commit": "722e5c3a435d73bac176eb3dc70420aa86121770"
+      }
     }
   },
   "execution_target": {
