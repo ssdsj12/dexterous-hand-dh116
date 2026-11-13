@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性 R0 控制步与提前终止结算
+
+每个完整 8 子步窗口或已知提前终止只结算一次，未知来源保留空值。正式 R0 系数和训练奖励仍待原生证据。 Ubuntu CPU 回归 78 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-control-settlement.md)
+
 ## 2026-11-13 — Tripod 与 Power 独立闭合可达性检查
 
 Tripod 左右静态候选桌面净空各 2 mm，闭合仍有近端碰撞。Power 筛查保留未通过的必要可达性证据，未生成原生配方。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-power-geometry-preparation.md)

@@ -7283,6 +7283,38 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-tripod-power-geometry-preparation.md",
       "report_source_commit": "1850e2717630b03de00de3fc2e41cb9a7a378e54"
+    },
+    "flex.f7-r0-control-settlement-cpu": {
+      "passed": 78,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformable_control_step.py",
+        "tests/test_dh116_deformable_grasp_task.py",
+        "tests/test_dh116_deformable_task_budget.py",
+        "tests/test_dh116_deformable_privileged_teacher.py",
+        "tests/test_dh116_deformable_privileged_ppo.py"
+      ],
+      "log_sha256": "fc019f3025e23e5b7e81df386a47de77d9742e45408017d0b23de2a69b70278a",
+      "tested_head": "fb6fe4b563154f72ae9fffe6105bdb604a749bea",
+      "stage": "cpu_verified_control_settlement",
+      "scope": "flexible_r0_control_settlement_cpu_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "training_reward": null,
+      "fixture_sha256": "89d5d3d297c69c43bab33c7112e25560e84fd7962e1c0f0e420bea9b6e9216c6",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-r0-control-settlement.md",
+      "report_source_commit": "33e03a52ebbaf1a78e0041a326c663b7b944157c"
     }
   }
 }
