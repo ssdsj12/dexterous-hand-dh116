@@ -1,3 +1,7 @@
+## 2026-11-13 — 左 Pinch v3 Kit 启动边界
+
+CPU 子进程复现 v2 提前导入 pxr，v3 纯字节预检到 AppLauncher 仍无 USD 导入。真实 SDK 复验为独立单次配方。 Ubuntu CPU 回归 193 项通过。[报告](docs/superpowers/reports/2026-11-13-single-left-pinch-v3-import-boundary.md)
+
 ## 2026-11-13 — Tripod 联合手掌和关节几何方向
 
 90 次独立数值查询验证左右联合方向。两侧目标下降，仍有指腹端点和近端间隙未通过，不生成 Reset 提案。 Ubuntu CPU 回归 59 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-joint-root-direction.md)

@@ -8810,6 +8810,44 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-tripod-joint-root-direction.md",
       "report_source_commit": "9efccfe4ce1c0ab160660b5645c82749e196a2b4"
+    },
+    "flex.f4-pinch-left-v3-preparation-cpu": {
+      "passed": 193,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_v3.py",
+        "tests/test_dh116_pinch_v2.py",
+        "tests/test_pinch_initial_geometry_v2.py",
+        "tests/test_deformable_grasp_runtime.py",
+        "tests/test_dh116_pinch_scheduler.py",
+        "tests/test_dh116_physx_lifetime_frame_v2.py",
+        "tests/test_dh116_physx_lifetime_probe.py",
+        "tests/test_dh116_physx_lifetime_validation.py",
+        "tests/test_dh116_physx_lifetime_scheduler.py",
+        "tests/test_dh116_physx_lifetime_debugger_stopped.py",
+        "tests/test_dh116_deformx_pair_capture.py"
+      ],
+      "log_sha256": "53b1e50019dc339751595a327c978561d7222fac4025e25353fed65875b2fbd4",
+      "tested_head": "87a4e1bd2da60f0f94e0c91b0730d5c792b6442d",
+      "stage": "cpu_verified_frozen_pinch_v3_startup",
+      "scope": "single_left_free_rod_lifecycle_readback_preparation",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "command_spec_sha256": "a7e2bedc60969037198db8fe2b5f40214de516f9734d1a5dda2f81390599788a",
+      "code_config_sha256": "113882bbab640846e6b3d3d5042bdfa6487ddbffbd497869d71acd8e11eb8362",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-single-left-pinch-v3-import-boundary.md",
+      "report_source_commit": "64417863c37129c4b139e4701e8a210bca72ea84"
     }
   }
 }
