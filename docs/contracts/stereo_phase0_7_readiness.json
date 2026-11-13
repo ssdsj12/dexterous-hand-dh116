@@ -8221,6 +8221,47 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-right-pinch-closure-screen.md",
       "report_source_commit": "5b8d068aa2f72e1123d53850a5c282649d2bf70a"
+    },
+    "flex.f7-dual-hand-reset-cpu": {
+      "passed": 312,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_deformable_bimanual_step.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_deformable_control_step.py",
+        "tests/test_dh116_deformable_grasp_task.py",
+        "tests/test_dh116_deformable_task_budget.py",
+        "tests/test_deformable_grasp_runtime.py",
+        "tests/test_joint_target_readback.py",
+        "tests/test_dh116_palm_mount.py",
+        "tests/test_free_wrist_mount.py",
+        "tests/test_dh116_tensor_world.py",
+        "tests/test_dh116_contact_effort.py",
+        "tests/test_dh116_flexible_solver_clock.py"
+      ],
+      "log_sha256": "dfa16a3e4bbe6b54059c90626e6be8b63034b297397364674800a2339bb84f17",
+      "tested_head": "e523957dca2ee826b18648055d777e11249447f1",
+      "stage": "cpu_verified_reset_transaction",
+      "scope": "dual_hand_in_place_reset_cpu",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "known_baseline_failures": 4,
+      "manifest_sha256": "229b4720ad0cc76725d3b50593e38f2f4f6dfe7bc30b0ecd534ba4eb07c956bf",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-hand-reset-cpu.md",
+      "report_source_commit": "779c5caab030154291233a17f6f7fddabb1eb23b"
     }
   }
 }

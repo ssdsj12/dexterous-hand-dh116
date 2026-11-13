@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手同杆原地 Reset 事务
+
+核对同一根杆的 Reset 身份、双手实际关节与目标读回，并保留未知力学字段。四项既有 root pose fixture 失败已独立复现。实际 PhysX Reset 和 R0 仍待验证。 Ubuntu CPU 回归 312 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-reset-cpu.md)
+
 ## 2026-11-13 — 右手 Pinch 独立闭合筛查
 
 450 个右侧候选完成，唯一严格端点候选在连续 finger13 近端净空门被拒，保留失败和断点证据。 Ubuntu CPU 回归 38 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-closure-screen.md)
