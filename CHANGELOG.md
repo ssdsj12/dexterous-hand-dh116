@@ -1,3 +1,7 @@
+## 2026-11-13 — PhysX Tensor View 退出栈与所有权审计
+
+GDB 定位到 SimulationView 释放路径，区分管理器 view 清空、Python 所有者、CUDA 同步和外层退出；新增只读引用诊断。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-tensor-lifetime-audit.md)
+
 ## 2026-11-13 — WireSeg depth18 精确配对与双任务恢复预检
 
 完整分片达到 10/148，depth18 新增 360 对；分割与深度断点各 128 次历史更新，实际新增优化更新为 0。 Ubuntu CPU 回归 84 项通过。[报告](docs/superpowers/reports/2026-11-13-wireseg-paired-download-separate-resume-preflight.md)

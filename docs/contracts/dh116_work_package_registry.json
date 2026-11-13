@@ -5491,7 +5491,7 @@
         "flex.f4-right-contact-native"
       ],
       "status": "blocked",
-      "reason": "The free-rod left Pinch candidate stopped at first measurement and has no qualified contact. Prepare a nonintersecting pose and diagnose tensor teardown before new native scope.",
+      "reason": "Pinch teardown archived GDB identifies SimulationView destruction path. Retainer unresolved and contact pair evidence unavailable. Use new geometry and owner observation before new native scope.",
       "blocker_kind": "native_evidence_required",
       "preparation_package": "flex.f4-free-pinch-runtime-preparation"
     },
@@ -9809,6 +9809,78 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-13-wireseg-paired-download-separate-resume-preflight.md",
         "report_source_commit": "dc0178ea8f45be6ca9d03bb5f648393cd7e14e39"
+      }
+    },
+    "flex.f4-physx-tensor-lifetime-evidence": {
+      "title": "PhysX Tensor View 退出栈与所有权审计",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-free-pinch-runtime-preparation"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 74,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_physx_tensor_lifetime.py",
+          "tests/test_deformable_grasp_runtime.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_pinch_scheduler.py",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "c98fbeabbc6cb450631f5aaf0a853b36060b5c8afb404d1f319c61cf7f14599b",
+        "tested_head": "bac024fcfdcf2e53bf3bd2fee0b63ab125384473",
+        "stage": "cpu_verified_and_archived_native_evidence_audit",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "real_training_updates": 0,
+        "root_cause_proven": false,
+        "scope": "archived_physics_tensor_owner_and_gdb_stack",
+        "audit_sha256": "5ffa06e55b92bdddea1391472ed22abf936156f8b84c036237a0ae6d9f8ef455",
+        "installed_sdk_sha256": "63ab652878e9ca6c32646965be4a7b700a87cb8e0299d0180b6bf574e64158a3",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-physx-tensor-lifetime-audit.md",
+        "report_source_commit": "b901fe0c09b1b54e33e0e87666262253b2fbabec"
+      },
+      "last_result": {
+        "passed": 74,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_physx_tensor_lifetime.py",
+          "tests/test_deformable_grasp_runtime.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_pinch_scheduler.py",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "c98fbeabbc6cb450631f5aaf0a853b36060b5c8afb404d1f319c61cf7f14599b",
+        "tested_head": "bac024fcfdcf2e53bf3bd2fee0b63ab125384473",
+        "stage": "cpu_verified_and_archived_native_evidence_audit",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "real_training_updates": 0,
+        "root_cause_proven": false,
+        "scope": "archived_physics_tensor_owner_and_gdb_stack",
+        "audit_sha256": "5ffa06e55b92bdddea1391472ed22abf936156f8b84c036237a0ae6d9f8ef455",
+        "installed_sdk_sha256": "63ab652878e9ca6c32646965be4a7b700a87cb8e0299d0180b6bf574e64158a3",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-physx-tensor-lifetime-audit.md",
+        "report_source_commit": "b901fe0c09b1b54e33e0e87666262253b2fbabec"
       }
     }
   },
