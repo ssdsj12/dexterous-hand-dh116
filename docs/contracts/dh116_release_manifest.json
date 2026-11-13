@@ -10016,6 +10016,49 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 81,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_cosserat_material_marker_reference.py",
+        "tests/test_contact_material_observability.py",
+        "tests/test_deformable_pair_source_basis.py",
+        "tests/test_dh116_deformable_grasp_task.py"
+      ],
+      "log_sha256": "f3732373389e9578b0de2dbf3e976a7a9910aa44a52f46a283ba21c7b8cd1c1b",
+      "tested_head": "b94667e00019416c1ca1b6809dce2dff11673b6f",
+      "scope": "cosserat_fixed_marker_kinematic_reference_cpu_only",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "optimizer_updates": 0,
+      "material_slip_available": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-cosserat-material-marker-reference.md",
+      "report_source_commit": "444651e03255e700fb56840e3a5de81e1c55a919",
+      "package": "flex.f7-cosserat-material-marker-cpu",
+      "commit": "52633ac58279934805cdf34c33e6cac2f5f052b5",
+      "parent": "b94667e00019416c1ca1b6809dce2dff11673b6f",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-cosserat-material-marker-reference.md",
+        "src/go2_pvcnn/control/dh116/tabletop_cosserat_material_marker_reference.py",
+        "tests/test_cosserat_material_marker_reference.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
