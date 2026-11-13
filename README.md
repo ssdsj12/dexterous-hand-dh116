@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手原生 Reset 账本与 SDK 输入回归
+
+复用双手真实 Reset 的 17DOF、23 body 和原安装 SDK 读取实现，回归 24D 动作路径及目标和实测分离。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-mounted-sdk-boundary-cpu.md)
+
 ## 2026-11-13 — 双手 Pinch 零动作区间 v3 原生复验
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-v3-native.md)。

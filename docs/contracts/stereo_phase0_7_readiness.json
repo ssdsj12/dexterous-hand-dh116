@@ -10022,6 +10022,32 @@
       },
       "status": "failed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-v3-native.md"
+    },
+    "flex.f7-dual-mounted-sdk-boundary-cpu": {
+      "passed": 68,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_mounted_sdk_boundary.py",
+        "tests/test_dh116_teacher_mounted_wrist_source.py",
+        "tests/test_dh116_deformable_bimanual_step.py",
+        "tests/test_dh116_flexible_physical_exchange.py"
+      ],
+      "log_sha256": "0eb14ca1dd2641bba823d4dfe63e74b93786cb27d80c59354d91522f298d7f80",
+      "tested_head": "baa4d5b165e7568fa6574aa6b892e941bc43931b",
+      "native_qualification": false,
+      "qualification_scope": "original_mounted_sdk_cpu_regression_with_native_reset_ledger",
+      "source_ledger_sha256": "36cff198922a48525cedfcbf5bd68c3fff7d2cdbbe44eec2ca1ba9c948bb0168",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-mounted-sdk-boundary-cpu.md",
+      "report_source_commit": "99cc76d2a2d33a38c220bbd4d5cc7afc36aa813d"
     }
   }
 }
