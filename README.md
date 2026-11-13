@@ -1,3 +1,7 @@
+## 2026-11-13 — 60 Hz 双手控制与 480 Hz 柔性物理交换
+
+单环境每控制步最多 8 个物理子步，接通原动作保护、真实 SDK 路由和同杆反力时差。CPU double 验证，场景装配和正式 R0 仍待资格。 Ubuntu CPU 回归 117 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-physical-exchange.md)
+
 ## 2026-11-13 — 柔性双手腕部原桌面安全投影
 
 复用原 2.1 mm 净空、腕速度约束、内禀旋转及撤回不安全下压目标。场景全手净空与原生执行仍待接入。 Ubuntu CPU 回归 104 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-wrist-projection.md)

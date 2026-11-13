@@ -7665,6 +7665,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-flexible-wrist-projection.md",
       "report_source_commit": "8f501e59e6f544c4830f62e848f4a51f259ea774"
+    },
+    "flex.f7-physical-exchange-cpu": {
+      "passed": 117,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_flexible_wrist_projection.py",
+        "tests/test_dh116_deformable_bimanual_step.py",
+        "tests/test_dh116_deformable_control_step.py",
+        "tests/test_dh116_deformable_grasp_task.py"
+      ],
+      "log_sha256": "8af68b01bce480df08643f8ef9c6420e98b13ab1084d3d9c1d754494c7373178",
+      "tested_head": "3c576d71ae569da8e2797a7ccd0cb21a31d927e8",
+      "stage": "cpu_verified_physical_exchange_composition",
+      "scope": "single_environment_flexible_exchange_cpu",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "control_hz": 60,
+      "physics_hz": 480,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-physical-exchange.md",
+      "report_source_commit": "c793063a94cd05de85bc520f50db02a49d7146f3"
     }
   }
 }
