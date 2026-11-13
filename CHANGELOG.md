@@ -1,3 +1,7 @@
+## 2026-11-13 — 左 Pinch v3 原生启动与单手读回
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v3-native.md)。
+
 ## 2026-11-13 — 左 Pinch v3 Kit 启动边界
 
 CPU 子进程复现 v2 提前导入 pxr，v3 纯字节预检到 AppLauncher 仍无 USD 导入。真实 SDK 复验为独立单次配方。 Ubuntu CPU 回归 193 项通过。[报告](docs/superpowers/reports/2026-11-13-single-left-pinch-v3-import-boundary.md)
