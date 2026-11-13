@@ -13984,6 +13984,58 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 93,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_surface_registration.py",
+        "tests/test_dh116_right_pinch_measured_direction.py",
+        "tests/test_dh116_polyline_support_certificate.py",
+        "tests/test_dh116_pinch_closure_margin.py",
+        "tests/test_dh116_pinch_rod_axis_clearance.py",
+        "tests/test_dh116_pinch_segment_geometry.py"
+      ],
+      "log_sha256": "ccd29cb6525c367bc03e111f74ffa969ddc85dfba0386e6456285f85a951212f",
+      "tested_head": "cc680a8df4e73db8be5625b2943af284c4d97c2f",
+      "kind": "cpu_owned_surface_registration",
+      "cpu_full_passed": 93,
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "static_path_passed": false,
+      "geometry_blocked": true,
+      "fk_evaluations": 103,
+      "endpoint_candidates_passed": 0,
+      "audit_result": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/right-surface-registration-20261113-NWCSlfLI/run01/result.json",
+      "audit_sha256": "ba47c60cd99ac88dd818ff41bc8de65990e1db9a262f35ea1e8515c461c1c8c4",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-right-pinch-surface-registration.md",
+      "report_source_commit": "d92170a575ec6508af82aa54a5537240e35d18c1",
+      "package": "flex.f8-right-pinch-surface-registration-cpu",
+      "commit": "da639f2b28a9517ce56f89f4cbd8ef2526438a69",
+      "parent": "cc680a8df4e73db8be5625b2943af284c4d97c2f",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/plans/2026-11-13-right-pinch-surface-registration.md",
+        "docs/superpowers/reports/2026-11-13-right-pinch-surface-registration.md",
+        "scripts/solve_dh116_right_pinch_surface_registration.py",
+        "tests/test_dh116_surface_registration.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
