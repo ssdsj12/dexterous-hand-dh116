@@ -1,3 +1,7 @@
+## 2026-11-13 — 左Pinch234步原生账本独立复审与来源修复
+
+原生234/234步自然exit0、无保护失败；修复旧version路由与跨Worktree来源路径后，只读完整账本复审通过。左双指同时接触85.9375ms，原failed回执不改，Teacher0/3。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-segment-postexit-reaudit.md)
+
 ## 2026-11-13 — Pinch三维逐段证明单次原生单因素复验
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-pinch-segment-contact-native.md)。
