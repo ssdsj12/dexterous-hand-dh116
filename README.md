@@ -1,3 +1,7 @@
+## 2026-11-13 — 真实双手 Pinch v4 账本的 R0 离线重放
+
+重放真实 SDK3–10 的8行和同钟杆状态，原CLI磁盘重放一致。5项奖励来源仍为NA，fixture系数只用于诊断，未授予R0训练资格；新增原生步数和PPO更新均为0。 Ubuntu CPU 回归 62 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-v4-r0-native-replay.md)
+
 ## 2026-11-13 — 冻结双手 Pinch 单区间动作回读 profile
 
 绑定已核验 v4 父账本和独立双手初态，冻结零动作8步后一次手指动作8步的离线 profile；本包原生步数与 PPO 更新均为0。预测间隙只作有条件预检，仍需逐步实测几何保护。 Ubuntu CPU 回归 75 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-eight-step-readback-profile.md)

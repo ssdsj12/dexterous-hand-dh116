@@ -17295,6 +17295,97 @@
         "report": "docs/superpowers/reports/2026-11-13-dual-pinch-eight-step-readback-profile.md",
         "report_source_commit": "68b646753ec2c1afc93d78116d8fc806df09672d"
       }
+    },
+    "flex.f7-dual-v4-r0-native-ledger-replay": {
+      "title": "真实双手 Pinch v4 账本的 R0 离线重放",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-hand-r0-replay-cpu",
+        "flex.f7-dual-pinch-zero-interval-v4-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 62,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_v4_r0_native_replay.py",
+          "tests/test_deformable_r0_replay.py",
+          "tests/test_dh116_deformable_control_step.py"
+        ],
+        "log_sha256": "8b7dfa9e418276a4cbc8dbfcae73d4c1ac90c1024045e88667c32808cffff332",
+        "tested_head": "55cc430d06ba32b980360145cd5db8f29dfd8e67",
+        "kind": "cpu_with_actual_native_ledger_offline_replay",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "original_ledger_sha256": "ead0dbf2c15b83864a1c440848ed9cf159b86c88a6ade0e4275208efebcf778c",
+        "replay_receipt_sha256": "1489d19c86f7eb19731f7b59c09fd1e6d01e721219fdb8be91bff80941ced5b8",
+        "measured_rows_replayed": 8,
+        "settled_control_windows": 1,
+        "raw_hand_pair_samples": 0,
+        "raw_rod_table_pair_samples": 3936,
+        "training_reward": null,
+        "blocked_terms": [
+          "approach_progress",
+          "lift_progress",
+          "hold_progress",
+          "material_anchor_slip",
+          "instability"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-v4-r0-native-replay.md",
+        "report_source_commit": "28072e3658caa0a8b7e81851365f9c8401e519dd"
+      },
+      "last_result": {
+        "passed": 62,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_v4_r0_native_replay.py",
+          "tests/test_deformable_r0_replay.py",
+          "tests/test_dh116_deformable_control_step.py"
+        ],
+        "log_sha256": "8b7dfa9e418276a4cbc8dbfcae73d4c1ac90c1024045e88667c32808cffff332",
+        "tested_head": "55cc430d06ba32b980360145cd5db8f29dfd8e67",
+        "kind": "cpu_with_actual_native_ledger_offline_replay",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "original_ledger_sha256": "ead0dbf2c15b83864a1c440848ed9cf159b86c88a6ade0e4275208efebcf778c",
+        "replay_receipt_sha256": "1489d19c86f7eb19731f7b59c09fd1e6d01e721219fdb8be91bff80941ced5b8",
+        "measured_rows_replayed": 8,
+        "settled_control_windows": 1,
+        "raw_hand_pair_samples": 0,
+        "raw_rod_table_pair_samples": 3936,
+        "training_reward": null,
+        "blocked_terms": [
+          "approach_progress",
+          "lift_progress",
+          "hold_progress",
+          "material_anchor_slip",
+          "instability"
+        ],
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-v4-r0-native-replay.md",
+        "report_source_commit": "28072e3658caa0a8b7e81851365f9c8401e519dd"
+      }
     }
   },
   "execution_target": {
