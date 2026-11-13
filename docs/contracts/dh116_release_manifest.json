@@ -12083,6 +12083,55 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 43,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_yaw_witness.py",
+        "tests/test_dh116_pinch_static_yaw.py",
+        "tests/test_dh116_pinch_trust_region.py"
+      ],
+      "log_sha256": "83aa0ea5248533a1296a341cc6c02f29ba720c4b43f3e2e9f197479dd13a8c0c",
+      "tested_head": "a919695c4aca1dd8ba7266c282308a7f5df49a8b",
+      "kind": "cpu_source_convex_envelope_feasible_pair_witness",
+      "status": "passed",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualification": false,
+      "static_reset_qualified": false,
+      "witness_reconstructions": 16,
+      "overlap_witnesses": 10,
+      "inconclusive": 6,
+      "new_search_candidates": 0,
+      "result_path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/pinch-yaw-witness-20261113-Nhixzu/run01/result.json",
+      "result_sha256": "61130374e62c82aa796b5b0bfbce95a92e015d0ae12ee3ad4435131bc37df715",
+      "next": "coupled palm placement and bounded finger closure",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-yaw-convex-witness.md",
+      "report_source_commit": "062a4a943e0bdba98910b7b0553ead5a70fd821e",
+      "package": "flex.f7-pinch-yaw-convex-witness-cpu",
+      "commit": "e5f0072c5b081eb6852752f6644a6cdc1b0988be",
+      "parent": "a919695c4aca1dd8ba7266c282308a7f5df49a8b",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-pinch-yaw-convex-witness.md",
+        "scripts/audit_dh116_pinch_yaw_witness.py",
+        "tests/test_dh116_pinch_yaw_witness.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
