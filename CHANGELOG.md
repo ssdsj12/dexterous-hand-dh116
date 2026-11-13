@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性求解器参数getter与配置来源分离
+
+读取真实mass/drag/damping/iterations API的独立旁路已实现，配置、getter和未知材料量分离。修复全局/逐mesh摩擦混淆及读回期间stream变化漏检；72项CPU回归通过。本包0原生步、0PPO，原生接入待新独立配方，不借用上批材料方向资格，Teacher仍0/3。 Ubuntu CPU 回归 72 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-parameter-provenance-readback.md)
+
 ## 2026-11-13 — 真实材料方向端点与原动作路径只读对照
 
 17组真实reset/端点读回通过，原生18步自然exit0。与前次原动作运行的16行杆节点、左右q/qd及SDK目标逐值一致；只读分析不新增原生步。仍为0手指—杆接触，材料转角不是接触滑移，三抓法Teacher均未开放。 Ubuntu CPU 回归 63 项通过。[报告](docs/superpowers/reports/2026-11-13-native-director-endpoint-readback.md)
