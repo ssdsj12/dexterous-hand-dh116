@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 同杆 Reset 提案
+
+左右静态连续净空 2.101095 / 2.112018 mm，均过原策略门，独立手包络沿杆轴至少相隔 295.679 mm。实际同杆 Reset 与接触仍未验证。 Ubuntu CPU 回归 31 项通过。[报告](docs/superpowers/reports/2026-11-13-paired-pinch-reset-preflight.md)
+
 ## 2026-11-13 — 左 Pinch v2 单手自由杆读回和自然退出
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v2-native.md)。

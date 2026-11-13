@@ -8602,6 +8602,37 @@
       },
       "status": "failed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v2-native.md"
+    },
+    "flex.f8-paired-pinch-reset-preflight-cpu": {
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_paired_pinch_reset_preflight.py",
+        "tests/test_dh116_right_pinch_runtime_clearance.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_dh116_dual_hand_episode.py"
+      ],
+      "log_sha256": "ec3270f0b568c0bc117365773c4698901991d55777b2521e244f997f9304cea7",
+      "tested_head": "edc8d8688e0904edeec72d58dc3ba188baa6e6d6",
+      "stage": "cpu_verified_paired_pinch_reset_proposal",
+      "scope": "paired_pinch_static_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "result_sha256": "996bdb33ed2d6f9abddb9171245142b5147af222b976fc799b5f89711c4f6a37",
+      "reset_seed_sha256": "647247fe31219f04337b6f6e29ddefaa2c81bcee27dbed8dd3d6f962e406230d",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-paired-pinch-reset-preflight.md",
+      "report_source_commit": "4116bf9b6207163d20aca6b0d1fdd31622da0e9d"
     }
   }
 }
