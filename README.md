@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch原24D动作与逐步执行目标合同
+
+232个理想跟踪CPU步与原控制函数对齐；新增独立逐步目标校验，保留原关节、Mimic、桌面和接触保护。CPU结果不冒充SDK读回，未执行原生或PPO。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-action-contract.md)
+
 ## 2026-11-13 — 右Pinch合法初态与连续接近路径
 
 独立抬高初始掌根0.5mm、受限三关节接近；161点加连续余量通过原桌面/避杆/深度门槛。107项CPU回归通过，实际SDK/Reset/接触仍待原生，未扩用旧预算。 Ubuntu CPU 回归 107 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-owned-approach.md)
