@@ -1,3 +1,7 @@
+## 2026-11-13 — DeformX 独立参数接口零步 CUDA 读回
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-native-parameter-getters-native.md)。
+
 ## 2026-11-13 — 独立 DeformX 原生参数只读接口与零步验证准备
 
 独立cp310/SM89编译通过，87项CPU回归通过；修复源码审计子进程的挂载目录信任。新增设备参数读回及来源区分，旧后端SHA未变。零物理步读回配方已冻结，尚未执行；Teacher仍未准入。 Ubuntu CPU 回归 87 项通过。[报告](docs/superpowers/reports/2026-11-13-deformx-native-parameter-getters.md)
