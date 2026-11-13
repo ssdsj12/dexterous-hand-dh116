@@ -7599,6 +7599,41 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-dual-hand-rod-runtime.md",
       "report_source_commit": "2eb2d203219d8408d91556bc5336b754ec92b8ef"
+    },
+    "flex.f7-bimanual-action-connection-cpu": {
+      "passed": 174,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformable_bimanual_step.py",
+        "tests/test_joint_target_readback.py",
+        "tests/test_dh116_teacher_preaction_readback.py",
+        "tests/test_dh116_palm_mount.py",
+        "tests/test_surface_contract.py",
+        "tests/test_free_wrist_grasp.py",
+        "tests/test_free_wrist_mount.py",
+        "tests/test_bimanual_physical_action_adapter.py",
+        "tests/test_deformable_grasp_runtime.py"
+      ],
+      "log_sha256": "ace3e32ce7ae1ecc7e78dc8512e9a2058ae0f837a118f81aa504829c671fa9f4",
+      "tested_head": "792998a64d3582a1c45f27c3281cbf970671bfc3",
+      "stage": "cpu_verified_api_composition",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "scope": "bimanual_native_sdk_api_boundary_cpu",
+      "action_size": 24,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-deformable-bimanual-step-cpu.md",
+      "report_source_commit": "8f40d8d3f04d81678461b635f6ad9f5fb67458f7"
     }
   }
 }

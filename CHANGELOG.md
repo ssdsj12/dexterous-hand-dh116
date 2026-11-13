@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 24D 控制边界与 PhysX 目标读回
+
+使用原关节和腕部动作语义，核验左右实例、实际目标、SDK 和杆时钟。原桌面投影接入和原生执行仍待验证。 Ubuntu CPU 回归 174 项通过。[报告](docs/superpowers/reports/2026-11-13-deformable-bimanual-step-cpu.md)
+
 ## 2026-11-13 — 双手同杆运行时与 10 指腹反作用力路由
 
 接通双手槽位和世界坐标反作用力路由，校验真实实例身份、单步时钟和 Reset。CUDA 用例在 CPU 回归中跳过，待原生标定。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-rod-runtime.md)
