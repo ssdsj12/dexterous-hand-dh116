@@ -12693,6 +12693,66 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 49,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_r0_applicability.py",
+        "tests/test_dh116_r0_applicability_history.py",
+        "tests/test_dh116_native_parameter_r0_replay.py",
+        "tests/test_dh116_r0_reward_domain.py"
+      ],
+      "log_sha256": "3e14c2a09f446735839ca547482d7f74efd83259df7802838ce645bbb0344e5d",
+      "tested_head": "36e83f7e2bd663acf18d22ae109b1cc1f008a1a6",
+      "kind": "cpu_regression_and_readonly_native_ledger_replay",
+      "cpu_full_passed": 122,
+      "cpu_additional_passed": 9,
+      "unique_test_count": 131,
+      "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/r0-applicability-regression-xkXYCO/pytest.log",
+      "replay_test_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/r0-replay-tests-AxkXiS/pytest.log",
+      "historical_red_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/r0-history-red-7NT2Bw/pytest.log",
+      "comparison": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/r0-actual-parameter-replay-kfwV9L/comparison.json",
+      "receipt_sha256": "f0767fc970b02d0e4024f57558982eb01bd3c7c6a9698e2289adef71f4974901",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "r0_native_qualified": false,
+      "remaining_blocked_terms": [
+        "approach_progress",
+        "hold_progress",
+        "instability"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-r0-applicability.md",
+      "report_source_commit": "4c0b11c45f44b4595d8dc70cd02c1aeeab98827b",
+      "package": "flex.f7-r0-applicability-cpu",
+      "commit": "1f587245868fa6e2e75872e575a9c7c733f2cd1d",
+      "parent": "36e83f7e2bd663acf18d22ae109b1cc1f008a1a6",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_tasks/flexible_r0_applicability_diagnostic_v2.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/plans/2026-11-13-flexible-r0-applicability.md",
+        "docs/superpowers/reports/2026-11-13-flexible-r0-applicability.md",
+        "scripts/replay_dh116_native_parameter_r0.py",
+        "src/go2_pvcnn/control/dh116/tabletop_deformable_r0_applicability.py",
+        "tests/test_dh116_native_parameter_r0_replay.py",
+        "tests/test_dh116_r0_applicability.py",
+        "tests/test_dh116_r0_applicability_history.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
