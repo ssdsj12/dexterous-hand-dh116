@@ -12142,6 +12142,73 @@
       "stage": "prepared_waiting_exact_native_approval",
       "reason": "Fixed registered worker entry and solver error check; requires new exact approval.",
       "scheduler_entrypoint": "scripts/run_dh116_deformx_pair_work_packages_v2.py"
+    },
+    "flex.f7-live-geometry-reader-cpu": {
+      "title": "柔性 24D 控制的同钟几何读回",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-dual-hand-scene-preparation-cpu",
+        "flex.f7-physical-exchange-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_live_geometry.py",
+          "tests/test_dh116_flexible_physical_exchange.py",
+          "tests/test_dh116_flexible_wrist_projection.py",
+          "tests/test_dh116_deformable_bimanual_step.py"
+        ],
+        "log_sha256": "600e970415c484ac20ba1ae2c5f205d86db94c5b4da8b983f02a16a62ef25b44",
+        "tested_head": "ae7d756f0a40b6235232060731dda5816db05920",
+        "stage": "cpu_verified_geometry_exchange_reader",
+        "scope": "same_clock_hand_geometry_cpu",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-live-geometry.md",
+        "report_source_commit": "ed11c2db7b6c55bc167e31812e580dc11a8ae7b8"
+      },
+      "last_result": {
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_live_geometry.py",
+          "tests/test_dh116_flexible_physical_exchange.py",
+          "tests/test_dh116_flexible_wrist_projection.py",
+          "tests/test_dh116_deformable_bimanual_step.py"
+        ],
+        "log_sha256": "600e970415c484ac20ba1ae2c5f205d86db94c5b4da8b983f02a16a62ef25b44",
+        "tested_head": "ae7d756f0a40b6235232060731dda5816db05920",
+        "stage": "cpu_verified_geometry_exchange_reader",
+        "scope": "same_clock_hand_geometry_cpu",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-live-geometry.md",
+        "report_source_commit": "ed11c2db7b6c55bc167e31812e580dc11a8ae7b8"
+      }
     }
   },
   "execution_target": {

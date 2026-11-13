@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性 24D 控制的同钟几何读回
+
+用实测 link pose 和局部 COM 接入全手源包络净空，保持原两侧几何身份；SDK double 回归通过，原生尚未验证。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-live-geometry.md)
+
 ## 2026-11-13 — DeformX 接触对校准 worker 注册路径修复
 
 从真实失败 intent 定位证据根层级，真实 CPU worker 子进程现通过授权到构造边界，并校验 solver 状态。旧失败保留。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-13-deformx-pair-worker-v2.md)

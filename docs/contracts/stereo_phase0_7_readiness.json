@@ -8114,6 +8114,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-deformx-pair-worker-v2.md",
       "report_source_commit": "81b9dbff17cc2b6ee68a80b5214841aec12f8b6f"
+    },
+    "flex.f7-live-geometry-reader-cpu": {
+      "passed": 43,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_flexible_live_geometry.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_flexible_wrist_projection.py",
+        "tests/test_dh116_deformable_bimanual_step.py"
+      ],
+      "log_sha256": "600e970415c484ac20ba1ae2c5f205d86db94c5b4da8b983f02a16a62ef25b44",
+      "tested_head": "ae7d756f0a40b6235232060731dda5816db05920",
+      "stage": "cpu_verified_geometry_exchange_reader",
+      "scope": "same_clock_hand_geometry_cpu",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-live-geometry.md",
+      "report_source_commit": "ed11c2db7b6c55bc167e31812e580dc11a8ae7b8"
     }
   }
 }
