@@ -1,3 +1,7 @@
+## 2026-11-13 — 独立原生 getter 后端接入双手实际任务
+
+146项合并CPU回归通过；补充真实scheduler加载和跨checkout指纹回归后，最终37项通过（累计149个独立测试）。首次集成35通过1失败：本地配置绝对路径污染指纹，已修复并保留失败日志。新配方18步/1环境/0PPO/180秒尚未执行；Teacher仍0/3。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-13-native-parameter-task-preflight.md)
+
 ## 2026-11-13 — 原生参数与真实 Reset／480Hz 时钟绑定
 
 123项CPU回归通过；核对72个后端源码，除只读getter外均与原后端一致。参数读回绑定真实rod、episode、Reset、SDK及solver时钟，保留不确定度和晋级状态。未改默认后端、奖励和控制器；独立任务原生接入待下一工作包。 Ubuntu CPU 回归 123 项通过。[报告](docs/superpowers/reports/2026-11-13-native-parameter-endpoint-adapter.md)

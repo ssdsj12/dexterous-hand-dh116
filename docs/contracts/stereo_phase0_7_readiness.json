@@ -11600,6 +11600,45 @@
       "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/native-parameter-endpoints-regression-gZzmr7/pytest.log",
       "report": "docs/superpowers/reports/2026-11-13-native-parameter-endpoint-adapter.md",
       "report_source_commit": "85ac438af856d1bc66c7930e8c087b95349ea153"
+    },
+    "flex.f7-native-parameter-task-cpu": {
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_native_parameter_task_worker.py",
+        "tests/test_dh116_native_parameter_endpoints.py"
+      ],
+      "log_sha256": "8ed67870ff03c77b12fb75fa63b9e4b5d45f4ba50d479c402c275ca07d6ff815",
+      "tested_head": "95ecd3008ab4863a4e41879df6c3b4de69ee54ad",
+      "kind": "cpu_owner_sdk_doubles_and_scheduler_subprocess",
+      "cpu_full_passed": 146,
+      "cpu_full_failed": 0,
+      "cpu_final_worker_passed": 19,
+      "unique_test_count": 149,
+      "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/native-parameter-task-regression-hrj7MD/pytest.log",
+      "worker_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/native-parameter-task-final-worker-wTsnYO/pytest.log",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "worker": "1e91af45356148106e49643c1194a2ab98bc62333bb426c10fb3ecbfcb9bfe12",
+      "command_spec_sha256": "81accf84f883f51c4a0425c5e94adf41ba34034faeb511d96e739b9948171346",
+      "code_config_sha256": "bc73ea4aba22065b14830640743d21f1133eee28bedd0821fa191320f3a8ceb3",
+      "final_fix_passed": 37,
+      "final_fix_failed": 0,
+      "fix_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/native-parameter-task-location-fix-PWRFKX/pytest.log",
+      "first_integration_failed": 1,
+      "first_integration_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flex.f7-native-parameter-task-cpu-gza3f5t9/pytest.log",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-native-parameter-task-preflight.md",
+      "report_source_commit": "1279aba6a137b3dafd7a0789f52de1e7298ede72"
     }
   }
 }
