@@ -11766,6 +11766,83 @@
         "report": "docs/superpowers/reports/2026-11-13-deformx-solver-clock.md",
         "report_source_commit": "2c8e6e3c430acd40f3564264c9442031afee4fb4"
       }
+    },
+    "flex.f4-dual-hand-scene-preparation-cpu": {
+      "title": "柔性双手原 USD 场景装配与几何身份",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-dual-hand-rod-runtime-cpu",
+        "flex.f7-bimanual-action-connection-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_hand_scene_preparation.py",
+          "tests/test_dh116_deformable_bimanual_step.py",
+          "tests/test_dh116_flexible_physical_exchange.py",
+          "tests/test_dh116_flexible_wrist_projection.py",
+          "tests/test_dh116_flexible_solver_clock.py"
+        ],
+        "log_sha256": "50ae6c3512eb2f3edab80e3d5878dba198de9b6a5dd119496c31e1aea1c1d3c8",
+        "tested_head": "8a9b26759c92e880ad726075f6637aa1bc8feec0",
+        "stage": "cpu_verified_actual_usd_geometry",
+        "scope": "dual_hand_scene_assembly_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "source_colliders": 34,
+        "soft_pads": 10,
+        "wrist_joints": 12,
+        "preparation_sha256": "b6de00de1266fe645416dd47deb9f95a56f00cd66d36d07621c9515fc66ca844",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-hand-scene-preparation-cpu.md",
+        "report_source_commit": "37279b763d8f55c1de37df7f45bb3a7acb006b28"
+      },
+      "last_result": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_hand_scene_preparation.py",
+          "tests/test_dh116_deformable_bimanual_step.py",
+          "tests/test_dh116_flexible_physical_exchange.py",
+          "tests/test_dh116_flexible_wrist_projection.py",
+          "tests/test_dh116_flexible_solver_clock.py"
+        ],
+        "log_sha256": "50ae6c3512eb2f3edab80e3d5878dba198de9b6a5dd119496c31e1aea1c1d3c8",
+        "tested_head": "8a9b26759c92e880ad726075f6637aa1bc8feec0",
+        "stage": "cpu_verified_actual_usd_geometry",
+        "scope": "dual_hand_scene_assembly_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "source_colliders": 34,
+        "soft_pads": 10,
+        "wrist_joints": 12,
+        "preparation_sha256": "b6de00de1266fe645416dd47deb9f95a56f00cd66d36d07621c9515fc66ca844",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-hand-scene-preparation-cpu.md",
+        "report_source_commit": "37279b763d8f55c1de37df7f45bb3a7acb006b28"
+      }
     }
   },
   "execution_target": {

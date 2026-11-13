@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性双手原 USD 场景装配与几何身份
+
+复用原双 USD、腕驱动和桌面，离线核对 34 个碰撞体、10 个软指腹、12 个腕关节和两侧 SDF。实际环境启动与后验 cooked 校验仍待验证。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-scene-preparation-cpu.md)
+
 ## 2026-11-13 — DeformX PPO 与 Hold 窗口的单精度时钟校验
 
 按真实 solver 单精度累计校验，同时保留 SDK 与杆整数步严格匹配。已覆盖 2401 步 CPU 重放。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-13-deformx-solver-clock.md)
