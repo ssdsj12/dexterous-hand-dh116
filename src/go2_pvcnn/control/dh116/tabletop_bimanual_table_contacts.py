@@ -126,8 +126,10 @@ def open_bimanual_table_contacts(stage,hands,prepared,*,read_clock):
                     or view.link_paths!=[[root+"/"+name for name in names]]):
                 raise ValueError("actual original 17DOF/17 body source mapping differs")
             paths[side]=[view.link_paths[0][names.index(name)] for name in expected]
-        missing=_reporting(stage,paths["left"]+paths["right"])
         static_table=not prim.HasAPI(UsdPhysics.RigidBodyAPI)
+        # An unsupported partner has no qualified reporting path to query.
+        # None records that reporter inspection was not performed.
+        missing=None if static_table else _reporting(stage,paths["left"]+paths["right"])
         unavailable=("static GPU table filter unsupported; empty buffers cannot prove absence"
                      if static_table else None)
         metadata=dict(table_is_static=static_table,capability_unavailable=unavailable,created_clock=before,source_sha256=pins,paths=paths,table_path=table,

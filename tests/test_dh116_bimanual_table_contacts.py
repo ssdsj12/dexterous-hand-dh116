@@ -196,5 +196,6 @@ def test_original_static_table_gpu_filter_is_na_before_view_creation(context):
     source=open_source(context);context[4]["clock"]=clock(3)
     result=api().read_bimanual_table_contacts(source,read_clock=context[3])
     assert not context[5]
+    assert source.metadata["missing_reporting"] is None
     assert result["available"] is False and result["total_contacts"] is None
     assert "static" in result["reason"] and "GPU" in result["reason"]

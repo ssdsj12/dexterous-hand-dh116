@@ -9500,6 +9500,50 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-contact-material-observability-cpu.md",
       "report_source_commit": "6f472e78f9e0d0e848b7d17886a6ccee43335505"
+    },
+    "flex.f7-dual-pinch-integrated-entry-cpu": {
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_pinch_entry.py",
+        "tests/test_dh116_dual_hand_evidence_journal.py"
+      ],
+      "log_sha256": "14b243fe405416938970d09b55849f3fdabc64a904ff9e0cfa361a712731b477",
+      "tested_head": "2bc68385b07f60783a104ba9e5279369b0a0091e",
+      "scope": "dual_pinch_single_zero_control_interval_cpu",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "optimizer_updates": 0,
+      "reported_common_channels": 66,
+      "isolated_schema_regression": {
+        "passed": 21,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_bimanual_table_contacts.py"
+        ],
+        "log_sha256": "20a26f524ae3d9ac5ba8c546ed0efe7f27de77795352c27361aeaed9810c72c0",
+        "tested_head": "2bc68385b07f60783a104ba9e5279369b0a0091e"
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-pinch-integrated-entry-cpu.md",
+      "report_source_commit": "f7e6f15ec969eca65858ea188bb5aa1b65a5f21e"
     }
   }
 }

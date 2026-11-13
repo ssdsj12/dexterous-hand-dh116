@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 原始构造、动作和账本整链
+
+从同杆 Reset 到零动作原 24D 控制窗和严格落盘，台面源明确 NA，保持原始 2.1 mm 门。 同进程动态 PhysX schema 夹具发生注册冲突，按原有独立进程运行原生 API 形状回归。 Ubuntu CPU 回归 12 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-integrated-entry-cpu.md)
+
 ## 2026-11-13 — 实测节点中心与连续材料锚来源审计
 
 从原始 pair 与同钟实测姿态重建节点中心运动，保留材料表面对应和 0.5 mm Slip 的来源阻断。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-13-contact-material-observability-cpu.md)
