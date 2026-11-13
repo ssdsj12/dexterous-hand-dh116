@@ -15896,6 +15896,66 @@
         "report": "docs/superpowers/reports/2026-11-13-cosserat-material-marker-reference.md",
         "report_source_commit": "444651e03255e700fb56840e3a5de81e1c55a919"
       }
+    },
+    "flex.f7-dual-external-wire-layout-cpu": {
+      "title": "双手外部柔性杆的原场景元数据",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-pinch-zero-interval-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_external_wire_layout.py"
+        ],
+        "log_sha256": "bb3c8891c1d085c65c4f2dd0508382229058e16d58989bdf8e24990f419d3100",
+        "tested_head": "114e7796c03e6afb9b9f2c1a2d6a9abd6c6fd4ee",
+        "scope": "original_external_wire_spawn_body_cpu_only",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "optimizer_updates": 0,
+        "v1_failed_receipt_sha256": "5825d7b12b8661ea540b30647bedb330691793d3595c2fa1e4bfa53b81a0ed02",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-external-wire-layout-cpu.md",
+        "report_source_commit": "3b3e917481ca7b20c96f487779100673cd8cba60"
+      },
+      "last_result": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_external_wire_layout.py"
+        ],
+        "log_sha256": "bb3c8891c1d085c65c4f2dd0508382229058e16d58989bdf8e24990f419d3100",
+        "tested_head": "114e7796c03e6afb9b9f2c1a2d6a9abd6c6fd4ee",
+        "scope": "original_external_wire_spawn_body_cpu_only",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "optimizer_updates": 0,
+        "v1_failed_receipt_sha256": "5825d7b12b8661ea540b30647bedb330691793d3595c2fa1e4bfa53b81a0ed02",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-external-wire-layout-cpu.md",
+        "report_source_commit": "3b3e917481ca7b20c96f487779100673cd8cba60"
+      }
     }
   },
   "execution_target": {

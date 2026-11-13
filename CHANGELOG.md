@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手外部柔性杆的原场景元数据
+
+原始双手场景入口要求 wire_center。独立适配器从锁定 wire_points 派生布局元数据，实际外部杆和物理资产保持原定义。 Ubuntu CPU 回归 7 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-external-wire-layout-cpu.md)
+
 ## 2026-11-13 — Cosserat 材料标记随杆截面运动的 CPU 参考
 
 为未来真实求解器遥测提供固定材料坐标和截面旋转的 CPU 参考，保留当前接触材料坐标、Slip 和误差界未知。 Ubuntu CPU 回归 81 项通过。[报告](docs/superpowers/reports/2026-11-13-cosserat-material-marker-reference.md)
