@@ -1,3 +1,7 @@
+## 2026-11-13 — Tripod 与 Power 独立闭合可达性检查
+
+Tripod 左右静态候选桌面净空各 2 mm，闭合仍有近端碰撞。Power 筛查保留未通过的必要可达性证据，未生成原生配方。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-power-geometry-preparation.md)
+
 ## 2026-11-13 — 柔性 Teacher 前动作 371D 来源审计
 
 保留原 371D 合同，新增按实测名称绑定的双手 34 个通道适配。旧单手 Pinch 账本未取得完整的身份与关节顺序，原生可纳入 0/371。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-preaction-readback.md)

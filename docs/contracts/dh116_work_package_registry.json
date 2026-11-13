@@ -5656,7 +5656,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "Independent original Tripod seed fails current source table clearance on both hands. No qualified flexible approach or native reset."
+      "reason": "Independent bilateral static candidate screened on CPU; proximal collision blocks closing and shared native physics/reset/R0 remain unqualified."
     },
     "flex.f8-power": {
       "title": "Power 无相机 R0 特权 Teacher",
@@ -5665,7 +5665,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "Independent archived Power geometry screen complete; 0 of 16 per side met prior wrap gate and no current flexible approach/paired reach exists."
+      "reason": "Independent bounded Power CPU approach screen rejected all sampled paths. Shared native physics/reset/R0 remain unqualified."
     },
     "flex.execution-dependency-split": {
       "title": "拆分柔性物理、双目采集与逐抓法 Teacher 资格",
@@ -10196,6 +10196,79 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-13-teacher-preaction-readback.md",
         "report_source_commit": "ea6dd2aab3e2bfad8b96ad873a2876c457c6c531"
+      }
+    },
+    "flex.f8-tripod-power-pose-preparation": {
+      "title": "Tripod 与 Power 独立闭合可达性检查",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-pinch-cooked-initial-geometry",
+        "flex.f8-power-flexible-initial-preflight"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_style_pose_preparation.py",
+          "tests/test_dh116_pinch_initial_table_clearance.py",
+          "tests/test_dh116_deformable_grasp_task.py"
+        ],
+        "log_sha256": "ecee05301d6589cc51de629b00433f25e027373765f25b5fa50b04cd14df559c",
+        "tested_head": "341f0e0bfa485b613efe408256b58275d7a05d9a",
+        "stage": "cpu_verified_geometry_preparation",
+        "scope": "tripod_power_fixed_budget_geometry_preparation",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "tripod_bilateral_static_candidate": true,
+        "tripod_approach_qualified": false,
+        "power_approach_qualified": false,
+        "geometry_evidence_sha256": "e6335c291c48ff40d1f19eb114a1f074594b2b7981e749b0f86335929babe4a6",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-tripod-power-geometry-preparation.md",
+        "report_source_commit": "1850e2717630b03de00de3fc2e41cb9a7a378e54"
+      },
+      "last_result": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_style_pose_preparation.py",
+          "tests/test_dh116_pinch_initial_table_clearance.py",
+          "tests/test_dh116_deformable_grasp_task.py"
+        ],
+        "log_sha256": "ecee05301d6589cc51de629b00433f25e027373765f25b5fa50b04cd14df559c",
+        "tested_head": "341f0e0bfa485b613efe408256b58275d7a05d9a",
+        "stage": "cpu_verified_geometry_preparation",
+        "scope": "tripod_power_fixed_budget_geometry_preparation",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "tripod_bilateral_static_candidate": true,
+        "tripod_approach_qualified": false,
+        "power_approach_qualified": false,
+        "geometry_evidence_sha256": "e6335c291c48ff40d1f19eb114a1f074594b2b7981e749b0f86335929babe4a6",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-tripod-power-geometry-preparation.md",
+        "report_source_commit": "1850e2717630b03de00de3fc2e41cb9a7a378e54"
       }
     }
   },
