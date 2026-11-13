@@ -1,3 +1,7 @@
+## 2026-11-13 — PhysX 构造 frame 释放 v2 单次原生
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-frame-v2-native.md)。
+
 ## 2026-11-13 — PhysX 构造 frame 引用释放与原生复验准备
 
 保留同一物理初始化，仅清理构造帧持有的局部引用并使用全线程暂停取证。新单次原生指纹待批准。 Ubuntu CPU 回归 135 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-lifetime-frame-v2.md)
