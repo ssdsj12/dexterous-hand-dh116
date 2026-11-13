@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch绕杆轴初态与连续桌面净空
+
+86项CPU回归通过；644状态有界审计找到左侧-0.965°杆轴Reset候选，连续桌面净空2.100079mm、预测双指SDF为-0.208/-0.251mm。余量仅0.079µm，尚未原生资格；右侧离散接触和非目标几何仍阻断。无新增物理/PPO，Teacher0/3。 Ubuntu CPU 回归 86 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-rod-axis-clearance.md)
+
 ## 2026-11-13 — Pinch非零动作FK与SDK跟踪误差分离
 
 83项CPU回归通过；16个已有原生端点分离坐标/Mimic/SDK跟踪。实测11关节FK最大误差左0.06855µm右0.07738µm；目标FK仍留1.58–2.41mm正SDF间隙，跟踪滞后非唯一无接触原因。无新物理/PPO，Teacher0/3。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-dynamic-fk.md)
