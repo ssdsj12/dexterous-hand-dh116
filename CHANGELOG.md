@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 同钟材料方向单次原生端点读回
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-director-endpoints-native.md)。
+
 ## 2026-11-13 — 双手 Pinch 同钟材料方向读回与生命周期原生准备
 
 独立配方只新增同钟真实节点与材料方向读回，原动作和守卫不变。完整 CPU SDK doubles 回归110项通过；保留两批失败证据并修复测试共享视图生命周期，未弱化原生校验。原生预算为2初始化+16测量，共18步、1环境、0PPO、最多一次；尚无本配方原生通过或Teacher资格。 Ubuntu CPU 回归 102 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-director-preflight.md)
