@@ -5511,7 +5511,7 @@
         "flex.f4-dh116-same-rod"
       ],
       "status": "blocked",
-      "reason": "需真实手关节及杆状态、原 24D 动作、Reset、GAE 终止和 R0 逐步闭环。"
+      "reason": "Named joint adapter covers 34/371 CPU fixture fields. Native dual-hand pre-action, reset, 24D issued action, complete 371D and R0 evidence remain blocked."
     },
     "flex.f6-camera-lifecycle": {
       "title": "同一帧 RGB、径向深度、Optical-Z 与实例 ID",
@@ -10121,7 +10121,82 @@
       ],
       "stage": "prepared_waiting_exact_native_approval",
       "reason": "Requires exact approval for one CUDA solver step and independent packet reconciliation.",
-      "scheduler_entrypoint": "scripts/run_dh116_deformx_pair_work_packages.py"
+      "scheduler_entrypoint": "scripts/run_dh116_deformx_pair_work_packages.py",
+      "dependency_scopes": {}
+    },
+    "flex.f7-teacher-preaction-readback-cpu": {
+      "title": "柔性 Teacher 前动作 371D 来源审计",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-force-aggregate-evidence"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 67,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_teacher_preaction_readback.py",
+          "tests/test_dh116_deformable_force_evidence.py",
+          "tests/test_joint_target_readback.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_deformable_privileged_ppo.py"
+        ],
+        "log_sha256": "784b70964d07c7c0a1eb98ab2ef97be28a26e6bb666f06376170490b2d6c72be",
+        "tested_head": "fc35ef99719edd210652823b75795c21e70577c6",
+        "stage": "cpu_verified_historical_source_audit",
+        "scope": "teacher_preaction_named_joint_source_audit",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "named_joint_fixture_fields": 34,
+        "historical_native_admitted_fields": 0,
+        "inventory_sha256": "c834e71548a43f841ea6ef1d74699c7818efa6d09bea7590071c717a6360b370",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-teacher-preaction-readback.md",
+        "report_source_commit": "ea6dd2aab3e2bfad8b96ad873a2876c457c6c531"
+      },
+      "last_result": {
+        "passed": 67,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_teacher_preaction_readback.py",
+          "tests/test_dh116_deformable_force_evidence.py",
+          "tests/test_joint_target_readback.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_deformable_privileged_ppo.py"
+        ],
+        "log_sha256": "784b70964d07c7c0a1eb98ab2ef97be28a26e6bb666f06376170490b2d6c72be",
+        "tested_head": "fc35ef99719edd210652823b75795c21e70577c6",
+        "stage": "cpu_verified_historical_source_audit",
+        "scope": "teacher_preaction_named_joint_source_audit",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "named_joint_fixture_fields": 34,
+        "historical_native_admitted_fields": 0,
+        "inventory_sha256": "c834e71548a43f841ea6ef1d74699c7818efa6d09bea7590071c717a6360b370",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-teacher-preaction-readback.md",
+        "report_source_commit": "ea6dd2aab3e2bfad8b96ad873a2876c457c6c531"
+      }
     }
   },
   "execution_target": {

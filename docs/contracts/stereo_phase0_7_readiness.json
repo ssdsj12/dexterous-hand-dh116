@@ -7218,6 +7218,39 @@
         "command_spec_sha256": "ddd6a7b6adfc744a87a32c8380d473b8c61b848ee7cb8f9b3c90e06a00468dd0",
         "code_config_sha256": "c65fe22d71a91d167694c90fd9a5113fd0c59f86c87439e882079fb09db36200"
       }
+    },
+    "flex.f7-teacher-preaction-readback-cpu": {
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_preaction_readback.py",
+        "tests/test_dh116_deformable_force_evidence.py",
+        "tests/test_joint_target_readback.py",
+        "tests/test_dh116_deformable_privileged_teacher.py",
+        "tests/test_dh116_deformable_privileged_ppo.py"
+      ],
+      "log_sha256": "784b70964d07c7c0a1eb98ab2ef97be28a26e6bb666f06376170490b2d6c72be",
+      "tested_head": "fc35ef99719edd210652823b75795c21e70577c6",
+      "stage": "cpu_verified_historical_source_audit",
+      "scope": "teacher_preaction_named_joint_source_audit",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "named_joint_fixture_fields": 34,
+      "historical_native_admitted_fields": 0,
+      "inventory_sha256": "c834e71548a43f841ea6ef1d74699c7818efa6d09bea7590071c717a6360b370",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-teacher-preaction-readback.md",
+      "report_source_commit": "ea6dd2aab3e2bfad8b96ad873a2876c457c6c531"
     }
   }
 }

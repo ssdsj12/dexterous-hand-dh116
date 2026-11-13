@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性 Teacher 前动作 371D 来源审计
+
+保留原 371D 合同，新增按实测名称绑定的双手 34 个通道适配。旧单手 Pinch 账本未取得完整的身份与关节顺序，原生可纳入 0/371。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-preaction-readback.md)
+
 ## 2026-11-13 — DeformX 逐接触对读回
 
 独立 SM89 扩展已编译，62 项 CPU 回归通过；一次 CUDA 标定待批准。[报告](docs/superpowers/reports/2026-11-13-deformx-pair-readback.md)
