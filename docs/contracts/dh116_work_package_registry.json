@@ -11700,6 +11700,72 @@
         "report": "docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md",
         "report_source_commit": "b69082f3c427185f177d4be18148940164415fd8"
       }
+    },
+    "flex.f7-solver-float-clock-cpu": {
+      "title": "DeformX PPO 与 Hold 窗口的单精度时钟校验",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-physical-exchange-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_solver_clock.py",
+          "tests/test_dual_hand_rod_runtime.py",
+          "tests/test_dh116_deformable_bimanual_step.py",
+          "tests/test_dh116_flexible_physical_exchange.py"
+        ],
+        "log_sha256": "38254df10e7887aba8749ab3925135206e689eb75fa43987d4dda24610a68d9c",
+        "tested_head": "bf7d8e1054d17d1ce28080f0dfb3affcd7e278b1",
+        "stage": "cpu_verified_solver_clock",
+        "scope": "solver_clock_float32_cpu_replay",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-deformx-solver-clock.md",
+        "report_source_commit": "2c8e6e3c430acd40f3564264c9442031afee4fb4"
+      },
+      "last_result": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_solver_clock.py",
+          "tests/test_dual_hand_rod_runtime.py",
+          "tests/test_dh116_deformable_bimanual_step.py",
+          "tests/test_dh116_flexible_physical_exchange.py"
+        ],
+        "log_sha256": "38254df10e7887aba8749ab3925135206e689eb75fa43987d4dda24610a68d9c",
+        "tested_head": "bf7d8e1054d17d1ce28080f0dfb3affcd7e278b1",
+        "stage": "cpu_verified_solver_clock",
+        "scope": "solver_clock_float32_cpu_replay",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-deformx-solver-clock.md",
+        "report_source_commit": "2c8e6e3c430acd40f3564264c9442031afee4fb4"
+      }
     }
   },
   "execution_target": {

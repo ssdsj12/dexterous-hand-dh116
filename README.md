@@ -1,3 +1,7 @@
+## 2026-11-13 — DeformX PPO 与 Hold 窗口的单精度时钟校验
+
+按真实 solver 单精度累计校验，同时保留 SDK 与杆整数步严格匹配。已覆盖 2401 步 CPU 重放。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-13-deformx-solver-clock.md)
+
 ## 2026-11-13 — Teacher 原生腕部实例路径绑定修复
 
 按已安装 IsaacLab 的实际根路径发现规则区分 wrist_fixed 与 base_link 所在容器。仍为 66/371 CPU 来源覆盖。 Ubuntu CPU 回归 146 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md)

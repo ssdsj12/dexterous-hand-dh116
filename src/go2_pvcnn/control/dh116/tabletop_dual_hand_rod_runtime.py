@@ -14,6 +14,7 @@ import numpy as np
 
 from .deformx_dh116_colliders import DISTAL_PAD_LINKS
 from .tabletop_deformable_grasp_runtime import DT, FreeRodRuntime, named_wrenches
+from .tabletop_deformable_solver_clock import solver_clock_matches
 from .tabletop_deformx_pair_capture import read_pair_capture
 from .tabletop_material import hand_material_contract
 from scripts.verify_dh116_deformx_rigid_bridge import wrench_at_com
@@ -145,6 +146,7 @@ class DualHandRodRuntime:
         self.run_uuid,self.env_id,self.rod_uid=run_uuid,env_id,rod_uid
         self.require_pairs=require_pairs
         self._needs_reset=True
+        self._last_solver_time=None
         self._seen_episodes={base.episode_uid}
         # A failed native append consumes the composition too: the caller must
         # dispose the original owned scope rather than try a second append.
@@ -198,6 +200,7 @@ class DualHandRodRuntime:
             raise RuntimeError("reset unexpectedly advanced solver time")
         row.update(rod_mesh_contact_pairs=None,pair_capture_status="invalid_until_measured_step",
                    hand_wrenches_com_world=None,table_wrench_world=None)
+        self._last_solver_time=before
         self._needs_reset=False
         return deepcopy(self._decorate(row))
 
@@ -217,6 +220,8 @@ class DualHandRodRuntime:
         before=float(self.rope.time)
         b.last=None
         try:
+            if before!=self._last_solver_time:
+                raise ValueError("solver time changed outside the owned exchange")
             b.physics_step=physics_step  # SDK has already advanced in the caller.
             for slot,name in enumerate(self.mesh_names):
                 if name!="table":
@@ -229,9 +234,7 @@ class DualHandRodRuntime:
             if self.rope.last_error:
                 raise RuntimeError(f"solver error: {self.rope.last_error}")
             after=float(self.rope.time)
-            if (not math.isfinite(after) or not math.isclose(after-before,DT,rel_tol=0,abs_tol=2e-6)
-                    or not math.isclose(after-b.time_origin,
-                        b.rod_tick/b.cfg["rod"]["solver_substeps"]*DT,rel_tol=0,abs_tol=2e-6)):
+            if not solver_clock_matches(before,after,steps=1):
                 raise ValueError("solver and SDK step clocks differ")
             row=b.capture(physics_step,contact_valid=False)
             nodes=_array(self.rope.contact_forces(),(1,len(b.nodes),3),"node contact forces")
@@ -259,6 +262,7 @@ class DualHandRodRuntime:
                 hand_wrenches_com_world=routes,table_wrench_world=table,pair_force_residual_n=residual)
             self._decorate(row)
             b.last=row
+            self._last_solver_time=after
             return deepcopy(row)
         except BaseException:
             self._needs_reset=True

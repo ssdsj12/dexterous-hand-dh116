@@ -17,6 +17,7 @@ from .linear_coupling import ACTIVE, JOINTS, MIMIC, active_limits
 from .tabletop_command_kernels import finger_pre_guard, surface_final_guard, wrist_requested_targets
 from .tabletop_joint_target_readback import read_joint_target_evidence, WRIST_LINEAR, WRIST_ANGULAR
 from .tabletop_palm_mount import MountView, local_translation, CONTRACT as MOUNT_CONTRACT
+from .tabletop_deformable_solver_clock import solver_clock_matches
 from .tabletop_surface_contract import ACTION_CONTRACT, validate_actions
 
 VERSION = 'dh116-deformable-bimanual-step-v1'
@@ -320,8 +321,7 @@ class BimanualStepConnection:
                 raise ValueError('episode/reset/policy identity changed across physical step')
             if (after['physics_step'] != pre['physics_step'] + 1
                     or after['rod_tick'] != pre['rod_tick'] + self.solver_substeps
-                    or not math.isclose(after['solver_time_s'] - pre['solver_time_s'],
-                                        DT, abs_tol=1e-8, rel_tol=0)):
+                    or not solver_clock_matches(pre['solver_time_s'], after['solver_time_s'], steps=1)):
                 raise ValueError('SDK/rod tick or actual solver clock skipped/repeated')
         for side in SIDES:
             pre, after = self._pre['hands'][side], post['hands'][side]
