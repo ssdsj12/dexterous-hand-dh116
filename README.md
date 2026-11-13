@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch 静态World-Z偏航独立几何筛选
+
+102个独立完整几何状态、58项CPU回归通过；左右各9个固定偏航候选及选中33点连续路径。非零偏航受非目标形体分离下界约束，保留原候选；负下界不等于已证实穿透。未生成新原生配方，0物理步/0PPO；真实接触和Teacher仍blocked。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-static-yaw-screen.md)
+
 ## 2026-11-13 — 双手 Pinch 参数来源单次原生端点读回
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-parameter-readback-native.md)。
