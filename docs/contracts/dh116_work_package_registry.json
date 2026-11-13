@@ -10063,6 +10063,65 @@
         "audit_sha256": "e4fac4c777c5f8e3ece6baf310026f9f051381e473be21f2037d207ede01a4e4",
         "blocker_kind": "native_evidence_source_missing"
       }
+    },
+    "flex.f7-deformx-pair-capture-cpu": {
+      "title": "DeformX 逐接触对补丁与 CPU 校验",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-force-aggregate-evidence"
+      ],
+      "status": "passed",
+      "last_result": {
+        "status": "passed",
+        "stage": "cpu_verified_cuda_compiled_not_executed",
+        "scope": "deformx_contact_pair_preparation",
+        "passed": 62,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "report": "docs/superpowers/reports/2026-11-13-deformx-pair-readback.md",
+        "tested_head": "07db9eb461f8db067beb294c12c077d1ea1b824e",
+        "tests": [
+          "tests/test_dh116_deformx_pair_capture.py",
+          "tests/test_dh116_deformable_force_evidence.py",
+          "tests/test_deformable_grasp_runtime.py",
+          "tests/test_dh116_deformable_grasp_task.py"
+        ],
+        "log_sha256": "cfcc8339139973a18af6fa7a507c5302ac2d6a3624a344524781aab5c0d36ad3",
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "actual_cuda_solver_steps": 0,
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "cuda_compilation_verified": true,
+        "arch": "SM89",
+        "pending_native_recipe": {
+          "command_spec_sha256": "ddd6a7b6adfc744a87a32c8380d473b8c61b848ee7cb8f9b3c90e06a00468dd0",
+          "code_config_sha256": "c65fe22d71a91d167694c90fd9a5113fd0c59f86c87439e882079fb09db36200"
+        }
+      }
+    },
+    "flex.f7-deformx-pair-capture-native": {
+      "title": "DeformX CUDA 逐接触对读回单步校准",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f7-deformx-pair-capture-cpu"
+      ],
+      "status": "blocked",
+      "command_spec": "configs/dh116_execution/deformx_mesh_pair_capture_calibration_v1.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "one_free_rod_one_table_sdf_pair_capture_calibration",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_deformx_pair_capture.py"
+      ],
+      "stage": "prepared_waiting_exact_native_approval",
+      "reason": "Requires exact approval for one CUDA solver step and independent packet reconciliation.",
+      "scheduler_entrypoint": "scripts/run_dh116_deformx_pair_work_packages.py"
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## 2026-11-13 — DeformX 逐接触对读回
+
+独立 SM89 扩展已编译，62 项 CPU 回归通过；一次 CUDA 标定待批准。[报告](docs/superpowers/reports/2026-11-13-deformx-pair-readback.md)
+
 ## 2026-11-13 — Power 独立档案的柔性桌面与杆筛选
 
 左右各16个历史握式种子通过初始避碰，但最差指腹到杆仍远，暂无柔性 Power 可达轨迹。 Ubuntu CPU 回归 20 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-power-initial-pose-preflight.md)

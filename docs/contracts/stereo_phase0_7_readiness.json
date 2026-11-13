@@ -7189,6 +7189,35 @@
       "candidate_sha256": "a2eefb1a8f487fdba7e567c51aab005211dec3f658d2aa939c0ff7289de0dc44",
       "audit_sha256": "e4fac4c777c5f8e3ece6baf310026f9f051381e473be21f2037d207ede01a4e4",
       "blocker_kind": "native_evidence_source_missing"
+    },
+    "flex.f7-deformx-pair-capture-cpu": {
+      "status": "passed",
+      "stage": "cpu_verified_cuda_compiled_not_executed",
+      "scope": "deformx_contact_pair_preparation",
+      "passed": 62,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "report": "docs/superpowers/reports/2026-11-13-deformx-pair-readback.md",
+      "tested_head": "07db9eb461f8db067beb294c12c077d1ea1b824e",
+      "tests": [
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_dh116_deformable_force_evidence.py",
+        "tests/test_deformable_grasp_runtime.py",
+        "tests/test_dh116_deformable_grasp_task.py"
+      ],
+      "log_sha256": "cfcc8339139973a18af6fa7a507c5302ac2d6a3624a344524781aab5c0d36ad3",
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "actual_cuda_solver_steps": 0,
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "cuda_compilation_verified": true,
+      "arch": "SM89",
+      "pending_native_recipe": {
+        "command_spec_sha256": "ddd6a7b6adfc744a87a32c8380d473b8c61b848ee7cb8f9b3c90e06a00468dd0",
+        "code_config_sha256": "c65fe22d71a91d167694c90fd9a5113fd0c59f86c87439e882079fb09db36200"
+      }
     }
   }
 }
