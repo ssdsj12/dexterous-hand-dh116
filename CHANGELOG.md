@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 独立原生退出和逐步审计
+
+独立复核 2+8 时钟、双手原始 17DOF 与净空、回执和 GDB。SimulationContext 活性单列，不升级接触或 Teacher 资格。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-postexit-audit-cpu.md)
+
 ## 2026-11-13 — Power 独立初态与原五指 SDF 可达范围
 
 两侧备用原姿态均通过初始台面 2.3 mm 静态筛查，固定底座和原合法闭合区间仍无法覆盖全部五个指腹。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-13-power-alternative-sdf-contact-interval.md)

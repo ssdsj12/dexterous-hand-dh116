@@ -9572,6 +9572,33 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-power-alternative-sdf-contact-interval.md",
       "report_source_commit": "97d242abe31cdf2e99099b0b301a0ddc44340c42"
+    },
+    "flex.f7-dual-pinch-postexit-audit-cpu": {
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_pinch_postexit.py",
+        "tests/test_dh116_dual_hand_evidence_journal.py",
+        "tests/test_dh116_physx_lifetime_validation.py"
+      ],
+      "log_sha256": "30a1980d084debeff552a019dfe1f564b6a1b6804693324dd40a265ab77a0aec",
+      "tested_head": "ad023f4ca99eabd112ebf8e77c163070e4e95a6a",
+      "scope": "dual_pinch_execution_post_exit_audit_cpu",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "optimizer_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-pinch-postexit-audit-cpu.md",
+      "report_source_commit": "f57040c7e547b78ae99f187dd024ae2725d8bf0d"
     }
   }
 }
