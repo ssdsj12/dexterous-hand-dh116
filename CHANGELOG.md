@@ -1,3 +1,7 @@
+## 2026-11-13 — 冻结双手 Pinch 单区间动作回读 profile
+
+绑定已核验 v4 父账本和独立双手初态，冻结零动作8步后一次手指动作8步的离线 profile；本包原生步数与 PPO 更新均为0。预测间隙只作有条件预检，仍需逐步实测几何保护。 Ubuntu CPU 回归 75 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-eight-step-readback-profile.md)
+
 ## 2026-11-13 — 静态台面 PhysX 逐接触来源校验
 
 历史左右标定的 480 行均不能证明原台面 contact report 可用。真实台面资格与历史 GPU readback 设备冲突分开保留。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-static-table-report-cell-cpu.md)
