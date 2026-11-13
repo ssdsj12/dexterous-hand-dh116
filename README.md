@@ -1,3 +1,7 @@
+## 2026-11-13 — Teacher 371D 原腕部状态来源
+
+按原 WXYZ、COM 速度、内禀关节角和 reset seed 接入 32 个腕部通道。CPU 中两手共 66/371，未绑定通道仍有 305 个。 Ubuntu CPU 回归 139 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md)
+
 ## 2026-11-13 — 60 Hz 双手控制与 480 Hz 柔性物理交换
 
 单环境每控制步最多 8 个物理子步，接通原动作保护、真实 SDK 路由和同杆反力时差。CPU double 验证，场景装配和正式 R0 仍待资格。 Ubuntu CPU 回归 117 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-physical-exchange.md)
