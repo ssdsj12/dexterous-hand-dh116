@@ -12261,6 +12261,40 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-pinch-contact-support-proof.md",
       "report_source_commit": "c35f7b07c322887c9595d937fef0791bf40c7869"
+    },
+    "flex.f7-pinch-segment-contact-cpu": {
+      "passed": 70,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_segment_geometry.py",
+        "tests/test_dh116_polyline_support_certificate.py",
+        "tests/test_dh116_pinch_segment_contact_worker.py",
+        "tests/test_dh116_pinch_segment_contact_owner.py",
+        "tests/test_dh116_pinch_margin_contact.py",
+        "tests/test_dh116_measured_closure_geometry.py"
+      ],
+      "log_sha256": "19195f41f0cdd503732b90fea1762af2c63b15ea238772b81ecfd533337c31c3",
+      "tested_head": "1b7ea05b101f81a7217c9b1765d0176a23c2eb63",
+      "kind": "cpu_segment_geometry_owner",
+      "cpu_full_passed": 70,
+      "replayed_native_rows": 214,
+      "replay_physics_steps": 0,
+      "replay_sha256": "4e107b0c659730026e545c822db6f23eab9a1eb28766931c70f929e3417f8d9d",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-segment-contact-preparation.md",
+      "report_source_commit": "807e047477d77d8df90d29ebe9f944eabe114ee0"
     }
   }
 }

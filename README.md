@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch三维逐杆段证明独立原生配方
+
+70项CPU回归通过；214条旧原生样本离线完整重算，新几何证明0失败。相同234步动作/Reset/物理，仅独立三维逐段证明，保护阈值不变；本新配方原生尚未执行，Teacher0/3。 Ubuntu CPU 回归 70 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-segment-contact-preparation.md)
+
 ## 2026-11-13 — Pinch真实接触账本与三维逐杆段间隙证明
 
 原生216/234步保护停止、exit1且无信号；左拇指310/食指279真实pair，连续同时接触48.4375ms。旧XZ间隙界−3.674µm，完整3D逐段CPU证明+0.497762mm；原失败回执不改，未升级Teacher或原生资格。 Ubuntu CPU 回归 41 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-contact-support-proof.md)
