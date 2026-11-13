@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch cooked hull 初态修正与 Tripod 独立筛选
+
+修正左手 Pinch 独立候选并验证连续桌面净空，Tripod 自身旧种子未通过。原生配方继续等待接触对和生命周期证据。 Ubuntu CPU 回归 169 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-initial-geometry-audit.md)
+
 ## 2026-11-13 — PhysX Tensor View 退出栈与所有权审计
 
 GDB 定位到 SimulationView 释放路径，区分管理器 view 清空、Python 所有者、CUDA 同步和外层退出；新增只读引用诊断。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-tensor-lifetime-audit.md)

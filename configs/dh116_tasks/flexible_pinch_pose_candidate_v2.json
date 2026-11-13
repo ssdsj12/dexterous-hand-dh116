@@ -1,0 +1,85 @@
+{
+  "version": "dh116-pinch-pose-candidate-v2",
+  "scope": "CPU_geometry_candidate_only",
+  "side": "left",
+  "source_sha256": {
+    "pose_reference": "da3d5a6fdd5e8bb4f5db1911a3659ad3b2b92c2fb99511e4ccbc055d3600512e",
+    "usd": "7c6b319074281775c45bc83ac8f434b9a4b7e7e7ba18815e345577d068eb9e6c",
+    "pad_evidence_lock": "acca227b59b1d2e43f02db8d9b3218e96f1ae64412ee28337b95e2c9e2c7bc1f",
+    "old_candidate": "9f751680de805c5075282c16bc5c5e5e30b8b7c261a3dd36f3b7b1cbab8f35c8",
+    "src/go2_pvcnn/control/dh116/hand_point_kinematics.py": "522b20cd7f68edd6392cdfe3a9e90d56147045f8e4f99c4afbac3dbdeb39ca4a",
+    "src/go2_pvcnn/control/dh116/usd_surface.py": "20554532113566d6c22de31f3fb9cc8c3039133c18235260c27b8b29f2c20843",
+    "src/go2_pvcnn/control/dh116/usd_contract.py": "41643397ab930dfa6ce44a2781f8cff7ae46823fc0f368267ce31a8236a06e63",
+    "src/go2_pvcnn/control/dh116/linear_coupling.py": "168e30634c2e240fbaecd225766b52a1f2a3c87afafc8c2a7b5a23dfcb1afe93",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flex-f4-parity-prep-Vu9H0f/gpu/left_finger14_link.json": "ff842335f14fe670736dd36e72494af085a2b6f019eea91914ad9fa292113dac",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flex-f4-parity-prep-Vu9H0f/gpu/left_finger23_link.json": "2e5d4ab0b55188c2499b7c835ec79c37bf6db4b9b0c32eb1981ba8e4ef124c81",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flex-f4-parity-prep-Vu9H0f/gpu/left_finger33_link.json": "7e79a464e42cc5b6bc95b529be4c87f4ae16aff95b5b5b181267e61c3f023817",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flex-f4-parity-prep-Vu9H0f/gpu/left_finger43_link.json": "50aa6cab1799febae46a55bc0d57c14d961ff1878f3dcf9d1b88634bb3051708",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flex-f4-parity-prep-Vu9H0f/gpu/left_finger53_link.json": "5292cacb1327f22d16e6b4eba2bd2eccebcc922be7f75992a013b95383a1438c"
+  },
+  "failed_native_artifacts_sha256": {
+    "plan.json": "8f803f05c04d946e87cf28416ce478bb8f7b740293a76e244c83cf9bf4e98efd",
+    "physics.jsonl": "0c8062301e82b3127b0c49aadc5fdfd0096310f27d00a1f9c9a2f552216a20d1",
+    "result.json": "d6a12c3dc7fed06ebe0cedf086b22a74ab495c4019d5da76d4af975b0579502b"
+  },
+  "base_pose_wxyz": [
+    0.49742945748902095,
+    0.24306903145211278,
+    0.4171107819860638,
+    -0.5364008139784637,
+    -0.3846972717135587,
+    0.7507884234984583,
+    0.024472822478934547
+  ],
+  "active_joint_names": [
+    "finger11",
+    "finger12",
+    "finger21",
+    "finger31",
+    "finger41",
+    "finger51"
+  ],
+  "active_q_rad": [
+    0.2881724154760496,
+    0.45720843503719977,
+    0.6626268401448028,
+    1.15,
+    1.15,
+    1.15
+  ],
+  "minimum_source_table_clearance_m": 0.0019,
+  "approach": {
+    "move_steps": 160,
+    "physics_hz": 480,
+    "velocity_rad_s": 0.075,
+    "active_delta_rad": [
+      0,
+      0.025,
+      0.025,
+      0,
+      0,
+      0
+    ],
+    "original_active_velocity_limit_rad_s": 0.3,
+    "palm_motion": "fixed_base",
+    "is_commanded_FK_only": true
+  },
+  "rod_layout": "unchanged pose_reference 41 nodes; radius 0.005 m; gravity/free ends unchanged",
+  "settling_axis_height_range_m": [
+    0.305,
+    0.308
+  ],
+  "material_status": "P0 calibrated coefficients remain unmeasured; geometry does not qualify material",
+  "all_17_live_cooked_available": false,
+  "native_recipe_ready": false,
+  "grasp_qualified": false,
+  "remaining_gates": [
+    "No new native recipe or execution approval is produced by CPU geometry.",
+    "Twelve nonpad colliders have only original USD convex envelopes, not captured live cooked hulls.",
+    "New reset must read actual all-body poses, joint_names, collider geometry, limits and contact offsets at the same SDK clock before stepping.",
+    "Actual reset/approach tracking, table contacts, solver forces and geometric normal directions remain unverified.",
+    "The vertical settling envelope is geometry; free rod sag/bounce and material contact are not simulated.",
+    "Per-mesh node anchors and live normals remain unavailable; neither 371D binding nor grasp qualification is admitted.",
+    "PhysX tensor lifetime and natural exit must pass independently."
+  ]
+}
