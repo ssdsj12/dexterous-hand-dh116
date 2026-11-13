@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch自身材料点与受约束掌根候选
+
+独立材料点4/3替代错误镜像次序；约束求解315次CPU验算得到1个端点通过，最低桌面净空2.1995mm。完整路径和实际Reset仍未验证，不启动原生；102项回归通过。 Ubuntu CPU 回归 102 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-owned-stations.md)
+
 ## 2026-11-13 — 右Pinch独立表面配准与穿桌候选拒绝
 
 右手自身USD/FK/SDF独立配准103次CPU测量，三个初值均导致掌根穿桌约118mm；93项回归通过但几何不通过，未生成原生配方。 Ubuntu CPU 回归 93 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-surface-registration.md)
