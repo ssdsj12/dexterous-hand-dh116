@@ -1,3 +1,7 @@
+## 2026-11-14 — Tripod hard constraints and continuous reference approach
+
+Hard constraints find a near-contact endpoint, but all three node gaps remain positive. A separate all-node-contact search fails; fixed-root opening violates original table clearance. A 119-sample, 59-interval moving-root reference path passes conservative CPU geometry only. Original 24D SDK action mapping and native contact, Reset, R0 remain unqualified; no native steps or PPO updates. Ubuntu CPU 回归 76 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-hard-constraint-path.md)
+
 ## 2026-11-14 — Tripod 节点对齐闭合与数值边界修复
 
 边界安全dogbox312次查询：三节点SDF+47.051/-10.337/+38.202μm；finger22/finger32已证明分离，但finger13负可行上界-51.706μm、桌面差6.080μm、原几何对向门未通过。0原生/训练，Tripod继续blocked，不以残差改善授予资格。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-node-closure.md)
