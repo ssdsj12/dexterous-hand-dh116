@@ -11454,6 +11454,43 @@
       "next": "separate bounded full-orientation reset or independent R0/episode contracts",
       "report": "docs/superpowers/reports/2026-11-13-pinch-direct-nonlinear-reset.md",
       "report_source_commit": "fd9e632f9a82dbb2a8ff2a1afea672bb172bff48"
+    },
+    "flex.f7-pinch-world-tilt-reset-cpu": {
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_orientation_reset.py",
+        "tests/test_dh116_pinch_direct_sqp.py",
+        "tests/test_dh116_pinch_coupled_lateral.py",
+        "tests/test_dh116_pinch_static_yaw.py",
+        "tests/test_dh116_pinch_trust_region.py"
+      ],
+      "log_sha256": "b490a79d955f20e2d5aca80927a8bf1fe038bac53a042604be495da54d6c86c3",
+      "tested_head": "647b687d728b4494f63c3db521760d8c0b45bae4",
+      "kind": "cpu_independent_world_tilt_reset_search",
+      "status": "passed",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "candidate_qualified": false,
+      "teacher_admission": false,
+      "geometry_states": 866,
+      "left_unique_queries": 200,
+      "right_unique_queries": 200,
+      "queries_exhausted": true,
+      "right_thumb_gap_mm": 0.23170514032244682,
+      "result_path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/pinch-orientation-20261113-qiicfu/run01/result.json",
+      "result_sha256": "6149a6b5b82b39a18407b9b6de431335fd244ecc9610e884db9bae3ef8a1c6fb",
+      "next": "independent source-locked native parameter getters and redesigned reset construction",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-world-tilt-reset.md",
+      "report_source_commit": "ce44a9a211f410328748ca811345a8c1b665657b"
     }
   }
 }

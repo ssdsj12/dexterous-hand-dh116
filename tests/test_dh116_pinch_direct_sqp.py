@@ -70,3 +70,22 @@ def test_timeout_preserves_no_native_claim(tmp_path,monkeypatch):
     assert m.main(["--output",str(tmp_path/"out")])==0
     r=json.loads((tmp_path/"out"/"result.json").read_text())
     assert r["status"]=="partial_timeout" and not r["native_qualification"]
+
+
+def test_optional_nine_dimension_solver_uses_same_hard_contract():
+    def query9(x):
+        return dict(labels=["hard","pad:contact_minus0p1mm"],
+                    values=[float(.8-x[7]),float(x[7]+x[8]-.5)])
+    out=m.solve(query9,np.zeros(9),-np.ones(9),np.ones(9),{},dimension=9)
+    assert len(out["selected_x"])==9 and out["selected_feasible"]
+    assert out["selected_contact_deficit_mm"]<.0001
+    assert out["unique_queries"]<=200
+
+@pytest.mark.parametrize("dimension",[0,8,10,True])
+def test_only_explicit_seven_or_nine_dimensions(dimension):
+    with pytest.raises(ValueError):
+        m.Queries(query,[],dimension=dimension)
+
+def test_nine_dimension_query_cannot_accept_seven_vector():
+    c=m.Queries(query,[],dimension=9)
+    with pytest.raises(ValueError):c(np.zeros(7))

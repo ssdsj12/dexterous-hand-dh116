@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch 独立初始横滚俯仰约束求解
+
+67项CPU回归通过；866个完整状态，两侧200查询上限消耗完。右拇指间隙0.231705mm仍无接触，左保留原候选；未生成新原生配方，未改腕部动作和物理保护。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-world-tilt-reset.md)
+
 ## 2026-11-13 — Pinch 完整非线性约束初姿有限求解
 
 54项CPU回归通过；808/866完整几何状态，左16迭代上限、右200查询上限均保留。左SDF两指负间隙仍不满足0.1mm预检余量，右拇指0.233784mm未接触。未生成原生配方，未改变物理/动作/保护，Teacher仍0/3。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-direct-nonlinear-reset.md)

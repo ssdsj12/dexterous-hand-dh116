@@ -37,12 +37,14 @@ class StateBudget:
             raise
 
 class Queries:
-    def __init__(self,query,records,maximum=MAX_QUERIES):
+    def __init__(self,query,records,maximum=MAX_QUERIES,*,dimension=7):
+        if type(dimension) is not int or dimension not in (7,9):raise ValueError("explicit 7D or 9D reset coordinates required")
+        self.dimension=dimension
         if type(maximum) is not int or not 1<=maximum<=MAX_QUERIES:raise ValueError("1..200 unique full queries required")
         self.query,self.records,self.maximum=query,records,maximum
         self.cache={};self.labels=None
     def __call__(self,x):
-        x=finite_array(x,(7,));key=x.tobytes()
+        x=finite_array(x,(self.dimension,));key=x.tobytes()
         if key in self.cache:return self.cache[key]
         if len(self.records)>=self.maximum:raise QueryBudget("per-side full-query cap")
         row=dict(query=len(self.records)+1,x=x.tolist(),status="started")
@@ -58,15 +60,16 @@ class Queries:
             with _commit_row_without_alarm():row.update(status="interrupted" if isinstance(error,BudgetExpired) else "error",error=type(error).__name__+": "+str(error))
             raise
 
-def solve(query,initial,lower,upper,trace,*,maximum=MAX_QUERIES):
-    seed,lower,upper=[finite_array(v,(7,)) for v in (initial,lower,upper)]
+def solve(query,initial,lower,upper,trace,*,maximum=MAX_QUERIES,dimension=7):
+    if type(dimension) is not int or dimension not in (7,9):raise ValueError("explicit 7D or 9D reset coordinates required")
+    seed,lower,upper=[finite_array(v,(dimension,)) for v in (initial,lower,upper)]
     if np.any(seed<lower) or np.any(seed>upper):raise ValueError("initial coordinate outside original absolute box")
     trace.update(queries=[],iterates=[],maximum_queries=maximum,maximum_iterations=MAX_ITERATIONS,finite_difference_step=EPS)
-    q=Queries(query,trace["queries"],maximum=maximum)
+    q=Queries(query,trace["queries"],maximum=maximum,dimension=dimension)
     first=q(seed);labels=first["labels"];soft=trust.contact_mask(labels);hard=~soft
     if not soft.any() or not hard.any():raise ValueError("separate target-contact and hard physical-design constraints required")
     def data(x):
-        x=finite_array(x,(7,))
+        x=finite_array(x,(dimension,))
         if np.any(x<lower-1e-12) or np.any(x>upper+1e-12):raise ValueError("optimizer queried outside original bounded reset")
         return trust.values(q(x),labels)
     def assess(x):
