@@ -13196,6 +13196,44 @@
       },
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f8-right-pinch-owned-contact-native.md"
+    },
+    "flex.f8-right-owned-native-evidence-cpu": {
+      "passed": 33,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_right_owned_evidence.py",
+        "tests/test_deformable_pair_source_basis.py"
+      ],
+      "log_sha256": "f73c4ff7b6674945319742c87e821195249dd6a2feff299a7ef2c747989ffa2b",
+      "tested_head": "fab2adfd87d87378b51e296e68f0d31f1f617021",
+      "kind": "readonly_right_native_contact_analysis",
+      "cpu_full_passed": 33,
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "actual_native_execution_steps": 234,
+      "actual_native_duration_seconds": 140.04282430303283,
+      "actual_outer_exit_code": 0,
+      "right_thumb_contact_pairs": 530,
+      "right_index_contact_pairs": 560,
+      "right_all_loaded_longest_seconds": 0.0920138888888889,
+      "table_loaded_solver_substeps": 2784,
+      "bilateral_required_loaded_substeps": 0,
+      "audit_result": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/right-owned-native-evidence-20261114-t36T8e8d/run02/result.json",
+      "audit_sha256": "644a90b2cc207d3f9087a58c4b3e0552c01c8cb178880bad2159eaa675e53bad",
+      "original_native_receipt_sha256": "3e12bb3204f46df748e1de7b35b77306e57be016e6a7f626249f0790d466c83d",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-right-owned-native-contact.md",
+      "report_source_commit": "4c037eb05598ef80fdcfc47fca9a75db9599784b"
     }
   }
 }

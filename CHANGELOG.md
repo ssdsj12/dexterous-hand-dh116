@@ -1,3 +1,7 @@
+## 2026-11-14 — 右Pinch实际接触与跟踪只读审计
+
+实际右指腹接触560/530条，同载荷92.014ms；原生234步自然退出0，仍有桌面承托，0抓取/Teacher成功。只读新增33项CPU回归，未再执行物理或训练。 Ubuntu CPU 回归 33 项通过。[报告](docs/superpowers/reports/2026-11-14-right-owned-native-contact.md)
+
 ## 2026-11-13 — 右Pinch独立234步接近原生诊断
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-right-pinch-owned-contact-native.md)。
