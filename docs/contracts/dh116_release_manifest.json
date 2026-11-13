@@ -6342,6 +6342,53 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 74,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_physx_tensor_lifetime.py",
+        "tests/test_deformable_grasp_runtime.py",
+        "tests/test_dh116_deformx_bridge_lifecycle.py",
+        "tests/test_dh116_pinch_scheduler.py",
+        "tests/test_dh116_deformx_thumb_contact.py"
+      ],
+      "log_sha256": "c98fbeabbc6cb450631f5aaf0a853b36060b5c8afb404d1f319c61cf7f14599b",
+      "tested_head": "bac024fcfdcf2e53bf3bd2fee0b63ab125384473",
+      "stage": "cpu_verified_and_archived_native_evidence_audit",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "real_training_updates": 0,
+      "root_cause_proven": false,
+      "scope": "archived_physics_tensor_owner_and_gdb_stack",
+      "audit_sha256": "5ffa06e55b92bdddea1391472ed22abf936156f8b84c036237a0ae6d9f8ef455",
+      "installed_sdk_sha256": "63ab652878e9ca6c32646965be4a7b700a87cb8e0299d0180b6bf574e64158a3",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-physx-tensor-lifetime-audit.md",
+      "report_source_commit": "b901fe0c09b1b54e33e0e87666262253b2fbabec",
+      "package": "flex.f4-physx-tensor-lifetime-evidence",
+      "commit": "9b48ace931a6d89e00a2b1434280db5b6920acf1",
+      "parent": "bac024fcfdcf2e53bf3bd2fee0b63ab125384473",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-physx-tensor-lifetime-audit.md",
+        "scripts/audit_dh116_physx_tensor_lifetime.py",
+        "src/go2_pvcnn/control/dh116/tabletop_native_lifetime_audit.py",
+        "tests/test_dh116_physx_tensor_lifetime.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
