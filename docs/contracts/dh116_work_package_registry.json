@@ -16954,6 +16954,75 @@
         "status": "passed",
         "report": "docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-v4-native.md"
       }
+    },
+    "flex.f7-native-boundary-inference-cpu": {
+      "title": "柔性 Teacher 真实动作前状态离线推理",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-measured-common-teacher-cpu",
+        "flex.f7-dual-pinch-zero-interval-v4-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 35,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_measured_inference.py",
+          "tests/test_dh116_flexible_measured_common_teacher.py",
+          "tests/test_dh116_flexible_measured_checkpoint.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_deformable_privileged_ppo.py"
+        ],
+        "log_sha256": "8a15e7cbf18b61cd407cfc914946092b8a17f15fc84df5ac3f14a2a50d6f39aa",
+        "tested_head": "38de93a5f10eefb3bc37295a84ccf31e95190298",
+        "native_qualification": false,
+        "qualification_scope": "real_native_preaction_packet_cpu_inference_only",
+        "teacher_admission": false,
+        "native_optimizer_updates": 0,
+        "source_ledger_sha256": "ead0dbf2c15b83864a1c440848ed9cf159b86c88a6ade0e4275208efebcf778c",
+        "source_native_receipt_sha256": "aa1a6877c29b460e8f12589674d4ba09381faf8aea200400a7cd0e71d1a5a1ec",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-native-boundary-inference.md",
+        "report_source_commit": "b4ab94458f55a4583937cdbd09ee521c636cbad5"
+      },
+      "last_result": {
+        "passed": 35,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_measured_inference.py",
+          "tests/test_dh116_flexible_measured_common_teacher.py",
+          "tests/test_dh116_flexible_measured_checkpoint.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_deformable_privileged_ppo.py"
+        ],
+        "log_sha256": "8a15e7cbf18b61cd407cfc914946092b8a17f15fc84df5ac3f14a2a50d6f39aa",
+        "tested_head": "38de93a5f10eefb3bc37295a84ccf31e95190298",
+        "native_qualification": false,
+        "qualification_scope": "real_native_preaction_packet_cpu_inference_only",
+        "teacher_admission": false,
+        "native_optimizer_updates": 0,
+        "source_ledger_sha256": "ead0dbf2c15b83864a1c440848ed9cf159b86c88a6ade0e4275208efebcf778c",
+        "source_native_receipt_sha256": "aa1a6877c29b460e8f12589674d4ba09381faf8aea200400a7cd0e71d1a5a1ec",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-native-boundary-inference.md",
+        "report_source_commit": "b4ab94458f55a4583937cdbd09ee521c636cbad5"
+      }
     }
   },
   "execution_target": {

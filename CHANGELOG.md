@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性 Teacher 真实动作前状态离线推理
+
+使用真实双手 Pinch 和 41 节点预动作账本，CPU 验证 24D Tanh 推理。正式 PPO 准入仍未通过。 Ubuntu CPU 回归 35 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-native-boundary-inference.md)
+
 ## 2026-11-13 — 双手 Pinch 零动作区间 v4 原生复验
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-v4-native.md)。
