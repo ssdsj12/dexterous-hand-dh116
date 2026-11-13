@@ -1,3 +1,7 @@
+## 2026-11-13 — PhysX 所有权生命周期 registry 原生对照
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-registry-native.md)。
+
 ## 2026-11-13 — PhysX Tensor View 两种清理路径对照准备
 
 两种资源清理路径分别冻结，捕获 GDB 调用栈、寄存器和动态库映射，外层退出独立复核。原生对照待批准。 Ubuntu CPU 回归 113 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-lifetime-probe-preparation.md)
