@@ -16238,6 +16238,98 @@
         "status": "failed",
         "report": "docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-v2-native.md"
       }
+    },
+    "flex.f7-dual-pinch-zero-interval-v3-cpu": {
+      "title": "双手 Pinch 场景准备交接",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-pinch-zero-interval-v2-cpu",
+        "flex.f7-dual-pinch-postexit-audit-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 23,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_pinch_worker_v3.py",
+          "tests/test_dh116_dual_pinch_postexit.py",
+          "tests/test_dh116_dual_pinch_worker_v2.py"
+        ],
+        "log_sha256": "ee311beae7a914635982d0971300ed427e54a2d187df048026ec1862e32ed82f",
+        "tested_head": "d7349430b737c2f5a7c593209d8524291fd25c32",
+        "native_qualification": false,
+        "qualification_scope": "dual_pinch_prepared_scene_handoff_cpu",
+        "prior_failure_receipt_sha256": "4ca563a091115cf056b32c921e67081ff9ff582b6df3f0f66abc40d61986f555",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v3-preflight.md",
+        "report_source_commit": "ab1f5dd6fafd4b40b9794718f6214ce1ac16b953"
+      },
+      "last_result": {
+        "passed": 23,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_pinch_worker_v3.py",
+          "tests/test_dh116_dual_pinch_postexit.py",
+          "tests/test_dh116_dual_pinch_worker_v2.py"
+        ],
+        "log_sha256": "ee311beae7a914635982d0971300ed427e54a2d187df048026ec1862e32ed82f",
+        "tested_head": "d7349430b737c2f5a7c593209d8524291fd25c32",
+        "native_qualification": false,
+        "qualification_scope": "dual_pinch_prepared_scene_handoff_cpu",
+        "prior_failure_receipt_sha256": "4ca563a091115cf056b32c921e67081ff9ff582b6df3f0f66abc40d61986f555",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v3-preflight.md",
+        "report_source_commit": "ab1f5dd6fafd4b40b9794718f6214ce1ac16b953"
+      }
+    },
+    "flex.f7-dual-pinch-zero-interval-v3-native": {
+      "title": "双手 Pinch 零动作区间 v3 原生复验",
+      "executor": "native_bounded",
+      "status": "pending",
+      "dependencies": [
+        "flex.f7-dual-pinch-zero-interval-v3-cpu",
+        "flex.f4-pinch-left-v4-native",
+        "flex.f7-deformx-pair-capture-v2-native"
+      ],
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/deformx_dual_pinch_zero_interval_v3.json",
+      "evidence_scope": "dual_pinch_same_free_rod_reset_zero_interval_v3",
+      "dependency_scopes": {
+        "flex.f4-pinch-left-v4-native": {
+          "scope": "single_left_fixed_base_free_rod_measured_node_contact_v4",
+          "native": true
+        },
+        "flex.f7-deformx-pair-capture-v2-native": {
+          "scope": "one_free_rod_one_table_sdf_pair_capture_calibration_v2",
+          "native": true
+        }
+      },
+      "tests": [
+        "tests/test_dh116_dual_pinch_worker_v3.py",
+        "tests/test_dh116_dual_pinch_postexit.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_dual_pinch_work_packages_v3.py"
     }
   },
   "execution_target": {

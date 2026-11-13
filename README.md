@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 场景准备交接
+
+双手原生 Reset 的场景配置由 builder 与台面读取器共享，冻结 2+8 步复验。 Ubuntu CPU 回归 23 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v3-preflight.md)
+
 ## 2026-11-13 — 双手 Pinch 原生同杆 2+8 元数据修正版
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-v2-native.md)。
