@@ -10575,7 +10575,7 @@
       "dependencies": [
         "flex.f4-physx-lifetime-probes-cpu"
       ],
-      "status": "blocked",
+      "status": "failed",
       "command_spec": "configs/dh116_execution/physx_lifetime_explicit_v1.json",
       "requires_approval": true,
       "resource_class": "isaac_single_gpu",
@@ -10591,8 +10591,115 @@
         "tests/test_dh116_physx_lifetime_scheduler.py"
       ],
       "stage": "prepared_waiting_exact_native_approval",
-      "reason": "Independent ownership probe awaits exact approval. No measured physics or PPO.",
-      "scheduler_entrypoint": "scripts/run_dh116_physx_lifetime_work_packages.py"
+      "reason": "native or CPU qualification failed; durable evidence retained outside Git",
+      "scheduler_entrypoint": "scripts/run_dh116_physx_lifetime_work_packages.py",
+      "last_native_attempt": {
+        "executor": "native_bounded",
+        "tested_head": "3110f18154f925427c6f937676997e17ab325781",
+        "batch_id": "physx-lifetime-registry-explicit-once",
+        "qualification_scope": "physx_lifetime_explicit_only",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "command_spec_sha256": "f10ad7bfa1625d0ba239613488233397bb6a8da43a93da63ff902d882e0348c4",
+        "code_config_sha256": "7880b81229cf40611d4dd367e05a5c3dad75d21ce40fc883df9e88d14e4bab25",
+        "launch_argv_sha256": "6937b5ecd3319882bab1c1a3afacdfcc952757a7b8e5e95bf82b2a0bc822a59e",
+        "debugger": "gdb_on_segv",
+        "debugger_script_sha256": "36089aebdb5399fd4d334139a6f9f1f86f82613671844f9aa92f558919eb78ef",
+        "debugger_wrapper_sha256": "a2263d9c38284fa875a6fa4eb918866c96f962dd9e6aa83f8be0d198f792edca",
+        "exit_code": 1,
+        "outer_exit_code": 1,
+        "log_sha256": "c0bff4b875d9b26f6fb17bd2233f2450b7b4d7395ef08f7d403ae49388cc286a",
+        "duration_seconds": 57.60949617391452,
+        "native_lock_observed": true,
+        "debugger_status_verified": false,
+        "debugger_backtrace_captured": false,
+        "blocker_kind": "failed_native",
+        "lifetime_post_exit_audit_sha256": "6bd3def41be4c0e9ee49ac25f2d36d3c1753fc8d485cef78b722728de3deb6fb",
+        "lifetime_validator_source_sha256": {
+          "scripts/run_dh116_physx_lifetime_work_packages.py": "7419a5cd8ff2172b21be226278bd71c277268d4f2308d199aa6ff36a47d5e0d6",
+          "scripts/probe_dh116_physx_lifetime.py": "8d1562163edacb66b79f8ce45ab004be1059f7e76677700f3cb6a933b301f351",
+          "scripts/dh116_physx_lifetime_acquisition.py": "daf43e49428f1d7c8e43efa34607404b0ed83c29cfb2c83d73066b64d421b2e5",
+          "scripts/dh116_physx_lifetime_debugger.py": "f93a100c31284b396bb750bb2fba3b1db8d1b553c7b09b73835204a9ca9af1b7",
+          "scripts/validate_dh116_physx_lifetime.py": "3c098431fcba148b7744773adc5637484e856420fb3151a60b0d3c27b92ea95a"
+        },
+        "result_sha256": "cc9f9ce4653055bcba072095a5c46a19cf17022e9e4a85e44a708a2e11dbaee8",
+        "native_physics_validated": false,
+        "cpu_regression": {
+          "passed": 39,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "tests/test_dh116_physx_lifetime_probe.py",
+            "tests/test_dh116_physx_lifetime_validation.py",
+            "tests/test_dh116_physx_lifetime_scheduler.py"
+          ],
+          "log_sha256": "48a76823f91589d49080397e2c4838137de82ba3e4d8ae2ce191237e1df1c36e",
+          "tested_head": "3110f18154f925427c6f937676997e17ab325781"
+        },
+        "status": "failed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-explicit-native.md"
+      },
+      "blocker_kind": "failed_native",
+      "last_result": {
+        "executor": "native_bounded",
+        "tested_head": "3110f18154f925427c6f937676997e17ab325781",
+        "batch_id": "physx-lifetime-registry-explicit-once",
+        "qualification_scope": "physx_lifetime_explicit_only",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "command_spec_sha256": "f10ad7bfa1625d0ba239613488233397bb6a8da43a93da63ff902d882e0348c4",
+        "code_config_sha256": "7880b81229cf40611d4dd367e05a5c3dad75d21ce40fc883df9e88d14e4bab25",
+        "launch_argv_sha256": "6937b5ecd3319882bab1c1a3afacdfcc952757a7b8e5e95bf82b2a0bc822a59e",
+        "debugger": "gdb_on_segv",
+        "debugger_script_sha256": "36089aebdb5399fd4d334139a6f9f1f86f82613671844f9aa92f558919eb78ef",
+        "debugger_wrapper_sha256": "a2263d9c38284fa875a6fa4eb918866c96f962dd9e6aa83f8be0d198f792edca",
+        "exit_code": 1,
+        "outer_exit_code": 1,
+        "log_sha256": "c0bff4b875d9b26f6fb17bd2233f2450b7b4d7395ef08f7d403ae49388cc286a",
+        "duration_seconds": 57.60949617391452,
+        "native_lock_observed": true,
+        "debugger_status_verified": false,
+        "debugger_backtrace_captured": false,
+        "blocker_kind": "failed_native",
+        "lifetime_post_exit_audit_sha256": "6bd3def41be4c0e9ee49ac25f2d36d3c1753fc8d485cef78b722728de3deb6fb",
+        "lifetime_validator_source_sha256": {
+          "scripts/run_dh116_physx_lifetime_work_packages.py": "7419a5cd8ff2172b21be226278bd71c277268d4f2308d199aa6ff36a47d5e0d6",
+          "scripts/probe_dh116_physx_lifetime.py": "8d1562163edacb66b79f8ce45ab004be1059f7e76677700f3cb6a933b301f351",
+          "scripts/dh116_physx_lifetime_acquisition.py": "daf43e49428f1d7c8e43efa34607404b0ed83c29cfb2c83d73066b64d421b2e5",
+          "scripts/dh116_physx_lifetime_debugger.py": "f93a100c31284b396bb750bb2fba3b1db8d1b553c7b09b73835204a9ca9af1b7",
+          "scripts/validate_dh116_physx_lifetime.py": "3c098431fcba148b7744773adc5637484e856420fb3151a60b0d3c27b92ea95a"
+        },
+        "result_sha256": "cc9f9ce4653055bcba072095a5c46a19cf17022e9e4a85e44a708a2e11dbaee8",
+        "native_physics_validated": false,
+        "cpu_regression": {
+          "passed": 39,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "tests/test_dh116_physx_lifetime_probe.py",
+            "tests/test_dh116_physx_lifetime_validation.py",
+            "tests/test_dh116_physx_lifetime_scheduler.py"
+          ],
+          "log_sha256": "48a76823f91589d49080397e2c4838137de82ba3e4d8ae2ce191237e1df1c36e",
+          "tested_head": "3110f18154f925427c6f937676997e17ab325781"
+        },
+        "status": "failed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-explicit-native.md"
+      }
     }
   },
   "execution_target": {

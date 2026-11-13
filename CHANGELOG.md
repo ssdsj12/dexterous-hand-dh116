@@ -1,3 +1,7 @@
+## 2026-11-13 — PhysX 所有权生命周期 explicit 原生对照
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-explicit-native.md)。
+
 ## 2026-11-13 — PhysX 所有权生命周期 registry 原生对照
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-registry-native.md)。
