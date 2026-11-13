@@ -18754,6 +18754,82 @@
         "status": "passed",
         "report": "docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-director-endpoints-native.md"
       }
+    },
+    "flex.f7-native-director-endpoint-summary-cpu": {
+      "title": "真实材料方向端点与原动作路径只读对照",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-pinch-director-endpoints-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 63,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_native_director_endpoints.py",
+          "tests/test_dh116_material_director_readback.py",
+          "tests/test_dh116_dual_pinch_closure_readback.py"
+        ],
+        "log_sha256": "5d007c70a10b71f66b490c6f925d662297b88a192c35d38a2ff73b407a287089",
+        "tested_head": "ef683a1316353794ac17e675be26ecf01501c569",
+        "kind": "cpu_analysis_of_actual_native_director_archive",
+        "new_native_physics_steps": 0,
+        "source_native_physics_steps": 18,
+        "source_native_receipt_sha256": "11731b7d0a95edfd9573c53ccd08af238f9db47831eb37bf7b3ea0c27b2d9dd6",
+        "source_native_exit_code": 0,
+        "material_packets": 17,
+        "hand_rod_pair_samples": 0,
+        "table_pair_samples": 7872,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "summary_sha256": "810dccb287f7af537533d55001d0b3aaba1769980818ab24771977599189fbbf",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-native-director-endpoint-readback.md",
+        "report_source_commit": "fcf596318490d17e548b3ce7a4537d0d934662c3"
+      },
+      "last_result": {
+        "passed": 63,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_native_director_endpoints.py",
+          "tests/test_dh116_material_director_readback.py",
+          "tests/test_dh116_dual_pinch_closure_readback.py"
+        ],
+        "log_sha256": "5d007c70a10b71f66b490c6f925d662297b88a192c35d38a2ff73b407a287089",
+        "tested_head": "ef683a1316353794ac17e675be26ecf01501c569",
+        "kind": "cpu_analysis_of_actual_native_director_archive",
+        "new_native_physics_steps": 0,
+        "source_native_physics_steps": 18,
+        "source_native_receipt_sha256": "11731b7d0a95edfd9573c53ccd08af238f9db47831eb37bf7b3ea0c27b2d9dd6",
+        "source_native_exit_code": 0,
+        "material_packets": 17,
+        "hand_rod_pair_samples": 0,
+        "table_pair_samples": 7872,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "summary_sha256": "810dccb287f7af537533d55001d0b3aaba1769980818ab24771977599189fbbf",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-native-director-endpoint-readback.md",
+        "report_source_commit": "fcf596318490d17e548b3ce7a4537d0d934662c3"
+      }
     }
   },
   "execution_target": {

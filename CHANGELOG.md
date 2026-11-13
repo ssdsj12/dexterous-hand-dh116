@@ -1,3 +1,7 @@
+## 2026-11-13 — 真实材料方向端点与原动作路径只读对照
+
+17组真实reset/端点读回通过，原生18步自然exit0。与前次原动作运行的16行杆节点、左右q/qd及SDK目标逐值一致；只读分析不新增原生步。仍为0手指—杆接触，材料转角不是接触滑移，三抓法Teacher均未开放。 Ubuntu CPU 回归 63 项通过。[报告](docs/superpowers/reports/2026-11-13-native-director-endpoint-readback.md)
+
 ## 2026-11-13 — 双手 Pinch 同钟材料方向单次原生端点读回
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-director-endpoints-native.md)。
