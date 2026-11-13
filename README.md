@@ -1,3 +1,7 @@
+## 2026-11-13 — Cosserat 材料标记随杆截面运动的 CPU 参考
+
+为未来真实求解器遥测提供固定材料坐标和截面旋转的 CPU 参考，保留当前接触材料坐标、Slip 和误差界未知。 Ubuntu CPU 回归 81 项通过。[报告](docs/superpowers/reports/2026-11-13-cosserat-material-marker-reference.md)
+
 ## 2026-11-13 — 双手 Pinch 同杆零动作 2+8 原生诊断
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-native.md)。
