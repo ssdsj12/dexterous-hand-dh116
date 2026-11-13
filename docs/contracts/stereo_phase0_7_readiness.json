@@ -7568,6 +7568,37 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-physx-gdb-stopped-context.md",
       "report_source_commit": "32e5187fcb550200fd6b93249c7d66e77c9e99d0"
+    },
+    "flex.f4-dual-hand-rod-runtime-cpu": {
+      "passed": 66,
+      "failed": 0,
+      "skipped": 1,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_deformable_grasp_runtime.py",
+        "tests/test_deformx_wire_runtime.py",
+        "tests/test_deformx_batched_adapter.py",
+        "tests/test_dh116_deformx_pair_capture.py"
+      ],
+      "log_sha256": "e8153491af28ca4dcb93df5a416db67848846d5392e845900c6f26e1927d0e1c",
+      "tested_head": "d4344c97197ea9cd60eb1ca7eeaf53cffe8436d4",
+      "stage": "cpu_verified_api_composition",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "scope": "dual_hand_free_rod_adapter_cpu",
+      "paired_mesh_slots": 10,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-hand-rod-runtime.md",
+      "report_source_commit": "2eb2d203219d8408d91556bc5336b754ec92b8ef"
     }
   }
 }

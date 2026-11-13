@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手同杆运行时与 10 指腹反作用力路由
+
+接通双手槽位和世界坐标反作用力路由，校验真实实例身份、单步时钟和 Reset。CUDA 用例在 CPU 回归中跳过，待原生标定。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-rod-runtime.md)
+
 ## 2026-11-13 — PhysX GDB 全线程暂停后取证
 
 带后台线程的 CPU 进程复现旧 GDB 命令错误。候选捕获器在所有线程暂停后保留完整栈、映射和实际退出状态，待下一原生配方接入。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-gdb-stopped-context.md)
