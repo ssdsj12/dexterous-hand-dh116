@@ -1,3 +1,7 @@
+## 2026-11-13 — 左 Pinch v2 初始全手几何读回
+
+原 17 碰撞体和锁定的 5 指腹几何使用 SDK link 位姿重算。已有 cooking 数据作为补充，实际 shape attachment 仍待原生核对。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-initial-geometry-v2-cpu.md)
+
 ## 2026-11-13 — 柔性双手动作前同钟状态读回
 
 双手动作前入口以同一物理边界读回 66 个原合同字段与杆快照。余下 305 项明确保留无效状态，原 Teacher 准入继续关闭。 Ubuntu CPU 回归 100 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-episode-common-readback.md)
