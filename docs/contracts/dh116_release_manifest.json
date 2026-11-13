@@ -14524,6 +14524,58 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_bilateral_owned_contract.py",
+        "tests/test_dh116_bilateral_owned_geometry.py",
+        "tests/test_dh116_bilateral_owned_action_audit.py",
+        "tests/test_dh116_right_approach_contract.py",
+        "tests/test_dh116_right_approach_geometry.py"
+      ],
+      "log_sha256": "140a2052b884df4fcd8b71ff2b45ab1c7479ea98aabc99d4a014942a7681d350",
+      "tested_head": "a4e8c2d19a7240beda5c42adee312972401ddc26",
+      "kind": "cpu_bilateral_original_control_contract",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "cpu_control_rows": 232,
+      "minimum_table_clearance_m": 0.0021177108284008983,
+      "minimum_interhand_separation_m": 0.3182067612145217,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-bilateral-owned-control.md",
+      "report_source_commit": "87d88724b37d96cd2aa63f7e93081dffd981898e",
+      "package": "flex.f8-bilateral-owned-contract-cpu",
+      "commit": "4587414de7bd132c5773fbc6c19e13474f54ba64",
+      "parent": "a4e8c2d19a7240beda5c42adee312972401ddc26",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_tasks/flexible_bilateral_owned_pinch_v1.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/plans/2026-11-14-bilateral-owned-pinch.md",
+        "docs/superpowers/reports/2026-11-14-bilateral-owned-control.md",
+        "scripts/audit_dh116_bilateral_owned_action_contract.py",
+        "scripts/prepare_dh116_bilateral_owned_pinch.py",
+        "src/go2_pvcnn/control/dh116/tabletop_bilateral_owned_geometry.py",
+        "tests/test_dh116_bilateral_owned_action_audit.py",
+        "tests/test_dh116_bilateral_owned_contract.py",
+        "tests/test_dh116_bilateral_owned_geometry.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
