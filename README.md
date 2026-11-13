@@ -1,3 +1,7 @@
+## 2026-11-13 — 最新Segment原生账本的R0实测approach接入
+
+修复旧approach读取器拒绝新Segment几何的版本断层；只读232原生测量步/29控制窗口，232approach有效，稳定性232步缺失、有效对向接触42步未资格化。无新原生/训练，R0与Teacher仍blocked。 Ubuntu CPU 回归 92 项通过。[报告](docs/superpowers/reports/2026-11-13-segment-r0-approach.md)
+
 ## 2026-11-13 — 右Pinch独立Reset几何与节点SDF诊断
 
 右手实际SDK234来源；四个明确变更的CPU批次共306端点评估，原生0/PPO0。独立Reset候选仍未通过非目标净空与双指SDF裕量，原生配方未生成；旧失败/保护文件/模型保留。 Ubuntu CPU 回归 90 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-reset-direction.md)
