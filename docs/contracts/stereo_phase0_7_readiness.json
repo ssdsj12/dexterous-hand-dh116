@@ -9144,6 +9144,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-pinch-measured-sdf-closure-margin.md",
       "report_source_commit": "2771d8b23e078a7d2d6af07e6fec271c22732413"
+    },
+    "flex.f7-dual-physical-evidence-cpu": {
+      "passed": 49,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_hand_evidence_journal.py",
+        "tests/test_dh116_dual_hand_episode.py",
+        "tests/test_deformable_r0_replay.py",
+        "tests/test_dh116_evidence_journal.py"
+      ],
+      "log_sha256": "69fd3171d9606a2e323bb245d4d664cde449b095e11035415f7f7c5f73cb1013",
+      "tested_head": "3c24deb16bf5f774b1fefa580b4c6a3bf72fc409",
+      "scope": "physical_owner_durable_evidence_cpu_only",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "physics_steps": 0,
+      "optimizer_updates": 0,
+      "measured_common_channels_cpu": 66,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-dual-physical-evidence.md",
+      "report_source_commit": "47803bb1ba0a472b78e6804757222e5642b583ea"
     }
   }
 }
