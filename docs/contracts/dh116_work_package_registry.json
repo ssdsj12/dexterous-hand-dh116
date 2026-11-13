@@ -17949,6 +17949,74 @@
         "report": "docs/superpowers/reports/2026-11-13-pinch-raised-reset-reachability.md",
         "report_source_commit": "bb2685204be3273f57e534ef443146007b6c8be9"
       }
+    },
+    "flex.f7-r0-reward-domain-cpu": {
+      "title": "区分 flexible R0 观测缺失与奖励定义域",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-v4-r0-native-ledger-replay"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 90,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_r0_reward_domain.py",
+          "tests/test_dh116_deformable_grasp_task.py",
+          "tests/test_dh116_deformable_control_step.py",
+          "tests/test_deformable_r0_replay.py"
+        ],
+        "log_sha256": "03cfb75aeabedeeb7add42f5a01d64dae9e50777040a947ad32ee251b0468425",
+        "tested_head": "6cab12fb2416ae3a6d6d13be18c8247c5a46b507",
+        "kind": "original_reward_kernel_cpu_domain_matrix",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "training_reward_available": false,
+        "original_reward_kernel_unchanged": true,
+        "actual_replay_sha256": "1489d19c86f7eb19731f7b59c09fd1e6d01e721219fdb8be91bff80941ced5b8",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-r0-reward-domain-audit.md",
+        "report_source_commit": "e0066a3e8845199935b4f76bda7d9949b16457a5"
+      },
+      "last_result": {
+        "passed": 90,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_r0_reward_domain.py",
+          "tests/test_dh116_deformable_grasp_task.py",
+          "tests/test_dh116_deformable_control_step.py",
+          "tests/test_deformable_r0_replay.py"
+        ],
+        "log_sha256": "03cfb75aeabedeeb7add42f5a01d64dae9e50777040a947ad32ee251b0468425",
+        "tested_head": "6cab12fb2416ae3a6d6d13be18c8247c5a46b507",
+        "kind": "original_reward_kernel_cpu_domain_matrix",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "training_reward_available": false,
+        "original_reward_kernel_unchanged": true,
+        "actual_replay_sha256": "1489d19c86f7eb19731f7b59c09fd1e6d01e721219fdb8be91bff80941ced5b8",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-r0-reward-domain-audit.md",
+        "report_source_commit": "e0066a3e8845199935b4f76bda7d9949b16457a5"
+      }
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## 2026-11-13 — 区分 flexible R0 观测缺失与奖励定义域
+
+实际原公式证明：补齐半径和稳定性可定义部分未达标项为0，但首approach无前值和未建立双手材料锚的slip仍为NA，严格reducer不能生成训练标量。保留旧kernel、系数与标准，记录独立后继奖励合同需处理的定义域；本包0原生步、0训练更新。 Ubuntu CPU 回归 90 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-reward-domain-audit.md)
+
 ## 2026-11-13 — Pinch 初始掌位与两指闭合的有界可达性诊断
 
 完成60个CPU几何状态的固定范围诊断，左右候选均未满足目标SDF接触及全轨迹余量，不生成原生配方。保留失败结果；不把保守下界失败当成已证明碰撞，也不据此宣称全局不可达。本包原生0步，PPO0更新。 Ubuntu CPU 回归 55 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-raised-reset-reachability.md)
