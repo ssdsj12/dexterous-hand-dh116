@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手同杆Pinch独立234步原生诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-bilateral-owned-pinch-native.md)。
+
 ## 2026-11-14 — 双手同杆独立原生入口与父回执门控
 
 双手独立入口复用原owner/退出逻辑，右真实父回执与左独立事后审计分别SHA核验。完整合成owner及worker19项通过，发布重新运行43项；原生未执行，Teacher未晋级。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-native-preparation.md)
