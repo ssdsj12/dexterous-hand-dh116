@@ -8097,6 +8097,55 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_right_pinch_targeted.py",
+        "tests/test_dh116_right_pinch_closure_screen.py",
+        "tests/test_dh116_flexible_style_pose_preparation.py",
+        "tests/test_dh116_pinch_initial_table_clearance.py"
+      ],
+      "log_sha256": "cabc7d606df3ff3f035f1977794bfc3a53b884d4358b1ff467879afb04550dc5",
+      "tested_head": "2825bf186ac235b499b0e29c7cb879485e3de1b5",
+      "stage": "cpu_verified_targeted_right_geometry_screen",
+      "scope": "right_pinch_independent_cpu_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "candidate_count": 120,
+      "strict_endpoint_pass_count": 78,
+      "continuous_pass_count": 1,
+      "policy_wrist_floor_passed": false,
+      "selected_proposal_sha256": "02b79aaa83f2c21f58a16e377cf67bd273511aae4b26714ab46fc30df1fa4e43",
+      "evidence_replay_sha256": "d50a77b0757501c69d56c9c5f6b8e15506bee4e96b42d1f604f8e481e50144fc",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-right-pinch-targeted-geometry.md",
+      "report_source_commit": "7eb8b9bf7b403b1b777cde9d3f06ab9fe003fa23",
+      "package": "flex.f8-right-pinch-targeted-cpu",
+      "commit": "47afd0fda84fadd3f1ad8c3b70a7e6301f2e4eef",
+      "parent": "2825bf186ac235b499b0e29c7cb879485e3de1b5",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-right-pinch-targeted-geometry.md",
+        "scripts/refine_dh116_right_pinch_geometry.py",
+        "tests/test_dh116_right_pinch_targeted.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
