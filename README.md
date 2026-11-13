@@ -1,3 +1,7 @@
+## 2026-11-13 — 左 Pinch v2 单手自由杆读回和自然退出
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v2-native.md)。
+
 ## 2026-11-13 — 单左 Pinch v2 原生复验准备
 
 同一原生配方记录 17 link 初始净空、真实桌面计数和 DeformX pair，并独立重开物理账本与自然退出证据。只授予单手运行与读回范围，抓取仍独立验收。 Ubuntu CPU 回归 169 项通过。[报告](docs/superpowers/reports/2026-11-13-single-left-pinch-v2-preparation.md)
