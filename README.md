@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch真实接触账本与三维逐杆段间隙证明
+
+原生216/234步保护停止、exit1且无信号；左拇指310/食指279真实pair，连续同时接触48.4375ms。旧XZ间隙界−3.674µm，完整3D逐段CPU证明+0.497762mm；原失败回执不改，未升级Teacher或原生资格。 Ubuntu CPU 回归 41 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-contact-support-proof.md)
+
 ## 2026-11-13 — 左Pinch最大净空初态单次原生接触诊断
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-pinch-margin-contact-native.md)。
