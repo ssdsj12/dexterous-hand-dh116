@@ -10048,6 +10048,31 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-dual-mounted-sdk-boundary-cpu.md",
       "report_source_commit": "99cc76d2a2d33a38c220bbd4d5cc7afc36aa813d"
+    },
+    "flex.f7-dual-pinch-zero-interval-v4-cpu": {
+      "passed": 38,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_pinch_worker_v4.py",
+        "tests/test_dh116_dual_pinch_postexit.py",
+        "tests/test_dh116_bimanual_table_contacts_v2.py"
+      ],
+      "log_sha256": "5063b6c8190670405f6fe33098d401ceb455e5ba105376dd79e6d9be36773fb7",
+      "tested_head": "43abe38b555fe6063cbdf2fac3ad87907c4a5686",
+      "native_qualification": false,
+      "qualification_scope": "dual_pinch_actual_static_table_collider_cpu",
+      "prior_failure_receipt_sha256": "b70888833bab2e1a1cbddff2fe9595b8953d31565d2ff7dc5c1c1a49da71c64c",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v4-preflight.md",
+      "report_source_commit": "bf9719f17cb45a8e3ac35901961cbb0742ec3fc6"
     }
   }
 }

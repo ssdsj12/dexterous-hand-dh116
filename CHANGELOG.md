@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 原台面碰撞节点
+
+按当前 Isaac Lab 的真实 USD 子节点读取原台面。保留静态接触 NA，冻结单次 2+8 复验。 Ubuntu CPU 回归 38 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v4-preflight.md)
+
 ## 2026-11-13 — 双手原生 Reset 账本与 SDK 输入回归
 
 复用双手真实 Reset 的 17DOF、23 body 和原安装 SDK 读取实现，回归 24D 动作路径及目标和实测分离。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-mounted-sdk-boundary-cpu.md)
