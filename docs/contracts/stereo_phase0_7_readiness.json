@@ -9356,6 +9356,34 @@
       },
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v4-native.md"
+    },
+    "flex.f7-bimanual-table-contact-cpu": {
+      "passed": 68,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_bimanual_table_contacts.py",
+        "tests/test_dh116_pinch_v2.py",
+        "tests/test_dh116_flexible_physical_exchange.py"
+      ],
+      "log_sha256": "a4dbe41b85e1f311cf2696688c051f179f95ec38c5ec6e169e00cd33ea01113c",
+      "tested_head": "23334324a192ff69e900c0f092129c0f61c6649e",
+      "scope": "bimanual_contact_source_cpu_only",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "static_filter_qualified": false,
+      "physics_steps": 0,
+      "optimizer_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-bimanual-hand-table-contact-cpu.md",
+      "report_source_commit": "5a6223c6a40856cf9b5d8f9cf22a9b187bdbef42"
     }
   }
 }

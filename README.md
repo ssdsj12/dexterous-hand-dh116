@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 PhysX 逐身体台面接触来源
+
+验证双手逐身体原始接触读回接线。固定台面 GPU 过滤能力仍须独立来源核实；随后单独加入 v4 已确认的能力门。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-13-bimanual-hand-table-contact-cpu.md)
+
 ## 2026-11-13 — 左 Pinch v4 固定底座实测闭合和原生退出
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v4-native.md)。
