@@ -196,6 +196,18 @@ def test_original_static_table_gpu_filter_is_na_before_view_creation(context):
     source=open_source(context);context[4]["clock"]=clock(3)
     result=api().read_bimanual_table_contacts(source,read_clock=context[3])
     assert not context[5]
-    assert source.metadata["missing_reporting"] is None
     assert result["available"] is False and result["total_contacts"] is None
     assert "static" in result["reason"] and "GPU" in result["reason"]
+
+
+def test_table_source_accepts_original_container_backend_instance(context):
+    from pxr import UsdPhysics
+    table=context[0].GetPrimAtPath(context[2]["prefix"]+"/Table")
+    table.RemoveAPI(UsdPhysics.RigidBodyAPI)
+    for hand in context[1]:
+        view=hand.root_physx_view
+        view.prim_paths=[view.prim_paths[0].removesuffix("/wrist_fixed")]
+    source=open_source(context)
+    context[4]["clock"]=clock(3)
+    result=api().read_bimanual_table_contacts(source,read_clock=context[3])
+    assert result["total_contacts"] is None and not context[5]

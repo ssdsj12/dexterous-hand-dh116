@@ -122,7 +122,7 @@ def open_bimanual_table_contacts(stage,hands,prepared,*,read_clock):
             if (len(expected)!=17 or len(set(expected))!=17 or len(names)!=23 or len(set(names))!=23
                     or set(hand.joint_names)!=set(JOINTS+WRIST_LINEAR+WRIST_ANGULAR)
                     or len(hand.joint_names)!=17 or not set(expected)<=set(names)
-                    or list(view.prim_paths)!=[root+"/wrist_fixed"]
+                    or list(view.prim_paths) not in ([root],[root+"/wrist_fixed"])
                     or view.link_paths!=[[root+"/"+name for name in names]]):
                 raise ValueError("actual original 17DOF/17 body source mapping differs")
             paths[side]=[view.link_paths[0][names.index(name)] for name in expected]

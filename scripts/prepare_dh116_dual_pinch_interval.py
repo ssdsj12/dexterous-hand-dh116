@@ -18,7 +18,7 @@ def assert_clean_import_boundary():
     return dict(loaded_usd_modules=[])
 
 
-def _owned_interval(sim,owners,trace,*,output,project,prepared,owner_resets,run_uuid,episode_uid):
+def _owned_interval(sim,owners,trace,*,output,project,prepared,owner_resets,run_uuid,episode_uid,code_config_sha256):
     episode=rod=contacts=journal=record=scene=None
     try:
         import torch
@@ -49,11 +49,22 @@ def _owned_interval(sim,owners,trace,*,output,project,prepared,owner_resets,run_
         journal.end(result)
         journal.close()
         audit=inspect_interval(Path(output)/"physical.jsonl")
+        from scripts.run_dh116_work_packages import native_physics_budget
+        if code_config_sha256 is not None:
+            sdk_rows = write_sdk_clock(Path(output)/"physical.jsonl", Path(output)/"sdk_clock.jsonl")
+            clock = dict(sdk_initial_step=0, sdk_after_setup_step=2,
+                sdk_first_measurement_step=sdk_rows[0]["sdk_step"],
+                sdk_last_measurement_step=sdk_rows[-1]["sdk_step"], sdk_final_step=rod.clock()["physics_step"],
+                setup_steps=2, measured_steps=len(sdk_rows), total_steps=10)
+            budget = native_physics_budget(initialization_physics_steps=2, warmup_physics_steps=0,
+                measurement_physics_steps=len(sdk_rows), other_physics_advancing_steps=0)
+        else:
+            clock = rod.clock()
+            budget = dict(total_sdk_steps=10,setup_steps=2,measured_steps=8,solver_substeps=12)
         return dict(version=VERSION,setup=setup,physics_rows=audit["measured_physics_rows"],
-            physics_budget=dict(total_sdk_steps=10,setup_steps=2,measured_steps=8,solver_substeps=12),
-            physics_clock=rod.clock(),journal=audit,hand_table_source_available=False,
+            physics_budget=budget,physics_clock=clock,journal=audit,hand_table_source_available=False,
             no_hand_table_contact_proven=False,native_qualification=False,teacher_admission=False,
-            grasp_qualified=False,ppo_updates=0,code_config_sha256=None)
+            grasp_qualified=False,ppo_updates=0,code_config_sha256=code_config_sha256)
     finally:
         if journal is not None:journal.close()
         # NativeOwners retains the contact views through composer reset and
@@ -97,8 +108,30 @@ def inspect_interval(path):
                 no_hand_table_contact_proven=False)
 
 
+def write_sdk_clock(journal_path, path):
+    """Copy scheduler clock rows from the independently inspected physical journal."""
+    import os
+
+    rows = []
+    with Path(journal_path).open() as stream:
+        next(stream)
+        for line in stream:
+            entry = json.loads(line)
+            if entry["operation"] == "physical":
+                exchange = entry["payload"]["exchange"]
+                rows.append(dict(phase_step=len(rows)+1,sdk_step=exchange["physics_step"]))
+    if [row["sdk_step"] for row in rows] != list(range(3, 11)):
+        raise ValueError("expected exact measured SDK clock in durable physical journal")
+    with Path(path).open("x") as stream:
+        for row in rows:
+            stream.write(json.dumps(row)+"\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    return rows
+
+
 def run_existing_app(app,*,make_sim,synchronize,clear_sim,stop,manager_is_none,freeze,
-                     output,project,prepared,owner_resets,run_uuid,episode_uid):
+                     output,project,prepared,owner_resets,run_uuid,episode_uid,code_config_sha256=None):
     """Compose existing lifecycle; caller owns a future separately gated App.
 
     clear_sim must use the source-verified simulation-owner helper in a future
@@ -114,7 +147,8 @@ def run_existing_app(app,*,make_sim,synchronize,clear_sim,stop,manager_is_none,f
         def acquire(sim,owners,trace,cleanup):
             try:
                 return _owned_interval(sim,owners,trace,output=output,project=project,prepared=prepared,
-                    owner_resets=owner_resets,run_uuid=run_uuid,episode_uid=episode_uid)
+                    owner_resets=owner_resets,run_uuid=run_uuid,episode_uid=episode_uid,
+                    code_config_sha256=code_config_sha256)
             finally:sim=owners=trace=None
         with bindings((lifecycle,"VERSION",VERSION),(lifecycle,"OWNED_NAMES",OWNED_NAMES),
                       (lifecycle,"LifetimeTrace",StartupTrace),

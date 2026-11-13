@@ -56,7 +56,7 @@ def test_actual_builder_journal_eight_ticks_and_lifecycle_failure_boundary(monke
             clear_sim=clear_sim,stop=lambda:callbacks.append("stop"),
             manager_is_none=lambda:True,freeze=lambda:False,output=output,
             project=ROOT,prepared=prepared,owner_resets=reset_owners,
-            run_uuid="cpu-entry",episode_uid="cpu-entry:paired")
+            run_uuid="cpu-entry",episode_uid="cpu-entry:paired",code_config_sha256="a"*64)
     if fault:
         with pytest.raises(RuntimeError):execute()
         result=inspect_evidence(output/"physical.jsonl")
@@ -65,6 +65,11 @@ def test_actual_builder_journal_eight_ticks_and_lifecycle_failure_boundary(monke
     else:
         result=execute();audit=entry.inspect_interval(output/"physical.jsonl")
         assert result["measurement_steps"]==8 and result["physics_steps"]==10
+        assert result["code_config_sha256"] == "a"*64
+        assert result["physics_clock"]["sdk_last_measurement_step"] == 10
+        assert result["physics_budget"]["total_physics_steps"] == 10
+        clock_rows = [json.loads(line) for line in (output/"sdk_clock.jsonl").read_text().splitlines()]
+        assert clock_rows == [dict(phase_step=i,sdk_step=i+2) for i in range(1,9)]
         assert audit["measured_physics_rows"]==8 and audit["complete_control_windows"]==1
         assert audit["static_table_contact_na_rows"]==8 and audit["no_hand_table_contact_proven"] is False
         assert audit["teacher_admission"] is False and audit["native_qualification"] is False

@@ -9599,6 +9599,52 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-dual-pinch-postexit-audit-cpu.md",
       "report_source_commit": "f57040c7e547b78ae99f187dd024ae2725d8bf0d"
+    },
+    "flex.f7-dual-pinch-zero-interval-cpu": {
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_pinch_worker.py",
+        "tests/test_dh116_dual_pinch_postexit.py",
+        "tests/test_dh116_dual_pinch_entry.py"
+      ],
+      "log_sha256": "cee05d4ec7d2b6a8d8cc82965f82ae89ef7204f853fab92afca4e67e22694bba",
+      "tested_head": "a6bb0dcc292540572299bddd5df6ce675559797d",
+      "scope": "dual_pinch_bounded_native_worker_preparation_cpu",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "optimizer_updates": 0,
+      "command_spec_sha256": "bdb4e652d28308b2a6359189177fb313271040100a558be9d897e4e7a166290c",
+      "code_config_sha256": "50a33500aaad8a825a78a9c6891070149ba38560a23c6a05b74ce2bb72309358",
+      "isolated_schema_regression": {
+        "passed": 22,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_bimanual_table_contacts.py"
+        ],
+        "log_sha256": "bbdb34de1cbf5a3262edb5fc831b898703ba3a7e822983a380bcacb8ad9b866b",
+        "tested_head": "a6bb0dcc292540572299bddd5df6ce675559797d"
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-native-preflight.md",
+      "report_source_commit": "20cb9aab75fb8d7b026f08f52bd9e3a9d88c81d2"
     }
   }
 }

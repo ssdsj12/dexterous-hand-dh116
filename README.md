@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 精确 2+8 原生配方准备
+
+封装独立同杆诊断，精确 2+8、1 环境、0 PPO。保留旧关节与腕部 2.1 mm 保护，支持原两个 SDK articulation 标识。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-native-preflight.md)
+
 ## 2026-11-13 — 双手 Pinch 独立原生退出和逐步审计
 
 独立复核 2+8 时钟、双手原始 17DOF 与净空、回执和 GDB。SimulationContext 活性单列，不升级接触或 Teacher 资格。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-postexit-audit-cpu.md)
