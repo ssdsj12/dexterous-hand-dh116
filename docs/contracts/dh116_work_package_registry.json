@@ -12995,6 +12995,123 @@
         "report": "docs/superpowers/reports/2026-11-13-right-pinch-policy-clearance.md",
         "report_source_commit": "a1c0457bc03471c6c72bee20b9ecee546d0d16bd"
       }
+    },
+    "flex.f4-pinch-left-v2-preparation-cpu": {
+      "title": "单左 Pinch v2 原生复验准备",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-pinch-initial-geometry-v2-cpu",
+        "flex.f4-physx-lifetime-frame-v2-native",
+        "flex.f7-deformx-pair-capture-v2-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 169,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_v2.py",
+          "tests/test_pinch_initial_geometry_v2.py",
+          "tests/test_deformable_grasp_runtime.py",
+          "tests/test_dh116_pinch_scheduler.py",
+          "tests/test_dh116_physx_lifetime_frame_v2.py",
+          "tests/test_dh116_physx_lifetime_probe.py",
+          "tests/test_dh116_physx_lifetime_validation.py",
+          "tests/test_dh116_physx_lifetime_scheduler.py",
+          "tests/test_dh116_physx_lifetime_debugger_stopped.py",
+          "tests/test_dh116_deformx_pair_capture.py"
+        ],
+        "log_sha256": "e17d7881198edd0e33d698b6d43d34896f66eaa5832556971325323f8bb74bb1",
+        "tested_head": "669e611f44b98a8ade0a1fe00bdc4eb8065b9021",
+        "stage": "cpu_verified_frozen_pinch_v2_recipe",
+        "scope": "single_left_free_rod_lifecycle_readback_preparation",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "command_spec_sha256": "6d8e139b171ebd4e363fa34ccb1e2991c734cb3be800365960727ecf281dc755",
+        "code_config_sha256": "35cefcf7a7b328303dfc45794cd310d7ef0ad62de3f8b9ac77ec44e281e838e5",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-single-left-pinch-v2-preparation.md",
+        "report_source_commit": "cae6099f5254256f890abb8152c1bb99b423c3e3"
+      },
+      "last_result": {
+        "passed": 169,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_v2.py",
+          "tests/test_pinch_initial_geometry_v2.py",
+          "tests/test_deformable_grasp_runtime.py",
+          "tests/test_dh116_pinch_scheduler.py",
+          "tests/test_dh116_physx_lifetime_frame_v2.py",
+          "tests/test_dh116_physx_lifetime_probe.py",
+          "tests/test_dh116_physx_lifetime_validation.py",
+          "tests/test_dh116_physx_lifetime_scheduler.py",
+          "tests/test_dh116_physx_lifetime_debugger_stopped.py",
+          "tests/test_dh116_deformx_pair_capture.py"
+        ],
+        "log_sha256": "e17d7881198edd0e33d698b6d43d34896f66eaa5832556971325323f8bb74bb1",
+        "tested_head": "669e611f44b98a8ade0a1fe00bdc4eb8065b9021",
+        "stage": "cpu_verified_frozen_pinch_v2_recipe",
+        "scope": "single_left_free_rod_lifecycle_readback_preparation",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "command_spec_sha256": "6d8e139b171ebd4e363fa34ccb1e2991c734cb3be800365960727ecf281dc755",
+        "code_config_sha256": "35cefcf7a7b328303dfc45794cd310d7ef0ad62de3f8b9ac77ec44e281e838e5",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-single-left-pinch-v2-preparation.md",
+        "report_source_commit": "cae6099f5254256f890abb8152c1bb99b423c3e3"
+      }
+    },
+    "flex.f4-pinch-left-v2-native": {
+      "title": "左 Pinch v2 单手自由杆读回和自然退出",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f4-pinch-left-v2-preparation-cpu",
+        "flex.f4-physx-lifetime-frame-v2-native",
+        "flex.f7-deformx-pair-capture-v2-native"
+      ],
+      "dependency_scopes": {
+        "flex.f4-physx-lifetime-frame-v2-native": {
+          "scope": "physx_lifetime_frame_detachment_v2_only",
+          "native": true
+        },
+        "flex.f7-deformx-pair-capture-v2-native": {
+          "scope": "one_free_rod_one_table_sdf_pair_capture_calibration_v2",
+          "native": true
+        }
+      },
+      "status": "pending",
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "reason": "仅限冻结配方单手物理读回，接触与抓取另行按原始数据审查。",
+      "command_spec": "configs/dh116_execution/deformx_pinch_left_candidate_v2.json",
+      "evidence_scope": "single_left_free_rod_lifecycle_readback_v2_only",
+      "tests": [
+        "tests/test_dh116_pinch_v2.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_pinch_work_packages_v2.py",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      }
     }
   },
   "execution_target": {

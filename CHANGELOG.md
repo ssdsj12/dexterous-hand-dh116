@@ -1,3 +1,7 @@
+## 2026-11-13 — 单左 Pinch v2 原生复验准备
+
+同一原生配方记录 17 link 初始净空、真实桌面计数和 DeformX pair，并独立重开物理账本与自然退出证据。只授予单手运行与读回范围，抓取仍独立验收。 Ubuntu CPU 回归 169 项通过。[报告](docs/superpowers/reports/2026-11-13-single-left-pinch-v2-preparation.md)
+
 ## 2026-11-13 — 右手 Pinch 原策略净空复验
 
 新独立右手静态候选连续净空 2.112018 mm，保持原端点及原保护门。动态接触和同杆 Reset 仍待实测。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-policy-clearance.md)
