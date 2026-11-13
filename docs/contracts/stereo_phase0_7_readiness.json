@@ -7993,6 +7993,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-dual-hand-scene-preparation-cpu.md",
       "report_source_commit": "37279b763d8f55c1de37df7f45bb3a7acb006b28"
+    },
+    "flex.f7-contact-pair-reduction-cpu": {
+      "passed": 73,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_flexible_pair_contact_diagnostics.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_dh116_deformable_grasp_task.py"
+      ],
+      "log_sha256": "80874673b62f11fb2f7294389b2742bfde07f09289f168f55873f84be1127e79",
+      "tested_head": "798a887badb37e2aa17413829477c0f7e8246a3c",
+      "stage": "cpu_verified_contact_pair_reduction",
+      "scope": "deformable_pair_contact_diagnostics_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-pair-contact-diagnostics.md",
+      "report_source_commit": "1ba50c86b23ccfbe678e62a08a86bb13aab49248"
     }
   }
 }
