@@ -6488,6 +6488,30 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "status": "blocked",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-next-native-budget-preflight.md",
+      "stage": "geometry_and_budget_audited",
+      "tested_head": "8de18479620e264e8895525e290ae569ae96fc9e",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "candidate_sha256": "a2eefb1a8f487fdba7e567c51aab005211dec3f658d2aa939c0ff7289de0dc44",
+      "audit_sha256": "e4fac4c777c5f8e3ece6baf310026f9f051381e473be21f2037d207ede01a4e4",
+      "blocker_kind": "native_evidence_source_missing",
+      "package": "flex.f4-free-pinch-recipe-preflight-20261113",
+      "commit": "153ec166bf1e780fc85dbfe4dadb0badbf84fc99",
+      "parent": "8de18479620e264e8895525e290ae569ae96fc9e",
+      "files": [
+        "docs/contracts/dh116_pinch_candidate_budget_preflight_20261113.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-pinch-next-native-budget-preflight.md"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
