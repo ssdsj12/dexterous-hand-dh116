@@ -1,3 +1,7 @@
+## 2026-11-14 — 双手同杆原生账本的R0实测接近与完整奖励门控
+
+双手同杆232物理样本、29控制步只读R0结算；approach全有效且最后左右0mm，完整奖励0/29，66/371状态有效。缺失稳定性/有效对向/固定材料滑移继续NA，不放行Teacher。无新物理步或PPO。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-r0-measured-replay.md)
+
 ## 2026-11-14 — 同一episode双手接触与Reset相对跟踪实测审计
 
 新原生234步、166.29秒自然退出0，四必需指腹同载荷85.9375ms；全程桌面承托，0抓取/Teacher成功。只读诊断保存同episode实际Reset基准与峰值身份，未再推进物理。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-owned-native-contact.md)
