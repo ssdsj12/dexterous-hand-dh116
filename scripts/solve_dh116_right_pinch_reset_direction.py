@@ -53,7 +53,7 @@ def final_gate(table,other,depth,dot):
         opposed=bool(dot<-.2))
     return dict(**flags,static_path_passed=all(flags.values()),native_ready=False,teacher_admission=False)
 
-def local_pass(measure,center,lo,hi,trust_radius=.5):
+def local_pass(measure,center,lo,hi,trust_radius=.5,*,proposal_only_rows=()):
     if not np.isfinite(trust_radius) or not .005<=trust_radius<=.5:raise ValueError("frozen finite local trust radius required")
     center=np.asarray(center,float);lo=np.asarray(lo,float);hi=np.asarray(hi,float)
     n=len(center)
@@ -69,6 +69,12 @@ def local_pass(measure,center,lo,hi,trust_radius=.5):
         if v.ndim!=1 or not len(v) or not np.isfinite(v).all():raise ValueError("finite constraints required")
         return v
     c=query(center);jac=[]
+    if (not isinstance(proposal_only_rows,(list,tuple))
+            or any(type(i) is not int or not 0<=i<len(c) for i in proposal_only_rows)
+            or len(set(proposal_only_rows))!=len(proposal_only_rows)):
+        raise ValueError("explicit distinct existing proposal row indices required")
+    if any(c[i]<.25 for i in proposal_only_rows):
+        raise ValueError("only safely inactive proposal rows with margin >=0.25 permitted")
     for h in (.002,.001):
         jac.append(np.column_stack([(query(center+np.eye(n)[j]*h)-query(center-np.eye(n)[j]*h))/(2*h) for j in range(n)]))
     relative=float(np.linalg.norm(jac[0]-jac[1])/max(np.linalg.norm(jac[1]),1e-12))
@@ -76,11 +82,19 @@ def local_pass(measure,center,lo,hi,trust_radius=.5):
     result=dict(center=center.tolist(),baseline=c.tolist(),jacobians=jac,
         jacobian_relative_error=relative,trust_radius=trust_radius,finite_difference_steps=[.002,.001],best_x=center.tolist(),best_violation=violation(c),
         trials=[],global_infeasibility_proven=False,linear_solver_calls=0)
-    if relative>.2:
+    proposal_jac=[j.copy() for j in jac]
+    for j in proposal_jac:j[list(proposal_only_rows)]=0.
+    proposal_relative=float(np.linalg.norm(proposal_jac[0]-proposal_jac[1])/max(np.linalg.norm(proposal_jac[1]),1e-12))
+    result.update(proposal_only_rows=list(proposal_only_rows),
+        proposal_jacobian_relative_error=proposal_relative,
+        full_nonlinear_constraints_always_verified=True)
+    # Opt-in inactive rows affect the local proposal only. Full original
+    # nonlinear vectors still determine EVERY trial loss and final gate.
+    if proposal_relative>.2:
         result.update(measurements=count,reason="constraint_jacobian_nonsmooth");return result
     lower=np.maximum(lo+.003-center,-trust_radius);upper=np.minimum(hi-.003-center,trust_radius)
     # Minimize common violation first. Then prefer the smallest Reset adjustment.
-    matrix=-np.column_stack((jac[-1],np.ones(len(c))))
+    matrix=-np.column_stack((proposal_jac[-1],np.ones(len(c))))
     fit=linprog(np.r_[np.zeros(n),1.],A_ub=matrix,b_ub=c,
         bounds=[*zip(lower,upper),(0,None)],method="highs",options={"time_limit":1.,"maxiter":200})
     result.update(linear_solver_calls=1,lp_status=int(fit.status),lp_message=fit.message)

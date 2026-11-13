@@ -41,13 +41,17 @@ class RelativeGeometry(base.Geometry):
         # FK sample, never discarded at the path-validation boundary.
         return base.Geometry.path(FrozenRelativeAngles(self,x[7:]),x[:7],emit)
 
-def run(result,emit):
-    if base.previous.digest(PARENT)!=PARENT_SHA:raise ValueError("exact failed Reset source required")
-    parent=base.previous.decode_owned(json.loads(PARENT.read_bytes()))
+def run(result,emit,*,inactive_opposition_proposal=False):
+    parent_path,parent_sha=PARENT,PARENT_SHA
+    if inactive_opposition_proposal:
+        parent_path=Path("/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/right-relative-reset-20261113-9shn7ze3/run01/result.json")
+        parent_sha="532c6461b1ed30dd59b316b5e2718ef57a1ad9ba7ed3f47d17f50620fed86f86"
+    if base.previous.digest(parent_path)!=parent_sha:raise ValueError("exact failed Reset source required")
+    parent=base.previous.decode_owned(json.loads(parent_path.read_bytes()))
     if parent["static_path_passed"] is not False:raise ValueError("expected preserved failed candidate")
-    geo=RelativeGeometry();lo,hi=geo.bounds();x=np.r_[parent["best_x"],0.,0.]
+    geo=RelativeGeometry();lo,hi=geo.bounds();x=np.array(parent["best_x"]) if inactive_opposition_proposal else np.r_[parent["best_x"],0.,0.]
     records=[];passes=[]
-    result.update(parent_result_sha256=PARENT_SHA,source_ledger_sha256=geo.anchor["ledger_sha256"],
+    result.update(parent_result_sha256=parent_sha,inactive_opposition_proposal=inactive_opposition_proposal,source_ledger_sha256=geo.anchor["ledger_sha256"],
         source_identity=geo.anchor["identity"],source_geometry=geo.g["source_sha256"],sdf_bindings=geo.binding,
         initial_x=x.copy(),pivot_world_m=PIVOT,extra_angle_scales_rad=[.05,.05],
         extra_rotation_order="world_Rz_then_matrix_Rx__Rz_times_Rx_after_existing_fixed_Reset",
@@ -57,7 +61,15 @@ def run(result,emit):
         row=geo.measure(x);records.append(row);emit(dict(phase="endpoint",index=len(records),**row))
         return np.array(row["constraint_values"])
     for _ in range(6):
-        fit=base.local_pass(query,x,lo,hi,trust_radius=.1);passes.append(fit);x=np.array(fit["best_x"])
+        proposal_rows=[]
+        if inactive_opposition_proposal:
+            # The original measure order is frozen and independently checked.
+            labels=records[-1]["constraint_labels"] if records else parent["selected"]["constraint_labels"]
+            if labels[-1]!="opposition" or labels.count("opposition")!=1:
+                raise ValueError("named sole opposition proposal row changed")
+            proposal_rows=[len(labels)-1]
+        fit=base.local_pass(query,x,lo,hi,trust_radius=.1,proposal_only_rows=proposal_rows)
+        passes.append(fit);x=np.array(fit["best_x"])
         result.update(best_x=x.copy(),best_violation=fit["best_violation"])
         if fit["best_violation"]==0 or np.linalg.norm(x-np.array(fit["center"]))<1e-10:break
     selected=next(r for r in reversed(records) if np.array_equal(r["x"],x))
@@ -75,15 +87,15 @@ def run(result,emit):
             "no actual rod response or contact measurement inferred from SDF"])
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument("--output",type=Path,required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument("--output",type=Path,required=True);p.add_argument("--inactive-opposition-proposal",action="store_true");a=p.parse_args()
     a.output.mkdir(parents=True,exist_ok=False);start=time.monotonic()
-    out=dict(version=VERSION,status="partial",budget=dict(endpoint_evaluations=246,path_samples=161,wall_s=120),new_physics_steps=0,ppo_updates=0)
+    out=dict(version=VERSION+("-inactive-proposal-v2" if a.inactive_opposition_proposal else ""),status="partial",budget=dict(endpoint_evaluations=246,path_samples=161,wall_s=120),new_physics_steps=0,ppo_updates=0)
     handler=signal.signal(signal.SIGALRM,lambda *args:(_ for _ in ()).throw(TimeoutError("120s CPU batch exhausted")))
     signal.setitimer(signal.ITIMER_REAL,120)
     try:
         with (a.output/"progress.jsonl").open("x") as f:
             def emit(row):f.write(json.dumps(base.previous.encode_owned(row),allow_nan=False)+"\n");f.flush()
-            try:run(out,emit)
+            try:run(out,emit,inactive_opposition_proposal=a.inactive_opposition_proposal)
             finally:f.flush();os.fsync(f.fileno())
     except Exception as exc:out.update(status="blocked",reason=type(exc).__name__+": "+str(exc))
     finally:signal.setitimer(signal.ITIMER_REAL,0);signal.signal(signal.SIGALRM,handler)

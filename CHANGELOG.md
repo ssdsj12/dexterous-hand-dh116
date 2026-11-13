@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch非光滑候选与完整非线性验算分离
+
+定位有余量SDF方向导数跳变，opt-in仅调整LP提案，全部原约束仍非线性验证。41次CPU测量四候选均失败，未创建原生配方；122项CPU回归通过，Teacher仍未准入。 Ubuntu CPU 回归 122 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-nonsmooth-proposal.md)
+
 ## 2026-11-13 — 真实Pinch相向接触连续时间重算
 
 原234步账本重放为2784子步：左两指相向载荷连续85.9375ms，右无接触，桌面全程承托。100项CPU回归通过；未赋予稳定/滑移/Teacher资格，无新原生或PPO。 Ubuntu CPU 回归 100 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-contact-timeline.md)
