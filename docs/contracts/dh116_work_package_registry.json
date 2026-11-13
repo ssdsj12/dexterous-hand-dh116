@@ -10342,6 +10342,150 @@
         "report": "docs/superpowers/reports/2026-11-13-flexible-r0-control-settlement.md",
         "report_source_commit": "33e03a52ebbaf1a78e0041a326c663b7b944157c"
       }
+    },
+    "flex.f4-physx-lifetime-probes-cpu": {
+      "title": "PhysX Tensor View 两种清理路径对照准备",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-physx-tensor-lifetime-evidence"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 113,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_physx_lifetime_probe.py",
+          "tests/test_dh116_physx_lifetime_validation.py",
+          "tests/test_dh116_physx_lifetime_scheduler.py",
+          "tests/test_dh116_physx_tensor_lifetime.py",
+          "tests/test_deformable_grasp_runtime.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_pinch_scheduler.py",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "159381b97b60625e2b55b21c952dd5fa97e1fefe21cc18a2f08127ef11e8aa19",
+        "tested_head": "b3def624b87f04b84459d319491af661a8a3fd97",
+        "stage": "cpu_verified_native_recipe_frozen",
+        "scope": "physx_tensor_lifetime_probe_preparation",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "pending_native_recipe_fingerprints": {
+          "registry": [
+            "726e6d06c39011bdd962e00f1d60f319b2465b09c91993d0d6fd7eef3039718a",
+            "354bf1cb8419f156e3b594f10c0760cc127adbc0d46c39c1a36fe044d26b310b"
+          ],
+          "explicit": [
+            "f10ad7bfa1625d0ba239613488233397bb6a8da43a93da63ff902d882e0348c4",
+            "7880b81229cf40611d4dd367e05a5c3dad75d21ce40fc883df9e88d14e4bab25"
+          ]
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-physx-lifetime-probe-preparation.md",
+        "report_source_commit": "6d3155a00bba6570aef51b769aaa44536a313f4e"
+      },
+      "last_result": {
+        "passed": 113,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_physx_lifetime_probe.py",
+          "tests/test_dh116_physx_lifetime_validation.py",
+          "tests/test_dh116_physx_lifetime_scheduler.py",
+          "tests/test_dh116_physx_tensor_lifetime.py",
+          "tests/test_deformable_grasp_runtime.py",
+          "tests/test_dh116_deformx_bridge_lifecycle.py",
+          "tests/test_dh116_pinch_scheduler.py",
+          "tests/test_dh116_deformx_thumb_contact.py"
+        ],
+        "log_sha256": "159381b97b60625e2b55b21c952dd5fa97e1fefe21cc18a2f08127ef11e8aa19",
+        "tested_head": "b3def624b87f04b84459d319491af661a8a3fd97",
+        "stage": "cpu_verified_native_recipe_frozen",
+        "scope": "physx_tensor_lifetime_probe_preparation",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "pending_native_recipe_fingerprints": {
+          "registry": [
+            "726e6d06c39011bdd962e00f1d60f319b2465b09c91993d0d6fd7eef3039718a",
+            "354bf1cb8419f156e3b594f10c0760cc127adbc0d46c39c1a36fe044d26b310b"
+          ],
+          "explicit": [
+            "f10ad7bfa1625d0ba239613488233397bb6a8da43a93da63ff902d882e0348c4",
+            "7880b81229cf40611d4dd367e05a5c3dad75d21ce40fc883df9e88d14e4bab25"
+          ]
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-physx-lifetime-probe-preparation.md",
+        "report_source_commit": "6d3155a00bba6570aef51b769aaa44536a313f4e"
+      }
+    },
+    "flex.f4-physx-lifetime-registry-native": {
+      "title": "PhysX 所有权生命周期 registry 原生对照",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f4-physx-lifetime-probes-cpu"
+      ],
+      "status": "blocked",
+      "command_spec": "configs/dh116_execution/physx_lifetime_registry_v1.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "physx_lifetime_registry_only",
+      "dependency_scopes": {},
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_physx_lifetime_probe.py",
+        "tests/test_dh116_physx_lifetime_validation.py",
+        "tests/test_dh116_physx_lifetime_scheduler.py"
+      ],
+      "stage": "prepared_waiting_exact_native_approval",
+      "reason": "Independent ownership probe awaits exact approval. No measured physics or PPO.",
+      "scheduler_entrypoint": "scripts/run_dh116_physx_lifetime_work_packages.py"
+    },
+    "flex.f4-physx-lifetime-explicit-native": {
+      "title": "PhysX 所有权生命周期 explicit 原生对照",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f4-physx-lifetime-probes-cpu"
+      ],
+      "status": "blocked",
+      "command_spec": "configs/dh116_execution/physx_lifetime_explicit_v1.json",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "physx_lifetime_explicit_only",
+      "dependency_scopes": {},
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [
+        "tests/test_dh116_physx_lifetime_probe.py",
+        "tests/test_dh116_physx_lifetime_validation.py",
+        "tests/test_dh116_physx_lifetime_scheduler.py"
+      ],
+      "stage": "prepared_waiting_exact_native_approval",
+      "reason": "Independent ownership probe awaits exact approval. No measured physics or PPO.",
+      "scheduler_entrypoint": "scripts/run_dh116_physx_lifetime_work_packages.py"
     }
   },
   "execution_target": {

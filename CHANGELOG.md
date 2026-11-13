@@ -1,3 +1,7 @@
+## 2026-11-13 — PhysX Tensor View 两种清理路径对照准备
+
+两种资源清理路径分别冻结，捕获 GDB 调用栈、寄存器和动态库映射，外层退出独立复核。原生对照待批准。 Ubuntu CPU 回归 113 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-lifetime-probe-preparation.md)
+
 ## 2026-11-13 — 柔性 R0 控制步与提前终止结算
 
 每个完整 8 子步窗口或已知提前终止只结算一次，未知来源保留空值。正式 R0 系数和训练奖励仍待原生证据。 Ubuntu CPU 回归 78 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-control-settlement.md)
