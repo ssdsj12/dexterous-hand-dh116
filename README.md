@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch三维逐段证明单次原生单因素复验
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-pinch-segment-contact-native.md)。
+
 ## 2026-11-13 — Pinch三维逐杆段证明独立原生配方
 
 70项CPU回归通过；214条旧原生样本离线完整重算，新几何证明0失败。相同234步动作/Reset/物理，仅独立三维逐段证明，保护阈值不变；本新配方原生尚未执行，Teacher0/3。 Ubuntu CPU 回归 70 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-segment-contact-preparation.md)
