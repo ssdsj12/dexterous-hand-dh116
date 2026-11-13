@@ -1,3 +1,7 @@
+## 2026-11-13 — DeformX 逐接触对 CUDA 校准 v2
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-deformx-pair-capture-v2-native.md)。
+
 ## 2026-11-13 — 柔性 24D 控制的同钟几何读回
 
 用实测 link pose 和局部 COM 接入全手源包络净空，保持原两侧几何身份；SDK double 回归通过，原生尚未验证。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-live-geometry.md)

@@ -8143,6 +8143,50 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-flexible-live-geometry.md",
       "report_source_commit": "ed11c2db7b6c55bc167e31812e580dc11a8ae7b8"
+    },
+    "flex.f7-deformx-pair-capture-v2-native": {
+      "executor": "native_bounded",
+      "tested_head": "fb204d11c38f667a8a59fca3f40d3e346f58c8b2",
+      "batch_id": "deformx-pair-v2-once",
+      "qualification_scope": "one_free_rod_one_table_sdf_pair_capture_calibration_v2",
+      "native_qualification": true,
+      "native_execution_performed": true,
+      "command_spec_sha256": "77d0290a350ba6b877991b9831da8fb4fb62441481e1866412935fc6d28af594",
+      "code_config_sha256": "94d855ce6be8700816a85a8e84d41a87fe74b52454bf4f8591661e932c6d08c6",
+      "launch_argv_sha256": "6860ec06dcc7e0d310e5eb16e8888e0f0e8fb74c759461484165fab8812d104c",
+      "exit_code": 0,
+      "outer_exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "duration_seconds": 2.803089093999006,
+      "native_lock_observed": true,
+      "artifact_sha256": {
+        "plan.json": "f790e35e2601df347804c67d118f9cc5963068479c349f23660b646f9a263e24",
+        "raw_pairs.json": "745c69678f47c58cab7174fb9e14299c5d070735a3af846fc4552a6a18979791",
+        "pairs.json": "27d6953f92e92a9aa666d4c37ec440d2af0fa7ac4dc6da1b61849519085b20d8",
+        "result.json": "b6d87c5970d6580690df696824c99266b12d0234037d0a57515b3cb9123e112e"
+      },
+      "ledger_counts": {},
+      "result_sha256": "7af3e7d7358ea58c2d4be656c889d162835830ccbe1db20f36c457a5cfe51ba2",
+      "native_physics_validated": true,
+      "cpu_regression": {
+        "passed": 24,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_pair_worker_v2.py"
+        ],
+        "log_sha256": "b591d2f526b3797056a13faa0c4dbd9dab60f92832023a26393fb13e6d9b50ec",
+        "tested_head": "fb204d11c38f667a8a59fca3f40d3e346f58c8b2"
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/dh116-managed-flex.f7-deformx-pair-capture-v2-native.md"
     }
   }
 }
