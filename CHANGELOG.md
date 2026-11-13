@@ -1,3 +1,7 @@
+## 2026-11-13 — 静态台面 PhysX 逐接触来源校验
+
+历史左右标定的 480 行均不能证明原台面 contact report 可用。真实台面资格与历史 GPU readback 设备冲突分开保留。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-static-table-report-cell-cpu.md)
+
 ## 2026-11-13 — 双手柔性动作后的实测净空保护
 
 记录每次 SDK 推进后的双手源几何净空。低于 2.1 mm 时保存终止行并停止下一动作。 Ubuntu CPU 回归 34 项通过。[报告](docs/superpowers/reports/2026-11-13-poststep-clearance-guard-cpu.md)

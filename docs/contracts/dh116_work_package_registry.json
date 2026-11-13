@@ -17154,6 +17154,72 @@
         "report": "docs/superpowers/reports/2026-11-13-poststep-clearance-guard-cpu.md",
         "report_source_commit": "05d90204453d05e475d9870f4e01afdf3a8b3df0"
       }
+    },
+    "flex.f7-static-table-report-source-cpu": {
+      "title": "静态台面 PhysX 逐接触来源校验",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-pinch-zero-interval-v4-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 74,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_static_table_report_cell.py",
+          "tests/test_dh116_stereo_contact_calibration.py",
+          "tests/test_dh116_physx_polled_contact_audit.py",
+          "tests/test_dh116_bimanual_table_contacts_v2.py"
+        ],
+        "log_sha256": "f92334036d42b3b56ae88a831c6e6f44c219bf7328bd7b56cfc5447d9a6eaf05",
+        "tested_head": "3c6c930eae20c4a55fe7dd2fa1c205a29fbbd348",
+        "native_qualification": false,
+        "qualification_scope": "exact_static_table_report_identity_cpu_replay",
+        "historical_native_rows_replayed": 480,
+        "table_positive_rows": 0,
+        "hand_table_source_available": false,
+        "teacher_admission": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-static-table-report-cell-cpu.md",
+        "report_source_commit": "0bbd243ce89ec8723cb5be2e4d696b402396bea5"
+      },
+      "last_result": {
+        "passed": 74,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_static_table_report_cell.py",
+          "tests/test_dh116_stereo_contact_calibration.py",
+          "tests/test_dh116_physx_polled_contact_audit.py",
+          "tests/test_dh116_bimanual_table_contacts_v2.py"
+        ],
+        "log_sha256": "f92334036d42b3b56ae88a831c6e6f44c219bf7328bd7b56cfc5447d9a6eaf05",
+        "tested_head": "3c6c930eae20c4a55fe7dd2fa1c205a29fbbd348",
+        "native_qualification": false,
+        "qualification_scope": "exact_static_table_report_identity_cpu_replay",
+        "historical_native_rows_replayed": 480,
+        "table_positive_rows": 0,
+        "hand_table_source_available": false,
+        "teacher_admission": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-static-table-report-cell-cpu.md",
+        "report_source_commit": "0bbd243ce89ec8723cb5be2e4d696b402396bea5"
+      }
     }
   },
   "execution_target": {
