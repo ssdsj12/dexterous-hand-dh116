@@ -10275,6 +10275,32 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-tripod-two-phase-sdf.md",
       "report_source_commit": "33da655c42aa965b163f4dd9f339fad4377395a4"
+    },
+    "flex.f7-poststep-source-clearance-cpu": {
+      "passed": 34,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_poststep_clearance_guard.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_dual_hand_evidence_journal.py"
+      ],
+      "log_sha256": "461590524ef34ddb4b43b79863b28c9acc0e6718c2dc298ad4877356470e1316",
+      "tested_head": "246933cda2eed028882b55076818fae2db4a41cf",
+      "native_qualification": false,
+      "qualification_scope": "poststep_source_envelope_clearance_guard_cpu",
+      "clearance_floor_m": 0.0021,
+      "teacher_admission": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-poststep-clearance-guard-cpu.md",
+      "report_source_commit": "05d90204453d05e475d9870f4e01afdf3a8b3df0"
     }
   }
 }

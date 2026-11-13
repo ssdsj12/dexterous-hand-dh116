@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手柔性动作后的实测净空保护
+
+记录每次 SDK 推进后的双手源几何净空。低于 2.1 mm 时保存终止行并停止下一动作。 Ubuntu CPU 回归 34 项通过。[报告](docs/superpowers/reports/2026-11-13-poststep-clearance-guard-cpu.md)
+
 ## 2026-11-13 — Tripod 起点与沉降杆闭合分阶段审计
 
 左手回退起点桌面几何净空 2.404 mm，闭合仍因近端碰撞被拒绝。右手旧末态独立拒绝。 Ubuntu CPU 回归 80 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-two-phase-sdf.md)
