@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch 后继配方独立力守恒归约
+
+核对原 FP32 账本标量和 FP64 独立守恒门。实际 238 行离线通过数值验证，保留 v3 外层失败和零手接触。 Ubuntu CPU 回归 36 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-force-precision-successor.md)
+
 ## 2026-11-13 — Power 掌位与六主动关节联合几何
 
 90 次有界 CPU 查询。拟合改善的姿态仍违反桌面和五指门，保留拒绝证据，无可用 Power Reset。 Ubuntu CPU 回归 60 项通过。[报告](docs/superpowers/reports/2026-11-13-power-joint-palm-direction.md)

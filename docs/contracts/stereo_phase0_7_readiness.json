@@ -9026,6 +9026,36 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-power-joint-palm-direction.md",
       "report_source_commit": "561be2673fe08577771c1515344b307fa252f20e"
+    },
+    "flex.f4-pinch-force-precision-cpu": {
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_force_precision.py",
+        "tests/test_dh116_pinch_v3_evidence_replay.py",
+        "tests/test_deformable_grasp_runtime.py",
+        "tests/test_dh116_deformx_pair_capture.py"
+      ],
+      "log_sha256": "edc2aa49181dc8e081b373fdb4efde8706c79bf59eaa70970e68f3c98aedf821",
+      "tested_head": "b884b54626a8321a004515c6ef15fefe26e64166",
+      "stage": "cpu_verified_precision_aware_force_ledger",
+      "scope": "frozen_v3_force_reduction_replay",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "offline_result_sha256": "010db2c3359b281808296d45811340d7c42057debb75c269200cc07a7d92e996",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-force-precision-successor.md",
+      "report_source_commit": "7774bc6b1d47f51da2408bfa0d0111fecd41d58e"
     }
   }
 }
