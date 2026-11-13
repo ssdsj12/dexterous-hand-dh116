@@ -23696,6 +23696,106 @@
         "report": "docs/superpowers/reports/2026-11-14-bilateral-owned-control.md",
         "report_source_commit": "87d88724b37d96cd2aa63f7e93081dffd981898e"
       }
+    },
+    "flex.f8-bilateral-owned-native-cpu": {
+      "title": "双手同杆独立原生入口与父回执门控",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-bilateral-owned-contract-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_bilateral_owned_worker.py",
+          "tests/test_dh116_bilateral_owned_contract.py",
+          "tests/test_dh116_bilateral_owned_geometry.py",
+          "tests/test_dh116_bilateral_owned_action_audit.py"
+        ],
+        "log_sha256": "8af1444d5211350d7581ea2cde0062c5cf32350a58da2b9b42ccca7d52ae40b2",
+        "tested_head": "506c337770174179ad09ce6ca27915f3fb93a4f4",
+        "kind": "cpu_bilateral_native_preparation",
+        "owner_worker_tests_passed": 19,
+        "owner_test_log_sha256": "de5ee25c9a27752d4a7dccc137664e7714121e0936791e14814fdda0a89affc8",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "native_recipe_prepared": true,
+        "native_execution_performed": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-bilateral-native-preparation.md",
+        "report_source_commit": "1a7dd3fb9447fe85f4147854d561d942affb0876"
+      },
+      "last_result": {
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_bilateral_owned_worker.py",
+          "tests/test_dh116_bilateral_owned_contract.py",
+          "tests/test_dh116_bilateral_owned_geometry.py",
+          "tests/test_dh116_bilateral_owned_action_audit.py"
+        ],
+        "log_sha256": "8af1444d5211350d7581ea2cde0062c5cf32350a58da2b9b42ccca7d52ae40b2",
+        "tested_head": "506c337770174179ad09ce6ca27915f3fb93a4f4",
+        "kind": "cpu_bilateral_native_preparation",
+        "owner_worker_tests_passed": 19,
+        "owner_test_log_sha256": "de5ee25c9a27752d4a7dccc137664e7714121e0936791e14814fdda0a89affc8",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "native_recipe_prepared": true,
+        "native_execution_performed": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-bilateral-native-preparation.md",
+        "report_source_commit": "1a7dd3fb9447fe85f4147854d561d942affb0876"
+      }
+    },
+    "flex.f8-bilateral-owned-pinch-native": {
+      "title": "双手同杆Pinch独立234步原生诊断",
+      "executor": "native_bounded",
+      "status": "blocked",
+      "reason": "New exact recipe requires standing approval fingerprint and exclusive GPU3 resource check.",
+      "dependencies": [
+        "flex.f8-bilateral-owned-native-cpu",
+        "flex.f8-right-pinch-owned-contact-native"
+      ],
+      "dependency_scopes": {
+        "flex.f8-right-pinch-owned-contact-native": {
+          "scope": "right_owned_pinch_2_setup_232_guarded_contact_diagnostic_only",
+          "native": true
+        }
+      },
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/deformx_bilateral_owned_pinch_v1.json",
+      "evidence_scope": "bilateral_owned_pinch_2_setup_232_guarded_contact_diagnostic_only",
+      "tests": [
+        "tests/test_dh116_bilateral_owned_worker.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_bilateral_owned_work_packages.py"
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## 2026-11-14 — 双手同杆独立原生入口与父回执门控
+
+双手独立入口复用原owner/退出逻辑，右真实父回执与左独立事后审计分别SHA核验。完整合成owner及worker19项通过，发布重新运行43项；原生未执行，Teacher未晋级。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-native-preparation.md)
+
 ## 2026-11-14 — 双手同杆原24D控制和几何合同
 
 合成原左右24D动作并校验两侧真实坐标合同，新增完整碰撞几何分离证明。CPU演算232子步、无投影；原生尚未执行，不授予Teacher资格。 Ubuntu CPU 回归 45 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-owned-control.md)
