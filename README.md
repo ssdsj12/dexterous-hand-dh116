@@ -1,3 +1,7 @@
+## 2026-11-13 — 柔性双手动作前同钟状态读回
+
+双手动作前入口以同一物理边界读回 66 个原合同字段与杆快照。余下 305 项明确保留无效状态，原 Teacher 准入继续关闭。 Ubuntu CPU 回归 100 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-episode-common-readback.md)
+
 ## 2026-11-13 — 右手 Pinch 定向静态闭合
 
 120 个局部候选中，right-targeted-092 通过原 1.9 mm 静态筛查与连续路径门。连续下界 2.039475 mm，尚未达到双手物理入口的 2.1 mm 策略净空要求。新杆轴高 0.305 m 仍需独立 Reset 绑定。 Ubuntu CPU 回归 45 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-targeted-geometry.md)

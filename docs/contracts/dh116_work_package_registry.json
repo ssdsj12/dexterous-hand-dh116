@@ -12695,6 +12695,85 @@
         "report": "docs/superpowers/reports/2026-11-13-right-pinch-targeted-geometry.md",
         "report_source_commit": "7eb8b9bf7b403b1b777cde9d3f06ab9fe003fa23"
       }
+    },
+    "flex.f7-dual-hand-episode-common-cpu": {
+      "title": "柔性双手动作前同钟状态读回",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-hand-physical-episode-cpu",
+        "flex.f7-teacher-mounted-wrist-source-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 100,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_episode_common.py",
+          "tests/test_dh116_dual_hand_episode.py",
+          "tests/test_dh116_teacher_mounted_wrist_source.py",
+          "tests/test_dh116_teacher_preaction_readback.py",
+          "tests/test_dual_hand_reset.py",
+          "tests/test_dh116_flexible_rod_boundary.py",
+          "tests/test_dh116_dual_hand_clock_handoff.py"
+        ],
+        "log_sha256": "05cfcfb4baa86236161d9fb63b86fa1a3d5b90f12ac4df12928e786c6e792c81",
+        "tested_head": "f21b428ffa6684323479bd97771a411867e63540",
+        "stage": "cpu_verified_pre_action_common_subset",
+        "scope": "dual_hand_same_boundary_common_state_cpu",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "source_bound_371d_channels_cpu": 66,
+        "unknown_channels": 305,
+        "independent_log_sha256": "8f5688b041f73e12eaf99576ed89cbe706e2cb8cba84eca26d3af2bdc9d5a79a",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-episode-common-readback.md",
+        "report_source_commit": "d6312ec3e0091c2307972970be43c9e0f9b5e00c"
+      },
+      "last_result": {
+        "passed": 100,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_episode_common.py",
+          "tests/test_dh116_dual_hand_episode.py",
+          "tests/test_dh116_teacher_mounted_wrist_source.py",
+          "tests/test_dh116_teacher_preaction_readback.py",
+          "tests/test_dual_hand_reset.py",
+          "tests/test_dh116_flexible_rod_boundary.py",
+          "tests/test_dh116_dual_hand_clock_handoff.py"
+        ],
+        "log_sha256": "05cfcfb4baa86236161d9fb63b86fa1a3d5b90f12ac4df12928e786c6e792c81",
+        "tested_head": "f21b428ffa6684323479bd97771a411867e63540",
+        "stage": "cpu_verified_pre_action_common_subset",
+        "scope": "dual_hand_same_boundary_common_state_cpu",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "source_bound_371d_channels_cpu": 66,
+        "unknown_channels": 305,
+        "independent_log_sha256": "8f5688b041f73e12eaf99576ed89cbe706e2cb8cba84eca26d3af2bdc9d5a79a",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-episode-common-readback.md",
+        "report_source_commit": "d6312ec3e0091c2307972970be43c9e0f9b5e00c"
+      }
     }
   },
   "execution_target": {
