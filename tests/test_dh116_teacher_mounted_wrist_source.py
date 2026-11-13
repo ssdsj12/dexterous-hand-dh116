@@ -66,9 +66,10 @@ def seed_packet():
     return capture_authored_reset_seed(world(),read_identity=lambda:clock(2),data_env_index=0)
 
 
-def capture(h,side="left",seed=None,read_identity=clock):
+def capture(h,side="left",seed=None,read_identity=clock,expected_articulation_path=None):
     return capture_mounted_hand(h,MountView(h),side=side,read_identity=read_identity,
-        data_env_index=0,expected_hand_path=f"/World/envs/env_8/{side}Hand",
+        data_env_index=0,expected_hand_container_path=f"/World/envs/env_8/{side}Hand",
+        expected_articulation_path=expected_articulation_path or f"/World/envs/env_8/{side}Hand",
         reset_seed=seed_packet() if seed is None else seed)
 
 
@@ -190,3 +191,44 @@ def test_validation_rejects_changed_execution_counters():
     result["optimizer_updates"]=1
     with pytest.raises(ValueError,match="reconstruct"):
         validate_mounted_observation(result)
+
+
+def test_mounted_root_joint_view_and_sibling_base_link_are_separate_identities():
+    h=hand("left")
+    h.root_physx_view.prim_paths=[p+"/wrist_fixed" for p in h.root_physx_view.prim_paths]
+    packet=capture(h,expected_articulation_path="/World/envs/env_8/leftHand/wrist_fixed")
+    assert packet["articulation_path"] == "/World/envs/env_8/leftHand/wrist_fixed"
+    assert packet["hand_container_path"] == "/World/envs/env_8/leftHand"
+    assert packet["body_path"] == "/World/envs/env_8/leftHand/base_link"
+    assert validate_mounted_observation(adapt_mounted_hands(
+        [packet],expected_identity=clock()))["valid_channels"] == 33
+
+
+
+@pytest.mark.parametrize("edit,expected_root",[
+    (lambda h:h.root_physx_view.prim_paths.__setitem__(0,"/World/envs/env_3/leftHand/wrist_fixed"),
+     "/World/envs/env_8/leftHand/wrist_fixed"),
+    (lambda h:h.root_physx_view.prim_paths.__setitem__(0,"/World/envs/env_8/rightHand/wrist_fixed"),
+     "/World/envs/env_8/rightHand/wrist_fixed"),
+    (lambda h:h.root_physx_view.link_paths[0].__setitem__(0,"/World/envs/env_8/leftHandExtra/other"),
+     "/World/envs/env_8/leftHand"),
+    (lambda h:h.root_physx_view.link_paths[0].__setitem__(1,"/World/envs/env_8/leftHand/wrist_fixed/base_link"),
+     "/World/envs/env_8/leftHand"),
+    (lambda h:h.root_physx_view.prim_paths.__setitem__(0,"/World/envs/env_8/leftHand/../leftHand"),
+     "/World/envs/env_8/leftHand/../leftHand"),
+])
+def test_articulation_and_container_identity_mismatches_are_rejected(edit,expected_root):
+    h=hand("left");edit(h)
+    with pytest.raises(ValueError,match="path"):
+        capture(h,expected_articulation_path=expected_root)
+
+
+def test_source_replay_rejects_old_or_conflated_path_packet():
+    packet=capture(hand("left"))
+    packet["version"]="dh116-teacher-mounted-preaction-source-v1"
+    with pytest.raises(ValueError,match="source"):
+        adapt_mounted_hands([packet],expected_identity=clock())
+    packet=capture(hand("left"))
+    packet["articulation_path"]="/World/envs/env_8/rightHand/wrist_fixed"
+    with pytest.raises(ValueError,match="path"):
+        adapt_mounted_hands([packet],expected_identity=clock())

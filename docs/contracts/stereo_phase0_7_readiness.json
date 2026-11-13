@@ -7897,6 +7897,39 @@
       },
       "status": "failed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f7-deformx-pair-capture-native.md"
+    },
+    "flex.f7-mount-view-path-identity-cpu": {
+      "passed": 146,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_mounted_wrist_source.py",
+        "tests/test_dh116_teacher_preaction_readback.py",
+        "tests/test_dh116_deformable_bimanual_step.py",
+        "tests/test_free_wrist_grasp.py",
+        "tests/test_free_wrist_mount.py"
+      ],
+      "log_sha256": "88d852a1a2a7ba548df8efed6bb52a66b3ae9ca430fb6072296aff89d79f73f7",
+      "tested_head": "2f0f23f4f060fb8cc093b2e57cbf8e311a54f2d0",
+      "stage": "cpu_verified_actual_mount_path_semantics",
+      "scope": "teacher_mounted_wrist_preaction_cpu",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "fixture_fields_valid": 66,
+      "unbound_fields": 305,
+      "fixture_sha256": "b9f6b0ef03f06f03cc3157fa4c93927316e0d1ff4b6755cf4f92217c80870e07",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md",
+      "report_source_commit": "b69082f3c427185f177d4be18148940164415fd8"
     }
   }
 }

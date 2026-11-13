@@ -2,7 +2,7 @@
 
 基线 94051e118215c31889888a9b074c82d5d996d040。只新增独立来源模块、CPU 测试和本报告；未修改冻结 TensorWorld/free_wrist、旧 source validator、Teacher、PPO、配置或 checkpoint。新增物理步 0、optimizer updates 0；未启动 Isaac、solver、GPU 或策略。
 
-新版本 dh116-teacher-mounted-preaction-source-v1 仅用于具备原 6 轴 MountView 的实际 17DOF hand 接口。旧 validator 不改，仍拒绝该新版本。新 validate_mounted_observation() 从保存的 source packets 重建数值与 mask；require_mounted_teacher_common() 在存在任何未知字段时拒绝导出。当前最多 66/371 字段可由 CPU 已验证的适配器提供，其余 **305 项仍未知**，不授予 Teacher/native 资格。
+首版 dh116-teacher-mounted-preaction-source-v1（现由文末路径修正 v2 取代）仅用于具备原 6 轴 MountView 的实际 17DOF hand 接口。旧 validator 不改，仍拒绝该新版本。新 validate_mounted_observation() 从保存的 source packets 重建数值与 mask；require_mounted_teacher_common() 在存在任何未知字段时拒绝导出。当前最多 66/371 字段可由 CPU 已验证的适配器提供，其余 **305 项仍未知**，不授予 Teacher/native 资格。
 
 ## 精确原语义
 
@@ -62,3 +62,33 @@ PYTHONPATH=src:.:tests OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 CUDA_VISIBLE_DEVICES=
 文件明确标记 CPU_API_DOUBLES_not_native_capture。将保存的 source packets 重新输入适配器后，66 个归一化值和全部 mask 完全一致，未知数仍为 305。原生成功池和训练状态不变。
 
 独立 physics agent 已只读审查完整模块，未见新的 clock/原观察语义阻断；未将该审查计作新原生证据，亦未重复测试。
+
+## Articulation root 与 hand container 身份修正（独立后续提交）
+
+基于 4684d89ef38cdad4a91cfa3dfc7fba527489aa5e。只改本模块、本测试、本报告，未改其它包。安装版 articulation.py 的 _initialize_impl()（1506–1547 行）查找实际 ArticulationRootAPI prim 后，以其路径创建 articulation view；本仓库 tabletop_palm_mount.py（37–39 行）把该 API 放在 hand container 下的 wrist_fixed。base_link 位于同一个 hand container 下，并非 wrist_fixed 的子节点。因此首版将 view prim_path 与 hand container 当成同一身份，会拒绝此有效布局。该结论来自只读源码与 CPU 复现，尚未测量实际 native backend 返回路径。
+
+capture_mounted_hand() 现在要求两个显式参数：expected_articulation_path 与 expected_hand_container_path。前者由 scene owner 建立实际预期 view 身份，并逐字核对 SDK prim_paths；后者独立核对 base_link 及该 row 的所有唯一 link_paths。支持显式核验的 container path 或其 descendant path，但不猜 backend 规范化规则、不自动剥离或添加 wrist_fixed。路径必须绝对、无空组件或 dot traversal，不能以 leftHandExtra 冒充 leftHand。正确 mount fixture 为 articulation=/World/envs/env_8/leftHand/wrist_fixed，body=/World/envs/env_8/leftHand/base_link。
+
+packet 版本提升为 dh116-teacher-mounted-preaction-source-v2，保存 articulation_path、hand_container_path 和 body_path；重放也验证三者关系。旧 v1 packet 与旧源码 SHA 不能借用新 validator。以上原始 snapshot-fixture.json / replay-proof.json 保留不变，是首版 CPU 证据，不声称已升级。新增独立 mount-path-v2-fixture.json（同目录）SHA256：
+b9f6b0ef03f06f03cc3157fa4c93927316e0d1ff4b6755cf4f92217c80870e07。
+它明确是 CPU API doubles，双手各以 wrist_fixed view 与 sibling base_link 成功捕获，66 项有效、305 项未知，actual_physics_steps=0 / optimizer_updates=0。
+
+先用新 mount 路径 fixture 在原实现复现 1 failed（actual SDK environment/body paths differ）。随后增加分离路径、错 env/side、错 container prefix、把 base_link 错放在 wrist_fixed 下、dot traversal 和旧 packet 拒绝测试。当前 mounted 共 **28 passed / 1.86s**；使用上节相同命令的相关回归为 **113 passed / 3.81s，退出码 0**（相对首版增加 7 项）。git diff --check 通过。physics agent 对 v2 diff 独立只读复核，无新增阻断；未把该审查计作测试或 native 运行。
+
+## 下一最小可执行包建议：控制器拥有的 B40/B41 来源（本次未实现）
+
+已逐块核对冻结的 stereo_privileged_state_contract.json 和原 observe()/begin_step()/end_step()。以下均为控制器内存的事实，不可用 measured joint state、SDK target、action decode 推测值或默认零替换：
+
+| block / 半开索引 | 原对象字段 | 关键时序约束 |
+| --- | --- | --- |
+| B02 [24,36) | task.previous | end_step() 才 copy_(command)；不是 old_command，不能未经完成边界就填 current command |
+| B03 [36,48) | task.reference | 原 template/reset seed 与 per-env reset 状态；不是 measured q，也不是 authored root_seed |
+| B37 [185,191) | task.rotation_targets | 本地 requested intrinsic angle target；不等同实际 mount angles |
+| B38 [191,197) | world.wrist_angles | advance() 经 allowed/live 门后保留的 submitted angle 命令 |
+| B39 [197,203) | world.palms | advance() 经 transport 和安全投影后的 offset；不是 palm_targets 或 measured palm |
+| B40 [203,215) | task.command | 原 float64 governed finger command，经原 low/high 归一化；SDK float32 target 仅可旁证提交 |
+| B41 [215,239) | task.actions | 当前 pre-action 边界之前最近一次 accepted 24D action；不是 previous_actions 或尚未提交的下一个策略动作 |
+
+建议最小下一包只实现 B40+B41，共 36 个字段：独立 owned controller packet，在原 begin_step() 前由同一 shared clock 读取实际 task.command/task.actions；绑定明确 action24 contract、原 active joint order/limits、reset 初始化记录、最近一次 accepted submission 的 run/env/episode/reset/rod/policy 身份以及当前 pre-action clock，拒绝提交中间态、跨 reset、缺失来源及未来 action。不得用任意 caller 字典加 valid=true 授权；重建 validator 需保留原对象来源与实现 SHA。不能为了测试创建 Teacher/optimizer；用 CPU 原 begin_step/observe 与固定 controller doubles 对照，覆盖 owned copy、交错 step、reset、24/26D 混用与当前 command 的 float64/SDK float32 差异。
+
+仅在调用方确实拥有这些已核验 controller 状态与 submission/reset 身份时，它们才可增加 36 项；理论上合并 mounted 的有效上限为 102/371、269 项仍未知，**当前仍为 66/371**。启动时的零 action 只能来自已记录的原 reset 写入，缺少 reset 记录时必须保持未知。B02/B03/B37–39 留给随后具有完整 reset/end-step/transport 生命周期证明的包；B16 还需要 valid consume 的更新事实，不能直接按当前 command-reference 现场重算。root_seed 已作为 mounted 归一化来源绑定，不单独增添观察维度。B70 虽来自 action，也属于完整已完成物理区间的平均，不能把单次 action 当区间均值。刚体 cylinder、rod、接触与 force 来源本次均未扩展。

@@ -17,7 +17,7 @@ from .linear_coupling import JOINTS
 from .tabletop_joint_target_readback import WRIST_LINEAR, WRIST_ANGULAR
 from .tabletop_palm_mount import MountView
 
-VERSION = "dh116-teacher-mounted-preaction-source-v1"
+VERSION = "dh116-teacher-mounted-preaction-source-v2"
 SOURCE = "isaaclab_base_link_pose_and_body_com_velocity_verified_against_physx"
 SEED_VERSION = "dh116-authored-reset-root-seed-v1"
 SEED_SOURCE = "tensorworld_layout_hand_roots_plus_origins_plus_root_xy"
@@ -96,6 +96,22 @@ def capture_authored_reset_seed(tensor_world, *, read_identity, data_env_index):
     return result
 
 
+
+def _absolute_prim_path(path):
+    return (isinstance(path, str) and path.startswith("/")
+            and all(part not in ("", ".", "..") for part in path.split("/")[1:]))
+
+
+def _mounted_paths(articulation, container, body, side):
+    # The fixed-joint articulation root and base_link are siblings in the
+    # authored mount. Backend prim_paths is verified independently: never
+    # derive the hand container by appending/removing an assumed root suffix.
+    if (not all(_absolute_prim_path(p) for p in (articulation, container, body))
+            or container.split("/")[-1] != side+"Hand"
+            or not (articulation == container or articulation.startswith(container+"/"))
+            or body != container+"/base_link"):
+        raise ValueError("exact separate articulation/container/base_link paths required")
+
 def _packet(packet, expected):
     if (not isinstance(packet, dict) or packet.get("version") != VERSION
             or packet.get("source") != SOURCE or packet.get("source_valid") is not True
@@ -119,16 +135,19 @@ def _packet(packet, expected):
     velocity = np.r_[_array(packet["body_lin_vel_w"], (3,)), _array(packet["body_ang_vel_w"], (3,))]
     if not math.isclose(float(np.linalg.norm(pose[3:])), 1., abs_tol=1e-5, rel_tol=0):
         raise ValueError("raw measured WXYZ quaternion must be finite and unit")
-    path = packet.get("hand_path")
-    if (not isinstance(path, str) or not path.startswith("/") or side+"Hand" not in path.split("/")
-            or packet.get("body_path") != path+"/base_link"):
-        raise ValueError("exact actual mounted base_link path required")
+    _mounted_paths(packet.get("articulation_path"), packet.get("hand_container_path"),
+                   packet.get("body_path"), side)
     seed = _seed_checked(packet["reset_seed"], expected)
     return names, q, qd, pose, velocity, seed
 
 
 def capture_mounted_hand(hand, mount, *, side, read_identity, data_env_index,
-                         expected_hand_path, reset_seed):
+                         expected_articulation_path, expected_hand_container_path, reset_seed):
+    """Bind caller-verified view identity separately from the authored container.
+
+    expected_articulation_path must be established by the scene owner and
+    match actual prim_paths exactly; no backend path normalization is guessed.
+    """
     if side not in SIDES or type(data_env_index) is not int or data_env_index < 0:
         raise ValueError("explicit side and data row required")
     before = _clock(read_identity())
@@ -146,10 +165,15 @@ def capture_mounted_hand(hand, mount, *, side, read_identity, data_env_index,
     paths = list(view.prim_paths)
     links = deepcopy(view.link_paths)
     n, count = len(paths), len(bodies)
-    if (data_env_index >= n or len(set(paths)) != n or paths[data_env_index] != expected_hand_path
+    _mounted_paths(expected_articulation_path, expected_hand_container_path,
+                   expected_hand_container_path+"/base_link", side)
+    if (data_env_index >= n or len(set(paths)) != n or paths[data_env_index] != expected_articulation_path
             or len(links) != n or any(len(row) != count for row in links)
-            or links[data_env_index][mount.base_id] != expected_hand_path+"/base_link"):
-        raise ValueError("actual SDK environment/body paths differ")
+            or links[data_env_index][mount.base_id] != expected_hand_container_path+"/base_link"
+            or len(set(links[data_env_index])) != count
+            or any(not _absolute_prim_path(p) or not p.startswith(expected_hand_container_path+"/")
+                   for p in links[data_env_index])):
+        raise ValueError("actual SDK articulation/container/body paths differ")
     cached_q, cached_qd = _array(data.joint_pos, (n, 17)), _array(data.joint_vel, (n, 17))
     cached_pose = _array(data.body_link_pose_w, (n, count, 7))
     cached_linear = _array(data.body_lin_vel_w, (n, count, 3))
@@ -169,7 +193,8 @@ def capture_mounted_hand(hand, mount, *, side, read_identity, data_env_index,
     idx, body = data_env_index, mount.base_id
     result = dict(version=VERSION, source=SOURCE, source_valid=True, side=side, identity=before,
         joint_names=names, q=q[idx].tolist(), qd=qd[idx].tolist(), dof_types=types[idx].tolist(),
-        hand_path=paths[idx], body_path=links[idx][body], body_link_pose_w=cached_pose[idx, body].tolist(),
+        articulation_path=paths[idx], hand_container_path=expected_hand_container_path,
+        body_path=links[idx][body], body_link_pose_w=cached_pose[idx, body].tolist(),
         body_lin_vel_w=cached_linear[idx, body].tolist(), body_ang_vel_w=cached_angular[idx, body].tolist(),
         velocity_reference=VELOCITY_REFERENCE, reset_seed=deepcopy(reset_seed),
         implementation_sha256=_implementation())

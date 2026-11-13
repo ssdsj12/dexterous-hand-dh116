@@ -1,3 +1,7 @@
+## 2026-11-13 — Teacher 原生腕部实例路径绑定修复
+
+按已安装 IsaacLab 的实际根路径发现规则区分 wrist_fixed 与 base_link 所在容器。仍为 66/371 CPU 来源覆盖。 Ubuntu CPU 回归 146 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md)
+
 ## 2026-11-13 — DeformX CUDA 逐接触对读回单步校准
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-deformx-pair-capture-native.md)。
