@@ -1,3 +1,7 @@
+## 2026-11-13 — Tripod 起点与沉降杆闭合分阶段审计
+
+左手回退起点桌面几何净空 2.404 mm，闭合仍因近端碰撞被拒绝。右手旧末态独立拒绝。 Ubuntu CPU 回归 80 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-two-phase-sdf.md)
+
 ## 2026-11-13 — 柔性 Teacher 真实动作前状态离线推理
 
 使用真实双手 Pinch 和 41 节点预动作账本，CPU 验证 24D Tanh 推理。正式 PPO 准入仍未通过。 Ubuntu CPU 回归 35 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-native-boundary-inference.md)

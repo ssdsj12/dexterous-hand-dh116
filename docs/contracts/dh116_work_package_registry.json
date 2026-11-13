@@ -17023,6 +17023,76 @@
         "report": "docs/superpowers/reports/2026-11-13-flexible-native-boundary-inference.md",
         "report_source_commit": "b4ab94458f55a4583937cdbd09ee521c636cbad5"
       }
+    },
+    "flex.f8-tripod-two-phase-sdf-cpu": {
+      "title": "Tripod 起点与沉降杆闭合分阶段审计",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-tripod-sdf-constrained-direction-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 80,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_tripod_two_phase_sdf.py",
+          "tests/test_dh116_tripod_sdf_constrained_direction.py",
+          "tests/test_dh116_tripod_joint_root_direction.py",
+          "tests/test_dh116_pinch_closure_margin.py",
+          "tests/test_dh116_power_alternative_sdf_interval.py"
+        ],
+        "log_sha256": "0912c398fcae3a76e8805ef34bad32098d7dd90473d669f10bfc0a0eabec8b03",
+        "tested_head": "eef29c8a5d7379ab48ebb6cc5f018f243e2f8ef5",
+        "native_qualification": false,
+        "qualification_scope": "tripod_cpu_split_quiet_and_settled_closure_rejection",
+        "left_quiet_table_clearance_mm": 2.40362,
+        "left_path_table_lower_mm": 2.350836,
+        "source_result_sha256": "68b244ea5adee6dada5394b5e46e7e96270b12d3f9d6d1cfb24e8d2a9fad51a4",
+        "proof_sha256": "90bf9ccf48cdd1b4ba59e9520150c0ab2c59224d2cd2c2652b59a76ffbf973e5",
+        "native_recipe_created": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-tripod-two-phase-sdf.md",
+        "report_source_commit": "33da655c42aa965b163f4dd9f339fad4377395a4"
+      },
+      "last_result": {
+        "passed": 80,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_tripod_two_phase_sdf.py",
+          "tests/test_dh116_tripod_sdf_constrained_direction.py",
+          "tests/test_dh116_tripod_joint_root_direction.py",
+          "tests/test_dh116_pinch_closure_margin.py",
+          "tests/test_dh116_power_alternative_sdf_interval.py"
+        ],
+        "log_sha256": "0912c398fcae3a76e8805ef34bad32098d7dd90473d669f10bfc0a0eabec8b03",
+        "tested_head": "eef29c8a5d7379ab48ebb6cc5f018f243e2f8ef5",
+        "native_qualification": false,
+        "qualification_scope": "tripod_cpu_split_quiet_and_settled_closure_rejection",
+        "left_quiet_table_clearance_mm": 2.40362,
+        "left_path_table_lower_mm": 2.350836,
+        "source_result_sha256": "68b244ea5adee6dada5394b5e46e7e96270b12d3f9d6d1cfb24e8d2a9fad51a4",
+        "proof_sha256": "90bf9ccf48cdd1b4ba59e9520150c0ab2c59224d2cd2c2652b59a76ffbf973e5",
+        "native_recipe_created": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-tripod-two-phase-sdf.md",
+        "report_source_commit": "33da655c42aa965b163f4dd9f339fad4377395a4"
+      }
     }
   },
   "execution_target": {
