@@ -1,3 +1,7 @@
+## 2026-11-13 — 左 Pinch 实测节点与两指闭合候选
+
+按 v3 实测节点和锁定 SDF 选择有限闭合候选，固定底座 1.9 mm 门通过 CPU 审计，保留 2.1 mm 六轴投影限制。 Ubuntu CPU 回归 47 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-measured-sdf-closure-margin.md)
+
 ## 2026-11-13 — SimulationContext 已知 ready 订阅释放
 
 对固定 Isaac SDK 源码核验后释放已知 PHYSICS_READY 订阅，再调用原 clear_instance。记录两层引用证据和未解析构造帧。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-13-simulation-owner-cleanup-cpu.md)

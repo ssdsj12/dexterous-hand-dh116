@@ -9115,6 +9115,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-simulation-owner-cleanup-cpu.md",
       "report_source_commit": "861259ec642cc64c47b8b2b8fe90d1e9acbab5ce"
+    },
+    "flex.f4-pinch-closure-margin-cpu": {
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_closure_margin.py",
+        "tests/test_dh116_pinch_v3_evidence_replay.py",
+        "tests/test_pinch_initial_geometry_v2.py"
+      ],
+      "log_sha256": "4664ac1637e9d56d99e0a7a7bb2f1032fe30922aeef2dd42461dfe7c1bf5997a",
+      "tested_head": "3d3e06383ef150b22de26061f50857c38f7dd4df",
+      "scope": "single_left_fixed_base_offline_contact_discovery_only",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "physics_steps": 0,
+      "optimizer_updates": 0,
+      "candidate_sha256": "3d04ccca63263b4480e1831693b8d7c70f1336170f2006b5c6a3a1f414553fe0",
+      "offline_proof_sha256": "448630ca4f54c3b4b35dbeb4246201445aff1fc55753c7631412062b80389e1b",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-measured-sdf-closure-margin.md",
+      "report_source_commit": "2771d8b23e078a7d2d6af07e6fec271c22732413"
     }
   }
 }
