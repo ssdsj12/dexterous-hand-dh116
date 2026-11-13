@@ -5656,7 +5656,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "两侧联合掌位和关节方向均实测降低 CPU 残差；近端净空与严格指腹端点仍未全部通过，无 Reset 提案。"
+      "reason": "实测几何重放显示初态落杆包络和节点 SDF 双重阻断，左 finger22 与右 finger13 需独立 Reset 和闭合轨迹；保留原 2.1 mm 门，无原生配方。"
     },
     "flex.f8-power": {
       "title": "Power 无相机 R0 特权 Teacher",
@@ -15097,6 +15097,70 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-13-static-table-contact-capability-correction.md",
         "report_source_commit": "b6cc0d0ec0790a4d47040948ad2982fd3bcda2a6"
+      }
+    },
+    "flex.f8-tripod-sdf-constrained-direction-cpu": {
+      "title": "Tripod 节点 SDF 与初态硬约束",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-tripod-joint-root-direction-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_tripod_sdf_constrained_direction.py",
+          "tests/test_dh116_pinch_closure_margin.py",
+          "tests/test_dh116_tripod_joint_root_direction.py"
+        ],
+        "log_sha256": "c0a80fd1874291b8f67ffda80a4e87e6eac1689d347d5ea0d914cb0d99600cef",
+        "tested_head": "324f9a3b6c5e50cfdf3fc4a481b1e73a03a9a331",
+        "scope": "targeted_tripod_constraints_cpu_only",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "reset_proposal_created": false,
+        "physics_steps": 0,
+        "optimizer_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-tripod-sdf-constrained-direction.md",
+        "report_source_commit": "2438679857167d788ad18aeeb7642a6bec31dcb0"
+      },
+      "last_result": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_tripod_sdf_constrained_direction.py",
+          "tests/test_dh116_pinch_closure_margin.py",
+          "tests/test_dh116_tripod_joint_root_direction.py"
+        ],
+        "log_sha256": "c0a80fd1874291b8f67ffda80a4e87e6eac1689d347d5ea0d914cb0d99600cef",
+        "tested_head": "324f9a3b6c5e50cfdf3fc4a481b1e73a03a9a331",
+        "scope": "targeted_tripod_constraints_cpu_only",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "reset_proposal_created": false,
+        "physics_steps": 0,
+        "optimizer_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-tripod-sdf-constrained-direction.md",
+        "report_source_commit": "2438679857167d788ad18aeeb7642a6bec31dcb0"
       }
     }
   },

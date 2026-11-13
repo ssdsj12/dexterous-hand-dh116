@@ -9411,6 +9411,34 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-static-table-contact-capability-correction.md",
       "report_source_commit": "b6cc0d0ec0790a4d47040948ad2982fd3bcda2a6"
+    },
+    "flex.f8-tripod-sdf-constrained-direction-cpu": {
+      "passed": 48,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_tripod_sdf_constrained_direction.py",
+        "tests/test_dh116_pinch_closure_margin.py",
+        "tests/test_dh116_tripod_joint_root_direction.py"
+      ],
+      "log_sha256": "c0a80fd1874291b8f67ffda80a4e87e6eac1689d347d5ea0d914cb0d99600cef",
+      "tested_head": "324f9a3b6c5e50cfdf3fc4a481b1e73a03a9a331",
+      "scope": "targeted_tripod_constraints_cpu_only",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "reset_proposal_created": false,
+      "physics_steps": 0,
+      "optimizer_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-tripod-sdf-constrained-direction.md",
+      "report_source_commit": "2438679857167d788ad18aeeb7642a6bec31dcb0"
     }
   }
 }

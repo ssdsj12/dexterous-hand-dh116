@@ -1,3 +1,7 @@
+## 2026-11-13 — Tripod 节点 SDF 与初态硬约束
+
+原 2.1 mm 限制下量化 Tripod 左右近端指节与落杆包络冲突，分别检验连续杆段与原求解器节点 SDF。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-sdf-constrained-direction.md)
+
 ## 2026-11-13 — 静态台面 GPU 过滤能力门
 
 根据 v4 原生 GPU 不支持静态台面过滤的证据，静态桌面不建不可靠 tensor view，输出明确 NA 并保留原桌面。 Ubuntu CPU 回归 27 项通过。[报告](docs/superpowers/reports/2026-11-13-static-table-contact-capability-correction.md)
