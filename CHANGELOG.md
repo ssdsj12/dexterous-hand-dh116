@@ -1,3 +1,7 @@
+## 2026-11-13 — PhysX GDB 全线程暂停后取证
+
+带后台线程的 CPU 进程复现旧 GDB 命令错误。候选捕获器在所有线程暂停后保留完整栈、映射和实际退出状态，待下一原生配方接入。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-gdb-stopped-context.md)
+
 ## 2026-11-13 — 三抓法 Teacher rollout 准入与 GAE 边界审计
 
 三抓法现有证据全部拒绝准入。复用 371D 来源门与原 GAE，终止不 bootstrap，截断只使用同回合末状态。2 环境 32 控制步预算仅作审计。 Ubuntu CPU 回归 107 项通过。[报告](docs/superpowers/reports/2026-11-13-deformable-rollout-admission.md)

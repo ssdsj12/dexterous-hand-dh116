@@ -10825,6 +10825,74 @@
         "report": "docs/superpowers/reports/2026-11-13-deformable-rollout-admission.md",
         "report_source_commit": "b0e17697a19d12c6c61c4217c66233ee6ea834a9"
       }
+    },
+    "flex.f4-physx-gdb-all-stop-cpu": {
+      "title": "PhysX GDB 全线程暂停后取证",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-physx-lifetime-contrast-audit"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 42,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_physx_lifetime_debugger_stopped.py",
+          "tests/test_dh116_physx_lifetime_probe.py",
+          "tests/test_dh116_physx_lifetime_validation.py",
+          "tests/test_dh116_physx_lifetime_scheduler.py"
+        ],
+        "log_sha256": "f35c87d8414fa8884851c2d5cc3029945a42854183e54360137d211b9f56034e",
+        "tested_head": "0552757f68ad5114395ac6391c8771aa864f79a6",
+        "stage": "cpu_verified_gdb_multithread_reproducer",
+        "scope": "gdb_observer_repair_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "threaded_gdb_fixtures": 3,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-physx-gdb-stopped-context.md",
+        "report_source_commit": "32e5187fcb550200fd6b93249c7d66e77c9e99d0"
+      },
+      "last_result": {
+        "passed": 42,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_physx_lifetime_debugger_stopped.py",
+          "tests/test_dh116_physx_lifetime_probe.py",
+          "tests/test_dh116_physx_lifetime_validation.py",
+          "tests/test_dh116_physx_lifetime_scheduler.py"
+        ],
+        "log_sha256": "f35c87d8414fa8884851c2d5cc3029945a42854183e54360137d211b9f56034e",
+        "tested_head": "0552757f68ad5114395ac6391c8771aa864f79a6",
+        "stage": "cpu_verified_gdb_multithread_reproducer",
+        "scope": "gdb_observer_repair_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "threaded_gdb_fixtures": 3,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-physx-gdb-stopped-context.md",
+        "report_source_commit": "32e5187fcb550200fd6b93249c7d66e77c9e99d0"
+      }
     }
   },
   "execution_target": {
