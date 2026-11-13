@@ -10800,6 +10800,53 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 75,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_pinch_readback_profile.py",
+        "tests/test_dh116_pinch_closure_margin.py",
+        "tests/test_dh116_flexible_wrist_projection.py",
+        "tests/test_dh116_deformable_bimanual_step.py"
+      ],
+      "log_sha256": "46e5a8aff4b8a451f4e6ee9f6ed8660753465ed526f2cfd4f944d8b1a3d1631a",
+      "tested_head": "d31b88c6f71e168a7b8f5f7ba6afd616ccdb3535",
+      "kind": "cpu_and_native_ledger_offline_replay",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "profile_sha256": "67fe4ac5a231355aac627d2ce4e7bd8186b138273d80df3c30a5c5406c4e0498",
+      "offline_result_sha256": "75ec5cee02eca0676d15db8eb07d00273c2b50b40b7dc8d7d16d09d18e17f803",
+      "parent_receipt_sha256": "aa1a6877c29b460e8f12589674d4ba09381faf8aea200400a7cd0e71d1a5a1ec",
+      "proposed_setup_steps": 2,
+      "proposed_measurement_steps": 16,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-pinch-eight-step-readback-profile.md",
+      "report_source_commit": "68b646753ec2c1afc93d78116d8fc806df09672d",
+      "package": "flex.f7-dual-pinch-readback-profile-cpu",
+      "commit": "858f78e578db560e39018b5c069653feea83b908",
+      "parent": "d31b88c6f71e168a7b8f5f7ba6afd616ccdb3535",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-dual-pinch-eight-step-readback-profile.md",
+        "scripts/prepare_dh116_dual_pinch_readback_profile.py",
+        "tests/test_dh116_dual_pinch_readback_profile.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
