@@ -12917,6 +12917,56 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 86,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_rod_axis_clearance.py",
+        "tests/test_dh116_pinch_closure_margin.py",
+        "tests/test_dh116_pinch_dynamic_fk.py",
+        "tests/test_dh116_measured_closure_geometry.py"
+      ],
+      "log_sha256": "b1df4a98fcd4ea582c2c4e066c77707035de46fba43858505dd4dfe2350bffd5",
+      "tested_head": "5d159d93a1119d3c11b9fa13b30ca7f57622c02e",
+      "kind": "cpu_static_reset_geometry",
+      "cpu_full_passed": 86,
+      "full_log": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/evidence-rod-axis-20261113-dohO4O/pytest.log",
+      "comparison": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/evidence-rod-axis-20261113-dohO4O/run01/result.json",
+      "comparison_sha256": "752d367a9caebe470575816d60750cd0765eaf90d5b9ebfbf06481a1ce0aee39",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "geometry_states": 644,
+      "left_static_geometry_passed": true,
+      "right_static_geometry_passed": false,
+      "native_ready": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-rod-axis-clearance.md",
+      "report_source_commit": "6d8c2f019001ed1f64d46da68b037d3c04493906",
+      "package": "flex.f7-pinch-rod-axis-clearance-cpu",
+      "commit": "4542c4862fd15b0d9df20e56545373aa4e510850",
+      "parent": "5d159d93a1119d3c11b9fa13b30ca7f57622c02e",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/plans/2026-11-13-pinch-rod-axis-clearance.md",
+        "docs/superpowers/reports/2026-11-13-pinch-rod-axis-clearance.md",
+        "scripts/audit_dh116_pinch_rod_axis_clearance.py",
+        "tests/test_dh116_pinch_rod_axis_clearance.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
