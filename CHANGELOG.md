@@ -1,3 +1,7 @@
+## 2026-11-13 — R0 适用域与实测 Reset 接近基准独立修复
+
+131项不同CPU回归通过；真实18步账本只读复放，已核验17个原生参数包。诊断R0阻断4→3，滑移原始值仍NA；稳定性、接近和保持来源仍缺失，Teacher0/3，新物理步/PPO0。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-applicability.md)
+
 ## 2026-11-13 — 独立原生参数后端双手任务单次18步
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-native-parameter-task-native.md)。
