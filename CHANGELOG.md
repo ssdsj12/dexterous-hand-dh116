@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch独立234步接近原生诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-right-pinch-owned-contact-native.md)。
+
 ## 2026-11-13 — 右Pinch独立原生入口与退出校验
 
 新入口使用右侧真实USD/SDF/动作及已验证静态路径，独立绑定退出校验；CPU完整232测量步及terminal验证，原保护保持。原生未执行，不授予Teacher资格。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-native-owned.md)
