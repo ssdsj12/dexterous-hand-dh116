@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 原生同杆 2+8 元数据修正版
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-v2-native.md)。
+
 ## 2026-11-13 — 双手 Pinch 2+8 原生元数据修正版
 
 v1 未推进物理即因缺少布局元数据退出。独立 v2 修复原场景入口并维持同一 10 步范围，保留旧回执。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v2-preflight.md)
