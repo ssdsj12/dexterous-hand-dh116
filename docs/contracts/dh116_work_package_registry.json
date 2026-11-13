@@ -10039,6 +10039,30 @@
         "report": "docs/superpowers/reports/2026-11-13-flexible-power-initial-pose-preflight.md",
         "report_source_commit": "c8a996389d881a10d41bff27d4ab4257f31936dc"
       }
+    },
+    "flex.f4-free-pinch-recipe-preflight-20261113": {
+      "title": "Pinch candidate configuration and proposed native budget audit",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-pinch-cooked-initial-geometry",
+        "flex.f4-physx-tensor-lifetime-evidence",
+        "flex.f7-force-aggregate-evidence"
+      ],
+      "status": "blocked",
+      "reason": "Full DeformX contact pair readback and separate native ownership evidence required before freezing a runnable recipe.",
+      "last_result": {
+        "status": "blocked",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-next-native-budget-preflight.md",
+        "stage": "geometry_and_budget_audited",
+        "tested_head": "8de18479620e264e8895525e290ae569ae96fc9e",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "candidate_sha256": "a2eefb1a8f487fdba7e567c51aab005211dec3f658d2aa939c0ff7289de0dc44",
+        "audit_sha256": "e4fac4c777c5f8e3ece6baf310026f9f051381e473be21f2037d207ede01a4e4",
+        "blocker_kind": "native_evidence_source_missing"
+      }
     }
   },
   "execution_target": {
