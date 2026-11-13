@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch非零动作FK与SDK跟踪误差分离
+
+83项CPU回归通过；16个已有原生端点分离坐标/Mimic/SDK跟踪。实测11关节FK最大误差左0.06855µm右0.07738µm；目标FK仍留1.58–2.41mm正SDF间隙，跟踪滞后非唯一无接触原因。无新物理/PPO，Teacher0/3。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-dynamic-fk.md)
+
 ## 2026-11-13 — Reset实际读回补齐R0接近基准
 
 144项CPU回归通过；从实际Reset getter数据重建基准，两个控制周期均8/8有效接近样本，首步实测负差值保留。未新增物理步/PPO，hold/instability仍阻断，真实手杆pair0，Teacher0/3。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-r0-reset-measured-approach.md)

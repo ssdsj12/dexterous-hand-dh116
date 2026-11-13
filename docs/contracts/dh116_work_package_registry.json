@@ -20789,6 +20789,87 @@
         "report": "docs/superpowers/reports/2026-11-13-r0-reset-measured-approach.md",
         "report_source_commit": "125bbe57f9d5ec0049211b0edfd8b1bda2827759"
       }
+    },
+    "flex.f7-pinch-dynamic-fk-cpu": {
+      "title": "Pinch非零动作FK与SDK跟踪误差分离",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-native-parameter-task-native",
+        "flex.f7-r0-reset-approach-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 42,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_dynamic_fk.py",
+          "tests/test_dh116_r0_measured_approach.py",
+          "tests/test_dh116_native_parameter_r0_replay.py"
+        ],
+        "log_sha256": "f4dbb0d76f0baa1b14d91d7553318461dcb29efd6786b627812b4e913352a193",
+        "tested_head": "0779cf8d300faccce9ae7de1ca9f7cd7b98bd41a",
+        "kind": "cpu_regression_and_pinned_nonzero_native_trajectory_readback",
+        "cpu_full_passed": 83,
+        "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/pinch-dynamic-fk-regression-GbTDji/pytest.log",
+        "comparison": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/pinch-dynamic-fk-regression-GbTDji/comparison.json",
+        "comparison_sha256": "cb87da4ba3da91d82aff235861d1e40671028ae116c949f2a74bddf6faa84267",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "actual_rows": 16,
+        "actual_full11_max_position_error_m": {
+          "left": 6.854933448957906e-08,
+          "right": 7.7378415415711e-08
+        },
+        "hand_rod_contact_samples": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-dynamic-fk.md",
+        "report_source_commit": "828bc043577aac62cf8d71cdb2535de2f0fd8356"
+      },
+      "last_result": {
+        "passed": 42,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_dynamic_fk.py",
+          "tests/test_dh116_r0_measured_approach.py",
+          "tests/test_dh116_native_parameter_r0_replay.py"
+        ],
+        "log_sha256": "f4dbb0d76f0baa1b14d91d7553318461dcb29efd6786b627812b4e913352a193",
+        "tested_head": "0779cf8d300faccce9ae7de1ca9f7cd7b98bd41a",
+        "kind": "cpu_regression_and_pinned_nonzero_native_trajectory_readback",
+        "cpu_full_passed": 83,
+        "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/pinch-dynamic-fk-regression-GbTDji/pytest.log",
+        "comparison": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/pinch-dynamic-fk-regression-GbTDji/comparison.json",
+        "comparison_sha256": "cb87da4ba3da91d82aff235861d1e40671028ae116c949f2a74bddf6faa84267",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "actual_rows": 16,
+        "actual_full11_max_position_error_m": {
+          "left": 6.854933448957906e-08,
+          "right": 7.7378415415711e-08
+        },
+        "hand_rod_contact_samples": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-dynamic-fk.md",
+        "report_source_commit": "828bc043577aac62cf8d71cdb2535de2f0fd8356"
+      }
     }
   },
   "execution_target": {
