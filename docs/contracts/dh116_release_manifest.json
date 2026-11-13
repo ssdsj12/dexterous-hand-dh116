@@ -11398,6 +11398,57 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_trust_region.py",
+        "tests/test_dh116_pinch_spread_axial_direction.py"
+      ],
+      "log_sha256": "cddfbe54eefcec27f53601336986b65eb57be68c058b4794e5ffa13d24d392ca",
+      "tested_head": "4519a385ca09d97d78dc136a909b7757d055c36e",
+      "kind": "bounded_cpu_nonlinear_geometry_with_recorded_actual_trials",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "candidate_ready": false,
+      "geometry_states": 330,
+      "geometry_state_cap": 352,
+      "result_sha256": "0b6ebea34f6ec22ee41c599343ac02aadd25b2560c600b969fe5e7e266819602",
+      "accepted_directions": {
+        "left": 1,
+        "right": 2
+      },
+      "rejected_directions": {
+        "left": 2,
+        "right": 1
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-trust-region.md",
+      "report_source_commit": "cf877be1fbea7f16d35d78699997fbf2e5f5e4cb",
+      "package": "flex.f7-pinch-nonlinear-trust-region-cpu",
+      "commit": "9f44dddbb7c7e8e7aa4d6e4fd5b49d223938c014",
+      "parent": "4519a385ca09d97d78dc136a909b7757d055c36e",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-pinch-trust-region.md",
+        "scripts/solve_dh116_pinch_trust_region.py",
+        "tests/test_dh116_pinch_trust_region.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
