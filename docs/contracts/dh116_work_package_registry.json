@@ -11980,6 +11980,73 @@
         "report": "docs/superpowers/reports/2026-11-13-teacher-policy-owner-source.md",
         "report_source_commit": "ff9382e3683a889c3c9ea54f65fde7e0b54db66e"
       }
+    },
+    "flex.f7-rod-reset-boundary-cpu": {
+      "title": "柔性杆 Reset 与测量状态同钟适配",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-dual-hand-rod-runtime-cpu",
+        "flex.f7-solver-float-clock-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 64,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_rod_boundary.py",
+          "tests/test_dual_hand_rod_runtime.py",
+          "tests/test_dh116_deformable_grasp_task.py",
+          "tests/test_dh116_deformable_privileged_teacher.py"
+        ],
+        "log_sha256": "ba25744e2b607ca874d440675c16f371afe77cd22d060ecdd0a8fcdca0332a5d",
+        "tested_head": "5963928a2b3211224fd1d0dbc1099fc4d9e8a40f",
+        "stage": "cpu_verified_rod_snapshot_boundary",
+        "scope": "flexible_rod_reset_and_post_physics_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-rod-reset-boundary.md",
+        "report_source_commit": "c52970b499f794781c884e9f7c76c7bb5ec1d29d"
+      },
+      "last_result": {
+        "passed": 64,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_flexible_rod_boundary.py",
+          "tests/test_dual_hand_rod_runtime.py",
+          "tests/test_dh116_deformable_grasp_task.py",
+          "tests/test_dh116_deformable_privileged_teacher.py"
+        ],
+        "log_sha256": "ba25744e2b607ca874d440675c16f371afe77cd22d060ecdd0a8fcdca0332a5d",
+        "tested_head": "5963928a2b3211224fd1d0dbc1099fc4d9e8a40f",
+        "stage": "cpu_verified_rod_snapshot_boundary",
+        "scope": "flexible_rod_reset_and_post_physics_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-flexible-rod-reset-boundary.md",
+        "report_source_commit": "c52970b499f794781c884e9f7c76c7bb5ec1d29d"
+      }
     }
   },
   "execution_target": {
