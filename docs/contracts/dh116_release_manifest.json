@@ -11732,6 +11732,58 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 72,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_flexible_parameter_readback.py",
+        "tests/test_deformable_grasp_runtime.py",
+        "tests/test_dh116_material_director_readback.py"
+      ],
+      "log_sha256": "1cc6e7be7799b3c335d661bb027a16d7147096568f45d3dfc442a02b086ee91c",
+      "tested_head": "9b2567745f16d062d90f6449727d4f7cf5bd8a4b",
+      "kind": "cpu_native_api_doubles_parameter_readback",
+      "new_native_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_parameter_readback_qualified": false,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "source_basis_sha256": "2b58857a46c81eb96fd5872c4c11973e6c2190d7b0e40ab382a2b191f8c58983",
+      "resolved_cpu_failures": [
+        "ambiguous_global_friction_source",
+        "cuda_stream_change_during_getter"
+      ],
+      "remaining": [
+        "new_native_parameter_capture",
+        "R0_applicability_and_measured_stability",
+        "qualified_bilateral_contact"
+      ],
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-parameter-provenance-readback.md",
+      "report_source_commit": "3a15c0ae5f66125d5aad89bc395f684457ab76f3",
+      "package": "flex.f7-parameter-provenance-readback-cpu",
+      "commit": "4570a5ffc954fcb0cd706786384633114b2b5bb0",
+      "parent": "9b2567745f16d062d90f6449727d4f7cf5bd8a4b",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-flexible-parameter-provenance-readback.md",
+        "src/go2_pvcnn/control/dh116/tabletop_flexible_parameter_readback.py",
+        "tests/test_flexible_parameter_readback.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
