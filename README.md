@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch 已存偏航候选凸包重叠证据
+
+56项CPU回归通过，16/16已存候选独立重建；10个源凸包重叠上界证据，6个仍不能判定；不冒充PhysX碰撞/真实接触，不产生新候选或原生配方，Teacher未晋级。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-yaw-convex-witness.md)
+
 ## 2026-11-13 — Pinch 静态World-Z偏航独立几何筛选
 
 102个独立完整几何状态、58项CPU回归通过；左右各9个固定偏航候选及选中33点连续路径。非零偏航受非目标形体分离下界约束，保留原候选；负下界不等于已证实穿透。未生成新原生配方，0物理步/0PPO；真实接触和Teacher仍blocked。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-static-yaw-screen.md)

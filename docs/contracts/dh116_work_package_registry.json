@@ -19460,6 +19460,84 @@
         "report": "docs/superpowers/reports/2026-11-13-pinch-static-yaw-screen.md",
         "report_source_commit": "6603fd1c7872d48f39c22bda4081be4f9792ad79"
       }
+    },
+    "flex.f7-pinch-yaw-convex-witness-cpu": {
+      "title": "Pinch 已存偏航候选凸包重叠证据",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-pinch-static-yaw-screen-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_yaw_witness.py",
+          "tests/test_dh116_pinch_static_yaw.py",
+          "tests/test_dh116_pinch_trust_region.py"
+        ],
+        "log_sha256": "83aa0ea5248533a1296a341cc6c02f29ba720c4b43f3e2e9f197479dd13a8c0c",
+        "tested_head": "a919695c4aca1dd8ba7266c282308a7f5df49a8b",
+        "kind": "cpu_source_convex_envelope_feasible_pair_witness",
+        "status": "passed",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualification": false,
+        "static_reset_qualified": false,
+        "witness_reconstructions": 16,
+        "overlap_witnesses": 10,
+        "inconclusive": 6,
+        "new_search_candidates": 0,
+        "result_path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/pinch-yaw-witness-20261113-Nhixzu/run01/result.json",
+        "result_sha256": "61130374e62c82aa796b5b0bfbce95a92e015d0ae12ee3ad4435131bc37df715",
+        "next": "coupled palm placement and bounded finger closure",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-yaw-convex-witness.md",
+        "report_source_commit": "062a4a943e0bdba98910b7b0553ead5a70fd821e"
+      },
+      "last_result": {
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_yaw_witness.py",
+          "tests/test_dh116_pinch_static_yaw.py",
+          "tests/test_dh116_pinch_trust_region.py"
+        ],
+        "log_sha256": "83aa0ea5248533a1296a341cc6c02f29ba720c4b43f3e2e9f197479dd13a8c0c",
+        "tested_head": "a919695c4aca1dd8ba7266c282308a7f5df49a8b",
+        "kind": "cpu_source_convex_envelope_feasible_pair_witness",
+        "status": "passed",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualification": false,
+        "static_reset_qualified": false,
+        "witness_reconstructions": 16,
+        "overlap_witnesses": 10,
+        "inconclusive": 6,
+        "new_search_candidates": 0,
+        "result_path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/pinch-yaw-witness-20261113-Nhixzu/run01/result.json",
+        "result_sha256": "61130374e62c82aa796b5b0bfbce95a92e015d0ae12ee3ad4435131bc37df715",
+        "next": "coupled palm placement and bounded finger closure",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-yaw-convex-witness.md",
+        "report_source_commit": "062a4a943e0bdba98910b7b0553ead5a70fd821e"
+      }
     }
   },
   "execution_target": {
