@@ -9784,6 +9784,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-dual-external-wire-layout-cpu.md",
       "report_source_commit": "3b3e917481ca7b20c96f487779100673cd8cba60"
+    },
+    "flex.f7-dual-pinch-zero-interval-v2-cpu": {
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_pinch_worker_v2.py",
+        "tests/test_dh116_dual_pinch_postexit.py",
+        "tests/test_dh116_dual_pinch_worker.py"
+      ],
+      "log_sha256": "be88c912407293758e46efbe86e6219304bf8c153615950676a82572f174495e",
+      "tested_head": "a7cb3bae067746dbd8e5e4d016c2d24bc9eef6fc",
+      "scope": "dual_pinch_metadata_successor_cpu_only",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "optimizer_updates": 0,
+      "command_spec_sha256": "80284f089f88ee289c56f4ef792689aab5729150c87469e017d7aee7a391581b",
+      "code_config_sha256": "e658c044aca8513ab2bef1c9dc198a06bab1cbc5a487de4816e23cff25ee715e",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v2-preflight.md",
+      "report_source_commit": "9fd26ebbfe1447864b5f6081d57b04bdada02841"
     }
   }
 }

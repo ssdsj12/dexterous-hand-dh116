@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 2+8 原生元数据修正版
+
+v1 未推进物理即因缺少布局元数据退出。独立 v2 修复原场景入口并维持同一 10 步范围，保留旧回执。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v2-preflight.md)
+
 ## 2026-11-13 — 双手外部柔性杆的原场景元数据
 
 原始双手场景入口要求 wire_center。独立适配器从锁定 wire_points 派生布局元数据，实际外部杆和物理资产保持原定义。 Ubuntu CPU 回归 7 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-external-wire-layout-cpu.md)
