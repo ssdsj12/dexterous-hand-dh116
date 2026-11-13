@@ -1,3 +1,7 @@
+## 2026-11-13 — 静态台面 GPU 过滤能力门
+
+根据 v4 原生 GPU 不支持静态台面过滤的证据，静态桌面不建不可靠 tensor view，输出明确 NA 并保留原桌面。 Ubuntu CPU 回归 27 项通过。[报告](docs/superpowers/reports/2026-11-13-static-table-contact-capability-correction.md)
+
 ## 2026-11-13 — 双手 PhysX 逐身体台面接触来源
 
 验证双手逐身体原始接触读回接线。固定台面 GPU 过滤能力仍须独立来源核实；随后单独加入 v4 已确认的能力门。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-13-bimanual-hand-table-contact-cpu.md)

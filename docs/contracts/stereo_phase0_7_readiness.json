@@ -9384,6 +9384,33 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-bimanual-hand-table-contact-cpu.md",
       "report_source_commit": "5a6223c6a40856cf9b5d8f9cf22a9b187bdbef42"
+    },
+    "flex.f7-static-table-contact-capability-cpu": {
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_bimanual_table_contacts.py",
+        "tests/test_dh116_flexible_physical_exchange.py"
+      ],
+      "log_sha256": "7ab00eb1830a54e7331a762e8da267cc937d4a5f0add0c4f45334d8f1c03cc53",
+      "tested_head": "b2d0a47303a3066973584b9bc5dc1e206e066d2d",
+      "scope": "static_table_contact_capability_gate_cpu",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "static_table_contact_measured": false,
+      "physics_steps": 0,
+      "optimizer_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-static-table-contact-capability-correction.md",
+      "report_source_commit": "b6cc0d0ec0790a4d47040948ad2982fd3bcda2a6"
     }
   }
 }

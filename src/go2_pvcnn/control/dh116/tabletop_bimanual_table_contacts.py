@@ -127,9 +127,12 @@ def open_bimanual_table_contacts(stage,hands,prepared,*,read_clock):
                 raise ValueError("actual original 17DOF/17 body source mapping differs")
             paths[side]=[view.link_paths[0][names.index(name)] for name in expected]
         missing=_reporting(stage,paths["left"]+paths["right"])
-        metadata=dict(created_clock=before,source_sha256=pins,paths=paths,table_path=table,
+        static_table=not prim.HasAPI(UsdPhysics.RigidBodyAPI)
+        unavailable=("static GPU table filter unsupported; empty buffers cannot prove absence"
+                     if static_table else None)
+        metadata=dict(table_is_static=static_table,capability_unavailable=unavailable,created_clock=before,source_sha256=pins,paths=paths,table_path=table,
                       missing_reporting=missing,capacity=CAPACITY)
-        if not missing:
+        if not missing and not static_table:
             asset=hands[0]._physics_sim_view
             for side in ("left","right"):
                 view=asset.create_rigid_contact_view(paths[side],
@@ -154,7 +157,7 @@ def read_bimanual_table_contacts(source,*,read_clock):
         if any(before[k]!=created[k] for k in ("run_uuid","env_id","episode_uid","reset_id","rod_uid")):
             raise ValueError("contact source reset/episode identity changed")
         if source.stage is None or len(source.views)!=2:
-            return dict(na,reason="contact reporting/views unavailable",source=meta)
+            return dict(na,reason=meta.get("capability_unavailable") or "contact reporting/views unavailable",source=meta)
         if not _table_active(source.stage,meta["table_path"]):
             return dict(na,reason="actual table collider unavailable",source=meta)
         missing=_reporting(source.stage,meta["paths"]["left"]+meta["paths"]["right"])

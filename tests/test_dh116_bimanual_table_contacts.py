@@ -47,6 +47,9 @@ def context():
             return scope["RigidContactView"](backend,Front())
     stage=Usd.Stage.CreateInMemory();prefix="/World/DeformXDualHand"
     table=UsdGeom.Cube.Define(stage,prefix+"/Table").GetPrim();UsdPhysics.CollisionAPI.Apply(table)
+    # Synthetic dynamic partner only exercises API parsing. Production table is
+    # static and has an explicitly unsupported GPU filter capability.
+    UsdPhysics.RigidBodyAPI.Apply(table)
     prepared=dict(prefix=prefix,hands={});hands=[];sim_view=SimView()
     names=["base_link"]+[f"finger{i}_link" for i in (11,12,13,14,21,22,23,31,32,33,41,42,43,51,52,53)]
     for side in ("left","right"):
@@ -184,3 +187,14 @@ def test_deactivated_actual_prim_is_na(context,what):
     context[0].GetPrimAtPath(path).SetActive(False)
     result=api().read_bimanual_table_contacts(source,read_clock=context[3])
     assert result["available"] is False and result["total_contacts"] is None
+
+
+def test_original_static_table_gpu_filter_is_na_before_view_creation(context):
+    from pxr import UsdPhysics
+    table=context[0].GetPrimAtPath(context[2]["prefix"]+"/Table")
+    table.RemoveAPI(UsdPhysics.RigidBodyAPI)
+    source=open_source(context);context[4]["clock"]=clock(3)
+    result=api().read_bimanual_table_contacts(source,read_clock=context[3])
+    assert not context[5]
+    assert result["available"] is False and result["total_contacts"] is None
+    assert "static" in result["reason"] and "GPU" in result["reason"]
