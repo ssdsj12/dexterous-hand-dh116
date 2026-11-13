@@ -12846,6 +12846,82 @@
         "report": "docs/superpowers/reports/2026-11-13-pinch-initial-geometry-v2-cpu.md",
         "report_source_commit": "71095aca7a4e2848f39b5f58cba1ed94344110f8"
       }
+    },
+    "flex.f8-tripod-proximal-targeted-cpu": {
+      "title": "Tripod 近端碰撞定向筛查",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-right-pinch-targeted-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_tripod_proximal_screen.py",
+          "tests/test_dh116_right_pinch_targeted.py",
+          "tests/test_dh116_right_pinch_closure_screen.py",
+          "tests/test_dh116_flexible_style_pose_preparation.py"
+        ],
+        "log_sha256": "afb9db19de62a4c950bc51122566113eebf8e4d7255728983c764dbb49e477b8",
+        "tested_head": "9b71010d3d591819db2642e50b9f06774109e994",
+        "stage": "cpu_verified_tripod_targeted_geometry_screen",
+        "scope": "tripod_independent_proximal_geometry_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "candidate_count": 120,
+        "pairable": false,
+        "continuous_path_checks": 0,
+        "result_sha256": "29c4ff4fb3a333f7e06af04df7edf8598a691fd8d27d7c8fb9270d01d575c58e",
+        "evidence_replay_sha256": "945223784386a9eb41d07436a5c963ae4914e6fad0e547918f614d35fad04689",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-tripod-proximal-targeted-screen.md",
+        "report_source_commit": "4303adf27ba0187f3c87f59b36c32027f07cfa8e"
+      },
+      "last_result": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_tripod_proximal_screen.py",
+          "tests/test_dh116_right_pinch_targeted.py",
+          "tests/test_dh116_right_pinch_closure_screen.py",
+          "tests/test_dh116_flexible_style_pose_preparation.py"
+        ],
+        "log_sha256": "afb9db19de62a4c950bc51122566113eebf8e4d7255728983c764dbb49e477b8",
+        "tested_head": "9b71010d3d591819db2642e50b9f06774109e994",
+        "stage": "cpu_verified_tripod_targeted_geometry_screen",
+        "scope": "tripod_independent_proximal_geometry_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "candidate_count": 120,
+        "pairable": false,
+        "continuous_path_checks": 0,
+        "result_sha256": "29c4ff4fb3a333f7e06af04df7edf8598a691fd8d27d7c8fb9270d01d575c58e",
+        "evidence_replay_sha256": "945223784386a9eb41d07436a5c963ae4914e6fad0e547918f614d35fad04689",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-tripod-proximal-targeted-screen.md",
+        "report_source_commit": "4303adf27ba0187f3c87f59b36c32027f07cfa8e"
+      }
     }
   },
   "execution_target": {

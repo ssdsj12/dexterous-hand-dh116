@@ -1,3 +1,7 @@
+## 2026-11-13 — Tripod 近端碰撞定向筛查
+
+左右各 60 个 CPU 候选，满足粗闭合的候选仍有近端 link 干涉。保留负间隙证据，Tripod 无可配对 Reset 候选。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-proximal-targeted-screen.md)
+
 ## 2026-11-13 — 左 Pinch v2 初始全手几何读回
 
 原 17 碰撞体和锁定的 5 指腹几何使用 SDK link 位姿重算。已有 cooking 数据作为补充，实际 shape attachment 仍待原生核对。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-initial-geometry-v2-cpu.md)
