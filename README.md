@@ -1,3 +1,7 @@
+## 2026-11-14 — 实际双手接触与固定材料标记对应误差
+
+真实178个同钟手指接触候选全部保留，124个同节点截面残差>0.5mm，右食指最大1.339164mm；右拇指固定标记端点位移0.640657mm仍非合格滑移。1933条手接触缺同子步director明确NA。只读数据，无新原生/训练。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-material-correspondence.md)
+
 ## 2026-11-14 — 双手同杆原生账本的R0实测接近与完整奖励门控
 
 双手同杆232物理样本、29控制步只读R0结算；approach全有效且最后左右0mm，完整奖励0/29，66/371状态有效。缺失稳定性/有效对向/固定材料滑移继续NA，不放行Teacher。无新物理步或PPO。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-r0-measured-replay.md)

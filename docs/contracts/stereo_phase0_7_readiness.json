@@ -13598,6 +13598,47 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-bilateral-r0-measured-replay.md",
       "report_source_commit": "020b84a4650b90988d275e9ccde758ac17997f10"
+    },
+    "flex.f7-bilateral-material-correspondence-cpu": {
+      "passed": 54,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_contact_material_correspondence.py",
+        "tests/test_bilateral_material_endpoint_audit.py",
+        "tests/test_bilateral_material_actual_result.py",
+        "tests/test_cosserat_material_marker_reference.py",
+        "tests/test_contact_material_observability.py"
+      ],
+      "log_sha256": "8c05707644b8bb87aaaadf6833d9e5d7c669a88c21a18f2f15e69057510bb1f4",
+      "tested_head": "9e00d69f3b5846be40ef181a070aaafbaf8a3693",
+      "kind": "readonly_bilateral_material_correspondence",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_qualified": false,
+      "teacher_admission": false,
+      "actual_source_native_steps": 234,
+      "endpoint_rows": 232,
+      "final_substep_pair_count": 178,
+      "unobserved_director_pair_count": 1933,
+      "model_residual_above_0p5mm_count": 124,
+      "max_model_residual_m": 0.0013391644216668237,
+      "model_max_right_thumb_tangent_m": 0.0006406565177586129,
+      "r0_tangential_slip_m": null,
+      "physical_error_bound_m": null,
+      "source_receipt_sha256": "8ff5b25afb5a46a1cb57899b5aedf42c1e0e766a5bf30d4628e229bd62850db8",
+      "audit_result": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/bilateral-material-endpoints-20261114-run03/result.json",
+      "audit_sha256": "b96648b2a712aae6ef036d2acdf63d396393bda313f20853414e84373bcc35a5",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-bilateral-material-correspondence.md",
+      "report_source_commit": "32c26e2717aaa84fe5a4d7892d63eea17bc2c878"
     }
   }
 }
