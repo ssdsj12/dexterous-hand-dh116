@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手柔性 Episode 的 R0 账本重放
+
+重放核对关节、实际 SDK 目标、杆包和逐接触数据，记录原 R0 的可用性。首步接近、有效对向接触和材料锚滑移缺失均保留 NA。 Ubuntu CPU 回归 306 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-replay-cpu.md)
+
 ## 2026-11-13 — Power 固定根闭合连续界
 
 独立核对五个原 Power 候选的关节余量、可用动作时间与实际碰撞包络，解析支撑平面给出连续下界。局部候选均未通过，无原生配方。 Ubuntu CPU 回归 35 项通过。[报告](docs/superpowers/reports/2026-11-13-power-continuous-closure-constraints.md)
