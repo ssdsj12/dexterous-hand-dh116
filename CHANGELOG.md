@@ -1,3 +1,7 @@
+## 2026-11-13 — 右手 Pinch 定向静态闭合
+
+120 个局部候选中，right-targeted-092 通过原 1.9 mm 静态筛查与连续路径门。连续下界 2.039475 mm，尚未达到双手物理入口的 2.1 mm 策略净空要求。新杆轴高 0.305 m 仍需独立 Reset 绑定。 Ubuntu CPU 回归 45 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-targeted-geometry.md)
+
 ## 2026-11-13 — 双手物理 Episode 链路
 
 双手 Reset、杆快照和 480/60 Hz 交换已接到同一 CPU 验证入口。保留初始净空拒绝、原保护终止与单样本时钟身份。 Ubuntu CPU 回归 96 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-physical-episode.md)
