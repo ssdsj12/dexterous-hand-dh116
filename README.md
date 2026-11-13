@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 同一自由杆原生构造接线
+
+完成双手实体、同一自由杆、实测几何回读及原有双手 Reset 的构造接线。CPU 验证保留 2.1 mm 腕部净空与原生发布门。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-builder-cpu.md)
+
 ## 2026-11-13 — Pinch 后继配方独立力守恒归约
 
 核对原 FP32 账本标量和 FP64 独立守恒门。实际 238 行离线通过数值验证，保留 v3 外层失败和零手接触。 Ubuntu CPU 回归 36 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-force-precision-successor.md)

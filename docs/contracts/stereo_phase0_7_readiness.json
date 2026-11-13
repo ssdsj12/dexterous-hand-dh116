@@ -9056,6 +9056,36 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-pinch-force-precision-successor.md",
       "report_source_commit": "7774bc6b1d47f51da2408bfa0d0111fecd41d58e"
+    },
+    "flex.f4-dual-pinch-builder-cpu": {
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_dual_pinch_builder.py",
+        "tests/test_dh116_dual_hand_scene_preparation.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_dh116_dual_hand_episode.py",
+        "tests/test_dh116_flexible_physical_exchange.py"
+      ],
+      "log_sha256": "83a88b0f986f70af3430358b15f77bc09f7414de471adcf13934e5072188c1b1",
+      "tested_head": "df40ce854e467b666f7e580a6d8faf3e6c74c637",
+      "scope": "dual_pinch_actual_sdk_shaped_owner_wiring_cpu_only",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "optimizer_updates": 0,
+      "paired_seed_sha256": "647247fe31219f04337b6f6e29ddefaa2c81bcee27dbed8dd3d6f962e406230d",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-dual-pinch-builder-cpu.md",
+      "report_source_commit": "93c923a940c43c76c8461ccbc449e46a9af496ba"
     }
   }
 }
