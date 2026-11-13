@@ -5665,7 +5665,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "固定根连续界和掌位/六关节联合诊断已核对。最优局部方向违反 1.9/2.1mm 桌面与五指接触门，无 Power Reset；原生同杆和 R0 未通过。"
+      "reason": "备用左右原姿态通过静态净空，但实际 SDF 全闭合区间分别排除三个和四个必要指腹。未形成五指 Reset/闭合配方；原生同杆与 R0 仍待验证。"
     },
     "flex.execution-dependency-split": {
       "title": "拆分柔性物理、双目采集与逐抓法 Teacher 资格",
@@ -15397,6 +15397,70 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-13-dual-pinch-integrated-entry-cpu.md",
         "report_source_commit": "f7e6f15ec969eca65858ea188bb5aa1b65a5f21e"
+      }
+    },
+    "flex.f8-power-alternative-sdf-interval-cpu": {
+      "title": "Power 独立初态与原五指 SDF 可达范围",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-power-joint-palm-direction-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 51,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_power_alternative_sdf_interval.py",
+          "tests/test_dh116_pinch_closure_margin.py",
+          "tests/test_dh116_power_joint_palm_direction.py"
+        ],
+        "log_sha256": "b0200ac16d66ee1a27deda896bffa43e68da92cd5244f6639de260ef0cf6f495",
+        "tested_head": "c55453b2c0a1bfa261745d11926502974dc0ed5c",
+        "scope": "power_alternative_reset_and_sdf_interval_cpu_only",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "reset_proposal_created": false,
+        "new_physics_steps": 0,
+        "optimizer_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-power-alternative-sdf-contact-interval.md",
+        "report_source_commit": "97d242abe31cdf2e99099b0b301a0ddc44340c42"
+      },
+      "last_result": {
+        "passed": 51,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_power_alternative_sdf_interval.py",
+          "tests/test_dh116_pinch_closure_margin.py",
+          "tests/test_dh116_power_joint_palm_direction.py"
+        ],
+        "log_sha256": "b0200ac16d66ee1a27deda896bffa43e68da92cd5244f6639de260ef0cf6f495",
+        "tested_head": "c55453b2c0a1bfa261745d11926502974dc0ed5c",
+        "scope": "power_alternative_reset_and_sdf_interval_cpu_only",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "reset_proposal_created": false,
+        "new_physics_steps": 0,
+        "optimizer_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-power-alternative-sdf-contact-interval.md",
+        "report_source_commit": "97d242abe31cdf2e99099b0b301a0ddc44340c42"
       }
     }
   },

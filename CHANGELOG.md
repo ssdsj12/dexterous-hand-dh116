@@ -1,3 +1,7 @@
+## 2026-11-13 — Power 独立初态与原五指 SDF 可达范围
+
+两侧备用原姿态均通过初始台面 2.3 mm 静态筛查，固定底座和原合法闭合区间仍无法覆盖全部五个指腹。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-13-power-alternative-sdf-contact-interval.md)
+
 ## 2026-11-13 — 双手 Pinch 原始构造、动作和账本整链
 
 从同杆 Reset 到零动作原 24D 控制窗和严格落盘，台面源明确 NA，保持原始 2.1 mm 门。 同进程动态 PhysX schema 夹具发生注册冲突，按原有独立进程运行原生 API 形状回归。 Ubuntu CPU 回归 12 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-integrated-entry-cpu.md)
