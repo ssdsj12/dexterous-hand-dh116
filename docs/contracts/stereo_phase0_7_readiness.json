@@ -7144,6 +7144,38 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-pinch-initial-geometry-audit.md",
       "report_source_commit": "8b10d7ff530f65981909823458b428f4d08081ae"
+    },
+    "flex.f8-power-flexible-initial-preflight": {
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_flexible_power_pose_preflight.py",
+        "tests/test_dh116_teacher_wrap_preflight.py",
+        "tests/test_dh116_deformable_privileged_teacher.py"
+      ],
+      "log_sha256": "d2201dc6c4dcff7d2e5bfaa4c31047f6dc8f9152e87e405a37e180746da914ca",
+      "tested_head": "cb57ae57cd2fe04e56a4d509fe9c37d81415bca7",
+      "stage": "cpu_verified_and_archived_geometry_audit",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "real_training_updates": 0,
+      "scope": "independent_archived_power_pose_screen",
+      "archives_per_side": 16,
+      "archive_wrap_pass_per_side": 0,
+      "static_no_overlap_per_side": 16,
+      "audit_sha256": "ef59990bf9181feb66e6cf4d9963e2b79c73973401969d37c4a53103d3e11922",
+      "elapsed_seconds": 40.81,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-power-initial-pose-preflight.md",
+      "report_source_commit": "c8a996389d881a10d41bff27d4ab4257f31936dc"
     }
   }
 }
