@@ -1,3 +1,7 @@
+## 2026-11-13 — 右手 Pinch 原策略净空复验
+
+新独立右手静态候选连续净空 2.112018 mm，保持原端点及原保护门。动态接触和同杆 Reset 仍待实测。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-policy-clearance.md)
+
 ## 2026-11-13 — Tripod 近端碰撞定向筛查
 
 左右各 60 个 CPU 候选，满足粗闭合的候选仍有近端 link 干涉。保留负间隙证据，Tripod 无可配对 Reset 候选。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-proximal-targeted-screen.md)

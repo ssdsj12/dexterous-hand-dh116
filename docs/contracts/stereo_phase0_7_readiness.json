@@ -8465,6 +8465,38 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-tripod-proximal-targeted-screen.md",
       "report_source_commit": "4303adf27ba0187f3c87f59b36c32027f07cfa8e"
+    },
+    "flex.f8-right-pinch-policy-clearance-cpu": {
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_right_pinch_runtime_clearance.py",
+        "tests/test_dh116_right_pinch_targeted.py",
+        "tests/test_dh116_right_pinch_closure_screen.py",
+        "tests/test_dh116_flexible_style_pose_preparation.py"
+      ],
+      "log_sha256": "a5ed8455b69905cdd134071372ce10b967d93564586ebd438495aa4d54c35858",
+      "tested_head": "86b8045c12e90e1fcd8f31feade044cf34e79ed6",
+      "stage": "cpu_verified_right_pinch_policy_clearance",
+      "scope": "right_pinch_continuous_static_geometry",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "continuous_clearance_m": 0.0021120175240435146,
+      "policy_wrist_floor_m": 0.0021,
+      "result_sha256": "9e47b1990493cf9ea62f7324e17c5fb596cd5dd337ca4ec8557ea7098136af1d",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-right-pinch-policy-clearance.md",
+      "report_source_commit": "a1c0457bc03471c6c72bee20b9ecee546d0d16bd"
     }
   }
 }
