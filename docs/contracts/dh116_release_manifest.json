@@ -14205,6 +14205,58 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_right_owned_worker.py",
+        "tests/test_dh116_right_owned_owner.py",
+        "tests/test_dh116_right_approach_contract.py",
+        "tests/test_dh116_right_approach_geometry.py"
+      ],
+      "log_sha256": "aaf7052e9fe5fc1294c1a89ca3805ad88aec421ed9b6558642aba9f4af4a72bb",
+      "tested_head": "55bb5f6c5be38678bc10d53b198c02f81232cb3c",
+      "kind": "cpu_right_owned_native_preparation",
+      "cpu_full_passed": 37,
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "native_recipe_prepared": true,
+      "native_execution_performed": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-right-pinch-native-owned.md",
+      "report_source_commit": "08896992c3e4873ca18c2775f222f33f7995d30b",
+      "precommit_recovery": "immutable prior transaction saved; actual recipe loading test added",
+      "package": "flex.f8-right-pinch-owned-contact-cpu",
+      "commit": "318027e7d589484445451872315d2e18ee7724a8",
+      "parent": "55bb5f6c5be38678bc10d53b198c02f81232cb3c",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_execution/deformx_right_pinch_owned_contact_v1.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/plans/2026-11-13-right-pinch-native-owned.md",
+        "docs/superpowers/reports/2026-11-13-right-pinch-native-owned.md",
+        "scripts/prepare_dh116_right_pinch_native_interval.py",
+        "scripts/run_dh116_right_pinch_owned_work_packages.py",
+        "scripts/validate_dh116_right_owned_contact.py",
+        "scripts/verify_dh116_right_pinch_owned_contact.py",
+        "tests/test_dh116_right_owned_owner.py",
+        "tests/test_dh116_right_owned_worker.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
