@@ -1,3 +1,7 @@
+## 2026-11-13 — 左Pinch最大净空初态单次原生接触诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-pinch-margin-contact-native.md)。
+
 ## 2026-11-13 — 左Pinch最大净空初态独立234步接触配方
 
 75项CPU回归通过；新234步=2初始化+48静置+160左指闭合+24保持，GPU3/1环境/0PPO/180秒。原右手/自由杆/物理/旧18步路径不变；原生尚未执行，Teacher0/3。 Ubuntu CPU 回归 75 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-margin-contact-preparation.md)
