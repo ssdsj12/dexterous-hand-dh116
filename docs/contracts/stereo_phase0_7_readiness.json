@@ -8923,6 +8923,40 @@
       },
       "status": "failed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v3-native.md"
+    },
+    "flex.f4-pinch-v3-evidence-replay-cpu": {
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_v3_evidence_replay.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_deformable_grasp_runtime.py"
+      ],
+      "log_sha256": "d7778a80ed036a77521d58da31a958eb84083a239e0b482e2a5eff83a5f2eadc",
+      "tested_head": "af71785895300958d474eccb7cea8d3f71a16193",
+      "stage": "cpu_replayed_failed_native_pinch_ledger",
+      "scope": "immutable_single_left_v3_failure_audit",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "previous_observed_native_physics_steps": 240,
+      "previous_measured_rows": 238,
+      "previous_native_hand_contact_rows": 0,
+      "previous_outer_exit_code": 1,
+      "legacy_precision_mismatch_rows": 208,
+      "replay_sha256": "84bab3fb94fadd217f5c2418acea0a340205aeccff54e7edf436d82966fc126d",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-v3-native-ledger-replay.md",
+      "report_source_commit": "a24d4179ce46c8407c96d5d936821aebd0f2eba8"
     }
   }
 }

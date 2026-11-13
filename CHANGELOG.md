@@ -1,3 +1,7 @@
+## 2026-11-13 — 左 Pinch v3 原生账本重放
+
+原生 v3 已完成 240 SDK 步，全部接触为杆与桌面。独立重放确认微小物理残差及旧 FP32/FP64 一致性失败。保留外层 exit 1 与 SimulationContext 存活证据。 Ubuntu CPU 回归 31 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-v3-native-ledger-replay.md)
+
 ## 2026-11-13 — 左 Pinch v3 原生启动与单手读回
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v3-native.md)。
