@@ -7225,6 +7225,53 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 139,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_teacher_mounted_wrist_source.py",
+        "tests/test_dh116_teacher_preaction_readback.py",
+        "tests/test_dh116_deformable_bimanual_step.py",
+        "tests/test_free_wrist_grasp.py",
+        "tests/test_free_wrist_mount.py"
+      ],
+      "log_sha256": "505f04b270f9a2978bb4c3c9d5e1a784eeb3226021baae7b95228517e21822df",
+      "tested_head": "dbe1579b608dab4b56d2565d10f12be5373dff23",
+      "stage": "cpu_verified_mounted_wrist_source",
+      "scope": "teacher_mounted_wrist_preaction_cpu",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "fixture_fields_valid": 66,
+      "unbound_fields": 305,
+      "fixture_sha256": "695608d39fa38df4b545f3eef1a22b88fc9c518b978488676b990c353d741b37",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md",
+      "report_source_commit": "4684d89ef38cdad4a91cfa3dfc7fba527489aa5e",
+      "package": "flex.f7-teacher-mounted-wrist-source-cpu",
+      "commit": "89007ea9f6bbd1437f19ec45ece81f61a3e4f2ac",
+      "parent": "dbe1579b608dab4b56d2565d10f12be5373dff23",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_mounted_wrist_source.py",
+        "tests/test_dh116_teacher_mounted_wrist_source.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
