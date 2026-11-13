@@ -10404,6 +10404,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-dual-v4-r0-native-replay.md",
       "report_source_commit": "28072e3658caa0a8b7e81851365f9c8401e519dd"
+    },
+    "flex.f7-measured-closure-geometry-cpu": {
+      "passed": 95,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_measured_closure_geometry.py",
+        "tests/test_dh116_dual_pinch_readback_profile.py",
+        "tests/test_dh116_pinch_closure_margin.py",
+        "tests/test_dh116_flexible_wrist_projection.py",
+        "tests/test_dh116_deformable_bimanual_step.py"
+      ],
+      "log_sha256": "77eb861f7dd54a9dcafb26a5cf67611a2ddfd593c37dc165ae2ac9b162d1667b",
+      "tested_head": "6dfa1cdf77b8fc38e17ef5463d86e00a23009ee4",
+      "kind": "cpu_sdk_doubles_and_immutable_profile_replay",
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "source_sha256": "3e90dca3dfc2448ad2a1e82f545c29e7229fbda7510b90fba45bf88a5a7132de",
+      "profile_sha256": "67fe4ac5a231355aac627d2ce4e7bd8186b138273d80df3c30a5c5406c4e0498",
+      "guard_floor_m": 0.0021,
+      "geometry_scope": "actual_source17_and_locked5_not_live_nonpad_cooked",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-measured-closure-geometry.md",
+      "report_source_commit": "582af6aa1f52d1e12822a69933032650aedb054d"
     }
   }
 }

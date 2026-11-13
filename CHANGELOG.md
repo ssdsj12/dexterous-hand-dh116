@@ -1,3 +1,7 @@
+## 2026-11-13 — 同钟双手闭合几何实测与失败保护
+
+新增23-link与17DOF同钟实测入口及无SDK复算；保留2.1mm净空、关节、Mimic、力和腕部保护。CPU double覆盖全部profile状态及读回失败，原生执行0步，尚未授予闭合或Teacher资格。 Ubuntu CPU 回归 95 项通过。[报告](docs/superpowers/reports/2026-11-13-measured-closure-geometry.md)
+
 ## 2026-11-13 — 真实双手 Pinch v4 账本的 R0 离线重放
 
 重放真实 SDK3–10 的8行和同钟杆状态，原CLI磁盘重放一致。5项奖励来源仍为NA，fixture系数只用于诊断，未授予R0训练资格；新增原生步数和PPO更新均为0。 Ubuntu CPU 回归 62 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-v4-r0-native-replay.md)
