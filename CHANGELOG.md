@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 单次受保护手指动作原生读回
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-guarded-closure-native.md)。
+
 ## 2026-11-13 — 双手 Pinch 单动作区间原生执行与失败记录准备
 
 保留原物理与守卫，修复包装递归和旁路读取异常丢失物理样本。冻结2+8+8一次手指动作，实际源几何逐步复算、终止行先保存、自然退出独立核验；本包原生0步、PPO0更新，尚未授予Teacher或抓取资格。 Ubuntu CPU 回归 101 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-guarded-closure-preflight.md)
