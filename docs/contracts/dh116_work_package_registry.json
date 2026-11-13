@@ -17878,6 +17878,77 @@
         "status": "passed",
         "report": "docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-guarded-closure-native.md"
       }
+    },
+    "flex.f7-pinch-raised-reset-direction-cpu": {
+      "title": "Pinch 初始掌位与两指闭合的有界可达性诊断",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-pinch-readback-profile-cpu",
+        "flex.f7-measured-closure-geometry-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 55,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_raised_reset_direction.py",
+          "tests/test_dh116_pinch_closure_margin.py",
+          "tests/test_dh116_dual_pinch_readback_profile.py"
+        ],
+        "log_sha256": "ce126be024ee7b95bb0ef3da7765c1aa729c993f042942b7e8c06592995c8c74",
+        "tested_head": "047262f1ab5ff16a8abbe3d8ce54550b80e048a2",
+        "kind": "bounded_cpu_geometry_and_native_parent_ledger_replay",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "candidate_ready": false,
+        "geometry_states": 60,
+        "result_sha256": "59ddbd86359758e6102da7e550d397b1e35f11f9b9aaa66bacf71a418a332634",
+        "offline_proof_sha256": "4f1982ec2494d75b12e47af838033d66cf759b9ac53ac26b60e14034efbd80f4",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-raised-reset-reachability.md",
+        "report_source_commit": "bb2685204be3273f57e534ef443146007b6c8be9"
+      },
+      "last_result": {
+        "passed": 55,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_raised_reset_direction.py",
+          "tests/test_dh116_pinch_closure_margin.py",
+          "tests/test_dh116_dual_pinch_readback_profile.py"
+        ],
+        "log_sha256": "ce126be024ee7b95bb0ef3da7765c1aa729c993f042942b7e8c06592995c8c74",
+        "tested_head": "047262f1ab5ff16a8abbe3d8ce54550b80e048a2",
+        "kind": "bounded_cpu_geometry_and_native_parent_ledger_replay",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "candidate_ready": false,
+        "geometry_states": 60,
+        "result_sha256": "59ddbd86359758e6102da7e550d397b1e35f11f9b9aaa66bacf71a418a332634",
+        "offline_proof_sha256": "4f1982ec2494d75b12e47af838033d66cf759b9ac53ac26b60e14034efbd80f4",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-raised-reset-reachability.md",
+        "report_source_commit": "bb2685204be3273f57e534ef443146007b6c8be9"
+      }
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## 2026-11-13 — Pinch 初始掌位与两指闭合的有界可达性诊断
+
+完成60个CPU几何状态的固定范围诊断，左右候选均未满足目标SDF接触及全轨迹余量，不生成原生配方。保留失败结果；不把保守下界失败当成已证明碰撞，也不据此宣称全局不可达。本包原生0步，PPO0更新。 Ubuntu CPU 回归 55 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-raised-reset-reachability.md)
+
 ## 2026-11-13 — 双手 Pinch 单次受保护手指动作原生读回
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-guarded-closure-native.md)。
