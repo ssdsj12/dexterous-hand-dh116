@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch原始凸包杆段距离独立证明
+
+独立4变量QP只提法向，完整883顶点/40原始杆段支撑重算；段3/4可行距离上界仍低于半径，不能用放宽净空修复。54项CPU通过，无新原生/PPO或配方。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-13-polyline-closest-support.md)
+
 ## 2026-11-13 — 最新Segment原生账本的R0实测approach接入
 
 修复旧approach读取器拒绝新Segment几何的版本断层；只读232原生测量步/29控制窗口，232approach有效，稳定性232步缺失、有效对向接触42步未资格化。无新原生/训练，R0与Teacher仍blocked。 Ubuntu CPU 回归 92 项通过。[报告](docs/superpowers/reports/2026-11-13-segment-r0-approach.md)

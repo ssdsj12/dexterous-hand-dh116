@@ -22350,6 +22350,86 @@
         "report": "docs/superpowers/reports/2026-11-13-segment-r0-approach.md",
         "report_source_commit": "b04cff7c31d3e754ec7010700fd689e40e38c534"
       }
+    },
+    "flex.f8-right-pinch-closest-support-cpu": {
+      "title": "右Pinch原始凸包杆段距离独立证明",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-right-pinch-reset-direction-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 54,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_polyline_closest_support.py",
+          "tests/test_dh116_polyline_support_certificate.py",
+          "tests/test_dh116_right_pinch_reset_direction.py",
+          "tests/test_dh116_right_pinch_measured_direction.py"
+        ],
+        "log_sha256": "82a275213ed893ff1e4885fdd808997cfd882a1e9d12cbf311595d8054cf8e07",
+        "tested_head": "fe7b42ccbb0410d87ec6e420d56ee1812ac8d1a5",
+        "kind": "cpu_frozen_geometry_closest_support_proof",
+        "cpu_full_passed": 54,
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "static_path_passed": false,
+        "geometry_blocked": true,
+        "optimizer_calls": 4,
+        "optimization_variables": 4,
+        "audit_result": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/closest-support-20261113-0_9gw9ho/run01/result.json",
+        "audit_sha256": "e0f4c1a4bb6341826a867e45cd84c55f7aaa01640eedc453a31811b924702b37",
+        "source_result_sha256": "bd311cc064544f0b6c4ee295ac49d7b5e72f883dacd22c9f36ea6daa8787b865",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-polyline-closest-support.md",
+        "report_source_commit": "0a878b2e00a9c74c1f0121f8105c6e05379a386c"
+      },
+      "last_result": {
+        "passed": 54,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_polyline_closest_support.py",
+          "tests/test_dh116_polyline_support_certificate.py",
+          "tests/test_dh116_right_pinch_reset_direction.py",
+          "tests/test_dh116_right_pinch_measured_direction.py"
+        ],
+        "log_sha256": "82a275213ed893ff1e4885fdd808997cfd882a1e9d12cbf311595d8054cf8e07",
+        "tested_head": "fe7b42ccbb0410d87ec6e420d56ee1812ac8d1a5",
+        "kind": "cpu_frozen_geometry_closest_support_proof",
+        "cpu_full_passed": 54,
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "static_path_passed": false,
+        "geometry_blocked": true,
+        "optimizer_calls": 4,
+        "optimization_variables": 4,
+        "audit_result": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/closest-support-20261113-0_9gw9ho/run01/result.json",
+        "audit_sha256": "e0f4c1a4bb6341826a867e45cd84c55f7aaa01640eedc453a31811b924702b37",
+        "source_result_sha256": "bd311cc064544f0b6c4ee295ac49d7b5e72f883dacd22c9f36ea6daa8787b865",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-polyline-closest-support.md",
+        "report_source_commit": "0a878b2e00a9c74c1f0121f8105c6e05379a386c"
+      }
     }
   },
   "execution_target": {
