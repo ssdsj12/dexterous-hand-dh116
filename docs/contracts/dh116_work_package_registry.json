@@ -19784,6 +19784,101 @@
         "report": "docs/superpowers/reports/2026-11-13-pinch-world-tilt-reset.md",
         "report_source_commit": "ce44a9a211f410328748ca811345a8c1b665657b"
       }
+    },
+    "flex.f7-native-parameter-getters-cpu": {
+      "title": "独立 DeformX 原生参数只读接口与零步验证准备",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-dual-pinch-parameter-readback-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 87,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_parameter_getters.py",
+          "tests/test_dh116_deformx_parameter_probe.py",
+          "tests/test_dh116_deformx_cuda_build.py",
+          "tests/test_dh116_deformx_pair_capture.py",
+          "tests/test_dh116_deformx_pair_worker_v2.py"
+        ],
+        "log_sha256": "22addeb216f5c1f363afd021ae1adaeaf43e26293a5e3c8a3891eb46242928ad",
+        "tested_head": "9c4f25551d23e4deb91627518003d1c07a5bde2d",
+        "kind": "cpu_and_isolated_cuda_build",
+        "status": "passed",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "build_verified": true,
+        "solver_executed": false,
+        "teacher_admission": false,
+        "extension_sha256": "2fea8036dc6630bcbc2a2b13a5699764f43cfdffef6036432ab812d4aaa96dec",
+        "source_delta_sha256": "0bf1ed22749f11049e8d6a83da6e024a685d8482f3e2208a1bcc163705d80ed8",
+        "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/parameter-getters-regression-Eka1et/pytest.log",
+        "report": "docs/superpowers/reports/2026-11-13-deformx-native-parameter-getters.md",
+        "report_source_commit": "bcfb6d0f5db39284f062e2172f229bbdc519ce6c"
+      },
+      "last_result": {
+        "passed": 87,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformx_parameter_getters.py",
+          "tests/test_dh116_deformx_parameter_probe.py",
+          "tests/test_dh116_deformx_cuda_build.py",
+          "tests/test_dh116_deformx_pair_capture.py",
+          "tests/test_dh116_deformx_pair_worker_v2.py"
+        ],
+        "log_sha256": "22addeb216f5c1f363afd021ae1adaeaf43e26293a5e3c8a3891eb46242928ad",
+        "tested_head": "9c4f25551d23e4deb91627518003d1c07a5bde2d",
+        "kind": "cpu_and_isolated_cuda_build",
+        "status": "passed",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "build_verified": true,
+        "solver_executed": false,
+        "teacher_admission": false,
+        "extension_sha256": "2fea8036dc6630bcbc2a2b13a5699764f43cfdffef6036432ab812d4aaa96dec",
+        "source_delta_sha256": "0bf1ed22749f11049e8d6a83da6e024a685d8482f3e2208a1bcc163705d80ed8",
+        "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/parameter-getters-regression-Eka1et/pytest.log",
+        "report": "docs/superpowers/reports/2026-11-13-deformx-native-parameter-getters.md",
+        "report_source_commit": "bcfb6d0f5db39284f062e2172f229bbdc519ce6c"
+      }
+    },
+    "flex.f7-native-parameter-getters-native": {
+      "title": "DeformX 独立参数接口零步 CUDA 读回",
+      "executor": "native_bounded",
+      "status": "pending",
+      "dependencies": [
+        "flex.f7-native-parameter-getters-cpu"
+      ],
+      "dependency_scopes": {},
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/deformx_parameter_getter_readback_v1.json",
+      "evidence_scope": "zero_step_parameter_getter_only",
+      "tests": [
+        "tests/test_dh116_deformx_parameter_probe.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_deformx_parameter_work_packages.py"
     }
   },
   "execution_target": {

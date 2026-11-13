@@ -1,3 +1,7 @@
+## 2026-11-13 — 独立 DeformX 原生参数只读接口与零步验证准备
+
+独立cp310/SM89编译通过，87项CPU回归通过；修复源码审计子进程的挂载目录信任。新增设备参数读回及来源区分，旧后端SHA未变。零物理步读回配方已冻结，尚未执行；Teacher仍未准入。 Ubuntu CPU 回归 87 项通过。[报告](docs/superpowers/reports/2026-11-13-deformx-native-parameter-getters.md)
+
 ## 2026-11-13 — Pinch 独立初始横滚俯仰约束求解
 
 67项CPU回归通过；866个完整状态，两侧200查询上限消耗完。右拇指间隙0.231705mm仍无接触，左保留原候选；未生成新原生配方，未改腕部动作和物理保护。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-world-tilt-reset.md)
