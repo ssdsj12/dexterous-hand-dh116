@@ -7708,6 +7708,97 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 64,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_flexible_rod_boundary.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_deformable_grasp_task.py",
+        "tests/test_dh116_deformable_privileged_teacher.py"
+      ],
+      "log_sha256": "ba25744e2b607ca874d440675c16f371afe77cd22d060ecdd0a8fcdca0332a5d",
+      "tested_head": "5963928a2b3211224fd1d0dbc1099fc4d9e8a40f",
+      "stage": "cpu_verified_rod_snapshot_boundary",
+      "scope": "flexible_rod_reset_and_post_physics_cpu_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-flexible-rod-reset-boundary.md",
+      "report_source_commit": "c52970b499f794781c884e9f7c76c7bb5ec1d29d",
+      "package": "flex.f7-rod-reset-boundary-cpu",
+      "commit": "b5033153aaa0b8443aea43c1fe4b237df747fba8",
+      "parent": "5963928a2b3211224fd1d0dbc1099fc4d9e8a40f",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-flexible-rod-reset-boundary.md",
+        "src/go2_pvcnn/control/dh116/tabletop_deformable_rod_boundary.py",
+        "tests/test_dh116_flexible_rod_boundary.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 89,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_pair_worker_v2.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "9f7c7cf9a41394d01579fec5bf9a840a62abee3ead83eb6a4c50eb629a78f8a6",
+      "tested_head": "b5033153aaa0b8443aea43c1fe4b237df747fba8",
+      "stage": "cpu_verified_registered_worker",
+      "scope": "deformx_pair_calibration_v2_preparation",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "pending_native_recipe": {
+        "command_spec_sha256": "77d0290a350ba6b877991b9831da8fb4fb62441481e1866412935fc6d28af594",
+        "code_config_sha256": "94d855ce6be8700816a85a8e84d41a87fe74b52454bf4f8591661e932c6d08c6"
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-deformx-pair-worker-v2.md",
+      "report_source_commit": "81b9dbff17cc2b6ee68a80b5214841aec12f8b6f",
+      "package": "flex.f7-deformx-pair-worker-v2-cpu",
+      "commit": "78069a043ee9bb28ce1f276ba6b77c520d47367c",
+      "parent": "b5033153aaa0b8443aea43c1fe4b237df747fba8",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_execution/deformx_mesh_pair_capture_calibration_v2.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-13-deformx-pair-worker-v2.md",
+        "scripts/run_dh116_deformx_pair_work_packages_v2.py",
+        "scripts/verify_dh116_deformx_pair_capture_v2.py",
+        "tests/test_dh116_deformx_pair_worker_v2.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
