@@ -13230,6 +13230,58 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_contact_failure_audit.py",
+        "tests/test_dh116_polyline_support_certificate.py",
+        "tests/test_dh116_measured_closure_geometry.py"
+      ],
+      "log_sha256": "c1f838945f4d20406f5c52278aac50f11c911bbebe4df6cc2856fa039d4d2dad",
+      "tested_head": "35d492d49a808bb2b6ccab3260870acc2b1a18bf",
+      "kind": "native_failure_offline_support_certificate",
+      "cpu_full_passed": 41,
+      "native_physics_steps": 0,
+      "source_native_physics_steps": 216,
+      "source_native_exit_code": 1,
+      "source_native_signal": null,
+      "source_ledger_sha256": "05fb4242cc11fb23017b32f1d4d2820dc3f669a16f18f9f5a1c27f8136070cb9",
+      "audit_result": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/pinch-contact-proof-2NQpDq/audit/result.json",
+      "audit_sha256": "a7ae3493f3dca125b82d74d2c13e27774b195efb9fcfd70708d3d4876f281291",
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "old_recipe_consumed": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-contact-support-proof.md",
+      "report_source_commit": "c35f7b07c322887c9595d937fef0791bf40c7869",
+      "package": "flex.f7-pinch-polyline-support-proof-cpu",
+      "commit": "ea72ce7892cdd48af445e86a1a6e6a3ada16abd1",
+      "parent": "35d492d49a808bb2b6ccab3260870acc2b1a18bf",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/plans/2026-11-13-pinch-polyline-support-proof.md",
+        "docs/superpowers/reports/2026-11-13-pinch-contact-support-proof.md",
+        "scripts/audit_dh116_pinch_contact_failure.py",
+        "src/go2_pvcnn/control/dh116/tabletop_polyline_support_certificate.py",
+        "tests/test_dh116_pinch_contact_failure_audit.py",
+        "tests/test_dh116_polyline_support_certificate.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
