@@ -13641,6 +13641,80 @@
         "report": "docs/superpowers/reports/2026-11-13-flexible-measured-checkpoint-cpu.md",
         "report_source_commit": "11449b5d82f09a6b244f513a0d32307fd4da5395"
       }
+    },
+    "flex.f8-tripod-joint-root-direction-cpu": {
+      "title": "Tripod 联合手掌和关节几何方向",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-tripod-proximal-targeted-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 59,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_tripod_joint_root_direction.py",
+          "tests/test_dh116_tripod_proximal_screen.py",
+          "tests/test_dh116_power_closure_constraints.py",
+          "tests/test_dh116_flexible_style_pose_preparation.py"
+        ],
+        "log_sha256": "9c9b24840c570ab4c5f39214e0fdb79e2fbf5b43f50e6fa7f517e4956b2ab426",
+        "tested_head": "33e3f3ac4586166232e2d829404024c8ccb8a9e4",
+        "stage": "cpu_verified_tripod_local_joint_root_direction",
+        "scope": "tripod_fixed_bounded_local_cpu_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "residual_evaluations": 90,
+        "pairable": false,
+        "result_sha256": "726ca01dc554cb1a2a8a1ee03222c240118b536ae4cd7ad7348a19ca36fa39ba",
+        "evidence_replay_sha256": "d53198db67ccd92fd41c888c7b8b011d211190ad70b5bd69dd60bff15387650d",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-tripod-joint-root-direction.md",
+        "report_source_commit": "9efccfe4ce1c0ab160660b5645c82749e196a2b4"
+      },
+      "last_result": {
+        "passed": 59,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_tripod_joint_root_direction.py",
+          "tests/test_dh116_tripod_proximal_screen.py",
+          "tests/test_dh116_power_closure_constraints.py",
+          "tests/test_dh116_flexible_style_pose_preparation.py"
+        ],
+        "log_sha256": "9c9b24840c570ab4c5f39214e0fdb79e2fbf5b43f50e6fa7f517e4956b2ab426",
+        "tested_head": "33e3f3ac4586166232e2d829404024c8ccb8a9e4",
+        "stage": "cpu_verified_tripod_local_joint_root_direction",
+        "scope": "tripod_fixed_bounded_local_cpu_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "residual_evaluations": 90,
+        "pairable": false,
+        "result_sha256": "726ca01dc554cb1a2a8a1ee03222c240118b536ae4cd7ad7348a19ca36fa39ba",
+        "evidence_replay_sha256": "d53198db67ccd92fd41c888c7b8b011d211190ad70b5bd69dd60bff15387650d",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-tripod-joint-root-direction.md",
+        "report_source_commit": "9efccfe4ce1c0ab160660b5645c82749e196a2b4"
+      }
     }
   },
   "execution_target": {

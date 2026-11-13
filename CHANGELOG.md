@@ -1,3 +1,7 @@
+## 2026-11-13 — Tripod 联合手掌和关节几何方向
+
+90 次独立数值查询验证左右联合方向。两侧目标下降，仍有指腹端点和近端间隙未通过，不生成 Reset 提案。 Ubuntu CPU 回归 59 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-joint-root-direction.md)
+
 ## 2026-11-13 — 柔性实测字段 Teacher 独立断点
 
 独立格式保存 CPU 诊断策略和 Adam/RNG，合成 PPO 续跑精确一致；原 Checkpoint 实现字节和指纹保留。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-measured-checkpoint-cpu.md)
