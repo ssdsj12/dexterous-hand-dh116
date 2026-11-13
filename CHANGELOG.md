@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch独立Reset几何与节点SDF诊断
+
+右手实际SDK234来源；四个明确变更的CPU批次共306端点评估，原生0/PPO0。独立Reset候选仍未通过非目标净空与双指SDF裕量，原生配方未生成；旧失败/保护文件/模型保留。 Ubuntu CPU 回归 90 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-reset-direction.md)
+
 ## 2026-11-13 — 右Pinch实测闭合方向与非目标几何阻断
 
 SDK234右手实测锚定；24定向端点+161完整路径+一次源凸包QP。固定腕闭合不能形成双指接触，source finger13候选几何重叠；未生成原生配方，未增加动作上限，Teacher0/3。 Ubuntu CPU 回归 77 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-measured-direction.md)

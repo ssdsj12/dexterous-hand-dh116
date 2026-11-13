@@ -12571,6 +12571,45 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-right-pinch-measured-direction.md",
       "report_source_commit": "495ff48945d6ce53b6078d20165c7a8fe65c5e21"
+    },
+    "flex.f8-right-pinch-reset-direction-cpu": {
+      "passed": 90,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_right_pinch_reset_direction.py",
+        "tests/test_dh116_right_pinch_measured_direction.py",
+        "tests/test_dh116_polyline_support_certificate.py",
+        "tests/test_dh116_pinch_closure_margin.py",
+        "tests/test_dh116_pinch_rod_axis_clearance.py",
+        "tests/test_dh116_pinch_segment_geometry.py"
+      ],
+      "log_sha256": "78dece760f45aa5b68f29eb7f0f62806d3dc9827e4ba2a66b12b2246be7ae56b",
+      "tested_head": "6709e72e170456ae05d30275a33d4a6dfd9d9833",
+      "kind": "measured_right_reset_cpu_diagnostic",
+      "cpu_full_passed": 90,
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "static_path_passed": false,
+      "geometry_blocked": true,
+      "source_native_sdk_step": 234,
+      "source_ledger_sha256": "170b9bc8090eeb3f4291ce4102335eabbcb1d49892e333d1aa5b4ac4d9585fdf",
+      "audit_result": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/right-reset-direction-v4-20261113-379rl4yl/run01/result.json",
+      "audit_sha256": "bd311cc064544f0b6c4ee295ac49d7b5e72f883dacd22c9f36ea6daa8787b865",
+      "diagnostic_endpoint_evaluations": 306,
+      "full_path_samples": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-right-pinch-reset-direction.md",
+      "report_source_commit": "538c4c92932825f42ab71ae8c43a6911485027e2"
     }
   }
 }
