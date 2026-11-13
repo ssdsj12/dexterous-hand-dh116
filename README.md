@@ -1,3 +1,7 @@
+## 2026-11-14 — Original 24D Tripod target mapping and bounded stage accounting
+
+Both intrinsic-linear and geodesic-knot target paths pass bounded CPU geometry with original controller kernels, float32 SDK target reconstruction and required cooked-pad guards. Minimum motion is 200 steps; unchanged setup/quiet/hold yields274, exceeding240. No native action, actual tracking, contact, Reset or Teacher qualification. Ubuntu CPU 回归 117 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-original-sdk-path.md)
+
 ## 2026-11-14 — Tripod hard constraints and continuous reference approach
 
 Hard constraints find a near-contact endpoint, but all three node gaps remain positive. A separate all-node-contact search fails; fixed-root opening violates original table clearance. A 119-sample, 59-interval moving-root reference path passes conservative CPU geometry only. Original 24D SDK action mapping and native contact, Reset, R0 remain unqualified; no native steps or PPO updates. Ubuntu CPU 回归 76 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-hard-constraint-path.md)

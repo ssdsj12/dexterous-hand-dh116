@@ -5656,7 +5656,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "Near-contact endpoint and continuous moving-root CPU reference pass; three required node gaps remain positive. Original 24D/SDK path, live rod contact, independent right-hand mapping, Reset and R0 still require qualification. No new native or PPO run."
+      "reason": "Original24D CPU target mapping passes for200-step motion under ideal tracking. Unchanged setup2/quiet48/hold24 total274 exceeds240; no native recipe promoted. Required gaps positive, actual tracking/contact/Reset/R0 and independent right-hand mapping remain unqualified."
     },
     "flex.f8-power": {
       "title": "Power 无相机 R0 特权 Teacher",
@@ -24775,6 +24775,98 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-14-tripod-hard-constraint-path.md",
         "report_source_commit": "30e279ec6453351fb023aae3681f2ca62a0806d5"
+      }
+    },
+    "flex.f8-tripod-sdk-path-cpu": {
+      "title": "Original 24D Tripod target mapping and bounded stage accounting",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-tripod-hard-path-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 117,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_tripod_sdk_path.py",
+          "tests/test_tripod_sdk_serialization.py",
+          "tests/test_tripod_sdk_required_contact_guard.py",
+          "tests/test_tripod_sdk_actual.py",
+          "tests/test_tripod_pose_path.py",
+          "tests/test_tripod_fixed_root_path.py",
+          "tests/test_dh116_flexible_wrist_projection.py",
+          "tests/test_dh116_deformable_bimanual_step.py",
+          "tests/test_free_wrist_grasp.py",
+          "tests/test_free_wrist_mount.py"
+        ],
+        "log_sha256": "b76badd6f654a1c0b37bea0fe618dd2efef2889e6de38e0974047213eed8b8c6",
+        "tested_head": "31a97153d5ceda20f4b9481d3ddc0a83c1f47a24",
+        "kind": "original_24d_tripod_target_path_cpu",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_qualified": false,
+        "teacher_admission": false,
+        "actual_tracking_validated": false,
+        "target_path_passed": true,
+        "motion_steps": 200,
+        "unchanged_stage_steps": 274,
+        "maximum_steps": 240,
+        "budget_passed": false,
+        "linear_result_sha256": "f0726bb65f7ed3d2e645fb9d93226dd0e83f2100ee1cc928c95fa60fc74156ae",
+        "geodesic_result_sha256": "13afddee4057d00b0c51881aa6b9a251cd49d7b52eb048517536f2c6f151a42a",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-tripod-original-sdk-path.md",
+        "report_source_commit": "afcd9b9ac8b648af8f90241bb5b48dac35f69d50"
+      },
+      "last_result": {
+        "passed": 117,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_tripod_sdk_path.py",
+          "tests/test_tripod_sdk_serialization.py",
+          "tests/test_tripod_sdk_required_contact_guard.py",
+          "tests/test_tripod_sdk_actual.py",
+          "tests/test_tripod_pose_path.py",
+          "tests/test_tripod_fixed_root_path.py",
+          "tests/test_dh116_flexible_wrist_projection.py",
+          "tests/test_dh116_deformable_bimanual_step.py",
+          "tests/test_free_wrist_grasp.py",
+          "tests/test_free_wrist_mount.py"
+        ],
+        "log_sha256": "b76badd6f654a1c0b37bea0fe618dd2efef2889e6de38e0974047213eed8b8c6",
+        "tested_head": "31a97153d5ceda20f4b9481d3ddc0a83c1f47a24",
+        "kind": "original_24d_tripod_target_path_cpu",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_qualified": false,
+        "teacher_admission": false,
+        "actual_tracking_validated": false,
+        "target_path_passed": true,
+        "motion_steps": 200,
+        "unchanged_stage_steps": 274,
+        "maximum_steps": 240,
+        "budget_passed": false,
+        "linear_result_sha256": "f0726bb65f7ed3d2e645fb9d93226dd0e83f2100ee1cc928c95fa60fc74156ae",
+        "geodesic_result_sha256": "13afddee4057d00b0c51881aa6b9a251cd49d7b52eb048517536f2c6f151a42a",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-tripod-original-sdk-path.md",
+        "report_source_commit": "afcd9b9ac8b648af8f90241bb5b48dac35f69d50"
       }
     }
   },
