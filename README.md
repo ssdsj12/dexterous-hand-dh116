@@ -1,3 +1,7 @@
+## 2026-11-13 — 实测节点中心与连续材料锚来源审计
+
+从原始 pair 与同钟实测姿态重建节点中心运动，保留材料表面对应和 0.5 mm Slip 的来源阻断。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-13-contact-material-observability-cpu.md)
+
 ## 2026-11-13 — 左 Pinch v4 原生接触与来源分项复核
 
 冻结的固定底座原生验证测得 1,165 条手杆 pair 和 567 个同子步双指载荷，外层自然退出 0。静态 GPU 手与台面源保留未知。 Ubuntu CPU 回归 38 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-v4-native-contact-provenance.md)

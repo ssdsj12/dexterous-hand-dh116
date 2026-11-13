@@ -15233,6 +15233,74 @@
         "report": "docs/superpowers/reports/2026-11-13-pinch-v4-native-contact-provenance.md",
         "report_source_commit": "6371b406bfc5b4252df2f49a0b1769330f99d255"
       }
+    },
+    "flex.f7-contact-material-observability-cpu": {
+      "title": "实测节点中心与连续材料锚来源审计",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-pinch-v4-contact-provenance-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 66,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_contact_material_observability.py",
+          "tests/test_deformable_pair_source_basis.py",
+          "tests/test_dh116_pinch_force_precision.py",
+          "tests/test_dh116_deformable_grasp_task.py"
+        ],
+        "log_sha256": "e23302f36f9374bbec4013529f08b3a59a46d08afbac04265781dbcaf485f17e",
+        "tested_head": "9a8d0ac59d6ede0e7dcd825003a335c76be07e0e",
+        "scope": "v4_native_pairs_offline_material_observability",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "slip_available": false,
+        "new_physics_steps": 0,
+        "optimizer_updates": 0,
+        "independent_replay_sha256": "d6b6f861df45bf078bee16dfeccd88765d064287eb2b5a2a2a3e833ce41c792c",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-contact-material-observability-cpu.md",
+        "report_source_commit": "6f472e78f9e0d0e848b7d17886a6ccee43335505"
+      },
+      "last_result": {
+        "passed": 66,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_contact_material_observability.py",
+          "tests/test_deformable_pair_source_basis.py",
+          "tests/test_dh116_pinch_force_precision.py",
+          "tests/test_dh116_deformable_grasp_task.py"
+        ],
+        "log_sha256": "e23302f36f9374bbec4013529f08b3a59a46d08afbac04265781dbcaf485f17e",
+        "tested_head": "9a8d0ac59d6ede0e7dcd825003a335c76be07e0e",
+        "scope": "v4_native_pairs_offline_material_observability",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "slip_available": false,
+        "new_physics_steps": 0,
+        "optimizer_updates": 0,
+        "independent_replay_sha256": "d6b6f861df45bf078bee16dfeccd88765d064287eb2b5a2a2a3e833ce41c792c",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-contact-material-observability-cpu.md",
+        "report_source_commit": "6f472e78f9e0d0e848b7d17886a6ccee43335505"
+      }
     }
   },
   "execution_target": {
