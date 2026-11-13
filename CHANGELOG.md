@@ -1,3 +1,7 @@
+## 2026-11-13 — 三抓法 Teacher rollout 准入与 GAE 边界审计
+
+三抓法现有证据全部拒绝准入。复用 371D 来源门与原 GAE，终止不 bootstrap，截断只使用同回合末状态。2 环境 32 控制步预算仅作审计。 Ubuntu CPU 回归 107 项通过。[报告](docs/superpowers/reports/2026-11-13-deformable-rollout-admission.md)
+
 ## 2026-11-13 — PhysX 生命周期两格原生结果
 
 两格 app.close 返回；GDB 全线程捕获失败且退出码 1，资源保留证据已复核。[报告](docs/superpowers/reports/2026-11-13-physx-lifetime-native-contrast.md)

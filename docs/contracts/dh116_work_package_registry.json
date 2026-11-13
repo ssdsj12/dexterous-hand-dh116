@@ -10748,6 +10748,83 @@
         "added_physics_steps": 0,
         "added_ppo_updates": 0
       }
+    },
+    "flex.f8-teacher-rollout-admission-cpu": {
+      "title": "三抓法 Teacher rollout 准入与 GAE 边界审计",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-teacher-preaction-readback-cpu",
+        "flex.f7-r0-control-settlement-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 107,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformable_rollout_admission.py",
+          "tests/test_dh116_teacher_preaction_readback.py",
+          "tests/test_dh116_deformable_control_step.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_deformable_privileged_ppo.py",
+          "tests/test_dh116_deformable_task_budget.py"
+        ],
+        "log_sha256": "a7000df683e8f7e6b18fe41f86232626479d0f1441c8099c0bed78b7f8d6eaf2",
+        "tested_head": "019e3082b898a7d461edb670c29a9cc8a2380a59",
+        "stage": "cpu_verified_training_admission_denied",
+        "scope": "flexible_teacher_rollout_audit_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "styles_admitted": [],
+        "audit_exit_code": 3,
+        "audit_sha256": "282b82e21e967193296a54cfe758d0d95c85434bfd5c8d160ce55cd6509a9a90",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-deformable-rollout-admission.md",
+        "report_source_commit": "b0e17697a19d12c6c61c4217c66233ee6ea834a9"
+      },
+      "last_result": {
+        "passed": 107,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_deformable_rollout_admission.py",
+          "tests/test_dh116_teacher_preaction_readback.py",
+          "tests/test_dh116_deformable_control_step.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_deformable_privileged_ppo.py",
+          "tests/test_dh116_deformable_task_budget.py"
+        ],
+        "log_sha256": "a7000df683e8f7e6b18fe41f86232626479d0f1441c8099c0bed78b7f8d6eaf2",
+        "tested_head": "019e3082b898a7d461edb670c29a9cc8a2380a59",
+        "stage": "cpu_verified_training_admission_denied",
+        "scope": "flexible_teacher_rollout_audit_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "actual_native_physics_steps": 0,
+        "actual_training_updates": 0,
+        "styles_admitted": [],
+        "audit_exit_code": 3,
+        "audit_sha256": "282b82e21e967193296a54cfe758d0d95c85434bfd5c8d160ce55cd6509a9a90",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-deformable-rollout-admission.md",
+        "report_source_commit": "b0e17697a19d12c6c61c4217c66233ee6ea834a9"
+      }
     }
   },
   "execution_target": {
