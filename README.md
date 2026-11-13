@@ -1,3 +1,7 @@
+## 2026-11-13 — 双手 Pinch 参数来源单次原生端点读回
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-parameter-readback-native.md)。
+
 ## 2026-11-13 — 双手 Pinch 参数来源同钟原生读回准备
 
 实际同钟参数捕获、冻结父回执、源文件与逐包独立审计接入原释放路径；全套164项CPU回归通过。修复测试替身API形状及父回执引用，保留失败证据。新配方仅18步、1环境、0PPO、一次；尚未执行本配方原生实验，真实抓取和Teacher仍未准入。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-native-parameter-preflight.md)
