@@ -1,3 +1,7 @@
+## 2026-11-13 — 右Pinch合法初态与连续接近路径
+
+独立抬高初始掌根0.5mm、受限三关节接近；161点加连续余量通过原桌面/避杆/深度门槛。107项CPU回归通过，实际SDK/Reset/接触仍待原生，未扩用旧预算。 Ubuntu CPU 回归 107 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-owned-approach.md)
+
 ## 2026-11-13 — 右Pinch自身材料点与受约束掌根候选
 
 独立材料点4/3替代错误镜像次序；约束求解315次CPU验算得到1个端点通过，最低桌面净空2.1995mm。完整路径和实际Reset仍未验证，不启动原生；102项回归通过。 Ubuntu CPU 回归 102 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-owned-stations.md)
