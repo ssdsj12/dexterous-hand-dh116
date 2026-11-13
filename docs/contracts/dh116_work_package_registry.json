@@ -14553,6 +14553,73 @@
         "report": "docs/superpowers/reports/2026-11-13-flexible-dual-physical-evidence.md",
         "report_source_commit": "47803bb1ba0a472b78e6804757222e5642b583ea"
       }
+    },
+    "flex.f7-dual-pinch-eight-tick-cpu": {
+      "title": "双手 Pinch 八子步完整动作接线",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-dual-pinch-builder-cpu",
+        "flex.f7-dual-physical-evidence-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 38,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_pinch_interval.py",
+          "tests/test_dh116_dual_hand_episode.py",
+          "tests/test_dh116_flexible_physical_exchange.py",
+          "tests/test_dh116_deformable_bimanual_step.py"
+        ],
+        "log_sha256": "f3f248d98f2644da1c70159a72f15a5a62e3a22582a545ecc2d0682553dbeb33",
+        "tested_head": "1e32e817e8884311dc5d42fa55a4b5f9d50e85f0",
+        "scope": "dual_pinch_owner_eight_tick_cpu_doubles_only",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "physics_steps": 0,
+        "optimizer_updates": 0,
+        "measured_common_channels_cpu": 66,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-pinch-eight-tick-cpu.md",
+        "report_source_commit": "c8f7ecebd6034a270c952fa66c54ff614ffbb97a"
+      },
+      "last_result": {
+        "passed": 38,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_pinch_interval.py",
+          "tests/test_dh116_dual_hand_episode.py",
+          "tests/test_dh116_flexible_physical_exchange.py",
+          "tests/test_dh116_deformable_bimanual_step.py"
+        ],
+        "log_sha256": "f3f248d98f2644da1c70159a72f15a5a62e3a22582a545ecc2d0682553dbeb33",
+        "tested_head": "1e32e817e8884311dc5d42fa55a4b5f9d50e85f0",
+        "scope": "dual_pinch_owner_eight_tick_cpu_doubles_only",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "physics_steps": 0,
+        "optimizer_updates": 0,
+        "measured_common_channels_cpu": 66,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-dual-pinch-eight-tick-cpu.md",
+        "report_source_commit": "c8f7ecebd6034a270c952fa66c54ff614ffbb97a"
+      }
     }
   },
   "execution_target": {
