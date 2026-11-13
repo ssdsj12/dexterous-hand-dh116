@@ -1,3 +1,7 @@
+## 2026-11-14 — 双手同杆原24D控制和几何合同
+
+合成原左右24D动作并校验两侧真实坐标合同，新增完整碰撞几何分离证明。CPU演算232子步、无投影；原生尚未执行，不授予Teacher资格。 Ubuntu CPU 回归 45 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-owned-control.md)
+
 ## 2026-11-14 — 右Pinch实际接触与跟踪只读审计
 
 实际右指腹接触560/530条，同载荷92.014ms；原生234步自然退出0，仍有桌面承托，0抓取/Teacher成功。只读新增33项CPU回归，未再执行物理或训练。 Ubuntu CPU 回归 33 项通过。[报告](docs/superpowers/reports/2026-11-14-right-owned-native-contact.md)

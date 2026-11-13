@@ -23624,6 +23624,78 @@
         "report": "docs/superpowers/reports/2026-11-14-right-owned-native-contact.md",
         "report_source_commit": "4c037eb05598ef80fdcfc47fca9a75db9599784b"
       }
+    },
+    "flex.f8-bilateral-owned-contract-cpu": {
+      "title": "双手同杆原24D控制和几何合同",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-right-owned-native-evidence-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 45,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_bilateral_owned_contract.py",
+          "tests/test_dh116_bilateral_owned_geometry.py",
+          "tests/test_dh116_bilateral_owned_action_audit.py",
+          "tests/test_dh116_right_approach_contract.py",
+          "tests/test_dh116_right_approach_geometry.py"
+        ],
+        "log_sha256": "140a2052b884df4fcd8b71ff2b45ab1c7479ea98aabc99d4a014942a7681d350",
+        "tested_head": "a4e8c2d19a7240beda5c42adee312972401ddc26",
+        "kind": "cpu_bilateral_original_control_contract",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "cpu_control_rows": 232,
+        "minimum_table_clearance_m": 0.0021177108284008983,
+        "minimum_interhand_separation_m": 0.3182067612145217,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-bilateral-owned-control.md",
+        "report_source_commit": "87d88724b37d96cd2aa63f7e93081dffd981898e"
+      },
+      "last_result": {
+        "passed": 45,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_bilateral_owned_contract.py",
+          "tests/test_dh116_bilateral_owned_geometry.py",
+          "tests/test_dh116_bilateral_owned_action_audit.py",
+          "tests/test_dh116_right_approach_contract.py",
+          "tests/test_dh116_right_approach_geometry.py"
+        ],
+        "log_sha256": "140a2052b884df4fcd8b71ff2b45ab1c7479ea98aabc99d4a014942a7681d350",
+        "tested_head": "a4e8c2d19a7240beda5c42adee312972401ddc26",
+        "kind": "cpu_bilateral_original_control_contract",
+        "native_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "cpu_control_rows": 232,
+        "minimum_table_clearance_m": 0.0021177108284008983,
+        "minimum_interhand_separation_m": 0.3182067612145217,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-bilateral-owned-control.md",
+        "report_source_commit": "87d88724b37d96cd2aa63f7e93081dffd981898e"
+      }
     }
   },
   "execution_target": {
