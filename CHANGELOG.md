@@ -1,3 +1,7 @@
+## 2026-11-13 — DeformX 接触对校准 worker 注册路径修复
+
+从真实失败 intent 定位证据根层级，真实 CPU worker 子进程现通过授权到构造边界，并校验 solver 状态。旧失败保留。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-13-deformx-pair-worker-v2.md)
+
 ## 2026-11-13 — 柔性杆 Reset 与测量状态同钟适配
 
 首动作前可验证杆节点、几何和材料顺序，未测接触保持 NaN 和 false mask。后端和物理时钟按实际输入核对。 Ubuntu CPU 回归 64 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-rod-reset-boundary.md)

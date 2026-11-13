@@ -8082,6 +8082,38 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-flexible-rod-reset-boundary.md",
       "report_source_commit": "c52970b499f794781c884e9f7c76c7bb5ec1d29d"
+    },
+    "flex.f7-deformx-pair-worker-v2-cpu": {
+      "passed": 89,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_deformx_pair_worker_v2.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "log_sha256": "9f7c7cf9a41394d01579fec5bf9a840a62abee3ead83eb6a4c50eb629a78f8a6",
+      "tested_head": "b5033153aaa0b8443aea43c1fe4b237df747fba8",
+      "stage": "cpu_verified_registered_worker",
+      "scope": "deformx_pair_calibration_v2_preparation",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "actual_native_physics_steps": 0,
+      "actual_training_updates": 0,
+      "pending_native_recipe": {
+        "command_spec_sha256": "77d0290a350ba6b877991b9831da8fb4fb62441481e1866412935fc6d28af594",
+        "code_config_sha256": "94d855ce6be8700816a85a8e84d41a87fe74b52454bf4f8591661e932c6d08c6"
+      },
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-deformx-pair-worker-v2.md",
+      "report_source_commit": "81b9dbff17cc2b6ee68a80b5214841aec12f8b6f"
     }
   }
 }
