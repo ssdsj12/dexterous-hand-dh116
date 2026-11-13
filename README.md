@@ -1,3 +1,7 @@
+## 2026-11-13 — 原生参数与真实 Reset／480Hz 时钟绑定
+
+123项CPU回归通过；核对72个后端源码，除只读getter外均与原后端一致。参数读回绑定真实rod、episode、Reset、SDK及solver时钟，保留不确定度和晋级状态。未改默认后端、奖励和控制器；独立任务原生接入待下一工作包。 Ubuntu CPU 回归 123 项通过。[报告](docs/superpowers/reports/2026-11-13-native-parameter-endpoint-adapter.md)
+
 ## 2026-11-13 — DeformX 独立参数接口零步 CUDA 读回
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-native-parameter-getters-native.md)。

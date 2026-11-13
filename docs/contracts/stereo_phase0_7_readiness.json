@@ -11567,6 +11567,39 @@
       },
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f7-native-parameter-getters-native.md"
+    },
+    "flex.f7-native-parameter-endpoints-cpu": {
+      "passed": 123,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_native_parameter_endpoints.py",
+        "tests/test_dh116_material_director_readback.py",
+        "tests/test_dh116_deformx_parameter_getters.py",
+        "tests/test_flexible_parameter_readback.py",
+        "tests/test_dh116_parameter_packet_validation.py"
+      ],
+      "log_sha256": "89e795afb970393dd2d4c1093abbe0dd77f19b670b6f57eb525b21fcd4b436a2",
+      "tested_head": "4ccea90e183e2a7f003b787e883bd845b4a67f35",
+      "kind": "cpu_same_clock_parameter_endpoints",
+      "status": "passed",
+      "cpu_full_passed": 123,
+      "native_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "task_physics_qualified": false,
+      "source_file_count": 72,
+      "source_tree_sha256": "3cc86d9864d0ffd05da64a2097378a5c8c2b779b2bf7003659ec1fa8e4306472",
+      "full_log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/native-parameter-endpoints-regression-gZzmr7/pytest.log",
+      "report": "docs/superpowers/reports/2026-11-13-native-parameter-endpoint-adapter.md",
+      "report_source_commit": "85ac438af856d1bc66c7930e8c087b95349ea153"
     }
   }
 }
