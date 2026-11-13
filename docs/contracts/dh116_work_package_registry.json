@@ -14354,6 +14354,72 @@
         "report": "docs/superpowers/reports/2026-11-13-dual-pinch-builder-cpu.md",
         "report_source_commit": "93c923a940c43c76c8461ccbc449e46a9af496ba"
       }
+    },
+    "flex.f4-simulation-owner-cleanup-cpu": {
+      "title": "SimulationContext 已知 ready 订阅释放",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-pinch-v3-evidence-replay-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_simulation_owner_cleanup.py",
+          "tests/test_dh116_physx_lifetime_probe.py",
+          "tests/test_dh116_pinch_v3.py"
+        ],
+        "log_sha256": "f0c11b70aaa2c368c6d46a6e667d1c38b896afcb9d2bd0505b051611e62229ef",
+        "tested_head": "596d7a9dd932b1ae07290bb38302c0b9334cbc03",
+        "scope": "source_locked_simulation_subscription_cleanup_cpu_only",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "simulation_release_verified": false,
+        "physics_steps": 0,
+        "optimizer_updates": 0,
+        "archive_comparison_sha256": "b3f2d67f380bb159383e665fe1899269d1630e6740312a596469d289a2c2e876",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-simulation-owner-cleanup-cpu.md",
+        "report_source_commit": "861259ec642cc64c47b8b2b8fe90d1e9acbab5ce"
+      },
+      "last_result": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_simulation_owner_cleanup.py",
+          "tests/test_dh116_physx_lifetime_probe.py",
+          "tests/test_dh116_pinch_v3.py"
+        ],
+        "log_sha256": "f0c11b70aaa2c368c6d46a6e667d1c38b896afcb9d2bd0505b051611e62229ef",
+        "tested_head": "596d7a9dd932b1ae07290bb38302c0b9334cbc03",
+        "scope": "source_locked_simulation_subscription_cleanup_cpu_only",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "simulation_release_verified": false,
+        "physics_steps": 0,
+        "optimizer_updates": 0,
+        "archive_comparison_sha256": "b3f2d67f380bb159383e665fe1899269d1630e6740312a596469d289a2c2e876",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-simulation-owner-cleanup-cpu.md",
+        "report_source_commit": "861259ec642cc64c47b8b2b8fe90d1e9acbab5ce"
+      }
     }
   },
   "execution_target": {

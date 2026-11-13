@@ -1,3 +1,7 @@
+## 2026-11-13 — SimulationContext 已知 ready 订阅释放
+
+对固定 Isaac SDK 源码核验后释放已知 PHYSICS_READY 订阅，再调用原 clear_instance。记录两层引用证据和未解析构造帧。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-13-simulation-owner-cleanup-cpu.md)
+
 ## 2026-11-13 — 双手 Pinch 同一自由杆原生构造接线
 
 完成双手实体、同一自由杆、实测几何回读及原有双手 Reset 的构造接线。CPU 验证保留 2.1 mm 腕部净空与原生发布门。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-builder-cpu.md)
