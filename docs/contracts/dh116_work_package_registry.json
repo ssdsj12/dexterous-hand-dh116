@@ -3678,7 +3678,7 @@
         "flex.f4-bimanual-contact-native"
       ],
       "status": "blocked",
-      "reason": "左右单拇指标定和 DeformX table pair 校准已通过各自范围。左 Pinch v3 完成 240 步，但无手杆 pair，外层退出 1；同杆双手接触与自由杆动态资格未通过。"
+      "reason": "固定底座左 Pinch v4 的拇指、食指与自由杆同子步载荷及自然退出已验证；尚未原生测得双手同杆接触与连续材料锚。静态手与台面源为未知。"
     },
     "flex.f7-synchronized-data": {
       "title": "双目与柔性物理状态同步数据",
@@ -5647,7 +5647,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "双手同杆静态 Reset 提案已过 2.1mm 原手腕门，左原生 v3 无手杆接触且退出 1；同杆接触、真实 Reset、完整状态与 R0 阻断。"
+      "reason": "单手 Pinch v4 实测双指接触通过。双手同杆、实测 Reset 与完整状态来源、连续材料锚和原生 R0 仍待验证。"
     },
     "flex.f8-tripod": {
       "title": "Tripod 无相机 R0 特权 Teacher",
@@ -15161,6 +15161,77 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-13-tripod-sdf-constrained-direction.md",
         "report_source_commit": "2438679857167d788ad18aeeb7642a6bec31dcb0"
+      }
+    },
+    "flex.f4-pinch-v4-contact-provenance-cpu": {
+      "title": "左 Pinch v4 原生接触与来源分项复核",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f4-pinch-left-v4-native",
+        "flex.f7-static-table-contact-capability-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 38,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_v4_source_provenance.py",
+          "tests/test_dh116_pinch_v4_audit.py",
+          "tests/test_dh116_pinch_force_precision.py"
+        ],
+        "log_sha256": "44f18f452085eddfe6d3f6bc7ccf954103b5f0f9b30f34a58e2711437d768321",
+        "tested_head": "05c808321a07f073a0d6479271d391414a029b15",
+        "scope": "replay_of_native_single_left_contact_provenance",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "hand_pair_samples": 1165,
+        "thumb_index_same_substep_load_count": 567,
+        "actual_prior_physics_steps": 240,
+        "new_physics_steps": 0,
+        "optimizer_updates": 0,
+        "independent_replay_sha256": "f17ec028d74d2c8bc46eb8045603852847b710f4bc2c94c22ecad7e2b1087efe",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-v4-native-contact-provenance.md",
+        "report_source_commit": "6371b406bfc5b4252df2f49a0b1769330f99d255"
+      },
+      "last_result": {
+        "passed": 38,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_pinch_v4_source_provenance.py",
+          "tests/test_dh116_pinch_v4_audit.py",
+          "tests/test_dh116_pinch_force_precision.py"
+        ],
+        "log_sha256": "44f18f452085eddfe6d3f6bc7ccf954103b5f0f9b30f34a58e2711437d768321",
+        "tested_head": "05c808321a07f073a0d6479271d391414a029b15",
+        "scope": "replay_of_native_single_left_contact_provenance",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "hand_pair_samples": 1165,
+        "thumb_index_same_substep_load_count": 567,
+        "actual_prior_physics_steps": 240,
+        "new_physics_steps": 0,
+        "optimizer_updates": 0,
+        "independent_replay_sha256": "f17ec028d74d2c8bc46eb8045603852847b710f4bc2c94c22ecad7e2b1087efe",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-13-pinch-v4-native-contact-provenance.md",
+        "report_source_commit": "6371b406bfc5b4252df2f49a0b1769330f99d255"
       }
     }
   },

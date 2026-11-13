@@ -1,3 +1,7 @@
+## 2026-11-13 — 左 Pinch v4 原生接触与来源分项复核
+
+冻结的固定底座原生验证测得 1,165 条手杆 pair 和 567 个同子步双指载荷，外层自然退出 0。静态 GPU 手与台面源保留未知。 Ubuntu CPU 回归 38 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-v4-native-contact-provenance.md)
+
 ## 2026-11-13 — Tripod 节点 SDF 与初态硬约束
 
 原 2.1 mm 限制下量化 Tripod 左右近端指节与落杆包络冲突，分别检验连续杆段与原求解器节点 SDF。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-sdf-constrained-direction.md)

@@ -9439,6 +9439,37 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-13-tripod-sdf-constrained-direction.md",
       "report_source_commit": "2438679857167d788ad18aeeb7642a6bec31dcb0"
+    },
+    "flex.f4-pinch-v4-contact-provenance-cpu": {
+      "passed": 38,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_pinch_v4_source_provenance.py",
+        "tests/test_dh116_pinch_v4_audit.py",
+        "tests/test_dh116_pinch_force_precision.py"
+      ],
+      "log_sha256": "44f18f452085eddfe6d3f6bc7ccf954103b5f0f9b30f34a58e2711437d768321",
+      "tested_head": "05c808321a07f073a0d6479271d391414a029b15",
+      "scope": "replay_of_native_single_left_contact_provenance",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "hand_pair_samples": 1165,
+      "thumb_index_same_substep_load_count": 567,
+      "actual_prior_physics_steps": 240,
+      "new_physics_steps": 0,
+      "optimizer_updates": 0,
+      "independent_replay_sha256": "f17ec028d74d2c8bc46eb8045603852847b710f4bc2c94c22ecad7e2b1087efe",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-13-pinch-v4-native-contact-provenance.md",
+      "report_source_commit": "6371b406bfc5b4252df2f49a0b1769330f99d255"
     }
   }
 }
