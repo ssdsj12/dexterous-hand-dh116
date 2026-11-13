@@ -1,3 +1,7 @@
+## 2026-11-13 — DeformX CUDA 逐接触对读回单步校准
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-deformx-pair-capture-native.md)。
+
 ## 2026-11-13 — PhysX 构造 frame 释放 v2 单次原生
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-frame-v2-native.md)。

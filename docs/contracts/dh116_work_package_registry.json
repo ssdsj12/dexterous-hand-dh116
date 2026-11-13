@@ -10107,7 +10107,7 @@
       "dependencies": [
         "flex.f7-deformx-pair-capture-cpu"
       ],
-      "status": "blocked",
+      "status": "failed",
       "command_spec": "configs/dh116_execution/deformx_mesh_pair_capture_calibration_v1.json",
       "requires_approval": true,
       "resource_class": "isaac_single_gpu",
@@ -10120,9 +10120,86 @@
         "tests/test_dh116_deformx_pair_capture.py"
       ],
       "stage": "prepared_waiting_exact_native_approval",
-      "reason": "Requires exact approval for one CUDA solver step and independent packet reconciliation.",
+      "reason": "native or CPU qualification failed; durable evidence retained outside Git",
       "scheduler_entrypoint": "scripts/run_dh116_deformx_pair_work_packages.py",
-      "dependency_scopes": {}
+      "dependency_scopes": {},
+      "last_native_attempt": {
+        "executor": "native_bounded",
+        "tested_head": "98a249bfe2932b66dcf105df8ca83828c3f4615d",
+        "batch_id": "f7-deformx-pair-capture-native",
+        "qualification_scope": "one_free_rod_one_table_sdf_pair_capture_calibration",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "command_spec_sha256": "ddd6a7b6adfc744a87a32c8380d473b8c61b848ee7cb8f9b3c90e06a00468dd0",
+        "code_config_sha256": "c65fe22d71a91d167694c90fd9a5113fd0c59f86c87439e882079fb09db36200",
+        "launch_argv_sha256": "93be0e59a5012da28c84a1b36756cb4f539c1589991d728e111f2567fc676405",
+        "exit_code": 1,
+        "outer_exit_code": 1,
+        "log_sha256": "17422d5df4073654fb95862e90115c05b6e9267dd778c9bc7b42fba8fec0b3c9",
+        "duration_seconds": 1.914839394041337,
+        "native_lock_observed": false,
+        "blocker_kind": "failed_native",
+        "result_sha256": "f791d884f78d237600ab34b4c4c5d30ae103a7cac7ebc8a69f6eea116b28c4ed",
+        "native_physics_validated": false,
+        "cpu_regression": {
+          "passed": 12,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "tests/test_dh116_deformx_pair_capture.py"
+          ],
+          "log_sha256": "42ffc4ab480db71fcd55637a3717179eac63f25bff61af6cb734a1578ce922d6",
+          "tested_head": "98a249bfe2932b66dcf105df8ca83828c3f4615d"
+        },
+        "status": "failed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f7-deformx-pair-capture-native.md"
+      },
+      "blocker_kind": "failed_native",
+      "last_result": {
+        "executor": "native_bounded",
+        "tested_head": "98a249bfe2932b66dcf105df8ca83828c3f4615d",
+        "batch_id": "f7-deformx-pair-capture-native",
+        "qualification_scope": "one_free_rod_one_table_sdf_pair_capture_calibration",
+        "native_qualification": false,
+        "native_execution_performed": true,
+        "command_spec_sha256": "ddd6a7b6adfc744a87a32c8380d473b8c61b848ee7cb8f9b3c90e06a00468dd0",
+        "code_config_sha256": "c65fe22d71a91d167694c90fd9a5113fd0c59f86c87439e882079fb09db36200",
+        "launch_argv_sha256": "93be0e59a5012da28c84a1b36756cb4f539c1589991d728e111f2567fc676405",
+        "exit_code": 1,
+        "outer_exit_code": 1,
+        "log_sha256": "17422d5df4073654fb95862e90115c05b6e9267dd778c9bc7b42fba8fec0b3c9",
+        "duration_seconds": 1.914839394041337,
+        "native_lock_observed": false,
+        "blocker_kind": "failed_native",
+        "result_sha256": "f791d884f78d237600ab34b4c4c5d30ae103a7cac7ebc8a69f6eea116b28c4ed",
+        "native_physics_validated": false,
+        "cpu_regression": {
+          "passed": 12,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "command": [
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "tests/test_dh116_deformx_pair_capture.py"
+          ],
+          "log_sha256": "42ffc4ab480db71fcd55637a3717179eac63f25bff61af6cb734a1578ce922d6",
+          "tested_head": "98a249bfe2932b66dcf105df8ca83828c3f4615d"
+        },
+        "status": "failed",
+        "report": "docs/superpowers/reports/dh116-managed-flex.f7-deformx-pair-capture-native.md"
+      }
     },
     "flex.f7-teacher-preaction-readback-cpu": {
       "title": "柔性 Teacher 前动作 371D 来源审计",
