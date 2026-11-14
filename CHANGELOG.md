@@ -1,3 +1,7 @@
+## 2026-11-14 — Pinch 等字节物理账本原生复验
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-pinch-fast-evidence-native.md)。
+
 ## 2026-11-14 — 控制器动作历史与 PPO 实际请求绑定
 
 新 Reset 明确拥有并读取上一动作。逐物理行核对实际请求、执行目标与 PPO 采样及 collection token；CPU 夹具覆盖安全投影和原存储。 Ubuntu CPU 回归 132 项通过。[报告](docs/superpowers/reports/2026-11-14-action24-history-owner.md)
