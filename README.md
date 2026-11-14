@@ -1,3 +1,7 @@
+## 2026-11-14 — 无相机Teacher采样与CPU owner隔离
+
+复用原物理owner、GAE和PPO storage，验证同pre-action采样、8子步、terminal持久保存及截断bootstrap；隔离的CPU fixture scalar不替代正式R0。真实collector在创建模型/optimizer/物理owner前拒绝，仍等待真实Mesh Reset、R0资格及Power来源。无新原生、GPU分配或optimizer更新。 Ubuntu CPU 回归 139 项通过。[报告](docs/superpowers/reports/2026-11-14-cpu-collector-owner-isolation.md)
+
 ## 2026-11-14 — 分离名义子步时间与账本端点时钟
 
 v2逐pair显式区分名义480Hz插值与原账本endpoint timestamp/solver_time，measured substep timestamp保留NA。真实旧232行/2958pair重放全部分类与identity不变；只改时钟来源命名，0新增原生/PPO。 Ubuntu CPU 回归 29 项通过。[报告](docs/superpowers/reports/2026-11-14-substep-clock-provenance.md)

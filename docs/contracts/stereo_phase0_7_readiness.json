@@ -17996,6 +17996,43 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-substep-clock-provenance.md",
       "report_source_commit": "af335e63bdd471cba277a0bd756e98a47b6ea537"
+    },
+    "flex.f7-no-camera-on-policy-collector-cpu": {
+      "passed": 139,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_no_camera_fixture_owners.py",
+        "tests/test_dh116_no_camera_collector.py",
+        "tests/test_dh116_dual_hand_episode.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_deformable_r0_replay.py",
+        "tests/test_dh116_deformable_control_step.py",
+        "tests/test_dh116_actual_backend_teacher.py",
+        "tests/test_dh116_no_camera_policy_device.py"
+      ],
+      "log_sha256": "53579f47e8cf8191a46b025c8876af0f3db6004ab983e6a4da4fbfbacdea5395",
+      "tested_head": "7f4307467a77233f161154d57aa6fd0f3aef1efa",
+      "qualification_scope": "reviewed_cpu_doubles_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "ppo_updates": 0,
+      "new_physics_steps": 0,
+      "gpu_allocations": 0,
+      "training_reward_qualified": false,
+      "reset_mesh_pose_qualified": false,
+      "policy_device_handoff_sha256": "804860eed8c9732279e5474b0d30fdffd61fb5c1b0eed87d4f07ed14075f9fc6",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-cpu-collector-owner-isolation.md",
+      "report_source_commit": "9d06399c350dcf9d91e0867a7257da73886188be"
     }
   }
 }
