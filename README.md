@@ -1,3 +1,7 @@
+## 2026-11-14 — 独立编译真实网格姿态与同子步接触采样扩展
+
+基于锁定72源，仅5源旁路采样delta，旧API/原二进制不变；独立CUDA12.8 SM89编译/安装各一次成功，新881701后端CPU import-only成功。新增actual cur/target/tele与同surfaceReadout pose/gap/native normal force；没有solver/Isaac调用，GPU数值/Reset/contact资格仍false。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-14-deformx-mesh-observations-build.md)
+
 ## 2026-11-14 — 每episode零步重提交原11个碰撞网格
 
 独立opt-in reset在原完整Reset后重新提交同11槽/原SDF/table/material，前后p/v/q/参数/时钟不变；第二episode同样覆盖，失败poison。修复原pending teleport覆盖与真实SDK浮点时间误拒；仅<=240步CPU资格，不授予长时PPO或原生mesh readback。旧源/模型/配方不变。 Ubuntu CPU 回归 78 项通过。[报告](docs/superpowers/reports/2026-11-14-zero-step-mesh-reset-rebuild.md)
