@@ -14325,6 +14325,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-pinch-effective-target-path.md",
       "report_source_commit": "2b6ddc93c636e3d4cebc325be3e6053ed1c580a2"
+    },
+    "flex.f8-effective-right-native-cpu": {
+      "passed": 60,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_effective_right_pinch_plan.py",
+        "tests/test_effective_right_pinch_geometry.py",
+        "tests/test_effective_right_pinch_worker.py",
+        "tests/test_effective_right_pinch_owner.py",
+        "tests/test_dh116_pinch_segment_geometry.py",
+        "tests/test_deformable_pad_region.py",
+        "tests/test_surface_contract.py"
+      ],
+      "log_sha256": "c9d2206b39a654380c08b5b27721136d969a09877537d31afa15b3db945d2827",
+      "tested_head": "70def33020c2a0a7c2e26c1e5ddf5ae6d0b11705",
+      "kind": "cpu_bounded_right_effective_pad_owner",
+      "native_recipe_created": true,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_qualified": false,
+      "teacher_admission": false,
+      "experiment_code_config_sha256": "3c8ef52ef77a14821b392ad12aeb7f816dc3211d9a74e5d75d97ee24b89311b1",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-effective-right-pinch-native-preparation.md",
+      "report_source_commit": "2f0f7cb120ecd4bea82070c325bed451d67d2857"
     }
   }
 }

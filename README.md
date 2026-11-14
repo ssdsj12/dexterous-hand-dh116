@@ -1,3 +1,7 @@
+## 2026-11-14 — 右手原有效指腹路径原生入口与全步CPU审计
+
+独立右手234步配方：原有效指腹判定逐480Hz/rod子步保存；原关节、桌面、非目标和生命周期保护保持。修正CPU夹具未执行carriage FK及只读资产误入发布名单。60项工作树CPU通过；尚未新原生执行或取得Teacher资格，非目标静态余量仅1.528um。 Ubuntu CPU 回归 60 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-right-pinch-native-preparation.md)
+
 ## 2026-11-14 — Pinch原有效指腹目标和受限绕行路径
 
 旧端点规划已超原指腹区域；独立右手候选通过原区域与静态约束，直线路径finger13失败；100um World-X分段绕行1025点及最大段速率区间界通过，非目标最小净空1.528um。左手仍失败，实际跟踪/杆响应/原生owner未资格；无新原生/无PPO，未生成配方。保留失败CPU日志及原保护。 Ubuntu CPU 回归 47 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-effective-target-path.md)

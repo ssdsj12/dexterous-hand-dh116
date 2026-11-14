@@ -5647,7 +5647,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "Original effective-pad region checked: all2111 prior hand pairs outside ellipse. New right-only endpoint/path CPU proposal passed but has1.528um non-target margin; actual tracking, rod response, reset/owner need qualification. Left endpoint remains failed. No new native recipe; no Teacher admission."
+      "reason": "Original effective pad audit rejected all2111 prior pairs; independent right reset/path has isolated234-step owner prepared. Native tracking and effective contact, original left endpoint, material slip and Teacher R0 remain unqualified."
     },
     "flex.f8-tripod": {
       "title": "Tripod 无相机 R0 特权 Teacher",
@@ -26012,6 +26012,108 @@
         "report": "docs/superpowers/reports/2026-11-14-pinch-effective-target-path.md",
         "report_source_commit": "2b6ddc93c636e3d4cebc325be3e6053ed1c580a2"
       }
+    },
+    "flex.f8-effective-right-native-cpu": {
+      "title": "右手原有效指腹路径原生入口与全步CPU审计",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-pinch-effective-target-path"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 60,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_effective_right_pinch_plan.py",
+          "tests/test_effective_right_pinch_geometry.py",
+          "tests/test_effective_right_pinch_worker.py",
+          "tests/test_effective_right_pinch_owner.py",
+          "tests/test_dh116_pinch_segment_geometry.py",
+          "tests/test_deformable_pad_region.py",
+          "tests/test_surface_contract.py"
+        ],
+        "log_sha256": "c9d2206b39a654380c08b5b27721136d969a09877537d31afa15b3db945d2827",
+        "tested_head": "70def33020c2a0a7c2e26c1e5ddf5ae6d0b11705",
+        "kind": "cpu_bounded_right_effective_pad_owner",
+        "native_recipe_created": true,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_qualified": false,
+        "teacher_admission": false,
+        "experiment_code_config_sha256": "3c8ef52ef77a14821b392ad12aeb7f816dc3211d9a74e5d75d97ee24b89311b1",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-effective-right-pinch-native-preparation.md",
+        "report_source_commit": "2f0f7cb120ecd4bea82070c325bed451d67d2857"
+      },
+      "last_result": {
+        "passed": 60,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_effective_right_pinch_plan.py",
+          "tests/test_effective_right_pinch_geometry.py",
+          "tests/test_effective_right_pinch_worker.py",
+          "tests/test_effective_right_pinch_owner.py",
+          "tests/test_dh116_pinch_segment_geometry.py",
+          "tests/test_deformable_pad_region.py",
+          "tests/test_surface_contract.py"
+        ],
+        "log_sha256": "c9d2206b39a654380c08b5b27721136d969a09877537d31afa15b3db945d2827",
+        "tested_head": "70def33020c2a0a7c2e26c1e5ddf5ae6d0b11705",
+        "kind": "cpu_bounded_right_effective_pad_owner",
+        "native_recipe_created": true,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_qualified": false,
+        "teacher_admission": false,
+        "experiment_code_config_sha256": "3c8ef52ef77a14821b392ad12aeb7f816dc3211d9a74e5d75d97ee24b89311b1",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-effective-right-pinch-native-preparation.md",
+        "report_source_commit": "2f0f7cb120ecd4bea82070c325bed451d67d2857"
+      }
+    },
+    "flex.f8-effective-right-pinch-native": {
+      "title": "右手原有效指腹234步原生接触诊断",
+      "executor": "native_bounded",
+      "status": "blocked",
+      "dependencies": [
+        "flex.f8-effective-right-native-cpu",
+        "flex.f7-native-parameter-task-native"
+      ],
+      "dependency_scopes": {
+        "flex.f7-native-parameter-task-native": {
+          "scope": "exact_2_setup_plus_16_native_parameter_task_endpoints_only",
+          "native": true
+        }
+      },
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/deformx_effective_right_pinch_contact_v1.json",
+      "evidence_scope": "effective_right_pinch_2_setup_232_guarded_region_diagnostic_only",
+      "tests": [
+        "tests/test_effective_right_pinch_worker.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_effective_right_work_packages.py",
+      "reason": "Await exact frozen standing-approval binding and single-instance resource check; no new native result yet."
     }
   },
   "execution_target": {
