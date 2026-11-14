@@ -1,3 +1,7 @@
+## 2026-11-14 — 完整原子接触源与负接触R0234步原生诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-complete-pair-r0-native.md)。
+
 ## 2026-11-14 — 原子接触配方保护资产路径分类修复
 
 原生启动前被release_path拒绝，尚未消耗预算；配方源码清单只包含既有可发布源码与新增实现，原资产输入锁、物理预算和父回执完全不变。40项CPU通过。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-14-complete-pair-recipe-scope.md)
