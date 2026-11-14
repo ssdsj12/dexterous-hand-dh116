@@ -20995,6 +20995,51 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 130,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_mesh_reset_numeric_state.py",
+        "tests/test_mesh_reset_order.py",
+        "tests/test_mesh_observation_profile.py",
+        "tests/test_dh116_material_director_readback.py",
+        "tests/test_dh116_native_parameter_endpoints.py"
+      ],
+      "log_sha256": "c924bd4bc09e5b6ff9eb579a5a84e70f3353dcaec1967aecb083acfc5c2a17c2",
+      "tested_head": "8a7b5f38dee9de5970ea3ad84358d49c37492344",
+      "qualification_scope": "cpu_exact_cuda_array_interface_protocol_numeric_copy",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "ppo_updates": 0,
+      "new_physics_steps": 0,
+      "prior_receipt_sha256": "6c97bc0cdb03c71f74c7f5a3c0ec350a9c52f64bf622451bf896737d73025027",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-mesh-reset-numeric-state-copy.md",
+      "report_source_commit": "10106a2b9a3bb7b032e0198ca559af730062fc44",
+      "package": "flex.f8-mesh-reset-numeric-state-cpu",
+      "commit": "de6a9fcfddc8fe35398fc66327ac8e6becd50d82",
+      "parent": "8a7b5f38dee9de5970ea3ad84358d49c37492344",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-mesh-reset-numeric-state-copy.md",
+        "src/go2_pvcnn/control/dh116/tabletop_mesh_reset_numeric_state.py",
+        "tests/test_mesh_reset_numeric_state.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
