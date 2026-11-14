@@ -1,3 +1,7 @@
+## 2026-11-14 — WireSeg depth20已审计子集独立物化与断点读取
+
+已审计depth20/train09共360对、713实例独立物化，全量读取和原位续作通过；元数据同份bytes校验解析。旧cohort/模型只读不改，训练更新0，不授予Stereo或模型精度资格。首次集成测试收集因入口缺既有工具目录的pyarrow失败（0测试），日志保留；补充现有tools PYTHONPATH后复验，不安装依赖。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-14-wireseg-depth20-materialization.md)
+
 ## 2026-11-14 — R0数值健康与Hold运动分离
 
 新独立opt-in health/constraint/hold合同，真实缺getter仍NA，原终止与损坏来源严格保留；正常负接触不要求先满足成功Hold。实际SDK3/176/234历史CPU回放，不新增原生或训练。正式系数仍null，Teacher未准入。 Ubuntu CPU 回归 155 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-health-separation-cpu.md)

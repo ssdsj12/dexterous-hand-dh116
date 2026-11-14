@@ -33632,6 +33632,98 @@
         "max_attempts_per_code_config": 1,
         "retry_requires_change": true
       }
+    },
+    "vision.wireseg-depth20-materialization-cpu": {
+      "title": "WireSeg depth20已审计子集独立物化与断点读取",
+      "executor": "gated",
+      "dependencies": [],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 51,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_materialize.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "78b8d03ac7154aceaed7414a5eb574b6fc5a9c45a362c1f39011e82c889bc737",
+        "tested_head": "0f3b50ec47653d756b5abe890e871b631e73e170",
+        "qualification_scope": "cpu_materialization_and_readonly_verified_360_pair_subset_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "training_updates": 0,
+        "materialization_manifest_sha256": "48947c6e3b3f70790f96ba028066d3aebf71296975d72fa5d4c9600ce43f5d33",
+        "readback_preservation_sha256": "dc7e73d526f73578e04159dc26918b47df4cdf0da3b635e80fa90ea67580a8df",
+        "samples": 360,
+        "instances": 713,
+        "valid_depth_pixels": 6579592,
+        "output_bytes": 1509995520,
+        "source_family_split_verified": true,
+        "original_cohort_unchanged": true,
+        "initial_integration_collection_failure": {
+          "exit_code": 2,
+          "tests_run": 0,
+          "reason": "existing isolated pyarrow tools directory missing from test PYTHONPATH",
+          "log_sha256": "9f71ef35fd1b3b594f31c85aecf5af8a639f14286f444728adc607ff5cdba245"
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-wireseg-depth20-materialization.md",
+        "report_source_commit": "b90464592a3ac52d892c33db83f05f4820b354c4"
+      },
+      "last_result": {
+        "passed": 51,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_wireseg_materialize.py",
+          "tests/test_dh116_wireseg_pretraining.py",
+          "tests/test_dh116_wireseg_blob_relay.py"
+        ],
+        "log_sha256": "78b8d03ac7154aceaed7414a5eb574b6fc5a9c45a362c1f39011e82c889bc737",
+        "tested_head": "0f3b50ec47653d756b5abe890e871b631e73e170",
+        "qualification_scope": "cpu_materialization_and_readonly_verified_360_pair_subset_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "training_updates": 0,
+        "materialization_manifest_sha256": "48947c6e3b3f70790f96ba028066d3aebf71296975d72fa5d4c9600ce43f5d33",
+        "readback_preservation_sha256": "dc7e73d526f73578e04159dc26918b47df4cdf0da3b635e80fa90ea67580a8df",
+        "samples": 360,
+        "instances": 713,
+        "valid_depth_pixels": 6579592,
+        "output_bytes": 1509995520,
+        "source_family_split_verified": true,
+        "original_cohort_unchanged": true,
+        "initial_integration_collection_failure": {
+          "exit_code": 2,
+          "tests_run": 0,
+          "reason": "existing isolated pyarrow tools directory missing from test PYTHONPATH",
+          "log_sha256": "9f71ef35fd1b3b594f31c85aecf5af8a639f14286f444728adc607ff5cdba245"
+        },
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-wireseg-depth20-materialization.md",
+        "report_source_commit": "b90464592a3ac52d892c33db83f05f4820b354c4"
+      }
     }
   },
   "execution_target": {
