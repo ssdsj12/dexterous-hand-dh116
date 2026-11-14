@@ -15917,6 +15917,38 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-owned-clock-projection.md",
       "report_source_commit": "8edb3de37ab1f495dccc2c5174143573bafb7718"
+    },
+    "flex.f7-sealed-r0-native-prep-cpu": {
+      "passed": 56,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_deferred_physical_audit.py",
+        "tests/test_sealed_r0_native.py",
+        "tests/test_owned_clock_projection.py",
+        "tests/test_origin_r0_native.py"
+      ],
+      "log_sha256": "c916179d0e7ef197e8e97762e76ac208ca7a618658cd7dd1d9c37a3ab19c046e",
+      "tested_head": "2c0353917f6161c72d09804bca7bcf03696760df",
+      "kind": "sealed_raw_owner_and_full_post_exit_validation_cpu",
+      "cpu_passed": 56,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "experiment_code_config_sha256": "866feedb65417e219f8a577a81ab535d927a43daef21fc2b76616fc2ac74d9c2",
+      "producer_pending_not_qualified": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-sealed-owner-post-exit-audit.md",
+      "report_source_commit": "943bb94ff0a9d1d3512ae954cedd2350ac481b10"
     }
   }
 }

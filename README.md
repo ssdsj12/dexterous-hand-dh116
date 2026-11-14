@@ -1,3 +1,7 @@
+## 2026-11-14 — 封存原生账本后自然退出及完整后置审计
+
+56项CPU回归通过；真实Python owner232样本/29窗口完整记录。待审计标记不能晋级；外层自然退出后保留原始全量验证、来源与R0重审。新配方234总步/180秒/0PPO/单实例一次，旧失败配方不重跑。 Ubuntu CPU 回归 56 项通过。[报告](docs/superpowers/reports/2026-11-14-sealed-owner-post-exit-audit.md)
+
 ## 2026-11-14 — 完整账本时钟投影与原验证器等价回放
 
 154项CPU通过；同一232行实际账本ABBA完整审计输出SHA一致，CPU均值32.116s→28.156s。没有新物理/原生资格，不据此重跑超时配方。 Ubuntu CPU 回归 154 项通过。[报告](docs/superpowers/reports/2026-11-14-owned-clock-projection.md)
