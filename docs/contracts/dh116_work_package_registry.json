@@ -5647,7 +5647,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "Same-substep raw solver audit:493/2784 bilateral >0.05N paired windows85.590ms; table loaded2784, right-hand upward-force windows0. Raw SDF contacts lack qualified effective surface/fixed material slip; stable/R0 sources incomplete, full reward0/29. No Teacher admission or consumed native retry."
+      "reason": "All2111 actual hand pairs fail original inner-pad ellipse; raw493 bilateral loaded windows are not effective opposing contact. Own-side full-FK/SDF approach must target original pad regions before a new native candidate. Fixed material slip/stability/R0 remain incomplete; no Teacher admission."
     },
     "flex.f8-tripod": {
       "title": "Tripod 无相机 R0 特权 Teacher",
@@ -25853,6 +25853,84 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-14-bilateral-substep-load-audit.md",
         "report_source_commit": "a5fbd3144e864062711398e1b959d7e5273793da"
+      }
+    },
+    "flex.f8-bilateral-effective-pad-region-audit": {
+      "title": "双手Pinch原有效指腹区域逐接触审计",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-bilateral-substep-load-audit"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 100,
+        "failed": 0,
+        "skipped": 1,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_deformable_pad_region.py",
+          "tests/test_deformable_pad_region_actual.py",
+          "tests/test_effective_pad.py",
+          "tests/test_effective_pad_batch.py",
+          "tests/test_pair_substep_load_audit.py",
+          "tests/test_dh116_bilateral_native_evidence.py"
+        ],
+        "log_sha256": "a2ed291ae9f68ca37ef720b7dfaf36bea1191ccfa629445e5d34240072569a06",
+        "tested_head": "91af148408bdbe908987aa0c5403ab5d72ecdc79",
+        "kind": "readonly_native_effective_pad_region_audit",
+        "result_sha256": "275c7f6359f668288efd8b120ba921e524c691d40bccf7321d682b71e792934d",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_qualified": false,
+        "teacher_admission": false,
+        "solver_rows": 2784,
+        "accepted_hand_pairs": 0,
+        "rejected_hand_pairs": 2111,
+        "full_r0_reward_ready": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-bilateral-effective-pad-regions.md",
+        "report_source_commit": "27952966d12854241390a9f6c72d2299823caa65"
+      },
+      "last_result": {
+        "passed": 100,
+        "failed": 0,
+        "skipped": 1,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_deformable_pad_region.py",
+          "tests/test_deformable_pad_region_actual.py",
+          "tests/test_effective_pad.py",
+          "tests/test_effective_pad_batch.py",
+          "tests/test_pair_substep_load_audit.py",
+          "tests/test_dh116_bilateral_native_evidence.py"
+        ],
+        "log_sha256": "a2ed291ae9f68ca37ef720b7dfaf36bea1191ccfa629445e5d34240072569a06",
+        "tested_head": "91af148408bdbe908987aa0c5403ab5d72ecdc79",
+        "kind": "readonly_native_effective_pad_region_audit",
+        "result_sha256": "275c7f6359f668288efd8b120ba921e524c691d40bccf7321d682b71e792934d",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_qualified": false,
+        "teacher_admission": false,
+        "solver_rows": 2784,
+        "accepted_hand_pairs": 0,
+        "rejected_hand_pairs": 2111,
+        "full_r0_reward_ready": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-bilateral-effective-pad-regions.md",
+        "report_source_commit": "27952966d12854241390a9f6c72d2299823caa65"
       }
     }
   },

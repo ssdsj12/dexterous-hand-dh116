@@ -1,3 +1,7 @@
+## 2026-11-14 — 双手Pinch原有效指腹区域逐接触审计
+
+只读核验原234步原生账本：2111条手部pair全部在原有效指腹椭圆外，表面距离与法向通过。保持原atlas/控制/保护，实际按自身link和同钟数据验证，非新原生/非Teacher资格。CPU100通过1可选CUDA profiling跳过。 Ubuntu CPU 回归 100 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-effective-pad-regions.md)
+
 ## 2026-11-14 — 双手Pinch逐求解器子步载荷与原阈值审计
 
 只读核验原234步账本的2784求解器子步。原>0.05N/-0.25规则下双手同时原始配对493子步(85.590ms)，桌面2784子步承载、右手合力Z无正值；非悬空抓取/非Teacher资格。新物理0步，完整峰值身份及nominal时间标记保留。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-substep-load-audit.md)
