@@ -1,3 +1,7 @@
+## 2026-11-14 — 完整接触原生超时账本与来源增长审计
+
+新原生234步自然exit0、无信号，196.212秒超过180秒，失败资格不晋级。离线重算232个完整原子接触/R0记录一致；左无接触、右2129条均在原指腹ellipse外。累计source身份出现162168次，独立928个；统计占41.426MB，定位下一轮开销分析，不伪造Teacher成功。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-14-complete-pair-native-budget-analysis.md)
+
 ## 2026-11-14 — 完整原子接触源与负接触R0234步原生诊断
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-complete-pair-r0-native.md)。
