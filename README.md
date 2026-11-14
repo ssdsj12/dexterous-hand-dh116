@@ -1,3 +1,7 @@
+## 2026-11-14 — 原控制代价逐物理行只读复算
+
+固定14个原source，逐480Hz实际行重算原time/action-rate/完整17DOF速度代价；保留混合单位数值语义、首窗上一动作NA与Tripod5行terminal。只读Pinch232/Tripod197原账本，Power缺失保持NA；不将负代价当抓取目标，不填原柔性十项系数，training_reward仍null。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-14-readonly-control-cost.md)
+
 ## 2026-11-14 — 独立CUDA来源绑定与零步Reset实际读回
 
 独立source_scope核验72新/72原文件、5个观测delta及构建导入证据，恢复旧默认。MeasuredMeshReset将原零步重建后的11槽current/target/solver实际读回与实际手指link核对，并保留constructor未知时钟和失败原始证据。本包仅CPU接线验证，不授予原生Reset或Teacher资格。 Ubuntu CPU 回归 180 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-observation-source-reset-readback.md)
