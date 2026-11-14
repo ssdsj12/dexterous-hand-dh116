@@ -16616,6 +16616,45 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-pinch-correlated-tracking-targets.md",
       "report_source_commit": "f349e7c4f3f010ce7f1408280f602e49ced0558e"
+    },
+    "flex.f8-tracking-pinch-native-prep-cpu": {
+      "passed": 88,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_tracking_pinch_plan.py",
+        "tests/test_tracking_pinch_native.py",
+        "tests/test_tracking_pinch_worker.py",
+        "tests/test_tracking_pinch_owner.py",
+        "tests/test_effective_right_pinch_plan.py",
+        "tests/test_effective_right_pinch_geometry.py",
+        "tests/test_owned_clock_projection.py",
+        "tests/test_deferred_physical_audit.py"
+      ],
+      "log_sha256": "4caba8e71ef8801ea43fde9294141b22539e3a63c5f9996015dbabdf84144415",
+      "tested_head": "b5b0cff76be09a7b293604104959e49837139134",
+      "qualification_scope": "tracking_aware_plan_geometry_owner_worker_cpu_only",
+      "source_commit": "4311cceef44a163da64e9f28080e93cfd7880eef",
+      "source_cpu_passed": 88,
+      "source_cpu_failed": 0,
+      "source_cpu_skipped": 0,
+      "source_cpu_log_sha256": "fe2f88a360767a725e04615645f39464d77f8a19d9a69b067ac6b4476ce70102",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-tracking-pinch-native-preparation.md",
+      "report_source_commit": "4311cceef44a163da64e9f28080e93cfd7880eef"
     }
   }
 }

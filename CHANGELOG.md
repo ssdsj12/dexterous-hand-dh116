@@ -1,3 +1,7 @@
+## 2026-11-14 — Tracking-aware Pinch 独立原生入口与完整退出审计
+
+独立 Reset/几何/worker 身份接入原234步所有权；同一24D关节动作与物理保护，复用封存后完整审计。源码回归88通过；未执行新的原生步，不授予Teacher或接触成功资格。 Ubuntu CPU 回归 88 项通过。[报告](docs/superpowers/reports/2026-11-14-tracking-pinch-native-preparation.md)
+
 ## 2026-11-14 — 同钟跟踪误差约束的Pinch目标与连续接近路径
 
 CPU最终57项回归；名义和24实测端点场景、1025点连续路径、232步经验轨迹与整手碰撞均通过。原100微米偏移/1.14mm每秒最大X速度不增加；最终经验非目标间隙+2.65微米仍小。保留失败和撤回重放，未运行新原生、未授予接触或Teacher资格。 Ubuntu CPU 回归 57 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-correlated-tracking-targets.md)
