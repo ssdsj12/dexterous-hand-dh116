@@ -1,3 +1,7 @@
+## 2026-11-14 — 同子步mesh姿态与原生gap接触包消费
+
+新增v2接触原始包CPU消费与序列核对，沿用原force/torque/impulse守恒，独立保留mesh姿态、gap、原生N及总力法向投影。缺字段、overflow、错时/跨episode拒绝；不从旧endpoint补值，不授予有效承托或Teacher资格，无新GPU/Isaac。 Ubuntu CPU 回归 124 项通过。[报告](docs/superpowers/reports/2026-11-14-native-pair-v2-consumer-cpu.md)
+
 ## 2026-11-14 — 无相机Teacher采样与CPU owner隔离
 
 复用原物理owner、GAE和PPO storage，验证同pre-action采样、8子步、terminal持久保存及截断bootstrap；隔离的CPU fixture scalar不替代正式R0。真实collector在创建模型/optimizer/物理owner前拒绝，仍等待真实Mesh Reset、R0资格及Power来源。无新原生、GPU分配或optimizer更新。 Ubuntu CPU 回归 139 项通过。[报告](docs/superpowers/reports/2026-11-14-cpu-collector-owner-isolation.md)
