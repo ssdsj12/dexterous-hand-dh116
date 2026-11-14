@@ -1,3 +1,7 @@
+## 2026-11-14 — 结合实测接近进展与原控制代价的奖励候选
+
+复用实际 232 行和 29 个控制窗口，逐行结算接近进展与原动作代价。首窗上一动作仍为 NA，后 28 窗按显式 100 points/m 候选计算。该候选只供历史算术验证，正式训练奖励仍未接通。 Ubuntu CPU 回归 99 项通过。[报告](docs/superpowers/reports/2026-11-14-approach-control-composer.md)
+
 ## 2026-11-14 — 等字节加速柔性物理账本编码
 
 使用真实 621 MB 账本逐行验证编码字节一致，CPU 编码时间 33.88 秒降至 6.78 秒。原保护、时钟、终止持久化和字段完整性保持原合同。Pinch 超时回执仍失败。 Ubuntu CPU 回归 19 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-evidence-encoding.md)
