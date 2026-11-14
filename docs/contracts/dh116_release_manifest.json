@@ -16715,6 +16715,53 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 126,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_owned_codec_comparison.py",
+        "tests/test_live_r0_profile_scope.py",
+        "tests/test_fast_owned_codec.py",
+        "tests/test_deformable_r0_replay.py"
+      ],
+      "log_sha256": "f78a8bbe944e88c067f36fa7fbc9463dd3911d5b68f9e0495810019a2abdbfc8",
+      "tested_head": "f8e890705ad90631b4869d8d68ab4060681e0de8",
+      "kind": "byte_exact_owned_codec_cpu",
+      "comparison_result_sha256": "554b0a7fe9004a228c46cfc6cf8ce3c823860bdd6e878fc81ad7fc34f91dbc3a",
+      "encoded_stream_sha256": "9fbbe47b94212874613d520b470a5c527403242c248f4117614f783bf1643f37",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_qualified": false,
+      "teacher_admission": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-fast-owned-codec.md",
+      "report_source_commit": "540851cc5c6389845635207337d9281bcd4ecb53",
+      "package": "flex.f7-fast-owned-codec-cpu",
+      "commit": "590730a108b23e4a3ca561850375887ef02c412c",
+      "parent": "f8e890705ad90631b4869d8d68ab4060681e0de8",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-fast-owned-codec.md",
+        "scripts/compare_dh116_owned_codec.py",
+        "scripts/profile_dh116_live_r0_observer.py",
+        "src/go2_pvcnn/control/dh116/tabletop_fast_owned_codec.py",
+        "tests/test_fast_owned_codec.py",
+        "tests/test_owned_codec_comparison.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
