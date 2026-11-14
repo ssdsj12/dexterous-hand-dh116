@@ -34876,6 +34876,78 @@
         "report": "docs/superpowers/reports/2026-11-14-native-pair-actual-pose-atlas-cpu.md",
         "report_source_commit": "71cd900f5237917ca59f29dd5239db6d4bf93a3b"
       }
+    },
+    "flex.f8-mesh-reset-health-owner-cpu": {
+      "title": "Pinch 实际 Reset 与接触读数接入物理 owner",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-observation-source-reset-readback-cpu",
+        "flex.f8-native-pair-v2-consumer-cpu",
+        "flex.f8-health-getter-native-prep-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 98,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_deformx_pair_observations_v2.py",
+          "tests/test_complete_pair_capture.py",
+          "tests/test_dh116_native_parameter_task_worker.py"
+        ],
+        "log_sha256": "e45570b9a4eb4056c4350c05577b8bad458ea92282dd672d8616960ded094a3c",
+        "tested_head": "fe581ebbff2b1986ccec16c0b9398841df328e24",
+        "qualification_scope": "cpu_owner_mesh_reset_and_same_row_sources_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "ppo_updates": 0,
+        "new_physics_steps": 0,
+        "task_regression_passed": 137,
+        "full_cpu_owner_steps": 234,
+        "full_cpu_owner_log_seconds": 444.11,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-mesh-reset-health-owner-preparation.md",
+        "report_source_commit": "bff9d22d3c6ef5e2c9a579eeedc44b894e2a36b3"
+      },
+      "last_result": {
+        "passed": 98,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_deformx_pair_observations_v2.py",
+          "tests/test_complete_pair_capture.py",
+          "tests/test_dh116_native_parameter_task_worker.py"
+        ],
+        "log_sha256": "e45570b9a4eb4056c4350c05577b8bad458ea92282dd672d8616960ded094a3c",
+        "tested_head": "fe581ebbff2b1986ccec16c0b9398841df328e24",
+        "qualification_scope": "cpu_owner_mesh_reset_and_same_row_sources_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "ppo_updates": 0,
+        "new_physics_steps": 0,
+        "task_regression_passed": 137,
+        "full_cpu_owner_steps": 234,
+        "full_cpu_owner_log_seconds": 444.11,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-mesh-reset-health-owner-preparation.md",
+        "report_source_commit": "bff9d22d3c6ef5e2c9a579eeedc44b894e2a36b3"
+      }
     }
   },
   "execution_target": {

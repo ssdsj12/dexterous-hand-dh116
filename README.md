@@ -1,3 +1,7 @@
+## 2026-11-14 — Pinch 实际 Reset 与接触读数接入物理 owner
+
+在新配方作用域保留完整 v1 与 v2 接触账本，复核实际 mesh Reset 和同钟健康读数。最终任务树 CPU 137 项，通过旧 guard 优先和终止前数据保存。完整 234 步 CPU owner 另有验证记录。 Ubuntu CPU 回归 98 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-reset-health-owner-preparation.md)
+
 ## 2026-11-14 — 真实接触姿态下的原指腹区域判别
 
 保持原1mm/.8/椭圆判据，使用每条contact记录的实际mesh姿态转换原指腹atlas；区分native gap/normal force与平面距离/dot投影，桌面不计指腹。此包仅CPU合同，不授予接触、支撑、滑移或Teacher资格。 Ubuntu CPU 回归 105 项通过。[报告](docs/superpowers/reports/2026-11-14-native-pair-actual-pose-atlas-cpu.md)
