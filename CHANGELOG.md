@@ -1,3 +1,7 @@
+## 2026-11-14 — 真实Reset及232样本接近源原生验证
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-approach-r0-native.md)。
+
 ## 2026-11-14 — 同钟接近源独立原生配方与全R0后置重算
 
 最终35项CPU回归通过；同钟距离源只在独立入口启用，全量实物账本后置重算每行/每控制；Reset或232样本任一缺失即不晋级。新配方234总SDK步、1环境、0PPO、180秒、GPU3单实例一次；不重跑消耗过的sealed/origin配方。 Ubuntu CPU 回归 26 项通过。[报告](docs/superpowers/reports/2026-11-14-approach-r0-native-preparation.md)
