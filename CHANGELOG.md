@@ -1,3 +1,7 @@
+## 2026-11-14 — 原R0独立快速编码有界原生配方
+
+新旧完整CPU回归122项通过。独立入口保持234步/180秒/GPU3/1env/0PPO及原物理动作；编码恢复证据与原R0同钟审计，旧超时配方保留，不扩大预算。 Ubuntu CPU 回归 97 项通过。[报告](docs/superpowers/reports/2026-11-14-fast-r0-native-preparation.md)
+
 ## 2026-11-14 — 同原生账本字节等价编码加速
 
 同不可变原生账本59948724编码字节与全流SHA一致，126项CPU回归；CPU剖析46.20降至27.66秒。初版无加速证据保留，尚不宣称原生墙钟通过，未开始PPO。 Ubuntu CPU 回归 126 项通过。[报告](docs/superpowers/reports/2026-11-14-fast-owned-codec.md)

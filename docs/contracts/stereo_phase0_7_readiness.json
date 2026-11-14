@@ -14978,6 +14978,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-fast-owned-codec.md",
       "report_source_commit": "540851cc5c6389845635207337d9281bcd4ecb53"
+    },
+    "flex.f7-fast-r0-reset-cpu": {
+      "passed": 97,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_fast_r0_native_worker.py",
+        "tests/test_fast_r0_native_session.py",
+        "tests/test_live_r0_native_worker.py",
+        "tests/test_fast_owned_codec.py"
+      ],
+      "log_sha256": "c754faaf5febf56aa87d036803b341c4dd88f7193efbfaa5004a31edec777ef4",
+      "tested_head": "b0b9f9b91bb4f220857c9c8dfbeda767d0a39430",
+      "kind": "independent_fast_codec_native_preparation",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "experiment_code_config_sha256": "687697a0fb9d7c9772463268624ad61cd86c2f744c4e881003176aada2dad57b",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-fast-r0-native-preparation.md",
+      "report_source_commit": "ea784852ea418c900645895b579e5e8c311f81c7"
     }
   }
 }
