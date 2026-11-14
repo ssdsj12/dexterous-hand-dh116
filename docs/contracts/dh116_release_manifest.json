@@ -20545,6 +20545,56 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 89,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_readonly_control_cost.py",
+        "tests/test_dh116_dual_hand_evidence_journal.py",
+        "tests/test_dh116_flexible_solver_clock.py",
+        "tests/test_privileged_teacher_reward_audit.py"
+      ],
+      "log_sha256": "766bb0b40493869381a9ac8092281d73648cf034facb233a1bd56b458b4d973d",
+      "tested_head": "8e2dbd5884b8e735ac385a505a0cde7d550fdb11",
+      "qualification_scope": "offline_original_formula_components_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "training_reward": null,
+      "ppo_updates": 0,
+      "new_physics_steps": 0,
+      "pinch_historical_rows": 232,
+      "tripod_historical_rows": 197,
+      "power_historical_rows": null,
+      "handoff_sha256": "611c23631b30e7812640e6a2fde4980f6d43e3a64375cdf258f84c769865d326",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-readonly-control-cost.md",
+      "report_source_commit": "1b53d665057c6716c921d92ad082f4a25328c6e4",
+      "package": "flex.r0-readonly-original-control-cost",
+      "commit": "37a6b66e7b577596e131f8e7bd0409fdb051c150",
+      "parent": "8e2dbd5884b8e735ac385a505a0cde7d550fdb11",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_diagnostics/readonly_control_cost_v1.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-readonly-control-cost.md",
+        "scripts/evaluate_dh116_readonly_control_cost.py",
+        "src/go2_pvcnn/control/dh116/tabletop_readonly_control_cost.py",
+        "tests/test_dh116_readonly_control_cost.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
