@@ -1,3 +1,7 @@
+## 2026-11-14 — 左Pinch独立Approach原生入口与双手目标校验
+
+左手1.5mm高位起点及原闭合量显式接入，双手232边界目标和原安全投影核对；独立新配方尚待原生执行，未授予Teacher资格。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-approach-native-preparation.md)
+
 ## 2026-11-14 — 左Pinch完整路径与高位Approach条件性审计
 
 末端通过候选的起点仅0.913mm净空被完整路径拦截。独立左手高1.5mm起点/4.5mm每秒下降路径通过1025连续界及232场景，原手指/右手路径不变；尚无新原生接触资格。 Ubuntu CPU 回归 23 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-continuous-approach.md)

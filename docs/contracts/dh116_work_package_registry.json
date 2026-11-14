@@ -31808,6 +31808,123 @@
         "report": "docs/superpowers/reports/2026-11-14-left-pinch-continuous-approach.md",
         "report_source_commit": "098c3bc2cf71b6ffe84f446cf0233f0846d4dbc1"
       }
+    },
+    "flex.f8-left-pinch-approach-native-prep-cpu": {
+      "title": "左Pinch独立Approach原生入口与双手目标校验",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-left-pinch-continuous-approach-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_left_pinch_approach_plan.py",
+          "tests/test_left_pinch_approach_geometry.py",
+          "tests/test_left_pinch_approach_native.py",
+          "tests/test_left_pinch_approach_worker.py",
+          "tests/test_left_pinch_approach_owner.py",
+          "tests/test_tracking_pinch_plan.py"
+        ],
+        "log_sha256": "5b1bc19e7c76b0798a7296731cd1471ec9b1f4d89dfe66eabd9b7af5b09b80c2",
+        "tested_head": "ab90149ede0da2ef5fee428c0665d41aff48969c",
+        "scope": "left_pinch_approach_native_entry_cpu_only",
+        "native": false,
+        "native_execution_performed": false,
+        "native_ready": false,
+        "teacher_admission": false,
+        "physics_steps": 0,
+        "ppo_updates": 0,
+        "recipe_sha256": "7af604a3a6caa566c8736b566abe55ca94a8343022a7308ed1deff6d0d68af18",
+        "preflight_sha256": "76846b82c0a36217e877acd4d8b1214c418aa5a2d7b4e672ff18b260cc29ece1",
+        "conditional_path_sha256": "a5ca10a1f612a20e216b545ccbd71a7aeeceb56117ddddb1101f4e7dfa1b4d74",
+        "frozen_total_sdk_steps": 234,
+        "timeout_seconds": 180,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-left-pinch-approach-native-preparation.md",
+        "report_source_commit": "eb9765bf6fc643cd13ae2c380ccb832b4e7c74dd"
+      },
+      "last_result": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_left_pinch_approach_plan.py",
+          "tests/test_left_pinch_approach_geometry.py",
+          "tests/test_left_pinch_approach_native.py",
+          "tests/test_left_pinch_approach_worker.py",
+          "tests/test_left_pinch_approach_owner.py",
+          "tests/test_tracking_pinch_plan.py"
+        ],
+        "log_sha256": "5b1bc19e7c76b0798a7296731cd1471ec9b1f4d89dfe66eabd9b7af5b09b80c2",
+        "tested_head": "ab90149ede0da2ef5fee428c0665d41aff48969c",
+        "scope": "left_pinch_approach_native_entry_cpu_only",
+        "native": false,
+        "native_execution_performed": false,
+        "native_ready": false,
+        "teacher_admission": false,
+        "physics_steps": 0,
+        "ppo_updates": 0,
+        "recipe_sha256": "7af604a3a6caa566c8736b566abe55ca94a8343022a7308ed1deff6d0d68af18",
+        "preflight_sha256": "76846b82c0a36217e877acd4d8b1214c418aa5a2d7b4e672ff18b260cc29ece1",
+        "conditional_path_sha256": "a5ca10a1f612a20e216b545ccbd71a7aeeceb56117ddddb1101f4e7dfa1b4d74",
+        "frozen_total_sdk_steps": 234,
+        "timeout_seconds": 180,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-left-pinch-approach-native-preparation.md",
+        "report_source_commit": "eb9765bf6fc643cd13ae2c380ccb832b4e7c74dd"
+      }
+    },
+    "flex.f8-left-pinch-approach-native": {
+      "title": "左Pinch高位Approach单次234步原生接触诊断",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f8-left-pinch-approach-native-prep-cpu",
+        "flex.f7-native-parameter-task-native",
+        "flex.f8-tracking-pinch-native"
+      ],
+      "dependency_scopes": {
+        "flex.f7-native-parameter-task-native": {
+          "scope": "exact_2_setup_plus_16_native_parameter_task_endpoints_only",
+          "native": true
+        },
+        "flex.f8-tracking-pinch-native": {
+          "scope": "tracking_aware_pinch_2_setup_232_original_guard_contact_diagnostic_only",
+          "native": true
+        }
+      },
+      "command_spec": "configs/dh116_execution/deformx_left_pinch_approach_contact_v1.json",
+      "evidence_scope": "left_pinch_raised_approach_2_setup_232_original_guard_diagnostic_only",
+      "status": "blocked",
+      "tests": [
+        "tests/test_left_pinch_approach_plan.py",
+        "tests/test_left_pinch_approach_native.py",
+        "tests/test_left_pinch_approach_worker.py"
+      ],
+      "timeout_seconds": 600,
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "scheduler_entrypoint": "scripts/run_dh116_left_pinch_approach_work_packages.py"
     }
   },
   "execution_target": {
