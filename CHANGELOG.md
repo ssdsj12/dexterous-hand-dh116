@@ -1,3 +1,7 @@
+## 2026-11-14 — R0固定测量来源与逐帧证据分离
+
+独立opt-in来源适配；保留每帧原始来源和SHA，未知保持未知。232实际历史物理样本/29结算数值、有效性、保护及动作全等；重放序列化92.883MB→11.078MB。CPU耗时28.961→30.348秒，没有证明原生提速；Teacher仍blocked。 Ubuntu CPU 回归 162 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-measurement-origin.md)
+
 ## 2026-11-14 — 完整接触原生超时账本与来源增长审计
 
 新原生234步自然exit0、无信号，196.212秒超过180秒，失败资格不晋级。离线重算232个完整原子接触/R0记录一致；左无接触、右2129条均在原指腹ellipse外。累计source身份出现162168次，独立928个；统计占41.426MB，定位下一轮开销分析，不伪造Teacher成功。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-14-complete-pair-native-budget-analysis.md)
