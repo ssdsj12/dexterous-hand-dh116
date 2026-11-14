@@ -1,3 +1,7 @@
+## 2026-11-14 — 左Pinch高位Approach单次234步原生接触诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-left-pinch-approach-native.md)。
+
 ## 2026-11-14 — 左Pinch独立Approach原生入口与双手目标校验
 
 左手1.5mm高位起点及原闭合量显式接入，双手232边界目标和原安全投影核对；独立新配方尚待原生执行，未授予Teacher资格。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-approach-native-preparation.md)

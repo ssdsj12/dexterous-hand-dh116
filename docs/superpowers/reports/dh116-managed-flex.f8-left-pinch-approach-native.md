@@ -1,0 +1,5 @@
+# 左Pinch高位Approach单次234步原生接触诊断
+
+基线 `25b4a199c79795b459fb7ca3d955ada4ead855f5`。原生范围 `left_pinch_raised_approach_2_setup_232_original_guard_diagnostic_only`，状态 `failed`，外层退出码 `1`。独立私有回执 SHA256 `25a75775ec43e03f6c722ae395df8584ac149e38c87e18ac77aba52f6d8d745d`。
+
+代码与配置 SHA256 `1fb6e01d1b1d2e4b957a6997dbefdca98aef7cd88dd9aee8879afc792fe8165f`。范围以独立产物校验和进程退出为准。原始日志留在 Ubuntu 私有证据目录。
