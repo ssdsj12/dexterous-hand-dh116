@@ -1,0 +1,61 @@
+{
+  "version": "dh116-pinch-correlated-tracking-targets-cpu-v3",
+  "mode": "cpu_only",
+  "search_physics_steps": [
+    211,
+    212,
+    214,
+    222,
+    234
+  ],
+  "validation_physics_steps": [
+    211,
+    212,
+    213,
+    214,
+    215,
+    216,
+    217,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234
+  ],
+  "maximum_evaluations": 600,
+  "maximum_seconds": 60.0,
+  "translation_scales_m": [
+    0.002,
+    0.002,
+    0.002
+  ],
+  "rotation_scales_rad": [
+    0.03,
+    0.03,
+    0.03
+  ],
+  "active_scales_rad": [
+    0.04,
+    0.04,
+    0.04
+  ],
+  "native_execution": false,
+  "teacher_admission": false,
+  "planning_gate": "original_pad_acceptance_and_touch_feasibility",
+  "contact_target_gap_m": 0.0,
+  "ellipse_planning_max": 1.0,
+  "initial_candidate_source": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/pinch-tracking-target-20261114/search-02/result.json",
+  "initial_candidate_sha256": "c6ddc92a3748572915f7a1da35b25d64b07805c545cdf59e6f5069ac698caa3a"
+}

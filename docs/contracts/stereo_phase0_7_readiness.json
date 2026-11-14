@@ -16576,6 +16576,46 @@
       },
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f7-approach-r0-native.md"
+    },
+    "flex.f8-pinch-tracking-targets-cpu": {
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_pinch_tracking_targets.py",
+        "tests/test_pinch_tracking_target_path.py",
+        "tests/test_effective_right_tracking_replay.py",
+        "tests/test_pinch_effective_targets.py",
+        "tests/test_pinch_effective_targets_actual.py",
+        "tests/test_deformable_pad_region.py",
+        "tests/test_surface_contract.py"
+      ],
+      "log_sha256": "92b3b8af58e1437d7ec4269b5089338bf11b674a70c6c33795227dca2df7ce37",
+      "tested_head": "117855f7fe2bab244561d82fc9ca54ed7150981e",
+      "kind": "correlated_native_tracking_cpu_candidate",
+      "source_native_receipt_sha256": "9b0a8eb4f37ce20e27d5054a4d95043e21fb99febb00128a878fffa739608ee6",
+      "cpu_tests_passed": 57,
+      "native_execution_performed": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "endpoint_observed_scenarios": 24,
+      "continuous_static_samples": 1025,
+      "observed_trajectory_samples": 232,
+      "source_candidate_sha256": "fceb4da1085c658142c56f82d311f2488de18242158d7eb63bc69996aef847b2",
+      "source_path_sha256": "b4a4d2a95ae97437c182a800f01f0862180e746f90149adc924e3b4fa71da600",
+      "unobserved_dynamics_qualified": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-pinch-correlated-tracking-targets.md",
+      "report_source_commit": "f349e7c4f3f010ce7f1408280f602e49ced0558e"
     }
   }
 }
