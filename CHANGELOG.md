@@ -1,3 +1,7 @@
+## 2026-11-14 — 稳定测量来源完整接触R0234步原生诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-origin-r0-native.md)。
+
 ## 2026-11-14 — 稳定来源R0独立原生入口与退出后核验
 
 54项CPU回归通过；完整Python owner232样本/29控制只为CPU证据。GPU3单实例1env0PPO234总步180秒新配方，不复用已耗预算，不提前授予原生/Teacher资格。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-origin-native-preparation.md)
