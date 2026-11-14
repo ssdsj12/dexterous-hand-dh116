@@ -1,3 +1,7 @@
+## 2026-11-14 — 左Pinch同钟实测来源与独立Reset候选
+
+左侧来源实际为静止，不能当成执行闭合失败；两组局部搜索失败保留，独立Reset候选通过名义及24场景末端检查。完整路径、动态接触与Teacher资格仍未通过。 Ubuntu CPU 回归 25 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-correlated-reset.md)
+
 ## 2026-11-14 — 真实右Pinch区域接触与双侧未承托证据
 
 234步新原生诊断120.19秒自然退出0；退出后审计通过。587条右手pair落入原区域，两指连续0.047917秒；左手0，双侧0，仍非抓取/Teacher成功。本包仅重放冻结账本，新增物理步0。 Ubuntu CPU 回归 20 项通过。[报告](docs/superpowers/reports/2026-11-14-tracking-pinch-native-contact.md)

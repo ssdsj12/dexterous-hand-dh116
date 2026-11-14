@@ -16932,6 +16932,41 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-tracking-pinch-native-contact.md",
       "report_source_commit": "5df9ae4f4323b6f3e9dd67d55d39c390478a38be"
+    },
+    "flex.f8-left-pinch-correlated-reset-cpu": {
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_left_pinch_tracking.py",
+        "tests/test_left_pinch_feasibility_search.py",
+        "tests/test_left_pinch_reset_search.py",
+        "tests/test_pinch_tracking_targets.py",
+        "tests/test_tracking_pinch_plan.py"
+      ],
+      "log_sha256": "b42268760140d33aa0912c70a86d17c2f8d1115397c3e2011179fc67c6a028f8",
+      "tested_head": "d35b997adf40e90c4a649f5cbe2a20c5f2507de4",
+      "scope": "left_pinch_owned_source_and_empirical_endpoint_cpu_only",
+      "native": false,
+      "native_ready": false,
+      "teacher_admission": false,
+      "physics_steps": 0,
+      "ppo_updates": 0,
+      "source_receipt_sha256": "83a8758210fd6aa35da239c32819b91b9b6967307d30f7e380c67f965381cf11",
+      "candidate_sha256": "f8acb5e5d1f54e92d037554f9d995eaa8cc0b0a797b8fdb7a08c52e25903c2a7",
+      "failed_searches_retained": 2,
+      "validation_scenarios": 24,
+      "continuous_path_proved": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-left-pinch-correlated-reset.md",
+      "report_source_commit": "b45219cd61814f2fa1701089f1bb910dd642bb81"
     }
   }
 }
