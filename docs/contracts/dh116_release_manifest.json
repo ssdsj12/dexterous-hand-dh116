@@ -19420,6 +19420,49 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_left_pinch_projection_failure.py",
+        "tests/test_left_pinch_approach_geometry.py"
+      ],
+      "log_sha256": "349225e2b134ba887e773cc672e35acf8252f6033e62d5fe9e69a316f55d4e1c",
+      "tested_head": "579bbe04eecb7965a1b70e0a50f54c12ac60ccab",
+      "qualification_scope": "locked_failed_left_approach_prefix_cpu_only",
+      "source_receipt_sha256": "25a75775ec43e03f6c722ae395df8584ac149e38c87e18ac77aba52f6d8d745d",
+      "result_sha256": "27206552adc2858ea7637099626afd5d82b18d6404f51cff4db8e136631ae853",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-left-pinch-projection-failure.md",
+      "report_source_commit": "bcace868592d0493986c50a97c15a96c638f66d2",
+      "package": "flex.f8-left-pinch-projection-failure-audit-cpu",
+      "commit": "86f1a15ec0b32e7db5582af5218495edb3549deb",
+      "parent": "579bbe04eecb7965a1b70e0a50f54c12ac60ccab",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-left-pinch-projection-failure.md",
+        "scripts/audit_dh116_left_pinch_projection_failure.py",
+        "tests/test_left_pinch_projection_failure.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
