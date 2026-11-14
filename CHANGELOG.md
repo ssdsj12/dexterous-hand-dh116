@@ -1,3 +1,7 @@
+## 2026-11-14 — 真实Reset和同钟几何距离接入独立R0会话
+
+最终19项CPU回归通过；已完成原生账本只读回放232/232接近样本有效，29窗口其他物理/R0项完全一致。Hold、滑移和稳定性仍NA；不授予Teacher或新原生资格。返回与累计报告一致性失败已修正，旧默认不变。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-14-live-measured-approach.md)
+
 ## 2026-11-14 — 封存owner与完整后置审计234步原生验证
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-sealed-r0-native.md)。

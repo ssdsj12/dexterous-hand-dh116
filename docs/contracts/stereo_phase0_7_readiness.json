@@ -16223,6 +16223,45 @@
       },
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f7-sealed-r0-native.md"
+    },
+    "flex.f7-live-measured-approach-cpu": {
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_live_measured_approach.py",
+        "tests/test_effective_right_r0_approach.py"
+      ],
+      "log_sha256": "59024c8db567adbfdab6b6f1fd2f6452826c8d2a95332008b379dd2cbccb6635",
+      "tested_head": "c6702b69f2366d66116fc34b7d7c0200c7d3f64d",
+      "kind": "live_approach_source_connection_and_qualified_ledger_offline_replay",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "final_cpu_passed": 19,
+      "physical_rows": 232,
+      "control_windows": 29,
+      "valid_approach_samples": 232,
+      "non_approach_values_unchanged": true,
+      "blocked_terms": [
+        "hold_progress",
+        "material_anchor_slip",
+        "instability"
+      ],
+      "source_receipt_sha256": "5481fb005ccc3d59197c7489a795f7623b1fbe36dc0bc8978a3760d48636b41b",
+      "replay_sha256": "33bdbd1c2a0cd5409a5987d288f58e48122430afc1959297425cbe9cb6fbd6f3",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-live-measured-approach.md",
+      "report_source_commit": "4063bde2948df593a4db058fcd1b1b2d97eb6704"
     }
   }
 }
