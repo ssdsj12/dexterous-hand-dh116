@@ -21401,6 +21401,53 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 99,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_approach_control_composer.py",
+        "tests/test_dh116_readonly_control_cost.py",
+        "tests/test_dh116_deformable_control_step.py"
+      ],
+      "log_sha256": "7bf9ec3fc1bb738a25e61f020a890dc4354f4a66038cd254601ca4cc55fac2bf",
+      "tested_head": "669eba9678449199aa3ce9805dfd787afb580d5c",
+      "qualification_scope": "exact_historical_arithmetic_candidate_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "training_reward": null,
+      "ppo_updates": 0,
+      "physical_rows": 232,
+      "known_candidate_windows": 28,
+      "known_candidate_reward_sum": -0.01859693043286804,
+      "artifact_sha256": "f0349729d5e4cf7413d698fc8e47dd52694becb97a9fe8913527886416d9a66f",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-approach-control-composer.md",
+      "report_source_commit": "d5f6a624b7a46bbaba5bb5b68940eb91ebd658f1",
+      "package": "flex.r0-approach-control-candidate",
+      "commit": "cbc3e951ed3f64f8711465e339c277fb610b83c9",
+      "parent": "669eba9678449199aa3ce9805dfd787afb580d5c",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-approach-control-composer.md",
+        "scripts/evaluate_dh116_approach_control_candidate.py",
+        "src/go2_pvcnn/control/dh116/tabletop_approach_control_composer.py",
+        "tests/test_approach_control_composer.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
