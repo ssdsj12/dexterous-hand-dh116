@@ -1,3 +1,7 @@
+## 2026-11-14 — 双手Pinch逐求解器子步载荷与原阈值审计
+
+只读核验原234步账本的2784求解器子步。原>0.05N/-0.25规则下双手同时原始配对493子步(85.590ms)，桌面2784子步承载、右手合力Z无正值；非悬空抓取/非Teacher资格。新物理0步，完整峰值身份及nominal时间标记保留。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-substep-load-audit.md)
+
 ## 2026-11-14 — Tripod完整几何闭合搜索与失败证据
 
 完成有界闭合搜索及逐次失败保留。run04为589次CPU查询，最优仍违反拇指/非目标碰撞体规划约束；0新物理步，未生成原生配方，Tripod与Teacher仍blocked。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-full-geometry-closure.md)

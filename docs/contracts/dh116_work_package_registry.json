@@ -5647,7 +5647,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "Actual bilateral234 naturalexit0; four pads loaded85.9375ms with table support.178 actual endpoint hand contacts:124 same-node cross-section candidate residuals>0.5mm, maximum1.339164mm; right thumb marker endpoint drift0.640657mm is model-dependent, not qualified slip.1933 hand pairs lack same-substep director. R0 full reward0/29,common66/371; no Teacher admission."
+      "reason": "Same-substep raw solver audit:493/2784 bilateral >0.05N paired windows85.590ms; table loaded2784, right-hand upward-force windows0. Raw SDF contacts lack qualified effective surface/fixed material slip; stable/R0 sources incomplete, full reward0/29. No Teacher admission or consumed native retry."
     },
     "flex.f8-tripod": {
       "title": "Tripod 无相机 R0 特权 Teacher",
@@ -25779,6 +25779,80 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-14-tripod-full-geometry-closure.md",
         "report_source_commit": "97780ab1ac55026028e0c3f2c4e9f6f4d5722e4b"
+      }
+    },
+    "flex.f8-bilateral-substep-load-audit": {
+      "title": "双手Pinch逐求解器子步载荷与原阈值审计",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-bilateral-owned-pinch-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_pair_substep_load_audit.py",
+          "tests/test_surface_force_sharing.py",
+          "tests/test_dh116_bilateral_r0_replay.py",
+          "tests/test_dh116_bilateral_native_evidence.py"
+        ],
+        "log_sha256": "2df998650496c99d0c29288684476ffbb678b4adf0f4ac0ed7aeaa258fd7fb90",
+        "tested_head": "224c04371af4d8cbb027aa1a757e7b88600ec0b5",
+        "kind": "readonly_native_substep_raw_load_audit",
+        "result_sha256": "f3a8076724fb0f706167192aecf0c0645fccb88b091fd7677bd5f290dbe4f102",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_qualified": false,
+        "teacher_admission": false,
+        "solver_rows": 2784,
+        "bilateral_raw_paired_substeps": 493,
+        "table_loaded_substeps": 2784,
+        "full_r0_reward_ready": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-bilateral-substep-load-audit.md",
+        "report_source_commit": "a5fbd3144e864062711398e1b959d7e5273793da"
+      },
+      "last_result": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_pair_substep_load_audit.py",
+          "tests/test_surface_force_sharing.py",
+          "tests/test_dh116_bilateral_r0_replay.py",
+          "tests/test_dh116_bilateral_native_evidence.py"
+        ],
+        "log_sha256": "2df998650496c99d0c29288684476ffbb678b4adf0f4ac0ed7aeaa258fd7fb90",
+        "tested_head": "224c04371af4d8cbb027aa1a757e7b88600ec0b5",
+        "kind": "readonly_native_substep_raw_load_audit",
+        "result_sha256": "f3a8076724fb0f706167192aecf0c0645fccb88b091fd7677bd5f290dbe4f102",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_qualified": false,
+        "teacher_admission": false,
+        "solver_rows": 2784,
+        "bilateral_raw_paired_substeps": 493,
+        "table_loaded_substeps": 2784,
+        "full_r0_reward_ready": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-bilateral-substep-load-audit.md",
+        "report_source_commit": "a5fbd3144e864062711398e1b959d7e5273793da"
       }
     }
   },
