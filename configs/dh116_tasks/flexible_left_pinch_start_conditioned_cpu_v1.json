@@ -1,0 +1,69 @@
+{
+  "version": "dh116-left-pinch-start-conditioned-cpu-v1",
+  "source_sha256": "f8acb5e5d1f54e92d037554f9d995eaa8cc0b0a797b8fdb7a08c52e25903c2a7",
+  "maximum_evaluations": 600,
+  "maximum_seconds": 60.0,
+  "source_config": {
+    "version": "dh116-left-pinch-independent-reset-cpu-v3",
+    "mode": "cpu_only",
+    "side": "left",
+    "maximum_evaluations": 600,
+    "maximum_search_seconds": 60.0,
+    "search_physics_steps": [
+      211,
+      222,
+      234
+    ],
+    "validation_physics_steps": [
+      211,
+      212,
+      213,
+      214,
+      215,
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      223,
+      224,
+      225,
+      226,
+      227,
+      228,
+      229,
+      230,
+      231,
+      232,
+      233,
+      234
+    ],
+    "translation_scales_m": [
+      0.004,
+      0.004,
+      0.004
+    ],
+    "rotation_scales_rad": [
+      0.06,
+      0.06,
+      0.06
+    ],
+    "active_scales_rad": [
+      0.08,
+      0.08,
+      0.08
+    ],
+    "native_execution": false,
+    "teacher_admission": false,
+    "initial_candidate_source": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/left-pinch-tracking-20261114/linear-range-audit-01.json",
+    "initial_candidate_sha256": "f263d85299e95a8e554e3a021173491bea22d4c8b7e5ca27b16dec742b381803",
+    "original_motion_unchanged": true,
+    "scope": "reset_pose_proposals_only_not_action_amplitude"
+  },
+  "original_motion_unchanged": true,
+  "initial_separation_m": 5e-05,
+  "native_execution": false,
+  "teacher_admission": false
+}

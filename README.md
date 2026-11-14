@@ -1,3 +1,7 @@
+## 2026-11-14 — 左Pinch完整路径与高位Approach条件性审计
+
+末端通过候选的起点仅0.913mm净空被完整路径拦截。独立左手高1.5mm起点/4.5mm每秒下降路径通过1025连续界及232场景，原手指/右手路径不变；尚无新原生接触资格。 Ubuntu CPU 回归 23 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-continuous-approach.md)
+
 ## 2026-11-14 — 左Pinch同钟实测来源与独立Reset候选
 
 左侧来源实际为静止，不能当成执行闭合失败；两组局部搜索失败保留，独立Reset候选通过名义及24场景末端检查。完整路径、动态接触与Teacher资格仍未通过。 Ubuntu CPU 回归 25 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-correlated-reset.md)
