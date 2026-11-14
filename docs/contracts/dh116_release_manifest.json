@@ -17389,6 +17389,51 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_complete_pair_ledger_profile.py",
+        "tests/test_complete_pair_native_audit.py",
+        "tests/test_complete_pair_recipe_scope.py"
+      ],
+      "log_sha256": "add130a2ace667715f617d07d196906fff221345639ad7c2b8c68d8c8772d1dc",
+      "tested_head": "3bfad44e67087fa23303b078cbd66493bb44720e",
+      "kind": "read_only_failed_budget_native_ledger_analysis",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "source_receipt_sha256": "208b6c6d16f7f7e23c8e72a721343bc74276d242fcc4ef0dd71b6d16182df508",
+      "profile_sha256": "3a14f06c83fb066a36fb8f4ba29413a8de06f7efba2048f6709e74f28ad71f5b",
+      "offline_source_revalidation_sha256": "c04a96308ef3a5762f4ed5c3262849a73e2be77af75a56f73e5fec791670b34b",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-complete-pair-native-budget-analysis.md",
+      "report_source_commit": "f9dccc72e8c3eb1f6ead1909cd97969104a1f98c",
+      "package": "flex.f7-complete-pair-budget-analysis-cpu",
+      "commit": "5eb4ef4841ecbfb191eec3568e07e2f9b187a635",
+      "parent": "3bfad44e67087fa23303b078cbd66493bb44720e",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-complete-pair-native-budget-analysis.md",
+        "scripts/profile_dh116_complete_pair_r0_ledger.py",
+        "tests/test_complete_pair_ledger_profile.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
