@@ -14085,6 +14085,39 @@
       },
       "status": "failed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f8-tripod-owned-contact-native.md"
+    },
+    "flex.f8-tripod-native-tracking-audit": {
+      "passed": 59,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_tripod_native_tracking_audit.py",
+        "tests/test_dh116_bilateral_native_evidence.py",
+        "tests/test_tripod_quiet_gate.py",
+        "tests/test_tripod_projection_scope.py",
+        "tests/test_tripod_exchange_admission.py"
+      ],
+      "log_sha256": "68568aac2347d35140cd3de82663471433ba831f6ac609b84af1b63ff87446fc",
+      "tested_head": "94d1f2ca9b64534b0c81302f9f55033aeb627767",
+      "kind": "consumed_native_terminal_prefix_offline_analysis",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_qualified": false,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "native_attempt_consumed_steps": 199,
+      "result_sha256": "8225701de3b8c447146dd52374fcb74b3247388c59d701946f804e082ba552e4",
+      "receipt_sha256": "9bb31008160da84e31c1e089eed925ba658d40c82a830173a958e21491ecf0eb",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-tripod-native-tracking-failure.md",
+      "report_source_commit": "c08d9c6a40f41128c348ef11bb38cdf4a3e54ded"
     }
   }
 }

@@ -1,3 +1,7 @@
+## 2026-11-14 — Tripod终止前缀与实际腕旋转滞后归因
+
+只读197条原生测量，SDK199因左finger22非目标间距保护终止；app.close返回且无SIGSEGV，但outer1，仍blocked。实测FK对齐后离线替换定位腕旋转滞后，未改保护、未重跑、未增加PPO。 Ubuntu CPU 回归 59 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-native-tracking-failure.md)
+
 ## 2026-11-13 — 独立左手Tripod234步原生接近与静置准入
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-tripod-owned-contact-native.md)。
