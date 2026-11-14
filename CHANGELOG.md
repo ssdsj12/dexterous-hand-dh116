@@ -1,3 +1,7 @@
+## 2026-11-14 — 等字节加速柔性物理账本编码
+
+使用真实 621 MB 账本逐行验证编码字节一致，CPU 编码时间 33.88 秒降至 6.78 秒。原保护、时钟、终止持久化和字段完整性保持原合同。Pinch 超时回执仍失败。 Ubuntu CPU 回归 19 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-evidence-encoding.md)
+
 ## 2026-11-14 — Pinch 数值 Reset 与逐接触姿态原生复验
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-mesh-reset-numeric-pinch-native.md)。

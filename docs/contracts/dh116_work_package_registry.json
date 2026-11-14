@@ -36242,6 +36242,76 @@
         "status": "failed",
         "report": "docs/superpowers/reports/dh116-managed-flex.f8-mesh-reset-numeric-pinch-native.md"
       }
+    },
+    "flex.f8-physical-evidence-encoding-cpu": {
+      "title": "等字节加速柔性物理账本编码",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-mesh-reset-numeric-pinch-prep-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_physical_evidence_encoding.py",
+          "tests/test_dh116_dual_hand_evidence_journal.py"
+        ],
+        "log_sha256": "e5c25f5a050b4f201fd29f306ef8a3fc6416abf7064d0948ff418c5bbdff7669",
+        "tested_head": "a45da21d0099bd41f5fbed246a0c148496d07041",
+        "qualification_scope": "cpu_byte_equivalent_full_retained_native_ledger_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "payload_rows": 295,
+        "physical_rows": 232,
+        "benchmark_saving_seconds": 27.100601673941128,
+        "benchmark_sha256": "b3f7fbf548ec1c6d66eb1545b2fdce9a2e230a21575cd9fea70c3d6b3e9762af",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-pinch-evidence-encoding.md",
+        "report_source_commit": "f4ec973c193389823d675b9c3ae2b7d8c776b127"
+      },
+      "last_result": {
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_physical_evidence_encoding.py",
+          "tests/test_dh116_dual_hand_evidence_journal.py"
+        ],
+        "log_sha256": "e5c25f5a050b4f201fd29f306ef8a3fc6416abf7064d0948ff418c5bbdff7669",
+        "tested_head": "a45da21d0099bd41f5fbed246a0c148496d07041",
+        "qualification_scope": "cpu_byte_equivalent_full_retained_native_ledger_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "payload_rows": 295,
+        "physical_rows": 232,
+        "benchmark_saving_seconds": 27.100601673941128,
+        "benchmark_sha256": "b3f7fbf548ec1c6d66eb1545b2fdce9a2e230a21575cd9fea70c3d6b3e9762af",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-pinch-evidence-encoding.md",
+        "report_source_commit": "f4ec973c193389823d675b9c3ae2b7d8c776b127"
+      }
     }
   },
   "execution_target": {
