@@ -1,3 +1,7 @@
+## 2026-11-14 — Pinch 数值 Reset 与逐接触姿态原生复验
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-mesh-reset-numeric-pinch-native.md)。
+
 ## 2026-11-14 — 冻结 Pinch CUDA 数值 Reset 复验
 
 修正仅提供 CUDA array interface 的包装对象被当成 NumPy 数值的错误。已消耗旧配方指纹保持原值。冻结相同 234 步、180 秒、0 PPO 的新配方，并要求外层复核独立数值快照。 Ubuntu CPU 回归 50 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-numeric-reset-native-recipe.md)
