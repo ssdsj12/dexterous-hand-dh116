@@ -18890,6 +18890,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-pinch-fast-evidence-native-recipe.md",
       "report_source_commit": "ff1ea51736dfefeab371f3b14d234d467e1fde0c"
+    },
+    "flex.f8-action24-history-owner-cpu": {
+      "passed": 132,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_action24_history_owner.py",
+        "tests/test_dh116_no_camera_collector.py",
+        "tests/test_dh116_readonly_control_cost.py",
+        "tests/test_deformable_r0_replay.py"
+      ],
+      "log_sha256": "3496dbdaf833faae08f23595e8d8f1029c4202816e8830f0b54cce853c05ca35",
+      "tested_head": "5eac3ac40ffaaae69a4458b7838d4dca9e806f04",
+      "qualification_scope": "cpu_controller_memory_and_actual_request_consistency",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "ppo_updates": 0,
+      "physical_fixture_steps": 16,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-action24-history-owner.md",
+      "report_source_commit": "17b246fbc83a8894989d524faf1892346b8976b4"
     }
   }
 }
