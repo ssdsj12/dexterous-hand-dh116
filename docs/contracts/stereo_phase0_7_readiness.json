@@ -17586,7 +17586,7 @@
         "tests/test_projected_pinch_worker.py": "1930daf183a5ea96eb6c96726d8293d1c8fc91e1a980134ba7c58655054eefba"
       },
       "result_sha256": "04ebfe2460b6366960d87cda6f36200f503072e4fdfa2abffd25bc8dfcf775c3",
-      "native_physics_validated": true,
+      "native_physics_validated": false,
       "cpu_regression": {
         "passed": 33,
         "failed": 0,
@@ -17607,7 +17607,11 @@
         "tested_head": "24eef09c230b3ee5ed50ba855b51a6584400e521"
       },
       "status": "passed",
-      "report": "docs/superpowers/reports/dh116-managed-flex.f8-original-projected-pinch-native.md"
+      "report": "docs/superpowers/reports/dh116-managed-flex.f8-original-projected-pinch-native.md",
+      "reason": "仅保留已完成预算/原guard/自然退出诊断；新源审计证明mesh Reset未同步，不能据此授予Teacher。",
+      "reset_mesh_pose_qualified": false,
+      "teacher_admission": false,
+      "qualification_correction_report": "docs/superpowers/reports/2026-11-14-substep-contact-reset-audit.md"
     },
     "flex.f8-projected-pinch-native-contact-audit-cpu": {
       "passed": 21,
@@ -17636,7 +17640,11 @@
       "statistics_sha256": "1c64155ff79e6c327dec6dfb95150a78659597c590b53772c981d04fcaf65c65",
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-projected-pinch-native-contact.md",
-      "report_source_commit": "b3ac14ea66eb8e6d4cf9a73c04691c6a2b53249f"
+      "report_source_commit": "b3ac14ea66eb8e6d4cf9a73c04691c6a2b53249f",
+      "reason": "旧候选统计为步末坐标近似，不能作为严格positive或negative有效接触证据；新子步重算见独立报告。",
+      "positive_effective_contact_qualified": false,
+      "negative_effective_contact_qualified": false,
+      "contact_timing_scope": "endpoint approximation; superseded by source-derived substep audit"
     },
     "flex.f8-projected-pinch-tracking-decomposition-cpu": {
       "passed": 15,
@@ -17815,6 +17823,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-actual-backend-measured-teacher.md",
       "report_source_commit": "5eb9692549f5cd7db7dd22b7e53135085a02479b"
+    },
+    "flex.f8-substep-contact-reset-audit-cpu": {
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_deformx_substep_pose.py",
+        "tests/test_substep_contact_audit.py",
+        "tests/test_live_effective_pad_source.py",
+        "tests/test_deformable_pad_region.py"
+      ],
+      "log_sha256": "e001db16d2a6480e2569c5da5fe6f4b0fe894a6554a347b3f6041cb75498386d",
+      "tested_head": "ab10328850afe91840218a9921d2dbab2fff93a4",
+      "qualification_scope": "locked_source_substep_reconstruction_and_historical_reset_audit_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "reset_mesh_pose_qualified": false,
+      "positive_effective_contact_qualified": false,
+      "negative_effective_contact_qualified": false,
+      "statistics_sha256": "4955ce70bc491fb0e9908dcdecae936a5a7196525c1b76ca537aec59a0732597",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-substep-contact-reset-audit.md",
+      "report_source_commit": "8f699b6b27877ad17db497365e691224bccbaeaa"
     }
   }
 }
