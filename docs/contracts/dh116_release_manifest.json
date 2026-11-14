@@ -21493,6 +21493,49 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 132,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_action24_history_owner.py",
+        "tests/test_dh116_no_camera_collector.py",
+        "tests/test_dh116_readonly_control_cost.py",
+        "tests/test_deformable_r0_replay.py"
+      ],
+      "log_sha256": "3496dbdaf833faae08f23595e8d8f1029c4202816e8830f0b54cce853c05ca35",
+      "tested_head": "5eac3ac40ffaaae69a4458b7838d4dca9e806f04",
+      "qualification_scope": "cpu_controller_memory_and_actual_request_consistency",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "ppo_updates": 0,
+      "physical_fixture_steps": 16,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-action24-history-owner.md",
+      "report_source_commit": "17b246fbc83a8894989d524faf1892346b8976b4",
+      "package": "flex.f8-action24-history-owner-cpu",
+      "commit": "4cb8009b5bfcbaa752e1ba40b4038302a39ee0c5",
+      "parent": "5eac3ac40ffaaae69a4458b7838d4dca9e806f04",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-action24-history-owner.md",
+        "src/go2_pvcnn/control/dh116/tabletop_action24_history_owner.py",
+        "tests/test_action24_history_owner.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
