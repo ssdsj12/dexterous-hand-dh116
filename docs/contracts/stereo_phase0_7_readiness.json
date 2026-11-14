@@ -17608,6 +17608,35 @@
       },
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f8-original-projected-pinch-native.md"
+    },
+    "flex.f8-projected-pinch-native-contact-audit-cpu": {
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_projected_pinch_contact_audit.py",
+        "tests/test_tracking_pinch_contact_replay.py"
+      ],
+      "log_sha256": "4a50be979f7d987608ac4e8df5188af3b8cecad3d31aac2f25e6ce5b0ea1910e",
+      "tested_head": "0daee467ccb90e85cbd233147fa725e9346644a3",
+      "qualification_scope": "projected_pinch_native_receipt_statistics_cpu_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "source_native_receipt_sha256": "04ebfe2460b6366960d87cda6f36200f503072e4fdfa2abffd25bc8dfcf775c3",
+      "statistics_sha256": "1c64155ff79e6c327dec6dfb95150a78659597c590b53772c981d04fcaf65c65",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-projected-pinch-native-contact.md",
+      "report_source_commit": "b3ac14ea66eb8e6d4cf9a73c04691c6a2b53249f"
     }
   }
 }

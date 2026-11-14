@@ -1,3 +1,7 @@
+## 2026-11-14 — 原生Pinch逐指有效区域与安全投影证据核验
+
+只读核验234步原生回执：左食指428条raw/0条有效区域接触，右侧同时原区域接触47.9ms，双侧0。区分SDK目标投影和实际掌位；不计抓取/Teacher资格，本包新增原生0。 Ubuntu CPU 回归 21 项通过。[报告](docs/superpowers/reports/2026-11-14-projected-pinch-native-contact.md)
+
 ## 2026-11-14 — 原安全投影Pinch单次234步原生诊断
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-original-projected-pinch-native.md)。
