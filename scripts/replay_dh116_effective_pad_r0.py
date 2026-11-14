@@ -56,7 +56,7 @@ def configuration():
         raise ValueError("immutable offline-only replay configuration required")
     return cfg
 
-def run(result, emit):
+def run(result, emit, *, negative_reducer_cls=None):
     cfg = configuration()
     source = FrozenEffectivePadSource(ROOT, pinned.RECEIPT,
         expected_receipt_sha256=pinned.RECEIPT_SHA, expected_scope=pinned.SCOPE)
@@ -99,7 +99,9 @@ def run(result, emit):
                     **extra)
                 adapted = deepcopy(task)
                 adapted["backend"]["extension_sha256"] = old.BACKEND_SHA
-                obs._reducer = old._ResetBoundApplicableR0(adapted, "pinch", env_id=0,
+                reducer = (negative_reducer_cls if mode == "negative_source" and negative_reducer_cls is not None
+                           else old._ResetBoundApplicableR0)
+                obs._reducer = reducer(adapted, "pinch", env_id=0,
                     budget_config=budget, diagnostic_coefficients=weights,
                     reset_approach=reset_approach["reset_approach"])
                 obs.record(p)
@@ -152,13 +154,15 @@ def run(result, emit):
             "training_reward_coefficients", "positive_contact_and_slip_source_when_applicable",
             "hand_table_contact_source"])
 
-def main():
+    return source
+
+def main(argv=None, *, run_fn=run, version=VERSION):
     p = argparse.ArgumentParser()
     p.add_argument("--output", required=True, type=Path)
-    args = p.parse_args()
+    args = p.parse_args(argv)
     args.output.mkdir(parents=True, exist_ok=False)
     start = time.monotonic()
-    result = dict(version=VERSION, status="partial", new_physics_steps=0,
+    result = dict(version=version, status="partial", new_physics_steps=0,
         ppo_updates=0, teacher_admission=False, native_qualification=False, training_reward=None)
     previous = signal.signal(signal.SIGALRM, lambda *a: (_ for _ in ()).throw(TimeoutError("600s CPU budget")))
     signal.setitimer(signal.ITIMER_REAL, 600)
@@ -167,7 +171,7 @@ def main():
             def emit(row):
                 f.write(json.dumps(encode_owned(row), allow_nan=False) + "\n")
                 f.flush()
-            try: run(result, emit)
+            try: run_fn(result, emit)
             finally: f.flush(); os.fsync(f.fileno())
     except Exception as e:
         result.update(status="blocked", reason=type(e).__name__ + ": " + str(e))

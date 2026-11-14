@@ -1,3 +1,7 @@
+## 2026-11-14 — 保持奖励必要条件与实际solver节点速度诊断
+
+独立默认关闭诊断：已知缺少双侧有效接触时hold贡献不适用，raw仍null/invalid，不填造稳定测量、不绕终止。冻结原生232步/29窗回放后剩instability缺失232/29，训练奖励仍0/29。实际solver节点峰速8.240307mm/s@env0/step152/node0，未赋予稳定资格。95项CPU通过，原生/PPO新增0。 Ubuntu CPU 回归 95 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-hold-necessary-domain.md)
+
 ## 2026-11-14 — 原有效指腹负证据接入R0且保留缺失来源
 
 同一冻结原生232步/29控制窗只读回放；2129右手pair原区域全部拒绝，接触unknown84→0；既有NA滑移原值仍null，仅贡献不适用。R0剩hold/instability各232步缺失，Teacher仍blocked。新增严格receipt/采集源码/SDF/时钟/聚合核验；117项CPU通过，新增原生/PPO均0。 Ubuntu CPU 回归 117 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-pad-negative-r0.md)
