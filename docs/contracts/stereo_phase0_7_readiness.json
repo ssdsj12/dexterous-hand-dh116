@@ -14289,6 +14289,42 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-bilateral-effective-pad-regions.md",
       "report_source_commit": "27952966d12854241390a9f6c72d2299823caa65"
+    },
+    "flex.f8-pinch-effective-target-path": {
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_pinch_effective_targets.py",
+        "tests/test_pinch_effective_targets_actual.py",
+        "tests/test_dh116_owned_approach.py",
+        "tests/test_tripod_contact_closure.py",
+        "tests/test_deformable_pad_region.py",
+        "tests/test_surface_contract.py"
+      ],
+      "log_sha256": "065f686d6c86ca32f40735f26257a1613f0fca553094ebb825521eb8cbf90c5d",
+      "tested_head": "326c1acdb73aff03b0c8b3f60c4212623909b7dc",
+      "kind": "cpu_original_pad_target_and_static_path_proposal",
+      "target_result_sha256": "cc6fcfcbf001d597fcc46d0a27768974f8e0f4b1714a872074ac8a6a65d8ddbe",
+      "path_result_sha256": "03b70ba97423665eac710ddd0fe3e868282885428efe1e0775bf304ccf9aa280",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_qualified": false,
+      "teacher_admission": false,
+      "right_static_path_passed": true,
+      "left_static_endpoint_passed": false,
+      "dynamic_tracking_qualified": false,
+      "native_recipe_created": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-pinch-effective-target-path.md",
+      "report_source_commit": "2b6ddc93c636e3d4cebc325be3e6053ed1c580a2"
     }
   }
 }

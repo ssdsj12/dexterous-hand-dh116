@@ -1,3 +1,7 @@
+## 2026-11-14 — Pinch原有效指腹目标和受限绕行路径
+
+旧端点规划已超原指腹区域；独立右手候选通过原区域与静态约束，直线路径finger13失败；100um World-X分段绕行1025点及最大段速率区间界通过，非目标最小净空1.528um。左手仍失败，实际跟踪/杆响应/原生owner未资格；无新原生/无PPO，未生成配方。保留失败CPU日志及原保护。 Ubuntu CPU 回归 47 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-effective-target-path.md)
+
 ## 2026-11-14 — 双手Pinch原有效指腹区域逐接触审计
 
 只读核验原234步原生账本：2111条手部pair全部在原有效指腹椭圆外，表面距离与法向通过。保持原atlas/控制/保护，实际按自身link和同钟数据验证，非新原生/非Teacher资格。CPU100通过1可选CUDA profiling跳过。 Ubuntu CPU 回归 100 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-effective-pad-regions.md)
