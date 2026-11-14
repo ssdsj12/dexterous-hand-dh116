@@ -19882,6 +19882,50 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_projected_pinch_tracking_decomposition.py",
+        "tests/test_effective_right_tracking_replay.py"
+      ],
+      "log_sha256": "81ab8ae3bfe2e1bb2420c02e3aa0dec7309ac234de04779c1a2d4ed1360f5988",
+      "tested_head": "ace2512c519931d3e8cce24a8531f55b78cc375e",
+      "qualification_scope": "projected_pinch_ordered_geometry_cpu_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "actual_native_boundaries_analyzed": 24,
+      "source_receipt_sha256": "04ebfe2460b6366960d87cda6f36200f503072e4fdfa2abffd25bc8dfcf775c3",
+      "analysis_sha256": "964bda6cf767913aa994a943ecd198cde7f5fc108c70ee276790634ee9e51045",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-projected-pinch-tracking-decomposition.md",
+      "report_source_commit": "910dcf12eb31ba1b439ac82f523bd1ab8155694c",
+      "package": "flex.f8-projected-pinch-tracking-decomposition-cpu",
+      "commit": "aed954c032779b0df6dc6525db2e4faa4885635d",
+      "parent": "ace2512c519931d3e8cce24a8531f55b78cc375e",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-projected-pinch-tracking-decomposition.md",
+        "scripts/audit_dh116_projected_pinch_tracking.py",
+        "tests/test_projected_pinch_tracking_decomposition.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
