@@ -32695,6 +32695,113 @@
         "report": "docs/superpowers/reports/2026-11-14-wrist-projection-source-evidence.md",
         "report_source_commit": "1b181482997dcb53b3152d511e55739765829abb"
       }
+    },
+    "flex.f8-original-projected-pinch-prep-cpu": {
+      "title": "原安全投影约束下的Pinch独立原生配方",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-owned-wrist-projection-evidence-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_projected_pinch_geometry.py",
+          "tests/test_projected_pinch_native.py",
+          "tests/test_projected_pinch_owner.py",
+          "tests/test_projected_pinch_worker.py",
+          "tests/test_left_pinch_approach_geometry.py"
+        ],
+        "log_sha256": "88cd80b8a09f75761eb2cc78d2f3a3e99910bfafba040f74aa207df676faec4e",
+        "tested_head": "8f3f42a6ffc24c9a40611fce70161de3862f6831",
+        "qualification_scope": "original_projection_pinch_preparation_cpu_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "recipe_sha256": "129e0b0e3455e276733554d15c1ccbd431772dc04572e168943ed3d327109254",
+        "entry_code_config_sha256": "720b2499cbdc52c53c25bcdde920168072650db120325ae27177cdb1be52fba0",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-original-projected-pinch-preparation.md",
+        "report_source_commit": "73c9fc931f315206a76deec1328a8fd3e669f42c"
+      },
+      "last_result": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_projected_pinch_geometry.py",
+          "tests/test_projected_pinch_native.py",
+          "tests/test_projected_pinch_owner.py",
+          "tests/test_projected_pinch_worker.py",
+          "tests/test_left_pinch_approach_geometry.py"
+        ],
+        "log_sha256": "88cd80b8a09f75761eb2cc78d2f3a3e99910bfafba040f74aa207df676faec4e",
+        "tested_head": "8f3f42a6ffc24c9a40611fce70161de3862f6831",
+        "qualification_scope": "original_projection_pinch_preparation_cpu_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "recipe_sha256": "129e0b0e3455e276733554d15c1ccbd431772dc04572e168943ed3d327109254",
+        "entry_code_config_sha256": "720b2499cbdc52c53c25bcdde920168072650db120325ae27177cdb1be52fba0",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-original-projected-pinch-preparation.md",
+        "report_source_commit": "73c9fc931f315206a76deec1328a8fd3e669f42c"
+      }
+    },
+    "flex.f8-original-projected-pinch-native": {
+      "title": "原安全投影Pinch单次234步原生诊断",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f8-original-projected-pinch-prep-cpu",
+        "flex.f7-native-parameter-task-native",
+        "flex.f8-tracking-pinch-native"
+      ],
+      "dependency_scopes": {
+        "flex.f7-native-parameter-task-native": {
+          "scope": "exact_2_setup_plus_16_native_parameter_task_endpoints_only",
+          "native": true
+        },
+        "flex.f8-tracking-pinch-native": {
+          "scope": "tracking_aware_pinch_2_setup_232_original_guard_contact_diagnostic_only",
+          "native": true
+        }
+      },
+      "command_spec": "configs/dh116_execution/deformx_projected_pinch_contact_v1.json",
+      "evidence_scope": "pinch_original_safety_projection_2_setup_232_diagnostic_only",
+      "status": "blocked",
+      "tests": [
+        "tests/test_projected_pinch_geometry.py",
+        "tests/test_projected_pinch_native.py",
+        "tests/test_projected_pinch_worker.py"
+      ],
+      "timeout_seconds": 600,
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "scheduler_entrypoint": "scripts/run_dh116_projected_pinch_work_packages.py"
     }
   },
   "execution_target": {

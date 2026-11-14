@@ -1,3 +1,7 @@
+## 2026-11-14 — 原安全投影约束下的Pinch独立原生配方
+
+原safe_z不变，新增独立目标合同、source重算、相邻applied offset连续性、完整/终止owner和worker门控。234 SDK步/0PPO/180秒单次配方准备；本包原生0，Teacher未准入。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-14-original-projected-pinch-preparation.md)
+
 ## 2026-11-14 — 原手腕安全投影实测输入留存与独立重算
 
 真实SDK175→176原投影重算误差0，左限制shape为finger13_link。新增只读来源与异常raw留存，默认动作/保护不变；新原生及PPO0。 Ubuntu CPU 回归 35 项通过。[报告](docs/superpowers/reports/2026-11-14-wrist-projection-source-evidence.md)
