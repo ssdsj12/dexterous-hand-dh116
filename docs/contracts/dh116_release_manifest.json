@@ -15750,6 +15750,56 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 68,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_tripod_contact_closure.py",
+        "tests/test_tripod_tracking_envelope.py",
+        "tests/test_tripod_fixed_orientation.py",
+        "tests/test_tripod_sdk_path.py",
+        "tests/test_tripod_fixed_root_path.py",
+        "tests/test_tripod_native_tracking_audit.py"
+      ],
+      "log_sha256": "e665d6929f21bbcdc470a3f3c7ca1778fcc445434440f87d843d86ddf330d815",
+      "tested_head": "b21ea3976e6dc01d94abe1b3a8f0dc15c2902cf7",
+      "kind": "full_geometry_closure_cpu_failure_audit",
+      "result_sha256": "d15198dd0ee006f3189df46d01a33d5f8e21365c3b2ae18b9f9362936a9c3116",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "static_constraints_passed": false,
+      "native_qualified": false,
+      "teacher_admission": false,
+      "evaluations": 589,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-tripod-full-geometry-closure.md",
+      "report_source_commit": "97780ab1ac55026028e0c3f2c4e9f6f4d5722e4b",
+      "package": "flex.f8-tripod-full-geometry-closure-audit",
+      "commit": "30b585dc3c57ea485367dbd7edae2ceb06d73abf",
+      "parent": "b21ea3976e6dc01d94abe1b3a8f0dc15c2902cf7",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_tasks/flexible_tripod_contact_closure_cpu_v1.json",
+        "configs/dh116_tasks/flexible_tripod_contact_closure_cpu_v2.json",
+        "configs/dh116_tasks/flexible_tripod_contact_closure_cpu_v3.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-tripod-full-geometry-closure.md",
+        "scripts/solve_dh116_tripod_contact_closure.py",
+        "tests/test_tripod_contact_closure.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
