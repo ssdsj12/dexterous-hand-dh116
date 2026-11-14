@@ -1,3 +1,7 @@
+## 2026-11-14 — 真实耦合Reset后原R0初始化及同钟观察器
+
+新增独立真实耦合Reset后初始化及逐物理步R0观察器，原物理动作和R0保持；弱引用清理、原账本先持久化、独立同钟/SHA退出审计。序数权重只作诊断，training_reward仍null；未启用离线hold扩展或开始PPO。新234步配方待发布后按站立授权单次执行。 Ubuntu CPU 回归 85 项通过。[报告](docs/superpowers/reports/2026-11-14-live-r0-reset-preparation.md)
+
 ## 2026-11-14 — 保持奖励必要条件与实际solver节点速度诊断
 
 独立默认关闭诊断：已知缺少双侧有效接触时hold贡献不适用，raw仍null/invalid，不填造稳定测量、不绕终止。冻结原生232步/29窗回放后剩instability缺失232/29，训练奖励仍0/29。实际solver节点峰速8.240307mm/s@env0/step152/node0，未赋予稳定资格。95项CPU通过，原生/PPO新增0。 Ubuntu CPU 回归 95 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-hold-necessary-domain.md)

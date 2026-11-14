@@ -26816,6 +26816,104 @@
         "report": "docs/superpowers/reports/2026-11-14-r0-hold-necessary-domain.md",
         "report_source_commit": "dd25e4f187d7a64015d8a25077b7f0549d4f1b28"
       }
+    },
+    "flex.f7-live-r0-reset-cpu": {
+      "title": "真实耦合Reset后原R0初始化及同钟观察器",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-effective-right-pinch-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 85,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_r0_after_physical_reset.py",
+          "tests/test_r0_live_observer.py",
+          "tests/test_live_r0_native_session.py",
+          "tests/test_live_r0_native_worker.py",
+          "tests/test_deformable_r0_replay.py",
+          "tests/test_dh116_deformable_control_step.py"
+        ],
+        "log_sha256": "8f596b4c85361343cee2c9ebf34a63adac89e61328187757b5a97a9027d36cf5",
+        "tested_head": "a8361087ba80b339c2646b292a03e700ded0d675",
+        "kind": "cpu_live_post_reset_R0_owner",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "experiment_code_config_sha256": "287586d40952b0cf4e0241bf16cda116193b7b66a4b64dfa14728fc24eeaa1f9",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-live-r0-reset-preparation.md",
+        "report_source_commit": "6723e225d9c409050f1378c84b8d6339b6943c43"
+      },
+      "last_result": {
+        "passed": 85,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_r0_after_physical_reset.py",
+          "tests/test_r0_live_observer.py",
+          "tests/test_live_r0_native_session.py",
+          "tests/test_live_r0_native_worker.py",
+          "tests/test_deformable_r0_replay.py",
+          "tests/test_dh116_deformable_control_step.py"
+        ],
+        "log_sha256": "8f596b4c85361343cee2c9ebf34a63adac89e61328187757b5a97a9027d36cf5",
+        "tested_head": "a8361087ba80b339c2646b292a03e700ded0d675",
+        "kind": "cpu_live_post_reset_R0_owner",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "experiment_code_config_sha256": "287586d40952b0cf4e0241bf16cda116193b7b66a4b64dfa14728fc24eeaa1f9",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-live-r0-reset-preparation.md",
+        "report_source_commit": "6723e225d9c409050f1378c84b8d6339b6943c43"
+      }
+    },
+    "flex.f7-live-r0-reset-native": {
+      "title": "真实耦合Reset与原R0同进程234步原生诊断",
+      "executor": "native_bounded",
+      "status": "blocked",
+      "dependencies": [
+        "flex.f7-live-r0-reset-cpu",
+        "flex.f7-native-parameter-task-native"
+      ],
+      "dependency_scopes": {
+        "flex.f7-native-parameter-task-native": {
+          "scope": "exact_2_setup_plus_16_native_parameter_task_endpoints_only",
+          "native": true
+        }
+      },
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/live_r0_reset_native_v1.json",
+      "evidence_scope": "actual_coupled_reset_then_live_original_R0_observer_234_steps_only",
+      "tests": [
+        "tests/test_live_r0_native_worker.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_live_r0_work_packages.py",
+      "reason": "新冻结运行入口；绑定本轮站立授权并检查单实例资源后可执行一次234总步/180秒/0PPO。旧原生预算不复用。"
     }
   },
   "execution_target": {
