@@ -20447,6 +20447,54 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 124,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_deformx_pair_observations_v2.py",
+        "tests/test_complete_pair_capture.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_dh116_flexible_pair_contact_diagnostics.py",
+        "tests/test_deformable_pad_region.py",
+        "tests/test_deformx_mesh_observations_preparation.py"
+      ],
+      "log_sha256": "110f9704b9aa618c98792aa7740b1e0a00cada439a5fb7c9303145975035897c",
+      "tested_head": "197e14e92747d69efbf9606632e149a047300698",
+      "qualification_scope": "pair_v2_cpu_consumer_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "positive_contact_qualified": false,
+      "negative_contact_qualified": false,
+      "ppo_updates": 0,
+      "new_physics_steps": 0,
+      "backend_sha256": "8817010163946945495c987923d11f3ade4fbd52482a83bbdd48f017d3149340",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-native-pair-v2-consumer-cpu.md",
+      "report_source_commit": "e4a3654160eb3beb4ba64fc0cfa92494d3888b61",
+      "package": "flex.f8-native-pair-v2-consumer-cpu",
+      "commit": "20599ea285b857ff0bb90a67612639d2a4971c83",
+      "parent": "197e14e92747d69efbf9606632e149a047300698",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-native-pair-v2-consumer-cpu.md",
+        "src/go2_pvcnn/control/dh116/tabletop_deformx_pair_observations_v2.py",
+        "tests/test_deformx_pair_observations_v2.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
