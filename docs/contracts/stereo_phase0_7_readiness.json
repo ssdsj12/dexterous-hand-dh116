@@ -18861,6 +18861,35 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-approach-control-composer.md",
       "report_source_commit": "d5f6a624b7a46bbaba5bb5b68940eb91ebd658f1"
+    },
+    "flex.f8-pinch-fast-evidence-prep-cpu": {
+      "passed": 34,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_pinch_fast_evidence_worker.py",
+        "tests/test_physical_evidence_encoding.py",
+        "tests/test_mesh_reset_numeric_worker.py",
+        "tests/test_dh116_dual_hand_evidence_journal.py"
+      ],
+      "log_sha256": "a81d106d964a38de7c4426b207a8a6dd89380a4cc38f44637acb81539580b78c",
+      "tested_head": "20879a3bb07f865e2de4049713405bc3ca25955d",
+      "qualification_scope": "frozen_byte_equivalent_pinch_worker_cpu_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "ppo_updates": 0,
+      "new_physics_steps": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-pinch-fast-evidence-native-recipe.md",
+      "report_source_commit": "ff1ea51736dfefeab371f3b14d234d467e1fde0c"
     }
   }
 }
