@@ -1,3 +1,7 @@
+## 2026-11-14 — 原安全投影Pinch单次234步原生诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-original-projected-pinch-native.md)。
+
 ## 2026-11-14 — 原安全投影约束下的Pinch独立原生配方
 
 原safe_z不变，新增独立目标合同、source重算、相邻applied offset连续性、完整/终止owner和worker门控。234 SDK步/0PPO/180秒单次配方准备；本包原生0，Teacher未准入。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-14-original-projected-pinch-preparation.md)
