@@ -15699,6 +15699,57 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 58,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_tripod_tracking_envelope.py",
+        "tests/test_tripod_fixed_orientation.py",
+        "tests/test_tripod_sdk_path.py",
+        "tests/test_tripod_fixed_root_path.py",
+        "tests/test_tripod_native_tracking_audit.py"
+      ],
+      "log_sha256": "71c7f36ad73e172e76db7acf6c4d30ddc8a1152919fe1d003d216c4d529a9483",
+      "tested_head": "2b72102f8fa3d04efba7d5f48491c8736e0633f1",
+      "kind": "conditional_kinematic_envelope_cpu_only",
+      "result_sha256": "85c84a028f36a094719d2c5f27967233fef5784f5ee5cbc63456597059ff30a9",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualified": false,
+      "actual_tracking_qualified": false,
+      "conditional_envelope_proved": true,
+      "verified_boxes": 1608,
+      "sampled_states": 928,
+      "rejected_sampled_states": 0,
+      "contact_established": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-tripod-conditional-tracking-envelope.md",
+      "report_source_commit": "f3eca92b35372855b65580682c1aceefde36bf1a",
+      "package": "flex.f8-tripod-conditional-envelope-cpu",
+      "commit": "0f0ad5d9c41dd4249cec719e011ddfb22b6abdfd",
+      "parent": "2b72102f8fa3d04efba7d5f48491c8736e0633f1",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_tasks/flexible_tripod_tracking_margin_cpu_v1.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-tripod-conditional-tracking-envelope.md",
+        "scripts/certify_dh116_tripod_tracking_envelope.py",
+        "tests/test_tripod_tracking_envelope.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
