@@ -20638,6 +20638,52 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 98,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_deformx_pair_observations_v2.py",
+        "tests/test_complete_pair_capture.py",
+        "tests/test_dh116_native_parameter_task_worker.py"
+      ],
+      "log_sha256": "e45570b9a4eb4056c4350c05577b8bad458ea92282dd672d8616960ded094a3c",
+      "tested_head": "fe581ebbff2b1986ccec16c0b9398841df328e24",
+      "qualification_scope": "cpu_owner_mesh_reset_and_same_row_sources_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "ppo_updates": 0,
+      "new_physics_steps": 0,
+      "task_regression_passed": 137,
+      "full_cpu_owner_steps": 234,
+      "full_cpu_owner_log_seconds": 444.11,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-mesh-reset-health-owner-preparation.md",
+      "report_source_commit": "bff9d22d3c6ef5e2c9a579eeedc44b894e2a36b3",
+      "package": "flex.f8-mesh-reset-health-owner-cpu",
+      "commit": "12868615b49e51633e064ab67121328241c511d1",
+      "parent": "fe581ebbff2b1986ccec16c0b9398841df328e24",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-mesh-reset-health-owner-preparation.md",
+        "scripts/prepare_dh116_mesh_reset_health_projected_pinch.py",
+        "src/go2_pvcnn/control/dh116/tabletop_mesh_observation_evidence.py",
+        "tests/test_mesh_reset_health_owner.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
