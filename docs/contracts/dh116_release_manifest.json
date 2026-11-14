@@ -19926,6 +19926,53 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_measured_left_pinch_candidates.py",
+        "tests/test_projected_pinch_tracking_decomposition.py"
+      ],
+      "log_sha256": "b87b1ef69383c439de3636eb044f4bd08a6765ed07fe11f63b4c35ff544da425",
+      "tested_head": "3dcb25096dc243223fdefad82f17a4df0eaa70d5",
+      "qualification_scope": "moving_left_pinch_empirical_cpu_tool_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "candidate_status": "blocked",
+      "candidate_empirical_endpoint_passed": false,
+      "search_evaluations": 600,
+      "search_seconds": 43.851585480966605,
+      "search_result_sha256": "596a7c94b33ea9ab3c1472cddb45152c17a52ff7d1d5cdceeafa99cc62ec0fb5",
+      "source_receipt_sha256": "04ebfe2460b6366960d87cda6f36200f503072e4fdfa2abffd25bc8dfcf775c3",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-moving-left-pinch-candidate-search.md",
+      "report_source_commit": "df8c1a1a2f01f483d5f0b037e258a29218855932",
+      "package": "flex.f8-moving-left-pinch-candidates-cpu",
+      "commit": "c91f4144254945d3510e4a749dd0d1c1f0941182",
+      "parent": "3dcb25096dc243223fdefad82f17a4df0eaa70d5",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-moving-left-pinch-candidate-search.md",
+        "scripts/solve_dh116_measured_left_pinch.py",
+        "tests/test_measured_left_pinch_candidates.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
