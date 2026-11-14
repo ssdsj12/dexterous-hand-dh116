@@ -1,3 +1,7 @@
+## 2026-11-14 — 固定腕姿Tripod与实测滞后离线筛选
+
+理想连续路径65点/32区间通过，但928个滞后角点24项失败，finger13最差间距下界-29.20um；候选不进入原生。新增CPU配置/代码/回归，原动作/物理/保护不变，无新增原生或PPO。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-fixed-orientation-screen.md)
+
 ## 2026-11-14 — Tripod终止前缀与实际腕旋转滞后归因
 
 只读197条原生测量，SDK199因左finger22非目标间距保护终止；app.close返回且无SIGSEGV，但outer1，仍blocked。实测FK对齐后离线替换定位腕旋转滞后，未改保护、未重跑、未增加PPO。 Ubuntu CPU 回归 59 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-native-tracking-failure.md)

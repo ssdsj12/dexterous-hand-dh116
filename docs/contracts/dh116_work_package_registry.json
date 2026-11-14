@@ -5656,7 +5656,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "Native SDK199 terminal: left source finger22 separation lower -14.889um; wrist rotation tracking lag. No hand contact/Teacher admission. New tracking-aware path required; consumed recipe not retryable."
+      "reason": "Fixed-orientation CPU candidate nominal proof passes, but24/928 lag states fail source finger13 (-29.20um). Candidate/native/Teacher not admitted. Next: original-bound geometry margin and tracking envelope; no consumed recipe retry."
     },
     "flex.f8-power": {
       "title": "Power 无相机 R0 特权 Teacher",
@@ -25549,6 +25549,82 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-14-tripod-native-tracking-failure.md",
         "report_source_commit": "c08d9c6a40f41128c348ef11bb38cdf4a3e54ded"
+      }
+    },
+    "flex.f8-tripod-fixed-orientation-screen": {
+      "title": "固定腕姿Tripod与实测滞后离线筛选",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-tripod-native-tracking-audit"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_tripod_fixed_orientation.py",
+          "tests/test_tripod_sdk_path.py",
+          "tests/test_tripod_fixed_root_path.py",
+          "tests/test_tripod_native_tracking_audit.py"
+        ],
+        "log_sha256": "fab3e36bfae2388289ccb22cea1c3c2b287e110ea528b793ed55c024830a864d",
+        "tested_head": "92b5b036604242a291cd1511593fa651ebed7b33",
+        "kind": "offline_fixed_orientation_candidate_screen",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "result_sha256": "b229203e1c18ca1bda3b1804e3f86e2bea5ce0022a107cabbe322b343c85d973",
+        "nominal_reference_proven": true,
+        "sampled_states": 928,
+        "rejected_states": 24,
+        "candidate_admitted": false,
+        "continuous_tracking_envelope_proven": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-tripod-fixed-orientation-screen.md",
+        "report_source_commit": "1212fa5de8b87124ae0095fe79157dcee882f161"
+      },
+      "last_result": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_tripod_fixed_orientation.py",
+          "tests/test_tripod_sdk_path.py",
+          "tests/test_tripod_fixed_root_path.py",
+          "tests/test_tripod_native_tracking_audit.py"
+        ],
+        "log_sha256": "fab3e36bfae2388289ccb22cea1c3c2b287e110ea528b793ed55c024830a864d",
+        "tested_head": "92b5b036604242a291cd1511593fa651ebed7b33",
+        "kind": "offline_fixed_orientation_candidate_screen",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "result_sha256": "b229203e1c18ca1bda3b1804e3f86e2bea5ce0022a107cabbe322b343c85d973",
+        "nominal_reference_proven": true,
+        "sampled_states": 928,
+        "rejected_states": 24,
+        "candidate_admitted": false,
+        "continuous_tracking_envelope_proven": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-tripod-fixed-orientation-screen.md",
+        "report_source_commit": "1212fa5de8b87124ae0095fe79157dcee882f161"
       }
     }
   },
