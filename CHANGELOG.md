@@ -1,3 +1,7 @@
+## 2026-11-14 — 每episode零步重提交原11个碰撞网格
+
+独立opt-in reset在原完整Reset后重新提交同11槽/原SDF/table/material，前后p/v/q/参数/时钟不变；第二episode同样覆盖，失败poison。修复原pending teleport覆盖与真实SDK浮点时间误拒；仅<=240步CPU资格，不授予长时PPO或原生mesh readback。旧源/模型/配方不变。 Ubuntu CPU 回归 78 项通过。[报告](docs/superpowers/reports/2026-11-14-zero-step-mesh-reset-rebuild.md)
+
 ## 2026-11-14 — 同钟数值健康getter与终止留证原生准备
 
 新增真实host getter/前后时钟/异常终止留行与外层CPU重放；37新+96既有CPU回归。旧234账本缺getter仍NA，未伪造0。已发现mesh Reset未生效，准备配置固定blocked，未注册新可运行原生配方，不重跑旧预算，0新原生/训练。 Ubuntu CPU 回归 133 项通过。[报告](docs/superpowers/reports/2026-11-14-health-getter-native-preparation.md)
