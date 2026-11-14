@@ -15595,6 +15595,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-r0-measurement-origin.md",
       "report_source_commit": "768a8106bc175523e2a9607739a8709bce77eb11"
+    },
+    "flex.f7-origin-r0-native-prep-cpu": {
+      "passed": 54,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_origin_r0_native.py",
+        "tests/test_r0_measurement_origin.py",
+        "tests/test_r0_origin_replay.py",
+        "tests/test_complete_pair_native_worker.py",
+        "tests/test_complete_pair_native_audit.py",
+        "tests/test_complete_pair_recipe_scope.py"
+      ],
+      "log_sha256": "977aefa77e8ea56424fc209616494f045874290169c5bf7d98d8a4d827922a24",
+      "tested_head": "b26f2ebf37b52f8c533e718f564f17f56f58b0c5",
+      "kind": "isolated_origin_native_preparation",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "cpu_passed": 54,
+      "experiment_code_config_sha256": "a60f8bbd4746d9a81112c5300ebf63bf79b05b7f01ed61d2e421fa070d8e81d0",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-r0-origin-native-preparation.md",
+      "report_source_commit": "30bceb4734b2eba5df81ba098299a0f8bd431673"
     }
   }
 }

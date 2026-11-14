@@ -1,3 +1,7 @@
+## 2026-11-14 — 稳定来源R0独立原生入口与退出后核验
+
+54项CPU回归通过；完整Python owner232样本/29控制只为CPU证据。GPU3单实例1env0PPO234总步180秒新配方，不复用已耗预算，不提前授予原生/Teacher资格。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-origin-native-preparation.md)
+
 ## 2026-11-14 — R0固定测量来源与逐帧证据分离
 
 独立opt-in来源适配；保留每帧原始来源和SHA，未知保持未知。232实际历史物理样本/29结算数值、有效性、保护及动作全等；重放序列化92.883MB→11.078MB。CPU耗时28.961→30.348秒，没有证明原生提速；Teacher仍blocked。 Ubuntu CPU 回归 162 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-measurement-origin.md)

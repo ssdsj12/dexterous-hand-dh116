@@ -28768,6 +28768,114 @@
         "report": "docs/superpowers/reports/2026-11-14-r0-measurement-origin.md",
         "report_source_commit": "768a8106bc175523e2a9607739a8709bce77eb11"
       }
+    },
+    "flex.f7-origin-r0-native-prep-cpu": {
+      "title": "稳定来源R0独立原生入口与退出后核验",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-r0-measurement-origin-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 54,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_origin_r0_native.py",
+          "tests/test_r0_measurement_origin.py",
+          "tests/test_r0_origin_replay.py",
+          "tests/test_complete_pair_native_worker.py",
+          "tests/test_complete_pair_native_audit.py",
+          "tests/test_complete_pair_recipe_scope.py"
+        ],
+        "log_sha256": "977aefa77e8ea56424fc209616494f045874290169c5bf7d98d8a4d827922a24",
+        "tested_head": "b26f2ebf37b52f8c533e718f564f17f56f58b0c5",
+        "kind": "isolated_origin_native_preparation",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "cpu_passed": 54,
+        "experiment_code_config_sha256": "a60f8bbd4746d9a81112c5300ebf63bf79b05b7f01ed61d2e421fa070d8e81d0",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-r0-origin-native-preparation.md",
+        "report_source_commit": "30bceb4734b2eba5df81ba098299a0f8bd431673"
+      },
+      "last_result": {
+        "passed": 54,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_origin_r0_native.py",
+          "tests/test_r0_measurement_origin.py",
+          "tests/test_r0_origin_replay.py",
+          "tests/test_complete_pair_native_worker.py",
+          "tests/test_complete_pair_native_audit.py",
+          "tests/test_complete_pair_recipe_scope.py"
+        ],
+        "log_sha256": "977aefa77e8ea56424fc209616494f045874290169c5bf7d98d8a4d827922a24",
+        "tested_head": "b26f2ebf37b52f8c533e718f564f17f56f58b0c5",
+        "kind": "isolated_origin_native_preparation",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "cpu_passed": 54,
+        "experiment_code_config_sha256": "a60f8bbd4746d9a81112c5300ebf63bf79b05b7f01ed61d2e421fa070d8e81d0",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-r0-origin-native-preparation.md",
+        "report_source_commit": "30bceb4734b2eba5df81ba098299a0f8bd431673"
+      }
+    },
+    "flex.f7-origin-r0-native": {
+      "title": "稳定测量来源完整接触R0234步原生诊断",
+      "executor": "native_bounded",
+      "status": "blocked",
+      "dependencies": [
+        "flex.f7-origin-r0-native-prep-cpu",
+        "flex.f7-native-parameter-task-native",
+        "flex.f7-fast-r0-reset-native"
+      ],
+      "dependency_scopes": {
+        "flex.f7-native-parameter-task-native": {
+          "scope": "exact_2_setup_plus_16_native_parameter_task_endpoints_only",
+          "native": true
+        },
+        "flex.f7-fast-r0-reset-native": {
+          "scope": "actual_coupled_reset_live_R0_byte_exact_codec_234_steps_only",
+          "native": true
+        }
+      },
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/origin_r0_native_v1.json",
+      "evidence_scope": "stable_measurement_origin_complete_atomic_R0_234_steps_only",
+      "tests": [
+        "tests/test_origin_r0_native.py",
+        "tests/test_r0_measurement_origin.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_origin_work_packages.py",
+      "reason": "来源身份与逐帧证据分离的新独立配方；Windows发布后绑定实际指纹，站立授权一次234步180秒，旧失败配方不重跑。"
     }
   },
   "execution_target": {
