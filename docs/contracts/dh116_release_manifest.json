@@ -21448,6 +21448,51 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 34,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_pinch_fast_evidence_worker.py",
+        "tests/test_physical_evidence_encoding.py",
+        "tests/test_mesh_reset_numeric_worker.py",
+        "tests/test_dh116_dual_hand_evidence_journal.py"
+      ],
+      "log_sha256": "a81d106d964a38de7c4426b207a8a6dd89380a4cc38f44637acb81539580b78c",
+      "tested_head": "20879a3bb07f865e2de4049713405bc3ca25955d",
+      "qualification_scope": "frozen_byte_equivalent_pinch_worker_cpu_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "ppo_updates": 0,
+      "new_physics_steps": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-pinch-fast-evidence-native-recipe.md",
+      "report_source_commit": "ff1ea51736dfefeab371f3b14d234d467e1fde0c",
+      "package": "flex.f8-pinch-fast-evidence-prep-cpu",
+      "commit": "992a0155a1824d688f0b638792f883525aeb1499",
+      "parent": "20879a3bb07f865e2de4049713405bc3ca25955d",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_execution/deformx_pinch_fast_evidence_v3.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-pinch-fast-evidence-native-recipe.md",
+        "scripts/run_dh116_pinch_fast_evidence_work_packages.py",
+        "scripts/verify_dh116_pinch_fast_evidence.py",
+        "tests/test_pinch_fast_evidence_worker.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
