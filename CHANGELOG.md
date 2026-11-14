@@ -1,3 +1,7 @@
+## 2026-11-14 — 右手原有效指腹234步原生接触诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-effective-right-pinch-native.md)。
+
 ## 2026-11-14 — 右手原有效指腹路径原生入口与全步CPU审计
 
 独立右手234步配方：原有效指腹判定逐480Hz/rod子步保存；原关节、桌面、非目标和生命周期保护保持。修正CPU夹具未执行carriage FK及只读资产误入发布名单。60项工作树CPU通过；尚未新原生执行或取得Teacher资格，非目标静态余量仅1.528um。 Ubuntu CPU 回归 60 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-right-pinch-native-preparation.md)
