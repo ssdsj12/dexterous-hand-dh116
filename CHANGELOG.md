@@ -1,3 +1,7 @@
+## 2026-11-14 — Tripod条件跟踪域与完整几何覆盖证明
+
+X+0.05mm/Z+0.15mm候选928/928离线状态通过；3215查询、1608连续子域通过独立覆盖核验。终点3指SDF仍正间距，未接触/未原生/未Teacher；保留原保护及10um规划余量。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-conditional-tracking-envelope.md)
+
 ## 2026-11-14 — 固定腕姿Tripod与实测滞后离线筛选
 
 理想连续路径65点/32区间通过，但928个滞后角点24项失败，finger13最差间距下界-29.20um；候选不进入原生。新增CPU配置/代码/回归，原动作/物理/保护不变，无新增原生或PPO。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-fixed-orientation-screen.md)

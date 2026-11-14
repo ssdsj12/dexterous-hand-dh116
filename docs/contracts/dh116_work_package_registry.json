@@ -5656,7 +5656,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "Fixed-orientation CPU candidate nominal proof passes, but24/928 lag states fail source finger13 (-29.20um). Candidate/native/Teacher not admitted. Next: original-bound geometry margin and tracking envelope; no consumed recipe retry."
+      "reason": "Conditional fixed-orientation tracking envelope independently proved1608boxes,928lag samples pass. Endpoint SDF +101.33/+86.23/+53.84um; no contact/native/Teacher qualification. Next closed-contact target under unchanged runtime guards; no consumed recipe retry."
     },
     "flex.f8-power": {
       "title": "Power 无相机 R0 特权 Teacher",
@@ -25625,6 +25625,86 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-14-tripod-fixed-orientation-screen.md",
         "report_source_commit": "1212fa5de8b87124ae0095fe79157dcee882f161"
+      }
+    },
+    "flex.f8-tripod-conditional-envelope-cpu": {
+      "title": "Tripod条件跟踪域与完整几何覆盖证明",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-tripod-fixed-orientation-screen"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 58,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_tripod_tracking_envelope.py",
+          "tests/test_tripod_fixed_orientation.py",
+          "tests/test_tripod_sdk_path.py",
+          "tests/test_tripod_fixed_root_path.py",
+          "tests/test_tripod_native_tracking_audit.py"
+        ],
+        "log_sha256": "71c7f36ad73e172e76db7acf6c4d30ddc8a1152919fe1d003d216c4d529a9483",
+        "tested_head": "2b72102f8fa3d04efba7d5f48491c8736e0633f1",
+        "kind": "conditional_kinematic_envelope_cpu_only",
+        "result_sha256": "85c84a028f36a094719d2c5f27967233fef5784f5ee5cbc63456597059ff30a9",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "actual_tracking_qualified": false,
+        "conditional_envelope_proved": true,
+        "verified_boxes": 1608,
+        "sampled_states": 928,
+        "rejected_sampled_states": 0,
+        "contact_established": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-tripod-conditional-tracking-envelope.md",
+        "report_source_commit": "f3eca92b35372855b65580682c1aceefde36bf1a"
+      },
+      "last_result": {
+        "passed": 58,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_tripod_tracking_envelope.py",
+          "tests/test_tripod_fixed_orientation.py",
+          "tests/test_tripod_sdk_path.py",
+          "tests/test_tripod_fixed_root_path.py",
+          "tests/test_tripod_native_tracking_audit.py"
+        ],
+        "log_sha256": "71c7f36ad73e172e76db7acf6c4d30ddc8a1152919fe1d003d216c4d529a9483",
+        "tested_head": "2b72102f8fa3d04efba7d5f48491c8736e0633f1",
+        "kind": "conditional_kinematic_envelope_cpu_only",
+        "result_sha256": "85c84a028f36a094719d2c5f27967233fef5784f5ee5cbc63456597059ff30a9",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "native_qualified": false,
+        "actual_tracking_qualified": false,
+        "conditional_envelope_proved": true,
+        "verified_boxes": 1608,
+        "sampled_states": 928,
+        "rejected_sampled_states": 0,
+        "contact_established": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-tripod-conditional-tracking-envelope.md",
+        "report_source_commit": "f3eca92b35372855b65580682c1aceefde36bf1a"
       }
     }
   },
