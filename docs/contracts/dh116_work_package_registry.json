@@ -34810,6 +34810,72 @@
         "report": "docs/superpowers/reports/2026-11-14-readonly-control-cost.md",
         "report_source_commit": "1b53d665057c6716c921d92ad082f4a25328c6e4"
       }
+    },
+    "flex.f8-native-pair-actual-pose-atlas-cpu": {
+      "title": "真实接触姿态下的原指腹区域判别",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-native-pair-v2-consumer-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 105,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_native_pair_atlas.py",
+          "tests/test_deformx_pair_observations_v2.py",
+          "tests/test_complete_pair_capture.py",
+          "tests/test_deformable_pad_region.py"
+        ],
+        "log_sha256": "258410566341ab976933737228c2e7d1be614f7b48d9619edc94f69a4cf7118f",
+        "tested_head": "4686db568eb9756530dd5635c7e11fa93f4cb9ab",
+        "qualification_scope": "cpu_actual_pair_pose_transform_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "ppo_updates": 0,
+        "new_physics_steps": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-native-pair-actual-pose-atlas-cpu.md",
+        "report_source_commit": "71cd900f5237917ca59f29dd5239db6d4bf93a3b"
+      },
+      "last_result": {
+        "passed": 105,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_native_pair_atlas.py",
+          "tests/test_deformx_pair_observations_v2.py",
+          "tests/test_complete_pair_capture.py",
+          "tests/test_deformable_pad_region.py"
+        ],
+        "log_sha256": "258410566341ab976933737228c2e7d1be614f7b48d9619edc94f69a4cf7118f",
+        "tested_head": "4686db568eb9756530dd5635c7e11fa93f4cb9ab",
+        "qualification_scope": "cpu_actual_pair_pose_transform_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "ppo_updates": 0,
+        "new_physics_steps": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-native-pair-actual-pose-atlas-cpu.md",
+        "report_source_commit": "71cd900f5237917ca59f29dd5239db6d4bf93a3b"
+      }
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## 2026-11-14 — 真实接触姿态下的原指腹区域判别
+
+保持原1mm/.8/椭圆判据，使用每条contact记录的实际mesh姿态转换原指腹atlas；区分native gap/normal force与平面距离/dot投影，桌面不计指腹。此包仅CPU合同，不授予接触、支撑、滑移或Teacher资格。 Ubuntu CPU 回归 105 项通过。[报告](docs/superpowers/reports/2026-11-14-native-pair-actual-pose-atlas-cpu.md)
+
 ## 2026-11-14 — 原控制代价逐物理行只读复算
 
 固定14个原source，逐480Hz实际行重算原time/action-rate/完整17DOF速度代价；保留混合单位数值语义、首窗上一动作NA与Tripod5行terminal。只读Pinch232/Tripod197原账本，Power缺失保持NA；不将负代价当抓取目标，不填原柔性十项系数，training_reward仍null。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-14-readonly-control-cost.md)
