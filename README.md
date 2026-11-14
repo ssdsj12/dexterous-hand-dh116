@@ -1,3 +1,7 @@
+## 2026-11-14 — 实际闭合左手数据约束候选与失败证据
+
+CPU来源/候选工具通过；600次查询候选仍失败，桌面安全净空、非目标指节和原指腹区域存在未解决冲突。不生成新原生配方，不改原动作/关节/成功标准。 Ubuntu CPU 回归 14 项通过。[报告](docs/superpowers/reports/2026-11-14-moving-left-pinch-candidate-search.md)
+
 ## 2026-11-14 — Pinch同钟SDK投影、跟踪与实际杆几何分解
 
 原计划左食指仅临界通过，原安全投影及实测杆变形改变区域位置。区分请求、SDK与实际跟踪；24个同episode边界CPU几何分解，不作因果或抓取成功声明。 Ubuntu CPU 回归 15 项通过。[报告](docs/superpowers/reports/2026-11-14-projected-pinch-tracking-decomposition.md)

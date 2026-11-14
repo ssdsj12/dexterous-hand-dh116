@@ -5647,7 +5647,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "New right original-region approach:234SDKsteps naturalexit0 in154.725s, guards passed, all2129 actualpairs outside originalellipse. Static planned0.95 changes to1.006/1.018 with actual hand poses,1.039/1.034 with actualrod. Need robust target/control and actual-source state/R0; no positive grasp/Teacher qualification. Do not rerun consumed recipe."
+      "reason": "Latest original-projection Pinch diagnostic completed234SDKsteps/163.4967s/natural0; left index raw428/original-region0, right both-region276solver windows, bilateral0. Moving-left measured-source CPU600-query candidate still fails original table/non-target/region guards (worst margin -0.011208mm), no new native recipe. Teacher preparation continues independently: full R0 stability/health source and training reward eligibility required; no positive-grasp prerequisite imposed for known-negative PPO learning."
     },
     "flex.f8-tripod": {
       "title": "Tripod 无相机 R0 特权 Teacher",
@@ -33461,6 +33461,80 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-14-projected-pinch-tracking-decomposition.md",
         "report_source_commit": "910dcf12eb31ba1b439ac82f523bd1ab8155694c"
+      }
+    },
+    "flex.f8-moving-left-pinch-candidates-cpu": {
+      "title": "实际闭合左手数据约束候选与失败证据",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-projected-pinch-tracking-decomposition-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 14,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_measured_left_pinch_candidates.py",
+          "tests/test_projected_pinch_tracking_decomposition.py"
+        ],
+        "log_sha256": "b87b1ef69383c439de3636eb044f4bd08a6765ed07fe11f63b4c35ff544da425",
+        "tested_head": "3dcb25096dc243223fdefad82f17a4df0eaa70d5",
+        "qualification_scope": "moving_left_pinch_empirical_cpu_tool_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "candidate_status": "blocked",
+        "candidate_empirical_endpoint_passed": false,
+        "search_evaluations": 600,
+        "search_seconds": 43.851585480966605,
+        "search_result_sha256": "596a7c94b33ea9ab3c1472cddb45152c17a52ff7d1d5cdceeafa99cc62ec0fb5",
+        "source_receipt_sha256": "04ebfe2460b6366960d87cda6f36200f503072e4fdfa2abffd25bc8dfcf775c3",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-moving-left-pinch-candidate-search.md",
+        "report_source_commit": "df8c1a1a2f01f483d5f0b037e258a29218855932"
+      },
+      "last_result": {
+        "passed": 14,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_measured_left_pinch_candidates.py",
+          "tests/test_projected_pinch_tracking_decomposition.py"
+        ],
+        "log_sha256": "b87b1ef69383c439de3636eb044f4bd08a6765ed07fe11f63b4c35ff544da425",
+        "tested_head": "3dcb25096dc243223fdefad82f17a4df0eaa70d5",
+        "qualification_scope": "moving_left_pinch_empirical_cpu_tool_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "candidate_status": "blocked",
+        "candidate_empirical_endpoint_passed": false,
+        "search_evaluations": 600,
+        "search_seconds": 43.851585480966605,
+        "search_result_sha256": "596a7c94b33ea9ab3c1472cddb45152c17a52ff7d1d5cdceeafa99cc62ec0fb5",
+        "source_receipt_sha256": "04ebfe2460b6366960d87cda6f36200f503072e4fdfa2abffd25bc8dfcf775c3",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-moving-left-pinch-candidate-search.md",
+        "report_source_commit": "df8c1a1a2f01f483d5f0b037e258a29218855932"
       }
     }
   },
