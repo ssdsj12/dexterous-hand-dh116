@@ -1,3 +1,7 @@
+## 2026-11-14 — 冻结 Pinch CUDA 数值 Reset 复验
+
+修正仅提供 CUDA array interface 的包装对象被当成 NumPy 数值的错误。已消耗旧配方指纹保持原值。冻结相同 234 步、180 秒、0 PPO 的新配方，并要求外层复核独立数值快照。 Ubuntu CPU 回归 50 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-numeric-reset-native-recipe.md)
+
 ## 2026-11-14 — 复制 CUDA 实际杆状态并保留严格 Reset 比较
 
 修复仅提供 CUDA array interface 的视图被哈希为 Python 对象地址。数值复制和诊断仅在新入口启用。原严格比较继续分辨真实状态、材料参数及带符号零的变化，失败仍保留数值与字段证据。 Ubuntu CPU 回归 130 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-reset-numeric-state-copy.md)

@@ -35625,6 +35625,101 @@
         "report": "docs/superpowers/reports/2026-11-14-mesh-reset-numeric-state-copy.md",
         "report_source_commit": "10106a2b9a3bb7b032e0198ca559af730062fc44"
       }
+    },
+    "flex.f8-mesh-reset-numeric-pinch-prep-cpu": {
+      "title": "冻结 Pinch CUDA 数值 Reset 复验",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-mesh-reset-numeric-state-cpu",
+        "flex.f8-mesh-reset-health-projected-pinch-prep-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 50,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_mesh_reset_numeric_worker.py",
+          "tests/test_mesh_reset_numeric_state.py",
+          "tests/test_mesh_reset_health_worker.py"
+        ],
+        "log_sha256": "eb1606b4e29ebf83ea5d12d8cf0d249eae71018587260848a4704867b77ed314",
+        "tested_head": "3c38c8c47aef47cbe64952756a8cc4e494b7608f",
+        "qualification_scope": "frozen_numeric_reset_worker_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "ppo_updates": 0,
+        "new_physics_steps": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-pinch-numeric-reset-native-recipe.md",
+        "report_source_commit": "650022033067487b8614ca106f7199f4de692048"
+      },
+      "last_result": {
+        "passed": 50,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_mesh_reset_numeric_worker.py",
+          "tests/test_mesh_reset_numeric_state.py",
+          "tests/test_mesh_reset_health_worker.py"
+        ],
+        "log_sha256": "eb1606b4e29ebf83ea5d12d8cf0d249eae71018587260848a4704867b77ed314",
+        "tested_head": "3c38c8c47aef47cbe64952756a8cc4e494b7608f",
+        "qualification_scope": "frozen_numeric_reset_worker_cpu_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "ppo_updates": 0,
+        "new_physics_steps": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-pinch-numeric-reset-native-recipe.md",
+        "report_source_commit": "650022033067487b8614ca106f7199f4de692048"
+      }
+    },
+    "flex.f8-mesh-reset-numeric-pinch-native": {
+      "title": "Pinch 数值 Reset 与逐接触姿态原生复验",
+      "executor": "native_bounded",
+      "dependencies": [
+        "flex.f8-mesh-reset-numeric-pinch-prep-cpu",
+        "flex.f7-native-parameter-task-native"
+      ],
+      "dependency_scopes": {
+        "flex.f7-native-parameter-task-native": {
+          "scope": "exact_2_setup_plus_16_native_parameter_task_endpoints_only",
+          "native": true
+        }
+      },
+      "command_spec": "configs/dh116_execution/deformx_mesh_reset_numeric_pinch_v2.json",
+      "evidence_scope": "numeric_mesh_reset_pair_v2_health_2_setup_232_diagnostic_only",
+      "status": "pending",
+      "tests": [
+        "tests/test_mesh_reset_numeric_worker.py",
+        "tests/test_mesh_reset_numeric_state.py",
+        "tests/test_mesh_reset_health_worker.py"
+      ],
+      "timeout_seconds": 300,
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "scheduler_entrypoint": "scripts/run_dh116_mesh_reset_numeric_pinch_work_packages.py"
     }
   },
   "execution_target": {
