@@ -33536,6 +33536,102 @@
         "report": "docs/superpowers/reports/2026-11-14-moving-left-pinch-candidate-search.md",
         "report_source_commit": "df8c1a1a2f01f483d5f0b037e258a29218855932"
       }
+    },
+    "flex.f8-r0-health-separation-cpu": {
+      "title": "R0数值健康与Hold运动分离",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-projected-pinch-native-contact-audit-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 155,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_r0_health_separation.py",
+          "tests/test_r0_numerical_health_source.py",
+          "tests/test_r0_hold_necessary_domain.py",
+          "tests/test_dh116_r0_applicability.py",
+          "tests/test_dh116_r0_applicability_history.py",
+          "tests/test_dh116_deformable_grasp_task.py",
+          "tests/test_dh116_deformable_control_step.py",
+          "tests/test_flexible_parameter_readback.py"
+        ],
+        "log_sha256": "850ea8a9be342c6dea68939703d3dff4968868c7f954a2c6513d923ff7db9985",
+        "tested_head": "0e042a95260eb10a9c8e916019af1724fc41bd88",
+        "qualification_scope": "r0_health_separation_cpu_and_frozen_ledger_replay_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "health_source_sha256": "50ddb2b2f8b4491765df7651ee3c0cfaa58b9a54ea883e5d5b5888be913f6285",
+        "actual_solver_error_missing_in_historical_ledger": true,
+        "training_reward_enabled": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-r0-health-separation-cpu.md",
+        "report_source_commit": "ffd41d490f4146652224da5019bd7ec99615abc5"
+      },
+      "last_result": {
+        "passed": 155,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_r0_health_separation.py",
+          "tests/test_r0_numerical_health_source.py",
+          "tests/test_r0_hold_necessary_domain.py",
+          "tests/test_dh116_r0_applicability.py",
+          "tests/test_dh116_r0_applicability_history.py",
+          "tests/test_dh116_deformable_grasp_task.py",
+          "tests/test_dh116_deformable_control_step.py",
+          "tests/test_flexible_parameter_readback.py"
+        ],
+        "log_sha256": "850ea8a9be342c6dea68939703d3dff4968868c7f954a2c6513d923ff7db9985",
+        "tested_head": "0e042a95260eb10a9c8e916019af1724fc41bd88",
+        "qualification_scope": "r0_health_separation_cpu_and_frozen_ledger_replay_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "health_source_sha256": "50ddb2b2f8b4491765df7651ee3c0cfaa58b9a54ea883e5d5b5888be913f6285",
+        "actual_solver_error_missing_in_historical_ledger": true,
+        "training_reward_enabled": false,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-r0-health-separation-cpu.md",
+        "report_source_commit": "ffd41d490f4146652224da5019bd7ec99615abc5"
+      }
+    },
+    "flex.f8-r0-health-getter-native": {
+      "title": "实际同钟RopeBatch错误来源与R0数值健康诊断",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-r0-health-separation-cpu",
+        "flex.f8-original-projected-pinch-native"
+      ],
+      "status": "blocked",
+      "reason": "独立observer/worker配方待冻结；旧234步已消费，不能复用；本包未创建原生资格。",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      }
     }
   },
   "execution_target": {

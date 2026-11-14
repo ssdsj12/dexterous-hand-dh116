@@ -1,3 +1,7 @@
+## 2026-11-14 — R0数值健康与Hold运动分离
+
+新独立opt-in health/constraint/hold合同，真实缺getter仍NA，原终止与损坏来源严格保留；正常负接触不要求先满足成功Hold。实际SDK3/176/234历史CPU回放，不新增原生或训练。正式系数仍null，Teacher未准入。 Ubuntu CPU 回归 155 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-health-separation-cpu.md)
+
 ## 2026-11-14 — 实际闭合左手数据约束候选与失败证据
 
 CPU来源/候选工具通过；600次查询候选仍失败，桌面安全净空、非目标指节和原指腹区域存在未解决冲突。不生成新原生配方，不改原动作/关节/成功标准。 Ubuntu CPU 回归 14 项通过。[报告](docs/superpowers/reports/2026-11-14-moving-left-pinch-candidate-search.md)
