@@ -1,3 +1,7 @@
+## 2026-11-14 — 完整账本时钟投影与原验证器等价回放
+
+154项CPU通过；同一232行实际账本ABBA完整审计输出SHA一致，CPU均值32.116s→28.156s。没有新物理/原生资格，不据此重跑超时配方。 Ubuntu CPU 回归 154 项通过。[报告](docs/superpowers/reports/2026-11-14-owned-clock-projection.md)
+
 ## 2026-11-14 — 当前有效右侧几何与真实Reset的R0接近测量
 
 69 CPU测试通过；232历史样本提供左右实际离散SDF接近距离，原生预算失败资格不晋级；原R0首窗口approach8/8有效，hold/slip/instability仍未知，Teacher仍blocked。右间距0不等于有效接触或抓取。 Ubuntu CPU 回归 69 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-right-r0-approach-source.md)

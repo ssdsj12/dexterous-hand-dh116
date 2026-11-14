@@ -15881,6 +15881,42 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-effective-right-r0-approach-source.md",
       "report_source_commit": "a4d290ed06156a8a6af6374926e74ce8bddc0607"
+    },
+    "flex.f7-owned-clock-projection-cpu": {
+      "passed": 154,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_owned_clock_projection.py",
+        "tests/test_dh116_bimanual_table_contacts.py",
+        "tests/test_dh116_bimanual_table_contacts_v2.py",
+        "tests/test_dh116_material_director_readback.py",
+        "tests/test_dh116_native_parameter_endpoints.py",
+        "tests/test_flexible_parameter_readback.py",
+        "tests/test_dh116_native_parameter_task.py"
+      ],
+      "log_sha256": "a21e661c8e2adae1b2779c749deb6fdc112e705aafe11201fe62b25b99ff1c4e",
+      "tested_head": "b91c55b11ed39a58e351f9c6c63de79e89330e49",
+      "kind": "clock_projection_ABBA_exact_full_audit",
+      "cpu_passed": 154,
+      "new_physics_steps": 0,
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "ppo_updates": 0,
+      "result_sha256": "0564b85d847e6c8a8cc5ce70610610a2ec964b2ea9bc62708771eb37daa94a53",
+      "physical_rows": 232,
+      "exact_result_match": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-owned-clock-projection.md",
+      "report_source_commit": "8edb3de37ab1f495dccc2c5174143573bafb7718"
     }
   }
 }
