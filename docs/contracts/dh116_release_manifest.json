@@ -20246,6 +20246,52 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 78,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_mesh_reset_order.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_dual_hand_episode.py"
+      ],
+      "log_sha256": "61fc7b5e653a623b54378a252a273c124e329daf75ff49f20abba97a15d909d9",
+      "tested_head": "242cb3aad511849df87bbad01868b2ac89cfc362",
+      "qualification_scope": "zero_step_original_mesh_reset_cpu_only_bounded_240",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "reset_mesh_pose_qualified": false,
+      "native_current_pose_readback_qualified": false,
+      "reset_source_sha256": "94394cd6a10c528422bda28f7ee8813587ba1ca970dff54d9eabcc41ab19b50a",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-zero-step-mesh-reset-rebuild.md",
+      "report_source_commit": "9a05f2adeb40d899f4dd09d935f49664054bd1fd",
+      "package": "flex.f7-zero-step-mesh-reset-rebuild-cpu",
+      "commit": "eff196fe0b89c1be8946619a0a3fcf5fc8750f78",
+      "parent": "242cb3aad511849df87bbad01868b2ac89cfc362",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-zero-step-mesh-reset-rebuild.md",
+        "src/go2_pvcnn/control/dh116/tabletop_mesh_reset_order.py",
+        "tests/test_mesh_reset_order.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
