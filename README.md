@@ -1,3 +1,7 @@
+## 2026-11-14 — 真实右Pinch区域接触与双侧未承托证据
+
+234步新原生诊断120.19秒自然退出0；退出后审计通过。587条右手pair落入原区域，两指连续0.047917秒；左手0，双侧0，仍非抓取/Teacher成功。本包仅重放冻结账本，新增物理步0。 Ubuntu CPU 回归 20 项通过。[报告](docs/superpowers/reports/2026-11-14-tracking-pinch-native-contact.md)
+
 ## 2026-11-14 — Tracking-aware Pinch 单次234步接触诊断
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-tracking-pinch-native.md)。
