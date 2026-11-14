@@ -1,3 +1,7 @@
+## 2026-11-14 — 真实耦合Reset与原R0同进程234步原生诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-live-r0-reset-native.md)。
+
 ## 2026-11-14 — 真实耦合Reset后原R0初始化及同钟观察器
 
 新增独立真实耦合Reset后初始化及逐物理步R0观察器，原物理动作和R0保持；弱引用清理、原账本先持久化、独立同钟/SHA退出审计。序数权重只作诊断，training_reward仍null；未启用离线hold扩展或开始PPO。新234步配方待发布后按站立授权单次执行。 Ubuntu CPU 回归 85 项通过。[报告](docs/superpowers/reports/2026-11-14-live-r0-reset-preparation.md)
