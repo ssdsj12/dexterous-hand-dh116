@@ -1,3 +1,7 @@
+## 2026-11-14 — 右手原生有效指腹失败的实测跟踪与杆位移分解
+
+新右手原生234步、154.725s、自然exit0、保护未触发；2129条hand pair全部超原有效指腹区域，抓取与Teacher资格仍不通过。冻结实际位姿/杆节点重算与solver点误差<0.000024mm，定位静态0.95余量未覆盖实测关节跟踪差及杆横移。新增严格身份/单位/SHA回放审计；不扩指腹、不重跑预算、不增加PPO。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-right-native-tracking.md)
+
 ## 2026-11-14 — 右手原有效指腹234步原生接触诊断
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-effective-right-pinch-native.md)。

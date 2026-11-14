@@ -5647,7 +5647,7 @@
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "Original effective pad audit rejected all2111 prior pairs; independent right reset/path has isolated234-step owner prepared. Native tracking and effective contact, original left endpoint, material slip and Teacher R0 remain unqualified."
+      "reason": "New right original-region approach:234SDKsteps naturalexit0 in154.725s, guards passed, all2129 actualpairs outside originalellipse. Static planned0.95 changes to1.006/1.018 with actual hand poses,1.039/1.034 with actualrod. Need robust target/control and actual-source state/R0; no positive grasp/Teacher qualification. Do not rerun consumed recipe."
     },
     "flex.f8-tripod": {
       "title": "Tripod 无相机 R0 特权 Teacher",
@@ -26550,6 +26550,86 @@
         },
         "status": "passed",
         "report": "docs/superpowers/reports/dh116-managed-flex.f8-effective-right-pinch-native.md"
+      }
+    },
+    "flex.f8-effective-right-tracking-replay": {
+      "title": "右手原生有效指腹失败的实测跟踪与杆位移分解",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f8-effective-right-pinch-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 40,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_effective_right_tracking_replay.py",
+          "tests/test_deformable_pad_region.py",
+          "tests/test_effective_right_pinch_geometry.py",
+          "tests/test_surface_contract.py"
+        ],
+        "log_sha256": "3684860096761239a435eace559bf6638641de7bd02fac1047294a379eb749b6",
+        "tested_head": "1d4ac306034cf86403aa9258073c0b59279b4608",
+        "kind": "cpu_replay_of_exact_native_effective_pad_failure",
+        "receipt_sha256": "9525c46f257fb6d5d81f585f71b47c571dcff7a05019b583e3e93c7535ed0bd8",
+        "ledger_sha256": "072fe9cf5212abdada92c09a0cd2a04a2032a12b98f437d903565c22eceadc5d",
+        "analysis_result_sha256": "821b15b72c403d1008501fd26a41087825db062b7260c39387f862c31f29d2a9",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_qualified": false,
+        "teacher_admission": false,
+        "source_native_physics_steps": 234,
+        "source_native_outer_exit_code": 0,
+        "source_native_duration_seconds": 154.72514228592627,
+        "raw_hand_pairs": 2129,
+        "accepted_by_original_region": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-effective-right-native-tracking.md",
+        "report_source_commit": "7d199bbc28b284630b48a1e69113ebd4dbb302d4"
+      },
+      "last_result": {
+        "passed": 40,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_effective_right_tracking_replay.py",
+          "tests/test_deformable_pad_region.py",
+          "tests/test_effective_right_pinch_geometry.py",
+          "tests/test_surface_contract.py"
+        ],
+        "log_sha256": "3684860096761239a435eace559bf6638641de7bd02fac1047294a379eb749b6",
+        "tested_head": "1d4ac306034cf86403aa9258073c0b59279b4608",
+        "kind": "cpu_replay_of_exact_native_effective_pad_failure",
+        "receipt_sha256": "9525c46f257fb6d5d81f585f71b47c571dcff7a05019b583e3e93c7535ed0bd8",
+        "ledger_sha256": "072fe9cf5212abdada92c09a0cd2a04a2032a12b98f437d903565c22eceadc5d",
+        "analysis_result_sha256": "821b15b72c403d1008501fd26a41087825db062b7260c39387f862c31f29d2a9",
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "native_qualified": false,
+        "teacher_admission": false,
+        "source_native_physics_steps": 234,
+        "source_native_outer_exit_code": 0,
+        "source_native_duration_seconds": 154.72514228592627,
+        "raw_hand_pairs": 2129,
+        "accepted_by_original_region": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-effective-right-native-tracking.md",
+        "report_source_commit": "7d199bbc28b284630b48a1e69113ebd4dbb302d4"
       }
     }
   },
