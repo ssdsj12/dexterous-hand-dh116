@@ -17768,6 +17768,56 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 69,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_effective_right_r0_approach.py",
+        "tests/test_dh116_r0_measured_approach.py",
+        "tests/test_dh116_r0_reset_approach.py",
+        "tests/test_dh116_segment_r0_approach.py",
+        "tests/test_dh116_bilateral_r0_approach.py"
+      ],
+      "log_sha256": "043655e9e04a230fb833364e46ec8af21bdbd5dd405c4bed20e31e99b839fbf9",
+      "tested_head": "98e995af8541300f52f6309f92e2da7005ee09c5",
+      "kind": "read_only_actual_geometry_approach_and_R0_first_window",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "cpu_passed": 69,
+      "physical_rows": 232,
+      "valid_approach_rows": 232,
+      "first_control_valid_approach_samples": 8,
+      "actual_reset_baseline": true,
+      "result_sha256": "fbcad74267fe13f2e8abb766803ee01937b83307506533348720817a5b3a70ca",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-effective-right-r0-approach-source.md",
+      "report_source_commit": "a4d290ed06156a8a6af6374926e74ce8bddc0607",
+      "package": "flex.f7-effective-right-r0-approach-source-cpu",
+      "commit": "50c22ff9f1f6e8c6900420ab207defdd38ce1caf",
+      "parent": "98e995af8541300f52f6309f92e2da7005ee09c5",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-effective-right-r0-approach-source.md",
+        "src/go2_pvcnn/control/dh116/tabletop_effective_right_r0_approach.py",
+        "tests/test_effective_right_r0_approach.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
