@@ -1,3 +1,7 @@
+## 2026-11-14 — 当前有效右侧几何与真实Reset的R0接近测量
+
+69 CPU测试通过；232历史样本提供左右实际离散SDF接近距离，原生预算失败资格不晋级；原R0首窗口approach8/8有效，hold/slip/instability仍未知，Teacher仍blocked。右间距0不等于有效接触或抓取。 Ubuntu CPU 回归 69 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-right-r0-approach-source.md)
+
 ## 2026-11-14 — 稳定测量来源完整接触R0234步原生诊断
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-origin-r0-native.md)。
