@@ -1,3 +1,7 @@
+## 2026-11-14 — 封存owner与完整后置审计234步原生验证
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-sealed-r0-native.md)。
+
 ## 2026-11-14 — 封存原生账本后自然退出及完整后置审计
 
 56项CPU回归通过；真实Python owner232样本/29窗口完整记录。待审计标记不能晋级；外层自然退出后保留原始全量验证、来源与R0重审。新配方234总步/180秒/0PPO/单实例一次，旧失败配方不重跑。 Ubuntu CPU 回归 56 项通过。[报告](docs/superpowers/reports/2026-11-14-sealed-owner-post-exit-audit.md)
