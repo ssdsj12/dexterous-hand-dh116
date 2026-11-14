@@ -17965,6 +17965,37 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-deformx-mesh-observations-build.md",
       "report_source_commit": "c255a2642c5bdd0c93a84cbde794bbc6844ec4d4"
+    },
+    "flex.f8-substep-clock-provenance-cpu": {
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_substep_clock_provenance.py",
+        "tests/test_deformx_substep_pose.py",
+        "tests/test_substep_contact_audit.py"
+      ],
+      "log_sha256": "88d1d1ea8bca828a27194626276dd16b0dd40296e749687e8b83d745d4a791d2",
+      "tested_head": "659d495141e33b61765ac5ab82f33f4af6d53ece",
+      "qualification_scope": "nominal_substep_clock_provenance_cpu_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "statistics_sha256": "5884ae4246e822c9138b905562838ded350fa3adc7205c61a71e4c70323c87fd",
+      "historical_pair_count": 2958,
+      "measured_substep_timestamp_available": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-substep-clock-provenance.md",
+      "report_source_commit": "af335e63bdd471cba277a0bd756e98a47b6ea537"
     }
   }
 }

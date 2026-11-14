@@ -1,3 +1,7 @@
+## 2026-11-14 — 分离名义子步时间与账本端点时钟
+
+v2逐pair显式区分名义480Hz插值与原账本endpoint timestamp/solver_time，measured substep timestamp保留NA。真实旧232行/2958pair重放全部分类与identity不变；只改时钟来源命名，0新增原生/PPO。 Ubuntu CPU 回归 29 项通过。[报告](docs/superpowers/reports/2026-11-14-substep-clock-provenance.md)
+
 ## 2026-11-14 — 独立编译真实网格姿态与同子步接触采样扩展
 
 基于锁定72源，仅5源旁路采样delta，旧API/原二进制不变；独立CUDA12.8 SM89编译/安装各一次成功，新881701后端CPU import-only成功。新增actual cur/target/tele与同surfaceReadout pose/gap/native normal force；没有solver/Isaac调用，GPU数值/Reset/contact资格仍false。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-14-deformx-mesh-observations-build.md)

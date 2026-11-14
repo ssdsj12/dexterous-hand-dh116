@@ -9,7 +9,7 @@ import hashlib
 import numpy as np
 from scipy.spatial.transform import Rotation
 
-VERSION="dh116-source-derived-substep-pose-v1"
+VERSION="dh116-source-derived-substep-pose-v2"
 SUBSTEPS=12
 SOURCE_LOCK={
 "csrc/bindings.cpp":"1be4aad4bfc6de1c4a2c44e891d57ce7e163b78c24a8bf99619d1cb1fe0ce836",
@@ -89,3 +89,21 @@ def classification_status(candidate):
         native_substep_pose_measured=False,cuda_bitwise_equivalence_verified=False,
         positive_contact_qualified=False,negative_contact_qualified=False,
         contact_depth_qualified=False,teacher_admission=False)
+
+
+def nominal_substep_clock(endpoint, substep):
+    """Label index-derived time separately; no measured substep timestamp exists."""
+    step=endpoint["physics_step"]
+    if type(step) is not int or step<1 or type(substep) is not int or not 0<=substep<SUBSTEPS:
+        raise ValueError("positive physics step and integer substep 0..11 required")
+    times={}
+    for key in ("timestamp_s","solver_time_s"):
+        value=endpoint[key]
+        if (isinstance(value,(bool,np.bool_)) or
+            not isinstance(value,(int,float,np.integer,np.floating)) or
+            not np.isfinite(value) or value<0):
+            raise ValueError("finite actual endpoint timestamp required")
+        times[key]=float(value)
+    return dict(nominal_substep_time_s=(step-1+(substep+1)/SUBSTEPS)/480,
+        endpoint_timestamp_s=times["timestamp_s"],endpoint_solver_time_s=times["solver_time_s"],
+        measured_substep_time_s=None,time_source="nominal_480Hz_index_interpolation")

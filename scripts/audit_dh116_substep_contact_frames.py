@@ -15,7 +15,7 @@ from go2_pvcnn.control.dh116.tabletop_dual_hand_rod_runtime import HAND_NAMES, M
 from go2_pvcnn.control.dh116.tabletop_deformable_pad_region import classify_pair, bind_geometry
 from go2_pvcnn.control.dh116.tabletop_deformx_substep_pose import (
     VERSION, BACKEND_SHA, verify_source_lock, target_pose, pose_at_substep,
-    to_matrix, classification_status,
+    to_matrix, classification_status, nominal_substep_clock,
 )
 ROOT=Path(__file__).resolve().parents[1]
 BUILD=Path("/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/parameter-getters-build-e96wtu")
@@ -106,7 +106,7 @@ def run():
                 raise ValueError("endpoint reconstruction differs from retained classification")
             new=classify_pair(pair,transforms[name][sub],atlas[name])
             result.append(dict(identity=clock,mesh_name=name,solver_substep=sub,
-                substep_time_s=(clock["physics_step"]-1+(sub+1)/12)/480,
+                clock_provenance=nominal_substep_clock(clock,sub),
                 node_index=pair["node_index"],endpoint_region=old,substep_region=new,
                 source_derived_mesh_pose_xyzw=pose_at_substep(start[name],end[name],sub).tolist(),
                 **classification_status(new["accepted_by_original_patch"])))
