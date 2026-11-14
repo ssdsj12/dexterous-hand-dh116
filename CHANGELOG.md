@@ -1,3 +1,7 @@
+## 2026-11-14 — 同钟数值健康getter与终止留证原生准备
+
+新增真实host getter/前后时钟/异常终止留行与外层CPU重放；37新+96既有CPU回归。旧234账本缺getter仍NA，未伪造0。已发现mesh Reset未生效，准备配置固定blocked，未注册新可运行原生配方，不重跑旧预算，0新原生/训练。 Ubuntu CPU 回归 133 项通过。[报告](docs/superpowers/reports/2026-11-14-health-getter-native-preparation.md)
+
 ## 2026-11-14 — 逐solver子步接触坐标与延迟Reset审计
 
 真实旧232测量行/2958pair离线重算：旧步末888候选→逐子步872，16分类变化；CPU插值不授予正/负有效接触资格。已发现pending teleport在首步被覆盖，左拇指构造/Reset相差65.435887mm。自然退出证据保留，但mesh Reset对齐未通过；不重跑旧配方，不新增原生。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-14-substep-contact-reset-audit.md)

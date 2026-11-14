@@ -17856,6 +17856,45 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-substep-contact-reset-audit.md",
       "report_source_commit": "8f699b6b27877ad17db497365e691224bccbaeaa"
+    },
+    "flex.f8-health-getter-native-prep-cpu": {
+      "passed": 133,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_flexible_health_native.py",
+        "tests/test_flexible_health_worker.py",
+        "tests/test_flexible_health_postexit.py",
+        "tests/test_flexible_health_owner.py",
+        "tests/test_projected_pinch_native.py",
+        "tests/test_deferred_physical_audit.py",
+        "tests/test_owned_clock_projection.py",
+        "tests/test_dh116_physx_lifetime_debugger_stopped.py",
+        "tests/test_r0_health_separation.py",
+        "tests/test_r0_numerical_health_source.py"
+      ],
+      "log_sha256": "0ff87a754290e22a353f0bc49280bd4070229175e9bdb80da300cacf5064ef77",
+      "tested_head": "56a2028afeabb21b2885213eef5440e209d6b610",
+      "qualification_scope": "health_host_getter_preparation_cpu_and_historical_replay_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "native_execution_allowed": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "reset_mesh_pose_qualified": false,
+      "health_getter_native_qualified": false,
+      "preparation_code_config_sha256": "ddbadccda423dc6e1e6497cae16a7ca9cb4beb858cbc564107e79b11153afe39",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-health-getter-native-preparation.md",
+      "report_source_commit": "a469da89178a8ed28ee1141703ca3aaa06677cd4"
     }
   }
 }
