@@ -15800,6 +15800,54 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 48,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_pair_substep_load_audit.py",
+        "tests/test_surface_force_sharing.py",
+        "tests/test_dh116_bilateral_r0_replay.py",
+        "tests/test_dh116_bilateral_native_evidence.py"
+      ],
+      "log_sha256": "2df998650496c99d0c29288684476ffbb678b4adf0f4ac0ed7aeaa258fd7fb90",
+      "tested_head": "224c04371af4d8cbb027aa1a757e7b88600ec0b5",
+      "kind": "readonly_native_substep_raw_load_audit",
+      "result_sha256": "f3a8076724fb0f706167192aecf0c0645fccb88b091fd7677bd5f290dbe4f102",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_qualified": false,
+      "teacher_admission": false,
+      "solver_rows": 2784,
+      "bilateral_raw_paired_substeps": 493,
+      "table_loaded_substeps": 2784,
+      "full_r0_reward_ready": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-bilateral-substep-load-audit.md",
+      "report_source_commit": "a5fbd3144e864062711398e1b959d7e5273793da",
+      "package": "flex.f8-bilateral-substep-load-audit",
+      "commit": "41c2f0603d0b76ba9fa7f5d4d14adacc35bea923",
+      "parent": "224c04371af4d8cbb027aa1a757e7b88600ec0b5",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-bilateral-substep-load-audit.md",
+        "scripts/audit_dh116_bilateral_substep_loads.py",
+        "src/go2_pvcnn/control/dh116/tabletop_pair_substep_load_audit.py",
+        "tests/test_pair_substep_load_audit.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
