@@ -20684,6 +20684,50 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 48,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_mesh_reset_health_worker.py",
+        "tests/test_flexible_health_worker.py",
+        "tests/test_projected_pinch_worker.py"
+      ],
+      "log_sha256": "23eb9c7ae50e04825af11b1e38c42e64cc339f9f0d3e474645b59cf694d2a574",
+      "tested_head": "351aa6a76ef30ee6be351185f3440a8699554b43",
+      "qualification_scope": "frozen_mesh_reset_pair_health_worker_cpu_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "ppo_updates": 0,
+      "new_physics_steps": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-mesh-reset-health-native-recipe.md",
+      "report_source_commit": "8096d1562ca5837848e0442a0161c36a2e5ecef8",
+      "package": "flex.f8-mesh-reset-health-projected-pinch-prep-cpu",
+      "commit": "39b3d391184ff643cc8b1f04bc158f18e026c67e",
+      "parent": "351aa6a76ef30ee6be351185f3440a8699554b43",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_execution/deformx_mesh_reset_health_projected_pinch_v1.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-mesh-reset-health-native-recipe.md",
+        "scripts/run_dh116_mesh_reset_health_work_packages.py",
+        "scripts/verify_dh116_mesh_reset_health_projected_pinch.py",
+        "tests/test_mesh_reset_health_worker.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
