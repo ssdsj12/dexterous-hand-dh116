@@ -1,3 +1,7 @@
+## 2026-11-14 — 独立CUDA来源绑定与零步Reset实际读回
+
+独立source_scope核验72新/72原文件、5个观测delta及构建导入证据，恢复旧默认。MeasuredMeshReset将原零步重建后的11槽current/target/solver实际读回与实际手指link核对，并保留constructor未知时钟和失败原始证据。本包仅CPU接线验证，不授予原生Reset或Teacher资格。 Ubuntu CPU 回归 180 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-observation-source-reset-readback.md)
+
 ## 2026-11-14 — 同子步mesh姿态与原生gap接触包消费
 
 新增v2接触原始包CPU消费与序列核对，沿用原force/torque/impulse守恒，独立保留mesh姿态、gap、原生N及总力法向投影。缺字段、overflow、错时/跨episode拒绝；不从旧endpoint补值，不授予有效承托或Teacher资格，无新GPU/Isaac。 Ubuntu CPU 回归 124 项通过。[报告](docs/superpowers/reports/2026-11-14-native-pair-v2-consumer-cpu.md)
