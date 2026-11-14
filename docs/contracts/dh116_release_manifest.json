@@ -20495,6 +20495,56 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 180,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_mesh_observation_profile.py",
+        "tests/test_mesh_reset_order.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_dual_hand_episode.py",
+        "tests/test_flexible_health_native.py",
+        "tests/test_r0_numerical_health_source.py",
+        "tests/test_flexible_parameter_readback.py"
+      ],
+      "log_sha256": "801c3dab41b1e113ec39f27a9a527cdcaf0a95cf6d13fed8e01e9dceb1c700e7",
+      "tested_head": "60c07c90d55c0ac77e62b65f99ec95d2309304f7",
+      "qualification_scope": "source_profile_reset_readback_cpu_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "reset_mesh_pose_qualified": false,
+      "ppo_updates": 0,
+      "new_physics_steps": 0,
+      "backend_sha256": "8817010163946945495c987923d11f3ade4fbd52482a83bbdd48f017d3149340",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-mesh-observation-source-reset-readback.md",
+      "report_source_commit": "e99d7986ed448f016f4dc7194e2e5703edfcbbb5",
+      "package": "flex.f8-observation-source-reset-readback-cpu",
+      "commit": "25c7f9edb07d73643bbe3913e6ea6a530d092ddc",
+      "parent": "60c07c90d55c0ac77e62b65f99ec95d2309304f7",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-mesh-observation-source-reset-readback.md",
+        "src/go2_pvcnn/control/dh116/tabletop_mesh_observation_source.py",
+        "src/go2_pvcnn/control/dh116/tabletop_mesh_reset_readback.py",
+        "tests/test_mesh_observation_profile.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
