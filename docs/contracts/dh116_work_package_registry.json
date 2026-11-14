@@ -30212,6 +30212,109 @@
         "report": "docs/superpowers/reports/2026-11-14-live-measured-approach.md",
         "report_source_commit": "4063bde2948df593a4db058fcd1b1b2d97eb6704"
       }
+    },
+    "flex.f7-approach-r0-native-prep-cpu": {
+      "title": "同钟接近源独立原生配方与全R0后置重算",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-live-measured-approach-cpu",
+        "flex.f7-sealed-r0-native"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 26,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_approach_r0_native.py",
+          "tests/test_deferred_physical_audit.py"
+        ],
+        "log_sha256": "40b576d877a42fad224929d789f5efe612a153224006eda4c9ee4034b32b301e",
+        "tested_head": "fc36e9472741d37724203661576fbeeb565d35c4",
+        "kind": "bounded_live_measured_approach_native_preparation",
+        "final_cpu_passed": 35,
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "experiment_code_config_sha256": "d5251c8f71bf7eb470cc9f482dad8013726ed4ff577c6990b60204ebf4108ad7",
+        "recipe_sha256": "4e3b631cdde215a27bd0ea16881521f4e6fd48d4259ad17ff81b378d41f89838",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-approach-r0-native-preparation.md",
+        "report_source_commit": "4bbaac613527421f8c75ca0a6618740c4d5060c0"
+      },
+      "last_result": {
+        "passed": 26,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_approach_r0_native.py",
+          "tests/test_deferred_physical_audit.py"
+        ],
+        "log_sha256": "40b576d877a42fad224929d789f5efe612a153224006eda4c9ee4034b32b301e",
+        "tested_head": "fc36e9472741d37724203661576fbeeb565d35c4",
+        "kind": "bounded_live_measured_approach_native_preparation",
+        "final_cpu_passed": 35,
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "experiment_code_config_sha256": "d5251c8f71bf7eb470cc9f482dad8013726ed4ff577c6990b60204ebf4108ad7",
+        "recipe_sha256": "4e3b631cdde215a27bd0ea16881521f4e6fd48d4259ad17ff81b378d41f89838",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-approach-r0-native-preparation.md",
+        "report_source_commit": "4bbaac613527421f8c75ca0a6618740c4d5060c0"
+      }
+    },
+    "flex.f7-approach-r0-native": {
+      "title": "真实Reset及232样本接近源原生验证",
+      "executor": "native_bounded",
+      "status": "blocked",
+      "dependencies": [
+        "flex.f7-approach-r0-native-prep-cpu",
+        "flex.f7-native-parameter-task-native",
+        "flex.f7-sealed-r0-native"
+      ],
+      "dependency_scopes": {
+        "flex.f7-native-parameter-task-native": {
+          "scope": "exact_2_setup_plus_16_native_parameter_task_endpoints_only",
+          "native": true
+        },
+        "flex.f7-sealed-r0-native": {
+          "scope": "sealed_owner_then_post_exit_complete_R0_234_steps_only",
+          "native": true
+        }
+      },
+      "resource_class": "isaac_single_gpu",
+      "requires_approval": true,
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/approach_r0_native_v1.json",
+      "evidence_scope": "actual_reset_and_same_clock_measured_approach_R0_234_steps_only",
+      "tests": [
+        "tests/test_approach_r0_native.py",
+        "tests/test_deferred_physical_audit.py"
+      ],
+      "scheduler_entrypoint": "scripts/run_dh116_approach_work_packages.py",
+      "reason": "Windows发布并核验后按持续授权绑定一次新指纹；保持物理/动作/保护，全量重算和有效覆盖必须通过，尚无新原生/Teacher资格。"
     }
   },
   "execution_target": {
