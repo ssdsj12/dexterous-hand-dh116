@@ -1,3 +1,7 @@
+## 2026-11-14 — Tracking-aware Pinch 单次234步接触诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-tracking-pinch-native.md)。
+
 ## 2026-11-14 — Tracking-aware Pinch 独立原生入口与完整退出审计
 
 独立 Reset/几何/worker 身份接入原234步所有权；同一24D关节动作与物理保护，复用封存后完整审计。源码回归88通过；未执行新的原生步，不授予Teacher或接触成功资格。 Ubuntu CPU 回归 88 项通过。[报告](docs/superpowers/reports/2026-11-14-tracking-pinch-native-preparation.md)
