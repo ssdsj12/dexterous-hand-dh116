@@ -1,3 +1,7 @@
+## 2026-11-14 — 冻结 Pinch 网格 Reset 单次原生配方
+
+保持原动作、1 环境、2+232 个物理步、180 秒和 0 次 PPO 更新。冻结真实参数任务回执、新 backend 和本轮输入。诊断通过只赋予对应 Reset、逐接触和 health 来源资格。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-reset-health-native-recipe.md)
+
 ## 2026-11-14 — Pinch 实际 Reset 与接触读数接入物理 owner
 
 在新配方作用域保留完整 v1 与 v2 接触账本，复核实际 mesh Reset 和同钟健康读数。最终任务树 CPU 137 项，通过旧 guard 优先和终止前数据保存。完整 234 步 CPU owner 另有验证记录。 Ubuntu CPU 回归 98 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-reset-health-owner-preparation.md)
