@@ -1,3 +1,7 @@
+## 2026-11-14 — 复制 CUDA 实际杆状态并保留严格 Reset 比较
+
+修复仅提供 CUDA array interface 的视图被哈希为 Python 对象地址。数值复制和诊断仅在新入口启用。原严格比较继续分辨真实状态、材料参数及带符号零的变化，失败仍保留数值与字段证据。 Ubuntu CPU 回归 130 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-reset-numeric-state-copy.md)
+
 ## 2026-11-14 — Pinch 网格 Reset、逐接触姿态和健康读数原生诊断
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-mesh-reset-health-projected-pinch-native.md)。
