@@ -1,0 +1,16 @@
+{
+  "version": "dh116-privileged-teacher-reward-v1",
+  "profile": "teacher_r2_support_recovery",
+  "enabled": false,
+  "explicit_opt_in_required": true,
+  "qualification_required": ["geometry", "force_side", "force_units", "force_frame", "partner_attribution", "per_digit_source"],
+  "geometry_progress": {"coefficient": 1.0, "dt_scaling": false},
+  "support_deficit": {"coefficient_points_s": -1.5, "normalization": "clip((runtime_weight_N-signed_attributable_support_N)/runtime_weight_N,0,1)", "dt_scaling": "actual_physical_seconds", "validity": "explicit_per_environment_mask;finite_positive_runtime_weight"},
+  "overlap": "reject_when_native_reward_already_contains_support_deficit",
+  "typed_candidate_config": "configs/dh116_training/privileged_teacher_shaping_candidates_v1.json",
+  "typed_factor_software": "implemented_hand_share_balance_opposing_pair_balance_recovery_normal_tangential_overload_executed_force_target_delta",
+  "hand_support_balance_target": "explicit_geometry_derived_Nx2_fraction;missing_NA;no_equal_split_default",
+  "native_measurement_factory": "pending",
+  "status": "disabled_until_native_force_qualification;no_fixed_10N_or_per_digit_broadcast",
+  "native_success": "unchanged_30mm_5s_0.5mm"
+}

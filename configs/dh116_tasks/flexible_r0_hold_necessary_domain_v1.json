@@ -1,0 +1,14 @@
+{
+  "version": "dh116-r0-hold-necessary-domain-diagnostic-v1",
+  "enabled_by_default": false,
+  "scope": "offline_diagnostic_only",
+  "hold_domain": "known_missing_bilateral_contact_has_no_hold_increment",
+  "missing_raw_policy": "retain_null_invalid_do_not_measure_stability",
+  "instability_terminal_unchanged": true,
+  "training_reward_enabled": false,
+  "success": {
+    "net_lift_m": 0.03,
+    "hold_s": 5,
+    "max_slip_m": 0.0005
+  }
+}

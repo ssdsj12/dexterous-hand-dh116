@@ -1,0 +1,10 @@
+{
+  "version": "dh116-privileged-teacher-ppo-config-v1",
+  "model": {"obs_dim": 371, "action_dim": 24, "hidden": [256, 256], "initial_std": 0.1},
+  "ppo": {"gamma": 0.995, "lam": 0.95, "clip": 0.2, "lr": 0.0003, "epochs": 5, "minibatches": 8, "entropy_coef": 0.005, "value_coef": 0.5, "max_grad_norm": 0.5, "min_std": 0.001, "max_std": 0.3},
+  "rollout_steps": 32,
+  "reward_profile": "teacher_r0_existing",
+  "history_reset": "clear",
+  "bc": {"actor_only": true, "separate_optimizer": true, "lr": 0.0003, "auxiliary_weight": 0.0, "schedule": "warm_start_only;no_implicit_PPO_auxiliary"},
+  "status": "experimental_starting_configuration_not_native_validated"
+}

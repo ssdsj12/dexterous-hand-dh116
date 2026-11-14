@@ -1,0 +1,18 @@
+{
+  "version": "dh116-stereo-student-ppo-config-v1",
+  "actor_input": "StereoHistoryBatch_only",
+  "critic_observation_size": 371,
+  "action_size": 24,
+  "network": {"embed_dim": 128, "history": 4, "num_heads": 4, "num_layers": 2, "dropout": 0.0, "points": 128, "proprio": 62, "action_size": 24, "image_resolution_wh": [224, 96]},
+  "ppo": {"gamma": 0.995, "lam": 0.95, "clip": 0.2, "lr": 0.0003, "epochs": 5, "minibatches": 8, "entropy_coef": 0.005, "value_coef": 0.5, "max_grad_norm": 0.5, "min_std": 0.001, "max_std": 0.3},
+  "rollout_steps": 32,
+  "reward_profile": "teacher_r0_existing",
+  "reward_operation": "same_audited_native_task_reward_once;no_new_success_definition",
+  "auxiliary_bc": {"enabled": false, "weight": 0.0, "optimizer": "independent_actor_optimizer", "schedule": "disabled_until_explicit_qualified_attachment", "ppo_storage_insertion": false},
+  "history_reset": "clear",
+  "depth_source": "computed_from_synchronized_left_right_RGB",
+  "checkpoint_version": "dh116-stereo-rgb-student-checkpoint-v1",
+  "deployment": "actor_only;no_privileged_critic_teacher_or_simulator_input",
+  "old_3844_observation_reinterpreted": false,
+  "native_validation": "pending"
+}

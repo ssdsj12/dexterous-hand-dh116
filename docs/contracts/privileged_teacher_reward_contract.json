@@ -1,0 +1,284 @@
+{
+  "version": "dh116-privileged-teacher-reward-audit-phase0-v1",
+  "base_commit": "6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b",
+  "evidence_scope": "read_only_source_audit_and_synthetic_CPU_arithmetic",
+  "physical_qualification": "NA_not_established_by_this_audit",
+  "active_run_profile": null,
+  "teacher_r_profiles_implemented": false,
+  "source_hash_algorithm": "sha256_exact_file_bytes",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_task.py": "b8e73877eef14c47c7440560bc4333e68349d46d8b0a579202937b3e0ddbda8e",
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_env.py": "93ece5a2abc6adb7c1e90a230c0283cc5c93880ddbbaded3451661ef6e6ca645",
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_world.py": "dd2a17bc397f7ec14254c3373ff1ef22aa4515b156fd25db50deba3052f564f4",
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_training.py": "f6d228f6f21d2cc8bf329149fdd0418a6e5e09c59b32b0ce9b02f7dd98eb86c9",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_reward_ablation.py": "c781d2baa36e7c532d7cc84c22de2c7eee2b174409ab928ce5e3dc6e812665d8",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_exploration.py": "8f7b84e16d2fe102bc18412bfa9b024e8319dabbb4145c985049547c9a816bb4",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_success.py": "1613e64e5a4b4477a0cfabd076fbf8323a3f434b741c816124fc4c9f263ed34f",
+    "src/go2_pvcnn/control/dh116/tabletop_lift_hold_window.py": "2c6ceba2c0fb9d1e7deff4aae5e16937d99893898ce05e50e6ef911c43223c9a",
+    "src/go2_pvcnn/control/dh116/tabletop_multifinger_monitor.py": "bf0cca580434cda9efbe6a5ea247429e609acb5192155c6d9ee2580dd1def5da",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_force_sharing.py": "14cee806b3e6c339a7e1242b65f43391cee0435a1efa67ecc9f0ffe11b20f0d3",
+    "src/go2_pvcnn/control/dh116/tabletop_free_wrist_grasp.py": "3791d45abd9fbab1a2d671b671dd49114c41e87d01ea994904ab52ba2d88899a",
+    "src/go2_pvcnn/control/dh116/tabletop_free_grasp_lift.py": "3916618423c44c4626cdce883ce86c3c40f9c76a69fd0de2d11f92c6da8deed3",
+    "src/go2_pvcnn/control/dh116/tabletop_phase_force_reward.py": "3774b45ec0a5a19307c3562631f53e92930510a6a4e1581e3fad9e219c72dd83",
+    "src/go2_pvcnn/control/dh116/tabletop_grasp_shaping.py": "63c084a4935e629543997b34b67ef3e3dad504e621ea05b3de775d134f63f011",
+    "src/go2_pvcnn/control/dh116/tabletop_stable_lift_reward.py": "92dbcfdd1a4fff880334d609df77d430280a455ff2f4f01ca1c08f4e3bde21ec",
+    "src/go2_pvcnn/control/dh116/tabletop_contact_window.py": "a299e141ec9e4215f3ee5bf1a0a8f9194a166b8d8856274c7f55e402be571b92",
+    "src/go2_pvcnn/control/dh116/tabletop_lift_reward_experiment.py": "acaac17fc62bf440968d6f68b3f7bb3924f1ef9c16add104a73b8a28bc5d3766",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_demonstrations.py": "622847bdec4edcb7a47fd16d744ae3680b53064bf5b4a1f49368a245e9204ca0",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_teacher.py": "f6118398eadead611e9bfbf6aa205dbb109d8f14a283d356d06b7a58413a6ce4",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_teacher_control.py": "fccf448d16b8c80758a1db17a450a0f1e5d525a06057037370e8e902b27acc04",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_support.py": "c594ed029402b53669f1c18ac922e5d8c83c99a246e76c8c990540a8c3b0857a",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_contract.py": "f1a28e5dca4e44a49d16244d92c2c849023f8030943cbec62853dcaeebabdb00",
+    "scripts/train_dh116_tabletop_gpu_ppo.py": "4353281ea7ebdb076af472a4e57832789809128fedf245d27c3e99d4d488d644",
+    "scripts/run_dh116_surface_student.py": "d7e4459b9ef4517fa19bed5ae94fb81b034fd8eeae5bdca6d9bca4fb28c2328f",
+    "scripts/train_dh116_surface_multistyle.py": "c31ea7e1cfc55ade3f020042c41c5b55aac1349d015b51c162effe49215494aa",
+    "scripts/smoke_dh116_surface_grasp.sh": "e175f979d70d9f19e339425b9081a8ee137dc74af0179dafe6b23392290c5c1e",
+    "configs/dh116_load_profiles/v2_pressure_12n_instant_candidate.json": "2201209afe01ea6d3caf2937c2f4d6ecd636a61036e3169fc15b09528ea400ee",
+    "src/go2_pvcnn/control/dh116/tabletop_vertical_force.py": "80ea8974a894b8a8849675f7f1664310abf92981fb5d25b5d3b58d4b566df88a",
+    "src/go2_pvcnn/control/dh116/tabletop_load_parameters.py": "c8e52eabe601c944eee659cd2ef9a497b0976cd0f00de257c9acd211ee170576",
+    "src/go2_pvcnn/control/dh116/tabletop_policy_force_region.py": "10f09d5fc681e856e6cd3828c92e1cf5b43e540e4c65a6424a80cef31a675ad4",
+    "src/go2_pvcnn/control/dh116/tabletop_grasp_acquisition.py": "7b13aed5d6a5a3077ea126e000d74fb3b328b3ce220d92e5efc182e5ed561df1",
+    "src/go2_pvcnn/control/dh116/tabletop_object_contact.py": "7a06a5d7690641dcca80c3247b30d038e03d7831aef306f49647de089624caa7"
+  },
+  "code_default": {
+    "surface_reward_profile": "baseline",
+    "surface_imitation_mode": "legacy",
+    "surface_force_sharing": false,
+    "surface_feedback": false,
+    "vision_lift_reward_experiment": "R0"
+  },
+  "checked_in_surface_launcher": {
+    "source": "scripts/smoke_dh116_surface_grasp.sh",
+    "surface_force_sharing": true,
+    "free_wrist_grasp": true,
+    "free_grasp_lift": true,
+    "phase_force_reward": true,
+    "vertical_force_reward": true,
+    "surface_reward_profile": "baseline",
+    "surface_imitation_mode": "legacy",
+    "surface_feedback": false,
+    "physics_hz": 480,
+    "control_hz": 60
+  },
+  "profiles": {
+    "baseline": [],
+    "v3_reference": [],
+    "v3_lift_only": [
+      "surface_lift_progress"
+    ],
+    "v3_early_hold_only": [
+      "surface_early_hold_rate"
+    ],
+    "v3_milestone_only": [
+      "surface_hold_milestone"
+    ],
+    "v3_contact_break_only": [
+      "surface_contact_break"
+    ],
+    "v3_slip_only": [
+      "surface_slip_window"
+    ],
+    "v3_relative_motion_only": [
+      "surface_relative_motion"
+    ],
+    "v3_support_only": [
+      "surface_support_deficit"
+    ],
+    "v3_smoothness_only": [
+      "surface_executed_smoothness"
+    ],
+    "lift_progress": [
+      "surface_lift_progress"
+    ],
+    "early_hold": [
+      "surface_lift_progress",
+      "surface_early_hold_rate",
+      "surface_hold_milestone"
+    ],
+    "contact_break": [
+      "surface_lift_progress",
+      "surface_early_hold_rate",
+      "surface_hold_milestone",
+      "surface_contact_break"
+    ],
+    "slip_relative": [
+      "surface_lift_progress",
+      "surface_early_hold_rate",
+      "surface_hold_milestone",
+      "surface_contact_break",
+      "surface_slip_window",
+      "surface_relative_motion"
+    ],
+    "support_deficit": [
+      "surface_lift_progress",
+      "surface_early_hold_rate",
+      "surface_hold_milestone",
+      "surface_contact_break",
+      "surface_slip_window",
+      "surface_relative_motion",
+      "surface_support_deficit"
+    ]
+  },
+  "coefficients": {
+    "surface_lift_progress": 8.0,
+    "surface_early_hold_rate": 2.0,
+    "surface_hold_milestone": [
+      1.0,
+      2.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0
+    ],
+    "surface_contact_break": -4.0,
+    "surface_slip_window": -24.0,
+    "surface_relative_motion": -2.0,
+    "surface_support_deficit": -1.5,
+    "surface_executed_smoothness": -1.0
+  },
+  "milestone_seconds": [
+    0.1,
+    0.3,
+    0.5,
+    1.0,
+    2.0,
+    5.0
+  ],
+  "disabled_legacy_terms": {
+    "baseline": [],
+    "v3_reference": [],
+    "v3_lift_only": [
+      "dex_lift",
+      "lift_milestone"
+    ],
+    "v3_early_hold_only": [],
+    "v3_milestone_only": [],
+    "v3_contact_break_only": [],
+    "v3_slip_only": [
+      "surface_slip_window"
+    ],
+    "v3_relative_motion_only": [],
+    "v3_support_only": [],
+    "v3_smoothness_only": [],
+    "lift_progress": [
+      "dex_lift",
+      "lift_milestone"
+    ],
+    "early_hold": [
+      "dex_lift",
+      "lift_milestone"
+    ],
+    "contact_break": [
+      "dex_lift",
+      "lift_milestone"
+    ],
+    "slip_relative": [
+      "dex_lift",
+      "lift_milestone",
+      "surface_slip_window"
+    ],
+    "support_deficit": [
+      "dex_lift",
+      "lift_milestone",
+      "surface_slip_window"
+    ]
+  },
+  "opt_in_conditions": {
+    "stable_hold_rewards": "surface_imitation_mode==stable_hold_v2 OR vision_student",
+    "v4": "surface_reward_profile!=baseline AND surface_feedback AND (stable_hold_v2 OR vision_student)",
+    "support": "v4_support_term AND vertical_force_reward AND phase_force_reward; source qualification is separate",
+    "smoothness": "v3_smoothness_only; no cumulative profile includes SMOOTH",
+    "lift_experiment": "vision_lift_reward_experiment!=R0 AND surface_reward_profile==support_deficit"
+  },
+  "current_surface_terms": {
+    "inherited": [
+      "lift_dwell",
+      "slip",
+      "smoothness",
+      "force",
+      "time",
+      "success",
+      "failure",
+      "downward_force"
+    ],
+    "phase_force": [
+      "grasp_upward_force",
+      "lift_upward_force"
+    ],
+    "native_surface": [
+      "dex_reach",
+      "dex_contact",
+      "dex_lift",
+      "dex_action_rate",
+      "surface_between_faces",
+      "surface_within_faces",
+      "surface_missing_opposition",
+      "ordinary_collision"
+    ],
+    "registered_zero": [
+      "approach",
+      "contact",
+      "lift",
+      "mpc_tracking",
+      "stage",
+      "contact_dwell",
+      "grasp_ready",
+      "close_downward",
+      "force_tracking",
+      "dex_force",
+      "dex_balance",
+      "contact_region"
+    ],
+    "stable_hold_opt_in": [
+      "surface_hold_progress",
+      "surface_slip_window"
+    ],
+    "env_added": [
+      "velocity_excess"
+    ]
+  },
+  "legacy_inactive_in_surface": {
+    "grasp_shaping": "constructor forcibly false for free_wrist_grasp",
+    "force_progress": "no GraspShaping instance",
+    "lift_milestone": "no GraspShaping instance",
+    "stable_lift_hold": "CLI excludes stable_lift_reward with free_wrist_grasp",
+    "contact_window_credit": "surface branch bypasses window_credit",
+    "force_tracking": "free_wrist add_feedback sets zero",
+    "grasp_acquisition": "CLI excludes free_wrist_grasp"
+  },
+  "composition": {
+    "physical_substep": "sum(pieces[name][valid]) plus preassembly failure costs",
+    "control_step": "sum live physical_substeps; optional GraspShaping.end once; TensorEnv velocity_excess",
+    "points": "all contributions after coefficient/dt are dimensionless points",
+    "valid": "live AND finite; most positive surface rates also failure==0",
+    "v4_valid": "valid AND NOT task.done; milestone override allows successful terminal sample",
+    "current_hold_overlap": [
+      "surface_hold_progress",
+      "lift_dwell",
+      "surface_early_hold_rate",
+      "surface_hold_milestone"
+    ]
+  },
+  "formal_success": {
+    "net_lift_m": 0.03,
+    "continuous_hold_s": 5.0,
+    "fixed_anchor_slip_m": 0.0005,
+    "linear_speed_strict_upper_m_s": 0.03,
+    "max_accepted_depth_m": 0.0008,
+    "max_mean_ordinary_fraction": 0.05,
+    "contact": "each_hand_native_dt_weighted_opposed_faces_above_0.05N; no balance/precision gate",
+    "slip": "max_all_raw_substep_euclidean_drift_of_three_rod_points_in_both_actual_wrists_from_fixed_hold_anchor",
+    "signed_force_gate": false,
+    "support_weight_gate": false,
+    "no_recovery": "demonstration/admission/provenance gate; not SurfaceLiftSuccess.update argument",
+    "task_event": "surface_lift_success.event AND entry_active AND previous_phase==3"
+  },
+  "phase1_binding": {
+    "r0": "pass_through_native_TensorEnv_reward_exactly_once; do not rebuild or add duplicate terms",
+    "r1": "disabled until target_geometry qualification; no Phase0 implementation",
+    "r2": "disabled until native contact-force side/unit/frame/partner/per-digit qualification",
+    "support_NA": "preserve unknown; never substitute zero or fixed10N; synthetic tests do not qualify physics",
+    "legacy_teacher": "26D/261D/10mm/0.3s is not current 24D/371D/30mm/5s acceptance"
+  },
+  "contract_sha256": "4a8677c39a839b210d5fdcd9e47f2c404518efce9138daa767ad25e67f4dc419"
+}

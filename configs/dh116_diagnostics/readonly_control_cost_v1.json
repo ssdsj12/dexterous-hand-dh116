@@ -1,0 +1,42 @@
+{
+  "version": "dh116-readonly-control-cost-contract-v1",
+  "scope": "offline_formula_components_only",
+  "training_profile": false,
+  "training_reward": null,
+  "physics_hz": 480,
+  "control_substeps": 8,
+  "first_previous_action": "unknown_until_prior_accepted_control_in_same_episode",
+  "velocity_semantics": "max_abs_full_17DOF_per_hand_numeric_mixed_m_per_s_and_rad_per_s",
+  "formulas": {
+    "time": "-0.1*dt",
+    "action_rate": "-0.5*mean(clip((action24-previous_action24)/2,-1,1)^2)*dt",
+    "velocity_excess": "-0.1*min((max(0,max_abs_all_34_qd-3)/3)^2,25)*dt"
+  },
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_task.py": "b8e73877eef14c47c7440560bc4333e68349d46d8b0a579202937b3e0ddbda8e",
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_env.py": "93ece5a2abc6adb7c1e90a230c0283cc5c93880ddbbaded3451661ef6e6ca645",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_exploration.py": "8f7b84e16d2fe102bc18412bfa9b024e8319dabbb4145c985049547c9a816bb4",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_dual_evidence.py": "79d3b9b2881df6ab4345410dab7f49e3f60e66445699d99d752d6b8b16bcbb16",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_r0_replay.py": "79fdc32b04638672c9e38092294c4b03cad4549e519ce8bc8ea9323a25dfe8d8",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_bimanual_step.py": "e144640a0310ab4824e482a2d643165239a74bbfdee66cae42289ff8cb3ee7f2",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_solver_clock.py": "bcf3e202430a9f01efd2df109dcb8014e3e7366c7c51f40f27af2201cc391f21",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_mounted_wrist_source.py": "9aa4e96f484ba4cf8f8afa2ff0cdcddb8d4909d3fb9bc52416e616f299cd8d4e",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_preaction_readback.py": "f7dc893a5bdf124fba2ddd3f62bd3e0e6ee738df99686fbd8d05eb699218c763",
+    "src/go2_pvcnn/control/dh116/tabletop_joint_target_readback.py": "3037241c9468a8c7d9bc57cdedd1f612b9942c1b8d15a7cc33fda626682026b8",
+    "src/go2_pvcnn/control/dh116/linear_coupling.py": "168e30634c2e240fbaecd225766b52a1f2a3c87afafc8c2a7b5a23dfcb1afe93",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_contract.py": "f1a28e5dca4e44a49d16244d92c2c849023f8030943cbec62853dcaeebabdb00",
+    "configs/dh116_tasks/flexible_dual_hand_grasp_v1.json": "8b4f7f8d3fb96c12b9794a7c5daaa2b65f9231699348d5635044bd3f5ac75d63",
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_world.py": "dd2a17bc397f7ec14254c3373ff1ef22aa4515b156fd25db50deba3052f564f4"
+  },
+  "archives": {
+    "pinch": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/approved-approach-r0-20261114-jfd3i7wj/native-runs/flex.f7-approach-r0-native/attempt-wy27jh8g/native/physical.jsonl",
+      "sha256": "4e9b42b1fc96119888cce34d4977d2fd8720b4385409dda45a10f59fcbb8b83b"
+    },
+    "tripod": {
+      "path": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/approved-tripod-owned-20261114-2xl75l3a/native-runs/flex.f8-tripod-owned-contact-native/attempt-r_cnsg84/native/physical.jsonl",
+      "sha256": "fc30831476a2247df49c875e185f13106168ffa117b696491ba0b25d94748f33"
+    },
+    "power": null
+  }
+}

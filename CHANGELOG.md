@@ -1,3 +1,1621 @@
+## 2026-11-14 — 控制器动作历史与 PPO 实际请求绑定
+
+新 Reset 明确拥有并读取上一动作。逐物理行核对实际请求、执行目标与 PPO 采样及 collection token；CPU 夹具覆盖安全投影和原存储。 Ubuntu CPU 回归 132 项通过。[报告](docs/superpowers/reports/2026-11-14-action24-history-owner.md)
+
+## 2026-11-14 — 冻结 Pinch 等字节账本复验
+
+上一 Pinch 原生完成全部 234 步且自然退出 0，203.79 秒超过原 180 秒预算。新配方采用原账本等字节编码，保持物理动作、Reset、接触数据、预算和全部原测量判据。 Ubuntu CPU 回归 34 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-fast-evidence-native-recipe.md)
+
+## 2026-11-14 — 结合实测接近进展与原控制代价的奖励候选
+
+复用实际 232 行和 29 个控制窗口，逐行结算接近进展与原动作代价。首窗上一动作仍为 NA，后 28 窗按显式 100 points/m 候选计算。该候选只供历史算术验证，正式训练奖励仍未接通。 Ubuntu CPU 回归 99 项通过。[报告](docs/superpowers/reports/2026-11-14-approach-control-composer.md)
+
+## 2026-11-14 — 等字节加速柔性物理账本编码
+
+使用真实 621 MB 账本逐行验证编码字节一致，CPU 编码时间 33.88 秒降至 6.78 秒。原保护、时钟、终止持久化和字段完整性保持原合同。Pinch 超时回执仍失败。 Ubuntu CPU 回归 19 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-evidence-encoding.md)
+
+## 2026-11-14 — Pinch 数值 Reset 与逐接触姿态原生复验
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-mesh-reset-numeric-pinch-native.md)。
+
+## 2026-11-14 — 冻结 Pinch CUDA 数值 Reset 复验
+
+修正仅提供 CUDA array interface 的包装对象被当成 NumPy 数值的错误。已消耗旧配方指纹保持原值。冻结相同 234 步、180 秒、0 PPO 的新配方，并要求外层复核独立数值快照。 Ubuntu CPU 回归 50 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-numeric-reset-native-recipe.md)
+
+## 2026-11-14 — 复制 CUDA 实际杆状态并保留严格 Reset 比较
+
+修复仅提供 CUDA array interface 的视图被哈希为 Python 对象地址。数值复制和诊断仅在新入口启用。原严格比较继续分辨真实状态、材料参数及带符号零的变化，失败仍保留数值与字段证据。 Ubuntu CPU 回归 130 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-reset-numeric-state-copy.md)
+
+## 2026-11-14 — Pinch 网格 Reset、逐接触姿态和健康读数原生诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-mesh-reset-health-projected-pinch-native.md)。
+
+## 2026-11-14 — 冻结 Pinch 网格 Reset 单次原生配方
+
+保持原动作、1 环境、2+232 个物理步、180 秒和 0 次 PPO 更新。冻结真实参数任务回执、新 backend 和本轮输入。诊断通过只赋予对应 Reset、逐接触和 health 来源资格。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-reset-health-native-recipe.md)
+
+## 2026-11-14 — Pinch 实际 Reset 与接触读数接入物理 owner
+
+在新配方作用域保留完整 v1 与 v2 接触账本，复核实际 mesh Reset 和同钟健康读数。最终任务树 CPU 137 项，通过旧 guard 优先和终止前数据保存。完整 234 步 CPU owner 另有验证记录。 Ubuntu CPU 回归 98 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-reset-health-owner-preparation.md)
+
+## 2026-11-14 — 真实接触姿态下的原指腹区域判别
+
+保持原1mm/.8/椭圆判据，使用每条contact记录的实际mesh姿态转换原指腹atlas；区分native gap/normal force与平面距离/dot投影，桌面不计指腹。此包仅CPU合同，不授予接触、支撑、滑移或Teacher资格。 Ubuntu CPU 回归 105 项通过。[报告](docs/superpowers/reports/2026-11-14-native-pair-actual-pose-atlas-cpu.md)
+
+## 2026-11-14 — 原控制代价逐物理行只读复算
+
+固定14个原source，逐480Hz实际行重算原time/action-rate/完整17DOF速度代价；保留混合单位数值语义、首窗上一动作NA与Tripod5行terminal。只读Pinch232/Tripod197原账本，Power缺失保持NA；不将负代价当抓取目标，不填原柔性十项系数，training_reward仍null。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-14-readonly-control-cost.md)
+
+## 2026-11-14 — 独立CUDA来源绑定与零步Reset实际读回
+
+独立source_scope核验72新/72原文件、5个观测delta及构建导入证据，恢复旧默认。MeasuredMeshReset将原零步重建后的11槽current/target/solver实际读回与实际手指link核对，并保留constructor未知时钟和失败原始证据。本包仅CPU接线验证，不授予原生Reset或Teacher资格。 Ubuntu CPU 回归 180 项通过。[报告](docs/superpowers/reports/2026-11-14-mesh-observation-source-reset-readback.md)
+
+## 2026-11-14 — 同子步mesh姿态与原生gap接触包消费
+
+新增v2接触原始包CPU消费与序列核对，沿用原force/torque/impulse守恒，独立保留mesh姿态、gap、原生N及总力法向投影。缺字段、overflow、错时/跨episode拒绝；不从旧endpoint补值，不授予有效承托或Teacher资格，无新GPU/Isaac。 Ubuntu CPU 回归 124 项通过。[报告](docs/superpowers/reports/2026-11-14-native-pair-v2-consumer-cpu.md)
+
+## 2026-11-14 — 无相机Teacher采样与CPU owner隔离
+
+复用原物理owner、GAE和PPO storage，验证同pre-action采样、8子步、terminal持久保存及截断bootstrap；隔离的CPU fixture scalar不替代正式R0。真实collector在创建模型/optimizer/物理owner前拒绝，仍等待真实Mesh Reset、R0资格及Power来源。无新原生、GPU分配或optimizer更新。 Ubuntu CPU 回归 139 项通过。[报告](docs/superpowers/reports/2026-11-14-cpu-collector-owner-isolation.md)
+
+## 2026-11-14 — 分离名义子步时间与账本端点时钟
+
+v2逐pair显式区分名义480Hz插值与原账本endpoint timestamp/solver_time，measured substep timestamp保留NA。真实旧232行/2958pair重放全部分类与identity不变；只改时钟来源命名，0新增原生/PPO。 Ubuntu CPU 回归 29 项通过。[报告](docs/superpowers/reports/2026-11-14-substep-clock-provenance.md)
+
+## 2026-11-14 — 独立编译真实网格姿态与同子步接触采样扩展
+
+基于锁定72源，仅5源旁路采样delta，旧API/原二进制不变；独立CUDA12.8 SM89编译/安装各一次成功，新881701后端CPU import-only成功。新增actual cur/target/tele与同surfaceReadout pose/gap/native normal force；没有solver/Isaac调用，GPU数值/Reset/contact资格仍false。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-14-deformx-mesh-observations-build.md)
+
+## 2026-11-14 — 每episode零步重提交原11个碰撞网格
+
+独立opt-in reset在原完整Reset后重新提交同11槽/原SDF/table/material，前后p/v/q/参数/时钟不变；第二episode同样覆盖，失败poison。修复原pending teleport覆盖与真实SDK浮点时间误拒；仅<=240步CPU资格，不授予长时PPO或原生mesh readback。旧源/模型/配方不变。 Ubuntu CPU 回归 78 项通过。[报告](docs/superpowers/reports/2026-11-14-zero-step-mesh-reset-rebuild.md)
+
+## 2026-11-14 — 同钟数值健康getter与终止留证原生准备
+
+新增真实host getter/前后时钟/异常终止留行与外层CPU重放；37新+96既有CPU回归。旧234账本缺getter仍NA，未伪造0。已发现mesh Reset未生效，准备配置固定blocked，未注册新可运行原生配方，不重跑旧预算，0新原生/训练。 Ubuntu CPU 回归 133 项通过。[报告](docs/superpowers/reports/2026-11-14-health-getter-native-preparation.md)
+
+## 2026-11-14 — 逐solver子步接触坐标与延迟Reset审计
+
+真实旧232测量行/2958pair离线重算：旧步末888候选→逐子步872，16分类变化；CPU插值不授予正/负有效接触资格。已发现pending teleport在首步被覆盖，左拇指构造/Reset相差65.435887mm。自然退出证据保留，但mesh Reset对齐未通过；不重跑旧配方，不新增原生。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-14-substep-contact-reset-audit.md)
+
+## 2026-11-14 — Teacher真实后端输入与独立模型身份适配
+
+原模型拒绝真实2fea后端已复现；新增独立CPU输入版本，Pinch/Tripod真实首态66有效+305NA、rod41x13，24D输出与旧PPO保持；Power缺实际来源仍拒绝。92回归通过、1个旧optimizer fixture明确deselected；0真实训练/原生。Mesh Reset、正式R0与collector资格仍未通过。 Ubuntu CPU 回归 92 项通过。[报告](docs/superpowers/reports/2026-11-14-actual-backend-measured-teacher.md)
+
+## 2026-11-14 — WireSeg depth20已审计子集独立物化与断点读取
+
+已审计depth20/train09共360对、713实例独立物化，全量读取和原位续作通过；元数据同份bytes校验解析。旧cohort/模型只读不改，训练更新0，不授予Stereo或模型精度资格。首次集成测试收集因入口缺既有工具目录的pyarrow失败（0测试），日志保留；补充现有tools PYTHONPATH后复验，不安装依赖。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-14-wireseg-depth20-materialization.md)
+
+## 2026-11-14 — R0数值健康与Hold运动分离
+
+新独立opt-in health/constraint/hold合同，真实缺getter仍NA，原终止与损坏来源严格保留；正常负接触不要求先满足成功Hold。实际SDK3/176/234历史CPU回放，不新增原生或训练。正式系数仍null，Teacher未准入。 Ubuntu CPU 回归 155 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-health-separation-cpu.md)
+
+## 2026-11-14 — 实际闭合左手数据约束候选与失败证据
+
+CPU来源/候选工具通过；600次查询候选仍失败，桌面安全净空、非目标指节和原指腹区域存在未解决冲突。不生成新原生配方，不改原动作/关节/成功标准。 Ubuntu CPU 回归 14 项通过。[报告](docs/superpowers/reports/2026-11-14-moving-left-pinch-candidate-search.md)
+
+## 2026-11-14 — Pinch同钟SDK投影、跟踪与实际杆几何分解
+
+原计划左食指仅临界通过，原安全投影及实测杆变形改变区域位置。区分请求、SDK与实际跟踪；24个同episode边界CPU几何分解，不作因果或抓取成功声明。 Ubuntu CPU 回归 15 项通过。[报告](docs/superpowers/reports/2026-11-14-projected-pinch-tracking-decomposition.md)
+
+## 2026-11-14 — 原生Pinch逐指有效区域与安全投影证据核验
+
+只读核验234步原生回执：左食指428条raw/0条有效区域接触，右侧同时原区域接触47.9ms，双侧0。区分SDK目标投影和实际掌位；不计抓取/Teacher资格，本包新增原生0。 Ubuntu CPU 回归 21 项通过。[报告](docs/superpowers/reports/2026-11-14-projected-pinch-native-contact.md)
+
+## 2026-11-14 — 原安全投影Pinch单次234步原生诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-original-projected-pinch-native.md)。
+
+## 2026-11-14 — 原安全投影约束下的Pinch独立原生配方
+
+原safe_z不变，新增独立目标合同、source重算、相邻applied offset连续性、完整/终止owner和worker门控。234 SDK步/0PPO/180秒单次配方准备；本包原生0，Teacher未准入。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-14-original-projected-pinch-preparation.md)
+
+## 2026-11-14 — 原手腕安全投影实测输入留存与独立重算
+
+真实SDK175→176原投影重算误差0，左限制shape为finger13_link。新增只读来源与异常raw留存，默认动作/保护不变；新原生及PPO0。 Ubuntu CPU 回归 35 项通过。[报告](docs/superpowers/reports/2026-11-14-wrist-projection-source-evidence.md)
+
+## 2026-11-14 — 左Pinch原生safe-z终止与失败前缀审计
+
+原生在176步原safe-z修正0.000809mm后触发实验精确路径检查；app.close已返回但外层exit1。保留174行物理前缀及终止几何unknown，不提升资格。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-projection-failure.md)
+
+## 2026-11-14 — 左Pinch高位Approach单次234步原生接触诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-left-pinch-approach-native.md)。
+
+## 2026-11-14 — 左Pinch独立Approach原生入口与双手目标校验
+
+左手1.5mm高位起点及原闭合量显式接入，双手232边界目标和原安全投影核对；独立新配方尚待原生执行，未授予Teacher资格。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-approach-native-preparation.md)
+
+## 2026-11-14 — 左Pinch完整路径与高位Approach条件性审计
+
+末端通过候选的起点仅0.913mm净空被完整路径拦截。独立左手高1.5mm起点/4.5mm每秒下降路径通过1025连续界及232场景，原手指/右手路径不变；尚无新原生接触资格。 Ubuntu CPU 回归 23 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-continuous-approach.md)
+
+## 2026-11-14 — 左Pinch同钟实测来源与独立Reset候选
+
+左侧来源实际为静止，不能当成执行闭合失败；两组局部搜索失败保留，独立Reset候选通过名义及24场景末端检查。完整路径、动态接触与Teacher资格仍未通过。 Ubuntu CPU 回归 25 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-correlated-reset.md)
+
+## 2026-11-14 — 真实右Pinch区域接触与双侧未承托证据
+
+234步新原生诊断120.19秒自然退出0；退出后审计通过。587条右手pair落入原区域，两指连续0.047917秒；左手0，双侧0，仍非抓取/Teacher成功。本包仅重放冻结账本，新增物理步0。 Ubuntu CPU 回归 20 项通过。[报告](docs/superpowers/reports/2026-11-14-tracking-pinch-native-contact.md)
+
+## 2026-11-14 — Tracking-aware Pinch 单次234步接触诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-tracking-pinch-native.md)。
+
+## 2026-11-14 — Tracking-aware Pinch 独立原生入口与完整退出审计
+
+独立 Reset/几何/worker 身份接入原234步所有权；同一24D关节动作与物理保护，复用封存后完整审计。源码回归88通过；未执行新的原生步，不授予Teacher或接触成功资格。 Ubuntu CPU 回归 88 项通过。[报告](docs/superpowers/reports/2026-11-14-tracking-pinch-native-preparation.md)
+
+## 2026-11-14 — 同钟跟踪误差约束的Pinch目标与连续接近路径
+
+CPU最终57项回归；名义和24实测端点场景、1025点连续路径、232步经验轨迹与整手碰撞均通过。原100微米偏移/1.14mm每秒最大X速度不增加；最终经验非目标间隙+2.65微米仍小。保留失败和撤回重放，未运行新原生、未授予接触或Teacher资格。 Ubuntu CPU 回归 57 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-correlated-tracking-targets.md)
+
+## 2026-11-14 — 真实Reset及232样本接近源原生验证
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-approach-r0-native.md)。
+
+## 2026-11-14 — 同钟接近源独立原生配方与全R0后置重算
+
+最终35项CPU回归通过；同钟距离源只在独立入口启用，全量实物账本后置重算每行/每控制；Reset或232样本任一缺失即不晋级。新配方234总SDK步、1环境、0PPO、180秒、GPU3单实例一次；不重跑消耗过的sealed/origin配方。 Ubuntu CPU 回归 26 项通过。[报告](docs/superpowers/reports/2026-11-14-approach-r0-native-preparation.md)
+
+## 2026-11-14 — 真实Reset和同钟几何距离接入独立R0会话
+
+最终19项CPU回归通过；已完成原生账本只读回放232/232接近样本有效，29窗口其他物理/R0项完全一致。Hold、滑移和稳定性仍NA；不授予Teacher或新原生资格。返回与累计报告一致性失败已修正，旧默认不变。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-14-live-measured-approach.md)
+
+## 2026-11-14 — 封存owner与完整后置审计234步原生验证
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-sealed-r0-native.md)。
+
+## 2026-11-14 — 封存原生账本后自然退出及完整后置审计
+
+56项CPU回归通过；真实Python owner232样本/29窗口完整记录。待审计标记不能晋级；外层自然退出后保留原始全量验证、来源与R0重审。新配方234总步/180秒/0PPO/单实例一次，旧失败配方不重跑。 Ubuntu CPU 回归 56 项通过。[报告](docs/superpowers/reports/2026-11-14-sealed-owner-post-exit-audit.md)
+
+## 2026-11-14 — 完整账本时钟投影与原验证器等价回放
+
+154项CPU通过；同一232行实际账本ABBA完整审计输出SHA一致，CPU均值32.116s→28.156s。没有新物理/原生资格，不据此重跑超时配方。 Ubuntu CPU 回归 154 项通过。[报告](docs/superpowers/reports/2026-11-14-owned-clock-projection.md)
+
+## 2026-11-14 — 当前有效右侧几何与真实Reset的R0接近测量
+
+69 CPU测试通过；232历史样本提供左右实际离散SDF接近距离，原生预算失败资格不晋级；原R0首窗口approach8/8有效，hold/slip/instability仍未知，Teacher仍blocked。右间距0不等于有效接触或抓取。 Ubuntu CPU 回归 69 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-right-r0-approach-source.md)
+
+## 2026-11-14 — 稳定测量来源完整接触R0234步原生诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-origin-r0-native.md)。
+
+## 2026-11-14 — 稳定来源R0独立原生入口与退出后核验
+
+54项CPU回归通过；完整Python owner232样本/29控制只为CPU证据。GPU3单实例1env0PPO234总步180秒新配方，不复用已耗预算，不提前授予原生/Teacher资格。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-origin-native-preparation.md)
+
+## 2026-11-14 — R0固定测量来源与逐帧证据分离
+
+独立opt-in来源适配；保留每帧原始来源和SHA，未知保持未知。232实际历史物理样本/29结算数值、有效性、保护及动作全等；重放序列化92.883MB→11.078MB。CPU耗时28.961→30.348秒，没有证明原生提速；Teacher仍blocked。 Ubuntu CPU 回归 162 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-measurement-origin.md)
+
+## 2026-11-14 — 完整接触原生超时账本与来源增长审计
+
+新原生234步自然exit0、无信号，196.212秒超过180秒，失败资格不晋级。离线重算232个完整原子接触/R0记录一致；左无接触、右2129条均在原指腹ellipse外。累计source身份出现162168次，独立928个；统计占41.426MB，定位下一轮开销分析，不伪造Teacher成功。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-14-complete-pair-native-budget-analysis.md)
+
+## 2026-11-14 — 完整原子接触源与负接触R0234步原生诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-complete-pair-r0-native.md)。
+
+## 2026-11-14 — 原子接触配方保护资产路径分类修复
+
+原生启动前被release_path拒绝，尚未消耗预算；配方源码清单只包含既有可发布源码与新增实现，原资产输入锁、物理预算和父回执完全不变。40项CPU通过。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-14-complete-pair-recipe-scope.md)
+
+## 2026-11-14 — 完整原子接触包与在线负接触R0源
+
+保留原始capacity/attempted/overflow及原子聚合，旧投影字段不变；在线原指腹判据仅提供已证实的负接触，正向承托仍未知。独立234步/180秒配方，不重跑已消耗原配方，不变更原物理/动作/R0。 Ubuntu CPU 回归 72 项通过。[报告](docs/superpowers/reports/2026-11-14-complete-pair-live-r0.md)
+
+## 2026-11-14 — 快速编码真实Reset与原R0234步原生诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-fast-r0-reset-native.md)。
+
+## 2026-11-14 — 原R0独立快速编码有界原生配方
+
+新旧完整CPU回归122项通过。独立入口保持234步/180秒/GPU3/1env/0PPO及原物理动作；编码恢复证据与原R0同钟审计，旧超时配方保留，不扩大预算。 Ubuntu CPU 回归 97 项通过。[报告](docs/superpowers/reports/2026-11-14-fast-r0-native-preparation.md)
+
+## 2026-11-14 — 同原生账本字节等价编码加速
+
+同不可变原生账本59948724编码字节与全流SHA一致，126项CPU回归；CPU剖析46.20降至27.66秒。初版无加速证据保留，尚不宣称原生墙钟通过，未开始PPO。 Ubuntu CPU 回归 126 项通过。[报告](docs/superpowers/reports/2026-11-14-fast-owned-codec.md)
+
+## 2026-11-14 — 真实R0原生超时证据与CPU编码热点
+
+真实原生234步、232个R0样本、29次结算且自然exit0，但187.245秒超过180秒，原生资格继续失败。CPU同账本剖析发现递归encode_owned热点，累计27.78秒含剖析开销；未修改保护、物理或训练准入，不重跑已耗配方。 Ubuntu CPU 回归 5 项通过。[报告](docs/superpowers/reports/2026-11-14-live-r0-native-budget-profile.md)
+
+## 2026-11-14 — 真实耦合Reset与原R0同进程234步原生诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-live-r0-reset-native.md)。
+
+## 2026-11-14 — 真实耦合Reset后原R0初始化及同钟观察器
+
+新增独立真实耦合Reset后初始化及逐物理步R0观察器，原物理动作和R0保持；弱引用清理、原账本先持久化、独立同钟/SHA退出审计。序数权重只作诊断，training_reward仍null；未启用离线hold扩展或开始PPO。新234步配方待发布后按站立授权单次执行。 Ubuntu CPU 回归 85 项通过。[报告](docs/superpowers/reports/2026-11-14-live-r0-reset-preparation.md)
+
+## 2026-11-14 — 保持奖励必要条件与实际solver节点速度诊断
+
+独立默认关闭诊断：已知缺少双侧有效接触时hold贡献不适用，raw仍null/invalid，不填造稳定测量、不绕终止。冻结原生232步/29窗回放后剩instability缺失232/29，训练奖励仍0/29。实际solver节点峰速8.240307mm/s@env0/step152/node0，未赋予稳定资格。95项CPU通过，原生/PPO新增0。 Ubuntu CPU 回归 95 项通过。[报告](docs/superpowers/reports/2026-11-14-r0-hold-necessary-domain.md)
+
+## 2026-11-14 — 原有效指腹负证据接入R0且保留缺失来源
+
+同一冻结原生232步/29控制窗只读回放；2129右手pair原区域全部拒绝，接触unknown84→0；既有NA滑移原值仍null，仅贡献不适用。R0剩hold/instability各232步缺失，Teacher仍blocked。新增严格receipt/采集源码/SDF/时钟/聚合核验；117项CPU通过，新增原生/PPO均0。 Ubuntu CPU 回归 117 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-pad-negative-r0.md)
+
+## 2026-11-14 — 右手原生有效指腹失败的实测跟踪与杆位移分解
+
+新右手原生234步、154.725s、自然exit0、保护未触发；2129条hand pair全部超原有效指腹区域，抓取与Teacher资格仍不通过。冻结实际位姿/杆节点重算与solver点误差<0.000024mm，定位静态0.95余量未覆盖实测关节跟踪差及杆横移。新增严格身份/单位/SHA回放审计；不扩指腹、不重跑预算、不增加PPO。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-right-native-tracking.md)
+
+## 2026-11-14 — 右手原有效指腹234步原生接触诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-effective-right-pinch-native.md)。
+
+## 2026-11-14 — 右手原有效指腹路径原生入口与全步CPU审计
+
+独立右手234步配方：原有效指腹判定逐480Hz/rod子步保存；原关节、桌面、非目标和生命周期保护保持。修正CPU夹具未执行carriage FK及只读资产误入发布名单。60项工作树CPU通过；尚未新原生执行或取得Teacher资格，非目标静态余量仅1.528um。 Ubuntu CPU 回归 60 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-right-pinch-native-preparation.md)
+
+## 2026-11-14 — Pinch原有效指腹目标和受限绕行路径
+
+旧端点规划已超原指腹区域；独立右手候选通过原区域与静态约束，直线路径finger13失败；100um World-X分段绕行1025点及最大段速率区间界通过，非目标最小净空1.528um。左手仍失败，实际跟踪/杆响应/原生owner未资格；无新原生/无PPO，未生成配方。保留失败CPU日志及原保护。 Ubuntu CPU 回归 47 项通过。[报告](docs/superpowers/reports/2026-11-14-pinch-effective-target-path.md)
+
+## 2026-11-14 — 双手Pinch原有效指腹区域逐接触审计
+
+只读核验原234步原生账本：2111条手部pair全部在原有效指腹椭圆外，表面距离与法向通过。保持原atlas/控制/保护，实际按自身link和同钟数据验证，非新原生/非Teacher资格。CPU100通过1可选CUDA profiling跳过。 Ubuntu CPU 回归 100 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-effective-pad-regions.md)
+
+## 2026-11-14 — 双手Pinch逐求解器子步载荷与原阈值审计
+
+只读核验原234步账本的2784求解器子步。原>0.05N/-0.25规则下双手同时原始配对493子步(85.590ms)，桌面2784子步承载、右手合力Z无正值；非悬空抓取/非Teacher资格。新物理0步，完整峰值身份及nominal时间标记保留。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-substep-load-audit.md)
+
+## 2026-11-14 — Tripod完整几何闭合搜索与失败证据
+
+完成有界闭合搜索及逐次失败保留。run04为589次CPU查询，最优仍违反拇指/非目标碰撞体规划约束；0新物理步，未生成原生配方，Tripod与Teacher仍blocked。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-full-geometry-closure.md)
+
+## 2026-11-14 — Tripod条件跟踪域与完整几何覆盖证明
+
+X+0.05mm/Z+0.15mm候选928/928离线状态通过；3215查询、1608连续子域通过独立覆盖核验。终点3指SDF仍正间距，未接触/未原生/未Teacher；保留原保护及10um规划余量。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-conditional-tracking-envelope.md)
+
+## 2026-11-14 — 固定腕姿Tripod与实测滞后离线筛选
+
+理想连续路径65点/32区间通过，但928个滞后角点24项失败，finger13最差间距下界-29.20um；候选不进入原生。新增CPU配置/代码/回归，原动作/物理/保护不变，无新增原生或PPO。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-fixed-orientation-screen.md)
+
+## 2026-11-14 — Tripod终止前缀与实际腕旋转滞后归因
+
+只读197条原生测量，SDK199因左finger22非目标间距保护终止；app.close返回且无SIGSEGV，但outer1，仍blocked。实测FK对齐后离线替换定位腕旋转滞后，未改保护、未重跑、未增加PPO。 Ubuntu CPU 回归 59 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-native-tracking-failure.md)
+
+## 2026-11-13 — 独立左手Tripod234步原生接近与静置准入
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-tripod-owned-contact-native.md)。
+
+## 2026-11-14 — Tripod live quiet admission and original24D native preparation
+
+Independent left Tripod234-step preparation:2setup+8quiet+200approach+24observe; original24D/guards retained, right identity independent. Actual quiet admission blocks motion and preserves terminal rows; synthetic full-owner and failure replay passed. No new native or PPO execution in this preparation package. Ubuntu CPU 回归 109 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-live-preparation.md)
+
+## 2026-11-14 — Measured Pinch quiet windows and cross-grasp admission separation
+
+Read-only analysis of immutable232-sample Pinch ledger: zero-action windows8/16/24/32/48, measured max node speed0.038329238mm/s, all table-loaded, no hand load. Distinct SI joint units and complete clock/identity checks. Supports investigating234-step new Tripod design, not a new recipe or admission; no new SDK/PPO steps. Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-14-actual-rod-quiet-windows.md)
+
+## 2026-11-14 — Original 24D Tripod target mapping and bounded stage accounting
+
+Both intrinsic-linear and geodesic-knot target paths pass bounded CPU geometry with original controller kernels, float32 SDK target reconstruction and required cooked-pad guards. Minimum motion is 200 steps; unchanged setup/quiet/hold yields274, exceeding240. No native action, actual tracking, contact, Reset or Teacher qualification. Ubuntu CPU 回归 117 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-original-sdk-path.md)
+
+## 2026-11-14 — Tripod hard constraints and continuous reference approach
+
+Hard constraints find a near-contact endpoint, but all three node gaps remain positive. A separate all-node-contact search fails; fixed-root opening violates original table clearance. A 119-sample, 59-interval moving-root reference path passes conservative CPU geometry only. Original 24D SDK action mapping and native contact, Reset, R0 remain unqualified; no native steps or PPO updates. Ubuntu CPU 回归 76 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-hard-constraint-path.md)
+
+## 2026-11-14 — Tripod 节点对齐闭合与数值边界修复
+
+边界安全dogbox312次查询：三节点SDF+47.051/-10.337/+38.202μm；finger22/finger32已证明分离，但finger13负可行上界-51.706μm、桌面差6.080μm、原几何对向门未通过。0原生/训练，Tripod继续blocked，不以残差改善授予资格。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-node-closure.md)
+
+## 2026-11-14 — Tripod 起点连续节点 SDF 核验
+
+原独立Tripod起点205条pad/node路径与48个连续插值分段全部保留；三指参考最小间隙1.770638/1.747874/2.615555mm，原桌面2.403620mm，解除粗SDF包络误拒。闭合端点碰撞仍blocked，无新原生/训练。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-vertical-sdf-reference.md)
+
+## 2026-11-14 — 实际双手接触与固定材料标记对应误差
+
+真实178个同钟手指接触候选全部保留，124个同节点截面残差>0.5mm，右食指最大1.339164mm；右拇指固定标记端点位移0.640657mm仍非合格滑移。1933条手接触缺同子步director明确NA。只读数据，无新原生/训练。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-material-correspondence.md)
+
+## 2026-11-14 — 双手同杆原生账本的R0实测接近与完整奖励门控
+
+双手同杆232物理样本、29控制步只读R0结算；approach全有效且最后左右0mm，完整奖励0/29，66/371状态有效。缺失稳定性/有效对向/固定材料滑移继续NA，不放行Teacher。无新物理步或PPO。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-r0-measured-replay.md)
+
+## 2026-11-14 — 同一episode双手接触与Reset相对跟踪实测审计
+
+新原生234步、166.29秒自然退出0，四必需指腹同载荷85.9375ms；全程桌面承托，0抓取/Teacher成功。只读诊断保存同episode实际Reset基准与峰值身份，未再推进物理。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-owned-native-contact.md)
+
+## 2026-11-13 — 双手同杆Pinch独立234步原生诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-bilateral-owned-pinch-native.md)。
+
+## 2026-11-14 — 双手同杆独立原生入口与父回执门控
+
+双手独立入口复用原owner/退出逻辑，右真实父回执与左独立事后审计分别SHA核验。完整合成owner及worker19项通过，发布重新运行43项；原生未执行，Teacher未晋级。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-native-preparation.md)
+
+## 2026-11-14 — 双手同杆原24D控制和几何合同
+
+合成原左右24D动作并校验两侧真实坐标合同，新增完整碰撞几何分离证明。CPU演算232子步、无投影；原生尚未执行，不授予Teacher资格。 Ubuntu CPU 回归 45 项通过。[报告](docs/superpowers/reports/2026-11-14-bilateral-owned-control.md)
+
+## 2026-11-14 — 右Pinch实际接触与跟踪只读审计
+
+实际右指腹接触560/530条，同载荷92.014ms；原生234步自然退出0，仍有桌面承托，0抓取/Teacher成功。只读新增33项CPU回归，未再执行物理或训练。 Ubuntu CPU 回归 33 项通过。[报告](docs/superpowers/reports/2026-11-14-right-owned-native-contact.md)
+
+## 2026-11-13 — 右Pinch独立234步接近原生诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-right-pinch-owned-contact-native.md)。
+
+## 2026-11-13 — 右Pinch独立原生入口与退出校验
+
+新入口使用右侧真实USD/SDF/动作及已验证静态路径，独立绑定退出校验；CPU完整232测量步及terminal验证，原保护保持。原生未执行，不授予Teacher资格。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-native-owned.md)
+
+## 2026-11-13 — 右Pinch原24D动作与逐步执行目标合同
+
+232个理想跟踪CPU步与原控制函数对齐；新增独立逐步目标校验，保留原关节、Mimic、桌面和接触保护。CPU结果不冒充SDK读回，未执行原生或PPO。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-action-contract.md)
+
+## 2026-11-13 — 右Pinch合法初态与连续接近路径
+
+独立抬高初始掌根0.5mm、受限三关节接近；161点加连续余量通过原桌面/避杆/深度门槛。107项CPU回归通过，实际SDK/Reset/接触仍待原生，未扩用旧预算。 Ubuntu CPU 回归 107 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-owned-approach.md)
+
+## 2026-11-13 — 右Pinch自身材料点与受约束掌根候选
+
+独立材料点4/3替代错误镜像次序；约束求解315次CPU验算得到1个端点通过，最低桌面净空2.1995mm。完整路径和实际Reset仍未验证，不启动原生；102项回归通过。 Ubuntu CPU 回归 102 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-owned-stations.md)
+
+## 2026-11-13 — 右Pinch独立表面配准与穿桌候选拒绝
+
+右手自身USD/FK/SDF独立配准103次CPU测量，三个初值均导致掌根穿桌约118mm；93项回归通过但几何不通过，未生成原生配方。 Ubuntu CPU 回归 93 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-surface-registration.md)
+
+## 2026-11-13 — 右Pinch非光滑候选与完整非线性验算分离
+
+定位有余量SDF方向导数跳变，opt-in仅调整LP提案，全部原约束仍非线性验证。41次CPU测量四候选均失败，未创建原生配方；122项CPU回归通过，Teacher仍未准入。 Ubuntu CPU 回归 122 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-nonsmooth-proposal.md)
+
+## 2026-11-13 — 真实Pinch相向接触连续时间重算
+
+原234步账本重放为2784子步：左两指相向载荷连续85.9375ms，右无接触，桌面全程承托。100项CPU回归通过；未赋予稳定/滑移/Teacher资格，无新原生或PPO。 Ubuntu CPU 回归 100 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-contact-timeline.md)
+
+## 2026-11-13 — 右Pinch独立相对初始姿态非线性验证
+
+独立相对X/Z姿态保留完整FK/原碰撞；119次CPU端点测量仍未通过，局部约束非光滑时停止。111项CPU回归通过，未创建新原生配方或启动PPO。 Ubuntu CPU 回归 111 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-relative-orientation.md)
+
+## 2026-11-13 — 右Pinch原始凸包杆段距离独立证明
+
+独立4变量QP只提法向，完整883顶点/40原始杆段支撑重算；段3/4可行距离上界仍低于半径，不能用放宽净空修复。54项CPU通过，无新原生/PPO或配方。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-13-polyline-closest-support.md)
+
+## 2026-11-13 — 最新Segment原生账本的R0实测approach接入
+
+修复旧approach读取器拒绝新Segment几何的版本断层；只读232原生测量步/29控制窗口，232approach有效，稳定性232步缺失、有效对向接触42步未资格化。无新原生/训练，R0与Teacher仍blocked。 Ubuntu CPU 回归 92 项通过。[报告](docs/superpowers/reports/2026-11-13-segment-r0-approach.md)
+
+## 2026-11-13 — 右Pinch独立Reset几何与节点SDF诊断
+
+右手实际SDK234来源；四个明确变更的CPU批次共306端点评估，原生0/PPO0。独立Reset候选仍未通过非目标净空与双指SDF裕量，原生配方未生成；旧失败/保护文件/模型保留。 Ubuntu CPU 回归 90 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-reset-direction.md)
+
+## 2026-11-13 — 右Pinch实测闭合方向与非目标几何阻断
+
+SDK234右手实测锚定；24定向端点+161完整路径+一次源凸包QP。固定腕闭合不能形成双指接触，source finger13候选几何重叠；未生成原生配方，未增加动作上限，Teacher0/3。 Ubuntu CPU 回归 77 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-measured-direction.md)
+
+## 2026-11-13 — 左Pinch234步原生账本独立复审与来源修复
+
+原生234/234步自然exit0、无保护失败；修复旧version路由与跨Worktree来源路径后，只读完整账本复审通过。左双指同时接触85.9375ms，原failed回执不改，Teacher0/3。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-segment-postexit-reaudit.md)
+
+## 2026-11-13 — Pinch三维逐段证明单次原生单因素复验
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-pinch-segment-contact-native.md)。
+
+## 2026-11-13 — Pinch三维逐杆段证明独立原生配方
+
+70项CPU回归通过；214条旧原生样本离线完整重算，新几何证明0失败。相同234步动作/Reset/物理，仅独立三维逐段证明，保护阈值不变；本新配方原生尚未执行，Teacher0/3。 Ubuntu CPU 回归 70 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-segment-contact-preparation.md)
+
+## 2026-11-13 — Pinch真实接触账本与三维逐杆段间隙证明
+
+原生216/234步保护停止、exit1且无信号；左拇指310/食指279真实pair，连续同时接触48.4375ms。旧XZ间隙界−3.674µm，完整3D逐段CPU证明+0.497762mm；原失败回执不改，未升级Teacher或原生资格。 Ubuntu CPU 回归 41 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-contact-support-proof.md)
+
+## 2026-11-13 — 左Pinch最大净空初态单次原生接触诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-pinch-margin-contact-native.md)。
+
+## 2026-11-13 — 左Pinch最大净空初态独立234步接触配方
+
+75项CPU回归通过；新234步=2初始化+48静置+160左指闭合+24保持，GPU3/1环境/0PPO/180秒。原右手/自由杆/物理/旧18步路径不变；原生尚未执行，Teacher0/3。 Ubuntu CPU 回归 75 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-margin-contact-preparation.md)
+
+## 2026-11-13 — Pinch杆轴Reset最大净空与161点深度检查
+
+98项CPU回归通过；644状态、每侧24次代数二分将左手连续桌面净空提高至2.111213mm，161目标点指腹深度未超过0.3mm。右侧仍不满足接触/非目标/对向条件。旧最小改动模式保留；无新增物理/PPO，Teacher0/3。 Ubuntu CPU 回归 98 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-rod-axis-margin.md)
+
+## 2026-11-13 — Pinch绕杆轴初态与连续桌面净空
+
+86项CPU回归通过；644状态有界审计找到左侧-0.965°杆轴Reset候选，连续桌面净空2.100079mm、预测双指SDF为-0.208/-0.251mm。余量仅0.079µm，尚未原生资格；右侧离散接触和非目标几何仍阻断。无新增物理/PPO，Teacher0/3。 Ubuntu CPU 回归 86 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-rod-axis-clearance.md)
+
+## 2026-11-13 — Pinch非零动作FK与SDK跟踪误差分离
+
+83项CPU回归通过；16个已有原生端点分离坐标/Mimic/SDK跟踪。实测11关节FK最大误差左0.06855µm右0.07738µm；目标FK仍留1.58–2.41mm正SDF间隙，跟踪滞后非唯一无接触原因。无新物理/PPO，Teacher0/3。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-dynamic-fk.md)
+
+## 2026-11-13 — Reset实际读回补齐R0接近基准
+
+144项CPU回归通过；从实际Reset getter数据重建基准，两个控制周期均8/8有效接近样本，首步实测负差值保留。未新增物理步/PPO，hold/instability仍阻断，真实手杆pair0，Teacher0/3。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-r0-reset-measured-approach.md)
+
+## 2026-11-13 — 实测指腹/柔性杆几何接入 R0 接近进度
+
+101项CPU回归通过；同一原生账本16个实际SDF距离形成15次合法增量。第二控制周期接近平均0.010819mm，阻断剩hold/instability；Reset基准仍NA，手指杆接触仍0，新物理步/PPO0，Teacher0/3。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-13-r0-measured-approach.md)
+
+## 2026-11-13 — R0 适用域与实测 Reset 接近基准独立修复
+
+131项不同CPU回归通过；真实18步账本只读复放，已核验17个原生参数包。诊断R0阻断4→3，滑移原始值仍NA；稳定性、接近和保持来源仍缺失，Teacher0/3，新物理步/PPO0。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-applicability.md)
+
+## 2026-11-13 — 独立原生参数后端双手任务单次18步
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-native-parameter-task-native.md)。
+
+## 2026-11-13 — 独立原生 getter 后端接入双手实际任务
+
+146项合并CPU回归通过；补充真实scheduler加载和跨checkout指纹回归后，最终37项通过（累计149个独立测试）。首次集成35通过1失败：本地配置绝对路径污染指纹，已修复并保留失败日志。新配方18步/1环境/0PPO/180秒尚未执行；Teacher仍0/3。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-13-native-parameter-task-preflight.md)
+
+## 2026-11-13 — 原生参数与真实 Reset／480Hz 时钟绑定
+
+123项CPU回归通过；核对72个后端源码，除只读getter外均与原后端一致。参数读回绑定真实rod、episode、Reset、SDK及solver时钟，保留不确定度和晋级状态。未改默认后端、奖励和控制器；独立任务原生接入待下一工作包。 Ubuntu CPU 回归 123 项通过。[报告](docs/superpowers/reports/2026-11-13-native-parameter-endpoint-adapter.md)
+
+## 2026-11-13 — DeformX 独立参数接口零步 CUDA 读回
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-native-parameter-getters-native.md)。
+
+## 2026-11-13 — 独立 DeformX 原生参数只读接口与零步验证准备
+
+独立cp310/SM89编译通过，87项CPU回归通过；修复源码审计子进程的挂载目录信任。新增设备参数读回及来源区分，旧后端SHA未变。零物理步读回配方已冻结，尚未执行；Teacher仍未准入。 Ubuntu CPU 回归 87 项通过。[报告](docs/superpowers/reports/2026-11-13-deformx-native-parameter-getters.md)
+
+## 2026-11-13 — Pinch 独立初始横滚俯仰约束求解
+
+67项CPU回归通过；866个完整状态，两侧200查询上限消耗完。右拇指间隙0.231705mm仍无接触，左保留原候选；未生成新原生配方，未改腕部动作和物理保护。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-world-tilt-reset.md)
+
+## 2026-11-13 — Pinch 完整非线性约束初姿有限求解
+
+54项CPU回归通过；808/866完整几何状态，左16迭代上限、右200查询上限均保留。左SDF两指负间隙仍不满足0.1mm预检余量，右拇指0.233784mm未接触。未生成原生配方，未改变物理/动作/保护，Teacher仍0/3。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-direct-nonlinear-reset.md)
+
+## 2026-11-13 — Pinch 横向掌位偏航闭合联合求解
+
+69项CPU回归通过；306/306完整FK/SDF状态。右拇指间隙从0.438482降至0.339444mm仍未接触，左侧硬净空失败未采用；不生成原生配方、不改变保护，Teacher仍未晋级。 Ubuntu CPU 回归 69 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-coupled-lateral-reset.md)
+
+## 2026-11-13 — Pinch 已存偏航候选凸包重叠证据
+
+56项CPU回归通过，16/16已存候选独立重建；10个源凸包重叠上界证据，6个仍不能判定；不冒充PhysX碰撞/真实接触，不产生新候选或原生配方，Teacher未晋级。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-yaw-convex-witness.md)
+
+## 2026-11-13 — Pinch 静态World-Z偏航独立几何筛选
+
+102个独立完整几何状态、58项CPU回归通过；左右各9个固定偏航候选及选中33点连续路径。非零偏航受非目标形体分离下界约束，保留原候选；负下界不等于已证实穿透。未生成新原生配方，0物理步/0PPO；真实接触和Teacher仍blocked。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-static-yaw-screen.md)
+
+## 2026-11-13 — 双手 Pinch 参数来源单次原生端点读回
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-parameter-readback-native.md)。
+
+## 2026-11-13 — 双手 Pinch 参数来源同钟原生读回准备
+
+实际同钟参数捕获、冻结父回执、源文件与逐包独立审计接入原释放路径；全套164项CPU回归通过。修复测试替身API形状及父回执引用，保留失败证据。新配方仅18步、1环境、0PPO、一次；尚未执行本配方原生实验，真实抓取和Teacher仍未准入。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-native-parameter-preflight.md)
+
+## 2026-11-13 — 柔性求解器参数getter与配置来源分离
+
+读取真实mass/drag/damping/iterations API的独立旁路已实现，配置、getter和未知材料量分离。修复全局/逐mesh摩擦混淆及读回期间stream变化漏检；72项CPU回归通过。本包0原生步、0PPO，原生接入待新独立配方，不借用上批材料方向资格，Teacher仍0/3。 Ubuntu CPU 回归 72 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-parameter-provenance-readback.md)
+
+## 2026-11-13 — 真实材料方向端点与原动作路径只读对照
+
+17组真实reset/端点读回通过，原生18步自然exit0。与前次原动作运行的16行杆节点、左右q/qd及SDK目标逐值一致；只读分析不新增原生步。仍为0手指—杆接触，材料转角不是接触滑移，三抓法Teacher均未开放。 Ubuntu CPU 回归 63 项通过。[报告](docs/superpowers/reports/2026-11-13-native-director-endpoint-readback.md)
+
+## 2026-11-13 — 双手 Pinch 同钟材料方向单次原生端点读回
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-director-endpoints-native.md)。
+
+## 2026-11-13 — 双手 Pinch 同钟材料方向读回与生命周期原生准备
+
+独立配方只新增同钟真实节点与材料方向读回，原动作和守卫不变。完整 CPU SDK doubles 回归110项通过；保留两批失败证据并修复测试共享视图生命周期，未弱化原生校验。原生预算为2初始化+16测量，共18步、1环境、0PPO、最多一次；尚无本配方原生通过或Teacher资格。 Ubuntu CPU 回归 102 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-director-preflight.md)
+
+## 2026-11-13 — Pinch 有界非线性几何候选的实际接受与拒绝
+
+一次330状态CPU复算保留三次实际改善、拒绝三次不合格候选；左右食指进入静态SDF谓词，拇指仍有正间隙。不增加原生步、不安装Reset、不授予Teacher资格。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-trust-region.md)
+
+## 2026-11-13 — 真实双手动作区间的目标与实测响应对齐
+
+只读16条既有实测行，四个指关节在16.67ms内实际增量约为SDK目标增量33–34%，四个已存指腹SDF间隙下降但仍为正。0手杆pair，7872条杆桌子步pair；静态手桌来源保留NA。未新增原生、FK/SDF计算或训练。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-closure-readback.md)
+
+## 2026-11-13 — Pinch 初态展开角与沿杆位置的非线性可达性核验
+
+同原生节点的150状态CPU检查改善了首态及全路径净空，但完整FK/SDF否决了两侧LP预测接触。未生成原生配方、未更改物理/速度/限位；下一步采用实际约束改善验证的有界信赖域，不扩大动作。原生0步/PPO0更新。 Ubuntu CPU 回归 59 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-spread-axial-direction.md)
+
+## 2026-11-13 — 绑定真实 DeformX API 的材料方向端点读回
+
+复用已存在RopeBatch.quaternions与positions，明确CUDA默认流同步、owned拷贝、reset/episode时钟和40段+padding。RopeBatch没有rest_lengths getter，构造来源与native未知分开；端点不冒称子步材料滑移，本包0原生步、0训练更新。 Ubuntu CPU 回归 111 项通过。[报告](docs/superpowers/reports/2026-11-13-material-director-endpoint-readback.md)
+
+## 2026-11-13 — 区分 flexible R0 观测缺失与奖励定义域
+
+实际原公式证明：补齐半径和稳定性可定义部分未达标项为0，但首approach无前值和未建立双手材料锚的slip仍为NA，严格reducer不能生成训练标量。保留旧kernel、系数与标准，记录独立后继奖励合同需处理的定义域；本包0原生步、0训练更新。 Ubuntu CPU 回归 90 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-reward-domain-audit.md)
+
+## 2026-11-13 — Pinch 初始掌位与两指闭合的有界可达性诊断
+
+完成60个CPU几何状态的固定范围诊断，左右候选均未满足目标SDF接触及全轨迹余量，不生成原生配方。保留失败结果；不把保守下界失败当成已证明碰撞，也不据此宣称全局不可达。本包原生0步，PPO0更新。 Ubuntu CPU 回归 55 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-raised-reset-reachability.md)
+
+## 2026-11-13 — 双手 Pinch 单次受保护手指动作原生读回
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-guarded-closure-native.md)。
+
+## 2026-11-13 — 双手 Pinch 单动作区间原生执行与失败记录准备
+
+保留原物理与守卫，修复包装递归和旁路读取异常丢失物理样本。冻结2+8+8一次手指动作，实际源几何逐步复算、终止行先保存、自然退出独立核验；本包原生0步、PPO0更新，尚未授予Teacher或抓取资格。 Ubuntu CPU 回归 101 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-guarded-closure-preflight.md)
+
+## 2026-11-13 — 同钟双手闭合几何实测与失败保护
+
+新增23-link与17DOF同钟实测入口及无SDK复算；保留2.1mm净空、关节、Mimic、力和腕部保护。CPU double覆盖全部profile状态及读回失败，原生执行0步，尚未授予闭合或Teacher资格。 Ubuntu CPU 回归 95 项通过。[报告](docs/superpowers/reports/2026-11-13-measured-closure-geometry.md)
+
+## 2026-11-13 — 真实双手 Pinch v4 账本的 R0 离线重放
+
+重放真实 SDK3–10 的8行和同钟杆状态，原CLI磁盘重放一致。5项奖励来源仍为NA，fixture系数只用于诊断，未授予R0训练资格；新增原生步数和PPO更新均为0。 Ubuntu CPU 回归 62 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-v4-r0-native-replay.md)
+
+## 2026-11-13 — 冻结双手 Pinch 单区间动作回读 profile
+
+绑定已核验 v4 父账本和独立双手初态，冻结零动作8步后一次手指动作8步的离线 profile；本包原生步数与 PPO 更新均为0。预测间隙只作有条件预检，仍需逐步实测几何保护。 Ubuntu CPU 回归 75 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-eight-step-readback-profile.md)
+
+## 2026-11-13 — 静态台面 PhysX 逐接触来源校验
+
+历史左右标定的 480 行均不能证明原台面 contact report 可用。真实台面资格与历史 GPU readback 设备冲突分开保留。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-static-table-report-cell-cpu.md)
+
+## 2026-11-13 — 双手柔性动作后的实测净空保护
+
+记录每次 SDK 推进后的双手源几何净空。低于 2.1 mm 时保存终止行并停止下一动作。 Ubuntu CPU 回归 34 项通过。[报告](docs/superpowers/reports/2026-11-13-poststep-clearance-guard-cpu.md)
+
+## 2026-11-13 — Tripod 起点与沉降杆闭合分阶段审计
+
+左手回退起点桌面几何净空 2.404 mm，闭合仍因近端碰撞被拒绝。右手旧末态独立拒绝。 Ubuntu CPU 回归 80 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-two-phase-sdf.md)
+
+## 2026-11-13 — 柔性 Teacher 真实动作前状态离线推理
+
+使用真实双手 Pinch 和 41 节点预动作账本，CPU 验证 24D Tanh 推理。正式 PPO 准入仍未通过。 Ubuntu CPU 回归 35 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-native-boundary-inference.md)
+
+## 2026-11-13 — 双手 Pinch 零动作区间 v4 原生复验
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-v4-native.md)。
+
+## 2026-11-13 — 双手 Pinch 原台面碰撞节点
+
+按当前 Isaac Lab 的真实 USD 子节点读取原台面。保留静态接触 NA，冻结单次 2+8 复验。 Ubuntu CPU 回归 38 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v4-preflight.md)
+
+## 2026-11-13 — 双手原生 Reset 账本与 SDK 输入回归
+
+复用双手真实 Reset 的 17DOF、23 body 和原安装 SDK 读取实现，回归 24D 动作路径及目标和实测分离。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-mounted-sdk-boundary-cpu.md)
+
+## 2026-11-13 — 双手 Pinch 零动作区间 v3 原生复验
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-v3-native.md)。
+
+## 2026-11-13 — 双手 Pinch 场景准备交接
+
+双手原生 Reset 的场景配置由 builder 与台面读取器共享，冻结 2+8 步复验。 Ubuntu CPU 回归 23 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v3-preflight.md)
+
+## 2026-11-13 — 双手 Pinch 原生同杆 2+8 元数据修正版
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-v2-native.md)。
+
+## 2026-11-13 — 双手 Pinch 2+8 原生元数据修正版
+
+v1 未推进物理即因缺少布局元数据退出。独立 v2 修复原场景入口并维持同一 10 步范围，保留旧回执。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-v2-preflight.md)
+
+## 2026-11-13 — 双手外部柔性杆的原场景元数据
+
+原始双手场景入口要求 wire_center。独立适配器从锁定 wire_points 派生布局元数据，实际外部杆和物理资产保持原定义。 Ubuntu CPU 回归 7 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-external-wire-layout-cpu.md)
+
+## 2026-11-13 — Cosserat 材料标记随杆截面运动的 CPU 参考
+
+为未来真实求解器遥测提供固定材料坐标和截面旋转的 CPU 参考，保留当前接触材料坐标、Slip 和误差界未知。 Ubuntu CPU 回归 81 项通过。[报告](docs/superpowers/reports/2026-11-13-cosserat-material-marker-reference.md)
+
+## 2026-11-13 — 双手 Pinch 同杆零动作 2+8 原生诊断
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-dual-pinch-zero-interval-native.md)。
+
+## 2026-11-13 — 双手 Pinch 精确 2+8 原生配方准备
+
+封装独立同杆诊断，精确 2+8、1 环境、0 PPO。保留旧关节与腕部 2.1 mm 保护，支持原两个 SDK articulation 标识。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-zero-interval-native-preflight.md)
+
+## 2026-11-13 — 双手 Pinch 独立原生退出和逐步审计
+
+独立复核 2+8 时钟、双手原始 17DOF 与净空、回执和 GDB。SimulationContext 活性单列，不升级接触或 Teacher 资格。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-postexit-audit-cpu.md)
+
+## 2026-11-13 — Power 独立初态与原五指 SDF 可达范围
+
+两侧备用原姿态均通过初始台面 2.3 mm 静态筛查，固定底座和原合法闭合区间仍无法覆盖全部五个指腹。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-13-power-alternative-sdf-contact-interval.md)
+
+## 2026-11-13 — 双手 Pinch 原始构造、动作和账本整链
+
+从同杆 Reset 到零动作原 24D 控制窗和严格落盘，台面源明确 NA，保持原始 2.1 mm 门。 同进程动态 PhysX schema 夹具发生注册冲突，按原有独立进程运行原生 API 形状回归。 Ubuntu CPU 回归 12 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-integrated-entry-cpu.md)
+
+## 2026-11-13 — 实测节点中心与连续材料锚来源审计
+
+从原始 pair 与同钟实测姿态重建节点中心运动，保留材料表面对应和 0.5 mm Slip 的来源阻断。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-13-contact-material-observability-cpu.md)
+
+## 2026-11-13 — 左 Pinch v4 原生接触与来源分项复核
+
+冻结的固定底座原生验证测得 1,165 条手杆 pair 和 567 个同子步双指载荷，外层自然退出 0。静态 GPU 手与台面源保留未知。 Ubuntu CPU 回归 38 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-v4-native-contact-provenance.md)
+
+## 2026-11-13 — Tripod 节点 SDF 与初态硬约束
+
+原 2.1 mm 限制下量化 Tripod 左右近端指节与落杆包络冲突，分别检验连续杆段与原求解器节点 SDF。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-sdf-constrained-direction.md)
+
+## 2026-11-13 — 静态台面 GPU 过滤能力门
+
+根据 v4 原生 GPU 不支持静态台面过滤的证据，静态桌面不建不可靠 tensor view，输出明确 NA 并保留原桌面。 Ubuntu CPU 回归 27 项通过。[报告](docs/superpowers/reports/2026-11-13-static-table-contact-capability-correction.md)
+
+## 2026-11-13 — 双手 PhysX 逐身体台面接触来源
+
+验证双手逐身体原始接触读回接线。固定台面 GPU 过滤能力仍须独立来源核实；随后单独加入 v4 已确认的能力门。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-13-bimanual-hand-table-contact-cpu.md)
+
+## 2026-11-13 — 左 Pinch v4 固定底座实测闭合和原生退出
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v4-native.md)。
+
+## 2026-11-13 — 左固定底座 Pinch v4 配方与退出审计
+
+冻结左侧节点 SDF 闭合、精度归约、回执和原生退出审计。使用旧单手材料与保护，CPU通过后在已有授权上执行一次原生复验。 Ubuntu CPU 回归 121 项通过。[报告](docs/superpowers/reports/2026-11-13-single-left-pinch-v4-preparation.md)
+
+## 2026-11-13 — 双手 Pinch 八子步完整动作接线
+
+覆盖实际双手 builder 到完整八子步、非零手指动作、SDK回读、反作用力交接、失败证据及原 2.1 mm 保护。 Ubuntu CPU 回归 38 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-eight-tick-cpu.md)
+
+## 2026-11-13 — 双手柔性物理和 24D 决策证据落盘
+
+流式保存实际 owner 决策、逐步接触、终止和明确未知的原始状态。独立重放检验共享 SDK 和求解器时钟。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-dual-physical-evidence.md)
+
+## 2026-11-13 — 左 Pinch 实测节点与两指闭合候选
+
+按 v3 实测节点和锁定 SDF 选择有限闭合候选，固定底座 1.9 mm 门通过 CPU 审计，保留 2.1 mm 六轴投影限制。 Ubuntu CPU 回归 47 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-measured-sdf-closure-margin.md)
+
+## 2026-11-13 — SimulationContext 已知 ready 订阅释放
+
+对固定 Isaac SDK 源码核验后释放已知 PHYSICS_READY 订阅，再调用原 clear_instance。记录两层引用证据和未解析构造帧。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-13-simulation-owner-cleanup-cpu.md)
+
+## 2026-11-13 — 双手 Pinch 同一自由杆原生构造接线
+
+完成双手实体、同一自由杆、实测几何回读及原有双手 Reset 的构造接线。CPU 验证保留 2.1 mm 腕部净空与原生发布门。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-pinch-builder-cpu.md)
+
+## 2026-11-13 — Pinch 后继配方独立力守恒归约
+
+核对原 FP32 账本标量和 FP64 独立守恒门。实际 238 行离线通过数值验证，保留 v3 外层失败和零手接触。 Ubuntu CPU 回归 36 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-force-precision-successor.md)
+
+## 2026-11-13 — Power 掌位与六主动关节联合几何
+
+90 次有界 CPU 查询。拟合改善的姿态仍违反桌面和五指门，保留拒绝证据，无可用 Power Reset。 Ubuntu CPU 回归 60 项通过。[报告](docs/superpowers/reports/2026-11-13-power-joint-palm-direction.md)
+
+## 2026-11-13 — 柔性杆接触方向与材料节点分辨率
+
+以原 solver 逐子步法向、力和接触点诊断方向。约 12.5 mm 节点间距不能支持 0.5 mm 真实材料滑移验证，未知项保留。 Ubuntu CPU 回归 162 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-pair-source-basis.md)
+
+## 2026-11-13 — 左 Pinch v3 原生账本重放
+
+原生 v3 已完成 240 SDK 步，全部接触为杆与桌面。独立重放确认微小物理残差及旧 FP32/FP64 一致性失败。保留外层 exit 1 与 SimulationContext 存活证据。 Ubuntu CPU 回归 31 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-v3-native-ledger-replay.md)
+
+## 2026-11-13 — 左 Pinch v3 原生启动与单手读回
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v3-native.md)。
+
+## 2026-11-13 — 左 Pinch v3 Kit 启动边界
+
+CPU 子进程复现 v2 提前导入 pxr，v3 纯字节预检到 AppLauncher 仍无 USD 导入。真实 SDK 复验为独立单次配方。 Ubuntu CPU 回归 193 项通过。[报告](docs/superpowers/reports/2026-11-13-single-left-pinch-v3-import-boundary.md)
+
+## 2026-11-13 — Tripod 联合手掌和关节几何方向
+
+90 次独立数值查询验证左右联合方向。两侧目标下降，仍有指腹端点和近端间隙未通过，不生成 Reset 提案。 Ubuntu CPU 回归 59 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-joint-root-direction.md)
+
+## 2026-11-13 — 柔性实测字段 Teacher 独立断点
+
+独立格式保存 CPU 诊断策略和 Adam/RNG，合成 PPO 续跑精确一致；原 Checkpoint 实现字节和指纹保留。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-measured-checkpoint-cpu.md)
+
+## 2026-11-13 — 柔性 Teacher 独立实测状态投影
+
+独立 CPU 派生模型只选择原 371D 账本里已接线的 66 项，加真实结构的杆节点输入。合成数据只验现有 PPO 兼容，原模型、Checkpoint 和原生准入保留。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-measured-common-teacher-cpu.md)
+
+## 2026-11-13 — 双手柔性 Episode 的 R0 账本重放
+
+重放核对关节、实际 SDK 目标、杆包和逐接触数据，记录原 R0 的可用性。首步接近、有效对向接触和材料锚滑移缺失均保留 NA。 Ubuntu CPU 回归 306 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-replay-cpu.md)
+
+## 2026-11-13 — Power 固定根闭合连续界
+
+独立核对五个原 Power 候选的关节余量、可用动作时间与实际碰撞包络，解析支撑平面给出连续下界。局部候选均未通过，无原生配方。 Ubuntu CPU 回归 35 项通过。[报告](docs/superpowers/reports/2026-11-13-power-continuous-closure-constraints.md)
+
+## 2026-11-13 — 双手 Pinch 同杆 Reset 提案
+
+左右静态连续净空 2.101095 / 2.112018 mm，均过原策略门，独立手包络沿杆轴至少相隔 295.679 mm。实际同杆 Reset 与接触仍未验证。 Ubuntu CPU 回归 31 项通过。[报告](docs/superpowers/reports/2026-11-13-paired-pinch-reset-preflight.md)
+
+## 2026-11-13 — 左 Pinch v2 单手自由杆读回和自然退出
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-pinch-left-v2-native.md)。
+
+## 2026-11-13 — 单左 Pinch v2 原生复验准备
+
+同一原生配方记录 17 link 初始净空、真实桌面计数和 DeformX pair，并独立重开物理账本与自然退出证据。只授予单手运行与读回范围，抓取仍独立验收。 Ubuntu CPU 回归 169 项通过。[报告](docs/superpowers/reports/2026-11-13-single-left-pinch-v2-preparation.md)
+
+## 2026-11-13 — 右手 Pinch 原策略净空复验
+
+新独立右手静态候选连续净空 2.112018 mm，保持原端点及原保护门。动态接触和同杆 Reset 仍待实测。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-policy-clearance.md)
+
+## 2026-11-13 — Tripod 近端碰撞定向筛查
+
+左右各 60 个 CPU 候选，满足粗闭合的候选仍有近端 link 干涉。保留负间隙证据，Tripod 无可配对 Reset 候选。 Ubuntu CPU 回归 48 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-proximal-targeted-screen.md)
+
+## 2026-11-13 — 左 Pinch v2 初始全手几何读回
+
+原 17 碰撞体和锁定的 5 指腹几何使用 SDK link 位姿重算。已有 cooking 数据作为补充，实际 shape attachment 仍待原生核对。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-initial-geometry-v2-cpu.md)
+
+## 2026-11-13 — 柔性双手动作前同钟状态读回
+
+双手动作前入口以同一物理边界读回 66 个原合同字段与杆快照。余下 305 项明确保留无效状态，原 Teacher 准入继续关闭。 Ubuntu CPU 回归 100 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-episode-common-readback.md)
+
+## 2026-11-13 — 右手 Pinch 定向静态闭合
+
+120 个局部候选中，right-targeted-092 通过原 1.9 mm 静态筛查与连续路径门。连续下界 2.039475 mm，尚未达到双手物理入口的 2.1 mm 策略净空要求。新杆轴高 0.305 m 仍需独立 Reset 绑定。 Ubuntu CPU 回归 45 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-targeted-geometry.md)
+
+## 2026-11-13 — 双手物理 Episode 链路
+
+双手 Reset、杆快照和 480/60 Hz 交换已接到同一 CPU 验证入口。保留初始净空拒绝、原保护终止与单样本时钟身份。 Ubuntu CPU 回归 96 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-physical-episode.md)
+
+## 2026-11-13 — PhysX 到 DeformX 位姿交接
+
+PhysX 前进后，读取新指腹位姿并校验 DeformX 仍处于前一边界；跳步、换 episode 或陈旧读取会拒绝交换。已接通 CPU 双手八步回归。 Ubuntu CPU 回归 92 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-clock-handoff.md)
+
+## 2026-11-13 — 双手同杆原地 Reset 事务
+
+核对同一根杆的 Reset 身份、双手实际关节与目标读回，并保留未知力学字段。四项既有 root pose fixture 失败已独立复现。实际 PhysX Reset 和 R0 仍待验证。 Ubuntu CPU 回归 312 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-reset-cpu.md)
+
+## 2026-11-13 — 右手 Pinch 独立闭合筛查
+
+450 个右侧候选完成，唯一严格端点候选在连续 finger13 近端净空门被拒，保留失败和断点证据。 Ubuntu CPU 回归 38 项通过。[报告](docs/superpowers/reports/2026-11-13-right-pinch-closure-screen.md)
+
+## 2026-11-13 — DeformX 逐接触对 CUDA 校准 v2
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-deformx-pair-capture-v2-native.md)。
+
+## 2026-11-13 — 柔性 24D 控制的同钟几何读回
+
+用实测 link pose 和局部 COM 接入全手源包络净空，保持原两侧几何身份；SDK double 回归通过，原生尚未验证。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-live-geometry.md)
+
+## 2026-11-13 — DeformX 接触对校准 worker 注册路径修复
+
+从真实失败 intent 定位证据根层级，真实 CPU worker 子进程现通过授权到构造边界，并校验 solver 状态。旧失败保留。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-13-deformx-pair-worker-v2.md)
+
+## 2026-11-13 — 柔性杆 Reset 与测量状态同钟适配
+
+首动作前可验证杆节点、几何和材料顺序，未测接触保持 NaN 和 false mask。后端和物理时钟按实际输入核对。 Ubuntu CPU 回归 64 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-rod-reset-boundary.md)
+
+## 2026-11-13 — Teacher 原策略 owner 动作与目标来源
+
+按实际 TensorTask owner 和动作时序核对原目标与上一接纳 24D action，共 36 项独立字段。尚未接入柔性环境。 Ubuntu CPU 回归 118 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-policy-owner-source.md)
+
+## 2026-11-13 — 逐指腹接触对与同子步加载诊断
+
+对账逐对力、杆节点和 mesh 力矩，报告同时加载、材料节点和桌面 SDF。滑移、外部支撑与有效对向接触维持未知。 Ubuntu CPU 回归 73 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-pair-contact-diagnostics.md)
+
+## 2026-11-13 — 柔性双手原 USD 场景装配与几何身份
+
+复用原双 USD、腕驱动和桌面，离线核对 34 个碰撞体、10 个软指腹、12 个腕关节和两侧 SDF。实际环境启动与后验 cooked 校验仍待验证。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-scene-preparation-cpu.md)
+
+## 2026-11-13 — DeformX PPO 与 Hold 窗口的单精度时钟校验
+
+按真实 solver 单精度累计校验，同时保留 SDK 与杆整数步严格匹配。已覆盖 2401 步 CPU 重放。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-13-deformx-solver-clock.md)
+
+## 2026-11-13 — Teacher 原生腕部实例路径绑定修复
+
+按已安装 IsaacLab 的实际根路径发现规则区分 wrist_fixed 与 base_link 所在容器。仍为 66/371 CPU 来源覆盖。 Ubuntu CPU 回归 146 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md)
+
+## 2026-11-13 — DeformX CUDA 逐接触对读回单步校准
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-deformx-pair-capture-native.md)。
+
+## 2026-11-13 — PhysX 构造 frame 释放 v2 单次原生
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-frame-v2-native.md)。
+
+## 2026-11-13 — PhysX 构造 frame 引用释放与原生复验准备
+
+保留同一物理初始化，仅清理构造帧持有的局部引用并使用全线程暂停取证。新单次原生指纹待批准。 Ubuntu CPU 回归 135 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-lifetime-frame-v2.md)
+
+## 2026-11-13 — Teacher 371D 原腕部状态来源
+
+按原 WXYZ、COM 速度、内禀关节角和 reset seed 接入 32 个腕部通道。CPU 中两手共 66/371，未绑定通道仍有 305 个。 Ubuntu CPU 回归 139 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-mounted-wrist-source.md)
+
+## 2026-11-13 — 60 Hz 双手控制与 480 Hz 柔性物理交换
+
+单环境每控制步最多 8 个物理子步，接通原动作保护、真实 SDK 路由和同杆反力时差。CPU double 验证，场景装配和正式 R0 仍待资格。 Ubuntu CPU 回归 117 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-physical-exchange.md)
+
+## 2026-11-13 — 柔性双手腕部原桌面安全投影
+
+复用原 2.1 mm 净空、腕速度约束、内禀旋转及撤回不安全下压目标。场景全手净空与原生执行仍待接入。 Ubuntu CPU 回归 104 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-wrist-projection.md)
+
+## 2026-11-13 — 双手 24D 控制边界与 PhysX 目标读回
+
+使用原关节和腕部动作语义，核验左右实例、实际目标、SDK 和杆时钟。原桌面投影接入和原生执行仍待验证。 Ubuntu CPU 回归 174 项通过。[报告](docs/superpowers/reports/2026-11-13-deformable-bimanual-step-cpu.md)
+
+## 2026-11-13 — 双手同杆运行时与 10 指腹反作用力路由
+
+接通双手槽位和世界坐标反作用力路由，校验真实实例身份、单步时钟和 Reset。CUDA 用例在 CPU 回归中跳过，待原生标定。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-13-dual-hand-rod-runtime.md)
+
+## 2026-11-13 — PhysX GDB 全线程暂停后取证
+
+带后台线程的 CPU 进程复现旧 GDB 命令错误。候选捕获器在所有线程暂停后保留完整栈、映射和实际退出状态，待下一原生配方接入。 Ubuntu CPU 回归 42 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-gdb-stopped-context.md)
+
+## 2026-11-13 — 三抓法 Teacher rollout 准入与 GAE 边界审计
+
+三抓法现有证据全部拒绝准入。复用 371D 来源门与原 GAE，终止不 bootstrap，截断只使用同回合末状态。2 环境 32 控制步预算仅作审计。 Ubuntu CPU 回归 107 项通过。[报告](docs/superpowers/reports/2026-11-13-deformable-rollout-admission.md)
+
+## 2026-11-13 — PhysX 生命周期两格原生结果
+
+两格 app.close 返回；GDB 全线程捕获失败且退出码 1，资源保留证据已复核。[报告](docs/superpowers/reports/2026-11-13-physx-lifetime-native-contrast.md)
+
+## 2026-11-13 — PhysX 所有权生命周期 explicit 原生对照
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-explicit-native.md)。
+
+## 2026-11-13 — PhysX 所有权生命周期 registry 原生对照
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-physx-lifetime-registry-native.md)。
+
+## 2026-11-13 — PhysX Tensor View 两种清理路径对照准备
+
+两种资源清理路径分别冻结，捕获 GDB 调用栈、寄存器和动态库映射，外层退出独立复核。原生对照待批准。 Ubuntu CPU 回归 113 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-lifetime-probe-preparation.md)
+
+## 2026-11-13 — 柔性 R0 控制步与提前终止结算
+
+每个完整 8 子步窗口或已知提前终止只结算一次，未知来源保留空值。正式 R0 系数和训练奖励仍待原生证据。 Ubuntu CPU 回归 78 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-r0-control-settlement.md)
+
+## 2026-11-13 — Tripod 与 Power 独立闭合可达性检查
+
+Tripod 左右静态候选桌面净空各 2 mm，闭合仍有近端碰撞。Power 筛查保留未通过的必要可达性证据，未生成原生配方。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-13-tripod-power-geometry-preparation.md)
+
+## 2026-11-13 — 柔性 Teacher 前动作 371D 来源审计
+
+保留原 371D 合同，新增按实测名称绑定的双手 34 个通道适配。旧单手 Pinch 账本未取得完整的身份与关节顺序，原生可纳入 0/371。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-13-teacher-preaction-readback.md)
+
+## 2026-11-13 — DeformX 逐接触对读回
+
+独立 SM89 扩展已编译，62 项 CPU 回归通过；一次 CUDA 标定待批准。[报告](docs/superpowers/reports/2026-11-13-deformx-pair-readback.md)
+
+## 2026-11-13 — Power 独立档案的柔性桌面与杆筛选
+
+左右各16个历史握式种子通过初始避碰，但最差指腹到杆仍远，暂无柔性 Power 可达轨迹。 Ubuntu CPU 回归 20 项通过。[报告](docs/superpowers/reports/2026-11-13-flexible-power-initial-pose-preflight.md)
+
+## 2026-11-13 — Pinch cooked hull 初态修正与 Tripod 独立筛选
+
+修正左手 Pinch 独立候选并验证连续桌面净空，Tripod 自身旧种子未通过。原生配方继续等待接触对和生命周期证据。 Ubuntu CPU 回归 169 项通过。[报告](docs/superpowers/reports/2026-11-13-pinch-initial-geometry-audit.md)
+
+## 2026-11-13 — PhysX Tensor View 退出栈与所有权审计
+
+GDB 定位到 SimulationView 释放路径，区分管理器 view 清空、Python 所有者、CUDA 同步和外层退出；新增只读引用诊断。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-13-physx-tensor-lifetime-audit.md)
+
+## 2026-11-13 — WireSeg depth18 精确配对与双任务恢复预检
+
+完整分片达到 10/148，depth18 新增 360 对；分割与深度断点各 128 次历史更新，实际新增优化更新为 0。 Ubuntu CPU 回归 84 项通过。[报告](docs/superpowers/reports/2026-11-13-wireseg-paired-download-separate-resume-preflight.md)
+
+## 2026-11-13 — 柔性杆力反馈来源与聚合证据校验
+
+锁定 DeformX 的逐节点合力、逐 mesh 净力矩现可独立审计；contact pair、外部支撑和材料滑移保持未资格化。 [报告](docs/superpowers/reports/2026-11-13-deformable-force-evidence.md)
+
+## 2026-11-12 — C5 与自由杆 Pinch 单次诊断
+
+两次原生均未通过。C5 缺少目标 holder，Pinch 在第 3 SDK 步触发 mimic 保护。GDB 输出路径修复通过 47 项 CPU 回归。[结果与恢复点](docs/superpowers/reports/2026-11-12-c5-and-pinch-native-diagnostic.md)
+
+## 2026-11-12 — Free rod left Pinch contact candidate only
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-free-pinch-left-candidate-native.md)。
+
+## 2026-11-12 — Camera C5 telemetry holder lifecycle
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c5.md)。
+
+## 2026-11-12 — 长时续任务第二批恢复点
+
+六个独立源码工作包已完成发布，最终隔离回归458项通过、0失败/跳过。自由杆候选与C5均未原生执行；深度精度仍不合格，Teacher/Student未越过准入门槛。[完整状态和恢复计划](docs/superpowers/reports/2026-11-12-continuation-batch2-progress-and-recovery.md)。
+
+## 2026-11-12 — WireSeg 完整固定清单监督域与误差复核
+
+完成原16 train/128 heldout、288个视图的只读CPU复核，精确复用16个已完成视图。25.92秒/exit0、模型权重不变；128个持出中心视图全部差于训练常数基线，线缆ROI MAE 0.141680m 对比0.087620m。监督域差异与误差统计加权已区分，未假定唯一因果；无法重建的pooled P95保持NA。 发布前独立审查补齐helper/聚合实现/脚本SHA缓存绑定；原结果保持不变，另存事后身份核验凭据。 Ubuntu CPU 回归 77 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-full-manifest-loss-domains.md)
+
+## 2026-11-12 — 自由杆单手 Pinch 实际运行入口与独立退出验收
+
+新增真实自由杆、重力、有限桌面、五个独立原 pad SDF 和反作用力写回入口。240 SDK tick 候选包含全部初始化；异常持有链、worker 重入和独立多pad退出审计均有故障回归。材料为显式 P0 系数候选，非实测；完整371D/R0/抓取资格仍未成立，未启动原生。 首次集成回归因裸Python未加载pxr在收集阶段退出2，完整失败日志保留；改由现有scripts/python.sh加载USD路径后重新验证。 Ubuntu CPU 回归 156 项通过。[报告](docs/superpowers/reports/2026-11-12-free-pinch-physical-runtime.md)
+
+## 2026-11-12 — WireSeg 旧深度模型只读误差归因
+
+对原深度/分割模型做 4 train＋4 heldout 的只读 CPU 推理，32 条记录，外层 7.31 秒/exit 0，模型权重不变。深度模型仍差于训练常数基线；监督域差与预测范围压缩得到小 cohort 证据，未认定唯一因果。先继续 loss/标签域审计，不盲目追加训练。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-readonly-depth-error-attribution.md)
+
+## 2026-11-12 — C5 原生 worker 保留独立采样入口
+
+修复 C5 父进程设置丢失于后台 worker 的执行缺口；真实 CPU 子进程回归确认 worker 进入相同专用入口、保留 GDB 命令和证据路径。旧 94ffe… 指纹与未执行审批作废；没有消耗原生次数。 Ubuntu CPU 回归 45 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md)
+
+## 2026-11-12 — WireSeg 旧断点独立诊断恢复与第九个官方数据块
+
+旧断点可在独立诊断格式中恢复 model/Adam/Torch RNG 与真实 sampler，并支持后续完整当前 RNG 链式续点；未知历史信息仍为 unknown，strict v2 不接受。新增 360 个官方精确 RGB-depth 配对，完整块 9/148。本轮真实训练 0 更新、原生 0 次。 Ubuntu CPU 回归 62 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-legacy-diagnostic-import.md)
+
+## 2026-11-12 — C5 telemetry hook 所有权对照与正常退出采样
+
+新增单变量 C5：在 C4 配置下提前释放已存在的 telemetry hook pair，并准备自然 finalize/崩溃完整栈与 maps。根因假设未证实，原生尚未运行；旧 C0–C4 和调度源码不变。 Ubuntu CPU 回归 44 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c5-ownership-preflight.md)
+
+## 2026-11-12 — P0-P6 bounded continuation evidence and recovery point
+
+本批四次原生调用：左右拇指预算合规、C3 自然退出，C4 SIGSEGV 保留栈和动态库映射且不重试。共 480 SDK 步/476 实测行/5712 杆子步，真实 PPO 与完整抓取回合均为 0。无相机 Teacher 结构化 CPU 更新/恢复已验证，WireSeg 8/148 入库；自由杆抓取、正式相机采集和真实训练仍按各自证据门控。原生批准额度已用完，已保存恢复点。 Ubuntu CPU 回归 357 项通过。[报告](docs/superpowers/reports/2026-11-12-continuation-p0-p6-batch-closeout.md)
+
+## 2026-11-12 — P5 frozen-policy regression follows preserved float32 contract
+
+首次合并回归 356 通过/1 失败已保留。CPU 同策略 2/4 批量复算的 logprob 舍入差为1.907e-6，新测试1e-6与原2e-5冻结检查不一致；改为调用原校验并验证策略参数和历史似然篡改均被拒绝。PPO源码、阈值和物理标准没有修改。 Ubuntu CPU 回归 9 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-ppo-frozen-likelihood-test.md)
+
+## 2026-11-12 — P5 isolated structured PPO runtime and checkpoint CPU verification
+
+无相机柔性 Teacher 使用独立 CPU 结构化 rollout/Checkpoint 入口，直接继承旧 PPO update、GAE、KL 和 Adam 回滚，旧源文件 SHA 不变。合成数据完成更新及恢复等价测试；不代表真实 Teacher 训练或抓取成功。Pinch/Tripod/Power 原生门槛保持关闭，当前相机失败不阻断这一准备工作。 Ubuntu CPU 回归 170 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-privileged-ppo-runtime-cpu.md)
+
+## 2026-11-12 — P3 current C3 C4 native exit and stack audit
+
+授权 C3/C4 各运行一次：C3 26.84 秒、outer/GDB 自然 0；C4 54.81 秒、outer255/SIGSEGV11。C4 默认窗口确实关闭，当前首故障为 _extensions+0x1e445，不能套用 C1 的 _appwindow 首帧。两格 0 物理步/0 PPO，不重试；渲染路径仍未资格化。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c3-c4-native-stack-audit.md)
+
+## 2026-11-12 — P4 measured Hold duration and immutable slip references
+
+进一步关闭 CPU 成功候选边界：Hold 需真实时间跨度满 5 秒且连续 2400 间隔，4.999760 秒反例拒绝；左右材料与切向参考 UID/来源冻结至 Reset，缺测不延续 Hold。原生资格仍待实际自由杆测量。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-hold-clock-and-slip-reference-review-fix.md)
+
+## 2026-11-12 — Camera C4 isolated lifecycle
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c4.md)。
+
+## 2026-11-12 — Camera C3 isolated lifecycle
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c3.md)。
+
+## 2026-11-12 — P5 independent Pinch Tripod Power privileged rod models
+
+三种抓法使用独立模型身份与 Checkpoint namespace，原 371D common 加独立 masked 材料节点分支，复用 24D Tanh Gaussian；原 PPO/CLI 未改。尚未接原生或训练，不能称为 Teacher 成功；相机和 MPC BC 均不是永久前置。 Ubuntu CPU 回归 153 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-privileged-teacher-model-cpu.md)
+
+## 2026-11-12 — P4 retain prohibited lift assistance until episode reset
+
+交叉审查复现并修复 4 类误判：已知支撑违规不能被其他 NA 掩盖；外力、附着或非法外部支撑一旦出现，本 episode 不得取得 Lift/Hold 成功候选。正常接近阶段桌面接触不锁存，Reset 清理记录。原生与训练资格仍关闭。 Ubuntu CPU 回归 36 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-grasp-support-review-fix.md)
+
+## 2026-11-12 — P2 WireSeg exact resume and verified paired subset
+
+新增 strict v2 断点，校验模型/Adam/RNG/含跳过样本的 sampler/global step/数据与配置 SHA，旧断点原样保留并拒绝伪严格恢复。新增 2 个完整官方分片，360 个精确单目 RGB-depth 配对；缓存 8/148，未启动真实训练。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-strict-checkpoint-resume.md)
+
+## 2026-11-12 — P3 AppWindow ownership and stereo raw-archive verification
+
+旧 C0/C1/C2 栈定位到 IAppWindow Python 包装对象释放的虚调用，具体持有者仍待原生对照。新增 C4 单变量配方，并修复采集换轴与原始归档重核验；C3/C4 尚未授权或运行，相机资格仍关闭。 Ubuntu CPU 回归 83 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-appwindow-ownership-and-capture-audit.md)
+
+## 2026-11-12 — P1/P4 free-rod task, reset and R0 source contract
+
+新增自由杆独立任务合同，复用原 DH116/USD/24D/371D；逐物理步 Reset、材料锚滑移、连续 Hold 和十项 R0 统计可 CPU 验证。原生未知参数与奖励系数保留 NA，training_reward 关闭，未启动抓取或训练。 Ubuntu CPU 回归 172 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-dual-hand-task-r0-cpu.md)
+
+## 2026-11-12 — 右拇指与柔性杆原生接触
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md)。
+
+## 2026-11-12 — 左拇指与柔性杆原生接触
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md)。
+
+## 2026-11-12 — P0 corrected thumb clock and contact proof
+
+修正配方显式计入初始化与测量，独立重读 SDK/rod 时钟、接触节点和关闭记录；每侧 240 步、串行最多 480 步，尚未执行新的原生复验。历史超预算证据保留，Pinch/Tripod/Power 不获资格。 Ubuntu CPU 回归 78 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-independent-budget-proof.md)
+
+## 2026-11-12 — 本批原生结果、127项集成回归及预算恢复点
+
+127项最终集成CPU回归通过；原生左右接触与自然退出证据保留但484/480预算不合规，C0/C1/C2原生均失败。新预算修复仅CPU通过，未再执行；恢复点和剩余门槛已保存。 Ubuntu CPU 回归 127 项通过。[报告](docs/superpowers/reports/2026-11-12-eb31c79-batch-closeout.md)
+
+## 2026-11-12 — 拇指初始化及收尾总物理步预算修复
+
+修复总物理步漏计：240总额=2初始化+238测量，并在注销时钟前冻结物理推进。原484步失败预算证据保留，新指纹只通过CPU、待新冻结审批，未原生重跑。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-total-physics-budget.md)
+
+## 2026-11-12 — Teacher与Hold预算显式计入初始化阶段
+
+保留v1计数兼容，新增v2独立配置；Teacher 512行与评估2880行仅为测量阶段，setup及总额未验证时保留null并禁止scope晋级。5秒Hold仍至少2400物理步，所有草案均需独立批准。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-12-deformable-task-budget-v2.md)
+
+## 2026-11-12 — 左右拇指接触账本与预算偏差复核
+
+左右接触及自然exit0证据有效，但每侧另有2初始化PhysX步，总484超批准480共4步；已撤回预算合规资格并保留原回执。未重跑、未扩预算，不能算抓取或Teacher成功。 Ubuntu CPU 回归 59 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-v2-paired-native.md)
+
+## 2026-11-12 — 相机C0到C2当前故障栈与原生对照
+
+三次独立相机生命周期对照均在app.close返回后SIGSEGV，记录同次C++栈与动态库映射；审计完成但自然退出和相机资格未通过。未重复失败版本，C3未运行。 Ubuntu CPU 回归 19 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c0-c2-current-native.md)
+
+## 2026-11-12 — WireSeg第三个RGB分片完整核验
+
+完整核验6/148 blobs；新增800条data_center只属test家族，精确配对深度0条，未训练或授予视觉资格。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-sixth-blob-verified.md)
+
+## 2026-11-12 — 同渲染experience默认stage对照
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c2.md)。
+
+## 2026-11-12 — 独立无stage渲染生命周期
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c1.md)。
+
+## 2026-11-12 — 官方最小SimulationApp生命周期
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-c0.md)。
+
+## 2026-11-12 — 右拇指与柔性杆原生接触
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-right-contact-native.md)。
+
+## 2026-11-12 — 左拇指与柔性杆原生接触
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f4-left-contact-native.md)。
+
+## 2026-11-12 — 原生成功结果恢复与发布二次核验
+
+恢复与发布均重新核对原始outer_exit、共享锁、日志及物理产物；外层139、ledger篡改、发布中断后篡改均拒绝，保留失败及已消耗指纹。 Ubuntu CPU 回归 57 项通过。[报告](docs/superpowers/reports/2026-11-12-native-receipt-binding.md)
+
+## 2026-11-12 — 标定与Teacher回合预算边界
+
+独立校验控制步、480Hz物理步、环境数、ledger行数与墙钟。2环境32控制步需512行，5秒Hold至少2400步/环境；零重力双端固定只能标定。示例未接执行、不扩大本轮480步授权。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-deformable-task-budget-boundary.md)
+
+## 2026-11-12 — 相机官方最小App与stage单变量对照
+
+新增独立C0最小App、C1无stage渲染、C2单变量默认stage对照；均同一GDB保留现场栈和库映射。C3仅备选配置，本轮不启动。无相机物理不依赖此链。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-12-camera-c0-c3-lifecycle-controls.md)
+
+## 2026-11-12 — 左右拇指独立身份配方与单次取证
+
+右侧锁定独立USD、SDF、link、slot和canonical action7；左右使用相同GDB取证，保持v2物理与释放逻辑。本轮预算左240后右240，两者均0update，右必须通过实际左回执资格门控。 Ubuntu CPU 回归 56 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-right-lifecycle-preflight.md)
+
+## 2026-11-12 — 原生前置回执绑定与同次崩溃栈
+
+右侧命令从真实已验证左侧回执解析路径和SHA，恢复复用前置；真实GDB对照保留外层255和inferior SIGSEGV，逐次捕获栈与映射，不改成成功。 Ubuntu CPU 回归 52 项通过。[报告](docs/superpowers/reports/2026-11-12-native-receipt-binding.md)
+
+## 2026-11-12 — WireSeg 固定16样本分割与深度诊断
+
+复用verified subset，独立完成128次分割和128次深度诊断；保留空mask与无深度失败证据。分别报告全视场、中央裁剪及线缆ROI，深度仍逊于训练常数基线，未授予Stereo/策略资格。 Ubuntu CPU 回归 25 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-fixed16-overfit-diagnostic.md)
+
+## 2026-11-12 — 隔离 CPU 测试租约与原生执行
+
+CPU fixture 改用私有锁。组合 OpenUSD CPU 回归 85 项通过，两次 V0 原生 SIGSEGV 继续归档。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-dh116-continuous-regression.md)
+
+## 2026-11-12 — 空渲染 Kit 生命周期
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-v0.md)。
+
+## 2026-11-12 — 相机退出隔离 SDK 默认场景
+
+V0 首次运行仍由 SDK 隐式创建场景。隔离 create_new_stage 变量并读取实际 stage 状态。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-12-render-no-sdk-default-stage.md)
+
+## 2026-11-12 — WireSeg 配对深度持出评估
+
+新深度分片通过完整 SHA 校验。128 张独立持出图报告配对深度误差。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-paired-heldout-depth.md)
+
+## 2026-11-12 — 左拇指资源释放变体与有界配方
+
+保留首轮退出失败；原生复验只改变对象释放顺序，右侧入口核验左侧外层回执和账本。 Ubuntu CPU 回归 47 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-thumb-scheduler-preflight.md)
+
+## 2026-11-12 — WireSeg 原始 RGB 子集续训与独立验证
+
+两份原始 RGB LFS 复核通过。seg-only 续到 160 步，另完成 16 步精确配对深度诊断。 Ubuntu CPU 回归 17 项通过。[报告](docs/superpowers/reports/2026-11-12-wireseg-verified-rgb-subset.md)
+
+## 2026-11-12 — 空渲染 Kit 生命周期
+
+原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f6-camera-v0.md)。
+
+## 2026-11-12 — 任务相机 V0–V3 有界原生配方
+
+四格按实际外层退出递进，V3 同一渲染读取全部模态。 Ubuntu CPU 回归 49 项通过。[报告](docs/superpowers/reports/2026-11-12-bounded-camera-recipes.md)
+
+## 2026-11-12 — 带授权、预算和证据的原生调度
+
+原生执行依赖可核验证据、批次授权、单实例资源锁和外层退出，恢复时保留既有回执。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-native-bounded-scheduler.md)
+
+## 2026-11-12 — 任务相机单次渲染与自然退出诊断入口
+
+同一渲染读回双侧模态，验证物理时钟与深度语义，保留独立退出判据。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-render-lifecycle-isolation-c.md)
+
+## 2026-11-12 — 真实 DH116 左拇指接触账本与关闭诊断
+
+左拇指 240 步真实物理账本记录 68 个接触步。外层退出 139，原生资格待修复，右侧保持待验证。 Ubuntu CPU 回归 7 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-left-thumb-contact-native.md)
+
+## 2026-11-12 — 拆分柔性物理、双目采集与逐抓法 Teacher 资格
+
+无相机 Teacher 分抓法依赖物理资格，双目采集和 WireSeg 单独推进。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-physics-stereo-dependencies.md)
+
+## 2026-11-12 — 原 F3 刚体命令的集成原生复验
+
+集成分支原命令 240 条物理样本、外层自然退出 0，账本与 E/E2 精确一致。 Ubuntu CPU 回归 6 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-integrated-rigid-entry.md)
+
+## 2026-11-12 — Drop 与 hang 两种原生渲染的精简配置对照
+
+Drop/hang 各有一帧完整原生 RGB、径向深度、Native ID 和 composed USD，精简配置下两轮仍外层 139。 Ubuntu CPU 回归 15 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-headless-experience-f6.md)
+
+## 2026-11-12 — 将原生渲染与实际凸包 SDF 纳入柔性采集依赖
+
+原生单指和同杆路径依赖实际凸包 SDF，F7 同步采集依赖 F6 原生关闭验收。 Ubuntu CPU 回归 29 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-f6-gate-wiring.md)
+
+## 2026-11-12 — 10 个原生凸包 GPU SDF 烘焙与显式注册
+
+10 个实际凸包使用 1 mm 体素烘焙并在同一 RopeBatch 注册；未推进物理或验证接触力。 Ubuntu CPU 回归 17 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-pad-sdf-registration.md)
+
+## 2026-11-12 — F6 渲染自然退出崩溃 C++ 回溯
+
+冻结 drop 入口的 GDB 首次 SIGSEGV 栈指向 AppWindow Python 绑定与 Carb，独立于 F3 PhysX Tensor。 Ubuntu CPU 回归 3 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-render-appwindow-backtrace.md)
+
+## 2026-11-12 — 第二个 WireSeg 深度分片和实测速率
+
+Ubuntu 完整 blob 现为 2/148。第二个 22.97 MB 官方分片在 Windows 用时 224.78 秒，正式预训练继续待完整数据。 Ubuntu CPU 回归 7 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-proxy-transport.md)
+
+## 2026-11-12 — 实际 PhysX CPU/GPU 凸包逐指配对
+
+两次独立原生退出 0，全部 10 个实际指腹有向多边形一致、顶点最大差值 0 m。 Ubuntu CPU 回归 15 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-hull-device-parity.md)
+
+## 2026-11-12 — F6 drop 原生渲染与关闭诊断
+
+Drop 已产出 RGB、径向深度、Native ID 和 composed USD，外层退出仍为 139，hang 待实际验证。 Ubuntu CPU 回归 14 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-render-smoke-f6.md)
+
+## 2026-11-12 — 原生 PhysX 读取 10 个 DH116 指腹凸包
+
+实际 PhysX CPU 读回全部 10 个指腹的 cooked convex hull，外层自然退出 0。GPU 烘焙一致性仍待验证。 原生入口的生命周期调用与 F3 新入口分离，修复集成导入回归。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-hull-native.md)
+
+## 2026-11-12 — WireSeg 分块续传与首个完整深度分片
+
+Windows 续传 6 块，Ubuntu 完整校验 22,541,803 字节官方分片并读取 360 个深度数组，未增加训练更新。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-resumable-relay.md)
+
+## 2026-11-12 — F3 DeformX 与 PhysX 完整桥接自然关闭
+
+A–E 均自然退出 0，两轮独立完整桥接各 240 步且与旧物理账本逐字节一致。原关闭路径的单一触发项尚未隔离。 Ubuntu CPU 回归 43 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-teardown-isolation.md)
+
+## 2026-11-12 — 官方 drop/hang DomeLight 派生修复
+
+四个派生 USD 只更新 DomeLight 纹理。76 个 USD 复审无未解析依赖，原始 109 个文件哈希一致。 Ubuntu CPU 回归 11 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-assets-f6.md)
+
+## 2026-11-12 — 实际指腹烘焙设置和 PhysX 凸包读回入口
+
+独立核对 10 个实际 USD 指腹的 cooking schema、坐标和离线凸包估计，确认已安装 PhysX 查询入口。 Ubuntu CPU 回归 11 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-cooked-hull-audit.md)
+
+## 2026-11-12 — 单 PhysX 刚体双向传力及关闭失败诊断
+
+240 个原生步核对单刚体力和力矩交换。物理证据可复现，PhysX 插件在 Python 终结时报 SIGSEGV，F3 自然退出仍 blocked。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f3-rigid-bridge-native.md)
+
+## 2026-11-12 — 将默认开发目标切换为 DeformX 柔性线缆
+
+默认调度覆盖柔性 F0–F10 和离线依赖。原 solid_cylinder 仍可独立回归。 Ubuntu CPU 回归 28 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-execution-target.md)
+
+## 2026-11-12 — DH116 实际指腹碰撞几何预检
+
+从实际 USD 解析双手 10 个闭合指腹碰撞网格，复现上游跳过 CollisionAPI 所在 Xform 的问题。PhysX cooked hull 和动态加载仍待验证。 Ubuntu CPU 回归 8 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-dh116-colliders-f4.md)
+
+## 2026-11-12 — 官方 DeformX drop/hang 资产和轨迹审计
+
+Ubuntu 审计 109 个原始文件、72 个线缆 USD、4 个场景与 6 份轨迹；原生渲染待独立验证。 Ubuntu CPU 回归 11 项通过。[报告](docs/superpowers/reports/2026-11-12-deformx-assets-f6.md)
+
+## 2026-11-12 — Standalone CUDA 静态、动力学与接触验证
+
+RTX 4090 独立求解器 36 项通过，保留 1 项上游高刚度限制 xfail。静态平台读回双侧力和力矩。 Ubuntu CPU 回归 12 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f2-standalone-gpu.md)
+
+## 2026-11-12 — 隔离 CUDA 12.8 与 cp310/SM89 扩展
+
+固定 cp310 和 CUDA 12.8.61 两次构建成功，实际产物均有 SM89 设备代码。 Ubuntu CPU 回归 18 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f1-cuda-build.md)
+
+## 2026-11-12 — DeformX 主仓库与递归源码锁定
+
+柔性主线锁定上游主仓库与 CPU/CUDA 两个精确子模块，原刚性环境作为独立回归。 Ubuntu CPU 回归 9 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f0-deformx-source-lock.md)
+
+## 2026-11-12 — WireSeg-36K 数据接入与单目诊断
+
+柔性主线 F5 的数据读取及共享视觉骨干诊断已验证。现有证据为 4 张样本、2 对深度与 1 次 CPU 分割更新。 Ubuntu CPU 回归 33 项通过。[报告](docs/superpowers/reports/2026-11-12-flexible-f5-wireseg-ingestion.md)
+
+## 2026-11-12 — 握式局部可达性有限差分复查
+
+原碰撞验证后两手最大指腹间距改善至左 1.899、右 0.950 mm。12 个候选均未通过完整握式筛选。 Ubuntu CPU 回归 219 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wrap-local-fd.md)
+
+## 2026-11-12 — 原生 T5 碰撞实例与 Wire SDK 来源核验
+
+核验 76 个启用碰撞体的身份与 256 条接触记录。该 Python SDK 写入路径未观测到调用，完整回合力学资格仍待验证。 Ubuntu CPU 回归 99 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-proxy-sdk-native-results.md)
+
+## 2026-11-12 — 二指三指独立首终止原生配对
+
+二指退出后继续观测三指。相同实测冷初态下，冻结 Teacher 的 sampled 和 mean 均出现右 finger12 合法目标下位置越限。 Ubuntu CPU 回归 46 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-per-slot-tripod-native.md)
+
+## 2026-11-12 — 握式多腕姿原几何补充搜索
+
+原有边界下每手 16 个不同起点，最接近的两手最大指腹间距仍高于原筛选线，握式保持待有效初态。 Ubuntu CPU 回归 219 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wrap-diverse-wrist-search.md)
+
+## 2026-11-12 — 握式 Teacher 整手包握几何预检
+
+握式按双手各五指包握预检，8 个历史候选和有界 CPU 搜索未得到可用初态。 Ubuntu CPU 回归 234 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wrap-geometry-preflight.md)
+
+## 2026-11-12 — T5 原生 PPO Teacher 的对象侧接触验证
+
+实际 R0 update-1 在 T5 的短窗完成 128 个物理步，双侧力闭合，端支架均持续承载。 Ubuntu CPU 回归 19 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-wire-tensor-native-results.md)
+
+## 2026-11-12 — 冻结 Teacher 同初态原生 sampled／mean 复验
+
+修复原生合同编码与回执。四次运行均退出 0，采样和 mean 均复现合法目标下的同一右 finger12 越限。 Ubuntu CPU 回归 56 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-native-v04.md)
+
+## 2026-11-12 — 原 GPU 任务 Wire 对象侧接触与支撑读回
+
+原 GPU 路径完成 128 个连续物理步，双侧接触力互相抵消。短窗的两个端支架持续承载，完整回合支撑资格仍未通过。 Ubuntu CPU 回归 80 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-wire-tensor-native-results.md)
+
+## 2026-11-12 — 原 T5 合同的特权 PPO Teacher 原生单更新
+
+2×32 原生完成 1 次 R0 PPO 更新，Checkpoint 与 Adam 读回一致，完整成功回合 0。 Ubuntu CPU 回归 65 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-native-r0-update1.md)
+
+## 2026-11-12 — 记录 GPU 任务早期接触读回失败并恢复默认探针
+
+早期启用报告读回导致 GPU reset 索引与缓冲区设备不一致。保留失败证据并恢复原探针默认。 Ubuntu CPU 回归 74 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-task-contact-early-readback-failure.md)
+
+## 2026-11-12 — 原 T5 MPC 八个首回合原生采集
+
+原生二指 4/4、三指 0/4，10,559 条状态／动作配对，全部首回合已分区。正式 BC 准入为 0。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-t5-first-episode-native-evidence.md)
+
+## 2026-11-12 — MPC 成功轨迹进入 Teacher 的原生证据预检
+
+只读入口实测读取三类原生日志，分开记录任务成功、正式证据与专家装配资格。 Ubuntu CPU 回归 53 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-teacher-provenance-preflight.md)
+
+## 2026-11-12 — MPC 内部控制状态与 reset 初始化来源
+
+新增隔离的同钟内部状态来源旁路。真实 T5 输入预检通过，实际字段资格待新的原生采集。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-internal-state-source-preflight.md)
+
+## 2026-11-12 — MPC 371D 原生同步账本持久化
+
+真实旧 64 行回放逐位恢复 371D、24D 和掩码。新版可选账本供未来执行，现有运行沿用冻结源码。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-durable-371d-transition-journal.md)
+
+## 2026-11-12 — 将 Teacher R0 绑定到原 T5 原生物理合同
+
+完整 T5 的实际张量合同与历史成功 T5 相同。新增只读派生与原生回调严格身份检查。 Ubuntu CPU 回归 85 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-t5-native-contract-binding.md)
+
+## 2026-11-12 — MPC 完整上一动作窗口的腕部字段校验
+
+62 条真实非 reset 行的 4 个腕部窗口字段逐值吻合，reset 行保留未测窗口。 Ubuntu CPU 回归 50 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md)
+
+## 2026-11-12 — 冻结 Teacher mean 配对的 sampled 完成证据
+
+mean 启动前校验 sampled 回执、原生账本和动作身份。旧 Teacher Checkpoint 与历史 T5 场景仍不可互换。 Ubuntu CPU 回归 54 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-pair-runner.md)
+
+## 2026-11-12 — MPC 371D 同钟数值与来源校验
+
+旧短程原生的 64 行均实证 204/371 个字段，新增独立旁路，保留 167 个未资格字段。 Ubuntu CPU 回归 31 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-native-observation-value-proof.md)
+
+## 2026-11-12 — Teacher 原生回调产物持久化
+
+训练、采集和冻结 Teacher 评估在应用关闭前写入并同步回执。外层退出仍以独立监督记录为准。 Ubuntu CPU 回归 82 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-callback-durable-completion.md)
+
+## 2026-11-12 — Teacher 原生成功专家数据装配器
+
+装配器逐行核验完整 371D、实际 issued 24D 和原生证据。当前未产生合格 BC 专家包。 Ubuntu CPU 回归 13 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-expert-assembly.md)
+
+## 2026-11-12 — 现有刚性 Teacher 任务逐接触读回探针
+
+晚于首次 reset 的探针实测记录 256 个物理步，结构化报告仍为空。新版启用时点前移，待单实例原生复验。 Ubuntu CPU 回归 71 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-task-contact-probe.md)
+
+## 2026-11-12 — Teacher Actor-only BC、R0 与冻结验收入口
+
+新增 SHA 绑定的 Actor-only BC、R0 恢复与冻结验收预检，短程 MPC 归档通过拒绝测试。 Ubuntu CPU 回归 75 项通过。[报告](docs/superpowers/reports/2026-11-12-teacher-bc-r0-frozen-chain.md)
+
+## 2026-11-12 — 冻结 Teacher sampled／mean 同初态配对入口
+
+真实 update-0 与同一双抓法初态通过 CPU 预检。旧 MPC reset family 和 native readback 不匹配，三路资格仍待验证。 Ubuntu CPU 回归 53 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-frozen-teacher-pair-runner.md)
+
+## 2026-11-12 — 原 T5 MPC 完整首回合采集预检
+
+真实 T5 参数及 10 个来源 SHA 预检通过，归档按完整成功、失败与未结束回合分流。完整原生预算待独立批准。 Ubuntu CPU 回归 37 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-t5-first-episode-capture-preflight.md)
+
+## 2026-11-12 — PhysX GPU 接触报告读回与左右拇指标定
+
+原生左右隔离标定分别读出 37、43 个可识别接触 pair headers。任务逐指、外部承托及附着资格仍需单独验证。 Ubuntu CPU 回归 67 项通过。[报告](docs/superpowers/reports/2026-11-12-physx-gpu-contact-report-readback.md)
+
+## 2026-11-12 — Cold8 状态标签与独立深度持出诊断
+
+两种抓法各有 12 条 Center XYZ 和 12 条线速度监督；独立持出证据仍不足以授予动态泛化与双目精度资格。 Ubuntu CPU 回归 55 项通过。[报告](docs/superpowers/reports/2026-11-12-stereo-cold8-state-depth-diagnostic.md)
+
+## 2026-11-12 — 右手 finger12 同初态三路配对预检
+
+旧 Teacher 与新 Cold8 的实测初态交集为 0。预检记录了 MPC 近邻状态、测量缺口与三路配对预算。 Ubuntu CPU 回归 41 项通过。[报告](docs/superpowers/reports/2026-11-12-finger12-native-pairing-preflight.md)
+
+## 2026-11-12 — 原 MPC 371D／24D 短程原生同步诊断
+
+修复同钟记录器的 dtype 错误。原 MPC 复验取得 64 条状态／动作记录和 512 条环境级物理样本，完整成功回合为 0。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-12-mpc-sync-v02-native-evidence.md)
+
+## 2026-11-12 — 8 初态双目同步采集
+
+二指、三指各完成 4 个独立物理初态，合计 32 条同钟双目与状态动作候选样本。正式训练资格待独立验证。 Ubuntu CPU 回归 63 项通过。[报告](docs/superpowers/reports/2026-11-12-stereo-cold8-native-capture.md)
+
+## 2026-11-12 — PhysX v3 原生自然退出与全新实例重启
+
+原生两轮均完整记录 240 个 480 Hz 物理步，并自然退出码 0。该结果仅授予关闭与重启资格。 Ubuntu CPU 回归 65 项通过。[报告](docs/superpowers/reports/2026-11-12-physx-v3-native-shutdown-pass.md)
+
+## 2026-11-12 — 复用双目深度辅助头的有界监督优化
+
+71 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-stereo-depth-auxiliary-optimizer-diagnostic.md)
+
+## 2026-11-12 — 双目分割按已验证的 Head 能力构建候选
+
+68 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-stereo-segmentation-mask-policy.md)
+
+## 2026-11-12 — 现有 solid_cylinder 同钟 SDK 线速度监督
+
+72 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-rigid-sdk-state-supervision.md)
+
+## 2026-11-12 — Teacher 右手 finger12 下限事件窗口
+
+29 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-right-finger12-event-windows.md)
+
+## 2026-11-12 — 现有刚性任务的密集和稀疏双目指标
+
+56 项 Ubuntu CPU 回归通过。原生资格依赖独立证据。[报告](docs/superpowers/reports/2026-11-12-stereo-reconstruction-metric-evidence.md)
+
+## 2026-11-12 — 现有刚性任务完整闭环（复用原环境，不重新建模）
+
+默认调度目标选择现有 `solid_cylinder` 闭环，柔性后端延期。27 项 Ubuntu CPU 回归通过。[报告](docs/superpowers/reports/2026-11-12-existing-solid-cylinder-execution-scope.md)
+
+## 2026-11-12 — PhysX 标定句柄释放与退出崩溃诊断
+
+v2 首轮 240 步完整，close 返回后子进程 SIGSEGV。隔离入口补齐句柄释放和崩溃诊断，65 项 CPU 回归通过。[软件报告](docs/superpowers/reports/2026-11-12-physx-sampling-handle-lifetime.md) · [原生证据](docs/superpowers/reports/2026-11-12-physx-v2-native-exit-crash.md)
+
+## 2026-11-12 — PhysX 标定关闭模式与子进程读回
+
+首轮 240 步完整，关闭返回标记缺失。隔离入口修复并通过 61 项 CPU 回归，原生资格待复验。[报告](docs/superpowers/reports/2026-11-12-physx-non-fast-shutdown-recovery.md)
+
+## 2026-11-12 — Ubuntu 提交与 Windows 发布中转
+
+Ubuntu 调度器只保存待发布提交，Windows 推送并读回后登记清单。22 项 CPU 回归通过。[报告](docs/superpowers/reports/2026-11-12-windows-relay-publication-policy.md)
+
+## 2026-11-11 — 双目 RGB 光轴深度辅助头
+
+Ubuntu 65 项 CPU 回归通过。历史 VGA 复放通过左右 RGB 梯度检查，右图缺少独立标签。[报告](docs/superpowers/reports/2026-11-11-stereo-depth-auxiliary-diagnostic.md)
+
+## 2026-11-11 — 独立排期刚性代理和柔性 Cosserat 验收
+
+刚性代理与柔性 Cosserat 各有原生验收依赖。Ubuntu 19 项 CPU 回归通过。[报告](docs/superpowers/reports/2026-11-11-rigid-deformable-scheduling-gates.md)
+
+## 2026-11-11 — DeformX 固定源码实际载荷预检
+
+CPU `passed`，通过 7 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp5.source-payload.md)。
+
+## 2026-11-11 — 状态监督残差及不确定度完整性
+
+CPU `passed`，通过 18 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp2.metric-integrity.md)。
+
+## 2026-11-11 — 准备 MPC 371D 与实际 24D 同步采集
+
+CPU `passed`，通过 50 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp3.mpc-sync-prepare.md)。
+
+## 2026-11-11 — GitHub 传输失败时保留 Ubuntu 工作包
+
+Ubuntu 调度器在 GitHub 连接异常时保留已测试提交。17 项 CPU 回归通过。[报告](docs/superpowers/reports/2026-11-11-work-package-publication-defer.md)
+
+## 2026-11-11 — 验证 PhysX 逐接触来源与条件方向
+
+CPU `passed`，通过 50 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp4.source-audit.md)。
+
+## 2026-11-11 — 双目候选置信度分组校准审计
+
+CPU `passed`，通过 26 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp1.confidence-offline.md)。
+
+## 2026-11-11 — Student 独立评估证据
+
+Student 冷评估核对实际发出 24D、传感与推理时钟及逐样本任务身份。Ubuntu 92 项 CPU 回归通过，原生验收待资格与审批。[报告](docs/superpowers/reports/2026-11-11-stereo-student-independent-proof.md)
+
+## 2026-11-11 — Ubuntu 状态合同审计
+
+兼容旧 v1 配置的两个已审计字节表示，继续记录实际原始 SHA。集成 CPU 82 项通过，原合同与 Checkpoint 未修改。
+
+## 2026-11-11 — 复核 Student 成功池与自有 rollout
+
+CPU `passed`，通过 22 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp6.cpu-admission.md)。
+
+## 2026-11-11 — 复核 DeformX CUDA 源码资格检查器
+
+CPU `passed`，通过 2 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp5.cpu-source-check.md)。
+
+## 2026-11-11 — 复核 PhysX 接触证据与退出合同
+
+CPU `passed`，通过 41 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp4.cpu-contract.md)。
+
+## 2026-11-11 — 复核 Teacher 动作合同与 PPO 回滚
+
+CPU `passed`，通过 94 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp3.cpu-contract.md)。
+
+## 2026-11-11 — 验证三种 Actor 的独立双目部署
+
+CPU `passed`，通过 47 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp6.deployment-isolation.md)。
+
+## 2026-11-11 — 区分状态监督的离线与原生资格模式
+
+CPU `passed`，通过 49 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp2.mode-gates.md)。
+
+## 2026-11-11 — 保留双目原色采样与候选分池
+
+CPU `passed`，通过 36 项。详细结果见[报告](docs/superpowers/reports/dh116-managed-wp1.sample-retention.md)。
+
+## 2026-11-11 — Ubuntu 工作包调度
+
+Ubuntu 工作区负责开发、CPU 验证与提交。本机只负责 GitHub 中转。调度器和中断恢复验证 14 项通过，原生任务与依赖安装按独立批准门槛执行。[执行计划](docs/superpowers/plans/DH116_AUTONOMOUS_EXECUTION_MASTER_PLAN.md)
+
+## 2026-11-11 — PhysX 复验申请
+
+复查原有关闭验证器的冻结快照、GPU、单实例和输出路径，72 项关闭及训练准入 CPU 回归通过。记录原生申请预算、失败停止条件和逐 contact 资格边界。无新原生实验。[审批前复核](docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md)
+
+## 2026-11-11 — 双目匹配固定像素与采样归因
+
+增加逐视图三类概率、可见与实际 mask 覆盖统计、联合参考和固定双向代价回归。41 项 CPU 通过，Front/Roll20 各四帧复放完成。候选改善部分覆盖，Roll20 准确点数仍低于原色，缺真实右 ID 的资格保持阻断。[复放报告](docs/superpowers/reports/2026-11-11-stereo-wire-point-traces.md)
+
+## 2026-11-11 — Teacher128 同状态动作复盘
+
+新增同身份 Teacher sample/mean 比较、逐关节首越线及跟踪误差、MPC 371D/24D 配对拒绝证据。94 项 CPU 通过，五次历史位置终止的实际力学原因仍待原生复验。旧 MPC 无可配对 371D，噪声与 BC 策略保持原样。[复盘报告](docs/superpowers/reports/2026-11-11-teacher128-paired-action-replay.md)
+
+## 2026-11-11 — 线缆点来源与时序身份
+
+候选记录新增逐点几何、有效性、来源和分段轨迹旁路。96 项 CPU 通过，两个历史 cohort 各四帧复放一致。原色轮廓 91/89 与软引导 67/65 个正确 Roll20 点均为表面来源，三维中心线时序资格仍待证。[验证报告](docs/superpowers/reports/2026-11-11-stereo-wire-geometry-sources.md)
+
+## 2026-11-11 — 143D 同步证据与分阶段准入
+
+补充同帧参考旁路身份、冷 8 诊断限制、连续中心线 Velocity 门槛和逐阶段训练、误差与有效覆盖报告。136 项 CPU 回归通过。历史 8 行、2 个独立初态上只拟合 6 行 Center XYZ，未建立泛化或不确定度校准。正式模式按预期退出 2。[验证报告](docs/superpowers/reports/2026-11-11-stereo-state-stage-admission.md)
+
+## 2026-11-11 — 正式训练准入复核
+
+42 项 CPU 回归核对已有成功池、DAgger 准入、Student 自有 PPO rollout 及候选隔离。Teacher128 诊断证据留在诊断范围。正式 BC、DAgger 和 Student PPO 继续阻断。[准入复核](docs/superpowers/reports/2026-11-11-stereo-formal-training-admission.md)
+
+## 2026-11-11 — DeformX CUDA 来源复查
+
+新增只读 CUDA 源码清单检查并通过 2 项 CPU 测试。服务器复查缺少完整目标仓库及 CUDA Toolkit 12.8，编译、GPU 求解和双向耦合均待解除阻断。[来源复查](docs/superpowers/reports/2026-11-11-stereo-deformx-source-recheck.md)
+
+## 2026-11-11 — PhysX 自然关闭预检
+
+新增顺序 240 步关停与重启验证、JSONL fsync、回调释放与 SIGTERM 证据。41 项 CPU 测试和服务器冻结副本预检通过。原生复验待批准，完整双手接触资格保持阻断。[执行计划](docs/superpowers/reports/2026-11-11-stereo-physx-shutdown-retest.md)
+
+## 2026-11-11 — 双目线缆对应复放
+
+增加保留完整 RGB 窗口的软引导匹配、逐帧对应和拒绝证据、原始 12 处整数视差固定回归。37 项 CPU 测试通过，Front 和 Roll20 各四帧复放均正常结束。预测 hard mask 的覆盖断层已复现，软引导恢复部分有效点，固定尾部仍失败，真实左右对应待合格右原生 ID。[验证报告](docs/superpowers/reports/2026-11-11-stereo-wire-correspondence.md)
+
+## 2026-11-11 — Teacher128 关节动作审计
+
+有界 Teacher 诊断增加 24D 分布和实际动作、全部关节的位置与速度、控制目标及越限证据。87 项 CPU 回归通过。历史 2,030 个物理子步和 256 次策略转移复核出五次右 `finger12` 实测位置越限，原生成功为 0。新增采集的原生复验和 MPC 的 371D 同步重采待批准。[验证报告](docs/superpowers/reports/2026-11-11-teacher128-joint-limit-audit.md)
+
+## 2026-11-11 — 双目状态监督多初态准入
+
+新增多来源候选账本读取，校验 RGB 深度来源、同帧 371D/24D 身份、参考标签和标定。分组跨文件保持物理初态隔离，Center XYZ 与线缆几何按顺序检查标签并分别启用。99 项 CPU 回归通过。历史归档仅有 2 个物理初态和 6 行中心标签，正式入口按预期阻断，无新模型或原生运行。[验证报告](docs/superpowers/reports/2026-11-11-stereo-state-multicohort.md)
+
+## 2026-11-11 — 按工作包持续发布
+
+将用户对独立工作包的持续提交和推送授权写入 `AGENTS.md`。README 和 readiness 同步记录目标开发分支、远端核验、失败证据保留和 Draft PR 规则。此工作包仅更新发布流程文档与状态记录，下一项原生工作仍是待独立批准的 8 初态同步采集。
+
+CPU 回归 84 项通过，15.07 秒，退出码 0。本次无 Isaac 原生验证、采集或训练。
+
+```text
+python -m pytest -q -p no:cacheprovider tests/test_dh116_stereo_cold_candidate_admission.py tests/test_dh116_stereo_candidate_cold_trials.py tests/test_dh116_stereo_contact_calibration.py tests/test_dh116_stereo_wire_tail_audit.py tests/test_dh116_stereo_state_training_modes.py tests/test_dh116_stereo_wire_segmentation.py tests/test_dh116_teacher_wp3.py
+```
+
+## 2026-11-11 — 按明确指令发布WP增量与采集预检
+
+本次按用户“更新到github”指令，将基于 `ae307a5` 的代码、独立配置、测试、处理后指标和预检报告发布到 `codex/dh116-stereo-privileged-dagger`，保留 Draft PR #2，不合并。新的8初态同步采集仍未获批准，本次发布不启动Isaac或训练。
+
+发布前复验7份新增核心测试：**84 passed，11.56s，exit0**。1183份源码/脚本/配置/测试与已完成双平台1147项完整回归的冻结版本逐字节一致，528份旧保护文件不变。此次复验不重复计作新原生结果。原始图像、物理日志、模型和私有归档不加入Git。
+
+本次包含真实RGB分割及point-source路径、三模式中心状态监督、Teacher KL事务与诊断、冷Reset同步证据准入和失败保存、PhysX来源/关闭诊断及768点尾部审计。Stereo精度、自然退出修复原生复验、逐contact来源与成功Teacher仍未通过；R2、Force Proxy、正式BC/DAgger保持关闭。最终测试和限制见[整合报告](docs/superpowers/reports/2026-11-11-stereo-wp-integration.md)、[readiness](docs/contracts/stereo_phase0_7_readiness.json)和[待批准采集计划](docs/superpowers/reports/2026-11-11-stereo-cold8-preflight-plan.md)。
+
+```text
+python -m pytest -q -p no:cacheprovider tests/test_dh116_stereo_cold_candidate_admission.py tests/test_dh116_stereo_candidate_cold_trials.py tests/test_dh116_stereo_contact_calibration.py tests/test_dh116_stereo_wire_tail_audit.py tests/test_dh116_stereo_state_training_modes.py tests/test_dh116_stereo_wire_segmentation.py tests/test_dh116_teacher_wp3.py
+```
+
+以下“未上传/不push”说明保留为预检阶段的历史快照；本条明确上传授权只改变发布范围，不改变实验授权或晋级状态。
+
+## 2026-11-11 — WP1–WP6增量与8初态采集预检查（未上传）
+
+以远端 `ae307a5` 为基线，保留已有架构。新增native-ID监督的双RGB分割、中心线/实测表面来源编码、右侧参考归档与逐点尾部审计；三种状态监督模式实际完成中心61–63的CPU诊断拟合。修复候选采集冷Reset读取、跨链初态身份、Checkpoint双检及失败样本保留。默认相机、371D/24D与原物理成功标准未变。
+
+Roll20同cohort复放为二指91/96、三指89/96个正确点，固定分母2009/2054，完整率4.53%/4.33%。这是采样覆盖改进，尾部仍14–22mm；分割实际接入仍失败，历史片段ID未记录，不能授部署或跟踪资格。真实6行中心标签的训练内MAE为5.395/1.522/4.258mm，没有独立validation/test。
+
+Teacher已完成本轮2env×128steps×1update原生R0诊断：256transition、5个joint_limit终止、成功0，受保护最终KL0.019917488。PhysX左拇指几何标定两次各240步完整，但退出需要采样后定向SIGTERM；修复代码经过CPU验证，尚待原生自然退出复验，pair来源未资格化。CUDA solver仍不可用，R2/Force Proxy、正式BC/DAgger/Student PPO保持关闭。
+
+最终CPU：Windows **1147 passed / 1 skipped**（174.53s）；服务器现有Python3.10/Torch2.7 **1147 passed / 2 skipped**（152.2s），均exit0、无Isaac导入，统计不相加。528保护文件SHA不变。用户本轮明确暂不采集新的8初态、不push/merge，PR保持Draft。
+
+[总报告](docs/superpowers/reports/2026-11-11-stereo-wp-integration.md) · [逐点预检](docs/superpowers/reports/2026-11-11-stereo-wp1-tail-preflight.md) · [待批准8初态计划](docs/superpowers/reports/2026-11-11-stereo-cold8-preflight-plan.md) · [readiness](docs/contracts/stereo_phase0_7_readiness.json) · [本轮文件清单](docs/stereo_wp_20261111_file_inventory.md)。以下保留历史阶段记录。
+
+## 2026-11-11 — 双目点云、状态监督与 Teacher PPO 验证
+
+本次更新以 085f6b8 为基线。Roll20 保存帧采用轮廓匹配和连通表面采样后，每帧二指 31/32 点、三指 30/32 点在 5 mm 内。正确点完整率分别为 1.54% 和 1.46%，三指光轴深度 P95 为 11.92 mm。该配置仍用于独立实验。
+
+完成 143D 逐字段审计及三种 Actor 模式的 CPU 验证。新的 2 环境、4 步原生候选采集核验出 6 条相对中心 XYZ 标签。两个独立初态不足以完成三路划分，状态估计器训练仍待合格数据。两次独立的 2 环境、32 步、1 更新 Teacher 原生诊断均以 0 次抓取成功结束。在同一个 0.02 KL 目标下，回滚及学习率回退将最终 KL 从 5.84524 降至 0.01997，Checkpoint 回读一致。R2 和正式 BC/DAgger/Student PPO 的准入仍待验证。
+
+本阶段完整 CPU 回归在 Windows 和服务器各通过 1063 项，分别跳过 1 项和 2 项。上传前执行以下 CPU 回归，93 项通过，用时 6.34 秒。
+
+    python -m pytest -q -p no:cacheprovider tests/test_dh116_stereo_wire_depth.py tests/test_dh116_stereo_state_supervision.py tests/test_dh116_privileged_teacher.py tests/test_dh116_privileged_cli.py tests/test_dh116_stereo_runtime_teacher_identity.py
+
+发布范围包括源码、配置、测试、字段审计和报告。原始测量、模型及日志保存在私有证据目录。[总报告](docs/superpowers/reports/2026-11-11-stereo-reliability.md) · [readiness](docs/contracts/stereo_phase0_7_readiness.json)
+
+## 2026-11-11 — Stereo 运行链路修复发布
+
+发布基线为 `9bfee426363527190011dbca164c104a00cbc999`。修复 RGB 二维拓扑与独立可见片段、TaskStateAdapter 到 Actor、左右掌局部点编码、真实 Teacher 身份和动作标签；保留旧路径，新增独立 latent/task-state/hybrid 配置。高分辨率 PPO 改为唯一帧池与有界 minibatch，粗到细区分默认 audit 与显式 accelerated。
+
+最终 CPU 回归：Windows **1030 passed / 1 skipped**（153.36s），服务器 **1030 passed / 2 skipped**（180.92s），均 exit0。完成 2/8/16/32 环境的 CPU/GPU 帧池测量、三模式 2env×4step 原生配对、Teacher 2env×1update 及 deterministic mean 采集诊断。原始二指0点失败被保留；逐分量拒绝修复后的同帧复放恢复4点，三指9点。详细原生复验见报告。
+
+这些是运行链路证据：Teacher/Student 没有取得成功资格，三模式未训练，深度完整率仍待验证；tiny Teacher batch KL偏高，同一episode跨多update的checkpoint切换边界仍需补齐。rigid_proxy明确标识，deformable_rod仅严格状态接口，真实后端未接通。528保护文件与30mm/5s/0.5mm标准不变，本阶段训练范围为短时诊断，发布目标为 Draft PR #2 的开发分支。
+
+上传前在 CPU 环境执行 pytest -q -p no:cacheprovider @tests，@tests 为 PowerShell 展开的全部 tests/test_dh116_stereo_runtime_*.py 和 tests/test_dh116_stereo_student_ppo.py。176 项通过，用时 23.78 秒。
+
+[完整报告](docs/superpowers/reports/2026-11-11-stereo-runtime-repair.md) · [机器摘要](docs/contracts/stereo_runtime_repair_validation_summary.json) · [readiness](docs/contracts/stereo_phase0_7_readiness.json) · [文件清单](docs/stereo_phase0_7_file_inventory.md)。以下为历史记录。
+
+## 2026-11-11 — 按用户授权上传J2-A/J2-B
+
+本次发布现有开发分支的J2-A（`a5a15fb`）与J2-B（`3cc5c12`）代码、独立配置、测试、报告和readiness；沿用[Draft PR #2](https://github.com/ssdsj12/dexterous-hand-dh116/pull/2)，保持Draft且不合并11-10。最新完整CPU回归885/886与48解析案例为上一阶段已执行证据；本次上传前另执行63项cost/integration检查，63 passed（20.36s，exit0）。528保护文件和1131份服务器已测源码SHA复核一致，未运行新Isaac/GPU实验或训练。
+
+原10run深度精度、物理抓取及部署资格仍未通过；下一工作包J2-C尚未执行。原始图像、运行日志、模型、缓存和私有归档不提交。推送后核对远端分支与Draft PR的HEAD SHA一致；下文保留各阶段当时未推送的历史记录。
+
+## 2026-11-11 — J2-B：四种独立匹配候选
+
+新增显式Census/Hamming、ZNCC、中心梯度L1与.25/.5/1粗到细候选；独立配置/SHA，完整RAW支持、同指标亚像素与全range审计，不覆盖旧默认SAD或模型。新增134项回归纳入最终相关组：Windows885 passed/1 skipped（149.97s）、server886 passed/1 skipped（140.38s），均exit0、无Isaac导入。48个固定解析case通过列出门槛；四候选标准coverage全100%、最大视差P95 .0250001px，Census存在极少坏尾，不能只看P95。
+
+这只是软件/解析证据。原10run native accuracy、物理与部署资格不变，GPU/完整吞吐未测；粗到细全range审计不宣称加速。无新Isaac、训练、push或merge。下一工作包J2-C，J2-F同原始数据比较与J3仍待执行。[完整报告/实际命令/失败记录](docs/superpowers/reports/2026-11-11-stereo-j2b-matching-candidates.md) · [readiness](docs/contracts/stereo_phase0_7_readiness.json)。以下保留阶段历史。
+
+## 2026-11-11 — J2-A合同、可靠亚像素和安全回归（本地）
+
+- 保留默认SAD数值和原12字段配置；新增mask别名、能力元数据与逐项拒绝原因。SGBM confidence保留兼容数值但不再表达质量概率，内部不可用项为NA。
+- 新增opt-in `reliable_sad`，采用五成本模型、独立fractional photometric验证和单频重复纹理证据；失败五成本配置独立保留。修复NaN邻居LR绕过、无效RGB影响边界proxy及非正视差换算，来源SHA进入processing合同，旧包不静默迁移。
+- `pytest -q -p no:cacheprovider`的五份J2-A测试组合156 passed（29.86s）；最终相关全组Windows751 passed/1 skipped（115.60s）、服务器752 passed/1 skipped（78.03s），均exit0、未导入Isaac。完整选择与命令见J2-A独立报告。
+- 保存Pixel A离线crop误差7.218→2.681mm及解析遮挡27个错误有效点；不冒充全wire精度或原生抓取成功。同步更新README、readiness、166项五目录清单和机器验证摘要；保留RED/GREEN原件于本地artifacts，不上传raw、日志、归档或模型。
+- 原528保护文件、控制/物理/执行器/Checkpoint和30mm/5s/0.5mm标准不变。未运行新native/GPU/训练，不push、不merge，PR保持Draft；J2-B与原生精度验证待后续工作包。
+
+## 2026-11-11 — 按明确指令发布J0/J1至现有Draft PR
+
+- 发布诊断实现`33d73d3`、完整报告/readiness与J2实施计划；保留原分支、Checkpoint和未达标状态，不合并、不训练、不新增native capture。
+- 本次执行`pytest -q -p no:cacheprovider tests/test_dh116_stereo_error_diagnostics.py tests/test_dh116_stereo_error_geometry.py`：31 passed，9.75s，exit0。完整性脚本核验528保护文件、1111份服务器已测源码/测试及52图SHA；`git diff --check`通过。
+- 595/596完整回归与10run重分析是2026-11-10历史验证，本次不重复计作新物理证据。公开范围仅代码/测试/文档/处理后指标；排除raw图像、日志、模型、缓存、密钥和归档。
+
+## 2026-11-10 — J0/J1源合同、分区误差与原始数据根因分析
+
+- 新增评估专用error diagnostics/geometry/CLI、原始数据交叉绑定和52张真实可视化；同像素固定reference分母、P50/P90/P95、NA、拒绝重叠/互斥及saved/replay四象限分开，右实例GT缺失不伪造。
+- 定位Block9亚像素偏移、低纹理窗口混合、SGBM自洽坏尾及虚高confidence；实际extractor在12首帧env观测全部0/128 token。保持baseline matcher与既有控制逻辑不变；离线counterfactual不是算法晋级。
+- 新增31项诊断/几何测试，保存RED/GREEN；最终Windows595 passed/1 skipped、server596 passed/1 skipped，均exit0。已有10run重分析完成57.223s，新增native0，158输入/来源SHA均未变，保护528文件不变。
+- 更新J0/J1报告、153项当前文件清单、机器readiness及J2具体计划。accuracy/物理/部署qualification仍false，Teacher/Student未训练；按本轮任务范围不push、不merge、不启动J2算法改造或新Isaac实验。
+
+## 2026-11-10 — Stereo原生接线、构图与分辨率测量收尾
+
+- 仅修正新增native配置：原launcher预检所需的真实三指reset、camera路由和无旧demo的启动参数；原guard、稳定Hold reward和旧控制路径保持。增加front四分辨率及独立roll20/window5与9实验，不改变默认旧rig。
+- 修复实际SDK instance-ID/光轴深度验证，逐env实际Wire mesh清单与未知有限深度fail-closed；旧v1材料不升级。保存producer退出、源码/配置/参考artifact SHA，区分测量可验证与accuracy资格。
+- 最终Windows相关CPU564 passed/1 skipped（75.44s）、现有服务器Python3.10/Torch2.7 CPU565 passed/1 skipped（67.68s），均exit0。10次实际相机配置采集exit0及重读通过，但accuracy全部未达标；≤5mm正确3D点完整率与有效覆盖分列，最终resolution未选择。完整命令、逐文件清单、指标、失败和剩余门槛见集成/原生报告。
+- 保留原528份生产文件raw SHA与历史Checkpoint；无模型训练、无原生Teacher/Student成功声明、不降低30mm/5s/0.5mm。force/support工厂、独立geometry资格、Teacher/Student每抓法100初态及完整训练吞吐待验证；PR保持Draft，不合并。以下同日记录为阶段历史快照。
+
+## 2026-11-10 — 隔离shaping与实际SDK监督/手内坐标接线
+
+- 实现R1四类与R2五类纯测量因子，默认关，signed support deficit只计一次；几何派生目标份额不强制左右等载。native工厂/独立geometry资格未完成，来源不合格拒绝启用。
+- runtime逐环境逐维核对SDK q/qd，仅0:24打开state监督；实际FK将RGB-derived worldpoints转左右掌坐标，invalid保留NaN，不作为GT输入。
+- 冻结全组Windows CPU528 passed/1 skipped、服务器现有Python3.10/Torch2.7 CPU529 passed/1 skipped，均exit0；原528生产源文件SHA不变。随后开始短相机实验，不训练或更换原模型，物理资格仍另验。
+
+## 2026-11-10 — 多分辨率/亚像素与跨环境审计适配
+
+- 新增320×240/640×360/640×480配置，默认主精度VGA；224×96保留原字节。资源batch/env可调，K随尺寸更新，流式视差与浮点LR一致性，不隐藏缩图。
+- K读回单独容纳SDK float32舍入误差，T/物理容差不改；不允许把此改动当提高成功率或真实深度精度。
+- 分辨率相关115项CPU组合通过。服务器首轮458通过/6失败：修复私有快照文档/子进程路径，并将AST审计仅适配3.10缺少的空type_params，保留原字节SHA与结构哈希；完整服务器重跑及原生实验待记录。
+
+## 2026-11-10 — Stereo Phase 7：cold trials与raw proof gates
+
+- 新增双抓法平衡冷试验、真实初态去重、逐480Hz正式tracker回放、raw来源/训练heldout闭包与独立模型选择；继续区分CPU、native capture及物理资格。
+- 新bootstrap只接受原launcher正常退出且callback完成，非零/异常保留失败。18项真实runpy回归、关联164项组合通过，未改原launcher或单实例锁。
+- 原生force/support/external/attachment来源、100独立初态成功和最终Student验收未取得；明确pending，不晋级、不合并。
+
+## 2026-11-10 — Stereo Phase 6：Student PPO与独立raw RGB执行
+
+- 新asymmetric PPO严格分离typed传感历史Actor与371D Critic，复用Tanh Gaussian/24D动作；独立保存policy/Adam/RNG/LR与actor-only导出。
+- 接通真实采集/BC/DAgger/PPO/独立RGB CLI；模型绑定calibration、matcher及源SHA，原始GT不进入Actor。训练源登记缺闭包则禁止正式heldout晋级。
+- Windows CPU463 passed/1 optional module skipped，exit0；服务器首次CPU6失败已保留日志并修复打包/AST兼容后重跑。尚无原生训练或Student成功，PR保持Draft。
+
+## 2026-11-10 — Stereo Phase 5：真正在线DAgger
+
+- Student实际step访问状态上查询Teacher；整动作owner选择、append-only池、独立Adam与PPO隔离。
+- D0、失败访问状态和成功示范分开；无原生Teacher资格时不执行正式第一步。
+- 8项DAgger协议测试包含于本轮450项CPU通过组合；原生DAgger与Student任务成功仍待验证，PR保持Draft。
+
+## 2026-11-10 — Stereo Phase 4：pre-action采集与独立BC
+
+- 新增Teacher采集协议、版本化supervision dataset、来源分组holdout、独立BC与训练模式/分块反传回归。
+- 完整成功池要求本次原生raw proof；CPU/候选数据不能授成功资格，不修改旧控制与Checkpoint。
+- 本次组合450 passed in61.80s；补充BC/运行组合19 passed/1 optional module skipped in18.02s，均exit0。原生采集、独立Student抓取仍pending；详见Phase4报告，PR保持Draft。
+
+## 2026-11-10 — Stereo Phase 3：隔离Stereo Transformer Actor
+
+- 新增真实共享GN-ResNet18/双目cross-attention/时序Transformer、多head估计、typed SensorHistory、SO(3)及masked losses；不改变旧3844D输入。
+- 原始证据不足的force监督failclosed；peer发现的metadata-only资格漏洞已补，正式gate重开raw artifacts。
+- Phase3单测27通过；含collection、DAgger、BC CLI及runtime后续集成组合51 passed in11.98s，exit0，未启动native/未授任务成功。按用户补充分辨率支持图像分批，原生精度及资源测试待完整链路后进行。
+
+## 2026-11-10 — Stereo Phase 2：RGB-only stereo独立模块
+
+- 新增标定、同步双RGB采集、视差/深度、坐标变换与验证模块；RGB-only原生reader不读取rendered depth，不推进物理。
+- 增加RGB可见骨架/弧长点顺序提取，分叉/断开/缺深度拒绝，不补隐藏几何。新增probe和depth-reference CLI，默认不运行native。
+- geometry+CLI+perception CPU组合43 passed in4.78s，exit0；实际标定、亚像素精度、原生性能和抓取均未验证。整数视差深度分辨率限制明确保留，PR继续Draft。
+
+## 2026-11-10 — Stereo Phase 1：独立 Teacher 软件路径
+
+- 新增独立371D privileged Teacher/PPO/reward/dataset/checkpoint、配置和collect/train/evaluate入口；新run独占目录和动作/状态/source SHA，不覆盖原模型。
+- 原生桥只替换新进程最终训练callback，复用原Task/World/Env和成功判据；default不启动，raw capture不授force/support/native资格。
+- CPU集成49 passed in6.10s，exit0；合成update/resume/terminal不是Isaac验证。成功专家池新增原始证据门控，R1/R2无资格不启用，R2未完成因子明确保留。
+- 原生Teacher、双目准确度与Student闭环仍待验收；隔离后续开发继续，PR保持Draft。详见Phase1集成报告。
+
+## 2026-11-10 — Stereo Phase 0：状态、动作与奖励审计
+
+- 新增371行状态映射、24行动作合同、奖励公式/系数/dt/重复风险审计和机器JSON；关键21份源码/报告精确SHA、全部528份原源码/脚本/配置保持。
+- 记录缺少嵌入有效性掩码、旧261D/26D Teacher合同、V4与旧hold/dwell叠加及正式/诊断滑移差异，明确NA与晋级边界；不修改原行为。
+- 现有Windows CPU环境运行审计与已有surface成功/奖励回归；准确命令、计数、日志见Phase0报告。Isaac、GPU物理、训练及新抓取成功均未验证。
+- 用户授权继续Phase1～7隔离实现；新增实施计划，先实现R0透传Teacher，不将CPU资格当原生成功。PR保持Draft，原11-10分支不覆盖。
+
 ## 2026-11-10 — CUDA 12.8 独立工具链计划（尚未安装或编译）
 
 - 固定最终CUDA12.8 / cp310 / Torch2.7cu128 / SM89，不再将12.2/12.4作为最终编译候选。只读复核59个路径模式及实际nvcc，仍只发现12.2.91、12.4.99；拟用用户目录可写但未进行创建/链接测试。

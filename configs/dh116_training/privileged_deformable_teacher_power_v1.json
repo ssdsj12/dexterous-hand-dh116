@@ -1,0 +1,28 @@
+{
+  "version": "dh116-deformable-privileged-teacher-config-v1",
+  "task_kind": "deformable_rod",
+  "grasp": "power",
+  "task_config_sha256": "8b4f7f8d3fb96c12b9794a7c5daaa2b65f9231699348d5635044bd3f5ac75d63",
+  "checkpoint_namespace": "deformable_teacher_power_v1",
+  "model": {
+    "common_size": 371,
+    "action_size": 24,
+    "hidden": [
+      256,
+      256
+    ],
+    "rod_feature_size": 13,
+    "rod_hidden": 64,
+    "initial_std": 0.1
+  },
+  "reward_profile": "flexible_r0",
+  "use_cameras": false,
+  "expert_initialization": "optional",
+  "native_ready": false,
+  "native_prerequisites": [
+    "qualified_same_rod_dual_hand_contact",
+    "qualified_reset_and_371d_common",
+    "qualified_flexible_r0",
+    "approved_bounded_native_budget"
+  ]
+}

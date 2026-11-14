@@ -1,0 +1,11 @@
+{
+  "version": "dh116-effective-pad-negative-r0-replay-v1",
+  "enabled_by_default": false,
+  "source_receipt_sha256": "9525c46f257fb6d5d81f585f71b47c571dcff7a05019b583e3e93c7535ed0bd8",
+  "expected_measured_steps": 232,
+  "new_physics_steps": 0,
+  "ppo_updates": 0,
+  "training_reward_enabled": false,
+  "coefficient_source": "existing_CPU_fixture_ordinal_weights_not_training_coefficients",
+  "teacher_admission": false
+}

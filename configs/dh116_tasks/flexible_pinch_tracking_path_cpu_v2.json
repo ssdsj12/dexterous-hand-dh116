@@ -1,0 +1,12 @@
+{
+  "version": "dh116-pinch-same-amplitude-plateau-cpu-v1",
+  "profile": "plateau",
+  "bow_amplitude_m": 0.0001,
+  "maximum_x_rate_m_s": 0.00114,
+  "segments": 20,
+  "physics_hz": 480,
+  "control_hz": 60,
+  "prior_failure_sha256": "e0879d44e640a99807f4675cf75442665646ab99220d41f74863516cabe6164e",
+  "native_execution": false,
+  "teacher_admission": false
+}

@@ -75,14 +75,13 @@ def test_rough_rod_and_hand_profiles_are_explicit_training_assumptions():
 
 
 def test_actual_hand_colliders_receive_physics_binding_and_modes_are_checked():
-    import json
+    from scripts.verify_dh116_cooked_convex_hulls_native import _sources
     from go2_pvcnn.control.dh116.tabletop_material import (
         bind_object_colliders, verify_collider_bindings, hand_material_contract)
     from pxr import Sdf
     spec = hand_material_contract('grip')['hand_contact_material']
-    manifest = json.loads(Path('assets/fixed_dual_panda_dh116_v1/manifest.json').read_text())
     stage = Usd.Stage.CreateInMemory()
-    source = next(x['path'] for x in manifest['sources'] if x['kind'] == 'dh116')
+    source = _sources(Path(__file__).resolve().parents[1])['left']['path']
     stage.DefinePrim('/Hand', 'Xform').GetReferences().AddReference(source)
     mat = UsdShade.Material.Define(stage, '/Grip')
     physics = UsdPhysics.MaterialAPI.Apply(mat.GetPrim())

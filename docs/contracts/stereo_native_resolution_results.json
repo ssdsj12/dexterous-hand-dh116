@@ -1,0 +1,394 @@
+{
+  "version": "dh116-stereo-native-results-summary-v1",
+  "scope": "previously_verified_by_each_immutable_run_source;not_grasp_qualification",
+  "environments": 2,
+  "frames_per_profile": 4,
+  "warmup_frames": 2,
+  "seed": 116,
+  "physics_hz": 480,
+  "control_hz": 60,
+  "actor_package_used": false,
+  "native_captures": 10,
+  "teacher_student_training_started": false,
+  "selected_resolution": null,
+  "results": [
+    {
+      "experiment": "old_rig",
+      "report_artifact": {
+        "path": "/tmp/dh116-stereo-20261110T114000Z/native_resolution_04/resolution_benchmark.json",
+        "sha256": "ff36f78a437762d4ee07409fe888b8b6b9e93af0db221e2dc3ee7ffe02f09768"
+      },
+      "width": 640,
+      "height": 480,
+      "metrics": {
+        "depth_mae_m": 0.04718067664565028,
+        "depth_rmse_m": 0.09545981689267348,
+        "depth_p95_m": 0.1809251755475998,
+        "wire_point_cloud_completeness": null,
+        "gpu_peak_allocated_bytes": 138739712,
+        "gpu_peak_reserved_bytes": 182452224,
+        "gpu_free_bytes": 15075442688,
+        "capture_ms": 42.76936328096781,
+        "depth_ms": 230.1606202381663,
+        "actor_ms": null
+      },
+      "stereo_pairs_per_second": null,
+      "qualified": false,
+      "measurements_verified": true,
+      "cohort_sha256": "248047ea9cbbd83147c940e4f37175c261506c883de3b679148bfe208d499b24",
+      "sample_count": 4,
+      "rgb_candidate_point_cloud_completeness": 0.19455757126990003,
+      "gpu_device_used_bytes": 10175184896,
+      "blocked_reasons": [
+        "measured_native_accuracy_did_not_pass_qualification_thresholds"
+      ],
+      "accuracy_source": "verified_native_raw_stereo_proof",
+      "performance_source": "verified_native_cuda_artifact"
+    },
+    {
+      "experiment": "old_rig",
+      "report_artifact": {
+        "path": "/tmp/dh116-stereo-20261110T114000Z/native_resolution_05/resolution_benchmark.json",
+        "sha256": "c15bf33c497f73e20f600ad14a78062dad9ea6dc738fd27673c71a7de02e4152"
+      },
+      "width": 224,
+      "height": 96,
+      "metrics": {
+        "depth_mae_m": 0.0471766210163054,
+        "depth_rmse_m": 0.08906985276586173,
+        "depth_p95_m": 0.25729593336582185,
+        "wire_point_cloud_completeness": null,
+        "gpu_peak_allocated_bytes": 19161088,
+        "gpu_peak_reserved_bytes": 33554432,
+        "gpu_free_bytes": 16171794432,
+        "capture_ms": 27.803310978924856,
+        "depth_ms": 75.69366526149679,
+        "actor_ms": null
+      },
+      "stereo_pairs_per_second": null,
+      "qualified": false,
+      "measurements_verified": true,
+      "cohort_sha256": "248047ea9cbbd83147c940e4f37175c261506c883de3b679148bfe208d499b24",
+      "sample_count": 4,
+      "rgb_candidate_point_cloud_completeness": 0.5327868852459017,
+      "gpu_device_used_bytes": 9078833152,
+      "blocked_reasons": [
+        "measured_native_accuracy_did_not_pass_qualification_thresholds"
+      ],
+      "accuracy_source": "verified_native_raw_stereo_proof",
+      "performance_source": "verified_native_cuda_artifact"
+    },
+    {
+      "experiment": "old_rig",
+      "report_artifact": {
+        "path": "/tmp/dh116-stereo-20261110T114000Z/native_resolution_05/resolution_benchmark.json",
+        "sha256": "c15bf33c497f73e20f600ad14a78062dad9ea6dc738fd27673c71a7de02e4152"
+      },
+      "width": 320,
+      "height": 240,
+      "metrics": {
+        "depth_mae_m": 0.04911211621454462,
+        "depth_rmse_m": 0.08972143657232887,
+        "depth_p95_m": 0.17659324407577515,
+        "wire_point_cloud_completeness": null,
+        "gpu_peak_allocated_bytes": 42942464,
+        "gpu_peak_reserved_bytes": 56623104,
+        "gpu_free_bytes": 15870132224,
+        "capture_ms": 28.523011758807115,
+        "depth_ms": 101.20499976619612,
+        "actor_ms": null
+      },
+      "stereo_pairs_per_second": null,
+      "qualified": false,
+      "measurements_verified": true,
+      "cohort_sha256": "248047ea9cbbd83147c940e4f37175c261506c883de3b679148bfe208d499b24",
+      "sample_count": 4,
+      "rgb_candidate_point_cloud_completeness": 0.36417468541820874,
+      "gpu_device_used_bytes": 9380495360,
+      "blocked_reasons": [
+        "measured_native_accuracy_did_not_pass_qualification_thresholds"
+      ],
+      "accuracy_source": "verified_native_raw_stereo_proof",
+      "performance_source": "verified_native_cuda_artifact"
+    },
+    {
+      "experiment": "old_rig",
+      "report_artifact": {
+        "path": "/tmp/dh116-stereo-20261110T114000Z/native_resolution_05/resolution_benchmark.json",
+        "sha256": "c15bf33c497f73e20f600ad14a78062dad9ea6dc738fd27673c71a7de02e4152"
+      },
+      "width": 640,
+      "height": 360,
+      "metrics": {
+        "depth_mae_m": 0.038940920653266556,
+        "depth_rmse_m": 0.07708138853356361,
+        "depth_p95_m": 0.2103487491607641,
+        "wire_point_cloud_completeness": null,
+        "gpu_peak_allocated_bytes": 107747328,
+        "gpu_peak_reserved_bytes": 148897792,
+        "gpu_free_bytes": 15433138176,
+        "capture_ms": 35.24790050869342,
+        "depth_ms": 192.518224241212,
+        "actor_ms": null
+      },
+      "stereo_pairs_per_second": null,
+      "qualified": false,
+      "measurements_verified": true,
+      "cohort_sha256": "248047ea9cbbd83147c940e4f37175c261506c883de3b679148bfe208d499b24",
+      "sample_count": 4,
+      "rgb_candidate_point_cloud_completeness": 0.1937984496124031,
+      "gpu_device_used_bytes": 9817489408,
+      "blocked_reasons": [
+        "measured_native_accuracy_did_not_pass_qualification_thresholds"
+      ],
+      "accuracy_source": "verified_native_raw_stereo_proof",
+      "performance_source": "verified_native_cuda_artifact"
+    },
+    {
+      "experiment": "front_v3",
+      "report_artifact": {
+        "path": "/tmp/dh116-stereo-20261110T115000Z/native_front_resolution_01/resolution_benchmark.json",
+        "sha256": "eba8e2fb222f67778fe1a7f5159d86c34e0b0455000e075f8a5dd948219591e2"
+      },
+      "width": 224,
+      "height": 96,
+      "metrics": {
+        "depth_mae_m": 0.06565573720509195,
+        "depth_rmse_m": 0.10380905887758,
+        "depth_p95_m": 0.257474422454834,
+        "wire_point_cloud_completeness": 0.009900990099009901,
+        "gpu_peak_allocated_bytes": 19247104,
+        "gpu_peak_reserved_bytes": 35651584,
+        "gpu_free_bytes": 16203251712,
+        "capture_ms": 27.419826481491327,
+        "depth_ms": 86.05361850641202,
+        "actor_ms": null
+      },
+      "wire_depth_metrics": {
+        "wire_depth_mae_m": 0.0406542236988361,
+        "wire_depth_rmse_m": 0.05281556889293767,
+        "wire_depth_p95_m": 0.12411636114120483,
+        "wire_depth_validity_coverage": 0.10297029702970296,
+        "wire_depth_count": 208
+      },
+      "stereo_pairs_per_second": null,
+      "qualified": false,
+      "measurements_verified": true,
+      "cohort_sha256": "64c4ce7801b0c7ac379450049f33b3566db7c3e90fb4d933c581a7981169eca5",
+      "sample_count": 4,
+      "rgb_candidate_point_cloud_completeness": 0.10297029702970296,
+      "gpu_device_used_bytes": 9047375872,
+      "blocked_reasons": [
+        "measured_native_accuracy_did_not_pass_qualification_thresholds"
+      ],
+      "accuracy_source": "verified_native_raw_stereo_proof",
+      "performance_source": "verified_native_cuda_artifact"
+    },
+    {
+      "experiment": "front_v3",
+      "report_artifact": {
+        "path": "/tmp/dh116-stereo-20261110T115000Z/native_front_resolution_01/resolution_benchmark.json",
+        "sha256": "eba8e2fb222f67778fe1a7f5159d86c34e0b0455000e075f8a5dd948219591e2"
+      },
+      "width": 320,
+      "height": 240,
+      "metrics": {
+        "depth_mae_m": 0.0660409609311501,
+        "depth_rmse_m": 0.10778334873996372,
+        "depth_p95_m": 0.2643495202064514,
+        "wire_point_cloud_completeness": 0.0,
+        "gpu_peak_allocated_bytes": 43249664,
+        "gpu_peak_reserved_bytes": 56623104,
+        "gpu_free_bytes": 16004349952,
+        "capture_ms": 32.0872479933314,
+        "depth_ms": 125.9015337418532,
+        "actor_ms": null
+      },
+      "wire_depth_metrics": {
+        "wire_depth_mae_m": 0.03595626857918753,
+        "wire_depth_rmse_m": 0.044594377158796744,
+        "wire_depth_p95_m": 0.09236717224121094,
+        "wire_depth_validity_coverage": 0.07411273486430063,
+        "wire_depth_count": 284
+      },
+      "stereo_pairs_per_second": null,
+      "qualified": false,
+      "measurements_verified": true,
+      "cohort_sha256": "64c4ce7801b0c7ac379450049f33b3566db7c3e90fb4d933c581a7981169eca5",
+      "sample_count": 4,
+      "rgb_candidate_point_cloud_completeness": 0.07411273486430063,
+      "gpu_device_used_bytes": 9246277632,
+      "blocked_reasons": [
+        "measured_native_accuracy_did_not_pass_qualification_thresholds"
+      ],
+      "accuracy_source": "verified_native_raw_stereo_proof",
+      "performance_source": "verified_native_cuda_artifact"
+    },
+    {
+      "experiment": "front_v3",
+      "report_artifact": {
+        "path": "/tmp/dh116-stereo-20261110T115000Z/native_front_resolution_01/resolution_benchmark.json",
+        "sha256": "eba8e2fb222f67778fe1a7f5159d86c34e0b0455000e075f8a5dd948219591e2"
+      },
+      "width": 640,
+      "height": 360,
+      "metrics": {
+        "depth_mae_m": 0.05861729227379692,
+        "depth_rmse_m": 0.10367912908725796,
+        "depth_p95_m": 0.26142674684524536,
+        "wire_point_cloud_completeness": 0.0018634987188446308,
+        "gpu_peak_allocated_bytes": 108668928,
+        "gpu_peak_reserved_bytes": 150994944,
+        "gpu_free_bytes": 15431041024,
+        "capture_ms": 38.86637075629551,
+        "depth_ms": 188.44354151224252,
+        "actor_ms": null
+      },
+      "wire_depth_metrics": {
+        "wire_depth_mae_m": 0.03807811813744885,
+        "wire_depth_rmse_m": 0.04844927432149343,
+        "wire_depth_p95_m": 0.1314678192138672,
+        "wire_depth_validity_coverage": 0.039832285115303984,
+        "wire_depth_count": 684
+      },
+      "stereo_pairs_per_second": null,
+      "qualified": false,
+      "measurements_verified": true,
+      "cohort_sha256": "64c4ce7801b0c7ac379450049f33b3566db7c3e90fb4d933c581a7981169eca5",
+      "sample_count": 4,
+      "rgb_candidate_point_cloud_completeness": 0.039832285115303984,
+      "gpu_device_used_bytes": 9819586560,
+      "blocked_reasons": [
+        "measured_native_accuracy_did_not_pass_qualification_thresholds"
+      ],
+      "accuracy_source": "verified_native_raw_stereo_proof",
+      "performance_source": "verified_native_cuda_artifact"
+    },
+    {
+      "experiment": "front_v3",
+      "report_artifact": {
+        "path": "/tmp/dh116-stereo-20261110T115000Z/native_front_resolution_01/resolution_benchmark.json",
+        "sha256": "eba8e2fb222f67778fe1a7f5159d86c34e0b0455000e075f8a5dd948219591e2"
+      },
+      "width": 640,
+      "height": 480,
+      "metrics": {
+        "depth_mae_m": 0.05861729087772195,
+        "depth_rmse_m": 0.103679127544697,
+        "depth_p95_m": 0.26142674684524536,
+        "wire_point_cloud_completeness": 0.0018634987188446308,
+        "gpu_peak_allocated_bytes": 139968512,
+        "gpu_peak_reserved_bytes": 184549376,
+        "gpu_free_bytes": 15073345536,
+        "capture_ms": 43.24928126879968,
+        "depth_ms": 207.53666922973935,
+        "actor_ms": null
+      },
+      "wire_depth_metrics": {
+        "wire_depth_mae_m": 0.03807815090257522,
+        "wire_depth_rmse_m": 0.048449301998145324,
+        "wire_depth_p95_m": 0.13146787881851196,
+        "wire_depth_validity_coverage": 0.039832285115303984,
+        "wire_depth_count": 684
+      },
+      "stereo_pairs_per_second": null,
+      "qualified": false,
+      "measurements_verified": true,
+      "cohort_sha256": "64c4ce7801b0c7ac379450049f33b3566db7c3e90fb4d933c581a7981169eca5",
+      "sample_count": 4,
+      "rgb_candidate_point_cloud_completeness": 0.039832285115303984,
+      "gpu_device_used_bytes": 10177282048,
+      "blocked_reasons": [
+        "measured_native_accuracy_did_not_pass_qualification_thresholds"
+      ],
+      "accuracy_source": "verified_native_raw_stereo_proof",
+      "performance_source": "verified_native_cuda_artifact"
+    },
+    {
+      "experiment": "front_roll20_block5",
+      "report_artifact": {
+        "path": "/tmp/dh116-stereo-20261110T120000Z/native_roll20_block5/resolution_benchmark.json",
+        "sha256": "5a39cbf2b35348f213e4354de6623a4eeddff7b93a58d9bcca93d0a385aa4a94"
+      },
+      "width": 640,
+      "height": 480,
+      "metrics": {
+        "depth_mae_m": 0.043743644674583096,
+        "depth_rmse_m": 0.0758888578249502,
+        "depth_p95_m": 0.17640088498592377,
+        "wire_point_cloud_completeness": 0.32980556239232095,
+        "gpu_peak_allocated_bytes": 139968512,
+        "gpu_peak_reserved_bytes": 184549376,
+        "gpu_free_bytes": 14939127808,
+        "capture_ms": 45.432052997057326,
+        "depth_ms": 210.70483725634404,
+        "actor_ms": null
+      },
+      "wire_depth_metrics": {
+        "wire_depth_mae_m": 0.007349601986715002,
+        "wire_depth_rmse_m": 0.016533495847631616,
+        "wire_depth_p95_m": 0.03438377380371094,
+        "wire_depth_validity_coverage": 0.43613093773074085,
+        "wire_depth_count": 7088
+      },
+      "stereo_pairs_per_second": null,
+      "qualified": false,
+      "measurements_verified": true,
+      "cohort_sha256": "12a14e90fa735a56ae35d4c14526fa7c29f240d4f4a8407d725b3fa44e68ff57",
+      "sample_count": 4,
+      "capture_depth_pairs_per_second": 7.808324673659308,
+      "capture_depth_throughput_scope": "capture_plus_depth_only;excludes_Actor_and_physics;not_used_for_selection",
+      "rgb_candidate_point_cloud_completeness": 0.43613093773074085,
+      "gpu_device_used_bytes": 10311499776,
+      "blocked_reasons": [
+        "measured_native_accuracy_did_not_pass_qualification_thresholds"
+      ],
+      "accuracy_source": "verified_native_raw_stereo_proof",
+      "performance_source": "verified_native_cuda_artifact"
+    },
+    {
+      "experiment": "front_roll20_block9",
+      "report_artifact": {
+        "path": "/tmp/dh116-stereo-20261110T120000Z/native_roll20_block9/resolution_benchmark.json",
+        "sha256": "5f884f2c5c49273988d4a98f5f87aa5c09d98d4037b6db7d9d716bdec0f1f129"
+      },
+      "width": 640,
+      "height": 480,
+      "metrics": {
+        "depth_mae_m": 0.04603813087841132,
+        "depth_rmse_m": 0.07640738415073606,
+        "depth_p95_m": 0.16407829523086548,
+        "wire_point_cloud_completeness": 0.46049716957912873,
+        "gpu_peak_allocated_bytes": 139968512,
+        "gpu_peak_reserved_bytes": 184549376,
+        "gpu_free_bytes": 15073345536,
+        "capture_ms": 42.180722739431076,
+        "depth_ms": 187.32418701983988,
+        "actor_ms": null
+      },
+      "wire_depth_metrics": {
+        "wire_depth_mae_m": 0.007977842050006269,
+        "wire_depth_rmse_m": 0.015115580756905165,
+        "wire_depth_p95_m": 0.02134096622467041,
+        "wire_depth_validity_coverage": 0.9387152350479941,
+        "wire_depth_count": 15256
+      },
+      "stereo_pairs_per_second": null,
+      "qualified": false,
+      "measurements_verified": true,
+      "cohort_sha256": "12a14e90fa735a56ae35d4c14526fa7c29f240d4f4a8407d725b3fa44e68ff57",
+      "sample_count": 4,
+      "capture_depth_pairs_per_second": 8.714410520009405,
+      "capture_depth_throughput_scope": "capture_plus_depth_only;excludes_Actor_and_physics;not_used_for_selection",
+      "rgb_candidate_point_cloud_completeness": 0.9387152350479941,
+      "gpu_device_used_bytes": 10177282048,
+      "blocked_reasons": [
+        "measured_native_accuracy_did_not_pass_qualification_thresholds"
+      ],
+      "accuracy_source": "verified_native_raw_stereo_proof",
+      "performance_source": "verified_native_cuda_artifact"
+    }
+  ],
+  "processed_summary_source_sha256": "dcbfcfe13a86abc01dd810800878ed77a51d53cee60370a9faa4fcc1041faf58",
+  "publication_scope": "processed_metrics_and_artifact_addresses_only;raw_images_logs_models_not_uploaded"
+}

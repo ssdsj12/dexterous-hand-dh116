@@ -1,0 +1,66 @@
+{
+  "version": "dh116-left-pinch-nonlinear-feasibility-cpu-v2",
+  "source_config": {
+    "version": "dh116-left-pinch-correlated-endpoint-cpu-v1",
+    "mode": "cpu_only",
+    "side": "left",
+    "maximum_evaluations": 600,
+    "maximum_search_seconds": 60.0,
+    "search_physics_steps": [
+      211,
+      222,
+      234
+    ],
+    "validation_physics_steps": [
+      211,
+      212,
+      213,
+      214,
+      215,
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      223,
+      224,
+      225,
+      226,
+      227,
+      228,
+      229,
+      230,
+      231,
+      232,
+      233,
+      234
+    ],
+    "translation_scales_m": [
+      0.002,
+      0.002,
+      0.002
+    ],
+    "rotation_scales_rad": [
+      0.03,
+      0.03,
+      0.03
+    ],
+    "active_scales_rad": [
+      0.04,
+      0.04,
+      0.04
+    ],
+    "native_execution": false,
+    "teacher_admission": false
+  },
+  "maximum_evaluations": 600,
+  "maximum_search_seconds": 60.0,
+  "initial_candidate_source": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/left-pinch-tracking-20261114/search-01/result.json",
+  "initial_candidate_sha256": "4c35c37916c7efd0a9fd470fd578195a43e589ac3119c59ade7bbb6c8508884a",
+  "optimizer": "bounded_least_squares_constraint_violation",
+  "finite_difference_step": 0.002,
+  "native_execution": false,
+  "teacher_admission": false
+}

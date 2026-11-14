@@ -1,0 +1,51 @@
+{
+  "baseline": "ae307a55917519138b6da5179e8254ce2e9a7c8f",
+  "protected_semantics_unchanged": true,
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_privileged_ppo.py": "f0a96f4f8c9548b5153d004013bef9d77b97250aa0bc43272626cffb15416854",
+    "src/go2_pvcnn/control/dh116/tabletop_privileged_cli.py": "e5f89d132f045fd51b32d6828b6ce24352fed3f1a5ca00a6acb4ea8e25aa12b4",
+    "src/go2_pvcnn/control/dh116/tabletop_privileged_dataset.py": "01c1718d4211643bd26a8288a6e769f506180bfc451054acf8a09b52ae0b8745",
+    "configs/dh116_training/privileged_teacher_ppo_guarded_v2.json": "408c7a58e25def513d4f9ce72ef72cb5d479a52acf73c831e096fe7e8630c972",
+    "tests/test_dh116_teacher_wp3.py": "c6515e214325b2bf58bd3c2aa422115af1367c724aae731281af92b8c917bb5f"
+  },
+  "cpu_local": {
+    "passed": 81,
+    "seconds": 5.63
+  },
+  "cpu_server": {
+    "passed": 81,
+    "seconds": 8.65
+  },
+  "indexed_student_cpu": {
+    "passed": 30,
+    "seconds": 17.41
+  },
+  "native": {
+    "exit_code": 0,
+    "run": "/tmp/dh116-wp3-teacher128-v02/teacher_diagnostic",
+    "num_envs": 2,
+    "steps": 128,
+    "updates": 1,
+    "physical_samples": 2030,
+    "transitions": 256,
+    "completed_failure_episodes": 5,
+    "open_episodes": 2,
+    "successes": 0,
+    "final_exact_kl": 0.01991748809814453,
+    "minibatch_accepted": 15,
+    "minibatch_attempted": 16,
+    "raw_sha256": "470e8c5d0f24b2cf97c1664ea26dbd566aa58969677d0b3f64660ff22e2d6ffc",
+    "checkpoint_sha256": "c1735e5f112b7f10ff4dacf00b2ac547728cea82a08d5b051e5b78cca84a9999"
+  },
+  "expert_bc": {
+    "admitted": false,
+    "reason": "legacy3844D_visual_observations_not_preaction371D;canonical24D_matches",
+    "requires_recollection": true
+  },
+  "qualification": {
+    "native_grasp": false,
+    "formal_training": false,
+    "expert_pool": false,
+    "student_training": false
+  }
+}

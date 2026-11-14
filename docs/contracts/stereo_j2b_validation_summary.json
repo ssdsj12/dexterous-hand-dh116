@@ -1,0 +1,384 @@
+{
+  "version": "dh116-stereo-j2b-validation-v1",
+  "date_utc": "2026-11-11",
+  "base_local_commit": "a5a15fb779ee39e0d637f53cb931fe335ea394e5",
+  "fetched_origin_commit": "692e09d2473502574d0870dfaffff38b6c0a544c",
+  "implemented": true,
+  "CPU_verified": true,
+  "analytic_gate_passed_for_listed_cases": true,
+  "added_pytest_cases": 134,
+  "windows_full": {
+    "passed": 885,
+    "skipped": 1,
+    "duration_s": 149.97,
+    "exit_code": 0
+  },
+  "server_full": {
+    "passed": 886,
+    "skipped": 1,
+    "duration_s": 140.38,
+    "exit_code": 0
+  },
+  "new_test_evidence": {
+    "first_combined": 110,
+    "subsequent_precision_cases": 24,
+    "all_cases_included_in_final_full_suites": true,
+    "overlapping_counts_do_not_add": true
+  },
+  "numerical": {
+    "processed_metrics_sha256": "5251f32b8471c8c8bef30c6f0ef1ef001ce67e9b24458d7b4409898a54486f87",
+    "source_snapshot_hashes_verified": true,
+    "source_stable_during_run": true,
+    "qualification_gate_passed": true,
+    "case_count": 48,
+    "methods": {
+      "blockmatch": {
+        "qualification": {
+          "observable_case_count": 4,
+          "observable_cases_qualified": true,
+          "affine_brightness_case_count": 0,
+          "affine_brightness_cases_qualified": null,
+          "all_requested_observable_cases_qualified": true,
+          "negative_cases_passed": null,
+          "numerical_qualification": "qualified_for_listed_CPU_continuous_cases_only"
+        },
+        "standard_coverage": [
+          1.0,
+          1.0,
+          0.7371428571428571,
+          1.0
+        ],
+        "standard_disparity_p95_abs_error_px": [
+          0.08819739520549774,
+          0.13577358424663544,
+          0.06190318614244461,
+          0.13252846896648407
+        ],
+        "minimum_standard_coverage": 0.7371428571428571,
+        "minimum_standard_correct_fraction_fixed_support": 0.7371428571428571,
+        "maximum_standard_disparity_p95_px": 0.13577358424663544,
+        "maximum_standard_depth_z_mae_m": 0.014648967422544956,
+        "maximum_standard_depth_z_rmse_m": 0.015340914949774742,
+        "maximum_standard_depth_z_p95_m": 0.022739099338650703,
+        "affine_case_count": 0,
+        "minimum_affine_coverage": null,
+        "maximum_affine_disparity_p95_px": null
+      },
+      "reliable_sad": {
+        "qualification": {
+          "observable_case_count": 4,
+          "observable_cases_qualified": true,
+          "affine_brightness_case_count": 0,
+          "affine_brightness_cases_qualified": null,
+          "all_requested_observable_cases_qualified": true,
+          "negative_cases_passed": null,
+          "numerical_qualification": "qualified_for_listed_CPU_continuous_cases_only"
+        },
+        "standard_coverage": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "standard_disparity_p95_abs_error_px": [
+          0.02500009536743164,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "minimum_standard_coverage": 1.0,
+        "minimum_standard_correct_fraction_fixed_support": 1.0,
+        "maximum_standard_disparity_p95_px": 0.02500009536743164,
+        "maximum_standard_depth_z_mae_m": 0.004279361106455326,
+        "maximum_standard_depth_z_rmse_m": 0.004280341323465109,
+        "maximum_standard_depth_z_p95_m": 0.004282355308532715,
+        "affine_case_count": 0,
+        "minimum_affine_coverage": null,
+        "maximum_affine_disparity_p95_px": null
+      },
+      "census": {
+        "qualification": {
+          "observable_case_count": 4,
+          "observable_cases_qualified": true,
+          "affine_brightness_case_count": 4,
+          "affine_brightness_cases_qualified": true,
+          "all_requested_observable_cases_qualified": true,
+          "negative_cases_passed": true,
+          "numerical_qualification": "qualified_for_listed_CPU_continuous_cases_only"
+        },
+        "standard_coverage": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "standard_disparity_p95_abs_error_px": [
+          0.02500009536743164,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "minimum_standard_coverage": 1.0,
+        "minimum_standard_correct_fraction_fixed_support": 0.9992857142857143,
+        "maximum_standard_disparity_p95_px": 0.02500009536743164,
+        "maximum_standard_depth_z_mae_m": 0.004320081323385239,
+        "maximum_standard_depth_z_rmse_m": 0.004377193283289671,
+        "maximum_standard_depth_z_p95_m": 0.004282355308532715,
+        "affine_case_count": 4,
+        "minimum_affine_coverage": 1.0,
+        "maximum_affine_disparity_p95_px": 0.02500009536743164
+      },
+      "zncc": {
+        "qualification": {
+          "observable_case_count": 4,
+          "observable_cases_qualified": true,
+          "affine_brightness_case_count": 4,
+          "affine_brightness_cases_qualified": true,
+          "all_requested_observable_cases_qualified": true,
+          "negative_cases_passed": true,
+          "numerical_qualification": "qualified_for_listed_CPU_continuous_cases_only"
+        },
+        "standard_coverage": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "standard_disparity_p95_abs_error_px": [
+          0.02500009536743164,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "minimum_standard_coverage": 1.0,
+        "minimum_standard_correct_fraction_fixed_support": 1.0,
+        "maximum_standard_disparity_p95_px": 0.02500009536743164,
+        "maximum_standard_depth_z_mae_m": 0.0042823548428714275,
+        "maximum_standard_depth_z_rmse_m": 0.004282355774194002,
+        "maximum_standard_depth_z_p95_m": 0.004282355308532715,
+        "affine_case_count": 4,
+        "minimum_affine_coverage": 1.0,
+        "maximum_affine_disparity_p95_px": 0.02500009536743164
+      },
+      "gradient": {
+        "qualification": {
+          "observable_case_count": 4,
+          "observable_cases_qualified": true,
+          "affine_brightness_case_count": 0,
+          "affine_brightness_cases_qualified": null,
+          "all_requested_observable_cases_qualified": true,
+          "negative_cases_passed": true,
+          "numerical_qualification": "qualified_for_listed_CPU_continuous_cases_only"
+        },
+        "standard_coverage": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "standard_disparity_p95_abs_error_px": [
+          0.02500009536743164,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "minimum_standard_coverage": 1.0,
+        "minimum_standard_correct_fraction_fixed_support": 1.0,
+        "maximum_standard_disparity_p95_px": 0.02500009536743164,
+        "maximum_standard_depth_z_mae_m": 0.0042823548428714275,
+        "maximum_standard_depth_z_rmse_m": 0.004282355774194002,
+        "maximum_standard_depth_z_p95_m": 0.004282355308532715,
+        "affine_case_count": 0,
+        "minimum_affine_coverage": null,
+        "maximum_affine_disparity_p95_px": null
+      },
+      "coarse_to_fine": {
+        "qualification": {
+          "observable_case_count": 4,
+          "observable_cases_qualified": true,
+          "affine_brightness_case_count": 0,
+          "affine_brightness_cases_qualified": null,
+          "all_requested_observable_cases_qualified": true,
+          "negative_cases_passed": true,
+          "numerical_qualification": "qualified_for_listed_CPU_continuous_cases_only"
+        },
+        "standard_coverage": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "standard_disparity_p95_abs_error_px": [
+          0.02500009536743164,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "minimum_standard_coverage": 1.0,
+        "minimum_standard_correct_fraction_fixed_support": 1.0,
+        "maximum_standard_disparity_p95_px": 0.02500009536743164,
+        "maximum_standard_depth_z_mae_m": 0.0042823548428714275,
+        "maximum_standard_depth_z_rmse_m": 0.004282355774194002,
+        "maximum_standard_depth_z_p95_m": 0.004282355308532715,
+        "affine_case_count": 0,
+        "minimum_affine_coverage": null,
+        "maximum_affine_disparity_p95_px": null
+      }
+    }
+  },
+  "test_append_provenance": {
+    "version": "dh116-stereo-j2b-qualification-test-append-v1",
+    "metrics_sha256": "5251f32b8471c8c8bef30c6f0ef1ef001ce67e9b24458d7b4409898a54486f87",
+    "metrics_historical_test_sha256": "8e6db6ec6b821cb1d321c7c6b5ad1b6467a6a081bc500baa5177889fe73b2f0a",
+    "current_test_sha256": "b5626d7bdbb107aa0dd80cfc5eb611c69fce0776db070d79982108313f29b6ec",
+    "production_source_sha256": {
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_bc.py": "4ffe8738fd358ee3758e536ab93026c368e618176315db2ed0f4b9a9a5d0abc8",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_calibration.py": "e0db2dfb0e0a9737e0821b015de96888a32377d0ac0c80ad927c01b6511d2664",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_camera.py": "10bd3a95725bc30d100a9f8eafac4938b0b0477e78454753d94ebd36edb7ef1c",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_camera_cli.py": "ca80080cea0a5c8070632d4ac5c0d1f4fb7da11dd6564505b63f9920f2a7ee21",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_checkpoint.py": "f5fbfe5830512cb23fd7bc739cbca899b477ec9173567c8b6fe6201d77b66099",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_contract.py": "57075ff8d59853e0262037b15141ab93e9c6ce2aa2302a421b9d09083e92f680",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_dagger.py": "485a7ef3cd523e0b748819e9cf1e1d8386ec1ef368dc28cff677da6aa813153a",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_dagger_dataset.py": "9522e76b252ea999e32bffdd9ba6bd05c09c5c1e467b49b8ab4b77a5cc7d9e60",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_dagger_trainer.py": "5074e9d1269eb32159aa0042cebb44ffbf14adee712f91be9d0ff32046e19f9a",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_depth.py": "b2755bbbf4f32c413ae95b9e6243a6912b0bf590d37cb3e9961ab2ed40801bb0",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_encoder.py": "37d6da0274902fa0763c230642f7c22f8eaac7547ad9d78fc1ff1d5aa91fdc3e",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_error_cli.py": "1ffa68ea5bcdfbe58bc33d79bfe5c91f73c0b3e03e0b6221b29133a46ee1418f",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_error_diagnostics.py": "ddbc76e54ff1b49d0e650cb0279e13d55dcb4a9166212885e1d667b66ec9ce1d",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_error_geometry.py": "7e4aaea565acfa022487b3ca20482dd29fdb0f4ea1d778b8f59e29f3aebadfdd",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_evaluation.py": "e5e273b5a56383446f6e8f92d8fe35c1574d8bb7ba17c0f36a0d36730f7ffcb5",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_framing.py": "884487259d8f69f215431d7899d457dfb18e505bfc8f903336a5217acc673550",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_geometry.py": "9e11e116bd507ab32ba2dac5bc16963e6e3a2d6659dab020cad420b6592f3599",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_inference.py": "42bcb0ec9983f8addfe4c0158e73674264c93a653b5831251acf5ee83ed70688",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_losses.py": "2d390c7f61f87ea27e1aca26a637b86128f38e671c4e037c46b7c9e9e230af26",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_matcher_candidates.py": "845471a6c56d5f3c7ab658f91f1f091fdefe1b9e7e7785fb3ea9797e2175ebb6",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py": "1d6f76689047cc4071d556d14207fae95adbfe61f1d1e3be4e543f9788270daa",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_native.py": "238c0e23a47c9518ea51aa383fab5a6a2b6b2a82a3cebc5d5e16304df163728c",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_observation.py": "169062c10a622ddc851bf7360e9c6df0b1917c26ca9fd76b82ed85582a17fa08",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_perception.py": "0b7f08446a94adc89867c69dc5a1ae4b3570a73ab9198051935a340244d2ef25",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_preprocessing.py": "765677315a692f23d7f67e54dca02cb3ebd3385dd0583d08921e62b0544620a9",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_promotion.py": "89d449bf5526c0637592b9580af0175a063601d5bbca1dce9f24ffa3e5ffeb16",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py": "5a4fbd176fcfb83e2d20abe62f157216878226913bb26720fdf4be6868548f8d",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_reference.py": "f2d3760333acf6165b46688635f9e570d00ea9c88ef71f4e41625d3a1119b787",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_resolution.py": "dc77aeb3f391d7a4bc95c41e8ad5b9ad58016ed4ec892653c42717e16832555d",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_resolution_benchmark.py": "64eec7f94b7160335d990ca992f0063010245c3c89886db20d9ba89ff2b8930e",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_rig_experiments.py": "a2b579241b3d36aa7dc4f5fdb04854d6702b89c4337774a1016d191551a0e7a2",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_runtime.py": "53bd9c9fb40cfcedfb48313ac07f04490809357f2f685f4640575e81ec919965",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_state_estimator.py": "9b02a18f8a34196a8c7108f273de7cc24f83cacc3a11497eaf62930ff907709b",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_student_cli.py": "6206cb121999066a5a7ddf1cc86a8f6a3ab11efede445c44418ef7f725d83eff",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_student_ppo.py": "475d49fa8f96b0fa64ecbb0fbd8b33a377ec1164bf2d29d9ce2df1ef90d17dca",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_supervision_dataset.py": "f516288a7c42f6112be7c8a13c407ab22cf93dc97bcdd873486ff34dd14645af",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_teacher_collector.py": "08c7473d902d4e96767e48454e0d1d0d5c4e7a9476fb0bfb92ef28f3d01f8542",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_temporal.py": "32829d4df8ba56f959223048274fcf72f32ce390d6072e4c6111fc2d208454a2",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_training_cli.py": "1e716af5bb5ac3044294f74b3ad6c6f16bd5e558b573cbdaee5d1849e6e1f32b",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_training_lineage.py": "d00fd4381e4b9166be8b55208bc59b5f4c055214b56dc8d9bc5891310b6aa9a1",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_validation.py": "8243aefe3d5b5ecc6b0a2505810d2cccfa075b114f67d5eacaffb87ae4b641b4"
+    },
+    "production_sources_unchanged_since_stable_metrics_verified": true,
+    "metrics_execution_not_relabelled_as_new_test_execution": true,
+    "qualification_command": "python -m pytest -q -p no:cacheprovider tests/test_dh116_stereo_j2b_analytic.py -k numerical_qualification",
+    "qualification_result": "24 passed, 33 deselected",
+    "qualification_log_sha256": "5127227032f62e066e367df8314fa76e1e1c32d252e700e6527c34b661e883f9",
+    "thresholds": {
+      "fixed_reference_pixels": 2800,
+      "minimum_coverage": 0.7,
+      "maximum_p95_disparity_error_px": 0.2,
+      "minimum_correct_fraction_fixed_support": 0.65,
+      "maximum_p95_depth_z_error_m": 0.04
+    },
+    "native_accuracy_qualified": false
+  },
+  "source_config_test_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_stereo_depth.py": "b2755bbbf4f32c413ae95b9e6243a6912b0bf590d37cb3e9961ab2ed40801bb0",
+    "src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py": "1d6f76689047cc4071d556d14207fae95adbfe61f1d1e3be4e543f9788270daa",
+    "src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py": "5a4fbd176fcfb83e2d20abe62f157216878226913bb26720fdf4be6868548f8d",
+    "src/go2_pvcnn/control/dh116/tabletop_stereo_preprocessing.py": "765677315a692f23d7f67e54dca02cb3ebd3385dd0583d08921e62b0544620a9",
+    "src/go2_pvcnn/control/dh116/tabletop_stereo_error_cli.py": "1ffa68ea5bcdfbe58bc33d79bfe5c91f73c0b3e03e0b6221b29133a46ee1418f",
+    "tests/test_dh116_stereo_j2b_analytic.py": "b5626d7bdbb107aa0dd80cfc5eb611c69fce0776db070d79982108313f29b6ec",
+    "tests/test_dh116_stereo_j2b_costs.py": "14ede00e13008a8f0b04418d75ed62fe6ad1f935fcd0029d18ce104453bd2eaf",
+    "tests/test_dh116_stereo_j2b_integration.py": "b0e129e39e54e22d42c306ac2c5988244a1811324f9a42712f9fe4fe6a6aa571",
+    "tests/test_dh116_stereo_j2b_pyramid.py": "24a3035482b723b5d9fc993971496b559042026d7eb3546e3ea9f074aee67b76",
+    "configs/dh116_training/stereo_matcher_census_j2b_v1.json": "649f5d6638a5e9564260f1b0bf47fdd7453794a380452de8b4a810b22af6a62f",
+    "configs/dh116_training/stereo_matcher_coarse_to_fine_j2b_v1.json": "acd305daa2264cdb19f9924389cbcd0b6d91b14b8e70bccfb282d5779ae67a13",
+    "configs/dh116_training/stereo_matcher_gradient_j2b_v1.json": "365a8d737065327494da63478b9e44cdc36bec668d0abeb09a7655d423f7c65a",
+    "configs/dh116_training/stereo_matcher_zncc_j2b_v1.json": "b9da96a182b6d5b44b52ed0d52789f15adf0c7cba55d94b018187b4d857e88a2"
+  },
+  "algorithm_identities": {
+    "census": {
+      "config_path": "configs/dh116_training/stereo_matcher_census_j2b_v1.json",
+      "config_sha256": "649f5d6638a5e9564260f1b0bf47fdd7453794a380452de8b4a810b22af6a62f",
+      "implementation_sha256": {
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_depth.py": "b2755bbbf4f32c413ae95b9e6243a6912b0bf590d37cb3e9961ab2ed40801bb0",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py": "1d6f76689047cc4071d556d14207fae95adbfe61f1d1e3be4e543f9788270daa",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py": "5a4fbd176fcfb83e2d20abe62f157216878226913bb26720fdf4be6868548f8d",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_preprocessing.py": "765677315a692f23d7f67e54dca02cb3ebd3385dd0583d08921e62b0544620a9",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_error_cli.py": "1ffa68ea5bcdfbe58bc33d79bfe5c91f73c0b3e03e0b6221b29133a46ee1418f"
+      },
+      "enabled_by_default": false,
+      "native_qualified": false
+    },
+    "coarse_to_fine": {
+      "config_path": "configs/dh116_training/stereo_matcher_coarse_to_fine_j2b_v1.json",
+      "config_sha256": "acd305daa2264cdb19f9924389cbcd0b6d91b14b8e70bccfb282d5779ae67a13",
+      "implementation_sha256": {
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_depth.py": "b2755bbbf4f32c413ae95b9e6243a6912b0bf590d37cb3e9961ab2ed40801bb0",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py": "1d6f76689047cc4071d556d14207fae95adbfe61f1d1e3be4e543f9788270daa",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py": "5a4fbd176fcfb83e2d20abe62f157216878226913bb26720fdf4be6868548f8d",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_preprocessing.py": "765677315a692f23d7f67e54dca02cb3ebd3385dd0583d08921e62b0544620a9",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_error_cli.py": "1ffa68ea5bcdfbe58bc33d79bfe5c91f73c0b3e03e0b6221b29133a46ee1418f"
+      },
+      "enabled_by_default": false,
+      "native_qualified": false
+    },
+    "gradient": {
+      "config_path": "configs/dh116_training/stereo_matcher_gradient_j2b_v1.json",
+      "config_sha256": "365a8d737065327494da63478b9e44cdc36bec668d0abeb09a7655d423f7c65a",
+      "implementation_sha256": {
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_depth.py": "b2755bbbf4f32c413ae95b9e6243a6912b0bf590d37cb3e9961ab2ed40801bb0",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py": "1d6f76689047cc4071d556d14207fae95adbfe61f1d1e3be4e543f9788270daa",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py": "5a4fbd176fcfb83e2d20abe62f157216878226913bb26720fdf4be6868548f8d",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_preprocessing.py": "765677315a692f23d7f67e54dca02cb3ebd3385dd0583d08921e62b0544620a9",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_error_cli.py": "1ffa68ea5bcdfbe58bc33d79bfe5c91f73c0b3e03e0b6221b29133a46ee1418f"
+      },
+      "enabled_by_default": false,
+      "native_qualified": false
+    },
+    "zncc": {
+      "config_path": "configs/dh116_training/stereo_matcher_zncc_j2b_v1.json",
+      "config_sha256": "b9da96a182b6d5b44b52ed0d52789f15adf0c7cba55d94b018187b4d857e88a2",
+      "implementation_sha256": {
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_depth.py": "b2755bbbf4f32c413ae95b9e6243a6912b0bf590d37cb3e9961ab2ed40801bb0",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_matching_costs.py": "1d6f76689047cc4071d556d14207fae95adbfe61f1d1e3be4e543f9788270daa",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_pyramid.py": "5a4fbd176fcfb83e2d20abe62f157216878226913bb26720fdf4be6868548f8d",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_preprocessing.py": "765677315a692f23d7f67e54dca02cb3ebd3385dd0583d08921e62b0544620a9",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_error_cli.py": "1ffa68ea5bcdfbe58bc33d79bfe5c91f73c0b3e03e0b6221b29133a46ee1418f"
+      },
+      "enabled_by_default": false,
+      "native_qualified": false
+    }
+  },
+  "protection": {
+    "original_unchanged": 528,
+    "server_executed_source_exact": 1131
+  },
+  "server_archive_sha256": "fbeb46368991fb4e9bb2f2e7f23d10e0d081fba0d2ed8a7d4880f3b5d7210a4e",
+  "native_capture_count": 0,
+  "native_accuracy_qualified": false,
+  "physical_qualified": false,
+  "deployment_qualified": false,
+  "training_started": false,
+  "pushed": false,
+  "merged": false,
+  "GPU_memory_bytes": null,
+  "full_sensor_actor_latency_ms": null,
+  "training_throughput": null,
+  "limitations": [
+    "CPU continuous planes only;not actual wire/occlusion/generalization qualification",
+    "Census has rare bad tail despite P95 and explicit integer fallback",
+    "single-tone repetition guard does not exclude arbitrary periodic patterns",
+    "pyramid uses full-range audit at each finer level;no search-speedup claim",
+    "J2-F common-support native-saved-data comparison not yet performed",
+    "original 10 native accuracy failures remain;selected_resolution remains null"
+  ],
+  "report": "docs/superpowers/reports/2026-11-11-stereo-j2b-matching-candidates.md"
+}

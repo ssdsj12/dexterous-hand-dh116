@@ -1,0 +1,28 @@
+{
+  "version": "dh116-pinch-effective-target-cpu-v1",
+  "mode": "cpu_only",
+  "translation_scales_m": [
+    0.002,
+    0.002,
+    0.002
+  ],
+  "reset_rotation_scales_rad": [
+    0.03,
+    0.03,
+    0.03
+  ],
+  "joint_scales_rad": [
+    0.04,
+    0.04,
+    0.04
+  ],
+  "table_clearance_m": 0.0021,
+  "native_required_gap_m": -0.0003,
+  "reserve_m": 0.00001,
+  "contact_target_gap_m": -0.0001,
+  "ellipse_planning_max": 0.64,
+  "maximum_evaluations_per_side": 600,
+  "maximum_seconds_per_side": 60,
+  "native_execution": false,
+  "teacher_admission": false
+}

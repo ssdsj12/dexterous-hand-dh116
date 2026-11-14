@@ -1,0 +1,158 @@
+{
+  "version": "dh116-stereo-optical-v1",
+  "width": 640,
+  "height": 480,
+  "baseline_m": 0.08,
+  "K_left": [
+    [
+      417.0321193091858,
+      0.0,
+      320.0
+    ],
+    [
+      0.0,
+      417.0321193091858,
+      240.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "K_right": [
+    [
+      417.0321193091858,
+      0.0,
+      320.0
+    ],
+    [
+      0.0,
+      417.0321193091858,
+      240.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_left": [
+    [
+      0.7071067811865475,
+      0.3810684897571042,
+      -0.5956398291872697,
+      0.42
+    ],
+    [
+      0.7071067811865475,
+      -0.3810684897571042,
+      0.5956398291872697,
+      -0.42
+    ],
+    [
+      -0.0,
+      -0.8423619247262304,
+      -0.5389122264075297,
+      0.78
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_right": [
+    [
+      0.7071067811865475,
+      0.3810684897571042,
+      -0.5956398291872697,
+      0.47656854249492375
+    ],
+    [
+      0.7071067811865475,
+      -0.3810684897571042,
+      0.5956398291872697,
+      -0.3634314575050762
+    ],
+    [
+      -0.0,
+      -0.8423619247262304,
+      -0.5389122264075297,
+      0.78
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "distortion_left": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "distortion_right": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "rectified": true,
+  "enabled_by_default": false,
+  "rgb_layout": "BCHW_float_0_1_RGB",
+  "optical_axes": "X_right_Y_down_Z_forward",
+  "horizontal_fov_degrees": 75.0,
+  "intended_distance_m": [
+    0.5,
+    0.8
+  ],
+  "depth_range_m": [
+    0.2,
+    1.2
+  ],
+  "disparity_range_px": [
+    8,
+    192
+  ],
+  "baseline_rationale": "Unchanged 80mm physical optical rig; square pixels fx=fy=417.032119309px at 75deg horizontal FOV; 0.2..1.2m disparities 166.813..27.802px. Native accuracy and memory remain unmeasured.",
+  "native_qualification": "pending; native_runs=0; synthetic_checks_do_not_establish_camera_accuracy",
+  "profile_version": "dh116-stereo-camera-resolution-v2",
+  "profile_name": "640x480_native_rerender",
+  "default_accuracy_profile": true,
+  "resolution_mode": "native_camera_rerender_not_image_resize",
+  "source_rig_calibration_sha256": "0d96cdb45d30a4ed36f5d2f0a8d263a296d33122a3fda2f67536b8f0025f538f",
+  "calibration_sha256": "02db3dc0eaaaf19149229510044d171d7bfb79849270a2b679fb64f0f79e69aa",
+  "depth_estimator": {
+    "method": "blockmatch",
+    "min_disparity": 8,
+    "max_disparity": 192,
+    "block_size": 5,
+    "min_depth_m": 0.2,
+    "max_depth_m": 1.2,
+    "lr_tolerance_px": 1.0,
+    "texture_threshold": 0.001,
+    "uniqueness_threshold": 0.05,
+    "rectify": false,
+    "subpixel": true,
+    "image_processing_batch_size": 1
+  },
+  "resource_limits": {
+    "max_width": 2048,
+    "max_height": 1536,
+    "max_readback_bytes": 1073741824,
+    "allow_resource_override": false
+  },
+  "disparity_budget": {
+    "near_disparity_px": 166.81284772367434,
+    "far_disparity_px": 27.802141287279056,
+    "suggested_min_disparity": 19,
+    "suggested_max_disparity": 176
+  },
+  "matcher_resource_policy": "stream_one_disparity_plane;image_processing_batch_size bounds image intermediates;never_hidden_downsample"
+}

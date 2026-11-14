@@ -1,0 +1,16 @@
+{
+  "version": "dh116-flexible-r0-applicability-diagnostic-v2",
+  "scope": "offline_diagnostic_only",
+  "enabled_by_default": false,
+  "native_qualification": false,
+  "training_reward_enabled": false,
+  "coefficient_source": "explicit_diagnostic_only",
+  "reset_approach": "same_reset_endpoint_measured_distance_or_unknown",
+  "slip_applicability": "known_pre_bilateral_contact_only_then_episode_latched",
+  "missing_raw_policy": "keep_null_invalid_even_when_contribution_inapplicable",
+  "success": {
+    "net_lift_m": 0.03,
+    "hold_s": 5,
+    "max_slip_m": 0.0005
+  }
+}

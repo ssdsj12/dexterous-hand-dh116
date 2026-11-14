@@ -1,0 +1,135 @@
+{
+  "version": "dh116-stereo-phase0-source-freeze-v1",
+  "base_commit": "6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b",
+  "instruction_sha256": "a09551b72c4540c3fb88f308461a2b0176cc5c625cbc974c8a138b765f90a2e6",
+  "instruction_lines": 930,
+  "critical_files": [
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_tensor_task.py",
+      "sha256": "b8e73877eef14c47c7440560bc4333e68349d46d8b0a579202937b3e0ddbda8e",
+      "bytes": 55249,
+      "lines": 815
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_tensor_env.py",
+      "sha256": "93ece5a2abc6adb7c1e90a230c0283cc5c93880ddbbaded3451661ef6e6ca645",
+      "bytes": 38197,
+      "lines": 601
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_surface_contract.py",
+      "sha256": "f1a28e5dca4e44a49d16244d92c2c849023f8030943cbec62853dcaeebabdb00",
+      "bytes": 7312,
+      "lines": 128
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_surface_reward_ablation.py",
+      "sha256": "c781d2baa36e7c532d7cc84c22de2c7eee2b174409ab928ce5e3dc6e812665d8",
+      "bytes": 13707,
+      "lines": 257
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_surface_teacher.py",
+      "sha256": "f6118398eadead611e9bfbf6aa205dbb109d8f14a283d356d06b7a58413a6ce4",
+      "bytes": 14895,
+      "lines": 233
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_surface_teacher_control.py",
+      "sha256": "fccf448d16b8c80758a1db17a450a0f1e5d525a06057037370e8e902b27acc04",
+      "bytes": 13555,
+      "lines": 210
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_vision_camera.py",
+      "sha256": "233a9a786f1ed5732c1bc22071bd1da73008f771c01f2dcc8492a564d001a68c",
+      "bytes": 24280,
+      "lines": 405
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_vision_student.py",
+      "sha256": "0628aea85346afb64a46ff9bff73d65f04e78a61cc46687534d044765513149d",
+      "bytes": 8074,
+      "lines": 161
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_vision_training.py",
+      "sha256": "ad55400f13720357999ead99eabbcad3f2f10debf6d5fae3f9e7586b7bf624a0",
+      "bytes": 39856,
+      "lines": 610
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_vision_supervision_dataset.py",
+      "sha256": "2f804e05fb237426b2b09a9b8051f8257a62e8a8e3f4e1ec28332b6f4229e8ee",
+      "bytes": 28065,
+      "lines": 484
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_vision_sequence_dataset.py",
+      "sha256": "86d60344dc9ec5c248d8e63124d2a000eed6d5c5bbd72ab180bc5643ba47cd1b",
+      "bytes": 19956,
+      "lines": 333
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_vision_sequence_losses.py",
+      "sha256": "1dfa99d558ebbde257296744b6ca31d4e50b3ba522c6debf8185a352d3d34253",
+      "bytes": 4929,
+      "lines": 78
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_vision_supervised_bc.py",
+      "sha256": "f5036d8b1693b8d58822a1016dea454518356e29060e847753f086b39980b727",
+      "bytes": 56751,
+      "lines": 906
+    },
+    {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_surface_dagger.py",
+      "sha256": "5758f10bf0bfd17eecadff59bf8e305f1b0c7d462e7d55e5f14c70581a918d14",
+      "bytes": 7266,
+      "lines": 134
+    },
+    {
+      "path": "docs/dh116_vision_student.md",
+      "sha256": "de20ea2e7bed227a50ae63565acadb23ecadbe9d317a34de572e735724e908ee",
+      "bytes": 11771,
+      "lines": 76
+    },
+    {
+      "path": "docs/superpowers/reports/2026-11-09-stage7-teacher-student-divergence.md",
+      "sha256": "f49687a38b25426a4d4e3991a11a2a0b0fb656059243d00fc95d558461fe9f5a",
+      "bytes": 58263,
+      "lines": 419
+    },
+    {
+      "path": "docs/superpowers/reports/2026-11-10-stage7-mpc-state-measurement.md",
+      "sha256": "e5d954fd70c82b12408bbe235a506f3d487815d01fbc7d9376899fa3a28e9fc1",
+      "bytes": 13188,
+      "lines": 114
+    },
+    {
+      "path": "docs/superpowers/reports/2026-11-10-stage7-mpc-contact-source-audit.md",
+      "sha256": "06de9f2151e64e7315e994d5f3eacf0078fdd40553ae632386bf7342de2a6afa",
+      "bytes": 16384,
+      "lines": 232
+    },
+    {
+      "path": "docs/superpowers/reports/2026-11-10-stage7-mpc-objective-arithmetic.md",
+      "sha256": "f41e8d37750bf915e0e35089f8220ba5e60868389b769591211b09d5256d3fa3",
+      "bytes": 4295,
+      "lines": 47
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-31-surface-teacher-student-ppo-mpc-design.md",
+      "sha256": "2dac24b9d464012de7db599a693900b6b332ac4960b2b2acf054d7e5157fd813",
+      "bytes": 3131,
+      "lines": 25
+    },
+    {
+      "path": "docs/superpowers/plans/2026-11-06-visual-teacher-mpc-supervision.md",
+      "sha256": "a5f8bfa5cb061f572adb473a7d2400c46351c392e7cf6179a1646ba68debba29",
+      "bytes": 2882,
+      "lines": 43
+    }
+  ],
+  "native_validation_performed": false
+}

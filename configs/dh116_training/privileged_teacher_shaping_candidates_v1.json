@@ -1,0 +1,31 @@
+{
+  "version": "dh116-privileged-shaping-v1",
+  "enabled": false,
+  "explicit_opt_in_required": true,
+  "pad_distance_scale_m": 0.02,
+  "coordination_scale_m": 0.02,
+  "arc_scale_m": 0.02,
+  "coefficients": {
+    "geometry_pad_distance": 1.0,
+    "geometry_coordination": 0.5,
+    "geometry_arc_position": 0.5,
+    "geometry_contact_area": 0.25,
+    "hand_support_balance": -0.25,
+    "opposing_pad_balance": -0.25,
+    "contact_recovery": 0.5,
+    "normal_overload": -0.1,
+    "tangential_overload": -0.1,
+    "force_target_delta": -0.05
+  },
+  "coefficient_status": "candidate_arithmetic_only;not_native_tuned_or_qualified",
+  "native_measurement_factory": "pending",
+  "native_qualified": false,
+  "default_runtime_profile": "teacher_r0_existing",
+  "success_definition": "unchanged_native_contract",
+  "force_layout": "actual_independent_per_digit_Nx2x5;no_whole_hand_broadcast",
+  "hand_support_balance_target": "explicit_geometry_derived_fraction_Nx2;sum1;missing_is_NA;no_50_50_default",
+  "expected_share_candidate_model": "quasistatic_vertical_point_support_lever_arms;actual_World_grasp_COM_gravity;applicability_requires_qualification",
+  "rate_terms": ["hand_support_balance", "opposing_pad_balance", "normal_overload", "tangential_overload"],
+  "potential_difference_terms": ["geometry_pad_distance", "geometry_coordination", "geometry_arc_position", "geometry_contact_area", "contact_recovery"],
+  "executed_delta_terms": ["force_target_delta"]
+}

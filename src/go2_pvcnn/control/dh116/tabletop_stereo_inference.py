@@ -1,0 +1,199 @@
+"""Standalone RGB-pair -> stereo depth -> sensor history -> Student action.
+
+No Teacher, critic, task, simulator state or rendered depth is accepted. Robot
+drivers remain responsible for validated encoder/FK input and the unchanged
+24D controller/safety contract; this module does not issue hardware commands.
+"""
+import argparse
+from copy import deepcopy
+import hashlib
+import io
+import json
+import math
+from pathlib import Path
+
+import torch
+
+from .tabletop_stereo_calibration import StereoCalibration
+from .tabletop_stereo_checkpoint import (
+    DEPLOYMENT_VERSION, _validate_actor_contract, _validate_state, tensor_state_sha256,
+)
+from .tabletop_stereo_depth import StereoDepth
+from .tabletop_stereo_observation import SensorBatch, StereoHistory
+from .tabletop_stereo_perception import WirePointExtractor, TrackedWirePointExtractor
+from .tabletop_stereo_geometry import world_to_palms
+from .tabletop_stereo_contract import ROOT, file_sha256, require_opt_in, require_sha, write_json_new
+from .tabletop_stereo_preprocessing import require_raw_processing
+from .tabletop_stereo_student_ppo import make_stereo_actor
+from .tabletop_stereo_wire_segmentation import configured_segmentation_depth
+
+
+RAW_FIELDS = {'left_rgb', 'right_rgb', 'proprio', 'left_timestamp_s', 'right_timestamp_s',
+              'frame_id', 'now_timestamp_s'}
+
+
+def _tensor_snapshot(path, *, expected_sha256=None, label):
+    data = Path(path).read_bytes()
+    sha = hashlib.sha256(data).hexdigest()
+    if expected_sha256 is not None and sha != require_sha(expected_sha256, label + ' SHA'):
+        raise ValueError(label + ' SHA mismatch')
+    return torch.load(io.BytesIO(data), map_location='cpu', weights_only=True), sha
+
+
+def _load_standalone_actor(path, calibration, *, expected_sha256=None):
+    """Use the unchanged v1 contract and validate the same bytes used by inference."""
+    payload, sha = _tensor_snapshot(path, expected_sha256=expected_sha256, label='Actor package')
+    if not isinstance(payload, dict) or payload.get('version') != DEPLOYMENT_VERSION:
+        raise ValueError('independent stereo deployment version required; legacy visual3844 forbidden')
+    allowed = {'version', 'actor', 'actor_sha256', 'actor_contract', 'network_config',
+               'calibration_sha256', 'preprocessor'}
+    if set(payload) != allowed:
+        raise ValueError('actor-only package must contain no critic/Teacher/optimizer/env')
+    contract, network = payload['actor_contract'], payload['network_config']
+    if payload['calibration_sha256'] != calibration:
+        raise ValueError('deployment calibration SHA mismatch')
+    _validate_actor_contract(contract, network, calibration)
+    if payload['preprocessor'] != contract['preprocessor']:
+        raise ValueError('preprocessor contract mismatch')
+    if payload['actor_sha256'] != tensor_state_sha256(payload['actor']):
+        raise ValueError('actor tensor SHA mismatch')
+    with torch.random.fork_rng(devices=[]):
+        actor = make_stereo_actor(network)
+    _validate_state(payload['actor'], actor)
+    actor.load_state_dict(payload['actor'], strict=True)
+    actor.deployment_contract = deepcopy(contract)
+    actor.network_config = deepcopy(network)
+    actor.calibration_sha256 = calibration
+    actor.deployment_package_artifact = dict(path=str(Path(path).resolve()), sha256=sha)
+    return actor.eval()
+
+
+class StereoRGBStudentRunner:
+    def __init__(self, actor_package, camera_config, *, num_envs=1, device='cpu', max_image_age_s=1/60,
+                 expected_actor_package_sha256=None):
+        data = Path(camera_config).read_bytes()
+        config = json.loads(data.decode('utf-8'))
+        self.calibration = StereoCalibration.from_dict(config)
+        self.actor = _load_standalone_actor(actor_package, self.calibration.sha256,
+            expected_sha256=expected_actor_package_sha256).to(device)
+        self.processing = require_raw_processing(self.actor.deployment_contract, config)
+        self.camera_config_sha256 = hashlib.sha256(data).hexdigest()
+        self.depth = configured_segmentation_depth(StereoDepth.from_config(config), config, device)
+        self.history = StereoHistory(num_envs, self.actor.network_config['history'], device=device)
+        self.extractor = (WirePointExtractor() if self.processing['perception']['algorithm']=='warm_colour_visible_simple_path_ZhangSuen_v1'
+            else TrackedWirePointExtractor(point_sampling=self.processing['perception']['point_sampling'],
+                ribbon_radius_px=self.processing['perception']['ribbon_radius_px'],
+                observed_surface_capacity=self.processing['perception']['observed_surface_capacity']))
+        self.num_envs, self.device = num_envs, torch.device(device)
+        if type(max_image_age_s) not in (int, float) or not math.isfinite(max_image_age_s) or max_image_age_s <= 0:
+            raise ValueError('positive image freshness limit required')
+        self.max_image_age_s = float(max_image_age_s)
+        self._frame, self._timestamp = -1, None
+        self.last_visible_geometry = None
+        self.package_sha256 = self.actor.deployment_package_artifact['sha256']
+
+    def _clear_temporal_state(self):
+        self.history.reset(torch.ones(self.num_envs,device=self.device,dtype=torch.bool))
+        self.extractor=(TrackedWirePointExtractor(point_sampling=self.extractor.point_sampling,
+                        ribbon_radius_px=self.extractor.ribbon_radius_px,observed_surface_capacity=self.extractor.observed_surface_capacity)
+                        if isinstance(self.extractor, TrackedWirePointExtractor) else type(self.extractor)())
+        self.last_visible_geometry=None
+
+    @torch.no_grad()
+    def step(self, left_rgb, right_rgb, proprio, *, left_timestamp_s, right_timestamp_s,
+             frame_id, now_timestamp_s, reset_mask=None):
+        if (type(frame_id) is not int or frame_id <= self._frame
+                or any(type(v) not in (int, float) or not math.isfinite(v) for v in
+                    (left_timestamp_s, right_timestamp_s, now_timestamp_s))):
+            self._clear_temporal_state()
+            raise ValueError('fresh frame ID and finite camera timestamps required')
+        if abs(left_timestamp_s-right_timestamp_s) > 1e-9:
+            self._clear_temporal_state()
+            raise ValueError('left/right RGB must represent the same physical time')
+        age = now_timestamp_s-left_timestamp_s
+        if age < 0 or age > self.max_image_age_s:
+            self._clear_temporal_state()
+            raise ValueError('stale/future RGB pair; no truth fallback or silent timing change')
+        dt = 1/60 if self._timestamp is None else left_timestamp_s-self._timestamp
+        if dt <= 0:
+            self._clear_temporal_state()
+            raise ValueError('camera simulation/physical timestamp must increase')
+        def rgb(value):
+            if not isinstance(value, torch.Tensor) or value.dtype not in (torch.float32, torch.uint8):
+                raise ValueError('RGB must be declared CHW uint8 RGB or float32 RGB; no BGR guessing')
+            return value.to(self.device).float()/255. if value.dtype == torch.uint8 else value.to(self.device)
+        left, right = rgb(left_rgb), rgb(right_rgb)
+        p = proprio.to(self.device)
+        if len(left) != self.num_envs:
+            raise ValueError('configured batch size mismatch')
+        if reset_mask is None:
+            reset_mask = torch.zeros(self.num_envs, device=self.device, dtype=torch.bool)
+        else:
+            reset_mask = reset_mask.to(self.device)
+        depth = self.depth.compute(left, right, self.calibration)
+        extraction_kwargs=dict(reset_mask=reset_mask)
+        if isinstance(self.extractor,TrackedWirePointExtractor):
+            extraction_kwargs.update(timestamp=left_timestamp_s,point_confidence=depth['confidence'],wire_mask=depth.get('wire_mask'))
+        points = self.extractor.extract(left, depth['depth_m'], depth['valid'],
+            self.calibration.K_left, self.calibration.T_world_left, **extraction_kwargs)
+        if 'timestamp_anomaly' in points: reset_mask=reset_mask|points['timestamp_anomaly']
+        sensor = SensorBatch(left_rgb=left, right_rgb=right, depth_m=depth['depth_m'],
+            depth_valid=depth['valid'], depth_confidence=depth['confidence'],
+            points_world=points['points_world'], point_valid=points['point_valid'], proprio=p,
+            point_confidence=points.get('confidence',points['point_valid'].float()),
+            point_provenance=points.get('point_provenance'),
+            dt=torch.full((self.num_envs,), dt, device=self.device, dtype=torch.float32),
+            image_age=torch.full((self.num_envs,), age, device=self.device, dtype=torch.float32),
+            image_valid=torch.ones(self.num_envs, 2, device=self.device, dtype=torch.bool))
+        history = self.history.update(sensor, reset_mask=reset_mask)
+        actions = self.actor.deterministic(history)
+        if actions.shape != (self.num_envs, 24) or not torch.isfinite(actions).all() or (actions.abs() > 1).any():
+            raise RuntimeError('Actor violated canonical normalized 24D action bounds')
+        # Same measured local geometry is available to the optional palms Actor.
+        self.last_visible_geometry = dict(points_world_m=points['points_world'].detach().clone(),
+            points_palms_m=world_to_palms(points['points_world'], p[:,24:38].reshape(self.num_envs,2,7)).detach().clone(),
+            point_valid=points['point_valid'].detach().clone(), frame_id=frame_id,
+            simulation_timestamp=float(left_timestamp_s),
+            source='RGB_stereo_and_current_measured_palm_FK', calibration_sha256=self.calibration.sha256)
+        self.last_visible_geometry['wire_tracking']={key:(value.detach().clone() if isinstance(value,torch.Tensor) else value)
+            for key,value in points.items() if key not in ('points_world','point_valid','xyz','valid')}
+        self._frame, self._timestamp = frame_id, float(left_timestamp_s)
+        return dict(actions24=actions.detach().clone(), frame_id=frame_id,
+            simulation_timestamp=float(left_timestamp_s), image_age_s=float(age),
+            depth_valid_fraction=depth['valid'].float().flatten(1).mean(1),
+            visible_wire_point_count=points['point_valid'].sum(1),
+            actor_package_sha256=self.package_sha256, calibration_sha256=self.calibration.sha256,
+            camera_config_sha256=self.camera_config_sha256,
+            inference_source_sha256=file_sha256(__file__),
+            processing_sha256=self.processing['processing_sha256'],
+            action_owner='student', teacher_executed=False, mpc_executed=False, critic_executed=False,
+            simulator_input_used=False,
+            depth_source='computed_from_synchronized_left_right_RGB', native_task_qualified=False)
+
+    def from_mapping(self, raw, *, reset_mask=None):
+        if not isinstance(raw, dict) or set(raw) != RAW_FIELDS:
+            raise ValueError('only RGB pair, measured proprioception and timing are accepted; privileged fields forbidden')
+        return self.step(**raw, reset_mask=reset_mask)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--actor-package', type=Path, required=True)
+    parser.add_argument('--actor-package-sha256')
+    parser.add_argument('--rgb-frame', type=Path, required=True)
+    parser.add_argument('--camera-config', type=Path, default=ROOT / 'configs/dh116_training/stereo_camera_640x480_v2.json')
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--device', default='cpu')
+    parser.add_argument('--enable-experiment', action='store_true')
+    args = parser.parse_args(argv)
+    require_opt_in(args.enable_experiment)
+    raw = torch.load(args.rgb_frame, map_location='cpu', weights_only=True)
+    if not isinstance(raw, dict) or set(raw) != RAW_FIELDS:
+        raise ValueError('versioned raw RGB/proprio frame required; depth/privileged tensors are not accepted')
+    runner = StereoRGBStudentRunner(args.actor_package, args.camera_config,
+        num_envs=len(raw['left_rgb']), device=args.device,
+        expected_actor_package_sha256=args.actor_package_sha256)
+    result = runner.from_mapping(raw)
+    result = {k: v.detach().cpu().tolist() if isinstance(v, torch.Tensor) else v for k, v in result.items()}
+    write_json_new(args.output, result)
+    return 0
