@@ -20136,6 +20136,55 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_deformx_substep_pose.py",
+        "tests/test_substep_contact_audit.py",
+        "tests/test_live_effective_pad_source.py",
+        "tests/test_deformable_pad_region.py"
+      ],
+      "log_sha256": "e001db16d2a6480e2569c5da5fe6f4b0fe894a6554a347b3f6041cb75498386d",
+      "tested_head": "ab10328850afe91840218a9921d2dbab2fff93a4",
+      "qualification_scope": "locked_source_substep_reconstruction_and_historical_reset_audit_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "reset_mesh_pose_qualified": false,
+      "positive_effective_contact_qualified": false,
+      "negative_effective_contact_qualified": false,
+      "statistics_sha256": "4955ce70bc491fb0e9908dcdecae936a5a7196525c1b76ca537aec59a0732597",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-substep-contact-reset-audit.md",
+      "report_source_commit": "8f699b6b27877ad17db497365e691224bccbaeaa",
+      "package": "flex.f8-substep-contact-reset-audit-cpu",
+      "commit": "68323f1754041538e52f0813db950b88c3008af3",
+      "parent": "ab10328850afe91840218a9921d2dbab2fff93a4",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-substep-contact-reset-audit.md",
+        "scripts/audit_dh116_substep_contact_frames.py",
+        "src/go2_pvcnn/control/dh116/tabletop_deformx_substep_pose.py",
+        "tests/test_deformx_substep_pose.py",
+        "tests/test_substep_contact_audit.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
