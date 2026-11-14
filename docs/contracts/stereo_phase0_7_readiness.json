@@ -15250,6 +15250,39 @@
       },
       "status": "passed",
       "report": "docs/superpowers/reports/dh116-managed-flex.f7-fast-r0-reset-native.md"
+    },
+    "flex.f7-complete-pair-r0-cpu": {
+      "passed": 72,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_complete_pair_capture.py",
+        "tests/test_live_effective_pad_source.py",
+        "tests/test_live_effective_pad_epoch.py",
+        "tests/test_live_effective_pad_accounting.py",
+        "tests/test_complete_pair_live_owner.py",
+        "tests/test_complete_pair_native_worker.py",
+        "tests/test_complete_pair_native_audit.py",
+        "tests/test_dh116_deformx_pair_capture.py"
+      ],
+      "log_sha256": "e60a4388381e8085c5d6320a115913773bc99d73fe0b82d3ee5de0f7e541ccad",
+      "tested_head": "8b96ec7ac2e5602c5b2aa970cb5061bef507b121",
+      "kind": "complete_atomic_contact_live_negative_source_and_native_preparation",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "native_qualification": false,
+      "experiment_code_config_sha256": "fc37cc7022bff89791f139f473cba270d5d12cb3ae42943b9b6dfecfb53e6560",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-complete-pair-live-r0.md",
+      "report_source_commit": "74138372b2ab329869e2e1fdbe914af5721f5b23"
     }
   }
 }

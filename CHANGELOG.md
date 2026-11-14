@@ -1,3 +1,7 @@
+## 2026-11-14 — 完整原子接触包与在线负接触R0源
+
+保留原始capacity/attempted/overflow及原子聚合，旧投影字段不变；在线原指腹判据仅提供已证实的负接触，正向承托仍未知。独立234步/180秒配方，不重跑已消耗原配方，不变更原物理/动作/R0。 Ubuntu CPU 回归 72 项通过。[报告](docs/superpowers/reports/2026-11-14-complete-pair-live-r0.md)
+
 ## 2026-11-14 — 快速编码真实Reset与原R0234步原生诊断
 
 原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-fast-r0-reset-native.md)。
