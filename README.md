@@ -1,3 +1,7 @@
+## 2026-11-14 — 左Pinch原生safe-z终止与失败前缀审计
+
+原生在176步原safe-z修正0.000809mm后触发实验精确路径检查；app.close已返回但外层exit1。保留174行物理前缀及终止几何unknown，不提升资格。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-projection-failure.md)
+
 ## 2026-11-14 — 左Pinch高位Approach单次234步原生接触诊断
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f8-left-pinch-approach-native.md)。
