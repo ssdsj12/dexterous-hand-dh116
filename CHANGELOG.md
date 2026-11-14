@@ -1,3 +1,7 @@
+## 2026-11-14 — Teacher真实后端输入与独立模型身份适配
+
+原模型拒绝真实2fea后端已复现；新增独立CPU输入版本，Pinch/Tripod真实首态66有效+305NA、rod41x13，24D输出与旧PPO保持；Power缺实际来源仍拒绝。92回归通过、1个旧optimizer fixture明确deselected；0真实训练/原生。Mesh Reset、正式R0与collector资格仍未通过。 Ubuntu CPU 回归 92 项通过。[报告](docs/superpowers/reports/2026-11-14-actual-backend-measured-teacher.md)
+
 ## 2026-11-14 — WireSeg depth20已审计子集独立物化与断点读取
 
 已审计depth20/train09共360对、713实例独立物化，全量读取和原位续作通过；元数据同份bytes校验解析。旧cohort/模型只读不改，训练更新0，不授予Stereo或模型精度资格。首次集成测试收集因入口缺既有工具目录的pyarrow失败（0测试），日志保留；补充现有tools PYTHONPATH后复验，不安装依赖。 Ubuntu CPU 回归 51 项通过。[报告](docs/superpowers/reports/2026-11-14-wireseg-depth20-materialization.md)

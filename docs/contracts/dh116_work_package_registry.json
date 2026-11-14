@@ -33724,6 +33724,86 @@
         "report": "docs/superpowers/reports/2026-11-14-wireseg-depth20-materialization.md",
         "report_source_commit": "b90464592a3ac52d892c33db83f05f4820b354c4"
       }
+    },
+    "flex.f7-actual-backend-measured-teacher-cpu": {
+      "title": "Teacher真实后端输入与独立模型身份适配",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-measured-common-teacher-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 92,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_actual_backend_teacher.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_flexible_measured_common_teacher.py",
+          "tests/test_dh116_teacher_mounted_wrist_source.py",
+          "tests/test_dh116_flexible_rod_boundary.py",
+          "tests/test_dh116_native_parameter_endpoints.py"
+        ],
+        "log_sha256": "f2e09b4290422b74d040324ecc3304d7e5a24ecfba5e8e6eaee2d4fd849d24a1",
+        "tested_head": "06b11c3c95ff1c2937eb41e861b6fbffed944e32",
+        "qualification_scope": "actual_backend_owned_input_cpu_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "reset_mesh_pose_qualified": false,
+        "training_reward_qualified": false,
+        "actual_input_proof_sha256": "fe1cb66bf043c6a42e8dbaaf18c43e888b9f1463bc41ee052975683eeb8ca213",
+        "pytest_addopts": "-k \"not original_ppo_update\"",
+        "deselected": 1,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-actual-backend-measured-teacher.md",
+        "report_source_commit": "5eb9692549f5cd7db7dd22b7e53135085a02479b"
+      },
+      "last_result": {
+        "passed": 92,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_actual_backend_teacher.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_flexible_measured_common_teacher.py",
+          "tests/test_dh116_teacher_mounted_wrist_source.py",
+          "tests/test_dh116_flexible_rod_boundary.py",
+          "tests/test_dh116_native_parameter_endpoints.py"
+        ],
+        "log_sha256": "f2e09b4290422b74d040324ecc3304d7e5a24ecfba5e8e6eaee2d4fd849d24a1",
+        "tested_head": "06b11c3c95ff1c2937eb41e861b6fbffed944e32",
+        "qualification_scope": "actual_backend_owned_input_cpu_only",
+        "native_qualification": false,
+        "native_execution_performed": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "reset_mesh_pose_qualified": false,
+        "training_reward_qualified": false,
+        "actual_input_proof_sha256": "fe1cb66bf043c6a42e8dbaaf18c43e888b9f1463bc41ee052975683eeb8ca213",
+        "pytest_addopts": "-k \"not original_ppo_update\"",
+        "deselected": 1,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-actual-backend-measured-teacher.md",
+        "report_source_commit": "5eb9692549f5cd7db7dd22b7e53135085a02479b"
+      }
     }
   },
   "execution_target": {
