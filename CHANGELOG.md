@@ -1,3 +1,7 @@
+## 2026-11-14 — 快速编码真实Reset与原R0234步原生诊断
+
+原生，状态 `passed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-fast-r0-reset-native.md)。
+
 ## 2026-11-14 — 原R0独立快速编码有界原生配方
 
 新旧完整CPU回归122项通过。独立入口保持234步/180秒/GPU3/1env/0PPO及原物理动作；编码恢复证据与原R0同钟审计，旧超时配方保留，不扩大预算。 Ubuntu CPU 回归 97 项通过。[报告](docs/superpowers/reports/2026-11-14-fast-r0-native-preparation.md)
