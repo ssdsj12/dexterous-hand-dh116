@@ -1,3 +1,7 @@
+## 2026-11-14 — 真实R0原生超时证据与CPU编码热点
+
+真实原生234步、232个R0样本、29次结算且自然exit0，但187.245秒超过180秒，原生资格继续失败。CPU同账本剖析发现递归encode_owned热点，累计27.78秒含剖析开销；未修改保护、物理或训练准入，不重跑已耗配方。 Ubuntu CPU 回归 5 项通过。[报告](docs/superpowers/reports/2026-11-14-live-r0-native-budget-profile.md)
+
 ## 2026-11-14 — 真实耦合Reset与原R0同进程234步原生诊断
 
 原生，状态 `failed`。详细结果见[报告](docs/superpowers/reports/dh116-managed-flex.f7-live-r0-reset-native.md)。

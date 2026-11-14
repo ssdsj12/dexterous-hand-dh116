@@ -14918,7 +14918,36 @@
         "tested_head": "0786429f52af87f378a4c59b212a90e2373921b5"
       },
       "status": "failed",
-      "report": "docs/superpowers/reports/dh116-managed-flex.f7-live-r0-reset-native.md"
+      "report": "docs/superpowers/reports/dh116-managed-flex.f7-live-r0-reset-native.md",
+      "reason": "本次actual Reset/R0234步、29窗口已完成，natural exit0，无信号；187.245秒超180秒，原生预算失败。只读复核不晋级；CPU热点为递归数值编码。此配方已耗，不自动重跑。"
+    },
+    "flex.f7-live-r0-budget-profile-cpu": {
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_live_r0_profile_scope.py"
+      ],
+      "log_sha256": "625cd9db075f0d063982baf4c6b8144844ffe79aa412f50047a80fc4dcddb921",
+      "tested_head": "2f4a8c9c264b40b263977264815fff9e4fa0cfe2",
+      "kind": "read_only_failed_native_cpu_profile",
+      "source_native_receipt_sha256": "e92282a2a01596b551342ac56cd046f4f5a0c289eda51cf76578b8712e4d89d1",
+      "profile_result_sha256": "fcde4f916872b978adbd6a46ae4a37c173331808fed0a650c35cf9ac0af6d33d",
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "native_qualified": false,
+      "teacher_admission": false,
+      "whole_native_recipe_qualified": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-live-r0-native-budget-profile.md",
+      "report_source_commit": "b5c8b7bebcd5721ead646bdbe11ce10796066a5c"
     }
   }
 }
