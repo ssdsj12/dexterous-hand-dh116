@@ -1,3 +1,7 @@
+## 2026-11-14 — 原子接触配方保护资产路径分类修复
+
+原生启动前被release_path拒绝，尚未消耗预算；配方源码清单只包含既有可发布源码与新增实现，原资产输入锁、物理预算和父回执完全不变。40项CPU通过。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-14-complete-pair-recipe-scope.md)
+
 ## 2026-11-14 — 完整原子接触包与在线负接触R0源
 
 保留原始capacity/attempted/overflow及原子聚合，旧投影字段不变；在线原指腹判据仅提供已证实的负接触，正向承托仍未知。独立234步/180秒配方，不重跑已消耗原配方，不变更原物理/动作/R0。 Ubuntu CPU 回归 72 项通过。[报告](docs/superpowers/reports/2026-11-14-complete-pair-live-r0.md)

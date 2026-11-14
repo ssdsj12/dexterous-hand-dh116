@@ -15283,6 +15283,37 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-complete-pair-live-r0.md",
       "report_source_commit": "74138372b2ab329869e2e1fdbe914af5721f5b23"
+    },
+    "flex.f7-complete-pair-recipe-scope-cpu": {
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_complete_pair_recipe_scope.py",
+        "tests/test_complete_pair_native_worker.py",
+        "tests/test_complete_pair_native_audit.py",
+        "tests/test_fast_r0_native_worker.py",
+        "tests/test_live_r0_native_worker.py"
+      ],
+      "log_sha256": "552fac611f4e51c8a8555f47182d0b297cb64dc23669ee248e701958b97c4e66",
+      "tested_head": "3401b3477033178c3f234a226ab7de926a801805",
+      "kind": "prelaunch_recipe_scope_correction",
+      "native_execution_performed": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "experiment_code_config_sha256": "fc37cc7022bff89791f139f473cba270d5d12cb3ae42943b9b6dfecfb53e6560",
+      "recipe_sha256": "1bdb1e4adc9d29d2ec3a1b34875ab5a7a84ee79358225e7ff0e033e34f867f60",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-complete-pair-recipe-scope.md",
+      "report_source_commit": "d6c7623957806eec68eac1772d4488ecc421eb83"
     }
   }
 }

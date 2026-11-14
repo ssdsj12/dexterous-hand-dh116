@@ -172,9 +172,6 @@
     "/usr/bin/gdb": "a6222ff0f450ca040e3479c04fdb7d0f1e0cabb099688270e720b7115d933c3d"
   },
   "source_files": [
-    "assets/fixed_dual_panda_dh116_v1/dependencies/3046ad2ed855_DH116_right.usd",
-    "assets/fixed_dual_panda_dh116_v1/dependencies/d134680ab619_DH116_left.usd",
-    "assets/fixed_dual_panda_dh116_v1/manifest.json",
     "configs/dh116_execution/deformx_dual_pinch_zero_interval_v1.json",
     "configs/dh116_execution/deformx_dual_pinch_zero_interval_v2.json",
     "configs/dh116_execution/deformx_dual_pinch_zero_interval_v3.json",
@@ -356,6 +353,7 @@
     "tests/test_complete_pair_live_owner.py",
     "tests/test_complete_pair_native_audit.py",
     "tests/test_complete_pair_native_worker.py",
+    "tests/test_complete_pair_recipe_scope.py",
     "tests/test_deformable_grasp_runtime.py",
     "tests/test_dh116_contact_material.py",
     "tests/test_dh116_dual_pinch_closure_interval.py",

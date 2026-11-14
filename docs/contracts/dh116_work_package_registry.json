@@ -28092,7 +28092,8 @@
       "dependencies": [
         "flex.f7-complete-pair-r0-cpu",
         "flex.f7-native-parameter-task-native",
-        "flex.f7-fast-r0-reset-native"
+        "flex.f7-fast-r0-reset-native",
+        "flex.f7-complete-pair-recipe-scope-cpu"
       ],
       "dependency_scopes": {
         "flex.f7-native-parameter-task-native": {
@@ -28117,7 +28118,77 @@
         "tests/test_complete_pair_native_audit.py"
       ],
       "scheduler_entrypoint": "scripts/run_dh116_complete_pair_work_packages.py",
-      "reason": "新完整接触包路径冻结后经Windows发布；按用户站立授权绑定实际指纹，只运行一次234步/180秒，原消费预算不复用。"
+      "reason": "前次仅配方路径验证失败，未启动无预算消耗；分类修复后Windows发布，再绑定新实际scheduler指纹一次运行。"
+    },
+    "flex.f7-complete-pair-recipe-scope-cpu": {
+      "title": "原子接触配方保护资产路径分类修复",
+      "executor": "gated",
+      "dependencies": [
+        "flex.f7-complete-pair-r0-cpu"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 40,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_complete_pair_recipe_scope.py",
+          "tests/test_complete_pair_native_worker.py",
+          "tests/test_complete_pair_native_audit.py",
+          "tests/test_fast_r0_native_worker.py",
+          "tests/test_live_r0_native_worker.py"
+        ],
+        "log_sha256": "552fac611f4e51c8a8555f47182d0b297cb64dc23669ee248e701958b97c4e66",
+        "tested_head": "3401b3477033178c3f234a226ab7de926a801805",
+        "kind": "prelaunch_recipe_scope_correction",
+        "native_execution_performed": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "experiment_code_config_sha256": "fc37cc7022bff89791f139f473cba270d5d12cb3ae42943b9b6dfecfb53e6560",
+        "recipe_sha256": "1bdb1e4adc9d29d2ec3a1b34875ab5a7a84ee79358225e7ff0e033e34f867f60",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-complete-pair-recipe-scope.md",
+        "report_source_commit": "d6c7623957806eec68eac1772d4488ecc421eb83"
+      },
+      "last_result": {
+        "passed": 40,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_complete_pair_recipe_scope.py",
+          "tests/test_complete_pair_native_worker.py",
+          "tests/test_complete_pair_native_audit.py",
+          "tests/test_fast_r0_native_worker.py",
+          "tests/test_live_r0_native_worker.py"
+        ],
+        "log_sha256": "552fac611f4e51c8a8555f47182d0b297cb64dc23669ee248e701958b97c4e66",
+        "tested_head": "3401b3477033178c3f234a226ab7de926a801805",
+        "kind": "prelaunch_recipe_scope_correction",
+        "native_execution_performed": false,
+        "new_physics_steps": 0,
+        "ppo_updates": 0,
+        "teacher_admission": false,
+        "experiment_code_config_sha256": "fc37cc7022bff89791f139f473cba270d5d12cb3ae42943b9b6dfecfb53e6560",
+        "recipe_sha256": "1bdb1e4adc9d29d2ec3a1b34875ab5a7a84ee79358225e7ff0e033e34f867f60",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-14-complete-pair-recipe-scope.md",
+        "report_source_commit": "d6c7623957806eec68eac1772d4488ecc421eb83"
+      }
     }
   },
   "execution_target": {
