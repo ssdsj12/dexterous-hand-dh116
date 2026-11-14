@@ -20292,6 +20292,58 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_deformx_mesh_observations_preparation.py",
+        "tests/test_dh116_deformx_parameter_getters.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_dh116_deformx_source_lock.py",
+        "tests/test_dh116_deformx_cuda_source.py"
+      ],
+      "log_sha256": "80b1b3a537a15898a980d7fb1179043f98bfb8879665c17e75ce9d5e0b668c37",
+      "tested_head": "f1f67e041142a4a37174557f3ff812445ffa477f",
+      "qualification_scope": "isolated_source_delta_cuda_compile_and_cpu_import_only",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "reset_mesh_pose_qualified": false,
+      "contact_qualified": false,
+      "build_verified": true,
+      "import_only_verified": true,
+      "solver_executed": false,
+      "backend_sha256": "8817010163946945495c987923d11f3ade4fbd52482a83bbdd48f017d3149340",
+      "build_result_sha256": "e04d1f55493bbb1dd21309cc1e25232980866146ca42fe9811e57e7171fd4038",
+      "import_result_sha256": "7fcee5aecaa1fdd9d6faa42f3c88cffbe9e5520ef8df9568110d03f266ce6bdd",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-deformx-mesh-observations-build.md",
+      "report_source_commit": "c255a2642c5bdd0c93a84cbde794bbc6844ec4d4",
+      "package": "flex.f8-mesh-observations-build-cpu",
+      "commit": "c9e8a703fa3651d064fc906a521323936bd6e4ad",
+      "parent": "f1f67e041142a4a37174557f3ff812445ffa477f",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-14-deformx-mesh-observations-build.md",
+        "scripts/prepare_dh116_deformx_mesh_observations.py",
+        "tests/test_deformx_mesh_observations_preparation.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
