@@ -1,3 +1,7 @@
+## 2026-11-14 — Pinch同钟SDK投影、跟踪与实际杆几何分解
+
+原计划左食指仅临界通过，原安全投影及实测杆变形改变区域位置。区分请求、SDK与实际跟踪；24个同episode边界CPU几何分解，不作因果或抓取成功声明。 Ubuntu CPU 回归 15 项通过。[报告](docs/superpowers/reports/2026-11-14-projected-pinch-tracking-decomposition.md)
+
 ## 2026-11-14 — 原生Pinch逐指有效区域与安全投影证据核验
 
 只读核验234步原生回执：左食指428条raw/0条有效区域接触，右侧同时原区域接触47.9ms，双侧0。区分SDK目标投影和实际掌位；不计抓取/Teacher资格，本包新增原生0。 Ubuntu CPU 回归 21 项通过。[报告](docs/superpowers/reports/2026-11-14-projected-pinch-native-contact.md)
