@@ -1,3 +1,7 @@
+## 2026-11-14 — 原手腕安全投影实测输入留存与独立重算
+
+真实SDK175→176原投影重算误差0，左限制shape为finger13_link。新增只读来源与异常raw留存，默认动作/保护不变；新原生及PPO0。 Ubuntu CPU 回归 35 项通过。[报告](docs/superpowers/reports/2026-11-14-wrist-projection-source-evidence.md)
+
 ## 2026-11-14 — 左Pinch原生safe-z终止与失败前缀审计
 
 原生在176步原safe-z修正0.000809mm后触发实验精确路径检查；app.close已返回但外层exit1。保留174行物理前缀及终止几何unknown，不提升资格。 Ubuntu CPU 回归 30 项通过。[报告](docs/superpowers/reports/2026-11-14-left-pinch-projection-failure.md)

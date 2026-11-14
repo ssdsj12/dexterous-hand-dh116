@@ -17282,6 +17282,37 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-left-pinch-projection-failure.md",
       "report_source_commit": "bcace868592d0493986c50a97c15a96c638f66d2"
+    },
+    "flex.f8-owned-wrist-projection-evidence-cpu": {
+      "passed": 35,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_wrist_projection_evidence.py",
+        "tests/test_wrist_projection_evidence_owner.py",
+        "tests/test_dh116_flexible_wrist_projection.py",
+        "tests/test_left_pinch_preprojection.py"
+      ],
+      "log_sha256": "a5e052f6a28faaed57e4fa878427b3cc66fd4ed4a47a5cccdbbc6b42fcc7536c",
+      "tested_head": "79b4ebcff148501e51f245f33adce265b7f3e1b5",
+      "qualification_scope": "owned_projection_source_and_failed_native_cpu_replay_only",
+      "source_receipt_sha256": "25a75775ec43e03f6c722ae395df8584ac149e38c87e18ac77aba52f6d8d745d",
+      "result_sha256": "9bd10e284f623d2af1526eebf0f88e4772a7be0d8e51e8e4659f64f99990f610",
+      "native_qualification": false,
+      "native_execution_performed": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-wrist-projection-source-evidence.md",
+      "report_source_commit": "1b181482997dcb53b3152d511e55739765829abb"
     }
   }
 }
