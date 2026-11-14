@@ -1,3 +1,7 @@
+## 2026-11-14 — 原有效指腹负证据接入R0且保留缺失来源
+
+同一冻结原生232步/29控制窗只读回放；2129右手pair原区域全部拒绝，接触unknown84→0；既有NA滑移原值仍null，仅贡献不适用。R0剩hold/instability各232步缺失，Teacher仍blocked。新增严格receipt/采集源码/SDF/时钟/聚合核验；117项CPU通过，新增原生/PPO均0。 Ubuntu CPU 回归 117 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-pad-negative-r0.md)
+
 ## 2026-11-14 — 右手原生有效指腹失败的实测跟踪与杆位移分解
 
 新右手原生234步、154.725s、自然exit0、保护未触发；2129条hand pair全部超原有效指腹区域，抓取与Teacher资格仍不通过。冻结实际位姿/杆节点重算与solver点误差<0.000024mm，定位静态0.95余量未覆盖实测关节跟踪差及杆横移。新增严格身份/单位/SHA回放审计；不扩指腹、不重跑预算、不增加PPO。 Ubuntu CPU 回归 40 项通过。[报告](docs/superpowers/reports/2026-11-14-effective-right-native-tracking.md)

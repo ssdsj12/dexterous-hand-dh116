@@ -14613,6 +14613,47 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-14-effective-right-native-tracking.md",
       "report_source_commit": "7d199bbc28b284630b48a1e69113ebd4dbb302d4"
+    },
+    "flex.f7-effective-pad-negative-r0-cpu": {
+      "passed": 117,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_r0_effective_pad_negative_source.py",
+        "tests/test_effective_pad_r0_replay.py",
+        "tests/test_dh116_r0_applicability_history.py",
+        "tests/test_dh116_r0_reward_domain.py",
+        "tests/test_dh116_r0_reset_approach.py",
+        "tests/test_deformable_pad_region.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_deformable_r0_replay.py"
+      ],
+      "log_sha256": "6997d272e4beb0ccc451e4c41ab83d3223ef63bc0a8f204ee557717b818e21c2",
+      "tested_head": "176dac170ad457d625971470eec6adfffd964422",
+      "kind": "cpu_replay_frozen_native_effective_contact_negatives",
+      "result_sha256": "23fd16e8a6608893a4c192e366c93f298cd48e0c4b88ac4be67c132da48e1a09",
+      "progress_sha256": "c2af730e34a125b287c54815ece124de80dc9cbb78fd5c405e945c1a5346e814",
+      "receipt_sha256": "9525c46f257fb6d5d81f585f71b47c571dcff7a05019b583e3e93c7535ed0bd8",
+      "source_physical_rows": 232,
+      "source_controls": 29,
+      "raw_hand_pairs": 2129,
+      "legacy_unknown_contact_rows": 84,
+      "new_unknown_contact_rows": 0,
+      "training_reward_controls": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_physics_steps": 0,
+      "ppo_updates": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-14-effective-pad-negative-r0.md",
+      "report_source_commit": "674d42b9b4c3c52fd54f06955dfffb386fb5d013"
     }
   }
 }
