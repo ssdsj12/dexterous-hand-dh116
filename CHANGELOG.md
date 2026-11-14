@@ -1,3 +1,7 @@
+## 2026-11-14 — Tripod完整几何闭合搜索与失败证据
+
+完成有界闭合搜索及逐次失败保留。run04为589次CPU查询，最优仍违反拇指/非目标碰撞体规划约束；0新物理步，未生成原生配方，Tripod与Teacher仍blocked。 Ubuntu CPU 回归 68 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-full-geometry-closure.md)
+
 ## 2026-11-14 — Tripod条件跟踪域与完整几何覆盖证明
 
 X+0.05mm/Z+0.15mm候选928/928离线状态通过；3215查询、1608连续子域通过独立覆盖核验。终点3指SDF仍正间距，未接触/未原生/未Teacher；保留原保护及10um规划余量。 Ubuntu CPU 回归 58 项通过。[报告](docs/superpowers/reports/2026-11-14-tripod-conditional-tracking-envelope.md)
