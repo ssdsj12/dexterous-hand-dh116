@@ -1,3 +1,7 @@
+## 2026-11-14 — 同原生账本字节等价编码加速
+
+同不可变原生账本59948724编码字节与全流SHA一致，126项CPU回归；CPU剖析46.20降至27.66秒。初版无加速证据保留，尚不宣称原生墙钟通过，未开始PPO。 Ubuntu CPU 回归 126 项通过。[报告](docs/superpowers/reports/2026-11-14-fast-owned-codec.md)
+
 ## 2026-11-14 — 真实R0原生超时证据与CPU编码热点
 
 真实原生234步、232个R0样本、29次结算且自然exit0，但187.245秒超过180秒，原生资格继续失败。CPU同账本剖析发现递归encode_owned热点，累计27.78秒含剖析开销；未修改保护、物理或训练准入，不重跑已耗配方。 Ubuntu CPU 回归 5 项通过。[报告](docs/superpowers/reports/2026-11-14-live-r0-native-budget-profile.md)

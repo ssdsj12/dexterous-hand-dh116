@@ -69,9 +69,12 @@ def run(receipt,expected,output):
         radius_sample=dict(value=measured["value"],source="native_parameter_snapshot:"+_digest(measured)))
     start=time.monotonic();profile=cProfile.Profile();counts=Counter();blocked=Counter()
     encoded_bytes=0
+    encoded_stream=hashlib.sha256()
     def encode(value):
         nonlocal encoded_bytes
-        encoded_bytes+=len(json.dumps(encode_owned(value),allow_nan=False))
+        payload=json.dumps(encode_owned(value),allow_nan=False).encode()
+        encoded_bytes+=len(payload)
+        encoded_stream.update(payload+b"\n")
     profile.enable()
     try:
         for e in events:
@@ -96,7 +99,8 @@ def run(receipt,expected,output):
         top.append(dict(file=path,line=line,function=name,primitive_calls=cc,total_calls=nc,self_s=tt,cumulative_s=ct))
     # This is a profile replay, not a measurement of native per-function wall time.
     return dict(version=VERSION,status="complete",counts=dict(counts),elapsed_profiled_cpu_s=elapsed,
-        blocked_terms=dict(blocked),encoded_bytes=encoded_bytes,top_cumulative=top,
+        blocked_terms=dict(blocked),encoded_bytes=encoded_bytes,
+        encoded_stream_sha256=encoded_stream.hexdigest(),top_cumulative=top,
         source_receipt_sha256=expected,source_budget_passed=r["native_qualification"],
         native_duration_s=r["duration_seconds"],disk_io_profiled=False,
         profiler_overhead_present=True,causal_native_attribution_proven=False,
