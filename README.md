@@ -1,3 +1,7 @@
+## 2026-11-15 — 固定锚生命周期与公开回执历史隔离 v2
+
+独立v2只实现固定四锚/失接触NA/同锚重接触和owned回执，不改变旧物理、奖励或PPO。初次QUALITY发现公开回执可篡改内部锚历史，已按原反例修复并保留失败证据；完整同钟SourceAdapter/独立Evaluator及native仍待实现。 Ubuntu CPU 回归 527 项通过。[报告](docs/superpowers/reports/2026-11-15-fixed-anchor-slip-lifecycle-v2.md)
+
 ## 2026-11-15 — Actual Teacher Worker 实施计划
 
 C06 CPU合同正式通过后，明确 L01可信启动、L02真实来源/A更新、L03独立B恢复的执行接线和依赖。原生provider及A/B资格尚未完成；本包仅文档核验，无新原生预算。[计划](docs/superpowers/plans/2026-11-15-dh116-actual-native-provider-plan.md)

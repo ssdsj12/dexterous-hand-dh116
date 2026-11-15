@@ -38016,7 +38016,8 @@
       "title": "固定锚滑移生命周期与同钟真实来源",
       "executor": "prepared",
       "dependencies": [
-        "review.fixed-s0-v2-design"
+        "review.fixed-s0-v2-design",
+        "teacher.v2.slip-lifecycle-cpu"
       ],
       "status": "blocked",
       "reason": "独立source/reward/evaluator待实现；不得填零或重锚",
@@ -38352,6 +38353,53 @@
       "status": "blocked",
       "reason": "实际来源A读取及独立B执行器待实装；原生审批另计",
       "native_qualification": false
+    },
+    "teacher.v2.slip-lifecycle-cpu": {
+      "title": "固定锚生命周期与公开回执历史隔离 v2",
+      "executor": "gated",
+      "dependencies": [
+        "review.fixed-s0-v2-design"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 527,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_native_reward_sources_v2.py",
+          "tests/test_native_teacher_reward.py",
+          "tests/test_native_phase_contract_v2.py",
+          "tests/test_native_teacher_context_v2.py",
+          "tests/test_dh116_r0_reward_domain.py"
+        ],
+        "log_sha256": "c7b579b9eea12fdd253faf2e5263657eb1a382876b0ba5fe4b9baa76a3ea479b",
+        "tested_head": "7fac1b5613ec904ea59fd0df37a65b085424ce49",
+        "native_qualification": false,
+        "qualification_scope": "cpu_fixed_anchor_lifecycle_and_public_snapshot_ownership_only",
+        "new_native_steps": 0,
+        "new_native_updates": 0,
+        "full_source_adapter_implemented": false,
+        "reward_v2_implemented": false,
+        "evaluator_v2_implemented": false,
+        "native_ready": false,
+        "prior_failed_candidate": "2d65f419f2e0298b436b07b4f434f8939c52bea4",
+        "prior_quality_failure": "public receipt alias rewrote authoritative fixed anchor history",
+        "prior_quality_evidence_sha256": "f5f90d345fd715e790f0dee31f9ac478b78db00ea6424fd7192a396e75d6387b",
+        "spec_review": "PASS exactc59f080; root127 including sealed four original alias counterexamples",
+        "spec_log_sha256": "95d60999990aed04bd749e4d334541b7662c5fa0f79324e275109a51a0f5def9",
+        "quality_review": "PASS exactc59f080; sealed4 + independent7 probes/220 mutation subcases + related527",
+        "quality_evidence_sha256": "ae670b4aae8cfa997d604c0209c5415d744cfc5e099c2e322fbf5f59b8437d7f",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-15-fixed-anchor-slip-lifecycle-v2.md",
+        "report_source_commit": "c59f08041ceecbf1d3cfd5b49ae57c12a0d6d7a2"
+      }
     }
   },
   "execution_target": {
