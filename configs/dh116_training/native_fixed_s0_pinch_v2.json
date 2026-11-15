@@ -1,0 +1,35 @@
+{
+  "version": "dh116-native-fixed-s0-teacher-config-v2",
+  "task_kind": "deformable_rod",
+  "grasp": "pinch",
+  "task_config_sha256": "8b4f7f8d3fb96c12b9794a7c5daaa2b65f9231699348d5635044bd3f5ac75d63",
+  "checkpoint_namespace": "native_fixed_s0_teacher_pinch_cpu_v2",
+  "model": {
+    "common_size": 371,
+    "action_size": 24,
+    "hidden": [
+      256,
+      256
+    ],
+    "rod_feature_size": 13,
+    "rod_hidden": 64,
+    "initial_std": 0.1
+  },
+  "reward_profile": "flexible_r0",
+  "use_cameras": false,
+  "expert_initialization": "optional",
+  "native_ready": false,
+  "native_prerequisites": [
+    "resolved_fixed_s0_manifest",
+    "actual_same_owner_phase_source_witness_v2",
+    "qualified_fixed_s0_reset_v2",
+    "independent_v2_checkpoint_adapter",
+    "actual_worker_provider",
+    "approved_bounded_native_budget"
+  ],
+  "profile": "fixed_s0_pinch_v2",
+  "prelift_stable_s": 0.25,
+  "prelift_scale_s": 0.25,
+  "resolved_reset_manifest": null,
+  "checkpoint_adapter_ready": false
+}

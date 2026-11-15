@@ -1,3 +1,7 @@
+## 2026-11-15 — 独立 context51 六键 Teacher 模型 CPU 子包
+
+独立新模型保留原六键、common66/305未知、材料41×13、24D及Tanh/PPO，context51编码102维；修复跨batch非法pack。当前仅unresolved CPU子包：真实S0正绑定、生产SourceAdapter、checkpoint/session未通，整体门仍blocked；旧Student143尚未与新Teacher对齐。 Ubuntu CPU 回归 313 项通过。[报告](docs/reports/2026-11-15-dh116-fixed-s0-teacher-model-v2-task4.md)
+
 ## 2026-11-15 — 真实Worker组合身份、父进程租约交接和明确设备启动
 
 独立actual companion锁完整源码/设备/GDB及同一执行身份，SO_PEERCRED与实际inferior本人FLOCK、调度进程和一次性grant联核；保留旧v1/v2批准路径。原目录manifest阻断已另经用户批准仅恢复metadata并完成来源重验；L02真实provider和L03恢复仍未实现，未启动原生。 Ubuntu CPU 回归 322 项通过。[报告](docs/superpowers/reports/2026-11-15-dh116-actual-launch-l01.md)

@@ -20024,6 +20024,58 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-15-dh116-actual-launch-l01.md",
       "report_source_commit": "785fcd666a61bd3c1d7e19d6fb59cb79e0fc8ae2"
+    },
+    "teacher.v2.model51-cpu": {
+      "passed": 313,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_native_phase_contract_v2.py",
+        "tests/test_native_teacher_context_v2.py",
+        "tests/test_native_teacher_model_v2.py",
+        "tests/test_native_teacher_context.py",
+        "tests/test_native_teacher_model.py",
+        "tests/test_native_teacher_session.py"
+      ],
+      "log_sha256": "d38e43371bc639b628bd8b8d0e3a2341bc774802c572166334034128840ec866",
+      "tested_head": "6d90a7eb49b4dce0275fe4d81b82a9dd68fcb6f5",
+      "native_qualification": false,
+      "qualification_scope": "unresolved_model51_and_context51_cpu_topology_packing_only",
+      "new_native_steps": 0,
+      "new_native_updates": 0,
+      "numeric_value_slots": 650,
+      "slots_are_not_all_valid": true,
+      "actor_fusion_width": 448,
+      "actual_s0_identity_bound": false,
+      "checkpoint_adapter_ready": false,
+      "production_source_adapter": false,
+      "native_ready": false,
+      "student_contract_aligned": false,
+      "overall_phase_context_model_ready": false,
+      "prior_failed_candidate": "4894022e832098f879fa86825afef9e35c3448cf",
+      "prior_quality_failure": "context/common batch mismatch exported invalid six-key tensors or IndexError",
+      "prior_quality_report_sha256": "dda484b6341550f84016bb12667b311a4f414b348e4519de4605bde7276d49ca",
+      "spec_review": "PASS exact0147e53 CPU subset; root74+sealed42",
+      "spec_log_sha256": "8ba19edae2a93ecd7597704a1fcbf58821dfb321048e0010fc848e6e4a740ebc",
+      "quality_review": "PASS exact0147e53; sealed42+independent38+related313",
+      "quality_report_sha256": "4f60f3fabac9b51ad7915c819af389edd43a584d41e95dc69e446ce6eb1536c8",
+      "quality_regression_log_sha256": "b98361c35c203e38c5425977307f3b117ca5ed5247e948209d1085d9894411f1",
+      "remaining_code_tasks": [
+        "verified manifest to model identity and packet S0 consistency binding",
+        "production same-owner source snapshot/phase witness",
+        "v2 checkpoint/session/collector integration",
+        "binocular predicted state to exact same Teacher Actor field contract"
+      ],
+      "status": "passed",
+      "report": "docs/reports/2026-11-15-dh116-fixed-s0-teacher-model-v2-task4.md",
+      "report_source_commit": "0147e5377e2f307fccfda769c0cb1ce80905536f"
     }
   }
 }
