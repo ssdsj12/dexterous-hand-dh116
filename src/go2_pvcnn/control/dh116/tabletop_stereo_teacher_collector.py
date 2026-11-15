@@ -47,10 +47,12 @@ class PreActionState:
     def validate(self,*,max_image_age_s=1/60):
         if type(self.sensor_history) is not StereoHistoryBatch:raise TypeError('typed sensor history required')
         h=self.sensor_history.validate();n=len(h)
-        _tensor(self.privileged,(n,371),'privileged')
+        _tensor(self.privileged,(n,371),'privileged',finite=False)
         _tensor(self.privileged_valid,(n,371),'privileged_valid',boolean=True)
         if self.privileged.device!=h.proprio.device or self.privileged_valid.device!=h.proprio.device:
             raise ValueError('snapshot sensors and privileged labels must share a device')
+        if bool((self.privileged_valid & ~torch.isfinite(self.privileged)).any()):
+            raise ValueError('valid 371D labels must be finite')
         if not isinstance(self.identities,list) or len(self.identities)!=n:raise ValueError('one identity per environment required')
         seen=set()
         for i,row in enumerate(self.identities):

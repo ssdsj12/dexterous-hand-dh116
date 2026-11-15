@@ -75,8 +75,10 @@ def validate_rows(rows,*,contract,schema_only):
         for name in ('teacher_sample','student_nominal'):_row_action(row.get(name),name,False)
         privileged,valid=row.get('privileged'),row.get('privileged_valid')
         if (not isinstance(privileged,torch.Tensor) or privileged.shape!=(371,) or not privileged.is_floating_point()
-                or not bool(torch.isfinite(privileged).all()) or not isinstance(valid,torch.Tensor)
-                or valid.shape!=(371,) or valid.dtype!=torch.bool):raise ValueError('371D labels and explicit per-dimension validity required')
+                or not isinstance(valid,torch.Tensor) or valid.shape!=(371,) or valid.dtype!=torch.bool
+                or valid.device!=privileged.device):raise ValueError('371D labels and explicit per-dimension validity required')
+        # This is a label ledger, not the legacy full-finite Critic input.
+        if bool((valid & ~torch.isfinite(privileged)).any()):raise ValueError('valid 371D labels must be finite')
         if row.get('action_owner') not in ('teacher','student'):raise ValueError('whole-action owner required')
         expected=row['teacher_mean'] if row['action_owner']=='teacher' else row.get('student_nominal')
         if expected is None or not torch.equal(row['issued_actions'],expected):raise ValueError('issued action differs from declared complete owner')

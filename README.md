@@ -1,3 +1,7 @@
+## 2026-11-15 — R04 masked 371D 标签兼容与旧 Critic 隔离
+
+标签边界仅要求 valid 项有限，保留 305 项未知 NaN/false 与同设备 mask，组批不补零；旧全有限 371D Critic、来源与成功专家准入保持。R04-live 仍独立待实施，未启动 BC/DAgger 或原生实验。 Ubuntu CPU 回归 106 项通过。[报告](docs/superpowers/reports/2026-11-15-r04-masked-label-compatibility.md)
+
 ## 2026-11-15 — C03 独立 Teacher 奖励结算与来源隔离
 
 实现已批准的 smoke/full 候选奖励、逐物理步成本和一次性结算；非法身份、数值及可变证据导致隔离。旧配置、PPO、物理及成功阈值不变。仅 CPU 数学/状态机验收；真实测量 adapter、collector 及原生资格仍待 C04/C06。 Ubuntu CPU 回归 344 项通过。[报告](docs/superpowers/reports/2026-11-15-c03-training-reward-engine.md)
