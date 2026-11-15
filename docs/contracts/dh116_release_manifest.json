@@ -22310,6 +22310,58 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 106,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_masked_label_compatibility.py",
+        "tests/test_dh116_stereo_collection.py",
+        "tests/test_dh116_stereo_dagger.py",
+        "tests/test_dh116_stereo_student_cli.py",
+        "tests/test_dh116_stereo_canonical_field_losses.py"
+      ],
+      "log_sha256": "8cb9369a566e973ef7e01f284fc5d78878577c57b812d3bce337e125e50df470",
+      "tested_head": "535dcab9f71fd37364132893a3e6f118f174b488",
+      "qualification_scope": "cpu_label_ledger_compatibility_only",
+      "legacy_full371_critic_finite_guard": "unchanged_and_tested_reject_nan",
+      "unknown_labels_imputed": false,
+      "r04_live_binding": "pending_independent_design",
+      "native_ready": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_native_steps": 0,
+      "ppo_updates": 0,
+      "spec_review": "r04_mask_spec_pass_8d086f81",
+      "quality_review": "r04_mask_quality_pass_8d086f81",
+      "protected_source_count": 528,
+      "historical_checkpoint_count": 2,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-15-r04-masked-label-compatibility.md",
+      "report_source_commit": "8d086f81a510c31f59a6d8b80c78485fee24ebbf",
+      "package": "repair.r04-masked-label-ledger",
+      "commit": "e5f742de33bcd31f57b3ec9c9f2de8fe0c5358cd",
+      "parent": "535dcab9f71fd37364132893a3e6f118f174b488",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-15-r04-masked-label-compatibility.md",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_supervision_dataset.py",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_teacher_collector.py",
+        "tests/test_dh116_stereo_masked_label_compatibility.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
