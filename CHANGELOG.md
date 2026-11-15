@@ -1,3 +1,7 @@
+## 2026-11-15 — 执行链分包实施计划与新版 Teacher PPO 奖励规范
+
+完整读取用户PPO文档与20公式图；按明确确认采用独立66公共字段＋rod＋task_context及smoke/full双profile，保留371账本与历史模型。5份总/子计划和57个Python代码块语法自审通过；本包仍只文档，新增测试、模型、原生与训练尚未执行。 Ubuntu CPU 回归 53 项通过。[报告](docs/superpowers/reports/2026-11-15-execution-chain-implementation-plan.md)
+
 ## 2026-11-15 — Teacher、视觉和 Student 全链路审查及修正设计
 
 基线三端对齐，1913 个 tracked Python AST 解析与262项主链CPU回归通过；审查确认8项缺陷并区分未接通链路。用户已选择现有执行链分包修复；本提交仅审查与设计，书面规范待审阅，未修源码、未启动原生或训练。 Ubuntu CPU 回归 53 项通过。[报告](docs/superpowers/reports/2026-11-15-whole-chain-code-review.md)

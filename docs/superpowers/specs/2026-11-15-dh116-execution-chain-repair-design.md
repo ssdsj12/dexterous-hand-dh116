@@ -1,5 +1,7 @@
 # DH116 全执行链审查与分包修正设计
 
+2026-11-15补充：用户已批准采用后续PPO与奖励文档的新版本方案；Teacher输入、训练奖励与准入依赖以[原生Teacher修订](2026-11-15-dh116-native-teacher-ppo-reward-amendment.md)为准。以下原始已审设计作为版本记录保留，其余R01–R08约束继续有效。
+
 日期：2026-11-15（UTC）
 审查基线：`74e9404aa207be0311de7f963dbd6bb49499db5f`
 仓库：`ssdsj12/dexterous-hand-dh116`
