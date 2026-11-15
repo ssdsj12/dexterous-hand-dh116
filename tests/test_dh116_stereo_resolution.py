@@ -274,4 +274,6 @@ def test_vga_float32_sdk_lens_roundtrip_is_numeric_K_error_not_extrinsic_slack()
         c.validate_readback(actual,actual,c.T_world_left,bad_t)
 
 
-LEGACY_224_SHA='f5c53f5c9d3042ee0ce97453a3420dda3ecb7417469d7362be20604b0171d494'
+# Pin the original Git blob bytes from config creation commit
+# 4e964ff14b39eee7b2aef2d5cd51d61e0eb80d55; the former pin was incorrect.
+LEGACY_224_SHA='897e842d3133b0fe3e7040abe1255c3c213c6a146f95dd73d10f3389a9ad6ddc'

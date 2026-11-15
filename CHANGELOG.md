@@ -1,3 +1,7 @@
+## 2026-11-15 — R07：修正非中心USD相机主点投影
+
+用实际USD Camera与Gf投影复现并修正非中心主点符号，author/readback共用正确数学；四分辨率与左右独立内参、位姿/原点/槽排序均有CPU回归。另修正自创建时即错误的旧224配置静态SHA断言，原配置字节不动。CPU投影不授予新的相机原生精度资格。 Ubuntu CPU 回归 208 项通过。[报告](docs/superpowers/reports/2026-11-15-r07-usd-camera-projection.md)
+
 ## 2026-11-15 — R03：将Teacher专家张量绑定到实际原生来源
 
 统一专家入场在原metadata/native proof之后重放实际process source、371D状态、canonical24实际动作和物理时钟；CLI在启动原生或模型前核对专家路径/SHA。新增上层篡改回归的下层native gate为显式CPU double，源和raw join仍运行真实代码；不授予新的Teacher或原生资格。 Ubuntu CPU 回归 105 项通过。[报告](docs/superpowers/reports/2026-11-15-r03-teacher-source-binding.md)

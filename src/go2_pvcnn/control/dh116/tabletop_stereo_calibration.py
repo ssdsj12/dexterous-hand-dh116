@@ -181,3 +181,34 @@ def rectify_rgb(left,right,calibration,*,return_masks=False):
     k1[:2,2]+=.5;k2[:2,2]+=.5
     result=StereoCalibration(k1,k2,*transforms,c.width,c.height,c.baseline_m)
     return (*outputs,result,*masks) if return_masks else (*outputs,result)
+
+
+def usd_aperture_offsets(k,width,height,focal_length):
+    """Map optical K to USD offsets in the same lens units as focal_length.
+
+    USD's view plane is +X right/+Y up; optical pixel coordinates are +Y down.
+    """
+    k=_matrix(k,(3,3),"USD lens K");focal=float(focal_length)
+    if (type(width) is not int or type(height) is not int or min(width,height)<1
+            or not math.isfinite(focal) or focal<=0):
+        raise ValueError("positive USD lens dimensions and scales required")
+    if (k[0,0]<=0 or k[1,1]<=0 or not torch.allclose(k[2],k.new_tensor([0.,0.,1.]))
+            or abs(float(k[0,1]))>1e-10 or abs(float(k[1,0]))>1e-10):
+        raise ValueError("invalid USD lens intrinsic matrix")
+    return ((width/2-float(k[0,2]))*focal/float(k[0,0]),
+            (float(k[1,2])-height/2)*focal/float(k[1,1]))
+
+
+def usd_aperture_intrinsics(width,height,focal_length,horizontal_aperture,
+                            vertical_aperture,horizontal_offset,vertical_offset):
+    """Recover optical K from finite USD lens data expressed in common units."""
+    values=tuple(float(x) for x in (focal_length,horizontal_aperture,
+        vertical_aperture,horizontal_offset,vertical_offset))
+    if (type(width) is not int or type(height) is not int or min(width,height)<1
+            or not all(math.isfinite(x) for x in values) or min(values[:3])<=0):
+        raise ValueError("finite USD lens data and positive dimensions required")
+    focal,horizontal,vertical,ox,oy=values
+    fx,fy=width*focal/horizontal,height*focal/vertical
+    return torch.tensor([[fx,0.,width/2-ox*fx/focal],
+                         [0.,fy,height/2+oy*fy/focal],
+                         [0.,0.,1.]],dtype=torch.float64)

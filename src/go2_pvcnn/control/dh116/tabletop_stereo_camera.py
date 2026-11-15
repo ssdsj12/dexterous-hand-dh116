@@ -11,7 +11,8 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from .tabletop_stereo_calibration import StereoCalibration
+from .tabletop_stereo_calibration import (
+    StereoCalibration, usd_aperture_offsets, usd_aperture_intrinsics)
 from .tabletop_stereo_depth import StereoDepth
 from .tabletop_stereo_validation import validate_images, validate_identity, validate_pair_timing
 
@@ -62,9 +63,10 @@ class _NativeRGBPairReader:
                 camera.CreateFocalLengthAttr(focal)
                 camera.CreateHorizontalApertureAttr(calibration.width*focal/float(k[0,0]))
                 camera.CreateVerticalApertureAttr(calibration.height*focal/float(k[1,1]))
-                # USD pinhole offset units follow aperture; do not assume centre principal point.
-                camera.CreateHorizontalApertureOffsetAttr((float(k[0,2])-calibration.width/2)*focal/float(k[0,0]))
-                camera.CreateVerticalApertureOffsetAttr(-(float(k[1,2])-calibration.height/2)*focal/float(k[1,1]))
+                horizontal_offset,vertical_offset=usd_aperture_offsets(
+                    k,calibration.width,calibration.height,focal)
+                camera.CreateHorizontalApertureOffsetAttr(horizontal_offset)
+                camera.CreateVerticalApertureOffsetAttr(vertical_offset)
                 camera.CreateClippingRangeAttr(Gf.Vec2f(.01,10.))
                 optical=t.numpy().copy();optical[:3,3]+=origin
                 usd=optical@np.diag([1.,-1.,-1.,1.])
@@ -88,13 +90,12 @@ class _NativeRGBPairReader:
         ah=np.asarray(self.view.get_horizontal_apertures());av=np.asarray(self.view.get_vertical_apertures())
         # Offset is read independently from the actual USD prim; APIs vary by SDK.
         K=np.tile(np.eye(3),(self.count,1,1));c=self.calibration
-        K[:,0,0]=c.width*focal/ah;K[:,1,1]=c.height*focal/av
         cache=self.UsdGeom.XformCache(self.Usd.TimeCode.Default())
         for i,path in enumerate(self.paths):
             camera=self.UsdGeom.Camera(self.stage.GetPrimAtPath(path))
-            usd_f=float(camera.GetFocalLengthAttr().Get())
-            K[i,0,2]=c.width/2+float(camera.GetHorizontalApertureOffsetAttr().Get())*K[i,0,0]/usd_f
-            K[i,1,2]=c.height/2-float(camera.GetVerticalApertureOffsetAttr().Get())*K[i,1,1]/usd_f
+            K[i]=usd_aperture_intrinsics(c.width,c.height,focal[i],ah[i],av[i],
+                camera.GetHorizontalApertureOffsetAttr().Get(),
+                camera.GetVerticalApertureOffsetAttr().Get()).numpy()
             authored=np.asarray(cache.GetLocalToWorldTransform(camera.GetPrim())).T@np.diag([1.,-1.,-1.,1.])
             if not np.allclose(authored,transforms[i],atol=1e-5,rtol=0.):raise ValueError('USD/runtime stereo calibration mismatch')
         index=self.order.cpu().numpy()

@@ -19169,6 +19169,46 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-15-r03-teacher-source-binding.md",
       "report_source_commit": "b47a070af6a1d870bed00955a1662e588bf165b5"
+    },
+    "repair.r07-usd-camera-projection": {
+      "passed": 208,
+      "failed": 0,
+      "skipped": 1,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_stereo_usd_principal_point.py",
+        "tests/test_dh116_stereo_geometry.py",
+        "tests/test_dh116_stereo_resolution_benchmark.py",
+        "tests/test_dh116_stereo_rig_experiments.py",
+        "tests/test_dh116_stereo_runtime_contract.py",
+        "tests/test_dh116_stereo_resolution.py",
+        "tests/test_dh116_stereo_native_bootstrap.py",
+        "tests/test_dh116_stereo_camera_cli.py",
+        "tests/test_dh116_stereo_shutdown_validation.py"
+      ],
+      "log_sha256": "9b944b6615494c90b8756752cae0dc9a189081f2309da760cc2edbf33a00cf0d",
+      "tested_head": "9d3c3af0f0203a95c663641f00c8a88732a30fd7",
+      "qualification_scope": "cpu_usd_gf_projection_and_readback_regression_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "student_admission": false,
+      "ppo_updates": 0,
+      "new_solver_steps": 0,
+      "legacy_center_calibration_digest_preserved": true,
+      "new_native_accuracy_proof_required": true,
+      "baseline_wrong_sha_pin_fixed_without_config_change": true,
+      "spec_review": "passed:/root/review_r07_spec",
+      "quality_review": "approved:/root/review_r07_quality",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-15-r07-usd-camera-projection.md",
+      "report_source_commit": "4b87dec2273839641db5c072b14d2fc19d76b8f0"
     }
   }
 }
