@@ -1,3 +1,7 @@
+## 2026-11-15 — R08：独立重审留存Pinch账本并保留原失败身份
+
+独立封存验证绕开两条动态alias属性错误，重验原实际账本、外层退出、锁、234步时钟与两快照23字段不变量。两次仅CPU只读CLI均exit0，原failed receipt及原工件SHA保持不变；新source指纹显式保存。默认可移植测试50项、私有16项显式opt-in；历史完整66项和既有73项证据分别记录，不重复计数。原生、Teacher、抓取资格仍为false，无新增物理步或PPO更新。 Ubuntu CPU 回归 123 项通过。[报告](docs/superpowers/reports/2026-11-15-retained-pinch-r08.md)
+
 ## 2026-11-15 — R02：统一371槽分类、回归与旋转监督数学
 
 371槽20项分类使用BCEWithLogits，两条训练入口共用canonical_state_loss，原来源、NA、旋转与force资格门保留。新增40组分类数值/梯度和版本保存回归；原quaternion专用测试收紧到实际所测旋转组，不改原始合同或PPO/Tanh数学。新的训练合同显式记录loss-v2，旧模型和原始数据不覆盖。 Ubuntu CPU 回归 168 项通过。[报告](docs/superpowers/reports/2026-11-15-r02-canonical-field-losses.md)
