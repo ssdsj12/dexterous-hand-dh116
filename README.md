@@ -1,3 +1,7 @@
+## 2026-11-15 — 独立 fixed-S0 v2 审查与实施计划
+
+完整核读加速/控制方案，明确四阶段、context51、失接触NA与固定锚几何漂移、长clock/guarded Reset和独立V2-I01入口。0.25s为待验证候选；本包仅设计审查，无新增CPU测试或原生运行，不授予Teacher成功资格。[差异审查](docs/superpowers/reports/2026-11-15-acceleration-control-gap-review.md)
+
 ## 2026-11-15 — C05 原 PPO 有界更新、原子恢复与只读 Checkpoint 审计
 
 复用原 Tanh PPO/GAE，实现仅接受真实非零更新的有界 runner、clean Checkpoint、一次字节快照原子恢复和纯只读完整 payload 审计。CPU 原更新1→保存→新 Reset/恢复→追加更新2通过；KL 全拒与源故障不补采样，旧模型和原始 Checkpoint 不覆盖。实际 C06 NativeProvider、原生 A/B 两次更新与自然退出仍未验证。 Ubuntu CPU 回归 86 项通过。[报告](docs/superpowers/reports/2026-11-15-c05-native-teacher-training-checkpoint.md)
