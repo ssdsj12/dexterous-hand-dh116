@@ -1,3 +1,7 @@
+## 2026-11-15 — R06：新增opt-in故障安全资源清理与独立账本持久化
+
+独立v3清理逐阶段隔离异常：clear失败仍释放alias、尝试STOP和单次close；只有freeze/manager/weakref等实证通过才允许post-STOP update。SPEC拦截的最终输出写失败丢失原错问题已通过3项失败回归修复，两个账本独立尝试且聚合错误。旧入口/配方/原回执保持原样；这些是CPU callback测试，未证明新的C++/原生自然退出。 Ubuntu CPU 回归 126 项通过。[报告](docs/superpowers/reports/2026-11-15-r06-fault-safe-lifecycle.md)
+
 ## 2026-11-15 — R04.1/R04.2：绑定封存Stereo来源与离线准入
 
 封存离线loader和candidate admission逐proof重验同completion的raw/manifest/records并精确重放Tensor行，拒收同证明下的像素/动作/Mask/顺序篡改。保留原Teacher成功池门和R02 loss-v2；不将最终process close设为在线DAgger每轮更新前置。本包仅完成R04.1/R04.2，真实manifest producer、live/direct-memory来源与masked-label适配仍未完成，不能宣称整个R04关闭。 Ubuntu CPU 回归 108 项通过。[报告](docs/superpowers/reports/2026-11-15-r04-sealed-stereo-sources.md)

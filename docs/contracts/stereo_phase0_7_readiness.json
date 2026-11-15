@@ -19333,6 +19333,42 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-15-r04-sealed-stereo-sources.md",
       "report_source_commit": "573e05c1c62c04768b4a9b769b7e0f58f74180c6"
+    },
+    "repair.r06-fault-safe-lifecycle": {
+      "passed": 126,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_fault_safe_lifecycle_v3.py",
+        "tests/test_tripod_native_scope.py",
+        "tests/test_dh116_pinch_v2.py",
+        "tests/test_dh116_pinch_v3.py",
+        "tests/test_dh116_physx_lifetime_probe.py"
+      ],
+      "log_sha256": "e546477d0b9f1fe96a7f9e5fae8df5293dac3eb210def2c20294c143a425b322",
+      "tested_head": "1e956caf1816232841a3efba9f76c61c76859e12",
+      "qualification_scope": "cpu_opt_in_fault_safe_lifecycle_and_error_persistence_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "native_cleanup_verified": false,
+      "process_exit_verified": false,
+      "teacher_admission": false,
+      "ppo_updates": 0,
+      "new_solver_steps": 0,
+      "legacy_default_path_preserved": true,
+      "final_output_failures_preserve_primary_error": true,
+      "spec_review": "passed_after_fix:/root/review_r06_spec",
+      "quality_review": "approved:/root/review_r06_quality",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-15-r06-fault-safe-lifecycle.md",
+      "report_source_commit": "dca148ea0d3dab00660b124d7f6723056e789296"
     }
   }
 }
