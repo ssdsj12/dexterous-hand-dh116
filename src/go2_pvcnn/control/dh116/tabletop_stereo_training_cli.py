@@ -363,8 +363,8 @@ def collect_cold_candidate_reference(environment, teacher, manifest, *, output,
     return records,report
 
 
-def admit_candidates(candidate_path, qualification, output):
-    from .tabletop_stereo_supervision_dataset import build_dataset, save_dataset
+def admit_candidates(candidate_path, qualification, output, *, source_bindings=None):
+    from .tabletop_stereo_supervision_dataset import build_dataset, save_dataset, validate_sealed_stereo_dataset
     from .tabletop_stereo_promotion import require_teacher_qualification
     candidate = torch.load(candidate_path, map_location='cpu', weights_only=False)
     if candidate.get('version') != CANDIDATE_VERSION:
@@ -380,7 +380,8 @@ def admit_candidates(candidate_path, qualification, output):
         record['teacher_qualification'] = qualification
         record['candidate_only'] = False
     dataset = build_dataset(records, source_sha256=candidate['teacher_checkpoint_sha256'],
-        qualification=qualification, schema_only=False)
+        qualification=qualification, schema_only=False, source_bindings=source_bindings)
+    validate_sealed_stereo_dataset(dataset)
     return save_dataset(dataset, output)
 
 
@@ -469,6 +470,9 @@ def main(mode='bc', argv=None):
     parser.add_argument('--output', type=Path)
     parser.add_argument('--dataset', type=Path)
     parser.add_argument('--candidate', type=Path)
+    if mode == 'admit':
+        parser.add_argument('--source-bindings', type=Path,
+            help='JSON list of sealed source proof references; not qualification')
     parser.add_argument('--teacher-checkpoint', type=Path)
     parser.add_argument('--teacher-config', type=Path, default=ROOT / 'configs/dh116_training/privileged_teacher_ppo_v1.json')
     parser.add_argument('--teacher-proof', type=Path)
@@ -534,10 +538,13 @@ def main(mode='bc', argv=None):
     if args.output is None:
         parser.error('exclusive new --output required')
     if mode == 'admit':
-        if not args.candidate or not args.teacher_proof:
-            parser.error('candidate and SHA-bound raw success proof required')
+        if not args.candidate or not args.teacher_proof or not args.source_bindings:
+            parser.error('candidate, raw success proof and sealed --source-bindings required')
+        from .tabletop_stereo_source_binding import _validate_bindings
+        bindings = _validate_bindings(_json(args.source_bindings))
         run = new_run(args.output)
-        report = admit_candidates(args.candidate, args.teacher_proof, run / 'successful_stereo_dataset.pt')
+        report = admit_candidates(args.candidate, args.teacher_proof, run / 'successful_stereo_dataset.pt',
+            source_bindings=bindings)
         write_json_new(run / 'admission.json', report)
         return 0
     if mode == 'bc':

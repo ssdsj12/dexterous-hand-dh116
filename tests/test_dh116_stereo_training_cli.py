@@ -121,3 +121,68 @@ def test_formal_collection_binds_proof_to_the_selected_resolution(tmp_path, monk
     matcher['subpixel'] = not matcher['subpixel']
     with pytest.raises(ValueError, match='matcher differs'):
         cli._formal_collection_admission({},checkpoint,{},config)
+
+
+@pytest.mark.parametrize("references", [True, {"qualified": True}, [], [True],
+    [{"proof_path": "relative.json", "proof_sha256": "a"*64, "row_indices": [0]}],
+    [{"proof_path": "/absent.json", "proof_sha256": "bad", "row_indices": [0]}],
+    [{"proof_path": "/absent.json", "proof_sha256": "a"*64, "row_indices": [True]}]])
+def test_admit_cli_rejects_malformed_binding_json_before_output(tmp_path, references):
+    config = tmp_path/"config.json"; config.write_text("{}")
+    refs = tmp_path/"refs.json"; refs.write_text(json.dumps(references))
+    output = tmp_path/"output"
+    with pytest.raises((ValueError, SystemExit)):
+        cli.main("admit", ["--config", str(config), "--candidate", str(tmp_path/"candidate.pt"),
+            "--teacher-proof", str(tmp_path/"teacher.json"), "--source-bindings", str(refs),
+            "--output", str(output), "--enable-experiment"])
+    assert not output.exists()
+
+
+def test_admit_cli_reads_binding_list_and_forwards_it(tmp_path, monkeypatch):
+    config = tmp_path/"config.json"; config.write_text("{}")
+    proof = tmp_path/"source.json"; proof.write_text("{}")
+    import hashlib
+    bindings = [dict(proof_path=str(proof), proof_sha256=hashlib.sha256(proof.read_bytes()).hexdigest(),
+        row_indices=[0])]
+    refs = tmp_path/"refs.json"; refs.write_text(json.dumps(bindings))
+    seen = []
+    def capture(candidate, qualification, output, *, source_bindings=None):
+        seen.append(source_bindings)
+        return {"cpu_dispatch_only": True}
+    monkeypatch.setattr(cli, "admit_candidates", capture)
+    assert cli.main("admit", ["--config", str(config), "--candidate", str(tmp_path/"candidate.pt"),
+        "--teacher-proof", str(tmp_path/"teacher.json"), "--source-bindings", str(refs),
+        "--output", str(tmp_path/"output"), "--enable-experiment"]) == 0
+    assert seen == [bindings]
+
+
+def test_source_bindings_argument_is_admission_only(tmp_path):
+    config = tmp_path/"config.json"; config.write_text('{"schema_version":"dh116-stereo-bc-v1"}')
+    with pytest.raises(SystemExit):
+        cli.main("bc", ["--config", str(config), "--source-bindings", str(tmp_path/"refs.json"),
+            "--check-config"])
+
+
+def test_candidate_admission_requires_sealed_sources_even_after_cpu_assumed_success_gates(tmp_path, monkeypatch):
+    # Only Teacher/native qualifications are assumed. The new sealed verifier stays real.
+    from test_dh116_stereo_source_binding import SealedCPU
+    from go2_pvcnn.control.dh116 import tabletop_stereo_supervision_dataset as datasets
+    from go2_pvcnn.control.dh116 import tabletop_stereo_promotion as promotion
+    sealed = SealedCPU(tmp_path, monkeypatch, successful=True)
+    monkeypatch.setattr(promotion, "require_teacher_qualification", lambda *a, **k: {"cpu_only": True})
+    monkeypatch.setattr(datasets, "require_teacher", lambda *a, **k: None)
+    identities = {tuple(row["identity"][key] for key in ("run_uuid", "env_id", "episode_uid", "reset_id"))
+        for row in sealed.data["rows"]}
+    monkeypatch.setattr(promotion, "qualified_episode_identities", lambda *a, **k: identities)
+    candidate = tmp_path/"candidate.pt"
+    torch.save(sealed.packet, candidate)
+    output = tmp_path/"forbidden.pt"
+    with pytest.raises(ValueError, match="trusted source bindings"):
+        cli.admit_candidates(candidate, None, output)
+    assert not output.exists()
+    bindings = sealed.data["source_bindings"]
+    result = cli.admit_candidates(candidate, None, tmp_path/"cpu-upper-only.pt", source_bindings=bindings)
+    assert result["native_qualified"] is False
+    loaded = datasets.load_dataset(tmp_path/"cpu-upper-only.pt")
+    assert loaded["source_bindings"] == bindings
+    assert len(sealed.native_calls) == 2

@@ -150,7 +150,17 @@ def validate_dataset(data,*,allow_schema_only=False):
     return data
 
 
-def build_dataset(records,*,source_sha256,contract=None,schema_only=False,qualification=None,purpose='successful_bc'):
+def validate_sealed_stereo_dataset(data,*,allow_schema_only=False):
+    """Validate completed disk sources before the existing qualification gates."""
+    if not isinstance(data,dict):raise ValueError('versioned stereo dataset required')
+    if data.get('schema_only') is not True:
+        from .tabletop_stereo_source_binding import verify_stereo_dataset_sources
+        verify_stereo_dataset_sources(data)
+    return validate_dataset(data,allow_schema_only=allow_schema_only)
+
+
+def build_dataset(records,*,source_sha256,contract=None,schema_only=False,qualification=None,
+                  purpose='successful_bc',source_bindings=None):
     rows=rows_from_records(list(records))
     if not rows:raise ValueError('nonempty executed records required')
     if contract is None:contract=make_contract('dagger' if purpose=='dagger_visited_states' else 'bc',{},
@@ -158,7 +168,8 @@ def build_dataset(records,*,source_sha256,contract=None,schema_only=False,qualif
     data=dict(version=VERSION,contract=copy.deepcopy(contract),source_sha256=source_sha256,schema_only=schema_only,
         native_qualified=False,validation_scope='schema_only_not_native_success',purpose=purpose,
         successful_demonstrations=False if schema_only or purpose!='successful_bc' else True,
-        qualification=str(qualification) if isinstance(qualification,Path) else copy.deepcopy(qualification),rows=rows)
+        qualification=str(qualification) if isinstance(qualification,Path) else copy.deepcopy(qualification),
+        source_bindings=copy.deepcopy(source_bindings),rows=rows)
     return validate_dataset(data,allow_schema_only=schema_only)
 
 
@@ -172,7 +183,7 @@ def save_dataset(data,path):
 def load_dataset(path,*,allow_schema_only=False,expected_sha256=None,expected_contract=None):
     if expected_sha256 is not None and file_sha256(path)!=require_sha(expected_sha256):raise ValueError('dataset bytes SHA mismatch')
     data=torch.load(path,map_location='cpu',weights_only=True)
-    validate_dataset(data,allow_schema_only=allow_schema_only)
+    validate_sealed_stereo_dataset(data,allow_schema_only=allow_schema_only)
     if expected_contract is not None:validate_contract(data['contract'],expected=expected_contract)
     return data
 

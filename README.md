@@ -1,3 +1,7 @@
+## 2026-11-15 — R04.1/R04.2：绑定封存Stereo来源与离线准入
+
+封存离线loader和candidate admission逐proof重验同completion的raw/manifest/records并精确重放Tensor行，拒收同证明下的像素/动作/Mask/顺序篡改。保留原Teacher成功池门和R02 loss-v2；不将最终process close设为在线DAgger每轮更新前置。本包仅完成R04.1/R04.2，真实manifest producer、live/direct-memory来源与masked-label适配仍未完成，不能宣称整个R04关闭。 Ubuntu CPU 回归 108 项通过。[报告](docs/superpowers/reports/2026-11-15-r04-sealed-stereo-sources.md)
+
 ## 2026-11-15 — R08：独立重审留存Pinch账本并保留原失败身份
 
 独立封存验证绕开两条动态alias属性错误，重验原实际账本、外层退出、锁、234步时钟与两快照23字段不变量。两次仅CPU只读CLI均exit0，原failed receipt及原工件SHA保持不变；新source指纹显式保存。默认可移植测试50项、私有16项显式opt-in；历史完整66项和既有73项证据分别记录，不重复计数。原生、Teacher、抓取资格仍为false，无新增物理步或PPO更新。 Ubuntu CPU 回归 123 项通过。[报告](docs/superpowers/reports/2026-11-15-retained-pinch-r08.md)
