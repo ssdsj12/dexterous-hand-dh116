@@ -19369,6 +19369,43 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-15-r06-fault-safe-lifecycle.md",
       "report_source_commit": "dca148ea0d3dab00660b124d7f6723056e789296"
+    },
+    "repair.r05-stereo-admission-matcher": {
+      "passed": 108,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_dh116_stereo_admission_matcher.py",
+        "tests/test_dh116_stereo_training_cli.py",
+        "tests/test_dh116_stereo_student_cli.py",
+        "tests/test_dh116_stereo_preprocessing.py",
+        "tests/test_dh116_stereo_student_ppo.py"
+      ],
+      "log_sha256": "94f239514b751241875584db773d22b060a841d7266966299fa0cba55758d97a",
+      "tested_head": "945704b7a652ad3f239d7f40316fd735ed55ebe8",
+      "qualification_scope": "cpu_shared_stereo_matcher_admission_only",
+      "native_execution_performed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "student_admission": false,
+      "ppo_updates": 0,
+      "new_solver_steps": 0,
+      "calibration_only_bypass_rejected": true,
+      "full_matcher_semantics_required": true,
+      "only_resource_exception": "image_processing_batch_size",
+      "preprocessing_source_unchanged": true,
+      "spec_review": "passed:/root/review_r05_spec",
+      "quality_review": "approved:/root/review_r05_quality",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-15-r05-stereo-admission-matcher.md",
+      "report_source_commit": "d582aa07306683db0e054ccd540192ea83e49b5a"
     }
   }
 }

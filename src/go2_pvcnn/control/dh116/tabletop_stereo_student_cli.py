@@ -290,12 +290,14 @@ def run_student(environment,actor_package,*,output,steps,calibration_sha256):
 
 def _formal_admission(args,calibration):
     from .tabletop_stereo_promotion import require_teacher_qualification,verify_stereo_qualification
+    from .tabletop_stereo_admission import require_qualified_stereo_processing
     if args.teacher_proof is None or args.teacher_checkpoint is None or args.stereo_proof is None:
         raise ValueError('formal Student PPO requires Teacher proof + actual Teacher checkpoint + stereo qualification proof')
     teacher=require_teacher_qualification(args.teacher_proof,file_sha256(args.teacher_checkpoint))
     stereo=verify_stereo_qualification(args.stereo_proof)
     if stereo['calibration_sha256']!=calibration.sha256:
         raise ValueError('formal stereo qualification calibration differs from selected camera')
+    require_qualified_stereo_processing(stereo, args.camera_config)
     if args.checkpoint is None and args.actor_package is None:
         raise ValueError('formal Student PPO requires explicit actor-package warm start or exact Student resume')
     return dict(teacher=teacher,stereo=stereo)

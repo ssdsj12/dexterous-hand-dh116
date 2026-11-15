@@ -33,18 +33,10 @@ def _load_frozen_teacher(bridge, config, ppo, checkpoint, expected_sha256):
 
 def _formal_collection_admission(teacher_proof, teacher_checkpoint, stereo_proof, camera_config):
     from .tabletop_stereo_promotion import require_teacher_qualification, verify_stereo_qualification
-    from .tabletop_stereo_calibration import StereoCalibration
+    from .tabletop_stereo_admission import require_qualified_stereo_processing
     teacher = require_teacher_qualification(teacher_proof, file_sha256(teacher_checkpoint))
     stereo = verify_stereo_qualification(stereo_proof)
-    selected = StereoCalibration.from_json(camera_config)
-    if stereo['calibration_sha256'] != selected.sha256:
-        raise ValueError('formal collection stereo proof calibration differs from the selected camera/resolution')
-    from .tabletop_stereo_preprocessing import processing_contract
-    measured = deepcopy(stereo.get('depth_estimator_config'))
-    if isinstance(measured, dict):
-        measured.pop('image_processing_batch_size', None)
-    if measured != processing_contract(camera_config)['depth_estimator']:
-        raise ValueError('formal collection matcher differs from the verified raw stereo processing')
+    require_qualified_stereo_processing(stereo, camera_config)
     return dict(teacher=teacher, stereo=stereo)
 
 

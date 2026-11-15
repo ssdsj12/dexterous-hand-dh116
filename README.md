@@ -1,3 +1,7 @@
+## 2026-11-15 — R05：统一Student与采集的Stereo matcher准入
+
+共享比较器在真实Teacher/Stereo证明验证后检查相机标定和完整matcher，拒收同K但匹配方式、亚像素或配置改变的旧证明；只排除image_processing_batch_size资源字段且不修改proof。保留Student显式warm-start/resume、R02损失合同和R04封存入口，不修改preprocessing源或旧配置。新旧CPU回归不授原生精度或模型训练资格。 Ubuntu CPU 回归 108 项通过。[报告](docs/superpowers/reports/2026-11-15-r05-stereo-admission-matcher.md)
+
 ## 2026-11-15 — R06：新增opt-in故障安全资源清理与独立账本持久化
 
 独立v3清理逐阶段隔离异常：clear失败仍释放alias、尝试STOP和单次close；只有freeze/manager/weakref等实证通过才允许post-STOP update。SPEC拦截的最终输出写失败丢失原错问题已通过3项失败回归修复，两个账本独立尝试且聚合错误。旧入口/配方/原回执保持原样；这些是CPU callback测试，未证明新的C++/原生自然退出。 Ubuntu CPU 回归 126 项通过。[报告](docs/superpowers/reports/2026-11-15-r06-fault-safe-lifecycle.md)
