@@ -60,7 +60,8 @@ class StereoBCTrainer:
         output=None
         if hasattr(self.actor,'estimator'):
             output=self.actor.estimator(history)
-            nominal=self.actor.action_net(output['latent']).tanh()
+            features=self.actor.features_from_estimates(output,history)
+            nominal=self.actor.action_net(features).tanh()
             state=self.state_loss(output,expected['targets'],expected['validity'],force_qualification=expected['force_qualification'])
             state_value=state['total']
         else:

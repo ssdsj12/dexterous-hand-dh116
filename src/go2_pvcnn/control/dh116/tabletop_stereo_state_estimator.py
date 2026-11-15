@@ -139,8 +139,7 @@ class StereoStudentActor(nn.Module):
         nn.init.orthogonal_(self.action_net[-1].weight,.01);nn.init.zeros_(self.action_net[-1].bias)
         self.log_std=nn.Parameter(torch.full((24,),math.log(.1)))
 
-    def latent_mean(self,history):
-        estimates=self.estimator(history)
+    def features_from_estimates(self,estimates,history):
         features=estimates['latent']
         if self.input_mode!='latent':
             # Auxiliary absolute-world geometry is never a task-state bypass.
@@ -148,7 +147,11 @@ class StereoStudentActor(nn.Module):
             task=self.task_state_adapter(selected,history)
             features=task['actor_features']
             if self.input_mode=='hybrid':features=torch.cat((estimates['latent'],features),-1)
-        return self.action_net(features)
+        return features
+
+    def latent_mean(self,history):
+        estimates=self.estimator(history)
+        return self.action_net(self.features_from_estimates(estimates,history))
 
     def forward(self,history):
         return self.latent_mean(history)

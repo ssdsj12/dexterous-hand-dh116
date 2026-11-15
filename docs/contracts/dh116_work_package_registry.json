@@ -36924,6 +36924,86 @@
         "report": "docs/superpowers/reports/2026-11-15-execution-chain-implementation-plan.md",
         "report_source_commit": "2779bf0431256505fd695df70d84fc5e61cdc8f0"
       }
+    },
+    "repair.r01-actor-inputs": {
+      "title": "R01：统一三种Stereo Actor的BC与DAgger特征入口",
+      "executor": "gated",
+      "dependencies": [
+        "review.execution-chain-implementation-plans-v2"
+      ],
+      "status": "passed",
+      "last_native_attempt": {
+        "passed": 66,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_bc_actor_inputs.py",
+          "tests/test_dh116_stereo_bc_mode.py",
+          "tests/test_dh116_stereo_runtime_actor_modes.py",
+          "tests/test_dh116_stereo_collection.py",
+          "tests/test_dh116_stereo_dagger.py",
+          "tests/test_dh116_stereo_student_ppo.py",
+          "tests/test_dh116_stereo_runtime_rollout_storage.py"
+        ],
+        "log_sha256": "ce9d173967472f71fbc3fa5957e38b61c19b9b1ce770e85b0a60a40f941d8b6a",
+        "tested_head": "d1fa6630f76420177a93cda7c24de25d97bf20af",
+        "qualification_scope": "cpu_actor_feature_routing_regression_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "student_admission": false,
+        "ppo_updates": 0,
+        "new_solver_steps": 0,
+        "original_latent_math_bitwise_preserved": true,
+        "spec_review": "passed:/root/review_r01_spec",
+        "quality_review": "approved:/root/review_r01_quality",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-15-r01-actor-input-repair.md",
+        "report_source_commit": "4838dd6d6ecbf893fecf3523f14ed2b69d26495a"
+      },
+      "last_result": {
+        "passed": 66,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_stereo_bc_actor_inputs.py",
+          "tests/test_dh116_stereo_bc_mode.py",
+          "tests/test_dh116_stereo_runtime_actor_modes.py",
+          "tests/test_dh116_stereo_collection.py",
+          "tests/test_dh116_stereo_dagger.py",
+          "tests/test_dh116_stereo_student_ppo.py",
+          "tests/test_dh116_stereo_runtime_rollout_storage.py"
+        ],
+        "log_sha256": "ce9d173967472f71fbc3fa5957e38b61c19b9b1ce770e85b0a60a40f941d8b6a",
+        "tested_head": "d1fa6630f76420177a93cda7c24de25d97bf20af",
+        "qualification_scope": "cpu_actor_feature_routing_regression_only",
+        "native_execution_performed": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "student_admission": false,
+        "ppo_updates": 0,
+        "new_solver_steps": 0,
+        "original_latent_math_bitwise_preserved": true,
+        "spec_review": "passed:/root/review_r01_spec",
+        "quality_review": "approved:/root/review_r01_quality",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-15-r01-actor-input-repair.md",
+        "report_source_commit": "4838dd6d6ecbf893fecf3523f14ed2b69d26495a"
+      }
     }
   },
   "execution_target": {
