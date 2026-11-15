@@ -1,3 +1,7 @@
+## 2026-11-15 — C05 Checkpoint 实际来源只读审计
+
+为共享只读产物审计增加显式 fresh/resume 来源匹配；旧默认、单次 immutable bytes 反序列化及原恢复函数不变。未执行原生训练。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-15-c05-checkpoint-origin-audit.md)
+
 ## 2026-11-15 — 固定 S0 v2 四阶段与独立双时钟 CPU 合同
 
 新增 Close→PreliftHold→Lift→LiftHold 独立数学合同，预抬与最终5秒保持分开计时；旧context50不变。调用方布尔和CPU receipt不能作为真实物理来源；S0及source witness仍待验证。 Ubuntu CPU 回归 126 项通过。[报告](docs/superpowers/reports/2026-11-15-fixed-s0-phase-contract-v2.md)

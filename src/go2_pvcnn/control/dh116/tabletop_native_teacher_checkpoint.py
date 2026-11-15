@@ -141,17 +141,19 @@ def _validate_payload(payload,trainer,identity):
     return rng
 
 
-def audit_checkpoint_bytes(raw,trainer,contract):
+def audit_checkpoint_bytes(raw,trainer,contract,*,expected_origin=None):
     """Validate immutable CPU checkpoint bytes without restoring live state.
 
     Only the existing source-identity checks read files. No checkpoint path is
     accepted or opened; returned metadata owns every nested value.
     """
     if type(raw) is not bytes:raise TypeError("exact immutable checkpoint bytes required")
+    if expected_origin is not None:_origin(expected_origin)
     identity=checkpoint_identity(trainer,contract)
     try:payload=torch.load(io.BytesIO(raw),map_location='cpu',weights_only=True)
     except (pickle.UnpicklingError,EOFError) as error:raise ValueError("unsupported safe checkpoint format") from error
     _validate_payload(payload,trainer,identity)
+    if expected_origin is not None and payload['origin']!=expected_origin:raise ValueError("checkpoint origin differs from expected origin")
     from .tabletop_deformable_r0_replay import _digest
     return copy.deepcopy(dict(version=payload['version'],identity=payload['identity'],
         counters=payload['counters'],policy_version=payload['policy_version'],

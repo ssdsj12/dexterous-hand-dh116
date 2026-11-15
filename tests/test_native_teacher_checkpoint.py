@@ -408,3 +408,69 @@ def test_audit_checkpoint_bytes_requires_cpu_before_deserialization_without_gpu_
     monkeypatch.setattr(ck.torch,'load',never)
     with pytest.raises(ValueError,match='CPU trainer'):ck.audit_checkpoint_bytes(raw,t,identity)
     assert str(t.device)=='cuda:0';equal_tree(before,training_snapshot(t))
+
+
+
+def origin_payload_bytes(payload,origin):
+    data=deepcopy(payload);data['origin']=deepcopy(origin)
+    stream=io.BytesIO();torch.save(data,stream);return stream.getvalue()
+
+
+@pytest.mark.parametrize('kind',['fresh','resume'])
+def test_audit_expected_origin_preserves_default_metadata_and_matches(monkeypatch,tmp_path,backend_profile,kind):
+    ck,t,identity,raw,payload,_=audit_case(monkeypatch,tmp_path,backend_profile)
+    origin=dict(kind='fresh') if kind=='fresh' else dict(kind='resume',checkpoint_sha256=hashlib.sha256(raw).hexdigest())
+    if kind=='resume':raw=origin_payload_bytes(payload,origin)
+    before=training_snapshot(t);expected_origin=deepcopy(origin);loads=[];real_load=ck.torch.load
+    def one_snapshot(stream,*args,**kwargs):
+        assert isinstance(stream,io.BytesIO) and stream.getvalue()==raw
+        assert kwargs==dict(map_location='cpu',weights_only=True)
+        loads.append(stream);return real_load(stream,*args,**kwargs)
+    monkeypatch.setattr(ck.torch,'load',one_snapshot)
+    default=ck.audit_checkpoint_bytes(raw,t,identity)
+    assert len(loads)==1;equal_tree(before,training_snapshot(t))
+    explicit_none=ck.audit_checkpoint_bytes(raw,t,identity,expected_origin=None)
+    assert len(loads)==2;equal_tree(before,training_snapshot(t))
+    matched=ck.audit_checkpoint_bytes(raw,t,identity,expected_origin=expected_origin)
+    assert len(loads)==3;equal_tree(before,training_snapshot(t))
+    assert set(default)=={'version','identity','counters','policy_version','accepted_minibatch_updates',
+        'physical_state_saved','restart_requires_verified_reset','checkpoint_sha256','policy_weights_sha256'}
+    equal_tree(default,explicit_none);equal_tree(default,matched);equal_tree(expected_origin,origin)
+    with pytest.raises(TypeError):ck.audit_checkpoint_bytes(raw,t,identity,origin)
+    assert len(loads)==3;equal_tree(before,training_snapshot(t))
+
+
+@pytest.mark.parametrize('case',['resume_as_fresh','fresh_as_resume','other_resume_sha'])
+def test_audit_expected_origin_rejects_valid_but_different_origin_after_full_validation(monkeypatch,tmp_path,backend_profile,case):
+    ck,t,identity,raw,payload,_=audit_case(monkeypatch,tmp_path,backend_profile)
+    resumed=dict(kind='resume',checkpoint_sha256=hashlib.sha256(raw).hexdigest())
+    if case!='fresh_as_resume':raw=origin_payload_bytes(payload,resumed)
+    expected=dict(kind='fresh') if case=='resume_as_fresh' else resumed if case=='fresh_as_resume' else dict(kind='resume',checkpoint_sha256='9'*64)
+    expected_before=deepcopy(expected);before=training_snapshot(t);validated=[];loads=[]
+    validate=ck._validate_payload;real_load=ck.torch.load
+    def complete_validation(*args,**kwargs):
+        result=validate(*args,**kwargs);validated.append(True);return result
+    def one_snapshot(stream,*args,**kwargs):
+        assert isinstance(stream,io.BytesIO) and stream.getvalue()==raw
+        assert kwargs==dict(map_location='cpu',weights_only=True)
+        loads.append(stream);return real_load(stream,*args,**kwargs)
+    monkeypatch.setattr(ck,'_validate_payload',complete_validation);monkeypatch.setattr(ck.torch,'load',one_snapshot)
+    with pytest.raises(ValueError,match='origin'):ck.audit_checkpoint_bytes(raw,t,identity,expected_origin=expected)
+    assert len(validated)==len(loads)==1
+    equal_tree(before,training_snapshot(t));equal_tree(expected_before,expected)
+
+
+@pytest.mark.parametrize('expected',[
+    pytest.param('fresh',id='text'),pytest.param({},id='empty'),
+    pytest.param(dict(kind='fresh',checkpoint_sha256='1'*64),id='fresh_extra'),
+    pytest.param(dict(kind='resume'),id='resume_missing_sha'),
+    pytest.param(dict(kind='resume',checkpoint_sha256='invalid'),id='resume_invalid_sha'),
+    pytest.param(dict(kind='resume',checkpoint_sha256='1'*64,extra=True),id='resume_extra'),
+    pytest.param(['fresh'],id='list')])
+def test_audit_expected_origin_rejects_malformed_expectation_without_state_changes(monkeypatch,tmp_path,backend_profile,expected):
+    ck,t,identity,raw,*_=audit_case(monkeypatch,tmp_path,backend_profile)
+    before=training_snapshot(t);expected_before=deepcopy(expected)
+    def no_deserialize(*args,**kwargs):raise AssertionError('malformed expected origin must fail before deserialization')
+    monkeypatch.setattr(ck.torch,'load',no_deserialize)
+    with pytest.raises(ValueError):ck.audit_checkpoint_bytes(raw,t,identity,expected_origin=expected)
+    equal_tree(before,training_snapshot(t));equal_tree(expected_before,expected)
