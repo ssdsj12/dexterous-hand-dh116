@@ -1,3 +1,7 @@
+## 2026-11-15 — 原控制长回合零步Reset续行与真实clock消费者门CPU包
+
+原control真实推进CPU双替身到240/258/2402，独立v2重建11mesh、Reset0步且预算不退款，再续下一episode8步；旧guard/2.1mm/时间限制不变。短native时钟证据不能证明长程，fp32三个实际SDK消费者长程拒绝，整体long-reset仍blocked；原生0步。 Ubuntu CPU 回归 231 项通过。[报告](docs/reports/2026-11-15-long-reset-continuation-v2.md)
+
 ## 2026-11-15 — 独立 context51 六键 Teacher 模型 CPU 子包
 
 独立新模型保留原六键、common66/305未知、材料41×13、24D及Tanh/PPO，context51编码102维；修复跨batch非法pack。当前仅unresolved CPU子包：真实S0正绑定、生产SourceAdapter、checkpoint/session未通，整体门仍blocked；旧Student143尚未与新Teacher对齐。 Ubuntu CPU 回归 313 项通过。[报告](docs/reports/2026-11-15-dh116-fixed-s0-teacher-model-v2-task4.md)

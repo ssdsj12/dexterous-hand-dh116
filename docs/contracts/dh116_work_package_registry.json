@@ -38030,10 +38030,11 @@
       "dependencies": [
         "review.fixed-s0-v2-design",
         "teacher.v2.clock-policy-cpu",
-        "teacher.v2.reset-source-chain-cpu"
+        "teacher.v2.reset-source-chain-cpu",
+        "teacher.v2.long-continuation-cpu"
       ],
       "status": "blocked",
-      "reason": "258及>2400 Reset与guarded exchange待实现",
+      "reason": "240/258/2402原控制→零步Reset→下一episode CPU已交付；真实SDK长模式尚未资格，现fp32实际SDK消费者在2402/9600拒绝；生产v2 owner/session/worker未接入，长程native门继续关闭",
       "native_qualification": false
     },
     "teacher.c06-worker-contracts": {
@@ -38503,6 +38504,73 @@
         "status": "passed",
         "report": "docs/reports/2026-11-15-dh116-fixed-s0-teacher-model-v2-task4.md",
         "report_source_commit": "0147e5377e2f307fccfda769c0cb1ce80905536f"
+      }
+    },
+    "teacher.v2.long-continuation-cpu": {
+      "title": "原控制长回合零步Reset续行与真实clock消费者门CPU包",
+      "executor": "gated",
+      "dependencies": [
+        "teacher.v2.clock-policy-cpu",
+        "teacher.v2.reset-source-chain-cpu"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 231,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_native_long_reset_episode_v2.py",
+          "tests/test_native_long_clock_consumers_v2.py",
+          "tests/test_mesh_reset_v2.py",
+          "tests/test_native_training_clock.py",
+          "tests/test_native_teacher_session.py",
+          "tests/test_dh116_dual_hand_episode.py"
+        ],
+        "log_sha256": "de7c168b42b3d156f2f923b6f036521c2356d50aff6d74d15fe981cac434ccab",
+        "tested_head": "5dedda6f1e11ce4357c579f721d71c5f6ba18e35",
+        "native_qualification": false,
+        "qualification_scope": "cpu_controlled_long_episode_reset_continuation_and_negative_consumer_gating_only",
+        "new_native_steps": 0,
+        "new_native_updates": 0,
+        "controlled_fixture_sdk_endpoints": [
+          240,
+          258,
+          2402
+        ],
+        "clock_consumer_probe_sdk_endpoints": [
+          240,
+          258,
+          2402,
+          9600
+        ],
+        "clock_consumers_ready": false,
+        "native_ready": false,
+        "teacher_admission": false,
+        "original_clock_tolerances_unchanged": true,
+        "no_budget_refund": true,
+        "spec_review": "PASS exact7730e27; independent37 new/262 old plus physical-step/source authentication probes",
+        "quality_review": "PASS exact7730e27; independent37+12 ownership/exception/tamper probes",
+        "candidate_cpu_passed": 231,
+        "candidate_log_sha256": "b253b0137c16eaa42d76195f25178db7f9d2b0ccf869a80f5f9940d9909d3172",
+        "spec_review_report_sha256": "4ecc2bbe81242da47b06a9f0a0e2c346ee9bee9d3a51e9258dc787fe8b33973c",
+        "spec_review_metadata_sha256": "fb2b976f09df7dc6663f54e50cc94f0878f737d6b70fec7750153ecde688f554",
+        "spec_new37_log_sha256": "205437b48d7107e65eff01d23f671bfd119e4885ba0891ca50edcc3ec8b9dd53",
+        "spec_old262_log_sha256": "2e1efaa80ade80b1db5ecb3629d27396ffc1972c1f8d74a75cb9ed5a890b3cd6",
+        "source_label_clarification": "52707334-byte source is reset_readback; separate numeric_reset is60257 bytes; original manifest verifies all source_refs",
+        "quality_report_sha256": "aade11f3aa06302672fa32d8dac650a0c7731e1ccddda13271fba5ff971997a6",
+        "quality_metadata_sha256": "d2c34db95498bfd8c20fa0d40917128ef38afcd61b2fc2b1b05645e1ba3b9c2d",
+        "quality_candidate_tests_log_sha256": "3e2b0f44cb39df3df2a832062456dfeee5995207427de33a6b3d942d8572c781",
+        "quality_independent_edges_log_sha256": "a73910b047bbb7734a78cde76c53dd9a1744fd87b374167b0469345422ac0c20",
+        "status": "passed",
+        "report": "docs/reports/2026-11-15-long-reset-continuation-v2.md",
+        "report_source_commit": "7730e275f7c9bac6344df8a950ceb11ba758cb7e"
       }
     }
   },
