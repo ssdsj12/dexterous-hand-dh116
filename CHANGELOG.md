@@ -1,3 +1,7 @@
+## 2026-11-15 — C05 原 PPO 有界更新、原子恢复与只读 Checkpoint 审计
+
+复用原 Tanh PPO/GAE，实现仅接受真实非零更新的有界 runner、clean Checkpoint、一次字节快照原子恢复和纯只读完整 payload 审计。CPU 原更新1→保存→新 Reset/恢复→追加更新2通过；KL 全拒与源故障不补采样，旧模型和原始 Checkpoint 不覆盖。实际 C06 NativeProvider、原生 A/B 两次更新与自然退出仍未验证。 Ubuntu CPU 回归 86 项通过。[报告](docs/superpowers/reports/2026-11-15-c05-native-teacher-training-checkpoint.md)
+
 ## 2026-11-15 — C04 实际来源绑定的独立无相机 Teacher Collector
 
 在真实 Reset 后建立新模型、原 PPO 与数值奖励；逐 SDK 子步先持久化原始证据，再校验 policy/token/request/SDK target、固定材料41距离和健康源。合法约束失败与源腐坏分开，保留 terminal/GAE；旧固定动作诊断读取器和所有受保护控制源码不改。当前只具备 Pinch smoke 软件适配，Reset>SDK240、full／Tripod／Power 来源、C06 worker 和原生资格仍为独立门槛。 Ubuntu CPU 回归 298 项通过。[报告](docs/superpowers/reports/2026-11-15-c04-native-teacher-session-collector.md)
