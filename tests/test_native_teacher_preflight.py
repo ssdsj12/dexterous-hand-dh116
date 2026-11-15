@@ -47,8 +47,18 @@ def current_profile():
     return BackendProfile.load(ROOT)
 
 
+@pytest.fixture
+def missing_teacher_modules(monkeypatch):
+    # Explicit absence fixture: integrating C02 must not change the pending
+    # branch's meaning, and the real implementation presence is tested below.
+    missing={ROOT/"src/go2_pvcnn/control/dh116"/name for name in (
+        "tabletop_native_teacher_model.py","tabletop_native_teacher_context.py")}
+    original=Path.is_file
+    monkeypatch.setattr(Path,"is_file",lambda path: False if path in missing else original(path))
+
+
 @pytest.mark.parametrize("style", ["pinch", "tripod", "power"])
-def test_actual_preflight_is_honest_and_style_specific(current_profile, style):
+def test_missing_teacher_modules_remain_pending_and_style_specific(current_profile,style,missing_teacher_modules):
     result = api().static_preflight(config(style), project=ROOT, backend_profile=current_profile)
     assert result["new_native_steps"] == 0
     assert result["live_reset_verified"] is False
@@ -66,6 +76,20 @@ def test_actual_preflight_is_honest_and_style_specific(current_profile, style):
     assert "formal_r0_numeric_source_missing" not in result["blocked_reasons"]
     assert all(set(("source_complete", "applicable", "valid", "reader", "source_sha256",
                     "blocked_reason", "release_condition")) <= set(c) for c in result["components"])
+
+
+@pytest.mark.parametrize("style", ["pinch", "tripod", "power"])
+def test_actual_teacher_modules_are_present_without_granting_readiness(current_profile,style):
+    result=api().static_preflight(config(style),project=ROOT,backend_profile=current_profile)
+    names={item["name"]:item for item in result["components"]}
+    for name in ("model","context"):
+        item=names[name]
+        assert item["valid"] is True and item["source_complete"] is True
+        assert item["blocked_reason"] is None
+        assert item["source_sha256"] == api().sha256_file(item["reader"])
+    assert result["static_ready"] is False
+    assert result["live_reset_verified"] is False and result["new_native_steps"] == 0
+    assert names["same_clock_distance"]["valid"] is (style == "pinch")
 
 
 @pytest.mark.parametrize("field,value", [
@@ -431,3 +455,28 @@ def test_profile_reader_scope_rechecks_actual_bytes_before_binding(current_profi
             pytest.fail("tampered source entered")
     assert radius.BACKEND_SHA == source.OLD_BACKEND_SHA
     assert all(getattr(module, name) == value for module, name, value in source._ORIGINAL)
+
+@pytest.mark.parametrize("digest_kind,sha_kind,expected",[
+    ("callable","callable",None),("bool","short",None),
+    ("short","valid_sha","b"*64),("valid_digest","callable","a"*64),
+])
+def test_module_source_identity_requires_full_string_sha(current_profile,monkeypatch,digest_kind,sha_kind,expected):
+    # Module imports may expose digest()/sha256() functions. Those are never
+    # source identities, and metadata extraction must never invoke them.
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_model as model
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_context as context
+    calls=[]
+    def forbidden():
+        calls.append(True)
+        raise AssertionError("metadata functions must not be called")
+    samples={"callable":forbidden,"bool":True,"short":"a"*63,
+        "valid_sha":"b"*64,"valid_digest":"a"*64}
+    for module in (model,context):
+        monkeypatch.setattr(module,"digest",samples[digest_kind],raising=False)
+        monkeypatch.setattr(module,"sha256",samples[sha_kind],raising=False)
+    result=api().static_preflight(config(),project=ROOT,backend_profile=current_profile)
+    for component in result["components"]:
+        if component["name"] in ("model","context"):
+            assert component["source_sha256"] == (expected or api().sha256_file(component["reader"]))
+    assert not calls
+    json.dumps(result,allow_nan=False)

@@ -1,3 +1,7 @@
+## 2026-11-15 — C02 common66／rod41×13／context50 独立 Teacher
+
+新独立六键模型使用 common66、全部 41×13 杆节点和 context50，保留 371 槽中 305 项 NaN/false。full 阶段与首次建锚绑定原任务实际 receipt；共享预检只接受真实 SHA 文本。旧模型、动作和 PPO 保持；CPU 原 PPO 更新、梯度和状态保存兼容通过，实际 native owner／PPO 资格仍待 C04–C06。 Ubuntu CPU 回归 216 项通过。[报告](docs/superpowers/reports/2026-11-15-c02-native-teacher-model.md)
+
 ## 2026-11-15 — R04 masked 371D 标签兼容与旧 Critic 隔离
 
 标签边界仅要求 valid 项有限，保留 305 项未知 NaN/false 与同设备 mask，组批不补零；旧全有限 371D Critic、来源与成功专家准入保持。R04-live 仍独立待实施，未启动 BC/DAgger 或原生实验。 Ubuntu CPU 回归 106 项通过。[报告](docs/superpowers/reports/2026-11-15-r04-masked-label-compatibility.md)

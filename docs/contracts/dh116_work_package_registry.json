@@ -37745,6 +37745,61 @@
         "report": "docs/superpowers/reports/2026-11-15-r04-masked-label-compatibility.md",
         "report_source_commit": "8d086f81a510c31f59a6d8b80c78485fee24ebbf"
       }
+    },
+    "teacher.c02-native-context-model": {
+      "title": "C02 common66／rod41×13／context50 独立 Teacher",
+      "executor": "gated",
+      "dependencies": [
+        "teacher.c01-backend-profile-preflight"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 216,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_native_teacher_context.py",
+          "tests/test_native_teacher_model.py",
+          "tests/test_native_teacher_profile.py",
+          "tests/test_native_teacher_preflight.py",
+          "tests/test_dh116_deformable_privileged_ppo.py",
+          "tests/test_dh116_deformable_privileged_teacher.py",
+          "tests/test_dh116_flexible_measured_common_teacher.py",
+          "tests/test_action24_history_owner.py"
+        ],
+        "log_sha256": "d9e057a5453cba507ec915872445fb10b3343313b6fe36a5e9504e1a369c238b",
+        "tested_head": "e0d849a40876a5c344be0e614bbefd4716ae736f",
+        "qualification_scope": "cpu_native_context_teacher_and_original_ppo_fixture_only",
+        "common_selected_dimensions": 66,
+        "unknown_ledger_dimensions": 305,
+        "rod_nodes": 41,
+        "rod_features": 13,
+        "context_dimensions": 50,
+        "actor_critic_fused_dimensions": 448,
+        "original_tanh_ppo_algorithm": "unchanged",
+        "cpu_fixture_optimizer_update_verified": true,
+        "native_ppo_updates": 0,
+        "full_phase_source": "original_task_step_owned_receipt",
+        "actual_owner_collector_binding": "pending_C04_C06",
+        "native_ready": false,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "new_native_steps": 0,
+        "spec_review": "c02_context_model_spec_pass_12aeee74",
+        "quality_review": "c02_context_model_quality_pass_12aeee74",
+        "protected_source_count": 528,
+        "historical_checkpoint_count": 2,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-15-c02-native-teacher-model.md",
+        "report_source_commit": "12aeee74e65bf35f60c4f7bfd2c75ea69dcaa140"
+      }
     }
   },
   "execution_target": {

@@ -8,6 +8,7 @@ import hashlib
 import importlib
 import json
 import math
+import re
 from pathlib import Path
 import sys
 
@@ -277,6 +278,15 @@ def _component(name, valid, *, reader, source_sha256=None, applicable=True,
         blocked_reason=reason if applicable and not valid else None, release_condition=release)
 
 
+def _reader_source_sha256(value, reader):
+    for name in ("digest", "sha256"):
+        candidate = getattr(value, name, None)
+        if type(candidate) is str and re.fullmatch(r"[0-9a-fA-F]{64}", candidate):
+            return candidate
+    path = Path(reader)
+    return sha256_file(path) if path.is_file() else None
+
+
 def static_preflight(config, *, project=ROOT, backend_profile=None):
     validate_config(config)
     project = Path(project).resolve()
@@ -288,8 +298,7 @@ def static_preflight(config, *, project=ROOT, backend_profile=None):
         try:
             value = call()
             components.append(_component(name, True, reader=reader,
-                source_sha256=getattr(value, "digest", None) or getattr(value, "sha256", None)
-                    or (sha256_file(project / reader) if (project / reader).is_file() else None),
+                source_sha256=_reader_source_sha256(value, project / reader),
                 release=release))
             return value
         except (ValueError, OSError, ImportError, KeyError, TypeError) as error:
