@@ -53,7 +53,10 @@ def test_real_gate_denies_before_any_factory_and_does_not_accept_switches(style)
     assert not gate["admitted"]
     assert gate["reset_mesh_qualified"] is False
     assert gate["training_reward_qualified"] is False
-    assert {"mesh_reset_source_unqualified", "formal_R0_training_source_missing"} <= set(gate["blocked_reasons"])
+    components={row["name"]:row for row in gate["components"]}
+    assert not components["resolved_reset_manifest"]["valid"]
+    assert not components["finite_budget"]["valid"]
+    assert "formal_R0_training_source_missing" not in gate["blocked_reasons"]
     assert gate["projection_valid_fields"] == 66
     def forbidden(*a, **kw):
         pytest.fail("denied input constructed policy, optimizer or native episode")

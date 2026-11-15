@@ -20,7 +20,7 @@ from .tabletop_deformable_bimanual_step import HandBinding
 from .tabletop_palm_mount import MountView
 from .tabletop_deformable_live_geometry import LiveGeometryReader
 
-VERSION = "dh116-restricted-cpu-fixture-owners-v1"
+VERSION = "dh116-restricted-cpu-fixture-owners-v2"
 FIXTURE_BYTES = b"CPU double"
 FIXTURE_SHA = hashlib.sha256(FIXTURE_BYTES).hexdigest()
 SOURCE_SHA256 = {'src/go2_pvcnn/control/dh116/tabletop_deformable_bimanual_step.py': 'e144640a0310ab4824e482a2d643165239a74bbfdee66cae42289ff8cb3ee7f2',
@@ -29,12 +29,12 @@ SOURCE_SHA256 = {'src/go2_pvcnn/control/dh116/tabletop_deformable_bimanual_step.
  'src/go2_pvcnn/control/dh116/tabletop_deformable_live_geometry.py': '19a318aa643d47a73e7dc49e226d2aa6fb4b5275e072dd2257c426e76ec7bbc9',
  'src/go2_pvcnn/control/dh116/tabletop_deformable_physical_exchange.py': 'c910ebd45e246d4aa20ec94429001d2c0e2365ff5a0a0ded922212a68a2d3a36',
  'src/go2_pvcnn/control/dh116/tabletop_dual_hand_rod_runtime.py': 'e568a5b1951d43c278bff9949f3773514b1cc8f13e5d948ee0bd982a8c894688',
- 'src/go2_pvcnn/control/dh116/tabletop_no_camera_collector.py': '5a15a993b73623d3b7cbc1ef379aa8a5a775dfef741a3cb8c1bd783c89a6fbac',
+ 'src/go2_pvcnn/control/dh116/tabletop_no_camera_collector.py': 'd5dc0cf8c2a784a46f88b2f5c276eaac621b0c7565359d74ab42f459f273f87e',
  'src/go2_pvcnn/control/dh116/tabletop_palm_mount.py': '4eb43511df607c5fee1503d9b389bf49ed52102dd7304c19e4bca7028f60e307',
  'tests/test_deformable_r0_replay.py': 'bd798ff40742459a90e15d8f018aed98c53e295a649334effa8f19a53dd6c608',
  'tests/test_dh116_deformable_bimanual_step.py': 'd8b8fc9dcf892628a2902c444370a96b2b46e64ba0482fa0b3ae4b998902bdbc',
  'tests/test_dh116_dual_hand_episode.py': 'a5dddecf74d23e4c95b926eabefe0e2d7150eb2cf5cf2f0bc61b35e803864744',
- 'tests/test_dh116_no_camera_collector.py': '657fb57f4839805689c26e200c7b74188703f70ac6689b7c60f2607fa4cbb5c9',
+ 'tests/test_dh116_no_camera_collector.py': '28d3b650bd3b270a638f48b5635f8345c84e571ca623996e2dcb21f8c32d8e9a',
  'tests/test_dh116_no_camera_fixture_owners.py': '20b60497b585233b51770bcd6dcf22aca6088d64b5b3b4b0ca5becb15d012d9b',
  'tests/test_dual_hand_reset.py': 'da8edd7676af069f8b0813d5de4a4c3287d2a391c0b90c04c78fe9ce55eaeae9',
  'tests/test_dual_hand_rod_runtime.py': '1f177c94993d10d9a7eeb2dd548e853fffb8d91d8c76eada0c41a1dd399ccaf6'}

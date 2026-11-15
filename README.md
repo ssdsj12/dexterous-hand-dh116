@@ -1,3 +1,7 @@
+## 2026-11-15 — C04 实际来源绑定的独立无相机 Teacher Collector
+
+在真实 Reset 后建立新模型、原 PPO 与数值奖励；逐 SDK 子步先持久化原始证据，再校验 policy/token/request/SDK target、固定材料41距离和健康源。合法约束失败与源腐坏分开，保留 terminal/GAE；旧固定动作诊断读取器和所有受保护控制源码不改。当前只具备 Pinch smoke 软件适配，Reset>SDK240、full／Tripod／Power 来源、C06 worker 和原生资格仍为独立门槛。 Ubuntu CPU 回归 298 项通过。[报告](docs/superpowers/reports/2026-11-15-c04-native-teacher-session-collector.md)
+
 ## 2026-11-15 — C02 common66／rod41×13／context50 独立 Teacher
 
 新独立六键模型使用 common66、全部 41×13 杆节点和 context50，保留 371 槽中 305 项 NaN/false。full 阶段与首次建锚绑定原任务实际 receipt；共享预检只接受真实 SHA 文本。旧模型、动作和 PPO 保持；CPU 原 PPO 更新、梯度和状态保存兼容通过，实际 native owner／PPO 资格仍待 C04–C06。 Ubuntu CPU 回归 216 项通过。[报告](docs/superpowers/reports/2026-11-15-c02-native-teacher-model.md)

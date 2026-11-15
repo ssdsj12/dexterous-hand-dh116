@@ -27,45 +27,37 @@ ENDPOINT = ("env_id","episode_uid","reset_id","rod_uid","physics_step","rod_tick
 TASK = "configs/dh116_tasks/flexible_dual_hand_grasp_v1.json"
 
 
-def actual_admission(project, grasp):
-    """Recheck available source/config bytes, never accept a native_ready switch."""
-    project = Path(project)
+def actual_admission(project,grasp,*,config=None):
+    """Same new static source gate; default candidate remains a truthful audit."""
+    from .tabletop_native_teacher_preflight import candidate_config,static_preflight
     if grasp not in ("pinch","tripod","power"):
         raise ValueError("original per-style identity required")
-    reasons = ["mesh_reset_source_unqualified", "formal_R0_training_source_missing"]
-    config = project/f"configs/dh116_training/actual_measured_teacher_{grasp}_v1.json"
-    task_bytes = (project/TASK).read_bytes()
-    task = json.loads(task_bytes)
-    coefficients = task["reward"]["coefficients"]
-    # Current frozen source is deliberately not an approved training recipe.
-    if any(value is not None for value in coefficients.values()):
-        reasons.append("unexpected_frozen_reward_coefficients")
-    binding = None
-    source_error = None
-    try:
-        binding = load_adapter_config(config, project)
-    except (ValueError, OSError, KeyError) as exc:
-        source_error = type(exc).__name__ + ": " + str(exc)
-        reasons.append("actual_model_source_unavailable")
-    return dict(version=VERSION, grasp=grasp, admitted=False, blocked_reasons=reasons,
-        projection_valid_fields=len(common_selection()),
-        model_binding_sha256=None if binding is None else binding["binding_sha256"],
-        model_source_error=source_error, model_input_available=binding is not None,
-        task_sha256=hashlib.sha256(task_bytes).hexdigest(),
-        coefficient_source=task["reward"]["coefficient_source"],
-        reset_mesh_qualified=False, training_reward_qualified=False,
-        native_qualification=False, teacher_admission=False,
+    from .tabletop_native_teacher_session import NativeSessionConfig,native_reset_source_limits
+    c=config.preflight if type(config) is NativeSessionConfig else config
+    if c is None: c=candidate_config(style=grasp)
+    if c.get("style") != grasp: raise ValueError("explicit style/config identity differs")
+    result=static_preflight(c,project=project)
+    if type(config) is NativeSessionConfig:
+        from .tabletop_native_teacher_session import verify_static_contract
+        try:verify_static_contract(config)
+        except ValueError as error:
+            result=dict(result,static_ready=False,blocked_reasons=list(result["blocked_reasons"])+[str(error)])
+    return dict(result,admitted=result["static_ready"],reset_source_limits=native_reset_source_limits(),projection_valid_fields=66,
+        reset_mesh_qualified=False,training_reward_qualified=False,
         scope="source_audit_only_not_rollout_authorization")
 
 
-def create_actual_collector(project, grasp, *, policy_factory, trainer_factory, episode_factory):
-    """Fail before any policy, optimizer or physical owner construction.
-
-    A future independently reviewed reset/source and reward contract must replace
-    this boundary. Factory arguments document order, not a caller-supplied bypass.
-    """
-    gate = actual_admission(project, grasp)
-    raise RuntimeError("actual collector admission denied: " + ", ".join(gate["blocked_reasons"]))
+def create_actual_collector(project,grasp,*,policy_factory,trainer_factory,episode_factory,config=None):
+    """Preserved keyword factories; explicit independent config uses formal session."""
+    from .tabletop_native_teacher_session import NativeFactories,create_native_collector
+    from .tabletop_training_reward import TrainingReward
+    if config is None:
+        gate=actual_admission(project,grasp)
+        raise RuntimeError("actual collector admission denied: "+", ".join(gate["blocked_reasons"]))
+    c=getattr(config,"preflight",config)
+    if c.get("style") != grasp: raise ValueError("explicit style/config identity differs")
+    return create_native_collector(config,NativeFactories(episode_factory,policy_factory,
+        trainer_factory,TrainingReward))
 
 
 class ExclusiveJournal:
