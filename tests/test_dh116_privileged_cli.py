@@ -242,3 +242,39 @@ def test_callback_receipt_cannot_claim_external_exit_or_ignore_missing_artifact(
     sample.write_text('{}')
     cli.write_native_callback_completion(tmp_path, {'outer_exit_verified': True}, [sample])
     assert json.loads(receipt.read_text())['outer_exit_verified'] is False
+
+
+@pytest.mark.parametrize('inputs', ['missing_sha', 'missing_path', 'wrong_sha', 'missing_bc_input'])
+def test_expert_path_sha_pair_is_checked_before_model_or_optimizer(tmp_path, monkeypatch, inputs):
+    config, ppo = cli.load_config(CONFIG)
+    expert = tmp_path / 'expert.pt'
+    expert.write_bytes(b'CPU invalid expert fixture')
+    kwargs = dict(expert_dataset=expert, expert_dataset_sha256='0'*64)
+    if inputs == 'missing_sha': kwargs.pop('expert_dataset_sha256')
+    elif inputs == 'missing_path': kwargs.pop('expert_dataset')
+    elif inputs == 'missing_bc_input': kwargs = dict(bc_steps=1)
+    def forbidden(*args, **kwargs):
+        pytest.fail('expert pair/SHA must fail before constructing training state')
+    monkeypatch.setattr(cli, 'PrivilegedTeacher', forbidden)
+    monkeypatch.setattr(cli, 'PPOTrainer', forbidden)
+    with pytest.raises(ValueError, match='expert|SHA|BC'):
+        cli.train_teacher(CPUFixtureBridge(), config, ppo, output=tmp_path, updates=1, **kwargs)
+
+
+@pytest.mark.parametrize('inputs', ['missing_sha', 'missing_path', 'wrong_sha', 'missing_bc_input'])
+def test_expert_path_sha_pair_is_checked_before_native_startup(tmp_path, monkeypatch, inputs):
+    from go2_pvcnn.control.dh116 import tabletop_stereo_native as native
+    expert = tmp_path / 'expert.pt'
+    expert.write_bytes(b'CPU invalid expert fixture')
+    options = ['--expert-dataset', str(expert), '--expert-dataset-sha256', '0'*64]
+    if inputs == 'missing_sha': options = options[:2]
+    elif inputs == 'missing_path': options = options[2:]
+    elif inputs == 'missing_bc_input': options = ['--bc-steps', '1']
+    def forbidden(*args, **kwargs):
+        pytest.fail('expert pair/SHA must fail before native startup')
+    monkeypatch.setattr(native, 'launch_native', forbidden)
+    output = tmp_path / 'never'
+    with pytest.raises(ValueError, match='expert|SHA|BC'):
+        cli.main('train', ['--config', str(CONFIG), '--output', str(output),
+            '--enable-experiment', '--execute-native'] + options)
+    assert not output.exists()

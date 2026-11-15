@@ -37,7 +37,12 @@ def artifacts(path, fault=None):
             object_net_lift_m=.031, formal_hold_s=5., formal_drift_m=.0002))
     raw = path / 'cpu_raw.jsonl'
     raw.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    completion = path / 'cpu_completion.json'
+    completion.write_text(json.dumps(dict(produced_artifacts=[
+        dict(path=str(source), sha256=file_sha256(source)),
+        dict(path=str(raw), sha256=file_sha256(raw))])))
     proof.write_text(json.dumps(dict(raw_artifact=dict(path=str(raw), sha256=file_sha256(raw)),
+        completion_artifact=dict(path=str(completion), sha256=file_sha256(completion)),
         producer=dict(config_artifact=dict(sha256='b'*64)))))
     manifest = dict(version='dh116-privileged-expert-assembly-v1',
         episodes=[dict(episode_uid='cpu-fixture', source_path=str(source), source_sha256=file_sha256(source),
@@ -46,17 +51,16 @@ def artifacts(path, fault=None):
 
 
 def CPU_only_gate(monkeypatch, *, verified=True):
-    """Mock the independent native gate to test serialization, never actual qualification."""
+    """Mock LOWER native qualification only; source/process/physics joins stay real.
+
+    These CPU artifacts never establish native success qualification.
+    """
     def verify(path, *, expected_identity, subject=None):
         if not verified:
             raise ValueError('independent native qualification unavailable')
         return dict(episode_uid='cpu-fixture', owner='mpc', qualified_success=True,
             native_evidence_verified=True, sample_count=13)
-    def produced(_proof, _base, binding, **_):
-        path = build.Path(binding['path'])
-        return path.read_bytes(), path
     monkeypatch.setattr(promotion, 'verify_native_episode', verify)
-    monkeypatch.setattr(promotion, '_process_output', produced)
 
 
 @pytest.mark.parametrize('fault', ['invalid_371', 'issued_mismatch', 'raw_gate', 'proof_sha'])

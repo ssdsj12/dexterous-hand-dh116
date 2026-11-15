@@ -87,30 +87,41 @@ def _write_diagnostic_rollout(output, trainer, checkpoint):
         torch.save(artifact, stream)
 
 
+def _validate_expert_inputs(expert_dataset, expert_dataset_sha256, bc_steps):
+    if (expert_dataset is None) != (expert_dataset_sha256 is None):
+        raise ValueError('expert dataset path and SHA256 must be supplied together')
+    if expert_dataset is None:
+        if bc_steps:
+            raise ValueError('qualified expert dataset required for BC warm start')
+        return
+    from .tabletop_privileged_warm_start import _checked_bytes
+    _checked_bytes(expert_dataset, expert_dataset_sha256, 'expert dataset')
+
+
 def train_teacher(bridge, config, ppo_config, *, output, updates, checkpoint=None,
-                  expert_dataset=None, bc_steps=0, checkpoint_interval=10,
+                  expert_dataset=None, expert_dataset_sha256=None, bc_steps=0, checkpoint_interval=10,
                   record_diagnostic_rollout=False):
     """Train only the independent model using the unchanged env.step reward."""
+    _validate_expert_inputs(expert_dataset, expert_dataset_sha256, bc_steps)
     if record_diagnostic_rollout and (bridge.n != 2 or config['rollout_steps'] not in (32,128) or updates != 1):
         raise ValueError('diagnostic rollout recording requires 2 environments, 32 or 128 steps and 1 update')
     output = Path(output)
+    identity = training_identity(ppo_config, bridge.contract,getattr(bridge,'task_identity',None))
+    if expert_dataset is not None:
+        from .tabletop_privileged_warm_start import read_expert
+        payload, _ = read_expert(expert_dataset, expert_dataset_sha256, identity)
     model = PrivilegedTeacher(**config['model'])
     trainer = PPOTrainer(model, ppo_config, rollout_steps=config['rollout_steps'],
         num_envs=bridge.n, device=bridge.device)
-    identity = training_identity(ppo_config, bridge.contract,getattr(bridge,'task_identity',None))
     if checkpoint is not None:
         load_checkpoint(checkpoint, trainer, identity, history_reset='clear')
     if expert_dataset is not None:
-        from .tabletop_privileged_dataset import ActorBCTrainer, validate_expert_dataset
-        payload = torch.load(expert_dataset, map_location='cpu', weights_only=False)
-        validate_expert_dataset(payload, expected_identity=identity)
+        from .tabletop_privileged_dataset import ActorBCTrainer
         bc = ActorBCTrainer(model, ppo_trainer=trainer, lr=config['bc']['lr'])
         for _ in range(bc_steps):
             bc.step(payload['observations'], payload['actions'], payload['valid_mask'], dataset=payload)
         with (output / 'expert_bc_optimizer.pt').open('xb') as stream:
             torch.save(bc.optimizer.state_dict(), stream)
-    elif bc_steps:
-        raise ValueError('qualified expert dataset required for BC warm start')
     write_json_new(output / 'model_identity.json', identity)
     if getattr(bridge,'task_identity',None) is not None:
         write_json_new(output / 'task_identity.json',bridge.task_identity)
@@ -344,6 +355,7 @@ def main(mode='train', argv=None):
     parser.add_argument('--camera-config', type=Path,
         default=ROOT / 'configs/dh116_training/stereo_camera_640x480_v2.json')
     parser.add_argument('--expert-dataset', type=Path)
+    parser.add_argument('--expert-dataset-sha256')
     parser.add_argument('--bc-steps', type=int, default=0)
     parser.add_argument('--checkpoint-interval', type=int, default=10)
     parser.add_argument('--record-diagnostic-rollout', action='store_true',
@@ -356,6 +368,7 @@ def main(mode='train', argv=None):
     parser.add_argument('--execute-native', action='store_true')
     parser.add_argument('--check-config', action='store_true')
     args = parser.parse_args(argv)
+    _validate_expert_inputs(args.expert_dataset, args.expert_dataset_sha256, args.bc_steps)
     config, ppo = load_config(args.config)
     if args.rollout_steps is not None:
         config['rollout_steps'] = args.rollout_steps
@@ -393,7 +406,8 @@ def main(mode='train', argv=None):
             args.camera_config, device=bridge.device))
         if mode == 'train':
             result = train_teacher(bridge, config, ppo, output=run, updates=args.updates,
-                checkpoint=args.checkpoint, expert_dataset=args.expert_dataset, bc_steps=args.bc_steps,
+                checkpoint=args.checkpoint, expert_dataset=args.expert_dataset,
+                expert_dataset_sha256=args.expert_dataset_sha256, bc_steps=args.bc_steps,
                 checkpoint_interval=args.checkpoint_interval, record_diagnostic_rollout=args.record_diagnostic_rollout)
             artifacts = [run / name for name in ('model_identity.json', 'resolved_config.json', 'iterations.jsonl')]
             artifacts.extend(run.glob('teacher_update_*.pt'))

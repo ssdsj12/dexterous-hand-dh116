@@ -1,3 +1,7 @@
+## 2026-11-15 — R03：将Teacher专家张量绑定到实际原生来源
+
+统一专家入场在原metadata/native proof之后重放实际process source、371D状态、canonical24实际动作和物理时钟；CLI在启动原生或模型前核对专家路径/SHA。新增上层篡改回归的下层native gate为显式CPU double，源和raw join仍运行真实代码；不授予新的Teacher或原生资格。 Ubuntu CPU 回归 105 项通过。[报告](docs/superpowers/reports/2026-11-15-r03-teacher-source-binding.md)
+
 ## 2026-11-15 — R01：统一三种Stereo Actor的BC与DAgger特征入口
 
 BC与Actor推理共用features_from_estimates；estimated_task_state/hybrid不再错误使用latent宽度。新测试先复现5项失败，再覆盖三模式BC/DAgger、动作分支梯度、训练模式恢复与原latent精确数学。只进行了CPU schema回归，无新增原生执行或训练资格。 Ubuntu CPU 回归 66 项通过。[报告](docs/superpowers/reports/2026-11-15-r01-actor-input-repair.md)

@@ -5,7 +5,6 @@ import pytest
 import torch
 
 from go2_pvcnn.control.dh116 import tabletop_privileged_cli as cli
-from go2_pvcnn.control.dh116 import tabletop_privileged_dataset as data
 from go2_pvcnn.control.dh116 import tabletop_privileged_warm_start as warm
 from go2_pvcnn.control.dh116.tabletop_privileged_checkpoint import load_checkpoint
 
@@ -13,20 +12,20 @@ from go2_pvcnn.control.dh116.tabletop_privileged_checkpoint import load_checkpoi
 CONFIG = Path(__file__).resolve().parents[1] / 'configs/dh116_training/privileged_teacher_ppo_guarded_v2.json'
 
 
-def fixture(path):
-    observations = torch.zeros(2, 371)
-    actions = torch.full((2, 24), .2)
-    valid = torch.ones(2, 371, dtype=torch.bool)
-    torch.save(dict(observations=observations.clone(), actions=actions.clone(), privileged_valid=valid,
-        sample_metadata=[dict(episode_uid='fixture', tick=i) for i in range(2)]), path)
-    return dict(observations=observations, actions=actions, valid_mask=torch.ones_like(actions, dtype=torch.bool),
-        episodes=[dict(episode_id='fixture', source_path=str(path), source_sha256=cli.file_sha256(path), start=0, end=2)])
+def fixture(path, monkeypatch, identity=None):
+    from test_dh116_teacher_expert_assembly import artifacts, CPU_only_gate
+    from go2_pvcnn.control.dh116 import tabletop_privileged_expert_assembly as build
+    source_identity, manifest = artifacts(path.parent)
+    CPU_only_gate(monkeypatch)
+    output = path.parent / 'assembled'
+    build.assemble_experts(manifest, source_identity if identity is None else identity, output)
+    return torch.load(output / 'privileged_native_expert.pt', weights_only=True)
 
 
 @pytest.mark.parametrize('fault', ['privileged', 'action', 'order', 'state', 'empty_mask'])
-def test_warm_start_reopens_aligned_source_and_rejects_invalid_rows(tmp_path, fault):
+def test_warm_start_reopens_aligned_source_and_rejects_invalid_rows(tmp_path, monkeypatch, fault):
     source = tmp_path / 'source.pt'
-    payload = fixture(source)
+    payload = fixture(source, monkeypatch)
     if fault == 'privileged':
         content = torch.load(source, weights_only=True)
         content['privileged_valid'][0, 24] = False
@@ -50,17 +49,16 @@ def test_warm_start_reopens_aligned_source_and_rejects_invalid_rows(tmp_path, fa
 def test_offline_actor_bc_checkpoint_loads_into_r0_without_critic_noise_or_adam_transfer(tmp_path, monkeypatch):
     config, ppo = cli.load_config(CONFIG)
     source = tmp_path / 'source.pt'
-    payload = fixture(source)
     identity = cli.training_identity(ppo, dict(test_only=True))
-    payload['identity'] = identity
+    payload = fixture(source, monkeypatch, identity)
     expert = tmp_path / 'expert.pt'
     torch.save(payload, expert)
     verification = []
-    def CPU_admission(value, *, expected_identity):
-        assert expected_identity == identity and value['identity'] == identity
+    replay = warm.verify_supervised_rows
+    def counted(value):
         verification.append(1)
-        return value
-    monkeypatch.setattr(data, 'validate_expert_dataset', CPU_admission)
+        return replay(value)
+    monkeypatch.setattr(warm, 'verify_supervised_rows', counted)
     torch.manual_seed(116)
     reference = cli.PPOTrainer(cli.PrivilegedTeacher(**config['model']), ppo,
         rollout_steps=config['rollout_steps'], num_envs=2)
@@ -70,7 +68,7 @@ def test_offline_actor_bc_checkpoint_loads_into_r0_without_critic_noise_or_adam_
     load_checkpoint(output / result['checkpoint_file'], reference, identity, history_reset='clear')
     assert result['native_grasp_qualification'] is False
     assert result['ppo_optimizer_state_empty'] and result['critic_and_noise_unchanged']
-    assert len(verification) >= 1 and reference.policy_version == 2
+    assert len(verification) == 1 and reference.policy_version == 2
     assert not reference.optimizer.state and reference.counters['updates'] == 0
     assert (output / 'bc_iterations.jsonl').is_file()
     assert (output / 'warm_start.json').is_file()
@@ -80,9 +78,8 @@ def test_offline_actor_bc_checkpoint_loads_into_r0_without_critic_noise_or_adam_
 def test_wrong_expert_sha_and_unqualified_source_create_no_run(tmp_path):
     config, ppo = cli.load_config(CONFIG)
     identity = cli.training_identity(ppo, dict(test_only=True))
-    source = tmp_path / 'source.pt'
     expert = tmp_path / 'expert.pt'
-    torch.save(fixture(source), expert)
+    torch.save(dict(observations=torch.zeros(2, 371)), expert)
     output = tmp_path / 'warm'
     with pytest.raises(ValueError, match='SHA'):
         warm.warm_start_teacher(config, ppo, identity, expert,

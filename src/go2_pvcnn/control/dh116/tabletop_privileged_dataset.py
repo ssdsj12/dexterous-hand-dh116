@@ -35,7 +35,7 @@ def _sha(value):
     return isinstance(value, str) and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
 
 
-def validate_expert_dataset(payload, *, expected_identity):
+def _validate_expert_metadata(payload, *, expected_identity):
     if not isinstance(payload, dict) or payload.get('version') != DATASET_VERSION:
         raise ValueError('versioned privileged expert dataset required')
     if payload.get('schema_only') is not False:
@@ -118,6 +118,20 @@ def validate_expert_dataset(payload, *, expected_identity):
     if cursor != n:
         raise ValueError('every expert transition must belong to a complete episode')
     return payload
+
+
+def validate_bound_expert_dataset(payload, *, expected_identity):
+    """Admit metadata and its actual process-bound supervised rows together."""
+    _validate_expert_metadata(payload, expected_identity=expected_identity)
+    # Local import keeps the dataset/CLI/warm-start dependency graph acyclic.
+    from .tabletop_privileged_warm_start import verify_supervised_rows
+    return payload, verify_supervised_rows(payload)
+
+
+def validate_expert_dataset(payload, *, expected_identity):
+    """Preserve the public payload-only API with full source admission."""
+    admitted, _ = validate_bound_expert_dataset(payload, expected_identity=expected_identity)
+    return admitted
 
 
 def audit_expert_compatibility(payload, *, expected_identity):

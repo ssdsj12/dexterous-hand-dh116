@@ -26,6 +26,9 @@ def _checked_bytes(path, expected_sha256, label):
 
 def verify_supervised_rows(payload):
     """Reopen actual pre-action state/issued-action rows for every admitted episode."""
+    from . import tabletop_stereo_promotion as promotion
+    from .tabletop_privileged_expert_assembly import _episode_source_rows
+
     sources = {}
     bindings = []
     for episode in payload['episodes']:
@@ -54,12 +57,18 @@ def verify_supervised_rows(payload):
             raise ValueError('source episode must contain the same contiguous pre-action rows')
         if not bool(valid[indices].all()):
             raise ValueError('unmasked 371D Teacher cannot warm start from unverified privileged fields')
-        for name, value in (('observations', observations), ('actions', actions)):
+        qualification, base = promotion._read_object(episode['qualification_evidence'])
+        promotion._process_output(qualification, base, dict(path=key[0], sha256=source_sha))
+        raw_physical, _ = promotion._artifact(qualification['raw_artifact'], base)
+        physical = [row for row in promotion._jsonl(raw_physical)
+                    if row.get('kind', 'sample') == 'sample' and row.get('live', True)]
+        state, issued = _episode_source_rows(source, episode_id, physical)
+        for name, value in (('observations', state), ('actions', issued)):
             target = payload[name][start:stop]
-            if value.dtype != target.dtype or not torch.equal(value[indices], target):
+            if value.dtype != target.dtype or not torch.equal(value, target):
                 raise ValueError('expert rows differ from measured/issued source ' + name)
-        if not bool(payload['valid_mask'][start:stop].any(dim=1).all()):
-            raise ValueError('every supervised pre-action row needs an eligible issued action')
+        if not torch.equal(payload['valid_mask'][start:stop], torch.ones_like(issued, dtype=torch.bool)):
+            raise ValueError('expert action mask differs from canonical issued source mask')
         bindings.append(dict(episode_id=episode_id, source_sha256=source_sha, rows=len(indices),
                              first_policy_tick=ticks[0], last_policy_tick=ticks[-1]))
     return bindings
@@ -68,8 +77,7 @@ def verify_supervised_rows(payload):
 def read_expert(expert_dataset, expert_sha256, identity):
     raw = _checked_bytes(expert_dataset, expert_sha256, 'expert dataset')
     payload = torch.load(io.BytesIO(raw), map_location='cpu', weights_only=True)
-    expert.validate_expert_dataset(payload, expected_identity=identity)
-    return payload, verify_supervised_rows(payload)
+    return expert.validate_bound_expert_dataset(payload, expected_identity=identity)
 
 
 def warm_start_teacher(config, ppo, identity, expert_dataset, *, expert_sha256, output, steps, num_envs, seed):
