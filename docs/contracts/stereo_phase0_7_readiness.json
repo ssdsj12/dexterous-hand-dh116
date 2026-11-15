@@ -19982,6 +19982,48 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-15-fixed-anchor-slip-lifecycle-v2.md",
       "report_source_commit": "c59f08041ceecbf1d3cfd5b49ae57c12a0d6d7a2"
+    },
+    "teacher.actual-launch-l01-cpu": {
+      "passed": 322,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_actual_launch_process.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_native_teacher_worker_lease.py",
+        "tests/test_native_teacher_worker_semantic.py",
+        "tests/test_native_teacher_worker_artifacts.py",
+        "tests/test_native_teacher_worker_checkpoint.py"
+      ],
+      "log_sha256": "bc97b32a927bee6f7879519c975b9dd438fbaa17ec8f31f57734bd8f413da8c4",
+      "tested_head": "5d5736302fa8420ae19a746491a613d0db1820b3",
+      "native_qualification": false,
+      "qualification_scope": "cpu_actual_launch_and_parent_issued_kernel_process_lease_only",
+      "new_native_steps": 0,
+      "new_native_updates": 0,
+      "actual_provider_implemented": false,
+      "actual_artifacts_implemented": false,
+      "native_b_executor_implemented": false,
+      "native_ready": false,
+      "candidate_full_cpu_passed": 322,
+      "candidate_full_log_sha256": "7ebf5ffd61dd3587e0c24071469c56040bdf90b2e6d02fa44d6c382868f669e5",
+      "spec_review": "PASS exact785fcd6; independent53 plus protection",
+      "quality_review": "PASS exact785fcd6; independent53/0",
+      "quality_log_sha256": "382059eaff46d3a06ce518fbe0bf1381aab38bb4aed917911e1b2592762c33a4",
+      "production_singleton_lock_touched": false,
+      "old_v1_v2_fingerprints_preserved": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-15-dh116-actual-launch-l01.md",
+      "report_source_commit": "785fcd666a61bd3c1d7e19d6fb59cb79e0fc8ae2"
     }
   }
 }

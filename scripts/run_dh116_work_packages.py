@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from datetime import datetime, timezone
 import hashlib
 import ipaddress
@@ -20,6 +20,11 @@ import sys
 import time
 from tempfile import NamedTemporaryFile, mkdtemp
 from urllib.request import urlopen
+
+# C06 intentionally requires the exact Repository type. Direct script launch
+# must share that same module identity with the worker's imported verifier.
+if __name__ == '__main__':
+    sys.modules['scripts.run_dh116_work_packages'] = sys.modules[__name__]
 
 
 BRANCH = 'codex/dh116-stereo-privileged-dagger'
@@ -630,10 +635,19 @@ def native_approval(approval, repo):
             or output.is_relative_to(repo.root) and not output.is_relative_to(repo.root / 'artifacts')):
         raise ValueError('approved native output root must be private and separate from source')
     for name, approved in approval['packages'].items():
+        keys = {'command_spec_sha256', 'code_config_sha256'}
         if (not ID.fullmatch(name) or not isinstance(approved, dict)
-                or set(approved) != {'command_spec_sha256', 'code_config_sha256'}
-                or any(not isinstance(v, str) or not SHA256.fullmatch(v) for v in approved.values())):
+                or set(approved) not in (keys, keys | {'actual_identity'})
+                or any(not isinstance(approved.get(k), str) or not SHA256.fullmatch(approved[k]) for k in keys)):
             raise ValueError('native batch requires exact package code and command spec SHA256')
+        if 'actual_identity' in approved:
+            actual = approved['actual_identity']
+            if (type(actual) is not dict or set(actual) != {'schema','core_recipe_identity','companion_sha256','source_closure_sha256'}
+                    or actual['schema'] != 'dh116-actual-native-execution-identity-v1'
+                    or actual['core_recipe_identity'] != {k:approved[k] for k in keys}
+                    or any(type(actual[k]) is not str or not SHA256.fullmatch(actual[k])
+                           for k in ('companion_sha256','source_closure_sha256'))):
+                raise ValueError('exact actual launch approval identity required')
     return approval
 
 
@@ -818,7 +832,64 @@ class Repository:
                     log=str(path), log_sha256=file_hash(path), tested_head=tested_head)
 
     def native_recipe(self, package):
+        if package.get('actual_launch') is not None:
+            from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_launch import PROVIDER
+            if not (self.root / PROVIDER).is_file():
+                raise ValueError('actual_provider_not_implemented')
         return native_recipe(self, package)
+
+    def actual_launch(self, package):
+        binding = package.get('actual_launch')
+        if binding is None:
+            return None
+        if (type(binding) is not dict or set(binding) != {'path','sha256'}
+                or type(binding['path']) is not str or not binding['path'].startswith('configs/dh116_execution/')
+                or not binding['path'].endswith('.json') or type(binding['sha256']) is not str
+                or not SHA256.fullmatch(binding['sha256'])):
+            raise ValueError('actual launch file binding invalid')
+        path = self.root / native_relative_path(binding['path'])
+        if path.resolve(strict=True) != path or not path.is_file():
+            raise ValueError('actual launch requires a regular local companion')
+        raw = path.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != binding['sha256']:
+            raise ValueError('actual launch companion SHA differs')
+        from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_launch import validate_actual_launch
+        return validate_actual_launch(json.loads(raw), repository=self, package=package)
+
+    def native_execution_identity(self, package, *, recipe=None):
+        recipe = recipe or self.native_recipe(package)
+        core = {k:recipe[k] for k in ('command_spec_sha256','code_config_sha256')}
+        launch = self.actual_launch(package)
+        actual = None
+        fingerprint = core['code_config_sha256']
+        if launch is not None:
+            from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_launch import actual_launch_identity, _digest
+            actual = actual_launch_identity(launch, companion_sha256=package['actual_launch']['sha256'])
+            fingerprint = _digest(dict(core_identity=core, actual_identity=actual))
+        return dict(core_identity=core, actual_identity=actual, attempt_fingerprint=fingerprint)
+
+    def resolve_actual_checkpoint_origin(self, launch, *, packages):
+        if launch['role'] == 'a_fresh':
+            return None
+        raise ValueError('actual_resume_not_implemented')
+
+    def _read_native_receipt_bytes(self, name, *, attempt_fingerprint, expected):
+        base = self.private / 'native-attempts' / name / attempt_fingerprint
+        matches = []
+        for path in base.glob('attempt-*/receipt.json'):
+            if path.resolve() == path and path.is_file():
+                raw = path.read_bytes()
+                if hashlib.sha256(raw).hexdigest() == expected:
+                    matches.append((path, raw))
+        if len(matches) != 1:
+            raise ValueError('native receipt is missing, ambiguous, or has been modified')
+        return matches[0]
+
+    def _verified_actual_native_receipt(self, name, scope, recipe, expected, *, launch):
+        # L02/L03 own the distinct role-aware artifact validator. Until then no
+        # generic A-only C06 receipt may be promoted to actual qualification.
+        self.native_execution_identity(self.registry()['packages'][name], recipe=recipe)
+        raise ValueError('actual_artifacts_not_implemented')
 
     def resolve_native_dependency_receipt(self, binding, packages):
         """Locate the published producer's exact private receipt and revalidate its bytes."""
@@ -827,7 +898,10 @@ class Repository:
         package = packages[producer]
         published = package.get('last_result', {})
         recipe = self.native_recipe(package)
-        identity = {key: recipe[key] for key in ('command_spec_sha256', 'code_config_sha256')}
+        execution = self.native_execution_identity(package, recipe=recipe)
+        identity = dict(execution['core_identity'])
+        if execution['actual_identity'] is not None:
+            identity['actual_identity'] = execution['actual_identity']
         expected = published.get('result_sha256', '')
         if (package['executor'] != 'native_bounded' or package['status'] != 'passed'
                 or published.get('native_qualification') is not True
@@ -838,17 +912,13 @@ class Repository:
         return dict(package=producer, qualification_scope=scope, path=str(path), sha256=expected)
 
     def _verified_native_receipt(self, name, scope, recipe, expected):
+        package = self.registry()['packages'][name]
+        launch = self.actual_launch(package)
+        if launch is not None:
+            return self._verified_actual_native_receipt(name, scope, recipe, expected, launch=launch)
         identity = {key: recipe[key] for key in ('command_spec_sha256', 'code_config_sha256')}
-        base = self.private / 'native-attempts' / name / identity['code_config_sha256']
-        matches = [path for path in base.glob('attempt-*/receipt.json')
-                   if path.resolve() == path and file_hash(path) == expected]
-        if len(matches) != 1:
-            raise ValueError('native receipt is missing, ambiguous, or has been modified')
-        path, = matches
+        path, raw = self._read_native_receipt_bytes(name, attempt_fingerprint=identity['code_config_sha256'], expected=expected)
         attempt = path.parent
-        raw = path.read_bytes()
-        if hashlib.sha256(raw).hexdigest() != expected:
-            raise ValueError('native receipt changed during verification')
         receipt = json.loads(raw)
         intent = json.loads(native_artifact(attempt, 'intent.json').read_text(encoding='utf-8'))
         outer = json.loads(native_artifact(attempt, 'outer_exit.json').read_text(encoding='utf-8'))
@@ -977,17 +1047,20 @@ class Repository:
                 continue
             try:
                 recipe = self.native_recipe(package)
+                execution = self.native_execution_identity(package, recipe=recipe)
             except (OSError, ValueError, TypeError, KeyError) as error:
                 blockers[name] = resource_blocker('external_data', str(error))
                 continue
-            fingerprint = recipe['code_config_sha256']
-            identities[name] = {k: recipe[k] for k in ('command_spec_sha256', 'code_config_sha256')}
+            fingerprint = execution['attempt_fingerprint']
+            identities[name] = dict(execution['core_identity'])
+            if execution['actual_identity'] is not None:
+                identities[name]['actual_identity'] = execution['actual_identity']
             recipes[name] = recipe
             current = package.get('last_result', {})
             attempts = list(self.native_attempts(name, fingerprint))
             if len(attempts) > 1:
                 raise RuntimeError(f'multiple native attempts consumed for identical code/config: {name}')
-            if current.get('code_config_sha256') == fingerprint:
+            if current.get('attempt_fingerprint', current.get('code_config_sha256')) == fingerprint:
                 if current.get('native_qualification') is True and package['status'] == 'passed':
                     qualified[name] = current
                 else:
@@ -1083,14 +1156,17 @@ class Repository:
             raise RuntimeError('native package is blocked, consumed, or unapproved')
         package = self.registry()['packages'][name]
         recipe = self.native_recipe(package)
-        fingerprint = recipe['code_config_sha256']
+        execution = self.native_execution_identity(package, recipe=recipe)
+        fingerprint = execution['attempt_fingerprint']
         base = self.private / 'native-attempts' / name / fingerprint
         base.mkdir(parents=True, exist_ok=True)
         directory = Path(mkdtemp(prefix='attempt-', dir=base))
         output = Path(approval['output_root']) / name / directory.name / 'native'
         intent = directory / 'intent.json'
         state = dict(package=name, head=self.head(), output=str(output), approval=approval,
-                     command_spec_sha256=recipe['command_spec_sha256'], code_config_sha256=fingerprint)
+                     **execution['core_identity'])
+        if execution['actual_identity'] is not None:
+            state.update(execution, actual_launch=package['actual_launch'])
         binding = recipe['spec'].get('dependency_receipt')
         if binding is not None:
             state['dependency_receipt'] = self.resolve_native_dependency_receipt(binding, self.registry()['packages'])
@@ -1112,12 +1188,19 @@ class Repository:
         packages = self.registry()['packages']
         package = packages[name]
         recipe = self.native_recipe(package)
-        identity = {k: recipe[k] for k in ('command_spec_sha256', 'code_config_sha256')}
+        execution = self.native_execution_identity(package, recipe=recipe)
+        identity = dict(execution['core_identity'])
+        actual_launch = self.actual_launch(package)
+        if execution['actual_identity'] is not None:
+            identity['actual_identity'] = execution['actual_identity']
         output_root = Path(approval['output_root'])
         output = output_root / name / path.name / 'native'
         if (self.head() != intent['head'] or identity != approval['packages'].get(name)
                 or any(intent[k] != v for k, v in identity.items()) or str(output) != intent['output']
-                or path.parent != self.private / 'native-attempts' / name / identity['code_config_sha256']):
+                or path.parent != self.private / 'native-attempts' / name / execution['attempt_fingerprint']
+                or actual_launch is not None and (intent.get('core_identity') != execution['core_identity']
+                    or intent.get('attempt_fingerprint') != execution['attempt_fingerprint']
+                    or intent.get('actual_launch') != package.get('actual_launch'))):
             raise RuntimeError('native worker intent no longer matches approved code/config')
         if native_dependency_blockers(packages, package,
                 {key: packages[key].get('last_result', {})
@@ -1133,6 +1216,8 @@ class Repository:
         result = dict(executor='native_bounded', tested_head=intent['head'], batch_id=approval['batch_id'],
                       qualification_scope=package['evidence_scope'], native_qualification=False,
                       native_execution_performed=False, output=str(output), **identity)
+        if actual_launch is not None:
+            result.update(execution, actual_launch=package['actual_launch'])
         if bound is not None:
             result['dependency_receipt_sha256'] = bound['sha256']
         try:
@@ -1153,7 +1238,11 @@ class Repository:
                         if bound is not None and bound != self.resolve_native_dependency_receipt(binding, packages):
                             raise RuntimeError('producer receipt changed before native launch')
                         if recipe['spec'].get('version') == 2:
-                            self._native_child(path, recipe['spec'], output, result, bound=bound, package=package)
+                            if actual_launch is not None:
+                                self._native_child(path, recipe['spec'], output, result, bound=bound,
+                                                   package=package, actual_launch=actual_launch)
+                            else:
+                                self._native_child(path, recipe['spec'], output, result, bound=bound, package=package)
                         else:
                             self._native_child(path, recipe['spec'], output, result, bound=bound)
                     except (OSError, ValueError, subprocess.SubprocessError):
@@ -1162,7 +1251,7 @@ class Repository:
         atomic_write(receipt, json_text(result))
         return dict(result, result_sha256=file_hash(receipt))
 
-    def _native_child(self, path, spec, output, result, *, bound=None, package=None):
+    def _native_child(self, path, spec, output, result, *, bound=None, package=None, actual_launch=None):
         budget = spec['budget']
         if output.resolve() != output:
             raise ValueError('native output path escapes the approved private root')
@@ -1177,17 +1266,36 @@ class Repository:
         result['launch_argv_sha256'] = file_hash(launch_record)
         env = {**os.environ, **spec.get('environment', {}), 'DH116_PYTHON': sys.executable,
                'CUDA_VISIBLE_DEVICES': str(budget['gpu_index']), 'PYTHONDONTWRITEBYTECODE': '1'}
-        debugger = spec.get('debugger') == 'gdb_on_segv'
+        debugger = (actual_launch or spec).get('debugger') == 'gdb_on_segv'
+        server = None
+        if actual_launch is not None:
+            from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_process import ActualLaunchServer
+            # _run_registered_native_worker already re-read the same intent.
+            # Server independently repeats registration/source/approval checks.
+            started = time.monotonic()
+            deadline = started + min(budget['timeout_seconds'], spec['teacher_contract']['limits']['inner_wall_timeout_s'])
+            server = ActualLaunchServer(repository=self, package=package,
+                intent_binding=dict(path=str(path/'intent.json'), sha256=file_hash(path/'intent.json')),
+                launch=actual_launch, directory=path/'actual-launch', deadline=deadline)
         if debugger:
             env['DH116_PYTHON'] = native_debugger_wrapper(path, result)
         log = path / 'native.log'
-        started = time.monotonic()
+        started = started if server is not None else time.monotonic()
         observed = False
-        with log.open('xb') as stream:
+        with ExitStack() as launch_scope, log.open('xb') as stream:
             atomic_write(path / 'running.json', json_text(dict(
                 worker_pid=os.getpid(), started_unix_s=time.time(), timeout_seconds=budget['timeout_seconds'])))
+            if server is not None:
+                launch_scope.enter_context(server)
+                env.update(CUDA_VISIBLE_DEVICES=actual_launch['device_plan']['cuda_visible_devices'],
+                    DH116_ACTUAL_LAUNCH_PATH=server.binding['path'],DH116_ACTUAL_LAUNCH_SHA256=server.binding['sha256'])
             with subprocess.Popen(command, cwd=self.root, env=env, stdin=subprocess.DEVNULL,
                                   stdout=stream, stderr=subprocess.STDOUT, start_new_session=True) as child:
+                if server is not None:
+                    try:
+                        server.serve_once(child)
+                    except (OSError,ValueError) as error:
+                        result['actual_launch_error'] = str(error)
                 while child.poll() is None and time.monotonic() - started <= budget['timeout_seconds']:
                     observed |= self.native_lock_observed(child.pid, debugger)
                     time.sleep(0.05)
@@ -1214,7 +1322,9 @@ class Repository:
                           reason='outer process failure, missing shared lock evidence, or elapsed budget exceeded')
             return
         try:
-            if spec.get('version') == 2:
+            if actual_launch is not None:
+                raise ValueError('actual_artifacts_not_implemented')
+            elif spec.get('version') == 2:
                 artifacts = validate_native_artifacts(spec, output, repository=self, package=package)
             else:
                 artifacts = validate_native_artifacts(spec, output)
@@ -1230,6 +1340,12 @@ class Repository:
         result.update(native_qualification=True, **artifacts)
 
     def start_native(self, name, approval):
+        package = self.registry()['packages'][name]
+        execution = self.native_execution_identity(package)
+        if execution['actual_identity'] is not None:
+            required = {**execution['core_identity'], 'actual_identity':execution['actual_identity']}
+            if not approval or approval.get('packages', {}).get(name) != required:
+                raise ValueError('exact independent actual launch approval required')
         intent = self.register_native_attempt(name, approval)
         budget = self.native_recipe(self.registry()['packages'][name])['spec']['budget']
         with (intent.parent / 'worker.log').open('xb') as log:

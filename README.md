@@ -1,3 +1,7 @@
+## 2026-11-15 — 真实Worker组合身份、父进程租约交接和明确设备启动
+
+独立actual companion锁完整源码/设备/GDB及同一执行身份，SO_PEERCRED与实际inferior本人FLOCK、调度进程和一次性grant联核；保留旧v1/v2批准路径。原目录manifest阻断已另经用户批准仅恢复metadata并完成来源重验；L02真实provider和L03恢复仍未实现，未启动原生。 Ubuntu CPU 回归 322 项通过。[报告](docs/superpowers/reports/2026-11-15-dh116-actual-launch-l01.md)
+
 ## 2026-11-15 — 固定锚生命周期与公开回执历史隔离 v2
 
 独立v2只实现固定四锚/失接触NA/同锚重接触和owned回执，不改变旧物理、奖励或PPO。初次QUALITY发现公开回执可篡改内部锚历史，已按原反例修复并保留失败证据；完整同钟SourceAdapter/独立Evaluator及native仍待实现。 Ubuntu CPU 回归 527 项通过。[报告](docs/superpowers/reports/2026-11-15-fixed-anchor-slip-lifecycle-v2.md)
