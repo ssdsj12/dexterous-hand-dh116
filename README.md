@@ -1,3 +1,7 @@
+## 2026-11-15 — 独立 v2 Reset 全源链与失败进度 CPU 合同
+
+独立贯通 dual/order/readback/numeric Reset 时钟策略，保留11槽、typed状态与字节一致性；失败时记录真实SDK进度，solver无可信计数则明确未知，拒bool与reader替换并保持原异常。旧v1不变；受控长回合续接和原生消费者尚未验收。 Ubuntu CPU 回归 233 项通过。[报告](docs/superpowers/reports/2026-11-15-native-reset-source-chain-v2.md)
+
 ## 2026-11-15 — 独立 context51 与固定引用生命周期 CPU 合同
 
 新增独立51维 context、owned pre/post 快照与严格阶段/历史身份；保持全部已建立的材料和切向引用不变，保留独立审查失败及修复证据。旧context50不变，真实W4来源、v2模型与原生训练仍未具备资格。 Ubuntu CPU 回归 183 项通过。[报告](docs/superpowers/reports/2026-11-15-fixed-s0-context51-v2.md)

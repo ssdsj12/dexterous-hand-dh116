@@ -19842,6 +19842,45 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-15-fixed-s0-context51-v2.md",
       "report_source_commit": "d108b71f310aa454db0e6dfc2c5a037ec95d7d5e"
+    },
+    "teacher.v2.reset-source-chain-cpu": {
+      "passed": 233,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_mesh_reset_v2.py",
+        "tests/test_native_training_clock.py",
+        "tests/test_mesh_reset_order.py",
+        "tests/test_mesh_reset_numeric_state.py",
+        "tests/test_dual_hand_reset.py"
+      ],
+      "log_sha256": "03cfd262cd8c48c11a66ef22539fe4737e83a5b7e85c609cf05d161562b8aa08",
+      "tested_head": "1b9472ac1064a68afbc97dadbde550d4643ba2be",
+      "native_qualification": false,
+      "qualification_scope": "cpu_reset_source_chain_only",
+      "actual_native_steps": 0,
+      "actual_native_updates": 0,
+      "controlled_long_episode_continuation_verified": false,
+      "current_native_clock_consumers_qualified": false,
+      "native_ready": false,
+      "old_reset_v1_unchanged": true,
+      "failure_solver_count_contract": "None with explicit unknown_no_actual_call_counter; never inferred from time",
+      "prior_spec_failed_candidate": "84806b1ca3e758aa2d7b4cb3c05c746a1b8f2658",
+      "prior_quality_failed_candidate": "42d38c3fb5122c59f5494117c13779e80a0a84f8",
+      "spec_review": "PASS42d38c3 base before isolated5line initialization correction",
+      "spec_evidence_sha256": "692ee28b908ad1a613842cfd2ee458d13a5a56dfcdc07857b7047566ec49dc1f",
+      "quality_review": "PASS exact f6748ea;72 tests6.44s and original early-failure probes",
+      "quality_evidence_sha256": "60c96fd6a275f03ff800c654ab94e8f44a16799a7875530da0dbb303ec08274b",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-15-native-reset-source-chain-v2.md",
+      "report_source_commit": "f6748ea95830f421b75e814fb6483b587354df66"
     }
   }
 }
