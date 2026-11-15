@@ -303,8 +303,10 @@ def test_privileged_quaternion_groups_never_receive_raw_component_huber():
     prediction.requires_grad_()
     sources={key:torch.ones(1,dtype=torch.bool) for key in loss_fn.required}
     sources['rotation_symmetry_valid']=torch.ones(1,dtype=torch.bool)
+    valid=torch.zeros(1,371,dtype=torch.bool)
+    for start in (64,156,163): valid[:,start:start+4]=True
     result=loss_fn({'privileged_state':prediction},{'privileged_state':target},
-        {'privileged_state':torch.ones(1,371,dtype=torch.bool),'state_sources':sources})
+        {'privileged_state':valid,'state_sources':sources})
     assert float(result['total'].detach())==pytest.approx(0.,abs=1e-6)
     result['total'].backward();assert torch.isfinite(prediction.grad).all()
 

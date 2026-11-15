@@ -1,3 +1,7 @@
+## 2026-11-15 — R02：统一371槽分类、回归与旋转监督数学
+
+371槽20项分类使用BCEWithLogits，两条训练入口共用canonical_state_loss，原来源、NA、旋转与force资格门保留。新增40组分类数值/梯度和版本保存回归；原quaternion专用测试收紧到实际所测旋转组，不改原始合同或PPO/Tanh数学。新的训练合同显式记录loss-v2，旧模型和原始数据不覆盖。 Ubuntu CPU 回归 168 项通过。[报告](docs/superpowers/reports/2026-11-15-r02-canonical-field-losses.md)
+
 ## 2026-11-15 — R07：修正非中心USD相机主点投影
 
 用实际USD Camera与Gf投影复现并修正非中心主点符号，author/readback共用正确数学；四分辨率与左右独立内参、位姿/原点/槽排序均有CPU回归。另修正自创建时即错误的旧224配置静态SHA断言，原配置字节不动。CPU投影不授予新的相机原生精度资格。 Ubuntu CPU 回归 208 项通过。[报告](docs/superpowers/reports/2026-11-15-r07-usd-camera-projection.md)

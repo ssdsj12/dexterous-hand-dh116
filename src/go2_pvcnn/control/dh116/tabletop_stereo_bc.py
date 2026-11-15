@@ -100,6 +100,6 @@ class StereoBCTrainer:
         total.backward()
         norm=torch.nn.utils.clip_grad_norm_(self.parameters,self.config['max_grad_norm'],error_if_nonfinite=True)
         self.optimizer.step();self.steps+=1
-        return dict(steps=self.steps,losses={k:float(v.detach()) for k,v in terms.items()}|{'total':float(total.detach())},
+        return dict(steps=self.steps,state_loss_version=self.state_loss.loss_version,losses={k:float(v.detach()) for k,v in terms.items()}|{'total':float(total.detach())},
             gradient_norms=norms,gradient_norm_before_clip=float(norm),coverage=state['coverage'],blocked_reasons=state['blocked_reasons'],
             schema_only=dataset['schema_only'],native_qualified=False,ppo_storage_modified=False)

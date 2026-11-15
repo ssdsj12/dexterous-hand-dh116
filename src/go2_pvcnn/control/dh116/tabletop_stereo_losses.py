@@ -10,6 +10,9 @@ from torch import nn
 from torch.nn import functional as F
 
 
+STATE_LOSS_VERSION = "dh116-stereo-canonical-field-loss-v2"
+
+
 def _force_proof_verified(binding):
     """Proof/producer/raw-byte verification is shared with the promotion gate."""
     try:
@@ -89,6 +92,7 @@ def per_dimension_metrics(prediction,target,mask):
 class StereoEstimationLoss(nn.Module):
     def __init__(self,state_contract_path=None,*,state_contract=None,head_weights=None,expected_contract_sha256=None):
         super().__init__()
+        self.loss_version = STATE_LOSS_VERSION
         if state_contract is None:
             path=Path(state_contract_path) if state_contract_path is not None else Path(__file__).resolve().parents[4]/'docs/contracts/stereo_privileged_state_contract.json'
             state_contract=json.loads(path.read_text(encoding='utf-8'))
@@ -134,6 +138,29 @@ class StereoEstimationLoss(nn.Module):
             mask[:,indices]&=value[:,None] if value.ndim==1 else value[:,indices]
         return mask
 
+    def canonical_state_loss(self, prediction, target, mask):
+        """Mixed canonical mathematics; callers qualify source/symmetry masks first."""
+        if prediction.ndim != 2 or prediction.shape[1] != 371:
+            raise ValueError('state prediction shape must be [B,371]')
+        # Validate the whole pair before slicing quaternion groups. Unknown raw
+        # values remain unchanged; each masked loss sanitizes its own operands.
+        _, _, mask = _safe_pair(prediction, target, mask)
+        scalar_mask = mask.clone()
+        rotation_losses = []
+        for group in self.rotations:
+            lo, hi = group['slice']
+            group_mask = mask[:, lo:hi].all(-1)
+            scalar_mask[:, lo:hi] = False
+            rotation_losses.append(quaternion_geodesic_loss(
+                prediction[:, lo:hi], target[:, lo:hi], group_mask))
+        classification = self.state_classification[None].to(prediction.device)
+        regression_loss = masked_smooth_l1(
+            prediction, target, scalar_mask & ~classification)
+        classification_loss = masked_bce(
+            prediction, target, scalar_mask & classification)
+        return regression_loss + classification_loss + sum(
+            rotation_losses, prediction.new_zeros(()))
+
     @staticmethod
     def _force_mask(qualification,prediction):
         empty=torch.zeros_like(prediction,dtype=torch.bool)
@@ -176,7 +203,6 @@ class StereoEstimationLoss(nn.Module):
             mask=_mask(supplied,pred)
             if name=='privileged_state':
                 mask=self.state_mask(pred,validity)
-                scalar_mask=mask.clone(); rotations=[]
                 for group in self.rotations:
                     lo,hi=group['slice']; group_mask=mask[:,lo:hi].all(-1)
                     if group.get('symmetry_mask_required'):
@@ -185,10 +211,8 @@ class StereoEstimationLoss(nn.Module):
                         elif not isinstance(symmetry,torch.Tensor) or symmetry.shape!=(len(pred),) or symmetry.dtype!=torch.bool or symmetry.device!=pred.device:
                             raise ValueError('rotation_symmetry_valid must be boolean [B]')
                         else: group_mask&=symmetry
-                    scalar_mask[:,lo:hi]=False
                     mask[:,lo:hi]=group_mask[:,None]
-                    rotations.append(quaternion_geodesic_loss(pred[:,lo:hi],target[:,lo:hi],group_mask))
-                loss=masked_smooth_l1(pred,target,scalar_mask)+sum(rotations,zero)
+                loss=self.canonical_state_loss(pred,target,mask)
             elif name=='force_proxy':
                 if pred.shape[1:]!=(2,3): raise ValueError('force prediction shape must be [B,2,3]')
                 qualified,reason=self._force_mask(force_qualification,pred)

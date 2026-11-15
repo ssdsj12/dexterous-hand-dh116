@@ -10,7 +10,7 @@ import random
 import torch
 
 from .tabletop_stereo_contract import digest, file_sha256, new_run, physical_initial_sha256, require_sha, write_json_new
-from .tabletop_stereo_losses import StereoEstimationLoss, masked_bce, masked_smooth_l1, quaternion_geodesic_loss
+from .tabletop_stereo_losses import STATE_LOSS_VERSION, StereoEstimationLoss, masked_bce, masked_smooth_l1
 from .tabletop_stereo_observation import StereoHistoryBatch
 from .tabletop_stereo_state_estimator import HEAD_SHAPES, StereoStateEstimator
 from .tabletop_stereo_supervision_dataset import identity_key, rows_from_records, validate_rows
@@ -801,13 +801,10 @@ def _prediction_loss(prediction, targets, criterion):
         scalar = mask.clone()
         if key == 'privileged_state':
             classification = criterion.state_classification[None].to(pred.device)
+            terms.append(criterion.canonical_state_loss(pred, target, mask))
             for group in criterion.rotations:
                 lo, hi = group['slice']
-                valid = mask[:,lo:hi].all(-1)
                 scalar[:,lo:hi] = False
-                terms.append(quaternion_geodesic_loss(pred[:,lo:hi], target[:,lo:hi], valid))
-            terms.append(masked_smooth_l1(pred, target, scalar & ~classification))
-            terms.append(masked_bce(pred, target, scalar & classification))
             pred = torch.where(classification, pred.sigmoid(), pred)
             # Quaternion error is represented by SO(3) radians per valid group,
             # rather than subtracting arbitrary-sign quaternion components.
@@ -1041,7 +1038,7 @@ def run_training_mode(model, rows, *, mode='formal_training', epochs=1, batch_si
         raise ValueError('nonempty rows and positive finite training settings required')
     split = split_estimator_rows(rows, seed=seed)
     heads = inspect_heads(rows, split)
-    report = dict(mode=mode, rows=len(rows), split=split, heads=heads, state_training_started=False,
+    report = dict(mode=mode, state_loss_version=STATE_LOSS_VERSION, rows=len(rows), split=split, heads=heads, state_training_started=False,
         generalization_qualified=False, actor_deployment_qualified=False, uncertainty_calibrated=False,
         successful_demonstration_pool=False)
     if mode == 'schema_test':
@@ -1203,7 +1200,7 @@ def main(argv=None):
         provenance['qualification'] = report['qualification']
     if report['state_training_started']:
         with (out/'state_estimator.pt').open('xb') as stream:
-            torch.save(dict(version='dh116-stereo-state-fit-v2', mode=args.mode,
+            torch.save(dict(version='dh116-stereo-state-fit-v2', mode=args.mode, state_loss_version=STATE_LOSS_VERSION,
                             estimator=model.cpu().state_dict(), trained_heads=[k for k,v in report['heads'].items() if v['enabled']],
                             generalization_qualified=False, actor_deployment_qualified=False,
                             successful_demonstration_pool=False,

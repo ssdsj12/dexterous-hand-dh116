@@ -174,6 +174,7 @@ def train_bc(data, network_config, bc_config, *, output, steps=100, batch_size=3
     output = Path(output)
     calibration = data['contract']['calibration_sha256']
     contract = make_contract('bc', dict(network=network, bc=deepcopy(bc_config),
+        state_loss_version=trainer.state_loss.loss_version,
         dataset_contract_sha256=data['contract']['contract_sha256'], schema_only=data['schema_only'],
         split=split, provenance=provenance, preprocessor=preprocessor), calibration_sha256=calibration)
     write_json_new(output / 'bc_contract.json', contract)
