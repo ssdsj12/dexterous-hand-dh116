@@ -1,3 +1,7 @@
+## 2026-11-15 — C01 当前后端来源与 Reset 两阶段预检
+
+新增实际源码加载的不可变 BackendProfile、静态/本次 Reset 分层预检与独立 CLI；修复当前 881701 参数到旧 radius reader 的桥接，作用域外保留旧 2fea 默认。CPU reader 组合通过不授予在线 Reset、原生 PPO 或抓取资格；C02/C04/C06 继续独立推进。 Ubuntu CPU 回归 252 项通过。[报告](docs/superpowers/reports/2026-11-15-c01-native-teacher-profile.md)
+
 ## 2026-11-15 — R05：统一Student与采集的Stereo matcher准入
 
 共享比较器在真实Teacher/Stereo证明验证后检查相机标定和完整matcher，拒收同K但匹配方式、亚像素或配置改变的旧证明；只排除image_processing_batch_size资源字段且不修改proof。保留Student显式warm-start/resume、R02损失合同和R04封存入口，不修改preprocessing源或旧配置。新旧CPU回归不授原生精度或模型训练资格。 Ubuntu CPU 回归 108 项通过。[报告](docs/superpowers/reports/2026-11-15-r05-stereo-admission-matcher.md)
