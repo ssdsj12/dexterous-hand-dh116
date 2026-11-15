@@ -1,3 +1,7 @@
+## 2026-11-15 — 独立 context51 与固定引用生命周期 CPU 合同
+
+新增独立51维 context、owned pre/post 快照与严格阶段/历史身份；保持全部已建立的材料和切向引用不变，保留独立审查失败及修复证据。旧context50不变，真实W4来源、v2模型与原生训练仍未具备资格。 Ubuntu CPU 回归 183 项通过。[报告](docs/superpowers/reports/2026-11-15-fixed-s0-context51-v2.md)
+
 ## 2026-11-15 — 独立 v2 实测 SDK 时钟包络与来源审计
 
 新增独立时钟误差包络与只读端点验证，区分 SDK 实读累计时间和名义 step/480。核验旧232行短窗证据并保留其退出失败；尚未实现长 Reset 或确认当前长程消费者资格。 Ubuntu CPU 回归 161 项通过。[报告](docs/superpowers/reports/2026-11-15-native-training-clock-v2.md)

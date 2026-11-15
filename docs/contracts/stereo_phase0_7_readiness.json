@@ -19804,6 +19804,44 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-15-native-training-clock-v2.md",
       "report_source_commit": "58bfc47a800be0860b67272dc49277233178e41e"
+    },
+    "teacher.v2.context51-cpu": {
+      "passed": 183,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_native_teacher_context_v2.py",
+        "tests/test_native_teacher_context.py",
+        "tests/test_native_phase_contract_v2.py"
+      ],
+      "log_sha256": "89926dd6b803b11179ebb3858012e22c11d589c34afbee043f08fdec14a731df",
+      "tested_head": "1b6daefceee73e6e5e7246afd125fac4597d4fb9",
+      "native_qualification": false,
+      "qualification_scope": "cpu_context51_shape_history_and_fixed_reference_lifecycle_only",
+      "source_scope": "cpu_fixture",
+      "actual_native_steps": 0,
+      "actual_native_updates": 0,
+      "production_source_ready": false,
+      "production_blocked_reason": "full_v2_phase_source_adapter_missing",
+      "v2_model_ready": false,
+      "old_context50_unchanged": true,
+      "source_sha256": "8f7737581a5597c282e551a04205819f2af792deddf74da3dd9ba29c0ecdf39c",
+      "spec_review": "PASS d108b71f;57 new tests and original reference substitution probe correctly rejects",
+      "spec_evidence_sha256": "b57ab9e52a3e48bfc0e9229ba0cfaaf35a39e9ff9a211cca37c608a9d1da3592",
+      "prior_failed_candidate": "0a4d27d44522fe7fd93deb9347d059f72bb9e222",
+      "prior_failure": "same-episode tangential reference UID substitution",
+      "quality_review": "PASS exact d108b71f;57 tests26.38s; independent pending/token/identity tamper probes",
+      "quality_evidence_sha256": "c22d4751cf5c2f37b1c6713de40a2b3c82dd435641ee3c2fb13863997dde7acd",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-15-fixed-s0-context51-v2.md",
+      "report_source_commit": "d108b71f310aa454db0e6dfc2c5a037ec95d7d5e"
     }
   }
 }
