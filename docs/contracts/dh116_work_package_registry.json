@@ -38092,7 +38092,10 @@
       "title": "真实SDK/Rod单实例worker",
       "executor": "gated",
       "dependencies": [
-        "teacher.c06-worker-contracts"
+        "teacher.c06-worker-contracts",
+        "teacher.actual-launch-l01-cpu",
+        "teacher.actual-provider-l02-cpu",
+        "teacher.actual-resume-l03-cpu"
       ],
       "status": "blocked",
       "reason": "actual provider/入口、来源闭环及独立预算资源待实装验证",
@@ -38291,6 +38294,64 @@
         "report": "docs/superpowers/reports/2026-11-15-native-reset-source-chain-v2.md",
         "report_source_commit": "f6748ea95830f421b75e814fb6483b587354df66"
       }
+    },
+    "review.actual-native-provider-plan": {
+      "title": "实际Teacher启动、来源与A/B恢复实施计划",
+      "executor": "prepared",
+      "dependencies": [
+        "teacher.c06-worker-contracts",
+        "teacher.c05-checkpoint-origin-audit"
+      ],
+      "status": "passed",
+      "last_result": {
+        "status": "passed",
+        "qualification_scope": "reviewed_implementation_plan_only",
+        "test_execution": "not_applicable_documentation_only",
+        "native_qualification": false,
+        "new_native_steps": 0,
+        "new_native_updates": 0,
+        "source_commit": "88a0c1e4aa75ef5ac3104272ecd23f70e76af90b",
+        "plan_sha256": "076bc9268f486f07a250c9031425d2938c6bd2e49da30c63ac50a3273303165f",
+        "report": "docs/superpowers/plans/2026-11-15-dh116-actual-native-provider-plan.md",
+        "checks": [
+          "single_document_scope",
+          "balanced_fences_and_text",
+          "explicit_L01_L02_L03_interfaces",
+          "qualified_C06_formal_dependency",
+          "finite_budget_and_no_native_claim",
+          "protected528_checkpoint2"
+        ]
+      }
+    },
+    "teacher.actual-launch-l01-cpu": {
+      "title": "L01可信parent-issued进程启动与租约",
+      "executor": "prepared",
+      "dependencies": [
+        "review.actual-native-provider-plan"
+      ],
+      "status": "blocked",
+      "reason": "代码、真实临时进程CPU和独立审查待完成",
+      "native_qualification": false
+    },
+    "teacher.actual-provider-l02-cpu": {
+      "title": "L02真实场景来源与A更新封存软件",
+      "executor": "prepared",
+      "dependencies": [
+        "teacher.actual-launch-l01-cpu"
+      ],
+      "status": "blocked",
+      "reason": "ActualProvider及raw41/model/setup/cap/lifecycle待实装；原生未运行",
+      "native_qualification": false
+    },
+    "teacher.actual-resume-l03-cpu": {
+      "title": "L03真实A身份与独立B恢复执行器软件",
+      "executor": "prepared",
+      "dependencies": [
+        "teacher.actual-provider-l02-cpu"
+      ],
+      "status": "blocked",
+      "reason": "实际来源A读取及独立B执行器待实装；原生审批另计",
+      "native_qualification": false
     }
   },
   "execution_target": {

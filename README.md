@@ -1,3 +1,7 @@
+## 2026-11-15 — Actual Teacher Worker 实施计划
+
+C06 CPU合同正式通过后，明确 L01可信启动、L02真实来源/A更新、L03独立B恢复的执行接线和依赖。原生provider及A/B资格尚未完成；本包仅文档核验，无新原生预算。[计划](docs/superpowers/plans/2026-11-15-dh116-actual-native-provider-plan.md)
+
 ## 2026-11-15 — C06 有界账本、只读 Checkpoint 与真实进程租约 CPU 合同
 
 新增严格原始/派生账本、连续物理与预算内容审计、完整同bytes C05 Checkpoint验证和实际Registry/kernel FLOCK绑定。CPU物理fixture N=3与模型41源尚未连通，setup/cap见证、ActualProvider和B执行器未实现；native资格仍关闭。 Ubuntu CPU 回归 269 项通过。[报告](docs/reports/2026-11-15-dh116-c06-cpu-contracts.md)
