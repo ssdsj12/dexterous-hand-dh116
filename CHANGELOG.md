@@ -1,3 +1,7 @@
+## 2026-11-15 — C03 独立 Teacher 奖励结算与来源隔离
+
+实现已批准的 smoke/full 候选奖励、逐物理步成本和一次性结算；非法身份、数值及可变证据导致隔离。旧配置、PPO、物理及成功阈值不变。仅 CPU 数学/状态机验收；真实测量 adapter、collector 及原生资格仍待 C04/C06。 Ubuntu CPU 回归 344 项通过。[报告](docs/superpowers/reports/2026-11-15-c03-training-reward-engine.md)
+
 ## 2026-11-15 — C01 当前后端来源与 Reset 两阶段预检
 
 新增实际源码加载的不可变 BackendProfile、静态/本次 Reset 分层预检与独立 CLI；修复当前 881701 参数到旧 radius reader 的桥接，作用域外保留旧 2fea 默认。CPU reader 组合通过不授予在线 Reset、原生 PPO 或抓取资格；C02/C04/C06 继续独立推进。 Ubuntu CPU 回归 252 项通过。[报告](docs/superpowers/reports/2026-11-15-c01-native-teacher-profile.md)

@@ -19451,6 +19451,42 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-15-c01-native-teacher-profile.md",
       "report_source_commit": "c0cc12c8be9ba9fafe8dacbbc843f9665c8d353b"
+    },
+    "teacher.c03-training-reward-cpu": {
+      "passed": 344,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_native_teacher_reward.py",
+        "tests/test_dh116_r0_reward_domain.py",
+        "tests/test_dh116_r0_applicability.py",
+        "tests/test_r0_health_separation.py",
+        "tests/test_dh116_deformable_control_step.py"
+      ],
+      "log_sha256": "dad7b083acde989efa5768cfca61bd6237d6cd3e1d3796e6da7dea400f1fccf5",
+      "tested_head": "a6a4290407456b4ea2d707e27272885b74e95bc6",
+      "qualification_scope": "cpu_reward_engine_only_not_native_or_grasp_success",
+      "source_adapter_evaluator_binding": "pending_C04",
+      "collector_ppo_binding": "pending_C04",
+      "native_ready": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "new_native_steps": 0,
+      "ppo_updates": 0,
+      "spec_review": "c03_final_spec_math_pass_4a2e44ee_and_root_config_delta_pass_deb4ae14",
+      "quality_review": "c03_final_quality_pass_deb4ae14",
+      "protected_source_count": 528,
+      "historical_checkpoint_count": 2,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-15-c03-training-reward-engine.md",
+      "report_source_commit": "deb4ae147252a077edf794354c183e1dbacc481e"
     }
   }
 }
