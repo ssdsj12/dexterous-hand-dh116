@@ -1,3 +1,7 @@
+## 2026-11-15 — 独立 v2 实测 SDK 时钟包络与来源审计
+
+新增独立时钟误差包络与只读端点验证，区分 SDK 实读累计时间和名义 step/480。核验旧232行短窗证据并保留其退出失败；尚未实现长 Reset 或确认当前长程消费者资格。 Ubuntu CPU 回归 161 项通过。[报告](docs/superpowers/reports/2026-11-15-native-training-clock-v2.md)
+
 ## 2026-11-15 — C05 Checkpoint 实际来源只读审计
 
 为共享只读产物审计增加显式 fresh/resume 来源匹配；旧默认、单次 immutable bytes 反序列化及原恢复函数不变。未执行原生训练。 Ubuntu CPU 回归 89 项通过。[报告](docs/superpowers/reports/2026-11-15-c05-checkpoint-origin-audit.md)

@@ -38025,7 +38025,8 @@
       "title": "长clock与显式guarded Reset",
       "executor": "prepared",
       "dependencies": [
-        "review.fixed-s0-v2-design"
+        "review.fixed-s0-v2-design",
+        "teacher.v2.clock-policy-cpu"
       ],
       "status": "blocked",
       "reason": "258及>2400 Reset与guarded exchange待实现",
@@ -38101,6 +38102,56 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-15-c05-checkpoint-origin-audit.md",
         "report_source_commit": "c9b802b91a2cb4c03e3b31a5052a166cd23d6f2e"
+      }
+    },
+    "teacher.v2.clock-policy-cpu": {
+      "title": "独立 v2 实测 SDK 时钟包络与来源审计",
+      "executor": "gated",
+      "dependencies": [
+        "review.fixed-s0-v2-design"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 161,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_native_training_clock.py",
+          "tests/test_mesh_reset_order.py",
+          "tests/test_mesh_reset_numeric_state.py",
+          "tests/test_dual_hand_reset.py"
+        ],
+        "log_sha256": "1963da324eef0e14cfeed901905343bbc5e33330c1c53c8bf69d94670ac270b8",
+        "tested_head": "acde68867c95e3190dbe268d6860b460f6b0fb1e",
+        "native_qualification": false,
+        "qualification_scope": "cpu_clock_math_and_retained_short_window_audit_only",
+        "actual_native_steps": 0,
+        "actual_native_updates": 0,
+        "long_reset_ready": false,
+        "current_native_precision_qualified": false,
+        "old_v1_clock_unchanged": true,
+        "source_sha256": "90bc0e7bab5117d5724d35ea5faaee25cb378981b1f3d58815d295c34439a32b",
+        "spec_review": "PASS exact58bfc47;93 tests+19202 Decimal endpoints+14 outside-boundary samples",
+        "spec_evidence_sha256": "182b3ce015c64696badd1dac87a710f6fbabf23b24822916534a81a86bbae072",
+        "quality_review": "PASS exact58bfc47;93 tests2.52s; actual9source SHA and old232raw reverified",
+        "historical_sdk_rows_audited": 232,
+        "historical_sdk_steps": [
+          3,
+          234
+        ],
+        "historical_original_exit_passed": false,
+        "historical_raw_sdk_sha256": "b4af5c5d6fba1c6e311cdf1ca0c96aa4e0ffbc922ce8a7ccef44ca80bfba53e6",
+        "quality_evidence_sha256": "a9e975001615c75f59e2015d0c4f28c04da64d4edf02056ca0aa3155f3cc067f",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-15-native-training-clock-v2.md",
+        "report_source_commit": "58bfc47a800be0860b67272dc49277233178e41e"
       }
     }
   },
