@@ -22660,6 +22660,50 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 89,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_native_teacher_checkpoint.py"
+      ],
+      "log_sha256": "c381750909a74665d9b347b0e4eca18c115dc8e02619aa9e4e7819404669ac96",
+      "tested_head": "de02ae7a0bef6c87185fc698f6cd3a66db90b2e3",
+      "native_qualification": false,
+      "qualification_scope": "cpu_checkpoint_audit_only",
+      "source_scope": "cpu_fixture_or_owner_source_unqualified",
+      "actual_native_steps": 0,
+      "actual_native_updates": 0,
+      "new_origin_contract": "optional exact expected_origin; fresh A distinct from actual resume origin; legacy default unchanged",
+      "source_sha256": "2b26625a62bb8cad74280d2c0ca07f29af418d3b0d4a3b20d67e4f564444c021",
+      "spec_review": "exact three-path diff; original nine functions byte-identical",
+      "quality_review": "PASS exact c9b802b;19 targeted tests,97.68s",
+      "quality_evidence_sha256": "ce5b26b9129bc1efb39ae24ed9470db0d9603a94a8af88806844430ffe92f787",
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-15-c05-checkpoint-origin-audit.md",
+      "report_source_commit": "c9b802b91a2cb4c03e3b31a5052a166cd23d6f2e",
+      "package": "teacher.c05-checkpoint-origin-audit",
+      "commit": "c6a85d1dab9070751ac87c952b8c162ff6270775",
+      "parent": "de02ae7a0bef6c87185fc698f6cd3a66db90b2e3",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-15-c05-checkpoint-origin-audit.md",
+        "src/go2_pvcnn/control/dh116/tabletop_native_teacher_checkpoint.py",
+        "tests/test_native_teacher_checkpoint.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
