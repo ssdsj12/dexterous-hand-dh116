@@ -1,3 +1,7 @@
+## 2026-11-15 — 固定 S0 v2 四阶段与独立双时钟 CPU 合同
+
+新增 Close→PreliftHold→Lift→LiftHold 独立数学合同，预抬与最终5秒保持分开计时；旧context50不变。调用方布尔和CPU receipt不能作为真实物理来源；S0及source witness仍待验证。 Ubuntu CPU 回归 126 项通过。[报告](docs/superpowers/reports/2026-11-15-fixed-s0-phase-contract-v2.md)
+
 ## 2026-11-15 — 独立 fixed-S0 v2 审查与实施计划
 
 完整核读加速/控制方案，明确四阶段、context51、失接触NA与固定锚几何漂移、长clock/guarded Reset和独立V2-I01入口。0.25s为待验证候选；本包仅设计审查，无新增CPU测试或原生运行，不授予Teacher成功资格。[差异审查](docs/superpowers/reports/2026-11-15-acceleration-control-gap-review.md)
