@@ -225,6 +225,34 @@ def test_native_completion_receipt_survives_without_reexecution(repo, monkeypatc
     assert repo.native_plan(approval=approval)['native_ready'] == []
 
 
+@pytest.mark.parametrize('version',[1,2])
+def test_cpu_child_does_not_promote_v2_contract_audit_to_native_qualification(repo,monkeypatch,tmp_path,version):
+    """Only CPU orchestration is exercised; v2's auditor is a negative stub.
+
+    Even granting the outer-process lock observation, missing actual-provider
+    witnesses cannot qualify v2. The separate real CPU collector tests run the
+    full checkpoint auditor; this stub supplies no checkpoint or native proof.
+    """
+    package=native_fixture(repo)
+    spec=repo.native_recipe(package)['spec'];spec['version']=version
+    if version==2:
+        evidence=dict(native_qualification=False,native_ready=False,
+            physical_to_model_snapshot_binding_verified=False)
+        monkeypatch.setattr(scheduler,'validate_native_artifacts',lambda *args,**kwargs:evidence)
+    monkeypatch.setattr(repo,'native_lock_observed',lambda *_:True)
+    attempt=tmp_path/f'cpu-attempt-{version}';attempt.mkdir()
+    output=tmp_path/f'cpu-output-{version}'/'native'
+    result=dict(native_qualification=False)
+    repo._native_child(attempt,spec,output,result,package=package)
+    assert result['outer_exit_code']==0
+    if version==2:
+        assert result['native_qualification'] is False and result['native_ready'] is False
+        assert result['physical_to_model_snapshot_binding_verified'] is False
+        assert result['blocker_kind']=='failed_native' and 'missing-actual-provider-witness' in result['reason']
+    else:
+        assert result['native_qualification'] is True and 'blocker_kind' not in result
+
+
 @pytest.mark.parametrize('changed', ['claimed_success_after_exit_139', 'own_ledger'])
 def test_native_resume_revalidates_own_receipt_before_qualification(repo, monkeypatch, changed):
     exit_code = 139 if changed == 'claimed_success_after_exit_139' else 0

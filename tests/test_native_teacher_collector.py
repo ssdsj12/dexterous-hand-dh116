@@ -15,7 +15,7 @@ import torch
 from test_native_teacher_context import backend_profile
 
 
-def fixture(monkeypatch,tmp_path,profile,*,rollout_steps=2,cap_controls=99):
+def fixture(monkeypatch,tmp_path,profile,*,rollout_steps=2,cap_controls=99,ppo_config=None,physics_budget_end=66):
     import test_deformable_r0_replay as replay
     from go2_pvcnn.control.dh116.tabletop_action24_history_owner import Action24HistoryOwner
     from go2_pvcnn.control.dh116.tabletop_native_teacher_context import TaskContextOwner
@@ -29,9 +29,9 @@ def fixture(monkeypatch,tmp_path,profile,*,rollout_steps=2,cap_controls=99):
     holder={}
     def setup(*a,**k):
         ep,rod,hands,sim,seed,owners,rows=original(*a,**k)
-        ep._end=66
+        ep._end=physics_budget_end
         history=Action24HistoryOwner(initial_action24=torch.zeros(1,24),
-            seed_source="explicit new CPU controller zero fixture",physics_budget_end=66,solver_substeps=12)
+            seed_source="explicit new CPU controller zero fixture",physics_budget_end=physics_budget_end,solver_substeps=12)
         owners["controller"]=history.wrap_controller_reset(owners["controller"])
         for phase,step in (("before_reset",0),("after_reset",2)):
             history.record(dict(kind="setup",phase=phase,sdk_step=step,sdk_time_s=step/480))
@@ -47,7 +47,7 @@ def fixture(monkeypatch,tmp_path,profile,*,rollout_steps=2,cap_controls=99):
     config,*_=model_setup("pinch")
     model=NativeContextTeacher(config,backend_profile=profile)
     reward_config=load_config(Path(__file__).resolve().parents[1]/"configs/dh116_training/approach_wiring_smoke_v1.json")
-    trainer=DeformablePPOTrainer(model,PPOConfig(gamma=reward_config.gamma,epochs=1,minibatches=1,
+    trainer=DeformablePPOTrainer(model,ppo_config or PPOConfig(gamma=reward_config.gamma,epochs=1,minibatches=1,
         lr=.0001),rollout_steps=rollout_steps,num_envs=1)
     journal=NativeJournal(tmp_path/"journal.jsonl",scope="cpu_fixture")
     context=TaskContextOwner(backend_profile=profile,mode=reward_config.profile,scope="cpu_fixture",

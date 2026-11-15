@@ -1,3 +1,7 @@
+## 2026-11-15 — C06 有界账本、只读 Checkpoint 与真实进程租约 CPU 合同
+
+新增严格原始/派生账本、连续物理与预算内容审计、完整同bytes C05 Checkpoint验证和实际Registry/kernel FLOCK绑定。CPU物理fixture N=3与模型41源尚未连通，setup/cap见证、ActualProvider和B执行器未实现；native资格仍关闭。 Ubuntu CPU 回归 269 项通过。[报告](docs/reports/2026-11-15-dh116-c06-cpu-contracts.md)
+
 ## 2026-11-15 — 独立 v2 Reset 全源链与失败进度 CPU 合同
 
 独立贯通 dual/order/readback/numeric Reset 时钟策略，保留11槽、typed状态与字节一致性；失败时记录真实SDK进度，solver无可信计数则明确未知，拒bool与reader替换并保持原异常。旧v1不变；受控长回合续接和原生消费者尚未验收。 Ubuntu CPU 回归 233 项通过。[报告](docs/superpowers/reports/2026-11-15-native-reset-source-chain-v2.md)

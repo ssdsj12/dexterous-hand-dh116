@@ -378,8 +378,11 @@ def _validate_native_physics_shutdown(output, clock, counters):
         raise ValueError('native shutdown clock, STOP, and App close ownership evidence differ')
 
 
-def validate_native_artifacts(spec, output):
+def validate_native_artifacts(spec, output, *, repository=None, package=None):
     """Reopen artifact bytes independently of any producer completion marker."""
+    if type(spec.get('version')) is int and spec['version'] == 2:
+        from go2_pvcnn.control.dh116.tabletop_native_teacher_worker_artifacts import validate_teacher_artifacts_v2
+        return validate_teacher_artifacts_v2(spec, output, repository=repository, package=package)
     validator = spec['validator']
     artifacts = {name: file_hash(native_artifact(output, name)) for name in validator['artifacts']}
     result = json.loads(native_artifact(output, validator['result_file']).read_text(encoding='utf-8'))
@@ -488,7 +491,7 @@ def _validate_native_physics_recipe(clock, validator, budget, args):
         raise ValueError('native physics budget must equal the measured ledger and the total --steps argument')
 
 
-def native_recipe(repo, package):
+def _native_recipe_v1(repo, package):
     name = package.get('command_spec', '')
     path = repo.root / native_relative_path(name)
     if not name.startswith('configs/dh116_execution/') or not name.endswith('.json'):
@@ -553,6 +556,12 @@ def native_recipe(repo, package):
             or 'DH116_NUM_THREADS' in environment and (not environment['DH116_NUM_THREADS'].isdigit()
                 or not 1 <= int(environment['DH116_NUM_THREADS']) <= 64)):
         raise ValueError('unsupported native environment override')
+    return native_recipe_identity(repo, package, raw, spec)
+
+
+def native_recipe_sources(repo, package, spec):
+    """Return the original exact local source inventory used by every version."""
+    entrypoint = spec['entrypoint']
     source_files = spec['source_files']
     if not isinstance(source_files, list):
         raise ValueError('native source_files must be a list')
@@ -567,6 +576,16 @@ def native_recipe(repo, package):
         if source.resolve(strict=True) != source or not source.is_file():
             raise ValueError(f'invalid native source: {relative}')
         identity[relative] = file_hash(source)
+    return identity
+
+
+def native_recipe_identity(repo, package, raw, spec):
+    """Hash source and pinned inputs identically for each admitted version."""
+    identity = native_recipe_sources(repo, package, spec)
+    if type(spec.get('version')) is int and spec['version'] == 2:
+        source_digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+        if spec['teacher_contract']['source_sha256'] != source_digest:
+            raise ValueError('v2 source inventory SHA differs from actual scheduler source closure')
     inputs = spec.get('inputs', {})
     if not isinstance(inputs, dict):
         raise ValueError('native inputs must map absolute files to SHA256')
@@ -580,6 +599,23 @@ def native_recipe(repo, package):
     spec_digest = hashlib.sha256(raw).hexdigest()
     digest = hashlib.sha256(json.dumps(dict(spec=spec_digest, source=identity), sort_keys=True).encode()).hexdigest()
     return dict(spec=spec, command_spec_sha256=spec_digest, code_config_sha256=digest)
+
+
+def native_recipe(repo, package):
+    """Dispatch the new finite Teacher protocol without widening legacy v1."""
+    name = package.get('command_spec', '')
+    path = repo.root / native_relative_path(name)
+    if not name.startswith('configs/dh116_execution/') or not name.endswith('.json'):
+        raise ValueError('native command spec must be in configs/dh116_execution')
+    if path.resolve(strict=True) != path or not path.is_file():
+        raise ValueError('native command spec must be a regular local file')
+    raw = path.read_bytes()
+    spec = json.loads(raw)
+    if isinstance(spec, dict) and type(spec.get('version')) is int and spec['version'] == 2:
+        from go2_pvcnn.control.dh116.tabletop_native_teacher_worker_contract import validate_teacher_recipe_v2
+        validate_teacher_recipe_v2(spec)
+        return native_recipe_identity(repo, package, raw, spec)
+    return _native_recipe_v1(repo, package)
 
 
 def native_approval(approval, repo):
@@ -847,7 +883,11 @@ class Repository:
                     or debug.get('debugger_inferior_signal') is not None
                     or any(item.get(k) != v for item in (outer, receipt) for k, v in debug.items())):
                 raise ValueError('native debugger evidence lacks independent inferior exit zero')
-        evidence = validate_native_artifacts(recipe['spec'], output)
+        if recipe['spec'].get('version') == 2:
+            evidence = validate_native_artifacts(recipe['spec'], output, repository=self,
+                package=self.registry()['packages'][name])
+        else:
+            evidence = validate_native_artifacts(recipe['spec'], output)
         if any(receipt.get(k) != v for k, v in evidence.items()):
             raise ValueError('native artifacts or measured ledger differ from the qualified receipt')
         return path
@@ -1112,14 +1152,17 @@ class Repository:
                     try:
                         if bound is not None and bound != self.resolve_native_dependency_receipt(binding, packages):
                             raise RuntimeError('producer receipt changed before native launch')
-                        self._native_child(path, recipe['spec'], output, result, bound=bound)
+                        if recipe['spec'].get('version') == 2:
+                            self._native_child(path, recipe['spec'], output, result, bound=bound, package=package)
+                        else:
+                            self._native_child(path, recipe['spec'], output, result, bound=bound)
                     except (OSError, ValueError, subprocess.SubprocessError):
                         result.update(blocker_kind='failed_native', reason='native worker failed to execute or finish',
                                       log_sha256=file_hash(path / 'native.log'))
         atomic_write(receipt, json_text(result))
         return dict(result, result_sha256=file_hash(receipt))
 
-    def _native_child(self, path, spec, output, result, *, bound=None):
+    def _native_child(self, path, spec, output, result, *, bound=None, package=None):
         budget = spec['budget']
         if output.resolve() != output:
             raise ValueError('native output path escapes the approved private root')
@@ -1171,9 +1214,18 @@ class Repository:
                           reason='outer process failure, missing shared lock evidence, or elapsed budget exceeded')
             return
         try:
-            artifacts = validate_native_artifacts(spec, output)
+            if spec.get('version') == 2:
+                artifacts = validate_native_artifacts(spec, output, repository=self, package=package)
+            else:
+                artifacts = validate_native_artifacts(spec, output)
         except (OSError, ValueError, TypeError) as error:
             result.update(blocker_kind='failed_native', reason=f'independent validator rejected evidence: {error}')
+            return
+        if spec.get('version') == 2:
+            result.update(artifacts)
+            if result.get('native_qualification') is not True:
+                result.update(native_qualification=False, blocker_kind='failed_native',
+                              reason='missing-actual-provider-witness: physical/model snapshot binding, setup and cap source')
             return
         result.update(native_qualification=True, **artifacts)
 
