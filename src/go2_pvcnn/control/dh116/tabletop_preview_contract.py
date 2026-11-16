@@ -1,6 +1,7 @@
 """CPU-only frozen identity for the independent, zero-PPO native preview."""
 import hashlib
 from pathlib import Path
+from .tabletop_preview_debugger import POLICY_VERSION
 from .tabletop_preview_launcher import ADAPTER_VERSION, preview_launcher_type
 
 VERSION = "dh116-webrtc-physical-preview-v1"
@@ -37,7 +38,7 @@ def freeze(root, experience, *, physical_gpu_index=3):
     if type(physical_gpu_index) is not int or physical_gpu_index<0:
         raise ValueError("nonnegative physical GPU index required")
     experience = Path(experience).resolve(strict=True)
-    return dict(version=VERSION, launcher_adapter=ADAPTER_VERSION, source_sha256=_inventory(root), physical_gpu_index=physical_gpu_index,
+    return dict(version=VERSION, launcher_adapter=ADAPTER_VERSION, debugger_policy=POLICY_VERSION, source_sha256=_inventory(root), physical_gpu_index=physical_gpu_index,
                 experience=dict(path=str(experience), sha256=_hash(experience)),
                 budget=dict(BUDGET), camera_config=CAMERA_CONFIG,
                 launcher=dict(headless=True, livestream=2, enable_cameras=True, device="cuda:0", kit_args="--enable omni.kit.widget.toolbar"),
@@ -46,9 +47,10 @@ def freeze(root, experience, *, physical_gpu_index=3):
 
 def verify(root, contract):
     if (not isinstance(contract,dict) or set(contract) !=
-        {"version","source_sha256","experience","budget","camera_config","launcher","action","permission","physical_gpu_index","launcher_adapter"}
+        {"version","source_sha256","experience","budget","camera_config","launcher","action","permission","physical_gpu_index","launcher_adapter","debugger_policy"}
         or contract["version"] != VERSION or contract["budget"] != BUDGET
         or contract["launcher_adapter"] != ADAPTER_VERSION
+        or contract["debugger_policy"] != POLICY_VERSION
         or type(contract["physical_gpu_index"]) is not int or contract["physical_gpu_index"]<0
         or contract["camera_config"] != CAMERA_CONFIG
         or contract["launcher"] != dict(headless=True,livestream=2,enable_cameras=True,device="cuda:0",kit_args="--enable omni.kit.widget.toolbar")
@@ -70,24 +72,33 @@ class RenderBudget:
         self._sim, self.limit, self.count = sim, limit, 0
         self._render = sim.render
         self._installed = False
+        self._closed = False
         self._had_override = "render" in vars(sim)
         self._prior_override = vars(sim).get("render")
 
     def __getattr__(self, name):
+        if self._closed: raise RuntimeError("render budget is closed")
         return getattr(self._sim, name)
 
     def install(self):
+        if self._closed: raise RuntimeError("render budget is closed")
         if self._installed: raise RuntimeError("render budget already installed")
         self._sim.render = self.render
         self._installed = True
 
     def close(self):
-        if self._installed:
-            if self._had_override: self._sim.render = self._prior_override
-            else: del self._sim.render
+        if self._closed:return
+        try:
+            if self._installed:
+                if self._had_override: self._sim.render = self._prior_override
+                else: del self._sim.render
+        finally:
             self._installed = False
+            self._closed = True
+            self._sim = self._render = self._prior_override = None
 
     def render(self):
+        if self._closed: raise RuntimeError("render budget is closed")
         if self.count >= self.limit: raise RuntimeError("preview render budget exhausted")
         self.count += 1
         return self._render()

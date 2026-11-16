@@ -12,7 +12,7 @@ VERSION = "dh116-fault-safe-lifecycle-v3"
 
 
 def run_lifecycle(app, *, make_sim, acquire, synchronize, clear_sim, stop,
-                  manager_is_none, freeze, output, cleanup):
+                  manager_is_none, freeze, output, cleanup, stage_observer=None):
     """Record every cleanup boundary and close once, then rethrow text-only faults.
 
     CPU callback success grants no native, grasp, process-exit or Teacher proof.
@@ -25,18 +25,34 @@ def run_lifecycle(app, *, make_sim, acquire, synchronize, clear_sim, stop,
     failures, clocks, stages = [], [], {}
     acquired = {}
 
+    def notify(name, event, error=None):
+        if stage_observer is None:
+            return
+        try:
+            stage_observer(dict(stage=name, event=event, error=error))
+        except BaseException as sink_error:
+            text = traceback.format_exc()
+            failures.append(text)
+            stages["diagnostic:" + name + ":" + event] = dict(
+                attempted=True, returned=False, error=text)
+            traceback.clear_frames(sink_error.__traceback__)
+            sink_error.__traceback__ = None
+
     def attempt(name, callback):
         record = dict(attempted=True, returned=False, error=None)
         stages[name] = record
+        notify(name, "start")
         try:
             value = callback()
             record["returned"] = True
+            notify(name, "returned")
             return value
         except BaseException as error:
             # No exception object or completed callback traceback may cross STOP.
             text = traceback.format_exc()
             record["error"] = text
             failures.append(text)
+            notify(name, "error", text)
             traceback.clear_frames(error.__traceback__)
             error.__traceback__ = None
             return None
@@ -46,6 +62,7 @@ def run_lifecycle(app, *, make_sim, acquire, synchronize, clear_sim, stop,
     def skip(name, reason):
         stages[name] = dict(attempted=False, returned=False, error=None,
                             skipped_reason=reason)
+        notify(name, "skipped")
 
     def frozen():
         if freeze() is not False:

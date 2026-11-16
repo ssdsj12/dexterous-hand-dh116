@@ -1,3 +1,7 @@
+## 2026-11-16 — 预览错误落盘、引用清理与有界崩溃诊断
+
+阶段错误逐事件fsync，修复RenderBudget/RGB引用及launcher回调生命周期，预览专用GDB首次限额栈与重复故障暂停；仅CPU验证，原生仍blocked。 Ubuntu CPU 回归 151 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-offline-cleanup.md)
+
 ## 2026-11-15 — 原生预览失败及批准终止证据归档
 
 本轮已创建SimulationContext但测量0行，关闭阶段重复livestream SIGSEGV，用户批准仅本轮进程SIGKILL，退出137；原始错误未落盘，保持blocked。 Ubuntu CPU 回归 15 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-native-forced-stop.md)

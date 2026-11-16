@@ -50,3 +50,13 @@ not a hash of the complete installed Isaac/Kit runtime. The existing singleton
 lock is held across App creation and the fault-safe lifecycle. Native
 viewport, camera, clock, resource-release and actual grasp behavior remain
 unverified until an independently authorized native run is observed.
+
+## 离线清理修复后的调试入口
+
+后续原生运行须重新冻结合同，并从项目解释器调用
+tabletop_preview_debugger.preview_debugger_wrapper 生成本次独立wrapper；
+旧 native_debugger_wrapper 不包含本次重复故障限流策略。
+wrapper路径作为 DH116_PYTHON 交给 scripts/python.sh，-c解释器探测保持直通。
+preview_stages.jsonl 在关闭之前逐事件fsync。首次fatal栈payload上限8MiB；
+重复fatal暂停等待用户处置；不保证硬墙钟超时或native自然退出。
+本改动只有CPU验证，不能将旧失败标记为通过。

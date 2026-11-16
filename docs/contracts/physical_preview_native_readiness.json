@@ -68,5 +68,17 @@
     "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-toolbar-5b1480ed",
     "native_log_sha256": "3916282c22f863add30dcba9bd16a20a8818e828ab4008a8c44e01a0d0c7b127",
     "first_error": "AttributeError: 'NoneType' object has no attribute 'visible'"
+  },
+  "latest_offline_repair": {
+    "package": "preview.offline-cleanup.cpu-20261116",
+    "cpu_passed": 151,
+    "new_isaac_runs": 0,
+    "native_qualification": false,
+    "stage_errors_fsync_before_close": true,
+    "render_and_rgb_aliases_released_in_cpu_tests": true,
+    "fatal_dump_payload_limit_bytes": 8388608,
+    "repeat_fault_action": "pause_debugger_not_fake_exit",
+    "adapter": "dh116-preview-owned-launcher-v2",
+    "native_revalidation": "not_authorized_in_this_package"
   }
 }

@@ -105,12 +105,14 @@ class RGBPairBridge:
             if self._close_error is not None: raise RuntimeError(self._close_error)
             return
         self._closed = True
-        if self._owns_reader:
-            try:
+        try:
+            if self._owns_reader:
                 self.reader.close()
-            except Exception as exc:
-                self._close_error = str(exc)
-                raise
+        except BaseException as exc:
+            self._close_error = str(exc)
+            raise
+        finally:
+            self.sim = self.reader = self.snapshot = self.origins = self.render_setting = None
 
     def capture(self):
         if self._closed:

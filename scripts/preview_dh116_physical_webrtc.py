@@ -17,11 +17,13 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
-from go2_pvcnn.control.dh116.tabletop_preview_contract import freeze, verify, BUDGET, RenderBudget, launch_preview_app
+from go2_pvcnn.control.dh116.tabletop_preview_contract import freeze, verify, BUDGET, RenderBudget
 
 EXPERIENCE = Path("/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.rendering.kit")
 REQUIRED = (
     "src/go2_pvcnn/control/dh116/live_deformx_display.py",
+    "src/go2_pvcnn/control/dh116/tabletop_preview_diagnostics.py",
+    "src/go2_pvcnn/control/dh116/tabletop_preview_debugger.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_launcher.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_device.py",
     "src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_bridge.py",
@@ -80,7 +82,8 @@ def execute(contract, output):
         from go2_pvcnn.control.dh116.tabletop_preview_device import probe_device
         probe_device(contract["physical_gpu_index"])
         from isaaclab.app import AppLauncher
-        app = launch_preview_app(AppLauncher, contract)
+        from go2_pvcnn.control.dh116.tabletop_preview_launcher import launch_managed_preview_app
+        app = launch_managed_preview_app(AppLauncher, contract)
         entered = False
         try:
             import torch
@@ -239,12 +242,14 @@ def execute(contract, output):
                 (lifecycle_bindings,"OWNED_NAMES",names),
                 (lifecycle_bindings,"LifetimeTrace",StartupTrace),
                 (lifecycle_bindings,"snapshot_weakrefs",snapshot_for_startup)):
-                entered=True
-                return run_lifecycle(SimpleNamespace(update=app.update, close=lambda:app.close(wait_for_replicator=False)),make_sim=make_sim,acquire=acquire,
-                    synchronize=lambda:torch.cuda.synchronize("cuda:0"),
-                    clear_sim=lambda sim:clear_known_simulation_instance(sim,contract=cleanup_contract),
-                    stop=stop,manager_is_none=lambda:SimulationManager.get_physics_sim_view() is None,
-                    freeze=freeze_player,output=output,cleanup="explicit")
+                from go2_pvcnn.control.dh116.tabletop_preview_diagnostics import StageJournal
+                with StageJournal(output/"preview_stages.jsonl") as stage_journal:
+                    entered=True
+                    return run_lifecycle(SimpleNamespace(update=app.update, close=lambda:app.close(wait_for_replicator=False)),make_sim=make_sim,acquire=acquire,
+                        synchronize=lambda:torch.cuda.synchronize("cuda:0"),
+                        clear_sim=lambda sim:clear_known_simulation_instance(sim,contract=cleanup_contract),
+                        stop=stop,manager_is_none=lambda:SimulationManager.get_physics_sim_view() is None,
+                        freeze=freeze_player,output=output,cleanup="explicit",stage_observer=stage_journal.emit)
         finally:
             if not entered: app.close(wait_for_replicator=False)
 

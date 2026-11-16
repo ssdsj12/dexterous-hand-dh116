@@ -116,4 +116,7 @@ class OwnedNativeRGBPairReader(_NativeRGBPairReader):
         return {key: timing[key] for key in ("frame_id", "simulation_time", "render_frame_number")}
 
     def close(self):
-        self.resources.close()
+        try:
+            self.resources.close()
+        finally:
+            self.sim = self.view = self.stage = self.reference = self.times = self.core = None

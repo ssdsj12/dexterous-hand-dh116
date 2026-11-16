@@ -38758,6 +38758,51 @@
         "report": "docs/superpowers/reports/2026-11-16-preview-native-forced-stop.md",
         "report_source_commit": "3017e9b254d8975903d94ec1051a5fd753f9e4a5"
       }
+    },
+    "preview.offline-cleanup.cpu-20261116": {
+      "title": "预览错误落盘、引用清理与有界崩溃诊断",
+      "executor": "gated",
+      "dependencies": [
+        "preview.native-result.cpu-audit-20261116"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 151,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_preview_durable_stages.py",
+          "tests/test_preview_owner_release.py",
+          "tests/test_preview_debugger.py",
+          "tests/test_fault_safe_lifecycle_v3.py",
+          "tests/test_preview_launcher.py",
+          "tests/test_preview_toolbar.py",
+          "tests/test_preview_device.py",
+          "tests/test_preview_contract.py",
+          "tests/test_physical_preview.py",
+          "tests/test_preview_presentation.py",
+          "tests/test_dh116_stereo_rgb_bridge.py",
+          "tests/test_dh116_stereo_rgb_resources.py",
+          "tests/test_dh116_stereo_camera_cli.py"
+        ],
+        "log_sha256": "0472aa801f9809fd9955736eaa62a5d44a9cc0d1709ff5d8f686ca2bc98b7bba",
+        "tested_head": "077ad4122ef564cd870274e5cc2820a35c8bf415",
+        "native_qualification": false,
+        "preview_native_status": "blocked",
+        "new_isaac_runs": 0,
+        "diagnostic_subprocess": "CPU Python SIGABRT only; no Isaac",
+        "fatal_dump_payload_limit_bytes": 8388608,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-16-preview-offline-cleanup.md",
+        "report_source_commit": "890f2b2ede09ccca772b2efbb33c73e3ae7af21e"
+      }
     }
   },
   "execution_target": {
