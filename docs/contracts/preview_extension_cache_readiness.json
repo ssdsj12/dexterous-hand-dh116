@@ -28,7 +28,13 @@
   "annotator_detach_errors_resolved": true,
   "actual_render_calls": 44,
   "current_candidate_native_executed": false,
-  "remaining_approved_attempts": 1,
+  "remaining_approved_attempts": 0,
   "root_cause_proven": false,
-  "report": "docs/superpowers/reports/2026-11-16-preview-extension-cache.md"
+  "report": "docs/superpowers/reports/2026-11-16-fixed-dual-cleanup-batch-result.md",
+  "status": "blocked_python_finalize_budget_exhausted",
+  "latest_native_result": "docs/contracts/fixed_dual_cleanup_batch_result.json",
+  "remaining_native_attempts": 0,
+  "default_cache_mode": "audit_only",
+  "normal_exit_qualified": false,
+  "wire_qualified": false
 }

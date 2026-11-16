@@ -1,3 +1,7 @@
+## 2026-11-16 — 固定双相机两次原生失败与只读缓存诊断
+
+两次共34对同钟RGB、34份真实wire快照，解绑错误消失，自然退出仍SIG11。cache释放前提未匹配、未执行；默认改只读类型诊断，预算耗尽不重跑。 Ubuntu CPU 回归 325 项通过。[报告](docs/superpowers/reports/2026-11-16-fixed-dual-cleanup-batch-result.md)
+
 ## 2026-11-16 — 扩展缓存候选借用引用与一次卸载保护修正
 
 复审发现并通过RED/GREEN修复prepare完成frame持有App和缓存删除失败可重复unload，最终候选未原生运行。 Ubuntu CPU 回归 323 项通过。[报告](docs/superpowers/reports/2026-11-16-extension-cache-review-fixes.md)

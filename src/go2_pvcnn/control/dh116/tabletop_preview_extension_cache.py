@@ -40,7 +40,7 @@ def prepare_extension_cache_release(app,getter,*,source,record=None):
     finally:app=None
 
 
-def prepare_loaded_extension_cache(app,*,record=None,output=None):
+def prepare_loaded_extension_cache(app,*,record=None,output=None,apply=False):
     try:
         root=Path(__file__).resolve().parents[4]
         source=json.loads((root/'configs/dh116_execution/preview_extension_cache_source_v1.json').read_text())
@@ -59,12 +59,24 @@ def prepare_loaded_extension_cache(app,*,record=None,output=None):
                 with target.open('a') as stream:
                     stream.write(json.dumps(dict(monotonic_ns=time.monotonic_ns(),**row))+'\n')
                     stream.flush();os.fsync(stream.fileno())
+        if not apply:
+            receipt=dict(mode='audit_only',cache_present=hasattr(getter,'extensions'),
+                cached_type=type(getattr(getter,'extensions',None)).__module__+'.'+
+                    type(getattr(getter,'extensions',None)).__name__,
+                diagnostic_errors=[],native_qualification=False)
+            if record is not None:
+                try:record(dict(event='extension_cache_read_only_probe',**receipt))
+                except BaseException as error:receipt['diagnostic_errors'].append(str(error))
+            return receipt
         return prepare_extension_cache_release(app,getter,source=path,record=record)
     finally:app=None
 
 
 def validate_extension_cache_receipt(receipt):
     if receipt is None:return
+    if receipt.get('mode')=='audit_only':
+        if receipt['diagnostic_errors']:raise RuntimeError(str(receipt['diagnostic_errors']))
+        return
     if (not receipt['cache_reference_removed'] or not receipt['framework_unload_returned']
             or receipt['diagnostic_errors']):
         raise RuntimeError('extension cache release/unload not confirmed: '+str(receipt))

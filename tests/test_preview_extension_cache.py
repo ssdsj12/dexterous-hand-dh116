@@ -127,3 +127,27 @@ def test_actual_launcher_framework_preparer_drops_borrowed_app():
     with hold_completed(function) as frames:
         function(app);app=None;gc.collect()
         assert frames and app_ref() is None
+
+
+def test_default_loaded_probe_is_read_only_and_preserves_framework(monkeypatch):
+    import sys
+    from go2_pvcnn.control.dh116.tabletop_preview_extension_cache import prepare_loaded_extension_cache
+    app,getter,ref,events=fixture();original=app._framework;records=[]
+    monkeypatch.setitem(sys.modules,"omni.ext._impl",SimpleNamespace(get_extensions_interface=getter))
+    monkeypatch.setitem(sys.modules,"omni.ext",SimpleNamespace(get_extensions_interface=getter))
+    receipt=prepare_loaded_extension_cache(app,record=records.append)
+    assert app._framework is original and ref() is not None
+    assert receipt['mode']=='audit_only' and receipt['cache_present']
+    assert receipt['native_qualification'] is False and records
+
+
+def test_missing_runtime_cache_is_diagnosed_without_creating_or_clearing_one(monkeypatch):
+    import sys
+    from go2_pvcnn.control.dh116.tabletop_preview_extension_cache import prepare_loaded_extension_cache,validate_extension_cache_receipt
+    app,getter,ref,events=fixture();del getter.extensions;original=app._framework
+    monkeypatch.setitem(sys.modules,"omni.ext._impl",SimpleNamespace(get_extensions_interface=getter))
+    monkeypatch.setitem(sys.modules,"omni.ext",SimpleNamespace(get_extensions_interface=getter))
+    receipt=prepare_loaded_extension_cache(app)
+    assert receipt['cache_present'] is False and app._framework is original
+    assert not hasattr(getter,'extensions')
+    validate_extension_cache_receipt(receipt)
