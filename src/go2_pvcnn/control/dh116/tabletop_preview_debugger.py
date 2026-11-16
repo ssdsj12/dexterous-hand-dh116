@@ -4,7 +4,7 @@ from pathlib import Path
 import shlex
 import sys
 
-POLICY_VERSION="dh116-preview-first-fatal-bounded-v1"
+POLICY_VERSION="dh116-preview-first-fatal-bounded-v2"
 
 class FatalDumpBudget:
     def __init__(self,execute,write,*,max_bytes=8*1024*1024):
@@ -20,7 +20,7 @@ class FatalDumpBudget:
             return
         if self.fatal_count>2:return
         self.write("DH116_GDB_FATAL_BACKTRACE "+signal_name+"\n")
-        for command in ("bt 64","thread apply all bt 32","info sharedlibrary","info proc mappings","py-bt"):
+        for command in ("bt 64","info registers","x/16i $pc-16","thread apply all bt 32","info sharedlibrary","info proc mappings","py-bt"):
             self.write("DH116_GDB_COMMAND "+command+"\n")
             try:text=self.execute(command)
             except Exception as error:text="COMMAND_ERROR "+str(error)+"\n"

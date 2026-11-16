@@ -1,0 +1,77 @@
+{
+  "version": "dh116-preview-owned-shutdown-readiness-v1",
+  "status": "cpu_passed_native_pending",
+  "source_baseline": "c7716c09e9cd86c8ceb71db0a62bd7f41444a43b",
+  "report": "docs/superpowers/reports/2026-11-16-preview-owned-shutdown-repair.md",
+  "code_sha256": {
+    "scripts/preview_dh116_physical_webrtc.py": "9dc03f29d0bcac29d3d92dd73638953da69d21264471db0a1b7ca6b6aa3551aa",
+    "src/go2_pvcnn/control/dh116/tabletop_physical_preview.py": "0e7031177bb45cfd80f657d1b1b3f4b2a2c192120b809cd0b8cf070239341835",
+    "src/go2_pvcnn/control/dh116/tabletop_preview_contract.py": "41e50144f8e4ef42ce557119f52f17c7bd64d8f3f0c279ff379ff2a56c35c849",
+    "src/go2_pvcnn/control/dh116/tabletop_preview_launcher.py": "1e30168bf75ebcff65de0f2625afa6dc660d8f80dc70bd2f53685e7904e68eb5",
+    "src/go2_pvcnn/control/dh116/tabletop_preview_debugger.py": "fb5ebde68dbcd8523e773005b61e83fd33d7b814e813683d3852462bd2ac527a",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_capture.py": "34b87780d444eddbbac89e0c40c6ee5882a5c19f1de64365fc8962f7db05358f",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py": "500bdcc1aa210667840cf2dfa4148fc96e9ec213bc26936d64ca13dab322f287",
+    "configs/dh116_execution/preview_shutdown_api_lock_v1.json": "635f1725053a2fcbb931d0560a556910e50e9e9508e0f098eb26d46e2611b457"
+  },
+  "cpu": {
+    "passed": 295,
+    "failed": 0,
+    "skipped": 0,
+    "wall_seconds": 16.76,
+    "log_sha256": "f46e854a3f86c5efbef55cb49416c9ce54fdfacb847e702d7d6c41206d3c2765"
+  },
+  "installed_api_sources": {
+    "manager": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.core.simulation_manager/isaacsim/core/simulation_manager/impl/simulation_manager.py",
+      "sha256": "97d1ef88202f370eac00281b193581ba02b5c95ed64131f153c006e3ab104357"
+    },
+    "simulation_app": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.simulation_app/isaacsim/simulation_app/simulation_app.py",
+      "sha256": "840ad13fcb3b4d8e10457809d42180b0fd807951a3e3cc153c832363fbef0bb2"
+    },
+    "timeline": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.timeline-1.0.11+d02c707b.lx64.r.cp310/omni/timeline/_timeline.pyi",
+      "sha256": "adf8065a9ba9abe290a179232c7b298c9a7957b62a7e8a7770768777beb639e0"
+    },
+    "livestream_stub": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.kit.livestream.core-6.1.0+106.2.0.lx64.r.cp310/omni/kit/livestream/bind/_kit_livestream.pyi",
+      "sha256": "231b2c81a99e61219eb0d48707cf03978d29a557352d5b4e99eb960bd720eca3"
+    },
+    "livestream_binding": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.kit.livestream.core-6.1.0+106.2.0.lx64.r.cp310/omni/kit/livestream/bind/_kit_livestream.cpython-310-x86_64-linux-gnu.so",
+      "sha256": "cd9ed4e8a3aab7dbd168b9862b4a14004093919b967e200e0c2d4820c6838100"
+    },
+    "livestream_plugin": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.kit.livestream.core-6.1.0+106.2.0.lx64.r.cp310/bin/libomni.kit.livestream.plugin.so",
+      "sha256": "726da8dc47348804cdc8115e41e170dfa36631fa802a21955c52ed04dfb2ff5f"
+    }
+  },
+  "confirmed_software_findings": [
+    "retained completed frames keep borrowed resource references",
+    "missing explicit pending STOP callback boundary before manager release guard",
+    "private livestream not explicitly stopped before owned renderer teardown",
+    "journal initialization outside cleanup try",
+    "cleanup exception could hide acquisition failure"
+  ],
+  "native_crash": {
+    "module": "libomni.kit.livestream.plugin.so",
+    "file_offset": "0x11f26",
+    "matching_archived_attempts": 2,
+    "cpp_pointer_root_cause_proven": false,
+    "registers_recorded_in_old_dump": false
+  },
+  "current_revision_native_executed": false,
+  "previous_revision_rgb_pairs": 17,
+  "previous_revision_signal": 11,
+  "native_qualification": false,
+  "normal_exit_qualified": false,
+  "physics_release_qualified": false,
+  "teacher_admission": false,
+  "student_admission": false,
+  "old_native_batch_remaining": 0,
+  "new_native_authorized": false,
+  "extra_gc_calls": 0,
+  "installed_sdk_files_modified": false,
+  "physics_changed": false,
+  "ppo_updates": 0
+}

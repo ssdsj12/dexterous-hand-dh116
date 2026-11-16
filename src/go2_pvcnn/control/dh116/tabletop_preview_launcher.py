@@ -3,13 +3,13 @@
 No SDK installation is patched. Absent buttons stay absent; existing buttons
 retain IsaacLab's hide/disable behavior. This owns no simulation or physics.
 """
-ADAPTER_VERSION = "dh116-preview-owned-launcher-v2"
+ADAPTER_VERSION = "dh116-preview-owned-launcher-v3"
 
 def _native_toolbar():
     import omni.kit.widget.toolbar
     return omni.kit.widget.toolbar.get_instance()
 
-def preview_launcher_type(base, *, toolbar_getter=None):
+def preview_launcher_type(base, *, toolbar_getter=None, partial_stop_presentation=None):
     if not isinstance(base,type):
         raise TypeError("AppLauncher class required")
     getter = _native_toolbar if toolbar_getter is None else toolbar_getter
@@ -21,11 +21,15 @@ def preview_launcher_type(base, *, toolbar_getter=None):
                 # The upstream constructor can fail after SimulationApp exists.
                 # Attempt normal close once and preserve the original failure.
                 partial=getattr(self,"_app",None)
+                cleanup_errors=[]
                 try:
                     if partial is not None:
-                        partial.close(wait_for_replicator=False)
-                except BaseException as cleanup:
-                    error.preview_startup_cleanup_error = str(cleanup)
+                        if partial_stop_presentation is not None:
+                            try:partial_stop_presentation()
+                            except BaseException as cleanup:cleanup_errors.append(str(cleanup))
+                        try:partial.close(wait_for_replicator=False)
+                        except BaseException as cleanup:cleanup_errors.append(str(cleanup))
+                    if cleanup_errors:error.preview_startup_cleanup_error="; ".join(cleanup_errors)
                 finally:
                     self._app = None
                     partial = None
@@ -66,17 +70,37 @@ def install_fatal_defaults(signal_api):
 
 class ManagedPreviewApp:
     """Own launcher callbacks explicitly; one normal close attempt, no forced exit."""
-    def __init__(self,launcher,*,signal_api):
+    def __init__(self,launcher,*,signal_api,stop_presentation=None):
         self._launcher=launcher
         self._app=launcher.app
         self._signals=signal_api
         self._closed=False
         self._close_error=None
+        self._stop_presentation=stop_presentation
+        self._presentation_attempted=False
+        self._presentation_error=None
+        self._presentation_receipt=None
         if signal_api is not None:install_fatal_defaults(signal_api)
 
     def update(self):
         if self._closed:raise RuntimeError("preview app is closed")
         return self._app.update()
+
+    def stop_presentation(self):
+        """One explicit owned-stream stop; a failure is sticky, never retried."""
+        if self._presentation_attempted:
+            if self._presentation_error:raise RuntimeError(self._presentation_error)
+            return self._presentation_receipt
+        self._presentation_attempted=True
+        stop,self._stop_presentation=self._stop_presentation,None
+        try:
+            if stop is not None:self._presentation_receipt=stop()
+        except BaseException as error:
+            self._presentation_error=type(error).__name__+": "+str(error)
+        finally:
+            stop=None
+        if self._presentation_error:raise RuntimeError(self._presentation_error) from None
+        return self._presentation_receipt
 
     def close(self,**kwargs):
         if self._closed:
@@ -86,6 +110,8 @@ class ManagedPreviewApp:
         launcher,app=self._launcher,self._app
         errors=[]
         try:
+            try:self.stop_presentation()
+            except BaseException as error:errors.append("presentation: "+str(error))
             for name in ("_hide_play_button_callback","_unhide_play_button_callback"):
                 subscription=getattr(launcher,name,None)
                 try:
@@ -117,7 +143,100 @@ class ManagedPreviewApp:
 
 def launch_managed_preview_app(launcher_factory,contract):
     import signal
+    verify_preview_shutdown_sources()
     kwargs=dict(contract["launcher"])
     kwargs.update(experience=contract["experience"]["path"],fast_shutdown=False)
-    launcher=preview_launcher_type(launcher_factory)(**kwargs)
-    return ManagedPreviewApp(launcher,signal_api=signal)
+    launcher=preview_launcher_type(launcher_factory,partial_stop_presentation=stop_native_presentation)(**kwargs)
+    return ManagedPreviewApp(launcher,signal_api=signal,stop_presentation=stop_native_presentation)
+
+
+def verify_preview_shutdown_sources(root=None):
+    """Read installed API/binary identities without starting Kit or changing SDK."""
+    import hashlib,json
+    from pathlib import Path
+    root=Path(__file__).resolve().parents[4] if root is None else Path(root)
+    data=json.loads((root/"configs/dh116_execution/preview_shutdown_api_lock_v1.json").read_text())
+    expected={"manager","simulation_app","timeline","livestream_stub","livestream_binding","livestream_plugin"}
+    if data.get("version")!="dh116-owned-preview-shutdown-api-v1" or set(data.get("sources",{}))!=expected:
+        raise ValueError("complete owned shutdown API contract required")
+    for name,item in data["sources"].items():
+        path=Path(item["path"])
+        if (not path.is_absolute() or path.is_symlink() or not path.is_file()
+                or hashlib.sha256(path.read_bytes()).hexdigest()!=item["sha256"]):
+            raise ValueError("installed shutdown source differs: "+name)
+    return data
+
+
+def quiesce_stream_interface(interface):
+    """Use actual installed disable/shutdown APIs, never force the process out."""
+    errors=[];result={}
+    try:
+        for name,args in (("enable_livestream",(False,)),("shutdown",())):
+            try:
+                method=getattr(interface,name)
+                value=method(*args)
+                result[name]=value is True
+                if value is not True:raise RuntimeError("returned "+repr(value))
+            except BaseException as error:
+                label="disable" if name=="enable_livestream" else name
+                errors.append(label+": "+type(error).__name__+": "+str(error))
+            finally:
+                method=None
+    finally:
+        interface=None
+    if errors:raise RuntimeError("; ".join(errors)) from None
+    return dict(result,native_thread_quiescence_qualified=False)
+
+
+def stop_native_presentation():
+    verify_preview_shutdown_sources()
+    import omni.kit.livestream.bind as bind
+    interface=bind.acquire_livestream_interface()
+    try:return quiesce_stream_interface(interface)
+    finally:interface=None
+
+
+def commit_preview_stop(timeline,*,freeze,read_clock):
+    """Dispatch real pending STOP callbacks without rendering or App.update.
+
+    The installed Timeline.commit API applies pending changes and callbacks on
+    the main thread. Manager release is still checked by the existing lifecycle.
+    Never write the manager's view field or invent a successful readback.
+    """
+    import threading
+    try:
+        if threading.current_thread() is not threading.main_thread():
+            raise RuntimeError("STOP commit requires the main thread")
+        if freeze() is not False:raise RuntimeError("STOP physics freeze failed")
+        before=read_clock()
+        timeline.stop()
+        timeline.commit()
+        if timeline.is_stopped() is not True:raise RuntimeError("timeline STOP did not read back true")
+        if freeze() is not False:raise RuntimeError("STOP physics freeze failed after commit")
+        after=read_clock()
+        # A weakref becoming dead is allowed; creation or changed SDK clocks is not.
+        if after is not None and after!=before:raise RuntimeError("STOP commit changed physical clock")
+        return dict(stop_commit_returned=True,clock_before=before,clock_after=after,
+            app_updates=0,explicit_physics_steps_requested=0,
+            physical_clock_unchanged=(True if before is not None and after==before else None),
+            native_release_verified=False)
+    finally:
+        timeline=freeze=read_clock=None
+
+
+def finish_preview_resources(app,camera,render,holder,journal):
+    """Stop presentation before removing any owned render product or stage prim."""
+    errors=[]
+    try:
+        operations=[("presentation",app.stop_presentation)]
+        if camera is not None:operations.append(("camera",camera.close))
+        if render is not None:operations.append(("render",render.close))
+        if holder is not None:operations.append(("holder",holder.clear))
+        if journal is not None:operations.append(("journal",journal.close))
+        for name,callback in operations:
+            try:callback()
+            except BaseException as error:errors.append(name+": "+type(error).__name__+": "+str(error))
+            finally:callback=None
+    finally:
+        app=camera=render=holder=journal=operations=callback=None
+    if errors:raise RuntimeError("; ".join(errors)) from None

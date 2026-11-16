@@ -1,15 +1,15 @@
 {
   "version": "dh116-tiled-step-stereo-readiness-v1",
-  "status": "native_rgb_capture_observed_shutdown_blocked",
-  "source_baseline": "f8e321d8f2318a762d27742fd33f843134cc7d53",
+  "status": "cpu_passed_owned_shutdown_fix_native_pending",
+  "source_baseline": "c7716c09e9cd86c8ceb71db0a62bd7f41444a43b",
   "reference_repository": "NVlabs/DEXTRAH",
   "reference_commit": "ebc08edafe5f7c5ad73dcb25ffa15e8d0353df50",
   "implementation_source_sha256": {
-    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_capture.py": "8d939c313860cb4c25019b19559e766b08c587e1aa16594a5e573061f7407ca6",
-    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py": "23acd81851d73e7b044bc85dd29b87ecdf605edef178e1ca9fad64e788c10500",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_capture.py": "34b87780d444eddbbac89e0c40c6ee5882a5c19f1de64365fc8962f7db05358f",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py": "500bdcc1aa210667840cf2dfa4148fc96e9ec213bc26936d64ca13dab322f287",
     "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_resources.py": "bb9f8bde46c4b1e1cae18548a62bc7c30b37ec4542ff393a4da7612a7f5fc612",
-    "src/go2_pvcnn/control/dh116/tabletop_preview_contract.py": "908ec4dd6fda364dbce999c52250d3363a9795f298d46c676ebe754a00abf52d",
-    "scripts/preview_dh116_physical_webrtc.py": "ea58a336d618fa6d9c4db1bd13969cc1757d3546eb4b017684757ca6c64a0278"
+    "src/go2_pvcnn/control/dh116/tabletop_preview_contract.py": "41e50144f8e4ef42ce557119f52f17c7bd64d8f3f0c279ff379ff2a56c35c849",
+    "scripts/preview_dh116_physical_webrtc.py": "9dc03f29d0bcac29d3d92dd73638953da69d21264471db0a1b7ca6b6aa3551aa"
   },
   "installed_api_sources": {
     "tiled": {
@@ -38,14 +38,15 @@
     }
   },
   "cpu": {
-    "passed": 271,
+    "passed": 295,
     "failed": 0,
     "skipped": 0,
-    "log_sha256": "7c893cdf2e52439164b806600802726601c29598a873b2a273ff44c2f52fc83a"
+    "wall_seconds": 16.76,
+    "log_sha256": "f46e854a3f86c5efbef55cb49416c9ce54fdfacb847e702d7d6c41206d3c2765"
   },
   "native": {
-    "executed": true,
-    "accepted_rgb_pairs": 17,
+    "executed": false,
+    "accepted_rgb_pairs": 0,
     "synchronization_qualified": false,
     "pixel_view_correspondence_qualified": false,
     "reset_qualified": false,
@@ -102,7 +103,8 @@
       "native_qualification": false
     },
     "latest_batch_result": "docs/contracts/tiled_step_native_result.json",
-    "last_attempt_source_head": "f8e321d8f2318a762d27742fd33f843134cc7d53"
+    "last_attempt_source_head": "f8e321d8f2318a762d27742fd33f843134cc7d53",
+    "last_actual_rgb_pairs": 17
   },
   "preview_contract_version": "dh116-webrtc-physical-preview-v3",
   "default_backend": "legacy_view",
@@ -165,14 +167,14 @@
     "batch_request_sha256": "dafaebc972a9aab49344c24e1824c85a9e5d7d699f85aed9dcb1faecdaeb30ca"
   },
   "remaining_blockers": [
-    "WebRTC present thread SIGSEGV at app.close; outer exit255",
-    "manager and owned resource release readbacks remain false/unknown",
-    "pixel-level stereo geometry/depth and Reset/restart have not been independently qualified",
-    "other resolutions not natively tested with this TiledCamera revision"
+    "owned shutdown revision requires new native budget and actual validation",
+    "archived WebRTC present thread SIG11 at file offset0x11f26 is not yet proven resolved",
+    "Reset/restart, stereo depth accuracy and other resolutions remain unqualified"
   ],
   "camera_pose_backend": "usd_camera_prim_isaac45",
   "camera_view_only_fabric_route_disabled": true,
   "global_physics_fabric_changed": false,
-  "current_revision_native_executed": true,
-  "latest_native_result": "docs/contracts/tiled_step_native_result.json"
+  "current_revision_native_executed": false,
+  "latest_native_result": "docs/contracts/tiled_step_native_result.json",
+  "owned_shutdown_readiness": "docs/contracts/preview_owned_shutdown_readiness.json"
 }

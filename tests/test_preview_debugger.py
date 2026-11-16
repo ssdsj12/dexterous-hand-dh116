@@ -38,3 +38,13 @@ def test_cpu_abort_keeps_real_signal_status_without_isaac(tmp_path):
     assert status["signal"]==6 and status["exit_code"] is None
     assert result.stdout.count("DH116_GDB_FATAL_BACKTRACE SIGABRT")==1
     assert "BAD_REENTRANT_CLOSE" not in result.stdout
+
+
+def test_fatal_dump_records_registers_and_instruction_before_large_thread_dump():
+    from go2_pvcnn.control.dh116.tabletop_preview_debugger import FatalDumpBudget
+    calls=[]
+    def execute(command):calls.append(command);return 'cpu fixture\n'
+    FatalDumpBudget(execute,lambda text:None).record('SIGSEGV')
+    assert 'info registers' in calls
+    assert 'x/16i $pc-16' in calls
+    assert calls.index('info registers')<calls.index('thread apply all bt 32')

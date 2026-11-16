@@ -8,36 +8,39 @@ from copy import deepcopy
 
 def run_preview(episode, journal, observer, *, actions, read_clock=None, publish_initial=True, on_terminal=None, before_control=None):
     """Run bounded controls, publishing reset and completed control boundaries."""
-    def observe(pre):
-        before = deepcopy(read_clock()) if read_clock is not None else None
-        observer(pre)
-        if read_clock is not None and read_clock() != before:
-            raise RuntimeError("preview observer advanced or changed the physical clock")
+    try:
+        def observe(pre):
+            before = deepcopy(read_clock()) if read_clock is not None else None
+            observer(pre)
+            if read_clock is not None and read_clock() != before:
+                raise RuntimeError("preview observer advanced or changed the physical clock")
 
-    pre = episode.pre_action_state()
-    if publish_initial:
-        observe(pre)
-    count = 0
-    terminal = None
-    for action in actions:
-        journal.begin(pre, action)
-        if before_control is not None:
-            before_control(pre, action)
-        result = episode.control(action)
-        journal.end(result)
-        count += 1
-        terminal = result["termination_reason"]
-        # A terminal episode is closed and cannot provide another pre-action state.
-        if terminal is not None:
-            if on_terminal is not None:
-                before = deepcopy(read_clock()) if read_clock is not None else None
-                on_terminal(result)
-                if read_clock is not None and read_clock() != before:
-                    raise RuntimeError("preview observer advanced or changed the physical clock")
-            break
         pre = episode.pre_action_state()
-        observe(pre)
-    return dict(control_intervals=count, termination_reason=terminal, ppo_updates=0)
+        if publish_initial:
+            observe(pre)
+        count = 0
+        terminal = None
+        for action in actions:
+            journal.begin(pre, action)
+            if before_control is not None:
+                before_control(pre, action)
+            result = episode.control(action)
+            journal.end(result)
+            count += 1
+            terminal = result["termination_reason"]
+            # A terminal episode is closed and cannot provide another pre-action state.
+            if terminal is not None:
+                if on_terminal is not None:
+                    before = deepcopy(read_clock()) if read_clock is not None else None
+                    on_terminal(result)
+                    if read_clock is not None and read_clock() != before:
+                        raise RuntimeError("preview observer advanced or changed the physical clock")
+                break
+            pre = episode.pre_action_state()
+            observe(pre)
+        return dict(control_intervals=count, termination_reason=terminal, ppo_updates=0)
+    finally:
+        episode = journal = observer = actions = read_clock = on_terminal = before_control = observe = None
 
 
 
@@ -118,7 +121,13 @@ def run_owned_scene(sim, owners, trace, *, builder, reader_factory, backend,
         result["physics_rows"] = state["generation"]
         return result
     finally:
-        episode = owners.resources.get("dual_episode")
-        if episode is not None and getattr(episode, "_record", None) is record:
-            episode._record = journal.record
-        state.clear()
+        try:
+            episode = owners.resources.get("dual_episode")
+            if episode is not None and getattr(episode, "_record", None) is record:
+                episode._record = journal.record
+        finally:
+            state.clear()
+            # A debugger/SDK may retain completed frames. Drop only our own
+            # aliases here; never materialize or clear somebody else's f_locals.
+            sim = owners = trace = builder = reader_factory = backend = journal = observer = actions = None
+            rod = reader = episode = clock = begin = publish = terminal = record = None

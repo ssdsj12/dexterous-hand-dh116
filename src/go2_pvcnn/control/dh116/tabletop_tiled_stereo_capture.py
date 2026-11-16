@@ -45,22 +45,25 @@ class TiledStereoCapture:
     def from_native(cls,sim,origins,calibration,snapshot,*,width=640,height=480,
                     horizontal_fov_degrees=75.,device="cuda:0",render_setting=None,
                     max_render_attempts=4,max_readback_bytes=1024**3):
-        from .tabletop_tiled_stereo_native import TiledNativeStereoReader
-        if not callable(snapshot):raise ValueError("physical snapshot callback required")
-        if type(max_render_attempts) is not int or not 1<=max_render_attempts<=16:
-            raise ValueError("bounded per-view render attempts required")
-        cal=rerender_calibration(calibration,width,height,horizontal_fov_degrees=horizontal_fov_degrees)
-        setting=_NativeRenderSetting() if render_setting is None else render_setting
-        if (any(not callable(getattr(setting,n,None)) for n in ("get","set"))
-                or type(setting.get()) is not bool):
-            raise ValueError("readable boolean render setting required")
-        reader=TiledNativeStereoReader(sim,origins,cal,device,max_readback_bytes=max_readback_bytes)
         try:
-            return cls(sim,reader,cal,snapshot,render_setting=setting,origins=origins,
-                       max_render_attempts=max_render_attempts)
-        except BaseException:
-            reader.close()
-            raise
+            from .tabletop_tiled_stereo_native import TiledNativeStereoReader
+            if not callable(snapshot):raise ValueError("physical snapshot callback required")
+            if type(max_render_attempts) is not int or not 1<=max_render_attempts<=16:
+                raise ValueError("bounded per-view render attempts required")
+            cal=rerender_calibration(calibration,width,height,horizontal_fov_degrees=horizontal_fov_degrees)
+            setting=_NativeRenderSetting() if render_setting is None else render_setting
+            if (any(not callable(getattr(setting,n,None)) for n in ("get","set"))
+                    or type(setting.get()) is not bool):
+                raise ValueError("readable boolean render setting required")
+            reader=TiledNativeStereoReader(sim,origins,cal,device,max_readback_bytes=max_readback_bytes)
+            try:
+                return cls(sim,reader,cal,snapshot,render_setting=setting,origins=origins,
+                           max_render_attempts=max_render_attempts)
+            except BaseException:
+                reader.close()
+                raise
+        finally:
+            sim = reader = snapshot = render_setting = setting = None
 
     def _physical(self):
         before=copy.deepcopy(self.snapshot())

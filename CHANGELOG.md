@@ -1,3 +1,7 @@
+## 2026-11-16 — 预览完成帧释放、STOP提交与直播关闭修复
+
+已复现并修复自身完成帧借用资源引用、STOP检查前缺少显式回调提交、直播未先于stage销毁停止及异常路径丢失原错误。实际脚本接线有CPU回归，首次故障补寄存器/指令。旧两次native预算已耗尽，本修正版未原生执行；SIG11和资源释放保持待验证，无SDK/物理/训练改动。 Ubuntu CPU 回归 295 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-owned-shutdown-repair.md)
+
 ## 2026-11-16 — TiledCamera两次原生复验与17对真实RGB证据
 
 已批准两次复验结束。修正版实际得到17对320x240双RGB、128连续测量物理步及1536测量solver子步；原生关闭仍SIG11/外层255，资源释放guard未通过，整体资格保持blocked。预算余0、零PPO、无强制结束；不将出图当作完整同步或抓取成功。 Ubuntu CPU 回归 271 项通过。[报告](docs/superpowers/reports/2026-11-16-tiled-two-attempt-native.md)

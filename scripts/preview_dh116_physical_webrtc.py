@@ -28,6 +28,7 @@ REQUIRED = (
     "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py",
     "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_resources.py",
     "configs/dh116_execution/tiled_camera_api_lock_v1.json",
+    "configs/dh116_execution/preview_shutdown_api_lock_v1.json",
     "src/go2_pvcnn/control/dh116/tabletop_preview_diagnostics.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_debugger.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_launcher.py",
@@ -114,116 +115,138 @@ def execute(contract, output):
                 settings.set_bool("/app/player/playSimulations", False)
                 return settings.get("/app/player/playSimulations")
 
+            import weakref
+            sim_reference=None
+
+            def read_owned_clock():
+                target=sim_reference() if sim_reference is not None else None
+                try:
+                    if target is None:return None
+                    return dict(sdk_step=int(target.current_time_step_index),sdk_time_s=float(target.current_time))
+                finally:target=None
+
             def stop():
                 import omni.timeline
-                omni.timeline.get_timeline_interface().stop()
+                from go2_pvcnn.control.dh116.tabletop_preview_launcher import commit_preview_stop
+                return commit_preview_stop(omni.timeline.get_timeline_interface().get_timeline(),
+                    freeze=freeze_player,read_clock=read_owned_clock)
 
             def make_sim():
-                sim = sim_utils.SimulationContext(sim_utils.SimulationCfg(
-                    dt=1/480, device="cuda:0", render_interval=1,
-                    gravity=(0.,0.,-9.81), physx=sim_utils.PhysxCfg(solver_type=0)))
-                sim.set_camera_view(eye=(1.35,-1.35,1.05), target=(.36,0.,.32))
-                light=sim_utils.DomeLightCfg(intensity=2000.)
-                light.func("/World/PreviewLight",light)
-                return sim
+                nonlocal sim_reference
+                try:
+                    sim = sim_utils.SimulationContext(sim_utils.SimulationCfg(
+                        dt=1/480, device="cuda:0", render_interval=1,
+                        gravity=(0.,0.,-9.81), physx=sim_utils.PhysxCfg(solver_type=0)))
+                    sim_reference=weakref.ref(sim)
+                    sim.set_camera_view(eye=(1.35,-1.35,1.05), target=(.36,0.,.32))
+                    light=sim_utils.DomeLightCfg(intensity=2000.)
+                    light.func("/World/PreviewLight",light)
+                    return sim
+                finally:
+                    sim = light = None
 
             def acquire(sim, owners, trace, cleanup):
-                camera = None
-                render_sim = RenderBudget(sim, BUDGET["max_render_calls"])
-                journal = DualHandEvidenceJournal(output/"physical.jsonl",
-                    physics_budget_end=BUDGET["total_sdk_steps"], solver_substeps=12)
-                holder = {}
+                camera=render_sim=journal=holder=None
+                result=None
+                errors=[]
                 try:
+                    render_sim = RenderBudget(sim, BUDGET["max_render_calls"])
+                    journal = DualHandEvidenceJournal(output/"physical.jsonl",
+                        physics_budget_end=BUDGET["total_sdk_steps"], solver_substeps=12)
+                    holder = {}
                     render_sim.install()
                     def present(pre, exchange):
                         nonlocal camera
-                        from pxr import UsdGeom, Gf
-                        from go2_pvcnn.control.dh116.live_deformx_display import LiveDeformxDisplay, capture_snapshot, capture_reset_snapshot
-                        from go2_pvcnn.control.dh116.tabletop_preview_presentation import PreviewPresentation
-                        from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest
-                        rod=owners.resources["runtime"]
-                        packet=exchange["material_director"]
-                        if exchange["preview_phase"] == "reset":
-                            snapshot=capture_reset_snapshot(exchange["rod"], packet, source_instance_id=id(rod.rope),
-                                read_clock=rod.clock, backend_profile=profile)
-                        else:
-                            snapshot=capture_snapshot(exchange, source_instance_id=id(rod.rope),
-                                read_clock=rod.clock, backend_profile=profile)
-                        holder["snapshot"],holder["exchange"]=snapshot,exchange
-                        if camera is None:
-                            mesh=UsdGeom.Mesh.Define(sim.stage,"/World/CosseratWire")
-                            mesh.CreateSubdivisionSchemeAttr().Set("none")
-                            mesh.CreateDisplayColorAttr().Set([Gf.Vec3f(1.,.2,.035)])
-                            display=LiveDeformxDisplay.for_mesh(mesh,snapshot["radius_m"],
-                                source_instance_id=id(rod.rope),backend_profile=profile)
-                            def identity():
-                                current=holder["exchange"]; clock=rod.clock()
-                                return dict(run_uuid=clock["run_uuid"],env_id=clock["env_id"],
-                                    episode_uid=clock["episode_uid"],reset_id=clock["reset_id"],
-                                    policy_tick=current["preview_policy_tick"],
-                                    physics_tick_start=current["preview_physics_start"],
-                                    physics_tick_end=clock["physics_step"],
-                                    rod_step=clock["rod_tick"], state_sha256=_digest(dict(
-                                        rod=current["rod"],material_director=current["material_director"],
-                                        action_readback=current.get("action_readback"))),
-                                    simulation_timestamp=clock["timestamp_s"],
-                                    calibration_sha256=holder["camera"].calibration.sha256,
-                                    sdk_step=clock["physics_step"],sdk_timestamp_s=clock["timestamp_s"],
-                                    rod_tick=clock["rod_tick"],solver_time_s=clock["solver_time_s"],
-                                    material_reference_uid=current["material_director"]["material_reference_uid"],
-                                    rod_uid=clock["rod_uid"])
-                            camera=create_preview_camera(ROOT,sim,contract,identity)
-                            holder["camera"]=camera
-                            owners.keep("preview_rgb",camera)
-                            trace.watch("preview_rgb",camera,owner="preview RGB",release="close before SDK STOP")
-                            (output/"capture_calibration.json").write_text(json.dumps(dict(
-                                **camera.calibration.to_dict(),
-                                calibration_sha256=camera.calibration.sha256,
-                                resolution_mode="native_lens_authoring_not_image_resize",
-                                camera_backend=contract["camera_backend"]),indent=2)+"\n")
-                            holder["display"]=display
-                        before=rod.clock()
-                        before_time=float(sim.current_time)
-                        index=holder.get("frame",0)
-                        def sink(images, owned_snapshot, terminal):
-                            from PIL import Image
-                            import numpy as np
-                            for side in ("left","right"):
-                                rgb=images[side+"_rgb"][0].permute(1,2,0).detach().cpu().numpy()
-                                Image.fromarray(np.clip(np.rint(rgb*255),0,255).astype("uint8")).save(output/(f"{index:03d}_{side}.png"))
-                            metadata=dict(phase=exchange["preview_phase"],terminal_reason=terminal,
-                                identity=images["identity"],render_timing=images["render_timing"],
-                                camera_backend=contract["camera_backend"],
-                                capture_source_scope=images.get("source_scope","legacy_bridge_unqualified"),
-                                resolution_wh=[camera.calibration.width,camera.calibration.height],
-                                calibration_sha256=images["calibration_sha256"],
-                                K_left=images["K_left"].tolist(),K_right=images["K_right"].tolist(),
-                                native_qualification=False,teacher_admission=False)
-                            (output/(f"{index:03d}_frame.json")).write_text(json.dumps(metadata,indent=2)+"\n")
-                        presenter=PreviewPresentation(capture_snapshot=lambda row:snapshot,
-                            display=holder["display"],camera=camera,read_clock=rod.clock,sink=sink)
-                        presenter(pre,exchange)
-                        holder["frame"]=index+1
-                        # Give the private WebRTC client time to connect while
-                        # pumping a frozen first frame; never advance physics.
-                        if index == 0:
-                            original=settings.get("/app/player/playSimulations")
-                            if type(original) is not bool: raise ValueError("player setting unavailable")
-                            try:
-                                settings.set_bool("/app/player/playSimulations",False)
-                                if settings.get("/app/player/playSimulations") is not False:
-                                    raise RuntimeError("preview freeze readback failed")
-                                for _ in range(24):
-                                    if time.monotonic()>=deadline: raise RuntimeError("preview wall budget expired")
-                                    render_sim.render()
-                                    if (rod.clock()!=before or sim.current_time_step_index!=before["physics_step"]
-                                            or float(sim.current_time)!=before_time):
-                                        raise RuntimeError("preview hold advanced physics")
-                                    time.sleep(.5)
-                            finally:
-                                settings.set_bool("/app/player/playSimulations",original)
-                                if settings.get("/app/player/playSimulations") is not original:
-                                    raise RuntimeError("preview freeze restoration failed")
+                        try:
+                            from pxr import UsdGeom, Gf
+                            from go2_pvcnn.control.dh116.live_deformx_display import LiveDeformxDisplay, capture_snapshot, capture_reset_snapshot
+                            from go2_pvcnn.control.dh116.tabletop_preview_presentation import PreviewPresentation
+                            from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest
+                            rod=owners.resources["runtime"]
+                            packet=exchange["material_director"]
+                            if exchange["preview_phase"] == "reset":
+                                snapshot=capture_reset_snapshot(exchange["rod"], packet, source_instance_id=id(rod.rope),
+                                    read_clock=rod.clock, backend_profile=profile)
+                            else:
+                                snapshot=capture_snapshot(exchange, source_instance_id=id(rod.rope),
+                                    read_clock=rod.clock, backend_profile=profile)
+                            holder["snapshot"],holder["exchange"],holder["runtime"]=snapshot,exchange,rod
+                            if camera is None:
+                                mesh=UsdGeom.Mesh.Define(sim.stage,"/World/CosseratWire")
+                                mesh.CreateSubdivisionSchemeAttr().Set("none")
+                                mesh.CreateDisplayColorAttr().Set([Gf.Vec3f(1.,.2,.035)])
+                                display=LiveDeformxDisplay.for_mesh(mesh,snapshot["radius_m"],
+                                    source_instance_id=id(rod.rope),backend_profile=profile)
+                                def identity():
+                                    current=holder["exchange"]; clock=holder["runtime"].clock()
+                                    return dict(run_uuid=clock["run_uuid"],env_id=clock["env_id"],
+                                        episode_uid=clock["episode_uid"],reset_id=clock["reset_id"],
+                                        policy_tick=current["preview_policy_tick"],
+                                        physics_tick_start=current["preview_physics_start"],
+                                        physics_tick_end=clock["physics_step"],
+                                        rod_step=clock["rod_tick"], state_sha256=_digest(dict(
+                                            rod=current["rod"],material_director=current["material_director"],
+                                            action_readback=current.get("action_readback"))),
+                                        simulation_timestamp=clock["timestamp_s"],
+                                        calibration_sha256=holder["camera"].calibration.sha256,
+                                        sdk_step=clock["physics_step"],sdk_timestamp_s=clock["timestamp_s"],
+                                        rod_tick=clock["rod_tick"],solver_time_s=clock["solver_time_s"],
+                                        material_reference_uid=current["material_director"]["material_reference_uid"],
+                                        rod_uid=clock["rod_uid"])
+                                camera=create_preview_camera(ROOT,sim,contract,identity)
+                                holder["camera"]=camera
+                                owners.keep("preview_rgb",camera)
+                                trace.watch("preview_rgb",camera,owner="preview RGB",release="close before SDK STOP")
+                                (output/"capture_calibration.json").write_text(json.dumps(dict(
+                                    **camera.calibration.to_dict(),
+                                    calibration_sha256=camera.calibration.sha256,
+                                    resolution_mode="native_lens_authoring_not_image_resize",
+                                    camera_backend=contract["camera_backend"]),indent=2)+"\n")
+                                holder["display"]=display
+                            before=rod.clock()
+                            before_time=float(sim.current_time)
+                            index=holder.get("frame",0)
+                            def sink(images, owned_snapshot, terminal):
+                                from PIL import Image
+                                import numpy as np
+                                for side in ("left","right"):
+                                    rgb=images[side+"_rgb"][0].permute(1,2,0).detach().cpu().numpy()
+                                    Image.fromarray(np.clip(np.rint(rgb*255),0,255).astype("uint8")).save(output/(f"{index:03d}_{side}.png"))
+                                metadata=dict(phase=exchange["preview_phase"],terminal_reason=terminal,
+                                    identity=images["identity"],render_timing=images["render_timing"],
+                                    camera_backend=contract["camera_backend"],
+                                    capture_source_scope=images.get("source_scope","legacy_bridge_unqualified"),
+                                    resolution_wh=[camera.calibration.width,camera.calibration.height],
+                                    calibration_sha256=images["calibration_sha256"],
+                                    K_left=images["K_left"].tolist(),K_right=images["K_right"].tolist(),
+                                    native_qualification=False,teacher_admission=False)
+                                (output/(f"{index:03d}_frame.json")).write_text(json.dumps(metadata,indent=2)+"\n")
+                            presenter=PreviewPresentation(capture_snapshot=lambda row:snapshot,
+                                display=holder["display"],camera=camera,read_clock=rod.clock,sink=sink)
+                            presenter(pre,exchange)
+                            holder["frame"]=index+1
+                            # Give the private WebRTC client time to connect while
+                            # pumping a frozen first frame; never advance physics.
+                            if index == 0:
+                                original=settings.get("/app/player/playSimulations")
+                                if type(original) is not bool: raise ValueError("player setting unavailable")
+                                try:
+                                    settings.set_bool("/app/player/playSimulations",False)
+                                    if settings.get("/app/player/playSimulations") is not False:
+                                        raise RuntimeError("preview freeze readback failed")
+                                    for _ in range(24):
+                                        if time.monotonic()>=deadline: raise RuntimeError("preview wall budget expired")
+                                        render_sim.render()
+                                        if (rod.clock()!=before or sim.current_time_step_index!=before["physics_step"]
+                                                or float(sim.current_time)!=before_time):
+                                            raise RuntimeError("preview hold advanced physics")
+                                        time.sleep(.5)
+                                finally:
+                                    settings.set_bool("/app/player/playSimulations",original)
+                                    if settings.get("/app/player/playSimulations") is not original:
+                                        raise RuntimeError("preview freeze restoration failed")
+                        finally:
+                            pre = exchange = rod = packet = snapshot = mesh = display = presenter = sink = identity = None
                     def actions():
                         for _ in range(BUDGET["control_intervals"]):
                             if time.monotonic()>=deadline: raise RuntimeError("preview wall budget expired")
@@ -236,15 +259,30 @@ def execute(contract, output):
                             physics_budget_end=BUDGET["total_sdk_steps"]),
                         device="cuda:0",actions=actions())
                     result["render_calls"] = render_sim.count
-                    return result
+                    # Persist actual counters before any later native close can crash.
+                    from scripts.probe_dh116_physx_lifetime import write_json
+                    write_json(output/"preview_acquire_result.json",dict(result,
+                        native_qualification=False,teacher_admission=False))
+                except BaseException:
+                    import traceback
+                    errors.append(traceback.format_exc())
+                    # Persist the first fault BEFORE entering native shutdown.
+                    try:
+                        from scripts.probe_dh116_physx_lifetime import write_json
+                        write_json(output/"preview_acquire_error.json",dict(
+                            stage="acquire",error=errors[-1],native_qualification=False))
+                    except BaseException:errors.append(traceback.format_exc())
                 finally:
                     try:
-                        if camera is not None: camera.close()
+                        from go2_pvcnn.control.dh116.tabletop_preview_launcher import finish_preview_resources
+                        finish_preview_resources(app,camera,render_sim,holder,journal)
+                    except BaseException:
+                        import traceback
+                        errors.append(traceback.format_exc())
                     finally:
-                        try: render_sim.close()
-                        finally:
-                            holder.clear()
-                            journal.close()
+                        sim=owners=trace=camera=render_sim=present=journal=holder=None
+                if errors:raise RuntimeError("\n".join(errors)) from None
+                return result
             names=tuple(side+"_"+suffix for side in ("left","right") for suffix in
                 ("hand","view","asset_sim_view","permanent_composer","instantaneous_composer"))+(
                 "runtime","rope","episode","material_director_reader","preview_rgb")

@@ -44,25 +44,28 @@ def _capture_resolution(value):
 
 def create_preview_camera(root, sim, contract, snapshot, *, render_setting=None):
     """Author both native lenses at the frozen size; never resize readback."""
-    from .tabletop_stereo_calibration import StereoCalibration
-    from .tabletop_stereo_rgb_bridge import RGBPairBridge
-    resolution = _capture_resolution(contract.get("capture_resolution"))
-    if contract.get("camera_config") != CAMERA_CONFIG:
-        raise ValueError("preview camera rig differs")
-    calibration = StereoCalibration.from_json(Path(root) / CAMERA_CONFIG)
-    backend = contract.get("camera_backend", "legacy_view")
-    if backend == "tiled_step":
-        from .tabletop_tiled_stereo_capture import TiledStereoCapture
-        return TiledStereoCapture.from_native(sim, [[0., 0., 0.]], calibration, snapshot,
+    try:
+        from .tabletop_stereo_calibration import StereoCalibration
+        from .tabletop_stereo_rgb_bridge import RGBPairBridge
+        resolution = _capture_resolution(contract.get("capture_resolution"))
+        if contract.get("camera_config") != CAMERA_CONFIG:
+            raise ValueError("preview camera rig differs")
+        calibration = StereoCalibration.from_json(Path(root) / CAMERA_CONFIG)
+        backend = contract.get("camera_backend", "legacy_view")
+        if backend == "tiled_step":
+            from .tabletop_tiled_stereo_capture import TiledStereoCapture
+            return TiledStereoCapture.from_native(sim, [[0., 0., 0.]], calibration, snapshot,
+                **resolution, horizontal_fov_degrees=75., device="cuda:0",
+                max_render_attempts=BUDGET["max_camera_renders_per_frame"] // 2,
+                render_setting=render_setting)
+        if backend != "legacy_view":
+            raise ValueError("unsupported preview camera backend")
+        return RGBPairBridge.from_native(sim, [[0., 0., 0.]], calibration, snapshot,
             **resolution, horizontal_fov_degrees=75., device="cuda:0",
-            max_render_attempts=BUDGET["max_camera_renders_per_frame"] // 2,
+            max_render_attempts=BUDGET["max_camera_renders_per_frame"],
             render_setting=render_setting)
-    if backend != "legacy_view":
-        raise ValueError("unsupported preview camera backend")
-    return RGBPairBridge.from_native(sim, [[0., 0., 0.]], calibration, snapshot,
-        **resolution, horizontal_fov_degrees=75., device="cuda:0",
-        max_render_attempts=BUDGET["max_camera_renders_per_frame"],
-        render_setting=render_setting)
+    finally:
+        sim = snapshot = render_setting = None
 
 
 def _camera_api_sources(root, backend):
@@ -115,13 +118,16 @@ def verify(root, contract):
 class RenderBudget:
     """Count render attempts, including failed calls; forwards all other access."""
     def __init__(self, sim, limit):
-        if type(limit) is not int or limit < 1: raise ValueError("positive render budget required")
-        self._sim, self.limit, self.count = sim, limit, 0
-        self._render = sim.render
-        self._installed = False
-        self._closed = False
-        self._had_override = "render" in vars(sim)
-        self._prior_override = vars(sim).get("render")
+        try:
+            if type(limit) is not int or limit < 1: raise ValueError("positive render budget required")
+            self._sim, self.limit, self.count = sim, limit, 0
+            self._render = sim.render
+            self._installed = False
+            self._closed = False
+            self._had_override = "render" in vars(sim)
+            self._prior_override = vars(sim).get("render")
+        finally:
+            sim = self = None
 
     def __getattr__(self, name):
         if self._closed: raise RuntimeError("render budget is closed")
