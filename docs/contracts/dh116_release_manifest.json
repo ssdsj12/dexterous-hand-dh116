@@ -23576,6 +23576,55 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 82,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_preview_camera_clock_startup.py",
+        "tests/test_dh116_stereo_rgb_bridge.py",
+        "tests/test_dh116_stereo_rgb_resources.py",
+        "tests/test_preview_owner_release.py",
+        "tests/test_preview_contract.py",
+        "tests/test_preview_presentation.py",
+        "tests/test_preview_debugger.py"
+      ],
+      "log_sha256": "45012eed13d885a61bd5ff8e84238732a4d3e0c90edfd43890aaa5d67c37ee10",
+      "tested_head": "b496702b37fd94a316a84975d451437905303c82",
+      "native_qualification": false,
+      "preview_native_status": "blocked",
+      "batch_attempts_used": 1,
+      "native_sdk_steps": 2,
+      "native_measurement_rows": 0,
+      "native_camera_pairs": 0,
+      "remaining_approved_attempts": 1,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-16-preview-camera-clock.md",
+      "report_source_commit": "fc706389b30df31455dc5dca06629bdd64b11194",
+      "package": "preview.camera-clock.cpu-20261116",
+      "commit": "94325a0bb30b5790fa148e6152027cc41e05949b",
+      "parent": "b496702b37fd94a316a84975d451437905303c82",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/physical_preview_native_readiness.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-16-preview-camera-clock.md",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_bridge.py",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_owned_native.py",
+        "tests/test_preview_camera_clock_startup.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
