@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import time
@@ -17,7 +18,7 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
-from go2_pvcnn.control.dh116.tabletop_preview_contract import freeze, verify, BUDGET, RenderBudget
+from go2_pvcnn.control.dh116.tabletop_preview_contract import freeze, verify, BUDGET, RenderBudget, create_preview_camera
 
 EXPERIENCE = Path("/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.rendering.kit")
 REQUIRED = (
@@ -134,8 +135,6 @@ def execute(contract, output):
                         nonlocal camera
                         from pxr import UsdGeom, Gf
                         from go2_pvcnn.control.dh116.live_deformx_display import LiveDeformxDisplay, capture_snapshot, capture_reset_snapshot
-                        from go2_pvcnn.control.dh116.tabletop_stereo_calibration import StereoCalibration
-                        from go2_pvcnn.control.dh116.tabletop_stereo_rgb_bridge import RGBPairBridge
                         from go2_pvcnn.control.dh116.tabletop_preview_presentation import PreviewPresentation
                         from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest
                         rod=owners.resources["runtime"]
@@ -169,12 +168,14 @@ def execute(contract, output):
                                     rod_tick=clock["rod_tick"],solver_time_s=clock["solver_time_s"],
                                     material_reference_uid=current["material_director"]["material_reference_uid"],
                                     rod_uid=clock["rod_uid"])
-                            calibration=StereoCalibration.from_json(ROOT/contract["camera_config"])
-                            camera=RGBPairBridge.from_native(sim, [[0.,0.,0.]], calibration, identity,
-                                device="cuda:0", max_render_attempts=BUDGET["max_camera_renders_per_frame"])
+                            camera=create_preview_camera(ROOT,sim,contract,identity)
                             holder["camera"]=camera
                             owners.keep("preview_rgb",camera)
                             trace.watch("preview_rgb",camera,owner="preview RGB",release="close before SDK STOP")
+                            (output/"capture_calibration.json").write_text(json.dumps(dict(
+                                **camera.calibration.to_dict(),
+                                calibration_sha256=camera.calibration.sha256,
+                                resolution_mode="native_lens_authoring_not_image_resize"),indent=2)+"\n")
                             holder["display"]=display
                         before=rod.clock()
                         before_time=float(sim.current_time)
@@ -187,6 +188,9 @@ def execute(contract, output):
                                 Image.fromarray(np.clip(np.rint(rgb*255),0,255).astype("uint8")).save(output/(f"{index:03d}_{side}.png"))
                             metadata=dict(phase=exchange["preview_phase"],terminal_reason=terminal,
                                 identity=images["identity"],render_timing=images["render_timing"],
+                                resolution_wh=[camera.calibration.width,camera.calibration.height],
+                                calibration_sha256=images["calibration_sha256"],
+                                K_left=images["K_left"].tolist(),K_right=images["K_right"].tolist(),
                                 native_qualification=False,teacher_admission=False)
                             (output/(f"{index:03d}_frame.json")).write_text(json.dumps(metadata,indent=2)+"\n")
                         presenter=PreviewPresentation(capture_snapshot=lambda row:snapshot,
@@ -261,16 +265,28 @@ def main(argv=None):
     group.add_argument("--freeze",type=Path)
     group.add_argument("--execute-native",action="store_true")
     parser.add_argument("--physical-gpu",type=int,default=3,help="physical GPU to bind when freezing a contract")
+    parser.add_argument("--resolution",help="WIDTHxHEIGHT at freeze time; both cameras use this native size")
     parser.add_argument("--contract",type=Path)
     parser.add_argument("--contract-sha256")
     parser.add_argument("--output",type=Path)
     args=parser.parse_args(argv)
+    if args.resolution is not None and not args.freeze:
+        parser.error("resolution is freeze-only; native execution uses the authorized contract")
+    width,height=640,480
+    if args.resolution is not None:
+        match=re.fullmatch(r"([1-9][0-9]*)[xX]([1-9][0-9]*)",args.resolution)
+        if match is None:parser.error("resolution must be positive WIDTHxHEIGHT")
+        width,height=map(int,match.groups())
     if args.freeze:
         if args.freeze.resolve().is_relative_to(ROOT):
             parser.error("freeze contract outside the source inventory")
         missing=[name for name in REQUIRED if not (ROOT/name).is_file()]
         if missing: parser.error("missing required integrated modules: "+", ".join(missing))
-        payload=json.dumps(freeze(ROOT,EXPERIENCE,physical_gpu_index=args.physical_gpu),sort_keys=True,indent=2)+"\n"
+        try:
+            contract=freeze(ROOT,EXPERIENCE,physical_gpu_index=args.physical_gpu,width=width,height=height)
+        except ValueError as error:
+            parser.error(str(error))
+        payload=json.dumps(contract,sort_keys=True,indent=2)+"\n"
         with args.freeze.open("x") as stream: stream.write(payload)
         print("contract_sha256="+_sha(args.freeze))
         return 0

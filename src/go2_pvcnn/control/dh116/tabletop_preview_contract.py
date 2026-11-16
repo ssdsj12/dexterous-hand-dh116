@@ -4,7 +4,7 @@ from pathlib import Path
 from .tabletop_preview_debugger import POLICY_VERSION
 from .tabletop_preview_launcher import ADAPTER_VERSION, preview_launcher_type
 
-VERSION = "dh116-webrtc-physical-preview-v1"
+VERSION = "dh116-webrtc-physical-preview-v2"
 BUDGET = dict(control_intervals=16, setup_sdk_steps=2, measured_sdk_steps=128,
               total_sdk_steps=130, solver_substeps_per_sdk_step=12,
               total_solver_substeps=1536, max_camera_renders_per_frame=8,
@@ -34,20 +34,43 @@ def _inventory(root):
     return result
 
 
-def freeze(root, experience, *, physical_gpu_index=3):
+def _capture_resolution(value):
+    from .tabletop_stereo_resolution import validate_resolution
+    if not isinstance(value, dict) or set(value) != {"width", "height"}:
+        raise ValueError("one shared left/right capture resolution required")
+    validate_resolution(value["width"], value["height"])
+    return dict(value)
+
+
+def create_preview_camera(root, sim, contract, snapshot, *, render_setting=None):
+    """Author both native lenses at the frozen size; never resize readback."""
+    from .tabletop_stereo_calibration import StereoCalibration
+    from .tabletop_stereo_rgb_bridge import RGBPairBridge
+    resolution = _capture_resolution(contract.get("capture_resolution"))
+    if contract.get("camera_config") != CAMERA_CONFIG:
+        raise ValueError("preview camera rig differs")
+    calibration = StereoCalibration.from_json(Path(root) / CAMERA_CONFIG)
+    return RGBPairBridge.from_native(sim, [[0., 0., 0.]], calibration, snapshot,
+        **resolution, horizontal_fov_degrees=75., device="cuda:0",
+        max_render_attempts=BUDGET["max_camera_renders_per_frame"],
+        render_setting=render_setting)
+
+
+def freeze(root, experience, *, physical_gpu_index=3, width=640, height=480):
     if type(physical_gpu_index) is not int or physical_gpu_index<0:
         raise ValueError("nonnegative physical GPU index required")
+    resolution = _capture_resolution(dict(width=width, height=height))
     experience = Path(experience).resolve(strict=True)
     return dict(version=VERSION, launcher_adapter=ADAPTER_VERSION, debugger_policy=POLICY_VERSION, source_sha256=_inventory(root), physical_gpu_index=physical_gpu_index,
                 experience=dict(path=str(experience), sha256=_hash(experience)),
-                budget=dict(BUDGET), camera_config=CAMERA_CONFIG,
+                budget=dict(BUDGET), camera_config=CAMERA_CONFIG, capture_resolution=resolution,
                 launcher=dict(headless=True, livestream=2, enable_cameras=True, device="cuda:0", kit_args="--enable omni.kit.widget.toolbar"),
                 action="zero_24d", permission="independent_preview_only")
 
 
 def verify(root, contract):
     if (not isinstance(contract,dict) or set(contract) !=
-        {"version","source_sha256","experience","budget","camera_config","launcher","action","permission","physical_gpu_index","launcher_adapter","debugger_policy"}
+        {"version","source_sha256","experience","budget","camera_config","launcher","action","permission","physical_gpu_index","launcher_adapter","debugger_policy","capture_resolution"}
         or contract["version"] != VERSION or contract["budget"] != BUDGET
         or contract["launcher_adapter"] != ADAPTER_VERSION
         or contract["debugger_policy"] != POLICY_VERSION
@@ -56,6 +79,7 @@ def verify(root, contract):
         or contract["launcher"] != dict(headless=True,livestream=2,enable_cameras=True,device="cuda:0",kit_args="--enable omni.kit.widget.toolbar")
         or contract["action"] != "zero_24d" or contract["permission"] != "independent_preview_only"):
         raise ValueError("independent preview settings differ")
+    _capture_resolution(contract["capture_resolution"])
     if contract["source_sha256"] != _inventory(root):
         raise ValueError("preview source inventory differs")
     exp = contract["experience"]

@@ -20417,6 +20417,62 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-16-preview-warp-readback.md",
       "report_source_commit": "0e280e9229ad5a4584331689189dd4a683ead11b"
+    },
+    "preview.resolution.cpu-20261116": {
+      "passed": 158,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_preview_resolution.py",
+        "tests/test_preview_warp_readback.py",
+        "tests/test_preview_camera_clock_startup.py",
+        "tests/test_preview_contract.py",
+        "tests/test_dh116_stereo_rgb_bridge.py",
+        "tests/test_dh116_stereo_rgb_resources.py",
+        "tests/test_preview_owner_release.py",
+        "tests/test_preview_debugger.py",
+        "tests/test_dh116_stereo_resolution.py",
+        "tests/test_dh116_stereo_resolution_benchmark.py"
+      ],
+      "log_sha256": "c9571c148d3f386a3806ced7da926bf9ad8e3d29416be267f5324bc456307661",
+      "tested_head": "c3e99e39e3c66b07f832d0b56a64c15370902816",
+      "native_qualification": false,
+      "preview_native_status": "blocked",
+      "remaining_approved_attempts": 0,
+      "resolution_profiles": [
+        [
+          224,
+          96
+        ],
+        [
+          320,
+          240
+        ],
+        [
+          640,
+          360
+        ],
+        [
+          640,
+          480
+        ]
+      ],
+      "custom_resolution_cpu_checked": [
+        512,
+        384
+      ],
+      "selected_resolution": null,
+      "dependency_versions_changed": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-16-preview-resolution-wiring.md",
+      "report_source_commit": "310d173bd5762dcf0df43d211a30c877a39566a7"
     }
   }
 }

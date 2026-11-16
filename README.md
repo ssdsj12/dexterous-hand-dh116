@@ -1,3 +1,7 @@
+## 2026-11-16 — 预览多分辨率实际执行链与四档离线核验
+
+修复预览入口漏传宽高，独立v2合同冻结实际双RGB尺寸并重新生成内参；四档CPU亚像素测试已执行，未运行新Isaac，原生读回与关闭仍blocked，未预选最终分辨率。 Ubuntu CPU 回归 158 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-resolution-wiring.md)
+
 ## 2026-11-16 — RGB旧owner接口独立兼容与两轮批次结果
 
 第二轮推进到RGB缓冲读取后因旧owner参数失败；独立范围映射非持有指针至deleter=None，安装源CPU重放验证，未升级依赖，原生仍blocked且批次耗尽。 Ubuntu CPU 回归 84 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-warp-readback.md)
