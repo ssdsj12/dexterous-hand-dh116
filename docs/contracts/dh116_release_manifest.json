@@ -23422,6 +23422,48 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_preview_launcher.py",
+        "tests/test_preview_contract.py"
+      ],
+      "log_sha256": "abb7d0f5e3a250ecaabf4d5a7fd1070e315439015282fa30b8fb6c1ac51266de",
+      "tested_head": "d6cba614929c6ed153a210d33090f025ebbda390",
+      "native_qualification": false,
+      "preview_native_status": "blocked",
+      "native_attempts_total": 3,
+      "forced_termination": true,
+      "outer_exit_code": 137,
+      "physical_measurement_rows": 0,
+      "camera_pairs": 0,
+      "automatic_retries": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-16-preview-native-forced-stop.md",
+      "report_source_commit": "3017e9b254d8975903d94ec1051a5fd753f9e4a5",
+      "package": "preview.native-result.cpu-audit-20261116",
+      "commit": "c73d7b450e7069f3ec65779f3a522aa48613bb1b",
+      "parent": "d6cba614929c6ed153a210d33090f025ebbda390",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/physical_preview_native_readiness.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-16-preview-native-forced-stop.md"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
