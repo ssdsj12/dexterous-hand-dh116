@@ -20167,6 +20167,32 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-16-live-flexible-stereo-preview.md",
       "report_source_commit": "6888b428f5dd9980cef5904abb4f0cf0ddb13bdb"
+    },
+    "preview.shared-gpu0.cpu-20261116": {
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_preview_device.py",
+        "tests/test_preview_contract.py",
+        "tests/test_physical_preview.py",
+        "tests/test_preview_presentation.py"
+      ],
+      "log_sha256": "beef2ec5aeaacb13425ad9affb59329473e9f16919ef18956b2822a29ad5c134",
+      "tested_head": "8bc541bf9031ba34329ab32ae178812c1f6bec22",
+      "native_qualification": false,
+      "preview_native_status": "not_run",
+      "approved_physical_gpu_index": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-16-preview-shared-gpu0.md",
+      "report_source_commit": "44311518a62c0afabd50b7bc009fd771a78945a2"
     }
   }
 }

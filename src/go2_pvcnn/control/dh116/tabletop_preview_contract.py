@@ -32,9 +32,11 @@ def _inventory(root):
     return result
 
 
-def freeze(root, experience):
+def freeze(root, experience, *, physical_gpu_index=3):
+    if type(physical_gpu_index) is not int or physical_gpu_index<0:
+        raise ValueError("nonnegative physical GPU index required")
     experience = Path(experience).resolve(strict=True)
-    return dict(version=VERSION, source_sha256=_inventory(root),
+    return dict(version=VERSION, source_sha256=_inventory(root), physical_gpu_index=physical_gpu_index,
                 experience=dict(path=str(experience), sha256=_hash(experience)),
                 budget=dict(BUDGET), camera_config=CAMERA_CONFIG,
                 launcher=dict(headless=True, livestream=2, enable_cameras=True, device="cuda:0"),
@@ -43,8 +45,9 @@ def freeze(root, experience):
 
 def verify(root, contract):
     if (not isinstance(contract,dict) or set(contract) !=
-        {"version","source_sha256","experience","budget","camera_config","launcher","action","permission"}
+        {"version","source_sha256","experience","budget","camera_config","launcher","action","permission","physical_gpu_index"}
         or contract["version"] != VERSION or contract["budget"] != BUDGET
+        or type(contract["physical_gpu_index"]) is not int or contract["physical_gpu_index"]<0
         or contract["camera_config"] != CAMERA_CONFIG
         or contract["launcher"] != dict(headless=True,livestream=2,enable_cameras=True,device="cuda:0")
         or contract["action"] != "zero_24d" or contract["permission"] != "independent_preview_only"):

@@ -1,3 +1,7 @@
+## 2026-11-15 — 独立预览按批准绑定共享GPU0
+
+仅独立预览按冻结GPU索引与真实PCI核验物理设备；Teacher原GPU3租约未改变，原生尚待单次执行。 Ubuntu CPU 回归 22 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-shared-gpu0.md)
+
 ## 2026-11-15 — 真实柔性杆与双 RGB 独立预览 CPU 接线
 
 新增真实 DeformX 参数快照、可视网格、同步 RGB 与零 PPO WebRTC 独立入口；CPU fixture 不证明真实原生显示或自然退出。待批准短原生预览。 Ubuntu CPU 回归 144 项通过。[报告](docs/superpowers/reports/2026-11-16-live-flexible-stereo-preview.md)

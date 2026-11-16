@@ -22,6 +22,7 @@ from go2_pvcnn.control.dh116.tabletop_preview_contract import freeze, verify, BU
 EXPERIENCE = Path("/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.rendering.kit")
 REQUIRED = (
     "src/go2_pvcnn/control/dh116/live_deformx_display.py",
+    "src/go2_pvcnn/control/dh116/tabletop_preview_device.py",
     "src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_bridge.py",
     "src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_owned_native.py",
     "src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_resources.py",
@@ -63,8 +64,8 @@ def execute(contract, output):
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile, profile_reader_scope
     profile = BackendProfile.load(ROOT)
     profile.verify()
-    if os.environ.get("CUDA_VISIBLE_DEVICES") != "3":
-        raise ValueError("preview requires the explicit physical GPU 3 mask")
+    if os.environ.get("CUDA_VISIBLE_DEVICES") != str(contract["physical_gpu_index"]):
+        raise ValueError("preview requires the frozen physical GPU mask")
     deadline = time.monotonic() + BUDGET["soft_deadline_s"]
     with native_instance_lock(NATIVE_LOCK):
         # Explicit backend must be imported only after the lock and before App.
@@ -75,8 +76,8 @@ def execute(contract, output):
             raise ValueError("actual preview backend differs from verified profile")
         from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
         assert_clean_import_boundary()
-        from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_launch import _probe_actual_device
-        _probe_actual_device(dict(physical_gpu_index=3,cuda_visible_devices="3",logical_device="cuda:0"))
+        from go2_pvcnn.control.dh116.tabletop_preview_device import probe_device
+        probe_device(contract["physical_gpu_index"])
         from isaaclab.app import AppLauncher
         app = AppLauncher(headless=True, livestream=2, enable_cameras=True, device="cuda:0",
                           experience=contract["experience"]["path"], fast_shutdown=False).app
@@ -253,6 +254,7 @@ def main(argv=None):
     group=parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--freeze",type=Path)
     group.add_argument("--execute-native",action="store_true")
+    parser.add_argument("--physical-gpu",type=int,default=3,help="physical GPU to bind when freezing a contract")
     parser.add_argument("--contract",type=Path)
     parser.add_argument("--contract-sha256")
     parser.add_argument("--output",type=Path)
@@ -262,7 +264,7 @@ def main(argv=None):
             parser.error("freeze contract outside the source inventory")
         missing=[name for name in REQUIRED if not (ROOT/name).is_file()]
         if missing: parser.error("missing required integrated modules: "+", ".join(missing))
-        payload=json.dumps(freeze(ROOT,EXPERIENCE),sort_keys=True,indent=2)+"\n"
+        payload=json.dumps(freeze(ROOT,EXPERIENCE,physical_gpu_index=args.physical_gpu),sort_keys=True,indent=2)+"\n"
         with args.freeze.open("x") as stream: stream.write(payload)
         print("contract_sha256="+_sha(args.freeze))
         return 0
