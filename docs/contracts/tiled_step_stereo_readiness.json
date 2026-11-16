@@ -1,7 +1,7 @@
 {
   "version": "dh116-tiled-step-stereo-readiness-v1",
-  "status": "cpu_clock_registration_fix_native_pending",
-  "source_baseline": "d1469d29fd288c2b52d45ced096a95ee95c3ac2d",
+  "status": "native_rgb_capture_observed_shutdown_blocked",
+  "source_baseline": "f8e321d8f2318a762d27742fd33f843134cc7d53",
   "reference_repository": "NVlabs/DEXTRAH",
   "reference_commit": "ebc08edafe5f7c5ad73dcb25ffa15e8d0353df50",
   "implementation_source_sha256": {
@@ -44,8 +44,8 @@
     "log_sha256": "7c893cdf2e52439164b806600802726601c29598a873b2a273ff44c2f52fc83a"
   },
   "native": {
-    "executed": false,
-    "accepted_rgb_pairs": 0,
+    "executed": true,
+    "accepted_rgb_pairs": 17,
     "synchronization_qualified": false,
     "pixel_view_correspondence_qualified": false,
     "reset_qualified": false,
@@ -73,22 +73,36 @@
       "incomplete_physical_lines": 0,
       "accepted_rgb_pairs": 0,
       "incomplete_stage_lines": 0,
+      "durable_stage_errors": [
+        {
+          "stage": "acquire",
+          "error": ""
+        },
+        {
+          "stage": "manager_readback_guard",
+          "error": "RuntimeError: manager view release false or unknown"
+        },
+        {
+          "stage": "ownership_readback_guard",
+          "error": "RuntimeError: owned resource release false or unknown"
+        },
+        {
+          "stage": "manager_before_close_guard",
+          "error": "RuntimeError: manager view release false or unknown before close"
+        },
+        {
+          "stage": "ownership_before_close_guard",
+          "error": "RuntimeError: owned resource release false or unknown before close"
+        }
+      ],
       "native_log_sha256": "ca8a0d27a4363d0e63ea2d9700ea5eeda40655632e78f8e3196ec55733edff08",
       "native_log_bytes": 1618234,
       "debugger_fatal_records": 1,
       "ppo_updates": 0,
-      "native_qualification": false,
-      "version": "dh116-tiled-step-native-result-v2",
-      "status": "failed_missing_clock_registration_and_close",
-      "request_sha256": "dafaebc972a9aab49344c24e1824c85a9e5d7d699f85aed9dcb1faecdaeb30ca",
-      "acquire_error": "AnnotatorRegistryError: No annotator of name IsaacReadTimes registered",
-      "sdk_steps_completed": 2,
-      "measured_sdk_steps_completed": 0,
-      "solver_measurement_substeps_completed": 0,
-      "remaining_approved_attempts": 1,
-      "shutdown_failure_library": "libomni.kit.livestream.plugin.so",
-      "physical_gpu_index": 0
-    }
+      "native_qualification": false
+    },
+    "latest_batch_result": "docs/contracts/tiled_step_native_result.json",
+    "last_attempt_source_head": "f8e321d8f2318a762d27742fd33f843134cc7d53"
   },
   "preview_contract_version": "dh116-webrtc-physical-preview-v3",
   "default_backend": "legacy_view",
@@ -137,7 +151,7 @@
     "automatically_resumed": false
   },
   "next_native_budget": {
-    "authorized": true,
+    "authorized": false,
     "proposed_resolution": [
       320,
       240
@@ -147,17 +161,18 @@
     "max_explicit_renders": 162,
     "soft_deadline_s": 180,
     "ppo_updates": 0,
-    "remaining_attempts": 1,
+    "remaining_attempts": 0,
     "batch_request_sha256": "dafaebc972a9aab49344c24e1824c85a9e5d7d699f85aed9dcb1faecdaeb30ca"
   },
   "remaining_blockers": [
-    "clock registration compatibility revision requires remaining approved native attempt",
-    "same-physics left/right RGB, Reset and GPU release remain unqualified",
-    "shutdown SIGSEGV in WebRTC present thread remains unresolved"
+    "WebRTC present thread SIGSEGV at app.close; outer exit255",
+    "manager and owned resource release readbacks remain false/unknown",
+    "pixel-level stereo geometry/depth and Reset/restart have not been independently qualified",
+    "other resolutions not natively tested with this TiledCamera revision"
   ],
   "camera_pose_backend": "usd_camera_prim_isaac45",
   "camera_view_only_fabric_route_disabled": true,
   "global_physics_fabric_changed": false,
-  "current_revision_native_executed": false,
+  "current_revision_native_executed": true,
   "latest_native_result": "docs/contracts/tiled_step_native_result.json"
 }

@@ -1,3 +1,7 @@
+## 2026-11-16 — TiledCamera两次原生复验与17对真实RGB证据
+
+已批准两次复验结束。修正版实际得到17对320x240双RGB、128连续测量物理步及1536测量solver子步；原生关闭仍SIG11/外层255，资源释放guard未通过，整体资格保持blocked。预算余0、零PPO、无强制结束；不将出图当作完整同步或抓取成功。 Ubuntu CPU 回归 271 项通过。[报告](docs/superpowers/reports/2026-11-16-tiled-two-attempt-native.md)
+
 ## 2026-11-16 — TiledCamera时钟扩展注册与首轮失败审计
 
 首轮原生未注册IsaacReadTimes，0双目帧，关闭仍SIG11；最小修复仅启用现有clock扩展并保留hidden ReferenceTime真实获取校验。修正版原生仍待验证，不改SDK安装和物理。 Ubuntu CPU 回归 271 项通过。[报告](docs/superpowers/reports/2026-11-16-tiled-clock-registration.md)
