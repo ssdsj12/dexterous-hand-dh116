@@ -1,9 +1,9 @@
 {
   "schema": "dh116-preview-native-attempt-v1",
   "status": "blocked",
-  "source_head": "b496702b37fd94a316a84975d451437905303c82",
-  "contract_sha256": "85118af9488f70ff9bdaeb7f3e2cfba96eb0cf67338f39a8129c24ab78f8bfaa",
-  "batch_attempt_number": 1,
+  "source_head": "78e2d19a014c234513ef61618ec861e8bb3f89cc",
+  "contract_sha256": "40e5b36b5ab11afe6db1d818e1b8a698b026f3bf95dad11804205359613bb617",
+  "batch_attempt_number": 2,
   "physical_gpu_index": 0,
   "outer_exit_code": 255,
   "debugger_inferior_final_status": {
@@ -11,44 +11,43 @@
     "signal": 11
   },
   "forced_termination": false,
-  "native_log_sha256": "6feec0775020d1c7d952d22b2666acb680bfde3b2de9d8d0091c96aac23e4425",
-  "native_log_bytes": 1634070,
+  "native_log_sha256": "48c9a6de377b30191586e7530c10525e10525f231ed4969d54a9559f261bfd9f",
+  "native_log_bytes": 1623104,
   "debugger_fatal_records": 1,
-  "initial_acquire_error": "ValueError: invalid ReferenceTime clock",
-  "raw_reference_time_value": "not recorded in original exception",
+  "initial_acquire_error": "TypeError: Warp array.__init__ unexpected keyword owner",
   "durable_stage_error_records": [
     {
-      "error": "Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 46, in attempt\n    value = callback()\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 89, in acquire_owned\n    received = previous.run_owned_call(\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_runtime.py\", line 386, in run_owned_call\n    raise RuntimeError(\"\\n\".join(([failure] if failure else []) + cleanup_errors)) from None\nRuntimeError: Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_runtime.py\", line 361, in run_owned_call\n    result = operation(owners)\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 90, in <lambda>\n    lambda owners: acquire(sim, owners, trace, cleanup),\n  File \"/mnt/mydisk/xk/dh116/scripts/preview_dh116_physical_webrtc.py\", line 220, in acquire\n    result=run_owned_scene(sim,owners,trace,builder=builder.build_reset_owned,\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_physical_preview.py\", line 116, in run_owned_scene\n    result = run_preview(episode, journal, publish, actions=actions, read_clock=clock,\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_physical_preview.py\", line 19, in run_preview\n    observe(pre)\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_physical_preview.py\", line 13, in observe\n    observer(pre)\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_physical_preview.py\", line 104, in publish\n    observer(pre, exchange)\n  File \"/mnt/mydisk/xk/dh116/scripts/preview_dh116_physical_webrtc.py\", line 193, in present\n    presenter(pre,exchange)\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_preview_presentation.py\", line 18, in __call__\n    rgb = self.camera.capture()\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_bridge.py\", line 124, in capture\n    return self._capture()\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_bridge.py\", line 170, in _capture\n    prior_clock = read_clock() if callable(read_clock) else None\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_owned_native.py\", line 95, in read_clock\n    raise ValueError(\"invalid ReferenceTime clock\")\nValueError: invalid ReferenceTime clock\n\n",
+      "error": "Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 46, in attempt\n    value = callback()\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 89, in acquire_owned\n    received = previous.run_owned_call(\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_runtime.py\", line 386, in run_owned_call\n    raise RuntimeError(\"\\n\".join(([failure] if failure else []) + cleanup_errors)) from None\nRuntimeError: Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_runtime.py\", line 361, in run_owned_call\n    result = operation(owners)\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 90, in <lambda>\n    lambda owners: acquire(sim, owners, trace, cleanup),\n  File \"/mnt/mydisk/xk/dh116/scripts/preview_dh116_physical_webrtc.py\", line 220, in acquire\n    result=run_owned_scene(sim,owners,trace,builder=builder.build_reset_owned,\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_physical_preview.py\", line 116, in run_owned_scene\n    result = run_preview(episode, journal, publish, actions=actions, read_clock=clock,\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_physical_preview.py\", line 19, in run_preview\n    observe(pre)\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_physical_preview.py\", line 13, in observe\n    observer(pre)\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_physical_preview.py\", line 104, in publish\n    observer(pre, exchange)\n  File \"/mnt/mydisk/xk/dh116/scripts/preview_dh116_physical_webrtc.py\", line 193, in present\n    presenter(pre,exchange)\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_preview_presentation.py\", line 18, in __call__\n    rgb = self.camera.capture()\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_bridge.py\", line 124, in capture\n    return self._capture()\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_bridge.py\", line 190, in _capture\n    candidate = self.reader.read()\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_stereo_camera.py\", line 113, in read\n    rgb=detile(self.view.get_rgb_tiled(device='cuda'),count=self.count,width=c.width,height=c.height,\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.sensors.camera/isaacsim/sensors/camera/camera_view.py\", line 575, in get_rgb_tiled\n    out = wp.to_torch(self.get_data(\"rgb\", tiled=True)[0])\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.sensors.camera/isaacsim/sensors/camera/camera_view.py\", line 515, in get_data\n    data = self._annotators[spec[\"name\"]].get_data(device=output_device)\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/annotators.py\", line 880, in get_data\n    annotator_data = annotator_utils.get_annotator_data(\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/py/carb/profiler/__init__.py\", line 99, in wrapper\n    r = f(*args, **kwds)\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/utils/annotator_utils.py\", line 853, in get_annotator_data\n    data, do_synchronize = _get_annotator_data(\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/py/carb/profiler/__init__.py\", line 99, in wrapper\n    r = f(*args, **kwds)\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/utils/annotator_utils.py\", line 774, in _get_annotator_data\n    annotator_output, do_synchronize = AnnotatorCache.get_data(\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/py/carb/profiler/__init__.py\", line 99, in wrapper\n    r = f(*args, **kwds)\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/utils/annotator_utils.py\", line 462, in get_data\n    data, do_synchronize = cls._get_data_from_ptr(annotator_id, data_params, do_copy)\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/py/carb/profiler/__init__.py\", line 99, in wrapper\n    r = f(*args, **kwds)\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/utils/annotator_utils.py\", line 487, in _get_data_from_ptr\n    array = _reshape_output_ptr(**params)\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/py/carb/profiler/__init__.py\", line 99, in wrapper\n    r = f(*args, **kwds)\n  File \"/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/utils/annotator_utils.py\", line 341, in _reshape_output_ptr\n    data = wp.types.array(\nTypeError: array.__init__() got an unexpected keyword argument 'owner'\n\n",
       "event": "error",
-      "monotonic_ns": 938987264142205,
+      "monotonic_ns": 939692363680091,
       "sequence": 3,
       "stage": "acquire"
     },
     {
       "error": "Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 46, in attempt\n    value = callback()\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 114, in reject\n    raise RuntimeError(message)\nRuntimeError: manager view release false or unknown\n",
       "event": "error",
-      "monotonic_ns": 938988110217271,
+      "monotonic_ns": 939693224988532,
       "sequence": 21,
       "stage": "manager_readback_guard"
     },
     {
       "error": "Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 46, in attempt\n    value = callback()\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 114, in reject\n    raise RuntimeError(message)\nRuntimeError: owned resource release false or unknown\n",
       "event": "error",
-      "monotonic_ns": 938988308471093,
+      "monotonic_ns": 939693446399253,
       "sequence": 25,
       "stage": "ownership_readback_guard"
     },
     {
       "error": "Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 46, in attempt\n    value = callback()\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 114, in reject\n    raise RuntimeError(message)\nRuntimeError: manager view release false or unknown before close\n",
       "event": "error",
-      "monotonic_ns": 938988321163800,
+      "monotonic_ns": 939693453383565,
       "sequence": 32,
       "stage": "manager_before_close_guard"
     },
     {
       "error": "Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 46, in attempt\n    value = callback()\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 114, in reject\n    raise RuntimeError(message)\nRuntimeError: owned resource release false or unknown before close\n",
       "event": "error",
-      "monotonic_ns": 938988512264417,
+      "monotonic_ns": 939693679263172,
       "sequence": 36,
       "stage": "ownership_before_close_guard"
     }
@@ -78,5 +77,6 @@
   "ppo_updates": 0,
   "native_qualification": false,
   "process_exit_verified": false,
-  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/batch2-4d1703de/attempt-1"
+  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/batch2-4d1703de/attempt-2",
+  "remaining_approved_attempts": 0
 }

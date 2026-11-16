@@ -82,6 +82,11 @@ class OwnedNativeRGBPairReader(_NativeRGBPairReader):
                 raise RuntimeError("native reader initialization failed; cleanup incomplete: " + str(cleanup_error)) from exc
             raise
 
+    def read(self):
+        from .tabletop_preview_warp_readback import isaac45_rgb_readback_scope
+        with isaac45_rgb_readback_scope():
+            return super().read()
+
     def read_clock(self):
         from .tabletop_vision_camera import paired_render_timestamp
         ref = self.reference.get_data()

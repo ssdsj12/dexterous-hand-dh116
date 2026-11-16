@@ -1,3 +1,7 @@
+## 2026-11-16 — RGB旧owner接口独立兼容与两轮批次结果
+
+第二轮推进到RGB缓冲读取后因旧owner参数失败；独立范围映射非持有指针至deleter=None，安装源CPU重放验证，未升级依赖，原生仍blocked且批次耗尽。 Ubuntu CPU 回归 84 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-warp-readback.md)
+
 ## 2026-11-16 — 首帧空时钟兼容与原生第一轮证据
 
 本轮原生推进至真实Reset与相机首帧读取，ReferenceTime检查失败；仅初始全零视为未就绪，预算不变，关闭仍signal11。 Ubuntu CPU 回归 82 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-camera-clock.md)
