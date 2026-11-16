@@ -1,3 +1,7 @@
+## 2026-11-16 — 首帧空时钟兼容与原生第一轮证据
+
+本轮原生推进至真实Reset与相机首帧读取，ReferenceTime检查失败；仅初始全零视为未就绪，预算不变，关闭仍signal11。 Ubuntu CPU 回归 82 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-camera-clock.md)
+
 ## 2026-11-16 — 真实建场wire_center首因与兼容修复
 
 新诊断取得建场缺wire_center的实际首因；caller补旧layout元数据，未改受保护builder/物理。原生关闭仍signal11，单份栈保留，修复尚未原生复验。 Ubuntu CPU 回归 39 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-wire-center-layout.md)

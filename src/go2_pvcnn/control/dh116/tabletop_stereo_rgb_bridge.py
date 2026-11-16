@@ -211,7 +211,7 @@ class RGBPairBridge:
             packet = candidate
             break
         if packet is None:
-            raise RuntimeError("fresh synchronized RGB unavailable within render attempt limit")
+            raise RuntimeError("fresh synchronized RGB unavailable within render attempt limit; reader_clock=" + str(getattr(self.reader,"last_clock_diagnostic",None)))
         left, right = packet["left_rgb"], packet["right_rgb"]
         validate_images(left, right, self.calibration)
         if len(rows) != left.shape[0]:

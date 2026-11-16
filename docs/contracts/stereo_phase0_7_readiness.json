@@ -20353,6 +20353,39 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-16-preview-wire-center-layout.md",
       "report_source_commit": "e078030e8e5c8470de99b4604974515b300a37b3"
+    },
+    "preview.camera-clock.cpu-20261116": {
+      "passed": 82,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_preview_camera_clock_startup.py",
+        "tests/test_dh116_stereo_rgb_bridge.py",
+        "tests/test_dh116_stereo_rgb_resources.py",
+        "tests/test_preview_owner_release.py",
+        "tests/test_preview_contract.py",
+        "tests/test_preview_presentation.py",
+        "tests/test_preview_debugger.py"
+      ],
+      "log_sha256": "45012eed13d885a61bd5ff8e84238732a4d3e0c90edfd43890aaa5d67c37ee10",
+      "tested_head": "b496702b37fd94a316a84975d451437905303c82",
+      "native_qualification": false,
+      "preview_native_status": "blocked",
+      "batch_attempts_used": 1,
+      "native_sdk_steps": 2,
+      "native_measurement_rows": 0,
+      "native_camera_pairs": 0,
+      "remaining_approved_attempts": 1,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-16-preview-camera-clock.md",
+      "report_source_commit": "fc706389b30df31455dc5dca06629bdd64b11194"
     }
   }
 }

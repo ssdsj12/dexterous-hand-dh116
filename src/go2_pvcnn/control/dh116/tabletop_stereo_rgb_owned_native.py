@@ -11,6 +11,7 @@ from .tabletop_stereo_rgb_resources import RGBResources
 class OwnedNativeRGBPairReader(_NativeRGBPairReader):
     def __init__(self,sim,origins,calibration,device,*,max_readback_bytes=1024**3,allow_resource_override=False):
         self.resources=RGBResources()
+        self._last_valid_clock=None
         try:
             # Resource admission happens before creating any tiled render product.
             origin_values=torch.as_tensor(origins,dtype=torch.float64).detach().cpu()
@@ -85,16 +86,26 @@ class OwnedNativeRGBPairReader(_NativeRGBPairReader):
         from .tabletop_vision_camera import paired_render_timestamp
         ref = self.reference.get_data()
         times = self.times.get_data()
-        ref_empty = ref is None or (isinstance(ref, dict) and not ref)
-        times_empty = times is None or (isinstance(times, dict) and not times)
+        startup = getattr(self, "_last_valid_clock", None) is None
+        self.last_clock_diagnostic = dict(reference=repr(ref), times=repr(times), startup=startup)
+        # OgnRefTime's inputs initialize to 0/0 before its first render execution.
+        # This is unavailable data, never an accepted time or an infinite retry.
+        ref_zero = (startup and isinstance(ref, dict)
+            and ref.get("referenceTimeNumerator") == 0 and ref.get("referenceTimeDenominator") == 0)
+        time_keys = ("swhFrameNumber", "frameNumber", "simulationTime",
+            "rationalTimeOfSimNumerator", "rationalTimeOfSimDenominator")
+        times_zero = (startup and isinstance(times, dict) and all(k in times for k in time_keys)
+            and all(times[k] == 0 for k in time_keys))
+        ref_empty = ref_zero or ref is None or (isinstance(ref, dict) and not ref)
+        times_empty = times_zero or times is None or (isinstance(times, dict) and not times)
         if not ref_empty:
             if not isinstance(ref, dict) or not {"referenceTimeNumerator", "referenceTimeDenominator"} <= ref.keys():
                 raise ValueError("invalid ReferenceTime metadata")
             try:
                 if int(ref["referenceTimeNumerator"]) < 0 or int(ref["referenceTimeDenominator"]) <= 0:
-                    raise ValueError("invalid ReferenceTime clock")
+                    raise ValueError("invalid ReferenceTime clock: " + repr(ref))
             except (TypeError, OverflowError) as exc:
-                raise ValueError("invalid ReferenceTime clock") from exc
+                raise ValueError("invalid ReferenceTime clock: " + repr(ref)) from exc
         if not times_empty:
             keys = {"swhFrameNumber", "frameNumber", "simulationTime",
                     "rationalTimeOfSimNumerator", "rationalTimeOfSimDenominator"}
@@ -106,13 +117,14 @@ class OwnedNativeRGBPairReader(_NativeRGBPairReader):
                         or int(times["rationalTimeOfSimDenominator"]) <= 0
                         or not np.isfinite(float(times["simulationTime"]))
                         or float(times["simulationTime"]) < 0):
-                    raise ValueError("invalid IsaacReadTimes clock")
+                    raise ValueError("invalid IsaacReadTimes clock: " + repr(times))
             except (TypeError, OverflowError) as exc:
-                raise ValueError("invalid IsaacReadTimes clock") from exc
+                raise ValueError("invalid IsaacReadTimes clock: " + repr(times)) from exc
         if ref_empty or times_empty:
             return None
         legacy = float(self.core.get_sim_time_at_swh_frame(int(ref["referenceTimeNumerator"])))
         timing = paired_render_timestamp(ref, times, legacy_time=legacy)
+        self._last_valid_clock = dict(timing)
         return {key: timing[key] for key in ("frame_id", "simulation_time", "render_frame_number")}
 
     def close(self):
