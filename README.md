@@ -1,3 +1,7 @@
+## 2026-11-15 — 预览原生启动失败证据与toolbar依赖修复
+
+GPU0单次预览在AppLauncher缺toolbar时失败，清理signal11；未创建任务scene或图像。补已安装依赖的冻结启动参数，原生复验仍待授权。 Ubuntu CPU 回归 24 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-toolbar-native-failure.md)
+
 ## 2026-11-15 — 独立预览按批准绑定共享GPU0
 
 仅独立预览按冻结GPU索引与真实PCI核验物理设备；Teacher原GPU3租约未改变，原生尚待单次执行。 Ubuntu CPU 回归 22 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-shared-gpu0.md)

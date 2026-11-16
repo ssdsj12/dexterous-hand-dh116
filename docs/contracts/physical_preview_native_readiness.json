@@ -1,0 +1,28 @@
+{
+  "schema": "dh116-preview-native-attempt-v1",
+  "status": "blocked",
+  "source_head": "3e277dcdffbd3f38f219a37902f6d1b770385d69",
+  "contract_sha256": "c3939b7ee5a348864c4ddf970f952861c24c5b40754f8a6f16fc53a21b09a208",
+  "physical_gpu_index": 0,
+  "outer_exit_code": 255,
+  "debugger_inferior_status": {
+    "exit_code": null,
+    "signal": 11
+  },
+  "native_log_sha256": "56361a28a9528c496980572260adad83c93bb6fd100c4c3728d55127550bf0f1",
+  "streaming_server_started": true,
+  "first_error": "ModuleNotFoundError: No module named 'omni.kit.widget.toolbar'",
+  "crash_module": "libomni.ext.plugin.so",
+  "task_scene_created": false,
+  "physical_ledger_created": false,
+  "observed_task_measurement_rows": 0,
+  "total_sdk_steps_observed": null,
+  "camera_pairs": 0,
+  "ppo_updates": 0,
+  "automatic_retries": 0,
+  "native_qualification": false,
+  "process_exit_verified": false,
+  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-e8a60161",
+  "cpu_fix_status": "toolbar_dependency_added_native_revalidation_pending",
+  "next_native_attempt_requires_approval": true
+}

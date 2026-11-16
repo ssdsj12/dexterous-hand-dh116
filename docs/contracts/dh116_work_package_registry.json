@@ -38645,6 +38645,44 @@
         "report": "docs/superpowers/reports/2026-11-16-preview-shared-gpu0.md",
         "report_source_commit": "44311518a62c0afabd50b7bc009fd771a78945a2"
       }
+    },
+    "preview.toolbar-startup.cpu-20261116": {
+      "title": "预览原生启动失败证据与toolbar依赖修复",
+      "executor": "gated",
+      "dependencies": [
+        "preview.shared-gpu0.cpu-20261116"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 24,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_preview_toolbar.py",
+          "tests/test_preview_device.py",
+          "tests/test_preview_contract.py",
+          "tests/test_physical_preview.py",
+          "tests/test_preview_presentation.py"
+        ],
+        "log_sha256": "b27c8e979310c142a48234ec3de7dbbb94f33fb6556e282655b7a314dc4c7e75",
+        "tested_head": "3e277dcdffbd3f38f219a37902f6d1b770385d69",
+        "native_qualification": false,
+        "preview_native_status": "blocked",
+        "native_attempts": 1,
+        "native_failure": "toolbar_import_then_shutdown_SIGSEGV",
+        "automatic_retries": 0,
+        "native_log_sha256": "56361a28a9528c496980572260adad83c93bb6fd100c4c3728d55127550bf0f1",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-16-preview-toolbar-native-failure.md",
+        "report_source_commit": "8483478baa436a4603a17e240693cc905f6eba7e"
+      }
     }
   },
   "execution_target": {

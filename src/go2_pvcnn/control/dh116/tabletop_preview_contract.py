@@ -39,7 +39,7 @@ def freeze(root, experience, *, physical_gpu_index=3):
     return dict(version=VERSION, source_sha256=_inventory(root), physical_gpu_index=physical_gpu_index,
                 experience=dict(path=str(experience), sha256=_hash(experience)),
                 budget=dict(BUDGET), camera_config=CAMERA_CONFIG,
-                launcher=dict(headless=True, livestream=2, enable_cameras=True, device="cuda:0"),
+                launcher=dict(headless=True, livestream=2, enable_cameras=True, device="cuda:0", kit_args="--enable omni.kit.widget.toolbar"),
                 action="zero_24d", permission="independent_preview_only")
 
 
@@ -49,7 +49,7 @@ def verify(root, contract):
         or contract["version"] != VERSION or contract["budget"] != BUDGET
         or type(contract["physical_gpu_index"]) is not int or contract["physical_gpu_index"]<0
         or contract["camera_config"] != CAMERA_CONFIG
-        or contract["launcher"] != dict(headless=True,livestream=2,enable_cameras=True,device="cuda:0")
+        or contract["launcher"] != dict(headless=True,livestream=2,enable_cameras=True,device="cuda:0",kit_args="--enable omni.kit.widget.toolbar")
         or contract["action"] != "zero_24d" or contract["permission"] != "independent_preview_only"):
         raise ValueError("independent preview settings differ")
     if contract["source_sha256"] != _inventory(root):
@@ -89,3 +89,10 @@ class RenderBudget:
         if self.count >= self.limit: raise RuntimeError("preview render budget exhausted")
         self.count += 1
         return self._render()
+
+
+def launch_preview_app(launcher_factory, contract):
+    """Pass the frozen startup dependencies before IsaacLab's toolbar hook."""
+    kwargs = dict(contract["launcher"])
+    kwargs.update(experience=contract["experience"]["path"], fast_shutdown=False)
+    return launcher_factory(**kwargs).app

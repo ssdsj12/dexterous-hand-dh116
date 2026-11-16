@@ -17,7 +17,7 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
-from go2_pvcnn.control.dh116.tabletop_preview_contract import freeze, verify, BUDGET, RenderBudget
+from go2_pvcnn.control.dh116.tabletop_preview_contract import freeze, verify, BUDGET, RenderBudget, launch_preview_app
 
 EXPERIENCE = Path("/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.rendering.kit")
 REQUIRED = (
@@ -79,8 +79,7 @@ def execute(contract, output):
         from go2_pvcnn.control.dh116.tabletop_preview_device import probe_device
         probe_device(contract["physical_gpu_index"])
         from isaaclab.app import AppLauncher
-        app = AppLauncher(headless=True, livestream=2, enable_cameras=True, device="cuda:0",
-                          experience=contract["experience"]["path"], fast_shutdown=False).app
+        app = launch_preview_app(AppLauncher, contract)
         entered = False
         try:
             import torch
