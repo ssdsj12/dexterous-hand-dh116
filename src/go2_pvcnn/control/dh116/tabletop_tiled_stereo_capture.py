@@ -150,6 +150,7 @@ class TiledStereoCapture:
         check()
         capture_id=self.last_capture_id+1
         timing=dict(capture_id=capture_id,raw_left_clock=left["raw_clock"],raw_right_clock=right["raw_clock"],
+            camera_pose_backend=getattr(self.reader,"pose_backend","unspecified"),
             raw_left_metadata=str(left.get("raw_time_metadata","unavailable"))[:4096],
             raw_right_metadata=str(right.get("raw_time_metadata","unavailable"))[:4096],
             physical_timestamp_s=stamp,physical_step=step,

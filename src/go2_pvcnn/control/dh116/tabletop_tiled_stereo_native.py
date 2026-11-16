@@ -23,10 +23,16 @@ def author_standard_camera_ops(camera,UsdGeom,Gf):
 
 
 def prepare_renderer_view(view):
-    """Mirror this owned camera's Fabric writes to renderer-visible USD."""
+    """Use the installed USD pose route for this owned Isaac4.5 camera only.
+
+    The installed Fabric route calls usdrt.hierarchy during the first buffer
+    read; that attribute was absent in the actual preview process. No global
+    Fabric/physics setting is changed. RTX image rendering stays on CUDA.
+    """
     if (type(getattr(view,"_use_fabric",None)) is not bool
             or type(getattr(view,"_sync_usd_on_fabric_write",None)) is not bool):
         raise ValueError("unsupported installed renderer view layout")
+    view._use_fabric=False
     view._sync_usd_on_fabric_write=True
 
 
@@ -39,10 +45,12 @@ def validate_usd_camera_pose(stage,path,transform,Usd,UsdGeom):
     actual=torch.as_tensor(transform,dtype=torch.float64).detach().cpu()
     expected=torch.as_tensor(optical,dtype=torch.float64)[None]
     if actual.shape!=expected.shape or not torch.allclose(actual,expected,atol=1e-5,rtol=0):
-        raise ValueError("USD/Fabric camera pose mismatch")
+        raise ValueError("USD/camera pose mismatch")
 
 
 class TiledNativeStereoReader:
+    pose_backend="usd_camera_prim_isaac45"
+
     def __init__(self,sim,origins,calibration,device,*,max_readback_bytes=1024**3):
         self.resources=TiledResources();self.sensor=None;self.sim=sim
         self.device=torch.device(device);self.calibration=calibration
@@ -84,6 +92,12 @@ class TiledNativeStereoReader:
                 data_types=["rgb"],update_period=0.,update_latest_camera_pose=True,debug_vis=False)
 
             class ExplicitTiledCamera(TiledCamera):
+                def _create_buffers(self):
+                    # Upstream reads poses while creating buffers, so apply
+                    # the owned view compatibility before that first read.
+                    prepare_renderer_view(self._view)
+                    return super()._create_buffers()
+
                 def __del__(self):
                     # The external owner performs all native cleanup once.
                     # Never reenter Replicator from a GC/finalizer callback.

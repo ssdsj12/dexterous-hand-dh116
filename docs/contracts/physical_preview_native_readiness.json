@@ -1,8 +1,8 @@
 {
   "schema": "dh116-preview-native-attempt-v1",
   "status": "blocked",
-  "source_head": "5b3a76633de0d1d8051b80b9022ec36efb46a240",
-  "contract_sha256": "a297c970df00ad60333e5d1f96dd04cad7e633e636894cb391e47a09b3ad6262",
+  "source_head": "11e16c8cec1ebda9f9ecda3d035d4d72e63e0795",
+  "contract_sha256": "d3edb9811686e8c27bc4be3c08849f81593ac14cdc548c60213d0e8456b35ce3",
   "batch_attempt_number": 1,
   "physical_gpu_index": 0,
   "outer_exit_code": 255,
@@ -11,10 +11,10 @@
     "signal": 11
   },
   "forced_termination": false,
-  "native_log_sha256": "a1ce6ac218d9c939c8d8e6455b52d7a54e6a3cd4283876a3c815d5f4b89142bc",
-  "native_log_bytes": 1632431,
+  "native_log_sha256": "be2647462a82b1d5a8f525479b98495938ac51e9f097bbd622ecd6ca4209c311",
+  "native_log_bytes": 1617592,
   "debugger_fatal_records": 1,
-  "initial_acquire_error": "render frame and physical timestamp mismatch",
+  "initial_acquire_error": "AttributeError: module 'usdrt' has no attribute 'hierarchy'",
   "observed_sdk_clocks": [
     {
       "kind": "setup",
@@ -28,12 +28,12 @@
   "ppo_updates": 0,
   "native_qualification": false,
   "process_exit_verified": false,
-  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/resolution-next-20261116T053653Z/attempt-224x96",
-  "remaining_approved_attempts": 3,
-  "batch_kind": "four_resolution_native",
+  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/tiled-step-next-20261116T062657Z/attempt-320x240",
+  "remaining_approved_attempts": 0,
+  "batch_kind": "approved_tiled_single_attempt",
   "resolution_wh": [
-    224,
-    96
+    320,
+    240
   ],
   "durable_stage_error_summary": [
     {
@@ -58,5 +58,6 @@
     }
   ],
   "measured_sdk_steps": 0,
-  "automatic_resume_allowed": false
+  "automatic_resume_allowed": false,
+  "native_backend": "tiled_step"
 }

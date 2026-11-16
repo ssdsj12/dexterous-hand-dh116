@@ -1,3 +1,7 @@
+## 2026-11-16 — TiledCamera原生失败证据与私有USD位姿兼容
+
+已批准的320×240单次原生在相机Fabric初始化遇usdrt.hierarchy属性不可用，关闭仍SIG11，未重跑。小修仅把owned camera view切至已存在USD位姿路径，并在首次buffer读取前生效；GPU渲染和全局物理配置不变，修正版原生资格仍待验证。 Ubuntu CPU 回归 266 项通过。[报告](docs/superpowers/reports/2026-11-16-tiled-usd-pose-compatibility.md)
+
 ## 2026-11-16 — 独立TiledCamera物理边界双RGB采集
 
 新增显式opt-in的TiledCamera顺序双视角采集，在同一物理状态边界绑定图像；分别保留原始渲染时钟，不改写时间戳。标准USD ops、float32 Fabric接口及USD/Fabric交叉读回已完成；旧路径保留，原生同步及关闭资格尚未授予。 Ubuntu CPU 回归 264 项通过。[报告](docs/superpowers/reports/2026-11-16-tiled-step-rgb.md)

@@ -1,12 +1,12 @@
 {
   "version": "dh116-tiled-step-stereo-readiness-v1",
-  "status": "cpu_passed_native_not_run",
-  "source_baseline": "d86bd5503052af60005cab9ee84b04fe15e38602",
+  "status": "cpu_passed_usd_pose_fix_native_pending",
+  "source_baseline": "11e16c8cec1ebda9f9ecda3d035d4d72e63e0795",
   "reference_repository": "NVlabs/DEXTRAH",
   "reference_commit": "ebc08edafe5f7c5ad73dcb25ffa15e8d0353df50",
   "implementation_source_sha256": {
-    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_capture.py": "ecf12238a3d93ce8c0862f0bec406e4f65327160f7ce72284ba03f0656769da8",
-    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py": "509ff1a333baea53ae47ce0b4f3302fbae3e8190b7029580cc48dfc40ef409b1",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_capture.py": "8d939c313860cb4c25019b19559e766b08c587e1aa16594a5e573061f7407ca6",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py": "38f107624899f7126be3921ffa47d989624ada8a5406574c7ab38623718a3c90",
     "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_resources.py": "bb9f8bde46c4b1e1cae18548a62bc7c30b37ec4542ff393a4da7612a7f5fc612",
     "src/go2_pvcnn/control/dh116/tabletop_preview_contract.py": "908ec4dd6fda364dbce999c52250d3363a9795f298d46c676ebe754a00abf52d",
     "scripts/preview_dh116_physical_webrtc.py": "ea58a336d618fa6d9c4db1bd13969cc1757d3546eb4b017684757ca6c64a0278"
@@ -38,10 +38,10 @@
     }
   },
   "cpu": {
-    "passed": 264,
+    "passed": 266,
     "failed": 0,
     "skipped": 0,
-    "log_sha256": "0b2f90b937e5778ceb74cb1b1212c10ee0cbe7e8d56c3fe8c1ed4c05dd65a243"
+    "log_sha256": "aea618e7486d000b1aa336f107f42a2c95704f5ff62b3873099ec4572544dad7"
   },
   "native": {
     "executed": false,
@@ -52,7 +52,41 @@
     "normal_exit_qualified": false,
     "gpu_release_qualified": false,
     "teacher_admission": false,
-    "student_admission": false
+    "student_admission": false,
+    "previous_revision_result": {
+      "version": "dh116-tiled-step-native-result-v1",
+      "status": "failed_initialization_and_close",
+      "source_head": "11e16c8cec1ebda9f9ecda3d035d4d72e63e0795",
+      "contract_sha256": "d3edb9811686e8c27bc4be3c08849f81593ac14cdc548c60213d0e8456b35ce3",
+      "request_sha256": "3d2bd4b714c6d012af01a87987e28cd8086bb836591fe6f9d4a57ac326baa014",
+      "camera_backend": "tiled_step",
+      "resolution_wh": [
+        320,
+        240
+      ],
+      "physical_gpu_index": 0,
+      "attempts": 1,
+      "current_single_attempt_budget_remaining": 0,
+      "forced_termination": false,
+      "sdk_steps_completed": 2,
+      "measured_sdk_steps_completed": 0,
+      "solver_measurement_substeps_completed": 0,
+      "physical_jsonl_total_rows": 6,
+      "incomplete_physical_lines": 0,
+      "accepted_rgb_pairs": 0,
+      "acquire_error": "AttributeError: module 'usdrt' has no attribute 'hierarchy'",
+      "failure_boundary": "TiledCamera._create_buffers -> XformPrimView._initialize_fabric",
+      "on_disk_hierarchy_bindings_found": true,
+      "runtime_attribute_was_available": false,
+      "outer_exit_code": 255,
+      "inferior_signal": 11,
+      "wall_seconds": 73.95016272808425,
+      "debugger_fatal_records": 1,
+      "native_log_sha256": "be2647462a82b1d5a8f525479b98495938ac51e9f097bbd622ecd6ca4209c311",
+      "shutdown_failure_library": "libomni.kit.livestream.plugin.so",
+      "native_qualification": false,
+      "ppo_updates": 0
+    }
   },
   "preview_contract_version": "dh116-webrtc-physical-preview-v3",
   "default_backend": "legacy_view",
@@ -113,8 +147,13 @@
     "ppo_updates": 0
   },
   "remaining_blockers": [
-    "new reader requires native left/right view and frame freshness evidence",
-    "native Reset and resource teardown require validation",
-    "livestream SIGSEGV is unresolved and is not claimed fixed by this package"
-  ]
+    "camera USD-pose compatibility revision not yet natively tested",
+    "same-physics left/right RGB, Reset and GPU release remain unqualified",
+    "shutdown still SIGSEGV in last actual run; this is not claimed fixed"
+  ],
+  "camera_pose_backend": "usd_camera_prim_isaac45",
+  "camera_view_only_fabric_route_disabled": true,
+  "global_physics_fabric_changed": false,
+  "current_revision_native_executed": false,
+  "latest_native_result": "docs/contracts/tiled_step_native_result.json"
 }

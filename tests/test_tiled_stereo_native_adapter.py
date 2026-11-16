@@ -89,3 +89,29 @@ def test_usd_pose_crosscheck_rejects_fabric_only_motion():
     camera.GetPrim().GetAttribute("xformOp:translate").Set(Gf.Vec3d(.1,0.,0.))
     with pytest.raises(ValueError,match="USD"):
         native.validate_usd_camera_pose(stage,"/World/Camera",actual,Usd,UsdGeom)
+
+def test_isaac45_camera_view_uses_usd_without_touching_other_fabric_views():
+    from go2_pvcnn.control.dh116 import tabletop_tiled_stereo_native as native
+    owned=SimpleNamespace(_use_fabric=True,_sync_usd_on_fabric_write=False)
+    other=SimpleNamespace(_use_fabric=True,_sync_usd_on_fabric_write=False)
+    native.prepare_renderer_view(owned)
+    assert owned._use_fabric is False
+    assert other._use_fabric is True
+
+def test_owned_override_selects_compatible_view_before_base_buffer_pose_read():
+    import ast
+    from pathlib import Path
+    from go2_pvcnn.control.dh116 import tabletop_tiled_stereo_native as native
+    tree=ast.parse(Path(native.__file__).read_text())
+    node=next(n for n in ast.walk(tree) if isinstance(n,ast.ClassDef) and n.name=="ExplicitTiledCamera")
+    calls=[]
+    class Base:
+        def _create_buffers(self):
+            assert self._view._use_fabric is False,"would call unavailable usdrt.hierarchy"
+            calls.append("base-buffer-read")
+    namespace=dict(TiledCamera=Base,prepare_renderer_view=native.prepare_renderer_view)
+    exec(compile(ast.Module(body=[node],type_ignores=[]),native.__file__,"exec"),namespace)
+    sensor=namespace["ExplicitTiledCamera"].__new__(namespace["ExplicitTiledCamera"])
+    sensor._view=SimpleNamespace(_use_fabric=True,_sync_usd_on_fabric_write=False)
+    sensor._create_buffers()
+    assert calls==["base-buffer-read"]

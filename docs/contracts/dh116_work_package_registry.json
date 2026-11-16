@@ -39104,6 +39104,67 @@
         "report": "docs/superpowers/reports/2026-11-16-tiled-step-rgb.md",
         "report_source_commit": "4ad499ae5626fbde2202b47f3871014e70c50756"
       }
+    },
+    "preview.tiled-usd-compat.cpu-20261116": {
+      "title": "TiledCamera原生失败证据与私有USD位姿兼容",
+      "executor": "gated",
+      "dependencies": [
+        "preview.tiled-step.cpu-20261116"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 266,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_tiled_stereo_capture.py",
+          "tests/test_tiled_stereo_resources.py",
+          "tests/test_tiled_stereo_native_adapter.py",
+          "tests/test_tiled_preview_backend.py",
+          "tests/test_preview_capture_clock_evidence.py",
+          "tests/test_preview_resolution.py",
+          "tests/test_preview_warp_readback.py",
+          "tests/test_preview_camera_clock_startup.py",
+          "tests/test_preview_contract.py",
+          "tests/test_dh116_stereo_rgb_bridge.py",
+          "tests/test_dh116_stereo_rgb_resources.py",
+          "tests/test_preview_owner_release.py",
+          "tests/test_preview_debugger.py",
+          "tests/test_dh116_stereo_resolution.py",
+          "tests/test_dh116_stereo_resolution_benchmark.py",
+          "tests/test_dh116_live_deformx_display.py",
+          "tests/test_physical_preview.py",
+          "tests/test_preview_presentation.py",
+          "tests/test_preview_durable_stages.py",
+          "tests/test_preview_launcher.py",
+          "tests/test_preview_toolbar.py",
+          "tests/test_preview_device.py"
+        ],
+        "log_sha256": "4143e8e8240b30263795455060bfc4d696ec1b1a871105b3aeb8bdb6f70aeb15",
+        "tested_head": "11e16c8cec1ebda9f9ecda3d035d4d72e63e0795",
+        "native_qualification": false,
+        "preview_native_status": "blocked",
+        "new_revision_native_executed": false,
+        "camera_pose_backend": "usd_camera_prim_isaac45",
+        "global_physics_fabric_changed": false,
+        "installed_sdk_files_changed": false,
+        "previous_native_attempts": 1,
+        "previous_native_rgb_pairs": 0,
+        "previous_native_outer_exit_code": 255,
+        "previous_native_signal": 11,
+        "current_single_attempt_budget_remaining": 0,
+        "ppo_updates": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-16-tiled-usd-pose-compatibility.md",
+        "report_source_commit": "e0a3fa4bb60aeefa5d80c28c61d2ed16141d69aa"
+      }
     }
   },
   "execution_target": {
