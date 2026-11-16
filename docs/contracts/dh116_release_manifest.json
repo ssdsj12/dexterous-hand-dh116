@@ -23625,6 +23625,54 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 84,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_preview_warp_readback.py",
+        "tests/test_preview_camera_clock_startup.py",
+        "tests/test_dh116_stereo_rgb_bridge.py",
+        "tests/test_dh116_stereo_rgb_resources.py",
+        "tests/test_preview_owner_release.py",
+        "tests/test_preview_contract.py",
+        "tests/test_preview_debugger.py"
+      ],
+      "log_sha256": "18a76e651e252029037e3290c1750ed14037cfa9edf46f48f0842c323e7bd654",
+      "tested_head": "78e2d19a014c234513ef61618ec861e8bb3f89cc",
+      "native_qualification": false,
+      "preview_native_status": "blocked",
+      "remaining_approved_attempts": 0,
+      "native_readback_error": "Warp owner keyword ABI mismatch",
+      "dependency_versions_changed": false,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-16-preview-warp-readback.md",
+      "report_source_commit": "0e280e9229ad5a4584331689189dd4a683ead11b",
+      "package": "preview.warp-readback.cpu-20261116",
+      "commit": "66893453368fa11245ffb8a6ac53fcbed77563c7",
+      "parent": "78e2d19a014c234513ef61618ec861e8bb3f89cc",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/physical_preview_native_readiness.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-16-preview-warp-readback.md",
+        "scripts/preview_dh116_physical_webrtc.py",
+        "src/go2_pvcnn/control/dh116/tabletop_preview_warp_readback.py",
+        "src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_owned_native.py",
+        "tests/test_preview_warp_readback.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
