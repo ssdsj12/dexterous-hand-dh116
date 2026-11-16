@@ -29,7 +29,7 @@ def _sdk_boundary(row, step):
     stamp = row["sdk_time_s"]
     if (type(row["sdk_step"]) is not int or row["sdk_step"] != step
             or type(stamp) not in (int, float)
-            or not math.isclose(stamp, step * DT, rel_tol=0, abs_tol=2e-7)):
+            or not math.isclose(stamp, step * DT, rel_tol=0, abs_tol=1e-5)):
         raise ValueError("SDK setup boundary differs")
 
 

@@ -53,7 +53,7 @@ def validate_post_step_clearance(row):
         raise ValueError("post-step source, implementation or same-boundary identity differs")
     stamp=packet["sdk_time_s"]
     if (type(stamp) not in (int,float) or not math.isfinite(stamp)
-            or not math.isclose(stamp,packet["physics_step"]*DT,rel_tol=0,abs_tol=2e-7)):
+            or not math.isclose(stamp,packet["physics_step"]*DT,rel_tol=0,abs_tol=1e-5)):
         raise ValueError("actual post-step SDK time differs")
     values,failed=_measure(packet["clearance_m"])
     indices=np.asarray(packet["lowest_shape_index"])

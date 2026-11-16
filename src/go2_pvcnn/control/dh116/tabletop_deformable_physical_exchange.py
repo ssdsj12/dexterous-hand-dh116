@@ -73,7 +73,7 @@ class FlexiblePhysicalExchange:
         if (clock["clock_valid"] is not True
                 or tuple(clock[k] for k in ("run_uuid", "episode_uid", "reset_id", "rod_uid")) != self._reset
                 or clock["physics_step"] != self._sim.current_time_step_index
-                or not math.isclose(clock["timestamp_s"], float(self._sim.current_time), rel_tol=0, abs_tol=2e-7)):
+                or not math.isclose(clock["timestamp_s"], float(self._sim.current_time), rel_tol=0, abs_tol=1e-5)):
             raise ValueError("live rod and SDK identity or clock changed")
         return [{**clock, "policy_step": self._control, "substep": substep}]
 

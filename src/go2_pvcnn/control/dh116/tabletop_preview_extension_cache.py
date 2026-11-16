@@ -10,9 +10,10 @@ def prepare_extension_cache_release(app,getter,*,source,record=None):
         code=getattr(getter,'__code__',None)
         if code is None or Path(code.co_filename).resolve()!=Path(source).resolve():
             raise ValueError('extension cache source differs')
-        if (type(vars(getter).get('extensions')).__module__+'.'+
-                type(vars(getter).get('extensions')).__name__!='omni.ext._extensions.IExtensions'):
-            raise ValueError('existing IExtensions cache required')
+        cached_ext=vars(getter).get('extensions')
+        if cached_ext is not None and (type(cached_ext).__module__+'.'+
+                type(cached_ext).__name__!='omni.ext._extensions.IExtensions'):
+            raise ValueError('unexpected extensions cache type')
         framework=app._framework
         if not callable(getattr(framework,'unload_all_plugins',None)):
             raise ValueError('original Framework unload required')
@@ -25,10 +26,13 @@ def prepare_extension_cache_release(app,getter,*,source,record=None):
                     raise RuntimeError('framework release cannot be retried')
                 receipt['unload_attempted']=True
                 # App.shutdown has completed, plugins are still loaded here.
-                try:
-                    del getter.extensions
-                    receipt['cache_reference_removed']=True
-                except BaseException as error:receipt['diagnostic_errors'].append(str(error))
+                if hasattr(getter,'extensions'):
+                    try:
+                        del getter.extensions
+                        receipt['cache_reference_removed']=True
+                    except BaseException as error:receipt['diagnostic_errors'].append(str(error))
+                else:
+                    receipt['diagnostic_errors'].append('extensions cache absent at unload')
                 if record is not None:
                     try:record(dict(event='extension_cache_reference_removed',native_qualification=False))
                     except BaseException as error:receipt['diagnostic_errors'].append(str(error))

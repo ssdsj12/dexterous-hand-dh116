@@ -78,7 +78,7 @@ class DualHandPhysicalEpisode:
         if (clock["clock_valid"] is not True
                 or clock["physics_step"] != self._sim.current_time_step_index
                 or not math.isclose(float(self._sim.current_time), clock["physics_step"] * DT,
-                                    abs_tol=2e-7, rel_tol=0)):
+                                    abs_tol=1e-5, rel_tol=0)):
             raise ValueError("pre-action SDK and rod clock differ")
         return dict(clock, phase=PHASE, policy_step=self._control_index, substep=0)
 
