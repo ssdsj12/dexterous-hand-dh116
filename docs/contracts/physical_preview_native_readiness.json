@@ -1,8 +1,8 @@
 {
   "schema": "dh116-preview-native-attempt-v1",
   "status": "blocked",
-  "source_head": "11e16c8cec1ebda9f9ecda3d035d4d72e63e0795",
-  "contract_sha256": "d3edb9811686e8c27bc4be3c08849f81593ac14cdc548c60213d0e8456b35ce3",
+  "source_head": "d1469d29fd288c2b52d45ced096a95ee95c3ac2d",
+  "contract_sha256": "d1cafbd09d639a5ea0332394b92d2de259c063d81dd1742ead963f07b3ad4686",
   "batch_attempt_number": 1,
   "physical_gpu_index": 0,
   "outer_exit_code": 255,
@@ -11,10 +11,10 @@
     "signal": 11
   },
   "forced_termination": false,
-  "native_log_sha256": "be2647462a82b1d5a8f525479b98495938ac51e9f097bbd622ecd6ca4209c311",
-  "native_log_bytes": 1617592,
+  "native_log_sha256": "ca8a0d27a4363d0e63ea2d9700ea5eeda40655632e78f8e3196ec55733edff08",
+  "native_log_bytes": 1618234,
   "debugger_fatal_records": 1,
-  "initial_acquire_error": "AttributeError: module 'usdrt' has no attribute 'hierarchy'",
+  "initial_acquire_error": "AnnotatorRegistryError: No annotator of name IsaacReadTimes registered",
   "observed_sdk_clocks": [
     {
       "kind": "setup",
@@ -28,9 +28,9 @@
   "ppo_updates": 0,
   "native_qualification": false,
   "process_exit_verified": false,
-  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/tiled-step-next-20261116T062657Z/attempt-320x240",
-  "remaining_approved_attempts": 0,
-  "batch_kind": "approved_tiled_single_attempt",
+  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/tiled-usd-batch2-20261116T063806Z/attempt-1",
+  "remaining_approved_attempts": 1,
+  "batch_kind": "approved_tiled_two_attempts",
   "resolution_wh": [
     320,
     240

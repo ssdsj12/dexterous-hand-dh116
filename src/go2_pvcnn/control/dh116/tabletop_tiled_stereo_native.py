@@ -12,6 +12,26 @@ from .tabletop_tiled_stereo_resources import TiledResources,RIG_PATH,verify_tile
 from .tabletop_stereo_rgb_owned_native import OwnedNativeRGBPairReader
 
 
+def ensure_clock_annotators(manager,registry):
+    """Activate the installed time-node owner before requesting its annotator.
+
+    Importing bindings does not run the extension's on_startup registration.
+    An existing enabled extension is never restarted or disabled by this owner.
+    Missing registration remains an error, never a synthetic timestamp.
+    """
+    extension="isaacsim.core.nodes"
+    if not manager.is_extension_enabled(extension):
+        manager.set_extension_enabled_immediate(extension,True)
+    if not manager.is_extension_enabled(extension):
+        raise RuntimeError("installed clock extension failed to enable: "+extension)
+    registered=set(registry.get_registered_annotators())
+    # ReferenceTime is hidden in the installed public registry listing.
+    # Its real get_annotator call below remains authoritative and fail-closed.
+    missing={"IsaacReadTimes"}-registered
+    if missing:
+        raise RuntimeError("installed clock annotators unavailable: "+", ".join(sorted(missing)))
+
+
 def author_standard_camera_ops(camera,UsdGeom,Gf):
     """Prepare only a new private prim for the installed XformPrimView."""
     if camera.GetOrderedXformOps():
@@ -71,6 +91,8 @@ class TiledNativeStereoReader:
             sources=verify_tiled_sources(root)
             import omni.replicator.core as rep
             import omni.usd
+            import omni.kit.app
+            ensure_clock_annotators(omni.kit.app.get_app().get_extension_manager(),rep.AnnotatorRegistry)
             from pxr import Gf,UsdGeom
             from isaaclab.sensors import TiledCamera,TiledCameraCfg
             if Path(inspect.getfile(TiledCamera)).resolve()!=Path(sources["tiled"]["path"]).resolve():

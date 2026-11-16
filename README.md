@@ -1,3 +1,7 @@
+## 2026-11-16 — TiledCamera时钟扩展注册与首轮失败审计
+
+首轮原生未注册IsaacReadTimes，0双目帧，关闭仍SIG11；最小修复仅启用现有clock扩展并保留hidden ReferenceTime真实获取校验。修正版原生仍待验证，不改SDK安装和物理。 Ubuntu CPU 回归 271 项通过。[报告](docs/superpowers/reports/2026-11-16-tiled-clock-registration.md)
+
 ## 2026-11-16 — TiledCamera原生失败证据与私有USD位姿兼容
 
 已批准的320×240单次原生在相机Fabric初始化遇usdrt.hierarchy属性不可用，关闭仍SIG11，未重跑。小修仅把owned camera view切至已存在USD位姿路径，并在首次buffer读取前生效；GPU渲染和全局物理配置不变，修正版原生资格仍待验证。 Ubuntu CPU 回归 266 项通过。[报告](docs/superpowers/reports/2026-11-16-tiled-usd-pose-compatibility.md)
