@@ -22,6 +22,7 @@ from go2_pvcnn.control.dh116.tabletop_preview_contract import freeze, verify, BU
 EXPERIENCE = Path("/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.rendering.kit")
 REQUIRED = (
     "src/go2_pvcnn/control/dh116/live_deformx_display.py",
+    "src/go2_pvcnn/control/dh116/tabletop_preview_launcher.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_device.py",
     "src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_bridge.py",
     "src/go2_pvcnn/control/dh116/tabletop_stereo_rgb_owned_native.py",

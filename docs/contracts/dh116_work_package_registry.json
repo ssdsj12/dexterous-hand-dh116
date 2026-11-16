@@ -38683,6 +38683,44 @@
         "report": "docs/superpowers/reports/2026-11-16-preview-toolbar-native-failure.md",
         "report_source_commit": "8483478baa436a4603a17e240693cc905f6eba7e"
       }
+    },
+    "preview.optional-toolbar-hooks.cpu-20261116": {
+      "title": "可选工具条按钮兼容与启动异常关闭",
+      "executor": "gated",
+      "dependencies": [
+        "preview.toolbar-startup.cpu-20261116"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 32,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_preview_launcher.py",
+          "tests/test_preview_toolbar.py",
+          "tests/test_preview_device.py",
+          "tests/test_preview_contract.py",
+          "tests/test_physical_preview.py",
+          "tests/test_preview_presentation.py"
+        ],
+        "log_sha256": "b16bb61d2e1b80b29e2d80e24d6e03cf28f9d65ceea786a09fda67d133d82d97",
+        "tested_head": "371395551328ae6429e491f8ec1eb11372934d9b",
+        "native_qualification": false,
+        "preview_native_status": "blocked",
+        "native_attempts_total": 2,
+        "native_failure": "absent_stop_button_then_shutdown_SIGSEGV",
+        "automatic_retries": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-16-preview-optional-toolbar-hooks.md",
+        "report_source_commit": "67ecf9e1d4735b6ef53abee7ad837c27fa61bd45"
+      }
     }
   },
   "execution_target": {

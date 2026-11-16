@@ -1,3 +1,7 @@
+## 2026-11-15 — 可选工具条按钮兼容与启动异常关闭
+
+修正版单次原生暴露空Stop按钮异常及插件退出崩溃；仅预览内兼容可选按钮、增加构造失败关闭尝试，包含安装源方法CPU重放，原生仍blocked。 Ubuntu CPU 回归 32 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-optional-toolbar-hooks.md)
+
 ## 2026-11-15 — 预览原生启动失败证据与toolbar依赖修复
 
 GPU0单次预览在AppLauncher缺toolbar时失败，清理signal11；未创建任务scene或图像。补已安装依赖的冻结启动参数，原生复验仍待授权。 Ubuntu CPU 回归 24 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-toolbar-native-failure.md)

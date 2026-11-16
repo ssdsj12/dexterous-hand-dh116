@@ -1,6 +1,7 @@
 """CPU-only frozen identity for the independent, zero-PPO native preview."""
 import hashlib
 from pathlib import Path
+from .tabletop_preview_launcher import ADAPTER_VERSION, preview_launcher_type
 
 VERSION = "dh116-webrtc-physical-preview-v1"
 BUDGET = dict(control_intervals=16, setup_sdk_steps=2, measured_sdk_steps=128,
@@ -36,7 +37,7 @@ def freeze(root, experience, *, physical_gpu_index=3):
     if type(physical_gpu_index) is not int or physical_gpu_index<0:
         raise ValueError("nonnegative physical GPU index required")
     experience = Path(experience).resolve(strict=True)
-    return dict(version=VERSION, source_sha256=_inventory(root), physical_gpu_index=physical_gpu_index,
+    return dict(version=VERSION, launcher_adapter=ADAPTER_VERSION, source_sha256=_inventory(root), physical_gpu_index=physical_gpu_index,
                 experience=dict(path=str(experience), sha256=_hash(experience)),
                 budget=dict(BUDGET), camera_config=CAMERA_CONFIG,
                 launcher=dict(headless=True, livestream=2, enable_cameras=True, device="cuda:0", kit_args="--enable omni.kit.widget.toolbar"),
@@ -45,8 +46,9 @@ def freeze(root, experience, *, physical_gpu_index=3):
 
 def verify(root, contract):
     if (not isinstance(contract,dict) or set(contract) !=
-        {"version","source_sha256","experience","budget","camera_config","launcher","action","permission","physical_gpu_index"}
+        {"version","source_sha256","experience","budget","camera_config","launcher","action","permission","physical_gpu_index","launcher_adapter"}
         or contract["version"] != VERSION or contract["budget"] != BUDGET
+        or contract["launcher_adapter"] != ADAPTER_VERSION
         or type(contract["physical_gpu_index"]) is not int or contract["physical_gpu_index"]<0
         or contract["camera_config"] != CAMERA_CONFIG
         or contract["launcher"] != dict(headless=True,livestream=2,enable_cameras=True,device="cuda:0",kit_args="--enable omni.kit.widget.toolbar")
@@ -95,4 +97,4 @@ def launch_preview_app(launcher_factory, contract):
     """Pass the frozen startup dependencies before IsaacLab's toolbar hook."""
     kwargs = dict(contract["launcher"])
     kwargs.update(experience=contract["experience"]["path"], fast_shutdown=False)
-    return launcher_factory(**kwargs).app
+    return preview_launcher_type(launcher_factory)(**kwargs).app

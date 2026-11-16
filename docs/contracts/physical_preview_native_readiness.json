@@ -1,17 +1,17 @@
 {
   "schema": "dh116-preview-native-attempt-v1",
   "status": "blocked",
-  "source_head": "3e277dcdffbd3f38f219a37902f6d1b770385d69",
-  "contract_sha256": "c3939b7ee5a348864c4ddf970f952861c24c5b40754f8a6f16fc53a21b09a208",
+  "source_head": "371395551328ae6429e491f8ec1eb11372934d9b",
+  "contract_sha256": "0d74860ce4442074e4e9297b2052ef7d8f2d1a9037e79e3085943f9ec6894113",
   "physical_gpu_index": 0,
   "outer_exit_code": 255,
   "debugger_inferior_status": {
     "exit_code": null,
     "signal": 11
   },
-  "native_log_sha256": "56361a28a9528c496980572260adad83c93bb6fd100c4c3728d55127550bf0f1",
+  "native_log_sha256": "3916282c22f863add30dcba9bd16a20a8818e828ab4008a8c44e01a0d0c7b127",
   "streaming_server_started": true,
-  "first_error": "ModuleNotFoundError: No module named 'omni.kit.widget.toolbar'",
+  "first_error": "AttributeError: 'NoneType' object has no attribute 'visible'",
   "crash_module": "libomni.ext.plugin.so",
   "task_scene_created": false,
   "physical_ledger_created": false,
@@ -22,7 +22,12 @@
   "automatic_retries": 0,
   "native_qualification": false,
   "process_exit_verified": false,
-  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-e8a60161",
-  "cpu_fix_status": "toolbar_dependency_added_native_revalidation_pending",
-  "next_native_attempt_requires_approval": true
+  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-toolbar-5b1480ed",
+  "cpu_fix_status": "optional_toolbar_hooks_added_native_revalidation_pending",
+  "next_native_attempt_requires_approval": true,
+  "previous_attempt": {
+    "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-e8a60161",
+    "native_log_sha256": "56361a28a9528c496980572260adad83c93bb6fd100c4c3728d55127550bf0f1",
+    "first_error": "ModuleNotFoundError: No module named 'omni.kit.widget.toolbar'"
+  }
 }

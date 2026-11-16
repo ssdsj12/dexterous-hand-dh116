@@ -18,11 +18,12 @@ def test_launcher_receives_frozen_toolbar_before_post_start_hook(tmp_path):
     kit=tmp_path/"render.kit";kit.write_text("minimal rendering")
     contract=freeze(tmp_path,kit,physical_gpu_index=0)
     app=object();calls=[]
-    def installed_launcher_contract(**kwargs):
-        calls.append(kwargs)
-        if kwargs.get("kit_args") != "--enable omni.kit.widget.toolbar":
-            raise ModuleNotFoundError("omni.kit.widget.toolbar")
-        return SimpleNamespace(app=app)
+    class installed_launcher_contract:
+        def __init__(self, **kwargs):
+            calls.append(kwargs)
+            if kwargs.get("kit_args") != "--enable omni.kit.widget.toolbar":
+                raise ModuleNotFoundError("omni.kit.widget.toolbar")
+            self.app = app
     assert launch_preview_app(installed_launcher_contract,contract) is app
     assert calls[0]["livestream"] == 2
     assert calls[0]["enable_cameras"] is True
