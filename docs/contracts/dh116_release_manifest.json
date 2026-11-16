@@ -23286,6 +23286,48 @@
       ],
       "remote_verified": true,
       "verification_route": "local_git_relay"
+    },
+    {
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_preview_device.py",
+        "tests/test_preview_contract.py",
+        "tests/test_physical_preview.py",
+        "tests/test_preview_presentation.py"
+      ],
+      "log_sha256": "beef2ec5aeaacb13425ad9affb59329473e9f16919ef18956b2822a29ad5c134",
+      "tested_head": "8bc541bf9031ba34329ab32ae178812c1f6bec22",
+      "native_qualification": false,
+      "preview_native_status": "not_run",
+      "approved_physical_gpu_index": 0,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-16-preview-shared-gpu0.md",
+      "report_source_commit": "44311518a62c0afabd50b7bc009fd771a78945a2",
+      "package": "preview.shared-gpu0.cpu-20261116",
+      "commit": "961fe08c7612d26f833e31444d52f34d384abc6b",
+      "parent": "8bc541bf9031ba34329ab32ae178812c1f6bec22",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/stereo_phase0_7_readiness.json",
+        "docs/superpowers/reports/2026-11-16-preview-shared-gpu0.md",
+        "scripts/preview_dh116_physical_webrtc.py",
+        "src/go2_pvcnn/control/dh116/tabletop_preview_contract.py",
+        "src/go2_pvcnn/control/dh116/tabletop_preview_device.py",
+        "tests/test_preview_device.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "local_git_relay"
     }
   ]
 }
