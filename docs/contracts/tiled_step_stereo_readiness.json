@@ -1,0 +1,120 @@
+{
+  "version": "dh116-tiled-step-stereo-readiness-v1",
+  "status": "cpu_passed_native_not_run",
+  "source_baseline": "d86bd5503052af60005cab9ee84b04fe15e38602",
+  "reference_repository": "NVlabs/DEXTRAH",
+  "reference_commit": "ebc08edafe5f7c5ad73dcb25ffa15e8d0353df50",
+  "implementation_source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_capture.py": "ecf12238a3d93ce8c0862f0bec406e4f65327160f7ce72284ba03f0656769da8",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py": "509ff1a333baea53ae47ce0b4f3302fbae3e8190b7029580cc48dfc40ef409b1",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_resources.py": "bb9f8bde46c4b1e1cae18548a62bc7c30b37ec4542ff393a4da7612a7f5fc612",
+    "src/go2_pvcnn/control/dh116/tabletop_preview_contract.py": "908ec4dd6fda364dbce999c52250d3363a9795f298d46c676ebe754a00abf52d",
+    "scripts/preview_dh116_physical_webrtc.py": "ea58a336d618fa6d9c4db1bd13969cc1757d3546eb4b017684757ca6c64a0278"
+  },
+  "installed_api_sources": {
+    "tiled": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sensors/camera/tiled_camera.py",
+      "sha256": "f3e9205a16a3ba335f9376a57cf4bf0473ecced928d9ac12d9ddeae83961d506"
+    },
+    "camera": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sensors/camera/camera.py",
+      "sha256": "a3689cffa01d046b510f7564f7adad972edf6316568b0e323abc2c4f0c4ec354"
+    },
+    "sensor": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sensors/sensor_base.py",
+      "sha256": "4716a4b89ed1ac4f640f8744f1e2fcaac2e74d00c2193e0ce24e52c61e5659fc"
+    },
+    "replicator_create": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/create.py",
+      "sha256": "0a5b18a4cfc0b07c490c29c619badc183f81b6b17d3633b68a90acb85550a09c"
+    },
+    "xform_view": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sim/views/xform_prim_view.py",
+      "sha256": "5a05ccc9322e6f042f2ab669cbaf7fb60712726dfeb0d323913b78c87d3755b3"
+    },
+    "fabric_utils": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/utils/warp/fabric.py",
+      "sha256": "209522df45e11ef3c6ac8edd571c24a9b6eb76e790812d7f6aaeb80bfa8b302f"
+    }
+  },
+  "cpu": {
+    "passed": 264,
+    "failed": 0,
+    "skipped": 0,
+    "log_sha256": "0b2f90b937e5778ceb74cb1b1212c10ee0cbe7e8d56c3fe8c1ed4c05dd65a243"
+  },
+  "native": {
+    "executed": false,
+    "accepted_rgb_pairs": 0,
+    "synchronization_qualified": false,
+    "pixel_view_correspondence_qualified": false,
+    "reset_qualified": false,
+    "normal_exit_qualified": false,
+    "gpu_release_qualified": false,
+    "teacher_admission": false,
+    "student_admission": false
+  },
+  "preview_contract_version": "dh116-webrtc-physical-preview-v3",
+  "default_backend": "legacy_view",
+  "new_backend": "tiled_step",
+  "new_backend_opt_in": true,
+  "source_clock_contract": "separate_raw_clocks_with_frozen_physics_boundary",
+  "shared_raw_timestamp_fabricated": false,
+  "supported_resolution_profiles": [
+    [
+      224,
+      96
+    ],
+    [
+      320,
+      240
+    ],
+    [
+      640,
+      360
+    ],
+    [
+      640,
+      480
+    ]
+  ],
+  "custom_resolution_cpu_checked": [
+    512,
+    384
+  ],
+  "default_accuracy_resolution": [
+    640,
+    480
+  ],
+  "selected_resolution": null,
+  "baseline_m": 0.08,
+  "horizontal_fov_degrees": 75.0,
+  "native_preview_environment_limit": 1,
+  "physics_hz": 480,
+  "policy_hz": 60,
+  "ppo_updates": 0,
+  "original_action_and_observation_contracts_changed": false,
+  "installed_sdk_files_modified": false,
+  "original_stopped_batch": {
+    "status": "stopped_common_path_failure",
+    "unused_old_source_cases": 3,
+    "automatically_resumed": false
+  },
+  "next_native_budget": {
+    "authorized": false,
+    "proposed_resolution": [
+      320,
+      240
+    ],
+    "total_sdk_steps": 130,
+    "solver_measurement_substeps": 1536,
+    "max_explicit_renders": 162,
+    "soft_deadline_s": 180,
+    "ppo_updates": 0
+  },
+  "remaining_blockers": [
+    "new reader requires native left/right view and frame freshness evidence",
+    "native Reset and resource teardown require validation",
+    "livestream SIGSEGV is unresolved and is not claimed fixed by this package"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "version": "dh116-installed-tiled-camera-api-v1",
+  "sources": {
+    "tiled": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sensors/camera/tiled_camera.py",
+      "sha256": "f3e9205a16a3ba335f9376a57cf4bf0473ecced928d9ac12d9ddeae83961d506"
+    },
+    "camera": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sensors/camera/camera.py",
+      "sha256": "a3689cffa01d046b510f7564f7adad972edf6316568b0e323abc2c4f0c4ec354"
+    },
+    "sensor": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sensors/sensor_base.py",
+      "sha256": "4716a4b89ed1ac4f640f8744f1e2fcaac2e74d00c2193e0ce24e52c61e5659fc"
+    },
+    "replicator_create": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/create.py",
+      "sha256": "0a5b18a4cfc0b07c490c29c619badc183f81b6b17d3633b68a90acb85550a09c"
+    },
+    "xform_view": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sim/views/xform_prim_view.py",
+      "sha256": "5a05ccc9322e6f042f2ab669cbaf7fb60712726dfeb0d323913b78c87d3755b3"
+    },
+    "fabric_utils": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/utils/warp/fabric.py",
+      "sha256": "209522df45e11ef3c6ac8edd571c24a9b6eb76e790812d7f6aaeb80bfa8b302f"
+    }
+  },
+  "modifications_to_sdk": false,
+  "native_qualification": false
+}

@@ -1,3 +1,7 @@
+## 2026-11-16 — 独立TiledCamera物理边界双RGB采集
+
+新增显式opt-in的TiledCamera顺序双视角采集，在同一物理状态边界绑定图像；分别保留原始渲染时钟，不改写时间戳。标准USD ops、float32 Fabric接口及USD/Fabric交叉读回已完成；旧路径保留，原生同步及关闭资格尚未授予。 Ubuntu CPU 回归 264 项通过。[报告](docs/superpowers/reports/2026-11-16-tiled-step-rgb.md)
+
 ## 2026-11-16 — 四档原生首例失败证据与严格时钟诊断补齐
 
 按授权串行执行首档224×96一次，2初始化步后时钟不一致且关闭SIGSEGV；后三档依公共错误停止规则未启动。补齐原始/预期时钟有界证据，严格拒绝不变，未重跑、未放宽容差或物理标准。 Ubuntu CPU 回归 160 项通过。[报告](docs/superpowers/reports/2026-11-16-resolution-native-clock-failure.md)

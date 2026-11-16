@@ -39044,6 +39044,66 @@
         "report": "docs/superpowers/reports/2026-11-16-resolution-native-clock-failure.md",
         "report_source_commit": "1352757c49683f3f2c4d848539cc98fffd953d31"
       }
+    },
+    "preview.tiled-step.cpu-20261116": {
+      "title": "独立TiledCamera物理边界双RGB采集",
+      "executor": "gated",
+      "dependencies": [
+        "preview.resolution-native-evidence.cpu-20261116"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 264,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_tiled_stereo_capture.py",
+          "tests/test_tiled_stereo_resources.py",
+          "tests/test_tiled_stereo_native_adapter.py",
+          "tests/test_tiled_preview_backend.py",
+          "tests/test_preview_capture_clock_evidence.py",
+          "tests/test_preview_resolution.py",
+          "tests/test_preview_warp_readback.py",
+          "tests/test_preview_camera_clock_startup.py",
+          "tests/test_preview_contract.py",
+          "tests/test_dh116_stereo_rgb_bridge.py",
+          "tests/test_dh116_stereo_rgb_resources.py",
+          "tests/test_preview_owner_release.py",
+          "tests/test_preview_debugger.py",
+          "tests/test_dh116_stereo_resolution.py",
+          "tests/test_dh116_stereo_resolution_benchmark.py",
+          "tests/test_dh116_live_deformx_display.py",
+          "tests/test_physical_preview.py",
+          "tests/test_preview_presentation.py",
+          "tests/test_preview_durable_stages.py",
+          "tests/test_preview_launcher.py",
+          "tests/test_preview_toolbar.py",
+          "tests/test_preview_device.py"
+        ],
+        "log_sha256": "1719b4dc00e4ed674740ac2fbf0a891f5cc6f52b4dae1934adf26097005955b4",
+        "tested_head": "d86bd5503052af60005cab9ee84b04fe15e38602",
+        "native_qualification": false,
+        "preview_native_status": "not_run",
+        "native_synchronization_qualified": false,
+        "camera_backend": "tiled_step",
+        "default_camera_backend": "legacy_view",
+        "installed_sdk_files_changed": false,
+        "actor_or_physics_contracts_changed": false,
+        "original_raw_clocks_preserved": true,
+        "ppo_updates": 0,
+        "native_single_environment_limit": 1,
+        "code_review_status": "three_API_issues_fixed_and_rechecked",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-16-tiled-step-rgb.md",
+        "report_source_commit": "4ad499ae5626fbde2202b47f3871014e70c50756"
+      }
     }
   },
   "execution_target": {

@@ -24,6 +24,10 @@ EXPERIENCE = Path("/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.p
 REQUIRED = (
     "src/go2_pvcnn/control/dh116/live_deformx_display.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_warp_readback.py",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_capture.py",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_resources.py",
+    "configs/dh116_execution/tiled_camera_api_lock_v1.json",
     "src/go2_pvcnn/control/dh116/tabletop_preview_diagnostics.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_debugger.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_launcher.py",
@@ -175,7 +179,8 @@ def execute(contract, output):
                             (output/"capture_calibration.json").write_text(json.dumps(dict(
                                 **camera.calibration.to_dict(),
                                 calibration_sha256=camera.calibration.sha256,
-                                resolution_mode="native_lens_authoring_not_image_resize"),indent=2)+"\n")
+                                resolution_mode="native_lens_authoring_not_image_resize",
+                                camera_backend=contract["camera_backend"]),indent=2)+"\n")
                             holder["display"]=display
                         before=rod.clock()
                         before_time=float(sim.current_time)
@@ -188,6 +193,8 @@ def execute(contract, output):
                                 Image.fromarray(np.clip(np.rint(rgb*255),0,255).astype("uint8")).save(output/(f"{index:03d}_{side}.png"))
                             metadata=dict(phase=exchange["preview_phase"],terminal_reason=terminal,
                                 identity=images["identity"],render_timing=images["render_timing"],
+                                camera_backend=contract["camera_backend"],
+                                capture_source_scope=images.get("source_scope","legacy_bridge_unqualified"),
                                 resolution_wh=[camera.calibration.width,camera.calibration.height],
                                 calibration_sha256=images["calibration_sha256"],
                                 K_left=images["K_left"].tolist(),K_right=images["K_right"].tolist(),
@@ -266,10 +273,14 @@ def main(argv=None):
     group.add_argument("--execute-native",action="store_true")
     parser.add_argument("--physical-gpu",type=int,default=3,help="physical GPU to bind when freezing a contract")
     parser.add_argument("--resolution",help="WIDTHxHEIGHT at freeze time; both cameras use this native size")
+    parser.add_argument("--camera-backend",choices=("legacy_view","tiled_step"),
+                        help="freeze-only independent capture backend; legacy_view remains default")
     parser.add_argument("--contract",type=Path)
     parser.add_argument("--contract-sha256")
     parser.add_argument("--output",type=Path)
     args=parser.parse_args(argv)
+    if args.camera_backend is not None and not args.freeze:
+        parser.error("camera backend is freeze-only; use the authorized contract")
     if args.resolution is not None and not args.freeze:
         parser.error("resolution is freeze-only; native execution uses the authorized contract")
     width,height=640,480
@@ -283,7 +294,8 @@ def main(argv=None):
         missing=[name for name in REQUIRED if not (ROOT/name).is_file()]
         if missing: parser.error("missing required integrated modules: "+", ".join(missing))
         try:
-            contract=freeze(ROOT,EXPERIENCE,physical_gpu_index=args.physical_gpu,width=width,height=height)
+            contract=freeze(ROOT,EXPERIENCE,physical_gpu_index=args.physical_gpu,width=width,height=height,
+                            camera_backend=args.camera_backend or "legacy_view")
         except ValueError as error:
             parser.error(str(error))
         payload=json.dumps(contract,sort_keys=True,indent=2)+"\n"
