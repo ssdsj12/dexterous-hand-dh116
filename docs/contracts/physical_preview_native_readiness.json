@@ -1,84 +1,54 @@
 {
   "schema": "dh116-preview-native-attempt-v1",
   "status": "blocked",
-  "source_head": "d6cba614929c6ed153a210d33090f025ebbda390",
-  "contract_sha256": "1d47548a4e297058170701d4e664c6d4006e1d96fae969089f6bc3af3f646bd5",
+  "source_head": "c7ae54dba461dd985d25990edb5e7d1c4169476b",
+  "contract_sha256": "f1f2abfc42e3ed81ff099fdebd922952496c48f537bff68481aebb30d809a1c8",
   "physical_gpu_index": 0,
-  "outer_exit_code": 137,
-  "observed_fatal_signal": 11,
-  "debugger_inferior_final_status": null,
-  "forced_termination": true,
-  "termination": {
-    "reason": "user_approved_termination_of_recursive_native_fault",
-    "forced_termination": true,
-    "natural_exit_verified": false,
-    "native_qualification": false,
-    "records": [
-      {
-        "pid": 2748610,
-        "signal": "SIGKILL",
-        "action": "authorized_termination",
-        "time_unix_s": 1794803191.2148812
-      },
-      {
-        "pid": 2748473,
-        "signal": "SIGKILL",
-        "action": "authorized_termination",
-        "time_unix_s": 1794803191.2155313
-      }
-    ]
+  "outer_exit_code": 255,
+  "debugger_inferior_final_status": {
+    "exit_code": null,
+    "signal": 11
   },
-  "native_log_sha256": "59e76fc29928c93b9e38f7b213bb0f8d4ec4b370221e142ef63978abebb7d713",
-  "native_log_bytes": 126453593,
-  "debugger_fatal_records": 81,
-  "streaming_server_started": true,
-  "simulation_context_created": true,
-  "first_acquisition_error": "not_durably_recorded_before_close_crash",
-  "observed_sdk_clocks": [
+  "forced_termination": false,
+  "native_log_sha256": "a192d8ec9f637f3363a1491d111c3644b1c3ecb5c45f8945c1bc8efadacf4f89",
+  "native_log_bytes": 1601648,
+  "debugger_fatal_records": 1,
+  "initial_acquire_error": "KeyError: wire_center",
+  "durable_stage_error_records": [
     {
-      "phase": "before_stop",
-      "clock_available": true,
-      "sdk_step": 0,
-      "sdk_time_s": 0.0
+      "error": "Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 46, in attempt\n    value = callback()\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 89, in acquire_owned\n    received = previous.run_owned_call(\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_runtime.py\", line 386, in run_owned_call\n    raise RuntimeError(\"\\n\".join(([failure] if failure else []) + cleanup_errors)) from None\nRuntimeError: Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_runtime.py\", line 361, in run_owned_call\n    result = operation(owners)\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 90, in <lambda>\n    lambda owners: acquire(sim, owners, trace, cleanup),\n  File \"/mnt/mydisk/xk/dh116/scripts/preview_dh116_physical_webrtc.py\", line 220, in acquire\n    result=run_owned_scene(sim,owners,trace,builder=builder.build_reset_owned,\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_physical_preview.py\", line 74, in run_owned_scene\n    builder(sim, owners, record=record, **build_kwargs)\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_dual_pinch_builder.py\", line 173, in build_reset_owned\n    scene=owners.keep(\"scene\",scene_api.assemble_prepared_scene(sim,project,prepared))\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_dual_hand_scene_preparation.py\", line 355, in assemble_prepared_scene\n    scene = spawn_scene(sim,args,layout,sources,prepared['prefix'],np.zeros(3),external_wire=True)\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_vec_isaac.py\", line 63, in spawn_scene\n    layout[key] = np.asarray(layout[key]) + origin\nKeyError: 'wire_center'\n\n",
+      "event": "error",
+      "monotonic_ns": 938071497633717,
+      "sequence": 3,
+      "stage": "acquire"
     },
     {
-      "phase": "after_stop",
-      "clock_available": true,
-      "sdk_step": 0,
-      "sdk_time_s": 0.0
+      "error": "Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 46, in attempt\n    value = callback()\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 114, in reject\n    raise RuntimeError(message)\nRuntimeError: owned resource release false or unknown\n",
+      "event": "error",
+      "monotonic_ns": 938071946597202,
+      "sequence": 24,
+      "stage": "ownership_readback_guard"
     },
     {
-      "phase": "before_close_check",
-      "clock_available": true,
-      "sdk_step": 0,
-      "sdk_time_s": 0.0
+      "error": "Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 46, in attempt\n    value = callback()\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 114, in reject\n    raise RuntimeError(message)\nRuntimeError: owned resource release false or unknown before close\n",
+      "event": "error",
+      "monotonic_ns": 938071986232433,
+      "sequence": 34,
+      "stage": "ownership_before_close_guard"
     }
   ],
+  "stage_journal_sha256": "d883dc76062451123c2c16d5a6bcb650eeb930fb39a2af91397661279278b1b2",
   "physical_ledger_rows": 0,
   "camera_pairs": 0,
   "ppo_updates": 0,
   "automatic_retries": 0,
   "native_qualification": false,
   "process_exit_verified": false,
-  "simulation_weakref_alive_before_close": true,
   "first_crash_module": "libomni.kit.livestream.plugin.so",
-  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-hooks-bd0ea33a",
-  "next_native_attempt_requires_approval": true,
+  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-durable-a904ba1f",
+  "layout_compatibility_fix": "CPU validation in this package; not rerun natively",
   "previous_attempt": {
-    "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-toolbar-5b1480ed",
-    "native_log_sha256": "3916282c22f863add30dcba9bd16a20a8818e828ab4008a8c44e01a0d0c7b127",
-    "first_error": "AttributeError: 'NoneType' object has no attribute 'visible'"
-  },
-  "latest_offline_repair": {
-    "package": "preview.offline-cleanup.cpu-20261116",
-    "cpu_passed": 151,
-    "new_isaac_runs": 0,
-    "native_qualification": false,
-    "stage_errors_fsync_before_close": true,
-    "render_and_rgb_aliases_released_in_cpu_tests": true,
-    "fatal_dump_payload_limit_bytes": 8388608,
-    "repeat_fault_action": "pause_debugger_not_fake_exit",
-    "adapter": "dh116-preview-owned-launcher-v2",
-    "native_revalidation": "not_authorized_in_this_package"
+    "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-hooks-bd0ea33a",
+    "native_log_sha256": "59e76fc29928c93b9e38f7b213bb0f8d4ec4b370221e142ef63978abebb7d713"
   }
 }

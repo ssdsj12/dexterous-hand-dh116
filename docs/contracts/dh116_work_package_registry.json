@@ -38803,6 +38803,48 @@
         "report": "docs/superpowers/reports/2026-11-16-preview-offline-cleanup.md",
         "report_source_commit": "890f2b2ede09ccca772b2efbb33c73e3ae7af21e"
       }
+    },
+    "preview.wire-layout.cpu-20261116": {
+      "title": "真实建场wire_center首因与兼容修复",
+      "executor": "gated",
+      "dependencies": [
+        "preview.offline-cleanup.cpu-20261116"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 39,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_scene_spawn_layout_compatibility.py",
+          "tests/test_dh116_dual_hand_scene_preparation.py",
+          "tests/test_preview_durable_stages.py",
+          "tests/test_preview_owner_release.py",
+          "tests/test_preview_debugger.py",
+          "tests/test_preview_contract.py"
+        ],
+        "log_sha256": "269f6701ec91bfbc85ae2e6e7f0873cd8446c3302c08e2260c2fb1a369f4f56e",
+        "tested_head": "c7ae54dba461dd985d25990edb5e7d1c4169476b",
+        "native_qualification": false,
+        "preview_native_status": "blocked",
+        "native_attempts_total": 4,
+        "first_acquire_error": "KeyError: wire_center",
+        "native_outer_exit_code": 255,
+        "native_signal": 11,
+        "native_fatal_records": 1,
+        "native_measurement_rows": 0,
+        "automatic_retries": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-16-preview-wire-center-layout.md",
+        "report_source_commit": "e078030e8e5c8470de99b4604974515b300a37b3"
+      }
     }
   },
   "execution_target": {

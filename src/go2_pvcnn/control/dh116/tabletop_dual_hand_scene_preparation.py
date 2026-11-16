@@ -190,6 +190,14 @@ def spawn_parameters(project, prepared):
         load_parameters=LoadParameters(effort_limit_nm=hand['active_effort_limit_nm']))
     reference = json.loads((Path(project)/'configs/dh116_training/pose_reference.json').read_text())['reference_layout']
     layout = deepcopy(reference)
+    # The shared builder translates wire_center before its external_wire branch.
+    # This is legacy layout metadata only: that branch creates no rigid wire and
+    # the DeformX material nodes continue to come from the separate rod owner.
+    reference_points = np.asarray(reference['wire_points'], dtype=float)
+    if (reference_points.ndim != 2 or reference_points.shape[1] != 3
+            or len(reference_points) < 2 or not np.isfinite(reference_points).all()):
+        raise ValueError('finite reference wire points required for legacy layout translation')
+    layout['wire_center'] = reference_points.mean(axis=0)
     layout['hand_roots'] = {s:np.asarray(prepared['hands'][s]['source_root_pose_w']).copy() for s in SIDES}
     layout['active_joints'] = {s:np.asarray(prepared['hands'][s]['source_active_q']).copy() for s in SIDES}
     return args,layout,{s:str(Path(project)/prepared['hands'][s]['usd_path']) for s in SIDES}

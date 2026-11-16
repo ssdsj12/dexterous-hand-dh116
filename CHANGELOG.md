@@ -1,3 +1,7 @@
+## 2026-11-16 — 真实建场wire_center首因与兼容修复
+
+新诊断取得建场缺wire_center的实际首因；caller补旧layout元数据，未改受保护builder/物理。原生关闭仍signal11，单份栈保留，修复尚未原生复验。 Ubuntu CPU 回归 39 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-wire-center-layout.md)
+
 ## 2026-11-16 — 预览错误落盘、引用清理与有界崩溃诊断
 
 阶段错误逐事件fsync，修复RenderBudget/RGB引用及launcher回调生命周期，预览专用GDB首次限额栈与重复故障暂停；仅CPU验证，原生仍blocked。 Ubuntu CPU 回归 151 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-offline-cleanup.md)
