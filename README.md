@@ -1,3 +1,7 @@
+## 2026-11-16 — Timeline真实Python入口修正与USD关闭失败证据
+
+单次原生完成17对RGB、61次显式render；15/17资源弱引用失效，仅manager持有同一个SimulationView。STOP多取一层get_timeline失败，之后在USD context销毁SIG11。已用实际SDK Python包装函数+实际脚本回归修正调用，v2锁含7项来源且保留v1。本修正版未再原生运行，预算余0，不授予关闭/训练资格。 Ubuntu CPU 回归 296 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-timeline-wrapper.md)
+
 ## 2026-11-16 — 预览完成帧释放、STOP提交与直播关闭修复
 
 已复现并修复自身完成帧借用资源引用、STOP检查前缺少显式回调提交、直播未先于stage销毁停止及异常路径丢失原错误。实际脚本接线有CPU回归，首次故障补寄存器/指令。旧两次native预算已耗尽，本修正版未原生执行；SIG11和资源释放保持待验证，无SDK/物理/训练改动。 Ubuntu CPU 回归 295 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-owned-shutdown-repair.md)

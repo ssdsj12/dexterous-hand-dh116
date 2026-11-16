@@ -3,7 +3,7 @@
 No SDK installation is patched. Absent buttons stay absent; existing buttons
 retain IsaacLab's hide/disable behavior. This owns no simulation or physics.
 """
-ADAPTER_VERSION = "dh116-preview-owned-launcher-v3"
+ADAPTER_VERSION = "dh116-preview-owned-launcher-v4"
 
 def _native_toolbar():
     import omni.kit.widget.toolbar
@@ -155,9 +155,9 @@ def verify_preview_shutdown_sources(root=None):
     import hashlib,json
     from pathlib import Path
     root=Path(__file__).resolve().parents[4] if root is None else Path(root)
-    data=json.loads((root/"configs/dh116_execution/preview_shutdown_api_lock_v1.json").read_text())
-    expected={"manager","simulation_app","timeline","livestream_stub","livestream_binding","livestream_plugin"}
-    if data.get("version")!="dh116-owned-preview-shutdown-api-v1" or set(data.get("sources",{}))!=expected:
+    data=json.loads((root/"configs/dh116_execution/preview_shutdown_api_lock_v2.json").read_text())
+    expected={"manager","simulation_app","timeline","livestream_stub","livestream_binding","livestream_plugin","timeline_python"}
+    if data.get("version")!="dh116-owned-preview-shutdown-api-v2" or set(data.get("sources",{}))!=expected:
         raise ValueError("complete owned shutdown API contract required")
     for name,item in data["sources"].items():
         path=Path(item["path"])

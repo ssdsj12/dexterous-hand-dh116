@@ -89,3 +89,33 @@ def test_actual_acquire_preserves_scene_and_cleanup_failure_together(tmp_path):
     text=''.join(traceback.format_exception(caught.type,caught.value,caught.tb))
     assert 'scene failure' in text and 'stream shutdown failure' in text
     assert events==['render-install','scene','stream-stop','render-close','journal-close']
+
+
+def test_actual_stop_accepts_installed_python_wrapper_timeline_without_second_lookup(monkeypatch):
+    import sys,types
+    # Execute the actual SDK Python accessor, not a guessed ITimeline stub.
+    sdk=Path('/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.timeline-1.0.11+d02c707b.lx64.r.cp310/omni/timeline/__init__.py')
+    node=next(n for n in ast.parse(sdk.read_text()).body
+        if isinstance(n,ast.FunctionDef) and n.name=='get_timeline_interface')
+    calls=[]
+    class Timeline:
+        def stop(self):calls.append('stop')
+        def commit(self):calls.append('commit')
+        def is_stopped(self):return True
+    timeline=Timeline()
+    namespace=dict(Timeline=Timeline,acquire_timeline_interface=lambda:
+        SimpleNamespace(get_timeline=lambda name:timeline))
+    exec(compile(ast.Module(body=[node],type_ignores=[]),str(sdk),'exec'),namespace)
+    accessor=namespace['get_timeline_interface']
+    assert accessor() is timeline and not hasattr(timeline,'get_timeline')
+    omni=types.ModuleType('omni');omni.timeline=types.ModuleType('omni.timeline')
+    omni.timeline.get_timeline_interface=accessor
+    monkeypatch.setitem(sys.modules,'omni',omni)
+    monkeypatch.setitem(sys.modules,'omni.timeline',omni.timeline)
+    script=ROOT/'scripts/preview_dh116_physical_webrtc.py'
+    stop=next(n for n in ast.walk(ast.parse(script.read_text()))
+        if isinstance(n,ast.FunctionDef) and n.name=='stop')
+    scope=dict(freeze_player=lambda:False,read_owned_clock=lambda:None)
+    exec(compile(ast.Module(body=[stop],type_ignores=[]),str(script),'exec'),scope)
+    scope['stop']()
+    assert calls==['stop','commit']

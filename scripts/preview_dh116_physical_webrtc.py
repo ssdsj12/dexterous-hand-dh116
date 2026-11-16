@@ -28,7 +28,7 @@ REQUIRED = (
     "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py",
     "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_resources.py",
     "configs/dh116_execution/tiled_camera_api_lock_v1.json",
-    "configs/dh116_execution/preview_shutdown_api_lock_v1.json",
+    "configs/dh116_execution/preview_shutdown_api_lock_v2.json",
     "src/go2_pvcnn/control/dh116/tabletop_preview_diagnostics.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_debugger.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_launcher.py",
@@ -128,7 +128,7 @@ def execute(contract, output):
             def stop():
                 import omni.timeline
                 from go2_pvcnn.control.dh116.tabletop_preview_launcher import commit_preview_stop
-                return commit_preview_stop(omni.timeline.get_timeline_interface().get_timeline(),
+                return commit_preview_stop(omni.timeline.get_timeline_interface(),
                     freeze=freeze_player,read_clock=read_owned_clock)
 
             def make_sim():

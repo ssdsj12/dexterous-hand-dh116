@@ -1,7 +1,7 @@
 {
   "version": "dh116-tiled-step-stereo-readiness-v1",
-  "status": "cpu_passed_owned_shutdown_fix_native_pending",
-  "source_baseline": "c7716c09e9cd86c8ceb71db0a62bd7f41444a43b",
+  "status": "cpu_passed_timeline_wrapper_fix_native_pending",
+  "source_baseline": "66f18cb07e563f3319dd57cb04158d29fdfa1b87",
   "reference_repository": "NVlabs/DEXTRAH",
   "reference_commit": "ebc08edafe5f7c5ad73dcb25ffa15e8d0353df50",
   "implementation_source_sha256": {
@@ -9,7 +9,7 @@
     "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py": "500bdcc1aa210667840cf2dfa4148fc96e9ec213bc26936d64ca13dab322f287",
     "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_resources.py": "bb9f8bde46c4b1e1cae18548a62bc7c30b37ec4542ff393a4da7612a7f5fc612",
     "src/go2_pvcnn/control/dh116/tabletop_preview_contract.py": "41e50144f8e4ef42ce557119f52f17c7bd64d8f3f0c279ff379ff2a56c35c849",
-    "scripts/preview_dh116_physical_webrtc.py": "9dc03f29d0bcac29d3d92dd73638953da69d21264471db0a1b7ca6b6aa3551aa"
+    "scripts/preview_dh116_physical_webrtc.py": "c7f554b7f8186a9b9a3045d7843512509b68149f8fd3ec57fd9baa94e37b31a1"
   },
   "installed_api_sources": {
     "tiled": {
@@ -38,11 +38,11 @@
     }
   },
   "cpu": {
-    "passed": 295,
+    "passed": 296,
     "failed": 0,
     "skipped": 0,
-    "wall_seconds": 16.76,
-    "log_sha256": "f46e854a3f86c5efbef55cb49416c9ce54fdfacb847e702d7d6c41206d3c2765"
+    "wall_seconds": 14.05,
+    "log_sha256": "0df96cba6e1118d11ba9d07f9db6ce71d04effd4034558eb6ce5eb228c6f0a4d"
   },
   "native": {
     "executed": false,
@@ -103,7 +103,7 @@
       "native_qualification": false
     },
     "latest_batch_result": "docs/contracts/tiled_step_native_result.json",
-    "last_attempt_source_head": "f8e321d8f2318a762d27742fd33f843134cc7d53",
+    "last_attempt_source_head": "66f18cb07e563f3319dd57cb04158d29fdfa1b87",
     "last_actual_rgb_pairs": 17
   },
   "preview_contract_version": "dh116-webrtc-physical-preview-v3",
@@ -167,9 +167,9 @@
     "batch_request_sha256": "dafaebc972a9aab49344c24e1824c85a9e5d7d699f85aed9dcb1faecdaeb30ca"
   },
   "remaining_blockers": [
-    "owned shutdown revision requires new native budget and actual validation",
-    "archived WebRTC present thread SIG11 at file offset0x11f26 is not yet proven resolved",
-    "Reset/restart, stereo depth accuracy and other resolutions remain unqualified"
+    "Timeline Python accessor revision needs actual STOP/commit validation",
+    "last native crashed in main-thread USD context destruction; residual manager view must be released",
+    "Reset/restart, depth accuracy and other resolutions remain unqualified"
   ],
   "camera_pose_backend": "usd_camera_prim_isaac45",
   "camera_view_only_fabric_route_disabled": true,

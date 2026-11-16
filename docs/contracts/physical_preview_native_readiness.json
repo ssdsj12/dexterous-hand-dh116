@@ -1,9 +1,9 @@
 {
   "schema": "dh116-preview-native-attempt-v1",
   "status": "blocked",
-  "source_head": "f8e321d8f2318a762d27742fd33f843134cc7d53",
-  "contract_sha256": "0768a1fad59ef0b4d1459adc20abf807a8783862262462df7f6fc932dc2999a3",
-  "batch_attempt_number": 2,
+  "source_head": "66f18cb07e563f3319dd57cb04158d29fdfa1b87",
+  "contract_sha256": "1ab1505542ee0b5fc90f212cfcbcc8d530ae506c8335460d1cacb0e3f570b35c",
+  "batch_attempt_number": 1,
   "physical_gpu_index": 0,
   "outer_exit_code": 255,
   "debugger_inferior_final_status": {
@@ -11,15 +11,23 @@
     "signal": 11
   },
   "forced_termination": false,
-  "native_log_sha256": "74f85dfc079c00625258e6643b5ae416aaa6ae71a06e2659f49a224f771967a9",
-  "native_log_bytes": 1617112,
+  "native_log_sha256": "b119a45bab158d2334d17a03e8e6bf3d59ab7f42053be2e14b93df4e553617e5",
+  "native_log_bytes": 1610852,
   "debugger_fatal_records": 1,
   "initial_acquire_error": null,
   "observed_sdk_clocks": [
     {
-      "phase": "completed_preview",
+      "phase": "before_stop",
       "sdk_step": 130,
-      "sdk_time_s": 0.2708333333333333
+      "sdk_time_s": 0.2708333474583924
+    },
+    {
+      "phase": "after_stop",
+      "clock_available": false
+    },
+    {
+      "phase": "before_close_check",
+      "clock_available": false
     }
   ],
   "physical_ledger_rows": 166,
@@ -27,14 +35,18 @@
   "ppo_updates": 0,
   "native_qualification": false,
   "process_exit_verified": false,
-  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/tiled-usd-batch2-20261116T063806Z/attempt-2",
+  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/owned-shutdown-native-20261116T074718Z/attempt-1",
   "remaining_approved_attempts": 0,
-  "batch_kind": "approved_tiled_two_attempts",
+  "batch_kind": "approved_owned_shutdown_single",
   "resolution_wh": [
     320,
     240
   ],
   "durable_stage_error_summary": [
+    {
+      "stage": "stop",
+      "error": "AttributeError: 'omni.timeline._timeline.Timeline' object has no attribute 'get_timeline'"
+    },
     {
       "stage": "manager_readback_guard",
       "error": "RuntimeError: manager view release false or unknown"
@@ -56,5 +68,8 @@
   "automatic_resume_allowed": false,
   "native_backend": "tiled_step",
   "capture_completed": true,
-  "shutdown_qualified": false
+  "shutdown_qualified": false,
+  "stop_error": "AttributeError: 'omni.timeline._timeline.Timeline' object has no attribute 'get_timeline'",
+  "actual_explicit_render_calls": 61,
+  "latest_result": "docs/contracts/preview_owned_shutdown_native_result.json"
 }
