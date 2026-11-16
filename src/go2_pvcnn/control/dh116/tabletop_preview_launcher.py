@@ -3,13 +3,16 @@
 No SDK installation is patched. Absent buttons stay absent; existing buttons
 retain IsaacLab's hide/disable behavior. This owns no simulation or physics.
 """
-ADAPTER_VERSION = "dh116-preview-owned-launcher-v4"
+from .tabletop_preview_window_owner import wrap_preview_hotkey_destroy,prepare_loaded_window_owner,validate_window_release_receipt
+
+ADAPTER_VERSION = "dh116-preview-owned-launcher-v5"
 
 def _native_toolbar():
     import omni.kit.widget.toolbar
     return omni.kit.widget.toolbar.get_instance()
 
-def preview_launcher_type(base, *, toolbar_getter=None, partial_stop_presentation=None):
+def preview_launcher_type(base, *, toolbar_getter=None, partial_stop_presentation=None,
+        partial_prepare_native_shutdown=None):
     if not isinstance(base,type):
         raise TypeError("AppLauncher class required")
     getter = _native_toolbar if toolbar_getter is None else toolbar_getter
@@ -22,12 +25,18 @@ def preview_launcher_type(base, *, toolbar_getter=None, partial_stop_presentatio
                 # Attempt normal close once and preserve the original failure.
                 partial=getattr(self,"_app",None)
                 cleanup_errors=[]
+                window_receipt=None
                 try:
                     if partial is not None:
                         if partial_stop_presentation is not None:
                             try:partial_stop_presentation()
                             except BaseException as cleanup:cleanup_errors.append(str(cleanup))
+                        if partial_prepare_native_shutdown is not None:
+                            try:window_receipt=partial_prepare_native_shutdown()
+                            except BaseException as cleanup:cleanup_errors.append(str(cleanup))
                         try:partial.close(wait_for_replicator=False)
+                        except BaseException as cleanup:cleanup_errors.append(str(cleanup))
+                        try:validate_window_release_receipt(window_receipt)
                         except BaseException as cleanup:cleanup_errors.append(str(cleanup))
                     if cleanup_errors:error.preview_startup_cleanup_error="; ".join(cleanup_errors)
                 finally:
@@ -70,13 +79,14 @@ def install_fatal_defaults(signal_api):
 
 class ManagedPreviewApp:
     """Own launcher callbacks explicitly; one normal close attempt, no forced exit."""
-    def __init__(self,launcher,*,signal_api,stop_presentation=None):
+    def __init__(self,launcher,*,signal_api,stop_presentation=None,prepare_native_shutdown=None):
         self._launcher=launcher
         self._app=launcher.app
         self._signals=signal_api
         self._closed=False
         self._close_error=None
         self._stop_presentation=stop_presentation
+        self._prepare_native_shutdown=prepare_native_shutdown
         self._presentation_attempted=False
         self._presentation_error=None
         self._presentation_receipt=None
@@ -130,8 +140,16 @@ class ManagedPreviewApp:
                             self._signals.signal(number,self._signals.SIG_DFL)
                     except BaseException as error:errors.append(name+": "+repr(error))
                     finally:handler=None
+            prepare,self._prepare_native_shutdown=self._prepare_native_shutdown,None
+            window_receipt=None
+            try:
+                if prepare is not None:window_receipt=prepare()
+            except BaseException as error:errors.append("window owner preparation: "+str(error))
+            finally:prepare=None
             try:app.close(**kwargs)
             except BaseException as error:errors.append("app.close: "+repr(error))
+            try:validate_window_release_receipt(window_receipt)
+            except BaseException as error:errors.append("window release evidence: "+str(error))
         finally:
             launcher._app=None
             self._app=self._launcher=self._signals=None
@@ -141,13 +159,27 @@ class ManagedPreviewApp:
             raise RuntimeError(self._close_error)
 
 
-def launch_managed_preview_app(launcher_factory,contract):
+def launch_managed_preview_app(launcher_factory,contract,*,shutdown_output=None):
     import signal
     verify_preview_shutdown_sources()
     kwargs=dict(contract["launcher"])
     kwargs.update(experience=contract["experience"]["path"],fast_shutdown=False)
-    launcher=preview_launcher_type(launcher_factory,partial_stop_presentation=stop_native_presentation)(**kwargs)
-    return ManagedPreviewApp(launcher,signal_api=signal,stop_presentation=stop_native_presentation)
+    def prepare():
+        data=verify_preview_shutdown_sources()
+        def record(row):
+            if shutdown_output is None:return
+            import json,os,time
+            from pathlib import Path
+            path=Path(shutdown_output)/"preview_window_release.jsonl"
+            path.parent.mkdir(parents=True,exist_ok=True)
+            with path.open("a",encoding="utf-8") as stream:
+                stream.write(json.dumps(dict(monotonic_ns=time.monotonic_ns(),**row),allow_nan=False)+"\n")
+                stream.flush();os.fsync(stream.fileno())
+        return prepare_loaded_window_owner(data["sources"],record=record)
+    launcher=preview_launcher_type(launcher_factory,partial_stop_presentation=stop_native_presentation,
+        partial_prepare_native_shutdown=prepare)(**kwargs)
+    return ManagedPreviewApp(launcher,signal_api=signal,stop_presentation=stop_native_presentation,
+        prepare_native_shutdown=prepare)
 
 
 def verify_preview_shutdown_sources(root=None):
@@ -155,9 +187,9 @@ def verify_preview_shutdown_sources(root=None):
     import hashlib,json
     from pathlib import Path
     root=Path(__file__).resolve().parents[4] if root is None else Path(root)
-    data=json.loads((root/"configs/dh116_execution/preview_shutdown_api_lock_v2.json").read_text())
-    expected={"manager","simulation_app","timeline","livestream_stub","livestream_binding","livestream_plugin","timeline_python"}
-    if data.get("version")!="dh116-owned-preview-shutdown-api-v2" or set(data.get("sources",{}))!=expected:
+    data=json.loads((root/"configs/dh116_execution/preview_shutdown_api_lock_v3.json").read_text())
+    expected={"manager","simulation_app","timeline","livestream_stub","livestream_binding","livestream_plugin","timeline_python","hotkeys_trigger","hotkeys_extension","extension_loader","appwindow_stub","appwindow_binding"}
+    if data.get("version")!="dh116-owned-preview-shutdown-api-v3" or set(data.get("sources",{}))!=expected:
         raise ValueError("complete owned shutdown API contract required")
     for name,item in data["sources"].items():
         path=Path(item["path"])

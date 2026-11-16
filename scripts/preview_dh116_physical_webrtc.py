@@ -28,7 +28,7 @@ REQUIRED = (
     "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py",
     "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_resources.py",
     "configs/dh116_execution/tiled_camera_api_lock_v1.json",
-    "configs/dh116_execution/preview_shutdown_api_lock_v2.json",
+    "configs/dh116_execution/preview_shutdown_api_lock_v3.json",
     "src/go2_pvcnn/control/dh116/tabletop_preview_diagnostics.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_debugger.py",
     "src/go2_pvcnn/control/dh116/tabletop_preview_launcher.py",
@@ -90,7 +90,7 @@ def execute(contract, output):
         probe_device(contract["physical_gpu_index"])
         from isaaclab.app import AppLauncher
         from go2_pvcnn.control.dh116.tabletop_preview_launcher import launch_managed_preview_app
-        app = launch_managed_preview_app(AppLauncher, contract)
+        app = launch_managed_preview_app(AppLauncher, contract, shutdown_output=output)
         entered = False
         try:
             import torch

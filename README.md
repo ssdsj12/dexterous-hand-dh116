@@ -1,3 +1,7 @@
+## 2026-11-16 — DEXTRAH关闭对照与私有窗口owner释放候选
+
+DEXTRAH入口实际先env.close再app.close；本地上轮17对RGB、16项资源全部失效且app.close已返回，最终Py_FinalizeEx AppWindow SIG11仍不通过。私有预览实例窗口释放候选、日志/partial-startup异常保护经CPU验证，尚待本批剩余一次原生验证。物理、模型和SDK安装不改。 Ubuntu CPU 回归 307 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-dextrah-shutdown-window-owner.md)
+
 ## 2026-11-16 — Timeline真实Python入口修正与USD关闭失败证据
 
 单次原生完成17对RGB、61次显式render；15/17资源弱引用失效，仅manager持有同一个SimulationView。STOP多取一层get_timeline失败，之后在USD context销毁SIG11。已用实际SDK Python包装函数+实际脚本回归修正调用，v2锁含7项来源且保留v1。本修正版未再原生运行，预算余0，不授予关闭/训练资格。 Ubuntu CPU 回归 296 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-timeline-wrapper.md)
