@@ -1,3 +1,7 @@
+## 2026-11-16 — 原生窗口释放已执行与解释器退出失败证据
+
+本批最后一次完成17对RGB、16项资源与热键窗口释放，正常app.close返回；外层255/Py_FinalizeEx扩展绑定SIG11仍失败。两次预算耗尽，完整证据私有保留，原生资格blocked，不再重跑；零PPO与原物理/模型保持。 Ubuntu CPU 回归 307 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-window-owner-native-result.md)
+
 ## 2026-11-16 — DEXTRAH关闭对照与私有窗口owner释放候选
 
 DEXTRAH入口实际先env.close再app.close；本地上轮17对RGB、16项资源全部失效且app.close已返回，最终Py_FinalizeEx AppWindow SIG11仍不通过。私有预览实例窗口释放候选、日志/partial-startup异常保护经CPU验证，尚待本批剩余一次原生验证。物理、模型和SDK安装不改。 Ubuntu CPU 回归 307 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-dextrah-shutdown-window-owner.md)

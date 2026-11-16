@@ -1,6 +1,6 @@
 {
   "version": "dh116-tiled-step-stereo-readiness-v1",
-  "status": "cpu_passed_owned_window_candidate_native_pending",
+  "status": "blocked_python_finalize_extensions_native_budget_exhausted",
   "source_baseline": "cf7fac999ef82e3598f467cae2641f78411b8503",
   "reference_repository": "NVlabs/DEXTRAH",
   "reference_commit": "ebc08edafe5f7c5ad73dcb25ffa15e8d0353df50",
@@ -45,8 +45,8 @@
     "log_sha256": "42a7ad4508191a67845d5f1b1f2cc8941346d87270517ce0e5ef7cff0469c59e"
   },
   "native": {
-    "executed": false,
-    "accepted_rgb_pairs": 0,
+    "executed": true,
+    "accepted_rgb_pairs": 17,
     "synchronization_qualified": false,
     "pixel_view_correspondence_qualified": false,
     "reset_qualified": false,
@@ -102,8 +102,8 @@
       "ppo_updates": 0,
       "native_qualification": false
     },
-    "latest_batch_result": "docs/contracts/preview_finalize_native_result.json",
-    "last_attempt_source_head": "cf7fac999ef82e3598f467cae2641f78411b8503",
+    "latest_batch_result": "docs/contracts/preview_finalize_native_batch_result.json",
+    "last_attempt_source_head": "e31a694879e16726f6caf6ea5ed61025482e50c9",
     "last_actual_rgb_pairs": 17
   },
   "preview_contract_version": "dh116-webrtc-physical-preview-v3",
@@ -153,7 +153,7 @@
     "automatically_resumed": false
   },
   "next_native_budget": {
-    "authorized": true,
+    "authorized": false,
     "proposed_resolution": [
       320,
       240
@@ -163,18 +163,18 @@
     "max_explicit_renders": 162,
     "soft_deadline_s": 180,
     "ppo_updates": 0,
-    "remaining_attempts": 1,
+    "remaining_attempts": 0,
     "batch_request_sha256": "5545d1f1712b1205e484f7aed5954c3a461a5ed69aa363e90a5f8192d11cb795"
   },
   "remaining_blockers": [
-    "Py_FinalizeEx AppWindow SIG11 after normal app.close return",
-    "owned window candidate not yet native verified",
-    "Reset/restart, depth accuracy and other resolutions remain unqualified"
+    "Py_FinalizeEx extension binding SIG11 after normal app.close and verified window reference clear",
+    "precise surviving native interface owner not yet proven; no repeated global cleanup",
+    "Reset/restart, pixel synchronization, depth accuracy and other resolutions unqualified"
   ],
   "camera_pose_backend": "usd_camera_prim_isaac45",
   "camera_view_only_fabric_route_disabled": true,
   "global_physics_fabric_changed": false,
-  "current_revision_native_executed": false,
-  "latest_native_result": "docs/contracts/preview_finalize_native_result.json",
+  "current_revision_native_executed": true,
+  "latest_native_result": "docs/contracts/preview_window_owner_native_result.json",
   "owned_shutdown_readiness": "docs/contracts/preview_owned_shutdown_readiness.json"
 }

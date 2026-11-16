@@ -1,8 +1,8 @@
 {
   "version": "dh116-preview-owned-shutdown-readiness-v1",
-  "status": "cpu_passed_owned_window_candidate_native_pending",
+  "status": "blocked_python_finalize_extensions_native_budget_exhausted",
   "source_baseline": "cf7fac999ef82e3598f467cae2641f78411b8503",
-  "report": "docs/superpowers/reports/2026-11-16-preview-dextrah-shutdown-window-owner.md",
+  "report": "docs/superpowers/reports/2026-11-16-preview-window-owner-native-result.md",
   "code_sha256": {
     "scripts/preview_dh116_physical_webrtc.py": "78a8814f0079964e40b6029d0e55358ec66bf5bbac745f6e667f13eec3897c25",
     "src/go2_pvcnn/control/dh116/tabletop_physical_preview.py": "0e7031177bb45cfd80f657d1b1b3f4b2a2c192120b809cd0b8cf070239341835",
@@ -80,11 +80,14 @@
     "cleanup exception could hide acquisition failure"
   ],
   "native_crash": {
-    "module": "_appwindow.cpython-310-x86_64-linux-gnu.so",
+    "thread": "main_python",
     "phase": "Py_FinalizeEx",
+    "module": "_extensions.cpython-310-x86_64-linux-gnu.so",
+    "file_offset": "0x1e445",
+    "instruction": "call *0x18(%rax)",
     "root_cause_proven": false
   },
-  "current_revision_native_executed": false,
+  "current_revision_native_executed": true,
   "previous_revision_rgb_pairs": 17,
   "previous_revision_signal": 11,
   "native_qualification": false,
@@ -93,12 +96,12 @@
   "teacher_admission": false,
   "student_admission": false,
   "old_native_batch_remaining": 0,
-  "new_native_authorized": true,
+  "new_native_authorized": false,
   "extra_gc_calls": 0,
   "installed_sdk_files_modified": false,
   "physics_changed": false,
   "ppo_updates": 0,
-  "latest_actual_native_result": "docs/contracts/preview_finalize_native_result.json",
+  "latest_actual_native_result": "docs/contracts/preview_window_owner_native_result.json",
   "archived_livestream_crashes": {
     "module": "libomni.kit.livestream.plugin.so",
     "file_offset": "0x11f26",
@@ -109,8 +112,9 @@
   "current_batch": {
     "request_sha256": "5545d1f1712b1205e484f7aed5954c3a461a5ed69aa363e90a5f8192d11cb795",
     "maximum_attempts": 2,
-    "completed_attempts": 1,
-    "remaining_attempts": 1
+    "completed_attempts": 2,
+    "remaining_attempts": 0,
+    "status": "budget_exhausted"
   },
   "candidate_window_owner": {
     "source_verified": true,
@@ -118,6 +122,10 @@
     "native_root_cause_proven": false,
     "scope": "one existing private preview HotkeyTrigger instance",
     "sdk_class_or_installation_patched": false,
-    "log_failure_deferred_until_after_close": true
+    "log_failure_deferred_until_after_close": true,
+    "native_hook_executed": true,
+    "native_window_reference_cleared": true,
+    "original_sdk_destroy_returned": true,
+    "shutdown_fix_qualified": false
   }
 }

@@ -1,0 +1,80 @@
+{
+  "source_head": "e31a694879e16726f6caf6ea5ed61025482e50c9",
+  "batch_attempt_number": 2,
+  "camera_backend": "tiled_step",
+  "resolution_wh": [
+    320,
+    240
+  ],
+  "contract_sha256": "98cf39c201a4a99f0e5870e0e4f6ff171dfd1ba60e056c5f48b6d8614ca166d9",
+  "outer_exit_code": 255,
+  "debugger_inferior_final_status": {
+    "exit_code": null,
+    "signal": 11
+  },
+  "wall_seconds": 170.41731949197128,
+  "forced_termination": false,
+  "physical_jsonl_total_rows": 166,
+  "incomplete_physical_lines": 0,
+  "accepted_rgb_pairs": 17,
+  "incomplete_stage_lines": 0,
+  "durable_stage_errors": [],
+  "native_log_sha256": "5d28688a2977297cf523198e83b4fff7a6a5fbf2e6f328c2f80c0086620a5ae4",
+  "native_log_bytes": 854705,
+  "debugger_fatal_records": 1,
+  "ppo_updates": 0,
+  "native_qualification": false,
+  "version": "dh116-preview-window-owner-native-result-v1",
+  "status": "blocked_python_finalize",
+  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/timeline-wrapper-batch2-20261116T080011Z/attempt-2",
+  "sdk_steps": 130,
+  "measurement_steps": 128,
+  "measurement_solver_substeps": 1536,
+  "actual_explicit_render_calls": 61,
+  "image_files_verified": 34,
+  "frame_manifest_sha256": "bff553acbe03f4dceb9956a5ed9aac0ce3adcc7aad35e299399cf0c9cf9ef23a",
+  "before_close_weakrefs": {
+    "total": 16,
+    "dead": 16
+  },
+  "after_close_weakrefs": {
+    "total": 16,
+    "dead": 16
+  },
+  "app_close_returned": true,
+  "window_release": [
+    {
+      "monotonic_ns": 952052781339262,
+      "event": "owned_window_release_hook_installed",
+      "owner_type": "omni.kit.hotkeys.core.trigger.HotkeyTrigger",
+      "field": "_HotkeyTrigger__app_window",
+      "window_present": true,
+      "native_qualification": false
+    },
+    {
+      "monotonic_ns": 952070524321104,
+      "event": "owned_window_reference_cleared",
+      "sdk_destroy_returned": true,
+      "errors": [],
+      "window_reference_absent": true,
+      "native_qualification": false
+    }
+  ],
+  "natural_exit_qualified": false,
+  "shutdown_qualified": false,
+  "teacher_admission": false,
+  "student_admission": false,
+  "raw_left_right_frame_id_different_count": 17,
+  "synchronization_qualified": false,
+  "crash": {
+    "thread": "main_python",
+    "phase": "Py_FinalizeEx",
+    "module": "_extensions.cpython-310-x86_64-linux-gnu.so",
+    "file_offset": "0x1e445",
+    "instruction": "call *0x18(%rax)",
+    "root_cause_proven": false
+  },
+  "request_sha256": "5545d1f1712b1205e484f7aed5954c3a461a5ed69aa363e90a5f8192d11cb795",
+  "remaining_approved_attempts": 0,
+  "automatic_retry_allowed": false
+}
