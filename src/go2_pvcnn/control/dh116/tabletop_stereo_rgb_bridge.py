@@ -66,6 +66,7 @@ class RGBPairBridge:
         self.max_render_attempts = max_render_attempts
         self.last_epoch = None
         self.last_episode = None
+        self.last_capture_diagnostic = None
         self._owns_reader = False
         self._closed = False
         self._close_error = None
@@ -128,6 +129,7 @@ class RGBPairBridge:
                 raise RuntimeError("render setting restoration failed")
 
     def _capture(self):
+        self.last_capture_diagnostic = None
         before = copy.deepcopy(self.snapshot())
         rows = before if isinstance(before, list) else [before]
         if not rows or any(not isinstance(r, dict) or set(r) != _IDENTITY_KEYS | _RAW_KEYS for r in rows):
@@ -200,7 +202,18 @@ class RGBPairBridge:
                     or timing.get("simulation_time") != timestamp
                     or type(timing.get("render_frame_number")) is not int
                     or timing["render_frame_number"] < 0 or abs(timestamp - sim_time) > 1e-6):
-                raise ValueError("render frame and physical timestamp mismatch")
+                # Preserve both raw clocks in the durable error. Never relabel
+                # a rendered timestamp or retain RGB/native buffers in evidence.
+                self.last_capture_diagnostic = dict(
+                    sdk_step=sdk_step, sdk_timestamp_s=sim_time,
+                    render_frame_id=frame, render_timestamp_s=timestamp,
+                    absolute_time_error_s=abs(timestamp - sim_time),
+                    timestamp_tolerance_s=1e-6,
+                    render_timing=repr(timing)[:2048],
+                    reader_clock_diagnostic=repr(getattr(
+                        self.reader, "last_clock_diagnostic", None))[:2048])
+                raise ValueError("render frame and physical timestamp mismatch; clocks=" +
+                                 repr(self.last_capture_diagnostic))
             epoch = timing["render_frame_number"]
             if callable(read_clock):
                 expected = {key: timing[key] for key in ("frame_id", "simulation_time", "render_frame_number")}

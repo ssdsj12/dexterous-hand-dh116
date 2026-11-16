@@ -1,10 +1,10 @@
 {
   "version": "dh116-preview-resolution-readiness-v1",
-  "status": "cpu_passed_native_blocked",
+  "status": "cpu_passed_native_clock_and_close_blocked",
   "source_baseline": "c3e99e39e3c66b07f832d0b56a64c15370902816",
-  "cpu_passed": 158,
+  "cpu_passed": 160,
   "cpu_failed": 0,
-  "cpu_log_sha256": "bc71457284ba207073cacf5688b6e35860715a01c9b4bfe8af082afd356c3baa",
+  "cpu_log_sha256": "3f0d3f2e8d08015f4442ea62c4203806954bc20d73285170e1bf541b61bca56a",
   "red_tests_failed_before_fix": 19,
   "capture_contract_version": "dh116-webrtc-physical-preview-v2",
   "default_accuracy_resolution": {
@@ -28,7 +28,7 @@
       "calibration_sha256": "3326bdddc11ec31e86a7b833d9b85c6478fc5e6a13fc201b9abb7e03cab57e0a",
       "cpu_calibration_passed": true,
       "cpu_subpixel_fixture_valid_pixels": 14322,
-      "native_status": "not_run",
+      "native_status": "failed_clock_and_close",
       "native_depth_mae_m": null,
       "native_depth_rmse_m": null,
       "native_depth_p95_m": null,
@@ -42,7 +42,7 @@
       "calibration_sha256": "aab774c7b2a40d13d9f72b77249523fba838856a7068170f884ffb6f71888587",
       "cpu_calibration_passed": true,
       "cpu_subpixel_fixture_valid_pixels": 61754,
-      "native_status": "not_run",
+      "native_status": "not_run_common_failure_stop",
       "native_depth_mae_m": null,
       "native_depth_rmse_m": null,
       "native_depth_p95_m": null,
@@ -56,7 +56,7 @@
       "calibration_sha256": "db15e0c782ad649feb02964a3b9aadef7d2ecd8af41bf82dfd498992125cdc06",
       "cpu_calibration_passed": true,
       "cpu_subpixel_fixture_valid_pixels": 197618,
-      "native_status": "not_run",
+      "native_status": "not_run_common_failure_stop",
       "native_depth_mae_m": null,
       "native_depth_rmse_m": null,
       "native_depth_p95_m": null,
@@ -70,7 +70,7 @@
       "calibration_sha256": "3a80f41c26c74d3d2b9692530eec1bb8e17ea373725281f97a277408a6913acb",
       "cpu_calibration_passed": true,
       "cpu_subpixel_fixture_valid_pixels": 267804,
-      "native_status": "not_run",
+      "native_status": "not_run_common_failure_stop",
       "native_depth_mae_m": null,
       "native_depth_rmse_m": null,
       "native_depth_p95_m": null,
@@ -80,16 +80,19 @@
     }
   ],
   "selected_resolution": null,
-  "remaining_approved_native_attempts": 0,
+  "remaining_approved_native_attempts": 3,
   "native_blockers": [
-    "RGB owner/deleter adaptation requires native verification",
-    "normal App close still failed with SIGSEGV in latest native evidence",
-    "prior two-attempt batch exhausted; no implicit new budget"
+    "render/SDK timestamp mismatch: exact raw delta was not preserved in failed version",
+    "normal close SIGSEGV in livestream plugin; manager/owner guards failed",
+    "batch stopped by approved common-failure rule; remaining frozen cases not executed"
   ],
   "qualification": {
     "native_camera": false,
     "native_depth": false,
     "teacher": false,
     "student": false
-  }
+  },
+  "native_batch_status": "stopped_common_path_failure",
+  "automatic_resume_allowed": false,
+  "native_result": "docs/contracts/physical_preview_resolution_native_result.json"
 }

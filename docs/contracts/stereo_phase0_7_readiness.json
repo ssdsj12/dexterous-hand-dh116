@@ -20473,6 +20473,53 @@
       "status": "passed",
       "report": "docs/superpowers/reports/2026-11-16-preview-resolution-wiring.md",
       "report_source_commit": "310d173bd5762dcf0df43d211a30c877a39566a7"
+    },
+    "preview.resolution-native-evidence.cpu-20261116": {
+      "passed": 160,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_preview_capture_clock_evidence.py",
+        "tests/test_preview_resolution.py",
+        "tests/test_preview_warp_readback.py",
+        "tests/test_preview_camera_clock_startup.py",
+        "tests/test_preview_contract.py",
+        "tests/test_dh116_stereo_rgb_bridge.py",
+        "tests/test_dh116_stereo_rgb_resources.py",
+        "tests/test_preview_owner_release.py",
+        "tests/test_preview_debugger.py",
+        "tests/test_dh116_stereo_resolution.py",
+        "tests/test_dh116_stereo_resolution_benchmark.py"
+      ],
+      "log_sha256": "5a32359feb6d8805b8e43416c0917951f0bc5c06806f893e3a90951eb4fd34ee",
+      "tested_head": "5b3a76633de0d1d8051b80b9022ec36efb46a240",
+      "native_qualification": false,
+      "preview_native_status": "blocked",
+      "native_attempts": 1,
+      "remaining_approved_attempts": 3,
+      "automatic_native_resume": false,
+      "attempt_resolution": [
+        224,
+        96
+      ],
+      "camera_pairs": 0,
+      "actual_sdk_steps": 2,
+      "measured_sdk_steps": 0,
+      "outer_exit_code": 255,
+      "inferior_signal": 11,
+      "forced_termination": false,
+      "acquisition_error": "render frame and physical timestamp mismatch",
+      "clock_tolerance_unchanged": true,
+      "status": "passed",
+      "report": "docs/superpowers/reports/2026-11-16-resolution-native-clock-failure.md",
+      "report_source_commit": "1352757c49683f3f2c4d848539cc98fffd953d31"
     }
   }
 }

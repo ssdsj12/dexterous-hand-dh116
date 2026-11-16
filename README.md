@@ -1,3 +1,7 @@
+## 2026-11-16 — 四档原生首例失败证据与严格时钟诊断补齐
+
+按授权串行执行首档224×96一次，2初始化步后时钟不一致且关闭SIGSEGV；后三档依公共错误停止规则未启动。补齐原始/预期时钟有界证据，严格拒绝不变，未重跑、未放宽容差或物理标准。 Ubuntu CPU 回归 160 项通过。[报告](docs/superpowers/reports/2026-11-16-resolution-native-clock-failure.md)
+
 ## 2026-11-16 — 预览多分辨率实际执行链与四档离线核验
 
 修复预览入口漏传宽高，独立v2合同冻结实际双RGB尺寸并重新生成内参；四档CPU亚像素测试已执行，未运行新Isaac，原生读回与关闭仍blocked，未预选最终分辨率。 Ubuntu CPU 回归 158 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-resolution-wiring.md)
