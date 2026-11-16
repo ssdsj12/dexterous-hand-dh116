@@ -1,3 +1,7 @@
+## 2026-11-16 — 扩展缓存候选借用引用与一次卸载保护修正
+
+复审发现并通过RED/GREEN修复prepare完成frame持有App和缓存删除失败可重复unload，最终候选未原生运行。 Ubuntu CPU 回归 323 项通过。[报告](docs/superpowers/reports/2026-11-16-extension-cache-review-fixes.md)
+
 ## 2026-11-16 — 双相机清理通过与原生扩展缓存释放候选
 
 第一轮双相机采17对、清理不再报错且App.close返回，Py_FinalizeEx扩展绑定仍SIG11。增加已核验SDK函数缓存的私有释放候选，保持原卸载调用。候选CPU通过，尚未原生。 Ubuntu CPU 回归 320 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-extension-cache.md)

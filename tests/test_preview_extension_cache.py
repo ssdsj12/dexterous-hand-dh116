@@ -21,7 +21,8 @@ def fixture():
             gc.collect()
             assert ref() is None,'cached native interface survives plugin unload'
             events.append('unload')
-    app=SimpleNamespace(_framework=Framework())
+    class App:pass
+    app=App();app._framework=Framework()
     return app,getter,ref,events
 
 
@@ -77,6 +78,8 @@ def test_cache_missing_at_release_still_calls_original_unload_once():
     app._framework.unload_all_plugins()
     assert events==['unload'] and receipt['diagnostic_errors']
     assert not receipt['cache_reference_removed']
+    with pytest.raises(RuntimeError,match='retried'):app._framework.unload_all_plugins()
+    assert events==['unload']
 
 
 def test_cleanup_failure_and_unload_failure_are_both_reported():
@@ -92,3 +95,35 @@ def test_cleanup_failure_and_unload_failure_are_both_reported():
     with pytest.raises(RuntimeError,match='plugin unload failed'):app._framework.unload_all_plugins()
     with pytest.raises(RuntimeError,match='not confirmed'):validate_extension_cache_receipt(receipt)
     assert events==['unload']
+
+@pytest.mark.parametrize("kind",["direct","loaded"])
+def test_preparation_completed_frame_cannot_keep_app_alive(monkeypatch,kind):
+    import sys
+    from test_preview_retained_frames import hold_completed
+    from go2_pvcnn.control.dh116 import tabletop_preview_extension_cache as cache
+    app,getter,ref,events=fixture();app_ref=weakref.ref(app)
+    if kind=="direct":
+        function=cache.prepare_extension_cache_release
+        kwargs=dict(getter=getter,source=SOURCE)
+    else:
+        function=cache.prepare_loaded_extension_cache;kwargs={}
+        monkeypatch.setitem(sys.modules,"omni.ext._impl",SimpleNamespace(get_extensions_interface=getter))
+        monkeypatch.setitem(sys.modules,"omni.ext",SimpleNamespace(get_extensions_interface=getter))
+    with hold_completed(function) as frames:
+        function(app,**kwargs)
+        app=None;gc.collect()
+        assert frames and app_ref() is None
+
+
+def test_actual_launcher_framework_preparer_drops_borrowed_app():
+    from test_preview_retained_frames import hold_completed
+    from go2_pvcnn.control.dh116 import tabletop_preview_launcher as launcher
+    tree=ast.parse(Path(launcher.__file__).read_text())
+    node=next(n for n in ast.walk(tree) if isinstance(n,ast.FunctionDef) and n.name=="prepare_framework")
+    namespace=dict(prepare_loaded_extension_cache=lambda app,**kw:None,shutdown_output=None)
+    exec(compile(ast.Module(body=[node],type_ignores=[]),launcher.__file__,"exec"),namespace)
+    function=namespace["prepare_framework"]
+    app,getter,ref,events=fixture();app_ref=weakref.ref(app)
+    with hold_completed(function) as frames:
+        function(app);app=None;gc.collect()
+        assert frames and app_ref() is None

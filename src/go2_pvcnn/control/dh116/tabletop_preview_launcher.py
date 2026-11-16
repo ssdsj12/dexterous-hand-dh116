@@ -192,7 +192,8 @@ def launch_managed_preview_app(launcher_factory,contract,*,shutdown_output=None)
                 stream.flush();os.fsync(stream.fileno())
         return prepare_loaded_window_owner(data["sources"],record=record)
     def prepare_framework(app):
-        return prepare_loaded_extension_cache(app,output=shutdown_output)
+        try:return prepare_loaded_extension_cache(app,output=shutdown_output)
+        finally:app=None
     launcher=preview_launcher_type(launcher_factory,partial_stop_presentation=stop_native_presentation,
         partial_prepare_native_shutdown=prepare,partial_prepare_framework_shutdown=prepare_framework)(**kwargs)
     return ManagedPreviewApp(launcher,signal_api=signal,stop_presentation=stop_native_presentation,
