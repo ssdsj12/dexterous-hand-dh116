@@ -30,7 +30,7 @@ def test_actual_preview_dispatches_to_tiled_reader_at_frozen_resolution(monkeypa
         def __init__(self,sim,origins,calibration,device,**kw):seen.update(c=calibration,device=device)
         def select(self,side):pass
         def read_clock(self):return None
-        def read(self):return None
+        def read_pair(self):return None
         def close(self):pass
     monkeypatch.setattr(native,"TiledNativeStereoReader",Reader)
     contract=dict(camera_config=preview.CAMERA_CONFIG,capture_resolution=dict(width=size[0],height=size[1]),camera_backend="tiled_step")

@@ -1,4 +1,4 @@
-"""Independent sequential-view capture fenced by one physical state identity.
+"""Fixed dual-camera capture fenced by one physical state identity.
 
 Renderer clocks remain raw and separate. This software transaction is not
 native synchronisation qualification and never grants Teacher/Student admission.
@@ -11,7 +11,7 @@ from .tabletop_stereo_calibration import StereoCalibration,rerender_calibration
 from .tabletop_stereo_validation import validate_identity,validate_images
 from .tabletop_stereo_rgb_bridge import _IDENTITY_KEYS,_RAW_KEYS,_same_snapshot,_NativeRenderSetting
 
-VERSION="dh116-tiled-step-stereo-v1"
+VERSION="dh116-fixed-dual-tiled-stereo-v1"
 _CLOCK_KEYS={"frame_id","simulation_time","render_frame_number"}
 _FRAME_KEYS={"rgb","K","T_world","raw_clock","native_evidence","raw_time_metadata"}
 
@@ -32,8 +32,8 @@ class TiledStereoCapture:
             raise ValueError("calibration and physical snapshot required")
         if type(max_render_attempts) is not int or not 1<=max_render_attempts<=16:
             raise ValueError("bounded per-view render attempts required")
-        if any(not callable(getattr(reader,n,None)) for n in ("select","read_clock","read","close")):
-            raise ValueError("owned sequential camera reader required")
+        if any(not callable(getattr(reader,n,None)) for n in ("read_clock","read_pair","close")):
+            raise ValueError("owned fixed paired-camera reader required")
         if any(not callable(getattr(render_setting,n,None)) for n in ("get","set")):
             raise ValueError("render setting get/set required")
         self.sim,self.reader,self.calibration,self.snapshot=sim,reader,calibration,snapshot
@@ -94,10 +94,8 @@ class TiledStereoCapture:
             if self.render_setting.get() is not False:raise RuntimeError("physics freeze setting failed")
             packet=self._capture()
         finally:
-            try:self.reader.select("left")
-            finally:
-                self.render_setting.set(original)
-                if self.render_setting.get() is not original:raise RuntimeError("render setting restore failed")
+            self.render_setting.set(original)
+            if self.render_setting.get() is not original:raise RuntimeError("render setting restore failed")
         timing=packet["render_timing"]
         if (type(self.sim.current_time_step_index) is not int
                 or self.sim.current_time_step_index!=timing["physical_step"]
@@ -106,7 +104,7 @@ class TiledStereoCapture:
             raise RuntimeError("physical state changed during camera restoration")
         rows=packet["identity"] if isinstance(packet["identity"],list) else [packet["identity"]]
         self.last_capture_id=timing["capture_id"]
-        self.last_epoch=timing["raw_right_clock"]["render_frame_number"]
+        self.last_epoch=max(timing["raw_left_clock"]["render_frame_number"],timing["raw_right_clock"]["render_frame_number"])
         self.last_episode=tuple((r["run_uuid"],r["env_id"],r["episode_uid"],r["reset_id"]) for r in rows)
         return packet
 
@@ -119,33 +117,37 @@ class TiledStereoCapture:
                     or self.sim.current_time_step_index!=step or float(self.sim.current_time)!=stamp
                     or not _same_snapshot(self.snapshot(),before)):
                 raise RuntimeError("physical state changed during tiled stereo capture")
-        frames={};render_calls=0
-        for side in ("left","right"):
-            self.reader.select(side);check()
-            for _ in range(self.max_render_attempts):
-                prior=self.reader.read_clock();check()
-                self.sim.render();render_calls+=1
-                self.render_setting.set(False)
-                check()
-                current=self.reader.read_clock();check()
-                if prior is None or current is None:continue
-                prior,current=_clock(prior),_clock(current)
-                if current["render_frame_number"]<=prior["render_frame_number"]:continue
-                if previous is not None and current["render_frame_number"]<=previous:continue
-                packet=self.reader.read();check()
-                if packet is None:continue
+        render_calls=0;frames=None
+        for _ in range(self.max_render_attempts):
+            prior=self.reader.read_clock();check()
+            self.sim.render();render_calls+=1
+            self.render_setting.set(False);check()
+            current=self.reader.read_clock();check()
+            if prior is None or current is None:continue
+            prior,current=_clock(prior),_clock(current)
+            if current["render_frame_number"]<=prior["render_frame_number"]:continue
+            if previous is not None and current["render_frame_number"]<=previous:continue
+            pair=self.reader.read_pair();check()
+            if pair is None:continue
+            if not isinstance(pair,dict) or set(pair)!={"left","right"}:
+                raise ValueError("reader must return both fixed cameras from one render")
+            candidate={}
+            for side in ("left","right"):
+                packet=pair[side]
                 if (not isinstance(packet,dict) or not set(packet)<=_FRAME_KEYS
                         or not (_FRAME_KEYS-{"raw_time_metadata"})<=set(packet)):
                     raise ValueError("reader returned forbidden or missing fields")
-                if (_clock(packet["raw_clock"])!=current
-                        or _clock(self.reader.read_clock())!=current):
-                    raise ValueError("raw render clock changed during image read")
+                raw=_clock(packet["raw_clock"])
+                if raw!=current:
+                    raise ValueError("fixed camera returned a stale render product")
+                if _clock(self.reader.read_clock())["render_frame_number"]!=current["render_frame_number"]:
+                    raise ValueError("raw render clock changed during paired image read")
                 if type(packet["native_evidence"]) is not bool:raise ValueError("explicit reader source required")
-                frames[side]={**packet,"rgb":packet["rgb"].clone(),
+                candidate[side]={**packet,"rgb":packet["rgb"].clone(),
                     "K":torch.as_tensor(packet["K"]).clone(),"T_world":torch.as_tensor(packet["T_world"]).clone()}
-                previous=current["render_frame_number"]
-                break
-            else:raise RuntimeError("fresh synchronized view unavailable within bounded renders")
+            frames=candidate
+            break
+        if frames is None:raise RuntimeError("fresh fixed-camera pair unavailable within bounded renders")
         left,right=frames["left"],frames["right"]
         validate_images(left["rgb"],right["rgb"],self.calibration)
         if len(rows)!=left["rgb"].shape[0]:raise ValueError("identity/camera batch mismatch")
@@ -157,7 +159,7 @@ class TiledStereoCapture:
             raw_left_metadata=str(left.get("raw_time_metadata","unavailable"))[:4096],
             raw_right_metadata=str(right.get("raw_time_metadata","unavailable"))[:4096],
             physical_timestamp_s=stamp,physical_step=step,
-            clock_mapping="separate_raw_clocks_with_frozen_physics_boundary",
+            clock_mapping="single_render_frozen_physics_boundary",
             native_synchronization_qualified=False)
         return dict(left_rgb=left["rgb"],right_rgb=right["rgb"],identity=before,
             calibration_sha256=self.calibration.sha256,K_left=left["K"],K_right=right["K"],

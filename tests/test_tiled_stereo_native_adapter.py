@@ -8,7 +8,7 @@ from test_dh116_stereo_rgb_bridge import calibration
 
 def reader():
     m=importlib.import_module("go2_pvcnn.control.dh116.tabletop_tiled_stereo_native")
-    obj=object.__new__(m.TiledNativeStereoReader)
+    obj=object.__new__(m.SequentialNativeStereoReader)
     obj.calibration=calibration();obj.device=torch.device("cpu")
     obj.n=1;obj._closed=False;obj._close_error=None
     obj.last_clock_diagnostic={"reference":"original","times":"original"}

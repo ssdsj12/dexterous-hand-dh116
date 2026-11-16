@@ -29,7 +29,7 @@ def harness(size=(640,480)):
                 raw_clock=self.read_clock(),native_evidence=False)
         def close(self):self.closed=True
     reader=Reader()
-    cls=getattr(importlib.import_module("go2_pvcnn.control.dh116.tabletop_tiled_stereo_capture"),"TiledStereoCapture")
+    cls=getattr(importlib.import_module("go2_pvcnn.control.dh116.tabletop_tiled_stereo_sequential"),"TiledStereoCapture")
     setting=RenderSetting()
     capture=cls(sim,reader,c,lambda:copy.deepcopy(identity),render_setting=setting,max_render_attempts=2)
     return capture,sim,reader,identity,events,setting
@@ -160,7 +160,7 @@ def test_episode_reset_clears_old_render_epoch_without_reusing_pair_identity():
 
 def test_native_factory_rejects_invalid_snapshot_before_any_native_reader(monkeypatch):
     import go2_pvcnn.control.dh116.tabletop_tiled_stereo_native as native
-    from go2_pvcnn.control.dh116.tabletop_tiled_stereo_capture import TiledStereoCapture
+    from go2_pvcnn.control.dh116.tabletop_tiled_stereo_sequential import TiledStereoCapture
     def unexpected(*a,**kw):raise AssertionError("native resources created for invalid request")
     monkeypatch.setattr(native,"TiledNativeStereoReader",unexpected)
     with pytest.raises(ValueError,match="snapshot"):

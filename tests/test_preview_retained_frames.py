@@ -80,7 +80,7 @@ def test_capture_factory_completed_frame_drops_sim_reader_and_snapshot(monkeypat
         def __init__(self,*a,**kw):refs.append(weakref.ref(self))
         def select(self,side):pass
         def read_clock(self):return None
-        def read(self):return None
+        def read_pair(self):return None
         def close(self):pass
     monkeypatch.setattr(native,'TiledNativeStereoReader',Reader)
     def invoke():

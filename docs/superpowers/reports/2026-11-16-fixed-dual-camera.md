@@ -1,0 +1,24 @@
+# 两台固定RGB相机与wire逐帧核验
+
+用户明确要求两个固定相机同时采集。基线df46eeea8224c651d070d96412ceec92ac63da6d。
+原先单相机select左右位姿已退出默认Tiled采集路径；旧采集模块另存为tabletop_tiled_stereo_sequential.py供历史回归。
+
+新TiledNativeStereoReader创建两个FixedNativeCameraReader，各自相机prim、TiledCamera、render product、时钟annotator和资源所有者。
+路径分别/World/DH116TiledStereo_Left/env_0/Camera与/World/DH116TiledStereo_Right/env_0/Camera。
+左右初始化一次自己的内外参；初始化后禁止select改位姿。采集一次sim.render后读两路RGB，
+要求左右原始时钟相等、读取过程中时钟不变、SDK物理/杆状态不变、独立USD位姿和标定读回通过。
+不把CPU模拟的相同clock写成原生同步资格。
+
+TiledResources增加每实例rig_path以分别释放两个相机根和render product。
+部分初始化失败时清理已创建相机；仍保留原SDK标准关闭和自然退出检查。
+脚本保存逐帧wire.json：真实完成边界41节点、40材料方向、杆实例、backend profile digest、
+半径和物理/solver身份；与RGB帧记录一同用于原生后审计。
+
+CPU相关28文件312 passed，0 failed，0 skipped；日志SHA
+ff780963a5710a64de07599bc2c5ae99ad601efcb6f17265595ae1ba3237d505。
+此前完整回归1失败来自旧测试fixture仍使用read而非read_pair，更新fixture后再次通过。
+新增测试覆盖一次render、两个reader独立路径、关闭两路、禁止后续位姿切换、左右clock错配拒绝。
+这只证明软件路径，原生执行和wire物理有效性尚待本轮一次短预览。
+用户已要求启动Isaac并继续测试相机/wire；本轮限定单实例、1环境、零PPO、130SDK步、
+1536测量solver子步、最多162render与180秒软截止，失败保存证据、不自动重试。
+保护528文件与2历史Checkpoint、原模型/物理参数不改。PR #2继续Draft。

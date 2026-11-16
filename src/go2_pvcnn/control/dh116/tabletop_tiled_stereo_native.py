@@ -68,12 +68,12 @@ def validate_usd_camera_pose(stage,path,transform,Usd,UsdGeom):
         raise ValueError("USD/camera pose mismatch")
 
 
-class TiledNativeStereoReader:
+class SequentialNativeStereoReader:
     pose_backend="usd_camera_prim_isaac45"
 
-    def __init__(self,sim,origins,calibration,device,*,max_readback_bytes=1024**3):
+    def __init__(self,sim,origins,calibration,device,*,max_readback_bytes=1024**3,side="left",rig_path=RIG_PATH):
         try:
-            self.resources=TiledResources();self.sensor=None;self.sim=sim
+            self.resources=TiledResources(rig_path=rig_path);self.sensor=None;self.sim=sim
             self.device=torch.device(device);self.calibration=calibration
             self._closed=False;self._close_error=None;self._native_initialized=False
             self._last_valid_clock=None
@@ -100,8 +100,8 @@ class TiledNativeStereoReader:
                     raise ValueError("imported TiledCamera differs from audited installation")
                 self.stage=omni.usd.get_context().get_stage()
                 self.resources.define_rig(self.stage,UsdGeom.Xform.Define)
-                UsdGeom.Xform.Define(self.stage,RIG_PATH+"/env_0")
-                path=RIG_PATH+"/env_0/Camera"
+                UsdGeom.Xform.Define(self.stage,rig_path+"/env_0")
+                path=rig_path+"/env_0/Camera"
                 self.path=path
                 camera=UsdGeom.Camera.Define(self.stage,path)
                 author_standard_camera_ops(camera,UsdGeom,Gf)
@@ -149,7 +149,7 @@ class TiledNativeStereoReader:
                 self.resources.attach(self.reference,paths[0]);self.resources.attach(self.times,paths[0])
                 core=importlib.import_module("isaacsim.core.nodes.bindings._isaacsim_core_nodes")
                 self.core=core.acquire_interface()
-                self.select("left")
+                self.select(side)
                 self._native_initialized=True
             except BaseException as original:
                 try:self.close()
@@ -218,3 +218,59 @@ class TiledNativeStereoReader:
             raise
         finally:
             self.sensor=self.sim=self.stage=self.reference=self.times=self.core=None
+
+class FixedNativeCameraReader(SequentialNativeStereoReader):
+    """One physical camera: its pose is authored once during construction."""
+    def select(self,side):
+        if self._native_initialized:
+            raise RuntimeError("fixed camera pose cannot be switched after initialization")
+        return super().select(side)
+
+
+class TiledNativeStereoReader:
+    """Two fixed camera prims, two render products, one external render boundary."""
+    pose_backend="two_fixed_usd_cameras_isaac45"
+
+    def __init__(self,sim,origins,calibration,device,*,max_readback_bytes=1024**3):
+        self.cameras={};self._closed=False;self._close_error=None
+        try:
+            if type(max_readback_bytes) is not int or max_readback_bytes<2:
+                raise ValueError("positive dual camera readback budget required")
+            for side in ("left","right"):
+                self.cameras[side]=FixedNativeCameraReader(sim,origins,calibration,device,
+                    max_readback_bytes=max_readback_bytes//2,side=side,
+                    rig_path=RIG_PATH+"_"+side.title())
+        except BaseException:
+            self.close()
+            raise
+        finally:sim=None
+
+    def read_clock(self):
+        if self._closed:raise RuntimeError("fixed stereo reader is closed")
+        return self.cameras["left"].read_clock()
+
+    def read_pair(self):
+        if self._closed:raise RuntimeError("fixed stereo reader is closed")
+        clocks={side:camera.read_clock() for side,camera in self.cameras.items()}
+        if any(clock is None for clock in clocks.values()):return None
+        if clocks["left"]!=clocks["right"]:
+            raise ValueError("fixed camera render products have different raw clocks")
+        pair={side:camera.read() for side,camera in self.cameras.items()}
+        if any(row is None for row in pair.values()):return None
+        if any(row["raw_clock"]!=clocks[side] for side,row in pair.items()):
+            raise ValueError("fixed camera clock changed during paired readback")
+        return pair
+
+    def close(self):
+        if self._closed:
+            if self._close_error:raise RuntimeError(self._close_error)
+            return
+        self._closed=True;errors=[]
+        for side,camera in list(self.cameras.items()):
+            try:camera.close()
+            except BaseException as error:errors.append(side+": "+str(error))
+            finally:camera=None
+        self.cameras.clear()
+        if errors:
+            self._close_error="; ".join(errors)
+            raise RuntimeError(self._close_error)

@@ -1,3 +1,7 @@
+## 2026-11-16 — 两台固定相机同次渲染与wire逐帧证据
+
+默认Tiled路径创建两台固定相机和独立render product，同次render后配对读取；旧顺序采集显式隔离用于回归。保存wire真实节点/材料方向快照，待本轮有界原生验证。 Ubuntu CPU 回归 312 项通过。[报告](docs/superpowers/reports/2026-11-16-fixed-dual-camera.md)
+
 ## 2026-11-16 — 原生窗口释放已执行与解释器退出失败证据
 
 本批最后一次完成17对RGB、16项资源与热键窗口释放，正常app.close返回；外层255/Py_FinalizeEx扩展绑定SIG11仍失败。两次预算耗尽，完整证据私有保留，原生资格blocked，不再重跑；零PPO与原物理/模型保持。 Ubuntu CPU 回归 307 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-window-owner-native-result.md)

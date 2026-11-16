@@ -212,6 +212,10 @@ def execute(contract, output):
                                 for side in ("left","right"):
                                     rgb=images[side+"_rgb"][0].permute(1,2,0).detach().cpu().numpy()
                                     Image.fromarray(np.clip(np.rint(rgb*255),0,255).astype("uint8")).save(output/(f"{index:03d}_{side}.png"))
+                                wire=dict(owned_snapshot)
+                                wire["rod_position"]=wire["rod_position"].tolist()
+                                wire["rod_director"]=wire["rod_director"].tolist()
+                                (output/(f"{index:03d}_wire.json")).write_text(json.dumps(wire,allow_nan=False,indent=2)+"\n")
                                 metadata=dict(phase=exchange["preview_phase"],terminal_reason=terminal,
                                     identity=images["identity"],render_timing=images["render_timing"],
                                     camera_backend=contract["camera_backend"],

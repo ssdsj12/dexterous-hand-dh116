@@ -1,0 +1,21 @@
+{
+  "version": "dh116-fixed-dual-camera-readiness-v1",
+  "status": "cpu_passed_native_pending",
+  "source_baseline": "df46eeea8224c651d070d96412ceec92ac63da6d",
+  "report": "docs/superpowers/reports/2026-11-16-fixed-dual-camera.md",
+  "camera_count": 2,
+  "pose_switch_during_capture": false,
+  "render_boundary": "one render for both fixed cameras",
+  "cpu": {
+    "passed": 312,
+    "failed": 0,
+    "log_sha256": "ff780963a5710a64de07599bc2c5ae99ad601efcb6f17265595ae1ba3237d505"
+  },
+  "native_executed": false,
+  "native_synchronization_qualified": false,
+  "wire_qualified": false,
+  "normal_exit_qualified": false,
+  "teacher_admission": false,
+  "student_admission": false,
+  "ppo_updates": 0
+}

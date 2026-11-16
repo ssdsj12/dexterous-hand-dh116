@@ -26,15 +26,16 @@ def verify_tiled_sources(root):
 
 
 class TiledResources:
-    def __init__(self):
+    def __init__(self,*,rig_path=RIG_PATH):
+        self.rig_path=rig_path
         self.stage=self.sensor=self.product=None
         self.token=None;self.extra=[];self.closed=False;self.error=None
 
     def define_rig(self,stage,define):
-        if stage.GetPrimAtPath(RIG_PATH).IsValid():raise RuntimeError("tiled stereo rig already exists")
-        define(stage,RIG_PATH)
+        if stage.GetPrimAtPath(self.rig_path).IsValid():raise RuntimeError("tiled stereo rig already exists")
+        define(stage,self.rig_path)
         token=uuid.uuid4().hex
-        stage.GetPrimAtPath(RIG_PATH).SetCustomDataByKey(MARKER,token)
+        stage.GetPrimAtPath(self.rig_path).SetCustomDataByKey(MARKER,token)
         self.stage,self.token=stage,token
 
     @contextmanager
@@ -95,10 +96,10 @@ class TiledResources:
             except Exception as e:errors.append("product destroy: "+repr(e))
         if self.stage is not None and not errors:
             try:
-                prim=self.stage.GetPrimAtPath(RIG_PATH)
+                prim=self.stage.GetPrimAtPath(self.rig_path)
                 if not prim.IsValid() or prim.GetCustomDataByKey(MARKER)!=self.token:
                     raise RuntimeError("tiled rig ownership marker changed")
-                if not self.stage.RemovePrim(RIG_PATH):raise RuntimeError("tiled rig removal failed")
+                if not self.stage.RemovePrim(self.rig_path):raise RuntimeError("tiled rig removal failed")
             except Exception as e:errors.append("rig removal: "+repr(e))
         if errors:
             self.error="; ".join(errors)
