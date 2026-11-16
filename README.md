@@ -1,3 +1,7 @@
+## 2026-11-15 — 原生预览失败及批准终止证据归档
+
+本轮已创建SimulationContext但测量0行，关闭阶段重复livestream SIGSEGV，用户批准仅本轮进程SIGKILL，退出137；原始错误未落盘，保持blocked。 Ubuntu CPU 回归 15 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-native-forced-stop.md)
+
 ## 2026-11-15 — 可选工具条按钮兼容与启动异常关闭
 
 修正版单次原生暴露空Stop按钮异常及插件退出崩溃；仅预览内兼容可选按钮、增加构造失败关闭尝试，包含安装源方法CPU重放，原生仍blocked。 Ubuntu CPU 回归 32 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-optional-toolbar-hooks.md)

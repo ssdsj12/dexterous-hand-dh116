@@ -38721,6 +38721,43 @@
         "report": "docs/superpowers/reports/2026-11-16-preview-optional-toolbar-hooks.md",
         "report_source_commit": "67ecf9e1d4735b6ef53abee7ad837c27fa61bd45"
       }
+    },
+    "preview.native-result.cpu-audit-20261116": {
+      "title": "原生预览失败及批准终止证据归档",
+      "executor": "gated",
+      "dependencies": [
+        "preview.optional-toolbar-hooks.cpu-20261116"
+      ],
+      "status": "passed",
+      "last_result": {
+        "passed": 15,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_preview_launcher.py",
+          "tests/test_preview_contract.py"
+        ],
+        "log_sha256": "abb7d0f5e3a250ecaabf4d5a7fd1070e315439015282fa30b8fb6c1ac51266de",
+        "tested_head": "d6cba614929c6ed153a210d33090f025ebbda390",
+        "native_qualification": false,
+        "preview_native_status": "blocked",
+        "native_attempts_total": 3,
+        "forced_termination": true,
+        "outer_exit_code": 137,
+        "physical_measurement_rows": 0,
+        "camera_pairs": 0,
+        "automatic_retries": 0,
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-16-preview-native-forced-stop.md",
+        "report_source_commit": "3017e9b254d8975903d94ec1051a5fd753f9e4a5"
+      }
     }
   },
   "execution_target": {

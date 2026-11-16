@@ -1,33 +1,72 @@
 {
   "schema": "dh116-preview-native-attempt-v1",
   "status": "blocked",
-  "source_head": "371395551328ae6429e491f8ec1eb11372934d9b",
-  "contract_sha256": "0d74860ce4442074e4e9297b2052ef7d8f2d1a9037e79e3085943f9ec6894113",
+  "source_head": "d6cba614929c6ed153a210d33090f025ebbda390",
+  "contract_sha256": "1d47548a4e297058170701d4e664c6d4006e1d96fae969089f6bc3af3f646bd5",
   "physical_gpu_index": 0,
-  "outer_exit_code": 255,
-  "debugger_inferior_status": {
-    "exit_code": null,
-    "signal": 11
+  "outer_exit_code": 137,
+  "observed_fatal_signal": 11,
+  "debugger_inferior_final_status": null,
+  "forced_termination": true,
+  "termination": {
+    "reason": "user_approved_termination_of_recursive_native_fault",
+    "forced_termination": true,
+    "natural_exit_verified": false,
+    "native_qualification": false,
+    "records": [
+      {
+        "pid": 2748610,
+        "signal": "SIGKILL",
+        "action": "authorized_termination",
+        "time_unix_s": 1794803191.2148812
+      },
+      {
+        "pid": 2748473,
+        "signal": "SIGKILL",
+        "action": "authorized_termination",
+        "time_unix_s": 1794803191.2155313
+      }
+    ]
   },
-  "native_log_sha256": "3916282c22f863add30dcba9bd16a20a8818e828ab4008a8c44e01a0d0c7b127",
+  "native_log_sha256": "59e76fc29928c93b9e38f7b213bb0f8d4ec4b370221e142ef63978abebb7d713",
+  "native_log_bytes": 126453593,
+  "debugger_fatal_records": 81,
   "streaming_server_started": true,
-  "first_error": "AttributeError: 'NoneType' object has no attribute 'visible'",
-  "crash_module": "libomni.ext.plugin.so",
-  "task_scene_created": false,
-  "physical_ledger_created": false,
-  "observed_task_measurement_rows": 0,
-  "total_sdk_steps_observed": null,
+  "simulation_context_created": true,
+  "first_acquisition_error": "not_durably_recorded_before_close_crash",
+  "observed_sdk_clocks": [
+    {
+      "phase": "before_stop",
+      "clock_available": true,
+      "sdk_step": 0,
+      "sdk_time_s": 0.0
+    },
+    {
+      "phase": "after_stop",
+      "clock_available": true,
+      "sdk_step": 0,
+      "sdk_time_s": 0.0
+    },
+    {
+      "phase": "before_close_check",
+      "clock_available": true,
+      "sdk_step": 0,
+      "sdk_time_s": 0.0
+    }
+  ],
+  "physical_ledger_rows": 0,
   "camera_pairs": 0,
   "ppo_updates": 0,
   "automatic_retries": 0,
   "native_qualification": false,
   "process_exit_verified": false,
-  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-toolbar-5b1480ed",
-  "cpu_fix_status": "optional_toolbar_hooks_added_native_revalidation_pending",
+  "simulation_weakref_alive_before_close": true,
+  "first_crash_module": "libomni.kit.livestream.plugin.so",
+  "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-hooks-bd0ea33a",
   "next_native_attempt_requires_approval": true,
   "previous_attempt": {
-    "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-e8a60161",
-    "native_log_sha256": "56361a28a9528c496980572260adad83c93bb6fd100c4c3728d55127550bf0f1",
-    "first_error": "ModuleNotFoundError: No module named 'omni.kit.widget.toolbar'"
+    "evidence_directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/live-stereo-preview-20261116/attempt-gpu0-toolbar-5b1480ed",
+    "native_log_sha256": "3916282c22f863add30dcba9bd16a20a8818e828ab4008a8c44e01a0d0c7b127",
+    "first_error": "AttributeError: 'NoneType' object has no attribute 'visible'"
   }
 }
