@@ -3,16 +3,17 @@
 No SDK installation is patched. Absent buttons stay absent; existing buttons
 retain IsaacLab's hide/disable behavior. This owns no simulation or physics.
 """
+from .tabletop_preview_extension_cache import prepare_loaded_extension_cache,validate_extension_cache_receipt
 from .tabletop_preview_window_owner import wrap_preview_hotkey_destroy,prepare_loaded_window_owner,validate_window_release_receipt
 
-ADAPTER_VERSION = "dh116-preview-owned-launcher-v5"
+ADAPTER_VERSION = "dh116-preview-owned-launcher-v6"
 
 def _native_toolbar():
     import omni.kit.widget.toolbar
     return omni.kit.widget.toolbar.get_instance()
 
 def preview_launcher_type(base, *, toolbar_getter=None, partial_stop_presentation=None,
-        partial_prepare_native_shutdown=None):
+        partial_prepare_native_shutdown=None,partial_prepare_framework_shutdown=None):
     if not isinstance(base,type):
         raise TypeError("AppLauncher class required")
     getter = _native_toolbar if toolbar_getter is None else toolbar_getter
@@ -25,7 +26,7 @@ def preview_launcher_type(base, *, toolbar_getter=None, partial_stop_presentatio
                 # Attempt normal close once and preserve the original failure.
                 partial=getattr(self,"_app",None)
                 cleanup_errors=[]
-                window_receipt=None
+                window_receipt=framework_receipt=None
                 try:
                     if partial is not None:
                         if partial_stop_presentation is not None:
@@ -34,7 +35,12 @@ def preview_launcher_type(base, *, toolbar_getter=None, partial_stop_presentatio
                         if partial_prepare_native_shutdown is not None:
                             try:window_receipt=partial_prepare_native_shutdown()
                             except BaseException as cleanup:cleanup_errors.append(str(cleanup))
+                        if partial_prepare_framework_shutdown is not None:
+                            try:framework_receipt=partial_prepare_framework_shutdown(partial)
+                            except BaseException as cleanup:cleanup_errors.append(str(cleanup))
                         try:partial.close(wait_for_replicator=False)
+                        except BaseException as cleanup:cleanup_errors.append(str(cleanup))
+                        try:validate_extension_cache_receipt(framework_receipt)
                         except BaseException as cleanup:cleanup_errors.append(str(cleanup))
                         try:validate_window_release_receipt(window_receipt)
                         except BaseException as cleanup:cleanup_errors.append(str(cleanup))
@@ -79,7 +85,7 @@ def install_fatal_defaults(signal_api):
 
 class ManagedPreviewApp:
     """Own launcher callbacks explicitly; one normal close attempt, no forced exit."""
-    def __init__(self,launcher,*,signal_api,stop_presentation=None,prepare_native_shutdown=None):
+    def __init__(self,launcher,*,signal_api,stop_presentation=None,prepare_native_shutdown=None,prepare_framework_shutdown=None):
         self._launcher=launcher
         self._app=launcher.app
         self._signals=signal_api
@@ -87,6 +93,7 @@ class ManagedPreviewApp:
         self._close_error=None
         self._stop_presentation=stop_presentation
         self._prepare_native_shutdown=prepare_native_shutdown
+        self._prepare_framework_shutdown=prepare_framework_shutdown
         self._presentation_attempted=False
         self._presentation_error=None
         self._presentation_receipt=None
@@ -146,8 +153,16 @@ class ManagedPreviewApp:
                 if prepare is not None:window_receipt=prepare()
             except BaseException as error:errors.append("window owner preparation: "+str(error))
             finally:prepare=None
+            framework_receipt=None
+            prepare,self._prepare_framework_shutdown=self._prepare_framework_shutdown,None
+            try:
+                if prepare is not None:framework_receipt=prepare(app)
+            except BaseException as error:errors.append("extension cache preparation: "+str(error))
+            finally:prepare=None
             try:app.close(**kwargs)
             except BaseException as error:errors.append("app.close: "+repr(error))
+            try:validate_extension_cache_receipt(framework_receipt)
+            except BaseException as error:errors.append("extension cache release: "+str(error))
             try:validate_window_release_receipt(window_receipt)
             except BaseException as error:errors.append("window release evidence: "+str(error))
         finally:
@@ -176,10 +191,12 @@ def launch_managed_preview_app(launcher_factory,contract,*,shutdown_output=None)
                 stream.write(json.dumps(dict(monotonic_ns=time.monotonic_ns(),**row),allow_nan=False)+"\n")
                 stream.flush();os.fsync(stream.fileno())
         return prepare_loaded_window_owner(data["sources"],record=record)
+    def prepare_framework(app):
+        return prepare_loaded_extension_cache(app,output=shutdown_output)
     launcher=preview_launcher_type(launcher_factory,partial_stop_presentation=stop_native_presentation,
-        partial_prepare_native_shutdown=prepare)(**kwargs)
+        partial_prepare_native_shutdown=prepare,partial_prepare_framework_shutdown=prepare_framework)(**kwargs)
     return ManagedPreviewApp(launcher,signal_api=signal,stop_presentation=stop_native_presentation,
-        prepare_native_shutdown=prepare)
+        prepare_native_shutdown=prepare,prepare_framework_shutdown=prepare_framework)
 
 
 def verify_preview_shutdown_sources(root=None):

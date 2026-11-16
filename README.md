@@ -1,3 +1,7 @@
+## 2026-11-16 — 双相机清理通过与原生扩展缓存释放候选
+
+第一轮双相机采17对、清理不再报错且App.close返回，Py_FinalizeEx扩展绑定仍SIG11。增加已核验SDK函数缓存的私有释放候选，保持原卸载调用。候选CPU通过，尚未原生。 Ubuntu CPU 回归 320 项通过。[报告](docs/superpowers/reports/2026-11-16-preview-extension-cache.md)
+
 ## 2026-11-16 — 固定双相机17对实采与wire来源核验、两阶段清理
 
 两台固定相机17对raw时钟一致，真实41节点wire逐帧对齐；首帧右图噪声和退出失败仍阻断。杆几乎静止，不能宣称柔性动力学通过。先解绑双方再销毁的清理候选CPU通过，尚待原生。 Ubuntu CPU 回归 313 项通过。[报告](docs/superpowers/reports/2026-11-16-fixed-dual-native-wire-audit.md)

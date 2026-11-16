@@ -1,0 +1,34 @@
+{
+  "source_head": "44cff0465f4f4820c3d07dbeac89ffa6f75bd425",
+  "batch_attempt_number": 1,
+  "camera_backend": "tiled_step",
+  "resolution_wh": [
+    320,
+    240
+  ],
+  "contract_sha256": "9e2ac7e78abd3592c753bf99eba0458bfd277c2c8f4d7bce8c1a2ac3402f6086",
+  "outer_exit_code": 255,
+  "debugger_inferior_final_status": {
+    "exit_code": null,
+    "signal": 11
+  },
+  "wall_seconds": 167.8237917489605,
+  "forced_termination": false,
+  "physical_jsonl_total_rows": 166,
+  "incomplete_physical_lines": 0,
+  "accepted_rgb_pairs": 17,
+  "incomplete_stage_lines": 0,
+  "durable_stage_errors": [],
+  "native_log_sha256": "c6ec7a6368530ef77921b2cdb8232cdceea560c3772512fa1d042941a6dc7fc8",
+  "native_log_bytes": 854491,
+  "debugger_fatal_records": 1,
+  "ppo_updates": 0,
+  "native_qualification": false,
+  "app_close_returned": true,
+  "annotator_detach_errors_resolved": true,
+  "actual_render_calls": 44,
+  "current_candidate_native_executed": false,
+  "remaining_approved_attempts": 1,
+  "root_cause_proven": false,
+  "report": "docs/superpowers/reports/2026-11-16-preview-extension-cache.md"
+}
