@@ -267,6 +267,10 @@ class TiledNativeStereoReader:
             return
         self._closed=True;errors=[]
         for side,camera in list(self.cameras.items()):
+            try:camera.resources.detach()
+            except BaseException as error:errors.append(side+" detach: "+str(error))
+            finally:camera=None
+        for side,camera in list(self.cameras.items()):
             try:camera.close()
             except BaseException as error:errors.append(side+": "+str(error))
             finally:camera=None

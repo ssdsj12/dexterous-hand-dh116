@@ -1,3 +1,7 @@
+## 2026-11-16 — 固定双相机17对实采与wire来源核验、两阶段清理
+
+两台固定相机17对raw时钟一致，真实41节点wire逐帧对齐；首帧右图噪声和退出失败仍阻断。杆几乎静止，不能宣称柔性动力学通过。先解绑双方再销毁的清理候选CPU通过，尚待原生。 Ubuntu CPU 回归 313 项通过。[报告](docs/superpowers/reports/2026-11-16-fixed-dual-native-wire-audit.md)
+
 ## 2026-11-16 — 两台固定相机同次渲染与wire逐帧证据
 
 默认Tiled路径创建两台固定相机和独立render product，同次render后配对读取；旧顺序采集显式隔离用于回归。保存wire真实节点/材料方向快照，待本轮有界原生验证。 Ubuntu CPU 回归 312 项通过。[报告](docs/superpowers/reports/2026-11-16-fixed-dual-camera.md)

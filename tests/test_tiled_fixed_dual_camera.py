@@ -59,7 +59,10 @@ def test_native_pair_owns_two_distinct_fixed_cameras_and_closes_both(monkeypatch
     from go2_pvcnn.control.dh116 import tabletop_tiled_stereo_native as native
     created=[]
     class Camera:
-        def __init__(self,*args,**kw):self.kw=kw;self.closed=False;created.append(self)
+        def __init__(self,*args,**kw):
+            from types import SimpleNamespace
+            self.resources=SimpleNamespace(detach=lambda:None)
+            self.kw=kw;self.closed=False;created.append(self)
         def read_clock(self):return dict(frame_id=5,simulation_time=0.,render_frame_number=5)
         def read(self):return dict(raw_clock=self.read_clock())
         def close(self):self.closed=True
@@ -82,10 +85,26 @@ def test_fixed_native_camera_refuses_pose_change_after_initialization():
 def test_pair_clock_mismatch_cannot_be_reported_as_synchronized(monkeypatch):
     from go2_pvcnn.control.dh116 import tabletop_tiled_stereo_native as native
     class Camera:
-        def __init__(self,*args,**kw):self.side=kw['side']
+        def __init__(self,*args,**kw):
+            from types import SimpleNamespace
+            self.resources=SimpleNamespace(detach=lambda:None)
+            self.side=kw['side']
         def read_clock(self):return dict(frame_id=5,simulation_time=0.,render_frame_number=5 if self.side=='left' else 6)
         def close(self):pass
     monkeypatch.setattr(native,'FixedNativeCameraReader',Camera)
     reader=native.TiledNativeStereoReader(None,None,None,'cuda')
     with pytest.raises(ValueError,match='different raw clocks'):reader.read_pair()
     reader.close()
+
+
+def test_detach_both_graphs_before_destroying_either_render_product():
+    from types import SimpleNamespace
+    from go2_pvcnn.control.dh116.tabletop_tiled_stereo_native import TiledNativeStereoReader
+    events=[]
+    reader=object.__new__(TiledNativeStereoReader)
+    reader._closed=False;reader._close_error=None
+    reader.cameras={side:SimpleNamespace(
+        resources=SimpleNamespace(detach=lambda side=side:events.append('detach:'+side)),
+        close=lambda side=side:events.append('destroy:'+side)) for side in ('left','right')}
+    reader.close()
+    assert events==['detach:left','detach:right','destroy:left','destroy:right']

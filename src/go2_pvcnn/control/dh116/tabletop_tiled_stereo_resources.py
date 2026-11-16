@@ -29,7 +29,7 @@ class TiledResources:
     def __init__(self,*,rig_path=RIG_PATH):
         self.rig_path=rig_path
         self.stage=self.sensor=self.product=None
-        self.token=None;self.extra=[];self.closed=False;self.error=None
+        self.token=None;self.extra=[];self.closed=False;self.detached=False;self.error=None
 
     def define_rig(self,stage,define):
         if stage.GetPrimAtPath(self.rig_path).IsValid():raise RuntimeError("tiled stereo rig already exists")
@@ -62,11 +62,12 @@ class TiledResources:
         self.extra.append((annotator,path))
         annotator.attach([path])
 
-    def close(self):
-        if self.closed:
+    def detach(self):
+        """Detach all owned annotators before any paired product is destroyed."""
+        if self.detached:
             if self.error:raise RuntimeError(self.error)
             return
-        self.closed=True;errors=[]
+        self.detached=True;errors=[]
         sensor=self.sensor
         if sensor is not None:
             try:sensor._clear_callbacks()
@@ -91,6 +92,17 @@ class TiledResources:
                         except Exception as e:errors.append(name+" detach: "+repr(e))
                     # Explicit owner is authoritative; never retry from __del__.
                     annotators.clear()
+        if errors:
+            self.error="; ".join(errors)
+            raise RuntimeError(self.error)
+
+    def close(self):
+        if self.closed:
+            if self.error:raise RuntimeError(self.error)
+            return
+        self.closed=True;errors=[]
+        self.detach()
+        sensor=self.sensor
         if self.product is not None and not errors:
             try:self.product.destroy()
             except Exception as e:errors.append("product destroy: "+repr(e))
