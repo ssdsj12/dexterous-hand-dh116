@@ -1,3 +1,7 @@
+## 2026-11-15 — 真实柔性杆与双 RGB 独立预览 CPU 接线
+
+新增真实 DeformX 参数快照、可视网格、同步 RGB 与零 PPO WebRTC 独立入口；CPU fixture 不证明真实原生显示或自然退出。待批准短原生预览。 Ubuntu CPU 回归 144 项通过。[报告](docs/superpowers/reports/2026-11-16-live-flexible-stereo-preview.md)
+
 ## 2026-11-15 — 原控制长回合零步Reset续行与真实clock消费者门CPU包
 
 原control真实推进CPU双替身到240/258/2402，独立v2重建11mesh、Reset0步且预算不退款，再续下一episode8步；旧guard/2.1mm/时间限制不变。短native时钟证据不能证明长程，fp32三个实际SDK消费者长程拒绝，整体long-reset仍blocked；原生0步。 Ubuntu CPU 回归 231 项通过。[报告](docs/reports/2026-11-15-long-reset-continuation-v2.md)

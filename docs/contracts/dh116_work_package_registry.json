@@ -38572,6 +38572,45 @@
         "report": "docs/reports/2026-11-15-long-reset-continuation-v2.md",
         "report_source_commit": "7730e275f7c9bac6344df8a950ceb11ba758cb7e"
       }
+    },
+    "preview.live-deformx-stereo.cpu-20261116": {
+      "title": "真实柔性杆与双 RGB 独立预览 CPU 接线",
+      "executor": "gated",
+      "dependencies": [],
+      "status": "passed",
+      "last_result": {
+        "passed": 144,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_live_flexible_stereo_scope.py",
+          "tests/test_dh116_live_deformx_display.py",
+          "tests/test_dh116_stereo_rgb_bridge.py",
+          "tests/test_dh116_stereo_rgb_resources.py",
+          "tests/test_dh116_stereo_camera_cli.py",
+          "tests/test_physical_preview.py",
+          "tests/test_preview_contract.py",
+          "tests/test_preview_presentation.py",
+          "tests/test_dh116_dual_hand_episode.py",
+          "tests/test_native_teacher_session.py"
+        ],
+        "log_sha256": "70c91ca2c930d52e06c61f5574f16e193d406c17d890ab650646ecc7bdceda23",
+        "tested_head": "07b848d4b8b0dc77c945b17a15f03c86165f9e57",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "preview_native_status": "not_run",
+        "baseline_head": "07b848d4b8b0dc77c945b17a15f03c86165f9e57",
+        "status": "passed",
+        "report": "docs/superpowers/reports/2026-11-16-live-flexible-stereo-preview.md",
+        "report_source_commit": "6888b428f5dd9980cef5904abb4f0cf0ddb13bdb"
+      }
     }
   },
   "execution_target": {
