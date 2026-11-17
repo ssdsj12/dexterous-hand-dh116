@@ -1,3 +1,7 @@
+## 2026-11-17: cooked face semantics separated from manifold diagnostics
+
+All34 saved hulls pass independent edge/vertex-link/connectivity/volume/winding checks;188 faces remain nonplanar and the protected full validator still qualifies0/34. The10 distal records exactly match F4. Reference PhysX plane construction closely matches saved output; exact binary mapping remains unproven. CPU429 passed, no new native run or physics change. See [report](docs/superpowers/reports/2026-11-17-teacher-cooked-surface-semantics.md).
+
 ## 2026-11-17: native matrix correction verified; hull topology and exit still blocked
 
 One GPU2 run,2 SDK setup steps,0 control/solver/PPO. Actual right finger42 near-unit quaternion confirms the corrected rotation path.34 cooked hull payloads returned; all34 fail the existing plane/topology check (189/1890 polygons). Exit still SIGSEGV in Tensor/Py_FinalizeEx; user-authorized cleanup completed, no retry. CPU421 passed. See [report](docs/superpowers/reports/2026-11-17-teacher-qnorm-native-verification.md).

@@ -72,3 +72,102 @@ def test_cli_refuses_overwrite_and_keeps_input_sha(tmp_path):
     assert len(saved['input_sha256'])==64 and saved['new_native_runs']==0
     with pytest.raises(FileExistsError):
         module.main(['--capture',str(source),'--output',str(output)])
+
+
+def surface(raw):
+    report=api().analyze_hull(raw)
+    assert 'surface_diagnostics' in report, 'independent surface diagnostics missing'
+    return report,report['surface_diagnostics']
+
+
+def test_cube_has_single_closed_vertex_rings_and_centered_signed_volume():
+    report,diagnostic=surface(cube())
+    assert diagnostic['available'] is True
+    assert diagnostic['combinatorial_surface_checks_passed'] is True
+    assert diagnostic['vertex_links_single_cycle'] is True
+    assert diagnostic['connected_components']==1 and diagnostic['euler_characteristic']==2
+    assert diagnostic['signed_fan_volume_native_units_cubed']==pytest.approx(8e-9)
+    assert diagnostic['nonplanar_polygon_count']==0
+    assert diagnostic['self_intersections_tested'] is False
+    assert diagnostic['native_qualification'] is False
+
+
+def test_nonplanar_closed_surface_never_overrides_protected_rejection():
+    raw=cube();raw['vertices'][0][2]+=.0001
+    before=copy.deepcopy(raw)
+    report,diagnostic=surface(raw)
+    assert report['closed_convex'] is False
+    assert diagnostic['combinatorial_surface_checks_passed'] is True
+    assert diagnostic['nonplanar_polygon_count']==1
+    assert diagnostic['max_best_fit_face_residual_native_units']>0.
+    assert diagnostic['diagnostic_plane_fits_applied_to_input'] is False
+    assert raw==before
+
+
+def test_open_surface_is_not_hidden_by_positive_volume():
+    raw=cube();raw['polygons']=raw['polygons'][1:];raw['num_polygons']-=1
+    raw['indices']=raw['indices'][4:]
+    for polygon in raw['polygons']:polygon['index_base']-=4
+    _,diagnostic=surface(raw)
+    assert diagnostic['available'] is True
+    assert diagnostic['directed_edges_pair_once'] is False
+    assert diagnostic['combinatorial_surface_checks_passed'] is False
+
+
+def test_reversed_face_detects_winding_and_edge_mismatch():
+    raw=cube();raw['indices'][:4]=raw['indices'][:4][::-1]
+    _,diagnostic=surface(raw)
+    assert diagnostic['winding_matches_stored_normals'] is False
+    assert diagnostic['directed_edges_pair_once'] is False
+    assert diagnostic['combinatorial_surface_checks_passed'] is False
+
+
+def test_overlapping_index_slots_are_reported_separately():
+    raw=cube();raw['polygons'][1]['index_base']=0
+    _,diagnostic=surface(raw)
+    assert diagnostic['index_ranges_complete_once'] is False
+    assert diagnostic['combinatorial_surface_checks_passed'] is False
+
+
+def test_pinched_vertex_is_detected_even_when_each_edge_has_an_opposite():
+    raw=cube();second=cube();mapping={0:6}
+    for i,vertex in enumerate(second['vertices']):
+        if i:
+            mapping[i]=len(raw['vertices'])
+            raw['vertices'].append([v+.002 for v in vertex])
+    for polygon in second['polygons']:
+        ids=second['indices'][polygon['index_base']:polygon['index_base']+polygon['num_vertices']]
+        polygon=copy.deepcopy(polygon)
+        polygon['plane'][3]-=sum(n*.002 for n in polygon['plane'][:3])
+        polygon['index_base']=len(raw['indices'])
+        raw['indices'].extend(mapping[i] for i in ids)
+        raw['polygons'].append(polygon)
+    raw['num_vertices']=len(raw['vertices']);raw['num_polygons']=len(raw['polygons'])
+    _,diagnostic=surface(raw)
+    assert diagnostic['directed_edges_pair_once'] is True
+    assert diagnostic['connected_components']==1
+    assert diagnostic['vertex_links_single_cycle'] is False
+    assert diagnostic['combinatorial_surface_checks_passed'] is False
+
+
+def test_volume_diagnostic_is_invariant_to_local_origin_translation():
+    raw=cube();shift=[.31,-.27,.45]
+    for vertex in raw['vertices']:
+        for i in range(3):vertex[i]+=shift[i]
+    for polygon in raw['polygons']:
+        polygon['plane'][3]-=sum(n*t for n,t in zip(polygon['plane'][:3],shift))
+    _,diagnostic=surface(raw)
+    assert diagnostic['combinatorial_surface_checks_passed'] is True
+    assert diagnostic['signed_fan_volume_native_units_cubed']==pytest.approx(8e-9)
+
+
+def test_nonempty_cli_report_serializes_diagnostic_numpy_comparisons(tmp_path):
+    row=dict(binding=dict(side='left',body_id=0,actual_body_path='/World/envs/env_0/leftHand/base_link'),
+        complete=True,cooked_hulls=[dict(raw=cube())])
+    source=tmp_path/'capture.json'
+    source.write_text(json.dumps(dict(capture=dict(complete=True,colliders=[row]))))
+    output=tmp_path/'result.json'
+    assert api().main(['--capture',str(source),'--output',str(output)])==0
+    result=json.loads(output.read_text())
+    assert result['bodies'][0]['hulls'][0]['surface_diagnostics']['positive_volume_at_original_numeric_scale'] is True
+    assert result['native_qualification'] is False

@@ -691,5 +691,10 @@
     "skipped": 0,
     "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-initialization-qnorm-execution-20261117T093606Z/registry-final.log",
     "log_sha256": "4abec92b185090d1e0971828056b2760f508c02cd42d9b9a2cfebac34d8c0593"
+  },
+  "latest_offline_semantics": {
+    "readiness": "docs/contracts/dh116_teacher_cooked_surface_semantics_v1.json",
+    "report": "docs/superpowers/reports/2026-11-17-teacher-cooked-surface-semantics.md",
+    "native_qualification": false
   }
 }

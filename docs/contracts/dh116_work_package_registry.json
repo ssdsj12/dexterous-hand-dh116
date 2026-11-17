@@ -40429,6 +40429,26 @@
         "skipped": 0,
         "scope": "CPU regression passed; native matrix passed,34 payloads returned,0 topology-qualified,exit SIGSEGV"
       }
+    },
+    "teacher.cooked-surface-semantics-v1": {
+      "title": "Cooked面的分项拓扑与参考SDK语义离线诊断",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "passed",
+      "branch": "11-17",
+      "native_runs": 0,
+      "tests": [
+        "tests/test_teacher_cooked_readback_audit.py",
+        "tests/test_tripod_cooked_geometry.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_cooked_surface_semantics_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-cooked-surface-semantics.md",
+      "last_result": {
+        "passed": 429,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU and existing raw data only; no native qualification"
+      }
     }
   },
   "execution_target": {

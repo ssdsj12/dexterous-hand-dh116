@@ -25256,6 +25256,23 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.cooked-surface-semantics-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-cooked-surface-semantics.md",
+      "readiness": "docs/contracts/dh116_teacher_cooked_surface_semantics_v1.json",
+      "cpu_tests": {
+        "passed": 429,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "publication": {
+        "state": "windows_publication_pending"
+      },
+      "remote_verified": false
     }
   ]
 }
