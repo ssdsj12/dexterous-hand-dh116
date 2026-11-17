@@ -134,7 +134,14 @@
   "eager_cuda_initialization_implemented": false,
   "report": "docs/superpowers/reports/2026-11-17-teacher-cuda-frame-owner-trace.md",
   "publication": {
-    "state": "windows_publication_pending"
+    "state": "windows_publication_verified",
+    "source_commit": "f340c4938c5145a4f41a959a5c8afffd00af8158",
+    "remote_branch": "11-17",
+    "files_verified": 9,
+    "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T11:51:44.758966+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "registry_cpu": {
     "command": [
