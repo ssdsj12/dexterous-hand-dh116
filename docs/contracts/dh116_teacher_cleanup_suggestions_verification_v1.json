@@ -124,7 +124,14 @@
   "existing_native_budget_reused": false,
   "report": "docs/superpowers/reports/2026-11-17-teacher-cleanup-suggestions-verification.md",
   "publication": {
-    "state": "windows_publication_pending"
+    "state": "windows_publication_verified",
+    "source_commit": "167b27f7776f902f00c011b8fb17a19b05099a1e",
+    "remote_branch": "11-17",
+    "files_verified": 7,
+    "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T11:40:02.411450+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "registry_cpu": {
     "command": [
