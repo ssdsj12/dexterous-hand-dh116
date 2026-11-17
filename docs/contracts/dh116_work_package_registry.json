@@ -40681,10 +40681,22 @@
       ],
       "status": "blocked",
       "branch": "11-17",
-      "native_runs": 0,
-      "readiness": "docs/contracts/dh116_teacher_stat_cache_release_v1.json",
-      "report": "docs/superpowers/reports/2026-11-17-teacher-source-bound-stat-cache-release.md",
-      "blocked_reason": "CPU repair ready; final published SHA must be frozen and receive new bounded native authorization. Prior once-only v2 budget consumed; no automatic retry."
+      "native_runs": 1,
+      "readiness": "docs/contracts/dh116_teacher_stat_cache_release_native_evidence_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-stat-cache-native-counterfactual.md",
+      "blocked_reason": "Approved one-shot budget consumed. Cache cleared and registered Python owners gone; inferior exited naturally1 without signal. Strict cooked hull capture0/34 still blocks Teacher; no retry authorized.",
+      "last_result": {
+        "native_runs": 1,
+        "cache_before": 2841,
+        "cache_after": 0,
+        "reset_calls": 1,
+        "normal_nonzero_exit": true,
+        "inferior_exit_code": 1,
+        "native_signal": null,
+        "strict_qualified_hulls": 0,
+        "teacher_admission": false,
+        "post_native_cpu_passed": 188
+      }
     }
   },
   "execution_target": {

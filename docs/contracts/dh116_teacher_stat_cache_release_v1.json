@@ -2,7 +2,7 @@
   "package": "teacher.stat-cache-release-v1",
   "branch": "11-17",
   "base_commit": "98ea761adb510d3fbe6d1d7b778a7a9abea55132",
-  "status": "CPU_verified_source_bound_reset_native_pending",
+  "status": "CPU_verified_native_followup_observed_geometry_still_blocked",
   "timestamp_utc": "2026-11-17T13:08:33.981418+00:00",
   "source_sha256": {
     "src/go2_pvcnn/control/dh116/tabletop_stat_cache_release.py": "593f33a0f58c0136cbc1919d62a14bdcf413c92387747b9ff975fe796582a211",
@@ -297,5 +297,15 @@
     "failed": 0,
     "skipped": 0,
     "overlap_with_related_suite": true
+  },
+  "native_followup": {
+    "readiness": "docs/contracts/dh116_teacher_stat_cache_release_native_evidence_v1.json",
+    "native_runs": 1,
+    "cache_entries_before": 2841,
+    "cache_entries_after": 0,
+    "normal_nonzero_exit": true,
+    "native_signal": null,
+    "strict_qualified_hulls": 0,
+    "formal_lifecycle_qualified": false
   }
 }

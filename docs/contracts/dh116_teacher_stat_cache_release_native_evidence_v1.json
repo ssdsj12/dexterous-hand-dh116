@@ -1,0 +1,514 @@
+{
+  "package": "teacher.stat-cache-release-native-v1",
+  "branch": "11-17",
+  "status": "single_native_cache_release_observed_natural_exit1_geometry_blocked",
+  "source_commit": "de84c4dfb018f9ef2ff79a06a7c3f537fd9f304c",
+  "frozen_sha256": "2108a5bfbfc315f1032abd7aa80ad80023f2c0725e833fcd4a75c84bf5e62a8a",
+  "timestamp_utc": "2026-11-17T15:34:54.754395+00:00",
+  "budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "pinch",
+    "sdk_setup_steps": 2,
+    "control_steps": 0,
+    "solver_steps": 0,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 180,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 0
+  },
+  "budget_consumed": true,
+  "native_runs": 1,
+  "summary": {
+    "timestamp_utc": "2026-11-17T15:31:34.226397+00:00",
+    "source_head": "de84c4dfb018f9ef2ff79a06a7c3f537fd9f304c",
+    "frozen_sha256": "2108a5bfbfc315f1032abd7aa80ad80023f2c0725e833fcd4a75c84bf5e62a8a",
+    "native_runs": 1,
+    "control_steps": 0,
+    "solver_steps": 0,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "sdk_steps": 2,
+    "capture_clock_before": {
+      "sdk_step": 2,
+      "sdk_time_s": 0.004166666883975267
+    },
+    "capture_clock_after": {
+      "sdk_step": 2,
+      "sdk_time_s": 0.004166666883975267
+    },
+    "returned_collision_owners": 34,
+    "returned_hulls": 34,
+    "strict_qualified_owners": 0,
+    "raw_cooked_hulls_identical_to_previous_run": 34,
+    "previous_run": "teacher-cuda-frame-walk-v2-native-20261117T121744Z",
+    "cache": {
+      "before_entries": 2841,
+      "cached_exceptions": 603,
+      "runtime_related_entries": 24,
+      "records_saved": 16,
+      "records_truncated": true,
+      "scan_truncated": false,
+      "after_entries": 0,
+      "reset_calls": 1,
+      "clock_before": {
+        "sdk_step": 2,
+        "sdk_time_s": 0.004166666883975267,
+        "app_update_number": 16
+      },
+      "clock_after": {
+        "sdk_step": 2,
+        "sdk_time_s": 0.004166666883975267,
+        "app_update_number": 16
+      },
+      "error_receipt_present": false,
+      "runtime_frame_functions": [
+        "<lambda>",
+        "<module>",
+        "__init__",
+        "__iter__",
+        "_call_with_frames_removed",
+        "_execute_app_owned",
+        "_find_and_load",
+        "_find_and_load_unlocked",
+        "_find_spec",
+        "_get_spec",
+        "_handle_fromlist",
+        "_lazy_init",
+        "_load_unlocked",
+        "_os_stat_cached",
+        "_path_is_mode_type",
+        "_path_isfile",
+        "_recalculate",
+        "_register_triton_kernels",
+        "_run_code",
+        "_run_module_as_main",
+        "continue_within_budget",
+        "create_force_runtime",
+        "create_runtime",
+        "exec_module",
+        "execute_native",
+        "find_spec",
+        "main",
+        "operation",
+        "run_owned_call"
+      ]
+    },
+    "python_simulation_alive_before_clear": true,
+    "python_simulation_alive_after_stop": false,
+    "tensor_wrapper_liveness_after_stop": {
+      "manager_sim_view": "gone",
+      "manager_sim_view_backend": "gone",
+      "left_asset": "gone",
+      "left_data": "gone",
+      "left_asset_sim_view": "gone",
+      "left_asset_sim_view_backend": "gone",
+      "left_data_sim_view": "gone",
+      "left_data_sim_view_backend": "gone",
+      "right_asset": "gone",
+      "right_data": "gone",
+      "right_asset_sim_view": "gone",
+      "right_asset_sim_view_backend": "gone",
+      "right_data_sim_view": "gone",
+      "right_data_sim_view_backend": "gone"
+    },
+    "manager_current_after_stop": {
+      "state": "none",
+      "field_present": true
+    },
+    "app_close_returned": true,
+    "worker_wall_s": 68.51317919790745,
+    "outer_wall_s": 71.61545892385766,
+    "inferior_natural_exit_observed": true,
+    "inferior_exit_code": 1,
+    "native_signal": null,
+    "gdb_returncode": 0,
+    "supervisor_exit_code": 1,
+    "natural_exit_zero": false,
+    "force_termination_used": false,
+    "retries": 0,
+    "processes_gone": true,
+    "lock_available": true,
+    "gpu2_after": "6, 24076",
+    "fault_forensics_not_triggered": true,
+    "native_binary_release_instrumented": false,
+    "formal_lifecycle_qualification": false,
+    "teacher_admission": false,
+    "full_workload_SIGSEGV_cause_proven": false
+  },
+  "post_native_cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_teacher_owner_diagnostics.py",
+      "tests/test_teacher_tensor_view_owners.py",
+      "tests/test_teacher_initialization_worker.py",
+      "tests/test_teacher_cuda_frame_owners.py",
+      "tests/test_teacher_cuda_frame_walk_v2.py",
+      "tests/test_teacher_stat_cache_release.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "elapsed_s": 20.07900187605992,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/post-native-cpu.log",
+    "log_sha256": "250e3584b130bcbc9cbfc2e9048833883bdb67dab1e4e2d3f71e8c652aa38898",
+    "additional_native_runs": 0,
+    "passed": 188,
+    "failed": 0,
+    "skipped": 0,
+    "overlaps_prior_522": true
+  },
+  "installed_cache_source_pins": {
+    "version": "dh116-kit-stat-cache-release-v1",
+    "module": "omni.ext._impl.stat_cache",
+    "sources": {
+      "cache": {
+        "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/py/omni/ext/_impl/stat_cache.py",
+        "sha256": "d09905d34ad52577c95f997d1f69fa152b3b3d71dc7e8570e777842ef064cd6b"
+      },
+      "settings": {
+        "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/py/omni/ext/_impl/ext_settings.py",
+        "sha256": "9ae0326d15a7573db685a1b6bed9d22d4a31d9008c2743e6bfacecb766f37fd4"
+      },
+      "startup": {
+        "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/py/omni/ext/_impl/_internal.py",
+        "sha256": "6dfde3b8a85cbb33746e0c506e5a9ba5cd2a7ad90caeb568098c274c14126283"
+      }
+    },
+    "functions": {
+      "_os_stat_cached": 11,
+      "refresh_stat_cache": 26,
+      "reset_stat_cache": 43
+    },
+    "max_reset_calls": 1,
+    "app_updates_added": 0,
+    "native_release_verified": false
+  },
+  "native_cache_runtime_frame_chain_observed": true,
+  "cpu_only_mechanism_promoted_to_native_observation": true,
+  "single_path_single_attempt_only": true,
+  "normal_nonzero_exit_observed": true,
+  "natural_exit_zero": false,
+  "native_binary_release_instrumented": false,
+  "native_release_verified": false,
+  "global_lifecycle_qualified": false,
+  "native_SIGSEGV_unique_cause_proven": false,
+  "teacher_admission": false,
+  "full_grasp_contact_validated": false,
+  "stop_clock_unavailable_due_to_owner_gone": true,
+  "stop_sdk_tick2_not_claimed": true,
+  "error_receipt_absence_alone_is_not_guard_proof": true,
+  "fault_forensics": {
+    "signal_observed": false,
+    "triggered": false,
+    "stack_or_mapping_created_for_this_fault": false,
+    "reason": "inferior exited without a signal; no fault branch to inspect; prior fault evidence preserved"
+  },
+  "cleanup": {
+    "required": false,
+    "preauthorized": true,
+    "force_termination_used": false,
+    "processes_gone": true,
+    "lock_available": true,
+    "retry": false
+  },
+  "strict_geometry": {
+    "returned_owners": 34,
+    "returned_hulls": 34,
+    "qualified": 0,
+    "raw_hash_matches_previous": 34,
+    "comparator": "queried_prim_path then full cooked_hulls[0].raw canonical JSON sha256",
+    "thresholds_changed": false,
+    "stored_representation_is_not_live_PxShape_attachment_proof": true
+  },
+  "protection": {
+    "checked": 528,
+    "mismatches": [],
+    "models_checked": 3,
+    "models_mismatches": [],
+    "inventory": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/protected-ubuntu.json",
+      "bytes": 67476,
+      "sha256": "fb6b58cfd2fe86408eb498a4390ecda35df2221d7198ca3a01ff59f86dea05ec"
+    },
+    "historical_tmp_checkpoints": "2 previously absent; not falsely verified"
+  },
+  "artifacts": [
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/approved_gdb_supervisor.py",
+      "bytes": 7650,
+      "sha256": "99c5c0f5a4d32d1fcfbcf8dfb54ba7d1ec6e835761db2e1f424dc8981b93f164"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/authorization.json",
+      "bytes": 1080,
+      "sha256": "31b89672dc72bddc008df4a9671db94aa3cbe6b615f8882a33938404673dc526"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/command.json",
+      "bytes": 1152,
+      "sha256": "cae0d34bd93266e3b4b9dc07ba19187237508825d414a5317e0e7fa0e1424c5f"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/forensic.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/native-evidence-summary.json",
+      "bytes": 3308,
+      "sha256": "5eceb23cc9c917c8ffa0f1d248cb282b3421369678b8de92455980506f5a46a2"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/outer_exit.json",
+      "bytes": 589,
+      "sha256": "72f8f6d53ced2a11f7ff7b78d0f71e4ec80883621f0f34b7bbc8d35e321ce7b2"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/post-native-cpu.json",
+      "bytes": 1362,
+      "sha256": "7adb462dd3f512c3d26720366e110e12eaeaaa282343c6016327fb62abc17f4c"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/post-native-cpu.log",
+      "bytes": 261,
+      "sha256": "250e3584b130bcbc9cbfc2e9048833883bdb67dab1e4e2d3f71e8c652aa38898"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/process_identity.json",
+      "bytes": 1904,
+      "sha256": "235f7bacfffa25aecbefbb761f41ff47d7c9a7241b82a8e7f8dce1e5b5f69225"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/startup.log",
+      "bytes": 434803,
+      "sha256": "e2f7210985499acdbc6229cc3b287618f4838be10b647fc890b04ef0a6a97226"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/supervisor_provenance.json",
+      "bytes": 538,
+      "sha256": "23c1b521b26c615fe8d76eaf066ce5ff7dcf4099618865e921107aa1330c6777"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/supervisor_state.json",
+      "bytes": 589,
+      "sha256": "72f8f6d53ced2a11f7ff7b78d0f71e4ec80883621f0f34b7bbc8d35e321ce7b2"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/actual_device_identity.json",
+      "bytes": 155,
+      "sha256": "fd3a8717cc659bd60bf2eb257b2c266777e79674fd5de59ecf9452750407aec5"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/after_STOP_before_app_close.maps",
+      "bytes": 694297,
+      "sha256": "f3e4a0c569153b2f98bfc7510d03f6595d928d78caa1b59651eaf2112cd346a7"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/after_STOP_before_app_close.refs.json",
+      "bytes": 345,
+      "sha256": "29b7f7cc942c6edf1241f7124467267b2ca1105e03b5fa3a85327f30c334c68f"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/after_reset.json",
+      "bytes": 84,
+      "sha256": "c5594a752f91e098fe96352bd920b5da791cf9e1e6a17583fddfda620eba5c11"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/after_stop.owner_edges.json",
+      "bytes": 937,
+      "sha256": "5729b55e32fce3adb18d137e6c7431b146c3f49c1ea01233e5af9d96c058740b"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/after_stop.tensor_view_owners.json",
+      "bytes": 5225,
+      "sha256": "e2d6ca745d3d9412b102a7a6984ab287d1826eead5a486be34ee5ed5873165ee"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/before_clear.owner_edges.json",
+      "bytes": 2391,
+      "sha256": "fff557d1bdb74ab274166f7769afc1de7ab9c2a084b6791df915261f24f44ba3"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/before_clear.tensor_view_owners.json",
+      "bytes": 5886,
+      "sha256": "83a896719aa04a30268b8c94cd147283765b3db1fe9e8595b74555df1c5a613d"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/before_reset.json",
+      "bytes": 68,
+      "sha256": "f02c7f72c0585fe7b866159d326c7fc75749663ddd002d061bd17154aea4778d"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/factory_owner_ids.json",
+      "bytes": 558,
+      "sha256": "706e875286ecf285c6b4b149a116ccd80f40c3e814a9c3222c927476f4eb0a3e"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/frozen_plan.json",
+      "bytes": 262808,
+      "sha256": "e1854afe54366e01caaf2ed4baabf08a5c8067214787876c74a5b7f15b8a8f6d"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/initialization_boundaries.jsonl",
+      "bytes": 136,
+      "sha256": "980a39dcf2b23e22ac663248d5f1437a6fa37a86613c0974448c3688eaa7d340"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/initialization_readback.json",
+      "bytes": 6219,
+      "sha256": "f162744dac19322edd3c6c9f43327385c07b12cd0abdf669f56e4519eb527a94"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/known_simulation_cleanup.json",
+      "bytes": 402,
+      "sha256": "ef29ddc105acce0fa738d25cc5e4c4beb39adb8bd95d21f74a7e3da23c5ba572"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/owned_hand_and_solver_references_dropped.maps",
+      "bytes": 695472,
+      "sha256": "d4e540c5233cd8454135fda3eb65900e60ded0f835b205db77fd0f277a283e8e"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/owned_hand_and_solver_references_dropped.refs.json",
+      "bytes": 1785,
+      "sha256": "8ec0ee8905bbc75301523518d570123d1243156ef3895ab65c70cad5bd732c24"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/ownership.jsonl",
+      "bytes": 1976,
+      "sha256": "d4daa9e60bf8bbe3487034949c46a266971f714737961510673f98aefe79dbe8"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/raw_sdk_body_poses.json",
+      "bytes": 703885,
+      "sha256": "dc14a1842e87b3c53607e281c7d08f030cef3d898bea6f25a0c2ca32cac93d1f"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/registered.tensor_view_owners.json",
+      "bytes": 6510,
+      "sha256": "5b1dcfc09f55fb96666df0dec5609a3b8a91902538bfcb35d1d3d176a2eeb5bd"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/result.json",
+      "bytes": 2837,
+      "sha256": "ad0b71f30f2d91512fdde3c66f6fba95094ed6a716c91a140d585f837d1dfc92"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/shutdown_complete.json",
+      "bytes": 132,
+      "sha256": "9f77f8a050c5a23357bff22328730b82ae3c9878388f2647eca940affb646e43"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/shutdown_observations.json",
+      "bytes": 437,
+      "sha256": "4a0fa2becf555a45514c328cb8dfc9939b5c2e77d4f3fddc3df95dfd512a1ff1"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/shutdown_stacks.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/shutdown_started.json",
+      "bytes": 97,
+      "sha256": "c7de3140d8c1803711e203425efaf7561960535dd19a436f218b79532bc64009"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/stat_cache_after.json",
+      "bytes": 573,
+      "sha256": "858d34f04e2cd7470eb3cd0a2d475899f647fe4bfbb84f409330f052d90ceb90"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/stat_cache_before.json",
+      "bytes": 148739,
+      "sha256": "c093ee993d2a5d89d328b6a1564c6c6a9ed4f4f2cb7c221a3141fa64009228f1"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/stat_cache_release.json",
+      "bytes": 158542,
+      "sha256": "4e22ddf458830e36329039862d3614d2ac1e282165b6832ffbe76c589d5ec3ac"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/stored_cooked_capture.json",
+      "bytes": 264096985,
+      "sha256": "c122c87408d681166cf9a437479d0010e1a8dd335dfdf55cb7e7ec0e2610982e"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-plan-20261117T131229Z.json",
+      "bytes": 262808,
+      "sha256": "e1854afe54366e01caaf2ed4baabf08a5c8067214787876c74a5b7f15b8a8f6d"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-freeze-20261117T131229Z.json",
+      "bytes": 2124,
+      "sha256": "3a00b454865ae608e5ec1b311516390926d656a9024f5f255fa1e1cd932428e7"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/registry-after-evidence.log",
+      "bytes": 100,
+      "sha256": "2e52ed732a0eac95bcc212967851b87135afe0c11495bea17045ade0683ae9c8"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/registry-after-evidence.json",
+      "bytes": 1081,
+      "sha256": "9bc1ddb9846901682dc25bbea2bd813eb7e2ddfacc2b41185f1bd352e75fa0f7"
+    }
+  ],
+  "report": "docs/superpowers/reports/2026-11-17-teacher-stat-cache-native-counterfactual.md",
+  "independent_read_only_review": {
+    "blockers": 0,
+    "SDK_or_GPU_executed": false,
+    "scope": "receipt/clock/weakref/exit qualification; large raw hull hashes not independently recomputed by reviewer"
+  },
+  "publication": {
+    "state": "pending_windows_publication"
+  },
+  "registry_cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "elapsed_s": 20.54911598400213,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-execution-20261117T131229Z/registry-after-evidence.log",
+    "log_sha256": "2e52ed732a0eac95bcc212967851b87135afe0c11495bea17045ade0683ae9c8",
+    "additional_native_runs": 0,
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0,
+    "overlaps_post_native_suite": true
+  }
+}

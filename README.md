@@ -1,3 +1,7 @@
+## 2026-11-17 source-bound cache native counterfactual
+
+One approved2-SDK-step run observed2841 cache entries cleared once, registered Python hand/Data owners gone after the original GC, and registered SimulationView/backend wrappers gone after STOP. The inferior exited naturally1 without SIGSEGV or forced cleanup. Strict hull capture remains0/34; this is not exit0, general native-release qualification or Teacher success. Post-native CPU188 pass. See [report](docs/superpowers/reports/2026-11-17-teacher-stat-cache-native-counterfactual.md).
+
 ## 2026-11-17 source-bound Kit cache release diagnostic
 
 An independent opt-in entry calls the installed, SHA/code-checked stat-cache reset API once before the existing owned GC. Legacy defaults remain unchanged. Post-observer/post-write guards reject cache recreation without retry;26 new CPU tests and522 related cases pass. No new native run; strict hull validation and Teacher remain blocked. See [report](docs/superpowers/reports/2026-11-17-teacher-source-bound-stat-cache-release.md).

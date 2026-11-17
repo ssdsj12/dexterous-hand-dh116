@@ -25501,6 +25501,28 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.stat-cache-release-native-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-stat-cache-native-counterfactual.md",
+      "readiness": "docs/contracts/dh116_teacher_stat_cache_release_native_evidence_v1.json",
+      "native_runs": 1,
+      "native_qualification": false,
+      "inferior_exit_code": 1,
+      "native_signal": null,
+      "force_termination_used": false,
+      "cache_release_observed": true,
+      "teacher_admission": false,
+      "post_native_cpu": {
+        "passed": 188,
+        "failed": 0,
+        "skipped": 0
+      },
+      "publication": {
+        "state": "pending_windows_publication"
+      },
+      "remote_verified": false
     }
   ]
 }

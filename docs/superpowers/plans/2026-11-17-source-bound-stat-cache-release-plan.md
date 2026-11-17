@@ -33,9 +33,12 @@ File: scripts/diagnose_dh116_teacher_stat_cache_release.py.
 - [x] New26 and related522 CPU regressions verified; Registry55 passed after metadata update (overlaps related suite).
 - [x] Report/readiness/Registry/README/CHANGELOG updated;528 protected hashes and3 original models verified.
 - [x] Explicit12-file source commit462e241 published from Windows; remote SHA/tree/files verified; PR2 Draft/unmerged. Publication-attestation commit follows the same route.
-- [ ] Freeze the final published repair plan outside Git. Request new bounded native authorization only after all code/tests/report are concrete. Previous budget is spent.
+- [x] Published de84c4d frozen as2108a5bf...; new explicit user authorization received; ran once. Cache release observed, natural exit1 without signal; strict geometry remains blocked. This budget is now spent.
 
 ## Independent review closure
 - [x] Compile-only actual function code/defaults/globals comparison and real settings predicate provenance.
 - [x] Read-only post-observer and post-receipt checks, including a direct live-dict check after the last clock reader; no repeat reset.
 - [x] Record all five review failures before repair; final targeted26 passed.
+
+## Native follow-up
+One approved attempt complete; report2026-11-17-teacher-stat-cache-native-counterfactual.md and readinessdh116_teacher_stat_cache_release_native_evidence_v1.json. No further native run authorized.
