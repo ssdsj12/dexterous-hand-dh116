@@ -44,3 +44,24 @@ def test_encoder_real_cpu_fixture(tmp_path):
 def test_encoder_missing_frame_fails(tmp_path):
     with pytest.raises(ValueError,match="sequence"):
         encode_frames(tmp_path,tmp_path/"no.mp4",fps=30,expected_count=3,ffmpeg="no-execution")
+
+def test_capture_waits_for_delayed_disk_writer_after_future_done(tmp_path):
+    p=tmp_path/"delayed.png";ticks=[]
+    async def completed():return True
+    def update():
+        ticks.append(1)
+        if len(ticks)==4:p.write_bytes(b"disk-complete")
+    capture_frame(lambda:completed(),update,lambda:(9,.1),p,max_updates=8)
+    assert len(ticks)>=4 and p.read_bytes()==b"disk-complete"
+
+def test_capture_waits_real_background_io_without_extra_render_updates(tmp_path):
+    import threading,time
+    p=tmp_path/"background.png"
+    async def complete():return True
+    def writer():
+        time.sleep(.05);p.write_bytes(b"complete")
+    thread=threading.Thread(target=writer);thread.start()
+    try:
+        capture_frame(lambda:complete(),lambda:None,lambda:(0,0),p,max_updates=2)
+        assert p.read_bytes()==b"complete"
+    finally:thread.join()

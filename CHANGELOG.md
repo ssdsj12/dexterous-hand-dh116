@@ -1,3 +1,14 @@
+## 2026-11-17: failed contact/Lift diagnostic videos; no successful Teacher grasp
+
+The user watched the compilation and confirmed the hands rose without grasping
+the rod. These videos are failed contact/Lift diagnostics; Power21mm does not
+establish sustained grip. Three481-frame native caches produced three241-frame MP4s and a723-frame compilation
+using zero new physical/solver steps or Teacher queries. All four videos fully
+decode and match Windows-local SHA values. CPU74 passed. Native and render
+shutdown both remain GDB255/SIGSEGV; Pinch/Tripod lack support-cleared Lift,
+Power reaches21.009mm without palm qualification, and no full grasp/Finger12/
+training-data success is granted. [Evidence report](docs/superpowers/reports/2026-11-17-supported-native-video.md)
+
 ## 2026-11-17: complete native-preview recording components
 
 Independent end supports, identity-checked recording and support-aware video labels are CPU verified. The first native attempt failed before Teacher action; no full grasp or natural shutdown is qualified. See [video report](docs/superpowers/reports/2026-11-17-supported-native-video.md).

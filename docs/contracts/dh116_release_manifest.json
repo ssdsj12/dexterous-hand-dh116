@@ -24959,8 +24959,105 @@
         "teacher_grasp_qualified": false
       },
       "publication": {
-        "state": "pending_windows_publication",
-        "base": "d060728812b57ad0d277bfde38f3aa0bf2f5614c"
+        "state": "windows_publication_verified",
+        "base": "d060728812b57ad0d277bfde38f3aa0bf2f5614c",
+        "remote_head": "c8d3629379a5b46f4189ef0fd21bc5f49d60e1ae",
+        "pr_number": 2,
+        "pr_draft": true,
+        "verified_at_utc": "2026-11-17T05:58:36.930594+00:00"
+      },
+      "commit": "c8d3629379a5b46f4189ef0fd21bc5f49d60e1ae",
+      "parent": "d060728812b57ad0d277bfde38f3aa0bf2f5614c",
+      "files": [
+        "CHANGELOG.md",
+        "README.md",
+        "configs/dh116_tasks/flexible_teacher_end_supported_v1.json",
+        "docs/contracts/dh116_release_manifest.json",
+        "docs/contracts/dh116_work_package_registry.json",
+        "docs/contracts/teacher_supported_video_readiness_v1.json",
+        "docs/superpowers/reports/2026-11-17-supported-native-video.md",
+        "src/go2_pvcnn/control/dh116/tabletop_deformx_end_supported_scene.py",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_preview_recording.py",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_video.py",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_video_delivery.py",
+        "tests/test_deformx_end_supported_scene.py",
+        "tests/test_teacher_preview_recording.py",
+        "tests/test_teacher_video.py",
+        "tests/test_teacher_video_delivery.py"
+      ],
+      "remote_verified": true,
+      "verification_route": "Windows bare relay; exact PR API head readback"
+    },
+    {
+      "package": "preview.teacher.cached-native-video-v1",
+      "report": "docs/superpowers/reports/2026-11-17-supported-native-video.md",
+      "readiness": "docs/contracts/teacher_supported_video_readiness_v1.json",
+      "source_sha256": {
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_video.py": "c89099f058d65b6b8ee1b4d95b861461336bd21ed77909b5cec6d488a4856d43",
+        "tests/test_teacher_video.py": "b91c62d0919fc1d1d7c0beda0776866d00ca673bb78cb9589e1f841340e0e083",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_cached_replay.py": "2f7a28f44c34871a49564f9de0c09b54ffd5ed889f08ebd5261ee8a6acf1e53f",
+        "tests/test_teacher_cached_replay.py": "2e05da8c2bbd32c7f692c83eca9b2d3a89186aaf2774b20a78ccc21a8d59a677",
+        "scripts/prepare_dh116_cached_video_scene.py": "b0f99499345e99a02db0afd6bc6659648d1d6f10b81335c2b4c8ad3f5cbdf4be",
+        "scripts/render_dh116_recorded_teacher_videos.py": "d2e578b68e62a7f652ead142770c3c37b4870d2236b1e36d62efb16fc773b1d2"
+      },
+      "cpu": {
+        "passed": 74,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "tests": [
+          "tests/test_deformx_end_supported_scene.py",
+          "tests/test_teacher_preview_recording.py",
+          "tests/test_teacher_video.py",
+          "tests/test_teacher_video_delivery.py",
+          "tests/test_teacher_cached_replay.py",
+          "tests/test_teacher_read_only_display_usd.py"
+        ],
+        "qualification_scope": "CPU components, cache identity, actual installed USD and ropesim.sdf; no simulator",
+        "elapsed_s": 4.75
+      },
+      "qualification": {
+        "cached_video_delivery_verified": true,
+        "native_cache_complete": true,
+        "native_grasp_qualified": false,
+        "natural_exit_qualified": false,
+        "finger12_event_window_qualified": false,
+        "power_full_grasp_qualified": false,
+        "stereo_training_data_qualified": false
+      },
+      "source_directory": "/mnt/mydisk/xk/dh116/runs/teacher_supported_video_20261117T052535Z",
+      "evidence_sha256": {
+        "native_complete.json": "53ca660ec3835792f648970a52c5b5233d98064d519ee88b89cedfad781ecbe5",
+        "outer_exit.json": "9392f93c9ea37baa9fb9683efaa8b2a6c07f864f6a8319eec79f3ec8f41fc826",
+        "runtime_error.json": "b03cc06d96cd62356b0702bbf87248fe39b5bc8fffeb36268667b71aa23cd547",
+        "offline_visual_link_manifest_v1.json": "88aac3b068f05900d6ac3b8146351a0797a8f3f0d0df2606be84a0a1dfc8ce63",
+        "native_frames.jsonl": "29616b6d732ede3d5a8ae2cb6159d0be97550de214b741d9e9ed3c8aa6a8bb5b",
+        "render_only_v1/render_outer_exit.json": "fe0b90e74cd499694616e321ab0e8e3ab0b5a869d87e9f259621d861771dd259",
+        "render_only_v1/videos/render_error.txt": "cc51222d397c47c50ebe92406abd00a0dfc902e773baf79d4afc2cd85e56d1ca",
+        "render_only_v2/scene_manifest.json": "580d6a870ecab5ae1d571c43343f38b97f243dafe00b6399a94559598e7b6cac",
+        "render_only_v2/render_outer_exit.json": "f377bb687c8baace20f6291b2cef7d9b842801de249d758fc0dd9287b845a733",
+        "render_only_v2/videos/videos_complete.json": "689ecf3248d52d3ac03a3babbd3a59f7f80177b3322be49bf09df8569ccde582",
+        "render_only_v2/videos/delivery_verified.json": "0627e567f8947166b28e00024b1e7e3aab62825b6ef3c58d5afd1840e04ad61b"
+      },
+      "video_sha256": {
+        "pinch_完整动作_候选演示.mp4": "4d868732badf3504397b17c950cdfcf77cfe848a9cd491622b2bd7a5bc34eafd",
+        "tripod_完整动作_候选演示.mp4": "b68a68e423b53877ed8029fe5f4d2ebbba84d175f5307eb7bd018dc9f1f04c39",
+        "power_完整动作_候选演示.mp4": "275fac1fe0b60614ba11b6ecff31f7d69db53290aac3d0b65773bd08fbd1845e",
+        "DH116_三抓法_完整动作_候选演示.mp4": "f5b41155d269fb799074846f05ec3e927743e152a95017a37f1b006a110525b9"
+      },
+      "publication": {
+        "state": "prepared_for_windows_publication",
+        "base": "c8d3629379a5b46f4189ef0fd21bc5f49d60e1ae",
+        "final_commit_receipt": "External Windows relay receipt identifies the containing commit and verifies PR2 Draft; no self-referential hash stored"
+      },
+      "delivery_classification": "failed_contact_lift_diagnostic",
+      "user_observed_failure": {
+        "source": "explicit_user_feedback_after_Windows_compilation_playback",
+        "playback_seen_by_user": true,
+        "observation": "根本没抓住，只是灵巧手本身往上走",
+        "classification": "failed_contact_and_lift_diagnostics_not_successful_teacher_demonstrations",
+        "power_21mm_is_sustained_grasp_evidence": false,
+        "next_contact_analysis_scope": "separate cache-only diagnostic work package; no new native or PPO"
       }
     }
   ]

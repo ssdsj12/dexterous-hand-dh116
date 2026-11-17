@@ -1,7 +1,7 @@
 {
   "version": "supported-native-video-components-v1",
-  "status": "cpu_components_verified_native_pending",
-  "cpu_test_count": 59,
+  "status": "failed_contact_lift_diagnostics_delivered_exit_and_grasp_blocked",
+  "cpu_test_count": 74,
   "cpu_failures": 0,
   "native_grasp_qualified": false,
   "natural_exit_qualified": false,
@@ -9,19 +9,23 @@
   "source_sha256": {
     "src/go2_pvcnn/control/dh116/tabletop_deformx_end_supported_scene.py": "ab47a2513c5165f49e9e54842c8738f9110e2951e4aebc614c456ea374fcb3f0",
     "src/go2_pvcnn/control/dh116/tabletop_teacher_preview_recording.py": "ad30243ce062b0a72d1854d0f2b35517070cbeeb40fe26813271fe00dba25424",
-    "src/go2_pvcnn/control/dh116/tabletop_teacher_video.py": "87a65471c19f2431032ae8674d096c6867a1f3b4ddb44a39bee04c0fef9506c6",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_video.py": "c89099f058d65b6b8ee1b4d95b861461336bd21ed77909b5cec6d488a4856d43",
     "src/go2_pvcnn/control/dh116/tabletop_teacher_video_delivery.py": "40e9b5862b18ce71d5a60ee3d8acb4cdbc1922e736147f13d78e25aad6b1f2e7",
     "tests/test_deformx_end_supported_scene.py": "8f453c8d718221d374796d5122a8c268ea97f53f606e5c0baa6bf5044a8e426e",
     "tests/test_teacher_preview_recording.py": "f5b719e89387ace7a850f98eeab7cd93b58d93308e18c1d4d6829b4c68e3af8f",
-    "tests/test_teacher_video.py": "9e02d5ec8c58d5d3d4979d63352e7804a1c8f4c6e0b0ea8d4991d824dabbf695",
+    "tests/test_teacher_video.py": "b91c62d0919fc1d1d7c0beda0776866d00ca673bb78cb9589e1f841340e0e083",
     "tests/test_teacher_video_delivery.py": "3c22d7aef46e0218ad920674be751f6f8b8a7c60c7613740bbb392cbb8b6ece2",
-    "configs/dh116_tasks/flexible_teacher_end_supported_v1.json": "f380744c9f2629f17254e4ce701f88893f011fe7feb82d693d551ddb7baed1fc"
+    "configs/dh116_tasks/flexible_teacher_end_supported_v1.json": "f380744c9f2629f17254e4ce701f88893f011fe7feb82d693d551ddb7baed1fc",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_cached_replay.py": "2f7a28f44c34871a49564f9de0c09b54ffd5ed889f08ebd5261ee8a6acf1e53f",
+    "tests/test_teacher_cached_replay.py": "2e05da8c2bbd32c7f692c83eca9b2d3a89186aaf2774b20a78ccc21a8d59a677",
+    "scripts/prepare_dh116_cached_video_scene.py": "b0f99499345e99a02db0afd6bc6659648d1d6f10b81335c2b4c8ad3f5cbdf4be",
+    "scripts/render_dh116_recorded_teacher_videos.py": "d2e578b68e62a7f652ead142770c3c37b4870d2236b1e36d62efb16fc773b1d2"
   },
   "native_driver_scope": "private-source-SHA-bound local deployment; not published or treated as reproducible public training",
   "original_checkpoint_write_operations": 0,
   "protected_source_count": 528,
   "protected_mismatches": 0,
-  "historical_checkpoint_status": "two_original_paths_previously_missing_no_substitutes",
+  "historical_checkpoint_status": "blocked_missing_original_paths",
   "first_attempt": {
     "contract": "82156b969c9a9c7f8440c17acb00ff71fb417baa0333672caeac025b221720d7",
     "sdk_physics_steps": 482,
@@ -33,6 +37,246 @@
   },
   "correction": "local baseline callback wrapped in torch.inference_mode; real-tensor CPU red/green verified",
   "height_semantics": "raw height retained; support-cleared net Lift nullable and same-clock ledger gated",
-  "new_native_run": "separately user-approved v2, in progress, no results claimed",
-  "report": "docs/superpowers/reports/2026-11-17-supported-native-video.md"
+  "new_native_run": "v2 recorded complete caches; original PNG capture and natural shutdown failed; no native rerun during cache rendering",
+  "report": "docs/superpowers/reports/2026-11-17-supported-native-video.md",
+  "cpu_skipped": 0,
+  "finger12_event_window_qualified": false,
+  "stereo_training_data_qualified": false,
+  "bc_dagger_admission": false,
+  "native_cache_complete": true,
+  "cached_video_delivery_verified": true,
+  "cpu_validation": {
+    "passed": 74,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "tests": [
+      "tests/test_deformx_end_supported_scene.py",
+      "tests/test_teacher_preview_recording.py",
+      "tests/test_teacher_video.py",
+      "tests/test_teacher_video_delivery.py",
+      "tests/test_teacher_cached_replay.py",
+      "tests/test_teacher_read_only_display_usd.py"
+    ],
+    "qualification_scope": "CPU components, cache identity, actual installed USD and ropesim.sdf; no simulator",
+    "elapsed_s": 4.75
+  },
+  "second_native_attempt": {
+    "source_directory": "/mnt/mydisk/xk/dh116/runs/teacher_supported_video_20261117T052535Z",
+    "frame_count_per_style": 481,
+    "styles": [
+      "pinch",
+      "tripod",
+      "power"
+    ],
+    "settling_controls": 60,
+    "teacher_controls": 480,
+    "total_controls": 540,
+    "sdk_step_final": 4322,
+    "sdk_time_final": 9.004167136270553,
+    "ppo_updates": 0,
+    "recording_complete": true,
+    "capture_failed_after_recording": true,
+    "error": "viewport PNG existed only after asynchronous writer delay; original native capture helper failed early",
+    "outer_exit": {
+      "gdb_returncode": 255,
+      "natural_exit_passed": false,
+      "finished_time": 1794893293.1944282,
+      "signal_cleanup_not_used": true
+    },
+    "shutdown_signal": "SIGSEGV",
+    "natural_exit_qualified": false,
+    "inferred_success": false
+  },
+  "cached_render": {
+    "prepared_directory": "/mnt/mydisk/xk/dh116/runs/teacher_supported_video_20261117T052535Z/render_only_v2",
+    "status": "videos_complete_shutdown_failed",
+    "videos_complete": {
+      "videos": {
+        "pinch": {
+          "frame_count": 241,
+          "fps": 30,
+          "duration_s": 8.033333333333333,
+          "sha256": "4d868732badf3504397b17c950cdfcf77cfe848a9cd491622b2bd7a5bc34eafd",
+          "source": "recorded_native_replay",
+          "interpolated": false,
+          "counts_as_success": false,
+          "video_file": "pinch_完整动作_候选演示.mp4",
+          "recording_sha256": "d18ef8977fc204dca16fa11410c92754cc80d244584ac32389ee2793a0695abb",
+          "checkpoint_sha256": "0decd82d2492e1e31382670479855948385068d91cf57aa431489cc2b3d8b2d4",
+          "measured_height_peak_mm": 6.45032525062561,
+          "measured_height_final_mm": 6.45032525062561,
+          "support_cleared_lift_peak_mm": null,
+          "new_physics_steps": 0,
+          "new_solver_steps": 0,
+          "teacher_queries": 0,
+          "power_palm_qualified": false
+        },
+        "tripod": {
+          "frame_count": 241,
+          "fps": 30,
+          "duration_s": 8.033333333333333,
+          "sha256": "b68a68e423b53877ed8029fe5f4d2ebbba84d175f5307eb7bd018dc9f1f04c39",
+          "source": "recorded_native_replay",
+          "interpolated": false,
+          "counts_as_success": false,
+          "video_file": "tripod_完整动作_候选演示.mp4",
+          "recording_sha256": "37ac60011d7b18597e4fc4a3b36d4901b809410eb4eada9d8b911aa27f42e7dd",
+          "checkpoint_sha256": "61b2127af32885a07a6a835a30c353f7cd3fc80b617dc7e2aed3951387cfb37a",
+          "measured_height_peak_mm": 0.010669231414794922,
+          "measured_height_final_mm": -0.0006854534149169922,
+          "support_cleared_lift_peak_mm": null,
+          "new_physics_steps": 0,
+          "new_solver_steps": 0,
+          "teacher_queries": 0,
+          "power_palm_qualified": false
+        },
+        "power": {
+          "frame_count": 241,
+          "fps": 30,
+          "duration_s": 8.033333333333333,
+          "sha256": "275fac1fe0b60614ba11b6ecff31f7d69db53290aac3d0b65773bd08fbd1845e",
+          "source": "recorded_native_replay",
+          "interpolated": false,
+          "counts_as_success": false,
+          "video_file": "power_完整动作_候选演示.mp4",
+          "recording_sha256": "a558a131b602eb6f0150f120025ab666e888998a23ae47e7987aabe0934caf32",
+          "checkpoint_sha256": "a3ab4ce1468312c86511f44db51cd9f442369683957c5bb9f5339a88c055962c",
+          "measured_height_peak_mm": 21.008789539337158,
+          "measured_height_final_mm": 21.008789539337158,
+          "support_cleared_lift_peak_mm": 21.008789539337158,
+          "new_physics_steps": 0,
+          "new_solver_steps": 0,
+          "teacher_queries": 0,
+          "power_palm_qualified": false
+        }
+      },
+      "render_updates": 11567,
+      "new_physics_steps": 0,
+      "new_solver_steps": 0,
+      "teacher_queries": 0,
+      "source_directory": "runs/teacher_supported_video_20261117T052535Z",
+      "source_ledger_sha256": "29616b6d732ede3d5a8ae2cb6159d0be97550de214b741d9e9ed3c8aa6a8bb5b",
+      "success_qualification": false
+    },
+    "outer_exit": {
+      "gdb_returncode": 255,
+      "natural_exit_passed": false,
+      "finished_time": 1794894801.5798929,
+      "forced_cleanup_used": false
+    },
+    "shutdown_signal": "SIGSEGV",
+    "full_decode_verified": true,
+    "scene_prims_cpu_verified": 1191,
+    "residual_physics_properties_cpu_verified": 0,
+    "new_physics_steps": 0,
+    "new_solver_steps": 0,
+    "teacher_queries": 0,
+    "simulation_context_created": false,
+    "earlier_render_directory": "render_only_v1",
+    "earlier_render_error": "viewport did not write a frame",
+    "earlier_render_outer_exit": {
+      "gdb_returncode": 255,
+      "natural_exit_passed": false,
+      "finished_time": 1794894186.0038636,
+      "forced_cleanup_used": false
+    },
+    "current_authorized_batch": {
+      "attempt1_directory": "render_only_v2",
+      "attempt2_used": false,
+      "automatic_retry_started_by_this_publication": false
+    }
+  },
+  "local_delivery": {
+    "directory": "D:/视频/DH116_20261117T052535Z",
+    "mp4_count": 4,
+    "windows_sha_rechecked": true,
+    "proof_file": "本地校验.json",
+    "media": {
+      "pinch_完整动作_候选演示.mp4": {
+        "frame_count": 241,
+        "fps": 30.0,
+        "width": 1280,
+        "height": 720,
+        "duration_s": 8.033333333333333,
+        "sha256": "4d868732badf3504397b17c950cdfcf77cfe848a9cd491622b2bd7a5bc34eafd",
+        "decoded_all_frames": true,
+        "first_last_differ": true
+      },
+      "tripod_完整动作_候选演示.mp4": {
+        "frame_count": 241,
+        "fps": 30.0,
+        "width": 1280,
+        "height": 720,
+        "duration_s": 8.033333333333333,
+        "sha256": "b68a68e423b53877ed8029fe5f4d2ebbba84d175f5307eb7bd018dc9f1f04c39",
+        "decoded_all_frames": true,
+        "first_last_differ": true
+      },
+      "power_完整动作_候选演示.mp4": {
+        "frame_count": 241,
+        "fps": 30.0,
+        "width": 1280,
+        "height": 720,
+        "duration_s": 8.033333333333333,
+        "sha256": "275fac1fe0b60614ba11b6ecff31f7d69db53290aac3d0b65773bd08fbd1845e",
+        "decoded_all_frames": true,
+        "first_last_differ": true
+      },
+      "DH116_三抓法_完整动作_候选演示.mp4": {
+        "frame_count": 723,
+        "fps": 30.0,
+        "width": 1280,
+        "height": 720,
+        "duration_s": 24.1,
+        "sha256": "f5b41155d269fb799074846f05ec3e927743e152a95017a37f1b006a110525b9",
+        "decoded_all_frames": true,
+        "first_last_differ": true
+      }
+    },
+    "combined_duration_s": 24.1,
+    "source_frame_selection": "0,2,...,480; 241 frames at30fps; no interpolation",
+    "player_opened": true,
+    "playback_confirmation_source": "explicit user feedback relayed by main task after Windows compilation playback"
+  },
+  "metadata_attestation_utc": "2026-11-17T05:58:36.930594+00:00",
+  "evidence_sha256": {
+    "native_complete.json": "53ca660ec3835792f648970a52c5b5233d98064d519ee88b89cedfad781ecbe5",
+    "outer_exit.json": "9392f93c9ea37baa9fb9683efaa8b2a6c07f864f6a8319eec79f3ec8f41fc826",
+    "runtime_error.json": "b03cc06d96cd62356b0702bbf87248fe39b5bc8fffeb36268667b71aa23cd547",
+    "offline_visual_link_manifest_v1.json": "88aac3b068f05900d6ac3b8146351a0797a8f3f0d0df2606be84a0a1dfc8ce63",
+    "native_frames.jsonl": "29616b6d732ede3d5a8ae2cb6159d0be97550de214b741d9e9ed3c8aa6a8bb5b",
+    "render_only_v1/render_outer_exit.json": "fe0b90e74cd499694616e321ab0e8e3ab0b5a869d87e9f259621d861771dd259",
+    "render_only_v1/videos/render_error.txt": "cc51222d397c47c50ebe92406abd00a0dfc902e773baf79d4afc2cd85e56d1ca",
+    "render_only_v2/scene_manifest.json": "580d6a870ecab5ae1d571c43343f38b97f243dafe00b6399a94559598e7b6cac",
+    "render_only_v2/render_outer_exit.json": "f377bb687c8baace20f6291b2cef7d9b842801de249d758fc0dd9287b845a733",
+    "render_only_v2/videos/videos_complete.json": "689ecf3248d52d3ac03a3babbd3a59f7f80177b3322be49bf09df8569ccde582",
+    "render_only_v2/videos/delivery_verified.json": "0627e567f8947166b28e00024b1e7e3aab62825b6ef3c58d5afd1840e04ad61b"
+  },
+  "current_preview_checkpoint_sha256": {
+    "pinch": "0decd82d2492e1e31382670479855948385068d91cf57aa431489cc2b3d8b2d4",
+    "tripod": "61b2127af32885a07a6a835a30c353f7cd3fc80b617dc7e2aed3951387cfb37a",
+    "power": "a3ab4ce1468312c86511f44db51cd9f442369683957c5bb9f5339a88c055962c"
+  },
+  "historical_missing_checkpoint_paths": [
+    "/tmp/dh116-wp3-teacher128-v02/teacher_diagnostic/teacher_update_000000.pt",
+    "/tmp/dh116-wp3-teacher128-v02/teacher_diagnostic/teacher_update_000001.pt"
+  ],
+  "remaining_blockers": [
+    "native_and_render_natural_exit_failed",
+    "full_30mm_5s_0_5mm_bilateral_grasp_not_qualified",
+    "finger12_event_window_not_qualified",
+    "power_palm_contact_not_qualified",
+    "stereo_training_data_not_qualified",
+    "historical_checkpoint_paths_missing"
+  ],
+  "delivery_classification": "failed_contact_lift_diagnostic",
+  "user_observed_failure": {
+    "source": "explicit_user_feedback_after_Windows_compilation_playback",
+    "playback_seen_by_user": true,
+    "observation": "根本没抓住，只是灵巧手本身往上走",
+    "classification": "failed_contact_and_lift_diagnostics_not_successful_teacher_demonstrations",
+    "power_21mm_is_sustained_grasp_evidence": false,
+    "next_contact_analysis_scope": "separate cache-only diagnostic work package; no new native or PPO"
+  }
 }

@@ -3,6 +3,7 @@ import asyncio
 import hashlib
 from pathlib import Path
 import subprocess
+import time
 
 def frame_indices(count,source_fps,target_fps):
     if (not all(isinstance(v,int) and v>0 for v in (count,source_fps,target_fps))
@@ -10,22 +11,27 @@ def frame_indices(count,source_fps,target_fps):
         raise ValueError("integer decimation must include initial and final frames")
     return list(range(0,count,source_fps//target_fps))
 
-def capture_frame(schedule,update,read_clock,path,*,max_updates=12):
+def capture_frame(schedule,update,read_clock,path,*,max_updates=12,write_timeout_s=3.0):
     """Pump render-only application updates; any native clock change aborts."""
     before=read_clock()
     loop=asyncio.get_event_loop()
     future=asyncio.ensure_future(schedule(),loop=loop)
     try:
         for _ in range(max_updates):
-            if future.done():break
+            if future.done() and Path(path).is_file() and Path(path).stat().st_size:
+                break
             update()
             if read_clock()!=before:raise RuntimeError("capture advanced physics clock")
             if not loop.is_running():loop.run_until_complete(asyncio.sleep(0))
         if not future.done():raise RuntimeError("capture update budget exhausted")
         future.result()
         if read_clock()!=before:raise RuntimeError("capture advanced physics clock")
-        if not Path(path).is_file() or not Path(path).stat().st_size:
-            raise RuntimeError("viewport did not write a frame")
+        deadline=time.monotonic()+write_timeout_s
+        while not Path(path).is_file() or not Path(path).stat().st_size:
+            if time.monotonic()>=deadline:raise RuntimeError("viewport file-write deadline exhausted")
+            if read_clock()!=before:raise RuntimeError("file wait advanced physics clock")
+            time.sleep(.01)
+        if read_clock()!=before:raise RuntimeError("file wait advanced physics clock")
     finally:
         if not future.done():
             future.cancel()
