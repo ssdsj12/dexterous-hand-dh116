@@ -25220,9 +25220,16 @@
       "native_runs": 0,
       "native_qualification": false,
       "publication": {
-        "state": "windows_publication_pending"
+        "state": "windows_publication_verified",
+        "source_commit": "b678b12b771c50d0d89958a4c15d32dc714dccaf",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "route": "Windows bare relay normal push, fetch and commit/tree/file readback",
+        "verified_at_utc": "2026-11-17T09:34:11.108298+00:00",
+        "pr2_draft": true,
+        "pr2_merged": false
       },
-      "remote_verified": false
+      "remote_verified": true
     }
   ]
 }
