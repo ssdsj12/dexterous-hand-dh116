@@ -40603,6 +40603,31 @@
         "teacher_admission": false,
         "natural_exit_qualified": false
       }
+    },
+    "teacher.cuda-frame-walk-v2": {
+      "title": "一次有界追踪CUDA上游frame链v2",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.cuda-frame-owner-trace-v1"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_cuda_frame_walk_v2.py",
+        "tests/test_teacher_cuda_frame_owners.py",
+        "tests/test_teacher_owner_diagnostics.py",
+        "tests/test_teacher_initialization_worker.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_cuda_frame_walk_v2.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-cuda-frame-walk-v2.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 496,
+        "failed": 0,
+        "skipped": 0,
+        "new_targeted_passed": 11,
+        "scope": "related CPU regression; native holder and lifecycle remain unqualified"
+      }
     }
   },
   "execution_target": {

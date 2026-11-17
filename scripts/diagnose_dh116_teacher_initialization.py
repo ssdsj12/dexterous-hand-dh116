@@ -68,7 +68,7 @@ def write_owner_probe(output,reference,phase):
     try:
         write_new(Path(output)/(phase+".owner_edges.json"),
             probe_simulation_owner_edges(reference,max_referrers=16,max_frame_depth=4,
-                                         trace_cuda_init_owners=True))
+                                         trace_cuda_init_owners=True,cuda_frame_owner_budget=8))
     except Exception as error:
         # A diagnostic write failure must not bypass clear/STOP/app.close.
         # Only text escapes; the probe drops all temporary object/frame aliases.
@@ -160,6 +160,8 @@ def external_input_paths(root):
     isaac=Path('/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim')
     paths.extend([
         Path('/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/cuda/__init__.py'),
+        Path('/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/__init__.py'),
+        Path('/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/library.py'),
         isaac/'exts/isaacsim.core.simulation_manager/isaacsim/core/simulation_manager/impl/simulation_manager.py',
         isaac/'exts/isaacsim.simulation_app/isaacsim/simulation_app/simulation_app.py',
         Path('/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/app/app_launcher.py'),

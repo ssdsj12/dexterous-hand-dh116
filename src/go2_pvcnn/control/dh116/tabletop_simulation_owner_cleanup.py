@@ -138,32 +138,51 @@ def _frame_callers(frame,limit):
         current=frame=None
 
 
-def _probe_cuda_frame_owners(frame,*,excluded_ids,max_referrers):
-    """Describe one additional Python-owner level; never retain or clear frames."""
-    parents=parent=None
+def _probe_cuda_frame_owners(frame,*,excluded_ids,max_referrers,max_frames=1):
+    """Walk only frame referrers with a hard node budget; emit scalar records."""
+    pending=parents=parent=current=None
     try:
-        parents=gc.get_referrers(frame)
-        descriptions=[]
-        for i in range(min(len(parents),max_referrers)):
-            parent=parents[i]
-            if id(parent) in excluded_ids:continue
-            if (type(parent) is types.FrameType and parent.f_code.co_filename==__file__
-                    and parent.f_code.co_name in ("probe_simulation_owner_edges","_probe_cuda_frame_owners")):
-                continue
-            descriptions.append(_describe_referrer(parent,frame))
-        return dict(frame=_describe_referrer(frame,None),owners=descriptions,
-            enumerated_count=len(parents),scanned_count=min(len(parents),max_referrers),
-            truncated=len(parents)>max_referrers,
-            observation="python_owners_observed" if descriptions else "no_visible_python_owner",
-            count_scope="scanned non-diagnostic Python referrers only; native holders may be invisible",
-            native_owner_qualified=False)
+        pending=[(frame,0,None)]
+        queued_ids={id(frame)}
+        packets=[]
+        duplicates=0
+        while pending and len(packets)<max_frames:
+            current,depth,previous_id=pending.pop(0)
+            parents=gc.get_referrers(current)
+            descriptions=[]
+            for i in range(min(len(parents),max_referrers)):
+                parent=parents[i]
+                if id(parent) in excluded_ids or parent is pending:continue
+                if (type(parent) is types.FrameType and parent.f_code.co_filename==__file__
+                        and parent.f_code.co_name in ("probe_simulation_owner_edges","_probe_cuda_frame_owners")):
+                    continue
+                descriptions.append(_describe_referrer(parent,current))
+                if type(parent) is types.FrameType:
+                    identity=id(parent)
+                    if identity in queued_ids:
+                        duplicates+=1
+                    else:
+                        queued_ids.add(identity)
+                        pending.append((parent,depth+1,id(current)))
+            packets.append(dict(frame=_describe_referrer(current,None),owners=descriptions,
+                parent_frame_id=previous_id,depth_from_cuda_frame=depth,
+                enumerated_count=len(parents),scanned_count=min(len(parents),max_referrers),
+                truncated=len(parents)>max_referrers,
+                observation="python_owners_observed" if descriptions else "no_visible_python_owner",
+                count_scope="scanned non-diagnostic Python referrers only; native holders may be invisible",
+                native_owner_qualified=False))
+            parents=parent=current=None
+        return dict(packets=packets,frames_followed=len(packets),
+            frame_walk_truncated=bool(pending),
+            pending_frame_candidates_at_limit=len(pending),
+            frame_walk_duplicates_skipped=duplicates)
     finally:
-        frame=parents=parent=None
+        frame=pending=parents=parent=current=None
 
 
 def probe_simulation_owner_edges(reference,*,max_referrers=16,max_frame_depth=4,
-                                 trace_cuda_init_owners=False):
-    """Scalar two-hop trace, optionally following one upstream CUDA-init frame.
+                                 trace_cuda_init_owners=False,cuda_frame_owner_budget=1):
+    """Scalar two-hop trace with an optional bounded upstream CUDA-frame walk.
 
     Never reads f_locals, clears frames, collects objects or follows native
     threads. gc.get_referrers enumerates Python owners, not all C++ holders.
@@ -177,15 +196,19 @@ def probe_simulation_owner_edges(reference,*,max_referrers=16,max_frame_depth=4,
         raise ValueError("max_frame_depth must be 1..8")
     if type(trace_cuda_init_owners) is not bool:
         raise ValueError("trace_cuda_init_owners must be boolean")
+    if type(cuda_frame_owner_budget) is not int or not 1<=cuda_frame_owner_budget<=8:
+        raise ValueError("cuda_frame_owner_budget must be 1..8")
     cuda_seen_ids=set()
     target=direct=owner=upstream=parent=None
     result=dict(version=VERSION,alive=None,direct_referrers=[],selected_owner_edges=[],
         root_cause_proven=False,native_release_verified=False,native_thread_attribution=None,
-        frame_locals_read=False,diagnostic_handles_retained=False,max_hops=3 if trace_cuda_init_owners else 2,
+        frame_locals_read=False,diagnostic_handles_retained=False,max_hops=2+cuda_frame_owner_budget if trace_cuda_init_owners else 2,
         max_referrers=max_referrers,max_frame_depth=max_frame_depth,
         enumeration_limit="gc.get_referrers enumerates all direct Python referrers; descriptions and traversal are bounded")
     if trace_cuda_init_owners:
-        result["cuda_frame_owner_trace"]=dict(max_frames=1,frames_followed=0,
+        result["cuda_frame_owner_trace"]=dict(max_frames=cuda_frame_owner_budget,frames_followed=0,
+            root_frames_followed=0,frame_walk_truncated=False,
+            pending_frame_candidates_at_limit=0,frame_walk_duplicates_skipped=0,
             candidate_occurrences_seen=0,duplicate_candidates_skipped=0,
             additional_candidates_not_followed=0,selector="_lazy_init function name",
             selector_is_not_source_qualification=True)
@@ -224,13 +247,18 @@ def probe_simulation_owner_edges(reference,*,max_referrers=16,max_frame_depth=4,
                     identity=id(parent)
                     if identity in cuda_seen_ids:
                         stats["duplicate_candidates_skipped"]+=1
-                    elif stats["frames_followed"]>=1:
+                    elif stats["root_frames_followed"]>=1:
                         stats["additional_candidates_not_followed"]+=1
                     else:
                         cuda_seen_ids.add(identity)
-                        frame_owner_packets.append(_probe_cuda_frame_owners(parent,
-                            excluded_ids={id(direct),id(upstream)},max_referrers=max_referrers))
-                        stats["frames_followed"]+=1
+                        walk=_probe_cuda_frame_owners(parent,
+                            excluded_ids={id(direct),id(upstream)},max_referrers=max_referrers,
+                            max_frames=cuda_frame_owner_budget)
+                        frame_owner_packets.extend(walk["packets"])
+                        for key in ("frames_followed","frame_walk_truncated",
+                                    "pending_frame_candidates_at_limit","frame_walk_duplicates_skipped"):
+                            stats[key]=walk[key]
+                        stats["root_frames_followed"]+=1
             result["selected_owner_edges"].append(dict(direct=description,upstream=summaries,
                 upstream_referrer_count=visible,
                 upstream_count_scope="scanned non-diagnostic owners",
