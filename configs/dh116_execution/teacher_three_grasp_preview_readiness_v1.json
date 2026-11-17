@@ -1,0 +1,27 @@
+{
+  "version": "dh116-three-teacher-preview-readiness-v1",
+  "cpu_tests": {
+    "passed": 6,
+    "failed": 0
+  },
+  "native_stream_received": true,
+  "button_switch_receipts": [
+    "pinch",
+    "tripod",
+    "power"
+  ],
+  "pose_sync_native_qualified": false,
+  "natural_exit_qualified": false,
+  "full_grasp_success_qualified": false,
+  "ppo_updates": 0,
+  "blocked_by": [
+    "published_reference_pose_vs_teacher_candidate_provenance",
+    "post_context_usd_sync_not_native_verified",
+    "natural_exit_not_qualified",
+    "publish_branch_and_uncommitted_runtime_dependencies"
+  ],
+  "protected_checkpoint_sha256_unchanged": true,
+  "failed_preview_cleaned_with_user_approval": true,
+  "new_native_launch_performed_after_github_audit": false,
+  "github_pose_reference_sha256": "da3d5a6fdd5e8bb4f5db1911a3659ad3b2b92c2fb99511e4ccbc055d3600512e"
+}

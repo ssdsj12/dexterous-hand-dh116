@@ -22,6 +22,7 @@ SCHEMA_SHA256 = hashlib.sha256((SCHEMA_VERSION + ":owned-clock-measurement-reque
 SUCCESS = MappingProxyType({"net_lift_m": .03, "hold_s": 5., "max_slip_m": .0005})
 SMOKE = "approach_wiring_smoke_v1"
 FULL = "flexible_train_r1_full"
+CURRICULUM = "flexible_train_curriculum_v1"
 _SCOPES = ("cpu_fixture", "unqualified_source")
 _BASE_UNITS = {"distance": "m", "numerical_health": "dimensionless", "constraint_failure": "dimensionless"}
 _FULL_UNITS = {"median_z": "m", "min_z": "m", "coverage_left": "dimensionless", "coverage_right": "dimensionless",
@@ -218,11 +219,12 @@ class RewardConfig:
     schema_sha256: str
     cost_max_per_second: float
     discounted_cost_bound: float
+    success: Mapping = field(default_factory=lambda: SUCCESS)
     # Data construction/replacement cannot inherit the loader's source binding.
     _source_path: str | None = field(default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self):
-        for name in ("ppo", "weights", "costs", "events"):
+        for name in ("ppo", "weights", "costs", "events", "success"):
             object.__setattr__(self, name, MappingProxyType(dict(getattr(self, name))))
 
     @property
@@ -231,9 +233,10 @@ class RewardConfig:
 
 
 def _profile_spec(profile):
-    full = profile == FULL
+    full = profile in (FULL, CURRICULUM)
     weights = {"distance": 2., "contact": 2., "persistence": .5, "geometry": 1., "lift": 4., "hold": 4.} if full else {"distance": 2.}
-    costs = {"command_rate": .05, "time": .10, "slip": 1. if full else None, "velocity": 0. if full else None}
+    slip_cost = 0.25 if profile == CURRICULUM else (1. if profile == FULL else None)
+    costs = {"command_rate": .05, "time": .10, "slip": slip_cost, "velocity": 0. if full else None}
     events = {"trusted_constraint_failure": -40., "prohibited_support": -50. if full else None, "success": 100. if full else None}
     ppo = dict(gae_lambda=.97 if full else .95, rollout_steps=256 if full else 32,
                learning_rate=1e-4, epochs=3 if full else 1, minibatches=4 if full else 1,
@@ -274,7 +277,7 @@ def _sha256_text(value):
 
 
 def _validate_reward_config(config):
-    if not _identity_text(config.profile) or config.profile not in (SMOKE, FULL):
+    if not _identity_text(config.profile) or config.profile not in (SMOKE, FULL, CURRICULUM):
         raise ValueError("loaded approved config profile required")
     if type(config.profile_version) is not int or config.profile_version != 1:
         raise ValueError("exact approved config version required")
@@ -287,7 +290,8 @@ def _validate_reward_config(config):
     _config_mapping(config.costs, costs, "costs")
     _config_mapping(config.events, events, "events")
     gamma = _config_ppo(config.ppo, ppo)
-    maximum = .05 + .10 + (2. if config.profile == FULL else 0.)
+    slip_max = 2. * config.costs["slip"] if config.profile in (FULL, CURRICULUM) else 0.
+    maximum = .05 + .10 + slip_max
     bound = maximum / (CONTROL_HZ * (1. - gamma))
     if (not _finite(config.cost_max_per_second)
             or not math.isclose(config.cost_max_per_second, maximum, rel_tol=0, abs_tol=1e-12)):
@@ -311,9 +315,14 @@ def load_config(path, *, ppo_gamma=None):
     if data.get("gamma_source") != "ppo.gamma" or "reward_gamma" in data or "gamma" in data:
         raise ValueError("reward gamma must come only from ppo.gamma")
     profile = data.get("profile")
-    if not _identity_text(profile) or profile not in (SMOKE, FULL):
+    if not _identity_text(profile) or profile not in (SMOKE, FULL, CURRICULUM):
         raise ValueError("independent approved reward profile required")
-    if data.get("success") != SUCCESS:
+    success = data.get("success")
+    if profile == CURRICULUM:
+        if (type(success) is not dict or set(success) != set(SUCCESS)
+                or any(not _finite(success[k]) or success[k] <= 0 for k in SUCCESS)):
+            raise ValueError("positive finite curriculum success thresholds required")
+    elif success != SUCCESS:
         raise ValueError("original success thresholds are immutable")
     if (data.get("schema_sha256") != SCHEMA_SHA256 or data.get("design_document_sha256") != DESIGN_SHA256
             or data.get("weight_status") != "design_approved_native_unverified"
@@ -333,12 +342,13 @@ def load_config(path, *, ppo_gamma=None):
     _config_mapping(data.get("potential_weights"), weights, "weights")
     _config_mapping(data.get("costs_per_second"), costs, "costs")
     _config_mapping(data.get("events"), events, "events")
-    maximum = .05 + .10 + (2. if profile == FULL else 0.)
+    slip_max = 2. * costs["slip"] if profile in (FULL, CURRICULUM) else 0.
+    maximum = .05 + .10 + slip_max
     bound = maximum / (CONTROL_HZ * (1. - gamma))
     if abs(events["trusted_constraint_failure"]) < bound:
         raise ValueError("failure penalty does not cover discounted cost bound; recompute approved bounds")
     result = RewardConfig(profile, 1, ppo, weights, costs, events, hashlib.sha256(raw).hexdigest(),
-                          SCHEMA_SHA256, maximum, bound)
+                          SCHEMA_SHA256, maximum, bound, success)
     _validate_reward_config(result)
     object.__setattr__(result, "_source_path", str(source_path))
     return result
@@ -523,7 +533,7 @@ class TrainingReward:
             if row.target_ids != self._last.target_ids:
                 raise SourceFailure("episode material target IDs changed")
         units = dict(_BASE_UNITS)
-        if self.config.profile == FULL:
+        if self.config.profile in (FULL, CURRICULUM):
             units.update(_FULL_UNITS)
         guards = frozenset(name for name in row.fields if name.startswith("original_guard_"))
         if reset:
@@ -534,7 +544,7 @@ class TrainingReward:
         values = {name: self._measurement(row, name, unit).raw for name, unit in units.items()}
         if values["distance"] < 0:
             raise SourceFailure("nonnegative actual distance required")
-        if self.config.profile == FULL:
+        if self.config.profile in (FULL, CURRICULUM):
             pads = row.required_pad_ids
             if (len(pads) != 2 or any(not _identity_text(side) for side, _ in pads)
                     or {side for side, _ in pads} != {"left", "right"}
@@ -653,7 +663,7 @@ class TrainingReward:
         terms = {name: _excluded() for name in ("distance", "contact", "persistence", "geometry", "lift", "hold", "slip", "velocity", "prohibited_support", "task_deadline")}
         terms["distance"] = _term(values["distance"], "m", src("distance"), 2. * pd)
         phi = 2. * pd
-        if self.config.profile == FULL:
+        if self.config.profile in (FULL, CURRICULUM):
             tick = row.stamp.physics_tick
             contact = values["coverage_left"] == values["coverage_right"] == 1 and values["opposed_left"] and values["opposed_right"]
             self._contact_start = (tick if self._contact_start is None else self._contact_start) if contact else None
@@ -662,15 +672,28 @@ class TrainingReward:
             median_delta = _source_value(values["median_z"] - self._reset_median)
             min_delta = _source_value(values["min_z"] - self._reset_min)
             h = min(median_delta, min_delta)
+            succ = self.config.success
+            is_curr = self.config.profile == CURRICULUM
             genuine = contact and values["bilateral_support"] and values["off_table"] and values["no_external_support"] and not values["prohibited_support"]
-            pl = _source_math(_clip, h / SUCCESS["net_lift_m"]) if genuine else 0.
-            hold = (genuine and h >= SUCCESS["net_lift_m"] and values["hold_motion"] and self._slip_status is True
-                    and values["numerical_health"] and not values["constraint_failure"])
-            self._hold_start = (tick if self._hold_start is None else self._hold_start) if hold else None
-            self._hold_s = _source_value(0. if self._hold_start is None else (tick - self._hold_start) / PHYSICS_HZ)
+            if is_curr:
+                lift_h = 0.5 * (median_delta + min_delta)
+                lift_ok = values["bilateral_support"] and values["no_external_support"] and not values["prohibited_support"]
+                pl = _source_math(_clip, lift_h / succ["net_lift_m"]) if lift_ok else 0.
+                hold = (lift_ok and lift_h >= succ["net_lift_m"] and values["hold_motion"]
+                        and self._slip_status is not False and values["numerical_health"] and not values["constraint_failure"])
+                if hold:
+                    self._hold_s = _source_value(self._hold_s + 1. / PHYSICS_HZ)
+                else:
+                    self._hold_s = _source_value(max(0., self._hold_s - 2. / PHYSICS_HZ))
+            else:
+                pl = _source_math(_clip, h / succ["net_lift_m"]) if genuine else 0.
+                hold = (genuine and h >= succ["net_lift_m"] and values["hold_motion"] and self._slip_status is True
+                        and values["numerical_health"] and not values["constraint_failure"])
+                self._hold_start = (tick if self._hold_start is None else self._hold_start) if hold else None
+                self._hold_s = _source_value(0. if self._hold_start is None else (tick - self._hold_start) / PHYSICS_HZ)
             pc = (values["coverage_left"] + values["coverage_right"]) / 2.
             pg = (values["opposed_left"] + values["opposed_right"]) / 2.
-            pp, ph = _source_math(_clip, self._contact_s / .25), _source_math(_clip, self._hold_s / SUCCESS["hold_s"])
+            pp, ph = _source_math(_clip, self._contact_s / .25), _source_math(_clip, self._hold_s / succ["hold_s"])
             terms.update(contact=_term(pc, "coverage_fraction", src("coverage_left") + ";" + src("coverage_right"), 2. * pc),
                          persistence=_term(self._contact_s, "s", "derived:continuous_required_bilateral_original_opposed", .5 * pp),
                          geometry=_term(pg, "dimensionless", src("opposed_left") + ";" + src("opposed_right"), pg),
@@ -684,7 +707,7 @@ class TrainingReward:
         for name in values:
             m = row.fields[name]
             terms["raw:" + name] = _term(m.raw, m.unit, m.stamp.source, applicable=m.applicable, history_reason=m.history_reason, valid=m.valid)
-        for a in row.anchors if self.config.profile == FULL else ():
+        for a in row.anchors if self.config.profile in (FULL, CURRICULUM) else ():
             for name, m in (("drift", a.drift), ("uncertainty", a.uncertainty)):
                 terms["raw:anchor:" + a.side + ":" + a.kind + ":" + name] = _term(m.raw, m.unit, m.stamp.source)
         return _source_value(phi), MappingProxyType(terms)
@@ -742,9 +765,11 @@ class TrainingReward:
             if not values["numerical_health"]: failures.append("numerical_health")
             if values["constraint_failure"]: failures.append("constraint_failure")
             failures.extend(n for n, v in values.items() if n.startswith("original_guard_") and v)
-            full = self.config.profile == FULL
+            full = self.config.profile in (FULL, CURRICULUM)
             if full and values["prohibited_support"]: failures.append("prohibited_support")
-            cost = .05 * self._qcmd + .10 + (_source_math(_clip, self._slip / .0005, 0., 2.) if full and self._slip is not None else 0.)
+            slip_w = (self.config.costs["slip"] or 0.) if full else 0.
+            slip_thr = self.config.success["max_slip_m"]
+            cost = .05 * self._qcmd + .10 + (slip_w * _source_math(_clip, self._slip / slip_thr, 0., 2.) if full and self._slip is not None else 0.)
             _source_value(cost)
             self._costs.append(cost)
             costs = MappingProxyType({"command_rate": _term(self._qcmd, "dimensionless", self._request.stamp.source, .05 * self._qcmd / PHYSICS_HZ),
@@ -756,7 +781,7 @@ class TrainingReward:
                 self._event = -50. if "prohibited_support" in failures else -40.
                 self._reasons = tuple(failures)
                 self._terminal = True
-            elif full and self._hold_s >= SUCCESS["hold_s"]:
+            elif full and self._hold_s >= self.config.success["hold_s"]:
                 self._event, self._reasons, self._terminal = 100., ("success",), True
             self._last, self._phi, self._terms = endpoint, phi, terms
             self._previous = self._request.values
@@ -784,9 +809,9 @@ class TrainingReward:
                      ";".join(self._last.fields[n].stamp.source for n in self._reasons if n in self._last.fields),
                      self._event if self._event < 0 and "prohibited_support" not in self._reasons else 0.),
                 "prohibited_support": _term(self._last.fields["prohibited_support"].raw, "dimensionless",
-                     self._last.fields["prohibited_support"].stamp.source, self._event if "prohibited_support" in self._reasons else 0.) if self.config.profile == FULL else _excluded(),
+                     self._last.fields["prohibited_support"].stamp.source, self._event if "prohibited_support" in self._reasons else 0.) if self.config.profile in (FULL, CURRICULUM) else _excluded(),
                 "success": _term(self._event == 100., "dimensionless", "derived:independent_reward_hold_predicate",
-                     self._event if self._event > 0 else 0.) if self.config.profile == FULL else _excluded()})
+                     self._event if self._event > 0 else 0.) if self.config.profile in (FULL, CURRICULUM) else _excluded()})
             packet = RewardPacket(token, self._request.policy_uid, self.config.profile, self.config.profile_version,
                 self.config.config_sha256, SCHEMA_SHA256,
                 _source_math(control_total, self._phi_pre, self._phi, self._costs, self.config.gamma, self._event, self._terminal),

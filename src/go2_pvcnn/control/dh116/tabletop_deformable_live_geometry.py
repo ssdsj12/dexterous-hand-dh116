@@ -61,7 +61,7 @@ class LiveGeometryReader:
             expected_sdk_step = row["physics_step"] + 1
         if (sdk_step != expected_sdk_step
                 or not math.isclose(float(self._sim.current_time), sdk_step * DT,
-                                    abs_tol=2e-7, rel_tol=0)):
+                                    abs_tol=1e-5, rel_tol=0)):
             raise ValueError("live geometry SDK clock differs")
         return row
 

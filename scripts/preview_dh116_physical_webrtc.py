@@ -320,6 +320,7 @@ def main(argv=None):
     parser.add_argument("--contract",type=Path)
     parser.add_argument("--contract-sha256")
     parser.add_argument("--output",type=Path)
+    parser.add_argument("--no-fast-exit",action="store_true",help="use normal Python Py_FinalizeEx teardown instead of os._exit(0) after app.close()")
     args=parser.parse_args(argv)
     if args.camera_backend is not None and not args.freeze:
         parser.error("camera backend is freeze-only; use the authorized contract")
@@ -350,6 +351,10 @@ def main(argv=None):
         parser.error("contract SHA differs")
     contract=verify(ROOT,json.loads(args.contract.read_text()))
     execute(contract,args.output)
+    if not args.no_fast_exit:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(0)
     return 0
 
 

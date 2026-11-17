@@ -1,0 +1,26 @@
+{
+  "version": "dh116-three-teacher-preview-v1",
+  "source_sha256": "f76d42c53bd7adb904f5d7e28741f83657fe688db7b5f64d66a436e60cecf9d6",
+  "checkpoints": {
+    "pinch": "runs/gpu_teacher_ppo/ppo16-d293fc6e/best.pt",
+    "tripod": "runs/gpu_teacher_ppo/ppo16-tripod-a9469516/best.pt",
+    "power": "runs/gpu_teacher_ppo/ppo16-power-8d465cfc/best.pt"
+  },
+  "checkpoint_sha256": {
+    "pinch": "0decd82d2492e1e31382670479855948385068d91cf57aa431489cc2b3d8b2d4",
+    "tripod": "61b2127af32885a07a6a835a30c353f7cd3fc80b617dc7e2aed3951387cfb37a",
+    "power": "a3ab4ce1468312c86511f44db51cd9f442369683957c5bb9f5339a88c055962c"
+  },
+  "actor_observation_dim": 67,
+  "action_dim": 24,
+  "ppo_updates": 0,
+  "viewer_is_success_qualification": false,
+  "display_sync": "isolated_visual_copy_v1",
+  "camera_only_button": true,
+  "display_uses_actual_solver_nodes": true,
+  "source_is_read_only": true,
+  "display_is_preview_only": true,
+  "usable_for_training_rgb_labels": false,
+  "physical_step_limit": 3842,
+  "control_step_limit_per_env": 480
+}

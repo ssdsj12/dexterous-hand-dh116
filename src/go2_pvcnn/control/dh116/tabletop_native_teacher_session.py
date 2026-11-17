@@ -64,7 +64,12 @@ class LiveContract:
     verification: dict
 
 
-def native_reset_source_limits():
+def native_reset_source_limits(*,long_clock=False):
+    if long_clock:
+        return dict(schema="dh116-mesh-reset-clock-v2-limits",max_reset_sdk_step=100000,
+            long_term_reset_supported=True,policy_interval_sdk_cap=None,
+            reader="tabletop_long_clock_v2._clock_long",
+            blocked_reason=None,release_condition="long_clock_v2_enabled")
     return dict(schema="dh116-mesh-reset-clock-v1-limits",max_reset_sdk_step=240,
         long_term_reset_supported=False,policy_interval_sdk_cap=None,
         reader="tabletop_mesh_reset_order._clock",
@@ -72,8 +77,8 @@ def native_reset_source_limits():
         release_condition="independent budget/profile/actual-clock Reset reader v2; frozen v1 remains unchanged")
 
 
-def reset_clock_preflight(owner):
-    limits=native_reset_source_limits()
+def reset_clock_preflight(owner,*,long_clock=False):
+    limits=native_reset_source_limits(long_clock=long_clock)
     step=owner.sim.current_time_step_index
     if type(step) is not int or step<0:raise ValueError("actual absolute SDK Reset clock required")
     if step>limits["max_reset_sdk_step"]:

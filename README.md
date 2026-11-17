@@ -1,3 +1,7 @@
+## 11-17 source snapshot
+
+Current Ubuntu runtime code and preview diagnostics are frozen on branch11-17, with87 CPU tests passing. Teacher empty-hand ascent, full Power grasp, paired-RGB preview and native shutdown remain unresolved; this is not a successful model release. See [snapshot report](docs/releases/2026-11-17-source-snapshot.md).
+
 ## 2026-11-17: failed contact/Lift diagnostic videos; no successful Teacher grasp
 
 The user watched the compilation and confirmed the hands rose without grasping

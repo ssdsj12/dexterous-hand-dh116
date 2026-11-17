@@ -1,0 +1,95 @@
+{
+  "version": "dh116-11-17-source-snapshot",
+  "base_development_head": "ccd87fd282901f05387a566d254bca7850c66a4d",
+  "ubuntu_source_branch": "11-16",
+  "ubuntu_source_head": "e85a3ef032ef5316cb947372ab6d7dcfbc60bd7d",
+  "target_branch": "11-17",
+  "source_sha256": {
+    "configs/dh116_execution/teacher_three_grasp_preview_readiness_v1.json": "09c20031cf34351a37a71c7723d9a1a69cdc122d789ee7f3b4c388b2c9c02718",
+    "configs/dh116_execution/teacher_three_grasp_preview_v1.json": "ef250656cc87a9f083cecbf5f4f0b42db924e25427423fb3f3da12a8b2e9ed3e",
+    "configs/dh116_tasks/flexible_pinch_undamped_v1.json": "5843f88dc38aac8ed55706a9cfa03ff09302089be46fd1627b96e1c1ab7a1ca7",
+    "configs/dh116_training/flexible_train_curriculum_stage1.json": "6f406590c702e38f78b4618006553947f909a2c52777e723cac5a876bdcdbee4",
+    "configs/dh116_training/gpu_teacher_style_seeds_v1.json": "3d2f11a36560c57c4bbc245d49a97f1986c6a8eac8e278b7412f39e135068f1e",
+    "scripts/preview_dh116_physical_webrtc.py": "d73cd66b909dd7071b38dd4a3d683e881f521199e2e1b4442b61acd9c2bb9df1",
+    "scripts/record_dh116_teacher_lift_videos.py": "6ace11ef2c56e38c6041aa86c5329d9f584ad96c94c755cebdda1947677d01ab",
+    "scripts/run_dh116_flexible_pinch_lift_demo.py": "b6ef50563bb02487fd501c178dd180bba8abfb30b6bde4ad0e5df0135ff6de03",
+    "scripts/run_dh116_gpu_fast_pinch_lift.py": "2f3c7ab3319b76663ecb9963e97f4d8671ed6fdb3d782949814a38efa5c7e39b",
+    "scripts/train_dh116_gpu_stereo_student.py": "91f9eb6b4937589fc352bef33d204bd02e23c458f0ad5b894db524e6a92e63d1",
+    "scripts/train_dh116_gpu_teacher_ppo.py": "f76d42c53bd7adb904f5d7e28741f83657fe688db7b5f64d66a436e60cecf9d6",
+    "scripts/view_dh116_teacher_grasps_webrtc.py": "be54e59034bc4331c1e395648eadceb13c307aa8ea9beb33531dad00bf33144d",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_clearance_guard.py": "f688a6aab2d849c5854ec0460ef4d6dbaddff53f219aaf0ee05c6384b30ee98b",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_dual_evidence.py": "31556f89247a6373f3029fa9b9185cf5d24ba8dad396b7fc940893240f93c66a",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_dual_hand_episode.py": "0c6275db803a5278ac7683b3f7e134754d1ac9a41f8ab198fc920bbdd5b953f7",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_runtime.py": "088fc1c3f91094b4337898ccd93d49c4b08e856069795352db1086597813480e",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_live_geometry.py": "a9ed93cd9a5da8c5071e6c7342b3fcf5017a5cec00e89045e94b1735a9264cb2",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_physical_exchange.py": "a0f3bd746da65fb9bdd7d59c997462e1d8b5470246548c3d4abf079ab07979b4",
+    "src/go2_pvcnn/control/dh116/tabletop_dual_pinch_builder.py": "b0d0fed79dddf88863a4c0e1a1ed10574158f340f3f30165e9f86ee7b1000ed9",
+    "src/go2_pvcnn/control/dh116/tabletop_long_clock_v2.py": "7463ed968538742700e9dda3a76a27207a1034163e182937b1401bcba161c0b4",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_session.py": "6135b4efa5ab02addd6e6e560bbd259cdcf687d0c5adef4be0ea7a37b3284a06",
+    "src/go2_pvcnn/control/dh116/tabletop_preview_extension_cache.py": "a5301e164ea49eee8f4694e888b1dcc5bf992f445ed8f830c73bcc331c40d918",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_grasp_preview_runtime.py": "329ac967c45f89f469d8e16c93445d49690d6c272b68b9ac51a2cdf1b6bf7fb6",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_supported_runtime.py": "59ab5b712b281138b47a6af8adb0f04440fb62836037b31be910985ee0341262",
+    "src/go2_pvcnn/control/dh116/tabletop_training_reward.py": "cc331efd9922ffb1da2e1ae35399e0f6ff04be4c3ef2547b189683a9bf5de53d",
+    "tests/test_dh116_curriculum_and_fixes.py": "7c5249f25f013f84176a009f7cd8db724beaee75951ce4f3850f1fd33f422a71",
+    "tests/test_teacher_grasp_preview_runtime.py": "896493d5bc7ba83deb11c3d99e733b2ef0fb71a0a2a1d53374027beed568caf6",
+    "tests/test_teacher_supported_runtime.py": "87033d4df020d17084750aefdd7dd2244f3c922174442ae80b7a988f34eba611"
+  },
+  "skipped_historical_deletions": 809,
+  "raw_models_uploaded": false,
+  "raw_native_data_uploaded": false,
+  "preview_only_scripts_omitted": [
+    "scripts/demo_grasps_stream.py",
+    "scripts/demo_grasps_approach.py",
+    "scripts/demo_grasps_with_approach.py"
+  ],
+  "exclusions": [
+    "runs/",
+    "NvStreamer*.etli",
+    "__pycache__/",
+    "DEPLOYMENT.txt",
+    "activate.sh",
+    "start_sim.sh",
+    ".gitignore",
+    "docs/CURRENT_PLAN.md"
+  ],
+  "teacher_grasp_qualified": false,
+  "student_training_admitted": false,
+  "power_full_wrap_qualified": false,
+  "natural_exit_qualified": false,
+  "native_budget_authorization": "none granted by source snapshot; prior experiments remain historical evidence",
+  "cpu_tests": {
+    "passed": 87,
+    "failed": 0,
+    "skipped": 0,
+    "native_runs": 0
+  },
+  "protected_original_count": 528,
+  "protected_original_mismatches": [],
+  "protected_snapshot_mismatches": [],
+  "current_candidate_models_unchanged": {
+    "pinch": true,
+    "tripod": true,
+    "power": true
+  },
+  "known_issues": [
+    "pinch_and_tripod_empty_hand_ascent_without_bilateral_contact",
+    "power_palm_and_five_finger_wrap_not_qualified",
+    "teacher_viewer_has_no_stereo_sensor_or_left_right_RGB_panels",
+    "curriculum_candidate_10mm_0.5s_2mm_is_not_formal_30mm_5s_0.5mm_acceptance",
+    "native_shutdown_SIGSEGV_unresolved",
+    "two_historical_inventory_checkpoint_paths_previously_missing"
+  ],
+  "official_acceptance": {
+    "net_lift_m": 0.03,
+    "continuous_hold_s": 5.0,
+    "max_slip_m": 0.0005,
+    "bilateral_effective_opposed_contact": true,
+    "no_external_support": true
+  },
+  "local_runtime_observations": {
+    "candidate_teacher_dim": 67,
+    "student_proprio_dim": 39,
+    "student_two_fixed_rgb_code_present": true,
+    "equal_task_state_contract_not_qualified": true
+  }
+}

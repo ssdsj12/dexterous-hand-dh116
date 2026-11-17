@@ -126,7 +126,7 @@ class _Composers:
 
 
 def build_reset_owned(sim,owners,*,project,prepared,ownership,record,owner_resets,
-                      run_uuid,episode_uid,physics_budget_end):
+                      run_uuid,episode_uid,physics_budget_end,damping_override=None):
     """Borrowed native handles are registered in caller's NativeOwners only.
 
     This function performs exactly one counted SDK reset and one same-rod
@@ -202,7 +202,7 @@ def build_reset_owned(sim,owners,*,project,prepared,ownership,record,owner_reset
         base=owners.keep("base_runtime",FreeRodRuntime(cfg,nodes,
             {n:grids["left."+n] for n in PADS},{n:poses["left."+n] for n in PADS},
             prepared["table"]["center_m"],prepared["table"]["size_m"],
-            episode_uid=run_uuid+":construction"))
+            episode_uid=run_uuid+":construction",damping_override=damping_override))
         rod=owners.keep("runtime",DualHandRodRuntime(base,bindings=initial,
             right_grids={n:grids["right."+n] for n in PADS},
             right_poses={n:poses["right."+n] for n in PADS},run_uuid=run_uuid,env_id=prepared["env_id"],

@@ -25059,6 +25059,24 @@
         "power_21mm_is_sustained_grasp_evidence": false,
         "next_contact_analysis_scope": "separate cache-only diagnostic work package; no new native or PPO"
       }
+    },
+    {
+      "package": "release.source-snapshot-11-17",
+      "branch": "11-17",
+      "base": "ccd87fd282901f05387a566d254bca7850c66a4d",
+      "report": "docs/releases/2026-11-17-source-snapshot.md",
+      "source_manifest": "docs/contracts/dh116_11_17_source_snapshot.json",
+      "cpu_tests": {
+        "passed": 87,
+        "failed": 0,
+        "skipped": 0
+      },
+      "teacher_qualified": false,
+      "native_runs": 0,
+      "publication": {
+        "state": "pending_windows_new_branch_push",
+        "force_push": false
+      }
     }
   ]
 }
