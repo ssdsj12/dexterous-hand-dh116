@@ -1,5 +1,10 @@
 ## 2026-11-17: cached Tensor View ownership probes, not a shutdown fix claim
 
+## 2026-11-17 native cached-view failure
+
+One two-SDK-step attempt confirmed shared cached SimulationView/backend still alive after STOP; app.close returned but finalization SIGSEGV persists. Separate authorized cleanup completed; no retry or Teacher admission. See [evidence report](docs/superpowers/reports/2026-11-17-teacher-native-cached-view-failure.md).
+
+
 ## 2026-11-17 CPU fixture integrity
 
 Fixed private scheduler CLI insertion and isolated copied test archives; 124 relevant CPU cases pass. Production qualification gates, assets and models remain unchanged. Native exit/contact remain unqualified. See [report](docs/superpowers/reports/2026-11-17-teacher-cpu-fixture-integrity.md).

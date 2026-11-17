@@ -702,5 +702,10 @@
     "report": "docs/superpowers/reports/2026-11-17-teacher-tensor-owner-probe.md",
     "native_runs": 0,
     "native_release_verified": false
+  },
+  "latest_native_owner_evidence": {
+    "readiness": "docs/contracts/dh116_teacher_native_cached_view_failure_v1.json",
+    "natural_exit_qualified": false,
+    "source_commit": "a0d48b95222606bf4670d97da7d228dd7b2687f9"
   }
 }

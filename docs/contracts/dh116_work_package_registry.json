@@ -40514,6 +40514,26 @@
         "skipped": 0,
         "scope": "CPU transport/audit fixtures only; not native qualification"
       }
+    },
+    "teacher.native-cached-view-failure-v1": {
+      "title": "原生缓存Tensor View持有链失败证据",
+      "executor": "gated",
+      "dependencies": [
+        "teacher.tensor-owner-probe-v1"
+      ],
+      "status": "blocked",
+      "branch": "11-17",
+      "native_runs": 1,
+      "readiness": "docs/contracts/dh116_teacher_native_cached_view_failure_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-native-cached-view-failure.md",
+      "blocked_reason": "Native attempt consumed; SIGSEGV after app.close; retained cached views observed, causal holder unresolved",
+      "last_result": {
+        "native_runs": 1,
+        "returned_hulls": 34,
+        "qualified_hulls": 0,
+        "natural_exit_qualified": false,
+        "teacher_admitted": false
+      }
     }
   },
   "execution_target": {
