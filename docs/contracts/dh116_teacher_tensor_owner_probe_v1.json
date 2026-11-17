@@ -233,7 +233,14 @@
     "real_archive_lock_or_native_qualification_modified": false
   },
   "publication": {
-    "state": "windows_publication_pending"
+    "state": "windows_publication_verified",
+    "source_commit": "efa2dfd0bd40004871e7941edb6728cff59e8744",
+    "remote_branch": "11-17",
+    "files_verified": 13,
+    "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T10:58:38.191472+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "report": "docs/superpowers/reports/2026-11-17-teacher-tensor-owner-probe.md"
 }
