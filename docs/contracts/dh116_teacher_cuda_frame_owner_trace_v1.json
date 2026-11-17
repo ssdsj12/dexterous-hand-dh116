@@ -164,5 +164,11 @@
   "protection": {
     "checked": 528,
     "mismatches": []
+  },
+  "native_followup_evidence": {
+    "readiness": "docs/contracts/dh116_teacher_cuda_triton_native_evidence_v1.json",
+    "native_runs": 1,
+    "root_cause_proven": false,
+    "observed_next_frame": "_register_triton_kernels"
   }
 }

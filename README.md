@@ -1,5 +1,10 @@
 ## 2026-11-17: cached Tensor View ownership probes, not a shutdown fix claim
 
+## 2026-11-17 native Triton-frame evidence
+
+One approved two-SDK-step observation traced retained CUDA initialization to a Triton registration frame; finalization SIGSEGV remains. Five isolated CPU controls did not reproduce retention. Authorized cleanup finished; no retry or Teacher admission. See [report](docs/superpowers/reports/2026-11-17-teacher-cuda-triton-native-evidence.md).
+
+
 ## 2026-11-17 CUDA frame owner tracing
 
 Added an opt-in third Python-owner hop above one CUDA-init frame; original two-hop default and cleanup order stay intact. Ten red/green tests and485 related CPU cases pass. Actual native holder/root cause remain unknown. See [report](docs/superpowers/reports/2026-11-17-teacher-cuda-frame-owner-trace.md).

@@ -1,0 +1,356 @@
+{
+  "package": "teacher.cuda-triton-native-evidence-v1",
+  "branch": "11-17",
+  "source_commit": "0c342aff1dfdc3855f3c5f7fd92c4d156a99cf2f",
+  "frozen_sha256": "c75fd2880f4644088849dd5e8d194621cbc13e423706383f87aca8fd95454c0b",
+  "status": "native_SIGSEGV_upstream_triton_frame_observed",
+  "native_runs": 1,
+  "budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "pinch",
+    "sdk_setup_steps": 2,
+    "control_steps": 0,
+    "solver_steps": 0,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 180,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 0
+  },
+  "budget_consumed": true,
+  "retries": 0,
+  "initialization_readback_passed": true,
+  "actual_sdk_clocks": {
+    "before_clear": {
+      "phase": "before_clear",
+      "clock_available": true,
+      "sdk_step": 2,
+      "sdk_time_s": 0.004166666883975267,
+      "clock_consistent_with_setup": true,
+      "manager_physics_view_released": null
+    },
+    "after_stop": {
+      "phase": "after_stop",
+      "clock_available": true,
+      "sdk_step": 2,
+      "sdk_time_s": 0.004166666883975267,
+      "clock_consistent_with_setup": true,
+      "manager_physics_view_released": true
+    }
+  },
+  "returned_collision_owners": 34,
+  "returned_hulls": 34,
+  "strict_qualified_hulls": 0,
+  "app_close_returned": true,
+  "worker_wall_s": 66.9656633080449,
+  "signal": "SIGSEGV",
+  "cpp_finalize_frame_observed": true,
+  "natural_exit_qualified": false,
+  "teacher_admission": false,
+  "root_cause_proven": false,
+  "native_release_verified": false,
+  "observed_third_hop": {
+    "frame": {
+      "object_id": 125856795801152,
+      "type": "builtins.frame",
+      "kind": "frame",
+      "function": "_lazy_init",
+      "filename": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/cuda/__init__.py",
+      "line": 346
+    },
+    "owners": [
+      {
+        "object_id": 125856736607168,
+        "type": "builtins.frame",
+        "kind": "frame",
+        "function": "_register_triton_kernels",
+        "filename": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/cuda/__init__.py",
+        "line": 1676
+      }
+    ],
+    "enumerated_count": 2,
+    "scanned_count": 2,
+    "truncated": false,
+    "observation": "python_owners_observed",
+    "count_scope": "scanned non-diagnostic Python referrers only; native holders may be invisible",
+    "native_owner_qualified": false
+  },
+  "cpu_controls": [
+    {
+      "mode": "control",
+      "scene_retained": false,
+      "cuda_initialized": false,
+      "forbidden_cuda_calls": [],
+      "operator_count": 0,
+      "native_isaac_runs": 0,
+      "qualification": "CPU Torch-dispatcher model only"
+    },
+    {
+      "mode": "constructor_registration",
+      "scene_retained": false,
+      "cuda_initialized": false,
+      "forbidden_cuda_calls": [],
+      "operator_count": 2,
+      "native_isaac_runs": 0,
+      "qualification": "CPU Torch-dispatcher model only"
+    },
+    {
+      "mode": "registration_before_constructor",
+      "scene_retained": false,
+      "cuda_initialized": false,
+      "forbidden_cuda_calls": [],
+      "operator_count": 2,
+      "native_isaac_runs": 0,
+      "qualification": "CPU Torch-dispatcher model only"
+    },
+    {
+      "mode": "inside_constructor",
+      "scene_retained": false,
+      "mocked_native_initialization": [
+        "mocked_native_init"
+      ],
+      "python_initialized_flag_simulated": true,
+      "actual_cuda_initializer_called": false,
+      "operator_count": 2,
+      "native_isaac_runs": 0,
+      "qualification": "CPU Python-control model; real dispatcher, mocked CUDA initialization"
+    },
+    {
+      "mode": "before_constructor",
+      "scene_retained": false,
+      "mocked_native_initialization": [
+        "mocked_native_init"
+      ],
+      "python_initialized_flag_simulated": true,
+      "actual_cuda_initializer_called": false,
+      "operator_count": 2,
+      "native_isaac_runs": 0,
+      "qualification": "CPU Python-control model; real dispatcher, mocked CUDA initialization"
+    }
+  ],
+  "cpu_control_processes": 5,
+  "cpu_control_results_are_native_evidence": false,
+  "force_termination_used": true,
+  "force_termination_preauthorized": true,
+  "cleanup": {
+    "pids": [
+      725876,
+      725746
+    ],
+    "inferior_signal": "SIGKILL",
+    "gdb_signal": "SIGTERM",
+    "processes_gone": true,
+    "native_root_signal": "SIGSEGV",
+    "natural_exit_qualified": false,
+    "force_termination_used": true,
+    "retry": false
+  },
+  "supervisor_flag_does_not_override_cleanup_receipt": true,
+  "artifacts": [
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-plan-20261117T115223Z.json",
+      "bytes": 259616,
+      "sha256": "ce3b54da2fbef9e7c6bdd6ba401de20c144e289cf0ae3cf32c8643e4fe4e608e"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/authorization.json",
+      "bytes": 1025,
+      "sha256": "4b9beb3ded8714650109a3b5b64855220742bc9e9d5fc57bcee265fc6e4c7202"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/supervisor_provenance.json",
+      "bytes": 418,
+      "sha256": "26d82eb65e6cffa860c52c4922b9e54e4dab04cdf565713d479991aa0f6786f6"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/command.json",
+      "bytes": 1144,
+      "sha256": "077296a253a62b7c418d907bb0d217728dc7bdc1606add2f1cd15bb851414ec9"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/startup.log",
+      "bytes": 416884,
+      "sha256": "bb833896dcb94e3d31e69bb2e497eec8fd4c4705ffb69f5918cdf6922d0874bd"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/forensic.log",
+      "bytes": 712730,
+      "sha256": "9ca46bfd7db4dd516f15cc377fef1f06cf01e6588ebac0434e2756813deb29f8"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/main_bt40.txt",
+      "bytes": 1701,
+      "sha256": "bd6b89261c54a158df75e8158633efa35e79d9688ffa9dd5c0f4da96545db5d9"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/supervisor_state.json",
+      "bytes": 924,
+      "sha256": "b7ffd66ffc5ea949214f225df194d2d4274b28bbbdb1f585540a2192fba0f8bb"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/outer_exit.json",
+      "bytes": 924,
+      "sha256": "b7ffd66ffc5ea949214f225df194d2d4274b28bbbdb1f585540a2192fba0f8bb"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/cleanup_execution_authorization.json",
+      "bytes": 1267,
+      "sha256": "daf44c430d158c9b7776cc4467d8545398d37c82e4fcf0ff89caefa0b4143d90"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/cleanup_receipt.json",
+      "bytes": 250,
+      "sha256": "476fbef2d221bc2f27485aafa22b0c7a7667ac4ac16602daf8e7acbbe1fc3f89"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/triton_cpu_registration_probe.py",
+      "bytes": 1483,
+      "sha256": "ff9291276f04e0c7ae3ee8b8c28d6c12b7dda3d53f580feae04caf72f16afe5a"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/triton_cpu_lazy_init_probe.py",
+      "bytes": 1714,
+      "sha256": "d8b4098599df1771ae703e727cbf5b70873f28fc03238d4d8608c86b7ca84cab"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/cpu-control.log",
+      "bytes": 213,
+      "sha256": "d28937f2024ed205de058bb0ce0f9342b189ac466a8506a47841e9295c3850d8"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/cpu-constructor_registration.log",
+      "bytes": 230,
+      "sha256": "c61df8227729868897cdc845aad129780764843c27a317a8713817f2c241dbaa"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/cpu-registration_before_constructor.log",
+      "bytes": 237,
+      "sha256": "1ec2341be89f3af57236cbd3dcc5941b7453296a6869bd21d081f73410926919"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/cpu-lazy-inside_constructor.log",
+      "bytes": 357,
+      "sha256": "643dc11007f73a1bb7b4703b16e5a3a2afce6ef15ca4eb9433274f9a280d1d90"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/cpu-lazy-before_constructor.log",
+      "bytes": 357,
+      "sha256": "7a5af4041a8011cb0fd91825445cec9c80001a2c9708d5f77c3c119cc6106eda"
+    },
+    {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-native-20261117T115223Z/factory_owner_ids.json",
+      "bytes": 558,
+      "sha256": "01dfd13d1b17de18d15104fcaddad8f2a762b3a8d88bd63953b55a7f32d58a96"
+    },
+    {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-native-20261117T115223Z/raw_sdk_body_poses.json",
+      "bytes": 703885,
+      "sha256": "dc14a1842e87b3c53607e281c7d08f030cef3d898bea6f25a0c2ca32cac93d1f"
+    },
+    {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-native-20261117T115223Z/stored_cooked_capture.json",
+      "bytes": 264096985,
+      "sha256": "c122c87408d681166cf9a437479d0010e1a8dd335dfdf55cb7e7ec0e2610982e"
+    },
+    {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-native-20261117T115223Z/before_clear.owner_edges.json",
+      "bytes": 7300,
+      "sha256": "ec7aae6af002a0c55d1982e042838b5e67d3836b122ccfafc71d640d9d195ce4"
+    },
+    {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-native-20261117T115223Z/after_stop.owner_edges.json",
+      "bytes": 5936,
+      "sha256": "6186f3c4997a7e9418a187f5f78508d017ce21472eca2e9f401b7576d850837d"
+    },
+    {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-native-20261117T115223Z/after_stop.tensor_view_owners.json",
+      "bytes": 6311,
+      "sha256": "59acce8f5309cc01ce0412623e52dc1dc5ebdc501c09731ebed759401e6551c3"
+    },
+    {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-native-20261117T115223Z/initialization_readback.json",
+      "bytes": 6217,
+      "sha256": "ca8f3c3c75e60b4f3151101b835d0807386639ec9301be4d2e70f4c47ce15359"
+    },
+    {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-native-20261117T115223Z/result.json",
+      "bytes": 2848,
+      "sha256": "cf81447b5bdcf1da07b262f2e2ca6cec2e245e040d20f88502d0cdb51cd9b6be"
+    },
+    {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-native-20261117T115223Z/shutdown_observations.json",
+      "bytes": 449,
+      "sha256": "473728734d338f3217fb75cc94395f81f6c821bfedd5a802c1bdfedd5ed21583"
+    },
+    {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-native-20261117T115223Z/shutdown_complete.json",
+      "bytes": 134,
+      "sha256": "816860bcdb735a46e900c6a3a294ea5d32600cc7ce6ef7eb2d87aad112f02d9e"
+    }
+  ],
+  "report": "docs/superpowers/reports/2026-11-17-teacher-cuda-triton-native-evidence.md",
+  "publication": {
+    "state": "windows_publication_pending"
+  },
+  "post_native_cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_teacher_owner_diagnostics.py",
+      "tests/test_teacher_tensor_view_owners.py",
+      "tests/test_teacher_initialization_worker.py",
+      "tests/test_teacher_cuda_frame_owners.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-execution-20261117T115223Z/post-native-cpu.log",
+    "log_sha256": "dd8b65adb6ffcb840aef073d93b0ed0c9bddea28799416079b42bbb0f0d9cead",
+    "additional_native_runs": 0,
+    "passed": 151,
+    "failed": 0,
+    "skipped": 0
+  },
+  "installed_source_audit_after_run": [
+    {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/cuda/__init__.py",
+      "bytes": 61129,
+      "sha256": "4bd2da05273edd47203133b45843ece0e59234af28204f2ed5cb10d6175a4c67"
+    },
+    {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/__init__.py",
+      "bytes": 100862,
+      "sha256": "9801e75447c7f585545f989f8a21940b60e0c4cc888effb2f08e739664b4b904"
+    },
+    {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/library.py",
+      "bytes": 60839,
+      "sha256": "fc8621e3447c09f1ccc6240f2d18320d1b3d2c901b8dd24a5d8580d40a61cff1"
+    },
+    {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/_library/utils.py",
+      "bytes": 16599,
+      "sha256": "d5141a479084acb2b773f8da042e0f0258796285124a77e5b6b87fa57048b2ce"
+    }
+  ],
+  "cached_view_aliases_alive_after_STOP": 14,
+  "manager_current_after_STOP": "none",
+  "root_articulation_views_gone_after_STOP": true
+}

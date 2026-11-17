@@ -40583,6 +40583,26 @@
         "targeted_new_passed": 10,
         "scope": "related CPU regression; native holder and release unqualified"
       }
+    },
+    "teacher.cuda-triton-native-evidence-v1": {
+      "title": "原生CUDA上游Triton注册帧及退出失败证据",
+      "executor": "gated",
+      "dependencies": [
+        "teacher.cuda-frame-owner-trace-v1"
+      ],
+      "status": "blocked",
+      "branch": "11-17",
+      "native_runs": 1,
+      "readiness": "docs/contracts/dh116_teacher_cuda_triton_native_evidence_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-cuda-triton-native-evidence.md",
+      "blocked_reason": "One approved attempt consumed; SIGSEGV after app.close. Triton registration frame observed; ultimate holder unobserved. CPU controls do not reproduce native retention.",
+      "last_result": {
+        "native_runs": 1,
+        "returned_hulls": 34,
+        "qualified_hulls": 0,
+        "teacher_admission": false,
+        "natural_exit_qualified": false
+      }
     }
   },
   "execution_target": {
