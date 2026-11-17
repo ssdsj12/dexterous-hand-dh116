@@ -40534,6 +40534,30 @@
         "natural_exit_qualified": false,
         "teacher_admitted": false
       }
+    },
+    "teacher.cleanup-suggestions-verification-v1": {
+      "title": "外部释放与CUDA初始化建议的本机CPU核验",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_cleanup_suggestions.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_cleanup_suggestions_verification_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-cleanup-suggestions-verification.md",
+      "execution_requirements": {
+        "DH116_INSTALLED_SDK_AUDIT": "1",
+        "CUDA_VISIBLE_DEVICES": "",
+        "scope": "read installed Python source and mock native calls; missing opt-in is not a pass"
+      },
+      "last_result": {
+        "passed": 60,
+        "targeted_passed": 8,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "installed-source CPU verification; not GPU/PhysX lifecycle qualification"
+      }
     }
   },
   "execution_target": {

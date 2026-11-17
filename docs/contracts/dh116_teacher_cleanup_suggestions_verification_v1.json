@@ -1,0 +1,155 @@
+{
+  "package": "teacher.cleanup-suggestions-verification-v1",
+  "branch": "11-17",
+  "base_commit": "ad1fd01862871c414b4a5acba76c61bb7e9c2304",
+  "status": "offline_verified_native_cause_unresolved",
+  "timestamp_utc": "2026-11-17T11:38:01.433520+00:00",
+  "test_source_sha256": "f8f0a987217e4209b905d49a7e2404b34816c53f1d96bd200655683aba20a51f",
+  "cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_teacher_cleanup_suggestions.py",
+      "tests/test_teacher_owner_diagnostics.py",
+      "tests/test_teacher_tensor_view_owners.py",
+      "tests/test_teacher_cooked_readback_audit.py",
+      "tests/test_simulation_owner_cleanup.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "elapsed_s": 5.888702910859138,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cleanup-suggestions-20261117/combined-regression.log",
+    "log_sha256": "3a44928dca4e718025153a5663f42c27fbd5ffd56e172410c42e55bf15ef0a9f",
+    "new_native_runs": 0,
+    "passed": 60,
+    "failed": 0,
+    "skipped": 0
+  },
+  "targeted": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_teacher_cleanup_suggestions.py"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 4.25844000116922,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cleanup-suggestions-20261117/targeted.log",
+    "log_sha256": "74e3c9e4f332d91b041eb24480472a13058e44a7f3ff9be9b5e94b6b0cfc15a3",
+    "new_native_runs": 0,
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0
+  },
+  "hull_audit": {
+    "owners": 34,
+    "hulls": 34,
+    "strict_passed": 0,
+    "rejected_planes": 189,
+    "polygons": 1890,
+    "combinatorial_passed": 34,
+    "svd_nonplanar_faces": 188,
+    "all_vertices_used": 34,
+    "positive_volume": 34,
+    "winding_consistent": 34,
+    "native_qualification": false,
+    "new_native_runs": 0
+  },
+  "hull_audit_artifact": {
+    "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cleanup-suggestions-20261117/hull-audit.json",
+    "bytes": 174595,
+    "sha256": "107746084667258e7ed9c9d24da40c272a5a112b9c4fe5ee057e5bb8034e1e2d"
+  },
+  "installed_sources": [
+    {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extsPhysics/omni.physics.tensors/omni/physics/tensors/impl/api.py",
+      "bytes": 354467,
+      "sha256": "bb5e684dce25e0ad7f3e03ec395ec4729d55203f3b3a58bfa824b8d106c0e54b"
+    },
+    {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/cuda/__init__.py",
+      "bytes": 61129,
+      "sha256": "4bd2da05273edd47203133b45843ece0e59234af28204f2ed5cb10d6175a4c67"
+    },
+    {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/cuda/memory.py",
+      "bytes": 45020,
+      "sha256": "e80622ac86dcbbd390aef592a5497a66cf7337e5c53c383ce3a051760a161886"
+    },
+    {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/cuda/_utils.py",
+      "bytes": 1597,
+      "sha256": "fe55aa2ba7846b8fa875bfc20582b25a3518fa256bdef67058736a7934bd9953"
+    }
+  ],
+  "new_native_runs": 0,
+  "cuda_initialization_performed": false,
+  "native_backend_calls_performed": false,
+  "solver_steps": 0,
+  "ppo_updates": 0,
+  "teacher_queries": 0,
+  "runtime_control_or_teardown_changed": false,
+  "assets_or_validator_changed": false,
+  "backend_pybind_release_api_qualified": false,
+  "eager_cuda_init_implemented": false,
+  "native_release_proven": false,
+  "natural_exit_proven": false,
+  "causal_root_proven": false,
+  "teacher_admission": false,
+  "force_termination_performed": false,
+  "existing_native_budget_reused": false,
+  "report": "docs/superpowers/reports/2026-11-17-teacher-cleanup-suggestions-verification.md",
+  "publication": {
+    "state": "windows_publication_pending"
+  },
+  "registry_cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cleanup-suggestions-20261117/registry-final.log",
+    "log_sha256": "ecf029a4de32b61ae10ec1f106f3b3acce822348395c877f1dd72a237c3f6eea",
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0
+  }
+}

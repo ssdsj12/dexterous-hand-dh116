@@ -1,5 +1,10 @@
 ## 2026-11-17: cached Tensor View ownership probes, not a shutdown fix claim
 
+## 2026-11-17 cleanup suggestion verification
+
+Installed-source CPU checks reject copying public backend.release and unindexed CUDA device snippets. Eight new checks and60 related cases pass; latest raw hull audit retains189 plane failures. No runtime/asset/native changes. See [report](docs/superpowers/reports/2026-11-17-teacher-cleanup-suggestions-verification.md).
+
+
 ## 2026-11-17 native cached-view failure
 
 One two-SDK-step attempt confirmed shared cached SimulationView/backend still alive after STOP; app.close returned but finalization SIGSEGV persists. Separate authorized cleanup completed; no retry or Teacher admission. See [evidence report](docs/superpowers/reports/2026-11-17-teacher-native-cached-view-failure.md).
