@@ -1,3 +1,7 @@
+## 2026-11-17: native matrix correction verified; hull topology and exit still blocked
+
+One GPU2 run,2 SDK setup steps,0 control/solver/PPO. Actual right finger42 near-unit quaternion confirms the corrected rotation path.34 cooked hull payloads returned; all34 fail the existing plane/topology check (189/1890 polygons). Exit still SIGSEGV in Tensor/Py_FinalizeEx; user-authorized cleanup completed, no retry. CPU421 passed. See [report](docs/superpowers/reports/2026-11-17-teacher-qnorm-native-verification.md).
+
 ## 2026-11-17: offline geometry options tested; near-unit SDK rotation repaired
 
 Static10-pad USD audit and historical CPU/GPU cooked parity pass.24 quaternion boundary cases expose the unnormalized derived-rotation defect; normalization now follows the unchanged raw guard, preserving raw data.414 CPU tests pass. No new native run; current34-owner capture and Tensor shutdown remain unqualified. See [report](docs/superpowers/reports/2026-11-17-teacher-offline-geometry-options.md).

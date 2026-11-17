@@ -25230,6 +25230,25 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.initialization-qnorm-native-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-qnorm-native-verification.md",
+      "readiness": "docs/contracts/dh116_teacher_qnorm_native_verification_v1.json",
+      "cpu_tests": {
+        "passed": 421,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 1,
+      "native_qualification": false,
+      "returned_hulls": 34,
+      "qualified_hulls": 0,
+      "publication": {
+        "state": "windows_publication_pending"
+      },
+      "remote_verified": false
     }
   ]
 }

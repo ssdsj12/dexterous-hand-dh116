@@ -40325,15 +40325,13 @@
       ],
       "status": "blocked",
       "blockers": [
-        "all34_actual_stored_cooked_not_read_back",
-        "raw34_failed_pose_evidence_missing_in_spent_run",
-        "live_shape_attachment_not_qualified",
-        "runtime_factory_aliases_and_native_finalize_unresolved",
-        "force_acquisition_and_full_grasp_not_qualified",
-        "natural_shutdown_not_qualified",
-        "native_authorization_consumed_no_retry"
+        "all34_hulls_topology_unqualified",
+        "native_plane_index_semantics_or_representation_not_resolved",
+        "PhysX_Tensor_finalize_ownership_unresolved",
+        "live_attachment_and_force_grasp_not_qualified",
+        "spent_once_only_budget_no_retry"
       ],
-      "report": "docs/superpowers/reports/2026-11-17-teacher-initialization-native-failure.md",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-qnorm-native-verification.md",
       "readiness": "docs/contracts/dh116_teacher_power_native_preflight_readiness_v1.json",
       "source_sha256": {
         "src/go2_pvcnn/control/dh116/tabletop_teacher_power_surface_audit.py": "560faa4bcc110ae4a3a8208308d8945e1d455e402ea2dd1409a8e2a079866d66",
@@ -40369,34 +40367,13 @@
         "cameras": 0,
         "livestream": false
       },
-      "native_runs": 1,
+      "native_runs": 2,
       "ppo_updates": 0,
       "branch": "11-17",
       "native_attempt": {
-        "executed_commit": "ff16a5c7f9ca4814ac8a5370f2432f7c4435b101",
-        "frozen_sha256": "806f802d9541d1c3e33ae43eb0fd54de882a77b76cecb6c689a290fbf37c8290",
-        "budget_consumed": true,
-        "scope": {
-          "gpu": 2,
-          "num_envs": 1,
-          "sdk_initialization_steps": 2,
-          "control_steps": 0,
-          "solver_steps": 0,
-          "teacher_queries": 0,
-          "model_loads": 0,
-          "ppo_updates": 0,
-          "attempts": 1,
-          "retries": 0,
-          "raw_body_pose_reads_per_hand": 1,
-          "cooked_collider_rows": 0,
-          "stored_cooked_count_getter_calls": 0,
-          "soft_wall_s": 180,
-          "automatic_force_termination_used": false,
-          "user_authorized_fault_cleanup_used": true
-        },
-        "signal": "SIGSEGV",
-        "native_exit_code": null,
-        "cleanup_complete": true
+        "record": "docs/contracts/dh116_teacher_qnorm_native_verification_v1.json",
+        "attempts": 1,
+        "budget_consumed": true
       },
       "latest_offline_repair": {
         "readiness": "docs/contracts/dh116_teacher_offline_geometry_diagnostics_v1.json",
@@ -40425,6 +40402,33 @@
       "report": "docs/superpowers/reports/2026-11-17-teacher-offline-geometry-options.md",
       "native_runs": 0,
       "branch": "11-17"
+    },
+    "teacher.initialization-qnorm-native-v1": {
+      "title": "四元数修复后的34碰撞体原生读取与退出验证",
+      "executor": "gated",
+      "dependencies": [],
+      "code_dependencies": [
+        "teacher.power-source-and-native-preflight-v1"
+      ],
+      "status": "blocked",
+      "blockers": [
+        "all34_hulls_topology_unqualified",
+        "native_plane_index_semantics_or_representation_not_resolved",
+        "PhysX_Tensor_finalize_ownership_unresolved",
+        "live_attachment_and_force_grasp_not_qualified",
+        "spent_once_only_budget_no_retry"
+      ],
+      "branch": "11-17",
+      "native_runs": 1,
+      "ppo_updates": 0,
+      "readiness": "docs/contracts/dh116_teacher_qnorm_native_verification_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-qnorm-native-verification.md",
+      "last_result": {
+        "passed": 421,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU regression passed; native matrix passed,34 payloads returned,0 topology-qualified,exit SIGSEGV"
+      }
     }
   },
   "execution_target": {

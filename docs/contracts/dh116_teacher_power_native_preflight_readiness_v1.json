@@ -1,8 +1,8 @@
 {
   "package": "teacher.power-source-and-native-preflight-v1",
   "branch": "11-17",
-  "status": "native_initialization_passed_capture_failed_shutdown_SIGSEGV",
-  "native_runs": 1,
+  "status": "matrix_conversion_verified_topology_and_shutdown_blocked",
+  "native_runs": 2,
   "ppo_updates": 0,
   "teacher_queries": 0,
   "source_sha256": {
@@ -115,26 +115,18 @@
   "protected_source_mismatches": [],
   "protected_collector_sha256": "ddf703d192958b2a1a88634c8a8433f46d43e43c15575cd02cee0a5803a75219",
   "blockers": [
-    "all34_actual_stored_cooked_not_read_back",
-    "raw34_failed_pose_evidence_missing_in_spent_run",
-    "live_shape_attachment_not_qualified",
-    "runtime_factory_aliases_and_native_finalize_unresolved",
-    "force_acquisition_and_full_grasp_not_qualified",
-    "natural_shutdown_not_qualified",
-    "native_authorization_consumed_no_retry"
+    "all34_hulls_topology_unqualified",
+    "native_plane_index_semantics_or_representation_not_resolved",
+    "PhysX_Tensor_finalize_ownership_unresolved",
+    "live_attachment_and_force_grasp_not_qualified",
+    "spent_once_only_budget_no_retry"
   ],
   "publication": {
-    "state": "windows_publication_verified",
-    "source_commit": "895103675d302e7203f68f7bd45799408419feb7",
-    "remote_branch": "11-17",
-    "files_verified": 11,
-    "route": "Windows bare relay normal push, fetch and exact commit/tree/file readback",
-    "verified_at_utc": "2026-11-17T09:18:21.669722+00:00",
-    "pr2_draft": true,
-    "pr2_merged": false
+    "state": "windows_publication_pending",
+    "remote_branch": "11-17"
   },
   "plan_generation": "Freeze only AFTER source/readiness/publication bookkeeping; frozen plan stays outside Git and is not executed by preflight.",
-  "report": "docs/superpowers/reports/2026-11-17-teacher-initialization-native-failure.md",
+  "report": "docs/superpowers/reports/2026-11-17-teacher-qnorm-native-verification.md",
   "timestamp_utc": "2026-11-17T09:15:02.145277+00:00",
   "post_line_endings_validation": {
     "command": [
@@ -157,26 +149,25 @@
   "native_initialization_scope": "original supported Pinch reset readback only",
   "native_attempt_record": "docs/contracts/dh116_teacher_initialization_native_attempt_20261117.json",
   "native_attempt": {
-    "executed_commit": "ff16a5c7f9ca4814ac8a5370f2432f7c4435b101",
-    "frozen_sha256": "806f802d9541d1c3e33ae43eb0fd54de882a77b76cecb6c689a290fbf37c8290",
+    "executed_commit": "23820535273de40b5c991914eb5cf2cf2d2019c3",
+    "frozen_sha256": "2f907b35010971bbea82e9f09c92719a93aa381a10c6d29eae84ce012463025c",
     "budget_consumed": true,
     "scope": {
       "gpu": 2,
       "num_envs": 1,
-      "sdk_initialization_steps": 2,
+      "sdk_setup_steps": 2,
       "control_steps": 0,
       "solver_steps": 0,
       "teacher_queries": 0,
       "model_loads": 0,
       "ppo_updates": 0,
+      "count_getter_queries": 34,
+      "hull_data_queries": 34,
       "attempts": 1,
       "retries": 0,
-      "raw_body_pose_reads_per_hand": 1,
-      "cooked_collider_rows": 0,
-      "stored_cooked_count_getter_calls": 0,
       "soft_wall_s": 180,
-      "automatic_force_termination_used": false,
-      "user_authorized_fault_cleanup_used": true
+      "auto_force_termination": false,
+      "user_authorized_fault_cleanup": true
     },
     "signal": "SIGSEGV",
     "native_exit_code": null,
@@ -198,5 +189,36 @@
     "sdk_near_unit_rotation_conversion_repaired": true,
     "native_revalidation": false,
     "exact_previous_failed_body_identified": false
-  }
+  },
+  "native_attempt_history": [
+    {
+      "executed_commit": "ff16a5c7f9ca4814ac8a5370f2432f7c4435b101",
+      "frozen_sha256": "806f802d9541d1c3e33ae43eb0fd54de882a77b76cecb6c689a290fbf37c8290",
+      "budget_consumed": true,
+      "scope": {
+        "gpu": 2,
+        "num_envs": 1,
+        "sdk_initialization_steps": 2,
+        "control_steps": 0,
+        "solver_steps": 0,
+        "teacher_queries": 0,
+        "model_loads": 0,
+        "ppo_updates": 0,
+        "attempts": 1,
+        "retries": 0,
+        "raw_body_pose_reads_per_hand": 1,
+        "cooked_collider_rows": 0,
+        "stored_cooked_count_getter_calls": 0,
+        "soft_wall_s": 180,
+        "automatic_force_termination_used": false,
+        "user_authorized_fault_cleanup_used": true
+      },
+      "signal": "SIGSEGV",
+      "native_exit_code": null,
+      "cleanup_complete": true
+    }
+  ],
+  "native_stored_cooked_returned_count": 34,
+  "native_stored_cooked_topology_qualified_count": 0,
+  "latest_native_verification": "docs/contracts/dh116_teacher_qnorm_native_verification_v1.json"
 }
