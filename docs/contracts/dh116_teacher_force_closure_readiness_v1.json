@@ -119,8 +119,16 @@
     "checked_at_utc": "2026-11-17T07:02:28.504855+00:00"
   },
   "publication": {
-    "status": "pending_windows_relay",
-    "remote_verified": false
+    "state": "windows_publication_verified",
+    "source_commit": "64a409da25847608a39205e79e2c3801ad279df9",
+    "remote_branch": "11-17",
+    "route": "Windows bare relay normal push and fetch readback",
+    "files_verified": 11,
+    "verified_at_utc": "2026-11-17T07:03:37.090379+00:00",
+    "pr2_draft": true,
+    "pr2_open": true,
+    "pr2_merged": false,
+    "original_development_branch_unchanged": "ccd87fd282901f05387a566d254bca7850c66a4d"
   },
   "report": "docs/superpowers/reports/2026-11-17-teacher-force-closure.md",
   "created_at_utc": "2026-11-17T07:00:58.812901+00:00",
