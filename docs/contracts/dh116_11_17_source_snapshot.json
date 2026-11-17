@@ -91,5 +91,16 @@
     "student_proprio_dim": 39,
     "student_two_fixed_rgb_code_present": true,
     "equal_task_state_contract_not_qualified": true
+  },
+  "publication": {
+    "state": "windows_publication_verified",
+    "source_commit": "4cffc17fd462a327aa5fefe14891b5793d01b3fd",
+    "source_tree": "4c5db908bb63d382679b41cc1118034479f33d92",
+    "remote_branch": "11-17",
+    "files_verified": 33,
+    "route": "Windows bare relay normal push and fetch readback",
+    "verified_at_utc": "2026-11-17T06:14:53.680460+00:00",
+    "pr2_draft": true,
+    "development_branch_unchanged": "ccd87fd282901f05387a566d254bca7850c66a4d"
   }
 }
