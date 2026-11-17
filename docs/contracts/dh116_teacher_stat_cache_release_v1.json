@@ -259,7 +259,15 @@
     "historical_tmp_checkpoint_status": "2 previously recorded /tmp checkpoints absent; not falsely verified"
   },
   "publication": {
-    "state": "pending_windows_publication"
+    "state": "windows_publication_verified",
+    "source_commit": "462e241239bda7aae58b7494ae18e7e9e559e24b",
+    "source_tree": "58913ad714be3a1be4fdc2ae63dfc5e0bbd74dae",
+    "remote_branch": "11-17",
+    "files_verified": 12,
+    "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T13:11:41.400704+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "registry_cpu": {
     "command": [

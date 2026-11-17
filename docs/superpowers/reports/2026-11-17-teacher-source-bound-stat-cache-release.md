@@ -43,3 +43,5 @@
 后续只申请一次新原生反事实诊断：GPU2、单实例、1环境、2 SDK初始化步、读取34 owner，0控制/solver/Teacher/PPO，180秒软上限、不重试。旧预算不复用。新freeze SHA在发布核验及全部readiness写入完成后生成。原生自然退出与严格几何仍须分开判定，不自动进入训练。
 
 最终联合CPU回归522 passed、0 failed、0 skipped（含26项新增）；Registry元数据回归55 passed、0 failed、0 skipped，55项与联合套件重叠，不累加成577。保护528/528一致，原Pinch/Tripod/Power三模型SHA一致。
+
+源码提交462e241239bda7aae58b7494ae18e7e9e559e24b已由Windows导入并正常push，远端tree58913ad714be3a1be4fdc2ae63dfc5e0bbd74dae、12文件一致；PR2 Draft=true、merged=false。此后仅追加发布核验元数据，不改变已测试源码。

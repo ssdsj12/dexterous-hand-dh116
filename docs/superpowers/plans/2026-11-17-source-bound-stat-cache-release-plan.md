@@ -32,7 +32,7 @@ File: scripts/diagnose_dh116_teacher_stat_cache_release.py.
 ## 4. Regression, protection and publication
 - [x] New26 and related522 CPU regressions verified; Registry55 passed after metadata update (overlaps related suite).
 - [x] Report/readiness/Registry/README/CHANGELOG updated;528 protected hashes and3 original models verified.
-- [ ] Commit explicit files on11-17; Windows imports the same commit and normally pushes; fetch and verify SHA/tree/file list. PR2 remainsDraft.
+- [x] Explicit12-file source commit462e241 published from Windows; remote SHA/tree/files verified; PR2 Draft/unmerged. Publication-attestation commit follows the same route.
 - [ ] Freeze the final published repair plan outside Git. Request new bounded native authorization only after all code/tests/report are concrete. Previous budget is spent.
 
 ## Independent review closure
