@@ -120,7 +120,14 @@
     "natural_shutdown_not_qualified"
   ],
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "0802edf8fcd5484f85a13d2b4ec81fca50478664",
+    "remote_branch": "11-17",
+    "files_verified": 13,
+    "route": "Windows bare relay normal push and fetch readback",
+    "verified_at_utc": "2026-11-17T08:37:52.224468+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "plan_generation": "Freeze only AFTER source/readiness/publication bookkeeping; frozen plan stays outside Git and is not executed by preflight.",
   "report": "docs/superpowers/reports/2026-11-17-teacher-power-source-and-native-preflight.md",
