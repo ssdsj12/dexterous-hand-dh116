@@ -389,7 +389,7 @@ class ForceContactHook:
         self.emit(row)
 
 
-def create_force_runtime(root,args,app,source_sha,force_hook):
+def create_force_runtime(root,args,app,source_sha,force_hook,*,owner_observer=None):
     """Construct only the selected N=1 native diagnostic, no automatic run."""
     import importlib.util
     from .tabletop_deformx_end_supported_scene import bind_native_end_supports,extend_mesh_pose_buffers
@@ -406,6 +406,9 @@ def create_force_runtime(root,args,app,source_sha,force_hook):
         audit_seed_after_setup=audit_seed_after_setup)
     exec(compile(code,str(path)+"[force-diagnostic-only]","exec"),namespace)
     values=namespace["create_runtime"](args,app,[plan["seeds_by_style"][args.mode]],plan,force_hook)
+    if owner_observer is not None:
+        from .tabletop_simulation_owner_cleanup import runtime_owner_ids
+        owner_observer(runtime_owner_ids(values,namespace))
     values.update(supported_scene_plan=plan,supported_scene_config=config,
         diagnostic_contract="force_contact_seeded_v2_no_ppo_no_success_admission",
         frozen_teacher_source_sha256=source_sha)

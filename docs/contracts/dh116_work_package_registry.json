@@ -40449,6 +40449,28 @@
         "skipped": 0,
         "scope": "CPU and existing raw data only; no native qualification"
       }
+    },
+    "teacher.tensor-owner-probe-v1": {
+      "title": "真实缓存SimulationView与上游持有者的只读诊断接线",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "passed",
+      "branch": "11-17",
+      "native_runs": 0,
+      "tests": [
+        "tests/test_teacher_owner_diagnostics.py",
+        "tests/test_teacher_tensor_view_owners.py",
+        "tests/test_teacher_initialization_worker.py",
+        "tests/test_simulation_owner_cleanup.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tensor_owner_probe_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-tensor-owner-probe.md",
+      "last_result": {
+        "passed": 467,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "related CPU regression only; native release and root cause unqualified"
+      }
     }
   },
   "execution_target": {

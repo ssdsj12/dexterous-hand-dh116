@@ -696,5 +696,11 @@
     "readiness": "docs/contracts/dh116_teacher_cooked_surface_semantics_v1.json",
     "report": "docs/superpowers/reports/2026-11-17-teacher-cooked-surface-semantics.md",
     "native_qualification": false
+  },
+  "latest_owner_diagnostic_preparation": {
+    "readiness": "docs/contracts/dh116_teacher_tensor_owner_probe_v1.json",
+    "report": "docs/superpowers/reports/2026-11-17-teacher-tensor-owner-probe.md",
+    "native_runs": 0,
+    "native_release_verified": false
   }
 }

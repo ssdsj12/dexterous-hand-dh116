@@ -1,3 +1,7 @@
+## 2026-11-17: cached Tensor View ownership probes, not a shutdown fix claim
+
+Added weak-only factory/asset/Data/SimulationView/backend observations at existing lifecycle boundaries and pinned8 installed source files. Diagnostic IO errors preserve ownership handoff and cleanup; old default controls/models remain unchanged. Combined related CPU467 passed; no new native run and no native release qualification. See [report](docs/superpowers/reports/2026-11-17-teacher-tensor-owner-probe.md).
+
 ## 2026-11-17: cooked face semantics separated from manifold diagnostics
 
 All34 saved hulls pass independent edge/vertex-link/connectivity/volume/winding checks;188 faces remain nonplanar and the protected full validator still qualifies0/34. The10 distal records exactly match F4. Reference PhysX plane construction closely matches saved output; exact binary mapping remains unproven. CPU429 passed, no new native run or physics change. See [report](docs/superpowers/reports/2026-11-17-teacher-cooked-surface-semantics.md).

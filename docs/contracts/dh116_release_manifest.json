@@ -25280,6 +25280,23 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tensor-owner-probe-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-tensor-owner-probe.md",
+      "readiness": "docs/contracts/dh116_teacher_tensor_owner_probe_v1.json",
+      "cpu_tests": {
+        "passed": 467,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "publication": {
+        "state": "windows_publication_pending"
+      },
+      "remote_verified": false
     }
   ]
 }

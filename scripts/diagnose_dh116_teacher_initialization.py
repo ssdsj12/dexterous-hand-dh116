@@ -38,6 +38,42 @@ def write_new(path,value):
         stream.flush();os.fsync(stream.fileno())
 
 
+
+
+def write_factory_owner_ids(output,row,errors):
+    """Record an ID-only receipt without interrupting runtime ownership handoff."""
+    try:
+        write_new(Path(output)/"factory_owner_ids.json",row)
+    except Exception as error:
+        message="factory owner IDs failed: "+type(error).__name__+": "+str(error)
+        # Detach the caught diagnostic IO traceback; no frame is cleared.
+        error.__traceback__=None
+        errors.append(message)
+
+
+def write_tensor_view_owners(output,view_owners,manager,phase,errors,*,runtime=None):
+    """Diagnostic failures add text without changing the owned cleanup flow."""
+    try:
+        row=(view_owners.capture(runtime,manager) if runtime is not None
+             else view_owners.observe(manager))
+        write_new(Path(output)/(phase+".tensor_view_owners.json"),row)
+    except Exception as error:
+        message=phase+" tensor view owners failed: "+type(error).__name__+": "+str(error)
+        error.__traceback__=None
+        errors.append(message)
+
+def write_owner_probe(output,reference,phase):
+    """Write bounded scalar owners at an existing lifecycle boundary only."""
+    from go2_pvcnn.control.dh116.tabletop_simulation_owner_cleanup import probe_simulation_owner_edges
+    try:
+        write_new(Path(output)/(phase+".owner_edges.json"),
+            probe_simulation_owner_edges(reference,max_referrers=16,max_frame_depth=4))
+    except Exception as error:
+        # A diagnostic write failure must not bypass clear/STOP/app.close.
+        # Only text escapes; the probe drops all temporary object/frame aliases.
+        return phase+" owner probe failed: "+type(error).__name__+": "+str(error)
+    return None
+
 def interpreter_identity():
     executable=Path(sys.executable).resolve(strict=True)
     return dict(executable=sys.executable,executable_resolved=str(executable),
@@ -126,7 +162,12 @@ def external_input_paths(root):
         isaac/'exts/isaacsim.simulation_app/isaacsim/simulation_app/simulation_app.py',
         Path('/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/app/app_launcher.py'),
         isaac/'exts/isaacsim.core.api/isaacsim/core/api/simulation_context/simulation_context.py',
+        isaac/'exts/isaacsim.core.api/isaacsim/core/api/physics_context/physics_context.py',
+        isaac/'extsPhysics/omni.physics.tensors/omni/physics/tensors/impl/api.py',
         Path('/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sim/simulation_context.py'),
+        Path('/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/assets/articulation/articulation.py'),
+        Path('/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/assets/articulation/articulation_data.py'),
+        Path('/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/assets/asset_base.py'),
         Path('/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/py/carb/events/_events.pyi'),
         isaac/'extsPhysics/omni.physx/omni/physx/__init__.py',
         isaac/'extsPhysics/omni.physx/omni/physx/bindings/_physx.pyi'])
@@ -393,7 +434,7 @@ def _execute_app_owned(app,plan,started):
     from go2_pvcnn.control.dh116.tabletop_teacher_power_surface_audit import prepare_power_cooked_bindings
     from go2_pvcnn.control.dh116.tabletop_teacher_sdk_cooked_capture import collect_sdk_cooked_geometry
     from go2_pvcnn.control.dh116.tabletop_simulation_owner_cleanup import (
-        simulation_source_contract,clear_known_simulation_instance)
+        simulation_source_contract,clear_known_simulation_instance,TensorViewOwners)
     from go2_pvcnn.control.dh116.tabletop_stereo_contact_calibration import close_calibration_app
     for module,name in ((force,'tabletop_teacher_force_runtime.py'),
         (seed_initialization,'tabletop_teacher_seed_initialization.py'),
@@ -407,6 +448,7 @@ def _execute_app_owned(app,plan,started):
     scope=dict(sim=None);acquired={};errors=[];close_returned=False
     shutdown={};sim_ref=None
     cleanup_contract=simulation_source_contract()
+    view_owners=TensorViewOwners()
     class Hook(force.ForceContactHook):
         def before_reset(self,sim):
             scope['sim']=sim
@@ -432,12 +474,14 @@ def _execute_app_owned(app,plan,started):
             args=SimpleNamespace(mode='pinch',num_envs=1,updates=0,eval_only=True,
                 device='cuda:0',gpu=2,horizon=0,bc_epochs=0,checkpoint=None)
             with observe_compiler(force):
-                rt=force.create_force_runtime(plan['project'],args,app,plan['teacher_source_sha256'],hook)
+                rt=force.create_force_runtime(plan['project'],args,app,plan['teacher_source_sha256'],hook,
+                    owner_observer=lambda row:write_factory_owner_ids(output,row,errors))
             continue_within_budget(started,'create_force_runtime returned',lambda:None)
             validate_loaded_project_modules(Path(plan['project']),frozen_files=plan['frozen_files'])
             write_new(output/'actual_device_identity.json',
                 device_receipt(SimulationManager,carb.settings.get_settings().get))
             owners.keep('runtime',rt)
+            write_tensor_view_owners(output,view_owners,SimulationManager,'registered',errors,runtime=rt)
             scope['sim']=rt.sim
             for side in ('left','right'):
                 hand=getattr(rt,side+'_hands');view=hand.root_physx_view
@@ -473,6 +517,9 @@ def _execute_app_owned(app,plan,started):
         if sim is None:sim=sim_utils.SimulationContext.instance()
         if sim is not None:
             sim_ref=weakref.ref(sim)
+            write_tensor_view_owners(output,view_owners,SimulationManager,'before_clear',errors)
+            owner_probe_error=write_owner_probe(output,sim_ref,'before_clear')
+            if owner_probe_error:errors.append(owner_probe_error)
         shutdown['before_clear']=shutdown_observation(sim_ref,manager_released=None,phase='before_clear')
         if shutdown['before_clear']['clock_consistent_with_setup'] is not True:
             errors.append('actual SDK tick2 unavailable or changed before cleanup')
@@ -491,6 +538,10 @@ def _execute_app_owned(app,plan,started):
         if not manager_released:errors.append('SimulationManager physics view remains alive after STOP')
         if shutdown['after_stop']['clock_consistent_with_setup'] is False:
             errors.append('actual SDK clock advanced during frozen STOP App.update')
+        if sim_ref is not None:
+            write_tensor_view_owners(output,view_owners,SimulationManager,'after_stop',errors)
+            owner_probe_error=write_owner_probe(output,sim_ref,'after_stop')
+            if owner_probe_error:errors.append(owner_probe_error)
         trace.checkpoint('after STOP before app close')
     except BaseException as error:
         errors.append(traceback.format_exc());traceback.clear_frames(error.__traceback__);error.__traceback__=None

@@ -509,3 +509,25 @@ def test_near_unit_sdk_pose_flows_through_complete_34_owner_cpu_capture(tmp_path
     assert captured[0]['poses_xyzw_by_hand'][1][0][16][3]>1.
     assert result['capture']['native_attested'] is False
     assert result['capture']['live_actor_shape_attachment_proven'] is False
+
+
+def test_external_inputs_bind_all_eight_installed_tensor_owner_source_models_without_sdk_imports():
+    m=api()
+    isaac=Path('/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim')
+    lab=Path('/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab')
+    expected={
+        isaac/'exts/isaacsim.core.api/isaacsim/core/api/simulation_context/simulation_context.py',
+        isaac/'exts/isaacsim.core.api/isaacsim/core/api/physics_context/physics_context.py',
+        isaac/'exts/isaacsim.core.simulation_manager/isaacsim/core/simulation_manager/impl/simulation_manager.py',
+        isaac/'extsPhysics/omni.physics.tensors/omni/physics/tensors/impl/api.py',
+        lab/'sim/simulation_context.py',
+        lab/'assets/articulation/articulation.py',
+        lab/'assets/articulation/articulation_data.py',
+        lab/'assets/asset_base.py',
+    }
+    before=set(sys.modules)
+    paths=m.external_input_paths(Path(__file__).resolve().parents[1])
+    assert expected<=set(paths), sorted(str(path) for path in expected-set(paths))
+    assert len(paths)==len(set(paths))
+    assert all(path.is_file() for path in expected)
+    assert not (set(sys.modules)-before)&{'torch','pxr','isaaclab','isaacsim','omni'}

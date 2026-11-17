@@ -11,7 +11,7 @@ import traceback
 import types
 import weakref
 
-from .tabletop_native_lifetime_audit import _describe_referrer
+from .tabletop_native_lifetime_audit import _describe_referrer,_type_name
 
 VERSION="dh116-simulation-owner-cleanup-cpu-v1"
 CORE=Path("/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.core.api/isaacsim/core/api/simulation_context/simulation_context.py")
@@ -101,7 +101,44 @@ def clear_known_simulation_instance(sim,*,contract):
     return result
 
 
-def probe_simulation_owner_edges(reference,*,max_referrers=16):
+
+def runtime_owner_ids(values,namespace):
+    """Correlate already-owned factory dictionaries using process-local IDs only.
+
+    IDs may be reused after object death. This is boundary evidence, not native
+    release or crash attribution. No callback, container or resource is retained.
+    """
+    if type(values) is not dict or type(namespace) is not dict:
+        raise TypeError("exact factory values and namespace dictionaries required")
+    known={}
+    for name in ("sim","left_hands","right_hands","rope","rope_pos_view","selected_scene"):
+        if name in values:
+            known[name]=id(values[name])
+    state=values.get("force_state")
+    return dict(version=VERSION,factory_locals_id=id(values),namespace_id=id(namespace),
+        force_state_id=id(state) if state is not None else None,known_object_ids=known,
+        ids_scope="single process and construction boundary; IDs may be reused after death",
+        root_cause_proven=False,native_release_verified=False)
+
+
+def _frame_callers(frame,limit):
+    """Bounded scalar f_back descriptions; never materialize frame locals."""
+    callers=[]
+    current=None
+    try:
+        current=frame.f_back
+        for _ in range(limit):
+            if current is None:break
+            callers.append(dict(object_id=id(current),kind="frame",
+                function=current.f_code.co_name,filename=current.f_code.co_filename,
+                line=current.f_lineno))
+            current=current.f_back
+        return callers
+    finally:
+        current=frame=None
+
+
+def probe_simulation_owner_edges(reference,*,max_referrers=16,max_frame_depth=4):
     """Bounded scalar two-hop trace of constructor-frame / ready-method owners.
 
     Never reads f_locals, clears frames, collects objects or follows native
@@ -112,10 +149,14 @@ def probe_simulation_owner_edges(reference,*,max_referrers=16):
         raise TypeError("one explicit weak reference required")
     if type(max_referrers) is not int or not 1<=max_referrers<=64:
         raise ValueError("max_referrers must be 1..64")
+    if type(max_frame_depth) is not int or not 1<=max_frame_depth<=8:
+        raise ValueError("max_frame_depth must be 1..8")
     target=direct=owner=upstream=parent=None
     result=dict(version=VERSION,alive=None,direct_referrers=[],selected_owner_edges=[],
         root_cause_proven=False,native_release_verified=False,native_thread_attribution=None,
-        frame_locals_read=False,diagnostic_handles_retained=False)
+        frame_locals_read=False,diagnostic_handles_retained=False,max_hops=2,
+        max_referrers=max_referrers,max_frame_depth=max_frame_depth,
+        enumeration_limit="gc.get_referrers enumerates all direct Python referrers; descriptions and traversal are bounded")
     try:
         target=reference()
         result["alive"]=target is not None
@@ -130,10 +171,12 @@ def probe_simulation_owner_edges(reference,*,max_referrers=16):
             selected=(type(owner) is types.FrameType and owner.f_code.co_name=="__init__"
                       or type(owner) is types.MethodType and owner.__func__.__name__=="_on_post_physics_ready")
             if not selected:continue
+            if type(owner) is types.FrameType:
+                description["caller_chain"]=_frame_callers(owner,max_frame_depth)
             upstream=gc.get_referrers(owner)
             summaries=[]
             visible=0
-            for j in range(len(upstream)):
+            for j in range(min(len(upstream),max_referrers)):
                 parent=upstream[j]
                 if parent is direct:continue
                 if (type(parent) is types.FrameType and parent.f_code.co_filename==__file__
@@ -142,8 +185,126 @@ def probe_simulation_owner_edges(reference,*,max_referrers=16):
                 if len(summaries)<max_referrers:
                     summaries.append(_describe_referrer(parent,owner))
             result["selected_owner_edges"].append(dict(direct=description,upstream=summaries,
-                upstream_referrer_count=visible,upstream_truncated=visible>max_referrers))
+                upstream_referrer_count=visible,
+                upstream_count_scope="scanned non-diagnostic owners",
+                upstream_enumerated_count=len(upstream),
+                upstream_scanned_count=min(len(upstream),max_referrers),
+                upstream_truncated=len(upstream)>max_referrers))
             upstream=parent=None
         return result
     finally:
         target=direct=owner=upstream=parent=None
+
+
+class TensorViewOwners:
+    """Weak-only observations of source-confirmed Python instance fields.
+
+    The installed source/line/SHA map is separate evidence. Object identities and
+    Python wrapper liveness never establish native backend release.
+    """
+
+    def __init__(self):
+        self.identities={}
+        self.references={}
+
+    @staticmethod
+    def _field(owner,name):
+        if owner is None:
+            return dict(state="unknown",reason="owner_unavailable"),None
+        try:
+            fields=(type.__getattribute__(owner,"__dict__") if isinstance(owner,type)
+                    else object.__getattribute__(owner,"__dict__"))
+        except (AttributeError,TypeError):
+            return dict(state="unknown",reason="dictionary_unavailable"),None
+        if type(fields) not in (dict,types.MappingProxyType):
+            return dict(state="unknown",reason="dictionary_unavailable"),None
+        if name not in fields:
+            return dict(state="unknown",reason="field_not_in_dictionary"),None
+        value=fields[name]
+        if value is None:
+            return dict(state="none",field_present=True),None
+        return dict(state="present",field_present=True,object_id=id(value),
+                    type=_type_name(value)),value
+
+    def _watch(self,name,row,value):
+        record=dict(row)
+        reference=None
+        if row["state"]=="present":
+            try:
+                reference=weakref.ref(value)
+                record["weakref_status"]="supported"
+            except TypeError:
+                record["weakref_status"]="unsupported"
+        else:
+            record["weakref_status"]="unavailable"
+        self.identities[name]=record
+        self.references[name]=reference
+
+    def capture(self,runtime,manager):
+        """Register known aliases once; retain only scalar records and weakrefs."""
+        hand=data=view=backend=owner=None
+        try:
+            if self.identities:
+                raise ValueError("tensor view owners already registered")
+            row,view=self._field(manager,"_physics_sim_view")
+            self._watch("manager_sim_view",row,view)
+            row,backend=self._field(view,"_backend")
+            self._watch("manager_sim_view_backend",row,backend)
+            for side in ("left","right"):
+                row,hand=self._field(runtime,side+"_hands")
+                self._watch(side+"_asset",row,hand)
+                row,data=self._field(hand,"_data")
+                self._watch(side+"_data",row,data)
+                for origin,owner in (("asset",hand),("data",data)):
+                    row,view=self._field(owner,"_physics_sim_view")
+                    name=side+"_"+origin+"_sim_view"
+                    self._watch(name,row,view)
+                    row,backend=self._field(view,"_backend")
+                    self._watch(name+"_backend",row,backend)
+            return self.observe(manager)
+        finally:
+            runtime=manager=hand=data=view=backend=owner=None
+
+    def _current_field(self,resource,field):
+        reference=self.references.get(resource)
+        target=None
+        try:
+            if reference is None:
+                return dict(state="unknown",reason="weakref_unavailable")
+            target=reference()
+            if target is None:
+                return dict(state="unknown",reason="owner_gone")
+            return self._field(target,field)[0]
+        finally:
+            target=None
+
+    def observe(self,manager):
+        """Observe cached wrapper/backend weakrefs and current plain fields."""
+        target=view=None
+        try:
+            result=dict(version=VERSION,resources={},current_fields={},
+                native_release_verified=False,root_cause_proven=False,
+                observation_scope="Python dictionaries and weakrefs only; native release unknown",
+                identity_scope="one process; IDs may be reused after object death")
+            result["manager_current"],view=self._field(manager,"_physics_sim_view")
+            result["manager_backend_current"]=self._field(view,"_backend")[0]
+            for name,record in self.identities.items():
+                row=dict(record)
+                reference=self.references[name]
+                if reference is None:
+                    row["python_liveness"]=("not_applicable" if row["state"]=="none" else "unknown")
+                else:
+                    target=reference()
+                    row["python_liveness"]="alive" if target is not None else "gone"
+                    target=None
+                result["resources"][name]=row
+            for side in ("left","right"):
+                result["current_fields"][side+"_asset._physics_sim_view"]=self._current_field(side+"_asset","_physics_sim_view")
+                result["current_fields"][side+"_asset._data"]=self._current_field(side+"_asset","_data")
+                result["current_fields"][side+"_data._physics_sim_view"]=self._current_field(side+"_data","_physics_sim_view")
+                for origin in ("asset","data"):
+                    name=side+"_"+origin+"_sim_view"
+                    result["current_fields"][name+"._backend"]=self._current_field(name,"_backend")
+            return result
+        finally:
+            target=view=manager=None
