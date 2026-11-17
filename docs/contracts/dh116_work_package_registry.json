@@ -40471,6 +40471,49 @@
         "skipped": 0,
         "scope": "related CPU regression only; native release and root cause unqualified"
       }
+    },
+    "teacher.cpu-fixture-integrity-v1": {
+      "title": "CPU调度夹具身份与外部证据隔离修复",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "passed",
+      "branch": "11-17",
+      "native_runs": 0,
+      "tests": [
+        "tests/test_dh116_physx_lifetime_frame_v2.py",
+        "tests/test_dh116_physx_lifetime_debugger_stopped.py",
+        "tests/test_dh116_physx_lifetime_probe.py",
+        "tests/test_dh116_physx_lifetime_scheduler.py",
+        "tests/test_dh116_physx_lifetime_validation.py",
+        "tests/test_dh116_physx_tensor_lifetime.py",
+        "tests/test_scheduler_cli_fixture.py",
+        "tests/test_dh116_bilateral_owned_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_dh116_deformx_pair_worker_v2.py::test_real_scheduler_child_reentry_preserves_evidence_root_and_actual_pair_gate",
+        "tests/test_dh116_dual_pinch_director_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_dh116_dual_pinch_parameter_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_dh116_native_parameter_task_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_dh116_pinch_margin_contact_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_dh116_pinch_scheduler.py::test_real_start_native_worker_reenters_wrapper_and_audits_before_receipt",
+        "tests/test_dh116_pinch_segment_contact_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_dh116_pinch_v2.py::test_real_cpu_worker_reentry_keeps_v2_marker_stopped_capture_and_postexit_gate",
+        "tests/test_dh116_pinch_v3.py::test_real_cpu_worker_reentry_keeps_v3_marker_stopped_capture_and_postexit_gate",
+        "tests/test_dh116_right_owned_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_effective_right_pinch_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_flexible_health_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_left_pinch_approach_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_mesh_reset_health_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_projected_pinch_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_tracking_pinch_worker.py::test_real_cpu_scheduler_child_reenters_director_wrapper_and_audits_before_receipt",
+        "tests/test_cpu_audit_fixture.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_cpu_fixture_integrity_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-cpu-fixture-integrity.md",
+      "last_result": {
+        "passed": 124,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU transport/audit fixtures only; not native qualification"
+      }
     }
   },
   "execution_target": {

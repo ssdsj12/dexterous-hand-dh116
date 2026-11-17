@@ -1,4 +1,5 @@
 """Real registered-shape CPU subprocess gates; calibration is always stubbed."""
+from scheduler_cli_fixture import inject_before_cli_main
 import importlib
 import json
 import os
@@ -61,8 +62,7 @@ NATIVE_SCHEDULER_LOCK=Path(__file__).resolve().parents[1]/'cpu-reservation.lock'
         if bad_error:
             stub=stub.replace("stale_reset_rejected=True,solver_last_error=0)",
                               "stale_reset_rejected=True,solver_last_error=7)")
-        marker="if __name__ == '__main__':";assert source.count(marker)==1
-        (scripts/"run_dh116_work_packages.py").write_text(source.replace(marker,stub+"\n"+marker))
+        (scripts/"run_dh116_work_packages.py").write_text(inject_before_cli_main(source,stub))
     extension=tmp_path/"build"/"ropesim"/"_ropesim.cpython-310-cpu-fixture.so"
     extension.parent.mkdir(parents=True);extension.write_bytes(b"CPU fake extension; never imported")
     selected=OLD_ENTRY if legacy else ENTRY

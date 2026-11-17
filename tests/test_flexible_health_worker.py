@@ -1,4 +1,6 @@
 """CPU only: actual subprocess reentry and scope/fingerprint gates."""
+from cpu_audit_fixture import install_cpu_audit_dependencies, assert_cpu_audit_artifacts
+from scheduler_cli_fixture import inject_before_cli_main
 from copy import deepcopy
 import importlib,sys,json
 from pathlib import Path
@@ -81,6 +83,7 @@ def audit_outcome(output,parent):
     return dict(parent,lifecycle_qualified=parent['lifecycle_qualified'] and not reject,
                 same_clock_health_getter_qualified=not reject,teacher_admission=False)
 """)
+    install_cpu_audit_dependencies(tmp_path,health=True)
     if reject:(tmp_path/"reject").touch()
     source=(ROOT/"scripts/run_dh116_work_packages.py").read_text()
     stub="""
@@ -113,8 +116,7 @@ Repository.resolve_native_dependency_receipt=lambda self,binding,packages:dict(
     **binding,path=str(self.private/'cpu-parent.json'),sha256='e'*64)
 NATIVE_SCHEDULER_LOCK=Path(__file__).resolve().parents[1]/'private'/'reservation.lock'
 """
-    marker="if __name__ == '__main__':";assert source.count(marker)==1
-    (scripts/"run_dh116_work_packages.py").write_text(source.replace(marker,stub+"\n"+marker))
+    (scripts/"run_dh116_work_packages.py").write_text(inject_before_cli_main(source,stub))
     private=tmp_path/"private";private.mkdir()
     identity=dict(command_spec_sha256="c"*64,code_config_sha256="d"*64)
     spec=dict(entrypoint=ENTRY,argv=["--cleanup","explicit","--output","{output}",
@@ -144,6 +146,7 @@ raise SystemExit(w.main())
     done=subprocess.run([sys.executable,"-c",parent],cwd=tmp_path,env=env,text=True,capture_output=True,timeout=25)
     assert done.returncode==0,done.stdout+done.stderr
     child=json.loads(done.stdout.splitlines()[-1])
+    assert_cpu_audit_artifacts(tmp_path,child,reject,health=True)
     assert child["worker_cli_entry"]==str(tmp_path/WRAPPER)
     assert child["worker_root"]==str(tmp_path) and child["worker_private"]==str(private)
     assert child["native_execution_performed"] is False

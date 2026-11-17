@@ -1,5 +1,10 @@
 ## 2026-11-17: cached Tensor View ownership probes, not a shutdown fix claim
 
+## 2026-11-17 CPU fixture integrity
+
+Fixed private scheduler CLI insertion and isolated copied test archives; 124 relevant CPU cases pass. Production qualification gates, assets and models remain unchanged. Native exit/contact remain unqualified. See [report](docs/superpowers/reports/2026-11-17-teacher-cpu-fixture-integrity.md).
+
+
 Added weak-only factory/asset/Data/SimulationView/backend observations at existing lifecycle boundaries and pinned8 installed source files. Diagnostic IO errors preserve ownership handoff and cleanup; old default controls/models remain unchanged. Combined related CPU467 passed; no new native run and no native release qualification. See [report](docs/superpowers/reports/2026-11-17-teacher-tensor-owner-probe.md).
 
 ## 2026-11-17: cooked face semantics separated from manifold diagnostics

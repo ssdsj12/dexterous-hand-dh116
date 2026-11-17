@@ -1,4 +1,5 @@
 """CPU gates and actual scheduler subprocess reentry for director acquisition."""
+from scheduler_cli_fixture import inject_before_cli_main
 from copy import deepcopy
 import importlib
 import json
@@ -161,8 +162,7 @@ Repository.resolve_native_dependency_receipt=lambda self,binding,packages:dict(
     **binding,path=str(self.private/'cpu-parent.json'),sha256='e'*64)
 NATIVE_SCHEDULER_LOCK=Path(__file__).resolve().parents[1]/'private'/'reservation.lock'
 """
-    marker="if __name__ == '__main__':";assert source.count(marker)==1
-    (scripts/"run_dh116_work_packages.py").write_text(source.replace(marker,stub+"\n"+marker))
+    (scripts/"run_dh116_work_packages.py").write_text(inject_before_cli_main(source,stub))
     private=tmp_path/"private";private.mkdir()
     identity=dict(command_spec_sha256="c"*64,code_config_sha256="d"*64)
     spec=dict(entrypoint=ENTRY,argv=["--cleanup","explicit","--output","{output}",

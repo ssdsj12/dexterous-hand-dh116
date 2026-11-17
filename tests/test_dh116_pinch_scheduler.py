@@ -1,4 +1,5 @@
 """CPU-only scheduler transport tests; stubs are never native evidence."""
+from scheduler_cli_fixture import inject_before_cli_main
 import importlib
 import json
 import os
@@ -103,9 +104,7 @@ Repository.native_plan=lambda self,**kwargs:{'native_qualified':[]}
 Repository.native_resource_blocker=lambda *a,**k:None
 NATIVE_SCHEDULER_LOCK=Path(__file__).resolve().parents[1]/'private'/'reservation.lock'
 """
-    marker="if __name__ == '__main__':"
-    assert source.count(marker)==1
-    (scripts/"run_dh116_work_packages.py").write_text(source.replace(marker,stub+"\n"+marker))
+    (scripts/"run_dh116_work_packages.py").write_text(inject_before_cli_main(source,stub))
     (scripts/"verify_dh116_deformx_pinch_contact.py").write_text("""
 import json
 from pathlib import Path
