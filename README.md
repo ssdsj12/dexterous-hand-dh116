@@ -1,3 +1,7 @@
+## 2026-11-17: complete native-preview recording components
+
+Independent end supports, identity-checked recording and support-aware video labels are CPU verified. The first native attempt failed before Teacher action; no full grasp or natural shutdown is qualified. See [video report](docs/superpowers/reports/2026-11-17-supported-native-video.md).
+
 ## 2026-11-17 — 隔离的 Teacher 显示层（CPU 验证）
 
 复用原 USD 视觉网格与已有坐标同步算法，显示副本不含物理组件。独立临时

@@ -24938,6 +24938,30 @@
         "protected_sources_unchanged": true,
         "current_three_preview_checkpoints_unchanged": true
       }
+    },
+    {
+      "package": "preview.teacher.supported-recording-v1",
+      "report": "docs/superpowers/reports/2026-11-17-supported-native-video.md",
+      "source_sha256": {
+        "src/go2_pvcnn/control/dh116/tabletop_deformx_end_supported_scene.py": "ab47a2513c5165f49e9e54842c8738f9110e2951e4aebc614c456ea374fcb3f0",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_preview_recording.py": "ad30243ce062b0a72d1854d0f2b35517070cbeeb40fe26813271fe00dba25424",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_video.py": "87a65471c19f2431032ae8674d096c6867a1f3b4ddb44a39bee04c0fef9506c6",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_video_delivery.py": "40e9b5862b18ce71d5a60ee3d8acb4cdbc1922e736147f13d78e25aad6b1f2e7",
+        "tests/test_deformx_end_supported_scene.py": "8f453c8d718221d374796d5122a8c268ea97f53f606e5c0baa6bf5044a8e426e",
+        "tests/test_teacher_preview_recording.py": "f5b719e89387ace7a850f98eeab7cd93b58d93308e18c1d4d6829b4c68e3af8f",
+        "tests/test_teacher_video.py": "9e02d5ec8c58d5d3d4979d63352e7804a1c8f4c6e0b0ea8d4991d824dabbf695",
+        "tests/test_teacher_video_delivery.py": "3c22d7aef46e0218ad920674be751f6f8b8a7c60c7613740bbb392cbb8b6ece2",
+        "configs/dh116_tasks/flexible_teacher_end_supported_v1.json": "f380744c9f2629f17254e4ce701f88893f011fe7feb82d693d551ddb7baed1fc"
+      },
+      "qualification": {
+        "cpu_components": 59,
+        "native_qualified": false,
+        "teacher_grasp_qualified": false
+      },
+      "publication": {
+        "state": "pending_windows_publication",
+        "base": "d060728812b57ad0d277bfde38f3aa0bf2f5614c"
+      }
     }
   ]
 }

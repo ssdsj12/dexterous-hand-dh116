@@ -1,0 +1,38 @@
+{
+  "version": "supported-native-video-components-v1",
+  "status": "cpu_components_verified_native_pending",
+  "cpu_test_count": 59,
+  "cpu_failures": 0,
+  "native_grasp_qualified": false,
+  "natural_exit_qualified": false,
+  "power_full_grasp_qualified": false,
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_deformx_end_supported_scene.py": "ab47a2513c5165f49e9e54842c8738f9110e2951e4aebc614c456ea374fcb3f0",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_preview_recording.py": "ad30243ce062b0a72d1854d0f2b35517070cbeeb40fe26813271fe00dba25424",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_video.py": "87a65471c19f2431032ae8674d096c6867a1f3b4ddb44a39bee04c0fef9506c6",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_video_delivery.py": "40e9b5862b18ce71d5a60ee3d8acb4cdbc1922e736147f13d78e25aad6b1f2e7",
+    "tests/test_deformx_end_supported_scene.py": "8f453c8d718221d374796d5122a8c268ea97f53f606e5c0baa6bf5044a8e426e",
+    "tests/test_teacher_preview_recording.py": "f5b719e89387ace7a850f98eeab7cd93b58d93308e18c1d4d6829b4c68e3af8f",
+    "tests/test_teacher_video.py": "9e02d5ec8c58d5d3d4979d63352e7804a1c8f4c6e0b0ea8d4991d824dabbf695",
+    "tests/test_teacher_video_delivery.py": "3c22d7aef46e0218ad920674be751f6f8b8a7c60c7613740bbb392cbb8b6ece2",
+    "configs/dh116_tasks/flexible_teacher_end_supported_v1.json": "f380744c9f2629f17254e4ce701f88893f011fe7feb82d693d551ddb7baed1fc"
+  },
+  "native_driver_scope": "private-source-SHA-bound local deployment; not published or treated as reproducible public training",
+  "original_checkpoint_write_operations": 0,
+  "protected_source_count": 528,
+  "protected_mismatches": 0,
+  "historical_checkpoint_status": "two_original_paths_previously_missing_no_substitutes",
+  "first_attempt": {
+    "contract": "82156b969c9a9c7f8440c17acb00ff71fb417baa0333672caeac025b221720d7",
+    "sdk_physics_steps": 482,
+    "settling_controls": 60,
+    "teacher_controls": 0,
+    "videos_created": 0,
+    "error": "inference tensor in-place reset outside InferenceMode",
+    "shutdown": "SIGSEGV in libomni.kit.livestream.plugin.so present thread; GDB rc255"
+  },
+  "correction": "local baseline callback wrapped in torch.inference_mode; real-tensor CPU red/green verified",
+  "height_semantics": "raw height retained; support-cleared net Lift nullable and same-clock ledger gated",
+  "new_native_run": "separately user-approved v2, in progress, no results claimed",
+  "report": "docs/superpowers/reports/2026-11-17-supported-native-video.md"
+}
