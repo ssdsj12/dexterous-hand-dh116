@@ -195,7 +195,14 @@
   ],
   "report": "docs/superpowers/reports/2026-11-17-teacher-native-cached-view-failure.md",
   "publication": {
-    "state": "windows_publication_pending"
+    "state": "windows_publication_verified",
+    "source_commit": "620593fd82e26b4be7d0e7e78d559f678b5c040d",
+    "remote_branch": "11-17",
+    "files_verified": 8,
+    "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T11:15:34.149662+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "previous_native_raw_hull_comparison": {
     "compared": 34,
