@@ -78,7 +78,11 @@
   "protected_sources_checked": 528,
   "protected_source_mismatches": [],
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "f867d74d984237da5c670615dc4ff81fc66464e4",
+    "remote_branch": "11-17",
+    "files_verified": 10,
+    "route": "Windows bare relay normal push/fetch readback"
   },
   "report": "docs/superpowers/reports/2026-11-17-teacher-acquisition-geometry.md",
   "timestamp_utc": "2026-11-17T08:06:41.146381+00:00"

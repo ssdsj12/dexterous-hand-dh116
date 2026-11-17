@@ -40310,6 +40310,62 @@
       "native_runs": 0,
       "ppo_updates": 0,
       "branch": "11-17"
+    },
+    "teacher.power-source-and-native-preflight-v1": {
+      "title": "Actual Power collision sources and initialization-only native worker",
+      "executor": "gated",
+      "dependencies": [],
+      "code_dependencies": [
+        "teacher.seeded-initialization-v1"
+      ],
+      "status": "blocked",
+      "blockers": [
+        "new_native_budget_not_authorized",
+        "all34_actual_stored_cooked_not_read_back",
+        "live_shape_attachment_not_qualified",
+        "new_seeded_initialization_not_native_validated",
+        "force_acquisition_and_full_grasp_not_qualified",
+        "natural_shutdown_not_qualified"
+      ],
+      "report": "docs/superpowers/reports/2026-11-17-teacher-power-source-and-native-preflight.md",
+      "readiness": "docs/contracts/dh116_teacher_power_native_preflight_readiness_v1.json",
+      "source_sha256": {
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_power_surface_audit.py": "560faa4bcc110ae4a3a8208308d8945e1d455e402ea2dd1409a8e2a079866d66",
+        "scripts/audit_dh116_power_surfaces.py": "ebb7a091ec95ac14db2dd35b0ac61f070537b80d6383785a93f1f6f447aae810",
+        "tests/test_teacher_power_surface_audit.py": "bd36dede6f84b26f9bdc3ad7167325c4f656de29a159e305abd4fcf37cff180e",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_sdk_cooked_capture.py": "e064b24fd17deb405dbda15d66ce78fbf1246435e38b60220f62e577eeda9982",
+        "scripts/diagnose_dh116_teacher_initialization.py": "0f90c62148fd3324df473266cb606e1fc03bcd98c5b5d998a4c19fa58e46c01b",
+        "tests/test_teacher_initialization_worker.py": "5ae6d31de5ce5a2ed9a15fce9cb7892b53777770f593b3a0ea8b072be837a256"
+      },
+      "last_result": {
+        "passed": 374,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU only"
+      },
+      "proposed_native_budget": {
+        "gpu": 2,
+        "num_envs": 1,
+        "mode": "pinch",
+        "sdk_setup_steps": 2,
+        "control_steps": 0,
+        "solver_steps": 0,
+        "teacher_queries": 0,
+        "ppo_updates": 0,
+        "model_loads": 0,
+        "explicit_app_updates_for_stop": 1,
+        "soft_wall_seconds": 180,
+        "attempts": 1,
+        "auto_retries": 0,
+        "auto_kill": false,
+        "max_collision_owners": 34,
+        "max_count_getter_queries": 68,
+        "cameras": 0,
+        "livestream": false
+      },
+      "native_runs": 0,
+      "ppo_updates": 0,
+      "branch": "11-17"
     }
   },
   "execution_target": {

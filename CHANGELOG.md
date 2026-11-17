@@ -1,3 +1,7 @@
+## 2026-11-17: real Power surface sources and native preflight
+
+Audited34 original collision owners; palm/proximal cooked sources remain missing. Added a frozen initialization-only worker with honest SDK clock, read-only geometry getters and natural-exit separation. CPU374 passed; no native run or Teacher training. The next2-setup-step/zero-control run still needs a new authorization. See [report](docs/superpowers/reports/2026-11-17-teacher-power-source-and-native-preflight.md).
+
 ## 2026-11-17: acquisition geometry candidates, not grasp success
 
 Original-source FK/SDF search reduces four Pinch predicted gaps to ~0.40mm; Tripod left remains unreachable/penetrating and is rejected. Both S0 proposals remain blocked pending cooked geometry, fresh settling and measured force. Original straight constructor nodes/rest length are preserved. CPU304 passed. See [report](docs/superpowers/reports/2026-11-17-teacher-acquisition-geometry.md).
