@@ -428,7 +428,14 @@
     "new_native_runs_require_fresh_frozen_budget"
   ],
   "publication": {
-    "state": "windows_publication_pending"
+    "state": "windows_publication_verified",
+    "source_commit": "38c432b51b17891e29bddf02847b5229bd22abbb",
+    "remote_branch": "11-17",
+    "files_verified": 9,
+    "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T10:25:10.040405+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "report": "docs/superpowers/reports/2026-11-17-teacher-cooked-surface-semantics.md",
   "post_registry_validation": {
