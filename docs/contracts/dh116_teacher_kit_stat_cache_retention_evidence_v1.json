@@ -580,7 +580,14 @@
   ],
   "report": "docs/superpowers/reports/2026-11-17-teacher-kit-stat-cache-retention.md",
   "publication": {
-    "state": "windows_publication_pending"
+    "state": "windows_publication_verified",
+    "source_commit": "da231d2fb88246ecff2780e80ac41381339d5d1c",
+    "remote_branch": "11-17",
+    "files_verified": 7,
+    "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T12:37:17.814502+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "post_native_cpu": {
     "command": [
