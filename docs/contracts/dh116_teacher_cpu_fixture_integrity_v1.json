@@ -135,6 +135,20 @@
     "mismatches": []
   },
   "publication": {
-    "state": "windows_publication_pending"
+    "state": "windows_publication_verified",
+    "source_commit": "32dcdea0be639bd26340b9038775710657e20e4c",
+    "remote_branch": "11-17",
+    "files_verified": 29,
+    "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T11:03:45.260394+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
+  },
+  "registry_cpu": {
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cpu-fixture-registry-final-20261117.log",
+    "log_sha256": "c2b6125dc550cd529c3d9a268a879a31d3a2deb93e9123c3420574f1175a584a"
   }
 }
