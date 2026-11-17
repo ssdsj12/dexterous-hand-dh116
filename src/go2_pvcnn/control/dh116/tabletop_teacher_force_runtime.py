@@ -27,7 +27,7 @@ def compile_force_runtime(source, expected_sha):
     factory=tree.body[0]
     factory.args.args.append(ast.arg(arg="force_hook"))
     factory.body.insert(0,ast.parse("force_hook.validate_arguments(args)").body[0])
-    counts=dict(capture=0,before=0,after=0,reset=0,table=0)
+    counts=dict(capture=0,before=0,after=0,reset=0,table=0,spawn=0,assets=0)
     for node in ast.walk(factory):
         if (isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute)
                 and node.func.attr=="Set" and len(node.args)==1
@@ -38,6 +38,33 @@ def compile_force_runtime(source, expected_sha):
             # The legacy fast candidate disabled PhysX table collision. This NEW
             # diagnostic task explicitly retains it; old source remains frozen.
             node.args[0]=ast.Constant(True);counts["table"]+=1
+    # Only N=1 is allowed. Reuse the scene-owned original hand assets and
+    # author the selected S0 before the first sim.reset(), not after two steps.
+    for node in ast.walk(factory):
+        if (isinstance(node,ast.Expr) and isinstance(node.value,ast.Call)
+                and isinstance(node.value.func,ast.Name) and node.value.func.id=="spawn_scene"):
+            node.value.func.id="spawn_force_scene"
+            node.value.keywords.append(ast.keyword(arg="seed",
+                value=ast.Subscript(value=ast.Name(id="preview_seeds",ctx=ast.Load()),
+                    slice=ast.Constant(0),ctx=ast.Load())))
+            # Expr -> Assign in its parent is handled by the transformer below.
+            counts["spawn"]+=1
+    class SelectAssets(ast.NodeTransformer):
+        def visit_Expr(self,node):
+            if (isinstance(node.value,ast.Call) and isinstance(node.value.func,ast.Name)
+                    and node.value.func.id=="spawn_force_scene"):
+                return ast.Assign(targets=[ast.Name(id="selected_scene",ctx=ast.Store())],value=node.value)
+            return self.generic_visit(node)
+        def visit_Assign(self,node):
+            if (isinstance(node.value,ast.Call) and isinstance(node.value.func,ast.Name)
+                    and node.value.func.id=="_make_art"):
+                side=node.value.args[0].value
+                node.value=ast.parse("selected_scene['hands']["+str(0 if side=="left" else 1)+"]",
+                    mode="eval").body
+                counts["assets"]+=1
+            return self.generic_visit(node)
+    factory=SelectAssets().visit(factory)
+    tree.body[0]=factory
     out=[]
     for node in factory.body:
         out.append(node)
@@ -79,8 +106,15 @@ raise
         rope_pos_view=rope_pos_view,left_hands=left_hands,right_hands=right_hands,
         l_base_id=l_base_id,r_base_id=r_base_id,l_wrist_ids=l_wrist_ids,r_wrist_ids=r_wrist_ids)
 """).body
+    # Observe the first setup result before cfg_rod/seed_q/post-reset writes.
+    pos=next(i for i,n in enumerate(out) if isinstance(n,ast.Assign)
+        and any(isinstance(v,ast.Name) and v.id=="cfg_rod" for v in n.targets))
+    out[pos:pos]=ast.parse("""
+initialization_readback=audit_seed_after_setup(locals(),preview_seeds[0])
+force_hook.accept_initialization(initialization_readback)
+""").body
     factory.body=out
-    if counts!=dict(capture=1,before=1,after=1,reset=1,table=1):
+    if counts!=dict(capture=1,before=1,after=1,reset=1,table=1,spawn=1,assets=2):
         raise ValueError("force diagnostic source layout differs: "+str(counts))
     return ast.fix_missing_locations(tree)
 
@@ -152,6 +186,11 @@ class ForceContactHook:
         self._hold=None
         self._previous_geometry=None
         self._episode_uid=None
+
+    def accept_initialization(self,receipt):
+        self.emit(dict(receipt,run_uid=self.run_uid))
+        if not receipt["passed"]:
+            raise RuntimeError("selected S0 failed actual initialization readback")
 
     def validate_arguments(self,args):
         if (args.num_envs!=1 or args.updates!=0 or args.eval_only is not True
@@ -355,6 +394,7 @@ def create_force_runtime(root,args,app,source_sha,force_hook):
     import importlib.util
     from .tabletop_deformx_end_supported_scene import bind_native_end_supports,extend_mesh_pose_buffers
     from .tabletop_teacher_supported_runtime import supported_seed_plan
+    from .tabletop_teacher_seed_initialization import spawn_force_scene,audit_seed_after_setup
     force_hook.validate_arguments(args)
     root=Path(root);path=root/"scripts/train_dh116_gpu_teacher_ppo.py"
     code=compile_force_runtime(path.read_text(),source_sha)
@@ -362,10 +402,11 @@ def create_force_runtime(root,args,app,source_sha,force_hook):
     spec=importlib.util.spec_from_file_location("_dh116_force_diagnostic_source",path)
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     namespace=dict(module.__dict__,bind_native_end_supports=bind_native_end_supports,
-        extend_mesh_pose_buffers=extend_mesh_pose_buffers)
+        extend_mesh_pose_buffers=extend_mesh_pose_buffers,spawn_force_scene=spawn_force_scene,
+        audit_seed_after_setup=audit_seed_after_setup)
     exec(compile(code,str(path)+"[force-diagnostic-only]","exec"),namespace)
     values=namespace["create_runtime"](args,app,[plan["seeds_by_style"][args.mode]],plan,force_hook)
     values.update(supported_scene_plan=plan,supported_scene_config=config,
-        diagnostic_contract="force_contact_v1_no_ppo_no_success_admission",
+        diagnostic_contract="force_contact_seeded_v2_no_ppo_no_success_admission",
         frozen_teacher_source_sha256=source_sha)
     return SimpleNamespace(**values)

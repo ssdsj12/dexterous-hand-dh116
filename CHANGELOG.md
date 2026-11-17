@@ -1,3 +1,7 @@
+## 2026-11-17: selected seed before the first SDK reset
+
+The independent force diagnostic reuses one pair of assets, authors selected per-hand FK/joint/wrist state before setup, and checks actual 17-DOF q/qd/base readback before any overwrite. Old defaults/assets/limits remain unchanged. CPU277 passed; native initialization and Teacher success are still unqualified. See [report](docs/superpowers/reports/2026-11-17-teacher-seed-initialization.md).
+
 ## 2026-11-17: reaction-force closure gate (opt-in, not native qualified)
 
 New independent N=1 diagnostics judge closure from complete simulated normal reaction/contact pairs, not finger posture. Both wrists hold until bilateral opposed contact persists; force loss pauses ascent. Power lacks palm/proximal sources and remains blocked. CPU269 passed; no new Isaac or PPO run. Original control, models and success thresholds are unchanged. See [report](docs/superpowers/reports/2026-11-17-teacher-force-closure.md).

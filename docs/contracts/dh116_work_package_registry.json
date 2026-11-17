@@ -40246,6 +40246,37 @@
       "native_runs": 0,
       "ppo_updates": 0,
       "branch": "11-17"
+    },
+    "teacher.seeded-initialization-v1": {
+      "title": "Selected S0 and one owned articulation pair before first SDK reset",
+      "executor": "gated",
+      "dependencies": [],
+      "status": "blocked",
+      "blockers": [
+        "new_initialization_not_native_validated",
+        "all_nonpad_cooked_geometry_not_source_qualified",
+        "natural_shutdown_not_qualified",
+        "no_formally_successful_teacher_model"
+      ],
+      "report": "docs/superpowers/reports/2026-11-17-teacher-seed-initialization.md",
+      "readiness": "docs/contracts/dh116_teacher_seed_initialization_readiness_v1.json",
+      "last_result": {
+        "passed": 277,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU only; native readiness false"
+      },
+      "source_sha256": {
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_force_runtime.py": "57f4c73ab64a7d42694114a521bef176a4d13cbe81f5e218ed2200a6af601c9d",
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_seed_initialization.py": "7827cedb1a5d1a308e1f79575ef4f6f0e2c5249fb17448dc4e896c7595a396c7",
+        "tests/test_teacher_seed_initialization.py": "ee006f17a65109a804011cc9a9c1c42eded4a02ba16fc8ec8af8c5191185e998"
+      },
+      "native_runs": 0,
+      "ppo_updates": 0,
+      "branch": "11-17",
+      "code_dependencies": [
+        "teacher.force-contact-gate-v1"
+      ]
     }
   },
   "execution_target": {

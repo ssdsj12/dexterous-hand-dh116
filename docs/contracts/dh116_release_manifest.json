@@ -25112,6 +25112,24 @@
         "original_development_branch_unchanged": "ccd87fd282901f05387a566d254bca7850c66a4d"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.seeded-initialization-v1",
+      "branch": "11-17",
+      "base": "ae17f03a9169ac62106a0eeb3107297eb40d70a1",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-seed-initialization.md",
+      "readiness": "docs/contracts/dh116_teacher_seed_initialization_readiness_v1.json",
+      "cpu_tests": {
+        "passed": 277,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "publication": {
+        "state": "pending_windows_relay"
+      },
+      "remote_verified": false
     }
   ]
 }
