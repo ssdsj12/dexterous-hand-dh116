@@ -675,7 +675,14 @@
   "next_native_attempt_authorized": false,
   "success_criteria_unchanged": true,
   "publication": {
-    "state": "windows_publication_pending"
+    "state": "windows_publication_verified",
+    "source_commit": "436365d389928fe3b33e7e3da32074fba5796e52",
+    "remote_branch": "11-17",
+    "files_verified": 9,
+    "route": "Windows bare relay normal push, fetch and commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T09:50:37.474402+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "report": "docs/superpowers/reports/2026-11-17-teacher-qnorm-native-verification.md",
   "post_registry_validation": {
