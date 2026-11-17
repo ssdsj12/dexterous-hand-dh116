@@ -146,7 +146,14 @@
   "teacher_admission": false,
   "report": "docs/superpowers/reports/2026-11-17-teacher-cuda-frame-walk-v2.md",
   "publication": {
-    "state": "windows_publication_pending"
+    "state": "windows_publication_verified",
+    "source_commit": "3e74abf79dd6ca4ab30d8c6596862408c76a73a9",
+    "remote_branch": "11-17",
+    "files_verified": 9,
+    "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T12:16:48.841610+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "registry_cpu": {
     "command": [
