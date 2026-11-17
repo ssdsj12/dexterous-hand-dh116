@@ -1,0 +1,95 @@
+{
+  "version": "dh116-fixed-dual-camera-native-wire-audit-v1",
+  "native": {
+    "source_head": "b22a788828da7123db31311481b5a2464dc448b2",
+    "batch_attempt_number": 1,
+    "camera_backend": "tiled_step",
+    "resolution_wh": [
+      320,
+      240
+    ],
+    "contract_sha256": "7422ff12e34df883b26443000ac2f7e9a191726184436b4254e3659492e0d48f",
+    "outer_exit_code": 255,
+    "debugger_inferior_final_status": {
+      "exit_code": null,
+      "signal": 11
+    },
+    "wall_seconds": 151.9861751908902,
+    "forced_termination": false,
+    "physical_jsonl_total_rows": 166,
+    "incomplete_physical_lines": 0,
+    "accepted_rgb_pairs": 17,
+    "incomplete_stage_lines": 0,
+    "durable_stage_errors": [
+      {
+        "error": "Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 46, in attempt\n    value = callback()\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 89, in acquire_owned\n    received = previous.run_owned_call(\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_runtime.py\", line 386, in run_owned_call\n    raise RuntimeError(\"\\n\".join(([failure] if failure else []) + cleanup_errors)) from None\nRuntimeError: Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_runtime.py\", line 361, in run_owned_call\n    result = operation(owners)\n  File \"/mnt/mydisk/xk/dh116/scripts/dh116_fault_safe_lifecycle_v3.py\", line 90, in <lambda>\n    lambda owners: acquire(sim, owners, trace, cleanup),\n  File \"/mnt/mydisk/xk/dh116/scripts/preview_dh116_physical_webrtc.py\", line 288, in acquire\n    if errors:raise RuntimeError(\"\\n\".join(errors)) from None\nRuntimeError: Traceback (most recent call last):\n  File \"/mnt/mydisk/xk/dh116/scripts/preview_dh116_physical_webrtc.py\", line 282, in acquire\n    finish_preview_resources(app,camera,render_sim,holder,journal)\n  File \"/mnt/mydisk/xk/dh116/src/go2_pvcnn/control/dh116/tabletop_preview_launcher.py\", line 274, in finish_preview_resources\n    if errors:raise RuntimeError(\"; \".join(errors)) from None\nRuntimeError: camera: RuntimeError: right: extra annotator: TypeError('Invalid NodeObj object in Py_Node in getAttributes'); rgba detach: TypeError('Invalid NodeObj object in Py_Node in getAttributes')\n\n\n",
+        "event": "error",
+        "monotonic_ns": 954874229966481,
+        "sequence": 3,
+        "stage": "acquire"
+      }
+    ],
+    "native_log_sha256": "c836d1ca5c89549f7a383a196ca9c8a2b626d314456289df35eddaa09133da79",
+    "native_log_bytes": 1618989,
+    "debugger_fatal_records": 1,
+    "ppo_updates": 0,
+    "native_qualification": false
+  },
+  "wire": {
+    "frames": 17,
+    "same_clock_pairs": 17,
+    "wire_snapshots": 17,
+    "node_shape": [
+      17,
+      3,
+      41
+    ],
+    "nodes_finite": true,
+    "frame_wire_identity_aligned": true,
+    "rod_ticks": [
+      0,
+      96,
+      192,
+      288,
+      384,
+      480,
+      576,
+      672,
+      768,
+      864,
+      960,
+      1056,
+      1152,
+      1248,
+      1344,
+      1440,
+      1536
+    ],
+    "radius_m": 0.004999999888241291,
+    "length_min_m": 0.5,
+    "length_max_m": 0.5,
+    "max_node_displacement_m": 8.948454372185702e-08,
+    "max_node_lateral_curvature_m": 1.4901161193847656e-08,
+    "profile_digests": [
+      "336e83f046b3c998dee862f52a61ed9c5c7ff0ed2ebd02b9f206fdd4441fcbb7"
+    ],
+    "source_instance_count": 1,
+    "wire_grasp_success_qualified": false
+  },
+  "camera_count": 2,
+  "pose_switch_during_capture": false,
+  "clock_equal_pairs": 17,
+  "pair_count": 17,
+  "startup_right_image_quality": "visible noise in frame000; frame013 visually clear",
+  "segmentation_or_depth_accuracy_qualified": false,
+  "normal_exit_qualified": false,
+  "wire_bending_qualified": false,
+  "wire_grasp_qualified": false,
+  "remaining_native_attempts": 0,
+  "cleanup_candidate": "detach both cameras before destroying either render product",
+  "cleanup_candidate_native_executed": false,
+  "cpu_passed": 313,
+  "cpu_failed": 0,
+  "cpu_log_sha256": "babcc3f587234e0ebb849a5be357ffa408823212ef7c9de1ca7cca52f70c2aab",
+  "report": "docs/superpowers/reports/2026-11-16-fixed-dual-native-wire-audit.md"
+}

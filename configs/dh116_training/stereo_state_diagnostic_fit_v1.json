@@ -1,0 +1,4 @@
+{
+  "version": "dh116-stereo-state-training-mode-v1",
+  "settings": {"mode": "diagnostic_fit", "epochs": 3, "batch_size": 2, "seed": 116, "lr": 0.0003, "image_processing_batch_size": 1}
+}

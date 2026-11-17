@@ -1,0 +1,125 @@
+{
+  "version": "dh116-stereo-optical-v1",
+  "width": 224,
+  "height": 96,
+  "baseline_m": 0.08,
+  "K_left": [
+    [
+      145.96124175821504,
+      0,
+      112.0
+    ],
+    [
+      0,
+      145.96124175821504,
+      48.0
+    ],
+    [
+      0,
+      0,
+      1
+    ]
+  ],
+  "K_right": [
+    [
+      145.96124175821504,
+      0,
+      112.0
+    ],
+    [
+      0,
+      145.96124175821504,
+      48.0
+    ],
+    [
+      0,
+      0,
+      1
+    ]
+  ],
+  "T_world_left": [
+    [
+      0.7071067811865475,
+      0.3810684897571042,
+      -0.5956398291872697,
+      0.42
+    ],
+    [
+      0.7071067811865475,
+      -0.3810684897571042,
+      0.5956398291872697,
+      -0.42
+    ],
+    [
+      -0.0,
+      -0.8423619247262304,
+      -0.5389122264075297,
+      0.78
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_right": [
+    [
+      0.7071067811865475,
+      0.3810684897571042,
+      -0.5956398291872697,
+      0.47656854249492375
+    ],
+    [
+      0.7071067811865475,
+      -0.3810684897571042,
+      0.5956398291872697,
+      -0.3634314575050762
+    ],
+    [
+      -0.0,
+      -0.8423619247262304,
+      -0.5389122264075297,
+      0.78
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "distortion_left": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "distortion_right": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "rectified": true,
+  "enabled_by_default": false,
+  "rgb_layout": "BCHW_float_0_1_RGB",
+  "optical_axes": "X_right_Y_down_Z_forward",
+  "horizontal_fov_degrees": 75.0,
+  "intended_distance_m": [
+    0.5,
+    0.8
+  ],
+  "depth_range_m": [
+    0.2,
+    1.2
+  ],
+  "disparity_range_px": [
+    1,
+    64
+  ],
+  "baseline_rationale": "fx=146px, baseline=.08m: disparity=23.4px at .5m and 14.6px at .8m; .2..1.2m requires58.4..9.7px, within1..64px. Wire16mm diameter spans~4.7..2.9px; accuracy/coverage remain unqualified.",
+  "native_qualification": "pending; no native run authorized by this isolated software test"
+}

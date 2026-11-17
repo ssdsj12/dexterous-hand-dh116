@@ -1,0 +1,11 @@
+{
+  "version": "dh116-effective-pinch-target-path-cpu-v3",
+  "mode": "cpu_only",
+  "path_samples": 1025,
+  "maximum_seconds": 60,
+  "motion_steps": 160,
+  "physics_hz": 480,
+  "bow_world_x_m": 0.0001,
+  "native_execution": false,
+  "teacher_admission": false
+}

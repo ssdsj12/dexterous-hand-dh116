@@ -1,0 +1,7 @@
+# Compile verified right approach through original24D and reset contracts
+Baseceb14527e17bddecc5a47fb7e70b1d8066ab1cd6. Freeze pathSHA28f4fdfc138daf800d372d7f3882c60e3953b16779c4fcb3032801cfff5ed8da.
+Derive independentpairReset using originalprepare_reset_state; left androdbyteidentical tomarginbaseline. Right roots/q frompassingCPUpath only, sourceidentities preserved.
+29actions:48quiet+160approach+24hold,8physicssubsteps peraction;2setupsteps remainnotexecutedbyCPU. Onlycanonical6/7/8 and17 maychange. Integrateoriginalfinger_pre_guard/surface_final_guard/wrist_requested_targets/project_policy_wrist_targets andMountViewlocal_translation over232idealtrackedCPUsteps, useactualsourceFKtableclearance, compareexpectedq/rootpath, preservefullrecords.
+CPUfixture is not SDKnativeevidence. Originalzero-wrist-onlyclosurevalidator currentlyrejects nonzerooffset; retainit unchanged and documentnewscopedvalidator neededbeforefrozenrecipe. NoIsaac/0PPO.
+
+AddedscopedRightApproachGeometry: requireexactper-substeprequested/projected/submittedtrajectoryandsource before replacing onlyoldzero-wristassertion. Alloriginaljoint/table/rod/depth/trackingguards retained; olddefaults unchanged.13negative/positiveCPUcases verify it. Nativeworker/recipe notcreatedinthispackage.

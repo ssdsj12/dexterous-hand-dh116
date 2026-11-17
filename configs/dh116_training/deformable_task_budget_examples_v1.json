@@ -1,0 +1,77 @@
+{
+  "description": "CPU budget examples. Calibration describes the existing probe. Real-task physical values and measurement sources require separate validation and native approval.",
+  "plans": {
+    "contact_calibration": {
+      "version": "dh116-deformable-task-budget-v1",
+      "task_kind": "deformable_rod",
+      "phase": "contact_calibration",
+      "wall_seconds": 180,
+      "physics_hz": 480,
+      "control_hz": 60,
+      "environments": 1,
+      "updates": 0,
+      "rollout_control_steps": 0,
+      "approach_control_steps": 0,
+      "hold_control_steps": 0,
+      "calibration_physics_steps": 240,
+      "physics": {
+        "gravity_world_m_s2": [0, 0, 0],
+        "pinned_node_ids": [0, 20],
+        "solver_substeps_per_physics_step": 12,
+        "source_sha256": null
+      },
+      "external_support": {
+        "policy": "calibration_pinned_endpoints",
+        "measurement_source_sha256": null
+      }
+    },
+    "teacher_update_smoke": {
+      "version": "dh116-deformable-task-budget-v1",
+      "task_kind": "deformable_rod",
+      "phase": "teacher_update_smoke",
+      "wall_seconds": 300,
+      "physics_hz": 480,
+      "control_hz": 60,
+      "environments": 2,
+      "updates": 1,
+      "rollout_control_steps": 32,
+      "approach_control_steps": 0,
+      "hold_control_steps": 0,
+      "calibration_physics_steps": 0,
+      "physics": {
+        "gravity_world_m_s2": [0, 0, -9.81],
+        "pinned_node_ids": [],
+        "solver_substeps_per_physics_step": null,
+        "source_sha256": null
+      },
+      "external_support": {
+        "policy": "forbidden_during_lift_hold",
+        "measurement_source_sha256": null
+      }
+    },
+    "frozen_eval": {
+      "version": "dh116-deformable-task-budget-v1",
+      "task_kind": "deformable_rod",
+      "phase": "frozen_eval",
+      "wall_seconds": 900,
+      "physics_hz": 480,
+      "control_hz": 60,
+      "environments": 1,
+      "updates": 0,
+      "rollout_control_steps": 0,
+      "approach_control_steps": 60,
+      "hold_control_steps": 300,
+      "calibration_physics_steps": 0,
+      "physics": {
+        "gravity_world_m_s2": [0, 0, -9.81],
+        "pinned_node_ids": [],
+        "solver_substeps_per_physics_step": null,
+        "source_sha256": null
+      },
+      "external_support": {
+        "policy": "forbidden_during_lift_hold",
+        "measurement_source_sha256": null
+      }
+    }
+  }
+}

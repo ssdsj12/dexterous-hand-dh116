@@ -1,0 +1,30 @@
+{
+  "version": "dh116-stereo-j2a-ablation-v1",
+  "algorithm": "five-integer-cost validation only",
+  "enabled_by_default": false,
+  "native_qualified": false,
+  "status": "retained_failed_observable_fixture_coverage;not_promoted",
+  "depth_estimator": {
+    "method": "reliable_sad",
+    "min_disparity": 8,
+    "max_disparity": 192,
+    "block_size": 9,
+    "min_depth_m": 0.2,
+    "max_depth_m": 1.2,
+    "lr_tolerance_px": 1.0,
+    "texture_threshold": 0.001,
+    "uniqueness_threshold": 0.05,
+    "rectify": false,
+    "subpixel": true,
+    "image_processing_batch_size": 1,
+    "photometric_verification": false,
+    "reliability": {
+      "min_curvature": 0.000001,
+      "fit_tolerance": 0.25,
+      "absolute_fit_tolerance": 0.05,
+      "mode_margin": 0.05,
+      "fallback": "integer"
+    }
+  },
+  "paired_ablation": "Only photometric_verification differs from the final J2-A candidate estimator"
+}

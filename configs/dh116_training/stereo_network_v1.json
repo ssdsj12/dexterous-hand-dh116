@@ -1,0 +1,52 @@
+{
+  "schema_version": "dh116-stereo-network-v1",
+  "observation_version": "dh116-stereo-sensor-history-v1",
+  "history": 4,
+  "embed_dim": 128,
+  "num_heads": 4,
+  "num_layers": 2,
+  "dropout": 0.0,
+  "backbone": {
+    "type": "GN_ResNet18",
+    "block": "BasicBlock",
+    "stages": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "channels": [
+      64,
+      128,
+      256,
+      512
+    ],
+    "normalization": "GroupNorm",
+    "weights": "scratch",
+    "pretrained": false,
+    "shared_left_right": true
+  },
+  "spatial_fusion": "bidirectional_stereo_cross_attention_then_proprio_gated_attention",
+  "spatial_encoding": "explicit_image_xy_world_xyz_and_arc_length_point_ordinal",
+  "temporal_encoding": "sinusoidal_slot_index_plus_cumulative_dt_and_image_age",
+  "image_resolution_wh": [
+    224,
+    96
+  ],
+  "depth_pool_grid": [
+    3,
+    3
+  ],
+  "points": 128,
+  "proprio": 62,
+  "action_size": 24,
+  "action_contract_sha256": "498cebedfe520cc2f6593b32776581c3da826ba95e4db441b7938d29176c55d9",
+  "actor_output": "unbounded_latent_mean",
+  "action_transform": "existing_saved_latent_tanh_Gaussian",
+  "runtime_input": "StereoHistoryBatch_only",
+  "geometry_identity": "upstream_arc_length_order_and_correspondence_required;network_does_not_infer_topology",
+  "force_proxy_semantics": "left_right_thumb_index_middle_accepted_pad_normal_proxy_N;not_world_XYZ;not_tactile_measurement",
+  "native_validation": "pending",
+  "image_processing_batch_size": 2,
+  "image_processing_batch_policy": "same_GN_backbone_per_chunk;checkpoint_gradients_in_training;no_image_resize"
+}

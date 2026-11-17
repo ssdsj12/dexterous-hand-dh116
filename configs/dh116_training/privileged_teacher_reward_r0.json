@@ -1,0 +1,10 @@
+{
+  "version": "dh116-privileged-teacher-reward-v1",
+  "profile": "teacher_r0_existing",
+  "enabled": true,
+  "operation": "return_final_native_TensorEnv_reward_exactly_once",
+  "term_closure_required": true,
+  "extra_shaping": {},
+  "native_success": "unchanged_30mm_5s_0.5mm",
+  "native_base_profile": "must_be_explicitly_recorded_by_runtime_not_inferred_from_R0_name"
+}

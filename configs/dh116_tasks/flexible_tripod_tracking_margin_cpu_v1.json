@@ -1,0 +1,15 @@
+{
+  "version": "dh116-tripod-conditional-tracking-envelope-v1",
+  "world_offset_m": [
+    0.00005,
+    0,
+    0.00015
+  ],
+  "reserve_m": 0.00001,
+  "maximum_proof_samples": 4096,
+  "physics_hz": 480,
+  "control_hz": 60,
+  "native_execution_enabled": false,
+  "teacher_admission": false,
+  "reference_only": true
+}

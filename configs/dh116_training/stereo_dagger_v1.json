@@ -1,0 +1,22 @@
+{
+  "schema_version": "dh116-stereo-dagger-v1",
+  "teacher_probability_by_stage": {
+    "D0": 1.0,
+    "D1": 0.5,
+    "D2": 0.2,
+    "D3": 0.1,
+    "D4": 0.0
+  },
+  "default_stage": "D4",
+  "owner_selection": "one_complete_24D_action_per_environment;never_per_dimension_interpolation",
+  "teacher_label": "queried_on_exact_current_visited_pre_action_privileged_state;deterministic_mean_detached",
+  "teacher_qualification": "required_before_first_formal_env_step;common_promotion_gate",
+  "aggregation": "append_only_unique_run_env_episode_reset_policy_tick",
+  "holdout": "physical_initial_condition_SHA_and_connected_source_episode_groups",
+  "D0": "Teacher_only_reference_not_DAgger_Student_rollout",
+  "failure_states": "allowed_in_visited_state_pool;never_successful_BC_demonstrations",
+  "ppo_storage_insertion": false,
+  "optimizer": "independent_Adam_clean_PPO_boundary",
+  "bc_config": "configs/dh116_training/stereo_bc_v1.json",
+  "native_validation": "pending"
+}

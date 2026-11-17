@@ -1,0 +1,286 @@
+{
+  "K_left": [
+    [
+      417.0321193091858,
+      0.0,
+      320.0
+    ],
+    [
+      0.0,
+      417.0321193091858,
+      240.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "K_right": [
+    [
+      417.0321193091858,
+      0.0,
+      320.0
+    ],
+    [
+      0.0,
+      417.0321193091858,
+      240.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_left": [
+    [
+      0.2074178340691671,
+      0.5698758154972223,
+      -0.7951222528777767,
+      1.0117032866372333
+    ],
+    [
+      0.9396926207859084,
+      -0.3420201433256687,
+      0.0,
+      -0.037587704831436336
+    ],
+    [
+      -0.2719478268906858,
+      -0.7471705136519138,
+      -0.6064491759237279,
+      0.8908779130756275
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_right": [
+    [
+      0.2074178340691671,
+      0.5698758154972223,
+      -0.7951222528777767,
+      1.0282967133627667
+    ],
+    [
+      0.9396926207859084,
+      -0.3420201433256687,
+      0.0,
+      0.037587704831436336
+    ],
+    [
+      -0.2719478268906858,
+      -0.7471705136519138,
+      -0.6064491759237279,
+      0.8691220869243725
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "width": 640,
+  "height": 480,
+  "baseline_m": 0.08,
+  "distortion_left": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "distortion_right": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "rectified": true,
+  "version": "dh116-stereo-optical-v1",
+  "calibration_sha256": "02fabb87c548cd982728dac5d6357ca08327258514269b163e880427b2556700",
+  "profile_version": "dh116-stereo-physical-rig-roll-experiment-v1",
+  "profile_name": "front_physical_roll20_640x480_block9",
+  "enabled_by_default": false,
+  "default_accuracy_profile": false,
+  "intended_accuracy_profile": false,
+  "resolution_mode": "physical_camera_rig_roll_and_rotated_baseline;not_image_rotation_or_resize",
+  "horizontal_fov_degrees": 75.0,
+  "optical_axes": "X_right_Y_down_Z_forward",
+  "rgb_layout": "BCHW_float_0_1_RGB",
+  "center_world_m": [
+    1.02,
+    0.0,
+    0.88
+  ],
+  "target_world_m": [
+    0.43,
+    0.0,
+    0.43
+  ],
+  "optical_right_world": [
+    0.2074178340691671,
+    0.9396926207859084,
+    -0.2719478268906858
+  ],
+  "depth_range_m": [
+    0.2,
+    1.2
+  ],
+  "disparity_range_px": [
+    8,
+    192
+  ],
+  "depth_estimator": {
+    "method": "blockmatch",
+    "min_disparity": 8,
+    "max_disparity": 192,
+    "block_size": 9,
+    "min_depth_m": 0.2,
+    "max_depth_m": 1.2,
+    "lr_tolerance_px": 1.0,
+    "texture_threshold": 0.001,
+    "uniqueness_threshold": 0.05,
+    "rectify": false,
+    "subpixel": true,
+    "image_processing_batch_size": 1
+  },
+  "disparity_budget": {
+    "near_disparity_px": 166.81284772367434,
+    "far_disparity_px": 27.802141287279056,
+    "suggested_min_disparity": 19,
+    "suggested_max_disparity": 176
+  },
+  "resource_limits": {
+    "max_width": 2048,
+    "max_height": 1536,
+    "max_readback_bytes": 1073741824,
+    "allow_resource_override": false
+  },
+  "matcher_resource_policy": "stream_one_disparity_plane;image_processing_batch_size=1;never_hidden_downsample",
+  "model_compatibility": "new_calibration_SHA_required;no_silent_reuse_of_old_rig_models",
+  "framing_reference_world_m": [
+    [
+      0.502083,
+      0.188617,
+      0.487541
+    ],
+    [
+      0.522067,
+      -0.197186,
+      0.478162
+    ],
+    [
+      0.483137,
+      0.177137,
+      0.495522
+    ],
+    [
+      0.515256,
+      -0.191129,
+      0.480714
+    ],
+    [
+      0.43,
+      -0.25,
+      0.368
+    ],
+    [
+      0.43,
+      0.25,
+      0.368
+    ]
+  ],
+  "framing_projection": {
+    "all_in_view": true,
+    "reference_point_count": 6,
+    "expanded_point_count": 48,
+    "workspace_margin_m": 0.05,
+    "minimum_border_margin_px": 122.15792123562004,
+    "minimum_optical_depth_m": 0.5695333612569538,
+    "source_scope": "CPU_projection_arithmetic",
+    "native_visibility_qualified": false,
+    "occlusion_checked": false,
+    "hidden_padding_or_resize": false
+  },
+  "source_metadata": {
+    "source_scope": "authored_physical_rig_observability_experiment",
+    "source_artifact": {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_rig_experiments.py",
+      "sha256": "a2b579241b3d36aa7dc4f5fdb04854d6702b89c4337774a1016d191551a0e7a2"
+    },
+    "parent_profile_artifact": {
+      "path": "configs/dh116_training/stereo_camera_front_640x480_v3.json",
+      "sha256": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b"
+    },
+    "parent_calibration_sha256": "3a80f41c26c74d3d2b9692530eec1bb8e17ea373725281f97a277408a6913acb",
+    "parent_source_metadata": {
+      "source_scope": "authored_front_rig_from_reported_native_framing_coordinates",
+      "reported_primary_palm_xyz_m": [
+        [
+          0.502083,
+          0.188617,
+          0.487541
+        ],
+        [
+          0.522067,
+          -0.197186,
+          0.478162
+        ]
+      ],
+      "reported_secondary_palm_xyz_m": [
+        [
+          0.483137,
+          0.177137,
+          0.495522
+        ],
+        [
+          0.515256,
+          -0.191129,
+          0.480714
+        ]
+      ],
+      "reported_wire_center_xyz_m": [
+        0.4299999475,
+        0.0,
+        0.3680000007
+      ],
+      "coordinate_frame": "environment_local_base_rig;runtime_shifts_rig_and_points_by_same_environment_origin",
+      "coordinates_status": "reported_actual_SDK_review_readback;50mm_XYZ_margin;raw_native_source_requires_separate_binding",
+      "source_artifact": {
+        "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_framing.py",
+        "sha256": "884487259d8f69f215431d7899d457dfb18e505bfc8f903336a5217acc673550"
+      },
+      "native_capture_performed_for_this_rig": false,
+      "old_rig_failed_evidence_preserved": true
+    },
+    "physical_roll_convention": "positive Rodrigues about opticalForward;right=cos*r+sin*d;down=-sin*r+cos*d",
+    "baseline_rotates_physically": true,
+    "image_rotation_used": false,
+    "comparison_to_parent": "block5 isolates rig roll;block9 additionally changes matching window",
+    "comparison_with_other_window": "only depth_estimator.block_size differs;calibration and all other matcher settings identical",
+    "native_capture_performed_for_this_rig": false,
+    "old_rig_failed_evidence_preserved": true
+  },
+  "native_qualification": "pending_independent_native_roll_rig_capture;CPU_geometry_does_not_establish_accuracy",
+  "rig_roll_degrees": 20.0,
+  "rig_roll_axis_world": [
+    -0.7951222528777767,
+    0.0,
+    -0.6064491759237279
+  ],
+  "epipolar_diagnostic": {
+    "left_wire_angle_degrees": -20.00000000000001,
+    "right_wire_angle_degrees": -20.000000000000004,
+    "source_scope": "CPU_projection_arithmetic",
+    "meaning": "wire_image_direction_relative_to_horizontal_epipolar_axis",
+    "native_accuracy_improvement_proven": false,
+    "photometric_texture_proven": false
+  }
+}

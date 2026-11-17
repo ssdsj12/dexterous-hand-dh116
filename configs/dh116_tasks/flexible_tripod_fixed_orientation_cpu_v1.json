@@ -1,0 +1,14 @@
+{
+  "version": "dh116-tripod-fixed-orientation-candidate-v1",
+  "mode": "offline_candidate_only",
+  "initial_world_z_raise_m": 0.0015,
+  "motion_steps": 200,
+  "native_execution_enabled": false,
+  "maximum_new_physics_steps": 0,
+  "physics_hz": 480,
+  "control_hz": 60,
+  "table_clearance_m": 0.0021,
+  "required_pad_minimum_reference_gap_m": -0.00005,
+  "continuous_tracking_proof_required": true,
+  "teacher_admission": false
+}

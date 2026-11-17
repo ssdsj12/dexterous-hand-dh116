@@ -1,0 +1,31 @@
+{
+  "version": "dh116-owned-preview-shutdown-api-v1",
+  "sources": {
+    "manager": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.core.simulation_manager/isaacsim/core/simulation_manager/impl/simulation_manager.py",
+      "sha256": "97d1ef88202f370eac00281b193581ba02b5c95ed64131f153c006e3ab104357"
+    },
+    "simulation_app": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.simulation_app/isaacsim/simulation_app/simulation_app.py",
+      "sha256": "840ad13fcb3b4d8e10457809d42180b0fd807951a3e3cc153c832363fbef0bb2"
+    },
+    "timeline": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.timeline-1.0.11+d02c707b.lx64.r.cp310/omni/timeline/_timeline.pyi",
+      "sha256": "adf8065a9ba9abe290a179232c7b298c9a7957b62a7e8a7770768777beb639e0"
+    },
+    "livestream_stub": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.kit.livestream.core-6.1.0+106.2.0.lx64.r.cp310/omni/kit/livestream/bind/_kit_livestream.pyi",
+      "sha256": "231b2c81a99e61219eb0d48707cf03978d29a557352d5b4e99eb960bd720eca3"
+    },
+    "livestream_binding": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.kit.livestream.core-6.1.0+106.2.0.lx64.r.cp310/omni/kit/livestream/bind/_kit_livestream.cpython-310-x86_64-linux-gnu.so",
+      "sha256": "cd9ed4e8a3aab7dbd168b9862b4a14004093919b967e200e0c2d4820c6838100"
+    },
+    "livestream_plugin": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.kit.livestream.core-6.1.0+106.2.0.lx64.r.cp310/bin/libomni.kit.livestream.plugin.so",
+      "sha256": "726da8dc47348804cdc8115e41e170dfa36631fa802a21955c52ed04dfb2ff5f"
+    }
+  },
+  "installed_sdk_files_modified": false,
+  "native_qualification": false
+}

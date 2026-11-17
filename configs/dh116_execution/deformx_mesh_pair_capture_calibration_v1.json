@@ -1,0 +1,62 @@
+{
+  "argv": [
+    "--output",
+    "{output}",
+    "--extension",
+    "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python/ropesim/_ropesim.cpython-310-x86_64-linux-gnu.so",
+    "--extension-sha256",
+    "92a50ba3747192b72fd607741ff1465c17874f7c8f8fb0cbed82d99d5985d8c0",
+    "--execute-native"
+  ],
+  "budget": {
+    "environments": 1,
+    "gpu_index": 3,
+    "min_disk_free_bytes": 1073741824,
+    "min_gpu_free_mib": 4096,
+    "physics_steps": 0,
+    "timeout_seconds": 90,
+    "updates": 0
+  },
+  "entrypoint": "scripts/verify_dh116_deformx_pair_capture.py",
+  "environment": {
+    "DH116_NUM_THREADS": "2",
+    "LD_LIBRARY_PATH": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flexible-f1-20261112-883RS4/sdk/lib64"
+  },
+  "inputs": {
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flexible-f1-20261112-883RS4/sdk/lib64/libcudart.so.12": "3de79bdf8165cfd0f27aed3c6f4c98dd6aa9b9b676036b9362491fe070854f07",
+    "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python/ropesim/__init__.py": "adc864e6bed274b88a0b15f44dcf8c2628cae5d6913518d147d5d8b4ac0d8419",
+    "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python/ropesim/_ropesim.cpython-310-x86_64-linux-gnu.so": "92a50ba3747192b72fd607741ff1465c17874f7c8f8fb0cbed82d99d5985d8c0",
+    "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python/ropesim/isaac_bridge.py": "7a593ec2b56f4115e3c04ebe5cd6969294c7047ec8c577012bfcb3c1bf649eae",
+    "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python/ropesim/sdf.py": "493ee1a8500614a1b6c27318bbbd7cad6731ddfc1c357b1f3853e055d9346e1d"
+  },
+  "source_files": [
+    "scripts/prepare_dh116_deformx_pair_readback.py",
+    "src/go2_pvcnn/control/dh116/tabletop_deformx_pair_capture.py",
+    "src/go2_pvcnn/control/dh116/tabletop_stereo_native.py",
+    "src/go2_pvcnn/control/dh116/tabletop_stereo_contract.py",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_contract.py",
+    "scripts/run_dh116_deformx_pair_work_packages.py"
+  ],
+  "validator": {
+    "artifacts": [
+      "plan.json",
+      "raw_pairs.json",
+      "pairs.json",
+      "result.json"
+    ],
+    "equals": {
+      "cuda_solver_steps": 1,
+      "extension_sha256": "92a50ba3747192b72fd607741ff1465c17874f7c8f8fb0cbed82d99d5985d8c0",
+      "isaac_physics_steps": 0,
+      "native_execution_performed": true,
+      "ppo_updates": 0,
+      "reconciled_pairs": true,
+      "rod_substeps": 12,
+      "scope": "one_free_rod_one_table_sdf_pair_capture_calibration",
+      "stale_reset_rejected": true
+    },
+    "line_counts": {},
+    "result_file": "result.json"
+  },
+  "version": 1
+}

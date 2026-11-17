@@ -1,0 +1,5 @@
+# 独立左手Tripod234步原生接近与静置准入
+
+基线 `7c8c7b2186b5b61e1f07b0acebc25c9d3023bc8f`。原生范围 `left_tripod_2_setup_8quiet_200approach_24observe_diagnostic_only`，状态 `failed`，外层退出码 `1`。独立私有回执 SHA256 `9bb31008160da84e31c1e089eed925ba658d40c82a830173a958e21491ecf0eb`。
+
+代码与配置 SHA256 `71f0fe738be3559c02c2a32ca5f1c2702f98cdb46ed403f3b2339fe732fa536a`。范围以独立产物校验和进程退出为准。原始日志留在 Ubuntu 私有证据目录。

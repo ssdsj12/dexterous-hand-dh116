@@ -1,0 +1,32 @@
+{
+  "version": "dh116-tripod-full-geometry-closure-v3",
+  "mode": "cpu_only",
+  "native_execution": false,
+  "translation_scales_m": [
+    0.0004,
+    0.0004
+  ],
+  "reset_rotation_scales_rad": [
+    0.01,
+    0.01,
+    0.01
+  ],
+  "joint_scales_rad": [
+    0.01,
+    0.01,
+    0.01,
+    0.01
+  ],
+  "table_clearance_m": 0.0021,
+  "native_required_gap_m": -0.0003,
+  "required_planning_gap_m": -0.00015,
+  "non_target_gap_m": 0,
+  "reserve_m": 0.00001,
+  "sdf_target_gap_m": -0.000015,
+  "physics_hz": 480,
+  "control_hz": 60,
+  "motion_steps": 200,
+  "maximum_evaluations": 600,
+  "maximum_seconds": 60,
+  "teacher_admission": false
+}

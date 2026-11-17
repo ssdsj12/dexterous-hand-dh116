@@ -1,0 +1,37 @@
+{
+  "scope": "non_executable_budget_preflight",
+  "native_recipe_generated": false,
+  "native_approval_requested": false,
+  "prior_native_attempts_consumed": true,
+  "approved_for_execution": false,
+  "environments": 1,
+  "gpu_index": 3,
+  "ppo_updates": 0,
+  "timeout_seconds": 180,
+  "max_attempts": 1,
+  "proposed_phase_counts": {
+    "initialization_physics_steps": 2,
+    "warmup_physics_steps": 0,
+    "measurement_physics_steps": 238,
+    "other_physics_advancing_steps": 0,
+    "total_physics_steps": 240
+  },
+  "expected_rod_substeps_at_12_per_measurement": 2856,
+  "required_evidence": [
+    "locked cooked collision identities, actual same-clock q/qd and transforms before advance",
+    "same-clock PhysX hand-table raw contact pairs and bounded DeformX node-mesh pairs with explicit overflow state",
+    "per-tick joint and wrench readback",
+    "application-owned callback release and no surviving measured tensor aliases",
+    "independent outer exit and original success criteria"
+  ],
+  "geometry_report_sha256": "e4fac4c777c5f8e3ece6baf310026f9f051381e473be21f2037d207ede01a4e4",
+  "candidate_config_sha256": "a2eefb1a8f487fdba7e567c51aab005211dec3f658d2aa939c0ff7289de0dc44",
+  "locked_old_scheduler_code_config_sha256": "d0ec5e2f6146c82e637331acd8dac173fd46cc80425e769578d36e7ce98273de",
+  "measured_this_turn": {
+    "native_executions": 0,
+    "physics_steps": 0,
+    "training_updates": 0,
+    "complete_episodes": 0
+  },
+  "status": "blocked_on_evidence_source_and_native_lifetime"
+}

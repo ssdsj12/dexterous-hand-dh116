@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "base_head": "b2de6ec4a0e1879b55052b84e0a2a412d7a0cf7c",
+  "tested_head": "1988eeb76349c0b68d90acfb1df2178c0f1ce248",
+  "specification_sha256": "e4f93658ea0c4c90324e7cde7e54a0dc104565f1bf9cbf4082ef9405c7f16802",
+  "branch": "codex/dh116-stereo-privileged-dagger",
+  "publication_route": "ubuntu_commit_windows_relay_only",
+  "qualification": "batch_checkpoint_only_not_training_qualification",
+  "cpu_evidence_sha256": "de998f2e45c27d8225343d57dfb8866fb357d4a0a7e8e9ef31daa0553178f55b",
+  "actual": {
+    "native_runs": 0,
+    "physics_steps": 0,
+    "rod_steps": 0,
+    "ppo_updates": 0,
+    "training_optimizer_updates": 0,
+    "complete_episodes": 0,
+    "native_success_rate": null
+  },
+  "requested_native_batches": {
+    "flex.f6-camera-c5": {
+      "command_spec_sha256": "b2111b376320ba4dfb4babd302034e77a0de12678f080d5386903ff335855322",
+      "code_config_sha256": "c9a7e7ec6effcb72a59b97b22138dd568a31579e057d18a8258be2451f4f42aa",
+      "budget": {
+        "environments": 1,
+        "gpu_index": 3,
+        "min_disk_free_bytes": 1073741824,
+        "min_gpu_free_mib": 4096,
+        "physics_steps": 0,
+        "timeout_seconds": 180,
+        "updates": 0
+      },
+      "approved": false,
+      "execution_count_this_batch": 0,
+      "entrypoint": "scripts/run_dh116_camera_c5_work_packages.py"
+    },
+    "flex.f4-free-pinch-left-candidate-native": {
+      "command_spec_sha256": "49084203742e4ff3487eeb1305fde2a342204edc06ecd34d7b4157bec38685d4",
+      "code_config_sha256": "d0ec5e2f6146c82e637331acd8dac173fd46cc80425e769578d36e7ce98273de",
+      "budget": {
+        "environments": 1,
+        "gpu_index": 3,
+        "min_disk_free_bytes": 1073741824,
+        "min_gpu_free_mib": 4096,
+        "physics_steps": 240,
+        "timeout_seconds": 180,
+        "updates": 0
+      },
+      "approved": false,
+      "execution_count_this_batch": 0,
+      "entrypoint": "scripts/run_dh116_pinch_work_packages.py"
+    }
+  },
+  "completed_native_receipts_reuse": {
+    "flex.f4-left-contact-native": {
+      "result_sha256": "460ce27e089ae3178b912dd22e72286122c4eee4d11769b154ef27051d0dd6ca",
+      "outer_exit_code": 0,
+      "native_qualification": true,
+      "physics_budget": {
+        "initialization_physics_steps": 2,
+        "warmup_physics_steps": 0,
+        "measurement_physics_steps": 238,
+        "other_physics_advancing_steps": 0,
+        "total_physics_steps": 240
+      },
+      "qualification_scope": "dh116_left_thumb_deformx_contact_lifecycle"
+    },
+    "flex.f4-right-contact-native": {
+      "result_sha256": "8007694e7b4424de4743f6ccd6660c85479b3540506647db725a34fa246a179f",
+      "outer_exit_code": 0,
+      "native_qualification": true,
+      "physics_budget": {
+        "initialization_physics_steps": 2,
+        "warmup_physics_steps": 0,
+        "measurement_physics_steps": 238,
+        "other_physics_advancing_steps": 0,
+        "total_physics_steps": 240
+      },
+      "qualification_scope": "dh116_right_thumb_deformx_contact_lifecycle"
+    },
+    "flex.f6-camera-c3": {
+      "result_sha256": "c0c48203d13e7de5416fca42d9a8d40096c588d8ca9eef5aa858f733c4a24f42",
+      "outer_exit_code": 0,
+      "native_qualification": true,
+      "physics_budget": null,
+      "qualification_scope": "camera_c3_isolated_lifecycle"
+    },
+    "flex.f6-camera-c4": {
+      "result_sha256": "7ef892c4dc65ea85168e167b023ec5d07c496f7aed12f99911d45238de5c05d6",
+      "outer_exit_code": 255,
+      "native_qualification": false,
+      "physics_budget": null,
+      "qualification_scope": "camera_c4_isolated_lifecycle"
+    }
+  },
+  "protected_file_count": 528,
+  "protected_checkpoints": {
+    "/tmp/dh116-wp3-teacher128-v02/teacher_diagnostic/teacher_update_000000.pt": "ec5831ac4de039e5e77e2ee4a3420497a0c103a2a5966a1a73662d4997966511",
+    "/tmp/dh116-wp3-teacher128-v02/teacher_diagnostic/teacher_update_000001.pt": "c1735e5f112b7f10ff4dacf00b2ac547728cea82a08d5b051e5b78cca84a9999"
+  },
+  "data": {
+    "wireseg_complete_blobs": 9,
+    "catalog_total_blobs": 148,
+    "depth21_lfs_sha256": "eeddfc47beff6abd0f92f7e3bb9da64fe0d9c734dfa9b4e3d39cc760ebcf7c08",
+    "subset_manifest_sha256": "84ce17fc28c99b46762d414003fe8b7b57a5351760c84d8526344ce24fbf60f8",
+    "full_audit_result_sha256": "c639628246161ba4cbd2ae48b69a083cdb1bfd6a3f9bee8f7eea01c35791cf48",
+    "cache_identity_proof_sha256": "2583d25ab88677d270af129f39c36a56d5d8aa224712728bb5d377eea1504ded"
+  },
+  "preserved_model": {
+    "original_seg_sha256": "77459b47f26ccfdeea024f298fe59bedbb9c119242cddda305aeea0b71cf5f39",
+    "original_depth_sha256": "56826811b64075446486fc0309a60a616dabcafc738d40700be04ec39ac21adb",
+    "imported_depth_sha256": "1d22ce17a31177af013c0b945a042de9cc04792549a99bcbe12c477711fd5a30"
+  },
+  "next": [
+    "C5 or free-Pinch exact approval then single-instance bounded execution, independently validate and publish",
+    "WireSeg wire/background objective and optimization-effective diagnostic before any new training budget",
+    "P4 true full-state/reset/R0/material-anchor bindings after physical evidence",
+    "Independent Pinch/Tripod/Power Teacher batches only after own gates",
+    "Student only after qualified teacher and synchronized stereo"
+  ],
+  "r2_enabled": false,
+  "formal_teacher_started": false,
+  "formal_student_started": false,
+  "original_project_preserved": true
+}

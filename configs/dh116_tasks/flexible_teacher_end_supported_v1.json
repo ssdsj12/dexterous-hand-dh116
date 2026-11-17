@@ -1,0 +1,91 @@
+{
+  "version": "dh116-flexible-teacher-end-supported-v1",
+  "status": "cpu_candidate_native_validation_pending",
+  "calibration_status": "candidate_not_measured",
+  "native_execution_validated": false,
+  "clearance_m": 0.06,
+  "action_size": 24,
+  "base_task": "configs/dh116_tasks/flexible_pinch_undamped_v1.json",
+  "seed_policy": "translate_original_nodes_and_roots_z_only_preserve_joints_quaternions_sources",
+  "table": {
+    "mu_s": 0.5,
+    "mu_k": 0.4,
+    "sdf_spacing_m": 0.005,
+    "sdf_margin_m": 0.025
+  },
+  "supports": {
+    "count": 2,
+    "mesh_indices": [
+      11,
+      12
+    ],
+    "static_physx_collision": true,
+    "deformx_box_sdf": true,
+    "persistent_during_rollout": true,
+    "attachments": false,
+    "fixed_nodes": false,
+    "physics_material": {
+      "mu_s": 0.5,
+      "mu_k": 0.4,
+      "restitution": 0.0,
+      "friction_combine_mode": "average",
+      "restitution_combine_mode": "average",
+      "scope": "per_env_supports_only",
+      "calibration_status": "candidate_not_measured"
+    }
+  },
+  "mesh_contract": {
+    "left_pads": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "table": 5,
+    "right_pads": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "supports": [
+      11,
+      12
+    ],
+    "pose_slots": 13,
+    "wrench_capacity": 64
+  },
+  "success": {
+    "net_lift_m": 0.03,
+    "hold_s": 5.0,
+    "require_full_support_clearance": true,
+    "missing_native_contact_status": "NA",
+    "lift_reference": "settled_initial_min_node_z",
+    "support_height_counts_as_lift": false,
+    "slip_m": 0.0005
+  },
+  "power": {
+    "status": "blocked",
+    "reason": "current_five_pad_meshes_lack_palm_and_proximal_physx_deformx_surface_qualification",
+    "required_behavior": "palm_enclosure_and_five_fingers_closed"
+  },
+  "pinch_tripod": {
+    "status": "diagnostic_ready_native_validation_pending"
+  },
+  "unchanged": [
+    "legacy_environment",
+    "models",
+    "original_hand_usd",
+    "original_hand_material",
+    "table_material",
+    "24D_action_contract"
+  ],
+  "not_evidence_of": [
+    "native_solver_execution",
+    "successful_grasp",
+    "successful_training",
+    "measured_clearance"
+  ]
+}

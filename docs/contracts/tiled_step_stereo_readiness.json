@@ -1,0 +1,180 @@
+{
+  "version": "dh116-tiled-step-stereo-readiness-v1",
+  "status": "blocked_python_finalize_extensions_native_budget_exhausted",
+  "source_baseline": "cf7fac999ef82e3598f467cae2641f78411b8503",
+  "reference_repository": "NVlabs/DEXTRAH",
+  "reference_commit": "ebc08edafe5f7c5ad73dcb25ffa15e8d0353df50",
+  "implementation_source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_capture.py": "34b87780d444eddbbac89e0c40c6ee5882a5c19f1de64365fc8962f7db05358f",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_native.py": "500bdcc1aa210667840cf2dfa4148fc96e9ec213bc26936d64ca13dab322f287",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_resources.py": "bb9f8bde46c4b1e1cae18548a62bc7c30b37ec4542ff393a4da7612a7f5fc612",
+    "src/go2_pvcnn/control/dh116/tabletop_preview_contract.py": "41e50144f8e4ef42ce557119f52f17c7bd64d8f3f0c279ff379ff2a56c35c849",
+    "scripts/preview_dh116_physical_webrtc.py": "c7f554b7f8186a9b9a3045d7843512509b68149f8fd3ec57fd9baa94e37b31a1"
+  },
+  "installed_api_sources": {
+    "tiled": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sensors/camera/tiled_camera.py",
+      "sha256": "f3e9205a16a3ba335f9376a57cf4bf0473ecced928d9ac12d9ddeae83961d506"
+    },
+    "camera": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sensors/camera/camera.py",
+      "sha256": "a3689cffa01d046b510f7564f7adad972edf6316568b0e323abc2c4f0c4ec354"
+    },
+    "sensor": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sensors/sensor_base.py",
+      "sha256": "4716a4b89ed1ac4f640f8744f1e2fcaac2e74d00c2193e0ce24e52c61e5659fc"
+    },
+    "replicator_create": {
+      "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.replicator.core-1.11.35+106.5.0.lx64.r.cp310/omni/replicator/core/scripts/create.py",
+      "sha256": "0a5b18a4cfc0b07c490c29c619badc183f81b6b17d3633b68a90acb85550a09c"
+    },
+    "xform_view": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/sim/views/xform_prim_view.py",
+      "sha256": "5a05ccc9322e6f042f2ab669cbaf7fb60712726dfeb0d323913b78c87d3755b3"
+    },
+    "fabric_utils": {
+      "path": "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/utils/warp/fabric.py",
+      "sha256": "209522df45e11ef3c6ac8edd571c24a9b6eb76e790812d7f6aaeb80bfa8b302f"
+    }
+  },
+  "cpu": {
+    "passed": 307,
+    "failed": 0,
+    "skipped": 0,
+    "wall_seconds": 17.706919031916186,
+    "log_sha256": "42a7ad4508191a67845d5f1b1f2cc8941346d87270517ce0e5ef7cff0469c59e"
+  },
+  "native": {
+    "executed": true,
+    "accepted_rgb_pairs": 17,
+    "synchronization_qualified": false,
+    "pixel_view_correspondence_qualified": false,
+    "reset_qualified": false,
+    "normal_exit_qualified": false,
+    "gpu_release_qualified": false,
+    "teacher_admission": false,
+    "student_admission": false,
+    "previous_revision_result": {
+      "source_head": "d1469d29fd288c2b52d45ced096a95ee95c3ac2d",
+      "batch_attempt_number": 1,
+      "camera_backend": "tiled_step",
+      "resolution_wh": [
+        320,
+        240
+      ],
+      "contract_sha256": "d1cafbd09d639a5ea0332394b92d2de259c063d81dd1742ead963f07b3ad4686",
+      "outer_exit_code": 255,
+      "debugger_inferior_final_status": {
+        "exit_code": null,
+        "signal": 11
+      },
+      "wall_seconds": 74.42727220105007,
+      "forced_termination": false,
+      "physical_jsonl_total_rows": 6,
+      "incomplete_physical_lines": 0,
+      "accepted_rgb_pairs": 0,
+      "incomplete_stage_lines": 0,
+      "durable_stage_errors": [
+        {
+          "stage": "acquire",
+          "error": ""
+        },
+        {
+          "stage": "manager_readback_guard",
+          "error": "RuntimeError: manager view release false or unknown"
+        },
+        {
+          "stage": "ownership_readback_guard",
+          "error": "RuntimeError: owned resource release false or unknown"
+        },
+        {
+          "stage": "manager_before_close_guard",
+          "error": "RuntimeError: manager view release false or unknown before close"
+        },
+        {
+          "stage": "ownership_before_close_guard",
+          "error": "RuntimeError: owned resource release false or unknown before close"
+        }
+      ],
+      "native_log_sha256": "ca8a0d27a4363d0e63ea2d9700ea5eeda40655632e78f8e3196ec55733edff08",
+      "native_log_bytes": 1618234,
+      "debugger_fatal_records": 1,
+      "ppo_updates": 0,
+      "native_qualification": false
+    },
+    "latest_batch_result": "docs/contracts/preview_finalize_native_batch_result.json",
+    "last_attempt_source_head": "e31a694879e16726f6caf6ea5ed61025482e50c9",
+    "last_actual_rgb_pairs": 17
+  },
+  "preview_contract_version": "dh116-webrtc-physical-preview-v3",
+  "default_backend": "legacy_view",
+  "new_backend": "tiled_step",
+  "new_backend_opt_in": true,
+  "source_clock_contract": "separate_raw_clocks_with_frozen_physics_boundary",
+  "shared_raw_timestamp_fabricated": false,
+  "supported_resolution_profiles": [
+    [
+      224,
+      96
+    ],
+    [
+      320,
+      240
+    ],
+    [
+      640,
+      360
+    ],
+    [
+      640,
+      480
+    ]
+  ],
+  "custom_resolution_cpu_checked": [
+    512,
+    384
+  ],
+  "default_accuracy_resolution": [
+    640,
+    480
+  ],
+  "selected_resolution": null,
+  "baseline_m": 0.08,
+  "horizontal_fov_degrees": 75.0,
+  "native_preview_environment_limit": 1,
+  "physics_hz": 480,
+  "policy_hz": 60,
+  "ppo_updates": 0,
+  "original_action_and_observation_contracts_changed": false,
+  "installed_sdk_files_modified": false,
+  "original_stopped_batch": {
+    "status": "stopped_common_path_failure",
+    "unused_old_source_cases": 3,
+    "automatically_resumed": false
+  },
+  "next_native_budget": {
+    "authorized": false,
+    "proposed_resolution": [
+      320,
+      240
+    ],
+    "total_sdk_steps": 130,
+    "solver_measurement_substeps": 1536,
+    "max_explicit_renders": 162,
+    "soft_deadline_s": 180,
+    "ppo_updates": 0,
+    "remaining_attempts": 0,
+    "batch_request_sha256": "5545d1f1712b1205e484f7aed5954c3a461a5ed69aa363e90a5f8192d11cb795"
+  },
+  "remaining_blockers": [
+    "Py_FinalizeEx extension binding SIG11 after normal app.close and verified window reference clear",
+    "precise surviving native interface owner not yet proven; no repeated global cleanup",
+    "Reset/restart, pixel synchronization, depth accuracy and other resolutions unqualified"
+  ],
+  "camera_pose_backend": "usd_camera_prim_isaac45",
+  "camera_view_only_fabric_route_disabled": true,
+  "global_physics_fabric_changed": false,
+  "current_revision_native_executed": true,
+  "latest_native_result": "docs/contracts/preview_window_owner_native_result.json",
+  "owned_shutdown_readiness": "docs/contracts/preview_owned_shutdown_readiness.json"
+}

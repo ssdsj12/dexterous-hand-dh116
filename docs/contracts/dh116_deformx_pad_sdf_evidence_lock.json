@@ -1,0 +1,27 @@
+{
+  "backend_commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
+  "parity_sha256": "aa424c5c444ad4e1020d744f1941a20380b105e8155e81f9af1510e7d7d1b7c4",
+  "gpu_result_sha256": "2de331289145d4be824243db0eeb64b796f24a92cee7b93ee61a37244e9bbde5",
+  "outer_exit_sha256": {
+    "cpu.exit_code": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "gpu.exit_code": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "parity.exit_code": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "gpu_rows": {
+    "left.finger14_link": "ff842335f14fe670736dd36e72494af085a2b6f019eea91914ad9fa292113dac",
+    "left.finger23_link": "2e5d4ab0b55188c2499b7c835ec79c37bf6db4b9b0c32eb1981ba8e4ef124c81",
+    "left.finger33_link": "7e79a464e42cc5b6bc95b529be4c87f4ae16aff95b5b5b181267e61c3f023817",
+    "left.finger43_link": "50aa6cab1799febae46a55bc0d57c14d961ff1878f3dcf9d1b88634bb3051708",
+    "left.finger53_link": "5292cacb1327f22d16e6b4eba2bd2eccebcc922be7f75992a013b95383a1438c",
+    "right.finger14_link": "62615e9350789c8f4ccd319c2c78cbd584830a56e0a2b9ed39cc61d57b8c9c29",
+    "right.finger23_link": "ee95dde42a9cf6cadfd63a551856a4d3f0f20b1abe826b2cfd86f6ab0d978401",
+    "right.finger33_link": "49e5b19caa2ae10572023162811dfa377c28fd8254027444599fa6fe51e5557c",
+    "right.finger43_link": "5147a6d3cb13c4ef13925da55c8ec196b1bd2e2648773dac6025ad42da7a0faa",
+    "right.finger53_link": "477a8ecca48387ca5eabc51907bb3e8820db3ce81f398a2890db0f157a8972c2"
+  },
+  "backend_files": {
+    "_ropesim.cpython-310-x86_64-linux-gnu.so": "c47942c4b15b3dfedc47212e71f8193825c0347df3c1d73fb76b648f7bdedb53",
+    "isaac_bridge.py": "7a593ec2b56f4115e3c04ebe5cd6969294c7047ec8c577012bfcb3c1bf649eae",
+    "sdf.py": "493ee1a8500614a1b6c27318bbbd7cad6731ddfc1c357b1f3853e055d9346e1d"
+  }
+}

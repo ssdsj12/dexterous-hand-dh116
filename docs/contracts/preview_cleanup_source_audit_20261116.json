@@ -1,0 +1,22 @@
+{
+  "scope": "read_only_installed_source_no_isaac_launch",
+  "source_sha256": {
+    "/mnt/mydisk/xk/projects/IsaacLab/source/isaaclab/isaaclab/app/app_launcher.py": "7ab2c742cfa64e2c4e2ea4601d9441e5e8c9bb8f556a121b0d10c337f9b6093e",
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.simulation_app/isaacsim/simulation_app/simulation_app.py": "840ad13fcb3b4d8e10457809d42180b0fd807951a3e3cc153c832363fbef0bb2",
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.kit.livestream.webrtc-6.0.0+106.2.0.lx64.r.cp310/omni/kit/livestream/webrtc/scripts/extension.py": "ad2837d2239c27cd8edce53799e5fbc357060ea397a49f0f48c26f66b6d8683e",
+    "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/omni/kernel/py/carb/events/_events.pyi": "5b65d0b62734824f532de87aca92829a8f5d025b2f02d33378335e62afcc501f"
+  },
+  "confirmed": [
+    "IsaacLab installs Python app.close handlers for SIGSEGV and SIGABRT",
+    "IsaacLab stores two timeline subscriptions whose callbacks reference launcher",
+    "SimulationApp.close can close stage and pump Kit while waiting before extension shutdown",
+    "WebRTC extension on_shutdown calls native livestream shutdown",
+    "carb ISubscription supports explicit unsubscribe"
+  ],
+  "unresolved": [
+    "The third native run initial acquire error was not persisted and remains unknown",
+    "Native cause of retained SimulationContext and WebRTC SIGSEGV is not proven by CPU tests",
+    "Default fatal signal delivery and explicit reference cleanup require new native validation",
+    "180-second deadline remains cooperative, not a hard native watchdog"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "version": "dh116-left-pinch-raised-approach-cpu-v2",
+  "path_samples": 1025,
+  "source_measurements": 232,
+  "maximum_seconds_per_stage": 60.0,
+  "left_bow_m": 0.0,
+  "original_motion_unchanged": false,
+  "native_execution": false,
+  "teacher_admission": false,
+  "left_start_raise_m": 0.0015,
+  "original_finger_motion_unchanged": true,
+  "right_motion_unchanged": true,
+  "left_z_rate_m_s": -0.0045,
+  "prior_path_failure_sha256": "c9a4d332d4d5309a1391794d905cfc34d1e9c28284a235a469d7869bd198931c"
+}

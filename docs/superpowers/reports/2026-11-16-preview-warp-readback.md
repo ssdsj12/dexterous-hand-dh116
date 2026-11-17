@@ -1,0 +1,11 @@
+# 复验批次第二轮：Isaac4.5与当前Warp读取ABI
+
+两次批次额度已经用完；本报告记录第二轮78e2d19a014c234513ef61618ec861e8bb3f89cc，合同40e5b36b5ab11afe6db1d818e1b8a698b026f3bf95dad11804205359613bb617。完成SDK2步真实reset，时钟初始化错误已越过，进入实际RGB缓冲读取；仍无有效输出图像或测量控制行。旧Replicator的_reshape_output_ptr传owner=False，当前Warp1.12.1构造函数已改用deleter，发生TypeError。关闭仍SIGSEGV，inferior signal11/外层255，单份栈；没有强制终止，没有额外第三次运行。
+
+## 独立小型兼容层
+
+不升级/降级或修改任何安装依赖。仅在本预览owned RGB reader读取期间，对精确锁定的annotator_utils文件创建一个函数副本：只将旧owner=False的外部指针映射为新接口deleter=None；拒绝owner=True或其他deleter。原Warp类/全局模块均不改，读取结束或异常恢复Replicator原函数。适配器限定当前文件SHA1898abce52559be7befbc7b41bdd6752139df113ac69e62b5b2a97a9c5743a95和Warp1.12.1，未知组合拒绝。
+
+CPU直接从安装版源码抽取真实_reshape_output_ptr，在CPU外部NumPy缓冲上复现owner错误，再验证新接口返回相同数值且不会释放外部缓冲；原数组类保持不变。另验证异常恢复、owner=True拒绝和owned reader真实调用路径。相关回归84 passed。未验证GPU指针生命周期、异步并发和原生图像正确性，不能将CPU测试写成GPU读回或自然退出通过。
+
+用户新增要求：继续逐档调试分辨率，不固定最终选择。该兼容层与分辨率无关；后续分辨率入口/配置独立实现。预算已耗尽，当前不再原生运行。历史模型、物理、控制和依赖环境均保留。

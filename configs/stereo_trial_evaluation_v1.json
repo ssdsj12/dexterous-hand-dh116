@@ -1,0 +1,19 @@
+{
+  "version": "dh116-stereo-cold-trial-evaluation-v1",
+  "minimum_per_style": 100,
+  "batch_size": 2,
+  "allowed_batch_sizes": [2, 4, 8],
+  "max_control_steps": 1200,
+  "deterministic": true,
+  "physics_hz": 480,
+  "control_hz": 60,
+  "reset_protocol": "full_manifest_validated_then_original_seed_buffer_writer_and_readback_kernels",
+  "subset_split_retagging": false,
+  "padding_clones": false,
+  "checkpoint_contract_rewritten": false,
+  "readback_tolerance": "existing_helper_default_2e-5_unchanged",
+  "completed_slots": "diagnostic_zero_after_first_terminal_until_batch_completes",
+  "default_operation": "check_config_no_native_launch",
+  "native_execution": "explicit_enable_experiment_and_execute_native_only",
+  "native_qualification": "pending_independent_raw_480Hz_source_success_and_force_support_proofs"
+}

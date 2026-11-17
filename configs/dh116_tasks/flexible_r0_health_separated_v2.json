@@ -1,0 +1,19 @@
+{
+  "version": "dh116-flexible-r0-health-separated-v2",
+  "enabled_by_default": false,
+  "scope": "owned_measurement_diagnostic_only",
+  "training_reward_enabled": false,
+  "native_qualification": false,
+  "instability": "nonfinite_recorded_state_or_explicit_native_solver_error",
+  "constraint_terminal": "reuse_original_physical_guards_without_double_instability_penalty",
+  "hold_motion": "independent_qualified_source_or_unknown",
+  "hold_motion_thresholds": null,
+  "legacy_rigid_speed_comparison_m_s": 0.03,
+  "legacy_rigid_speed_adopted": false,
+  "coefficient_source": "explicit_diagnostic_only",
+  "success": {
+    "net_lift_m": 0.03,
+    "hold_s": 5.0,
+    "max_slip_m": 0.0005
+  }
+}

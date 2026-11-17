@@ -1,0 +1,27 @@
+# 双相机清理实际通过与扩展接口缓存候选
+
+第一轮source44cff046，合同9e2ac7e78abd3592c753bf99eba0458bfd277c2c8f4d7bce8c1a2ac3402f6086。
+用户批准本批最多两次；已执行一次，剩一次，仅用于有明确已测试修订，旧版不重跑。
+GPU0单实例320×240零PPO，130SDK步/1536测量solver子步，44render，167.823792秒。
+17对RGB全部同原始帧钟；166完整physical JSONL，无durable阶段error。
+原左右annotator解绑错误已消失，窗口引用释放、正常App.close返回均已确认。
+但Py_FinalizeEx仍在_extensions.so+0x1e445经carb发生SIG11，外层255，未强制终止。
+原生日志SHA c6ec7a6368530ef77921b2cdb8232cdceea560c3772512fa1d042941a6dc7fc8。
+
+安装版omni.ext._impl.get_extensions_interface将IExtensions永久缓存于函数属性extensions；
+源码中未见释放该属性。SDK App.close先App.shutdown再Framework.unload_all_plugins，
+已有GDB指令是虚表间接调用，尚不足以证明缓存对象就是故障对象。
+
+本包私有SimulationApp实例的framework facade仅在原unload_all_plugins前删除现有缓存属性；
+不重新获取接口、不把缓存对象保存在局部/receipt/异常/闭包，不改SDK安装或class。
+真实getter代码文件SHA、公开别名、IExtensions类型均校验；未知布局拒绝。
+即使删除/记录失败仍尝试原unload一次，外层正常close返回后检查receipt报告错误。
+部分launcher启动失败路径同样执行prepare与原close。
+没有os._exit、快退、信号退出或跳过插件卸载，也不新增gc调用。
+
+CPU真实SDK getter AST复放先1pass/3fail，修复后完整320pass/0fail。
+新增7测试涵盖源码、缓存保留、shutdown→release→unload、持有完成frame、
+记录失败、缓存中途消失、清理与unload双失败。
+CPU日志SHA11b3b333b4eb43aa0493b31471982677a705a1cb1adfa89150058a5423e55ff5。
+此候选尚未原生运行，不授予正常退出、相机全质量或wire动力学资格。
+528保护文件、2历史Checkpoint保持核验；原图/日志/模型不上传Git，PR #2 Draft。

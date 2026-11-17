@@ -1,0 +1,11 @@
+{
+  "schema_version": "dh116-stereo-cold-candidate-v1",
+  "candidate_only": true,
+  "batch_size": 2,
+  "count_per_style": 4,
+  "steps_per_initial": 4,
+  "camera_config": "configs/dh116_training/stereo_camera_roll20_surface96_diagnostic_v1.json",
+  "purpose": "bounded_synchronized_state_and_instance_labels_not_successful_expert",
+  "native_execution_default": false,
+  "success_thresholds_unchanged": true
+}

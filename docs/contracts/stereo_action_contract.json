@@ -1,0 +1,569 @@
+{
+  "version": "dh116-stereo-action-phase0-audit-v1",
+  "scope": "Phase0_read_only_source_audit_CPU_only",
+  "base_commit": "6cee7418a5e49f56b7f0090fc5eaf20b143c0b1b",
+  "instruction_source_sha256": "a09551b72c4540c3fb88f308461a2b0176cc5c625cbc974c8a138b765f90a2e6",
+  "action_contract": {
+    "version": "dh116-surface-motion24-v1",
+    "size": 24,
+    "joint_order": [
+      "left.finger11",
+      "left.finger12",
+      "left.finger21",
+      "left.finger31",
+      "left.finger41",
+      "left.finger51",
+      "right.finger11",
+      "right.finger12",
+      "right.finger21",
+      "right.finger31",
+      "right.finger41",
+      "right.finger51"
+    ],
+    "slices": {
+      "joint_velocity": [
+        0,
+        12
+      ],
+      "world_translation_velocity": [
+        12,
+        18
+      ],
+      "intrinsic_rotation_velocity": [
+        18,
+        24
+      ]
+    },
+    "hand_order": [
+      "left",
+      "right"
+    ],
+    "axis_order": [
+      "X",
+      "Y",
+      "Z"
+    ],
+    "joint_rate_rad_s": 0.3,
+    "translation_rate_m_s": 0.01,
+    "rotation_rate_rad_s": 0.5,
+    "normalized_range": [
+      -1.0,
+      1.0
+    ],
+    "wrist_vector_norm_limit": 1.0,
+    "translation_frame": "world;positive_Z_up",
+    "rotation": "seed_wxyz_times_intrinsic_X_then_Y_then_Z",
+    "integration": "existing_native_physics_dt;targets_integrated_at_each_substep",
+    "zero_action": "retain_current_targets_subject_to_existing_joint_lead_and_table_safety_projection",
+    "guards": "existing_joint_limits_lead_velocity_table_clearance;no_added_force_servo",
+    "force_action_dimensions": 0
+  },
+  "action_contract_sha256": "498cebedfe520cc2f6593b32776581c3da826ba95e4db441b7938d29176c55d9",
+  "physics_hz": 480,
+  "control_hz": 60,
+  "physics_substeps": 8,
+  "dimensions": [
+    {
+      "index": 0,
+      "name": "left.finger11",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_left",
+      "joint_position_bounds_rad": [
+        0.0,
+        1.3962634015954636
+      ]
+    },
+    {
+      "index": 1,
+      "name": "left.finger12",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_left",
+      "joint_position_bounds_rad": [
+        0.007912622218025698,
+        1.03
+      ]
+    },
+    {
+      "index": 2,
+      "name": "left.finger21",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_left",
+      "joint_position_bounds_rad": [
+        0.0,
+        1.2217304763960306
+      ]
+    },
+    {
+      "index": 3,
+      "name": "left.finger31",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_left",
+      "joint_position_bounds_rad": [
+        0.0,
+        1.2217304763960306
+      ]
+    },
+    {
+      "index": 4,
+      "name": "left.finger41",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_left",
+      "joint_position_bounds_rad": [
+        0.0,
+        1.2217304763960306
+      ]
+    },
+    {
+      "index": 5,
+      "name": "left.finger51",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_left",
+      "joint_position_bounds_rad": [
+        0.0,
+        1.2217304763960306
+      ]
+    },
+    {
+      "index": 6,
+      "name": "right.finger11",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_right",
+      "joint_position_bounds_rad": [
+        0.0,
+        1.3962634015954636
+      ]
+    },
+    {
+      "index": 7,
+      "name": "right.finger12",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_right",
+      "joint_position_bounds_rad": [
+        0.007912622218025698,
+        1.03
+      ]
+    },
+    {
+      "index": 8,
+      "name": "right.finger21",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_right",
+      "joint_position_bounds_rad": [
+        0.0,
+        1.2217304763960306
+      ]
+    },
+    {
+      "index": 9,
+      "name": "right.finger31",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_right",
+      "joint_position_bounds_rad": [
+        0.0,
+        1.2217304763960306
+      ]
+    },
+    {
+      "index": 10,
+      "name": "right.finger41",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_right",
+      "joint_position_bounds_rad": [
+        0.0,
+        1.2217304763960306
+      ]
+    },
+    {
+      "index": 11,
+      "name": "right.finger51",
+      "unit": "rad/s",
+      "scale": 0.3,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_increases_named_active_joint_radians",
+      "rate_limit": "target_delta_abs<=0.3*physics_dt; measured_velocity_not_guaranteed",
+      "control_meaning": "integrate_joint_position_target_then_measured_q_lead_0.1rad_and_affine_limits",
+      "coordinate_frame": "authored_named_joint_axis_right",
+      "joint_position_bounds_rad": [
+        0.0,
+        1.2217304763960306
+      ]
+    },
+    {
+      "index": 12,
+      "name": "left.translation.X",
+      "unit": "m/s",
+      "scale": 0.01,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_world_X",
+      "rate_limit": "per_hand_xyz_vector_norm<=0.01m/s",
+      "control_meaning": "integrate_world_offset_then_transport_and_table_clearance_projection",
+      "coordinate_frame": "world",
+      "offset_bounds_m": [
+        -0.03,
+        0.03
+      ]
+    },
+    {
+      "index": 13,
+      "name": "left.translation.Y",
+      "unit": "m/s",
+      "scale": 0.01,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_world_Y",
+      "rate_limit": "per_hand_xyz_vector_norm<=0.01m/s",
+      "control_meaning": "integrate_world_offset_then_transport_and_table_clearance_projection",
+      "coordinate_frame": "world",
+      "offset_bounds_m": [
+        -0.03,
+        0.03
+      ]
+    },
+    {
+      "index": 14,
+      "name": "left.translation.Z",
+      "unit": "m/s",
+      "scale": 0.01,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_world_Z_up",
+      "rate_limit": "per_hand_xyz_vector_norm<=0.01m/s",
+      "control_meaning": "integrate_world_offset_then_transport_and_table_clearance_projection",
+      "coordinate_frame": "world",
+      "offset_bounds_m": [
+        -0.004,
+        0.05
+      ]
+    },
+    {
+      "index": 15,
+      "name": "right.translation.X",
+      "unit": "m/s",
+      "scale": 0.01,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_world_X",
+      "rate_limit": "per_hand_xyz_vector_norm<=0.01m/s",
+      "control_meaning": "integrate_world_offset_then_transport_and_table_clearance_projection",
+      "coordinate_frame": "world",
+      "offset_bounds_m": [
+        -0.03,
+        0.03
+      ]
+    },
+    {
+      "index": 16,
+      "name": "right.translation.Y",
+      "unit": "m/s",
+      "scale": 0.01,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_world_Y",
+      "rate_limit": "per_hand_xyz_vector_norm<=0.01m/s",
+      "control_meaning": "integrate_world_offset_then_transport_and_table_clearance_projection",
+      "coordinate_frame": "world",
+      "offset_bounds_m": [
+        -0.03,
+        0.03
+      ]
+    },
+    {
+      "index": 17,
+      "name": "right.translation.Z",
+      "unit": "m/s",
+      "scale": 0.01,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_world_Z_up",
+      "rate_limit": "per_hand_xyz_vector_norm<=0.01m/s",
+      "control_meaning": "integrate_world_offset_then_transport_and_table_clearance_projection",
+      "coordinate_frame": "world",
+      "offset_bounds_m": [
+        -0.004,
+        0.05
+      ]
+    },
+    {
+      "index": 18,
+      "name": "left.intrinsic_rotation.X",
+      "unit": "rad/s",
+      "scale": 0.5,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_right_hand_intrinsic_X_chart_angle",
+      "rate_limit": "per_hand_XYZ_chart_angle_rate_norm<=0.5rad/s",
+      "control_meaning": "integrate_intrinsic_angle_chart;seed_wxyz*qX*qY*qZ",
+      "coordinate_frame": "authored_wrist_seed_intrinsic_X_then_Y_then_Z",
+      "angle_bounds_rad": [
+        -1.5707963267948966,
+        1.5707963267948966
+      ]
+    },
+    {
+      "index": 19,
+      "name": "left.intrinsic_rotation.Y",
+      "unit": "rad/s",
+      "scale": 0.5,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_right_hand_intrinsic_Y_chart_angle",
+      "rate_limit": "per_hand_XYZ_chart_angle_rate_norm<=0.5rad/s",
+      "control_meaning": "integrate_intrinsic_angle_chart;seed_wxyz*qX*qY*qZ",
+      "coordinate_frame": "authored_wrist_seed_intrinsic_X_then_Y_then_Z",
+      "angle_bounds_rad": [
+        -1.5707963267948966,
+        1.5707963267948966
+      ]
+    },
+    {
+      "index": 20,
+      "name": "left.intrinsic_rotation.Z",
+      "unit": "rad/s",
+      "scale": 0.5,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_right_hand_intrinsic_Z_chart_angle",
+      "rate_limit": "per_hand_XYZ_chart_angle_rate_norm<=0.5rad/s",
+      "control_meaning": "integrate_intrinsic_angle_chart;seed_wxyz*qX*qY*qZ",
+      "coordinate_frame": "authored_wrist_seed_intrinsic_X_then_Y_then_Z",
+      "angle_bounds_rad": [
+        -1.5707963267948966,
+        1.5707963267948966
+      ]
+    },
+    {
+      "index": 21,
+      "name": "right.intrinsic_rotation.X",
+      "unit": "rad/s",
+      "scale": 0.5,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_right_hand_intrinsic_X_chart_angle",
+      "rate_limit": "per_hand_XYZ_chart_angle_rate_norm<=0.5rad/s",
+      "control_meaning": "integrate_intrinsic_angle_chart;seed_wxyz*qX*qY*qZ",
+      "coordinate_frame": "authored_wrist_seed_intrinsic_X_then_Y_then_Z",
+      "angle_bounds_rad": [
+        -1.5707963267948966,
+        1.5707963267948966
+      ]
+    },
+    {
+      "index": 22,
+      "name": "right.intrinsic_rotation.Y",
+      "unit": "rad/s",
+      "scale": 0.5,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_right_hand_intrinsic_Y_chart_angle",
+      "rate_limit": "per_hand_XYZ_chart_angle_rate_norm<=0.5rad/s",
+      "control_meaning": "integrate_intrinsic_angle_chart;seed_wxyz*qX*qY*qZ",
+      "coordinate_frame": "authored_wrist_seed_intrinsic_X_then_Y_then_Z",
+      "angle_bounds_rad": [
+        -1.5707963267948966,
+        1.5707963267948966
+      ]
+    },
+    {
+      "index": 23,
+      "name": "right.intrinsic_rotation.Z",
+      "unit": "rad/s",
+      "scale": 0.5,
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "sign": "positive_right_hand_intrinsic_Z_chart_angle",
+      "rate_limit": "per_hand_XYZ_chart_angle_rate_norm<=0.5rad/s",
+      "control_meaning": "integrate_intrinsic_angle_chart;seed_wxyz*qX*qY*qZ",
+      "coordinate_frame": "authored_wrist_seed_intrinsic_X_then_Y_then_Z",
+      "angle_bounds_rad": [
+        -1.5707963267948966,
+        1.5707963267948966
+      ]
+    }
+  ],
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/linear_coupling.py": "168e30634c2e240fbaecd225766b52a1f2a3c87afafc8c2a7b5a23dfcb1afe93",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_contract.py": "f1a28e5dca4e44a49d16244d92c2c849023f8030943cbec62853dcaeebabdb00",
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_task.py": "b8e73877eef14c47c7440560bc4333e68349d46d8b0a579202937b3e0ddbda8e",
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_env.py": "93ece5a2abc6adb7c1e90a230c0283cc5c93880ddbbaded3451661ef6e6ca645",
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_world.py": "dd2a17bc397f7ec14254c3373ff1ef22aa4515b156fd25db50deba3052f564f4",
+    "src/go2_pvcnn/control/dh116/tabletop_free_wrist_grasp.py": "3791d45abd9fbab1a2d671b671dd49114c41e87d01ea994904ab52ba2d88899a",
+    "src/go2_pvcnn/control/dh116/tabletop_command_kernels.py": "acc8687ee965fb3f4dc11859083ca9a5bc84139a604101a219ac01d518a5ccd8",
+    "src/go2_pvcnn/control/dh116/tabletop_palm_mount.py": "4eb43511df607c5fee1503d9b389bf49ed52102dd7304c19e4bca7028f60e307",
+    "src/go2_pvcnn/control/dh116/tabletop_velocity_limits.py": "91e054800154f396afd07e0ed96971765ce9a7debf9cd1abd247c0e54fc48b0b",
+    "src/go2_pvcnn/control/dh116/tabletop_gpu_isaac.py": "3c0b5e48fbbb5b3ea3018a04cce9e82b2b679884cb1b7301df3a70ad371b9f83",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_exploration.py": "8f7b84e16d2fe102bc18412bfa9b024e8319dabbb4145c985049547c9a816bb4",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_student.py": "0628aea85346afb64a46ff9bff73d65f04e78a61cc46687534d044765513149d",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_training.py": "ad55400f13720357999ead99eabbcad3f2f10debf6d5fae3f9e7586b7bf624a0",
+    "src/go2_pvcnn/control/dh116/tabletop_squashed_gaussian.py": "4cc9bafcd1dcb3b1c639781241a099b922752df8b5578d32a869a0dc7a980153",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_squashed_policy.py": "741512bf8d9656b12ab9693879ea5c3657882d4484f7e4cf08e402bc245e0b61",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_squashed_ppo.py": "696335e5a8bada278fc65c77d4aa5a14237c7ee9b410e293325401d5bb69408f",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_action_contract.py": "e6ebf550e754fe5059ca4ff4dcfb32df2ffe3676b3743b3168f7473612c45ca0",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_command_shadow.py": "6770bb8470e0a5535f6cf6a27b52469cd608f6ce888fcf9a9d8eadb6b76ff8bc",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_teacher_collection.py": "75033f127188dff41e3a5d570f8fbfdb33ed8ba26207bc98e4d785199440a733",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_teacher_constrained_mpc.py": "4984b40b42ea31eda28783c0e5dac3f9d780628eae85746ebc58f5c5bcd8ed4b",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_supervision_dataset.py": "2f804e05fb237426b2b09a9b8051f8257a62e8a8e3f4e1ec28332b6f4229e8ee",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_imitation.py": "84abee8f79c0d44cc3395870d723c81619cb91cc8c4e1148cc5b0548ba9033cb",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_demonstrations.py": "622847bdec4edcb7a47fd16d744ae3680b53064bf5b4a1f49368a245e9204ca0",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_teacher.py": "f6118398eadead611e9bfbf6aa205dbb109d8f14a283d356d06b7a58413a6ce4",
+    "src/go2_pvcnn/control/dh116/tabletop_surface_teacher_control.py": "fccf448d16b8c80758a1db17a450a0f1e5d525a06057037370e8e902b27acc04",
+    "src/go2_pvcnn/control/dh116/tabletop_bimanual_physical_action_adapter.py": "e7a332517f5b3732c4b2eb003d94ccb2a7aa9341db22b9252d9313f9e7178e22",
+    "src/go2_pvcnn/control/dh116/tabletop_bimanual_experiment_runtime.py": "801de7626f30826fe2392a460b1ebcbb24f11f9fcf81b6a83b80b54c5da537f6",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_inference.py": "330f4ca130bb2386995c848e4c6a370d759775b103fafde21a332c6a4b0793b6",
+    "src/go2_pvcnn/control/dh116/tabletop_vision_evaluation.py": "c66be028f28d133c435e3407537b673fd455b8b23d1a0d0f3cd45ba6abec6152",
+    "scripts/train_dh116_tabletop_gpu_ppo.py": "4353281ea7ebdb076af472a4e57832789809128fedf245d27c3e99d4d488d644"
+  },
+  "audit_gaps": [
+    "TrainingActionAdapter_symbol_not_found; actual adapter is optional env.bimanual_action_adapter",
+    "shadow._validate_contract does not independently validate action_contract_sha256 string; sequence boundary does",
+    "physical adapter decode describes pre-vector-norm nominal speeds; controller applies per-hand vector norm",
+    "no privileged PPO Teacher implementation or checkpoint qualification established in Phase0",
+    "SDK buffer targets and actual physical readback are separate; no native run performed"
+  ],
+  "action_sha_calculation": {
+    "source": "tabletop_vision_command_shadow.action_contract_sha256",
+    "serialization": "json.dumps(ACTION_CONTRACT, sort_keys=True, separators=(comma,colon), allow_nan=False).encode(); SHA256",
+    "distinguished_from": [
+      "surface_contract_sha256(full371D)",
+      "controller_source_sha256(four_named_source_files)"
+    ]
+  },
+  "enforcement": [
+    {
+      "boundary": "surface.validate_contract",
+      "checks": "full371D_schema_and_full_surface_digest"
+    },
+    {
+      "boundary": "load_teacher_reference_dataset",
+      "checks": "canonical371D_surface_contract_and_exact_action_dict;not_arbitrary_state_oracle"
+    },
+    {
+      "boundary": "shadow._validate_contract",
+      "checks": "exact_action_dict_and_controller_source_sha",
+      "action_sha_string_independently_checked": false
+    },
+    {
+      "boundary": "validate_sequence_context",
+      "checks": "canonical_action_sha_by_default;explicit_expected_SHA_can_override;dataset_bytes_SHA_and_optional_expected_controller_SHA"
+    },
+    {
+      "boundary": "physical_adapter_checkpoint",
+      "checks": "explicit_exact_adapter_contract_and_runtime_verification;opt_in"
+    }
+  ]
+}

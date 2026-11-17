@@ -1,0 +1,9 @@
+{
+  "version": "dh116-live-r0-reset-native-v1",
+  "enabled_by_default": false,
+  "physics_steps": 234,
+  "ppo_updates": 0,
+  "diagnostic_coefficients": "existing_ordinal_fixture_not_training",
+  "training_reward_enabled": false,
+  "legacy_physics_actions_unchanged": true
+}

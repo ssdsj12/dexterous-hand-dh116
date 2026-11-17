@@ -1,0 +1,253 @@
+{
+  "K_left": [
+    [
+      417.0321193091858,
+      0.0,
+      320.0
+    ],
+    [
+      0.0,
+      417.0321193091858,
+      180.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "K_right": [
+    [
+      417.0321193091858,
+      0.0,
+      320.0
+    ],
+    [
+      0.0,
+      417.0321193091858,
+      180.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_left": [
+    [
+      0.0,
+      0.6064491759237279,
+      -0.7951222528777767,
+      1.02
+    ],
+    [
+      1.0,
+      0.0,
+      0.0,
+      -0.04
+    ],
+    [
+      0.0,
+      -0.7951222528777767,
+      -0.6064491759237279,
+      0.88
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_right": [
+    [
+      0.0,
+      0.6064491759237279,
+      -0.7951222528777767,
+      1.02
+    ],
+    [
+      1.0,
+      0.0,
+      0.0,
+      0.04
+    ],
+    [
+      0.0,
+      -0.7951222528777767,
+      -0.6064491759237279,
+      0.88
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "width": 640,
+  "height": 360,
+  "baseline_m": 0.08,
+  "distortion_left": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "distortion_right": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "rectified": true,
+  "version": "dh116-stereo-optical-v1",
+  "calibration_sha256": "db15e0c782ad649feb02964a3b9aadef7d2ecd8af41bf82dfd498992125cdc06",
+  "profile_version": "dh116-stereo-camera-front-v3",
+  "profile_name": "front_640x360_native_rerender",
+  "enabled_by_default": false,
+  "default_accuracy_profile": false,
+  "intended_accuracy_profile": false,
+  "resolution_mode": "new_front_native_rig_not_image_resize",
+  "horizontal_fov_degrees": 75.0,
+  "optical_axes": "X_right_Y_down_Z_forward",
+  "rgb_layout": "BCHW_float_0_1_RGB",
+  "center_world_m": [
+    1.02,
+    0.0,
+    0.88
+  ],
+  "target_world_m": [
+    0.43,
+    0.0,
+    0.43
+  ],
+  "optical_right_world": [
+    0.0,
+    1.0,
+    0.0
+  ],
+  "depth_range_m": [
+    0.2,
+    1.2
+  ],
+  "disparity_range_px": [
+    8,
+    192
+  ],
+  "depth_estimator": {
+    "method": "blockmatch",
+    "min_disparity": 8,
+    "max_disparity": 192,
+    "block_size": 5,
+    "min_depth_m": 0.2,
+    "max_depth_m": 1.2,
+    "lr_tolerance_px": 1.0,
+    "texture_threshold": 0.001,
+    "uniqueness_threshold": 0.05,
+    "rectify": false,
+    "subpixel": true,
+    "image_processing_batch_size": 1
+  },
+  "disparity_budget": {
+    "near_disparity_px": 166.81284772367434,
+    "far_disparity_px": 27.802141287279056,
+    "suggested_min_disparity": 19,
+    "suggested_max_disparity": 176
+  },
+  "resource_limits": {
+    "max_width": 2048,
+    "max_height": 1536,
+    "max_readback_bytes": 1073741824,
+    "allow_resource_override": false
+  },
+  "matcher_resource_policy": "stream_one_disparity_plane;image_processing_batch_size=1;never_hidden_downsample",
+  "model_compatibility": "new_calibration_SHA_required;no_silent_reuse_of_old_rig_models",
+  "framing_reference_world_m": [
+    [
+      0.502083,
+      0.188617,
+      0.487541
+    ],
+    [
+      0.522067,
+      -0.197186,
+      0.478162
+    ],
+    [
+      0.483137,
+      0.177137,
+      0.495522
+    ],
+    [
+      0.515256,
+      -0.191129,
+      0.480714
+    ],
+    [
+      0.43,
+      -0.25,
+      0.368
+    ],
+    [
+      0.43,
+      0.25,
+      0.368
+    ]
+  ],
+  "framing_projection": {
+    "all_in_view": true,
+    "reference_point_count": 6,
+    "expanded_point_count": 48,
+    "workspace_margin_m": 0.05,
+    "minimum_border_margin_px": 109.21243062635332,
+    "minimum_optical_depth_m": 0.5695333612569538,
+    "source_scope": "CPU_projection_arithmetic",
+    "native_visibility_qualified": false,
+    "occlusion_checked": false,
+    "hidden_padding_or_resize": false
+  },
+  "source_metadata": {
+    "source_scope": "authored_front_rig_from_reported_native_framing_coordinates",
+    "reported_primary_palm_xyz_m": [
+      [
+        0.502083,
+        0.188617,
+        0.487541
+      ],
+      [
+        0.522067,
+        -0.197186,
+        0.478162
+      ]
+    ],
+    "reported_secondary_palm_xyz_m": [
+      [
+        0.483137,
+        0.177137,
+        0.495522
+      ],
+      [
+        0.515256,
+        -0.191129,
+        0.480714
+      ]
+    ],
+    "reported_wire_center_xyz_m": [
+      0.4299999475,
+      0.0,
+      0.3680000007
+    ],
+    "coordinate_frame": "environment_local_base_rig;runtime_shifts_rig_and_points_by_same_environment_origin",
+    "coordinates_status": "reported_actual_SDK_review_readback;50mm_XYZ_margin;raw_native_source_requires_separate_binding",
+    "source_artifact": {
+      "path": "src/go2_pvcnn/control/dh116/tabletop_stereo_framing.py",
+      "sha256": "884487259d8f69f215431d7899d457dfb18e505bfc8f903336a5217acc673550"
+    },
+    "native_capture_performed_for_this_rig": false,
+    "old_rig_failed_evidence_preserved": true
+  },
+  "native_qualification": "pending_new_front_rig_native_readback_visibility_and_accuracy;CPU_projection_only"
+}

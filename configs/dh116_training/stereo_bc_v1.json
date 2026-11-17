@@ -1,0 +1,19 @@
+{
+  "schema_version": "dh116-stereo-bc-v1",
+  "lr": 0.0003,
+  "lambda_action": 1.0,
+  "lambda_state": 1.0,
+  "lambda_depth": 0.0,
+  "lambda_temporal": 0.0,
+  "max_grad_norm": 0.5,
+  "batch_size": 32,
+  "epochs": 1,
+  "teacher_target": "deterministic_tanh_latent_mean_detached",
+  "group_normalization": "equal_mean_of_fingers12_world_translation6_intrinsic_rotation6;physical_scale_cancels",
+  "state_validity": "phase0_required_source_keys_fail_closed",
+  "force_default_valid": false,
+  "success_pool_requires": "complete_first_native_episode_no_recovery_restore_and_SHA_bound_rawproof",
+  "fixture_mode": "explicit_schema_only_no_native_qualification",
+  "weights_status": "candidate_not_holdout_calibrated",
+  "ppo_storage_insertion": false
+}

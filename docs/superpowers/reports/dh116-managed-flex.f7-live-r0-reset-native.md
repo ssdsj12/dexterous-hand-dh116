@@ -1,0 +1,5 @@
+# 真实耦合Reset与原R0同进程234步原生诊断
+
+基线 `0786429f52af87f378a4c59b212a90e2373921b5`。原生范围 `actual_coupled_reset_then_live_original_R0_observer_234_steps_only`，状态 `failed`，外层退出码 `0`。独立私有回执 SHA256 `e92282a2a01596b551342ac56cd046f4f5a0c289eda51cf76578b8712e4d89d1`。
+
+代码与配置 SHA256 `b5c1d80c7b1c162c120302b3ecfc8af11b739a6ab28a5a5f1d0f8ebede10d83f`。范围以独立产物校验和进程退出为准。原始日志留在 Ubuntu 私有证据目录。

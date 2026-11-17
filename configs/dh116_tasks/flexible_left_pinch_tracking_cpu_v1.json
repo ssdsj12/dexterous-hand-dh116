@@ -1,0 +1,55 @@
+{
+  "active_scales_rad": [
+    0.04,
+    0.04,
+    0.04
+  ],
+  "maximum_evaluations": 600,
+  "maximum_search_seconds": 60.0,
+  "mode": "cpu_only",
+  "native_execution": false,
+  "rotation_scales_rad": [
+    0.03,
+    0.03,
+    0.03
+  ],
+  "search_physics_steps": [
+    211,
+    222,
+    234
+  ],
+  "side": "left",
+  "teacher_admission": false,
+  "translation_scales_m": [
+    0.002,
+    0.002,
+    0.002
+  ],
+  "validation_physics_steps": [
+    211,
+    212,
+    213,
+    214,
+    215,
+    216,
+    217,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234
+  ],
+  "version": "dh116-left-pinch-correlated-endpoint-cpu-v1"
+}

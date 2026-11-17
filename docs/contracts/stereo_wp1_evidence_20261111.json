@@ -1,0 +1,51 @@
+{
+  "baseline": "ae307a55917519138b6da5179e8254ce2e9a7c8f",
+  "stage": "WP1",
+  "native_capture_count": 0,
+  "formal_training": false,
+  "segmentation_deployment_qualified": false,
+  "stereo_accuracy_qualified": false,
+  "model_fits": "CPU native-left-ID diagnostic only",
+  "sources": {
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_wire_segmentation.py": "a5989d650adad68821646fde8591464a18a6b9dcd454d944f5df212a3534d0fe",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_wire_tracking.py": "1abc6816eb05596e9e6519ffdae166c1b4344126eb8b85057f235290f0d83c58",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_wire_matching.py": "1b0ec2568e5b549fa5e8ec902ae2ee8b8cf27c2d958e1814598de4874dda126b",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_depth.py": "f524f77424a1736d16d1832620bb302e15e48b1d969a0ebd3751dc8d3249d1e0",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_error_diagnostics.py": "ce440ff049911b9bcd1f4cec81ed02b02d5e6d873cbd51c97923f18eb29f4bec",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_wire_diagnostics.py": "1c370bfc4d86b3ccb329b73aca143254525a9295a41c1e59c8a3c0420ba27d92",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_observation.py": "a3b8ecc709028e4c234126ea8751cc9f82a1a2ded78dd32883cc841d7f49448f",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_encoder.py": "d324f6506e8a10adf7933dfe4c63e0cf5438e5dad213eb2ccf1917346f488107",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_state_estimator.py": "11204a27aebb78fd38230970b164557a1badc75af4f5cbb906d1b193522f7dce",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_reference.py": "72523584524eded4534b1a31a95b80979f99ba7f5b6900001e3deb99109c30a7",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_checkpoint.py": "f3cf43b1e4ff075ad6c0483852c7f2b493f79c9e68cad885d4b55ec93a5fea90",
+    "src\\go2_pvcnn\\control\\dh116\\tabletop_stereo_preprocessing.py": "8ea73648d3a52b885f7291b666ac21d33215c3ea193e1ffe7ad4a49a093f43f3"
+  },
+  "evidence": {
+    "artifacts\\stereo-wp-20261111\\wp1\\front_balanced200_depth.json": "7bf9810859fe16b17df5427c8379a4cbcf606694f45eb6e930256e3237a961fe",
+    "artifacts\\stereo-wp-20261111\\wp1\\front_capacity.json": "c3a18127a9d0eabb5f97b5c9346dbd5c7e6f724681e2b77bdc59d24557c6be02",
+    "artifacts\\stereo-wp-20261111\\wp1\\front_capacity_rmse.json": "595ec47b53be93de17dffd0dff88a5117599d8f043e403d14fe1c2437bd5ff84",
+    "artifacts\\stereo-wp-20261111\\wp1\\front_learned200.json": "6302a13cb45168ce68e6baff81ffc644e4585cc5f372226a97b2cfad005d56e0",
+    "artifacts\\stereo-wp-20261111\\wp1\\roll20_balanced200_depth.json": "dbbe8c39c782ae7daebe2578ce1161e5284281ff186c39e2b554ec210b249bb2",
+    "artifacts\\stereo-wp-20261111\\wp1\\roll20_capacity.json": "b97a366e6654424324d0ce13a9c68cab03c4a312fded2f0a49b9b18e0f55d964",
+    "artifacts\\stereo-wp-20261111\\wp1\\roll20_capacity_rmse.json": "57ce8dd2579ec1cd2f04a416c0ec9aa9a321f13cc54e082488456fb65bf768bd",
+    "artifacts\\stereo-wp-20261111\\wp1\\roll20_learned200.json": "0c3bff6311649e0a83dfe9c4aa71ce4a6b0694abd661be98f38f815368c4e6cd",
+    "artifacts\\stereo-wp-20261111\\wp1\\segmentation_balanced200.json": "6b3e08ff8d0ecdd37a86b40bf4c54bf9568aa85db7f50809ad79d3e8d6d8a48f",
+    "artifacts\\stereo-wp-20261111\\wp1\\segmentation_fit.json": "e36b29296bf8a357829a26ece483a59ab4d51b79f649767ebc0ffb45fa66e567",
+    "artifacts\\stereo-wp-20261111\\wp1\\segmentation_fit200.json": "de2d82b68c4204bfeb4332a4f5e99c7bf8b736b72e51c81267de799386dcf243",
+    "artifacts\\stereo-wp-20261111\\wp1\\source.tar.sha.json": "2738f812ca51ee42e77319bb7035c34541cc958a81bf4544505ba5011a581cbe",
+    "artifacts\\stereo-wp-20261111\\wp1\\source_v02.tar.sha.json": "54f02dac566923423faff1aecd306de65db3ee9e792c6cd00fbae9cb7bb2c3b8"
+  },
+  "pending": [
+    "new bilateral native ID capture authorization",
+    "right segmentation labels",
+    "occlusion truth and calibration",
+    "cross-initial validation",
+    "stereo correctness tails"
+  ],
+  "cpu_tests": {
+    "count": 145,
+    "elapsed_s": 32.45,
+    "log": "artifacts/stereo-wp-20261111/wp1/regression_final2.log",
+    "sha256": "c8474d6e6e6ac875c137d3c57cf368a9fa42ec2d343148f7cf648f50b5ff4346"
+  }
+}

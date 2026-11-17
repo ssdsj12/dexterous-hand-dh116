@@ -1,0 +1,39 @@
+{
+  "repository": "DeformX/DeformX-Assets",
+  "revision": "9ef440fa263dcd9b39689c97860f1d94d599bc5a",
+  "manifest_sha256": "509ed09a36393b40ff6b0775789a9aa08505176a7f3dc2e9014cf6ec16e55836",
+  "include_prefixes": ["usd/", "wires_traj_data/", "ground/", "scripts/"],
+  "include_files": [
+    "README.md",
+    ".gitattributes",
+    "background/boiler_room_4k.hdr",
+    "background/machine_shop_01_4k.hdr",
+    "background/empty_workshop_4k.hdr",
+    "background/small_workshop_4k.hdr"
+  ],
+  "metadata_sha256": {
+    ".gitattributes": "f3b69064e005dfe44053a74dfca3348382b8e82ac1dd615506abd7f66c42958d",
+    "README.md": "a9041af6d725c078c11adfbe252306d1f3471424f6b1460237136bf2a637f793"
+  },
+  "scene_usds": [
+    "usd/rod_drop_multi_2_plane.usdc",
+    "usd/rod_drop_multi_4_plane.usdc",
+    "usd/rod_drop_multi_8_plane.usdc",
+    "usd/rod_hang_flying.usdc"
+  ],
+  "expected_template_dome_references": {
+    "usd/rod_drop_multi_2_plane.usdc": ["usd/textures/color_0C0C0C.exr"],
+    "usd/rod_drop_multi_4_plane.usdc": ["usd/textures/color_0C0C0C.exr"],
+    "usd/rod_drop_multi_8_plane.usdc": ["usd/textures/color_0C0C0C.exr"],
+    "usd/rod_hang_flying.usdc": ["usd/textures/industrial_pipe_and_valve_01_4k.hdr"]
+  },
+  "wire_usdc_count": 72,
+  "trajectory_rods": {
+    "wires_traj_data/drop_n2_100.npz": 2,
+    "wires_traj_data/drop_n4_100.npz": 4,
+    "wires_traj_data/drop_n8_100.npz": 8,
+    "wires_traj_data/hang_n2_100.npz": 2,
+    "wires_traj_data/hang_n4_100.npz": 4,
+    "wires_traj_data/hang_n8_100.npz": 8
+  }
+}

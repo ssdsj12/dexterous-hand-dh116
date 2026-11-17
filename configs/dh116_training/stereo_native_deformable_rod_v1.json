@@ -1,0 +1,8 @@
+{
+  "version": "dh116-stereo-native-bootstrap-v1",
+  "task_kind": "deformable_rod",
+  "physical_object_kind": "cosserat_rod",
+  "state_contract": "dh116-deformable-rod-readback-v1",
+  "required_backend": "Cosserat/DeformX",
+  "arguments": []
+}
