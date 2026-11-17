@@ -25206,6 +25206,23 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.offline-geometry-options-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-offline-geometry-options.md",
+      "readiness": "docs/contracts/dh116_teacher_offline_geometry_diagnostics_v1.json",
+      "cpu_tests": {
+        "passed": 414,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "publication": {
+        "state": "windows_publication_pending"
+      },
+      "remote_verified": false
     }
   ]
 }

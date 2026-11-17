@@ -218,7 +218,9 @@ def pose_matrix_xyzw(pose):
     p=np.asarray(pose,dtype=float)
     if p.shape!=(7,) or not np.isfinite(p).all() or not np.isclose(np.linalg.norm(p[3:]),1.,atol=1e-5,rtol=0):
         raise ValueError('finite actual SDK XYZW link pose required')
-    x,y,z,w=p[3:];mat=np.eye(4)
+    # The raw SDK quaternion stays unchanged in the saved snapshot.
+    # Normalize only the derived rotation, AFTER the original near-unit guard.
+    x,y,z,w=p[3:]/np.linalg.norm(p[3:]);mat=np.eye(4)
     mat[:3,:3]=[[1-2*(y*y+z*z),2*(x*y-z*w),2*(x*z+y*w)],
                [2*(x*y+z*w),1-2*(x*x+z*z),2*(y*z-x*w)],
                [2*(x*z-y*w),2*(y*z+x*w),1-2*(x*x+y*y)]]

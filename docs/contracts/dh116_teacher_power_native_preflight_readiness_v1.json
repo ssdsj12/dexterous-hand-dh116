@@ -10,8 +10,8 @@
     "scripts/audit_dh116_power_surfaces.py": "ebb7a091ec95ac14db2dd35b0ac61f070537b80d6383785a93f1f6f447aae810",
     "tests/test_teacher_power_surface_audit.py": "bd36dede6f84b26f9bdc3ad7167325c4f656de29a159e305abd4fcf37cff180e",
     "src/go2_pvcnn/control/dh116/tabletop_teacher_sdk_cooked_capture.py": "e064b24fd17deb405dbda15d66ce78fbf1246435e38b60220f62e577eeda9982",
-    "scripts/diagnose_dh116_teacher_initialization.py": "17dd28a65cd9ee3c18518a2a9863721300646fa290516e34cd28ac01ac75910d",
-    "tests/test_teacher_initialization_worker.py": "808e68f151df87d1b0b1064f85615fead8e739fc3e7e79ba23cf94becde8e89e"
+    "scripts/diagnose_dh116_teacher_initialization.py": "3c67a86d66eeb4c1247f94707c1d07518fbfcf4768197aaf101ef48d12d76771",
+    "tests/test_teacher_initialization_worker.py": "f6988a57907ee58f6166c62088e5495f67e417b03daa090233b7c1232545a723"
   },
   "cpu": {
     "command": [
@@ -190,5 +190,13 @@
     "log_sha256": "b4554d2646a93873e35ee0b542ed4ba120f542977d4d3c48355caf1e951fbcb1",
     "scope": "publication-stage worker and scheduler CPU regression"
   },
-  "protected_inventory_sha256": "fb6b58cfd2fe86408eb498a4390ecda35df2221d7198ca3a01ff59f86dea05ec"
+  "protected_inventory_sha256": "fb6b58cfd2fe86408eb498a4390ecda35df2221d7198ca3a01ff59f86dea05ec",
+  "latest_offline_repair": {
+    "readiness": "docs/contracts/dh116_teacher_offline_geometry_diagnostics_v1.json",
+    "report": "docs/superpowers/reports/2026-11-17-teacher-offline-geometry-options.md",
+    "cpu_passed": 414,
+    "sdk_near_unit_rotation_conversion_repaired": true,
+    "native_revalidation": false,
+    "exact_previous_failed_body_identified": false
+  }
 }

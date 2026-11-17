@@ -40397,7 +40397,34 @@
         "signal": "SIGSEGV",
         "native_exit_code": null,
         "cleanup_complete": true
+      },
+      "latest_offline_repair": {
+        "readiness": "docs/contracts/dh116_teacher_offline_geometry_diagnostics_v1.json",
+        "native_qualification": false
       }
+    },
+    "teacher.offline-geometry-options-v1": {
+      "title": "离线凸包/设备重算及SDK四元数转换回归",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "passed",
+      "tests": [
+        "tests/test_teacher_initialization_worker.py",
+        "tests/test_dh116_cooked_convex_hulls.py",
+        "tests/test_dh116_cooked_hull_device_parity.py",
+        "tests/test_tripod_cooked_geometry.py"
+      ],
+      "last_result": {
+        "passed": 414,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU/offline; historical native reanalysis only",
+        "native_qualification": false
+      },
+      "readiness": "docs/contracts/dh116_teacher_offline_geometry_diagnostics_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-offline-geometry-options.md",
+      "native_runs": 0,
+      "branch": "11-17"
     }
   },
   "execution_target": {

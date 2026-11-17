@@ -451,3 +451,61 @@ def test_snapshot_write_failure_stops_before_any_cooked_getter():
             collector=lambda *a,**k:pytest.fail('unrecorded snapshot reached collector'),
             on_snapshot=failed_write)
     assert len(calls)==2
+
+
+@pytest.mark.parametrize('scale_error',[-9e-6,-1e-6,-1e-7,1e-7,1e-6,9e-6])
+@pytest.mark.parametrize('sign',[-1.,1.])
+@pytest.mark.parametrize('quaternion,expected',[
+    ([1.,0.,0.,0.],[[1.,0.,0.],[0.,-1.,0.],[0.,0.,-1.]]),
+    ([.5,.5,.5,.5],[[0.,0.,1.],[1.,0.,0.],[0.,1.,0.]])])
+def test_accepted_near_unit_sdk_pose_produces_rigid_rotation_without_mutating_raw(
+        scale_error,sign,quaternion,expected):
+    m=api()
+    from go2_pvcnn.control.dh116.tabletop_tripod_cooked_geometry import _matrix
+    raw=np.r_[np.array([.12,-.23,.34]),np.array(quaternion)*sign*(1.+scale_error)]
+    before=raw.copy()
+    matrix=_matrix(m.pose_matrix_xyzw(raw))
+    np.testing.assert_array_equal(raw,before)
+    np.testing.assert_allclose(matrix[:3,:3],expected,atol=1e-12,rtol=0.)
+    np.testing.assert_array_equal(matrix[:3,3],before[:3])
+
+
+@pytest.mark.parametrize('quaternion',[
+    [0.,0.,0.,0.],[0.,0.,0.,1.00002],[0.,0.,0.,.99998],
+    [float('nan'),0.,0.,1.],[0.,float('inf'),0.,1.]])
+def test_sdk_quaternion_normalization_cannot_admit_invalid_raw_pose(quaternion):
+    with pytest.raises(ValueError,match='finite actual SDK XYZW link pose'):
+        api().pose_matrix_xyzw([1.,2.,3.]+quaternion)
+
+
+def test_near_unit_sdk_pose_flows_through_complete_34_owner_cpu_capture(tmp_path):
+    from test_tripod_cooked_geometry import scene
+    from pxr import Sdf,UsdGeom
+    from go2_pvcnn.control.dh116 import tabletop_tripod_cooked_geometry as old
+    from go2_pvcnn.control.dh116.tabletop_teacher_sdk_cooked_capture import build_sdk_collector
+    stage,models,roots,names,snapshot,getter=scene(tmp_path/'sources')
+    UsdGeom.Xform.Define(stage,'/World/envs/env_0')
+    assert Sdf.CopySpec(stage.GetRootLayer(),'/World/envs/env_4',stage.GetRootLayer(),'/World/envs/env_0')
+    roots=[r.replace('env_4','env_0') for r in roots]
+    bindings=old.prepare_cooked_bindings(models,roots,names)
+    reads=[]
+    class View:
+        def __init__(self,hand_index):
+            self.hand_index=hand_index
+            self.link_paths=[[roots[hand_index]+'/'+name for name in names[hand_index]]]
+        def get_link_transforms(self):
+            reads.append(self.hand_index)
+            poses=np.zeros((1,17,7),dtype=np.float32)
+            poses[:,:,3]=np.float32(1.+1e-7)
+            return poses
+    runtime=NS(sim=NS(current_time_step_index=2,current_time=2/480,stage=stage,is_playing=lambda:True),
+        rope=NS(time=0.),left_hands=NS(root_physx_view=View(0)),right_hands=NS(root_physx_view=View(1)))
+    captured=[]
+    result=api().capture_once(runtime,bindings,getter,collector=build_sdk_collector(),
+        on_snapshot=captured.append)
+    assert reads==[0,1] and len(captured)==1
+    assert result['capture']['complete'],result['capture']['reasons']
+    assert len(result['capture']['colliders'])==34 and len(getter.calls)==68
+    assert captured[0]['poses_xyzw_by_hand'][1][0][16][3]>1.
+    assert result['capture']['native_attested'] is False
+    assert result['capture']['live_actor_shape_attachment_proven'] is False

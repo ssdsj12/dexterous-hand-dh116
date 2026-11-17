@@ -1,3 +1,7 @@
+## 2026-11-17: offline geometry options tested; near-unit SDK rotation repaired
+
+Static10-pad USD audit and historical CPU/GPU cooked parity pass.24 quaternion boundary cases expose the unnormalized derived-rotation defect; normalization now follows the unchanged raw guard, preserving raw data.414 CPU tests pass. No new native run; current34-owner capture and Tensor shutdown remain unqualified. See [report](docs/superpowers/reports/2026-11-17-teacher-offline-geometry-options.md).
+
 ## 2026-11-17: initialization readback passed; capture and exit failed
 
 Authorized GPU2 once-only run:2 SDK setup steps,0 control/solver/PPO. Both hands' seed readbacks passed. Cooked capture stopped before getters (0/34); shutdown SIGSEGV in PhysX Tensor during Py_FinalizeEx. The user separately authorized cleanup; no retry. Raw-pose persistence is repaired offline;377 CPU tests pass. Teacher remains blocked. See [failure report](docs/superpowers/reports/2026-11-17-teacher-initialization-native-failure.md).
