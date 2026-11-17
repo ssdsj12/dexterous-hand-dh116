@@ -40648,6 +40648,43 @@
         "teacher_admission": false,
         "cpu_control_processes": 3
       }
+    },
+    "teacher.stat-cache-release-v1": {
+      "title": "源码绑定的Kit stat缓存一次释放独立诊断",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.cuda-frame-walk-v2"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_stat_cache_release.py",
+        "tests/test_teacher_initialization_worker.py",
+        "tests/test_simulation_owner_cleanup.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_stat_cache_release_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-source-bound-stat-cache-release.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 522,
+        "failed": 0,
+        "skipped": 0,
+        "new_targeted_passed": 26,
+        "scope": "related CPU regression only; native cache release/exit and Teacher unqualified"
+      }
+    },
+    "teacher.stat-cache-release-native-v1": {
+      "title": "一次源码绑定stat-cache释放原生反事实",
+      "executor": "gated",
+      "dependencies": [
+        "teacher.stat-cache-release-v1"
+      ],
+      "status": "blocked",
+      "branch": "11-17",
+      "native_runs": 0,
+      "readiness": "docs/contracts/dh116_teacher_stat_cache_release_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-source-bound-stat-cache-release.md",
+      "blocked_reason": "CPU repair ready; final published SHA must be frozen and receive new bounded native authorization. Prior once-only v2 budget consumed; no automatic retry."
     }
   },
   "execution_target": {

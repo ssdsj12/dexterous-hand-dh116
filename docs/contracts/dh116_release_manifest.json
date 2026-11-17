@@ -25476,6 +25476,23 @@
         "failed": 0,
         "skipped": 0
       }
+    },
+    {
+      "package": "teacher.stat-cache-release-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-source-bound-stat-cache-release.md",
+      "readiness": "docs/contracts/dh116_teacher_stat_cache_release_v1.json",
+      "cpu_tests": {
+        "passed": 522,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "publication": {
+        "state": "pending_windows_publication"
+      },
+      "remote_verified": false
     }
   ]
 }

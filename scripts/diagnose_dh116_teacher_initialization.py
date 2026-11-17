@@ -383,7 +383,7 @@ def close_fallback_app(app,output,*,close_app):
     close_app(app,output,simulation=None)
     return True
 
-def execute_native(plan):
+def execute_native(plan,*,before_owner_collect=None):
     """Already-approved exclusive process; no automatic retry or forced exit."""
     validate_execution_context(Path(plan['project']))
     started=time.monotonic()
@@ -400,8 +400,11 @@ def execute_native(plan):
         try:
             app=AppLauncher(headless=True,device='cuda:0',enable_cameras=False,fast_shutdown=False,
                 experience=plan['experience']).app
-            return continue_within_budget(started,'AppLauncher returned',
-                lambda:_execute_app_owned(app,plan,started))
+            if before_owner_collect is None:
+                owned=lambda:_execute_app_owned(app,plan,started)
+            else:
+                owned=lambda:_execute_app_owned(app,plan,started,before_owner_collect=before_owner_collect)
+            return continue_within_budget(started,'AppLauncher returned',owned)
         except BaseException as error:
             failure=traceback.format_exc()
             traceback.clear_frames(error.__traceback__);error.__traceback__=None
@@ -421,7 +424,7 @@ def execute_native(plan):
         raise RuntimeError(failure) from None
 
 
-def _execute_app_owned(app,plan,started):
+def _execute_app_owned(app,plan,started,*,before_owner_collect=None):
     # All USD, PhysX, solver, trace and runtime imports occur after AppLauncher.
     import carb.settings
     import torch
@@ -509,7 +512,8 @@ def _execute_app_owned(app,plan,started):
     try:
         if sim_utils.SimulationContext.instance() is not None:
             raise RuntimeError('unexpected existing SimulationContext before owned runtime')
-        acquired=run_owned_call(operation,synchronize=lambda:torch.cuda.synchronize('cuda:0'),ownership=trace)
+        acquired=run_owned_call(operation,synchronize=lambda:torch.cuda.synchronize('cuda:0'),ownership=trace,
+            before_collect=(lambda:before_owner_collect(scope.get('sim'))) if before_owner_collect is not None else None)
     except BaseException as error:
         errors.append(traceback.format_exc());traceback.clear_frames(error.__traceback__);error.__traceback__=None
     # No active acquisition exception/frame is retained across STOP.

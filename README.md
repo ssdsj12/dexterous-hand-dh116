@@ -1,3 +1,7 @@
+## 2026-11-17 source-bound Kit cache release diagnostic
+
+An independent opt-in entry calls the installed, SHA/code-checked stat-cache reset API once before the existing owned GC. Legacy defaults remain unchanged. Post-observer/post-write guards reject cache recreation without retry;26 new CPU tests and522 related cases pass. No new native run; strict hull validation and Teacher remain blocked. See [report](docs/superpowers/reports/2026-11-17-teacher-source-bound-stat-cache-release.md).
+
 ## 2026-11-17: cached Tensor View ownership probes, not a shutdown fix claim
 
 ## 2026-11-17 Kit stat-cache retention evidence

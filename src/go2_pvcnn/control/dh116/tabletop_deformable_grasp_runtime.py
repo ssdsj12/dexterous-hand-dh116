@@ -344,7 +344,7 @@ class NativeOwners:
         return value
 
 
-def run_owned_call(operation, *, synchronize, ownership):
+def run_owned_call(operation, *, synchronize, ownership, before_collect=None):
     """Release solver/view/composer owners even when an SDK frame raises.
 
     The completed failing frame is explicitly cleared before STOP/App close;
@@ -358,6 +358,7 @@ def run_owned_call(operation, *, synchronize, ownership):
     failed_tb = None
     failed_exception = None
     cleanup_errors = []
+    hook_interrupt = None
     try:
         result = operation(owners)
     except BaseException as error:
@@ -381,8 +382,19 @@ def run_owned_call(operation, *, synchronize, ownership):
         for name in ("provider", "runtime", "view", "composer", "hand"):
             owners.resources.pop(name, None)
         owners.resources.clear()
+        if before_collect is not None:
+            try:
+                before_collect()
+            except (KeyboardInterrupt,SystemExit) as error:
+                error.__traceback__=None
+                hook_interrupt=error
+            except Exception as error:
+                cleanup_errors.append(traceback.format_exc())
+                error.__traceback__=None
         gc.collect()
         ownership.checkpoint("owned hand and solver references dropped")
+        if hook_interrupt is not None:
+            raise hook_interrupt from None
     if failure or cleanup_errors:
         raise RuntimeError("\n".join(([failure] if failure else []) + cleanup_errors)) from None
     return result
