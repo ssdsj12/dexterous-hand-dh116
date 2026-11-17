@@ -138,8 +138,32 @@ def _frame_callers(frame,limit):
         current=frame=None
 
 
-def probe_simulation_owner_edges(reference,*,max_referrers=16,max_frame_depth=4):
-    """Bounded scalar two-hop trace of constructor-frame / ready-method owners.
+def _probe_cuda_frame_owners(frame,*,excluded_ids,max_referrers):
+    """Describe one additional Python-owner level; never retain or clear frames."""
+    parents=parent=None
+    try:
+        parents=gc.get_referrers(frame)
+        descriptions=[]
+        for i in range(min(len(parents),max_referrers)):
+            parent=parents[i]
+            if id(parent) in excluded_ids:continue
+            if (type(parent) is types.FrameType and parent.f_code.co_filename==__file__
+                    and parent.f_code.co_name in ("probe_simulation_owner_edges","_probe_cuda_frame_owners")):
+                continue
+            descriptions.append(_describe_referrer(parent,frame))
+        return dict(frame=_describe_referrer(frame,None),owners=descriptions,
+            enumerated_count=len(parents),scanned_count=min(len(parents),max_referrers),
+            truncated=len(parents)>max_referrers,
+            observation="python_owners_observed" if descriptions else "no_visible_python_owner",
+            count_scope="scanned non-diagnostic Python referrers only; native holders may be invisible",
+            native_owner_qualified=False)
+    finally:
+        frame=parents=parent=None
+
+
+def probe_simulation_owner_edges(reference,*,max_referrers=16,max_frame_depth=4,
+                                 trace_cuda_init_owners=False):
+    """Scalar two-hop trace, optionally following one upstream CUDA-init frame.
 
     Never reads f_locals, clears frames, collects objects or follows native
     threads. gc.get_referrers enumerates Python owners, not all C++ holders.
@@ -151,12 +175,20 @@ def probe_simulation_owner_edges(reference,*,max_referrers=16,max_frame_depth=4)
         raise ValueError("max_referrers must be 1..64")
     if type(max_frame_depth) is not int or not 1<=max_frame_depth<=8:
         raise ValueError("max_frame_depth must be 1..8")
+    if type(trace_cuda_init_owners) is not bool:
+        raise ValueError("trace_cuda_init_owners must be boolean")
+    cuda_seen_ids=set()
     target=direct=owner=upstream=parent=None
     result=dict(version=VERSION,alive=None,direct_referrers=[],selected_owner_edges=[],
         root_cause_proven=False,native_release_verified=False,native_thread_attribution=None,
-        frame_locals_read=False,diagnostic_handles_retained=False,max_hops=2,
+        frame_locals_read=False,diagnostic_handles_retained=False,max_hops=3 if trace_cuda_init_owners else 2,
         max_referrers=max_referrers,max_frame_depth=max_frame_depth,
         enumeration_limit="gc.get_referrers enumerates all direct Python referrers; descriptions and traversal are bounded")
+    if trace_cuda_init_owners:
+        result["cuda_frame_owner_trace"]=dict(max_frames=1,frames_followed=0,
+            candidate_occurrences_seen=0,duplicate_candidates_skipped=0,
+            additional_candidates_not_followed=0,selector="_lazy_init function name",
+            selector_is_not_source_qualification=True)
     try:
         target=reference()
         result["alive"]=target is not None
@@ -175,6 +207,7 @@ def probe_simulation_owner_edges(reference,*,max_referrers=16,max_frame_depth=4)
                 description["caller_chain"]=_frame_callers(owner,max_frame_depth)
             upstream=gc.get_referrers(owner)
             summaries=[]
+            frame_owner_packets=[]
             visible=0
             for j in range(min(len(upstream),max_referrers)):
                 parent=upstream[j]
@@ -184,12 +217,28 @@ def probe_simulation_owner_edges(reference,*,max_referrers=16,max_frame_depth=4)
                 visible+=1
                 if len(summaries)<max_referrers:
                     summaries.append(_describe_referrer(parent,owner))
+                if (trace_cuda_init_owners and type(parent) is types.FrameType
+                        and parent.f_code.co_name=="_lazy_init"):
+                    stats=result["cuda_frame_owner_trace"]
+                    stats["candidate_occurrences_seen"]+=1
+                    identity=id(parent)
+                    if identity in cuda_seen_ids:
+                        stats["duplicate_candidates_skipped"]+=1
+                    elif stats["frames_followed"]>=1:
+                        stats["additional_candidates_not_followed"]+=1
+                    else:
+                        cuda_seen_ids.add(identity)
+                        frame_owner_packets.append(_probe_cuda_frame_owners(parent,
+                            excluded_ids={id(direct),id(upstream)},max_referrers=max_referrers))
+                        stats["frames_followed"]+=1
             result["selected_owner_edges"].append(dict(direct=description,upstream=summaries,
                 upstream_referrer_count=visible,
                 upstream_count_scope="scanned non-diagnostic owners",
                 upstream_enumerated_count=len(upstream),
                 upstream_scanned_count=min(len(upstream),max_referrers),
                 upstream_truncated=len(upstream)>max_referrers))
+            if trace_cuda_init_owners:
+                result["selected_owner_edges"][-1]["upstream_frame_owners"]=frame_owner_packets
             upstream=parent=None
         return result
     finally:

@@ -40558,6 +40558,31 @@
         "skipped": 0,
         "scope": "installed-source CPU verification; not GPU/PhysX lifecycle qualification"
       }
+    },
+    "teacher.cuda-frame-owner-trace-v1": {
+      "title": "CUDA初始化帧上游持有者第三层只读诊断",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.tensor-owner-probe-v1"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_cuda_frame_owners.py",
+        "tests/test_teacher_owner_diagnostics.py",
+        "tests/test_teacher_tensor_view_owners.py",
+        "tests/test_teacher_initialization_worker.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_cuda_frame_owner_trace_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-cuda-frame-owner-trace.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 485,
+        "failed": 0,
+        "skipped": 0,
+        "targeted_new_passed": 10,
+        "scope": "related CPU regression; native holder and release unqualified"
+      }
     }
   },
   "execution_target": {

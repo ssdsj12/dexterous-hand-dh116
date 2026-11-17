@@ -25377,6 +25377,23 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.cuda-frame-owner-trace-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-cuda-frame-owner-trace.md",
+      "readiness": "docs/contracts/dh116_teacher_cuda_frame_owner_trace_v1.json",
+      "cpu_tests": {
+        "passed": 485,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "publication": {
+        "state": "windows_publication_pending"
+      },
+      "remote_verified": false
     }
   ]
 }

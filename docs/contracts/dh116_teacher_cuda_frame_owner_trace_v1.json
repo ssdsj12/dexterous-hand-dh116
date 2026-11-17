@@ -1,0 +1,161 @@
+{
+  "package": "teacher.cuda-frame-owner-trace-v1",
+  "branch": "11-17",
+  "base_commit": "dd90dca58edbc74329fd6e049a7dad8cea43205a",
+  "status": "cpu_verified_third_hop_native_pending",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_simulation_owner_cleanup.py": "2b066f2da635eabc40d915e74bd5e52349f70e4533e6c05a25f21574766b8310",
+    "scripts/diagnose_dh116_teacher_initialization.py": "cecf32a26e1559455b5905902eb31265072c4feeb2947816db9c28022dc1a4eb",
+    "tests/test_teacher_cuda_frame_owners.py": "2ac311daa8f6676d9383f257f7628a818ce6689c82fa693cad68cf36d8888e4e"
+  },
+  "timestamp_utc": "2026-11-17T11:49:17.758478+00:00",
+  "installed_cuda_source": {
+    "path": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/torch/cuda/__init__.py",
+    "bytes": 61129,
+    "sha256": "4bd2da05273edd47203133b45843ece0e59234af28204f2ed5cb10d6175a4c67"
+  },
+  "cuda_source_in_native_freeze": true,
+  "cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_teacher_force_runtime.py",
+      "tests/test_native_phase_contract_v2.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_deformx_end_supported_scene.py",
+      "tests/test_teacher_preview_recording.py",
+      "tests/test_teacher_video.py",
+      "tests/test_teacher_video_delivery.py",
+      "tests/test_teacher_cached_replay.py",
+      "tests/test_teacher_read_only_display_usd.py",
+      "tests/test_teacher_grasp_preview_runtime.py",
+      "tests/test_teacher_supported_runtime.py",
+      "tests/test_dh116_curriculum_and_fixes.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_teacher_seed_initialization.py",
+      "tests/test_teacher_acquisition_geometry.py",
+      "tests/test_teacher_power_surface_audit.py",
+      "tests/test_teacher_initialization_worker.py",
+      "tests/test_tripod_cooked_geometry.py",
+      "tests/test_dh116_flexible_colliders.py",
+      "tests/test_dh116_cooked_convex_hulls.py",
+      "tests/test_dh116_cooked_hull_device_parity.py",
+      "tests/test_teacher_cooked_readback_audit.py",
+      "tests/test_teacher_owner_diagnostics.py",
+      "tests/test_simulation_owner_cleanup.py",
+      "tests/test_teacher_tensor_view_owners.py",
+      "tests/test_teacher_cuda_frame_owners.py",
+      "tests/test_teacher_cleanup_suggestions.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "elapsed_s": 52.282837690087035,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-20261117/full-regression.log",
+    "log_sha256": "dcecb7583b25a3eaaa651861e83c9666650e1d37e3543ff984ac64201130fbc9",
+    "native_runs": 0,
+    "passed": 485,
+    "failed": 0,
+    "skipped": 0
+  },
+  "targeted": {
+    "red_failed": 10,
+    "green_passed": 10
+  },
+  "artifacts": [
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-20261117/red.log",
+      "bytes": 15144,
+      "sha256": "09ca0770ba23c8cbce2f95d466ed6a3531d3a98e2861c303770df8a95f9fdb25"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-20261117/red-command.json",
+      "bytes": 689,
+      "sha256": "67b7c4a7e8ba936524517a88f7977111a468f01e56eb917363977ed8c9e2f580"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-20261117/green.log",
+      "bytes": 99,
+      "sha256": "5af70ecbdcaa9c0bcc0be320a63723e61fbb359ae43fbb8c8b5350f547e91877"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-20261117/green-command.json",
+      "bytes": 405,
+      "sha256": "25f999962c68e4527c5c272832c548d675efd42c27d136bfb98dce6dccf1a8d9"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-20261117/full-regression.log",
+      "bytes": 581,
+      "sha256": "dcecb7583b25a3eaaa651861e83c9666650e1d37e3543ff984ac64201130fbc9"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-20261117/full-regression.json",
+      "bytes": 2315,
+      "sha256": "07577bf69724f4855f7bc0bdd6ad11c704677e334cf91a05df3bb11c583dd2bb"
+    }
+  ],
+  "default_hops": 2,
+  "opt_in_hops": 3,
+  "max_cuda_frames_per_probe": 1,
+  "max_additional_gc_referrer_enumerations_per_probe": 1,
+  "max_additional_enumerations_per_native_attempt": 2,
+  "worker_max_referrers_per_scan": 16,
+  "gc_enumeration_size_bounded": false,
+  "frame_locals_read": false,
+  "frames_cleared": false,
+  "production_gc_collect_calls_added": 0,
+  "native_methods_called_by_trace": false,
+  "selector_is_function_name_not_source_qualification": true,
+  "third_hop_missing_python_owner_means": "unknown; native holders may be invisible",
+  "native_runs": 0,
+  "cuda_initialization_performed": false,
+  "control_steps": 0,
+  "solver_steps": 0,
+  "model_loads": 0,
+  "teacher_queries": 0,
+  "ppo_updates": 0,
+  "runtime_cleanup_order_changed": false,
+  "physics_or_assets_changed": false,
+  "root_cause_proven": false,
+  "native_release_verified": false,
+  "teacher_admission": false,
+  "eager_cuda_initialization_implemented": false,
+  "report": "docs/superpowers/reports/2026-11-17-teacher-cuda-frame-owner-trace.md",
+  "publication": {
+    "state": "windows_publication_pending"
+  },
+  "registry_cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cuda-frame-owner-20261117/registry-final.log",
+    "log_sha256": "ece5c252f5f6d1b3ca7dd44e885e47778337aa3f50fbd131b05c57690f2870c0",
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0
+  },
+  "protection": {
+    "checked": 528,
+    "mismatches": []
+  }
+}
