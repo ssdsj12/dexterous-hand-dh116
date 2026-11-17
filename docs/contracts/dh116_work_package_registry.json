@@ -40628,6 +40628,26 @@
         "new_targeted_passed": 11,
         "scope": "related CPU regression; native holder and lifecycle remain unqualified"
       }
+    },
+    "teacher.kit-stat-cache-retention-evidence-v1": {
+      "title": "原生importlib帧链与Kit stat异常缓存CPU复现",
+      "executor": "gated",
+      "dependencies": [
+        "teacher.cuda-frame-walk-v2"
+      ],
+      "status": "blocked",
+      "branch": "11-17",
+      "readiness": "docs/contracts/dh116_teacher_kit_stat_cache_retention_evidence_v1.json",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-kit-stat-cache-retention.md",
+      "native_runs": 1,
+      "blocked_reason": "One native budget spent; SIGSEGV remains. CPU exact SDK cache reproduces frame retention and reset removes it; native counterfactual not yet executed.",
+      "last_result": {
+        "native_runs": 1,
+        "strict_qualified_hulls": 0,
+        "natural_exit_qualified": false,
+        "teacher_admission": false,
+        "cpu_control_processes": 3
+      }
     }
   },
   "execution_target": {

@@ -25450,6 +25450,20 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.kit-stat-cache-retention-evidence-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-kit-stat-cache-retention.md",
+      "readiness": "docs/contracts/dh116_teacher_kit_stat_cache_retention_evidence_v1.json",
+      "native_runs": 1,
+      "native_qualification": false,
+      "signal": "SIGSEGV",
+      "cpu_retention_mechanism_reproduced": true,
+      "publication": {
+        "state": "windows_publication_pending"
+      },
+      "remote_verified": false
     }
   ]
 }

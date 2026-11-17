@@ -1,5 +1,10 @@
 ## 2026-11-17: cached Tensor View ownership probes, not a shutdown fix claim
 
+## 2026-11-17 Kit stat-cache retention evidence
+
+Native tracing reached importlib file checks and still ended in SIGSEGV. Exact installed Kit Python cache source reproduces Scene retention on CPU; its existing reset API releases it in the model. Native cause/fix remains unqualified. See [report](docs/superpowers/reports/2026-11-17-teacher-kit-stat-cache-retention.md).
+
+
 ## 2026-11-17 bounded CUDA owner walk v2
 
 The isolated diagnostic can follow at most8 distinct upstream frames with cycle detection and explicit truncation. Defaults and cleanup behavior stay intact; 11 new red/green cases and496 related CPU cases pass. No new native execution. See [report](docs/superpowers/reports/2026-11-17-teacher-cuda-frame-walk-v2.md).
