@@ -1,3 +1,7 @@
+## 2026-11-17: reaction-force closure gate (opt-in, not native qualified)
+
+New independent N=1 diagnostics judge closure from complete simulated normal reaction/contact pairs, not finger posture. Both wrists hold until bilateral opposed contact persists; force loss pauses ascent. Power lacks palm/proximal sources and remains blocked. CPU269 passed; no new Isaac or PPO run. Original control, models and success thresholds are unchanged. See [report](docs/superpowers/reports/2026-11-17-teacher-force-closure.md).
+
 ## 11-17 source snapshot
 
 Current Ubuntu runtime code and preview diagnostics are frozen on branch11-17, with87 CPU tests passing. Teacher empty-hand ascent, full Power grasp, paired-RGB preview and native shutdown remain unresolved; this is not a successful model release. See [snapshot report](docs/releases/2026-11-17-source-snapshot.md).

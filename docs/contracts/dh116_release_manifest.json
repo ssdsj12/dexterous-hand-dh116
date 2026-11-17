@@ -25085,6 +25085,24 @@
         "development_branch_unchanged": "ccd87fd282901f05387a566d254bca7850c66a4d"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.force-contact-gate-v1",
+      "branch": "11-17",
+      "base": "56e7f16303e13e7e49eae75492e3ffbaef78d53b",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-force-closure.md",
+      "readiness": "docs/contracts/dh116_teacher_force_closure_readiness_v1.json",
+      "cpu_tests": {
+        "passed": 269,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "publication": {
+        "state": "pending_windows_relay"
+      },
+      "remote_verified": false
     }
   ]
 }
