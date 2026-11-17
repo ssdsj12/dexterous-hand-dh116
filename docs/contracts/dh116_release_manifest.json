@@ -25127,6 +25127,27 @@
       "native_runs": 0,
       "native_qualification": false,
       "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c804715f380410d698024bf4c8ea10c1e29ef25c",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "route": "Windows bare relay normal push/fetch readback"
+      },
+      "remote_verified": true
+    },
+    {
+      "package": "teacher.acquisition-geometry-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-acquisition-geometry.md",
+      "readiness": "docs/contracts/dh116_teacher_acquisition_geometry_readiness_v1.json",
+      "cpu_tests": {
+        "passed": 304,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "publication": {
         "state": "pending_windows_relay"
       },
       "remote_verified": false

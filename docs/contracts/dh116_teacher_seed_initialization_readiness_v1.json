@@ -75,7 +75,11 @@
     "no_formally_successful_teacher_model"
   ],
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "c804715f380410d698024bf4c8ea10c1e29ef25c",
+    "remote_branch": "11-17",
+    "files_verified": 9,
+    "route": "Windows bare relay normal push/fetch readback"
   },
   "report": "docs/superpowers/reports/2026-11-17-teacher-seed-initialization.md",
   "generated_at_utc": "2026-11-17T07:54:10.906244+00:00"

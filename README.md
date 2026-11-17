@@ -1,3 +1,7 @@
+## 2026-11-17: acquisition geometry candidates, not grasp success
+
+Original-source FK/SDF search reduces four Pinch predicted gaps to ~0.40mm; Tripod left remains unreachable/penetrating and is rejected. Both S0 proposals remain blocked pending cooked geometry, fresh settling and measured force. Original straight constructor nodes/rest length are preserved. CPU304 passed. See [report](docs/superpowers/reports/2026-11-17-teacher-acquisition-geometry.md).
+
 ## 2026-11-17: selected seed before the first SDK reset
 
 The independent force diagnostic reuses one pair of assets, authors selected per-hand FK/joint/wrist state before setup, and checks actual 17-DOF q/qd/base readback before any overwrite. Old defaults/assets/limits remain unchanged. CPU277 passed; native initialization and Teacher success are still unqualified. See [report](docs/superpowers/reports/2026-11-17-teacher-seed-initialization.md).

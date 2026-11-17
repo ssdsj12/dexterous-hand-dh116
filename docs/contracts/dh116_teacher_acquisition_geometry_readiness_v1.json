@@ -1,0 +1,85 @@
+{
+  "package": "teacher.acquisition-geometry-v1",
+  "branch": "11-17",
+  "status": "cpu_passed_candidates_blocked",
+  "native_runs": 0,
+  "ppo_updates": 0,
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_acquisition_geometry.py": "ba6bc0af8d8a2873033621d673dc0d1b87948bb99704d85f85fecc0fa5451605",
+    "scripts/prepare_dh116_teacher_acquisition.py": "ba5e62b45f5560d4207eb85e71cc98497e2ba40320dd99ce38a32f75824effdb",
+    "tests/test_teacher_acquisition_geometry.py": "232c66b7abb55e1ed285457ec1085ac81cebe37deec1991da51d57a1132a12c0"
+  },
+  "cpu": {
+    "passed": 304,
+    "failed": 0,
+    "skipped": 0,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_teacher_force_runtime.py",
+      "tests/test_native_phase_contract_v2.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_deformx_end_supported_scene.py",
+      "tests/test_teacher_preview_recording.py",
+      "tests/test_teacher_video.py",
+      "tests/test_teacher_video_delivery.py",
+      "tests/test_teacher_cached_replay.py",
+      "tests/test_teacher_read_only_display_usd.py",
+      "tests/test_teacher_grasp_preview_runtime.py",
+      "tests/test_teacher_supported_runtime.py",
+      "tests/test_dh116_curriculum_and_fixes.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_teacher_seed_initialization.py",
+      "tests/test_teacher_acquisition_geometry.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-acquisition-full-regression-20261117.log",
+    "log_sha256": "e70b5e7188fc229e853b97c931ff50fe6c95144ab58912ee130b982da48fc6f7"
+  },
+  "authoritative_proposal": {
+    "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-acquisition-20261117/proposal-v6.json",
+    "sha256": "ac21168383b091f6f233b10057aa075141f53e00eb0eeaf1f2a2608ebdb30282",
+    "historical_implementation": {
+      "scripts/prepare_dh116_teacher_acquisition.py": "ba5e62b45f5560d4207eb85e71cc98497e2ba40320dd99ce38a32f75824effdb",
+      "src/go2_pvcnn/control/dh116/tabletop_teacher_acquisition_geometry.py": "eedf69676c8b8b256d19f86ec527ada3819dd1646e222465c303b1478bd2ab93"
+    },
+    "verification_path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-acquisition-20261117/boundary-verification.json",
+    "verification_sha256": "4a87e8b20422a83cec8f1fd4db14b86d49ec903ca42b78aab3cd8a6e8656b194"
+  },
+  "candidate_scope": "original constructor nodes preserved; optimization refers to old measured settled nodes only",
+  "pinch_geometric_gap_reachable": true,
+  "tripod_geometric_gap_reachable": false,
+  "freeze_s0": false,
+  "native_admission": false,
+  "force_closure_measured": false,
+  "blockers": [
+    "nonpad_cooked_missing",
+    "source_rod_clearance_unknown",
+    "interhand_clearance_not_qualified",
+    "tripod_left_not_reachable_and_penetrating",
+    "fresh_settling_required",
+    "actual_force_contact_not_validated"
+  ],
+  "radius_m": 0.005,
+  "rest_length_m": 0.5,
+  "material_or_physics_modified": false,
+  "protected_sources_checked": 528,
+  "protected_source_mismatches": [],
+  "publication": {
+    "state": "pending_windows_relay"
+  },
+  "report": "docs/superpowers/reports/2026-11-17-teacher-acquisition-geometry.md",
+  "timestamp_utc": "2026-11-17T08:06:41.146381+00:00"
+}
