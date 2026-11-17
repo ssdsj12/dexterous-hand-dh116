@@ -295,7 +295,14 @@
   ],
   "report": "docs/superpowers/reports/2026-11-17-teacher-cuda-triton-native-evidence.md",
   "publication": {
-    "state": "windows_publication_pending"
+    "state": "windows_publication_verified",
+    "source_commit": "7a3d6fe2961cf5a33bf4778361458ffaf6a73847",
+    "remote_branch": "11-17",
+    "files_verified": 7,
+    "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+    "verified_at_utc": "2026-11-17T12:08:38.760107+00:00",
+    "pr2_draft": true,
+    "pr2_merged": false
   },
   "post_native_cpu": {
     "command": [
