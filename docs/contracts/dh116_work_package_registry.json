@@ -40253,7 +40253,6 @@
       "dependencies": [],
       "status": "blocked",
       "blockers": [
-        "new_initialization_not_native_validated",
         "all_nonpad_cooked_geometry_not_source_qualified",
         "natural_shutdown_not_qualified",
         "no_formally_successful_teacher_model"
@@ -40276,7 +40275,13 @@
       "branch": "11-17",
       "code_dependencies": [
         "teacher.force-contact-gate-v1"
-      ]
+      ],
+      "native_initialization_evidence": {
+        "record": "docs/contracts/dh116_teacher_initialization_native_attempt_20261117.json",
+        "source_commit": "ff16a5c7f9ca4814ac8a5370f2432f7c4435b101",
+        "sdk_step": 2,
+        "scope": "original supported Pinch seed before overwrite; not force/grasp success"
+      }
     },
     "teacher.acquisition-geometry-v1": {
       "title": "Actual-node original-SDF acquisition candidates",
@@ -40320,28 +40325,29 @@
       ],
       "status": "blocked",
       "blockers": [
-        "new_native_budget_not_authorized",
         "all34_actual_stored_cooked_not_read_back",
+        "raw34_failed_pose_evidence_missing_in_spent_run",
         "live_shape_attachment_not_qualified",
-        "new_seeded_initialization_not_native_validated",
+        "runtime_factory_aliases_and_native_finalize_unresolved",
         "force_acquisition_and_full_grasp_not_qualified",
-        "natural_shutdown_not_qualified"
+        "natural_shutdown_not_qualified",
+        "native_authorization_consumed_no_retry"
       ],
-      "report": "docs/superpowers/reports/2026-11-17-teacher-power-source-and-native-preflight.md",
+      "report": "docs/superpowers/reports/2026-11-17-teacher-initialization-native-failure.md",
       "readiness": "docs/contracts/dh116_teacher_power_native_preflight_readiness_v1.json",
       "source_sha256": {
         "src/go2_pvcnn/control/dh116/tabletop_teacher_power_surface_audit.py": "560faa4bcc110ae4a3a8208308d8945e1d455e402ea2dd1409a8e2a079866d66",
         "scripts/audit_dh116_power_surfaces.py": "ebb7a091ec95ac14db2dd35b0ac61f070537b80d6383785a93f1f6f447aae810",
         "tests/test_teacher_power_surface_audit.py": "bd36dede6f84b26f9bdc3ad7167325c4f656de29a159e305abd4fcf37cff180e",
         "src/go2_pvcnn/control/dh116/tabletop_teacher_sdk_cooked_capture.py": "e064b24fd17deb405dbda15d66ce78fbf1246435e38b60220f62e577eeda9982",
-        "scripts/diagnose_dh116_teacher_initialization.py": "0f90c62148fd3324df473266cb606e1fc03bcd98c5b5d998a4c19fa58e46c01b",
-        "tests/test_teacher_initialization_worker.py": "5ae6d31de5ce5a2ed9a15fce9cb7892b53777770f593b3a0ea8b072be837a256"
+        "scripts/diagnose_dh116_teacher_initialization.py": "17dd28a65cd9ee3c18518a2a9863721300646fa290516e34cd28ac01ac75910d",
+        "tests/test_teacher_initialization_worker.py": "808e68f151df87d1b0b1064f85615fead8e739fc3e7e79ba23cf94becde8e89e"
       },
       "last_result": {
-        "passed": 374,
+        "passed": 377,
         "failed": 0,
         "skipped": 0,
-        "scope": "CPU only"
+        "scope": "CPU passed; native init passed, collision capture and exit failed"
       },
       "proposed_native_budget": {
         "gpu": 2,
@@ -40363,9 +40369,35 @@
         "cameras": 0,
         "livestream": false
       },
-      "native_runs": 0,
+      "native_runs": 1,
       "ppo_updates": 0,
-      "branch": "11-17"
+      "branch": "11-17",
+      "native_attempt": {
+        "executed_commit": "ff16a5c7f9ca4814ac8a5370f2432f7c4435b101",
+        "frozen_sha256": "806f802d9541d1c3e33ae43eb0fd54de882a77b76cecb6c689a290fbf37c8290",
+        "budget_consumed": true,
+        "scope": {
+          "gpu": 2,
+          "num_envs": 1,
+          "sdk_initialization_steps": 2,
+          "control_steps": 0,
+          "solver_steps": 0,
+          "teacher_queries": 0,
+          "model_loads": 0,
+          "ppo_updates": 0,
+          "attempts": 1,
+          "retries": 0,
+          "raw_body_pose_reads_per_hand": 1,
+          "cooked_collider_rows": 0,
+          "stored_cooked_count_getter_calls": 0,
+          "soft_wall_s": 180,
+          "automatic_force_termination_used": false,
+          "user_authorized_fault_cleanup_used": true
+        },
+        "signal": "SIGSEGV",
+        "native_exit_code": null,
+        "cleanup_complete": true
+      }
     }
   },
   "execution_target": {

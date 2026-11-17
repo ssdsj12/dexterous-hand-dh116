@@ -1,3 +1,5 @@
+> Historical preparation. Subsequent authorized run: [native failure report](2026-11-17-teacher-initialization-native-failure.md). Initialization passed; capture and exit failed.
+
 # Power source audit and bounded initialization-only native preparation
 
 ## Actual outcome

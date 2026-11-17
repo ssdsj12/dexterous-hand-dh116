@@ -2,7 +2,7 @@
   "package": "teacher.seeded-initialization-v1",
   "branch": "11-17",
   "base": "ae17f03a9169ac62106a0eeb3107297eb40d70a1",
-  "status": "cpu_passed_native_blocked",
+  "status": "native_readback_passed_full_grasp_blocked",
   "native_runs": 0,
   "ppo_updates": 0,
   "source_sha256": {
@@ -53,7 +53,7 @@
     "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-seed-full-regression-20261117.log",
     "log_sha256": "29221dc5eea21eec8d26064f27df17c406c23b57f50429ba7de88a86b99f0408"
   },
-  "actual_native_initialization_verified": false,
+  "actual_native_initialization_verified": true,
   "full_grasp_qualified": false,
   "teacher_ppo_ready": false,
   "numeric_readback_guards": {
@@ -69,7 +69,6 @@
   "protected_source_files_checked": 528,
   "protected_source_mismatches": [],
   "blockers": [
-    "new_initialization_not_native_validated",
     "all_nonpad_cooked_geometry_not_source_qualified",
     "natural_shutdown_not_qualified",
     "no_formally_successful_teacher_model"
@@ -82,5 +81,11 @@
     "route": "Windows bare relay normal push/fetch readback"
   },
   "report": "docs/superpowers/reports/2026-11-17-teacher-seed-initialization.md",
-  "generated_at_utc": "2026-11-17T07:54:10.906244+00:00"
+  "generated_at_utc": "2026-11-17T07:54:10.906244+00:00",
+  "native_initialization_evidence": {
+    "record": "docs/contracts/dh116_teacher_initialization_native_attempt_20261117.json",
+    "source_commit": "ff16a5c7f9ca4814ac8a5370f2432f7c4435b101",
+    "sdk_step": 2,
+    "scope": "original supported Pinch seed before overwrite; not force/grasp success"
+  }
 }

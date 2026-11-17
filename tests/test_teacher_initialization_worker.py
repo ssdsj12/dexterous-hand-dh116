@@ -386,3 +386,68 @@ def test_stopped_simulation_cannot_be_claimed_running_to_cooked_getter():
     with pytest.raises(RuntimeError,match='running'):
         m.capture_once(rt,bindings,'getter',collector=collector)
     assert queries==[]
+
+
+def snapshot_runtime():
+    calls=[]
+    class View:
+        def __init__(self,side):
+            self.link_paths=[['/World/envs/env_0/'+side+'Hand/base_link']]
+        def get_link_transforms(self):
+            calls.append(self.link_paths[0][0])
+            return np.array([[[1.,2.,3.,0.,0.,0.,1.]]],dtype=np.float32)
+    rt=NS(sim=NS(current_time_step_index=2,current_time=2/480,stage='actual_stage',
+        is_playing=lambda:True),rope=NS(time=0.),
+        left_hands=NS(root_physx_view=View('left')),
+        right_hands=NS(root_physx_view=View('right')))
+    bindings=[dict(side=s,hand_index=i,body_id=0,source_body_path='/Source/'+s+'/base_link',
+        actual_body_path='/World/envs/env_0/'+s+'Hand/base_link') for i,s in enumerate(('left','right'))]
+    return rt,bindings,calls
+
+
+def test_raw_sdk_packet_survives_collector_rejection_without_second_snapshot(tmp_path):
+    m=api();rt,bindings,calls=snapshot_runtime()
+    path=tmp_path/'raw_sdk_body_poses.json'
+    def collect(*args,**kwargs):
+        assert path.exists(), 'raw evidence must be durable before validator runs'
+        return dict(complete=False,censored=True,reasons=['finite rigid actual body-link matrix required'])
+    packet=m.capture_once(rt,bindings,'getter',collector=collect,
+        on_snapshot=lambda row:m.write_new(path,row))
+    raw=json.loads(path.read_text())
+    assert raw['poses_xyzw_by_hand'][0][0][0]==[1.,2.,3.,0.,0.,0.,1.]
+    assert raw['bindings']==bindings
+    assert raw['sdk_clock_before']==raw['sdk_clock_after']==dict(sdk_step=2,sdk_time_s=2/480)
+    assert raw['process_exit_verified'] is False
+    assert raw['native_attested'] is False
+    assert len(calls)==2
+    with pytest.raises(RuntimeError,match='incomplete'):
+        m.persist_capture(tmp_path,packet)
+    saved=json.loads((tmp_path/'stored_cooked_capture.json').read_text())
+    assert saved['source_body_poses_w']['right']['/Source/right/base_link'][0][3]==1.
+
+
+def test_nonfinite_sdk_pose_is_saved_before_conversion_rejects(tmp_path):
+    m=api();rt,bindings,calls=snapshot_runtime()
+    original=rt.right_hands.root_physx_view.get_link_transforms
+    def bad():
+        value=original();value[0,0,3]=np.nan;return value
+    rt.right_hands.root_physx_view.get_link_transforms=bad
+    from go2_pvcnn.control.dh116.tabletop_teacher_force_runtime import _encode_nonfinite
+    path=tmp_path/'raw_sdk_body_poses.json'
+    with pytest.raises(ValueError,match='finite actual SDK'):
+        m.capture_once(rt,bindings,'getter',collector=lambda *a,**k:pytest.fail('invalid pose reached collector'),
+            on_snapshot=lambda row:m.write_new(path,_encode_nonfinite(row)))
+    saved=json.loads(path.read_text())
+    assert saved['poses_xyzw_by_hand'][1][0][0][3]=='NaN'
+    assert saved['nonfinite_encoding']=='tagged_non_measurements'
+    assert len(calls)==2
+
+
+def test_snapshot_write_failure_stops_before_any_cooked_getter():
+    m=api();rt,bindings,calls=snapshot_runtime()
+    def failed_write(row):raise OSError('disk write failed')
+    with pytest.raises(OSError,match='disk write failed'):
+        m.capture_once(rt,bindings,'getter',
+            collector=lambda *a,**k:pytest.fail('unrecorded snapshot reached collector'),
+            on_snapshot=failed_write)
+    assert len(calls)==2

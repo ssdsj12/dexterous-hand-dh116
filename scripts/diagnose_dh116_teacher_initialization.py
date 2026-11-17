@@ -226,7 +226,7 @@ def pose_matrix_xyzw(pose):
     return mat.tolist()
 
 
-def capture_once(runtime,bindings,cooking,*,collector):
+def capture_once(runtime,bindings,cooking,*,collector,on_snapshot=None):
     """One actual SDK pose-buffer snapshot per hand; no clock advancement."""
     hands=views=poses=sim=None
     try:
@@ -243,6 +243,18 @@ def capture_once(runtime,bindings,cooking,*,collector):
             if len(paths)!=1 or paths[0][binding['body_id']]!=binding['actual_body_path']:
                 raise ValueError('actual SDK body path identity differs')
         poses=[host(hand.root_physx_view.get_link_transforms()) for hand in hands]
+        snapshot_clock=clock(sim)
+        # Durable CPU-only evidence comes before conversion or protected preflight.
+        # This is the same two SDK reads, not an extra simulation/pose sample.
+        if on_snapshot is not None:
+            on_snapshot(dict(schema='dh116-raw-sdk-body-poses-v1',env_id=0,episode_id=0,
+                policy_step=0,control_step=0,sdk_clock_before=before,sdk_clock_after=snapshot_clock,
+                quaternion_order='xyzw',position_unit='m',
+                poses_xyzw_by_hand=[value.tolist() for value in poses],
+                bindings=bindings,source='actual SDK articulation get_link_transforms once per hand',
+                nonfinite_encoding='tagged_non_measurements',native_attested=False,
+                process_exit_verified=False))
+        if snapshot_clock!=before:raise RuntimeError('SDK clock changed during pose snapshot')
         source_poses={side:{} for side in ('left','right')}
         for binding in bindings:
             hi=binding['hand_index'];bi=binding['body_id']
@@ -257,7 +269,8 @@ def capture_once(runtime,bindings,cooking,*,collector):
         captured=collector(sim.stage,cooking,bindings,snapshot,simulation_running=playing)
         after=clock(sim)
         if after!=before:raise RuntimeError('SDK clock changed during read-only capture')
-        return dict(capture=captured,snapshot_count_per_hand=1,sdk_clock_before=before,sdk_clock_after=after,
+        return dict(capture=captured,source_body_poses_w=source_poses,
+            snapshot_count_per_hand=1,sdk_clock_before=before,sdk_clock_after=after,
             clock_adapter_blocked=any('CLOCK_INTEGER_REQUIRED_tensor_world_physics_steps' in str(r)
                 for r in captured.get('reasons',[])),process_exit_verified=False)
     finally:
@@ -433,7 +446,8 @@ def _execute_app_owned(app,plan,started):
             names=[list(rt.left_hands.body_names),list(rt.right_hands.body_names)]
             bindings=prepare_power_cooked_bindings(reports,roots,names)
             cooking=get_physx_cooking_interface()
-            captured=capture_once(rt,bindings,cooking,collector=collect_sdk_cooked_geometry)
+            captured=capture_once(rt,bindings,cooking,collector=collect_sdk_cooked_geometry,
+                on_snapshot=lambda row:write_new(output/'raw_sdk_body_poses.json',force._encode_nonfinite(row)))
             persist_capture(output,captured)
             return dict(capture_complete=captured['capture'].get('complete') is True,
                 clock_adapter_blocked=captured['clock_adapter_blocked'],prepared_collision_bindings=len(bindings),

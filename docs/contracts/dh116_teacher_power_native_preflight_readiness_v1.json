@@ -1,8 +1,8 @@
 {
   "package": "teacher.power-source-and-native-preflight-v1",
   "branch": "11-17",
-  "status": "cpu_prepared_native_authorization_pending",
-  "native_runs": 0,
+  "status": "native_initialization_passed_capture_failed_shutdown_SIGSEGV",
+  "native_runs": 1,
   "ppo_updates": 0,
   "teacher_queries": 0,
   "source_sha256": {
@@ -10,13 +10,10 @@
     "scripts/audit_dh116_power_surfaces.py": "ebb7a091ec95ac14db2dd35b0ac61f070537b80d6383785a93f1f6f447aae810",
     "tests/test_teacher_power_surface_audit.py": "bd36dede6f84b26f9bdc3ad7167325c4f656de29a159e305abd4fcf37cff180e",
     "src/go2_pvcnn/control/dh116/tabletop_teacher_sdk_cooked_capture.py": "e064b24fd17deb405dbda15d66ce78fbf1246435e38b60220f62e577eeda9982",
-    "scripts/diagnose_dh116_teacher_initialization.py": "0f90c62148fd3324df473266cb606e1fc03bcd98c5b5d998a4c19fa58e46c01b",
-    "tests/test_teacher_initialization_worker.py": "5ae6d31de5ce5a2ed9a15fce9cb7892b53777770f593b3a0ea8b072be837a256"
+    "scripts/diagnose_dh116_teacher_initialization.py": "17dd28a65cd9ee3c18518a2a9863721300646fa290516e34cd28ac01ac75910d",
+    "tests/test_teacher_initialization_worker.py": "808e68f151df87d1b0b1064f85615fead8e739fc3e7e79ba23cf94becde8e89e"
   },
   "cpu": {
-    "passed": 374,
-    "failed": 0,
-    "skipped": 0,
     "command": [
       "/mnt/mydisk/xk/envs/dh116/bin/python",
       "-B",
@@ -53,8 +50,14 @@
       "PYTHONDONTWRITEBYTECODE": "1"
     },
     "exit_code": 0,
-    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-native-preparation-full-regression-20261117.log",
-    "log_sha256": "a5c4428f325af894fc0d9dcac75c0e76383a69cd9635ae30c4ff630b7c24018c"
+    "elapsed_s": 50.54873882501852,
+    "timestamp_utc": "2026-11-17T09:06:05.940941+00:00",
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-initialization-native-failure-regression-20261117.log",
+    "log_sha256": "0bf2d9d3a400f5268573f3c9fc9266afd5a8e11148d5c3e76cdb222e79eeed21",
+    "native_execution": false,
+    "passed": 377,
+    "failed": 0,
+    "skipped": 0
   },
   "audit": {
     "source_file_sha256": {
@@ -102,7 +105,7 @@
     "livestream": false
   },
   "native_stored_cooked_capture_complete": false,
-  "native_initialization_qualified": false,
+  "native_initialization_qualified": true,
   "native_natural_exit_qualified": false,
   "live_pxshape_attachment_qualified": false,
   "power_force_closure_qualified": false,
@@ -112,26 +115,21 @@
   "protected_source_mismatches": [],
   "protected_collector_sha256": "ddf703d192958b2a1a88634c8a8433f46d43e43c15575cd02cee0a5803a75219",
   "blockers": [
-    "new_native_budget_not_authorized",
     "all34_actual_stored_cooked_not_read_back",
+    "raw34_failed_pose_evidence_missing_in_spent_run",
     "live_shape_attachment_not_qualified",
-    "new_seeded_initialization_not_native_validated",
+    "runtime_factory_aliases_and_native_finalize_unresolved",
     "force_acquisition_and_full_grasp_not_qualified",
-    "natural_shutdown_not_qualified"
+    "natural_shutdown_not_qualified",
+    "native_authorization_consumed_no_retry"
   ],
   "publication": {
-    "state": "windows_publication_verified",
-    "source_commit": "0802edf8fcd5484f85a13d2b4ec81fca50478664",
-    "remote_branch": "11-17",
-    "files_verified": 13,
-    "route": "Windows bare relay normal push and fetch readback",
-    "verified_at_utc": "2026-11-17T08:37:52.224468+00:00",
-    "pr2_draft": true,
-    "pr2_merged": false
+    "state": "windows_publication_pending",
+    "remote_branch": "11-17"
   },
   "plan_generation": "Freeze only AFTER source/readiness/publication bookkeeping; frozen plan stays outside Git and is not executed by preflight.",
-  "report": "docs/superpowers/reports/2026-11-17-teacher-power-source-and-native-preflight.md",
-  "timestamp_utc": "2026-11-17T08:31:09.629655+00:00",
+  "report": "docs/superpowers/reports/2026-11-17-teacher-initialization-native-failure.md",
+  "timestamp_utc": "2026-11-17T09:15:02.145277+00:00",
   "post_line_endings_validation": {
     "command": [
       "/mnt/mydisk/xk/envs/dh116/bin/python",
@@ -149,5 +147,42 @@
     "exit_code": 0,
     "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-native-preflight-final-targeted-20261117.log",
     "log_sha256": "b0987c795776c8b98b27cfc4118d15824db912ad439c4e339202d26b64d76a09"
-  }
+  },
+  "native_initialization_scope": "original supported Pinch reset readback only",
+  "native_attempt_record": "docs/contracts/dh116_teacher_initialization_native_attempt_20261117.json",
+  "native_attempt": {
+    "executed_commit": "ff16a5c7f9ca4814ac8a5370f2432f7c4435b101",
+    "frozen_sha256": "806f802d9541d1c3e33ae43eb0fd54de882a77b76cecb6c689a290fbf37c8290",
+    "budget_consumed": true,
+    "scope": {
+      "gpu": 2,
+      "num_envs": 1,
+      "sdk_initialization_steps": 2,
+      "control_steps": 0,
+      "solver_steps": 0,
+      "teacher_queries": 0,
+      "model_loads": 0,
+      "ppo_updates": 0,
+      "attempts": 1,
+      "retries": 0,
+      "raw_body_pose_reads_per_hand": 1,
+      "cooked_collider_rows": 0,
+      "stored_cooked_count_getter_calls": 0,
+      "soft_wall_s": 180,
+      "automatic_force_termination_used": false,
+      "user_authorized_fault_cleanup_used": true
+    },
+    "signal": "SIGSEGV",
+    "native_exit_code": null,
+    "cleanup_complete": true
+  },
+  "post_report_validation": {
+    "passed": 86,
+    "failed": 0,
+    "skipped": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-initialization-publication-final-20261117.log",
+    "log_sha256": "b4554d2646a93873e35ee0b542ed4ba120f542977d4d3c48355caf1e951fbcb1",
+    "scope": "publication-stage worker and scheduler CPU regression"
+  },
+  "protected_inventory_sha256": "fb6b58cfd2fe86408eb498a4390ecda35df2221d7198ca3a01ff59f86dea05ec"
 }

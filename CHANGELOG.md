@@ -1,3 +1,7 @@
+## 2026-11-17: initialization readback passed; capture and exit failed
+
+Authorized GPU2 once-only run:2 SDK setup steps,0 control/solver/PPO. Both hands' seed readbacks passed. Cooked capture stopped before getters (0/34); shutdown SIGSEGV in PhysX Tensor during Py_FinalizeEx. The user separately authorized cleanup; no retry. Raw-pose persistence is repaired offline;377 CPU tests pass. Teacher remains blocked. See [failure report](docs/superpowers/reports/2026-11-17-teacher-initialization-native-failure.md).
+
 ## 2026-11-17: real Power surface sources and native preflight
 
 Audited34 original collision owners; palm/proximal cooked sources remain missing. Added a frozen initialization-only worker with honest SDK clock, read-only geometry getters and natural-exit separation. CPU374 passed; no native run or Teacher training. The next2-setup-step/zero-control run still needs a new authorization. See [report](docs/superpowers/reports/2026-11-17-teacher-power-source-and-native-preflight.md).
