@@ -1,0 +1,20 @@
+{
+  "version": "dh116-read-only-display-readiness-v1",
+  "status": "cpu_verified_native_pending",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_read_only_display.py": "86131fb6df9e982f6a184e3cf62ddd0891aa00702cbaaf0cee33b03a54719963",
+    "tests/test_teacher_read_only_display_usd.py": "1e8cbb70f5cdf050a9eb643c9a799160734f36cac64313a1181dfe325bb8fae6"
+  },
+  "cpu_usd_tests_passed": 10,
+  "cpu_usd_tests_failed": 0,
+  "local_viewer_cpu_tests_passed": 17,
+  "native_display_qualified": false,
+  "natural_exit_qualified": false,
+  "teacher_grasp_qualified": false,
+  "stereo_supervision_qualified": false,
+  "protected_source_count": 528,
+  "protected_sources_unchanged": true,
+  "historical_checkpoint_verification": "blocked_missing_original_paths",
+  "historical_missing_checkpoint_count": 2,
+  "current_three_preview_checkpoints_unchanged": true
+}

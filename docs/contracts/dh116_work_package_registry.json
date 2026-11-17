@@ -39884,6 +39884,30 @@
         "report": "docs/superpowers/reports/2026-11-16-fixed-dual-cleanup-batch-result.md",
         "report_source_commit": "c4353da14b77c4b68e9336d4ea84e6d60f6a2b7c"
       }
+    },
+    "preview.teacher.read-only-display-v1": {
+      "title": "Isolated visual-only Teacher display and CPU USD checks",
+      "executor": "gated",
+      "dependencies": [],
+      "status": "blocked",
+      "report": "docs/superpowers/reports/2026-11-17-read-only-teacher-display-cpu.md",
+      "readiness": "docs/contracts/teacher_read_only_display_readiness_v1.json",
+      "blockers": [
+        "bounded_native_display_validation_pending",
+        "historical_checkpoint_paths_missing"
+      ],
+      "last_result": {
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "command": "LD_LIBRARY_PATH=<installed omni.usd.libs>/bin PYTHONPATH=<installed omni.usd.libs>:src CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 python -B -m pytest -q tests/test_teacher_read_only_display_usd.py",
+        "qualification_scope": "cpu_usd_visual_geometry_and_pose_isolation_only"
+      },
+      "source_sha256": {
+        "src/go2_pvcnn/control/dh116/tabletop_teacher_read_only_display.py": "86131fb6df9e982f6a184e3cf62ddd0891aa00702cbaaf0cee33b03a54719963",
+        "tests/test_teacher_read_only_display_usd.py": "1e8cbb70f5cdf050a9eb643c9a799160734f36cac64313a1181dfe325bb8fae6"
+      }
     }
   },
   "execution_target": {

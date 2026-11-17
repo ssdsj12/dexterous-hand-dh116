@@ -1,3 +1,10 @@
+## 2026-11-17 — 隔离的 Teacher 显示层（CPU 验证）
+
+复用原 USD 视觉网格与已有坐标同步算法，显示副本不含物理组件。独立临时
+session layer 保持原资产根层和用户修改不变。CPU USD 10项通过；原生显示、
+正常退出和真实抓取成功仍待分别验证。528项源码保护匹配；两个历史
+Checkpoint 原路径缺失，未冒充保护通过。[报告](docs/superpowers/reports/2026-11-17-read-only-teacher-display-cpu.md)
+
 ## 2026-11-16 — 固定双相机两次原生失败与只读缓存诊断
 
 两次共34对同钟RGB、34份真实wire快照，解绑错误消失，自然退出仍SIG11。cache释放前提未匹配、未执行；默认改只读类型诊断，预算耗尽不重跑。 Ubuntu CPU 回归 325 项通过。[报告](docs/superpowers/reports/2026-11-16-fixed-dual-cleanup-batch-result.md)
