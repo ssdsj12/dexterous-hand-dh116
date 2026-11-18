@@ -81,7 +81,14 @@
   "teacher_admission": false,
   "ppo_collector_connected": false,
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "9e65c607605221ef664fbc88ef4d919697a86825",
+    "source_tree": "3d498a23d4b3a94de3698213bd7a219df51d02f7",
+    "remote_branch": "11-17",
+    "files_verified": 7,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T05:45:28.638825+00:00"
   },
   "registry_cpu": {
     "command": [
