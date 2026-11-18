@@ -25956,6 +25956,58 @@
         "verified_at_utc": "2026-11-18T10:35:23.130881+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.fresh-numeric-reset-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-fresh-numeric-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_fresh_numeric_reset_v1.json",
+      "cpu_tests": {
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "targeted"
+      },
+      "native_runs": 2,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "f839b9a43cdb7ae494d8e034374ac9e35bfb97e0",
+        "source_tree": "292f2b6138d7da8367539b9ba7c9dab5e76d13bb",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T11:32:54.872327+00:00"
+      },
+      "remote_verified": true
+    },
+    {
+      "package": "teacher.ppo-worker-factories-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-ppo-worker-factories.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo_worker_factories_v1.json",
+      "cpu_tests": {
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "targeted"
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "861c98969e9091734d409931cab720d10998b86d",
+        "source_tree": "7bf60ff5eb624f4ae3d10cf5b6af2050ac9fc40a",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T11:32:54.873896+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }

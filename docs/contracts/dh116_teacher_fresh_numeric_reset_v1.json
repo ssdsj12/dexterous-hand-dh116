@@ -137,6 +137,13 @@
     }
   },
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "f839b9a43cdb7ae494d8e034374ac9e35bfb97e0",
+    "source_tree": "292f2b6138d7da8367539b9ba7c9dab5e76d13bb",
+    "remote_branch": "11-17",
+    "files_verified": 9,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T11:32:54.872327+00:00"
   }
 }

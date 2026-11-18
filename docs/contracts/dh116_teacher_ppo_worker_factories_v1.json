@@ -50,6 +50,13 @@
   ],
   "teacher_admission": false,
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "861c98969e9091734d409931cab720d10998b86d",
+    "source_tree": "7bf60ff5eb624f4ae3d10cf5b6af2050ac9fc40a",
+    "remote_branch": "11-17",
+    "files_verified": 10,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T11:32:54.873896+00:00"
   }
 }
