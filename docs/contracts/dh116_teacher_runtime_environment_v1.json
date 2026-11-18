@@ -330,7 +330,14 @@
   "app_close_natural_exit_verified": false,
   "ppo_updates": 0,
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "957ed9a1b1fb5d31719fb8d429da6acb6f51360a",
+    "source_tree": "3c175676da492fb09b4ca257b785749b4cc4e79c",
+    "remote_branch": "11-17",
+    "files_verified": 8,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T06:48:59.174871+00:00"
   },
   "registry_cpu": {
     "command": [

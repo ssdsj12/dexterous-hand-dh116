@@ -25707,6 +25707,31 @@
         "verified_at_utc": "2026-11-18T06:12:12.029588+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.runtime-environment-diagnostics-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-runtime-environment.md",
+      "readiness": "docs/contracts/dh116_teacher_runtime_environment_v1.json",
+      "cpu_tests": {
+        "passed": 618,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "957ed9a1b1fb5d31719fb8d429da6acb6f51360a",
+        "source_tree": "3c175676da492fb09b4ca257b785749b4cc4e79c",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T06:48:59.174871+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
