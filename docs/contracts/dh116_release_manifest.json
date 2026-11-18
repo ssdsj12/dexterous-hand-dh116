@@ -25622,9 +25622,16 @@
       "native_qualification": false,
       "teacher_admission": false,
       "publication": {
-        "state": "pending_windows_publication"
+        "state": "windows_publication_verified",
+        "source_commit": "3cf8cc5bbe809163e4b3bdcb90cab2a39a212ab7",
+        "source_tree": "dc94900ed997cdbc2fbaa3f82d9a671c558a492b",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T03:13:07.331621+00:00"
       },
-      "remote_verified": false
+      "remote_verified": true
     }
   ]
 }
