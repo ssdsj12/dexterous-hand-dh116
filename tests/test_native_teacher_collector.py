@@ -364,3 +364,69 @@ def test_source_primary_exception_survives_quarantine_log_failure(monkeypatch,tm
     with pytest.raises(ValueError) as exc:c.collect()
     assert exc.value is original and c.quarantined and rod.rope.steps==3
     assert c.trainer._pending is not None and c.consumed_sdk_steps==3
+
+@pytest.mark.parametrize("expire", [False, True])
+def test_student_stereo_sidecar_is_pre_action_and_bound_to_issued_action(monkeypatch, tmp_path, backend_profile, expire):
+    from pathlib import Path
+    from types import SimpleNamespace
+    from test_native_teacher_stereo import fixture as stereo_fixture
+    from go2_pvcnn.control.dh116.tabletop_tiled_stereo_capture import TiledStereoCapture
+
+    collector, _, _, _, sim, _ = fixture(monkeypatch, tmp_path, backend_profile)
+    cal, synthetic_pre, camera_packet = stereo_fixture()
+    camera = object.__new__(TiledStereoCapture)
+    camera.sim, camera.calibration = sim, cal
+    camera.last_capture_id, camera.origins = 0, None
+    events = []
+    collector.owner.sim = sim
+    collector.owner.contract = SimpleNamespace(
+        config=SimpleNamespace(project=Path(__file__).resolve().parents[1]))
+    original_pre_action = collector.owner.pre_action_state
+
+    def pre_action():
+        state = original_pre_action()
+        # The base CPU physical double uses only three nodes. Use the explicit
+        # 41-node camera fixture for this sidecar plumbing test.
+        state["rod_boundary"]["rod_snapshot"]["node_positions"] = synthetic_pre[
+            "rod_boundary"]["rod_snapshot"]["node_positions"].clone()
+        return state
+
+    collector.owner.pre_action_state = pre_action
+
+    def capture():
+        assert sim.current_time_step_index == 2
+        assert collector.trainer._pending is None
+        identity = camera.snapshot()
+        camera_packet["identity"] = identity
+        camera_packet["render_timing"]["physical_timestamp_s"] = identity["sdk_timestamp_s"]
+        events.append("captured")
+        if expire:
+            collector.sources.remaining_substeps = lambda: 0
+        return camera_packet
+
+    camera.capture = capture
+    camera.close = lambda: events.append("closed")
+    collector.owner.close = lambda: events.append("owner_closed")
+    collector.attach_student_stereo(camera, tmp_path/"rgb")
+    result = collector.collect()
+    rows = operations(collector)
+    if expire:
+        assert result is None and sim.current_time_step_index == 2
+        assert collector.trainer._pending is None
+        assert rows[-1]["operation"] == "window_not_started"
+        assert not any(row["operation"] == "decision" for row in rows)
+        collector.close()
+        assert events == ["captured", "closed", "owner_closed"]
+        return
+    decision = next(row["payload"] for row in rows if row["operation"] == "decision")
+    action = next(row["payload"] for row in rows if row["operation"] == "student_stereo_action")
+    assert action["collection_token"] == decision["collection_token"]
+    assert action["student_stereo"] == decision["student_stereo"]
+    assert action["pre_action_sha256"] == decision["pre_action_sha256"]
+    settlement = next(row["payload"] for row in rows if row["operation"] == "settlement")
+    assert action["issued_actions"] == settlement["issued_actions"]
+    assert tuple(collector.trainer.rollout.batch()["actions"].shape[-1:]) == (24,)
+    assert "student_stereo" not in collector.trainer.rollout.batch()["actor_obs"]
+    assert (tmp_path / "rgb" / action["student_stereo"]["receipt_path"]).is_file()
+    collector.close()
+    assert events == ["captured", "closed", "owner_closed"]

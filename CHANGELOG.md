@@ -1,3 +1,7 @@
+## 2026-11-18 Teacher to Student stereo alignment
+
+The native Teacher collector can attach the fixed Student cameras on its original pre-action boundary. It persists same-clock palm, rod, and valid privileged labels and pairs them with the actual issued action. PPO inputs stay unchanged. [Report](docs/superpowers/reports/2026-11-18-native-teacher-student-stereo.md).
+
 ## 2026-11-18 fresh Pinch Teacher episode
 
 The original Pinch scene can now be handed to the Teacher session before episode Reset. The Teacher's geometry callback uses the measured same-clock rod snapshot. CPU-tested ownership and source wiring are available. Native provider and PPO execution remain pending. [Report](docs/superpowers/reports/2026-11-18-teacher-ppo-fresh-pinch.md).

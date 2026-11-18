@@ -80,6 +80,7 @@ class NativeTeacherCollector:
             verify_native_teacher_identity(trainer.model.model_identity,model_contract(
                 live.model_contract.config,owner.backend_profile,live.model_contract.context_mode))
         self.journal=owner.ledger
+        self._student_stereo = None
         self.quarantined=self._closed=self._active=self.episode_done=False
         self.consumed_sdk_steps=0 if previous is None else previous.consumed_sdk_steps
         self.transitions=0 if previous is None else previous.transitions
@@ -144,6 +145,27 @@ class NativeTeacherCollector:
         self.accept_updated_policy()
         return result
 
+    def attach_student_stereo(self, camera, output):
+        """Transfer a fresh camera on this simulation to this opt-in collector."""
+        from .tabletop_native_teacher_stereo import capture_identity
+        from .tabletop_stereo_calibration import StereoCalibration
+        from .tabletop_teacher_stereo_alignment import STUDENT_CAMERA
+        from .tabletop_tiled_stereo_capture import TiledStereoCapture
+
+        if (type(camera) is not TiledStereoCapture or camera.sim is not self.owner.sim
+                or camera.last_capture_id != 0 or self._student_stereo is not None
+                or self._closed or self.quarantined or self._active or self.transitions != 0):
+            raise ValueError("fresh fixed Student stereo and the same unadvanced Teacher owner required")
+        project = Path(self.owner.contract.config.project).resolve()
+        expected = StereoCalibration.from_json(project / STUDENT_CAMERA)
+        output = Path(output).resolve()
+        if camera.calibration.sha256 != expected.sha256 or output.is_relative_to(project):
+            raise ValueError("fixed Student calibration and independent evidence directory required")
+        output.mkdir(exist_ok=False)
+        camera.snapshot = lambda: capture_identity(
+            self.owner.pre_action_state(), expected.sha256, sdk_timestamp_s=float(camera.sim.current_time))
+        self._student_stereo = camera, output
+
     def collect(self):
         from .tabletop_training_reward import SourceFailure
         from .tabletop_native_teacher_context import ContextIdentity
@@ -163,13 +185,27 @@ class NativeTeacherCollector:
             context=self.context.freeze_pre_action(ContextIdentity.from_clock(pre["common"]["identity"]),history_owner=self.history)
             obs=self.sources.pack(tr.model,pre,context)
             if _digest(owner.pre_action_state())!=prehash: raise SourceFailure("owner advanced/changed during pre-action packing")
+            stereo = {}
+            if self._student_stereo is not None:
+                from .tabletop_native_teacher_stereo import save_aligned_rgb_pair
+                camera, output = self._student_stereo
+                label = save_aligned_rgb_pair(
+                    pre, camera.capture(), camera.calibration, output, origins=camera.origins)
+                if label["state_sha256"] != prehash or _digest(owner.pre_action_state()) != prehash:
+                    raise SourceFailure("Teacher state changed during Student RGB capture")
+                stereo = dict(student_stereo=label)
+                remaining = self.sources.remaining_substeps()
+                if remaining < 8:
+                    self.journal.emit("window_not_started", dict(
+                        remaining_substeps=remaining, reason="after_student_stereo", **stereo))
+                    return None
             sample=tr.collect_step(obs,obs);token=sample["collection_token"]
             if token in self._used_tokens: raise SourceFailure("replayed policy collection token")
             decision=self.history.begin(pre,tr)
             self.reward.begin(self.sources.submitted_request(sample,decision),remaining_substeps=remaining)
             self._used_tokens.add(token)
             self.journal.emit("decision",dict(pre_action_sha256=prehash,observation=obs,
-                collection_token=token,policy=self._epoch,sampled_action24=sample["actions"],history=decision))
+                collection_token=token,policy=self._epoch,sampled_action24=sample["actions"],history=decision,**stereo))
             result=owner.control(sample["actions"])
             if result["physical_samples"]!=len(self._rows) or not 1<=len(self._rows)<=8:
                 raise SourceFailure("actual original control window differs from durable rows")
@@ -203,6 +239,9 @@ class NativeTeacherCollector:
             boundary=gae_boundary(terminated=bool(terminated),truncated=bool(truncated),
                 endpoint_identity=endpoint,next_value_identity=next_endpoint)
             self._check_policy()
+            if stereo:
+                self.journal.emit("student_stereo_action",dict(collection_token=token,
+                                  pre_action_sha256=prehash, issued_actions=issued, **stereo))
             self.journal.emit("settlement",dict(reward=packet,post_context=post_context,
                 history=settlement,result=result,issued_actions=issued,next_value=value,gae_boundary=boundary))
             tr.record_step(torch.tensor([packet.reward]),torch.tensor([bool(terminated or truncated)]),value,
@@ -226,6 +265,8 @@ class NativeTeacherCollector:
         from .tabletop_native_teacher_session import verify_reset_and_sources
         if self.quarantined or not self.episode_done or self._active:
             raise RuntimeError("only a completed terminal/external truncation can reset")
+        if self._student_stereo is not None:
+            raise RuntimeError("Student stereo recording requires an independently attached episode owner")
         static=self.live.static
         self.close()
         owner=factories.episode(static)
@@ -244,7 +285,13 @@ class NativeTeacherCollector:
     def close(self):
         if self._closed:return
         self._closed=True
-        try:self.owner.close()
+        stereo, self._student_stereo = self._student_stereo, None
+        try:
+            try:
+                if stereo is not None:
+                    stereo[0].close()
+            finally:
+                self.owner.close()
         except BaseException as cleanup:
             self.owner.record_cleanup_failure(cleanup)
             raise
