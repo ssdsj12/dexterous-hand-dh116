@@ -104,7 +104,14 @@
   "action_alignment_verified": false,
   "reprojection_px": null,
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "4ae1d26c14778c5dcfc383db899f423413b12f22",
+    "source_tree": "d13ec74d0b7ed3aaade9bc7ba5eef3a19a216c85",
+    "remote_branch": "11-17",
+    "files_verified": 14,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T06:12:12.029588+00:00"
   },
   "registry_cpu": {
     "command": [
