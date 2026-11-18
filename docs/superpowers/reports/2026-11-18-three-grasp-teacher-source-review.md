@@ -26,3 +26,7 @@ Power 的五指加载检查保留。旧 13 mesh 账本只有十个 distal 指腹
 - Ubuntu 联合 CPU 回归 265 通过、2 失败、3 初始化错误。对上述五项以同一环境重新加载 `bcfd517` 对应源码，复现同样的 2 失败和 3 初始化错误。一个来自历史 R08 生产者 builder 的 SHA 与现有 worktree 不同，其余四个来自旧成对 Pinch 证据的路径别名。
 - 数值 Reset 对照使用历史真实文件只读输入，四种非法外层状态只写临时副本。
 - 本包新增 Isaac 运行和 PPO 更新均为零。正式验收仍按线缆净抬升 30 mm、连续保持 5 s、滑移不超过 0.5 mm。
+
+### 32 步 PPO 采样窗口
+
+在 Ubuntu 运行 `/mnt/mydisk/xk/envs/dh116/bin/python -B -m pytest -q -p no:cacheprovider -s tests/test_native_teacher_training.py`，该套件 10 项通过。新增回归使用 CPU 夹具和原 PPO 优化器。采样 32 次，保留 256 个仿真替身物理步、32 条决策和 32 条价值估计来源，完整账本 931 行。每条来源均有唯一序号，并与各自的 pre-action 或 bootstrap 时刻对齐。已接受 1 个 minibatch，参数 L2 变化约 0.04165。独立日志 `training-cpu-rollout32.log` 的 SHA-256 为 `3937eccd5bc8d489cc599322337094626dbae6aeffada0d31a4b7e430482ef8f`。真实 Worker、物理来源和外层自然退出仍待验证。

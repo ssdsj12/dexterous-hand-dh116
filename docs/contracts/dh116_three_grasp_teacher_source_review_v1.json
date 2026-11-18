@@ -44,6 +44,16 @@
         "same-baseline-failures.log": "2bd295e32b5c3c206c211e08d9700577fab94623f230cd118bae811e6e112b56",
         "targeted-cpu.log": "d2fdc2ee9554cd1d853f57ebaa815e00c4cddd355f829226bee445863c63d94e"
       }
+    },
+    "rollout32": {
+      "suite_passed": 10,
+      "controls": 32,
+      "synthetic_physical_steps": 256,
+      "source_rows": 64,
+      "journal_rows": 931,
+      "accepted_minibatches": 1,
+      "native_qualification": false,
+      "log_sha256": "3937eccd5bc8d489cc599322337094626dbae6aeffada0d31a4b7e430482ef8f"
     }
   },
   "reset_manifest_sha256": "110f6dbcca61f36111ada20c47dbf698fab72fe2cef4d8e36c866690b4531daa",

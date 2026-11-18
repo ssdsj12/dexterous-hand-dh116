@@ -38405,6 +38405,7 @@
         "failed": 2,
         "errors": 3,
         "targeted_passed": 11,
+        "rollout32_cpu_passed": true,
         "baseline_reproduced": true
       }
     },

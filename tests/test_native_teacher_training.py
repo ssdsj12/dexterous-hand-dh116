@@ -103,3 +103,43 @@ def test_preflight_reports_new_budget_authority_and_resource_reservation_separat
         'kernel_resource_reservation_missing'}<=set(report['blocked_reasons'])
     assert report['execution_requirements']['budget'] is None
     assert report['execution_requirements']['fresh_worker_lease_verified'] is False
+
+
+def test_rollout32_r0_update_retains_all_source_bindings(monkeypatch, tmp_path, backend_profile):
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest
+
+    collector, _, rod, _, sim, _ = fixture(monkeypatch, tmp_path, backend_profile,
+                                          rollout_steps=32, physics_budget_end=258)
+
+    def recorded(model, pre, context, *, purpose):
+        observation = collector.sources.pack(model, pre, context)
+        sequence = collector.journal.emit("teacher_input_source", {
+            "purpose": purpose,
+            "step": sim.current_time_step_index,
+            "observation_sha256": _digest(observation),
+        })
+        return observation, sequence
+
+    collector.sources.pack_recorded = recorded
+    result = runner().run_updates(collector)
+    rows = [json.loads(line) for line in collector.journal.path.read_text().splitlines()]
+    decisions = [row for row in rows if row["operation"] == "decision"]
+    settlements = [row for row in rows if row["operation"] == "settlement"]
+    inputs = [row for row in rows if row["operation"] == "teacher_input_source"]
+    physical = [row for row in rows if row["operation"] == "physical"]
+    assert len(decisions) == len(settlements) == 32
+    assert len(inputs) == 64
+    assert len(physical) == rod.rope.steps == 256
+    assert sim.current_time_step_index == 258
+    for index, (decision, settlement) in enumerate(zip(decisions, settlements)):
+        first = rows[decision["payload"]["source_pack_sequence"]]
+        bootstrap = settlement["payload"]["bootstrap_source"]
+        second = rows[bootstrap["source_pack_sequence"]]
+        assert first["sequence"] < decision["sequence"] < second["sequence"] < settlement["sequence"]
+        assert first["payload"]["purpose"] == "decision" and first["payload"]["step"] == 2 + 8 * index
+        assert second["payload"]["purpose"] == "bootstrap" and second["payload"]["step"] == 10 + 8 * index
+        assert second["payload"]["observation_sha256"] == bootstrap["observation_sha256"]
+    assert result["updates"] == 1 and result["accepted_minibatch_updates"] > 0
+    assert result["parameter_delta_l2"] > 0
+    print(f"rows={len(rows)} sources={len(inputs)} controls={len(decisions)} physics={len(physical)} "
+          f"accepted={result['accepted_minibatch_updates']} l2={result['parameter_delta_l2']:.9g}")
