@@ -26008,6 +26008,32 @@
         "verified_at_utc": "2026-11-18T11:32:54.873896+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.ppo-bootstrap-source-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-ppo-bootstrap-source.md",
+      "readiness": "docs/contracts/dh116_work_package_registry.json",
+      "cpu_tests": {
+        "passed": 184,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b923d1f0ec8e455901bd98a0b67877d2f9a6e720",
+        "source_tree": "a7a8af4b542c885f8ba6190a3811250b46e1359c",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T12:26:17.827311+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
