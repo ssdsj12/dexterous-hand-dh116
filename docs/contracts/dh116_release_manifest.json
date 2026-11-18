@@ -26059,6 +26059,32 @@
         "verified_at_utc": "2026-11-18T12:57:22.280247+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.three-grasp-source-review-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-three-grasp-teacher-source-review.md",
+      "readiness": "docs/contracts/dh116_three_grasp_teacher_source_review_v1.json",
+      "cpu_tests": {
+        "passed": 320,
+        "failed": 2,
+        "errors": 3,
+        "baseline_reproduced": true
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "525a34e6ffa3954edd8f39ecb65fb21dd15d9359",
+        "source_tree": "1a7940f3128d1158a61d67656a107cd585dea166",
+        "remote_branch": "11-17",
+        "files_verified": 13,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T13:37:25.833162+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
