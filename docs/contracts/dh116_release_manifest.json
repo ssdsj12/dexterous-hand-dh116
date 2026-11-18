@@ -25732,6 +25732,31 @@
         "verified_at_utc": "2026-11-18T06:48:59.174871+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-no-camera-reset-recheck-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-pinch-no-camera-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_reset_recheck_v1.json",
+      "cpu_tests": {
+        "passed": 195,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "f6f660446211edeb5c7f80de16d01bbcf45768ca",
+        "source_tree": "c1957bd290d90c6b5d163dbaa8ec6c663c0400f2",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T06:59:57.645374+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }

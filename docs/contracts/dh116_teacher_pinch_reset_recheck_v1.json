@@ -88,6 +88,13 @@
     "stat_cache_release.json": "4d5c1bbad1edbd64a670658d867f4a0121d629f1d432d9a3fbf086061ecb9b20"
   },
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "f6f660446211edeb5c7f80de16d01bbcf45768ca",
+    "source_tree": "c1957bd290d90c6b5d163dbaa8ec6c663c0400f2",
+    "remote_branch": "11-17",
+    "files_verified": 5,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T06:59:57.645374+00:00"
   }
 }
