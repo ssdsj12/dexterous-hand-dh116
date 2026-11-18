@@ -480,3 +480,27 @@ def test_module_source_identity_requires_full_string_sha(current_profile,monkeyp
             assert component["source_sha256"] == (expected or api().sha256_file(component["reader"]))
     assert not calls
     json.dumps(result,allow_nan=False)
+
+
+
+
+@pytest.mark.parametrize("origin, old_applies", [("fresh", False), ("retained", True), ("missing", True)])
+def test_static_retained_gate_only_applies_without_verified_fresh_manifest(monkeypatch, origin, old_applies):
+    from types import SimpleNamespace
+
+    preflight = api()
+    def manifest(*args, **kwargs):
+        if origin == "missing":
+            raise ValueError("source not bound")
+        digest = preflight.ORIGINAL_RECEIPT_SHA if origin == "retained" else "e"*64
+        return SimpleNamespace(data=lambda: {"source_refs": {"original_receipt": {"sha256": digest}}})
+    monkeypatch.setattr(preflight, "load_reset_manifest", manifest)
+    calls = []
+    def stale(*, project):
+        calls.append(project)
+        raise ValueError("stale R08")
+    monkeypatch.setattr(preflight, "retained_reset_source", stale)
+    report = preflight.static_preflight(config(), backend_profile=object())
+    result = next(item for item in report["components"] if item["name"] == "retained_reset")
+    assert result["applicable"] is old_applies
+    assert bool(calls) is old_applies

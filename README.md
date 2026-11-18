@@ -1,3 +1,7 @@
+## 2026-11-18 fresh numeric Pinch Teacher Reset
+
+The camera-free native Reset captured both 41-node numerical snapshots and all 11 mesh bindings, and the sealed manifest passed the production reader after natural exit 0. PPO worker execution remains pending. [Report](docs/superpowers/reports/2026-11-18-teacher-fresh-numeric-reset.md).
+
 ## 2026-11-18 Student stereo clock across a second Reset
 
 One native Pinch scene produced three paired RGB captures across two episode resets. The 4.167 ms raw scene-clock offset persisted and all three pairs stayed outside the 2 ms timing gate. [Report](docs/superpowers/reports/2026-11-18-native-stereo-second-reset-clock.md).

@@ -1,0 +1,142 @@
+{
+  "package": "teacher.fresh-numeric-reset-v1",
+  "branch": "11-17",
+  "status": "current_numeric_reset_manifest_passed_teacher_worker_pending",
+  "report": "docs/superpowers/reports/2026-11-18-teacher-fresh-numeric-reset.md",
+  "source_commit_base": "3d04cb44794aa1eba1f26f1786d1107cdbd7b3ec",
+  "native_runs": 2,
+  "pre_app_failed_launches": 1,
+  "full_training_ready": false,
+  "ppo_updates": 0,
+  "reset_seal": {
+    "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-fresh-numeric-reset-stop-20261118/resolved_reset_manifest.json",
+    "sha256": "110f6dbcca61f36111ada20c47dbf698fab72fe2cef4d8e36c866690b4531daa",
+    "resolved_reset_manifest_valid": true
+  },
+  "first_launch": {
+    "style": "pinch",
+    "output": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-fresh-numeric-reset-20261118/native-reset",
+    "exit_code": 1,
+    "wall_s": 3.5898908860981464,
+    "frozen_command_sha256": "883b89b973200058beddf385e643c230376c8265fb62253fafa3e835545ca92a",
+    "plan_sha256": "ec310e4f449dfb9b44659aa74c1dd19655cf539baab8fb99ab89b7cfa8d98447",
+    "artifact_sha256": {},
+    "auto_retry": false,
+    "auto_kill": false,
+    "log_sha256": "82b8cd89a2115df6a7c2b47207e593b985aa145e4bec6c0cc68cc57c29cc1d04"
+  },
+  "first_native": {
+    "style": "pinch",
+    "output": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-fresh-numeric-reset-v2-20261118/native-reset",
+    "exit_code": 1,
+    "wall_s": 45.93843720294535,
+    "frozen_command_sha256": "0e61ee501a3b9aa985367468281984fdc211171b02af2aad1c583f27f7613108",
+    "plan_sha256": "cc5815556d775d9eab61077b706b212b3e5bf069b8088d57123ae7cc31b542e1",
+    "artifact_sha256": {
+      "mesh_reset_state.json": "39b210d63903ea7cf021b0670a73dab1ca6c0aa60b5647a84708d00372313de1",
+      "mesh_reset_numeric_state.json": "64f56c7ae974233168173dedcd5b27c5894220cdec271d56cb91b9afe143129f",
+      "reset_capture.json": "bcd45d4ad845df6c463541265a05339ae8eb76f47110a5e54714c28ca6012a80",
+      "result.json": "c01395cb36484530518b43e807c7e247e86fa0484ef74bcf68875e518f09922d",
+      "cleanup_stages.json": "65febb9f6854ad5b693ce9aa8fe668d0eee7ee036a80f82a5a38a49972aa7b9f",
+      "reset_geometry.json": "0ac45460ccac35d09546b34181e1dd16d600f8803d7ec223857ddd947095e506",
+      "pre_action_common.json": "4e7efcaea4d61368e596f3a340bedb2c286f20e7841478405032f9a069e64e6a"
+    },
+    "auto_retry": false,
+    "auto_kill": false,
+    "log_sha256": "54c3625b4f891f2dcbac4052a7a187848ed5a8f4ca5982e45ab68968f0e53c49"
+  },
+  "final_native": {
+    "style": "pinch",
+    "output": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-fresh-numeric-reset-stop-20261118/native-reset",
+    "exit_code": 0,
+    "wall_s": 42.43475944106467,
+    "frozen_command_sha256": "1a7d0baba37ee3a5dc0d6e6bf91c782dd796649a56b7c14057d5585052e56eb2",
+    "plan_sha256": "f0be8e2e65d7e22f0045404c757b3745b575e817ddcdae150f46df5a0d460b8e",
+    "artifact_sha256": {
+      "mesh_reset_state.json": "4cdab82e5f51486951826914010421eeeb722dfc1b76ce6ba98bbf13d2f47dfb",
+      "mesh_reset_numeric_state.json": "4e045dd95cc1f6451a6e39a523c6bfdedc4b828c16492dea9c9d331ef534efd5",
+      "reset_capture.json": "eec4b146c1510a0cc6336de8f5104434047e0ba8f219897fd3db2ac76bf99f40",
+      "result.json": "9bb9f859c14b3cb5b65e45a13159ebd88576fed23525f321a42896143b215b62",
+      "app_close_returned.json": "9d064d53f917000ae2466102eabeb06c3c5d89ea8a6e407fe9575aa5f09dbb96",
+      "cleanup_stages.json": "ebde22cf19524db2dbb2e2c180affab85f16e5ea6eb739ead0a462fd32580795",
+      "reset_geometry.json": "0ac45460ccac35d09546b34181e1dd16d600f8803d7ec223857ddd947095e506",
+      "pre_action_common.json": "31f021f9d31b9cb77083843701e23d5658e01298d365a8d9e7130e469be24abf"
+    },
+    "auto_retry": false,
+    "auto_kill": false,
+    "log_sha256": "472d1012b55ce809397e6bb461328743935b922e5fe5ad95b10764255c61a9fc"
+  },
+  "seal_input_sha256": "49c7b9ea185c8ac00c73d8fc576efca44fa588684d50d87fc27154a10bcc96ca",
+  "actual_bounded_command": [
+    "/mnt/mydisk/xk/envs/dh116/bin/python",
+    "-B",
+    "-m",
+    "scripts.record_dh116_teacher_numeric_reset",
+    "--output",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-fresh-numeric-reset-stop-20261118/native-reset",
+    "--plan",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-fresh-numeric-reset-stop-20261118/plan.json",
+    "--approved-frozen-sha256",
+    "1a7d0baba37ee3a5dc0d6e6bf91c782dd796649a56b7c14057d5585052e56eb2"
+  ],
+  "reset_capture": {
+    "run_uuid": "teacher-reset-118c2bf762344d5bae8b2a7a14420ead",
+    "episode_uid": "teacher-reset-118c2bf762344d5bae8b2a7a14420ead:0",
+    "sdk_step": 2,
+    "sdk_time_s": 0.004166666883975267,
+    "clearance_passed": true,
+    "physics_rows": 0,
+    "new_control_steps": 0,
+    "actual_rod_tick": 0,
+    "ppo_updates": 0,
+    "grasp_qualified": false
+  },
+  "passed_checks": [
+    "backend",
+    "resolved_reset_manifest",
+    "model",
+    "context",
+    "reward",
+    "accepted_request24",
+    "common66",
+    "current_parameters",
+    "eight_sdk_per_control",
+    "native_health",
+    "original_guards",
+    "rod41x13",
+    "same_clock_distance",
+    "sdk_target_readback"
+  ],
+  "numeric": {
+    "samples": 2,
+    "nodes": 41,
+    "mesh_slots": 11,
+    "byte_equal": true
+  },
+  "teacher_ppo_preflight_sha256": "d63c2e1786a248e4d583454431f9ca06dbac7dccfb4f07c8ff304772a0bb328e",
+  "blocked_reasons": [
+    "finite explicit positive native budget source required",
+    "new_native_budget_missing",
+    "new_native_authorization_missing",
+    "kernel_resource_reservation_missing",
+    "c06_source_bound_worker_lease_missing"
+  ],
+  "cpu": {
+    "targeted_reset": 43,
+    "targeted_gate_and_stop": 7,
+    "broader_preliminary": {
+      "passed": 99,
+      "failed": 1,
+      "errors": 3,
+      "reason": "old R08 manifest source SHA differs in the live checkout"
+    },
+    "logs": {
+      "targeted.log": "939dc709b20d673e4c53dffc4860fdf2ad6e6df5f77257e0b30733e615974af7",
+      "stop-green.log": "82440943af3f11a88c8d1e16b0749bee2155a267d22b51427ef03f7b455a2f6c",
+      "cpu.log": "e382f52ec81757817c0c0ae1f1ef342481ec4969b8e9a71909858771c2bb49d6"
+    }
+  },
+  "publication": {
+    "state": "pending_windows_relay"
+  }
+}

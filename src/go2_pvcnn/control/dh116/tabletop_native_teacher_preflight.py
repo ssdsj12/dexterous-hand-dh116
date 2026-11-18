@@ -311,14 +311,17 @@ def static_preflight(config, *, project=ROOT, backend_profile=None):
         return value.verify(project)
     profile = check("backend", backend, "tabletop_mesh_observation_source.source_basis",
                     "restore exact reviewed observation binary and all current source bytes")
-    check("resolved_reset_manifest", lambda: load_reset_manifest(config, project=project),
+    manifest = check("resolved_reset_manifest", lambda: load_reset_manifest(config, project=project),
           "resolved_reset_manifest", "pin independently reviewed raw Reset sources and exact numeric state")
     check("finite_budget", lambda: validate_budget(config, project=project),
           "budget_authorization_and_resource_lock",
           "freeze separate finite native PPO budget, matching authorization and singleton reservation")
+    # A validated independent Reset does not borrow historical R08 provenance.
+    fresh_reset = (manifest is not None and
+                   manifest.data()["source_refs"]["original_receipt"]["sha256"] != ORIGINAL_RECEIPT_SHA)
     check("retained_reset", lambda: retained_reset_source(project=project), str(R08_REPORT),
-          "restore sealed R08 report/current replay sources; historical proof never verifies this Reset",
-          applicable=config["style"] == "pinch")
+          "restore sealed R08 report/current replay sources when using historical evidence",
+          applicable=config["style"] == "pinch" and not fresh_reset)
     modules = (("model", "tabletop_native_teacher_model.py", "MODEL_SCHEMA_VERSION", MODEL_SCHEMA_VERSION),
                ("context", "tabletop_native_teacher_context.py", "CONTEXT_SCHEMA_VERSION", CONTEXT_SCHEMA_VERSION))
     for name, filename, constant, expected in modules:

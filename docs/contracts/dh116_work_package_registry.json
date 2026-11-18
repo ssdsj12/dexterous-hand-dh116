@@ -41073,6 +41073,26 @@
         "skipped": 0,
         "scope": "CPU pass and one bounded native run with two resets of one Pinch seed."
       }
+    },
+    "teacher.fresh-numeric-reset-v1": {
+      "title": "当前源码 Teacher Pinch 数值 Reset",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_fresh_teacher_reset_evidence.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_fresh_numeric_reset_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-fresh-numeric-reset.md",
+      "native_runs": 2,
+      "blocked_reason": "Fresh numeric Reset and natural close verified; PPO worker and actual launch artifacts pending.",
+      "last_result": {
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "Reset source verification passed. Native PPO updates zero."
+      }
     }
   },
   "execution_target": {
