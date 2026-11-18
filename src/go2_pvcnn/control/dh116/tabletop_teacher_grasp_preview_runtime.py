@@ -27,7 +27,7 @@ def load_seeds(root):
     return result
 
 
-def compile_runtime(source,expected_sha):
+def compile_runtime(source,expected_sha,*,observe_actions=False):
     if hashlib.sha256(source.encode()).hexdigest()!=expected_sha:
         raise ValueError("Teacher source changed since preview configuration was frozen")
     tree=ast.parse(source)
@@ -64,19 +64,43 @@ seed_root_base=torch.tensor([[s["roots"][hi] for s in preview_seeds] for hi in r
     for node in ast.walk(compiled):
         if isinstance(node,ast.Attribute) and node.attr in ("_exit","backward"):
             raise ValueError("training or forced exit may not enter the viewer")
+    if observe_actions:
+        factory = compiled.body[0]
+        factory.args.args.append(ast.arg(arg="step_observer"))
+        step = next(n for n in factory.body if isinstance(n, ast.FunctionDef) and n.name == "step_env")
+        substeps = next(n for n in step.body if isinstance(n, ast.For))
+        lines = [ast.unparse(n) for n in substeps.body]
+        if lines.count("sim.step(render=False)") != 1:
+            raise ValueError("exact frozen SDK integrator required for observation")
+        at = lines.index("sim.step(render=False)")
+        if lines[at-2:at] != ["left_hands.write_data_to_sim()", "right_hands.write_data_to_sim()"]:
+            raise ValueError("exact frozen command write boundary required")
+        substeps.body[at:at+1] = ast.parse(
+            "if _sub == 0: step_observer('issued', sim, act)\n"
+            "sim.step(render=False)\n"
+            "if _sub == 0: step_observer('integrated', sim, act)"
+        ).body
+        ast.fix_missing_locations(compiled)
     return compiled
 
 
-def create_runtime(root,args,app,source_sha):
+def create_runtime(root,args,app,source_sha,*,step_observer=None):
     import importlib.util
     path=Path(root)/"scripts/train_dh116_gpu_teacher_ppo.py"
     source=path.read_text()
-    code=compile_runtime(source,source_sha)
+    code=compile_runtime(source,source_sha,observe_actions=step_observer is not None)
     spec=importlib.util.spec_from_file_location("_dh116_preview_teacher",path)
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     namespace=dict(module.__dict__)
     exec(compile(code,str(path)+"[preview-only]","exec"),namespace)
-    return SimpleNamespace(**namespace["create_runtime"](args,app,load_seeds(root)))
+    seeds = load_seeds(root)
+    if args.num_envs == 1:
+        seeds = [seeds[MODES.index(args.mode)]]
+    extra = () if step_observer is None else (step_observer,)
+    values = namespace["create_runtime"](args, app, seeds, *extra)
+    if step_observer is not None:
+        values["actor_critic_factory"] = module.build_actor_critic
+    return SimpleNamespace(**values)
 
 
 def export_physics_display(sim,interface):

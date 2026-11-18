@@ -365,3 +365,17 @@ def test_last_clock_reader_cannot_repopulate_cache_after_snapshot(sdk):
         a.verify_stat_cache_empty(m,contract=a.stat_cache_source_contract(),
             clock_reader=reader,expected_clock=clock())
     assert len(calls)==2 and m._stat_cache
+
+def test_opt_in_window_release_keeps_the_actual_post_control_clock(sdk):
+    m, app, clock, _ = sdk
+    a = api()
+    contract = a.stat_cache_source_contract()
+    def after_control():
+        return dict(clock(), sdk_step=10, sdk_time_s=10/480)
+    with pytest.raises(ValueError, match="clock"):
+        a.release_owned_stat_cache(m, contract=contract, clock_reader=after_control)
+    receipt = a.release_owned_stat_cache(m, contract=contract, clock_reader=after_control,
+                                         expected_sdk_step=10)
+    assert receipt["clock_before"] == receipt["clock_after"] == after_control()
+    assert receipt["reset_api_calls"] == 1
+    assert app.updates == 0

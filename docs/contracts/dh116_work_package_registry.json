@@ -40825,6 +40825,30 @@
         "skipped": 0,
         "scope": "CPU offline audit only"
       }
+    },
+    "teacher.student-stereo-sync-native-v1": {
+      "title": "Teacher 固定双 RGB 与动作下发原生同步",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.student-stereo-alignment-v1"
+      ],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_stereo_sync.py",
+        "tests/test_preview_warp_readback.py",
+        "tests/test_teacher_stat_cache_release.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_stereo_sync_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-stereo-sync.md",
+      "native_runs": 1,
+      "blocked_reason": "CPU Warp ABI fix verified; native Pinch paired capture blocked, exit SIGSEGV",
+      "last_result": {
+        "passed": 610,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU tests passed; first native attempt failed before RGB and control"
+      }
     }
   },
   "execution_target": {

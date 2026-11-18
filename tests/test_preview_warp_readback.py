@@ -62,3 +62,46 @@ def test_owned_reader_scopes_compatibility_and_restores_on_rgb_exception(monkeyp
     reader=object.__new__(OwnedNativeRGBPairReader)
     with pytest.raises(RuntimeError,match="rgb failed"):reader.read()
     assert events==["enter","read","restore"]
+
+def test_bundled_warp_uses_the_real_original_nonowning_call():
+    import os
+    import subprocess
+    import sys
+
+    ext = Path(sys.prefix) / "lib/python3.10/site-packages/isaacsim/extscache"
+    bundled = ext / "omni.warp.core-1.5.0+lx64"
+    script = """
+import ast
+import sys
+import types
+from pathlib import Path
+import numpy as np
+import warp as wp
+from go2_pvcnn.control.dh116 import tabletop_preview_warp_readback as adapter
+
+path = next(Path(sys.argv[1]).glob("omni.replicator.core-*/omni/replicator/core/scripts/utils/annotator_utils.py"))
+module = types.ModuleType("omni.replicator.core.scripts.utils.annotator_utils")
+module.__file__ = str(path)
+module.wp, module.np = wp, np
+module.carb = types.SimpleNamespace(profiler=types.SimpleNamespace(begin=lambda *a:None,end=lambda *a:None))
+node = next(n for n in ast.parse(path.read_text()).body if isinstance(n, ast.FunctionDef) and n.name=="_reshape_output_ptr")
+node.decorator_list = []
+exec(compile(ast.Module(body=[node],type_ignores=[]),str(path),"exec"),vars(module))
+sys.modules[module.__name__] = module
+raw = module._reshape_output_ptr
+source = np.array([1., 2., 3.], np.float32)
+with adapter.isaac45_rgb_readback_scope():
+    assert module._reshape_output_ptr is raw
+    value = raw(ptr=source.ctypes.data,height=0,width=0,strides=(4,),buffer_size=source.nbytes,elem_count=1,
+        source_device="cpu",target_device="cpu",wp_dtype=wp.float32,np_dtype=np.dtype(np.float32))
+    result = value[0] if isinstance(value,tuple) else value
+    assert np.array_equal(result,source)
+assert module._reshape_output_ptr is raw
+"""
+    if not bundled.is_dir():
+        pytest.skip("installed Isaac bundled Warp unavailable")
+    root = Path(__file__).resolve().parents[1]
+    env = dict(os.environ, PYTHONPATH=os.pathsep.join(map(str,(bundled, root/"src"))), CUDA_VISIBLE_DEVICES="")
+    result = subprocess.run([sys.executable, "-B", "-c", script, str(ext)], env=env,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    assert result.returncode == 0, result.stdout

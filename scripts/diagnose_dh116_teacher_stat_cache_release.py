@@ -50,7 +50,7 @@ def make_before_collect(plan):
     contract=plan["stat_cache_release"]["source_contract"]
     if plan["stat_cache_release"]["max_reset_calls"]!=1:raise ValueError("one reset budget required")
     called=False
-    def before_collect(simulation):
+    def before_collect(simulation, *, expected_sdk_step=2):
         nonlocal called
         if called:raise RuntimeError("stat cache reset is once only")
         called=True
@@ -74,14 +74,14 @@ def make_before_collect(plan):
             def observe(phase,row):
                 legacy.write_new(output/("stat_cache_"+phase+".json"),row)
             receipt=cache.release_owned_stat_cache(module,contract=contract,
-                         clock_reader=read_clock,observer=observe)
+                         clock_reader=read_clock,observer=observe,expected_sdk_step=expected_sdk_step)
             receipt["final_post_write_guard_required"]=True
             receipt["final_post_write_guard_attested_by_this_file"]=False
             legacy.write_new(output/"stat_cache_release.json",receipt)
             # Last operation after all successful evidence writes. No second
             # write/reset/update follows this read-only guard.
             cache.verify_stat_cache_empty(module,contract=contract,clock_reader=read_clock,
-                                          expected_clock=receipt["clock_before"])
+                                          expected_clock=receipt["clock_before"],expected_sdk_step=expected_sdk_step)
         except Exception as error:
             message=type(error).__name__+": "+str(error)
             error.__traceback__=None

@@ -151,27 +151,28 @@ def snapshot_stat_cache(module,*,contract,max_entries=4096,max_records=16):
         module=fields=cache=key=value=error=None
 
 
-def _clock(reader):
+def _clock(reader, expected_sdk_step):
     row=reader()
     if type(row) is not dict or set(row)!={"sdk_step","sdk_time_s","app_update_number"}:
         raise ValueError("complete SDK/App clock required")
     step,t,update=row["sdk_step"],row["sdk_time_s"],row["app_update_number"]
-    if (type(step) is not int or step!=2 or type(t) not in (float,int)
-            or not math.isfinite(t) or not math.isclose(t,2/480,rel_tol=0,abs_tol=2e-6)
+    if (type(expected_sdk_step) is not int or expected_sdk_step<2
+            or type(step) is not int or step!=expected_sdk_step or type(t) not in (float,int)
+            or not math.isfinite(t) or not math.isclose(t,expected_sdk_step/480,rel_tol=0,abs_tol=2e-6)
             or type(update) is not int or update<0):
-        raise ValueError("SDK2 and valid non-sentinel App clock required")
+        raise ValueError(f"SDK step {expected_sdk_step} and valid non-sentinel App clock required")
     return dict(row)
 
 
-def verify_stat_cache_empty(module,*,contract,clock_reader,expected_clock):
+def verify_stat_cache_empty(module,*,contract,clock_reader,expected_clock,expected_sdk_step=2):
     """Read-only final guard; never reset twice, write evidence or advance App."""
     fields=None
     try:
         fields=_validated_fields(module,contract)
-        expected=_clock(lambda:expected_clock)
-        before=_clock(clock_reader)
+        expected=_clock(lambda:expected_clock,expected_sdk_step)
+        before=_clock(clock_reader,expected_sdk_step)
         snapshot=snapshot_stat_cache(module,contract=contract)
-        after=_clock(clock_reader)
+        after=_clock(clock_reader,expected_sdk_step)
         if before!=expected or after!=expected:
             raise ValueError("clock changed after stat cache evidence IO")
         # Last direct check of the live dictionary, AFTER the last reader.
@@ -183,7 +184,7 @@ def verify_stat_cache_empty(module,*,contract,clock_reader,expected_clock):
         module=fields=clock_reader=None
 
 
-def release_owned_stat_cache(module,*,contract,clock_reader,observer=None):
+def release_owned_stat_cache(module,*,contract,clock_reader,observer=None,expected_sdk_step=2):
     fields=None
     io_errors=[]
     def emit(phase,row):
@@ -195,12 +196,12 @@ def release_owned_stat_cache(module,*,contract,clock_reader,observer=None):
     try:
         fields=_validated_fields(module,contract)
         before=snapshot_stat_cache(module,contract=contract)
-        clock_before=_clock(clock_reader)
+        clock_before=_clock(clock_reader,expected_sdk_step)
         # Even a process interruption in evidence writing cannot bypass the
         # source-qualified cache reset. The original owned GC still follows.
         try:emit("before",dict(before,clock=clock_before))
         finally:fields["reset_stat_cache"]()
-        clock_after=_clock(clock_reader)
+        clock_after=_clock(clock_reader,expected_sdk_step)
         if clock_after!=clock_before:raise ValueError("clock changed during stat cache API")
         after=snapshot_stat_cache(module,contract=contract)
         if after["cache_entries_total"]!=0:raise ValueError("stat cache reset did not leave an empty cache")
@@ -212,7 +213,7 @@ def release_owned_stat_cache(module,*,contract,clock_reader,observer=None):
         emit("after",dict(after,clock=clock_after,reset_api_calls=1))
         if io_errors:raise RuntimeError("stat cache evidence IO failed: "+"; ".join(io_errors))
         receipt["post_observer_check"]=verify_stat_cache_empty(module,contract=contract,
-            clock_reader=clock_reader,expected_clock=clock_before)
+            clock_reader=clock_reader,expected_clock=clock_before,expected_sdk_step=expected_sdk_step)
         return receipt
     finally:
         module=fields=clock_reader=observer=None

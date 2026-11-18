@@ -1,3 +1,7 @@
+## 2026-11-18 native Teacher stereo synchronization
+
+An opt-in headless recorder binds actual dual Student RGB, Teacher state and the SDK action-write boundary. The first Pinch native run was blocked by the loaded Isaac Warp ABI, with zero paired frames and a post-close signal. The bundled Warp path is verified on CPU and awaits native validation. [Report](docs/superpowers/reports/2026-11-18-teacher-stereo-sync.md).
+
 ## 2026-11-18 Teacher stereo alignment audit
 
 The offline auditor verifies saved Student-camera calibration and RGB fingerprints, recomputes privileged geometry in both image and palm frames, and checks consecutive 60 Hz policy captures against 480 Hz SDK time. Native image and action evidence are pending. [Report](docs/superpowers/reports/2026-11-18-teacher-stereo-alignment-offline.md).
