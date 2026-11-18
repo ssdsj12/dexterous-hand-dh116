@@ -240,8 +240,12 @@ class NativeTeacherCollector:
                 endpoint_identity=endpoint,next_value_identity=next_endpoint)
             self._check_policy()
             if stereo:
-                self.journal.emit("student_stereo_action",dict(collection_token=token,
-                                  pre_action_sha256=prehash, issued_actions=issued, **stereo))
+                if stereo["student_stereo"]["student_sync_usable"]:
+                    self.journal.emit("student_stereo_action",dict(collection_token=token,
+                                      pre_action_sha256=prehash, issued_actions=issued, **stereo))
+                else:
+                    self.journal.emit("student_stereo_rejected",dict(collection_token=token,
+                                      pre_action_sha256=prehash, **stereo))
             self.journal.emit("settlement",dict(reward=packet,post_context=post_context,
                 history=settlement,result=result,issued_actions=issued,next_value=value,gae_boundary=boundary))
             tr.record_step(torch.tensor([packet.reward]),torch.tensor([bool(terminated or truncated)]),value,

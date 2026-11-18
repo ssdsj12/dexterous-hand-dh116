@@ -1,0 +1,100 @@
+{
+  "package": "teacher.native-first-stereo-pair-timing-v1",
+  "branch": "11-17",
+  "base_commit": "248ccee1e7d3c1d5fe2c26c8c82a4e40a08f2ac1",
+  "status": "native_rgb_readback_passed_timing_and_exit_failed",
+  "report": "docs/superpowers/reports/2026-11-18-native-stereo-first-pair.md",
+  "cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_native_teacher_stereo.py",
+      "tests/test_native_teacher_collector.py",
+      "tests/test_teacher_stereo_sync.py",
+      "tests/test_tiled_stereo_capture.py",
+      "tests/test_teacher_stereo_alignment.py",
+      "tests/test_teacher_stereo_alignment_offline.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-first-frame-20261118/first-pair-joint-cpu.log",
+    "log_sha256": "4ad290908517fff9ee41e104d1d8a9a18a0b7b8a7f09cefb4c29385fb4ccf5e8",
+    "passed": 128,
+    "failed": 0,
+    "skipped": 0
+  },
+  "native_runs": 1,
+  "evidence_dir": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-first-frame-20261118/native-pinch-first-pair",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_stereo_sync.py": "bad9f70f1fb9a58a931caf2886b0f018ac20894cc74297d68eda2e544e40c0f5",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_stereo.py": "e0d334b0e164ac97723bcd94a84f5f22e5d8626c74e414badaf52959dd145f5f",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_collector.py": "e03af9802d6a31f9315126db5f524739b5020706470bf1e8d9bc805d12fd71ea",
+    "scripts/record_dh116_teacher_stereo_sync.py": "0f4eb5de0d4a88be6c631f087b14e38beba2a0e85ad74d20cf21903dc28d8a94",
+    "tests/test_native_teacher_stereo.py": "318c993852987a101fcb6fffc22b0f99959b289b10aa24883bb1ead76bd2efd3",
+    "tests/test_native_teacher_collector.py": "afee094df4d1eb7c0e6a109b6f4b20ed4157b298af50613a1be39a1b22076ce6"
+  },
+  "warp_version": "1.5.0",
+  "warp_policy": "native_owner_false",
+  "native_rgb_pairs": 1,
+  "student_usable_pairs": 0,
+  "setup_sdk_steps": 2,
+  "control_steps": 0,
+  "solver_steps": 0,
+  "ppo_updates": 0,
+  "stereo_rejection": {
+    "frame_receipt": "frame-000000/teacher_stereo_alignment.json",
+    "frame_receipt_sha256": "997df6e2c2153d96b8169feed86f9e151f4760a05fc37cb9dfc8785951afcf4c",
+    "controls_executed": 0,
+    "rgb_sdk_delta_ms": -4.166666883975267,
+    "student_sync_usable": false,
+    "student_sync_rejection": "rgb_sdk_skew_at_or_above_2ms"
+  },
+  "render_timing": {
+    "capture_id": 1,
+    "raw_left_clock": {
+      "frame_id": 20,
+      "simulation_time": 0.0,
+      "render_frame_number": 20
+    },
+    "raw_right_clock": {
+      "frame_id": 20,
+      "simulation_time": 0.0,
+      "render_frame_number": 20
+    },
+    "camera_pose_backend": "two_fixed_usd_cameras_isaac45",
+    "raw_left_metadata": "{'reference': \"{'referenceTimeDenominator': 30, 'referenceTimeNumerator': 20}\", 'times': \"{'durationDenominator': 18446744073709551615, 'durationNumerator': 0, 'execOut': 1, 'externalTimeOfSimNs': -1, 'frameNumber': 20, 'rationalTimeOfSimDenominator': 30, 'rationalTimeOfSimNumerator': 20, 'sampleTimeOffsetInSimFrames': 18446744073709551615, 'simulationTime': 0.0, 'simulationTimeMonotonic': 0.0, 'swhFrameNumber': 0, 'systemTime': 1794992550.1587298}\", 'startup': False}",
+    "raw_right_metadata": "{'reference': \"{'referenceTimeDenominator': 30, 'referenceTimeNumerator': 20}\", 'times': \"{'durationDenominator': 18446744073709551615, 'durationNumerator': 0, 'execOut': 1, 'externalTimeOfSimNs': -1, 'frameNumber': 20, 'rationalTimeOfSimDenominator': 30, 'rationalTimeOfSimNumerator': 20, 'sampleTimeOffsetInSimFrames': 18446744073709551615, 'simulationTime': 0.0, 'simulationTimeMonotonic': 0.0, 'swhFrameNumber': 0, 'systemTime': 1794992550.1587298}\", 'startup': False}",
+    "physical_timestamp_s": 0.004166666883975267,
+    "physical_step": 2,
+    "clock_mapping": "single_render_frozen_physics_boundary",
+    "native_synchronization_qualified": false
+  },
+  "outer_exit": {
+    "exit_code": -11,
+    "wall_elapsed_s": 48.13081641681492,
+    "frozen_sha256": "e5e1a1e4a5d1c7b37d21a3dd204c6a4f43579ce73fee8fb39da722832dcd4c50",
+    "log_sha256": "922cc050b010965ccfb6536c1ba4b3251899413929837fe8955555d5e9cbcb6d",
+    "auto_retry": false,
+    "auto_kill": false
+  },
+  "measured_reprojection_pixels": null,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "new_teacher_collector_native_verified": false,
+  "publication": {
+    "state": "pending_windows_relay"
+  }
+}

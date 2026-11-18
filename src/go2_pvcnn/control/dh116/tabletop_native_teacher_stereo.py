@@ -12,6 +12,7 @@ from .tabletop_stereo_geometry import world_to_palms
 from .tabletop_stereo_validation import validate_images
 from .tabletop_teacher_preaction_readback import _identity
 from .tabletop_teacher_stereo_alignment import _finite, _projection
+from .tabletop_teacher_stereo_sync import student_rgb_timing
 from .tabletop_tiled_stereo_capture import _clock
 
 
@@ -96,14 +97,14 @@ def save_aligned_rgb_pair(pre, packet, calibration, output, *, origins=None):
             os.fsync(stream.fileno())
         cameras[side].update(rgb_file=path.name, rgb_sha256=hashlib.sha256(path.read_bytes()).hexdigest())
 
+    sync = student_rgb_timing(left_clock["simulation_time"], identity["sdk_timestamp_s"])
     receipt = dict(schema="dh116-native-teacher-student-stereo-v1", identity=identity,
                    privileged_values=[float(v) if ok else None for v, ok in zip(values, valid)],
                    privileged_valid=valid.tolist(), cameras=cameras, render_timing=timing,
                    source_scope=packet["source_scope"], native_qualification=False,
                    rod_nodes_world_m=nodes.tolist(), palm_poses_world_xyz_wxyz=palms.tolist(),
                    rod_nodes_palm_m={side:local[i].tolist() for i,side in enumerate(SIDES)},
-                   rgb_sdk_delta_ms=1000*(left_clock["simulation_time"]-identity["sdk_timestamp_s"]),
-                   occlusion_measured=False)
+                   occlusion_measured=False, **sync)
     path = folder / "alignment.json"
     with path.open("x", encoding="utf-8") as stream:
         json.dump(receipt, stream, allow_nan=False)
@@ -112,4 +113,4 @@ def save_aligned_rgb_pair(pre, packet, calibration, output, *, origins=None):
     return dict(receipt_path=str(path.relative_to(output)),
                 receipt_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
                 state_sha256=identity["state_sha256"], capture_id=capture_id,
-                calibration_sha256=calibration.sha256)
+                calibration_sha256=calibration.sha256, **sync)

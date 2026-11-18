@@ -40942,6 +40942,29 @@
         "skipped": 0,
         "scope": "CPU pre-action camera join and action binding. Native collection remains pending."
       }
+    },
+    "teacher.native-first-stereo-pair-timing-v1": {
+      "title": "原生 Pinch 首帧和 2 ms 数据门",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.native-student-stereo-sidecar-cpu-v1"
+      ],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_stereo.py",
+        "tests/test_native_teacher_collector.py"
+      ],
+      "readiness": "docs/contracts/dh116_native_first_stereo_pair_timing_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-native-stereo-first-pair.md",
+      "native_runs": 1,
+      "blocked_reason": "One raw native stereo pair. RGB minus SDK -4.166667 ms. No usable Student label. Outer exit SIGSEGV.",
+      "last_result": {
+        "passed": 128,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU pass. Native RGB readback only. Timing and natural exit pending."
+      }
     }
   },
   "execution_target": {

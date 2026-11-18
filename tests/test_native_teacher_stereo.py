@@ -67,3 +67,19 @@ def test_mismatched_source_never_produces_an_aligned_label(tmp_path, fault):
     with pytest.raises(ValueError):
         save_aligned_rgb_pair(pre, packet, cal, tmp_path)
     assert not list(tmp_path.iterdir())
+
+@pytest.mark.parametrize("delta_s,usable", [(0., True), (.00199, True), (.00201, False), (-.003, False)])
+def test_frame_timing_flags_are_saved_with_raw_evidence(tmp_path, delta_s, usable):
+    import json
+
+    cal, pre, packet = fixture()
+    timing = packet["render_timing"]
+    for side in ("raw_left_clock", "raw_right_clock"):
+        timing[side]["simulation_time"] = timing["physical_timestamp_s"] + delta_s
+    result = save_aligned_rgb_pair(pre, packet, cal, tmp_path)
+    receipt = json.loads((tmp_path/result["receipt_path"]).read_text())
+    assert receipt["student_sync_usable"] is result["student_sync_usable"] is usable
+    assert receipt["rgb_sdk_delta_ms"] == pytest.approx(delta_s*1000)
+    assert receipt["student_sync_rejection"] == (
+        None if usable else "rgb_sdk_skew_at_or_above_2ms")
+    assert (tmp_path/result["receipt_path"]).with_name("right.png").is_file()

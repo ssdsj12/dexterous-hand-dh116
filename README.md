@@ -1,3 +1,7 @@
+## 2026-11-18 native first Student stereo pair
+
+Both fixed native cameras returned RGB through the original Isaac Warp 1.5 pointer path. The 2 ms timing gate rejected the pair before action issuance. The outer process returned SIGSEGV after App close. [Report](docs/superpowers/reports/2026-11-18-native-stereo-first-pair.md).
+
 ## 2026-11-18 Teacher to Student stereo alignment
 
 The native Teacher collector can attach the fixed Student cameras on its original pre-action boundary. It persists same-clock palm, rod, and valid privileged labels and pairs them with the actual issued action. PPO inputs stay unchanged. [Report](docs/superpowers/reports/2026-11-18-native-teacher-student-stereo.md).

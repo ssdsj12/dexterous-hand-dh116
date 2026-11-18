@@ -24,6 +24,16 @@ class ActionBoundary:
             raise ValueError("unexpected Teacher action hook order")
 
 
+def student_rgb_timing(rgb_sim_s, sdk_sim_s):
+    """Classify time alignment while retaining the original signed measurement."""
+    if not all(math.isfinite(t) and t >= 0 for t in (rgb_sim_s, sdk_sim_s)):
+        raise ValueError("finite nonnegative camera and SDK clock required")
+    delta_ms = (rgb_sim_s - sdk_sim_s) * 1000
+    usable = abs(delta_ms) < 2.
+    return dict(rgb_sdk_delta_ms=delta_ms, student_sync_usable=usable,
+                student_sync_rejection=None if usable else "rgb_sdk_skew_at_or_above_2ms")
+
+
 def sync_row(receipt, issued, integrated, *, capture_start_ns, rgb_ready_ns, final_step,
              actor_action, applied_action):
     identity, render = receipt["identity"], receipt["render_timing"]
@@ -54,7 +64,7 @@ def sync_row(receipt, issued, integrated, *, capture_start_ns, rgb_ready_ns, fin
                 act_phys_delta_ms=(act_time-phys_time)*1000, capture_start_wall_ns=capture_start_ns,
                 rgb_ready_wall_ns=rgb_ready_ns, act_issued_wall_ns=issued["wall_ns"],
                 act_integrated_wall_ns=integrated["wall_ns"], actor_action_24=actor_action,
-                controller_input_24=applied_action)
+                controller_input_24=applied_action, **student_rgb_timing(rgb_time, phys_time))
 
 
 def _stats(values):

@@ -365,8 +365,8 @@ def test_source_primary_exception_survives_quarantine_log_failure(monkeypatch,tm
     assert exc.value is original and c.quarantined and rod.rope.steps==3
     assert c.trainer._pending is not None and c.consumed_sdk_steps==3
 
-@pytest.mark.parametrize("expire", [False, True])
-def test_student_stereo_sidecar_is_pre_action_and_bound_to_issued_action(monkeypatch, tmp_path, backend_profile, expire):
+@pytest.mark.parametrize("mode", ["aligned", "budget_expired", "bad_timestamp"])
+def test_student_stereo_sidecar_is_pre_action_and_bound_to_issued_action(monkeypatch, tmp_path, backend_profile, mode):
     from pathlib import Path
     from types import SimpleNamespace
     from test_native_teacher_stereo import fixture as stereo_fixture
@@ -400,8 +400,11 @@ def test_student_stereo_sidecar_is_pre_action_and_bound_to_issued_action(monkeyp
         camera_packet["identity"] = identity
         camera_packet["render_timing"]["physical_timestamp_s"] = identity["sdk_timestamp_s"]
         events.append("captured")
-        if expire:
+        if mode == "budget_expired":
             collector.sources.remaining_substeps = lambda: 0
+        elif mode == "bad_timestamp":
+            for side in ("raw_left_clock", "raw_right_clock"):
+                camera_packet["render_timing"][side]["simulation_time"] += .003
         return camera_packet
 
     camera.capture = capture
@@ -410,7 +413,7 @@ def test_student_stereo_sidecar_is_pre_action_and_bound_to_issued_action(monkeyp
     collector.attach_student_stereo(camera, tmp_path/"rgb")
     result = collector.collect()
     rows = operations(collector)
-    if expire:
+    if mode == "budget_expired":
         assert result is None and sim.current_time_step_index == 2
         assert collector.trainer._pending is None
         assert rows[-1]["operation"] == "window_not_started"
@@ -419,6 +422,14 @@ def test_student_stereo_sidecar_is_pre_action_and_bound_to_issued_action(monkeyp
         assert events == ["captured", "closed", "owner_closed"]
         return
     decision = next(row["payload"] for row in rows if row["operation"] == "decision")
+    if mode == "bad_timestamp":
+        rejected = next(row["payload"] for row in rows if row["operation"] == "student_stereo_rejected")
+        assert rejected["student_stereo"]["student_sync_usable"] is False
+        assert rejected["collection_token"] == decision["collection_token"]
+        assert not any(row["operation"] == "student_stereo_action" for row in rows)
+        assert sim.current_time_step_index == 10
+        collector.close()
+        return
     action = next(row["payload"] for row in rows if row["operation"] == "student_stereo_action")
     assert action["collection_token"] == decision["collection_token"]
     assert action["student_stereo"] == decision["student_stereo"]

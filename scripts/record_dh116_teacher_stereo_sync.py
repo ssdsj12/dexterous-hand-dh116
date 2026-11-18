@@ -16,7 +16,7 @@ from scripts import diagnose_dh116_teacher_stereo_alignment as stereo
 from scripts import diagnose_dh116_teacher_stat_cache_release as cleanup
 from go2_pvcnn.control.dh116 import tabletop_teacher_stereo_alignment as alignment
 from go2_pvcnn.control.dh116.tabletop_teacher_grasp_preview_runtime import MODES
-from go2_pvcnn.control.dh116.tabletop_teacher_stereo_sync import ActionBoundary, sync_row, timing_summary
+from go2_pvcnn.control.dh116.tabletop_teacher_stereo_sync import ActionBoundary, student_rgb_timing, sync_row, timing_summary
 
 ROOT = Path(__file__).resolve().parents[1]
 ORIGINAL = Path("/mnt/mydisk/xk/dh116")
@@ -103,7 +103,10 @@ def _record(app, plan, started, scope, rows, trace):
             trace.watch(side + "_root_physx_view", hand.root_physx_view,
                         owner=side + " articulation", release="runtime scope dropped", gpu_view=True)
         hand = None
+        trace.event("episode_reset_before", sdk_clock=legacy.clock(sim),
+                    python_stack=traceback.format_stack(limit=8))
         rt.reset_all()
+        trace.event("episode_reset_after", sdk_clock=legacy.clock(sim))
         if sim.current_time_step_index != budget["sdk_setup_steps"]:
             raise RuntimeError("unexpected setup physics budget")
         legacy.validate_loaded_project_modules(ROOT, frozen_files=plan["frozen_files"])
@@ -178,6 +181,17 @@ def _record(app, plan, started, scope, rows, trace):
                 rgb_ns = monotonic_ns()
                 if packet["source_scope"] != "native_tiled_reader" or packet["identity"] != identity:
                     raise RuntimeError("expected native pre-action RGB pair")
+                timing = packet["render_timing"]
+                sync = student_rgb_timing(timing["raw_left_clock"]["simulation_time"],
+                                          timing["physical_timestamp_s"])
+                if not sync["student_sync_usable"]:
+                    rejected = alignment.aligned_payload(state, identity, packet, cal, origins)
+                    rejected.update(source_scope=packet["source_scope"], phase="before_teacher_action",
+                                    teacher_policy_queried=False, **sync)
+                    path, sha = _save_frame(out, rejected, packet, image_module=Image, np=np)
+                    legacy.write_new(out/"rejected_rgb_sync.json", dict(
+                        frame_receipt=path, frame_receipt_sha256=sha, controls_executed=tick, **sync))
+                    raise RuntimeError("Student RGB pair exceeded the frozen 2 ms timing boundary")
                 if not sim.is_playing():
                     raise RuntimeError("timeline is paused before controller execution")
                 boundary.begin()
@@ -194,7 +208,7 @@ def _record(app, plan, started, scope, rows, trace):
                                privileged_source="frozen Teacher get_obs()", teacher_policy_queried=True,
                                env_origin_world_m=state["env_origin_world_m"],
                                teacher_reference_env_m=state["teacher_reference_env_m"],
-                               teacher_wire_node_indices=state["teacher_wire_node_indices"])
+                               teacher_wire_node_indices=state["teacher_wire_node_indices"], **sync)
                 path, sha = _save_frame(out, receipt, packet, image_module=Image, np=np)
                 row.update(frame_receipt=path, frame_receipt_sha256=sha, mode=budget["mode"],
                            checkpoint_sha256=plan["checkpoint_sha256"], render_passes=packet["render_passes"],
