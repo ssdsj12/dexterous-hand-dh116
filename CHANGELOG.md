@@ -1,3 +1,7 @@
+## 2026-11-18 Pinch Teacher PPO worker factories
+
+The original Teacher, trainer, and reward factories are wired for an issued native lease. Source-bound native journal and checkpoint validation still block the first actual worker rollout. [Report](docs/superpowers/reports/2026-11-18-teacher-ppo-worker-factories.md).
+
 ## 2026-11-18 fresh numeric Pinch Teacher Reset
 
 The camera-free native Reset captured both 41-node numerical snapshots and all 11 mesh bindings, and the sealed manifest passed the production reader after natural exit 0. PPO worker execution remains pending. [Report](docs/superpowers/reports/2026-11-18-teacher-fresh-numeric-reset.md).

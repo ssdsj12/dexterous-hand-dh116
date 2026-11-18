@@ -41093,6 +41093,27 @@
         "skipped": 0,
         "scope": "Reset source verification passed. Native PPO updates zero."
       }
+    },
+    "teacher.ppo-worker-factories-v1": {
+      "title": "Pinch Teacher 原 PPO worker 工厂接线",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_factories.py",
+        "tests/test_native_teacher_session.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_ppo_worker_factories_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-ppo-worker-factories.md",
+      "native_runs": 0,
+      "blocked_reason": "Actual worker SourcePack and artifact validator / issued lease pending.",
+      "last_result": {
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU factory and original fixture optimizer verified."
+      }
     }
   },
   "execution_target": {

@@ -149,7 +149,10 @@ def verify_reset_and_sources(owner,reset,contract):
 def build_fresh_pinch_owner(contract, *, sim, owners, prepared, ownership, ledger,
                             run_uuid, episode_uid, owner_resets, mesh_plan):
     """Use the original Pinch builder inside the existing owner and journal."""
-    from .tabletop_dual_pinch_builder import build_fresh_owned
+    import sys
+    from contextlib import nullcontext
+    from scripts.probe_dh116_physx_lifetime_frame_v2 import bindings
+    from . import tabletop_dual_pinch_builder as builder
     from .tabletop_native_teacher_collector import NativeJournal
     from .tabletop_native_teacher_profile import profile_reader_scope
 
@@ -166,11 +169,28 @@ def build_fresh_pinch_owner(contract, *, sim, owners, prepared, ownership, ledge
                 # evidence. NativeEpisodeOwner writes setup once to its journal.
                 ownership.event("pinch_scene_setup", source_row=row)
 
-        with profile_reader_scope(contract.backend_profile):
-            fresh = build_fresh_owned(
-                sim, owners, project=contract.config.project, prepared=prepared, ownership=ownership,
-                record=record_setup, run_uuid=run_uuid, episode_uid=episode_uid,
-                physics_budget_end=contract.budget["max_sdk_steps"])
+        profile = contract.backend_profile
+        with profile_reader_scope(profile):
+            scene_scope = nullcontext()
+            if mesh_plan is None:
+                from .tabletop_dual_hand_scene_preparation import prepare_scene
+                from .tabletop_mesh_reset_order import prepare_mesh_reset_plan
+
+                if prepared is None:
+                    prepared = prepare_scene(contract.config.project)
+                scene_scope = bindings((builder, "BACKEND", Path(profile.binary_path)),
+                                       (builder, "BACKEND_SHA", profile.binary_sha256))
+            with scene_scope:
+                fresh = builder.build_fresh_owned(
+                    sim, owners, project=contract.config.project, prepared=prepared, ownership=ownership,
+                    record=record_setup, run_uuid=run_uuid, episode_uid=episode_uid,
+                    physics_budget_end=contract.budget["max_sdk_steps"])
+            if mesh_plan is None:
+                sdf = sys.modules.get("ropesim.sdf")
+                if sdf is None:
+                    raise ValueError("actual loaded SDF module required to derive the Reset mesh plan")
+                mesh_plan = prepare_mesh_reset_plan(contract.config.project, prepared, fresh.episode._rod,
+                                                    sdf_module=sdf)
             return NativeEpisodeOwner(
                 fresh.episode, contract, episode_uid=episode_uid, owner_resets=owner_resets,
                 mesh_plan=mesh_plan, ledger=ledger, setup_events=fresh.setup_events,

@@ -291,8 +291,10 @@ def test_constructor_failure_restores_actual_episode_callback_and_drops_borrowed
     finally:
         ledger.close()
 
-def test_fresh_pinch_factory_hands_one_journal_and_profile_to_original_owner(monkeypatch, tmp_path):
+@pytest.mark.parametrize("derive_mesh", [False, True])
+def test_fresh_pinch_factory_hands_one_journal_and_profile_to_original_owner(monkeypatch, tmp_path, derive_mesh):
     from contextlib import contextmanager
+    from pathlib import Path
     from go2_pvcnn.control.dh116 import tabletop_dual_pinch_builder as builder
     from go2_pvcnn.control.dh116 import tabletop_native_teacher_profile as profile
     from go2_pvcnn.control.dh116.tabletop_native_teacher_collector import NativeJournal
@@ -301,15 +303,38 @@ def test_fresh_pinch_factory_hands_one_journal_and_profile_to_original_owner(mon
     events = []
     marker = object()
     setup_events = tuple(dict(kind="setup", sdk_step=t, sdk_time_s=t/480) for t in (0, 2))
-    fresh = builder.FreshPinchEpisode(marker, setup_events, lambda: ())
+    rod = object()
+    episode = SimpleNamespace(_rod=rod)
+    fresh = builder.FreshPinchEpisode(episode, setup_events, lambda: ())
+    prepared = object()
+    if derive_mesh:
+        from go2_pvcnn.control.dh116 import tabletop_dual_hand_scene_preparation as scene
+        from go2_pvcnn.control.dh116 import tabletop_mesh_reset_order as reset
+        import sys
+
+        def prepare(project):
+            assert project == config.project
+            events.append("prepare")
+            return prepared
+
+        def build_mesh(project, current_scene, current_rod, *, sdf_module):
+            assert project == config.project
+            assert current_scene is prepared and current_rod is rod and sdf_module is marker
+            events.append("mesh")
+            return marker
+
+        monkeypatch.setattr(scene, "prepare_scene", prepare)
+        monkeypatch.setattr(reset, "prepare_mesh_reset_plan", build_mesh)
+        monkeypatch.setitem(sys.modules, "ropesim.sdf", marker)
     config = m.NativeSessionConfig(dict(style="pinch", profile="approach_wiring_smoke_v1"),
                                    {}, tmp_path/"training.jsonl", 1., 32)
-    contract = m.StaticContract(config, marker, None, {}, None, None, {"max_sdk_steps":258}, None, "")
+    profile_value = SimpleNamespace(binary_path="/path/to/locked/backend", binary_sha256="e"*64) if derive_mesh else marker
+    contract = m.StaticContract(config, profile_value, None, {}, None, None, {"max_sdk_steps":258}, None, "")
     trace = Mock()
 
     @contextmanager
     def opened(value):
-        assert value is marker
+        assert value is profile_value
         events.append("profile")
         yield
         events.append("profile_return")
@@ -317,13 +342,18 @@ def test_fresh_pinch_factory_hands_one_journal_and_profile_to_original_owner(mon
     def build(sim, owners, **kwargs):
         assert sim is owners is marker
         assert kwargs["physics_budget_end"] == 258
+        if derive_mesh:
+            assert kwargs["prepared"] is prepared
+            assert builder.BACKEND == Path(profile_value.binary_path)
+            assert builder.BACKEND_SHA == profile_value.binary_sha256
         for row in setup_events:
             kwargs["record"](row)
         events.append("build")
         return fresh
 
-    def owner(episode, source, **kwargs):
-        assert episode is marker and source is contract
+    def owner(current, source, **kwargs):
+        assert current is episode and source is contract
+        assert kwargs["mesh_plan"] is marker
         assert kwargs["ledger"] is journal and kwargs["setup_events"] == setup_events
         assert kwargs["initial_geometry"] is fresh.initial_geometry
         events.append("owner")
@@ -336,10 +366,43 @@ def test_fresh_pinch_factory_hands_one_journal_and_profile_to_original_owner(mon
     try:
         result = m.build_fresh_pinch_owner(
             contract, sim=marker, owners=marker, prepared=None, ownership=trace, ledger=journal,
-            run_uuid="source", episode_uid="episode", owner_resets={}, mesh_plan=marker)
+            run_uuid="source", episode_uid="episode", owner_resets={}, mesh_plan=None if derive_mesh else marker)
         assert result is marker
-        assert events == ["profile", "build", "owner", "profile_return"]
+        if derive_mesh:
+            assert events == ["profile", "prepare", "build", "mesh", "owner", "profile_return"]
+        else:
+            assert events == ["profile", "build", "owner", "profile_return"]
         assert trace.event.call_count == 2
         assert journal.path.read_text() == ""
     finally:
         journal.close()
+
+
+
+
+def test_training_alias_scope_only_applies_to_exact_pinch_receipt(monkeypatch, tmp_path):
+    import hashlib
+    from scripts import prepare_dh116_pinch_margin_contact as legacy
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_sources import _canonical_pinch_history
+
+    canonical = tmp_path / "real"
+    canonical.mkdir()
+    original = canonical / "receipt.json"
+    original.write_text("{}")
+    alias_dir = tmp_path / "alias"
+    alias_dir.symlink_to(canonical, target_is_directory=True)
+    alias = alias_dir / original.name
+    digest = hashlib.sha256(original.read_bytes()).hexdigest()
+    monkeypatch.setattr(legacy, "OLD_PAIR", alias)
+    monkeypatch.setattr(legacy, "OLD_PAIR_SHA", digest)
+    read_locked = legacy.read_locked
+    with pytest.raises(ValueError, match="locked evidence changed"):
+        read_locked(alias, digest)
+    with _canonical_pinch_history():
+        assert legacy.read_locked(alias, digest) == {}
+        with pytest.raises(ValueError, match="locked evidence changed"):
+            legacy.read_locked(alias, "a"*64)
+        original.write_text("[]")
+        with pytest.raises(ValueError, match="locked evidence changed"):
+            legacy.read_locked(alias, digest)
+    assert legacy.read_locked is read_locked

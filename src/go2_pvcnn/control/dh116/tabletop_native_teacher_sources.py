@@ -3,8 +3,10 @@
 It never imports a native extension, fabricates full contact/slip sources, or
 changes the grasp string to borrow another style's geometry qualification.
 """
+from contextlib import contextmanager
 from copy import deepcopy
 import math
+from pathlib import Path
 import sys
 import time
 import numpy as np
@@ -12,6 +14,23 @@ import torch
 
 from .tabletop_native_teacher_profile import profile_reader_scope
 from .tabletop_training_reward import RewardEndpoint,SourceStamp,Measurement,SubmittedRequest,SourceFailure
+
+
+@contextmanager
+def _canonical_pinch_history():
+    """Route the one locked Pinch receipt through the existing reader's canonical path."""
+    from scripts import prepare_dh116_pinch_margin_contact as legacy
+    from scripts.probe_dh116_physx_lifetime_frame_v2 import bindings
+
+    original = legacy.read_locked
+    def read(path, expected):
+        path = Path(path)
+        if path == legacy.OLD_PAIR and expected == legacy.OLD_PAIR_SHA:
+            path = path.resolve(strict=True)
+        return original(path, expected)
+
+    with bindings((legacy, "read_locked", read)):
+        yield
 
 
 class NativePinchSources:
@@ -31,7 +50,8 @@ class NativePinchSources:
         self.owner,self.contract=owner,contract
         # C01 uses the legacy reader only at the actual Reset (no schedule).
         # Policy intervals use the independent owned-history reader.
-        self.reset_distance=BilateralMeasuredPinchApproach(contract.config.project)
+        with _canonical_pinch_history():
+            self.reset_distance=BilateralMeasuredPinchApproach(contract.config.project)
         self.distance=PolicyOwnedPinchApproach(contract.config.project,scope=scope)
         # This reader is always instantiated under the reviewed current profile;
         # never borrow the historical 2fea packet/default sources.
