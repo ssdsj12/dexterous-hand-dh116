@@ -41010,6 +41010,27 @@
         "skipped": 0,
         "scope": "CPU pass. Reanalysis of prior native frames only."
       }
+    },
+    "teacher.webrtc-display-gate-v1": {
+      "title": "Teacher WebRTC 显示门与控制隔离",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_webrtc_display_gate.py",
+        "tests/test_teacher_read_only_display_usd.py"
+      ],
+      "readiness": "docs/contracts/teacher_webrtc_display_gate_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-webrtc-display-gate.md",
+      "native_runs": 1,
+      "blocked_reason": "Short native viewer completed with all poses qualified; outer process SIGSEGV remains.",
+      "last_result": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU injected display errors; native no rejection at 60 controls."
+      }
     }
   },
   "execution_target": {
