@@ -40783,6 +40783,27 @@
         "skipped": 0,
         "scope": "CPU only, actual offset reads pending"
       }
+    },
+    "teacher.student-stereo-alignment-v1": {
+      "title": "柔性 Teacher 同时刻双 RGB 和特权投影",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.stat-cache-release-v1"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_stereo_alignment.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_stereo_alignment_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-stereo-alignment.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 591,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "initialization alignment CPU only"
+      }
     }
   },
   "execution_target": {

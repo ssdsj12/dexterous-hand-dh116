@@ -163,6 +163,7 @@ class TiledStereoCapture:
             native_synchronization_qualified=False)
         return dict(left_rgb=left["rgb"],right_rgb=right["rgb"],identity=before,
             calibration_sha256=self.calibration.sha256,K_left=left["K"],K_right=right["K"],
+            T_world_left=left["T_world"],T_world_right=right["T_world"],
             render_timing=timing,render_passes=render_calls,
             source_scope="native_tiled_reader" if left["native_evidence"] and right["native_evidence"] else "cpu_fixture")
 

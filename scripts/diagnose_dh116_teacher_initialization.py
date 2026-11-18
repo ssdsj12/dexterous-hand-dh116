@@ -385,10 +385,12 @@ def close_fallback_app(app,output,*,close_app):
     close_app(app,output,simulation=None)
     return True
 
-def execute_native(plan,*,before_owner_collect=None,after_cooked_capture=None):
+def execute_native(plan,*,before_owner_collect=None,after_cooked_capture=None,teacher_stereo_capture=None):
     """Already-approved exclusive process; no automatic retry or forced exit."""
     validate_execution_context(Path(plan['project']))
     started=time.monotonic()
+    if (teacher_stereo_capture is not None) != ("teacher_stereo" in plan):
+        raise ValueError("Teacher stereo callback and frozen plan must agree")
     os.environ['CUDA_VISIBLE_DEVICES']='2';os.environ['CUDA_DEVICE_ORDER']='PCI_BUS_ID'
     os.environ.setdefault('OMNI_KIT_ACCEPT_EULA','YES')
     from go2_pvcnn.control.dh116.tabletop_stereo_native import native_instance_lock
@@ -400,11 +402,12 @@ def execute_native(plan,*,before_owner_collect=None,after_cooked_capture=None):
         write_new(output/'frozen_plan.json',plan)
         app=None;failure=None;fallback_close_returned=False
         try:
-            app=AppLauncher(headless=True,device='cuda:0',enable_cameras=False,fast_shutdown=False,
+            app=AppLauncher(headless=True,device='cuda:0',enable_cameras=teacher_stereo_capture is not None,fast_shutdown=False,
                 experience=plan['experience']).app
-            if after_cooked_capture is not None:
+            if after_cooked_capture is not None or teacher_stereo_capture is not None:
                 owned=lambda:_execute_app_owned(app,plan,started,
-                    before_owner_collect=before_owner_collect,after_cooked_capture=after_cooked_capture)
+                    before_owner_collect=before_owner_collect,after_cooked_capture=after_cooked_capture,
+                    teacher_stereo_capture=teacher_stereo_capture)
             elif before_owner_collect is None:
                 owned=lambda:_execute_app_owned(app,plan,started)
             else:
@@ -429,7 +432,8 @@ def execute_native(plan,*,before_owner_collect=None,after_cooked_capture=None):
         raise RuntimeError(failure) from None
 
 
-def _execute_app_owned(app,plan,started,*,before_owner_collect=None,after_cooked_capture=None):
+def _execute_app_owned(app,plan,started,*,before_owner_collect=None,after_cooked_capture=None,
+                       teacher_stereo_capture=None):
     # All USD, PhysX, solver, trace and runtime imports occur after AppLauncher.
     import carb.settings
     import torch
@@ -506,13 +510,23 @@ def _execute_app_owned(app,plan,started,*,before_owner_collect=None,after_cooked
             cooking=get_physx_cooking_interface()
             captured=capture_once(rt,bindings,cooking,collector=collect_sdk_cooked_geometry,
                 on_snapshot=lambda row:write_new(output/'raw_sdk_body_poses.json',force._encode_nonfinite(row)))
-            if after_cooked_capture is None:
+            if after_cooked_capture is None and teacher_stereo_capture is None:
                 persist_capture(output,captured)
             else:
                 def read_after_capture():
-                    continue_within_budget(started, 'contact offset baseline', lambda:
-                        after_cooked_capture(rt.sim,SimulationManager.get_physics_sim_view(),
-                                             bindings,captured['sdk_clock_after']))
+                    if after_cooked_capture is not None:
+                        continue_within_budget(started, 'contact offset baseline', lambda:
+                            after_cooked_capture(rt.sim,SimulationManager.get_physics_sim_view(),
+                                                 bindings,captured['sdk_clock_after']))
+                    if teacher_stereo_capture is not None:
+                        try:
+                            continue_within_budget(started, 'Teacher stereo alignment', lambda:
+                                teacher_stereo_capture(rt))
+                        except Exception as error:
+                            message = f"{type(error).__name__}: {error}"
+                            error.__traceback__ = None
+                            errors.append(message)
+                            write_new(output/'teacher_stereo_alignment_error.json', {"error": message})
                 persist_capture(output,captured,after_write=read_after_capture)
             return dict(capture_complete=captured['capture'].get('complete') is True,
                 clock_adapter_blocked=captured['clock_adapter_blocked'],prepared_collision_bindings=len(bindings),

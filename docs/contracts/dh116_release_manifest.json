@@ -25632,6 +25632,24 @@
         "verified_at_utc": "2026-11-18T03:13:07.331621+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.student-stereo-alignment-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-stereo-alignment.md",
+      "readiness": "docs/contracts/dh116_teacher_stereo_alignment_v1.json",
+      "cpu_tests": {
+        "passed": 591,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "pending_windows_publication"
+      },
+      "remote_verified": false
     }
   ]
 }

@@ -1,3 +1,7 @@
+## 2026-11-18 flexible Teacher stereo initialization
+
+An independent Teacher initialization worker uses the Student fixed stereo lenses and binds its RGB pair to raw DeformX nodes, both world palm poses, and the original 67D Teacher observation. CPU verification is complete. Actual frame capture and continuous rollout are pending. [Report](docs/superpowers/reports/2026-11-18-teacher-stereo-alignment.md).
+
 ## 2026-11-18 contact offset baseline
 
 The optional initialization diagnostic binds the installed Tensor API and reads the single shape slot of three exact links at SDK step 2. CPU fixtures verify the readback contract. Native values and qualification are pending. [Report](docs/superpowers/reports/2026-11-18-teacher-contact-offset-baseline.md).

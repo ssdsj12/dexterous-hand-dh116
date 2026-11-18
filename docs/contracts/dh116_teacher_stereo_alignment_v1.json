@@ -1,0 +1,148 @@
+{
+  "package": "teacher.student-stereo-alignment-v1",
+  "branch": "11-17",
+  "base_commit": "bd5c119fbfe1dfe46b38d7c8d29cdf09cf00a5fa",
+  "report": "docs/superpowers/reports/2026-11-18-teacher-stereo-alignment.md",
+  "status": "cpu_verified_initialization_pair_native_pending",
+  "cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_teacher_force_runtime.py",
+      "tests/test_native_phase_contract_v2.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_deformx_end_supported_scene.py",
+      "tests/test_teacher_preview_recording.py",
+      "tests/test_teacher_video.py",
+      "tests/test_teacher_video_delivery.py",
+      "tests/test_teacher_cached_replay.py",
+      "tests/test_teacher_read_only_display_usd.py",
+      "tests/test_teacher_grasp_preview_runtime.py",
+      "tests/test_teacher_supported_runtime.py",
+      "tests/test_dh116_curriculum_and_fixes.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_teacher_seed_initialization.py",
+      "tests/test_teacher_acquisition_geometry.py",
+      "tests/test_teacher_power_surface_audit.py",
+      "tests/test_teacher_initialization_worker.py",
+      "tests/test_tripod_cooked_geometry.py",
+      "tests/test_dh116_flexible_colliders.py",
+      "tests/test_dh116_cooked_convex_hulls.py",
+      "tests/test_dh116_cooked_hull_device_parity.py",
+      "tests/test_teacher_cooked_readback_audit.py",
+      "tests/test_teacher_owner_diagnostics.py",
+      "tests/test_simulation_owner_cleanup.py",
+      "tests/test_teacher_tensor_view_owners.py",
+      "tests/test_teacher_cuda_frame_owners.py",
+      "tests/test_teacher_cleanup_suggestions.py",
+      "tests/test_teacher_cuda_frame_walk_v2.py",
+      "tests/test_teacher_stat_cache_release.py",
+      "tests/test_teacher_cooked_representation_audit.py",
+      "tests/test_teacher_cooked_failed_face_audit.py",
+      "tests/test_teacher_contact_offset_baseline.py",
+      "tests/test_tiled_stereo_capture.py",
+      "tests/test_teacher_stereo_alignment.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-alignment-20261118/cpu.log",
+    "log_sha256": "9751617580c4b70e56e0ec563693006052f2ab21395cb15ad523eb17677d4cab",
+    "passed": 591,
+    "failed": 0,
+    "skipped": 0
+  },
+  "targeted_cpu": {
+    "passed": 129,
+    "new_cases": 8
+  },
+  "source_sha256": {
+    "scripts/diagnose_dh116_teacher_initialization.py": "2c5a92826ff8e2b91a7ca09f35ee64366ed7faa05dfb4bdb058e4d967397ed2d",
+    "scripts/diagnose_dh116_teacher_stereo_alignment.py": "50d0ec58c1612a08f4eb44fe5eae85ed7e38f902559126c73145d569c26c6098",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_stereo_alignment.py": "255ba5d81f903cc9ff72e1838db286137d62b962a07e996e46202fc61e02d478",
+    "src/go2_pvcnn/control/dh116/tabletop_tiled_stereo_capture.py": "3e6183ca179b10ec99cd9bc8213640a069661a3ba13148a067870ac2cb4a8f57",
+    "configs/dh116_training/stereo_camera_front_640x480_v3.json": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b",
+    "scripts/train_dh116_gpu_teacher_ppo.py": "f76d42c53bd7adb904f5d7e28741f83657fe688db7b5f64d66a436e60cecf9d6",
+    "tests/test_teacher_stereo_alignment.py": "181c375c69a4e4c1fc8bcb50fd729a6a9d30525c6f8ab4d93c26432ae46b9cde"
+  },
+  "native_runs": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "teacher_source": "frozen GPU Teacher 67D get_obs",
+  "capture_pairs": 1,
+  "ppo_collector_connected": false,
+  "artifacts": [
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-alignment-20261118/cpu.json",
+      "sha256": "000c60083d665a1bdf9273c8edcc55782411cebc3016cb9622f331c136586597"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-alignment-20261118/cpu.log",
+      "sha256": "9751617580c4b70e56e0ec563693006052f2ab21395cb15ad523eb17677d4cab"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-alignment-20261118/green-final.json",
+      "sha256": "2c01533481c985a654663add98debf818a7c604101846ee2dc7c5e538b5a6001"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-alignment-20261118/green-final.log",
+      "sha256": "037e6b551564bfc66d0768a55a563071a055c2cd0b24ef141c045359c705394c"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-alignment-20261118/green.json",
+      "sha256": "4c56ea5dd3884973629288528ab61776bd6d7448a587bbf7fe9aed7417a7ad6c"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-alignment-20261118/green.log",
+      "sha256": "d225b40b26a740bc40332550942f272e152bbfb760700ebf04c1ebb00036c9a0"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-alignment-20261118/red.json",
+      "sha256": "a67a471bd5b2876f1c486342a4ef672a469bb5a68ae9fbcdf1012b187fcc335e"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-alignment-20261118/red.log",
+      "sha256": "cdbdef2394afc5b01f212e4099df40ec3c1c1304ff7114293e0f96c9e2cac6d2"
+    }
+  ],
+  "publication": {
+    "state": "pending_windows_publication"
+  },
+  "registry_cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-alignment-20261118/registry.log",
+    "log_sha256": "2ab04322a983894d690f9821d40365f80dd2525f92ddaf65488d9efae505ef58",
+    "passed": 55,
+    "overlaps_cpu_regression": true
+  }
+}
