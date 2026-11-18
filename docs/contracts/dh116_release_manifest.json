@@ -25906,6 +25906,56 @@
         "verified_at_utc": "2026-11-18T10:21:44.581671+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.webrtc-shutdown-order-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-webrtc-shutdown-order.md",
+      "readiness": "docs/contracts/teacher_webrtc_shutdown_order_v1.json",
+      "cpu_tests": {
+        "passed": 54,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ea0f14a627d7a11a15d49891cf759446562450cf",
+        "source_tree": "37eff4c81be9c879f4c48d0ea8c420a2666549ce",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T10:35:23.129335+00:00"
+      },
+      "remote_verified": true
+    },
+    {
+      "package": "teacher.native-stereo-second-reset-clock-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-native-stereo-second-reset-clock.md",
+      "readiness": "docs/contracts/dh116_native_stereo_second_reset_clock_v1.json",
+      "cpu_tests": {
+        "passed": 84,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ebd8268b6526bf07fba59c8c4e6a71b871d5f7bd",
+        "source_tree": "a23a8bea6c20c219f5cba5f6b3a8bc448bef5f5b",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T10:35:23.130881+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }

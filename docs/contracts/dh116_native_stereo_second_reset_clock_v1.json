@@ -217,6 +217,13 @@
   "training_samples_admitted": 0,
   "teacher_admission": false,
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "ebd8268b6526bf07fba59c8c4e6a71b871d5f7bd",
+    "source_tree": "a23a8bea6c20c219f5cba5f6b3a8bc448bef5f5b",
+    "remote_branch": "11-17",
+    "files_verified": 7,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T10:35:23.130881+00:00"
   }
 }
