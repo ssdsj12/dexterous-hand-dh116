@@ -25881,6 +25881,31 @@
         "verified_at_utc": "2026-11-18T10:08:21.898135+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.webrtc-display-gate-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-webrtc-display-gate.md",
+      "readiness": "docs/contracts/teacher_webrtc_display_gate_v1.json",
+      "cpu_tests": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "be17e867663c937d6667db0fbd091ca49f52443a",
+        "source_tree": "b9c4969eea9923f551fb46f13eaebff51c90d583",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T10:21:44.581671+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
