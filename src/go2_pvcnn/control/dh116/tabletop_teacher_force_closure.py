@@ -1,0 +1,133 @@
+"""Conservative force-closure evidence from complete DeformX solver pair captures.
+
+This CPU reducer reports simulated contact reaction only. It makes no slip,
+posture, gravity, dynamics, hardware, or native grasp-success inference.
+"""
+import itertools
+import math
+
+import numpy as np
+
+from .tabletop_deformx_pair_capture import validate_pair_capture
+
+
+_PAD_NAMES = ("thumb", "index", "middle", "ring", "little")
+_REQUIRED = {"Pinch": 2, "Tripod": 3, "Power": 5}
+
+
+def _pad_summary(pairs, divisor, mesh_id):
+    load = sum(max(0., p["normal_force_on_rod_n"]) for p in pairs)
+    weighted = np.zeros(3)
+    force = np.zeros(3)
+    for pair in pairs:
+        weighted += max(0., pair["normal_force_on_rod_n"]) * np.asarray(pair["outward_normal_world"])
+        force += pair["force_on_rod_world_n"]
+    length = float(np.linalg.norm(weighted))
+    normal = (weighted / length).tolist() if length > 1e-12 else None
+    if not math.isfinite(load) or not np.isfinite(force).all() or not math.isfinite(length):
+        raise ValueError("nonfinite reduced reaction")
+    return dict(mesh_id=mesh_id, normal_load_n=float(load / divisor),
+                force_on_rod_world_n=(force / divisor).tolist(),
+                normal_on_rod_world=normal)
+
+
+def _opposition(pads, grasp):
+    """Pick an opposing pair whose axis also covers every required Tripod pad."""
+    candidates = []
+    for first, second in itertools.combinations(pads, 2):
+        a, b = pads[first]["normal_on_rod_world"], pads[second]["normal_on_rod_world"]
+        if a is None or b is None:
+            continue
+        a, b = np.asarray(a), np.asarray(b)
+        cosine = float(np.clip(np.dot(a, b), -1., 1.))
+        faces = True
+        if grasp == "Tripod":
+            axis = a - b
+            length = np.linalg.norm(axis)
+            faces = bool(length > 1e-12 and all(
+                pad["normal_on_rod_world"] is not None and
+                abs(float(np.dot(pad["normal_on_rod_world"], axis / length))) >= .2
+                for pad in pads.values()))
+        candidates.append((cosine, first, second, faces))
+    eligible = [c for c in candidates if c[0] <= -.25 and c[3]]
+    chosen = min(eligible or candidates, default=None)
+    return dict(effective=bool(eligible),
+                opposition_cos=None if chosen is None else chosen[0],
+                opposing_pads=[] if chosen is None else list(chosen[1:3]),
+                all_required_pads_on_opposing_faces=False if chosen is None else chosen[3])
+
+
+def reduce_force_closure(packet, *, grasp, dt_s=1/480):
+    """Reduce the original atomic 13-mesh, one-rod solver capture.
+
+    Grasp accepts lowercase runtime names and capitalized aliases.
+    Mesh slots: left thumb..little 0..4, table 5, right thumb..little 6..10,
+    supports 11/12. Each required pad must exceed .05 N, each hand must
+    exceed .3 N, and weighted normals must oppose (cos <= -.25) in *every*
+    solver substep. Tripod pads must project onto the selected opposing axis
+    with abs projection >= .2. Power cannot qualify without a real palm /
+    proximal source, absent in this mesh layout.
+
+    Per-pad loads and force vectors are averages over all solver substeps;
+    per_substep contains the unaveraged evidence used for the decision.
+    Invalid, incomplete, overflowing or unreconciled captures raise ValueError.
+    """
+    if isinstance(grasp, str) and grasp in ("pinch", "tripod", "power"):
+        grasp = grasp.capitalize()
+    if not isinstance(grasp, str) or grasp not in _REQUIRED:
+        raise ValueError("grasp must be pinch, tripod or power (capitalized aliases accepted)")
+    try:
+        if packet["mesh_count"] != 13:
+            raise ValueError("force closure requires the exact 13 mesh layout")
+        # Do not filter/remap the packet or rebuild solver totals before validating.
+        capture = validate_pair_capture(
+            packet, dt_s=dt_s, node_forces=packet["node_forces_on_rod_world_n"],
+            mesh_wrenches=packet["mesh_wrenches_on_mesh_world"])
+    except (KeyError, TypeError, IndexError, OverflowError) as exc:
+        raise ValueError("malformed complete solver pair packet") from exc
+    substeps = packet["substeps"]
+    by_mesh = {mesh: [] for mesh in range(13)}
+    for pair in capture["pairs"]:
+        by_mesh[pair["mesh_index"]].append(pair)
+    hands = {}
+    for side, base in (("left", 0), ("right", 6)):
+        required = _PAD_NAMES[:_REQUIRED[grasp]]
+        summaries = {name: _pad_summary(by_mesh[base + i], substeps, base + i)
+                     for i, name in enumerate(_PAD_NAMES)}
+        evidence, loaded, reasons = [], [], []
+        for step in range(substeps):
+            pads = {name: _pad_summary(
+                [p for p in by_mesh[base + i] if p["substep"] == step], 1, base + i)
+                for i, name in enumerate(required)}
+            step_reasons = ["required_pad_normal_load_not_above_0.05n:" + name
+                            for name, pad in pads.items() if pad["normal_load_n"] <= .05]
+            total = sum(pad["normal_load_n"] for pad in pads.values())
+            if total <= .3:
+                step_reasons.append("required_hand_normal_load_not_above_0.3n")
+            opposition = _opposition(pads, grasp)
+            if not opposition["effective"]:
+                step_reasons.append("required_pad_normal_opposition_missing")
+            if grasp == "Power":
+                step_reasons.append("power_palm_proximal_source_missing")
+            passed = not step_reasons
+            if passed:
+                loaded.append(step)
+            reasons.extend(step_reasons)
+            evidence.append(dict(substep=step, per_pad=pads, total_normal_load_n=float(total),
+                                 loaded=passed, reasons=step_reasons, **opposition))
+        cosines = [step["opposition_cos"] for step in evidence]
+        hands[side] = dict(
+            loaded=len(loaded) == substeps, loaded_substeps=loaded,
+            required_mesh_ids=[base + i for i in range(len(required))],
+            required_pads=list(required), per_pad=summaries,
+            total_normal_load_n=float(sum(summaries[name]["normal_load_n"] for name in required)),
+            worst_opposition_cos=None if any(c is None for c in cosines) else max(cosines),
+            per_substep=evidence, reasons=sorted(set(reasons)))
+    support = {name: _pad_summary(by_mesh[mesh], substeps, mesh)
+               for name, mesh in (("table", 5), ("support_0", 11), ("support_1", 12))}
+    bilateral = all(hand["loaded"] for hand in hands.values())
+    return dict(bilateral=bilateral, grasp=grasp, per_hand=hands,
+                external_support=dict(per_mesh=support,
+                    total_normal_load_n=float(sum(p["normal_load_n"] for p in support.values()))),
+                source_scope="deformx_simulated_contact_reaction_not_hardware", native_success=False,
+                solver_substeps=substeps, all_solver_substeps_loaded=bilateral)
