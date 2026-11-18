@@ -41178,6 +41178,29 @@
         "skipped": 0,
         "scope": "CPU factory and original fixture optimizer verified."
       }
+    },
+    "teacher.wire-pose-candidate-v1": {
+      "title": "线缆材料坐标下的 DH116 预抓取姿态",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_wire_pose_candidate.py",
+        "tests/test_teacher_seed_initialization.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_teacher_force_runtime.py",
+        "tests/test_native_phase_contract_v2.py"
+      ],
+      "readiness": "docs/contracts/dh116_wire_pose_candidate_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-wire-pose-candidate.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 147,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU pose mapping only; collision and native force validation pending"
+      }
     }
   },
   "execution_target": {

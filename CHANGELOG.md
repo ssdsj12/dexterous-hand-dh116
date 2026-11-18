@@ -1,3 +1,7 @@
+## 2026-11-18 Wire-relative DH116 pregrasp candidates
+
+The CPU candidate tool places each existing hand pose at its own wire material node, retaining DH116 joint coupling and the rod geometry. Native collision and force validation remain separate. [Report](docs/superpowers/reports/2026-11-18-wire-pose-candidate.md).
+
 ## 2026-11-18 Three-grasp Teacher input and contact evidence
 
 Pinch now links decisions and bootstrap values to the raw state consumed by the model. Tripod verifies signed thumb opposition against both partner fingers. The production Reset reader checks natural exit for fresh evidence. [Review and regression](docs/superpowers/reports/2026-11-18-three-grasp-teacher-source-review.md).
