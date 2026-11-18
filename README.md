@@ -1,3 +1,7 @@
+## 2026-11-18 Teacher first-update checkpoint sealing
+
+The fresh Teacher update requires a complete single-episode 32-control PPO window and seals only audited checkpoint bytes. A CPU regression exercised the pinned KL Guard configuration. Native worker and grasp qualification are pending. [Report](docs/superpowers/reports/2026-11-18-dh116-teacher-first-update-seal.md).
+
 ## 2026-11-18 Wire-relative DH116 pregrasp candidates
 
 The CPU candidate tool places each existing hand pose at its own wire material node, retaining DH116 joint coupling and the rod geometry. Native collision and force validation remain separate. [Report](docs/superpowers/reports/2026-11-18-wire-pose-candidate.md).

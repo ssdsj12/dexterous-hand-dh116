@@ -1,4 +1,5 @@
 """Bounded CPU fixtures over original physical owner and original PPO update."""
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -108,8 +109,19 @@ def test_preflight_reports_new_budget_authority_and_resource_reservation_separat
 def test_rollout32_r0_update_retains_all_source_bindings(monkeypatch, tmp_path, backend_profile):
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest
 
-    collector, _, rod, _, sim, _ = fixture(monkeypatch, tmp_path, backend_profile,
-                                          rollout_steps=32, physics_budget_end=258)
+    from go2_pvcnn.control.dh116.tabletop_privileged_ppo import PPOConfig
+
+    approved = json.loads((Path(__file__).resolve().parents[1] /
+                           "configs/dh116_training/approach_wiring_smoke_v1.json").read_text())["ppo"]
+    ppo = PPOConfig(lr=approved["learning_rate"], gamma=approved["gamma"],
+                    lam=approved["gae_lambda"], clip=approved["clip"], entropy_coef=approved["entropy"],
+                    value_coef=approved["value"], max_grad_norm=approved["max_grad_norm"],
+                    epochs=approved["epochs"], minibatches=approved["minibatches"],
+                    target_kl=approved["target_kl"], kl_backtrack_steps=approved["kl_backtrack_steps"])
+    with torch.random.fork_rng(devices=[]):
+        torch.manual_seed(116)
+        collector, _, rod, _, sim, _ = fixture(monkeypatch, tmp_path, backend_profile,
+                                              rollout_steps=32, physics_budget_end=258, ppo_config=ppo)
 
     def recorded(model, pre, context, *, purpose):
         observation = collector.sources.pack(model, pre, context)
@@ -121,12 +133,25 @@ def test_rollout32_r0_update_retains_all_source_bindings(monkeypatch, tmp_path, 
         return observation, sequence
 
     collector.sources.pack_recorded = recorded
-    result = runner().run_updates(collector)
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_update import run_fresh_update
+    from test_native_teacher_checkpoint import contract
+
+    with torch.random.fork_rng(devices=[]):
+        torch.manual_seed(117)
+        result = run_fresh_update(collector, checkpoint_contract=contract(collector.trainer))
+    checkpoint = tmp_path / "teacher_clean.pt"
+    assert checkpoint.is_file()
+    assert result["clean_checkpoint"]["path"] == checkpoint.name
+    assert result["clean_checkpoint"]["sha256"] == hashlib.sha256(checkpoint.read_bytes()).hexdigest()
+    assert result["scope"] == "cpu_fixture"
+    assert result["native_qualification"] is result["teacher_admission"] is False
     rows = [json.loads(line) for line in collector.journal.path.read_text().splitlines()]
     decisions = [row for row in rows if row["operation"] == "decision"]
     settlements = [row for row in rows if row["operation"] == "settlement"]
     inputs = [row for row in rows if row["operation"] == "teacher_input_source"]
     physical = [row for row in rows if row["operation"] == "physical"]
+    assert rows[-1]["operation"] == "fresh_update_checkpoint_sealed"
+    assert rows[-1]["payload"] == result
     assert len(decisions) == len(settlements) == 32
     assert len(inputs) == 64
     assert len(physical) == rod.rope.steps == 256
@@ -141,5 +166,7 @@ def test_rollout32_r0_update_retains_all_source_bindings(monkeypatch, tmp_path, 
         assert second["payload"]["observation_sha256"] == bootstrap["observation_sha256"]
     assert result["updates"] == 1 and result["accepted_minibatch_updates"] > 0
     assert result["parameter_delta_l2"] > 0
+    exact_kl = result["metrics"]["epoch_trace"][-1]["exact_full_rollout_kl"]
+    assert exact_kl <= approved["target_kl"]
     print(f"rows={len(rows)} sources={len(inputs)} controls={len(decisions)} physics={len(physical)} "
-          f"accepted={result['accepted_minibatch_updates']} l2={result['parameter_delta_l2']:.9g}")
+          f"accepted={result['accepted_minibatch_updates']} l2={result['parameter_delta_l2']:.9g} exact_kl={exact_kl:.9g}")

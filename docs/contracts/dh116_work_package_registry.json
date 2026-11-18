@@ -38414,7 +38414,8 @@
       "executor": "prepared",
       "dependencies": [
         "teacher.actual-launch-l01-cpu",
-        "teacher.actual-fresh-pinch-scene-cpu"
+        "teacher.actual-fresh-pinch-scene-cpu",
+        "teacher.actual-fresh-update-seal-cpu"
       ],
       "status": "blocked",
       "reason": "Pinch fresh scene, C04 owner factory and pre-reset bootstrap input ledger pass CPU tests. Actual provider, raw41/model binding, A update and artifact closure require implementation and native verification.",
@@ -41200,6 +41201,28 @@
         "failed": 0,
         "skipped": 0,
         "scope": "CPU pose mapping only; collision and native force validation pending"
+      }
+    },
+    "teacher.actual-fresh-update-seal-cpu": {
+      "title": "Teacher 首次 32 步 PPO 更新与检查点封存",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.actual-fresh-pinch-scene-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_update.py",
+        "tests/test_native_teacher_training.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_first_update_seal_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-dh116-teacher-first-update-seal.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 18,
+        "related_passed": 267,
+        "failed": 0,
+        "scope": "CPU original optimizer, KL Guard and immutable checkpoint audit. Actual worker remains blocked."
       }
     }
   },
