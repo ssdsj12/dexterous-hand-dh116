@@ -72,7 +72,7 @@ def _save_frame(output, receipt, packet, *, image_module, np):
     return str(path.relative_to(output)), legacy.sha(path)
 
 
-def _record(app, plan, started, scope, rows):
+def _record(app, plan, started, scope, rows, trace):
     import torch
     import numpy as np
     from PIL import Image
@@ -80,6 +80,7 @@ def _record(app, plan, started, scope, rows):
     from go2_pvcnn.control.dh116.tabletop_teacher_grasp_preview_runtime import create_runtime
     from go2_pvcnn.control.dh116.tabletop_teacher_read_only_display import ReadOnlyHandDisplay
     from go2_pvcnn.control.dh116.tabletop_stereo_calibration import StereoCalibration
+    from go2_pvcnn.control.dh116.tabletop_preview_warp_readback import inspect_rgb_readback_abi
     from go2_pvcnn.control.dh116.tabletop_stereo_rgb_bridge import _NativeRenderSetting
     from go2_pvcnn.control.dh116.tabletop_tiled_stereo_capture import TiledStereoCapture
     from go2_pvcnn.control.dh116.tabletop_tiled_stereo_native import TiledNativeStereoReader
@@ -93,6 +94,15 @@ def _record(app, plan, started, scope, rows):
                                gpu=2, device="cuda:2", horizon=budget["policy_horizon"])
         rt = create_runtime(ROOT, args, app, plan["teacher_source_sha256"], step_observer=boundary)
         sim = scope["sim"] = rt.sim
+        trace.watch("simulation", sim, owner="recording scope", release="owned SimulationContext cleanup")
+        for side in ("left", "right"):
+            hand = getattr(rt, side + "_hands")
+            trace.watch(side + "_hand", hand, owner="runtime", release="runtime scope dropped")
+            trace.watch(side + "_articulation_data", hand.data,
+                        owner=side + " articulation", release="runtime scope dropped")
+            trace.watch(side + "_root_physx_view", hand.root_physx_view,
+                        owner=side + " articulation", release="runtime scope dropped", gpu_view=True)
+        hand = None
         rt.reset_all()
         if sim.current_time_step_index != budget["sdk_setup_steps"]:
             raise RuntimeError("unexpected setup physics budget")
@@ -133,6 +143,11 @@ def _record(app, plan, started, scope, rows):
         reader = TiledNativeStereoReader(sim, origins, cal, rt.device)
         camera = TiledStereoCapture(sim, reader, cal, snapshot, render_setting=setting, origins=origins,
                                     max_render_attempts=plan["teacher_stereo"]["max_render_attempts"])
+        trace.watch("fixed_stereo_reader", reader, owner="camera", release="owned camera close")
+        warp_abi = inspect_rgb_readback_abi()
+        legacy.write_new(out/"warp_rgb_abi.json", warp_abi)
+        if warp_abi["error"] is not None:
+            raise ValueError(warp_abi["error"])
         run = out.name
         with (out/"sync_log.jsonl").open("x") as ledger:
             window = monotonic()
@@ -221,7 +236,7 @@ def execute_native(plan):
         out.mkdir()
         legacy.write_new(out/"frozen_plan.json", plan)
         started = monotonic()
-        app = None
+        app = trace = None
         errors, scope, rows = [], {}, []
 
         def save_error(phase, error):
@@ -235,19 +250,19 @@ def execute_native(plan):
                 from isaaclab.app import AppLauncher
                 import signal
                 from go2_pvcnn.control.dh116.tabletop_preview_launcher import (
-                    install_fatal_defaults, preview_launcher_type)
+                    ManagedPreviewApp, preview_launcher_type)
                 if any(name == "pxr" or name.startswith("pxr.") for name in sys.modules):
                     raise RuntimeError("USD loaded before owned AppLauncher")
                 argv = sys.argv
                 try:
                     sys.argv = argv[:1]
                     launcher = preview_launcher_type(AppLauncher)
-                    app = launcher(headless=True, enable_cameras=True, device="cuda:2", livestream=0,
-                                   active_gpu=2, physics_gpu=2, multi_gpu=False, fast_shutdown=False,
-                                   experience=plan["experience"]).app
+                    app = ManagedPreviewApp(
+                        launcher(headless=True, enable_cameras=True, device="cuda:2", livestream=0,
+                                 active_gpu=2, physics_gpu=2, multi_gpu=False, fast_shutdown=False,
+                                 experience=plan["experience"]), signal_api=signal)
                 finally:
                     sys.argv = argv
-                install_fatal_defaults(signal)
                 import torch
                 torch.cuda.set_device(2)
                 from scripts.dh116_pinch_startup_v3 import StartupTrace
@@ -262,7 +277,7 @@ def execute_native(plan):
                             raise ValueError("post-recording SDK clock outside frozen budget")
                         release_cache(sim, expected_sdk_step=step)
 
-                run_owned_call(lambda owners: _record(app, plan, started, scope, rows),
+                run_owned_call(lambda owners: _record(app, plan, started, scope, rows, trace),
                                synchronize=lambda:torch.cuda.synchronize("cuda:2"), ownership=trace,
                                before_collect=release_at_current_boundary)
             except BaseException as error:
@@ -320,6 +335,9 @@ def execute_native(plan):
                         owned = None
                     except BaseException as error:
                         save_error("close", error)
+                    else:
+                        if trace is not None:
+                            trace.checkpoint("after app close returned")
         if monotonic()-started > plan["budget"]["soft_wall_seconds"]:
             errors.append(dict(phase="wall", error="soft wall budget exceeded"))
         legacy.write_new(out/"result.json", dict(errors=errors, frames=len(rows),

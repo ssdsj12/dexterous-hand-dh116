@@ -1,3 +1,7 @@
+## 2026-11-18 Teacher runtime diagnostics
+
+The native RGB recorder saves the actual Warp and Replicator pointer contract before first read and observes known launcher and articulation owners through close. CPU-only preflight verifies the pinned reward configurations and backend for all three camera-free Teacher styles. Reset and physical qualification remain pending. [Report](docs/superpowers/reports/2026-11-18-teacher-runtime-environment.md).
+
 ## 2026-11-18 native Teacher stereo synchronization
 
 An opt-in headless recorder binds actual dual Student RGB, Teacher state and the SDK action-write boundary. The first Pinch native run was blocked by the loaded Isaac Warp ABI, with zero paired frames and a post-close signal. The bundled Warp path is verified on CPU and awaits native validation. [Report](docs/superpowers/reports/2026-11-18-teacher-stereo-sync.md).

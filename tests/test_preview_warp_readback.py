@@ -89,6 +89,11 @@ node.decorator_list = []
 exec(compile(ast.Module(body=[node],type_ignores=[]),str(path),"exec"),vars(module))
 sys.modules[module.__name__] = module
 raw = module._reshape_output_ptr
+receipt = adapter.inspect_rgb_readback_abi()
+assert receipt["policy"] == "native_owner_false"
+assert receipt["warp_version"] == "1.5.0"
+assert receipt["warp_extension_config"]["path"].endswith("/config/extension.toml")
+assert receipt["annotator_uses_same_warp"] and receipt["error"] is None
 source = np.array([1., 2., 3.], np.float32)
 with adapter.isaac45_rgb_readback_scope():
     assert module._reshape_output_ptr is raw

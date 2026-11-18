@@ -56,28 +56,61 @@ def binding_scope(module,replacement):
                 raise RuntimeError("annotator pointer binding changed concurrently")
             module._reshape_output_ptr=previous
 
+def _file_identity(path):
+    path = Path(path).resolve()
+    return dict(path=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+
+
+def _pointer_abi(module, warp):
+    annotator = _file_identity(module.__file__)
+    warp_init = _file_identity(warp.__file__)
+    warp_array = _file_identity(inspect.getfile(warp.array.__init__))
+    parameters = inspect.signature(warp.array.__init__).parameters
+    raw = inspect.unwrap(module._reshape_output_ptr)
+    same_warp = isinstance(raw, types.FunctionType) and raw.__globals__.get("wp") is warp
+    receipt = dict(warp_version=warp.__version__, warp_module=warp_init, warp_array=warp_array,
+                   annotator_module=annotator, annotator_uses_same_warp=same_warp,
+                   owner_argument="owner" in parameters, deleter_argument="deleter" in parameters,
+                   warp_extension_config=None, policy=None, error=None)
+    if annotator["sha256"] != ANNOTATOR_SHA256 or not same_warp:
+        receipt["error"] = "unverified Isaac Replicator RGB pointer source"
+    elif warp.__version__ == "1.5.0" and "owner" in parameters and parameters["owner"].default is False:
+        root = Path(warp_init["path"]).parents[1]
+        fingerprints = {str(Path(row["path"]).relative_to(root)):row["sha256"]
+                        for row in (warp_init, warp_array) if Path(row["path"]).is_relative_to(root)}
+        if fingerprints == BUNDLED_WARP_SOURCES:
+            receipt["policy"] = "native_owner_false"
+            config = root / "config/extension.toml"
+            if config.is_file():
+                receipt["warp_extension_config"] = _file_identity(config)
+        else:
+            receipt["error"] = "unverified bundled Warp RGB pointer source"
+    elif warp.__version__ == "1.12.1" and "owner" not in parameters and "deleter" in parameters:
+        receipt["policy"] = "scoped_owner_to_deleter"
+    else:
+        receipt["error"] = "unverified Isaac/Warp RGB pointer ABI"
+    return receipt
+
+
+def inspect_rgb_readback_abi():
+    """Read the active Isaac process source and constructor contract without reading RGB."""
+    with _LOCK:
+        module = importlib.import_module("omni.replicator.core.scripts.utils.annotator_utils")
+        return _pointer_abi(module, importlib.import_module("warp"))
+
+
 @contextmanager
 def isaac45_rgb_readback_scope():
     """Only use the exact audited installed combination, inside an active App."""
-    module=importlib.import_module("omni.replicator.core.scripts.utils.annotator_utils")
-    warp=importlib.import_module("warp")
-    path=Path(module.__file__).resolve()
-    parameters=inspect.signature(warp.array.__init__).parameters
-    raw=inspect.unwrap(module._reshape_output_ptr)
-    if (hashlib.sha256(path.read_bytes()).hexdigest()!=ANNOTATOR_SHA256
-            or not isinstance(raw,types.FunctionType) or raw.__globals__.get("wp") is not warp):
-        raise ValueError("unverified Isaac Replicator RGB pointer source")
-    if warp.__version__=="1.5.0" and "owner" in parameters and parameters["owner"].default is False:
-        source_paths=(Path(warp.__file__).resolve(),Path(inspect.getfile(warp.array.__init__)).resolve())
-        root=source_paths[0].parents[1]
-        fingerprints={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in source_paths}
-        if fingerprints != BUNDLED_WARP_SOURCES:
-            raise ValueError("unverified bundled Warp RGB pointer source")
-        with _LOCK:
+    with _LOCK:
+        module = importlib.import_module("omni.replicator.core.scripts.utils.annotator_utils")
+        warp = importlib.import_module("warp")
+        receipt = _pointer_abi(module, warp)
+        if receipt["policy"] == "native_owner_false":
             yield
-        return
-    if warp.__version__!="1.12.1" or "owner" in parameters or "deleter" not in parameters:
-        raise ValueError("unverified Isaac/Warp RGB pointer ABI")
-    replacement=adapt_pointer_function(module._reshape_output_ptr,warp)
-    with binding_scope(module,replacement):
-        yield
+        elif receipt["policy"] == "scoped_owner_to_deleter":
+            replacement = adapt_pointer_function(module._reshape_output_ptr, warp)
+            with binding_scope(module, replacement):
+                yield
+        else:
+            raise ValueError(receipt["error"])

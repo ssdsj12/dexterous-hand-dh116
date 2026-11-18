@@ -40849,6 +40849,29 @@
         "skipped": 0,
         "scope": "CPU tests passed; first native attempt failed before RGB and control"
       }
+    },
+    "teacher.runtime-environment-diagnostics-v1": {
+      "title": "Teacher 运行环境、实际 Warp ABI 与关闭边界",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.student-stereo-alignment-v1"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_preview_warp_readback.py",
+        "tests/test_preview_launcher.py",
+        "tests/test_teacher_stereo_sync.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_runtime_environment_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-runtime-environment.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 618,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU only. All six Teacher configurations remain native blocked."
+      }
     }
   },
   "execution_target": {
