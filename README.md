@@ -1,3 +1,7 @@
+## 2026-11-18 Teacher stereo alignment audit
+
+The offline auditor verifies saved Student-camera calibration and RGB fingerprints, recomputes privileged geometry in both image and palm frames, and checks consecutive 60 Hz policy captures against 480 Hz SDK time. Native image and action evidence are pending. [Report](docs/superpowers/reports/2026-11-18-teacher-stereo-alignment-offline.md).
+
 ## 2026-11-18 flexible Teacher stereo initialization
 
 An independent Teacher initialization worker uses the Student fixed stereo lenses and binds its RGB pair to raw DeformX nodes, both world palm poses, and the original 67D Teacher observation. CPU verification is complete. Actual frame capture and continuous rollout are pending. [Report](docs/superpowers/reports/2026-11-18-teacher-stereo-alignment.md).

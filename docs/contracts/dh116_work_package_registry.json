@@ -40804,6 +40804,27 @@
         "skipped": 0,
         "scope": "initialization alignment CPU only"
       }
+    },
+    "teacher.student-stereo-alignment-offline-v1": {
+      "title": "Teacher 双 RGB 离线投影和物理时序检查",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.student-stereo-alignment-v1"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_stereo_alignment_offline.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_stereo_alignment_offline_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-stereo-alignment-offline.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 599,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU offline audit only"
+      }
     }
   },
   "execution_target": {
