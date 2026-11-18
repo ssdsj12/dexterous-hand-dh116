@@ -17,8 +17,8 @@ Direct atol1e-4 admission is rejected: current original validator scales its flo
 - [x] Test green and existing auditor regression. Do not change the protected _validate_hull or installed SDK.
 - [x] Run this opt-in CLI on the latest saved34-owner JSON, record input/output SHA, per-side source/cooked counts, residuals and diagnostic threshold counts; report existing0/34 separately. No raw arrays or large logs in Git.
 - [x] Related CPU544, Registry55 (overlap), protected528 and3 original models verified; diff and raw packet SHA checked.
-- [ ] Update report/readiness/Registry/release/README/CHANGELOG; Ubuntu commit, Windows import/push, remote SHA/tree/files verify. PR2 Draft.
-- [ ] Leave original geometry/admission blocked unless a separate evidence-backed versioned contract is reviewed. Do not use this audit result to start Teacher.
+- [x] Code/report/readiness/Registry/release/README/CHANGELOG committed as1ca209f; Windows normal push and remote SHA/tree/9files verified. PR2 Draft.
+- [x] Original strict geometry/admission stays blocked; no Teacher launch or new native run.
 
 ## Review closure
 - [x] Finite-input composition overflow reproduced before repair; np.errstate now fails closed.

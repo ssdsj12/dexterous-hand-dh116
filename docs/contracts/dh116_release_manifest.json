@@ -25546,9 +25546,17 @@
       "native_qualification": false,
       "teacher_admission": false,
       "publication": {
-        "state": "pending_windows_publication"
+        "state": "windows_publication_verified",
+        "source_commit": "1ca209f497559bb3969dc44577ac6ed3e806331b",
+        "source_tree": "a5947dac18fed69e8a390376eeaa5688060436dc",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "route": "Windows bare relay normal push/fetch commit/tree/file readback",
+        "verified_at_utc": "2026-11-18T02:25:29.901555+00:00",
+        "pr2_draft": true,
+        "pr2_merged": false
       },
-      "remote_verified": false
+      "remote_verified": true
     }
   ]
 }

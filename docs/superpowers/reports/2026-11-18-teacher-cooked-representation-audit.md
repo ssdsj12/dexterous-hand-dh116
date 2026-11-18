@@ -59,3 +59,5 @@ c122c87408d681166cf9a437479d0010e1a8dd335dfdf55cb7e7ec0e2610982e。
 下一项应基于已保存的原polygon和实际求解器消费方式，提出独立版本的表示契约及空间/力学误差验收；不能以放宽allclose替代。没有新授权前不启动原生、不重Cook、不把此审计通过写成Teacher或抓取成功。
 
 元数据更新后的Registry回归55 passed、0 failed、0 skipped，和544项联合回归重叠，不累加。原生预算没有增加或消耗。
+
+源码与报告提交1ca209f497559bb3969dc44577ac6ed3e806331b已通过Windows发布并核验tree a5947dac18fed69e8a390376eeaa5688060436dc及9文件；PR2 Draft=true、merged=false。后续发布核验提交仅更新元数据。
