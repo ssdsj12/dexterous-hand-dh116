@@ -41031,6 +41031,27 @@
         "skipped": 0,
         "scope": "CPU injected display errors; native no rejection at 60 controls."
       }
+    },
+    "teacher.webrtc-shutdown-order-v1": {
+      "title": "WebRTC 原生关闭阶段与首次故障栈",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_webrtc_display_gate.py",
+        "tests/test_simulation_owner_cleanup.py"
+      ],
+      "readiness": "docs/contracts/teacher_webrtc_shutdown_order_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-webrtc-shutdown-order.md",
+      "native_runs": 1,
+      "blocked_reason": "First SIGSEGV in livestream present thread after successful CUDA synchronization and STOP. GDB lost inferior before final status.",
+      "last_result": {
+        "passed": 54,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU pass and bounded native crash localization."
+      }
     }
   },
   "execution_target": {

@@ -1,0 +1,211 @@
+{
+  "package": "teacher.webrtc-shutdown-order-v1",
+  "branch": "11-17",
+  "status": "native_present_thread_sigsegv_after_stop",
+  "base_commit": "b79d19e38b87c7f6cc6c6ddee6a77270ca55c343",
+  "report": "docs/superpowers/reports/2026-11-18-teacher-webrtc-shutdown-order.md",
+  "cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_teacher_webrtc_display_gate.py",
+      "tests/test_preview_shutdown_order.py",
+      "tests/test_preview_shutdown_wiring.py",
+      "tests/test_simulation_owner_cleanup.py",
+      "tests/test_teacher_read_only_display_usd.py",
+      "tests/test_teacher_grasp_preview_runtime.py"
+    ],
+    "passed": 54,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "log_sha256": "8f491184af08bb71daff24d4ba667f8ce3c11f59da45eb2b97c114cce30a05ae"
+  },
+  "native_runs": 1,
+  "budget": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "scripts/view_dh116_teacher_grasps_webrtc.py",
+      "--gpu",
+      "2",
+      "--duration",
+      "25",
+      "--max-control-steps",
+      "60",
+      "--checkpoint-root",
+      "/mnt/mydisk/xk/dh116",
+      "--output",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-webrtc-shutdown-order-20261118/native-viewer-short"
+    ],
+    "gdb": [
+      "gdb",
+      "-batch",
+      "-nx",
+      "-iex",
+      "set auto-load off",
+      "-x",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-webrtc-shutdown-order-20261118/shutdown.gdb",
+      "--args",
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "scripts/view_dh116_teacher_grasps_webrtc.py",
+      "--gpu",
+      "2",
+      "--duration",
+      "25",
+      "--max-control-steps",
+      "60",
+      "--checkpoint-root",
+      "/mnt/mydisk/xk/dh116",
+      "--output",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-webrtc-shutdown-order-20261118/native-viewer-short"
+    ],
+    "gdb_recipe_sha256": "f01d2a4f3aac396ddbbb764601708dfb3917439ee611df08e2c2a1c57b4fa1f9",
+    "sha256": {
+      "scripts/view_dh116_teacher_grasps_webrtc.py": "783509c0c126162ae27655cd5996e1fa418f54b2c481e96884d1a156826f9504",
+      "src/go2_pvcnn/control/dh116/tabletop_teacher_read_only_display.py": "86131fb6df9e982f6a184e3cf62ddd0891aa00702cbaaf0cee33b03a54719963",
+      "src/go2_pvcnn/control/dh116/tabletop_teacher_grasp_preview_runtime.py": "3d20e8d030235857cc58eccb4bc5cbd2aa820f5542745f4c1d9e8145ef30930a",
+      "scripts/train_dh116_gpu_teacher_ppo.py": "f76d42c53bd7adb904f5d7e28741f83657fe688db7b5f64d66a436e60cecf9d6",
+      "configs/dh116_execution/teacher_three_grasp_preview_v1.json": "ef250656cc87a9f083cecbf5f4f0b42db924e25427423fb3f3da12a8b2e9ed3e"
+    },
+    "checkpoints": {
+      "pinch": "0decd82d2492e1e31382670479855948385068d91cf57aa431489cc2b3d8b2d4",
+      "tripod": "61b2127af32885a07a6a835a30c353f7cd3fc80b617dc7e2aed3951387cfb37a",
+      "power": "a3ab4ce1468312c86511f44db51cd9f442369683957c5bb9f5339a88c055962c"
+    },
+    "gpu": 2,
+    "envs": 3,
+    "control_limit": 60,
+    "physical_step_limit": 482,
+    "solver_substep_limit_per_env": 5760,
+    "viewer_duration_s": 25,
+    "soft_timeout_s": 180,
+    "ppo_updates": 0,
+    "auto_retry": false,
+    "auto_kill": false
+  },
+  "native": {
+    "viewer": {
+      "control_steps": 60,
+      "sdk_step": 482,
+      "first_verified_control_step": 1,
+      "rejected_display_frames": 0,
+      "final_display_qualified": true,
+      "ppo_updates": 0,
+      "process_exit_verified": false
+    },
+    "outer": {
+      "gdb_returncode": 1,
+      "inferior_exit_code": null,
+      "inferior_signal": null,
+      "gdb_first_stop": true,
+      "wall_s": 95.08358881087042,
+      "plan_sha256": "c278fa728224f7997a247a979001cd6de311a238ca3be503d95078c74907c074",
+      "log_sha256": "82234eeb15e27e8140f0dec5f0dfbcc3bad5032254fa026739e959a58a1ae1ac",
+      "natural_exit_passed": false,
+      "auto_retry": false,
+      "auto_kill": false
+    },
+    "stages": [
+      {
+        "phase": "freeze_physics",
+        "event": "started",
+        "monotonic_ns": 1131179681603752,
+        "process_exit_verified": false
+      },
+      {
+        "phase": "freeze_physics",
+        "event": "returned",
+        "monotonic_ns": 1131179687352834,
+        "process_exit_verified": false,
+        "result": {
+          "sdk_step": 482,
+          "cuda_device": "cuda:2"
+        }
+      },
+      {
+        "phase": "cuda_synchronize",
+        "event": "started",
+        "monotonic_ns": 1131179688319655,
+        "process_exit_verified": false
+      },
+      {
+        "phase": "cuda_synchronize",
+        "event": "returned",
+        "monotonic_ns": 1131179690498503,
+        "process_exit_verified": false,
+        "result": null
+      },
+      {
+        "phase": "release_runtime",
+        "event": "started",
+        "monotonic_ns": 1131179691626459,
+        "process_exit_verified": false
+      },
+      {
+        "phase": "release_runtime",
+        "event": "returned",
+        "monotonic_ns": 1131180594879344,
+        "process_exit_verified": false,
+        "result": {
+          "version": "dh116-simulation-owner-cleanup-cpu-v1",
+          "subscription_status": "explicitly_unsubscribed",
+          "unsubscribe_returned": true,
+          "subscription_field_cleared": true,
+          "original_clear_instance_returned": true,
+          "extra_gc_calls": 0,
+          "native_release_verified": false,
+          "simulation_liveness_after_return": null,
+          "constructor_frame_owner_resolved": false,
+          "physics_steps_executed": 0
+        }
+      },
+      {
+        "phase": "stop_physics",
+        "event": "started",
+        "monotonic_ns": 1131180597835476,
+        "process_exit_verified": false
+      },
+      {
+        "phase": "stop_physics",
+        "event": "returned",
+        "monotonic_ns": 1131180822303504,
+        "process_exit_verified": false,
+        "result": {
+          "physics_view_released": true
+        }
+      },
+      {
+        "phase": "app_close",
+        "event": "started",
+        "monotonic_ns": 1131180838812893,
+        "process_exit_verified": false
+      }
+    ],
+    "first_fault": "Thread 514 \"present thread\" received signal SIGSEGV, Segmentation fault.",
+    "top_libraries": [
+      "libomni.kit.livestream.plugin.so",
+      "libcarb.events.plugin.so",
+      "libomni.kit.renderer.plugin.so"
+    ],
+    "post_stop_debugger_error": "Couldn't get registers: No such process",
+    "analysis_scope": "native crash localization, not ownership or teardown race proof",
+    "evidence_sha256": {
+      "viewer_complete.json": "d470d8c41916fa935336f95581cdca1721b2a26dd52a64551e37fc7a0efa4ef0",
+      "shutdown_phases.jsonl": "0fd0f2d4e6028baf1111ec54f0abdba61581a706a29b9a6c6e220ec0ab695148",
+      "ready.json": "14b2139e7ff37ad591d1d3354588e802d8bcfe6570ce38ffc53148853b54e44e"
+    },
+    "evidence_dir": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-webrtc-shutdown-order-20261118"
+  },
+  "native_qualification": false,
+  "teacher_admission": false,
+  "publication": {
+    "state": "pending_windows_relay"
+  }
+}

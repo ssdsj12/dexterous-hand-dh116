@@ -47,6 +47,31 @@ def _publish_audited_view(audit, viewport, output, control_step):
     return False
 
 
+def _shutdown_preview(output, steps, close_app):
+    with (output/"shutdown_phases.jsonl").open("x") as ledger:
+        def receipt(name, event, **fields):
+            row = dict(phase=name, event=event, monotonic_ns=time.monotonic_ns(),
+                       process_exit_verified=False, **fields)
+            ledger.write(json.dumps(row, allow_nan=False)+"\n")
+            ledger.flush()
+            os.fsync(ledger.fileno())
+
+        def run(name, operation):
+            receipt(name, "started")
+            try:
+                result = operation()
+            except BaseException as error:
+                receipt(name, "error", error_type=type(error).__name__, message=str(error))
+                raise
+            receipt(name, "returned", result=result)
+
+        try:
+            for name, operation in steps:
+                run(name, operation)
+        finally:
+            run("app_close", close_app)
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gpu",type=int,default=2)
@@ -241,15 +266,46 @@ def main():
         print(failure["error"],file=sys.__stderr__,flush=True)
         raise
     finally:
-        try:
-            if display is not None:display.close()
-            if rt is not None:
-                # SDK's own reset guard also prevents STOP waiting for a new PLAY
-                # while the application owner is deliberately shutting down.
-                rt.sim._disable_app_control_on_stop_handle=True
-                rt.sim.stop()
-        finally:
-            app.close(wait_for_replicator=False)
+        # These loop locals may hold a view even after its runtime namespace is released.
+        measured = points = obs = action = med = minimum = None
+        steps = []
+        if rt is not None:
+            import omni.timeline
+            from isaacsim.core.simulation_manager import SimulationManager
+            from go2_pvcnn.control.dh116.tabletop_simulation_owner_cleanup import (
+                clear_known_simulation_instance, simulation_source_contract)
+
+            def freeze_physics():
+                settings.set_bool("/app/player/playSimulations",False)
+                if settings.get("/app/player/playSimulations") is not False:
+                    raise RuntimeError("preview physics freeze failed before shutdown")
+                return dict(sdk_step=rt.sim.current_time_step_index, cuda_device=runtime_args.device)
+
+            def release_runtime():
+                nonlocal rt, display
+                if display is not None:
+                    display.close()
+                    display = None
+                sim = rt.sim
+                rt.__dict__.clear()
+                rt = None
+                return clear_known_simulation_instance(sim, contract=simulation_source_contract())
+
+            def stop_physics():
+                omni.timeline.get_timeline_interface().stop()
+                app.update()
+                released = SimulationManager.get_physics_sim_view() is None
+                if not released:
+                    raise RuntimeError("SimulationManager still owns its physics view after STOP")
+                return dict(physics_view_released=True)
+
+            steps = [
+                ("freeze_physics", freeze_physics),
+                ("cuda_synchronize", lambda: torch.cuda.synchronize(runtime_args.device)),
+                ("release_runtime", release_runtime),
+                ("stop_physics", stop_physics),
+            ]
+        _shutdown_preview(args.output, steps, lambda: app.close(wait_for_replicator=False))
 
 
 

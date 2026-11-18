@@ -43,3 +43,39 @@ def test_checkpoint_root_keeps_the_same_sha_when_sharing_models(tmp_path):
     checkpoint.write_bytes(b"changed bytes")
     with pytest.raises(ValueError, match="checkpoint changed"):
         viewer._read_frozen_checkpoints(tmp_path, config)
+
+
+
+@pytest.mark.parametrize("sync_fails", [False, True])
+def test_shutdown_records_phases_and_keeps_errors_visible(tmp_path, sync_fails):
+    calls = []
+
+    def callback(name):
+        def run():
+            calls.append(name)
+            if name == "cuda_synchronize" and sync_fails:
+                raise RuntimeError("CUDA error")
+            return {"done": True} if name == "stop" else None
+        return run
+
+    steps = ("freeze", "cuda_synchronize", "release", "stop", "app_close")
+    def close():
+        viewer._shutdown_preview(tmp_path, [(name, callback(name)) for name in steps[:-1]],
+                                 callback(steps[-1]))
+
+    if sync_fails:
+        with pytest.raises(RuntimeError, match="CUDA error"):
+            close()
+        assert calls == ["freeze", "cuda_synchronize", "app_close"]
+    else:
+        close()
+        assert calls == list(steps)
+    rows = [json.loads(line) for line in (tmp_path/"shutdown_phases.jsonl").read_text().splitlines()]
+    assert [row["phase"] for row in rows[::2]] == calls
+    assert rows[-1]["event"] == "returned"
+    assert rows[-1]["phase"] == "app_close"
+    assert rows[-1]["process_exit_verified"] is False
+    if sync_fails:
+        assert rows[3]["event"] == "error"
+    else:
+        assert rows[-3]["result"] == {"done": True}

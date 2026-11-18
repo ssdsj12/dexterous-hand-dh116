@@ -1,3 +1,7 @@
+## 2026-11-18 Teacher WebRTC shutdown diagnosis
+
+Shutdown stages are flushed independently. CUDA synchronization and PhysX STOP returned during the native run. GDB located the first SIGSEGV in the livestream present thread during App close. [Report](docs/superpowers/reports/2026-11-18-teacher-webrtc-shutdown-order.md).
+
 ## 2026-11-18 Teacher WebRTC display gate
 
 The viewer hides and logs rejected display frames while bounded control continues. The original pose tolerances still control viewport publication. Native preview completed 60 controls across three poses, then the outer process exited with SIGSEGV. [Report](docs/superpowers/reports/2026-11-18-teacher-webrtc-display-gate.md).
