@@ -28,3 +28,22 @@ def test_seal_requires_natural_exit_and_bound_native_artifacts(tmp_path):
     write(run/reset.NUMERIC_FILE, {"replaced": True})
     with pytest.raises(ValueError, match="artifact SHA"):
         reset._verify_outer(run, exit_file, write(exit_file, shell))
+
+@pytest.mark.parametrize("exit_fields", [{}, {"exit_code": -11}, {"exit_code": False}, {"exit_code": 0.0}])
+def test_manifest_reader_rejects_non_native_exit_before_examining_reset_data(tmp_path, exit_fields):
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_preflight as preflight
+
+    def source(name, payload):
+        path = tmp_path / name
+        return dict(path=str(path), sha256=write(path, payload))
+
+    refs = dict(original_receipt=source("outer.json", dict(style="pinch", **exit_fields)),
+                reset_readback=source("readback.json", {}),
+                numeric_reset=source("numeric.json", {}))
+    cfg = preflight.candidate_config()
+    cfg["resolved_reset_manifest"] = source("manifest.json", dict(
+        schema=preflight.RESET_MANIFEST_SCHEMA, style="pinch", pose_preview_only=False,
+        target_schema=preflight.TARGET_SCHEMA_VERSION, target_material_ids=list(range(41)),
+        source_refs=refs))
+    with pytest.raises(ValueError, match="natural exit 0"):
+        preflight.load_reset_manifest(cfg, project=tmp_path)

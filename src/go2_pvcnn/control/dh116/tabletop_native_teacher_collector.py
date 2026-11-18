@@ -31,6 +31,7 @@ class NativeJournal:
         row=dict(sequence=self._seq,scope=self.scope,operation=operation,payload=owned(payload))
         self._stream.write(json.dumps(row,sort_keys=True,allow_nan=False)+"\n")
         self._stream.flush();os.fsync(self._stream.fileno());self._seq+=1
+        return row["sequence"]
 
     def close(self): self._stream.close()
 
@@ -166,6 +167,13 @@ class NativeTeacherCollector:
             self.owner.pre_action_state(), expected.sha256, sdk_timestamp_s=float(camera.sim.current_time))
         self._student_stereo = camera, output
 
+    def _pack_observation(self, pre, context, *, purpose):
+        recorded = getattr(self.sources, "pack_recorded", None)
+        if recorded is None:
+            return self.sources.pack(self.trainer.model, pre, context), {}
+        observation, sequence = recorded(self.trainer.model, pre, context, purpose=purpose)
+        return observation, dict(source_pack_sequence=sequence)
+
     def collect(self):
         from .tabletop_training_reward import SourceFailure
         from .tabletop_native_teacher_context import ContextIdentity
@@ -183,7 +191,7 @@ class NativeTeacherCollector:
             pre=owner.pre_action_state();prehash=_digest(pre)
             captured=self.history.capture_pre_action(pre)
             context=self.context.freeze_pre_action(ContextIdentity.from_clock(pre["common"]["identity"]),history_owner=self.history)
-            obs=self.sources.pack(tr.model,pre,context)
+            obs, decision_source = self._pack_observation(pre, context, purpose="decision")
             if _digest(owner.pre_action_state())!=prehash: raise SourceFailure("owner advanced/changed during pre-action packing")
             stereo = {}
             if self._student_stereo is not None:
@@ -197,7 +205,7 @@ class NativeTeacherCollector:
                 remaining = self.sources.remaining_substeps()
                 if remaining < 8:
                     self.journal.emit("window_not_started", dict(
-                        remaining_substeps=remaining, reason="after_student_stereo", **stereo))
+                        remaining_substeps=remaining, reason="after_student_stereo", **decision_source, **stereo))
                     return None
             sample=tr.collect_step(obs,obs);token=sample["collection_token"]
             if token in self._used_tokens: raise SourceFailure("replayed policy collection token")
@@ -205,7 +213,8 @@ class NativeTeacherCollector:
             self.reward.begin(self.sources.submitted_request(sample,decision),remaining_substeps=remaining)
             self._used_tokens.add(token)
             self.journal.emit("decision",dict(pre_action_sha256=prehash,observation=obs,
-                collection_token=token,policy=self._epoch,sampled_action24=sample["actions"],history=decision,**stereo))
+                collection_token=token,policy=self._epoch,sampled_action24=sample["actions"],history=decision,
+                **decision_source, **stereo))
             result=owner.control(sample["actions"])
             if result["physical_samples"]!=len(self._rows) or not 1<=len(self._rows)<=8:
                 raise SourceFailure("actual original control window differs from durable rows")
@@ -233,7 +242,7 @@ class NativeTeacherCollector:
                 next_pre=owner.pre_action_state();next_hash=_digest(next_pre)
                 if ContextIdentity.from_clock(next_pre["common"]["identity"])!=post_context.metadata.identities[0]:
                     raise SourceFailure("next value endpoint differs from actual pre-reset endpoint")
-                next_obs=self.sources.pack(tr.model,next_pre,post_context)
+                next_obs, bootstrap_binding = self._pack_observation(next_pre, post_context, purpose="bootstrap")
                 # Preserve the critic input before evaluation, while it still belongs
                 # to the physical endpoint of this action and before any Reset.
                 observation = _copy(next_obs)
@@ -242,7 +251,7 @@ class NativeTeacherCollector:
                 next_endpoint=deepcopy(endpoint)
                 bootstrap_source = dict(collection_token=token, identity=next_endpoint,
                                         pre_action_sha256=next_hash, observation=observation,
-                                        observation_sha256=_digest(observation))
+                                        observation_sha256=_digest(observation), **bootstrap_binding)
             boundary=gae_boundary(terminated=bool(terminated),truncated=bool(truncated),
                 endpoint_identity=endpoint,next_value_identity=next_endpoint)
             self._check_policy()

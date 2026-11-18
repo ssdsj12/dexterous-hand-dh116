@@ -156,3 +156,26 @@ def test_existing_runtime_lowercase_grasp_names(grasp, pads):
     if grasp == "power":
         assert all("power_palm_proximal_source_missing" in h["reasons"]
                    for h in result["per_hand"].values())
+
+@pytest.mark.parametrize("flipped_mesh", [1, 2, 7, 8])
+def test_tripod_requires_thumb_to_oppose_both_loaded_partners_at_each_substep(flipped_mesh):
+    rows = [(s, n, m, (1., 0., 0.), (.2, 0., 0.))
+            if s == 1 and m == flipped_mesh else (s, n, m, normal, force)
+            for s, n, m, normal, force in loaded_rows(pads=3)]
+    result = reduce(packet(rows), grasp="tripod")
+    assert not result["bilateral"]
+    side = "left" if flipped_mesh < 5 else "right"
+    bad = result["per_hand"][side]
+    assert bad["loaded_substeps"] == [0]
+    assert "required_pad_normal_opposition_missing" in bad["per_substep"][1]["reasons"]
+
+
+def test_tripod_balanced_surrounding_normals_pass_without_world_axis_assumptions():
+    normals = [(0., 0., 1.), (0., np.sqrt(3)/2, -.5), (0., -np.sqrt(3)/2, -.5)]
+    rows = []
+    for s, n, mesh, _, _ in loaded_rows(pads=3):
+        normal = np.asarray(normals[mesh % 6]) * (-1 if mesh >= 6 else 1)
+        rows.append((s, n, mesh, normal, .2 * normal))
+    result = reduce(packet(rows), grasp="tripod")
+    assert result["bilateral"]
+    assert result["per_hand"]["right"]["worst_opposition_cos"] == pytest.approx(-.5)

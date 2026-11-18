@@ -1,0 +1,56 @@
+{
+  "package": "teacher.three-grasp-source-review-v1",
+  "branch": "11-17",
+  "base_commit": "bcfd5171187ff5c2b955cbe2f52e830c95d70b1c",
+  "status": "cpu_changes_verified_native_update_blocked",
+  "report": "docs/superpowers/reports/2026-11-18-three-grasp-teacher-source-review.md",
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_status": {
+    "pinch": "input_source_journal_ready_worker_pending",
+    "tripod": "thumb_to_both_contact_gate_verified_on_cpu_native_sources_pending",
+    "power": "native_palm_proximal_measurement_pending"
+  },
+  "cpu": {
+    "red_failed": 11,
+    "targeted_passed": 11,
+    "passed": 265,
+    "failed": 2,
+    "errors": 3,
+    "baseline_reproduced_failed": 2,
+    "baseline_reproduced_errors": 3,
+    "joint_suites": [
+      "tests/test_teacher_force_closure.py",
+      "tests/test_teacher_force_runtime.py",
+      "tests/test_native_teacher_model.py",
+      "tests/test_native_teacher_collector.py",
+      "tests/test_fresh_teacher_reset_evidence.py",
+      "tests/test_native_teacher_preflight.py",
+      "tests/test_native_teacher_policy_pinch_distance.py",
+      "tests/test_native_teacher_actual_factories.py",
+      "tests/test_native_teacher_actual_launch.py",
+      "tests/test_native_teacher_training.py",
+      "tests/test_native_teacher_worker_artifacts.py"
+    ],
+    "registry_passed": 55,
+    "evidence": {
+      "directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-three-grasp-source-review-20261118",
+      "logs": {
+        "joint-cpu.log": "c0ed78d42a4eddb2b8956bb383001129de0f52c4ac25931d7f3c7726b1eddbaa",
+        "red.log": "417455fa130c103e2a7373e239c36dd9c5c81ddab360d369db076301b579d0b7",
+        "registry-cpu.log": "4227fd2e244290cc122442599c9122a55bf7ca254feaaefdbec8734de08401ba",
+        "same-baseline-failures.log": "2bd295e32b5c3c206c211e08d9700577fab94623f230cd118bae811e6e112b56",
+        "targeted-cpu.log": "d2fdc2ee9554cd1d853f57ebaa815e00c4cddd355f829226bee445863c63d94e"
+      }
+    }
+  },
+  "reset_manifest_sha256": "110f6dbcca61f36111ada20c47dbf698fab72fe2cef4d8e36c866690b4531daa",
+  "dataset": {
+    "name": "OakInk",
+    "url": "https://github.com/oakink/OakInk",
+    "use": "offline_pose_candidates_only",
+    "ingested": false
+  }
+}

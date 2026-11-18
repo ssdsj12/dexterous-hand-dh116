@@ -5,6 +5,7 @@ changes the grasp string to borrow another style's geometry qualification.
 """
 from contextlib import contextmanager
 from copy import deepcopy
+from dataclasses import asdict
 import math
 from pathlib import Path
 import sys
@@ -206,7 +207,34 @@ class NativePinchSources:
             event_history=dict(source="task_event_history",identity=identity,valid=True,
                 success_emitted=False,trusted_failure_emitted=bool(packet and packet.event<0)))
 
-    def pack(self,model,pre,context):
-        with profile_reader_scope(self.contract.backend_profile):
-            raw=deepcopy(self._raw)
-            return model.pack_native_inputs(pre,raw,self.parameters,context,backend_profile=self.contract.backend_profile)
+    def pack(self, model, pre, context):
+        return self._pack(model, pre, context)[0]
+
+    def pack_recorded(self, model, pre, context, *, purpose):
+        """Bind the original pack call to an unqualified, durable source row."""
+        if purpose not in ("decision", "bootstrap"):
+            raise ValueError("decision or bootstrap pack purpose required")
+        if self.owner.ledger.scope != self.scope or context.metadata.scope != self.scope:
+            raise ValueError("source pack scope must match the owning journal and context")
+        return self._pack(model, pre, context, purpose=purpose)
+
+    def _pack(self, model, pre, context, *, purpose=None):
+        from .tabletop_deformable_r0_replay import _copy, _digest
+
+        profile = self.contract.backend_profile
+        raw = deepcopy(self._raw)
+        parameters = self.parameters
+        if purpose is not None:
+            buffers = _copy(dict(pre_action=pre, raw_rod=raw, parameters=parameters, context=asdict(context)))
+        with profile_reader_scope(profile):
+            observation = model.pack_native_inputs(pre, raw, parameters, context, backend_profile=profile)
+        if purpose is None:
+            return observation, None
+
+        buffers["observation"] = _copy(observation)
+        sequence = self.owner.ledger.emit("teacher_input_source", dict(
+            purpose=purpose, clock=asdict(context.metadata.identities[0]),
+            context_owner_uid=context.metadata.owner_uid, backend_profile_sha256=profile.digest,
+            native_qualification=False, buffers=buffers,
+            sha256={name: _digest(buffer) for name, buffer in buffers.items()}))
+        return observation, sequence

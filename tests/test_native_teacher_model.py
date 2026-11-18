@@ -293,3 +293,42 @@ def test_raw_pack_rejects_self_consistent_parameters_outside_locked_physics(back
         expected_time_s=p["time_s"])
     with pytest.raises(ValueError):
         model_module().pack_native_inputs(pre,raw,parameters,packet,backend_profile=backend_profile)
+
+def test_policy_source_pack_records_exact_cpu_inputs_once(backend_profile, tmp_path, monkeypatch):
+    import json
+    from dataclasses import asdict
+    from types import SimpleNamespace
+
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest, decode_owned
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_collector import NativeJournal
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_sources import NativePinchSources
+
+    pre, raw, parameters, context = raw_cpu_packets(backend_profile)
+    model, *_ = cpu_model(backend_profile)
+    ledger = NativeJournal(tmp_path/"source.jsonl", scope="cpu_fixture")
+    adapter = object.__new__(NativePinchSources)
+    adapter.owner = SimpleNamespace(ledger=ledger)
+    adapter.contract = SimpleNamespace(backend_profile=backend_profile)
+    adapter.scope = "cpu_fixture"
+    adapter._raw, adapter.parameters = raw, parameters
+    original_pack = model.pack_native_inputs
+    calls = []
+
+    def pack(*args, **kwargs):
+        calls.append(args[1])
+        return original_pack(*args, **kwargs)
+
+    monkeypatch.setattr(model, "pack_native_inputs", pack)
+    obs, sequence = adapter.pack_recorded(model, pre, context, purpose="decision")
+    ledger.close()
+    row = json.loads(ledger.path.read_text())
+    assert len(calls) == 1
+    assert row["operation"] == "teacher_input_source" and row["sequence"] == sequence
+    record = decode_owned(row["payload"])
+    assert record["purpose"] == "decision" and row["scope"] == "cpu_fixture"
+    assert record["native_qualification"] is False
+    assert record["clock"] == asdict(context.metadata.identities[0])
+    expected = dict(pre_action=pre, raw_rod=raw, parameters=parameters, context=asdict(context), observation=obs)
+    assert record["sha256"] == {k: _digest(v) for k, v in expected.items()}
+    assert {k: _digest(v) for k, v in record["buffers"].items()} == record["sha256"]
+    assert record["buffers"]["raw_rod"]["node_positions"].shape == (1, 41, 3)

@@ -133,8 +133,16 @@ def load_reset_manifest(config, *, project=ROOT):
             raise ValueError("actual resolved reset/style/target manifest required; preview cannot qualify")
         if set(value.get("source_refs", {})) != {"original_receipt", "reset_readback", "numeric_reset"}:
             raise ValueError("resolved reset original raw source bindings required")
-        for binding in value["source_refs"].values():
-            _binding(binding, project)
+        refs = value["source_refs"]
+        _, original_raw = _binding(refs["original_receipt"], project)
+        original = json.loads(original_raw)
+        retained = refs["original_receipt"]["sha256"] == ORIGINAL_RECEIPT_SHA
+        if not retained:
+            if original.get("style") != config["style"]:
+                raise ValueError("independent original Reset style provenance required")
+            exit_code = original.get("exit_code")
+            if type(exit_code) is not int or exit_code != 0:
+                raise ValueError("natural exit 0 from the independent native Reset run required")
         seed = value["reset_seed"]
         from .tabletop_dual_hand_reset import _seed
         _seed(seed)
@@ -148,20 +156,18 @@ def load_reset_manifest(config, *, project=ROOT):
         # Derive state from the pinned original raw artifacts, rather than
         # letting a digest bless invented finite values in a manifest.
         from .tabletop_deformable_r0_replay import decode_owned, encode_owned
-        _, original_raw = _binding(value["source_refs"]["original_receipt"], project)
-        original = json.loads(original_raw)
-        _, reset_raw = _binding(value["source_refs"]["reset_readback"], project)
+        _, reset_raw = _binding(refs["reset_readback"], project)
         saved = decode_owned(json.loads(reset_raw))
         saved = saved.get("readback", saved)
         receipt = saved.get("completed_reset_receipt", saved)
         if "completed_reset_receipt" in saved:
             receipt = dict(receipt, mesh_state_readback={k: v for k, v in saved.items()
                             if k != "completed_reset_receipt"})
-        _, numeric_raw = _binding(value["source_refs"]["numeric_reset"], project)
+        _, numeric_raw = _binding(refs["numeric_reset"], project)
         audit = decode_owned(json.loads(numeric_raw))
         from . import tabletop_mesh_observation_source as source
         from .tabletop_mesh_reset_numeric_state import validate_numeric_reset_audit
-        if value["source_refs"]["original_receipt"]["sha256"] == ORIGINAL_RECEIPT_SHA:
+        if retained:
             if config["style"] != "pinch":
                 raise ValueError("Pinch retained Reset proof cannot transfer to Tripod/Power")
             retained_reset_source(project=project)
@@ -169,8 +175,6 @@ def load_reset_manifest(config, *, project=ROOT):
             with producer_profile(project, Path(original["output"])), source.source_scope():
                 validate_numeric_reset_audit(audit, reset_receipt=receipt)
         else:
-            if original.get("style") != config["style"]:
-                raise ValueError("independent original Reset style provenance required")
             with source.source_scope():
                 validate_numeric_reset_audit(audit, reset_receipt=receipt)
         if receipt["seed"] != value["reset_seed"]:
@@ -182,7 +186,7 @@ def load_reset_manifest(config, *, project=ROOT):
         if digest(encode_owned(receipt["rod_reset"]["mesh_bindings"])) != value["mesh_bindings_sha256"]:
             raise ValueError("resolved mesh bindings differ from original raw source")
         for key in ("reset_readback", "numeric_reset"):
-            ref = value["source_refs"][key]
+            ref = refs[key]
             file = Path(ref["path"])
             if (not file.is_absolute() or file.parent != Path(original["output"])
                     or original["artifact_sha256"].get(file.name) != ref["sha256"]):

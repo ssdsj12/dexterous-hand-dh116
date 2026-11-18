@@ -1,3 +1,7 @@
+## 2026-11-18 Three-grasp Teacher input and contact evidence
+
+Pinch now links decisions and bootstrap values to the raw state consumed by the model. Tripod verifies signed thumb opposition against both partner fingers. The production Reset reader checks natural exit for fresh evidence. [Review and regression](docs/superpowers/reports/2026-11-18-three-grasp-teacher-source-review.md).
+
 ## 2026-11-18 Teacher dual-RGB WebRTC preview
 
 An opt-in preview displays both fixed Student cameras while frozen Teacher inference records pre-action privileged geometry and the issued action. The first connected Windows session displayed both views. [Report](docs/superpowers/reports/2026-11-18-teacher-live-stereo-webrtc.md).

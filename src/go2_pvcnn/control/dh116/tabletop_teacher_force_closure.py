@@ -31,8 +31,30 @@ def _pad_summary(pairs, divisor, mesh_id):
                 normal_on_rod_world=normal)
 
 
+def _tripod_opposition(pads):
+    names = ("thumb", "index", "middle")
+    normals = [pads[name]["normal_on_rod_world"] for name in names]
+    if any(normal is None for normal in normals):
+        return dict(effective=False, opposition_cos=None, opposing_pads=[],
+                    all_required_pads_on_opposing_faces=False)
+
+    thumb, index, middle = np.asarray(normals)
+    cosines = np.clip(np.array([thumb @ index, thumb @ middle]), -1., 1.)
+    weakest = int(np.argmax(cosines))
+    axis = thumb - (index + middle) / 2
+    length = float(np.linalg.norm(axis))
+    faces = False
+    if length > 1e-12:
+        axis /= length
+        faces = bool(thumb @ axis >= .2 and index @ axis <= -.2 and middle @ axis <= -.2)
+    return dict(effective=bool(faces and cosines[weakest] <= -.25),
+                opposition_cos=float(cosines[weakest]), opposing_pads=["thumb", names[weakest + 1]],
+                all_required_pads_on_opposing_faces=faces)
+
+
 def _opposition(pads, grasp):
-    """Pick an opposing pair whose axis also covers every required Tripod pad."""
+    if grasp == "Tripod":
+        return _tripod_opposition(pads)
     candidates = []
     for first, second in itertools.combinations(pads, 2):
         a, b = pads[first]["normal_on_rod_world"], pads[second]["normal_on_rod_world"]
@@ -40,21 +62,13 @@ def _opposition(pads, grasp):
             continue
         a, b = np.asarray(a), np.asarray(b)
         cosine = float(np.clip(np.dot(a, b), -1., 1.))
-        faces = True
-        if grasp == "Tripod":
-            axis = a - b
-            length = np.linalg.norm(axis)
-            faces = bool(length > 1e-12 and all(
-                pad["normal_on_rod_world"] is not None and
-                abs(float(np.dot(pad["normal_on_rod_world"], axis / length))) >= .2
-                for pad in pads.values()))
-        candidates.append((cosine, first, second, faces))
-    eligible = [c for c in candidates if c[0] <= -.25 and c[3]]
+        candidates.append((cosine, first, second))
+    eligible = [c for c in candidates if c[0] <= -.25]
     chosen = min(eligible or candidates, default=None)
     return dict(effective=bool(eligible),
                 opposition_cos=None if chosen is None else chosen[0],
                 opposing_pads=[] if chosen is None else list(chosen[1:3]),
-                all_required_pads_on_opposing_faces=False if chosen is None else chosen[3])
+                all_required_pads_on_opposing_faces=chosen is not None)
 
 
 def reduce_force_closure(packet, *, grasp, dt_s=1/480):
@@ -64,9 +78,10 @@ def reduce_force_closure(packet, *, grasp, dt_s=1/480):
     Mesh slots: left thumb..little 0..4, table 5, right thumb..little 6..10,
     supports 11/12. Each required pad must exceed .05 N, each hand must
     exceed .3 N, and weighted normals must oppose (cos <= -.25) in *every*
-    solver substep. Tripod pads must project onto the selected opposing axis
-    with abs projection >= .2. Power cannot qualify without a real palm /
-    proximal source, absent in this mesh layout.
+    solver substep. For Tripod, the thumb must oppose each partner and project
+    by at least .2 onto the common axis, with both partners projecting by at
+    least .2 in the opposite direction. Power needs actual palm or proximal
+    contact, which this mesh layout does not measure.
 
     Per-pad loads and force vectors are averages over all solver substeps;
     per_substep contains the unaveraged evidence used for the decision.

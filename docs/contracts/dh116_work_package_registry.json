@@ -38377,6 +38377,37 @@
         "report_source_commit": "785fcd666a61bd3c1d7e19d6fb59cb79e0fc8ae2"
       }
     },
+    "teacher.three-grasp-source-review-v1": {
+      "title": "三抓法 Teacher 输入来源与对向反力校验",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_force_closure.py",
+        "tests/test_teacher_force_runtime.py",
+        "tests/test_native_teacher_model.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_fresh_teacher_reset_evidence.py",
+        "tests/test_native_teacher_preflight.py",
+        "tests/test_native_teacher_policy_pinch_distance.py",
+        "tests/test_native_teacher_actual_factories.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_training.py",
+        "tests/test_native_teacher_worker_artifacts.py"
+      ],
+      "readiness": "docs/contracts/dh116_three_grasp_teacher_source_review_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-three-grasp-teacher-source-review.md",
+      "native_runs": 0,
+      "blocked_reason": "Native run_a and artifact audit pending. Historical source failures reproduced on baseline. Tripod and Power need their own live contact evidence.",
+      "last_result": {
+        "passed": 265,
+        "failed": 2,
+        "errors": 3,
+        "targeted_passed": 11,
+        "baseline_reproduced": true
+      }
+    },
     "teacher.actual-provider-l02-cpu": {
       "title": "L02真实场景来源与A更新封存软件",
       "executor": "prepared",

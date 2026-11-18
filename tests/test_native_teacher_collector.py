@@ -458,3 +458,28 @@ def test_student_stereo_sidecar_is_pre_action_and_bound_to_issued_action(monkeyp
     assert (tmp_path / "rgb" / action["student_stereo"]["receipt_path"]).is_file()
     collector.close()
     assert events == ["captured", "closed", "owner_closed"]
+
+def test_decision_and_bootstrap_reference_their_separate_source_pack_rows(monkeypatch, tmp_path, backend_profile):
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest
+
+    c, _, _, _, sim, _ = fixture(monkeypatch, tmp_path, backend_profile, cap_controls=1)
+    def recorded(model, pre, context, *, purpose):
+        obs = c.sources.pack(model, pre, context)
+        sequence = c.journal.emit("teacher_input_source", dict(
+            purpose=purpose, physics_step=sim.current_time_step_index, observation_sha256=_digest(obs)))
+        return obs, sequence
+
+    c.sources.pack_recorded = recorded
+    c.collect()
+    rows = operations(c)
+    decision = next(r for r in rows if r["operation"] == "decision")
+    settlement = next(r for r in rows if r["operation"] == "settlement")
+    decision_seq = decision["payload"]["source_pack_sequence"]
+    bootstrap = settlement["payload"]["bootstrap_source"]
+    bootstrap_seq = bootstrap["source_pack_sequence"]
+    assert decision_seq < decision["sequence"] < bootstrap_seq < settlement["sequence"]
+    assert rows[decision_seq]["payload"]["purpose"] == "decision"
+    assert rows[decision_seq]["payload"]["physics_step"] == 2
+    assert rows[bootstrap_seq]["payload"]["purpose"] == "bootstrap"
+    assert rows[bootstrap_seq]["payload"]["physics_step"] == 10
+    assert rows[bootstrap_seq]["payload"]["observation_sha256"] == bootstrap["observation_sha256"]
