@@ -25856,6 +25856,31 @@
         "verified_at_utc": "2026-11-18T09:31:03.550251+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.native-stereo-reset-clock-origin-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-native-stereo-reset-clock-origin.md",
+      "readiness": "docs/contracts/dh116_native_stereo_reset_clock_origin_v1.json",
+      "cpu_tests": {
+        "passed": 137,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "f3468dfc46efa80672fdd2751c5afa51afb5b5a4",
+        "source_tree": "1aa79d76375edd5b0e991c95416262e1331822d3",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T10:08:21.898135+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
