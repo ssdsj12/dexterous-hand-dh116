@@ -227,6 +227,13 @@
   "teacher_admission": false,
   "new_teacher_collector_native_verified": false,
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "c09aef9af74198dc490b81e5d3c4c6bbf2031220",
+    "source_tree": "99fbcbc73e85da0d30d1202c321791c95a24f085",
+    "remote_branch": "11-17",
+    "files_verified": 7,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T09:31:03.550251+00:00"
   }
 }

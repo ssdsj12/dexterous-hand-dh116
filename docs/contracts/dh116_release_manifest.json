@@ -25831,6 +25831,31 @@
         "verified_at_utc": "2026-11-18T09:09:19.767050+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.native-stereo-clock-warmup-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-native-stereo-clock-warmup.md",
+      "readiness": "docs/contracts/dh116_native_stereo_clock_warmup_v1.json",
+      "cpu_tests": {
+        "passed": 131,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c09aef9af74198dc490b81e5d3c4c6bbf2031220",
+        "source_tree": "99fbcbc73e85da0d30d1202c321791c95a24f085",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T09:31:03.550251+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
