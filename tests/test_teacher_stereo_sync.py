@@ -99,6 +99,17 @@ def test_freeze_records_one_mode_and_hard_control_budget(tmp_path, monkeypatch):
     assert plan["budget"]["ppo_updates"] == 0
     assert not plan["budget"]["webrtc"]
     recorder.check_plan(plan, recorder.legacy.digest(plan))
+    live = recorder.freeze_plan(tmp_path/"live", "pinch", 16, live_webrtc=True)
+    assert live["budget"]["webrtc"] is True
+    assert live["budget"]["max_total_sdk_steps"] == 130
+    assert live["budget"]["max_capture_renders"] == 64
+    assert live["budget"]["ppo_updates"] == 0
+    assert live["budget"]["live_hold_seconds"] == 60
+    assert live["budget"]["connection_wall_seconds"] == 35
+    assert live["budget"]["max_connection_updates"] == 700
+    recorder.check_plan(live, recorder.legacy.digest(live))
+    with pytest.raises(ValueError, match="at most 16"):
+        recorder.freeze_plan(tmp_path/"live-long", "pinch", 17, live_webrtc=True)
     warmup = recorder.freeze_plan(tmp_path/"warmup", "pinch", 1, clock_warmup=True)
     assert warmup["clock_warmup_compare"]
     assert warmup["teacher_stereo"]["capture_pairs"] == 2
@@ -184,3 +195,25 @@ def test_second_reset_preserves_sdk_clock_and_captures_its_own_solver_origin(ste
         assert result["sdk_before"] == result["sdk_after"]
         assert result["solver_before_s"] == 8/480
         assert result["solver_after_s"] == 0.
+
+def test_live_preview_keeps_clock_rejection_diagnostic():
+    from scripts import record_dh116_teacher_stereo_sync as recorder
+
+    skewed = {"student_sync_usable": False, "rgb_sdk_delta_ms": -4.166667}
+    assert recorder._allow_teacher_step(skewed, live_webrtc=False) is False
+    assert recorder._allow_teacher_step(skewed, live_webrtc=True) is True
+
+
+def test_live_preview_prepares_two_separate_rgba_images():
+    import torch
+    from scripts import record_dh116_teacher_stereo_sync as recorder
+
+    left = torch.zeros((1, 3, 2, 3))
+    right = left.clone()
+    right[:, 1] = 1
+    images = recorder._preview_pixels(dict(left_rgb=left, right_rgb=right), 3, 2)
+    assert images["left"].shape == images["right"].shape == (2, 3, 4)
+    assert images["left"][0, 0].tolist() == [0, 0, 0, 255]
+    assert images["right"][0, 0].tolist() == [0, 255, 0, 255]
+    with pytest.raises(ValueError, match="calibrated RGB shape"):
+        recorder._preview_pixels(dict(left_rgb=left, right_rgb=right[..., :2]), 3, 2)

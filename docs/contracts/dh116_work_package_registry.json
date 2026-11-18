@@ -41061,6 +41061,30 @@
         "scope": "CPU pass and bounded native crash localization."
       }
     },
+    "teacher.native-stereo-live-webrtc-v1": {
+      "title": "Teacher 固定双 RGB WebRTC 旁路",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_stereo_sync.py",
+        "tests/test_native_teacher_stereo.py",
+        "tests/test_teacher_stereo_alignment.py",
+        "tests/test_tiled_stereo_capture.py",
+        "tests/test_teacher_webrtc_display_gate.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_live_stereo_webrtc_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-live-stereo-webrtc.md",
+      "native_runs": 2,
+      "blocked_reason": "Windows dual RGB preview verified. Native shutdown and raw clock qualification remain pending.",
+      "last_result": {
+        "passed": 59,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU and bounded diagnostic dual RGB display"
+      }
+    },
     "teacher.native-stereo-second-reset-clock-v1": {
       "title": "Pinch 双目时钟第二次 Reset 原生对照",
       "executor": "pytest",

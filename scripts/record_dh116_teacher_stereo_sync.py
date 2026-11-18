@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import shutil
 import sys
-from time import monotonic, monotonic_ns
+from time import monotonic, monotonic_ns, sleep
 import traceback
 from types import SimpleNamespace
 
@@ -27,9 +27,11 @@ VERSION = "dh116-teacher-stereo-sync-native-v1"
 legacy = stereo.legacy
 
 
-def freeze_plan(output, mode, max_steps, *, clock_warmup=False, reset_recheck=False):
+def freeze_plan(output, mode, max_steps, *, clock_warmup=False, reset_recheck=False, live_webrtc=False):
     if mode not in MODES or type(max_steps) is not int or not 1 <= max_steps <= 500:
         raise ValueError("known gesture and bounded recording of at most 500 control steps required")
+    if live_webrtc and (max_steps > 16 or clock_warmup or reset_recheck):
+        raise ValueError("live stereo preview requires at most 16 control steps and no clock experiment")
     if reset_recheck and not clock_warmup:
         raise ValueError("second Reset requires clock warmup")
     if clock_warmup and (mode != "pinch" or max_steps != 1):
@@ -64,6 +66,12 @@ def freeze_plan(output, mode, max_steps, *, clock_warmup=False, reset_recheck=Fa
         plan["teacher_stereo"]["capture_pairs"] = 3
         plan["budget"].update(episode_resets=2,max_capture_renders=12,raw_rgb_upper_bound_bytes=2*640*480*3*3)
         plan["preserved_scope"] = "one Pinch seed with two resets and one zero-action window"
+    if live_webrtc:
+        recorder = ROOT / "scripts/record_dh116_teacher_stereo_sync.py"
+        plan["frozen_files"][str(recorder)] = legacy.sha(recorder)
+        plan["budget"].update(webrtc=True, capture_wall_seconds=70, live_hold_seconds=60,
+                              connection_wall_seconds=35, max_connection_updates=700,
+                              max_presentation_updates=1200)
     return plan
 
 
@@ -72,9 +80,79 @@ def check_plan(plan, sha):
         raise ValueError("exact bounded native synchronization fingerprint required")
     expected = freeze_plan(plan["output"], plan["budget"]["mode"], plan["budget"]["control_steps"],
                            clock_warmup=plan.get("clock_warmup_compare", False),
-                           reset_recheck=plan.get("clock_reset_recheck", False))
+                           reset_recheck=plan.get("clock_reset_recheck", False),
+                           live_webrtc=plan["budget"]["webrtc"])
     if plan != expected or Path(plan["output"]).exists():
         raise ValueError("frozen inputs changed or output directory already exists")
+
+
+def _allow_teacher_step(sync, *, live_webrtc):
+    # A rejected image can be displayed during diagnostic inference because
+    # the frozen Teacher consumes the privileged observation only.
+    return live_webrtc or sync["student_sync_usable"]
+
+
+def _preview_pixels(packet, width, height):
+    import numpy as np
+
+    images = {}
+    for side in ("left", "right"):
+        rgb = packet[side+"_rgb"]
+        if tuple(rgb.shape) != (1, 3, height, width):
+            raise ValueError("calibrated RGB shape required for preview")
+        rgb = rgb[0].permute(1, 2, 0).detach().cpu().numpy()
+        if not np.isfinite(rgb).all():
+            raise ValueError("finite RGB values required for preview")
+        rgba = np.full((height, width, 4), 255, dtype=np.uint8)
+        rgba[:, :, :3] = np.clip(np.rint(rgb * 255), 0, 255).astype(np.uint8)
+        images[side] = rgba
+    return images
+
+
+class StereoPreview:
+    def __init__(self, mode, calibration):
+        import omni.ui as ui
+
+        self.width, self.height = calibration.width, calibration.height
+        self.providers = {side: ui.ByteImageProvider() for side in ("left", "right")}
+        self.window = ui.Window("DH116 Teacher | Student Stereo", width=1180, height=525)
+        self.window.position_x, self.window.position_y = 20, 42
+        with self.window.frame:
+            with ui.VStack(spacing=5):
+                ui.Label(f"{mode.title()} | Frozen Teacher | {self.width} x {self.height}", height=24)
+                with ui.HStack(spacing=10):
+                    for side in ("left", "right"):
+                        with ui.VStack(spacing=4):
+                            ui.Label(f"{side.title()} RGB", height=24)
+                            ui.ImageWithProvider(self.providers[side])
+                self.status = ui.Label("Waiting for paired camera frames", height=28)
+
+    def present(self, packet, sync):
+        images = _preview_pixels(packet, self.width, self.height)
+        for side, provider in self.providers.items():
+            provider.set_data_array(images[side].reshape(-1), [self.width, self.height])
+        tick = packet["identity"]["sdk_step"]
+        frame = packet["render_timing"]["raw_left_clock"]["render_frame_number"]
+        self.status.text = (f"Privileged state SDK step {tick} | RGB render {frame} | "
+                            f"RGB - SDK {sync['rgb_sdk_delta_ms']:+.3f} ms | Diagnostic only")
+
+    def close(self):
+        self.window.destroy()
+        self.window = self.status = None
+        self.providers.clear()
+
+
+def _keep_preview_visible(app, sim, output, *, deadline, max_updates, continue_marker=None):
+    before = legacy.clock(sim)
+    for _ in range(max_updates):
+        if monotonic() >= deadline or (output/"stop_requested").exists():
+            return
+        if continue_marker is not None and (output/continue_marker).exists():
+            return
+        app.update()
+        if legacy.clock(sim) != before:
+            raise RuntimeError("presentation advanced the frozen physical state")
+        sleep(.05)
 
 
 def _save_frame(output, receipt, packet, *, image_module, np, frame_index=None):
@@ -143,10 +221,11 @@ def _record(app, plan, started, scope, rows, trace):
     from go2_pvcnn.control.dh116.tabletop_tiled_stereo_native import TiledNativeStereoReader
 
     out, budget = Path(plan["output"]), plan["budget"]
+    preview_fields = dict(diagnostic_preview=True, student_training_sample=False) if budget["webrtc"] else {}
     warmup = plan.get("clock_warmup_compare", False)
     reset_recheck = plan.get("clock_reset_recheck", False)
     cal = StereoCalibration.from_json(ROOT / alignment.STUDENT_CAMERA)
-    rt = sim = camera = reader = display = model = None
+    rt = sim = camera = reader = display = model = preview = None
     boundary = ActionBoundary()
     try:
         args = SimpleNamespace(mode=budget["mode"], num_envs=1, updates=0, eval_only=True,
@@ -207,6 +286,8 @@ def _record(app, plan, started, scope, rows, trace):
         camera = TiledStereoCapture(sim, reader, cal, snapshot, render_setting=setting, origins=origins,
                                     max_render_attempts=plan["teacher_stereo"]["max_render_attempts"])
         trace.watch("fixed_stereo_reader", reader, owner="camera", release="owned camera close")
+        if budget["webrtc"]:
+            preview = StereoPreview(budget["mode"], cal)
         warp_abi = inspect_rgb_readback_abi()
         legacy.write_new(out/"warp_rgb_abi.json", warp_abi)
         if warp_abi["error"] is not None:
@@ -217,7 +298,8 @@ def _record(app, plan, started, scope, rows, trace):
         with (out/"sync_log.jsonl").open("x") as ledger:
             window = monotonic()
             for tick in range(plan["teacher_stereo"]["capture_pairs"]):
-                if monotonic()-window >= budget["capture_wall_seconds"]:
+                if ((out/"stop_requested").exists()
+                        or monotonic()-window >= budget["capture_wall_seconds"]):
                     break
                 legacy.continue_within_budget(started, "next synchronization frame", lambda: None)
                 before = legacy.clock(sim)
@@ -275,14 +357,29 @@ def _record(app, plan, started, scope, rows, trace):
                             second_reset = _reset_clock_boundary(rt)
                         legacy.write_new(out/"second_reset_boundary.json", second_reset)
                     continue
-                if not sync["student_sync_usable"]:
-                    rejected = alignment.aligned_payload(state, identity, packet, cal, origins)
-                    rejected.update(source_scope=packet["source_scope"], phase="before_teacher_action",
-                                    teacher_policy_queried=False, **sync)
-                    path, sha = _save_frame(out, rejected, packet, image_module=Image, np=np)
+                receipt = alignment.aligned_payload(state, identity, packet, cal, origins)
+                if not _allow_teacher_step(sync, live_webrtc=budget["webrtc"]):
+                    receipt.update(source_scope=packet["source_scope"], phase="before_teacher_action",
+                                   teacher_policy_queried=False, **sync)
+                    path, sha = _save_frame(out, receipt, packet, image_module=Image, np=np)
                     legacy.write_new(out/"rejected_rgb_sync.json", dict(
                         frame_receipt=path, frame_receipt_sha256=sha, controls_executed=tick, **sync))
                     raise RuntimeError("Student RGB pair exceeded the frozen 2 ms timing boundary")
+                if preview is not None:
+                    preview.present(packet, sync)
+                    if tick == 0:
+                        legacy.write_new(out/"webrtc_waiting.json", dict(
+                            identity=identity, diagnostics_only=True, ppo_updates=0))
+                        print("DH116_STEREO_WEBRTC_WAITING_FOR_VIEWER", flush=True)
+                        _keep_preview_visible(app, sim, out,
+                            deadline=min(monotonic() + budget["connection_wall_seconds"],
+                                         started + budget["soft_wall_seconds"] - 8),
+                            max_updates=budget["max_connection_updates"],
+                            continue_marker="viewer_connected")
+                        if (out/"stop_requested").exists():
+                            break
+                        if snapshot()["state_sha256"] != identity["state_sha256"]:
+                            raise RuntimeError("Teacher state changed while waiting for the viewer")
                 if not sim.is_playing():
                     raise RuntimeError("timeline is paused before controller execution")
                 boundary.begin()
@@ -294,20 +391,24 @@ def _record(app, plan, started, scope, rows, trace):
                                capture_start_ns=start_ns, rgb_ready_ns=rgb_ns,
                                final_step=sim.current_time_step_index, actor_action=action[0].cpu().tolist(),
                                applied_action=boundary.applied[0].cpu().tolist())
-                receipt = alignment.aligned_payload(state, identity, packet, cal, origins)
                 receipt.update(source_scope=packet["source_scope"], phase="before_teacher_action",
                                privileged_source="frozen Teacher get_obs()", teacher_policy_queried=True,
                                env_origin_world_m=state["env_origin_world_m"],
                                teacher_reference_env_m=state["teacher_reference_env_m"],
-                               teacher_wire_node_indices=state["teacher_wire_node_indices"], **sync)
+                               teacher_wire_node_indices=state["teacher_wire_node_indices"], **preview_fields, **sync)
                 path, sha = _save_frame(out, receipt, packet, image_module=Image, np=np)
                 row.update(frame_receipt=path, frame_receipt_sha256=sha, mode=budget["mode"],
                            checkpoint_sha256=plan["checkpoint_sha256"], render_passes=packet["render_passes"],
-                           within_reference_policy_horizon=tick<budget["policy_horizon"])
+                           within_reference_policy_horizon=tick<budget["policy_horizon"], **preview_fields)
                 ledger.write(json.dumps(row, allow_nan=False)+"\n")
                 ledger.flush()
                 os.fsync(ledger.fileno())
                 rows.append(row)
+                if preview is not None and len(rows) == 1:
+                    legacy.write_new(out/"webrtc_ready.json", dict(mode=budget["mode"],
+                        first_frame_receipt=path, first_frame_receipt_sha256=sha,
+                        diagnostics_only=True, ppo_updates=0))
+                    print("DH116_STEREO_WEBRTC_READY", flush=True)
         if warmup:
             if len(comparison) != plan["teacher_stereo"]["capture_pairs"]:
                 raise RuntimeError("clock comparison ended without all planned native RGB pairs")
@@ -330,6 +431,12 @@ def _record(app, plan, started, scope, rows, trace):
             raise RuntimeError("recording window elapsed without a complete sample")
         scope["window"] = dict(elapsed_wall_s=monotonic()-window, completed_frames=len(rows),
             stop_reason="control_limit" if len(rows)==budget["control_steps"] else "capture_wall_limit")
+        if preview is not None:
+            preview.status.text += " | Last captured pair"
+            deadline = min(monotonic() + budget["live_hold_seconds"],
+                           started + budget["soft_wall_seconds"] - 8)
+            _keep_preview_visible(app, sim, out, deadline=deadline,
+                                  max_updates=budget["max_presentation_updates"])
     finally:
         try:
             if camera is not None:
@@ -338,12 +445,16 @@ def _record(app, plan, started, scope, rows, trace):
                 reader.close()
         finally:
             try:
-                if display is not None:
-                    display.close()
+                if preview is not None:
+                    preview.close()
             finally:
-                if rt is not None:
-                    rt.__dict__.clear()
-                camera = reader = display = model = rt = sim = app = None
+                try:
+                    if display is not None:
+                        display.close()
+                finally:
+                    if rt is not None:
+                        rt.__dict__.clear()
+                    camera = reader = display = model = preview = rt = sim = app = None
 
 
 def execute_native(plan):
@@ -373,17 +484,23 @@ def execute_native(plan):
                 from isaaclab.app import AppLauncher
                 import signal
                 from go2_pvcnn.control.dh116.tabletop_preview_launcher import (
-                    ManagedPreviewApp, preview_launcher_type)
+                    ManagedPreviewApp, preview_launcher_type, stop_native_presentation)
                 if any(name == "pxr" or name.startswith("pxr.") for name in sys.modules):
                     raise RuntimeError("USD loaded before owned AppLauncher")
                 argv = sys.argv
                 try:
                     sys.argv = argv[:1]
-                    launcher = preview_launcher_type(AppLauncher)
+                    live = plan["budget"]["webrtc"]
+                    stop_stream = stop_native_presentation if live else None
+                    launcher = (preview_launcher_type(AppLauncher, toolbar_getter=lambda: None,
+                                                      partial_stop_presentation=stop_stream)
+                                if live else preview_launcher_type(AppLauncher))
+                    presentation = dict(width=1280, height=720) if live else {}
                     app = ManagedPreviewApp(
-                        launcher(headless=True, enable_cameras=True, device="cuda:2", livestream=0,
+                        launcher(headless=True, enable_cameras=True, device="cuda:2", livestream=2 if live else 0,
                                  active_gpu=2, physics_gpu=2, multi_gpu=False, fast_shutdown=False,
-                                 experience=plan["experience"]), signal_api=signal)
+                                 experience=plan["experience"], **presentation),
+                        signal_api=signal, stop_presentation=stop_stream)
                 finally:
                     sys.argv = argv
                 import torch
@@ -479,12 +596,13 @@ def main(argv=None):
     parser.add_argument("--record-sync-data", action="store_true")
     parser.add_argument("--clock-warmup", action="store_true")
     parser.add_argument("--clock-reset-recheck", action="store_true")
+    parser.add_argument("--live-webrtc", action="store_true")
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     cleanup.validate_execution_context(ROOT)
     if not args.record_sync_data:
         plan = freeze_plan(args.output, args.mode, args.max_control_steps, clock_warmup=args.clock_warmup,
-                           reset_recheck=args.clock_reset_recheck)
+                           reset_recheck=args.clock_reset_recheck, live_webrtc=args.live_webrtc)
         legacy.write_new(args.plan, plan)
         print(json.dumps(dict(frozen_sha256=legacy.digest(plan), native_started=False, budget=plan["budget"])))
         return 0
@@ -493,7 +611,8 @@ def main(argv=None):
     if (str(args.output.resolve()) != plan["output"] or args.mode != plan["budget"]["mode"]
             or args.max_control_steps != plan["budget"]["control_steps"]
             or args.clock_warmup != plan.get("clock_warmup_compare", False)
-            or args.clock_reset_recheck != plan.get("clock_reset_recheck", False)):
+            or args.clock_reset_recheck != plan.get("clock_reset_recheck", False)
+            or args.live_webrtc != plan["budget"]["webrtc"]):
         raise ValueError("CLI and frozen recording identity differ")
     return execute_native(plan)
 

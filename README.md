@@ -1,3 +1,7 @@
+## 2026-11-18 Teacher dual-RGB WebRTC preview
+
+An opt-in preview displays both fixed Student cameras while frozen Teacher inference records pre-action privileged geometry and the issued action. The first connected Windows session displayed both views. [Report](docs/superpowers/reports/2026-11-18-teacher-live-stereo-webrtc.md).
+
 ## 2026-11-18 Teacher PPO critic-input evidence
 
 Teacher rollout settlement now retains the exact pre-reset bootstrap input with its observation SHA and action token. CPU regression passed 129 tests. The original PPO worker and grasp qualification remain pending. [Report](docs/superpowers/reports/2026-11-18-teacher-ppo-bootstrap-source.md).
