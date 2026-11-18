@@ -1,3 +1,7 @@
+## 2026-11-18 Teacher PPO critic-input evidence
+
+Teacher rollout settlement now retains the exact pre-reset bootstrap input with its observation SHA and action token. CPU regression passed 129 tests. The original PPO worker and grasp qualification remain pending. [Report](docs/superpowers/reports/2026-11-18-teacher-ppo-bootstrap-source.md).
+
 ## 2026-11-18 Pinch Teacher PPO worker factories
 
 The original Teacher, trainer, and reward factories are wired for an issued native lease. Source-bound native journal and checkpoint validation still block the first actual worker rollout. [Report](docs/superpowers/reports/2026-11-18-teacher-ppo-worker-factories.md).

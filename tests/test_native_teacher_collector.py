@@ -156,6 +156,8 @@ def test_third_trusted_guard_durable_exact_three_terminal_rows(monkeypatch,tmp_p
     assert c.trainer.rollout.batch()["done"].all()
     assert not c.trainer.rollout.batch()["bootstrap_mask"].any()
     assert operations(c)[-1]["operation"]=="transition_recorded"
+    settlement=next(r["payload"] for r in operations(c) if r["operation"]=="settlement")
+    assert settlement["bootstrap_source"] is None
 
 
 @pytest.mark.parametrize("damage",["nan","identity","request","targets","weights"])
@@ -227,16 +229,31 @@ def test_raw_exchange_survives_original_boundary_conversion_failure(monkeypatch,
 
 
 def test_pre_reset_bootstrap_value_is_explicit_and_owned(monkeypatch,tmp_path,backend_profile):
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest,decode_owned
+
     c,ep,rod,hands,sim,rows=fixture(monkeypatch,tmp_path,backend_profile,cap_controls=1)
     calls=[]
     def value(obs):
         # A deliberately different endpoint value from the following reset.
-        calls.append(obs["task_context"].clone())
+        calls.append(deepcopy(obs))
         return torch.tensor([37. if rod.clock()["reset_id"]==1 else -999.])
     monkeypatch.setattr(c.trainer.model,"value",value)
     packet=c.collect()
     assert packet.truncated and c.trainer.rollout.batch()["next_value"].item()==37.
-    assert calls[-1][0,43]>0 and c.context.current.values[0,43]>0
+    assert calls[-1]["task_context"][0,43]>0 and c.context.current.values[0,43]>0
+    decision=next(r["payload"] for r in operations(c) if r["operation"]=="decision")
+    settlement=next(r["payload"] for r in operations(c) if r["operation"]=="settlement")
+    bootstrap=settlement["bootstrap_source"]
+    assert bootstrap["collection_token"]==decision["collection_token"]==packet.token
+    endpoint=settlement["history"]["endpoint"]
+    assert bootstrap["identity"]["phase"]=="post_action_pre_reset"
+    assert all(value==endpoint[key] for key,value in bootstrap["identity"].items() if key!="phase")
+    assert settlement["gae_boundary"]["bootstrap_mask"]
+    assert bootstrap["identity"]["physics_step"]==sim.current_time_step_index==10
+    assert bootstrap["pre_action_sha256"]==_digest(c.owner.pre_action_state())
+    assert bootstrap["pre_action_sha256"]!=decision["pre_action_sha256"]
+    assert bootstrap["observation_sha256"]==_digest(calls[-1])
+    assert _digest(decode_owned(bootstrap["observation"]))==bootstrap["observation_sha256"]
 
 
 def test_policy_token_replay_fails_before_any_second_window(monkeypatch,tmp_path,backend_profile):

@@ -228,14 +228,21 @@ class NativeTeacherCollector:
             endpoint={k:endpoint[k] for k in ("env_id","episode_uid","reset_id","rod_uid","physics_step","rod_tick","timestamp_s")}
             endpoint["phase"]="post_action_pre_reset"
             next_endpoint=None;value=torch.zeros(1)
+            bootstrap_source = None
             if not terminated:
                 next_pre=owner.pre_action_state();next_hash=_digest(next_pre)
                 if ContextIdentity.from_clock(next_pre["common"]["identity"])!=post_context.metadata.identities[0]:
                     raise SourceFailure("next value endpoint differs from actual pre-reset endpoint")
                 next_obs=self.sources.pack(tr.model,next_pre,post_context)
+                # Preserve the critic input before evaluation, while it still belongs
+                # to the physical endpoint of this action and before any Reset.
+                observation = _copy(next_obs)
                 with torch.no_grad(): value=tr.model.value(next_obs).detach().cpu().clone()
                 if _digest(owner.pre_action_state())!=next_hash: raise SourceFailure("bootstrap source advanced before reset")
                 next_endpoint=deepcopy(endpoint)
+                bootstrap_source = dict(collection_token=token, identity=next_endpoint,
+                                        pre_action_sha256=next_hash, observation=observation,
+                                        observation_sha256=_digest(observation))
             boundary=gae_boundary(terminated=bool(terminated),truncated=bool(truncated),
                 endpoint_identity=endpoint,next_value_identity=next_endpoint)
             self._check_policy()
@@ -247,7 +254,8 @@ class NativeTeacherCollector:
                     self.journal.emit("student_stereo_rejected",dict(collection_token=token,
                                       pre_action_sha256=prehash, **stereo))
             self.journal.emit("settlement",dict(reward=packet,post_context=post_context,
-                history=settlement,result=result,issued_actions=issued,next_value=value,gae_boundary=boundary))
+                history=settlement,result=result,issued_actions=issued,next_value=value,
+                gae_boundary=boundary,bootstrap_source=bootstrap_source))
             tr.record_step(torch.tensor([packet.reward]),torch.tensor([bool(terminated or truncated)]),value,
                 truncated=torch.tensor([bool(truncated)]),bootstrap_mask=torch.tensor([not terminated]),
                 executed_actions=issued,collection_token=token)

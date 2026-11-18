@@ -38385,8 +38385,16 @@
         "teacher.actual-fresh-pinch-scene-cpu"
       ],
       "status": "blocked",
-      "reason": "Pinch fresh scene and C04 owner factory CPU ready. Actual provider, raw41/model binding, A update and artifact closure require implementation and native verification.",
-      "native_qualification": false
+      "reason": "Pinch fresh scene, C04 owner factory and pre-reset bootstrap input ledger pass CPU tests. Actual provider, raw41/model binding, A update and artifact closure require implementation and native verification.",
+      "native_qualification": false,
+      "last_result": {
+        "cpu_passed": 129,
+        "registry_cpu_passed": 55,
+        "cpu_failed": 0,
+        "native_runs": 0,
+        "native_ppo_updates": 0,
+        "report": "docs/superpowers/reports/2026-11-18-teacher-ppo-bootstrap-source.md"
+      }
     },
     "teacher.actual-resume-l03-cpu": {
       "title": "L03真实A身份与独立B恢复执行器软件",
