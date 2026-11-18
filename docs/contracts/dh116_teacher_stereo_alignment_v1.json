@@ -118,7 +118,14 @@
     }
   ],
   "publication": {
-    "state": "pending_windows_publication"
+    "state": "windows_publication_verified",
+    "source_commit": "07f3e9a3458cf5a2248b18257907ce903f184614",
+    "source_tree": "e9f01ddd6415e442021d1336899153e83bda1d7f",
+    "remote_branch": "11-17",
+    "files_verified": 11,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T05:32:00.845938+00:00"
   },
   "registry_cpu": {
     "command": [
