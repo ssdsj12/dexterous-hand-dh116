@@ -1,3 +1,7 @@
+## 2026-11-18 native Student stereo clock warmup
+
+A single Pinch zero-command control window advanced the SDK and both fixed RGB clocks by 16.667 ms. Both native pairs kept a 4.167 ms offset and failed the 2 ms timing gate. App close returned and the outer process reported SIGSEGV. [Report](docs/superpowers/reports/2026-11-18-native-stereo-clock-warmup.md).
+
 ## 2026-11-18 native first Student stereo pair
 
 Both fixed native cameras returned RGB through the original Isaac Warp 1.5 pointer path. The 2 ms timing gate rejected the pair before action issuance. The outer process returned SIGSEGV after App close. [Report](docs/superpowers/reports/2026-11-18-native-stereo-first-pair.md).

@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import io
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -26,9 +27,11 @@ VERSION = "dh116-teacher-stereo-sync-native-v1"
 legacy = stereo.legacy
 
 
-def freeze_plan(output, mode, max_steps):
+def freeze_plan(output, mode, max_steps, *, clock_warmup=False):
     if mode not in MODES or type(max_steps) is not int or not 1 <= max_steps <= 500:
         raise ValueError("known gesture and bounded recording of at most 500 control steps required")
+    if clock_warmup and (mode != "pinch" or max_steps != 1):
+        raise ValueError("clock comparison requires one Pinch control window")
     plan = stereo.freeze_plan(ROOT, output, legacy.BINDINGS)
     cfg = json.loads((ROOT / MODEL_CONFIG).read_text())
     checkpoint = (ORIGINAL / cfg["checkpoints"][mode]).resolve(strict=True)
@@ -45,13 +48,23 @@ def freeze_plan(output, mode, max_steps):
                           model_loads=1, policy_horizon=REFERENCE_POLICY_HORIZON, capture_wall_seconds=10, max_capture_renders=4*max_steps,
                           raw_rgb_upper_bound_bytes=2*640*480*3*max_steps, webrtc=False)
     plan["preserved_scope"] = "existing three-grasp preview seed and frozen Teacher, one selected mode per process"
+    if clock_warmup:
+        plan["clock_warmup_compare"] = True
+        plan["frozen_files"][str(ROOT/"scripts/record_dh116_teacher_stereo_sync.py")] = legacy.sha(
+            ROOT/"scripts/record_dh116_teacher_stereo_sync.py")
+        plan["teacher_stereo"]["capture_pairs"] = 2
+        plan["budget"].update(teacher_queries=0, model_loads=0, warmup_control_steps=1,
+                              capture_wall_seconds=plan["budget"]["soft_wall_seconds"],
+                              max_capture_renders=8, raw_rgb_upper_bound_bytes=2*640*480*3*2)
+        plan["preserved_scope"] = "existing Pinch reset seed; one zero-action window between diagnostic RGB pairs"
     return plan
 
 
 def check_plan(plan, sha):
     if plan.get("version") != VERSION or legacy.digest(plan) != sha:
         raise ValueError("exact bounded native synchronization fingerprint required")
-    expected = freeze_plan(plan["output"], plan["budget"]["mode"], plan["budget"]["control_steps"])
+    expected = freeze_plan(plan["output"], plan["budget"]["mode"], plan["budget"]["control_steps"],
+                           clock_warmup=plan.get("clock_warmup_compare", False))
     if plan != expected or Path(plan["output"]).exists():
         raise ValueError("frozen inputs changed or output directory already exists")
 
@@ -72,6 +85,30 @@ def _save_frame(output, receipt, packet, *, image_module, np):
     return str(path.relative_to(output)), legacy.sha(path)
 
 
+def _zero_action_clock_window(rt, boundary):
+    import torch
+
+    before = legacy.clock(rt.sim)
+    solver_before = float(rt.rope.time)
+    if before["sdk_step"] != 2 or not rt.sim.is_playing():
+        raise RuntimeError("warmup must start at the playing post-reset SDK boundary")
+    boundary.begin()
+    with torch.inference_mode():
+        rt.step_env(torch.zeros((1, 24), dtype=torch.float32, device=rt.device))
+    after = legacy.clock(rt.sim)
+    solver_after = float(rt.rope.time)
+    if (after["sdk_step"] != 10 or not boundary.issued or not boundary.integrated
+            or boundary.issued["sdk_step"] != 2 or boundary.integrated["sdk_step"] != 3
+            or list(boundary.applied.shape) != [1, 24] or torch.count_nonzero(boundary.applied).item()
+            or not math.isclose(after["sdk_time_s"] - before["sdk_time_s"], 8/480, rel_tol=0, abs_tol=1e-6)
+            or not math.isclose(solver_after - solver_before, 8/480, rel_tol=0, abs_tol=1e-6)):
+        raise RuntimeError("zero-action window differs from the frozen clock budget")
+    return dict(sdk_before=before, sdk_after=after, action_issued=boundary.issued,
+                first_integrated=boundary.integrated, solver_before_s=solver_before,
+                solver_after_s=solver_after, solver_elapsed_s=solver_after-solver_before,
+                applied_action_24=boundary.applied[0].cpu().tolist())
+
+
 def _record(app, plan, started, scope, rows, trace):
     import torch
     import numpy as np
@@ -86,6 +123,7 @@ def _record(app, plan, started, scope, rows, trace):
     from go2_pvcnn.control.dh116.tabletop_tiled_stereo_native import TiledNativeStereoReader
 
     out, budget = Path(plan["output"]), plan["budget"]
+    warmup = plan.get("clock_warmup_compare", False)
     cal = StereoCalibration.from_json(ROOT / alignment.STUDENT_CAMERA)
     rt = sim = camera = reader = display = model = None
     boundary = ActionBoundary()
@@ -110,13 +148,14 @@ def _record(app, plan, started, scope, rows, trace):
         if sim.current_time_step_index != budget["sdk_setup_steps"]:
             raise RuntimeError("unexpected setup physics budget")
         legacy.validate_loaded_project_modules(ROOT, frozen_files=plan["frozen_files"])
-        model = rt.actor_critic_factory(67, 24, init_std=.008, device=rt.device)
-        raw_model = Path(plan["checkpoint"]).read_bytes()
-        if hashlib.sha256(raw_model).hexdigest() != plan["checkpoint_sha256"]:
-            raise ValueError("checkpoint changed before load")
-        model.load_state_dict(torch.load(io.BytesIO(raw_model), map_location=rt.device,
-                                         weights_only=False)["model"])
-        model.eval()
+        if not warmup:
+            model = rt.actor_critic_factory(67, 24, init_std=.008, device=rt.device)
+            raw_model = Path(plan["checkpoint"]).read_bytes()
+            if hashlib.sha256(raw_model).hexdigest() != plan["checkpoint_sha256"]:
+                raise ValueError("checkpoint changed before load")
+            model.load_state_dict(torch.load(io.BytesIO(raw_model), map_location=rt.device,
+                                             weights_only=False)["model"])
+            model.eval()
         setting = _NativeRenderSetting()
         setting.set(False)
         if setting.get() is not False:
@@ -152,15 +191,17 @@ def _record(app, plan, started, scope, rows, trace):
         if warp_abi["error"] is not None:
             raise ValueError(warp_abi["error"])
         run = out.name
+        comparison = []
         with (out/"sync_log.jsonl").open("x") as ledger:
             window = monotonic()
-            for tick in range(budget["control_steps"]):
+            for tick in range(plan["teacher_stereo"]["capture_pairs"]):
                 if monotonic()-window >= budget["capture_wall_seconds"]:
                     break
                 legacy.continue_within_budget(started, "next synchronization frame", lambda: None)
                 before = legacy.clock(sim)
                 step, stamp = before["sdk_step"], before["sdk_time_s"]
-                if step != 2+8*tick or step+8 > budget["max_total_sdk_steps"]:
+                next_step = step if warmup and tick == 1 else step+8
+                if step != 2+8*tick or next_step > budget["max_total_sdk_steps"]:
                     raise RuntimeError("control step exceeds frozen SDK budget")
                 state = alignment.runtime_state(rt)
                 identity = dict(run_uuid=run, env_id=0, episode_uid=run+":0", reset_id=0, policy_tick=tick,
@@ -184,6 +225,22 @@ def _record(app, plan, started, scope, rows, trace):
                 timing = packet["render_timing"]
                 sync = student_rgb_timing(timing["raw_left_clock"]["simulation_time"],
                                           timing["physical_timestamp_s"])
+                if warmup:
+                    phase = "after_zero_action_warmup" if tick else "before_zero_action_warmup"
+                    receipt = alignment.aligned_payload(state, identity, packet, cal, origins)
+                    receipt.update(source_scope=packet["source_scope"], phase=phase,
+                                   teacher_policy_queried=False, training_sample=False, **sync)
+                    path, sha = _save_frame(out, receipt, packet, image_module=Image, np=np)
+                    sample = dict(frame_receipt=path, frame_receipt_sha256=sha, phase=phase,
+                                  render_timing=timing, render_passes=packet["render_passes"],
+                                  capture_start_wall_ns=start_ns, rgb_ready_wall_ns=rgb_ns, **sync)
+                    comparison.append(sample)
+                    legacy.write_new(out/f"{phase}.json", sample)
+                    if tick == 0:
+                        legacy.continue_within_budget(started, "zero-action warmup", lambda: None)
+                        elapsed = _zero_action_clock_window(rt, boundary)
+                        legacy.write_new(out/"zero_action_window.json", elapsed)
+                    continue
                 if not sync["student_sync_usable"]:
                     rejected = alignment.aligned_payload(state, identity, packet, cal, origins)
                     rejected.update(source_scope=packet["source_scope"], phase="before_teacher_action",
@@ -217,6 +274,20 @@ def _record(app, plan, started, scope, rows, trace):
                 ledger.flush()
                 os.fsync(ledger.fileno())
                 rows.append(row)
+        if warmup:
+            if len(comparison) != 2:
+                raise RuntimeError("clock comparison ended without both native RGB pairs")
+            timing_passed = comparison[-1]["student_sync_usable"]
+            scope["window"] = dict(elapsed_wall_s=monotonic()-window, completed_frames=0,
+                                  diagnostic_rgb_pairs=2, diagnostic_timing_passed=timing_passed,
+                                  stop_reason="clock_comparison_complete")
+            legacy.write_new(out/"clock_warmup_comparison.json",
+                             dict(samples=comparison, zero_action_window=elapsed,
+                                  post_warmup_timing_passed=timing_passed,
+                                  teacher_queries=0, ppo_updates=0, training_samples=0))
+            if not timing_passed:
+                raise RuntimeError("post-warmup RGB pair still exceeds the frozen 2 ms timing boundary")
+            return
         if not rows:
             raise RuntimeError("recording window elapsed without a complete sample")
         scope["window"] = dict(elapsed_wall_s=monotonic()-window, completed_frames=len(rows),
@@ -303,7 +374,9 @@ def execute_native(plan):
                 save_error("timing", error)
                 summary = dict(frames=len(rows), sequence_valid=False)
             legacy.write_new(out/"sync_log.json", dict(version=VERSION, mode=plan["budget"]["mode"],
-                capture_complete=not errors, window=scope.get("window"), timings=summary, source="frozen native Teacher and Student cameras",
+                capture_complete=not errors, window=scope.get("window"), timings=summary,
+                source=("native Student camera clock comparison" if plan.get("clock_warmup_compare")
+                        else "frozen native Teacher and Student cameras"),
                 data_file="sync_log.jsonl", teacher_admitted=False, process_exit_verified=False))
             failed_checks = [key for key in ("rgb_phys_under_2ms", "action_same_sdk_boundary",
                                              "action_sim_offset_constant") if summary.get(key) is False]
@@ -366,18 +439,20 @@ def main(argv=None):
     parser.add_argument("--mode", choices=MODES, default="pinch")
     parser.add_argument("--max-control-steps", type=int, default=500)
     parser.add_argument("--record-sync-data", action="store_true")
+    parser.add_argument("--clock-warmup", action="store_true")
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     cleanup.validate_execution_context(ROOT)
     if not args.record_sync_data:
-        plan = freeze_plan(args.output, args.mode, args.max_control_steps)
+        plan = freeze_plan(args.output, args.mode, args.max_control_steps, clock_warmup=args.clock_warmup)
         legacy.write_new(args.plan, plan)
         print(json.dumps(dict(frozen_sha256=legacy.digest(plan), native_started=False, budget=plan["budget"])))
         return 0
     plan = json.loads(args.plan.read_text())
     check_plan(plan, args.approved_frozen_sha256)
     if (str(args.output.resolve()) != plan["output"] or args.mode != plan["budget"]["mode"]
-            or args.max_control_steps != plan["budget"]["control_steps"]):
+            or args.max_control_steps != plan["budget"]["control_steps"]
+            or args.clock_warmup != plan.get("clock_warmup_compare", False)):
         raise ValueError("CLI and frozen recording identity differ")
     return execute_native(plan)
 

@@ -40965,6 +40965,29 @@
         "skipped": 0,
         "scope": "CPU pass. Native RGB readback only. Timing and natural exit pending."
       }
+    },
+    "teacher.native-stereo-clock-warmup-v1": {
+      "title": "Pinch 原生双 RGB 时钟热身对照",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.native-student-stereo-sidecar-cpu-v1"
+      ],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_stereo_sync.py",
+        "tests/test_tiled_stereo_capture.py"
+      ],
+      "readiness": "docs/contracts/dh116_native_stereo_clock_warmup_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-native-stereo-clock-warmup.md",
+      "native_runs": 1,
+      "blocked_reason": "Two native RGB pairs retain a -4.166667 ms raw RGB-SDK offset. Neither qualified. Outer exit returned SIGSEGV.",
+      "last_result": {
+        "passed": 131,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU pass. Bounded native zero-action comparison complete. Epoch mapping and process exit remain open."
+      }
     }
   },
   "execution_target": {

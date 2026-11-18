@@ -80,13 +80,17 @@ def test_freeze_records_one_mode_and_hard_control_budget(tmp_path, monkeypatch):
     path.parent.mkdir(parents=True)
     model = tmp_path / "model"
     model.write_bytes(b"frozen checkpoint bytes")
-    path.write_text(json.dumps(dict(checkpoints={"tripod": "model"},
-        checkpoint_sha256={"tripod": hashlib.sha256(model.read_bytes()).hexdigest()},
+    path.write_text(json.dumps(dict(checkpoints={"tripod": "model", "pinch": "model"},
+        checkpoint_sha256={mode: hashlib.sha256(model.read_bytes()).hexdigest()
+                           for mode in ("tripod", "pinch")},
         source_sha256="teacher-source")))
+    script = tmp_path/"scripts/record_dh116_teacher_stereo_sync.py"
+    script.parent.mkdir()
+    script.write_bytes(b"frozen recorder bytes")
     monkeypatch.setattr(recorder, "ROOT", tmp_path)
     monkeypatch.setattr(recorder, "ORIGINAL", tmp_path)
     monkeypatch.setattr(recorder.stereo, "freeze_plan", lambda root, output, bindings: dict(
-        output=str(output), teacher_source_sha256="teacher-source", budget=dict(ppo_updates=0),
+        output=str(output), teacher_source_sha256="teacher-source", budget=dict(ppo_updates=0, soft_wall_seconds=180),
         frozen_files={}, teacher_stereo={}))
     plan = recorder.freeze_plan(tmp_path/"out", "tripod", 500)
     assert plan["budget"]["max_total_sdk_steps"] == 4002
@@ -95,8 +99,53 @@ def test_freeze_records_one_mode_and_hard_control_budget(tmp_path, monkeypatch):
     assert plan["budget"]["ppo_updates"] == 0
     assert not plan["budget"]["webrtc"]
     recorder.check_plan(plan, recorder.legacy.digest(plan))
+    warmup = recorder.freeze_plan(tmp_path/"warmup", "pinch", 1, clock_warmup=True)
+    assert warmup["clock_warmup_compare"]
+    assert warmup["teacher_stereo"]["capture_pairs"] == 2
+    assert warmup["budget"]["max_total_sdk_steps"] == 10
+    assert warmup["budget"]["solver_steps"] == 96
+    assert warmup["budget"]["teacher_queries"] == warmup["budget"]["model_loads"] == 0
+    assert warmup["budget"]["max_capture_renders"] == 8
+    recorder.check_plan(warmup, recorder.legacy.digest(warmup))
+    with pytest.raises(ValueError, match="one Pinch control window"):
+        recorder.freeze_plan(tmp_path/"invalid", "pinch", 2, clock_warmup=True)
     model.write_bytes(b"changed checkpoint")
     with pytest.raises(ValueError, match="checkpoint or source changed"):
         recorder.check_plan(plan, recorder.legacy.digest(plan))
     with pytest.raises(ValueError, match="at most 500"):
         recorder.freeze_plan(tmp_path/"invalid", "tripod", 501)
+
+
+
+@pytest.mark.parametrize("sdk_steps,solver_steps,admitted", [
+    (8, 96, True), (7, 96, False), (8, 95, False),
+])
+def test_zero_action_clock_window(sdk_steps, solver_steps, admitted):
+    from types import SimpleNamespace
+
+    from scripts import record_dh116_teacher_stereo_sync as recorder
+
+    boundary = ActionBoundary()
+    sim = SimpleNamespace(current_time_step_index=2, current_time=2/480, is_playing=lambda: True)
+    rope = SimpleNamespace(time=0.)
+    seen = []
+
+    def step(action):
+        seen.append(action.tolist())
+        boundary("issued", sim, action)
+        sim.current_time_step_index += 1
+        sim.current_time += 1/480
+        boundary("integrated", sim, action)
+        sim.current_time_step_index += sdk_steps-1
+        sim.current_time += (sdk_steps-1)/480
+        rope.time += solver_steps/(480*12)
+
+    rt = SimpleNamespace(sim=sim, rope=rope, device="cpu", step_env=step)
+    if admitted:
+        result = recorder._zero_action_clock_window(rt, boundary)
+        assert result["sdk_after"]["sdk_step"] == 10
+        assert result["solver_elapsed_s"] == pytest.approx(8/480)
+    else:
+        with pytest.raises(RuntimeError, match="frozen clock budget"):
+            recorder._zero_action_clock_window(rt, boundary)
+    assert seen == [[[0.]*24]]
