@@ -68,3 +68,35 @@ def test_cli_writes_opt_in_evidence_and_preserves_default(tmp_path):
     assert "failed_face_audit" not in json.loads(default.read_text())
     assert audit.main(args + ["--output", str(output), "--export-failed-faces"]) == 0
     assert len(json.loads(output.read_text())["failed_face_audit"]["faces"]) == 1
+
+
+def test_fitted_plane_keeps_full_hull_enclosure_error_visible():
+    import numpy as np
+
+    points = np.array([[0., 0., 0.], [1., 0., 0.], [1., 1., 0.], [0., 1., 0.],
+                       [0.5, 0.5, 0.00021]])
+    projection = audit._fitted_plane_diagnostics(points, [0, 1, 2, 3], [0., 0., 1.])
+    assert projection["best_fit_mean_abs_residual_m"] == 0
+    assert projection["best_fit_max_residual_m"] == 0
+    assert projection["best_fit_max_outside_residual_m"] == pytest.approx(0.00021)
+
+
+def test_projection_is_a_separate_counterfactual_in_failed_face_export():
+    row = row_fixture()
+    raw = row["cooked_hulls"][0]["raw"]
+    raw["polygons"][0]["plane"][3] += 0.0002
+    packet = {"capture": {"complete": False, "colliders": [row]}}
+    before = copy.deepcopy(packet)
+    result = audit.analyze_capture(packet, export_failed_faces=True)
+    report = result["failed_face_audit"]
+    face, = report["faces"]
+    assert face["stored_mean_abs_face_residual_m"] == pytest.approx(0.0002)
+    assert face["best_fit_mean_abs_residual_m"] == pytest.approx(0)
+    assert face["best_fit_max_outside_residual_m"] == pytest.approx(0)
+    comparison = report["projection_comparison"]
+    assert comparison["comparison_threshold_m"] == 0.00015
+    assert comparison["faces_examined"] == 1
+    assert comparison["fitted_mean_within_threshold"] == 1
+    assert comparison["stored_face_or_enclosure_above_threshold"] == 1
+    assert result["hulls_passing_existing_validator"] == 0
+    assert packet == before

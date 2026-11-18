@@ -233,6 +233,43 @@ def _source_vertex_matches(row, coordinates):
     return matches
 
 
+def _fitted_plane_diagnostics(vertices, ids, stored_normal):
+    """Measure a least-squares face plane without replacing the stored plane."""
+    points = vertices[ids]
+    center = points.mean(axis=0)
+    centered = points - center
+    _, singular_values, basis = np.linalg.svd(centered, full_matrices=False)
+    normal = basis[-1]
+    face_distances = abs(centered @ normal)
+    alignment = float(normal @ stored_normal)
+    # A collinear ring or perpendicular reference cannot orient the plane.
+    epsilon = np.finfo(float).eps
+    outside = None
+    if (singular_values[1] > epsilon * max(points.shape) * singular_values[0]
+            and abs(alignment) > epsilon * np.linalg.norm(stored_normal)):
+        if alignment < 0:
+            normal = -normal
+        outside = float(np.max((vertices - center) @ normal))
+    return dict(best_fit_mean_abs_residual_m=float(face_distances.mean()),
+                best_fit_max_residual_m=float(face_distances.max()),
+                best_fit_max_outside_residual_m=outside)
+
+
+def _projection_comparison(faces):
+    threshold = 0.00015
+    outside = [face["best_fit_max_outside_residual_m"] for face in faces]
+    return dict(
+        comparison_threshold_m=threshold,
+        faces_examined=len(faces),
+        fitted_mean_within_threshold=sum(1 for f in faces if f["best_fit_mean_abs_residual_m"] <= threshold),
+        fitted_face_max_within_threshold=sum(1 for f in faces if f["best_fit_max_residual_m"] <= threshold),
+        fitted_enclosure_above_threshold=sum(1 for value in outside if value is not None and value > threshold),
+        fitted_enclosure_unavailable=sum(value is None for value in outside),
+        stored_face_or_enclosure_above_threshold=sum(
+            1 for f in faces if max(f["max_face_residual_m"], f["max_outside_residual_m"]) > threshold),
+    )
+
+
 def _failed_hull_faces(raw, validation):
     vertices, measurements = _plane_measurements(raw)
     tolerance = validation["numeric_topology_tolerance_native_units"]
@@ -255,8 +292,7 @@ def _failed_hull_faces(raw, validation):
         if max(face_max, outside_max) <= FAILED_FACE_THRESHOLD_M:
             continue
         points = vertices[ids]
-        centered = points - points.mean(axis=0)
-        _, _, basis = np.linalg.svd(centered, full_matrices=False)
+        projection = _fitted_plane_diagnostics(vertices, ids, plane[:3])
         # All areas use the stored ring's triangle fan. For warped polygons
         # this is the area of that fan, with no claim of a unique planar area.
         fan = areas[index]
@@ -267,7 +303,8 @@ def _failed_hull_faces(raw, validation):
             face_signed_residuals_m=residuals[ids].tolist(),
             max_face_residual_m=face_max, max_outside_residual_m=outside_max,
             max_outside_vertex_index=int(np.argmax(residuals)),
-            best_fit_max_residual_m=float(np.max(abs(centered @ basis[-1]))),
+            stored_mean_abs_face_residual_m=float(np.mean(abs(residuals[ids]))),
+            **projection,
             fan_area_m2=float(fan.sum()), min_fan_triangle_area_m2=float(fan.min()),
             hull_median_fan_area_m2=hull_median_area,
             original_winding_area_floor_m2=float(tolerance ** 2),
@@ -301,6 +338,7 @@ def export_failed_face_evidence(colliders, bodies):
                 errors.append(dict(identity, error=str(error)))
     return dict(schema="dh116-cooked-failed-face-evidence-v1", plane_threshold_m=FAILED_FACE_THRESHOLD_M,
                 hulls_examined=checked, hulls_unchanged_under_reindex=unchanged, faces=faces, errors=errors,
+                projection_comparison=_projection_comparison(faces),
                 native_qualification=False)
 
 

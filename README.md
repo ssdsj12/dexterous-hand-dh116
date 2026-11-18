@@ -1,3 +1,7 @@
+## 2026-11-18 fitted plane distance comparison
+
+The offline face export reports fitted mean and maximum distances plus enclosure residuals for the 30 flagged polygons. The 0.15 mm comparison is diagnostic. Strict hull qualification remains 0/34. [Audit report](docs/superpowers/reports/2026-11-18-teacher-cooked-plane-projection.md).
+
 ## 2026-11-18 cooked polygon evidence
 
 Offline export records 30 rejected polygon rings with per-vertex residuals, normals, areas and source point matches. Reindexing preserved both plane predicates and strict validity across all 34 hulls. All 30 polygons have four to six vertices and measurable nonplanarity. Strict validity remains 0/34. [Audit report](docs/superpowers/reports/2026-11-18-teacher-cooked-failed-faces.md).

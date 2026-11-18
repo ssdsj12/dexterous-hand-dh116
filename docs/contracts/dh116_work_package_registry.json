@@ -40741,6 +40741,26 @@
         "skipped": 0,
         "scope": "CPU and archived data only; strict hull 0/34"
       }
+    },
+    "teacher.cooked-plane-projection-audit-v1": {
+      "title": "原平面和拟合平面的距离与包覆复核",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.cooked-failed-face-audit-v1"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_cooked_failed_face_audit.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_cooked_plane_projection_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-cooked-plane-projection.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 550,
+        "failed": 0,
+        "scope": "offline diagnostic only"
+      }
     }
   },
   "execution_target": {

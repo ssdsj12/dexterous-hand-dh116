@@ -1,0 +1,157 @@
+{
+  "package": "teacher.cooked-plane-projection-audit-v1",
+  "branch": "11-17",
+  "base_commit": "e08a53cc8f0a42eafe03882f9d03d573a643e0dd",
+  "report": "docs/superpowers/reports/2026-11-18-teacher-cooked-plane-projection.md",
+  "status": "offline_diagnostic_complete_teacher_blocked",
+  "cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_teacher_force_runtime.py",
+      "tests/test_native_phase_contract_v2.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_deformx_end_supported_scene.py",
+      "tests/test_teacher_preview_recording.py",
+      "tests/test_teacher_video.py",
+      "tests/test_teacher_video_delivery.py",
+      "tests/test_teacher_cached_replay.py",
+      "tests/test_teacher_read_only_display_usd.py",
+      "tests/test_teacher_grasp_preview_runtime.py",
+      "tests/test_teacher_supported_runtime.py",
+      "tests/test_dh116_curriculum_and_fixes.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_teacher_seed_initialization.py",
+      "tests/test_teacher_acquisition_geometry.py",
+      "tests/test_teacher_power_surface_audit.py",
+      "tests/test_teacher_initialization_worker.py",
+      "tests/test_tripod_cooked_geometry.py",
+      "tests/test_dh116_flexible_colliders.py",
+      "tests/test_dh116_cooked_convex_hulls.py",
+      "tests/test_dh116_cooked_hull_device_parity.py",
+      "tests/test_teacher_cooked_readback_audit.py",
+      "tests/test_teacher_owner_diagnostics.py",
+      "tests/test_simulation_owner_cleanup.py",
+      "tests/test_teacher_tensor_view_owners.py",
+      "tests/test_teacher_cuda_frame_owners.py",
+      "tests/test_teacher_cleanup_suggestions.py",
+      "tests/test_teacher_cuda_frame_walk_v2.py",
+      "tests/test_teacher_stat_cache_release.py",
+      "tests/test_teacher_cooked_representation_audit.py",
+      "tests/test_teacher_cooked_failed_face_audit.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cooked-plane-projection-20261118/cpu.log",
+    "log_sha256": "c61b761fbf4f5ef35e1882bed579bf13204b2d1529a49d05e029cc3a66fcaee7",
+    "passed": 550,
+    "failed": 0,
+    "skipped": 0
+  },
+  "targeted_cpu": {
+    "passed": 43,
+    "new_cases": 2
+  },
+  "prior_fields_match": true,
+  "diagnostic_only": true,
+  "projection": {
+    "comparison_threshold_m": 0.00015,
+    "faces_examined": 30,
+    "fitted_mean_within_threshold": 30,
+    "fitted_face_max_within_threshold": 30,
+    "fitted_enclosure_above_threshold": 0,
+    "fitted_enclosure_unavailable": 0,
+    "stored_face_or_enclosure_above_threshold": 3
+  },
+  "strict_hulls_passed": 0,
+  "native_qualification": false,
+  "native_runs": 0,
+  "teacher_admission": false,
+  "input_packet": {
+    "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stat-cache-release-native-20261117T131229Z/stored_cooked_capture.json",
+    "bytes": 264096985,
+    "sha256": "c122c87408d681166cf9a437479d0010e1a8dd335dfdf55cb7e7ec0e2610982e"
+  },
+  "source_sha256": {
+    "scripts/audit_dh116_teacher_cooked_readback.py": "bf21b9550d536ec82dc4d9cafa63dfa4946a9b8d619d75c551d48c2c32204df0",
+    "tests/test_teacher_cooked_failed_face_audit.py": "0fc0170b778bd7966aea67795facb09a3fb003e638ae0367391fb708e6344ebe"
+  },
+  "artifacts": [
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cooked-plane-projection-20261118/projection-audit.json",
+      "bytes": 252023,
+      "sha256": "fb3bb1f887096423263edb3e867ac5ea428bb4330e45b300f520f3471f11c914"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cooked-plane-projection-20261118/plane-projection.csv",
+      "bytes": 5303,
+      "sha256": "92c5a4e2b9e7e7b6972817cd2178184e842b6464800ff94b5a2bb6d3e3a55af9"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cooked-plane-projection-20261118/projection-run.json",
+      "bytes": 1274,
+      "sha256": "3e6c2015ad8159ac5b1de1f55a9691b1abfd8a10dacc22bb83847f428116fda6"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cooked-plane-projection-20261118/red.log",
+      "bytes": 1831,
+      "sha256": "fcc10553b4dc66dca3b746ab7330dccb0db7b26a13094c0a08b7fd38e7c2e4a5"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cooked-plane-projection-20261118/green-final.log",
+      "bytes": 99,
+      "sha256": "f03eeb75dedbec07d7949a78432c41c12b9a8f3ad3ff1f5d82c138c40e54cd13"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cooked-plane-projection-20261118/cpu.json",
+      "bytes": 2461,
+      "sha256": "8e33279f4a91688a33cff2565922d7af7f819ed1f73854780cae52ccec4887ea"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cooked-plane-projection-20261118/cpu.log",
+      "bytes": 661,
+      "sha256": "c61b761fbf4f5ef35e1882bed579bf13204b2d1529a49d05e029cc3a66fcaee7"
+    }
+  ],
+  "publication": {
+    "state": "pending_windows_publication"
+  },
+  "registry_cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-cooked-plane-projection-20261118/registry.log",
+    "log_sha256": "74046657049040c2f47c5246513c14ea818a775ea428c26fe91b1967b45c905f",
+    "passed": 55,
+    "overlaps_cpu_regression": true
+  }
+}
