@@ -26034,6 +26034,31 @@
         "verified_at_utc": "2026-11-18T12:26:17.827311+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.native-stereo-live-webrtc-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-live-stereo-webrtc.md",
+      "readiness": "docs/contracts/dh116_teacher_live_stereo_webrtc_v1.json",
+      "cpu_tests": {
+        "passed": 114,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 2,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7114995c3d98ada20f98f20f81b4e282f20ade5a",
+        "source_tree": "0d76ee7285112860d58515169d6ba24624b1d564",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T12:57:22.280247+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
