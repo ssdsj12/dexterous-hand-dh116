@@ -40761,6 +40761,28 @@
         "failed": 0,
         "scope": "offline diagnostic only"
       }
+    },
+    "teacher.contact-offset-baseline-v1": {
+      "title": "SDK 偏移基线只读入口",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.stat-cache-release-v1",
+        "teacher.cooked-plane-projection-audit-v1"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_contact_offset_baseline.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_contact_offset_baseline_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-contact-offset-baseline.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 561,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU only, actual offset reads pending"
+      }
     }
   },
   "execution_target": {

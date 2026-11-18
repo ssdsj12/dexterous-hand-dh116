@@ -1,0 +1,142 @@
+{
+  "package": "teacher.contact-offset-baseline-v1",
+  "branch": "11-17",
+  "base_commit": "867cd10722e9c9cd7f112e2714bd5d3e55c52230",
+  "report": "docs/superpowers/reports/2026-11-18-teacher-contact-offset-baseline.md",
+  "status": "implemented_cpu_verified_native_pending",
+  "cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_teacher_force_runtime.py",
+      "tests/test_native_phase_contract_v2.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_deformx_end_supported_scene.py",
+      "tests/test_teacher_preview_recording.py",
+      "tests/test_teacher_video.py",
+      "tests/test_teacher_video_delivery.py",
+      "tests/test_teacher_cached_replay.py",
+      "tests/test_teacher_read_only_display_usd.py",
+      "tests/test_teacher_grasp_preview_runtime.py",
+      "tests/test_teacher_supported_runtime.py",
+      "tests/test_dh116_curriculum_and_fixes.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_teacher_seed_initialization.py",
+      "tests/test_teacher_acquisition_geometry.py",
+      "tests/test_teacher_power_surface_audit.py",
+      "tests/test_teacher_initialization_worker.py",
+      "tests/test_tripod_cooked_geometry.py",
+      "tests/test_dh116_flexible_colliders.py",
+      "tests/test_dh116_cooked_convex_hulls.py",
+      "tests/test_dh116_cooked_hull_device_parity.py",
+      "tests/test_teacher_cooked_readback_audit.py",
+      "tests/test_teacher_owner_diagnostics.py",
+      "tests/test_simulation_owner_cleanup.py",
+      "tests/test_teacher_tensor_view_owners.py",
+      "tests/test_teacher_cuda_frame_owners.py",
+      "tests/test_teacher_cleanup_suggestions.py",
+      "tests/test_teacher_cuda_frame_walk_v2.py",
+      "tests/test_teacher_stat_cache_release.py",
+      "tests/test_teacher_cooked_representation_audit.py",
+      "tests/test_teacher_cooked_failed_face_audit.py",
+      "tests/test_teacher_contact_offset_baseline.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-contact-offset-baseline-20261118/cpu.log",
+    "log_sha256": "97827e633656341994aa0976c8ce7b32628d5f458b14d5beef6cb29dd9b5d687",
+    "passed": 561,
+    "failed": 0,
+    "skipped": 0
+  },
+  "targeted_cpu": {
+    "passed": 99,
+    "new_cases": 11
+  },
+  "source_sha256": {
+    "scripts/diagnose_dh116_teacher_initialization.py": "afdccf620c5764dace386535574adf5479512260535a04f308206b33e0b27ed1",
+    "scripts/diagnose_dh116_teacher_stat_cache_release.py": "57e0c90564dde36f157e78bfeda456447622faa8937369acaecbcf191e9f26ae",
+    "src/go2_pvcnn/control/dh116/tabletop_contact_offset_baseline.py": "b5d529013961b4773670eea5946796aaa40cdcbee2f064636e12ea4cca479009",
+    "tests/test_teacher_contact_offset_baseline.py": "27b143203c338852ddcd6cead18dcad36faba1249edf378db4fafbaac98f0e58"
+  },
+  "sdk_api_sha256": "bb5e684dce25e0ad7f3e03ec395ec4729d55203f3b3a58bfa824b8d106c0e54b",
+  "native_runs": 0,
+  "actual_offset_values": null,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "publication": {
+    "state": "pending_windows_publication"
+  },
+  "artifacts": [
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-contact-offset-baseline-20261118/cpu.json",
+      "sha256": "33ee5ec09aef8fbef3c77b7d3982b94160aa74a133cce48b4a8cf364ed4c11a4"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-contact-offset-baseline-20261118/cpu.log",
+      "sha256": "97827e633656341994aa0976c8ce7b32628d5f458b14d5beef6cb29dd9b5d687"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-contact-offset-baseline-20261118/green-final.json",
+      "sha256": "8846187f1450ac0c2eddd066ff52a9f915660e60f3b08142358fcaf733356282"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-contact-offset-baseline-20261118/green-final.log",
+      "sha256": "21e75737a3f2178dc76c09f08586d9ca23d16ead23673c23c8bf7fac4bd1dcf4"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-contact-offset-baseline-20261118/green.json",
+      "sha256": "7ad9950ae79aab2d017e92ba908b8954233b680188a57415df8d34a872c1a1b0"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-contact-offset-baseline-20261118/green.log",
+      "sha256": "9e77c0a1ed218795a68fd340aa649f3fdb3e7b0f8e1ff5f92963c32f4318934b"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-contact-offset-baseline-20261118/red.json",
+      "sha256": "91f74496b0d6334b59fb248a13bf2a4bb5a215bcb3959ed7a0da3037368e61b9"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-contact-offset-baseline-20261118/red.log",
+      "sha256": "2a687715d83f0bf031fc81ef1200a924ff816e0b220443373da8a532635a3f8b"
+    }
+  ],
+  "registry_cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-contact-offset-baseline-20261118/registry.log",
+    "log_sha256": "54147e0599d8da719be08fcd9727e7602b1b51810484ca6366433f7072416a20",
+    "passed": 55,
+    "overlaps_cpu_regression": true
+  }
+}

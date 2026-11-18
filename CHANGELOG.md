@@ -1,3 +1,7 @@
+## 2026-11-18 contact offset baseline
+
+The optional initialization diagnostic binds the installed Tensor API and reads the single shape slot of three exact links at SDK step 2. CPU fixtures verify the readback contract. Native values and qualification are pending. [Report](docs/superpowers/reports/2026-11-18-teacher-contact-offset-baseline.md).
+
 ## 2026-11-18 fitted plane distance comparison
 
 The offline face export reports fitted mean and maximum distances plus enclosure residuals for the 30 flagged polygons. The 0.15 mm comparison is diagnostic. Strict hull qualification remains 0/34. [Audit report](docs/superpowers/reports/2026-11-18-teacher-cooked-plane-projection.md).

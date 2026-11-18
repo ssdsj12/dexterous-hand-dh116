@@ -8,6 +8,7 @@ import weakref
 
 from scripts import diagnose_dh116_teacher_initialization as legacy
 from go2_pvcnn.control.dh116 import tabletop_stat_cache_release as cache
+from go2_pvcnn.control.dh116 import tabletop_contact_offset_baseline as offsets
 
 VERSION="dh116-teacher-stat-cache-release-native-v1"
 
@@ -19,7 +20,7 @@ def validate_execution_context(root):
     legacy.validate_execution_context(root)
 
 
-def freeze_plan(root,output,binding_reports):
+def freeze_plan(root,output,binding_reports,*,contact_offset_baseline=False):
     plan=legacy.freeze_plan(root,output,binding_reports)
     contract=cache.stat_cache_source_contract()
     plan["version"]=VERSION
@@ -27,13 +28,18 @@ def freeze_plan(root,output,binding_reports):
                                 "source_contract":contract}
     for pin in contract["sources"].values():
         plan["frozen_files"][pin["path"]]=pin["sha256"]
+    if contact_offset_baseline:
+        offset_contract = offsets.source_contract()
+        plan["contact_offset_baseline"] = offset_contract
+        plan["frozen_files"][offset_contract["api_path"]] = offset_contract["api_sha256"]
     return plan
 
 
 def verify_plan(plan,approved):
     if approved!=legacy.digest(plan):raise ValueError("exact approved stat-cache frozen SHA required")
     if plan.get("version")!=VERSION:raise ValueError("independent stat cache plan version required")
-    rebuilt=freeze_plan(plan["project"],plan["output"],plan["binding_reports"])
+    rebuilt=freeze_plan(plan["project"],plan["output"],plan["binding_reports"],
+                        contact_offset_baseline="contact_offset_baseline" in plan)
     if plan!=rebuilt:raise ValueError("stat cache frozen source/contract/budget differs")
     if Path(plan["output"]).exists():raise ValueError("fresh exclusive output directory required")
     return plan
@@ -89,6 +95,34 @@ def make_before_collect(plan):
     return before_collect
 
 
+def make_offset_capture(plan):
+    output = Path(plan["output"])
+    contract = plan["contact_offset_baseline"]
+
+    def capture(sim, simulation_view, bindings, expected_clock):
+        try:
+            from pxr import UsdGeom
+
+            api = sys.modules.get(offsets.API_MODULE)
+            if api is None or str(Path(api.__file__).resolve()) != contract["api_path"]:
+                raise ValueError("loaded Physics Tensor API does not match frozen source")
+            result = offsets.read_contact_offsets(
+                simulation_view, bindings, meters_per_unit=UsdGeom.GetStageMetersPerUnit(sim.stage),
+                read_clock=lambda: legacy.clock(sim), expected_clock=expected_clock)
+            result["frozen_api_source_sha256"] = contract["api_sha256"]
+            legacy.write_new(output/"contact_offset_baseline.json", result)
+        except Exception as error:
+            # The raw cooked receipt is already durable. Closure stays on the
+            # original owner-release path if this optional diagnostic fails.
+            text = f"{type(error).__name__}: {error}"
+            error.__traceback__ = None
+            legacy.write_new(output/"contact_offset_baseline_error.json", {"error": text})
+        finally:
+            sim = simulation_view = None
+
+    return capture
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project",type=Path,default=Path(__file__).resolve().parents[1])
@@ -97,6 +131,8 @@ def main(argv=None):
     parser.add_argument("--plan",type=Path,required=True)
     parser.add_argument("--execute-native",action="store_true")
     parser.add_argument("--approved-frozen-sha256")
+    parser.add_argument("--contact-offset-baseline",action="store_true",
+                        help="include an exact-link, read-only PhysX offset baseline")
     args=parser.parse_args(argv)
     validate_execution_context(args.project)
     if args.execute_native:
@@ -105,9 +141,17 @@ def main(argv=None):
         if (str(args.project.resolve())!=plan["project"] or str(args.output.resolve())!=plan["output"]
                 or str(args.binding_reports.resolve())!=plan["binding_reports"]):
             raise ValueError("CLI and frozen stat cache identity differ")
-        legacy.execute_native(plan,before_owner_collect=make_before_collect(plan))
+        if args.contact_offset_baseline != ("contact_offset_baseline" in plan):
+            raise ValueError("CLI contact offset baseline differs from approved plan")
+        before_collect = make_before_collect(plan)
+        if args.contact_offset_baseline:
+            legacy.execute_native(plan, before_owner_collect=before_collect,
+                                  after_cooked_capture=make_offset_capture(plan))
+        else:
+            legacy.execute_native(plan, before_owner_collect=before_collect)
     else:
-        plan=freeze_plan(args.project,args.output,args.binding_reports)
+        plan=freeze_plan(args.project,args.output,args.binding_reports,
+                         contact_offset_baseline=args.contact_offset_baseline)
         legacy.write_new(args.plan,plan)
         print(json.dumps({"native_execution_performed":False,"plan":str(args.plan),
                           "frozen_sha256":legacy.digest(plan),"cache_api_executed":False}))

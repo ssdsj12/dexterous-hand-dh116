@@ -25607,6 +25607,24 @@
         "verified_at_utc": "2026-11-18T02:48:35.901270+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.contact-offset-baseline-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-contact-offset-baseline.md",
+      "readiness": "docs/contracts/dh116_teacher_contact_offset_baseline_v1.json",
+      "cpu_tests": {
+        "passed": 561,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "pending_windows_publication"
+      },
+      "remote_verified": false
     }
   ]
 }
