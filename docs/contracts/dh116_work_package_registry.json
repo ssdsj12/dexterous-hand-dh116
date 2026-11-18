@@ -40988,6 +40988,28 @@
         "skipped": 0,
         "scope": "CPU pass. Bounded native zero-action comparison complete. Epoch mapping and process exit remain open."
       }
+    },
+    "teacher.native-stereo-reset-clock-origin-v1": {
+      "title": "Pinch 原生双目时钟起点复算",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.native-student-stereo-sidecar-cpu-v1"
+      ],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_stereo_alignment_offline.py"
+      ],
+      "readiness": "docs/contracts/dh116_native_stereo_reset_clock_origin_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-native-stereo-reset-clock-origin.md",
+      "native_runs": 0,
+      "blocked_reason": "One prior native Pinch reset and two pairs support an epoch-offset candidate only. Independent native resets and clean shutdown are pending.",
+      "last_result": {
+        "passed": 137,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU pass. Reanalysis of prior native frames only."
+      }
     }
   },
   "execution_target": {

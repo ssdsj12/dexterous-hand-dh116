@@ -1,3 +1,7 @@
+## 2026-11-18 native Student stereo Reset clock origin
+
+Offline audit derives a 4.167 ms candidate offset from the saved Reset ledger and reproduces zero residual on two prior Pinch frames. Native synchronization admission remains pending. [Report](docs/superpowers/reports/2026-11-18-native-stereo-reset-clock-origin.md).
+
 ## 2026-11-18 native Student stereo clock warmup
 
 A single Pinch zero-command control window advanced the SDK and both fixed RGB clocks by 16.667 ms. Both native pairs kept a 4.167 ms offset and failed the 2 ms timing gate. App close returned and the outer process reported SIGSEGV. [Report](docs/superpowers/reports/2026-11-18-native-stereo-clock-warmup.md).

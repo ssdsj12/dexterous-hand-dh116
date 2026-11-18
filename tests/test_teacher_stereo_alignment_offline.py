@@ -90,3 +90,58 @@ def test_audits_consecutive_physics_boundaries_and_keeps_clocks_distinct(tmp_pat
     _, skipped, _ = write_frame(tmp_path / "f3", tick=2, epoch=88)
     with pytest.raises(ValueError, match="policy"):
         audit.audit_sequence([a, audit.audit_frame(skipped, cal)])
+
+
+
+
+def _clock_origin_evidence(tmp_path, second_rgb):
+    events = tmp_path/"ownership.jsonl"
+    phases = ("episode_reset_before", "episode_reset_after")
+    clocks = [dict(phase=phase, sdk_clock=dict(sdk_step=2, sdk_time_s=2/480)) for phase in phases]
+    events.write_text("".join(json.dumps(row) + "\n" for row in clocks))
+    frames = []
+    for tick, rgb_time in enumerate((0., second_rgb)):
+        cal, path, data = write_frame(tmp_path/f"frame-{tick:06d}", tick=tick, epoch=20+tick)
+        data["identity"].update(run_uuid=tmp_path.name, solver_time_s=tick/60)
+        for side in ("left", "right"):
+            data["render_timing"][f"raw_{side}_clock"]["simulation_time"] = rgb_time
+        path.write_text(json.dumps(data))
+        frames.append(audit.audit_frame(path, cal))
+    return events, frames
+
+
+@pytest.mark.parametrize("second_rgb, expected", [(1/60, 0.), (1/60 + .003, 3.)])
+def test_reset_clock_origin_audits_from_physics_anchor_without_admission(tmp_path, second_rgb, expected):
+    events, frames = _clock_origin_evidence(tmp_path, second_rgb)
+    report = audit.audit_reset_clock_origin(frames, events, audit.file_sha(events))
+    rows = report["frames"]
+    assert report["candidate_offset_ms"] == pytest.approx(2/480*1000)
+    assert rows[0]["raw_rgb_sdk_delta_ms"] == pytest.approx(-2/480*1000)
+    assert rows[1]["candidate_rgb_sdk_delta_ms"] == pytest.approx(expected)
+    assert rows[1]["rgb_solver_delta_ms"] == pytest.approx(expected)
+    assert rows[1]["candidate_within_2ms"] is (expected == 0.)
+    assert report["candidate_only"] and not report["native_synchronization_qualified"]
+    assert frames[0]["renderer_clock"]["simulation_time"] == 0.
+
+
+@pytest.mark.parametrize("fault", ["sha", "source", "reset_step", "duplicate_reset"])
+def test_reset_clock_origin_rejects_unbound_anchor(tmp_path, fault):
+    events, frames = _clock_origin_evidence(tmp_path, 1/60)
+    expected_sha = audit.file_sha(events)
+    if fault == "sha":
+        events.write_text(events.read_text() + "{}\n")
+    elif fault == "source":
+        frames[0]["identity"]["run_uuid"] = "different-run"
+        frames[1]["identity"]["run_uuid"] = "different-run"
+    else:
+        lines = events.read_text().splitlines()
+        if fault == "reset_step":
+            row = json.loads(lines[1])
+            row["sdk_clock"]["sdk_step"] += 1
+            lines[1] = json.dumps(row)
+        else:
+            lines.append(lines[-1])
+        events.write_text("\n".join(lines) + "\n")
+        expected_sha = audit.file_sha(events)
+    with pytest.raises(ValueError, match="Reset"):
+        audit.audit_reset_clock_origin(frames, events, expected_sha)

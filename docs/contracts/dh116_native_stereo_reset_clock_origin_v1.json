@@ -1,0 +1,220 @@
+{
+  "package": "teacher.native-stereo-reset-clock-origin-v1",
+  "branch": "11-17",
+  "base_commit": "6a6723972cc8153cea189ec56a15feafee03944e",
+  "status": "offline_candidate_only",
+  "report": "docs/superpowers/reports/2026-11-18-native-stereo-reset-clock-origin.md",
+  "native_runs": 0,
+  "source_native_runs": 1,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "training_samples_admitted": 0,
+  "source_readiness": "docs/contracts/dh116_native_stereo_clock_warmup_v1.json",
+  "source_native_exit_code": -11,
+  "cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_native_teacher_stereo.py",
+      "tests/test_native_teacher_collector.py",
+      "tests/test_teacher_stereo_sync.py",
+      "tests/test_tiled_stereo_capture.py",
+      "tests/test_teacher_stereo_alignment.py",
+      "tests/test_teacher_stereo_alignment_offline.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-reset-clock-origin-20261118/joint-cpu.log",
+    "log_sha256": "c9fe97d4b6a15c6621ab7d6db81a3643018b9d47dc6cb5c81f0528bf0c47549d",
+    "passed": 137,
+    "failed": 0,
+    "skipped": 0
+  },
+  "reset_origin_audit": {
+    "reset_ledger_sha256": "d417a8eaae67696f451d9e8f1660d4af314fa90ea6397c0c52a3cd837e87343d",
+    "reset_sdk_step": 2,
+    "reset_sdk_time_s": 0.004166666883975267,
+    "candidate_offset_ms": 4.166666883975267,
+    "frames": [
+      {
+        "receipt_sha256": "b576823d1b21fa62b49d0f5c73e12b3a668629dcb04e03a514ece57e5c338388",
+        "capture_id": 1,
+        "sdk_step": 2,
+        "raw_rgb_s": 0.0,
+        "sdk_s": 0.004166666883975267,
+        "solver_s": 0.0,
+        "raw_rgb_sdk_delta_ms": -4.166666883975267,
+        "raw_within_2ms": false,
+        "candidate_rgb_sdk_delta_ms": 0.0,
+        "candidate_within_2ms": true,
+        "rgb_solver_delta_ms": 0.0
+      },
+      {
+        "receipt_sha256": "fbccbd88083e7cf825e950409f62c8d695c4d0e89815cdbd18b268b3178a04f5",
+        "capture_id": 2,
+        "sdk_step": 10,
+        "raw_rgb_s": 0.01666666753590107,
+        "sdk_s": 0.020833334419876337,
+        "solver_s": 0.01666666753590107,
+        "raw_rgb_sdk_delta_ms": -4.166666883975267,
+        "raw_within_2ms": false,
+        "candidate_rgb_sdk_delta_ms": 0.0,
+        "candidate_within_2ms": true,
+        "rgb_solver_delta_ms": 0.0
+      }
+    ],
+    "candidate_only": true,
+    "native_synchronization_qualified": false
+  },
+  "audit_command": [
+    "/mnt/mydisk/xk/envs/dh116/bin/python",
+    "-B",
+    "-m",
+    "scripts.audit_dh116_teacher_stereo_alignment",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-clock-warmup-20261118/native-pinch-clock-warmup/frame-000000/teacher_stereo_alignment.json",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-clock-warmup-20261118/native-pinch-clock-warmup/frame-000001/teacher_stereo_alignment.json",
+    "--reset-ledger",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-stereo-clock-warmup-20261118/native-pinch-clock-warmup/ownership.jsonl",
+    "--reset-ledger-sha256",
+    "d417a8eaae67696f451d9e8f1660d4af314fa90ea6397c0c52a3cd837e87343d"
+  ],
+  "files": {
+    "audit_json_sha256": "4dd69b02bae5ed4efeb396774b4ebc5a584c1b6138fa4000b30b53fb09468055",
+    "installed_source_audit_sha256": "d9fb4323c2706d9d378049aa241920d255600905b9ad7c6ecfc20a72e48d0a3a"
+  },
+  "installed_source_audit": {
+    "reset_source": {
+      "exception": "ValueError",
+      "message": "actual file SHA differs: /mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src/go2_pvcnn/control/dh116/tabletop_dual_pinch_builder.py",
+      "mismatches": [
+        {
+          "path": "src/go2_pvcnn/control/dh116/tabletop_dual_pinch_builder.py",
+          "expected": "5b190d1896647773c2f8895e73224f387d1dd17a565a44c4e2212db8f477fe17",
+          "actual": "bbbb6a65ba91932e73bd94c13b723c2fb910103cb445963924a12e374c81b2d6"
+        },
+        {
+          "path": "src/go2_pvcnn/control/dh116/tabletop_dual_hand_scene_preparation.py",
+          "expected": "c79ac1a5a0b9becd5d782708caa634398a249da5729432fd5ce0c1ae78b693fb",
+          "actual": "67c1bb2fa39b6c150c4f3d962f09dea38a2e2dd8762af0a64ccdf304ea390bab"
+        },
+        {
+          "path": "src/go2_pvcnn/control/dh116/tabletop_deformable_dual_hand_episode.py",
+          "expected": "4c50d414fb983f9189b73cefd3ec2ffe0a7633c105aecd6cf1d01749845e74f7",
+          "actual": "0c6275db803a5278ac7683b3f7e134754d1ac9a41f8ab198fc920bbdd5b953f7"
+        },
+        {
+          "path": "src/go2_pvcnn/control/dh116/tabletop_deformable_dual_evidence.py",
+          "expected": "79d3b9b2881df6ab4345410dab7f49e3f60e66445699d99d752d6b8b16bcbb16",
+          "actual": "31556f89247a6373f3029fa9b9185cf5d24ba8dad396b7fc940893240f93c66a"
+        },
+        {
+          "path": "src/go2_pvcnn/control/dh116/tabletop_deformable_physical_exchange.py",
+          "expected": "c910ebd45e246d4aa20ec94429001d2c0e2365ff5a0a0ded922212a68a2d3a36",
+          "actual": "a0f3bd746da65fb9bdd7d59c997462e1d8b5470246548c3d4abf079ab07979b4"
+        },
+        {
+          "path": "src/go2_pvcnn/control/dh116/tabletop_deformable_live_geometry.py",
+          "expected": "19a318aa643d47a73e7dc49e226d2aa6fb4b5275e072dd2257c426e76ec7bbc9",
+          "actual": "a9ed93cd9a5da8c5071e6c7342b3fcf5017a5cec00e89045e94b1735a9264cb2"
+        },
+        {
+          "path": "src/go2_pvcnn/control/dh116/tabletop_simulation_owner_cleanup.py",
+          "expected": "e93c53968a64f76301bddb9876ce12ce6b7692dc95b4ae6068fa115c7f5736de",
+          "actual": "6d5d13f9e2bd18e6ce9641b0c3561d96de76be1a03f33fd4b0e25f26ce4d7625"
+        },
+        {
+          "path": "src/go2_pvcnn/control/dh116/tabletop_deformable_clearance_guard.py",
+          "expected": "98d95efd26b1cb7fb833649e897c30d361bde78807b28671f7132f118ceec9dc",
+          "actual": "f688a6aab2d849c5854ec0460ef4d6dbaddff53f219aaf0ee05c6384b30ee98b"
+        },
+        {
+          "path": "tests/test_dh116_dual_pinch_director_worker.py",
+          "expected": "55e48555a5a483c809b45a4e424b5f6a8e5b244e2277b7267cecde61c3c2af87",
+          "actual": "b0eb8963b11e6d2ba7abe261312fa5c0056b22af7403641043c930da55cc7b44"
+        },
+        {
+          "path": "tests/test_dh116_native_parameter_task_worker.py",
+          "expected": "2e13762a8a84280f84043a725acfb7e013a1cc522822ae0a037b989c80e02391",
+          "actual": "8b08fb331d90105a6992f5c75f90fd71b56bb2b99750970f12f228c11ff510d0"
+        },
+        {
+          "path": "tests/test_dh116_pinch_margin_contact_worker.py",
+          "expected": "532e2eee2bb41e268f24e5ae0363ce2e3b4ae4b0d62d2db60d52147170395984",
+          "actual": "3c53a031b4f854115e43183e37f3ae3758fdc52c489862e5067bb61ff2f08238"
+        },
+        {
+          "path": "tests/test_effective_right_pinch_worker.py",
+          "expected": "29f49fa177f4e5db2ebf49e18be56715eb19d0ec7ea2854e091f0900a607ef6f",
+          "actual": "2a315ee6a16b2752802ae0c27e26071723b73229756f409e3d44b68a9e8ecf9c"
+        },
+        {
+          "path": "tests/test_tracking_pinch_worker.py",
+          "expected": "22c3e01fec8edfb4614d1eabf1d0c7b5eeb590c1f551a618a61cdd2660594e7a",
+          "actual": "1ca3e70743120391d990f9be76d95b1e611491bd306ae451ab4722b9e1960cfd"
+        },
+        {
+          "path": "tests/test_left_pinch_approach_worker.py",
+          "expected": "36827f47b016fb00d0b80bbd3d62e41bab45df2286c2c9459656a2d960379d20",
+          "actual": "0b4133681f1f0c278febe5c0f1dd37556c47cbdfbb8b812dce4df46a04522ea6"
+        },
+        {
+          "path": "tests/test_projected_pinch_worker.py",
+          "expected": "1930daf183a5ea96eb6c96726d8293d1c8fc91e1a980134ba7c58655054eefba",
+          "actual": "e9910c49f31842d19724c4494b73a9e57932f2b9e71b7b034d0e32ce4b499240"
+        },
+        {
+          "path": "tests/test_flexible_health_worker.py",
+          "expected": "7d2e3d7df6577d19aa4e314fbeb95819619b787c59e31d3e6566155359618091",
+          "actual": "6bc0ebd268b0e235a8ee390b3caf603859cbc4e9619433d34c44db1f3f300215"
+        },
+        {
+          "path": "tests/test_mesh_reset_health_worker.py",
+          "expected": "d1b1271ee8661942ef3ac43964827a0d291e265d1aa5cea789cc581b6f9ec732",
+          "actual": "3bf94c6cdda34f23724a8d7d852865ac72a8ff2e1b893c6ad2b706f56ccda9c1"
+        }
+      ]
+    },
+    "async_module_sha256": "73fa118ee5dd9c6f54ac7ae1ef389db319b97b07df9bb4fc24075f085d58c710",
+    "async_exports_source": [
+      "\"\"\"Provides an asynchronous task engine for integrating Python's asyncio with the Omniverse Kit update loop.\"\"\"",
+      "__all__=[\"run_coroutine\", \"_AsyncEngineDriver\"]",
+      "",
+      "from .async_engine import _AsyncEngineDriver",
+      "from .async_engine import run_coroutine"
+    ],
+    "owned_callsite_matches": [
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_contact_calibration.py:195:        json.dump(dict(time_unix_s=time.time(),wait_for_replicator=False,process_exit_verified=False),f)",
+      "src/go2_pvcnn/control/dh116/tabletop_stereo_contact_calibration.py:214:            app.close(wait_for_replicator=False)"
+    ],
+    "simulation_app_close_source": [
+      [
+        561,
+        "def close(self, wait_for_replicator=True) -> None:"
+      ],
+      [
+        569,
+        "if wait_for_replicator:"
+      ],
+      [
+        570,
+        "rep.orchestrator.wait_until_complete()"
+      ]
+    ]
+  },
+  "publication": {
+    "state": "pending_windows_relay"
+  }
+}

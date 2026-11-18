@@ -11,6 +11,7 @@ from PIL import Image
 from go2_pvcnn.control.dh116.tabletop_stereo_calibration import StereoCalibration
 from go2_pvcnn.control.dh116.tabletop_stereo_geometry import world_to_palms
 from go2_pvcnn.control.dh116.tabletop_teacher_stereo_alignment import STUDENT_CAMERA, _finite, _projection
+from go2_pvcnn.control.dh116.tabletop_teacher_stereo_sync import student_rgb_timing
 from go2_pvcnn.control.dh116.tabletop_tiled_stereo_capture import _clock
 
 
@@ -161,18 +162,71 @@ def audit_sequence(frames):
                 wall_capture_latency_ms=None, complete_episodes_verified=0, actions_verified=0)
 
 
+def audit_reset_clock_origin(frames, reset_ledger, expected_sha):
+    """Test a reset-relative origin against saved frames without qualifying them."""
+    audit_sequence(frames)
+    first = frames[0]["identity"]
+    ledger = Path(reset_ledger)
+    if (len(frames) < 2 or first["policy_tick"] != 0 or first["run_uuid"] != ledger.parent.name
+            or ledger.name != "ownership.jsonl" or ledger.is_symlink()):
+        raise ValueError("Reset clock audit requires consecutive frames from the start of the same run")
+    data = ledger.read_bytes()
+    if hashlib.sha256(data).hexdigest() != expected_sha:
+        raise ValueError("Reset ledger SHA differs")
+    phases = ("episode_reset_before", "episode_reset_after")
+    events = [json.loads(line) for line in data.splitlines()]
+    resets = [event for event in events if event.get("phase") in phases]
+    if tuple(event["phase"] for event in resets) != phases:
+        raise ValueError("Reset ledger must record exactly one ordered reset boundary")
+    anchor = resets[1]["sdk_clock"]
+    if (resets[0]["sdk_clock"] != anchor or type(anchor["sdk_step"]) is not int
+            or anchor["sdk_step"] != first["sdk_step"]
+            or anchor["sdk_time_s"] != first["sdk_timestamp_s"]):
+        raise ValueError("Reset ledger does not match the first physical boundary")
+    offset = anchor["sdk_time_s"]
+    rows = []
+    for frame in frames:
+        identity = frame["identity"]
+        raw = frame["renderer_clock"]["simulation_time"]
+        sdk = identity["sdk_timestamp_s"]
+        solver = _finite(identity["solver_time_s"], ()).item()
+        original = student_rgb_timing(raw, sdk)
+        candidate = student_rgb_timing(raw+offset, sdk)
+        rows.append(dict(receipt_sha256=frame["receipt_sha256"], capture_id=frame["capture_id"],
+                         sdk_step=identity["sdk_step"], raw_rgb_s=raw, sdk_s=sdk, solver_s=solver,
+                         raw_rgb_sdk_delta_ms=original["rgb_sdk_delta_ms"],
+                         raw_within_2ms=original["student_sync_usable"],
+                         candidate_rgb_sdk_delta_ms=candidate["rgb_sdk_delta_ms"],
+                         candidate_within_2ms=candidate["student_sync_usable"],
+                         rgb_solver_delta_ms=(raw-solver)*1000))
+    return dict(reset_ledger_sha256=expected_sha, reset_sdk_step=anchor["sdk_step"], reset_sdk_time_s=offset,
+                candidate_offset_ms=offset*1000, frames=rows, candidate_only=True,
+                native_synchronization_qualified=False)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("receipts", nargs="+", type=Path, help="one episode fragment in capture order")
     parser.add_argument("--calibration", type=Path, default=Path(__file__).resolve().parents[1] / STUDENT_CAMERA)
     parser.add_argument("--annotations", type=Path, help="manual annotations for a single supplied receipt")
+    parser.add_argument("--reset-ledger", type=Path, help="ownership.jsonl from the same sealed run")
+    parser.add_argument("--reset-ledger-sha256", help="expected SHA256 of the reset ledger")
     args = parser.parse_args()
+    if bool(args.reset_ledger) != bool(args.reset_ledger_sha256):
+        parser.error("--reset-ledger and --reset-ledger-sha256 must be supplied together")
+    if args.reset_ledger and any(path.resolve().parent.parent != args.reset_ledger.resolve().parent
+                                 for path in args.receipts):
+        parser.error("Reset ledger and frame receipts must share the native run directory")
     if args.annotations and len(args.receipts) != 1:
         parser.error("--annotations requires exactly one receipt")
     calibration = StereoCalibration.from_json(args.calibration)
     labels = json.loads(args.annotations.read_text()) if args.annotations else None
     frames = [audit_frame(path, calibration, labels) for path in args.receipts]
-    print(json.dumps(dict(frames=frames, sequence=audit_sequence(frames)), indent=2, allow_nan=False))
+    result = dict(frames=frames, sequence=audit_sequence(frames))
+    if args.reset_ledger:
+        result["reset_clock_origin"] = audit_reset_clock_origin(frames, args.reset_ledger,
+                                                               args.reset_ledger_sha256)
+    print(json.dumps(result, indent=2, allow_nan=False))
 
 
 if __name__ == "__main__":
