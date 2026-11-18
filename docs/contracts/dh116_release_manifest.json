@@ -25757,6 +25757,31 @@
         "verified_at_utc": "2026-11-18T06:59:57.645374+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.actual-fresh-pinch-scene-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-ppo-fresh-pinch.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo_fresh_pinch_v1.json",
+      "cpu_tests": {
+        "passed": 46,
+        "failed": 0,
+        "scope": "targeted"
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "6140dc94f13f18d20a66290986d2e8ab90a7c638",
+        "source_tree": "b6bdedfa7a143c435c23f63bbe60719a79dbdba8",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T07:45:26.455252+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }

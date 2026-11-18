@@ -130,6 +130,13 @@
   "teacher_admission": false,
   "ppo_updates": 0,
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "6140dc94f13f18d20a66290986d2e8ab90a7c638",
+    "source_tree": "b6bdedfa7a143c435c23f63bbe60719a79dbdba8",
+    "remote_branch": "11-17",
+    "files_verified": 10,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T07:45:26.455252+00:00"
   }
 }
