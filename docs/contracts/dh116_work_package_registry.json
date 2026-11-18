@@ -40697,6 +40697,29 @@
         "teacher_admission": false,
         "post_native_cpu_passed": 188
       }
+    },
+    "teacher.cooked-source-coordinate-audit-v1": {
+      "title": "原始/cooked集合与坐标链离线审计修正",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.cooked-surface-semantics-v1"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_cooked_representation_audit.py",
+        "tests/test_teacher_cooked_readback_audit.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_cooked_representation_audit_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-cooked-representation-audit.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 544,
+        "failed": 0,
+        "skipped": 0,
+        "new_targeted_passed": 22,
+        "scope": "CPU regression and existing packet only; strict hulls0/34 unchanged"
+      }
     }
   },
   "execution_target": {

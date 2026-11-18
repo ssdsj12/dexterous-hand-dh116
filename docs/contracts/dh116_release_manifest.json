@@ -25531,6 +25531,24 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.cooked-source-coordinate-audit-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-cooked-representation-audit.md",
+      "readiness": "docs/contracts/dh116_teacher_cooked_representation_audit_v1.json",
+      "cpu_tests": {
+        "passed": 544,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "pending_windows_publication"
+      },
+      "remote_verified": false
     }
   ]
 }

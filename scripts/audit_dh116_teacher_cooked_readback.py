@@ -140,7 +140,144 @@ def analyze_hull(raw):
     return result
 
 
-def analyze_capture(packet):
+
+def _vertex_statistics(distances):
+    return dict(p50_m=float(np.percentile(distances,50)),
+        p90_m=float(np.percentile(distances,90)),p95_m=float(np.percentile(distances,95)),
+        max_m=float(np.max(distances)),count=int(len(distances)))
+
+
+def _nearest_vertex_distances(points,tree,chunk):
+    distances=np.empty(len(points),dtype=float)
+    for start in range(0,len(points),chunk):
+        stop=min(start+chunk,len(points))
+        distances[start:stop]=tree.query(points[start:stop],k=1,workers=1)[0]
+    if not np.isfinite(distances).all():raise ValueError("finite nearest-vertex distances required")
+    return distances
+
+
+def _plane_threshold_study(raw,original):
+    # Counterfactual plane predicate only: NEVER a modified full validator.
+    vertices=np.asarray(raw["vertices"],dtype=float);residuals=[]
+    for polygon in raw["polygons"]:
+        start,count=polygon["index_base"],polygon["num_vertices"]
+        if type(start) is not int or type(count) is not int or start<0 or count<3:
+            raise ValueError("integer polygon range required for threshold study")
+        ids=raw["indices"][start:start+count]
+        if len(ids)!=count or min(ids)<0 or max(ids)>=len(vertices):
+            raise ValueError("complete polygon range required for threshold study")
+        plane=np.asarray(polygon["plane"],dtype=float)
+        if plane.shape!=(4,) or not np.isfinite(plane).all() or np.linalg.norm(plane[:3])<1e-12:
+            raise ValueError("finite nonzero plane required for threshold study")
+        plane=plane/np.linalg.norm(plane[:3])
+        residual=vertices@plane[:3]+plane[3]
+        residuals.append(max(float(np.max(abs(residual[ids]))),float(np.max(residual))))
+    if original is None:raise ValueError("original validator numeric scale unavailable")
+    return [dict(name=name,tolerance_m=float(tol),failing_faces=int(np.sum(np.asarray(residuals)>tol)),
+                 polygons_examined=len(residuals),plane_predicate_only=True,admission_applied=False)
+            for name,tol in (("original_numeric_scale",original),("image_suggested_1e_4_m",1e-4))]
+
+
+
+def _saved_source_geometry_sha(points,triangles,orientation):
+    """Recompute existing usd_surface.read_surface byte contract; no USD import."""
+    triangles=np.asarray(triangles)
+    if (triangles.ndim!=2 or triangles.shape[1]!=3 or not len(triangles)
+            or not np.issubdtype(triangles.dtype,np.integer)
+            or triangles.min()<0 or triangles.max()>=len(points)):
+        raise ValueError("integer in-range source triangles required")
+    if orientation not in ("rightHanded","leftHanded"):
+        raise ValueError("explicit saved source orientation required")
+    digest=hashlib.sha256()
+    digest.update(b"DH116-triangle-surface-v1\0")
+    digest.update(np.asarray(points.shape,dtype="<i8").tobytes())
+    digest.update(points.astype("<f8").tobytes())
+    digest.update(triangles.astype("<i8").tobytes())
+    digest.update(orientation.encode("ascii"))
+    return digest.hexdigest()
+
+def diagnose_cooked_representation(row,*,query_chunk_size=65536):
+    """Read-only SI mesh-frame comparison. Vertex-set distances are NOT surface errors."""
+    if type(query_chunk_size) is not int or not 1<=query_chunk_size<=65536:
+        raise ValueError("query chunk must be an integer in1..65536")
+    result=dict(available=False,query_chunk_size=query_chunk_size,
+        method="chunked_bidirectional_unique_vertex_cKDTree",vertex_distances_are_surface_errors=False,
+        cooking_abi_alignment_proven=False,live_shape_attachment_proven=False,
+        source_geometry_content_hash_recomputed=False,
+        input_geometry_modified=False,validator_tolerance_changed=False,native_qualification=False)
+    try:
+        with np.errstate(over="raise",invalid="raise",divide="raise"):
+            from scipy.spatial import cKDTree
+            from go2_pvcnn.control.dh116.tabletop_tripod_cooked_geometry import _matrix
+            unit=row["binding"]["source_manifest"]["meters_per_unit"]
+            if type(unit) not in (int,float) or unit!=1.:
+                raise ValueError("explicit original SI metre geometry required; no inferred unit conversion")
+            source=row["source_geometry"];frames=row["frames"]
+            source_sha=source["source_geometry_sha256"]
+            if (type(source_sha) is not str or len(source_sha)!=64
+                    or any(c not in "0123456789abcdef" for c in source_sha)
+                    or source_sha!=source["live_mesh_geometry_sha256"]):
+                raise ValueError("matching saved source/live geometry identity required")
+            if frames["convention"]!="column_vectors_world_from_body_SI_metres":
+                raise ValueError("explicit original column-vector SI frame convention required")
+            points=np.asarray(source["original_mesh_points"],dtype=float)
+            if points.ndim!=2 or points.shape[1]!=3 or len(points)<4 or not np.isfinite(points).all():
+                raise ValueError("finite original Nx3 vertex records required")
+            collision=row["binding"]["source_collision"]
+            computed=_saved_source_geometry_sha(points,source["original_triangles"],collision["orientation"])
+            if computed!=source_sha or collision["geometry_sha256"]!=source_sha:
+                raise ValueError("saved source content or binding geometry hash differs")
+            result["source_geometry_content_hash_recomputed"]=True
+            result["source_content_sha256"]=computed
+            body=_matrix(frames["actual_body_link_pose_w"])
+            mesh=_matrix(frames["mesh_to_body"]);live_mesh=_matrix(source["live_mesh_to_body"])
+            original_mesh=_matrix(source["original_mesh_to_body"])
+            if not np.array_equal(mesh,live_mesh):
+                raise ValueError("same saved mesh-to-body matrix required")
+            usd=_matrix(frames["usd_world_from_mesh_crosscheck_only"])
+            world=body@mesh;inverse=np.linalg.inv(world)
+            unique=np.unique(points,axis=0);source_tree=cKDTree(unique,copy_data=True)
+            hulls=[]
+            if not row["cooked_hulls"]:raise ValueError("at least one stored cooked hull required")
+            for item in row["cooked_hulls"]:
+                raw=item["raw"];vertices=np.asarray(raw["vertices"],dtype=float)
+                if (type(raw["num_vertices"]) is not int or vertices.shape!=(raw["num_vertices"],3)
+                        or len(vertices)<4 or not np.isfinite(vertices).all()):
+                    raise ValueError("finite counted cooked vertices required")
+                # Keeping original numbers/order: trees own separate coordinate buffers.
+                cooked_tree=cKDTree(vertices,copy_data=True)
+                forward=_nearest_vertex_distances(unique,cooked_tree,query_chunk_size)
+                reverse=_nearest_vertex_distances(vertices,source_tree,query_chunk_size)
+                world_points=vertices@world[:3,:3].T+world[:3,3]
+                restored=world_points@inverse[:3,:3].T+inverse[:3,3]
+                validation=_validate_hull(raw)
+                hulls.append(dict(cooked_vertices=len(vertices),
+                    source_unique_to_cooked_vertex=_vertex_statistics(forward),
+                    cooked_to_source_unique_vertex=_vertex_statistics(reverse),
+                    world_mesh_roundtrip_max_m=float(np.max(np.linalg.norm(restored-vertices,axis=1))),
+                    existing_validator_closed_convex=validation["closed_convex"],
+                    existing_validator_reasons=validation["reasons"],
+                    plane_threshold_study=_plane_threshold_study(raw,validation.get("numeric_topology_tolerance_native_units"))))
+            result.update(available=True,source_vertex_records=len(points),source_unique_vertices=len(unique),
+                saved_source_live_geometry_sha_equal=True,source_geometry_sha256=source_sha,
+                original_live_mesh_to_body_max_abs_entry_delta=float(np.max(abs(original_mesh-live_mesh))),
+                world_mesh_usd_crosscheck_max_abs_entry_delta=float(np.max(abs(world-usd))),
+                body_rotation_orthogonality_max_abs_delta=float(np.max(abs(body[:3,:3].T@body[:3,:3]-np.eye(3)))),
+                body_rotation_determinant=float(np.linalg.det(body[:3,:3])),hulls=hulls)
+    except (ValueError,TypeError,KeyError,IndexError,OverflowError,FloatingPointError,np.linalg.LinAlgError) as error:
+        result["error"]=type(error).__name__+": "+str(error)
+    return result
+
+
+def _same_saved_sdk_boundary(before,after):
+    def valid(row):
+        return (type(row) is dict and set(row)=={"sdk_step","sdk_time_s"}
+            and type(row["sdk_step"]) is int and row["sdk_step"]>=0
+            and type(row["sdk_time_s"]) in (int,float) and np.isfinite(row["sdk_time_s"])
+            and row["sdk_time_s"]>=0)
+    return bool(valid(before) and valid(after) and before==after)
+
+def analyze_capture(packet,*,compare_source_vertices=False):
     capture=packet['capture'];bodies=[];seen=set();duplicates=[]
     hull_count=passed=0
     for row in capture.get('colliders',[]):
@@ -157,7 +294,7 @@ def analyze_capture(packet):
             actual_body_path=binding['actual_body_path'],
             stored_complete_flag=row.get('complete'),stored_reasons=row.get('reasons'),
             hulls=hulls))
-    return dict(schema='dh116-offline-cooked-readback-audit-v1',
+    result=dict(schema='dh116-offline-cooked-readback-audit-v1',
         capture_claimed_complete=capture.get('complete'),
         collider_rows=len(bodies),unique_body_count=len(seen),duplicate_body_identities=duplicates,
         hulls_returned=hull_count,hulls_passing_existing_validator=passed,
@@ -166,15 +303,27 @@ def analyze_capture(packet):
         capture_clock=capture.get('capture_clock'),bodies=bodies,
         input_geometry_modified=False,planes_refitted=False,validator_tolerance_changed=False,
         new_native_runs=0,native_qualification=False)
+    if compare_source_vertices:
+        for body,row in zip(bodies,capture.get('colliders',[])):
+            body['coordinate_diagnostics']=diagnose_cooked_representation(row)
+        before,after=packet.get('sdk_clock_before'),packet.get('sdk_clock_after')
+        result['schema']='dh116-offline-cooked-readback-audit-v2'
+        result['representation_audit']=dict(
+            clock_before=before,clock_after=after,same_packet_sdk_boundary=_same_saved_sdk_boundary(before,after),
+            clock_source='saved top-level actual SDK clock; missing values remain unknown',
+            native_qualification=False,validator_tolerance_changed=False,vertices_refitted=False)
+    return result
 
 
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--capture',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--compare-source-vertices',action='store_true',
+        help='opt-in read-only source/cooked vertex and coordinate diagnostics; never admission')
     args=parser.parse_args(argv)
     payload=args.capture.read_bytes()
-    result=analyze_capture(json.loads(payload))
+    result=analyze_capture(json.loads(payload),compare_source_vertices=args.compare_source_vertices)
     result.update(input_path=str(args.capture.resolve()),input_sha256=hashlib.sha256(payload).hexdigest())
     with args.output.open('x',encoding='utf-8') as stream:
         json.dump(result,stream,indent=2,allow_nan=False)

@@ -1,3 +1,7 @@
+## 2026-11-18 cooked source-coordinate audit
+
+The existing offline auditor now has an opt-in source/cooked vertex-set comparison, source-content hash recomputation, finite coordinate-chain checks, saved SDK clocks and a non-admitting plane-threshold study. All1125 saved cooked vertices exactly match source vertex sets; loosening plane tolerance to1e-4m still leaves30 failed faces. Strict qualification stays0/34. CPU544 pass; no new Isaac run. See [report](docs/superpowers/reports/2026-11-18-teacher-cooked-representation-audit.md).
+
 ## 2026-11-17 source-bound cache native counterfactual
 
 One approved2-SDK-step run observed2841 cache entries cleared once, registered Python hand/Data owners gone after the original GC, and registered SimulationView/backend wrappers gone after STOP. The inferior exited naturally1 without SIGSEGV or forced cleanup. Strict hull capture remains0/34; this is not exit0, general native-release qualification or Teacher success. Post-native CPU188 pass. See [report](docs/superpowers/reports/2026-11-17-teacher-stat-cache-native-counterfactual.md).
