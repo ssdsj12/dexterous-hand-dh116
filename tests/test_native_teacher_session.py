@@ -290,3 +290,56 @@ def test_constructor_failure_restores_actual_episode_callback_and_drops_borrowed
             assert "cleanup diagnostic failed" in fallback
     finally:
         ledger.close()
+
+def test_fresh_pinch_factory_hands_one_journal_and_profile_to_original_owner(monkeypatch, tmp_path):
+    from contextlib import contextmanager
+    from go2_pvcnn.control.dh116 import tabletop_dual_pinch_builder as builder
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_profile as profile
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_collector import NativeJournal
+
+    m = mod()
+    events = []
+    marker = object()
+    setup_events = tuple(dict(kind="setup", sdk_step=t, sdk_time_s=t/480) for t in (0, 2))
+    fresh = builder.FreshPinchEpisode(marker, setup_events, lambda: ())
+    config = m.NativeSessionConfig(dict(style="pinch", profile="approach_wiring_smoke_v1"),
+                                   {}, tmp_path/"training.jsonl", 1., 32)
+    contract = m.StaticContract(config, marker, None, {}, None, None, {"max_sdk_steps":258}, None, "")
+    trace = Mock()
+
+    @contextmanager
+    def opened(value):
+        assert value is marker
+        events.append("profile")
+        yield
+        events.append("profile_return")
+
+    def build(sim, owners, **kwargs):
+        assert sim is owners is marker
+        assert kwargs["physics_budget_end"] == 258
+        for row in setup_events:
+            kwargs["record"](row)
+        events.append("build")
+        return fresh
+
+    def owner(episode, source, **kwargs):
+        assert episode is marker and source is contract
+        assert kwargs["ledger"] is journal and kwargs["setup_events"] == setup_events
+        assert kwargs["initial_geometry"] is fresh.initial_geometry
+        events.append("owner")
+        return marker
+
+    monkeypatch.setattr(profile, "profile_reader_scope", opened)
+    monkeypatch.setattr(builder, "build_fresh_owned", build)
+    monkeypatch.setattr(m, "NativeEpisodeOwner", owner)
+    journal = NativeJournal(tmp_path/"training.jsonl")
+    try:
+        result = m.build_fresh_pinch_owner(
+            contract, sim=marker, owners=marker, prepared=None, ownership=trace, ledger=journal,
+            run_uuid="source", episode_uid="episode", owner_resets={}, mesh_plan=marker)
+        assert result is marker
+        assert events == ["profile", "build", "owner", "profile_return"]
+        assert trace.event.call_count == 2
+        assert journal.path.read_text() == ""
+    finally:
+        journal.close()

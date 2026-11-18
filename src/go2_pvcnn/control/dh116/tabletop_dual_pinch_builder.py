@@ -5,6 +5,8 @@ imports occur only in build_reset_owned, which requires an existing simulation.
 No launcher, lock, recipe, measured physics loop or Teacher qualification.
 """
 from copy import deepcopy
+from dataclasses import dataclass
+from functools import partial
 import hashlib
 import json
 import math
@@ -125,6 +127,86 @@ class _Composers:
             self=member=None
 
 
+@dataclass(frozen=True)
+class FreshPinchEpisode:
+    """Borrowed original episode and SDK setup evidence for a single owner."""
+
+    episode: object
+    setup_events: tuple
+    initial_geometry: object
+
+
+def _inspect_geometry(project, prepared, sim, hands, rod):
+    from . import tabletop_dual_hand_scene_preparation as scene_api
+
+    try:
+        return scene_api.bind_actual_geometry(
+            project, prepared, sim.stage, hands,
+            read_clock=lambda: [dict(rod.clock(), policy_step=0, substep=0)])
+    finally:
+        sim = hands = rod = None
+
+
+def _initial_geometry_rows(project, prepared, sim, hands, nodes, radius_m):
+    from scripts.audit_dh116_pinch_initial_pose import load_geometry
+    from .tabletop_pinch_initial_geometry_v2 import capture_pinch_initial_geometry
+
+    hand = None
+    try:
+        for side, hand in zip(("left", "right"), hands):
+            evidence = capture_pinch_initial_geometry(
+                sim.stage, hand, load_geometry(project, side=side), cooking_interface=None,
+                read_clock=lambda: _clock(sim),
+                table_center_m=prepared["table"]["center_m"],
+                table_size_m=prepared["table"]["size_m"], rod_nodes_w=nodes,
+                rod_radius_m=radius_m, minimum_table_gap_m=CLEARANCE_M,
+                minimum_rod_gap_m=0.)
+            yield dict(kind="initial_geometry", side=side, evidence=evidence)
+            if evidence["initial_geometry_passed"] is not True:
+                raise ValueError("paired source17/locked5 geometry below unchanged floor or rod gap")
+    finally:
+        sim = hands = hand = None
+
+
+def _fresh_initial_geometry(project, prepared, sim, hands, episode, radius_m):
+    try:
+        if episode._state != "active" or episode._control_index != 0:
+            raise ValueError("actual original episode Reset boundary required")
+        identity = episode._read_state_clock()
+        packet = episode._rod_packet
+        snapshot = packet["rod_snapshot"]
+        if (packet["boundary"] != "reset" or packet["run_uuid"] != identity["run_uuid"]
+                or snapshot["env_ids"] != [identity["env_id"]]
+                or snapshot["episode_uids"] != [identity["episode_uid"]]
+                or snapshot["reset_ids"] != [identity["reset_id"]]
+                or snapshot["rod_uids"] != [identity["rod_uid"]]
+                or snapshot["physics_step"] != identity["physics_step"]
+                or snapshot["timestamp_s"] != identity["timestamp_s"]
+                or snapshot["rod_tick"] != identity["rod_tick"]):
+            raise ValueError("initial geometry requires the same-clock measured rod Reset")
+        nodes = snapshot["node_positions"]
+        if tuple(nodes.shape) != (1, 41, 3):
+            raise ValueError("complete measured 41-node Reset geometry required")
+        yield from _initial_geometry_rows(
+            project, prepared, sim, hands, nodes[0].detach().cpu().numpy(), radius_m)
+        if episode._read_state_clock() != identity:
+            raise ValueError("rod/SDK clock advanced during initial geometry inspection")
+    finally:
+        sim = hands = episode = None
+
+
+def build_fresh_owned(sim, owners, *, project, prepared, ownership, record,
+                      run_uuid, episode_uid, physics_budget_end):
+    """Build the single Pinch scene, deferring the episode Reset to Teacher."""
+    try:
+        return _build_owned(
+            sim, owners, project=project, prepared=prepared, ownership=ownership, record=record,
+            run_uuid=run_uuid, episode_uid=episode_uid, physics_budget_end=physics_budget_end,
+            owner_resets=None, damping_override=None, defer_episode_reset=True)
+    finally:
+        sim = owners = prepared = ownership = record = None
+
+
 def build_reset_owned(sim,owners,*,project,prepared,ownership,record,owner_resets,
                       run_uuid,episode_uid,physics_budget_end,damping_override=None):
     """Borrowed native handles are registered in caller's NativeOwners only.
@@ -134,8 +216,19 @@ def build_reset_owned(sim,owners,*,project,prepared,ownership,record,owner_reset
     The stored episode may be used only inside that owner's separately
     authorized control scope; this helper never calls episode.control.
     """
+    try:
+        return _build_owned(
+            sim, owners, project=project, prepared=prepared, ownership=ownership, record=record,
+            run_uuid=run_uuid, episode_uid=episode_uid, physics_budget_end=physics_budget_end,
+            owner_resets=owner_resets, damping_override=damping_override, defer_episode_reset=False)
+    finally:
+        sim = owners = prepared = ownership = record = owner_resets = None
+
+
+def _build_owned(sim, owners, *, project, prepared, ownership, record, run_uuid, episode_uid,
+                 physics_budget_end, owner_resets, damping_override, defer_episode_reset):
     scene=hands=hand=view=base=rod=episode=bindings=mount=composers=None
-    inspect=read_clock=backend=grids=members=value=geometry=None
+    inspect=read_clock=backend=grids=members=value=geometry=initial_geometry=None
     try:
         # Reject a missing/nonfresh context before any lazy SDK/geometry import.
         if sim is None or _clock(sim)!={"sdk_step":0,"sdk_time_s":0.}:
@@ -174,10 +267,12 @@ def build_reset_owned(sim,owners,*,project,prepared,ownership,record,owner_reset
         hands=scene["hands"]
         if scene["wire"] is not None or scene["sensors"]:
             raise ValueError("external single-rod scene required")
-        record(dict(kind="setup",phase="before_reset",**_clock(sim)))
+        setup_before = dict(kind="setup", phase="before_reset", **_clock(sim))
+        record(dict(setup_before))
         sim.reset()
         after=_clock(sim)
-        record(dict(kind="setup",phase="after_reset",**after))
+        setup_after = dict(kind="setup", phase="after_reset", **after)
+        record(dict(setup_after))
         if after["sdk_step"]!=2:raise ValueError("SDK setup must advance exactly two observed steps")
         settings=scene_api.validate_simulation_settings(sim,prepared)
         members=[]
@@ -214,29 +309,25 @@ def build_reset_owned(sim,owners,*,project,prepared,ownership,record,owner_reset
         for side,hand in zip(("left","right"),hands):
             bindings.append(HandBinding(side,hand,{prepared["env_id"]:paths[side]},MountView(hand)))
         bindings=owners.keep("hand_bindings",tuple(bindings))
-        def read_clock():
-            return [dict(rod.clock(),policy_step=0,substep=0)]
-        def inspect():
-            return scene_api.bind_actual_geometry(project,prepared,sim.stage,hands,read_clock=read_clock)
+        inspect = partial(_inspect_geometry, project, prepared, sim, hands, rod)
         episode=owners.keep("dual_episode",DualHandPhysicalEpisode(sim,rod,bindings,
             backend_artifact=BACKEND,backend_sha256=BACKEND_SHA,inspect_geometry=inspect,
             physics_budget_end=physics_budget_end,record=record))
         ownership.watch("episode",episode,owner="dual builder",release="owned scope")
+        if defer_episode_reset:
+            if _clock(sim) != after or rod.clock()["rod_tick"] != 0:
+                raise ValueError("fresh Teacher construction advanced beyond SDK setup")
+            initial_geometry = partial(
+                _fresh_initial_geometry, project, prepared, sim, hands, episode, cfg["rod"]["radius_m"])
+            return FreshPinchEpisode(episode, (setup_before, setup_after), initial_geometry)
+
         reset=episode.reset(packet["reset_seed"],episode_uid=episode_uid,owner_resets=owner_resets)
-        from scripts.audit_dh116_pinch_initial_pose import load_geometry
-        from .tabletop_pinch_initial_geometry_v2 import capture_pinch_initial_geometry
         locked_clearance=[]
-        for side,hand in zip(("left","right"),hands):
-            geometry=load_geometry(project,side=side)
-            captured=capture_pinch_initial_geometry(sim.stage,hand,geometry,
-                cooking_interface=None,read_clock=lambda:_clock(sim),
-                table_center_m=prepared["table"]["center_m"],table_size_m=prepared["table"]["size_m"],
-                rod_nodes_w=nodes,rod_radius_m=cfg["rod"]["radius_m"],
-                minimum_table_gap_m=CLEARANCE_M,minimum_rod_gap_m=0.)
-            record(dict(kind="initial_geometry",side=side,evidence=captured))
-            if captured["initial_geometry_passed"] is not True:
-                raise ValueError("paired source17/locked5 geometry below unchanged floor or rod gap")
-            locked_clearance.append(min(row["table"]["top_clearance_m"] for row in captured["locked_pads"].values()))
+        for row in _initial_geometry_rows(project, prepared, sim, hands, nodes, cfg["rod"]["radius_m"]):
+            record(row)
+            if row["evidence"]["initial_geometry_passed"] is True:
+                locked_clearance.append(min(pad["table"]["top_clearance_m"]
+                                            for pad in row["evidence"]["locked_pads"].values()))
         if _clock(sim)!=after or rod.clock()["rod_tick"]!=0:
             raise ValueError("preparation must not advance a measured SDK or solver step")
         ownership.checkpoint("dual_reset_complete")
@@ -251,7 +342,7 @@ def build_reset_owned(sim,owners,*,project,prepared,ownership,record,owner_reset
             native_table_support_verified=False)
     finally:
         sim=owners=scene=hands=hand=view=base=rod=episode=bindings=mount=composers=None
-        inspect=read_clock=backend=grids=prepared=ownership=record=owner_resets=members=value=geometry=None
+        inspect=read_clock=backend=grids=prepared=ownership=record=owner_resets=members=value=geometry=initial_geometry=None
 
 
 def run_preparation(sim,*,project,ownership,synchronize,record,owner_resets,

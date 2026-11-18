@@ -1,0 +1,135 @@
+{
+  "package": "teacher.actual-fresh-pinch-scene-cpu",
+  "branch": "11-17",
+  "base_commit": "ca73112686de6e805ae468397189660ddc6148e1",
+  "report": "docs/superpowers/reports/2026-11-18-teacher-ppo-fresh-pinch.md",
+  "status": "fresh_scene_cpu_verified_actual_ppo_blocked",
+  "cpu_targeted": {
+    "passed": 46,
+    "failed": 0,
+    "runs": [
+      {
+        "command": [
+          "/mnt/mydisk/xk/envs/dh116/bin/python",
+          "-B",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_dh116_dual_pinch_builder.py"
+        ],
+        "env": {
+          "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+          "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+          "OMP_NUM_THREADS": "4",
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "CUDA_VISIBLE_DEVICES": "",
+          "DH116_INSTALLED_SDK_AUDIT": "1"
+        },
+        "exit_code": 0,
+        "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-ppo-fresh-pinch-20261118/pinch-builder.log",
+        "log_sha256": "547409acd0f81645207268382cb4d23b28e7517e214b6c69129275c446e91173",
+        "passed": 19
+      },
+      {
+        "command": [
+          "/mnt/mydisk/xk/envs/dh116/bin/python",
+          "-B",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_native_teacher_profile.py",
+          "-k",
+          "pinch_construction_scope"
+        ],
+        "env": {
+          "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+          "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+          "OMP_NUM_THREADS": "4",
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "CUDA_VISIBLE_DEVICES": "",
+          "DH116_INSTALLED_SDK_AUDIT": "1"
+        },
+        "exit_code": 0,
+        "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-ppo-fresh-pinch-20261118/profile-pinch-scope.log",
+        "log_sha256": "d6b76d98a318f53d56d27469368d2adb2f2a32f0c0c7164fe5fb742c68f3484d",
+        "passed": 1
+      },
+      {
+        "command": [
+          "bash",
+          "scripts/python.sh",
+          "-B",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_native_teacher_actual_launch_process.py"
+        ],
+        "exit_code": 0,
+        "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-ppo-fresh-pinch-20261118/launch-cpu-official-wrapper.log",
+        "log_sha256": "5b500825695a0d1b50f30fd356dac7436b2d081989126783515057695fe5af9b",
+        "passed": 25
+      },
+      {
+        "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-ppo-fresh-pinch-20261118/official-wrapper-spotcheck.log",
+        "log_sha256": "3036726e368654781e3d4fdbb57743f8be3b5a7adf84f349470677f50dbacdfb",
+        "passed": 1,
+        "scope": "fresh pipeline owner; separate launcher case overlaps with official launcher suite"
+      }
+    ]
+  },
+  "cpu_broad_original_invocation": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_native_teacher_session.py",
+      "tests/test_native_teacher_preflight.py",
+      "tests/test_native_teacher_profile.py",
+      "tests/test_native_teacher_policy_pinch_distance.py",
+      "tests/test_native_teacher_training.py",
+      "tests/test_native_teacher_checkpoint.py",
+      "tests/test_native_teacher_collector.py",
+      "tests/test_native_teacher_actual_launch.py",
+      "tests/test_native_teacher_actual_launch_process.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 1,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-ppo-fresh-pinch-20261118/native-teacher-contracts.log",
+    "log_sha256": "2f4e1c357a61964c176ca8978c9d18eca8f044b40383ff2573175a8bf82cbc14",
+    "passed": 298,
+    "failed": 38,
+    "errors": 3
+  },
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_dual_pinch_builder.py": "bbbb6a65ba91932e73bd94c13b723c2fb910103cb445963924a12e374c81b2d6",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_session.py": "57b25ee9aa46cb59e7c3002db593be844bec3158eb1bcc79327a6ec60d8da35b",
+    "tests/test_dh116_dual_pinch_builder.py": "a6fab8979931c9c0faf98d1d288ed71451c5b3665bc4f34ad53f6574f795fd9f",
+    "tests/test_native_teacher_session.py": "b2685b09fd88777430e339e2df74856800a695859a5633442abe6693b239177d",
+    "tests/test_native_teacher_profile.py": "78b11a56dc3ca65d44db72aab73e7431727dc8e735a6c7a3d6a0e713aaa709c9"
+  },
+  "native_runs": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "ppo_updates": 0,
+  "publication": {
+    "state": "pending_windows_relay"
+  }
+}

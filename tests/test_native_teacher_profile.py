@@ -120,3 +120,17 @@ def test_source_loader_rejects_current_source_tamper(monkeypatch, which):
         lambda path: original(path) + (b"tamper" if path == target else b""))
     with pytest.raises(ValueError, match="SHA|source"):
         m.BackendProfile.load(ROOT)
+
+def test_pinch_construction_scope_uses_the_observation_backend_then_restores_legacy(profile):
+    from pathlib import Path
+    from go2_pvcnn.control.dh116 import tabletop_dual_pinch_builder as builder
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import profile_reader_scope
+
+    legacy = (builder.BACKEND, builder.BACKEND_SHA)
+    assert legacy[1] != profile.binary_sha256
+    with pytest.raises(RuntimeError, match="synthetic operation"):
+        with profile_reader_scope(profile):
+            assert (builder.BACKEND, builder.BACKEND_SHA) == (
+                Path(profile.binary_path), profile.binary_sha256)
+            raise RuntimeError("synthetic operation")
+    assert (builder.BACKEND, builder.BACKEND_SHA) == legacy

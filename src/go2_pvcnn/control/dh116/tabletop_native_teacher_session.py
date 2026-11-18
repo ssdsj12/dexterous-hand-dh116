@@ -146,6 +146,39 @@ def verify_reset_and_sources(owner,reset,contract):
         contract.backend_profile,contract.config.preflight["profile"]),contract.reward_config,verification)
 
 
+def build_fresh_pinch_owner(contract, *, sim, owners, prepared, ownership, ledger,
+                            run_uuid, episode_uid, owner_resets, mesh_plan):
+    """Use the original Pinch builder inside the existing owner and journal."""
+    from .tabletop_dual_pinch_builder import build_fresh_owned
+    from .tabletop_native_teacher_collector import NativeJournal
+    from .tabletop_native_teacher_profile import profile_reader_scope
+
+    fresh = None
+    try:
+        if (type(contract) is not StaticContract or type(ledger) is not NativeJournal
+                or contract.config.preflight["style"] != "pinch"
+                or contract.config.preflight["profile"] != "approach_wiring_smoke_v1"
+                or Path(contract.config.journal_path) != ledger.path):
+            raise ValueError("verified Pinch smoke contract and its own journal required")
+        def record_setup(row):
+            if row["kind"] == "setup":
+                # Failed scene construction still has external ownership
+                # evidence. NativeEpisodeOwner writes setup once to its journal.
+                ownership.event("pinch_scene_setup", source_row=row)
+
+        with profile_reader_scope(contract.backend_profile):
+            fresh = build_fresh_owned(
+                sim, owners, project=contract.config.project, prepared=prepared, ownership=ownership,
+                record=record_setup, run_uuid=run_uuid, episode_uid=episode_uid,
+                physics_budget_end=contract.budget["max_sdk_steps"])
+            return NativeEpisodeOwner(
+                fresh.episode, contract, episode_uid=episode_uid, owner_resets=owner_resets,
+                mesh_plan=mesh_plan, ledger=ledger, setup_events=fresh.setup_events,
+                initial_geometry=fresh.initial_geometry)
+    finally:
+        sim = owners = prepared = ownership = ledger = owner_resets = fresh = None
+
+
 def create_native_collector(config,factories):
     contract=verify_static_contract(config)
     owner=factories.episode(contract)

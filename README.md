@@ -1,3 +1,7 @@
+## 2026-11-18 fresh Pinch Teacher episode
+
+The original Pinch scene can now be handed to the Teacher session before episode Reset. The Teacher's geometry callback uses the measured same-clock rod snapshot. CPU-tested ownership and source wiring are available. Native provider and PPO execution remain pending. [Report](docs/superpowers/reports/2026-11-18-teacher-ppo-fresh-pinch.md).
+
 ## 2026-11-18 Pinch native initialization recheck
 
 The camera-free Pinch recheck on the current source passed measured hand initialization at SDK step 2. All 34 stored-cooked responses were captured and the strict topology gate remained 0/34. The external process exited naturally with code 1 after App close. [Report](docs/superpowers/reports/2026-11-18-teacher-pinch-no-camera-reset.md).

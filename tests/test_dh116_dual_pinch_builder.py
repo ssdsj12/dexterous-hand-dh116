@@ -232,7 +232,7 @@ def test_deliberately_retained_builder_frames_drop_native_aliases(monkeypatch,tm
     # that broader SDK callback-lifetime question requires actual native evidence.
     def profiler(frame,event,arg):
         if (event=="return" and frame.f_code.co_filename==filename
-                and frame.f_code.co_name in ("build_reset_owned","run_preparation","_initial_pads")):
+                and frame.f_code.co_name in ("build_reset_owned","run_preparation","_initial_pads","_build_owned")):
             frames.append(frame)
     sys.setprofile(profiler)
     try:
@@ -275,3 +275,34 @@ def test_missing_or_nonfresh_context_rejected_without_native_import(step):
 def test_module_compiles_on_runtime_python():
     path=Path(module().__file__)
     compile(path.read_text(),str(path),"exec")
+
+def test_fresh_pinch_handoff_defers_original_episode_reset(monkeypatch, tmp_path, prepared, geometry):
+    from go2_pvcnn.control.dh116.tabletop_deformable_grasp_runtime import NativeOwners
+
+    sim, trace, reset_owners, _, record, rows, events, refs, meta, drop = setup(
+        monkeypatch, tmp_path, prepared, geometry)
+    owners = NativeOwners()
+    fresh = module().build_fresh_owned(
+        sim, owners, project=ROOT, prepared=prepared, ownership=trace, record=record,
+        run_uuid="teacher-cpu", episode_uid="teacher-cpu:pinch", physics_budget_end=258)
+    assert fresh.episode is owners.resources["dual_episode"]
+    assert fresh.episode._state == "new"
+    assert [event["sdk_step"] for event in fresh.setup_events] == [0, 2]
+    assert events.count("setup_reset") == 1
+    assert refs["rope"]().resets == refs["rope"]().steps == 0
+    assert not any(row["kind"] in ("reset", "physical") for row in rows)
+    with pytest.raises(ValueError, match="actual original episode Reset boundary"):
+        list(fresh.initial_geometry())
+    packet = module().load_pair_proposal()
+    reset = fresh.episode.reset(packet["reset_seed"], episode_uid="teacher-cpu:pinch",
+                                owner_resets=reset_owners)
+    assert reset["reset"]["new_sdk_steps"] == reset["reset"]["new_solver_steps"] == 0
+    assert sim.current_time_step_index == 2
+    assert [row["side"] for row in fresh.initial_geometry()] == ["left", "right"]
+    # A same-shaped but foreign episode packet must not feed the geometry reader.
+    snapshot = fresh.episode._rod_packet["rod_snapshot"]
+    snapshot["episode_uids"] = ["other-episode"]
+    with pytest.raises(ValueError, match="same-clock measured rod Reset"):
+        list(fresh.initial_geometry())
+    assert refs["rope"]().resets == 1 and refs["rope"]().steps == 0
+    drop()
