@@ -25782,6 +25782,30 @@
         "verified_at_utc": "2026-11-18T07:45:26.455252+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.native-student-stereo-sidecar-cpu-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-native-teacher-student-stereo.md",
+      "readiness": "docs/contracts/dh116_native_teacher_student_stereo_v1.json",
+      "cpu_tests": {
+        "passed": 110,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "57eb9a8246937f8d377ad49dd69a0be9c21606c9",
+        "source_tree": "0ce13424f287fdd1d14d00cc1ca7375511617fc6",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T07:57:19.460639+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }

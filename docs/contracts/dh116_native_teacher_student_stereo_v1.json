@@ -50,6 +50,13 @@
   "teacher_actor_receives_rgb": false,
   "ppo_updates": 0,
   "publication": {
-    "state": "pending_windows_relay"
+    "state": "windows_publication_verified",
+    "source_commit": "57eb9a8246937f8d377ad49dd69a0be9c21606c9",
+    "source_tree": "0ce13424f287fdd1d14d00cc1ca7375511617fc6",
+    "remote_branch": "11-17",
+    "files_verified": 9,
+    "pr2_draft": true,
+    "pr2_merged": false,
+    "verified_at_utc": "2026-11-18T07:57:19.460639+00:00"
   }
 }
