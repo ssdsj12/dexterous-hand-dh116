@@ -1,0 +1,93 @@
+{
+  "package": "teacher.pinch-no-camera-reset-recheck-v1",
+  "branch": "11-17",
+  "base_commit": "9ab2cc9965a232ab7fcd7a0712a010b05886f6d3",
+  "report": "docs/superpowers/reports/2026-11-18-teacher-pinch-no-camera-reset.md",
+  "status": "native_hand_initialization_passed_strict_collision_topology_failed",
+  "cpu": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_teacher_initialization_worker.py",
+      "tests/test_teacher_seed_initialization.py",
+      "tests/test_teacher_stat_cache_release.py",
+      "tests/test_teacher_cooked_readback_audit.py",
+      "tests/test_teacher_cooked_representation_audit.py",
+      "tests/test_teacher_cooked_failed_face_audit.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python:src",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-runtime-environment-20261118/pinch-retest-cpu.log",
+    "log_sha256": "53cb4c85d87aabcf4ae2a7b63252df6da4794346f8c93c6c6aeb2b82a518f93a",
+    "passed": 195,
+    "failed": 0,
+    "skipped": 0
+  },
+  "native_runs": 1,
+  "setup_sdk_steps": 2,
+  "control_steps": 0,
+  "ppo_updates": 0,
+  "solver_steps": 0,
+  "teacher_queries": 0,
+  "rgb_pairs": 0,
+  "raw_cooked_responses": 34,
+  "strict_cooked_pass": 0,
+  "hand_initialization_passed": true,
+  "hand_errors": {
+    "left": {
+      "joint_max_error_rad": 3.722350760959614e-08,
+      "base_position_error_m": 1.0806133855166598e-08,
+      "base_rotation_error_rad": 2.346637211445515e-07,
+      "passed": true
+    },
+    "right": {
+      "joint_max_error_rad": 4.1311260856602416e-08,
+      "base_position_error_m": 1.928456936899327e-08,
+      "base_rotation_error_rad": 2.632069845893339e-07,
+      "passed": true
+    }
+  },
+  "manager_physics_view_released": true,
+  "app_close_returned": true,
+  "worker_exit_receipt": {
+    "exit_code": 1,
+    "wall_elapsed_s": 48.23450343310833,
+    "auto_kill": false,
+    "auto_retry": false,
+    "plan_sha256": "5f626a18ef57051ddcadb80ab6910180786bb5c67a5d9a20a75df819899dbbdf",
+    "log_sha256": "70c158d0a09881b00de84e922af16540b8a0689a370d2a8ade468cc31e206e27"
+  },
+  "resolved_reset_manifest_ready": false,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "evidence_dir": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-runtime-environment-20261118/native-no-camera-pinch-reset",
+  "evidence_sha256": {
+    "before_reset.json": "f02c7f72c0585fe7b866159d326c7fc75749663ddd002d061bd17154aea4778d",
+    "after_reset.json": "c5594a752f91e098fe96352bd920b5da791cf9e1e6a17583fddfda620eba5c11",
+    "initialization_readback.json": "c86e7f4207df0b842f0bdc9dba4374b621858039e484f0fe6102a5a12b6fa773",
+    "actual_device_identity.json": "fd3a8717cc659bd60bf2eb257b2c266777e79674fd5de59ecf9452750407aec5",
+    "stored_cooked_capture.json": "c122c87408d681166cf9a437479d0010e1a8dd335dfdf55cb7e7ec0e2610982e",
+    "result.json": "722da44fdb1d5224f0a046ebfef447f76070db7aafb8aa3ff2c23e52fd018fbc",
+    "shutdown_observations.json": "4a0fa2becf555a45514c328cb8dfc9939b5c2e77d4f3fddc3df95dfd512a1ff1",
+    "shutdown_complete.json": "760178019ce441723ab1ff0cf8911b5dce8cbac0b7c4627cae0e5cce5ffcaf90",
+    "after_STOP_before_app_close.maps": "2082bc1dd39f7496d23da244bf9163232929f411ed7c69a9565dd7aafca979cc",
+    "after_STOP_before_app_close.refs.json": "29b7f7cc942c6edf1241f7124467267b2ca1105e03b5fa3a85327f30c334c68f",
+    "stat_cache_release.json": "4d5c1bbad1edbd64a670658d867f4a0121d629f1d432d9a3fbf086061ecb9b20"
+  },
+  "publication": {
+    "state": "pending_windows_relay"
+  }
+}

@@ -1,3 +1,7 @@
+## 2026-11-18 Pinch native initialization recheck
+
+The camera-free Pinch recheck on the current source passed measured hand initialization at SDK step 2. All 34 stored-cooked responses were captured and the strict topology gate remained 0/34. The external process exited naturally with code 1 after App close. [Report](docs/superpowers/reports/2026-11-18-teacher-pinch-no-camera-reset.md).
+
 ## 2026-11-18 Teacher runtime diagnostics
 
 The native RGB recorder saves the actual Warp and Replicator pointer contract before first read and observes known launcher and articulation owners through close. CPU-only preflight verifies the pinned reward configurations and backend for all three camera-free Teacher styles. Reset and physical qualification remain pending. [Report](docs/superpowers/reports/2026-11-18-teacher-runtime-environment.md).

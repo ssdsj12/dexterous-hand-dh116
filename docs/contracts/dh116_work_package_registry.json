@@ -40872,6 +40872,29 @@
         "skipped": 0,
         "scope": "CPU only. All six Teacher configurations remain native blocked."
       }
+    },
+    "teacher.pinch-no-camera-reset-recheck-v1": {
+      "title": "无相机 Pinch 原生初始化复验",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.runtime-environment-diagnostics-v1"
+      ],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_initialization_worker.py",
+        "tests/test_teacher_stat_cache_release.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_reset_recheck_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-pinch-no-camera-reset.md",
+      "native_runs": 1,
+      "blocked_reason": "Hand initialization passed at SDK 2. Stored cooked topology strict result remains 0/34. Resolved Reset manifest and Teacher admission are pending.",
+      "last_result": {
+        "passed": 195,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU regression and one independent native diagnostic exit 1"
+      }
     }
   },
   "execution_target": {
