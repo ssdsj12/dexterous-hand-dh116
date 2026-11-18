@@ -156,27 +156,152 @@ def _nearest_vertex_distances(points,tree,chunk):
     return distances
 
 
-def _plane_threshold_study(raw,original):
-    # Counterfactual plane predicate only: NEVER a modified full validator.
-    vertices=np.asarray(raw["vertices"],dtype=float);residuals=[]
-    for polygon in raw["polygons"]:
-        start,count=polygon["index_base"],polygon["num_vertices"]
-        if type(start) is not int or type(count) is not int or start<0 or count<3:
-            raise ValueError("integer polygon range required for threshold study")
-        ids=raw["indices"][start:start+count]
-        if len(ids)!=count or min(ids)<0 or max(ids)>=len(vertices):
-            raise ValueError("complete polygon range required for threshold study")
-        plane=np.asarray(polygon["plane"],dtype=float)
-        if plane.shape!=(4,) or not np.isfinite(plane).all() or np.linalg.norm(plane[:3])<1e-12:
-            raise ValueError("finite nonzero plane required for threshold study")
-        plane=plane/np.linalg.norm(plane[:3])
-        residual=vertices@plane[:3]+plane[3]
-        residuals.append(max(float(np.max(abs(residual[ids]))),float(np.max(residual))))
-    if original is None:raise ValueError("original validator numeric scale unavailable")
-    return [dict(name=name,tolerance_m=float(tol),failing_faces=int(np.sum(np.asarray(residuals)>tol)),
-                 polygons_examined=len(residuals),plane_predicate_only=True,admission_applied=False)
-            for name,tol in (("original_numeric_scale",original),("image_suggested_1e_4_m",1e-4))]
 
+FAILED_FACE_THRESHOLD_M = 1e-4
+
+
+def _plane_measurements(raw):
+    vertices = np.asarray(raw["vertices"], dtype=float)
+    polygons = raw["polygons"]
+    indices = raw["indices"]
+    if (vertices.shape != (raw["num_vertices"], 3) or not len(vertices)
+            or not np.isfinite(vertices).all() or len(polygons) != raw["num_polygons"]
+            or any(type(index) is not int for index in indices)):
+        raise ValueError("finite counted hull vertices and integer indices required")
+    measurements = []
+    slots = []
+    for polygon in polygons:
+        start, count = polygon["index_base"], polygon["num_vertices"]
+        if type(start) is not int or type(count) is not int or start < 0 or count < 3:
+            raise ValueError("integer polygon range required")
+        ids = indices[start:start + count]
+        if len(ids) != count or len(set(ids)) != count or min(ids) < 0 or max(ids) >= len(vertices):
+            raise ValueError("valid distinct polygon indices required")
+        slots.extend(range(start, start + count))
+        plane = np.asarray(polygon["plane"], dtype=float)
+        if plane.shape != (4,) or not np.isfinite(plane).all():
+            raise ValueError("finite stored plane required")
+        norm = np.linalg.norm(plane[:3])
+        if norm < 1e-12:
+            raise ValueError("nonzero stored normal required")
+        unit = plane / norm
+        residuals = vertices @ unit[:3] + unit[3]
+        measurements.append((ids, plane, residuals))
+    if sorted(slots) != list(range(len(indices))):
+        raise ValueError("complete nonoverlapping polygon ranges required")
+    return vertices, measurements
+
+
+def _plane_maxima(ids, residuals):
+    return float(np.max(abs(residuals[ids]))), float(np.max(residuals))
+
+
+def _plane_threshold_study(raw, original):
+    # Counterfactual plane predicate only.
+    _, measurements = _plane_measurements(raw)
+    if original is None:
+        raise ValueError("original validator numeric scale unavailable")
+    worst = [max(_plane_maxima(ids, residuals)) for ids, _, residuals in measurements]
+    return [dict(name=name, tolerance_m=float(tol), failing_faces=sum(1 for value in worst if value > tol),
+                 polygons_examined=len(worst), plane_predicate_only=True, admission_applied=False)
+            for name, tol in (("original_numeric_scale", original),
+                              ("image_suggested_1e_4_m", FAILED_FACE_THRESHOLD_M))]
+
+
+def _fan_areas(points):
+    offsets = points[1:] - points[0]
+    return np.linalg.norm(np.cross(offsets[:-1], offsets[1:]), axis=1) / 2
+
+
+def _source_vertex_matches(row, coordinates):
+    """Bind exact point matches to original record indices, including duplicates."""
+    source = row["source_geometry"]
+    binding = row["binding"]
+    if binding["source_manifest"]["meters_per_unit"] != 1.0:
+        raise ValueError("metre source mesh required")
+    points = np.asarray(source["original_mesh_points"], dtype=float)
+    collision = binding["source_collision"]
+    if points.ndim != 2 or points.shape[1] != 3 or not np.isfinite(points).all():
+        raise ValueError("finite source vertices required")
+    digest = _saved_source_geometry_sha(points, source["original_triangles"], collision["orientation"])
+    if digest != source["source_geometry_sha256"] or digest != collision["geometry_sha256"]:
+        raise ValueError("source content hash differs")
+    matches = {}
+    for coordinate in coordinates:
+        indices = np.flatnonzero(np.all(points == coordinate, axis=1))
+        matches[coordinate] = {"first_index": int(indices[0]), "count": len(indices)} if len(indices) else None
+    return matches
+
+
+def _failed_hull_faces(raw, validation):
+    vertices, measurements = _plane_measurements(raw)
+    tolerance = validation["numeric_topology_tolerance_native_units"]
+    # Reverse storage order without changing any polygon's directed ring.
+    reindexed = dict(raw, vertices=raw["vertices"][::-1], polygons=raw["polygons"][::-1],
+                     indices=[len(vertices) - 1 - index for index in raw["indices"]])
+    _, permuted = _plane_measurements(reindexed)
+    reindexed_validation = _validate_hull(reindexed)
+    areas = [_fan_areas(vertices[ids]) for ids, _, _ in measurements]
+    hull_median_area = float(np.median([fan.sum() for fan in areas]))
+    comparisons = []
+    failed = []
+    for index, ((ids, plane, residuals), (other_ids, _, other_residuals)) in enumerate(
+            zip(measurements, reversed(permuted))):
+        face_max, outside_max = _plane_maxima(ids, residuals)
+        other_max = _plane_maxima(other_ids, other_residuals)
+        comparisons.append([max(face_max, outside_max) > limit for limit in
+                            (tolerance, FAILED_FACE_THRESHOLD_M)] ==
+                           [max(other_max) > limit for limit in (tolerance, FAILED_FACE_THRESHOLD_M)])
+        if max(face_max, outside_max) <= FAILED_FACE_THRESHOLD_M:
+            continue
+        points = vertices[ids]
+        centered = points - points.mean(axis=0)
+        _, _, basis = np.linalg.svd(centered, full_matrices=False)
+        # All areas use the stored ring's triangle fan. For warped polygons
+        # this is the area of that fan, with no claim of a unique planar area.
+        fan = areas[index]
+        failed.append(dict(
+            polygon_index=index, index_base=raw["polygons"][index]["index_base"],
+            cooked_vertex_indices=ids, cooked_vertices_mesh_m=points.tolist(),
+            stored_normal=plane[:3].tolist(), stored_plane=plane.tolist(),
+            face_signed_residuals_m=residuals[ids].tolist(),
+            max_face_residual_m=face_max, max_outside_residual_m=outside_max,
+            max_outside_vertex_index=int(np.argmax(residuals)),
+            best_fit_max_residual_m=float(np.max(abs(centered @ basis[-1]))),
+            fan_area_m2=float(fan.sum()), min_fan_triangle_area_m2=float(fan.min()),
+            hull_median_fan_area_m2=hull_median_area,
+            original_winding_area_floor_m2=float(tolerance ** 2),
+        ))
+    return failed, all(comparisons) and reindexed_validation["closed_convex"] == validation["closed_convex"]
+
+
+def export_failed_face_evidence(colliders, bodies):
+    faces = []
+    errors = []
+    checked = unchanged = 0
+    for row, body in zip(colliders, bodies):
+        owner = row["binding"].get("actual_collision_owner_path")
+        for hull_index, (item, validation) in enumerate(zip(row.get("cooked_hulls", []), body["hulls"])):
+            checked += 1
+            identity = dict(side=body["side"], actual_body_path=body["actual_body_path"],
+                            collision_owner_path=owner, hull_index=hull_index)
+            try:
+                with np.errstate(over="raise", invalid="raise", divide="raise"):
+                    failed, equivalent = _failed_hull_faces(item["raw"], validation)
+                    coordinates = {tuple(point) for face in failed for point in face["cooked_vertices_mesh_m"]}
+                    matches = _source_vertex_matches(row, coordinates) if coordinates else {}
+                for face in failed:
+                    face.update(identity)
+                    face["source_exact_vertex_matches"] = [
+                        matches[tuple(point)] for point in face["cooked_vertices_mesh_m"]]
+                faces.extend(failed)
+                unchanged += int(equivalent)
+            except (ValueError, KeyError, IndexError, TypeError, OverflowError, FloatingPointError,
+                    np.linalg.LinAlgError) as error:
+                errors.append(dict(identity, error=str(error)))
+    return dict(schema="dh116-cooked-failed-face-evidence-v1", plane_threshold_m=FAILED_FACE_THRESHOLD_M,
+                hulls_examined=checked, hulls_unchanged_under_reindex=unchanged, faces=faces, errors=errors,
+                native_qualification=False)
 
 
 def _saved_source_geometry_sha(points,triangles,orientation):
@@ -277,7 +402,7 @@ def _same_saved_sdk_boundary(before,after):
             and row["sdk_time_s"]>=0)
     return bool(valid(before) and valid(after) and before==after)
 
-def analyze_capture(packet,*,compare_source_vertices=False):
+def analyze_capture(packet,*,compare_source_vertices=False,export_failed_faces=False):
     capture=packet['capture'];bodies=[];seen=set();duplicates=[]
     hull_count=passed=0
     for row in capture.get('colliders',[]):
@@ -312,6 +437,8 @@ def analyze_capture(packet,*,compare_source_vertices=False):
             clock_before=before,clock_after=after,same_packet_sdk_boundary=_same_saved_sdk_boundary(before,after),
             clock_source='saved top-level actual SDK clock; missing values remain unknown',
             native_qualification=False,validator_tolerance_changed=False,vertices_refitted=False)
+    if export_failed_faces:
+        result['failed_face_audit']=export_failed_face_evidence(capture.get('colliders',[]),bodies)
     return result
 
 
@@ -321,9 +448,12 @@ def main(argv=None):
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--compare-source-vertices',action='store_true',
         help='opt-in read-only source/cooked vertex and coordinate diagnostics; never admission')
+    parser.add_argument('--export-failed-faces', action='store_true',
+        help='export per-face evidence above the diagnostic 0.1 mm plane threshold')
     args=parser.parse_args(argv)
     payload=args.capture.read_bytes()
-    result=analyze_capture(json.loads(payload),compare_source_vertices=args.compare_source_vertices)
+    result=analyze_capture(json.loads(payload),compare_source_vertices=args.compare_source_vertices,
+                           export_failed_faces=args.export_failed_faces)
     result.update(input_path=str(args.capture.resolve()),input_sha256=hashlib.sha256(payload).hexdigest())
     with args.output.open('x',encoding='utf-8') as stream:
         json.dump(result,stream,indent=2,allow_nan=False)

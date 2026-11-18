@@ -1,3 +1,7 @@
+## 2026-11-18 cooked polygon evidence
+
+Offline export records 30 rejected polygon rings with per-vertex residuals, normals, areas and source point matches. Reindexing preserved both plane predicates and strict validity across all 34 hulls. All 30 polygons have four to six vertices and measurable nonplanarity. Strict validity remains 0/34. [Audit report](docs/superpowers/reports/2026-11-18-teacher-cooked-failed-faces.md).
+
 ## 2026-11-18 cooked source-coordinate audit
 
 The existing offline auditor now has an opt-in source/cooked vertex-set comparison, source-content hash recomputation, finite coordinate-chain checks, saved SDK clocks and a non-admitting plane-threshold study. All1125 saved cooked vertices exactly match source vertex sets; loosening plane tolerance to1e-4m still leaves30 failed faces. Strict qualification stays0/34. CPU544 pass; no new Isaac run. See [report](docs/superpowers/reports/2026-11-18-teacher-cooked-representation-audit.md).

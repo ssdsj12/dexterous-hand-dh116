@@ -40720,6 +40720,27 @@
         "new_targeted_passed": 22,
         "scope": "CPU regression and existing packet only; strict hulls0/34 unchanged"
       }
+    },
+    "teacher.cooked-failed-face-audit-v1": {
+      "title": "Cooked hull 逐面残差、面积与索引重排复核",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.cooked-source-coordinate-audit-v1"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_cooked_failed_face_audit.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_cooked_failed_faces_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-teacher-cooked-failed-faces.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 548,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU and archived data only; strict hull 0/34"
+      }
     }
   },
   "execution_target": {
