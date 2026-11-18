@@ -27,9 +27,11 @@ VERSION = "dh116-teacher-stereo-sync-native-v1"
 legacy = stereo.legacy
 
 
-def freeze_plan(output, mode, max_steps, *, clock_warmup=False):
+def freeze_plan(output, mode, max_steps, *, clock_warmup=False, reset_recheck=False):
     if mode not in MODES or type(max_steps) is not int or not 1 <= max_steps <= 500:
         raise ValueError("known gesture and bounded recording of at most 500 control steps required")
+    if reset_recheck and not clock_warmup:
+        raise ValueError("second Reset requires clock warmup")
     if clock_warmup and (mode != "pinch" or max_steps != 1):
         raise ValueError("clock comparison requires one Pinch control window")
     plan = stereo.freeze_plan(ROOT, output, legacy.BINDINGS)
@@ -57,6 +59,11 @@ def freeze_plan(output, mode, max_steps, *, clock_warmup=False):
                               capture_wall_seconds=plan["budget"]["soft_wall_seconds"],
                               max_capture_renders=8, raw_rgb_upper_bound_bytes=2*640*480*3*2)
         plan["preserved_scope"] = "existing Pinch reset seed; one zero-action window between diagnostic RGB pairs"
+    if reset_recheck:
+        plan["clock_reset_recheck"] = True
+        plan["teacher_stereo"]["capture_pairs"] = 3
+        plan["budget"].update(episode_resets=2,max_capture_renders=12,raw_rgb_upper_bound_bytes=2*640*480*3*3)
+        plan["preserved_scope"] = "one Pinch seed with two resets and one zero-action window"
     return plan
 
 
@@ -64,13 +71,15 @@ def check_plan(plan, sha):
     if plan.get("version") != VERSION or legacy.digest(plan) != sha:
         raise ValueError("exact bounded native synchronization fingerprint required")
     expected = freeze_plan(plan["output"], plan["budget"]["mode"], plan["budget"]["control_steps"],
-                           clock_warmup=plan.get("clock_warmup_compare", False))
+                           clock_warmup=plan.get("clock_warmup_compare", False),
+                           reset_recheck=plan.get("clock_reset_recheck", False))
     if plan != expected or Path(plan["output"]).exists():
         raise ValueError("frozen inputs changed or output directory already exists")
 
 
-def _save_frame(output, receipt, packet, *, image_module, np):
-    folder = output / f"frame-{receipt['identity']['policy_tick']:06d}"
+def _save_frame(output, receipt, packet, *, image_module, np, frame_index=None):
+    index = receipt["identity"]["policy_tick"] if frame_index is None else frame_index
+    folder = output / f"frame-{index:06d}"
     folder.mkdir()
     for side in ("left", "right"):
         rgb = packet[side+"_rgb"][0].permute(1, 2, 0).detach().cpu().numpy()
@@ -109,6 +118,17 @@ def _zero_action_clock_window(rt, boundary):
                 applied_action_24=boundary.applied[0].cpu().tolist())
 
 
+def _reset_clock_boundary(rt):
+    sdk_before = legacy.clock(rt.sim)
+    solver_before = float(rt.rope.time)
+    rt.reset_all()
+    sdk_after = legacy.clock(rt.sim)
+    if sdk_before != sdk_after:
+        raise RuntimeError("episode reset advanced the SDK clock")
+    return dict(sdk_before=sdk_before, sdk_after=sdk_after,
+                solver_before_s=solver_before, solver_after_s=float(rt.rope.time))
+
+
 def _record(app, plan, started, scope, rows, trace):
     import torch
     import numpy as np
@@ -124,6 +144,7 @@ def _record(app, plan, started, scope, rows, trace):
 
     out, budget = Path(plan["output"]), plan["budget"]
     warmup = plan.get("clock_warmup_compare", False)
+    reset_recheck = plan.get("clock_reset_recheck", False)
     cal = StereoCalibration.from_json(ROOT / alignment.STUDENT_CAMERA)
     rt = sim = camera = reader = display = model = None
     boundary = ActionBoundary()
@@ -192,6 +213,7 @@ def _record(app, plan, started, scope, rows, trace):
             raise ValueError(warp_abi["error"])
         run = out.name
         comparison = []
+        second_reset = None
         with (out/"sync_log.jsonl").open("x") as ledger:
             window = monotonic()
             for tick in range(plan["teacher_stereo"]["capture_pairs"]):
@@ -200,16 +222,21 @@ def _record(app, plan, started, scope, rows, trace):
                 legacy.continue_within_budget(started, "next synchronization frame", lambda: None)
                 before = legacy.clock(sim)
                 step, stamp = before["sdk_step"], before["sdk_time_s"]
-                next_step = step if warmup and tick == 1 else step+8
-                if step != 2+8*tick or next_step > budget["max_total_sdk_steps"]:
+                after_second_reset = reset_recheck and tick == 2
+                expected_step = 10 if after_second_reset else 2+8*tick
+                next_step = step if warmup and tick >= 1 else step+8
+                if step != expected_step or next_step > budget["max_total_sdk_steps"]:
                     raise RuntimeError("control step exceeds frozen SDK budget")
                 state = alignment.runtime_state(rt)
-                identity = dict(run_uuid=run, env_id=0, episode_uid=run+":0", reset_id=0, policy_tick=tick,
-                                physics_tick_start=step, physics_tick_end=step, rod_step=step-2,
+                reset_id = int(after_second_reset)
+                rod_step = 0 if after_second_reset else step-2
+                identity = dict(run_uuid=run, env_id=0, episode_uid=run+f":{reset_id}", reset_id=reset_id,
+                                policy_tick=0 if after_second_reset else tick,
+                                physics_tick_start=step, physics_tick_end=step, rod_step=rod_step,
                                 state_sha256=alignment.state_digest(state), simulation_timestamp=stamp,
                                 calibration_sha256=cal.sha256, sdk_step=step, sdk_timestamp_s=stamp,
-                                rod_tick=step-2, solver_time_s=float(rt.rope.time),
-                                material_reference_uid=run+":rod0", rod_uid=run+":rod")
+                                rod_tick=rod_step, solver_time_s=float(rt.rope.time),
+                                material_reference_uid=run+f":rod{reset_id}", rod_uid=run+":rod")
                 pose_error = display.sync(
                     {(0, side):getattr(rt, side+"_hands").data.body_link_pose_w[0]
                      for side in ("left","right")}, read_clock=lambda:legacy.clock(sim))
@@ -226,12 +253,14 @@ def _record(app, plan, started, scope, rows, trace):
                 sync = student_rgb_timing(timing["raw_left_clock"]["simulation_time"],
                                           timing["physical_timestamp_s"])
                 if warmup:
-                    phase = "after_zero_action_warmup" if tick else "before_zero_action_warmup"
+                    phase = ("before_zero_action_warmup", "after_zero_action_warmup",
+                             "after_second_reset")[tick]
                     receipt = alignment.aligned_payload(state, identity, packet, cal, origins)
                     receipt.update(source_scope=packet["source_scope"], phase=phase,
                                    teacher_policy_queried=False, training_sample=False, **sync)
-                    path, sha = _save_frame(out, receipt, packet, image_module=Image, np=np)
+                    path, sha = _save_frame(out, receipt, packet, image_module=Image, np=np, frame_index=tick)
                     sample = dict(frame_receipt=path, frame_receipt_sha256=sha, phase=phase,
+                                  identity=identity,
                                   render_timing=timing, render_passes=packet["render_passes"],
                                   capture_start_wall_ns=start_ns, rgb_ready_wall_ns=rgb_ns, **sync)
                     comparison.append(sample)
@@ -240,6 +269,11 @@ def _record(app, plan, started, scope, rows, trace):
                         legacy.continue_within_budget(started, "zero-action warmup", lambda: None)
                         elapsed = _zero_action_clock_window(rt, boundary)
                         legacy.write_new(out/"zero_action_window.json", elapsed)
+                    elif tick == 1 and reset_recheck:
+                        legacy.continue_within_budget(started, "second episode reset", lambda: None)
+                        with torch.inference_mode():
+                            second_reset = _reset_clock_boundary(rt)
+                        legacy.write_new(out/"second_reset_boundary.json", second_reset)
                     continue
                 if not sync["student_sync_usable"]:
                     rejected = alignment.aligned_payload(state, identity, packet, cal, origins)
@@ -275,16 +309,20 @@ def _record(app, plan, started, scope, rows, trace):
                 os.fsync(ledger.fileno())
                 rows.append(row)
         if warmup:
-            if len(comparison) != 2:
-                raise RuntimeError("clock comparison ended without both native RGB pairs")
-            timing_passed = comparison[-1]["student_sync_usable"]
+            if len(comparison) != plan["teacher_stereo"]["capture_pairs"]:
+                raise RuntimeError("clock comparison ended without all planned native RGB pairs")
+            timing_passed = comparison[1]["student_sync_usable"]
+            result = dict(samples=comparison, zero_action_window=elapsed,
+                          post_warmup_timing_passed=timing_passed,
+                          teacher_queries=0, ppo_updates=0, training_samples=0)
+            if reset_recheck:
+                result.update(second_reset=second_reset,
+                              post_second_reset_timing_passed=comparison[2]["student_sync_usable"])
+                timing_passed = timing_passed and result["post_second_reset_timing_passed"]
             scope["window"] = dict(elapsed_wall_s=monotonic()-window, completed_frames=0,
-                                  diagnostic_rgb_pairs=2, diagnostic_timing_passed=timing_passed,
+                                  diagnostic_rgb_pairs=len(comparison), diagnostic_timing_passed=timing_passed,
                                   stop_reason="clock_comparison_complete")
-            legacy.write_new(out/"clock_warmup_comparison.json",
-                             dict(samples=comparison, zero_action_window=elapsed,
-                                  post_warmup_timing_passed=timing_passed,
-                                  teacher_queries=0, ppo_updates=0, training_samples=0))
+            legacy.write_new(out/"clock_warmup_comparison.json", result)
             if not timing_passed:
                 raise RuntimeError("post-warmup RGB pair still exceeds the frozen 2 ms timing boundary")
             return
@@ -440,11 +478,13 @@ def main(argv=None):
     parser.add_argument("--max-control-steps", type=int, default=500)
     parser.add_argument("--record-sync-data", action="store_true")
     parser.add_argument("--clock-warmup", action="store_true")
+    parser.add_argument("--clock-reset-recheck", action="store_true")
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     cleanup.validate_execution_context(ROOT)
     if not args.record_sync_data:
-        plan = freeze_plan(args.output, args.mode, args.max_control_steps, clock_warmup=args.clock_warmup)
+        plan = freeze_plan(args.output, args.mode, args.max_control_steps, clock_warmup=args.clock_warmup,
+                           reset_recheck=args.clock_reset_recheck)
         legacy.write_new(args.plan, plan)
         print(json.dumps(dict(frozen_sha256=legacy.digest(plan), native_started=False, budget=plan["budget"])))
         return 0
@@ -452,7 +492,8 @@ def main(argv=None):
     check_plan(plan, args.approved_frozen_sha256)
     if (str(args.output.resolve()) != plan["output"] or args.mode != plan["budget"]["mode"]
             or args.max_control_steps != plan["budget"]["control_steps"]
-            or args.clock_warmup != plan.get("clock_warmup_compare", False)):
+            or args.clock_warmup != plan.get("clock_warmup_compare", False)
+            or args.clock_reset_recheck != plan.get("clock_reset_recheck", False)):
         raise ValueError("CLI and frozen recording identity differ")
     return execute_native(plan)
 

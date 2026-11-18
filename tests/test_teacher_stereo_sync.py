@@ -109,6 +109,16 @@ def test_freeze_records_one_mode_and_hard_control_budget(tmp_path, monkeypatch):
     recorder.check_plan(warmup, recorder.legacy.digest(warmup))
     with pytest.raises(ValueError, match="one Pinch control window"):
         recorder.freeze_plan(tmp_path/"invalid", "pinch", 2, clock_warmup=True)
+    recheck = recorder.freeze_plan(tmp_path/"recheck", "pinch", 1, clock_warmup=True,
+                                   reset_recheck=True)
+    assert recheck["clock_reset_recheck"]
+    assert recheck["teacher_stereo"]["capture_pairs"] == 3
+    assert recheck["budget"]["episode_resets"] == 2
+    assert recheck["budget"]["max_capture_renders"] == 12
+    assert recheck["budget"]["max_total_sdk_steps"] == warmup["budget"]["max_total_sdk_steps"]
+    recorder.check_plan(recheck, recorder.legacy.digest(recheck))
+    with pytest.raises(ValueError, match="requires clock warmup"):
+        recorder.freeze_plan(tmp_path/"invalid", "pinch", 1, reset_recheck=True)
     model.write_bytes(b"changed checkpoint")
     with pytest.raises(ValueError, match="checkpoint or source changed"):
         recorder.check_plan(plan, recorder.legacy.digest(plan))
@@ -149,3 +159,28 @@ def test_zero_action_clock_window(sdk_steps, solver_steps, admitted):
         with pytest.raises(RuntimeError, match="frozen clock budget"):
             recorder._zero_action_clock_window(rt, boundary)
     assert seen == [[[0.]*24]]
+
+
+
+
+@pytest.mark.parametrize("step_delta", [0, 1])
+def test_second_reset_preserves_sdk_clock_and_captures_its_own_solver_origin(step_delta):
+    from types import SimpleNamespace
+
+    from scripts import record_dh116_teacher_stereo_sync as recorder
+
+    sim = SimpleNamespace(current_time_step_index=10, current_time=10/480)
+    rope = SimpleNamespace(time=8/480)
+    def reset():
+        sim.current_time_step_index += step_delta
+        sim.current_time += step_delta / 480
+        rope.time = 0.
+    rt = SimpleNamespace(sim=sim, rope=rope, reset_all=reset)
+    if step_delta:
+        with pytest.raises(RuntimeError, match="reset advanced the SDK clock"):
+            recorder._reset_clock_boundary(rt)
+    else:
+        result = recorder._reset_clock_boundary(rt)
+        assert result["sdk_before"] == result["sdk_after"]
+        assert result["solver_before_s"] == 8/480
+        assert result["solver_after_s"] == 0.

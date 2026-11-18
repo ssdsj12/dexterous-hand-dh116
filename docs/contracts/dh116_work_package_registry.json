@@ -41052,6 +41052,27 @@
         "skipped": 0,
         "scope": "CPU pass and bounded native crash localization."
       }
+    },
+    "teacher.native-stereo-second-reset-clock-v1": {
+      "title": "Pinch 双目时钟第二次 Reset 原生对照",
+      "executor": "pytest",
+      "dependencies": [],
+      "status": "blocked",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_teacher_stereo_sync.py",
+        "tests/test_native_teacher_stereo.py"
+      ],
+      "readiness": "docs/contracts/dh116_native_stereo_second_reset_clock_v1.json",
+      "report": "docs/superpowers/reports/2026-11-18-native-stereo-second-reset-clock.md",
+      "native_runs": 1,
+      "blocked_reason": "The same scene-origin offset survives two resets. Three diagnostic RGB pairs fail the raw timing gate. Outer exit SIGSEGV.",
+      "last_result": {
+        "passed": 84,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "CPU pass and one bounded native run with two resets of one Pinch seed."
+      }
     }
   },
   "execution_target": {

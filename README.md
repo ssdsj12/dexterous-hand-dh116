@@ -1,3 +1,7 @@
+## 2026-11-18 Student stereo clock across a second Reset
+
+One native Pinch scene produced three paired RGB captures across two episode resets. The 4.167 ms raw scene-clock offset persisted and all three pairs stayed outside the 2 ms timing gate. [Report](docs/superpowers/reports/2026-11-18-native-stereo-second-reset-clock.md).
+
 ## 2026-11-18 Teacher WebRTC shutdown diagnosis
 
 Shutdown stages are flushed independently. CUDA synchronization and PhysX STOP returned during the native run. GDB located the first SIGSEGV in the livestream present thread during App close. [Report](docs/superpowers/reports/2026-11-18-teacher-webrtc-shutdown-order.md).
