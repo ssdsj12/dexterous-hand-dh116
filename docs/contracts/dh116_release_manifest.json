@@ -26110,6 +26110,31 @@
         "verified_at_utc": "2026-11-18T15:20:34.160656+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.actual-fresh-update-seal-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-dh116-teacher-first-update-seal.md",
+      "readiness": "docs/contracts/dh116_teacher_first_update_seal_v1.json",
+      "cpu_tests": {
+        "passed": 285,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "34964ba4b50476bde03eecadaa2b9be11665cec9",
+        "source_tree": "24949541d6d1ce5ee930912ebadb254162bb4e39",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T15:58:05.912018+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
