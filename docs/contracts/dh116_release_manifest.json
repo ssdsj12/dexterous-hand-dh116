@@ -25806,6 +25806,31 @@
         "verified_at_utc": "2026-11-18T07:57:19.460639+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.native-first-stereo-pair-timing-v1",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-18-native-stereo-first-pair.md",
+      "readiness": "docs/contracts/dh116_native_first_stereo_pair_timing_v1.json",
+      "cpu_tests": {
+        "passed": 128,
+        "failed": 0,
+        "skipped": 0
+      },
+      "native_runs": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ec9f0bcbb21470f4506979916662c29db284b24f",
+        "source_tree": "ddcc1c7955c126d8069691bae13ddaffd7fdbf9d",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-18T09:09:19.767050+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
