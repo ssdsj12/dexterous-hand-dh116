@@ -13,13 +13,15 @@ from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, JOINTS, active_limit
 from go2_pvcnn.control.dh116.tabletop_deformable_wrist_projection import CLEARANCE_M
 from go2_pvcnn.control.dh116.tabletop_teacher_seed_initialization import seed_arrays
 from scripts.audit_dh116_pinch_initial_pose import DISTAL_PAD_LINKS, box_relation, load_geometry
-from scripts.audit_dh116_wire_contact_witness import audit_seed, shapes_world
+from scripts.audit_dh116_wire_contact_witness import audit_seed, endpoint_gap, shapes_world
 from scripts.prepare_dh116_wire_pose_candidate import HANDS, _material_tangents, _pad_gap_interval, _station_frame
 from scripts.solve_dh116_tripod_joint_root_direction import COARSE
 
 ROLL_DEGREES = (0, -45, 45, -90, 90, -135, 135, 180)
 FLEXION_TRIALS_RAD = (0., -.10, .10)
 SEATING_BACKOFF_M = (0., .004)
+APPROACH_STEP_M = .0005
+APPROACH_STEPS = 40
 
 
 def palm_axis_frames(material_frame):
@@ -94,6 +96,43 @@ def support_collisions(shapes, supports):
     return support_clearance(shapes, supports)[0]
 
 
+def audit_fixed_preshape_approach(shapes, nodes, radius, direction, supports):
+    """Certify the swept convex envelopes of a horizontal translation at fixed q."""
+    axis = np.asarray(direction, dtype=float).copy()
+    if axis.shape != (3,) or not np.isfinite(axis).all():
+        raise ValueError("finite palm direction required")
+    axis[2] = 0.
+    length = np.linalg.norm(axis)
+    if length <= 1e-8:
+        return dict(reason="horizontal_direction_unavailable", last_accepted_translation_m=None,
+                    native_contact_verified=False)
+    axis /= length
+    accepted = None
+    rejected = None
+    for index in range(APPROACH_STEPS + 1):
+        distance = index * APPROACH_STEP_M
+        shift = distance * axis
+        # At fixed joints and rotation, convex hull(V U (V + shift)) is
+        # precisely the continuous translational sweep of each convex hull.
+        swept = {key: np.vstack((vertices, vertices + shift)) for key, vertices in shapes.items()}
+        hits, support_gap = support_clearance(swept, supports)
+        uncertain = [key for key, hull in swept.items() if _pad_gap_interval(hull, nodes, radius)["lower_m"] < 0.]
+        evidence = dict(translation_m=distance, support_intersections=hits,
+                        minimum_support_separating_axis_gap_m=support_gap, rod_uncertified_shapes=uncertain)
+        if hits or (support_gap is not None and support_gap < CLEARANCE_M) or uncertain:
+            rejected = evidence
+            break
+        accepted = evidence
+    required = ("source:base_link", *("cooked:" + key for key in DISTAL_PAD_LINKS))
+    witnesses = {}
+    if accepted is not None:
+        shift = accepted["translation_m"] * axis
+        witnesses = {key: endpoint_gap(shapes[key] + shift, nodes, radius) for key in required if key in shapes}
+    return dict(last_accepted_translation_m=None if accepted is None else accepted["translation_m"],
+                last_accepted=accepted, first_rejected=rejected, endpoint_witnesses=witnesses,
+                table_clearance_unchanged=True, native_contact_verified=False)
+
+
 def _search_palm(geometry, pose, q, nodes, station, frame, supports, *, aligned_preshape):
     if geometry["fk"].root.rsplit("/", 1)[-1] != "base_link":
         raise ValueError("Power palm support requires the original base_link")
@@ -151,7 +190,8 @@ def _search_palm(geometry, pose, q, nodes, station, frame, supports, *, aligned_
     return min(trials, key=lambda row: row["rank"]), len(trials)
 
 
-def prepare_palm_seed(seed, *, stations, project, supports=(), aligned_preshape=False):
+def prepare_palm_seed(seed, *, stations, project, supports=(), aligned_preshape=False,
+                      audit_approach=False):
     nodes, joints, roots, _ = seed_arrays(seed)
     tangent = _material_tangents(nodes)
     if (not isinstance(stations, dict) or set(stations) != set(HANDS)
@@ -164,7 +204,8 @@ def prepare_palm_seed(seed, *, stations, project, supports=(), aligned_preshape=
     for idx, side in enumerate(HANDS):
         node = stations[side]
         frame = _station_frame(tangent, node)
-        selected, count = _search_palm(load_geometry(project, side=side), roots[idx],
+        geometry = load_geometry(project, side=side)
+        selected, count = _search_palm(geometry, roots[idx],
             joints[idx, active_ids], nodes, nodes[node], frame, supports, aligned_preshape=aligned_preshape)
         trial["roots"][idx] = selected["root"]
         if aligned_preshape:
@@ -172,6 +213,16 @@ def prepare_palm_seed(seed, *, stations, project, supports=(), aligned_preshape=
         search[side] = dict(selected, node_id=node, candidates_evaluated=count)
     seed_arrays(trial)
     evidence = audit_seed(trial, style="power", project=project)
+    if audit_approach:
+        for side, row in search.items():
+            if not evidence["hands"][side]["table_clearance_passed"]:
+                row["fixed_preshape_approach"] = dict(reason="table_clearance_not_qualified",
+                    last_accepted_translation_m=None, native_contact_verified=False)
+                continue
+            geometry = load_geometry(project, side=side)
+            hulls = shapes_world(geometry, row["root"], row["active_q"])
+            row["fixed_preshape_approach"] = audit_fixed_preshape_approach(
+                hulls, nodes, geometry["old_candidate"]["rod"]["radius_m"], row["palm_toward_fingers"], supports)
     opposed_sides = all(all(item > 0. for item in row["finger_side_projection_m"].values())
                         for row in search.values())
     supports_clear = all(
@@ -194,6 +245,8 @@ def main(argv=None):
                         help="use the existing independent Power seed and support boxes")
     parser.add_argument("--aligned-preshape", action="store_true",
                         help="align each hand from its FK finger span and try bounded flexion offsets")
+    parser.add_argument("--audit-approach", action="store_true",
+                        help="audit a bounded fixed-joint horizontal sweep; does not move the candidate")
     parser.add_argument("--left-node", required=True, type=int)
     parser.add_argument("--right-node", required=True, type=int)
     parser.add_argument("--output", required=True, type=Path)
@@ -211,7 +264,8 @@ def main(argv=None):
     else:
         raw = args.seed.read_bytes()
     result = prepare_palm_seed(json.loads(raw), stations=dict(left=args.left_node, right=args.right_node),
-                               project=args.project, supports=supports, aligned_preshape=args.aligned_preshape)
+                               project=args.project, supports=supports, aligned_preshape=args.aligned_preshape,
+                               audit_approach=args.audit_approach)
     result["input_seed_sha256"] = hashlib.sha256(raw).hexdigest()
     with args.output.open("x", encoding="utf-8") as stream:
         json.dump(result, stream, indent=2, allow_nan=False)

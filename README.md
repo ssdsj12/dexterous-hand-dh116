@@ -1,3 +1,7 @@
+## 2026-11-19 Teacher Power wrist approach sweep
+
+The opt-in Power geometry tool audits the continuous swept volume of the fixed-joint approach against rod and supports. Both palms approach within 0.35 mm; fingers still require a separate closure path. [Report](docs/superpowers/reports/2026-11-19-teacher-power-fixed-preshape-sweep.md).
+
 ## 2026-11-19 Pinch Teacher source-bound recipe
 
 The original freezer re-derived the runtime semantic identity. The native initialization regression and its pre-action failure are recorded. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-semantic-refreeze.md).

@@ -69,3 +69,20 @@ def test_tripod_witness_prefers_proven_endpoint_over_proxy_winner():
     valid = row("clear", -.4, good=True)
     assert sorted([hit, unknown, wrong_direction, shallow_hit, valid], key=_tripod_witness_rank) == [
         valid, wrong_direction, unknown, shallow_hit, hit]
+
+
+def test_power_approach_rejects_swept_support_between_clear_endpoints(monkeypatch):
+    from scripts import prepare_dh116_power_palm_seed as power
+
+    hull = np.array(list(itertools.product((-.0005, .0005), repeat=3)))
+    shapes = {"source:base_link": hull}
+    supports = [dict(center_m=[.004, 0., 0.], size_m=[.001, .001, .001])]
+    assert power.support_collisions(shapes, supports) == []
+    assert power.support_collisions({"source:base_link": hull + [.008, 0., 0.]}, supports) == []
+    wire = np.array([[0., -.01, .1], [0., .01, .1]])
+    monkeypatch.setattr(power, "APPROACH_STEP_M", .008)
+    result = power.audit_fixed_preshape_approach(shapes, wire, .005, [1., 0., 0.], supports)
+    assert result["last_accepted_translation_m"] == 0.
+    assert result["first_rejected"]["support_intersections"] == [
+        {"source": "source:base_link", "support_index": 0}]
+    assert result["native_contact_verified"] is False

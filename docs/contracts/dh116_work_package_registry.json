@@ -41747,6 +41747,26 @@
         "sha256": "23074dc31e5445ec74facfb569c0c5eef393e29ee52b1640f20c2f595f5eafc2"
       },
       "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-semantic-refreeze.md"
+    },
+    "teacher.power-fixed-preshape-sweep-cpu": {
+      "title": "Audit the continuous Power wrist translation to the rod",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.tripod-witness-shortlist-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_collision_aware_teacher_seeds.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_approach_sweep_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-power-fixed-preshape-sweep.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 53,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
