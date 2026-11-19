@@ -27313,6 +27313,31 @@
         "verified_at_utc": "2026-11-19T16:27:56.138578+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-right-two-ledger-clearance-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v10-right-reset-candidate.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_v10_right_reset_candidate_v1.json",
+      "cpu_tests": {
+        "passed": 17,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1c05c8d70e5e12bdbdfaaf77a80f6068590493f3",
+        "source_tree": "0e610ef1feb0edb0bb8f73fe2fe3c66ed09c4ae4",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T16:32:09.445712+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
