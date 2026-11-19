@@ -869,3 +869,27 @@ def test_flexible_capture_gates_follow_task_camera_and_native_cooked_sdf_evidenc
     assert {"flex.f4-cooked-hull-device-parity", "flex.f4-cooked-pad-sdf",
             "flex.f4-left-contact-native", "flex.f4-right-contact-native"} <= set(scoped)
     assert {"flex.f5-wireseg-pretraining", "flex.f6-render-native"}.isdisjoint(scoped)
+
+
+@pytest.mark.parametrize('branch, allowed', [(scheduler.BRANCH, True), ('11-17', True),
+                                            ('11-10', False), ('unrelated', False)])
+def test_native_worker_branch_check_keeps_publication_target_pinned(tmp_path, monkeypatch, branch, allowed):
+    repo = scheduler.Repository(tmp_path)
+    url = f'https://github.com/{scheduler.PROJECT}.git'
+
+    def git(*args):
+        return branch if args == ('branch', '--show-current') else url
+
+    monkeypatch.setattr(repo, 'git', git)
+    if allowed:
+        repo.verify_native_target()
+    else:
+        with pytest.raises(RuntimeError, match='native'):
+            repo.verify_native_target()
+    if branch != scheduler.BRANCH:
+        with pytest.raises(RuntimeError, match='development branch'):
+            repo.verify_local_target()
+
+    monkeypatch.setattr(repo, 'git', lambda *args: branch if args == ('branch', '--show-current') else 'wrong')
+    with pytest.raises(RuntimeError, match='origin'):
+        repo.verify_native_target()

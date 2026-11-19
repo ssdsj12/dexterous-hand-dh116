@@ -41468,9 +41468,17 @@
         "max_attempts_per_code_config": 1,
         "retry_requires_change": true
       },
-      "status": "pending",
+      "status": "blocked",
       "tests": [],
-      "title": "Pinch fresh PPO smoke32 diagnostic"
+      "title": "Pinch fresh PPO smoke32 diagnostic",
+      "blocker_kind": "failed_native",
+      "reason": "Original native worker handshake rejected before Isaac; partial CPU execution only",
+      "last_result": {
+        "attempt_fingerprint": "cde13f53264118f4e83f1e2d58c9b4c49068c78a95e07b12a5dd0a7ce7d3062e",
+        "result_sha256": "8069fad23d4be9bd5981560dd9c948f48030ed855e64c84499bc5573f7667fc9",
+        "native_execution_performed": false,
+        "native_qualification": false
+      }
     },
     "teacher.pinch-ppo-draft-cpu": {
       "title": "Pinch 首次原生 PPO 配方 CPU 冻结",
@@ -41552,6 +41560,46 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-native-worker-branch": {
+      "title": "Verify the Pinch native worker entry on 11-17",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.actual-launch-l01-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_native_worker_branch_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-worker-branch.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 152,
+        "failed": 0,
+        "scope": "CPU only"
+      }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v2": {
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v2.json",
+        "sha256": "bb38f0e9ac7f395879fdd80edffc1402106e23a6263b1e6fb95ee0c716a2c0d3"
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v2.json",
+      "dependencies": [],
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "status": "pending",
+      "tests": [],
+      "title": "Pinch fresh PPO smoke32 diagnostic after native branch fix",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-worker-branch.md"
     }
   },
   "execution_target": {

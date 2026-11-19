@@ -706,13 +706,20 @@ class Repository:
     def head(self):
         return self.git('rev-parse', 'HEAD').strip()
 
-    def verify_local_target(self):
+    def _matches_origin(self):
         urls = {f'https://github.com/{PROJECT}.git', f'https://github.com/{PROJECT}',
                 f'git@github.com:{PROJECT}.git', f'ssh://git@github.com/{PROJECT}.git'}
-        if (self.git('branch', '--show-current').strip() != BRANCH
-                or any(url.strip() not in urls for url in (
-                    self.git('remote', 'get-url', 'origin'), self.git('remote', 'get-url', '--push', 'origin')))):
+        return all(self.git(*args).strip() in urls for args in (
+            ('remote', 'get-url', 'origin'), ('remote', 'get-url', '--push', 'origin')))
+
+    def verify_local_target(self):
+        if self.git('branch', '--show-current').strip() != BRANCH or not self._matches_origin():
             raise RuntimeError('expected DH116 origin and development branch')
+
+    def verify_native_target(self):
+        if self.git('branch', '--show-current').strip() not in {BRANCH, '11-17'} or not self._matches_origin():
+            raise RuntimeError('expected DH116 origin and supported native branch')
+
     def verify_target(self):
         self.verify_local_target()
         with urlopen(f'https://api.github.com/repos/{PROJECT}/pulls/2', timeout=12) as stream:
@@ -1316,9 +1323,11 @@ class Repository:
                                 self._native_child(path, recipe['spec'], output, result, bound=bound, package=package)
                         else:
                             self._native_child(path, recipe['spec'], output, result, bound=bound)
-                    except (OSError, ValueError, subprocess.SubprocessError):
+                    except (OSError, ValueError, subprocess.SubprocessError) as error:
+                        log = path / 'native.log'
                         result.update(blocker_kind='failed_native', reason='native worker failed to execute or finish',
-                                      log_sha256=file_hash(path / 'native.log'))
+                                      launch_failure=dict(type=type(error).__name__, detail=str(error)),
+                                      log_sha256=file_hash(log) if log.is_file() else None)
         atomic_write(receipt, json_text(result))
         return dict(result, result_sha256=file_hash(receipt))
 
@@ -1788,7 +1797,7 @@ def main(argv=None):
             raise ValueError('native batch approval must stay outside published source')
         approval = native_approval(json.loads(approval_path.read_text(encoding='utf-8')), repo)
     if args.native_worker:
-        repo.verify_local_target()
+        repo.verify_native_target()
         print(json_text(repo.run_native_worker(args.native_worker)), end='', flush=True)
         return 0
     if bool(args.verify_actual_diagnostic) != bool(args.receipt_sha256):

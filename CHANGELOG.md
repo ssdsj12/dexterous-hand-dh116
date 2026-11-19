@@ -1,3 +1,7 @@
+## 2026-11-19 Teacher Pinch native worker entry
+
+The native worker accepts the published `11-17` branch. The first launch was rejected before Isaac started, and the corrected smoke recipe stays unqualified pending native execution. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-native-worker-branch.md).
+
 ## 2026-11-19 Tripod convex witnesses and Power palm-referenced prepose
 
 The endpoint gate checks original source colliders alongside locked pads. Separate closest-point diagnostics and Power preposes compare the table and existing two-support scenes. [Report](docs/superpowers/reports/2026-11-19-dh116-wire-endpoint-power-palm.md).
