@@ -41596,10 +41596,20 @@
         "max_attempts_per_code_config": 1,
         "retry_requires_change": true
       },
-      "status": "pending",
+      "status": "blocked",
       "tests": [],
       "title": "Pinch fresh PPO smoke32 diagnostic after native branch fix",
-      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-worker-branch.md"
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-worker-branch.md",
+      "blocker_kind": "failed_native",
+      "reason": "Worker reached the lock but grant rejected the control directory before Isaac launch",
+      "last_result": {
+        "attempt_fingerprint": "6de6894074051f972aeeea3ac234f780761a4c6290aa92530d2a06335fdce347",
+        "result_sha256": "dd37906d2a7add2f30e27b74c215ffc8d9fa3c080e9ceb325eab66b829eef1b3",
+        "outer_exit_code": 2,
+        "native_execution_performed": true,
+        "isaac_started": false,
+        "native_qualification": false
+      }
     },
     "teacher.tripod-power-collision-aware-seeds": {
       "title": "Compare Tripod exact endpoints and left/right Power preshapes",
@@ -41641,6 +41651,46 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-native-private-control": {
+      "title": "Preflight private POSIX control storage before Pinch worker start",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-native-worker-branch"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_native_control_storage_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-control-storage.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 153,
+        "failed": 0,
+        "scope": "CPU only"
+      }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v3": {
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v3.json",
+        "sha256": "9aa190d06e3a59977e9b9b3a81a7508b4e9d0a8d236603fd309ccaa8bfc67bdd"
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v3.json",
+      "dependencies": [],
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "status": "pending",
+      "tests": [],
+      "title": "Pinch fresh PPO smoke32 with private control storage",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-control-storage.md"
     }
   },
   "execution_target": {

@@ -893,3 +893,19 @@ def test_native_worker_branch_check_keeps_publication_target_pinned(tmp_path, mo
     monkeypatch.setattr(repo, 'git', lambda *args: branch if args == ('branch', '--show-current') else 'wrong')
     with pytest.raises(RuntimeError, match='origin'):
         repo.verify_native_target()
+
+
+def test_native_control_directory_verifies_posix_owner_and_mode(tmp_path, monkeypatch):
+    root = tmp_path / 'repo'
+    root.mkdir()
+    private = tmp_path / 'private'
+    repo = scheduler.Repository(root, evidence_dir=private)
+    assert repo.native_control_directory_blocker() is None
+    assert private.stat().st_mode & 0o777 == 0o700
+    assert list(private.iterdir()) == []
+    private.chmod(0o777)
+    assert '0700' in repo.native_control_directory_blocker()
+
+    private.chmod(0o700)
+    monkeypatch.setattr(scheduler.os, 'getuid', lambda: private.stat().st_uid + 1)
+    assert 'owner' in repo.native_control_directory_blocker()

@@ -15,10 +15,11 @@ from pathlib import Path, PurePosixPath
 import re
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 import time
-from tempfile import NamedTemporaryFile, mkdtemp
+from tempfile import NamedTemporaryFile, TemporaryDirectory, mkdtemp
 from urllib.request import urlopen
 
 # C06 intentionally requires the exact Repository type. Direct script launch
@@ -1054,6 +1055,21 @@ class Repository:
             if result.get('blocker_kind') != 'waiting_resource':
                 yield dict(result, result_sha256=file_hash(receipt))
 
+    def native_control_directory_blocker(self):
+        """Check the filesystem contract before starting an actual worker."""
+        try:
+            self.private.mkdir(mode=0o700, parents=True, exist_ok=True)
+            info = self.private.stat()
+            if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o700:
+                return 'actual native control directory requires current owner and mode 0700'
+            with TemporaryDirectory(prefix='.private-mode-probe-', dir=self.private) as directory:
+                info = Path(directory).lstat()
+                if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o700:
+                    return 'actual native control filesystem does not preserve owner and mode 0700'
+        except OSError as error:
+            return f'unable to verify actual native control directory: {error}'
+        return None
+
     def native_resource_blocker(self, recipe, output_root, worker=False):
         budget = recipe['spec']['budget']
         try:
@@ -1220,7 +1236,12 @@ class Repository:
             if not approval or approval['packages'].get(name) != identities[name]:
                 blockers[name] = resource_blocker('waiting_approval', 'no batch approval for exact code/config and command')
             else:
-                reason = self.native_resource_blocker(recipe, Path(approval['output_root'])) if probe_resources else None
+                reason = None
+                if probe_resources:
+                    if 'actual_identity' in identities[name]:
+                        reason = self.native_control_directory_blocker()
+                    if reason is None:
+                        reason = self.native_resource_blocker(recipe, Path(approval['output_root']))
                 if reason:
                     blockers[name] = resource_blocker('waiting_resource', reason)
                 else:
@@ -1236,6 +1257,10 @@ class Repository:
         recipe = self.native_recipe(package)
         execution = self.native_execution_identity(package, recipe=recipe)
         fingerprint = execution['attempt_fingerprint']
+        if execution['actual_identity'] is not None:
+            reason = self.native_control_directory_blocker()
+            if reason is not None:
+                raise ValueError(reason)
         base = self.private / 'native-attempts' / name / fingerprint
         base.mkdir(parents=True, exist_ok=True)
         directory = Path(mkdtemp(prefix='attempt-', dir=base))

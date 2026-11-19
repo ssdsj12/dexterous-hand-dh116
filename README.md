@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch launch control storage
+
+Actual Teacher workers preflight private control-directory ownership and modes. The heavier output stays on the data volume. The failed v2 receipt and its replacement recipe are recorded. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-native-control-storage.md).
+
 ## 2026-11-19 Teacher Tripod endpoint shortlist
 
 A bounded set of Tripod candidates now receives exact endpoint checks. No tested seed qualified. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-witness-shortlist.md).
