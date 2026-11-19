@@ -27138,6 +27138,31 @@
         "verified_at_utc": "2026-11-19T12:35:57.616887+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-middle-continuous-reach-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-power-middle-reach.md",
+      "readiness": "docs/contracts/dh116_teacher_power_middle_reach_v1.json",
+      "cpu_tests": {
+        "passed": 19,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "3cf044e524e091587307a35871b1a05533224696",
+        "source_tree": "02c7f0f687380db7979dadc646c83c0aa867aa1b",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T12:38:40.558752+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
