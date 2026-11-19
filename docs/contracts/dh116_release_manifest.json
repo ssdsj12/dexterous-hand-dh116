@@ -26863,6 +26863,31 @@
         "verified_at_utc": "2026-11-19T10:42:47.033509+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-material-cross-section-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-power-material-reach.md",
+      "readiness": "docs/contracts/dh116_teacher_power_material_reach_v1.json",
+      "cpu_tests": {
+        "passed": 14,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7e7de19449a0b7444fff4ec94964753ea38b59b9",
+        "source_tree": "158a13d3c685038d80d05d6f498f33f5b99e4c51",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T10:45:28.229641+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
