@@ -42103,6 +42103,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.tripod-recenter-and-delay-screen-cpu": {
+      "title": "Recenter bilateral Tripod and screen recorded tracking delay",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.tripod-bilateral-closure-reference-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_tripod_bilateral_closure.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_recenter_delay_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-recenter-delay.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 42,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

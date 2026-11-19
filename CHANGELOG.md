@@ -1,3 +1,7 @@
+## 2026-11-19 Bilateral Tripod recenter and tracking-delay screen
+
+Replayed two independently delayed target profiles on the original link geometry and retained the bounded candidate that clears both sampled profiles. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-recenter-delay.md).
+
 ## 2026-11-19 Power palm seating and six-joint closure audit
 
 Separated palm approach from five-digit closure and identified different remaining Power constraints for each hand. [Report](docs/superpowers/reports/2026-11-19-teacher-power-palm-five-digit.md).

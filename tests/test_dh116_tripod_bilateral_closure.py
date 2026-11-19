@@ -27,3 +27,27 @@ def test_polyline_path_cannot_certify_a_midpath_rod_violation():
     assert not proof["proved"]
     assert proof["violations"][0]["fraction"] == .5
     assert proof["violations"][0]["shape"] == "rod:finger13"
+
+
+def test_measured_recenter_endpoint_has_bounded_wrist_and_active_motion():
+    from scipy.spatial.transform import Rotation
+
+    root = np.array([0., 0., .3, 1., 0., 0., 0.])
+    q = np.full(6, .2)
+    rotation = np.roll(Rotation.from_rotvec([0., .003, 0.]).as_quat(), 1)
+    recenter = {"root": [0., 0., .3002, *rotation], "q": (.201*np.ones(6)).tolist()}
+    pose, angles = closure.recenter_endpoint(root, q, recenter)
+    np.testing.assert_allclose(pose, recenter["root"])
+    np.testing.assert_allclose(angles, recenter["q"])
+    recenter["root"][2] += .005
+    with pytest.raises(ValueError, match="bounded"):
+        closure.recenter_endpoint(root, q, recenter)
+
+
+def test_delayed_closure_checks_wrist_and_fingers_independently():
+    poses = np.array([[0., 0., height, 1., 0., 0., 0.] for height in (3., 2., 1.)])
+    joints = np.array([np.full(6, tick) for tick in (0., 1., 2.)])
+    rows = list(closure.delay_samples(poses, joints, 1, [0, 2, 0, 0, 0, 0]))
+    assert [(step, pose[2], q[1], q[2]) for step, pose, q in rows] == [
+        (4, 1., 2., 2.), (3, 1., 1., 2.), (2, 2., 0., 2.), (1, 3., 0., 1.), (0, 3., 0., 0.),
+    ]
