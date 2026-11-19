@@ -27338,6 +27338,31 @@
         "verified_at_utc": "2026-11-19T16:32:09.445712+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-v11-bound-native-reset",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v11-draft.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_v11_bound_reset_v1.json",
+      "cpu_tests": {
+        "passed": 124,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "2ff3b34f747bc43b8b1fbcaa16aa673fd4392c6c",
+        "source_tree": "4fe8759ea1711a4228be5051a741b20426e94538",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T16:41:28.482554+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
