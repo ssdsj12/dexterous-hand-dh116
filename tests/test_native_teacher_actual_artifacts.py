@@ -94,3 +94,69 @@ def test_derive_rejects_incomplete_or_reused_native_output(attempt, damage):
     assert not (output / "training_result.json").exists()
     assert set(x.name for x in output.iterdir()) & set(GENERATED) == (
         {"physics.jsonl"} if damage == "existing_view" else set())
+
+
+@pytest.mark.parametrize("damage", [None, "changed_lifecycle", "changed_checkpoint",
+                                    "detached_physical_view", "claimed_outer_exit"])
+def test_independent_read_binds_output_views_to_frozen_raw_bytes(attempt, damage):
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_artifacts import freeze_actual_fresh_artifacts
+
+    spec, output, rows, journal, lifecycle = attempt
+    derived = _derive()(spec=spec, output=output)
+    if damage == "changed_lifecycle":
+        (lifecycle / "ownership.jsonl").write_text('{"owner":"substituted"}\n')
+    elif damage == "changed_checkpoint":
+        (output / "teacher_clean.pt").write_bytes(b"changed after derived result")
+    elif damage == "detached_physical_view":
+        path = output / "physics.jsonl"
+        changed = path.read_text().replace('"sdk_step":3}', '"sdk_step":999}', 1)
+        assert changed != path.read_text()
+        path.write_text(changed)
+    elif damage == "claimed_outer_exit":
+        path = output / "shutdown_complete.json"
+        data = json.loads(path.read_text())
+        data["process_exit_verified"] = True
+        path.write_text(json.dumps(data))
+    if damage is not None:
+        with pytest.raises(ValueError, match="checkpoint|frozen|derived"):
+            freeze_actual_fresh_artifacts(spec=spec, output=output)
+        return
+    frozen = freeze_actual_fresh_artifacts(spec=spec, output=output)
+    assert frozen["result"] == derived
+    assert frozen["rows"] == rows
+    assert frozen["raw_journal"] == journal.read_bytes()
+    assert frozen["checkpoint_bytes"] == (output / "teacher_clean.pt").read_bytes()
+    assert frozen["artifact_sha256"]["ownership.jsonl"] == _sha(output / "ownership.jsonl")
+
+
+@pytest.mark.parametrize("damage", [None, "missing_seal", "different_prefix", "changed_checkpoint"])
+def test_actual_input_audit_binds_exact_journal_prefix_to_checkpoint_seal(monkeypatch, damage):
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_actual_artifacts as worker_actual
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_actual_inputs as inputs
+
+    earlier = dict(sequence=0, operation="setup", payload={})
+    prefix = (json.dumps(earlier, sort_keys=True) + "\n").encode()
+    result = {"journal_prefix_sha256": hashlib.sha256(prefix).hexdigest(), "decision_packs": 32}
+    checkpoint = {"path": "teacher_clean.pt", "sha256": "a" * 64}
+    seal = dict(sequence=1, operation="fresh_update_checkpoint_sealed",
+                payload={"clean_checkpoint": dict(checkpoint), "input_source_audit": dict(result)})
+    later = dict(sequence=2, operation="owner_lease_closed", payload={})
+    if damage == "different_prefix":
+        seal["payload"]["input_source_audit"]["journal_prefix_sha256"] = "0" * 64
+    elif damage == "changed_checkpoint":
+        seal["payload"]["clean_checkpoint"]["sha256"] = "b" * 64
+    rows = [earlier, seal, later] if damage != "missing_seal" else [earlier, later]
+    raw = b"".join((json.dumps(row, sort_keys=True) + "\n").encode() for row in rows)
+    frozen = dict(result={"clean_checkpoint": checkpoint}, rows=rows, raw_journal=raw)
+    profile = object()
+
+    def audit(data, *, backend_profile, scope, controls=32):
+        assert data == prefix and backend_profile is profile and scope == "owner_source_unqualified"
+        return result
+
+    monkeypatch.setattr(inputs, "audit_teacher_input_sources", audit)
+    if damage:
+        with pytest.raises(ValueError, match="source.*seal|checkpoint.*seal"):
+            worker_actual._audit_sealed_packs(frozen, profile)
+    else:
+        assert worker_actual._audit_sealed_packs(frozen, profile) == result

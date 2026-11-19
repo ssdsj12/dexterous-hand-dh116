@@ -72,17 +72,13 @@ def _publish(output, files):
             os.close(handle)
 
 
-def derive_actual_artifacts(*, spec, output):
-    """Write fresh pre-exit Worker evidence. The raw journal and R06 stay intact."""
+def _originals(spec, output):
     from scripts.run_dh116_work_packages import native_artifact
 
     validate_teacher_recipe_v2(spec)
     output = Path(output)
     if not output.is_dir() or output.resolve(strict=True) != output:
         raise ValueError("canonical Worker output directory required")
-    for name in (*_VIEWS, "shutdown_complete.json", "training_result.json"):
-        if os.path.lexists(output / name):
-            raise FileExistsError("derived output already exists: " + name)
     lifecycle = {}
     for name in _LIFECYCLE_FILES:
         relative = "lifecycle/" + name
@@ -92,6 +88,13 @@ def derive_actual_artifacts(*, spec, output):
             raise ValueError("regular R06 evidence required: " + relative) from error
     if not lifecycle["ownership.jsonl"] or not lifecycle["ownership.jsonl"].endswith(b"\n"):
         raise ValueError("complete R06 ownership stream required")
+    raw_name = spec["teacher_contract"]["journal_contract"]["raw_file"]
+    raw = native_artifact(output, raw_name).read_bytes()
+    checkpoint = native_artifact(output, "teacher_clean.pt").read_bytes()
+    return lifecycle, raw, checkpoint
+
+
+def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes):
     acquisition = _normal_close(lifecycle)
     physical = acquisition.get("physical")
     expected_clock = dict(start_sdk_step=2, end_sdk_step=258, start_rod_tick=0, end_rod_tick=3072)
@@ -101,12 +104,11 @@ def derive_actual_artifacts(*, spec, output):
     contract = spec["teacher_contract"]
     limits = contract["limits"]["jsonl_limits"]
     raw_name = contract["journal_contract"]["raw_file"]
-    raw = native_artifact(output, raw_name).read_bytes()
     rows = _jsonl(raw, name=raw_name, maximum=limits[raw_name])
     checkpoint = acquisition.get("clean_checkpoint")
     if type(checkpoint) is not dict:
         raise ValueError("sealed fresh checkpoint reference required in R06 acquisition")
-    checkpoint_sha = _digest(native_artifact(output, "teacher_clean.pt").read_bytes())
+    checkpoint_sha = _digest(checkpoint_bytes)
     training = ("loaded_updates", "target_updates", "updates", "accepted_minibatch_updates", "parameter_delta_l2")
     result = dict(schema=RESULT_SCHEMA, semantic_sha256=contract["semantic_sha256"],
         training={name: acquisition.get(name) for name in training},
@@ -115,7 +117,7 @@ def derive_actual_artifacts(*, spec, output):
         raw_journal_sha256=_digest(raw), lifecycle_sha256={name: _digest(data) for name, data in lifecycle.items()})
     validate_teacher_training_result(result, expected_semantic_sha256=contract["semantic_sha256"],
                                      artifact_sha256={"teacher_clean.pt": checkpoint_sha})
-    _journal(rows, result)
+    epoch = _journal(rows, result)
 
     files = {}
     for name, operation in _VIEWS.items():
@@ -130,5 +132,85 @@ def derive_actual_artifacts(*, spec, output):
         pending_simulation_callback_error=None, callback_scope="observed_R06_STOP_and_close",
         lifecycle_sha256=result["lifecycle_sha256"], qualification_granted=False))
     files["training_result.json"] = _json_line(result)
+    return files, result, rows, epoch
+
+
+def derive_actual_artifacts(*, spec, output):
+    """Write fresh pre-exit Worker evidence. The raw journal and R06 stay intact."""
+    output = Path(output)
+    for name in (*_VIEWS, "shutdown_complete.json", "training_result.json"):
+        if os.path.lexists(output / name):
+            raise FileExistsError("derived output already exists: " + name)
+    files, result, _, _ = _derived_payloads(spec, *_originals(spec, output))
     _publish(output, files)
     return result
+
+
+def freeze_actual_fresh_artifacts(*, spec, output):
+    """Read each file once and recompute the views over those immutable bytes."""
+    from scripts.run_dh116_work_packages import native_artifact
+
+    output = Path(output)
+    lifecycle, raw, checkpoint = _originals(spec, output)
+    expected, result, rows, epoch = _derived_payloads(spec, lifecycle, raw, checkpoint)
+    digests = {}
+    for name, canonical in expected.items():
+        saved = native_artifact(output, name).read_bytes()
+        if saved != canonical:
+            raise ValueError("derived artifact differs from frozen original evidence: " + name)
+        digests[name] = _digest(saved)
+    digests[spec["teacher_contract"]["journal_contract"]["raw_file"]] = result["raw_journal_sha256"]
+    digests["teacher_clean.pt"] = result["clean_checkpoint"]["sha256"]
+    return dict(result=result, rows=rows, raw_journal=raw, checkpoint_bytes=checkpoint,
+                artifact_sha256=digests, policy_epoch=epoch)
+
+
+def _audit_sealed_packs(frozen, profile):
+    from .tabletop_native_teacher_actual_inputs import SCOPE, audit_teacher_input_sources
+
+    seams = [(index, row["payload"]) for index, row in enumerate(frozen["rows"])
+             if row["operation"] == "fresh_update_checkpoint_sealed"]
+    if len(seams) != 1:
+        raise ValueError("source ledger requires exactly one checkpoint seal")
+    index, seal = seams[0]
+    checkpoint = seal.get("clean_checkpoint")
+    if (type(checkpoint) is not dict or any(checkpoint.get(key) != value
+            for key, value in frozen["result"]["clean_checkpoint"].items())):
+        raise ValueError("checkpoint differs from the original journal seal")
+    prefix = b"".join(frozen["raw_journal"].splitlines(keepends=True)[:index])
+    rebuilt = audit_teacher_input_sources(prefix, backend_profile=profile, scope=SCOPE)
+    if rebuilt != seal.get("input_source_audit"):
+        raise ValueError("source audit differs from the recorded checkpoint seal")
+    return rebuilt
+
+
+def audit_actual_fresh_outputs(spec, output, *, repository, package):
+    """Audit fresh Pinch output after the parent has observed the real exit.
+
+    Full admission also requires independent setup, cap and receipt validation.
+    The returned data can describe a complete measured window while it remains
+    ineligible for publishing a qualified native receipt.
+    """
+    from .tabletop_native_teacher_profile import BackendProfile
+    from .tabletop_native_teacher_worker_artifacts import (
+        _audit_fresh_checkpoint, _current_recipe_context, _physical_journal,
+    )
+
+    context = _current_recipe_context(spec, repository, package)
+    launch = repository.actual_launch(context["package"])
+    if launch is None or launch["role"] != "a_fresh" or launch["checkpoint_origin"] is not None:
+        raise ValueError("registered A-fresh companion required for this output audit")
+    frozen = freeze_actual_fresh_artifacts(spec=spec, output=output)
+    physical = _physical_journal(frozen["rows"], reward_scope="unqualified_source",
+                                 expected_backend_sha256=spec["teacher_contract"]["backend_sha256"])
+    if physical["physical_nodes"] != 41:
+        raise ValueError("actual Pinch Worker requires 41 measured material nodes")
+    model_input = _audit_sealed_packs(frozen, BackendProfile.load(repository.root))
+    result = frozen["result"]
+    checkpoint = _audit_fresh_checkpoint(spec, repository, context, checkpoint_bytes=frozen["checkpoint_bytes"],
+        checkpoint_binding=result["clean_checkpoint"], training=result["training"], epoch=frozen["policy_epoch"])
+    return dict(artifact_sha256=frozen["artifact_sha256"], lifecycle_sha256=result["lifecycle_sha256"],
+        teacher_training=result["training"], physical_evidence=physical, checkpoint_audit=checkpoint,
+        input_source_audit=model_input, physical_to_model_snapshot_binding_verified=True,
+        actual_setup_source_verified=False, cap_source_verified=False,
+        native_ready=False, native_qualification=False, teacher_admission=False)

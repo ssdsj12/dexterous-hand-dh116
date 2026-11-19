@@ -1323,7 +1323,8 @@ class Repository:
             return
         try:
             if actual_launch is not None:
-                raise ValueError('actual_artifacts_not_implemented')
+                from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_artifacts import audit_actual_fresh_outputs
+                artifacts = audit_actual_fresh_outputs(spec, output, repository=self, package=package)
             elif spec.get('version') == 2:
                 artifacts = validate_native_artifacts(spec, output, repository=self, package=package)
             else:
@@ -1334,8 +1335,9 @@ class Repository:
         if spec.get('version') == 2:
             result.update(artifacts)
             if result.get('native_qualification') is not True:
-                result.update(native_qualification=False, blocker_kind='failed_native',
-                              reason='missing-actual-provider-witness: physical/model snapshot binding, setup and cap source')
+                reason = ('actual_setup_and_cap_receipt_audit_pending' if actual_launch is not None
+                          else 'missing-actual-provider-witness: physical/model snapshot binding, setup and cap source')
+                result.update(native_qualification=False, blocker_kind='failed_native', reason=reason)
             return
         result.update(native_qualification=True, **artifacts)
 

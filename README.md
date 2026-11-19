@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch first-update output audit
+
+The scheduler now checks the actual fresh Worker bounds, raw input and checkpoint after observing the child exit. The CPU regression passed 220 tests. Independent setup and cap evidence still gate native receipts. [Report](docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-output-audit.md).
+
 ## 2026-11-19 Three-grasp candidate table clearance
 
 The optional wire candidate preflight checks each hand against the fixed table. Pinch passed this static check. Tripod and Power need corrected initial poses. The CPU regression passed 96 tests. [Report](docs/superpowers/reports/2026-11-19-dh116-wire-pose-table-clearance.md).

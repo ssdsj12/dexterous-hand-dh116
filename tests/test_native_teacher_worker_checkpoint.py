@@ -38,21 +38,14 @@ def binding(path):return dict(path=str(path),sha256=sha(path.read_bytes()))
 
 
 def actual_reset(tmp_path):
-    from go2_pvcnn.control.dh116 import tabletop_native_teacher_preflight as pre
-    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned,encode_owned
-    original_path=pre.EVIDENCE/('native-attempts/flex.f8-pinch-fast-evidence-native/'
-        'f0b5bc8cd80210db27052f4f96f435c7ce48a7ff23d53fd533a53fd3ed63502f/attempt-2ynpy5si/receipt.json')
-    original=json.loads(pre.checked_file(original_path,pre.ORIGINAL_RECEIPT_SHA));output=Path(original['output'])
-    reset_path,numeric_path=output/'mesh_reset_state.json',output/'mesh_reset_numeric_state.json'
-    saved=decode_owned(json.loads(reset_path.read_bytes()))['readback']['completed_reset_receipt']
-    numeric=decode_owned(json.loads(numeric_path.read_bytes()))
-    manifest=dict(schema=pre.RESET_MANIFEST_SCHEMA,style='pinch',pose_preview_only=False,
-        target_schema=pre.TARGET_SCHEMA_VERSION,target_material_ids=list(range(41)),
-        source_refs=dict(original_receipt=binding(original_path),reset_readback=binding(reset_path),numeric_reset=binding(numeric_path)),
-        reset_seed=saved['seed'],rod_state={k:numeric['samples'][1]['state'][k].tolist()
-            for k in ('positions','velocities','quaternions')},
-        mesh_bindings_sha256=pre.digest(encode_owned(saved['rod_reset']['mesh_bindings'])))
-    path=tmp_path/'resolved.json';path.write_text(json.dumps(manifest));return path
+    """Use the current independently sealed Pinch Reset as a read-only fixture source."""
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
+
+    readiness = ROOT / "docs/contracts/dh116_teacher_fresh_numeric_reset_v1.json"
+    seal = json.loads(readiness.read_bytes())["reset_seal"]
+    path = tmp_path / "resolved.json"
+    path.write_bytes(checked_file(seal["path"], seal["sha256"]))
+    return path
 
 
 def build_full_case(tmp_path,monkeypatch):
@@ -67,10 +60,7 @@ def build_full_case(tmp_path,monkeypatch):
     spec=recipe(tmp_path);root=tmp_path/'source-project';root.mkdir()
     names={*spec['source_files'],'scripts/python.sh','scripts/run_dh116_work_packages.py',
         'tests/test_native_teacher_worker_checkpoint.py',source.CONFIG}
-    # Actual backend local inventory and retained Reset replay readers; only
-    # source/assets are copied. Historical PT/data stay at their original path.
-    review=json.loads(pre.checked_file(pre.R08_REPORT,pre.R08_SHA))
-    names.update(p for p in review['replay_source_sha256'] if not Path(p).is_absolute())
+    # Historical source/Reset files remain in their original read-only locations.
     names.update(str(Path(row.path).relative_to(ROOT)) for row in profile.inventory
         if Path(row.path).is_relative_to(ROOT))
     for name in names:
@@ -432,3 +422,22 @@ def test_exact_integer_checks_preserve_legal_boolean_masks(full_case):
     assert evidence['checkpoint_audit']['counters']==dict(environment_steps=32,updates=1)
     assert evidence['checkpoint_audit']['checkpoint_sha256']==result['clean_checkpoint']['sha256']
     assert evidence['native_qualification'] is False and evidence['native_ready'] is False
+
+
+def test_fresh_physical_audit_uses_actual_reward_scope_without_changing_legacy(full_case):
+    _, out, _, _, _, _ = full_case
+    rows = [json.loads(line) for line in (out / "training_events.jsonl").read_bytes().splitlines()]
+    for record in rows:
+        if record["operation"] == "settlement":
+            for field in ("pre_endpoint", "endpoint"):
+                record["payload"]["reward"][field]["stamp"]["scope"] = "unqualified_source"
+
+    with pytest.raises(ValueError, match="reward/physical endpoint clock identity differs"):
+        artifacts._physical_journal(rows)
+    physical = artifacts._physical_journal(rows, reward_scope="unqualified_source")
+    assert physical["measured_sdk_steps"] == 256
+
+    first = next(row for row in rows if row["operation"] == "settlement")
+    first["payload"]["reward"]["pre_endpoint"]["stamp"]["scope"] = "owner_source_unqualified"
+    with pytest.raises(ValueError, match="reward/physical endpoint clock identity differs"):
+        artifacts._physical_journal(rows, reward_scope="unqualified_source")

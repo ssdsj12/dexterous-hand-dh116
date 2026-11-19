@@ -38418,17 +38418,18 @@
         "teacher.actual-fresh-update-seal-cpu",
         "teacher.actual-input-audit-cpu",
         "teacher.actual-fresh-worker-entry-cpu",
-        "teacher.actual-worker-ledgers-cpu"
+        "teacher.actual-worker-ledgers-cpu",
+        "teacher.actual-fresh-output-audit-cpu"
       ],
       "status": "blocked",
-      "reason": "Fixed A-fresh Worker and evidence serialization pass CPU regression. The independent actual artifact and outer-process audit remains pending.",
+      "reason": "A-fresh artifacts, model input and checkpoint audit pass CPU regression. Independent setup/cap evidence and qualified receipt revalidation remain pending.",
       "native_qualification": false,
       "last_result": {
-        "cpu_passed": 199,
+        "cpu_passed": 220,
         "cpu_failed": 0,
         "native_runs": 0,
         "native_ppo_updates": 0,
-        "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-worker-ledgers.md"
+        "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-output-audit.md"
       }
     },
     "teacher.actual-resume-l03-cpu": {
@@ -41306,6 +41307,27 @@
         "passed": 96,
         "failed": 0,
         "scope": "CPU candidate table screening only"
+      }
+    },
+    "teacher.actual-fresh-output-audit-cpu": {
+      "title": "Pinch 首次更新的独立产物核验",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.actual-worker-ledgers-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_artifacts.py",
+        "tests/test_native_teacher_worker_checkpoint.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_fresh_output_audit_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-output-audit.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 220,
+        "failed": 0,
+        "scope": "CPU frozen artifact, physical source scope, policy input and checkpoint verification"
       }
     }
   },

@@ -153,7 +153,7 @@ def audit_teacher_artifacts_v2(spec, output):
         checkpoint_binding=checkpoint,checkpoint_bytes=raw[checkpoint["path"]],journal_rows=journal)
 
 
-def _physical_journal(rows):
+def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None):
     """Check existing C04 payloads, never invent Reset/setup or clock values.
 
     This original action schema records the nominal SDK timestamp contract.
@@ -171,6 +171,7 @@ def _physical_journal(rows):
     from .tabletop_stereo_rod_state import _owned_tensor,VERSION as ROD_VERSION,UNITS
     groups={op:[r["payload"] for r in rows if r["operation"]==op] for op in PRIMARY_OPERATIONS}
     sequence=_Sequence(258,12)
+    checked_reward_scope = _required_native_source_scope() if reward_scope is None else reward_scope
     owner=backend=nodes=previous_action=None
     try:
         def clock(value):
@@ -181,7 +182,7 @@ def _physical_journal(rows):
             expected=dict(env_id=endpoint["env_id"],episode_uid=endpoint["episode_uid"],
                 reset_uid=str(endpoint["reset_id"]),rod_uid=endpoint["rod_uid"],
                 physics_tick=endpoint["physics_step"],solver_time_s=endpoint["solver_time_s"],
-                scope=_required_native_source_scope(),frame="world")
+                scope=checked_reward_scope,frame="world")
             if any(type(value.get(k)) is not type(v) or value[k]!=v for k,v in expected.items()):
                 raise ValueError("reward/physical endpoint clock identity differs")
         for control in range(32):
@@ -246,7 +247,8 @@ def _physical_journal(rows):
                     raise ValueError("physical endpoints must cover unique contiguous SDK3..258/rod12..3072")
                 if (snapshot["version"]!=ROD_VERSION or snapshot["units"]!=UNITS or snapshot["backend"]!="DeformX"
                         or snapshot["coordinate_frame"]!="world" or not _sha(snapshot["backend_sha256"])
-                        or backend is not None and snapshot["backend_sha256"]!=backend):
+                        or backend is not None and snapshot["backend_sha256"]!=backend
+                        or expected_backend_sha256 is not None and snapshot["backend_sha256"]!=expected_backend_sha256):
                     raise ValueError("material readback version/units/backend differs")
                 backend=snapshot["backend_sha256"]
                 positions=snapshot["node_positions"]
@@ -321,32 +323,38 @@ def _current_recipe_context(spec, repository, package):
         source_contract=worker_training_source_contract(repository,current,spec))
 
 
-def validate_teacher_artifacts_v2(spec, output, *, repository=None, package=None):
-    audit=audit_teacher_artifacts_v2(spec,output)
-    context=_current_recipe_context(spec,repository,package)
-    physical=_physical_journal(audit.pop("journal_rows"))
+def _audit_fresh_checkpoint(spec, repository, context, *, checkpoint_bytes, checkpoint_binding, training, epoch):
     with _cpu_reference(spec,repository,context) as (trainer,contract):
         from .tabletop_native_teacher_checkpoint import audit_checkpoint_bytes
         from .tabletop_deformable_r0_replay import _digest
         try:
-            metadata=audit_checkpoint_bytes(audit.pop("checkpoint_bytes"),trainer,contract,
-                expected_origin={"kind":"fresh"})
+            metadata=audit_checkpoint_bytes(checkpoint_bytes,trainer,contract,expected_origin={"kind":"fresh"})
         except RuntimeError as error:
             raise ValueError("CPU checkpoint audit rejected malformed payload: "+str(error)) from error
-        training=audit["teacher_training"];epoch=audit["policy_epoch"]
-        if (metadata["checkpoint_sha256"]!=audit["checkpoint_binding"]["sha256"]
-                or metadata["checkpoint_sha256"]!=audit["artifact_sha256"]["teacher_clean.pt"]
+        if (metadata["checkpoint_sha256"]!=checkpoint_binding["sha256"]
                 or metadata["counters"]!={"environment_steps":32,"updates":training["updates"]}
                 or metadata["policy_version"]!=epoch["policy_version"]
                 or metadata["accepted_minibatch_updates"]!=training["accepted_minibatch_updates"]
                 or metadata["policy_weights_sha256"]!=epoch["weights"]
                 or _digest(metadata["identity"]["model"])!=epoch["model"]):
             raise ValueError("checkpoint policy weights/model/counters differ from original journal and report")
-        audit["checkpoint_audit"]=metadata
-        audit.update(physical_evidence=physical,model_nodes=len(context["model_target_contract"]["target_material_ids"]),
-            model_target_schema=context["model_target_contract"]["target_schema"],
-            physical_to_model_snapshot_binding_verified=False,actual_setup_source_verified=False,
-            cap_source_verified=False,native_ready=False,native_qualification=False)
+        return metadata
+
+
+def validate_teacher_artifacts_v2(spec, output, *, repository=None, package=None):
+    audit=audit_teacher_artifacts_v2(spec,output)
+    context=_current_recipe_context(spec,repository,package)
+    physical=_physical_journal(audit.pop("journal_rows"))
+    metadata=_audit_fresh_checkpoint(spec,repository,context,checkpoint_bytes=audit.pop("checkpoint_bytes"),
+        checkpoint_binding=audit["checkpoint_binding"], training=audit["teacher_training"],
+        epoch=audit["policy_epoch"])
+    if metadata["checkpoint_sha256"]!=audit["artifact_sha256"]["teacher_clean.pt"]:
+        raise ValueError("checkpoint bytes differ from the frozen artifact inventory")
+    audit["checkpoint_audit"]=metadata
+    audit.update(physical_evidence=physical,model_nodes=len(context["model_target_contract"]["target_material_ids"]),
+        model_target_schema=context["model_target_contract"]["target_schema"],
+        physical_to_model_snapshot_binding_verified=False,actual_setup_source_verified=False,
+        cap_source_verified=False,native_ready=False,native_qualification=False)
     return audit
 
 
