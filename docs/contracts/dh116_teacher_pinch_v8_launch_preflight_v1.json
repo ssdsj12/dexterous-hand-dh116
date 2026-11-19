@@ -1,0 +1,48 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-v8-canonical-launch-preflight-cpu",
+  "branch": "11-17",
+  "review_baseline": "a5e350f4fdd8cd7a9eaa131f444244bc38f55cb3",
+  "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v8-launch-preflight.md",
+  "cpu": {
+    "passed": 4,
+    "failed": 0,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_native_teacher_actual_launch_process.py",
+      "-k",
+      "real_cpu_direct_and_original_gdb or interpreter_flags or process_identity_is_kernel"
+    ],
+    "log_sha256": "7fc7249bb67f4e75d42d41758129e1ef4cdff71494f6a1aedb99b0288dd7614a",
+    "red_sha256": "294bb0630d0dd029d739acf9b95d2ce9788cb28d7ef0392f73a76acdee7b9e52"
+  },
+  "source_sha256": {
+    "configs/dh116_execution/pinch-actual-smoke32-core-v8.json": "fc8f9562869b523fd86347b400154dee76ac8723a75b74b93486d8859be22219",
+    "configs/dh116_execution/pinch-actual-smoke32-launch-v8.json": "c3a1f41192aa5e89d6fc6419ce5e2e9d950935f763edbda0dcbc499e992cd85e"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "attempt_fingerprint": "e4f597aecbf764ebf97fd149b7fcc175f832aca79973fec4b1ab86e24219f13a",
+  "draft_sha256": "1e02a89272940f73cacfd17666c6ebe717a121d0de373f888cd5c1e08ea93f54",
+  "training_bytes_identical_to_v7": true,
+  "blocked_reason": "v8_requires_exact_new_native_approval"
+}

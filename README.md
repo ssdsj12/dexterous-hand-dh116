@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch v8 canonical launch preflight
+
+Prepared a new individually gated Pinch smoke32 after validating the exact scheduler child arguments. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v8-launch-preflight.md).
+
 ## 2026-11-19 Pinch v7 scheduler process signature
 
 Recorded the pre-Isaac v7 process-signature failure and added Linux CPU coverage for the signed worker command. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v7-native-argv.md).

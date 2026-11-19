@@ -42155,6 +42155,46 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v8": {
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v8.json",
+        "sha256": "c3a1f41192aa5e89d6fc6419ce5e2e9d950935f763edbda0dcbc499e992cd85e"
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v8.json",
+      "dependencies": [
+        "teacher.pinch-v8-canonical-launch-preflight-cpu"
+      ],
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "status": "pending",
+      "tests": [],
+      "title": "Pinch fresh PPO smoke32 with canonical scheduler parent argv",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v8-launch-preflight.md"
+    },
+    "teacher.pinch-v8-canonical-launch-preflight-cpu": {
+      "title": "Freeze Pinch v8 with the canonical scheduler launch route",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-native-scheduler-argv-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v8_launch_preflight_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v8-launch-preflight.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 4,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
