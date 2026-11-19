@@ -194,8 +194,14 @@ def main(argv=None):
                         help="screen both candidate hands against the fixed table before using the seed")
     parser.add_argument("--propose-table-repair", action="store_true",
                         help="test a separate vertical root correction and preserve its geometry evidence")
+    parser.add_argument("--joint-pregrasp-search", action="store_true",
+                        help="search a separate bounded Tripod or Power wrist/finger candidate")
     parser.add_argument("--project", type=Path, default=Path(__file__).resolve().parents[1])
     args = parser.parse_args(argv)
+    if args.joint_pregrasp_search and args.grasp == "pinch":
+        parser.error("--joint-pregrasp-search requires tripod or power")
+    if args.joint_pregrasp_search and args.propose_table_repair:
+        parser.error("select one trial algorithm")
 
     reference = args.reference.read_bytes()
     target = args.target.read_bytes()
@@ -210,9 +216,15 @@ def main(argv=None):
     if args.propose_table_repair:
         report["vertical_repair"] = propose_vertical_repair(
             seed, grasp=args.grasp, project=args.project, initial_table=report["static_table_clearance"])
+    if args.joint_pregrasp_search:
+        from scripts.solve_dh116_wire_pregrasp import search_pregrasp
+
+        report["joint_pregrasp_search"] = search_pregrasp(seed, style=args.grasp, project=args.project)
     encoded = json.dumps(report, indent=2, allow_nan=False)
     with args.output.open("x", encoding="utf-8") as handle:
         handle.write(encoded + "\n")
+    if args.joint_pregrasp_search:
+        return 0 if report["joint_pregrasp_search"]["geometry_candidate_passed"] else 2
     if args.propose_table_repair:
         return 2 if report["vertical_repair"]["status"] == "blocked" else 0
     return 0 if report.get("static_table_clearance", {}).get("passed", True) else 2

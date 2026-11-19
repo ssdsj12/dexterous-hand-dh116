@@ -1,3 +1,7 @@
+## 2026-11-19 Tripod and Power joint pregrasp search
+
+The opt-in search changes wrist pose and finger preshape under the original coupled limits. Both replayed candidates improved pad reach and remain blocked at static geometry gates. [Report](docs/superpowers/reports/2026-11-19-dh116-wire-joint-pregrasp.md).
+
 ## 2026-11-19 Pinch actual update wall budget
 
 The fresh Worker's actual wall clock samples are audited against the parent lease and frozen episode cap. The qualified receipt stage remains separate. [Report](docs/superpowers/reports/2026-11-19-dh116-teacher-actual-wall-budget.md).

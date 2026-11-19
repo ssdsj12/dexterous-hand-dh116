@@ -206,3 +206,37 @@ def test_vertical_repair_keeps_rods_and_joints_and_rejects_detached_pads(style, 
     else:
         assert repair["status"] == "unchanged" and code == 0
     assert record["native_contact_verified"] is False and record["teacher_admission"] is False
+
+
+@pytest.mark.parametrize("style,left_id,right_id,width", [
+    ("tripod", 36, 8, 4),
+    ("power", 33, 8, 6),
+])
+def test_joint_pregrasp_search_reduces_error_within_original_coupling(style, left_id, right_id, width, tmp_path):
+    from pathlib import Path
+    from scripts.prepare_dh116_wire_pose_candidate import main
+
+    root = Path(__file__).resolve().parents[1]
+    metadata = json.loads((root / "docs/contracts/dh116_wire_pose_candidate_v1.json").read_bytes())
+    inputs = Path(metadata["evidence"]["directory"])
+    output = tmp_path / f"{style}-joint.json"
+    code = main(["--reference", str(inputs / f"{style}-reference.json"),
+                 "--target", str(inputs / f"{style}-wire.json"), "--output", str(output),
+                 "--grasp", style, "--left-node", str(left_id), "--right-node", str(right_id),
+                 "--joint-pregrasp-search", "--project", str(root)])
+    data = json.loads(output.read_bytes())
+    result = data["joint_pregrasp_search"]
+    seed = result["trial_seed"]
+    assert seed_arrays(seed)[0].shape == (41, 3)
+    assert seed["nodes"] == data["seed"]["nodes"]
+    assert result["native_contact_verified"] is False and result["teacher_admission"] is False
+    for side in ("left", "right"):
+        hand = result["hands"][side]
+        assert len(hand["active_search_joints"]) == width
+        assert hand["evaluations"] <= result["max_evaluations_per_hand"]
+        assert hand["objective"] < hand["initial_objective"]
+        assert hand["table_clearance_passed"]
+        assert len(hand["pad_geometry"]) == (3 if style == "tripod" else 5)
+        assert len(hand["nonrequired_rod_lower_m"]) >= 17 - (3 if style == "tripod" else 5)
+    assert code == 2
+    assert not result["geometry_candidate_passed"]

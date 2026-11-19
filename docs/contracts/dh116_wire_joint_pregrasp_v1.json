@@ -1,0 +1,194 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.wire-joint-pregrasp-cpu",
+  "branch": "11-17",
+  "review_baseline": "e86e74bf4428dfe1c477c53125893f6114c69af1",
+  "report": "docs/superpowers/reports/2026-11-19-dh116-wire-joint-pregrasp.md",
+  "cpu": {
+    "passed": 110,
+    "failed": 0,
+    "new_cases": 2,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_wire_pose_candidate.py",
+      "tests/test_dh116_tripod_joint_root_direction.py",
+      "tests/test_dh116_power_joint_palm_direction.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_teacher_power_surface_audit.py",
+      "tests/test_teacher_seed_initialization.py"
+    ],
+    "log_sha256": "f20e6767fc933086b68c74a88b4ae4932fabed5f6022ec945aea626c3289416c",
+    "red_sha256": "c4dd86057805add86f1f4d0fabf3d8a009b8578b9c3da2843bac83174791d623"
+  },
+  "source_sha256": {
+    "scripts/prepare_dh116_wire_pose_candidate.py": "c8cc148b3d611c8398b6c1a2ca393148338831934dfccdd96fab0bb76749297a",
+    "scripts/solve_dh116_wire_pregrasp.py": "2876cd94e45ab1f91525c60db3bba951d7e7215f67c2c3050bf1c18e4fe684ae",
+    "tests/test_dh116_wire_pose_candidate.py": "bf5c9ff489a64c25f52825010e28c16a3104320af867cce328e932d40ed695c5"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "repeated_candidates": {
+    "tripod": {
+      "sha256": "59af19167312c3b82b0d1c7b8507169e9b96690fd480f57e541276c7897cc9bb",
+      "repeated_exactly": true,
+      "geometry_candidate_passed": false,
+      "hands": {
+        "left": {
+          "initial_objective": 13.96437122517471,
+          "objective": 0.1825500881186567,
+          "evaluations": 83,
+          "candidate_root_z_change_m": 0.0,
+          "minimum_table_clearance_m": 0.0034005521299923513,
+          "pad_geometry": {
+            "finger14_link": {
+              "lower_m": 0.0003246877327999839,
+              "upper_m": 0.0003847045344992272
+            },
+            "finger23_link": {
+              "lower_m": 0.0002119819325044966,
+              "upper_m": 0.00028006120510448246
+            },
+            "finger33_link": {
+              "lower_m": 0.00023470030852471648,
+              "upper_m": 0.0002880044538533944
+            }
+          },
+          "vertex_direction_dots": {
+            "finger23_link": -0.08768656389250645,
+            "finger33_link": -0.10440973856484605
+          },
+          "nonrequired_rod_clear": false,
+          "endpoint_geometry_passed": false
+        },
+        "right": {
+          "initial_objective": 59.04899445848263,
+          "objective": 0.35508542947990646,
+          "evaluations": 88,
+          "candidate_root_z_change_m": 0.009409386527556463,
+          "minimum_table_clearance_m": 0.0021000099999999855,
+          "pad_geometry": {
+            "finger14_link": {
+              "lower_m": 0.00047777252163367447,
+              "upper_m": 0.0006922552476083261
+            },
+            "finger23_link": {
+              "lower_m": 0.0003322768890809934,
+              "upper_m": 0.0004621638764975
+            },
+            "finger33_link": {
+              "lower_m": -0.0003847014146117703,
+              "upper_m": -9.018692471919723e-05
+            }
+          },
+          "vertex_direction_dots": {
+            "finger23_link": -0.2595195653990872,
+            "finger33_link": -0.8437520952951032
+          },
+          "nonrequired_rod_clear": true,
+          "endpoint_geometry_passed": false
+        }
+      }
+    },
+    "power": {
+      "sha256": "11888b65c018bde2d22ec926a8b38ccf45da4fdea0a1154717c2479567494d9c",
+      "repeated_exactly": true,
+      "geometry_candidate_passed": false,
+      "hands": {
+        "left": {
+          "initial_objective": 130.35375065304234,
+          "objective": 16.98459244418964,
+          "evaluations": 106,
+          "candidate_root_z_change_m": 0.004384546220641272,
+          "minimum_table_clearance_m": 0.0021000099999999855,
+          "pad_geometry": {
+            "finger14_link": {
+              "lower_m": 0.0004360283294178099,
+              "upper_m": 0.0005269567550849547
+            },
+            "finger23_link": {
+              "lower_m": 0.0021892270888413455,
+              "upper_m": 0.002259095975568419
+            },
+            "finger33_link": {
+              "lower_m": -0.002000841604727848,
+              "upper_m": -0.0014554887695940402
+            },
+            "finger43_link": {
+              "lower_m": 0.0001922924650732052,
+              "upper_m": 0.0002181546137733226
+            },
+            "finger53_link": {
+              "lower_m": 0.0033324661724337466,
+              "upper_m": 0.003361904045571584
+            }
+          },
+          "vertex_direction_dots": {
+            "finger23_link": -0.03439977102605955,
+            "finger33_link": -0.6167323046475347,
+            "finger43_link": -0.5715135367544487,
+            "finger53_link": 0.013715141844148838
+          },
+          "nonrequired_rod_clear": true,
+          "endpoint_geometry_passed": false
+        },
+        "right": {
+          "initial_objective": 896.8979143115538,
+          "objective": 18.622594398202573,
+          "evaluations": 93,
+          "candidate_root_z_change_m": 0.0003120890845573765,
+          "minimum_table_clearance_m": 0.0021000099999999855,
+          "pad_geometry": {
+            "finger14_link": {
+              "lower_m": 0.0036998774218365903,
+              "upper_m": 0.003830565672925637
+            },
+            "finger23_link": {
+              "lower_m": 0.0003835154418774308,
+              "upper_m": 0.00044443750456715233
+            },
+            "finger33_link": {
+              "lower_m": 0.0017811359004165702,
+              "upper_m": 0.0019017797271333673
+            },
+            "finger43_link": {
+              "lower_m": 5.5162216263288884e-05,
+              "upper_m": 7.591563899666973e-05
+            },
+            "finger53_link": {
+              "lower_m": 0.0017910530578028945,
+              "upper_m": 0.0018943753058496052
+            }
+          },
+          "vertex_direction_dots": {
+            "finger23_link": 0.08690348293548258,
+            "finger33_link": -0.5325108273189115,
+            "finger43_link": -0.43596485593868034,
+            "finger53_link": -0.3425019362839085
+          },
+          "nonrequired_rod_clear": true,
+          "endpoint_geometry_passed": false
+        }
+      }
+    }
+  },
+  "targeted_final_sha256": "ce4ef86bb1d9d2a0132ec7c5acc3a61c0465803a9fbae03cbd382fb94200ae58"
+}
