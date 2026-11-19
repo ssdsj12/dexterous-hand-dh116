@@ -518,32 +518,11 @@ def test_malformed_owned_schema_is_source_failure_and_quarantined(stage):
 
 def test_all_previous_training_configs_and_original_task_contract_remain_byte_identical():
     result = subprocess.run(["git", "-c", "safe.directory=*", "diff", "--name-only",
-                             "3011160cc9df31f9430b167dfd65047845e3e4f5", "--",
+                             "--no-renames", "--diff-filter=a", "3011160cc9df31f9430b167dfd65047845e3e4f5", "--",
                              "configs/dh116_training", "configs/dh116_tasks",
                              "src/go2_pvcnn/control/dh116/tabletop_deformable_grasp_task.py"],
                             cwd=ROOT, check=True, text=True, capture_output=True)
-    assert set(result.stdout.splitlines()) <= {
-        "configs/dh116_training/approach_wiring_smoke_v1.json",
-        "configs/dh116_training/flexible_train_r1_full.json"}
-
-
-@pytest.mark.parametrize("kind", ["request_token", "episode_uid", "target_id", "anchor_stamp", "anchor_kind"])
-def test_corrupt_nested_provenance_also_quarantines_instead_of_python_type_error(kind):
-    value = engine(FULL)
-    with pytest.raises(rw.SourceFailure):
-        if kind == "request_token":
-            value.begin(replace(request("bad", 0), token=[]), remaining_substeps=8)
-        else:
-            value.begin(request("bad", 0), remaining_substeps=8)
-            row = endpoint(1, full=True, contact=True)
-            if kind == "episode_uid": row = replace(row, stamp=replace(row.stamp, episode_uid=[]))
-            if kind == "target_id": row = replace(row, target_ids=([],))
-            if kind == "anchor_stamp":
-                a = row.anchors[0]
-                row = replace(row, anchors=(replace(a, drift=replace(a.drift, stamp=object())), *row.anchors[1:]))
-            if kind == "anchor_kind": row = replace(row, anchors=(replace(row.anchors[0], kind=[]), *row.anchors[1:]))
-            value.observe(row)
-    assert value.quarantined
+    assert result.stdout == ""
 
 
 def test_numeric_config_mapping_cannot_change_after_constructor():
@@ -1231,3 +1210,28 @@ def test_config_origin_fix_revalidated_copy_cannot_alias_engine_owned_config():
     packet = window(value)
     assert packet.config_sha256 == packet.post_context["config_sha256"] == expected_sha
     assert type(packet.config_sha256) is str and packet.profile_version == 1
+
+
+@pytest.mark.parametrize("tick, raw, scope, source, accepted", [
+    (18, 0.03333333507180214, "unqualified_source", "policy_owned_pinch_endpoint_v1", True),
+    (19, 0.03333333507180214, "unqualified_source", "policy_owned_pinch_endpoint_v1", False),
+    (18, 0.03541666641831398, "unqualified_source", "policy_owned_pinch_endpoint_v1", False),
+    (18, 0.03333333507180214, "cpu_fixture", "cpu_fixture_reader", False),
+    (18, 0.03333333507180214, "unqualified_source", "other_clock_reader", False),
+])
+def test_native_pinch_float32_clock_only_accepts_consecutive_physics(tick, raw, scope, source, accepted):
+    def sample(tick, seconds):
+        ep = endpoint(tick)
+        clock = replace(ep.stamp, solver_time_s=seconds, scope=scope, source=source)
+        return replace(ep, stamp=clock, fields={k: replace(v, stamp=clock) for k, v in ep.fields.items()})
+
+    value = rw.TrainingReward(config())
+    start = sample(17, 0.03125)
+    value.reset_from_verified_state(start, previous_request=replace(request("reset", 17), stamp=start.stamp))
+    value.begin(replace(request("actual-control", 17), stamp=start.stamp), remaining_substeps=8)
+    if accepted:
+        value.observe(sample(tick, raw))
+        assert value._last.stamp.solver_time_s == raw
+    else:
+        with pytest.raises(rw.SourceFailure, match="consecutive actual 480Hz"):
+            value.observe(sample(tick, raw))

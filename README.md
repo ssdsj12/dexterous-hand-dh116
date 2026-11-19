@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch native solver clock validation
+
+Pinch v5 issued real policy commands. The smoke reward now recognizes verified binary32 clock rounding while retaining the observed stamps and exact tick/episode checks. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-native-binary32-clock.md).
+
 ## 2026-11-19 Pinch Teacher source validation latency
 
 The verified source closure scan now probes each candidate once per transaction and binds the companion without rescanning; the v4 wall-cap failure is preserved. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-launch-source-scan.md).

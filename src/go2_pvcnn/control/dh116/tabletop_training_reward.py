@@ -10,6 +10,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import struct
 from types import MappingProxyType
 from typing import Mapping
 
@@ -40,6 +41,29 @@ def _finite(value):
         return math.isfinite(value)
     except OverflowError:
         return False
+
+
+def _solver_interval_matches(previous, current, *, pinch_smoke):
+    step = 1 / PHYSICS_HZ
+    interval = current.solver_time_s - previous.solver_time_s
+    if math.isclose(interval, step, rel_tol=0., abs_tol=1e-9):
+        return True
+    if not (pinch_smoke and current.scope == "unqualified_source"
+            and current.source == "policy_owned_pinch_endpoint_v1"):
+        return False
+    times = (previous.solver_time_s, current.solver_time_s)
+    # The native RopeBatch getter returns binary32 seconds. Keep these
+    # exact observations in the reward stamp and bound only their rounding.
+    if any(not 0. <= value <= float.fromhex("0x1.fffffep+127") for value in times):
+        return False
+    rounded = [struct.unpack(">f", struct.pack(">f", value))[0] for value in times]
+    if tuple(rounded) != times:
+        return False
+    step32 = struct.unpack(">f", struct.pack(">f", step))[0]
+    ulps = [max(2. ** -149, math.ldexp(1., math.frexp(value)[1] - 24))
+           if value else 2. ** -149 for value in times]
+    error_bound = min(1e-6, .5 * sum(ulps) + abs(step32 - step))
+    return math.isclose(interval, step, rel_tol=0., abs_tol=error_bound)
 
 
 def _owned_raw(value):
@@ -528,7 +552,7 @@ class TrainingReward:
                     or (row.stamp.env_id, row.stamp.reset_uid, row.stamp.rod_uid, row.stamp.source) !=
                        (prior.env_id, prior.reset_uid, prior.rod_uid, prior.source)
                     or row.stamp.physics_tick != prior.physics_tick + 1
-                    or not math.isclose(row.stamp.solver_time_s - prior.solver_time_s, 1 / PHYSICS_HZ, rel_tol=0, abs_tol=1e-9)):
+                    or not _solver_interval_matches(prior, row.stamp, pinch_smoke=self.config.profile == SMOKE)):
                 raise SourceFailure("same episode and consecutive actual 480Hz clock required")
             if row.target_ids != self._last.target_ids:
                 raise SourceFailure("episode material target IDs changed")

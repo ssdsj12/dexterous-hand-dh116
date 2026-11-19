@@ -41808,7 +41808,7 @@
     },
     "teacher.pinch-ppo-fresh-smoke32-v5": {
       "title": "Pinch fresh PPO smoke32 after import-closure validation speedup",
-      "status": "pending",
+      "status": "blocked",
       "executor": "native_bounded",
       "dependencies": [],
       "requires_approval": true,
@@ -41824,7 +41824,65 @@
         "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v5.json",
         "sha256": "1fd779b3cd3e4c1656b95d38f19c958d8358309e85470529e053067a55e27374"
       },
-      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-launch-source-scan.md"
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-launch-source-scan.md",
+      "blocker_kind": "failed_native",
+      "reason": "Second physical window quarantined by source binary32 seconds precision",
+      "last_result": {
+        "attempt_fingerprint": "04e3748b48c7215113b3628d87411e7f7b07df1279ec5cf7a41a7ac489ab3d47",
+        "result_sha256": "b2f42bdc48693c16ebeda5d40c0df3239413f2c7a2ee6e5fa3107c51d69f8f42",
+        "outer_exit_code": 1,
+        "native_execution_performed": true,
+        "isaac_started": true,
+        "setup_sdk_steps": 2,
+        "measured_sdk_steps": 16,
+        "ppo_updates": 0,
+        "native_qualification": false
+      }
+    },
+    "teacher.pinch-native-binary32-clock": {
+      "title": "Validate binary32 Pinch solver time without changing the physical clock",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-launch-source-scan-latency"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_reward.py",
+        "tests/test_native_teacher_actual_artifacts.py",
+        "tests/test_native_teacher_actual_update.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_native_reward_sources_v2.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_native_binary32_clock_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-binary32-clock.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 478,
+        "failed": 0,
+        "scope": "CPU only"
+      }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v6": {
+      "title": "Pinch fresh PPO smoke32 with source-specific binary32 clock validation",
+      "status": "pending",
+      "executor": "native_bounded",
+      "dependencies": [],
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v6.json",
+      "tests": [],
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v6.json",
+        "sha256": "6c38bcf48e0a3b650719e8cbf463a7dc39a8cfeaa54159ff75871b84e7c36dae"
+      },
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-binary32-clock.md"
     }
   },
   "execution_target": {
