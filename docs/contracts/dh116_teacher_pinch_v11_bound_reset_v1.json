@@ -1,0 +1,59 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-v11-bound-native-reset",
+  "branch": "11-17",
+  "review_baseline": "dc6803f621b212dea6a3a221a019560ef7c6b07f",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v11-draft.md",
+  "cpu": {
+    "passed": 124,
+    "failed": 0,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_fresh_teacher_reset_evidence.py",
+      "tests/test_dh116_paired_pinch_reset_preflight.py",
+      "tests/test_native_teacher_actual_launch_process.py",
+      "tests/test_native_teacher_actual_provider.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "bb1a211d8b206973a2c083193dbbf5583de0c938863badf13f71c8f6a975ad17",
+    "red_sha256": "915601232c6f6bd9703b01aad4cb50ed64571c8f67cb3cba972966219f2e6894"
+  },
+  "source_sha256": {
+    "configs/dh116_execution/pinch-actual-smoke32-core-v11.json": "58b96125536c9112011dbad645059a9689b6b0d89994af825db15dc03afa4f51",
+    "configs/dh116_execution/pinch-actual-smoke32-launch-v11.json": "1644db7827fc06754d6f3d9e312ac87f594769617bf2a640fa25048db6668f6f"
+  },
+  "native_runs": 1,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "native_reset": {
+    "outer_receipt_sha256": "3ba8b7d237be8cbe3d7121e449ec02b51fcdbe1af6dee17e5ef8a0f943da7eb8",
+    "manifest_sha256": "6f68015fe317ecdc28468f9483cd24361c1d894ae316bd02c3f6117ccaf73eef",
+    "frozen_fingerprint": "c3f75ffafb9d9870339356bab80c54d920ee2aa1bad940c0a7d566268490c4e0",
+    "close_mode": "normal",
+    "outer_exit_code": 0,
+    "lifetime_released_before_close": true,
+    "actual_sdk_steps": 2,
+    "actual_solver_steps": 0,
+    "actual_ppo_updates": 0,
+    "wall_seconds": 47.34328544605523
+  },
+  "v11_draft_fingerprint": "f62e1849dc0dbcbfb5a3309eb521c9f683bbeecc3a62f5491c2f5938a525edd5"
+}

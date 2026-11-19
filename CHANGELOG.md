@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch v11 native Reset and seeded PPO diagnostic preflight
+
+The new right-hand Pinch Reset passed both physical source and locked-pad readbacks and naturally exited zero. A separate seeded PPO diagnostic binds that manifest. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v11-draft.md).
+
 ## 2026-11-19 Pinch right Reset candidate and two-ledger clearance replay
 
 The new right-hand Reset candidate preserves the strict Pinch endpoints, the original rod and both measured and SDK-target replay guards across 67 retained physical samples. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v10-right-reset-candidate.md).

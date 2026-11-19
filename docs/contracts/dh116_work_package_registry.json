@@ -42555,6 +42555,47 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v11": {
+      "title": "Pinch fresh PPO smoke32 with independent CPU seeds and new right Reset",
+      "status": "pending",
+      "executor": "native_bounded",
+      "dependencies": [
+        "teacher.pinch-fresh-cpu-rng-binding-cpu",
+        "teacher.pinch-right-two-ledger-clearance-cpu"
+      ],
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v11.json",
+      "tests": [],
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v11.json",
+        "sha256": "1644db7827fc06754d6f3d9e312ac87f594769617bf2a640fa25048db6668f6f"
+      },
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v11-draft.md"
+    },
+    "teacher.pinch-v11-bound-native-reset": {
+      "title": "Seal the native Pinch Reset and freeze the first seeded PPO recipe",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-right-two-ledger-clearance-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v11_bound_reset_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v11-draft.md",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 124,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
