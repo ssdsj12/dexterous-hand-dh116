@@ -26637,6 +26637,31 @@
         "verified_at_utc": "2026-11-19T08:18:13.187361+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-fixed-preshape-sweep-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-power-fixed-preshape-sweep.md",
+      "readiness": "docs/contracts/dh116_teacher_power_approach_sweep_v1.json",
+      "cpu_tests": {
+        "passed": 53,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "80011c8269f06a3b5b1a7eaf57ad6049fbcb55cc",
+        "source_tree": "1cecbdd82b0b08057798a6c79be145430df00aab",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T08:23:50.465131+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
