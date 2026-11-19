@@ -170,3 +170,39 @@ def test_candidate_cli_checks_real_table_geometry_for_each_hand(style, left_node
         assert arm["source_sha256"]["usd"]
     assert not result["collision_qualified"] and not result["native_contact_verified"]
     assert not result["teacher_admission"]
+
+
+@pytest.mark.parametrize("style,left_id,right_id,expected", [
+    ("pinch", 39, 1, (0., 0.)),
+    ("tripod", 36, 8, (.196, 4.575)),
+    ("power", 33, 8, (6.165, 4.575)),
+])
+def test_vertical_repair_keeps_rods_and_joints_and_rejects_detached_pads(style, left_id, right_id, expected, tmp_path):
+    from pathlib import Path
+    from scripts.prepare_dh116_wire_pose_candidate import main
+
+    root = Path(__file__).resolve().parents[1]
+    config = json.loads((root / "docs/contracts/dh116_wire_pose_candidate_v1.json").read_text())
+    inputs = Path(config["evidence"]["directory"])
+    output = tmp_path / "candidate.json"
+    code = main(["--reference", str(inputs / f"{style}-reference.json"),
+                 "--target", str(inputs / f"{style}-wire.json"), "--output", str(output),
+                 "--grasp", style, "--left-node", str(left_id), "--right-node", str(right_id),
+                 "--propose-table-repair", "--project", str(root)])
+    record = json.loads(output.read_bytes())
+    repair = record["vertical_repair"]
+    baseline, trial = record["seed"], repair["trial_seed"]
+    assert trial["nodes"] == baseline["nodes"] and trial["joints"] == baseline["joints"]
+    for side, old, new, rise in zip(("left", "right"), baseline["roots"], trial["roots"], expected):
+        assert new[:2] == old[:2] and new[3:] == old[3:]
+        assert (new[2] - old[2])*1000 == pytest.approx(rise, abs=.001)
+        assert repair["table_after"]["hands"][side]["passed"]
+    if style != "pinch":
+        right = repair["hands"]["right"]["required_pad_gaps"]
+        assert right["finger23_link"]["comparison"] == "proven_farther"
+        assert right["finger33_link"]["after_m"]["upper_m"] < 0
+        assert not repair["static_repair_proven"]
+        assert code == 2
+    else:
+        assert repair["status"] == "unchanged" and code == 0
+    assert record["native_contact_verified"] is False and record["teacher_admission"] is False

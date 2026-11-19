@@ -1,3 +1,7 @@
+## 2026-11-19 Three-grasp vertical pose repair
+
+The optional world-Z repair emits isolated trial poses and checks required-pad gap bounds on the original polyline. The tested Tripod and Power trials are blocked from promotion. [Report](docs/superpowers/reports/2026-11-19-dh116-wire-vertical-repair.md).
+
 ## 2026-11-19 Pinch first-update output audit
 
 The scheduler now checks the actual fresh Worker bounds, raw input and checkpoint after observing the child exit. The CPU regression passed 220 tests. Independent setup and cap evidence still gate native receipts. [Report](docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-output-audit.md).

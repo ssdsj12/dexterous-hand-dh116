@@ -113,6 +113,73 @@ def audit_table_clearance(seed, *, project):
         live_cooked_geometry_verified=False, grasp_qualified=False)
 
 
+
+def _pad_gap_interval(hull, nodes, radius):
+    from go2_pvcnn.control.dh116.tabletop_polyline_support_certificate import (
+        NUMERIC_GUARD, RADIUS, certify,
+    )
+
+    if radius != RADIUS:
+        raise ValueError("wire radius differs from the existing support certificate")
+    # The support planes bound the distance below. The test of real hull
+    # vertices against continuous segments supplies an achievable upper bound.
+    lower = certify(hull, nodes)["segment_lower_m"]
+    edge = np.diff(nodes, axis=0)
+    offset = hull[:, None, :] - nodes[None, :-1, :]
+    t = np.clip(np.einsum("vsi,si->vs", offset, edge) / np.einsum("si,si->s", edge, edge), 0., 1.)
+    upper = float(np.linalg.norm(offset - t[:, :, None] * edge, axis=-1).min() - radius + NUMERIC_GUARD)
+    return dict(lower_m=lower, upper_m=upper)
+
+
+def propose_vertical_repair(seed, *, grasp, project, initial_table):
+    """Try only a world-Z root shift while retaining the original seed."""
+    from copy import deepcopy
+
+    from scripts.audit_dh116_pinch_initial_pose import DISTAL_PAD_LINKS, load_geometry, world_vertices
+    from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, JOINTS
+
+    nodes, joints, roots, _ = seed_arrays(seed)
+    _material_tangents(nodes)
+    active = [JOINTS.index(name) for name in ACTIVE]
+    required = DISTAL_PAD_LINKS[:{"pinch": 2, "tripod": 3, "power": 5}[grasp]]
+    trial = deepcopy(seed)
+    hands = {}
+    for i, side in enumerate(HANDS):
+        margin = initial_table["minimum_required_clearance_m"] - initial_table["hands"][side]["minimum_table_top_clearance_m"]
+        # A 10 nm computational cushion covers rounding at the existing floor.
+        rise = float(margin + 1e-8) if margin > 0. else 0.
+        trial["roots"][i][2] += rise
+        pad_checks = {}
+        if rise:
+            geometry = load_geometry(project, side=side)
+            cooked = world_vertices(geometry, roots[i], joints[i, active], cooked=True)
+            radius = geometry["old_candidate"]["rod"]["radius_m"]
+            for pad in required:
+                hull = cooked[pad]
+                before = _pad_gap_interval(hull, nodes, radius)
+                after = _pad_gap_interval(hull + [0., 0., rise], nodes, radius)
+                if after["lower_m"] > before["upper_m"]:
+                    comparison = "proven_farther"
+                elif after["upper_m"] <= before["lower_m"]:
+                    comparison = "nonworsening"
+                else:
+                    comparison = "unresolved"
+                pad_checks[pad] = dict(before_m=before, after_m=after, comparison=comparison)
+        hands[side] = dict(rise_m=rise, required_pad_gaps=pad_checks, preserve_pad_reach_proven=all(
+            check["comparison"] == "nonworsening" and check["after_m"]["lower_m"] >= 0.
+            for check in pad_checks.values()))
+    changed = any(row["rise_m"] > 0. for row in hands.values())
+    table_after = audit_table_clearance(trial, project=project) if changed else initial_table
+    passed = table_after["passed"] and all(row["preserve_pad_reach_proven"] for row in hands.values())
+    status = "static_repair_proven" if passed else "blocked"
+    if not changed and passed:
+        status = "unchanged"
+    return dict(status=status, scope="static_table_and_required_pad_geometry",
+                trial_seed=trial, table_after=table_after, hands=hands,
+                static_repair_proven=bool(changed and passed),
+                actual_contact_measurement=False, teacher_admission=False)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reference", type=Path, required=True,
@@ -125,6 +192,8 @@ def main(argv=None):
     parser.add_argument("--right-node", type=int, required=True)
     parser.add_argument("--audit-table-clearance", action="store_true",
                         help="screen both candidate hands against the fixed table before using the seed")
+    parser.add_argument("--propose-table-repair", action="store_true",
+                        help="test a separate vertical root correction and preserve its geometry evidence")
     parser.add_argument("--project", type=Path, default=Path(__file__).resolve().parents[1])
     args = parser.parse_args(argv)
 
@@ -136,11 +205,16 @@ def main(argv=None):
                   material_node_ids_by_hand=stations,
                   input_sha256=dict(reference=sha256(reference).hexdigest(), target=sha256(target).hexdigest()),
                   seed=seed, collision_qualified=False, native_contact_verified=False, teacher_admission=False)
-    if args.audit_table_clearance:
+    if args.audit_table_clearance or args.propose_table_repair:
         report["static_table_clearance"] = audit_table_clearance(seed, project=args.project)
+    if args.propose_table_repair:
+        report["vertical_repair"] = propose_vertical_repair(
+            seed, grasp=args.grasp, project=args.project, initial_table=report["static_table_clearance"])
     encoded = json.dumps(report, indent=2, allow_nan=False)
     with args.output.open("x", encoding="utf-8") as handle:
         handle.write(encoded + "\n")
+    if args.propose_table_repair:
+        return 2 if report["vertical_repair"]["status"] == "blocked" else 0
     return 0 if report.get("static_table_clearance", {}).get("passed", True) else 2
 
 
