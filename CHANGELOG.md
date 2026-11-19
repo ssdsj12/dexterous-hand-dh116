@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch clearance and contact recenter
+
+An independent same-rod CPU Reset candidate preserves the original pad and wrist gates; the native Teacher builder rejects mismatched Reset provenance. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-contact-recenter.md).
+
 ## 2026-11-19 Pinch native physical clearance diagnosis
 
 A source-bound audit identifies the first measured left finger22 clearance termination. A separate static offset screen quantifies the reset reserve before any new native recipe. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-physical-clearance.md).

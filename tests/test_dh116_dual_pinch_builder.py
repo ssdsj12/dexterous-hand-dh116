@@ -306,3 +306,13 @@ def test_fresh_pinch_handoff_defers_original_episode_reset(monkeypatch, tmp_path
         list(fresh.initial_geometry())
     assert refs["rope"]().resets == 1 and refs["rope"]().steps == 0
     drop()
+
+
+def test_fresh_pinch_refuses_reset_seed_from_another_pair_before_sdk_setup(monkeypatch):
+    m = module()
+    monkeypatch.setattr(m, "_clock", lambda sim: dict(sdk_step=0, sdk_time_s=0.))
+    monkeypatch.setattr(m, "load_pair_proposal", lambda: {"reset_seed": {"sha256": "a" * 64}})
+    with pytest.raises(ValueError, match="paired scene and Teacher Reset seed differ"):
+        m.build_fresh_owned(object(), object(), project="/tmp", prepared=None, ownership=None,
+            record=lambda row: pytest.fail("must not record or advance setup"), run_uuid="run",
+            episode_uid="episode", physics_budget_end=258, expected_reset_seed={"sha256": "b" * 64})

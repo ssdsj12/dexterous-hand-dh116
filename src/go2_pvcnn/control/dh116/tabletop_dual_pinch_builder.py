@@ -196,13 +196,14 @@ def _fresh_initial_geometry(project, prepared, sim, hands, episode, radius_m):
 
 
 def build_fresh_owned(sim, owners, *, project, prepared, ownership, record,
-                      run_uuid, episode_uid, physics_budget_end):
+                      run_uuid, episode_uid, physics_budget_end, expected_reset_seed=None):
     """Build the single Pinch scene, deferring the episode Reset to Teacher."""
     try:
         return _build_owned(
             sim, owners, project=project, prepared=prepared, ownership=ownership, record=record,
             run_uuid=run_uuid, episode_uid=episode_uid, physics_budget_end=physics_budget_end,
-            owner_resets=None, damping_override=None, defer_episode_reset=True)
+            owner_resets=None, damping_override=None, defer_episode_reset=True,
+            expected_reset_seed=expected_reset_seed)
     finally:
         sim = owners = prepared = ownership = record = None
 
@@ -226,7 +227,7 @@ def build_reset_owned(sim,owners,*,project,prepared,ownership,record,owner_reset
 
 
 def _build_owned(sim, owners, *, project, prepared, ownership, record, run_uuid, episode_uid,
-                 physics_budget_end, owner_resets, damping_override, defer_episode_reset):
+                 physics_budget_end, owner_resets, damping_override, defer_episode_reset, expected_reset_seed=None):
     scene=hands=hand=view=base=rod=episode=bindings=mount=composers=None
     inspect=read_clock=backend=grids=members=value=geometry=initial_geometry=None
     try:
@@ -239,6 +240,8 @@ def _build_owned(sim, owners, *, project, prepared, ownership, record, run_uuid,
                 or type(physics_budget_end) is not int or physics_budget_end<10):
             raise ValueError("explicit identity, recorder and future interval budget required")
         packet=load_pair_proposal()
+        if expected_reset_seed is not None and packet["reset_seed"] != expected_reset_seed:
+            raise ValueError("paired scene and Teacher Reset seed differ")
         project=Path(project).resolve()
         from . import tabletop_dual_hand_scene_preparation as scene_api
         from .tabletop_deformable_grasp_runtime import FreeRodRuntime,load_candidate

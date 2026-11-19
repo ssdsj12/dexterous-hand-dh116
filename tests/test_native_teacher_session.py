@@ -342,6 +342,7 @@ def test_fresh_pinch_factory_hands_one_journal_and_profile_to_original_owner(mon
     def build(sim, owners, **kwargs):
         assert sim is owners is marker
         assert kwargs["physics_budget_end"] == 258
+        assert kwargs["expected_reset_seed"] is contract.reset_seed
         if derive_mesh:
             assert kwargs["prepared"] is prepared
             assert builder.BACKEND == Path(profile_value.binary_path)

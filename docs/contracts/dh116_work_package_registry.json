@@ -41919,6 +41919,28 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-contact-recenter-cpu": {
+      "title": "Paired Pinch spare clearance with contact recenter and native seed provenance",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-physical-clearance-audit"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_paired_pinch_reset_preflight.py",
+        "tests/test_dh116_dual_pinch_builder.py",
+        "tests/test_native_teacher_session.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_contact_recenter_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-contact-recenter.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 5,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
