@@ -26762,6 +26762,31 @@
         "verified_at_utc": "2026-11-19T09:54:47.125477+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-material-roll-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-material-roll.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_material_roll_v1.json",
+      "cpu_tests": {
+        "passed": 40,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "56b6a9da43b1f1e37f1a6498f8ad962f93666ead",
+        "source_tree": "a427b8e481a4922853e82328f13be94be772b7e4",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T09:59:42.645078+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
