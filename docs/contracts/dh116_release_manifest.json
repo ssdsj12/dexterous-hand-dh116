@@ -26160,6 +26160,32 @@
         "verified_at_utc": "2026-11-19T03:21:17.691730+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.actual-fresh-worker-entry-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-bounded-worker.md",
+      "readiness": "docs/contracts/dh116_teacher_bounded_worker_v1.json",
+      "cpu_tests": {
+        "passed": 149,
+        "failed": 0,
+        "publication_regression_passed": 69
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0402d21a99ec7818366f4a4f9d35710bb34f4105",
+        "source_tree": "280387babcd1b0fb6af3d8d7a7d604880caf95ff",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T03:50:25.400504+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
