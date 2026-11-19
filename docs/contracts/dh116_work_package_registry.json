@@ -38416,18 +38416,18 @@
         "teacher.actual-launch-l01-cpu",
         "teacher.actual-fresh-pinch-scene-cpu",
         "teacher.actual-fresh-update-seal-cpu",
-        "teacher.actual-input-audit-cpu"
+        "teacher.actual-input-audit-cpu",
+        "teacher.actual-fresh-worker-entry-cpu"
       ],
       "status": "blocked",
-      "reason": "Pinch fresh scene, C04 owner factory and pre-reset bootstrap input ledger pass CPU tests. Actual provider, raw41/model binding, A update and artifact closure require implementation and native verification.",
+      "reason": "Fixed A-fresh worker and raw-input composition pass CPU regression. Scheduler artifact serialization and independent audit are pending.",
       "native_qualification": false,
       "last_result": {
-        "cpu_passed": 129,
-        "registry_cpu_passed": 55,
+        "cpu_passed": 149,
         "cpu_failed": 0,
         "native_runs": 0,
         "native_ppo_updates": 0,
-        "report": "docs/superpowers/reports/2026-11-18-teacher-ppo-bootstrap-source.md"
+        "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-bounded-worker.md"
       }
     },
     "teacher.actual-resume-l03-cpu": {
@@ -41245,6 +41245,26 @@
         "passed": 231,
         "failed": 0,
         "scope": "CPU original source audit, PPO checkpoint gate and parent deadline. Actual native worker pending."
+      }
+    },
+    "teacher.actual-fresh-worker-entry-cpu": {
+      "title": "Pinch Teacher 有界 Worker 固定入口",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.actual-input-audit-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_provider.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_bounded_worker_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-bounded-worker.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 149,
+        "failed": 0,
+        "scope": "CPU worker/lifecycle and style regression with zero native updates"
       }
     }
   },
