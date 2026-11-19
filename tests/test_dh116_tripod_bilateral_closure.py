@@ -51,3 +51,24 @@ def test_delayed_closure_checks_wrist_and_fingers_independently():
     assert [(step, pose[2], q[1], q[2]) for step, pose, q in rows] == [
         (4, 1., 2., 2.), (3, 1., 1., 2.), (2, 2., 0., 2.), (1, 3., 0., 1.), (0, 3., 0., 0.),
     ]
+
+
+def test_tripod_delay_corners_find_a_mixed_failure_hidden_by_two_legacy_cases():
+    poses = np.array([[0., 0., height, 1., 0., 0., 0.] for height in (2., 1., 0.)])
+    joints = np.zeros((3, 6))
+    joints[:, 1:4] = np.arange(3.)[:, None]
+    ticks = {name: {"screening_upper_ticks": 1} for name in (*closure.ACTIVE, "wrist_z")}
+
+    def clearance(pose, q):
+        failed = pose[2] == 0. and q[1] == 1. and q[2] == q[3] == 2.
+        return {"rod:source:finger13_link": -.00001 if failed else .0001}
+
+    assert all(row["violation"] is None for row in closure.screen_delays(poses, joints, ticks, clearance))
+    cases = closure.screen_delays(poses, joints, ticks, clearance, corners=True)
+    assert len(cases) == 16
+    assert len({(row["wrist_delay_ticks"], tuple(row["joint_delays_ticks"])) for row in cases}) == 16
+    failed = [row for row in cases if row["violation"]]
+    assert len(failed) == 1
+    assert failed[0]["joint_delays_ticks"] == [0, 1, 0, 0, 0, 0]
+    assert failed[0]["violation"]["sdk_reference_tick"] == 2
+    assert failed[0]["violation"]["shape"] == "rod:source:finger13_link"

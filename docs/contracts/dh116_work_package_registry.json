@@ -42215,6 +42215,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.tripod-recorded-delay-corners-cpu": {
+      "title": "Check all sampled mixed recorded delay corners on both Tripod hands",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.tripod-recenter-and-delay-screen-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_tripod_bilateral_closure.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_delay_corners_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-delay-corners.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 43,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

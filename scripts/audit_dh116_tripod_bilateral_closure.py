@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check a two-hand Tripod reference trajectory on its original material polyline."""
 import argparse
+from itertools import product
 import json
 from pathlib import Path
 
@@ -55,7 +56,7 @@ def delay_samples(poses, angles, wrist_ticks, joint_ticks):
         yield tick, pose, active
 
 
-def screen_delays(positions, angles, ticks, query):
+def screen_delays(positions, angles, ticks, query, *, corners=False):
     moving = np.any(angles != angles[0], axis=0)
     if np.any(moving & np.array([ticks[name] is None for name in ACTIVE])) or ticks["wrist_z"] is None:
         raise ValueError("observed delays required for each changing Tripod target")
@@ -63,24 +64,42 @@ def screen_delays(positions, angles, ticks, query):
              for index, name in enumerate(ACTIVE)]
     zero = [0] * len(ACTIVE)
     wrist = ticks["wrist_z"]["screening_upper_ticks"]
+    scenarios = [("wrist_lags", wrist, zero), ("fingers_lag", 0, joint)]
+    if corners:
+        domains = [(0, value) if value else (0,) for value in (wrist, *joint)]
+        scenarios = [(f"delay_corner_{index:02d}", w, list(q)) for index, (w, *q) in
+                     enumerate(product(*domains))]
+        # Try mixed cases first while still retaining a result for every corner.
+        scenarios.sort(key=lambda item: item[1:] in ((0, zero), (wrist, zero), (0, joint), (wrist, joint)))
     cases = []
-    for name, delay, finger_delay in (("wrist_lags", wrist, zero), ("fingers_lag", 0, joint)):
+    cache = {}
+    for name, delay, finger_delay in scenarios:
         failure = None
+        minimum = None
         samples = 0
         for tick, pose, q in delay_samples(positions, angles, delay, finger_delay):
             samples += 1
-            margins = {key: value - (CLEARANCE_M if key.startswith("table:") else 0.)
-                       for key, value in query(pose, q).items()}
-            shape = min(margins, key=margins.get)
-            if margins[shape] <= 0.:
-                failure = dict(sdk_reference_tick=tick, shape=shape, margin_m=margins[shape])
+            key = (pose.tobytes(), q.tobytes())
+            if key not in cache:
+                margins = {shape: value - (CLEARANCE_M if shape.startswith("table:") else 0.)
+                           for shape, value in query(pose, q).items()}
+                limiting = min(margins, key=margins.get)
+                cache[key] = (limiting, margins[limiting])
+            shape, margin = cache[key]
+            if minimum is None or margin < minimum["margin_m"]:
+                minimum = dict(sdk_reference_tick=tick, shape=shape, margin_m=margin)
+            if margin <= 0.:
+                failure = dict(sdk_reference_tick=tick, shape=shape, margin_m=margin)
                 break
-        cases.append(dict(scenario=name, wrist_delay_ticks=delay, joint_delays_ticks=finger_delay,
-                          sampled=samples, violation=failure))
+        result = dict(scenario=name, wrist_delay_ticks=delay, joint_delays_ticks=finger_delay,
+                      sampled=samples, violation=failure)
+        if corners:
+            result["minimum_sampled_margin"] = minimum
+        cases.append(result)
     return cases
 
 
-def audit_reference(artifact, project, *, recenter=None, delay_evidence=None):
+def audit_reference(artifact, project, *, recenter=None, delay_evidence=None, delay_corners=False):
     seed = artifact["trial_seed"]
     nodes, joints, roots, _ = seed_arrays(seed)
     ids = [JOINTS.index(key) for key in ACTIVE]
@@ -164,11 +183,17 @@ def audit_reference(artifact, project, *, recenter=None, delay_evidence=None):
                            executed_target_end_pose_wxyz=positions[-1].tolist(),
                            executed_target_end_q_rad=angles[-1].tolist())
         if delay_evidence is not None:
+            cases = screen_delays(positions, angles, delay_evidence, query_geometry, corners=delay_corners)
             hands[side]["delay_screen"] = dict(
                 delay_source="historical_left_tripod", transferred_to_right=(side == "right"),
                 continuous_delay_box_proved=False,
-                cases=screen_delays(positions, angles, delay_evidence, query_geometry),
+                cases=cases,
             )
+            if delay_corners:
+                hands[side]["delay_screen"].update(
+                    sampled_delay_corner_count=len(cases),
+                    sampled_delay_corners_passed=all(case["violation"] is None for case in cases),
+                )
     passed = all(item["proof"]["proved"] and item["projection_changes"] == 0
                  and item["side_plane_clearance_m"] > 0.
                  and item["terminal"]["geometric_approach_passed"]
@@ -184,7 +209,9 @@ def main():
     parser.add_argument("--endpoint-sha256", required=True)
     parser.add_argument("--recenter", type=Path)
     parser.add_argument("--recenter-sha256")
-    parser.add_argument("--screen-recorded-delays", action="store_true")
+    delay_mode = parser.add_mutually_exclusive_group()
+    delay_mode.add_argument("--screen-recorded-delays", action="store_true")
+    delay_mode.add_argument("--screen-delay-corners", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     artifact = checked_json(args.endpoint, args.endpoint_sha256)
@@ -197,11 +224,11 @@ def main():
             raise ValueError("recenter was derived from a different pair")
         recenter = bound["hands"]
     delay_evidence = None
-    if args.screen_recorded_delays:
+    if args.screen_recorded_delays or args.screen_delay_corners:
         from scripts.prepare_dh116_tripod_fixed_orientation import recorded_lags
         delay_evidence = recorded_lags()
     result = audit_reference(artifact, Path(__file__).resolve().parents[1], recenter=recenter,
-                             delay_evidence=delay_evidence)
+                             delay_evidence=delay_evidence, delay_corners=args.screen_delay_corners)
     if recenter is not None:
         result["recenter_sha256"] = args.recenter_sha256
     result["input_sha256"] = args.endpoint_sha256

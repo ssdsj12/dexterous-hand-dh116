@@ -1,3 +1,7 @@
+## 2026-11-19 Tripod mixed delay corner audit
+
+Ran all 16 discrete wrist-and-finger delay corners per hand and recorded their exact limiting colliders. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-delay-corners.md).
+
 ## 2026-11-19 Power seated station and wrist rotation audit
 
 Found two support-clear left palm stations and tested two independent right wrist axes about a fixed palm witness. [Report](docs/superpowers/reports/2026-11-19-teacher-power-seated-pockets.md).

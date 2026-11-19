@@ -1,0 +1,56 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.tripod-recorded-delay-corners-cpu",
+  "branch": "11-17",
+  "review_baseline": "a5e350f4fdd8cd7a9eaa131f444244bc38f55cb3",
+  "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-delay-corners.md",
+  "cpu": {
+    "passed": 43,
+    "failed": 0,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_tripod_bilateral_closure.py",
+      "tests/test_tripod_sdk_path.py",
+      "tests/test_tripod_tracking_envelope.py",
+      "tests/test_dh116_tripod_joint_root_direction.py"
+    ],
+    "log_sha256": "ddfee08ca6409022cb0f3b2bc1eeec080727ed6fe7d21a9eec01ce3cc9d221ad",
+    "red_sha256": "148a03bda10bc286c55c675d7617c93f570f97d57c4fabd829c69e05772f31fe"
+  },
+  "source_sha256": {
+    "scripts/audit_dh116_tripod_bilateral_closure.py": "73e7f0ba074fbf7eda5e1c25d0fbf5e112f1e60e23a5374dd18b8b1d402b8b08",
+    "tests/test_dh116_tripod_bilateral_closure.py": "234a53aeb562e6e765ee174c019f278f7abe5bb08280bcb9218b290efdb5ea8f"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "experiment_sha256": "d9c90067555f321312225d51ef1d15196d804f1a1e398ef9a1f81c1382c63fda",
+  "right_delay_transferred": true,
+  "delay_corners_per_side": 16,
+  "sampled_tick_checks_per_side": 2776,
+  "failures": 0,
+  "minimum_sampled_margin_m": {
+    "left": 7.3063689290295795e-06,
+    "right": 1.1040916028610357e-05
+  },
+  "continuous_delay_box_proved": false,
+  "blocked_reason": "fractional_delay_tracking_and_bilateral_contact_reaction_unqualified"
+}
