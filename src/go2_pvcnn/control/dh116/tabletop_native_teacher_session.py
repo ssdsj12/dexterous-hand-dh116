@@ -180,11 +180,14 @@ def build_fresh_pinch_owner(contract, *, sim, owners, prepared, ownership, ledge
                     prepared = prepare_scene(contract.config.project)
                 scene_scope = bindings((builder, "BACKEND", Path(profile.binary_path)),
                                        (builder, "BACKEND_SHA", profile.binary_sha256))
+            manifest = contract.reset_manifest
+            pair_proposal = manifest.data().get("pair_proposal") if manifest is not None else None
             with scene_scope:
                 fresh = builder.build_fresh_owned(
                     sim, owners, project=contract.config.project, prepared=prepared, ownership=ownership,
                     record=record_setup, run_uuid=run_uuid, episode_uid=episode_uid,
-                    physics_budget_end=contract.budget["max_sdk_steps"], expected_reset_seed=contract.reset_seed)
+                    physics_budget_end=contract.budget["max_sdk_steps"], expected_reset_seed=contract.reset_seed,
+                    pair_proposal=pair_proposal)
             if mesh_plan is None:
                 sdf = sys.modules.get("ropesim.sdf")
                 if sdf is None:

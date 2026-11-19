@@ -146,6 +146,26 @@ def load_reset_manifest(config, *, project=ROOT):
         seed = value["reset_seed"]
         from .tabletop_dual_hand_reset import _seed
         _seed(seed)
+        proposal = value.get("pair_proposal")
+        if proposal != original.get("pair_proposal"):
+            raise ValueError("resolved Reset and original receipt paired proposal differ")
+        if not retained and config["style"] == "pinch" and proposal is None:
+            from .tabletop_dual_pinch_builder import SEED_SHA
+
+            if seed["sha256"] != SEED_SHA:
+                raise ValueError("fresh Pinch requires an explicit paired proposal for a new seed")
+        if proposal is not None:
+            from .tabletop_dual_pinch_builder import load_bound_pair_proposal
+
+            if retained or config["style"] != "pinch":
+                raise ValueError("independent Pinch Reset required for a new paired proposal")
+            out = Path(original["output"])
+            plan = json.loads(checked_file(out / "frozen_plan.json", original["plan_sha256"]))
+            capture = json.loads(checked_file(out / "reset_capture.json",
+                                              original["artifact_sha256"]["reset_capture.json"]))
+            if (plan.get("pair_proposal") != proposal or capture.get("pair_proposal") != proposal
+                    or load_bound_pair_proposal(proposal)["reset_seed"] != seed):
+                raise ValueError("native plan, acquisition and paired Reset seed provenance differ")
         for name, shape in (("positions", (1, 41, 3)), ("velocities", (1, 41, 3)),
                             ("quaternions", (1, 41, 4))):
             array = np.asarray(value["rod_state"][name])

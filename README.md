@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch recentered native Reset and PPO draft
+
+The recentered Pinch pair sealed after a natural-exit native Reset; a separately frozen smoke32 proposal uses that exact manifest. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-bound-native-reset.md).
+
 ## 2026-11-19 Power independent wrist and finger screening
 
 Opt-in Power screening separates the palm and digit roles and records real convex endpoint clearance, with no promotion from static evidence. [Report](docs/superpowers/reports/2026-11-19-teacher-power-independent-closure.md).

@@ -1,0 +1,61 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-recenter-bound-reset",
+  "branch": "11-17",
+  "review_baseline": "85546558ab867e9bc9f5a5859d07484a76d83175",
+  "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-bound-native-reset.md",
+  "cpu": {
+    "passed": 133,
+    "failed": 0,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_fresh_teacher_reset_evidence.py",
+      "tests/test_native_teacher_actual_launch.py",
+      "tests/test_native_teacher_actual_launch_process.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "e8e37098901b05ac104e286a255860f97fa7213f7c796422319668c7a612463f",
+    "red_sha256": "335b70b0e6469d75335305609e4b3e4f3330a3af43f62b9cbad8de21805aa44f"
+  },
+  "source_sha256": {
+    "scripts/record_dh116_teacher_numeric_reset.py": "d644f4b7652c37350324c57e936e65977239bed4ff7338502445b08a16df9411",
+    "src/go2_pvcnn/control/dh116/tabletop_dual_pinch_builder.py": "1d70a5bd526d973c3792722288de4eaf85ecf2766fe2c242dfdddf441d75f602",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_preflight.py": "8b416dcd08f52ef2ab2022bc69a24fc7671a306ef6d431a0fc0034616dfbd01e",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_session.py": "49214edb1b245801da27ddf645bc8667aa68b9e5f5d721fcca55806f4cba3593",
+    "tests/test_fresh_teacher_reset_evidence.py": "d8a373134e74216a0e98f2b99eae744f57183375700f62b50f5f842832d9a512"
+  },
+  "native_runs": 1,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "native_reset_passed": true,
+  "reset_capture_sdk_steps": 2,
+  "reset_qualification_only": true,
+  "native_reset_manifest_sha256": "ea45be098f8ab92be6ac0d8ac62063d8189aa56790c866d19bb798a9cd0c12bc",
+  "native_outer_exit": 0,
+  "native_outer_receipt_sha256": "63ec28aa67e5be512072a2a838b130bed5899f37ad8cd11ad37b5c648d402ddd",
+  "ppo_draft_attempt_sha256": "380a08af61036143ae4d39784a31e1a140aaef1bb4408994cb69584d0cf1ca9f",
+  "historical_regression": {
+    "passed": 67,
+    "failed": 1,
+    "setup_errors": 3,
+    "reason": "original R08 producer source SHA mismatch already at baseline"
+  }
+}

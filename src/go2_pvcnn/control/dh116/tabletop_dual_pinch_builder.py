@@ -26,19 +26,39 @@ def _sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def load_pair_proposal(path=PAIR):
+def load_pair_proposal(path=PAIR, *, expected_sha=PAIR_SHA, expected_seed_sha=SEED_SHA):
     """Exact private CPU evidence; no USD, SDK, solver or geometry imports."""
     raw=Path(path).read_bytes()
-    if hashlib.sha256(raw).hexdigest()!=PAIR_SHA:
+    if hashlib.sha256(raw).hexdigest()!=expected_sha:
         raise ValueError("paired evidence bytes differ")
     packet=json.loads(raw)
     seed=deepcopy(packet["reset_seed"]);digest=seed.pop("sha256")
     actual=hashlib.sha256(json.dumps(seed,sort_keys=True,separators=(",",":")).encode()).hexdigest()
-    if (digest!=SEED_SHA or actual!=digest
+    if ((expected_seed_sha is not None and digest!=expected_seed_sha) or actual!=digest
             or packet["wrist_clearance_floor_m"]!=CLEARANCE_M
             or packet["native_qualified"] is not False
             or packet["teacher_admission"] is not False):
         raise ValueError("paired reset identity/scope differs")
+    return packet
+
+
+def load_bound_pair_proposal(binding):
+    """Read a separately frozen, statically accepted Pinch candidate."""
+    if not isinstance(binding, dict) or set(binding) != {"path", "sha256"}:
+        raise ValueError("explicit paired proposal path and SHA required")
+    path = Path(binding["path"])
+    if not path.is_absolute() or path.resolve(strict=True) != path:
+        raise ValueError("canonical absolute paired proposal path required")
+    packet = load_pair_proposal(path, expected_sha=binding["sha256"], expected_seed_sha=None)
+    extra = packet.get("left_extra_clearance_m", 0.)
+    left = packet.get("left_continuous_clearance_m", 0.)
+    right = packet.get("right_continuous_clearance_m", 0.)
+    if (packet.get("version") != "dh116-paired-pinch-reset-preflight-cpu-margin-v1"
+            or packet.get("passes_static_policy_clearance") is not True
+            or packet.get("grasp_qualified") is not False
+            or any(type(v) not in (int, float) or not math.isfinite(v) for v in (extra, left, right))
+            or extra <= 0. or left < CLEARANCE_M + extra or right < CLEARANCE_M):
+        raise ValueError("paired proposal static clearance or CPU-only scope differs")
     return packet
 
 
@@ -196,14 +216,15 @@ def _fresh_initial_geometry(project, prepared, sim, hands, episode, radius_m):
 
 
 def build_fresh_owned(sim, owners, *, project, prepared, ownership, record,
-                      run_uuid, episode_uid, physics_budget_end, expected_reset_seed=None):
+                      run_uuid, episode_uid, physics_budget_end, expected_reset_seed=None,
+                      pair_proposal=None):
     """Build the single Pinch scene, deferring the episode Reset to Teacher."""
     try:
         return _build_owned(
             sim, owners, project=project, prepared=prepared, ownership=ownership, record=record,
             run_uuid=run_uuid, episode_uid=episode_uid, physics_budget_end=physics_budget_end,
             owner_resets=None, damping_override=None, defer_episode_reset=True,
-            expected_reset_seed=expected_reset_seed)
+            expected_reset_seed=expected_reset_seed, pair_proposal=pair_proposal)
     finally:
         sim = owners = prepared = ownership = record = None
 
@@ -227,7 +248,8 @@ def build_reset_owned(sim,owners,*,project,prepared,ownership,record,owner_reset
 
 
 def _build_owned(sim, owners, *, project, prepared, ownership, record, run_uuid, episode_uid,
-                 physics_budget_end, owner_resets, damping_override, defer_episode_reset, expected_reset_seed=None):
+                 physics_budget_end, owner_resets, damping_override, defer_episode_reset,
+                 expected_reset_seed=None, pair_proposal=None):
     scene=hands=hand=view=base=rod=episode=bindings=mount=composers=None
     inspect=read_clock=backend=grids=members=value=geometry=initial_geometry=None
     try:
@@ -239,7 +261,7 @@ def _build_owned(sim, owners, *, project, prepared, ownership, record, run_uuid,
                 or episode_uid==run_uuid+":construction"
                 or type(physics_budget_end) is not int or physics_budget_end<10):
             raise ValueError("explicit identity, recorder and future interval budget required")
-        packet=load_pair_proposal()
+        packet=load_pair_proposal() if pair_proposal is None else load_bound_pair_proposal(pair_proposal)
         if expected_reset_seed is not None and packet["reset_seed"] != expected_reset_seed:
             raise ValueError("paired scene and Teacher Reset seed differ")
         project=Path(project).resolve()

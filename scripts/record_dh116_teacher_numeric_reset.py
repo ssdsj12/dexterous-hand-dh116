@@ -19,7 +19,7 @@ REQUIRED_EVIDENCE = (READBACK_FILE, NUMERIC_FILE, "reset_capture.json", "result.
                      "pre_action_common.json")
 
 
-def freeze_plan(output):
+def freeze_plan(output, *, pair_proposal=None):
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile
 
     result = cache.freeze_plan(ROOT, output, native.BINDINGS)
@@ -31,6 +31,12 @@ def freeze_plan(output):
             raise ValueError("conflicting frozen backend inventory: "+path)
     result.update(version=SCHEMA,backend_profile_sha256=profile.digest,
                   preserved_scope="original Pinch scene, measured Reset only, no camera/control/PPO")
+    if pair_proposal is not None:
+        from go2_pvcnn.control.dh116.tabletop_dual_pinch_builder import load_bound_pair_proposal
+
+        load_bound_pair_proposal(pair_proposal)
+        result["pair_proposal"] = pair_proposal
+        result["frozen_files"][pair_proposal["path"]] = pair_proposal["sha256"]
     result["budget"]["episode_resets"] = 1
     return result
 
@@ -42,13 +48,18 @@ def _verify_outer(run, receipt, expected_sha):
     if (data.get("output") != str(run.resolve()) or data.get("style") != "pinch"
             or type(data.get("exit_code")) is not int or data["exit_code"] != 0):
         raise ValueError("natural exit 0 from the same Pinch Reset run required")
-    if native.sha(run/"frozen_plan.json") != data.get("plan_sha256"):
+    frozen = run / "frozen_plan.json"
+    if frozen.is_symlink() or native.sha(frozen) != data.get("plan_sha256"):
         raise ValueError("outer Reset plan SHA differs")
     inventory = data.get("artifact_sha256", {})
     for name in REQUIRED_EVIDENCE:
         path = run/name
         if path.is_symlink() or native.sha(path) != inventory.get(name):
             raise ValueError("outer Reset artifact SHA differs: "+name)
+    plan = json.loads(frozen.read_bytes())
+    capture = json.loads((run / "reset_capture.json").read_bytes())
+    if plan.get("pair_proposal") != data.get("pair_proposal") or plan.get("pair_proposal") != capture.get("pair_proposal"):
+        raise ValueError("outer Reset proposal binding differs from plan or acquisition")
     return data
 
 
@@ -84,6 +95,8 @@ def seal_manifest(run, receipt, receipt_sha, destination):
         mesh_bindings_sha256=digest(encode_owned(reset["rod_reset"]["mesh_bindings"])))
     for key,name in (("reset_readback",READBACK_FILE),("numeric_reset",NUMERIC_FILE)):
         manifest["source_refs"][key]=dict(path=str((run/name).resolve()),sha256=data["artifact_sha256"][name])
+    if "pair_proposal" in data:
+        manifest["pair_proposal"] = data["pair_proposal"]
     # Validate the exact staged bytes using the unchanged production Reset reader.
     destination = Path(destination).resolve()
     if destination.exists():
@@ -99,7 +112,7 @@ def seal_manifest(run, receipt, receipt_sha, destination):
     return dict(path=str(destination),sha256=native.sha(destination),resolved_reset_manifest_valid=True)
 
 
-def _acquire(sim, owners, trace, output, profile):
+def _acquire(sim, owners, trace, output, profile, *, pair_proposal=None):
     from uuid import uuid4
 
     from scripts.probe_dh116_physx_lifetime_frame_v2 import bindings
@@ -119,10 +132,13 @@ def _acquire(sim, owners, trace, output, profile):
         trace.event("physical_boundary",kind=event["kind"])
     with profile_reader_scope(profile), bindings((builder,"BACKEND",binary),
                                                   (builder,"BACKEND_SHA",profile.binary_sha256)):
+        packet = (builder.load_pair_proposal() if pair_proposal is None
+                  else builder.load_bound_pair_proposal(pair_proposal))
+        seed = packet["reset_seed"]
         fresh = builder.build_fresh_owned(sim,owners,project=ROOT,prepared=prepared,ownership=trace,
-                   record=record,run_uuid=run,episode_uid=episode_uid,physics_budget_end=10)
+                   record=record,run_uuid=run,episode_uid=episode_uid,physics_budget_end=10,
+                   expected_reset_seed=seed, pair_proposal=pair_proposal)
         episode = fresh.episode
-        seed = builder.load_pair_proposal()["reset_seed"]
         factory = make_reset_type(ROOT,prepared,output)
         with bindings((episode_api,"DualHandResetTransaction",factory)), numeric_reset_state_scope(
                 sim=sim,rod=episode._rod,record=lambda value:_write(output/NUMERIC_FILE,value)):
@@ -135,6 +151,8 @@ def _acquire(sim, owners, trace, output, profile):
         outcome = dict(run_uuid=run,episode_uid=episode_uid,**native.clock(sim),
             clearance_passed=result["clearance_passed"],physics_rows=0,new_control_steps=0,
             actual_rod_tick=episode._rod.clock()["rod_tick"],ppo_updates=0,grasp_qualified=False)
+        if pair_proposal is not None:
+            outcome["pair_proposal"] = pair_proposal
         _write(output/"reset_geometry.json",geometry)
         _write(output/"pre_action_common.json",common)
         native.write_new(output/"reset_capture.json",outcome)
@@ -201,7 +219,7 @@ def execute(plan):
                 sim_reference = weakref.ref(sim)
                 return sim
             def acquire(sim, owners, trace, cleanup):
-                result = _acquire(sim,owners,trace,output,profile)
+                result = _acquire(sim,owners,trace,output,profile,pair_proposal=plan.get("pair_proposal"))
                 # Clear the known Kit stat cache before the existing owner GC.
                 cache_release(sim,expected_sdk_step=2)
                 return result
@@ -237,8 +255,15 @@ def main(argv=None):
     parser.add_argument("--outer-receipt",type=Path)
     parser.add_argument("--outer-sha256")
     parser.add_argument("--manifest",type=Path)
+    parser.add_argument("--pair-proposal", type=Path)
+    parser.add_argument("--pair-sha256")
     args=parser.parse_args(argv)
+    if (args.pair_proposal is None) != (args.pair_sha256 is None):
+        parser.error("--pair-proposal and --pair-sha256 must be supplied together")
+    pair_proposal = None if args.pair_proposal is None else dict(path=str(args.pair_proposal), sha256=args.pair_sha256)
     if args.manifest:
+        if pair_proposal is not None:
+            parser.error("manifest takes its proposal only from the native receipt")
         if not args.outer_receipt or not args.outer_sha256:
             parser.error("manifest requires independent outer Reset receipt and SHA")
         print(json.dumps(seal_manifest(args.output,args.outer_receipt,args.outer_sha256,args.manifest)))
@@ -246,7 +271,7 @@ def main(argv=None):
     if args.plan is None:
         parser.error("an independent freeze plan is required")
     native.validate_execution_context(ROOT)
-    expected=freeze_plan(args.output)
+    expected=freeze_plan(args.output, pair_proposal=pair_proposal)
     if not args.approved_frozen_sha256:
         native.write_new(args.plan,expected)
         print(json.dumps(dict(frozen_sha256=native.digest(expected),budget=expected["budget"])))

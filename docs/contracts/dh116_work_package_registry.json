@@ -41981,6 +41981,47 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-recenter-bound-reset": {
+      "title": "Bind the recentered Pinch proposal through native Reset",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-contact-recenter-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_fresh_teacher_reset_evidence.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_bound_native_reset_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-bound-native-reset.md",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 133,
+        "failed": 0,
+        "scope": "CPU publish tests and native Reset only"
+      }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v7": {
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v7.json",
+        "sha256": "4960efe84fb9da34e773de82504ed7697bc058df1ca40897f61ee99a0c063b13"
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v7.json",
+      "dependencies": [
+        "teacher.pinch-recenter-bound-reset"
+      ],
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "status": "pending",
+      "tests": [],
+      "title": "Pinch fresh PPO smoke32 on the newly sealed recentered Reset"
     }
   },
   "execution_target": {
