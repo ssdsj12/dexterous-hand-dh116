@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch v10 diagnostic preflight
+
+Pinch v10 binds the current collector source and existing verified Reset to a separate single-attempt diagnostic recipe. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v10-draft.md).
+
 ## 2026-11-19 Control-scoped Pinch Teacher source verification
 
 Pinch keeps full inventory readback at collection entry and before PPO transition commit. Inside one control interval, the same-thread readers reuse the verified source basis and preserve every physical row. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-control-source-scope.md).

@@ -42435,6 +42435,46 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v10": {
+      "title": "Pinch fresh PPO smoke32 with control-scoped source revalidation",
+      "status": "pending",
+      "executor": "native_bounded",
+      "dependencies": [
+        "teacher.pinch-control-source-scope-cpu"
+      ],
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v10.json",
+      "tests": [],
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v10.json",
+        "sha256": "782dffdffd461643d562d7107f23f26c7894a20c2cc0257452a89c8176860111"
+      },
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v10-draft.md"
+    },
+    "teacher.pinch-v10-control-source-preflight-cpu": {
+      "title": "Freeze Pinch v10 against current control-scoped source",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-control-source-scope-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v10_draft_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v10-draft.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 97,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
