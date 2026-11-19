@@ -26412,6 +26412,31 @@
         "verified_at_utc": "2026-11-19T05:31:23.763581+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-ppo-draft-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-pinch-ppo-smoke32-draft.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_ppo_draft_v1.json",
+      "cpu_tests": {
+        "passed": 189,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "db3e989de7a7ab500380bc95768aa3fd2e7fbd26",
+        "source_tree": "b64255cafbcb40ae0951213d0ec6466f1efb2197",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T06:00:46.725762+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
