@@ -77,6 +77,30 @@ def test_actual_regular_file_hash_required(tmp_path, kind):
         m.checked_file(p, sha)
 
 
+def test_profile_rehashes_pad_bytes_once_per_verification_and_rejects_a_later_change(profile, monkeypatch):
+    pad = Path(next(file.path for file in profile.inventory if file.role == "pad_sdf"))
+    read_bytes = Path.read_bytes
+    pad_reads = 0
+    tampered = False
+
+    def read(path):
+        nonlocal pad_reads
+        data = read_bytes(path)
+        if path != pad:
+            return data
+        pad_reads += 1
+        return data + b"tampered" if tampered else data
+
+    monkeypatch.setattr(Path, "read_bytes", read)
+    assert profile.verify(ROOT) is profile
+    assert pad_reads == 1
+
+    tampered = True
+    with pytest.raises(ValueError, match="actual file SHA differs"):
+        profile.verify(ROOT)
+    assert pad_reads == 2
+
+
 def test_profile_reopens_bytes_each_verification(profile, monkeypatch):
     m = api()
     original = m.checked_file

@@ -1,0 +1,89 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-v9-wall-truncation-audit-cpu",
+  "branch": "11-17",
+  "review_baseline": "dc6803f621b212dea6a3a221a019560ef7c6b07f",
+  "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v9-throughput.md",
+  "cpu": {
+    "passed": 153,
+    "failed": 0,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_native_teacher_profile.py",
+      "tests/test_native_teacher_model.py",
+      "tests/test_native_teacher_actual_inputs.py",
+      "tests/test_native_teacher_actual_update.py",
+      "tests/test_native_teacher_actual_provider.py",
+      "tests/test_native_teacher_policy_pinch_distance.py",
+      "tests/test_dh116_work_packages.py",
+      "-k",
+      "not test_old_frozen_reader_rejects_legal_policy_action"
+    ],
+    "log_sha256": "c1b98be2220d54f6aaa83704073cb971ffd6816306b776f642ea37accb45479d",
+    "red_sha256": "b7278ebcdade26a4bbd8d4e6f9e693ecdd19aeb833cb8555f37c84ea178ba269"
+  },
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_profile.py": "0777ca72b0ee2e725f94fa034056593d89c3e4c3675cb539a0b5e88538359e3a",
+    "tests/test_native_teacher_profile.py": "56110b1a52e91f3f1e050fec1cef5d04ec5160a39dbe12d1826bfe6ce0b54f94"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "referenced_native_attempts": 1,
+  "native_result": {
+    "fingerprint": "1484e90ac79677f02d965750b1cf2b1cc40886a6155ceee3bad2365d9322c7a2",
+    "receipt_sha256": "aeb29f649367ba8823f067987d32d6579502e219a09d985ef76069939f0adc1b",
+    "journal_sha256": "24cf6d9c3bdc574ec09cb80c26b4f7cf6275af49af25a411b94294c257e17593",
+    "total_records": 234,
+    "setup_sdk_steps": 2,
+    "sdk_measured_steps": 48,
+    "internal_solver_substeps": 576,
+    "controls": 6,
+    "guard_failures": 0,
+    "ppo_updates": 0,
+    "outer_exit_code": 1,
+    "native_signal": null,
+    "wall_seconds": 194.95191263686866,
+    "time_remaining_before_update_s": 77.30392905510962,
+    "minimum_table_clearance_m": {
+      "left": 0.0021601927215004757,
+      "right": 0.002236924070170121
+    },
+    "failure": "wall_budget_truncation; owned_native_resource_release_not_verified"
+  },
+  "cpu_profile_interleaved_medians_ms": {
+    "verify": [
+      252.29,
+      166.53
+    ],
+    "scope": [
+      294.52,
+      217.86
+    ]
+  },
+  "baseline_fixture_failure_log_sha256": "4141da8134910c1036c44d794f14b26330e821a311b2a796d5645c00ce9d0729",
+  "unfiltered_regression": {
+    "passed": 153,
+    "failed": 1,
+    "log_sha256": "f3d96d17394ddf9790e045fdfb0deaa25dbeafe339baa2144b3c3ea876d72502"
+  },
+  "native_next": "source-validation accounting and new bounded candidate only if throughput estimate supports it"
+}

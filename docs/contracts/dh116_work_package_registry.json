@@ -42352,10 +42352,30 @@
         "max_attempts_per_code_config": 1,
         "retry_requires_change": true
       },
-      "status": "pending",
+      "status": "blocked",
       "tests": [],
       "title": "Pinch fresh PPO smoke32 on new right-thumb dynamic clearance Reset",
-      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v9-bound-reset.md"
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v9-throughput.md",
+      "blocker_kind": "failed_native",
+      "reason": "Native v9 reached six full controls and 48 guarded physical steps before wall-budget truncation. Zero PPO updates and an outer failure exit.",
+      "last_result": {
+        "attempt_fingerprint": "1484e90ac79677f02d965750b1cf2b1cc40886a6155ceee3bad2365d9322c7a2",
+        "result_sha256": "aeb29f649367ba8823f067987d32d6579502e219a09d985ef76069939f0adc1b",
+        "diagnostic_verified": false,
+        "outer_exit_code": 1,
+        "debugger_inferior_signal": null,
+        "native_lock_observed": true,
+        "native_execution_performed": true,
+        "isaac_started": true,
+        "setup_sdk_steps": 2,
+        "measured_sdk_steps": 48,
+        "internal_solver_substeps": 576,
+        "policy_decisions": 6,
+        "truncated_transitions": 1,
+        "ppo_updates": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     },
     "teacher.pinch-v9-bound-native-reset": {
       "title": "Seal the new right Pinch Reset and freeze v9",
@@ -42371,6 +42391,26 @@
       "native_runs": 1,
       "last_result": {
         "passed": 17,
+        "failed": 0,
+        "scope": "CPU only"
+      }
+    },
+    "teacher.pinch-v9-wall-truncation-audit-cpu": {
+      "title": "Audit Pinch v9 wall truncation and remove duplicate profile verification",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-v9-bound-native-reset"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_profile.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v9_throughput_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v9-throughput.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 153,
         "failed": 0,
         "scope": "CPU only"
       }

@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch v9 natural process exit and profile validation cost
+
+Pinch v9 retained 48 guarded physical rows and six complete control windows before wall truncation, with zero PPO updates. Profile verification now hashes the complete rebuilt inventory without an additional preliminary pass. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v9-throughput.md).
+
 ## 2026-11-19 Pinch v9 source-bound Reset
 
 Accepted a new native Reset after independent exit and readback verification and froze the same-budget v9 PPO diagnostic. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v9-bound-reset.md).

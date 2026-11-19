@@ -181,8 +181,8 @@ class BackendProfile:
         return result
 
     def verify(self, project=ROOT):
-        for row in self.inventory:
-            checked_file(row.path, row.sha256)
+        # Loading hashes the current files. Full profile equality also rejects
+        # a changed inventory, even when every current file passes its own SHA.
         current = type(self).load(project)
         if current != self:
             raise ValueError("current BackendProfile source identity differs")
