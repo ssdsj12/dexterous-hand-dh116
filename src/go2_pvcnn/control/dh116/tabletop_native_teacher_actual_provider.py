@@ -270,12 +270,14 @@ def _run_isaac(attempt, config, lease):
 def run_a(*, config, lease, output):
     """Run one fresh 32-control smoke update with the approved process lease."""
     from scripts.diagnose_dh116_teacher_initialization import write_new
+    from .tabletop_native_teacher_actual_artifacts import derive_actual_artifacts
 
     attempt = _verify_attempt(config, lease, output)
     attempt.output.mkdir()
     lifecycle = _run_isaac(attempt, config, lease)
     if lifecycle.get("close_mode") != "normal" or lifecycle.get("failure") is not None:
         raise RuntimeError("R06 normal in-process close required before recording the update")
+    derive_actual_artifacts(spec=attempt.spec, output=attempt.output)
     result = dict(lifecycle["acquisition"], process_exit_verified=False,
                   native_qualification=False, teacher_admission=False)
     write_new(attempt.output / "owned_update.json", result)

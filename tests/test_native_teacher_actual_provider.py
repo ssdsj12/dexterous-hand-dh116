@@ -132,7 +132,15 @@ def test_run_a_keeps_python_close_distinct_from_outer_exit(lease_fixture, monkey
         assert supplied_config is config and supplied_lease is lease
         return {"acquisition": result, "close_mode": "normal", "failure": None}
 
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_actual_artifacts as artifacts
+
+    def derive(*, spec, output):
+        assert spec["budget"]["physics_steps"] == 258
+        assert output.is_dir() and not list(output.iterdir())
+        return {"native_qualification": False}
+
     monkeypatch.setattr(provider(), "_run_isaac", run)
+    monkeypatch.setattr(artifacts, "derive_actual_artifacts", derive)
     assert provider().run_a(config=config, lease=lease, output=output) == {
         "updates": 1, "process_exit_verified": False,
         "native_qualification": False, "teacher_admission": False,

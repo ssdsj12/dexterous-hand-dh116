@@ -38417,17 +38417,18 @@
         "teacher.actual-fresh-pinch-scene-cpu",
         "teacher.actual-fresh-update-seal-cpu",
         "teacher.actual-input-audit-cpu",
-        "teacher.actual-fresh-worker-entry-cpu"
+        "teacher.actual-fresh-worker-entry-cpu",
+        "teacher.actual-worker-ledgers-cpu"
       ],
       "status": "blocked",
-      "reason": "Fixed A-fresh worker and raw-input composition pass CPU regression. Scheduler artifact serialization and independent audit are pending.",
+      "reason": "Fixed A-fresh Worker and evidence serialization pass CPU regression. The independent actual artifact and outer-process audit remains pending.",
       "native_qualification": false,
       "last_result": {
-        "cpu_passed": 149,
+        "cpu_passed": 199,
         "cpu_failed": 0,
         "native_runs": 0,
         "native_ppo_updates": 0,
-        "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-bounded-worker.md"
+        "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-worker-ledgers.md"
       }
     },
     "teacher.actual-resume-l03-cpu": {
@@ -41265,6 +41266,26 @@
         "passed": 149,
         "failed": 0,
         "scope": "CPU worker/lifecycle and style regression with zero native updates"
+      }
+    },
+    "teacher.actual-worker-ledgers-cpu": {
+      "title": "Pinch Worker 原账本派生与关闭摘要",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.actual-fresh-worker-entry-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_artifacts.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_worker_ledgers_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-worker-ledgers.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 199,
+        "failed": 0,
+        "scope": "CPU raw journal, Worker and lifecycle regression; no outer receipt granted"
       }
     }
   },

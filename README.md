@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch Worker evidence ledgers
+
+The fresh Worker derives exact physics and transition views while retaining its raw journal and R06 originals. The CPU regression passed 199 tests. The independent outer audit remains pending. [Report](docs/superpowers/reports/2026-11-19-dh116-teacher-worker-ledgers.md).
+
 ## 2026-11-19 Bounded Pinch Teacher Worker
 
 The fixed fresh Worker composes the existing native scene, Reset, PPO update and R06 teardown. The final CPU regression passed 149 tests. Scheduler artifact verification and the first native PPO update are pending. [Report](docs/superpowers/reports/2026-11-19-dh116-teacher-bounded-worker.md).
