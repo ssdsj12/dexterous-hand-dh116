@@ -41687,10 +41687,66 @@
         "max_attempts_per_code_config": 1,
         "retry_requires_change": true
       },
-      "status": "pending",
+      "status": "blocked",
       "tests": [],
       "title": "Pinch fresh PPO smoke32 with private control storage",
-      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-control-storage.md"
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-control-storage.md",
+      "blocker_kind": "failed_native",
+      "reason": "Native reset completed; initial semantic identity rejected before action",
+      "last_result": {
+        "attempt_fingerprint": "6d5cb9cc4248dedc105035c63bf590a1ca659ca5e37ef0c031a554188186a0cc",
+        "result_sha256": "fb067670d0ac8e266d79d3a09e8d547d5a7fe061684903e937042c7510f8a7e3",
+        "outer_exit_code": 1,
+        "native_execution_performed": true,
+        "isaac_started": true,
+        "setup_sdk_steps": 2,
+        "ppo_updates": 0,
+        "native_qualification": false
+      }
+    },
+    "teacher.pinch-semantic-refreeze-cpu": {
+      "title": "Rebuild Pinch fixed recipe from the current semantic source",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-native-private-control"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_worker_artifacts.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_actual_artifacts.py",
+        "tests/test_native_teacher_actual_provider.py",
+        "tests/test_native_teacher_actual_update.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_semantic_refreeze_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-semantic-refreeze.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 118,
+        "failed": 0,
+        "scope": "CPU only"
+      }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v4": {
+      "title": "Pinch fresh PPO smoke32 after source-bound semantic refreeze",
+      "status": "pending",
+      "executor": "native_bounded",
+      "dependencies": [],
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v4.json",
+      "tests": [],
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v4.json",
+        "sha256": "23074dc31e5445ec74facfb569c0c5eef393e29ee52b1640f20c2f595f5eafc2"
+      },
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-semantic-refreeze.md"
     }
   },
   "execution_target": {

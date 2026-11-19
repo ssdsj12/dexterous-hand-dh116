@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch Teacher source-bound recipe
+
+The original freezer re-derived the runtime semantic identity. The native initialization regression and its pre-action failure are recorded. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-semantic-refreeze.md).
+
 ## 2026-11-19 Pinch launch control storage
 
 Actual Teacher workers preflight private control-directory ownership and modes. The heavier output stays on the data volume. The failed v2 receipt and its replacement recipe are recorded. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-native-control-storage.md).
