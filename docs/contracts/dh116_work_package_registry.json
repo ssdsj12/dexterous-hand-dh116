@@ -42082,6 +42082,27 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.power-palm-and-five-digit-cpu": {
+      "title": "Check Power palm seating and independent six-joint reclosure",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.power-material-cross-section-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_collision_aware_teacher_seeds.py",
+        "tests/test_dh116_power_material_reach.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_palm_five_digit_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-power-palm-five-digit.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 16,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

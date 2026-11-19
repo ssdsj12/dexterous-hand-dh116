@@ -160,3 +160,17 @@ def test_power_closure_cli_status_tracks_independent_screen(monkeypatch, tmp_pat
                        "--left-node", "3", "--right-node", "6", "--output", str(output)])
     assert code == 2
     assert json.loads(output.read_text())["closure_screen"]["pairs"] == []
+
+
+def test_power_reclosure_can_change_thumb_abduction_when_explicitly_enabled():
+    from scripts.prepare_dh116_power_palm_seed import search_closure_joints
+
+    q0 = np.zeros(6)
+    target = np.array([.75, .5, .5, .5, .5, .5])
+    evaluate = lambda q: {"rank": (np.linalg.norm(q-target),)}
+    unchanged, _ = search_closure_joints(q0, q0, np.ones(6), evaluate)
+    changed, evaluations = search_closure_joints(q0, q0, np.ones(6), evaluate,
+                                                 include_thumb_abduction=True)
+    assert unchanged["active_q"][0] == 0.
+    np.testing.assert_array_equal(changed["active_q"], target)
+    assert evaluations <= 40

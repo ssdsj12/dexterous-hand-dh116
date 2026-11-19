@@ -1,3 +1,7 @@
+## 2026-11-19 Power palm seating and six-joint closure audit
+
+Separated palm approach from five-digit closure and identified different remaining Power constraints for each hand. [Report](docs/superpowers/reports/2026-11-19-teacher-power-palm-five-digit.md).
+
 ## 2026-11-19 Pinch historical link-motion replay
 
 Replayed ten measured Pinch SDK substeps on the v7 native Reset and retained the original table gate. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-observed-tracking.md).

@@ -135,7 +135,7 @@ def audit_fixed_preshape_approach(shapes, nodes, radius, direction, supports):
                 table_clearance_unchanged=True, native_contact_verified=False)
 
 
-def search_closure_joints(seed, lower, upper, evaluate):
+def search_closure_joints(seed, lower, upper, evaluate, *, include_thumb_abduction=False):
     """Start with coordinated closure, then vary each flexion independently."""
     def score(q):
         result = evaluate(q)
@@ -152,7 +152,10 @@ def search_closure_joints(seed, lower, upper, evaluate):
             if result is not None and (best is None or result["rank"] < best["rank"]):
                 best = result
 
-    for joint in range(1, len(seed)):
+    joints = list(range(1, len(seed)))
+    if include_thumb_abduction:
+        joints.append(0)
+    for joint in joints:
         center = seed.copy() if best is None else best["active_q"].copy()
         for fraction in (0., .25, .5, .75, 1.):
             q = center.copy()
@@ -199,61 +202,70 @@ def audit_closure_positions(geometry, row, nodes, supports):
         return []
     axis = np.asarray(row["palm_toward_fingers"]) * [1., 1., 0.]
     axis /= np.linalg.norm(axis)
-    layout = geometry["reference"]["reference_layout"]
-    table_top = layout["table_center"][2] + layout["table_size"][2] / 2
-    radius = geometry["old_candidate"]["rod"]["radius_m"]
-    required = ("source:base_link", *("cooked:" + pad for pad in DISTAL_PAD_LINKS))
     results = []
     for fraction in (0., .5, 1.):
         root = np.asarray(row["root"]).copy()
         root[:3] += distance * fraction * axis
-        rejected = dict(table=0, support=0, rod=0, thumb_clearance=0)
-
-        def evaluate(q):
-            expand(q)
-            hulls = shapes_world(geometry, root, q)
-            clearance = min(float(vertices[:, 2].min()) for vertices in hulls.values()) - table_top
-            if clearance < CLEARANCE_M:
-                rejected["table"] += 1
-                return None
-            hits, support_gap = support_clearance(hulls, supports)
-            if hits or (support_gap is not None and support_gap < CLEARANCE_M):
-                rejected["support"] += 1
-                return None
-            gaps = {key: _pad_gap_interval(vertices, nodes, radius) for key, vertices in hulls.items()}
-            if any(gap["lower_m"] < 0. for gap in gaps.values()):
-                rejected["rod"] += 1
-                return None
-            thumb_gap = thumb_clearance(hulls)
-            if thumb_gap <= 0.:
-                rejected["thumb_clearance"] += 1
-                return None
-            uppers = [gaps[key]["upper_m"] for key in required]
-            return dict(rank=(max(uppers), sum(uppers)), hulls=hulls,
-                        minimum_support_separating_axis_gap_m=support_gap,
-                        thumb_separating_axis_gap_m=thumb_gap)
-
-        best, count = search_closure_joints(np.asarray(row["active_q"]), *active_limits(), evaluate)
-        result = dict(wrist_fraction=fraction, evaluations=count, rejections=rejected,
-                      root=root.tolist(), endpoint_geometry_passed=False)
-        if best is not None:
-            hulls = best.pop("hulls")
-            witness = audit_hand(hulls, nodes, radius, layout, DISTAL_PAD_LINKS, include_palm=True)
-            directions = {key: (witness["gaps"][key]["witness"] or {}).get("direction")
-                          for key in required}
-            palm, thumb = (directions[key] for key in required[:2])
-            fingers = [directions[key] for key in required[2:]]
-            palm_dots = [None if palm is None or finger is None else float(np.dot(palm, finger))
-                         for finger in fingers]
-            thumb_dots = list(witness["witness_direction_dots"].values())
-            y = np.concatenate([v[:, 1] for v in hulls.values()])
-            endpoint = (witness["geometric_approach_passed"]
-                        and all(dot is not None and dot < 0. for dot in palm_dots)
-                        and any(dot is not None and dot < -.2 for dot in thumb_dots))
-            result.update(best, active_q=best["active_q"].tolist(), exact=witness, palm_finger_direction_dots=palm_dots,
-                          hand_y_bounds_m=[float(y.min()), float(y.max())], endpoint_geometry_passed=endpoint)
-        results.append(result)
+        result = audit_closure_at_root(geometry, root, row["active_q"], nodes, supports)
+        results.append(dict(wrist_fraction=fraction, **result))
     return results
+
+
+def audit_closure_at_root(geometry, root, active_q, nodes, supports, *, include_thumb_abduction=False):
+    """Screen a single wrist endpoint against all original geometry constraints."""
+    layout = geometry["reference"]["reference_layout"]
+    table_top = layout["table_center"][2] + layout["table_size"][2] / 2
+    radius = geometry["old_candidate"]["rod"]["radius_m"]
+    required = ("source:base_link", *("cooked:" + pad for pad in DISTAL_PAD_LINKS))
+    rejected = dict(table=0, support=0, rod=0, thumb_clearance=0)
+
+    def evaluate(q):
+        expand(q)
+        hulls = shapes_world(geometry, root, q)
+        clearance = min(float(vertices[:, 2].min()) for vertices in hulls.values()) - table_top
+        if clearance < CLEARANCE_M:
+            rejected["table"] += 1
+            return None
+        hits, support_gap = support_clearance(hulls, supports)
+        if hits or (support_gap is not None and support_gap < CLEARANCE_M):
+            rejected["support"] += 1
+            return None
+        gaps = {key: _pad_gap_interval(vertices, nodes, radius) for key, vertices in hulls.items()}
+        if any(gap["lower_m"] < 0. for gap in gaps.values()):
+            rejected["rod"] += 1
+            return None
+        thumb_gap = thumb_clearance(hulls)
+        if thumb_gap <= 0.:
+            rejected["thumb_clearance"] += 1
+            return None
+        uppers = [gaps[key]["upper_m"] for key in required]
+        return dict(rank=(max(uppers), sum(uppers)), hulls=hulls,
+                    minimum_support_separating_axis_gap_m=support_gap,
+                    thumb_separating_axis_gap_m=thumb_gap)
+
+    best, count = search_closure_joints(
+        np.asarray(active_q), *active_limits(), evaluate,
+        include_thumb_abduction=include_thumb_abduction,
+    )
+    result = dict(evaluations=count, rejections=rejected,
+                  root=root.tolist(), endpoint_geometry_passed=False)
+    if best is not None:
+        hulls = best.pop("hulls")
+        witness = audit_hand(hulls, nodes, radius, layout, DISTAL_PAD_LINKS, include_palm=True)
+        directions = {key: (witness["gaps"][key]["witness"] or {}).get("direction")
+                      for key in required}
+        palm, thumb = (directions[key] for key in required[:2])
+        fingers = [directions[key] for key in required[2:]]
+        palm_dots = [None if palm is None or finger is None else float(np.dot(palm, finger))
+                     for finger in fingers]
+        thumb_dots = list(witness["witness_direction_dots"].values())
+        y = np.concatenate([v[:, 1] for v in hulls.values()])
+        endpoint = (witness["geometric_approach_passed"]
+                    and all(dot is not None and dot < 0. for dot in palm_dots)
+                    and any(dot is not None and dot < -.2 for dot in thumb_dots))
+        result.update(best, active_q=best["active_q"].tolist(), exact=witness, palm_finger_direction_dots=palm_dots,
+                      hand_y_bounds_m=[float(y.min()), float(y.max())], endpoint_geometry_passed=endpoint)
+    return result
 
 
 def _search_palm(geometry, pose, q, nodes, station, frame, supports, *, aligned_preshape):
