@@ -26287,6 +26287,31 @@
         "verified_at_utc": "2026-11-19T04:38:12.495223+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.actual-fresh-setup-audit-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-setup-audit.md",
+      "readiness": "docs/contracts/dh116_teacher_fresh_setup_audit_v1.json",
+      "cpu_tests": {
+        "passed": 265,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "5f6c27556958e864668da4458128ec74ba564f3f",
+        "source_tree": "bee14800d55b4dba8437b580e52941170e729717",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T04:40:42.369241+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
