@@ -26437,6 +26437,31 @@
         "verified_at_utc": "2026-11-19T06:00:46.725762+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.wire-coupled-tripod-power-reach-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-tripod-coupled-power-palm-reach.md",
+      "readiness": "docs/contracts/dh116_wire_coupled_tripod_power_reach_v1.json",
+      "cpu_tests": {
+        "passed": 114,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7fc37ac59c5597853d6de1d670cc5ad48c69dbc9",
+        "source_tree": "72a879befc0b97da99c2371e4f5ed2b6597c4a9e",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T06:02:57.830161+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
