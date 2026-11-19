@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch Teacher setup and first action
+
+The actual A post-exit audit ties the two measured SDK setup steps and a zero-step episode Reset to the first executed action. Cap and qualified receipt revalidation remain pending. [Report](docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-setup-audit.md).
+
 ## 2026-11-19 Three-grasp vertical pose repair
 
 The optional world-Z repair emits isolated trial poses and checks required-pad gap bounds on the original polyline. The tested Tripod and Power trials are blocked from promotion. [Report](docs/superpowers/reports/2026-11-19-dh116-wire-vertical-repair.md).

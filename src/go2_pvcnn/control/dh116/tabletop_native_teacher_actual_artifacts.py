@@ -184,10 +184,52 @@ def _audit_sealed_packs(frozen, profile):
     return rebuilt
 
 
+
+def _audit_fresh_setup(rows):
+    from .tabletop_deformable_dual_evidence import _Sequence, _clock_row
+    from .tabletop_dual_hand_reset import _no_step
+    from .tabletop_deformable_r0_replay import decode_owned
+    from .tabletop_deformable_bimanual_step import DT
+
+    setup = [r for r in rows if r["operation"] == "setup"]
+    reset = [r for r in rows if r["operation"] == "owner_event" and r["payload"].get("kind") == "reset"]
+    first_action = next((r for r in rows if r["operation"] == "decision"), None)
+    first_physical = next((r for r in rows if r["operation"] == "physical"), None)
+    if (len(setup) != 2 or len(reset) != 1 or first_action is None or first_physical is None
+            or not setup[0]["sequence"] < setup[1]["sequence"] < reset[0]["sequence"]
+                < first_action["sequence"] < first_physical["sequence"]):
+        raise ValueError("ordered SDK setup and exactly one Reset before the first action required")
+    try:
+        sequence = _Sequence(258, 12)
+        for row in setup:
+            sequence.accept("setup", row["payload"])
+        data = decode_owned(reset[0]["payload"])
+        sequence.accept("reset", data)
+        receipt = data["reset"]
+        before, after = receipt["before_clock"], receipt["after_actual_clocks"]
+        _no_step(before, after)
+        last_setup = setup[-1]["payload"]
+        if (any(type(row["sdk_physics_step"]) is not int or row["sdk_physics_step"] != 2
+                or row["sdk_timestamp_s"] != last_setup["sdk_time_s"] or row["sdk_dt_s"] != DT
+                for row in (before, after))
+                or any(type(receipt[key]) is not int or receipt[key] != 0
+                       for key in ("new_sdk_steps", "new_solver_steps"))
+                or after["rod"] != receipt["after_clock"]
+                or data["clearance_passed"] is not True):
+            raise ValueError("actual SDK setup and zero-step Reset readbacks differ")
+        pre = first_physical["payload"]["exchange"]["action_readback"]["pre"]["identity"]
+        if len(pre) != 1 or _clock_row(pre[0]) != sequence.clock:
+            raise ValueError("Reset identity differs from the first executed pre-action boundary")
+    except (KeyError, TypeError, IndexError) as error:
+        raise ValueError("incomplete actual setup and Reset readback") from error
+    return dict(setup_sdk_steps=sequence.setup, episode_reset_sdk_steps=receipt["new_sdk_steps"],
+                episode_uid=sequence.clock["episode_uid"], reset_id=sequence.clock["reset_id"])
+
+
 def audit_actual_fresh_outputs(spec, output, *, repository, package):
     """Audit fresh Pinch output after the parent has observed the real exit.
 
-    Full admission also requires independent setup, cap and receipt validation.
+    Full admission also requires independent cap and receipt validation.
     The returned data can describe a complete measured window while it remains
     ineligible for publishing a qualified native receipt.
     """
@@ -201,6 +243,7 @@ def audit_actual_fresh_outputs(spec, output, *, repository, package):
     if launch is None or launch["role"] != "a_fresh" or launch["checkpoint_origin"] is not None:
         raise ValueError("registered A-fresh companion required for this output audit")
     frozen = freeze_actual_fresh_artifacts(spec=spec, output=output)
+    setup = _audit_fresh_setup(frozen["rows"])
     physical = _physical_journal(frozen["rows"], reward_scope="unqualified_source",
                                  expected_backend_sha256=spec["teacher_contract"]["backend_sha256"])
     if physical["physical_nodes"] != 41:
@@ -212,5 +255,5 @@ def audit_actual_fresh_outputs(spec, output, *, repository, package):
     return dict(artifact_sha256=frozen["artifact_sha256"], lifecycle_sha256=result["lifecycle_sha256"],
         teacher_training=result["training"], physical_evidence=physical, checkpoint_audit=checkpoint,
         input_source_audit=model_input, physical_to_model_snapshot_binding_verified=True,
-        actual_setup_source_verified=False, cap_source_verified=False,
+        setup_evidence=setup, actual_setup_source_verified=True, cap_source_verified=False,
         native_ready=False, native_qualification=False, teacher_admission=False)

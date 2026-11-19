@@ -38419,17 +38419,18 @@
         "teacher.actual-input-audit-cpu",
         "teacher.actual-fresh-worker-entry-cpu",
         "teacher.actual-worker-ledgers-cpu",
-        "teacher.actual-fresh-output-audit-cpu"
+        "teacher.actual-fresh-output-audit-cpu",
+        "teacher.actual-fresh-setup-audit-cpu"
       ],
       "status": "blocked",
-      "reason": "A-fresh artifacts, model input and checkpoint audit pass CPU regression. Independent setup/cap evidence and qualified receipt revalidation remain pending.",
+      "reason": "Independent A-fresh setup, physical snapshots, model input and checkpoint CPU audits are implemented. Actual cap and receipt revalidation remain pending.",
       "native_qualification": false,
       "last_result": {
-        "cpu_passed": 220,
+        "cpu_passed": 265,
         "cpu_failed": 0,
         "native_runs": 0,
         "native_ppo_updates": 0,
-        "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-output-audit.md"
+        "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-setup-audit.md"
       }
     },
     "teacher.actual-resume-l03-cpu": {
@@ -41343,6 +41344,26 @@
       ],
       "readiness": "docs/contracts/dh116_wire_vertical_repair_v1.json",
       "report": "docs/superpowers/reports/2026-11-19-dh116-wire-vertical-repair.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 265,
+        "failed": 0,
+        "scope": "CPU regression only"
+      }
+    },
+    "teacher.actual-fresh-setup-audit-cpu": {
+      "title": "Pinch 建场与首动作 Reset 证据",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.actual-fresh-output-audit-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_artifacts.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_fresh_setup_audit_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-setup-audit.md",
       "native_runs": 0,
       "last_result": {
         "passed": 265,

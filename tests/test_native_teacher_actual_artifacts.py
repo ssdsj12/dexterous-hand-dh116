@@ -160,3 +160,51 @@ def test_actual_input_audit_binds_exact_journal_prefix_to_checkpoint_seal(monkey
             worker_actual._audit_sealed_packs(frozen, profile)
     else:
         assert worker_actual._audit_sealed_packs(frozen, profile) == result
+
+
+@pytest.mark.parametrize("damage", [None, "setup_step", "order", "duplicate_reset", "advance_reset", "foreign_episode"])
+def test_pinches_setup_matches_first_pre_action_without_hidden_step(damage):
+    from copy import deepcopy
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_artifacts import _audit_fresh_setup
+
+    clock = dict(run_uuid="run1", episode_uid="run1:0", rod_uid="rod0", env_id=0, reset_id=1,
+                 physics_step=2, rod_tick=0, timestamp_s=2/480, solver_time_s=0.,
+                 clock_valid=True, policy_step=0, substep=0)
+    boundary = dict(boundary="reset", run_uuid="run1", rod_uid="rod0", rod_tick=0,
+                    teacher_admission=False, native_qualified=False,
+                    rod_snapshot=dict(env_ids=[0], episode_uids=["run1:0"], reset_ids=[1], rod_uids=["rod0"],
+                                      physics_step=2, rod_tick=0, timestamp_s=2/480))
+    rod = {key: value for key, value in clock.items() if key not in ("policy_step", "substep")}
+    sdk = dict(sdk_physics_step=2, sdk_timestamp_s=2/480, sdk_dt_s=1/480)
+    before = dict(sdk, rod=dict(rod, episode_uid="run1:construction", reset_id=0,
+                                clock_valid=False, physics_step=None, timestamp_s=None))
+    events = [
+        ("setup", dict(kind="setup", phase="before_reset", sdk_step=0, sdk_time_s=0.)),
+        ("setup", dict(kind="setup", phase="after_reset", sdk_step=2, sdk_time_s=2/480)),
+        ("owner_event", dict(kind="reset", clearance_passed=True, rod_boundary=boundary,
+                             reset=dict(status="complete", before_clock=before, after_clock=rod,
+                                        after_actual_clocks=dict(sdk, rod=deepcopy(rod)),
+                                        new_sdk_steps=0, new_solver_steps=0))),
+        ("decision", {}),
+        ("physical", dict(exchange=dict(action_readback=dict(pre=dict(identity=[deepcopy(clock)]))))),
+    ]
+    if damage == "setup_step":
+        events[1][1]["sdk_step"] = True
+    elif damage == "order":
+        events[1], events[2] = events[2], events[1]
+    elif damage == "duplicate_reset":
+        events.insert(3, deepcopy(events[2]))
+    elif damage == "advance_reset":
+        events[2][1]["reset"]["before_clock"]["sdk_physics_step"] = 1
+    elif damage == "foreign_episode":
+        events[-1][1]["exchange"]["action_readback"]["pre"]["identity"][0]["episode_uid"] = "other"
+
+    rows = [dict(sequence=index, operation=kind, payload=payload) for index, (kind, payload) in enumerate(events)]
+    if damage:
+        with pytest.raises(ValueError, match="setup|Reset|reset"):
+            _audit_fresh_setup(rows)
+    else:
+        result = _audit_fresh_setup(rows)
+        assert result["setup_sdk_steps"] == 2
+        assert result["episode_reset_sdk_steps"] == 0
+        assert result["episode_uid"] == "run1:0"

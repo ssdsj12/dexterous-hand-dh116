@@ -1,0 +1,59 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.actual-fresh-setup-audit-cpu",
+  "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-setup-audit.md",
+  "branch": "11-17",
+  "review_baseline": "e857f0435106a9f2dfeff8f5130ad393e6a762cb",
+  "cpu": {
+    "passed": 265,
+    "failed": 0,
+    "new_cases": 6,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_native_teacher_actual_artifacts.py",
+      "tests/test_native_teacher_worker_artifacts.py",
+      "tests/test_native_teacher_actual_provider.py",
+      "tests/test_fault_safe_lifecycle_v3.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_dh116_wire_pose_candidate.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_dh116_tripod_joint_root_direction.py",
+      "tests/test_dh116_power_joint_palm_direction.py"
+    ],
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "log": "joint-final-cpu.log",
+    "sha256": "b1e8f02a194b5cb5891616d76f1ff1288f65b2eb203cbfb19ac2b1920c2feb46",
+    "red_sha256": "67cdce15973b90f216ec3b8dcc745c90772e210378cda55b07e9cff08380e304"
+  },
+  "sources": {
+    "scripts/run_dh116_work_packages.py": "7992929481fb335f6d12e4b0b8c2efd8dd4195297716dd8fe698a4f24ffc5c27",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_artifacts.py": "c3727550b0edbf89c0fd133cad231bfa469d7e570950d66a6a757056cf543a16",
+    "tests/test_native_teacher_actual_artifacts.py": "84bcab432da83aa94094d9aec5737063db424c058c444abfdf37a9844c93254f"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "setup_focused_log_sha256": "2de53716c0348a100aed8d5183f9a016da6844162b38d17cdc93150eca7a0224",
+  "remaining": [
+    "independent_actual_cap_audit",
+    "qualified_receipt_revalidation",
+    "singleton_resource"
+  ]
+}

@@ -1335,7 +1335,7 @@ class Repository:
         if spec.get('version') == 2:
             result.update(artifacts)
             if result.get('native_qualification') is not True:
-                reason = ('actual_setup_and_cap_receipt_audit_pending' if actual_launch is not None
+                reason = ('actual_cap_and_receipt_audit_pending' if actual_launch is not None
                           else 'missing-actual-provider-witness: physical/model snapshot binding, setup and cap source')
                 result.update(native_qualification=False, blocker_kind='failed_native', reason=reason)
             return
