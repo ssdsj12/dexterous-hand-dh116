@@ -26662,6 +26662,31 @@
         "verified_at_utc": "2026-11-19T08:23:50.465131+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-launch-source-scan-latency",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-launch-source-scan.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_launch_source_scan_v1.json",
+      "cpu_tests": {
+        "passed": 198,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c9358406b89148ee631b99fc8ba0081710b9f8da",
+        "source_tree": "36e691003f3f57c8188ce839209212d0d2212b8d",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T08:41:31.106561+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
