@@ -42274,6 +42274,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.tripod-continuous-delay-band-cpu": {
+      "title": "Certify continuous Tripod delay phases from the controller knots",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.tripod-recorded-delay-corners-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_tripod_bilateral_closure.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_continuous_delay_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-continuous-delay.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 44,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

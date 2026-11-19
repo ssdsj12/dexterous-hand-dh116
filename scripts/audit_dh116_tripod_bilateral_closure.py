@@ -15,6 +15,7 @@ from scripts.audit_dh116_pinch_initial_pose import (
     DISTAL_PAD_LINKS, checked_json, load_geometry, path_displacement_bound,
 )
 from scripts.audit_dh116_tripod_fixed_root_path import certify_path
+from scripts.certify_dh116_tripod_tracking_envelope import certify_box, verify_box_certificate
 from scripts.audit_dh116_tripod_sdk_path import compile_actions, runtime_reference
 from scripts.audit_dh116_wire_contact_witness import audit_hand, endpoint_gap, shapes_world
 from scripts.prepare_dh116_wire_pose_candidate import HANDS, _pad_gap_interval
@@ -99,7 +100,79 @@ def screen_delays(positions, angles, ticks, query, *, corners=False):
     return cases
 
 
-def audit_reference(artifact, project, *, recenter=None, delay_evidence=None, delay_corners=False):
+def phase_sample(knots, phase):
+    phase = float(np.clip(phase, 0., len(knots)-1))
+    index = min(int(phase), len(knots)-2)
+    fraction = phase - index
+    return (1. - fraction) * knots[index] + fraction * knots[index+1]
+
+
+def phase_state(positions, angles, *, joint_index, phase, relative_wrist_phase):
+    pose = phase_sample(positions, phase + relative_wrist_phase)
+    pose[3:] = positions[0, 3:]
+    q = angles[0].copy()
+    if joint_index is not None:
+        q[joint_index] = phase_sample(angles[:, joint_index], phase)
+    return pose, q
+
+
+def certify_delay_band(positions, angles, ticks, geometry, query):
+    """Cover the exact relative phase domain of each link's single moving chain."""
+    if (len(positions) != len(angles) or len(positions) < 2 or
+            np.max(np.abs(positions[:, 3:] - positions[0, 3:])) > 1e-12):
+        raise ValueError("same-length fixed-orientation controller knots required")
+    q_speed = np.abs(np.diff(angles, axis=0)).max(axis=0)
+    wrist_speed = float(np.linalg.norm(np.diff(positions[:, :3], axis=0), axis=1).max())
+    moving = np.flatnonzero(q_speed)
+    if not len(moving) or ticks["wrist_z"] is None or any(ticks[ACTIVE[j]] is None for j in moving):
+        raise ValueError("measured delay bounds for all observed axes required")
+    groups = {}
+    keys = tuple(key.removeprefix("table:") for key in query(positions[0], angles[0], None)
+                 if key.startswith("table:"))
+    speeds = {}
+    for j in moving:
+        i = int(np.argmax(np.abs(np.diff(angles[:, j]))))
+        delta = np.zeros(6)
+        delta[j] = angles[i+1, j] - angles[i, j]
+        speeds[j] = {kind+":"+link: travel for kind in ("source", "cooked")
+                     for link, travel in path_displacement_bound(geometry, angles[i], delta,
+                                                                  cooked=kind=="cooked").items()}
+    for key in keys:
+        dependencies = [j for j in moving if speeds[j][key] > 0.]
+        if len(dependencies) > 1:
+            raise ValueError("shape uses more than one changing joint; single-chain phase bound invalid")
+        index = int(dependencies[0]) if dependencies else None
+        groups.setdefault(index, []).append(key)
+    last = len(positions) - 1
+    wrist_delay = ticks["wrist_z"]["screening_upper_ticks"]
+    results = {}
+    for index, shapes in groups.items():
+        if index is None:
+            lower, upper = [0.], [float(last)]
+        else:
+            lower = [0., -float(wrist_delay)]
+            upper = [float(last), float(ticks[ACTIVE[index]]["screening_upper_ticks"])]
+        speed = {shape: [wrist_speed] if index is None else [wrist_speed + speeds[index][shape], wrist_speed]
+                 for shape in shapes}
+        bounds = {kind+":"+shape: values for shape, values in speed.items()
+                  for kind in ("table", "side", "rod")}
+
+        def checked(point):
+            pose, active = phase_state(positions, angles, joint_index=index, phase=point[0],
+                                       relative_wrist_phase=point[1] if len(point)==2 else 0.)
+            return {key: value - (CLEARANCE_M if key.startswith("table:") else 0.)
+                    for key, value in query(pose, active, shapes).items()}
+
+        proof = certify_box(checked, bounds, lower, upper, max_samples=4096, max_seconds=150)
+        checked_proof = verify_box_certificate(proof, checked, bounds, lower, upper) if proof["proved"] else None
+        label = "static_fingers" if index is None else ACTIVE[index]
+        results[label] = dict(shape_keys=shapes, lower=lower, upper=upper, proof=proof,
+                              independent_cover_check=checked_proof)
+    return dict(groups=results, proved=all(group["proof"]["proved"] for group in results.values()),
+                knots=len(positions), native_tracking_verified=False)
+
+
+def audit_reference(artifact, project, *, recenter=None, delay_evidence=None, delay_corners=False, delay_band=False):
     seed = artifact["trial_seed"]
     nodes, joints, roots, _ = seed_arrays(seed)
     ids = [JOINTS.index(key) for key in ACTIVE]
@@ -157,9 +230,11 @@ def audit_reference(artifact, project, *, recenter=None, delay_evidence=None, de
             active = (1.-fraction)*angles[index] + fraction*angles[index+1]
             return query_geometry(pose, active)
 
-        def query_geometry(pose, active):
+        def query_geometry(pose, active, shape_keys=None):
             rows = {}
             for key, hull in shapes_world(g, pose, active).items():
+                if shape_keys is not None and key not in shape_keys:
+                    continue
                 rows["table:"+key] = float(hull[:, 2].min()-top)
                 rows["side:"+key] = float((sign*hull[:, 1]).min())
                 gap = _pad_gap_interval(hull, nodes, radius)["lower_m"]
@@ -182,7 +257,12 @@ def audit_reference(artifact, project, *, recenter=None, delay_evidence=None, de
                            side_plane_clearance_m=side_margin,
                            executed_target_end_pose_wxyz=positions[-1].tolist(),
                            executed_target_end_q_rad=angles[-1].tolist())
-        if delay_evidence is not None:
+        if delay_band:
+            band = certify_delay_band(positions, angles, delay_evidence, g, query_geometry)
+            hands[side]["delay_screen"] = dict(delay_source="historical_left_tripod",
+                transferred_to_right=(side == "right"), continuous_delay_box_proved=band["proved"],
+                phase_band=band, cases=[])
+        elif delay_evidence is not None:
             cases = screen_delays(positions, angles, delay_evidence, query_geometry, corners=delay_corners)
             hands[side]["delay_screen"] = dict(
                 delay_source="historical_left_tripod", transferred_to_right=(side == "right"),
@@ -212,6 +292,7 @@ def main():
     delay_mode = parser.add_mutually_exclusive_group()
     delay_mode.add_argument("--screen-recorded-delays", action="store_true")
     delay_mode.add_argument("--screen-delay-corners", action="store_true")
+    delay_mode.add_argument("--certify-delay-band", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     artifact = checked_json(args.endpoint, args.endpoint_sha256)
@@ -224,11 +305,12 @@ def main():
             raise ValueError("recenter was derived from a different pair")
         recenter = bound["hands"]
     delay_evidence = None
-    if args.screen_recorded_delays or args.screen_delay_corners:
+    if args.screen_recorded_delays or args.screen_delay_corners or args.certify_delay_band:
         from scripts.prepare_dh116_tripod_fixed_orientation import recorded_lags
         delay_evidence = recorded_lags()
     result = audit_reference(artifact, Path(__file__).resolve().parents[1], recenter=recenter,
-                             delay_evidence=delay_evidence, delay_corners=args.screen_delay_corners)
+                             delay_evidence=delay_evidence, delay_corners=args.screen_delay_corners,
+                             delay_band=args.certify_delay_band)
     if recenter is not None:
         result["recenter_sha256"] = args.recenter_sha256
     result["input_sha256"] = args.endpoint_sha256
@@ -239,6 +321,9 @@ def main():
         case["violation"] is not None for hand in result["hands"].values()
         for case in hand["delay_screen"]["cases"]
     )
+    if args.certify_delay_band:
+        delay_fail = not all(hand["delay_screen"]["continuous_delay_box_proved"]
+                             for hand in result["hands"].values())
     return 0 if result["continuous_reference_path_proved"] and not delay_fail else 2
 
 

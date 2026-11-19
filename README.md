@@ -1,3 +1,7 @@
+## 2026-11-19 Tripod continuous delay band
+
+Certified and independently rechecked both hands over the historical pure-delay bands on the fixed reference rod. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-continuous-delay.md).
+
 ## 2026-11-19 Pinch v8 native terminal and measured clearance
 
 Recorded the single authorized v8 attempt and verified a right finger13 table-clearance terminal at SDK step 7. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v8-native-terminal.md).

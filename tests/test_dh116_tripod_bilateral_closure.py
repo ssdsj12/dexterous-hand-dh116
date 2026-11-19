@@ -72,3 +72,15 @@ def test_tripod_delay_corners_find_a_mixed_failure_hidden_by_two_legacy_cases():
     assert failed[0]["joint_delays_ticks"] == [0, 1, 0, 0, 0, 0]
     assert failed[0]["violation"]["sdk_reference_tick"] == 2
     assert failed[0]["violation"]["shape"] == "rod:source:finger13_link"
+
+
+def test_tripod_phase_band_uses_maximum_finger_delay_to_advance_wrist():
+    positions = np.array([[0., 0., z, 1., 0., 0., 0.] for z in (3., 2., 1., 0.)])
+    angles = np.zeros((4, 6))
+    angles[:, 1] = (0., .02, .06, .12)
+    pose, q = closure.phase_state(positions, angles, joint_index=1, phase=1.5, relative_wrist_phase=.25)
+    assert pose[2] == pytest.approx(1.25)
+    assert q[1] == pytest.approx(.04)
+    pose, q = closure.phase_state(positions, angles, joint_index=1, phase=2.5, relative_wrist_phase=1.)
+    assert pose[2] == 0.
+    assert q[1] == pytest.approx(.09)
