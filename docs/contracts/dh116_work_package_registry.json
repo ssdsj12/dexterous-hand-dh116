@@ -42173,10 +42173,31 @@
         "max_attempts_per_code_config": 1,
         "retry_requires_change": true
       },
-      "status": "pending",
+      "status": "blocked",
       "tests": [],
       "title": "Pinch fresh PPO smoke32 with canonical scheduler parent argv",
-      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v8-launch-preflight.md"
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v8-native-terminal.md",
+      "blocker_kind": "failed_native",
+      "reason": "Right finger13 source hull crossed the original table clearance floor at SDK step 7",
+      "last_result": {
+        "attempt_fingerprint": "e4f597aecbf764ebf97fd149b7fcc175f832aca79973fec4b1ab86e24219f13a",
+        "result_sha256": "98d48d1addf7115ac69a3f7ab85235493f29918683043f083185121fad0a3309",
+        "diagnostic_verified": false,
+        "outer_exit_code": 1,
+        "debugger_inferior_signal": null,
+        "native_lock_observed": true,
+        "native_execution_performed": true,
+        "isaac_started": true,
+        "setup_sdk_steps": 2,
+        "measured_sdk_steps": 5,
+        "internal_solver_substeps": 60,
+        "policy_decisions": 1,
+        "terminal_transitions": 1,
+        "ppo_updates": 0,
+        "terminal_sdk_step": 7,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     },
     "teacher.pinch-v8-canonical-launch-preflight-cpu": {
       "title": "Freeze Pinch v8 with the canonical scheduler launch route",
@@ -42232,6 +42253,24 @@
       "native_runs": 0,
       "last_result": {
         "passed": 43,
+        "failed": 0,
+        "scope": "CPU only"
+      }
+    },
+    "teacher.pinch-v8-terminal-clearance-audit-cpu": {
+      "title": "Audit the measured Pinch v8 right thumb terminal",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-v8-canonical-launch-preflight-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v8_native_terminal_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v8-native-terminal.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 99,
         "failed": 0,
         "scope": "CPU only"
       }

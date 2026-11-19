@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch v8 native terminal and measured clearance
+
+Recorded the single authorized v8 attempt and verified a right finger13 table-clearance terminal at SDK step 7. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v8-native-terminal.md).
+
 ## 2026-11-19 Tripod mixed delay corner audit
 
 Ran all 16 discrete wrist-and-finger delay corners per hand and recorded their exact limiting colliders. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-delay-corners.md).
