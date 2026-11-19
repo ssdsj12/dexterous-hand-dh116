@@ -61,7 +61,12 @@ def test_acquisition_uses_one_journal_and_releases_collector_on_every_return(tmp
     from go2_pvcnn.control.dh116 import tabletop_native_teacher_actual_update as update
     from go2_pvcnn.control.dh116 import tabletop_native_teacher_session as session
 
+    import hashlib
+    import torch
+
     events = []
+    initial_rng = torch.get_rng_state().clone()
+    exploration_state = torch.Generator(device="cpu").manual_seed(2026112002).get_state()
     attempt = SimpleNamespace(project=tmp_path, output=tmp_path, session_uid="cpu-composition",
                               device={"logical_device": "cuda:0"})
     sim, owners, trace, lease, owner, static = (object() for _ in range(6))
@@ -92,11 +97,23 @@ def test_acquisition_uses_one_journal_and_releases_collector_on_every_return(tmp
             if failure in ("close", "both"):
                 raise RuntimeError("collector close failure")
 
-        return SimpleNamespace(owner=owner, journal=journal, close=close)
+        return SimpleNamespace(owner=owner, journal=journal, close=close, _epoch={"weights": "c" * 64})
 
     def step(collector, *, checkpoint_contract):
         assert checkpoint_contract == {"fixture": True}
         events.append(("update", collector.journal))
+        entries = [json.loads(line) for line in collector.journal.path.read_text().splitlines()]
+        seed_records = [entry["payload"] for entry in entries if entry["operation"] == "fresh_policy_rng"]
+        assert len(seed_records) == 1
+        seed = seed_records[0]
+        assert seed["initialization_seed"] == 2026112001
+        assert seed["exploration_seed"] == 2026112002
+        assert seed["initial_weights_sha256"] == "c" * 64
+        assert seed["deterministic_physics_claimed"] is False
+        assert seed["exploration_state_sha256"] == hashlib.sha256(exploration_state.numpy().tobytes()).hexdigest()
+        assert seed["native_qualification"] is False and seed["teacher_admission"] is False
+        assert torch.equal(torch.get_rng_state(), exploration_state)
+        torch.rand(5)
         if failure in ("update", "both"):
             raise ValueError("original update failure")
         return {"updates": 1, "native_qualification": False}
@@ -127,8 +144,10 @@ def test_acquisition_uses_one_journal_and_releases_collector_on_every_return(tmp
         expected.append("after_update")
     assert [name for name, _ in events] == [*expected, "close"]
     assert all(log is events[0][1] and log._stream.closed for _, log in events)
-    saved = json.loads(Path(events[0][1].path).read_text())
-    assert saved["payload"]["native_qualification"] is False
+    saved = [json.loads(line) for line in Path(events[0][1].path).read_text().splitlines()]
+    assert [row["operation"] for row in saved] == ["owned_cpu_fixture", "fresh_policy_rng"]
+    assert saved[0]["payload"]["native_qualification"] is False
+    assert torch.equal(torch.get_rng_state(), initial_rng)
 
 
 def test_run_a_keeps_python_close_distinct_from_outer_exit(lease_fixture, monkeypatch):

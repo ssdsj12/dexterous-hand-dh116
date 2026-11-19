@@ -2,6 +2,7 @@
 from contextlib import closing
 from dataclasses import dataclass
 from functools import partial
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -145,7 +146,13 @@ def _record_actual_wall_budget(collector, lease, phase):
 
 
 def _acquire(sim, owners, trace, *, attempt, config, lease):
-    from .tabletop_native_teacher_actual_factories import build_actual_factories
+    import torch
+
+    from .tabletop_native_teacher_actual_factories import (
+        FRESH_POLICY_EXPLORATION_SEED,
+        FRESH_POLICY_INITIALIZATION_SEED,
+        build_actual_factories,
+    )
     from .tabletop_native_teacher_actual_update import run_fresh_update
     from .tabletop_native_teacher_collector import NativeJournal
     from .tabletop_native_teacher_session import (
@@ -167,7 +174,23 @@ def _acquire(sim, owners, trace, *, attempt, config, lease):
         try:
             checkpoint_contract = _checkpoint_contract(collector, attempt)
             _record_actual_wall_budget(collector, lease, "before_update")
-            result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract)
+            # Keep exploration, PPO minibatches and checkpoint sealing on the
+            # same CPU stream. Restore the process state even on failure.
+            with torch.random.fork_rng(devices=[]):
+                torch.default_generator.manual_seed(FRESH_POLICY_EXPLORATION_SEED)
+                rng_bytes = torch.get_rng_state().numpy().tobytes()
+                journal.emit("fresh_policy_rng", {
+                    "version": "dh116-fresh-policy-cpu-rng-v1",
+                    "device_scope": "cpu",
+                    "initialization_seed": FRESH_POLICY_INITIALIZATION_SEED,
+                    "exploration_seed": FRESH_POLICY_EXPLORATION_SEED,
+                    "initial_weights_sha256": collector._epoch["weights"],
+                    "exploration_state_sha256": hashlib.sha256(rng_bytes).hexdigest(),
+                    "deterministic_physics_claimed": False,
+                    "native_qualification": False,
+                    "teacher_admission": False,
+                })
+                result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract)
             _record_actual_wall_budget(collector, lease, "after_update")
         except BaseException:
             try:

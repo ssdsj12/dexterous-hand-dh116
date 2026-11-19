@@ -82,6 +82,31 @@ def test_real_factories_use_c04_owner_and_original_components(boundaries):
     assert policy.model_identity["native_ready"] is False
 
 
+def test_fresh_cpu_policy_weights_are_independent_of_ambient_torch_rng(boundaries):
+    import torch
+
+    fs, _, owner, static, _, _ = boundaries
+    fs.episode(static)
+    _finished_live_check(owner)
+    live = ModelContract(static.config.model_config, static.backend_profile, SMOKE)
+    with torch.random.fork_rng(devices=[]):
+        torch.default_generator.manual_seed(11)
+        before_a = torch.get_rng_state().clone()
+        first = fs.policy(live)
+        after_a = torch.get_rng_state().clone()
+
+        torch.default_generator.manual_seed(74)
+        before_b = torch.get_rng_state().clone()
+        second = fs.policy(live)
+        after_b = torch.get_rng_state().clone()
+
+    second_parameters = dict(second.named_parameters())
+    for name, tensor in first.named_parameters():
+        assert torch.equal(tensor, second_parameters[name]), name
+    assert torch.equal(before_a, after_a)
+    assert torch.equal(before_b, after_b)
+
+
 def test_rejects_stale_or_foreign_boundaries_before_model_creation(boundaries):
     fs, lease, owner, static, calls, _ = boundaries
     live = ModelContract(static.config.model_config, static.backend_profile, SMOKE)

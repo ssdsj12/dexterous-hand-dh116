@@ -1,3 +1,7 @@
+## 2026-11-20 Fresh Pinch diagnostic CPU RNG binding
+
+Fresh Pinch worker construction and exploration use independently frozen CPU Torch seeds. The worker journals initialization and exploration provenance before the first motion decision. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-fresh-cpu-rng.md).
+
 ## 2026-11-20 Pinch v10 physical terminal and throughput evidence
 
 The native limit remained active. v10 reached SDK step 21 before the original right thumb table-clearance guard stopped the rollout. The shared Reset produced different policy draws, so the v9/v10 comparison is descriptive. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v10-native-outcome.md).

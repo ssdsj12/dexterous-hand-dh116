@@ -42514,6 +42514,27 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-fresh-cpu-rng-binding-cpu": {
+      "title": "Fix fresh Pinch CPU model and PPO random streams",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-v10-outcome-audit-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_factories.py",
+        "tests/test_native_teacher_actual_provider.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_fresh_cpu_rng_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-fresh-cpu-rng.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 214,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

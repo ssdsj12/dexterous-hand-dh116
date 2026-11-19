@@ -16,6 +16,12 @@ from .tabletop_native_teacher_training import VERSION
 from .tabletop_training_reward import TrainingReward
 
 
+# Fixed diagnostic seeds are bound by the A-fresh source closure, independent
+# of the per-attempt nonce and of any RNG draws during scene construction.
+FRESH_POLICY_INITIALIZATION_SEED = 2026112001
+FRESH_POLICY_EXPLORATION_SEED = 2026112002
+
+
 def build_actual_factories(*, lease, episode_factory, prepare_source_pack):
     """Return factories in the order consumed by create_native_collector.
 
@@ -72,8 +78,12 @@ def build_actual_factories(*, lease, episode_factory, prepare_source_pack):
         bind_source_pack = prepare_source_pack(owner, contract)
         if not callable(bind_source_pack):
             raise ValueError("verified source-pack binder required before constructing the policy")
-        model = NativeContextTeacher(contract.config, backend_profile=contract.backend_profile,
-                                     context_mode=contract.context_mode)
+        import torch
+
+        with torch.random.fork_rng(devices=[]), torch.device("cpu"):
+            torch.default_generator.manual_seed(FRESH_POLICY_INITIALIZATION_SEED)
+            model = NativeContextTeacher(contract.config, backend_profile=contract.backend_profile,
+                                         context_mode=contract.context_mode)
         bind_source_pack(model)
         policy_ref = ref(model)
         return model
