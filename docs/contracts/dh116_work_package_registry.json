@@ -42062,6 +42062,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-recenter-observed-tracking-cpu": {
+      "title": "Audit measured Pinch v6 link motion on v7 native Reset",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-recenter-bound-reset"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_pinch_recentered_tracking.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_observed_tracking_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-observed-tracking.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 25,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

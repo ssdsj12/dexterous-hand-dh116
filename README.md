@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch historical link-motion replay
+
+Replayed ten measured Pinch SDK substeps on the v7 native Reset and retained the original table gate. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-observed-tracking.md).
+
 ## 2026-11-19 Power material cross-section reach audit
 
 The matched supported-rod sweep measured the effect of wrist roll, lateral shift and palm backoff on each hand's closure reach. [Report](docs/superpowers/reports/2026-11-19-teacher-power-material-reach.md).
