@@ -26512,6 +26512,31 @@
         "verified_at_utc": "2026-11-19T06:34:00.567226+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-native-worker-branch",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-worker-branch.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_native_worker_branch_v1.json",
+      "cpu_tests": {
+        "passed": 152,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "88847d1b67c18b5fdfd125d51652463ded5a33e0",
+        "source_tree": "fb04c40da068ecb35c59c1005aa4b84d6c18c4c3",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T07:22:55.000774+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
