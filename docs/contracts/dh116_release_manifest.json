@@ -26337,6 +26337,31 @@
         "verified_at_utc": "2026-11-19T05:01:14.229308+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.wire-joint-pregrasp-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-wire-joint-pregrasp.md",
+      "readiness": "docs/contracts/dh116_wire_joint_pregrasp_v1.json",
+      "cpu_tests": {
+        "passed": 110,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "21bb28fb8206f622f8f8df87cc1723657cc2f3c8",
+        "source_tree": "0eca4b30744ebe238c28abbc2e8b68ed5ec24a72",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T05:04:06.609443+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
