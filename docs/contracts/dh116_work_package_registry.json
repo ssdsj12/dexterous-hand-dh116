@@ -41866,7 +41866,7 @@
     },
     "teacher.pinch-ppo-fresh-smoke32-v6": {
       "title": "Pinch fresh PPO smoke32 with source-specific binary32 clock validation",
-      "status": "pending",
+      "status": "blocked",
       "executor": "native_bounded",
       "dependencies": [],
       "requires_approval": true,
@@ -41882,7 +41882,43 @@
         "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v6.json",
         "sha256": "6c38bcf48e0a3b650719e8cbf463a7dc39a8cfeaa54159ff75871b84e7c36dae"
       },
-      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-binary32-clock.md"
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-binary32-clock.md",
+      "blocker_kind": "failed_native",
+      "reason": "Native early terminal: left finger22_link crossed original table-clearance guard",
+      "last_result": {
+        "attempt_fingerprint": "923d67d03eb28d7b05a13ad0f232a4cd08c091d2fe2a66e02e144b1fd0d6ca66",
+        "result_sha256": "77196ce5ca851901452a5aff3b903c447b1f13ce6bd4596c7bcd030dc2feb26c",
+        "outer_exit_code": 1,
+        "native_execution_performed": true,
+        "isaac_started": true,
+        "setup_sdk_steps": 2,
+        "measured_sdk_steps": 10,
+        "ppo_updates": 0,
+        "native_qualification": false
+      }
+    },
+    "teacher.pinch-physical-clearance-audit": {
+      "title": "Audit actual Pinch terminal floor, collider and wrist projection",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-native-binary32-clock"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_pinch_ppo_clearance_audit.py",
+        "tests/test_native_teacher_actual_artifacts.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_dh116_pinch_initial_table_clearance.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_physical_clearance_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-physical-clearance.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 66,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

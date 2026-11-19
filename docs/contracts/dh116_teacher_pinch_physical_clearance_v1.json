@@ -1,0 +1,205 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-physical-clearance-audit",
+  "branch": "11-17",
+  "review_baseline": "eb25e6fd2b387517fa26af8967b78868b30a52f2",
+  "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-physical-clearance.md",
+  "cpu": {
+    "passed": 66,
+    "failed": 0,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_pinch_ppo_clearance_audit.py",
+      "tests/test_native_teacher_actual_artifacts.py",
+      "tests/test_native_teacher_collector.py",
+      "tests/test_dh116_pinch_initial_table_clearance.py"
+    ],
+    "log_sha256": "31de47bb733b214cb357c46f696e5f519b0a5b778819362bc756d6909b3be62d",
+    "red_sha256": "25fde9bc35539e390c80e467a4c1d2136ddd9b3c87ba583f03bf12381a0e9967"
+  },
+  "source_sha256": {
+    "scripts/audit_dh116_pinch_ppo_clearance.py": "6f40727d7367ee6e1fc2d1de11602e9dbe5868a631675afeaa28bbc1cc78616b",
+    "tests/test_dh116_pinch_ppo_clearance_audit.py": "71f6d4a24a78550d0acde3d9fe996f30536fe366c01727da4674a364a6da2b81"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "previous_native_attempt": {
+    "fingerprint": "923d67d03eb28d7b05a13ad0f232a4cd08c091d2fe2a66e02e144b1fd0d6ca66",
+    "receipt_sha256": "77196ce5ca851901452a5aff3b903c447b1f13ce6bd4596c7bcd030dc2feb26c",
+    "journal_sha256": "92fc82b7a52fb911dec02231eb6cd3ce3e2c1496ee7029df5a3dacfe654a2aac",
+    "native_log_sha256": "a3ea12db69f46356a305a1881eb52914817bf1443bfa187455ba96fa8fe1fd45",
+    "outer_exit": 1,
+    "elapsed_s": 135.09157346002758,
+    "measured_sdk_steps": 10,
+    "setup_sdk_steps": 2,
+    "internal_solver_substeps": 120,
+    "ppo_updates": 0,
+    "complete_control_windows": 1,
+    "terminal_partial_samples": 2,
+    "reason": "post_step_source_clearance:left"
+  },
+  "measured_clearance_audit": {
+    "physical_steps_scanned": 10,
+    "first_clearance_failure": {
+      "identity": {
+        "run_uuid": "ec2f97f96fb2062425c40f0d9fcbfdcd46ed56755521992b96e997ee5e4b2e12",
+        "env_id": 0,
+        "episode_uid": "ec2f97f96fb2062425c40f0d9fcbfdcd46ed56755521992b96e997ee5e4b2e12:0",
+        "reset_id": 1,
+        "rod_uid": "rod0",
+        "physics_step": 12
+      },
+      "policy_step": 1,
+      "substep": 1,
+      "side": "left",
+      "collider_source": "source",
+      "link": "finger22_link",
+      "guard": "post_step_source_clearance:left",
+      "minimum_clearance_m": 0.0020976735901807597,
+      "measured_link_clearance_m": 0.00209766476118195,
+      "floor_m": 0.0021,
+      "previous_clearance_m": 0.0021002334621673113,
+      "observed_floor_deficit_m": 2.326409819240153e-06,
+      "wrist_projection_clipped": false,
+      "hand_table_contacts": null
+    },
+    "native_qualification": false,
+    "teacher_admission": false,
+    "journal_sha256": "92fc82b7a52fb911dec02231eb6cd3ce3e2c1496ee7029df5a3dacfe654a2aac",
+    "sha256": "332fb5b7824bcbba5e1c11e30f8f97e76a63325a07fe1451d869cf1f641b2258"
+  },
+  "independent_reset_geometry": {
+    "scope": "same_measured_vertices_rigid_translation_cpu_only",
+    "artifact_sha256": "87645cfa0475d360bb2cf1c5ac86ead3a7e23d3434342a7566ff264aa7736df1",
+    "candidates": {
+      "left": [
+        {
+          "vertical_offset_m": 0.0,
+          "minimum_table_clearance_m": 0.0021108364836241456,
+          "required_upper_m": {
+            "cooked:finger14_link": 0.0015601207167234349,
+            "cooked:finger23_link": 0.00201514593274979
+          },
+          "negative_gaps": [],
+          "unknown_clearance": []
+        },
+        {
+          "vertical_offset_m": 5e-05,
+          "minimum_table_clearance_m": 0.00216083648362414,
+          "required_upper_m": {
+            "cooked:finger14_link": 0.0015715347099194187,
+            "cooked:finger23_link": 0.002024623230205481
+          },
+          "negative_gaps": [],
+          "unknown_clearance": []
+        },
+        {
+          "vertical_offset_m": 0.0001,
+          "minimum_table_clearance_m": 0.0022108364836241345,
+          "required_upper_m": {
+            "cooked:finger14_link": 0.001582948703115354,
+            "cooked:finger23_link": 0.002034100527661207
+          },
+          "negative_gaps": [],
+          "unknown_clearance": []
+        },
+        {
+          "vertical_offset_m": 0.00025,
+          "minimum_table_clearance_m": 0.002360836483624118,
+          "required_upper_m": {
+            "cooked:finger14_link": 0.0016171906827032482,
+            "cooked:finger23_link": 0.0020625332353027275
+          },
+          "negative_gaps": [],
+          "unknown_clearance": []
+        },
+        {
+          "vertical_offset_m": 0.0005,
+          "minimum_table_clearance_m": 0.002610836483624146,
+          "required_upper_m": {
+            "cooked:finger14_link": 0.0016742606486832038,
+            "cooked:finger23_link": 0.002114274108243984
+          },
+          "negative_gaps": [],
+          "unknown_clearance": []
+        }
+      ],
+      "right": [
+        {
+          "vertical_offset_m": 0.0,
+          "minimum_table_clearance_m": 0.0021163453231999863,
+          "required_upper_m": {
+            "cooked:finger14_link": 0.0007466274756199901,
+            "cooked:finger23_link": 0.0021271132945904917
+          },
+          "negative_gaps": [],
+          "unknown_clearance": []
+        },
+        {
+          "vertical_offset_m": 5e-05,
+          "minimum_table_clearance_m": 0.0021663453231999807,
+          "required_upper_m": {
+            "cooked:finger14_link": 0.0007431829004783249,
+            "cooked:finger23_link": 0.0021533051541770855
+          },
+          "negative_gaps": [],
+          "unknown_clearance": []
+        },
+        {
+          "vertical_offset_m": 0.0001,
+          "minimum_table_clearance_m": 0.0022163453231999752,
+          "required_upper_m": {
+            "cooked:finger14_link": 0.0007397383253366051,
+            "cooked:finger23_link": 0.002179497013763832
+          },
+          "negative_gaps": [],
+          "unknown_clearance": []
+        },
+        {
+          "vertical_offset_m": 0.00025,
+          "minimum_table_clearance_m": 0.0023663453231999587,
+          "required_upper_m": {
+            "cooked:finger14_link": 0.0007294853080317988,
+            "cooked:finger23_link": 0.002258072592523989
+          },
+          "negative_gaps": [],
+          "unknown_clearance": []
+        },
+        {
+          "vertical_offset_m": 0.0005,
+          "minimum_table_clearance_m": 0.0026163453231999867,
+          "required_upper_m": {
+            "cooked:finger14_link": 0.0007190333126064761,
+            "cooked:finger23_link": 0.0023890318904576276
+          },
+          "negative_gaps": [],
+          "unknown_clearance": []
+        }
+      ]
+    },
+    "activated": false
+  },
+  "later_offline_controls": {
+    "tripod_sha256": "f4a877a0de0d81b7f2ef4feeacf5160dbe042f0e8a375e70d9213f2887d5ab2a",
+    "power_sha256": "2e08ae2f8cbcd8928c753bf34335c2ad0a575f23470557db4e955abe6b6b8339"
+  }
+}

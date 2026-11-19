@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch native physical clearance diagnosis
+
+A source-bound audit identifies the first measured left finger22 clearance termination. A separate static offset screen quantifies the reset reserve before any new native recipe. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-physical-clearance.md).
+
 ## 2026-11-19 Pinch native solver clock validation
 
 Pinch v5 issued real policy commands. The smoke reward now recognizes verified binary32 clock rounding while retaining the observed stamps and exact tick/episode checks. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-native-binary32-clock.md).
