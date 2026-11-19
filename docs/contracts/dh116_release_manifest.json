@@ -26262,6 +26262,31 @@
         "verified_at_utc": "2026-11-19T04:20:29.052225+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.wire-vertical-repair-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-wire-vertical-repair.md",
+      "readiness": "docs/contracts/dh116_wire_vertical_repair_v1.json",
+      "cpu_tests": {
+        "passed": 265,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "354c83e9a582eba7d9dc4af1fc23c13f753af61d",
+        "source_tree": "35f865f8764a158aa968a61b0d89faacf4b8c8c8",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T04:38:12.495223+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
