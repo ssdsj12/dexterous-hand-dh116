@@ -42019,9 +42019,21 @@
         "max_attempts_per_code_config": 1,
         "retry_requires_change": true
       },
-      "status": "pending",
+      "status": "blocked",
       "tests": [],
-      "title": "Pinch fresh PPO smoke32 on the newly sealed recentered Reset"
+      "title": "Pinch fresh PPO smoke32 on the newly sealed recentered Reset",
+      "blocker_kind": "failed_native",
+      "reason": "Scheduler parent process signature rejected a leading interpreter flag before the Isaac child launched",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v7-native-argv.md",
+      "last_result": {
+        "attempt_fingerprint": "380a08af61036143ae4d39784a31e1a140aaef1bb4408994cb69584d0cf1ca9f",
+        "result_sha256": "294bb0630d0dd029d739acf9b95d2ce9788cb28d7ef0392f73a76acdee7b9e52",
+        "native_execution_performed": false,
+        "isaac_started": false,
+        "setup_sdk_steps": 0,
+        "ppo_updates": 0,
+        "native_qualification": false
+      }
     },
     "teacher.tripod-bilateral-closure-reference-cpu": {
       "title": "Continuous reference certificate for bilateral Tripod closure",
@@ -42120,6 +42132,26 @@
       "native_runs": 0,
       "last_result": {
         "passed": 42,
+        "failed": 0,
+        "scope": "CPU only"
+      }
+    },
+    "teacher.pinch-native-scheduler-argv-cpu": {
+      "title": "Verify signed Pinch native worker parent argv and record the v7 failed launch",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-recenter-observed-tracking-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_launch_process.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v7_native_argv_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v7-native-argv.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 4,
         "failed": 0,
         "scope": "CPU only"
       }

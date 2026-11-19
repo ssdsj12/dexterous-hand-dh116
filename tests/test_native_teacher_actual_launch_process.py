@@ -215,9 +215,9 @@ def cpu_fixture(repo,tmp_path):
 from scripts import run_dh116_work_packages as scheduler
 from test_dh116_work_packages import repo
 
-def run_cpu_parent(repo,intent,*,mode='',debugger=False):
-    env={**os.environ,'CPU_MODE':mode,'CPU_DEBUGGER':'1' if debugger else '0'}
-    return subprocess.run([sys.executable,str(repo.root/'scripts/run_dh116_work_packages.py'),'--native-worker',intent['path'],'--evidence-dir',str(repo.private)],cwd=repo.root,env=env,capture_output=True,text=True,timeout=20)
+def run_cpu_parent(repo,intent,*,mode='',debugger=False,interpreter_flags=()):
+    env={**os.environ,'CPU_MODE':mode,'CPU_DEBUGGER':'1' if debugger else '0','PYTHONDONTWRITEBYTECODE':'1'}
+    return subprocess.run([sys.executable,*interpreter_flags,str(repo.root/'scripts/run_dh116_work_packages.py'),'--native-worker',intent['path'],'--evidence-dir',str(repo.private)],cwd=repo.root,env=env,capture_output=True,text=True,timeout=20)
 
 
 @pytest.mark.parametrize('debugger',[False,True])
@@ -239,6 +239,14 @@ def test_real_cpu_handshake_rejects_foreign_or_unapproved_grant(repo,tmp_path,da
     result=run_cpu_parent(repo,intent,mode=damage)
     assert result.returncode==2,(result.stdout,result.stderr)
     assert '"ok": false' in result.stdout
+
+
+def test_real_cpu_launch_rejects_interpreter_flags_before_the_signed_worker(repo, tmp_path):
+    _, _, _, intent = cpu_fixture(repo, tmp_path)
+    result = run_cpu_parent(repo, intent, interpreter_flags=("-B",))
+    assert result.returncode == 2
+    assert "actual scheduler native-worker process argv/source required" in result.stdout
+    assert not (Path(intent["path"]).parent / "actual-launch/reply.json").exists()
 
 
 def test_pytest_parent_cannot_self_issue_actual_grant(repo,tmp_path):

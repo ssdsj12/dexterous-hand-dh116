@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch v7 scheduler process signature
+
+Recorded the pre-Isaac v7 process-signature failure and added Linux CPU coverage for the signed worker command. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v7-native-argv.md).
+
 ## 2026-11-19 Bilateral Tripod recenter and tracking-delay screen
 
 Replayed two independently delayed target profiles on the original link geometry and retained the bounded candidate that clears both sampled profiles. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-recenter-delay.md).
