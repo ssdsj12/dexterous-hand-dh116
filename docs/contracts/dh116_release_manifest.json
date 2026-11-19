@@ -26562,6 +26562,31 @@
         "verified_at_utc": "2026-11-19T07:31:53.610523+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-witness-shortlist-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-witness-shortlist.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_witness_shortlist_v1.json",
+      "cpu_tests": {
+        "passed": 42,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "17b933956471447056e27893e05d707dbed6ee4c",
+        "source_tree": "e2db0e742ef8500b6ff61d32267934b0e712f7ff",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T07:46:39.654695+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
