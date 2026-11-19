@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch v9 source-bound Reset
+
+Accepted a new native Reset after independent exit and readback verification and froze the same-budget v9 PPO diagnostic. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v9-bound-reset.md).
+
 ## 2026-11-19 Power continuous middle-finger reach
 
 Compared isolated middle-finger joint reach against each eligible seated Power pose and separated pose reach from search resolution. [Report](docs/superpowers/reports/2026-11-19-teacher-power-middle-reach.md).

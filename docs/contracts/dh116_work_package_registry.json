@@ -42334,6 +42334,46 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v9": {
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v9.json",
+        "sha256": "dcb9888e956ef3934d4dc2a476df6d3866d1b4b860c5bff9d011c22af294ca31"
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v9.json",
+      "dependencies": [
+        "teacher.pinch-v9-bound-native-reset"
+      ],
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "status": "pending",
+      "tests": [],
+      "title": "Pinch fresh PPO smoke32 on new right-thumb dynamic clearance Reset",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v9-bound-reset.md"
+    },
+    "teacher.pinch-v9-bound-native-reset": {
+      "title": "Seal the new right Pinch Reset and freeze v9",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-v8-right-active-passive-clearance-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v9_bound_reset_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v9-bound-reset.md",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 17,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
