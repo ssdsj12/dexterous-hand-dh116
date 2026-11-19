@@ -42042,6 +42042,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.power-material-cross-section-cpu": {
+      "title": "Power material-frame wrist backoff and lateral reach audit",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.power-independent-closure-screen-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_power_material_reach.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_material_reach_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-power-material-reach.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 14,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

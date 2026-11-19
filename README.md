@@ -1,3 +1,7 @@
+## 2026-11-19 Power material cross-section reach audit
+
+The matched supported-rod sweep measured the effect of wrist roll, lateral shift and palm backoff on each hand's closure reach. [Report](docs/superpowers/reports/2026-11-19-teacher-power-material-reach.md).
+
 ## 2026-11-19 Bilateral Tripod approach and closure reference
 
 Compile synchronized two-hand 24D closure and certify swept clearance on the original rod polyline under ideal target tracking. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-bilateral-closure.md).
