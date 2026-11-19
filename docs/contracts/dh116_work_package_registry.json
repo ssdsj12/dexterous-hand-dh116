@@ -41531,6 +41531,27 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.tripod-endpoint-power-palm-seating-cpu": {
+      "title": "Tripod 双来源端点检查与 Power 掌面参考初姿",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.wire-coupled-tripod-power-reach-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_wire_pose_candidate.py",
+        "tests/test_dh116_wire_endpoint_followup.py"
+      ],
+      "readiness": "docs/contracts/dh116_wire_endpoint_power_palm_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-wire-endpoint-power-palm.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 150,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

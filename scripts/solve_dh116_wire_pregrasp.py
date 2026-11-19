@@ -151,6 +151,11 @@ def _bilateral_clearance(bounds):
     return max(left[0] - right[1], right[0] - left[1])
 
 
+def _required_source_clearance(shapes, pads, nodes, radius):
+    return {name: _pad_gap_interval(shapes[name], nodes, radius)["lower_m"]
+            for name in ("source:" + pad for pad in pads)}
+
+
 def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
     count = JOINT_COUNT[style]
     pads = DISTAL_PAD_LINKS[:3 if style == "tripod" else 5]
@@ -220,6 +225,8 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
         pad_passed = all(row["lower_m"] >= 0. and row["upper_m"] <= COARSE for row in pad_geometry.values())
         directions_passed = all(dot is not None and dot < -.2 for dot in best["dots"].values())
         clear_nonrequired = min(nonrequired.values()) >= 0.
+        source_pads = _required_source_clearance(best["shapes"], pads, nodes, radius)
+        source_pads_clear = min(source_pads.values()) >= 0.
         y_bounds = _y_bounds(best["shapes"])
         evidence = dict(
             active_search_joints=list(ACTIVE[:count]), evaluations=used, objective=best["rank"],
@@ -229,7 +236,9 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
             pad_geometry=pad_geometry, pad_gap_gate_passed=pad_passed, vertex_direction_dots=best["dots"],
             vertex_direction_gate_passed=directions_passed, nonrequired_rod_lower_m=nonrequired,
             nonrequired_rod_clear=clear_nonrequired, hand_y_bounds_m=y_bounds,
-            endpoint_geometry_passed=table_passed and pad_passed and directions_passed and clear_nonrequired,
+            required_source_rod_lower_m=source_pads, required_source_rod_clear=source_pads_clear,
+            endpoint_geometry_passed=table_passed and pad_passed and directions_passed
+                                     and clear_nonrequired and source_pads_clear,
             source_sha256=geometry["source_sha256"])
         if refinement is not None:
             evidence["refinement"] = refinement

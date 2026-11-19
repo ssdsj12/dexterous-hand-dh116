@@ -237,6 +237,9 @@ def test_joint_pregrasp_search_reduces_error_within_original_coupling(style, lef
         assert hand["objective"] < hand["initial_objective"]
         assert hand["table_clearance_passed"]
         assert len(hand["pad_geometry"]) == (3 if style == "tripod" else 5)
+        assert set(hand["required_source_rod_lower_m"]) == {"source:" + name for name in hand["pad_geometry"]}
+        if hand["endpoint_geometry_passed"]:
+            assert hand["required_source_rod_clear"]
         assert len(hand["nonrequired_rod_lower_m"]) >= 17 - (3 if style == "tripod" else 5)
     assert code == 2
     assert not result["geometry_candidate_passed"]
