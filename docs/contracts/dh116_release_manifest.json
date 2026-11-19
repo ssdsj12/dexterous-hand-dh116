@@ -27063,6 +27063,31 @@
         "verified_at_utc": "2026-11-19T12:00:53.216290+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-v8-terminal-clearance-audit-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v8-native-terminal.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_v8_native_terminal_v1.json",
+      "cpu_tests": {
+        "passed": 99,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1e00699ce72065d541de89c2c4bc1233f2d298bc",
+        "source_tree": "f3385e29a86b85d81a3928693119cadd5724649f",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T12:13:04.171682+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
