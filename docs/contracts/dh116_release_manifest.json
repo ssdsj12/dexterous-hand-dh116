@@ -27013,6 +27013,31 @@
         "verified_at_utc": "2026-11-19T11:55:21.724472+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-seated-material-pockets-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-power-seated-pockets.md",
+      "readiness": "docs/contracts/dh116_teacher_power_seated_pockets_v1.json",
+      "cpu_tests": {
+        "passed": 18,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ae115833f8d615d7ac7b74363ff9b8985a6eb294",
+        "source_tree": "3f6fce6c1d74d7736b4edbe8d14405f1b96d6eed",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T11:59:10.283023+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
