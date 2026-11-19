@@ -52,3 +52,20 @@ def test_power_support_clearance_measures_separation_and_keeps_partner():
     hits, separation = support_clearance({"source:base_link": hull + [.005, 0., 0.]}, supports)
     assert hits == []
     assert separation == pytest.approx(.003)
+
+
+def test_tripod_witness_prefers_proven_endpoint_over_proxy_winner():
+    from scripts.solve_dh116_wire_pregrasp import _tripod_witness_rank
+
+    def row(status, dot, good=False, upper=.0001):
+        gaps = {"source:thumb": dict(status=status, upper_m=upper)}
+        return dict(endpoint_geometry_passed=good,
+                    endpoint_witness=dict(gaps=gaps, witness_direction_dots={"cooked:middle": dot}))
+
+    hit = row("intersection_proven", -.8, upper=-.001)
+    shallow_hit = row("intersection_proven", -.1, upper=-.0001)
+    unknown = row("unresolved", None)
+    wrong_direction = row("clear", -.1)
+    valid = row("clear", -.4, good=True)
+    assert sorted([hit, unknown, wrong_direction, shallow_hit, valid], key=_tripod_witness_rank) == [
+        valid, wrong_direction, unknown, shallow_hit, hit]

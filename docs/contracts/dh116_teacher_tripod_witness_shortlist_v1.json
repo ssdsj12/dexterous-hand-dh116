@@ -1,0 +1,481 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.tripod-witness-shortlist-cpu",
+  "branch": "11-17",
+  "review_baseline": "026606b08222e490dc86feaa52c4e7fed6fdeea7",
+  "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-witness-shortlist.md",
+  "cpu": {
+    "passed": 42,
+    "failed": 0,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_collision_aware_teacher_seeds.py",
+      "tests/test_dh116_wire_endpoint_followup.py",
+      "tests/test_dh116_wire_pose_candidate.py"
+    ],
+    "log_sha256": "44d95a071e6656c8d29a88e1f5decce62aa7654e84392aeac7ecef84e878cc33",
+    "red_sha256": "762b30b9567f2b8a3be900db121761b1befb1033260ba9c7b5f72ad798a26470"
+  },
+  "source_sha256": {
+    "scripts/solve_dh116_wire_pregrasp.py": "193b5c57d74780f5c6789ad68fb55866c7f7fdf31483792786a2988b20ea42d3",
+    "tests/test_dh116_collision_aware_teacher_seeds.py": "8bbbdd70021a209ea3b0333157c9583f97084160ef9eb01c6bdba95b691f0afd"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "tripod": {
+    "original": {
+      "artifact_sha256": "6070c70cb6901f71b7113a8d608520079a2d3148c4b286f4bcfdbebe82287ae8",
+      "geometry_candidate_passed": false,
+      "hands": {
+        "left": {
+          "witness_selection": {
+            "candidates": 4,
+            "cap": 6,
+            "ranks": [
+              [
+                true,
+                1,
+                5.569595241786303e-05,
+                0,
+                0,
+                0.0,
+                0.053978618356619906
+              ],
+              [
+                true,
+                1,
+                9.423948163707861e-05,
+                0,
+                0,
+                0.0,
+                0.06455878808737431
+              ],
+              [
+                true,
+                1,
+                6.467844349992226e-05,
+                0,
+                0,
+                0.0,
+                0.039859955891658
+              ],
+              [
+                true,
+                1,
+                6.40020913389979e-05,
+                0,
+                0,
+                0.0,
+                0.044806587861177194
+              ]
+            ],
+            "selected_rank": [
+              true,
+              1,
+              5.569595241786303e-05,
+              0,
+              0,
+              0.0,
+              0.053978618356619906
+            ],
+            "optimized_proxy_rank": [
+              true,
+              1,
+              5.569595241786303e-05,
+              0,
+              0,
+              0.0,
+              0.053978618356619906
+            ]
+          },
+          "finger13": {
+            "lower_m": -5.969597170856688e-05,
+            "upper_m": -5.569595241786303e-05,
+            "vertex_upper_m": -5.5476370641653534e-05,
+            "original_lower_m": -0.00014946320722807803,
+            "status": "intersection_proven",
+            "witness": {
+              "segment": 34,
+              "fraction": 0.37454707459988984,
+              "hull_point_m": [
+                0.43438770680180594,
+                0.18262803391303473,
+                0.3093641036111057
+              ],
+              "rod_axis_point_m": [
+                0.43206862580419136,
+                0.18268183656850365,
+                0.3050000071525574
+              ],
+              "feasible_upper_m": -5.569595241786303e-05,
+              "direction": null
+            },
+            "actual_contact_measurement": false
+          },
+          "directions": {
+            "cooked:finger23_link": -0.22798664539119282,
+            "cooked:finger33_link": -0.1460213816433801
+          }
+        },
+        "right": {
+          "witness_selection": {
+            "candidates": 5,
+            "cap": 6,
+            "ranks": [
+              [
+                true,
+                0,
+                0.0,
+                1,
+                0,
+                0.0,
+                0.0
+              ],
+              [
+                true,
+                1,
+                5.918037487731331e-05,
+                0,
+                0,
+                0.0,
+                0.0
+              ],
+              [
+                true,
+                1,
+                8.780160207843684e-06,
+                0,
+                0,
+                0.0,
+                0.0
+              ],
+              [
+                true,
+                1,
+                9.83673660183019e-06,
+                0,
+                0,
+                0.0,
+                0.0
+              ],
+              [
+                true,
+                1,
+                1.0204615454933313e-05,
+                0,
+                0,
+                0.0,
+                0.0
+              ]
+            ],
+            "selected_rank": [
+              true,
+              0,
+              0.0,
+              1,
+              0,
+              0.0,
+              0.0
+            ],
+            "optimized_proxy_rank": [
+              true,
+              0,
+              0.0,
+              1,
+              0,
+              0.0,
+              0.0
+            ]
+          },
+          "finger13": {
+            "lower_m": -2.954474626553396e-06,
+            "upper_m": 1.0455253787062852e-06,
+            "vertex_upper_m": 1.0455253787062852e-06,
+            "original_lower_m": -5.114063320326633e-05,
+            "status": "unresolved",
+            "witness": {
+              "segment": 2,
+              "fraction": 0.2505284639568639,
+              "hull_point_m": [
+                0.43752173241971176,
+                -0.21874604762350353,
+                0.30742564984136705
+              ],
+              "rod_axis_point_m": [
+                0.43315232219017247,
+                -0.21886839122660673,
+                0.3050000071525574
+              ],
+              "feasible_upper_m": 1.0455253977000381e-06,
+              "direction": null
+            },
+            "actual_contact_measurement": false
+          },
+          "directions": {
+            "cooked:finger23_link": -0.25777790174388004,
+            "cooked:finger33_link": -0.7136114826112324
+          }
+        }
+      }
+    },
+    "recenter": {
+      "artifact_sha256": "5f5bb2d005b68b1d1015d7643f3275de310f126331b45f13fca98fc7eb2458ad",
+      "geometry_candidate_passed": false,
+      "hands": {
+        "left": {
+          "witness_selection": {
+            "candidates": 5,
+            "cap": 6,
+            "ranks": [
+              [
+                true,
+                1,
+                5.26930810206298e-05,
+                0,
+                0,
+                0.0,
+                0.053471668705534325
+              ],
+              [
+                true,
+                2,
+                8.386988452537165e-05,
+                0,
+                0,
+                0.0,
+                0.06131584193183498
+              ],
+              [
+                true,
+                1,
+                6.551035293505945e-05,
+                0,
+                0,
+                0.0,
+                0.03467586104895301
+              ],
+              [
+                true,
+                1,
+                6.40020913389979e-05,
+                0,
+                0,
+                0.0,
+                0.044806587861177194
+              ],
+              [
+                true,
+                1,
+                9.769601400797488e-05,
+                0,
+                0,
+                0.0,
+                0.06564338363610867
+              ]
+            ],
+            "selected_rank": [
+              true,
+              1,
+              5.26930810206298e-05,
+              0,
+              0,
+              0.0,
+              0.053471668705534325
+            ],
+            "optimized_proxy_rank": [
+              true,
+              1,
+              5.26930810206298e-05,
+              0,
+              0,
+              0.0,
+              0.053471668705534325
+            ]
+          },
+          "finger13": {
+            "lower_m": -5.669315416728026e-05,
+            "upper_m": -5.26930810206298e-05,
+            "vertex_upper_m": -5.240791091800099e-05,
+            "original_lower_m": -0.00014648803978711188,
+            "status": "intersection_proven",
+            "witness": {
+              "segment": 34,
+              "fraction": 0.37278775691326266,
+              "hull_point_m": [
+                0.4343866506339553,
+                0.1826060551340171,
+                0.3093677940600416
+              ],
+              "rod_axis_point_m": [
+                0.4320681156020622,
+                0.18265984509217764,
+                0.3050000071525574
+              ],
+              "feasible_upper_m": -5.26930810206298e-05,
+              "direction": null
+            },
+            "actual_contact_measurement": false
+          },
+          "directions": {
+            "cooked:finger23_link": -0.2286865869512564,
+            "cooked:finger33_link": -0.14652833129446569
+          }
+        },
+        "right": {
+          "witness_selection": {
+            "candidates": 5,
+            "cap": 6,
+            "ranks": [
+              [
+                true,
+                1,
+                1.7833857903355476e-05,
+                0,
+                0,
+                0.0,
+                0.0
+              ],
+              [
+                true,
+                1,
+                1.4779503080244484e-05,
+                0,
+                0,
+                0.0,
+                0.0
+              ],
+              [
+                true,
+                1,
+                1.7227943065395872e-05,
+                0,
+                0,
+                0.0,
+                0.0
+              ],
+              [
+                true,
+                1,
+                1.9191651059797484e-05,
+                0,
+                0,
+                0.0,
+                0.0
+              ],
+              [
+                true,
+                1,
+                1.787367575414286e-05,
+                0,
+                0,
+                0.0,
+                0.0
+              ]
+            ],
+            "selected_rank": [
+              true,
+              1,
+              1.4779503080244484e-05,
+              0,
+              0,
+              0.0,
+              0.0
+            ],
+            "optimized_proxy_rank": [
+              true,
+              1,
+              1.7833857903355476e-05,
+              0,
+              0,
+              0.0,
+              0.0
+            ]
+          },
+          "finger13": {
+            "lower_m": -1.8779542702734068e-05,
+            "upper_m": -1.4779503080244484e-05,
+            "vertex_upper_m": -8.615265062342145e-06,
+            "original_lower_m": -0.00012090713342066049,
+            "status": "intersection_proven",
+            "witness": {
+              "segment": 2,
+              "fraction": 0.4113526770761114,
+              "hull_point_m": [
+                0.43743142396562257,
+                -0.2167366994114675,
+                0.30745401247229387
+              ],
+              "rod_axis_point_m": [
+                0.43309603371558075,
+                -0.21685809047979016,
+                0.3050000071525574
+              ],
+              "feasible_upper_m": -1.4779503080244484e-05,
+              "direction": null
+            },
+            "actual_contact_measurement": false
+          },
+          "directions": {
+            "cooked:finger23_link": -0.20890026271296624,
+            "cooked:finger33_link": -0.6512226250107709
+          }
+        }
+      }
+    }
+  },
+  "power_fixed_posture_rod_sweep": {
+    "artifact_sha256": "b821e9473320cd8c377edd1e8edc18c5d1420cd1f3ae12b5d8a46d6837672e63",
+    "hands": {
+      "left": {
+        "first_failed_m": 0.02,
+        "last_accepted_m": 0.0195,
+        "blocked_shapes": [
+          "source:base_link"
+        ],
+        "endpoint_upper_m": {
+          "source:base_link": 0.0002917891508039637,
+          "cooked:finger14_link": 0.02402652796835257,
+          "cooked:finger23_link": 0.024133545064233534,
+          "cooked:finger33_link": 0.026595308248251355,
+          "cooked:finger43_link": 0.027525672870336446,
+          "cooked:finger53_link": 0.026164407974807513
+        }
+      },
+      "right": {
+        "first_failed_m": 0.015,
+        "last_accepted_m": 0.0145,
+        "blocked_shapes": [
+          "source:base_link"
+        ],
+        "endpoint_upper_m": {
+          "source:base_link": 0.00034350709667644273,
+          "cooked:finger14_link": 0.016872680852773252,
+          "cooked:finger23_link": 0.02525841073605756,
+          "cooked:finger33_link": 0.02483406877083224,
+          "cooked:finger43_link": 0.027539259535279796,
+          "cooked:finger53_link": 0.026370368929274766
+        }
+      }
+    }
+  },
+  "sibling_power_qualification": false
+}

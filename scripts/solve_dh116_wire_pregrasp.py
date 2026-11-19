@@ -29,6 +29,7 @@ REFINEMENT_LEVELS = LEVELS + (.03125, .015625)
 MAX_DIMENSIONS = 6 + max(JOINT_COUNT.values())
 MAX_EVALUATIONS = 1 + 2 * MAX_DIMENSIONS * len(LEVELS)
 MAX_REFINEMENT_EVALUATIONS = 1 + 2 * MAX_DIMENSIONS * len(REFINEMENT_LEVELS)
+TRIPOD_WITNESS_LIMIT = 6
 
 
 def _closest_vertex(hull, nodes, edges, squared_lengths):
@@ -42,7 +43,7 @@ def _closest_vertex(hull, nodes, edges, squared_lengths):
     return distance, direction
 
 
-def _coordinate_search(evaluate, lower, upper, *, start=None, levels=LEVELS):
+def _coordinate_search(evaluate, lower, upper, *, start=None, levels=LEVELS, visit=None):
     """Fixed ordered steps with at most two evaluations per dimension and level."""
     at = np.zeros_like(lower) if start is None else start.copy()
     initial = best = evaluate(at)
@@ -59,10 +60,12 @@ def _coordinate_search(evaluate, lower, upper, *, start=None, levels=LEVELS):
                 evaluations += 1
                 if row["rank"] < best["rank"]:
                     best, at = row, trial
+        if visit is not None:
+            visit(best)
     return initial, best, evaluations, at
 
 
-def _tripod_coupled_search(evaluate, coordinates, best, lower, upper):
+def _tripod_coupled_search(evaluate, coordinates, best, lower, upper, *, visit=None):
     evaluations = 0
     for stride in TRIPOD_COUPLED_LEVELS:
         for i, j in TRIPOD_COUPLED_AXES:
@@ -77,6 +80,8 @@ def _tripod_coupled_search(evaluate, coordinates, best, lower, upper):
                 evaluations += 1
                 if row["rank"] < best["rank"]:
                     best, coordinates = row, trial
+        if visit is not None:
+            visit(best)
     return best, evaluations, coordinates
 
 
@@ -113,7 +118,7 @@ def _constraint_violations(row, pads, nodes, radius):
     return violations
 
 
-def _refine_hand(evaluate, start, lower, upper, pads, nodes, radius, *, coupled):
+def _refine_hand(evaluate, start, lower, upper, pads, nodes, radius, *, coupled, visit=None):
     """Retain the first search result unless certified endpoint violations improve."""
     baseline = _constraint_violations(start, pads, nodes, radius)
     preserve = [key for key, value in baseline.items() if value == 0.]
@@ -127,18 +132,40 @@ def _refine_hand(evaluate, start, lower, upper, pads, nodes, radius, *, coupled)
         return dict(row=row, rank=rank, violations=violations)
 
     initial, best, used, coordinates = _coordinate_search(
-        evaluate_constraints, lower, upper, start=start["coordinates"], levels=REFINEMENT_LEVELS)
+        evaluate_constraints, lower, upper, start=start["coordinates"], levels=REFINEMENT_LEVELS, visit=visit)
     detail = dict(evaluations=used, baseline_violations=baseline, baseline_total_violation=initial["rank"][-1])
     if coupled:
         before = best["violations"]
         preserve = [key for key, value in before.items() if value == 0.]
         best, evaluations, coordinates = _tripod_coupled_search(
-            evaluate_constraints, coordinates, best, lower, upper)
+            evaluate_constraints, coordinates, best, lower, upper, visit=visit)
         detail["coupled"] = dict(evaluations=evaluations, max_evaluations=MAX_COUPLED_EVALUATIONS,
             before_violations=before, selected_coordinates=coordinates.tolist(),
             lower=lower.tolist(), upper=upper.tolist())
     detail.update(selected_violations=best["violations"], selected_total_violation=best["rank"][-1])
     return best["row"], detail
+
+
+def _tripod_witness_rank(evidence):
+    witness = evidence["endpoint_witness"]
+    gaps = witness["gaps"]
+    dots = witness["witness_direction_dots"].values()
+    intersections = [g for g in gaps.values() if g["status"] == "intersection_proven"]
+    return (not evidence["endpoint_geometry_passed"], len(intersections),
+            max((-g["upper_m"] for g in intersections), default=0.),
+            sum(g["status"] == "unresolved" for g in gaps.values()),
+            sum(dot is None for dot in dots),
+            max((max(0., gaps[key]["upper_m"] - COARSE) for key in witness.get("pad_source_ids", ())), default=0.),
+            sum(max(0., dot + .2) for dot in dots if dot is not None))
+
+
+def _tripod_witness_preserves_baseline(baseline, evidence):
+    before = baseline["endpoint_witness"]
+    after = evidence["endpoint_witness"]
+    return (all(row["status"] == "intersection_proven" or after["gaps"][key]["status"] != "intersection_proven"
+                for key, row in before["gaps"].items())
+            and all(dot is None or after["witness_direction_dots"][key] is not None
+                    for key, dot in before["witness_direction_dots"].items()))
 
 
 def _y_bounds(shapes):
@@ -200,14 +227,28 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
         error += 4. * sum((max(0., -gap) * 1000.) ** 2 for n, gap in distances.items()
                           if n not in {"cooked:" + pad for pad in pads})
         error += 4. * sum((1.2 if dot is None else max(0., dot + .2)) ** 2 for dot in dots.values())
-        return dict(root=root, active=active, shapes=shapes, rank=float(error), dots=dots)
+        return dict(root=root, active=active, shapes=shapes, rank=float(error), dots=dots,
+                    coordinates=x.copy())
 
     initial, baseline, used, coordinates = _coordinate_search(evaluate, lower, upper)
     best = baseline
     refinement = None
+    nearby = []
+
+    def remember(candidate):
+        row = candidate["row"]
+        if any(all(np.array_equal(row[key], other["row"][key]) for key in ("root", "active"))
+               for other in nearby):
+            return
+        nearby.append(candidate)
+        # The final proxy winner and the baseline each have a reserved slot.
+        if len(nearby) > TRIPOD_WITNESS_LIMIT - 2:
+            nearby.pop(0)
+
     if refine:
         best, refinement = _refine_hand(
-            evaluate, dict(baseline, coordinates=coordinates), lower, upper, pads, nodes, radius, coupled=coupled)
+            evaluate, baseline, lower, upper, pads, nodes, radius,
+            coupled=coupled, visit=remember if style == "tripod" else None)
     palm_reach = None
     if refine and style == "power":
         if geometry["fk"].root.rsplit("/", 1)[-1] != "base_link":
@@ -250,7 +291,8 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
                 evidence.update(search_proxy_endpoint_passed=evidence["endpoint_geometry_passed"],
                     endpoint_geometry_passed=certified,
                     endpoint_witness={key: witness[key] for key in (
-                        "gaps", "witness_direction_dots", "direction_gate_passed", "geometric_approach_passed")})
+                        "gaps", "pad_source_ids", "witness_direction_dots", "direction_gate_passed",
+                        "geometric_approach_passed")})
             if style == "power":
                 link = "base_link"
                 evidence["palm_geometry"] = dict(link=link,
@@ -265,8 +307,31 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
     if refinement is not None:
         retained = dict(refinement, selected_total_violation=refinement["baseline_total_violation"],
                         selected_violations=refinement["baseline_violations"])
+        if "coupled" in retained:
+            retained["coupled"] = dict(retained["coupled"], selected_coordinates=coordinates.tolist())
         baseline_evidence = describe(baseline, retained)
-        if baseline_evidence["endpoint_geometry_passed"] and not evidence["endpoint_geometry_passed"]:
+        if style == "tripod":
+            pool = [(best, evidence), (baseline, baseline_evidence)]
+            for candidate in reversed(nearby):
+                row = candidate["row"]
+                if any(all(np.array_equal(row[key], other[key]) for key in ("root", "active"))
+                       for other, _ in pool):
+                    continue
+                detail = dict(refinement, selected_violations=candidate["violations"],
+                              selected_total_violation=candidate["rank"][-1])
+                if "coupled" in detail:
+                    detail["coupled"] = dict(detail["coupled"], selected_coordinates=row["coordinates"].tolist(),
+                                             proxy_winner_coordinates=refinement["coupled"]["selected_coordinates"])
+                pool.append((row, describe(row, detail)))
+            best, evidence = min((candidate for candidate in pool
+                                  if _tripod_witness_preserves_baseline(baseline_evidence, candidate[1])),
+                                 key=lambda candidate: _tripod_witness_rank(candidate[1]))
+            evidence["refinement"]["witness_selection"] = dict(
+                candidates=len(pool), cap=TRIPOD_WITNESS_LIMIT,
+                ranks=[_tripod_witness_rank(info) for _, info in pool],
+                selected_rank=_tripod_witness_rank(evidence),
+                optimized_proxy_rank=_tripod_witness_rank(pool[0][1]))
+        elif baseline_evidence["endpoint_geometry_passed"] and not evidence["endpoint_geometry_passed"]:
             return baseline, baseline_evidence, baseline, baseline_evidence
     return best, evidence, baseline, baseline_evidence
 

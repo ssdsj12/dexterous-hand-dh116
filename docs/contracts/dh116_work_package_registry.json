@@ -41621,6 +41621,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.tripod-witness-shortlist-cpu": {
+      "title": "Recheck bounded Tripod endpoint candidates with convex witnesses",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.tripod-power-collision-aware-seeds"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_collision_aware_teacher_seeds.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_witness_shortlist_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-witness-shortlist.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 42,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

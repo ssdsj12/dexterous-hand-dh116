@@ -1,3 +1,7 @@
+## 2026-11-19 Teacher Tripod endpoint shortlist
+
+A bounded set of Tripod candidates now receives exact endpoint checks. No tested seed qualified. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-witness-shortlist.md).
+
 ## 2026-11-19 Teacher Tripod and Power geometry
 
 Tripod checks original and cooked colliders through the CPU search and verifies the endpoint against the original geometry. Power evaluates both proper axial orientations and reports measured static support clearance. Both remain geometry diagnostics. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-power-collision-aware-seeds.md).
