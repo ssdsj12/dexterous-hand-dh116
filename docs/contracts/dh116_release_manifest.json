@@ -27213,6 +27213,31 @@
         "verified_at_utc": "2026-11-19T14:19:17.429553+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-control-source-scope-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-control-source-scope.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_control_source_scope_v1.json",
+      "cpu_tests": {
+        "passed": 205,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b561d2d273513df235316abbb1a6339ef2aee56b",
+        "source_tree": "55c7935f83f6bec09e25e7634bd84e28abef929a",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T15:54:20.616448+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
