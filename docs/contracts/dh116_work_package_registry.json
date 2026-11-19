@@ -41511,6 +41511,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-owned-update-readback-cpu": {
+      "title": "Pinch 原生更新副本与外层回执复核",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-ppo-draft-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_pinch_owned_update.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_owned_update_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-pinch-owned-update-readback.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 89,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

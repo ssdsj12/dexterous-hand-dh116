@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch owned update readback
+
+The independent CPU command compares the worker's update copy to the R06 result pinned by the scheduler diagnostic receipt. [Report](docs/superpowers/reports/2026-11-19-dh116-pinch-owned-update-readback.md).
+
 ## 2026-11-19 Tripod coupled pregrasp and Power palm reach
 
 An opt-in Tripod search tests combined wrist/finger moves while preserving certified constraints. The Power audit bounds the motion of the original palm under the current pose box. [Report](docs/superpowers/reports/2026-11-19-dh116-tripod-coupled-power-palm-reach.md).
