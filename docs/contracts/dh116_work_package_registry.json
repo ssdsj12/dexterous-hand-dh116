@@ -41491,6 +41491,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.wire-coupled-tripod-power-reach-cpu": {
+      "title": "Tripod 成对搜索与 Power 掌面可达边界",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.wire-certified-pregrasp-refinement-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_wire_pose_candidate.py"
+      ],
+      "readiness": "docs/contracts/dh116_wire_coupled_tripod_power_reach_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-tripod-coupled-power-palm-reach.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 114,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

@@ -275,3 +275,31 @@ def test_joint_pregrasp_refinement_preserves_certified_constraints(style, left_i
             assert hand["palm_geometry"]["locked_cooked_available"] is False
             assert hand["palm_geometry"]["native_reaction_measured"] is False
     assert result["palm_contact_verified"] is result["native_contact_verified"] is result["teacher_admission"] is False
+
+
+def test_tripod_coupled_step_finds_direction_blocked_on_every_single_axis():
+    from scripts.solve_dh116_wire_pregrasp import _coordinate_search, _tripod_coupled_search
+
+    def evaluate(x):
+        # An isolated wrist or thumb move breaks a zero-violation constraint.
+        return {"rank": (x[0] != x[6], abs(.0625 - x[0]))}
+
+    lower = -np.ones(10)
+    upper = np.ones(10)
+    _, best, _, coordinates = _coordinate_search(evaluate, lower, upper)
+    assert best["rank"] == (False, .0625)
+    selected, used, coordinates = _tripod_coupled_search(evaluate, coordinates, best, lower, upper)
+    assert selected["rank"] == (False, 0.)
+    np.testing.assert_array_equal(coordinates[[0, 6]], [.0625, .0625])
+    assert used <= 400
+
+
+def test_power_palm_reach_accounts_for_rotation_and_one_way_z():
+    from scripts.solve_dh116_wire_pregrasp import _palm_vertical_reach
+
+    hull = np.array([[.1, 0., .05], [0., .1, .05], [0., 0., .06]])
+    nodes = np.array([[0., 0., 0.], [0., .1, 0.]])
+    reach = _palm_vertical_reach(hull, np.zeros(3), nodes, .005)
+    assert 0. < reach["max_rotation_displacement_m"] < .025
+    assert reach["vertical_gap_lower_m"] > .02
+    assert reach["can_rule_out_coarse_approach"] is True

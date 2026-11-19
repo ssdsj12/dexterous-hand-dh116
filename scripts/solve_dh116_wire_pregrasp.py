@@ -15,6 +15,14 @@ from go2_pvcnn.control.dh116.tabletop_teacher_seed_initialization import seed_ar
 # The existing style-specific offline translation and joint/rotation scales.
 TRANSLATION_M = {"tripod": .005, "power": .015}
 JOINT_COUNT = {"tripod": 4, "power": 6}
+WRIST_ROTATION_RAD = .1
+TRIPOD_COUPLED_LEVELS = (.0625, .03125, .015625, .0078125)
+# XYZ translation, XYZ rotation, then the four style-specific active joints.
+TRIPOD_COUPLED_AXES = ((0, 1), (0, 2), (1, 2), (0, 4), (1, 5), (2, 4), (2, 5),
+    (0, 6), (1, 6), (2, 6), (0, 7), (1, 7), (2, 7),
+    (0, 8), (1, 8), (2, 8), (0, 9), (1, 9), (2, 9),
+    (6, 7), (6, 8), (6, 9), (7, 8), (7, 9), (8, 9))
+MAX_COUPLED_EVALUATIONS = 4 * len(TRIPOD_COUPLED_LEVELS) * len(TRIPOD_COUPLED_AXES)
 LEVELS = (1., .5, .25, .125, .0625)
 REFINEMENT_LEVELS = LEVELS + (.03125, .015625)
 MAX_DIMENSIONS = 6 + max(JOINT_COUNT.values())
@@ -53,6 +61,34 @@ def _coordinate_search(evaluate, lower, upper, *, start=None, levels=LEVELS):
     return initial, best, evaluations, at
 
 
+def _tripod_coupled_search(evaluate, coordinates, best, lower, upper):
+    evaluations = 0
+    for stride in TRIPOD_COUPLED_LEVELS:
+        for i, j in TRIPOD_COUPLED_AXES:
+            axes = [i, j]
+            for direction in ((-1, -1), (-1, 1), (1, -1), (1, 1)):
+                target = np.clip(coordinates[axes] + stride * np.array(direction), lower[axes], upper[axes])
+                if np.any(target == coordinates[axes]):
+                    continue
+                trial = coordinates.copy()
+                trial[axes] = target
+                row = evaluate(trial)
+                evaluations += 1
+                if row["rank"] < best["rank"]:
+                    best, coordinates = row, trial
+    return best, evaluations, coordinates
+
+
+def _palm_vertical_reach(hull, root_xyz, nodes, radius):
+    """One-way table clearance correction cannot lower the rigid palm."""
+    lever = np.linalg.norm(hull - root_xyz, axis=1).max()
+    angle = np.sqrt(3.) * WRIST_ROTATION_RAD
+    displacement = float(2. * lever * np.sin(angle / 2.))
+    lower_gap = float(hull[:, 2].min() - nodes[:, 2].max() - radius - displacement - NUMERIC_GUARD)
+    return dict(vertical_gap_lower_m=lower_gap, max_rotation_displacement_m=displacement,
+        can_rule_out_coarse_approach=lower_gap > COARSE)
+
+
 def _constraint_violations(row, pads, nodes, radius):
     segment_min = np.minimum(nodes[:-1], nodes[1:])
     segment_max = np.maximum(nodes[:-1], nodes[1:])
@@ -78,7 +114,7 @@ def _constraint_violations(row, pads, nodes, radius):
     return violations
 
 
-def _refine_hand(evaluate, start, lower, upper, pads, nodes, radius):
+def _refine_hand(evaluate, start, lower, upper, pads, nodes, radius, *, coupled):
     """Retain the first search result unless certified endpoint violations improve."""
     baseline = _constraint_violations(start, pads, nodes, radius)
     preserve = [key for key, value in baseline.items() if value == 0.]
@@ -90,11 +126,19 @@ def _refine_hand(evaluate, start, lower, upper, pads, nodes, radius):
         rank = (any(violations[key] > 0. for key in preserve), total)
         return dict(row=row, rank=rank, violations=violations)
 
-    initial, best, used, _ = _coordinate_search(
+    initial, best, used, coordinates = _coordinate_search(
         evaluate_constraints, lower, upper, start=start["coordinates"], levels=REFINEMENT_LEVELS)
-    return best["row"], dict(evaluations=used, baseline_violations=baseline,
-        selected_violations=best["violations"], baseline_total_violation=initial["rank"][1],
-        selected_total_violation=best["rank"][1])
+    detail = dict(evaluations=used, baseline_violations=baseline, baseline_total_violation=initial["rank"][1])
+    if coupled:
+        before = best["violations"]
+        preserve = [key for key, value in before.items() if value == 0.]
+        best, evaluations, coordinates = _tripod_coupled_search(
+            evaluate_constraints, coordinates, best, lower, upper)
+        detail["coupled"] = dict(evaluations=evaluations, max_evaluations=MAX_COUPLED_EVALUATIONS,
+            before_violations=before, selected_coordinates=coordinates.tolist(),
+            lower=lower.tolist(), upper=upper.tolist())
+    detail.update(selected_violations=best["violations"], selected_total_violation=best["rank"][1])
+    return best["row"], detail
 
 
 def _y_bounds(shapes):
@@ -107,7 +151,7 @@ def _bilateral_clearance(bounds):
     return max(left[0] - right[1], right[0] - left[1])
 
 
-def _search_hand(geometry, pose, q, nodes, style, *, refine):
+def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
     count = JOINT_COUNT[style]
     pads = DISTAL_PAD_LINKS[:3 if style == "tripod" else 5]
     layout = geometry["reference"]["reference_layout"]
@@ -124,7 +168,7 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine):
     def evaluate(x):
         root = pose.copy()
         root[:2] += scale * x[:2]
-        root[3:] = np.roll((Rotation.from_rotvec(.1 * x[3:6]) * rotation).as_quat(), 1)
+        root[3:] = np.roll((Rotation.from_rotvec(WRIST_ROTATION_RAD * x[3:6]) * rotation).as_quat(), 1)
         active = q.copy()
         active[:count] = np.clip(q[:count] + .1 * x[6:], limits_min[:count], limits_max[:count])
         source, cooked = (world_vertices(geometry, root, active, cooked=locked) for locked in (False, True))
@@ -158,7 +202,14 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine):
     refinement = None
     if refine:
         best, refinement = _refine_hand(
-            evaluate, dict(baseline, coordinates=coordinates), lower, upper, pads, nodes, radius)
+            evaluate, dict(baseline, coordinates=coordinates), lower, upper, pads, nodes, radius, coupled=coupled)
+    palm_reach = None
+    if refine and style == "power":
+        if geometry["fk"].root.rsplit("/", 1)[-1] != "base_link":
+            raise ValueError("palm reach certificate requires base_link as the FK root")
+        palm = world_vertices(geometry, pose, q)["base_link"]
+        palm_reach = _palm_vertical_reach(palm, pose[:3], nodes, radius)
+
     def describe(best, refinement):
         table = {name: box_relation(v, layout["table_center"], layout["table_size"])
                  for name, v in best["shapes"].items()}
@@ -187,7 +238,8 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine):
                 evidence["palm_geometry"] = dict(link=link,
                     source=geometry["source_colliders"][link]["kind"],
                     rod_gap=_pad_gap_interval(best["shapes"]["source:" + link], nodes, radius),
-                    locked_cooked_available=link in geometry["cooked_pads"], native_reaction_measured=False)
+                    locked_cooked_available=link in geometry["cooked_pads"], native_reaction_measured=False,
+                    local_vertical_reach=palm_reach)
         return evidence
 
     evidence = describe(best, refinement)
@@ -199,9 +251,11 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine):
     return best, evidence, baseline, baseline_evidence
 
 
-def search_pregrasp(seed, *, style, project, refine=False):
+def search_pregrasp(seed, *, style, project, refine=False, coupled=False):
     if style not in JOINT_COUNT:
         raise ValueError("joint pregrasp search requires Tripod or Power")
+    if coupled and (style != "tripod" or not refine):
+        raise ValueError("coupled search requires Tripod refinement")
     nodes, full, roots, _ = seed_arrays(seed)
     _material_tangents(nodes)
     active_indices = [JOINTS.index(name) for name in ACTIVE]
@@ -211,7 +265,7 @@ def search_pregrasp(seed, *, style, project, refine=False):
     baseline_hands = {}
     for i, side in enumerate(HANDS):
         selected, hands[side], baseline, baseline_hands[side] = _search_hand(
-            load_geometry(project, side=side), roots[i], full[i, active_indices], nodes, style, refine=refine)
+            load_geometry(project, side=side), roots[i], full[i, active_indices], nodes, style, refine=refine, coupled=coupled)
         trial["roots"][i] = selected["root"].tolist()
         trial["joints"][i] = expand(selected["active"]).tolist()
         if refine:

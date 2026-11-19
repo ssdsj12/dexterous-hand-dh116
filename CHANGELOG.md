@@ -1,3 +1,7 @@
+## 2026-11-19 Tripod coupled pregrasp and Power palm reach
+
+An opt-in Tripod search tests combined wrist/finger moves while preserving certified constraints. The Power audit bounds the motion of the original palm under the current pose box. [Report](docs/superpowers/reports/2026-11-19-dh116-tripod-coupled-power-palm-reach.md).
+
 ## 2026-11-19 Pinch PPO smoke32 recipe
 
 The fresh camera-free recipe is bound to the real reset, current worker source and installed environment. The native entry is pending exact approval and resource availability. [Report](docs/superpowers/reports/2026-11-19-dh116-pinch-ppo-smoke32-draft.md).
