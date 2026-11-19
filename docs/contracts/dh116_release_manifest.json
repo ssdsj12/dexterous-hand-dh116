@@ -27038,6 +27038,31 @@
         "verified_at_utc": "2026-11-19T11:59:10.283023+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-recorded-delay-corners-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-delay-corners.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_delay_corners_v1.json",
+      "cpu_tests": {
+        "passed": 43,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "f8cf2dbda38d0b0ecfbda93714e9e72e49b003e0",
+        "source_tree": "7c56973cec1dccdcec963b0020e2c1806686a723",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T12:00:53.216290+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
