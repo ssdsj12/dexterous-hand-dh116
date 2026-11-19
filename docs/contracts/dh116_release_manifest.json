@@ -26537,6 +26537,31 @@
         "verified_at_utc": "2026-11-19T07:22:55.000774+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-power-collision-aware-seeds",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-power-collision-aware-seeds.md",
+      "readiness": "docs/contracts/dh116_teacher_collision_aware_seeds_v1.json",
+      "cpu_tests": {
+        "passed": 154,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "fb97e9a4d2dd82842423813b682be08eae0001b1",
+        "source_tree": "dd4594f9a244bc54e419e0ef69de9d1d5b1308c6",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T07:31:53.610523+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
