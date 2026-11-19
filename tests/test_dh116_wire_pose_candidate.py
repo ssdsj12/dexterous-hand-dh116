@@ -138,3 +138,35 @@ def test_candidate_cli_records_hashes_and_keeps_existing_output(scene, tmp_path)
     with pytest.raises(FileExistsError):
         main(args)
     assert output.read_bytes() == old
+
+
+@pytest.mark.parametrize("style,left_node,right_node,expected", [
+    ("pinch", 39, 1, {"left": [], "right": []}),
+    ("tripod", 36, 8, {"left": [], "right": ["finger32_link", "finger33_link"]}),
+    ("power", 33, 8, {"left": ["finger32_link", "finger33_link"],
+                       "right": ["finger32_link", "finger33_link"]}),
+])
+def test_candidate_cli_checks_real_table_geometry_for_each_hand(style, left_node, right_node, expected, tmp_path):
+    from pathlib import Path
+    from scripts.prepare_dh116_wire_pose_candidate import main
+
+    root = Path(__file__).resolve().parents[1]
+    metadata = json.loads((root / "docs/contracts/dh116_wire_pose_candidate_v1.json").read_text())
+    inputs = Path(metadata["evidence"]["directory"])
+    output = tmp_path / "candidate.json"
+    code = main(["--reference", str(inputs / f"{style}-reference.json"),
+                 "--target", str(inputs / f"{style}-wire.json"), "--output", str(output),
+                 "--grasp", style, "--left-node", str(left_node), "--right-node", str(right_node),
+                 "--audit-table-clearance", "--project", str(root)])
+    result = json.loads(output.read_bytes())
+    clearance = result["static_table_clearance"]
+    assert code == (0 if style == "pinch" else 2)
+    assert clearance["passed"] is (style == "pinch")
+    for hand, links in expected.items():
+        arm = clearance["hands"][hand]
+        assert list(arm["source_intersections"]) == links
+        assert len(arm["source"]) == 17
+        assert len(arm["locked_cooked_pads"]) == 5
+        assert arm["source_sha256"]["usd"]
+    assert not result["collision_qualified"] and not result["native_contact_verified"]
+    assert not result["teacher_admission"]

@@ -1,3 +1,7 @@
+## 2026-11-19 Three-grasp candidate table clearance
+
+The optional wire candidate preflight checks each hand against the fixed table. Pinch passed this static check. Tripod and Power need corrected initial poses. The CPU regression passed 96 tests. [Report](docs/superpowers/reports/2026-11-19-dh116-wire-pose-table-clearance.md).
+
 ## 2026-11-19 Pinch Worker evidence ledgers
 
 The fresh Worker derives exact physics and transition views while retaining its raw journal and R06 originals. The CPU regression passed 199 tests. The independent outer audit remains pending. [Report](docs/superpowers/reports/2026-11-19-dh116-teacher-worker-ledgers.md).

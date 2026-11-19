@@ -81,6 +81,38 @@ def retarget_seed(reference, target, stations):
     return result
 
 
+def audit_table_clearance(seed, *, project):
+    """Screen actual candidate FK against the fixed scene table using CPU geometry."""
+    from scripts.audit_dh116_pinch_initial_pose import box_relation, load_geometry, world_vertices
+    from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, JOINTS
+    from go2_pvcnn.control.dh116.tabletop_dual_pinch_builder import CLEARANCE_M
+
+    _, joints, roots, _ = seed_arrays(seed)
+    active = [JOINTS.index(name) for name in ACTIVE]
+    hands = {}
+    for side, root, q in zip(HANDS, roots, joints):
+        geometry = load_geometry(project, side=side)
+        layout = geometry["reference"]["reference_layout"]
+
+        def inspect(*, cooked):
+            shapes = world_vertices(geometry, root, q[active], cooked=cooked)
+            return {name: box_relation(hull, layout["table_center"], layout["table_size"])
+                    for name, hull in shapes.items()}
+
+        source = inspect(cooked=False)
+        pads = inspect(cooked=True)
+        source_hits = sorted(name for name, row in source.items() if row["intersects"])
+        cooked_hits = sorted(name for name, row in pads.items() if row["intersects"])
+        minimum = min(row["top_clearance_m"] for row in (*source.values(), *pads.values()))
+        hands[side] = dict(source=source, locked_cooked_pads=pads, source_intersections=source_hits,
+            cooked_pad_intersections=cooked_hits, minimum_table_top_clearance_m=minimum,
+            passed=not source_hits and not cooked_hits and minimum >= CLEARANCE_M,
+            source_sha256=geometry["source_sha256"])
+    return dict(scope="static_world_table_reference", minimum_required_clearance_m=CLEARANCE_M,
+        hands=hands, passed=all(hand["passed"] for hand in hands.values()),
+        live_cooked_geometry_verified=False, grasp_qualified=False)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reference", type=Path, required=True,
@@ -91,6 +123,9 @@ def main(argv=None):
     parser.add_argument("--grasp", choices=GRASPS, required=True)
     parser.add_argument("--left-node", type=int, required=True)
     parser.add_argument("--right-node", type=int, required=True)
+    parser.add_argument("--audit-table-clearance", action="store_true",
+                        help="screen both candidate hands against the fixed table before using the seed")
+    parser.add_argument("--project", type=Path, default=Path(__file__).resolve().parents[1])
     args = parser.parse_args(argv)
 
     reference = args.reference.read_bytes()
@@ -101,10 +136,12 @@ def main(argv=None):
                   material_node_ids_by_hand=stations,
                   input_sha256=dict(reference=sha256(reference).hexdigest(), target=sha256(target).hexdigest()),
                   seed=seed, collision_qualified=False, native_contact_verified=False, teacher_admission=False)
+    if args.audit_table_clearance:
+        report["static_table_clearance"] = audit_table_clearance(seed, project=args.project)
     encoded = json.dumps(report, indent=2, allow_nan=False)
     with args.output.open("x", encoding="utf-8") as handle:
         handle.write(encoded + "\n")
-    return 0
+    return 0 if report.get("static_table_clearance", {}).get("passed", True) else 2
 
 
 if __name__ == "__main__":

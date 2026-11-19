@@ -41287,6 +41287,26 @@
         "failed": 0,
         "scope": "CPU raw journal, Worker and lifecycle regression; no outer receipt granted"
       }
+    },
+    "teacher.wire-pose-table-clearance-cpu": {
+      "title": "三抓法候选初态桌面净空",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.wire-pose-candidate-v1"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_wire_pose_candidate.py"
+      ],
+      "readiness": "docs/contracts/dh116_wire_pose_table_clearance_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-wire-pose-table-clearance.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 96,
+        "failed": 0,
+        "scope": "CPU candidate table screening only"
+      }
     }
   },
   "execution_target": {
