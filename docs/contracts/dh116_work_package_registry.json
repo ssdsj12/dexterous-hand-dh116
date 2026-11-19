@@ -41411,6 +41411,27 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.actual-fresh-diagnostic-receipt-cpu": {
+      "title": "Pinch Teacher 实际诊断回执离线复验",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.actual-fresh-cap-audit-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_actual_launch_process.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_actual_diagnostic_receipt_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-pinch-diagnostic-receipt-readback.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 196,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

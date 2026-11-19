@@ -195,7 +195,9 @@ def test_scheduler_actual_branch_uses_original_gdb_and_budget_mask(repo,tmp_path
         def __init__(self,**kwargs):
             self.binding=dict(path=str(attempt/'CPU-binding.json'),sha256='f'*64)
         def __enter__(self):captures.append('enter');return self
-        def serve_once(self,child):captures.append('serve')
+        def serve_once(self, child):
+            captures.append('serve')
+            return dict(path=str(attempt/'CPU-reply.json'), sha256='e'*64)
         def __exit__(self,*args):captures.append('close')
     monkeypatch.setattr(process,'ActualLaunchServer',CPUServer)
     monkeypatch.setenv('CUDA_VISIBLE_DEVICES','')
@@ -212,6 +214,12 @@ def test_scheduler_actual_branch_uses_original_gdb_and_budget_mask(repo,tmp_path
     assert Path(env['DH116_PYTHON'])==attempt/'debugger-python'
     assert result['debugger']=='gdb_on_segv'
     assert result['debugger_status_verified'] is True
+    assert result['launch_evidence_sha256'] == {
+        'intent.json': scheduler.file_hash(attempt/'intent.json'),
+        'actual-launch/binding.json': 'f'*64,
+        'actual-launch/reply.json': 'e'*64,
+        'outer_exit.json': scheduler.file_hash(attempt/'outer_exit.json'),
+    }
     assert captures[-1]=='close'
     assert result.get('native_qualification') is not True
 

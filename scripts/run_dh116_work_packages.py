@@ -677,6 +677,11 @@ def native_dependency_blockers(packages, package, qualified):
     return waiting
 
 
+ACTUAL_DIAGNOSTIC_LAUNCH_FILES = (
+    "intent.json", "actual-launch/binding.json", "actual-launch/reply.json", "outer_exit.json",
+)
+
+
 class Repository:
     def __init__(self, root, *, github_ip=None, evidence_dir=None):
         self.root = Path(root).resolve()
@@ -961,6 +966,72 @@ class Repository:
         if any(receipt.get(k) != v for k, v in evidence.items()):
             raise ValueError('native artifacts or measured ledger differ from the qualified receipt')
         return path
+
+    def verify_actual_diagnostic(self, name, expected):
+        """Recompute evidence for an explicitly unqualified, completed A-fresh run."""
+        if not isinstance(expected, str) or not SHA256.fullmatch(expected):
+            raise ValueError('exact diagnostic receipt SHA256 required')
+        package = self.registry()['packages'][name]
+        recipe = self.native_recipe(package)
+        launch = self.actual_launch(package)
+        if launch is None or launch['role'] != 'a_fresh':
+            raise ValueError('registered fresh actual launch required')
+        execution = self.native_execution_identity(package, recipe=recipe)
+        path, raw = self._read_native_receipt_bytes(
+            name, attempt_fingerprint=execution['attempt_fingerprint'], expected=expected)
+        attempt = path.parent
+        receipt = json.loads(raw)
+        hashes = receipt.get('launch_evidence_sha256')
+        if (type(hashes) is not dict or set(hashes) != set(ACTUAL_DIAGNOSTIC_LAUNCH_FILES)
+                or any(not isinstance(sha, str) or not SHA256.fullmatch(sha) for sha in hashes.values())
+                or any(file_hash(native_artifact(attempt, key)) != sha for key, sha in hashes.items())):
+            raise ValueError('diagnostic launch files are missing or changed')
+        intent = json.loads(native_artifact(attempt, 'intent.json').read_bytes())
+        approval = native_approval(intent['approval'], self)
+        output = Path(approval['output_root']) / name / attempt.name / 'native'
+        identity = dict(execution['core_identity'], actual_identity=execution['actual_identity'])
+        if (intent.get('package') != name or intent.get('output') != str(output)
+                or receipt.get('output') != str(output) or output.resolve(strict=True) != output
+                or not output.is_dir() or approval['packages'].get(name) != identity
+                or receipt.get('tested_head') != intent.get('head') or receipt.get('batch_id') != approval['batch_id']
+                or intent.get('actual_launch') != package['actual_launch']
+                or receipt.get('actual_launch') != package['actual_launch']
+                or any(item.get(k) != v for item in (intent, receipt) for k, v in (execution | identity).items())
+                or receipt.get('executor') != 'native_bounded' or receipt.get('native_execution_performed') is not True
+                or receipt.get('qualification_scope') != package['evidence_scope']
+                or receipt.get('blocker_kind') != 'failed_native'
+                or receipt.get('reason') != 'actual_receipt_audit_pending'
+                or receipt.get('actual_launch_error') is not None
+                or any(receipt.get(flag) is not False for flag in
+                       ('native_qualification', 'native_ready', 'teacher_admission'))):
+            raise ValueError('diagnostic receipt differs from the approved unqualified attempt')
+        outer = json.loads(native_artifact(attempt, 'outer_exit.json').read_bytes())
+        log = native_artifact(attempt, 'native.log')
+        seconds = outer.get('duration_seconds')
+        if (type(seconds) not in (int, float) or not 0 < seconds <= recipe['spec']['budget']['timeout_seconds']
+                or receipt.get('duration_seconds') != seconds or receipt.get('log_sha256') != outer.get('log_sha256')
+                or file_hash(log) != outer.get('log_sha256')
+                or type(receipt.get('exit_code')) is not int or receipt['exit_code'] != 0
+                or any(type(item.get('outer_exit_code')) is not int or item['outer_exit_code'] != 0
+                       or item.get('native_lock_observed') is not True for item in (outer, receipt))):
+            raise ValueError('diagnostic receipt lacks independent bounded natural-exit evidence')
+        if launch.get('debugger') == 'gdb_on_segv':
+            debug = debugger_status(log)
+            if (not debug['debugger_status_verified'] or debug.get('debugger_inferior_exit_code') != 0
+                    or debug.get('debugger_inferior_signal') is not None
+                    or any(item.get(k) != v for item in (outer, receipt) for k, v in debug.items())):
+                raise ValueError('diagnostic debugger evidence lacks independent inferior exit zero')
+        from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_process import read_archived_fresh_launch
+        from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_artifacts import audit_actual_fresh_outputs
+
+        envelope = read_archived_fresh_launch(attempt, spec=recipe['spec'], launch=launch,
+                                              identity=execution, hashes=hashes)
+        evidence = audit_actual_fresh_outputs(recipe['spec'], output, repository=self,
+                                              package=package, envelope=envelope)
+        if any(receipt.get(k) != v for k, v in evidence.items()):
+            raise ValueError('diagnostic native artifacts changed after scheduler receipt')
+        return dict(diagnostic_verified=True, package=name, tested_head=receipt['tested_head'],
+                    receipt_sha256=expected, native_qualification=False, teacher_admission=False)
 
     def native_attempts(self, name, fingerprint):
         root = self.private / 'native-attempts' / name / fingerprint
@@ -1274,8 +1345,8 @@ class Repository:
             # Server independently repeats registration/source/approval checks.
             started = time.monotonic()
             deadline = started + min(budget['timeout_seconds'], spec['teacher_contract']['limits']['inner_wall_timeout_s'])
-            server = ActualLaunchServer(repository=self, package=package,
-                intent_binding=dict(path=str(path/'intent.json'), sha256=file_hash(path/'intent.json')),
+            intent_binding = dict(path=str(path/'intent.json'), sha256=file_hash(path/'intent.json'))
+            server = ActualLaunchServer(repository=self, package=package, intent_binding=intent_binding,
                 launch=actual_launch, directory=path/'actual-launch', deadline=deadline)
         if debugger:
             env['DH116_PYTHON'] = native_debugger_wrapper(path, result)
@@ -1293,7 +1364,12 @@ class Repository:
                                   stdout=stream, stderr=subprocess.STDOUT, start_new_session=True) as child:
                 if server is not None:
                     try:
-                        server.serve_once(child)
+                        grant = server.serve_once(child)
+                        result['launch_evidence_sha256'] = {
+                            'intent.json': intent_binding['sha256'],
+                            'actual-launch/binding.json': server.binding['sha256'],
+                            'actual-launch/reply.json': grant['sha256'],
+                        }
                     except (OSError,ValueError) as error:
                         result['actual_launch_error'] = str(error)
                 while child.poll() is None and time.monotonic() - started <= budget['timeout_seconds']:
@@ -1314,12 +1390,17 @@ class Repository:
             **{key: result[key] for key in ('outer_exit_code', 'duration_seconds', 'log_sha256', 'native_lock_observed')},
             **debug_status,
         }))
+        if 'launch_evidence_sha256' in result:
+            result['launch_evidence_sha256']['outer_exit.json'] = file_hash(path / 'outer_exit.json')
         debugger_failed = debugger and (not result['debugger_status_verified']
                                         or result.get('debugger_inferior_exit_code') != 0
                                         or result.get('debugger_inferior_signal') is not None)
         if code != 0 or not observed or seconds > budget['timeout_seconds'] or debugger_failed:
             result.update(blocker_kind='failed_native',
                           reason='outer process failure, missing shared lock evidence, or elapsed budget exceeded')
+            return
+        if actual_launch is not None and 'launch_evidence_sha256' not in result:
+            result.update(blocker_kind='failed_native', reason='missing completed actual worker grant')
             return
         try:
             if actual_launch is not None:
@@ -1684,6 +1765,8 @@ def main(argv=None):
     modes.add_argument('--resume', action='store_true')
     modes.add_argument('--native-worker', type=Path, help=argparse.SUPPRESS)
     modes.add_argument('--relay-plan', action='store_true')
+    modes.add_argument('--verify-actual-diagnostic', metavar='PACKAGE', help='read back a sealed diagnostic receipt')
+    parser.add_argument('--receipt-sha256', help='exact SHA256 for --verify-actual-diagnostic')
     modes.add_argument('--relay-ack', action='store_true', help='Read verified local publisher receipt from stdin')
     parser.add_argument('--scope', choices=('current', 'all'), default='current',
                         help='select the configured target or all registered work packages')
@@ -1707,6 +1790,11 @@ def main(argv=None):
     if args.native_worker:
         repo.verify_local_target()
         print(json_text(repo.run_native_worker(args.native_worker)), end='', flush=True)
+        return 0
+    if bool(args.verify_actual_diagnostic) != bool(args.receipt_sha256):
+        parser.error('--verify-actual-diagnostic and --receipt-sha256 must be supplied together')
+    if args.verify_actual_diagnostic:
+        print(json_text(repo.verify_actual_diagnostic(args.verify_actual_diagnostic, args.receipt_sha256)), end='')
         return 0
     if args.relay_plan:
         print(json_text(repo.relay_plan()), end='')

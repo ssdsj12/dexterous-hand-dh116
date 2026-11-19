@@ -301,6 +301,46 @@ def read_launch_binding(binding, *, repository, package=None):
         raise ValueError('actual_parent_binding_invalid: ' + str(error)) from error
 
 
+def read_archived_fresh_launch(attempt, *, spec, launch, identity, hashes):
+    """Read an ended attempt's canonical files without authorizing a live process."""
+    launch_dir = attempt / 'actual-launch'
+    _, raw = _read(dict(path=str(launch_dir / 'binding.json'),
+                        sha256=hashes['actual-launch/binding.json']))
+    envelope = _envelope(json.loads(raw))
+    pin = spec['teacher_contract']
+    expected_intent = dict(path=str(attempt / 'intent.json'), sha256=hashes['intent.json'])
+    issued, deadline = envelope.issued_monotonic_s, envelope.deadline_monotonic_s
+    if (_encode(envelope) != raw or envelope.schema != ENVELOPE_SCHEMA
+            or envelope.package_name != attempt.parent.parent.name
+            or envelope.role != 'a_fresh' or envelope.checkpoint_origin is not None
+            or envelope.device_plan != launch['device_plan']
+            or envelope.registered_intent != expected_intent
+            or envelope.core_identity != identity['core_identity']
+            or envelope.actual_identity != identity['actual_identity']
+            or envelope.frozen_config != pin['training_config']
+            or envelope.semantic_sha256 != pin['semantic_sha256']
+            or envelope.core_source_sha256 != pin['source_sha256']
+            or type(issued) not in (float, int) or type(deadline) not in (float, int)
+            or not 0 < issued < deadline or deadline - issued > pin['limits']['inner_wall_timeout_s']):
+        raise ValueError('archived launch source, intent or deadline differs')
+
+    _, raw = _read(dict(path=str(launch_dir / 'reply.json'), sha256=hashes['actual-launch/reply.json']))
+    reply = _reply(json.loads(raw))
+    if (_encode(reply) != raw or reply.schema != REPLY_SCHEMA
+            or reply.envelope_sha256 != hashes['actual-launch/binding.json']
+            or reply.intent_sha256 != hashes['intent.json'] or reply.server != envelope.parent
+            or reply.actual_identity != envelope.actual_identity or reply.nonce != envelope.nonce
+            or reply.role != envelope.role or reply.checkpoint_origin is not None
+            or reply.issued_monotonic_s != issued or reply.deadline_monotonic_s != deadline):
+        raise ValueError('archived worker grant differs from its parent envelope')
+    for field, name in ((reply.process_config, 'process.json'), (reply.authorization, 'authorization.json'),
+                        (reply.resource, 'resource.json')):
+        path, _ = _read(field)
+        if path != launch_dir / name:
+            raise ValueError('archived worker grant file escapes this attempt')
+    return envelope
+
+
 def validate_parent_launch_envelope(envelope, *, repository, package, connection, expected_binding_sha256):
     try:
         _static(envelope, repository=repository, package=package)

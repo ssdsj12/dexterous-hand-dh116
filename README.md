@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch Teacher diagnostic receipt readback
+
+The scheduler seals the fresh worker handshake with the outer exit and can independently re-audit the private diagnostic receipt after the worker exits. Native training qualification remains gated. [Report](docs/superpowers/reports/2026-11-19-dh116-pinch-diagnostic-receipt-readback.md).
+
 ## 2026-11-19 Tripod and Power joint pregrasp search
 
 The opt-in search changes wrist pose and finger preshape under the original coupled limits. Both replayed candidates improved pad reach and remain blocked at static geometry gates. [Report](docs/superpowers/reports/2026-11-19-dh116-wire-joint-pregrasp.md).

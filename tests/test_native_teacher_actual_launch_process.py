@@ -255,3 +255,64 @@ def test_granted_lease_revalidates_original_files_and_kernel_lock_without_reconn
     assert result.returncode==2,(result.stdout,result.stderr)
     assert 'CPU_SERVER {"ok": true' in result.stdout
     assert 'CPU_RESULT {"ok": false' in result.stdout
+
+
+@pytest.mark.parametrize("damage", ["none", "receipt_sha", "intent", "binding", "reply",
+                                    "process", "outer", "native_log", "artifacts", "promotion"])
+def test_actual_diagnostic_receipt_rechecks_finished_cpu_grant(repo, tmp_path, monkeypatch, damage):
+    import json
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_actual_artifacts as artifacts
+
+    package, _, _, intent_binding = cpu_fixture(repo, tmp_path)
+    child = run_cpu_parent(repo, intent_binding, debugger=True)
+    assert child.returncode == 0, child.stdout + child.stderr
+    attempt = Path(intent_binding["path"]).parent
+    intent = json.loads(Path(intent_binding["path"]).read_bytes())
+    output = Path(intent["output"])
+    output.mkdir(parents=True)
+    native_log = attempt / "native.log"
+    native_log.write_text(child.stdout + child.stderr)
+    outer = attempt / "outer_exit.json"
+    measured = dict(outer_exit_code=0, native_lock_observed=True, duration_seconds=.5,
+                    log_sha256=scheduler.file_hash(native_log), **scheduler.debugger_status(native_log))
+    outer.write_text(json.dumps(measured))
+    files = ("intent.json", "actual-launch/binding.json", "actual-launch/reply.json", "outer_exit.json")
+    evidence = {"native_qualification": False, "native_ready": False, "teacher_admission": False,
+                "artifact_sha256": {"raw": "a" * 64}}
+    receipt = dict(measured, **repo.native_execution_identity(package), **intent["core_identity"],
+                   executor="native_bounded", native_execution_performed=True, exit_code=0,
+                   tested_head=intent["head"], batch_id=intent["approval"]["batch_id"],
+                   qualification_scope=package["evidence_scope"], output=str(output),
+                   reason="actual_receipt_audit_pending", blocker_kind="failed_native",
+                   actual_launch=package["actual_launch"],
+                   launch_evidence_sha256={name: scheduler.file_hash(attempt / name) for name in files},
+                   **evidence)
+
+    def verify(_spec, path, *, repository, package, envelope):
+        assert path == output and repository is repo and envelope.package_name == "actual"
+        assert not Path(envelope.socket_path).exists()
+        if damage == "artifacts":
+            return dict(evidence, artifact_sha256={"raw": "b" * 64})
+        return evidence
+
+    monkeypatch.setattr(artifacts, "audit_actual_fresh_outputs", verify)
+    files_to_damage = dict(intent="intent.json", binding="actual-launch/binding.json",
+        reply="actual-launch/reply.json", process="actual-launch/process.json",
+        outer="outer_exit.json", native_log="native.log")
+    if damage in files_to_damage:
+        (attempt / files_to_damage[damage]).write_text("{}")
+    if damage == "promotion":
+        receipt["native_qualification"] = True
+    path = attempt / "receipt.json"
+    path.write_text(json.dumps(receipt))
+    sha = scheduler.file_hash(path) if damage != "receipt_sha" else "b" * 64
+    # An offline readback must also work when later unrelated commits move HEAD.
+    monkeypatch.setattr(repo, "head", lambda: "d" * 40)
+    if damage == "none":
+        result = repo.verify_actual_diagnostic("actual", sha)
+        assert result["diagnostic_verified"] is True
+        assert result["native_qualification"] is False and result["teacher_admission"] is False
+        assert result["receipt_sha256"] == sha
+    else:
+        with pytest.raises(ValueError):
+            repo.verify_actual_diagnostic("actual", sha)
