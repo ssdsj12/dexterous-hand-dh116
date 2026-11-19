@@ -38420,17 +38420,18 @@
         "teacher.actual-fresh-worker-entry-cpu",
         "teacher.actual-worker-ledgers-cpu",
         "teacher.actual-fresh-output-audit-cpu",
-        "teacher.actual-fresh-setup-audit-cpu"
+        "teacher.actual-fresh-setup-audit-cpu",
+        "teacher.actual-fresh-cap-audit-cpu"
       ],
       "status": "blocked",
-      "reason": "Independent A-fresh setup, physical snapshots, model input and checkpoint CPU audits are implemented. Actual cap and receipt revalidation remain pending.",
+      "reason": "Fresh A scene, model, checkpoint, setup and cap audits passed CPU tests. Qualified receipt revalidation and native runs remain pending.",
       "native_qualification": false,
       "last_result": {
-        "cpu_passed": 265,
+        "cpu_passed": 186,
         "cpu_failed": 0,
         "native_runs": 0,
         "native_ppo_updates": 0,
-        "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-setup-audit.md"
+        "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-actual-wall-budget.md"
       }
     },
     "teacher.actual-resume-l03-cpu": {
@@ -41369,6 +41370,26 @@
         "passed": 265,
         "failed": 0,
         "scope": "CPU regression only"
+      }
+    },
+    "teacher.actual-fresh-cap-audit-cpu": {
+      "title": "Pinch 实际 PPO 窗口时限证据",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.actual-fresh-setup-audit-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_artifacts.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_actual_wall_budget_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-actual-wall-budget.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 186,
+        "failed": 0,
+        "scope": "CPU only"
       }
     }
   },

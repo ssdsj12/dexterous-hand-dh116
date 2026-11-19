@@ -1,0 +1,58 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.actual-fresh-cap-audit-cpu",
+  "branch": "11-17",
+  "review_baseline": "e86e74bf4428dfe1c477c53125893f6114c69af1",
+  "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-actual-wall-budget.md",
+  "cpu": {
+    "passed": 186,
+    "failed": 0,
+    "new_cases": 6,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_native_teacher_actual_artifacts.py",
+      "tests/test_native_teacher_actual_provider.py",
+      "tests/test_native_teacher_session.py",
+      "tests/test_native_teacher_actual_factories.py",
+      "tests/test_native_teacher_actual_launch.py",
+      "tests/test_native_teacher_actual_launch_process.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "90a0c1fe59d6bdfeec496ac4b32550e5349335b56725ee6c736d14d6ad6586c3",
+    "red_sha256": "524dad0d907b01b66fd423250ddd71bb9b2fdf7003d814477128e2540eff751f"
+  },
+  "source_sha256": {
+    "scripts/run_dh116_work_packages.py": "8afc21932311ef21d9e1dc60b22745cc7c0d791ded20fe8bba26c69561cbd69b",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_artifacts.py": "e508aa87daac1ac73e5dbfb0f9892c7f7ed8d88032463ade37cd53bab092b540",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_provider.py": "756c55e7280a5c563f20a3a60fe767723c6a314fdbda9e6915252b707fa57864",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_session.py": "90656b852eea42a7976eb4819f6f6534fb6f24d637aa7b99dc4d1e1c266edbc2",
+    "tests/test_native_teacher_actual_artifacts.py": "1b7f81a9f7f78d929385c5bcc6e0a37b8df1473c0b12536e1a98ce015112897a",
+    "tests/test_native_teacher_actual_provider.py": "6ff6c487105b40b10fc227384d3715dc222fca12ca935b00d35185f54a3b93fe"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "remaining": [
+    "qualified_receipt_revalidation",
+    "separately_frozen_native_recipe",
+    "existing_isaac_lock"
+  ]
+}

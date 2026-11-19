@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch actual update wall budget
+
+The fresh Worker's actual wall clock samples are audited against the parent lease and frozen episode cap. The qualified receipt stage remains separate. [Report](docs/superpowers/reports/2026-11-19-dh116-teacher-actual-wall-budget.md).
+
 ## 2026-11-19 Pinch Teacher setup and first action
 
 The actual A post-exit audit ties the two measured SDK setup steps and a zero-step episode Reset to the first executed action. Cap and qualified receipt revalidation remain pending. [Report](docs/superpowers/reports/2026-11-19-dh116-teacher-fresh-setup-audit.md).

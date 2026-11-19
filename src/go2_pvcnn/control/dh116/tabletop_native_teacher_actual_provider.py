@@ -130,6 +130,20 @@ def _checkpoint_contract(collector, attempt):
         source_sha256=source, config_sha256=semantic)
 
 
+
+def _record_actual_wall_budget(collector, lease, phase):
+    owner = collector.owner
+    runtime = owner.contract.runtime
+    sample = runtime.wall_readback()
+    if (sample["parent_deadline_s"] != lease.deadline_monotonic_s or sample["remaining_s"] <= 0.
+            or owner.context.external_cap_s != sample["local_cap_s"]
+            or owner.context.episode_cap_s != owner.contract.config.episode_cap_s):
+        raise ValueError("live actual Teacher wall budget or context cap differs")
+    collector.journal.emit("fresh_update_wall_budget", dict(sample, phase=phase,
+        episode_uid=owner.episode_uid, sdk_step=owner.sim.current_time_step_index,
+        episode_cap_s=owner.context.episode_cap_s))
+
+
 def _acquire(sim, owners, trace, *, attempt, config, lease):
     from .tabletop_native_teacher_actual_factories import build_actual_factories
     from .tabletop_native_teacher_actual_update import run_fresh_update
@@ -151,7 +165,10 @@ def _acquire(sim, owners, trace, *, attempt, config, lease):
             prepare_source_pack=partial(_prepare_source_pack, device=attempt.device["logical_device"]))
         collector = create_native_collector(session, factories)
         try:
-            result = run_fresh_update(collector, checkpoint_contract=_checkpoint_contract(collector, attempt))
+            checkpoint_contract = _checkpoint_contract(collector, attempt)
+            _record_actual_wall_budget(collector, lease, "before_update")
+            result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract)
+            _record_actual_wall_budget(collector, lease, "after_update")
         except BaseException:
             try:
                 collector.close()

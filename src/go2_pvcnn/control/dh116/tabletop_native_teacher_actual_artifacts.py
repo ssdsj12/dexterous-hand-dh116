@@ -226,14 +226,46 @@ def _audit_fresh_setup(rows):
                 episode_uid=sequence.clock["episode_uid"], reset_id=sequence.clock["reset_id"])
 
 
-def audit_actual_fresh_outputs(spec, output, *, repository, package):
+
+def _audit_fresh_budget(rows, envelope, *, episode_uid, episode_cap_s, local_cap_s):
+    import math
+
+    samples = [row for row in rows if row["operation"] == "fresh_update_wall_budget"]
+    decisions = [row["sequence"] for row in rows if row["operation"] == "decision"]
+    seals = [row["sequence"] for row in rows if row["operation"] == "fresh_update_checkpoint_sealed"]
+    if (len(samples) != 2 or not decisions or len(seals) != 1
+            or not samples[0]["sequence"] < decisions[0] <= decisions[-1] < seals[0] < samples[1]["sequence"]
+            or episode_uid != envelope.nonce + ":0"):
+        raise ValueError("parent-bound wall budget samples must bracket the fresh update")
+    deadline = envelope.deadline_monotonic_s
+    before, after = [row["payload"] for row in samples]
+    for row, phase, step in zip((before, after), ("before_update", "after_update"), (2, 258)):
+        numbers = ("episode_cap_s", "local_cap_s", "observed_s", "started_s", "parent_deadline_s", "remaining_s")
+        if (any(type(row.get(k)) not in (int, float) or not math.isfinite(row[k]) for k in numbers)
+                or row.get("phase") != phase or row.get("episode_uid") != episode_uid
+                or type(row.get("sdk_step")) is not int or row["sdk_step"] != step
+                or row["episode_cap_s"] != episode_cap_s or row["local_cap_s"] != local_cap_s
+                or row["parent_deadline_s"] != deadline
+                or not envelope.issued_monotonic_s <= row["started_s"] <= row["observed_s"] < deadline):
+            raise ValueError("fresh update budget identity, cap or parent deadline differs")
+        remaining = min(local_cap_s - (row["observed_s"] - row["started_s"]), deadline - row["observed_s"])
+        if remaining <= 0. or not math.isclose(row["remaining_s"], remaining, abs_tol=1e-9, rel_tol=0.):
+            raise ValueError("fresh update budget differs from the live local and parent clocks")
+    if before["started_s"] != after["started_s"] or before["observed_s"] > after["observed_s"]:
+        raise ValueError("fresh update budget clocks do not belong to one session")
+    return dict(parent_deadline_s=deadline, episode_cap_s=episode_cap_s, session_local_cap_s=local_cap_s,
+                remaining_before_s=before["remaining_s"], remaining_after_s=after["remaining_s"])
+
+
+def audit_actual_fresh_outputs(spec, output, *, repository, package, envelope):
     """Audit fresh Pinch output after the parent has observed the real exit.
 
-    Full admission also requires independent cap and receipt validation.
+    Full admission also requires independent receipt validation.
     The returned data can describe a complete measured window while it remains
     ineligible for publishing a qualified native receipt.
     """
-    from .tabletop_native_teacher_profile import BackendProfile
+    from .tabletop_native_teacher_actual_process import ParentLaunchEnvelope
+    from .tabletop_native_teacher_profile import BackendProfile, checked_file
     from .tabletop_native_teacher_worker_artifacts import (
         _audit_fresh_checkpoint, _current_recipe_context, _physical_journal,
     )
@@ -242,8 +274,17 @@ def audit_actual_fresh_outputs(spec, output, *, repository, package):
     launch = repository.actual_launch(context["package"])
     if launch is None or launch["role"] != "a_fresh" or launch["checkpoint_origin"] is not None:
         raise ValueError("registered A-fresh companion required for this output audit")
+    pin = spec["teacher_contract"]
+    if (type(envelope) is not ParentLaunchEnvelope or envelope.role != "a_fresh"
+            or envelope.package_name != context["package_name"] or
+            envelope.semantic_sha256 != pin["semantic_sha256"] or envelope.core_source_sha256 != pin["source_sha256"]
+            or envelope.frozen_config != pin["training_config"]):
+        raise ValueError("parent launch envelope differs from the approved actual budget")
+    config = json.loads(checked_file(envelope.frozen_config["path"], envelope.frozen_config["sha256"]))
     frozen = freeze_actual_fresh_artifacts(spec=spec, output=output)
     setup = _audit_fresh_setup(frozen["rows"])
+    budget = _audit_fresh_budget(frozen["rows"], envelope, episode_uid=setup["episode_uid"],
+        episode_cap_s=config["episode_cap_s"], local_cap_s=pin["limits"]["inner_wall_timeout_s"])
     physical = _physical_journal(frozen["rows"], reward_scope="unqualified_source",
                                  expected_backend_sha256=spec["teacher_contract"]["backend_sha256"])
     if physical["physical_nodes"] != 41:
@@ -255,5 +296,5 @@ def audit_actual_fresh_outputs(spec, output, *, repository, package):
     return dict(artifact_sha256=frozen["artifact_sha256"], lifecycle_sha256=result["lifecycle_sha256"],
         teacher_training=result["training"], physical_evidence=physical, checkpoint_audit=checkpoint,
         input_source_audit=model_input, physical_to_model_snapshot_binding_verified=True,
-        setup_evidence=setup, actual_setup_source_verified=True, cap_source_verified=False,
+        setup_evidence=setup, budget_evidence=budget, actual_setup_source_verified=True, cap_source_verified=True,
         native_ready=False, native_qualification=False, teacher_admission=False)

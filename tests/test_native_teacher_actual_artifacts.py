@@ -208,3 +208,36 @@ def test_pinches_setup_matches_first_pre_action_without_hidden_step(damage):
         assert result["setup_sdk_steps"] == 2
         assert result["episode_reset_sdk_steps"] == 0
         assert result["episode_uid"] == "run1:0"
+
+
+@pytest.mark.parametrize("damage", [None, "old_deadline", "past_deadline", "local_only", "wrong_cap", "swapped"])
+def test_pinches_budget_is_bound_to_parent_envelope_and_update_window(damage):
+    from types import SimpleNamespace
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_artifacts import _audit_fresh_budget
+
+    envelope = SimpleNamespace(nonce="run", issued_monotonic_s=100., deadline_monotonic_s=120.)
+    def record(phase, stamp, step):
+        return dict(phase=phase, episode_uid="run:0", sdk_step=step, episode_cap_s=2.,
+                    local_cap_s=20., started_s=106., observed_s=stamp, parent_deadline_s=120.,
+                    remaining_s=120.-stamp)
+    start, end = record("before_update", 110., 2), record("after_update", 119., 258)
+    items = [("decision", {}), ("fresh_update_checkpoint_sealed", {})]
+    if damage == "old_deadline":
+        start["parent_deadline_s"] = 126.
+    elif damage == "past_deadline":
+        end.update(observed_s=120., remaining_s=0.)
+    elif damage == "local_only":
+        end["remaining_s"] = 7.
+    elif damage == "wrong_cap":
+        end["episode_cap_s"] = 3.
+    items = [("fresh_update_wall_budget", start), *items, ("fresh_update_wall_budget", end)]
+    if damage == "swapped":
+        items[0], items[-1] = items[-1], items[0]
+    rows = [dict(sequence=i, operation=kind, payload=data) for i, (kind, data) in enumerate(items)]
+    if damage:
+        with pytest.raises(ValueError, match="budget|deadline"):
+            _audit_fresh_budget(rows, envelope, episode_uid="run:0", episode_cap_s=2., local_cap_s=20.)
+    else:
+        result = _audit_fresh_budget(rows, envelope, episode_uid="run:0", episode_cap_s=2., local_cap_s=20.)
+        assert result == {"parent_deadline_s": 120., "episode_cap_s": 2.,
+                          "session_local_cap_s": 20., "remaining_before_s": 10., "remaining_after_s": 1.}

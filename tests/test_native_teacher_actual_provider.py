@@ -107,6 +107,11 @@ def test_acquisition_uses_one_journal_and_releases_collector_on_every_return(tmp
     monkeypatch.setattr(update, "run_fresh_update", step)
     monkeypatch.setattr(provider(), "_checkpoint_contract", lambda *_: {"fixture": True})
 
+    def record(collector, given_lease, phase):
+        assert given_lease is lease
+        events.append((phase, collector.journal))
+
+    monkeypatch.setattr(provider(), "_record_actual_wall_budget", record)
     config = {"preflight": {}, "model_config": {}, "episode_cap_s": 2., "rollout_steps": 32}
     if failure in ("update", "both"):
         with pytest.raises(ValueError, match="original update failure"):
@@ -117,7 +122,10 @@ def test_acquisition_uses_one_journal_and_releases_collector_on_every_return(tmp
     else:
         assert provider()._acquire(sim, owners, trace, attempt=attempt, config=config, lease=lease) == {
             "updates": 1, "native_qualification": False}
-    assert [name for name, _ in events] == ["scene", "update", "close"]
+    expected = ["scene", "before_update", "update"]
+    if failure not in ("update", "both"):
+        expected.append("after_update")
+    assert [name for name, _ in events] == [*expected, "close"]
     assert all(log is events[0][1] and log._stream.closed for _, log in events)
     saved = json.loads(Path(events[0][1].path).read_text())
     assert saved["payload"]["native_qualification"] is False

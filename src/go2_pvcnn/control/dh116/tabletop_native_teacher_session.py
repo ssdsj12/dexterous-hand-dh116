@@ -240,14 +240,23 @@ class SessionBudget:
             raise ValueError("parent launch deadline changed within the owned session")
         self._parent_deadline_s = deadline_s
 
-    def remaining_s(self):
-        import time
-
-        now = time.monotonic()
+    def _remaining_at(self, now):
         remaining = self.limits["wall_timeout_s"] - (now - self.started)
         if self._parent_deadline_s is not None:
             remaining = min(remaining, self._parent_deadline_s - now)
         return max(0., remaining)
+
+    def remaining_s(self):
+        import time
+
+        return self._remaining_at(time.monotonic())
+
+    def wall_readback(self):
+        import time
+
+        now = time.monotonic()
+        return dict(started_s=self.started, observed_s=now, local_cap_s=self.limits["wall_timeout_s"],
+                    parent_deadline_s=self._parent_deadline_s, remaining_s=self._remaining_at(now))
 
     def record_setup(self,owner,events):
         events=tuple(events)
