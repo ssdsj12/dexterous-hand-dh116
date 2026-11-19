@@ -41941,6 +41941,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.tripod-material-roll-cpu": {
+      "title": "Tripod material-segment wrist roll with independent exact contact witnesses",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.tripod-witness-shortlist-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_wire_pose_candidate.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_material_roll_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-material-roll.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 40,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

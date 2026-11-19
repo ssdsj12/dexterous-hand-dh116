@@ -313,3 +313,18 @@ def test_power_palm_reach_accounts_for_rotation_and_one_way_z():
     assert 0. < reach["max_rotation_displacement_m"] < .025
     assert reach["vertical_gap_lower_m"] > .02
     assert reach["can_rule_out_coarse_approach"] is True
+
+
+def test_tripod_roll_keeps_material_pivot_and_rotates_wrist_with_proper_handedness():
+    from scipy.spatial.transform import Rotation
+    from scripts.solve_dh116_wire_pregrasp import tripod_rolled_pose
+
+    nodes = np.array([[0., 0., 0.], [0., 2., 0.]])
+    pose = np.array([0., .7, .1, 1., 0., 0., 0.])
+    rolled = tripod_rolled_pose(pose, nodes, 0, .35, -15.)
+    delta = Rotation.from_quat(np.roll(rolled[3:], -1))
+    np.testing.assert_allclose(rolled[:3] - [0., .7, 0.], delta.apply([0., 0., .1]), atol=1e-12)
+    np.testing.assert_allclose(delta.apply([0., 1., 0.]), [0., 1., 0.], atol=1e-12)
+    assert np.linalg.det(delta.as_matrix()) == pytest.approx(1.)
+    with pytest.raises(ValueError, match="material"):
+        tripod_rolled_pose(pose, nodes, 1, .35, -15.)

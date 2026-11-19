@@ -336,11 +336,28 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
     return best, evidence, baseline, baseline_evidence
 
 
-def search_pregrasp(seed, *, style, project, refine=False, coupled=False):
+def tripod_rolled_pose(pose, nodes, segment, fraction, roll_deg):
+    if (type(segment) is not int or not 0 <= segment < len(nodes) - 1
+            or not 0. <= fraction <= 1. or roll_deg not in (-15., 15.)):
+        raise ValueError("bounded roll about a measured material segment required")
+    start = nodes[segment]
+    edge = nodes[segment + 1] - start
+    length = np.linalg.norm(edge)
+    if not np.isfinite(length) or length <= 0.:
+        raise ValueError("nondegenerate material segment required")
+    delta = Rotation.from_rotvec(np.deg2rad(roll_deg) * edge / length)
+    pivot = start + fraction * edge
+    wrist = Rotation.from_quat(np.roll(pose[3:], -1))
+    return np.r_[pivot + delta.apply(pose[:3] - pivot), np.roll((delta * wrist).as_quat(), 1)]
+
+
+def search_pregrasp(seed, *, style, project, refine=False, coupled=False, tripod_left_roll_deg=0.):
     if style not in JOINT_COUNT:
         raise ValueError("joint pregrasp search requires Tripod or Power")
     if coupled and (style != "tripod" or not refine):
         raise ValueError("coupled search requires Tripod refinement")
+    if tripod_left_roll_deg and (not coupled or tripod_left_roll_deg not in (-15., 15.)):
+        raise ValueError("bounded material roll requires coupled Tripod refinement")
     nodes, full, roots, _ = seed_arrays(seed)
     _material_tangents(nodes)
     active_indices = [JOINTS.index(name) for name in ACTIVE]
@@ -356,6 +373,32 @@ def search_pregrasp(seed, *, style, project, refine=False, coupled=False):
         if refine:
             baseline_seed["roots"][i] = baseline["root"].tolist()
             baseline_seed["joints"][i] = expand(baseline["active"]).tolist()
+    roll_evidence = None
+    if tripod_left_roll_deg and not hands["left"]["endpoint_geometry_passed"]:
+        from scripts.audit_dh116_wire_contact_witness import endpoint_gap, shapes_world
+
+        geometry = load_geometry(project, side="left")
+        q = full[0, active_indices]
+        thumb = shapes_world(geometry, roots[0], q)["cooked:" + DISTAL_PAD_LINKS[0]]
+        radius = geometry["old_candidate"]["rod"]["radius_m"]
+        witness = endpoint_gap(thumb, nodes, radius)["witness"]
+        roll_evidence = dict(angle_deg=tripod_left_roll_deg, accepted=False)
+        if witness is None:
+            roll_evidence["reason"] = "no_material_pivot_witness"
+        else:
+            segment, fraction = witness["segment"], witness["fraction"]
+            pose = tripod_rolled_pose(roots[0], nodes, segment, fraction, tripod_left_roll_deg)
+            selected, evidence, _, _ = _search_hand(
+                geometry, pose, q, nodes, style, refine=True, coupled=True)
+            y_gap = _bilateral_clearance([evidence["hand_y_bounds_m"], hands["right"]["hand_y_bounds_m"]])
+            accepted = (evidence["endpoint_geometry_passed"] and y_gap > 0.
+                        and _tripod_witness_preserves_baseline(hands["left"], evidence))
+            roll_evidence.update(segment=segment, fraction=fraction, accepted=accepted,
+                                 bilateral_y_clearance_m=y_gap, attempted_endpoint=evidence if not accepted else None)
+            if accepted:
+                trial["roots"][0] = selected["root"].tolist()
+                trial["joints"][0] = expand(selected["active"]).tolist()
+                hands["left"] = evidence
     seed_arrays(trial)
     separation = _bilateral_clearance([hands[side]["hand_y_bounds_m"] for side in HANDS])
     result = dict(trial_seed=trial, hands=hands, max_evaluations_per_hand=MAX_EVALUATIONS,
@@ -363,6 +406,8 @@ def search_pregrasp(seed, *, style, project, refine=False, coupled=False):
         geometry_candidate_passed=separation > 0. and all(row["endpoint_geometry_passed"] for row in hands.values()),
         self_collision_verified=False, continuous_path_verified=False, palm_contact_verified=False,
         native_contact_verified=False, teacher_admission=False)
+    if roll_evidence is not None:
+        result["left_material_roll"] = roll_evidence
     if refine:
         baseline_y_gap = _bilateral_clearance([baseline_hands[side]["hand_y_bounds_m"] for side in HANDS])
         result["refinement"] = dict(baseline_seed=baseline_seed,

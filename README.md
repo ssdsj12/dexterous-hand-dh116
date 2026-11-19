@@ -1,3 +1,7 @@
+## 2026-11-19 Tripod material-axis wrist roll
+
+An opt-in left wrist roll about a measured material segment improves exact paired Tripod endpoints on the same rod. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-material-roll.md).
+
 ## 2026-11-19 Pinch clearance and contact recenter
 
 An independent same-rod CPU Reset candidate preserves the original pad and wrist gates; the native Teacher builder rejects mismatched Reset provenance. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-contact-recenter.md).

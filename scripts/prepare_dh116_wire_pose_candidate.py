@@ -200,8 +200,12 @@ def main(argv=None):
                         help="refine the wrist/finger candidate under certified endpoint constraints")
     parser.add_argument("--coupled-tripod-refinement", action="store_true",
                         help="try bounded paired wrist and finger changes after Tripod refinement")
+    parser.add_argument("--tripod-left-roll-deg", type=float, choices=(-15., 0., 15.), default=0.,
+                        help="try one material-axis roll only if left coupled Tripod geometry fails")
     parser.add_argument("--project", type=Path, default=Path(__file__).resolve().parents[1])
     args = parser.parse_args(argv)
+    if args.tripod_left_roll_deg and not args.coupled_tripod_refinement:
+        parser.error("--tripod-left-roll-deg requires coupled Tripod refinement")
     if args.coupled_tripod_refinement and (args.grasp != "tripod" or not args.refine_joint_pregrasp):
         parser.error("--coupled-tripod-refinement requires refined Tripod search")
     if args.refine_joint_pregrasp and not args.joint_pregrasp_search:
@@ -229,7 +233,7 @@ def main(argv=None):
 
         report["joint_pregrasp_search"] = search_pregrasp(
             seed, style=args.grasp, project=args.project, refine=args.refine_joint_pregrasp,
-            coupled=args.coupled_tripod_refinement)
+            coupled=args.coupled_tripod_refinement, tripod_left_roll_deg=args.tripod_left_roll_deg)
     encoded = json.dumps(report, indent=2, allow_nan=False)
     with args.output.open("x", encoding="utf-8") as handle:
         handle.write(encoded + "\n")
