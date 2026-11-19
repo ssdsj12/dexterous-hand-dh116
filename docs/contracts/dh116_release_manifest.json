@@ -26888,6 +26888,31 @@
         "verified_at_utc": "2026-11-19T10:45:28.229641+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-recenter-observed-tracking-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-observed-tracking.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_observed_tracking_v1.json",
+      "cpu_tests": {
+        "passed": 25,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ad0e7f5ab691a14e170a2cb78af7dcc7f4c06156",
+        "source_tree": "12714928c3a970b8b609caf6abc5b7e8e3f4eb44",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T11:10:26.929564+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
