@@ -1,3 +1,7 @@
+## 2026-11-19 Power independent wrist and finger screening
+
+Opt-in Power screening separates the palm and digit roles and records real convex endpoint clearance, with no promotion from static evidence. [Report](docs/superpowers/reports/2026-11-19-teacher-power-independent-closure.md).
+
 ## 2026-11-19 Tripod material-axis wrist roll
 
 An opt-in left wrist roll about a measured material segment improves exact paired Tripod endpoints on the same rod. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-material-roll.md).

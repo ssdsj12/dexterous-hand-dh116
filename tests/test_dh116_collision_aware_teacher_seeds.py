@@ -86,3 +86,77 @@ def test_power_approach_rejects_swept_support_between_clear_endpoints(monkeypatc
     assert result["first_rejected"]["support_intersections"] == [
         {"source": "source:base_link", "support_index": 0}]
     assert result["native_contact_verified"] is False
+
+
+def test_power_closure_search_uses_independent_finger_commands():
+    from scripts.prepare_dh116_power_palm_seed import search_closure_joints
+
+    lower = np.zeros(6)
+    upper = np.ones(6)
+    target = np.asarray([0., .5, .25, .75, .25, .75])
+
+    def score(q):
+        if q[1] > .75:
+            return None
+        return {"rank": (np.linalg.norm(q - target),)}
+
+    result, count = search_closure_joints(np.zeros(6), lower, upper, score)
+    assert np.array_equal(result["active_q"], target)
+    assert count <= 34
+
+
+def test_power_closure_collision_certificate_is_conservative():
+    from itertools import product
+    from scripts.prepare_dh116_power_palm_seed import thumb_clearance
+
+    box = np.asarray(list(product((0., .01), repeat=3)))
+    moving = {"source:finger13_link": box, "cooked:finger23_link": box + [.009, 0., 0.]}
+    assert thumb_clearance(moving) <= 0.
+    moving["cooked:finger23_link"] += [.003, 0., 0.]
+    assert thumb_clearance(moving) == pytest.approx(.002)
+
+
+@pytest.mark.parametrize("rejected_by", ["table", "support", "thumb_clearance", "same_side"])
+def test_power_closure_never_promotes_unproven_roles(monkeypatch, rejected_by):
+    import scripts.prepare_dh116_power_palm_seed as power
+
+    keys = ("source:base_link", *("cooked:" + pad for pad in power.DISTAL_PAD_LINKS))
+    z = .001 if rejected_by == "table" else .003
+    hulls = {key: np.array([[0., 0., z], [.01, .01, z]]) for key in keys}
+    table = dict(table_center=[0., 0., -.01], table_size=[1., 1., .02])
+    geometry = dict(reference=dict(reference_layout=table), old_candidate=dict(rod=dict(radius_m=.005)))
+    row = dict(root=[0., 0., 0., 1., 0., 0., 0.], palm_toward_fingers=[1., 0., 0.],
+               active_q=[0.]*6, fixed_preshape_approach=dict(last_accepted_translation_m=.001))
+
+    monkeypatch.setattr(power, "active_limits", lambda: (np.zeros(6), np.ones(6)))
+    monkeypatch.setattr(power, "expand", lambda q: q)
+    monkeypatch.setattr(power, "shapes_world", lambda *args: hulls)
+    monkeypatch.setattr(power, "support_clearance", lambda *args: ([], .001 if rejected_by == "support" else .003))
+    monkeypatch.setattr(power, "thumb_clearance", lambda *args: -.001 if rejected_by == "thumb_clearance" else .003)
+    monkeypatch.setattr(power, "_pad_gap_interval", lambda *args: dict(lower_m=.0001, upper_m=.0002))
+    witness = dict(witness=dict(direction=[1., 0., 0.]))
+    monkeypatch.setattr(power, "audit_hand", lambda *args, **kw: dict(
+        geometric_approach_passed=True, gaps={key: witness for key in keys},
+        witness_direction_dots={key: 1. for key in keys[2:]}))
+    results = power.audit_closure_positions(geometry, row, np.zeros((2, 3)), ())
+    assert [item["wrist_fraction"] for item in results] == [0., .5, 1.]
+    assert not any(item["endpoint_geometry_passed"] for item in results)
+    if rejected_by == "same_side":
+        assert all(item["palm_finger_direction_dots"] == [1.]*4 for item in results)
+    else:
+        assert all(item["rejections"][rejected_by] == item["evaluations"] for item in results)
+
+
+def test_power_closure_cli_status_tracks_independent_screen(monkeypatch, tmp_path):
+    import json
+    import scripts.prepare_dh116_power_palm_seed as power
+
+    seed = tmp_path / "seed.json"
+    seed.write_text("{}")
+    output = tmp_path / "audit.json"
+    result = dict(geometric_wrap_passed=True, closure_screen=dict(pairs=[]))
+    monkeypatch.setattr(power, "prepare_palm_seed", lambda *args, **kwargs: result.copy())
+    code = power.main(["--seed", str(seed), "--audit-approach", "--audit-closure",
+                       "--left-node", "3", "--right-node", "6", "--output", str(output)])
+    assert code == 2
+    assert json.loads(output.read_text())["closure_screen"]["pairs"] == []

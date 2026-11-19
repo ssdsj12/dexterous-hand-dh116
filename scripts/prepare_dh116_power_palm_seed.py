@@ -7,13 +7,15 @@ import json
 from pathlib import Path
 
 import numpy as np
+from scipy.spatial import ConvexHull
 from scipy.spatial.transform import Rotation
 
+from go2_pvcnn.control.dh116.clearance import separation_lower_bound
 from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, JOINTS, active_limits, expand
 from go2_pvcnn.control.dh116.tabletop_deformable_wrist_projection import CLEARANCE_M
 from go2_pvcnn.control.dh116.tabletop_teacher_seed_initialization import seed_arrays
 from scripts.audit_dh116_pinch_initial_pose import DISTAL_PAD_LINKS, box_relation, load_geometry
-from scripts.audit_dh116_wire_contact_witness import audit_seed, endpoint_gap, shapes_world
+from scripts.audit_dh116_wire_contact_witness import audit_hand, audit_seed, endpoint_gap, shapes_world
 from scripts.prepare_dh116_wire_pose_candidate import HANDS, _material_tangents, _pad_gap_interval, _station_frame
 from scripts.solve_dh116_tripod_joint_root_direction import COARSE
 
@@ -133,6 +135,127 @@ def audit_fixed_preshape_approach(shapes, nodes, radius, direction, supports):
                 table_clearance_unchanged=True, native_contact_verified=False)
 
 
+def search_closure_joints(seed, lower, upper, evaluate):
+    """Start with coordinated closure, then vary each flexion independently."""
+    def score(q):
+        result = evaluate(q)
+        return None if result is None else dict(result, active_q=q.copy())
+
+    best = score(seed)
+    count = 1
+    for thumb in (.25, .5, .75):
+        for fingers in (.25, .5, .75):
+            q = seed.copy()
+            q[1:] = (lower + (upper - lower) * np.r_[0., thumb, np.full(4, fingers)])[1:]
+            result = score(q)
+            count += 1
+            if result is not None and (best is None or result["rank"] < best["rank"]):
+                best = result
+
+    for joint in range(1, len(seed)):
+        center = seed.copy() if best is None else best["active_q"].copy()
+        for fraction in (0., .25, .5, .75, 1.):
+            q = center.copy()
+            q[joint] = lower[joint] + fraction * (upper[joint] - lower[joint])
+            if q[joint] == center[joint]:
+                continue
+            result = score(q)
+            count += 1
+            if result is not None and (best is None or result["rank"] < best["rank"]):
+                best = result
+    return best, count
+
+
+def thumb_clearance(shapes):
+    """Conservative separating-axis certificates between thumb and other digits."""
+    thumb = [v for key, v in shapes.items() if key.split(":")[1].startswith("finger1")]
+    fingers = [v for key, v in shapes.items() if key.split(":")[1].startswith(
+        ("finger2", "finger3", "finger4", "finger5"))]
+    if not thumb or not fingers:
+        raise ValueError("original thumb and other finger hulls required")
+    bounds = {id(hull): (hull.min(0), hull.max(0)) for hull in thumb + fingers}
+    normals = {}
+    gaps = []
+    for a in thumb:
+        lo_a, hi_a = bounds[id(a)]
+        for b in fingers:
+            lo_b, hi_b = bounds[id(b)]
+            gap = float(np.maximum(lo_a - hi_b, lo_b - hi_a).max())
+            if gap <= 0.:
+                # AABB overlap alone is unresolved. Try source hull face axes
+                # and retain only a certified strictly positive separation.
+                for hull in (a, b):
+                    if id(hull) not in normals:
+                        normals[id(hull)] = ConvexHull(hull).equations[:, :3]
+                gap = separation_lower_bound(a, b, np.vstack((normals[id(a)], normals[id(b)])))
+            gaps.append(gap)
+    return min(gaps)
+
+
+def audit_closure_positions(geometry, row, nodes, supports):
+    """Screen endpoint geometry with real FK; do not certify a motion or load."""
+    distance = row["fixed_preshape_approach"]["last_accepted_translation_m"]
+    if distance is None:
+        return []
+    axis = np.asarray(row["palm_toward_fingers"]) * [1., 1., 0.]
+    axis /= np.linalg.norm(axis)
+    layout = geometry["reference"]["reference_layout"]
+    table_top = layout["table_center"][2] + layout["table_size"][2] / 2
+    radius = geometry["old_candidate"]["rod"]["radius_m"]
+    required = ("source:base_link", *("cooked:" + pad for pad in DISTAL_PAD_LINKS))
+    results = []
+    for fraction in (0., .5, 1.):
+        root = np.asarray(row["root"]).copy()
+        root[:3] += distance * fraction * axis
+        rejected = dict(table=0, support=0, rod=0, thumb_clearance=0)
+
+        def evaluate(q):
+            expand(q)
+            hulls = shapes_world(geometry, root, q)
+            clearance = min(float(vertices[:, 2].min()) for vertices in hulls.values()) - table_top
+            if clearance < CLEARANCE_M:
+                rejected["table"] += 1
+                return None
+            hits, support_gap = support_clearance(hulls, supports)
+            if hits or (support_gap is not None and support_gap < CLEARANCE_M):
+                rejected["support"] += 1
+                return None
+            gaps = {key: _pad_gap_interval(vertices, nodes, radius) for key, vertices in hulls.items()}
+            if any(gap["lower_m"] < 0. for gap in gaps.values()):
+                rejected["rod"] += 1
+                return None
+            thumb_gap = thumb_clearance(hulls)
+            if thumb_gap <= 0.:
+                rejected["thumb_clearance"] += 1
+                return None
+            uppers = [gaps[key]["upper_m"] for key in required]
+            return dict(rank=(max(uppers), sum(uppers)), hulls=hulls,
+                        minimum_support_separating_axis_gap_m=support_gap,
+                        thumb_separating_axis_gap_m=thumb_gap)
+
+        best, count = search_closure_joints(np.asarray(row["active_q"]), *active_limits(), evaluate)
+        result = dict(wrist_fraction=fraction, evaluations=count, rejections=rejected,
+                      root=root.tolist(), endpoint_geometry_passed=False)
+        if best is not None:
+            hulls = best.pop("hulls")
+            witness = audit_hand(hulls, nodes, radius, layout, DISTAL_PAD_LINKS, include_palm=True)
+            directions = {key: (witness["gaps"][key]["witness"] or {}).get("direction")
+                          for key in required}
+            palm, thumb = (directions[key] for key in required[:2])
+            fingers = [directions[key] for key in required[2:]]
+            palm_dots = [None if palm is None or finger is None else float(np.dot(palm, finger))
+                         for finger in fingers]
+            thumb_dots = list(witness["witness_direction_dots"].values())
+            y = np.concatenate([v[:, 1] for v in hulls.values()])
+            endpoint = (witness["geometric_approach_passed"]
+                        and all(dot is not None and dot < 0. for dot in palm_dots)
+                        and any(dot is not None and dot < -.2 for dot in thumb_dots))
+            result.update(best, active_q=best["active_q"].tolist(), exact=witness, palm_finger_direction_dots=palm_dots,
+                          hand_y_bounds_m=[float(y.min()), float(y.max())], endpoint_geometry_passed=endpoint)
+        results.append(result)
+    return results
+
+
 def _search_palm(geometry, pose, q, nodes, station, frame, supports, *, aligned_preshape):
     if geometry["fk"].root.rsplit("/", 1)[-1] != "base_link":
         raise ValueError("Power palm support requires the original base_link")
@@ -191,7 +314,9 @@ def _search_palm(geometry, pose, q, nodes, station, frame, supports, *, aligned_
 
 
 def prepare_palm_seed(seed, *, stations, project, supports=(), aligned_preshape=False,
-                      audit_approach=False):
+                      audit_approach=False, audit_closure=False):
+    if audit_closure and not audit_approach:
+        raise ValueError("closure audit requires a fixed-preshape approach audit")
     nodes, joints, roots, _ = seed_arrays(seed)
     tangent = _material_tangents(nodes)
     if (not isinstance(stations, dict) or set(stations) != set(HANDS)
@@ -223,18 +348,33 @@ def prepare_palm_seed(seed, *, stations, project, supports=(), aligned_preshape=
             hulls = shapes_world(geometry, row["root"], row["active_q"])
             row["fixed_preshape_approach"] = audit_fixed_preshape_approach(
                 hulls, nodes, geometry["old_candidate"]["rod"]["radius_m"], row["palm_toward_fingers"], supports)
+            if audit_closure:
+                row["closure_endpoints"] = audit_closure_positions(geometry, row, nodes, supports)
     opposed_sides = all(all(item > 0. for item in row["finger_side_projection_m"].values())
                         for row in search.values())
     supports_clear = all(
         not row["support_intersections"] and (not aligned_preshape or not supports
             or row["minimum_support_separating_axis_gap_m"] >= CLEARANCE_M)
         for row in search.values())
-    return dict(schema="dh116-power-palm-referenced-seed-v1", trial_seed=trial, search=search, evidence=evidence,
+    result = dict(schema="dh116-power-palm-referenced-seed-v1", trial_seed=trial, search=search, evidence=evidence,
         support_boxes_audited=len(supports), discrete_support_clearance_passed=supports_clear,
         aligned_preshape=aligned_preshape,
         geometric_wrap_passed=opposed_sides and supports_clear and evidence["static_approach_passed"],
         locked_palm_cooked_available=False, palm_patch_identity_proven=False,
         native_contact_verified=False, palm_contact_verified=False, teacher_admission=False)
+    if audit_closure:
+        pairs = []
+        for left in search["left"].get("closure_endpoints", []):
+            for right in search["right"].get("closure_endpoints", []):
+                if left["endpoint_geometry_passed"] and right["endpoint_geometry_passed"]:
+                    a, b = left["hand_y_bounds_m"], right["hand_y_bounds_m"]
+                    gap = max(a[0] - b[1], b[0] - a[1])
+                    if gap > 0.:
+                        pairs.append(dict(left=left["wrist_fraction"], right=right["wrist_fraction"],
+                                          bilateral_y_clearance_m=gap))
+        result["closure_screen"] = dict(pairs=pairs, continuous_path_verified=False,
+                                        native_contact_verified=False, teacher_admission=False)
+    return result
 
 
 def main(argv=None):
@@ -247,6 +387,8 @@ def main(argv=None):
                         help="align each hand from its FK finger span and try bounded flexion offsets")
     parser.add_argument("--audit-approach", action="store_true",
                         help="audit a bounded fixed-joint horizontal sweep; does not move the candidate")
+    parser.add_argument("--audit-closure", action="store_true",
+                        help="screen independent joint endpoints at three certified wrist positions")
     parser.add_argument("--left-node", required=True, type=int)
     parser.add_argument("--right-node", required=True, type=int)
     parser.add_argument("--output", required=True, type=Path)
@@ -265,11 +407,13 @@ def main(argv=None):
         raw = args.seed.read_bytes()
     result = prepare_palm_seed(json.loads(raw), stations=dict(left=args.left_node, right=args.right_node),
                                project=args.project, supports=supports, aligned_preshape=args.aligned_preshape,
-                               audit_approach=args.audit_approach)
+                               audit_approach=args.audit_approach, audit_closure=args.audit_closure)
     result["input_seed_sha256"] = hashlib.sha256(raw).hexdigest()
     with args.output.open("x", encoding="utf-8") as stream:
         json.dump(result, stream, indent=2, allow_nan=False)
         stream.write("\n")
+    if args.audit_closure:
+        return 0 if result["closure_screen"]["pairs"] else 2
     return 0 if result["geometric_wrap_passed"] else 2
 
 
