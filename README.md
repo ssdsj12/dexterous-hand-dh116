@@ -1,3 +1,7 @@
+## 2026-11-19 Power continuous middle-finger reach
+
+Compared isolated middle-finger joint reach against each eligible seated Power pose and separated pose reach from search resolution. [Report](docs/superpowers/reports/2026-11-19-teacher-power-middle-reach.md).
+
 ## 2026-11-19 Pinch right thumb dynamic clearance
 
 Replayed the v8 terminal using all measured joints and prepared a new right-hand Reset candidate within the original geometric limits. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v8-right-clearance-candidate.md).

@@ -55,3 +55,18 @@ def test_power_station_change_transports_wrist_and_inward_in_the_rod_frame():
                                              _material_tangents(nodes), source=1, target=2)
     np.testing.assert_allclose(target, [1., 2., .3, 1., 0., 0., 0.], atol=1e-12)
     np.testing.assert_allclose(inward, [-1., 0., 0.], atol=1e-12)
+
+
+def test_power_digit_bound_accounts_for_a_gap_between_sample_knots():
+    from scripts.audit_dh116_power_material_reach import summarize_middle_reach
+
+    rows = [
+        {"gap_lower_m": .001, "gap_upper_m": .0011, "clear": True},
+        {"gap_lower_m": .001, "gap_upper_m": .0011, "clear": False},
+    ]
+    possible = summarize_middle_reach(rows, point_travel_m=.0011)
+    assert not possible["fixed_wrist_reach_excluded"]
+    assert possible["best_clear_sample_upper_m"] == .0011
+    excluded = summarize_middle_reach(rows, point_travel_m=.0004)
+    assert excluded["fixed_wrist_reach_excluded"]
+    assert excluded["continuous_minimum_lower_m"] > .0005

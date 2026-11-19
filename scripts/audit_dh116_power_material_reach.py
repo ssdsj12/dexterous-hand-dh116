@@ -8,10 +8,11 @@ from pathlib import Path
 import numpy as np
 from scipy.spatial.transform import Rotation
 
+from go2_pvcnn.control.dh116.linear_coupling import ACTIVE
 from go2_pvcnn.control.dh116.tabletop_deformable_wrist_projection import CLEARANCE_M
 from go2_pvcnn.control.dh116.tabletop_teacher_seed_initialization import seed_arrays
 from go2_pvcnn.control.dh116.tabletop_teacher_supported_runtime import supported_seed_plan
-from scripts.audit_dh116_pinch_initial_pose import DISTAL_PAD_LINKS, checked_json, load_geometry
+from scripts.audit_dh116_pinch_initial_pose import DISTAL_PAD_LINKS, checked_json, load_geometry, path_displacement_bound
 from scripts.audit_dh116_wire_contact_witness import audit_hand, endpoint_gap, shapes_world
 from scripts.prepare_dh116_power_palm_seed import (
     active_limits, audit_closure_at_root, support_clearance, thumb_clearance,
@@ -257,6 +258,77 @@ def audit_reach(artifact, *, project, resolve_closure=False, palm_approach_only=
                 native_contact_verified=False, teacher_admission=False, **extra)
 
 
+def summarize_middle_reach(samples, *, point_travel_m):
+    """Bound the continuous minimum gap using the largest nearest-knot displacement."""
+    if not samples or not np.isfinite(point_travel_m) or point_travel_m < 0.:
+        raise ValueError("nonempty sweep and finite point travel reserve required")
+    lower = min(row["gap_lower_m"] for row in samples) - point_travel_m
+    best = min(samples, key=lambda row: row["gap_upper_m"])
+    best_clear = min((row["gap_upper_m"] for row in samples if row["clear"]), default=None)
+    return dict(continuous_minimum_lower_m=lower, best_sample_upper_m=best["gap_upper_m"],
+                best_clear_sample_upper_m=best_clear, fixed_wrist_reach_excluded=bool(lower > .0005))
+
+
+def middle_reach(artifact, seated, *, project):
+    nodes, *_ = seed_arrays(artifact["trial_seed"])
+    plan, _ = supported_seed_plan(project)
+    if not np.array_equal(nodes, np.asarray(plan["seeds_by_style"]["power"]["nodes"], dtype=nodes.dtype)):
+        raise ValueError("same end-supported Power rod required")
+    supports = plan["scene"]["supports"]
+    lower, upper = active_limits()
+    index = ACTIVE.index("finger31")
+    sweep = np.linspace(lower[index], upper[index], 65)
+    hands = {}
+    for side in HANDS:
+        geometry = load_geometry(project, side=side)
+        layout = geometry["reference"]["reference_layout"]
+        top = layout["table_center"][2] + layout["table_size"][2] / 2
+        radius = geometry["old_candidate"]["rod"]["radius_m"]
+        prior = seated["hands"][side]
+        q = np.asarray(prior["open_q_rad"]).copy()
+        if not np.array_equal(q, lower):
+            raise ValueError("original open Power joint seed required")
+        delta = np.zeros_like(lower)
+        delta[index] = upper[index] - lower[index]
+        pad = "cooked:finger33_link"
+        reserve = path_displacement_bound(geometry, q, delta, cooked=True)["finger33_link"] / (2*(len(sweep)-1))
+        hands[side] = []
+        for candidate in prior["candidates"]:
+            if not candidate["eligible"]:
+                continue
+            root = np.asarray(candidate["root"])
+            samples = []
+            for angle in sweep:
+                q[index] = angle
+                digit = {key: shape for key, shape in shapes_world(geometry, root, q).items()
+                         if key.split(":")[1].startswith("finger3")}
+                gap = _pad_gap_interval(digit[pad], nodes, radius)
+                table = min(float(vertices[:, 2].min() - top) for vertices in digit.values())
+                hits, support = support_clearance(digit, supports)
+                rod_ok = True
+                for vertices in digit.values():
+                    g = _pad_gap_interval(vertices, nodes, radius)
+                    if g["lower_m"] < 0.:
+                        g = endpoint_gap(vertices, nodes, radius) if g["upper_m"] >= 0. else g
+                    rod_ok &= g["lower_m"] >= 0.
+                    if not rod_ok:
+                        break
+                samples.append(dict(angle_rad=float(angle), gap_lower_m=gap["lower_m"], gap_upper_m=gap["upper_m"],
+                                     table_gap_m=table, support_gap_m=support, rod_clear=bool(rod_ok),
+                                     clear=bool(rod_ok and table >= CLEARANCE_M and not hits and support >= CLEARANCE_M)))
+            bounds = summarize_middle_reach(samples, point_travel_m=reserve)
+            q[index] = min(samples, key=lambda row: row["gap_upper_m"])["angle_rad"]
+            tight_upper = endpoint_gap(shapes_world(geometry, root, q)[pad], nodes, radius)["upper_m"]
+            hands[side].append(dict(station=candidate["station"], mode=candidate["mode"],
+                                    degrees=candidate.get("degrees"), continuous_bounds=bounds,
+                                    best_coarse_sample_tight_upper_m=tight_upper,
+                                    point_travel_m=reserve, samples=samples))
+        if not hands[side]:
+            raise ValueError("seated evidence contains no eligible wrist for " + side)
+    return dict(hands=hands, scoped_digit="finger31 → finger33_link", native_contact_verified=False,
+                teacher_admission=False, actual_isaac_steps=0)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--closure-evidence", type=Path, required=True)
@@ -269,11 +341,25 @@ def main():
                       help="screen a single inward axis with the hand open before attempting closure")
     mode.add_argument("--screen-seated-pockets", action="store_true",
                       help="change the left material station and rotate the right wrist about its palm witness")
+    mode.add_argument("--screen-middle-reach", action="store_true")
+    parser.add_argument("--seated-evidence", type=Path)
+    parser.add_argument("--seated-sha256")
     args = parser.parse_args()
     artifact = checked_json(args.closure_evidence, args.closure_sha256)
-    result = audit_reach(artifact, project=Path(__file__).resolve().parents[1],
-                         resolve_closure=args.resolve_closure, palm_approach_only=args.palm_approach_only,
-                         seated_pockets=args.screen_seated_pockets)
+    project = Path(__file__).resolve().parents[1]
+    if args.screen_middle_reach:
+        if not args.seated_evidence or not args.seated_sha256:
+            parser.error("middle reach requires a pinned seated-pocket result")
+        seated = checked_json(args.seated_evidence, args.seated_sha256)
+        if seated["input_sha256"] != args.closure_sha256:
+            raise ValueError("seated evidence binds a different closure source")
+        result = middle_reach(artifact, seated, project=project)
+        result["seated_sha256"] = args.seated_sha256
+    else:
+        if args.seated_evidence or args.seated_sha256:
+            parser.error("seated evidence applies only to middle reach")
+        result = audit_reach(artifact, project=project, resolve_closure=args.resolve_closure,
+                             palm_approach_only=args.palm_approach_only, seated_pockets=args.screen_seated_pockets)
     result["input_sha256"] = args.closure_sha256
     with args.output.open("x", encoding="utf-8") as stream:
         json.dump(result, stream, indent=2, allow_nan=False)

@@ -42314,6 +42314,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.power-middle-continuous-reach-cpu": {
+      "title": "Bound full middle-finger reach for the existing Power wrist poses",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.power-seated-material-pockets-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_power_material_reach.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_middle_reach_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-power-middle-reach.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 19,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
