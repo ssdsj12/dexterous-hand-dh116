@@ -1,3 +1,7 @@
+## 2026-11-19 Control-scoped Pinch Teacher source verification
+
+Pinch keeps full inventory readback at collection entry and before PPO transition commit. Inside one control interval, the same-thread readers reuse the verified source basis and preserve every physical row. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-control-source-scope.md).
+
 ## 2026-11-19 Pinch v9 natural process exit and profile validation cost
 
 Pinch v9 retained 48 guarded physical rows and six complete control windows before wall truncation, with zero PPO updates. Profile verification now hashes the complete rebuilt inventory without an additional preliminary pass. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v9-throughput.md).

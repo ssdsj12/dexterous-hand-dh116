@@ -368,6 +368,44 @@ def test_three_actual_cpu_episodes_reset_memory_events_without_clock_or_rollout_
     assert third.consumed_sdk_steps==19 and third.context.current.metadata.identities[0].episode_uid=="run-cpu:third"
 
 
+def test_profile_tampering_preserves_physical_rows_but_blocks_transition(monkeypatch, tmp_path, backend_profile):
+    c, _, _, _, _, _ = fixture(monkeypatch, tmp_path, backend_profile)
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_profile as profile
+    c._source_profile = backend_profile
+    pad = Path(next(file.path for file in backend_profile.inventory if file.role == "pad_sdf"))
+    original_read = Path.read_bytes
+    pad_reads = 0
+    tampered = False
+    original_observe = c.sources.observe
+
+    def read(path):
+        nonlocal pad_reads
+        data = original_read(path)
+        if path != pad:
+            return data
+        pad_reads += 1
+        return data + b"tampered" if tampered else data
+
+    def observe(row):
+        nonlocal tampered
+        with profile.profile_reader_scope(backend_profile):
+            result = original_observe(row)
+        tampered = True
+        return result
+
+    monkeypatch.setattr(Path, "read_bytes", read)
+    monkeypatch.setattr(c.sources, "observe", observe)
+    with pytest.raises(ValueError, match="actual file SHA differs"):
+        c.collect()
+    assert pad_reads == 2
+    assert c.quarantined and not c._active and c.consumed_sdk_steps == 8
+    assert c.transitions == 0 and len(c.trainer.rollout) == 0
+    operations_readback = [row["operation"] for row in operations(c)]
+    assert operations_readback.count("physical") == 8
+    assert operations_readback[-1] == "rollout_quarantined"
+    assert "transition_recorded" not in operations_readback
+
+
 def test_source_primary_exception_survives_quarantine_log_failure(monkeypatch,tmp_path,backend_profile):
     c,ep,rod,hands,sim,rows=fixture(monkeypatch,tmp_path,backend_profile)
     original=ValueError("original source exception");observe=c.sources.observe;emit=c.journal.emit

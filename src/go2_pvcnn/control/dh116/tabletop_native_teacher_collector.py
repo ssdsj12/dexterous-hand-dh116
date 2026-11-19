@@ -3,6 +3,7 @@
 Exactly one episode.control per decision; no sim.step or optimizer call here.
 Source adapters supply typed measured endpoints, never qualification booleans.
 """
+from contextlib import nullcontext
 from copy import deepcopy
 from dataclasses import asdict,is_dataclass
 import math
@@ -68,6 +69,7 @@ class NativeTeacherCollector:
             raise ValueError("clean initial trainer boundary required")
         self.owner,self.trainer,self.reward,self.live=owner,trainer,reward,live
         self.history,self.context,self.sources=owner.history,owner.context,owner.sources
+        self._source_profile = None
         if self.sources.scope!="cpu_fixture":
             from .tabletop_native_teacher_session import NativeEpisodeOwner,LiveContract
             from .tabletop_native_teacher_sources import NativePinchSources
@@ -80,6 +82,7 @@ class NativeTeacherCollector:
                 raise ValueError("same verified owner/model/profile/approved PPO config required")
             verify_native_teacher_identity(trainer.model.model_identity,model_contract(
                 live.model_contract.config,owner.backend_profile,live.model_contract.context_mode))
+            self._source_profile = owner.backend_profile
         self.journal=owner.ledger
         self._student_stereo = None
         self.quarantined=self._closed=self._active=self.episode_done=False
@@ -175,11 +178,10 @@ class NativeTeacherCollector:
         return observation, dict(source_pack_sequence=sequence)
 
     def collect(self):
-        from .tabletop_training_reward import SourceFailure
-        from .tabletop_native_teacher_context import ContextIdentity
+        from .tabletop_native_teacher_profile import control_source_scope
         if self.quarantined or self._closed or self._active or self.episode_done:
             raise RuntimeError("closed/quarantined/terminal collector; new verified episode required")
-        tr,owner=self.trainer,self.owner
+        tr=self.trainer
         remaining=self.sources.remaining_substeps()
         if remaining<8:
             self.journal.emit("window_not_started",dict(remaining_substeps=remaining))
@@ -187,91 +189,10 @@ class NativeTeacherCollector:
         if len(tr.rollout)>=tr.rollout_steps: raise RuntimeError("rollout full; complete original PPO update first")
         self._active=True;self._terminal=None;self._rows=[]
         try:
-            self._check_policy()
-            pre=owner.pre_action_state();prehash=_digest(pre)
-            captured=self.history.capture_pre_action(pre)
-            context=self.context.freeze_pre_action(ContextIdentity.from_clock(pre["common"]["identity"]),history_owner=self.history)
-            obs, decision_source = self._pack_observation(pre, context, purpose="decision")
-            if _digest(owner.pre_action_state())!=prehash: raise SourceFailure("owner advanced/changed during pre-action packing")
-            stereo = {}
-            if self._student_stereo is not None:
-                from .tabletop_native_teacher_stereo import save_aligned_rgb_pair
-                camera, output = self._student_stereo
-                label = save_aligned_rgb_pair(
-                    pre, camera.capture(), camera.calibration, output, origins=camera.origins)
-                if label["state_sha256"] != prehash or _digest(owner.pre_action_state()) != prehash:
-                    raise SourceFailure("Teacher state changed during Student RGB capture")
-                stereo = dict(student_stereo=label)
-                remaining = self.sources.remaining_substeps()
-                if remaining < 8:
-                    self.journal.emit("window_not_started", dict(
-                        remaining_substeps=remaining, reason="after_student_stereo", **decision_source, **stereo))
-                    return None
-            sample=tr.collect_step(obs,obs);token=sample["collection_token"]
-            if token in self._used_tokens: raise SourceFailure("replayed policy collection token")
-            decision=self.history.begin(pre,tr)
-            self.reward.begin(self.sources.submitted_request(sample,decision),remaining_substeps=remaining)
-            self._used_tokens.add(token)
-            self.journal.emit("decision",dict(pre_action_sha256=prehash,observation=obs,
-                collection_token=token,policy=self._epoch,sampled_action24=sample["actions"],history=decision,
-                **decision_source, **stereo))
-            result=owner.control(sample["actions"])
-            if result["physical_samples"]!=len(self._rows) or not 1<=len(self._rows)<=8:
-                raise SourceFailure("actual original control window differs from durable rows")
-            # History's existing sequence validates the ORIGINAL physical guard.
-            # Additional trusted reward guard is retained in actual result/packet.
-            historical=deepcopy(result);historical["termination_reason"]=self._rows[-1]["exchange"]["guard_failure"]
-            if len(self._rows)<8 and historical["termination_reason"] is None:
-                # Sequence's terminal rule requires a declared physical stop;
-                # actual observer result is the trusted independent health guard.
-                raise SourceFailure("trusted observer terminal lacks persisted physical guard")
-            settlement=self.history.end(historical)
-            terminated=self.reward._terminal
-            truncated=not terminated and self.sources.external_truncated()
-            packet=self.reward.settle_once(token,truncated=truncated,
-                buffer_full=not terminated and not truncated and len(tr.rollout)+1==tr.rollout_steps)
-            post_state=self.sources.context_state(packet)
-            post_context=self.context.advance_physical_endpoint(post_state,history_owner=self.history,collection_token=token)
-            issued=self.history.issued_for_pending(tr,settlement)
-            endpoint=deepcopy(settlement["endpoint"])
-            endpoint={k:endpoint[k] for k in ("env_id","episode_uid","reset_id","rod_uid","physics_step","rod_tick","timestamp_s")}
-            endpoint["phase"]="post_action_pre_reset"
-            next_endpoint=None;value=torch.zeros(1)
-            bootstrap_source = None
-            if not terminated:
-                next_pre=owner.pre_action_state();next_hash=_digest(next_pre)
-                if ContextIdentity.from_clock(next_pre["common"]["identity"])!=post_context.metadata.identities[0]:
-                    raise SourceFailure("next value endpoint differs from actual pre-reset endpoint")
-                next_obs, bootstrap_binding = self._pack_observation(next_pre, post_context, purpose="bootstrap")
-                # Preserve the critic input before evaluation, while it still belongs
-                # to the physical endpoint of this action and before any Reset.
-                observation = _copy(next_obs)
-                with torch.no_grad(): value=tr.model.value(next_obs).detach().cpu().clone()
-                if _digest(owner.pre_action_state())!=next_hash: raise SourceFailure("bootstrap source advanced before reset")
-                next_endpoint=deepcopy(endpoint)
-                bootstrap_source = dict(collection_token=token, identity=next_endpoint,
-                                        pre_action_sha256=next_hash, observation=observation,
-                                        observation_sha256=_digest(observation), **bootstrap_binding)
-            boundary=gae_boundary(terminated=bool(terminated),truncated=bool(truncated),
-                endpoint_identity=endpoint,next_value_identity=next_endpoint)
-            self._check_policy()
-            if stereo:
-                if stereo["student_stereo"]["student_sync_usable"]:
-                    self.journal.emit("student_stereo_action",dict(collection_token=token,
-                                      pre_action_sha256=prehash, issued_actions=issued, **stereo))
-                else:
-                    self.journal.emit("student_stereo_rejected",dict(collection_token=token,
-                                      pre_action_sha256=prehash, **stereo))
-            self.journal.emit("settlement",dict(reward=packet,post_context=post_context,
-                history=settlement,result=result,issued_actions=issued,next_value=value,
-                gae_boundary=boundary,bootstrap_source=bootstrap_source))
-            tr.record_step(torch.tensor([packet.reward]),torch.tensor([bool(terminated or truncated)]),value,
-                truncated=torch.tensor([bool(truncated)]),bootstrap_mask=torch.tensor([not terminated]),
-                executed_actions=issued,collection_token=token)
-            self.journal.emit("transition_recorded",dict(collection_token=token,rollout_length=len(tr.rollout)))
-            self.context.commit_post_context(post_context)
-            self.transitions+=1;self.episode_done=bool(terminated or truncated)
-            return packet
+            scope = (nullcontext() if self._source_profile is None
+                     else control_source_scope(self._source_profile))
+            with scope as verify_source:
+                return self._collect_window(remaining, verify_source)
         except BaseException as exc:
             self.quarantined=True
             try:
@@ -281,6 +202,99 @@ class NativeTeacherCollector:
             except BaseException: pass
             raise
         finally: self._active=False
+
+    def _collect_window(self, remaining, verify_source):
+        from .tabletop_training_reward import SourceFailure
+        from .tabletop_native_teacher_context import ContextIdentity
+
+        tr, owner = self.trainer, self.owner
+        self._check_policy()
+        pre=owner.pre_action_state();prehash=_digest(pre)
+        captured=self.history.capture_pre_action(pre)
+        context=self.context.freeze_pre_action(ContextIdentity.from_clock(pre["common"]["identity"]),history_owner=self.history)
+        obs, decision_source = self._pack_observation(pre, context, purpose="decision")
+        if _digest(owner.pre_action_state())!=prehash: raise SourceFailure("owner advanced/changed during pre-action packing")
+        stereo = {}
+        if self._student_stereo is not None:
+            from .tabletop_native_teacher_stereo import save_aligned_rgb_pair
+            camera, output = self._student_stereo
+            label = save_aligned_rgb_pair(
+                pre, camera.capture(), camera.calibration, output, origins=camera.origins)
+            if label["state_sha256"] != prehash or _digest(owner.pre_action_state()) != prehash:
+                raise SourceFailure("Teacher state changed during Student RGB capture")
+            stereo = dict(student_stereo=label)
+            remaining = self.sources.remaining_substeps()
+            if remaining < 8:
+                self.journal.emit("window_not_started", dict(
+                    remaining_substeps=remaining, reason="after_student_stereo", **decision_source, **stereo))
+                return None
+        sample=tr.collect_step(obs,obs);token=sample["collection_token"]
+        if token in self._used_tokens: raise SourceFailure("replayed policy collection token")
+        decision=self.history.begin(pre,tr)
+        self.reward.begin(self.sources.submitted_request(sample,decision),remaining_substeps=remaining)
+        self._used_tokens.add(token)
+        self.journal.emit("decision",dict(pre_action_sha256=prehash,observation=obs,
+            collection_token=token,policy=self._epoch,sampled_action24=sample["actions"],history=decision,
+            **decision_source, **stereo))
+        result=owner.control(sample["actions"])
+        if result["physical_samples"]!=len(self._rows) or not 1<=len(self._rows)<=8:
+            raise SourceFailure("actual original control window differs from durable rows")
+        # History's existing sequence validates the ORIGINAL physical guard.
+        # Additional trusted reward guard is retained in actual result/packet.
+        historical=deepcopy(result);historical["termination_reason"]=self._rows[-1]["exchange"]["guard_failure"]
+        if len(self._rows)<8 and historical["termination_reason"] is None:
+            # Sequence's terminal rule requires a declared physical stop;
+            # actual observer result is the trusted independent health guard.
+            raise SourceFailure("trusted observer terminal lacks persisted physical guard")
+        settlement=self.history.end(historical)
+        terminated=self.reward._terminal
+        truncated=not terminated and self.sources.external_truncated()
+        packet=self.reward.settle_once(token,truncated=truncated,
+            buffer_full=not terminated and not truncated and len(tr.rollout)+1==tr.rollout_steps)
+        post_state=self.sources.context_state(packet)
+        post_context=self.context.advance_physical_endpoint(post_state,history_owner=self.history,collection_token=token)
+        issued=self.history.issued_for_pending(tr,settlement)
+        endpoint=deepcopy(settlement["endpoint"])
+        endpoint={k:endpoint[k] for k in ("env_id","episode_uid","reset_id","rod_uid","physics_step","rod_tick","timestamp_s")}
+        endpoint["phase"]="post_action_pre_reset"
+        next_endpoint=None;value=torch.zeros(1)
+        bootstrap_source = None
+        if not terminated:
+            next_pre=owner.pre_action_state();next_hash=_digest(next_pre)
+            if ContextIdentity.from_clock(next_pre["common"]["identity"])!=post_context.metadata.identities[0]:
+                raise SourceFailure("next value endpoint differs from actual pre-reset endpoint")
+            next_obs, bootstrap_binding = self._pack_observation(next_pre, post_context, purpose="bootstrap")
+            # Preserve the critic input before evaluation, while it still belongs
+            # to the physical endpoint of this action and before any Reset.
+            observation = _copy(next_obs)
+            with torch.no_grad(): value=tr.model.value(next_obs).detach().cpu().clone()
+            if _digest(owner.pre_action_state())!=next_hash: raise SourceFailure("bootstrap source advanced before reset")
+            next_endpoint=deepcopy(endpoint)
+            bootstrap_source = dict(collection_token=token, identity=next_endpoint,
+                                    pre_action_sha256=next_hash, observation=observation,
+                                    observation_sha256=_digest(observation), **bootstrap_binding)
+        boundary=gae_boundary(terminated=bool(terminated),truncated=bool(truncated),
+            endpoint_identity=endpoint,next_value_identity=next_endpoint)
+        self._check_policy()
+        if verify_source is not None:
+            verify_source()
+        if stereo:
+            if stereo["student_stereo"]["student_sync_usable"]:
+                self.journal.emit("student_stereo_action",dict(collection_token=token,
+                                  pre_action_sha256=prehash, issued_actions=issued, **stereo))
+            else:
+                self.journal.emit("student_stereo_rejected",dict(collection_token=token,
+                                  pre_action_sha256=prehash, **stereo))
+        self.journal.emit("settlement",dict(reward=packet,post_context=post_context,
+            history=settlement,result=result,issued_actions=issued,next_value=value,
+            gae_boundary=boundary,bootstrap_source=bootstrap_source))
+        tr.record_step(torch.tensor([packet.reward]),torch.tensor([bool(terminated or truncated)]),value,
+            truncated=torch.tensor([bool(truncated)]),bootstrap_mask=torch.tensor([not terminated]),
+            executed_actions=issued,collection_token=token)
+        self.journal.emit("transition_recorded",dict(collection_token=token,rollout_length=len(tr.rollout)))
+        self.context.commit_post_context(post_context)
+        self.transitions+=1;self.episode_done=bool(terminated or truncated)
+        return packet
 
     def restart_episode(self,factories):
         from .tabletop_native_teacher_session import verify_reset_and_sources

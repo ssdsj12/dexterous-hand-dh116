@@ -4,6 +4,7 @@ Loading proves current CPU file provenance only. No native module is imported,
 no owner is created, and historical measured models retain their own identity.
 """
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import dataclass
 import hashlib
 import json
@@ -194,7 +195,7 @@ _profile_reader_thread = None
 
 
 @contextmanager
-def profile_reader_scope(backend_profile):
+def _bind_profile_reader(backend_profile):
     """Bind the complete legacy Reset-reader bridge to a verified NEW profile.
 
     The old radius replay default remains historical outside this single-owner
@@ -214,15 +215,101 @@ def profile_reader_scope(backend_profile):
     if radius.BACKEND_SHA != expected:
         raise ValueError("unexpected profile radius reader binding")
     prior = radius.BACKEND_SHA
-    with source.source_scope():
+    with source.source_scope() as basis:
         if not _profile_reader_depth:
             radius.BACKEND_SHA = backend_profile.binary_sha256
             _profile_reader_thread = owner
         _profile_reader_depth += 1
         try:
-            yield backend_profile
+            yield basis
         finally:
             _profile_reader_depth -= 1
             if not _profile_reader_depth:
                 radius.BACKEND_SHA = prior
                 _profile_reader_thread = None
+
+_control_source_snapshot = None
+
+
+def _control_snapshot(backend_profile=None):
+    snapshot = _control_source_snapshot
+    if snapshot is None:
+        return None
+    profile, thread_id, _ = snapshot
+    from . import tabletop_mesh_observation_source as source
+    from scripts import replay_dh116_native_parameter_r0 as radius
+
+    if thread_id != threading.get_ident():
+        raise ValueError("control source scope belongs to another thread")
+    if backend_profile is not None and backend_profile is not profile:
+        raise ValueError("control source profile differs from the current collection")
+    if (_profile_reader_depth != 1 or source._depth < 1 or source._thread != thread_id
+            or radius.BACKEND_SHA != profile.binary_sha256
+            or any(getattr(module, name) != value for module, name, value in source._BINDINGS)):
+        raise ValueError("control source reader bindings changed during collection")
+    return snapshot
+
+
+@contextmanager
+def profile_reader_scope(backend_profile):
+    """Bind existing Reset/readback readers and validate standalone entries."""
+    if type(backend_profile) is not BackendProfile:
+        raise ValueError("actual source-loaded BackendProfile required")
+    if _control_snapshot(backend_profile) is not None:
+        yield backend_profile
+        return
+    with _bind_profile_reader(backend_profile):
+        yield backend_profile
+
+
+def policy_source_basis(backend_profile=None):
+    """Return the current owned basis, or verify actual bytes for standalone calls."""
+    from . import tabletop_mesh_observation_source as source
+
+    snapshot = _control_snapshot(backend_profile)
+    if snapshot is not None:
+        return deepcopy(snapshot[2])
+    if backend_profile is not None:
+        backend_profile.verify()
+    return source.source_basis()
+
+
+def _inventory_file_state(backend_profile):
+    state = []
+    for entry in backend_profile.inventory:
+        info = Path(entry.path).lstat()
+        state.append((info.st_dev, info.st_ino, info.st_mode, info.st_size,
+                      info.st_mtime_ns, info.st_ctime_ns))
+    return tuple(state)
+
+
+@contextmanager
+def control_source_scope(backend_profile):
+    """Bound byte verification to one synchronous, same-owner control interval.
+
+    The caller verifies the source again before committing a policy transition.
+    No file contents or reader bindings survive the interval.
+    """
+    global _control_source_snapshot
+    if _profile_reader_depth or _control_source_snapshot is not None:
+        raise ValueError("a new control source scope requires an idle reader")
+    if type(backend_profile) is not BackendProfile:
+        raise ValueError("actual source-loaded BackendProfile required")
+    before = _inventory_file_state(backend_profile)
+    with _bind_profile_reader(backend_profile) as basis:
+        if _inventory_file_state(backend_profile) != before:
+            raise ValueError("control source files changed while binding")
+        snapshot = (backend_profile, threading.get_ident(), basis)
+        _control_source_snapshot = snapshot
+
+        def verify_before_commit():
+            if _control_snapshot(backend_profile) is not snapshot:
+                raise ValueError("control source scope is no longer active")
+            backend_profile.verify()
+            if _inventory_file_state(backend_profile) != before:
+                raise ValueError("control source files changed during collection")
+
+        try:
+            yield verify_before_commit
+        finally:
+            _control_source_snapshot = None

@@ -229,6 +229,7 @@ def pack_native_inputs(pre_action,raw_rod,parameters,task_context,*,backend_prof
     """
     from . import tabletop_mesh_observation_source as source
     from .tabletop_deformable_rod_boundary import RodBoundaryState
+    from .tabletop_native_teacher_profile import policy_source_basis
     from .tabletop_deformable_r0_replay import _digest
     from .tabletop_deformx_parameter_snapshot import validate_snapshot
     from .tabletop_teacher_mounted_wrist_source import validate_mounted_observation, _clock
@@ -243,7 +244,7 @@ def pack_native_inputs(pre_action,raw_rod,parameters,task_context,*,backend_prof
     if task_context.metadata.scope != "cpu_fixture" and (
             raw_rod.get("source_scope") == "cpu_fixture" or parameters.get("source_scope") == "cpu_fixture"):
         raise ValueError("CPU fixture data cannot be relabelled as live source")
-    profile.verify()
+    basis = policy_source_basis(profile)
     common=pre_action["common"]
     validate_mounted_observation(common)
     clock=_clock(common["identity"])
@@ -252,7 +253,7 @@ def pack_native_inputs(pre_action,raw_rod,parameters,task_context,*,backend_prof
     if not isinstance(raw_rod,dict) or any(raw_rod.get(k) != clock[k] for k in keys):
         raise ValueError("pre-action and raw material node clock differ")
     if (not isinstance(parameters,dict) or parameters.get("version") != source.PARAMETER_VERSION
-            or parameters.get("sources") != source.source_basis()
+            or parameters.get("sources") != basis
             or parameters.get("new_sdk_steps") != 0 or parameters.get("new_solver_steps") != 0
             or parameters.get("teacher_admission") is not False
             or parameters.get("task_physics_qualified") is not False):

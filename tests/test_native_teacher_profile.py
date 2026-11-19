@@ -101,6 +101,55 @@ def test_profile_rehashes_pad_bytes_once_per_verification_and_rejects_a_later_ch
     assert pad_reads == 2
 
 
+def test_control_source_scope_reuses_only_its_bound_profile_and_rechecks_on_commit(profile, monkeypatch):
+    m = api()
+    from concurrent.futures import ThreadPoolExecutor
+    from go2_pvcnn.control.dh116 import tabletop_mesh_observation_source as source
+    from scripts import replay_dh116_native_parameter_r0 as radius
+    foreign = m.BackendProfile.load()
+    pad = Path(next(file.path for file in profile.inventory if file.role == "pad_sdf"))
+    read_bytes = Path.read_bytes
+    pad_reads = 0
+    tampered = False
+
+    def read(path):
+        nonlocal pad_reads
+        data = read_bytes(path)
+        if path != pad:
+            return data
+        pad_reads += 1
+        return data + b"tampered" if tampered else data
+
+    monkeypatch.setattr(Path, "read_bytes", read)
+    with pytest.raises(ValueError, match="actual file SHA differs"):
+        with m.control_source_scope(profile) as verify_before_commit:
+            for _ in range(3):
+                with m.profile_reader_scope(profile):
+                    basis = m.policy_source_basis(profile)
+                    basis["sources"].clear()
+                    assert m.policy_source_basis(profile)["sources"]
+            with pytest.raises(ValueError, match="profile differs"):
+                m.policy_source_basis(foreign)
+            with pytest.raises(ValueError, match="actual source-loaded BackendProfile required"):
+                with m.profile_reader_scope(None):
+                    pytest.fail("an unbound reader entered the active control scope")
+            with ThreadPoolExecutor(max_workers=1) as other_thread:
+                with pytest.raises(ValueError, match="belongs to another thread"):
+                    other_thread.submit(m.policy_source_basis, profile).result()
+            assert pad_reads == 1
+            tampered = True
+            verify_before_commit()
+    assert pad_reads == 2
+    assert radius.BACKEND_SHA == source.OLD_BACKEND_SHA
+    assert source._depth == 0
+
+    tampered = False
+    with m.control_source_scope(profile) as verify_before_commit:
+        assert pad_reads == 3
+        verify_before_commit()
+    assert pad_reads == 4
+
+
 def test_profile_reopens_bytes_each_verification(profile, monkeypatch):
     m = api()
     original = m.checked_file

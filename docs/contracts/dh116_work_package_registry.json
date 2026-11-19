@@ -42414,6 +42414,27 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-control-source-scope-cpu": {
+      "title": "Bound Teacher source verification to a control interval",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-v9-wall-truncation-audit-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_profile.py",
+        "tests/test_native_teacher_collector.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_control_source_scope_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-control-source-scope.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 205,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

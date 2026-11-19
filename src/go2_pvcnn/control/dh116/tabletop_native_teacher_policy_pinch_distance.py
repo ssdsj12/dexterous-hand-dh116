@@ -35,8 +35,9 @@ def _radius(exchange):
     from scripts.replay_dh116_native_parameter_r0 import check_radius_packet
     try:
         from . import tabletop_mesh_observation_source as source
+        from .tabletop_native_teacher_profile import policy_source_basis
         packet=exchange["material_director"]
-        _require(packet.get("version")==source.PARAMETER_VERSION and packet.get("sources")==source.source_basis(),
+        _require(packet.get("version")==source.PARAMETER_VERSION and packet.get("sources")==policy_source_basis(),
             "current policy parameter reader/source inventory differs")
         return check_radius_packet(packet,exchange["rod"])
     except (ValueError,KeyError,TypeError) as exc:raise SourceFailure("actual same-clock radius: "+str(exc)) from exc
