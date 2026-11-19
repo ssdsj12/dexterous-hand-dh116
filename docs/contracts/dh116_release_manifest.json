@@ -27288,6 +27288,31 @@
         "verified_at_utc": "2026-11-19T16:08:32.980206+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-fresh-cpu-rng-binding-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-fresh-cpu-rng.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_fresh_cpu_rng_v1.json",
+      "cpu_tests": {
+        "passed": 214,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "fb4c8d48539b2eba1933ec9d06a70594bf68b3c4",
+        "source_tree": "c36502d557231d309a818410c911c432894eb0c8",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T16:27:56.138578+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
