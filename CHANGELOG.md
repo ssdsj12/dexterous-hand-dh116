@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch right Reset candidate and two-ledger clearance replay
+
+The new right-hand Reset candidate preserves the strict Pinch endpoints, the original rod and both measured and SDK-target replay guards across 67 retained physical samples. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v10-right-reset-candidate.md).
+
 ## 2026-11-20 Fresh Pinch diagnostic CPU RNG binding
 
 Fresh Pinch worker construction and exploration use independently frozen CPU Torch seeds. The worker journals initialization and exploration provenance before the first motion decision. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-fresh-cpu-rng.md).

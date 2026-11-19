@@ -42535,6 +42535,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-right-two-ledger-clearance-cpu": {
+      "title": "Qualify a right Pinch geometry candidate across v9 and v10 CPU replays",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-v10-outcome-audit-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_pinch_v10_clearance_candidate.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v10_right_reset_candidate_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v10-right-reset-candidate.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 17,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
