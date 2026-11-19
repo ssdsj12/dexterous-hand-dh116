@@ -26787,6 +26787,31 @@
         "verified_at_utc": "2026-11-19T09:59:42.645078+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-independent-closure-screen-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-power-independent-closure.md",
+      "readiness": "docs/contracts/dh116_teacher_power_independent_closure_v1.json",
+      "cpu_tests": {
+        "passed": 13,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "916d8675db75a559e26d96892d0f45ca3fbfc22d",
+        "source_tree": "5e701af258cff88309939f7ae0c5588c7462a078",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T10:08:28.143260+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
