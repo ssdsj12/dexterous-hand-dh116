@@ -26963,6 +26963,31 @@
         "verified_at_utc": "2026-11-19T11:22:17.159873+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-native-scheduler-argv-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v7-native-argv.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_v7_native_argv_v1.json",
+      "cpu_tests": {
+        "passed": 4,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "5888eb6ff22b0b735d5bb676dc09e2bcecb19590",
+        "source_tree": "989f8ffb9ac61696b298b0cfa7136a68c4d1f0f1",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T11:51:49.106714+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
