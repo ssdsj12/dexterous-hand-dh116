@@ -240,3 +240,38 @@ def test_joint_pregrasp_search_reduces_error_within_original_coupling(style, lef
         assert len(hand["nonrequired_rod_lower_m"]) >= 17 - (3 if style == "tripod" else 5)
     assert code == 2
     assert not result["geometry_candidate_passed"]
+
+
+@pytest.mark.parametrize("style,left_id,right_id", [("tripod", 36, 8), ("power", 33, 8)])
+def test_joint_pregrasp_refinement_preserves_certified_constraints(style, left_id, right_id, tmp_path):
+    from pathlib import Path
+
+    from scripts.prepare_dh116_wire_pose_candidate import main
+
+    root = Path(__file__).resolve().parents[1]
+    inputs = Path(json.loads((root / "docs/contracts/dh116_wire_pose_candidate_v1.json").read_bytes())
+                  ["evidence"]["directory"])
+    output = tmp_path / f"{style}-refined.json"
+    code = main(["--reference", str(inputs / f"{style}-reference.json"),
+                 "--target", str(inputs / f"{style}-wire.json"), "--output", str(output),
+                 "--grasp", style, "--left-node", str(left_id), "--right-node", str(right_id),
+                 "--joint-pregrasp-search", "--refine-joint-pregrasp", "--project", str(root)])
+    result = json.loads(output.read_bytes())["joint_pregrasp_search"]
+    assert result["trial_seed"]["nodes"] == result["refinement"]["baseline_seed"]["nodes"]
+    assert code == (0 if result["geometry_candidate_passed"] else 2)
+    assert sum(h["refinement"]["selected_total_violation"] for h in result["hands"].values()) < sum(
+        h["refinement"]["baseline_total_violation"] for h in result["hands"].values())
+    for hand in result["hands"].values():
+        detail = hand["refinement"]
+        assert detail["evaluations"] <= result["refinement"]["max_evaluations_per_hand"]
+        for key, previous in detail["baseline_violations"].items():
+            if previous == 0.:
+                assert detail["selected_violations"][key] == 0.
+        assert detail["selected_total_violation"] <= detail["baseline_total_violation"]
+        assert hand["table_clearance_passed"]
+        if style == "power":
+            assert hand["palm_geometry"]["link"] == "base_link"
+            assert hand["palm_geometry"]["source"] == "source_USD_convex_envelope_not_live_cooked"
+            assert hand["palm_geometry"]["locked_cooked_available"] is False
+            assert hand["palm_geometry"]["native_reaction_measured"] is False
+    assert result["palm_contact_verified"] is result["native_contact_verified"] is result["teacher_admission"] is False

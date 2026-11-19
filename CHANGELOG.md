@@ -1,3 +1,7 @@
+## 2026-11-19 Tripod and Power certified pregrasp refinement
+
+The optional refinement keeps the prior wrist/finger candidate and improves geometric endpoint violations under the existing bounds. Power palm is reported with its USD-only collision source. [Report](docs/superpowers/reports/2026-11-19-dh116-wire-certified-pregrasp-refinement.md).
+
 ## 2026-11-19 Pinch Teacher diagnostic receipt readback
 
 The scheduler seals the fresh worker handshake with the outer exit and can independently re-audit the private diagnostic receipt after the worker exits. Native training qualification remains gated. [Report](docs/superpowers/reports/2026-11-19-dh116-pinch-diagnostic-receipt-readback.md).

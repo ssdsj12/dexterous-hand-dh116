@@ -196,8 +196,12 @@ def main(argv=None):
                         help="test a separate vertical root correction and preserve its geometry evidence")
     parser.add_argument("--joint-pregrasp-search", action="store_true",
                         help="search a separate bounded Tripod or Power wrist/finger candidate")
+    parser.add_argument("--refine-joint-pregrasp", action="store_true",
+                        help="refine the wrist/finger candidate under certified endpoint constraints")
     parser.add_argument("--project", type=Path, default=Path(__file__).resolve().parents[1])
     args = parser.parse_args(argv)
+    if args.refine_joint_pregrasp and not args.joint_pregrasp_search:
+        parser.error("--refine-joint-pregrasp requires --joint-pregrasp-search")
     if args.joint_pregrasp_search and args.grasp == "pinch":
         parser.error("--joint-pregrasp-search requires tripod or power")
     if args.joint_pregrasp_search and args.propose_table_repair:
@@ -219,7 +223,8 @@ def main(argv=None):
     if args.joint_pregrasp_search:
         from scripts.solve_dh116_wire_pregrasp import search_pregrasp
 
-        report["joint_pregrasp_search"] = search_pregrasp(seed, style=args.grasp, project=args.project)
+        report["joint_pregrasp_search"] = search_pregrasp(
+            seed, style=args.grasp, project=args.project, refine=args.refine_joint_pregrasp)
     encoded = json.dumps(report, indent=2, allow_nan=False)
     with args.output.open("x", encoding="utf-8") as handle:
         handle.write(encoded + "\n")
