@@ -21,7 +21,8 @@ TRIPOD_COUPLED_LEVELS = (.0625, .03125, .015625, .0078125)
 TRIPOD_COUPLED_AXES = ((0, 1), (0, 2), (1, 2), (0, 4), (1, 5), (2, 4), (2, 5),
     (0, 6), (1, 6), (2, 6), (0, 7), (1, 7), (2, 7),
     (0, 8), (1, 8), (2, 8), (0, 9), (1, 9), (2, 9),
-    (6, 7), (6, 8), (6, 9), (7, 8), (7, 9), (8, 9))
+    (6, 7), (6, 8), (6, 9), (7, 8), (7, 9), (8, 9),
+    (3, 6), (3, 7), (4, 6), (4, 7), (5, 6), (5, 7))
 MAX_COUPLED_EVALUATIONS = 4 * len(TRIPOD_COUPLED_LEVELS) * len(TRIPOD_COUPLED_AXES)
 LEVELS = (1., .5, .25, .125, .0625)
 REFINEMENT_LEVELS = LEVELS + (.03125, .015625)
@@ -95,8 +96,6 @@ def _constraint_violations(row, pads, nodes, radius):
     violations = {}
     for name, hull in row["shapes"].items():
         source, link = name.split(":")
-        if source == "source" and link in pads:
-            continue
         required = source == "cooked" and link in pads
         axis_separation = np.maximum(hull.min(0) - segment_max, segment_min - hull.max(0))
         if not required and np.all(axis_separation.max(1) > radius + NUMERIC_GUARD + 1e-10):
@@ -123,12 +122,13 @@ def _refine_hand(evaluate, start, lower, upper, pads, nodes, radius, *, coupled)
         row = evaluate(x)
         violations = _constraint_violations(row, pads, nodes, radius)
         total = sum(value ** 2 for value in violations.values())
-        rank = (any(violations[key] > 0. for key in preserve), total)
+        penetrations = sum(value > 0. for key, value in violations.items() if key.endswith(":nonpenetration"))
+        rank = (any(violations[key] > 0. for key in preserve), penetrations, total)
         return dict(row=row, rank=rank, violations=violations)
 
     initial, best, used, coordinates = _coordinate_search(
         evaluate_constraints, lower, upper, start=start["coordinates"], levels=REFINEMENT_LEVELS)
-    detail = dict(evaluations=used, baseline_violations=baseline, baseline_total_violation=initial["rank"][1])
+    detail = dict(evaluations=used, baseline_violations=baseline, baseline_total_violation=initial["rank"][-1])
     if coupled:
         before = best["violations"]
         preserve = [key for key, value in before.items() if value == 0.]
@@ -137,7 +137,7 @@ def _refine_hand(evaluate, start, lower, upper, pads, nodes, radius, *, coupled)
         detail["coupled"] = dict(evaluations=evaluations, max_evaluations=MAX_COUPLED_EVALUATIONS,
             before_violations=before, selected_coordinates=coordinates.tolist(),
             lower=lower.tolist(), upper=upper.tolist())
-    detail.update(selected_violations=best["violations"], selected_total_violation=best["rank"][1])
+    detail.update(selected_violations=best["violations"], selected_total_violation=best["rank"][-1])
     return best["row"], detail
 
 
@@ -198,7 +198,7 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
             dots[pad] = float(thumb @ partner) if thumb is not None and partner is not None else None
         error = sum(((gap - COARSE / 2) * 1000.) ** 2 for gap in values)
         error += 4. * sum((max(0., -gap) * 1000.) ** 2 for n, gap in distances.items()
-                          if n.split(":")[1] not in pads)
+                          if n not in {"cooked:" + pad for pad in pads})
         error += 4. * sum((1.2 if dot is None else max(0., dot + .2)) ** 2 for dot in dots.values())
         return dict(root=root, active=active, shapes=shapes, rank=float(error), dots=dots)
 
@@ -242,6 +242,15 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
             source_sha256=geometry["source_sha256"])
         if refinement is not None:
             evidence["refinement"] = refinement
+            if style == "tripod":
+                from scripts.audit_dh116_wire_contact_witness import audit_hand
+
+                witness = audit_hand(best["shapes"], nodes, radius, layout, pads)
+                certified = witness["geometric_approach_passed"] and witness["direction_gate_passed"]
+                evidence.update(search_proxy_endpoint_passed=evidence["endpoint_geometry_passed"],
+                    endpoint_geometry_passed=certified,
+                    endpoint_witness={key: witness[key] for key in (
+                        "gaps", "witness_direction_dots", "direction_gate_passed", "geometric_approach_passed")})
             if style == "power":
                 link = "base_link"
                 evidence["palm_geometry"] = dict(link=link,
@@ -257,6 +266,8 @@ def _search_hand(geometry, pose, q, nodes, style, *, refine, coupled):
         retained = dict(refinement, selected_total_violation=refinement["baseline_total_violation"],
                         selected_violations=refinement["baseline_violations"])
         baseline_evidence = describe(baseline, retained)
+        if baseline_evidence["endpoint_geometry_passed"] and not evidence["endpoint_geometry_passed"]:
+            return baseline, baseline_evidence, baseline, baseline_evidence
     return best, evidence, baseline, baseline_evidence
 
 

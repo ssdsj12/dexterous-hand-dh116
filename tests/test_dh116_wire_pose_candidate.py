@@ -262,26 +262,33 @@ def test_joint_pregrasp_refinement_preserves_certified_constraints(style, left_i
     result = json.loads(output.read_bytes())["joint_pregrasp_search"]
     assert result["trial_seed"]["nodes"] == result["refinement"]["baseline_seed"]["nodes"]
     assert code == (0 if result["geometry_candidate_passed"] else 2)
-    assert sum(h["refinement"]["selected_total_violation"] for h in result["hands"].values()) < sum(
-        h["refinement"]["baseline_total_violation"] for h in result["hands"].values())
+    improvements = []
     for hand in result["hands"].values():
         detail = hand["refinement"]
         assert detail["evaluations"] <= result["refinement"]["max_evaluations_per_hand"]
         for key, previous in detail["baseline_violations"].items():
             if previous == 0.:
                 assert detail["selected_violations"][key] == 0.
-        assert detail["selected_total_violation"] <= detail["baseline_total_violation"]
+        def rank(stage):
+            violations = detail[f"{stage}_violations"]
+            return (sum(value > 0. for key, value in violations.items() if key.endswith(":nonpenetration")),
+                    detail[f"{stage}_total_violation"])
+
+        baseline_rank, selected_rank = rank("baseline"), rank("selected")
+        assert selected_rank <= baseline_rank
+        improvements.append(selected_rank < baseline_rank)
         assert hand["table_clearance_passed"]
         if style == "power":
             assert hand["palm_geometry"]["link"] == "base_link"
             assert hand["palm_geometry"]["source"] == "source_USD_convex_envelope_not_live_cooked"
             assert hand["palm_geometry"]["locked_cooked_available"] is False
             assert hand["palm_geometry"]["native_reaction_measured"] is False
+    assert any(improvements)
     assert result["palm_contact_verified"] is result["native_contact_verified"] is result["teacher_admission"] is False
 
 
 def test_tripod_coupled_step_finds_direction_blocked_on_every_single_axis():
-    from scripts.solve_dh116_wire_pregrasp import _coordinate_search, _tripod_coupled_search
+    from scripts.solve_dh116_wire_pregrasp import MAX_COUPLED_EVALUATIONS, _coordinate_search, _tripod_coupled_search
 
     def evaluate(x):
         # An isolated wrist or thumb move breaks a zero-violation constraint.
@@ -294,7 +301,7 @@ def test_tripod_coupled_step_finds_direction_blocked_on_every_single_axis():
     selected, used, coordinates = _tripod_coupled_search(evaluate, coordinates, best, lower, upper)
     assert selected["rank"] == (False, 0.)
     np.testing.assert_array_equal(coordinates[[0, 6]], [.0625, .0625])
-    assert used <= 400
+    assert used <= MAX_COUPLED_EVALUATIONS
 
 
 def test_power_palm_reach_accounts_for_rotation_and_one_way_z():

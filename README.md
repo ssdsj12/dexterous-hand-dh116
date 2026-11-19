@@ -1,3 +1,7 @@
+## 2026-11-19 Teacher Tripod and Power geometry
+
+Tripod checks original and cooked colliders through the CPU search and verifies the endpoint against the original geometry. Power evaluates both proper axial orientations and reports measured static support clearance. Both remain geometry diagnostics. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-power-collision-aware-seeds.md).
+
 ## 2026-11-19 Teacher Pinch native worker entry
 
 The native worker accepts the published `11-17` branch. The first launch was rejected before Isaac started, and the corrected smoke recipe stays unqualified pending native execution. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-native-worker-branch.md).

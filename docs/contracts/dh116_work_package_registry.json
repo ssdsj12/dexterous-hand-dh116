@@ -41600,6 +41600,27 @@
       "tests": [],
       "title": "Pinch fresh PPO smoke32 diagnostic after native branch fix",
       "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-native-worker-branch.md"
+    },
+    "teacher.tripod-power-collision-aware-seeds": {
+      "title": "Compare Tripod exact endpoints and left/right Power preshapes",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.tripod-endpoint-power-palm-seating-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_collision_aware_teacher_seeds.py",
+        "tests/test_dh116_wire_pose_candidate.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_collision_aware_seeds_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-power-collision-aware-seeds.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 154,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
