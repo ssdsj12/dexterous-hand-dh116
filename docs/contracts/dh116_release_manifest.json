@@ -27088,6 +27088,31 @@
         "verified_at_utc": "2026-11-19T12:13:04.171682+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-continuous-delay-band-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-continuous-delay.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_continuous_delay_v1.json",
+      "cpu_tests": {
+        "passed": 44,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ffab2b9ef6f981370ce687aa2a5b5e342cbd2e79",
+        "source_tree": "f66fa6603ed984218f16205b101b7ebcc7f9147d",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T12:34:00.178378+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
