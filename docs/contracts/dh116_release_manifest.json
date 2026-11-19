@@ -26462,6 +26462,31 @@
         "verified_at_utc": "2026-11-19T06:02:57.830161+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-owned-update-readback-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-pinch-owned-update-readback.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_owned_update_v1.json",
+      "cpu_tests": {
+        "passed": 89,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "de277aa40b960a69c8a359dc4ea42953814006bb",
+        "source_tree": "48d1fa7b68905db408662d63fef7faff595c3cba",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T06:31:06.650817+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
