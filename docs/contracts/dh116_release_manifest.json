@@ -26212,6 +26212,31 @@
         "verified_at_utc": "2026-11-19T03:56:34.860320+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.wire-pose-table-clearance-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-wire-pose-table-clearance.md",
+      "readiness": "docs/contracts/dh116_wire_pose_table_clearance_v1.json",
+      "cpu_tests": {
+        "passed": 96,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "d5fc32fe68ecf782b2ea9e07f376a2369f660b56",
+        "source_tree": "db299ef47fd343e5b8431c39c269c5d7cf1b9653",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T04:17:06.388560+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
