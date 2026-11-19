@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch PPO smoke32 recipe
+
+The fresh camera-free recipe is bound to the real reset, current worker source and installed environment. The native entry is pending exact approval and resource availability. [Report](docs/superpowers/reports/2026-11-19-dh116-pinch-ppo-smoke32-draft.md).
+
 ## 2026-11-19 Tripod and Power certified pregrasp refinement
 
 The optional refinement keeps the prior wrist/finger candidate and improves geometric endpoint violations under the existing bounds. Power palm is reported with its USD-only collision source. [Report](docs/superpowers/reports/2026-11-19-dh116-wire-certified-pregrasp-refinement.md).

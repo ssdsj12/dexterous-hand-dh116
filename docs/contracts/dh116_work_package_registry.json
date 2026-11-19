@@ -41452,6 +41452,45 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v1": {
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v1.json",
+        "sha256": "fe665ff96856a8fc6ca6864e6bc39ee36b61420cd6b458840b8361bddd4309fb"
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v1.json",
+      "dependencies": [],
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "status": "pending",
+      "tests": [],
+      "title": "Pinch fresh PPO smoke32 diagnostic"
+    },
+    "teacher.pinch-ppo-draft-cpu": {
+      "title": "Pinch 首次原生 PPO 配方 CPU 冻结",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.actual-fresh-diagnostic-receipt-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_pinch_draft.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_ppo_draft_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-pinch-ppo-smoke32-draft.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 189,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
