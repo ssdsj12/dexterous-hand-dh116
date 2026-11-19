@@ -41730,7 +41730,7 @@
     },
     "teacher.pinch-ppo-fresh-smoke32-v4": {
       "title": "Pinch fresh PPO smoke32 after source-bound semantic refreeze",
-      "status": "pending",
+      "status": "blocked",
       "executor": "native_bounded",
       "dependencies": [],
       "requires_approval": true,
@@ -41746,7 +41746,19 @@
         "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v4.json",
         "sha256": "23074dc31e5445ec74facfb569c0c5eef393e29ee52b1640f20c2f595f5eafc2"
       },
-      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-semantic-refreeze.md"
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-semantic-refreeze.md",
+      "blocker_kind": "failed_native",
+      "reason": "Native reset completed; signed wall lease expired at reward factory before action",
+      "last_result": {
+        "attempt_fingerprint": "33147dbd7cc7eadfad0da524fa60d666fd53ee18ff84cc1d546bfe424c44ddb9",
+        "result_sha256": "7134a8d49b7e29b0e2d2be88f2dd442c444df661e0616635656de103e6c89953",
+        "outer_exit_code": 1,
+        "native_execution_performed": true,
+        "isaac_started": true,
+        "setup_sdk_steps": 2,
+        "ppo_updates": 0,
+        "native_qualification": false
+      }
     },
     "teacher.power-fixed-preshape-sweep-cpu": {
       "title": "Audit the continuous Power wrist translation to the rod",
@@ -41767,6 +41779,52 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-launch-source-scan-latency": {
+      "title": "Reduce repeated launch source verification within a single transaction",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-semantic-refreeze-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_work_packages.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_actual_launch_process.py",
+        "tests/test_native_teacher_worker_lease.py",
+        "tests/test_native_teacher_actual_artifacts.py",
+        "tests/test_native_teacher_actual_factories.py",
+        "tests/test_native_teacher_actual_provider.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_launch_source_scan_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-launch-source-scan.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 198,
+        "failed": 0,
+        "scope": "CPU only"
+      }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v5": {
+      "title": "Pinch fresh PPO smoke32 after import-closure validation speedup",
+      "status": "pending",
+      "executor": "native_bounded",
+      "dependencies": [],
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v5.json",
+      "tests": [],
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v5.json",
+        "sha256": "1fd779b3cd3e4c1656b95d38f19c958d8358309e85470529e053067a55e27374"
+      },
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-launch-source-scan.md"
     }
   },
   "execution_target": {

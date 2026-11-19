@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch Teacher source validation latency
+
+The verified source closure scan now probes each candidate once per transaction and binds the companion without rescanning; the v4 wall-cap failure is preserved. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-launch-source-scan.md).
+
 ## 2026-11-19 Teacher Power wrist approach sweep
 
 The opt-in Power geometry tool audits the continuous swept volume of the fixed-joint approach against rod and supports. Both palms approach within 0.35 mm; fingers still require a separate closure path. [Report](docs/superpowers/reports/2026-11-19-teacher-power-fixed-preshape-sweep.md).

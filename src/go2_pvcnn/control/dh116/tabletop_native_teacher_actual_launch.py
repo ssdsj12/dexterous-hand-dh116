@@ -48,7 +48,16 @@ def _local_import_closure(root, roots):
     The sole dynamic provider is a fixed path explicitly supplied as a root.
     External installed libraries remain under the existing backend profile.
     """
-    pending=list(roots);seen=set()
+    pending = list(roots)
+    seen = set()
+    checked = set(roots)
+
+    def enqueue_if_local(name):
+        if name not in checked:
+            checked.add(name)
+            if (root / name).is_file():
+                pending.append(name)
+
     while pending:
         name=pending.pop()
         if name in seen or not name.endswith('.py'):continue
@@ -56,8 +65,8 @@ def _local_import_closure(root, roots):
         path=_regular(root,name)
         for parent in Path(name).parents:
             init=(parent/'__init__.py').as_posix()
-            if init!='__init__.py' and (root/init).is_file() and init not in seen:
-                pending.append(init)
+            if init != '__init__.py':
+                enqueue_if_local(init)
         module=name.removesuffix('.py').replace('/','.')
         if module.startswith('src.'):module=module[4:]
         package=module.rsplit('.',1)[0]
@@ -73,10 +82,9 @@ def _local_import_closure(root, roots):
                 candidates=[base,*[base+'.'+item.name for item in node.names if item.name!='*']]
             for candidate in candidates:
                 for base in ('src/',''):
-                    relative=base+candidate.replace('.','/')+'.py'
-                    if (root/relative).is_file() and relative not in seen:pending.append(relative)
-                    init=base+candidate.replace('.','/')+'/__init__.py'
-                    if (root/init).is_file() and init not in seen:pending.append(init)
+                    relative = base + candidate.replace('.', '/')
+                    enqueue_if_local(relative + '.py')
+                    enqueue_if_local(relative + '/__init__.py')
     return seen
 
 def audit_loaded_actual_sources(repository, package):

@@ -851,7 +851,7 @@ class Repository:
                 raise ValueError('actual_provider_not_implemented')
         return native_recipe(self, package)
 
-    def actual_launch(self, package):
+    def actual_launch(self, package, *, recipe=None):
         binding = package.get('actual_launch')
         if binding is None:
             return None
@@ -867,19 +867,23 @@ class Repository:
         if hashlib.sha256(raw).hexdigest() != binding['sha256']:
             raise ValueError('actual launch companion SHA differs')
         from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_launch import validate_actual_launch
-        return validate_actual_launch(json.loads(raw), repository=self, package=package)
+        return validate_actual_launch(json.loads(raw), repository=self, package=package, recipe=recipe)
 
     def native_execution_identity(self, package, *, recipe=None):
+        _, identity = self._native_execution(package, recipe=recipe)
+        return identity
+
+    def _native_execution(self, package, *, recipe=None):
         recipe = recipe or self.native_recipe(package)
         core = {k:recipe[k] for k in ('command_spec_sha256','code_config_sha256')}
-        launch = self.actual_launch(package)
+        launch = self.actual_launch(package, recipe=recipe)
         actual = None
         fingerprint = core['code_config_sha256']
         if launch is not None:
             from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_launch import actual_launch_identity, _digest
             actual = actual_launch_identity(launch, companion_sha256=package['actual_launch']['sha256'])
             fingerprint = _digest(dict(core_identity=core, actual_identity=actual))
-        return dict(core_identity=core, actual_identity=actual, attempt_fingerprint=fingerprint)
+        return launch, dict(core_identity=core, actual_identity=actual, attempt_fingerprint=fingerprint)
 
     def resolve_actual_checkpoint_origin(self, launch, *, packages):
         if launch['role'] == 'a_fresh':

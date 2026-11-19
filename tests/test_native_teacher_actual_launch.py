@@ -274,3 +274,24 @@ def test_entry_preserves_external_evidence_dir_from_bound_attempt(repo,tmp_path,
     monkeypatch.setattr(process,'read_launch_binding',static)
     assert mod.main(spec['argv'][:-1]+[str(tmp_path/'never-app')])==2
     assert seen==[external]
+
+
+def test_scan_import_closure_probes_a_repeated_candidate_once_per_scan(tmp_path, monkeypatch):
+    from pathlib import Path
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_launch import _local_import_closure
+
+    (tmp_path / "start.py").write_text("import optional_support\n" * 10)
+    missing = tmp_path / "optional_support.py"
+    original = Path.is_file
+    probes = []
+
+    def is_file(path):
+        if path == missing:
+            probes.append(path)
+        return original(path)
+
+    monkeypatch.setattr(Path, "is_file", is_file)
+    assert _local_import_closure(tmp_path, {"start.py"}) == {"start.py"}
+    assert probes == [missing]
+    missing.write_text("value = 1\n")
+    assert _local_import_closure(tmp_path, {"start.py"}) == {"start.py", "optional_support.py"}

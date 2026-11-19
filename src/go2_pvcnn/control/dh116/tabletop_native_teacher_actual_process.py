@@ -188,8 +188,7 @@ def _registered(repository, package, intent_binding):
     path, raw = _read(intent_binding)
     intent = json.loads(raw)
     recipe = repository.native_recipe(current)
-    launch = repository.actual_launch(current)
-    identity = repository.native_execution_identity(current, recipe=recipe)
+    launch, identity = repository._native_execution(current, recipe=recipe)
     if launch is None or identity['actual_identity'] is None:
         raise ValueError('actual registered launch approval required')
     approval = scheduler.native_approval(intent['approval'], repository)
