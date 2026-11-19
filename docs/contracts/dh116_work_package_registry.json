@@ -42438,7 +42438,7 @@
     },
     "teacher.pinch-ppo-fresh-smoke32-v10": {
       "title": "Pinch fresh PPO smoke32 with control-scoped source revalidation",
-      "status": "pending",
+      "status": "blocked",
       "executor": "native_bounded",
       "dependencies": [
         "teacher.pinch-control-source-scope-cpu"
@@ -42456,7 +42456,28 @@
         "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v10.json",
         "sha256": "782dffdffd461643d562d7107f23f26c7894a20c2cc0257452a89c8176860111"
       },
-      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v10-draft.md"
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v10-native-outcome.md",
+      "blocker_kind": "failed_native",
+      "reason": "Consumed v10: original right source-collider table clearance guard at SDK step 21, zero PPO updates.",
+      "last_result": {
+        "attempt_fingerprint": "9e4db8ba833995b3b12d2cfd54032e87093bdee1bcad8d700240fb413237882f",
+        "result_sha256": "178c53d37bf896a3d05349247a39dfd579f08e96a5ed7b1c9d73f2720e8d5f64",
+        "diagnostic_verified": false,
+        "outer_exit_code": 1,
+        "debugger_inferior_signal": null,
+        "native_lock_observed": true,
+        "native_execution_performed": true,
+        "isaac_started": true,
+        "setup_sdk_steps": 2,
+        "measured_sdk_steps": 19,
+        "internal_solver_substeps": 228,
+        "policy_decisions": 3,
+        "terminal_transitions": 1,
+        "ppo_updates": 0,
+        "terminal_sdk_step": 21,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     },
     "teacher.pinch-v10-control-source-preflight-cpu": {
       "title": "Freeze Pinch v10 against current control-scoped source",
@@ -42469,6 +42490,24 @@
       "tests": [],
       "readiness": "docs/contracts/dh116_teacher_pinch_v10_draft_v1.json",
       "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v10-draft.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 97,
+        "failed": 0,
+        "scope": "CPU only"
+      }
+    },
+    "teacher.pinch-v10-outcome-audit-cpu": {
+      "title": "Audit the Pinch v10 right thumb clearance terminal",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-v10-control-source-preflight-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v10_outcome_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v10-native-outcome.md",
       "native_runs": 0,
       "last_result": {
         "passed": 97,

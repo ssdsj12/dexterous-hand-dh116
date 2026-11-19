@@ -1,0 +1,69 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-v10-outcome-audit-cpu",
+  "branch": "11-17",
+  "review_baseline": "dc6803f621b212dea6a3a221a019560ef7c6b07f",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v10-native-outcome.md",
+  "cpu": {
+    "passed": 97,
+    "failed": 0,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_native_teacher_actual_launch.py",
+      "tests/test_native_teacher_actual_update.py"
+    ],
+    "log_sha256": "2152b629b01a8d0631cd1bf05e0ebdaf2acb708717adbbfeaec77f4cc1577aea",
+    "red_sha256": "35c6b11b0e4724be4f416aa2255ec2307c46147fd2c47c80154fa731e0c0d001"
+  },
+  "source_sha256": {},
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "referenced_native_attempts": 1,
+  "native_result": {
+    "fingerprint": "9e4db8ba833995b3b12d2cfd54032e87093bdee1bcad8d700240fb413237882f",
+    "receipt_sha256": "178c53d37bf896a3d05349247a39dfd579f08e96a5ed7b1c9d73f2720e8d5f64",
+    "journal_sha256": "fa7e6300ac5a48804a00b4f9e0b30bbda010e88168bf2114cb0850d18bbdb878",
+    "offline_fk_audit_sha256": "397132f8771c6d134e4bb924599ffc60c39eb95df96a83a6fa36c041ecbd113b",
+    "setup_sdk_steps": 2,
+    "sdk_measured_steps": 19,
+    "internal_solver_substeps": 228,
+    "completed_full_controls": 2,
+    "terminal_partial_step": 3,
+    "ppo_updates": 0,
+    "outer_exit_code": 1,
+    "debugger_signal": null,
+    "wall_seconds": 133.20327464211732,
+    "failed_side": "right",
+    "failed_link": "finger13_link",
+    "failed_sdk_step": 21,
+    "right_clearance_m": 0.002098153305056971,
+    "limit_m": 0.0021,
+    "right_clearance_fk_attribution_um": {
+      "base": -102.213,
+      "active": -42.662,
+      "passive": -0.002,
+      "error": -0.035
+    },
+    "causally_paired": false
+  }
+}

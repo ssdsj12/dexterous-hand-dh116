@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch v10 physical terminal and throughput evidence
+
+The native limit remained active. v10 reached SDK step 21 before the original right thumb table-clearance guard stopped the rollout. The shared Reset produced different policy draws, so the v9/v10 comparison is descriptive. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v10-native-outcome.md).
+
 ## 2026-11-19 Pinch v10 diagnostic preflight
 
 Pinch v10 binds the current collector source and existing verified Reset to a separate single-attempt diagnostic recipe. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v10-draft.md).
