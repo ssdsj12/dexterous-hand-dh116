@@ -42294,6 +42294,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-v8-right-active-passive-clearance-cpu": {
+      "title": "Separate right Pinch active and passive motion and prepare a new Reset",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.pinch-v8-terminal-clearance-audit-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_pinch_dynamic_fk.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v8_right_clearance_candidate_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v8-right-clearance-candidate.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 24,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

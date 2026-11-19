@@ -108,3 +108,18 @@ def test_existing_output_is_rejected_before_any_archive_read(tmp_path,monkeypatc
     monkeypatch.setattr(audit,"run",forbidden)
     with pytest.raises(SystemExit):audit.main(["--output",str(output)])
     assert output.read_text()=="existing"
+
+
+def test_active_displacement_replay_retains_reset_passive_residual():
+    import numpy as np
+    from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, JOINTS, expand
+    from scripts.audit_dh116_pinch_dynamic_fk import keep_reference_mimic_residual
+
+    q0 = np.array([.4, .2, .3, .4, .5, .6])
+    moved = q0.copy()
+    moved[ACTIVE.index("finger12")] += .005
+    reset = expand(q0).copy()
+    reset[JOINTS.index("finger13")] += .001
+    active_only = keep_reference_mimic_residual(reset, moved)
+    np.testing.assert_allclose(active_only - expand(moved), reset - expand(q0), atol=1e-14)
+    assert active_only is not reset

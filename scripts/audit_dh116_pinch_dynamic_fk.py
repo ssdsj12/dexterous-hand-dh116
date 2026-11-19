@@ -51,6 +51,15 @@ def full_named_poses(fk,root,angles):
     if len(named)!=len(poses):raise ValueError("ambiguous source link names")
     return named
 
+def keep_reference_mimic_residual(reference_full, active):
+    """Replay coupled active displacement while retaining the Reset's passive offset."""
+    reference = np.asarray(reference_full, dtype=float)
+    if reference.shape != (len(JOINTS),) or not np.isfinite(reference).all():
+        raise ValueError("finite ordered Reset full joint vector required")
+    initial_active = reference[[JOINTS.index(name) for name in ACTIVE]]
+    return reference + (expand(active) - expand(initial_active))
+
+
 def pose_error(predicted,actual):
     p,a=rigid(predicted),rigid(actual)
     delta=p[:3,3]-a[:3,3]

@@ -1,0 +1,56 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-v8-right-active-passive-clearance-cpu",
+  "branch": "11-17",
+  "review_baseline": "dc6803f621b212dea6a3a221a019560ef7c6b07f",
+  "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-v8-right-clearance-candidate.md",
+  "cpu": {
+    "passed": 24,
+    "failed": 0,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_pinch_dynamic_fk.py",
+      "tests/test_dh116_pinch_recentered_tracking.py",
+      "tests/test_dh116_paired_pinch_reset_preflight.py",
+      "-k",
+      "not actual_16_native_endpoints and not actual_fk_consistency_is_separate"
+    ],
+    "log_sha256": "1b4e3e45dbb50e0dbe60abda0dd0bf3d7cfa40c79429f723b5f4e9c550d14ecf",
+    "red_sha256": "c35ee0123ebfa2b46356e99366c81e829cf55f0d4e0f731a37dc92a4d5ffe730"
+  },
+  "source_sha256": {
+    "scripts/audit_dh116_pinch_dynamic_fk.py": "fe2c53697e277121f0d8dcc879730631331ad8879448b17a2bbf02c6d9dd3603",
+    "scripts/prepare_dh116_pinch_v8_clearance_candidate.py": "3e3279cf19eb5d7cdfbfba8ae288b76211cda98eaf5ae0eeabc671c677db73d6",
+    "tests/test_dh116_pinch_dynamic_fk.py": "d2158ceabacb72547b551b9e494932224e0506710ae9851f1a95e59ee8623961"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "counterfactual_issued_targets_are_measurements": false,
+  "prior_right_terminal_steps": 5,
+  "minimum_measured_motion_replay_m": 0.0022231731160429757,
+  "minimum_ideal_sdk_target_motion_replay_m": 0.0021572355400287235,
+  "evidence_sha256": "69123c80b790fc84b0e949d8afcf7b8b4bcf00ed42f8227161a4b51dfe18a006",
+  "new_pair_sha256": "1d8e048de67f337f3bf41ca1e15f5d3ea4d255139f5a71f0a11ce481737c7cba",
+  "new_reset_fingerprint": "a8a447b8b68d9b8fb8569de2c21c41df87701031892ad3dd16f990e7ed6c0109",
+  "historical_fixture_errors_reproduced_on_baseline": 2,
+  "blocked_reason": "fresh_source_bound_native_reset_requires_approval"
+}

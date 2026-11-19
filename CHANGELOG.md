@@ -1,3 +1,7 @@
+## 2026-11-19 Pinch right thumb dynamic clearance
+
+Replayed the v8 terminal using all measured joints and prepared a new right-hand Reset candidate within the original geometric limits. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v8-right-clearance-candidate.md).
+
 ## 2026-11-19 Tripod continuous delay band
 
 Certified and independently rechecked both hands over the historical pure-delay bands on the fixed reference rod. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-continuous-delay.md).
