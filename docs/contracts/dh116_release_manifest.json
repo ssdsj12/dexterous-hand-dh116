@@ -26135,6 +26135,31 @@
         "verified_at_utc": "2026-11-18T15:58:05.912018+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.actual-input-audit-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-input-source-audit.md",
+      "readiness": "docs/contracts/dh116_teacher_input_source_audit_v1.json",
+      "cpu_tests": {
+        "passed": 231,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "fc81e1e149e3cee99c686186631a1a262c8c9ed9",
+        "source_tree": "66bad321bece97f9e4dc3f5dae5beb938ddcd680",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T03:21:17.691730+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
