@@ -42022,6 +42022,26 @@
       "status": "pending",
       "tests": [],
       "title": "Pinch fresh PPO smoke32 on the newly sealed recentered Reset"
+    },
+    "teacher.tripod-bilateral-closure-reference-cpu": {
+      "title": "Continuous reference certificate for bilateral Tripod closure",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.tripod-material-roll-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_tripod_bilateral_closure.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_bilateral_closure_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-bilateral-closure.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 31,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

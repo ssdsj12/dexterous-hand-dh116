@@ -1,0 +1,55 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.tripod-bilateral-closure-reference-cpu",
+  "branch": "11-17",
+  "review_baseline": "85546558ab867e9bc9f5a5859d07484a76d83175",
+  "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-bilateral-closure.md",
+  "cpu": {
+    "passed": 31,
+    "failed": 0,
+    "environment": {
+      "PYTHONPATH": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/src:/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117:/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310:/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/teacher-pair-build-zQEenV/python",
+      "LD_LIBRARY_PATH": "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/extscache/omni.usd.libs-1.0.1+d02c707b.lx64.r.cp310/bin",
+      "OMP_NUM_THREADS": "4",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "CUDA_VISIBLE_DEVICES": "",
+      "DH116_INSTALLED_SDK_AUDIT": "1",
+      "GIT_CONFIG_COUNT": "1",
+      "GIT_CONFIG_KEY_0": "safe.directory",
+      "GIT_CONFIG_VALUE_0": "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117"
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_tripod_bilateral_closure.py",
+      "tests/test_tripod_fixed_root_path.py",
+      "tests/test_tripod_sdk_path.py",
+      "tests/test_tripod_tracking_envelope.py"
+    ],
+    "log_sha256": "e404dc3a5d3eaa2c95d86324608f8e2e4d8110465e6bbef5c42e754d0f4cda7c",
+    "red_sha256": "3262ec5b2d011796a8e053b4cd6b94fb431c7171a3eb10250963a9c00b172ca2"
+  },
+  "source_sha256": {
+    "scripts/audit_dh116_tripod_bilateral_closure.py": "4533a559b3f2e790c88b77b425b40ef8707c50043f2c0b065f2179e22280dee4",
+    "tests/test_dh116_tripod_bilateral_closure.py": "95b1d71050ee6bb19f754cc774b6c187e5c8d0987086fb3981dce669f7a9f1ba"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "nominal_bilateral_reference_path_proved": true,
+  "planned_controls": 20,
+  "planned_sdk_steps": 160,
+  "evidence_sha256": "0e1d183f2fcf8e9152bea1f671fc34fe8fe749a69dcffc2eb1a29f882204be7e",
+  "legacy_exchange": {
+    "failed": 8,
+    "reason": "original retained path canonical alias rejected"
+  },
+  "right_rod_margin_m": 1.445418331118279e-07,
+  "blocked_reason": "requires_tracking_reserve_same_hand_clearance_and_new_bilateral_native_worker"
+}

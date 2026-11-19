@@ -1,0 +1,29 @@
+import numpy as np
+import pytest
+
+from scripts import audit_dh116_tripod_bilateral_closure as closure
+
+
+def test_bilateral_compilation_drives_both_hands_on_the_same_clock():
+    pose = np.array([0., 0., .3, 1., 0., 0., 0.])
+    q = np.full(6, .2)
+    end = pose.copy()
+    end[2] -= .0007
+    close = q + [0., .01, .01, .01, 0., 0.]
+    endpoints = {side: (pose, end, q, close) for side in ("left", "right")}
+    actions, plans = closure.compile_bilateral_actions(endpoints, physics_steps=160)
+    assert actions.shape == (20, 24)
+    assert np.all(actions[:, [1, 2, 3, 7, 8, 9]] > 0.)
+    assert np.all(actions[:, [14, 17]] < 0.)
+    assert np.array_equal(actions, sum(np.array(plan["actions"]) for plan in plans.values()))
+
+
+def test_polyline_path_cannot_certify_a_midpath_rod_violation():
+    def query(t):
+        return {"table:finger22": .003, "rod:finger13": .002 - .003 * (1 - abs(2*t-1))}
+
+    proof = closure.certify_path(query, dict(zip(query(0.), [0., .006])),
+                                dict(zip(query(0.), [.0021, 0.])))
+    assert not proof["proved"]
+    assert proof["violations"][0]["fraction"] == .5
+    assert proof["violations"][0]["shape"] == "rod:finger13"

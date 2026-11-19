@@ -1,3 +1,7 @@
+## 2026-11-19 Bilateral Tripod approach and closure reference
+
+Compile synchronized two-hand 24D closure and certify swept clearance on the original rod polyline under ideal target tracking. [Report](docs/superpowers/reports/2026-11-19-teacher-tripod-bilateral-closure.md).
+
 ## 2026-11-19 Pinch recentered native Reset and PPO draft
 
 The recentered Pinch pair sealed after a natural-exit native Reset; a separately frozen smoke32 proposal uses that exact manifest. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-bound-native-reset.md).
