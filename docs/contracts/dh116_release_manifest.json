@@ -26938,6 +26938,31 @@
         "verified_at_utc": "2026-11-19T11:19:55.069994+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-recenter-and-delay-screen-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-tripod-recenter-delay.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_recenter_delay_v1.json",
+      "cpu_tests": {
+        "passed": 42,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "be922975f44c9b6082c02f49bcd41e3ee0478771",
+        "source_tree": "1ce85391d9b723ba357fbcda91964ee33d9c4eeb",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T11:22:17.159873+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
