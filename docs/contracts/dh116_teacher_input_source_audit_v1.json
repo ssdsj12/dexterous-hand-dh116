@@ -1,0 +1,48 @@
+{
+  "package": "teacher.actual-input-audit-cpu",
+  "branch": "11-17",
+  "base_commit": "d4aa566e2a6be97ef9d8b98f121784d7f3c2d42d",
+  "status": "cpu_input_alignment_and_deadline_verified_actual_worker_pending",
+  "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-input-source-audit.md",
+  "tests": [
+    "tests/test_native_teacher_actual_inputs.py",
+    "tests/test_native_teacher_actual_update.py",
+    "tests/test_native_teacher_training.py",
+    "tests/test_native_teacher_actual_factories.py",
+    "tests/test_native_teacher_worker_artifacts.py",
+    "tests/test_dh116_work_packages.py",
+    "tests/test_teacher_force_closure.py",
+    "tests/test_fault_safe_lifecycle_v3.py",
+    "tests/test_native_teacher_session.py"
+  ],
+  "cpu": {
+    "passed": 231,
+    "failed": 0,
+    "new_regressions": 11,
+    "focused_passed": 15,
+    "registry_post_edit_passed": 55
+  },
+  "evidence": {
+    "directory": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-original-input-audit-20261119",
+    "log_sha256": {
+      "deadline-red.log": "415af16e2b1f42f7f11ad802bdb8269ff0a7f04f2ac9c915e7eb520ccbeaf00d",
+      "final-regression.log": "d33ee5064ac1785db7a7de4029a064fb7c8aec1206b1bb9d6c3857911d693e0f",
+      "green.log": "630155b4b0ad3a81b70cd0a83b9e0d4ffa93a85034625355de34e09a1a5b7341",
+      "input-deadline-green.log": "925c43fe7782696b4f487b38a38dabc3be9d0ad7832e63675b1e5e32880bd964",
+      "red-fixture-fixed.log": "6d9ff0417d6d6aa1d5ec71d2ea3a35b9a690073c22385d707b73efcfa27ea891",
+      "red-ready.log": "86f510cba2998e4617558970630500149aa3034664e010ab12886f6810d019e5",
+      "red.log": "7c35559592254028b14aa1284f8cf0d938a6e77241c7e7c7ca884a0672ca4b58",
+      "regression.log": "e5db7726c8f99877eecacd8beddd0982dfe40f4b92fc6c3fa05dcaa7dd016d94",
+      "registry-after-edit.log": "51a65f028adfaeaad75f173e792da0914b38a6219428238f12cd0c93e79d328e"
+    }
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_blockers": {
+    "pinch": "actual_owned_run_a_and_process_evidence_pending",
+    "tripod": "independent_bilateral_rod_contact_source_pending",
+    "power": "independent_palm_proximal_and_wrap_source_pending"
+  }
+}

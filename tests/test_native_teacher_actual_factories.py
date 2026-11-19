@@ -1,6 +1,7 @@
 """CPU test seams for factory composition without any native qualification."""
 
 from dataclasses import replace
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -9,7 +10,7 @@ from go2_pvcnn.control.dh116 import tabletop_native_teacher_actual_factories as 
 from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_factories import build_actual_factories
 from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_process import ActualWorkerLease
 from go2_pvcnn.control.dh116.tabletop_native_teacher_session import (
-    ModelContract, NativeEpisodeOwner, NativeFactories, NativeSessionConfig, StaticContract,
+    ModelContract, NativeEpisodeOwner, NativeFactories, NativeSessionConfig, SessionBudget, StaticContract,
 )
 from go2_pvcnn.control.dh116.tabletop_native_teacher_training import VERSION
 from go2_pvcnn.control.dh116.tabletop_training_reward import TrainingReward, load_config
@@ -30,11 +31,13 @@ def boundaries(monkeypatch, tmp_path, backend_profile):
     config = NativeSessionConfig(preflight, model_config, tmp_path / "train.jsonl", 2., 32, ROOT)
     reward = load_config(ROOT / "configs/dh116_training/approach_wiring_smoke_v1.json", ppo_gamma=.995)
     ppo = PPOConfig(lr=.0001, gamma=.995, epochs=1, minibatches=1)
-    static = StaticContract(config, backend_profile, None, {}, ppo, reward, {}, None, "")
+    budget = {"wall_timeout_s": 120.}
+    static = StaticContract(config, backend_profile, None, {}, ppo, reward, budget, SessionBudget(budget), "")
     lease = object.__new__(ActualWorkerLease)
     lease._config = dict(schema=VERSION, preflight=preflight, model_config=model_config,
                          episode_cap_s=2., rollout_steps=32)
     lease._closed = False
+    lease._envelope = SimpleNamespace(deadline_monotonic_s=time.monotonic() + 60.)
     lease_events = []
 
     def revalidate(self):
@@ -132,3 +135,25 @@ def test_unavailable_source_capability_fails_before_model_initialization(boundar
     _finished_live_check(owner)
     with pytest.raises(ValueError, match="actual source capability unavailable"):
         fs.policy(ModelContract(static.config.model_config, static.backend_profile, SMOKE))
+
+
+
+def test_actual_episode_uses_original_parent_deadline_instead_of_starting_a_new_budget(boundaries, monkeypatch):
+    fs, lease, owner, static, _, _ = boundaries
+    remaining_at_start = 1.
+    parent_deadline = static.runtime.started + remaining_at_start
+    lease._envelope.deadline_monotonic_s = parent_deadline
+    monkeypatch.setattr(time, "monotonic", lambda: static.runtime.started + .5)
+    assert fs.episode(static) is owner
+    assert static.runtime.remaining_s() == pytest.approx(.5)
+    monkeypatch.setattr(time, "monotonic", lambda: parent_deadline)
+    assert static.runtime.remaining_s() == 0.
+
+
+def test_expired_parent_deadline_rejects_before_building_episode(boundaries, monkeypatch):
+    _, lease, _, static, _, _ = boundaries
+    monkeypatch.setattr(time, "monotonic", lambda: lease.deadline_monotonic_s)
+    fs = build_actual_factories(lease=lease, episode_factory=lambda _: pytest.fail("expired launch built a scene"),
+                                prepare_source_pack=lambda *_: None)
+    with pytest.raises((ValueError, RuntimeError), match="parent.*deadline"):
+        fs.episode(static)

@@ -82,12 +82,19 @@ def run_fresh_update(collector, *, checkpoint_contract):
                 or trainer.counters != {"updates": 1, "environment_steps": ROLLOUT_STEPS}
                 or any(end[key] != start[key] for key in ("run_uuid", "episode_uid", "rod_uid", "reset_id"))):
             raise TrainingStopped("exact one-episode 32-control/256-physics PPO update required")
+        input_audit = {}
+        if scope == "owner_source_unqualified":
+            from .tabletop_native_teacher_actual_inputs import audit_teacher_input_sources
+
+            input_audit["input_source_audit"] = audit_teacher_input_sources(
+                collector.journal.path.read_bytes(), backend_profile=collector.owner.backend_profile,
+                scope=scope, controls=ROLLOUT_STEPS)
         audited = _seal_checkpoint(checkpoint, trainer, checkpoint_contract)
         result = dict(training, clean_checkpoint=dict(path=checkpoint.name, sha256=audited["checkpoint_sha256"],
                       policy_weights_sha256=audited["policy_weights_sha256"]),
                       physical=dict(start_sdk_step=start["physics_step"], end_sdk_step=end["physics_step"],
                                     start_rod_tick=start["rod_tick"], end_rod_tick=end["rod_tick"]),
-                      native_qualification=False, teacher_admission=False)
+                      native_qualification=False, teacher_admission=False, **input_audit)
         collector.journal.emit("fresh_update_checkpoint_sealed", result)
         return result
     except BaseException:

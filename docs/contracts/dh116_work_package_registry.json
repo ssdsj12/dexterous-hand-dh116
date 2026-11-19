@@ -38415,7 +38415,8 @@
       "dependencies": [
         "teacher.actual-launch-l01-cpu",
         "teacher.actual-fresh-pinch-scene-cpu",
-        "teacher.actual-fresh-update-seal-cpu"
+        "teacher.actual-fresh-update-seal-cpu",
+        "teacher.actual-input-audit-cpu"
       ],
       "status": "blocked",
       "reason": "Pinch fresh scene, C04 owner factory and pre-reset bootstrap input ledger pass CPU tests. Actual provider, raw41/model binding, A update and artifact closure require implementation and native verification.",
@@ -41223,6 +41224,27 @@
         "related_passed": 267,
         "failed": 0,
         "scope": "CPU original optimizer, KL Guard and immutable checkpoint audit. Actual worker remains blocked."
+      }
+    },
+    "teacher.actual-input-audit-cpu": {
+      "title": "Teacher 原始输入核对与父进程时限绑定",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.actual-fresh-update-seal-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_native_teacher_actual_inputs.py",
+        "tests/test_native_teacher_actual_factories.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_input_source_audit_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-dh116-teacher-input-source-audit.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 231,
+        "failed": 0,
+        "scope": "CPU original source audit, PPO checkpoint gate and parent deadline. Actual native worker pending."
       }
     }
   },

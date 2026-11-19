@@ -1,3 +1,7 @@
+## 2026-11-19 Teacher input evidence before checkpoint sealing
+
+The actual-source worker path checks each packed observation against its Reset or physics ledger and limits collection by the parent deadline. The CPU regression passed 231 tests. [Report](docs/superpowers/reports/2026-11-19-dh116-teacher-input-source-audit.md).
+
 ## 2026-11-18 Teacher first-update checkpoint sealing
 
 The fresh Teacher update requires a complete single-episode 32-control PPO window and seals only audited checkpoint bytes. A CPU regression exercised the pinned KL Guard configuration. Native worker and grasp qualification are pending. [Report](docs/superpowers/reports/2026-11-18-dh116-teacher-first-update-seal.md).

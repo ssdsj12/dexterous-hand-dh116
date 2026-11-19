@@ -228,10 +228,26 @@ class SessionBudget:
         self.limits=dict(limits);self.started=time.monotonic()
         self.sdk_steps=self.solver_calls=self.internal_solver_substeps=self.resets=self.episodes=0
         self.scene=None;self.last_clock=None;self.setup_sdk_steps=0;self._setup_recorded=False
+        self._parent_deadline_s = None
+
+    def bind_parent_deadline(self, deadline_s):
+        import math
+        import time
+
+        if type(deadline_s) not in (int, float) or not math.isfinite(deadline_s) or deadline_s <= time.monotonic():
+            raise ValueError("fresh parent launch deadline required before episode construction")
+        if self._parent_deadline_s is not None and self._parent_deadline_s != deadline_s:
+            raise ValueError("parent launch deadline changed within the owned session")
+        self._parent_deadline_s = deadline_s
 
     def remaining_s(self):
         import time
-        return max(0.,self.limits["wall_timeout_s"]-(time.monotonic()-self.started))
+
+        now = time.monotonic()
+        remaining = self.limits["wall_timeout_s"] - (now - self.started)
+        if self._parent_deadline_s is not None:
+            remaining = min(remaining, self._parent_deadline_s - now)
+        return max(0., remaining)
 
     def record_setup(self,owner,events):
         events=tuple(events)

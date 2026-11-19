@@ -41,6 +41,7 @@ def build_actual_factories(*, lease, episode_factory, prepare_source_pack):
                 or config.preflight["profile"] != "approach_wiring_smoke_v1"
                 or type(config.rollout_steps) is not int or config.rollout_steps != 32):
             raise ValueError("approved Pinch approach smoke and rollout32 required")
+        static.runtime.bind_parent_deadline(lease.deadline_monotonic_s)
         owner = episode_factory(static)
         if (type(owner) is not NativeEpisodeOwner or owner.contract is not static
                 or owner._closed or owner.episode._state != "new"):
