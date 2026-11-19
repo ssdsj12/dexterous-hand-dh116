@@ -26712,6 +26712,31 @@
         "verified_at_utc": "2026-11-19T09:01:46.240232+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-physical-clearance-audit",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-pinch-physical-clearance.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_physical_clearance_v1.json",
+      "cpu_tests": {
+        "passed": 66,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "020a8806d9f7539bc4cb57464fd060b442cb4eac",
+        "source_tree": "b012044c0e0a5aba524e38744e62255900a1c55d",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-19T09:09:44.103563+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
