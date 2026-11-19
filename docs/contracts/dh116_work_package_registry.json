@@ -42195,6 +42195,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.power-seated-material-pockets-cpu": {
+      "title": "Audit separated Power stations and palm-witness rotations",
+      "executor": "pytest",
+      "dependencies": [
+        "teacher.power-palm-and-five-digit-cpu"
+      ],
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_power_material_reach.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_seated_pockets_v1.json",
+      "report": "docs/superpowers/reports/2026-11-19-teacher-power-seated-pockets.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 18,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

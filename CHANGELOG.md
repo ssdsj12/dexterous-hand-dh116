@@ -1,3 +1,7 @@
+## 2026-11-19 Power seated station and wrist rotation audit
+
+Found two support-clear left palm stations and tested two independent right wrist axes about a fixed palm witness. [Report](docs/superpowers/reports/2026-11-19-teacher-power-seated-pockets.md).
+
 ## 2026-11-19 Pinch v8 canonical launch preflight
 
 Prepared a new individually gated Pinch smoke32 after validating the exact scheduler child arguments. [Report](docs/superpowers/reports/2026-11-19-teacher-pinch-v8-launch-preflight.md).

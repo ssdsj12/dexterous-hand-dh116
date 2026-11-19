@@ -211,7 +211,8 @@ def audit_closure_positions(geometry, row, nodes, supports):
     return results
 
 
-def audit_closure_at_root(geometry, root, active_q, nodes, supports, *, include_thumb_abduction=False):
+def audit_closure_at_root(geometry, root, active_q, nodes, supports, *, include_thumb_abduction=False,
+                          refine_uncertain_rod=False):
     """Screen a single wrist endpoint against all original geometry constraints."""
     layout = geometry["reference"]["reference_layout"]
     table_top = layout["table_center"][2] + layout["table_size"][2] / 2
@@ -231,7 +232,13 @@ def audit_closure_at_root(geometry, root, active_q, nodes, supports, *, include_
             rejected["support"] += 1
             return None
         gaps = {key: _pad_gap_interval(vertices, nodes, radius) for key, vertices in hulls.items()}
-        if any(gap["lower_m"] < 0. for gap in gaps.values()):
+        for key, gap in gaps.items():
+            if gap["lower_m"] >= 0.:
+                continue
+            if refine_uncertain_rod and gap["upper_m"] >= 0.:
+                gaps[key] = endpoint_gap(hulls[key], nodes, radius)
+                if gaps[key]["lower_m"] >= 0.:
+                    continue
             rejected["rod"] += 1
             return None
         thumb_gap = thumb_clearance(hulls)

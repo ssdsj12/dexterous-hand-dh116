@@ -16,7 +16,7 @@ from scripts.audit_dh116_wire_contact_witness import audit_hand, endpoint_gap, s
 from scripts.prepare_dh116_power_palm_seed import (
     active_limits, audit_closure_at_root, support_clearance, thumb_clearance,
 )
-from scripts.prepare_dh116_wire_pose_candidate import HANDS, _material_tangents, _pad_gap_interval
+from scripts.prepare_dh116_wire_pose_candidate import HANDS, _material_tangents, _pad_gap_interval, _station_frame
 
 ANGLES_DEG = (0., -30., -15., 15., 30.)
 LATERAL_M = (0., -.004, .004, -.008, .008)
@@ -55,7 +55,44 @@ def palm_approach_samples(measure):
     return sorted([*rows, *refinements], key=lambda candidate: candidate["inward_m"])
 
 
-def screen_palm_endpoint(g, root, inward, nodes, supports, top, radius):
+def rotate_root_about_witness(root, witness, axis, degrees):
+    """Rotate a wxyz wrist pose about a point and axis expressed in World."""
+    axis = np.asarray(axis, dtype=float)
+    length = np.linalg.norm(axis)
+    if not np.isfinite(length) or length <= 1e-8:
+        raise ValueError("nondegenerate world rotation axis required")
+    spin = Rotation.from_rotvec(np.deg2rad(degrees) * (axis / length))
+    orientation = spin * Rotation.from_quat(np.roll(root[3:], -1))
+    return np.r_[witness + spin.apply(root[:3] - witness), np.roll(orientation.as_quat(), 1)]
+
+
+def transport_power_station(root, inward, nodes, tangents, *, source, target):
+    if not (0 < source < len(nodes) - 1 and 0 < target < len(nodes) - 1):
+        raise ValueError("interior material stations required")
+    source_frame = _station_frame(tangents, source)
+    target_frame = _station_frame(tangents, target)
+    change = Rotation.from_matrix(target_frame @ source_frame.T)
+    orientation = change * Rotation.from_quat(np.roll(root[3:], -1))
+    return (np.r_[nodes[target] + change.apply(root[:3] - nodes[source]),
+                  np.roll(orientation.as_quat(), 1)], change.apply(inward))
+
+
+def seated_geometry(hulls, nodes, supports, top, radius):
+    table = min(float(hull[:, 2].min() - top) for hull in hulls.values())
+    hits, support = support_clearance(hulls, supports)
+    rod = {}
+    for key, hull in hulls.items():
+        gap = _pad_gap_interval(hull, nodes, radius)["lower_m"]
+        rod[key] = endpoint_gap(hull, nodes, radius)["lower_m"] if gap < .00011 else gap
+    limiting = min(rod, key=rod.get)
+    thumb_gap = thumb_clearance(hulls)
+    return dict(table_gap_m=table, support_gap_m=support, support_hits=hits, rod_gap_m=rod[limiting],
+                rod_limiting_hull=limiting, thumb_gap_m=thumb_gap,
+                eligible=(table >= CLEARANCE_M and not hits and support >= CLEARANCE_M
+                          and rod[limiting] >= 0. and thumb_gap > 0.))
+
+
+def screen_palm_endpoint(g, root, inward, nodes, supports, top, radius, *, reclose=True):
     open_q, _ = active_limits()
     original = shapes_world(g, root, open_q)
 
@@ -69,20 +106,10 @@ def screen_palm_endpoint(g, root, inward, nodes, supports, top, radius):
         if row["palm_lower_m"] < 0. or row["palm_gap_m"] > .0005:
             continue
         hulls = {key: hull + row["inward_m"] * inward for key, hull in original.items()}
-        table = min(float(hull[:, 2].min() - top) for hull in hulls.values())
-        hits, support = support_clearance(hulls, supports)
-        rod = {}
-        for key, hull in hulls.items():
-            gap = _pad_gap_interval(hull, nodes, radius)["lower_m"]
-            rod[key] = endpoint_gap(hull, nodes, radius)["lower_m"] if gap < .00011 else gap
-        limiting = min(rod, key=rod.get)
-        row.update(table_gap_m=table, support_gap_m=support, support_hits=hits, rod_gap_m=rod[limiting],
-                   rod_limiting_hull=limiting, thumb_gap_m=thumb_clearance(hulls))
-        row["eligible"] = (table >= CLEARANCE_M and not hits and support >= CLEARANCE_M
-                           and row["rod_gap_m"] >= 0. and row["thumb_gap_m"] > 0.)
+        row.update(seated_geometry(hulls, nodes, supports, top, radius))
     eligible = [row for row in samples if row["eligible"]]
     closure = None
-    if eligible:
+    if eligible and reclose:
         wrist = root.copy()
         wrist[:3] += min(eligible, key=lambda row: row["palm_gap_m"])["inward_m"] * inward
         closure = audit_closure_at_root(g, wrist, open_q, nodes, supports, include_thumb_abduction=True)
@@ -90,7 +117,59 @@ def screen_palm_endpoint(g, root, inward, nodes, supports, top, radius):
                 closure_reaudit=closure)
 
 
-def audit_reach(artifact, *, project, resolve_closure=False, palm_approach_only=False):
+def screen_seated_pockets(g, root, inward, nodes, tangents, station, supports, top, radius, *, side):
+    setup = screen_palm_endpoint(g, root, inward, nodes, supports, top, radius, reclose=False)
+    q = np.asarray(setup["open_q_rad"])
+    near = [row for row in setup["samples"] if 0. <= row["palm_lower_m"] <= row["palm_gap_m"] <= .0005]
+    candidates = []
+    pivot = None
+    if side == "left":
+        if not near:
+            raise ValueError("left source has no near-palm geometric witness")
+        advance = min(near, key=lambda row: abs(row["palm_gap_m"] - .0002))["inward_m"]
+        for offset in (0, -1, -2, -4):
+            target = station + offset
+            candidate, direction = transport_power_station(root, inward, nodes, tangents,
+                                                            source=station, target=target)
+            candidate[:3] += advance * direction
+            candidates.append((dict(station=target, mode="station"), candidate))
+    else:
+        eligible = [row for row in near if row["eligible"]]
+        if not eligible:
+            raise ValueError("right source has no clear near-palm geometric witness")
+        advance = min(eligible, key=lambda row: row["palm_gap_m"])["inward_m"]
+        seated = root.copy()
+        seated[:3] += advance * inward
+        palm = endpoint_gap(shapes_world(g, seated, q)["source:base_link"], nodes, radius)
+        if palm["witness"] is None:
+            raise ValueError("right palm witness is missing")
+        pivot = np.asarray(palm["witness"]["hull_point_m"])
+        tangent = _station_frame(tangents, station)[:, 0]
+        candidates.append((dict(station=station, mode="reference"), seated))
+        for label, axis in (("rod_tangent", tangent), ("transverse", np.cross(tangent, inward))):
+            for degree in (-10., -5., 5., 10.):
+                candidate = rotate_root_about_witness(seated, pivot, axis, degree)
+                candidates.append((dict(station=station, mode=label, degrees=degree), candidate))
+
+    rows = []
+    for labels, candidate in candidates:
+        hulls = shapes_world(g, candidate, q)
+        palm = endpoint_gap(hulls["source:base_link"], nodes, radius)
+        bounds = seated_geometry(hulls, nodes, supports, top, radius)
+        eligible = bounds.pop("eligible") and 0. <= palm["lower_m"] <= palm["upper_m"] <= .0005
+        row = dict(labels, root=candidate.tolist(), **bounds, palm_lower_m=palm["lower_m"],
+                   palm_gap_m=palm["upper_m"], eligible=eligible,
+                   open_y_bounds_m=[min(float(v[:, 1].min()) for v in hulls.values()),
+                                    max(float(v[:, 1].max()) for v in hulls.values())])
+        if eligible:
+            row["closure"] = audit_closure_at_root(g, candidate, q, nodes, supports,
+                                                   include_thumb_abduction=True, refine_uncertain_rod=True)
+        rows.append(row)
+    return dict(source_station=station, inward_advance_m=advance, open_q_rad=q.tolist(),
+                pivot_world_m=None if pivot is None else pivot.tolist(), candidates=rows)
+
+
+def audit_reach(artifact, *, project, resolve_closure=False, palm_approach_only=False, seated_pockets=False):
     nodes, *_ = seed_arrays(artifact["trial_seed"])
     plan, _ = supported_seed_plan(project)
     supported = plan["seeds_by_style"]["power"]
@@ -110,6 +189,10 @@ def audit_reach(artifact, *, project, resolve_closure=False, palm_approach_only=
         layout = g["reference"]["reference_layout"]
         top = layout["table_center"][2] + layout["table_size"][2] / 2
         radius = g["old_candidate"]["rod"]["radius_m"]
+        if seated_pockets:
+            hands[side] = screen_seated_pockets(g, root, inward, nodes, tangents, station, supports, top,
+                                                radius, side=side)
+            continue
         if palm_approach_only:
             hands[side] = screen_palm_endpoint(g, root, inward, nodes, supports, top, radius)
             continue
@@ -160,9 +243,18 @@ def audit_reach(artifact, *, project, resolve_closure=False, palm_approach_only=
                     g, wrist, q, nodes, supports, include_thumb_abduction=True))
                 for label, wrist in trials
             ]
+    extra = {}
+    if seated_pockets:
+        left, right = ([row for row in hands[side]["candidates"] if "closure" in row]
+                       for side in HANDS)
+        extra["open_bilateral_y_separation_m"] = [
+            dict(left_station=l["station"], right_mode=h["mode"], right_degrees=h.get("degrees"),
+                 gap_m=l["open_y_bounds_m"][0] - h["open_y_bounds_m"][1])
+            for l in left for h in right
+        ]
     return dict(hands=hands, support_boxes=len(supports), actual_isaac_steps=0,
                 continuous_path_verified=False, locked_palm_cooked_available=False,
-                native_contact_verified=False, teacher_admission=False)
+                native_contact_verified=False, teacher_admission=False, **extra)
 
 
 def main():
@@ -175,10 +267,13 @@ def main():
                         help="re-audit all six active joints at the reference and best distinct wrist")
     mode.add_argument("--palm-approach-only", action="store_true",
                       help="screen a single inward axis with the hand open before attempting closure")
+    mode.add_argument("--screen-seated-pockets", action="store_true",
+                      help="change the left material station and rotate the right wrist about its palm witness")
     args = parser.parse_args()
     artifact = checked_json(args.closure_evidence, args.closure_sha256)
     result = audit_reach(artifact, project=Path(__file__).resolve().parents[1],
-                         resolve_closure=args.resolve_closure, palm_approach_only=args.palm_approach_only)
+                         resolve_closure=args.resolve_closure, palm_approach_only=args.palm_approach_only,
+                         seated_pockets=args.screen_seated_pockets)
     result["input_sha256"] = args.closure_sha256
     with args.output.open("x", encoding="utf-8") as stream:
         json.dump(result, stream, indent=2, allow_nan=False)
