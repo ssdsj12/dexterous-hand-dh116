@@ -27988,6 +27988,31 @@
         "verified_at_utc": "2026-11-20T06:34:48.559444+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-swept-wrist-command-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-swept-wrist-projection.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_swept_wrist_projection_v1.json",
+      "cpu_tests": {
+        "passed": 40,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "84926681ae1fecfc65478d0c93200b5fd322f74b",
+        "source_tree": "6a4520179b8077be6b0aed023910caeb18691971",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T07:04:05.901311+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
