@@ -28238,6 +28238,31 @@
         "verified_at_utc": "2026-11-20T09:32:40.705667+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-early-finger-native-worker-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-native-worker.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_early_finger_native_worker_v1.json",
+      "cpu_tests": {
+        "passed": 167,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a2a77745140b5bce0047b442ebf2527f1ce99e99",
+        "source_tree": "604fc940949226dad2921343ad0ce07e1f69623d",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T09:36:33.943377+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
