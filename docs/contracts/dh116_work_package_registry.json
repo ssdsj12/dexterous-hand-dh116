@@ -43039,6 +43039,23 @@
         "scope": "right native no-contact tracking and natural exit only",
         "native_qualification": false
       }
+    },
+    "teacher.pinch-v13-pair-and-precontact-audit-cpu": {
+      "title": "Pinch v13 two-hand Reset proposal with multi-archive cutoff",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "tests": [
+        "tests/test_dh116_pinch_v13_pair.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v13_pair_cpu_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-precontact-v13.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 46,
+        "failed": 0,
+        "scope": "static and four original motions, no native qualification"
+      }
     }
   },
   "execution_target": {

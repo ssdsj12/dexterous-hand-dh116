@@ -1,5 +1,8 @@
 ## 2026-11-20 Teacher rollout codec CPU speedup
 
+- 封存 Pinch v13 候选 Reset，记录三种抓法受载前的几何证据。
+
+
 - 新增 Tripod 直杆跟踪对照，保留原弯杆计划和静置保护。
 
 
