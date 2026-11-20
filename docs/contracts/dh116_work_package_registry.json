@@ -43436,6 +43436,29 @@
         "teacher_admission": false,
         "native_qualification": false
       }
+    },
+    "teacher.pinch-late-wrist-native-result": {
+      "title": "Falsify the last-window left-wrist Pinch compensation hypothesis",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-late-wrist-launch-cpu"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-native-result.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_late_wrist_native_result_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "scope": "completed matched diagnostic; intervention did not establish bilateral opposition",
+        "left_index_gap_m": 0.0002578413113951683,
+        "native_exit_code": 0,
+        "right_loaded_opposed_substeps": 15,
+        "bilateral_loaded_opposed_substeps": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

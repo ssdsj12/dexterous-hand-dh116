@@ -1,0 +1,134 @@
+{
+  "schema": "dh116-pinch-late-wrist-native-result-v1",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-native-result.md",
+  "execution_commit": "0f612d59832cb6340a1d8a959b620664236b2d7d",
+  "frozen_recipe_sha256": "cf1dbc9aea5427ac089b48ede9c14cb80167b3465d389d6bfb1f6a7b56666d62",
+  "budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "pinch",
+    "sdk_setup_steps": 2,
+    "control_steps": 9,
+    "solver_steps": 864,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 180,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 0,
+    "episode_resets": 1,
+    "sdk_steps": 74
+  },
+  "native_runs": 1,
+  "outer_exit_code": 0,
+  "forced_exit": false,
+  "elapsed_s": 81.70117390481755,
+  "native_close_qualified": true,
+  "intervention_issued": true,
+  "prefix_sdk_step": 66,
+  "prefix_errors": {
+    "max_rod_node_error_m": 0.0,
+    "left": {
+      "max_q_error": 0.0,
+      "root_error_m": 0.0,
+      "root_error_rad": 0.0
+    },
+    "right": {
+      "max_q_error": 0.0,
+      "root_error_m": 0.0,
+      "root_error_rad": 0.0
+    }
+  },
+  "physical_rows": 72,
+  "control_windows": 9,
+  "baseline": {
+    "left": {
+      "terminal_gap_m": [
+        -3.9441511034965515e-07,
+        0.00023232726380228996
+      ],
+      "peak_pad_load_n": [
+        0.05397679712074172,
+        0.0
+      ],
+      "minimum_table_clearance_m": 0.0023651855283757794,
+      "minimum_non_target_gap_m": 2.3871259448528595e-05
+    },
+    "right": {
+      "terminal_gap_m": [
+        -5.274079740047455e-06,
+        -4.385132342576981e-06
+      ],
+      "peak_pad_load_n": [
+        0.5695426403529404,
+        0.4727358779992146
+      ],
+      "minimum_table_clearance_m": 0.0023260973405908048,
+      "minimum_non_target_gap_m": 3.495488164251444e-05
+    }
+  },
+  "contrast": {
+    "left": {
+      "terminal_gap_m": [
+        -3.7206336855888367e-07,
+        0.0002578413113951683
+      ],
+      "peak_pad_load_n": [
+        0.05397679712074172,
+        0.0
+      ],
+      "minimum_table_clearance_m": 0.0023651855283757794,
+      "minimum_non_target_gap_m": 1.0177026348258747e-05
+    },
+    "right": {
+      "terminal_gap_m": [
+        -5.279667675495148e-06,
+        -4.373956471681595e-06
+      ],
+      "peak_pad_load_n": [
+        0.5680363036390585,
+        0.4727359105432214
+      ],
+      "minimum_table_clearance_m": 0.0023260973405908048,
+      "minimum_non_target_gap_m": 3.47795035677851e-05
+    }
+  },
+  "same_substep_opposition": {
+    "left": 0,
+    "right": 15,
+    "bilateral": 0
+  },
+  "final_reactions": {
+    "substep": 11,
+    "left": {
+      "thumb_load_n": 0.03991773526083084,
+      "index_load_n": 0.0,
+      "opposition_cos": null,
+      "signed_opposition": false,
+      "loaded_opposed": false
+    },
+    "right": {
+      "thumb_load_n": 0.5680363036390585,
+      "index_load_n": 0.4727359105432214,
+      "opposition_cos": -0.9662678675117019,
+      "signed_opposition": true,
+      "loaded_opposed": true
+    }
+  },
+  "hypothesis_supported": false,
+  "lift_tested": false,
+  "ppo_updates": 0,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "native_qualification": false,
+  "artifacts": {
+    "outcome": "5911937ab5e9de90255f237dec2a77b600311ea80d45129d8f743959c67c5cd1",
+    "physical_ledger": "65a4bce13b543e4b92ca73a629e05fe11ad859d3538f74f32b7e10fa4da5ddec",
+    "launch_log": "ceb6a857a01fcf782b62208fbb3e0a09eb12592421dbb0596ca267e0a66a8ea3",
+    "independent_comparison": "e0b8288ac8a1cc94982d2b7aad4ea7f2b7aa760416bfeb31af114ea61243a191",
+    "independent_physics_metrics": "ccf54aa3002251d660ffb1a0e6bbc50194a6ebe841a7cde81a558bf1eb56792c"
+  }
+}

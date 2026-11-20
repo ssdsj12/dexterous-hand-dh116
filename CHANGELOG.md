@@ -1,4 +1,8 @@
 
+## Pinch late left-wrist native comparison
+
+Record the paired native left-wrist comparison, real pad reactions and unsuccessful bilateral closure. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-native-result.md).
+
 ## Pinch late left-wrist comparison
 
 Add a bounded last-window left-wrist comparison and record its conditional safety checks. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-worker.md).

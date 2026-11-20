@@ -1,4 +1,8 @@
 
+## Pinch late left-wrist native comparison
+
+Matched native Pinch data rules out the last-window left-wrist correction as a transition to fixed-wrist hold. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-native-result.md).
+
 ## Pinch late left-wrist comparison
 
 The Pinch comparison tests a correction in the final left wrist window, following a sealed same-clock prefix. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-worker.md).
