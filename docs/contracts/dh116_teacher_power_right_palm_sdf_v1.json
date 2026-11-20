@@ -1,0 +1,171 @@
+{
+  "schema": "dh116.teacher.power.right_palm_sdf.v1",
+  "status": "isolated_gpu_surface_error_measured_native_shape_pending",
+  "cpu_passed": 109,
+  "standalone_gpu_runs": 1,
+  "native_runs": 0,
+  "native_qualification": false,
+  "outer_sha256": "8ddaafa7915b67d4a77eb0bf36248c7f5be0996282e07acd3560ae6a823aca90",
+  "gpu_result_sha256": "57727e345cb03586daeccd17a4e9589b68191740c2260595cea990e011e42884",
+  "scope": "isolated_fixed_right_palm_fan_gpu_sdf_and_error_audit",
+  "wp_device": "cuda:0",
+  "torch_device": "0",
+  "gpu_name": "NVIDIA GeForce RTX 4090",
+  "rods_per_env": 1,
+  "mesh_wrench_buffer_shape": [
+    1,
+    1,
+    6
+  ],
+  "simulation_steps": 0,
+  "isaac_launched": false,
+  "contact_verified": false,
+  "palms": {
+    "right.base_link": {
+      "shape": [
+        110,
+        79,
+        153
+      ],
+      "dtype": "float32",
+      "bytes": 5318280,
+      "origin_link_m": [
+        -0.0531708300113678,
+        -0.03638814762234688,
+        -0.012000000104308128
+      ],
+      "spacing_m": 0.001,
+      "lattice_hi_link_m": [
+        0.0558291699886322,
+        0.04161185237765312,
+        0.13999999989569187
+      ],
+      "inside_sample_link_m": [
+        0.002460197312757373,
+        0.006151925772428513,
+        0.06238463893532753
+      ],
+      "inside_signed_distance_m": -0.020196991553431562,
+      "outside_sample_link_m": [
+        0.05046003311872482,
+        0.006151925772428513,
+        0.06238463893532753
+      ],
+      "outside_signed_distance_m": 0.008594440897858229,
+      "distance_min_m": -0.023076124489307404,
+      "distance_max_m": 0.05222077667713165,
+      "min_six_lattice_faces_signed_distance_m": 0.012000000104308128,
+      "max_abs_sdf_at_hull_vertices_m": 0.00032792266045239104,
+      "configurable_truncation_distance_m": null,
+      "gpu_row_sha256": "afbb3a2ce69d723edd9eb075dc0f214b163b6a30cc82d34c551a3f6a56156773",
+      "closed_welded_hull": true,
+      "welded_vertices": 37,
+      "welded_faces": 70,
+      "rod_radius_m": 0.005,
+      "voxels_per_rod_radius": 5.0,
+      "margin_m": 0.012,
+      "thickness_m": 0.0,
+      "round_m": 0.0,
+      "frame": "original_pad_coincident_local_basis_m",
+      "native_coincident_basis_max_matrix_delta": 0.0,
+      "position_world_m": [
+        -1.7462298274040222e-10,
+        -1.399999976158142,
+        0.6499999761581421
+      ],
+      "quaternion_world_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sdk_pose_matrix_max_delta": 0.0,
+      "rope_mesh_index": 0,
+      "sdf_file_sha256": "e5153e58c8b17b30d6ab2e2535a8c5d1bcf7c1d6f2c581fa6b00f0fa5fe53d7c"
+    }
+  },
+  "triangle_audit_sha256": "e415122e51214673032ef5ffa37f82f4985040baf1bb49f4ecbc229fc14ec555",
+  "backend_lock_sha256": "acca227b59b1d2e43f02db8d9b3218e96f1ae64412ee28337b95e2c9e2c7bc1f",
+  "welded_triangle_audit": {
+    "face_pairs": 2415,
+    "exact_pairs": 467,
+    "crossings": []
+  },
+  "reference_error": {
+    "groups": {
+      "surface": {
+        "count": 212,
+        "signed_samples": 0,
+        "opposite_sign_count": 0,
+        "mean_error_m": 6.945918631868941e-05,
+        "p95_error_m": 0.000262198856265207,
+        "max_error_m": 0.00032792266045239104
+      },
+      "face_0.025_voxel": {
+        "count": 140,
+        "signed_samples": 140,
+        "opposite_sign_count": 0,
+        "mean_error_m": 1.0459544903327783e-09,
+        "p95_error_m": 2.5501270420466887e-09,
+        "max_error_m": 1.7069220495075468e-08
+      },
+      "face_0.1_voxel": {
+        "count": 140,
+        "signed_samples": 140,
+        "opposite_sign_count": 0,
+        "mean_error_m": 1.0293784800100946e-09,
+        "p95_error_m": 2.5092502327948354e-09,
+        "max_error_m": 1.7418108349601916e-08
+      },
+      "face_0.5_voxel": {
+        "count": 140,
+        "signed_samples": 140,
+        "opposite_sign_count": 0,
+        "mean_error_m": 1.1721409712538205e-09,
+        "p95_error_m": 1.9844435224030596e-09,
+        "max_error_m": 5.3403743643302796e-08
+      },
+      "face_1_voxel": {
+        "count": 140,
+        "signed_samples": 140,
+        "opposite_sign_count": 0,
+        "mean_error_m": 3.1094555096413454e-08,
+        "p95_error_m": 1.926104851958027e-09,
+        "max_error_m": 2.951297599451978e-06
+      },
+      "face_2_voxel": {
+        "count": 140,
+        "signed_samples": 140,
+        "opposite_sign_count": 0,
+        "mean_error_m": 6.190455136274118e-07,
+        "p95_error_m": 2.912543614294084e-09,
+        "max_error_m": 6.0175547826732964e-05
+      },
+      "face_5_voxel": {
+        "count": 140,
+        "signed_samples": 140,
+        "opposite_sign_count": 0,
+        "mean_error_m": 7.551279400675199e-06,
+        "p95_error_m": 3.493855430990763e-05,
+        "max_error_m": 0.0002700895145345819
+      }
+    },
+    "worst": {
+      "group": "surface",
+      "sample_index": 7,
+      "xyz_link_m": [
+        -0.038081299513578415,
+        0.009297235868871212,
+        0.11969824880361557
+      ],
+      "grid_m": 0.00032792266045239104,
+      "reference_m": 0.0,
+      "absolute_error_m": 0.00032792266045239104
+    },
+    "scope": "sampled_original_fan_error_not_global_bound"
+  },
+  "physx_shape_equivalence_verified": false,
+  "native_power_task_registration": false,
+  "grasp_verified": false,
+  "teacher_admission": false
+}

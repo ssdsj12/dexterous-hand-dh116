@@ -1,4 +1,8 @@
 
+## Power right palm SDF
+
+Measured the standalone GPU grid against the original right palm triangles. [Report](docs/superpowers/reports/2026-11-20-teacher-power-right-palm-sdf.md).
+
 ## Tripod right seed corridor audit
 
 Screened the right wrist path with a lower seed and measured same-link tracking stress. [Report](docs/superpowers/reports/2026-11-20-teacher-tripod-right-seed-corridor.md).
