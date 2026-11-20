@@ -28513,6 +28513,31 @@
         "verified_at_utc": "2026-11-20T11:44:51.065672+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-authenticated-palm-fans-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-palm-triangle-surface.md",
+      "readiness": "docs/contracts/dh116_teacher_power_native_palm_fans_v1.json",
+      "cpu_tests": {
+        "passed": 37,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "2eef09e8802eaf889daab591f5f9d5a467993560",
+        "source_tree": "718ffd6231ef65d53d64ba1817a3a71fe43194ee",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T12:05:51.690680+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
