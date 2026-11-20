@@ -28413,6 +28413,31 @@
         "verified_at_utc": "2026-11-20T11:11:10.861493+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-left-precontact-hold-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-left-precontact-hold.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_left_precontact_hold_cpu_v1.json",
+      "cpu_tests": {
+        "passed": 207,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "97c6acde4aae97daadbdd0ebb094935fee04d360",
+        "source_tree": "be68771325350d80c7771dc92e64343360e6af07",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T11:18:57.702861+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
