@@ -27638,6 +27638,31 @@
         "verified_at_utc": "2026-11-20T04:25:43.219149+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-right-tracking-path-boundary-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-launch.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_launch_v1.json",
+      "cpu_tests": {
+        "passed": 137,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "d1610598033a953f248da9bc097e28e086cb32ac",
+        "source_tree": "315a31c70204b0b89d3f47c3f95f1a88023bd1d3",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T04:29:15.698692+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
