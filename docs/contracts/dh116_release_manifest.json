@@ -27688,6 +27688,31 @@
         "verified_at_utc": "2026-11-20T04:38:29.676480+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-right-owned-quiet-native",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-native-quiet.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_native_quiet_v1.json",
+      "cpu_tests": {
+        "passed": 0,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "9ef55545c332ca8394fef015d90c2dba6ea8b74c",
+        "source_tree": "10868b1a50ed0df55ee23bdae6043a51a768b9c1",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T04:42:47.108044+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
