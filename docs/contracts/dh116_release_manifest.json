@@ -28388,6 +28388,31 @@
         "verified_at_utc": "2026-11-20T10:54:20.084124+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-angular-gate-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-angular-gate-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_angular_gate_native_v1.json",
+      "cpu_tests": {
+        "passed": 204,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "33513e60774b9b6b2ee930faa6e7b902db947445",
+        "source_tree": "6fc4b47ef409a98d2bd8a1d5b93021ee23ecd551",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T11:11:10.861493+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
