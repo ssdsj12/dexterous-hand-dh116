@@ -28638,6 +28638,31 @@
         "verified_at_utc": "2026-11-20T12:43:26.221991+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-asymmetric-preload-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-asymmetric-preload-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_asymmetric_preload_native_v1.json",
+      "cpu_tests": {
+        "passed": 225,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0eb84d8a2b04ba61a7125d6987b88a3eadb5a40f",
+        "source_tree": "25c962e7526424e25c7520507529866056f73a6f",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T12:57:23.937250+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
