@@ -325,12 +325,14 @@ def _current_recipe_context(spec, repository, package):
         source_contract=worker_training_source_contract(repository,current,spec))
 
 
-def _audit_fresh_checkpoint(spec, repository, context, *, checkpoint_bytes, checkpoint_binding, training, epoch):
+def _audit_fresh_checkpoint(spec, repository, context, *, checkpoint_bytes, checkpoint_binding,
+                            training, epoch, include_rng_digest=False):
     with _cpu_reference(spec,repository,context) as (trainer,contract):
         from .tabletop_native_teacher_checkpoint import audit_checkpoint_bytes
         from .tabletop_deformable_r0_replay import _digest
         try:
-            metadata=audit_checkpoint_bytes(checkpoint_bytes,trainer,contract,expected_origin={"kind":"fresh"})
+            metadata=audit_checkpoint_bytes(checkpoint_bytes,trainer,contract,expected_origin={"kind":"fresh"},
+                include_rng_digest=include_rng_digest)
         except RuntimeError as error:
             raise ValueError("CPU checkpoint audit rejected malformed payload: "+str(error)) from error
         if (metadata["checkpoint_sha256"]!=checkpoint_binding["sha256"]

@@ -296,7 +296,8 @@ def audit_actual_fresh_outputs(spec, output, *, repository, package, envelope):
                                      controls=pin["limits"]["controls"])
     result = frozen["result"]
     checkpoint = _audit_fresh_checkpoint(spec, repository, context, checkpoint_bytes=frozen["checkpoint_bytes"],
-        checkpoint_binding=result["clean_checkpoint"], training=result["training"], epoch=frozen["policy_epoch"])
+        checkpoint_binding=result["clean_checkpoint"], training=result["training"], epoch=frozen["policy_epoch"],
+        include_rng_digest=True)
     return dict(artifact_sha256=frozen["artifact_sha256"], lifecycle_sha256=result["lifecycle_sha256"],
         teacher_training=result["training"], physical_evidence=physical, checkpoint_audit=checkpoint,
         input_source_audit=model_input, physical_to_model_snapshot_binding_verified=True,

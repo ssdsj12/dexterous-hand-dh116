@@ -141,7 +141,7 @@ def _validate_payload(payload,trainer,identity):
     return rng
 
 
-def audit_checkpoint_bytes(raw,trainer,contract,*,expected_origin=None):
+def audit_checkpoint_bytes(raw,trainer,contract,*,expected_origin=None,include_rng_digest=False):
     """Validate immutable CPU checkpoint bytes without restoring live state.
 
     Only the existing source-identity checks read files. No checkpoint path is
@@ -155,13 +155,16 @@ def audit_checkpoint_bytes(raw,trainer,contract,*,expected_origin=None):
     _validate_payload(payload,trainer,identity)
     if expected_origin is not None and payload['origin']!=expected_origin:raise ValueError("checkpoint origin differs from expected origin")
     from .tabletop_deformable_r0_replay import _digest
-    return copy.deepcopy(dict(version=payload['version'],identity=payload['identity'],
+    metadata=dict(version=payload['version'],identity=payload['identity'],
         counters=payload['counters'],policy_version=payload['policy_version'],
         accepted_minibatch_updates=payload['accepted_minibatch_updates'],
         physical_state_saved=payload['physical_state_saved'],
         restart_requires_verified_reset=payload['restart_requires_verified_reset'],
         checkpoint_sha256=hashlib.sha256(raw).hexdigest(),
-        policy_weights_sha256=_digest(payload['policy'])))
+        policy_weights_sha256=_digest(payload['policy']))
+    if include_rng_digest:
+        metadata['rng_state_sha256']=_digest(payload['rng'])
+    return copy.deepcopy(metadata)
 
 
 def save_checkpoint(path,trainer,contract):
@@ -188,7 +191,7 @@ def save_checkpoint(path,trainer,contract):
     return dict(path=str(path),version=VERSION,sha256=file_sha256(path),identity=identity)
 
 
-def load_checkpoint(path,trainer,contract):
+def load_checkpoint(path,trainer,contract,*,expected_sha256=None):
     """Restore one immutable byte snapshot; later path changes are irrelevant.
 
     Digest, deserialization and validation all refer to the same bytes. Every
@@ -197,6 +200,8 @@ def load_checkpoint(path,trainer,contract):
     identity=checkpoint_identity(trainer,contract);_clean(trainer,'clear')
     raw=Path(path).read_bytes()
     checkpoint_sha256=hashlib.sha256(raw).hexdigest()
+    if expected_sha256 is not None and checkpoint_sha256!=expected_sha256:
+        raise ValueError('checkpoint SHA-256 differs from the authorized immutable bytes')
     try:payload=torch.load(io.BytesIO(raw),map_location='cpu',weights_only=True)
     except (pickle.UnpicklingError,EOFError) as error:raise ValueError("unsupported safe checkpoint format") from error
     rng=_validate_payload(payload,trainer,identity)
@@ -218,7 +223,7 @@ def load_checkpoint(path,trainer,contract):
     return result
 
 
-def checkpoint_trainer_factory(factory,path,contract_factory):
+def checkpoint_trainer_factory(factory,path,contract_factory,*,expected_sha256=None):
     """Restore during C04's trainer factory, after fresh verified Reset/live.
 
     The first collector freezes the loaded version N directly. No already-active
@@ -229,6 +234,6 @@ def checkpoint_trainer_factory(factory,path,contract_factory):
         raise TypeError("explicit original trainer and contract factories required")
     def restored(*args,**kwargs):
         trainer=factory(*args,**kwargs)
-        load_checkpoint(path,trainer,contract_factory(trainer))
+        load_checkpoint(path,trainer,contract_factory(trainer),expected_sha256=expected_sha256)
         return trainer
     return restored

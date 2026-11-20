@@ -1080,6 +1080,7 @@ class Repository:
         checkpoint = native_artifact(output, 'teacher_clean.pt')
         checkpoint_sha = metadata['checkpoint_sha256']
         policy_weights_sha = metadata['policy_weights_sha256']
+        rng_state_sha = metadata['rng_state_sha256']
         accepted = metadata['accepted_minibatch_updates']
         if (any(evidence.get(key) is not True for key in (
                 'actual_setup_source_verified', 'cap_source_verified',
@@ -1095,14 +1096,15 @@ class Repository:
                 or metadata['physical_state_saved'] is not False
                 or metadata['restart_requires_verified_reset'] is not True
                 or any(not isinstance(value, str) or not SHA256.fullmatch(value) or value == '0' * 64
-                       for value in (checkpoint_sha, policy_weights_sha))
+                       for value in (checkpoint_sha, policy_weights_sha, rng_state_sha))
                 or file_hash(checkpoint) != checkpoint_sha):
             raise ValueError('actual A checkpoint evidence is incomplete, incompatible or changed')
         return dict(origin_scope='actual_resume_diagnostic_unqualified', producer_package=name,
                     receipt_sha256=expected, tested_head=summary['tested_head'],
                     producer_episode_uid=episode_uid,
                     checkpoint_path=str(checkpoint), checkpoint_sha256=checkpoint_sha,
-                    policy_weights_sha256=policy_weights_sha, semantic_sha256=source['semantic_sha256'],
+                    policy_weights_sha256=policy_weights_sha, rng_state_sha256=rng_state_sha,
+                    semantic_sha256=source['semantic_sha256'],
                     source_closure_sha256=source['source_sha256'], loaded_updates=1,
                     loaded_policy_version=1, loaded_environment_steps=controls,
                     loaded_accepted_minibatch_updates=accepted, diagnostic_verified=True,

@@ -44,7 +44,7 @@ def _stage(role, work):
     from go2_pvcnn.control.dh116.tabletop_deformable_dual_hand_episode import DualHandPhysicalEpisode
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest
     from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_update import run_fresh_update, run_resumed_update
-    from go2_pvcnn.control.dh116.tabletop_native_teacher_checkpoint import _rng_state, load_checkpoint
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_checkpoint import _rng_state, checkpoint_trainer_factory
     from test_native_teacher_checkpoint import contract
     from test_native_teacher_collector import fixture
     from test_native_teacher_context import backend_profile
@@ -68,7 +68,9 @@ def _stage(role, work):
         assert owner.context._current is not None
         assert owner.episode._state == "active"
         path = work / "a" / "teacher_clean.pt"
-        load_checkpoint(path, trainer, contract(trainer))
+        restore = checkpoint_trainer_factory(lambda: trainer, path, contract,
+                                             expected_sha256=origin["checkpoint_sha256"])
+        assert restore() is trainer
         captured.update(restored_rng_sha256=_digest(_rng_state()),
                         loaded_weights_sha256=_digest(trainer.model.state_dict()),
                         restored_adam=int(next(iter(trainer.optimizer.state.values()))["step"].item()))
@@ -84,8 +86,15 @@ def _stage(role, work):
             origin = dict(checkpoint_path=str(work / "a" / "teacher_clean.pt"),
                           checkpoint_sha256=origin["checkpoint_sha256"],
                           policy_weights_sha256=origin["weights_sha256"],
+                          rng_state_sha256=origin["rng_sha256"],
                           loaded_accepted_minibatch_updates=origin["accepted"],
                           producer_episode_uid=origin["episode"])
+            with torch.random.fork_rng(devices=[]):
+                torch.rand(1)
+                with pytest.raises(ValueError, match="restored optimizer RNG differs"):
+                    run_resumed_update(collector, checkpoint_contract=checked, origin=origin, controls=8)
+                assert collector.transitions == 0 and rod.rope.steps == 0
+                assert not (folder / "teacher_clean.pt").exists()
             result = run_resumed_update(collector, checkpoint_contract=checked, origin=origin, controls=8)
         events = [json.loads(line)["operation"] for line in collector.journal.path.read_text().splitlines()]
         assert events.count("optimizer_update_accepted") == 1

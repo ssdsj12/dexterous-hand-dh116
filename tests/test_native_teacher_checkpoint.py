@@ -155,6 +155,26 @@ def test_reject_payload_atomically(monkeypatch,tmp_path,backend_profile,damage):
     equal_tree(before,training_snapshot(t))
 
 
+def test_authorized_resume_rejects_replaced_checkpoint_before_restore(monkeypatch,tmp_path,backend_profile):
+    ck=checkpoint()
+    collector,*_=fixture(monkeypatch,tmp_path/'live',backend_profile,rollout_steps=2)
+    trainer=collector.trainer
+    identity=contract(trainer)
+    path=tmp_path/'replacement.pt'
+    path.write_bytes(b'replaced after scheduler verification')
+    before=training_snapshot(trainer)
+
+    def deserialize(*args, **kwargs):
+        pytest.fail("unauthorized checkpoint bytes must be rejected before deserialization")
+
+    monkeypatch.setattr(ck.torch,'load',deserialize)
+    with pytest.raises(ValueError,match='checkpoint SHA-256 differs'):
+        ck.load_checkpoint(path,trainer,identity,expected_sha256='a'*64)
+    with pytest.raises(ValueError,match='checkpoint SHA-256 differs'):
+        ck.checkpoint_trainer_factory(lambda:trainer,path,contract,expected_sha256='a'*64)()
+    equal_tree(before,training_snapshot(trainer))
+
+
 def test_pending_and_rollout_and_never_updated_save_rejected(monkeypatch,tmp_path,backend_profile):
     ck=checkpoint();c,*_=fixture(monkeypatch,tmp_path,backend_profile,rollout_steps=2);identity=contract(c.trainer)
     with pytest.raises(RuntimeError):ck.save_checkpoint(tmp_path/'fresh.pt',c.trainer,identity)
@@ -351,6 +371,9 @@ def test_audit_checkpoint_bytes_returns_owned_metadata_without_any_live_mutation
     metadata=ck.audit_checkpoint_bytes(raw,t,identity)
     assert len(loads)==len(validated)==1
     equal_tree(metadata,expected);equal_tree(before,training_snapshot(t))
+    extended=ck.audit_checkpoint_bytes(raw,t,identity,include_rng_digest=True)
+    equal_tree(extended,dict(expected,rng_state_sha256=_digest(payload['rng'])))
+    equal_tree(before,training_snapshot(t))
     def plain(value):
         if type(value) is dict:
             assert all(type(key) is str for key in value)

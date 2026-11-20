@@ -106,6 +106,8 @@ def _run_update(collector, *, checkpoint_contract, controls, origin):
         if start["episode_uid"] == origin["producer_episode_uid"]:
             raise ValueError("resumed update requires a distinct physical episode from A")
         restored_rng = _digest(_rng_state())
+        if restored_rng != origin["rng_state_sha256"]:
+            raise ValueError("restored optimizer RNG differs from A")
     try:
         training = run_updates(collector, additional_updates=1)
         end = _clock(collector, controls=controls, sdk_step=2 + physical_steps,

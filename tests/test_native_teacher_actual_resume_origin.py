@@ -33,6 +33,7 @@ def archive(tmp_path, monkeypatch):
     meta = {
         "checkpoint_sha256": hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
         "policy_weights_sha256": "4" * 64,
+        "rng_state_sha256": "6" * 64,
         "counters": {"environment_steps": 8, "updates": 1},
         "policy_version": 1,
         "accepted_minibatch_updates": 2,
@@ -75,6 +76,7 @@ def test_resume_origin_reopens_same_a_bytes_without_grasp_promotion(archive):
     assert origin["producer_episode_uid"] == "fresh-episode-A"
     assert origin["checkpoint_sha256"] == meta["checkpoint_sha256"]
     assert origin["policy_weights_sha256"] == meta["policy_weights_sha256"]
+    assert origin["rng_state_sha256"] == meta["rng_state_sha256"]
     assert origin["loaded_policy_version"] == 1 and origin["loaded_accepted_minibatch_updates"] == 2
     assert origin["loaded_environment_steps"] == 8 and origin["loaded_updates"] == 1
     assert origin["origin_scope"] == "actual_resume_diagnostic_unqualified"
@@ -95,7 +97,7 @@ def test_changed_resume_contract_fails_before_opening_old_a(archive, changed):
     assert calls == []
 
 
-@pytest.mark.parametrize("corruption", ["checkpoint bytes", "CPU fixture", "no Reset", "missing episode UID", "not published"])
+@pytest.mark.parametrize("corruption", ["checkpoint bytes", "CPU fixture", "no Reset", "missing episode UID", "invalid RNG digest", "not published"])
 def test_incomplete_origins_do_not_enter_resume(archive, corruption):
     repo, path, published, meta, evidence, consumer, _ = archive
     if corruption == "checkpoint bytes":
@@ -106,6 +108,8 @@ def test_incomplete_origins_do_not_enter_resume(archive, corruption):
         evidence["actual_setup_source_verified"] = False
     elif corruption == "missing episode UID":
         evidence["setup_evidence"].clear()
+    elif corruption == "invalid RNG digest":
+        meta["rng_state_sha256"] = "0" * 64
     else:
         published["last_result"]["diagnostic_verified"] = False
     with pytest.raises(ValueError):
