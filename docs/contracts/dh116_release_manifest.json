@@ -28338,6 +28338,31 @@
         "verified_at_utc": "2026-11-20T10:09:53.480568+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-prelift-target-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-prelift-target.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_prelift_target_cpu_v1.json",
+      "cpu_tests": {
+        "passed": 188,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a0937e5a199c5a6d9b76d08f4a52dfaf181e9b46",
+        "source_tree": "ec9c41a5baebbe1cce324d178fc70693c2599393",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T10:29:40.263876+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
