@@ -27763,6 +27763,31 @@
         "verified_at_utc": "2026-11-20T04:52:19.500461+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-straight-tracking-native",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-straight-native-result.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_straight_tracking_native_v1.json",
+      "cpu_tests": {
+        "passed": 0,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "e8516e7bb79d362022fe45d74b663d6418c78d03",
+        "source_tree": "675e2c519ca483fbfabcf1013c96f31a3a08c0ce",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T04:57:05.908717+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
