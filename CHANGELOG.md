@@ -1,4 +1,8 @@
 
+## Pinch thumb force projection
+
+Replayed fixed and longitudinal wrist trials with per-substep normal and tangential thumb force projections. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-thumb-force-projections.md).
+
 ## Power palm solver reactions
 
 Measured forces and moments for each original palm in an isolated CUDA rod fixture. [Report](docs/superpowers/reports/2026-11-20-teacher-power-palm-solvers.md).

@@ -1,0 +1,245 @@
+{
+  "version": "dh116-teacher-pinch-thumb-force-projections-v1",
+  "status": "diagnostic_complete",
+  "evidence": {
+    "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2222-pinch-thumb-force-projections-replay.json",
+    "sha256": "3ddc29353f24abbc8e89105626deffe5e73335cd021c77a1cad504b5f9393101"
+  },
+  "metrics": {
+    "scope": "same-substep preserved Pinch ledger attribution",
+    "passed": 232,
+    "failed": 0,
+    "native_runs": 0,
+    "optimizer_updates": 0,
+    "fixed_thumb_inward_p05_n": 0.04503468060982908,
+    "longitudinal_thumb_inward_p05_n": 0.014890893809201685,
+    "longitudinal_signed_failures": 9,
+    "native_qualification": false,
+    "teacher_admission": false
+  },
+  "cases": {
+    "fixed": {
+      "ledger_sha256": "7bde45de8bb66ddfc5a5d01c98c299be110f57afbbfbbdf2e77e255cb96811e1",
+      "substeps": 768,
+      "thumb_inward_p05_n": 0.04503468060982908,
+      "thumb_inward_min_n": 0.01815200094292465,
+      "sign_losses": 0,
+      "negative_thumb_inward_count": 0,
+      "nodes_hist": [
+        [
+          34,
+          35,
+          768
+        ]
+      ],
+      "loss_samples": []
+    },
+    "longitudinal": {
+      "ledger_sha256": "31f4a762204b11fb5a8de14da53530b047d739062f907810ca3d59722c09ae04",
+      "substeps": 768,
+      "thumb_inward_p05_n": 0.014890893809201685,
+      "thumb_inward_min_n": -0.013155049266484115,
+      "sign_losses": 9,
+      "negative_thumb_inward_count": 9,
+      "nodes_hist": [
+        [
+          34,
+          35,
+          768
+        ]
+      ],
+      "loss_samples": [
+        {
+          "sdk": 307,
+          "substep": 9,
+          "original_signed": false,
+          "normal_n": [
+            0.088172271052677,
+            0.054876453558022655
+          ],
+          "tangential_n": [
+            -0.03820202178602255,
+            -0.05615396588206098
+          ],
+          "inward_n": [
+            0.04997024926665445,
+            -0.001277512324038323
+          ],
+          "material_nodes": [
+            34,
+            35
+          ]
+        },
+        {
+          "sdk": 307,
+          "substep": 10,
+          "original_signed": false,
+          "normal_n": [
+            0.08654285840870288,
+            0.05343661389609658
+          ],
+          "tangential_n": [
+            -0.040633020439119524,
+            -0.0582890287690109
+          ],
+          "inward_n": [
+            0.04590983796958335,
+            -0.00485241487291432
+          ],
+          "material_nodes": [
+            34,
+            35
+          ]
+        },
+        {
+          "sdk": 307,
+          "substep": 11,
+          "original_signed": false,
+          "normal_n": [
+            0.0812353564936906,
+            0.053094083979234194
+          ],
+          "tangential_n": [
+            -0.03240942290707519,
+            -0.05900575269411861
+          ],
+          "inward_n": [
+            0.048825933586615404,
+            -0.005911668714884416
+          ],
+          "material_nodes": [
+            34,
+            35
+          ]
+        },
+        {
+          "sdk": 343,
+          "substep": 10,
+          "original_signed": false,
+          "normal_n": [
+            0.07389167279335349,
+            0.05750636123918692
+          ],
+          "tangential_n": [
+            -0.04500415015217124,
+            -0.05849104466580844
+          ],
+          "inward_n": [
+            0.02888752264118225,
+            -0.0009846834266215253
+          ],
+          "material_nodes": [
+            34,
+            35
+          ]
+        },
+        {
+          "sdk": 343,
+          "substep": 11,
+          "original_signed": false,
+          "normal_n": [
+            0.06913103049182917,
+            0.05730208196914268
+          ],
+          "tangential_n": [
+            -0.04450918420745416,
+            -0.06023824906642084
+          ],
+          "inward_n": [
+            0.02462184628437501,
+            -0.0029361670972781616
+          ],
+          "material_nodes": [
+            34,
+            35
+          ]
+        },
+        {
+          "sdk": 353,
+          "substep": 8,
+          "original_signed": false,
+          "normal_n": [
+            0.08148704180264449,
+            0.058427540568034744
+          ],
+          "tangential_n": [
+            -0.06910310354184489,
+            -0.060829774354837524
+          ],
+          "inward_n": [
+            0.012383938260799601,
+            -0.00240223378680278
+          ],
+          "material_nodes": [
+            34,
+            35
+          ]
+        },
+        {
+          "sdk": 353,
+          "substep": 9,
+          "original_signed": false,
+          "normal_n": [
+            0.07653604046400707,
+            0.05703326271024796
+          ],
+          "tangential_n": [
+            -0.048872353958719236,
+            -0.06408333856971947
+          ],
+          "inward_n": [
+            0.02766368650528783,
+            -0.007050075859471515
+          ],
+          "material_nodes": [
+            34,
+            35
+          ]
+        },
+        {
+          "sdk": 353,
+          "substep": 10,
+          "original_signed": false,
+          "normal_n": [
+            0.07164842369407809,
+            0.05554705814285001
+          ],
+          "tangential_n": [
+            -0.04498300467483411,
+            -0.06636733818354512
+          ],
+          "inward_n": [
+            0.026665419019243977,
+            -0.010820280040695102
+          ],
+          "material_nodes": [
+            34,
+            35
+          ]
+        },
+        {
+          "sdk": 353,
+          "substep": 11,
+          "original_signed": false,
+          "normal_n": [
+            0.0675275605481641,
+            0.05483925913732203
+          ],
+          "tangential_n": [
+            -0.04491693174727085,
+            -0.06799430840380614
+          ],
+          "inward_n": [
+            0.022610628800893245,
+            -0.013155049266484115
+          ],
+          "material_nodes": [
+            34,
+            35
+          ]
+        }
+      ]
+    }
+  },
+  "next": "Keep both wrists stationary during closure and screen a changed thumb seating direction before any guarded lift."
+}
