@@ -131,6 +131,8 @@ def run_owned_tracking(sim, owners, trace, *, project, plan_path, plan_sha256, o
     from go2_pvcnn.control.dh116.tabletop_deformable_dual_evidence import DualHandEvidenceJournal
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile, profile_reader_scope
     from go2_pvcnn.control.dh116.tabletop_tripod_quiet_gate import TripodQuietGate
+    from scripts import audit_dh116_pinch_initial_pose as legacy_geometry
+    from scripts.audit_dh116_certified_segment_distance import segment_hull_distance
     from scripts.probe_dh116_physx_lifetime_frame_v2 import bindings
 
     episode = rod = journal = recorder = None
@@ -159,9 +161,11 @@ def run_owned_tracking(sim, owners, trace, *, project, plan_path, plan_sha256, o
                 (builder, "BACKEND", Path(profile.binary_path)),
                 (builder, "BACKEND_SHA", profile.binary_sha256),
                 (episode_api, "FlexiblePhysicalExchange", ClearanceGuardedExchange)):
-            builder.build_reset_owned(sim, owners, project=project, prepared=prepared,
-                ownership=trace, record=recorder, owner_resets=owner_resets,
-                run_uuid=run_uuid, episode_uid=episode_uid, physics_budget_end=BUDGET["sdk_steps"])
+            # Only this diagnostic's initial segment queries opt into the certificate.
+            with bindings((legacy_geometry, "segment_hull_distance", segment_hull_distance)):
+                builder.build_reset_owned(sim, owners, project=project, prepared=prepared,
+                    ownership=trace, record=recorder, owner_resets=owner_resets,
+                    run_uuid=run_uuid, episode_uid=episode_uid, physics_budget_end=BUDGET["sdk_steps"])
             episode = owners.resources["dual_episode"]
             rod = owners.resources["runtime"]
             for index, values in enumerate(actions):

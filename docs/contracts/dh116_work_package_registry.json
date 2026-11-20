@@ -42979,6 +42979,27 @@
         "failed": 1,
         "scope": "native initial geometry passed; curved-rod quiet gate failed; zero movement"
       }
+    },
+    "teacher.tripod-curved-rod-capsule-isolated-cpu": {
+      "title": "Isolate Tripod segment certificate and retain legacy Power source identity",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.tripod-curved-rod-capsule-certificate-cpu"
+      ],
+      "tests": [
+        "tests/test_pinch_capsule_distance_certificate.py",
+        "tests/test_dh116_power_alternative_sdf_interval.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_capsule_isolated_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-capsule-isolated.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 49,
+        "failed": 0,
+        "scope": "CPU regression and archived Reset replay"
+      }
     }
   },
   "execution_target": {

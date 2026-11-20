@@ -80,37 +80,6 @@ def box_relation(vertices, center, size):
             "bounds_world_m": [v.min(0).tolist(), v.max(0).tolist()]}
 
 
-def _certify_segment_distance(vertices, start, axis, planes, estimate, scale):
-    """Check a feasible upper bound and a full-vertex separating lower bound."""
-    point = estimate[:3].copy()
-    endpoint = start + np.clip(estimate[3], 0., 1.) * axis
-    normals, offsets = planes[:, :3], planes[:, 3]
-    if np.any(offsets >= 0.):  # The constructed interior is the origin.
-        return None
-    heights = normals @ point
-    positive = heights > 0.
-    if positive.any():
-        factor = min(1., float(np.min(-offsets[positive] / heights[positive])))
-        point *= factor * (1. - 1e-12)
-    if np.any(normals @ point + offsets > 0.):
-        return None
-
-    delta = point - endpoint
-    norm = float(np.linalg.norm(delta))
-    rounding_m = 1e-12
-    lower = 0.
-    if norm > 0.:
-        # A non-expansive direction makes support separation a distance bound.
-        normal = delta / (norm * (1. + 1e-12))
-        separation = (vertices @ normal).min() - max(start @ normal, (start + axis) @ normal)
-        lower = max(0., float(separation) * scale - rounding_m)
-    upper = norm * scale + rounding_m
-    # Keep the original capsule contact comparison's nanometre precision.
-    if not 0. <= upper - lower <= 1e-9:
-        return None
-    return point, endpoint, lower
-
-
 def convex_patch_closest(vertices, start, directions):
     """Convex QP to a finite segment (1 axis) or rectangle (2 axes), in metres.
 
@@ -137,26 +106,15 @@ def convex_patch_closest(vertices, start, directions):
     result = minimize(objective, np.r_[v.mean(0), np.full(len(axes), .5)], jac=jacobian,
         bounds=[(None, None)]*3+[(0, 1)]*len(axes), constraints=constraint,
         method="SLSQP", options={"ftol": 1e-14, "maxiter": 200})
-    estimate = result.x
-    if not np.isfinite(estimate).all() or np.max(matrix @ estimate + planes[:, 3]) > 1e-8:
+    if not result.success or np.max(matrix@result.x+planes[:, 3]) > 1e-8:
         raise ValueError("continuous patch/convex-hull distance did not converge")
-    if result.success:
-        point = origin + scale * estimate[:3]
-        patch_point = origin + scale * (a + estimate[3:] @ axes)
-        distance = float(np.linalg.norm(point - patch_point))
-    else:
-        checked = None
-        if len(axes) == 1 and result.status == 8:
-            checked = _certify_segment_distance(v, a, axes[0], planes, estimate, scale)
-        if checked is None:
-            raise ValueError("continuous patch/convex-hull distance did not converge")
-        hull_point, axis_point, distance = checked
-        point, patch_point = origin + scale * hull_point, origin + scale * axis_point
-    difference = point - patch_point
-    direction_norm = float(np.linalg.norm(difference))
+    point = origin+scale*result.x[:3]
+    patch_point = origin+scale*(a+result.x[3:]@axes)
+    difference = point-patch_point
+    distance = float(np.linalg.norm(difference))
     return {"distance_m": distance, "hull_point_w": point.tolist(),
             "axis_point_w": patch_point.tolist(),
-            "geometric_axis_to_hull_direction": (difference/direction_norm).tolist() if direction_norm > 1e-10 else None}
+            "geometric_axis_to_hull_direction": (difference/distance).tolist() if distance > 1e-10 else None}
 
 
 def segment_hull_distance(vertices, start, end):
