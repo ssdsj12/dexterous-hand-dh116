@@ -42962,6 +42962,23 @@
         "failed": 0,
         "scope": "CPU and raw Reset offline replay; preceding native attempt failed"
       }
+    },
+    "teacher.tripod-right-owned-quiet-native": {
+      "title": "Right Tripod native quiet window with current rod and hands",
+      "executor": "gated",
+      "status": "blocked",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.tripod-curved-rod-capsule-certificate-cpu"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_native_quiet_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-native-quiet.md",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 0,
+        "failed": 1,
+        "scope": "native initial geometry passed; curved-rod quiet gate failed; zero movement"
+      }
     }
   },
   "execution_target": {

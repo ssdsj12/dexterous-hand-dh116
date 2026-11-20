@@ -2,7 +2,7 @@
 
 ## Tripod 第二次原生结果
 
-冻结指纹 `df8a2ebfc5fa75e3747674344c6fab04dc1cc1a112bb4e0d3eed41ab6330bbd6`。真实双手和自由杆进入 Reset，完成两个 SDK 初始化步。碰撞数据已进入初始几何检查，SLSQP 在弯杆某些有限边得到 status 8 `Positive directional derivative for linesearch`，随后启动故障关闭，外层自然退出码 1、28.55 秒。两个 Step 之内之外均无控制动作，PPO 更新 0。原始日志 SHA `4118a4ad3f8420af3cd2f1938d453e60b8d6345e0d6ce13cd1da0d59eff58a85`，外层回执 SHA `6f4aaf2f0da6cebc2b4e511016c21beba9d31cc67ccb4d5118b88e179579285e`，保存的原生 Reset 账本 SHA `ef914f10694ab126a04f7e69a5502cd01ceab9547ade55074aa821fb86cc1987`。当前仍缺完整跟踪和正常关闭回执。
+冻结指纹 `df8a2ebfc5fa75e3747674344c6fab04dc1cc1a112bb4e0d3eed41ab6330bbd6`。真实双手和自由杆进入 Reset，完成两个 SDK 初始化步。碰撞数据已进入初始几何检查，SLSQP 在弯杆某些有限边得到 status 8 `Positive directional derivative for linesearch`，随后启动故障关闭，外层自然退出码 1、28.55 秒。两个初始化步内均无控制动作，PPO 更新 0。原始日志 SHA `4118a4ad3f8420af3cd2f1938d453e60b8d6345e0d6ce13cd1da0d59eff58a85`，外层回执 SHA `6f4aaf2f0da6cebc2b4e511016c21beba9d31cc67ccb4d5118b88e179579285e`，保存的原生 Reset 账本 SHA `ef914f10694ab126a04f7e69a5502cd01ceab9547ade55074aa821fb86cc1987`。当前仍缺完整跟踪和正常关闭回执。
 
 ## 数值修复和原生 Reset 离线回放
 
