@@ -132,6 +132,7 @@ def test_valid_atomic_pairs_bind_real_current_totals_and_distinct_sides(monkeypa
     reset(obj,poses);row=obj.step(poses,centers,physics_step=3)
     names={p["mesh_name"] for p in row["rod_mesh_contact_pairs"]["pairs"]}
     assert names=={"left.finger14_link","right.finger14_link"}
+    assert "solver_buffer" not in row["rod_mesh_contact_pairs"]
     assert row["pair_capture_status"]=="validated_solver_samples"
     assert row["contact_pair_qualification"] is False
 
@@ -308,7 +309,20 @@ def test_power_palms_append_to_one_free_rod_and_route_distinct_com_reactions(mon
         base.rope.wrenches[0,12]=[0.,0.,-2.,-.2,0.,0.]
         base.rope.force[0,0,2]+=6.
     base.rope.step_free=step
+
+    def inspect_pairs():
+        slots = (0, 6, 11, 12)
+        vectors = [[0., 0., 0., 0., 0., 1., *(-12 * base.rope.wrenches[0, slot, :3]),
+                    *(12 * base.rope.wrenches[0, slot, 3:])] for slot in slots]
+        return dict(substeps=12, mesh_count=13, capacity=6396, attempted=len(slots), overflow=False,
+                    indices=np.array([(0, 0, slot) for slot in slots]), vectors=np.array(vectors),
+                    node_forces_on_rod_world_n=base.rope.force[0], mesh_wrenches_on_mesh_world=base.rope.wrenches[0])
+
+    base.rope.contact_pair_samples = inspect_pairs
     row=obj.step(poses,centers,physics_step=3)
+    assert row["rod_mesh_contact_pairs"]["solver_buffer"] == dict(
+        substeps=12, mesh_count=13, capacity=6396, attempted=4, overflow=False
+    )
     assert row["rod_tick"]==12 and row["pair_force_residual_n"]==pytest.approx(0)
     assert {item[0] for item in base.rope.poses[-12:]}==set(range(13))-{5}
     left,right=map(row["hand_wrenches_com_world"].get,("left","right"))

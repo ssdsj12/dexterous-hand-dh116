@@ -1,3 +1,7 @@
+## Power same-clock palm and pad evidence
+
+Validated the original solver buffer and measured each five-pad and palm group separately from the table on the same physical boundary. [Report](docs/superpowers/reports/2026-11-21-teacher-power-contact-evidence.md).
+
 ## Tripod near-rod wrist settle extension
 
 Added 24 zero-action SDK steps and kept the measured wrist gate intact. The full right near-rod approach completed with all source/cooked clearance rows. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-near-settle-extension.md).

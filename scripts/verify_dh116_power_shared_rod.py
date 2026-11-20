@@ -156,6 +156,7 @@ def acquire_original_power_reset(sim, owners, trace, output, *, profile):
 def run_shared(sim, owners, trace, output, *, profile, args):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
+    from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
     from go2_pvcnn.control.dh116.tabletop_power_shared_rod import (
         contact_links, PowerSharedRodRuntime, write_composer_reactions,
     )
@@ -194,6 +195,8 @@ def run_shared(sim, owners, trace, output, *, profile, args):
                  for side in SIDES}
         loaded = {name:0 for name in power.mesh_names}
         max_residual = 0.
+        contact_exchanges = 0
+        opposing_exchanges = 0
         for before_sdk in range(2, SDK_END):
             if power.clock()["physics_step"] != before_sdk:
                 raise ValueError("only the preceding same-rod reaction can be delivered")
@@ -211,6 +214,11 @@ def run_shared(sim, owners, trace, output, *, profile, args):
             native.write_new(output/f"power_exchange_{sdk}.json", encode_owned(dict(
                 route=route, preceding_reaction_sdk_step=before_sdk if before_sdk>2 else None,
                 clearance_m=clearance, rod=row, hand_link_poses=poses, hand_link_coms=centers)))
+            if args.measure_contact_evidence:
+                evidence = measure_power_contact(row)
+                native.write_new(output/f"power_contact_{sdk}.json", evidence)
+                contact_exchanges += 1
+                opposing_exchanges += int(evidence["all_substeps_power_contacts"])
             route = row["hand_wrenches_com_world"]
             for pair in row["rod_mesh_contact_pairs"]["pairs"]:
                 loaded[pair["mesh_name"]] += 1
@@ -220,6 +228,9 @@ def run_shared(sim, owners, trace, output, *, profile, args):
             solver_substeps=power.clock()["rod_tick"], mesh_names=power.mesh_names,
             pair_counts=loaded, max_force_balance_residual_n=max_residual,
             native_qualification=False, grasp_qualified=False, teacher_admission=False, ppo_updates=0)
+        if args.measure_contact_evidence:
+            result.update(same_clock_contact_exchanges=contact_exchanges,
+                          bilateral_opposed_contact_exchanges=opposing_exchanges)
         native.write_new(output/"power_shared_result.json", result)
         return result
     except Exception:
@@ -239,6 +250,7 @@ def main(argv=None):
     for key in ("output", "plan", "rays", "left-bake", "right-bake"):
         parser.add_argument("--" + key, type=Path, required=True)
     parser.add_argument("--approved-frozen-sha256")
+    parser.add_argument("--measure-contact-evidence", action="store_true")
     args = parser.parse_args(argv)
     native.validate_execution_context(ROOT)
     plan = reset.freeze_plan(args.output)
@@ -246,7 +258,10 @@ def main(argv=None):
     plan["budget"].update(mode="power_shared_task_rod", sdk_steps=SDK_END, solver_steps=(SDK_END-2)*SUBSTEPS,
                          new_power_mesh_registrations=2)
     rays = sources.checked_json(args.rays, sources.RAYS_SHA)["palms"]
-    files = [args.rays]
+    files = [args.rays, Path(__file__)]
+    if args.measure_contact_evidence:
+        plan["same_clock_power_contact_evidence"] = True
+        files.append(ROOT / "src/go2_pvcnn/control/dh116/tabletop_power_contact_evidence.py")
     for side, bake in (("left", args.left_bake), ("right", args.right_bake)):
         _, _, frozen, _ = sources.fixture(side, rays[side], bake)
         archive = args.rays.parent / f"{side}_base_link.json"

@@ -296,6 +296,10 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
                         raise ValueError("atomic pair capture does not match this step's totals")
                 pairs=read_pair_capture(SimpleNamespace(contact_pair_samples=lambda:packet),
                     dt_s=DT,physics_step=physics_step,rod_tick=b.rod_tick,mesh_names=self.mesh_names)
+                if self.mesh_names == POWER_MESH_NAMES:
+                    pairs["solver_buffer"] = {key: packet[key] for key in (
+                        "substeps", "mesh_count", "capacity", "attempted", "overflow"
+                    )}
             routes,table=route_world_wrenches(named,self.bindings,poses,centers)
             row.update(contact_valid=True,distributed_contact=nodes,named_wrenches=named,
                 rod_mesh_contact_pairs=pairs,pair_capture_status="validated_solver_samples" if pairs else "unavailable",

@@ -1,0 +1,80 @@
+{
+  "version": "dh116-teacher-power-contact-evidence-v1",
+  "status": "native_capture_path_passed_power_contact_pending",
+  "source_head": "c898980059810e0b5038fdeabbc619cbef291771",
+  "frozen_recipe_sha256": "5723a655388386212cd584a63d35cd146b852f7643917c074ee3e20f85bd1436",
+  "frozen_plan_sha256": "091136f9eaeeeaccc61bcbeacf9050e4cacaa5b401b6d27bdfd6d2018a1a6671",
+  "outer_receipt": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2250-power-contact-reducer-native/outer.json",
+  "outer_sha256": "6387e85fb74a7774b0aa3dcce33ae891b4fa79f8cf5114b8b55fb968cd9c6894",
+  "raw_metrics_sha256": "d6148a44aa29f4f25df9f5c678e40383fbf02c5831b79ca73c920400ce482676",
+  "native_runs": 1,
+  "cpu_tests_passed": 364,
+  "geometry_screen": {
+    "rod_height_m": 0.365,
+    "source_sha256": "1e37e8f648c51fab914fe20cb897ad9664f93264eccdb2b12198a765c511e9df",
+    "static_only": true,
+    "side": {
+      "left": {
+        "largest_pad_gap_upper_m": 0.000897922754858279,
+        "minimum_non_target_gap_lower_m": 9.199511406313778e-05,
+        "best_palm_pad_radial_cos": -0.9931328113542809,
+        "table_clearance_m": 0.009872448103265263
+      },
+      "right": {
+        "largest_pad_gap_upper_m": 0.0008362179290746768,
+        "minimum_non_target_gap_lower_m": 7.81821043675587e-05,
+        "best_palm_pad_radial_cos": -0.992181817359161,
+        "table_clearance_m": 0.03705874978662138
+      }
+    }
+  },
+  "exit_code": 0,
+  "elapsed_s": 35.52312797890045,
+  "expected_slots": [
+    "left.finger14_link",
+    "left.finger23_link",
+    "left.finger33_link",
+    "left.finger43_link",
+    "left.finger53_link",
+    "table",
+    "right.finger14_link",
+    "right.finger23_link",
+    "right.finger33_link",
+    "right.finger43_link",
+    "right.finger53_link",
+    "left.base_link",
+    "right.base_link"
+  ],
+  "frames": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "source_pair_capacity": 6396,
+  "table_pairs": 3936,
+  "table_load_min_n": 0.24101255740970373,
+  "table_load_max_n": 0.35549353528767824,
+  "palm_loaded_substeps": 0,
+  "distal_loaded_substeps": 0,
+  "payload_sha256s": {
+    "power_contact_10.json": "2f42602d6977b28440540e56b01095fed3860a2844ff87a3247bb78e3063a406",
+    "power_contact_3.json": "3b4f633b851f8e92be6957a0139f653308994fcc73a0dce928a961c14038143b",
+    "power_contact_4.json": "03726890f51c4d4f96553f71b3a75730d5546165c0d9542ceb60f28332dbe34e",
+    "power_contact_5.json": "ae3d31a2b4f62f27a89f87e21b4e53c521b882cfde48e0941f6eed94e9129d16",
+    "power_contact_6.json": "774c0a2798a3f78165d001b8bc63436ca613b053440573cba9d9ff2304d601c3",
+    "power_contact_7.json": "b168c29b1494011bd34c61c9205b63ac5adb65b7acec3820789c15088efa9e84",
+    "power_contact_8.json": "9c1e886c35658e619dfebe046abf399358a72c0826c1cd934a6807e4e8bf50a7",
+    "power_contact_9.json": "30517c432a9968cefef4fac97085540667409f017b5c96a201942083a0d00e80"
+  },
+  "force_balance_residual_n": 1.4556571841265914e-06,
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "ppo_updates": 0,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-power-contact-evidence.md"
+}
