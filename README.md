@@ -1,4 +1,8 @@
 
+## Pinch early finger native comparison
+
+Earlier Pinch finger timing establishes left index load; the left and right signed opposition windows remain adjacent. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-native-result.md).
+
 ## Pinch earlier left-finger preflight
 
 Pinch replays an earlier two-finger command on 41 archived same-clock boundaries under the original action limits. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-cpu.md).

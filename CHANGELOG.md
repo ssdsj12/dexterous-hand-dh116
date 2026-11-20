@@ -1,4 +1,8 @@
 
+## Pinch early finger native comparison
+
+Record native left- and right-hand Pinch force windows and the left resultant-force sign transition. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-native-result.md).
+
 ## Pinch earlier left-finger preflight
 
 Add source-bound Pinch early left-finger schedule screening and explicit conditional geometry bounds. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-cpu.md).
