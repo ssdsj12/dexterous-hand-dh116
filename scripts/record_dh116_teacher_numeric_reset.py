@@ -159,7 +159,35 @@ def _acquire(sim, owners, trace, output, profile, *, pair_proposal=None):
         return outcome
 
 
-def execute(plan):
+def _run_acquisition(sim, owners, trace, output, profile, plan, cache_release, operation=None):
+    try:
+        if operation is None:
+            result = _acquire(sim, owners, trace, output, profile, pair_proposal=plan.get("pair_proposal"))
+            expected_step = 2
+        else:
+            result = operation(sim, owners, trace, output)
+            maximum_step = plan["budget"]["sdk_steps"]
+            expected_step = result.get("guarded_stop_sdk_step", maximum_step)
+            if ("guarded_stop_sdk_step" in result and
+                    (not result.get("failure") or type(expected_step) is not int or
+                     not 2 <= expected_step <= maximum_step)):
+                raise ValueError("guarded acquisition stop clock is outside the frozen budget")
+            if native.clock(sim)["sdk_step"] != expected_step:
+                raise ValueError("measured acquisition SDK clock differs from its frozen budget")
+            native.validate_loaded_project_modules(ROOT, frozen_files=plan["frozen_files"])
+        # The read-only guard inside this callback is the last SDK cache operation.
+        try:
+            cache_release(sim, expected_sdk_step=expected_step)
+        except Exception as error:
+            if not result.get("failure"):
+                raise
+            result["failure"] += "\nstat cache cleanup: " + type(error).__name__ + ": " + str(error)
+        return result
+    finally:
+        sim = owners = trace = None
+
+
+def execute(plan, *, acquire_operation=None):
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile
     from go2_pvcnn.control.dh116.tabletop_stereo_native import native_instance_lock
 
@@ -219,10 +247,11 @@ def execute(plan):
                 sim_reference = weakref.ref(sim)
                 return sim
             def acquire(sim, owners, trace, cleanup):
-                result = _acquire(sim,owners,trace,output,profile,pair_proposal=plan.get("pair_proposal"))
-                # Clear the known Kit stat cache before the existing owner GC.
-                cache_release(sim,expected_sdk_step=2)
-                return result
+                try:
+                    return _run_acquisition(sim, owners, trace, output, profile, plan,
+                                            cache_release, acquire_operation)
+                finally:
+                    sim = owners = trace = None
             def read_clock():
                 observed = sim_reference() if sim_reference is not None else None
                 return native.clock(observed) if observed is not None else None

@@ -1,5 +1,8 @@
 ## 2026-11-20 Teacher rollout codec CPU speedup
 
+- 为 Tripod 右手跟踪增加冻结原生启动、自然退出核验和失败回执。
+
+
 - 修复历史配对 Reset 证据在数据盘迁移后的规范路径读取，保留冻结来源键与哈希校验。
 
 

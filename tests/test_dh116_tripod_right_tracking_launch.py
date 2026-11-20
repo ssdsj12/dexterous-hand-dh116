@@ -1,0 +1,81 @@
+from types import SimpleNamespace
+
+import pytest
+
+from scripts import launch_dh116_tripod_right_tracking as launch
+from scripts import record_dh116_teacher_numeric_reset as reset
+
+
+def test_worker_needs_exact_frozen_plan_before_lifecycle(tmp_path, monkeypatch):
+    output = tmp_path / "native"
+    expected = dict(project="fixture", output=str(output), frozen_files={})
+    monkeypatch.setattr(launch, "freeze_plan", lambda path, tracking: expected)
+    monkeypatch.setattr(launch.native, "validate_execution_context", lambda *a: None)
+    calls = []
+    monkeypatch.setattr(reset, "execute", lambda *a, **k: calls.append((a, k)))
+    plan = tmp_path / "plan.json"
+    args = ["--output", str(output), "--tracking-plan", str(tmp_path / "reference.json"),
+            "--plan", str(plan)]
+    assert launch.main(args) == 0
+    with pytest.raises(ValueError, match="frozen"):
+        launch.main([*args, "--approved-frozen-sha256", "0" * 64])
+    assert calls == []
+
+
+def test_claim_is_exclusive_per_output(tmp_path):
+    output = tmp_path / "native"
+    path = launch.claim_attempt(output, "exact", ["python", "-m", "worker"])
+    assert path.is_file()
+    with pytest.raises(FileExistsError):
+        launch.claim_attempt(output, "exact", ["python", "-m", "worker"])
+
+
+def test_cache_uses_measured_final_sdk_step_and_old_default(monkeypatch):
+    calls = []
+    monkeypatch.setattr(reset, "_acquire", lambda *a, **k: {"legacy": True})
+    monkeypatch.setattr(reset.native, "clock", lambda sim: {"sdk_step": sim.step})
+    monkeypatch.setattr(reset.native, "validate_loaded_project_modules", lambda *a, **k: None)
+    cache = lambda sim, *, expected_sdk_step: calls.append(expected_sdk_step)
+    plan = dict(budget=dict(sdk_steps=178), frozen_files={})
+    old = reset._run_acquisition(SimpleNamespace(step=2), None, None, None, None, plan, cache)
+    assert old == {"legacy": True}
+    result = {"physics_rows": 176}
+    operation = lambda *a, **k: result
+    assert reset._run_acquisition(SimpleNamespace(step=178), None, None, None, None,
+                                  plan, cache, operation) == result
+    with pytest.raises(ValueError, match="clock"):
+        reset._run_acquisition(SimpleNamespace(step=177), None, None, None, None,
+                               plan, cache, operation)
+    assert calls == [2, 178]
+
+
+@pytest.mark.parametrize("code,elapsed,reason", [
+    (1, 40., "worker failed"),
+    (-11, 40., "worker failed"),
+    (0, 181., "wall"),
+    (0, 40., "natural-close"),
+])
+def test_outer_does_not_promote_close_or_failure(code, elapsed, reason, tmp_path):
+    with pytest.raises(ValueError, match=reason):
+        launch.validate_outer(tmp_path, exit_code=code, wall_seconds=elapsed)
+
+
+def test_known_guard_stop_cleans_observed_step_and_preserves_primary_failure(monkeypatch):
+    monkeypatch.setattr(reset.native, "clock", lambda sim: {"sdk_step": sim.step})
+    monkeypatch.setattr(reset.native, "validate_loaded_project_modules", lambda *a, **k: None)
+    plan = dict(budget=dict(sdk_steps=178), frozen_files={})
+    result = dict(failure="quiet failed", guarded_stop_sdk_step=10)
+    calls = []
+
+    def bad_cache(sim, *, expected_sdk_step):
+        calls.append(expected_sdk_step)
+        raise RuntimeError("synthetic cache error")
+
+    received = reset._run_acquisition(SimpleNamespace(step=10), None, None, None, None,
+                                      plan, bad_cache, lambda *a: result)
+    assert calls == [10]
+    assert received["failure"].splitlines() == ["quiet failed", "stat cache cleanup: RuntimeError: synthetic cache error"]
+    for stopped in (1, 179):
+        with pytest.raises(ValueError, match="outside"):
+            reset._run_acquisition(SimpleNamespace(step=stopped), None, None, None, None,
+                plan, bad_cache, lambda *a: dict(failure="guard stop", guarded_stop_sdk_step=stopped))

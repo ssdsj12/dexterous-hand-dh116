@@ -2,6 +2,7 @@
 from copy import deepcopy
 import math
 from pathlib import Path
+import time
 
 import numpy as np
 
@@ -14,6 +15,10 @@ BUDGET = dict(sdk_steps=178, setup=2, quiet=8, motion=160, quiet_after=8,
               ppo_updates=0, instances=1)
 VERSION = "dh116-right-tripod-noncontact-tracking-plan-v1"
 MOVING_CHANNELS = (7, 8, 9, 17)
+
+
+class TrackingStopped(ValueError):
+    """Guard stop at a completed owned SDK boundary."""
 
 
 def _validate_action(action):
@@ -70,7 +75,7 @@ class _TrackingRecorder:
         self._failed = True
         exchange = payload["exchange"]
         if exchange["guard_failure"] is not None:
-            raise ValueError("original clearance or joint guard: " + exchange["guard_failure"])
+            raise TrackingStopped("original clearance or joint guard: " + exchange["guard_failure"])
         row = extract(payload)
         ordinal = self._samples + 1
         validate_tracking_sample(row, self._actions[(ordinal - 1) // 8], ordinal=ordinal)
@@ -87,7 +92,7 @@ class _TrackingRecorder:
         if self._quiet is not None and ordinal <= 8:
             quiet = self._quiet.observe_measurement(row)
             if quiet["status"] == "failed":
-                raise ValueError("right Tripod entry quiet failed: " + ", ".join(quiet["failure_reasons"]))
+                raise TrackingStopped("right Tripod entry quiet failed: " + ", ".join(quiet["failure_reasons"]))
         self._samples = ordinal
         self._failed = False
 
@@ -103,7 +108,7 @@ def record_tracking_window(plan, record, *, quiet=None):
 
 
 def run_owned_tracking(sim, owners, trace, *, project, plan_path, plan_sha256, output,
-                       run_uuid, episode_uid):
+                       run_uuid, episode_uid, soft_deadline=None):
     """Borrow a fresh context under the existing lock/normal-close supervisor."""
     from functools import partial
 
@@ -155,10 +160,17 @@ def run_owned_tracking(sim, owners, trace, *, project, plan_path, plan_sha256, o
             episode = owners.resources["dual_episode"]
             rod = owners.resources["runtime"]
             for index, values in enumerate(actions):
+                if soft_deadline is not None and time.monotonic() >= soft_deadline:
+                    raise TrackingStopped("right Tripod wall budget reached before next control")
                 if index:
                     quiet.require_ready()
                 action = torch.from_numpy(values[None, :])
-                journal.begin(episode.pre_action_state(), action)
+                pre_action = episode.pre_action_state()
+                if index == 0:
+                    measured = pre_action["rod_boundary"]["rod_snapshot"]["node_positions"]
+                    if not np.array_equal(measured, nodes.astype(np.float32)[None]):
+                        raise TrackingStopped("actual reset rod nodes differ from the frozen right Tripod seed")
+                journal.begin(pre_action, action)
                 result = episode.control(action)
                 journal.end(result)
                 if result["termination_reason"] is not None:

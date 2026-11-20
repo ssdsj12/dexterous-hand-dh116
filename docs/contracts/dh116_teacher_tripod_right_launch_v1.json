@@ -1,0 +1,30 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.tripod-right-tracking-launch-cpu",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-launch.md",
+  "cpu": {
+    "passed": 136,
+    "failed": 0,
+    "log_sha256": "33b44f5723fe7c2aa4f6d7b12869d1a2eadc94e0b6db991fde8c7308b06da8d9"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "budget": {
+    "gpu": 2,
+    "instances": 1,
+    "sdk_steps": 178,
+    "control_steps": 22,
+    "solver_steps": 2112,
+    "ppo_updates": 0,
+    "soft_wall_seconds": 180
+  },
+  "source_sha256": {
+    "scripts/launch_dh116_tripod_right_tracking.py": "1fec56e60fad19919c6b65ff383f0a2e027160f44549ffac4e745325cdf3aba7",
+    "scripts/record_dh116_teacher_numeric_reset.py": "bdbe38932e401df5c9cb5d533f627f485f5c9ba3a06831c8e7e65d743b6e1c8d",
+    "scripts/verify_dh116_tripod_right_tracking.py": "2638c8f50aa481e1aba72877fe7e74f6d98fc286a6571271b1cf130c4ba2403b",
+    "tests/test_dh116_tripod_right_tracking_launch.py": "08cd671ecabcaf3d806d451d1983cebac7f308242f9f62bea5091e375a7c9d42"
+  }
+}
