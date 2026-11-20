@@ -42850,6 +42850,30 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.tripod-right-tracking-owned-cpu": {
+      "title": "Tripod right-only owned tracking and raw solver evidence",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.tripod-right-tracking-plan-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_right_tracking_native.py",
+        "tests/test_dh116_tripod_right_tracking_plan.py",
+        "tests/test_tripod_quiet_gate.py",
+        "tests/test_tripod_native_evidence.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_owned_tracking_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-owned-tracking.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 68,
+        "failed": 0,
+        "scope": "scoped CPU only",
+        "extended_cpu_failed": 8
+      }
     }
   },
   "execution_target": {

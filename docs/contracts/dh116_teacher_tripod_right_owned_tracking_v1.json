@@ -1,0 +1,28 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.tripod-right-tracking-owned-cpu",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-owned-tracking.md",
+  "cpu": {
+    "passed": 68,
+    "failed": 0,
+    "log_sha256": "295f1a37f3869167023fa6bdf3697d1bc235e4f98d78445a6a32578cf9952bad"
+  },
+  "extended_cpu": {
+    "passed": 68,
+    "failed": 8,
+    "log_sha256": "d5fbea4074aa748553955d4cc356c13bba3eb603090bf84aebaa9f8475458fab",
+    "failure": "legacy left exchange fixture uses a noncanonical evidence path with unchanged SHA"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "plan_sha256": "e419ed68ba6cff54e5ecdf0b679a2b72550851519d918a785c293677c496b112",
+  "planned_sdk_steps": 178,
+  "planned_controls": 22,
+  "source_sha256": {
+    "scripts/verify_dh116_tripod_right_tracking.py": "58d589eb7233cd6a0bd87942fde9084ce8ee6e0b5db11abd4cbd8d0f7608f2ca",
+    "tests/test_dh116_tripod_right_tracking_native.py": "8bc4e7db9981fba876da893035c961ba2e69f3ed141ef959375489da41a08e21"
+  }
+}

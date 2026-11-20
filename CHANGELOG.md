@@ -1,5 +1,8 @@
 ## 2026-11-20 Teacher rollout codec CPU speedup
 
+- Tripod 右手独立跟踪接通原运行时的挂载关节、求解器接触和失败账本，原生回执待执行。
+
+
 The collector reuses the finite-array encoder while preserving canonical owned bytes, rollout identities and durable writes. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-collector-codec.md).
 
 ## 2026-11-20 Right Tripod tracking preflight

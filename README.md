@@ -3587,3 +3587,5 @@ bash scripts/python.sh scripts/run_current.py --run --gui --output runs/gui_tria
 2026-10-18 原实例 `table_margin_raise1mm_trial1` 在 step 58872 通过 close 并保存 `stage_hold.json`，进入实际夹持保持。step 58968 四指法向载荷约 0.948/0.896/0.992/1.014 N，hold 基线后滑移约 0.008 mm。这是原运行控制器的历史阶段证据，不代表新 touch-first 版本已完成 Isaac 验收。
 
 旧恢复试验成功加载状态，但接近末段桌面余量不足触发保护，未闭指/夹持/抬升。当前调整为左手路径上移1mm，名义桌面余量约2.20mm；实际试验仍在原项目运行。未使用绑定伪造抓取，1mm安全阈值不变。
+
+Tripod 右手独立跟踪实现与回归见 [运行边界报告](docs/superpowers/reports/2026-11-20-teacher-tripod-right-owned-tracking.md)。
