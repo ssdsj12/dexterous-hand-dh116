@@ -84,3 +84,12 @@ def test_frozen_config_rejects_modified_proposal(tmp_path,field):
     f=tmp_path/m.CONFIG;f.parent.mkdir(parents=True);f.write_text(json.dumps(p))
     with pytest.raises(ValueError,match="frozen"):
         m.load_pair(tmp_path)
+
+
+def test_migrated_evidence_keeps_the_frozen_provenance_key():
+    m = api()
+    historical = "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/paired-pinch-reset-BaP0hx/result.json"
+    assert m.OLD_PAIR.resolve(strict=True) == m.OLD_PAIR
+    packet = m.load_pair()
+    assert packet["sources"][historical] == m.OLD_PAIR_SHA
+    assert str(m.OLD_PAIR) not in packet["sources"]

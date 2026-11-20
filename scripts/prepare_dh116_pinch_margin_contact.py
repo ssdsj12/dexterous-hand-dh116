@@ -13,7 +13,9 @@ SETUP_STEPS,MEASURED_STEPS,TOTAL_STEPS=2,232,234
 PROFILE_SHA=None
 ROOT=Path(__file__).resolve().parents[1]
 CONFIG="configs/dh116_tasks/flexible_pinch_margin_contact_v1.json"
-OLD_PAIR=Path("/home/xk/.local/share/dh116-autonomous-3c80166/evidence/paired-pinch-reset-BaP0hx/result.json")
+# Keep the archived provenance label while reading the pinned data-disk file.
+OLD_PAIR_SOURCE="/home/xk/.local/share/dh116-autonomous-3c80166/evidence/paired-pinch-reset-BaP0hx/result.json"
+OLD_PAIR=Path("/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/paired-pinch-reset-BaP0hx/result.json")
 OLD_PAIR_SHA="996bdb33ed2d6f9abddb9171245142b5147af222b976fc799b5f89711c4f6a37"
 PROOF=Path("/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/evidence-rod-axis-margin-20261113-Pz4lNR/run01/result.json")
 PROOF_SHA="d1fc5b21cd2ed0d3e9d4c17e5cc56eff1259a13dc6558942c052c668f9d1c03b"
@@ -51,7 +53,7 @@ def derive_pair():
         left_pose_sha256=old["left_pose_sha256"],left=dict(candidate=candidate),
         right=deepcopy(old["right"]),rod_seed=deepcopy(old["rod_seed"]),reset_seed=seed,
         wrist_clearance_floor_m=.0021,native_qualified=False,teacher_admission=False,
-        sources={str(OLD_PAIR):OLD_PAIR_SHA,str(PROOF):PROOF_SHA},
+        sources={OLD_PAIR_SOURCE:OLD_PAIR_SHA,str(PROOF):PROOF_SHA},
         schedule=dict(setup_steps=2,quiet_steps=48,closure_steps=160,hold_steps=24,total_steps=234,
             policy_steps=29,physics_hz=480,control_hz=60,ppo_updates=0,environments=1),
         required_pad_min_gap_m=-.0003,

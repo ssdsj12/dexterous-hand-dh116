@@ -42874,6 +42874,25 @@
         "scope": "scoped CPU only",
         "extended_cpu_failed": 8
       }
+    },
+    "teacher.legacy-pair-canonical-path-cpu": {
+      "title": "Historical paired Reset path relocation",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [],
+      "tests": [
+        "tests/test_tripod_exchange_admission.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_legacy_pair_path_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-legacy-pair-migration.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 49,
+        "failed": 0,
+        "scope": "scoped CPU",
+        "extended_cpu_failed": 1
+      }
     }
   },
   "execution_target": {
