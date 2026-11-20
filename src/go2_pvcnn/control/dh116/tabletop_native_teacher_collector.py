@@ -6,6 +6,7 @@ Source adapters supply typed measured endpoints, never qualification booleans.
 from contextlib import contextmanager, nullcontext, suppress
 from copy import deepcopy
 from dataclasses import asdict,is_dataclass
+import hashlib
 import math
 import os
 import json
@@ -14,9 +15,19 @@ from time import perf_counter_ns
 
 import torch
 
-from .tabletop_deformable_r0_replay import _copy,_digest,encode_owned
+from .tabletop_deformable_r0_replay import decode_owned
+from .tabletop_fast_owned_codec import encode_owned
 from .tabletop_deformable_privileged_ppo import DeformablePPOTrainer
 from .tabletop_deformable_rollout_admission import gae_boundary
+
+
+def _copy(value):
+    return decode_owned(encode_owned(value))
+
+
+def _digest(value):
+    return hashlib.sha256(json.dumps(encode_owned(value), sort_keys=True, separators=(",", ":"),
+                                     allow_nan=False).encode()).hexdigest()
 
 
 class NativeJournal:

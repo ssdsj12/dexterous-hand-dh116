@@ -1,3 +1,7 @@
+## 2026-11-20 Teacher rollout codec CPU speedup
+
+The collector reuses the finite-array encoder while preserving canonical owned bytes, rollout identities and durable writes. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-collector-codec.md).
+
 ## 2026-11-20 Right Tripod tracking preflight
 
 An independent right-active tracking reference keeps the left action zero and proves geometric clearance before native tracking. [Report](docs/superpowers/reports/2026-11-20-teacher-tripod-right-no-contact-tracking.md).

@@ -42829,6 +42829,27 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-byte-equivalent-collector-codec-cpu": {
+      "title": "Byte-equivalent fast owned encoding in native Teacher collector",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.pinch-v12-timed-outcome-cpu"
+      ],
+      "tests": [
+        "tests/test_native_teacher_owned_codec_parity.py",
+        "tests/test_native_teacher_collector.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_collector_codec_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-collector-codec.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 208,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

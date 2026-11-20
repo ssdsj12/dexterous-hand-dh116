@@ -1,0 +1,40 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-byte-equivalent-collector-codec-cpu",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-collector-codec.md",
+  "review_baseline": "9a4561b103645a94af3aba6cd0af1213cf1f25a3",
+  "cpu": {
+    "passed": 208,
+    "failed": 0,
+    "log_sha256": "2ecd4619a823af267d65b4972beb4fc5d2b29c3f9bcab6c53126175464cbace5",
+    "red_sha256": "060583b2ba82e81a1601a2349b30c893eeb24c0a23ec829fe0abce0ac4c84b6f"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "benchmark": {
+    "rows": 187,
+    "byte_equivalent": true,
+    "duplicate_owned_legacy_equal": true,
+    "journal_source_sha256": "0e9c70159eebb6cc7343a83982d1ca4eac7a6179aacd19c546451ff0969aab85",
+    "metrics": {
+      "encode_json": {
+        "baseline_s": 4.319030949031003,
+        "collector_s": 2.396355275530368
+      },
+      "digest": {
+        "baseline_s": 4.348397140391171,
+        "collector_s": 2.5330067451577634
+      }
+    }
+  },
+  "benchmark_log_sha256": "6c512e456679561aacd5172f4de4d27fc492845aeae4716ac383437d33cddad8",
+  "historical_replay_sha256": "79fdc32b04638672c9e38092294c4b03cad4549e519ce8bc8ea9323a25dfe8d8",
+  "reused_codec_sha256": "2a7bfb85420df12544e534c0a150332ab9d8a776a26dccd459289e7a140555bf",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_collector.py": "27551e79dc68f1cde30a1212c388d6c019cd1d243a043ce9d3b86bc3188be72d",
+    "tests/test_native_teacher_owned_codec_parity.py": "176e4a39edd445e07a6f7c92cdf5e1fbf27902838b8fb7fa18dc3752bc3a90a4"
+  }
+}
