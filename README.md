@@ -1,4 +1,8 @@
 
+## Pinch earlier left-finger preflight
+
+Pinch replays an earlier two-finger command on 41 archived same-clock boundaries under the original action limits. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-cpu.md).
+
 ## Pinch late left-wrist native comparison
 
 Matched native Pinch data rules out the last-window left-wrist correction as a transition to fixed-wrist hold. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-native-result.md).

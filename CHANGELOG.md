@@ -1,4 +1,8 @@
 
+## Pinch earlier left-finger preflight
+
+Add source-bound Pinch early left-finger schedule screening and explicit conditional geometry bounds. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-cpu.md).
+
 ## Pinch late left-wrist native comparison
 
 Record the paired native left-wrist comparison, real pad reactions and unsuccessful bilateral closure. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-native-result.md).

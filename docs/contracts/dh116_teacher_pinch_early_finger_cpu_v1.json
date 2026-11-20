@@ -1,0 +1,138 @@
+{
+  "schema": "dh116-teacher-pinch-early-finger-cpu-readiness-v1",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-cpu.md",
+  "base_commit": "7570557da776fced5e1f5b4d91b4333d4cce91d5",
+  "physical_ledger_sha256": "2c3f9693ec9110c5dddf1e225585beb6b57b12f293dd9f86fc0414c767200202",
+  "command": [
+    "python",
+    "-B",
+    "-m",
+    "scripts.screen_dh116_pinch_early_finger",
+    "--baseline",
+    "<sealed_native_baseline>",
+    "--output",
+    "<new_output>"
+  ],
+  "cpu_command": [
+    "python",
+    "-B",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_dh116_pinch_early_finger.py",
+    "tests/test_dh116_pinch_late_wrist.py",
+    "tests/test_dh116_staged_pinch_contact.py",
+    "tests/test_dh116_pinch_staged_closure.py",
+    "tests/test_dh116_deformx_pair_capture.py",
+    "tests/test_teacher_force_closure.py",
+    "tests/test_native_teacher_worker_contract.py",
+    "tests/test_dh116_work_packages.py"
+  ],
+  "cpu_passed": 165,
+  "cpu_failed": 0,
+  "cpu_log_sha256": "577a1085fadc365aed6652cc6bf14b52be6f9b14cc980a45c7318cc6c5a3e7c5",
+  "conditional_preflight": {
+    "passed": true,
+    "first_shared_boundary": 34,
+    "archive_boundaries": 41,
+    "gains": [
+      0.8,
+      1.0
+    ],
+    "rod_sensitivity_m": 5e-05,
+    "minimum_table_clearance_m": 0.0024917999748810815,
+    "minimum_non_target_clearance_m": 2.0392386160439106e-05,
+    "minimum_non_target_link": "source:finger22_link",
+    "terminal_cases": [
+      {
+        "gains": [
+          0.9,
+          0.9
+        ],
+        "gaps_m": [
+          -0.00014259805902838707,
+          -0.00018073385581374168
+        ],
+        "node_ids": [
+          35,
+          34
+        ],
+        "opposition_cos": -0.7953269074533925,
+        "passes_nominal_gate": true
+      },
+      {
+        "gains": [
+          0.8,
+          0.8
+        ],
+        "gaps_m": [
+          -0.0001267637126147747,
+          -0.00013471953570842743
+        ],
+        "node_ids": [
+          35,
+          34
+        ],
+        "opposition_cos": -0.7942445142965631,
+        "passes_nominal_gate": true
+      },
+      {
+        "gains": [
+          0.8,
+          1.0
+        ],
+        "gaps_m": [
+          -0.0001267637126147747,
+          -0.00022392161190509796
+        ],
+        "node_ids": [
+          35,
+          34
+        ],
+        "opposition_cos": -0.7676044814306336,
+        "passes_nominal_gate": true
+      },
+      {
+        "gains": [
+          1.0,
+          0.8
+        ],
+        "gaps_m": [
+          -0.00015847152099013329,
+          -0.00013471953570842743
+        ],
+        "node_ids": [
+          35,
+          34
+        ],
+        "opposition_cos": -0.7948079281397111,
+        "passes_nominal_gate": true
+      },
+      {
+        "gains": [
+          1.0,
+          1.0
+        ],
+        "gaps_m": [
+          -0.00015847152099013329,
+          -0.00022392161190509796
+        ],
+        "node_ids": [
+          35,
+          34
+        ],
+        "opposition_cos": -0.7682562399501973,
+        "passes_nominal_gate": true
+      }
+    ],
+    "additional_joint_targets_rad": [
+      0.0025999999999999986,
+      0.006999999999999995
+    ],
+    "report_sha256": "c2f5339da95a0dd3bcb9208306ce7d3e0f89478f4a17309c58083ab8ef39bb69"
+  },
+  "native_qualification": false,
+  "teacher_admission": false,
+  "native_runs": 0,
+  "ppo_updates": 0
+}
