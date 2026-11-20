@@ -27963,6 +27963,31 @@
         "verified_at_utc": "2026-11-20T06:23:09.109766+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-source-fixtures-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-source-fixtures.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_source_fixtures_v1.json",
+      "cpu_tests": {
+        "passed": 83,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "9d629f59d6f009b092e1293913b7c5c8edb5b91a",
+        "source_tree": "65ba61e409ba969888b2f2d76f7b1e0ce8277765",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T06:34:48.559444+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
