@@ -1,4 +1,8 @@
 
+## Pinch precontact left hold
+
+Verify the original left tracking range before reducing stale targets and starting the right wrist window. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-left-precontact-hold.md).
+
 ## Pinch live right-wrist gate
 
 Add a current-instance geometry gate for the right-wrist Pinch window and record the first rod motion outside the certified range. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-angular-gate-native.md).

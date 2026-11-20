@@ -53,11 +53,12 @@ def right_control_windows(issued, goal):
 
 
 def right_geometry(row, actual, issued, target, envelope, *, nodes,
-                   phase_names=("angle_first", "wrist_first", "finger_release"), phase_seconds=75.):
-    model, source = prelift._bound_model(prelift.base.ROOT, "right")
-    raw = row["closure_geometry"]["raw"]["hands"]["right"]
+                   phase_names=("angle_first", "wrist_first", "finger_release"), phase_seconds=75.,
+                   side="right", require_pad_clearance=False):
+    model, source = prelift._bound_model(prelift.base.ROOT, side)
+    raw = row["closure_geometry"]["raw"]["hands"][side]
     frames, xyz = prelift._frames(model, raw["body_names"], raw["link_poses_xyzw"])
-    hand = row["action_readback"]["post"]["hands"]["right"]
+    hand = row["action_readback"]["post"]["hands"][side]
     names = hand["joint_names"]
     q = hand["q"][0, [names.index(n) for n in prelift.JOINTS]]
     anchor = Rotation.from_quat(np.roll(hand["native_anchor_pose_w"][0, 3:], -1)).as_matrix()
@@ -100,12 +101,12 @@ def right_geometry(row, actual, issued, target, envelope, *, nodes,
         fr = moved(x, key)
         verts = model.vertices[key] @ fr[:3, :3].T + fr[:3, 3]
         gap = {"table": float(verts[:, 2].min() - model.table_top - prelift.CLEARANCE_M - reserves[key])}
-        if key.split(":", 1)[1] not in prelift.REQUIRED:
+        if require_pad_clearance or key.split(":", 1)[1] not in prelift.REQUIRED:
             lower = rod.gap_lower_m(verts)
             if lower < .00015:
                 precise = prelift.endpoint_gap(verts, nodes, nominal_radius)["lower_m"]
                 lower = max(lower, precise + nominal_radius - radius - prelift.NODE_RESERVE_M)
-            gap["non_target_rod"] = lower - reserves[key]
+            gap["rod" if require_pad_clearance else "non_target_rod"] = lower - reserves[key]
         return gap
 
     def certify_phase(lo, hi, *, seconds):
@@ -131,9 +132,9 @@ def right_geometry(row, actual, issued, target, envelope, *, nodes,
     if "finger_release" not in phases:
         return phases, None
     grids = {"left": {}, "right": {}}
-    prelift._bind_pad_grids(row, "right", source, grids, {})
+    prelift._bind_pad_grids(row, side, source, grids, {})
     staged_end = np.array([1., 1., LINEAR_APPROACH_LIMIT, 1.])
-    gaps = [prelift._contact(grids["right"][key], moved(staged_end, key), nodes, radius)[0] for key in prelift.PADS]
+    gaps = [prelift._contact(grids[side][key], moved(staged_end, key), nodes, radius)[0] for key in prelift.PADS]
     return phases, gaps
 
 
