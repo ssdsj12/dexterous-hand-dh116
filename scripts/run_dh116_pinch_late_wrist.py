@@ -41,10 +41,10 @@ def variant_schedule(actions, xyz_delta, euler_delta):
     return result
 
 
-def prefix_measurements(row):
+def prefix_measurements(row, *, expected_sdk=LAST_PREFIX_SDK):
     _same_clock(row)
-    if row["physics_step"] != LAST_PREFIX_SDK or row["guard_failure"] is not None:
-        raise ValueError("same-clock safe SDK66 readback required")
+    if row["physics_step"] != expected_sdk or row["guard_failure"] is not None:
+        raise ValueError(f"same-clock safe SDK{expected_sdk} readback required")
     geometry = row["closure_geometry"]["raw"]["hands"]
     readback = row["action_readback"]["post"]["hands"]
     measured = {"rod_nodes_m": _finite(row["rod"]["node_positions"][0], (41, 3)).tolist()}

@@ -43489,6 +43489,36 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-early-finger-native-worker-cpu": {
+      "title": "Bind guarded native Pinch comparison to earlier left-finger preflight",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-early-finger-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_early_finger_worker.py",
+        "tests/test_dh116_pinch_early_finger.py",
+        "tests/test_dh116_pinch_late_wrist.py",
+        "tests/test_dh116_staged_pinch_contact.py",
+        "tests/test_dh116_pinch_staged_closure.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-native-worker.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_early_finger_native_worker_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 167,
+        "failed": 0,
+        "sdk_prefix": 34,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
