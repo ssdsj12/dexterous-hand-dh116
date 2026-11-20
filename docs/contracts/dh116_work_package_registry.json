@@ -42787,6 +42787,28 @@
         "failed": 0,
         "scope": "CPU replay of an existing native run"
       }
+    },
+    "teacher.power-five-digit-fixed-wrist-audit-cpu": {
+      "title": "Power fixed-wrist continuous reach across all five digits",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.power-middle-continuous-reach-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_power_fixed_wrist_digits.py",
+        "tests/test_dh116_power_material_reach.py"
+      ],
+      "timeout_seconds": 300,
+      "readiness": "docs/contracts/dh116_teacher_power_fixed_wrist_digits_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-five-digit-fixed-wrist.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 97,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {

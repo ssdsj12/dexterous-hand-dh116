@@ -1,3 +1,7 @@
+## 2026-11-20 Power five-digit fixed-wrist reach
+
+The ring and little fingers remain outside the original 0.5 mm proximity gate across their full joint ranges at this wrist pose. [Report](docs/superpowers/reports/2026-11-20-teacher-power-five-digit-fixed-wrist.md).
+
 ## 2026-11-20 Pinch v12 native PPO timing outcome
 
 The left hand remained within clearance through 83 measured SDK steps. The right thumb guard stopped the rollout and the first PPO update remains uncompleted. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v12-timed-outcome.md).
