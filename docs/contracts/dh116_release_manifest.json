@@ -28588,6 +28588,31 @@
         "verified_at_utc": "2026-11-20T12:22:54.201835+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-left-palm-sdf-gpu-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-left-palm-sdf.md",
+      "readiness": "docs/contracts/dh116_teacher_power_left_palm_sdf_v1.json",
+      "cpu_tests": {
+        "passed": 100,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a2bcf74b810df0ba060b74b5fa2852299d222b3e",
+        "source_tree": "3ffd729adb264d0311602acb028e82ace7a9421c",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T12:35:09.562052+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
