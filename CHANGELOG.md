@@ -1,4 +1,8 @@
 
+## Power palm solver reactions
+
+Measured forces and moments for each original palm in an isolated CUDA rod fixture. [Report](docs/superpowers/reports/2026-11-20-teacher-power-palm-solvers.md).
+
 ## Tripod staged right wrist
 
 Verified wrist settling before the raised approach in one clean native run. [Report](docs/superpowers/reports/2026-11-20-teacher-tripod-staged-wrist.md).

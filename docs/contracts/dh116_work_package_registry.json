@@ -44355,6 +44355,52 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-palm-solver-reactions-gpu-result": {
+      "title": "Measure isolated solver reactions on each original Power palm",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-palm-physx-rays-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_palm_reactions.py",
+        "tests/test_dh116_power_palm_raycast.py",
+        "tests/test_dh116_power_right_palm_sdf.py",
+        "tests/test_dh116_power_palm_self_intersection.py",
+        "tests/test_dh116_power_left_palm_sdf.py",
+        "tests/test_dh116_power_palm_surface.py",
+        "tests/test_dh116_power_palm_parity.py",
+        "tests/test_dh116_cooked_hull_device_parity.py",
+        "tests/test_dh116_cooked_convex_hulls.py",
+        "tests/test_teacher_power_surface_audit.py",
+        "tests/test_teacher_cooked_readback_audit.py",
+        "tests/test_dh116_deformx_pad_sdf.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-palm-solvers.md",
+      "readiness": "docs/contracts/dh116_teacher_power_palm_solver_reactions_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "two isolated solver palm reactions",
+        "passed": 113,
+        "failed": 0,
+        "isaac_runs": 0,
+        "standalone_gpu_runs": 1,
+        "solver_substeps": 24,
+        "pair_counts": {
+          "left": 7,
+          "right": 7
+        },
+        "inward_force_n": {
+          "left": 4.25149658240402,
+          "right": 4.0134226986581085
+        },
+        "live_articulation_feedback": false,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

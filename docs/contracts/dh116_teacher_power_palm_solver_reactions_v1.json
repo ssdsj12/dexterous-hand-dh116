@@ -1,0 +1,108 @@
+{
+  "version": "dh116-teacher-power-palm-solver-reactions-v1",
+  "status": "diagnostic_complete",
+  "evidence": {
+    "output_directory": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2221-power-palm-reactions-gpu/result.json",
+    "outer_sha256": "1e9f1c439b833979184c0b2b31cc3a3829e6bc0f9af297cafbaf2e98314d2b1d",
+    "artifacts": {
+      "left.base_link-raw.json": "4faea7c9fadfaae9f275577a55653ee43946c0685972964b28c2f63065d5ab85",
+      "result.json": "1554e61e52a3ff778b0330cfb4a3e6b7874e047a097db6e8887c53ce0344b29a",
+      "right.base_link-raw.json": "92e726980166cc6d60498862f937d0fd74ce67bdda33388afc1a21bd57c07715"
+    },
+    "receipt_sha256": "d2b4722f9db478b82b53d45d37a74bf17e77e3ab72ccd4e0de24b4ccc6e783d2",
+    "gpu_watchdog_exit_code": 0
+  },
+  "metrics": {
+    "scope": "two isolated solver palm reactions",
+    "passed": 113,
+    "failed": 0,
+    "isaac_runs": 0,
+    "standalone_gpu_runs": 1,
+    "solver_substeps": 24,
+    "pair_counts": {
+      "left": 7,
+      "right": 7
+    },
+    "inward_force_n": {
+      "left": 4.25149658240402,
+      "right": 4.0134226986581085
+    },
+    "live_articulation_feedback": false,
+    "native_qualification": false,
+    "teacher_admission": false
+  },
+  "fixtures": {
+    "left": {
+      "mesh": "left.base_link",
+      "triangle": 39,
+      "tangent_axis": 2,
+      "initial_contacts_predicted": 7,
+      "minimum_initial_grid_m": 0.004649945393815168,
+      "outward_world": [
+        0.0557553768157959,
+        0.9956684112548828,
+        -0.07440266758203506
+      ],
+      "source_body": "/World/F4CookedAudit/leftPlacement/Hand/base_link",
+      "source_colliders": [
+        "/World/F4CookedAudit/leftPlacement/Hand/base_link/collisions/base_link/node_STL_BINARY_",
+        "/World/F4CookedAudit/leftPlacement/Hand/base_link/collisions/base_link/node_STL_BINARY_/mesh"
+      ],
+      "sdf_sha256": "824df146c5bd50c3e878a577e4f91ebce66b7b76fc2873c54aacef11c6a9e961",
+      "mesh_index": 0,
+      "solver_steps": 12,
+      "contact_pairs": 7,
+      "loaded_solver_substeps": 1,
+      "force_on_mesh_n": [
+        -0.30862629413604736,
+        -4.226293563842773,
+        0.3535090684890747
+      ],
+      "torque_about_origin_nm": [
+        0.24472717940807343,
+        -0.016784418374300003,
+        -0.02775058150291443
+      ],
+      "positive_inward_reaction_n": 4.25149658240402,
+      "force_residual_n": 2.9802322387695312e-08,
+      "raw_validated": true
+    },
+    "right": {
+      "mesh": "right.base_link",
+      "triangle": 12,
+      "tangent_axis": 2,
+      "initial_contacts_predicted": 7,
+      "minimum_initial_grid_m": 0.00464998747362945,
+      "outward_world": [
+        -0.8634507060050964,
+        0.4405636191368103,
+        -0.24567584693431854
+      ],
+      "source_body": "/World/F4CookedAudit/rightPlacement/Hand/base_link",
+      "source_colliders": [
+        "/World/F4CookedAudit/rightPlacement/Hand/base_link/collisions/base_link/node_STL_BINARY_",
+        "/World/F4CookedAudit/rightPlacement/Hand/base_link/collisions/base_link/node_STL_BINARY_/mesh"
+      ],
+      "sdf_sha256": "e5153e58c8b17b30d6ab2e2535a8c5d1bcf7c1d6f2c581fa6b00f0fa5fe53d7c",
+      "mesh_index": 0,
+      "solver_steps": 12,
+      "contact_pairs": 7,
+      "loaded_solver_substeps": 1,
+      "force_on_mesh_n": [
+        3.5722150802612305,
+        -1.5881030559539795,
+        0.933468759059906
+      ],
+      "torque_about_origin_nm": [
+        0.09510688483715057,
+        0.22826865315437317,
+        0.0007565673440694809
+      ],
+      "positive_inward_reaction_n": 4.0134226986581085,
+      "force_residual_n": 1.3328003944934608e-07,
+      "raw_validated": true
+    }
+  },
+  "solver_sha256": "8817010163946945495c987923d11f3ade4fbd52482a83bbdd48f017d3149340",
+  "next": "Bind live palm identities and shift the measured world-origin moment to each actual PhysX hand COM in a dedicated Power path."
+}
