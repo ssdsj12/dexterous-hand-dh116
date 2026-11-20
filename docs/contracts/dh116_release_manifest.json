@@ -28488,6 +28488,31 @@
         "verified_at_utc": "2026-11-20T11:43:20.548610+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-palm-device-parity-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-palm-device-parity.md",
+      "readiness": "docs/contracts/dh116_teacher_power_palm_device_parity_v1.json",
+      "cpu_tests": {
+        "passed": 33,
+        "failed": 0
+      },
+      "native_runs": 2,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "712675814ec55fc23bf347db9e3ca84ee51df1b2",
+        "source_tree": "484c7d7e380b58e35d0ebfb392269006786c7438",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T11:44:51.065672+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
