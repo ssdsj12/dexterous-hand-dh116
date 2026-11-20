@@ -1,0 +1,68 @@
+{
+  "schema": "dh116-pinch-late-wrist-worker-v1",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-worker.md",
+  "base_commit": "88502b0619f0c576b8751d8c25c6abb55622f1b0",
+  "baseline_outer_sha256": "86e870cd65aa72e0bb79cc734258691bad43900dceba61c46368e6f388163b0e",
+  "baseline_physical_ledger_sha256": "2c3f9693ec9110c5dddf1e225585beb6b57b12f293dd9f86fc0414c767200202",
+  "archived_sdk66_through_74_preflight_sha256": "68ac56d4a2080e3d81aac5b85c2fc928176d942d78e1a6deea11647c552a22fa",
+  "intervention": {
+    "start_at_observed_sdk_step": 66,
+    "control_window": [
+      66,
+      74
+    ],
+    "left_wrist_indices": [
+      12,
+      13,
+      14,
+      18,
+      19,
+      20
+    ],
+    "retained_wrist_target_residual_fraction": 0.25,
+    "unchanged_requested_right_and_finger_actions": true,
+    "conditional_table_margin_lower_m": 0.00029206558160474244,
+    "conditional_min_endpoint_non_target_gap_m": 4.42337527620078e-05
+  },
+  "maximum": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "pinch",
+    "sdk_setup_steps": 2,
+    "control_steps": 9,
+    "solver_steps": 864,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 180,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 0,
+    "episode_resets": 1,
+    "sdk_steps": 74
+  },
+  "cpu": {
+    "passed": 161,
+    "failed": 0,
+    "log_sha256": "79ad62e60161e58193416dd8f03e67c141ebd2b119f27db7bcd193f5d6658664",
+    "command": [
+      "python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_pinch_late_wrist.py",
+      "tests/test_dh116_staged_pinch_contact.py",
+      "tests/test_dh116_pinch_staged_closure.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_native_teacher_worker_contract.py",
+      "tests/test_dh116_work_packages.py"
+    ]
+  },
+  "native_runs": 0,
+  "teacher_admission": false,
+  "native_qualification": false
+}

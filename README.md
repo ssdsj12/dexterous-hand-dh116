@@ -1,3 +1,7 @@
+
+## Pinch late left-wrist comparison
+
+The Pinch comparison tests a correction in the final left wrist window, following a sealed same-clock prefix. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-worker.md).
 ## Staged Pinch native contact result
 
 The first staged native close measured right-hand opposition. The left index remained unloaded and no bilateral lift was attempted. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-contact-native-result.md).

@@ -1,3 +1,7 @@
+
+## Pinch late left-wrist comparison
+
+Add a bounded last-window left-wrist comparison and record its conditional safety checks. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-worker.md).
 ## Staged Pinch native contact result
 
 Record native staged Pinch contact and isolate the left wrist/finger tracking trade-off from the final same-clock snapshot. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-contact-native-result.md).
