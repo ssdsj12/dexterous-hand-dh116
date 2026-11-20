@@ -43160,16 +43160,27 @@
       "tests": [],
       "title": "Pinch fresh 8-control PPO wiring diagnostic",
       "command_spec": "configs/dh116_execution/pinch-actual-smoke8-core-v1.json",
-      "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Verified native Reset, exact standing authorization and resource reservation required.",
+      "status": "passed",
+      "reason": "Independently audited bounded diagnostic. Native grasp/Teacher qualification remains false.",
       "dependencies": [
         "teacher.pinch-v13-native-reset"
       ],
-      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-diagnostic.md",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-native-result.md",
       "actual_launch": {
         "path": "configs/dh116_execution/pinch-actual-smoke8-launch-v1.json",
         "sha256": "8193a0b4d6eda0353129d8b435da6715e2bdb8e0158d5845a33028327b548173"
+      },
+      "readiness": "docs/contracts/dh116_teacher_pinch_smoke8_native_result_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "inferior_exit": 0,
+        "ppo_updates": 1,
+        "result_sha256": "45e82085c28da975337af855dfb1e2cc5da30f42dbad5722252771618e26ec31",
+        "diagnostic_verified": true,
+        "native_qualification": false,
+        "teacher_admission": false
       }
     },
     "teacher.pinch-smoke8-wiring-cpu": {

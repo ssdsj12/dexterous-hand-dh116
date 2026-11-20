@@ -1,0 +1,107 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "branch": "11-17",
+  "package": "teacher.pinch-ppo-fresh-smoke8-v1",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-native-result.md",
+  "source_recipe": "docs/contracts/dh116_teacher_pinch_smoke8_wiring_v1.json",
+  "tested_head": "52112a2dd059effa88fc60a8aad0b88352996109",
+  "native_runs": 1,
+  "ppo_updates": 1,
+  "diagnostic_verified": true,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "receipt_sha256": "45e82085c28da975337af855dfb1e2cc5da30f42dbad5722252771618e26ec31",
+  "independent_audit_log_sha256": "1063bff85b5208466561038a6e1e78f347a344abbd829ada5894d48719145805",
+  "attempt_fingerprint": "217473ef997c5d2877c6181c963ce0fe0ed87efa7f0d40e7ef30a29704a4ae45",
+  "outer_exit_code": 0,
+  "inferior_exit_code": 0,
+  "inferior_signal": null,
+  "wall_duration_s": 160.65373155404814,
+  "physical": {
+    "physical_nodes": 41,
+    "measured_sdk_steps": 64,
+    "controls": 8,
+    "solver_calls": 64,
+    "internal_solver_substeps": 768,
+    "first_sdk_endpoint": 3,
+    "last_sdk_endpoint": 66,
+    "clock_schema": "original_nominal_timestamp_and_recorded_solver_time"
+  },
+  "budget": {
+    "parent_deadline_s": 1288998.075822311,
+    "episode_cap_s": 0.5333333333333333,
+    "session_local_cap_s": 180,
+    "remaining_before_s": 76.8818248079624,
+    "remaining_after_s": 35.80129274702631
+  },
+  "counter": {
+    "environment_steps": 8,
+    "updates": 1
+  },
+  "metrics": {
+    "accepted_minibatches": 1,
+    "weight_delta_l2": 0.004261774702230818,
+    "target_kl": 0.02,
+    "exact_kl": 0.001690305769443512,
+    "accepted_lr": 1e-05,
+    "kl_guard_attempts": [
+      {
+        "lr": 0.0001,
+        "exact_full_rollout_kl": 0.16932949423789978
+      },
+      {
+        "lr": 1e-05,
+        "exact_full_rollout_kl": 0.001690305769443512
+      }
+    ]
+  },
+  "retained_operations": {
+    "setup": 2,
+    "reset_clock_preflight": 1,
+    "owner_event": 1,
+    "numeric_reset": 1,
+    "initial_geometry": 2,
+    "reset_sources": 1,
+    "collector_origin": 1,
+    "fresh_update_wall_budget": 2,
+    "fresh_policy_rng": 1,
+    "teacher_input_source": 16,
+    "decision": 8,
+    "delivered_exchange": 64,
+    "physical": 64,
+    "budget_consumed": 64,
+    "policy_pinch_distance": 64,
+    "settlement": 8,
+    "transition_recorded": 8,
+    "policy_epoch": 1,
+    "optimizer_update_accepted": 1,
+    "fresh_update_checkpoint_sealed": 1,
+    "owner_lease_closed": 1
+  },
+  "table_min_clearance_m": {
+    "left": 0.002335824994526725,
+    "right": 0.0025040011543752683
+  },
+  "solver_contact_pairs_by_mesh": {
+    "table": 31488
+  },
+  "input_source_audit": {
+    "source_scope": "owner_source_unqualified",
+    "decision_packs": 8,
+    "bootstrap_packs": 8,
+    "source_packs": 16,
+    "journal_prefix_sha256": "704d92165ca01f18b5bfd9bfe7be3875d9f3638d220b40ea3005f76711aee112",
+    "native_qualification": false,
+    "teacher_admission": false
+  },
+  "artifact_sha256": {
+    "physics.jsonl": "6f3931b7b0c746ebae0dec8934c2ecd8968c8a3be2488550cebab22b36a287b3",
+    "transitions.jsonl": "21bba5091cb838a8e63938767c71ba2456ad69bbf060646ae0b2fe9c6083092c",
+    "ownership.jsonl": "36888deabed52df97f4ceeaff037b8b1c4bf02e239812018a7f20ea85dec2be1",
+    "shutdown_complete.json": "9f3a5d3250310e2d9c5c85526fe4069a570c9655fbe88d41f7df58c887435acf",
+    "training_result.json": "3b846f2f71ff14174e8128e79dc986cb84acf79d8d15baa69b596ea3d2850f5c",
+    "training_events.jsonl": "1fb582fc5851cdcc23467216095d507135aa54de8bca96b92fa00a59dc7a5dcd",
+    "teacher_clean.pt": "d5eb5dde96858175b9673849a82ea2339b131607fa6ecdf8817421d4364f4597"
+  },
+  "checkpoint_scope": "independent unqualified smoke8; not for longer or expert resume"
+}
