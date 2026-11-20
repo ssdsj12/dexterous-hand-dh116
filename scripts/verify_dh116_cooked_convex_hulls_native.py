@@ -295,7 +295,7 @@ def _release_owned_native_view(app, simulation, output):
 
 
 
-def main():
+def main(*, scene_queries=False):
     from isaaclab.app import AppLauncher
 
     parser = argparse.ArgumentParser(description=__doc__)
@@ -329,6 +329,7 @@ def main():
 
             sim = sim_utils.SimulationContext(sim_utils.SimulationCfg(
                 dt=_DT, device=args.device, gravity=(0.0, 0.0, 0.0),
+                enable_scene_query_support=scene_queries,
             ))
             _run(sim, args.output, sources, args.steps, args.device)
         except Exception:

@@ -1,0 +1,68 @@
+{
+  "schema": "dh116.teacher.power.palm_physx_rays.v1",
+  "status": "owned_original_palm_rays_measured_shape_difference_retained",
+  "cpu_passed": 111,
+  "native_runs": 2,
+  "native_physics_steps": 4,
+  "ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "full_surface_equivalence_verified": false,
+  "raw_sha256": "6e5a7a500a89f3081b660cfcea836fe426dea51989238d1f6b3631c2d8872659",
+  "successful_outer_sha256": "ac2eea4191606d7a56c4c4cab43014478024a20e7e9f289fade7d1958489047f",
+  "query_disabled_outer_sha256": "a54771a17e4700bd53c3e990d6f3d27917931f3495be50a92bba97dd3ecb029f",
+  "metrics_sha256": "2627e49a5689408f4f2d93f375f6b583c1499d40490a18416a3353a7d5a7b032",
+  "metrics": {
+    "left": {
+      "total": 68,
+      "owned": 56,
+      "occluded_by_original_fingers": 12,
+      "sdf_phi_at_native_hit": {
+        "p50_m": 1.924906348444626e-08,
+        "p95_m": 5.122504851840793e-08,
+        "max_m": 5.977164684385541e-08
+      },
+      "sdf_grid_sha256": "824df146c5bd50c3e878a577e4f91ebce66b7b76fc2873c54aacef11c6a9e961",
+      "original_fan_m": {
+        "p50_m": 1.938103350680384e-08,
+        "p95_m": 5.1942738320178566e-08,
+        "max_m": 6.125030642747942e-08
+      },
+      "convex_vertex_boundary_m": {
+        "p50_m": 1.9381033507671203e-08,
+        "p95_m": 5.194273832191329e-08,
+        "max_m": 6.125030642661206e-08
+      },
+      "differential_rays": []
+    },
+    "right": {
+      "total": 70,
+      "owned": 60,
+      "occluded_by_original_fingers": 10,
+      "sdf_phi_at_native_hit": {
+        "p50_m": 1.3674667241129188e-08,
+        "p95_m": 4.746840801423783e-08,
+        "max_m": 1.9514009197983653e-05
+      },
+      "sdf_grid_sha256": "e5153e58c8b17b30d6ab2e2535a8c5d1bcf7c1d6f2c581fa6b00f0fa5fe53d7c",
+      "original_fan_m": {
+        "p50_m": 1.4183218106488676e-08,
+        "p95_m": 4.696815186716954e-08,
+        "max_m": 1.951304679249314e-05
+      },
+      "convex_vertex_boundary_m": {
+        "p50_m": 1.4183218106922357e-08,
+        "p95_m": 4.696815186712617e-08,
+        "max_m": 4.450537542801357e-05
+      },
+      "differential_rays": [
+        {
+          "triangle": 59,
+          "original_fan_m": 0.003999999999999999,
+          "convex_vertex_boundary_m": 0.003965067969760662,
+          "native_hit_distance_m": 0.004009573345188675
+        }
+      ]
+    }
+  }
+}

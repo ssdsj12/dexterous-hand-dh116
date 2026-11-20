@@ -1,4 +1,8 @@
 
+## Power native palm rays
+
+Compared owned PhysX palm hits with the original triangle surfaces. [Report](docs/superpowers/reports/2026-11-20-teacher-power-palm-physx-rays.md).
+
 ## Power right palm SDF
 
 Measured the standalone GPU grid against the original right palm triangles. [Report](docs/superpowers/reports/2026-11-20-teacher-power-right-palm-sdf.md).
