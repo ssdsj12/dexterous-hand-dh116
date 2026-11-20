@@ -28013,6 +28013,31 @@
         "verified_at_utc": "2026-11-20T07:04:05.901311+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-early-approach-geometry-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-early-approach.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_early_approach_v1.json",
+      "cpu_tests": {
+        "passed": 116,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "bddda03f7d934f2e7afa35ecd0b941b00b4683de",
+        "source_tree": "51ca0f091ef3175ce6defee9c5fecffddd774104",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T07:31:42.006952+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
