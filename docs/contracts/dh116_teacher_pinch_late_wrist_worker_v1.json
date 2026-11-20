@@ -44,9 +44,9 @@
     "sdk_steps": 74
   },
   "cpu": {
-    "passed": 161,
+    "passed": 162,
     "failed": 0,
-    "log_sha256": "79ad62e60161e58193416dd8f03e67c141ebd2b119f27db7bcd193f5d6658664",
+    "log_sha256": "f36808a3196b61e63205ab768ea71c3f3589bd22e77490c16ecbbf60c7958434",
     "command": [
       "python",
       "-B",
@@ -64,5 +64,18 @@
   },
   "native_runs": 0,
   "teacher_admission": false,
-  "native_qualification": false
+  "native_qualification": false,
+  "rejected_launch": {
+    "exit_code": 1,
+    "sdk_steps": 0,
+    "isaac_app_started": false,
+    "outer_sha256": "31401ac46432e3a288d6ffa2fe9e3d296887dd03ca9d3fb57b310f6dcb42153f",
+    "native_log_sha256": "ac81a1825b09f08df53a7eae5d4179121167535f92554a8db3f423b4dad2c04b",
+    "failure": "USD imported before AppLauncher"
+  },
+  "launch_validation": {
+    "real_cpu_subprocess": true,
+    "clean_import_boundary": true,
+    "log_sha256": "0d7a52bb45971e5729cb1e3510566e91e02fd1b68e2f9e0abc0ab47b45bd1942"
+  }
 }

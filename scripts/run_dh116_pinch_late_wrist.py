@@ -3,6 +3,9 @@
 import argparse
 import functools
 import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -203,14 +206,25 @@ def main(argv=None):
     p.add_argument("--approved-frozen-sha256")
     args = p.parse_args(argv)
     base.lifecycle.native.validate_execution_context(ROOT)
-    plan = _load_variant(args.output, args.sealed_reset, args.baseline)
-    digest = base.lifecycle.native.digest(plan)
     if args.approved_frozen_sha256 is None:
+        plan = _load_variant(args.output, args.sealed_reset, args.baseline)
+        digest = base.lifecycle.native.digest(plan)
         base.lifecycle.native.write_new(args.plan, plan)
-        print(json.dumps(dict(frozen_sha256=digest,budget=plan["budget"])))
+        print(json.dumps(dict(frozen_sha256=digest, budget=plan["budget"])))
     else:
-        if args.approved_frozen_sha256 != digest or json.loads(args.plan.read_text()) != plan or args.output.exists():
-            raise ValueError("exact staged successor recipe and fresh output required")
+        # The FK/USD certificate imports pxr. Rebuild it in a separate CPU process
+        # so the AppLauncher process reaches its existing clean import boundary.
+        with tempfile.TemporaryDirectory(prefix="pinch-certificate-", dir=args.plan.parent) as work:
+            rebuilt = Path(work) / "plan.json"
+            subprocess.run([
+                sys.executable, "-B", "-m", "scripts.run_dh116_pinch_late_wrist",
+                "--output", str(args.output), "--plan", str(rebuilt),
+                "--sealed-reset", str(args.sealed_reset), "--baseline", str(args.baseline),
+            ], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+            plan = json.loads(rebuilt.read_text())
+        if (args.approved_frozen_sha256 != base.lifecycle.native.digest(plan)
+                or json.loads(args.plan.read_text()) != plan or args.output.exists()):
+            raise ValueError("exact staged successor recipe rebuild and fresh output required")
         base.lifecycle.execute(plan, acquire_operation=functools.partial(acquire, plan=plan))
     return 0
 

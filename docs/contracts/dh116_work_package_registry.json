@@ -43407,6 +43407,35 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-late-wrist-launch-cpu": {
+      "title": "Keep rebuilt FK certificate out of the AppLauncher process",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-late-wrist-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_late_wrist.py",
+        "tests/test_dh116_staged_pinch_contact.py",
+        "tests/test_dh116_pinch_staged_closure.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-worker.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_late_wrist_worker_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 162,
+        "failed": 0,
+        "observed_prelaunch_failures": 1,
+        "isaac_app_started": false,
+        "teacher_admission": false,
+        "native_qualification": false
+      }
     }
   },
   "execution_target": {

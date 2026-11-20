@@ -15,3 +15,9 @@ The sealed 74-SDK-step reference measured right-hand opposition in its final 15 
 For preparation, use the project interpreter with `python -B -m scripts.run_dh116_pinch_late_wrist --sealed-reset <manifest> --baseline <sealed_run> --output <new_native_directory> --plan <new_plan>`. The actual execution requires the resulting exact frozen SHA and a fresh output directory.
 
 Next, compare observed four-pad reactions, protected terminal events and the real process exit against the sealed baseline.
+
+## Launch isolation correction
+
+The first launched worker returned 1 before AppLauncher with `USD imported before AppLauncher`, after the FK certificate imported `pxr` in the process that would own Isaac. No App, SDK step or contact sample was created. The original exit and log SHA remain in readiness.
+
+The worker now rebuilds the certificate in a separate CPU subprocess, compares the complete rebuilt plan and approved digest in the clean launcher process, then follows the existing lifecycle gate. A real subprocess verification reached the clean USD import boundary with native execution replaced by a CPU check. The joint suite passed 162 tests. A new frozen recipe is required for the one native comparison.
