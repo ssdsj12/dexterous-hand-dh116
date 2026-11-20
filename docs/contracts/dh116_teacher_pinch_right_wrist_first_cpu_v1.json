@@ -1,0 +1,343 @@
+{
+  "schema": "dh116-pinch-right-wrist-first-readiness-v1",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-right-wrist-first.md",
+  "base_commit": "dac6a218bd4edea5ef75eec61686bc71ade552f9",
+  "phase_seed_sdk": 58,
+  "source_physical_ledger_sha256": "486b4b08ace112fa497ed7165600dd34790018f7f20f7dbb321ad3cbc1184ce0",
+  "phase_bounds": {
+    "angle_first": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.566671590857764,
+        0.5720571697142459,
+        0.30026399523997865,
+        1.531185215920542
+      ]
+    ],
+    "wrist_first": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.55
+      ],
+      [
+        0.566671590857764,
+        0.5720571697142459,
+        0.65,
+        1.02
+      ]
+    ],
+    "finger_release": [
+      [
+        0.0,
+        0.0,
+        0.55,
+        0.55
+      ],
+      [
+        1.0,
+        1.0,
+        1.02,
+        1.02
+      ]
+    ]
+  },
+  "snapshots": {
+    "58": {
+      "sha256": "0cbdb527190130101c055c3e46425b953010c178b9511d60045c7c0b4c1b8438",
+      "stages": {
+        "angle_first": {
+          "minimum_margin_m": 3.4360551014290066e-08,
+          "independent_subboxes": 110
+        },
+        "wrist_first": {
+          "minimum_margin_m": 6.163132330691979e-07,
+          "independent_subboxes": 40
+        },
+        "finger_release": {
+          "minimum_margin_m": 4.0598123394897253e-07,
+          "independent_subboxes": 112
+        }
+      },
+      "nominal_right_pad_gaps_m": [
+        -6.362656131386757e-05,
+        -0.00016784574836492538
+      ]
+    },
+    "66": {
+      "sha256": "d4a005d831a9d2ee2630524ae014870129c036bdf8e57b734b453b22981959fb",
+      "stages": {
+        "angle_first": {
+          "minimum_margin_m": 3.4360551014290066e-08,
+          "independent_subboxes": 110
+        },
+        "wrist_first": {
+          "minimum_margin_m": 6.163132330691979e-07,
+          "independent_subboxes": 40
+        },
+        "finger_release": {
+          "minimum_margin_m": 4.0598123394897253e-07,
+          "independent_subboxes": 112
+        }
+      },
+      "nominal_right_pad_gaps_m": [
+        -6.390083581209183e-05,
+        -0.00016755936667323112
+      ]
+    },
+    "74": {
+      "sha256": "649ab3b0b72a4243416b582108e77b3c949a5095f679ab44aba4353cf040c076",
+      "stages": {
+        "angle_first": {
+          "minimum_margin_m": 3.4360551014290066e-08,
+          "independent_subboxes": 115
+        },
+        "wrist_first": {
+          "minimum_margin_m": 6.163132330691979e-07,
+          "independent_subboxes": 43
+        },
+        "finger_release": {
+          "minimum_margin_m": 7.205343781771723e-08,
+          "independent_subboxes": 227
+        }
+      },
+      "nominal_right_pad_gaps_m": [
+        -7.820967584848404e-05,
+        -6.591528654098511e-05
+      ]
+    }
+  },
+  "requests": {
+    "angle_only_requests": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.1218628572565987,
+        -0.5797185302619656,
+        0.0016936942911503425
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "translation_only_requests": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.055350073605131556,
+        0.02047368028512686,
+        -0.3410866591025963,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "finger_only_requests": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0070095062255859375,
+        0.5679025873541833,
+        0.7793331146240146,
+        -0.0015616416931152344,
+        -0.00016689300537109375,
+        -0.00014901161193847656,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    ]
+  },
+  "source_right_target": [
+    0.6994751691818237,
+    0.02769904024899006,
+    0.7368510961532593,
+    0.27531737089157104,
+    0.5642440915107727,
+    0.2512429654598236,
+    0.523539669515098,
+    -0.2244752257203704,
+    0.4098924724713413,
+    0.004578596290998997,
+    0.022029355076259027,
+    -6.724739258763329e-05
+  ],
+  "proposed_right_hold_target": [
+    0.6995102167129517,
+    0.030538553185760976,
+    0.7407477617263794,
+    0.27530956268310547,
+    0.5642432570457458,
+    0.2512422204017639,
+    0.5235304445028305,
+    -0.22447181344032288,
+    0.4098356246948242,
+    0.0035630724805273415,
+    0.01719836732407598,
+    -5.313327349471377e-05
+  ],
+  "measured_max_reference_rod_drift_m": 0.0008241766,
+  "independent_sensitivity_m": 5e-05,
+  "live_release_gate_required": true,
+  "original_safety_only": true,
+  "native_runs": 0,
+  "ppo_updates": 0,
+  "native_ready": false,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "cpu_tests": {
+    "passed": 192,
+    "failed": 0,
+    "log_sha256": "5e28656bf30e1a8b98a4515730fb2e29d487a3ea496799fa8ce05fe423db8754",
+    "command": [
+      "python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_pinch_wrist_first.py",
+      "tests/test_dh116_pinch_prelift.py",
+      "tests/test_dh116_pinch_wrist_relief_worker.py",
+      "tests/test_dh116_pinch_wrist_relief.py",
+      "tests/test_dh116_pinch_early_finger_worker.py",
+      "tests/test_dh116_pinch_early_finger.py",
+      "tests/test_dh116_pinch_late_wrist.py",
+      "tests/test_dh116_staged_pinch_contact.py",
+      "tests/test_dh116_pinch_staged_closure.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_native_teacher_worker_contract.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_tripod_tracking_envelope.py"
+    ]
+  }
+}

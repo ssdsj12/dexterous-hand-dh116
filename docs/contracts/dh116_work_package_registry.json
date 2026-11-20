@@ -43632,6 +43632,43 @@
         "teacher_admission": false,
         "native_qualification": false
       }
+    },
+    "teacher.pinch-right-wrist-first-cpu": {
+      "title": "Three-phase measured right-wrist and finger release geometry",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-prelift-target-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_wrist_first.py",
+        "tests/test_dh116_pinch_prelift.py",
+        "tests/test_dh116_pinch_wrist_relief_worker.py",
+        "tests/test_dh116_pinch_wrist_relief.py",
+        "tests/test_dh116_pinch_early_finger_worker.py",
+        "tests/test_dh116_pinch_early_finger.py",
+        "tests/test_dh116_pinch_late_wrist.py",
+        "tests/test_dh116_staged_pinch_contact.py",
+        "tests/test_dh116_pinch_staged_closure.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_tripod_tracking_envelope.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-right-wrist-first.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_right_wrist_first_cpu_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 192,
+        "failed": 0,
+        "qualified_cpu_rod_snapshots": 3,
+        "certified_shapes_each_phase": 22,
+        "native_ready": false,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

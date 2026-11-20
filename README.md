@@ -1,4 +1,8 @@
 
+## Pinch staged right wrist entry
+
+The right Pinch transition now has three bounded command phases with conditional clearance checks. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-right-wrist-first.md).
+
 ## Pinch simultaneous bilateral contact
 
 Pinch records 14 consecutive same-substep bilateral opposed reactions in a bounded native close. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-wrist-relief-native-result.md).

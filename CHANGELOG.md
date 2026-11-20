@@ -1,4 +1,8 @@
 
+## Pinch staged right wrist entry
+
+Separately certify right Pinch wrist rotation, translation and finger closure from the recorded approach. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-right-wrist-first.md).
+
 ## Pinch simultaneous bilateral contact
 
 Record simultaneous native Pinch forces and terminal sign loss after source-bound left wrist relief. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-wrist-relief-native-result.md).
