@@ -58,7 +58,8 @@ def _jsonl(raw, *, name, maximum):
     return result
 
 
-def _journal(rows, result, *, controls=32):
+def _journal(rows, result, *, controls=32, initial_version=0, prior_accepted=0,
+             prior_weights=None):
     by_operation={}
     for index,row in enumerate(rows):
         if (set(row)!={"sequence","scope","operation","payload"}
@@ -85,12 +86,15 @@ def _journal(rows, result, *, controls=32):
             for k in ("updates","accepted_minibatch_updates","parameter_delta_l2")):
         raise ValueError("summary accepted update must equal original journal counters and weight-change metric")
     metrics=accepted.get("metrics")
-    if (not isinstance(metrics,dict) or not _exact_int(metrics.get("minibatch_updates"),training["accepted_minibatch_updates"])):
+    new_minibatches=training["accepted_minibatch_updates"]-prior_accepted
+    if (new_minibatches<1 or not isinstance(metrics,dict)
+            or not _exact_int(metrics.get("minibatch_updates"),new_minibatches)):
         raise ValueError("accepted journal metrics must contain the actual completed minibatch count")
     origin=by_operation["collector_origin"][0]["payload"].get("policy")
     epoch=by_operation["policy_epoch"][0]["payload"]
-    if (not isinstance(origin,dict) or not _exact_int(origin.get("policy_version"),0)
-            or not _exact_int(epoch.get("policy_version"),1)
+    if (not isinstance(origin,dict) or not _exact_int(origin.get("policy_version"),initial_version)
+            or not _exact_int(epoch.get("policy_version"),initial_version+1)
+            or prior_weights is not None and origin.get("weights")!=prior_weights
             or not isinstance(origin.get("session_id"),str) or not origin["session_id"]
             or epoch.get("session_id")!=origin["session_id"] or epoch.get("model")!=origin.get("model")
             or any(not _sha(item.get(key)) for item in (origin,epoch) for key in ("weights","model"))
@@ -103,7 +107,7 @@ def _journal(rows, result, *, controls=32):
         settled=settlement["payload"].get("reward")
         selected_policy=decision["payload"].get("policy")
         if (not isinstance(token,str) or not token or token in tokens
-                or not isinstance(selected_policy,dict) or not _exact_int(selected_policy.get("policy_version"),0)
+                or not isinstance(selected_policy,dict) or not _exact_int(selected_policy.get("policy_version"),initial_version)
                 or selected_policy!=origin
                 or not isinstance(settled,dict) or settled.get("token")!=token
                 or transition["payload"].get("collection_token")!=token
@@ -153,7 +157,8 @@ def audit_teacher_artifacts_v2(spec, output):
         checkpoint_binding=checkpoint,checkpoint_bytes=raw[checkpoint["path"]],journal_rows=journal)
 
 
-def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None, controls=32):
+def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None, controls=32,
+                      initial_policy_version=0):
     """Check existing C04 payloads, never invent Reset/setup or clock values.
 
     This original action schema records the nominal SDK timestamp contract.
@@ -196,7 +201,7 @@ def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None, 
                     or history["pre_action_sha256"]!=decision["pre_action_sha256"]
                     or not _sha(decision["pre_action_sha256"])
                     or policy["collection_token"]!=token or policy["session_id"]!=origin["session_id"]
-                    or not _exact_int(policy["policy_version"],0)
+                    or not _exact_int(policy["policy_version"],initial_policy_version)
                     or policy["model_weights_sha256"]!=origin["weights"]
                     or _digest(policy["model_identity"])!=origin["model"]
                     or not np.array_equal(_action(history["sampled_action24"]),action)
@@ -327,16 +332,24 @@ def _current_recipe_context(spec, repository, package):
 
 def _audit_fresh_checkpoint(spec, repository, context, *, checkpoint_bytes, checkpoint_binding,
                             training, epoch, include_rng_digest=False):
+    return _audit_role_checkpoint(spec, repository, context, checkpoint_bytes=checkpoint_bytes,
+        checkpoint_binding=checkpoint_binding, training=training, epoch=epoch, expected_origin={"kind":"fresh"},
+        environment_windows=1, include_rng_digest=include_rng_digest)
+
+
+def _audit_role_checkpoint(spec, repository, context, *, checkpoint_bytes, checkpoint_binding,
+                           training, epoch, expected_origin, environment_windows, include_rng_digest=False):
     with _cpu_reference(spec,repository,context) as (trainer,contract):
         from .tabletop_native_teacher_checkpoint import audit_checkpoint_bytes
         from .tabletop_deformable_r0_replay import _digest
         try:
-            metadata=audit_checkpoint_bytes(checkpoint_bytes,trainer,contract,expected_origin={"kind":"fresh"},
+            metadata=audit_checkpoint_bytes(checkpoint_bytes,trainer,contract,expected_origin=expected_origin,
                 include_rng_digest=include_rng_digest)
         except RuntimeError as error:
             raise ValueError("CPU checkpoint audit rejected malformed payload: "+str(error)) from error
         if (metadata["checkpoint_sha256"]!=checkpoint_binding["sha256"]
-                or metadata["counters"]!={"environment_steps":spec["teacher_contract"]["limits"]["controls"],"updates":training["updates"]}
+                or metadata["counters"]!={"environment_steps":environment_windows*spec["teacher_contract"]["limits"]["controls"],
+                                          "updates":training["updates"]}
                 or metadata["policy_version"]!=epoch["policy_version"]
                 or metadata["accepted_minibatch_updates"]!=training["accepted_minibatch_updates"]
                 or metadata["policy_weights_sha256"]!=epoch["weights"]

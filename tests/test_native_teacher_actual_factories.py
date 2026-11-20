@@ -37,6 +37,7 @@ def boundaries(monkeypatch, tmp_path, backend_profile):
     lease._config = dict(schema=VERSION, preflight=preflight, model_config=model_config,
                          episode_cap_s=2., rollout_steps=32)
     lease._closed = False
+    lease._reply = SimpleNamespace(checkpoint_origin=None, role="a_fresh")
     lease._envelope = SimpleNamespace(deadline_monotonic_s=time.monotonic() + 60.)
     lease_events = []
 
@@ -182,3 +183,42 @@ def test_expired_parent_deadline_rejects_before_building_episode(boundaries, mon
                                 prepare_source_pack=lambda *_: None)
     with pytest.raises((ValueError, RuntimeError), match="parent.*deadline"):
         fs.episode(static)
+
+
+def test_leased_restore_runs_only_after_new_live_reset_and_source_binding(boundaries, monkeypatch):
+    _, lease, owner, static, _, _ = boundaries
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_checkpoint as checkpoint
+
+    origin = dict(checkpoint_path="/verified/actual/A/teacher_clean.pt", checkpoint_sha256="b"*64)
+    lease._reply = SimpleNamespace(checkpoint_origin=origin, role="b_resume")
+    order = []
+
+    def training_contract(trainer, verified_owner):
+        assert verified_owner is owner and owner.context._current is not None
+        assert trainer.counters["updates"] == 0
+        order.append("training_contract")
+        return {"cpu_fixture": True}
+
+    def restore(factory, path, contract, *, expected_sha256):
+        assert path == origin["checkpoint_path"] and expected_sha256 == origin["checkpoint_sha256"]
+        def load():
+            trainer = factory()
+            assert contract(trainer) == {"cpu_fixture": True}
+            order.append("restore")
+            return trainer
+        return load
+
+    monkeypatch.setattr(checkpoint, "checkpoint_trainer_factory", restore)
+    factories = build_actual_factories(lease=lease, episode_factory=lambda contract: owner,
+        prepare_source_pack=lambda held, contract: lambda model: order.append("source_bound"),
+        resume_contract=training_contract)
+    factories.episode(static)
+    live = ModelContract(static.config.model_config, static.backend_profile, SMOKE)
+    with pytest.raises(ValueError, match="same live episode"):
+        factories.policy(live)
+    assert order == []
+    _finished_live_check(owner)
+    model = factories.policy(live)
+    trainer = factories.trainer(model, static.ppo_config)
+    assert trainer.model is model
+    assert order == ["source_bound", "training_contract", "restore"]

@@ -1,4 +1,4 @@
-"""Fixed A-fresh Pinch Worker. The scheduler owns outer-process qualification."""
+"""Owned Pinch PPO worker. The scheduler verifies eventual outer-process exit."""
 from contextlib import closing
 from dataclasses import dataclass
 from functools import partial
@@ -27,12 +27,12 @@ class _Attempt:
         return self.repository.root
 
 
-def _verify_attempt(config, lease, output):
+def _verify_attempt(config, lease, output, *, role="a_fresh"):
     if type(lease) is not process.ActualWorkerLease:
         raise TypeError("verified actual worker lease required")
     lease.revalidate()
-    if lease.role != "a_fresh" or lease.resume_origin is not None:
-        raise ValueError("fresh actual worker role and empty resume origin required")
+    if lease.role != role or ((role == "a_fresh") != (lease.resume_origin is None)):
+        raise ValueError("actual worker role and its authorized resume origin must agree")
     if json.dumps(config, sort_keys=True, allow_nan=False) != json.dumps(
             lease.process_config, sort_keys=True, allow_nan=False):
         raise ValueError("actual worker config differs from the verified process overlay")
@@ -94,6 +94,10 @@ def _prepare_source_pack(owner, contract, *, device):
 
 
 def _checkpoint_contract(collector, attempt):
+    return _make_checkpoint_contract(collector.trainer, collector.live.static, collector.sources.scope, attempt)
+
+
+def _make_checkpoint_contract(trainer, static, scope, attempt):
     from scripts.diagnose_dh116_teacher_initialization import validate_loaded_project_modules
     from .tabletop_mesh_observation_source import CONFIG, CONFIG_SHA
     from .tabletop_native_teacher_actual_launch import audit_loaded_actual_sources
@@ -105,7 +109,6 @@ def _checkpoint_contract(collector, attempt):
     )
     from .tabletop_surface_contract import ACTION_CONTRACT
 
-    static = collector.live.static
     profile, manifest = static.backend_profile, static.reset_manifest
     source = worker_training_source_contract(attempt.repository, attempt.package, attempt.spec)
     target = digest(worker_training_target_contract(profile, manifest))
@@ -128,13 +131,13 @@ def _checkpoint_contract(collector, attempt):
         raise ValueError("live Teacher semantic identity differs from the frozen recipe")
     validate_loaded_project_modules(attempt.project)
     audit_loaded_actual_sources(attempt.repository, attempt.package)
-    return build_training_contract(collector.trainer, scope=collector.sources.scope,
+    return build_training_contract(trainer, scope=scope,
         reward_sha256=expected["reward_sha256"], target_sha256=target, reset_sha256=manifest.sha256,
         source_sha256=source, config_sha256=semantic)
 
 
 
-def _record_actual_wall_budget(collector, lease, phase):
+def _record_actual_wall_budget(collector, lease, phase, *, operation="fresh_update_wall_budget"):
     owner = collector.owner
     runtime = owner.contract.runtime
     sample = runtime.wall_readback()
@@ -142,12 +145,12 @@ def _record_actual_wall_budget(collector, lease, phase):
             or owner.context.external_cap_s != sample["local_cap_s"]
             or owner.context.episode_cap_s != owner.contract.config.episode_cap_s):
         raise ValueError("live actual Teacher wall budget or context cap differs")
-    collector.journal.emit("fresh_update_wall_budget", dict(sample, phase=phase,
+    collector.journal.emit(operation, dict(sample, phase=phase,
         episode_uid=owner.episode_uid, sdk_step=owner.sim.current_time_step_index,
         episode_cap_s=owner.context.episode_cap_s))
 
 
-def _acquire(sim, owners, trace, *, attempt, config, lease):
+def _acquire(sim, owners, trace, *, attempt, config, lease, resume=None):
     import torch
 
     from .tabletop_native_teacher_actual_factories import (
@@ -156,7 +159,7 @@ def _acquire(sim, owners, trace, *, attempt, config, lease):
         build_actual_factories,
     )
     from .tabletop_fast_owned_codec import codec_scope
-    from .tabletop_native_teacher_actual_update import run_fresh_update
+    from .tabletop_native_teacher_actual_update import run_fresh_update, run_resumed_update
     from .tabletop_native_teacher_collector import NativeJournal
     from .tabletop_native_teacher_session import (
         NativeSessionConfig, build_fresh_pinch_owner, create_native_collector,
@@ -171,34 +174,51 @@ def _acquire(sim, owners, trace, *, attempt, config, lease):
                 ownership=trace, ledger=journal, run_uuid=attempt.session_uid,
                 episode_uid=attempt.session_uid + ":0", owner_resets=_fresh_reset_owners(), mesh_plan=None)
 
+        factory_options = {}
+        restored_contract = None
+
+        def make_restore_contract(trainer, owner):
+            nonlocal restored_contract
+            restored_contract = _make_checkpoint_contract(trainer, owner.contract, owner.sources.scope, attempt)
+            return restored_contract
+
+        if resume is not None:
+            factory_options["resume_contract"] = make_restore_contract
         factories = build_actual_factories(lease=lease, episode_factory=build,
-            prepare_source_pack=partial(_prepare_source_pack, device=attempt.device["logical_device"]))
+            prepare_source_pack=partial(_prepare_source_pack, device=attempt.device["logical_device"]),
+            **factory_options)
         collector = create_native_collector(session, factories)
+        record_budget = _record_actual_wall_budget if resume is None else partial(
+            _record_actual_wall_budget, operation="resume_update_wall_budget")
         try:
-            checkpoint_contract = _checkpoint_contract(collector, attempt)
-            _record_actual_wall_budget(collector, lease, "before_update")
-            # Keep exploration, PPO minibatches and checkpoint sealing on the
-            # same CPU stream. Restore the process state even on failure.
-            with torch.random.fork_rng(devices=[]):
-                torch.default_generator.manual_seed(FRESH_POLICY_EXPLORATION_SEED)
-                rng_bytes = torch.get_rng_state().numpy().tobytes()
-                journal.emit("fresh_policy_rng", {
-                    "version": "dh116-fresh-policy-cpu-rng-v1",
-                    "device_scope": "cpu",
-                    "initialization_seed": FRESH_POLICY_INITIALIZATION_SEED,
-                    "exploration_seed": FRESH_POLICY_EXPLORATION_SEED,
-                    "initial_weights_sha256": collector._epoch["weights"],
-                    "exploration_state_sha256": hashlib.sha256(rng_bytes).hexdigest(),
-                    "deterministic_physics_claimed": False,
-                    "native_qualification": False,
-                    "teacher_admission": False,
-                })
-                # The one owned worker can accelerate the legacy encoder during
-                # collection; the unchanged replay schema remains authoritative.
+            checkpoint_contract = (_checkpoint_contract(collector, attempt) if resume is None
+                                   else restored_contract)
+            record_budget(collector, lease, "before_update")
+            if resume is not None:
                 with codec_scope(), collector.trace_wall_windows(trace.event):
-                    result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract,
-                                              controls=config["rollout_steps"])
-            _record_actual_wall_budget(collector, lease, "after_update")
+                    result = run_resumed_update(collector, checkpoint_contract=checkpoint_contract,
+                                                controls=config["rollout_steps"], origin=resume)
+            else:
+                with torch.random.fork_rng(devices=[]):
+                    torch.default_generator.manual_seed(FRESH_POLICY_EXPLORATION_SEED)
+                    rng_bytes = torch.get_rng_state().numpy().tobytes()
+                    journal.emit("fresh_policy_rng", {
+                        "version": "dh116-fresh-policy-cpu-rng-v1",
+                        "device_scope": "cpu",
+                        "initialization_seed": FRESH_POLICY_INITIALIZATION_SEED,
+                        "exploration_seed": FRESH_POLICY_EXPLORATION_SEED,
+                        "initial_weights_sha256": collector._epoch["weights"],
+                        "exploration_state_sha256": hashlib.sha256(rng_bytes).hexdigest(),
+                        "deterministic_physics_claimed": False,
+                        "native_qualification": False,
+                        "teacher_admission": False,
+                    })
+                    # The one owned worker can accelerate the legacy encoder during
+                    # collection; the unchanged replay schema remains authoritative.
+                    with codec_scope(), collector.trace_wall_windows(trace.event):
+                        result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract,
+                                                  controls=config["rollout_steps"])
+            record_budget(collector, lease, "after_update")
         except BaseException:
             try:
                 collector.close()
@@ -211,7 +231,7 @@ def _acquire(sim, owners, trace, *, attempt, config, lease):
         return result
 
 
-def _run_isaac(attempt, config, lease):
+def _run_isaac(attempt, config, lease, *, resume=None):
     from scripts import diagnose_dh116_teacher_initialization as native
     from scripts.diagnose_dh116_teacher_stat_cache_release import make_before_collect
     from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
@@ -279,7 +299,8 @@ def _run_isaac(attempt, config, lease):
             return sim
 
         def acquire(sim, owners, trace, cleanup):
-            result = _acquire(sim, owners, trace, attempt=attempt, config=config, lease=lease)
+            result = _acquire(sim, owners, trace, attempt=attempt, config=config, lease=lease,
+                              **({"resume": resume} if resume is not None else {}))
             clock = result["physical"]
             cache_release(sim, expected_sdk_step=clock["end_sdk_step"])
             return dict(result, physics_rows=clock["end_sdk_step"] - clock["start_sdk_step"])
@@ -316,15 +337,33 @@ def _run_isaac(attempt, config, lease):
 
 def run_a(*, config, lease, output):
     """Run one bounded fresh smoke update with the approved process lease."""
-    from scripts.diagnose_dh116_teacher_initialization import write_new
-    from .tabletop_native_teacher_actual_artifacts import derive_actual_artifacts
+    return _run_owned_update(config, lease, output, role="a_fresh")
 
-    attempt = _verify_attempt(config, lease, output)
+
+def run_b(*, config, lease, output):
+    """Restore A only after a new authorised Reset, then make one update."""
+    return _run_owned_update(config, lease, output, role="b_resume")
+
+
+def _run_owned_update(config, lease, output, *, role):
+    from scripts.diagnose_dh116_teacher_initialization import write_new
+    from .tabletop_native_teacher_actual_artifacts import derive_actual_artifacts, derive_actual_resume_artifacts
+
+    resume = None
+    if role == "a_fresh":
+        attempt = _verify_attempt(config, lease, output)
+    else:
+        attempt = _verify_attempt(config, lease, output, role=role)
+        resume = lease.resume_origin
     attempt.output.mkdir()
-    lifecycle = _run_isaac(attempt, config, lease)
+    lifecycle = (_run_isaac(attempt, config, lease) if resume is None
+                 else _run_isaac(attempt, config, lease, resume=resume))
     if lifecycle.get("close_mode") != "normal" or lifecycle.get("failure") is not None:
         raise RuntimeError("R06 normal in-process close required before recording the update")
-    derive_actual_artifacts(spec=attempt.spec, output=attempt.output)
+    if resume is None:
+        derive_actual_artifacts(spec=attempt.spec, output=attempt.output)
+    else:
+        derive_actual_resume_artifacts(spec=attempt.spec, output=attempt.output, origin=resume)
     result = dict(lifecycle["acquisition"], process_exit_verified=False,
                   native_qualification=False, teacher_admission=False)
     write_new(attempt.output / "owned_update.json", result)

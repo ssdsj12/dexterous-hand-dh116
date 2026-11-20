@@ -1,19 +1,21 @@
-"""Derive the fresh Worker's evidence views from its closed original journals."""
+"""Derive actual Worker evidence views from its closed original journals."""
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from .tabletop_native_teacher_worker_artifacts import PRIMARY_OPERATIONS, _journal, _json, _jsonl
 from .tabletop_native_teacher_worker_contract import (
-    RESULT_SCHEMA, validate_teacher_recipe_v2, validate_teacher_training_result,
+    RESULT_SCHEMA, _sha, validate_teacher_recipe_v2, validate_teacher_training_result,
 )
 
 
 _LIFECYCLE_FILES = ("result.json", "cleanup_stages.json", "app_close_returned.json",
                     "stop_commit.json", "ownership.jsonl")
 _VIEWS = {"physics.jsonl": "physical", "transitions.jsonl": "transition_recorded", "ownership.jsonl": None}
+_RESUME_RESULT_SCHEMA = "dh116-native-teacher-actual-resume-result-v1"
 _CLOSE_STAGES = ("stop", "manager_before_close", "ownership_before_close", "close", "close_returned_marker")
 
 
@@ -94,7 +96,50 @@ def _originals(spec, output):
     return lifecycle, raw, checkpoint
 
 
-def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes):
+def _resume_result(result, acquisition, rows, origin, *, contract, checkpoint_sha):
+    """Bind B's report to the exact loaded policy, counters and raw update seal."""
+    if (type(origin) is not dict or origin.get("origin_scope") != "actual_resume_diagnostic_unqualified"
+            or origin.get("native_qualification") is not False or origin.get("teacher_admission") is not False
+            or origin.get("source_closure_sha256") != contract["source_sha256"]
+            or origin.get("semantic_sha256") != contract["semantic_sha256"]
+            or any(type(origin.get(key)) is not int or origin[key] != value for key, value in (
+                ("loaded_updates", 1), ("loaded_policy_version", 1),
+                ("loaded_environment_steps", contract["limits"]["controls"])))
+            or any(not _sha(origin.get(key)) or origin[key]=="0"*64 for key in
+                   ("checkpoint_sha256", "policy_weights_sha256", "rng_state_sha256"))):
+        raise ValueError("verified same-contract actual A diagnostic origin required")
+    expected_origin = dict(kind="resume", checkpoint_sha256=origin["checkpoint_sha256"])
+    training = result["training"]
+    accepted_before = origin.get("loaded_accepted_minibatch_updates")
+    seal_rows = [row for row in rows if row["operation"] == "resume_update_checkpoint_sealed"]
+    start_checks = dict(resume_origin=expected_origin, restored_rng_sha256=origin["rng_state_sha256"],
+                        native_qualification=False, teacher_admission=False)
+    if (type(accepted_before) is not int or accepted_before<1
+            or any(type(training.get(key)) is not int or training[key] != value for key, value in (
+                ("loaded_updates", 1), ("target_updates", 2), ("updates", 2)))
+            or type(training.get("accepted_minibatch_updates")) is not int
+            or training["accepted_minibatch_updates"] <= accepted_before
+            or type(training.get("parameter_delta_l2")) not in (int, float)
+            or not math.isfinite(training["parameter_delta_l2"]) or training["parameter_delta_l2"]<=0
+            or result["clean_checkpoint"] != dict(path="teacher_clean.pt", sha256=checkpoint_sha)
+            or not _sha(checkpoint_sha) or checkpoint_sha == origin["checkpoint_sha256"]
+            or any(type(acquisition.get(key)) is not type(value) or acquisition[key] != value
+                   for key, value in start_checks.items())
+            or len(seal_rows) != 1 or any(row["operation"] == "fresh_update_checkpoint_sealed" for row in rows)
+            or _json_line(seal_rows[0]["payload"]) != _json_line(
+                {key:value for key,value in acquisition.items() if key!="physics_rows"})
+            or "physics_rows" in acquisition and (type(acquisition["physics_rows"]) is not int
+                or acquisition["physics_rows"] != contract["limits"]["controls"]*8)
+            or any(row["sequence"] >= seal_rows[0]["sequence"] for row in rows
+                   if row["operation"] == "optimizer_update_accepted")):
+        raise ValueError("resumed result differs from the same-contract loaded state or original journal seal")
+    result.update(schema=_RESUME_RESULT_SCHEMA, resume_origin=expected_origin,
+                  restored_rng_sha256=origin["rng_state_sha256"])
+    return _journal(rows, result, controls=contract["limits"]["controls"], initial_version=1,
+                    prior_accepted=accepted_before, prior_weights=origin["policy_weights_sha256"])
+
+
+def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes, *, origin=None):
     acquisition = _normal_close(lifecycle)
     physical = acquisition.get("physical")
     contract = spec["teacher_contract"]
@@ -117,9 +162,13 @@ def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes):
         clean_checkpoint={name: checkpoint.get(name) for name in ("path", "sha256")},
         process_exit_verified=False, native_qualification=False, teacher_admission=False,
         raw_journal_sha256=_digest(raw), lifecycle_sha256={name: _digest(data) for name, data in lifecycle.items()})
-    validate_teacher_training_result(result, expected_semantic_sha256=contract["semantic_sha256"],
-                                     artifact_sha256={"teacher_clean.pt": checkpoint_sha})
-    epoch = _journal(rows, result, controls=bounds["controls"])
+    if origin is None:
+        validate_teacher_training_result(result, expected_semantic_sha256=contract["semantic_sha256"],
+                                         artifact_sha256={"teacher_clean.pt": checkpoint_sha})
+        epoch = _journal(rows, result, controls=bounds["controls"])
+    else:
+        epoch = _resume_result(result, acquisition, rows, origin, contract=contract,
+                               checkpoint_sha=checkpoint_sha)
 
     files = {}
     for name, operation in _VIEWS.items():
@@ -139,22 +188,44 @@ def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes):
 
 def derive_actual_artifacts(*, spec, output):
     """Write fresh pre-exit Worker evidence. The raw journal and R06 stay intact."""
+    return _derive(spec, output, origin=None)
+
+
+def derive_actual_resume_artifacts(*, spec, output, origin):
+    """Write resumed pre-exit evidence with distinct counters and origin."""
+    if type(origin) is not dict:
+        raise ValueError("actual A origin required for B evidence")
+    return _derive(spec, output, origin=origin)
+
+
+def _derive(spec, output, *, origin):
     output = Path(output)
     for name in (*_VIEWS, "shutdown_complete.json", "training_result.json"):
         if os.path.lexists(output / name):
             raise FileExistsError("derived output already exists: " + name)
-    files, result, _, _ = _derived_payloads(spec, *_originals(spec, output))
+    files, result, _, _ = _derived_payloads(spec, *_originals(spec, output), origin=origin)
     _publish(output, files)
     return result
 
 
 def freeze_actual_fresh_artifacts(*, spec, output):
-    """Read each file once and recompute the views over those immutable bytes."""
+    """Read each file once and recompute the A views over those immutable bytes."""
+    return _freeze(spec, output, origin=None)
+
+
+def freeze_actual_resume_artifacts(*, spec, output, origin):
+    """Read B's immutable view bytes and recompute its separate result contract."""
+    if type(origin) is not dict:
+        raise ValueError("actual A origin required for B evidence")
+    return _freeze(spec, output, origin=origin)
+
+
+def _freeze(spec, output, *, origin):
     from scripts.run_dh116_work_packages import native_artifact
 
     output = Path(output)
     lifecycle, raw, checkpoint = _originals(spec, output)
-    expected, result, rows, epoch = _derived_payloads(spec, lifecycle, raw, checkpoint)
+    expected, result, rows, epoch = _derived_payloads(spec, lifecycle, raw, checkpoint, origin=origin)
     digests = {}
     for name, canonical in expected.items():
         saved = native_artifact(output, name).read_bytes()
@@ -167,11 +238,11 @@ def freeze_actual_fresh_artifacts(*, spec, output):
                 artifact_sha256=digests, policy_epoch=epoch)
 
 
-def _audit_sealed_packs(frozen, profile, *, controls=32):
+def _audit_sealed_packs(frozen, profile, *, controls=32, seal_operation="fresh_update_checkpoint_sealed"):
     from .tabletop_native_teacher_actual_inputs import SCOPE, audit_teacher_input_sources
 
     seams = [(index, row["payload"]) for index, row in enumerate(frozen["rows"])
-             if row["operation"] == "fresh_update_checkpoint_sealed"]
+             if row["operation"] == seal_operation]
     if len(seams) != 1:
         raise ValueError("source ledger requires exactly one checkpoint seal")
     index, seal = seams[0]
@@ -229,12 +300,12 @@ def _audit_fresh_setup(rows):
 
 
 
-def _audit_fresh_budget(rows, envelope, *, episode_uid, episode_cap_s, local_cap_s, end_sdk_step=258):
-    import math
+def _audit_fresh_budget(rows, envelope, *, episode_uid, episode_cap_s, local_cap_s, end_sdk_step=258,
+                        role_prefix="fresh"):
 
-    samples = [row for row in rows if row["operation"] == "fresh_update_wall_budget"]
+    samples = [row for row in rows if row["operation"] == role_prefix + "_update_wall_budget"]
     decisions = [row["sequence"] for row in rows if row["operation"] == "decision"]
-    seals = [row["sequence"] for row in rows if row["operation"] == "fresh_update_checkpoint_sealed"]
+    seals = [row["sequence"] for row in rows if row["operation"] == role_prefix + "_update_checkpoint_sealed"]
     if (len(samples) != 2 or not decisions or len(seals) != 1
             or not samples[0]["sequence"] < decisions[0] <= decisions[-1] < seals[0] < samples[1]["sequence"]
             or episode_uid != envelope.nonce + ":0"):
@@ -266,38 +337,71 @@ def audit_actual_fresh_outputs(spec, output, *, repository, package, envelope):
     The returned data can describe a complete measured window while it remains
     ineligible for publishing a qualified native receipt.
     """
+    return _audit_actual_outputs(spec, output, repository=repository, package=package,
+                                 envelope=envelope, role="a_fresh")
+
+
+def audit_actual_resume_outputs(spec, output, *, repository, package, envelope):
+    """Audit B only after its outer process exit and parent origin readback."""
+    return _audit_actual_outputs(spec, output, repository=repository, package=package,
+                                 envelope=envelope, role="b_resume")
+
+
+def _audit_actual_outputs(spec, output, *, repository, package, envelope, role):
     from .tabletop_native_teacher_actual_process import ParentLaunchEnvelope
     from .tabletop_native_teacher_profile import BackendProfile, checked_file
     from .tabletop_native_teacher_worker_artifacts import (
-        _audit_fresh_checkpoint, _current_recipe_context, _physical_journal,
+        _audit_fresh_checkpoint, _audit_role_checkpoint, _current_recipe_context, _physical_journal,
     )
 
     context = _current_recipe_context(spec, repository, package)
     launch = repository.actual_launch(context["package"])
-    if launch is None or launch["role"] != "a_fresh" or launch["checkpoint_origin"] is not None:
-        raise ValueError("registered A-fresh companion required for this output audit")
+    if launch is None or launch["role"] != role:
+        raise ValueError("matching registered actual companion role required for this audit")
     pin = spec["teacher_contract"]
-    if (type(envelope) is not ParentLaunchEnvelope or envelope.role != "a_fresh"
+    if (type(envelope) is not ParentLaunchEnvelope or envelope.role != role
             or envelope.package_name != context["package_name"] or
             envelope.semantic_sha256 != pin["semantic_sha256"] or envelope.core_source_sha256 != pin["source_sha256"]
             or envelope.frozen_config != pin["training_config"]):
         raise ValueError("parent launch envelope differs from the approved actual budget")
     config = json.loads(checked_file(envelope.frozen_config["path"], envelope.frozen_config["sha256"]))
-    frozen = freeze_actual_fresh_artifacts(spec=spec, output=output)
+    origin = envelope.checkpoint_origin
+    if role == "a_fresh":
+        if origin is not None or launch["checkpoint_origin"] is not None:
+            raise ValueError("fresh output audit rejects a resume origin")
+        frozen = freeze_actual_fresh_artifacts(spec=spec, output=output)
+        prefix, initial_version = "fresh", 0
+    else:
+        reference = launch["checkpoint_origin"]
+        if (type(origin) is not dict or type(reference) is not dict
+                or set(reference) != {"producer_package", "receipt_sha256"}
+                or any(origin.get(key) != reference[key] for key in reference)):
+            raise ValueError("resumed output origin differs from the registered A reference")
+        frozen = freeze_actual_resume_artifacts(spec=spec, output=output, origin=origin)
+        prefix, initial_version = "resume", 1
     setup = _audit_fresh_setup(frozen["rows"])
+    if origin is not None and setup["episode_uid"] == origin["producer_episode_uid"]:
+        raise ValueError("resumed output must contain a distinct physical Reset from A")
     budget = _audit_fresh_budget(frozen["rows"], envelope, episode_uid=setup["episode_uid"],
         episode_cap_s=config["episode_cap_s"], local_cap_s=pin["limits"]["inner_wall_timeout_s"],
-        end_sdk_step=spec["budget"]["physics_steps"])
+        end_sdk_step=spec["budget"]["physics_steps"], role_prefix=prefix)
     physical = _physical_journal(frozen["rows"], reward_scope="unqualified_source",
-                                 expected_backend_sha256=pin["backend_sha256"], controls=pin["limits"]["controls"])
+        expected_backend_sha256=pin["backend_sha256"], controls=pin["limits"]["controls"],
+        initial_policy_version=initial_version)
     if physical["physical_nodes"] != 41:
         raise ValueError("actual Pinch Worker requires 41 measured material nodes")
     model_input = _audit_sealed_packs(frozen, BackendProfile.load(repository.root),
-                                     controls=pin["limits"]["controls"])
+        controls=pin["limits"]["controls"], seal_operation=prefix + "_update_checkpoint_sealed")
     result = frozen["result"]
-    checkpoint = _audit_fresh_checkpoint(spec, repository, context, checkpoint_bytes=frozen["checkpoint_bytes"],
+    checkpoint_args = dict(checkpoint_bytes=frozen["checkpoint_bytes"],
         checkpoint_binding=result["clean_checkpoint"], training=result["training"], epoch=frozen["policy_epoch"],
         include_rng_digest=True)
+    if origin is None:
+        checkpoint = _audit_fresh_checkpoint(spec, repository, context, **checkpoint_args)
+    else:
+        checkpoint = _audit_role_checkpoint(spec, repository, context, **checkpoint_args,
+            expected_origin=dict(kind="resume", checkpoint_sha256=origin["checkpoint_sha256"]),
+            environment_windows=2)
     return dict(artifact_sha256=frozen["artifact_sha256"], lifecycle_sha256=result["lifecycle_sha256"],
         teacher_training=result["training"], physical_evidence=physical, checkpoint_audit=checkpoint,
         input_source_audit=model_input, physical_to_model_snapshot_binding_verified=True,

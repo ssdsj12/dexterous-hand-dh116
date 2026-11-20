@@ -22,7 +22,7 @@ FRESH_POLICY_INITIALIZATION_SEED = 2026112001
 FRESH_POLICY_EXPLORATION_SEED = 2026112002
 
 
-def build_actual_factories(*, lease, episode_factory, prepare_source_pack):
+def build_actual_factories(*, lease, episode_factory, prepare_source_pack, resume_contract=None):
     """Return factories in the order consumed by create_native_collector.
 
     prepare_source_pack verifies the live source capability and returns the
@@ -30,6 +30,9 @@ def build_actual_factories(*, lease, episode_factory, prepare_source_pack):
     """
     if type(lease) is not ActualWorkerLease or not callable(episode_factory) or not callable(prepare_source_pack):
         raise TypeError("actual worker lease, episode factory and source-pack binding required")
+    origin = lease.resume_origin
+    if origin is None and resume_contract is not None or origin is not None and not callable(resume_contract):
+        raise ValueError("checkpoint restore requires both a leased A origin and a live training contract")
     owner_ref = policy_ref = None
 
     def episode(static):
@@ -94,7 +97,17 @@ def build_actual_factories(*, lease, episode_factory, prepare_source_pack):
             raise ValueError("same policy constructed for this live episode required")
         if ppo is not owner.contract.ppo_config:
             raise ValueError("same approved PPO configuration required")
-        return DeformablePPOTrainer(model, ppo, rollout_steps=owner.contract.config.rollout_steps, num_envs=1)
+        def new_trainer():
+            return DeformablePPOTrainer(model, ppo, rollout_steps=owner.contract.config.rollout_steps,
+                                        num_envs=1)
+
+        if origin is None:
+            return new_trainer()
+        from .tabletop_native_teacher_checkpoint import checkpoint_trainer_factory
+
+        restore = checkpoint_trainer_factory(new_trainer, origin["checkpoint_path"],
+            lambda trainer: resume_contract(trainer, owner), expected_sha256=origin["checkpoint_sha256"])
+        return restore()
 
     def reward(contract):
         owner = live_owner()

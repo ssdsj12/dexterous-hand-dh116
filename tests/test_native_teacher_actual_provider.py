@@ -212,3 +212,11 @@ def test_run_a_rejects_an_incomplete_close_record(lease_fixture, monkeypatch, mo
     with pytest.raises(RuntimeError, match="R06.*normal"):
         provider().run_a(config=config, lease=lease, output=output)
     assert not list(output.iterdir())
+
+
+def test_run_b_cannot_reuse_fresh_lease_or_output(lease_fixture, monkeypatch):
+    instance, config, path = lease_fixture
+    assert not path.exists()
+    with pytest.raises(ValueError, match="role"):
+        provider().run_b(config=config, lease=instance, output=path)
+    assert not path.exists()

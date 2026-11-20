@@ -1,3 +1,7 @@
+## Actual Teacher resumed worker and artifact roles
+
+Add the B restore path after a fresh Reset and audit the resumed policy, physical ledger and checkpoint separately. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-provider.md).
+
 ## Actual Teacher resume checkpoint binding
 
 Require the authorized checkpoint SHA before restore and the audited RNG state before the first resumed control. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-binding.md).
