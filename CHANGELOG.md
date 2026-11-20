@@ -1,4 +1,8 @@
 
+## Power live palm reaction validation
+
+Apply same-clock DeformX palm reactions to the original mounted Isaac hands and measure both real responses. [Report](docs/superpowers/reports/2026-11-20-teacher-power-live-palm-feedback.md).
+
 ## Power torque reference and Pinch registry validation
 
 Recompute pair moments about the actual palm mesh origin and register the Pinch replay with the pytest executor. [Report](docs/superpowers/reports/2026-11-20-teacher-power-palm-solvers.md).

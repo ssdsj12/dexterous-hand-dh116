@@ -44453,6 +44453,93 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-live-palm-feedback-native-result": {
+      "title": "Measure live DH116 palm velocity response to DeformX contact forces",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-palm-solver-reactions-gpu-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_live_palm_feedback.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_dh116_dual_pinch_builder.py",
+        "tests/test_dh116_power_palm_reactions.py",
+        "tests/test_dh116_power_palm_raycast.py",
+        "tests/test_dh116_power_right_palm_sdf.py",
+        "tests/test_dh116_power_palm_self_intersection.py",
+        "tests/test_dh116_power_left_palm_sdf.py",
+        "tests/test_dh116_power_palm_surface.py",
+        "tests/test_dh116_power_palm_parity.py",
+        "tests/test_dh116_cooked_hull_device_parity.py",
+        "tests/test_dh116_cooked_convex_hulls.py",
+        "tests/test_teacher_power_surface_audit.py",
+        "tests/test_teacher_cooked_readback_audit.py",
+        "tests/test_dh116_deformx_pad_sdf.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-live-palm-feedback.md",
+      "readiness": "docs/contracts/dh116_teacher_power_live_palm_feedback_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "isolated_mounted_articulation_palm_feedback",
+        "palms": {
+          "left": {
+            "response_detected": true,
+            "quiet_projected_m_s": [
+              -1.3677359937807497e-10,
+              5.63604429427012e-11
+            ],
+            "loaded_projected_m_s": 0.00444487408030424,
+            "threshold_m_s": 2e-05
+          },
+          "right": {
+            "response_detected": true,
+            "quiet_projected_m_s": [
+              -3.0182274872562916e-10,
+              2.93392450879343e-11
+            ],
+            "loaded_projected_m_s": 0.004396635241351389,
+            "threshold_m_s": 2e-05
+          }
+        },
+        "sdk_steps": 5,
+        "solver_substeps": 24,
+        "control_steps": 0,
+        "ppo_updates": 0,
+        "native_qualification": false,
+        "grasp_qualified": false,
+        "teacher_admission": false,
+        "continuously_coupled_power_grasp": false,
+        "outer_exit_code": 0,
+        "setup_sdk_steps": 2,
+        "measured_sdk_steps": 3,
+        "isaac_runs": 1,
+        "bootstrap_guard_rejections": 1,
+        "loaded_rod_sdk_boundary": 4,
+        "loaded_action_sdk_boundary": 5,
+        "pair_counts": {
+          "left": 7,
+          "right": 7
+        },
+        "contact_force_on_palm_n": {
+          "left": [
+            2.0722408294677734,
+            -2.9190316200256348,
+            -2.2995851039886475
+          ],
+          "right": [
+            -1.250025749206543,
+            -2.398923873901367,
+            -2.977623462677002
+          ]
+        },
+        "cpu_tests_passed": 189,
+        "cpu_tests_failed": 0
+      }
     }
   },
   "execution_target": {
