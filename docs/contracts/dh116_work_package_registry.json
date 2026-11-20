@@ -42920,6 +42920,27 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.tripod-right-tracking-path-boundary-cpu": {
+      "title": "Right Tripod frozen JSON path compatibility",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.tripod-right-tracking-launch-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_right_tracking_native.py",
+        "tests/test_dh116_tripod_right_tracking_launch.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_launch_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-launch.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 137,
+        "failed": 0,
+        "scope": "CPU regression; earlier native attempt separately recorded"
+      }
     }
   },
   "execution_target": {

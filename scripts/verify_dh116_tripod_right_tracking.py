@@ -41,6 +41,16 @@ def validate_schedule(plan):
     return actions.copy()
 
 
+def read_tracking_plan(path, sha256):
+    plan = checked_json(Path(path), sha256)
+    actions = validate_schedule(plan)
+    if (plan["endpoint_sha256"] != ENDPOINT_SHA or plan["reference_sha256"] != REFERENCE_SHA
+            or plan["proved_right_sweep"]["proved"] is not True
+            or plan["native_qualification"] is not False):
+        raise ValueError("frozen right Tripod static provenance required")
+    return plan, actions
+
+
 def validate_tracking_sample(row, expected_action, *, ordinal):
     if (not 1 <= ordinal <= 176 or row["physics_step"] != ordinal + 2
             or row["rod_tick"] != ordinal * 12 or row["policy_step"] != (ordinal - 1) // 8
@@ -125,12 +135,7 @@ def run_owned_tracking(sim, owners, trace, *, project, plan_path, plan_sha256, o
 
     episode = rod = journal = recorder = None
     try:
-        plan = checked_json(plan_path, plan_sha256)
-        actions = validate_schedule(plan)
-        if (plan["endpoint_sha256"] != ENDPOINT_SHA or plan["reference_sha256"] != REFERENCE_SHA
-                or plan["proved_right_sweep"]["proved"] is not True
-                or plan["native_qualification"] is not False):
-            raise ValueError("frozen right Tripod static provenance required")
+        plan, actions = read_tracking_plan(plan_path, plan_sha256)
         nodes = finite(plan["rod_nodes_m"], (41, 3))
         packet = deepcopy(builder.load_pair_proposal())
         packet["reset_seed"] = plan["reset_seed"]

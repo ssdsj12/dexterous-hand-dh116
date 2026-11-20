@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from scripts import record_dh116_teacher_numeric_reset as reset
 from scripts.verify_dh116_tripod_right_tracking import (
-    BUDGET, TrackingStopped, run_owned_tracking, validate_schedule,
+    BUDGET, TrackingStopped, read_tracking_plan, run_owned_tracking,
 )
 
 
@@ -24,9 +24,7 @@ CLOSE_RESERVE_SECONDS = 10
 
 def freeze_plan(output, tracking):
     tracking = Path(tracking).resolve(strict=True)
-    if native.sha(tracking) != TRACKING_SHA:
-        raise ValueError("frozen right Tripod reference bytes differ")
-    validate_schedule(json.loads(tracking.read_bytes()))
+    read_tracking_plan(str(tracking), TRACKING_SHA)
     plan = reset.freeze_plan(output)
     path = str(tracking)
     plan["frozen_files"][path] = TRACKING_SHA

@@ -1,5 +1,8 @@
 ## 2026-11-20 Teacher rollout codec CPU speedup
 
+- 统一 Tripod 预检和原生入口的冻结计划路径解析，保留第 0 步失败原生回执。
+
+
 - 为 Tripod 右手跟踪增加冻结原生启动、自然退出核验和失败回执。
 
 

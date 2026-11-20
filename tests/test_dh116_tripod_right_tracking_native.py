@@ -1,8 +1,11 @@
+import json
+import hashlib
+
 import numpy as np
 import pytest
 
 from scripts.verify_dh116_tripod_right_tracking import (
-    BUDGET, record_tracking_window, validate_schedule, validate_tracking_sample,
+    BUDGET, read_tracking_plan, record_tracking_window, validate_schedule, validate_tracking_sample,
 )
 
 
@@ -144,3 +147,18 @@ def test_invalid_native_evidence_is_saved_and_stops_the_next_sample(defect, matc
     with pytest.raises(RuntimeError, match="stopped"):
         audit(physical_sample(3, plan["actions24"][0]))
     assert len(ledger) == 2
+
+
+def test_frozen_launch_string_path_uses_the_real_plan_reader(tmp_path):
+    from scripts.prepare_dh116_tripod_right_tracking import ENDPOINT_SHA, REFERENCE_SHA
+
+    plan = schedule()
+    plan["actions24"] = plan["actions24"].tolist()
+    plan.update(endpoint_sha256=ENDPOINT_SHA, reference_sha256=REFERENCE_SHA,
+                proved_right_sweep=dict(proved=True), native_qualification=False)
+    path = tmp_path / "plan.json"
+    path.write_text(json.dumps(plan))
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    loaded, actions = read_tracking_plan(str(path), digest)
+    assert loaded == plan
+    np.testing.assert_array_equal(actions, plan["actions24"])
