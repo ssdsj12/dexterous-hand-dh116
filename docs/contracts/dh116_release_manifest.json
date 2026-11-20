@@ -27588,6 +27588,31 @@
         "verified_at_utc": "2026-11-20T04:10:35.187076+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.legacy-pair-canonical-path-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-legacy-pair-migration.md",
+      "readiness": "docs/contracts/dh116_teacher_legacy_pair_path_v1.json",
+      "cpu_tests": {
+        "passed": 49,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ddaf42e4a972f1791634e945ec4b146e9d8b68fe",
+        "source_tree": "fe6226228edd2958c3086336d333be2c2fd3209d",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T04:15:24.277786+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
