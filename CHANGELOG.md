@@ -1,3 +1,7 @@
+## 2026-11-20 Right Tripod tracking preflight
+
+An independent right-active tracking reference keeps the left action zero and proves geometric clearance before native tracking. [Report](docs/superpowers/reports/2026-11-20-teacher-tripod-right-no-contact-tracking.md).
+
 ## 2026-11-20 Power five-digit fixed-wrist reach
 
 The ring and little fingers remain outside the original 0.5 mm proximity gate across their full joint ranges at this wrist pose. [Report](docs/superpowers/reports/2026-11-20-teacher-power-five-digit-fixed-wrist.md).

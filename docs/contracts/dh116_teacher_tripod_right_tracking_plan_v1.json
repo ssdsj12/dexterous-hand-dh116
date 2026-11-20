@@ -1,0 +1,39 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.tripod-right-tracking-plan-cpu",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-no-contact-tracking.md",
+  "review_baseline": "9a4561b103645a94af3aba6cd0af1213cf1f25a3",
+  "cpu": {
+    "passed": 33,
+    "failed": 0,
+    "log_sha256": "db255cf2ddb1c61a8653a3ce9f48bce9e22e35dc610ba194a44b8a423b69898e",
+    "red_sha256": "716c8cbaeab625e4ec7a53812d2ce81b0ce417d474d7287f064a0b067a73c1af"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "plan_sha256": "e419ed68ba6cff54e5ecdf0b679a2b72550851519d918a785c293677c496b112",
+  "planned_budget": {
+    "sdk_steps": 178,
+    "setup": 2,
+    "quiet": 8,
+    "motion": 160,
+    "quiet_after": 8,
+    "ppo_updates": 0,
+    "instances": 1
+  },
+  "minimum_rod_gap_m": {
+    "left": 0.0027808654403287457,
+    "right": 0.003048938593592604
+  },
+  "minimum_table_gap_m": {
+    "left": 0.005309017991199039,
+    "right": 0.008147590005064285
+  },
+  "source_sha256": {
+    "scripts/prepare_dh116_tripod_right_tracking.py": "34450d18bab275cfd9f82f3da64b5f0cea8cd8735b77a84a85dabb362e0b9e20",
+    "tests/test_dh116_tripod_right_tracking_plan.py": "cc24f3bf7a6f454e784639d64539235ab436fd685f573451e39d212a2d698b2e"
+  }
+}

@@ -42809,6 +42809,26 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.tripod-right-tracking-plan-cpu": {
+      "title": "Right-active independent Tripod noncontact tracking reference",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.tripod-continuous-delay-band-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_right_tracking_plan.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_tracking_plan_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-no-contact-tracking.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 33,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
