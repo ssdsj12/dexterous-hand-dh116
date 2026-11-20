@@ -1,3 +1,7 @@
+## Pinch matched force control
+
+Measured the zero-action continuation beside both previous increments at the same initial state and SDK times. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-same-state-force-control.md).
+
 ## Pinch left index-only preload
 
 Verified the single-axis increment with the original three native gates and preserved the measured post-increment decrease in bilateral loaded opposition. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-index-only-preload.md).

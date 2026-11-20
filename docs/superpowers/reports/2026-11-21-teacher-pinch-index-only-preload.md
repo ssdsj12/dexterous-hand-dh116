@@ -14,3 +14,5 @@ The longest consecutive qualifying interval after the increment was 17 solver su
 The candidate is rejected for motion promotion based on its measured post-command outcome. The two equal-length windows come from different times. A no-increment continuation from SDK 362 is needed to estimate how much of the later deterioration occurs without an index change.
 
 368 CPU regressions passed. The exact worker is `python -B -m scripts.run_dh116_pinch_index_only_preload`. [Readiness and raw evidence identities](../../contracts/dh116_teacher_pinch_index_only_preload_v1.json).
+
+The subsequent [same-initial-state control](2026-11-21-teacher-pinch-same-state-force-control.md) measured 293 versus 197 qualifying substeps at matched SDK times. The candidate remains below the requirements for sustained hold.

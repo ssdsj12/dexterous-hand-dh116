@@ -44973,6 +44973,63 @@
         "teacher_admission": false,
         "ppo_updates": 0
       }
+    },
+    "teacher.pinch-same-state-force-hold-control-native-result": {
+      "title": "Compare both Pinch increments against a same-state and same-time zero-action hold",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-index-only-preload-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_dh116_dual_hand_evidence_journal.py",
+        "tests/test_dh116_pinch_angular_gate.py",
+        "tests/test_dh116_pinch_asymmetric_preload.py",
+        "tests/test_dh116_pinch_bilateral_closure.py",
+        "tests/test_dh116_pinch_bilateral_preload.py",
+        "tests/test_dh116_pinch_early_finger.py",
+        "tests/test_dh116_pinch_early_finger_worker.py",
+        "tests/test_dh116_pinch_fixed_wrist_seating.py",
+        "tests/test_dh116_pinch_index_pacing.py",
+        "tests/test_dh116_pinch_late_wrist.py",
+        "tests/test_dh116_pinch_longitudinal_preload.py",
+        "tests/test_dh116_pinch_precontact_hold.py",
+        "tests/test_dh116_pinch_precontact_pair.py",
+        "tests/test_dh116_pinch_prelift.py",
+        "tests/test_dh116_pinch_staged_closure.py",
+        "tests/test_dh116_pinch_thumb_projections.py",
+        "tests/test_dh116_pinch_wrist_alignment.py",
+        "tests/test_dh116_pinch_wrist_first.py",
+        "tests/test_dh116_pinch_wrist_relief.py",
+        "tests/test_dh116_pinch_wrist_relief_worker.py",
+        "tests/test_dh116_staged_pinch_contact.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_pinch_index_only_preload.py",
+        "tests/test_dh116_pinch_fixed_force_hold_control.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-same-state-force-control.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_same_state_force_control_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "native_same_state_same_time_force_diagnostic_hold_unqualified",
+        "passed": 262,
+        "failed": 0,
+        "outer_exit_code": 0,
+        "sdk_steps": 442,
+        "solver_substeps": 5280,
+        "zero_action_bilateral_qualified": 197,
+        "index_only_bilateral_qualified": 293,
+        "compound_bilateral_qualified": 292,
+        "independent_initial_states": 1,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "ppo_updates": 0
+      }
     }
   },
   "execution_target": {
