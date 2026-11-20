@@ -41478,7 +41478,8 @@
         "result_sha256": "8069fad23d4be9bd5981560dd9c948f48030ed855e64c84499bc5573f7667fc9",
         "native_execution_performed": false,
         "native_qualification": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-ppo-draft-cpu": {
       "title": "Pinch 首次原生 PPO 配方 CPU 冻结",
@@ -41609,7 +41610,8 @@
         "native_execution_performed": true,
         "isaac_started": false,
         "native_qualification": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.tripod-power-collision-aware-seeds": {
       "title": "Compare Tripod exact endpoints and left/right Power preshapes",
@@ -41702,7 +41704,8 @@
         "setup_sdk_steps": 2,
         "ppo_updates": 0,
         "native_qualification": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-semantic-refreeze-cpu": {
       "title": "Rebuild Pinch fixed recipe from the current semantic source",
@@ -41758,7 +41761,8 @@
         "setup_sdk_steps": 2,
         "ppo_updates": 0,
         "native_qualification": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.power-fixed-preshape-sweep-cpu": {
       "title": "Audit the continuous Power wrist translation to the rod",
@@ -41837,7 +41841,8 @@
         "measured_sdk_steps": 16,
         "ppo_updates": 0,
         "native_qualification": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-native-binary32-clock": {
       "title": "Validate binary32 Pinch solver time without changing the physical clock",
@@ -41895,7 +41900,8 @@
         "measured_sdk_steps": 10,
         "ppo_updates": 0,
         "native_qualification": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-physical-clearance-audit": {
       "title": "Audit actual Pinch terminal floor, collider and wrist projection",
@@ -42033,7 +42039,8 @@
         "setup_sdk_steps": 0,
         "ppo_updates": 0,
         "native_qualification": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.tripod-bilateral-closure-reference-cpu": {
       "title": "Continuous reference certificate for bilateral Tripod closure",
@@ -42197,7 +42204,8 @@
         "terminal_sdk_step": 7,
         "native_qualification": false,
         "teacher_admission": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-v8-canonical-launch-preflight-cpu": {
       "title": "Freeze Pinch v8 with the canonical scheduler launch route",
@@ -42375,7 +42383,8 @@
         "ppo_updates": 0,
         "native_qualification": false,
         "teacher_admission": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-v9-bound-native-reset": {
       "title": "Seal the new right Pinch Reset and freeze v9",
@@ -42477,7 +42486,8 @@
         "terminal_sdk_step": 21,
         "native_qualification": false,
         "teacher_admission": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-v10-control-source-preflight-cpu": {
       "title": "Freeze Pinch v10 against current control-scoped source",
@@ -42598,7 +42608,8 @@
         "terminal_sdk_step": 74,
         "native_qualification": false,
         "teacher_admission": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-v11-bound-native-reset": {
       "title": "Seal the native Pinch Reset and freeze the first seeded PPO recipe",
@@ -42681,7 +42692,8 @@
       "actual_launch": {
         "path": "configs/dh116_execution/pinch-actual-smoke32-launch-wall-profile.json",
         "sha256": "9845ac01eb8b3c6da1e69edf318a827b074bd711bd356590151134862e65ddc5"
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-v12-paired-replay-cpu": {
       "title": "Paired Pinch v12 replay retains geometric clearance across three native journals",
@@ -42745,7 +42757,8 @@
         "terminal_sdk_step": 85,
         "native_qualification": false,
         "teacher_admission": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-v12-native-reset": {
       "title": "Pinch v12 actual Reset and timing-enabled PPO preflight",
@@ -43107,7 +43120,8 @@
         "ppo_updates": 0,
         "scope": "guarded native wiring diagnostic",
         "native_qualification": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-v13-ppo-recipe-cpu": {
       "title": "Pinch v13 verified source closure and bounded PPO preparation",
@@ -43181,7 +43195,8 @@
         "diagnostic_verified": true,
         "native_qualification": false,
         "teacher_admission": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.pinch-smoke8-wiring-cpu": {
       "title": "Exact shorter Pinch PPO diagnostic contract and CPU wiring",
@@ -45204,7 +45219,6 @@
         "path": "configs/dh116_execution/pinch-actual-resume-pair-a-smoke8-launch-v1.json",
         "sha256": "18b993621c055a8a61d7102c85f82fdcf9bff3763ada13ec19ca108501ba75dd"
       },
-      "blocker_kind": "approval",
       "command_spec": "configs/dh116_execution/pinch-actual-resume-pair-a-smoke8-core-v1.json",
       "dependencies": [
         "teacher.pinch-v13-native-reset",
@@ -45212,8 +45226,45 @@
       ],
       "evidence_scope": "pinch_actual_resume_pair_a_smoke8_v1",
       "executor": "native_bounded",
-      "reason": "Requires the exact bounded native batch and Isaac resource reservation.",
-      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-native-plan.md",
+      "reason": "Actual A diagnostic independently read back; Teacher and grasp admission stay closed.",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-a.md",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "status": "passed",
+      "tests": [],
+      "title": "Pinch independent A with the common A/B eight-control PPO closure",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_pair_a_v1.json",
+      "native_runs": 1,
+      "dependency_scopes": {},
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "inferior_exit": 0,
+        "ppo_updates": 1,
+        "result_sha256": "3775283e887c0082b21fbc29b278a8777470caf210c9423d64e328df13ea57e6",
+        "diagnostic_verified": true,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.pinch-ppo-resume-pair-b-smoke8-v1": {
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-resume-pair-b-smoke8-launch-v1.json",
+        "sha256": "f0b19e94c777ca83dd818cb8d38c005cfbc86cbb01580e296d7ca021304a71bb"
+      },
+      "command_spec": "configs/dh116_execution/pinch-actual-resume-pair-b-smoke8-core-v1.json",
+      "dependencies": [
+        "teacher.pinch-v13-native-reset",
+        "teacher.actual-resume-launch-cpu"
+      ],
+      "evidence_scope": "pinch_actual_resume_pair_b_smoke8_v1",
+      "executor": "native_bounded",
+      "reason": "Exact same-source native A receipt plus bounded B resources required.",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-a.md",
       "requires_approval": true,
       "resource_class": "isaac_single_gpu",
       "retry_policy": {
@@ -45222,9 +45273,11 @@
       },
       "status": "blocked",
       "tests": [],
-      "title": "Pinch independent A with the common A/B eight-control PPO closure",
-      "readiness": "docs/contracts/dh116_teacher_actual_resume_launch_v1.json",
-      "native_runs": 0
+      "title": "Independent Pinch B with one PPO update from the verified A checkpoint",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_pair_a_v1.json",
+      "native_runs": 0,
+      "dependency_scopes": {},
+      "blocker_kind": "approval"
     }
   },
   "execution_target": {

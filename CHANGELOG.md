@@ -1,3 +1,7 @@
+## Pinch native PPO diagnostic A
+
+Sealed one real PPO update and registered the independently bounded same-source B diagnostic. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-a.md).
+
 ## Actual Teacher resume authorization
 
 Bind the resumed worker to a verified A diagnostic at launch and read back separate A and B records. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-native-plan.md).
