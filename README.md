@@ -1,3 +1,7 @@
+## 2026-11-20 Staged Pinch native Reset
+
+The staged Pinch candidate has passed its measured open Reset. Native settling and the force-bearing close remain the next validation. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-open-native-reset.md).
+
 ## 2026-11-20 Pinch staged close
 
 A fixed Pinch open Reset and 64-step close passes archived geometry and original action-kernel checks. The native Reset and load checks are pending. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-close-geometry.md).

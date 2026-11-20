@@ -43309,6 +43309,28 @@
         "teacher_admission": false,
         "native_qualification": false
       }
+    },
+    "teacher.pinch-staged-open-native-reset": {
+      "title": "Measured staged Pinch open Reset and natural exit",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-staged-close-geometry-cpu"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-staged-open-native-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_staged_open_native_reset_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "sdk_steps": 2,
+        "control_steps": 0,
+        "exit_code": 0,
+        "native_reset_verified": true,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

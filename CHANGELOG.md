@@ -1,3 +1,7 @@
+## 2026-11-20 Staged Pinch native Reset
+
+Record the independently sealed native Reset for the new fixed Pinch candidate. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-open-native-reset.md).
+
 ## 2026-11-20 Pinch staged close
 
 Add per-segment flexible rod clearance and a fixed Pinch open Reset plus a bounded 24D close replay. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-close-geometry.md).

@@ -1,0 +1,72 @@
+{
+  "schema": "dh116-pinch-staged-open-native-reset-result-v1",
+  "scope": "single measured pre-action Reset, no action or actual contact qualification",
+  "execution_head": "bce9590b905090b15bf2472675418085b675466c",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-staged-open-native-reset.md",
+  "candidate_sha256": "afc7e79c75a5b0436d4b9224c3b9d556cdcb4b9a933cbd1dea615153f4fd186e",
+  "frozen_recipe_sha256": "7b2a3db8d294ec5fad892b630070f03fab9c652264a535693bbdd181a5d95877",
+  "frozen_artifact_sha256": "2af8b6691c29dcefbdcb8e485aa924c6f14a5a30129a5f7a2b32dd283b420a47",
+  "native": {
+    "gpu": 2,
+    "envs": 1,
+    "runs": 1,
+    "exit_code": 0,
+    "forced_exit": false,
+    "elapsed_s": 46.07849569199607,
+    "sdk_steps": 2,
+    "control_steps": 0,
+    "new_solver_steps": 0,
+    "ppo_updates": 0,
+    "reset_verified": true,
+    "outer_sha256": "5234d161cc6b99af59c4c59c477a8f4e0e4cc552269b4b564f497c95ac5204b8",
+    "log_sha256": "2b8218239ffb6d62bdd2a45ffaaf4abe4229531352b02a2d0dc9b09e788d8480",
+    "sealed_reset_sha256": "2f8ec96ba01922b81502b4575a7b9657bbae0bc8c928c14698b3811936e2e9a8",
+    "independent_metrics_sha256": "1765728a3dcccdcc32594ef1158c92bf8d974c7a7caf8efb0f3d4c1e006c7caa",
+    "hands": {
+      "left": {
+        "envelopes_checked": 22,
+        "table_minimum_m": 0.0023652163366613133,
+        "table_limiting_shape": "source_colliders:finger13_link",
+        "rod_minimum_m": 0.0005372863335155577,
+        "rod_limiting_shape": "source_colliders:finger14_link",
+        "root_position_error_m": 6.26445981491927e-09,
+        "root_rotation_error_rad": 2.346637211445515e-07,
+        "active_q_max_error_rad": 1.5794662133750137e-08,
+        "measured_qd_max_rad_s": 0.0,
+        "finger12_measured_rad": 0.4545574188232422
+      },
+      "right": {
+        "envelopes_checked": 22,
+        "table_minimum_m": 0.0023260989702171275,
+        "table_limiting_shape": "source_colliders:finger13_link",
+        "rod_minimum_m": 0.0008637366072965615,
+        "rod_limiting_shape": "source_colliders:finger14_link",
+        "root_position_error_m": 1.3762976073756244e-08,
+        "root_rotation_error_rad": 1.7377590819732256e-07,
+        "active_q_max_error_rad": 2.2244592168263466e-08,
+        "measured_qd_max_rad_s": 0.0,
+        "finger12_measured_rad": 0.008949057199060917
+      }
+    }
+  },
+  "cpu": {
+    "passed": 142,
+    "failed": 0,
+    "log_sha256": "033836b486e52cd9f1692d3ad0324291b4831deae1153dc4951d77012c39d945",
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_pinch_staged_closure.py",
+      "tests/test_native_teacher_worker_contract.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "expanded_timeout_s": 170,
+    "expanded_incomplete_log_sha256": "27c055695d9cea2f87a57147a29039c1dda077aeb17a32589e29fdaa7e5bb335"
+  },
+  "native_grasp_qualified": false,
+  "teacher_admission": false,
+  "resume": "Validate quiet settling and execute a separate bounded 64-SDK-step close using the verified Reset and same-substep reaction accounting."
+}
