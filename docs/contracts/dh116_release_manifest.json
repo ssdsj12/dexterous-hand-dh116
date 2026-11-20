@@ -28913,6 +28913,31 @@
         "verified_at_utc": "2026-11-20T14:19:49.101261+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power live palm reaction validation",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-live-palm-feedback.md",
+      "readiness": "docs/contracts/dh116_teacher_power_live_palm_feedback_v1.json",
+      "cpu_tests": {
+        "passed": 189,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "fbdf6fd751d6ce27ab8a7f7679065af40f2ea61b",
+        "source_tree": "e63b15a4e131be415c5e9e1c9ee915d96effc572",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T14:42:44.168010+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
