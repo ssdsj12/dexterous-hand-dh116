@@ -413,5 +413,56 @@
   "native_runs": 1,
   "native_qualification": false,
   "teacher_admission": false,
-  "lift_tested": false
+  "lift_tested": false,
+  "force_components": {
+    "sdk73": [
+      {
+        "substep": 8,
+        "node_ids": [
+          35,
+          34
+        ],
+        "force_cosine": -0.16455922481233312,
+        "normal_term": -0.6231502818679943,
+        "tangent_term": 0.06122249372636954,
+        "mixed_term": 0.3973685633292918,
+        "tangential_load_n": [
+          0.29778353303872995,
+          0.4019469147684569
+        ],
+        "axial_term_n": [
+          -0.013622678054378308,
+          0.3525083731102717
+        ]
+      },
+      {
+        "substep": 9,
+        "node_ids": [
+          35,
+          34
+        ],
+        "force_cosine": 0.18130140691337557,
+        "normal_term": -0.511500311321975,
+        "tangent_term": 0.17780512328157677,
+        "mixed_term": 0.5149965949537738,
+        "tangential_load_n": [
+          0.5157278527495333,
+          0.44261937908200866
+        ],
+        "axial_term_n": [
+          0.0897795929548238,
+          0.3530476537236297
+        ]
+      }
+    ],
+    "artifact_sha256": "21a31ef68b4fda869cf0d0749a2c892dbe19c0bde59695e14c3b5de129660e29",
+    "scope": "world resultants decomposed by their respective measured contact normals"
+  },
+  "parallel_power_cpu_diagnostic": {
+    "poses": 25,
+    "open_and_palm_guard_pass": 4,
+    "best_sampled_pinky_endpoint_upper_m": 0.006373300609937865,
+    "native_ready": false,
+    "sha256": "2f3949d4d92f41f5ef472505351793f897ef4ac493ee169fb4fbf33434e6bfd0"
+  }
 }
