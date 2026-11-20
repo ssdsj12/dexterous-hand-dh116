@@ -32,8 +32,8 @@ def compile_preload(previous, states, goals):
     )
 
 
-def boundary_has_opposition(row):
-    if row["physics_step"] != closure.LAST_SDK or row["guard_failure"] is not None:
+def boundary_has_opposition(row, *, sdk_step=closure.LAST_SDK):
+    if row["physics_step"] != sdk_step or row["guard_failure"] is not None:
         return False
     records = row["stage_reaction"]["per_substep"]
     return [sample["substep"] for sample in records] == list(range(base.SUBSTEPS)) and all(
@@ -78,30 +78,39 @@ def prepare(args, *, screen_geometry=False):
     return plan
 
 
-def acquire(sim, owners, trace, output, *, plan):
+def measure_gate(row, plan, *, sdk_step, prefix_windows, config_key, gate_key, compiler):
+    receipt = row[gate_key] = dict(passed=False)
+    try:
+        config = plan[config_key]
+        measured = late.prefix_measurements(row, expected_sdk=sdk_step)
+        receipt["prefix"] = late.compare_prefix(measured, config["prefix"])
+        receipt["signed_opposition"] = boundary_has_opposition(row, sdk_step=sdk_step)
+        states = {side: prelift.joint_and_wrist(row, side) for side in config["goals"]}
+        actions, targets = compiler(plan["action_schedule"][:prefix_windows], states, config["goals"])
+        receipt["same_actions"] = bool(np.allclose(
+            actions, plan["action_schedule"][:len(actions)], atol=1e-7, rtol=0,
+        ))
+        if receipt["prefix"]["passed"] and receipt["signed_opposition"] and receipt["same_actions"]:
+            receipt["proofs"] = closure.certify_closure(row, states, targets)
+            receipt["passed"] = all(proof["proved"] for proof in receipt["proofs"].values())
+        if not receipt["passed"]:
+            row["guard_failure"] = f"pinch_{gate_key}_rejected"
+    except Exception as error:
+        receipt["error"] = f"{type(error).__name__}: {error}"
+        prefix = gate_key.removesuffix("_gate")
+        row["guard_failure"] = f"pinch_{prefix}_source_invalid"
+
+
+def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, after=None):
     def observe(row):
-        if row["physics_step"] != closure.LAST_SDK:
-            return
-        receipt = row["bilateral_preload_gate"] = dict(passed=False)
-        try:
-            config = plan["preload"]
-            measured = late.prefix_measurements(row, expected_sdk=closure.LAST_SDK)
-            receipt["prefix"] = late.compare_prefix(measured, config["prefix"])
-            receipt["signed_opposition"] = boundary_has_opposition(row)
-            states = {side: prelift.joint_and_wrist(row, side) for side in config["goals"]}
-            actions, targets = compile_preload(plan["action_schedule"][:PREFIX_WINDOWS], states, config["goals"])
-            receipt["same_actions"] = bool(np.allclose(actions, plan["action_schedule"], atol=1e-7, rtol=0))
-            if receipt["prefix"]["passed"] and receipt["signed_opposition"] and receipt["same_actions"]:
-                receipt["proofs"] = closure.certify_closure(row, states, targets)
-                receipt["passed"] = all(proof["proved"] for proof in receipt["proofs"].values())
-            if not receipt["passed"]:
-                row["guard_failure"] = "pinch_bilateral_preload_gate_rejected"
-        except Exception as error:
-            receipt["error"] = f"{type(error).__name__}: {error}"
-            row["guard_failure"] = "pinch_bilateral_preload_source_invalid"
+        if row["physics_step"] == closure.LAST_SDK:
+            measure_gate(row, plan, sdk_step=closure.LAST_SDK, prefix_windows=PREFIX_WINDOWS,
+                         config_key="preload", gate_key="bilateral_preload_gate", compiler=compile_preload)
+        elif after is not None:
+            after(row)
 
     try:
-        return closure.acquire(sim, owners, trace, output, plan=plan, sdk_steps=LAST_SDK, after=observe)
+        return closure.acquire(sim, owners, trace, output, plan=plan, sdk_steps=sdk_steps, after=observe)
     finally:
         sim = owners = trace = None
 

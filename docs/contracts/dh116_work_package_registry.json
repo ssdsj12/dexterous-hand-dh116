@@ -44053,6 +44053,53 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-asymmetric-preload-native-result": {
+      "title": "Measure three-channel Pinch trim and simultaneous bilateral reactions",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-bilateral-preload-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_asymmetric_preload.py",
+        "tests/test_dh116_pinch_bilateral_preload.py",
+        "tests/test_dh116_pinch_bilateral_closure.py",
+        "tests/test_dh116_pinch_wrist_alignment.py",
+        "tests/test_dh116_pinch_index_pacing.py",
+        "tests/test_dh116_pinch_precontact_pair.py",
+        "tests/test_dh116_pinch_precontact_hold.py",
+        "tests/test_dh116_pinch_angular_gate.py",
+        "tests/test_dh116_pinch_wrist_first.py",
+        "tests/test_dh116_pinch_prelift.py",
+        "tests/test_dh116_pinch_wrist_relief_worker.py",
+        "tests/test_dh116_pinch_wrist_relief.py",
+        "tests/test_dh116_pinch_early_finger_worker.py",
+        "tests/test_dh116_pinch_early_finger.py",
+        "tests/test_dh116_pinch_late_wrist.py",
+        "tests/test_dh116_staged_pinch_contact.py",
+        "tests/test_dh116_pinch_staged_closure.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_tripod_tracking_envelope.py",
+        "tests/test_dh116_dual_hand_evidence_journal.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-asymmetric-preload-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_asymmetric_preload_native_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "bounded asymmetric preload",
+        "passed": 225,
+        "failed": 0,
+        "sdk_steps": 362,
+        "qualified_bilateral_substeps": 473,
+        "max_consecutive_qualified_substeps": 16,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

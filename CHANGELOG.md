@@ -1,4 +1,8 @@
 
+## Pinch asymmetric preload
+
+Measured bilateral reactions with a fixed left index target and fixed wrists. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-asymmetric-preload-native.md).
+
 ## Pinch preload and isolated Power palm validation
 
 Measured Pinch finger reactions while holding both wrist targets fixed. Baked the authenticated left Power palm in the standalone GPU solver. [Pinch report](docs/superpowers/reports/2026-11-20-teacher-pinch-bilateral-preload-native.md). [Power report](docs/superpowers/reports/2026-11-20-teacher-power-left-palm-sdf.md).
