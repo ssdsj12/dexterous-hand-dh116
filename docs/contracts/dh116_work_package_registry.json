@@ -42941,6 +42941,27 @@
         "failed": 0,
         "scope": "CPU regression; earlier native attempt separately recorded"
       }
+    },
+    "teacher.tripod-curved-rod-capsule-certificate-cpu": {
+      "title": "Tripod curved rod segment distance numerical certification",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.tripod-right-tracking-path-boundary-cpu"
+      ],
+      "tests": [
+        "tests/test_pinch_capsule_distance_certificate.py",
+        "tests/test_pinch_initial_geometry_v2.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_capsule_certificate_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-capsule-certificate.md",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 164,
+        "failed": 0,
+        "scope": "CPU and raw Reset offline replay; preceding native attempt failed"
+      }
     }
   },
   "execution_target": {

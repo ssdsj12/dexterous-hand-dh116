@@ -1,0 +1,37 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.tripod-curved-rod-capsule-certificate-cpu",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-capsule-certificate.md",
+  "cpu": {
+    "passed": 164,
+    "failed": 0,
+    "log_sha256": "b4a3e9bd3f1521b86c2d309d3f669953f83f270c0c3576d5606dc18d51b7ef1d",
+    "red_log_sha256": "6eaa3ee0bdf3e42d7a01227dbac3bf8ca732d8bf2a9dd2311e6b407956772594"
+  },
+  "native_attempt": {
+    "fingerprint": "df8a2ebfc5fa75e3747674344c6fab04dc1cc1a112bb4e0d3eed41ab6330bbd6",
+    "sdk_setup_steps": 2,
+    "physical_tracking_rows": 0,
+    "ppo_updates": 0,
+    "exit_code": 1,
+    "close_mode": "fault",
+    "native_qualification": false,
+    "log_sha256": "4118a4ad3f8420af3cd2f1938d453e60b8d6345e0d6ce13cd1da0d59eff58a85",
+    "outer_sha256": "6f4aaf2f0da6cebc2b4e511016c21beba9d31cc67ccb4d5118b88e179579285e"
+  },
+  "native_runs": 1,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "offline_replay": {
+    "checked": 44,
+    "unresolved": 0,
+    "minimum_capsule_gap_m": 0.0028047081024534645,
+    "sha256": "39443040e3b067e2f361c85d1f5a5e5b180333194209e25555b9ceb4811efde6"
+  },
+  "source_sha256": {
+    "scripts/audit_dh116_pinch_initial_pose.py": "34e702aa24e07378587896bc76fd9aece34bf2ccc9618a110ca7a2f6f227ffb9",
+    "tests/test_pinch_capsule_distance_certificate.py": "b0b0908f94ae369c1fac877eff24fee59d3330dd9c729774d9bb194b535170fa"
+  }
+}

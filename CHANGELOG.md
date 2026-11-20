@@ -1,5 +1,8 @@
 ## 2026-11-20 Teacher rollout codec CPU speedup
 
+- 为弯杆单段凸包距离增加保守数值证书，保留 Tripod 原生 Reset 失败账本。
+
+
 - 统一 Tripod 预检和原生入口的冻结计划路径解析，保留第 0 步失败原生回执。
 
 
