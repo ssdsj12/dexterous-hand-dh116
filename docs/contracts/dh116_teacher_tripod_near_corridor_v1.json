@@ -1,0 +1,249 @@
+{
+  "version": "dh116-teacher-tripod-near-corridor-v1",
+  "status": "guarded_stop_wrist_speed",
+  "source_head": "1dbd7bc7ff74ffc9e0d19d90a33b76bb0e755cc5",
+  "frozen_recipe_sha256": "ae06c68ab2459e3d1c746334bfa43abe32fc62430c929c7ecc3293de9c090436",
+  "frozen_plan_sha256": "2f2545515ecd21a0722388a9631ec69bd9d672393a3429c6ca73c0fcd2ade403",
+  "outer_receipt": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2243-tripod-near-corridor-native/outer.json",
+  "outer_sha256": "c8323ee17528a4bf1998197cd79821e3e3d3d369e8a5e8abe8d89ece419bad5b",
+  "raw_metrics_sha256": "af9c6abe1bc8674a8d3e667b3c5e00f713a96cf41b629848e85e581d272236dd",
+  "cpu_tests_passed": 295,
+  "native_attempts": 1,
+  "outer_exit_code": 1,
+  "forced_exit": false,
+  "app_close_returned": true,
+  "close_status": "normal",
+  "outer_elapsed_s": 83.87442389782518,
+  "ledger_sha256": "443ce3a553afa411cb535f220eaa054ea34fec74403d20f63294cf089e00487a",
+  "geometry_rows": 328,
+  "completed_control_windows": 40,
+  "last_sdk": 330,
+  "minimum": {
+    "left": {
+      "table_m": {
+        "shape": "source:finger22_link",
+        "value_m": 0.005309046304411091,
+        "sdk": 3
+      },
+      "rod_lower_m": {
+        "shape": "source:finger13_link",
+        "value_m": 0.002852799325485107,
+        "sdk": 3
+      }
+    },
+    "right": {
+      "table_m": {
+        "shape": "source:finger13_link",
+        "value_m": 0.0050981698698273625,
+        "sdk": 3
+      },
+      "rod_lower_m": {
+        "shape": "source:finger33_link",
+        "value_m": 0.0009355343246325372,
+        "sdk": 3
+      }
+    }
+  },
+  "last_right_pad_lower_m": {
+    "finger14_link": 0.0018665008411534797,
+    "finger23_link": 0.004181724293023333,
+    "finger33_link": 0.0028669022600511028
+  },
+  "final_wrist_gate": {
+    "passed": false,
+    "sdk_step": 330,
+    "target_error_rad": 9.191905014915847e-10,
+    "tracking_error_rad": 0.00013222917914390564,
+    "speed_rad_s": 0.0013401682954281569,
+    "required_angle_error_rad": 0.0002,
+    "required_speed_rad_s": 0.001,
+    "rows": [
+      {
+        "sdk_step": 323,
+        "target": [
+          -0.002387972781434655,
+          -0.04345878213644028,
+          0.006650474388152361
+        ],
+        "q": [
+          -0.0023809291888028383,
+          -0.04332655295729637,
+          0.006630562245845795
+        ],
+        "qd": [
+          -7.189418829511851e-05,
+          -0.0013401682954281569,
+          0.0002025364083237946
+        ]
+      },
+      {
+        "sdk_step": 324,
+        "target": [
+          -0.002387972781434655,
+          -0.04345878213644028,
+          0.006650474388152361
+        ],
+        "q": [
+          -0.0023810758721083403,
+          -0.04332928732037544,
+          0.006630975287407637
+        ],
+        "qd": [
+          -7.039496267680079e-05,
+          -0.001312464359216392,
+          0.00019833729311358184
+        ]
+      },
+      {
+        "sdk_step": 325,
+        "target": [
+          -0.002387972781434655,
+          -0.04345878213644028,
+          0.006650474388152361
+        ],
+        "q": [
+          -0.0023812195286154747,
+          -0.04333196580410004,
+          0.006631379947066307
+        ],
+        "qd": [
+          -6.893018144182861e-05,
+          -0.0012853317894041538,
+          0.00019422125478740782
+        ]
+      },
+      {
+        "sdk_step": 326,
+        "target": [
+          -0.002387972781434655,
+          -0.04345878213644028,
+          0.006650474388152361
+        ],
+        "q": [
+          -0.0023813601583242416,
+          -0.043334588408470154,
+          0.006631776224821806
+        ],
+        "qd": [
+          -6.749540625605732e-05,
+          -0.0012587520759552717,
+          0.00019019111641682684
+        ]
+      },
+      {
+        "sdk_step": 327,
+        "target": [
+          -0.002387972781434655,
+          -0.04345878213644028,
+          0.006650474388152361
+        ],
+        "q": [
+          -0.002381497761234641,
+          -0.043337155133485794,
+          0.006632164120674133
+        ],
+        "qd": [
+          -6.609020056203008e-05,
+          -0.0012327214935794473,
+          0.0001862443459685892
+        ]
+      },
+      {
+        "sdk_step": 328,
+        "target": [
+          -0.002387972781434655,
+          -0.04345878213644028,
+          0.006650474388152361
+        ],
+        "q": [
+          -0.0023816325701773167,
+          -0.043339669704437256,
+          0.006632544100284576
+        ],
+        "qd": [
+          -6.471544475061819e-05,
+          -0.0012072374811396003,
+          0.00018238190386909992
+        ]
+      },
+      {
+        "sdk_step": 329,
+        "target": [
+          -0.002387972781434655,
+          -0.04345878213644028,
+          0.006650474388152361
+        ],
+        "q": [
+          -0.0023817645851522684,
+          -0.04334213212132454,
+          0.006632916163653135
+        ],
+        "qd": [
+          -6.336437945719808e-05,
+          -0.001182276289910078,
+          0.0001785972126526758
+        ]
+      },
+      {
+        "sdk_step": 330,
+        "target": [
+          -0.002387972781434655,
+          -0.04345878213644028,
+          0.006650474388152361
+        ],
+        "q": [
+          -0.0023818938061594963,
+          -0.04334454610943794,
+          0.00663328031077981
+        ],
+        "qd": [
+          -6.204624514793977e-05,
+          -0.0011578367557376623,
+          0.0001748900394886732
+        ]
+      }
+    ]
+  },
+  "ledger_state": {
+    "version": "dh116-dual-physical-evidence-v1",
+    "sdk_setup_boundaries": 2,
+    "record_rows": 414,
+    "physics_budget_end": 498,
+    "solver_substeps": 12,
+    "reset_recorded": true,
+    "measured_physics_rows": 328,
+    "last_sdk_step": 330,
+    "settled_control_windows": 40,
+    "complete_control_windows": 40,
+    "unsettled_control_window": true,
+    "native_qualification": false,
+    "teacher_admission": false,
+    "optimizer_updates": 0,
+    "record_sha256": "443ce3a553afa411cb535f220eaa054ea34fec74403d20f63294cf089e00487a"
+  },
+  "raised_vs_near_wrist": {
+    "raised_pitch_target_rad": -0.03188516944646835,
+    "near_pitch_target_rad": -0.04345878213644028,
+    "raised_tail_peak_speed_rad_s": 0.0009836748940870166,
+    "near_tail_peak_speed_rad_s": 0.0013401682954281569,
+    "near_last_pitch_speed_rad_s": 0.0011578367557376623,
+    "observed_per_sdk_speed_decay": 0.979327004484573,
+    "extrapolated_steps_for_8_row_gate": 15,
+    "extrapolated_first_of_last_eight_speed_after_24_steps_rad_s": 0.0008117547953951115,
+    "prediction_native_evidence": false
+  },
+  "transfers": {
+    "continuous_candidate_sha256": "715bd3286c49ec21ed2e84562c14f6814be38f13de240a4f517c5c0918a6a272",
+    "all_sdk_stress_sha256": "4ac1af53639df017f6ced93535236f8bd57e9af52c84801d69f537f09eeea025",
+    "rows": 496,
+    "minimum_continuous_margin_m": 2.8120048296839477e-06,
+    "minimum_transferred_non_target_clearance_m": 6.542477139665572e-05,
+    "minimum_transferred_table_clearance_m": 0.002473007173730113,
+    "native_evidence": false
+  },
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "ppo_updates": 0,
+  "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-near-corridor.md"
+}

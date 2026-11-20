@@ -1,3 +1,7 @@
+## Tripod near-rod clearance
+
+Recorded actual two-hand geometry on all 328 measured boundaries before the unchanged right wrist settling gate stopped the native approach. [Report](docs/superpowers/reports/2026-11-20-teacher-tripod-near-corridor.md).
+
 ## Pinch fixed-wrist seating
 
 Measured the left thumb and index seating increments with all three native contact gates and isolated the loss of signed opposition to the left side. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-fixed-wrist-seating.md).

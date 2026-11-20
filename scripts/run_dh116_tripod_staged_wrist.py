@@ -82,7 +82,7 @@ def prepare(args):
     return original
 
 
-def acquire(sim, owners, trace, output, *, plan, args, deadline):
+def acquire(sim, owners, trace, output, *, plan, args, deadline, observe_boundary=None):
     samples = deque(maxlen=8)
     run_uuid = "tripod-staged-wrist-" + uuid4().hex
     packet = plan["tracking_plan"]
@@ -90,6 +90,8 @@ def acquire(sim, owners, trace, output, *, plan, args, deadline):
     desired = packet["right_reference"]["intrinsic_knots_rad"][-1]
 
     def observe(exchange):
+        if observe_boundary is not None:
+            observe_boundary(exchange)
         hand = exchange["action_readback"]["post"]["hands"]["right"]
         ids = [hand["joint_names"].index(name) for name in ANGLES]
         samples.append(dict(sdk_step=exchange["physics_step"], target=hand["backend_targets"][0, ids].tolist(),
