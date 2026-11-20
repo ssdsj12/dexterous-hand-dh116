@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch early approach screen
+
+Add the same-boundary Pinch target screen and identify the right proximal collision of its rejected early candidate. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-approach.md).
+
 ## 2026-11-20 Pinch pre-submit wrist clearance
 
 Add the isolated bilateral wrist sweep, the pre-submit exchange binding, and the retained Pinch v13 CPU audit. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-swept-wrist-projection.md).

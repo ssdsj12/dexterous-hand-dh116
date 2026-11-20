@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch early approach screen
+
+An archived early Pinch target screen reports same-step opposing pad geometry and predicts a right proximal collision in its tested candidate. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-approach.md).
+
 ## 2026-11-20 Pinch pre-submit wrist clearance
 
 The retained Pinch v13 wrist sweep identifies rate-limited clearance failures before SDK submission. The isolated binding has CPU coverage. Live geometry integration and native qualification are pending. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-swept-wrist-projection.md).
