@@ -74,7 +74,8 @@ def certify_pacing(row, states, targets, *, prove=wrist.right_geometry):
     return result
 
 
-def archive_boundary(folder, *, outer_sha=OUTER_SHA, ledger_sha=LEDGER_SHA, sdk_steps=pair.LAST_SDK, windows=7):
+def archive_boundary(folder, *, outer_sha=OUTER_SHA, ledger_sha=LEDGER_SHA, sdk_steps=pair.LAST_SDK, windows=7,
+                     contact_guard=pair.guard_hand_contact):
     receipt = base._checked(folder / "outer.json", outer_sha)
     native = folder / "native"
     journal = native / "physical.jsonl"
@@ -96,7 +97,7 @@ def archive_boundary(folder, *, outer_sha=OUTER_SHA, ledger_sha=LEDGER_SHA, sdk_
                 last = base.decode_owned(entry["payload"])["exchange"]
     if last is None or last["physics_step"] != sdk_steps:
         raise ValueError("settled precontact boundary required")
-    pair.guard_hand_contact(last)
+    contact_guard(last)
     late.prefix_measurements(last, expected_sdk=sdk_steps)
     return plan, last
 

@@ -24,8 +24,9 @@ GOAL_SHA = {"left": "4f3b86a86d57ac487e4a3a2baec976caa41ab7ffc1ef74e8be22dfb74df
             "right": "56ec58d71207e10d0bd02d492ff6c7b7af7c9cbdb3dd3fe08892c13a41b17541"}
 
 
-def compile_closure(previous, states, goals):
-    prefix = prelift._finite(previous, (19, 24))
+def compile_closure(previous, states, goals, *, prefix_windows=19, closing_windows=CLOSING_WINDOWS,
+                    settle_windows=SETTLE_WINDOWS):
+    prefix = prelift._finite(previous, (prefix_windows, 24))
     targets, motions = {}, {}
     low, high = prelift.active_limits()
     for side in ("left", "right"):
@@ -36,10 +37,10 @@ def compile_closure(previous, states, goals):
             raise ValueError("original safe closing finger targets required")
         motions[side] = target - command
         targets[side] = target
-    advance = prelift.global_channel_order(motions["left"], motions["right"]) / (prelift.WINDOW_SCALE * CLOSING_WINDOWS)
+    advance = prelift.global_channel_order(motions["left"], motions["right"]) / (prelift.WINDOW_SCALE * closing_windows)
     if np.any(abs(advance) > 1.) or np.any(advance[UNCHANGED]):
         raise ValueError("selected four-finger closure exceeds input rate")
-    return np.vstack((prefix, np.tile(advance, (CLOSING_WINDOWS, 1)), np.zeros((SETTLE_WINDOWS, 24)))), targets
+    return np.vstack((prefix, np.tile(advance, (closing_windows, 1)), np.zeros((settle_windows, 24)))), targets
 
 
 def guard_selected_contact(row):
@@ -93,11 +94,13 @@ def prepare(args, *, screen_geometry=False):
     return previous
 
 
-def acquire(sim, owners, trace, output, *, plan):
+def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, after=None):
     def observe(row):
         step = row["physics_step"]
         if step > alignment.LAST_SDK:
             guard_selected_contact(row)
+            if after is not None and row["guard_failure"] is None:
+                after(row)
             return
         if step != alignment.LAST_SDK:
             return
@@ -108,7 +111,7 @@ def acquire(sim, owners, trace, output, *, plan):
             receipt["prefix"] = late.compare_prefix(measured, cfg["prefix"])
             states = {side: prelift.joint_and_wrist(row, side) for side in ("left", "right")}
             actions, targets = compile_closure(plan["action_schedule"][:19], states, cfg["goals"])
-            receipt["same_actions"] = bool(np.allclose(actions, plan["action_schedule"], atol=1e-7, rtol=0))
+            receipt["same_actions"] = bool(np.allclose(actions, plan["action_schedule"][:len(actions)], atol=1e-7, rtol=0))
             if receipt["prefix"]["passed"] and receipt["same_actions"]:
                 receipt["proofs"] = certify_closure(row, states, targets)
                 receipt["passed"] = all(x["proved"] for x in receipt["proofs"].values())
@@ -119,23 +122,23 @@ def acquire(sim, owners, trace, output, *, plan):
             row["guard_failure"] = "pinch_bilateral_closure_source_invalid"
 
     try:
-        return alignment.acquire(sim, owners, trace, output, plan=plan, sdk_steps=LAST_SDK,
+        return alignment.acquire(sim, owners, trace, output, plan=plan, sdk_steps=sdk_steps,
                                  after=observe, contact_after=alignment.LAST_SDK)
     finally:
         sim = owners = trace = None
 
 
-def main(argv=None):
+def main(argv=None, *, extra_flags=(), prepare_operation=prepare, acquire_operation=acquire):
     parser = argparse.ArgumentParser(description=__doc__)
     for flag in ("output", "plan", "sealed-reset", "baseline", "preflight", "archive", "wrist-preflight",
                  "previous", "angular-proof", "left-proof", "right-proof", "precontact", "pacing", "aligned",
-                 "left-closure", "right-closure"):
+                 "left-closure", "right-closure", *extra_flags):
         parser.add_argument("--" + flag, type=Path, required=True)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native = base.lifecycle.native
     native.validate_execution_context(base.ROOT)
-    plan = prepare(args, screen_geometry=args.approved_frozen_sha256 is None)
+    plan = prepare_operation(args, screen_geometry=args.approved_frozen_sha256 is None)
     digest = native.digest(plan)
     if args.approved_frozen_sha256 is None:
         native.write_new(args.plan, plan)
@@ -146,7 +149,7 @@ def main(argv=None):
             raise ValueError("exact approved closure plan and fresh output required")
         from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
         assert_clean_import_boundary()
-        base.lifecycle.execute(plan, acquire_operation=functools.partial(acquire, plan=plan))
+        base.lifecycle.execute(plan, acquire_operation=functools.partial(acquire_operation, plan=plan))
     return 0
 
 
