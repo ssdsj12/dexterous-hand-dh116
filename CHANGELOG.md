@@ -1,3 +1,7 @@
+## Staged Pinch native contact result
+
+Record native staged Pinch contact and isolate the left wrist/finger tracking trade-off from the final same-clock snapshot. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-contact-native-result.md).
+
 ## Staged Pinch native close driver
 
 Add a sealed staged Pinch close driver with reconciled 11-slot solver reaction evidence. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-contact-worker.md).

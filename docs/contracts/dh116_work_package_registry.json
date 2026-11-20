@@ -43357,6 +43357,28 @@
         "scope": "source-bound closure worker and CPU regression",
         "native_qualification": false
       }
+    },
+    "teacher.pinch-staged-contact-native-result": {
+      "title": "Measured staged Pinch quiet and close native contact",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-staged-contact-worker-cpu"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-staged-contact-native-result.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_staged_contact_native_result_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "scope": "completed diagnostic; no bilateral force closure",
+        "sdk_steps": 74,
+        "right_loaded_opposed_substeps": 15,
+        "bilateral_loaded_opposed_substeps": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

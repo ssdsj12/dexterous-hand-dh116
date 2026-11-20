@@ -1,3 +1,7 @@
+## Staged Pinch native contact result
+
+The first staged native close measured right-hand opposition. The left index remained unloaded and no bilateral lift was attempted. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-contact-native-result.md).
+
 ## Staged Pinch native close driver
 
 The staged Pinch quiet-and-close driver records same-substep reactions and stops at the original measured guards. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-contact-worker.md).
