@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch v12 native PPO timing outcome
+
+The left hand remained within clearance through 83 measured SDK steps. The right thumb guard stopped the rollout and the first PPO update remains uncompleted. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v12-timed-outcome.md).
+
 ## 2026-11-20 Pinch v12 native Reset
 
 The measured bilateral Reset passed and the outer Isaac process naturally exited zero. The new timed PPO recipe binds that Reset. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v12-native-reset.md).
