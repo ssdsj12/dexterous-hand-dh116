@@ -43331,6 +43331,32 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-staged-contact-worker-cpu": {
+      "title": "Bounded staged Pinch opposed contact diagnostic",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-staged-open-native-reset"
+      ],
+      "tests": [
+        "tests/test_dh116_staged_pinch_contact.py",
+        "tests/test_dh116_pinch_staged_closure.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-staged-contact-worker.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_staged_contact_worker_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 158,
+        "failed": 0,
+        "scope": "source-bound closure worker and CPU regression",
+        "native_qualification": false
+      }
     }
   },
   "execution_target": {

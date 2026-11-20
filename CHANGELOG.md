@@ -1,3 +1,7 @@
+## Staged Pinch native close driver
+
+Add a sealed staged Pinch close driver with reconciled 11-slot solver reaction evidence. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-contact-worker.md).
+
 ## 2026-11-20 Staged Pinch native Reset
 
 Record the independently sealed native Reset for the new fixed Pinch candidate. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-open-native-reset.md).

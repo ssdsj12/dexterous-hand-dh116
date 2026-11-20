@@ -1,3 +1,7 @@
+## Staged Pinch native close driver
+
+The staged Pinch quiet-and-close driver records same-substep reactions and stops at the original measured guards. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-contact-worker.md).
+
 ## 2026-11-20 Staged Pinch native Reset
 
 The staged Pinch candidate has passed its measured open Reset. Native settling and the force-bearing close remain the next validation. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-open-native-reset.md).
