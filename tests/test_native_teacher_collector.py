@@ -15,7 +15,8 @@ import torch
 from test_native_teacher_context import backend_profile
 
 
-def fixture(monkeypatch,tmp_path,profile,*,rollout_steps=2,cap_controls=99,ppo_config=None,physics_budget_end=66):
+def fixture(monkeypatch,tmp_path,profile,*,rollout_steps=2,cap_controls=99,ppo_config=None,physics_budget_end=66,
+            configure_trainer=None):
     import test_deformable_r0_replay as replay
     from go2_pvcnn.control.dh116.tabletop_action24_history_owner import Action24HistoryOwner
     from go2_pvcnn.control.dh116.tabletop_native_teacher_context import TaskContextOwner
@@ -62,6 +63,8 @@ def fixture(monkeypatch,tmp_path,profile,*,rollout_steps=2,cap_controls=99,ppo_c
         record(row)
     ep._record=durable
     context.reset_from_verified_state(sources.context_state(None),history_owner=history)
+    if configure_trainer is not None:
+        configure_trainer(trainer, owner)
     collector=NativeTeacherCollector(owner,trainer,TrainingReward(reward_config),SimpleNamespace())
     return collector,ep,rod,hands,sim,rows
 

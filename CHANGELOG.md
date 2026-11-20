@@ -1,3 +1,7 @@
+## Actual Teacher resume update
+
+Verified a fresh Reset and a second PPO update across independent CPU fixture processes, preserving the first checkpoint. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-update.md).
+
 ## Actual Teacher diagnostic origin
 
 Bind a published actual A diagnostic to canonical checkpoint bytes and the same-source, same-training contract for a future independent resume. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-origin.md).

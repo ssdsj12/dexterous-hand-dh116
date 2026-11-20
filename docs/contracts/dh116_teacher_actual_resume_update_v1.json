@@ -1,0 +1,52 @@
+{
+  "version": "dh116-teacher-actual-resume-update-v1",
+  "status": "cpu_verified_two_independent_ppo_processes",
+  "scope": "cpu_fixture",
+  "fresh_fixture": {
+    "update": 1,
+    "steps": 8,
+    "physical_steps": 64,
+    "training_loaded": 0,
+    "delta_l2": 0.040066875032629824,
+    "accepted": 1,
+    "checkpoint_sha256": "8001c9cbcc8ac4b8553a208eef4f9427d099769c30eb546a29725315df07cd8f",
+    "weights_sha256": "c22f3647c5d1061672b1d8afeb3f4fd764d2b2987aca2b7c513631ce4d8a607f",
+    "rng_sha256": "e253a6dcf467c78ef3081170053d29d7e7f4a40276fb9d4054a8003d41c988aa",
+    "origin": {
+      "kind": "fresh"
+    },
+    "native_qualification": false
+  },
+  "resumed_fixture": {
+    "update": 2,
+    "steps": 16,
+    "physical_steps": 64,
+    "training_loaded": 1,
+    "delta_l2": 0.033964399853863084,
+    "accepted": 2,
+    "checkpoint_sha256": "ca9f930b74440c06991d4f73d918a1308faae0f91bca574b6dcc457eacb370af",
+    "weights_sha256": "a5d9397f27c0d840b4661aa11628745a508562223d0b6c3ab6b2568fa694f83f",
+    "rng_sha256": "0c9ee70fa88ad5b5083e27ab1adaf99b55ca70bbaef35d9582e212ef1a4acc76",
+    "origin": {
+      "kind": "resume",
+      "checkpoint_sha256": "8001c9cbcc8ac4b8553a208eef4f9427d099769c30eb546a29725315df07cd8f"
+    },
+    "native_qualification": false,
+    "restored_rng_sha256": "e253a6dcf467c78ef3081170053d29d7e7f4a40276fb9d4054a8003d41c988aa",
+    "loaded_weights_sha256": "c22f3647c5d1061672b1d8afeb3f4fd764d2b2987aca2b7c513631ce4d8a607f",
+    "restored_adam": 1
+  },
+  "distinct_processes": true,
+  "distinct_episodes": true,
+  "restored_rng_matches_checkpoint": true,
+  "original_a_checkpoint_preserved": true,
+  "controls_per_process": 8,
+  "cpu_tests_passed": 334,
+  "cpu_log_sha256": "edc32c9e8ff7265300f349d350c577a209e19a3dda3eb4e752122122dbbc6252",
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "actual_resume_worker_enabled": false,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-update.md"
+}
