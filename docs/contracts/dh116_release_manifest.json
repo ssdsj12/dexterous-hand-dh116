@@ -29113,6 +29113,31 @@
         "verified_at_utc": "2026-11-20T16:52:33.104931+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Actual Teacher diagnostic checkpoint origin readback",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-origin.md",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_origin_v1.json",
+      "cpu_tests": {
+        "passed": 205,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7ec5924588c9daff57fb4e3a23ed4fe2d5bf416c",
+        "source_tree": "03adeb44ec0e565cd5857eadae8d2fb2ca9f5a10",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T17:03:17.578441+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
