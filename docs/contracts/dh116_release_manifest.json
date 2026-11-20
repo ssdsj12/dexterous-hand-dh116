@@ -29213,6 +29213,31 @@
         "verified_at_utc": "2026-11-20T17:35:35.827586+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Actual Teacher resume launch and bounded A recipe",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-native-plan.md",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_launch_v1.json",
+      "cpu_tests": {
+        "passed": 279,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ad6e4fb53e4089caf899d8c99ef885418aa258c1",
+        "source_tree": "c2b689ecfe5404593f786e8e968dea98f4f23706",
+        "remote_branch": "11-17",
+        "files_verified": 13,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T17:43:06.035073+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
