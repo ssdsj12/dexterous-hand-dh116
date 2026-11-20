@@ -145,9 +145,9 @@ class ObservedClose(ClearanceGuardedExchange):
             self = action = row = None
 
 
-def inspect_interval(path, actions):
+def inspect_interval(path, actions, *, sdk_steps=SDK_STEPS):
     audit = inspect_evidence(path)
-    if audit["physics_budget_end"] != SDK_STEPS or audit["solver_substeps"] != SUBSTEPS:
+    if audit["physics_budget_end"] != sdk_steps or audit["solver_substeps"] != SUBSTEPS:
         raise ValueError("ledger differs from frozen close budget")
     quiet, begins, rows = [], [], []
     reset_nodes = None
@@ -182,12 +182,12 @@ def inspect_interval(path, actions):
     full = [step for step, data in reactions if data["all_12_loaded_opposed"]]
     return dict(audit, quiet_admission=quiet[0] if quiet else None,
                 rows_with_simultaneous_loaded_opposition=common, rows_all_12_opposed=full,
-                final_8_sdk_all_substeps_opposed=(len(rows) == MEASURED_STEPS
-                    and full[-8:] == list(range(SDK_STEPS-7, SDK_STEPS+1))),
+                final_8_sdk_all_substeps_opposed=(len(rows) == sdk_steps - 2
+                    and full[-8:] == list(range(sdk_steps-7, sdk_steps+1))),
                 teacher_admission=False, grasp_qualified=False)
 
 
-def acquire(sim, owners, trace, output, *, plan):
+def acquire(sim, owners, trace, output, *, plan, sdk_steps=SDK_STEPS):
     import sys
     from uuid import uuid4
     import torch
@@ -207,13 +207,13 @@ def acquire(sim, owners, trace, output, *, plan):
         prepared = scene.prepare_scene(ROOT)
         run = "staged-pinch-" + uuid4().hex
         journal_path = Path(output) / "physical.jsonl"
-        journal = DualHandEvidenceJournal(journal_path, physics_budget_end=SDK_STEPS, solver_substeps=SUBSTEPS)
+        journal = DualHandEvidenceJournal(journal_path, physics_budget_end=sdk_steps, solver_substeps=SUBSTEPS)
         with profile_reader_scope(profile), bindings(
                 (builder, "BACKEND", Path(profile.binary_path)), (builder, "BACKEND_SHA", profile.binary_sha256),
                 (physical, "FlexiblePhysicalExchange", ObservedClose)):
             fresh = builder.build_fresh_owned(sim, owners, project=ROOT, prepared=prepared,
                 ownership=trace, record=journal.record, run_uuid=run, episode_uid=run+":0",
-                physics_budget_end=SDK_STEPS, expected_reset_seed=seed, pair_proposal=source)
+                physics_budget_end=sdk_steps, expected_reset_seed=seed, pair_proposal=source)
             episode = fresh.episode
             reset = episode.reset(seed, episode_uid=run+":0", owner_resets=diagnostic_reset_owners())
             for item in fresh.initial_geometry():
@@ -237,12 +237,12 @@ def acquire(sim, owners, trace, output, *, plan):
                 if result["termination_reason"]:
                     break
         journal.close()
-        audit = inspect_interval(journal_path, np.asarray(plan["action_schedule"]))
+        audit = inspect_interval(journal_path, np.asarray(plan["action_schedule"]), sdk_steps=sdk_steps)
         report = dict(version=VERSION, physics_rows=audit["measured_physics_rows"],
                       close_evidence=audit, ppo_updates=0, grasp_qualified=False, teacher_admission=False)
         if audit["terminal_reason"]:
             report.update(failure=audit["terminal_reason"], guarded_stop_sdk_step=audit["last_sdk_step"])
-        elif audit["last_sdk_step"] != SDK_STEPS or audit["settled_control_windows"] != len(plan["action_schedule"]):
+        elif audit["last_sdk_step"] != sdk_steps or audit["settled_control_windows"] != len(plan["action_schedule"]):
             raise ValueError("incomplete staged close without measured terminal")
         lifecycle.native.write_new(Path(output)/"staged_close_audit.json", report)
         return report

@@ -52,7 +52,8 @@ def right_control_windows(issued, goal):
             prelift.bounded_transition(row(aligned), row(target))[:2])
 
 
-def right_geometry(row, actual, issued, target, envelope, *, nodes):
+def right_geometry(row, actual, issued, target, envelope, *, nodes,
+                   phase_names=("angle_first", "wrist_first", "finger_release"), phase_seconds=75.):
     model, source = prelift._bound_model(prelift.base.ROOT, "right")
     raw = row["closure_geometry"]["raw"]["hands"]["right"]
     frames, xyz = prelift._frames(model, raw["body_names"], raw["link_poses_xyzw"])
@@ -126,7 +127,9 @@ def right_geometry(row, actual, issued, target, envelope, *, nodes):
         return dict(proved=True, verified_shapes=verified)
 
     # The same measured rod shape underlies each conditional phase proof.
-    phases = {key: certify_phase(*envelope[key], seconds=75.) for key in ("angle_first", "wrist_first", "finger_release")}
+    phases = {key: certify_phase(*envelope[key], seconds=phase_seconds) for key in phase_names}
+    if "finger_release" not in phases:
+        return phases, None
     grids = {"left": {}, "right": {}}
     prelift._bind_pad_grids(row, "right", source, grids, {})
     staged_end = np.array([1., 1., LINEAR_APPROACH_LIMIT, 1.])

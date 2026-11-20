@@ -1,4 +1,8 @@
 
+## Pinch live right-wrist gate
+
+Add a current-instance geometry gate for the right-wrist Pinch window and record the first rod motion outside the certified range. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-angular-gate-native.md).
+
 ## Pinch staged right wrist entry
 
 Separately certify right Pinch wrist rotation, translation and finger closure from the recorded approach. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-right-wrist-first.md).

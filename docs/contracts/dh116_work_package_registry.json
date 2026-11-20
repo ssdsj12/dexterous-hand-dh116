@@ -43669,6 +43669,45 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-angular-gate-native-result": {
+      "title": "Measure guarded right-wrist recovery on a current-instance Pinch prefix",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "blocked",
+      "dependencies": [
+        "teacher.pinch-right-wrist-first-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_angular_gate.py",
+        "tests/test_dh116_pinch_wrist_first.py",
+        "tests/test_dh116_pinch_prelift.py",
+        "tests/test_dh116_pinch_wrist_relief_worker.py",
+        "tests/test_dh116_pinch_wrist_relief.py",
+        "tests/test_dh116_pinch_early_finger_worker.py",
+        "tests/test_dh116_pinch_early_finger.py",
+        "tests/test_dh116_pinch_late_wrist.py",
+        "tests/test_dh116_staged_pinch_contact.py",
+        "tests/test_dh116_pinch_staged_closure.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_tripod_tracking_envelope.py",
+        "tests/test_dh116_dual_hand_evidence_journal.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-angular-gate-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_angular_gate_native_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 204,
+        "failed": 0,
+        "native_completed": false,
+        "last_sdk_step": 60,
+        "terminal_reason": "pinch_angular_rod_reserve_exceeded",
+        "teacher_admission": false,
+        "native_qualification": false
+      }
     }
   },
   "execution_target": {
