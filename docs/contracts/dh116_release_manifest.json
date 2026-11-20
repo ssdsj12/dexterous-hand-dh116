@@ -28038,6 +28038,31 @@
         "verified_at_utc": "2026-11-20T07:31:42.006952+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-staged-close-geometry-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-staged-close-geometry.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_staged_close_v1.json",
+      "cpu_tests": {
+        "passed": 118,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "5e45992f675f3d27c287a33c63ffc00da4543040",
+        "source_tree": "ca153db6970a1a442dbfcff296b3084dd5f05b4b",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T08:06:19.128068+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
