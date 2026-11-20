@@ -28363,6 +28363,31 @@
         "verified_at_utc": "2026-11-20T10:29:40.263876+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-right-wrist-first-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-right-wrist-first.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_right_wrist_first_cpu_v1.json",
+      "cpu_tests": {
+        "passed": 192,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ac5f148f10c94d267851ea0ac81a718875689f00",
+        "source_tree": "c1934381fabca037c3c58615ad94e86133140bc6",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T10:54:20.084124+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
