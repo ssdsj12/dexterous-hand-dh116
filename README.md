@@ -1,4 +1,8 @@
 
+## Pinch simultaneous bilateral contact
+
+Pinch records 14 consecutive same-substep bilateral opposed reactions in a bounded native close. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-wrist-relief-native-result.md).
+
 ## Pinch early finger native comparison
 
 Earlier Pinch finger timing establishes left index load; the left and right signed opposition windows remain adjacent. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-native-result.md).

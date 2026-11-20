@@ -43574,6 +43574,29 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-wrist-relief-native-result": {
+      "title": "Observe simultaneous signed bilateral Pinch force",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-wrist-relief-cpu"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-wrist-relief-native-result.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_wrist_relief_native_result_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "scope": "completed guarded diagnostic and 14 consecutive bilateral signed substeps",
+        "sdk_steps": 74,
+        "left_loaded_opposed_substeps": 33,
+        "right_loaded_opposed_substeps": 15,
+        "bilateral_loaded_opposed_substeps": 14,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

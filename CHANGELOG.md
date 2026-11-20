@@ -1,4 +1,8 @@
 
+## Pinch simultaneous bilateral contact
+
+Record simultaneous native Pinch forces and terminal sign loss after source-bound left wrist relief. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-wrist-relief-native-result.md).
+
 ## Pinch early finger native comparison
 
 Record native left- and right-hand Pinch force windows and the left resultant-force sign transition. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-finger-native-result.md).
