@@ -27888,6 +27888,31 @@
         "verified_at_utc": "2026-11-20T05:46:34.408560+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tri-grasp-target-geometry-replay-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tri-grasp-target-geometry-replay.md",
+      "readiness": "docs/contracts/dh116_teacher_tri_grasp_target_geometry_replay_v1.json",
+      "cpu_tests": {
+        "passed": 9,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c976250cab54fb17ac4012a249c33ac391e8c192",
+        "source_tree": "922666f9987f90c958324d99a164a8f71da8b104",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T05:52:57.221380+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
