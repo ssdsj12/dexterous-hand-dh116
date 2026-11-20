@@ -1,0 +1,52 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-window-wall-time-cpu",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-wall-time.md",
+  "review_baseline": "3d057f0d4d782802db90fce8117c7857d001cd04",
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "cpu": {
+    "passed": 188,
+    "failed": 0,
+    "log_sha256": "f455076e7ec6675293851614cf70f77d4906116a3ad57eb2d4fbe2fefd348690",
+    "red_sha256": "6e1b37df9d7d68f22a3264d61e0fbd892c06032cc91fa2c3dd345a9dc30a2335"
+  },
+  "archived_physical_replay": {
+    "total_steps": 139,
+    "earlier_translation_sha256": "e163a973bf721a91ce8a8174db77e07c9bff1fc6c19d2cd78289561c8c7321ed",
+    "pitch_sha256": "f0f94b0660cb23655635643b16b641fbbbff76cef2479a726b7ff8106887305f",
+    "roll_sha256": "f5d8868718dc67baff7d77730c6c7b0024c3400553acbb8ad90bff45de4b8b92",
+    "original_right_minimum_m": 0.002171756163866889,
+    "selected_left_replayed_minimum_m": 0.00231364929736555,
+    "selected_left_static_lower_bound_m": 0.002327456169254799,
+    "selected_left_finger13_rod_lower_bound_m": 4.493694662814795e-05,
+    "native_reset_qualified": false
+  },
+  "matched_reset_fallback": {
+    "core_identity": {
+      "command_spec_sha256": "d5e6d3d3dfad59cb84f8f6c17b7229735e399a1d81ff2e0a9f41a1b823f21b4a",
+      "code_config_sha256": "2e1f8ca45964c52dec345a2c785bbd3a14e4f1715809c503fc8ecd89f948f31c"
+    },
+    "actual_identity": {
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "core_recipe_identity": {
+        "code_config_sha256": "2e1f8ca45964c52dec345a2c785bbd3a14e4f1715809c503fc8ecd89f948f31c",
+        "command_spec_sha256": "d5e6d3d3dfad59cb84f8f6c17b7229735e399a1d81ff2e0a9f41a1b823f21b4a"
+      },
+      "companion_sha256": "a17701abee14004a003f689df05acd7811cd51a47267baa6f43afd3e07ed6be5",
+      "source_closure_sha256": "ab695819a5264dbd368beb4de37313f212c3236ffd4c5f1d13d0b5e7c6f74358"
+    },
+    "attempt_fingerprint": "90c665c67952e9682b6d71fb16302325d968acfaa215fbdb072126d69cf3395c"
+  },
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_provider.py": "190a37e20fe1d634c1bb63ed21418a459f573f27a31ff362936c36a90f5ced8b",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_collector.py": "b9fa5983aba94379c583660cde4a778feb5256a2bdf67bfd8fc0c2f5e24814af",
+    "tests/test_native_teacher_actual_provider.py": "603443699395a370af6f17fd4de2b26b4dc6563986a64ed9403e1dbd20e3d521",
+    "tests/test_native_teacher_collector.py": "373d123c730212679bd39a8b6303f23e10d708b8a242250d69033f77b9f5371e",
+    "configs/dh116_execution/pinch-actual-smoke32-core-wall-profile.json": "d5e6d3d3dfad59cb84f8f6c17b7229735e399a1d81ff2e0a9f41a1b823f21b4a",
+    "configs/dh116_execution/pinch-actual-smoke32-launch-wall-profile.json": "a17701abee14004a003f689df05acd7811cd51a47267baa6f43afd3e07ed6be5"
+  }
+}

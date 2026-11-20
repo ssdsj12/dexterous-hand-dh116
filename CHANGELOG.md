@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch control-window wall-time trace
+
+The fresh diagnostic records one lifecycle timing sample for each complete, terminal or failed control window. Bilateral replay produced geometry candidates for a new left Reset. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-wall-time.md).
+
 ## 2026-11-20 Pinch v11 seeded native outcome
 
 The verified action replay reproduced all nine decisions. Native collection stopped at the original left thumb clearance guard and completed no PPO update. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v11-native-outcome.md).

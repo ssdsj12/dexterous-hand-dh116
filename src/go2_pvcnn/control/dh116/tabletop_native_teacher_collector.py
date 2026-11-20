@@ -3,13 +3,14 @@
 Exactly one episode.control per decision; no sim.step or optimizer call here.
 Source adapters supply typed measured endpoints, never qualification booleans.
 """
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext, suppress
 from copy import deepcopy
 from dataclasses import asdict,is_dataclass
 import math
 import os
 import json
 from pathlib import Path
+from time import perf_counter_ns
 
 import torch
 
@@ -37,18 +38,45 @@ class NativeJournal:
     def close(self): self._stream.close()
 
 
+class _WindowWallTime:
+    PHASES = ("source_binding", "pre_action", "physical_control", "post_action")
+
+    def __init__(self):
+        self.phase_ns = dict.fromkeys(self.PHASES, 0)
+        self.phase = self.PHASES[0]
+        self.started_ns = self.boundary_ns = perf_counter_ns()
+        self.physical_observer_ns = 0
+
+    def advance(self, next_phase):
+        boundary = perf_counter_ns()
+        self.phase_ns[self.phase] = boundary - self.boundary_ns
+        self.phase = next_phase
+        self.boundary_ns = boundary
+
+    @contextmanager
+    def observe(self):
+        started_ns = perf_counter_ns()
+        try:
+            yield
+        finally:
+            self.physical_observer_ns += perf_counter_ns() - started_ns
+
+
 class _TerminalObserver:
     """Original recorder runs first; propagate trusted reward terminal immediately."""
-    def __init__(self,inner,reason,journal,on_advanced):
+    def __init__(self,inner,reason,journal,on_advanced,wall_time):
         self.inner,self.reason,self.journal,self.on_advanced=inner,reason,journal,on_advanced
+        self.wall_time = wall_time
     def control(self,action,*,observe):
         def delivered(row):
             # Raw advanced exchange survives even if original boundary conversion
             # raises before the episode's physical recorder is reached.
-            self.on_advanced(row)
-            self.journal.emit("delivered_exchange",row)
-            observe(row)
-            return self.reason()
+            timing = self.wall_time()
+            with timing.observe() if timing is not None else nullcontext():
+                self.on_advanced(row)
+                self.journal.emit("delivered_exchange",row)
+                observe(row)
+                return self.reason()
         return self.inner.control(action,observe=delivered)
 
 
@@ -85,6 +113,7 @@ class NativeTeacherCollector:
             self._source_profile = owner.backend_profile
         self.journal=owner.ledger
         self._student_stereo = None
+        self._wall_trace_sink = self._window_wall = None
         self.quarantined=self._closed=self._active=self.episode_done=False
         self.consumed_sdk_steps=0 if previous is None else previous.consumed_sdk_steps
         self.transitions=0 if previous is None else previous.transitions
@@ -116,7 +145,8 @@ class NativeTeacherCollector:
             self.consumed_sdk_steps+=1
             runtime=getattr(getattr(owner,"contract",None),"runtime",None)
             if runtime is not None: runtime.charge(row,self.sources.solver_substeps)
-        ep._exchange=_TerminalObserver(original_exchange,lambda:self._terminal,self.journal,advanced)
+        ep._exchange=_TerminalObserver(original_exchange,lambda:self._terminal,self.journal,advanced,
+                                       lambda: self._window_wall)
         owner._restores.append(lambda:setattr(ep,"_record",original_record))
         owner._restores.append(lambda:setattr(ep,"_exchange",original_exchange))
         self.journal.emit("collector_origin",dict(policy=self._epoch,
@@ -177,6 +207,17 @@ class NativeTeacherCollector:
         observation, sequence = recorded(self.trainer.model, pre, context, purpose=purpose)
         return observation, dict(source_pack_sequence=sequence)
 
+    @contextmanager
+    def trace_wall_windows(self, sink):
+        """Use a separate diagnostic sink for this synchronous collection scope."""
+        if not callable(sink) or self._active or self._closed or self._wall_trace_sink is not None:
+            raise ValueError("an idle collector and an independent timing sink are required")
+        self._wall_trace_sink = sink
+        try:
+            yield
+        finally:
+            self._wall_trace_sink = None
+
     def collect(self):
         from .tabletop_native_teacher_profile import control_source_scope
         if self.quarantined or self._closed or self._active or self.episode_done:
@@ -188,11 +229,18 @@ class NativeTeacherCollector:
             return None
         if len(tr.rollout)>=tr.rollout_steps: raise RuntimeError("rollout full; complete original PPO update first")
         self._active=True;self._terminal=None;self._rows=[]
+        sink = self._wall_trace_sink
+        timing = self._window_wall = _WindowWallTime() if sink is not None else None
+        sdk_steps_before, transitions_before = self.consumed_sdk_steps, self.transitions
+        packet = None
         try:
             scope = (nullcontext() if self._source_profile is None
                      else control_source_scope(self._source_profile))
             with scope as verify_source:
-                return self._collect_window(remaining, verify_source)
+                if timing is not None:
+                    timing.advance("pre_action")
+                packet = self._collect_window(remaining, verify_source)
+                return packet
         except BaseException as exc:
             self.quarantined=True
             try:
@@ -201,7 +249,24 @@ class NativeTeacherCollector:
                     pending_preserved=tr._pending is not None,recovery="last_clean_checkpoint_only"))
             except BaseException: pass
             raise
-        finally: self._active=False
+        finally:
+            self._active = False
+            self._window_wall = None
+            if timing is not None:
+                timing.advance(None)
+                terminal_reason = (self._rows[-1]["exchange"]["guard_failure"]
+                                   if packet is not None and packet.terminated else None)
+                # A trace write failure cannot replace the original physical/source failure.
+                with suppress(BaseException) if self.quarantined else nullcontext():
+                    sink("control_window_wall", version="dh116-control-window-wall-v1",
+                         scope=self.sources.scope, control_index=transitions_before,
+                         elapsed_ns=timing.boundary_ns - timing.started_ns, phase_ns=timing.phase_ns,
+                         physical_observer_ns=timing.physical_observer_ns,
+                         sdk_steps_delivered=self.consumed_sdk_steps - sdk_steps_before,
+                         transition_recorded=self.transitions > transitions_before,
+                         terminated=bool(packet and packet.terminated), truncated=bool(packet and packet.truncated),
+                         terminal_reason=terminal_reason, quarantined=self.quarantined,
+                         native_qualification=False, teacher_admission=False)
 
     def _collect_window(self, remaining, verify_source):
         from .tabletop_training_reward import SourceFailure
@@ -236,7 +301,12 @@ class NativeTeacherCollector:
         self.journal.emit("decision",dict(pre_action_sha256=prehash,observation=obs,
             collection_token=token,policy=self._epoch,sampled_action24=sample["actions"],history=decision,
             **decision_source, **stereo))
+        timing = self._window_wall
+        if timing is not None:
+            timing.advance("physical_control")
         result=owner.control(sample["actions"])
+        if timing is not None:
+            timing.advance("post_action")
         if result["physical_samples"]!=len(self._rows) or not 1<=len(self._rows)<=8:
             raise SourceFailure("actual original control window differs from durable rows")
         # History's existing sequence validates the ORIGINAL physical guard.

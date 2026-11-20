@@ -521,3 +521,76 @@ def test_decision_and_bootstrap_reference_their_separate_source_pack_rows(monkey
     assert rows[bootstrap_seq]["payload"]["purpose"] == "bootstrap"
     assert rows[bootstrap_seq]["payload"]["physics_step"] == 10
     assert rows[bootstrap_seq]["payload"]["observation_sha256"] == bootstrap["observation_sha256"]
+
+
+@pytest.mark.parametrize("mode, measured", [("complete", 8), ("terminal", 3), ("source_error", 3)])
+def test_control_wall_trace_preserves_the_original_physical_and_ppo_boundaries(
+        monkeypatch, tmp_path, backend_profile, mode, measured):
+    import itertools
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_collector as module
+
+    c, _, rod, hands, sim, _ = fixture(monkeypatch, tmp_path, backend_profile)
+    clock = itertools.count(10, 10)
+    monkeypatch.setattr(module, "perf_counter_ns", lambda: next(clock), raising=False)
+    emitted = []
+
+    if mode == "source_error":
+        c.sources.damage = "identity"
+    if mode == "terminal":
+        native_step = sim.step
+
+        def step(*, render):
+            native_step(render=render)
+            if rod.rope.steps == 2:
+                hands[1].measured[0, hands[1].joint_names.index("finger12")] = -.05
+
+        sim.step = step
+
+    def sink(phase, **row):
+        emitted.append((phase, row))
+
+    with c.trace_wall_windows(sink):
+        if mode == "source_error":
+            with pytest.raises((ValueError, RuntimeError), match="same episode and consecutive actual 480Hz clock"):
+                c.collect()
+        else:
+            assert c.collect().terminated is (mode == "terminal")
+
+    [(phase, row)] = emitted
+    assert phase == "control_window_wall"
+    assert row["sdk_steps_delivered"] == measured == rod.rope.steps
+    assert row["scope"] == "cpu_fixture"
+    assert row["native_qualification"] is False and row["teacher_admission"] is False
+    assert row["quarantined"] is (mode == "source_error")
+    assert row["terminated"] is (mode == "terminal")
+    assert row["truncated"] is False
+    assert row["transition_recorded"] is (mode != "source_error")
+    assert (row["terminal_reason"] is not None) is (mode == "terminal")
+    assert row["elapsed_ns"] == sum(row["phase_ns"].values())
+    assert row["phase_ns"]["physical_control"] >= row["physical_observer_ns"] == 10 * measured
+    assert row["phase_ns"]["post_action"] == (0 if mode == "source_error" else 10)
+    assert all(r["operation"] != "control_window_wall" for r in operations(c))
+    assert c._wall_trace_sink is None and c._window_wall is None
+
+
+@pytest.mark.parametrize("source_error", [False, True])
+def test_wall_trace_sink_failure_never_quarantines_a_good_transition_or_replaces_source_error(
+        monkeypatch, tmp_path, backend_profile, source_error):
+    c, _, rod, _, _, _ = fixture(monkeypatch, tmp_path, backend_profile)
+    if source_error:
+        c.sources.damage = "identity"
+
+    def sink(*_, **details):
+        raise OSError("timing sink failed")
+
+    with c.trace_wall_windows(sink):
+        if source_error:
+            with pytest.raises((ValueError, RuntimeError), match="same episode and consecutive actual 480Hz clock"):
+                c.collect()
+        else:
+            with pytest.raises(OSError, match="timing sink failed"):
+                c.collect()
+    assert c.quarantined is source_error
+    assert c.transitions == (0 if source_error else 1)
+    assert rod.rope.steps == (3 if source_error else 8)
+    assert c._wall_trace_sink is None

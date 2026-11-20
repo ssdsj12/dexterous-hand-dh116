@@ -42637,6 +42637,51 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.pinch-window-wall-time-cpu": {
+      "title": "Pinch control-window wall clock and bilateral FK screening",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.pinch-v11-seeded-outcome-cpu"
+      ],
+      "tests": [
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_actual_provider.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_wall_time_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-wall-time.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 188,
+        "failed": 0,
+        "scope": "CPU only"
+      }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-wall-profile": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Pinch matched Reset bounded wall-time diagnostic",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Backup matched-Reset profile, superseded for next launch by left candidate pending native Reset.",
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-wall-profile.json",
+      "dependencies": [
+        "teacher.pinch-window-wall-time-cpu"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-wall-time.md",
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-wall-profile.json",
+        "sha256": "a17701abee14004a003f689df05acd7811cd51a47267baa6f43afd3e07ed6be5"
+      }
     }
   },
   "execution_target": {

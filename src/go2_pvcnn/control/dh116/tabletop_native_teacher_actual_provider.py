@@ -190,7 +190,8 @@ def _acquire(sim, owners, trace, *, attempt, config, lease):
                     "native_qualification": False,
                     "teacher_admission": False,
                 })
-                result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract)
+                with collector.trace_wall_windows(trace.event):
+                    result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract)
             _record_actual_wall_budget(collector, lease, "after_update")
         except BaseException:
             try:

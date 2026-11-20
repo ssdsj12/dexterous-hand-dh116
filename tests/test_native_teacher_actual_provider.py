@@ -69,7 +69,20 @@ def test_acquisition_uses_one_journal_and_releases_collector_on_every_return(tmp
     exploration_state = torch.Generator(device="cpu").manual_seed(2026112002).get_state()
     attempt = SimpleNamespace(project=tmp_path, output=tmp_path, session_uid="cpu-composition",
                               device={"logical_device": "cuda:0"})
-    sim, owners, trace, lease, owner, static = (object() for _ in range(6))
+    from contextlib import contextmanager
+
+    sim, owners, lease, owner, static = (object() for _ in range(5))
+    trace = SimpleNamespace(event=lambda *_a, **_kw: None)
+    attached = []
+
+    @contextmanager
+    def trace_wall_windows(sink):
+        assert sink is trace.event
+        attached.append(sink)
+        try:
+            yield
+        finally:
+            attached.pop()
 
     def build(state, **kwargs):
         assert state is static
@@ -93,14 +106,15 @@ def test_acquisition_uses_one_journal_and_releases_collector_on_every_return(tmp
 
         def close():
             events.append(("close", journal))
-            assert not journal._stream.closed
+            assert not journal._stream.closed and not attached
             if failure in ("close", "both"):
                 raise RuntimeError("collector close failure")
 
-        return SimpleNamespace(owner=owner, journal=journal, close=close, _epoch={"weights": "c" * 64})
+        return SimpleNamespace(owner=owner, journal=journal, close=close, _epoch={"weights": "c" * 64},
+                               trace_wall_windows=trace_wall_windows)
 
     def step(collector, *, checkpoint_contract):
-        assert checkpoint_contract == {"fixture": True}
+        assert checkpoint_contract == {"fixture": True} and attached == [trace.event]
         events.append(("update", collector.journal))
         entries = [json.loads(line) for line in collector.journal.path.read_text().splitlines()]
         seed_records = [entry["payload"] for entry in entries if entry["operation"] == "fresh_policy_rng"]
