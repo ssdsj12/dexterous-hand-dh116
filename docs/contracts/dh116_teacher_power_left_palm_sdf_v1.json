@@ -1,0 +1,78 @@
+{
+  "schema": "dh116.teacher.power.left_palm_sdf.v1",
+  "status": "standalone_gpu_registration_passed",
+  "left": {
+    "shape": [
+      110,
+      79,
+      153
+    ],
+    "dtype": "float32",
+    "bytes": 5318280,
+    "origin_link_m": [
+      -0.0553891658782959,
+      -0.036345843225717545,
+      -0.012000000104308128
+    ],
+    "spacing_m": 0.001,
+    "lattice_hi_link_m": [
+      0.0536108341217041,
+      0.041654156774282455,
+      0.13999999989569187
+    ],
+    "inside_sample_link_m": [
+      0.002293157624080777,
+      0.006485247518867254,
+      0.06866350024938583
+    ],
+    "inside_signed_distance_m": -0.020064070574803694,
+    "outside_sample_link_m": [
+      0.048364218324422836,
+      0.006485247518867254,
+      0.06866350024938583
+    ],
+    "outside_signed_distance_m": 0.010030362416313433,
+    "distance_min_m": -0.023317493498325348,
+    "distance_max_m": 0.05248906835913658,
+    "min_six_lattice_faces_signed_distance_m": 0.012000000104308128,
+    "max_abs_sdf_at_hull_vertices_m": 0.00041463044359842403,
+    "configurable_truncation_distance_m": null,
+    "gpu_row_sha256": "9fbe513502279888f647d9eb8f200969427db5271d815bad4646817646b907de",
+    "closed_welded_hull": true,
+    "welded_vertices": 36,
+    "welded_faces": 68,
+    "rod_radius_m": 0.005,
+    "voxels_per_rod_radius": 5.0,
+    "margin_m": 0.012,
+    "thickness_m": 0.0,
+    "round_m": 0.0,
+    "frame": "original_pad_coincident_local_basis_m",
+    "native_coincident_basis_max_matrix_delta": 0.0,
+    "position_world_m": [
+      2.9103830456733704e-10,
+      1.399999976158142,
+      0.6499999761581421
+    ],
+    "quaternion_world_xyzw": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "sdk_pose_matrix_max_delta": 0.0,
+    "rope_mesh_index": 0,
+    "sdf_file_sha256": "824df146c5bd50c3e878a577e4f91ebce66b7b76fc2873c54aacef11c6a9e961"
+  },
+  "right_status": "original_fan_differs_from_vertex_convex_hull",
+  "gpu_result_sha256": "8316ca79897e63f12fb5c7908544d549312a93c9b3cb66beec64b78fd6bb9cdf",
+  "outer_sha256": "dac7ec655a82513bae795605dd4d59345fb63a79c790fd7e56668aca9f2b1463",
+  "standalone_gpu_runs": 1,
+  "native_runs": 0,
+  "ppo_updates": 0,
+  "live_mesh_slots_qualified": 11,
+  "live_mesh_slots_required": 13,
+  "native_qualification": false,
+  "contact_verified": false,
+  "teacher_admission": false,
+  "cpu_passed": 100
+}
