@@ -28988,6 +28988,31 @@
         "verified_at_utc": "2026-11-20T15:38:48.863293+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Tripod near-rod native clearance",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-near-corridor.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_near_corridor_v1.json",
+      "cpu_tests": {
+        "passed": 295,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "e7c382bce51522340b1e79aad4064b152ae52155",
+        "source_tree": "192ece652ce5dc47f729faea5c1c93208ce0c9e9",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T15:57:16.307756+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
