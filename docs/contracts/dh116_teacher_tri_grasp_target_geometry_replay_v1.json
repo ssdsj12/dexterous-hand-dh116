@@ -31,6 +31,25 @@
       "physics_step": 118,
       "guard_reason": "post_step_source_clearance:right",
       "recorded_m": 0.0020968845555315307
+    },
+    "sweep_followup": {
+      "evidence_sha256": "c1d311424bea656229c3317d82c166bbb1011a75156777edc5088b46a7e87d45",
+      "source_closure_cpu_trace_sha256": "06d3fae058943c028051ca6f4d1690ae1053a33c6a165eb7f11aec6cac97e8fd",
+      "source_closure_cpu_profile_s": 0.20951,
+      "tested_sdk_steps": [
+        80,
+        81,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118
+      ],
+      "native_sdk_steps": 0,
+      "sdk81_half_rotation_margin_m": 3.340648929723222e-05,
+      "sdk118_zero_rotation_margin_m": 6.569326901364157e-07,
+      "runtime_projection_enabled": false
     }
   },
   "tripod": {
