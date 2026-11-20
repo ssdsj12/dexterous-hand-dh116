@@ -27413,6 +27413,31 @@
         "verified_at_utc": "2026-11-20T03:05:08.406507+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-v12-paired-replay-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v12-pair.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_v12_pair_v1.json",
+      "cpu_tests": {
+        "passed": 77,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "5d5ee19c62decbbbb329af9b0548357e0606aae2",
+        "source_tree": "2106ba20ee958653350fa6b006b21087c409a670",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T03:12:33.249744+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
