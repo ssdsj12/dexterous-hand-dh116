@@ -27513,6 +27513,31 @@
         "verified_at_utc": "2026-11-20T03:40:42.556415+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-right-tracking-plan-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-no-contact-tracking.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_tracking_plan_v1.json",
+      "cpu_tests": {
+        "passed": 33,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "cf4b37f167f27a2296f2f4d9a9311dbebfb9b1ff",
+        "source_tree": "88127227b3d043eea3f48215566cc0ad62b0f573",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T03:53:41.022091+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
