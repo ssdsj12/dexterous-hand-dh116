@@ -29063,6 +29063,31 @@
         "verified_at_utc": "2026-11-20T16:20:55.820788+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Pinch left index-only preload diagnostic",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-index-only-preload.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_index_only_preload_v1.json",
+      "cpu_tests": {
+        "passed": 368,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "5a1a89a13e95db95c0fbd34bbcdd2830c1b086b2",
+        "source_tree": "b792ed09dfe64c334fb53856c5919081f40915f9",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T16:36:17.539181+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
