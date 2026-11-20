@@ -74,19 +74,19 @@ def certify_pacing(row, states, targets, *, prove=wrist.right_geometry):
     return result
 
 
-def archive_boundary(folder):
-    receipt = base._checked(folder / "outer.json", OUTER_SHA)
+def archive_boundary(folder, *, outer_sha=OUTER_SHA, ledger_sha=LEDGER_SHA, sdk_steps=pair.LAST_SDK, windows=7):
+    receipt = base._checked(folder / "outer.json", outer_sha)
     native = folder / "native"
     journal = native / "physical.jsonl"
     frozen = native / "frozen_plan.json"
     plan = base._checked(frozen, receipt["plan_sha256"])
     if (receipt["exit_code"] != 0 or receipt["forced_exit"] or receipt["output"] != str(native)
-            or receipt["artifact_sha256"]["physical.jsonl"] != LEDGER_SHA
-            or base.lifecycle.native.sha(journal) != LEDGER_SHA):
+            or receipt["artifact_sha256"]["physical.jsonl"] != ledger_sha
+            or base.lifecycle.native.sha(journal) != ledger_sha):
         raise ValueError("exact naturally closed precontact receipt required")
-    result = base.inspect_interval(journal, np.asarray(plan["action_schedule"]), sdk_steps=pair.LAST_SDK)
-    if (result["last_sdk_step"] != pair.LAST_SDK or result["terminal_reason"]
-            or result["complete_control_windows"] != 7):
+    result = base.inspect_interval(journal, np.asarray(plan["action_schedule"]), sdk_steps=sdk_steps)
+    if (result["last_sdk_step"] != sdk_steps or result["terminal_reason"]
+            or result["complete_control_windows"] != windows):
         raise ValueError("required precontact run failed its journal validation")
     last = None
     with journal.open() as stream:
@@ -94,10 +94,10 @@ def archive_boundary(folder):
             entry = json.loads(line)
             if entry.get("operation") == "physical":
                 last = base.decode_owned(entry["payload"])["exchange"]
-    if last is None or last["physics_step"] != pair.LAST_SDK:
-        raise ValueError("settled SDK58 measurement required")
+    if last is None or last["physics_step"] != sdk_steps:
+        raise ValueError("settled precontact boundary required")
     pair.guard_hand_contact(last)
-    late.prefix_measurements(last, expected_sdk=pair.LAST_SDK)
+    late.prefix_measurements(last, expected_sdk=sdk_steps)
     return plan, last
 
 
@@ -123,9 +123,11 @@ def prepare(args, *, screen_geometry=False):
     return previous
 
 
-def acquire(sim, owners, trace, output, *, plan):
+def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, after=None):
     def observe(row):
         if row["physics_step"] != pair.LAST_SDK:
+            if after is not None:
+                after(row)
             return
         receipt = row["index_pacing_gate"] = dict(passed=False)
         try:
@@ -133,7 +135,7 @@ def acquire(sim, owners, trace, output, *, plan):
             receipt["prefix"] = late.compare_prefix(measured, plan["index_pacing"]["prefix"])
             states = {s: prelift.joint_and_wrist(row, s) for s in ("left", "right")}
             actions, targets = compile_index_pacing(plan["action_schedule"][:7], states)
-            receipt["same_actions"] = bool(np.allclose(actions, plan["action_schedule"], atol=1e-7, rtol=0))
+            receipt["same_actions"] = bool(np.allclose(actions, plan["action_schedule"][:len(actions)], atol=1e-7, rtol=0))
             if receipt["prefix"]["passed"] and receipt["same_actions"]:
                 receipt["proofs"] = certify_pacing(row, states, targets)
                 receipt["passed"] = all(x["proved"] for x in receipt["proofs"].values())
@@ -144,7 +146,7 @@ def acquire(sim, owners, trace, output, *, plan):
             row["guard_failure"] = "pinch_index_pacing_source_invalid"
 
     try:
-        return pair.acquire(sim, owners, trace, output, plan=plan, sdk_steps=LAST_SDK, observe=observe)
+        return pair.acquire(sim, owners, trace, output, plan=plan, sdk_steps=sdk_steps, observe=observe)
     finally:
         sim = owners = trace = None
 

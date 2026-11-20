@@ -1,4 +1,8 @@
 
+## Pinch native wrist alignment
+
+Verify wrist adjustment before closing and sharpen the existing table proof in its measured reference frame. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-wrist-alignment-native.md).
+
 ## Power native palm device parity
 
 Verify both original palm collider readbacks across CPU and GPU. [Report](docs/superpowers/reports/2026-11-20-teacher-power-palm-device-parity.md).

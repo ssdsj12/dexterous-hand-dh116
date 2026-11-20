@@ -67,3 +67,27 @@ def test_first_phase_does_not_force_the_full_downward_wrist_travel():
     assert env["wrist_first"][1][2] == .65
     assert env["finger_release"][0][2] == .55
     assert env["finger_release"][1][2] >= .65
+
+def test_independent_wrist_table_bound_uses_z_of_live_alignment():
+    from scipy.spatial.transform import Rotation
+    from scripts.prepare_dh116_pinch_wrist_first import independent_translation_bounds
+
+    rotation = Rotation.from_euler("y", 5., degrees=True).as_matrix()
+    offsets = np.array([.0004, -.0005, .0002])
+    ordinary, table = independent_translation_bounds(rotation, offsets)
+    np.testing.assert_array_equal(ordinary, np.abs(offsets))
+    np.testing.assert_allclose(table, np.abs((rotation @ np.diag(offsets))[2]))
+    assert table[1] == 0. and table[0] > 0.
+    # The exact table sensitivity for every independent world-axis increment
+    # is measured after the per-link alignment, including tilted links.
+    measured = Rotation.from_euler("XYZ", [.01, -.15, .02]).as_matrix()
+    _, table = independent_translation_bounds(measured, offsets)
+    for scale in ([1., -.3, .4], [-.1, .7, -.2]):
+        actual = abs((measured @ (np.array(scale) * offsets))[2])
+        assert actual <= np.abs(scale) @ table + 1e-15
+
+
+def test_independent_wrist_bounds_reject_non_rigid_transform():
+    from scripts.prepare_dh116_pinch_wrist_first import independent_translation_bounds
+    with pytest.raises(ValueError, match="rigid"):
+        independent_translation_bounds(np.diag([1., 2., 1.]), np.ones(3))

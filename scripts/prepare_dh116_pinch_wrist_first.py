@@ -52,6 +52,15 @@ def right_control_windows(issued, goal):
             prelift.bounded_transition(row(aligned), row(target))[:2])
 
 
+def independent_translation_bounds(rotation, offsets):
+    """Per-axis travel in world space and along the table normal after alignment."""
+    rotation = prelift._finite(rotation, (3, 3))
+    offsets = prelift._finite(offsets, (3,))
+    if not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-8, rtol=0) or np.linalg.det(rotation) <= 0:
+        raise ValueError("independent wrist extent requires rigid source alignment")
+    return np.abs(offsets), np.abs(rotation[2] * offsets)
+
+
 def right_geometry(row, actual, issued, target, envelope, *, nodes,
                    phase_names=("angle_first", "wrist_first", "finger_release"), phase_seconds=75.,
                    side="right", require_pad_clearance=False, independent_wrist=False):
@@ -84,14 +93,18 @@ def right_geometry(row, actual, issued, target, envelope, *, nodes,
         others.append(prelift.expand(command) - base_expanded)
     other_joint_motion = np.maximum(abs(others[0]), abs(others[1]))
     linear_residual, angular_residual = envelope["wrist_residuals"]
-    bounds, reserves = {}, {}
+    bounds, table_bounds, reserves = {}, {}, {}
     for key, angles in model.joint_radii.items():
         radius_from_wrist = model.wrist_radii[key]
+        fingers = [angles @ abs(g) for g in q_groups]
         if independent_wrist:
-            wrist_bounds = np.r_[abs(delta[6:9]), radius_from_wrist * abs(delta[9:])]
+            linear, table_linear = independent_translation_bounds(alignment[key][:3, :3], delta[6:9])
+            angular = radius_from_wrist * abs(delta[9:])
+            bounds[key] = np.r_[fingers, linear, angular]
+            table_bounds[key] = np.r_[fingers, table_linear, angular]
         else:
             wrist_bounds = [np.linalg.norm(delta[6:9]), radius_from_wrist * abs(delta[9:]).sum()]
-        bounds[key] = np.array([*(angles @ abs(g) for g in q_groups), *wrist_bounds])
+            bounds[key] = table_bounds[key] = np.r_[fingers, wrist_bounds]
         reserves[key] = float(np.linalg.norm(linear_residual) + radius_from_wrist * abs(angular_residual).sum()
                               + angles @ other_joint_motion)
 
@@ -121,7 +134,7 @@ def right_geometry(row, actual, issued, target, envelope, *, nodes,
             if left <= 0:
                 return dict(proved=False, verified_shapes=verified, unresolved_shape=key, reason="phase time budget")
             labels = one_shape(key, (lo + hi) / 2)
-            coefficient = {name: bounds[key] for name in labels}
+            coefficient = {name: table_bounds[key] if name == "table" else bounds[key] for name in labels}
             query = lambda x: one_shape(key, x)
             proof = prelift.certify_box(query, coefficient, lo, hi, max_samples=768, max_seconds=left)
             if not proof["proved"]:

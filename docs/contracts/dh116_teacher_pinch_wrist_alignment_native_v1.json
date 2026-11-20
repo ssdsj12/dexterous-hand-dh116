@@ -1,0 +1,160 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-wrist-alignment-native-result",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-wrist-alignment-native.md",
+  "status": "native_precontact_wrist_alignment_verified",
+  "native_runs": 2,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "cpu": {
+    "passed": 217,
+    "failed": 0,
+    "log_sha256": "7b973451cad0ef2045e0b5b86ae994a27f2fa1b7f243aac35c90b74fbbb38e22",
+    "tests": [
+      "tests/test_dh116_pinch_wrist_alignment.py",
+      "tests/test_dh116_pinch_index_pacing.py",
+      "tests/test_dh116_pinch_precontact_pair.py",
+      "tests/test_dh116_pinch_precontact_hold.py",
+      "tests/test_dh116_pinch_angular_gate.py",
+      "tests/test_dh116_pinch_wrist_first.py",
+      "tests/test_dh116_pinch_prelift.py",
+      "tests/test_dh116_pinch_wrist_relief_worker.py",
+      "tests/test_dh116_pinch_wrist_relief.py",
+      "tests/test_dh116_pinch_early_finger_worker.py",
+      "tests/test_dh116_pinch_early_finger.py",
+      "tests/test_dh116_pinch_late_wrist.py",
+      "tests/test_dh116_staged_pinch_contact.py",
+      "tests/test_dh116_pinch_staged_closure.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_native_teacher_worker_contract.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_tripod_tracking_envelope.py",
+      "tests/test_dh116_dual_hand_evidence_journal.py"
+    ]
+  },
+  "earlier_attempts": [
+    {
+      "outer_sha256": "85ce7efb4816f1b0aaf26c3561d11a5462adcf4ac00e8b7ca1e632ea78750099",
+      "stop_sdk": 58,
+      "issue": "prefix_suffix_shape_mismatch"
+    },
+    {
+      "outer_sha256": "c8fd767a63c1f61ad81585293af173f512e8ff433c9ae9291e8921495e73bfc4",
+      "native_started": false,
+      "issue": "new_workspace_source_after_freeze"
+    }
+  ],
+  "measured": {
+    "steps": 152,
+    "windows": 19,
+    "terminal": null,
+    "outer_sha256": "1c60be7bcae80ded0476133a6dcd0f0974534dc1bd0e2cf91477718a7e23de6e",
+    "ledger_sha256": "9711361ae252af26ec92bef27c158fbd5f07bd9c7e55fd83419e02154fc3691c",
+    "exit_code": 0,
+    "forced": false,
+    "wall_s": 148.85582250892185,
+    "gate": true,
+    "hands": {
+      "left": {
+        "actual_wrist_delta": [
+          0.00018677115440368652,
+          -5.960464477539063e-08,
+          -0.00021097064018249512,
+          0.0011036728974431753,
+          0.0001848284446168691,
+          1.3135850167600438e-06
+        ],
+        "actual_wrist_vs_target": [
+          -5.781287326644957e-08,
+          -5.960464477539063e-08,
+          4.6705454614937025e-08,
+          -0.0007190224715850489,
+          -0.00013757986490963963,
+          2.2448029994848184e-06
+        ],
+        "projected_wrist_delta": [
+          0.00018685876959934067,
+          0.0,
+          -0.00021101734563711005,
+          0.001823539831675589,
+          0.00030105806328356273,
+          0.0
+        ],
+        "target_finger_change": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gate_margin_m": 7.334300560749501e-06,
+        "proved": 22
+      },
+      "right": {
+        "actual_wrist_delta": [
+          0.0,
+          -0.0003995150327682495,
+          -0.00011986494064331055,
+          0.00045442068949341774,
+          0.0022182706743478775,
+          -8.333634468726814e-06
+        ],
+        "actual_wrist_vs_target": [
+          2.198985993295821e-08,
+          3.544867268334695e-07,
+          9.356106839275569e-08,
+          -0.0002589763088949324,
+          -0.001266671624384208,
+          1.7092825412329433e-06
+        ],
+        "projected_wrist_delta": [
+          0.0,
+          -0.00040000000000001146,
+          -0.00012000000000000899,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "target_finger_change": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gate_margin_m": 4.753312640173895e-06,
+        "proved": 22
+      }
+    },
+    "rod_motion_m": 7.450580596923828e-09,
+    "pairs": {
+      "table": 74784,
+      "hand": 0
+    }
+  },
+  "conditional_closure_screen": {
+    "left": {
+      "sha256": "4f3b86a86d57ac487e4a3a2baec976caa41ab7ffc1ef74e8be22dfb74df0251f",
+      "candidate_verified": true,
+      "minima_m": {
+        "0.04": 2.386671965322985e-06,
+        "0.08": null,
+        "0.12": null
+      }
+    },
+    "right": {
+      "sha256": "56ec58d71207e10d0bd02d492ff6c7b7af7c9cbdb3dd3fe08892c13a41b17541",
+      "candidate_verified": true,
+      "minima_m": {
+        "0.04": 3.395462523478397e-06,
+        "0.08": 1.3862789228259742e-06,
+        "0.12": 1.2688628648160178e-06
+      }
+    }
+  }
+}
