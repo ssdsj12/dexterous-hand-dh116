@@ -28538,6 +28538,31 @@
         "verified_at_utc": "2026-11-20T12:05:51.690680+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-wrist-alignment-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-wrist-alignment-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_wrist_alignment_native_v1.json",
+      "cpu_tests": {
+        "passed": 217,
+        "failed": 0
+      },
+      "native_runs": 2,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b418c408b421ed6996f51844894eb4f4b11aad86",
+        "source_tree": "b860d6dd28cd3d68cf8ee9298783cedbe76eb36d",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T12:14:02.798130+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
