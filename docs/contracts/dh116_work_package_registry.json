@@ -44540,6 +44540,88 @@
         "cpu_tests_passed": 189,
         "cpu_tests_failed": 0
       }
+    },
+    "teacher.power-shared-task-rod-native-result": {
+      "title": "Register two Power palms on one original native task rod",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-live-palm-feedback-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_cooked_convex_hulls.py",
+        "tests/test_dh116_cooked_hull_device_parity.py",
+        "tests/test_dh116_deformx_pad_sdf.py",
+        "tests/test_dh116_dual_hand_evidence_journal.py",
+        "tests/test_dh116_dual_pinch_builder.py",
+        "tests/test_dh116_power_left_palm_sdf.py",
+        "tests/test_dh116_power_live_palm_feedback.py",
+        "tests/test_dh116_power_palm_parity.py",
+        "tests/test_dh116_power_palm_raycast.py",
+        "tests/test_dh116_power_palm_reactions.py",
+        "tests/test_dh116_power_palm_self_intersection.py",
+        "tests/test_dh116_power_palm_surface.py",
+        "tests/test_dh116_power_right_palm_sdf.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_teacher_cooked_readback_audit.py",
+        "tests/test_teacher_power_surface_audit.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-shared-task-rod.md",
+      "readiness": "docs/contracts/dh116_teacher_power_shared_task_rod_v1.json",
+      "native_runs": 3,
+      "last_result": {
+        "scope": "original_dual_hand_shared_rod_no_action_power_layout",
+        "rods_per_env": 1,
+        "sdk_steps": 10,
+        "measured_exchanges": 8,
+        "solver_substeps": 96,
+        "mesh_names": [
+          "left.finger14_link",
+          "left.finger23_link",
+          "left.finger33_link",
+          "left.finger43_link",
+          "left.finger53_link",
+          "table",
+          "right.finger14_link",
+          "right.finger23_link",
+          "right.finger33_link",
+          "right.finger43_link",
+          "right.finger53_link",
+          "left.base_link",
+          "right.base_link"
+        ],
+        "pair_counts": {
+          "left.finger14_link": 0,
+          "left.finger23_link": 0,
+          "left.finger33_link": 0,
+          "left.finger43_link": 0,
+          "left.finger53_link": 0,
+          "table": 3936,
+          "right.finger14_link": 0,
+          "right.finger23_link": 0,
+          "right.finger33_link": 0,
+          "right.finger43_link": 0,
+          "right.finger53_link": 0,
+          "left.base_link": 0,
+          "right.base_link": 0
+        },
+        "max_force_balance_residual_n": 1.4556571841265914e-06,
+        "native_qualification": false,
+        "grasp_qualified": false,
+        "teacher_admission": false,
+        "ppo_updates": 0,
+        "outer_exit_code": 0,
+        "physics_steps": 10,
+        "pair_capacity": 6396,
+        "native_attempts": 3,
+        "valid_native_runs": 1,
+        "cpu_tests_passed": 202,
+        "expanded_suite_preexisting_failures": 6,
+        "grasp_admission": false
+      }
     }
   },
   "execution_target": {

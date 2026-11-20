@@ -281,3 +281,107 @@ def test_pose_write_fault_records_already_advanced_sdk_without_advancing_rod(mon
     state=obj.clock()
     assert state["physics_step"]==3 and state["rod_tick"]==0
     assert state["clock_valid"] is False and base.rope.steps==0
+
+
+def test_power_palms_append_to_one_free_rod_and_route_distinct_com_reactions(monkeypatch):
+    from go2_pvcnn.control.dh116 import tabletop_power_shared_rod as m
+    base,bindings,poses,centers=setup(monkeypatch)
+    palms=("left.base_link","right.base_link")
+    for side, name in zip(("left","right"),palms):
+        bindings[name]=dict(bindings[side+".finger14_link"],body_name="base_link",
+            body_index=6,prim_path=f"/World/{side}Hand/base_link")
+        poses[name]=(np.array([.5, float(side=="right"), .2]), np.array([0.,0.,0.,1.]))
+        centers[name]=poses[name][0]+[0.,.25,0.]
+    obj=m.PowerSharedRodRuntime(base,bindings=bindings,right_grids={n:Grid() for n in PADS},
+        right_poses={n:poses["right."+n] for n in PADS},run_uuid="power-cpu",env_id=0,
+        palm_grids={key:Grid() for key in palms},palm_poses={key:poses[key] for key in palms})
+    assert obj.mesh_names==(*m.MESH_NAMES,*palms)
+    assert obj.rope is base.rope and len(base.rope.slots)==13
+    state=reset(obj,poses)
+    assert state["rod_mesh_contact_pairs"] is None
+    assert {row[0] for row in base.rope.poses}==set(range(13))-{5}
+    assert all(row[3] for row in base.rope.poses)
+
+    def step(dt, substeps):
+        FakeRope.step_free(base.rope, dt, substeps)
+        base.rope.wrenches[0,11]=[0.,0.,-4.,.25,0.,0.]
+        base.rope.wrenches[0,12]=[0.,0.,-2.,-.2,0.,0.]
+        base.rope.force[0,0,2]+=6.
+    base.rope.step_free=step
+    row=obj.step(poses,centers,physics_step=3)
+    assert row["rod_tick"]==12 and row["pair_force_residual_n"]==pytest.approx(0)
+    assert {item[0] for item in base.rope.poses[-12:]}==set(range(13))-{5}
+    left,right=map(row["hand_wrenches_com_world"].get,("left","right"))
+    assert left["body_ids"]==right["body_ids"]==[0,1,2,3,4,6]
+    np.testing.assert_allclose(left["forces"][0,-1],[0,0,-4])
+    np.testing.assert_allclose(right["forces"][0,-1],[0,0,-2])
+    np.testing.assert_allclose(left["torques"][0,-1],[1.25,0,0])
+    np.testing.assert_allclose(right["torques"][0,-1],[.3,0,0])
+
+    wrote={}
+    class Composer:
+        def __init__(self, side): self.side=side
+        def reset(self): pass
+        def set_forces_and_torques(self, **packet): wrote[self.side]=packet
+    m.write_composer_reactions({side:Composer(side) for side in ("left","right")},
+        row["hand_wrenches_com_world"],to_tensor=lambda x:x)
+    assert wrote["right"]["body_ids"][-1]==6 and wrote["right"]["forces"][0,-1,2]==-2
+    one_short=dict(row["hand_wrenches_com_world"],right=dict(right,body_ids=right["body_ids"][:-1]))
+    with pytest.raises(ValueError):
+        m.write_composer_reactions({side:Composer(side) for side in ("left","right")},
+            one_short,to_tensor=lambda x:x)
+
+
+def test_unilateral_palm_input_is_rejected_before_any_native_append(monkeypatch):
+    from go2_pvcnn.control.dh116 import tabletop_power_shared_rod as m
+    base,bindings,poses,_=setup(monkeypatch)
+    with pytest.raises(ValueError,match="both"):
+        m.PowerSharedRodRuntime(base,bindings=bindings,right_grids={n:Grid() for n in PADS},
+            right_poses={n:poses["right."+n] for n in PADS},run_uuid="bad-power",env_id=0,
+            palm_grids={"left.base_link":Grid()},palm_poses={"left.base_link":poses["left.finger14_link"]})
+    assert len(base.rope.slots)==6
+
+
+def test_shared_power_attach_uses_measured_original_reset_without_resetting_rod(monkeypatch):
+    from go2_pvcnn.control.dh116 import tabletop_power_shared_rod as m
+    original,base,_,poses,_=runtime(monkeypatch)
+    state=reset(original,poses)
+    expected=original.clock()
+    palms={}
+    palm_poses={}
+    for side in ("left","right"):
+        key=side+".base_link"
+        row=original.bindings[side+".finger14_link"]
+        palms[key]=dict(row,body_name="base_link",body_index=9,prim_path=f"/World/{side}Hand/base_link")
+        palm_poses[key]=(np.array([0.,float(side=="right"),.4]),np.array([0.,0.,0.,1.]))
+    power=m.PowerSharedRodRuntime.from_original_reset(original,palm_bindings=palms,
+        palm_grids={key:Grid() for key in palms},palm_poses=palm_poses,expected_clock=expected)
+    assert power.clock()==expected and power.rope is original.rope
+    assert base.rope.resets==1 and base.rope.steps==0
+    assert power.mesh_names[-2:]==("left.base_link","right.base_link")
+    with pytest.raises(RuntimeError,match="reset"):
+        original.step(poses,{n:p[0] for n,p in poses.items()},physics_step=3)
+    # Pose/clock identity still belongs to the original reset. The old owner
+    # cannot claim the same solver twice even before the first Power step.
+    assert state["rod_tick"]==0
+    with pytest.raises(ValueError, match="original reset"):
+        m.PowerSharedRodRuntime.from_original_reset(original,palm_bindings=palms,
+            palm_grids={key:Grid() for key in palms},palm_poses=palm_poses,expected_clock=expected)
+
+
+def test_power_reserves_complete_pair_capture_during_original_single_allocation(monkeypatch):
+    from scripts.verify_dh116_power_shared_rod import SharedPowerOwners
+    original, base, *_=runtime(monkeypatch)
+    rope=base.rope
+    allocations=[]
+    rope.enable_contact_pair_capture=allocations.append
+    owner=SimpleNamespace(resources={})
+    def keep(name,value):
+        owner.resources[name]=value
+        return value
+    owner.keep=keep
+    scoped=SharedPowerOwners(owner)
+    assert scoped.keep("runtime",original) is original
+    original.rope.enable_contact_pair_capture(len(base.nodes)*11*12)
+    assert allocations==[len(base.nodes)*13*12] and original.rope is rope
+    assert scoped.allocated_capacity==len(base.nodes)*13*12

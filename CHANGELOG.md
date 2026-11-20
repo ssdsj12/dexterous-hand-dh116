@@ -1,4 +1,8 @@
 
+## Power shared free-rod layout
+
+Register both original palms on one measured task rod with a single full pair allocation. [Report](docs/superpowers/reports/2026-11-20-teacher-power-shared-task-rod.md).
+
 ## Power live palm reaction validation
 
 Apply same-clock DeformX palm reactions to the original mounted Isaac hands and measure both real responses. [Report](docs/superpowers/reports/2026-11-20-teacher-power-live-palm-feedback.md).
