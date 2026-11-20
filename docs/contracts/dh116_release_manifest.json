@@ -27913,6 +27913,31 @@
         "verified_at_utc": "2026-11-20T05:52:57.221380+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-smoke8-wiring-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-diagnostic.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_smoke8_wiring_v1.json",
+      "cpu_tests": {
+        "passed": 264,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "fd283bfb0f34ada9dace772f4f9a53be0ff48373",
+        "source_tree": "a4bff31482221a2efe7a916119c0c0fece8d3e9a",
+        "remote_branch": "11-17",
+        "files_verified": 18,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T06:15:37.263602+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
