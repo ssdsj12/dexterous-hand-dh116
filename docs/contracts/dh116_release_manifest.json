@@ -28613,6 +28613,31 @@
         "verified_at_utc": "2026-11-20T12:35:09.562052+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-bilateral-preload-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-bilateral-preload-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_bilateral_preload_native_v1.json",
+      "cpu_tests": {
+        "passed": 222,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "fb4be960640c6971b0c0a5ba082d476e0efd076d",
+        "source_tree": "efb0f265f40781badc0f3d5c7c901d5f555a79fc",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T12:43:26.221991+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
