@@ -27388,6 +27388,31 @@
         "verified_at_utc": "2026-11-20T02:40:51.243595+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-window-wall-time-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-wall-time.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_wall_time_v1.json",
+      "cpu_tests": {
+        "passed": 188,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "2a6d04fdde63c42488841c9550190c67f4038798",
+        "source_tree": "66aa9cd9f62b741da47af39518bf6dc582a7438a",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T03:05:08.406507+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
