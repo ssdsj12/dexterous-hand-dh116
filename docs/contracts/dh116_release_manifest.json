@@ -27713,6 +27713,31 @@
         "verified_at_utc": "2026-11-20T04:42:47.108044+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-curved-rod-capsule-isolated-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-capsule-isolated.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_capsule_isolated_v1.json",
+      "cpu_tests": {
+        "passed": 49,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "35b1b135c2454b542d4e938cdb7d6b23f779c87c",
+        "source_tree": "c2aa81de5ef29c5f52d6f4a841bb089b029d7848",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T04:46:19.955172+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
