@@ -77,3 +77,18 @@ def test_checkpoint_publication_uses_audited_bytes(monkeypatch, tmp_path, backen
         assert path.read_bytes() == immutable[0]
         assert receipt["checkpoint_sha256"] == hashlib.sha256(immutable[0]).hexdigest()
     assert len(immutable) == 1 and not list(tmp_path.glob(".teacher-audit-*"))
+
+
+def test_short_diagnostic_runs_one_real_ppo_update_and_binds_64_sdk_rows(
+        monkeypatch, tmp_path, backend_profile):
+    collector, _, rod, _, sim, _ = fixture(monkeypatch, tmp_path, backend_profile, rollout_steps=8)
+    result = update().run_fresh_update(collector, checkpoint_contract=contract(collector.trainer),
+                                       controls=8)
+    assert result["updates"] == 1 and result["accepted_minibatch_updates"] > 0
+    assert result["physical"] == dict(start_sdk_step=2, end_sdk_step=66,
+                                      start_rod_tick=0, end_rod_tick=768)
+    assert collector.trainer.counters == {"updates": 1, "environment_steps": 8}
+    assert sim.current_time_step_index == 66 and rod.rope.steps == 64
+    assert len([r for r in operations(collector) if r["operation"] == "physical"]) == 64
+    assert (tmp_path / "teacher_clean.pt").is_file()
+    assert result["native_qualification"] is False and result["teacher_admission"] is False

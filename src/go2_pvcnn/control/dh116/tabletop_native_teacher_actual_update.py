@@ -7,11 +7,10 @@ from .tabletop_deformable_r0_replay import _digest
 from .tabletop_native_teacher_checkpoint import audit_checkpoint_bytes, checkpoint_identity, save_checkpoint
 from .tabletop_native_teacher_collector import NativeTeacherCollector
 from .tabletop_native_teacher_training import TrainingStopped, run_updates
+from .tabletop_native_teacher_worker_contract import fresh_smoke_limits
 
 
 ROLLOUT_STEPS = 32
-PHYSICAL_STEPS = ROLLOUT_STEPS * 8
-ROD_SUBSTEPS = 12
 FRESH_ORIGIN = {"kind": "fresh"}
 CHECKPOINT_NAME = "teacher_clean.pt"
 
@@ -47,8 +46,8 @@ def _clock(collector, *, controls, sdk_step, rod_tick):
     return clock
 
 
-def run_fresh_update(collector, *, checkpoint_contract):
-    """Train 32 controls in one episode and bind the clean checkpoint to the ledger.
+def run_fresh_update(collector, *, checkpoint_contract, controls=ROLLOUT_STEPS):
+    """Train over one fixed-horizon episode and bind the checkpoint to its ledger.
 
     The caller owns scene construction, authorization and teardown. Successful
     serialization is training evidence only. Native source and outer-process
@@ -56,6 +55,8 @@ def run_fresh_update(collector, *, checkpoint_contract):
     """
     if type(collector) is not NativeTeacherCollector:
         raise ValueError("original C04 collector required")
+    limits, _ = fresh_smoke_limits(controls)
+    physical_steps = limits["measured_sdk_steps"]
     trainer = collector.trainer
     checkpoint = collector.journal.path.parent / CHECKPOINT_NAME
     if os.path.lexists(checkpoint):
@@ -63,12 +64,12 @@ def run_fresh_update(collector, *, checkpoint_contract):
     if (collector._closed or collector._active or collector.quarantined or collector.episode_done
             or collector._student_stereo is not None
             or collector.transitions != 0 or collector.consumed_sdk_steps != 0
-            or trainer.num_envs != 1 or trainer.rollout_steps != ROLLOUT_STEPS
+            or trainer.num_envs != 1 or trainer.rollout_steps != controls
             or trainer.policy_version != 0 or trainer.counters != {"updates": 0, "environment_steps": 0}
             or trainer._pending is not None or len(trainer.rollout)
             or getattr(trainer, "_native_training_origin", FRESH_ORIGIN) != FRESH_ORIGIN
             or getattr(trainer, "_native_accepted_minibatches", 0) != 0):
-        raise ValueError("fresh camera-free Teacher, one environment and 32 unused rollout steps required")
+        raise ValueError("fresh camera-free Teacher, one environment and the exact unused rollout required")
     identity = checkpoint_identity(trainer, checkpoint_contract)
     scope = collector.sources.scope
     if (identity["training_contract"]["scope"] != scope or collector.journal.scope != scope):
@@ -76,19 +77,19 @@ def run_fresh_update(collector, *, checkpoint_contract):
     start = _clock(collector, controls=0, sdk_step=2, rod_tick=0)
     try:
         training = run_updates(collector, additional_updates=1)
-        end = _clock(collector, controls=ROLLOUT_STEPS, sdk_step=2 + PHYSICAL_STEPS,
-                     rod_tick=PHYSICAL_STEPS * ROD_SUBSTEPS)
-        if (collector.transitions != ROLLOUT_STEPS or collector.consumed_sdk_steps != PHYSICAL_STEPS
-                or trainer.counters != {"updates": 1, "environment_steps": ROLLOUT_STEPS}
+        end = _clock(collector, controls=controls, sdk_step=2 + physical_steps,
+                     rod_tick=limits["max_internal_solver_substeps"])
+        if (collector.transitions != controls or collector.consumed_sdk_steps != physical_steps
+                or trainer.counters != {"updates": 1, "environment_steps": controls}
                 or any(end[key] != start[key] for key in ("run_uuid", "episode_uid", "rod_uid", "reset_id"))):
-            raise TrainingStopped("exact one-episode 32-control/256-physics PPO update required")
+            raise TrainingStopped("exact one-episode control/SDK PPO update required")
         input_audit = {}
         if scope == "owner_source_unqualified":
             from .tabletop_native_teacher_actual_inputs import audit_teacher_input_sources
 
             input_audit["input_source_audit"] = audit_teacher_input_sources(
                 collector.journal.path.read_bytes(), backend_profile=collector.owner.backend_profile,
-                scope=scope, controls=ROLLOUT_STEPS)
+                scope=scope, controls=controls)
         audited = _seal_checkpoint(checkpoint, trainer, checkpoint_contract)
         result = dict(training, clean_checkpoint=dict(path=checkpoint.name, sha256=audited["checkpoint_sha256"],
                       policy_weights_sha256=audited["policy_weights_sha256"]),

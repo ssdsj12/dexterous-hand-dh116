@@ -38,6 +38,8 @@ def _verify_attempt(config, lease, output):
         raise ValueError("actual worker config differs from the verified process overlay")
     repository, package = lease._repository, lease._package
     _, recipe, _, _, intent = process._registered(repository, package, lease._envelope.registered_intent)
+    if config["rollout_steps"] != recipe["spec"]["teacher_contract"]["limits"]["controls"]:
+        raise ValueError("actual worker rollout config differs from the approved controls")
     output = Path(output)
     if (not output.is_absolute() or str(output) != intent["output"]
             or output.parent.resolve(strict=True) != output.parent):
@@ -194,7 +196,8 @@ def _acquire(sim, owners, trace, *, attempt, config, lease):
                 # The one owned worker can accelerate the legacy encoder during
                 # collection; the unchanged replay schema remains authoritative.
                 with codec_scope(), collector.trace_wall_windows(trace.event):
-                    result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract)
+                    result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract,
+                                              controls=config["rollout_steps"])
             _record_actual_wall_budget(collector, lease, "after_update")
         except BaseException:
             try:
@@ -312,7 +315,7 @@ def _run_isaac(attempt, config, lease):
 
 
 def run_a(*, config, lease, output):
-    """Run one fresh 32-control smoke update with the approved process lease."""
+    """Run one bounded fresh smoke update with the approved process lease."""
     from scripts.diagnose_dh116_teacher_initialization import write_new
     from .tabletop_native_teacher_actual_artifacts import derive_actual_artifacts
 

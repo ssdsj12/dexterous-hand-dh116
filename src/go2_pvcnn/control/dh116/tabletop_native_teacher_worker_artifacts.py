@@ -58,7 +58,7 @@ def _jsonl(raw, *, name, maximum):
     return result
 
 
-def _journal(rows, result):
+def _journal(rows, result, *, controls=32):
     by_operation={}
     for index,row in enumerate(rows):
         if (set(row)!={"sequence","scope","operation","payload"}
@@ -71,14 +71,14 @@ def _journal(rows, result):
     if len(by_operation.get("optimizer_update_accepted",[]))!=1:
         raise ValueError("raw journal must contain exactly one accepted optimizer update")
     expected=["collector_origin"]
-    for _ in range(32):
+    for _ in range(controls):
         expected.append("decision")
         for _ in range(8):expected.extend(SDK_OPERATIONS)
         expected.extend(("settlement","transition_recorded"))
     expected.extend(("policy_epoch","optimizer_update_accepted"))
     actual=[r["operation"] for r in rows if r["operation"] in PRIMARY_OPERATIONS]
     if actual!=expected:
-        raise ValueError("raw journal must retain complete original 32-control/256-SDK operation sequence")
+        raise ValueError("raw journal must retain complete original control/SDK operation sequence")
     training=result["training"]
     accepted=by_operation["optimizer_update_accepted"][0]["payload"]
     if any(type(accepted.get(k)) is not type(training[k]) or accepted[k]!=training[k]
@@ -139,7 +139,7 @@ def audit_teacher_artifacts_v2(spec, output):
     checkpoint=validate_teacher_training_result(result,
         expected_semantic_sha256=spec["teacher_contract"]["semantic_sha256"],artifact_sha256=digests)
     journal=ledgers["training_events.jsonl"]
-    epoch=_journal(journal,result)
+    epoch=_journal(journal,result,controls=spec["teacher_contract"]["limits"]["controls"])
     _view("physics.jsonl",ledgers["physics.jsonl"],journal,"physical")
     _view("transitions.jsonl",ledgers["transitions.jsonl"],journal,"transition_recorded")
     _view("ownership.jsonl",ledgers["ownership.jsonl"],journal,None)
@@ -153,7 +153,7 @@ def audit_teacher_artifacts_v2(spec, output):
         checkpoint_binding=checkpoint,checkpoint_bytes=raw[checkpoint["path"]],journal_rows=journal)
 
 
-def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None):
+def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None, controls=32):
     """Check existing C04 payloads, never invent Reset/setup or clock values.
 
     This original action schema records the nominal SDK timestamp contract.
@@ -170,7 +170,8 @@ def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None):
     from .tabletop_deformable_r0_replay import decode_owned,_digest
     from .tabletop_stereo_rod_state import _owned_tensor,VERSION as ROD_VERSION,UNITS
     groups={op:[r["payload"] for r in rows if r["operation"]==op] for op in PRIMARY_OPERATIONS}
-    sequence=_Sequence(258,12)
+    measured = controls * 8
+    sequence=_Sequence(2 + measured,12)
     checked_reward_scope = _required_native_source_scope() if reward_scope is None else reward_scope
     owner=backend=nodes=previous_action=None
     try:
@@ -185,7 +186,7 @@ def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None):
                 scope=checked_reward_scope,frame="world")
             if any(type(value.get(k)) is not type(v) or value[k]!=v for k,v in expected.items()):
                 raise ValueError("reward/physical endpoint clock identity differs")
-        for control in range(32):
+        for control in range(controls):
             decision=decode_owned(groups["decision"][control]);history=decision["history"]
             action=_action(decision["sampled_action24"]);token=decision["collection_token"]
             policy=history["policy"];origin=decision["policy"]
@@ -244,7 +245,7 @@ def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None):
                 sequence._physical(sample)  # Original clock/action/rod-boundary validator, no <=240 cap.
                 if (not _exact_int(exchange["physics_step"],measured+2)
                         or not _exact_int(post["rod_tick"],measured*12)):
-                    raise ValueError("physical endpoints must cover unique contiguous SDK3..258/rod12..3072")
+                    raise ValueError("physical endpoints must cover unique contiguous SDK and rod steps")
                 if (snapshot["version"]!=ROD_VERSION or snapshot["units"]!=UNITS or snapshot["backend"]!="DeformX"
                         or snapshot["coordinate_frame"]!="world" or not _sha(snapshot["backend_sha256"])
                         or backend is not None and snapshot["backend_sha256"]!=backend
@@ -273,7 +274,7 @@ def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None):
                 if (set(budget)!={"sdk_steps","solver_calls","internal_solver_substeps"}
                         or any(not _exact_int(budget[k],v) for k,v in dict(sdk_steps=measured,
                             solver_calls=measured,internal_solver_substeps=measured*12).items())):
-                    raise ValueError("measured budget must advance1..256 with12 internal substeps, excluding setup2")
+                    raise ValueError("measured budget must advance one SDK step with 12 internal substeps, excluding setup")
                 physical_hashes.append(_digest(sample))
                 target_hashes.append(_digest(exchange["action_readback"]["submission"]["expected_backend_targets"]))
                 projection_hashes.append(_digest(exchange["wrist_projection"]))
@@ -303,8 +304,9 @@ def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None):
             if reward["policy_uid"]!=origin["weights"] or reward["post_context"]["previous_request_token"]!=token:
                 raise ValueError("reward policy/token differs from measured control")
             previous_action=action
-        if sequence.physical!=256 or sequence.controls!=32 or sequence.windows!=32 or sequence.action is not None:
-            raise ValueError("complete32/256 physical settlement required")
+        if (sequence.physical != measured or sequence.controls != controls
+                or sequence.windows != controls or sequence.action is not None):
+            raise ValueError("complete control/SDK physical settlement required")
         return dict(physical_nodes=nodes,measured_sdk_steps=sequence.physical,controls=sequence.controls,
             solver_calls=sequence.physical,internal_solver_substeps=sequence.physical*12,
             first_sdk_endpoint=3,last_sdk_endpoint=sequence.clock["physics_step"],
@@ -332,7 +334,7 @@ def _audit_fresh_checkpoint(spec, repository, context, *, checkpoint_bytes, chec
         except RuntimeError as error:
             raise ValueError("CPU checkpoint audit rejected malformed payload: "+str(error)) from error
         if (metadata["checkpoint_sha256"]!=checkpoint_binding["sha256"]
-                or metadata["counters"]!={"environment_steps":32,"updates":training["updates"]}
+                or metadata["counters"]!={"environment_steps":spec["teacher_contract"]["limits"]["controls"],"updates":training["updates"]}
                 or metadata["policy_version"]!=epoch["policy_version"]
                 or metadata["accepted_minibatch_updates"]!=training["accepted_minibatch_updates"]
                 or metadata["policy_weights_sha256"]!=epoch["weights"]
@@ -344,7 +346,7 @@ def _audit_fresh_checkpoint(spec, repository, context, *, checkpoint_bytes, chec
 def validate_teacher_artifacts_v2(spec, output, *, repository=None, package=None):
     audit=audit_teacher_artifacts_v2(spec,output)
     context=_current_recipe_context(spec,repository,package)
-    physical=_physical_journal(audit.pop("journal_rows"))
+    physical=_physical_journal(audit.pop("journal_rows"),controls=spec["teacher_contract"]["limits"]["controls"])
     metadata=_audit_fresh_checkpoint(spec,repository,context,checkpoint_bytes=audit.pop("checkpoint_bytes"),
         checkpoint_binding=audit["checkpoint_binding"], training=audit["teacher_training"],
         epoch=audit["policy_epoch"])
@@ -377,7 +379,8 @@ def _cpu_reference(spec,repository,context):
     from .tabletop_deformable_privileged_ppo import DeformablePPOTrainer
     from .tabletop_privileged_ppo import PPOConfig
     from .tabletop_native_teacher_checkpoint import build_training_contract
-    from .tabletop_native_teacher_worker_contract import SOURCE_FILES,training_semantic_digest,worker_training_target_contract
+    from .tabletop_native_teacher_worker_contract import (
+        SOURCE_FILES, training_semantic_digest, validate_fresh_smoke_rollout, worker_training_target_contract)
     from scripts.run_dh116_work_packages import native_recipe_sources
     # Tie reference code to the same actual scheduler inventory. A temporary
     # source project may contain identical copies, never caller-equal hashes.
@@ -395,8 +398,9 @@ def _cpu_reference(spec,repository,context):
     if pre.get("authorization") is not None or pre.get("resource_lock") is not None:
         raise ValueError("frozen training config must not include process lease overlay")
     limits=pin["limits"]
-    expected_budget=dict(max_sdk_steps=258,max_resets=1,max_solver_calls=256,
-        max_episode_count=1,wall_timeout_s=limits["inner_wall_timeout_s"])
+    expected_budget=dict(max_sdk_steps=spec["budget"]["physics_steps"],max_resets=limits["max_resets"],
+        max_solver_calls=limits["max_solver_calls"],max_episode_count=limits["max_episode_count"],
+        wall_timeout_s=limits["inner_wall_timeout_s"])
     if (pre.get("budget")!=expected_budget
             or any(not _exact_int(pre["budget"][key],value) for key,value in expected_budget.items()
                 if key!="wall_timeout_s")
@@ -430,8 +434,9 @@ def _cpu_reference(spec,repository,context):
         target_key=mapping.get(key,key)
         if target_key not in values or type(values[target_key]) is not type(value) or values[target_key]!=value:
             raise ValueError("frozen preflight/PPO/reward numeric configuration differs: "+key)
-    if config["rollout_steps"]!=reward.ppo["rollout_steps"]:
-        raise ValueError("frozen rollout length differs from approved reward/PPO config")
+    if config["rollout_steps"] != limits["controls"]:
+        raise ValueError("frozen rollout length differs from approved controls")
+    validate_fresh_smoke_rollout(config["rollout_steps"], expected_budget, reward.ppo["rollout_steps"])
     ppo=PPOConfig(**values)
     py=random.getstate();numpy=deepcopy(np.random.get_state())
     try:

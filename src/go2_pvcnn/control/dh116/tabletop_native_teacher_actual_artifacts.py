@@ -97,12 +97,14 @@ def _originals(spec, output):
 def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes):
     acquisition = _normal_close(lifecycle)
     physical = acquisition.get("physical")
-    expected_clock = dict(start_sdk_step=2, end_sdk_step=258, start_rod_tick=0, end_rod_tick=3072)
+    contract = spec["teacher_contract"]
+    bounds = contract["limits"]
+    expected_clock = dict(start_sdk_step=bounds["setup_sdk_steps"], end_sdk_step=spec["budget"]["physics_steps"],
+                          start_rod_tick=0, end_rod_tick=bounds["max_internal_solver_substeps"])
     if (type(physical) is not dict or any(type(physical.get(key)) is not int or physical[key] != value
                                          for key, value in expected_clock.items())):
         raise ValueError("R06 acquisition requires the complete fresh SDK and rod window")
-    contract = spec["teacher_contract"]
-    limits = contract["limits"]["jsonl_limits"]
+    limits = bounds["jsonl_limits"]
     raw_name = contract["journal_contract"]["raw_file"]
     rows = _jsonl(raw, name=raw_name, maximum=limits[raw_name])
     checkpoint = acquisition.get("clean_checkpoint")
@@ -117,7 +119,7 @@ def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes):
         raw_journal_sha256=_digest(raw), lifecycle_sha256={name: _digest(data) for name, data in lifecycle.items()})
     validate_teacher_training_result(result, expected_semantic_sha256=contract["semantic_sha256"],
                                      artifact_sha256={"teacher_clean.pt": checkpoint_sha})
-    epoch = _journal(rows, result)
+    epoch = _journal(rows, result, controls=bounds["controls"])
 
     files = {}
     for name, operation in _VIEWS.items():
@@ -165,7 +167,7 @@ def freeze_actual_fresh_artifacts(*, spec, output):
                 artifact_sha256=digests, policy_epoch=epoch)
 
 
-def _audit_sealed_packs(frozen, profile):
+def _audit_sealed_packs(frozen, profile, *, controls=32):
     from .tabletop_native_teacher_actual_inputs import SCOPE, audit_teacher_input_sources
 
     seams = [(index, row["payload"]) for index, row in enumerate(frozen["rows"])
@@ -178,7 +180,7 @@ def _audit_sealed_packs(frozen, profile):
             for key, value in frozen["result"]["clean_checkpoint"].items())):
         raise ValueError("checkpoint differs from the original journal seal")
     prefix = b"".join(frozen["raw_journal"].splitlines(keepends=True)[:index])
-    rebuilt = audit_teacher_input_sources(prefix, backend_profile=profile, scope=SCOPE)
+    rebuilt = audit_teacher_input_sources(prefix, backend_profile=profile, scope=SCOPE, controls=controls)
     if rebuilt != seal.get("input_source_audit"):
         raise ValueError("source audit differs from the recorded checkpoint seal")
     return rebuilt
@@ -227,7 +229,7 @@ def _audit_fresh_setup(rows):
 
 
 
-def _audit_fresh_budget(rows, envelope, *, episode_uid, episode_cap_s, local_cap_s):
+def _audit_fresh_budget(rows, envelope, *, episode_uid, episode_cap_s, local_cap_s, end_sdk_step=258):
     import math
 
     samples = [row for row in rows if row["operation"] == "fresh_update_wall_budget"]
@@ -239,7 +241,7 @@ def _audit_fresh_budget(rows, envelope, *, episode_uid, episode_cap_s, local_cap
         raise ValueError("parent-bound wall budget samples must bracket the fresh update")
     deadline = envelope.deadline_monotonic_s
     before, after = [row["payload"] for row in samples]
-    for row, phase, step in zip((before, after), ("before_update", "after_update"), (2, 258)):
+    for row, phase, step in zip((before, after), ("before_update", "after_update"), (2, end_sdk_step)):
         numbers = ("episode_cap_s", "local_cap_s", "observed_s", "started_s", "parent_deadline_s", "remaining_s")
         if (any(type(row.get(k)) not in (int, float) or not math.isfinite(row[k]) for k in numbers)
                 or row.get("phase") != phase or row.get("episode_uid") != episode_uid
@@ -284,12 +286,14 @@ def audit_actual_fresh_outputs(spec, output, *, repository, package, envelope):
     frozen = freeze_actual_fresh_artifacts(spec=spec, output=output)
     setup = _audit_fresh_setup(frozen["rows"])
     budget = _audit_fresh_budget(frozen["rows"], envelope, episode_uid=setup["episode_uid"],
-        episode_cap_s=config["episode_cap_s"], local_cap_s=pin["limits"]["inner_wall_timeout_s"])
+        episode_cap_s=config["episode_cap_s"], local_cap_s=pin["limits"]["inner_wall_timeout_s"],
+        end_sdk_step=spec["budget"]["physics_steps"])
     physical = _physical_journal(frozen["rows"], reward_scope="unqualified_source",
-                                 expected_backend_sha256=spec["teacher_contract"]["backend_sha256"])
+                                 expected_backend_sha256=pin["backend_sha256"], controls=pin["limits"]["controls"])
     if physical["physical_nodes"] != 41:
         raise ValueError("actual Pinch Worker requires 41 measured material nodes")
-    model_input = _audit_sealed_packs(frozen, BackendProfile.load(repository.root))
+    model_input = _audit_sealed_packs(frozen, BackendProfile.load(repository.root),
+                                     controls=pin["limits"]["controls"])
     result = frozen["result"]
     checkpoint = _audit_fresh_checkpoint(spec, repository, context, checkpoint_bytes=frozen["checkpoint_bytes"],
         checkpoint_binding=result["clean_checkpoint"], training=result["training"], epoch=frozen["policy_epoch"])

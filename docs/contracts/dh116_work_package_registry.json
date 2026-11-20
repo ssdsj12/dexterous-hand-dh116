@@ -43147,6 +43147,53 @@
         "scope": "CPU replay and static geometry only",
         "native_qualification": false
       }
+    },
+    "teacher.pinch-ppo-fresh-smoke8-v1": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "pinch_fresh_ppo_smoke8_diagnostic_v1",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Pinch fresh 8-control PPO wiring diagnostic",
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke8-core-v1.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Verified native Reset, exact standing authorization and resource reservation required.",
+      "dependencies": [
+        "teacher.pinch-v13-native-reset"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-diagnostic.md",
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke8-launch-v1.json",
+        "sha256": "8193a0b4d6eda0353129d8b435da6715e2bdb8e0158d5845a33028327b548173"
+      }
+    },
+    "teacher.pinch-smoke8-wiring-cpu": {
+      "title": "Exact shorter Pinch PPO diagnostic contract and CPU wiring",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.pinch-v13-native-reset"
+      ],
+      "tests": [
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_native_teacher_actual_update.py",
+        "tests/test_native_teacher_actual_artifacts.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-diagnostic.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_smoke8_wiring_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 264,
+        "failed": 0,
+        "scope": "CPU and retained physical prefix only",
+        "native_qualification": false
+      }
     }
   },
   "execution_target": {

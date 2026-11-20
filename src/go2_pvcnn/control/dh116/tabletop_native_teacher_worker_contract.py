@@ -1,7 +1,7 @@
 """Finite C06 preparation contracts; structural validity grants no execution lease.
 
 No App, CUDA or training imports occur here. V1 native recipes retain their own
-240-step gate; this protocol is only the new Pinch smoke32 envelope.
+240-step gate. This protocol allows only the sealed Pinch smoke horizons.
 """
 from copy import deepcopy
 import math
@@ -84,6 +84,33 @@ def teacher_journal_row_budget():
         max_raw_journal_rows=maximum)
 
 
+def fresh_smoke_limits(controls):
+    """Exactly two bounded diagnostic horizons on the same task and reward."""
+    if type(controls) is not int or controls not in (8, 32):
+        raise ValueError("Pinch smoke requires exactly 8 or 32 controls")
+    measured = controls * FIXED_LIMITS["sdk_steps_per_control"]
+    limits = dict(FIXED_LIMITS, controls=controls, measured_sdk_steps=measured,
+                  max_solver_calls=measured,
+                  max_internal_solver_substeps=measured * FIXED_LIMITS["internal_substeps_per_solver_call"])
+    rows = dict(JSONL_LIMITS)
+    if controls == 8:
+        rows.update({"physics.jsonl": measured, "transitions.jsonl": controls,
+                     "ownership.jsonl": 128, "training_events.jsonl": 768})
+    return limits, rows
+
+
+def validate_fresh_smoke_rollout(controls, budget, approved_reward_controls):
+    """A short collector horizon must have its own exact SDK/solver budget."""
+    if controls == approved_reward_controls:
+        return
+    limits, _ = fresh_smoke_limits(controls)
+    if (controls != 8 or approved_reward_controls != 32
+            or budget["max_sdk_steps"] != limits["setup_sdk_steps"] + limits["measured_sdk_steps"]
+            or budget["max_solver_calls"] != limits["max_solver_calls"]
+            or budget["max_episode_count"] != 1 or budget["max_resets"] != 1):
+        raise ValueError("rollout length differs from approved reward/PPO config or exact short budget")
+
+
 def _sha(value):
     return isinstance(value, str) and SHA256.fullmatch(value) is not None
 
@@ -93,7 +120,7 @@ def _exact_int(value, expected):
 
 
 def validate_teacher_recipe_v2(spec):
-    """Validate the sole finite structural profile, without probing resources.
+    """Validate a finite structural profile, without probing resources.
 
     All declared source paths and inputs are hashed by the shared scheduler
     identity helper. The actual worker entrypoint must exist there; this module
@@ -111,7 +138,7 @@ def validate_teacher_recipe_v2(spec):
             or contract["schema"] != RECIPE_SCHEMA
             or contract["profile"] != "approach_wiring_smoke_v1" or contract["style"] != "pinch"
             or any(not _sha(contract[k]) for k in keys if k.endswith("_sha256"))):
-        raise ValueError("independent pinned Pinch smoke32 Teacher contract required")
+        raise ValueError("independent pinned Pinch smoke Teacher contract required")
     if (contract["journal_contract"] != JOURNAL_CONTRACT
             or contract["journal_contract"].get("retain_raw_sequence_references") is not True):
         raise ValueError("complete original NativeJournal and lossless derived views required")
@@ -129,24 +156,28 @@ def validate_teacher_recipe_v2(spec):
     if (not isinstance(sources, list) or any(not isinstance(x, str) for x in sources)
             or len(set(sources)) != len(sources) or not SOURCE_FILES <= set(sources)):
         raise ValueError("C06 source closure must include recipe and lease implementation")
+    limits = contract["limits"]
+    if not isinstance(limits, dict):
+        raise ValueError("explicit Pinch smoke limits required")
+    fixed, row_budget = fresh_smoke_limits(limits.get("controls"))
+    end_step = fixed["setup_sdk_steps"] + fixed["measured_sdk_steps"]
     budget = spec["budget"]
     bounds = {"gpu_index":(0,63), "timeout_seconds":(31,900), "min_gpu_free_mib":(1,1000000),
         "min_disk_free_bytes":(1,10**13)}
     if (not isinstance(budget, dict) or set(budget) != set(bounds)|{"physics_steps", "environments", "updates"}
             or any(type(budget[k]) is not int or not lo <= budget[k] <= hi for k,(lo,hi) in bounds.items())
-            or not _exact_int(budget["physics_steps"],258) or not _exact_int(budget["environments"],1)
+            or not _exact_int(budget["physics_steps"],end_step) or not _exact_int(budget["environments"],1)
             or not _exact_int(budget["updates"],1)):
-        raise ValueError("new finite v2 budget requires 258 SDK, one environment and one update")
-    limits = contract["limits"]
-    if (not isinstance(limits, dict) or set(limits) != set(FIXED_LIMITS)|{"inner_wall_timeout_s", "jsonl_limits"}
-            or any(not _exact_int(limits[k],v) for k,v in FIXED_LIMITS.items())):
+        raise ValueError("finite v2 budget requires the exact SDK cap, one environment and one update")
+    if (set(limits) != set(fixed)|{"inner_wall_timeout_s", "jsonl_limits"}
+            or any(not _exact_int(limits[k],v) for k,v in fixed.items())):
         raise ValueError("complete exact finite control/Reset/solver/process limits required")
     wall = limits["inner_wall_timeout_s"]
     rows = limits["jsonl_limits"]
     if (type(wall) not in (int,float) or not math.isfinite(wall)
             or not 0 < wall <= budget["timeout_seconds"]-30
-            or not isinstance(rows, dict) or set(rows) != set(JSONL_LIMITS)
-            or any(not _exact_int(rows[k],v) for k,v in JSONL_LIMITS.items())):
+            or not isinstance(rows, dict) or set(rows) != set(row_budget)
+            or any(not _exact_int(rows[k],v) for k,v in row_budget.items())):
         raise ValueError("inner wall and complete finite outer JSONL limits required")
     validator = spec["validator"]
     if (not isinstance(validator, dict)
@@ -155,7 +186,7 @@ def validate_teacher_recipe_v2(spec):
             or validator["equals"] != {"schema":RESULT_SCHEMA}
             or not isinstance(validator["artifacts"], list)
             or len(validator["artifacts"]) != len(ARTIFACTS) or set(validator["artifacts"]) != ARTIFACTS
-            or validator["line_counts"] != {"physics.jsonl":256, "transitions.jsonl":32}
+            or validator["line_counts"] != {name: row_budget[name] for name in ("physics.jsonl", "transitions.jsonl")}
             or any(type(v) is not int for v in validator["line_counts"].values())):
         raise ValueError("exact independent Teacher transition/SDK/checkpoint artifacts required")
     return deepcopy(spec)
@@ -210,11 +241,12 @@ def training_semantic_config(training_config, *, backend_identity, source_identi
     expected = {"schema", "preflight", "model_config", "episode_cap_s", "rollout_steps"}
     if (not isinstance(training_config, dict) or set(training_config) != expected
             or training_config["schema"] != "dh116-native-teacher-training-cpu-v1"
-            or not _exact_int(training_config["rollout_steps"],32)):
+            or type(training_config["rollout_steps"]) is not int):
         raise ValueError("exact C05 training configuration schema required")
     pre = deepcopy(validate_config(training_config["preflight"]))
     if pre["profile"] != "approach_wiring_smoke_v1" or pre["style"] != "pinch":
-        raise ValueError("C06 supports only the new Pinch smoke32 semantic profile")
+        raise ValueError("C06 supports only the Pinch approach smoke semantic profile")
+    validate_fresh_smoke_rollout(training_config["rollout_steps"], pre["budget"], 32)
     cap = training_config["episode_cap_s"]
     if type(cap) not in (float,int) or not math.isfinite(cap) or cap <= 0:
         raise ValueError("finite explicit episode cap required")

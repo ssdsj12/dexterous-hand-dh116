@@ -122,8 +122,8 @@ def verify_static_contract(config):
         target=mapping.get(key,key)
         if target not in values or values[target]!=value:
             raise ValueError("preflight/PPO/reward numeric config differs: "+key)
-    if config.rollout_steps!=reward.ppo["rollout_steps"]:
-        raise ValueError("rollout length differs from approved reward/PPO config")
+    from .tabletop_native_teacher_worker_contract import validate_fresh_smoke_rollout
+    validate_fresh_smoke_rollout(config.rollout_steps, budget, reward.ppo["rollout_steps"])
     ppo=PPOConfig(**values)
     model_contract(config.model_config,profile,config.preflight["profile"])
     from .tabletop_deformable_r0_replay import _digest

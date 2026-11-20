@@ -33,7 +33,8 @@ def lease_fixture(tmp_path, monkeypatch):
     lease._repository = SimpleNamespace(root=tmp_path)
     lease._package = {"fixture": True}
     monkeypatch.setattr(process.ActualWorkerLease, "revalidate", lambda _: None)
-    fake_recipe = dict(spec={"teacher_contract": {}, "budget": {"physics_steps": 258}})
+    fake_recipe = dict(spec={"teacher_contract": {"limits": {"controls": 32}},
+                             "budget": {"physics_steps": 258}})
     monkeypatch.setattr(process, "_registered", lambda *_: ("a", fake_recipe, {}, {}, {"output": str(output)}))
     return lease, config, output
 
@@ -113,7 +114,8 @@ def test_acquisition_uses_one_journal_and_releases_collector_on_every_return(tmp
         return SimpleNamespace(owner=owner, journal=journal, close=close, _epoch={"weights": "c" * 64},
                                trace_wall_windows=trace_wall_windows)
 
-    def step(collector, *, checkpoint_contract):
+    def step(collector, *, checkpoint_contract, controls):
+        assert controls == 32
         assert checkpoint_contract == {"fixture": True} and attached == [trace.event]
         events.append(("update", collector.journal))
         entries = [json.loads(line) for line in collector.journal.path.read_text().splitlines()]

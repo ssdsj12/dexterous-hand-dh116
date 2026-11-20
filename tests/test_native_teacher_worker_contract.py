@@ -191,3 +191,35 @@ def test_shared_source_inventory_and_training_contract_use_actual_files(tmp_path
     (root/"tests/package.py").write_text("# changed package test dependency")
     with pytest.raises(ValueError,match="source"):
         contract_module().worker_training_source_contract(repo,package,spec)
+
+
+def smoke8_recipe(tmp_path):
+    spec = recipe(tmp_path)
+    spec["budget"]["physics_steps"] = 66
+    spec["teacher_contract"]["limits"].update(
+        controls=8, measured_sdk_steps=64, max_solver_calls=64, max_internal_solver_substeps=768,
+        jsonl_limits={"physics.jsonl": 64, "transitions.jsonl": 8,
+                     "ownership.jsonl": 128, "training_events.jsonl": 768},
+    )
+    spec["validator"]["line_counts"] = {"physics.jsonl": 64, "transitions.jsonl": 8}
+    return spec
+
+
+def test_short_diagnostic_is_an_exact_smaller_recipe(tmp_path):
+    spec = smoke8_recipe(tmp_path)
+    assert contract_module().validate_teacher_recipe_v2(spec) == spec
+
+
+@pytest.mark.parametrize("field", ["sdk", "controls", "solver", "journal"])
+def test_short_diagnostic_cannot_inherit_larger_budget(tmp_path, field):
+    spec = smoke8_recipe(tmp_path)
+    if field == "sdk":
+        spec["budget"]["physics_steps"] = 258
+    elif field == "controls":
+        spec["teacher_contract"]["limits"]["controls"] = 32
+    elif field == "solver":
+        spec["teacher_contract"]["limits"]["max_solver_calls"] = 256
+    else:
+        spec["teacher_contract"]["limits"]["jsonl_limits"]["training_events.jsonl"] = 2048
+    with pytest.raises(ValueError):
+        contract_module().validate_teacher_recipe_v2(spec)

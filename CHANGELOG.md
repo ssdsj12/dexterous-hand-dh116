@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch short PPO diagnostic
+
+新增独立 Pinch 8 控制窗 PPO 诊断，源绑定和完整账本仍由原调度器审计。 [报告](docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-diagnostic.md)。
+
 ## 2026-11-20 Teacher rollout codec CPU speedup
 
 - 封存 Pinch v13 有界诊断配方，减少采集物理行冗余拷贝。

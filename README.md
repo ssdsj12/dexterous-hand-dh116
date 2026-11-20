@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch short PPO diagnostic
+
+短配方验证采集、单次优化和 checkpoint 封存。32 窗原生结果和真实抓取资格独立跟踪。 [报告](docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-diagnostic.md)。
+
 ## 2026-11-20 Teacher rollout codec CPU speedup
 
 The collector reuses the finite-array encoder while preserving canonical owned bytes, rollout identities and durable writes. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-collector-codec.md).

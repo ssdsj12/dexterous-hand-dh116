@@ -1,0 +1,89 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-smoke8-wiring-cpu",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-diagnostic.md",
+  "tested_head": "5aa5df9992a95959805f9da888f1377c1827d51f",
+  "cpu_tests": {
+    "passed": 264,
+    "failed": 0,
+    "log_sha256": "03f04e6dd7fe93d3803da206c9cc60b7c2572b64d2aa63c5d2fc9d76244f7128",
+    "red_log_sha256": "21c1eba2874161562cfc742f30e1dfa2b69e95b731bfe984d15beeb276cc6339"
+  },
+  "archive": {
+    "original_journal_sha256": "3b46bc46f0b615eca40e26c8bafec9c5df9b873cb89ddaf45b171889f5cf2b7b",
+    "physics_reaudit_log_sha256": "47282b650094418310ac31d1f7ecdda02e976ad4dc47b6c7477fe32fafdd1f9c",
+    "original_retained_controls": 8,
+    "physical_rows": 64,
+    "new_sdk_steps": 0,
+    "new_ppo_updates": 0
+  },
+  "source_sha256": {
+    "configs/dh116_execution/pinch-actual-smoke8-core-v1.json": "2b3b84e0fc701000609e8f0ba6e6f2269a23a3ad061815c4eb18502e86a57ce5",
+    "configs/dh116_execution/pinch-actual-smoke8-launch-v1.json": "8193a0b4d6eda0353129d8b435da6715e2bdb8e0158d5845a33028327b548173",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_artifacts.py": "862aff2b5f89da88e16ead179893a44dc3b5c77f7fc522091a24c573390f3a9c",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_factories.py": "99694766382126ebcba2cb50aa1403b1fd5cb36cbba0e69e14c48b9b55e3b4fa",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_provider.py": "f250712e78d174f4c0f46914325bef0a78b13d0cf804a20a10866b1fb0175c4a",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_update.py": "2bd0f40a6f372e0a4dc431f17cfecb0b1d0f80e5f1f7539aa48875dd67024a85",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_session.py": "aca758f81bb1b9f6fb71342b01ede45ba64ef5ef2b5f8187eb351d9540f9ad3e",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_worker_artifacts.py": "3ed3c979ebe9477af68c685076680be0d5b408240ddbc5c4bdab4a7ad9e0dbe7",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_worker_contract.py": "cca681567ba813b69ecfa67dddaa788c8018c48890fa8c73542b104480ff736f",
+    "tests/test_native_teacher_actual_artifacts.py": "2c8c905ec7c0e8660828f27af0438bab41aed979eec8d5cf55096c7aa88f463d",
+    "tests/test_native_teacher_actual_provider.py": "7ca98734b3c9bfb3ae406af674308e05dfdd55b5994e5f89fe03d5f7cb087606",
+    "tests/test_native_teacher_actual_update.py": "29cac1ef9be5e3c359ed497d2cd0e0ce445c11cc36e1813733ce2e48e80412d0",
+    "tests/test_native_teacher_worker_contract.py": "9ae967f5f7ff8a27831bab90156349ccf9fd6582dcb9e3a319ca72c266657f0c"
+  },
+  "budget": {
+    "environments": 1,
+    "gpu_index": 3,
+    "min_disk_free_bytes": 1073741824,
+    "min_gpu_free_mib": 4096,
+    "physics_steps": 66,
+    "timeout_seconds": 240,
+    "updates": 1
+  },
+  "config_sha256": "eb6ebba751aa4c598a6947bc934d00a1e8c191ce4f2b9854e0e427ac0e491527",
+  "frozen_files": 505,
+  "identity": {
+    "actual_identity": {
+      "companion_sha256": "8193a0b4d6eda0353129d8b435da6715e2bdb8e0158d5845a33028327b548173",
+      "core_recipe_identity": {
+        "code_config_sha256": "ed925126945163e6e52625f1bc65ae60102d2e31dd0be7a92e5988262cfdbc91",
+        "command_spec_sha256": "2b3b84e0fc701000609e8f0ba6e6f2269a23a3ad061815c4eb18502e86a57ce5"
+      },
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "source_closure_sha256": "6df700a7a1cc99ff314dc94a69461f22e462885559ff7f209b3085ec6de5868d"
+    },
+    "attempt_fingerprint": "217473ef997c5d2877c6181c963ce0fe0ed87efa7f0d40e7ef30a29704a4ae45",
+    "core_identity": {
+      "code_config_sha256": "ed925126945163e6e52625f1bc65ae60102d2e31dd0be7a92e5988262cfdbc91",
+      "command_spec_sha256": "2b3b84e0fc701000609e8f0ba6e6f2269a23a3ad061815c4eb18502e86a57ce5"
+    }
+  },
+  "limits": {
+    "controls": 8,
+    "inner_wall_timeout_s": 180,
+    "internal_substeps_per_solver_call": 12,
+    "jsonl_limits": {
+      "ownership.jsonl": 128,
+      "physics.jsonl": 64,
+      "training_events.jsonl": 768,
+      "transitions.jsonl": 8
+    },
+    "max_episode_count": 1,
+    "max_internal_solver_substeps": 768,
+    "max_processes": 1,
+    "max_resets": 1,
+    "max_solver_calls": 64,
+    "measured_sdk_steps": 64,
+    "other_sdk_steps": 0,
+    "sdk_steps_per_control": 8,
+    "setup_sdk_steps": 2,
+    "warmup_sdk_steps": 0
+  },
+  "semantic": "47d26bd5bd2095cb0addec0248d3717f24b5c16f3cd80a77a878f6e3667965ac",
+  "native_runs": 0,
+  "ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false
+}

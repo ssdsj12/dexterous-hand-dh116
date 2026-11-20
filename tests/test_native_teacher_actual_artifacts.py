@@ -241,3 +241,31 @@ def test_pinches_budget_is_bound_to_parent_envelope_and_update_window(damage):
         result = _audit_fresh_budget(rows, envelope, episode_uid="run:0", episode_cap_s=2., local_cap_s=20.)
         assert result == {"parent_deadline_s": 120., "episode_cap_s": 2.,
                           "session_local_cap_s": 20., "remaining_before_s": 10., "remaining_after_s": 1.}
+
+
+def test_short_diagnostic_derives_exact_bounds_without_removing_raw_rows(attempt, tmp_path):
+    from test_native_teacher_worker_contract import smoke8_recipe
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_worker_artifacts import PRIMARY_OPERATIONS
+
+    _, output, rows, journal, lifecycle = attempt
+    spec = smoke8_recipe(tmp_path)
+    short_rows = []
+    controls = 0
+    for row in rows:
+        if row["operation"] == "decision":
+            controls += 1
+        if controls > 8 and row["operation"] in PRIMARY_OPERATIONS - {"policy_epoch", "optimizer_update_accepted"}:
+            continue
+        short_rows.append(dict(row, sequence=len(short_rows)))
+    journal.write_text("".join(json.dumps(row) + "\n" for row in short_rows))
+    before = journal.read_bytes()
+    record_path = lifecycle / "result.json"
+    record = json.loads(record_path.read_bytes())
+    record["acquisition"]["physical"].update(end_sdk_step=66, end_rod_tick=768)
+    record_path.write_text(json.dumps(record))
+    _derive()(spec=spec, output=output)
+    assert journal.read_bytes() == before
+    audited = auditor.audit_teacher_artifacts_v2(spec, output)
+    assert audited["ledger_counts"]["physics.jsonl"] == 64
+    assert audited["ledger_counts"]["transitions.jsonl"] == 8
+    assert audited["journal_rows"] == short_rows
