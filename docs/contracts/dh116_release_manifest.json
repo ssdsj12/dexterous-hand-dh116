@@ -28663,6 +28663,31 @@
         "verified_at_utc": "2026-11-20T12:57:23.937250+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-palm-triangle-intersections-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-palm-self-intersection.md",
+      "readiness": "docs/contracts/dh116_teacher_power_palm_triangle_intersections_v1.json",
+      "cpu_tests": {
+        "passed": 106,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "42f39889f7ae4fdb6ef010f01b9df120d2a5c40a",
+        "source_tree": "d9a165002e2632a507020b7e60f384ad42ecee59",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T12:58:48.896405+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
