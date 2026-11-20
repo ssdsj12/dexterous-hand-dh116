@@ -29088,6 +29088,31 @@
         "verified_at_utc": "2026-11-20T16:36:17.539181+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Pinch same-initial-state force hold control",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-same-state-force-control.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_same_state_force_control_v1.json",
+      "cpu_tests": {
+        "passed": 262,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "229137ec38bc9e7e27b23dc46f4f69585a32531a",
+        "source_tree": "c682a8bb05133f8cc3b76492670b13b382729a5b",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T16:52:33.104931+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
