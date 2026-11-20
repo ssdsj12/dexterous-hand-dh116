@@ -1,0 +1,407 @@
+{
+  "version": "dh116-teacher-pinch-fixed-wrist-seating-v1",
+  "status": "native_diagnostic_complete_candidate_rejected",
+  "source_head": "8f56dbb9597d50cfe78354341985c58e438630e2",
+  "frozen_recipe_sha256": "6e7a94b57e87f26b128fc6600d39d1265c50917529ed4f61b547ce6636378d3e",
+  "frozen_plan_sha256": "cf24f1167f832e2e086433f5fac5790651d95138d42689bc7df592017188c6f8",
+  "outer_receipt": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2237-pinch-fixed-wrist-seating-native/outer.json",
+  "outer_sha256": "85b2f71949de95b87bbb3a8d3da655e57ebd0ef9d2a2ab545d328a64b8d7e8c5",
+  "ledger_sha256": "28c42bea8a2be7a4859466d018f6ccf6841a252a0202873ce4a94ab1a1b88fb1",
+  "app_close_returned_sha256": "9d064d53f917000ae2466102eabeb06c3c5d89ea8a6e407fe9575aa5f09dbb96",
+  "metrics_sha256": "21eb76e9958a0963e5aed2dfb622b4b06380e4bba07cf4b29e8b0c2a6b0f7d40",
+  "force_attribution_sha256": "3c34b09c818adf26a83db52714307b181f266eca931c7cb7750218bbc86ceffe",
+  "cpu_tests": {
+    "passed": 292,
+    "failed": 0
+  },
+  "native_attempts": 1,
+  "outer_exit_code": 0,
+  "forced_exit": false,
+  "sdk_steps": 442,
+  "solver_substeps": 5280,
+  "control_windows": 55,
+  "native_ppo_updates": 0,
+  "gates": {
+    "bilateral_preload_gate": {
+      "sdk": 202,
+      "fields": [
+        "passed",
+        "prefix",
+        "signed_opposition",
+        "same_actions",
+        "proofs"
+      ],
+      "status": {
+        "passed": true
+      },
+      "proofs": {
+        "left": {
+          "proved": true,
+          "minimum_margin_m": 1.1363795246736916e-07
+        },
+        "right": {
+          "proved": true,
+          "minimum_margin_m": 0.00014643868405091813
+        }
+      }
+    },
+    "asymmetric_preload_gate": {
+      "sdk": 282,
+      "fields": [
+        "passed",
+        "prefix",
+        "signed_opposition",
+        "same_actions",
+        "proofs"
+      ],
+      "status": {
+        "passed": true
+      },
+      "proofs": {
+        "left": {
+          "proved": true,
+          "minimum_margin_m": 1.2530034572940651e-06
+        },
+        "right": {
+          "proved": true,
+          "minimum_margin_m": 5.553826447344604e-05
+        }
+      }
+    },
+    "fixed_wrist_seating_gate": {
+      "sdk": 362,
+      "fields": [
+        "passed",
+        "prefix",
+        "signed_opposition",
+        "same_actions",
+        "proofs"
+      ],
+      "status": {
+        "passed": true
+      },
+      "proofs": {
+        "left": {
+          "proved": true,
+          "minimum_margin_m": 2.3676844611265294e-08
+        },
+        "right": {
+          "proved": true,
+          "minimum_margin_m": 6.354550124138773e-05
+        }
+      }
+    }
+  },
+  "substep_comparison": {
+    "baseline": {
+      "n": 960,
+      "signed": 960,
+      "qualified": 473,
+      "pads": 960,
+      "longest": 16,
+      "hand_pairs": 3840,
+      "table_pairs": 36585,
+      "fully_qualified_sdk_steps": 2,
+      "force": {
+        "left": [
+          [
+            0.10684898280964983,
+            0.09796161463030811,
+            0.20812445330860954
+          ],
+          [
+            0.14794664076200065,
+            0.150231241442227,
+            0.30043738425773964
+          ],
+          [
+            0.18598148038191495,
+            0.18552952576716203,
+            0.36849828833368725
+          ]
+        ],
+        "right": [
+          [
+            0.12623026145251706,
+            0.10232987158534373,
+            0.2286104032941783
+          ],
+          [
+            0.18462564240176052,
+            0.16823175319828432,
+            0.3526062703632764
+          ],
+          [
+            0.21721246682781095,
+            0.1915044794801595,
+            0.40871694630797045
+          ]
+        ]
+      }
+    },
+    "baseline_settled": {
+      "n": 768,
+      "signed": 768,
+      "qualified": 420,
+      "pads": 768,
+      "longest": 16,
+      "hand_pairs": 3072,
+      "table_pairs": 29382,
+      "fully_qualified_sdk_steps": 2,
+      "force": {
+        "left": [
+          [
+            0.1197531217915887,
+            0.1076523149726723,
+            0.227405436764261
+          ],
+          [
+            0.1503316502743875,
+            0.15166222646449468,
+            0.30415301792849886
+          ],
+          [
+            0.18598148038191495,
+            0.18552952576716203,
+            0.3644312561522465
+          ]
+        ],
+        "right": [
+          [
+            0.1678049161651578,
+            0.11714212164533899,
+            0.2860516646241049
+          ],
+          [
+            0.1855796629320601,
+            0.16895977878416013,
+            0.3542883381733677
+          ],
+          [
+            0.21721246682781095,
+            0.1915044794801595,
+            0.40871694630797045
+          ]
+        ]
+      }
+    },
+    "seating": {
+      "n": 960,
+      "signed": 585,
+      "qualified": 390,
+      "pads": 960,
+      "longest": 21,
+      "hand_pairs": 3840,
+      "table_pairs": 37176,
+      "fully_qualified_sdk_steps": 5,
+      "force": {
+        "left": [
+          [
+            0.10855615860031342,
+            0.09424597825568154,
+            0.20360546591251638
+          ],
+          [
+            0.16978832421279927,
+            0.14925208055161115,
+            0.32285655378935396
+          ],
+          [
+            0.292227901224851,
+            0.21299487523898483,
+            0.4640498055631534
+          ]
+        ],
+        "right": [
+          [
+            0.14300072394060503,
+            0.11287422982766016,
+            0.260444059175727
+          ],
+          [
+            0.18329498035509068,
+            0.16243238391835352,
+            0.34668140778972767
+          ],
+          [
+            0.21580664176637754,
+            0.19607371765504708,
+            0.41188035942142465
+          ]
+        ]
+      }
+    },
+    "seating_settled": {
+      "n": 768,
+      "signed": 470,
+      "qualified": 292,
+      "pads": 768,
+      "longest": 15,
+      "hand_pairs": 3072,
+      "table_pairs": 29707,
+      "fully_qualified_sdk_steps": 3,
+      "force": {
+        "left": [
+          [
+            0.10855615860031342,
+            0.09424597825568154,
+            0.20360546591251638
+          ],
+          [
+            0.16434050709099868,
+            0.14656582930697432,
+            0.3111573881247768
+          ],
+          [
+            0.292227901224851,
+            0.21299487523898483,
+            0.4640498055631534
+          ]
+        ],
+        "right": [
+          [
+            0.14300072394060503,
+            0.11287422982766016,
+            0.260444059175727
+          ],
+          [
+            0.18299378278288403,
+            0.1614030666633683,
+            0.3450997956047709
+          ],
+          [
+            0.21530449902094895,
+            0.18944583025123451,
+            0.40475032927218346
+          ]
+        ]
+      }
+    },
+    "raw_last_window": {
+      "n": 96,
+      "signed": 75,
+      "qualified": 29,
+      "pads": 96,
+      "longest": 7,
+      "hand_pairs": 384,
+      "table_pairs": 3720,
+      "fully_qualified_sdk_steps": 0,
+      "force": {
+        "left": [
+          [
+            0.11011262258570098,
+            0.09424597825568154,
+            0.2047603213684343
+          ],
+          [
+            0.14681686828064303,
+            0.1378542010202667,
+            0.2846711347850538
+          ],
+          [
+            0.17568822861834532,
+            0.17468393973889884,
+            0.34821307868436313
+          ]
+        ],
+        "right": [
+          [
+            0.15515180791529226,
+            0.1389336915830972,
+            0.2947883893973801
+          ],
+          [
+            0.1800313299856311,
+            0.16080054504880797,
+            0.3403297367560909
+          ],
+          [
+            0.19843360650024455,
+            0.1669513884347344,
+            0.36423018162541665
+          ]
+        ]
+      }
+    }
+  },
+  "side_attribution": {
+    "baseline": {
+      "sides": [
+        0,
+        0
+      ],
+      "cos": [
+        [
+          -0.7482334855547017,
+          -0.7477743371947698,
+          -0.7469445347395527
+        ],
+        [
+          -0.9408035635558863,
+          -0.9406821955194602,
+          -0.9404125048052091
+        ]
+      ],
+      "table_m": 0.0025638077199067744,
+      "table_floor_m": 0.0021
+    },
+    "seating": {
+      "sides": [
+        375,
+        0
+      ],
+      "cos": [
+        [
+          -0.7517698264209647,
+          -0.7512714842593946,
+          -0.7482251723312632
+        ],
+        [
+          -0.9408257576836588,
+          -0.9407309873844512,
+          -0.928674878210325
+        ]
+      ],
+      "table_m": 0.0025641292774636892,
+      "table_floor_m": 0.0021
+    }
+  },
+  "force": {
+    "baseline": {
+      "samples": 960,
+      "nodes:[34, 35]": 960
+    },
+    "seating": {
+      "samples": 960,
+      "nodes:[34, 35]": 960,
+      "signed_fail": 375,
+      "index_inward_negative": 23,
+      "thumb_inward_negative": 369,
+      "thumb_normal_still_inward": 375,
+      "index_normal_inverted": 0,
+      "thumb_normal_inverted": 0
+    }
+  },
+  "left_non_target_clearance_m": {
+    "baseline": {
+      "source:finger13_link": 1.4461411294037357e-06,
+      "source:finger22_link": 0.00015786826124297888
+    },
+    "seating": {
+      "source:finger13_link": 0.00016636206625225865,
+      "source:finger22_link": 0.00015348713133972632
+    }
+  },
+  "seating_channels": [
+    0,
+    2
+  ],
+  "seating_delta_rad": [
+    -0.003,
+    -0.0005
+  ],
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-fixed-wrist-seating.md"
+}

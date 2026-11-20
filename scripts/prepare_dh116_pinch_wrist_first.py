@@ -63,7 +63,11 @@ def independent_translation_bounds(rotation, offsets):
 
 def right_geometry(row, actual, issued, target, envelope, *, nodes,
                    phase_names=("angle_first", "wrist_first", "finger_release"), phase_seconds=75.,
-                   side="right", require_pad_clearance=False, independent_wrist=False):
+                   side="right", require_pad_clearance=False, independent_wrist=False,
+                   active_axes=(1,2)):
+    if (len(active_axes)!=2 or len(set(active_axes))!=2
+            or any(type(i) is not int or not 0<=i<6 for i in active_axes)):
+        raise ValueError("two distinct original active axes required")
     model, source = prelift._bound_model(prelift.base.ROOT, side)
     raw = row["closure_geometry"]["raw"]["hands"][side]
     frames, xyz = prelift._frames(model, raw["body_names"], raw["link_poses_xyzw"])
@@ -82,14 +86,14 @@ def right_geometry(row, actual, issued, target, envelope, *, nodes,
     active = actual[:6]
     base_expanded = prelift.expand(active)
     q_groups = []
-    for index in (1, 2):
+    for index in active_axes:
         command = active.copy()
         command[index] = target[index]
         q_groups.append(prelift.expand(command) - base_expanded)
     others = []
     for known in (issued, target):
         command = known[:6].copy()
-        command[1:3] = active[1:3]
+        command[list(active_axes)] = active[list(active_axes)]
         others.append(prelift.expand(command) - base_expanded)
     other_joint_motion = np.maximum(abs(others[0]), abs(others[1]))
     linear_residual, angular_residual = envelope["wrist_residuals"]

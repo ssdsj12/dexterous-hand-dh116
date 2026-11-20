@@ -78,7 +78,8 @@ def prepare(args, *, screen_geometry=False):
     return plan
 
 
-def measure_gate(row, plan, *, sdk_step, prefix_windows, config_key, gate_key, compiler):
+def measure_gate(row, plan, *, sdk_step, prefix_windows, config_key, gate_key, compiler,
+                 certify=closure.certify_closure):
     receipt = row[gate_key] = dict(passed=False)
     try:
         config = plan[config_key]
@@ -91,7 +92,7 @@ def measure_gate(row, plan, *, sdk_step, prefix_windows, config_key, gate_key, c
             actions, plan["action_schedule"][:len(actions)], atol=1e-7, rtol=0,
         ))
         if receipt["prefix"]["passed"] and receipt["signed_opposition"] and receipt["same_actions"]:
-            receipt["proofs"] = closure.certify_closure(row, states, targets)
+            receipt["proofs"] = certify(row, states, targets)
             receipt["passed"] = all(proof["proved"] for proof in receipt["proofs"].values())
         if not receipt["passed"]:
             row["guard_failure"] = f"pinch_{gate_key}_rejected"

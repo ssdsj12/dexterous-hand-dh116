@@ -1,3 +1,6 @@
+## Pinch fixed-wrist seating
+
+Measured the left thumb and index seating increments with all three native contact gates and isolated the loss of signed opposition to the left side. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-fixed-wrist-seating.md).
 
 ## Power shared free-rod layout
 
