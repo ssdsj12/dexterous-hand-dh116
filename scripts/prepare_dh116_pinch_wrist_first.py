@@ -54,7 +54,7 @@ def right_control_windows(issued, goal):
 
 def right_geometry(row, actual, issued, target, envelope, *, nodes,
                    phase_names=("angle_first", "wrist_first", "finger_release"), phase_seconds=75.,
-                   side="right", require_pad_clearance=False):
+                   side="right", require_pad_clearance=False, independent_wrist=False):
     model, source = prelift._bound_model(prelift.base.ROOT, side)
     raw = row["closure_geometry"]["raw"]["hands"][side]
     frames, xyz = prelift._frames(model, raw["body_names"], raw["link_poses_xyzw"])
@@ -87,13 +87,17 @@ def right_geometry(row, actual, issued, target, envelope, *, nodes,
     bounds, reserves = {}, {}
     for key, angles in model.joint_radii.items():
         radius_from_wrist = model.wrist_radii[key]
-        bounds[key] = np.array([*(angles @ abs(g) for g in q_groups),
-                                np.linalg.norm(delta[6:9]), radius_from_wrist * abs(delta[9:]).sum()])
+        if independent_wrist:
+            wrist_bounds = np.r_[abs(delta[6:9]), radius_from_wrist * abs(delta[9:])]
+        else:
+            wrist_bounds = [np.linalg.norm(delta[6:9]), radius_from_wrist * abs(delta[9:]).sum()]
+        bounds[key] = np.array([*(angles @ abs(g) for g in q_groups), *wrist_bounds])
         reserves[key] = float(np.linalg.norm(linear_residual) + radius_from_wrist * abs(angular_residual).sum()
                               + angles @ other_joint_motion)
 
     def moved(x, key):
-        world = model._frames(anchor, xyz + x[2] * delta[6:9], actual[9:] + x[3] * delta[9:],
+        linear, angular = (x[2:5], x[5:8]) if independent_wrist else (x[2], x[3])
+        world = model._frames(anchor, xyz + linear * delta[6:9], actual[9:] + angular * delta[9:],
                               q + q_groups[0] * x[0] + q_groups[1] * x[1])
         return alignment[key] @ world[model.paths[key]]
 

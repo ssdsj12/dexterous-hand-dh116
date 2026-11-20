@@ -1,4 +1,8 @@
 
+## Pinch native index pacing
+
+Advance the lagging left index around the original rod while removing pending right-finger motion. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-index-pacing-native.md).
+
 ## Pinch native precontact contrast
 
 Verify the precontact left pause and right angular schedule in one native instance. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-precontact-pair-native.md).

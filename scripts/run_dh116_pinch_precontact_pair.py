@@ -86,7 +86,7 @@ def prepare(args):
     return previous
 
 
-def acquire(sim, owners, trace, output, *, plan):
+def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, observe=None):
     angular_gate = angular.AngularGate(plan["angular_gate"], sdk=ANGULAR_SDK, compare=right_prefix)
     left_nodes = None
 
@@ -124,6 +124,8 @@ def acquire(sim, owners, trace, output, *, plan):
                             row["guard_failure"] = "pinch_precontact_left_rod_reserve_exceeded"
                             return row
                     angular_gate.observe(row)
+                    if row["guard_failure"] is None and observe is not None:
+                        observe(row)
                 except Exception as error:
                     row["precontact_source_error"] = f"{type(error).__name__}: {error}"
                     row["guard_failure"] = "pinch_precontact_source_invalid"
@@ -133,7 +135,7 @@ def acquire(sim, owners, trace, output, *, plan):
 
     try:
         with base.bindings((base, "ObservedClose", ObservedPairClose)):
-            return base.acquire(sim, owners, trace, output, plan=plan, sdk_steps=LAST_SDK)
+            return base.acquire(sim, owners, trace, output, plan=plan, sdk_steps=sdk_steps)
     finally:
         sim = owners = trace = None
 
