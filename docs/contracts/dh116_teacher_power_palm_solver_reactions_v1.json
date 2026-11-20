@@ -58,14 +58,26 @@
         -4.226293563842773,
         0.3535090684890747
       ],
-      "torque_about_origin_nm": [
+      "positive_inward_reaction_n": 4.25149658240402,
+      "force_residual_n": 2.9802322387695312e-08,
+      "raw_validated": true,
+      "torque_about_mesh_origin_world_nm": [
         0.24472717940807343,
         -0.016784418374300003,
         -0.02775058150291443
       ],
-      "positive_inward_reaction_n": 4.25149658240402,
-      "force_residual_n": 2.9802322387695312e-08,
-      "raw_validated": true
+      "moment_reference_audit": {
+        "frame": "world",
+        "about": "mesh_origin",
+        "origin_world_m": [
+          2.9103830456733704e-10,
+          1.399999976158142,
+          0.6499999761581421
+        ],
+        "mesh_origin_residual_nm": 2.3992910067272497e-07,
+        "world_origin_residual_nm": 7.616560595047058,
+        "raw_pair_sha256": "4faea7c9fadfaae9f275577a55653ee43946c0685972964b28c2f63065d5ab85"
+      }
     },
     "right": {
       "mesh": "right.base_link",
@@ -93,16 +105,39 @@
         -1.5881030559539795,
         0.933468759059906
       ],
-      "torque_about_origin_nm": [
+      "positive_inward_reaction_n": 4.0134226986581085,
+      "force_residual_n": 1.3328003944934608e-07,
+      "raw_validated": true,
+      "torque_about_mesh_origin_world_nm": [
         0.09510688483715057,
         0.22826865315437317,
         0.0007565673440694809
       ],
-      "positive_inward_reaction_n": 4.0134226986581085,
-      "force_residual_n": 1.3328003944934608e-07,
-      "raw_validated": true
+      "moment_reference_audit": {
+        "frame": "world",
+        "about": "mesh_origin",
+        "origin_world_m": [
+          -1.7462298274040222e-10,
+          -1.399999976158142,
+          0.6499999761581421
+        ],
+        "mesh_origin_residual_nm": 3.649083708428841e-07,
+        "world_origin_residual_nm": 13.323278279277094,
+        "raw_pair_sha256": "92e726980166cc6d60498862f937d0fd74ce67bdda33388afc1a21bd57c07715"
+      }
     }
   },
   "solver_sha256": "8817010163946945495c987923d11f3ade4fbd52482a83bbdd48f017d3149340",
-  "next": "Bind live palm identities and shift the measured world-origin moment to each actual PhysX hand COM in a dedicated Power path."
+  "next": "Bind live palm identities and shift the moment about each palm link origin to its actual PhysX center of mass in a dedicated Power path.",
+  "moment_reference_evidence": {
+    "offline_replay_sha256": "04bbeaba56e155b7267595e49c656278787696465fbbdb07b5ceaa20070ac637",
+    "compiled_source_sha256": "ea3652bcaf05571986fc40e12717ca91ab9debe578eb61f7df4b0bfe35d8201f",
+    "source_lines": [
+      167,
+      173,
+      200,
+      206
+    ],
+    "gpu_replay_runs": 0
+  }
 }

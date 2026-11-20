@@ -1,4 +1,8 @@
 
+## Power torque reference and Pinch registry validation
+
+Recompute pair moments about the actual palm mesh origin and register the Pinch replay with the pytest executor. [Report](docs/superpowers/reports/2026-11-20-teacher-power-palm-solvers.md).
+
 ## Pinch thumb force projection
 
 Replayed fixed and longitudinal wrist trials with per-substep normal and tangential thumb force projections. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-thumb-force-projections.md).

@@ -44399,13 +44399,14 @@
         },
         "live_articulation_feedback": false,
         "native_qualification": false,
-        "teacher_admission": false
+        "teacher_admission": false,
+        "moment_about": "each_palm_mesh_origin_expressed_in_world_axes"
       }
     },
     "teacher.pinch-thumb-force-projections-cpu": {
       "title": "Attribute left Pinch thumb opposition loss to measured force components",
       "branch": "11-17",
-      "executor": "cpu",
+      "executor": "pytest",
       "status": "passed",
       "dependencies": [
         "teacher.pinch-longitudinal-preload-native-result"

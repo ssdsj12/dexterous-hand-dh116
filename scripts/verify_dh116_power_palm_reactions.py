@@ -51,6 +51,28 @@ def reaction_sign(force_on_palm, outward):
     return signed
 
 
+
+def audit_moment_origin(pairs, origin):
+    """Independently verify the contact-point moment about the named palm mesh."""
+    origin = np.asarray(origin, dtype=float)
+    if not pairs or origin.shape != (3,) or not np.isfinite(origin).all():
+        raise ValueError("contact pairs and a finite mesh origin are required")
+    position, force, torque = (
+        np.asarray([pair[key] for pair in pairs], dtype=float)
+        for key in ("contact_point_world_m", "force_on_rod_world_n", "torque_on_mesh_about_origin_world_nm")
+    )
+    if any(x.shape != (len(pairs), 3) or not np.isfinite(x).all() for x in (position, force, torque)):
+        raise ValueError("finite world position, force, and torque required")
+    local_expected = np.cross(position - origin, -force)
+    world_expected = np.cross(position, -force)
+    mesh_residual = float(np.max(np.linalg.norm(torque - local_expected, axis=1)))
+    world_residual = float(np.max(np.linalg.norm(torque - world_expected, axis=1)))
+    if mesh_residual > 5e-5:
+        raise ValueError("pair torques do not reconcile about the mesh origin")
+    return dict(frame="world", about="mesh_origin", origin_world_m=origin.tolist(),
+                mesh_origin_residual_nm=mesh_residual, world_origin_residual_nm=world_residual)
+
+
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -123,10 +145,11 @@ def run_fixture(packet, cfg, ropesim, output):
     residual = float(np.linalg.norm(node_forces.sum(axis=0) + wrench[0, :3]))
     if not measured["pairs"] or residual > 1e-3:
         raise ValueError("missing real palm pair data or failed aggregate reaction balance")
+    moment = audit_moment_origin(measured["pairs"], pose["position_world_m"])
     reaction = reaction_sign(wrench[0, :3], witness["outward_world"])
     return dict(**witness, mesh_index=index, solver_steps=12, contact_pairs=len(measured["pairs"]),
                 loaded_solver_substeps=len({x["substep"] for x in measured["pairs"]}),
-                force_on_mesh_n=wrench[0, :3].tolist(), torque_about_origin_nm=wrench[0, 3:].tolist(),
+                force_on_mesh_n=wrench[0, :3].tolist(), torque_about_mesh_origin_world_nm=wrench[0, 3:].tolist(), moment_reference_audit=moment,
                 positive_inward_reaction_n=reaction, force_residual_n=residual, raw_validated=True)
 
 
