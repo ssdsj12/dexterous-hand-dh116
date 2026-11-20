@@ -30,16 +30,18 @@ def angular_schedule(original, rotation_request):
 
 
 class AngularGate:
-    def __init__(self, config, prove=wrist.right_geometry):
+    def __init__(self, config, prove=wrist.right_geometry, *, sdk=FIRST_SDK, compare=None):
         self.config = config
         self.prove = prove
+        self.sdk = sdk
+        self.compare = late.compare_prefix if compare is None else compare
         self.nodes = None
 
     def observe(self, row):
         step = row["physics_step"]
-        if row["guard_failure"] is not None or step < FIRST_SDK:
+        if row["guard_failure"] is not None or step < self.sdk:
             return
-        if step == FIRST_SDK:
+        if step == self.sdk:
             self._admit(row)
             return
         prelift._same_clock(row)
@@ -54,8 +56,8 @@ class AngularGate:
     def _admit(self, row):
         receipt = row["angular_gate"] = {"passed": False}
         try:
-            observed = late.prefix_measurements(row, expected_sdk=FIRST_SDK)
-            prefix = late.compare_prefix(observed, self.config["prefix"])
+            observed = late.prefix_measurements(row, expected_sdk=self.sdk)
+            prefix = self.compare(observed, self.config["prefix"])
             receipt["prefix"] = prefix
             if not prefix["passed"]:
                 row["guard_failure"] = "pinch_angular_prefix_mismatch"

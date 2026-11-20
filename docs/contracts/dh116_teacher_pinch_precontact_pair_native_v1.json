@@ -1,0 +1,112 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-precontact-pair-native-result",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-precontact-pair-native.md",
+  "status": "native_precontact_only_verified",
+  "native_runs": 1,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "cpu": {
+    "passed": 209,
+    "failed": 0,
+    "log_sha256": "828a375017c9c2917933900ec55cb6bb55742adeac506f4d14d4315a9de7cd50",
+    "tests": [
+      "tests/test_dh116_pinch_precontact_pair.py",
+      "tests/test_dh116_pinch_precontact_hold.py",
+      "tests/test_dh116_pinch_angular_gate.py",
+      "tests/test_dh116_pinch_wrist_first.py",
+      "tests/test_dh116_pinch_prelift.py",
+      "tests/test_dh116_pinch_wrist_relief_worker.py",
+      "tests/test_dh116_pinch_wrist_relief.py",
+      "tests/test_dh116_pinch_early_finger_worker.py",
+      "tests/test_dh116_pinch_early_finger.py",
+      "tests/test_dh116_pinch_late_wrist.py",
+      "tests/test_dh116_staged_pinch_contact.py",
+      "tests/test_dh116_pinch_staged_closure.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_native_teacher_worker_contract.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_tripod_tracking_envelope.py",
+      "tests/test_dh116_dual_hand_evidence_journal.py"
+    ],
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_pinch_precontact_pair.py",
+      "tests/test_dh116_pinch_precontact_hold.py",
+      "tests/test_dh116_pinch_angular_gate.py",
+      "tests/test_dh116_pinch_wrist_first.py",
+      "tests/test_dh116_pinch_prelift.py",
+      "tests/test_dh116_pinch_wrist_relief_worker.py",
+      "tests/test_dh116_pinch_wrist_relief.py",
+      "tests/test_dh116_pinch_early_finger_worker.py",
+      "tests/test_dh116_pinch_early_finger.py",
+      "tests/test_dh116_pinch_late_wrist.py",
+      "tests/test_dh116_staged_pinch_contact.py",
+      "tests/test_dh116_pinch_staged_closure.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_native_teacher_worker_contract.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_tripod_tracking_envelope.py",
+      "tests/test_dh116_dual_hand_evidence_journal.py"
+    ]
+  },
+  "native": {
+    "gates": [
+      {
+        "sdk": 18,
+        "name": "precontact_left_gate",
+        "proof_shapes": 22,
+        "margin_m": 7.09870490336307e-05
+      },
+      {
+        "sdk": 50,
+        "name": "angular_gate",
+        "proof_shapes": 22,
+        "margin_m": 3.8975139994986915e-07
+      }
+    ],
+    "stats": {
+      "18": {
+        "right_wrist_pitch_actual_mrad": 0.28860356542281806,
+        "right_wrist_pitch_requested_mrad": 3.6715591793765046
+      },
+      "26": {
+        "right_wrist_pitch_actual_mrad": 1.0960220824927092,
+        "right_wrist_pitch_requested_mrad": 7.343118358753009
+      },
+      "50": {
+        "right_wrist_pitch_actual_mrad": 5.898767616599798,
+        "right_wrist_pitch_requested_mrad": 18.35779589688252
+      },
+      "58": {
+        "right_wrist_pitch_actual_mrad": 7.720036897808313,
+        "right_wrist_pitch_requested_mrad": 17.19836732407598
+      }
+    },
+    "max_rod_displacement_m": 3.725290298461914e-09,
+    "table_pair_count": 27552,
+    "hand_pair_count": 0,
+    "outer_sha256": "3abac57052f958536b3028f910dbb2e13641eda6f9dcf4726c9526b72c1aeed1",
+    "proof_budget_fingerprint": "206969028b323ea6bc9216763267b57d0b0947abfc2ed9fe72e6913fe72eafc8",
+    "last_sdk_step": 58,
+    "measured_physics_rows": 56,
+    "complete_control_windows": 7,
+    "settled_control_windows": 7,
+    "terminal_reason": null,
+    "exit_code": 0,
+    "forced_exit": false,
+    "solver_substeps": 672,
+    "ledger_sha256": "6844a742d3e53d4ed6a9ab3b2d3786b5ec4e1b274bc03d656945d9c832947401",
+    "audit_sha256": "ac60d6bc91e47054d0127fda675b4e8ac2692a8ad2c241793f99c795d0bb8a25"
+  }
+}

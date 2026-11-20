@@ -1,4 +1,8 @@
 
+## Pinch native precontact contrast
+
+Verify the precontact left pause and right angular schedule in one native instance. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-precontact-pair-native.md).
+
 ## Pinch precontact left hold
 
 Verify the original left tracking range before reducing stale targets and starting the right wrist window. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-left-precontact-hold.md).

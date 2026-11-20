@@ -1,4 +1,8 @@
 
+## Pinch native precontact contrast
+
+The native Pinch precontact contrast keeps the rod stationary while the original controller applies an early right-wrist correction. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-precontact-pair-native.md).
+
 ## Pinch live right-wrist gate
 
 The right-wrist Pinch diagnostic now checks live geometry before issuing the angular command and preserves a measured stop when the rod moves outside the certified range. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-angular-gate-native.md).
