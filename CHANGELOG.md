@@ -1,4 +1,8 @@
 
+## Tripod right seed corridor audit
+
+Screened the right wrist path with a lower seed and measured same-link tracking stress. [Report](docs/superpowers/reports/2026-11-20-teacher-tripod-right-seed-corridor.md).
+
 ## Power palm triangle intersection audit
 
 Checked the original palm triangles for intersections beyond shared boundaries. [Report](docs/superpowers/reports/2026-11-20-teacher-power-palm-self-intersection.md).

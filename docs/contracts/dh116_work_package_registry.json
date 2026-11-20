@@ -44132,6 +44132,37 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-right-seed-corridor-cpu": {
+      "title": "Check lower right Tripod wrist seed against measured same-link tracking stress",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-straight-tracking-native"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_right_seed_corridor.py",
+        "tests/test_dh116_tripod_right_tracking_plan.py",
+        "tests/test_dh116_tripod_right_tracking_launch.py",
+        "tests/test_dh116_tripod_right_tracking_native.py",
+        "tests/test_tripod_sdk_path.py",
+        "tests/test_tripod_tracking_envelope.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-seed-corridor.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_seed_corridor_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "offline corridor diagnostic",
+        "passed": 119,
+        "failed": 0,
+        "extended_passed": 665,
+        "extended_failed": 5,
+        "tracking_stress_passed": false,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
