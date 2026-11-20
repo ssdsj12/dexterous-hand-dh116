@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch v12 native Reset
+
+The measured bilateral Reset passed and the outer Isaac process naturally exited zero. The new timed PPO recipe binds that Reset. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v12-native-reset.md).
+
 ## 2026-11-20 Pinch v12 left Reset candidate
 
 The independent candidate passed the original continuous geometry gate and bilateral replay on 139 archived physical samples. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v12-pair.md).
