@@ -28888,6 +28888,31 @@
         "verified_at_utc": "2026-11-20T14:14:57.333777+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power palm torque reference and registry correction",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-palm-solvers.md",
+      "readiness": "docs/contracts/dh116_teacher_power_palm_solver_reactions_v1.json",
+      "cpu_tests": {
+        "passed": 341,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "79794c94cf445103a0518c3b9c4482db9419febf",
+        "source_tree": "ea1dcb33eb6cec83564cf535cac1fdf260c2ce77",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T14:19:49.101261+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
