@@ -27663,6 +27663,31 @@
         "verified_at_utc": "2026-11-20T04:29:15.698692+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-curved-rod-capsule-certificate-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-capsule-certificate.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_capsule_certificate_v1.json",
+      "cpu_tests": {
+        "passed": 164,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b61a29c606a341635b52a5507caec531da8e806e",
+        "source_tree": "88e47161e539cdbd54cf33637348e4b6f72bf7ca",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T04:38:29.676480+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
