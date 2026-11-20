@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch v11 seeded native outcome
+
+The verified action replay reproduced all nine decisions. Native collection stopped at the original left thumb clearance guard and completed no PPO update. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v11-native-outcome.md).
+
 ## 2026-11-19 Pinch v11 native Reset and seeded PPO diagnostic preflight
 
 The new right-hand Pinch Reset passed both physical source and locked-pad readbacks and naturally exited zero. A separate seeded PPO diagnostic binds that manifest. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v11-draft.md).

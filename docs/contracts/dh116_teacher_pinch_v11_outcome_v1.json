@@ -1,0 +1,46 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-v11-seeded-outcome-cpu",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v11-native-outcome.md",
+  "review_baseline": "af01c4f72d9686f79b417bfe603b1192b9cc83eb",
+  "cpu": {
+    "passed": 83,
+    "failed": 0,
+    "log_sha256": "4d7648625c0e5002170b763a645edf50b30acb42fae43ca44477f8c0a99c3391",
+    "red_sha256": "eab2ce63326fe968cfab2055320452d25f3ca7d88dd153b0e78a3ab44fa703a9"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "referenced_native_attempts": 1,
+  "native_result": {
+    "attempt_fingerprint": "f62e1849dc0dbcbfb5a3309eb521c9f683bbeecc3a62f5491c2f5938a525edd5",
+    "result_sha256": "0a67c37f8beb65072141567a8e643f9cc99c851cfbd72b54e2c710ab2b3a3370",
+    "diagnostic_verified": false,
+    "outer_exit_code": 1,
+    "debugger_inferior_signal": null,
+    "native_lock_observed": true,
+    "native_execution_performed": true,
+    "isaac_started": true,
+    "setup_sdk_steps": 2,
+    "measured_sdk_steps": 72,
+    "internal_solver_substeps": 864,
+    "policy_decisions": 9,
+    "terminal_transitions": 1,
+    "ppo_updates": 0,
+    "terminal_sdk_step": 74,
+    "native_qualification": false,
+    "teacher_admission": false
+  },
+  "seed_replay": {
+    "actions": 9,
+    "max_absolute_error": 2.9802322387695312e-08,
+    "journal_sha256": "002f76be32d57ea269e3f9e737cabe0de0a61aedafbede97b2f5d966df23119f"
+  },
+  "source_sha256": {
+    "scripts/audit_dh116_pinch_seeded_actions.py": "32c6944856f5c5e83fcf352992de272bee9546274c8adc067106f07ee70cf231",
+    "tests/test_dh116_pinch_seeded_actions.py": "09238d219f103ececf8375343c40e7dacc76dfee9f6b5b8f6d358b7d77e59128"
+  }
+}
