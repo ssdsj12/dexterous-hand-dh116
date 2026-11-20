@@ -43128,6 +43128,25 @@
         "failed": 0,
         "scope": "CPU only"
       }
+    },
+    "teacher.tri-grasp-target-geometry-replay-cpu": {
+      "title": "Pinch measured-anchor target audit and Tripod and Power static follow-up",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [],
+      "tests": [
+        "tests/test_dh116_pinch_target_clearance.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tri-grasp-target-geometry-replay.md",
+      "readiness": "docs/contracts/dh116_teacher_tri_grasp_target_geometry_replay_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 9,
+        "failed": 0,
+        "scope": "CPU replay and static geometry only",
+        "native_qualification": false
+      }
     }
   },
   "execution_target": {
