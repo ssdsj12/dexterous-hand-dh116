@@ -1,3 +1,7 @@
+## Actual Teacher diagnostic origin
+
+Bind a published actual A diagnostic to canonical checkpoint bytes and the same-source, same-training contract for a future independent resume. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-origin.md).
+
 ## Pinch matched force control
 
 Measured the zero-action continuation beside both previous increments at the same initial state and SDK times. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-same-state-force-control.md).
