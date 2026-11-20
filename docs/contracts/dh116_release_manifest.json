@@ -29188,6 +29188,31 @@
         "verified_at_utc": "2026-11-20T17:27:31.985523+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Actual Teacher resumed worker and artifact roles",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-provider.md",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_provider_v1.json",
+      "cpu_tests": {
+        "passed": 169,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "149965d2c8b67dde1408291bd12b82fd34839604",
+        "source_tree": "a4a0271e058485c1f9ac38f232a4058b9459c8ea",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T17:35:35.827586+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
