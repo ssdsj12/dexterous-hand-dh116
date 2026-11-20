@@ -1,0 +1,128 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "branch": "11-17",
+  "package": "teacher.pinch-ppo-fresh-smoke32-v13",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v13-ppo-native-result.md",
+  "status": "failed",
+  "cpu_tests": {
+    "passed": 66,
+    "failed": 0,
+    "log_sha256": "77120be136f0da5a466f4d905f3bb607a7df52a8b3932baa28d011c704a97a5f"
+  },
+  "tested_head": "9186e65e6ce21a37fb66fa944ea5ab130a81d0e2",
+  "attempt_fingerprint": "b22bc5fb2aca4c2b65ff7e3d783c80189f574f4d1af48438c7c5f0385d56b899",
+  "native_runs": 1,
+  "sdk_steps": 118,
+  "ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "outer_exit_code": 1,
+  "inferior_exit_code": 1,
+  "inferior_signal": null,
+  "wall_seconds": 184.17285136296414,
+  "timing": {
+    "complete_windows": 14,
+    "journal_sha256": "3b46bc46f0b615eca40e26c8bafec9c5df9b873cb89ddaf45b171889f5cf2b7b",
+    "measured_sdk_steps": 116,
+    "median_complete_ns": {
+      "outside_physical_observer": 1562451022.0,
+      "physical_control": 3363196496.0,
+      "physical_observer": 1800745474.0,
+      "post_action": 558917245.0,
+      "pre_action": 333943184.5,
+      "source_binding": 230981605.0,
+      "total": 4483619713.0
+    },
+    "native_qualification": false,
+    "recorded_windows": 15,
+    "teacher_admission": false,
+    "terminal_reason": "post_step_source_clearance:right",
+    "terminal_sdk_step": 118,
+    "trace_sha256": "25bb69a94d3758db1db6d7e9ad350898a9eaa59d72a881e15c8abc61d9ec0aa9"
+  },
+  "reported_remaining_seconds_before_update": 75.43108481401578,
+  "projected_32_control_median_seconds": 143.475830816,
+  "terminal": {
+    "sdk_step": 118,
+    "control_index": 14,
+    "substep": 3,
+    "source": "right:table:source:finger13_link",
+    "clearance_m": 0.002096885959391115,
+    "previous_clearance_m": 0.0021027412435390413,
+    "floor_m": 0.0021,
+    "actual_wrist_tracking_error_m": 1.9152548403575456e-05,
+    "action24": [
+      -0.08410719782114029,
+      0.18095682561397552,
+      0.11898355185985565,
+      -0.01683231070637703,
+      0.1273515224456787,
+      0.173735573887825,
+      0.021455951035022736,
+      0.1551927924156189,
+      -0.00072716164868325,
+      0.11074236035346985,
+      0.12224721163511276,
+      -0.009052945300936699,
+      0.06686250865459442,
+      0.1579158455133438,
+      0.10615123808383942,
+      -0.04801999777555466,
+      0.263432115316391,
+      0.16710703074932098,
+      -0.06565498560667038,
+      -0.04203946515917778,
+      0.3953172564506531,
+      0.19365108013153076,
+      -0.1630554497241974,
+      -0.09550824761390686
+    ],
+    "nominal_projection_reasons": [
+      0,
+      0
+    ],
+    "gae_boundary": {
+      "bootstrap_mask": false,
+      "done": true,
+      "gae_carry": false,
+      "truncated": false
+    }
+  },
+  "retained_operations": {
+    "setup": 2,
+    "reset_clock_preflight": 1,
+    "owner_event": 1,
+    "numeric_reset": 1,
+    "initial_geometry": 2,
+    "reset_sources": 1,
+    "collector_origin": 1,
+    "fresh_update_wall_budget": 1,
+    "fresh_policy_rng": 1,
+    "teacher_input_source": 29,
+    "decision": 15,
+    "delivered_exchange": 116,
+    "physical": 116,
+    "budget_consumed": 116,
+    "policy_pinch_distance": 116,
+    "settlement": 15,
+    "transition_recorded": 15,
+    "training_stopped": 1,
+    "owner_lease_closed": 1
+  },
+  "solver_pair_counts_by_mesh": {
+    "table": 57072
+  },
+  "training_stop_reason": "fresh_verified_reset_factories_required",
+  "digest": {
+    "receipt": "e8a9c8c735f20714aa59d557792fa268705c32324b1ca11bece84627de8d0d72",
+    "outer_exit": "5b582cdc617522619d056785e40e49e31aab02d1b888fb450ae84d1d8b199d00",
+    "wall_audit": "405f8725199a5ab4fd1dcf57f4a43be9d6f135731c046417ae4836c01f6db315",
+    "native_log": "bb7e42fb9149d7aaed220b1c568cb4ab2562fc2cd888b330ad9c8821251e0a56",
+    "lifecycle_result": "ff463fe867fcb628ced89a2ef29e7d848c73fc68c0411af6efd4398ef97afdd8"
+  },
+  "next_in_scope": [
+    "compare requested geometry with the same-step SDK measured link and finger motion",
+    "test a pre-action swept clearance correction without reducing the 2.1 mm floor",
+    "reserve the measured full-rollout wall budget before requesting another smoke32 attempt"
+  ]
+}

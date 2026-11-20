@@ -43088,16 +43088,25 @@
       "tests": [],
       "title": "Pinch v13 source-bound fresh 32-control Teacher diagnostic",
       "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v13.json",
-      "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Verified native Reset, exact standing authorization and resource reservation required.",
+      "status": "failed",
+      "blocker_kind": "native_evidence",
+      "reason": "Measured right finger13 source-envelope clearance stopped SDK step 118; full 32-window rollout lacks wall-clock headroom.",
       "dependencies": [
         "teacher.pinch-v13-native-reset"
       ],
-      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v13-ppo-recipe.md",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v13-ppo-native-result.md",
       "actual_launch": {
         "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v13.json",
         "sha256": "bed7abf2866667076b19ccf0ced9b633a6f0bc43eb667484265a2318bf20230c"
+      },
+      "readiness": "docs/contracts/dh116_teacher_pinch_v13_ppo_native_result_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 0,
+        "failed": 1,
+        "ppo_updates": 0,
+        "scope": "guarded native wiring diagnostic",
+        "native_qualification": false
       }
     },
     "teacher.pinch-v13-ppo-recipe-cpu": {
