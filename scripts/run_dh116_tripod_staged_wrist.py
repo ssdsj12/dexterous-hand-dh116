@@ -82,11 +82,18 @@ def prepare(args):
     return original
 
 
-def acquire(sim, owners, trace, output, *, plan, args, deadline, observe_boundary=None):
+def acquire(sim, owners, trace, output, *, plan, args, deadline, observe_boundary=None, gate_sdk=GATE_SDK):
     samples = deque(maxlen=8)
     run_uuid = "tripod-staged-wrist-" + uuid4().hex
     packet = plan["tracking_plan"]
-    actions = tracking.finite(packet["actions24"], (CONTROL_WINDOWS, 24))
+    delay = gate_sdk - GATE_SDK
+    if delay < 0 or delay % 8:
+        raise ValueError("settling extension must contain whole zero-action windows")
+    windows = CONTROL_WINDOWS + delay // 8
+    budget = dict(BUDGET, sdk_steps=SDK_STEPS + delay, motion=(windows - 2) * 8)
+    if plan["budget"]["control_steps"] != windows or plan["budget"]["sdk_steps"] != budget["sdk_steps"]:
+        raise ValueError("staged wrist gate and acquisition budget differ")
+    actions = tracking.finite(packet["actions24"], (windows, 24))
     desired = packet["right_reference"]["intrinsic_knots_rad"][-1]
 
     def observe(exchange):
@@ -96,8 +103,8 @@ def acquire(sim, owners, trace, output, *, plan, args, deadline, observe_boundar
         ids = [hand["joint_names"].index(name) for name in ANGLES]
         samples.append(dict(sdk_step=exchange["physics_step"], target=hand["backend_targets"][0, ids].tolist(),
                             q=hand["q"][0, ids].tolist(), qd=hand["qd"][0, ids].tolist()))
-        if exchange["physics_step"] == GATE_SDK:
-            gate = wrist_gate(list(samples), desired, expected_sdk=GATE_SDK)
+        if exchange["physics_step"] == gate_sdk:
+            gate = wrist_gate(list(samples), desired, expected_sdk=gate_sdk)
             native.write_new(output/"wrist_gate.json", gate)
             if not gate["passed"]:
                 raise tracking.TrackingStopped("measured right Tripod wrist not settled")
@@ -108,7 +115,7 @@ def acquire(sim, owners, trace, output, *, plan, args, deadline, observe_boundar
         return packet, actions
 
     try:
-        with cal.bindings((tracking, "BUDGET", BUDGET), (tracking, "MOVING_CHANNELS", cal.MOVING_CHANNELS),
+        with cal.bindings((tracking, "BUDGET", budget), (tracking, "MOVING_CHANNELS", cal.MOVING_CHANNELS),
                           (tracking, "read_tracking_plan", read_plan), (tracking, "validate_schedule", lambda _: actions)):
             return tracking.run_owned_tracking(
                 sim, owners, trace, project=cal.launcher.ROOT, plan_path=args.plan, plan_sha256=native.sha(args.plan),

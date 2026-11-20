@@ -1,3 +1,7 @@
+## Tripod near-rod wrist settle extension
+
+Added 24 zero-action SDK steps and kept the measured wrist gate intact. The full right near-rod approach completed with all source/cooked clearance rows. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-near-settle-extension.md).
+
 ## Tripod near-rod clearance
 
 Recorded actual two-hand geometry on all 328 measured boundaries before the unchanged right wrist settling gate stopped the native approach. [Report](docs/superpowers/reports/2026-11-20-teacher-tripod-near-corridor.md).

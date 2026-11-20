@@ -184,14 +184,14 @@ def verify_boundary(exchange):
         raise staged.tracking.TrackingStopped("Tripod near-rod boundary did not certify clearance")
 
 
-def acquire(sim, owners, trace, output, *, plan, args, deadline):
+def acquire(sim, owners, trace, output, *, plan, args, deadline, gate_sdk=staged.GATE_SDK):
     # Build once after App launch, retaining only owned CPU geometry arrays.
     geometry = NearCorridorGeometry(staged.cal.launcher.ROOT)
     try:
         with staged.cal.bindings((NearCorridorExchange, "geometry", geometry),
                                  (clearance, "ClearanceGuardedExchange", NearCorridorExchange)):
             return staged.acquire(sim, owners, trace, output, plan=plan, args=args, deadline=deadline,
-                                  observe_boundary=verify_boundary)
+                                  observe_boundary=verify_boundary, gate_sdk=gate_sdk)
     finally:
         sim = owners = trace = geometry = None
 
