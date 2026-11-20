@@ -29138,6 +29138,31 @@
         "verified_at_utc": "2026-11-20T17:03:17.578441+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Actual Teacher resume update",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-update.md",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_update_v1.json",
+      "cpu_tests": {
+        "passed": 334,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "88c5da6874ddbd0a4bbdbf99f12705e4813e6d76",
+        "source_tree": "df54c9c7965aea46d0207b08f01f88408aa4049c",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T17:15:44.974132+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
