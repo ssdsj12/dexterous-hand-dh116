@@ -27738,6 +27738,31 @@
         "verified_at_utc": "2026-11-20T04:46:19.955172+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-straight-tracking-control-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-straight-tracking-control.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_straight_tracking_control_v1.json",
+      "cpu_tests": {
+        "passed": 101,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "8146592674da4062a5e0edb6886412aaff3187ee",
+        "source_tree": "ab631c03f4b706897f17213507dcc21fd4cf594a",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T04:52:19.500461+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
