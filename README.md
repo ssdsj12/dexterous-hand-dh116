@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch pre-submit wrist clearance
+
+The retained Pinch v13 wrist sweep identifies rate-limited clearance failures before SDK submission. The isolated binding has CPU coverage. Live geometry integration and native qualification are pending. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-swept-wrist-projection.md).
+
 ## 2026-11-20 Pinch short PPO diagnostic
 
 短配方验证采集、单次优化和 checkpoint 封存。32 窗原生结果和真实抓取资格独立跟踪。 [报告](docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-diagnostic.md)。

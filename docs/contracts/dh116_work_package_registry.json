@@ -43226,6 +43226,32 @@
         "scope": "source fixture and checkpoint targeted reruns",
         "native_qualification": false
       }
+    },
+    "teacher.pinch-swept-wrist-command-cpu": {
+      "title": "Pinch bilateral continuous wrist clearance pre-submit audit",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tri-grasp-target-geometry-replay-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_swept_wrist_projection.py",
+        "tests/test_dh116_pinch_target_clearance.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_dual_pinch_builder.py",
+        "tests/test_dh116_dual_hand_episode.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-swept-wrist-projection.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_swept_wrist_projection_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 40,
+        "failed": 0,
+        "archived_sdk_boundaries": 116,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -1,0 +1,57 @@
+{
+  "schema": "dh116-teacher-pinch-swept-wrist-projection-v1",
+  "base_commit": "b1300f1e5f4927632d03a61596f4621d63eabe2d",
+  "scope": "retained native journal kinematic replay and CPU exchange tests",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-swept-wrist-projection.md",
+  "cpu": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_swept_wrist_projection.py",
+      "tests/test_dh116_pinch_target_clearance.py",
+      "tests/test_dh116_flexible_physical_exchange.py",
+      "tests/test_dh116_dual_pinch_builder.py",
+      "tests/test_dh116_dual_hand_episode.py"
+    ],
+    "passed": 40,
+    "failed": 0,
+    "log_sha256": "77bb8528c82c89d2473ac037621dcc90057a51ba2a69e66591335d17c6b86170"
+  },
+  "archived_replay": {
+    "sdk_boundaries": 116,
+    "envelopes": 44,
+    "table_clearance_floor_m": 0.0021,
+    "journal_sha256": "3b46bc46f0b615eca40e26c8bafec9c5df9b873cb89ddaf45b171889f5cf2b7b",
+    "result_sha256": "fa8d2d378d9e52ef04558f07ea257eddb96fb4a2dc1e113634f1a4783445a744",
+    "finite_candidates_rejected": {
+      "left": 42,
+      "right": 31
+    },
+    "endpoint_bound_below_floor": {
+      "left": 12,
+      "right": 24
+    },
+    "first_endpoint_bound_failure_sdk_step": {
+      "left": 93,
+      "right": 95
+    },
+    "reserve_screen_sha256": "d8177631b7eab94dcb0960d1a3e0c24d6d204eda3d9a381b115348afb076e2bd",
+    "rod_reach_screen_sha256": "e5467f6ad5237ee4e5e807818bb5419faade0e5d3c96b262e89f2c02c42da4ee"
+  },
+  "broader_regression": {
+    "passed": 42,
+    "failed": 2,
+    "log_sha256": "8a6e3e82c93daa45ce52462bacbf7131b26b165d024dc9f24eb2491f6fa241a8",
+    "failure_class": "archived receipt canonical-path guard under Ubuntu home symlink",
+    "retained_receipt_sha256": "97f83e1e001ea28cfa08ebcf4017d717f7adcc11aad38402280e780f48311746"
+  },
+  "native_runs": 0,
+  "native_steps": 0,
+  "ppo_updates": 0,
+  "runtime_projection_enabled": false,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "resume": "Preserve rod reach while redesigning the earlier Pinch approach. Bind and freeze the checker only after replay verifies the revised path."
+}
