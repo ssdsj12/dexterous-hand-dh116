@@ -44314,6 +44314,47 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-staged-wrist-native-result": {
+      "title": "Verify staged right Tripod wrist settling before approach",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-right-axis-calibration-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_staged_wrist.py",
+        "tests/test_dh116_tripod_right_axis_calibration.py",
+        "tests/test_dh116_tripod_right_tracking_observability.py",
+        "tests/test_dh116_tripod_right_seed_corridor.py",
+        "tests/test_dh116_tripod_right_tracking_plan.py",
+        "tests/test_dh116_tripod_right_tracking_launch.py",
+        "tests/test_dh116_tripod_right_tracking_native.py",
+        "tests/test_tripod_sdk_path.py",
+        "tests/test_tripod_tracking_envelope.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-staged-wrist.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_staged_wrist_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "raised no-contact right wrist and approach",
+        "passed": 129,
+        "failed": 0,
+        "sdk_steps": 498,
+        "control_steps": 62,
+        "solver_substeps": 5952,
+        "hand_rod_contact_pairs": 0,
+        "guarded_faults": 0,
+        "wrist_gate_sdk_step": 330,
+        "max_measured_error_rad": 9.706616401672363e-05,
+        "max_measured_speed_rad_s": 0.0009836748940870166,
+        "outer_exit_code": 0,
+        "ppo_updates": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

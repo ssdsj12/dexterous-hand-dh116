@@ -1,4 +1,8 @@
 
+## Tripod staged right wrist
+
+Verified wrist settling before the raised approach in one clean native run. [Report](docs/superpowers/reports/2026-11-20-teacher-tripod-staged-wrist.md).
+
 ## Tripod right actuator calibration
 
 Measured original right wrist and finger tracking on a raised no-contact path. [Report](docs/superpowers/reports/2026-11-20-teacher-tripod-right-axis-calibration.md).

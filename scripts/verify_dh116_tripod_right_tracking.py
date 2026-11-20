@@ -52,7 +52,7 @@ def read_tracking_plan(path, sha256):
 
 
 def validate_tracking_sample(row, expected_action, *, ordinal):
-    if (not 1 <= ordinal <= 176 or row["physics_step"] != ordinal + 2
+    if (not 1 <= ordinal <= BUDGET["sdk_steps"] - 2 or row["physics_step"] != ordinal + 2
             or row["rod_tick"] != ordinal * 12 or row["policy_step"] != (ordinal - 1) // 8
             or row["substep"] != (ordinal - 1) % 8
             or not math.isclose(row["timestamp_s"], (ordinal + 2) / 480, abs_tol=2e-7, rel_tol=0.)):
@@ -66,12 +66,13 @@ def validate_tracking_sample(row, expected_action, *, ordinal):
 
 
 class _TrackingRecorder:
-    def __init__(self, actions, record, quiet):
+    def __init__(self, actions, record, quiet, observe):
         self._actions = actions
         self._record = record
         self._samples = 0
         self._identity = None
         self._quiet = quiet
+        self._observe = observe
         self._failed = False
 
     def __call__(self, payload):
@@ -103,22 +104,24 @@ class _TrackingRecorder:
             quiet = self._quiet.observe_measurement(row)
             if quiet["status"] == "failed":
                 raise TrackingStopped("right Tripod entry quiet failed: " + ", ".join(quiet["failure_reasons"]))
+        if self._observe is not None:
+            self._observe(exchange)
         self._samples = ordinal
         self._failed = False
 
     def finish(self):
-        if self._failed or self._samples != 176 or self._quiet is None:
+        if self._failed or self._samples != BUDGET["sdk_steps"] - 2 or self._quiet is None:
             raise ValueError("incomplete right Tripod tracking")
         self._quiet.require_ready()
         return self._samples
 
 
-def record_tracking_window(plan, record, *, quiet=None):
-    return _TrackingRecorder(validate_schedule(plan), record, quiet)
+def record_tracking_window(plan, record, *, quiet=None, observe=None):
+    return _TrackingRecorder(validate_schedule(plan), record, quiet, observe)
 
 
 def run_owned_tracking(sim, owners, trace, *, project, plan_path, plan_sha256, output,
-                       run_uuid, episode_uid, soft_deadline=None):
+                       run_uuid, episode_uid, soft_deadline=None, observe=None):
     """Borrow a fresh context under the existing lock/normal-close supervisor."""
     from functools import partial
 
@@ -147,7 +150,7 @@ def run_owned_tracking(sim, owners, trace, *, project, plan_path, plan_sha256, o
         journal = DualHandEvidenceJournal(Path(output) / "physical.jsonl",
                                           physics_budget_end=BUDGET["sdk_steps"], solver_substeps=12)
         quiet = TripodQuietGate(reset_nodes_m=nodes.astype(np.float32))
-        recorder = record_tracking_window(plan, journal.record, quiet=quiet)
+        recorder = record_tracking_window(plan, journal.record, quiet=quiet, observe=observe)
 
         def absent(name, context):
             return dict(owner=name, status="not_present", episode_uid=context["episode_uid"],
