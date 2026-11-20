@@ -1,0 +1,30 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.tripod-straight-tracking-control-cpu",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-straight-tracking-control.md",
+  "cpu": {
+    "passed": 101,
+    "failed": 0,
+    "log_sha256": "88f71cb80afcf4efc990189f744b0c0f08cb0800bc1faa62e703a0f36f1d91e0",
+    "red_planner_sha256": "f13a7264b2b3d5089d379fce7be5a660f9b754db70fee472ad3359a1efe11bef",
+    "red_freeze_sha256": "5fd70291ce7f320eb3bd4535900cda73cfcc600d59d59b479cf95fdf4a2f81a4"
+  },
+  "straight_plan_sha256": "0b87852d4a409bc25bea051eb9880786f55825d9e4bf031b49886a0a89ddc778",
+  "original_plan_sha256": "e419ed68ba6cff54e5ecdf0b679a2b72550851519d918a785c293677c496b112",
+  "minimum_rod_gap_m": {
+    "left": 0.0028629631196405224,
+    "right": 0.002652953738506697
+  },
+  "sdk_step_budget": 178,
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "source_sha256": {
+    "scripts/prepare_dh116_tripod_right_tracking.py": "8d663b28091a7a8730b22ec2b811b1521bc96c7ed9d2abf04292d5e6a76045c9",
+    "scripts/launch_dh116_tripod_right_tracking.py": "1af3bae6b51de4cccf08770e35d140563f19cc87d7d0c7dbc027f9c70195b0fb",
+    "tests/test_dh116_tripod_right_tracking_plan.py": "06d00bd56a8e0905a4248ab25e03af0e9d2eecaa90719afdb0bf148ceb914e06",
+    "tests/test_dh116_tripod_right_tracking_launch.py": "1117ad2141b5929f38e47444b86965922ecb780c3fbf20a635c5639e193ba56f"
+  }
+}

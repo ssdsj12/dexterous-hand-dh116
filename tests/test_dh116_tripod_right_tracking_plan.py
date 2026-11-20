@@ -39,3 +39,21 @@ def test_unsafe_change_to_right_wrist_is_rejected(original):
     reference["hands"]["right"]["executed_target_end_pose_wxyz"][2] -= .05
     with pytest.raises(ValueError, match="right.*clearance|right.*projection|right.*pose"):
         build_tracking_plan(endpoint, reference, project=ROOT)
+
+
+def test_straight_control_changes_only_rod_x_and_recertifies(original):
+    endpoint, reference = original
+    curved = build_tracking_plan(endpoint, reference, project=ROOT)
+    straight = build_tracking_plan(endpoint, reference, project=ROOT, straight_control=True)
+    a, b = (np.asarray(row["rod_nodes_m"]) for row in (curved, straight))
+    assert np.ptp(a[:, 0]) > .003
+    np.testing.assert_array_equal(b[:, 0], np.full(len(b), .432))
+    np.testing.assert_array_equal(a[:, 1:], b[:, 1:])
+    assert straight["reset_seed"] == curved["reset_seed"]
+    assert straight["actions24"] == curved["actions24"]
+    assert straight["budget"] == curved["budget"]
+    assert straight["rod_initial_state"] == "straight_free_rod_x_432mm_control"
+    assert straight["proved_right_sweep"]["proved"] is True
+    assert straight["minimum_rod_gap_m"] != curved["minimum_rod_gap_m"]
+    assert min(straight["minimum_rod_gap_m"].values()) >= .002
+    assert straight["native_qualification"] is False

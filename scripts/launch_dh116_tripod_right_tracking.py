@@ -18,21 +18,27 @@ ROOT = reset.ROOT
 native = reset.native
 SCHEMA = "dh116-right-tripod-owned-native-v1"
 TRACKING_SHA = "e419ed68ba6cff54e5ecdf0b679a2b72550851519d918a785c293677c496b112"
+STRAIGHT_TRACKING_SHA = "0b87852d4a409bc25bea051eb9880786f55825d9e4bf031b49886a0a89ddc778"
 WALL_SECONDS = 180
 CLOSE_RESERVE_SECONDS = 10
 
 
 def freeze_plan(output, tracking):
     tracking = Path(tracking).resolve(strict=True)
-    read_tracking_plan(str(tracking), TRACKING_SHA)
+    sha256 = native.sha(tracking)
+    if sha256 not in (TRACKING_SHA, STRAIGHT_TRACKING_SHA):
+        raise ValueError("Tripod tracking SHA is not an approved candidate")
+    reference, _ = read_tracking_plan(str(tracking), sha256)
     plan = reset.freeze_plan(output)
     path = str(tracking)
-    plan["frozen_files"][path] = TRACKING_SHA
+    plan["frozen_files"][path] = sha256
     plan["budget"].update(mode="right_tripod_noncontact_tracking", sdk_steps=BUDGET["sdk_steps"],
                           control_steps=22, solver_steps=2112, soft_wall_seconds=WALL_SECONDS,
                           close_reserve_seconds=CLOSE_RESERVE_SECONDS)
-    plan.update(version=SCHEMA, tracking_plan=dict(path=path, sha256=TRACKING_SHA),
+    plan.update(version=SCHEMA, tracking_plan=dict(path=path, sha256=sha256),
                 preserved_scope="free grounded rod with left parked and right-only tracking")
+    if "rod_initial_state" in reference:
+        plan["rod_initial_state"] = reference["rod_initial_state"]
     return plan
 
 

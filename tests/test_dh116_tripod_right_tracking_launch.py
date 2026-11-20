@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from pathlib import Path
 
 import pytest
 
@@ -79,3 +80,22 @@ def test_known_guard_stop_cleans_observed_step_and_preserves_primary_failure(mon
         with pytest.raises(ValueError, match="outside"):
             reset._run_acquisition(SimpleNamespace(step=stopped), None, None, None, None,
                 plan, bad_cache, lambda *a: dict(failure="guard stop", guarded_stop_sdk_step=stopped))
+
+
+@pytest.mark.parametrize("filename,key", [
+    ("ag1800-tripod-right-native-preparation.json", "TRACKING_SHA"),
+    ("ag1900-tripod-straight-tracking-plan.json", "STRAIGHT_TRACKING_SHA"),
+])
+def test_frozen_launch_keeps_curved_and_straight_provenance(filename, key, tmp_path, monkeypatch):
+    evidence = Path.home() / ".local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119"
+    tracking = evidence / filename
+    monkeypatch.setattr(reset, "freeze_plan", lambda output: {"frozen_files": {}, "budget": {}})
+    plan = launch.freeze_plan(tmp_path / "native", tracking)
+    digest = getattr(launch, key)
+    assert plan["tracking_plan"] == dict(path=str(tracking.resolve()), sha256=digest)
+    assert plan["frozen_files"][str(tracking.resolve())] == digest
+    assert plan["budget"]["sdk_steps"] == 178
+    rejected = tmp_path / "changed.json"
+    rejected.write_bytes(tracking.read_bytes() + b" ")
+    with pytest.raises(ValueError, match="SHA|approved"):
+        launch.freeze_plan(tmp_path / "native", rejected)

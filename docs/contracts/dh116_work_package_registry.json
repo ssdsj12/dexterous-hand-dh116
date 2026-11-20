@@ -43000,6 +43000,27 @@
         "failed": 0,
         "scope": "CPU regression and archived Reset replay"
       }
+    },
+    "teacher.tripod-straight-tracking-control-cpu": {
+      "title": "Fixed X straight free rod right Tripod tracking control",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.tripod-curved-rod-capsule-isolated-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_right_tracking_plan.py",
+        "tests/test_dh116_tripod_right_tracking_launch.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_straight_tracking_control_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-straight-tracking-control.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 101,
+        "failed": 0,
+        "scope": "CPU, old plan byte equality and frozen source gate"
+      }
     }
   },
   "execution_target": {

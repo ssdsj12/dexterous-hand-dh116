@@ -19,6 +19,7 @@ from scripts.prepare_dh116_wire_pose_candidate import _pad_gap_interval
 
 ENDPOINT_SHA = "16fcae86fcdf1a10f914d99d2cbc487dca1a44b359cf7584259cf7adb4a6f146"
 REFERENCE_SHA = "fa6910beac936c05d809b878ff4763d7f47e64736ae592df7d302ff43de9814c"
+STRAIGHT_CONTROL_X_M = .432
 SDK_MOTION_STEPS = 160
 TABLE_PROOF_M = CLEARANCE_M + .0008
 ROD_PROOF_M = .002
@@ -90,12 +91,15 @@ def _right_sweep(plan, geometry, query):
     return proof, _limits(margins)
 
 
-def build_tracking_plan(endpoint, reference, *, project):
+def build_tracking_plan(endpoint, reference, *, project, straight_control=False):
     if (reference["input_sha256"] != ENDPOINT_SHA
             or reference["continuous_reference_path_proved"] is not True
             or reference["native_contact_verified"] is not False):
         raise ValueError("fixed grounded Tripod endpoint provenance required")
     nodes, _, _, _ = seed_arrays(endpoint["trial_seed"])
+    if straight_control:
+        nodes = nodes.copy()
+        nodes[:, 0] = STRAIGHT_CONTROL_X_M
     geometry = {side: load_geometry(project, side=side) for side in ("left", "right")}
     poses, open_q, end_q, queries = {}, {}, {}, {}
     increment = np.array([0., .01, .01, .01, 0., 0.])
@@ -126,7 +130,7 @@ def build_tracking_plan(endpoint, reference, *, project):
         joint_positions=[expand(open_q[side]).tolist() for side in ("left", "right")],
         joint_velocities=[[0.] * 11 for _ in range(2)],
         source_description="grounded cable with static left and independently cleared right Tripod tracking")
-    return dict(version="dh116-right-tripod-noncontact-tracking-plan-v1", reset_seed=seed,
+    result = dict(version="dh116-right-tripod-noncontact-tracking-plan-v1", reset_seed=seed,
                 rod_nodes_m=nodes.tolist(), actions24=actions.tolist(), right_reference=plan,
                 measured_right_tracking=False, self_collision_verified=False,
                 grasp_qualified=False, teacher_admission=False, native_qualification=False,
@@ -136,16 +140,22 @@ def build_tracking_plan(endpoint, reference, *, project):
                 bilateral_y_gap_m=left["side"] + right["side"],
                 budget=dict(sdk_steps=2 + len(actions) * 8, setup=2, quiet=8, motion=160, quiet_after=8,
                             ppo_updates=0, instances=1))
+    if straight_control:
+        result["rod_initial_state"] = "straight_free_rod_x_432mm_control"
+    return result
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("endpoint", "reference", "output"):
         parser.add_argument("--" + name, required=True, type=Path)
+    parser.add_argument("--straight-control", action="store_true",
+                        help="re-prove the fixed .432 m straight-rod comparison")
     args = parser.parse_args(argv)
     result = build_tracking_plan(checked_json(args.endpoint, ENDPOINT_SHA),
                                  checked_json(args.reference, REFERENCE_SHA),
-                                 project=Path(__file__).resolve().parents[1])
+                                 project=Path(__file__).resolve().parents[1],
+                                 straight_control=args.straight_control)
     result.update(endpoint_sha256=ENDPOINT_SHA, reference_sha256=REFERENCE_SHA)
     with args.output.open("x", encoding="utf-8") as stream:
         json.dump(result, stream, indent=2, allow_nan=False)

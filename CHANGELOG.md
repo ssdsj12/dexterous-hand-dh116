@@ -1,5 +1,8 @@
 ## 2026-11-20 Teacher rollout codec CPU speedup
 
+- 新增 Tripod 直杆跟踪对照，保留原弯杆计划和静置保护。
+
+
 - 为弯杆单段凸包距离增加保守数值证书，保留 Tripod 原生 Reset 失败账本。
 
 
