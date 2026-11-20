@@ -43021,6 +43021,24 @@
         "failed": 0,
         "scope": "CPU, old plan byte equality and frozen source gate"
       }
+    },
+    "teacher.tripod-straight-tracking-native": {
+      "title": "Right Tripod 178 SDK steps on straight rod native control",
+      "executor": "gated",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.tripod-straight-tracking-control-cpu"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_straight_tracking_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-straight-native-result.md",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "scope": "right native no-contact tracking and natural exit only",
+        "native_qualification": false
+      }
     }
   },
   "execution_target": {
