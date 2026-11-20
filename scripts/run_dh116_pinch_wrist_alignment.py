@@ -82,9 +82,11 @@ def prepare(args, *, screen_geometry=False):
     return previous
 
 
-def acquire(sim, owners, trace, output, *, plan):
+def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, after=None, contact_after=None):
     def observe(row):
         if row["physics_step"] != pacing.LAST_SDK:
+            if after is not None:
+                after(row)
             return
         receipt = row["wrist_alignment_gate"] = dict(passed=False)
         try:
@@ -93,7 +95,7 @@ def acquire(sim, owners, trace, output, *, plan):
             receipt["prefix"] = late.compare_prefix(measured, cfg["prefix"])
             states = {side: prelift.joint_and_wrist(row, side) for side in ("left", "right")}
             actions, targets = compile_alignment(plan["action_schedule"][:13], states, cfg["offsets"])
-            receipt["same_actions"] = bool(np.allclose(actions, plan["action_schedule"], atol=1e-7, rtol=0))
+            receipt["same_actions"] = bool(np.allclose(actions, plan["action_schedule"][:len(actions)], atol=1e-7, rtol=0))
             if receipt["prefix"]["passed"] and receipt["same_actions"]:
                 receipt["proofs"] = certify_alignment(row, states, targets)
                 receipt["passed"] = all(x["proved"] for x in receipt["proofs"].values())
@@ -104,7 +106,7 @@ def acquire(sim, owners, trace, output, *, plan):
             row["guard_failure"] = "pinch_wrist_alignment_source_invalid"
 
     try:
-        return pacing.acquire(sim, owners, trace, output, plan=plan, sdk_steps=LAST_SDK, after=observe)
+        return pacing.acquire(sim, owners, trace, output, plan=plan, sdk_steps=sdk_steps, after=observe, contact_after=contact_after)
     finally:
         sim = owners = trace = None
 

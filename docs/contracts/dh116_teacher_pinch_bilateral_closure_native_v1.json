@@ -1,0 +1,291 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-bilateral-closure-native-result",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-bilateral-closure-native.md",
+  "status": "native_four_pad_contact_observed_load_gate_unmet",
+  "native_runs": 1,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "cpu": {
+    "passed": 220,
+    "failed": 0,
+    "log_sha256": "44fc6839187f039ec3ff0f6a7c3a1876adea9760912c8788630f4f28a3336c7d",
+    "tests": [
+      "tests/test_dh116_pinch_bilateral_closure.py",
+      "tests/test_dh116_pinch_wrist_alignment.py",
+      "tests/test_dh116_pinch_index_pacing.py",
+      "tests/test_dh116_pinch_precontact_pair.py",
+      "tests/test_dh116_pinch_precontact_hold.py",
+      "tests/test_dh116_pinch_angular_gate.py",
+      "tests/test_dh116_pinch_wrist_first.py",
+      "tests/test_dh116_pinch_prelift.py",
+      "tests/test_dh116_pinch_wrist_relief_worker.py",
+      "tests/test_dh116_pinch_wrist_relief.py",
+      "tests/test_dh116_pinch_early_finger_worker.py",
+      "tests/test_dh116_pinch_early_finger.py",
+      "tests/test_dh116_pinch_late_wrist.py",
+      "tests/test_dh116_staged_pinch_contact.py",
+      "tests/test_dh116_pinch_staged_closure.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_native_teacher_worker_contract.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_tripod_tracking_envelope.py",
+      "tests/test_dh116_dual_hand_evidence_journal.py"
+    ]
+  },
+  "measured": {
+    "outer_exit": 0,
+    "forced_exit": false,
+    "elapsed_s": 184.5527718400117,
+    "outer_sha256": "1b7ee7c43de04f74dd5d6c92460c9ceec731f62c1a859641f3f92f206441c4a5",
+    "ledger_sha256": "ddf53e94dfa6cc95c34c107deee0b3f54161b1022a53524ff7a8cd2b57ff3382",
+    "closure_gate_passed": true,
+    "gate_certificates": {
+      "left": {
+        "proved": true,
+        "shapes": 22,
+        "minimum_margin_m": 2.386671965322985e-06
+      },
+      "right": {
+        "proved": true,
+        "shapes": 22,
+        "minimum_margin_m": 3.395462523478397e-06
+      }
+    },
+    "terminal": null,
+    "sdk": 202,
+    "windows": 25,
+    "last_observed_closure_sdk": 202,
+    "counts": {
+      "support_count": 23462,
+      "hand_count": 140
+    },
+    "first_hand": {
+      "right.finger14_link": [
+        196,
+        3
+      ],
+      "left.finger14_link": [
+        200,
+        11
+      ],
+      "left.finger23_link": [
+        201,
+        2
+      ],
+      "right.finger23_link": [
+        202,
+        0
+      ]
+    },
+    "first_signed": {
+      "left": {
+        "sdk": 201,
+        "substep": 2
+      },
+      "right": {
+        "sdk": 202,
+        "substep": 0
+      }
+    },
+    "first_bilateral": null,
+    "bilateral_substeps": 0,
+    "longest_bilateral_run": 0,
+    "loaded_opposition_substeps": {
+      "left": 0,
+      "right": 0
+    },
+    "peak_digit_load_n": {
+      "left": {
+        "thumb": 0.07491476382644968,
+        "index": 0.09535062478087777
+      },
+      "right": {
+        "thumb": 0.07953412240020326,
+        "index": 0.06527421850078088
+      }
+    },
+    "boundary_q": [
+      {
+        "step": 162,
+        "rod_pos": [
+          0.4300000071525574,
+          0.4300000071525574,
+          0.4300000071525574
+        ],
+        "left_actual_q": [
+          0.45697057247161865,
+          0.7025977969169617
+        ],
+        "right_actual_q": [
+          0.023433316498994827,
+          0.7310179471969604
+        ]
+      },
+      {
+        "step": 170,
+        "rod_pos": [
+          0.4300000071525574,
+          0.4300000071525574,
+          0.4300000071525574
+        ],
+        "left_actual_q": [
+          0.459856778383255,
+          0.7032017111778259
+        ],
+        "right_actual_q": [
+          0.02450820989906788,
+          0.7327955961227417
+        ]
+      },
+      {
+        "step": 178,
+        "rod_pos": [
+          0.4300000071525574,
+          0.4300000071525574,
+          0.4300000071525574
+        ],
+        "left_actual_q": [
+          0.463417112827301,
+          0.703942060470581
+        ],
+        "right_actual_q": [
+          0.025833789259195328,
+          0.7349867820739746
+        ]
+      },
+      {
+        "step": 186,
+        "rod_pos": [
+          0.4300000071525574,
+          0.4300000071525574,
+          0.4300000071525574
+        ],
+        "left_actual_q": [
+          0.467277854681015,
+          0.7047436833381653
+        ],
+        "right_actual_q": [
+          0.027271021157503128,
+          0.7373637557029724
+        ]
+      },
+      {
+        "step": 194,
+        "rod_pos": [
+          0.4300000071525574,
+          0.4300000071525574,
+          0.4300000071525574
+        ],
+        "left_actual_q": [
+          0.46989765763282776,
+          0.7052839994430542
+        ],
+        "right_actual_q": [
+          0.028246745467185974,
+          0.7389664649963379
+        ]
+      },
+      {
+        "step": 202,
+        "rod_pos": [
+          0.4299990236759186,
+          0.4300000071525574,
+          0.4299980401992798
+        ],
+        "left_actual_q": [
+          0.4710210859775543,
+          0.7054895162582397
+        ],
+        "right_actual_q": [
+          0.028597285971045494,
+          0.7396865487098694
+        ]
+      }
+    ]
+  },
+  "secondary": {
+    "signed_both": [
+      [
+        202,
+        0
+      ],
+      [
+        202,
+        1
+      ],
+      [
+        202,
+        2
+      ],
+      [
+        202,
+        3
+      ],
+      [
+        202,
+        4
+      ],
+      [
+        202,
+        5
+      ],
+      [
+        202,
+        6
+      ],
+      [
+        202,
+        7
+      ],
+      [
+        202,
+        8
+      ],
+      [
+        202,
+        9
+      ],
+      [
+        202,
+        10
+      ],
+      [
+        202,
+        11
+      ]
+    ],
+    "all_four_loaded": [
+      [
+        202,
+        6
+      ],
+      [
+        202,
+        7
+      ],
+      [
+        202,
+        8
+      ],
+      [
+        202,
+        9
+      ],
+      [
+        202,
+        10
+      ],
+      [
+        202,
+        11
+      ]
+    ],
+    "suffix_minimum_table_clearance_m": 0.002170243604593891,
+    "left_max_sum_n": 0.16870886150537048,
+    "right_max_sum_n": 0.14440663466863563
+  }
+}

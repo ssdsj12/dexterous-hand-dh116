@@ -86,7 +86,11 @@ def prepare(args):
     return previous
 
 
-def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, observe=None):
+def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, observe=None, contact_after=None):
+    if contact_after is not None and (observe is None or type(contact_after) is not int
+                                      or not LAST_SDK <= contact_after < sdk_steps
+                                      or (contact_after - 2) % 8):
+        raise ValueError("owned contact phase requires an observed control boundary")
     angular_gate = angular.AngularGate(plan["angular_gate"], sdk=ANGULAR_SDK, compare=right_prefix)
     left_nodes = None
 
@@ -96,8 +100,12 @@ def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, observe=Non
             row = None
             try:
                 row = super()._step(action, substep)
-                guard_hand_contact(row)
                 step = row["physics_step"]
+                if contact_after is not None and step > contact_after:
+                    if row["guard_failure"] is None:
+                        observe(row)
+                    return row
+                guard_hand_contact(row)
                 if row["guard_failure"] is not None or step < PAUSE_SDK:
                     return row
                 try:

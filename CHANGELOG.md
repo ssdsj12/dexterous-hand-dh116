@@ -1,4 +1,8 @@
 
+## Pinch native bilateral contact
+
+Record synchronized four-pad reactions and the remaining original load-gate deficit. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-bilateral-closure-native.md).
+
 ## Pinch native wrist alignment
 
 Verify wrist adjustment before closing and sharpen the existing table proof in its measured reference frame. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-wrist-alignment-native.md).

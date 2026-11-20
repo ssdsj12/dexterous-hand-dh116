@@ -123,7 +123,7 @@ def prepare(args, *, screen_geometry=False):
     return previous
 
 
-def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, after=None):
+def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, after=None, contact_after=None):
     def observe(row):
         if row["physics_step"] != pair.LAST_SDK:
             if after is not None:
@@ -146,7 +146,7 @@ def acquire(sim, owners, trace, output, *, plan, sdk_steps=LAST_SDK, after=None)
             row["guard_failure"] = "pinch_index_pacing_source_invalid"
 
     try:
-        return pair.acquire(sim, owners, trace, output, plan=plan, sdk_steps=sdk_steps, observe=observe)
+        return pair.acquire(sim, owners, trace, output, plan=plan, sdk_steps=sdk_steps, observe=observe, contact_after=contact_after)
     finally:
         sim = owners = trace = None
 
