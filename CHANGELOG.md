@@ -1,4 +1,8 @@
 
+## Power native palm device parity
+
+Verify both original palm collider readbacks across CPU and GPU. [Report](docs/superpowers/reports/2026-11-20-teacher-power-palm-device-parity.md).
+
 ## Pinch native index pacing
 
 Advance the lagging left index around the original rod while removing pending right-finger motion. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-index-pacing-native.md).

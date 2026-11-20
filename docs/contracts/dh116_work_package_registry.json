@@ -43833,6 +43833,31 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-palm-device-parity-native-result": {
+      "title": "Match the native CPU and GPU collider hulls of both original Power palms",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [],
+      "tests": [
+        "tests/test_dh116_power_palm_parity.py",
+        "tests/test_dh116_cooked_hull_device_parity.py",
+        "tests/test_dh116_cooked_convex_hulls.py",
+        "tests/test_teacher_power_surface_audit.py",
+        "tests/test_teacher_cooked_readback_audit.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-palm-device-parity.md",
+      "readiness": "docs/contracts/dh116_teacher_power_palm_device_parity_v1.json",
+      "native_runs": 2,
+      "last_result": {
+        "passed": 33,
+        "failed": 0,
+        "scope": "original palm device and topology parity",
+        "palms": 2,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

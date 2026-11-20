@@ -1,0 +1,89 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.power-palm-device-parity-native-result",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-power-palm-device-parity.md",
+  "status": "native_palm_device_parity_verified",
+  "native_runs": 2,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "cpu": {
+    "passed": 33,
+    "failed": 0,
+    "log_sha256": "2bff7d0b96cb3ab275eced9b533c4ab524467c4db3ceedc7cf88f03d5fa669ad",
+    "tests": [
+      "tests/test_dh116_power_palm_parity.py",
+      "tests/test_dh116_cooked_hull_device_parity.py",
+      "tests/test_dh116_cooked_convex_hulls.py",
+      "tests/test_teacher_power_surface_audit.py",
+      "tests/test_teacher_cooked_readback_audit.py"
+    ]
+  },
+  "native": {
+    "scope": "original_dh116_live_power_palm_cpu_cuda0_cooking_parity",
+    "physics_devices": [
+      {
+        "requested_device": "cpu",
+        "manager_device": "cpu",
+        "tensor_device_ordinal": -1,
+        "gpu_dynamics_enabled": false,
+        "broadphase": "MBP",
+        "physx_device_override": -1
+      },
+      {
+        "requested_device": "cuda:0",
+        "manager_device": "cuda:0",
+        "tensor_device_ordinal": 0,
+        "gpu_dynamics_enabled": true,
+        "broadphase": "GPU",
+        "physx_device_override": -1
+      }
+    ],
+    "backend_identity_passed": true,
+    "matching_source_sha": true,
+    "matching_physics_clock": true,
+    "reference_frames": [
+      "mesh_local",
+      "mesh_local"
+    ],
+    "parity_passed": true,
+    "sdf_baked": false,
+    "palms": {
+      "left.base_link": {
+        "cpu_vertices": 36,
+        "gpu_vertices": 36,
+        "cpu_polygons": 63,
+        "gpu_polygons": 63,
+        "max_vertex_delta_m": 0.0,
+        "directed_polygon_topology_equal": true,
+        "vertex_tolerance_m": 5e-07,
+        "parity_passed": true,
+        "cpu_local_basis_max_delta": 0.0,
+        "gpu_local_basis_max_delta": 0.0
+      },
+      "right.base_link": {
+        "cpu_vertices": 37,
+        "gpu_vertices": 37,
+        "cpu_polygons": 62,
+        "gpu_polygons": 62,
+        "max_vertex_delta_m": 0.0,
+        "directed_polygon_topology_equal": true,
+        "vertex_tolerance_m": 5e-07,
+        "parity_passed": true,
+        "cpu_local_basis_max_delta": 0.0,
+        "gpu_local_basis_max_delta": 0.0
+      }
+    },
+    "palm_sdf_registered": false,
+    "force_contact_qualified": false,
+    "attempt_sha256": "f24589c1fd14139f70d2de77908ff79ca226c08a9711b869bc07a20d586f8cc0",
+    "parity_sha256": "c296c2301d9c266693ff5c4956889bb1e279a8e7e6afe9cc988650bc87c381cb",
+    "outer_receipts": {
+      "cpu": "f24b231283706510b8a87cf072a96c1fb6f67662ad96b5db01d3a32527f55e17",
+      "gpu": "689ac3fb8cdd39c5ea3aa189c17c1595d7f4cbf379785941e95ec75da8bb93da"
+    },
+    "historical_raw_payload_matches": true,
+    "strict_convex_plane_gate_passed": false
+  }
+}
