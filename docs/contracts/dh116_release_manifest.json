@@ -27563,6 +27563,31 @@
         "verified_at_utc": "2026-11-20T03:57:20.398333+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-right-tracking-owned-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-owned-tracking.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_owned_tracking_v1.json",
+      "cpu_tests": {
+        "passed": 68,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b5ffce035b0a86a05b492ce67ed2bb47af56ecec",
+        "source_tree": "0f903e60f24f9dc0949c7baf3c30e288faf70154",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T04:10:35.187076+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
