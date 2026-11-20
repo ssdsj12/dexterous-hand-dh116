@@ -28763,6 +28763,31 @@
         "verified_at_utc": "2026-11-20T13:30:00.760106+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-longitudinal-preload-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-longitudinal-preload-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_longitudinal_preload_native_v1.json",
+      "cpu_tests": {
+        "passed": 229,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "e18485553579edc7600aa2e1c2dfa22bc438f697",
+        "source_tree": "1967c922d610aa787b963929e3e380d6a15c551c",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T13:41:08.256389+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
