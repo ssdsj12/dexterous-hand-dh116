@@ -25,7 +25,7 @@ RUNS = {"v9": 48, "v10": 19}
 RIGHT_CHANGE = dict(root_z_m=.000175, root_x_m=-.00005, world_pitch_rad=-.001, thumb_seed_rad=.0005)
 
 
-def _read_motion(path, expected_sha, *, expected_steps, reset_seed_sha, geometry):
+def _read_motion(path, expected_sha, *, expected_steps, reset_seed_sha, geometry, side="right"):
     raw = _checked_bytes(path, expected_sha)
     rows = [decode_owned(json.loads(line)) for line in raw.splitlines()]
     if [row["sequence"] for row in rows] != list(range(len(rows))):
@@ -39,8 +39,8 @@ def _read_motion(path, expected_sha, *, expected_steps, reset_seed_sha, geometry
     reset, = resets
     clock = reset["after_clock"]
     if clock["physics_step"] != 2 or reset["seed"]["sha256"] != reset_seed_sha:
-        raise ValueError("both motions must start from the same pinned Pinch Reset")
-    hand = reset["hands"]["right"]
+        raise ValueError("motion must start from its pinned Pinch Reset")
+    hand = reset["hands"][side]
     q0 = named_joint_values(hand, "q", JOINTS)
     root_inv = np.linalg.inv(measured_pose(hand, "body_poses_xyzw", "base_link"))
     motion = []
@@ -49,13 +49,13 @@ def _read_motion(path, expected_sha, *, expected_steps, reset_seed_sha, geometry
         source = packet["raw"]
         identity = source["identity"]
         if (packet["source_complete"] is not True
-                or packet["sources"]["right"]["source_sha256"] != geometry["source_sha256"]
+                or packet["sources"][side]["source_sha256"] != geometry["source_sha256"]
                 or exchange["post_step_clearance"]["floor_m"] != CLEARANCE_M
                 or identity["physics_step"] != exchange["physics_step"]
                 or any(identity[key] != clock[key] for key in ("env_id", "episode_uid", "reset_id", "run_uuid", "rod_uid"))):
             raise ValueError("same ordered physical owner, geometry and clearance floor required")
-        root = measured_pose(source["hands"]["right"], "link_poses_xyzw", "base_link")
-        sdk = exchange["action_readback"]["post"]["hands"]["right"]
+        root = measured_pose(source["hands"][side], "link_poses_xyzw", "base_link")
+        sdk = exchange["action_readback"]["post"]["hands"][side]
         actual = named_joint_values(sdk, "q", JOINTS)
         target = keep_reference_mimic_residual(q0, named_joint_values(sdk, "backend_targets", ACTIVE))
         motion.append((root_inv @ root, actual - q0, target - q0))

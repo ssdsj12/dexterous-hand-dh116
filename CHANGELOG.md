@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch v12 left Reset candidate
+
+The independent candidate passed the original continuous geometry gate and bilateral replay on 139 archived physical samples. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-v12-pair.md).
+
 ## 2026-11-20 Pinch control-window wall-time trace
 
 The fresh diagnostic records one lifecycle timing sample for each complete, terminal or failed control window. Bilateral replay produced geometry candidates for a new left Reset. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-wall-time.md).
