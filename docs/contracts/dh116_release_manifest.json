@@ -28788,6 +28788,31 @@
         "verified_at_utc": "2026-11-20T13:41:08.256389+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-right-axis-calibration-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-axis-calibration.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_axis_calibration_v1.json",
+      "cpu_tests": {
+        "passed": 124,
+        "failed": 0
+      },
+      "native_runs": 2,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7ff04c606fe647548da4f3cfc486a9efac8b1cd6",
+        "source_tree": "57daf645e3365c3835244ccb7c154099f4fb1ca7",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T13:51:25.789189+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
