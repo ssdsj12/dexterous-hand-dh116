@@ -16,6 +16,7 @@ from go2_pvcnn.control.dh116.tabletop_joint_target_readback import WRIST_ANGULAR
 from go2_pvcnn.control.dh116.tabletop_native_teacher_swept_projection import (
     ANGULAR_STEP_RAD, LINEAR_STEP_M, _finite,
 )
+from go2_pvcnn.control.dh116.tabletop_rod_separation_certificate import RodCapsuleSeparation
 from go2_pvcnn.control.dh116.tabletop_surface_contract import ACTION_CONTRACT
 from scripts.audit_dh116_pinch_wrist_sweep import SIDES, _bound_model, _frames
 from scripts.audit_dh116_tripod_fixed_root_path import certify_path
@@ -83,7 +84,7 @@ def _contact(grid, transform, nodes, radius):
     return float(phi[node] - np.float32(radius)), node, normal / norm if norm > 0 else None
 
 
-def _non_target_certificate(model, poses, travel, nodes, radius):
+def _non_target_certificate(model, poses, travel, nodes, radius, *, node_motion_bound_m=None):
     shapes = tuple(name for name in model.paths if name.split(":", 1)[1] not in REQUIRED)
     projected_rod = (nodes @ NORMALS.T).max(axis=0)
 
@@ -96,8 +97,17 @@ def _non_target_certificate(model, poses, travel, nodes, radius):
                 values[name] = float(separation.max() - radius)
         return values
 
-    proof = certify_path(clearance, {name: travel[name] for name in shapes},
-                         dict.fromkeys(shapes, 0.), max_depth=8, max_samples=129)
+    bounds = {name: travel[name] for name in shapes}
+    if node_motion_bound_m is None:
+        proof = certify_path(clearance, bounds, dict.fromkeys(shapes, 0.), max_depth=8, max_samples=129)
+    else:
+        rod = RodCapsuleSeparation(nodes, radius, node_motion_bound_m=node_motion_bound_m)
+
+        def convex_envelopes(fraction):
+            return {name: model.vertices[name] @ transform[:3, :3].T + transform[:3, 3]
+                    for name, transform in poses(fraction).items() if name in shapes}
+
+        proof = rod.certify_path(convex_envelopes, bounds, margin_m=0.)
     return dict(proved=proof["proved"], status=proof["status"],
                 sample_count=len(proof["samples"]),
                 start_lower_m=min(proof["samples"][0.].values()),
@@ -120,7 +130,7 @@ def _same_clock(row):
     return {key: identity[key] for key in keys}
 
 
-def _evaluate(model, row, side, grids, delta):
+def _evaluate(model, row, side, grids, delta, *, rod_motion_bound_m=None):
     raw = row["closure_geometry"]["raw"]["hands"][side]
     measured, xyz = _frames(model, raw["body_names"], raw["link_poses_xyzw"])
     post = row["action_readback"]["post"]["hands"][side]
@@ -156,7 +166,8 @@ def _evaluate(model, row, side, grids, delta):
     table = boundary.prove(xyz + delta[:3], wrist + delta[5:])
     travel = {key: float(np.linalg.norm(delta[:3]) + abs(delta[5:]).sum() * model.wrist_radii[key]
                          + model.joint_radii[key] @ abs(dq)) for key in model.paths}
-    separate = _non_target_certificate(model, poses, travel, rod, radius)
+    per_node_bound = np.full(len(rod), rod_motion_bound_m) if rod_motion_bound_m is not None else None
+    separate = _non_target_certificate(model, poses, travel, rod, radius, node_motion_bound_m=per_node_bound)
     bounds = np.array([
         ((model.vertices[key] @ value[1, :3]).min() + value[1, 3] - travel[key],
          (model.vertices[key] @ value[1, :3]).max() + value[1, 3] + travel[key])
@@ -172,7 +183,30 @@ def _evaluate(model, row, side, grids, delta):
                 swept_y_bounds_m=[float(bounds[:, 0].min()), float(bounds[:, 1].max())])
 
 
-def audit(project, journal, journal_sha256, candidate):
+def _bind_pad_grids(row, side, source, grids, grid_locks):
+    for pad, key in zip(REQUIRED, PADS):
+        full = f"{side}.{pad}"
+        capture = next(value for path, value in source.items() if path.endswith(f"/{side}_{pad}.json"))
+        binding = row["rod"]["mesh_bindings"][full]
+        hand = row["closure_geometry"]["raw"]["hands"][side]
+        index = hand["body_names"].index(pad)
+        if (binding["capture_sha256"] != capture or binding["side"] != side
+                or binding["body_name"] != pad or binding["body_index"] != index
+                or binding["prim_path"] != hand["link_paths"][0][index]
+                or binding["frame"] != "PhysX_link_origin" or binding["unit"] != "m"):
+            raise ValueError("locked cooked collision and SDF bindings must agree")
+        lock = (binding["sdf_path"], binding["sdf_sha256"])
+        if full not in grid_locks:
+            with np.load(io.BytesIO(_checked_bytes(Path(lock[0]), lock[1])), allow_pickle=False) as npz:
+                grids[side][key] = {name: npz[name].copy() for name in npz.files}
+            grid_locks[full] = lock
+        if lock != grid_locks[full]:
+            raise ValueError("stable signed-distance source required across retained SDK rows")
+
+
+def audit(project, journal, journal_sha256, candidate, *, rod_motion_bound_m=None):
+    if rod_motion_bound_m is not None and (not np.isfinite(rod_motion_bound_m) or rod_motion_bound_m < 0.):
+        raise ValueError("finite nonnegative rod motion bound required")
     raw = [json.loads(line) for line in _checked_bytes(journal, journal_sha256).splitlines()]
     wanted = candidate["sdk_steps"]
     budget = candidate["hypothetical_sdk_step_budget"]
@@ -196,34 +230,25 @@ def audit(project, journal, journal_sha256, candidate):
         row = packet[tick]
         result = dict(sdk_step=tick, identity=_same_clock(row))
         for model, side, source in zip(models, SIDES, sources):
-            for pad, key in zip(REQUIRED, PADS):
-                full = f"{side}.{pad}"
-                capture = next(value for path, value in source.items() if path.endswith(f"/{side}_{pad}.json"))
-                binding = row["rod"]["mesh_bindings"][full]
-                hand = row["closure_geometry"]["raw"]["hands"][side]
-                index = hand["body_names"].index(pad)
-                if (binding["capture_sha256"] != capture or binding["side"] != side
-                        or binding["body_name"] != pad or binding["body_index"] != index
-                        or binding["prim_path"] != hand["link_paths"][0][index]
-                        or binding["frame"] != "PhysX_link_origin" or binding["unit"] != "m"):
-                    raise ValueError("locked cooked collision and SDF bindings must agree")
-                lock = (binding["sdf_path"], binding["sdf_sha256"])
-                if full not in grid_locks:
-                    with np.load(io.BytesIO(_checked_bytes(Path(lock[0]), lock[1])), allow_pickle=False) as npz:
-                        grids[side][key] = {name: npz[name].copy() for name in npz.files}
-                    grid_locks[full] = lock
-                if lock != grid_locks[full]:
-                    raise ValueError("stable signed-distance source required across retained SDK rows")
-            result[side] = _evaluate(model, row, side, grids[side], commands[side])
+            _bind_pad_grids(row, side, source, grids, grid_locks)
+            result[side] = _evaluate(model, row, side, grids[side], commands[side],
+                                     rod_motion_bound_m=rod_motion_bound_m)
         left, right = [result[side]["swept_y_bounds_m"] for side in SIDES]
         result["interhand_sweep_gap_m"] = max(left[0], right[0]) - min(left[1], right[1])
         rows.append(result)
-    return dict(schema="dh116-pinch-early-approach-replay-v1", journal_sha256=journal_sha256,
+    result = dict(schema="dh116-pinch-early-approach-replay-v1", journal_sha256=journal_sha256,
                 hypothetical_sdk_step_budget=budget, lower_bound_sdk_steps=horizon,
                 ordered_pad_names=list(REQUIRED), candidate=candidate, rows=rows,
                 sdf_sha256={k: lock[1] for k, lock in grid_locks.items()},
                 summary=bilateral_summary(rows), actual_isaac_steps=0, ppo_updates=0,
                 teacher_admission=False, native_qualification=False)
+    if rod_motion_bound_m is not None:
+        result["rod_separation"] = {
+            "method": "per_segment_capsule_support",
+            "node_motion_bound_m": rod_motion_bound_m,
+            "motion_assumption_is_native_measurement": False,
+        }
+    return result
 
 
 def main(argv=None):
@@ -231,8 +256,11 @@ def main(argv=None):
     for name in ("project", "journal", "candidate", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--journal-sha256", required=True)
+    parser.add_argument("--rod-motion-bound-m", type=float,
+                        help="Use segment capsule support with this explicit per-node motion assumption")
     args = parser.parse_args(argv)
-    result = audit(args.project, args.journal, args.journal_sha256, json.loads(args.candidate.read_text()))
+    result = audit(args.project, args.journal, args.journal_sha256, json.loads(args.candidate.read_text()),
+                   rod_motion_bound_m=args.rod_motion_bound_m)
     with args.output.open("x", encoding="utf-8") as stream:
         json.dump(result, stream, indent=2, allow_nan=False)
         stream.write("\n")

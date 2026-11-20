@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch staged close
+
+A fixed Pinch open Reset and 64-step close passes archived geometry and original action-kernel checks. The native Reset and load checks are pending. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-close-geometry.md).
+
 ## 2026-11-20 Pinch early approach screen
 
 An archived early Pinch target screen reports same-step opposing pad geometry and predicts a right proximal collision in its tested candidate. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-approach.md).

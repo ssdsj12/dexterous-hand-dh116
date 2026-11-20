@@ -1,3 +1,7 @@
+## 2026-11-20 Pinch staged close
+
+Add per-segment flexible rod clearance and a fixed Pinch open Reset plus a bounded 24D close replay. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-staged-close-geometry.md).
+
 ## 2026-11-20 Pinch early approach screen
 
 Add the same-boundary Pinch target screen and identify the right proximal collision of its rejected early candidate. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-early-approach.md).

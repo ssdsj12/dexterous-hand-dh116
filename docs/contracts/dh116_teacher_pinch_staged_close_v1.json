@@ -1,0 +1,48 @@
+{
+  "schema": "dh116-pinch-staged-close-readiness-v1",
+  "reviewed_base_commit": "628447e464badab887e714a67a85065d7c180e20",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-staged-close-geometry.md",
+  "candidate": "configs/dh116_execution/pinch-staged-open-and-close-archived-v1.json",
+  "work_scope": "offline replay, authored grounded geometry and original action kernels",
+  "cpu": {
+    "passed": 118,
+    "failed": 0,
+    "seconds": 20.06,
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_pinch_staged_closure.py",
+      "tests/test_dh116_rod_separation_certificate.py",
+      "tests/test_dh116_pinch_early_approach.py",
+      "tests/test_dh116_swept_wrist_projection.py",
+      "tests/test_dh116_pinch_target_clearance.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "b1afcae726cc7ced858672326ae3c89c7a9f5555cf61b1a1ab8e5478182a3726",
+    "red_sha256": [
+      "0fee5733dc3f2187c8e377dc4b2164dc8a6c533635d8b519867523025765dc7e",
+      "45f73b99b194e1cb3576d3a8a4218a6b0e16613688375de039880844fff7551a"
+    ]
+  },
+  "evidence": {
+    "journal_sha256": "3b46bc46f0b615eca40e26c8bafec9c5df9b873cb89ddaf45b171889f5cf2b7b",
+    "staged_replay_sha256": "601b32e01119fde2974ad279903383082a3b18b265b7b72dd856aa4b6a427614",
+    "candidate_sha256": "afc7e79c75a5b0436d4b9224c3b9d556cdcb4b9a933cbd1dea615153f4fd186e",
+    "authored_grounded_sha256": "c52bd2087f11ac1c0c7a6b272143a429851baf4cdbb000091ef7368106ea2f78",
+    "original_replayed_sha256": "2edf3ef620146c81b38e55d7f0625ce1829d0d7fcaea5e12a096333dc72748a6",
+    "old_candidate_segment_fixed_sha256": "a2d6fd3cf57d0d71d9fddcb637a70bed02ec7fad5ba56a94a6bae28a59a969aa",
+    "old_candidate_segment_50um_sha256": "63af5419de55407536c2b5324523a19e5dd84a1479156cb19090ca485e603614",
+    "fit_sdk_step": 16,
+    "passed_same_episode_boundaries": 9,
+    "declared_sensitivity_m": 5e-05
+  },
+  "native_runs": 0,
+  "sdk_steps_executed": 0,
+  "ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "resume": "Bind candidate to Reset owner and capture actual no-precontact geometry before 64-step opposed close."
+}

@@ -43280,6 +43280,35 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-staged-close-geometry-cpu": {
+      "title": "Fixed Pinch Reset and canonical opposed close geometry",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-early-approach-geometry-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_staged_closure.py",
+        "tests/test_dh116_rod_separation_certificate.py",
+        "tests/test_dh116_pinch_early_approach.py",
+        "tests/test_dh116_swept_wrist_projection.py",
+        "tests/test_dh116_pinch_target_clearance.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-staged-close-geometry.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_staged_close_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 118,
+        "failed": 0,
+        "same_episode_boundaries": 9,
+        "candidate_close_sdk_steps": 64,
+        "teacher_admission": false,
+        "native_qualification": false
+      }
     }
   },
   "execution_target": {
