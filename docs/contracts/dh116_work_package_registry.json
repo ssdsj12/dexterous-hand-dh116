@@ -44281,6 +44281,39 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-right-axis-calibration-native-result": {
+      "title": "Measure missing right Tripod actuator directions in an isolated free approach",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-right-seed-corridor-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_right_axis_calibration.py",
+        "tests/test_dh116_tripod_right_tracking_observability.py",
+        "tests/test_dh116_tripod_right_seed_corridor.py",
+        "tests/test_dh116_tripod_right_tracking_plan.py",
+        "tests/test_dh116_tripod_right_tracking_launch.py",
+        "tests/test_dh116_tripod_right_tracking_native.py",
+        "tests/test_tripod_sdk_path.py",
+        "tests/test_tripod_tracking_envelope.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-tripod-right-axis-calibration.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_axis_calibration_v1.json",
+      "native_runs": 2,
+      "last_result": {
+        "scope": "right Tripod free-space dynamic calibration",
+        "passed": 124,
+        "failed": 0,
+        "valid_native_measurement_runs": 1,
+        "bootstrap_failed_runs": 1,
+        "sdk_steps": 178,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
