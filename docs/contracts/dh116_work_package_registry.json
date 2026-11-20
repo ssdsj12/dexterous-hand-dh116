@@ -43858,6 +43858,35 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-authenticated-palm-fans-cpu": {
+      "title": "Differentiate the original left and right Power palm fan surfaces",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-palm-device-parity-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_palm_surface.py",
+        "tests/test_dh116_power_palm_parity.py",
+        "tests/test_dh116_cooked_hull_device_parity.py",
+        "tests/test_dh116_cooked_convex_hulls.py",
+        "tests/test_teacher_power_surface_audit.py",
+        "tests/test_teacher_cooked_readback_audit.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-palm-triangle-surface.md",
+      "readiness": "docs/contracts/dh116_teacher_power_native_palm_fans_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 37,
+        "failed": 0,
+        "scope": "authenticated Power fan surface equivalence audit",
+        "left_exact": true,
+        "right_exact": false,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
