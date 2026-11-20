@@ -1,0 +1,416 @@
+{
+  "version": "dh116-teacher-pinch-left-index-only-preload-v1",
+  "status": "native_diagnostic_complete_candidate_rejected",
+  "source_head": "7c7b213d6e54abaf352aeea2ce95e01cbe8ef954",
+  "frozen_recipe_sha256": "5a6799797f1a0ae2e335a58dd6783f779afece9aa3bc9a4297fca649f36b0196",
+  "frozen_plan_sha256": "f366b849848c5b93a6e666a4d828177983d66569e5b465663f79aec27972489b",
+  "outer_receipt": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2252-pinch-index-only-native/outer.json",
+  "outer_sha256": "fa89c9523ede4f49ea089e7ab37f24f609db8e1525eff070f1f0b6aee03873c5",
+  "ledger_sha256": "ef62434c903b48ba7b2c0aa2e8abad974fdb9bceea39b40469684bb5aec94155",
+  "raw_metrics_sha256": "09ea04fb5f3fc3d6822f2293cf3b01ee2b8d4e83b1842f13638379efb17acefc",
+  "attribution_sha256": "d80a9311da9f098b44cf59b7ce84742531dd746837720ca10eb81a936985a622",
+  "certificate_comparison_sha256": "609cca15a57223e917807b2648ec6b790385797a7f9713645c99c9bac7fa1946",
+  "cpu_tests_passed": 368,
+  "native_attempts": 1,
+  "sdk_steps": 442,
+  "solver_substeps": 5280,
+  "control_windows": 55,
+  "action_channel": 2,
+  "increment_rad": 0.0001,
+  "outer_exit_code": 0,
+  "forced_exit": false,
+  "contact_gates": {
+    "bilateral_preload_gate": {
+      "sdk": 202,
+      "fields": [
+        "passed",
+        "prefix",
+        "signed_opposition",
+        "same_actions",
+        "proofs"
+      ],
+      "status": {
+        "passed": true
+      },
+      "proofs": {
+        "left": {
+          "proved": true,
+          "minimum_margin_m": 1.1363795246736916e-07
+        },
+        "right": {
+          "proved": true,
+          "minimum_margin_m": 0.00014643868405091813
+        }
+      }
+    },
+    "asymmetric_preload_gate": {
+      "sdk": 282,
+      "fields": [
+        "passed",
+        "prefix",
+        "signed_opposition",
+        "same_actions",
+        "proofs"
+      ],
+      "status": {
+        "passed": true
+      },
+      "proofs": {
+        "left": {
+          "proved": true,
+          "minimum_margin_m": 1.2530034572940651e-06
+        },
+        "right": {
+          "proved": true,
+          "minimum_margin_m": 5.553826447344604e-05
+        }
+      }
+    },
+    "left_index_only_gate": {
+      "sdk": 362,
+      "fields": [
+        "passed",
+        "prefix",
+        "signed_opposition",
+        "same_actions",
+        "proofs"
+      ],
+      "status": {
+        "passed": true
+      },
+      "proofs": {
+        "left": {
+          "proved": true,
+          "minimum_margin_m": 4.534755228714799e-07
+        },
+        "right": {
+          "proved": true,
+          "minimum_margin_m": 6.354550124138773e-05
+        }
+      }
+    }
+  },
+  "comparisons": {
+    "baseline": {
+      "n": 960,
+      "signed": 960,
+      "qualified": 473,
+      "pads": 960,
+      "longest": 16,
+      "hand_pairs": 3840,
+      "table_pairs": 36585,
+      "fully_qualified_sdk_steps": 2,
+      "force": {
+        "left": [
+          [
+            0.10684898280964983,
+            0.09796161463030811,
+            0.20812445330860954
+          ],
+          [
+            0.14794664076200065,
+            0.150231241442227,
+            0.30043738425773964
+          ],
+          [
+            0.18598148038191495,
+            0.18552952576716203,
+            0.36849828833368725
+          ]
+        ],
+        "right": [
+          [
+            0.12623026145251706,
+            0.10232987158534373,
+            0.2286104032941783
+          ],
+          [
+            0.18462564240176052,
+            0.16823175319828432,
+            0.3526062703632764
+          ],
+          [
+            0.21721246682781095,
+            0.1915044794801595,
+            0.40871694630797045
+          ]
+        ]
+      }
+    },
+    "baseline_settled": {
+      "n": 768,
+      "signed": 768,
+      "qualified": 420,
+      "pads": 768,
+      "longest": 16,
+      "hand_pairs": 3072,
+      "table_pairs": 29382,
+      "fully_qualified_sdk_steps": 2,
+      "force": {
+        "left": [
+          [
+            0.1197531217915887,
+            0.1076523149726723,
+            0.227405436764261
+          ],
+          [
+            0.1503316502743875,
+            0.15166222646449468,
+            0.30415301792849886
+          ],
+          [
+            0.18598148038191495,
+            0.18552952576716203,
+            0.3644312561522465
+          ]
+        ],
+        "right": [
+          [
+            0.1678049161651578,
+            0.11714212164533899,
+            0.2860516646241049
+          ],
+          [
+            0.1855796629320601,
+            0.16895977878416013,
+            0.3542883381733677
+          ],
+          [
+            0.21721246682781095,
+            0.1915044794801595,
+            0.40871694630797045
+          ]
+        ]
+      }
+    },
+    "index_only": {
+      "n": 960,
+      "signed": 919,
+      "qualified": 379,
+      "pads": 960,
+      "longest": 17,
+      "hand_pairs": 3840,
+      "table_pairs": 36858,
+      "fully_qualified_sdk_steps": 9,
+      "force": {
+        "left": [
+          [
+            0.08420379500631048,
+            0.09364346983907604,
+            0.17915275560054705
+          ],
+          [
+            0.1432519001036846,
+            0.1467164791383595,
+            0.2939852420689575
+          ],
+          [
+            0.1896969986294072,
+            0.21189032792260218,
+            0.39244893802710634
+          ]
+        ],
+        "right": [
+          [
+            0.13863240796381815,
+            0.10905817764567427,
+            0.2492471335659987
+          ],
+          [
+            0.18296864422738326,
+            0.16803090805672413,
+            0.3515518613420926
+          ],
+          [
+            0.21580661954721725,
+            0.1971281370992836,
+            0.4114284536096374
+          ]
+        ]
+      }
+    },
+    "index_only_settled": {
+      "n": 768,
+      "signed": 729,
+      "qualified": 293,
+      "pads": 768,
+      "longest": 17,
+      "hand_pairs": 3072,
+      "table_pairs": 29483,
+      "fully_qualified_sdk_steps": 7,
+      "force": {
+        "left": [
+          [
+            0.08420379500631048,
+            0.09364346983907604,
+            0.17915275560054705
+          ],
+          [
+            0.14232301210466208,
+            0.14656583010352098,
+            0.2922529663873033
+          ],
+          [
+            0.1896969986294072,
+            0.21189032792260218,
+            0.39244893802710634
+          ]
+        ],
+        "right": [
+          [
+            0.13863240796381815,
+            0.10905817764567427,
+            0.2492471335659987
+          ],
+          [
+            0.18234101663710975,
+            0.16737816194136151,
+            0.34979445756471406
+          ],
+          [
+            0.21430031651035386,
+            0.1971281370992836,
+            0.4114284536096374
+          ]
+        ]
+      }
+    },
+    "raw_last_window": {
+      "n": 96,
+      "signed": 87,
+      "qualified": 22,
+      "pads": 96,
+      "longest": 9,
+      "hand_pairs": 384,
+      "table_pairs": 3658,
+      "fully_qualified_sdk_steps": 0,
+      "force": {
+        "left": [
+          [
+            0.09037970635772541,
+            0.09364346983907604,
+            0.1862827186005276
+          ],
+          [
+            0.13421396296222632,
+            0.14292553850556838,
+            0.27939895860017583
+          ],
+          [
+            0.1881907429789577,
+            0.2022498030772039,
+            0.3759295802322049
+          ]
+        ],
+        "right": [
+          [
+            0.13863240796381815,
+            0.11834714314325456,
+            0.26938168539157525
+          ],
+          [
+            0.175487199076638,
+            0.16893466324826628,
+            0.3467316387333136
+          ],
+          [
+            0.19858425910606314,
+            0.18904413000493897,
+            0.3876283891110021
+          ]
+        ]
+      }
+    }
+  },
+  "settled_side_failures": {
+    "baseline": {
+      "counts": {
+        "both": 420,
+        "left_only_fails": 341,
+        "right_only_fails": 7,
+        "both_fail": 0,
+        "left_sign_losses": 0,
+        "right_sign_losses": 0
+      },
+      "minimum_table_m": 0.0025638077199067744,
+      "max_force_residual_n": 8.259128509610773e-07,
+      "left_force": {
+        "samples": 768,
+        "p50": 0.30415301792849886,
+        "p95": 0.3493152091427185,
+        "max": 0.3644312561522465
+      },
+      "right_force": {
+        "samples": 768,
+        "p50": 0.3542883381733677,
+        "p95": 0.3780983838959872,
+        "max": 0.40871694630797045
+      },
+      "left_side_deficit": {
+        "samples": 341,
+        "p50": 0.020174189410214982,
+        "p95": 0.050953597668622674,
+        "max": 0.07259456323573898
+      },
+      "right_side_deficit": {
+        "samples": 7,
+        "p50": 0.008073614263847062,
+        "p95": 0.012893901110350737,
+        "max": 0.013948335375895071
+      }
+    },
+    "index_only": {
+      "counts": {
+        "both": 293,
+        "left_only_fails": 444,
+        "right_only_fails": 15,
+        "both_fail": 16,
+        "left_sign_losses": 39,
+        "right_sign_losses": 0
+      },
+      "minimum_table_m": 0.002565001969444536,
+      "max_force_residual_n": 8.325558147155879e-07,
+      "left_force": {
+        "samples": 768,
+        "p50": 0.2922529663873033,
+        "p95": 0.3482934248906582,
+        "max": 0.39244893802710634
+      },
+      "right_force": {
+        "samples": 768,
+        "p50": 0.34979445756471406,
+        "p95": 0.37596190718069417,
+        "max": 0.4114284536096374
+      },
+      "left_side_deficit": {
+        "samples": 460,
+        "p50": 0.023161841333036226,
+        "p95": 0.08096972748770706,
+        "max": 0.12084724439945294
+      },
+      "right_side_deficit": {
+        "samples": 31,
+        "p50": 0.011036026787100806,
+        "p95": 0.038451241400546954,
+        "max": 0.05075286643400129
+      }
+    }
+  },
+  "same_interval_control_exists": false,
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "ppo_updates": 0,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-index-only-preload.md",
+  "signed_force_projection_sha256": "2e5a523cf67f601bd5a37083989ead44871dc848848ba7cd42880b824341b06b",
+  "full_post_increment_force_sign_losses": {
+    "samples": 960,
+    "nodes:[34, 35]": 960,
+    "signed_fail": 41,
+    "index_inward_negative": 1,
+    "thumb_inward_negative": 30,
+    "thumb_normal_still_inward": 41,
+    "index_normal_inverted": 0,
+    "thumb_normal_inverted": 0
+  }
+}

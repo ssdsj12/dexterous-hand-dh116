@@ -21,11 +21,12 @@ LEDGER_SHA = "7bde45de8bb66ddfc5a5d01c98c299be110f57afbbfbbdf2e77e255cb96811e1"
 GATE_KEY = "fixed_wrist_seating"
 
 
-def compile_seating(previous, states, nominal_targets=None):
+def compile_seating(previous, states, nominal_targets=None, *, increments=SEATING_DELTA_RAD):
+    increments = prelift._finite(increments, (len(SEATING_DOF),))
     prefix = prelift._finite(previous, (PREFIX_WINDOWS,24))
     commands = {side:prelift._finite(states[side][1], (12,)) for side in ("left","right")}
     targets = {side:value.copy() for side,value in commands.items()}
-    targets["left"][list(SEATING_DOF)] += SEATING_DELTA_RAD
+    targets["left"][list(SEATING_DOF)] += increments
     if nominal_targets is not None:
         for side,q in targets.items():
             if not np.allclose(q, prelift._finite(nominal_targets[side],(12,)), atol=2e-9, rtol=0):
@@ -34,7 +35,9 @@ def compile_seating(previous, states, nominal_targets=None):
     if any(np.any(q[:6]<lo) or np.any(q[:6]>hi) for q in targets.values()):
         raise ValueError("seating exceeds original DH116 joint limits")
     delta = prelift.global_channel_order(*(targets[s]-commands[s] for s in ("left","right")))
-    if np.any(np.delete(delta, SEATING_DOF)) or np.any(delta[list(SEATING_DOF)]>=0.):
+    changed = delta[list(SEATING_DOF)]
+    if (np.any(np.delete(delta, SEATING_DOF))
+            or not np.array_equal(np.sign(changed), np.sign(increments))):
         raise ValueError("only the two retained left finger channels may move")
     ramp = delta/(prelift.WINDOW_SCALE*RAMP_WINDOWS)
     if np.any(np.abs(ramp)>1.):
@@ -72,16 +75,16 @@ def certify_seating(row, states, targets):
     return result
 
 
-def prepare(args, *, screen_geometry=False):
+def prepare(args, *, screen_geometry=False, compiler=compile_seating, certificate=certify_seating):
     plan=prior.prepare(args)
     archive,row=pacing.archive_boundary(args.seated_prefix,outer_sha=OUTER_SHA,ledger_sha=LEDGER_SHA,
         sdk_steps=PREFIX_SDK,windows=PREFIX_WINDOWS,contact_guard=closure.guard_selected_contact)
     if plan["action_schedule"]!=archive["action_schedule"] or not preload.boundary_has_opposition(row,sdk_step=PREFIX_SDK):
         raise ValueError("matching fixed-wrist signed contact source required")
     states={side:prelift.joint_and_wrist(row,side) for side in ("left","right")}
-    actions,targets=compile_seating(plan["action_schedule"],states)
+    actions,targets=compiler(plan["action_schedule"],states)
     if screen_geometry:
-        proofs=certify_seating(row,states,targets)
+        proofs=certificate(row,states,targets)
         if not all(proof["proved"] for proof in proofs.values()):
             raise ValueError({side:proof.get("unresolved_shape") for side,proof in proofs.items()})
     for path in (args.seated_prefix/"outer.json",args.seated_prefix/"native/physical.jsonl",
@@ -96,15 +99,15 @@ def prepare(args, *, screen_geometry=False):
     return plan
 
 
-def acquire(sim, owners, trace, output, *, plan):
+def acquire(sim, owners, trace, output, *, plan, compiler=compile_seating, certificate=certify_seating,
+            boundary_name="fixed_wrist_seating_gate"):
     def observe(row):
         if row["physics_step"]==preload.LAST_SDK:
             preload.measure_gate(row,plan,sdk_step=preload.LAST_SDK,prefix_windows=prior.PREFIX_WINDOWS,
                 config_key=prior.GATE_KEY,gate_key="asymmetric_preload_gate",compiler=prior.compile_asymmetric)
         elif row["physics_step"]==PREFIX_SDK:
             preload.measure_gate(row,plan,sdk_step=PREFIX_SDK,prefix_windows=PREFIX_WINDOWS,
-                config_key=GATE_KEY,gate_key="fixed_wrist_seating_gate",compiler=compile_seating,
-                certify=certify_seating)
+                config_key=GATE_KEY,gate_key=boundary_name,compiler=compiler,certify=certificate)
     try:
         return preload.acquire(sim,owners,trace,output,plan=plan,sdk_steps=LAST_SDK,after=observe)
     finally:
