@@ -1,4 +1,8 @@
 
+## Pinch longitudinal wrist seating
+
+Measured synchronous pad loads after a bounded left wrist translation. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-longitudinal-preload-native.md).
+
 ## Power native palm rays
 
 Compared owned PhysX palm hits with the original triangle surfaces. [Report](docs/superpowers/reports/2026-11-20-teacher-power-palm-physx-rays.md).
