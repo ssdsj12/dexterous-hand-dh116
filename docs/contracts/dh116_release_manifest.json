@@ -29013,6 +29013,31 @@
         "verified_at_utc": "2026-11-20T15:57:16.307756+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Tripod right near-rod approach after measured wrist settling",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-near-settle-extension.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_near_settle_extension_v1.json",
+      "cpu_tests": {
+        "passed": 298,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "28a0d1629ad680cb58a6469ea6ff16bd37dc53d5",
+        "source_tree": "c98e4ad2f8d1f47c66bc5327cdd24b3d6379d2f4",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T16:06:41.385593+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
