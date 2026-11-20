@@ -28463,6 +28463,31 @@
         "verified_at_utc": "2026-11-20T11:24:29.666074+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-index-pacing-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-index-pacing-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_index_pacing_native_v1.json",
+      "cpu_tests": {
+        "passed": 212,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "aa11f9beebab8010d89ce05a6301f9a840b9901d",
+        "source_tree": "d96ace7c907c5c9bcb80b0d37283601bd4d5b2af",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T11:43:20.548610+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
