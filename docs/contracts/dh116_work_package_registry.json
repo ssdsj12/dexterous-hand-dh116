@@ -43043,6 +43043,7 @@
     "teacher.pinch-v13-pair-and-precontact-audit-cpu": {
       "title": "Pinch v13 two-hand Reset proposal with multi-archive cutoff",
       "executor": "pytest",
+      "dependencies": [],
       "status": "passed",
       "branch": "11-17",
       "tests": [
