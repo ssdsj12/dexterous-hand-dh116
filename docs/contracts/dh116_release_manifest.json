@@ -28313,6 +28313,31 @@
         "verified_at_utc": "2026-11-20T10:03:15.634221+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-wrist-relief-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-wrist-relief-native-result.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_wrist_relief_native_result_v1.json",
+      "cpu_tests": {
+        "passed": 171,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "312274695c46329adfa13ff982dd07f78c5ee033",
+        "source_tree": "e457c48c28ff49a25be506a22e0e72b9828732c3",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T10:09:53.480568+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }

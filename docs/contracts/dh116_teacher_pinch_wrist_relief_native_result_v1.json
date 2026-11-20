@@ -625,5 +625,110 @@
   "native_qualification": false,
   "teacher_admission": false,
   "lift_tested": false,
-  "hold_tested": false
+  "hold_tested": false,
+  "measured_hold_transition_residuals": {
+    "scope": "actual targets minus joints; no hold dynamics tested",
+    "one_window_right_rotation_normalized_norm": 1.9898658297942993,
+    "sides": {
+      "left": {
+        "joint_names": [
+          "finger11",
+          "finger12",
+          "finger21",
+          "finger31",
+          "finger41",
+          "finger51"
+        ],
+        "finger_target_minus_actual_rad": [
+          0.0002257823944091797,
+          0.00474509596824646,
+          0.006265699863433838,
+          2.4080276489257812e-05,
+          -1.0728836059570312e-06,
+          -1.7881393432617188e-06
+        ],
+        "wrist_target_minus_actual_m": [
+          -3.156234440482297e-05,
+          -3.521951772045284e-05,
+          6.3983477961437885e-06
+        ],
+        "rotation_target_minus_actual_rad": [
+          0.00015270016192971982,
+          -0.007280240781591507,
+          -0.0004035005509654511
+        ],
+        "one_window_normalized_exact_tracking_clamp": {
+          "fingers": [
+            -0.04515647888183594,
+            -0.949019193649292,
+            -1.2531399726867676,
+            -0.0048160552978515625,
+            0.00021457672119140625,
+            0.00035762786865234375
+          ],
+          "wrist_xyz": [
+            0.18937406642893784,
+            0.21131710632271705,
+            -0.03839008677686273
+          ],
+          "wrist_euler": [
+            -0.01832401943156638,
+            0.8736288937909809,
+            0.04842006611585413
+          ]
+        },
+        "wrist_world_speed_m_s": 0.003898913972079754
+      },
+      "right": {
+        "joint_names": [
+          "finger11",
+          "finger12",
+          "finger21",
+          "finger31",
+          "finger41",
+          "finger51"
+        ],
+        "finger_target_minus_actual_rad": [
+          -3.504753112792969e-05,
+          0.003789437934756279,
+          0.005392551422119141,
+          7.808208465576172e-06,
+          8.344650268554688e-07,
+          7.450580596923828e-07
+        ],
+        "wrist_target_minus_actual_m": [
+          -7.742766886531527e-06,
+          2.3738218868363248e-06,
+          -4.87417086513231e-05
+        ],
+        "rotation_target_minus_actual_rad": [
+          0.0033889634321839822,
+          0.016232141481248075,
+          -4.8706555496174156e-05
+        ],
+        "one_window_normalized_exact_tracking_clamp": {
+          "fingers": [
+            0.0070095062255859375,
+            -0.757887601852417,
+            -1.0785102844238281,
+            -0.0015616416931152344,
+            -0.00016689300537109375,
+            -0.00014901161193847656
+          ],
+          "wrist_xyz": [
+            0.04645660131918916,
+            -0.014242931321017949,
+            0.2924502519079386
+          ],
+          "wrist_euler": [
+            -0.40667561186207785,
+            -1.947856977749769,
+            0.005844786659540899
+          ]
+        },
+        "wrist_world_speed_m_s": 0.012600702233612537
+      }
+    },
+    "evidence_sha256": "836d0e5d13a9e12d9e573aaa24b90883ea48561851e420f87a2cabb52c43cb14"
+  }
 }
