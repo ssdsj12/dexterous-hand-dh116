@@ -28163,6 +28163,31 @@
         "verified_at_utc": "2026-11-20T09:02:07.158652+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-late-wrist-launch-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-late-wrist-worker.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_late_wrist_worker_v1.json",
+      "cpu_tests": {
+        "passed": 162,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "4e6fc474c314bc71aaf663dda9a50774d69bcfa8",
+        "source_tree": "3b647a3c9057481d2f82a03f8e4d1255a0e8d0d0",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T09:08:23.615550+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
