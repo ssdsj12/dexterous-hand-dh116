@@ -44100,6 +44100,38 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-palm-triangle-intersections-cpu": {
+      "title": "Check both original Power palm triangle surfaces for exact intersections",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-authenticated-palm-fans-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_power_palm_self_intersection.py",
+        "tests/test_dh116_power_left_palm_sdf.py",
+        "tests/test_dh116_power_palm_surface.py",
+        "tests/test_dh116_power_palm_parity.py",
+        "tests/test_dh116_cooked_hull_device_parity.py",
+        "tests/test_dh116_cooked_convex_hulls.py",
+        "tests/test_teacher_power_surface_audit.py",
+        "tests/test_teacher_cooked_readback_audit.py",
+        "tests/test_dh116_deformx_pad_sdf.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-power-palm-self-intersection.md",
+      "readiness": "docs/contracts/dh116_teacher_power_palm_triangle_intersections_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "original triangle self-intersection audit",
+        "passed": 106,
+        "failed": 0,
+        "right_sdf_baked": false,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

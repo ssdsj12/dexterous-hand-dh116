@@ -1,4 +1,8 @@
 
+## Power palm triangle intersection audit
+
+Checked the original palm triangles for intersections beyond shared boundaries. [Report](docs/superpowers/reports/2026-11-20-teacher-power-palm-self-intersection.md).
+
 ## Pinch asymmetric preload
 
 Measured bilateral reactions with a fixed left index target and fixed wrists. [Report](docs/superpowers/reports/2026-11-20-teacher-pinch-asymmetric-preload-native.md).
