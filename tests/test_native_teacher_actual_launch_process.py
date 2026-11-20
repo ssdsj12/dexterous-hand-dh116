@@ -90,7 +90,14 @@ try:
                     connection.recv(4096)
                 raise ValueError('nonce replay rejected')
             lease=launch.request_actual_launch(binding,repository=repository,package=package)
-            assert lease.role=='a_fresh' and lease.resume_origin is None
+            assert lease.role==envelope.role and lease.resume_origin==envelope.checkpoint_origin
+            if lease.role=='b_resume':
+                assert lease.resume_origin['origin_scope']=='actual_resume_diagnostic_unqualified'
+                assert lease.resume_origin['teacher_admission'] is False
+                copied=lease.resume_origin;copied['checkpoint_sha256']='0'*64
+                assert lease.resume_origin['checkpoint_sha256']!='0'*64
+            else:
+                assert lease.role=='a_fresh' and lease.resume_origin is None
             assert lease.device_plan==envelope.device_plan and lease.launch_identity==envelope.actual_identity
             original=lease.device_plan;original['logical_device']='tampered'
             assert lease.device_plan['logical_device']=='cuda:0'
@@ -141,6 +148,17 @@ intent=Path(args.native_worker);binding=dict(path=str(intent),sha256=scheduler.f
 state=json.loads(intent.read_text());package=repository.registry()['packages'][state['package']]
 companion=repository.actual_launch(package);spec=repository.native_recipe(package)['spec']
 mode=os.environ.get('CPU_MODE','')
+origin_reads=[]
+if companion['role']=='b_resume':
+    def read_fixture_origin(producer, digest, *, resume_spec):
+        origin=json.loads((root/'cpu-fixture-origin.json').read_bytes())
+        if origin['producer_package']!=producer or origin['receipt_sha256']!=digest:
+            raise ValueError('CPU fixture A receipt changed')
+        if scheduler.file_hash(Path(origin['checkpoint_path']))!=origin['checkpoint_sha256']:
+            raise ValueError('CPU fixture A checkpoint changed before grant')
+        origin_reads.append(producer)
+        return origin
+    repository.read_actual_resume_origin=read_fixture_origin
 try:
     import contextlib
     with (scheduler.native_file_lock(intent.parent/'worker.lock') if mode!='missing_worker_lock' else contextlib.nullcontext()), (scheduler.native_file_lock(scheduler.NATIVE_SCHEDULER_LOCK) if mode!='missing_scheduler_lock' else contextlib.nullcontext()):
@@ -158,6 +176,8 @@ try:
             if mode=='symlink_overlay':
                 (intent.parent/'actual-launch/authorization.json').symlink_to(root/'forbidden-authorization.json')
             if mode=='intent':intent.write_text('{}')
+            if mode=='resume_changed_checkpoint':
+                Path(server.envelope.checkpoint_origin['checkpoint_path']).write_bytes(b'changed source')
             if mode=='expired':time.sleep(3.05)
             held=scheduler.NATIVE_LOCK.open('a+b')
             try:
@@ -170,7 +190,7 @@ try:
                 if mode=='foreign_root':spawn=subprocess.Popen([sys.executable,'-c','import time;time.sleep(.2)'])
                 try:
                     reply=server.serve_once(spawn)
-                    print('CPU_SERVER '+json.dumps(dict(ok=True,reply=reply)),flush=True)
+                    print('CPU_SERVER '+json.dumps(dict(ok=True,reply=reply,origin_reads=len(origin_reads))),flush=True)
                 except Exception as error:
                     print('CPU_SERVER '+json.dumps(dict(ok=False,error=str(error))),flush=True)
                 out,err=child.communicate(timeout=10);print(out+err,flush=True)
@@ -183,7 +203,7 @@ except Exception as error:
 """
 
 
-def cpu_fixture(repo,tmp_path):
+def cpu_fixture(repo,tmp_path,*,resume=False):
     from copy import deepcopy
     import hashlib,json
     from test_native_teacher_actual_launch import actual_fixture,PROVIDER
@@ -202,6 +222,22 @@ def cpu_fixture(repo,tmp_path):
     pin_source_closure(repo.root,spec);write_json(repo.root/package['command_spec'],spec)
     core=repo.native_recipe(package);launch['core_recipe_identity']={k:core[k] for k in ('command_spec_sha256','code_config_sha256')}
     launch['source_closure_sha256']=spec['teacher_contract']['source_sha256']
+    if resume:
+        checkpoint=tmp_path/'cpu-origin'/'teacher_clean.pt';checkpoint.parent.mkdir()
+        checkpoint.write_bytes(b'CPU fixture A checkpoint bytes')
+        reference=dict(producer_package='teacher.cpu-a',receipt_sha256='f'*64)
+        launch.update(role='b_resume',checkpoint_origin=reference)
+        launch['provider']['entrypoint']='run_b'
+        origin=dict(**reference,origin_scope='actual_resume_diagnostic_unqualified',
+            tested_head='8'*40,producer_episode_uid='cpu-A:0',checkpoint_path=str(checkpoint),
+            checkpoint_sha256=hashlib.sha256(checkpoint.read_bytes()).hexdigest(),policy_weights_sha256='a'*64,
+            rng_state_sha256='b'*64,semantic_sha256=spec['teacher_contract']['semantic_sha256'],
+            source_closure_sha256=launch['source_closure_sha256'],loaded_updates=1,
+            loaded_policy_version=1,loaded_environment_steps=32,loaded_accepted_minibatch_updates=2,
+            diagnostic_verified=True,native_ready=False,native_qualification=False,grasp_qualified=False,
+            teacher_admission=False)
+        write_json(repo.root/'cpu-fixture-origin.json',origin)
+        repo.read_actual_resume_origin=lambda *_a,**_kw:origin
     write_json(repo.root/package['actual_launch']['path'],launch)
     package['actual_launch']['sha256']=hashlib.sha256((repo.root/package['actual_launch']['path']).read_bytes()).hexdigest()
     registry=repo.registry();registry['packages']['actual']=package;write_json(repo.root/scheduler.REGISTRY,registry)
@@ -266,12 +302,14 @@ def test_granted_lease_revalidates_original_files_and_kernel_lock_without_reconn
 
 
 @pytest.mark.parametrize("damage", ["none", "receipt_sha", "intent", "binding", "reply",
-                                    "process", "outer", "native_log", "artifacts", "promotion"])
+                                    "process", "outer", "native_log", "artifacts", "promotion",
+                                    "resume_none", "resume_changed_a", "resume_outer"])
 def test_actual_diagnostic_receipt_rechecks_finished_cpu_grant(repo, tmp_path, monkeypatch, damage):
     import json
     from go2_pvcnn.control.dh116 import tabletop_native_teacher_actual_artifacts as artifacts
 
-    package, _, _, intent_binding = cpu_fixture(repo, tmp_path)
+    resume = damage.startswith("resume_")
+    package, _, _, intent_binding = cpu_fixture(repo, tmp_path, resume=resume)
     child = run_cpu_parent(repo, intent_binding, debugger=True)
     assert child.returncode == 0, child.stdout + child.stderr
     attempt = Path(intent_binding["path"]).parent
@@ -303,7 +341,15 @@ def test_actual_diagnostic_receipt_rechecks_finished_cpu_grant(repo, tmp_path, m
             return dict(evidence, artifact_sha256={"raw": "b" * 64})
         return evidence
 
-    monkeypatch.setattr(artifacts, "audit_actual_fresh_outputs", verify)
+    audit_name = "audit_actual_resume_outputs" if resume else "audit_actual_fresh_outputs"
+    monkeypatch.setattr(artifacts, audit_name, verify)
+    readback = repo.verify_actual_resume_diagnostic if resume else repo.verify_actual_diagnostic
+    if damage == "resume_changed_a":
+        origin = json.loads((repo.root/"cpu-fixture-origin.json").read_bytes())
+        repo.read_actual_resume_origin = lambda *_a,**_kw:dict(origin, rng_state_sha256="c"*64)
+    if damage == "resume_outer":
+        outer.write_text(json.dumps(dict(measured, outer_exit_code=1)))
+        receipt["launch_evidence_sha256"]["outer_exit.json"] = scheduler.file_hash(outer)
     files_to_damage = dict(intent="intent.json", binding="actual-launch/binding.json",
         reply="actual-launch/reply.json", process="actual-launch/process.json",
         outer="outer_exit.json", native_log="native.log")
@@ -316,11 +362,45 @@ def test_actual_diagnostic_receipt_rechecks_finished_cpu_grant(repo, tmp_path, m
     sha = scheduler.file_hash(path) if damage != "receipt_sha" else "b" * 64
     # An offline readback must also work when later unrelated commits move HEAD.
     monkeypatch.setattr(repo, "head", lambda: "d" * 40)
-    if damage == "none":
-        result = repo.verify_actual_diagnostic("actual", sha)
+    if damage in ("none", "resume_none"):
+        result = readback("actual", sha)
+        if resume:
+            with pytest.raises(ValueError, match="role"):
+                repo.verify_actual_diagnostic("actual", sha)
         assert result["diagnostic_verified"] is True
         assert result["native_qualification"] is False and result["teacher_admission"] is False
         assert result["receipt_sha256"] == sha
     else:
         with pytest.raises(ValueError):
-            repo.verify_actual_diagnostic("actual", sha)
+            readback("actual", sha)
+
+
+@pytest.mark.parametrize("mode", ["resume_grant", "resume_changed_checkpoint"])
+def test_actual_b_handshake_and_archive_bind_immutable_a_origin(repo, tmp_path, mode):
+    import json
+    from pathlib import Path
+
+    package, spec, launch, intent = cpu_fixture(repo, tmp_path, resume=True)
+    result = run_cpu_parent(repo, intent, mode=mode)
+    server_rows = [json.loads(line.removeprefix("CPU_SERVER ")) for line in result.stdout.splitlines()
+                   if line.startswith("CPU_SERVER ")]
+    assert server_rows, result.stdout+result.stderr
+    row = server_rows[-1]
+    if mode == "resume_changed_checkpoint":
+        assert result.returncode != 0 and row["ok"] is False
+        assert "checkpoint changed before grant" in row["error"]
+        return
+    assert result.returncode == 0 and row["ok"] is True, result.stdout+result.stderr
+    assert row["origin_reads"] == 2
+    assert 'native_ready": false' in result.stdout
+    directory = Path(intent["path"]).parent
+    names = ("intent.json", "actual-launch/binding.json", "actual-launch/reply.json")
+    hashes = {name:scheduler.file_hash(directory/name) for name in names}
+    identity = repo.native_execution_identity(package)
+    reader = module()
+    envelope = reader.read_archived_resume_launch(directory, spec=spec, launch=launch,
+                                                identity=identity, hashes=hashes)
+    assert envelope.checkpoint_origin["teacher_admission"] is False
+    with pytest.raises(ValueError, match="role"):
+        reader.read_archived_fresh_launch(directory, spec=spec, launch=launch,
+                                         identity=identity, hashes=hashes)

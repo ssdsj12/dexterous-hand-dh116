@@ -45163,6 +45163,68 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.actual-resume-launch-cpu": {
+      "title": "Authenticate and verify the actual B launch without grasp admission",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.actual-resume-provider-cpu"
+      ],
+      "tests": [
+        "tests/test_native_teacher_actual_resume_launch.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_actual_launch_process.py",
+        "tests/test_native_teacher_actual_resume_origin.py",
+        "tests/test_native_teacher_actual_resume_artifacts.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_native_teacher_worker_lease.py",
+        "tests/test_native_teacher_worker_semantic.py",
+        "tests/test_native_teacher_actual_provider.py",
+        "tests/test_native_teacher_actual_factories.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-native-plan.md",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_launch_v1.json",
+      "timeout_seconds": 240,
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_fixture",
+        "passed": 279,
+        "failed": 0,
+        "native_runs": 0,
+        "ppo_updates": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.pinch-ppo-resume-pair-a-smoke8-v1": {
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-resume-pair-a-smoke8-launch-v1.json",
+        "sha256": "18b993621c055a8a61d7102c85f82fdcf9bff3763ada13ec19ca108501ba75dd"
+      },
+      "blocker_kind": "approval",
+      "command_spec": "configs/dh116_execution/pinch-actual-resume-pair-a-smoke8-core-v1.json",
+      "dependencies": [
+        "teacher.pinch-v13-native-reset",
+        "teacher.actual-resume-launch-cpu"
+      ],
+      "evidence_scope": "pinch_actual_resume_pair_a_smoke8_v1",
+      "executor": "native_bounded",
+      "reason": "Requires the exact bounded native batch and Isaac resource reservation.",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-native-plan.md",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "status": "blocked",
+      "tests": [],
+      "title": "Pinch independent A with the common A/B eight-control PPO closure",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_launch_v1.json",
+      "native_runs": 0
     }
   },
   "execution_target": {

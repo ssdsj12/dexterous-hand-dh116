@@ -250,12 +250,13 @@ def make_parent_launch_envelope(*, repository, package, intent_binding, launch, 
     if launch != current or not isinstance(nonce, str) or len(nonce) < 32:
         raise ValueError('current actual launch and fresh nonce required')
     contract = recipe['spec']['teacher_contract']
+    origin = repository.resolve_actual_checkpoint_origin(current, resume_spec=recipe["spec"], package_name=name)
     _socket_path(socket_path)
     result = ParentLaunchEnvelope(ENVELOPE_SCHEMA, name, deepcopy(intent_binding), identity['core_identity'],
         identity['actual_identity'], contract['source_sha256'], contract['semantic_sha256'],
         deepcopy(contract['training_config']), process_identity(os.getpid()), str(socket_path), nonce,
         time.monotonic(), deadline, current['role'], deepcopy(current['device_plan']),
-        deepcopy(current['checkpoint_origin']))
+        deepcopy(origin))
     _wall(result, recipe)
     _verify_scheduler_parent(result, repository)
     return result
@@ -274,10 +275,12 @@ def _static(envelope, *, repository, package=None, check_socket=True):
             or envelope.semantic_sha256 != contract['semantic_sha256']
             or envelope.frozen_config != contract['training_config']
             or envelope.role != launch['role'] or envelope.device_plan != launch['device_plan']
-            or envelope.checkpoint_origin != launch['checkpoint_origin']
             or process_identity(envelope.parent.pid) != envelope.parent
             or envelope.parent.uid != os.getuid()):
         raise ValueError('actual parent envelope current source/process binding differs')
+    from .tabletop_native_teacher_actual_launch import validate_actual_checkpoint_origin
+
+    validate_actual_checkpoint_origin(launch, envelope.checkpoint_origin, recipe["spec"], package_name=name)
     _read(envelope.frozen_config)
     _wall(envelope, recipe)
     _verify_scheduler_parent(envelope, repository)
@@ -301,7 +304,22 @@ def read_launch_binding(binding, *, repository, package=None):
 
 
 def read_archived_fresh_launch(attempt, *, spec, launch, identity, hashes):
-    """Read an ended attempt's canonical files without authorizing a live process."""
+    """Read an ended A attempt's canonical files without authorizing a live process."""
+    return _read_archived_launch(attempt, spec=spec, launch=launch, identity=identity,
+                                 hashes=hashes, expected_role="a_fresh")
+
+
+def read_archived_resume_launch(attempt, *, spec, launch, identity, hashes):
+    """Read an ended B attempt's canonical files and immutable restore binding."""
+    return _read_archived_launch(attempt, spec=spec, launch=launch, identity=identity,
+                                 hashes=hashes, expected_role="b_resume")
+
+
+def _read_archived_launch(attempt, *, spec, launch, identity, hashes, expected_role):
+    from .tabletop_native_teacher_actual_launch import validate_actual_checkpoint_origin
+
+    if launch["role"] != expected_role:
+        raise ValueError("archived launch role differs")
     launch_dir = attempt / 'actual-launch'
     _, raw = _read(dict(path=str(launch_dir / 'binding.json'),
                         sha256=hashes['actual-launch/binding.json']))
@@ -311,7 +329,7 @@ def read_archived_fresh_launch(attempt, *, spec, launch, identity, hashes):
     issued, deadline = envelope.issued_monotonic_s, envelope.deadline_monotonic_s
     if (_encode(envelope) != raw or envelope.schema != ENVELOPE_SCHEMA
             or envelope.package_name != attempt.parent.parent.name
-            or envelope.role != 'a_fresh' or envelope.checkpoint_origin is not None
+            or envelope.role != expected_role
             or envelope.device_plan != launch['device_plan']
             or envelope.registered_intent != expected_intent
             or envelope.core_identity != identity['core_identity']
@@ -322,6 +340,8 @@ def read_archived_fresh_launch(attempt, *, spec, launch, identity, hashes):
             or type(issued) not in (float, int) or type(deadline) not in (float, int)
             or not 0 < issued < deadline or deadline - issued > pin['limits']['inner_wall_timeout_s']):
         raise ValueError('archived launch source, intent or deadline differs')
+    validate_actual_checkpoint_origin(launch, envelope.checkpoint_origin, spec,
+                                      package_name=envelope.package_name)
 
     _, raw = _read(dict(path=str(launch_dir / 'reply.json'), sha256=hashes['actual-launch/reply.json']))
     reply = _reply(json.loads(raw))
@@ -329,7 +349,7 @@ def read_archived_fresh_launch(attempt, *, spec, launch, identity, hashes):
             or reply.envelope_sha256 != hashes['actual-launch/binding.json']
             or reply.intent_sha256 != hashes['intent.json'] or reply.server != envelope.parent
             or reply.actual_identity != envelope.actual_identity or reply.nonce != envelope.nonce
-            or reply.role != envelope.role or reply.checkpoint_origin is not None
+            or reply.role != envelope.role or _encode(reply.checkpoint_origin) != _encode(envelope.checkpoint_origin)
             or reply.issued_monotonic_s != issued or reply.deadline_monotonic_s != deadline):
         raise ValueError('archived worker grant differs from its parent envelope')
     for field, name in ((reply.process_config, 'process.json'), (reply.authorization, 'authorization.json'),
@@ -337,6 +357,10 @@ def read_archived_fresh_launch(attempt, *, spec, launch, identity, hashes):
         path, _ = _read(field)
         if path != launch_dir / name:
             raise ValueError('archived worker grant file escapes this attempt')
+    if expected_role == "b_resume":
+        _, raw_auth = _read(reply.authorization)
+        if json.loads(raw_auth).get("checkpoint_origin_sha256") != _hash(_encode(envelope.checkpoint_origin)):
+            raise ValueError("archived grant does not bind the resume origin")
     return envelope
 
 
@@ -428,7 +452,7 @@ def issue_process_overlay(*, repository, package, envelope, connection, spawn_ro
     """Server-only issuer: reread registration, kernel peer, ancestry and FLOCK."""
     from scripts import run_dh116_work_packages as scheduler
     from .tabletop_native_teacher_preflight import authorization_config_digest
-    _, recipe, _, _, _ = _registered(repository, package, envelope.registered_intent)
+    name, recipe, launch, _, _ = _registered(repository, package, envelope.registered_intent)
     _static(envelope, repository=repository, package=package)
     if process_identity(os.getpid()) != envelope.parent:
         raise ValueError('only the registered live parent can issue a grant')
@@ -457,6 +481,12 @@ def issue_process_overlay(*, repository, package, envelope, connection, spawn_ro
         wall_timeout_s=limits['inner_wall_timeout_s'])
     if config.get('budget') != budget:
         raise ValueError('frozen five-key budget must derive from the approved recipe')
+    origin = None
+    if envelope.role == "b_resume":
+        origin = repository.resolve_actual_checkpoint_origin(launch, resume_spec=spec, package_name=name)
+        if _encode(origin) != _encode(envelope.checkpoint_origin):
+            raise ValueError("resolved A origin changed before the worker grant")
+        _wall(envelope, recipe)
     directory = _session_dir(envelope)
     session = envelope.nonce
     auth = dict(schema='dh116-native-teacher-budget-authorization-v1', scope='new_native_teacher_ppo',
@@ -467,6 +497,8 @@ def issue_process_overlay(*, repository, package, envelope, connection, spawn_ro
         issued_monotonic_s=envelope.issued_monotonic_s, deadline_monotonic_s=envelope.deadline_monotonic_s,
         actual_identity=envelope.actual_identity, intent_sha256=envelope.registered_intent['sha256'],
         nonce=envelope.nonce, server=asdict(envelope.parent), role=envelope.role)
+    if origin is not None:
+        auth["checkpoint_origin_sha256"] = _hash(_encode(origin))
     authorization = _write(directory / 'authorization.json', auth)
     resource = dict(schema='dh116-native-resource-reservation-v1', session_uid=session,
         resource_class='isaac_native_singleton', authorization_sha256=authorization['sha256'], pid=peer.pid,
@@ -497,7 +529,7 @@ def validate_worker_launch_reply(reply, *, envelope, repository, package, connec
                 or reply.actual_identity != envelope.actual_identity or reply.nonce != envelope.nonce
                 or reply.server != peer_process_identity(connection) or reply.server != envelope.parent
                 or reply.worker != current or reply.lock_device != device or reply.lock_inode != inode
-                or reply.role != envelope.role or reply.checkpoint_origin != envelope.checkpoint_origin
+                or reply.role != envelope.role or _encode(reply.checkpoint_origin) != _encode(envelope.checkpoint_origin)
                 or reply.issued_monotonic_s != envelope.issued_monotonic_s
                 or reply.deadline_monotonic_s != envelope.deadline_monotonic_s):
             raise ValueError('worker reply source/peer/session/role/deadline differs')
@@ -517,6 +549,9 @@ def validate_worker_launch_reply(reply, *, envelope, repository, package, connec
                 issued_monotonic_s=envelope.issued_monotonic_s,
                 deadline_monotonic_s=envelope.deadline_monotonic_s).items()):
             raise ValueError('parent process overlay actual contract differs')
+        if envelope.role == "b_resume" and auth.get("checkpoint_origin_sha256") != _hash(
+                _encode(envelope.checkpoint_origin)):
+            raise ValueError("parent authorization does not bind the resume origin")
         core = verify_worker_lease(config['preflight'], repo=repository, package=package,
             expected_semantic_sha256=envelope.semantic_sha256)
         return dict(core_lease=core, process_config=config, server=peer_process_identity(connection))

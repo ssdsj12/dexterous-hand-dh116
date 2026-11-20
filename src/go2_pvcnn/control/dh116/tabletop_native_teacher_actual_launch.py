@@ -26,8 +26,20 @@ SOURCE_FILES = frozenset({
     'scripts/train_dh116_native_teacher_worker.py',
     'tests/test_native_teacher_actual_launch.py',
     'tests/test_native_teacher_actual_launch_process.py',
+    'tests/test_native_teacher_actual_resume_origin.py',
+    'tests/test_native_teacher_actual_resume_update.py',
+    'tests/test_native_teacher_actual_resume_artifacts.py',
+    'tests/test_native_teacher_actual_resume_launch.py',
 })
 _SHA = re.compile(r'[0-9a-f]{64}')
+_RESUME_REFERENCE_KEYS = {"producer_package", "receipt_sha256"}
+_RESUME_ORIGIN_KEYS = _RESUME_REFERENCE_KEYS | {
+    "origin_scope", "tested_head", "producer_episode_uid", "checkpoint_path",
+    "checkpoint_sha256", "policy_weights_sha256", "rng_state_sha256", "semantic_sha256",
+    "source_closure_sha256", "loaded_updates", "loaded_policy_version", "loaded_environment_steps",
+    "loaded_accepted_minibatch_updates", "diagnostic_verified", "native_ready",
+    "native_qualification", "grasp_qualified", "teacher_admission",
+}
 
 def _digest(value):
     return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
@@ -100,6 +112,52 @@ def audit_loaded_actual_sources(repository, package):
             if relative.startswith(('src/','scripts/')) and relative.endswith('.py') and relative not in inventory:
                 raise ValueError('actual loaded producer source closure incomplete: '+relative)
 
+def _resume_reference(reference):
+    if (type(reference) is not dict or set(reference) != _RESUME_REFERENCE_KEYS
+            or type(reference["producer_package"]) is not str
+            or not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,70}", reference["producer_package"])
+            or not _sha(reference["receipt_sha256"]) or reference["receipt_sha256"] == "0"*64):
+        raise ValueError("actual resume requires only the exact A package and receipt reference")
+    return reference
+
+
+def validate_actual_checkpoint_origin(launch, origin, spec, *, package_name):
+    """Check a resolved diagnostic origin against the frozen companion and training contract."""
+    role = launch["role"]
+    if role == "a_fresh":
+        if launch["checkpoint_origin"] is not None or origin is not None:
+            raise ValueError("fresh actual launch must have no checkpoint origin")
+        return
+    if role != "b_resume":
+        raise ValueError("unsupported actual worker role")
+    reference = _resume_reference(launch["checkpoint_origin"])
+    pin = spec["teacher_contract"]
+    if (type(origin) is not dict or set(origin) != _RESUME_ORIGIN_KEYS
+            or any(origin.get(key) != value for key, value in reference.items())
+            or origin["producer_package"] == package_name
+            or origin["origin_scope"] != "actual_resume_diagnostic_unqualified"
+            or origin["diagnostic_verified"] is not True
+            or any(origin[key] is not False for key in ("native_ready", "native_qualification",
+                                                        "grasp_qualified", "teacher_admission"))
+            or origin["source_closure_sha256"] != pin["source_sha256"]
+            or origin["semantic_sha256"] != pin["semantic_sha256"]
+            or type(origin["tested_head"]) is not str or not re.fullmatch(r"[0-9a-f]{40}", origin["tested_head"])
+            or type(origin["producer_episode_uid"]) is not str or not origin["producer_episode_uid"]
+            or type(origin["loaded_accepted_minibatch_updates"]) is not int
+            or origin["loaded_accepted_minibatch_updates"] < 1
+            or any(type(origin[key]) is not int or origin[key] != value for key, value in (
+                ("loaded_updates", 1), ("loaded_policy_version", 1),
+                ("loaded_environment_steps", pin["limits"]["controls"])))
+            or any(not _sha(origin[key]) or origin[key]=="0"*64 for key in (
+                "checkpoint_sha256", "policy_weights_sha256", "rng_state_sha256",
+                "source_closure_sha256", "semantic_sha256"))):
+        raise ValueError("resolved A checkpoint origin differs from the frozen diagnostic contract")
+    path = origin["checkpoint_path"]
+    if (type(path) is not str or not Path(path).is_absolute()
+            or _regular(Path(path).parent, path).name != "teacher_clean.pt"):
+        raise ValueError("canonical original A checkpoint path required")
+
+
 def validate_actual_launch(launch, *, repository, package, recipe=None):
     """Validate current companion bytes against the unchanged C06 core."""
     recipe=recipe or repository.native_recipe(package)
@@ -110,12 +168,16 @@ def validate_actual_launch(launch, *, repository, package, recipe=None):
             or launch['core_recipe_identity']!=core or launch['debugger']!='gdb_on_segv'
             or launch['source_closure_sha256']!=spec['teacher_contract']['source_sha256']):
         raise ValueError('actual launch core/source/debugger binding invalid')
-    if launch['role']=='b_resume':raise ValueError('actual_resume_not_implemented')
-    if launch['role']!='a_fresh' or launch['checkpoint_origin'] is not None:
+    if launch['role']=='a_fresh' and launch['checkpoint_origin'] is None:
+        entrypoint='run_a'
+    elif launch['role']=='b_resume':
+        _resume_reference(launch['checkpoint_origin'])
+        entrypoint='run_b'
+    else:
         raise ValueError('actual launch role/origin invalid')
     provider=launch['provider']
     if (type(provider) is not dict or set(provider)!={'path','entrypoint','sha256'}
-            or provider['path']!=PROVIDER or provider['entrypoint']!='run_a' or not _sha(provider['sha256'])):
+            or provider['path']!=PROVIDER or provider['entrypoint']!=entrypoint or not _sha(provider['sha256'])):
         raise ValueError('actual launch fixed provider binding invalid')
     plan=launch['device_plan']
     if (type(plan) is not dict or set(plan)!={'physical_gpu_index','cuda_visible_devices','logical_device','experience_path','experience_sha256'}
@@ -237,7 +299,8 @@ def main(argv=None):
                 if Path(provider.__file__).resolve()!=expected:
                     raise ValueError('actual_provider_source_substitution')
                 audit_loaded_actual_sources(repository,package)
-                provider.run_a(config=lease.process_config,lease=lease,output=Path(args.output))
+                run = provider.run_b if lease.role == "b_resume" else provider.run_a
+                run(config=lease.process_config,lease=lease,output=Path(args.output))
             finally:lease.close()
         return 0
     except (OSError,ValueError,KeyError,TypeError,ImportError,subprocess.SubprocessError) as error:

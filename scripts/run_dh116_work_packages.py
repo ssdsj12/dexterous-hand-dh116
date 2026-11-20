@@ -885,10 +885,22 @@ class Repository:
             fingerprint = _digest(dict(core_identity=core, actual_identity=actual))
         return launch, dict(core_identity=core, actual_identity=actual, attempt_fingerprint=fingerprint)
 
-    def resolve_actual_checkpoint_origin(self, launch, *, packages):
+    def resolve_actual_checkpoint_origin(self, launch, *, resume_spec, package_name):
         if launch['role'] == 'a_fresh':
             return None
-        raise ValueError('actual_resume_not_implemented')
+        from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_launch import (
+            _resume_reference, validate_actual_checkpoint_origin,
+        )
+
+        if launch['role'] != 'b_resume':
+            raise ValueError('unsupported actual worker role')
+        reference = _resume_reference(launch['checkpoint_origin'])
+        producer = reference['producer_package']
+        if producer == package_name:
+            raise ValueError('actual resume cannot consume its own diagnostic')
+        origin = self.read_actual_resume_origin(producer, reference['receipt_sha256'], resume_spec=resume_spec)
+        validate_actual_checkpoint_origin(launch, origin, resume_spec, package_name=package_name)
+        return origin
 
     def _read_native_receipt_bytes(self, name, *, attempt_fingerprint, expected):
         base = self.private / 'native-attempts' / name / attempt_fingerprint
@@ -984,14 +996,22 @@ class Repository:
         summary, _, _ = self._verified_actual_fresh_diagnostic(name, expected)
         return summary
 
+    def verify_actual_resume_diagnostic(self, name, expected):
+        """Read back one actual resumed diagnostic while retaining all admission guards."""
+        summary, _, _ = self._verified_actual_diagnostic(name, expected, role='b_resume')
+        return summary
+
     def _verified_actual_fresh_diagnostic(self, name, expected):
+        return self._verified_actual_diagnostic(name, expected, role='a_fresh')
+
+    def _verified_actual_diagnostic(self, name, expected, *, role):
         if not isinstance(expected, str) or not SHA256.fullmatch(expected):
             raise ValueError('exact diagnostic receipt SHA256 required')
         package = self.registry()['packages'][name]
         recipe = self.native_recipe(package)
         launch = self.actual_launch(package)
-        if launch is None or launch['role'] != 'a_fresh':
-            raise ValueError('registered fresh actual launch required')
+        if launch is None or launch['role'] != role:
+            raise ValueError('registered matching actual diagnostic role required')
         execution = self.native_execution_identity(package, recipe=recipe)
         path, raw = self._read_native_receipt_bytes(
             name, attempt_fingerprint=execution['attempt_fingerprint'], expected=expected)
@@ -1037,13 +1057,23 @@ class Repository:
                     or debug.get('debugger_inferior_signal') is not None
                     or any(item.get(k) != v for item in (outer, receipt) for k, v in debug.items())):
                 raise ValueError('diagnostic debugger evidence lacks independent inferior exit zero')
-        from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_process import read_archived_fresh_launch
-        from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_artifacts import audit_actual_fresh_outputs
+        from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_process import (
+            read_archived_fresh_launch, read_archived_resume_launch,
+        )
+        from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_artifacts import (
+            audit_actual_fresh_outputs, audit_actual_resume_outputs,
+        )
 
-        envelope = read_archived_fresh_launch(attempt, spec=recipe['spec'], launch=launch,
-                                              identity=execution, hashes=hashes)
-        evidence = audit_actual_fresh_outputs(recipe['spec'], output, repository=self,
-                                              package=package, envelope=envelope)
+        if role == 'a_fresh':
+            read_launch, audit = read_archived_fresh_launch, audit_actual_fresh_outputs
+        else:
+            read_launch, audit = read_archived_resume_launch, audit_actual_resume_outputs
+        envelope = read_launch(attempt, spec=recipe['spec'], launch=launch, identity=execution, hashes=hashes)
+        if role == 'b_resume':
+            origin = self.resolve_actual_checkpoint_origin(launch, resume_spec=recipe['spec'], package_name=name)
+            if envelope.checkpoint_origin != origin:
+                raise ValueError('archived B checkpoint differs from the reverified A diagnostic')
+        evidence = audit(recipe['spec'], output, repository=self, package=package, envelope=envelope)
         if any(receipt.get(k) != v for k, v in evidence.items()):
             raise ValueError('diagnostic native artifacts changed after scheduler receipt')
         summary = dict(diagnostic_verified=True, package=name, tested_head=receipt['tested_head'],
@@ -1255,16 +1285,21 @@ class Repository:
         binding_checks = {}
 
         def binding_error(name):
-            binding = recipes[name]['spec'].get('dependency_receipt')
-            if binding is None:
+            recipe = recipes[name]
+            binding = recipe['spec'].get('dependency_receipt')
+            if binding is None and selected[name].get('actual_launch') is None:
                 return None
             if name not in binding_checks:
                 try:
-                    bound = self.resolve_native_dependency_receipt(binding, registry['packages'])
-                    result = qualified.get(name)
-                    error = ('qualified result binds a different producer receipt'
-                             if result is not None and result.get('dependency_receipt_sha256') != bound['sha256']
-                             else None)
+                    error = None
+                    if binding is not None:
+                        bound = self.resolve_native_dependency_receipt(binding, registry['packages'])
+                        result = qualified.get(name)
+                        if result is not None and result.get('dependency_receipt_sha256') != bound['sha256']:
+                            error = 'qualified result binds a different producer receipt'
+                    launch = self.actual_launch(selected[name], recipe=recipe)
+                    if launch is not None and launch['role'] == 'b_resume':
+                        self.resolve_actual_checkpoint_origin(launch, resume_spec=recipe['spec'], package_name=name)
                 except (OSError, ValueError, KeyError, TypeError) as exc:
                     error = str(exc)
                 binding_checks[name] = error
@@ -1508,14 +1543,22 @@ class Repository:
             return
         try:
             if actual_launch is not None:
-                from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_artifacts import audit_actual_fresh_outputs
-                artifacts = audit_actual_fresh_outputs(
-                    spec, output, repository=self, package=package, envelope=server.envelope)
+                from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_artifacts import (
+                    audit_actual_fresh_outputs, audit_actual_resume_outputs,
+                )
+                audit = audit_actual_fresh_outputs
+                if actual_launch['role'] == 'b_resume':
+                    origin = self.resolve_actual_checkpoint_origin(actual_launch, resume_spec=spec,
+                                                                   package_name=server.envelope.package_name)
+                    if server.envelope.checkpoint_origin != origin:
+                        raise ValueError('verified A origin changed before the B output audit')
+                    audit = audit_actual_resume_outputs
+                artifacts = audit(spec, output, repository=self, package=package, envelope=server.envelope)
             elif spec.get('version') == 2:
                 artifacts = validate_native_artifacts(spec, output, repository=self, package=package)
             else:
                 artifacts = validate_native_artifacts(spec, output)
-        except (OSError, ValueError, TypeError) as error:
+        except (OSError, ValueError, TypeError, KeyError) as error:
             result.update(blocker_kind='failed_native', reason=f'independent validator rejected evidence: {error}')
             return
         if spec.get('version') == 2:
@@ -1870,7 +1913,9 @@ def main(argv=None):
     modes.add_argument('--native-worker', type=Path, help=argparse.SUPPRESS)
     modes.add_argument('--relay-plan', action='store_true')
     modes.add_argument('--verify-actual-diagnostic', metavar='PACKAGE', help='read back a sealed diagnostic receipt')
-    parser.add_argument('--receipt-sha256', help='exact SHA256 for --verify-actual-diagnostic')
+    modes.add_argument('--verify-actual-resume-diagnostic', metavar='PACKAGE',
+                       help='read back a sealed resumed diagnostic receipt')
+    parser.add_argument('--receipt-sha256', help='exact SHA256 for actual diagnostic readback')
     modes.add_argument('--relay-ack', action='store_true', help='Read verified local publisher receipt from stdin')
     parser.add_argument('--scope', choices=('current', 'all'), default='current',
                         help='select the configured target or all registered work packages')
@@ -1895,10 +1940,13 @@ def main(argv=None):
         repo.verify_native_target()
         print(json_text(repo.run_native_worker(args.native_worker)), end='', flush=True)
         return 0
-    if bool(args.verify_actual_diagnostic) != bool(args.receipt_sha256):
-        parser.error('--verify-actual-diagnostic and --receipt-sha256 must be supplied together')
-    if args.verify_actual_diagnostic:
-        print(json_text(repo.verify_actual_diagnostic(args.verify_actual_diagnostic, args.receipt_sha256)), end='')
+    diagnostic_package = args.verify_actual_diagnostic or args.verify_actual_resume_diagnostic
+    if bool(diagnostic_package) != bool(args.receipt_sha256):
+        parser.error('actual diagnostic readback and --receipt-sha256 must be supplied together')
+    if diagnostic_package:
+        readback = (repo.verify_actual_diagnostic if args.verify_actual_diagnostic
+                    else repo.verify_actual_resume_diagnostic)
+        print(json_text(readback(diagnostic_package, args.receipt_sha256)), end='')
         return 0
     if args.relay_plan:
         print(json_text(repo.relay_plan()), end='')

@@ -1,3 +1,7 @@
+## Actual Teacher resume authorization
+
+Bind the resumed worker to a verified A diagnostic at launch and read back separate A and B records. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-native-plan.md).
+
 ## Actual Teacher resumed worker and artifact roles
 
 Add the B restore path after a fresh Reset and audit the resumed policy, physical ledger and checkpoint separately. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-provider.md).

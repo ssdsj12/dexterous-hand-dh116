@@ -15,7 +15,12 @@ PROVIDER = 'src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_provider.
 FILES = {'src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_launch.py',
     'src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_process.py',
     'scripts/train_dh116_native_teacher_worker.py',
-    'tests/test_native_teacher_actual_launch.py','tests/test_native_teacher_actual_launch_process.py'}
+    'tests/test_native_teacher_actual_launch.py','tests/test_native_teacher_actual_launch_process.py',
+    'tests/test_native_teacher_actual_resume_origin.py',
+    'tests/test_native_teacher_actual_resume_update.py',
+    'tests/test_native_teacher_actual_resume_artifacts.py',
+    'tests/test_native_teacher_actual_resume_launch.py',
+}
 ENVIRONMENT='configs/dh116_execution/actual-environment-v1.json'
 
 def launch_module():
@@ -107,11 +112,11 @@ def test_companion_change_invalidates_approval_and_receipt_dispatch(repo,tmp_pat
     with pytest.raises(ValueError,match='actual_artifacts_not_implemented'):
         repo._verified_native_receipt('actual','cpu-only-fixture',repo.native_recipe(package),'f'*64)
 
-def test_l03_resume_explicitly_rejected(repo,tmp_path):
+def test_resume_with_unrecognized_producer_reference_is_rejected(repo,tmp_path):
     package,_,launch=actual_fixture(repo,tmp_path)
     launch['role']='b_resume';launch['provider']['entrypoint']='run_b'
     launch['checkpoint_origin']=dict(package='a',receipt_sha256='f'*64)
-    with pytest.raises(ValueError,match='actual_resume_not_implemented'):
+    with pytest.raises(ValueError,match='exact A package and receipt reference'):
         launch_module().validate_actual_launch(launch,repository=repo,package=package,recipe=repo.native_recipe(package))
 
 def test_actual_device_checks_actual_mask_and_enumeration(repo,tmp_path):

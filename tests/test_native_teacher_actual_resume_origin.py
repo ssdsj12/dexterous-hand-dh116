@@ -6,7 +6,7 @@ import pytest
 from scripts.run_dh116_work_packages import Repository
 
 
-PACKAGE = "teacher.pinch-real-smoke-A"
+PACKAGE = "teacher.pinch-real-smoke-a"
 RECEIPT_SHA = "a" * 64
 
 
