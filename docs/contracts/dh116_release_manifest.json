@@ -29163,6 +29163,31 @@
         "verified_at_utc": "2026-11-20T17:15:44.974132+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Actual Teacher resume checkpoint binding",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-binding.md",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_binding_v1.json",
+      "cpu_tests": {
+        "passed": 246,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "483a2e6831fc24086e9484781bada0e9d7fcfc7e",
+        "source_tree": "4d69abeebe83446a769d1846b3d2af90fe4999f3",
+        "remote_branch": "11-17",
+        "files_verified": 12,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T17:27:31.985523+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
