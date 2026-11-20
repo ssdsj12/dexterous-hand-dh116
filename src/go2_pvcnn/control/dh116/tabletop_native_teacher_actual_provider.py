@@ -153,6 +153,7 @@ def _acquire(sim, owners, trace, *, attempt, config, lease):
         FRESH_POLICY_INITIALIZATION_SEED,
         build_actual_factories,
     )
+    from .tabletop_fast_owned_codec import codec_scope
     from .tabletop_native_teacher_actual_update import run_fresh_update
     from .tabletop_native_teacher_collector import NativeJournal
     from .tabletop_native_teacher_session import (
@@ -190,7 +191,9 @@ def _acquire(sim, owners, trace, *, attempt, config, lease):
                     "native_qualification": False,
                     "teacher_admission": False,
                 })
-                with collector.trace_wall_windows(trace.event):
+                # The one owned worker can accelerate the legacy encoder during
+                # collection; the unchanged replay schema remains authoritative.
+                with codec_scope(), collector.trace_wall_windows(trace.event):
                     result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract)
             _record_actual_wall_budget(collector, lease, "after_update")
         except BaseException:

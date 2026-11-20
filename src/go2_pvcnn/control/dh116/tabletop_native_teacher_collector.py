@@ -128,7 +128,7 @@ class NativeTeacherCollector:
         self.quarantined=self._closed=self._active=self.episode_done=False
         self.consumed_sdk_steps=0 if previous is None else previous.consumed_sdk_steps
         self.transitions=0 if previous is None else previous.transitions
-        self._terminal=None;self._rows=[]
+        self._terminal=None;self._guard_results=[]
         self._used_tokens=set() if previous is None else set(previous._used_tokens);self._epoch=self._fingerprint()
         self._updates=trainer.counters["updates"]
         self.sources.reset_reward(reward)
@@ -143,7 +143,7 @@ class NativeTeacherCollector:
                     solver_calls=self.consumed_sdk_steps,internal_solver_substeps=self.consumed_sdk_steps*self.sources.solver_substeps))
                 if row.get("kind")!="physical" or not self._active:
                     raise RuntimeError("physical source outside pending window")
-                self._rows.append(_copy(row))
+                self._guard_results.append(row["exchange"]["guard_failure"])
                 endpoint=self.sources.observe(row)
                 self.reward.observe(endpoint)
                 if self.reward._terminal:
@@ -239,7 +239,7 @@ class NativeTeacherCollector:
             self.journal.emit("window_not_started",dict(remaining_substeps=remaining))
             return None
         if len(tr.rollout)>=tr.rollout_steps: raise RuntimeError("rollout full; complete original PPO update first")
-        self._active=True;self._terminal=None;self._rows=[]
+        self._active=True;self._terminal=None;self._guard_results=[]
         sink = self._wall_trace_sink
         timing = self._window_wall = _WindowWallTime() if sink is not None else None
         sdk_steps_before, transitions_before = self.consumed_sdk_steps, self.transitions
@@ -265,7 +265,7 @@ class NativeTeacherCollector:
             self._window_wall = None
             if timing is not None:
                 timing.advance(None)
-                terminal_reason = (self._rows[-1]["exchange"]["guard_failure"]
+                terminal_reason = (self._guard_results[-1]
                                    if packet is not None and packet.terminated else None)
                 # A trace write failure cannot replace the original physical/source failure.
                 with suppress(BaseException) if self.quarantined else nullcontext():
@@ -318,12 +318,12 @@ class NativeTeacherCollector:
         result=owner.control(sample["actions"])
         if timing is not None:
             timing.advance("post_action")
-        if result["physical_samples"]!=len(self._rows) or not 1<=len(self._rows)<=8:
+        if result["physical_samples"]!=len(self._guard_results) or not 1<=len(self._guard_results)<=8:
             raise SourceFailure("actual original control window differs from durable rows")
         # History's existing sequence validates the ORIGINAL physical guard.
         # Additional trusted reward guard is retained in actual result/packet.
-        historical=deepcopy(result);historical["termination_reason"]=self._rows[-1]["exchange"]["guard_failure"]
-        if len(self._rows)<8 and historical["termination_reason"] is None:
+        historical=deepcopy(result);historical["termination_reason"]=self._guard_results[-1]
+        if len(self._guard_results)<8 and historical["termination_reason"] is None:
             # Sequence's terminal rule requires a declared physical stop;
             # actual observer result is the trusted independent health guard.
             raise SourceFailure("trusted observer terminal lacks persisted physical guard")

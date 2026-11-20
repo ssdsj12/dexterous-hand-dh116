@@ -1,5 +1,8 @@
 ## 2026-11-20 Teacher rollout codec CPU speedup
 
+- 封存 Pinch v13 有界诊断配方，减少采集物理行冗余拷贝。
+
+
 - 封存 Pinch v13 候选 Reset，记录三种抓法受载前的几何证据。
 
 

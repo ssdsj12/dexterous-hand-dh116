@@ -1,0 +1,38 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-v13-ppo-recipe-cpu",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v13-ppo-recipe.md",
+  "cpu": {
+    "passed": 250,
+    "failed": 0,
+    "log_sha256": "06ec602447593ca3082669249322654941e0d5588768bcee11f70cc0eb8f3103",
+    "red_log_sha256": "e471d8dc12a2d43c423cce8b46d05274653454b540f9bbb447c8fc0359a1c5f5"
+  },
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_collector.py": "8d9f943c45a979d79a62517afd5fbf258debb3f34c966c8f4a9e2ac51912e114",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_provider.py": "fd999d0c798b8cd587b8e93a76f15321e8423de295493c4936fa80d158c25ff6",
+    "tests/test_native_teacher_collector.py": "332ed94d625dd4f2e0eb5ed6b75175a7710297032dcdf6b8261e8289df9265e1"
+  },
+  "attempt_fingerprint": "b22bc5fb2aca4c2b65ff7e3d783c80189f574f4d1af48438c7c5f0385d56b899",
+  "recipe": {
+    "actual_identity": {
+      "companion_sha256": "bed7abf2866667076b19ccf0ced9b633a6f0bc43eb667484265a2318bf20230c",
+      "core_recipe_identity": {
+        "code_config_sha256": "62d439b5482425df7a07ebe44141ecb399d36791f2a59f8cef8ca92893bb8cd2",
+        "command_spec_sha256": "c6e9eda7c3d9e047397616d8981d21e4672aec776f6a0312d8931017fce1f836"
+      },
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "source_closure_sha256": "50dd9f29b21e98c62ada91387c0c7c49423c3500cbe63108827493cc1b69f5d6"
+    },
+    "attempt_fingerprint": "b22bc5fb2aca4c2b65ff7e3d783c80189f574f4d1af48438c7c5f0385d56b899",
+    "core_identity": {
+      "code_config_sha256": "62d439b5482425df7a07ebe44141ecb399d36791f2a59f8cef8ca92893bb8cd2",
+      "command_spec_sha256": "c6e9eda7c3d9e047397616d8981d21e4672aec776f6a0312d8931017fce1f836"
+    }
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false
+}

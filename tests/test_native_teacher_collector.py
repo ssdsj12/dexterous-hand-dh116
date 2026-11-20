@@ -594,3 +594,23 @@ def test_wall_trace_sink_failure_never_quarantines_a_good_transition_or_replaces
     assert c.transitions == (0 if source_error else 1)
     assert rod.rope.steps == (3 if source_error else 8)
     assert c._wall_trace_sink is None
+
+
+def test_collector_counts_original_guards_without_copying_durable_physical_rows(
+        monkeypatch, tmp_path, backend_profile):
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_collector as module
+
+    collector, *_ = fixture(monkeypatch, tmp_path, backend_profile)
+    copy_owned = module._copy
+
+    def reject_redundant_physical_copy(value):
+        if isinstance(value, dict) and value.get("kind") == "physical":
+            raise AssertionError("duplicate full physical snapshot in collector")
+        return copy_owned(value)
+
+    monkeypatch.setattr(module, "_copy", reject_redundant_physical_copy)
+    summary = collector.collect()
+    assert not summary.done
+    physical = [row for row in operations(collector) if row["operation"] == "physical"]
+    assert len(physical) == collector.consumed_sdk_steps == 8
+    assert all("rod_boundary" in row["payload"] for row in physical)

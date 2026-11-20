@@ -43074,6 +43074,50 @@
         "scope": "Reset and teardown only",
         "native_qualification": false
       }
+    },
+    "teacher.pinch-ppo-fresh-smoke32-v13": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "pinch_fresh_ppo_smoke32_diagnostic_v1",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Pinch v13 source-bound fresh 32-control Teacher diagnostic",
+      "command_spec": "configs/dh116_execution/pinch-actual-smoke32-core-v13.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Verified native Reset, exact standing authorization and resource reservation required.",
+      "dependencies": [
+        "teacher.pinch-v13-native-reset"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v13-ppo-recipe.md",
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-smoke32-launch-v13.json",
+        "sha256": "bed7abf2866667076b19ccf0ced9b633a6f0bc43eb667484265a2318bf20230c"
+      }
+    },
+    "teacher.pinch-v13-ppo-recipe-cpu": {
+      "title": "Pinch v13 verified source closure and bounded PPO preparation",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.pinch-v13-native-reset"
+      ],
+      "tests": [
+        "tests/test_native_teacher_collector.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_v13_ppo_recipe_v1.json",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v13-ppo-recipe.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 250,
+        "failed": 0,
+        "scope": "CPU only"
+      }
     }
   },
   "execution_target": {
