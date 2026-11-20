@@ -1,0 +1,36 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "package": "teacher.pinch-v13-native-reset",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-v13-native-reset.md",
+  "native_runs": 1,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "reset_verified": true,
+  "sdk_setup_steps": 2,
+  "control_steps": 0,
+  "solver_steps": 0,
+  "ppo_updates": 0,
+  "exit_code": 0,
+  "wall_seconds": 43.750546572962776,
+  "frozen_fingerprint": "86b4440ac6d80a23f76b11d53eeebf5c4bb0f9792cbdd6074facf4595f0fbd42",
+  "pair_sha256": "933acc2b669b3bef249e206752e6364ea30ae4263afce734e22c998054eba67d",
+  "reset_manifest_sha256": "fce817f5bebc8c4a9368bae1d9169ac702f40c4540847e94db17c520ae6672b8",
+  "outer_receipt_sha256": "d8014a7464e43976e7c4e05dae5ca45cd8dbced3dd26092ca97ae636adff38f2",
+  "native_log_sha256": "93f33315e55c67d02ca35e8f5df44bc2c2afa46393458487cfafa443575e6a36",
+  "geometry_by_side": {
+    "left": {
+      "source_minimum_table_clearance_m": 0.0023372100065872092,
+      "locked_pad_minimum_table_clearance_m": 0.003410563643977682,
+      "initial_geometry_passed": true,
+      "stored_cooking_complete": false
+    },
+    "right": {
+      "source_minimum_table_clearance_m": 0.0026531732134380537,
+      "locked_pad_minimum_table_clearance_m": 0.00433873204435864,
+      "initial_geometry_passed": true,
+      "stored_cooking_complete": false
+    }
+  }
+}
