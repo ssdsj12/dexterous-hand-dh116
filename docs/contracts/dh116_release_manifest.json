@@ -28438,6 +28438,31 @@
         "verified_at_utc": "2026-11-20T11:18:57.702861+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-precontact-pair-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-precontact-pair-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_precontact_pair_native_v1.json",
+      "cpu_tests": {
+        "passed": 209,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "8f24ab426ffdb3fb8b9781dead81c5bf8d736651",
+        "source_tree": "2207d94e425a4f479960e9c4469662d7e1f17273",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-20T11:24:29.666074+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
