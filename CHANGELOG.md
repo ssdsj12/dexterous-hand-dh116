@@ -1,3 +1,7 @@
+## 2026-11-20  Pinch source fixtures
+
+恢复旧 Reset 的封存 Git 来源测试，并修复终止观察器的计时夹具。
+
 ## 2026-11-20 Pinch short PPO diagnostic
 
 新增独立 Pinch 8 控制窗 PPO 诊断，源绑定和完整账本仍由原调度器审计。 [报告](docs/superpowers/reports/2026-11-20-teacher-pinch-smoke8-diagnostic.md)。

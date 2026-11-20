@@ -43205,6 +43205,27 @@
         "scope": "CPU and retained physical prefix only",
         "native_qualification": false
       }
+    },
+    "teacher.pinch-source-fixtures-cpu": {
+      "title": "Pinch native source regression fixture repairs",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [],
+      "tests": [
+        "tests/test_native_teacher_policy_pinch_distance.py",
+        "tests/test_native_teacher_preflight.py",
+        "tests/test_native_teacher_worker_checkpoint.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-20-teacher-pinch-source-fixtures.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_source_fixtures_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 83,
+        "failed": 0,
+        "scope": "source fixture and checkpoint targeted reruns",
+        "native_qualification": false
+      }
     }
   },
   "execution_target": {

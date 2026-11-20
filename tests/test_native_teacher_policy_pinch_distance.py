@@ -166,7 +166,9 @@ def run_window(c,source,ep,*,action=.123):
         record(event)
         endpoint=source.observe(event);reward.observe(endpoint)
         if reward._terminal:reason[0]="reward:"+"|".join(reward._reasons)
-    ep._record=observed;ep._exchange=_TerminalObserver(ep._exchange,lambda:reason[0],c.journal,lambda row:None)
+    ep._record = observed
+    ep._exchange = _TerminalObserver(ep._exchange, lambda: reason[0], c.journal,
+                                     lambda row: None, wall_time=lambda: None)
     result=ep.control(sample["actions"])
     settlement=history.end(result);issued=history.issued_for_pending(c.trainer,settlement)
     packet=reward.settle_once(sample["collection_token"])

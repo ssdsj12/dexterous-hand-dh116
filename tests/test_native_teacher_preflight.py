@@ -242,8 +242,33 @@ def test_real_cpu_mounted_reader_reopens_current_sdk(damage):
             api().validate_live_mounted(bindings, observation, read_identity=lambda: actual)
 
 
+@pytest.fixture(scope="module")
+def retained_replay_project(tmp_path_factory):
+    from go2_pvcnn.control.dh116 import tabletop_mesh_observation_source as source
+
+    project = tmp_path_factory.mktemp("retained-r08-source")
+    m = api()
+    producer = "54bae79365886d37e68a8d1eaf3ddeeea8eeb387"
+    report = json.loads(m.checked_file(m.R08_REPORT, m.R08_SHA))
+    pins = dict(report["replay_source_sha256"])
+    pins.update(source.source_basis()["local_sources"])
+    pins[source.CONFIG] = source.CONFIG_SHA
+    git = ["git", "-c", f"safe.directory={ROOT}", "-C", str(ROOT)]
+    for name, digest in pins.items():
+        relative = Path(name)
+        if relative.is_absolute():
+            m.checked_file(relative, digest)
+            continue
+        path = project / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(subprocess.check_output([*git, "show", f"{producer}:{name}"]))
+        m.checked_file(path, digest)
+    return project
+
+
 @pytest.mark.parametrize("damage", ["none", "seed", "rod", "receipt_sha"])
-def test_retained_manifest_is_derived_from_actual_small_raw_artifacts(tmp_path, damage):
+def test_retained_manifest_is_derived_from_actual_small_raw_artifacts(
+        tmp_path, damage, retained_replay_project):
     m = api()
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned, encode_owned
     original_path = m.EVIDENCE / (
@@ -276,14 +301,14 @@ def test_retained_manifest_is_derived_from_actual_small_raw_artifacts(tmp_path, 
     c = config()
     c["resolved_reset_manifest"] = dict(path=str(path), sha256=m.sha256_file(path))
     if damage == "none":
-        manifest = m.load_reset_manifest(c, project=ROOT)
+        manifest = m.load_reset_manifest(c, project=retained_replay_project)
         assert manifest.data()["source_refs"]["original_receipt"]["sha256"] == m.ORIGINAL_RECEIPT_SHA
         first = manifest.data()
         first["rod_state"]["positions"][0][0][0] = 999
         assert manifest.data()["rod_state"]["positions"][0][0][0] != 999
     else:
         with pytest.raises(ValueError):
-            m.load_reset_manifest(c, project=ROOT)
+            m.load_reset_manifest(c, project=retained_replay_project)
 
 
 def test_cli_malformed_schema_exits_two_and_writes_nothing(tmp_path):
