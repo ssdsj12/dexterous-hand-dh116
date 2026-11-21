@@ -32030,6 +32030,31 @@
         "verified_at_utc": "2026-11-21T19:38:33.169630+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.fresh-supported-control",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-fresh-supported-control.md",
+      "readiness": "docs/contracts/dh116_teacher_fresh_supported_control_v1.json",
+      "cpu_tests": {
+        "passed": 261,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "4fc54d0a0b0ab619214e2a9324e8184902bdb2f2",
+        "source_tree": "f95e417593ffa1b4799f7744827e88a382156585",
+        "remote_branch": "11-17",
+        "files_verified": 14,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T20:02:49.374103+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
