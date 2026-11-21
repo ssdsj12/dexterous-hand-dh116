@@ -1,3 +1,7 @@
+## Tripod independent supported native Reset
+
+Publish the receipts and native measurements. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-supported-reset-native.md).
+
 ## Pinch thumb tangent native comparison
 
 Publish the receipts and native measurements. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-thumb-tangent-native.md).

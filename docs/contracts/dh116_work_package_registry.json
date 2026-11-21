@@ -46241,6 +46241,32 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-supported-seed-native-result": {
+      "title": "Tripod independent supported native Reset",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-supported-seed-preflight"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_tripod_distal_route.py",
+        "tests/test_tripod_tracking_envelope.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_supported_reset_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-supported-reset-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "natural_exit": 0,
+        "cpu_preflight_passed": 107,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
