@@ -29638,6 +29638,31 @@
         "verified_at_utc": "2026-11-21T04:23:02.671086+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power continuing rod action handoff",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-action-handoff.md",
+      "readiness": "docs/contracts/dh116_teacher_power_supported_action_handoff_v1.json",
+      "cpu_tests": {
+        "passed": 150,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7ddb7263a9cef753bfc06cb4b369f9cf1dbfd964",
+        "source_tree": "7491630039c57ec908bb9199019fae9e5896031a",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T04:24:24.065415+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
