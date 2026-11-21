@@ -31063,6 +31063,31 @@
         "verified_at_utc": "2026-11-21T10:07:47.800974+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-left-index-stabilization-native",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-left-index-stabilization-native.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_left_index_stabilization_native_v1.json",
+      "cpu_tests": {
+        "passed": 221,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c57f13b13596da96fe289cc19a053ba05747a028",
+        "source_tree": "1aba306855cd21678d2b632b02d67b60a52422a6",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T10:17:29.336764+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
