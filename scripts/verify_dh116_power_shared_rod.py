@@ -717,6 +717,9 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                     bilateral=distal_contact.get("bilateral"),
                     continuous_cooked_hulls=distal_contact.get("continuous_cooked_hulls"),
                     envelope_refinement=distal_contact.get("envelope_refinement"))
+                if distal_contact.get("entry_contract")=="dh116-902-joint-contact-transfer-v1":
+                    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
+                    probe.prime_supported_boundary(decode_owned(final_settle),expected_clock=power.clock())
             if power_route is not None and "palm_witness" in power_route:
                 from scripts.verify_dh116_power_staged_palm_witness import SupportedPalmProbe
 

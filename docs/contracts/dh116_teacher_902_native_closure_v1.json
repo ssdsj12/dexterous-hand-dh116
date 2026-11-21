@@ -1,0 +1,62 @@
+{
+  "version": "dh116-teacher-902-native-closure-v1",
+  "base_head": "3d704bc26b7614cf98426772a07ea9a6020a66d9",
+  "status": "cpu_preflight_passed_actual_contact_not_run",
+  "cpu_tests": {
+    "passed": 242,
+    "failed": 0,
+    "new_cases": 7,
+    "final_narrow_passed": 58,
+    "log_sha256": "f903d8919936b1cf26922e2d7cae23d9d53bdf91cc97cc550f6e8324b59e7a33",
+    "registry_passed": 60
+  },
+  "source_sha256": {
+    "scripts/certify_dh116_902_joint_contact_path.py": "ac46ce90b78403351c8c0d8f7ca101c5dd782e47c0e23a741f3c6e12d8fcbcd8",
+    "scripts/screen_dh116_902_fixed_wrist_open.py": "f86632625ccbb6fb0110071680f5537cc9d3b70ee42c6944b9e1675d388825ae",
+    "scripts/verify_dh116_supported_distal_transfer.py": "cefb595fe9332aa32e66850022ebbe18f45fd51183b4386440c767c7c9240049",
+    "scripts/screen_dh116_902_flexible_contact.py": "85b1f6e23f0579375a4f9150f24c8e9988c06179c9dc818d38e9920614761f6d",
+    "scripts/verify_dh116_power_shared_rod.py": "30d61cd04e762a769e9fd72e3447177f533e5939c88e94750057a65be4ff9959",
+    "scripts/dh116_902_joint_closure_contract.py": "f012b99dc32ae7c4c03327aefb049ad4c53884dd259da2f00070a496f25cf032",
+    "scripts/verify_dh116_902_joint_closure.py": "88ddd4f5e167eedda1df54048d89b2c7f794147488dbce6bbd961753648d5cc0",
+    "tests/test_dh116_902_execution_handoff.py": "c925c514383cf752195f1393b5e9f5d110e5173aa2506d1ddb1c8ec4a6c369e7",
+    "tests/test_dh116_902_fixed_wrist_open.py": "479b4f7e806dac6361603ff75f049c7e1221e590b6780300090a84fea53ba05b"
+  },
+  "source_receipt_sha256": "5681a8cddffb664104b0d8ef7699cc8354693407a1c9e3b2427f2339de2d1022",
+  "execution_receipt_sha256": "655a24bb551c655685a0e168712c13e282226ea6f93de167ee3bb49e3286add2",
+  "cpu_proof_sha256": "ea660beac7285292226fa2bc6427b9da3e784e8d4d36187c897d6d10c37bb797",
+  "action_sha256": "fca43517d288e4b98e504bf17c2618384b3dbff3ac83506a2d0ceb490b5d49e3",
+  "initial_passed": true,
+  "cpu_path_passed": true,
+  "endpoint_contact_candidate_passed": true,
+  "closing_windows": 64,
+  "short_feedback_windows": 16,
+  "short_feedback_seconds": 0.26666666666666666,
+  "budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "sdk_steps": 880,
+    "solver_substeps": 10536,
+    "control_windows": 80,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "soft_wall_seconds": 480,
+    "outer_soft_wall_seconds": 600,
+    "auto_retries": 0,
+    "auto_kill": false
+  },
+  "native_runs": 0,
+  "force_qualified": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "rounds": "902-native-closure R1-R2",
+    "production_sources_verified": true,
+    "last_optional_hash_strengthening_reread": false
+  },
+  "next": [
+    "Seal only after all Windows publication/manifest updates",
+    "One serial bounded actual closing/contact ledger, preserve guard failure and native stack",
+    "Record per-pad load, opposition and next-step issued reaction without granting 5s Hold or Teacher qualification"
+  ]
+}

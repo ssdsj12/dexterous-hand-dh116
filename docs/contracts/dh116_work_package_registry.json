@@ -47909,6 +47909,30 @@
         "native_outer_exit": 0,
         "derived_geometry_passed": true
       }
+    },
+    "teacher.902-native-closure": {
+      "title": "Source-separated actual supported-to-closing contact and reaction diagnostic",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-joint-contact-reset"
+      ],
+      "tests": [
+        "tests/test_dh116_902_execution_handoff.py",
+        "tests/test_dh116_902_fixed_wrist_open.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_902_command_contact.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_native_closure_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-native-closure.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 242,
+        "main_cpu_freeze_passed": true,
+        "teacher_admission": false,
+        "force_qualified": false
+      }
     }
   },
   "execution_target": {

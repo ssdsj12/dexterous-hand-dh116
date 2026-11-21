@@ -72,6 +72,9 @@ def held_route_passed(rows):
 def independent_entry(task, contact):
     """Admit only an explicit independently sealed boundary; legacy paths remain strict."""
     from scripts.diagnose_dh116_teacher_initialization import digest
+    if contact is not None and contact.get("entry_contract") == "dh116-902-joint-contact-transfer-v1":
+        from scripts.dh116_902_joint_closure_contract import validate_contact
+        return validate_contact(task,contact)
     if contact is not None and contact.get("entry_contract") == "dh116-902-command-contact-v2":
         from scripts.screen_dh116_902_command_contact import independent_entry as command_entry
         return command_entry(task, contact)

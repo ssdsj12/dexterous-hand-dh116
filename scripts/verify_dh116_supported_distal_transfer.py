@@ -161,6 +161,28 @@ class SupportedDistalProbe:
         self.bilateral_loaded_rows = 0
         self.first_contact_sdk_by_side = {side: None for side in SIDES}
 
+    def prime_supported_boundary(self,row,*,expected_clock):
+        """Seed only a real zero-hand-load SDK240 settling observation."""
+        from copy import deepcopy
+        identity=("run_uuid","env_id","episode_uid","reset_id","rod_uid",
+                  "physics_step","rod_tick","timestamp_s")
+        rod=row["rod"]
+        if (self.boundary_sdk!=240 or self.previous is not None or getattr(self,"archive",None) is not None
+                or expected_clock.get("clock_valid") is not True
+                or rod.get("clock_valid") is not True or rod.get("physics_step")!=240
+                or rod.get("rod_tick")!=2856 or row.get("preceding_reaction_sdk_step")!=239
+                or any(rod.get(key)!=expected_clock.get(key) for key in identity)
+                or rod.get("pair_capture_status")!="validated_solver_samples"
+                or set(row.get("native_joint_state",{}))!=set(SIDES)
+                or any(pair["mesh_name"] not in END_SUPPORT_NAMES
+                       for pair in rod.get("rod_mesh_contact_pairs",{}).get("pairs",[]))):
+            raise ValueError("one actual same-clock supported Reset boundary is required")
+        routes=rod.get("hand_wrenches_com_world",{})
+        if set(routes)!=set(SIDES) or any(not np.isfinite(route[key]).all() or np.any(route[key])
+                for route in routes.values() for key in ("forces","torques")):
+            raise ValueError("zero preceding hand load required at the isolated supported boundary")
+        self.previous=deepcopy(dict(physics_step=240,rod=rod,boundary_kind="measured_support_settling"))
+
     def active(self, sdk):
         return sdk > self.boundary_sdk
 

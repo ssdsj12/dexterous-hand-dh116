@@ -64,3 +64,11 @@ def test_endpoint_geometry_is_not_contact_when_evidence_fails(bad):
 def test_endpoint_pass_is_only_geometric_candidate():
     from scripts.screen_dh116_902_fixed_wrist_open import endpoint_contact_candidate
     assert endpoint_contact_candidate({"pad_gaps_m":[-.00001]*3,"node_ids":[2,3,4],"opposition":[-.9,-.8]})
+
+
+def test_same_backend_float32_target_does_not_generate_spread_action():
+    start=np.asarray([.046,.00801263221802571,.576,.698,.25,.25],dtype=np.float32).astype(float)
+    goal=start.copy();goal[0]+=.3;goal[1]=.00801263221802571
+    actions,states=compile_closure(start,goal,windows=64)
+    assert np.count_nonzero(actions[:,7])==0
+    np.testing.assert_array_equal(states[:,1],np.full(len(states),start[1]))

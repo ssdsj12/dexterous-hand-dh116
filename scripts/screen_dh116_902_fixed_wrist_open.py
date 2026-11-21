@@ -28,7 +28,9 @@ def compile_closure(initial, target, *, windows):
     expand(q);expand(goal)
     if type(windows) is not int or not 1<=windows<=120:
         raise ValueError("explicit bounded closure windows required")
-    moving=goal!=q
+    # The physical target buffer is float32. Equal representable targets must
+    # remain exact holds even when their input float64 spellings differ.
+    moving=goal.astype(np.float32)!=q.astype(np.float32)
     q=q.astype(np.float32).astype(float);expand(q)
     # Unchanged source joints retain their actual float32 target exactly.
     goal=np.where(moving,goal,q)
