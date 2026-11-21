@@ -30063,6 +30063,31 @@
         "verified_at_utc": "2026-11-21T05:58:39.637043+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power proximal motion handoff",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-action.md",
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_action_v1.json",
+      "cpu_tests": {
+        "passed": 130,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0e032fda38d4e44ddbfacc2581a00e48f0cf6bce",
+        "source_tree": "b9e169fecbe14f6c2949ded58380b6924b0810a3",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T06:02:06.012144+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
