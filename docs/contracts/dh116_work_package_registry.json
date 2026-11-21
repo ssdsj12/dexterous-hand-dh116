@@ -46608,6 +46608,32 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.supported-distal-same-clock-force-reducer": {
+      "title": "Same-clock distal force evidence on the intact 17-slot rod",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-supported-guarded-approach-native-result",
+        "teacher.tripod-measured-precontact-native-result"
+      ],
+      "tests": [
+        "tests/test_teacher_force_closure.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_power_end_supported_rod.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_supported_distal_contact_evidence_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-supported-distal-contact-evidence.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 133,
+        "archived_native_rows_checked": 2,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

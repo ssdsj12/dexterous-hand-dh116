@@ -1,3 +1,7 @@
+## Same-clock distal force evidence for supported rod
+
+Reuse original pad thresholds after validating the complete 17-slot contact packet. [Report](docs/superpowers/reports/2026-11-21-teacher-supported-distal-contact-evidence.md).
+
 ## Pinch supported approach native result
 
 Record actual bilateral hand advance and end-support loads after a matched Reset. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-supported-guarded-approach-native.md).

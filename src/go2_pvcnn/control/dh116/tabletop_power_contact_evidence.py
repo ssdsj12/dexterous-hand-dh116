@@ -11,7 +11,7 @@ from .tabletop_power_shared_rod import (
     END_SUPPORT_NAMES, PALM_NAMES, PADS, POWER_MESH_NAMES, SUPPORTED_POWER_MESH_NAMES,
     SUPPORTED_LAYOUTS, PROXIMAL_LINK, PROXIMAL_NAMES, PROXIMAL_POWER_MESH_NAMES, _bindings,
 )
-from .tabletop_teacher_force_closure import _opposition, _pad_summary
+from .tabletop_teacher_force_closure import _opposition, _pad_summary, _summarize_distal_pairs
 
 
 DT = 1 / 480
@@ -156,3 +156,38 @@ def measure_power_contact(rod):
         result["external_support_force_norm_n"] = loads
         result["zero_external_support_load"] = all(max(per_step) <= TABLE_LOAD_LIMIT_N for per_step in loads.values())
     return result
+
+
+def measure_supported_distal_contact(rod, *, grasp):
+    """Assess Pinch or Tripod loads on the intact 17-mesh supported-rod capture."""
+    if grasp not in ("pinch", "tripod"):
+        raise ValueError("supported distal contact expects pinch or tripod")
+    try:
+        names = tuple(rod["mesh_names"])
+        if names != PROXIMAL_POWER_MESH_NAMES:
+            raise ValueError("the original ordered 17-slot rod capture is required")
+        pairs = _power_pairs(rod)
+    except (KeyError, TypeError, IndexError, OverflowError) as exc:
+        raise ValueError("missing or malformed physical supported rod contact sources") from exc
+    support_names = ("table", *END_SUPPORT_NAMES)
+    evidence = _summarize_distal_pairs(
+        pairs, substeps=SUBSTEPS, mesh_count=len(names), grasp=grasp.capitalize(),
+        support_slots={name: names.index(name) for name in support_names},
+    )
+    targets = {slot for hand in evidence["per_hand"].values() for slot in hand["required_mesh_ids"]}
+    external = {name: [0.] * SUBSTEPS for name in support_names}
+    unexpected = set()
+    for pair in pairs:
+        name, step = names[pair["mesh_index"]], pair["substep"]
+        if name in external:
+            external[name][step] += float(np.linalg.norm(pair["force_on_rod_world_n"]))
+        elif pair["mesh_index"] not in targets:
+            unexpected.add(name)
+    evidence.update(
+        identity={key: rod[key] for key in IDENTITY_FIELDS},
+        external_support_force_norm_n=external,
+        support_free=all(max(loads) <= TABLE_LOAD_LIMIT_N for loads in external.values()),
+        unexpected_hand_contacts=sorted(unexpected),
+        diagnostic_only=True, grasp_qualified=False, teacher_admission=False,
+    )
+    return evidence

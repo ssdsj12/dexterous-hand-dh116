@@ -100,9 +100,15 @@ def reduce_force_closure(packet, *, grasp, dt_s=1/480):
             mesh_wrenches=packet["mesh_wrenches_on_mesh_world"])
     except (KeyError, TypeError, IndexError, OverflowError) as exc:
         raise ValueError("malformed complete solver pair packet") from exc
-    substeps = packet["substeps"]
-    by_mesh = {mesh: [] for mesh in range(13)}
-    for pair in capture["pairs"]:
+    return _summarize_distal_pairs(
+        capture["pairs"], substeps=packet["substeps"], mesh_count=13, grasp=grasp,
+        support_slots={"table": 5, "support_0": 11, "support_1": 12})
+
+
+def _summarize_distal_pairs(pairs, *, substeps, mesh_count, grasp, support_slots):
+    """Compute grasp-specific pad loading from previously reconciled pairs."""
+    by_mesh = {mesh: [] for mesh in range(mesh_count)}
+    for pair in pairs:
         by_mesh[pair["mesh_index"]].append(pair)
     hands = {}
     for side, base in (("left", 0), ("right", 6)):
@@ -139,7 +145,7 @@ def reduce_force_closure(packet, *, grasp, dt_s=1/480):
             worst_opposition_cos=None if any(c is None for c in cosines) else max(cosines),
             per_substep=evidence, reasons=sorted(set(reasons)))
     support = {name: _pad_summary(by_mesh[mesh], substeps, mesh)
-               for name, mesh in (("table", 5), ("support_0", 11), ("support_1", 12))}
+               for name, mesh in support_slots.items()}
     bilateral = all(hand["loaded"] for hand in hands.values())
     return dict(bilateral=bilateral, grasp=grasp, per_hand=hands,
                 external_support=dict(per_mesh=support,

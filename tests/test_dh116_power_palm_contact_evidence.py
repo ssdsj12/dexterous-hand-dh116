@@ -11,7 +11,7 @@ from go2_pvcnn.control.dh116.tabletop_power_shared_rod import (
 )
 
 
-def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False):
+def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False, load=.1):
     def stamp(name):
         return hashlib.sha256(name.encode()).hexdigest()
 
@@ -38,7 +38,7 @@ def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False)
                 direction = np.array([0., 1., 0.])
             if name == "table":
                 direction = np.array([0., 0., 1.])
-            force = .1 * direction
+            force = load * direction
             indices.append((step, slot, slot))
             vectors.append([0., 0., 0., *direction, *force, 0., 0., 0.])
             node_forces[slot] += force / 12
@@ -111,3 +111,34 @@ def test_proximal_load_cannot_replace_a_palm_or_a_distal_pad():
     assert result["proximal_contacts"]["right"][0]["normal_load_n"] == pytest.approx(.1)
     assert result["hands"]["right"]["per_substep"][0]["palm_normal_load_n"] == 0.
     assert not result["teacher_admission"]
+
+def test_supported_tripod_keeps_original_pad_and_support_slots_and_load_semantics():
+    from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_supported_distal_contact
+
+    rod = build(proximal=True, table=True, load=.125)
+    evidence = measure_supported_distal_contact(rod, grasp="tripod")
+    assert evidence["bilateral"]
+    for side, slots in (("left", [0, 1, 2]), ("right", [6, 7, 8])):
+        hand = evidence["per_hand"][side]
+        assert hand["required_mesh_ids"] == slots
+        assert hand["loaded_substeps"] == list(range(12))
+        assert hand["worst_opposition_cos"] == pytest.approx(-1.)
+    assert evidence["external_support"]["total_normal_load_n"] == pytest.approx(.375)
+    assert evidence["external_support"]["per_mesh"]["support_0"]["mesh_id"] == 13
+    assert evidence["external_support"]["per_mesh"]["support_1"]["mesh_id"] == 14
+    assert not evidence["support_free"] and not evidence["native_success"]
+
+
+@pytest.mark.parametrize("damage", ["wrong_layout", "overflow", "cancelled_non_target_mesh", "stale_clock"])
+def test_supported_distal_validates_the_unfiltered_owned_packet(damage):
+    from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_supported_distal_contact
+
+    rod = build(proximal=damage != "wrong_layout")
+    if damage == "overflow":
+        rod["rod_mesh_contact_pairs"]["solver_buffer"]["overflow"] = True
+    elif damage == "cancelled_non_target_mesh":
+        rod["named_wrenches"]["left.base_link"][0] += .25
+    elif damage == "stale_clock":
+        rod["rod_mesh_contact_pairs"]["physics_step"] -= 1
+    with pytest.raises(ValueError):
+        measure_supported_distal_contact(rod, grasp="tripod")
