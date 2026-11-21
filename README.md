@@ -1,3 +1,7 @@
+## 902 staged approach compiler
+
+Separate middle opening, wrist transit and fixed-wrist closure while preserving the original902 target. Reject hidden wrist vector normalization;234 related CPU checks and1088 ideal-command substeps pass. Measured tracking and contact remain unqualified. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-staged-approach.md).
+
 ## 902 tracking reserve refinement
 
 Distinguish loose distance bounds from actual narrow rod clearance using complete archived envelopes and source-bound certificates. 218 related CPU checks pass; selected-state evidence is not full-path/native qualification. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-tracking-reserve.md).

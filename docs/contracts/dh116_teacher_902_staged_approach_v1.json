@@ -1,0 +1,113 @@
+{
+  "version": "dh116-teacher-902-staged-approach-v1",
+  "base_head": "29c41609f599171000ae47ad2ec60cf9c2ce1a36",
+  "status": "cpu_staged_path_passed_native_tracking_contact_blocked",
+  "source_sha256": {
+    "scripts/compile_dh116_902_staged_approach.py": "29607bff39add4a448134f70171f13e1c926b7d204ffb047aa3a759bb77d8b62",
+    "tests/test_dh116_902_staged_approach.py": "a36e0a21032af094aa232d2677b8f4c22b39d0ef092cd2c59915f7b6302b1045",
+    "configs/dh116_tasks/flexible_902_tripod_staged_cpu_v1.json": "be408ba17a470fe2c752252559ac3b636ee0e9a3a7a08cf9b278065784174ed8"
+  },
+  "cpu_tests": {
+    "passed": 234,
+    "failed": 0,
+    "new_cases": 16,
+    "log_sha256": "4d77b3a8a51d0b4a733ba3ce9b327078a694474e012098391a58f9b86a71838c"
+  },
+  "scope": "staged_ideal_command_CPU_only_not_native_receipt",
+  "ideal_command_substeps": 1088,
+  "control_windows": 136,
+  "phase_windows": [
+    16,
+    66,
+    54
+  ],
+  "ideal_path_guard_passed": true,
+  "elapsed_seconds": 129.05109463492408,
+  "endpoint_error": {
+    "position_m": 1.1415167050419747e-08,
+    "rotation_rad": 7.207938917283932e-08,
+    "joint_rad": 2.1621426549156553e-07
+  },
+  "action_sha256": "eb07f81c7fdfb5270f4a8e5c0a2543abc1c14317a005f4e6f175c5da14a1f5fb",
+  "max_wrist_action_norm": 0.9978136618770699,
+  "phase_metrics": {
+    "open_middle": {
+      "control_substeps": 128,
+      "right_lower_bounds_m": {
+        "contact_rod_clearance_m": 0.00033815697672701095,
+        "noncontact_rod_clearance_m": 0.002839033742668251,
+        "support_clearance_m": 0.0013839130065607923,
+        "table_clearance_m": 0.046437982690400614
+      }
+    },
+    "move_wrist": {
+      "control_substeps": 528,
+      "right_lower_bounds_m": {
+        "contact_rod_clearance_m": 0.00018235539925348654,
+        "noncontact_rod_clearance_m": 0.001176596175412048,
+        "support_clearance_m": 0.0010019419290729914,
+        "table_clearance_m": 0.04644256738555391
+      }
+    },
+    "close_fixed_wrist": {
+      "control_substeps": 432,
+      "right_lower_bounds_m": {
+        "contact_rod_clearance_m": -0.00014988064385279554,
+        "noncontact_rod_clearance_m": 0.0011784830733782004,
+        "support_clearance_m": 0.001000261021622817,
+        "table_clearance_m": 0.04989769082844214
+      }
+    }
+  },
+  "robust_tracking_qualified": false,
+  "native_admissible": false,
+  "teacher_admission": false,
+  "native_runs": 0,
+  "solver_steps": 0,
+  "ppo_updates": 0,
+  "teacher_queries": 0,
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "round": "902-staged-reserve R4",
+    "reviewed_compiler_sha256": "749c64f2085be5520132622858371066747f99733adc4a83124830c731a84dce",
+    "reviewed_tests_sha256": "a326f8a568e1352496ceb3de5ee2f40fc36da01a2a1ae7f3981e74f19988ff90",
+    "config_review": "Codex only; Antigravity connector disallowed configs JSON",
+    "accepted_finding": "Wrist L2 source/compiled limit missing; independently reproduced four failures and fixed.",
+    "final_source_reread_by_antigravity": false
+  },
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3,
+  "camera_sha256": {
+    "configs/dh116_training/stereo_camera_front_640x480_v3.json": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b",
+    "configs/dh116_training/stereo_camera_hand_order_640x480_v1.json": "673b71d4edc425620c78544959cdd00a545db0104bb164a6f2d22f368776d98b"
+  },
+  "evidence_sha256": {
+    "staged-compiler-vector-green.log": "9ec2dce8d6f13ba09d0e1a098d3e0dd53ceded61f2b886d3cf2745948fb3584b",
+    "staged-compiler-green-final.log": "15cf8dc66094a6b6dd021e65c23c24364e564496aa11875d75158a547a4abe52",
+    "staged-compiler-green-first.log": "364932a4d4fa0d2434d702055067d5b6bbb98fad367854edf0e511a70d17d2b8",
+    "staged-compiler-green.log": "57fe3a6a91c08d878ccf6c2716247d65b009dffaccfed218add870020c500d63",
+    "staged-compiler-red.log": "b1b9beaa02a43cfc310deb049a0b89e996ebf9763ad8c9498aa8b32fccdf467a",
+    "staged-compiler-regression-final.json": "73c1550e158df3a39cb68d5bae69f8c20fda94494471f14e7807cfff592c995b",
+    "staged-compiler-regression-final.log": "4d77b3a8a51d0b4a733ba3ce9b327078a694474e012098391a58f9b86a71838c",
+    "staged-compiler-regression.json": "19fe619011f6c24cbef1f503442adc2681378f0ec7cf4e313755377eb6f108f0",
+    "staged-compiler-regression.log": "f36a1f6a333e9035c9a7fd105ebd38dc07b89bc352eb7bb7b577472bd4fc3da1",
+    "staged-compiler-vector-red.log": "d0a65ec1a2b5b33e08d0a173495425d774bae8a1e73fba25a88172d238079c97",
+    "command-v3-extra-opening-path-final.json": "f8d457e16bbaf245c51d73bf063d038fa5ad5da0ad80d7ab61039dd8209e630b",
+    "command-v3-extra-opening-path-final.log": "ac138e1531bac940511d9919ef1735be8eded1b0add46a8fe9d1a9931f39e097",
+    "command-v3-extra-opening-path-final.py": "0a4b59c6e01334b347eba90c9af167f166c5ae4fa57bc30a2d73f2095f4e0f3a",
+    "command-v3-extra-opening-path.json": "7953fb0f0b61a11c9e7a884510b30ae542da0ec5dc9aa8d3bab0cdf6f02bdb5a",
+    "command-v3-extra-opening-path.log": "e85edb05210887c14acf10c4cf2dc35e62181a5b57dd57eeb2a446d52a649d31",
+    "command-v3-extra-opening-path.py": "369434388460dae504e1b26c894272e1003e4e50f9624cf407f3be0d373167e9"
+  },
+  "next_gate": [
+    "Measured transit tracking error must fit live geometry reserve",
+    "Same-clock stationary target and measured wrist pose/velocity convergence",
+    "Opposed real contact and delivered reaction before loaded Hold/Lift"
+  ],
+  "registry_tests": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "8a65a7db8806417aa38667ac6a3469346e36ad9a1e6712f7f840e383d78343ee"
+  },
+  "cpu_tests_total": 294
+}

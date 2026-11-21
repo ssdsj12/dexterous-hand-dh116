@@ -47509,7 +47509,7 @@
       "readiness": "docs/contracts/dh116_teacher_902_contact_guard_audit_v1.json",
       "report": "docs/superpowers/reports/2026-11-21-teacher-902-contact-guard-audit.md",
       "native_runs": 1,
-      "reason": "Native v2 failed at SDK476, natural exit1, no hand forces. No same-fingerprint retry. Selected seven-state refinement corrects coarse support reserves but proves narrow rod reserves18–68 micrometres. Full staged intermediate reserve and measured wrist convergence remain unqualified; no guard change."
+      "reason": "Previous v2 native SDK476 guard failure is retained; zero hand forces, natural exit1, same-fingerprint retry forbidden. New separate CPU staged route passes1088 ideal substeps with wrist-transit contact lower bound+0.182355mm, but previous measured wrist discrepancy~1.14mm remains larger. Measured transit tracking and settling, then real contact/reaction closure remain required."
     },
     "teacher.902-command-replay": {
       "title": "Replay actual 480 Hz commands before screening 902 contact paths",
@@ -47723,6 +47723,29 @@
         "selected_substeps": 7,
         "full_path_certified": false,
         "teacher_admission": false
+      }
+    },
+    "teacher.902-staged-approach": {
+      "title": "Compile isolated middle opening, wrist transit and fixed-wrist closure without hidden action clipping",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-tracking-reserve"
+      ],
+      "tests": [
+        "tests/test_dh116_902_staged_approach.py",
+        "tests/test_dh116_902_command_path.py",
+        "tests/test_dh116_902_command_contact.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_staged_approach_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-staged-approach.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 234,
+        "ideal_command_substeps": 1088,
+        "teacher_admission": false,
+        "robust_tracking_qualified": false
       }
     }
   },
