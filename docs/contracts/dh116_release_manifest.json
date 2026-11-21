@@ -30538,6 +30538,31 @@
         "verified_at_utc": "2026-11-21T07:56:30.554444+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.supported-distal-same-clock-force-reducer",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-supported-distal-contact-evidence.md",
+      "readiness": "docs/contracts/dh116_teacher_supported_distal_contact_evidence_v1.json",
+      "cpu_tests": {
+        "passed": 133,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1c0cabe07e59f834973f797fd97c383bb1000ef6",
+        "source_tree": "511ffb0659d61096f7244665830497e2bed9657d",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T07:58:19.303274+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
