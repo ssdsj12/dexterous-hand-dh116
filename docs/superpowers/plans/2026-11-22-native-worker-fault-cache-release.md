@@ -9,7 +9,7 @@
 - [x] Observe failing test before production changes.
 - [x] Implement private worker lifecycle boundary; remove success-only release, retain scalar completed end and weak sim reader.
 - [x] Run normal/source-fault/cache-rejection regressions, legacy lifecycle and actual worker regressions.
-- [ ] Independently review spec/quality, protect all528 files/3 old checkpoints, report/readiness and publish via Windows.
+- [x] Independently review spec/quality, protect all528 files/3 old checkpoints, report/readiness and publish via Windows.
 - [x] Freeze new current source recipe; do not consume native budget before runtime readiness.
 
 Boundary requirements: actual SDK step integer>=2 and<=frozen max; completed end must equal actual step. Synchronize and clear traceback frames precede release; original GC/STOP/App flow follows; no second cache call, no new physics/update, no os._exit, no signal, no qualification inference.

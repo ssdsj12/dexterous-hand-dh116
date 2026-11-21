@@ -32430,6 +32430,31 @@
         "verified_at_utc": "2026-11-21T23:15:50.270483+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.native-worker-fault-cache-release",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-native-worker-fault-cache-release.md",
+      "readiness": "docs/contracts/dh116_native_worker_fault_cache_release_v1.json",
+      "cpu_tests": {
+        "passed": 203,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a1a55d35ec09a6d7a92e436a19281e8520f35c9d",
+        "source_tree": "57fbeddb1e407aea486eff223f8991a8b9a0a736",
+        "remote_branch": "11-17",
+        "files_verified": 13,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T23:29:06.497277+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
