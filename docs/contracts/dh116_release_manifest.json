@@ -31163,6 +31163,31 @@
         "verified_at_utc": "2026-11-21T10:34:56.966575+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-staged-palm-witness-native",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-staged-palm-witness-native.md",
+      "readiness": "docs/contracts/dh116_teacher_power_staged_palm_witness_native_v1.json",
+      "cpu_tests": {
+        "passed": 81,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a05f9815891464a5e72f8958f1646fb251dd8984",
+        "source_tree": "329e85413dea60ffafbec0f601bdac38825d9750",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T10:58:40.728294+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
