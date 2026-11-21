@@ -1,3 +1,7 @@
+## Pinch thumb tangent native comparison
+
+Publish the receipts and native measurements. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-thumb-tangent-native.md).
+
 ## Tripod independent supported Reset
 
 Freeze hand-specific initial poses against the full archived settling tube and preserve a separate native receipt. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-supported-reset.md).
