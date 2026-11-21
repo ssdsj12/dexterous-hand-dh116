@@ -45396,21 +45396,30 @@
       ],
       "evidence_scope": "pinch_actual_resume_pair_b_smoke8_v2",
       "executor": "native_bounded",
-      "reason": "Exact same-source native A receipt plus bounded B resources required.",
-      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-a-v2.md",
+      "reason": "Independent actual A-to-B native resume audited; full task reward, grasp and Teacher admission stay closed.",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-b-v2.md",
       "requires_approval": true,
       "resource_class": "isaac_single_gpu",
       "retry_policy": {
         "max_attempts_per_code_config": 1,
         "retry_requires_change": true
       },
-      "status": "blocked",
+      "status": "passed",
       "tests": [],
       "title": "Independent Pinch B with one PPO update from the verified A checkpoint",
-      "readiness": "docs/contracts/dh116_teacher_actual_resume_pair_a_v2.json",
-      "native_runs": 0,
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_pair_b_v2.json",
+      "native_runs": 1,
       "dependency_scopes": {},
-      "blocker_kind": "approval"
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "inferior_exit": 0,
+        "ppo_updates": 1,
+        "result_sha256": "ee36b494ae2032476540c9ef9cb88257c3b0eae15efd8ab087e902966d89fcca",
+        "diagnostic_verified": true,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -3880,3 +3880,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - 本次验证：`bash scripts/python.sh -m pytest tests -q --tb=short`，559 passed in 51.52s，退出码 0（本地包含未上传的历史测试资源）。`bash scripts/python.sh scripts/run_current.py` 配置校验/命令预览退出码 0，未启动第二个 Isaac。上传清单 413 个文件约 106 MB，无超过 50 MB 的单文件，未发现常见 GitHub token 或私钥签名。新增文档的 whitespace 检查通过；厂家原文件及既有代码存在尾随空白，保持原字节，未为上传修改其内容。
 - 未完成：原试验结果收尾、新目录实际 Isaac 验证、真实闭指/夹持/抬升验收、跨机器配置与测试夹具的完整可移植性。
 - 下一步：根据原试验安全门结果推进，不绕过接触、反作用力和碰撞保护。
+
+- Verified two native Pinch PPO updates across a fresh-process checkpoint resume. Both v2 processes exited naturally; this is a diagnostic, not grasp qualification.
