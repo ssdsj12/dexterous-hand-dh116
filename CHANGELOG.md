@@ -1,3 +1,7 @@
+## Tripod right distal first contact probe
+
+Preserve original non-target clearance and verify the actual next-step PhysX reaction. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-right-first-contact.md).
+
 ## Same-clock distal force evidence for supported rod
 
 Reuse original pad thresholds after validating the complete 17-slot contact packet. [Report](docs/superpowers/reports/2026-11-21-teacher-supported-distal-contact-evidence.md).

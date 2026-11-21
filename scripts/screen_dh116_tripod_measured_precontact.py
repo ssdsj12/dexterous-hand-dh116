@@ -23,8 +23,8 @@ SAMPLES = 17
 ROD_RESERVE_M = .00025
 
 
-def archive(receipt):
-    expected = json.loads(CONTRACT.read_bytes())["actual"]
+def archive(receipt, *, contract=CONTRACT, sdk=SDK):
+    expected = json.loads(contract.read_bytes())["actual"]
     outer = sources.checked_json(receipt, expected["outer_sha256"])
     raw = receipt.parent / "native"
     marker = raw / "app_close_returned.json"
@@ -33,9 +33,9 @@ def archive(receipt):
             or outer["forced_exit"] or outer["exceeded_budget"]
             or close["app_close_returned"] is not True):
         raise ValueError("sealed naturally closed Tripod run required")
-    row_paths = [raw / f"tripod_control_{tick}.json" for tick in range(SDK - 8, SDK + 1)]
+    row_paths = [raw / f"tripod_control_{tick}.json" for tick in range(sdk - 8, sdk + 1)]
     rows = []
-    for tick, path in enumerate(row_paths, SDK - 8):
+    for tick, path in enumerate(row_paths, sdk - 8):
         row = sources.checked_json(path, outer["artifact_sha256"][path.name])
         if (row["physics_step"] != tick or row["guard_failure"] is not None
                 or row["sdk_hand_geometry"]["physics_step"] != tick
@@ -46,7 +46,7 @@ def archive(receipt):
     supports = sources.checked_json(support_path, outer["artifact_sha256"][support_path.name])
     if native.sha(row_paths[-1]) != expected["last_row_sha256"]:
         raise ValueError("Tripod terminal row is not the archived waypoint boundary")
-    return rows, supports["supports"], [CONTRACT, receipt, marker, *row_paths, support_path]
+    return rows, supports["supports"], [contract, receipt, marker, *row_paths, support_path]
 
 
 def check_route(samples, *, pad_count=3):
@@ -73,7 +73,7 @@ def as_matrix(position, quat):
 
 
 def measure_side(side, raw, nodes, tube, boxes, grids, goal, table_top, *,
-                 pads=PADS, max_delta_m=.002, max_delta_rad=.025):
+                 pads=PADS, max_delta_m=.002, max_delta_rad=.025, contact_pads=()):
     from scripts.audit_dh116_pinch_initial_pose import load_geometry
     from scripts.certify_dh116_tripod_distal_route import support_clearance_lower
     from scripts.prepare_dh116_pinch_closure_margin import fk_poses, sample_grid
@@ -114,6 +114,8 @@ def measure_side(side, raw, nodes, tube, boxes, grids, goal, table_top, *,
         distances = {label: separation(points, *tube) for label, points in world.items()}
         limiting_shape = min(distances, key=distances.get)
         rod = distances[limiting_shape]
+        noncontact = min(gap for label, gap in distances.items()
+                         if label.split(":", 1)[1] not in contact_pads)
         support = min(support_clearance_lower(points, low, high) for points in world.values() for low, high in boxes)
         table = min(float(points[:, 2].min() - table_top) for points in world.values())
         gaps, normals, node_ids = [], [], []
@@ -134,6 +136,8 @@ def measure_side(side, raw, nodes, tube, boxes, grids, goal, table_top, *,
         samples.append(dict(shape_count=len(world), rod_clearance_m=rod, support_clearance_m=support,
                             table_clearance_m=table, limiting_shape=limiting_shape, pad_gaps_m=gaps, node_ids=node_ids,
                             opposition=[float(normals[0] @ n) for n in normals[1:]]))
+        if contact_pads:
+            samples[-1]["noncontact_rod_clearance_m"] = noncontact
     return samples
 
 

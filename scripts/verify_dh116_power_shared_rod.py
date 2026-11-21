@@ -53,7 +53,7 @@ class SharedPowerOwners:
         return CapacityReservation()
 
 
-def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, support_scene=None, reference_nodes=None):
+def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, support_scene=None, reference_nodes=None, distal_probe=None):
     from go2_pvcnn.control.dh116.tabletop_batch_geometry import collision_clearance
     from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import _owned
     from go2_pvcnn.control.dh116.tabletop_deformable_wrist_projection import CLEARANCE_M
@@ -90,12 +90,16 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
         boxes = [(np.asarray(box["center_m"])-np.asarray(box["size_m"])/2,
                   np.asarray(box["center_m"])+np.asarray(box["size_m"])/2) for box in support_scene["supports"]]
         tube = None if reference_nodes is None else archived_tube(reference_nodes)
+        active_probe = distal_probe is not None and distal_probe.active(sdk)
         for hand, body, vertices in clearance_shapes:
             world = rotated_points(frame_poses[0, hand, body], vertices)
             if any(support_clearance_lower(world, low, high) <= 1e-10 for low, high in boxes):
                 raise ValueError("live original hand source envelope intersects a support")
-            if tube is not None and separation(world, *tube) <= .00025:
+            contact_shape = active_probe and (hand, body) in distal_probe.shape_keys
+            if tube is not None and not contact_shape and separation(world, *tube) <= .00025:
                 raise ValueError("live hand source envelope lost its staged rod clearance")
+        if active_probe:
+            distal_probe.check_pad_gaps(poses, reference_nodes)
     if native.clock(sim)["sdk_step"] != sdk:
         raise ValueError("SDK moved during link and COM readback")
     if not np.isfinite(clearance).all() or np.any(clearance < CLEARANCE_M):
@@ -285,7 +289,8 @@ def supported_action_schedule(action, remaining_sdk):
 
 def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                          clearance_shapes, setup, action, sdk_end, verify_support_continuity=False,
-                         task="power", support_scene=None, waypoint_archive=None, precontact_archive=None):
+                         task="power", support_scene=None, waypoint_archive=None, precontact_archive=None,
+                         distal_probe=None):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -302,7 +307,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         def geometry():
             sdk = native.clock(sim)["sdk_step"]
             options = {} if support_scene is None else dict(support_scene=support_scene,
-                reference_nodes=power._base.last["node_positions"])
+                reference_nodes=power._base.last["node_positions"], distal_probe=distal_probe)
             poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk, **options)
             roots = [np.r_[poses[name][0],poses[name][1][[3,0,1,2]]] for name in PALM_NAMES]
             if task in ("tripod", "pinch"):
@@ -336,6 +341,14 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
             if precontact_archive is not None and row["physics_step"] == 432:
                 verify_waypoint_boundary(encode_owned(emitted), precontact_archive,
                                          sdk_step=432, exact_geometry=True)
+            if distal_probe is not None and row["physics_step"] == distal_probe.boundary_sdk:
+                verify_waypoint_boundary(encode_owned(emitted), distal_probe.archive,
+                                         sdk_step=distal_probe.boundary_sdk, exact_geometry=True)
+            if distal_probe is not None:
+                evidence, reason = distal_probe.observe(row)
+                if distal_probe.active(row["physics_step"]):
+                    native.write_new(output/f"{task}_distal_probe_{row['physics_step']}.json", evidence)
+                    return reason
             pairs = row["rod"]["rod_mesh_contact_pairs"]["pairs"]
             if any(pair["mesh_name"] not in END_SUPPORT_NAMES for pair in pairs):
                 return "external_contact_during_parked_action"
@@ -356,6 +369,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         aggregate = (completed[0] if len(schedule)==1 else dict(
             physical_samples=sum(item["physical_samples"] for item in completed), windows=completed,
             termination_reason=completed[-1]["termination_reason"]))
+        if distal_probe is not None:
+            native.write_new(output/f"{task}_distal_probe_summary.json", distal_probe.summary())
         native.write_new(output/f"{task}_control_result.json",
                          encode_owned(dict(start=start, end=power.clock(), result=aggregate)))
         if aggregate["termination_reason"] or aggregate["physical_samples"] != 8*len(schedule):
@@ -368,7 +383,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
 def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=None,
                sdk_end=SDK_END, require_no_hand_contact=False, action_after_settle=None,
                task="power", live_support_scene=None, tripod_archive=None, waypoint_archive=None,
-               precontact_archive=None, pinch_archive=None):
+               precontact_archive=None, pinch_archive=None, distal_contact=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -383,6 +398,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 or (task == "pinch" and (supported_acquire is None or not require_no_hand_contact
                     or live_support_scene is None or (action_after_settle is None) != (pinch_archive is None)))
                 or (task != "pinch" and pinch_archive is not None)
+                or (distal_contact is not None and (task != "tripod" or precontact_archive is None))
                 or (task == "power" and (tripod_archive is not None or waypoint_archive is not None))
                 or (waypoint_archive is not None and tripod_archive is None)
                 or (precontact_archive is not None and (task != "tripod" or waypoint_archive is None
@@ -514,11 +530,20 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 final_settle = json.loads((output/f"{task}_exchange_{settle_end}.json").read_bytes())
                 recorded = tripod_archive if task == "tripod" else pinch_archive
                 verify_proximal_action_boundary(final_settle, recorded)
+            probe = None
+            if distal_contact is not None:
+                from scripts.verify_dh116_supported_distal_transfer import SupportedDistalProbe
+                from go2_pvcnn.control.dh116 import tabletop_dual_hand_scene_preparation as scene
+
+                geometry = scene.load_sdf_arrays(scene.prepare_scene(ROOT))
+                probe = SupportedDistalProbe(distal_contact["boundary_sdk"], distal_contact["stations"],
+                    meshes, clearance_shapes, grids=geometry, archive=distal_contact["archive"],
+                    max_pad_penetration_m=distal_contact["max_pad_penetration_m"])
             control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
                 meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end,
                 verify_support_continuity=any(x is not None for x in (action_reference, tripod_archive, pinch_archive)),
                 task=task, support_scene=live_support_scene, waypoint_archive=waypoint_archive,
-                precontact_archive=precontact_archive)
+                precontact_archive=precontact_archive, distal_probe=probe)
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,
