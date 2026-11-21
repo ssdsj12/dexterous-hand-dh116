@@ -1,3 +1,7 @@
+## Power retreat and opening failure evidence
+
+Retain completed motion rows and failed process lifecycle evidence separately. [Report](docs/superpowers/reports/2026-11-21-teacher-power-retreat-then-open-native-failure.md).
+
 ## Power retreat then open
 
 Check the swept Power opening route and interlock opening on measured retreat. [Report](docs/superpowers/reports/2026-11-21-teacher-power-retreat-then-open.md).

@@ -46720,6 +46720,34 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-retreat-then-open-native-failure": {
+      "title": "Power retreat and open native source-mutation failure evidence",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-retreat-then-open"
+      ],
+      "tests": [
+        "tests/test_dh116_power_retreat_then_open.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_retreat_then_open_native_failure_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-retreat-then-open-native-failure.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 153,
+        "native_result": "failed_frozen_source_and_shutdown_checks",
+        "native_natural_exit_code": 255,
+        "debugger_signal": 11,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
