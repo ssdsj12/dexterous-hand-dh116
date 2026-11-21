@@ -30963,6 +30963,31 @@
         "verified_at_utc": "2026-11-21T09:38:10.328772+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-guarded-wrist-bypass",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-guarded-wrist-bypass.md",
+      "readiness": "docs/contracts/dh116_teacher_power_guarded_wrist_bypass_v1.json",
+      "cpu_tests": {
+        "passed": 219,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "903b39c55f6124a08842b6262547770854eb8dfc",
+        "source_tree": "eaaa663c8dfa01a7daf5d975f6a000d817dd08b4",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T09:40:01.049267+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
