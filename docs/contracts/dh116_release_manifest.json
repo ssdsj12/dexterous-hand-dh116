@@ -30738,6 +30738,31 @@
         "verified_at_utc": "2026-11-21T08:32:49.815578+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-bilateral-distal-continuation",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-bilateral-distal-continuation.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_bilateral_distal_continuation_v1.json",
+      "cpu_tests": {
+        "passed": 156,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a48bd282b61ce45c93f44f65e04cabb97c857cfb",
+        "source_tree": "ab5f02ebbc972014945ba840e06fe034619547ff",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T08:40:35.134149+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
