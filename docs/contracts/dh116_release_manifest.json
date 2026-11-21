@@ -31113,6 +31113,31 @@
         "verified_at_utc": "2026-11-21T10:20:17.936380+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-left-staged-wrist-workspace",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-left-staged-wrist-workspace.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_left_staged_wrist_workspace_v1.json",
+      "cpu_tests": {
+        "passed": 48,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ce7b2e79a6f8d5b7cf6f6896308ab5bcb7fb4a8f",
+        "source_tree": "80ce28a12bda39ba4754e6c09359ae841be9aa08",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T10:31:22.884716+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
