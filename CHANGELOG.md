@@ -1,3 +1,7 @@
+## Fixed-wrist open Reset screening
+
+Original 902 Tripod wrist/terminal grip retained. 24/135 open candidates and the selected 512-substep ideal geometry path pass; the middle pad still has a +0.237 mm terminal gap, so endpoint contact remains blocked. 140 CPU checks pass; zero native runs. [Report](docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open.md).
+
 ## Flexible substep target holds
 
 Optional target holds preserve every physical step, rod reaction and original guard; 93 related CPU tests pass. Old V2/retained source gates remain blocked (12 failures and 1 setup error in the expanded suite). No native tracking or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-902-substep-selection.md).

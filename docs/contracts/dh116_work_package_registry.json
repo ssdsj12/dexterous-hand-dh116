@@ -47775,6 +47775,38 @@
         "native_integration": false,
         "legacy_v2_source_gate_blocked": true
       }
+    },
+    "teacher.902-fixed-wrist-open-screen": {
+      "title": "Audit open Reset at original final wrist and expose unclosed endpoint contact",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-staged-approach"
+      ],
+      "tests": [
+        "tests/test_dh116_902_fixed_wrist_open.py",
+        "tests/test_dh116_902_flexible_reset.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_902_command_path.py",
+        "tests/test_dh116_continuous_envelope_refinement.py",
+        "tests/test_dh116_902_tracking_reserve.py",
+        "tests/test_dh116_902_command_contact.py",
+        "tests/test_pinch_capsule_distance_certificate.py",
+        "tests/test_dh116_tripod_supported_reset.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_fixed_wrist_open_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 140,
+        "new_cases": 16,
+        "initial_geometry_passed": true,
+        "ideal_closure_geometry_passed": true,
+        "endpoint_contact_candidate_passed": false,
+        "teacher_admission": false,
+        "native_admissible": false
+      }
     }
   },
   "execution_target": {
