@@ -83,3 +83,26 @@ def test_left_index_seating_reads_left_force_and_preserves_right_channel():
     assert force=={"index":.01}
     with pytest.raises(ValueError,match="measured hand identity"):
         select_seating_command(command[0],right_only,{2:"index"},side="right")
+
+
+def test_tripod_replay_stage_emits_only_its_own_named_slots(monkeypatch, tmp_path):
+    from scripts import verify_dh116_supported_force_seating as seating
+
+    import json
+    receipt = tmp_path / "outer.json"
+    path = tmp_path / "native" / "tripod_control_1296.json"
+    path.parent.mkdir()
+    receipt.write_text(json.dumps({"artifact_sha256": {path.name:"fixture"}}))
+    path.write_text(json.dumps({"physics_step":1296,"sdk_hand_geometry":{"physics_step":1296},
+        "rod":{"physics_step":1296,"rod_tick":15528},"guard_failure":None}))
+    contract=tmp_path/"contract.json"
+    contract.write_text(json.dumps({"actual":{"outer_sha256":"fixture","end_sdk":1456},
+                                    "force_followup_boundary":{"sdk":1296}}))
+    monkeypatch.setattr(seating,"TRIPOD_CONTRACT",contract)
+    monkeypatch.setattr(seating.measured.sources,"checked_json",lambda p,d:json.loads(p.read_bytes()))
+    monkeypatch.setattr(seating.measured,"archive",lambda *args,**kwargs:([{"physics_step":1456}],[],(receipt,)))
+    cmd,stage,_=seating.load_tripod_seating(receipt,np.zeros((152,24)),start_sdk=240)
+    planned=cmd[(1296-240)//8]
+    pads={int(slot):pad for slot,pad in stage["pad_by_slot"].items()}
+    assert pads=={8:"index",9:"middle"}
+    assert select_seating_command(planned,evidence(),pads)[0].nonzero()[0].tolist()==[8,9]

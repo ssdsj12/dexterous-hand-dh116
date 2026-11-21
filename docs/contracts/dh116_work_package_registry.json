@@ -47120,6 +47120,30 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-seat-phase-hand-ownership": {
+      "title": "Keep frozen Tripod force commands within their measured hand",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-left-index-oscillation-dose"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_force_seating.py",
+        "tests/test_dh116_tripod_bilateral_distal_retarget.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_seat_phase_hand_ownership_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-seat-phase-hand-ownership.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 221,
+        "previous_native_exit_code": 1,
+        "left_dose_executed": false,
+        "corrected_recipe_native_passed": false,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

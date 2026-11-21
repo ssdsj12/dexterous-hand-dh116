@@ -12,13 +12,15 @@ from scripts import screen_dh116_tripod_measured_precontact as measured
 TRIPOD_REQUEST = measured.ROOT / "configs/dh116_tasks/flexible_tripod_right_force_seating_v1.json"
 TRIPOD_CONTRACT = measured.ROOT / "docs/contracts/dh116_teacher_tripod_measured_left_retarget_native_v2.json"
 TRIPOD_SDK = 1296
-PAD_FOR_SLOT = {2: "index", 8: "index", 9: "middle"}
+RIGHT_PADS = {8: "index", 9: "middle"}
+LEFT_PADS = {2: "index"}
+PADS_BY_HAND = {"left": LEFT_PADS, "right": RIGHT_PADS}
 DOSE_THRESHOLD_N = .085
 
 
 def validate_seating_schedule(schedule, pad_by_slot, *, max_travel_rad):
     schedule = np.asarray(schedule, dtype=float)
-    if (not pad_by_slot or any(PAD_FOR_SLOT.get(slot) != pad for slot, pad in pad_by_slot.items())
+    if (not pad_by_slot or not any(pad_by_slot.items() <= expected.items() for expected in PADS_BY_HAND.values())
             or schedule.ndim != 2 or schedule.shape[1] != 24 or not len(schedule)
             or not np.isfinite(schedule).all() or (schedule < 0.).any() or (schedule > 1.).any()
             or any(np.any(schedule[:, slot]) for slot in range(24) if slot not in pad_by_slot)):
@@ -29,7 +31,8 @@ def validate_seating_schedule(schedule, pad_by_slot, *, max_travel_rad):
 
 
 def select_seating_command(planned, evidence, pad_by_slot, *, side="right"):
-    if side not in ("left", "right") or any((slot < 6) != (side == "left") for slot in pad_by_slot):
+    if (side not in PADS_BY_HAND or not pad_by_slot
+            or not pad_by_slot.items() <= PADS_BY_HAND[side].items()):
         raise ValueError("a seating action must use the measured hand identity")
     hand = evidence["per_hand"][side]
     rows = hand["per_substep"]
@@ -75,12 +78,12 @@ def load_tripod_seating(receipt, actions, *, start_sdk):
     command[[8, 9]] = [request["planned_action_by_joint"][name] for name in ("finger21", "finger31")]
     appended = np.vstack((np.repeat(command[None], request["dose_windows"], axis=0),
                           np.zeros((request["settle_windows"], 24))))
-    validate_seating_schedule(appended, PAD_FOR_SLOT, max_travel_rad=request["maximum_finger_travel_rad"])
+    validate_seating_schedule(appended, RIGHT_PADS, max_travel_rad=request["maximum_finger_travel_rad"])
     count = (TRIPOD_SDK - start_sdk) // 8
     if not 0 < count < len(actions) or start_sdk + 8 * count != TRIPOD_SDK:
         raise ValueError("seating requires the intact original replay through SDK 1296")
     return np.vstack((actions[:count], appended)), dict(sdk_step=TRIPOD_SDK, archive=row,
-        pad_by_slot={str(slot): pad for slot, pad in PAD_FOR_SLOT.items()}), (
+        pad_by_slot={str(slot): pad for slot, pad in RIGHT_PADS.items()}), (
         *paths, Path(__file__), TRIPOD_REQUEST, checkpoint)
 
 
@@ -127,7 +130,7 @@ def load_tripod_left_stabilization(receipt, actions, *, start_sdk):
         raise ValueError("left stabilization requires replay through all prior right doses")
     planned = np.zeros((req["dose_windows"] + req["hold_windows"], 24))
     planned[:req["dose_windows"], 2] = req["normalized_index_action"]
-    pads = {2:"index"}
+    pads = LEFT_PADS
     validate_seating_schedule(planned, pads, max_travel_rad=req["max_travel_rad"])
     return np.vstack((actions[:count], planned)), dict(sdk_step=sdk, archive=row, side="left",
         pad_by_slot={"2":"index"}), (*bound, path, request_path, Path(__file__))

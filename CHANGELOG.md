@@ -1,3 +1,7 @@
+## Tripod seating phase hand ownership
+
+Fix the replay-phase slot compiler and retain the explicit native stop before either dose. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-seat-phase-hand-ownership.md).
+
 ## Tripod left-index load oscillation
 
 Preserve the measured holding-phase oscillation and add a hand-bound fixed-wrist dosing probe. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-left-index-oscillation-dose.md).
