@@ -31313,6 +31313,31 @@
         "verified_at_utc": "2026-11-21T12:06:18.250038+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-tripod-safe-boundary",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-tripod-safe-boundary.md",
+      "readiness": "docs/contracts/dh116_teacher_902_tripod_safe_boundary_v1.json",
+      "cpu_tests": {
+        "passed": 164,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "638f15b3a93c0d5bee9231da9c1e372c4828e28a",
+        "source_tree": "d5e23274b15a2ac30cb9987a33a01f9377328a43",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T12:26:15.321338+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
