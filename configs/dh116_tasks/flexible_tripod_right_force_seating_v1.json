@@ -1,0 +1,11 @@
+{
+  "version": "dh116-tripod-right-force-seating-v1",
+  "control_boundary_sdk": 1296,
+  "maximum_finger_travel_rad": 0.003,
+  "planned_action_by_joint": {
+    "finger21": 0.06,
+    "finger31": 0.06
+  },
+  "dose_windows": 10,
+  "settle_windows": 18
+}

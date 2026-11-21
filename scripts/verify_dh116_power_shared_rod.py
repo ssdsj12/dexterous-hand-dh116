@@ -365,6 +365,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         trace.watch("power_control_exchange", control, owner="supported Power action diagnostic", release="owned scope")
 
         power_start = geometry()["root_poses_w"] if power_open_boundary_sdk is not None else None
+        seating = None if distal_probe is None or distal_probe.bilateral is None else distal_probe.bilateral.get("seating")
 
         def observe(row):
             emitted = row
@@ -386,6 +387,12 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
             if distal_probe is not None and row["physics_step"] == distal_probe.boundary_sdk:
                 verify_waypoint_boundary(encode_owned(emitted), distal_probe.archive,
                                          sdk_step=distal_probe.boundary_sdk, exact_geometry=True)
+            if seating is not None and row["physics_step"] == seating["sdk_step"]:
+                actual, expected = encode_owned(emitted), seating["archive"]
+                verify_waypoint_boundary(actual, expected, sdk_step=seating["sdk_step"], exact_geometry=True)
+                if (actual["rod"]["rod_mesh_contact_pairs"] != expected["rod"]["rod_mesh_contact_pairs"]
+                        or actual["issued_composer_wrench"] != expected["issued_composer_wrench"]):
+                    raise ValueError("Tripod force seating replay did not match its sealed force source")
             if distal_probe is not None:
                 later = distal_probe.bilateral
                 if later is not None:
@@ -418,6 +425,21 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
 
         completed = []
         for command in schedule:
+            sdk = power.clock()["physics_step"]
+            if seating is not None and sdk >= seating["sdk_step"]:
+                from scripts.verify_dh116_supported_force_seating import select_seating_command
+                from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_supported_distal_contact
+
+                prior = distal_probe.previous
+                if prior is None or prior["physics_step"] != sdk:
+                    raise ValueError("force seating requires the previously completed same-SDK solver sample")
+                evidence = measure_supported_distal_contact(prior["rod"], grasp=task)
+                selected, loads = select_seating_command(command, evidence, {
+                    int(slot): pad for slot, pad in seating["pad_by_slot"].items()})
+                native.write_new(output/f"{task}_seating_command_{sdk}.json",
+                    dict(source_sdk_step=sdk, proposed_action=command.tolist(), issued_action=selected.tolist(),
+                         minimum_pad_force_n=loads, previously_qualified=evidence["per_hand"]["right"]["loaded"]))
+                command = selected
             result = control.control(torch.tensor(command, dtype=torch.float64)[None], observe=observe)
             completed.append(result)
             if result["termination_reason"] or result["physical_samples"] != 8:

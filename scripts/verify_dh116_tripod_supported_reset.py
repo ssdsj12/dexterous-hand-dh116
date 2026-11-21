@@ -276,7 +276,10 @@ def freeze(args):
         if plan["frozen_files"].setdefault(path, digest) != digest:
             raise ValueError("inconsistent Tripod source fingerprints")
     archived = waypoint = precontact = distal_archive = bilateral_archive = None
+    seating = getattr(args, "seating_reference", None)
     retarget = getattr(args, "retarget_reference", None)
+    if seating is not None and retarget is None:
+        raise ValueError("Tripod force seating requires the verified retarget path")
     retarget_proof = getattr(args, "retarget_screen", None)
     if (retarget is None) != (retarget_proof is None):
         raise ValueError("supply the paired Tripod retarget receipt and CPU screen")
@@ -335,6 +338,12 @@ def freeze(args):
                 plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
             plan["bilateral_tripod_contact"] = parameters
             actions = np.vstack((actions,appended))
+            if seating is not None:
+                from scripts.verify_dh116_supported_force_seating import load_tripod_seating
+
+                actions, seat, bound = load_tripod_seating(seating, actions, start_sdk=SDK_END)
+                parameters["seating"] = seat
+                plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
         sdk_end = SDK_END + 8*len(actions)
         plan["tripod_approach"] = actions.tolist()
         plan["budget"].update(mode=("tripod_guarded_waypoint_continuation" if waypoint
@@ -366,6 +375,7 @@ def main(argv=None):
     parser.add_argument("--bilateral-screen", type=Path)
     parser.add_argument("--retarget-reference", type=Path)
     parser.add_argument("--retarget-screen", type=Path)
+    parser.add_argument("--seating-reference", type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(screen.ROOT)

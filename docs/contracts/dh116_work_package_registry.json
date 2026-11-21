@@ -46957,6 +46957,28 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-force-guided-right-seating": {
+      "title": "Retain force-driven fixed-wrist seating at measured Tripod boundary",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-measured-left-retarget-native"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_force_seating.py",
+        "tests/test_dh116_tripod_bilateral_distal_retarget.py",
+        "tests/test_dh116_supported_distal_transfer.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_force_guided_right_seating_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-force-guided-right-seating.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 216,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## Tripod force-guided right seating
+
+Use the measured SDK 1296 force boundary to allow bounded finger-only seating with fixed wrist targets. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-force-guided-right-seating.md).
+
 ## Tripod retarget native contact result
 
 Confirm three left fingertip force transfers on the shared rod and retain the measured bilateral load shortfall. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-measured-left-retarget-native.md).
