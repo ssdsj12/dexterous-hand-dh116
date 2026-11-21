@@ -30313,6 +30313,31 @@
         "verified_at_utc": "2026-11-21T06:55:06.433798+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Pinch delayed load native comparison",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-delayed-force-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_delayed_force_native_v1.json",
+      "cpu_tests": {
+        "passed": 112,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "aa83015a6a35534d289ca2ffd6c3afab68939203",
+        "source_tree": "09f09886f09ddcc4fed42296307c905927822fd8",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T07:01:48.872280+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
