@@ -1,0 +1,52 @@
+{
+  "version": "dh116-teacher-supported-rod-reference-v1",
+  "status": "cpu_source_and_real_archive_verified",
+  "native_receipt_sha256": "8c0e73409e3a4ef001d1f9807439c14689c538be0d74f944208ab3ea0b4c9620",
+  "archived_sample_sha256": "e99021b41b6e07dae66fa812bb3fcbf9a81f33237e77c50bc44993fcd3a81fc6",
+  "sdk_step": 240,
+  "rod_tick": 2856,
+  "material_nodes": 41,
+  "rest_length_sum_m": 0.5,
+  "observed_minimum_z_m": 0.3470669388771057,
+  "native_snapshot": true,
+  "conditional_route_cross_reference": [
+    {
+      "proved": false,
+      "violations": [
+        {
+          "point": [
+            0.5
+          ],
+          "margins": {
+            "rod:source:finger33_link": -8.639922928010334e-05
+          }
+        }
+      ],
+      "minimum_margin_m": null
+    },
+    {
+      "proved": false,
+      "violations": [
+        {
+          "point": [
+            0.5
+          ],
+          "margins": {
+            "rod:source:finger22_link": -0.00022241943475580982,
+            "rod:source:finger23_link": -0.0006592644428235698,
+            "rod:source:finger33_link": -0.0013510931668948504,
+            "rod:cooked:finger23_link": -0.000620788141444694,
+            "rod:cooked:finger33_link": -0.001351093166895239
+          }
+        }
+      ],
+      "minimum_margin_m": null
+    }
+  ],
+  "old_raised_to_initial_shared_max_m": 0.0036055635588019127,
+  "new_native_runs": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "native_qualification": false,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-supported-rod-reference-source.md"
+}

@@ -45641,6 +45641,30 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.measured-supported-rod-reference-cpu": {
+      "title": "Use exact native material state for supported grasp candidate geometry",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-parked-support-settle-native-result",
+        "teacher.tripod-right-distal-continuous-approach-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_rod_reference.py",
+        "tests/test_dh116_tripod_distal_route.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_supported_rod_reference_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-supported-rod-reference-source.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_and_native_artifact_readback",
+        "passed": 72,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
