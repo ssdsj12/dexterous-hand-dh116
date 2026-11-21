@@ -11,7 +11,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation, Slerp
 
 from scripts.audit_dh116_pinch_initial_pose import (
-    load_geometry, path_displacement_bound, pose_matrix, transform,
+    box_relation, load_geometry, path_displacement_bound, pose_matrix, transform,
 )
 from scripts.audit_dh116_wire_contact_witness import endpoint_gap
 from scripts.certify_dh116_tripod_tracking_envelope import certify_box
@@ -51,6 +51,14 @@ def read_terminal(ledger, contract):
     right = near["hands"]["right"]
     body = dict(zip(right["body_names"], right["link_poses_xyzw"][0], strict=True))
     return joints, body, exchange["rod"]["node_positions"][0].copy()
+
+
+def support_clearance_lower(vertices, low, high):
+    lower = float(np.linalg.norm(
+        np.maximum(np.maximum(low-vertices.max(axis=0), vertices.min(axis=0)-high),0.)))
+    if lower > 0.:
+        return lower
+    return box_relation(vertices, (low+high)/2, high-low)["max_separating_axis_gap_m"]
 
 
 def proof(model, body, base_q, nodes, contract):
@@ -110,9 +118,8 @@ def proof(model, body, base_q, nodes, contract):
                     lower = endpoint_gap(points,nodes,.005)["lower_m"]
                 result["rod:"+key] = lower
                 result["table:"+key] = float(points[:,2].min()-.3-.0021)
-                result["support:"+key] = min(float(np.linalg.norm(
-                    np.maximum(np.maximum(lo-points.max(axis=0), points.min(axis=0)-hi),0.)))
-                    for lo,hi in supports)
+                result["support:"+key] = min(support_clearance_lower(points, lo, hi)
+                                             for lo, hi in supports)
             return result
         records.append(prove_segment(margins, motion, max_samples=2048))
     return records
@@ -128,10 +135,10 @@ def main(argv=None):
     contract = json.loads(args.contract.read_bytes())
     if (contract.get("version") not in ("dh116-flexible-tripod-right-distal-approach-cpu-v1",
                                         "dh116-flexible-tripod-right-parked-rod-approach-cpu-v1")
-            or contract.get("side") != "right" or len(contract["waypoints"]) != 3
+            or contract.get("side") != "right" or len(contract["waypoints"]) < 2
             or len(contract["support_boxes"]) != 2
             or contract.get("native_measurement") is not False):
-        raise ValueError("explicit three-waypoint, right-hand static-rod route required")
+        raise ValueError("explicit right-hand static-rod route required")
     base_q, body, nodes = read_terminal(args.ledger, contract)
     parked = contract.get("parked_rod_reference")
     if (parked is None) != (contract["version"] == "dh116-flexible-tripod-right-distal-approach-cpu-v1"):
@@ -152,7 +159,7 @@ def main(argv=None):
             sdk_step=ref.physics_step, rod_tick=ref.rod_tick,
             max_snapshot_speed_m_s=float(np.linalg.norm(ref.node_velocities,axis=-1).max()))
     records = proof(load_geometry(Path.cwd(), side="right"), body, base_q, nodes, contract)
-    passed = len(records) == 2 and all(row["proved"] for row in records)
+    passed = len(records) == len(contract["waypoints"])-1 and all(row["proved"] for row in records)
     out=dict(scope="right_hand_static_rod_kinematic_approach",proved=passed,
              native_measurement=False,grasp_qualified=False,records=records)
     if binding is not None:

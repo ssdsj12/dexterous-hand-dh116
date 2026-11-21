@@ -3902,3 +3902,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - Verified both Power supports carried the native free rod throughout all 2,856 solver substeps with hands parked and zero table contact. No grasp qualification was granted.
 
 - Bound supported Rod geometry proofs to verified native material snapshots, including measured velocities and original rest lengths. The old raised Tripod curve remains a separate reference.
+
+- Certified a new right Tripod corridor on the measured supported rod and used finite convex support separation when world bounding boxes overlapped.

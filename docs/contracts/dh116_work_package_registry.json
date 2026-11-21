@@ -45665,6 +45665,29 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-parked-right-approach-cpu": {
+      "title": "Prove the right Tripod route on the sealed native parked rod",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.measured-supported-rod-reference-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_distal_route.py",
+        "tests/test_dh116_supported_rod_reference.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_parked_approach_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-parked-right-approach.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_geometry_from_archived_native_curve",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "passed": 66,
+        "failed": 0
+      }
     }
   },
   "execution_target": {

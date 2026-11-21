@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from scripts.certify_dh116_tripod_distal_route import prove_segment
+from scripts.certify_dh116_tripod_distal_route import prove_segment, support_clearance_lower
 
 
 def test_rejects_an_unsafe_midpoint_between_clear_endpoints():
@@ -19,3 +19,15 @@ def test_covers_whole_interval_with_positive_displacement_reserve():
     assert min(box["minimum_margin_m"] for box in proof["certified_boxes"]) > 0.
     assert sum(np.asarray(box["upper"])[0] - np.asarray(box["lower"])[0]
                for box in proof["certified_boxes"]) == pytest.approx(1.)
+
+
+def test_uses_convex_separation_when_world_aabbs_overlap():
+    from scipy.spatial.transform import Rotation
+
+    local = np.array([[x,y,z] for x in (-1.,1.) for y in (-.1,.1) for z in (-.1,.1)])
+    vertices=Rotation.from_euler("z",45,degrees=True).apply(local)
+    low=np.array([.5,-.6,-.05])
+    high=np.array([.6,-.5,.05])
+    assert np.all(vertices.max(0)>low) and np.all(vertices.min(0)<high)
+    assert support_clearance_lower(vertices,low,high) > .5
+    assert support_clearance_lower(vertices,-.02*np.ones(3),.02*np.ones(3)) < 0

@@ -1,0 +1,23 @@
+{
+  "version": "dh116-tripod-right-parked-approach-v1",
+  "status": "conditional_right_route_certified_against_native_parked_curve",
+  "verified_rod": {
+    "sample_sha256": "e99021b41b6e07dae66fa812bb3fcbf9a81f33237e77c50bc44993fcd3a81fc6",
+    "receipt_sha256": "8c0e73409e3a4ef001d1f9807439c14689c538be0d74f944208ab3ea0b4c9620",
+    "sdk_step": 240,
+    "rod_tick": 2856,
+    "max_snapshot_speed_m_s": 0.01291269063949585
+  },
+  "proof_sha256": "1af463a63850341d1d3d7ee6445b647fec6e4205f88f6ed87a69e24ce7cb59dc",
+  "corridor_minimum_m": [
+    0.0009013026032867246,
+    4.914752365651825e-05,
+    2.3086481732194746e-05
+  ],
+  "same_clock_native_motion_validated": false,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-parked-right-approach.md",
+  "cpu_tests_passed": 66
+}

@@ -1,0 +1,9 @@
+# Right Tripod approach on the measured supported rod
+
+The new independent three-segment right Tripod route uses the naturally exiting parked rod at SDK 240 and the original right-hand body alignment from SDK 522. It now uses exact convex-box separation when a hand envelope and support have overlapping world-axis bounding boxes. In the measured reference screen, the original AABB test gave zero for one candidate whose closest convex support gap was 2.007 mm. Actual intersections are still rejected, and the positive gap remains a certified lower bound.
+
+The smallest certified distances in the three right-hand segments were 901.303, 49.148 and 23.086 µm. The final cooked thumb/index/middle gaps had upper bounds 0.215/0.225/0.204 mm. The independent left endpoint screen on the same saved rod matched its own USD/cooked geometry, with corresponding upper gaps 0.172/0.226/0.240 mm and 0.075 mm minimum original-envelope rod gap. The left result remains an endpoint screen.
+
+The right proof freezes the measured rod geometry during each mathematical interval. The native sample had 0.0129 m/s peak node velocity. Neither this corridor nor the left endpoint grants permission to treat the moving rod as fixed in a live approach. Match the same-clock rod and support state, account for motion or re-evaluate clearance, and verify both hands independently before initiating closure.
+
+Run `python -B -m scripts.certify_dh116_tripod_distal_route --contract configs/dh116_tasks/flexible_tripod_right_parked_rod_approach_cpu_v1.json --ledger <sealed-right-trajectory> --parked-receipt <sealed-outer.json> --output <new-proof.json>`. Proof SHA-256 `1af463a63850341d1d3d7ee6445b647fec6e4205f88f6ed87a69e24ce7cb59dc`. The related 66 CPU tests passed. The package uses the existing native sample and grants no grasp qualification.
