@@ -47234,6 +47234,33 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-staged-palm-witness-native": {
+      "title": "Measure native Power palm contact and reaction on both DH116 hands",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-staged-palm-witness"
+      ],
+      "tests": [
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_high_bypass.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_staged_palm_witness_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-staged-palm-witness-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 81,
+        "native_exit_code": 0,
+        "palm_contact_sdk_by_hand": {
+          "left": 6347,
+          "right": 6356
+        },
+        "state_scope": "supported_palm_witness",
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

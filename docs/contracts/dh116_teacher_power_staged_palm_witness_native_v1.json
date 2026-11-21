@@ -1,0 +1,118 @@
+{
+  "version": "dh116-teacher-power-staged-palm-witness-native-v1",
+  "receipt_sha256": "522f0180c88583ebf4cd4be1664e41667ecd25c67e583adb675fdd92969e7e9a",
+  "frozen_sha256": "260954a9bbc3ec980a8c9f7a86f7521d0c51b5136a706bbb298ec6c0127ba8dd",
+  "source_code_sha": "607d90a3583be662cbe42dcf683bcae2b79d0d26",
+  "native_verified_natural_exit": true,
+  "exit_code": 0,
+  "signal": null,
+  "app_close_returned": true,
+  "elapsed_s": 1162.9047966420185,
+  "last_sdk": 6504,
+  "last_motion_row_sha256": "618f7f52161c7d72713608cfa1138f4600569da8c3cdb91722688441e5bde093",
+  "matched_high_anchor": true,
+  "palm_precontact_reached": true,
+  "first_loaded_contact": {
+    "support_0": 6096,
+    "support_1": 6096,
+    "left.base_link": 6347,
+    "right.base_link": 6356
+  },
+  "first_applied_palm_feedback": {
+    "left.base_link": 6348,
+    "right.base_link": 6357
+  },
+  "positive_pair_counts": {
+    "support_0": 4908,
+    "support_1": 4908,
+    "left.base_link": 1871,
+    "right.base_link": 1774
+  },
+  "peak_normal_load_n": {
+    "support_0": 0.16353711485823946,
+    "support_1": 0.1643906980752945,
+    "left.base_link": 0.010895780455184828,
+    "right.base_link": 0.015163716553354037
+  },
+  "validated_reaction_ticks": 157,
+  "contact_violation_rows": [],
+  "support_free_sdk_rows": 0,
+  "palm_and_five_opposed": [],
+  "checkpoints": [
+    {
+      "physics_step": 1408,
+      "errors": {
+        "left": {
+          "position_m": 8.950177870967615e-05,
+          "rotation_rad": 7.552560155957992e-07
+        },
+        "right": {
+          "position_m": 8.955624163275734e-05,
+          "rotation_rad": 4.794830959086468e-07
+        }
+      }
+    },
+    {
+      "physics_step": 3584,
+      "errors": {
+        "left": {
+          "position_m": 9.780218344660542e-05,
+          "rotation_rad": 0.007250368772465002
+        },
+        "right": {
+          "position_m": 7.569886351658402e-05,
+          "rotation_rad": 0.0047926966626947705
+        }
+      }
+    },
+    {
+      "physics_step": 4584,
+      "errors": {
+        "left": {
+          "position_m": 9.166335734243096e-05,
+          "rotation_rad": 1.1352829478216603e-06
+        },
+        "right": {
+          "position_m": 7.893810619124251e-05,
+          "rotation_rad": 0.002964263712418695
+        }
+      }
+    },
+    {
+      "physics_step": 6096,
+      "errors": {
+        "left": {
+          "position_m": 9.437354667025762e-05,
+          "rotation_rad": 0.0002299145666886498
+        },
+        "right": {
+          "position_m": 8.25256442335678e-05,
+          "rotation_rad": 6.630293455992492e-07
+        }
+      }
+    },
+    {
+      "physics_step": 6376,
+      "errors": {
+        "left": {
+          "position_m": 1.7222936410362793e-05,
+          "rotation_rad": 6.701684225326684e-06
+        },
+        "right": {
+          "position_m": 6.868217186724753e-05,
+          "rotation_rad": 4.287619629428068e-06
+        }
+      }
+    }
+  ],
+  "geometry_stop": [],
+  "diagnostic_failure": null,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "ppo_updates": 0,
+  "cpu_tests": {
+    "passed": 81,
+    "failed": 0
+  },
+  "runtime_scope": "palm_contact_without_finger_closure"
+}

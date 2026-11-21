@@ -1,3 +1,7 @@
+## Power native palm contact and reaction
+
+Record independent native palm contacts, measured reaction delivery, support status, and natural exit. [Report](docs/superpowers/reports/2026-11-21-teacher-power-staged-palm-witness-native.md).
+
 ## Power staged palm contact witness
 
 Prepare the separately screened native palm routes and check raw contacts and reactions. [Report](docs/superpowers/reports/2026-11-21-teacher-power-staged-palm-witness.md).
