@@ -4228,3 +4228,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - 2026-11-22: fixed-wrist open Reset diagnostic completed 240 SDK / 2856 solver steps and natural exit 0; live full-shape clearance and grasp qualification remain pending.
 
 - 2026-11-22: audited 239 actual Reset/settling frames with measured-base/q-derived geometry; 223 related CPU tests passed. Middle-only closing remains blocked by original geometry guard. See [docs/superpowers/reports/2026-11-22-teacher-902-live-clearance.md](docs/superpowers/reports/2026-11-22-teacher-902-live-clearance.md).
+
+- 2026-11-22: isolated 902 Tripod micro-alignment now passes initial and full 512-substep float32 CPU closure gates; 228 related tests passed. Actual new Reset/contact/force qualification remains pending. See [docs/superpowers/reports/2026-11-22-teacher-902-joint-contact.md](docs/superpowers/reports/2026-11-22-teacher-902-joint-contact.md).

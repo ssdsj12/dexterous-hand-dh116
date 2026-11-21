@@ -47855,6 +47855,32 @@
         "teacher_admission": false,
         "contact_candidate_passed": false
       }
+    },
+    "teacher.902-joint-contact-path": {
+      "title": "Bounded joint wrist/finger alignment and full float32 CPU closure path",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-live-clearance"
+      ],
+      "tests": [
+        "tests/test_dh116_902_joint_contact_search.py",
+        "tests/test_dh116_902_joint_contact_path.py",
+        "tests/test_dh116_902_command_contact.py",
+        "tests/test_dh116_902_fixed_wrist_open.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_joint_contact_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-joint-contact.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 228,
+        "initial_geometry_passed": true,
+        "full_float32_path_passed": true,
+        "endpoint_contact_candidate_passed": true,
+        "teacher_admission": false,
+        "native_contact_verified": false
+      }
     }
   },
   "execution_target": {
