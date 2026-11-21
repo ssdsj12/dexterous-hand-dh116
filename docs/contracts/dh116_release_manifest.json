@@ -32105,6 +32105,31 @@
         "verified_at_utc": "2026-11-21T20:23:25.872194+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-fresh-reset-native-validation",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-fresh-reset-native.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_fresh_reset_native_v1.json",
+      "cpu_tests": {
+        "passed": 3,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "e466a2f30ea110a80525e20496639fe223f8fc7a",
+        "source_tree": "9a2b4e0b61f41fda9bad764126fde7c773ab630e",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T20:37:01.007867+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
