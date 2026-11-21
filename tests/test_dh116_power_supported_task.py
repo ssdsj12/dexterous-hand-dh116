@@ -343,3 +343,25 @@ def test_proximal_candidate_hashes_and_grid_contract(tmp_path, monkeypatch, corr
         assert tuple(packets) == power.PROXIMAL_NAMES
         assert len(frozen) == 7 and contract in frozen
         assert all(item[1]["spacing"] == .0005 for item in packets.values())
+
+
+def test_proximal_motion_boundary_gates_both_sdk_and_solver_state():
+    from copy import deepcopy
+
+    from scripts.verify_dh116_power_shared_rod import verify_proximal_action_boundary
+
+    row = dict(rod=dict(physics_step=240, rod_tick=2856, node_positions=[.4], velocities=[.001],
+                       rest_lengths_m=[.0125], mesh_names=power.PROXIMAL_POWER_MESH_NAMES,
+                       external_support_wrenches_world={"support_0": [.15], "support_1": [.16]},
+                       episode_uid="sealed"),
+               native_joint_state={"right": [.2]}, hand_link_poses={}, hand_link_coms={}, clearance_m=[.01, .02])
+    new = deepcopy(row)
+    new["rod"]["episode_uid"] = "new"
+    verify_proximal_action_boundary(new, row)
+    new["rod"]["velocities"][0] *= -1
+    with pytest.raises(ValueError, match="diverged"):
+        verify_proximal_action_boundary(new, row)
+    new = deepcopy(row)
+    new["native_joint_state"]["right"][0] += .00001
+    with pytest.raises(ValueError, match="diverged"):
+        verify_proximal_action_boundary(new, row)

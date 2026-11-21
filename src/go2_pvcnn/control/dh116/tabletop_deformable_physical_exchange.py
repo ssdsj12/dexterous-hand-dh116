@@ -38,12 +38,12 @@ class FlexiblePhysicalExchange:
         expected_links = 5
         if continue_supported_rod:
             from .tabletop_power_shared_rod import (
-                PowerSharedRodRuntime, SUPPORTED_POWER_MESH_NAMES,
+                PowerSharedRodRuntime, PROXIMAL_POWER_MESH_NAMES, SUPPORTED_POWER_MESH_NAMES, contact_links,
                 write_composer_reactions as write_supported_reactions,
             )
 
             if (type(rod) is not PowerSharedRodRuntime
-                    or rod.mesh_names != SUPPORTED_POWER_MESH_NAMES):
+                    or rod.mesh_names not in (SUPPORTED_POWER_MESH_NAMES, PROXIMAL_POWER_MESH_NAMES)):
                 raise ValueError("the same supported Power rod owner is required for the action handoff")
             if getattr(rod, "_action_exchange_claimed", False):
                 raise ValueError("supported rod already attached to an action exchange")
@@ -55,7 +55,7 @@ class FlexiblePhysicalExchange:
                     or previous.get("pair_capture_status") != "validated_solver_samples"
                     or previous.get("contact_valid") is not True):
                 raise ValueError("same-clock, complete previous supported rod exchange required")
-            expected_links = 6
+            expected_links = len(contact_links(rod.bindings))
             wrench_writer = write_supported_reactions
         env = clock["env_id"]
         self._composers = {}

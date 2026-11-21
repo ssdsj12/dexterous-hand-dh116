@@ -14,6 +14,7 @@ CONFIG = ROOT / "configs/dh116_tasks/flexible_power_supported_contact_v1.json"
 SETTLE = ROOT / "configs/dh116_tasks/flexible_power_supported_settle_v1.json"
 ACTION_PROBE = ROOT / "configs/dh116_tasks/flexible_power_supported_action_probe_v1.json"
 NEAR_OPEN = ROOT / "configs/dh116_tasks/flexible_power_near_open_settle_v1.json"
+PROXIMAL_ACTION = ROOT / "configs/dh116_tasks/flexible_power_proximal_action_v1.json"
 native, reset, sources = shared.native, shared.reset, shared.sources
 
 
@@ -132,6 +133,7 @@ def freeze(args):
     capture = getattr(args, "proximal_capture", None)
     bake = getattr(args, "proximal_bake", None)
     proximal_files = []
+    action_reference = getattr(args, "proximal_action_reference", None)
     if capture is not None or bake is not None:
         if not near or capture is None or bake is None:
             raise ValueError("both proximal evidence inputs and the near-open diagnostic are required")
@@ -178,6 +180,23 @@ def freeze(args):
             config["hands"][side] = dict(pose_wxyz=initial_xyz+specification["initial_quaternion_wxyz"],
                                            q_rad=specification["initial_q_rad"])
     action = None
+    if action_reference is not None:
+        if not proximal_files or sdk_end != 240:
+            raise ValueError("proximal motion requires the settled near-open 17-slot scene")
+        request = json.loads(PROXIMAL_ACTION.read_bytes())
+        expected_action = [0.] * 24
+        expected_action[12] = expected_action[15] = -.5
+        if (request["version"] != "dh116-power-proximal-action-v1"
+                or request["near_open_config_sha256"] != native.sha(NEAR_OPEN)
+                or request["start_sdk_step"] != sdk_end or request["control_windows"] != 1
+                or request["action24"] != expected_action):
+            raise ValueError("exact original bounds and one independent 17-slot approach pulse required")
+        action = request["action24"]
+        row, reference_files = shared.proximal_action_boundary(action_reference, request["native_outer_sha256"])
+        if row["rod"]["physics_step"] != sdk_end:
+            raise ValueError("17-slot action reference has the wrong boundary")
+        proximal_files.extend((PROXIMAL_ACTION, *reference_files))
+        sdk_end += 8
     if probe:
         request = json.loads(ACTION_PROBE.read_bytes())
         action = request["action24"]
@@ -200,8 +219,11 @@ def freeze(args):
                 else "power_supported_near_open_no_contact_settling")
     if probe:
         mode = "power_supported_settle_and_action_probe"
+    if action_reference is not None:
+        mode = "power_supported_proximal_near_open_action_probe"
+    if action is not None:
         plan["action24"] = action
-    plan["budget"].update(mode=mode, sdk_steps=sdk_end, control_steps=int(probe),
+    plan["budget"].update(mode=mode, sdk_steps=sdk_end, control_steps=int(action is not None),
                           solver_steps=(sdk_end-2)*shared.SUBSTEPS, new_power_mesh_registrations=6 if proximal_files else 4)
     src = ROOT / "src/go2_pvcnn/control/dh116"
     files = [CONFIG, Path(__file__), Path(shared.__file__), args.rays,
@@ -239,6 +261,7 @@ def main(argv=None):
     parser.add_argument("--near-open-screen",type=Path)
     parser.add_argument("--proximal-capture", type=Path)
     parser.add_argument("--proximal-bake", type=Path)
+    parser.add_argument("--proximal-action-reference", type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(ROOT)

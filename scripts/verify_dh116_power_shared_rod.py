@@ -178,6 +178,33 @@ def bind_proximal_sources(sim, bindings, original, *, args):
     return records, grids
 
 
+def proximal_action_boundary(receipt, digest):
+    """Require the exact clean 17-slot chamber at the same settled boundary."""
+    from go2_pvcnn.control.dh116.tabletop_power_shared_rod import PROXIMAL_POWER_MESH_NAMES
+    from go2_pvcnn.control.dh116.tabletop_supported_rod_reference import load_parked_reference
+
+    verified = load_parked_reference(receipt, digest, 240)
+    outer = sources.checked_json(receipt, digest)
+    result = receipt.parent/"native"/"power_shared_result.json"
+    sample = receipt.parent/"native"/"power_exchange_240.json"
+    frozen = sources.checked_json(result, outer["artifact_sha256"][result.name])
+    row = sources.checked_json(sample, verified.sample_sha256)
+    if (tuple(frozen["mesh_names"]) != PROXIMAL_POWER_MESH_NAMES
+            or tuple(row["rod"]["mesh_names"]) != PROXIMAL_POWER_MESH_NAMES):
+        raise ValueError("the settled action reference must use all 17 original named slots")
+    return row, (receipt, result, sample)
+
+
+def verify_proximal_action_boundary(actual, archived):
+    """Match physical arrays exactly while preserving the new run identity."""
+    rod_keys = ("physics_step", "rod_tick", "node_positions", "velocities", "rest_lengths_m",
+                "external_support_wrenches_world", "mesh_names")
+    hand_keys = ("native_joint_state", "hand_link_poses", "hand_link_coms", "clearance_m")
+    if (any(actual["rod"][k] != archived["rod"][k] for k in rod_keys)
+            or any(actual[k] != archived[k] for k in hand_keys)):
+        raise ValueError("live near-open Power state diverged from the sealed 17-slot reference")
+
+
 def archive_geometry_digest(archive):
     from scripts.audit_dh116_cooked_hull_device_parity import _pad_hull
 
@@ -217,7 +244,7 @@ def acquire_original_power_reset(sim, owners, trace, output, *, profile):
 
 
 def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
-                         clearance_shapes, setup, action, sdk_end):
+                         clearance_shapes, setup, action, sdk_end, verify_support_continuity=False):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -253,9 +280,15 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
 
         def observe(row):
             native.write_new(output/f"power_control_{row['physics_step']}.json", encode_owned(row))
-            if any(pair["mesh_name"] not in END_SUPPORT_NAMES
-                   for pair in row["rod"]["rod_mesh_contact_pairs"]["pairs"]):
+            pairs = row["rod"]["rod_mesh_contact_pairs"]["pairs"]
+            if any(pair["mesh_name"] not in END_SUPPORT_NAMES for pair in pairs):
                 return "external_contact_during_parked_action"
+            if verify_support_continuity:
+                actual = {(pair["mesh_name"], pair["substep"]) for pair in pairs
+                          if pair["normal_force_on_rod_n"] > 0.}
+                expected = {(name, tick) for name in END_SUPPORT_NAMES for tick in range(SUBSTEPS)}
+                if actual != expected:
+                    return "lost_support_during_proximal_approach_pulse"
             return None
 
         result = control.control(torch.tensor(action,dtype=torch.float64)[None],observe=observe)
@@ -294,8 +327,9 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             raise ValueError("original same-clock task Reset and table clearance required")
         clock = original.clock()
         stationary_near_open = getattr(args, "verify_near_open_settling", False)
+        action_reference = getattr(args, "proximal_action_reference", None)
         if stationary_near_open and (supported_acquire is None or not require_no_hand_contact
-                                     or action_after_settle is not None):
+                                     or (action_after_settle is not None and action_reference is None)):
             raise ValueError("stationary Reset binding is restricted to the near-open settling diagnostic")
         added, grids = bind_palm_sources(sim, bindings, original, args=args)
         capture = getattr(args, "proximal_capture", None)
@@ -388,8 +422,15 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 raise RuntimeError("the isolated support-settling interval recorded a hand pair")
         measured_action_steps = 0
         if action_after_settle is not None:
+            if action_reference is not None:
+                from scripts.verify_dh116_power_supported_task import PROXIMAL_ACTION
+                request = json.loads(PROXIMAL_ACTION.read_bytes())
+                archived, _ = proximal_action_boundary(action_reference, request["native_outer_sha256"])
+                final_settle = json.loads((output/f"power_exchange_{settle_end}.json").read_bytes())
+                verify_proximal_action_boundary(final_settle, archived)
             control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
-                meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end)
+                meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end,
+                verify_support_continuity=action_reference is not None)
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,

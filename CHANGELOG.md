@@ -1,3 +1,7 @@
+## Power proximal action handoff
+
+Continue the same 17-slot rod through one opt-in, guarded wrist approach pulse. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-action.md).
+
 ## Tripod archived rod motion envelope
 
 Audit bilateral approach prefixes with a continuous distance reserve derived from the same archived material nodes. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-archived-motion-envelope.md).
