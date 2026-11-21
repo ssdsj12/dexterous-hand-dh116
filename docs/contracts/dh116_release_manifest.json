@@ -31888,6 +31888,31 @@
         "verified_at_utc": "2026-11-21T17:44:16.816780+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-whole-envelope",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-whole-envelope.md",
+      "readiness": "docs/contracts/dh116_teacher_902_whole_envelope_v1.json",
+      "cpu_tests": {
+        "passed": 287,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "d355a60c8bcf43f2e3d4bc3dbc605ba2e3085991",
+        "source_tree": "e0df770f51795e8145d81140a5c5c9246662fabe",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T18:07:08.262260+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
