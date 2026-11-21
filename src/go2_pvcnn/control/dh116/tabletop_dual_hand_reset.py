@@ -123,6 +123,11 @@ def _composer(composer, body_count):
 
 def _hands(bindings, rod, *, finite):
     """Own actual backend buffers; cached command targets never replace them."""
+    # Supported flexible tasks bind palms and optional proximal links as well
+    # as the original distal pads. Validate that exact bilateral layout before
+    # any reset write; never silently omit an extra native collider.
+    from .tabletop_power_shared_rod import contact_links
+    links = contact_links(rod.bindings)
     result = {}
     for binding in bindings:
         hand = binding.hand
@@ -152,10 +157,11 @@ def _hands(bindings, rod, *, finite):
             raise ValueError("actual articulation root differs from pad container")
         if paths[0] != [container+"/"+name for name in bodies]:
             raise ValueError("actual body names/paths differ from rod hand container")
-        for name in PADS:
+        for name in links:
             row = rod.bindings[binding.side+"."+name]
-            if row["body_index"] != bodies.index(name) or row["prim_path"] != paths[0][bodies.index(name)]:
-                raise ValueError("rod pad binding differs from actual articulation")
+            if (row["body_index"] != bodies.index(name) or row["prim_path"] != paths[0][bodies.index(name)]
+                    or row.get("side") != binding.side or row.get("body_name") != name):
+                raise ValueError("rod contact binding differs from actual articulation")
         packet = dict(joint_names=names, body_names=bodies, link_paths=paths,
             articulation_paths=list(view.prim_paths), dof_types=_owned(types),
             backend_targets=_owned(evidence["backend"]["values"]),
@@ -304,9 +310,11 @@ class DualHandResetTransaction:
             pad_poses = {}
             for binding in bindings:
                 row = updated[binding.side]
-                for name in PADS:
-                    pose = row["body_poses_xyzw"][0, row["body_names"].index(name)]
-                    pad_poses[binding.side+"."+name] = (pose[:3].copy(), pose[3:].copy())
+                for key, contact in rod.bindings.items():
+                    if contact["side"] != binding.side:
+                        continue
+                    pose = row["body_poses_xyzw"][0, contact["body_index"]]
+                    pad_poses[key] = (pose[:3].copy(), pose[3:].copy())
             phase = "rod"
             raw_reset = rod.reset(physics_step=before_clock["sdk_physics_step"],
                 episode_uid=self.episode_uid, reset_id=reset_id, pad_poses=pad_poses)

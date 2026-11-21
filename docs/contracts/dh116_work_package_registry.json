@@ -47971,6 +47971,30 @@
         "old_native_run_promoted": false,
         "teacher_admission": false
       }
+    },
+    "teacher.supported-reset-readback": {
+      "title": "Preserve all supported hand contact links through actual no-step Reset/readback",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [],
+      "tests": [
+        "tests/test_native_teacher_supported_reset.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_dh116_flexible_live_geometry.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_supported_reset_readback_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-supported-reset-readback.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_narrow_passed": 27,
+        "new_regressions": 0,
+        "expanded_cpu_passed": 281,
+        "expanded_cpu_failed": 1,
+        "baseline_failure_reproduced": true,
+        "scope": "CPU bridge only; supported collector/native pending",
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

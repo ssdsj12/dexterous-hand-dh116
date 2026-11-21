@@ -18,7 +18,7 @@ class LiveGeometryReader:
     reader does not replace native cooked-hull qualification or move the SDK.
     """
 
-    def __init__(self, sim, bindings, inspected_geometry, *, read_clock):
+    def __init__(self, sim, bindings, inspected_geometry, *, read_clock, contact_bindings=None):
         self._sim, self._bindings = sim, tuple(bindings)
         self._read_clock = read_clock
         clock = self._clock()
@@ -34,6 +34,16 @@ class LiveGeometryReader:
         self._pads = deepcopy(inspected_geometry["pad_bindings"])
         if set(self._pads) != set(HAND_NAMES):
             raise ValueError("all ten original pad identities required")
+        if contact_bindings is not None:
+            from .tabletop_power_shared_rod import contact_links
+            contact_links(contact_bindings)  # Exact bilateral 5/6/7-link layouts only.
+            if not set(HAND_NAMES) <= set(contact_bindings):
+                raise ValueError("all inspected original pad bindings must be preserved")
+            for key, inspected in self._pads.items():
+                if any(contact_bindings[key].get(field) != inspected.get(field)
+                       for field in ("side", "body_index", "prim_path")):
+                    raise ValueError("extended contacts changed an inspected original pad binding")
+            self._pads = deepcopy(contact_bindings)
         self._shapes = deepcopy(inspected_geometry["shapes"])
         self._ids = tuple(self._identity(b) for b in self._bindings)
         if {h for h, _, _ in self._shapes} != {0, 1}:
@@ -44,9 +54,11 @@ class LiveGeometryReader:
             for key, pad in self._pads.items():
                 if key.startswith(b.side + "."):
                     i = pad["body_index"]
-                    if (pad["side"] != b.side or self._ids[index][2][i] != key.split(".")[1]
-                            or self._ids[index][3][i] != pad["prim_path"]):
-                        raise ValueError("inspected pad link identity differs")
+                    if (type(i) is not int or not 0 <= i < len(self._ids[index][2])
+                            or pad["side"] != b.side or self._ids[index][2][i] != key.split(".")[1]
+                            or self._ids[index][3][i] != pad["prim_path"]
+                            or (contact_bindings is not None and pad.get("body_name") != key.split(".")[1])):
+                        raise ValueError("inspected contact link identity differs")
 
     def _clock(self, previous_rod_clock=None):
         row = deepcopy(self._read_clock())

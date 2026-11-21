@@ -1,3 +1,7 @@
+## Supported Teacher Reset/readback
+
+Preserve all14 actual hand contact-link poses and all17 mesh slots; refuse bad extra identities before writes. Original10-pad reader remains default; explicit extended reads keep full-hand clearance. Final27 CPU checks pass; expanded281 pass/1 historical source-SHA failure reproduced on baseline. No new native/PPO or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-supported-reset-readback.md).
+
 ## Fixed-wrist open Reset screening
 
 Original 902 Tripod wrist/terminal grip retained. 24/135 open candidates and the selected 512-substep ideal geometry path pass; the middle pad still has a +0.237 mm terminal gap, so endpoint contact remains blocked. 140 CPU checks pass; zero native runs. [Report](docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open.md).
