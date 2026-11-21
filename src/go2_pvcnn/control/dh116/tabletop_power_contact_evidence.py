@@ -174,16 +174,44 @@ def measure_supported_distal_contact(rod, *, grasp):
         pairs, substeps=SUBSTEPS, mesh_count=len(names), grasp=grasp.capitalize(),
         support_slots={name: names.index(name) for name in support_names},
     )
-    targets = {slot for hand in evidence["per_hand"].values() for slot in hand["required_mesh_ids"]}
+    nodes = np.asarray(rod.get("node_positions"), dtype=float)
+    if nodes.shape != (1, NODE_COUNT, 3) or not np.isfinite(nodes).all():
+        raise ValueError("the same-boundary 41 current world-space nodes are required")
+    y = nodes[0, :, 1]
+    if y[0] >= y[-1]:
+        raise ValueError("supported rod material orientation must run from world negative Y to positive Y")
+    center_y = (y[0] + y[-1]) / 2
+    center_station = NODE_COUNT // 2
+    target_sides = {slot: side for side, hand in evidence["per_hand"].items()
+                    for slot in hand["required_mesh_ids"]}
     external = {name: [0.] * SUBSTEPS for name in support_names}
     unexpected = set()
+    wrong_side = []
     for pair in pairs:
         name, step = names[pair["mesh_index"]], pair["substep"]
         if name in external:
             external[name][step] += float(np.linalg.norm(pair["force_on_rod_world_n"]))
-        elif pair["mesh_index"] not in targets:
+        elif pair["mesh_index"] not in target_sides:
             unexpected.add(name)
+        else:
+            index = pair["node_index"]
+            side = target_sides[pair["mesh_index"]]
+            sign = 1 if side == "left" else -1
+            if sign * (index - center_station) <= 0 or sign * (y[index] - center_y) <= 0:
+                wrong_side.append(dict(link=name, substep=step, node_index=index, node_world_y_m=float(y[index])))
+                row = evidence["per_hand"][side]["per_substep"][step]
+                row["loaded"] = False
+                reason = "required_pad_on_wrong_wire_side"
+                if reason not in row["reasons"]:
+                    row["reasons"].append(reason)
+    for hand in evidence["per_hand"].values():
+        hand["loaded_substeps"] = [row["substep"] for row in hand["per_substep"] if row["loaded"]]
+        hand["loaded"] = len(hand["loaded_substeps"]) == SUBSTEPS
+        hand["reasons"] = sorted({reason for row in hand["per_substep"] for reason in row["reasons"]})
+    bilateral = all(hand["loaded"] for hand in evidence["per_hand"].values())
     evidence.update(
+        bilateral=bilateral, all_solver_substeps_loaded=bilateral,
+        wrong_side_contacts=wrong_side, material_side_split_world_y_m=float(center_y),
         identity={key: rod[key] for key in IDENTITY_FIELDS},
         external_support_force_norm_n=external,
         support_free=all(max(loads) <= TABLE_LOAD_LIMIT_N for loads in external.values()),

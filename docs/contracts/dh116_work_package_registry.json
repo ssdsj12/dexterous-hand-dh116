@@ -47284,6 +47284,33 @@
         "native_image_reprojection_verified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.902-flexible-distal-reset": {
+      "title": "Screen independent 902 Pinch and Tripod on one supported free DeformX rod",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.fixed-stereo-physical-hand-order"
+      ],
+      "tests": [
+        "tests/test_dh116_902_flexible_reset.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_pinch_supported_reset.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_native_phase_contract_v2.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_flexible_distal_reset_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-reset.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 160,
+        "native_grasp_verified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

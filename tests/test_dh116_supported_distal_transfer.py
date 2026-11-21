@@ -54,7 +54,7 @@ def test_probe_persists_contact_then_transferred_wrench_and_rejects_unselected_c
     probe = transfer.SupportedDistalProbe(528, target, binding, [(1, 4, np.zeros((4, 3)))],
                 grids={'right.finger14_link': None}, archive={}, max_pad_penetration_m=.00025)
     monkeypatch.setattr(transfer, 'measure_supported_distal_contact',
-                        lambda rod, grasp: dict(bilateral=False, per_hand={s: {'loaded': False}
+                        lambda rod, grasp: dict(bilateral=False, wrong_side_contacts=[], per_hand={s: {'loaded': False}
                                                          for s in ('left', 'right')}))
     def wrench(force):
         return {'right': {'body_ids': [4], 'is_global': True,
@@ -73,6 +73,14 @@ def test_probe_persists_contact_then_transferred_wrench_and_rejects_unselected_c
     assert reason == 'unexpected_contact_outside_distal_station'
     assert probe.summary()['first_transfer_sdk'] == 530
 
+    wrong = {'link': 'right.finger14_link', 'node_index': 3}
+    monkeypatch.setattr(transfer, 'measure_supported_distal_contact',
+                        lambda rod, grasp: dict(bilateral=False, wrong_side_contacts=[wrong],
+                                                per_hand={s: {'loaded': False} for s in ('left', 'right')}))
+    observed, reason = probe.observe(row(531, 0., 0., [dict(mesh_name='right.finger14_link', node_index=3)]))
+    assert observed['violations'] == ['right.finger14_link:3']
+    assert reason == 'unexpected_contact_outside_distal_station'
+
 
 def test_pinch_probe_uses_a_two_pad_diagnostic_without_enabling_third_pad(monkeypatch):
     from scripts import verify_dh116_supported_distal_transfer as transfer
@@ -83,7 +91,7 @@ def test_pinch_probe_uses_a_two_pad_diagnostic_without_enabling_third_pad(monkey
                for i, name in enumerate(target)}
     def observe(rod, *, grasp):
         assert grasp == 'pinch'
-        return dict(bilateral=False, per_hand=dict(left={'loaded': False}, right={'loaded': False}))
+        return dict(bilateral=False, wrong_side_contacts=[], per_hand=dict(left={'loaded': False}, right={'loaded': False}))
     monkeypatch.setattr(transfer, 'measure_supported_distal_contact', observe)
     probe = transfer.SupportedDistalProbe(432, target, binding,
                 [(1, i, np.zeros((4, 3))) for i in range(2)], grids=dict.fromkeys(target),

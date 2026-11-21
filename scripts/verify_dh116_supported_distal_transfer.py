@@ -155,6 +155,8 @@ class SupportedDistalProbe:
         stations = self.stations_at(sdk)
         violations = pairs_outside_station(pairs, stations)
         evidence = measure_supported_distal_contact(rod, grasp=self.grasp)
+        wrong_side = {f"{pair['link']}:{pair['node_index']}" for pair in evidence["wrong_side_contacts"]}
+        violations = sorted(set(violations) | wrong_side)
         active_links = [p["mesh_name"] for p in pairs if p["node_index"] in stations.get(p["mesh_name"], ())]
         intended_pairs = len(active_links)
         for side in SIDES:

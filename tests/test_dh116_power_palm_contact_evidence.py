@@ -11,7 +11,7 @@ from go2_pvcnn.control.dh116.tabletop_power_shared_rod import (
 )
 
 
-def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False, load=.1):
+def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False, load=.1, crossed=False):
     def stamp(name):
         return hashlib.sha256(name.encode()).hexdigest()
 
@@ -39,9 +39,13 @@ def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False,
             if name == "table":
                 direction = np.array([0., 0., 1.])
             force = load * direction
-            indices.append((step, slot, slot))
+            node = slot
+            if proximal and name not in static:
+                left_half = name.startswith("left.") != crossed
+                node = 33 if left_half else 7
+            indices.append((step, node, slot))
             vectors.append([0., 0., 0., *direction, *force, 0., 0., 0.])
-            node_forces[slot] += force / 12
+            node_forces[node] += force / 12
             mesh[slot, :3] -= force / 12
     raw = dict(substeps=12, mesh_count=len(names), capacity=41*len(names)*12,
                attempted=len(indices), overflow=False, indices=np.asarray(indices),
@@ -58,6 +62,8 @@ def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False,
                distributed_contact=node_forces[None, :, :],
                named_wrenches=dict(zip(names, mesh)), table_wrench_world=mesh[5])
     if proximal:
+        rod["node_positions"] = np.stack((np.full(41, .43), np.linspace(-.25, .25, 41),
+                                          np.full(41, .365)), axis=-1)[None]
         rod["external_support_wrenches_world"] = {name: mesh[names.index(name)] for name in static}
     return rod
 
@@ -141,4 +147,29 @@ def test_supported_distal_validates_the_unfiltered_owned_packet(damage):
     elif damage == "stale_clock":
         rod["rod_mesh_contact_pairs"]["physics_step"] -= 1
     with pytest.raises(ValueError):
+        measure_supported_distal_contact(rod, grasp="tripod")
+
+
+@pytest.mark.parametrize("grasp", ["pinch", "tripod"])
+def test_distal_reference_requires_the_correct_physical_side(grasp):
+    from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_supported_distal_contact
+
+    matched = measure_supported_distal_contact(build(proximal=True, load=.2), grasp=grasp)
+    assert matched["bilateral"] and not matched["wrong_side_contacts"]
+    crossed = measure_supported_distal_contact(build(proximal=True, load=.2, crossed=True), grasp=grasp)
+    assert not crossed["bilateral"] and not crossed["all_solver_substeps_loaded"]
+    assert {entry["link"].split(".")[0] for entry in crossed["wrong_side_contacts"]} == {"left", "right"}
+    assert not crossed["per_hand"]["left"]["loaded"]
+    assert not crossed["per_hand"]["right"]["loaded"]
+
+
+def test_distal_reference_rejects_missing_or_reversed_material_geometry():
+    from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_supported_distal_contact
+
+    rod = build(proximal=True)
+    nodes = rod.pop("node_positions")
+    with pytest.raises(ValueError, match="41 current world-space nodes"):
+        measure_supported_distal_contact(rod, grasp="tripod")
+    rod["node_positions"] = nodes[:, ::-1].copy()
+    with pytest.raises(ValueError, match="material orientation"):
         measure_supported_distal_contact(rod, grasp="tripod")

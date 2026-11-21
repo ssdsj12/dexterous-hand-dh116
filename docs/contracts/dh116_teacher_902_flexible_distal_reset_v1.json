@@ -1,0 +1,84 @@
+{
+  "version": "dh116-teacher-902-flexible-distal-reset-v1",
+  "status": "cpu_screened",
+  "camera_profiles_modified": false,
+  "reports": {
+    "pinch": {
+      "grasp": "pinch",
+      "readback_source": "offline_source_and_locked_cooked_geometry",
+      "hands": {
+        "left": {
+          "count": 22,
+          "minimum_rod_gap_m": 0.0022688455991040305,
+          "minimum_table_gap_m": 0.05699992518315827,
+          "minimum_support_gap_m": 0.024768263737329845,
+          "target_pad_rod_gaps_m": {
+            "finger14_link": 0.0033512386696342078,
+            "finger23_link": 0.0025136112172855453
+          },
+          "passed": true
+        },
+        "right": {
+          "count": 22,
+          "minimum_rod_gap_m": 0.002742080692634822,
+          "minimum_table_gap_m": 0.058723140063112855,
+          "minimum_support_gap_m": 0.028870109542758725,
+          "target_pad_rod_gaps_m": {
+            "finger14_link": 0.0031394481539779905,
+            "finger23_link": 0.003084352487220236
+          },
+          "passed": true
+        }
+      },
+      "geometry_passed": true,
+      "supported_scene_sha256": "5c54a8f741f02d3b2cda7110acb8b92a109fe212e549d08cd9b33678c8e07df0",
+      "camera_sha256": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b",
+      "reset_seed_sha256": "b323ee137943ee7523f62db7e67d7ee2afd326316ae379ff393fcefc66e498c5",
+      "native_reset_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false
+    },
+    "tripod": {
+      "grasp": "tripod",
+      "readback_source": "offline_source_and_locked_cooked_geometry",
+      "hands": {
+        "left": {
+          "count": 22,
+          "minimum_rod_gap_m": 0.0012474120291566162,
+          "minimum_table_gap_m": 0.05738234604516007,
+          "minimum_support_gap_m": 0.02631373089323729,
+          "target_pad_rod_gaps_m": {
+            "finger14_link": 0.0014400665943370356,
+            "finger23_link": 0.00142499620536951,
+            "finger33_link": 0.0018527615659233955
+          },
+          "passed": true
+        },
+        "right": {
+          "count": 22,
+          "minimum_rod_gap_m": 0.0029701569782984534,
+          "minimum_table_gap_m": 0.04400864011982625,
+          "minimum_support_gap_m": 0.001919998574906363,
+          "target_pad_rod_gaps_m": {
+            "finger14_link": 0.0034381623451797587,
+            "finger23_link": 0.0031463911706608736,
+            "finger33_link": 0.006032706659587537
+          },
+          "passed": true
+        }
+      },
+      "geometry_passed": true,
+      "supported_scene_sha256": "5c54a8f741f02d3b2cda7110acb8b92a109fe212e549d08cd9b33678c8e07df0",
+      "camera_sha256": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b",
+      "reset_seed_sha256": "037cf06384aa65bcf19b26c39db85337beada9651e8527d54d99a1c7dc521ef2",
+      "native_reset_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false
+    }
+  },
+  "cpu_tests_passed": 160,
+  "cpu_log_sha256": "eabf7283f9ca662e85ff870c34e72a4ab621e5bd63d83ae0571eb5b88df566d0",
+  "native_runs": 0,
+  "native_grasp_verified": false,
+  "teacher_admission": false
+}

@@ -1,3 +1,7 @@
+## 902 Pinch and Tripod on the flexible rod
+
+Add independent Reset candidates and require distal links to load their own material half. [Report](docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-reset.md).
+
 ## Fixed stereo physical hand order
 
 Add a separately calibrated fixed rig and verify projected physical hand identity in each RGB view. [Report](docs/superpowers/reports/2026-11-21-teacher-fixed-stereo-hand-order.md).
