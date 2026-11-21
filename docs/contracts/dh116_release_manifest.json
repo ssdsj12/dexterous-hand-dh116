@@ -30388,6 +30388,31 @@
         "verified_at_utc": "2026-11-21T07:14:39.455727+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-supported-free-rod-reset",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-supported-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_supported_reset_v1.json",
+      "cpu_tests": {
+        "passed": 94,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b36e567217a0a95f682300f3853fabbad6631cd4",
+        "source_tree": "7b32f4e5be1da4a8c864f8c8ae34dd2246285fc3",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T07:15:38.126356+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
