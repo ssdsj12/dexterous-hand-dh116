@@ -12,6 +12,7 @@ from scripts import verify_dh116_power_supported_task as supported
 shared = supported.shared
 native, reset, sources = shared.native, shared.reset, shared.sources
 SDK_END = 240
+APPROACH_PROOF_SHA = "54f72ae776a56f688c4746971819ce320ffdb0e31adcc647e053f9d6e23a67e4"
 REQUEST = screen.ROOT/"configs/dh116_tasks/flexible_pinch_end_supported_seed_v1.json"
 
 
@@ -24,6 +25,30 @@ def load_screen(path):
             or audit["all_passed"] is not True or audit["init_and_archived_samples"]!=239):
         raise ValueError("exact independently screened two-hand Pinch seed required")
     return seed["config"]
+
+
+def load_approach(receipt, proof, config):
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
+    from scripts import screen_dh116_pinch_supported_approach as approach
+    from scripts.verify_dh116_tripod_supported_reset import waypoint_controls
+
+    rows, supports, files = approach.archive(receipt)
+    audit = sources.checked_json(proof, APPROACH_PROOF_SHA)
+    request = json.loads(approach.REQUEST.read_bytes())
+    if (audit["all_passed"] is not True or audit["version"] != request["version"]
+            or audit["outer_sha256"] != native.sha(receipt)
+            or audit["request_sha256"] != native.sha(approach.REQUEST)
+            or audit["last_row_sha256"] != native.sha(files[-1])
+            or audit["before_sdk"] != SDK_END or audit["route_sample_count"] != approach.measured.SAMPLES
+            or set(audit["samples"]) != set(shared.SIDES)
+            or supports != config["support_scene"]["supports"]
+            or not all(approach.measured.check_route(value, pad_count=len(approach.PADS))
+                       for value in audit["samples"].values())):
+        raise ValueError("exact bilateral supported Pinch approach proof required")
+    state = approach.settled_control_state(decode_owned(rows[-1]), config)
+    actions = waypoint_controls(config, state, request["goals"], windows=approach.WINDOWS)
+    return rows[-1], actions, (*files, approach.REQUEST, proof, Path(approach.__file__),
+        Path(approach.measured.__file__), screen.ROOT / "scripts/verify_dh116_tripod_supported_reset.py")
 
 
 def freeze(args):
@@ -51,12 +76,22 @@ def freeze(args):
         archive=args.rays.parent/f"{side}_base_link.json"
         sources.checked_json(archive,record["gpu_row_sha256"])
         files.extend((archive,folder/"result.json",folder/f"{side}.base_link.npz"))
+    boundary = actions = None
+    if (args.approach_reference is None) != (args.approach_screen is None):
+        raise ValueError("both Pinch approach source and proof are required")
+    if args.approach_reference is not None:
+        boundary, actions, dependencies = load_approach(args.approach_reference, args.approach_screen, config)
+        files.extend(dependencies)
+        sdk_end = SDK_END + 8 * len(actions)
+        plan["pinch_approach"] = actions.tolist()
+        plan["budget"].update(mode="pinch_measured_guarded_approach", sdk_steps=sdk_end,
+            control_steps=len(actions), solver_steps=(sdk_end-2)*shared.SUBSTEPS, soft_wall_seconds=240)
     for source in files:
         path=str(source.resolve(strict=True))
         digest=native.sha(source)
         if plan["frozen_files"].setdefault(path,digest)!=digest:
             raise ValueError("inconsistent Pinch supported source fingerprints")
-    return plan,config
+    return plan,config,boundary
 
 
 def main(argv=None):
@@ -64,10 +99,12 @@ def main(argv=None):
     for flag in ("output","plan","geometry-audit","pinch-receipt","parked-receipt","rays","left-bake","right-bake",
                  "proximal-capture","proximal-bake"):
         parser.add_argument("--"+flag,required=True,type=Path)
+    parser.add_argument("--approach-reference",type=Path)
+    parser.add_argument("--approach-screen",type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args=parser.parse_args(argv)
     native.validate_execution_context(screen.ROOT)
-    plan,config=freeze(args)
+    plan,config,boundary=freeze(args)
     from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
 
     assert_clean_import_boundary()
@@ -82,10 +119,12 @@ def main(argv=None):
 
     args.verify_near_open_settling=True
     args.measure_contact_evidence=False
+    sdk_end = plan["budget"]["sdk_steps"]
     reset.execute(plan,acquire_operation=partial(shared.run_shared,profile=BackendProfile.load(screen.ROOT),
-        args=args,supported_acquire=partial(supported.acquire_supported_reset,config=config,sdk_end=SDK_END,
-        task="pinch"),sdk_end=SDK_END,require_no_hand_contact=True,task="pinch",
-        live_support_scene=config["support_scene"]))
+        args=args,supported_acquire=partial(supported.acquire_supported_reset,config=config,sdk_end=sdk_end,
+        task="pinch"),sdk_end=sdk_end,require_no_hand_contact=True,task="pinch",
+        live_support_scene=config["support_scene"], pinch_archive=boundary,
+        action_after_settle=plan.get("pinch_approach")))
     return 0
 
 

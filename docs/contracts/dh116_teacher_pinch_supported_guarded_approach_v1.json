@@ -1,0 +1,110 @@
+{
+  "version": "dh116-pinch-supported-approach-v1",
+  "native_runs": 0,
+  "cpu_regressions_passed": 98,
+  "native_budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "pinch_measured_guarded_approach",
+    "sdk_setup_steps": 2,
+    "control_steps": 24,
+    "solver_steps": 5160,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 240,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 6,
+    "episode_resets": 1,
+    "sdk_steps": 432
+  },
+  "screen_sha256": "54f72ae776a56f688c4746971819ce320ffdb0e31adcc647e053f9d6e23a67e4",
+  "source_outer_sha256": "d03a948f3b92150868aecad89927b6ac8f0422c9d169dd2e64c954d6c281c049",
+  "source_end_row_sha256": "b0e127ed079c44e86345c635ecb9adc0f8ef89cefcf69ff11dbbd60d446c504b",
+  "hands": {
+    "left": {
+      "initial": {
+        "shape_count": 22,
+        "rod_clearance_m": 0.0035448568254735635,
+        "support_clearance_m": 0.02396352962244454,
+        "table_clearance_m": 0.064028369091986,
+        "limiting_shape": "source_colliders:finger13_link",
+        "pad_gaps_m": [
+          0.003954074768079445,
+          0.006572705569039679
+        ],
+        "node_ids": [
+          35,
+          34
+        ],
+        "opposition": [
+          -0.0720392415998327
+        ]
+      },
+      "terminal": {
+        "shape_count": 22,
+        "rod_clearance_m": 0.0011371804028831867,
+        "support_clearance_m": 0.02050593191511306,
+        "table_clearance_m": 0.05704218796548899,
+        "limiting_shape": "source_colliders:finger23_link",
+        "pad_gaps_m": [
+          0.0023582409142889017,
+          0.001555787446364064
+        ],
+        "node_ids": [
+          35,
+          34
+        ],
+        "opposition": [
+          -0.3698164297946508
+        ]
+      },
+      "minimum_rod_clearance_m": 0.0011371804028831867
+    },
+    "right": {
+      "initial": {
+        "shape_count": 22,
+        "rod_clearance_m": 0.0014789859529326654,
+        "support_clearance_m": 0.0036401011981396663,
+        "table_clearance_m": 0.05967543172986456,
+        "limiting_shape": "source_colliders:finger23_link",
+        "pad_gaps_m": [
+          0.003139879780823117,
+          0.0018485874562243045
+        ],
+        "node_ids": [
+          3,
+          2
+        ],
+        "opposition": [
+          -0.8596837517053025
+        ]
+      },
+      "terminal": {
+        "shape_count": 22,
+        "rod_clearance_m": 0.0004906224402319026,
+        "support_clearance_m": 0.002462585123291167,
+        "table_clearance_m": 0.05921247454921247,
+        "limiting_shape": "source_colliders:finger23_link",
+        "pad_gaps_m": [
+          0.0016051205301548044,
+          0.0008936640337155154
+        ],
+        "node_ids": [
+          3,
+          2
+        ],
+        "opposition": [
+          -0.914034604644766
+        ]
+      },
+      "minimum_rod_clearance_m": 0.0004906224402319026
+    }
+  },
+  "hand_contact_verified": false,
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

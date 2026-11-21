@@ -1,3 +1,7 @@
+## Pinch guarded supported approach
+
+Bind per-hand approach commands to the sealed settled native Pinch state and whole-hand geometry. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-supported-guarded-approach.md).
+
 ## Tripod measured precontact native result
 
 Record original-boundary replay, distal clearances and end-support continuity. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-measured-precontact-native.md).

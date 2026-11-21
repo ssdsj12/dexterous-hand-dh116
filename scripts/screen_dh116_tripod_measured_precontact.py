@@ -49,7 +49,7 @@ def archive(receipt):
     return rows, supports["supports"], [CONTRACT, receipt, marker, *row_paths, support_path]
 
 
-def check_route(samples):
+def check_route(samples, *, pad_count=3):
     def row_passed(row):
         gaps = np.asarray(row["pad_gaps_m"], dtype=float)
         directions = np.asarray(row["opposition"], dtype=float)
@@ -58,8 +58,8 @@ def check_route(samples):
                 and row["rod_clearance_m"] > ROD_RESERVE_M
                 and row["support_clearance_m"] > 0.
                 and row["table_clearance_m"] >= CLEARANCE_M
-                and gaps.shape == (3,) and np.isfinite(gaps).all() and (gaps > ROD_RESERVE_M).all()
-                and directions.shape == (2,) and np.isfinite(directions).all())
+                and gaps.shape == (pad_count,) and np.isfinite(gaps).all() and (gaps > ROD_RESERVE_M).all()
+                and directions.shape == (pad_count - 1,) and np.isfinite(directions).all())
     return bool(len(samples) == SAMPLES and all(row_passed(row) for row in samples)
                 and min(samples[-1]["pad_gaps_m"]) < min(samples[0]["pad_gaps_m"])
                 and max(samples[-1]["opposition"]) < -.2)
@@ -72,7 +72,8 @@ def as_matrix(position, quat):
     return matrix
 
 
-def measure_side(side, raw, nodes, tube, boxes, grids, goal, table_top):
+def measure_side(side, raw, nodes, tube, boxes, grids, goal, table_top, *,
+                 pads=PADS, max_delta_m=.002, max_delta_rad=.025):
     from scripts.audit_dh116_pinch_initial_pose import load_geometry
     from scripts.certify_dh116_tripod_distal_route import support_clearance_lower
     from scripts.prepare_dh116_pinch_closure_margin import fk_poses, sample_grid
@@ -86,7 +87,7 @@ def measure_side(side, raw, nodes, tube, boxes, grids, goal, table_top):
     target = np.asarray(goal["pose_wxyz"], dtype=float)
     if (target.shape != (7,) or not np.isfinite(target).all()
             or abs(np.linalg.norm(target[3:]) - 1.) > 1e-8
-            or goal_q.shape != (6,) or np.any(np.abs(goal_q - active) > .025)):
+            or goal_q.shape != (6,) or np.any(np.abs(goal_q - active) > max_delta_rad)):
         raise ValueError("small, finite Tripod precontact target required")
     expand(goal_q)
     model = load_geometry(ROOT, side=side)
@@ -95,7 +96,7 @@ def measure_side(side, raw, nodes, tube, boxes, grids, goal, table_top):
               if key.startswith(side + ".")}
     palm = actual["base_link"]
     start = np.r_[palm[:3, 3], Rotation.from_matrix(palm[:3, :3]).as_quat()[[3, 0, 1, 2]]]
-    if np.linalg.norm(target[:3] - start[:3]) > .002:
+    if np.linalg.norm(target[:3] - start[:3]) > max_delta_m:
         raise ValueError("Tripod precontact goal exceeds small planned displacement")
     start_fk = fk_poses(model, start, active)
     corrections = {name: np.linalg.solve(start_fk[name], body) for name, body in actual.items()}
@@ -116,7 +117,7 @@ def measure_side(side, raw, nodes, tube, boxes, grids, goal, table_top):
         support = min(support_clearance_lower(points, low, high) for points in world.values() for low, high in boxes)
         table = min(float(points[:, 2].min() - table_top) for points in world.values())
         gaps, normals, node_ids = [], [], []
-        for name in PADS:
+        for name in pads:
             world_pose = poses[name]
             local = (nodes - world_pose[:3, 3]) @ world_pose[:3, :3]
             phi, gradient, valid = sample_grid(grids[f"{side}.{name}"], local, dtype=np.float64)

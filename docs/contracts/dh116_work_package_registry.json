@@ -46556,6 +46556,31 @@
         "native_natural_exit_code": 0,
         "control_windows": 36
       }
+    },
+    "teacher.pinch-supported-guarded-approach": {
+      "title": "Pinch guarded measured approach to supported free rod",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-supported-free-rod-reset-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_supported_reset.py",
+        "tests/test_dh116_tripod_measured_precontact.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_supported_guarded_approach_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-supported-guarded-approach.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 98,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
