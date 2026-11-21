@@ -38,3 +38,7 @@ The shared full-envelope design was reviewed in earlier R1/R2. Final R3 was quot
 No new native run, Teacher query, PPO update or successful grasp in this package. Next freeze one bounded Tripod right-contact experiment: preserve original 240-step settlement and 21-window approach, then 66-window contact; maximum SDK936, 11208 solver substeps, 87 control windows, one environment, zero PPO. Record actual source/cooked guards and reaction force and require natural outer exit. Stop at any original guard violation. This is contact evidence only, not 5 s hold or Lift admission.
 
 Pinch still requires force-loaded fixed-wrist hold; Power requires palm plus four-finger enclosure and opposed thumb. Both stereo camera configs remain fixed. All three must separately meet original support-free 30 mm / 5 s / 0.5 mm success criteria.
+
+## Subsequent native result
+
+The bounded v2 attempt stopped at SDK476 on the source-envelope guard and naturally exited 1 without a signal. No contact or grasp qualification. See [measured representation/tracking audit](2026-11-21-teacher-902-contact-guard-audit.md); the earlier native-pending section records the pre-run state.

@@ -47505,10 +47505,10 @@
         "teacher.902-live-envelope"
       ],
       "tests": [],
-      "readiness": "docs/contracts/dh116_teacher_902_continuous_contact_v1.json",
-      "report": "docs/superpowers/reports/2026-11-21-teacher-902-continuous-contact.md",
-      "native_runs": 0,
-      "reason": "Shared guard CPU path passes; full actual-command/SAT route recipe and native tracking/contact qualification remain pending. No automatic legacy v1 activation."
+      "readiness": "docs/contracts/dh116_teacher_902_contact_guard_audit_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-contact-guard-audit.md",
+      "native_runs": 1,
+      "reason": "One v2 native attempt stopped at SDK476: actual wrist tracking plus conservative source/cooked mismatch; no hand forces. Natural exit 1. Same fingerprint retry forbidden; guards unchanged."
     },
     "teacher.902-command-replay": {
       "title": "Replay actual 480 Hz commands before screening 902 contact paths",
@@ -47635,6 +47635,30 @@
         "native_grasp_verified": false,
         "teacher_admission": false,
         "registry_tests_passed": 60
+      }
+    },
+    "teacher.902-contact-guard-audit": {
+      "title": "Separate source-envelope rejection, cooked geometry and actual wrist tracking",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-command-contact-v2"
+      ],
+      "tests": [
+        "tests/test_dh116_902_contact_guard.py",
+        "tests/test_dh116_902_command_contact.py",
+        "tests/test_dh116_continuous_envelope_refinement.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_contact_guard_audit_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-contact-guard-audit.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 197,
+        "native_contact_passed": false,
+        "natural_exit_code": 1,
+        "first_guard_sdk": 476,
+        "teacher_admission": false
       }
     }
   },

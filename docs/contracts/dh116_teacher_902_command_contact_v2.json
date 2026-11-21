@@ -1,7 +1,7 @@
 {
   "version": "dh116-teacher-902-command-contact-v2",
   "base_head": "cfbc2147e66baa7a0688ccda562db54c3b921149",
-  "status": "cpu_actual_command_proof_passed_native_contact_pending",
+  "status": "cpu_actual_command_proof_passed_native_contact_failed",
   "source_sha256": {
     "scripts/screen_dh116_902_command_contact.py": "55435277d870d0beaea6d1a797262d941d643305799601e2818415fe4d4e1418",
     "scripts/screen_dh116_902_flexible_contact.py": "bad02a36878c3e9c6243ccce83e538c62efa81990baf95ff3accc145fb51fa81",
@@ -67,7 +67,7 @@
     "request": "902-command-contact-v2 R1",
     "status": "pending_no_approval_claimed"
   },
-  "native_runs": 0,
+  "native_runs": 1,
   "ppo_updates": 0,
   "teacher_queries": 0,
   "grasp_qualified": false,
@@ -95,5 +95,7 @@
     "command-contact-v2-rounding-red.log": "c9979bd0ecba7b13c48e83281f69799efbd823db7191ceab75bb3f2418aa9b55",
     "command-contact-v2-seals.log": "db90fd93857986c2def220cfb7144d337f365bf4443bf00a07edb2f199687b52",
     "command-contact-v2-unit.log": "021738208e02a0e955022516b4d897c6f859399a4a05766a703197ff5766fb1a"
-  }
+  },
+  "native_result_readiness": "docs/contracts/dh116_teacher_902_contact_guard_audit_v1.json",
+  "native_contact_verified": false
 }

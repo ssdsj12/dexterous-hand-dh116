@@ -1,0 +1,194 @@
+{
+  "version": "dh116-teacher-902-contact-guard-audit-v1",
+  "base_head": "98d06fdcddd8587b2899bfa96e99b4914247dd34",
+  "status": "cpu_audit_passed_native_contact_blocked",
+  "source_sha256": {
+    "scripts/audit_dh116_902_contact_guard.py": "c24b7404e68cf42ea06894b05c0cfe503e1ca59bcfb36363d2251912c2d83399",
+    "tests/test_dh116_902_contact_guard.py": "1442edef29ed77e78755fbfee23acb92e4a1af58af939b5645675db5f7bccb14"
+  },
+  "cpu_tests": {
+    "passed": 197,
+    "failed": 0,
+    "new_cases": 6,
+    "log_sha256": "88b94e2b40b7a16913d688c163adf546fbafc667214748e1f0c73dc3149fc577",
+    "registry_passed": 60,
+    "total_passed": 257,
+    "registry_log_sha256": "8449f2c91a337ca8db02257d0802cd53fb58a7f3e07647035980212d05378eaa"
+  },
+  "native_runs": 1,
+  "native_ppo_updates": 0,
+  "teacher_queries": 0,
+  "native_result": {
+    "exit_code": 1,
+    "natural_exit": true,
+    "signal": null,
+    "forced_exit": false,
+    "elapsed_s": 228.57568521308713,
+    "sdk_steps": 476,
+    "completed_control_rows": 235,
+    "completed_tail_substeps": 67,
+    "rod_source_sdk": 475,
+    "solver_substeps": 5676,
+    "max_sdk_steps": 936,
+    "max_solver_substeps": 11208,
+    "fingerprint": "fe4fe3f312b46fdc0ff17c1d00c5a43c32dfd6d01c45155a7c75675140de1041",
+    "guard": "right.finger33_link_source_envelope",
+    "same_fingerprint_retry_allowed": false
+  },
+  "geometry": [
+    {
+      "side": "right",
+      "body": "finger33_link",
+      "geometry": {
+        "segment_qp_calls": 3,
+        "node_qp_calls": 2,
+        "segment_min_lower_m": -0.0001528123078367435,
+        "segment_min_upper_m": -0.0001528123058226671,
+        "segment_witness": {
+          "index": 4,
+          "lower_m": 0.004847187692163257,
+          "upper_m": 0.004847187694177333,
+          "hull_point_m": [
+            0.4254019187605867,
+            -0.19631598944088152,
+            0.35775601711071114
+          ],
+          "segment_point_m": [
+            0.4300000071525574,
+            -0.1961072166547702,
+            0.3592756307445977
+          ],
+          "optimizer_status": 0,
+          "certificate_method": "direct_support_bounds",
+          "polish_candidates": 0
+        },
+        "node_min_lower_m": 0.0002772476550344056,
+        "node_min_upper_m": 0.0002772476570475878,
+        "node_witness": {
+          "index": 4,
+          "lower_m": 0.005277247655034406,
+          "upper_m": 0.005277247657047588,
+          "hull_point_m": [
+            0.42509344240043206,
+            -0.19805520741882876,
+            0.3581353813538898
+          ],
+          "segment_point_m": [
+            0.4300000071525574,
+            -0.1992053985595703,
+            0.3597012758255005
+          ],
+          "optimizer_status": 0,
+          "certificate_method": "direct_support_bounds",
+          "polish_candidates": 0
+        },
+        "inter_node_collision_without_node_contact": true,
+        "certified_contact_limit_violation": true,
+        "original_contact_limit_m": 0.00015,
+        "original_radius_m": 0.005
+      },
+      "cooked_geometry": {
+        "segment_qp_calls": 3,
+        "node_qp_calls": 2,
+        "segment_min_lower_m": 2.0504816389692142e-05,
+        "segment_min_upper_m": 2.0504903064136673e-05,
+        "segment_witness": {
+          "index": 4,
+          "lower_m": 0.005020504816389692,
+          "upper_m": 0.005020504903064137,
+          "hull_point_m": [
+            0.4255235168429303,
+            -0.19601797066227622,
+            0.35696902431413713
+          ],
+          "segment_point_m": [
+            0.4300000071525574,
+            -0.1957086003506096,
+            0.35922086666868247
+          ],
+          "optimizer_status": 0,
+          "certificate_method": "direct_support_bounds",
+          "polish_candidates": 0
+        },
+        "node_min_lower_m": 0.000580674293532416,
+        "node_min_upper_m": 0.0005806743651945393,
+        "node_witness": {
+          "index": 4,
+          "lower_m": 0.005580674293532416,
+          "upper_m": 0.005580674365194539,
+          "hull_point_m": [
+            0.4247253781824421,
+            -0.19763403054996315,
+            0.3587776860003172
+          ],
+          "segment_point_m": [
+            0.4300000071525574,
+            -0.1992053985595703,
+            0.3597012758255005
+          ],
+          "optimizer_status": 0,
+          "certificate_method": "direct_support_bounds",
+          "polish_candidates": 0
+        },
+        "inter_node_collision_without_node_contact": false,
+        "certified_contact_limit_violation": false,
+        "original_contact_limit_m": 0.00015,
+        "original_radius_m": 0.005
+      },
+      "source_representation": "source_USD_convex_envelope_not_live_cooked",
+      "cooked_representation": "frozen_original_F4_cooked_vertices",
+      "source_only_rejection_not_cooked_contact": true,
+      "actual_physical_contact_proven": false,
+      "original_guard_conditions": [
+        "contact_envelope_unresolved",
+        "contact_rod_penetration"
+      ]
+    }
+  ],
+  "preceding_hand_wrenches": {
+    "left": {
+      "maximum_force_n": 0.0,
+      "maximum_torque_nm": 0.0
+    },
+    "right": {
+      "maximum_force_n": 0.0,
+      "maximum_torque_nm": 0.0
+    }
+  },
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3,
+  "camera_sha256": {
+    "configs/dh116_training/stereo_camera_front_640x480_v3.json": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b",
+    "configs/dh116_training/stereo_camera_hand_order_640x480_v1.json": "673b71d4edc425620c78544959cdd00a545db0104bb164a6f2d22f368776d98b"
+  },
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "request": "902-command-contact-v2 R1 with actual native follow-up",
+    "status": "R1_received_independently_checked_R2_followup_pending",
+    "accepted": [
+      "source/cooked distinction",
+      "actual wrist tracking decomposition",
+      "independent loader identity hardening"
+    ],
+    "corrected": [
+      "formal native launcher already recomputes full proof",
+      "soft wall already 240 via required precontact branch"
+    ]
+  },
+  "native_contact_verified": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "evidence_sha256": {
+    "command-v2-native-tripod/outer.json": "ffc57e0423eaffbd22afa942d9f7a571253bb7859c49c83b137b96e06ae97dfa",
+    "command-v2-native-tripod/native/tripod_geometry_guard_476.json": "29e8170899108d969862f699a1e4bcf7eb613e08caac50fb0772c41906590221",
+    "command-v2-native-guard-representation.json": "e9ff8886a1b82be9edd0e43adaecb410a1795bb0cc546ccbb8ae60957332baff",
+    "command-v2-native-counterfactual.json": "fd373aa46c81c8cd1601ea9714161f7434a85afaa021c70c921341dc8547d14f",
+    "command-v2-cooked-tracking-audit.json": "5f8eb7daa668546d820e39423b9e1a865d34992aa161748f4ae56d047b53e88f",
+    "command-v2-guard-audit-green.log": "21e5dc9b7a8ffefe8ec5f0dec676c6af1e6b8566bf7e173cdf7900bd41472343",
+    "command-v2-guard-audit-red.log": "e63621592c6c87c986502efbf62fd5b4bcb06b862ed1865f3f74c30b14a51645",
+    "command-v2-guard-regression.log": "88b94e2b40b7a16913d688c163adf546fbafc667214748e1f0c73dc3149fc577",
+    "command-v2-guard-representation-green-v2.log": "7e4cce167a35f5ac13240b8fd8cb2707b2d11f1817edfd47b0bc687df855145c",
+    "command-v2-guard-representation-green.log": "bebe264744640c64c66eaca745191d178ca81772c30a343d5f268395d7a21481",
+    "command-v2-guard-representation-red.log": "675d3b68b2fe131326f32e9ce07c412d064d11e20852ae17071c82fad0c4239b"
+  }
+}
