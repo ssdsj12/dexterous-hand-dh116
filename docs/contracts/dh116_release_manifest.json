@@ -31613,6 +31613,31 @@
         "verified_at_utc": "2026-11-21T15:40:01.973523+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-substep-selection",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-substep-selection.md",
+      "readiness": "docs/contracts/dh116_teacher_902_substep_selection_v1.json",
+      "cpu_tests": {
+        "passed": 153,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "30fce151d67cb371f05b671451335d06787c5625",
+        "source_tree": "a0da598137b97a2048d72d6f91bd786e82ef261c",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T16:03:13.697886+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
