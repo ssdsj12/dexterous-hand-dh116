@@ -31813,6 +31813,31 @@
         "verified_at_utc": "2026-11-21T17:04:27.850750+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-native-closure",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-native-closure.md",
+      "readiness": "docs/contracts/dh116_teacher_902_native_closure_v1.json",
+      "cpu_tests": {
+        "passed": 302,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0fdac628eb86e88ec5fe1345900306570557604d",
+        "source_tree": "77dd7f9b644476b41c7a4ba83ba3f0c0b16603dc",
+        "remote_branch": "11-17",
+        "files_verified": 14,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T17:25:01.696523+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
