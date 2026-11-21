@@ -3896,3 +3896,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - Proved a separate right Tripod two-segment distal approach for the fixed raised reference against all source and locked cooked envelopes. New native contact remains unverified.
 
 - Added a hands-clear Power support settling case with an independent step budget, measured contact stop, and explicit native DOF units.
+
+- Verified the two native Pinch force-feedback increments and exact matched-control identity. The longest qualified interval stays below the grasp hold requirement.

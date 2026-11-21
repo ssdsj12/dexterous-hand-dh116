@@ -45591,6 +45591,31 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-fixed-wrist-force-feedback-native-result": {
+      "title": "Measure fixed-wrist Pinch feedback in a same-state native comparison",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-fixed-wrist-force-feedback-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_fixed_force_feedback.py",
+        "tests/test_teacher_force_closure.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_fixed_wrist_force_feedback_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-fixed-wrist-force-feedback-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "native_fixed_wrist_force_diagnostic",
+        "native_exit": 0,
+        "qualified_substeps": 293,
+        "matched_control_substeps": 197,
+        "result_sha256": "79498873c2211b8722338bc1be20292c74a496dd6918ea593bdea8530ef0d63d",
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
