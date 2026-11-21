@@ -74,6 +74,8 @@ def independent_entry(task, contact):
     from scripts.diagnose_dh116_teacher_initialization import digest
     if contact is None or contact.get("entry_contract") != "dh116-902-distal-contact-v1":
         return False
+    if contact.get("envelope_refinement") is not None:
+        raise ValueError("legacy 902 v1 cannot enable envelope refinement")
     sdk = contact.get("boundary_sdk")
     row = contact.get("archive", {})
     if (task not in ("pinch", "tripod") or contact.get("grasp") != task
@@ -148,6 +150,8 @@ def stage_actions(config, row, request):
 
 
 def checked_request(request, *, grasp, sdk, outer_sha):
+    if request.get("envelope_refinement") is not None:
+        raise ValueError("legacy 902 v1 cannot enable envelope refinement")
     windows, hold = request.get("control_windows"), request.get("hold_windows")
     if (request.get("version") != "dh116-902-distal-contact-v1"
             or request.get("grasp") != grasp or grasp not in ("pinch", "tripod")
@@ -182,6 +186,7 @@ def contact_dependency_files():
         "scripts/screen_dh116_tripod_measured_precontact.py",
         "scripts/verify_dh116_supported_distal_transfer.py",
         "scripts/audit_dh116_pinch_initial_pose.py",
+        "scripts/audit_dh116_certified_segment_distance.py",
         "scripts/prepare_dh116_pinch_closure_margin.py",
         "scripts/screen_dh116_tripod_supported_reset.py",
         "scripts/certify_dh116_tripod_distal_route.py",

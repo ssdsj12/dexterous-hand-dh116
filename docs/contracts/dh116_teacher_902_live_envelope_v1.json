@@ -1,0 +1,122 @@
+{
+  "version": "dh116-teacher-902-live-envelope-v1",
+  "base_head": "09a26fee479b5f31f6a8af40856e87f6a51ad713",
+  "status": "cpu_guard_consistency_passed_native_recipe_pending",
+  "source_sha256": {
+    "scripts/audit_dh116_certified_segment_distance.py": "5d9a22d3bff024eead53145a1f639ad516708f930885777a3c410fde0defa300",
+    "scripts/verify_dh116_power_shared_rod.py": "aebb712ebdcde52cf457f96e823f1383998a33bb9f31fc82c1bb51d4040afc1f",
+    "scripts/verify_dh116_supported_distal_transfer.py": "671a7458a5eb4f0bd2fc77d0746603939ee10b979306d3554325ca751e11d5ed",
+    "scripts/screen_dh116_902_flexible_contact.py": "67d24f38b13ee96792fe7e12b2ff4065aa9b787810056c5c241f6e3fb1d617f1",
+    "tests/test_dh116_continuous_envelope_refinement.py": "82ac256e06670c984d0a8311cf54f429c0618172a4cef7147eb2b7e01aa1c54b"
+  },
+  "algorithm": {
+    "version": "dh116-continuous-envelope-support-v1",
+    "max_qp_calls_per_shape": 40,
+    "max_frames": 9,
+    "contact_limit_m": 0.00015,
+    "rod_radius_m": 0.005,
+    "all_original_groups_and_frames": true,
+    "upper_bound_admits": false,
+    "legacy_v1_disabled": true,
+    "legacy_window_limit": 24,
+    "source_and_cooked_share_helper": true
+  },
+  "cpu_tests": {
+    "passed": 171,
+    "registry_passed": 60,
+    "total_passed": 231,
+    "failed": 0,
+    "new_cases": 23,
+    "test_files": [
+      "tests/test_pinch_capsule_distance_certificate.py",
+      "tests/test_dh116_902_flexible_reset.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_dh116_902_flexible_contact.py",
+      "tests/test_dh116_supported_distal_transfer.py",
+      "tests/test_dh116_tripod_measured_precontact.py",
+      "tests/test_dh116_tripod_near_corridor.py",
+      "tests/test_dh116_tripod_right_axis_calibration.py",
+      "tests/test_dh116_tripod_right_tracking_native.py",
+      "tests/test_dual_hand_rod_runtime.py",
+      "tests/test_dh116_tripod_supported_reset.py",
+      "tests/test_dh116_902_command_path.py",
+      "tests/test_dh116_continuous_envelope_refinement.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "087cc72192ec3eeccb2454cb9083ce636b958e1bf5b1df46c656fc608b996bf7",
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_pinch_capsule_distance_certificate.py",
+      "tests/test_dh116_902_flexible_reset.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_dh116_902_flexible_contact.py",
+      "tests/test_dh116_supported_distal_transfer.py",
+      "tests/test_dh116_tripod_measured_precontact.py",
+      "tests/test_dh116_tripod_near_corridor.py",
+      "tests/test_dh116_tripod_right_axis_calibration.py",
+      "tests/test_dh116_tripod_right_tracking_native.py",
+      "tests/test_dual_hand_rod_runtime.py",
+      "tests/test_dh116_tripod_supported_reset.py",
+      "tests/test_dh116_902_command_path.py",
+      "tests/test_dh116_continuous_envelope_refinement.py",
+      "tests/test_dh116_work_packages.py"
+    ]
+  },
+  "diagnostic": {
+    "ideal_command_substeps": 528,
+    "full_envelope_lower_m": -0.00014995769490250277,
+    "noncontact_lower_m": 0.00262228132804998,
+    "fast_support_lower_m": 1.5652194768622785e-06,
+    "full_sat_support_lower_m": 0.0013870835804002182,
+    "refinement_calls": 238,
+    "greater_index_relief_rejected": true,
+    "native_dynamics_measured": false
+  },
+  "evidence_sha256": {
+    "live-envelope-red.log": "c5be8a1ee699b37ff1be8b57b36d146fef79324b6ab88452a7e455aff40bd667",
+    "live-envelope-clock-red.log": "f35eba258213b791c83f0cd907b6f1a7ad97adb8bc7160cafc39ff337b9f1f54",
+    "live-envelope-failure-ledger-red.log": "78ef3ce2c722653ca0b37e7fc85b7de77059990bca622f0c1e3930e0e4862425",
+    "live-envelope-finite-red.log": "134e3a76577f3addaf2aa174f00263f4d157af2a023678f2841f201530091122",
+    "live-envelope-combined-final.log": "087cc72192ec3eeccb2454cb9083ce636b958e1bf5b1df46c656fc608b996bf7",
+    "live-envelope-combined-final-exit.json": "bc8020a85e26da4f27d6521b4e157625e3f8ad923eb4aee720f4517e47c113e1",
+    "check-command-live-envelope.py": "c41416d5abbb363d42d199627cecb93fa4a21acca3b5763374c30e9661c858fe",
+    "check-command-live-envelope-exit.json": "1c52b2bbb84f118a72e772eff4b3fe134c13d76c1a9e6e7313242050db3d9dbe",
+    "tripod-command-live-envelope.json": "ed658a724f2151c827088f4a8e687a669c0e6bbe4673cd158e42876bb9b29a78",
+    "check-command-support-relief.py": "ae2bafac9bf21d25bfbddf8e949f094ad17f2acf969f60311dc1b7d14b5847a2",
+    "check-command-support-relief-exit.json": "8f6841f783f253e4286a751d4840b19db23e97a1ffecbfcc53de30b33eec1ab8",
+    "tripod-command-support-relief.json": "858eeb111293e2a452edc6db336dd98944d0848fcb1acf71b50dc4a5f0d46bf4",
+    "check-command-support-sat.py": "6f57e9bc22135d6e721353a2185ceb5f4f372e99e3ef28bd4d6d95f45f9e7617",
+    "check-command-support-sat-exit.json": "a36cae6df8b0b3a89df8c264e7a749bdd55f96de3bd49f68ae9fbc105e3e06f7",
+    "tripod-command-support-sat.json": "e9f54fdbcac31f7ac5e078d78b51675c11796310d5bec8d8c81af4d568190227"
+  },
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "completed": [
+      "902-live-envelope R1",
+      "902-live-envelope R2"
+    ],
+    "final_review": "R3 blocked by Antigravity account quota; no final approval claimed",
+    "codex_independent_review": true
+  },
+  "camera_sha256": {
+    "configs/dh116_training/stereo_camera_front_640x480_v3.json": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b",
+    "configs/dh116_training/stereo_camera_hand_order_640x480_v1.json": "673b71d4edc425620c78544959cdd00a545db0104bb164a6f2d22f368776d98b"
+  },
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3,
+  "pr2_draft": true,
+  "native_runs": 0,
+  "ppo_updates": 0,
+  "teacher_queries": 0,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "remaining": [
+    "source-bound actual-command route proof and SAT support witness",
+    "native tracking and force contact",
+    "fixed-wrist loaded hold",
+    "unsupported lift/hold/slip for all three styles"
+  ]
+}

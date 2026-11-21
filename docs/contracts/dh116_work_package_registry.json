@@ -47501,13 +47501,14 @@
       "dependencies": [
         "teacher.902-continuous-contact-guard",
         "teacher.902-command-replay",
-        "teacher.902-distance-certificate"
+        "teacher.902-distance-certificate",
+        "teacher.902-live-envelope"
       ],
       "tests": [],
       "readiness": "docs/contracts/dh116_teacher_902_continuous_contact_v1.json",
       "report": "docs/superpowers/reports/2026-11-21-teacher-902-continuous-contact.md",
       "native_runs": 0,
-      "reason": "Full float32 command replay has a certified index gap failure at ordinal 478; no live refined-guard or grasp qualification."
+      "reason": "Shared guard CPU path passes; full actual-command/SAT route recipe and native tracking/contact qualification remain pending. No automatic legacy v1 activation."
     },
     "teacher.902-command-replay": {
       "title": "Replay actual 480 Hz commands before screening 902 contact paths",
@@ -47565,6 +47566,39 @@
         "contact_route_qualified": false,
         "teacher_admission": false,
         "registry_tests_passed": 60
+      }
+    },
+    "teacher.902-live-envelope": {
+      "title": "Share certified complete envelope across offline and live contact guards",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-distance-certificate"
+      ],
+      "tests": [
+        "tests/test_pinch_capsule_distance_certificate.py",
+        "tests/test_dh116_902_flexible_reset.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_902_flexible_contact.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_tripod_measured_precontact.py",
+        "tests/test_dh116_tripod_near_corridor.py",
+        "tests/test_dh116_tripod_right_axis_calibration.py",
+        "tests/test_dh116_tripod_right_tracking_native.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_902_command_path.py",
+        "tests/test_dh116_continuous_envelope_refinement.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_live_envelope_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-live-envelope.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 171,
+        "registry_tests_passed": 60,
+        "native_grasp_verified": false,
+        "teacher_admission": false
       }
     }
   },

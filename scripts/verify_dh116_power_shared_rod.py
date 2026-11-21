@@ -53,16 +53,29 @@ class SharedPowerOwners:
         return CapacityReservation()
 
 
-def check_supported_shape(world, boxes, tube, *, contact_shape, contact_penetration_m=None):
+def check_supported_shape(world, boxes, tube, *, contact_shape, contact_penetration_m=None,
+                          reference_nodes=None, envelope_refinement=None, record_refinement=None):
     from scripts.certify_dh116_tripod_distal_route import support_clearance_lower
     from scripts.screen_dh116_tripod_supported_reset import separation
 
+    from scripts.audit_dh116_certified_segment_distance import validate_envelope_version, rod_envelope_clearance
+    validate_envelope_version(envelope_refinement)
     gaps = {name: float(support_clearance_lower(world, low, high)) for name, low, high in boxes}
     conditions = ["support_clearance"] if any(gap <= 1e-10 for gap in gaps.values()) else []
     if contact_penetration_m is not None and not 0. < contact_penetration_m <= .00015:
         raise ValueError("original bounded continuous contact penetration required")
+    if contact_shape and envelope_refinement is not None and contact_penetration_m is None:
+        raise ValueError("explicit original contact penetration limit required for refinement")
     guard_contact = contact_shape and contact_penetration_m is not None
     rod_gap = None if tube is None or (contact_shape and not guard_contact) else float(separation(world, *tube))
+    refinement = None
+    if guard_contact and envelope_refinement is not None:
+        refinement = rod_envelope_clearance(world, reference_nodes, max_penetration_m=contact_penetration_m)
+        rod_gap = refinement["lower_m"]
+        if record_refinement is not None:
+            record_refinement(refinement)
+        if not refinement["passed"]:
+            conditions.append("contact_envelope_unresolved")
     if guard_contact:
         if rod_gap is None or not np.isfinite(rod_gap) or rod_gap < -contact_penetration_m:
             conditions.append("contact_rod_penetration")
@@ -70,10 +83,10 @@ def check_supported_shape(world, boxes, tube, *, contact_shape, contact_penetrat
         conditions.append("rod_clearance")
     if conditions:
         return dict(conditions=conditions, support_gap_m=gaps, rod_gap_lower_m=rod_gap,
-                    selected_distal_shape=bool(contact_shape))
+                    selected_distal_shape=bool(contact_shape), envelope_refinement=refinement)
 
 
-def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, support_scene=None, reference_nodes=None, distal_probe=None, record_guard=None):
+def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, support_scene=None, reference_nodes=None, distal_probe=None, record_guard=None, rod_source_sdk=None):
     from go2_pvcnn.control.dh116.tabletop_batch_geometry import collision_clearance
     from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import _owned
     from go2_pvcnn.control.dh116.tabletop_deformable_wrist_projection import CLEARANCE_M
@@ -81,6 +94,12 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
     if native.clock(sim)["sdk_step"] != sdk:
         raise ValueError("live links must share the requested SDK boundary")
     poses, centers, frames = {}, {}, []
+    refined = (distal_probe is not None and distal_probe.active(sdk)
+               and getattr(distal_probe, "envelope_refinement", None) is not None)
+    source_audit, cooked_audit = {}, {}
+    if refined and (support_scene is None or type(rod_source_sdk) is not int
+                    or rod_source_sdk not in (sdk-1, sdk)):
+        raise ValueError("explicit rod source clock and supports required for envelope refinement")
     for side in SIDES:
         hand = bindings[side].hand
         view = hand.root_physx_view
@@ -114,9 +133,20 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
         for hand, body, vertices in clearance_shapes:
             world = rotated_points(frame_poses[0, hand, body], vertices)
             contact_shape = active_probe and distal_probe.contact_shape(sdk, (hand, body))
+            record_refinement = None
+            if refined and contact_shape:
+                names = [name for name in distal_probe.stations
+                         if mesh_bindings[name]["side"] == SIDES[hand]
+                         and mesh_bindings[name]["body_index"] == body]
+                if len(names) != 1:
+                    raise ValueError("one owned source envelope per selected cooked hull required")
+                record_refinement = lambda result, name=names[0]: source_audit.update({name: result})
             failure = check_supported_shape(world, boxes, tube, contact_shape=contact_shape,
                 contact_penetration_m=(distal_probe.max_pad_penetration_m
-                    if active_probe and getattr(distal_probe, "continuous_cooked_hulls", None) else None))
+                    if active_probe and getattr(distal_probe, "continuous_cooked_hulls", None) else None),
+                reference_nodes=reference_nodes,
+                envelope_refinement=distal_probe.envelope_refinement if refined else None,
+                record_refinement=record_refinement)
             if failure is not None:
                 side = SIDES[hand]
                 articulation = bindings[side].hand
@@ -134,11 +164,28 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
                       else "live hand source envelope lost its staged rod clearance")
             raise ValueError(f'{reason}: {first["side"]}.{first["body_name"]}')
         if active_probe:
-            distal_probe.check_pad_gaps(sdk, poses, reference_nodes)
+            if refined:
+                try:
+                    distal_probe.check_pad_gaps(sdk, poses, reference_nodes,
+                                               record_refinement=cooked_audit.update)
+                except ValueError:
+                    if record_guard is not None:
+                        record_guard(dict(observed_sdk_step=sdk,
+                                          source_envelope=source_audit, cooked_envelope=cooked_audit,
+                                          failure="selected_cooked_or_sdf_guard"))
+                    raise
+            else:
+                distal_probe.check_pad_gaps(sdk, poses, reference_nodes)
     if native.clock(sim)["sdk_step"] != sdk:
         raise ValueError("SDK moved during link and COM readback")
     if not np.isfinite(clearance).all() or np.any(clearance < CLEARANCE_M):
         raise ValueError("original full-hand table clearance protection failed")
+    if refined and rod_source_sdk == sdk-1:
+        # Only post-SDK/pre-rod handoff is consumed by observe(). Ordinary
+        # pre-step same-clock reads must not create stale pending certificates.
+        distal_probe.bind_envelope(sdk=sdk, rod_source_sdk=rod_source_sdk,
+                                   reference_nodes=reference_nodes,
+                                   source=source_audit, cooked=cooked_audit)
     return poses, centers, clearance
 
 
@@ -350,7 +397,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                     rod_clearance_limit_m=.00025, support_clearance_limit_m=1e-10)))
 
             options = {} if support_scene is None else dict(support_scene=support_scene,
-                reference_nodes=rod["node_positions"], distal_probe=distal_probe, record_guard=record_guard)
+                reference_nodes=rod["node_positions"], distal_probe=distal_probe, record_guard=record_guard,
+                rod_source_sdk=rod["physics_step"])
             poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk, **options)
             roots = [np.r_[poses[name][0],poses[name][1][[3,0,1,2]]] for name in PALM_NAMES]
             if task in ("tripod", "pinch") or power_open_boundary_sdk is not None:
@@ -667,7 +715,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                     meshes, clearance_shapes, grids=geometry, archive=distal_contact["archive"],
                     max_pad_penetration_m=distal_contact["max_pad_penetration_m"], grasp=distal_contact["grasp"],
                     bilateral=distal_contact.get("bilateral"),
-                    continuous_cooked_hulls=distal_contact.get("continuous_cooked_hulls"))
+                    continuous_cooked_hulls=distal_contact.get("continuous_cooked_hulls"),
+                    envelope_refinement=distal_contact.get("envelope_refinement"))
             if power_route is not None and "palm_witness" in power_route:
                 from scripts.verify_dh116_power_staged_palm_witness import SupportedPalmProbe
 

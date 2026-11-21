@@ -91,10 +91,13 @@ def validate_live_pad_gaps(grids, poses, reference_nodes, *, max_penetration_m):
 
 
 
-def validate_live_continuous_hulls(hulls, poses, reference_nodes, *, max_penetration_m):
+def validate_live_continuous_hulls(hulls, poses, reference_nodes, *, max_penetration_m,
+                                   envelope_refinement=None, record_refinement=None):
     """A conservative full-segment bound prevents between-node penetration."""
     from scipy.spatial.transform import Rotation
     from scripts.screen_dh116_tripod_supported_reset import archived_tube, separation
+    from scripts.audit_dh116_certified_segment_distance import validate_envelope_version, rod_envelope_clearance
+    validate_envelope_version(envelope_refinement)
     nodes = np.asarray(reference_nodes, dtype=float)
     if (nodes.shape != (1,41,3) or not np.isfinite(nodes).all()
             or not 0. < max_penetration_m <= .00015):
@@ -107,6 +110,13 @@ def validate_live_continuous_hulls(hulls, poses, reference_nodes, *, max_penetra
         position, quaternion = poses[name]
         world = v @ Rotation.from_quat(quaternion).as_matrix().T + position
         gap = float(separation(world, *tube))
+        if envelope_refinement is not None:
+            evidence = rod_envelope_clearance(world, nodes, max_penetration_m=max_penetration_m)
+            if record_refinement is not None:
+                record_refinement({name: evidence})
+            if not evidence["passed"]:
+                raise ValueError(f"selected live cooked continuous envelope unresolved: {name}: {evidence['reason']}")
+            gap = evidence["lower_m"]
         if not np.isfinite(gap) or gap < -max_penetration_m:
             raise ValueError(f"selected live cooked continuous rod bound failed: {name} gap={gap!r}")
 
@@ -116,12 +126,18 @@ class SupportedDistalProbe:
 
     def __init__(self, boundary_sdk, stations, bindings, clearance_shapes, *,
                  grids, archive, max_pad_penetration_m, grasp="tripod", bilateral=None,
-                 continuous_cooked_hulls=None):
+                 continuous_cooked_hulls=None, envelope_refinement=None):
         if grasp not in ("pinch", "tripod"):
             raise ValueError("only admitted distal diagnostic styles can use this probe")
         if continuous_cooked_hulls is not None and (set(continuous_cooked_hulls) != set(stations)
                 or bilateral is not None or not 0. < max_pad_penetration_m <= .00015):
             raise ValueError("one independently bounded continuous contact stage required")
+        from scripts.audit_dh116_certified_segment_distance import validate_envelope_version
+        validate_envelope_version(envelope_refinement)
+        if envelope_refinement is not None and continuous_cooked_hulls is None:
+            raise ValueError("versioned envelope refinement requires owned cooked hulls")
+        self.envelope_refinement = envelope_refinement
+        self._envelope_pending = {}
         self.continuous_cooked_hulls = continuous_cooked_hulls
         self.grasp = grasp
         self.boundary_sdk = boundary_sdk
@@ -158,12 +174,35 @@ class SupportedDistalProbe:
         return key in self.shape_keys or (self.bilateral is not None and
             sdk > self.bilateral["boundary_sdk"] and key in self.additional_shape_keys)
 
-    def check_pad_gaps(self, sdk, poses, reference_nodes):
+    def check_pad_gaps(self, sdk, poses, reference_nodes, *, record_refinement=None):
         grids = {name: self.grids[name] for name in self.stations_at(sdk)}
         validate_live_pad_gaps(grids, poses, reference_nodes, max_penetration_m=self.max_pad_penetration_m)
         if self.continuous_cooked_hulls is not None:
             validate_live_continuous_hulls(self.continuous_cooked_hulls, poses, reference_nodes,
-                                          max_penetration_m=self.max_pad_penetration_m)
+                                          max_penetration_m=self.max_pad_penetration_m,
+                                          envelope_refinement=self.envelope_refinement,
+                                          record_refinement=record_refinement)
+
+    def bind_envelope(self, *, sdk, rod_source_sdk, reference_nodes, source, cooked):
+        from copy import deepcopy
+        import hashlib
+        nodes = np.asarray(reference_nodes, dtype="<f8")
+        expected = set(self.stations)
+        if (self.envelope_refinement is None or type(sdk) is not int or not self.active(sdk)
+                or type(rod_source_sdk) is not int or rod_source_sdk != sdk-1
+                or nodes.shape != (1,41,3) or not np.isfinite(nodes).all()
+                or set(source) != expected or set(cooked) != expected or self._envelope_pending
+                or any(row.get("method") != self.envelope_refinement or row.get("passed") is not True
+                       for rows in (source,cooked) for row in rows.values())):
+            raise ValueError("complete current-SDK source/cooked envelope evidence required")
+        self._envelope_pending[sdk] = deepcopy(dict(observed_sdk_step=sdk,
+            rod_source_physics_step=rod_source_sdk, phase="sdk_complete_rod_pending",
+            rod_nodes_sha256=hashlib.sha256(nodes.tobytes()).hexdigest(), source=source, cooked=cooked))
+
+    def consume_envelope(self, sdk):
+        if set(self._envelope_pending) != {sdk}:
+            raise ValueError("current SDK envelope evidence missing, stale or already consumed")
+        return self._envelope_pending.pop(sdk)
 
     def observe(self, row):
         sdk = row["physics_step"]
@@ -173,6 +212,7 @@ class SupportedDistalProbe:
             return None, None
         if self.previous is None:
             raise ValueError("expected guarded native contact boundary is absent")
+        envelope = None if self.envelope_refinement is None else self.consume_envelope(sdk)
         transferred = check_reaction_delivery(self.previous, row)
         self.previous = row
         if transferred:
@@ -200,6 +240,8 @@ class SupportedDistalProbe:
         self.bilateral_loaded_rows += int(evidence["bilateral"] and not violations)
         record = dict(sdk_step=sdk, intended_pairs=intended_pairs, violations=violations,
                       reaction_from_previous_solver_row_applied=transferred, force_evidence=evidence)
+        if envelope is not None:
+            record["continuous_envelope"] = envelope
         return record, "unexpected_contact_outside_distal_station" if violations else None
 
     def summary(self):

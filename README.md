@@ -1,3 +1,7 @@
+## 902 shared complete-envelope guard
+
+Versioned source/cooked refinement preserves original safety limits. 231 CPU checks pass; a full 528-substep ideal command replay is geometrically supported, but remains unqualified for native grasping. Both fixed RGB cameras are unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-live-envelope.md).
+
 ## 902 certified distance bounds
 
 Require independent bounds even when the optimizer reports success; bounded feature polishing preserves the original precision. Complete 528-substep CPU replay still rejects the contact route. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-distance-certificate.md).

@@ -133,3 +133,80 @@ def segment_hull_bounds(vertices, start, end):
 def segment_hull_distance(vertices, start, end):
     """Return only the independently certified lower bound for legacy callers."""
     return segment_hull_bounds(vertices, start, end)["lower_m"]
+
+
+ENVELOPE_REFINEMENT_VERSION = "dh116-continuous-envelope-support-v1"
+
+
+def validate_envelope_version(value):
+    if value is not None and (type(value) is not str or value != ENVELOPE_REFINEMENT_VERSION):
+        raise ValueError("explicit registered envelope refinement version required")
+
+
+def rod_envelope_clearance(vertices, node_samples, *, max_penetration_m, max_qp_calls=40):
+    """Certify separation from all 20 convex T-by-3-node envelopes plus 5 mm radius.
+
+    Segment QP witnesses generate directions only. Acceptance always uses every
+    vertex and every frame in each original group, never a subset upper bound.
+    No native eligibility, contact force or trajectory-tracking claim is made.
+    """
+    from scripts.screen_dh116_tripod_supported_reset import archived_tube
+
+    v = np.asarray(vertices, dtype=float)
+    nodes = np.asarray(node_samples, dtype=float)
+    if (v.ndim != 2 or v.shape[1] != 3 or len(v) < 4 or not np.isfinite(v).all()
+            or nodes.ndim != 3 or nodes.shape[1:] != (41, 3) or not 1 <= len(nodes) <= 9
+            or not np.isfinite(nodes).all() or not 0. < max_penetration_m <= .00015
+            or type(max_qp_calls) is not int or not 0 <= max_qp_calls <= 40):
+        raise ValueError("bounded finite full-envelope geometry and original contact limit required")
+    # Work in one translated frame, including the QP witnesses.
+    origin = v.mean(axis=0)
+    v, nodes = v-origin, nodes-origin
+    normals, upper = archived_tube(nodes)
+    lower = np.max(np.min(v @ normals.T, axis=0)[None, :] - upper, axis=1)
+    lower -= _DISTANCE_ROUNDING_M
+    fast = float(lower.min())
+    calls, witnesses = 0, []
+    subset_upper = None
+
+    def result(reason, error=None):
+        report = dict(method=ENVELOPE_REFINEMENT_VERSION, passed=reason == "certified",
+                      reason=reason, fast_lower_m=fast, lower_m=float(lower.min()),
+                      group_lower_m=lower.tolist(), frame_count=len(nodes),
+                      radius_m=.005, max_penetration_m=max_penetration_m,
+                      qp_calls=calls, subset_upper_m=subset_upper, witnesses=witnesses)
+        if error is not None:
+            report["error"] = error
+        return report
+
+    for group in np.flatnonzero(lower < -max_penetration_m):
+        start = int(group)*2
+        support_nodes = nodes[:, start:start+3].reshape(-1, 3)
+        for segment in (start, start+1):
+            if calls >= max_qp_calls:
+                return result("qp_budget_exhausted")
+            calls += 1
+            try:
+                bound = segment_hull_bounds(v, nodes[-1, segment], nodes[-1, segment+1])
+            except ValueError as exc:
+                return result("distance_certificate_failed", str(exc))
+            upper_gap = bound["upper_m"] - .005
+            subset_upper = upper_gap if subset_upper is None else min(subset_upper, upper_gap)
+            if upper_gap < -max_penetration_m:
+                return result("subset_collision")
+            delta = np.asarray(bound["hull_point_m"]) - np.asarray(bound["segment_point_m"])
+            length = float(np.linalg.norm(delta))
+            if not np.isfinite(length) or length == 0.:
+                return result("unresolved_direction")
+            normal = delta / (length*(1.+1e-12))
+            support_lower = float(np.min(v @ normal) - np.max(support_nodes @ normal) - .005
+                                  - _DISTANCE_ROUNDING_M)
+            lower[group] = max(lower[group], support_lower)
+            witnesses.append(dict(group=int(group), segment=segment, source_frame=len(nodes)-1,
+                                  normal=normal.tolist(), support_lower_m=support_lower,
+                                  segment_upper_m=upper_gap))
+            if lower[group] >= -max_penetration_m:
+                break
+        if lower[group] < -max_penetration_m:
+            return result("full_envelope_unresolved")
+    return result("certified")
