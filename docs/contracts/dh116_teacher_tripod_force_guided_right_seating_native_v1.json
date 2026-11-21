@@ -1,0 +1,94 @@
+{
+  "version": "dh116-teacher-tripod-force-guided-right-seating-native-v1",
+  "reduction_sha256": "4ddd1cf241d0adde55b1e5e17e3f52ace36aacd09026f7d49cb293343b6ef5e7",
+  "native_runs": 1,
+  "cpu_regressions_passed": 216,
+  "loaded_sdk_rows": {
+    "left": 34,
+    "right": 213,
+    "bilateral": 24
+  },
+  "measured_seating_records": 28,
+  "additional_right_target_travel_rad": {
+    "8": 0.0012,
+    "9": 0.0017999999999999997
+  },
+  "actual": {
+    "native_natural_exit_verified": true,
+    "outer_code": 0,
+    "signal": null,
+    "elapsed_s": 404.3621060331352,
+    "outer_sha256": "f5a2f04ba76ea5fc5b1684c470421e31a3677d8e741e5e241b8246c4ff68b6de",
+    "frozen_sha256": "6f3ff2e095d459ded13bd75917ca6dfc868090950a0866c961df6b481e1dbbb8",
+    "end_sdk": 1520,
+    "actual_motion_rows": 1280,
+    "checked_bilateral_phase_rows": 768,
+    "bilateral_phase_transfer_rows": 768,
+    "longest_consecutive_bilateral_sdk_steps": 1,
+    "pair_counts": {
+      "support_0": 9216,
+      "right.finger23_link": 9216,
+      "right.finger14_link": 9216,
+      "right.finger33_link": 9216,
+      "support_1": 9216,
+      "left.finger33_link": 3184,
+      "left.finger14_link": 3078,
+      "left.finger23_link": 1089
+    },
+    "first_sdk_by_mesh": {
+      "support_0": 753,
+      "right.finger23_link": 753,
+      "right.finger14_link": 753,
+      "right.finger33_link": 753,
+      "support_1": 753,
+      "left.finger33_link": 1255,
+      "left.finger14_link": 1264,
+      "left.finger23_link": 1282
+    },
+    "peak_normal_per_pair_n": {
+      "support_0": 0.1209582164882138,
+      "right.finger23_link": 0.15826483131950653,
+      "right.finger14_link": 0.1930610319036218,
+      "right.finger33_link": 0.09776074873066565,
+      "support_1": 0.18608184158802032,
+      "left.finger33_link": 0.19496910728870487,
+      "left.finger14_link": 0.8966170542228638,
+      "left.finger23_link": 0.7301676020689906
+    },
+    "support_peak_force_n": {
+      "table": 0,
+      "support_0": 0.12126623229832924,
+      "support_1": 0.20375996028639012
+    },
+    "violations": [],
+    "diagnostic_failure": null,
+    "native_grasp_qualified": false,
+    "teacher_admission": false,
+    "after_retarget_loaded": {
+      "left": 34,
+      "right": 167,
+      "bilateral": 24
+    },
+    "exact_sdk1136_reference": true,
+    "app_close_returned": true,
+    "first_left_composer_delivery_by_name": {
+      "left.finger33_link": 1256,
+      "left.finger14_link": 1265,
+      "left.finger23_link": 1283
+    },
+    "guards": [],
+    "loaded_after_seating": {
+      "left": 31,
+      "right": 167,
+      "bilateral": 24
+    },
+    "longest_loaded_after_seating": {
+      "left": 1,
+      "right": 60,
+      "bilateral": 1
+    },
+    "last_row_sha256": "a57ef8409d0697c6a1b379990c64150c1e463f89081e8a4dab755b903f6a9b76"
+  },
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

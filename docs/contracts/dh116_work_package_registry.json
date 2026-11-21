@@ -46979,6 +46979,31 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-force-guided-right-seating-native": {
+      "title": "Measure intermittent simultaneous Tripod contact after fixed-wrist force seating",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-force-guided-right-seating"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_force_seating.py",
+        "tests/test_dh116_tripod_bilateral_distal_retarget.py",
+        "tests/test_dh116_supported_distal_transfer.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_force_guided_right_seating_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-force-guided-right-seating-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 216,
+        "native_exit_code": 0,
+        "bilateral_loaded_sdk_rows": 24,
+        "longest_continuous_sdk_rows": 1,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

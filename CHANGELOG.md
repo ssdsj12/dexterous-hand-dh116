@@ -1,3 +1,7 @@
+## Tripod force-guided seating native result
+
+Record 24 simultaneous loaded and opposed Tripod SDK steps, with a longest run of one step. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-force-guided-right-seating-native.md).
+
 ## Tripod force-guided right seating
 
 Use the measured SDK 1296 force boundary to allow bounded finger-only seating with fixed wrist targets. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-force-guided-right-seating.md).
