@@ -29863,6 +29863,31 @@
         "verified_at_utc": "2026-11-21T05:20:22.105200+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-proximal-ray-preflight",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-rays.md",
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_ray_preflight_v1.json",
+      "cpu_tests": {
+        "passed": 68,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0bd4c99b475de764a222c71dc12d82b83877c063",
+        "source_tree": "8cb87f306c6f49f492daace2de50acd6929d4d1d",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T05:25:41.171993+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
