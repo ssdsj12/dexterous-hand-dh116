@@ -30813,6 +30813,31 @@
         "verified_at_utc": "2026-11-21T08:57:21.432923+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-measured-left-retarget",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-measured-left-retarget.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_measured_left_retarget_v2.json",
+      "cpu_tests": {
+        "passed": 208,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7515d7c927f7644ee70424626e1cf1d8f41bcc37",
+        "source_tree": "c8e9447e09d5367d5034b614bd3af4ebfb811b82",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T09:05:06.553482+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
