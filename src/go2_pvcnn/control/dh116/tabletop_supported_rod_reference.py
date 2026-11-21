@@ -43,8 +43,10 @@ def _readonly(array, shape):
     return np.frombuffer(array.tobytes(order="C"), dtype=array.dtype).reshape(shape)
 
 
-def load_parked_reference(receipt, expected_sha256, sdk_step):
+def load_parked_reference(receipt, expected_sha256, sdk_step, *, task="power"):
     """Bind native clock, both support contacts and all material geometry at this tick."""
+    if task not in ("power", "tripod", "pinch"):
+        raise ValueError("explicit original supported task identity required")
     receipt = Path(receipt).resolve(strict=True)
     raw = receipt.read_bytes()
     if hashlib.sha256(raw).hexdigest() != expected_sha256:
@@ -61,16 +63,16 @@ def load_parked_reference(receipt, expected_sha256, sdk_step):
     if output.parent != receipt.parent:
         raise ValueError("recorded native output directory is outside the receipt scope")
     manifest = outer["artifact_sha256"]
-    scene, _ = _read_artifact(output, manifest, "power_support_scene.json")
-    result, _ = _read_artifact(output, manifest, "power_shared_result.json")
+    scene, _ = _read_artifact(output, manifest, f"{task}_support_scene.json")
+    result, _ = _read_artifact(output, manifest, f"{task}_shared_result.json")
     lifecycle, _ = _read_artifact(output, manifest, "result.json")
     end = result["sdk_steps"]
-    if (result["scope"] != "measured_power_support_settling_without_hand"
+    if (result["scope"] != f"measured_{task}_support_settling_without_hand"
             or type(end) is not int or end < sdk_step or result["measured_exchanges"] != end-2
             or result["solver_substeps"] != (end-2)*12 or lifecycle["physics_steps"] != end
             or lifecycle["failure"] is not None or lifecycle["lifetime_released_before_close"] is not True):
         raise ValueError("complete isolated support-settling acquisition required")
-    sample, sample_sha = _read_artifact(output, manifest, f"power_exchange_{sdk_step}.json")
+    sample, sample_sha = _read_artifact(output, manifest, f"{task}_exchange_{sdk_step}.json")
     rod = decode_owned(sample)["rod"]
     pairs = rod["rod_mesh_contact_pairs"]
     tick = (sdk_step-2)*12

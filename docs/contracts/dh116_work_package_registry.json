@@ -47832,6 +47832,29 @@
         "native_outer_exit": 0,
         "live_geometry_recheck_pending": true
       }
+    },
+    "teacher.902-live-clearance": {
+      "title": "Audit measured Reset geometry and expose middle-only contact failure",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-fixed-wrist-open-reset"
+      ],
+      "tests": [
+        "tests/test_dh116_902_live_clearance.py",
+        "tests/test_dh116_supported_rod_reference.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_live_clearance_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-live-clearance.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 223,
+        "geometry_passed": true,
+        "all_links_independently_measured": false,
+        "teacher_admission": false,
+        "contact_candidate_passed": false
+      }
     }
   },
   "execution_target": {

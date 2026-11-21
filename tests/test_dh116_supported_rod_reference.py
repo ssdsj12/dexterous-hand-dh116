@@ -69,3 +69,18 @@ def test_requires_outer_natural_exit(tmp_path):
     path,digest=archive(tmp_path,signal=11)
     with pytest.raises(ValueError, match="natural exit"):
         load_parked_reference(path,digest,240)
+
+
+def test_explicit_tripod_source_keeps_identity_clock_and_contact_guards(tmp_path):
+    path,_=archive(tmp_path)
+    outer=json.loads(path.read_bytes());out=tmp_path/"native"
+    for suffix in ["support_scene.json","exchange_240.json","shared_result.json"]:
+        old="power_"+suffix;new="tripod_"+suffix
+        row=json.loads((out/old).read_bytes())
+        if suffix=="shared_result.json":row["scope"]="measured_tripod_support_settling_without_hand"
+        outer["artifact_sha256"][new]=write(out/new,row)
+    digest=write(path,outer)
+    ref=load_parked_reference(path,digest,240,task="tripod")
+    assert ref.node_positions.shape==(41,3)
+    with pytest.raises(ValueError):
+        load_parked_reference(path,digest,240,task="wrong")
