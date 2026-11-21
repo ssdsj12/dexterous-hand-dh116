@@ -47144,6 +47144,29 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-left-index-stabilization-native": {
+      "title": "Measure the paired left dose and continuing Tripod instability",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-seat-phase-hand-ownership"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_force_seating.py",
+        "tests/test_dh116_supported_distal_transfer.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_left_index_stabilization_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-left-index-stabilization-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 221,
+        "native_exit_code": 0,
+        "longest_bilateral_sdk_rows": 1,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## Tripod left-index dose native result
+
+Record the matched force comparison and continuing intermittent bilateral support contact. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-left-index-stabilization-native.md).
+
 ## Tripod seating phase hand ownership
 
 Fix the replay-phase slot compiler and retain the explicit native stop before either dose. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-seat-phase-hand-ownership.md).
