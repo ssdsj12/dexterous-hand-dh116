@@ -32155,6 +32155,31 @@
         "verified_at_utc": "2026-11-21T20:48:28.926918+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-source-adapter",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-source-adapter.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_source_adapter_v1.json",
+      "cpu_tests": {
+        "passed": 55,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ae20fff2f52ab481de14565cc6e5e518e93282e2",
+        "source_tree": "09adcea6f0b382134b82441ddbac61b4f43ea202",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T21:00:14.736891+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
