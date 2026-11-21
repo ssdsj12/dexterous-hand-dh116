@@ -30288,6 +30288,31 @@
         "verified_at_utc": "2026-11-21T06:50:51.840183+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power first proximal approach direction",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-approach-direction.md",
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_approach_direction_v1.json",
+      "cpu_tests": {
+        "passed": 83,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "28fd0d663504c69d2ba36886a217e47a577c106e",
+        "source_tree": "ee786df896173a49d9257bd7cc79df7561991ff5",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T06:55:06.433798+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
