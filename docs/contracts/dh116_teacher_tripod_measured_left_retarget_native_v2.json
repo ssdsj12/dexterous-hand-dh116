@@ -1,0 +1,100 @@
+{
+  "version": "dh116-teacher-tripod-measured-left-retarget-native-v2",
+  "reduction_sha256": "3ad02dcfd1deac1b7159e55ff3ca37ade053ecfe5e6753bb9380f2baf31504f8",
+  "load_window_audit_sha256": "dc3c32c9d8c37ffe1e1b5103d6372dac5a28e995bc34d227722612f192de15b9",
+  "native_runs": 1,
+  "cpu_regressions_passed": 208,
+  "loaded_sdk_rows": {
+    "left": 33,
+    "right": 46,
+    "bilateral": 0
+  },
+  "force_followup_boundary": {
+    "sdk": 1296,
+    "worst_per_pad_n": {
+      "left": {
+        "thumb": 0.31888981319636134,
+        "index": 0.2347363752580746,
+        "middle": 0.13305900116290628
+      },
+      "right": {
+        "thumb": 0.10910836313546779,
+        "index": 0.05628645473720714,
+        "middle": 0.03268734460902181
+      }
+    },
+    "deficit_n": 0.01731265539097819,
+    "loaded_ticks": [
+      12,
+      0
+    ]
+  },
+  "actual": {
+    "native_natural_exit_verified": true,
+    "outer_code": 0,
+    "signal": null,
+    "elapsed_s": 405.76482129702345,
+    "outer_sha256": "0c75401d0e672d2b082d4f71d91ed4122561e2a72e7103255462f45eaf8f0f47",
+    "frozen_sha256": "949aff8b10137d8c68df4347c739b71ed0c9f3c7c10301dc7e66704ceb27558c",
+    "end_sdk": 1456,
+    "actual_motion_rows": 1216,
+    "checked_bilateral_phase_rows": 704,
+    "bilateral_phase_transfer_rows": 704,
+    "longest_consecutive_bilateral_sdk_steps": 0,
+    "pair_counts": {
+      "support_0": 8448,
+      "right.finger23_link": 8448,
+      "right.finger14_link": 8448,
+      "right.finger33_link": 7074,
+      "support_1": 8448,
+      "left.finger33_link": 2416,
+      "left.finger14_link": 2310,
+      "left.finger23_link": 820
+    },
+    "first_sdk_by_mesh": {
+      "support_0": 753,
+      "right.finger23_link": 753,
+      "right.finger14_link": 753,
+      "right.finger33_link": 753,
+      "support_1": 753,
+      "left.finger33_link": 1255,
+      "left.finger14_link": 1264,
+      "left.finger23_link": 1282
+    },
+    "peak_normal_per_pair_n": {
+      "support_0": 0.1209582164882138,
+      "right.finger23_link": 0.17970495813853038,
+      "right.finger14_link": 0.1510847212071113,
+      "right.finger33_link": 0.09776074873066565,
+      "support_1": 0.19045019149780273,
+      "left.finger33_link": 0.2556239275017437,
+      "left.finger14_link": 1.9417576443069873,
+      "left.finger23_link": 1.7604469481126745
+    },
+    "support_peak_force_n": {
+      "table": 0,
+      "support_0": 0.12126623229832924,
+      "support_1": 0.2094597199969879
+    },
+    "violations": [],
+    "diagnostic_failure": null,
+    "native_grasp_qualified": false,
+    "teacher_admission": false,
+    "after_retarget_loaded": {
+      "left": 33,
+      "right": 0,
+      "bilateral": 0
+    },
+    "exact_sdk1136_reference": true,
+    "app_close_returned": true,
+    "first_left_composer_delivery_by_name": {
+      "left.finger33_link": 1256,
+      "left.finger14_link": 1265,
+      "left.finger23_link": 1283
+    },
+    "guards": [],
+    "last_row_sha256": "c9cfaa91758468b8cffd7fcd208ed8a72c63a33c74bc1b626747d8014b2db05a"
+  },
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

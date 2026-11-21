@@ -46931,6 +46931,32 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-measured-left-retarget-native": {
+      "title": "Measure actual Tripod left fingertip contacts and bilateral load shortfall",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-measured-left-retarget"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_bilateral_distal_retarget.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_tripod_measured_precontact.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_measured_left_retarget_native_v2.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-measured-left-retarget-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 208,
+        "native_exit_code": 0,
+        "left_loaded_sdk_rows": 33,
+        "right_loaded_sdk_rows": 46,
+        "bilateral_loaded_sdk_rows": 0,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
