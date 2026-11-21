@@ -47823,11 +47823,14 @@
       ],
       "readiness": "docs/contracts/dh116_teacher_902_fixed_wrist_open_reset_v1.json",
       "report": "docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md",
-      "native_runs": 0,
+      "native_runs": 1,
       "last_result": {
         "cpu_preflight_passed": 82,
         "native_reset_verified": false,
-        "teacher_admission": false
+        "teacher_admission": false,
+        "native_interval_complete": true,
+        "native_outer_exit": 0,
+        "live_geometry_recheck_pending": true
       }
     }
   },

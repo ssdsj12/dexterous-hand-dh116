@@ -4224,3 +4224,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - 902 staged-path follow-up: 1032 ideal substeps pass, but submicrometre reserves explicitly block native admission; no extra Isaac or PPO execution.
 
 - 2026-11-22: added independent 902 fixed-wrist open Reset-only execution; 82 related CPU tests passed; 60 Registry tests passed, native/contact qualification pending. See [docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md](docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md).
+
+- 2026-11-22: fixed-wrist open Reset diagnostic completed 240 SDK / 2856 solver steps and natural exit 0; live full-shape clearance and grasp qualification remain pending.

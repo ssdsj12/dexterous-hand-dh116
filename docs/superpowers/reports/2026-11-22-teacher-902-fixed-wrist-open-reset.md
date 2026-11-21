@@ -16,3 +16,14 @@ The entry now checks complete per-step files and exact SDK/solver/pair counts af
 
 ## R3 supported-rod correction
 Antigravity found that pair_counts includes support_0/support_1: rejecting every nonzero pair would reject valid support settling. A fixture with actual support names and positive support counts reproduced the bug (1 failed, 16 passed). completed_interval now requires both supports present with positive integer counts and a nonempty hand set with zero integer counts. Missing support, zero support and missing hand evidence have explicit tests. Latest related regression: 82 passed / 0 failed (20 new cases); prior Registry run: 60 passed / 0 failed. Two prior CPU-only frozen plans are superseded, never run; native attempts remain zero. Before execution use a fresh plan and current frozen SHA.
+
+## Final R4 and actual native interval
+Antigravity reread final entry d5929c77322c732c8deba7779d37fddea0a9c0cd5360d29863634fb5c64a4c31 and test 41792d7b4cab9e90448cbd1cd33150703f4e95bc0ed35854af3db484a32c6b58 and found no new CPU wiring blocker. No native qualification was inferred from review.
+
+One actual run used final fingerprint 7b01c0999e5cfc2a3911d1551d4508e3f30710b220405a47fc9fc3dd1e473aaa, code HEAD 6a644fece0cd0a4735ba0fccc3b15615fe7ee20c. It completed SDK 2+238=240 and 2856 solver substeps with 238 exchange records, zero action/Teacher/PPO. Outer natural exit 0; forced_exit=false, exceeded_budget=false; wall 91.826s. No internal failure file. Each end support has 2856 captured pairs, hand pairs zero; support peak loads {'table': 0.0, 'support_0': 0.1564640571747694, 'support_1': 0.15651294064896087}; pair force balance residual 0 N. Receipt SHA: 5681a8cddffb664104b0d8ef7699cc8354693407a1c9e3b2427f2339de2d1022.
+
+Tail SDK232..240 active joint error is 0 rad at float32 readback on both hands; maximum passive affine mimic residual is 4.0046871e-8 rad. Backend targets are constant. The passive backend zero drive target is not a valid tracking target; passive motion is evaluated against the original affine mimic instead. Minimum recorded table clearance is 0.046151561m. Final maximum rod node speed 0.012912691m/s is reported without a settling-qualification claim.
+
+All-22-shape live rod/support clearance recomputation remains pending, as does endpoint contact and all grasp/hold/lift qualification. This interval is complete, not a qualified Teacher. First private metric reducer used scalar conversion on an array-valued clearance field and failed; fixed to np.min, retaining tool/error evidence. Raw native data/maps/logs remain private at ref902/fixed-open-reset-native-tripod-r4.
+
+Recovery: do not rerun this consumed fingerprint. Next read real rod frames and measured q/qd, finish clearance audit, then plan force-guided closure. Fixed RGB configs unchanged; this diagnostic collected no RGB.

@@ -1,7 +1,7 @@
 {
   "version": "dh116-teacher-902-fixed-wrist-open-reset-v1",
   "base_head": "5d0f99acc27ddc7e02c97d9c7c1d1b753fb4cb5b",
-  "status": "cpu_passed_native_not_run",
+  "status": "native_interval_complete_live_geometry_recheck_pending",
   "cpu_tests": {
     "passed": 82,
     "failed": 0,
@@ -17,7 +17,7 @@
     "num_envs": 1,
     "gpu": 2
   },
-  "native_runs": 0,
+  "native_runs": 1,
   "teacher_admission": false,
   "camera_configs_unchanged": true,
   "source_sha256": {
@@ -27,16 +27,224 @@
   "cpu_recipe_sha256": null,
   "review": {
     "skill": "antigravity-desktop-review",
-    "rounds": "902-open-reset R1-R3; R4 final reread pending",
+    "rounds": "902-open-reset R1-R4 complete",
     "accepted_findings": [
       "proof/frozen receipt and source SHA agreement",
       "internal interval failure must return nonzero after cleanup",
       "Separate nonzero end-support pair counts from zero hand pair counts"
-    ]
+    ],
+    "final_source_reread_by_antigravity": true
   },
   "limitations": [
     "Open Reset experiment only; original endpoint contact remains failed",
     "Pair counts and exit code alone cannot qualify Reset; inspect all live geometry and failure files",
     "No camera frames acquired by this no-camera diagnostic; both fixed camera configs preserved"
+  ],
+  "native_interval_complete": true,
+  "native_reset_qualified": false,
+  "native": {
+    "frozen_sha256": "7b01c0999e5cfc2a3911d1551d4508e3f30710b220405a47fc9fc3dd1e473aaa",
+    "outer_sha256": "5681a8cddffb664104b0d8ef7699cc8354693407a1c9e3b2427f2339de2d1022",
+    "exit_code": 0,
+    "forced_exit": false,
+    "exceeded_budget": false,
+    "elapsed_seconds": 91.82648272602819,
+    "sdk_steps": 240,
+    "measured_exchanges": 238,
+    "solver_substeps": 2856,
+    "ppo_updates": 0,
+    "hand_pairs": 0,
+    "support_pair_counts": {
+      "support_0": 2856,
+      "support_1": 2856
+    },
+    "peak_support_force_n": {
+      "table": 0.0,
+      "support_0": 0.1564640571747694,
+      "support_1": 0.15651294064896087
+    },
+    "max_force_balance_residual_n": 0.0,
+    "readback": {
+      "rows": 238,
+      "tail_sdk": [
+        232,
+        240
+      ],
+      "joint_readback": {
+        "left": {
+          "names": [
+            "wrist_x",
+            "wrist_y",
+            "wrist_z",
+            "wrist_roll",
+            "wrist_pitch",
+            "wrist_yaw",
+            "finger11",
+            "finger21",
+            "finger31",
+            "finger41",
+            "finger51",
+            "finger12",
+            "finger22",
+            "finger32",
+            "finger42",
+            "finger52",
+            "finger13"
+          ],
+          "position_units": [
+            "m",
+            "m",
+            "m",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad"
+          ],
+          "max_abs_position_minus_target": [
+            1.0878859662069584e-12,
+            3.515019525446306e-11,
+            4.617373150495041e-11,
+            4.69328842456207e-09,
+            8.873611845316987e-10,
+            7.307101035358698e-10,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.6706015467643738,
+            0.6982751488685608,
+            0.6554920077323914,
+            0.8856419920921326,
+            0.39036068320274353
+          ],
+          "max_abs_velocity": [
+            5.662225202596183e-11,
+            2.3720554409578654e-09,
+            2.57051357976934e-09,
+            2.168012969150368e-08,
+            7.63767449285524e-09,
+            8.75742500738852e-09,
+            5.515050638393859e-09,
+            2.848988600590019e-09,
+            4.2048213799716905e-09,
+            1.3626097938868043e-07,
+            1.2041277841490228e-07,
+            1.920685832601521e-12,
+            5.8782177347893594e-08,
+            5.334588877303759e-07,
+            3.271611603850033e-07,
+            1.8439624227539753e-07,
+            1.1297618129901821e-07
+          ],
+          "target_peak_to_peak": 0.0,
+          "active_joint_max_error_rad": 0.0,
+          "passive_mimic_max_error_rad": 4.0046870708465576e-08,
+          "note": "Passive joints follow affine mimic; their zero backend drive target is not their physical target."
+        },
+        "right": {
+          "names": [
+            "wrist_x",
+            "wrist_y",
+            "wrist_z",
+            "wrist_roll",
+            "wrist_pitch",
+            "wrist_yaw",
+            "finger11",
+            "finger21",
+            "finger31",
+            "finger41",
+            "finger51",
+            "finger12",
+            "finger22",
+            "finger32",
+            "finger42",
+            "finger52",
+            "finger13"
+          ],
+          "position_units": [
+            "m",
+            "m",
+            "m",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad",
+            "rad"
+          ],
+          "max_abs_position_minus_target": [
+            3.5456094440652897e-13,
+            1.0026621026504312e-11,
+            1.3840820850541391e-11,
+            1.4690262339911442e-09,
+            2.0941265388429997e-10,
+            2.003825438912088e-10,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5418117642402649,
+            0.6539666652679443,
+            0.24123486876487732,
+            0.24123665690422058,
+            8.818766946205869e-05
+          ],
+          "max_abs_velocity": [
+            2.216885355843523e-11,
+            6.84546586082746e-10,
+            8.214225410974052e-10,
+            7.777602561986896e-09,
+            1.6560621762806704e-09,
+            3.011723315182735e-09,
+            1.6659384982631309e-09,
+            8.123635097945225e-10,
+            5.422293725132477e-10,
+            3.5764514905167744e-08,
+            3.530052339328904e-08,
+            1.0358869317883546e-10,
+            1.1432280189183075e-07,
+            1.448595412512077e-07,
+            1.2571419460982725e-07,
+            1.1615986750257434e-07,
+            4.315708679314412e-08
+          ],
+          "target_peak_to_peak": 0.0,
+          "active_joint_max_error_rad": 0.0,
+          "passive_mimic_max_error_rad": 4.0046870708465576e-08,
+          "note": "Passive joints follow affine mimic; their zero backend drive target is not their physical target."
+        }
+      },
+      "minimum_recorded_table_clearance_m": 0.04615156078669813,
+      "final_max_node_speed_m_s": 0.01291269063949585,
+      "teacher_admission": false,
+      "live_full_shape_clearance_recheck_pending": true
+    }
+  },
+  "next_gate": [
+    "Recompute all 22 original shapes per hand against all 238 measured rod/support frames",
+    "Use actual settled/current rod geometry to repair middle contact before force-guided closing",
+    "Opposed load then fixed wrist hold before any Lift; Teacher admission remains false"
   ]
 }
