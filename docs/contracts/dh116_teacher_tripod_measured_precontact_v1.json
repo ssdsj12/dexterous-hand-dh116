@@ -1,0 +1,124 @@
+{
+  "version": "dh116-tripod-measured-precontact-v1",
+  "native_runs": 0,
+  "cpu_regressions_passed": 117,
+  "native_budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "tripod_measured_guarded_precontact",
+    "sdk_setup_steps": 2,
+    "control_steps": 36,
+    "solver_steps": 6312,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 300,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 6,
+    "episode_resets": 1,
+    "sdk_steps": 528
+  },
+  "exact_route_proof_sha256": "a3f3436c87c43ad516666bc7b1ad6005ff50bdda5f4be7267ddda96b571ea8fe",
+  "source_outer_sha256": "c415e6dd3ac5599481ac78079ecc6abbe4385f1ddec35a535e32f9909451e11a",
+  "source_last_row_sha256": "e07cff38c2fcc0f080f5b79b2fbc082ab71a43dacb18d92c355ecd54591fa678",
+  "measurements": {
+    "left": {
+      "first": {
+        "shape_count": 22,
+        "rod_clearance_m": 0.0013347821709636665,
+        "support_clearance_m": 0.0236728715431187,
+        "table_clearance_m": 0.05411522524692075,
+        "limiting_shape": "source_colliders:finger33_link",
+        "pad_gaps_m": [
+          0.002572221774426748,
+          0.002164617973554799,
+          0.0017871645310045207
+        ],
+        "node_ids": [
+          36,
+          36,
+          34
+        ],
+        "opposition": [
+          -0.49629062656877554,
+          -0.7319577266155518
+        ]
+      },
+      "last": {
+        "shape_count": 22,
+        "rod_clearance_m": 0.0004974136493368086,
+        "support_clearance_m": 0.02527380846163141,
+        "table_clearance_m": 0.05262640552025649,
+        "limiting_shape": "source_colliders:finger33_link",
+        "pad_gaps_m": [
+          0.001489065346874774,
+          0.0010167438732181164,
+          0.0008079555804789001
+        ],
+        "node_ids": [
+          36,
+          36,
+          34
+        ],
+        "opposition": [
+          -0.6188893825459061,
+          -0.775864973327702
+        ]
+      },
+      "minimum_rod_clearance_m": 0.0004974136493368086,
+      "minimum_support_clearance_m": 0.0236728715431187
+    },
+    "right": {
+      "first": {
+        "shape_count": 22,
+        "rod_clearance_m": 0.0003622714196265253,
+        "support_clearance_m": 0.0018459243746138526,
+        "table_clearance_m": 0.046933703228502766,
+        "limiting_shape": "source_colliders:finger33_link",
+        "pad_gaps_m": [
+          0.0019804048121641656,
+          0.0010681070402588774,
+          0.0015098505570082582
+        ],
+        "node_ids": [
+          3,
+          2,
+          4
+        ],
+        "opposition": [
+          -0.7791498048763184,
+          -0.972062924586797
+        ]
+      },
+      "last": {
+        "shape_count": 22,
+        "rod_clearance_m": 0.000444570212868145,
+        "support_clearance_m": 0.0018231105348377116,
+        "table_clearance_m": 0.04738547886194605,
+        "limiting_shape": "source_colliders:finger23_link",
+        "pad_gaps_m": [
+          0.0012983964264626693,
+          0.0010038794404277542,
+          0.0015544700698144672
+        ],
+        "node_ids": [
+          3,
+          2,
+          4
+        ],
+        "opposition": [
+          -0.7658762595326413,
+          -0.9751930336381445
+        ]
+      },
+      "minimum_rod_clearance_m": 0.0003622714196265253,
+      "minimum_support_clearance_m": 0.0018231105348377116
+    }
+  },
+  "live_contact_verified": false,
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

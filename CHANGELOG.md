@@ -1,3 +1,7 @@
+## Tripod measured precontact targets
+
+Screen a bilateral continuation from exact native joint, link and rod readback. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-measured-precontact.md).
+
 ## Pinch supported flexible rod native Reset result
 
 Record native bilateral clearance, support continuity, and natural exit. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-supported-reset-native.md).

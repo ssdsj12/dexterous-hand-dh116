@@ -258,16 +258,20 @@ def acquire_original_power_reset(sim, owners, trace, output, *, profile):
         sim = owners = trace = None
 
 
-def verify_waypoint_boundary(actual, archived):
+def verify_waypoint_boundary(actual, archived, *, sdk_step=272, exact_geometry=False):
     array_fields = ("node_positions","velocities","rest_lengths_m","external_support_wrenches_world",
                     "mesh_names","physics_step","rod_tick")
     hand_fields = ("q","qd","backend_targets","native_anchor_pose_w")
-    if (actual["physics_step"] != 272 or actual["physics_step"] != archived["physics_step"]
+    if (actual["physics_step"] != sdk_step or actual["physics_step"] != archived["physics_step"]
             or any(actual["rod"][key] != archived["rod"][key] for key in array_fields)
             or any(actual["action_readback"]["post"]["hands"][side][key]
                    != archived["action_readback"]["post"]["hands"][side][key]
                    for side in SIDES for key in hand_fields)):
         raise ValueError("live Tripod action prefix does not match its sealed waypoint boundary")
+    if exact_geometry:
+        geometry = actual.get("sdk_hand_geometry", {})
+        if geometry.get("physics_step") != sdk_step or geometry != archived.get("sdk_hand_geometry"):
+            raise ValueError("live Tripod link poses differ from the sealed precontact boundary")
 
 
 def supported_action_schedule(action, remaining_sdk):
@@ -281,7 +285,7 @@ def supported_action_schedule(action, remaining_sdk):
 
 def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                          clearance_shapes, setup, action, sdk_end, verify_support_continuity=False,
-                         task="power", support_scene=None, waypoint_archive=None):
+                         task="power", support_scene=None, waypoint_archive=None, precontact_archive=None):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -329,6 +333,9 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
             native.write_new(output/f"{task}_control_{row['physics_step']}.json", encode_owned(emitted))
             if waypoint_archive is not None and row["physics_step"] == 272:
                 verify_waypoint_boundary(encode_owned(row), waypoint_archive)
+            if precontact_archive is not None and row["physics_step"] == 432:
+                verify_waypoint_boundary(encode_owned(emitted), precontact_archive,
+                                         sdk_step=432, exact_geometry=True)
             pairs = row["rod"]["rod_mesh_contact_pairs"]["pairs"]
             if any(pair["mesh_name"] not in END_SUPPORT_NAMES for pair in pairs):
                 return "external_contact_during_parked_action"
@@ -360,7 +367,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
 
 def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=None,
                sdk_end=SDK_END, require_no_hand_contact=False, action_after_settle=None,
-               task="power", live_support_scene=None, tripod_archive=None, waypoint_archive=None):
+               task="power", live_support_scene=None, tripod_archive=None, waypoint_archive=None,
+               precontact_archive=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -376,6 +384,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                     or not require_no_hand_contact or live_support_scene is None))
                 or (task == "power" and (tripod_archive is not None or waypoint_archive is not None))
                 or (waypoint_archive is not None and tripod_archive is None)
+                or (precontact_archive is not None and (task != "tripod" or waypoint_archive is None
+                    or sdk_end <= 432))
                 or (task == "tripod" and
                 (supported_acquire is None or not require_no_hand_contact or live_support_scene is None
                  or (action_after_settle is None) != (tripod_archive is None)))):
@@ -504,7 +514,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
                 meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end,
                 verify_support_continuity=action_reference is not None or tripod_archive is not None,
-                task=task, support_scene=live_support_scene, waypoint_archive=waypoint_archive)
+                task=task, support_scene=live_support_scene, waypoint_archive=waypoint_archive,
+                precontact_archive=precontact_archive)
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,

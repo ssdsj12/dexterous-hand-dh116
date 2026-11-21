@@ -51,16 +51,17 @@ def approach_reference(receipt):
 WAYPOINT_CONTRACT = screen.ROOT/"docs/contracts/dh116_teacher_tripod_guarded_approach_native_v1.json"
 WAYPOINT_INDEX = {"left": 1, "right": 2}
 WAYPOINT_WINDOWS = 20
+PRECONTACT_PROOF_SHA = "a3f3436c87c43ad516666bc7b1ad6005ff50bdda5f4be7267ddda96b571ea8fe"
 WAYPOINT_PROOF_SHA = "15c89406150e583bde244a827951ebfc702c69b1e48cd8e8b5729f9a72620c27"
 
 
-def waypoint_controls(config, row, desired):
+def waypoint_controls(config, row, desired, *, windows=WAYPOINT_WINDOWS):
     from scipy.spatial.transform import Rotation
     from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, active_limits
     from go2_pvcnn.control.dh116.tabletop_surface_contract import ACTION_CONTRACT
 
     wrist = row["wrist_projection"]
-    dt = WAYPOINT_WINDOWS * 8 * shared.DT
+    dt = windows * 8 * shared.DT
     low, high = active_limits()
     joint_delta, position_delta, rotation_delta = [], [], []
     for i, side in enumerate(shared.SIDES):
@@ -84,7 +85,7 @@ def waypoint_controls(config, row, desired):
     if (not np.isfinite(command).all() or np.max(np.abs(command))>1.
             or any(np.linalg.norm(command[k:k+3])>1. for k in (12,15,18,21))):
         raise ValueError("Tripod waypoint exceeds the original 24D action rate bounds")
-    return np.repeat(command[None], WAYPOINT_WINDOWS, axis=0)
+    return np.repeat(command[None], windows, axis=0)
 
 
 def load_waypoint(receipt, proof, config):
@@ -114,6 +115,25 @@ def load_waypoint(receipt, proof, config):
     if sorted(checked) != sorted(WAYPOINT_INDEX):
         raise ValueError("both original Tripod waypoint checks are required")
     return row, waypoint_controls(config,decode_owned(row),goals), (WAYPOINT_CONTRACT,receipt,row_path,proof)
+
+
+def load_precontact(receipt, proof, config):
+    from scripts import screen_dh116_tripod_measured_precontact as measured
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
+
+    rows, _, files = measured.archive(receipt)
+    request = json.loads(measured.REQUEST.read_bytes())
+    audit = sources.checked_json(proof, PRECONTACT_PROOF_SHA)
+    if (audit["all_passed"] is not True or audit["version"] != request["version"]
+            or audit["outer_sha256"] != native.sha(receipt)
+            or audit["request_sha256"] != native.sha(measured.REQUEST)
+            or audit["last_row_sha256"] != native.sha(files[-2])
+            or audit["before_sdk"] != measured.SDK or audit["route_sample_count"] != measured.SAMPLES
+            or set(audit["samples"]) != set(measured.SIDES)
+            or not all(measured.check_route(value) for value in audit["samples"].values())):
+        raise ValueError("exact independently screened bilateral Tripod precontact path required")
+    return rows[-1], waypoint_controls(config, decode_owned(rows[-1]), request["goals"], windows=12), (
+        *files, measured.REQUEST, Path(measured.__file__), proof)
 
 
 def freeze(args):
@@ -154,7 +174,11 @@ def freeze(args):
         digest = native.sha(source)
         if plan["frozen_files"].setdefault(path, digest) != digest:
             raise ValueError("inconsistent Tripod source fingerprints")
-    archived = waypoint = None
+    archived = waypoint = precontact = None
+    if (args.precontact_reference is None) != (args.precontact_screen is None):
+        raise ValueError("provide both Tripod precontact inputs")
+    if args.precontact_reference is not None and args.waypoint_reference is None:
+        raise ValueError("Tripod precontact continuation requires original waypoint evidence")
     if (args.waypoint_reference is None) != (args.waypoint_geometry is None):
         raise ValueError("provide the paired Tripod waypoint evidence inputs")
     if args.waypoint_reference is not None and args.approach_reference is None:
@@ -177,13 +201,19 @@ def freeze(args):
             waypoint, appended, bound = load_waypoint(args.waypoint_reference,args.waypoint_geometry,config)
             plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
             actions = np.vstack((actions,appended))
+        if args.precontact_reference is not None:
+            precontact, appended, bound = load_precontact(args.precontact_reference,args.precontact_screen,config)
+            plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
+            actions = np.vstack((actions,appended))
         sdk_end = SDK_END + 8*len(actions)
         plan["tripod_approach"] = actions.tolist()
         plan["budget"].update(mode=("tripod_guarded_waypoint_continuation" if waypoint
                                     else "tripod_supported_guarded_approach"), sdk_steps=sdk_end,
                               control_steps=len(actions), solver_steps=(sdk_end-2)*shared.SUBSTEPS,
-                              soft_wall_seconds=240 if waypoint else plan["budget"]["soft_wall_seconds"])
-    return plan, config, archived, waypoint
+                              soft_wall_seconds=300 if precontact else (240 if waypoint else plan["budget"]["soft_wall_seconds"]))
+        if precontact is not None:
+            plan["budget"]["mode"] = "tripod_measured_guarded_precontact"
+    return plan, config, archived, waypoint, precontact
 
 
 def main(argv=None):
@@ -194,10 +224,12 @@ def main(argv=None):
     parser.add_argument("--approach-reference", type=Path)
     parser.add_argument("--waypoint-reference", type=Path)
     parser.add_argument("--waypoint-geometry", type=Path)
+    parser.add_argument("--precontact-reference", type=Path)
+    parser.add_argument("--precontact-screen", type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(screen.ROOT)
-    plan, config, archived, waypoint = freeze(args)
+    plan, config, archived, waypoint, precontact = freeze(args)
     from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
 
     assert_clean_import_boundary()
@@ -217,7 +249,7 @@ def main(argv=None):
         args=args, supported_acquire=partial(supported.acquire_supported_reset, config=config, sdk_end=sdk_end,
         task="tripod"), sdk_end=sdk_end, require_no_hand_contact=True, task="tripod", tripod_archive=archived,
         action_after_settle=plan.get("tripod_approach"), live_support_scene=config["support_scene"],
-        waypoint_archive=waypoint))
+        waypoint_archive=waypoint, precontact_archive=precontact))
     return 0
 
 
