@@ -3898,3 +3898,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - Added a hands-clear Power support settling case with an independent step budget, measured contact stop, and explicit native DOF units.
 
 - Verified the two native Pinch force-feedback increments and exact matched-control identity. The longest qualified interval stays below the grasp hold requirement.
+
+- Verified both Power supports carried the native free rod throughout all 2,856 solver substeps with hands parked and zero table contact. No grasp qualification was granted.

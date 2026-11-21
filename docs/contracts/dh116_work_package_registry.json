@@ -45616,6 +45616,31 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-parked-support-settle-native-result": {
+      "title": "Verify two-sided native rod support with parked hands",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-parked-support-settle-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_end_supported_rod.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_parked_support_settle_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-parked-support-settle-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "native_support_suspension_only",
+        "native_exit": 0,
+        "solver_substeps": 2856,
+        "loaded_substeps_each_support": 2856,
+        "result_sha256": "8c0e73409e3a4ef001d1f9807439c14689c538be0d74f944208ab3ea0b4c9620",
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
