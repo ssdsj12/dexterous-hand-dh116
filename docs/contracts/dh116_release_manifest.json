@@ -30788,6 +30788,31 @@
         "verified_at_utc": "2026-11-21T08:49:20.279912+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.supported-distal-live-clearance-evidence",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-supported-distal-live-clearance-evidence.md",
+      "readiness": "docs/contracts/dh116_teacher_supported_distal_live_clearance_evidence_v1.json",
+      "cpu_tests": {
+        "passed": 137,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "9935bd1475f9a12c3e78f9d3450f20620571f897",
+        "source_tree": "57900ae9b6b7b40647b32b9e784256f2da006262",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T08:57:21.432923+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
