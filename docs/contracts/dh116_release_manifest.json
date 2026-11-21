@@ -30163,6 +30163,31 @@
         "verified_at_utc": "2026-11-21T06:33:08.870626+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Pinch thumb tangent native comparison",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-thumb-tangent-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_thumb_tangent_native_v1.json",
+      "cpu_tests": {
+        "passed": 117,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a1ca9a6342839debbf6adc0a0bc5dd164d6ebc1b",
+        "source_tree": "467db794057b1253843037b984db38bb5827cdd5",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T06:37:51.641474+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
