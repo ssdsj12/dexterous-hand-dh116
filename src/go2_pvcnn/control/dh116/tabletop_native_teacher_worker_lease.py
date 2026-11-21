@@ -58,6 +58,8 @@ def _verify(config, *, repo, package, expected_semantic_sha256):
         spec = recipe["spec"]
         identity = {k:recipe[k] for k in ("command_spec_sha256","code_config_sha256")}
         contract = spec.get("teacher_contract",{})
+        if contract.get("style") != config["style"] or contract.get("profile") != config["profile"]:
+            raise ValueError("frozen recipe style/profile differs from the actual worker grasp")
         if (spec.get("version") != 2 or contract.get("semantic_sha256") != expected_semantic_sha256
                 or auth.get("semantic_sha256") != expected_semantic_sha256
                 or auth.get("recipe_identity") != identity or resource.get("recipe_identity") != identity

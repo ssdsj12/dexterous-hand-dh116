@@ -17,7 +17,7 @@ from .tabletop_native_teacher_worker_contract import (
 
 SDK_OPERATIONS = ("delivered_exchange", "physical", "budget_consumed", "policy_pinch_distance")
 CONTROL_OPERATIONS = ("decision", "settlement", "transition_recorded")
-PRIMARY_OPERATIONS = frozenset((*SDK_OPERATIONS,*CONTROL_OPERATIONS,
+PRIMARY_OPERATIONS = frozenset((*SDK_OPERATIONS,"policy_tripod_distance",*CONTROL_OPERATIONS,
     "collector_origin","policy_epoch","optimizer_update_accepted"))
 
 
@@ -59,7 +59,10 @@ def _jsonl(raw, *, name, maximum):
 
 
 def _journal(rows, result, *, controls=32, initial_version=0, prior_accepted=0,
-             prior_weights=None):
+             prior_weights=None, grasp="pinch"):
+    if grasp not in ("pinch","tripod"):
+        raise ValueError("independent journal grasp required")
+    sdk_operations=(*SDK_OPERATIONS[:-1],"policy_"+grasp+"_distance")
     by_operation={}
     for index,row in enumerate(rows):
         if (set(row)!={"sequence","scope","operation","payload"}
@@ -74,7 +77,7 @@ def _journal(rows, result, *, controls=32, initial_version=0, prior_accepted=0,
     expected=["collector_origin"]
     for _ in range(controls):
         expected.append("decision")
-        for _ in range(8):expected.extend(SDK_OPERATIONS)
+        for _ in range(8):expected.extend(sdk_operations)
         expected.extend(("settlement","transition_recorded"))
     expected.extend(("policy_epoch","optimizer_update_accepted"))
     actual=[r["operation"] for r in rows if r["operation"] in PRIMARY_OPERATIONS]
@@ -143,7 +146,7 @@ def audit_teacher_artifacts_v2(spec, output):
     checkpoint=validate_teacher_training_result(result,
         expected_semantic_sha256=spec["teacher_contract"]["semantic_sha256"],artifact_sha256=digests)
     journal=ledgers["training_events.jsonl"]
-    epoch=_journal(journal,result,controls=spec["teacher_contract"]["limits"]["controls"])
+    epoch=_journal(journal,result,controls=spec["teacher_contract"]["limits"]["controls"],grasp=spec["teacher_contract"]["style"])
     _view("physics.jsonl",ledgers["physics.jsonl"],journal,"physical")
     _view("transitions.jsonl",ledgers["transitions.jsonl"],journal,"transition_recorded")
     _view("ownership.jsonl",ledgers["ownership.jsonl"],journal,None)

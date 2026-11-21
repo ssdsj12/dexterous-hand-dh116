@@ -1,7 +1,7 @@
 """Finite C06 preparation contracts; structural validity grants no execution lease.
 
 No App, CUDA or training imports occur here. V1 native recipes retain their own
-240-step gate. This protocol allows only the sealed Pinch smoke horizons.
+240-step gate. This protocol permits independent Pinch/Tripod sources at sealed smoke horizons.
 """
 from copy import deepcopy
 import math
@@ -47,6 +47,13 @@ SOURCE_FILES = frozenset({
         "tabletop_stereo_rod_state.py")),
     "configs/dh116_tasks/flexible_pinch_candidate_v1.json",
 })
+TRIPOD_SOURCE_FILES = frozenset("src/go2_pvcnn/control/dh116/"+name for name in (
+    "tabletop_tripod_reset_manifest.py", "tabletop_tripod_reset_distance.py",
+    "tabletop_native_teacher_policy_tripod_distance.py", "tabletop_fresh_supported_builder.py",
+    "tabletop_supported_mesh_reset.py", "tabletop_fresh_supported_exchange.py",
+    "tabletop_power_shared_rod.py", "tabletop_power_supported_task.py",
+    "tabletop_deformable_dual_hand_episode.py", "tabletop_deformable_physical_exchange.py",
+    "tabletop_deformable_live_geometry.py"))
 FIXED_LIMITS = dict(controls=32, sdk_steps_per_control=8, setup_sdk_steps=2,
     measured_sdk_steps=256, warmup_sdk_steps=0, other_sdk_steps=0,
     max_resets=1, max_episode_count=1, max_solver_calls=256,
@@ -136,9 +143,9 @@ def validate_teacher_recipe_v2(spec):
         "backend_sha256", "target_sha256", "reset_sha256", "reward_sha256", "limits", "journal_contract"}
     if (not isinstance(contract, dict) or set(contract) != keys
             or contract["schema"] != RECIPE_SCHEMA
-            or contract["profile"] != "approach_wiring_smoke_v1" or contract["style"] != "pinch"
+            or contract["profile"] != "approach_wiring_smoke_v1" or contract["style"] not in ("pinch","tripod")
             or any(not _sha(contract[k]) for k in keys if k.endswith("_sha256"))):
-        raise ValueError("independent pinned Pinch smoke Teacher contract required")
+        raise ValueError("independent pinned grasp smoke Teacher contract required")
     if (contract["journal_contract"] != JOURNAL_CONTRACT
             or contract["journal_contract"].get("retain_raw_sequence_references") is not True):
         raise ValueError("complete original NativeJournal and lossless derived views required")
@@ -156,9 +163,11 @@ def validate_teacher_recipe_v2(spec):
     if (not isinstance(sources, list) or any(not isinstance(x, str) for x in sources)
             or len(set(sources)) != len(sources) or not SOURCE_FILES <= set(sources)):
         raise ValueError("C06 source closure must include recipe and lease implementation")
+    if contract["style"] == "tripod" and not TRIPOD_SOURCE_FILES <= set(sources):
+        raise ValueError("complete independent Tripod source closure required")
     limits = contract["limits"]
     if not isinstance(limits, dict):
-        raise ValueError("explicit Pinch smoke limits required")
+        raise ValueError("explicit grasp smoke limits required")
     fixed, row_budget = fresh_smoke_limits(limits.get("controls"))
     end_step = fixed["setup_sdk_steps"] + fixed["measured_sdk_steps"]
     budget = spec["budget"]
@@ -244,8 +253,8 @@ def training_semantic_config(training_config, *, backend_identity, source_identi
             or type(training_config["rollout_steps"]) is not int):
         raise ValueError("exact C05 training configuration schema required")
     pre = deepcopy(validate_config(training_config["preflight"]))
-    if pre["profile"] != "approach_wiring_smoke_v1" or pre["style"] != "pinch":
-        raise ValueError("C06 supports only the Pinch approach smoke semantic profile")
+    if pre["profile"] != "approach_wiring_smoke_v1" or pre["style"] not in ("pinch","tripod"):
+        raise ValueError("C06 requires independent Pinch/Tripod approach smoke semantics")
     validate_fresh_smoke_rollout(training_config["rollout_steps"], pre["budget"], 32)
     cap = training_config["episode_cap_s"]
     if type(cap) not in (float,int) or not math.isfinite(cap) or cap <= 0:
@@ -290,6 +299,10 @@ def training_semantic_config(training_config, *, backend_identity, source_identi
             reward = load_config(path,ppo_gamma=ppo["gamma"])
             if reward.config_sha256 != pre[key]["sha256"] or reward.profile != pre["profile"]:
                 raise ValueError("reward bytes or profile changed during semantic validation")
+        if key == "resolved_reset_manifest" and pre["style"] == "tripod":
+            from .tabletop_tripod_reset_manifest import SCHEMA as TRIPOD_RESET_SCHEMA
+            if content.get("schema") != TRIPOD_RESET_SCHEMA or content.get("style") != "tripod":
+                raise ValueError("independent Tripod manifest style/schema required")
         pre[key] = {"sha256":pre[key]["sha256"]}
     for key in ("authorization", "resource_lock", "budget"):
         pre.pop(key)
@@ -397,8 +410,11 @@ def worker_training_target_contract(backend_profile,manifest):
     """One fixed material-node target map for both provider and CPU auditor."""
     from .tabletop_native_teacher_profile import BackendProfile,TARGET_SCHEMA_VERSION
     from .tabletop_native_teacher_preflight import ResolvedResetManifest
-    if type(backend_profile) is not BackendProfile or type(manifest) is not ResolvedResetManifest:
-        raise ValueError("actual source-loaded backend profile and resolved Reset manifest required")
+    from .tabletop_tripod_reset_manifest import TripodResetManifest
+    expected = {"pinch":ResolvedResetManifest,"tripod":TripodResetManifest}
+    if (type(backend_profile) is not BackendProfile or type(manifest) not in expected.values()
+            or type(manifest) is not expected.get(manifest.data().get("style"))):
+        raise ValueError("actual source-loaded backend profile and independent grasp Reset manifest required")
     target=dict(target_schema=backend_profile.target_schema,target_material_ids=list(range(41)))
     data=manifest.data()
     if (target["target_schema"]!=TARGET_SCHEMA_VERSION

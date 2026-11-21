@@ -73,7 +73,7 @@ def test_b_post_exit_audits_same_clock_and_new_episode(tmp_path, monkeypatch, da
     from go2_pvcnn.control.dh116 import tabletop_native_teacher_worker_artifacts as common
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile
 
-    pin = dict(source_sha256="a"*64, semantic_sha256="b"*64, backend_sha256="c"*64,
+    pin = dict(style="pinch",source_sha256="a"*64, semantic_sha256="b"*64, backend_sha256="c"*64,
                training_config={"path":"/fixed", "sha256":"d"*64},
                limits=dict(controls=8, inner_wall_timeout_s=180))
     spec = dict(teacher_contract=pin, budget=dict(physics_steps=66))

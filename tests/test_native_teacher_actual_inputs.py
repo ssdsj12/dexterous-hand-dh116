@@ -56,7 +56,12 @@ def packet_at(profile, template, step):
 
 @pytest.fixture
 def ledger(backend_profile):
-    template = raw_cpu_packets(backend_profile)
+    return recorded_ledger(backend_profile)
+
+
+def recorded_ledger(backend_profile, template=None):
+    """Share the owning source-join fixture without duplicating its event writer."""
+    template = raw_cpu_packets(backend_profile) if template is None else template
     rows = []
 
     def emit(operation, value):

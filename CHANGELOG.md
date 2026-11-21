@@ -1,3 +1,7 @@
+## Tripod Worker source and grasp identity
+
+Independent Tripod recipe/manifest/target and complete input/journal checks now retain the actual grasp across fresh/resume and reject cross-grasp leases before App creation. 369 selected CPU tests pass; no new native PPO or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-worker-contract.md).
+
 ## Tripod fresh17 Teacher Worker composition
 
 The actual provider now selects an independent fresh17 scene factory and exact Tripod source adapter, then reuses the original policy/PPO factories. 56 selected CPU checks pass. Recipe semantics, checkpoint target and complete output audits still gate native launch; no new native/PPO/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-fresh-worker.md).

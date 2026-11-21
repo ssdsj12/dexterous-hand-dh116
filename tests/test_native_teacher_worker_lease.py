@@ -179,3 +179,29 @@ def test_malformed_auth_json_is_a_closed_gate(tmp_path,holder,value):
     result=ask(holder[0],message)
     assert result['ok'] is False
     assert result['type']=='ValueError',result
+
+
+def test_recipe_grasp_cannot_disagree_with_the_actual_held_worker_config(tmp_path,holder):
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_worker_contract as worker
+    message,auth_path,resource_path=fixture(tmp_path,holder)
+    root=Path(message["root"])
+    command=root/message["package"]["command_spec"]
+    spec=json.loads(command.read_text())
+    spec["teacher_contract"]["style"]="tripod"
+    spec["source_files"]=sorted(set(spec["source_files"])|worker.TRIPOD_SOURCE_FILES)
+    for name in worker.TRIPOD_SOURCE_FILES:
+        path=root/name;path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text("# explicit CPU source-closure fixture only\n")
+    pin_source_closure(root,spec);write(command,spec)
+    recipe=scheduler.Repository(root).native_recipe(message["package"])
+    identity={k:recipe[k] for k in ("command_spec_sha256","code_config_sha256")}
+    auth=json.loads(auth_path.read_bytes());resource=json.loads(resource_path.read_bytes())
+    auth.update(recipe_identity=identity,source_sha256=spec["teacher_contract"]["source_sha256"])
+    message["config"]["authorization"]=write(auth_path,auth)
+    resource.update(recipe_identity=identity,authorization_sha256=message["config"]["authorization"]["sha256"])
+    message["config"]["resource_lock"]=write(resource_path,resource)
+    # Config/auth/template all still say Pinch; the frozen recipe says Tripod.
+    # Every source digest and the real child FLOCK are otherwise valid.
+    result=ask(holder[0],message)
+    assert result["ok"] is False,result
+    assert result["type"]=="ValueError" and any(word in result["error"] for word in ("style","grasp")),result

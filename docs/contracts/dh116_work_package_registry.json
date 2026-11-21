@@ -48280,6 +48280,43 @@
         "teacher_admission": false,
         "scope": "CPU composition only; recipe/target/artifact audits and native PPO pending"
       }
+    },
+    "teacher.tripod-worker-contract-audit": {
+      "title": "Bind independent Tripod worker recipe, checkpoint, full source/journal and actual lease identity",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-fresh-worker-composition"
+      ],
+      "tests": [
+        "tests/test_native_teacher_tripod_worker_contract.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_native_teacher_worker_semantic.py",
+        "tests/test_native_teacher_worker_checkpoint.py",
+        "tests/test_native_teacher_tripod_worker_audit.py",
+        "tests/test_native_teacher_actual_inputs.py",
+        "tests/test_native_teacher_worker_artifacts.py",
+        "tests/test_native_teacher_actual_artifacts.py",
+        "tests/test_native_teacher_actual_resume_artifacts.py",
+        "tests/test_native_teacher_actual_update.py",
+        "tests/test_native_teacher_actual_resume_update.py",
+        "tests/test_native_teacher_worker_lease.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_actual_launch_process.py",
+        "tests/test_native_teacher_actual_resume_launch.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_worker_contract_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-worker-contract.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 369,
+        "cpu_failed": 0,
+        "new_tests": 10,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU worker audit only; frozen Tripod native update/resume pending"
+      }
     }
   },
   "execution_target": {

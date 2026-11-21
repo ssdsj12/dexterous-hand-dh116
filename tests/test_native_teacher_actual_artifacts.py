@@ -150,8 +150,9 @@ def test_actual_input_audit_binds_exact_journal_prefix_to_checkpoint_seal(monkey
     frozen = dict(result={"clean_checkpoint": checkpoint}, rows=rows, raw_journal=raw)
     profile = object()
 
-    def audit(data, *, backend_profile, scope, controls=32):
+    def audit(data, *, backend_profile, scope, controls=32, grasp="pinch"):
         assert data == prefix and backend_profile is profile and scope == "owner_source_unqualified"
+        assert grasp == "pinch"
         return result
 
     monkeypatch.setattr(inputs, "audit_teacher_input_sources", audit)

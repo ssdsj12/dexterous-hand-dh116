@@ -127,7 +127,7 @@ def _run_update(collector, *, checkpoint_contract, controls, origin):
 
             input_audit["input_source_audit"] = audit_teacher_input_sources(
                 collector.journal.path.read_bytes(), backend_profile=collector.owner.backend_profile,
-                scope=scope, controls=controls)
+                scope=scope, controls=controls,grasp=trainer.model.model_identity["grasp"])
         if (previous_checkpoint is not None
                 and hashlib.sha256(previous_checkpoint.read_bytes()).hexdigest() != origin["checkpoint_sha256"]):
             raise TrainingStopped("original A checkpoint changed during the resumed update")

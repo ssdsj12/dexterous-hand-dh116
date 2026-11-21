@@ -45,7 +45,7 @@ def _rebuild(buffers, profile, context):
                  context, profile, CONTEXT_MODE)
 
 
-def _check_pack(row, reference, anchor, *, purpose, profile, scope):
+def _check_pack(row, reference, anchor, *, purpose, profile, scope, grasp):
     recorded = row["payload"]
     if row["operation"] != "teacher_input_source" or recorded.get("purpose") != purpose:
         raise ValueError("Teacher source pack purpose differs from its decision or bootstrap")
@@ -72,18 +72,26 @@ def _check_pack(row, reference, anchor, *, purpose, profile, scope):
         raise ValueError("Teacher pack differs from the actual decision or critic observation")
     context = _context(buffers["context"])
     metadata = context.metadata
-    if (metadata.scope != scope or metadata.grasp != "pinch"
+    if (metadata.scope != scope or metadata.grasp != grasp
             or metadata.identities != (ContextIdentity(**witness["clock"]),)
             or metadata.owner_uid != witness["context_owner_uid"]):
         raise ValueError("Teacher context clock, owner, grasp or scope differs")
+    if grasp == "tripod":
+        from pathlib import PurePosixPath
+        packets={p["side"]:p for p in pre["common"]["source_packets"]}
+        for side in ("left","right"):
+            root=str(PurePosixPath(buffers["raw_rod"]["mesh_bindings"][side+".base_link"]["prim_path"]).parent)
+            if packets[side]["hand_container_path"] != root:
+                raise ValueError("Tripod source pack and mounted hand side/root differ")
     if _digest(_rebuild(buffers, profile, context)) != digests["observation"]:
         raise ValueError("Teacher policy input differs from reconstructed original tensors")
     return metadata.owner_uid
 
 
-def audit_teacher_input_sources(raw, *, backend_profile, scope, controls=32):
+def audit_teacher_input_sources(raw, *, backend_profile, scope, controls=32, grasp="pinch"):
     """Independently join immutable source and policy rows, without native admission."""
-    if scope not in ("cpu_fixture", SCOPE) or type(controls) is not int or not 1 <= controls <= 32:
+    if (scope not in ("cpu_fixture", SCOPE) or type(controls) is not int or not 1 <= controls <= 32
+            or grasp not in ("pinch","tripod")):
         raise ValueError("bounded Teacher source audit and explicit scope required")
     name = "training_events.jsonl"
     rows = _jsonl(raw, name=name, maximum=JSONL_LIMITS[name])
@@ -112,13 +120,28 @@ def audit_teacher_input_sources(raw, *, backend_profile, scope, controls=32):
         if type(index) is not int or not lower < index < upper or index in used:
             raise ValueError("Teacher source pack purpose, sequence order or uniqueness differs")
         owner = _check_pack(rows[index], reference, anchor,
-                            purpose=purpose, profile=backend_profile, scope=scope)
+                            purpose=purpose, profile=backend_profile, scope=scope, grasp=grasp)
         used.add(index)
         context_owners.add(owner)
 
     try:
         reset = resets[0]["payload"]
         start = reset["reset"]["rod_reset"], reset["rod_boundary"], reset_sources[0]["payload"]["parameters"]
+        if grasp == "tripod":
+            from .tabletop_power_shared_rod import PROXIMAL_POWER_MESH_NAMES, _bindings
+            baseline=None
+            for row in (start[0],*[item["payload"]["exchange"]["rod"] for item in physics]):
+                try:
+                    bindings=_bindings(row["mesh_bindings"])
+                    if tuple(row["mesh_names"]) != PROXIMAL_POWER_MESH_NAMES or len(bindings) != 14:
+                        raise ValueError("complete seventeen-slot layout required")
+                    if any(v.get("frame")!="PhysX_link_origin" or v.get("unit")!="m" for v in bindings.values()):
+                        raise ValueError("actual contact frame/unit differs")
+                    current=_digest(bindings)
+                    if baseline is None:baseline=current
+                    if current!=baseline:raise ValueError("mid-step contact source bindings changed")
+                except (KeyError,ValueError,TypeError) as error:
+                    raise ValueError("Tripod physical source layout differs: "+str(error)) from error
         lower = reset_sources[0]["sequence"]
         if resets[0]["sequence"] >= lower:
             raise ValueError("Reset source order differs")

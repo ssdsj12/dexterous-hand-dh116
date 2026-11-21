@@ -136,7 +136,7 @@ def _resume_result(result, acquisition, rows, origin, *, contract, checkpoint_sh
     result.update(schema=_RESUME_RESULT_SCHEMA, resume_origin=expected_origin,
                   restored_rng_sha256=origin["rng_state_sha256"])
     return _journal(rows, result, controls=contract["limits"]["controls"], initial_version=1,
-                    prior_accepted=accepted_before, prior_weights=origin["policy_weights_sha256"])
+                    prior_accepted=accepted_before, prior_weights=origin["policy_weights_sha256"],grasp=contract["style"])
 
 
 def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes, *, origin=None):
@@ -165,7 +165,7 @@ def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes, *, origin=None):
     if origin is None:
         validate_teacher_training_result(result, expected_semantic_sha256=contract["semantic_sha256"],
                                          artifact_sha256={"teacher_clean.pt": checkpoint_sha})
-        epoch = _journal(rows, result, controls=bounds["controls"])
+        epoch = _journal(rows, result, controls=bounds["controls"],grasp=contract["style"])
     else:
         epoch = _resume_result(result, acquisition, rows, origin, contract=contract,
                                checkpoint_sha=checkpoint_sha)
@@ -238,7 +238,7 @@ def _freeze(spec, output, *, origin):
                 artifact_sha256=digests, policy_epoch=epoch)
 
 
-def _audit_sealed_packs(frozen, profile, *, controls=32, seal_operation="fresh_update_checkpoint_sealed"):
+def _audit_sealed_packs(frozen, profile, *, controls=32, seal_operation="fresh_update_checkpoint_sealed",grasp="pinch"):
     from .tabletop_native_teacher_actual_inputs import SCOPE, audit_teacher_input_sources
 
     seams = [(index, row["payload"]) for index, row in enumerate(frozen["rows"])
@@ -251,7 +251,7 @@ def _audit_sealed_packs(frozen, profile, *, controls=32, seal_operation="fresh_u
             for key, value in frozen["result"]["clean_checkpoint"].items())):
         raise ValueError("checkpoint differs from the original journal seal")
     prefix = b"".join(frozen["raw_journal"].splitlines(keepends=True)[:index])
-    rebuilt = audit_teacher_input_sources(prefix, backend_profile=profile, scope=SCOPE, controls=controls)
+    rebuilt = audit_teacher_input_sources(prefix, backend_profile=profile, scope=SCOPE, controls=controls,grasp=grasp)
     if rebuilt != seal.get("input_source_audit"):
         raise ValueError("source audit differs from the recorded checkpoint seal")
     return rebuilt
@@ -391,7 +391,7 @@ def _audit_actual_outputs(spec, output, *, repository, package, envelope, role):
     if physical["physical_nodes"] != 41:
         raise ValueError("actual Pinch Worker requires 41 measured material nodes")
     model_input = _audit_sealed_packs(frozen, BackendProfile.load(repository.root),
-        controls=pin["limits"]["controls"], seal_operation=prefix + "_update_checkpoint_sealed")
+        controls=pin["limits"]["controls"], seal_operation=prefix + "_update_checkpoint_sealed",grasp=pin["style"])
     result = frozen["result"]
     checkpoint_args = dict(checkpoint_bytes=frozen["checkpoint_bytes"],
         checkpoint_binding=result["clean_checkpoint"], training=result["training"], epoch=frozen["policy_epoch"],
