@@ -48200,6 +48200,30 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-source-adapter": {
+      "title": "Independent three-pad Tripod sources with retained Pinch implementation",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-reset-manifest"
+      ],
+      "tests": [
+        "tests/test_native_teacher_tripod_sources.py",
+        "tests/test_native_teacher_session.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_source_adapter_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-source-adapter.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 55,
+        "cpu_failed": 0,
+        "new_tests": 2,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU adapter only; static/live gate, native collector and PPO pending"
+      }
     }
   },
   "execution_target": {

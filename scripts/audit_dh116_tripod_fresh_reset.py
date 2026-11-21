@@ -93,7 +93,17 @@ def audit_run(run_dir, *, receipt, expected_sha256):
         _require(outer[key] == value, 'actual debugger log status differs from outer receipt')
     for (name, sha) in outer['artifact_sha256'].items():
         checked_file(run / name, sha)
-    publication_metadata = {str(root / rel): rel for rel in ('docs/contracts/dh116_work_package_registry.json', 'docs/contracts/dh116_release_manifest.json')}
+    # Exact historical bookkeeping and post-Reset consumers are not the physical
+    # acquisition implementation. Their frozen Git blobs remain verified. Every
+    # actual Reset/SDK/solver/SDF/asset/config file below is still checked current.
+    archival_non_acquisition = (
+        'docs/contracts/dh116_work_package_registry.json',
+        'docs/contracts/dh116_release_manifest.json',
+        'src/go2_pvcnn/control/dh116/tabletop_native_teacher_sources.py',
+        'src/go2_pvcnn/control/dh116/tabletop_native_teacher_session.py',
+        'src/go2_pvcnn/control/dh116/tabletop_native_teacher_preflight.py',
+    )
+    publication_metadata = {str(root / rel): rel for rel in archival_non_acquisition}
     for (path, sha) in plan['frozen_files'].items():
         if path in publication_metadata:
             blob = subprocess.check_output(['git', '-c', 'safe.directory=' + str(root), 'show', outer['head'] + ':' + publication_metadata[path]])
@@ -233,7 +243,7 @@ def audit_run(run_dir, *, receipt, expected_sha256):
         mesh_plan_sha256=data['mesh_plan']['sha256'],
         reset_seed_sha256=result['reset_seed_sha256'],
         artifact_sha256=outer['artifact_sha256'],
-        publication_metadata_source='exact frozen Git blob for registry/release only; physical files rehashed current',
+        publication_metadata_source='exact frozen Git blobs for publication bookkeeping and post-Reset consumers; all acquisition/physical files rehashed current',
         native_reset_component_verified=True,
         teacher_admission=False,
         grasp_qualified=False,

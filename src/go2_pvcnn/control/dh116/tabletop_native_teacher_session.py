@@ -305,7 +305,7 @@ class NativeEpisodeOwner:
     def __init__(self,episode,contract,*,episode_uid,owner_resets,mesh_plan,ledger,setup_events,initial_geometry,previous_reset=None):
         from .tabletop_deformable_dual_hand_episode import DualHandPhysicalEpisode
         from .tabletop_native_teacher_action_history import NativeAction24HistoryOwner
-        from .tabletop_native_teacher_sources import NativePinchSources
+        from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources
         if type(episode) is not DualHandPhysicalEpisode or episode._state != "new":
             raise ValueError("one fresh original physical episode over existing scene required")
         self.episode,self.contract=episode,contract
@@ -335,7 +335,11 @@ class NativeEpisodeOwner:
             for event in setup_events:
                 if event.get("kind")!="setup": raise ValueError("original scene setup evidence required")
                 ledger.emit("setup",event)
-            self.sources=NativePinchSources(self,contract)
+            source_types={"pinch":NativePinchSources,"tripod":NativeTripodSources}
+            style=contract.config.preflight["style"]
+            if style not in source_types:
+                raise ValueError("independent source adapter unavailable for "+style)
+            self.sources=source_types[style](self,contract)
         except BaseException:
             try:
                 self.close()

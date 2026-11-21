@@ -1,4 +1,4 @@
-"""Pinch smoke adapter using the existing SDK, SDF, parameter and health readers.
+"""Independent Pinch/Tripod smoke sources over the original SDK and physical readers.
 
 It never imports a native extension, fabricates full contact/slip sources, or
 changes the grasp string to borrow another style's geometry qualification.
@@ -34,26 +34,23 @@ def _canonical_pinch_history():
         yield
 
 
-class NativePinchSources:
+class _NativeGeometrySources:
+    STYLE = None
     scope="owner_source_unqualified"
     reward_scope="unqualified_source"
 
     def __init__(self,owner,contract,*,scope="owner_source_unqualified"):
-        from .tabletop_bilateral_r0_approach import BilateralMeasuredPinchApproach
         from .tabletop_native_parameter_endpoints import NativeParameterEndpoints
-        from .tabletop_native_teacher_policy_pinch_distance import PolicyOwnedPinchApproach
-        if contract.config.preflight["style"]!="pinch":
+        if self.STYLE not in ("pinch","tripod") or contract.config.preflight["style"]!=self.STYLE:
             raise ValueError("independent style-specific distance source missing")
         if contract.config.preflight["profile"]!="approach_wiring_smoke_v1":
             raise ValueError("full_shared_contact_slip_hold_source_adapter_missing")
         if scope not in ("cpu_fixture","owner_source_unqualified"):raise ValueError("explicit unqualified source scope required")
         self.scope=scope;self.reward_scope="cpu_fixture" if scope=="cpu_fixture" else "unqualified_source"
         self.owner,self.contract=owner,contract
-        # C01 uses the legacy reader only at the actual Reset (no schedule).
-        # Policy intervals use the independent owned-history reader.
-        with _canonical_pinch_history():
-            self.reset_distance=BilateralMeasuredPinchApproach(contract.config.project)
-        self.distance=PolicyOwnedPinchApproach(contract.config.project,scope=scope)
+        # Each concrete adapter supplies its own verified Reset and policy metric.
+        # Parameter/history/health/packing code is shared; grasp qualification is not.
+        self._configure_distances(owner,contract,scope)
         # This reader is always instantiated under the reviewed current profile;
         # never borrow the historical 2fea packet/default sources.
         with profile_reader_scope(contract.backend_profile):
@@ -70,7 +67,7 @@ class NativePinchSources:
         values=distance["auxiliary"]["samples"]["approach_distance_m"]["value"]
         identity=distance["auxiliary"]["identity"]
         if values is None or any(identity.get(k)!=clock[k] for k in identity):
-            raise SourceFailure("same-clock bilateral Pinch distance unavailable")
+            raise SourceFailure("same-clock bilateral "+self.STYLE.title()+" distance unavailable")
         if len(values)!=2 or not np.isfinite(values).all():
             raise SourceFailure("finite actual bilateral distance required")
         from .tabletop_r0_health_separation import _verified
@@ -83,10 +80,10 @@ class NativePinchSources:
             raise SourceFailure("same-clock actual native health source required")
         code=health["last_error"]
         if type(code) is not int: raise SourceFailure("actual native health getter unavailable")
-        stamp=self._stamp(clock,"policy_owned_pinch_endpoint_v1")
+        stamp=self._stamp(clock,"policy_owned_"+self.STYLE+"_endpoint_v1")
         def measurement(value,source,unit="dimensionless"):
             return Measurement(value,unit,self._stamp(clock,source))
-        fields=dict(distance=measurement(float(np.mean(values)),"PolicyOwnedPinchApproach.fixed_material41","m"),
+        fields=dict(distance=measurement(float(np.mean(values)),"PolicyOwned"+self.STYLE.title()+"Approach.fixed_material41","m"),
             numerical_health=measurement(code==0,"RopeBatch.last_error.same_owner"),
             constraint_failure=measurement(guard is not None,"original_joint_force_clearance_and_policy_source_geometry_guards"),
             original_guard_joint_force_clearance_geometry=measurement(guard is not None,"original_joint_force_clearance_and_policy_source_geometry_guards"))
@@ -103,7 +100,7 @@ class NativePinchSources:
         self._raw=deepcopy(receipt["rod_reset"])
         self.parameters=self.reader.capture_reset(receipt["rod_reset"],material_reference_uid=self.owner.episode_uid+":material41",
             rope=owner.rod.rope,backend=sys.modules["ropesim._ropesim"],sim=owner.sim,read_clock=owner.rod.clock)
-        d=self.reset_distance.capture_reset(receipt,self.parameters,grasp="pinch")
+        d=self.reset_distance.capture_reset(receipt,self.parameters,grasp=self.STYLE)
         h=self._health(clock)
         self._reset_timestamp_s=clock["timestamp_s"]
         self._reset_endpoint=self._last=self._endpoint(clock,d,h,None)
@@ -148,7 +145,7 @@ class NativePinchSources:
         from .tabletop_native_teacher_context import TaskContextOwner
         owner=self.owner;c=self.contract
         owner.context=TaskContextOwner(backend_profile=c.backend_profile,mode=c.reward_config.profile,
-            scope=self.scope,episode_cap_s=c.config.episode_cap_s,external_cap_s=c.budget["wall_timeout_s"],grasp="pinch")
+            scope=self.scope,episode_cap_s=c.config.episode_cap_s,external_cap_s=c.budget["wall_timeout_s"],grasp=self.STYLE)
         owner.context.reset_from_verified_state(self.context_state(None),history_owner=owner.history)
 
     def reset_reward(self,reward):
@@ -172,7 +169,7 @@ class NativePinchSources:
             # This runs AFTER durable physical recording and history.record.
             # The independent reader binds the complete row to the actual issued
             # request/SDK targets, collection token and current history window.
-            d=self.distance.capture(event,history_owner=self.owner.history,grasp="pinch")
+            d=self.distance.capture(event,history_owner=self.owner.history,grasp=self.STYLE)
             from .tabletop_deformable_clearance_guard import validate_post_step_clearance
             raw=dict(row,guard_failure=row["original_guard_failure"])
             checked=validate_post_step_clearance(raw)
@@ -180,7 +177,7 @@ class NativePinchSources:
             if not geometry["source_complete"]:
                 raise SourceFailure("required actual geometry/distance source unavailable")
             guard=checked["terminal_reason"] or geometry.get("terminal_reason")
-            self.owner.ledger.emit("policy_pinch_distance",d)
+            self.owner.ledger.emit("policy_"+self.STYLE+"_distance",d)
             self._last=self._endpoint(row["rod"],d,row["native_teacher_health"],guard)
         return self._last
 
@@ -238,3 +235,45 @@ class NativePinchSources:
             native_qualification=False, buffers=buffers,
             sha256={name: _digest(buffer) for name, buffer in buffers.items()}))
         return observation, sequence
+
+
+class NativePinchSources(_NativeGeometrySources):
+    """Original bilateral two-pad source and policy-owned history contract."""
+    STYLE = "pinch"
+
+    def _configure_distances(self,owner,contract,scope):
+        from .tabletop_bilateral_r0_approach import BilateralMeasuredPinchApproach
+        from .tabletop_native_teacher_policy_pinch_distance import PolicyOwnedPinchApproach
+        with _canonical_pinch_history():
+            self.reset_distance=BilateralMeasuredPinchApproach(contract.config.project)
+        self.distance=PolicyOwnedPinchApproach(contract.config.project,scope=scope)
+
+
+class NativeTripodSources(_NativeGeometrySources):
+    """Independent six-pad metric over the authentic17-slot supported task."""
+    STYLE = "tripod"
+
+    def _configure_distances(self,owner,contract,scope):
+        from .tabletop_tripod_reset_manifest import TripodResetManifest, SCOPE
+        from .tabletop_tripod_reset_distance import MeasuredTripodResetApproach
+        from .tabletop_native_teacher_policy_tripod_distance import PolicyOwnedTripodApproach
+        from .tabletop_power_shared_rod import PowerSharedRodRuntime, PROXIMAL_POWER_MESH_NAMES
+        from .tabletop_deformable_r0_replay import encode_owned
+        from .tabletop_native_teacher_profile import digest
+        manifest=contract.reset_manifest
+        if type(manifest) is not TripodResetManifest:
+            raise ValueError("source-derived independent Tripod Reset manifest required")
+        data=manifest.data()
+        if (data["style"]!="tripod" or data["scope"]!=SCOPE
+                or tuple(owner.rod.mesh_names)!=PROXIMAL_POWER_MESH_NAMES
+                or digest(encode_owned(owner.rod.bindings))!=data["mesh_bindings_sha256"]):
+            raise ValueError("actual Tripod17 task and same-side mesh sources differ")
+        if scope=="owner_source_unqualified":
+            if type(owner.rod) is not PowerSharedRodRuntime:
+                raise ValueError("actual single supported17 runtime required for native Tripod")
+            manifest.verify(project=contract.config.project)
+        task=data["task_config"]
+        self.reset_distance=MeasuredTripodResetApproach(contract.config.project,scope=scope)
+        self.distance=PolicyOwnedTripodApproach(contract.config.project,scope=scope,
+            task_config=Path(task["path"]),task_config_sha256=task["sha256"],
+            mesh_bindings=owner.rod.bindings)

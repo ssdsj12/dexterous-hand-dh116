@@ -1,3 +1,7 @@
+## Independent Tripod Teacher source adapter
+
+Tripod now uses its own six-pad Reset and policy-history distance, source-derived manifest and task context. Missing middle-pad SDF coverage refuses reward creation. 55 selected CPU checks pass; static/live admission and native Tripod PPO remain pending. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-source-adapter.md).
+
 ## Source-derived Tripod Reset manifest
 
 The independent Tripod17 manifest now reconstructs state and scene inputs from real exited native evidence on every load. Rehashed caller fields cannot replace the rod/task/style. 70 selected CPU checks pass; the independent source adapter/live gate and PPO remain pending. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-reset-manifest.md).

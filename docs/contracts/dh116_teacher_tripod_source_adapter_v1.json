@@ -1,0 +1,70 @@
+{
+  "version": "dh116-teacher-tripod-source-adapter-v1",
+  "base_head": "30b934925116107c34d530b42a5a7921030d164c",
+  "status": "cpu_source_adapter_ready_static_live_and_collector_pending",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_sources.py": "97afe69ffc9986f2aff9dc9b998eec1cb19ac6813ec8c2435a782eb93c38f258",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_session.py": "d04492cb1d72e4402a1306c762c1843cad52f951e5065102ac6fb8a9dba7d328",
+    "scripts/audit_dh116_tripod_fresh_reset.py": "ef86f7fe37f30ec9dedeafc861fe617e417efea10b0234667e881db0a5920481",
+    "tests/test_native_teacher_tripod_sources.py": "1a607d4799449f177cbb659e07a998359597a2bb8cb017c2c3b4906ee77a0ec4"
+  },
+  "cpu": {
+    "passed": 55,
+    "failed": 0,
+    "new_tests": 2,
+    "seconds": 319.51,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_native_teacher_tripod_sources.py",
+      "tests/test_native_teacher_session.py",
+      "tests/test_native_teacher_policy_pinch_distance.py",
+      "tests/test_native_teacher_policy_tripod_distance.py",
+      "tests/test_tripod_fresh_reset_native_audit.py"
+    ],
+    "scope": "selected CPU source replay and regressions; explicit CPU getter fixtures; no new native run",
+    "log_sha256": {
+      "tripod-source-adapter-red.log": "a8f428974ab5cff1fb897eade4167c6bc2c741d96e513d2c3cced3001da85376",
+      "tripod-source-adapter-first-green.log": "45b41eb0d038c9ba51a20167557ec7ed57f5ab1c388c54bbdabfa93d29ccae74",
+      "tripod-source-adapter-green-2.log": "40fd77cb7177c259e910b8607de96e9a35f20d48e544c81eb3cd597fec90d2e6",
+      "tripod-source-consumer-audit-red.log": "a0a750a4a7b5c9bfbd2a0ae8944c861835c03467d5e9d6253f720faf19877693",
+      "tripod-source-adapter-final-regression.log": "e6d0e3fec7600871c235d45182f994c706d79a104d1501fde968b0d9e277fe0e"
+    },
+    "registry_passed": 60,
+    "registry_failed": 0,
+    "registry_seconds": 16.64,
+    "registry_log_sha256": "78ed959cd595a64cdc07d617f40d58c942250a92a9d1ce195a5163e25dbf81fb"
+  },
+  "provenance": {
+    "historical_consumer_sources": "exact Git blobs at actual frozen outer.head",
+    "current_physical_sources": "all acquisition/SDK/solver/SDF/asset/config bytes remain current-SHA checked",
+    "native_evidence_reused_as": "historical Reset only, not new consumer qualification"
+  },
+  "readiness": {
+    "tripod_manifest": true,
+    "tripod_source_adapter_cpu": true,
+    "tripod_static_gate": false,
+    "tripod_live_gate": false,
+    "tripod_native_collector": false,
+    "tripod_ppo": false,
+    "full_contact_slip_hold": false,
+    "grasp_success": false
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "force_proxy_enabled": false,
+  "r2_enabled": false,
+  "cameras_changed": false,
+  "physical_parameters_changed": false,
+  "review": {
+    "new_external_review_obtained": false,
+    "result": "No new Antigravity review; prior quota limitation retained"
+  }
+}
