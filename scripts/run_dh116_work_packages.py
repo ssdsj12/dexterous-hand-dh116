@@ -1482,23 +1482,24 @@ class Repository:
             from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_process import ActualLaunchServer
             # _run_registered_native_worker already re-read the same intent.
             # Server independently repeats registration/source/approval checks.
-            started = time.monotonic()
-            deadline = started + min(budget['timeout_seconds'], spec['teacher_contract']['limits']['inner_wall_timeout_s'])
             intent_binding = dict(path=str(path/'intent.json'), sha256=file_hash(path/'intent.json'))
             server = ActualLaunchServer(repository=self, package=package, intent_binding=intent_binding,
-                launch=actual_launch, directory=path/'actual-launch', deadline=deadline)
+                launch=actual_launch, directory=path/'actual-launch')
         if debugger:
             env['DH116_PYTHON'] = native_debugger_wrapper(path, result)
         log = path / 'native.log'
-        started = started if server is not None else time.monotonic()
+        started = time.monotonic()
         observed = False
         with ExitStack() as launch_scope, log.open('xb') as stream:
-            atomic_write(path / 'running.json', json_text(dict(
-                worker_pid=os.getpid(), started_unix_s=time.time(), timeout_seconds=budget['timeout_seconds'])))
             if server is not None:
                 launch_scope.enter_context(server)
+                issued = server.envelope.issued_monotonic_s
+                result['prelaunch_cpu_seconds'] = issued - started
+                started = issued
                 env.update(CUDA_VISIBLE_DEVICES=actual_launch['device_plan']['cuda_visible_devices'],
                     DH116_ACTUAL_LAUNCH_PATH=server.binding['path'],DH116_ACTUAL_LAUNCH_SHA256=server.binding['sha256'])
+            atomic_write(path / 'running.json', json_text(dict(
+                worker_pid=os.getpid(), started_unix_s=time.time(), timeout_seconds=budget['timeout_seconds'])))
             with subprocess.Popen(command, cwd=self.root, env=env, stdin=subprocess.DEVNULL,
                                   stdout=stream, stderr=subprocess.STDOUT, start_new_session=True) as child:
                 if server is not None:

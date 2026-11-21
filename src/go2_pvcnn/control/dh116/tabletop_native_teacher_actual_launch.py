@@ -30,6 +30,7 @@ SOURCE_FILES = frozenset({
     'tests/test_native_teacher_actual_resume_update.py',
     'tests/test_native_teacher_actual_resume_artifacts.py',
     'tests/test_native_teacher_actual_resume_launch.py',
+    'tests/test_native_teacher_actual_resume_budget.py',
 })
 _SHA = re.compile(r'[0-9a-f]{64}')
 _RESUME_REFERENCE_KEYS = {"producer_package", "receipt_sha256"}

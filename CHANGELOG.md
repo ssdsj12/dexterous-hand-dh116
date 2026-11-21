@@ -1,3 +1,7 @@
+## Pinch resume wall budget
+
+Preserve the failed resumed attempt and start the bounded native clock after its read-only producer preflight. [Report](docs/superpowers/reports/2026-11-21-teacher-resume-budget-timing.md).
+
 ## Pinch native PPO diagnostic A
 
 Sealed one real PPO update and registered the independently bounded same-source B diagnostic. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-a.md).

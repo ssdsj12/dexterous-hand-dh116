@@ -45263,8 +45263,8 @@
       ],
       "evidence_scope": "pinch_actual_resume_pair_b_smoke8_v1",
       "executor": "native_bounded",
-      "reason": "Exact same-source native A receipt plus bounded B resources required.",
-      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-a.md",
+      "reason": "Post-update inner wall check failed; outer and inferior exit 1; evidence preserved.",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-resume-budget-timing.md",
       "requires_approval": true,
       "resource_class": "isaac_single_gpu",
       "retry_policy": {
@@ -45274,10 +45274,77 @@
       "status": "blocked",
       "tests": [],
       "title": "Independent Pinch B with one PPO update from the verified A checkpoint",
-      "readiness": "docs/contracts/dh116_teacher_actual_resume_pair_a_v1.json",
-      "native_runs": 0,
+      "readiness": "docs/contracts/dh116_teacher_actual_native_clock_v2.json",
+      "native_runs": 1,
       "dependency_scopes": {},
-      "blocker_kind": "approval"
+      "blocker_kind": "failed_native",
+      "last_result": {
+        "passed": 0,
+        "failed": 1,
+        "inferior_exit": 1,
+        "ppo_updates": 1,
+        "result_sha256": "64294b7cbeacc54100da691b7b4ed1f472577ca6b589907d546de501c5b1f36e",
+        "attempt_fingerprint": "4851d04dae0fdd0b31377f963a9850cc51fb55d90936243b5f397b4f0239996e",
+        "diagnostic_verified": false,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.actual-resume-native-clock-cpu": {
+      "title": "Exclude read-only producer preflight from the bounded native clock",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.actual-resume-launch-cpu"
+      ],
+      "tests": [
+        "tests/test_native_teacher_actual_resume_budget.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_actual_launch_process.py",
+        "tests/test_native_teacher_actual_resume_launch.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_native_teacher_worker_lease.py",
+        "tests/test_native_teacher_actual_resume_artifacts.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-21-teacher-resume-budget-timing.md",
+      "readiness": "docs/contracts/dh116_teacher_actual_native_clock_v2.json",
+      "timeout_seconds": 240,
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_fixture",
+        "passed": 220,
+        "failed": 0,
+        "native_qualification": false
+      }
+    },
+    "teacher.pinch-ppo-resume-pair-a-smoke8-v2": {
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-actual-resume-pair-a-smoke8-launch-v2.json",
+        "sha256": "f2bcee22f274820d0b817daae149b8467ec705da2a0f81e92a343fe993f011fc"
+      },
+      "blocker_kind": "approval",
+      "command_spec": "configs/dh116_execution/pinch-actual-resume-pair-a-smoke8-core-v2.json",
+      "dependencies": [
+        "teacher.pinch-v13-native-reset",
+        "teacher.actual-resume-native-clock-cpu"
+      ],
+      "evidence_scope": "pinch_actual_resume_pair_a_smoke8_v2",
+      "executor": "native_bounded",
+      "reason": "Requires the exact bounded native batch and Isaac resource reservation.",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-resume-budget-timing.md",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "status": "blocked",
+      "tests": [],
+      "title": "Pinch independent A with the common A/B eight-control PPO closure",
+      "readiness": "docs/contracts/dh116_teacher_actual_native_clock_v2.json",
+      "native_runs": 0
     }
   },
   "execution_target": {

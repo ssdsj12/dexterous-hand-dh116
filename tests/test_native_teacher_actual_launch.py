@@ -20,6 +20,7 @@ FILES = {'src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_launch.py',
     'tests/test_native_teacher_actual_resume_update.py',
     'tests/test_native_teacher_actual_resume_artifacts.py',
     'tests/test_native_teacher_actual_resume_launch.py',
+    'tests/test_native_teacher_actual_resume_budget.py',
 }
 ENVIRONMENT='configs/dh116_execution/actual-environment-v1.json'
 
@@ -199,7 +200,11 @@ def test_scheduler_actual_branch_uses_original_gdb_and_budget_mask(repo,tmp_path
     class CPUServer:
         def __init__(self,**kwargs):
             self.binding=dict(path=str(attempt/'CPU-binding.json'),sha256='f'*64)
-        def __enter__(self):captures.append('enter');return self
+        def __enter__(self):
+            from types import SimpleNamespace
+            self.envelope=SimpleNamespace(issued_monotonic_s=scheduler.time.monotonic())
+            captures.append('enter')
+            return self
         def serve_once(self, child):
             captures.append('serve')
             return dict(path=str(attempt/'CPU-reply.json'), sha256='e'*64)
@@ -235,7 +240,11 @@ def test_actual_server_is_closed_when_popen_fails(repo,tmp_path,monkeypatch):
     captures=[]
     class CPUServer:
         def __init__(self,**kwargs):self.binding=dict(path='/CPU-only',sha256='f'*64)
-        def __enter__(self):captures.append('enter');return self
+        def __enter__(self):
+            from types import SimpleNamespace
+            self.envelope=SimpleNamespace(issued_monotonic_s=scheduler.time.monotonic())
+            captures.append('enter')
+            return self
         def __exit__(self,*args):captures.append('close')
     monkeypatch.setattr(process,'ActualLaunchServer',CPUServer)
     def fail(*args,**kwargs):raise OSError('CPU Popen fixture failure')

@@ -245,17 +245,23 @@ def _socket_path(path):
     return path
 
 
-def make_parent_launch_envelope(*, repository, package, intent_binding, launch, socket_path, nonce, deadline):
+def make_parent_launch_envelope(*, repository, package, intent_binding, launch, socket_path, nonce, deadline=None):
     name, recipe, current, identity, _ = _registered(repository, package, intent_binding)
     if launch != current or not isinstance(nonce, str) or len(nonce) < 32:
         raise ValueError('current actual launch and fresh nonce required')
     contract = recipe['spec']['teacher_contract']
     origin = repository.resolve_actual_checkpoint_origin(current, resume_spec=recipe["spec"], package_name=name)
     _socket_path(socket_path)
+    # Origin verification only reads the completed A attempt. Start the
+    # native clock after that CPU preflight, before writing the grant binding.
+    issued = time.monotonic()
+    if deadline is None:
+        native_seconds = min(contract['limits']['inner_wall_timeout_s'], recipe['spec']['budget']['timeout_seconds'])
+        deadline = math.nextafter(issued + native_seconds, issued)
     result = ParentLaunchEnvelope(ENVELOPE_SCHEMA, name, deepcopy(intent_binding), identity['core_identity'],
         identity['actual_identity'], contract['source_sha256'], contract['semantic_sha256'],
         deepcopy(contract['training_config']), process_identity(os.getpid()), str(socket_path), nonce,
-        time.monotonic(), deadline, current['role'], deepcopy(current['device_plan']),
+        issued, deadline, current['role'], deepcopy(current['device_plan']),
         deepcopy(origin))
     _wall(result, recipe)
     _verify_scheduler_parent(result, repository)
@@ -661,7 +667,7 @@ def request_actual_launch(binding, *, repository, package=None):
 
 class ActualLaunchServer:
     """One scheduler-owned listener; no daemon, retry or reconnect."""
-    def __init__(self, *, repository, package, intent_binding, launch, directory, deadline):
+    def __init__(self, *, repository, package, intent_binding, launch, directory, deadline=None):
         self.repository = repository; self.package = deepcopy(package)
         self.intent_binding = deepcopy(intent_binding); self.launch = deepcopy(launch)
         self.directory = Path(directory); self.deadline = deadline
@@ -682,6 +688,7 @@ class ActualLaunchServer:
             self.envelope = make_parent_launch_envelope(repository=self.repository, package=self.package,
                 intent_binding=self.intent_binding, launch=self.launch, socket_path=sock,
                 nonce=secrets.token_hex(32), deadline=self.deadline)
+            self.deadline = self.envelope.deadline_monotonic_s
             self.binding = _write(self.directory / 'binding.json', self.envelope)
             return self
         except BaseException:
