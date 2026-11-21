@@ -1,0 +1,135 @@
+{
+  "version": "dh116-teacher-pinch-delayed-force-native-v1",
+  "actual": {
+    "cases": {
+      "tangent": {
+        "signed": 275,
+        "qualifying": 26,
+        "pads": 288,
+        "n": 288,
+        "longest": 6,
+        "fully_qualified_sdk": 0,
+        "table_pairs": 11145,
+        "contact_gates": {
+          "bilateral_preload_gate": [
+            202,
+            true
+          ],
+          "asymmetric_preload_gate": [
+            282,
+            true
+          ],
+          "thumb_tangent_probe_gate": [
+            362,
+            true
+          ]
+        },
+        "thumb_net_projection_n": [
+          -0.010238616561707286,
+          0.013547586459764576,
+          0.07952989529267954,
+          0.1441856031223143
+        ],
+        "outer_sha256": "02bcb1323379edcbd226f6c356ad3f4a7f807f2cc77dd1066fe56d1efbb14e4f",
+        "ledger_sha256": "b332bb35f4840d4b824084366548d73cbff0ee48438c7a45c4abc129cee7cff2",
+        "elapsed_s": 367.0476521290839
+      },
+      "delayed_recovery": {
+        "signed": 274,
+        "qualifying": 36,
+        "pads": 288,
+        "n": 288,
+        "longest": 6,
+        "fully_qualified_sdk": 0,
+        "table_pairs": 11049,
+        "contact_gates": {
+          "bilateral_preload_gate": [
+            202,
+            true
+          ],
+          "asymmetric_preload_gate": [
+            282,
+            true
+          ]
+        },
+        "thumb_net_projection_n": [
+          -0.007988513443962078,
+          0.009064865219504862,
+          0.08041487746317068,
+          0.15327895143012915
+        ],
+        "outer_sha256": "81cd7c78916c8811b8b7f8368fcbd4767075096764a8a591b595d6a10b0b1f3c",
+        "ledger_sha256": "fa41bfde22104dfbcc8b97903fc3e0bbc6db586f7b31b2ca701815ac313bac74",
+        "elapsed_s": 393.87542796484195
+      }
+    },
+    "matched_state": true,
+    "frozen_sha256": "3dffa007d29993c97ddfd4447346d4c2effeae1abdbcd7a20e47d3043bd4ea6f",
+    "qualification": false,
+    "independent_seeds": 1,
+    "decisions": [
+      {
+        "observed_sdk_step": 418,
+        "proposed_control_step": 52,
+        "identity": {
+          "run_uuid": "staged-pinch-ffacae8d7a2d4625a718091d243a68c4",
+          "episode_uid": "staged-pinch-ffacae8d7a2d4625a718091d243a68c4:0",
+          "reset_id": 1,
+          "rod_uid": "rod0"
+        },
+        "solver_substeps": 96,
+        "left_insufficient_substeps": 87,
+        "right_insufficient_substeps": 1,
+        "reasons": [
+          "left_required_load_deficit"
+        ],
+        "left_index_delta_rad": 5e-05,
+        "total_index_delta_rad": 5e-05
+      },
+      {
+        "observed_sdk_step": 426,
+        "proposed_control_step": 53,
+        "identity": {
+          "run_uuid": "staged-pinch-ffacae8d7a2d4625a718091d243a68c4",
+          "episode_uid": "staged-pinch-ffacae8d7a2d4625a718091d243a68c4:0",
+          "reset_id": 1,
+          "rod_uid": "rod0"
+        },
+        "solver_substeps": 96,
+        "left_insufficient_substeps": 85,
+        "right_insufficient_substeps": 4,
+        "reasons": [
+          "opposing_contact_not_continuous"
+        ],
+        "left_index_delta_rad": 0.0,
+        "total_index_delta_rad": 5e-05
+      },
+      {
+        "observed_sdk_step": 434,
+        "proposed_control_step": 54,
+        "identity": {
+          "run_uuid": "staged-pinch-ffacae8d7a2d4625a718091d243a68c4",
+          "episode_uid": "staged-pinch-ffacae8d7a2d4625a718091d243a68c4:0",
+          "reset_id": 1,
+          "rod_uid": "rod0"
+        },
+        "solver_substeps": 96,
+        "left_insufficient_substeps": 84,
+        "right_insufficient_substeps": 0,
+        "reasons": [
+          "opposing_contact_not_continuous"
+        ],
+        "left_index_delta_rad": 0.0,
+        "total_index_delta_rad": 5e-05
+      }
+    ]
+  },
+  "reduction_sha256": "ee6c213f1aa5a7bf568cd54a59bbcfbdd6f5ba6842dbed193de8fff79ce938de",
+  "native_runs": 1,
+  "natural_exit_code": 0,
+  "sdk_steps": 442,
+  "solver_steps": 5280,
+  "grasp_verified": false,
+  "teacher_admission": false,
+  "ppo_updates": 0
+}

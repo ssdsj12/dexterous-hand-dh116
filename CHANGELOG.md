@@ -1,3 +1,7 @@
+## Pinch delayed load native comparison
+
+Record the evidence and original control contract. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-delayed-force-native.md).
+
 ## Power proximal approach direction
 
 Evaluate the sealed bilateral near-open routes with their own SDF normals on the retained rod. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-approach-direction.md).
