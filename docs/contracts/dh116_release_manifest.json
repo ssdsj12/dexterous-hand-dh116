@@ -30088,6 +30088,31 @@
         "verified_at_utc": "2026-11-21T06:02:06.012144+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power proximal native motion",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-action-native.md",
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_action_native_v1.json",
+      "cpu_tests": {
+        "passed": 85,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c0f20e3456972202ce85af5791672073114db0fc",
+        "source_tree": "9a73bfed69736e9119b42c6a315dce2b360592a1",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T06:12:51.663849+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
