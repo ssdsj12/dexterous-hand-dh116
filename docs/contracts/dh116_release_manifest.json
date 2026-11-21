@@ -29513,6 +29513,31 @@
         "verified_at_utc": "2026-11-21T03:54:30.369284+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power parked-hand support settling",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-parked-support-settle.md",
+      "readiness": "docs/contracts/dh116_teacher_power_parked_support_settle_v1.json",
+      "cpu_tests": {
+        "passed": 117,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a7e918fc8f4d0406ceebe2f6d72c95448a3a5222",
+        "source_tree": "29284084eb77c390aff5fe2485f74ceb95ef8922",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T04:03:30.855122+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
