@@ -31738,6 +31738,31 @@
         "verified_at_utc": "2026-11-21T16:35:25.958483+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-joint-contact-path",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-joint-contact.md",
+      "readiness": "docs/contracts/dh116_teacher_902_joint_contact_v1.json",
+      "cpu_tests": {
+        "passed": 288,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "6a04685e3b1dcb958c4fe5726bd26346a2855264",
+        "source_tree": "fbff587bef6d4eab945f9469a411ee3e6218f3b7",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T16:48:51.479431+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
