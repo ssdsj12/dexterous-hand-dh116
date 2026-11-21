@@ -83,3 +83,28 @@ def test_action_bridge_keeps_wrist_right_hand_and_other_fingers_fixed(monkeypatc
     action, diag = actor(pilot.seating.PREFIX_WINDOWS, np.zeros(24), window())
     assert np.flatnonzero(action).tolist() == [2]
     assert action[2] * pilot.prelift.WINDOW_SCALE[2] == pytest.approx(diag["left_index_delta_rad"])
+
+
+def test_delayed_thumb_tangent_feedback_preserves_the_first_52_windows(monkeypatch):
+    from scripts import run_dh116_pinch_tangent_force_hold as successor
+
+    data = object()
+    expected = np.zeros(24)
+    expected[2] = .01
+    calls = []
+
+    def decide(self, control, nominal, rows):
+        assert control == 52 and rows is data
+        assert self._force_hold._next_boundary == 418
+        calls.append(control)
+        return expected, {"selected": True}
+
+    monkeypatch.setattr(successor.FeedbackAction, "__call__", decide)
+    ctrl = successor.DelayedTangentFeedback()
+    prefix = np.ones(24)
+    for i in range(52):
+        chosen, event = ctrl(i, prefix, data)
+        assert chosen is prefix and event is None
+    chosen, event = ctrl(52, np.zeros(24), data)
+    np.testing.assert_array_equal(chosen, expected)
+    assert event["selected"] and calls == [52]

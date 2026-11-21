@@ -1,3 +1,7 @@
+## Pinch late measured load recovery
+
+Reuse the sealed tangential candidate and allow an index increment only after the current measured opposition gate. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-delayed-force-recovery.md).
+
 ## Tripod guarded approach native tracking
 
 Record measured bilateral displacement and chronological support reactions across four control windows. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-guarded-approach-native.md).
