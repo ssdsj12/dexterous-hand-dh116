@@ -1,3 +1,7 @@
+## 902 flexible distal approach
+
+Screen the arms and fingers against measured settled wire and end supports. [Report](docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-precontact.md).
+
 ## Native 902-inspired Pinch and Tripod Reset
 
 Verify independent native resets, actual end-support loads and natural exit in both modes. [Report](docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-reset.md).

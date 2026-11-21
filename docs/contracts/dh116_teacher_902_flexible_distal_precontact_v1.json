@@ -1,0 +1,75 @@
+{
+  "version": "dh116-teacher-902-flexible-distal-precontact-v1",
+  "status": "cpu_precontact_screened",
+  "cpu_tests_passed": 163,
+  "cpu_log_sha256": "3ddc2a7b09a90889340f38484c88072b73666c1649005a91abc254304b4bf8e3",
+  "actual": {
+    "pinch": {
+      "proof_sha256": "268cf4ec8c9202dbeaa419f4a5652bf4fe7ba6afd93c900752d249f421ee8b52",
+      "settled_outer_sha256": "e2725ec5bee3943032d74b09a6bb2174e2b04f8122328d90af346c7824954764",
+      "hands": {
+        "left": {
+          "sampled_min_rod_m": 0.0004913678321952775,
+          "sampled_min_support_m": 0.0013483131925861036,
+          "terminal_pad_gap_m": [
+            0.0010037797192687156,
+            0.0011679132763885765
+          ],
+          "terminal_node_ids": [
+            36,
+            36
+          ]
+        },
+        "right": {
+          "sampled_min_rod_m": 0.0005244776463965706,
+          "sampled_min_support_m": 0.004707588686637212,
+          "terminal_pad_gap_m": [
+            0.0012549142496921187,
+            0.0007080188842590318
+          ],
+          "terminal_node_ids": [
+            4,
+            4
+          ]
+        }
+      }
+    },
+    "tripod": {
+      "proof_sha256": "40e5586f080c9407b272f5e344f27f28f96d62d9d6dee5fab7e5a3250d916510",
+      "settled_outer_sha256": "cd237bfd52ba5375aa337eef96fa3b248ea2552e5ab34eba25ec1ef8f026e033",
+      "hands": {
+        "left": {
+          "sampled_min_rod_m": 0.00043462052073076074,
+          "sampled_min_support_m": 0.02294225473309297,
+          "terminal_pad_gap_m": [
+            0.001210898754730013,
+            0.0009521258379406846,
+            0.0008570276474659791
+          ],
+          "terminal_node_ids": [
+            36,
+            36,
+            34
+          ]
+        },
+        "right": {
+          "sampled_min_rod_m": 0.00030012749807306616,
+          "sampled_min_support_m": 0.0013100696467190451,
+          "terminal_pad_gap_m": [
+            0.0014759992468914391,
+            0.0013207589486424094,
+            0.0013141511594471113
+          ],
+          "terminal_node_ids": [
+            3,
+            2,
+            4
+          ]
+        }
+      }
+    }
+  },
+  "pose_tracking_native_verified": false,
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

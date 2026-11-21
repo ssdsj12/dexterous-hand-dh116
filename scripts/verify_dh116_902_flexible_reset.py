@@ -110,8 +110,14 @@ def main(argv=None):
     parser.add_argument("--proximal-capture", type=Path)
     parser.add_argument("--proximal-bake", type=Path)
     parser.add_argument("--approved-frozen-sha256")
+    parser.add_argument("--settled-receipt", type=Path)
+    parser.add_argument("--precontact-proof", type=Path)
     args = parser.parse_args(argv)
+    if (args.settled_receipt is None) != (args.precontact_proof is None):
+        parser.error("the native precontact approach needs its receipt and geometry proof")
     if args.plan is None:
+        if args.settled_receipt is not None:
+            parser.error("a native Plan is required for the precontact approach")
         report, _, _ = screen(args.grasp)
         with args.output.open("x") as handle:
             json.dump(report, handle, indent=2)
@@ -131,6 +137,19 @@ def main(argv=None):
     plan.update(version="dh116-902-flexible-supported-reset-v1", screen=report)
     plan["budget"].update(mode="902_" + args.grasp + "_supported_settle", sdk_steps=SDK_END, control_steps=0,
                           solver_steps=(SDK_END - 2) * shared.SUBSTEPS, new_power_mesh_registrations=6)
+    approach = actions = None
+    sdk_end = SDK_END
+    if args.settled_receipt is not None:
+        from scripts import screen_dh116_902_flexible_precontact as route
+
+        approach, actions, sources_used = route.load_approach(
+            args.settled_receipt, args.precontact_proof, args.grasp, config)
+        files = (*files, *sources_used)
+        sdk_end = route.SDK_END
+        plan["action_schedule"] = actions.tolist()
+        plan["budget"].update(mode="902_" + args.grasp + "_hands_clear_precontact",
+                              sdk_steps=sdk_end, control_steps=len(actions),
+                              solver_steps=(sdk_end - 2) * shared.SUBSTEPS, soft_wall_seconds=240)
     _, proximal_inputs = shared.proximal_registration_inputs(args.proximal_capture, args.proximal_bake)
     scripts = ROOT / "scripts"
     files = [*files, Path(supported.__file__), Path(shared.__file__), args.rays, *proximal_inputs,
@@ -155,10 +174,12 @@ def main(argv=None):
 
     args.verify_near_open_settling = True
     args.measure_contact_evidence = False
-    acquire = partial(supported.acquire_supported_reset, config=config, sdk_end=SDK_END, task=args.grasp)
+    acquire = partial(supported.acquire_supported_reset, config=config, sdk_end=sdk_end, task=args.grasp)
     reset.execute(plan, acquire_operation=partial(shared.run_shared, profile=BackendProfile.load(ROOT), args=args,
-        supported_acquire=acquire, sdk_end=SDK_END, require_no_hand_contact=True, task=args.grasp,
-        live_support_scene=config["support_scene"]))
+        supported_acquire=acquire, sdk_end=sdk_end, require_no_hand_contact=True, task=args.grasp,
+        live_support_scene=config["support_scene"], action_after_settle=actions,
+        pinch_archive=approach if args.grasp == "pinch" else None,
+        tripod_archive=approach if args.grasp == "tripod" else None))
     return 0
 
 
