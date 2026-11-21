@@ -29288,6 +29288,31 @@
         "verified_at_utc": "2026-11-21T03:04:41.284488+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power static end supports and contact separation",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-end-support-layout.md",
+      "readiness": "docs/contracts/dh116_teacher_power_end_support_layout_v1.json",
+      "cpu_tests": {
+        "passed": 121,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "2260837bee99a632abf2a6be4c6bc0b53d751f8f",
+        "source_tree": "bbccc13a5df3b313a92bc2c43c19246016c36252",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T03:07:20.380917+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
