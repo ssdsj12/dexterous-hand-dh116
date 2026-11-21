@@ -46,6 +46,18 @@ def main(argv=None):
     p.add_argument("--approved-frozen-sha256")
     args=p.parse_args(argv)
     native.validate_execution_context(ROOT)
+    if args.approved_frozen_sha256 is not None:
+        saved=json.loads(args.plan.read_bytes())
+        if native.digest(saved)!=args.approved_frozen_sha256:
+            raise ValueError("approved plan SHA differs")
+        current=native.interpreter_identity()
+        expected=saved.get("execution_context")
+        if expected!=current:
+            keys=sorted(key for key in set(current)|set(expected or {})
+                        if current.get(key)!=(expected or {}).get(key))
+            raise ValueError("execution context differs: "+", ".join(keys))
+        if args.output.exists():
+            raise ValueError("fresh exclusive output required")
     proof,proof_hash=fresh_proof(args)
     config,actions,contact,archive,files=contract.load_stage(args.candidate,args.search,args.search_receipt,
         args.execution_receipt,args.execution_proof)

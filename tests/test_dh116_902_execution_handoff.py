@@ -67,3 +67,44 @@ def test_incomplete_or_guarded_native_run_cannot_report_completion(tmp_path):
     assert not diagnostic_complete(tmp_path)
     (tmp_path/"tripod_failure.json").write_text("{}")
     assert not diagnostic_complete(tmp_path)
+
+
+def approved_launch_argv(tmp_path, entry, frozen, approval=None):
+    plan=tmp_path/"plan.json"
+    plan.write_text(json.dumps(frozen))
+    argv=[]
+    for name in ("candidate","search","search-receipt","execution-receipt","execution-proof",
+                 "rays","left-bake","right-bake","proximal-capture","proximal-bake"):
+        argv.extend(("--"+name,str(tmp_path/name)))
+    argv.extend(("--output",str(tmp_path/"native"),"--plan",str(plan),
+                 "--approved-frozen-sha256",approval or entry.native.digest(frozen)))
+    return argv
+
+
+@pytest.mark.parametrize("failure", ["context", "approval", "used_output"])
+def test_invalid_launch_is_rejected_before_expensive_proof(tmp_path, monkeypatch, failure):
+    from scripts import verify_dh116_902_joint_closure as entry
+    frozen=dict(execution_context=entry.native.interpreter_identity())
+    if failure=="context":
+        frozen["execution_context"]["pythonpath"]="different-order"
+    if failure=="used_output":
+        (tmp_path/"native").mkdir()
+    argv=approved_launch_argv(tmp_path,entry,frozen,"0"*64 if failure=="approval" else None)
+    def unexpected_proof(args):
+        raise AssertionError("expensive proof started before launch validation")
+    monkeypatch.setattr(entry,"fresh_proof",unexpected_proof)
+    with pytest.raises(ValueError,match={"context":"execution context differs.*pythonpath",
+                                       "approval":"approved plan SHA",
+                                       "used_output":"fresh exclusive output"}[failure]):
+        entry.main(argv)
+
+
+def test_matching_approved_launch_reaches_fresh_proof(tmp_path, monkeypatch):
+    from scripts import verify_dh116_902_joint_closure as entry
+    frozen=dict(execution_context=entry.native.interpreter_identity())
+    argv=approved_launch_argv(tmp_path,entry,frozen)
+    def proof_reached(args):
+        raise RuntimeError("fresh proof reached")
+    monkeypatch.setattr(entry,"fresh_proof",proof_reached)
+    with pytest.raises(RuntimeError,match="fresh proof reached"):
+        entry.main(argv)

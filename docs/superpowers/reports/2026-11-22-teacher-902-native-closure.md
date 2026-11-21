@@ -29,3 +29,14 @@ GPU2, one Isaac/environment, 2 initialization + 238 settling + 640 controlled SD
 Success of this diagnostic means complete guarded records and natural exit. Actual contact/opposition/force delivery must be read from the new ledger. Zero contact, guard termination, unexpected station, failed shutdown or missing rows remain explicit failures/limitations, never Teacher success. Raw native logs and models remain outside Git.
 
 Registry regression: 60 passed, 0 failed.
+
+## Launch-context correction (actual pre-Kit rejection)
+The first attempt at published HEAD 1a1ed3e5c27323bb52ed45a64ac54a3b36ed3182 froze 0ad0f0a7b728f56ee2a7a485da71a8475d33836b99bb37cb1e3d9960645ce1a3. It exited 1 after 53.456s BEFORE loading Isaac. All source hashes were unchanged; no native output, SDK/solver/control/Teacher/PPO steps, crash or forced termination occurred.
+
+Codex's private launcher had prepended ROOT to PYTHONPATH even though the frozen environment already contained it. Two real CPU subprocess identity reads isolated pythonpath as the only changed field: original env equals the frozen identity, prepended env does not. Antigravity independently read the actual entry and interpreter_identity and confirmed the cause (902-native-launch-context R1). The launch failure is not a physical/contact failure, and is not a qualification.
+
+The private launcher now preserves the original environment and asserts the complete current identity before starting GDB. The project entry also checks approved JSON SHA, exact execution identity (with differing key names), and fresh output BEFORE the costly proof. Its original full rebuilt-plan/fingerprint/output guard remains after proof; no identity normalization or bypass was added. A new entry-boundary regression failed in three branches on the old code, while the matching identity positive control reached proof. All 62 related cases pass. An actual wrong-env entry subprocess now rejects with execution context differs: pythonpath in 2.946s, without Kit/native output.
+
+Old attempt/receipt remain immutable outside Git. The old fingerprint will not be retried. Publish and seal a new corrected-version fingerprint before the next single bounded physical diagnostic. The diagnostic budget and all physical/success gates remain unchanged.
+
+Launch correction Registry regression: 60 passed, 0 failed, 14.83s. The original 242-case physical-helper regression is retained separately from this 62-case entry regression.

@@ -4236,3 +4236,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - 2026-11-22: aligned Tripod wrist completed one actual 240-SDK/2856-solver Reset interval with natural exit 0 and passing 239-frame derived clearance audit. Closing/contact/Teacher qualification remains pending.
 
 - 2026-11-22: wired a source-separated SDK240-to-contact diagnostic with original guards and measured reaction priming; fixed exact held-axis compilation. 242 related CPU tests passed; actual closure not yet run. See [docs/superpowers/reports/2026-11-22-teacher-902-native-closure.md](docs/superpowers/reports/2026-11-22-teacher-902-native-closure.md).
+
+- 2026-11-22: Preserve frozen launch PYTHONPATH and fail mismatched 902 closing identities before proof/Kit; retain the strict final fingerprint guard and zero-step rejected attempt evidence.

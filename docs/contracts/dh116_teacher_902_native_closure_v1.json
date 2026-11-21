@@ -1,7 +1,7 @@
 {
   "version": "dh116-teacher-902-native-closure-v1",
   "base_head": "3d704bc26b7614cf98426772a07ea9a6020a66d9",
-  "status": "cpu_preflight_passed_actual_contact_not_run",
+  "status": "launch_environment_fixed_native_closure_pending",
   "cpu_tests": {
     "passed": 242,
     "failed": 0,
@@ -17,8 +17,8 @@
     "scripts/screen_dh116_902_flexible_contact.py": "85b1f6e23f0579375a4f9150f24c8e9988c06179c9dc818d38e9920614761f6d",
     "scripts/verify_dh116_power_shared_rod.py": "30d61cd04e762a769e9fd72e3447177f533e5939c88e94750057a65be4ff9959",
     "scripts/dh116_902_joint_closure_contract.py": "f012b99dc32ae7c4c03327aefb049ad4c53884dd259da2f00070a496f25cf032",
-    "scripts/verify_dh116_902_joint_closure.py": "88ddd4f5e167eedda1df54048d89b2c7f794147488dbce6bbd961753648d5cc0",
-    "tests/test_dh116_902_execution_handoff.py": "c925c514383cf752195f1393b5e9f5d110e5173aa2506d1ddb1c8ec4a6c369e7",
+    "scripts/verify_dh116_902_joint_closure.py": "246edddbec5ab71afc49f4623e7424f59061602c5996d8b92384f4eca6ad78e6",
+    "tests/test_dh116_902_execution_handoff.py": "4a595c4c50654649f38cb66ee1309de7bfbb69c088af1881ffab16ab93be2355",
     "tests/test_dh116_902_fixed_wrist_open.py": "479b4f7e806dac6361603ff75f049c7e1221e590b6780300090a84fea53ba05b"
   },
   "source_receipt_sha256": "5681a8cddffb664104b0d8ef7699cc8354693407a1c9e3b2427f2339de2d1022",
@@ -58,5 +58,26 @@
     "Seal only after all Windows publication/manifest updates",
     "One serial bounded actual closing/contact ledger, preserve guard failure and native stack",
     "Record per-pad load, opposition and next-step issued reaction without granting 5s Hold or Teacher qualification"
-  ]
+  ],
+  "launch_attempts": 1,
+  "launch_rejection": {
+    "head": "1a1ed3e5c27323bb52ed45a64ac54a3b36ed3182",
+    "frozen_sha256": "0ad0f0a7b728f56ee2a7a485da71a8475d33836b99bb37cb1e3d9960645ce1a3",
+    "outer_exit_code": 1,
+    "isaac_started": false,
+    "sdk_steps": 0,
+    "solver_steps": 0,
+    "reason": "private launcher duplicated PYTHONPATH root",
+    "receipt_sha256": "1ee19dea8714d79d44d2e3f337bbde9c4637cd4e1244699611ccf2ab4a7cde7e"
+  },
+  "launch_precheck": {
+    "tests_passed": 62,
+    "tests_failed": 0,
+    "new_cases": 4,
+    "cpu_log_sha256": "35258f04bb79ab45e650383f410cdfc3826d51fad3355c6babb8e73b5e961d47",
+    "red_log_sha256": "b9993bdf8c7dd52785186fa24d7fd125d30e4226c1b479b6ed6ca0293c5e325b",
+    "actual_bad_environment_rejected_in_seconds": 2.9464935280848294,
+    "strict_identity_preserved": true,
+    "full_postproof_guard_preserved": true
+  }
 }

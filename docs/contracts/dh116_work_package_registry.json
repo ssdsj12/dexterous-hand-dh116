@@ -47931,7 +47931,12 @@
         "cpu_preflight_passed": 242,
         "main_cpu_freeze_passed": true,
         "teacher_admission": false,
-        "force_qualified": false
+        "force_qualified": false,
+        "launch_attempts": 1,
+        "native_runs": 0,
+        "launch_environment_rejected": true,
+        "early_launch_tests_passed": 62,
+        "actual_bad_env_reject_seconds": 2.9464935280848294
       }
     }
   },
