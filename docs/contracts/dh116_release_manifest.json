@@ -32280,6 +32280,31 @@
         "verified_at_utc": "2026-11-21T21:41:13.368664+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.native-parameter-source-scope",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-native-parameter-scope.md",
+      "readiness": "docs/contracts/dh116_teacher_native_parameter_scope_v1.json",
+      "cpu_tests": {
+        "passed": 199,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a3a2477bd54ba9ee98eec6da722366d98e7c147e",
+        "source_tree": "b662d88cb00e5331ee76a37d3485ecd5ded5e5dd",
+        "remote_branch": "11-17",
+        "files_verified": 14,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T21:52:16.926962+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
