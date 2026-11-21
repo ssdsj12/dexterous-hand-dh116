@@ -30238,6 +30238,31 @@
         "verified_at_utc": "2026-11-21T06:41:53.616520+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Tripod native guarded approach tracking",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-guarded-approach-native.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_guarded_approach_native_v1.json",
+      "cpu_tests": {
+        "passed": 111,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "bc35511a652cf2e33b993324eba8406f0e31a158",
+        "source_tree": "4f44c8fd5f9adb554b3ad393f974b67f44070c97",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T06:46:12.118749+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
