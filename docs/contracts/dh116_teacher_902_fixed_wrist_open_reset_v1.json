@@ -3,10 +3,10 @@
   "base_head": "5d0f99acc27ddc7e02c97d9c7c1d1b753fb4cb5b",
   "status": "cpu_passed_native_not_run",
   "cpu_tests": {
-    "passed": 79,
+    "passed": 82,
     "failed": 0,
-    "new_cases": 17,
-    "log_sha256": "bfc0742470b84ef54f1569e8b5e62d840802bafd821064d12c70dd2779c86cb4",
+    "new_cases": 20,
+    "log_sha256": "e12875c3554c4dd8e20f32f12df613158b4100f13d9787835dbd638f3d00b6ad",
     "registry_passed": 60
   },
   "budget": {
@@ -21,16 +21,17 @@
   "teacher_admission": false,
   "camera_configs_unchanged": true,
   "source_sha256": {
-    "scripts/verify_dh116_902_fixed_wrist_open_reset.py": "cc210f7d72ae9fe1838915e003bcbef030862e5c0d2998c95b39247c60ac1943",
-    "tests/test_dh116_902_fixed_wrist_open_reset.py": "9c59e0e55e305b72b82c8c06cbbf7cefc79748d729b35052689a124fafcffbd5"
+    "scripts/verify_dh116_902_fixed_wrist_open_reset.py": "d5929c77322c732c8deba7779d37fddea0a9c0cd5360d29863634fb5c64a4c31",
+    "tests/test_dh116_902_fixed_wrist_open_reset.py": "41792d7b4cab9e90448cbd1cd33150703f4e95bc0ed35854af3db484a32c6b58"
   },
   "cpu_recipe_sha256": null,
   "review": {
     "skill": "antigravity-desktop-review",
-    "rounds": "902-open-reset R1-R2; R3 final reread pending",
+    "rounds": "902-open-reset R1-R3; R4 final reread pending",
     "accepted_findings": [
       "proof/frozen receipt and source SHA agreement",
-      "internal interval failure must return nonzero after cleanup"
+      "internal interval failure must return nonzero after cleanup",
+      "Separate nonzero end-support pair counts from zero hand pair counts"
     ]
   },
   "limitations": [

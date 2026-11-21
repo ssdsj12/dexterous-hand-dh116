@@ -47825,7 +47825,7 @@
       "report": "docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md",
       "native_runs": 0,
       "last_result": {
-        "cpu_preflight_passed": 79,
+        "cpu_preflight_passed": 82,
         "native_reset_verified": false,
         "teacher_admission": false
       }

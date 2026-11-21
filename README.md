@@ -3702,4 +3702,4 @@ bash scripts/python.sh scripts/run_current.py --run --gui --output runs/gui_tria
 
 Tripod 右手独立跟踪实现与回归见 [运行边界报告](docs/superpowers/reports/2026-11-20-teacher-tripod-right-owned-tracking.md)。
 
-- 2026-11-22: added independent 902 fixed-wrist open Reset-only execution; 79 related CPU tests passed; 60 Registry tests passed, native/contact qualification pending. See [docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md](docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md).
+- 2026-11-22: added independent 902 fixed-wrist open Reset-only execution; 82 related CPU tests passed; 60 Registry tests passed, native/contact qualification pending. See [docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md](docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md).

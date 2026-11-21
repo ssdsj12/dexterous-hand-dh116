@@ -79,7 +79,7 @@ def test_frozen_source_must_match_fresh_screen(tmp_path):
 @pytest.mark.parametrize("bad",["failure","missing","short","pair"])
 def test_natural_exit_is_not_internal_success(tmp_path,bad):
     result=dict(sdk_steps=240,measured_exchanges=238,solver_substeps=2856,
-        pair_counts={"left.pad":0,"right.pad":0},teacher_admission=False,ppo_updates=0,rods_per_env=1)
+        pair_counts={"left.pad":0,"right.pad":0,"support_0":12,"support_1":15},teacher_admission=False,ppo_updates=0,rods_per_env=1)
     if bad=="short":result["measured_exchanges"]=237
     if bad=="pair":result["pair_counts"]["right.pad"]=1
     if bad!="missing":(tmp_path/"tripod_shared_result.json").write_text(json.dumps(result))
@@ -89,9 +89,22 @@ def test_natural_exit_is_not_internal_success(tmp_path,bad):
 
 def test_complete_no_contact_interval_is_separate_from_grasp(tmp_path):
     row=dict(sdk_steps=240,measured_exchanges=238,solver_substeps=2856,
-        pair_counts={"left.pad":0,"right.pad":0},teacher_admission=False,ppo_updates=0,rods_per_env=1)
+        pair_counts={"left.pad":0,"right.pad":0,"support_0":12,"support_1":15},teacher_admission=False,ppo_updates=0,rods_per_env=1)
     (tmp_path/"tripod_shared_result.json").write_text(json.dumps(row))
     for sdk in range(3,241):(tmp_path/f"tripod_exchange_{sdk}.json").write_text("{}")
     assert m.completed_interval(tmp_path)
     (tmp_path/"tripod_exchange_100.json").unlink()
+    assert not m.completed_interval(tmp_path)
+
+
+@pytest.mark.parametrize("bad",["missing_support","unsupported","no_hands"])
+def test_support_evidence_is_required(tmp_path,bad):
+    counts={"left.pad":0,"right.pad":0,"support_0":12,"support_1":15}
+    if bad=="missing_support":counts.pop("support_1")
+    if bad=="unsupported":counts["support_1"]=0
+    if bad=="no_hands":counts={k:v for k,v in counts.items() if k.startswith("support")}
+    row=dict(sdk_steps=240,measured_exchanges=238,solver_substeps=2856,
+        pair_counts=counts,teacher_admission=False,ppo_updates=0,rods_per_env=1)
+    (tmp_path/"tripod_shared_result.json").write_text(json.dumps(row))
+    for sdk in range(3,241):(tmp_path/f"tripod_exchange_{sdk}.json").write_text("{}")
     assert not m.completed_interval(tmp_path)

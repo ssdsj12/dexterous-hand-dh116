@@ -84,10 +84,15 @@ def completed_interval(output):
     if (output/"tripod_failure.json").exists() or not result.is_file():
         return False
     row=json.loads(result.read_bytes())
+    from go2_pvcnn.control.dh116.tabletop_power_shared_rod import END_SUPPORT_NAMES
+    counts=row.get("pair_counts",{})
+    hands={name:value for name,value in counts.items() if name not in END_SUPPORT_NAMES}
+    supported=(all(type(counts.get(name)) is int and counts[name]>0 for name in END_SUPPORT_NAMES)
+        and hands and all(type(value) is int and value==0 for value in hands.values()))
     return bool(row.get("sdk_steps")==SDK_END and row.get("measured_exchanges")==SDK_END-2
         and row.get("solver_substeps")==SOLVER_STEPS and row.get("rods_per_env")==1
         and row.get("ppo_updates")==0 and row.get("teacher_admission") is False
-        and row.get("pair_counts") and all(type(v) is int and v==0 for v in row["pair_counts"].values())
+        and supported
         and all((output/f"tripod_exchange_{sdk}.json").is_file() for sdk in range(3,SDK_END+1)))
 
 
