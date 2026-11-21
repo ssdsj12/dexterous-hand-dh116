@@ -29713,6 +29713,31 @@
         "verified_at_utc": "2026-11-21T04:40:00.797986+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-reset-solver-sweep-repair",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-reset-solver-sweep.md",
+      "readiness": "docs/contracts/dh116_teacher_power_reset_solver_sweep_v1.json",
+      "cpu_tests": {
+        "passed": 153,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1a8c01c30ff0e394232c779db308ff054d662b63",
+        "source_tree": "2894b72397f261853053730e5a5476b5efb5ce35",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T04:51:20.364905+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
