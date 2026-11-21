@@ -4,6 +4,7 @@ This code is exercised with CPU doubles. It does not create an app, choose
 reset poses, grant native qualification, or feed rewards to PPO.
 """
 from copy import deepcopy
+import json
 import math
 
 import numpy as np
@@ -196,13 +197,19 @@ class FlexiblePhysicalExchange:
                     guard_failure=guard_failure,
                     native_qualification=False, teacher_admission=False)
 
-    def control(self, action, *, observe):
-        """Deliver each terminal row once; the owner persists each delivered row."""
+    def control(self, action, *, observe, select_substep_action=None):
+        """Deliver each real physical row once, including optional target holds.
+
+        The opt-in selector may issue only the proposed increment or zero.
+        Zero retains targets; it does not freeze the bodies, rod, or clock.
+        All reactions and safety checks still run at the original physics rate.
+        """
         if self._closed or self._active:
             raise RuntimeError("closed or in-progress control exchange")
         validate_actions(action)
-        if action.shape != (1, 24) or not callable(observe):
-            raise ValueError("one canonical action and a physical row observer required")
+        if (action.shape != (1, 24) or not callable(observe)
+                or (select_substep_action is not None and not callable(select_substep_action))):
+            raise ValueError("one canonical action, observer, and optional callable selector required")
         if self._sim.current_time_step_index != self._expected_sdk_step:
             self._closed = True
             raise RuntimeError("external advance of the owned SDK clock")
@@ -213,7 +220,30 @@ class FlexiblePhysicalExchange:
         try:
             reason = None
             for substep in range(8):
-                row = self._step(action, substep)
+                issued = action
+                selection = None
+                if select_substep_action is not None:
+                    before = self._clock(substep)[0]
+                    issued, decision = select_substep_action(action.clone(), deepcopy(before))
+                    if self._clock(substep)[0] != before:
+                        raise ValueError("selector changed the owned physical clock")
+                    validate_actions(issued)
+                    if (issued.shape != (1, 24) or not isinstance(decision, dict)
+                            or type(decision.get("paused")) is not bool
+                            or not isinstance(decision.get("reason"), str) or not decision["reason"]):
+                        raise ValueError("selector requires one action, boolean paused, and a reason")
+                    # Reject unpersistable evidence before any native action write.
+                    json.dumps(decision, allow_nan=False)
+                    issued = issued.detach().cpu().double().clone()
+                    expected = torch.zeros_like(action) if decision["paused"] else action
+                    if not torch.equal(issued, expected):
+                        raise ValueError("selector may only retain targets or issue the original action")
+                    selection = dict(source_clock=deepcopy(before),
+                                     proposed_action24=action.numpy().copy(),
+                                     issued_action24=issued.numpy().copy(), decision=deepcopy(decision))
+                row = self._step(issued, substep)
+                if selection is not None:
+                    row["substep_selection"] = selection
                 observed_reason = observe(deepcopy(row))
                 reason = row["guard_failure"] or observed_reason
                 if reason is not None:

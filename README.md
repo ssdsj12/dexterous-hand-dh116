@@ -1,3 +1,7 @@
+## Flexible substep target holds
+
+Optional target holds preserve every physical step, rod reaction and original guard; 93 related CPU tests pass. Old V2/retained source gates remain blocked (12 failures and 1 setup error in the expanded suite). No native tracking or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-902-substep-selection.md).
+
 ## 902 staged approach compiler
 
 Separate middle opening, wrist transit and fixed-wrist closure while preserving the original902 target. Reject hidden wrist vector normalization;234 related CPU checks and1088 ideal-command substeps pass. Measured tracking and contact remain unqualified. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-staged-approach.md).

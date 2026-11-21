@@ -1,0 +1,94 @@
+{
+  "version": "dh116-teacher-902-substep-selection-v1",
+  "base_head": "53ca7fffd24565afa76cb58e3e2c68b9f92395d1",
+  "status": "cpu_interface_passed_native_gate_not_integrated",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_physical_exchange.py": "e270a7d75d248025577cba0f527a7b75e447de75d94cb4fbd6aa05bcb54bbff9",
+    "tests/test_dh116_flexible_substep_selection.py": "4154df6474cade06abc137a88dedda5018edbb1145fb14bb38fdfa37a93c43cf"
+  },
+  "cpu_tests": {
+    "passed": 93,
+    "failed": 0,
+    "new_cases": 10,
+    "log_sha256": "574d9357be3b974deadfb30301b8b60516abaebaf6212ecf8abe64e8a4702faa"
+  },
+  "broadened_legacy_regression": {
+    "passed": 95,
+    "failed": 12,
+    "errors": 1,
+    "log_sha256": "fe9bc7bc4711e5e82aa7c9104c819c3213a1482b9d363de19748d2396316ef39",
+    "scope": "includes obsolete v2/retained Reset source gates",
+    "status": "blocked",
+    "baseline_pins_already_differ": [
+      {
+        "file": "src/go2_pvcnn/control/dh116/tabletop_deformable_clearance_guard.py",
+        "pinned": "98d95efd26b1cb7fb833649e897c30d361bde78807b28671f7132f118ceec9dc",
+        "baseline_sha256": "dc489e6c48c23137cfac7d62aee1faf7242f3acea132ab0caca8d4f14f894093",
+        "current_sha256": "dc489e6c48c23137cfac7d62aee1faf7242f3acea132ab0caca8d4f14f894093"
+      },
+      {
+        "file": "src/go2_pvcnn/control/dh116/tabletop_deformable_physical_exchange.py",
+        "pinned": "c910ebd45e246d4aa20ec94429001d2c0e2365ff5a0a0ded922212a68a2d3a36",
+        "baseline_sha256": "90dcd505922b6ffbb61a9a9af942772d4991a8783062b0da937adf181be06ae3",
+        "current_sha256": "e270a7d75d248025577cba0f527a7b75e447de75d94cb4fbd6aa05bcb54bbff9"
+      },
+      {
+        "file": "src/go2_pvcnn/control/dh116/tabletop_deformable_live_geometry.py",
+        "pinned": "19a318aa643d47a73e7dc49e226d2aa6fb4b5275e072dd2257c426e76ec7bbc9",
+        "baseline_sha256": "a9ed93cd9a5da8c5071e6c7342b3fcf5017a5cec00e89045e94b1735a9264cb2",
+        "current_sha256": "a9ed93cd9a5da8c5071e6c7342b3fcf5017a5cec00e89045e94b1735a9264cb2"
+      },
+      {
+        "file": "src/go2_pvcnn/control/dh116/tabletop_batch_geometry.py",
+        "pinned": "f375078c59270acd8b7f30993ddd30576ad563031486af178db001ed9274da03",
+        "baseline_sha256": "f375078c59270acd8b7f30993ddd30576ad563031486af178db001ed9274da03",
+        "current_sha256": "f375078c59270acd8b7f30993ddd30576ad563031486af178db001ed9274da03"
+      },
+      {
+        "file": "src/go2_pvcnn/control/dh116/tabletop_deformable_wrist_projection.py",
+        "pinned": "fbe593155d992b0c4a1c02df893648e67a3294ca11e00d5e12bc208796359ab3",
+        "baseline_sha256": "fbe593155d992b0c4a1c02df893648e67a3294ca11e00d5e12bc208796359ab3",
+        "current_sha256": "fbe593155d992b0c4a1c02df893648e67a3294ca11e00d5e12bc208796359ab3"
+      }
+    ],
+    "retained_builder": {
+      "pinned": "5b190d1896647773c2f8895e73224f387d1dd17a565a44c4e2212db8f477fe17",
+      "baseline_and_current": "76d521df582f1e51773052fe0c3366f8026cdf53f32003e19f09e6a042425d55"
+    },
+    "source_gate_bypassed": false
+  },
+  "native_runs": 0,
+  "solver_steps": 0,
+  "ppo_updates": 0,
+  "teacher_admission": false,
+  "physical_rate_hz": 480,
+  "control_rate_hz": 60,
+  "substeps_per_window": 8,
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "rounds": "902-measured-transit R1-R4",
+    "reviewed_final_source_sha256": "e270a7d75d248025577cba0f527a7b75e447de75d94cb4fbd6aa05bcb54bbff9",
+    "source_verified": true
+  },
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3,
+  "next_gate": [
+    "Measured same-clock q/qd gate and bounded source-action cursor required before selector native use",
+    "Fixed-wrist open Reset candidate is independently screened; no native launch in this package",
+    "Do not repin old v2/retained source gates without versioned source and Reset evidence"
+  ],
+  "evidence_sha256": {
+    "substep-selector-active-regression.log": "574d9357be3b974deadfb30301b8b60516abaebaf6212ecf8abe64e8a4702faa",
+    "substep-selector-evidence-red.log": "48fd2ad00dc71239db100716063daf44facbbb923afde7c997a87545e6689c51",
+    "substep-selector-final.log": "aa40fc53c620bdfadd3e3472e2eb7dfae097c7819b50deac2d2ec5ee9164ae0e",
+    "substep-selector-green.log": "bcc46c3401715eab82cb12af047480daea5e612721e6962a435e09416a7195e9",
+    "substep-selector-red.log": "b8a85bc283fc2319ad072960987fafc83a777e6951f1462f296c8a138c5220dd",
+    "substep-selector-regression.log": "fe9bc7bc4711e5e82aa7c9104c819c3213a1482b9d363de19748d2396316ef39"
+  },
+  "registry_tests": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "67d994ade0835f2675fa33f027eb58f415423ca0c45cd2a93bd32f7a4dc5c2cd"
+  },
+  "cpu_tests_total": 153
+}

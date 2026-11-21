@@ -47747,6 +47747,34 @@
         "teacher_admission": false,
         "robust_tracking_qualified": false
       }
+    },
+    "teacher.902-substep-selection": {
+      "title": "Preserve physical reaction and guards during optional substep target holds",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-staged-approach"
+      ],
+      "tests": [
+        "tests/test_dh116_flexible_substep_selection.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_dual_hand_clock_handoff.py",
+        "tests/test_dh116_poststep_clearance_guard.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_902_command_path.py",
+        "tests/test_dh116_902_command_contact.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_substep_selection_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-substep-selection.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 93,
+        "new_cases": 10,
+        "teacher_admission": false,
+        "native_integration": false,
+        "legacy_v2_source_gate_blocked": true
+      }
     }
   },
   "execution_target": {
