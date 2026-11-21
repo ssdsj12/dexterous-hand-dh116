@@ -15,7 +15,7 @@ from scripts.prepare_dh116_tripod_owned_approach import QUIET_LIMITS
 from scripts.probe_dh116_physx_lifetime_frame_v2 import bindings
 from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import DT
 from go2_pvcnn.control.dh116.tabletop_deformable_clearance_guard import (
-    ClearanceGuardedExchange, validate_post_step_clearance,
+    ClearanceGuardedExchange, frozen_clearance_sources, validate_post_step_clearance,
 )
 from go2_pvcnn.control.dh116.tabletop_deformable_dual_evidence import DualHandEvidenceJournal, inspect_evidence
 from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
@@ -145,7 +145,8 @@ class ObservedClose(ClearanceGuardedExchange):
             self = action = row = None
 
 
-def inspect_interval(path, actions, *, sdk_steps=SDK_STEPS, feedback_factory=None):
+def inspect_interval(path, actions, *, sdk_steps=SDK_STEPS, feedback_factory=None, sealed_archive=None):
+    archived_sources = frozen_clearance_sources(sealed_archive["frozen_files"]) if sealed_archive is not None else None
     audit = inspect_evidence(path)
     if audit["physics_budget_end"] != sdk_steps or audit["solver_substeps"] != SUBSTEPS:
         raise ValueError("ledger differs from frozen close budget")
@@ -172,7 +173,8 @@ def inspect_interval(path, actions, *, sdk_steps=SDK_STEPS, feedback_factory=Non
                 begins.append(data["action"])
             if entry["operation"] == "physical":
                 row = data["exchange"]
-                validate_post_step_clearance(dict(row, guard_failure=row["original_guard_failure"]))
+                validate_post_step_clearance(dict(row, guard_failure=row["original_guard_failure"]),
+                                             sealed_archive_sources=archived_sources)
                 if "stage_reaction" in row and row["stage_reaction"] != same_substep_reaction(row["rod"]):
                     raise ValueError("durable reaction differs from independently reread solver pairs")
                 if "quiet_admission" in row:

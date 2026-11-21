@@ -12,7 +12,7 @@ from scripts import screen_dh116_pinch_wrist_relief as screen
 
 base = early.base
 PROOF_SHA = "deacfb73e810221e94b7f1ab6c1c72b78a7875a7ad321e7cf8201d4e5466aa21"
-SCREEN_SHA = "f3e453fea84a84b6fe113ec7e8ff635446350b4c892ce2341b7f1079055a4474"
+SCREEN_SHA = "09b43e64b7e7c1e0c17156ea6785f5bebd96b3035f434bdf1d7baf6dafc83a1a"
 
 
 def prepare(args):

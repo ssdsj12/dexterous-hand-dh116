@@ -1,3 +1,7 @@
+## Pinch thumb tangent probe and verified archive replay
+
+Freeze a two-channel fixed-wrist intervention and replay old clearance with the receipt's own sealed source stamps. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-thumb-tangent-probe.md).
+
 ## Power proximal native motion handoff
 
 Record one guarded 24D pulse on the original supported flexible rod with all 17 slots attached. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-action-native.md).

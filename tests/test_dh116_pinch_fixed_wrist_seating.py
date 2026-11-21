@@ -79,3 +79,31 @@ def test_acquisition_keeps_all_three_contact_gates(monkeypatch):
         (282, "asymmetric_preload_gate", None),
         (362, "fixed_wrist_seating_gate", seating.certify_seating),
     ]
+
+
+def test_thumb_tangential_candidate_preserves_wrists_and_runs_own_gate(monkeypatch):
+    from scripts import run_dh116_pinch_thumb_tangent_probe as probe
+
+    previous = np.zeros((45, 24))
+    previous[0, 17] = .15
+    initial = states()
+    action, goals = probe.compile_probe(previous, initial)
+    np.testing.assert_array_equal(action[:45], previous)
+    np.testing.assert_array_equal(action[47:], 0.)
+    delta = action[45:47].sum(axis=0)*seating.prelift.WINDOW_SCALE
+    np.testing.assert_array_equal(np.flatnonzero(delta), [0, 2])
+    np.testing.assert_allclose(delta[[0, 2]], [.00025, -.00005])
+    np.testing.assert_array_equal(goals["right"], initial["right"][1])
+    frozen = {"staged_version": probe.VERSION}
+    calls = []
+
+    def acquire(*a, **kwargs):
+        assert kwargs["plan"] is frozen
+        assert kwargs["compiler"] is probe.compile_probe
+        assert kwargs["boundary_name"] == "thumb_tangent_probe_gate"
+        calls.append(kwargs)
+        return "result"
+
+    monkeypatch.setattr(seating, "acquire", acquire)
+    assert probe.acquire(None, None, None, None, plan=frozen) == "result"
+    assert len(calls) == 1

@@ -85,7 +85,7 @@ def archive_boundary(folder, *, outer_sha=OUTER_SHA, ledger_sha=LEDGER_SHA, sdk_
             or receipt["artifact_sha256"]["physical.jsonl"] != ledger_sha
             or base.lifecycle.native.sha(journal) != ledger_sha):
         raise ValueError("exact naturally closed precontact receipt required")
-    result = base.inspect_interval(journal, np.asarray(plan["action_schedule"]), sdk_steps=sdk_steps)
+    result = base.inspect_interval(journal, np.asarray(plan["action_schedule"]), sdk_steps=sdk_steps, sealed_archive=plan)
     if (result["last_sdk_step"] != sdk_steps or result["terminal_reason"]
             or result["complete_control_windows"] != windows):
         raise ValueError("required precontact run failed its journal validation")

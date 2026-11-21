@@ -46155,6 +46155,36 @@
         "native_contact_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-thumb-tangent-probe": {
+      "title": "Freeze a Pinch thumb tangent probe and validate archived clearance by original provenance",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-fixed-wrist-force-feedback-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_poststep_clearance_guard.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_pinch_fixed_wrist_seating.py",
+        "tests/test_dh116_pinch_fixed_force_feedback.py",
+        "tests/test_dh116_pinch_fixed_force_hold_control.py",
+        "tests/test_dh116_pinch_asymmetric_preload.py",
+        "tests/test_dh116_pinch_bilateral_preload.py",
+        "tests/test_dh116_pinch_index_only_preload.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_thumb_tangent_probe_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-thumb-tangent-probe.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 117,
+        "failed": 0,
+        "sealed_archive_verified": true,
+        "native_contact_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

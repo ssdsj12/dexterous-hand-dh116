@@ -62,7 +62,7 @@ def load_archive(case):
             or base.lifecycle.native.sha(ledger) != LEDGER_SHA):
         raise ValueError("exact naturally closed early-finger reference required")
     plan = base._checked(native / "frozen_plan.json", receipt["plan_sha256"])
-    audit = base.inspect_interval(ledger, np.asarray(plan["action_schedule"]))
+    audit = base.inspect_interval(ledger, np.asarray(plan["action_schedule"]), sealed_archive=plan)
     if audit["terminal_reason"] or audit["last_sdk_step"] != base.SDK_STEPS:
         raise ValueError("uninterrupted reference interval required")
     rows = {}

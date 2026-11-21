@@ -64,7 +64,7 @@ def load_reference(case):
             or outer["artifact_sha256"]["physical.jsonl"] != BASELINE_LEDGER_SHA
             or base.lifecycle.native.sha(ledger) != BASELINE_LEDGER_SHA):
         raise ValueError("exact source-bound original Pinch native receipt required")
-    audit = base.inspect_interval(ledger, np.asarray(original["action_schedule"]))
+    audit = base.inspect_interval(ledger, np.asarray(original["action_schedule"]), sealed_archive=original)
     if audit["terminal_reason"] or audit["last_sdk_step"] != 74 or audit["measured_physics_rows"] != 72:
         raise ValueError("complete original quiet plus close evidence required")
     rows = []

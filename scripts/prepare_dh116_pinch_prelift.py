@@ -54,7 +54,7 @@ def archived_endpoint(folder):
             or base.lifecycle.native.sha(ledger) != SOURCE_LEDGER_SHA):
         raise ValueError("exact naturally closed simultaneous-contact source required")
     original = base._checked(native / "frozen_plan.json", receipt["plan_sha256"])
-    summary = base.inspect_interval(ledger, np.asarray(original["action_schedule"]))
+    summary = base.inspect_interval(ledger, np.asarray(original["action_schedule"]), sealed_archive=original)
     if summary["last_sdk_step"] != 74 or summary["terminal_reason"] or not summary["rows_with_simultaneous_loaded_opposition"]:
         raise ValueError("complete qualifying diagnostic, with measured bilateral contact required")
     last = admission = None

@@ -13,7 +13,7 @@ from scripts import screen_dh116_pinch_early_finger as screen
 base = late.base
 START_SDK = 34
 PREFLIGHT_SHA = "c2f5339da95a0dd3bcb9208306ce7d3e0f89478f4a17309c58083ab8ef39bb69"
-SCREEN_SHA = "0bde01a475df8ab9a1bc9a30a225c59425cc1a6f5a932dee9bb538878b177f22"
+SCREEN_SHA = "404bb7fea5f10fbf78007b6aea877703d0f962dccd162c596eee5257784e4ac2"
 
 
 def prepare(output, sealed, baseline, preflight):

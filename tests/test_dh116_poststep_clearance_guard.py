@@ -137,3 +137,25 @@ def test_terminal_clearance_is_durable_in_existing_journal_before_settlement(mon
         with pytest.raises(RuntimeError,match="active"):episode.control(action)
     assert sim.current_time_step_index==3 and rod.rope.steps==1
     assert inspect_evidence(path)["settled_control_windows"]==1
+
+
+def test_archived_clearance_provenance_comes_from_sealed_plan_and_never_live(monkeypatch):
+    api = module()
+    exchange, _, _, _ = guarded(monkeypatch)
+    rows = []
+    exchange.control(torch.zeros(1, 24), observe=rows.append)
+    row = deepcopy(rows[0])
+    historical = dict(row["post_step_clearance"]["source_sha256"])
+    historical["tabletop_deformable_physical_exchange.py"] = "a" * 64
+    files = {"/archived/src/go2_pvcnn/control/dh116/"+name: digest for name, digest in historical.items()}
+    row["post_step_clearance"]["source_sha256"] = historical
+    with pytest.raises(ValueError, match="implementation"):
+        api.validate_post_step_clearance(row)
+    bound = api.frozen_clearance_sources(files)
+    assert api.validate_post_step_clearance(row, sealed_archive_sources=bound)["passed"] is True
+    row["post_step_clearance"]["source_sha256"] = {**historical, "tabletop_batch_geometry.py": "b"*64}
+    with pytest.raises(ValueError, match="implementation"):
+        api.validate_post_step_clearance(row, sealed_archive_sources=bound)
+    files.pop("/archived/src/go2_pvcnn/control/dh116/tabletop_batch_geometry.py")
+    with pytest.raises(ValueError, match="complete"):
+        api.frozen_clearance_sources(files)

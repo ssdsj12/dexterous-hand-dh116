@@ -21,12 +21,27 @@ GEOMETRY_SOURCE="same_clock_physx_link_transforms_local_com_and_original_collisi
 SIDES=("left","right")
 
 
+CLEARANCE_SOURCE_FILES=(Path(__file__).name,"tabletop_deformable_physical_exchange.py",
+                        "tabletop_deformable_live_geometry.py","tabletop_batch_geometry.py",
+                        "tabletop_deformable_wrist_projection.py")
+
+
 def _pins():
     root=Path(__file__).parent
-    names=(Path(__file__).name,"tabletop_deformable_physical_exchange.py",
-           "tabletop_deformable_live_geometry.py","tabletop_batch_geometry.py",
-           "tabletop_deformable_wrist_projection.py")
-    return {name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in names}
+    return {name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in CLEARANCE_SOURCE_FILES}
+
+
+def frozen_clearance_sources(files):
+    """Extract the independent source stamps from an already SHA-verified archived recipe."""
+    suffix=("src","go2_pvcnn","control","dh116")
+    sources={}
+    for name in CLEARANCE_SOURCE_FILES:
+        values=[stamp for path,stamp in files.items() if Path(path).parts[-5:]==(*suffix,name)]
+        if (len(values)!=1 or not isinstance(values[0],str) or len(values[0])!=64
+                or any(symbol not in "0123456789abcdef" for symbol in values[0])):
+            raise ValueError("complete unique archived clearance source hashes required")
+        sources[name]=values[0]
+    return sources
 
 
 def _measure(values):
@@ -37,13 +52,15 @@ def _measure(values):
     return values,failed
 
 
-def validate_post_step_clearance(row):
+def validate_post_step_clearance(row, *, sealed_archive_sources=None):
     """Recheck one decoded durable exchange row; never steps or owns SDK objects."""
     packet=row["post_step_clearance"]
     post=row["action_readback"]["post"]["identity"]
+    expected_sources=_pins() if sealed_archive_sources is None else sealed_archive_sources
     if (len(post)!=1 or packet["version"]!=VERSION or packet["floor_m"]!=.0021
             or CLEARANCE_M!=.0021 or packet["source"]!=GEOMETRY_SOURCE
-            or packet["source_sha256"]!=_pins() or packet["identity"]!=post[0]
+            or set(expected_sources)!=set(CLEARANCE_SOURCE_FILES)
+            or packet["source_sha256"]!=expected_sources or packet["identity"]!=post[0]
             or packet["identity"]["clock_valid"] is not True
             or packet["geometry_phase"]!="sdk_complete_rod_pending"
             or packet["physics_step"]!=row["physics_step"]
