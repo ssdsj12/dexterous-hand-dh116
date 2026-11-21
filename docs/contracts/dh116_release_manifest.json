@@ -32380,6 +32380,31 @@
         "verified_at_utc": "2026-11-21T22:48:08.409292+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-reward-clock-parity",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-reward-clock-parity.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_reward_clock_parity_v1.json",
+      "cpu_tests": {
+        "passed": 457,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0147cb74316862b19e8938b2a2f07fd252eb1df9",
+        "source_tree": "cd376cb6aa2e975ac5de54857a9d5a0b3ca31412",
+        "remote_branch": "11-17",
+        "files_verified": 14,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T23:03:05.378980+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
