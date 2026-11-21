@@ -1,0 +1,8 @@
+{
+  "version": "dh116-pinch-right-force-seating-v1",
+  "control_boundary_sdk": 656,
+  "maximum_finger_travel_rad": 0.0012,
+  "planned_index_action": 0.03,
+  "dose_windows": 8,
+  "settle_windows": 16
+}

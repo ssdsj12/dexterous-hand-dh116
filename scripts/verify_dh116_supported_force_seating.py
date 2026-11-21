@@ -80,3 +80,23 @@ def load_tripod_seating(receipt, actions, *, start_sdk):
     return np.vstack((actions[:count], appended)), dict(sdk_step=TRIPOD_SDK, archive=row,
         pad_by_slot={str(slot): pad for slot, pad in PAD_FOR_SLOT.items()}), (
         *paths, Path(__file__), TRIPOD_REQUEST, checkpoint)
+
+
+def load_pinch_seating(receipt):
+    contract = measured.ROOT / "docs/contracts/dh116_teacher_pinch_right_first_contact_native_v1.json"
+    request_path = measured.ROOT / "configs/dh116_tasks/flexible_pinch_right_force_seating_v1.json"
+    request = json.loads(request_path.read_bytes())
+    sdk = 656
+    if (request["version"] != "dh116-pinch-right-force-seating-v1" or request["control_boundary_sdk"] != sdk
+            or request["dose_windows"] != 8 or request["settle_windows"] != 16
+            or not 0. < request["maximum_finger_travel_rad"] <= .0012):
+        raise ValueError("expected frozen right Pinch index seating contract")
+    rows, _, paths = measured.archive(receipt, contract=contract, sdk=sdk, task="pinch")
+    command = np.zeros(24)
+    command[8] = request["planned_index_action"]
+    pads = {8: "index"}
+    appended = np.vstack((np.repeat(command[None], request["dose_windows"], axis=0),
+                          np.zeros((request["settle_windows"], 24))))
+    validate_seating_schedule(appended, pads, max_travel_rad=request["maximum_finger_travel_rad"])
+    return appended, dict(sdk_step=sdk, archive=rows[-1], pad_by_slot={"8": "index"}), (
+        *paths, Path(__file__), request_path)

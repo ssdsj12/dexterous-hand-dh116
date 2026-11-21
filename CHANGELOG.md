@@ -1,3 +1,7 @@
+## Pinch force-guided right index seating
+
+Take a bounded right-index action from measured Pinch reaction data with both wrists fixed. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-force-guided-index-seating.md).
+
 ## Tripod force-guided seating native result
 
 Record 24 simultaneous loaded and opposed Tripod SDK steps, with a longest run of one step. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-force-guided-right-seating-native.md).

@@ -105,6 +105,9 @@ def freeze(args):
         sources.checked_json(archive,record["gpu_row_sha256"])
         files.extend((archive,folder/"result.json",folder/f"{side}.base_link.npz"))
     boundary = actions = distal = None
+    seating = getattr(args, "seating_reference", None)
+    if seating is not None and args.distal_reference is None:
+        raise ValueError("Pinch force seating requires the replayed distal contact prefix")
     if (args.distal_reference is None) != (args.distal_screen is None):
         raise ValueError("provide Pinch right distal source and proof together")
     if args.distal_reference is not None and args.approach_reference is None:
@@ -122,6 +125,16 @@ def freeze(args):
             files.extend(dependencies)
             plan["right_pinch_distal_contact"] = parameters
             distal = dict(parameters, archive=end_row)
+            if seating is not None:
+                from scripts.verify_dh116_supported_force_seating import load_pinch_seating
+
+                appended, seat, bound = load_pinch_seating(seating)
+                if seat["sdk_step"] != SDK_END + 8 * len(actions):
+                    raise ValueError("Pinch force seating requires the sealed complete SDK 656 boundary")
+                actions = np.vstack((actions, appended))
+                distal["seating"] = seat
+                plan["right_pinch_force_seating"] = seat
+                files.extend(bound)
         sdk_end = SDK_END + 8 * len(actions)
         plan["pinch_approach"] = actions.tolist()
         plan["budget"].update(mode="pinch_measured_guarded_approach", sdk_steps=sdk_end,
@@ -145,6 +158,7 @@ def main(argv=None):
     parser.add_argument("--approach-screen",type=Path)
     parser.add_argument("--distal-reference",type=Path)
     parser.add_argument("--distal-screen",type=Path)
+    parser.add_argument("--seating-reference",type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args=parser.parse_args(argv)
     native.validate_execution_context(screen.ROOT)

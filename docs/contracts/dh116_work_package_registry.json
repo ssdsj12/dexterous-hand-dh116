@@ -47004,6 +47004,29 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-force-guided-index-seating": {
+      "title": "Probe previously insufficient right Pinch loads with measured index seating",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-right-first-contact-native-result",
+        "teacher.tripod-force-guided-right-seating-native"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_force_seating.py",
+        "tests/test_dh116_pinch_supported_reset.py",
+        "tests/test_dh116_supported_distal_transfer.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_force_guided_index_seating_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-force-guided-index-seating.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 217,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

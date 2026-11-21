@@ -41,3 +41,31 @@ def test_budget_and_same_sample_force_completeness():
     reading["per_hand"]["right"]["per_substep"].pop()
     with pytest.raises(ValueError, match="12"):
         select_seating_command(command[0], reading, {9: "middle"})
+
+
+def test_pinch_seating_uses_only_the_right_index_and_its_own_receipt(monkeypatch, tmp_path):
+    from scripts import verify_dh116_supported_force_seating as seating
+
+    repo = tmp_path
+    request = repo / "configs/dh116_tasks/flexible_pinch_right_force_seating_v1.json"
+    request.parent.mkdir(parents=True)
+    import json
+    request.write_text(json.dumps(dict(version="dh116-pinch-right-force-seating-v1",control_boundary_sdk=656,
+        maximum_finger_travel_rad=.0012,planned_index_action=.03,dose_windows=8,settle_windows=16)))
+    monkeypatch.setattr(seating.measured, "ROOT", repo)
+    sealed = {"physics_step": 656, "source": "Pinch original right"}
+    receipt = repo / "receipt.json"
+
+    def archive(path, *, contract, sdk, task):
+        assert path == receipt
+        assert sdk == 656 and task == "pinch"
+        assert contract.name == "dh116_teacher_pinch_right_first_contact_native_v1.json"
+        return [sealed], [], (receipt,)
+
+    monkeypatch.setattr(seating.measured, "archive", archive)
+    commands, plan, sources = seating.load_pinch_seating(receipt)
+    assert commands.shape == (24, 24)
+    assert np.flatnonzero(np.any(commands,axis=0)).tolist() == [8]
+    np.testing.assert_allclose(commands[:8,8], .03)
+    np.testing.assert_array_equal(commands[8:], 0.)
+    assert plan["archive"] == sealed and plan["pad_by_slot"] == {"8":"index"} and receipt in sources

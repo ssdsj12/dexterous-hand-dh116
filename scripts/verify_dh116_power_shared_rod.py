@@ -317,7 +317,7 @@ def supported_action_schedule(action, remaining_sdk):
 def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                          clearance_shapes, setup, action, sdk_end, verify_support_continuity=False,
                          task="power", support_scene=None, waypoint_archive=None, precontact_archive=None,
-                         distal_probe=None, power_open_boundary_sdk=None):
+                         distal_probe=None, power_open_boundary_sdk=None, force_seating=None):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -365,7 +365,9 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         trace.watch("power_control_exchange", control, owner="supported Power action diagnostic", release="owned scope")
 
         power_start = geometry()["root_poses_w"] if power_open_boundary_sdk is not None else None
-        seating = None if distal_probe is None or distal_probe.bilateral is None else distal_probe.bilateral.get("seating")
+        seating = force_seating
+        if seating is None and distal_probe is not None and distal_probe.bilateral is not None:
+            seating = distal_probe.bilateral.get("seating")
 
         def observe(row):
             emitted = row
@@ -392,7 +394,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 verify_waypoint_boundary(actual, expected, sdk_step=seating["sdk_step"], exact_geometry=True)
                 if (actual["rod"]["rod_mesh_contact_pairs"] != expected["rod"]["rod_mesh_contact_pairs"]
                         or actual["issued_composer_wrench"] != expected["issued_composer_wrench"]):
-                    raise ValueError("Tripod force seating replay did not match its sealed force source")
+                    raise ValueError(f"{task} force seating replay did not match its sealed force source")
             if distal_probe is not None:
                 later = distal_probe.bilateral
                 if later is not None:
@@ -630,7 +632,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 verify_support_continuity=any(x is not None for x in (action_reference, tripod_archive, pinch_archive, power_open_archive)),
                 task=task, support_scene=live_support_scene, waypoint_archive=waypoint_archive,
                 precontact_archive=precontact_archive, distal_probe=probe,
-                power_open_boundary_sdk=power_open_boundary_sdk)
+                power_open_boundary_sdk=power_open_boundary_sdk,
+                force_seating=None if distal_contact is None else distal_contact.get("seating"))
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,
