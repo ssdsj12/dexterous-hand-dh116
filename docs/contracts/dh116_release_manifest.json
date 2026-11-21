@@ -30613,6 +30613,31 @@
         "verified_at_utc": "2026-11-21T08:11:10.749630+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-retreat-then-open",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-retreat-then-open.md",
+      "readiness": "docs/contracts/dh116_teacher_power_retreat_then_open_v1.json",
+      "cpu_tests": {
+        "passed": 153,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a15ce3ffecbddc504593d712f64ad0ec6ae6a19a",
+        "source_tree": "fbe06547571cf79c5d4929f45791aeca2ad1fbf1",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T08:15:39.981824+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
