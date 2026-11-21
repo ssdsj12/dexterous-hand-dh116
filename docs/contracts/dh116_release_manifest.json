@@ -31463,6 +31463,31 @@
         "verified_at_utc": "2026-11-21T14:14:37.984851+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "902-command-contact-v2",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-command-contact-v2.md",
+      "readiness": "docs/contracts/dh116_teacher_902_command_contact_v2.json",
+      "cpu_tests": {
+        "passed": 251,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "97881218c676a23aa82562a1075f98df17f1094a",
+        "source_tree": "1b9b3939f45eac90775bbdfe84225206fe06785a",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T14:33:25.956781+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
