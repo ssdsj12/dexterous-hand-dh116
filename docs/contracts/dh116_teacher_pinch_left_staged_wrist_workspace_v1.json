@@ -1,0 +1,85 @@
+{
+  "native_natural_exit_verified": false,
+  "outer_code": 1,
+  "signal": null,
+  "elapsed_s": 337.3579256031662,
+  "outer_sha256": "5e0963258b455dec004af530f1d1a1008192eee15d7449929e3a7cb99835426d",
+  "frozen_sha256": "04e87c30bfb198123923ffa7674887b474cacec627838799fba746bdd155db39",
+  "end_sdk": 1792,
+  "actual_motion_rows": 1552,
+  "checked_bilateral_phase_rows": 944,
+  "bilateral_phase_transfer_rows": 944,
+  "left_steps": [],
+  "right_steps": [],
+  "bilateral_steps": [],
+  "longest_consecutive_bilateral_sdk_steps": 0,
+  "pair_counts": {
+    "support_0": 11328,
+    "right.finger23_link": 3628,
+    "right.finger14_link": 11328,
+    "support_1": 11328
+  },
+  "first_sdk_by_mesh": {
+    "support_0": 849,
+    "right.finger23_link": 849,
+    "right.finger14_link": 849,
+    "support_1": 849
+  },
+  "peak_normal_per_pair_n": {
+    "support_0": 0.1667506098744129,
+    "right.finger23_link": 0.03816030851146575,
+    "right.finger14_link": 0.0321852037282368,
+    "support_1": 0.16037382185459137
+  },
+  "support_peak_force_n": {
+    "table": 0,
+    "support_0": 0.16730188738312804,
+    "support_1": 0.1604030895584222
+  },
+  "violations": [],
+  "diagnostic_failure": {
+    "action_termination": "left_pinch_midpoint_tracking_gate"
+  },
+  "native_grasp_qualified": false,
+  "teacher_admission": false,
+  "after_retarget_loaded": {
+    "left": 0,
+    "right": 0,
+    "bilateral": 0
+  },
+  "exact_sdk848_reference": true,
+  "app_close_returned": true,
+  "first_left_composer_delivery_by_name": {},
+  "guards": [],
+  "last_row_sha256": "6e8ef949c6006486bafa99cd49275301c2a3b14917672e12ef9fd0987b930d86",
+  "version": "dh116-teacher-pinch-left-staged-contact-native-v1",
+  "midpoint": {
+    "physics_step": 1792,
+    "source": "measured_sdk_and_projected_wrist",
+    "pose_position_error_mm": 12.512406743303027,
+    "position_error_xyz_mm": [
+      -0.053855970801430786,
+      -0.014961708767052828,
+      12.512281893864719
+    ],
+    "rotation_error_rad": 0.00875454896284424,
+    "active_joint_max_error_rad": 0.002103369326021731,
+    "reset_world_z_m": 0.4848647085577069,
+    "commanded_midpoint_world_z_m": 0.4683524515637006,
+    "measured_world_z_m": 0.4808647334575653,
+    "projected_world_z_m": 0.4808647085577069,
+    "original_lower_z_offset_m": -0.004,
+    "safe_z_interlock_active": false
+  },
+  "failure_evidence_sha256": "e79e48b9d564fbc49469b6d228209454536370f54d239493c914eafc3fd815ee",
+  "support_free_qualification": false,
+  "ppo_updates": 0,
+  "sdk_rows_until_guard": 1792,
+  "solver_substeps": 21480,
+  "next": "Constrain planning to the live original wrist workspace and verify a horizontally offset candidate.",
+  "cpu_tests": {
+    "passed": 48,
+    "failed": 0
+  },
+  "workspace_compiler_validates_both_waypoints": true
+}

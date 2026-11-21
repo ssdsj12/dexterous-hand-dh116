@@ -1,0 +1,9 @@
+# Pinch left approach wrist workspace
+
+The NVIDIA Isaac diagnostic replayed the exact right-hand seating at SDK step 848 and retained 944 consecutive reaction transfers through step 1792. The left midpoint tracking gate stopped the run at step 1792. Both supports carried load throughout this segment, and neither left pad made contact. No interval met the bilateral force criterion. The application close marker was written. The outer and debugger exit codes were both 1 with no signal, timeout or force termination.
+
+The planned midpoint Z was 468.352 mm. The live reset-relative origin was 484.865 mm, and the controller’s original −4 mm wrist bound limited the projected target to 480.865 mm. The measured Z matched the projected target within 0.00003 mm. The measured midpoint missed the target by 12.512 mm in Z and 0.00875 rad in orientation. The original safe-Z interlock was inactive. A source-envelope check in the prior offline screen had omitted the controller’s absolute reachable range.
+
+`validate_left_wrist_workspace()` derives the world-space bound from the archived projected wrist position and its reset-relative offset. Both stages must pass this check before any command schedule is issued. The four workspace regressions failed before the change and passed afterward. The combined targeted CPU run passed 48 tests. The unsuccessful native attempt and frozen request are retained for replay. The next Pinch candidate must solve for contact inside the original wrist workspace.
+
+Run `python -B -m pytest -q tests/test_dh116_pinch_left_staged_workspace.py tests/test_dh116_pinch_supported_reset.py tests/test_dh116_supported_distal_transfer.py tests/test_dh116_supported_force_seating.py tests/test_dh116_tripod_bilateral_distal_retarget.py tests/test_dh116_power_high_bypass.py tests/test_dh116_power_supported_task.py` from the Ubuntu development tree. The run receipt and source fingerprints are in the linked readiness record.

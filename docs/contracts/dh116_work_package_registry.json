@@ -47189,6 +47189,30 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-left-staged-wrist-workspace": {
+      "title": "Reject unreachable staged Pinch left wrist waypoints",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-staged-left-distal-approach"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_left_staged_workspace.py",
+        "tests/test_dh116_supported_distal_transfer.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_left_staged_wrist_workspace_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-left-staged-wrist-workspace.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 48,
+        "native_exit_code": 1,
+        "native_termination": "left_pinch_midpoint_tracking_gate",
+        "last_sdk": 1792,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

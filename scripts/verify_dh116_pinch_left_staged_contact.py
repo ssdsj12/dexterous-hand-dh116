@@ -3,6 +3,10 @@
 import json
 from pathlib import Path
 
+import numpy as np
+
+from go2_pvcnn.control.dh116.tabletop_free_wrist_grasp import CONTRACT as WRIST
+
 from scripts import screen_dh116_tripod_measured_precontact as measured
 from scripts.verify_dh116_tripod_supported_reset import bilateral_schedule
 
@@ -12,6 +16,20 @@ SDK = 848
 WINDOWS = (118, 18)
 PAUSES = (0, 16)
 STATIONS = {"left.finger14_link": [35], "left.finger23_link": [35]}
+
+
+def validate_left_wrist_workspace(projection, waypoints):
+    # Use the measured world-space origin feeding the original wrist transport.
+    projected_position = projection["projected_root_poses"][0, 0, :3]
+    origin = projected_position - projection["palm_offsets_m"][0, 0]
+    lower = origin + WRIST["palm_lower_m"]
+    upper = origin + WRIST["palm_upper_m"]
+    for index, waypoint in enumerate(waypoints, start=1):
+        position = np.asarray(waypoint["pose_wxyz"][:3], dtype=float)
+        if (position.shape != (3,) or not np.isfinite(position).all()
+                or np.any(position < lower) or np.any(position > upper)):
+            raise ValueError(f"left Pinch waypoint {index} outside original wrist workspace: "
+                             f"position={position.tolist()}, lower={lower.tolist()}, upper={upper.tolist()}")
 
 
 def load_left_route(receipt, config):
@@ -41,7 +59,9 @@ def load_left_route(receipt, config):
     if (request["version"] != "dh116-pinch-left-staged-contact-v1" or request["source_sdk"] != SDK
             or request["target_stations"] != STATIONS):
         raise ValueError("the immutable measured left Pinch path is required")
-    commands = bilateral_schedule(config, measured.decode_owned(row), request["left_waypoints"], WINDOWS, PAUSES)
+    decoded = measured.decode_owned(row)
+    validate_left_wrist_workspace(decoded["wrist_projection"], request["left_waypoints"])
+    commands = bilateral_schedule(config, decoded, request["left_waypoints"], WINDOWS, PAUSES)
     return commands, dict(boundary_sdk=SDK+8*WINDOWS[0], replay_sdk=SDK, stations=STATIONS,
                           midpoint_sdk=SDK+8*WINDOWS[0], midpoint_target=request["left_waypoints"][0],
                           archive=row), (CONTRACT, REQUEST, Path(__file__), receipt, marker, supports, boundary)

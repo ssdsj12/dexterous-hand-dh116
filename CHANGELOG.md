@@ -1,3 +1,7 @@
+## Pinch left approach wrist workspace
+
+Reject unreachable targets before issuing commands and record the native midpoint stop. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-left-staged-wrist-workspace.md).
+
 ## Pinch staged left distal approach
 
 Bind the independent left approach and limited contact permission to the real right-seating trajectory. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-staged-left-distal-approach.md).
