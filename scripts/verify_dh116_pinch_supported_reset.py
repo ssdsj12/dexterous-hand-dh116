@@ -106,6 +106,9 @@ def freeze(args):
         files.extend((archive,folder/"result.json",folder/f"{side}.base_link.npz"))
     boundary = actions = distal = None
     seating = getattr(args, "seating_reference", None)
+    left_contact = getattr(args, "left_contact_reference", None)
+    if left_contact is not None and seating is None:
+        raise ValueError("left approach requires the same measured right force seating prefix")
     if seating is not None and args.distal_reference is None:
         raise ValueError("Pinch force seating requires the replayed distal contact prefix")
     if (args.distal_reference is None) != (args.distal_screen is None):
@@ -135,12 +138,25 @@ def freeze(args):
                 distal["seating"] = seat
                 plan["right_pinch_force_seating"] = seat
                 files.extend(bound)
+                if left_contact is not None:
+                    from scripts.verify_dh116_pinch_left_staged_contact import load_left_route
+
+                    more, handoff, dependencies = load_left_route(left_contact, config)
+                    seat["stop_sdk"] = SDK_END + 8 * len(actions)
+                    if handoff["replay_sdk"] != seat["stop_sdk"]:
+                        raise ValueError("left Pinch must continue the completed right seating window")
+                    actions = np.vstack((actions, more))
+                    distal["bilateral"] = handoff
+                    plan["left_pinch_staged_contact"] = handoff
+                    files.extend(dependencies)
         sdk_end = SDK_END + 8 * len(actions)
         plan["pinch_approach"] = actions.tolist()
         plan["budget"].update(mode="pinch_measured_guarded_approach", sdk_steps=sdk_end,
             control_steps=len(actions), solver_steps=(sdk_end-2)*shared.SUBSTEPS, soft_wall_seconds=240)
         if distal is not None:
             plan["budget"].update(mode="pinch_right_measured_distal_contact", soft_wall_seconds=360)
+        if left_contact is not None:
+            plan["budget"].update(mode="pinch_bilateral_staged_distal_contact", soft_wall_seconds=820)
     for source in files:
         path=str(source.resolve(strict=True))
         digest=native.sha(source)
@@ -159,6 +175,7 @@ def main(argv=None):
     parser.add_argument("--distal-reference",type=Path)
     parser.add_argument("--distal-screen",type=Path)
     parser.add_argument("--seating-reference",type=Path)
+    parser.add_argument("--left-contact-reference",type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args=parser.parse_args(argv)
     native.validate_execution_context(screen.ROOT)

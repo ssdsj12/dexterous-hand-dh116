@@ -47167,6 +47167,28 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-staged-left-distal-approach": {
+      "title": "Stage the measured left Pinch approach against the same supported rod",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-force-guided-index-seating-native"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_supported_reset.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_supported_force_seating.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_staged_left_distal_approach_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-staged-left-distal-approach.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 222,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -182,3 +182,22 @@ def test_live_source_guard_emits_the_measured_body_before_stopping(monkeypatch):
     assert failure["rod_gap_lower_m"] < .00025
     np.testing.assert_array_equal(failure["pose_world_wxyz"], [.40, .13, .30, 1., 0., 0., 0.])
     np.testing.assert_array_equal(failure["source_vertices_local_m"], verts)
+
+
+def test_pinch_left_distal_guard_only_opens_after_its_staged_midpoint():
+    names = ("finger14_link", "finger23_link")
+    bindings = {f"{side}.{name}": dict(side=side, body_name=name, body_index=i,
+                    prim_path=f"/World/{side}/{name}")
+                for side in ("left","right") for i,name in enumerate(names)}
+    shapes = [(lane,i,np.zeros((4,3))) for lane in (0,1) for i in (0,1)]
+    from scripts.verify_dh116_supported_distal_transfer import SupportedDistalProbe
+
+    probe = SupportedDistalProbe(432,{f"right.{name}":[3] for name in names},bindings,shapes,
+        grids=dict.fromkeys(bindings),archive={},max_pad_penetration_m=.00025,grasp="pinch",
+        bilateral={"boundary_sdk":1792,"replay_sdk":848,"stations":{f"left.{name}":[35] for name in names}})
+    assert probe.contact_shape(849,(1,0))
+    assert not probe.contact_shape(849,(0,0))
+    assert not probe.contact_shape(1792,(0,0))
+    assert probe.contact_shape(1793,(0,0))
+    assert probe.stations_at(1793)=={f"{side}.{name}":[35 if side=="left" else 3]
+                                    for side in ("left","right") for name in names}

@@ -1,3 +1,7 @@
+## Pinch staged left distal approach
+
+Bind the independent left approach and limited contact permission to the real right-seating trajectory. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-staged-left-distal-approach.md).
+
 ## Tripod left-index dose native result
 
 Record the matched force comparison and continuing intermittent bilateral support contact. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-left-index-stabilization-native.md).

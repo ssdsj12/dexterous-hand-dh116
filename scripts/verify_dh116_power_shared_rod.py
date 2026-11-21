@@ -419,13 +419,14 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
             if distal_probe is not None:
                 later = distal_probe.bilateral
                 if later is not None:
-                    checkpoint = later if row["physics_step"] == later["boundary_sdk"] else later.get("retarget")
-                    if checkpoint is not None and row["physics_step"] == checkpoint.get("sdk_step", later["boundary_sdk"]):
+                    replay_sdk = later.get("replay_sdk", later["boundary_sdk"])
+                    checkpoint = later if row["physics_step"] == replay_sdk else later.get("retarget")
+                    if checkpoint is not None and row["physics_step"] == checkpoint.get("sdk_step", replay_sdk):
                         actual, expected = encode_owned(emitted), checkpoint["archive"]
                         verify_waypoint_boundary(actual, expected, sdk_step=row["physics_step"], exact_geometry=True)
                         if (actual["rod"]["rod_mesh_contact_pairs"] != expected["rod"]["rod_mesh_contact_pairs"]
                                 or actual["issued_composer_wrench"] != expected["issued_composer_wrench"]):
-                            raise ValueError("Tripod contact or force differs from the sealed pre-retarget replay")
+                            raise ValueError(f"{task} contact or force differs from the sealed pre-retarget replay")
                 evidence, reason = distal_probe.observe(row)
                 if distal_probe.active(row["physics_step"]):
                     native.write_new(output/f"{task}_distal_probe_{row['physics_step']}.json", evidence)
@@ -433,7 +434,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                         from scripts.verify_dh116_supported_distal_transfer import midpoint_reached
 
                         if not midpoint_reached(emitted, later["midpoint_target"]):
-                            return "left_tripod_midpoint_tracking_gate"
+                            return f"left_{task}_midpoint_tracking_gate"
                     return reason
             pairs = row["rod"]["rod_mesh_contact_pairs"]["pairs"]
             if any(pair["mesh_name"] not in END_SUPPORT_NAMES for pair in pairs):
@@ -449,7 +450,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         completed = []
         for command in schedule:
             sdk = power.clock()["physics_step"]
-            seating = next((s for s in reversed(seatings) if s["sdk_step"] <= sdk), None)
+            seating = next((s for s in reversed(seatings) if s["sdk_step"] <= sdk < s.get("stop_sdk", sdk_end)), None)
             if seating is not None:
                 from scripts.verify_dh116_supported_force_seating import select_seating_command
                 from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_supported_distal_contact

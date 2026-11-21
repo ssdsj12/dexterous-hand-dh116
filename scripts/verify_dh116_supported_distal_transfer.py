@@ -85,9 +85,9 @@ class SupportedDistalProbe:
         self.stations = stations
         self.bilateral = bilateral
         self.additional_stations = {} if bilateral is None else bilateral["stations"]
-        if (bilateral is not None and (grasp != "tripod"
-                or set(self.additional_stations) & set(stations) or bilateral["boundary_sdk"] <= boundary_sdk)):
-            raise ValueError("independent later Tripod contact areas required")
+        if (bilateral is not None and (set(self.additional_stations) & set(stations)
+                or bilateral["boundary_sdk"] <= boundary_sdk)):
+            raise ValueError("independent later distal contact areas required")
         self.shape_keys = target_shape_keys(bindings, clearance_shapes, stations)
         self.additional_shape_keys = target_shape_keys(bindings, clearance_shapes, self.additional_stations)
         self.grids = {name: grids[name] for name in set(stations) | set(self.additional_stations)}
