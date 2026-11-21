@@ -1,3 +1,7 @@
+## Pinch right supported first contact probe
+
+Use a two-pad material-station allowance and retain next-step native force evidence. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-right-first-contact.md).
+
 ## Power retreat and opening failure evidence
 
 Retain completed motion rows and failed process lifecycle evidence separately. [Report](docs/superpowers/reports/2026-11-21-teacher-power-retreat-then-open-native-failure.md).

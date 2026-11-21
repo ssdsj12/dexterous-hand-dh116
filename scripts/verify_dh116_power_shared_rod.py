@@ -271,11 +271,11 @@ def verify_waypoint_boundary(actual, archived, *, sdk_step=272, exact_geometry=F
             or any(actual["action_readback"]["post"]["hands"][side][key]
                    != archived["action_readback"]["post"]["hands"][side][key]
                    for side in SIDES for key in hand_fields)):
-        raise ValueError("live Tripod action prefix does not match its sealed waypoint boundary")
+        raise ValueError("live action prefix does not match its sealed waypoint boundary")
     if exact_geometry:
         geometry = actual.get("sdk_hand_geometry", {})
         if geometry.get("physics_step") != sdk_step or geometry != archived.get("sdk_hand_geometry"):
-            raise ValueError("live Tripod link poses differ from the sealed precontact boundary")
+            raise ValueError("live link poses differ from the sealed precontact boundary")
 
 
 def supported_action_schedule(action, remaining_sdk):
@@ -406,7 +406,10 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 or (task == "pinch" and (supported_acquire is None or not require_no_hand_contact
                     or live_support_scene is None or (action_after_settle is None) != (pinch_archive is None)))
                 or (task != "pinch" and pinch_archive is not None)
-                or (distal_contact is not None and (task != "tripod" or precontact_archive is None))
+                or (distal_contact is not None and (
+                    (task not in ("tripod", "pinch") or distal_contact["grasp"] != task)
+                    or (task == "tripod" and precontact_archive is None)
+                    or (task == "pinch" and pinch_archive is None)))
                 or (power_open_archive is not None and (task != "power" or action_after_settle is None
                     or live_support_scene is None or type(power_open_boundary_sdk) is not int))
                 or (power_open_archive is None and power_open_boundary_sdk is not None)
@@ -549,7 +552,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 geometry = scene.load_sdf_arrays(scene.prepare_scene(ROOT))
                 probe = SupportedDistalProbe(distal_contact["boundary_sdk"], distal_contact["stations"],
                     meshes, clearance_shapes, grids=geometry, archive=distal_contact["archive"],
-                    max_pad_penetration_m=distal_contact["max_pad_penetration_m"])
+                    max_pad_penetration_m=distal_contact["max_pad_penetration_m"], grasp=distal_contact["grasp"])
             control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
                 meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end,
                 verify_support_continuity=any(x is not None for x in (action_reference, tripod_archive, pinch_archive, power_open_archive)),

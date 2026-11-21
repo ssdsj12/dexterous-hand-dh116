@@ -72,3 +72,26 @@ def test_probe_persists_contact_then_transferred_wrench_and_rejects_unselected_c
     assert observed['violations'] == ['right.base_link:3']
     assert reason == 'unexpected_contact_outside_distal_station'
     assert probe.summary()['first_transfer_sdk'] == 530
+
+
+def test_pinch_probe_uses_a_two_pad_diagnostic_without_enabling_third_pad(monkeypatch):
+    from scripts import verify_dh116_supported_distal_transfer as transfer
+
+    target = {'right.finger14_link': [3], 'right.finger23_link': [2]}
+    binding = {name: dict(side='right', body_index=i, body_name=name.split('.')[1],
+                         prim_path='/World/rightHand/'+name.split('.')[1])
+               for i, name in enumerate(target)}
+    def observe(rod, *, grasp):
+        assert grasp == 'pinch'
+        return dict(per_hand=dict(left={'loaded': False}, right={'loaded': False}))
+    monkeypatch.setattr(transfer, 'measure_supported_distal_contact', observe)
+    probe = transfer.SupportedDistalProbe(432, target, binding,
+                [(1, i, np.zeros((4, 3))) for i in range(2)], grids=dict.fromkeys(target),
+                archive={}, max_pad_penetration_m=.00025, grasp='pinch')
+    def row(step, pairs):
+        return dict(physics_step=step, reaction_source_physics_step=step-1, issued_composer_wrench={},
+                    rod=dict(hand_wrenches_com_world={}, rod_mesh_contact_pairs=dict(pairs=pairs)))
+    probe.observe(row(432, []))
+    evidence, reason = probe.observe(row(433, [dict(mesh_name='right.finger33_link', node_index=2)]))
+    assert evidence['violations'] == ['right.finger33_link:2']
+    assert reason == 'unexpected_contact_outside_distal_station'

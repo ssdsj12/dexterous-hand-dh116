@@ -28,7 +28,7 @@ def read_request():
     return request
 
 
-def route_passes(samples):
+def route_passes(samples, *, pads=measured.PADS, stations=STATIONS):
     if set(samples) != set(measured.SIDES):
         return False
     if not all(len(samples[side]) == measured.SAMPLES for side in measured.SIDES):
@@ -40,11 +40,11 @@ def route_passes(samples):
             if (row["shape_count"] != 22 or not np.isfinite([rod, row["support_clearance_m"], row["table_clearance_m"]]).all()
                     or rod <= measured.ROD_RESERVE_M or row["support_clearance_m"] <= 0.
                     or row["table_clearance_m"] < measured.CLEARANCE_M
-                    or gaps.shape != (3,) or not np.isfinite(gaps).all()
+                    or gaps.shape != (len(pads),) or not np.isfinite(gaps).all()
                     or (gaps < -MAX_PAD_SDF_PENETRATION_M).any()):
                 return False
-            if side == "right" and any(node not in STATIONS[f"right.{name}"]
-                                       for name, node in zip(measured.PADS, row["node_ids"], strict=True)):
+            if side == "right" and any(node not in stations[f"right.{name}"]
+                                       for name, node in zip(pads, row["node_ids"], strict=True)):
                 return False
     end = samples["right"][-1]
     return bool(max(end["pad_gaps_m"]) < .0001 and max(end["opposition"]) < -.25)

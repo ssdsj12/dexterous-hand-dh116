@@ -158,7 +158,7 @@ def load_distal_contact(receipt, proof, config):
                     Path(transfer.__file__), Path(force.__file__),
                     Path(force.__file__).with_name("tabletop_teacher_force_closure.py"))
     return rows[-1], actions, dependencies, dict(
-        boundary_sdk=first.SDK, stations=request["target_stations"],
+        boundary_sdk=first.SDK, stations=request["target_stations"], grasp="tripod",
         max_pad_penetration_m=first.MAX_PAD_SDF_PENETRATION_M)
 
 

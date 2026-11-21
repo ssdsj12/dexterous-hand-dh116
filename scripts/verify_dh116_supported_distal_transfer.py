@@ -55,7 +55,10 @@ class SupportedDistalProbe:
     """Track measured contact and the following PhysX command, without granting success."""
 
     def __init__(self, boundary_sdk, stations, bindings, clearance_shapes, *,
-                 grids, archive, max_pad_penetration_m):
+                 grids, archive, max_pad_penetration_m, grasp="tripod"):
+        if grasp not in ("pinch", "tripod"):
+            raise ValueError("only admitted distal diagnostic styles can use this probe")
+        self.grasp = grasp
         self.boundary_sdk = boundary_sdk
         self.stations = stations
         self.shape_keys = target_shape_keys(bindings, clearance_shapes, stations)
@@ -106,7 +109,7 @@ class SupportedDistalProbe:
         rod = row["rod"]
         pairs = rod["rod_mesh_contact_pairs"]["pairs"]
         violations = pairs_outside_station(pairs, self.stations)
-        evidence = measure_supported_distal_contact(rod, grasp="tripod")
+        evidence = measure_supported_distal_contact(rod, grasp=self.grasp)
         intended_pairs = sum(p["node_index"] in self.stations.get(p["mesh_name"], ()) for p in pairs)
         if intended_pairs:
             if self.first_contact_sdk is None:

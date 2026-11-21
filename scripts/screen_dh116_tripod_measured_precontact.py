@@ -23,7 +23,9 @@ SAMPLES = 17
 ROD_RESERVE_M = .00025
 
 
-def archive(receipt, *, contract=CONTRACT, sdk=SDK):
+def archive(receipt, *, contract=CONTRACT, sdk=SDK, task="tripod"):
+    if task not in ("tripod", "pinch"):
+        raise ValueError("owned supported distal grasp archive required")
     expected = json.loads(contract.read_bytes())["actual"]
     outer = sources.checked_json(receipt, expected["outer_sha256"])
     raw = receipt.parent / "native"
@@ -32,20 +34,20 @@ def archive(receipt, *, contract=CONTRACT, sdk=SDK):
     if (outer["exit_code"] != 0 or outer["debugger_inferior_exit_code"] != 0
             or outer["forced_exit"] or outer["exceeded_budget"]
             or close["app_close_returned"] is not True):
-        raise ValueError("sealed naturally closed Tripod run required")
-    row_paths = [raw / f"tripod_control_{tick}.json" for tick in range(sdk - 8, sdk + 1)]
+        raise ValueError("sealed naturally closed supported distal run required")
+    row_paths = [raw / f"{task}_control_{tick}.json" for tick in range(sdk - 8, sdk + 1)]
     rows = []
     for tick, path in enumerate(row_paths, sdk - 8):
         row = sources.checked_json(path, outer["artifact_sha256"][path.name])
         if (row["physics_step"] != tick or row["guard_failure"] is not None
                 or row["sdk_hand_geometry"]["physics_step"] != tick
                 or row["rod"]["physics_step"] != tick or row["rod"]["rod_tick"] != (tick - 2) * 12):
-            raise ValueError("Tripod link, rod and action source clocks differ")
+            raise ValueError("supported distal link, rod and action source clocks differ")
         rows.append(row)
-    support_path = raw / "tripod_support_scene.json"
+    support_path = raw / f"{task}_support_scene.json"
     supports = sources.checked_json(support_path, outer["artifact_sha256"][support_path.name])
     if native.sha(row_paths[-1]) != expected["last_row_sha256"]:
-        raise ValueError("Tripod terminal row is not the archived waypoint boundary")
+        raise ValueError("terminal row is not the archived distal boundary")
     return rows, supports["supports"], [contract, receipt, marker, *row_paths, support_path]
 
 
