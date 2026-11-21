@@ -32005,6 +32005,31 @@
         "verified_at_utc": "2026-11-21T19:19:01.564652+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.supported-mesh-reset",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-supported-mesh-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_supported_mesh_reset_v1.json",
+      "cpu_tests": {
+        "passed": 172,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "704ffff754039fec6e126de518817f3375d563b3",
+        "source_tree": "cd9759b78e61057bda841facbef218e94bf4adae",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T19:38:33.169630+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
