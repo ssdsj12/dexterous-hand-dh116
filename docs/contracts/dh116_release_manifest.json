@@ -30213,6 +30213,31 @@
         "verified_at_utc": "2026-11-21T06:38:07.454598+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Tripod guarded four-window approach",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-guarded-approach.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_guarded_approach_v1.json",
+      "cpu_tests": {
+        "passed": 111,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7bd5168ef6641350cb95b024348fc1300fd9639c",
+        "source_tree": "45a4b14638b364c870ac1b25d8b669efe0e53777",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T06:41:53.616520+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
