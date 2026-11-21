@@ -213,7 +213,8 @@ def bind_palm_sources(sim, bindings, original, *, args):
         palm_bindings[key] = dict(side=side, body_name="base_link", body_index=body, prim_path=path,
             source_usd_sha256=parent["source_usd_sha256"], source_geometry_sha256=live["geometry_sha256"],
             cooked_geometry_sha256=archive_geometry_digest(archive), capture_sha256=frozen["gpu_row_sha256"],
-            sdf_sha256=frozen["sdf_file_sha256"])
+            sdf_sha256=frozen["sdf_file_sha256"], frame=live["frame"], unit=live["unit"],
+            sdf_path=str(bake / (key+".npz")))
     return palm_bindings, palm_grids
 
 
@@ -275,7 +276,8 @@ def bind_proximal_sources(sim, bindings, original, *, args):
         records[name] = dict(side=side, body_name=PROXIMAL_LINK, body_index=body, prim_path=path,
             source_usd_sha256=parent["source_usd_sha256"], source_geometry_sha256=live["geometry_sha256"],
             cooked_geometry_sha256=archive_geometry_digest(archive), capture_sha256=expected["native_row_sha256"],
-            sdf_sha256=expected["grid_sha256"])
+            sdf_sha256=expected["grid_sha256"], frame=live["frame"], unit=live["unit"],
+            sdf_path=str(args.proximal_bake / (name+".npz")))
     return records, grids
 
 

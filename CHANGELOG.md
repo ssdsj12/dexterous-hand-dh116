@@ -1,3 +1,7 @@
+## Fresh supported Tripod Reset sources
+
+Fresh construction now accepts all17 original mesh slots without a hidden Reset; palm/proximal metadata preserves verified frame, units and SDF path. Independent three-pad Reset distance refuses pose, clock and source mismatches; unknown stays unknown. 102 selected CPU checks and60 Registry checks pass; no new native/PPO or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-fresh-tripod-reset-sources.md).
+
 ## Tripod policy distance
 
 Independent three-pad-per-hand SDF distance binds actual policy history and all7 wrench routes/17 meshes; missing middle coverage stays unknown. Pinch defaults remain2 pads/5 routes. 166 selected CPU checks pass; Tripod Reset/fresh collector/native PPO remain pending. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-policy-distance.md).

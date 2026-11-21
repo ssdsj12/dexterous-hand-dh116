@@ -48020,6 +48020,32 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.fresh-tripod-reset-sources": {
+      "title": "Fresh17-slot composition, preserved source metadata and measured six-pad Tripod Reset distance",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-policy-distance"
+      ],
+      "tests": [
+        "tests/test_dh116_fresh_supported_rod.py",
+        "tests/test_dh116_supported_binding_units.py",
+        "tests/test_native_teacher_tripod_reset_distance.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_fresh_tripod_reset_sources_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-fresh-tripod-reset-sources.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 102,
+        "cpu_failed": 0,
+        "new_tests": 7,
+        "scope": "CPU construction and Reset distance only; full17-slot measured Reset/native collector pending",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "registry_passed": 60
+      }
     }
   },
   "execution_target": {

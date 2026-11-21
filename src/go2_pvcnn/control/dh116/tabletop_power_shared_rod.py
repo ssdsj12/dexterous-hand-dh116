@@ -159,7 +159,7 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
 
     def __init__(self, base, *, bindings, right_grids, right_poses, run_uuid, env_id,
                  rod_uid="rod0", require_pairs=False, palm_grids=None, palm_poses=None,
-                 support_grids=None, support_poses=None):
+                 support_grids=None, support_poses=None, proximal_grids=None, proximal_poses=None):
         checked=_bindings(bindings)
         extended="base_link" in contact_links(checked)
         expected=set(PALM_NAMES) if extended else set()
@@ -169,9 +169,24 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
             raise ValueError("Power requires grids and poses for both original palm bindings")
         support_grid_args, support_targets = _support_mesh_inputs(
             support_grids, support_poses, allow_supports=extended and require_pairs is True)
+        proximal = PROXIMAL_LINK in contact_links(checked)
+        if proximal:
+            if (not support_grid_args or proximal_grids is None or proximal_poses is None
+                    or set(proximal_grids) != set(PROXIMAL_NAMES)
+                    or set(proximal_poses) != set(PROXIMAL_NAMES)):
+                raise ValueError("fresh proximal layout requires both original grids/poses and complete supports")
+            for field in ("capture_sha256", "source_geometry_sha256", "cooked_geometry_sha256", "sdf_sha256"):
+                digests = [checked[name].get(field) for name in PROXIMAL_NAMES]
+                if (any(not isinstance(value, str) or not re.fullmatch("[0-9a-f]{64}", value)
+                        or value == "0"*64 for value in digests) or digests[0] == digests[1]):
+                    raise ValueError("independent authenticated proximal sources required")
+        elif proximal_grids is not None or proximal_poses is not None:
+            raise ValueError("proximal inputs require both original proximal bindings")
+        proximal_targets = _poses(proximal_poses, PROXIMAL_NAMES) if proximal else {}
         poses={"right."+name:value for name,value in _poses(right_poses,PADS).items()}
         poses.update(_poses(palm_poses,expected))
         poses.update(support_targets)
+        poses.update(proximal_targets)
         if set(right_grids)!=set(PADS):
             raise ValueError("five right original SDFs required")
         if (not isinstance(base,FreeRodRuntime) or base.names!=list(PADS)+["table"] or
@@ -187,11 +202,13 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         grid_args={"right."+name:right_grids[name].as_args() for name in PADS}
         grid_args.update({name:grid.as_args() for name,grid in palm_grids.items()})
         grid_args.update(support_grid_args)
+        if proximal:
+            grid_args.update({name:grid.as_args() for name,grid in proximal_grids.items()})
         self._base=base
         self.bindings=checked
         self.mesh_names=POWER_MESH_NAMES if extended else MESH_NAMES
         if support_grid_args:
-            self.mesh_names=SUPPORTED_POWER_MESH_NAMES
+            self.mesh_names=PROXIMAL_POWER_MESH_NAMES if proximal else SUPPORTED_POWER_MESH_NAMES
         self.run_uuid,self.env_id,self.rod_uid=run_uuid,env_id,rod_uid
         self.require_pairs=require_pairs
         self._needs_reset=True
