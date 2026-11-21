@@ -1,0 +1,4 @@
+# Tripod v8独立冻结（未执行）
+将真实worker的source-bound缓存释放移到原run_owned_call已有before_collect边界，异常与成功均执行。
+指纹0edf9c3c8392846174c34bc0e4a24c919668dfbc5373cb3fd13589a2c733985d；564文件闭包。
+原8控制/66SDK/768内部子步/1更新、180/240s上限不变。仅CPU回归，不声称已解决SIGSEGV或wall不足；未启动新Isaac或消耗新预算。

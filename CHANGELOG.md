@@ -1,3 +1,7 @@
+## Worker fault-path cache release
+
+The actual worker now releases its source-bound stat cache at the existing pre-GC boundary on success and acquisition failure, after synchronization and traceback cleanup.203 selected CPU checks pass; the sealed lifecycle/Reset sources stay unchanged. No new native run or SIGSEGV/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-native-worker-fault-cache-release.md).
+
 ## Tripod raw-data decode performance
 
 Owned numeric JSON decoding preserves exact output bytes while reducing the measured median1.406s to0.476s; complete manifest revalidation improves9.932s to8.560s. All provenance/geometry checks remain.157 selected CPU checks pass; no new native run, PPO update or qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-owned-decode-performance.md).

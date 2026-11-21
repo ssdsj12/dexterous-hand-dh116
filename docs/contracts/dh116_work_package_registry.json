@@ -48794,8 +48794,8 @@
       "evidence_scope": "tripod_actual_fresh_smoke8_v7",
       "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v7.json",
       "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Frozen current independent Tripod sources. Decoder/manifest CPU speedup measured, but wall sufficiency and missing fault-path stat-cache release remain unverified; no new native attempt.",
+      "blocker_kind": "superseded",
+      "reason": "Never executed; fault-path cache callback wiring changes the worker source closure. Preserve this identity with zero attempts; use independent reviewed successor after readiness.",
       "dependencies": [
         "teacher.tripod-fresh-reset-native-validation",
         "teacher.tripod-owned-decode-performance"
@@ -48806,6 +48806,65 @@
       "actual_launch": {
         "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v7.json",
         "sha256": "d2c6dc8e1a5b158eadbd18541a0ca32760cd7ed8784dff5d7414b1893c043796"
+      },
+      "dependency_scopes": {}
+    },
+    "teacher.native-worker-fault-cache-release": {
+      "title": "Release source-bound worker stat cache before existing owned GC on success and fault",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-owned-decode-performance"
+      ],
+      "tests": [
+        "tests/test_native_teacher_actual_cache_lifecycle.py",
+        "tests/test_fault_safe_lifecycle_v3.py",
+        "tests/test_native_teacher_actual_provider.py",
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_native_worker_fault_cache_release_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-native-worker-fault-cache-release.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 203,
+        "cpu_failed": 0,
+        "new_tests": 10,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "sigsegv_fixed_verified": false,
+        "native_runs": 0,
+        "scope": "CPU real worker lifecycle composition, callbacks and bounded clocks; no new SDK evidence"
+      }
+    },
+    "teacher.tripod-ppo-fresh-smoke8-v8": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Independent Tripod fresh17 smoke8 actual PPO diagnostic",
+      "evidence_scope": "tripod_actual_fresh_smoke8_v8",
+      "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v8.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Frozen exact current sources; CPU success/fault release routing passes but real SDK exit and wall sufficiency remain unverified; no exact native batch consumed.",
+      "dependencies": [
+        "teacher.tripod-fresh-reset-native-validation",
+        "teacher.native-worker-fault-cache-release"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v8.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v8.json",
+      "native_runs": 0,
+      "actual_launch": {
+        "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v8.json",
+        "sha256": "df882601a58b57b7138031eabc1797496c43904d2cf604903e8e344482dc8292"
       }
     }
   },

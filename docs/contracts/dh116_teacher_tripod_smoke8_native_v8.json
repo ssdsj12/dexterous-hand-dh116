@@ -1,0 +1,29 @@
+{
+  "version": "dh116-teacher-tripod-smoke8-native-v8",
+  "status": "frozen_unexecuted_native_exit_and_runtime_readiness_pending",
+  "identity": {
+    "actual_identity": {
+      "companion_sha256": "df882601a58b57b7138031eabc1797496c43904d2cf604903e8e344482dc8292",
+      "core_recipe_identity": {
+        "code_config_sha256": "98d9b0471923fde924460293510323bea011d10c6ca20892bc0ffc1b6e94147e",
+        "command_spec_sha256": "a9d35430161d31bd35e04bfc427d68fa6546b818ee488f5f09e2acbb363cdafc"
+      },
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "source_closure_sha256": "af4f5c1aeedc6a80adabfaff7f50e690635530eab8311e1f0d1ca776a0ecd274"
+    },
+    "attempt_fingerprint": "0edf9c3c8392846174c34bc0e4a24c919668dfbc5373cb3fd13589a2c733985d",
+    "core_identity": {
+      "code_config_sha256": "98d9b0471923fde924460293510323bea011d10c6ca20892bc0ffc1b6e94147e",
+      "command_spec_sha256": "a9d35430161d31bd35e04bfc427d68fa6546b818ee488f5f09e2acbb363cdafc"
+    }
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "planned_sdk_steps": 66,
+  "planned_control_steps": 8,
+  "planned_internal_solver_substeps": 768,
+  "launch_readiness": false,
+  "blocker": "CPU cache exception-route fix still needs real SDK release/exit evidence; finite runtime sufficiency not yet established"
+}

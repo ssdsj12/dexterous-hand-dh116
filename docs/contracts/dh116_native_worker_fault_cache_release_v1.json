@@ -1,0 +1,119 @@
+{
+  "version": "dh116-native-worker-fault-cache-release-v1",
+  "base_head": "38bd608222e57c463171a0f0629e6193d14a25c1",
+  "status": "cpu_exception_and_success_route_verified_native_pending",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_provider.py": "2ef5fde2e9a97c9f114c8e72bd5d70289a570505a0c4e2bca6aece929a21d4fb",
+    "tests/test_native_teacher_actual_cache_lifecycle.py": "823ec04e344d972e7b32c4dd6d72812ed4f0ffd7ef4e83329e9f0ea23a2e452f",
+    "scripts/dh116_fault_safe_lifecycle_v3.py": "8615631499273f5eb636c386818f478a67fb8fcf67d9c8846a2db429dba8372e"
+  },
+  "cpu": {
+    "passed": 203,
+    "failed": 0,
+    "new_tests": 10,
+    "groups": [
+      {
+        "passed": 68,
+        "failed": 0,
+        "seconds": 8.93,
+        "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/native-worker-fault-cache-expanded-green-2.log",
+        "sha256": "e610732e17d93661b5dac97c5d77ecd9c0a82bec12f8293beaf64d0976d109e9",
+        "command": [
+          "/mnt/mydisk/xk/envs/dh116/bin/python",
+          "-B",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_native_teacher_actual_cache_lifecycle.py",
+          "tests/test_fault_safe_lifecycle_v3.py",
+          "tests/test_native_teacher_actual_provider.py"
+        ]
+      },
+      {
+        "passed": 135,
+        "failed": 0,
+        "seconds": 35.37,
+        "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-frozen-worker-v8-green.log",
+        "sha256": "36d3d0558f127cc268cf53f24816c2026b786008708fb729a6bb8113f50bec98",
+        "command": [
+          "/mnt/mydisk/xk/envs/dh116/bin/python",
+          "-B",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "tests/test_native_teacher_tripod_frozen_worker.py",
+          "tests/test_native_teacher_actual_launch.py",
+          "tests/test_native_teacher_worker_contract.py",
+          "tests/test_dh116_work_packages.py"
+        ]
+      }
+    ],
+    "red_log_sha256": "c0a77c41a91389bfed431170ad55726a11e517abd6479981afea71670cc181cb",
+    "intermediate_test_expectation_failure_sha256": "231da25f54ce91632438f347a83375cff283a4ff61d5140c1be864634d1e49d6"
+  },
+  "coverage": {
+    "healthy_acquire": true,
+    "failed_acquire": true,
+    "cache_rejected": true,
+    "double_failure_preserved": true,
+    "bounded_actual_clock": true,
+    "completed_end_match": true,
+    "missing_sim_refused": true,
+    "foreign_pre_gc_callback_refused": true,
+    "scope_binding_restored": true,
+    "completed_failure_frames_cleared_before_cache": true,
+    "existing_gc_and_stop_order_retained": true,
+    "make_sim_failure_cleaned_by_original_lifecycle": true,
+    "pre_owned_construction_cache_release_covered": false
+  },
+  "review": {
+    "role": "independent_readonly_owned_decode_review",
+    "spec": "passed_no_major_findings",
+    "quality": "passed_no_major_findings",
+    "reviewer_ran_tests": false,
+    "source_sha256": {
+      "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_provider.py": "2ef5fde2e9a97c9f114c8e72bd5d70289a570505a0c4e2bca6aece929a21d4fb",
+      "tests/test_native_teacher_actual_cache_lifecycle.py": "823ec04e344d972e7b32c4dd6d72812ed4f0ffd7ef4e83329e9f0ea23a2e452f",
+      "scripts/dh116_fault_safe_lifecycle_v3.py": "8615631499273f5eb636c386818f478a67fb8fcf67d9c8846a2db429dba8372e"
+    },
+    "antigravity": "quota unavailable; no new Antigravity response"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "sigsegv_fixed_verified": false,
+  "natural_exit_verified": false,
+  "runtime_wall_sufficiency_verified": false,
+  "next_native_identity": {
+    "actual_identity": {
+      "companion_sha256": "df882601a58b57b7138031eabc1797496c43904d2cf604903e8e344482dc8292",
+      "core_recipe_identity": {
+        "code_config_sha256": "98d9b0471923fde924460293510323bea011d10c6ca20892bc0ffc1b6e94147e",
+        "command_spec_sha256": "a9d35430161d31bd35e04bfc427d68fa6546b818ee488f5f09e2acbb363cdafc"
+      },
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "source_closure_sha256": "af4f5c1aeedc6a80adabfaff7f50e690635530eab8311e1f0d1ca776a0ecd274"
+    },
+    "attempt_fingerprint": "0edf9c3c8392846174c34bc0e4a24c919668dfbc5373cb3fd13589a2c733985d",
+    "core_identity": {
+      "code_config_sha256": "98d9b0471923fde924460293510323bea011d10c6ca20892bc0ffc1b6e94147e",
+      "command_spec_sha256": "a9d35430161d31bd35e04bfc427d68fa6546b818ee488f5f09e2acbb363cdafc"
+    }
+  },
+  "next_native_runtime_ready": false,
+  "legacy_lifecycle_changed": false,
+  "reset_source_changed": false,
+  "physical_parameters_changed": false,
+  "cameras_changed": false,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "protected_files_verified": 528,
+  "original_checkpoints_verified": 3,
+  "next": "Complete within-budget startup/control feasibility and source-bound native release evidence; v8 remains unexecuted"
+}
