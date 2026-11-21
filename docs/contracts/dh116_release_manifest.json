@@ -29488,6 +29488,31 @@
         "verified_at_utc": "2026-11-21T03:50:46.653137+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Tripod right distal continuous approach proof",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-distal-approach-proof.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_distal_approach_v1.json",
+      "cpu_tests": {
+        "passed": 283,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "fe861737e9892153a39f4a36452fdc4366e748d3",
+        "source_tree": "34c7e9c9be45c1c0ed0854a8ed93ab17db144cbc",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T03:54:30.369284+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
