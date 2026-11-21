@@ -46475,6 +46475,31 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-supported-free-rod-reset-native-result": {
+      "title": "Pinch supported flexible rod native Reset result",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-supported-free-rod-reset"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_supported_reset.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_supported_reset_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-supported-reset-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 94,
+        "native_reset_verified": true,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
