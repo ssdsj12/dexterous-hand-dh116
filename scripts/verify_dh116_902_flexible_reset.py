@@ -113,11 +113,17 @@ def main(argv=None):
     parser.add_argument("--settled-receipt", type=Path)
     parser.add_argument("--precontact-proof", type=Path)
     parser.add_argument("--precontact-windows", type=int, default=24)
+    parser.add_argument("--contact-receipt", type=Path)
+    parser.add_argument("--contact-request", type=Path)
+    parser.add_argument("--contact-proof", type=Path)
     args = parser.parse_args(argv)
     if (args.settled_receipt is None) != (args.precontact_proof is None):
         parser.error("the native precontact approach needs its receipt and geometry proof")
     if args.precontact_windows != 24 and args.settled_receipt is None:
         parser.error("a shorter prefix requires the original precontact receipt and proof")
+    contact_args = (args.contact_receipt, args.contact_request, args.contact_proof)
+    if any(contact_args) and (not all(contact_args) or args.settled_receipt is None):
+        parser.error("contact stage requires its own receipt, request, proof and original approach")
     if args.plan is None:
         if args.settled_receipt is not None:
             parser.error("a native Plan is required for the precontact approach")
@@ -153,6 +159,27 @@ def main(argv=None):
         plan["budget"].update(mode="902_" + args.grasp + "_hands_clear_precontact",
                               sdk_steps=sdk_end, control_steps=len(actions),
                               solver_steps=(sdk_end - 2) * shared.SUBSTEPS, soft_wall_seconds=240)
+    contact = None
+    if args.contact_receipt is not None:
+        # Keep standalone USD geometry in a child before Kit chooses its bindings.
+        with TemporaryDirectory(prefix="dh116-902-contact-screen-") as folder:
+            proof_path = Path(folder) / "proof.json"
+            subprocess.run([sys.executable, "-B", "-m", "scripts.screen_dh116_902_flexible_contact",
+                "--receipt", str(args.contact_receipt), "--request", str(args.contact_request),
+                "--output", str(proof_path)], cwd=ROOT, check=True)
+            if json.loads(proof_path.read_bytes()) != json.loads(args.contact_proof.read_bytes()):
+                raise ValueError("fresh geometry differs from the frozen contact proof")
+        from scripts.screen_dh116_902_flexible_contact import load_stage
+        tail, contact, contact_files = load_stage(args.contact_receipt, args.contact_request,
+            args.contact_proof, args.grasp, before_sdk=sdk_end)
+        import numpy as np
+        actions = np.concatenate([actions, tail])
+        sdk_end += 8 * len(tail)
+        files = (*files, *contact_files)
+        plan["action_schedule"] = actions.tolist()
+        plan["distal_contact"] = contact
+        plan["budget"].update(mode="902_" + args.grasp + "_distal_contact",
+            sdk_steps=sdk_end, control_steps=len(actions), solver_steps=(sdk_end-2)*shared.SUBSTEPS)
     _, proximal_inputs = shared.proximal_registration_inputs(args.proximal_capture, args.proximal_bake)
     scripts = ROOT / "scripts"
     files = [*files, Path(supported.__file__), Path(shared.__file__), args.rays, *proximal_inputs,
@@ -182,7 +209,7 @@ def main(argv=None):
         supported_acquire=acquire, sdk_end=sdk_end, require_no_hand_contact=True, task=args.grasp,
         live_support_scene=config["support_scene"], action_after_settle=actions,
         pinch_archive=approach if args.grasp == "pinch" else None,
-        tripod_archive=approach if args.grasp == "tripod" else None))
+        tripod_archive=approach if args.grasp == "tripod" else None, distal_contact=contact))
     return 0
 
 

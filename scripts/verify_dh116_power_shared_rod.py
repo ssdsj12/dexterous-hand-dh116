@@ -53,14 +53,20 @@ class SharedPowerOwners:
         return CapacityReservation()
 
 
-def check_supported_shape(world, boxes, tube, *, contact_shape):
+def check_supported_shape(world, boxes, tube, *, contact_shape, contact_penetration_m=None):
     from scripts.certify_dh116_tripod_distal_route import support_clearance_lower
     from scripts.screen_dh116_tripod_supported_reset import separation
 
     gaps = {name: float(support_clearance_lower(world, low, high)) for name, low, high in boxes}
     conditions = ["support_clearance"] if any(gap <= 1e-10 for gap in gaps.values()) else []
-    rod_gap = None if tube is None or contact_shape else float(separation(world, *tube))
-    if rod_gap is not None and rod_gap <= .00025:
+    if contact_penetration_m is not None and not 0. < contact_penetration_m <= .00015:
+        raise ValueError("original bounded continuous contact penetration required")
+    guard_contact = contact_shape and contact_penetration_m is not None
+    rod_gap = None if tube is None or (contact_shape and not guard_contact) else float(separation(world, *tube))
+    if guard_contact:
+        if rod_gap is None or not np.isfinite(rod_gap) or rod_gap < -contact_penetration_m:
+            conditions.append("contact_rod_penetration")
+    elif rod_gap is not None and rod_gap <= .00025:
         conditions.append("rod_clearance")
     if conditions:
         return dict(conditions=conditions, support_gap_m=gaps, rod_gap_lower_m=rod_gap,
@@ -108,7 +114,9 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
         for hand, body, vertices in clearance_shapes:
             world = rotated_points(frame_poses[0, hand, body], vertices)
             contact_shape = active_probe and distal_probe.contact_shape(sdk, (hand, body))
-            failure = check_supported_shape(world, boxes, tube, contact_shape=contact_shape)
+            failure = check_supported_shape(world, boxes, tube, contact_shape=contact_shape,
+                contact_penetration_m=(distal_probe.max_pad_penetration_m
+                    if active_probe and getattr(distal_probe, "continuous_cooked_hulls", None) else None))
             if failure is not None:
                 side = SIDES[hand]
                 articulation = bindings[side].hand
@@ -505,13 +513,15 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
     episode = original = power = bindings = composers = binding = scoped_owners = None
     setup = support_options = None
     try:
+        from scripts.screen_dh116_902_flexible_contact import independent_entry
+        independent = independent_entry(task, distal_contact)
         if (task not in ("power", "tripod", "pinch")
                 or (task == "pinch" and (supported_acquire is None or not require_no_hand_contact
                     or live_support_scene is None or (action_after_settle is None) != (pinch_archive is None)))
                 or (task != "pinch" and pinch_archive is not None)
                 or (distal_contact is not None and (
                     (task not in ("tripod", "pinch") or distal_contact["grasp"] != task)
-                    or (task == "tripod" and precontact_archive is None)
+                    or (task == "tripod" and precontact_archive is None and not independent)
                     or (task == "pinch" and pinch_archive is None)))
                 or (power_open_archive is not None and (task != "power" or action_after_settle is None
                     or live_support_scene is None or type(power_open_boundary_sdk) is not int))
@@ -656,7 +666,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 probe = SupportedDistalProbe(distal_contact["boundary_sdk"], distal_contact["stations"],
                     meshes, clearance_shapes, grids=geometry, archive=distal_contact["archive"],
                     max_pad_penetration_m=distal_contact["max_pad_penetration_m"], grasp=distal_contact["grasp"],
-                    bilateral=distal_contact.get("bilateral"))
+                    bilateral=distal_contact.get("bilateral"),
+                    continuous_cooked_hulls=distal_contact.get("continuous_cooked_hulls"))
             if power_route is not None and "palm_witness" in power_route:
                 from scripts.verify_dh116_power_staged_palm_witness import SupportedPalmProbe
 

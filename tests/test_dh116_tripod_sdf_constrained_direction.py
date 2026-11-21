@@ -88,3 +88,19 @@ def test_partial_setup_preserves_denied_status(tmp_path,monkeypatch):
     r=json.loads((out/"result.json").read_text())
     assert r["status"]=="partial_timeout" and not r["native_ready"]
     assert not r["reset_proposal_created"] and r["evaluation_records"]==[]
+
+
+def test_direction_after_another_highs_user_does_not_reconfigure_global_pool():
+    import subprocess,sys
+    code=(
+        "import numpy as np;"
+        "from scipy.optimize import linprog;"
+        "from scripts.solve_dh116_tripod_sdf_constrained_direction import constrained_direction;"
+        "assert linprog([1.],bounds=[(0.,1.)],method='highs').success;"
+        "r=constrained_direction(lambda x:dict(constraint_values=[x[0]-.2,.8-x[0]],"
+        "constraint_labels=['lower','upper']),-np.ones(10),np.ones(10));"
+        "assert r['linear_solver_status']==0,r;"
+        "assert min(r['best']['constraint_values'])>=-1e-9,r;"
+    )
+    result=subprocess.run([sys.executable,"-c",code],capture_output=True,text=True,timeout=20)
+    assert result.returncode==0,result.stderr

@@ -23,10 +23,10 @@ SAMPLES = 17
 ROD_RESERVE_M = .00025
 
 
-def archive(receipt, *, contract=CONTRACT, sdk=SDK, task="tripod"):
+def archive(receipt, *, contract=CONTRACT, sdk=SDK, task="tripod", expected=None):
     if task not in ("tripod", "pinch"):
         raise ValueError("owned supported distal grasp archive required")
-    expected = json.loads(contract.read_bytes())["actual"]
+    expected = json.loads(contract.read_bytes())["actual"] if expected is None else expected
     outer = sources.checked_json(receipt, expected["outer_sha256"])
     raw = receipt.parent / "native"
     marker = raw / "app_close_returned.json"
@@ -147,6 +147,8 @@ def measure_side(side, raw, nodes, tube, boxes, grids, goal, table_top, *,
                                 opposition=[float(normals[0] @ n) for n in normals[1:]]))
             if contact_pads:
                 samples[-1]["noncontact_rod_clearance_m"] = noncontact
+                samples[-1]["contact_rod_clearance_m"] = min(
+                    gap for label, gap in distances.items() if label.split(":", 1)[1] in contact_pads)
     return samples
 
 

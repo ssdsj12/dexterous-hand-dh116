@@ -90,13 +90,39 @@ def validate_live_pad_gaps(grids, poses, reference_nodes, *, max_penetration_m):
             raise ValueError(f"selected live pad SDF exceeded its penetration bound: {name} gap={gap!r}")
 
 
+
+def validate_live_continuous_hulls(hulls, poses, reference_nodes, *, max_penetration_m):
+    """A conservative full-segment bound prevents between-node penetration."""
+    from scipy.spatial.transform import Rotation
+    from scripts.screen_dh116_tripod_supported_reset import archived_tube, separation
+    nodes = np.asarray(reference_nodes, dtype=float)
+    if (nodes.shape != (1,41,3) or not np.isfinite(nodes).all()
+            or not 0. < max_penetration_m <= .00015):
+        raise ValueError("bounded intact continuous rod geometry required")
+    tube = archived_tube(nodes)
+    for name, vertices in hulls.items():
+        v = np.asarray(vertices, dtype=float)
+        if v.ndim != 2 or v.shape[1] != 3 or len(v) < 4 or not np.isfinite(v).all():
+            raise ValueError("finite cooked continuous contact hull required")
+        position, quaternion = poses[name]
+        world = v @ Rotation.from_quat(quaternion).as_matrix().T + position
+        gap = float(separation(world, *tube))
+        if not np.isfinite(gap) or gap < -max_penetration_m:
+            raise ValueError(f"selected live cooked continuous rod bound failed: {name} gap={gap!r}")
+
+
 class SupportedDistalProbe:
     """Track measured contact and the following PhysX command, without granting success."""
 
     def __init__(self, boundary_sdk, stations, bindings, clearance_shapes, *,
-                 grids, archive, max_pad_penetration_m, grasp="tripod", bilateral=None):
+                 grids, archive, max_pad_penetration_m, grasp="tripod", bilateral=None,
+                 continuous_cooked_hulls=None):
         if grasp not in ("pinch", "tripod"):
             raise ValueError("only admitted distal diagnostic styles can use this probe")
+        if continuous_cooked_hulls is not None and (set(continuous_cooked_hulls) != set(stations)
+                or bilateral is not None or not 0. < max_pad_penetration_m <= .00015):
+            raise ValueError("one independently bounded continuous contact stage required")
+        self.continuous_cooked_hulls = continuous_cooked_hulls
         self.grasp = grasp
         self.boundary_sdk = boundary_sdk
         self.stations = stations
@@ -135,6 +161,9 @@ class SupportedDistalProbe:
     def check_pad_gaps(self, sdk, poses, reference_nodes):
         grids = {name: self.grids[name] for name in self.stations_at(sdk)}
         validate_live_pad_gaps(grids, poses, reference_nodes, max_penetration_m=self.max_pad_penetration_m)
+        if self.continuous_cooked_hulls is not None:
+            validate_live_continuous_hulls(self.continuous_cooked_hulls, poses, reference_nodes,
+                                          max_penetration_m=self.max_pad_penetration_m)
 
     def observe(self, row):
         sdk = row["physics_step"]

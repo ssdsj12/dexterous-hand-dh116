@@ -47455,6 +47455,57 @@
         "hand_contacts": 0,
         "teacher_admission": false
       }
+    },
+    "teacher.902-continuous-contact-guard": {
+      "title": "Reject between-node penetration in independent 902 contact stages",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-tripod-safe-boundary-native"
+      ],
+      "tests": [
+        "tests/test_dh116_902_flexible_precontact.py",
+        "tests/test_dh116_902_flexible_reset.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_pinch_supported_reset.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_native_phase_contract_v2.py",
+        "tests/test_dh116_902_flexible_contact.py",
+        "tests/test_dh116_pinch_closure_margin.py",
+        "tests/test_dh116_measured_closure_geometry.py",
+        "tests/test_dh116_power_alternative_sdf_interval.py",
+        "tests/test_bimanual_tracking_guard.py",
+        "tests/test_sdf_segment_extrema.py",
+        "tests/test_tripod_contact_closure.py",
+        "tests/test_dh116_tripod_sdf_constrained_direction.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_continuous_contact_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-continuous-contact.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 287,
+        "continuous_candidate_rejected": true,
+        "native_grasp_verified": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.902-continuous-contact-guard-native": {
+      "title": "Validate continuous-safe 902 contact",
+      "branch": "11-17",
+      "executor": "gated",
+      "status": "blocked",
+      "dependencies": [
+        "teacher.902-continuous-contact-guard"
+      ],
+      "tests": [],
+      "readiness": "docs/contracts/dh116_teacher_902_continuous_contact_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-continuous-contact.md",
+      "native_runs": 0,
+      "reason": "Old target and alternative direct path fail unchanged continuous contact constraints; no native recipe."
     }
   },
   "execution_target": {

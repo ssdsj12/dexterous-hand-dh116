@@ -146,10 +146,12 @@ def constrained_direction(evaluate,lower,upper):
         result["rejection"]="two_scale_constraint_jacobian_unstable";return result
     # One LP minimizes a common normalized constraint violation; no soft reward
     # is allowed to relabel a physical violation as a passing candidate.
+    # Reuse the process-wide HiGHS scheduler; changing its thread count here
+    # fails after another scipy.linprog caller has initialized it.
     fit=linprog(np.r_[np.zeros(10),1.],
         A_ub=-np.column_stack((jac[-1],np.ones(len(c)))),b_ub=c,
         bounds=[*zip(lo,hi),(0,None)],method="highs",
-        options={"time_limit":1.,"maxiter":200,"threads":2})
+        options={"time_limit":1.,"maxiter":200})
     result.update(linear_solver_calls=1,linear_solver_status=int(fit.status),linear_solver_message=fit.message)
     if not fit.success:return result
     direction=fit.x[:10]

@@ -1,3 +1,7 @@
+## 902 continuous contact guard
+
+Reject rod penetration between nodes; preserve fixed stereo and the safe boundary. 287 CPU tests pass; contact path remains blocked. [Report](docs/superpowers/reports/2026-11-21-teacher-902-continuous-contact.md).
+
 ## Native 902 Tripod safe boundary
 
 Verified SDK 408, exact replay-prefix identity and natural exit 0 before the previous SDK 411 failure. [Report](docs/superpowers/reports/2026-11-21-teacher-902-tripod-safe-boundary.md).
