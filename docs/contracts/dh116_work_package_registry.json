@@ -47499,13 +47499,39 @@
       "executor": "gated",
       "status": "blocked",
       "dependencies": [
-        "teacher.902-continuous-contact-guard"
+        "teacher.902-continuous-contact-guard",
+        "teacher.902-command-replay"
       ],
       "tests": [],
       "readiness": "docs/contracts/dh116_teacher_902_continuous_contact_v1.json",
       "report": "docs/superpowers/reports/2026-11-21-teacher-902-continuous-contact.md",
       "native_runs": 0,
-      "reason": "Old target and alternative direct path fail unchanged continuous contact constraints; no native recipe."
+      "reason": "Seven timing candidates fail continuous geometry screening; command replay is not native dynamics or contact-load qualification."
+    },
+    "teacher.902-command-replay": {
+      "title": "Replay actual 480 Hz commands before screening 902 contact paths",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-continuous-contact-guard"
+      ],
+      "tests": [
+        "tests/test_dh116_902_command_path.py",
+        "tests/test_dh116_902_flexible_contact.py",
+        "tests/test_dh116_deformable_bimanual_step.py",
+        "tests/test_dh116_tripod_supported_reset.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_command_replay_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-command-replay.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 60,
+        "archived_steps_verified": 16,
+        "maximum_command_error": 0,
+        "native_grasp_verified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

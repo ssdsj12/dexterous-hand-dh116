@@ -1,0 +1,188 @@
+{
+  "version": "dh116-teacher-902-command-replay-v1",
+  "base_head": "d0a71679675a1cccea1e460eaa0bd31bec06358d",
+  "status": "cpu_command_replay_verified_contact_route_blocked",
+  "cpu_tests": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 3.43,
+    "log_sha256": "bcfeaebd49ae4c6076701a35ce1be5672a1d857360f0419533857e2b4d4a1266",
+    "test_files": [
+      "tests/test_dh116_902_command_path.py",
+      "tests/test_dh116_902_flexible_contact.py",
+      "tests/test_dh116_deformable_bimanual_step.py",
+      "tests/test_dh116_tripod_supported_reset.py"
+    ]
+  },
+  "archived_native_replays": {
+    "pinch": {
+      "evidence_sha256": "58ddfdc182b9e50f1147174e6fa2b6d29c3dc20416ce77c7a767ae9c761797a8",
+      "source_outer_sha256": "ac6345ae0b377b70a098155786571e14cd91855af3a252471529ed7218d360f7",
+      "last_row_sha256": "ea6985622f9b45a280f005f56c5f48ba2cc2ab9482b62394632d31f7e0206888",
+      "sdk_steps": [
+        425,
+        426,
+        427,
+        428,
+        429,
+        430,
+        431,
+        432
+      ],
+      "checked_fields": [
+        "submitted_fingers",
+        "submitted_wrist",
+        "finger",
+        "palms",
+        "angles",
+        "projected_root",
+        "projected_angles",
+        "projected_palms"
+      ],
+      "maximum_error": 0.0
+    },
+    "tripod": {
+      "evidence_sha256": "04dbfcece77b84ee9ac60746a2358e9f3b19f8cfd73c702b5f3daf5ed4c86eaf",
+      "source_outer_sha256": "ba230eed88c2b003f58bb0a7104d3811312d3bafabde999c0ca9ba5435f1e0a9",
+      "last_row_sha256": "3c066ff00d19e1b2fd640fdfc5b68ffa050854f1025090ee1cfe64b7cacbdf19",
+      "sdk_steps": [
+        401,
+        402,
+        403,
+        404,
+        405,
+        406,
+        407,
+        408
+      ],
+      "checked_fields": [
+        "submitted_fingers",
+        "submitted_wrist",
+        "finger",
+        "palms",
+        "angles",
+        "projected_root",
+        "projected_angles",
+        "projected_palms"
+      ],
+      "maximum_error": 0.0
+    }
+  },
+  "source_sha256": {
+    "scripts/screen_dh116_902_command_path.py": "f0ccc75e17bdc93894988ec65afd82562162002334b3329d985ddafa11a0d114",
+    "src/go2_pvcnn/control/dh116/tabletop_command_kernels.py": "acc8687ee965fb3f4dc11859083ca9a5bc84139a604101a219ac01d518a5ccd8",
+    "src/go2_pvcnn/control/dh116/tabletop_palm_mount.py": "4eb43511df607c5fee1503d9b389bf49ed52102dd7304c19e4bca7028f60e307",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_wrist_projection.py": "fbe593155d992b0c4a1c02df893648e67a3294ca11e00d5e12bc208796359ab3"
+  },
+  "failed_candidates": {
+    "delay_every_substep": [
+      {
+        "delay_windows": 0,
+        "minimum_continuous_lower_bound_mm": -0.2661303741298138,
+        "native_ready": false
+      },
+      {
+        "delay_windows": 16,
+        "minimum_continuous_lower_bound_mm": -0.2633396583418546,
+        "native_ready": false
+      },
+      {
+        "delay_windows": 32,
+        "minimum_continuous_lower_bound_mm": -0.2633396583418546,
+        "native_ready": false
+      }
+    ],
+    "phase_sparse_every_eight_substeps": [
+      {
+        "mode": "wrist_first",
+        "minimum_continuous_lower_bound_mm": -4.0258964385332945,
+        "minimum_noncontact_lower_bound_mm": -1.728656280096219,
+        "minimum_support_lower_bound_mm": 0.006918970026470461,
+        "sdf_unknown_samples": 0,
+        "native_ready": false
+      },
+      {
+        "mode": "fingers_first",
+        "minimum_continuous_lower_bound_mm": -0.8622985765490698,
+        "minimum_noncontact_lower_bound_mm": 1.5131046364275091,
+        "minimum_support_lower_bound_mm": 0.033039746570984185,
+        "sdf_unknown_samples": 0,
+        "native_ready": false
+      },
+      {
+        "mode": "rotation_first",
+        "minimum_continuous_lower_bound_mm": -7.136871716449167,
+        "minimum_noncontact_lower_bound_mm": -7.270942823992432,
+        "minimum_support_lower_bound_mm": 0.052128460622691275,
+        "sdf_unknown_samples": 17,
+        "native_ready": false
+      },
+      {
+        "mode": "translation_first",
+        "minimum_continuous_lower_bound_mm": -9.300885922270519,
+        "minimum_noncontact_lower_bound_mm": -7.704968126564626,
+        "minimum_support_lower_bound_mm": -3.6809451070264445,
+        "sdf_unknown_samples": 46,
+        "native_ready": false
+      }
+    ],
+    "assumptions": [
+      "ideal_target_tracking_after_first_measured_input",
+      "rod_nodes_fixed_to_archived_boundary",
+      "pre-review comparisons did not quantize wrist targets for geometry",
+      "lower bounds reject candidates but are not exact collision depth measurements"
+    ],
+    "evidence_sha256": {
+      "tripod-command-delay-margin-comparison.json": "462b3ca8a0d036fa5849a52f47c8a1e6a5604e288af66988742598dab7daad17",
+      "tripod-command-phases-comparison.partial.json": "ca83c278bd97108e436bb20344ef9ef4a557759dec848054cb0784c45535ef7b",
+      "compare-command-phases.log": "ae5eea61d56ee03314c702955712f3db096e0c88b9bf0ed4f183f6ffd43b6034",
+      "tripod-command-phases-remaining-comparison.json": "ced27e0bb6ec6e47540f5e60345395ac64e4c98e17c4df71221f0cf384fca528",
+      "compare-command-delay-limit-audit.log": "fa01351817ccf4951cc8f01f31811c472560534d2790bbc4d8c7cfb35ea70566",
+      "command-path-review-red.log": "55430353f79de26b8decad2fd14c9c20e3afc105807be5f950fee2dca8fe0a66",
+      "command-path-wrist-red.log": "2a9619b4f5b35123253354bdb7ff1d941ebc9762e504773e05528cd37eabda55",
+      "compare-command-delay-margin.py": "cade1b26c16f6c6aa85e628225cd79afc4b49f6a1db4bb9e5c3242ea77ab01a4",
+      "compare-command-phases.py": "bf88f2604d2019d0870b5dbf71a0d40fc07d4d8c3f98ec3a4522ac4f7ed82d5a",
+      "compare-command-phases-remaining.py": "8544e7961a7b0982f6899490ee212edc6a2de824f5f4e25ceff9c940c3c2ea6a"
+    }
+  },
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "rounds": [
+      "902-controller-route R1 unavailable",
+      "902-controller-route R2",
+      "902-controller-route R3"
+    ],
+    "same_worktree_verified": true,
+    "adopted": [
+      "original carriage limit using measured mount anchors",
+      "compare projected states and actual float32 wrist writes",
+      "separate archival replay from ideal tracking assumption"
+    ],
+    "corrected": [
+      "requested wrist angles already validated by original projection",
+      "old Slerp -0.2074 mm is not actual command trajectory result"
+    ]
+  },
+  "fixed_camera_sha256": {
+    "stereo_camera_front_640x480_v3.json": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b",
+    "stereo_camera_hand_order_640x480_v1.json": "673b71d4edc425620c78544959cdd00a545db0104bb164a6f2d22f368776d98b"
+  },
+  "native_runs": 0,
+  "teacher_queries": 0,
+  "ppo_updates": 0,
+  "rgb_frames_captured": 0,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "remaining": [
+    "No admissible new Tripod contact route",
+    "Pinch requires aligned opposed force and hold",
+    "Power fist/palm wrap and support-free lift unqualified"
+  ],
+  "next": "Screen an outside-clearance wrist alignment followed by fixed-wrist closure; preserve original safety and fixed cameras.",
+  "registry_tests": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 15.34,
+    "log_sha256": "9eb1278d5ba5ccf5f76dce1daca7ab896a4e1dc4dcfa39bdf8ad2a27e42a2179"
+  }
+}
