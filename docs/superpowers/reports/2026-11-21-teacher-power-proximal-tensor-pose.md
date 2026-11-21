@@ -4,4 +4,4 @@ The earlier raw GPU rays differed from the Cooked fan at the rigid-interface pos
 
 The view must identify the same original body and return finite metre position and unit XYZW rotation. The SDK clock must remain unchanged across all readings and rays. Both raw sources and all actual hit identities are retained. The relative-geometry comparison holds source topology fixed. It does not translate the raw report, adjust PhysX tolerances, or create an SDF.
 
-66 related CPU tests passed. The distinct frozen CUDA diagnostic uses one Isaac process, only two SDK setup steps, zero control/solver/PPO steps and the existing cleanup and 180-second soft wall budget. Surface qualification still requires the actual native data.
+66 related CPU tests passed. The distinct frozen CUDA diagnostic uses one Isaac process, two SDK setup plus two explicit capture steps, zero control/solver/PPO steps and the existing cleanup and 180-second soft wall budget. Surface qualification still requires the actual native data.

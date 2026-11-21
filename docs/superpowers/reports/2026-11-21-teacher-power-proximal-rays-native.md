@@ -1,6 +1,6 @@
 # Native Power proximal ray witnesses
 
-CPU and GPU PhysX each completed two SDK steps in separate sequential Isaac instances, with natural outer and GDB exit code 0. Both original `finger52_link` convex hulls had 34 vertices and 61 polygons. The CPU/GPU vertex and directed topology comparisons were exact for each side. Each device and side returned 36 of 64 rays on the intended original rigid body and collision owner. The other rays include intervening original finger51 and finger53 shapes and do not attest the proximal surface.
+CPU and GPU PhysX each completed two SDK setup steps and two explicit capture steps in separate sequential Isaac instances, with natural outer and GDB exit code 0. Both original `finger52_link` convex hulls had 34 vertices and 61 polygons. The CPU/GPU vertex and directed topology comparisons were exact for each side. Each device and side returned 36 of 64 rays on the intended original rigid body and collision owner. The other rays include intervening original finger51 and finger53 shapes and do not attest the proximal surface.
 
 | Physical device | Left ray depth error P95 / max (mm) | Right ray depth error P95 / max (mm) |
 | --- | ---: | ---: |

@@ -14,6 +14,8 @@ from scripts.diagnose_dh116_teacher_initialization import digest, sha, write_new
 
 LINK = "finger52_link"
 ROOT = Path(__file__).resolve().parents[1]
+SETUP_SDK_STEPS = 2
+CAPTURE_SDK_STEPS = 2
 
 
 def owned_tensor_pose(view, path):
@@ -82,8 +84,9 @@ def record_rays(original, stage, physx, hands, output, clock, *, tensor_pose_con
 def _receipt(root, requested_device):
     path = root/"outer.json"
     outer = json.loads(path.read_bytes())
-    if (outer["exit_code"] != 0 or (outer["debugger_inferior_exit_code"] != 0)
-            or outer["debugger_inferior_signal"] is not None or outer["forced_exit"] or outer["exceeded_budget"]):
+    if (outer["exit_code"] != 0 or outer["debugger_inferior_exit_code"] != 0
+            or outer["debugger_status_verified"] is not True or outer["debugger_inferior_signal"] is not None
+            or outer["forced_exit"] or outer["exceeded_budget"]):
         raise ValueError("successful natural native exit required before parity")
     if sha(root/"native.log") != outer["native_log_sha256"]:
         raise ValueError("native ray log SHA differs")
@@ -92,8 +95,10 @@ def _receipt(root, requested_device):
         if Path(name).name != name or (n/name).is_symlink() or sha(n/name) != value:
             raise ValueError("independent proximal artifact differs")
     result = json.loads((n/"result.json").read_bytes())
-    if result["physics_device"]["requested_device"] != requested_device or result["clock"]["steps_commanded"] != 2:
-        raise ValueError("exact native device and two-step capture required")
+    if (result["physics_device"]["requested_device"] != requested_device
+            or result["clock"]["steps_commanded"] != CAPTURE_SDK_STEPS
+            or result["clock"]["physics_step"] != SETUP_SDK_STEPS + CAPTURE_SDK_STEPS):
+        raise ValueError("exact native device and setup/capture clock required")
     return n
 
 
@@ -141,7 +146,8 @@ def main(argv=None):
                 tensor_pose_control=args.tensor_pose_control,
                 frozen_files={str(path.resolve()):sha(path) for path in files},
                 source_assets=prior.probe._sources(ROOT),
-                budget=dict(sdk_steps=2, solver_steps=0, control_steps=0, ppo_updates=0,
+                budget=dict(sdk_steps=SETUP_SDK_STEPS+CAPTURE_SDK_STEPS, sdk_setup_steps=SETUP_SDK_STEPS,
+                            sdk_capture_steps=CAPTURE_SDK_STEPS, solver_steps=0, control_steps=0, ppo_updates=0,
                             soft_wall_seconds=180, auto_retries=0, auto_kill=False))
     if args.approved_frozen_sha256 is None:
         write_new(args.plan, plan)
@@ -152,13 +158,13 @@ def main(argv=None):
     original = sys.argv
     try:
         sys.argv = [original[0], "--output", str(args.output), "--execute-native", "--headless",
-                    "--steps", "2", "--device", args.device]
+                    "--steps", str(CAPTURE_SDK_STEPS), "--device", args.device]
         recorder = partial(record_rays, prior.probe._record_pads, tensor_pose_control=args.tensor_pose_control)
         read = partial(prior.read_collision_source, expected_link=LINK)
         with prior.bindings((prior.probe, "DISTAL_PAD_LINKS", (LINK,)),
                             (prior.probe, "read_pad_triangles", read),
                             (prior.probe, "_record_pads", recorder)):
-            prior.probe.main(scene_queries=True)
+            prior.probe.main(scene_queries=True, exact_setup_steps=SETUP_SDK_STEPS)
     finally:
         sys.argv = original
     return 0

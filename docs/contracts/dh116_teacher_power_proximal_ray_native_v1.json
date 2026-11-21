@@ -74,5 +74,10 @@
   "gpu_pose_surface_qualification": false,
   "sdf_registered": false,
   "native_contact_qualified": false,
-  "teacher_admission": false
+  "teacher_admission": false,
+  "actual_sdk_steps_per_run": {
+    "setup": 2,
+    "capture": 2,
+    "total": 4
+  }
 }

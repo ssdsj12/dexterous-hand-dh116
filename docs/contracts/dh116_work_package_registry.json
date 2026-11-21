@@ -45979,6 +45979,31 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-proximal-tensor-pose-ray-native-result": {
+      "title": "Resolve GPU proximal ray pose mismatch with the exact Tensor View",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-proximal-tensor-pose-ray-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_power_palm_raycast.py",
+        "tests/test_dh116_power_palm_parity.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_tensor_pose_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-tensor-pose-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "native_same_clock_tensor_pose_surface_rays",
+        "native_exit": 0,
+        "sdk_steps": 4,
+        "observed_attach_pose_matched": true,
+        "sdf_registered": false,
+        "native_contact_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

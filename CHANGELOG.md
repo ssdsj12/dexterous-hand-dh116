@@ -1,3 +1,7 @@
+## Native Power proximal pose-source result
+
+Use exact same-clock rigid Tensor View readback to resolve the GPU ray discrepancy and count both setup and capture SDK steps. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-tensor-pose-native.md).
+
 ## Power proximal Tensor View ray comparison
 
 Freeze one same-clock ray diagnostic driven by the exact native rigid-body Tensor View and the earlier rigid-interface poses. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-tensor-pose.md).

@@ -172,7 +172,7 @@ def _physics_device(physx, requested):
     }
 
 
-def _run(sim, output, sources, steps, requested_device):
+def _run(sim, output, sources, steps, requested_device, *, exact_setup_steps=None):
     import omni.usd
     from omni.physx import get_physx_interface
     from pxr import UsdGeom
@@ -184,6 +184,8 @@ def _run(sim, output, sources, steps, requested_device):
     physx = get_physx_interface()
     sim.reset()
     index_before = int(sim.current_time_step_index)
+    if exact_setup_steps is not None and index_before != exact_setup_steps:
+        raise RuntimeError(f"native SDK setup differs: observed {index_before}, expected {exact_setup_steps}")
     for _ in range(steps):
         sim.step(render=False)
     index_after = int(sim.current_time_step_index)
@@ -295,7 +297,7 @@ def _release_owned_native_view(app, simulation, output):
 
 
 
-def main(*, scene_queries=False):
+def main(*, scene_queries=False, exact_setup_steps=None):
     from isaaclab.app import AppLauncher
 
     parser = argparse.ArgumentParser(description=__doc__)
@@ -331,7 +333,7 @@ def main(*, scene_queries=False):
                 dt=_DT, device=args.device, gravity=(0.0, 0.0, 0.0),
                 enable_scene_query_support=scene_queries,
             ))
-            _run(sim, args.output, sources, args.steps, args.device)
+            _run(sim, args.output, sources, args.steps, args.device, exact_setup_steps=exact_setup_steps)
         except Exception:
             write_json(args.output / "failure.json", {"exception": traceback.format_exc()})
             raise

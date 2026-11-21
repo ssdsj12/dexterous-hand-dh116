@@ -1,0 +1,63 @@
+{
+  "version": "dh116-teacher-power-proximal-tensor-pose-native-v1",
+  "result": {
+    "clock": [
+      4,
+      0.008333333767950535
+    ],
+    "difference": {
+      "left": {
+        "relative_angle_rad": 0.016210734092922736,
+        "relative_position_m": 9.352774096083692e-05,
+        "rigid": {
+          "max_m": 0.0005166328858884246,
+          "min_dot": 0.4724464022979793,
+          "owned": 36,
+          "p95_m": 0.0004479229431981625,
+          "total": 64
+        },
+        "tensor": {
+          "max_m": 1.67923665180935e-05,
+          "min_dot": 0.9995719491545624,
+          "owned": 36,
+          "p95_m": 5.064653573177286e-08,
+          "total": 64
+        }
+      },
+      "right": {
+        "relative_angle_rad": 0.016210763252150012,
+        "relative_position_m": 9.36461410147495e-05,
+        "rigid": {
+          "max_m": 0.0005167251628873798,
+          "min_dot": 0.47244551367134213,
+          "owned": 36,
+          "p95_m": 0.00044796779771368554,
+          "total": 64
+        },
+        "tensor": {
+          "max_m": 1.679604330481841e-05,
+          "min_dot": 0.9995719167310961,
+          "owned": 36,
+          "p95_m": 5.508261176649307e-08,
+          "total": 64
+        }
+      }
+    },
+    "elapsed_s": 33.91305004013702,
+    "native_recipe_sha256": "15c385e935d1ad7401968118b2edeb292d54a78db49233673ff82926c67a0a7f",
+    "outer_sha256": "687dcfeec7741aa3e48c822a4b8a692074ef110029281e1451723064aaf0ca12"
+  },
+  "audit_sha256": "2eab3e75e6ba044249c5b88da736ad87abec80773f039b99232e20936904c1f0",
+  "native_runs": 1,
+  "actual_sdk_steps": 4,
+  "setup_sdk_steps": 2,
+  "capture_sdk_steps": 2,
+  "cpu_tests": {
+    "passed": 66,
+    "failed": 0
+  },
+  "surface_witness_scope": "owned_rays_only",
+  "native_contact_qualified": false,
+  "sdf_registered": false,
+  "teacher_admission": false
+}
