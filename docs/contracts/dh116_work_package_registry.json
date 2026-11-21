@@ -45881,6 +45881,33 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-reset-pose-first-control-native-result": {
+      "title": "Verify one first control on the committed and queued Pinch Reset paths",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-reset-pose-first-control-cpu"
+      ],
+      "tests": [
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dual_hand_reset.py"
+      ],
+      "readiness": "docs/contracts/dh116_pinch_reset_pose_first_control_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-reset-pose-first-control-native.md",
+      "native_runs": 2,
+      "last_result": {
+        "scope": "native_paired_first_control_without_hand_contact",
+        "natural_exits": [
+          0,
+          0
+        ],
+        "sdk_steps_per_attempt": 10,
+        "zero_new_solver_steps_for_reset": true,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -1,0 +1,9 @@
+# Pinch native first-control paired result
+
+Two fresh Isaac processes ran serially on GPU 2 with the identical Pinch v13 reset seed, alternate compiled solver and original measured joint/mesh source. Each completed two setup and eight measured SDK steps, 96 solver substeps and one predetermined 24D action window. GDB and the outer process both returned zero naturally on both runs. Wall time was 46.652 s with commit and 44.921 s with the queued Reset.
+
+The first treatment committed ten original finger pad poses at SDK 2 and rod tick 0, without consuming a solver or physics step. Both runs matched all captured Reset articulation poses, joint positions/velocities and backend targets, as well as rod positions, velocities and segment rest lengths. The recorded action and backend target arrays matched for the entire control window.
+
+Both treatments produced 492 table pairs in the first exchange and 3,936 in the complete window. There were zero hand pairs, and all rod node locations matched exactly over the eight measured exchanges. This verifies the live lifecycle and no-contact controlled motion against the legacy path. It provides no result on the load response of a real pinch, and the default Teacher backend has not been changed.
+
+Commit outer receipt `115079fe29d31edf88ff9fd5c0d5183b7a27c74b70524966e8b5bed2ae2fc85a` and native recipe `99640eaa6de0bd2f252459d83bce9d85e73a057cd2877374b6d0a45a6edea426`. Queued Reset outer receipt `f8d327b1f2ac86948259de2005428a401833bcfa670888f3d526911fc96a1edc` and native recipe `4cb390389d0fdf7d1ae88e244f9cb1aedbbc601c4be4ab609e1571b2cbe63164`. The related CPU suite passed 132 tests. A separate contact-bearing grasp qualification still requires opposite reaction on both hands, table/support release and the original lift, hold and slip thresholds.
