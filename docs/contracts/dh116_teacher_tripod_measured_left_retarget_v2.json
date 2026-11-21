@@ -1,0 +1,32 @@
+{
+  "version": "dh116-tripod-bilateral-retarget-v2",
+  "receipt_sha256": "19bdfd53d7ce4894ec8cb865c6fadd8144861325c9a9337b151f796ee4baa591",
+  "request_sha256": "0430a2597a579779aeab38960c59b67e34e875d72e3d35a3ff7bd8faeaceedc9",
+  "sdk_step": 1136,
+  "archived_row_sha256": "f222342a52a32c671d787ec0d2daabd617755f4091904d2d6efda5617b5a7b0f",
+  "grasp_qualified": false,
+  "screen_sha256": "9db3a3eda8986af0b5e3959b56e1d9e584a0f1ab4105eb02c1e7d08b8e7a8559",
+  "samples": 17,
+  "min_sampled_noncontact_gap_m": 0.000898951630792566,
+  "target_pad_gaps_m": [
+    -6.98273223092771e-05,
+    -6.977905761430293e-05,
+    -7.00421379516928e-05
+  ],
+  "target_station_nodes": [
+    35,
+    35,
+    33
+  ],
+  "target_normal_dots": [
+    -0.8160469201213222,
+    -0.5562230692947928
+  ],
+  "cpu_regressions_passed": 208,
+  "native_runs": 0,
+  "teacher_admission": false,
+  "sdk_steps_max": 1456,
+  "control_steps_max": 152,
+  "solver_substeps_max": 17448,
+  "soft_wall_seconds": 600
+}

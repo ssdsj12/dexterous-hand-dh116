@@ -46908,6 +46908,29 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-measured-left-retarget": {
+      "title": "Retarget the left Tripod approach against measured rod displacement",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-distal-live-clearance-evidence"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_bilateral_distal_retarget.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_tripod_measured_precontact.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_measured_left_retarget_v2.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-measured-left-retarget.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 208,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

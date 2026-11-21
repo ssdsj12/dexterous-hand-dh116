@@ -51,6 +51,7 @@ def approach_reference(receipt):
 WAYPOINT_CONTRACT = screen.ROOT/"docs/contracts/dh116_teacher_tripod_guarded_approach_native_v1.json"
 WAYPOINT_INDEX = {"left": 1, "right": 2}
 WAYPOINT_WINDOWS = 20
+BILATERAL_RETARGET_PROOF_SHA = "9db3a3eda8986af0b5e3959b56e1d9e584a0f1ab4105eb02c1e7d08b8e7a8559"
 BILATERAL_CONTACT_PROOF_SHA = "73aa9ed889c787652f3671f1215282f889749f7c0014455541f90568d9225bf6"
 DISTAL_CONTACT_PROOF_SHA = "bc2202bae667df2d2b55084569ee7b50d28af7873bf78ff743ac7815faa9a1f8"
 PRECONTACT_PROOF_SHA = "a3f3436c87c43ad516666bc7b1ad6005ff50bdda5f4be7267ddda96b571ea8fe"
@@ -210,6 +211,32 @@ def load_bilateral_contact(receipt, proof, config):
     return rows[-1], commands, dependencies, parameters
 
 
+def load_retargeted_bilateral(receipt, proof, config, appended, parameters):
+    from scripts import screen_dh116_tripod_bilateral_retarget as retarget
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
+
+    rows, supports, bound = retarget.completed_rows(receipt)
+    screen_result = sources.checked_json(proof, BILATERAL_RETARGET_PROOF_SHA)
+    request = retarget.read_request()
+    samples = screen_result["samples"]
+    old_row = receipt.parent/"native"/f"tripod_control_{retarget.SDK}.json"
+    if (screen_result["version"] != request["version"] or screen_result["sdk_step"] != retarget.SDK
+            or screen_result["receipt_sha256"] != native.sha(receipt)
+            or screen_result["archived_row_sha256"] != native.sha(old_row)
+            or screen_result["request_sha256"] != native.sha(retarget.REQUEST)
+            or supports != config["support_scene"]["supports"] or not retarget.route_passes(samples)):
+        raise ValueError("the independent left Tripod screen must bind the measured retarget checkpoint")
+    raw, goal = rows[retarget.SDK], request["left_goal"]
+    count = (retarget.SDK - parameters["boundary_sdk"]) // 8
+    if not 0 < count < len(appended) or parameters["boundary_sdk"]+8*count != retarget.SDK:
+        raise ValueError("retarget checkpoint must split the original bilateral command schedule")
+    commands = bilateral_schedule(config, decode_owned(raw), [goal],
+                                  [retarget.DRIVE_WINDOWS], [retarget.SETTLE_WINDOWS])
+    parameters.update(retarget=dict(sdk_step=retarget.SDK, archive=raw,
+        minimum_sampled_noncontact_rod_m=min(row["noncontact_rod_clearance_m"] for row in samples)))
+    return np.vstack((appended[:count], commands)), (*bound, proof, retarget.REQUEST, Path(retarget.__file__))
+
+
 def freeze(args):
     from go2_pvcnn.control.dh116.tabletop_power_supported_task import prepare_initial_state
 
@@ -249,6 +276,12 @@ def freeze(args):
         if plan["frozen_files"].setdefault(path, digest) != digest:
             raise ValueError("inconsistent Tripod source fingerprints")
     archived = waypoint = precontact = distal_archive = bilateral_archive = None
+    retarget = getattr(args, "retarget_reference", None)
+    retarget_proof = getattr(args, "retarget_screen", None)
+    if (retarget is None) != (retarget_proof is None):
+        raise ValueError("supply the paired Tripod retarget receipt and CPU screen")
+    if retarget is not None and args.bilateral_reference is None:
+        raise ValueError("Tripod retarget requires the original bilateral replay inputs")
     if (args.bilateral_reference is None) != (args.bilateral_screen is None):
         raise ValueError("provide both bilateral Tripod continuation sources")
     if args.bilateral_reference is not None and args.distal_reference is None:
@@ -297,6 +330,9 @@ def freeze(args):
             bilateral_archive, appended, bound, parameters = load_bilateral_contact(
                 args.bilateral_reference, args.bilateral_screen, config)
             plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
+            if retarget is not None:
+                appended, bound = load_retargeted_bilateral(retarget, retarget_proof, config, appended, parameters)
+                plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
             plan["bilateral_tripod_contact"] = parameters
             actions = np.vstack((actions,appended))
         sdk_end = SDK_END + 8*len(actions)
@@ -328,6 +364,8 @@ def main(argv=None):
     parser.add_argument("--distal-screen", type=Path)
     parser.add_argument("--bilateral-reference", type=Path)
     parser.add_argument("--bilateral-screen", type=Path)
+    parser.add_argument("--retarget-reference", type=Path)
+    parser.add_argument("--retarget-screen", type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(screen.ROOT)

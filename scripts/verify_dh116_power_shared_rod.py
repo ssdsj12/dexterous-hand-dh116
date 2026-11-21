@@ -388,13 +388,14 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                                          sdk_step=distal_probe.boundary_sdk, exact_geometry=True)
             if distal_probe is not None:
                 later = distal_probe.bilateral
-                if later is not None and row["physics_step"] == later["boundary_sdk"]:
-                    actual = encode_owned(emitted)
-                    expected = later["archive"]
-                    verify_waypoint_boundary(actual, expected, sdk_step=later["boundary_sdk"], exact_geometry=True)
-                    if (actual["rod"]["rod_mesh_contact_pairs"] != expected["rod"]["rod_mesh_contact_pairs"]
-                            or actual["issued_composer_wrench"] != expected["issued_composer_wrench"]):
-                        raise ValueError("the previous right Tripod contact or force differs from the sealed replay")
+                if later is not None:
+                    checkpoint = later if row["physics_step"] == later["boundary_sdk"] else later.get("retarget")
+                    if checkpoint is not None and row["physics_step"] == checkpoint.get("sdk_step", later["boundary_sdk"]):
+                        actual, expected = encode_owned(emitted), checkpoint["archive"]
+                        verify_waypoint_boundary(actual, expected, sdk_step=row["physics_step"], exact_geometry=True)
+                        if (actual["rod"]["rod_mesh_contact_pairs"] != expected["rod"]["rod_mesh_contact_pairs"]
+                                or actual["issued_composer_wrench"] != expected["issued_composer_wrench"]):
+                            raise ValueError("Tripod contact or force differs from the sealed pre-retarget replay")
                 evidence, reason = distal_probe.observe(row)
                 if distal_probe.active(row["physics_step"]):
                     native.write_new(output/f"{task}_distal_probe_{row['physics_step']}.json", evidence)

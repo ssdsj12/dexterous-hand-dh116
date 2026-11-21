@@ -1,3 +1,7 @@
+## Tripod left approach retarget
+
+Retarget the left approach from the measured SDK 1136 boundary and preserve original contact and force guards. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-measured-left-retarget.md).
+
 ## Supported distal live clearance evidence
 
 Persist the measured hand link, SDK boundary, support margins, and earlier rod snapshot at the existing guard stop. [Report](docs/superpowers/reports/2026-11-21-teacher-supported-distal-live-clearance-evidence.md).
