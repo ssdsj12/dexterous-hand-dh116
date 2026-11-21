@@ -47807,6 +47807,28 @@
         "teacher_admission": false,
         "native_admissible": false
       }
+    },
+    "teacher.902-fixed-wrist-open-reset": {
+      "title": "Measure independently screened fixed-wrist open Reset without issuing closing actions",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-fixed-wrist-open-screen"
+      ],
+      "tests": [
+        "tests/test_dh116_902_fixed_wrist_open_reset.py",
+        "tests/test_dh116_902_fixed_wrist_open.py",
+        "tests/test_dh116_902_flexible_reset.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_fixed_wrist_open_reset_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 79,
+        "native_reset_verified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -1,0 +1,41 @@
+{
+  "version": "dh116-teacher-902-fixed-wrist-open-reset-v1",
+  "base_head": "5d0f99acc27ddc7e02c97d9c7c1d1b753fb4cb5b",
+  "status": "cpu_passed_native_not_run",
+  "cpu_tests": {
+    "passed": 79,
+    "failed": 0,
+    "new_cases": 17,
+    "log_sha256": "bfc0742470b84ef54f1569e8b5e62d840802bafd821064d12c70dd2779c86cb4",
+    "registry_passed": 60
+  },
+  "budget": {
+    "sdk_steps": 240,
+    "solver_steps": 2856,
+    "control_steps": 0,
+    "ppo_updates": 0,
+    "num_envs": 1,
+    "gpu": 2
+  },
+  "native_runs": 0,
+  "teacher_admission": false,
+  "camera_configs_unchanged": true,
+  "source_sha256": {
+    "scripts/verify_dh116_902_fixed_wrist_open_reset.py": "cc210f7d72ae9fe1838915e003bcbef030862e5c0d2998c95b39247c60ac1943",
+    "tests/test_dh116_902_fixed_wrist_open_reset.py": "9c59e0e55e305b72b82c8c06cbbf7cefc79748d729b35052689a124fafcffbd5"
+  },
+  "cpu_recipe_sha256": null,
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "rounds": "902-open-reset R1-R2; R3 final reread pending",
+    "accepted_findings": [
+      "proof/frozen receipt and source SHA agreement",
+      "internal interval failure must return nonzero after cleanup"
+    ]
+  },
+  "limitations": [
+    "Open Reset experiment only; original endpoint contact remains failed",
+    "Pair counts and exit code alone cannot qualify Reset; inspect all live geometry and failure files",
+    "No camera frames acquired by this no-camera diagnostic; both fixed camera configs preserved"
+  ]
+}

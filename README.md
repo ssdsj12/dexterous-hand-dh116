@@ -3701,3 +3701,5 @@ bash scripts/python.sh scripts/run_current.py --run --gui --output runs/gui_tria
 旧恢复试验成功加载状态，但接近末段桌面余量不足触发保护，未闭指/夹持/抬升。当前调整为左手路径上移1mm，名义桌面余量约2.20mm；实际试验仍在原项目运行。未使用绑定伪造抓取，1mm安全阈值不变。
 
 Tripod 右手独立跟踪实现与回归见 [运行边界报告](docs/superpowers/reports/2026-11-20-teacher-tripod-right-owned-tracking.md)。
+
+- 2026-11-22: added independent 902 fixed-wrist open Reset-only execution; 79 related CPU tests passed; 60 Registry tests passed, native/contact qualification pending. See [docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md](docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md).
