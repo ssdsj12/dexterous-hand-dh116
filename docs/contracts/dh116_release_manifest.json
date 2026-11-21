@@ -29838,6 +29838,31 @@
         "verified_at_utc": "2026-11-21T05:13:47.722990+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-reset-pose-first-control-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-reset-pose-first-control-native.md",
+      "readiness": "docs/contracts/dh116_pinch_reset_pose_first_control_native_v1.json",
+      "cpu_tests": {
+        "passed": 132,
+        "failed": 0
+      },
+      "native_runs": 2,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "f871764fc0ca814115962ef03f198537fc82d707",
+        "source_tree": "0ac6920f16e7d92ed6d74fab84cf220023406d31",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T05:20:22.105200+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
