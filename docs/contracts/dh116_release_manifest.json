@@ -29413,6 +29413,31 @@
         "verified_at_utc": "2026-11-21T03:32:01.924084+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power supported contact ledger at Reset",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-binding.md",
+      "readiness": "docs/contracts/dh116_teacher_power_supported_binding_v1.json",
+      "cpu_tests": {
+        "passed": 121,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c5408d2dbea5183985f8fbd015997a856ad3331b",
+        "source_tree": "d78121e10659ae72d225a48c0d7cc94783e97cc8",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T03:36:09.545907+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
