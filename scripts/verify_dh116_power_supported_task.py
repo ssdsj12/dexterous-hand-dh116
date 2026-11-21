@@ -11,10 +11,11 @@ from scripts import verify_dh116_power_shared_rod as shared
 
 ROOT = shared.ROOT
 CONFIG = ROOT / "configs/dh116_tasks/flexible_power_supported_contact_v1.json"
+SETTLE = ROOT / "configs/dh116_tasks/flexible_power_supported_settle_v1.json"
 native, reset, sources = shared.native, shared.reset, shared.sources
 
 
-def acquire_supported_reset(sim, owners, trace, output, *, profile, config):
+def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_end=shared.SDK_END):
     from go2_pvcnn.control.dh116 import tabletop_dual_hand_scene_preparation as scene_api
     from go2_pvcnn.control.dh116 import tabletop_dual_pinch_builder as builder
     from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import HandBinding
@@ -92,7 +93,7 @@ def acquire_supported_reset(sim, owners, trace, output, *, profile, config):
             episode = owners.keep("dual_episode", DualHandPhysicalEpisode(sim, original, mount_bindings,
                 backend_artifact=Path(profile.binary_path), backend_sha256=profile.binary_sha256,
                 inspect_geometry=partial(builder._inspect_geometry, ROOT, prepared, sim, hands, original),
-                physics_budget_end=shared.SDK_END, record=record))
+                physics_budget_end=sdk_end, record=record))
             trace.watch("episode", episode, owner="supported Power builder", release="owned scope")
             episode.reset(seed, episode_uid=run+":0", owner_resets=diagnostic_reset_owners())
             hulls = {}
@@ -123,14 +124,27 @@ def freeze(args):
     from go2_pvcnn.control.dh116.tabletop_power_supported_task import prepare_initial_state
 
     config = json.loads(CONFIG.read_bytes())
+    settle = args.settle_without_hand_contact
+    sdk_end = shared.SDK_END
+    if settle:
+        experiment = json.loads(SETTLE.read_bytes())
+        if (experiment["version"] != "dh116-power-support-settle-v1"
+                or experiment["base_config_sha256"] != native.sha(CONFIG)
+                or experiment["sdk_steps"] != 240
+                or experiment["initial_hand_x_translation_m"] != .105):
+            raise ValueError("independent bounded support settlement configuration required")
+        sdk_end = experiment["sdk_steps"]
+        for hand in config["hands"].values():
+            hand["pose_wxyz"][0] += experiment["initial_hand_x_translation_m"]
     task = load_flexible_grasp_task(ROOT/"configs/dh116_tasks/flexible_dual_hand_grasp_v1.json", ROOT)
     table = dict(center_m=task["scene"]["table_center_m"], size_m=task["scene"]["table_size_m"])
     seed, _, _, _ = prepare_initial_state(config, table)
     plan = reset.freeze_plan(args.output)
     plan.update(version="dh116-power-supported-contact-pilot-v1",
                 preserved_scope=config["scope"], power_seed_sha256=seed["sha256"])
-    plan["budget"].update(mode="power_supported_contact_pilot", sdk_steps=shared.SDK_END,
-                          solver_steps=(shared.SDK_END-2)*shared.SUBSTEPS, new_power_mesh_registrations=4)
+    mode = "power_supported_settle_without_hand" if settle else "power_supported_contact_pilot"
+    plan["budget"].update(mode=mode, sdk_steps=sdk_end,
+                          solver_steps=(sdk_end-2)*shared.SUBSTEPS, new_power_mesh_registrations=4)
     src = ROOT / "src/go2_pvcnn/control/dh116"
     files = [CONFIG, Path(__file__), Path(shared.__file__), args.rays,
              src/"tabletop_power_supported_task.py", src/"tabletop_power_contact_evidence.py",
@@ -142,6 +156,8 @@ def freeze(args):
         archive = args.rays.parent/f"{side}_base_link.json"
         sources.checked_json(archive, frozen["gpu_row_sha256"])
         files.extend((archive, bake/"result.json", bake/f"{side}.base_link.npz"))
+    if settle:
+        files.append(SETTLE)
     hashes = {str(path.resolve(strict=True)):native.sha(path) for path in files}
     for path, digest in hashes.items():
         if plan["frozen_files"].setdefault(path, digest) != digest:
@@ -153,6 +169,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     for flag in ("output", "plan", "rays", "left-bake", "right-bake"):
         parser.add_argument("--"+flag, type=Path, required=True)
+    parser.add_argument("--settle-without-hand-contact", dest="settle_without_hand_contact", action="store_true")
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(ROOT)
@@ -171,8 +188,10 @@ def main(argv=None):
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile
 
     args.measure_contact_evidence = True
+    end = plan["budget"]["sdk_steps"]
     reset.execute(plan, acquire_operation=partial(shared.run_shared, profile=BackendProfile.load(ROOT),
-        args=args, supported_acquire=partial(acquire_supported_reset, config=config)))
+        args=args, sdk_end=end, require_no_hand_contact=args.settle_without_hand_contact,
+        supported_acquire=partial(acquire_supported_reset, config=config, sdk_end=end)))
     return 0
 
 

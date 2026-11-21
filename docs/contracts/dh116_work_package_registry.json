@@ -45568,6 +45568,29 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-parked-support-settle-cpu": {
+      "title": "Isolate Power support settling from finger reactions",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-supported-contact-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_end_supported_rod.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_parked_support_settle_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-parked-support-settle.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_and_archived_native_readback",
+        "passed": 117,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

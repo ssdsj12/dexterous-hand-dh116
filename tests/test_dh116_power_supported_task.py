@@ -78,7 +78,8 @@ def test_freeze_does_not_run_offline_usd_scene_preparation(tmp_path, monkeypatch
     monkeypatch.setattr(pilot.sources, "checked_json", lambda path, sha: {"palms": {"left": {}, "right": {}}})
     monkeypatch.setattr(pilot.sources, "fixture", lambda side, rays, bake: (
         None, None, {"gpu_row_sha256": "a"*64}, None))
-    paths = {"output": tmp_path / "native", "rays": tmp_path / "rays.json"}
+    paths = {"output": tmp_path / "native", "rays": tmp_path / "rays.json",
+             "settle_without_hand_contact": False}
     paths["rays"].write_text("{}")
     for side in ("left", "right"):
         bake = tmp_path / f"{side}-bake"
@@ -90,10 +91,22 @@ def test_freeze_does_not_run_offline_usd_scene_preparation(tmp_path, monkeypatch
     plan, _ = pilot.freeze(Namespace(**paths))
     assert plan["budget"]["sdk_steps"] == 10 and plan["budget"]["solver_steps"] == 96
     assert str(pilot.CONFIG) in plan["frozen_files"]
+    paths["settle_without_hand_contact"] = True
+    settled, config = pilot.freeze(Namespace(**paths))
+    original = json.loads(pilot.CONFIG.read_bytes())
+    assert settled["budget"]["sdk_steps"] == 240 and settled["budget"]["solver_steps"] == 238*12
+    assert str(pilot.SETTLE) in settled["frozen_files"]
+    assert config["rod_nodes_w_m"] == original["rod_nodes_w_m"]
+    assert config["support_scene"] == original["support_scene"]
+    for side in power.SIDES:
+        assert config["hands"][side]["pose_wxyz"][0] - original["hands"][side]["pose_wxyz"][0] == pytest.approx(.105)
 
 
-def test_supported_worker_records_all_exchanges_and_independent_support_loads(tmp_path, monkeypatch):
+@pytest.mark.parametrize(("isolated", "hand_pair"), [(False, False), (True, False), (True, True)])
+def test_supported_worker_records_all_exchanges_and_independent_support_loads(
+        tmp_path, monkeypatch, isolated, hand_pair):
     from types import SimpleNamespace as NS
+    from go2_pvcnn.control.dh116.tabletop_joint_target_readback import WRIST_LINEAR
     from go2_pvcnn.control.dh116 import tabletop_dual_hand_reset as reset_api
     from go2_pvcnn.control.dh116 import tabletop_power_contact_evidence as evidence
     from scripts import verify_dh116_power_shared_rod as shared
@@ -122,8 +135,9 @@ def test_supported_worker_records_all_exchanges_and_independent_support_loads(tm
     hands = []
     for side in power.SIDES:
         view = NS(get_dof_positions=lambda: np.zeros((1, 17)), get_dof_velocities=lambda: np.zeros((1, 17)))
+        joint_names = list(WRIST_LINEAR) + [f"other{i}" for i in range(17-len(WRIST_LINEAR))]
         hand = NS(permanent_wrench_composer=object(), root_physx_view=view,
-                  joint_names=list(range(17)), write_data_to_sim=lambda: None, update=lambda _: None)
+                  joint_names=joint_names, write_data_to_sim=lambda: None, update=lambda _: None)
         hands.append(NS(side=side, hand=hand))
     clock = lambda: dict(physics_step=sim.sdk, rod_tick=(sim.sdk-2)*12)
     original = NS(bindings={key: meshes[key] for key in power.HAND_NAMES}, clock=clock, rope=object())
@@ -133,8 +147,11 @@ def test_supported_worker_records_all_exchanges_and_independent_support_loads(tm
     fixture = NS(_base=NS(nodes=np.zeros((41, 3))), rope=original.rope, clock=clock, mesh_names=names,
                  bindings=meshes)
     vectors = {side: {"forces": np.zeros((1,6,3))} for side in power.SIDES}
+    pair_names = ["support_0", "support_1"]
+    if hand_pair:
+        pair_names.append("left.finger14_link")
     fixture.step = lambda *args, **kw: dict(hand_wrenches_com_world=vectors, pair_force_residual_n=0.,
-        rod_mesh_contact_pairs={"pairs":[{"mesh_name": "support_0"},{"mesh_name": "support_1"}]},
+        rod_mesh_contact_pairs={"pairs":[{"mesh_name": name} for name in pair_names]},
         external_support_wrenches_world={"table": np.zeros(6),
             "support_0": np.array([0.,0.,.15, 0.,0.,0.]), "support_1": np.array([0.,0.,.17, 0.,0.,0.])})
     def attach(orig, **kwargs):
@@ -143,8 +160,13 @@ def test_supported_worker_records_all_exchanges_and_independent_support_loads(tm
     monkeypatch.setattr(power.PowerSharedRodRuntime, "from_original_reset", attach)
 
     result = shared.run_shared(sim, owners, None, tmp_path, profile=None,
-        args=NS(measure_contact_evidence=True),
+        args=NS(measure_contact_evidence=True), require_no_hand_contact=isolated,
         supported_acquire=lambda *a, **kw: ({"clock": dict(physics_step=2)}, {"support_poses": {}}))
+    if hand_pair:
+        assert "recorded a hand pair" in result["failure"]
+        assert result["guarded_stop_sdk_step"] == 3
+        assert (tmp_path/"power_exchange_3.json").exists()
+        return
     assert result.get("failure") is None, result
     assert result["solver_substeps"] == 96
     assert result["native_qualification"] is False
@@ -152,3 +174,7 @@ def test_supported_worker_records_all_exchanges_and_independent_support_loads(tm
     assert len(list(tmp_path.glob("power_exchange_*.json"))) == 8
     binding = json.loads((tmp_path/"power_binding.json").read_text())
     assert binding["pair_capacity"] == 41*15*12 and binding["supported_task"] is True
+
+    row = json.loads((tmp_path/"power_exchange_3.json").read_text())
+    assert row["native_joint_state"]["left"]["position_units"][:3] == ["m"]*3
+    assert row["native_joint_state"]["left"]["velocity_units"][-1] == "rad/s"

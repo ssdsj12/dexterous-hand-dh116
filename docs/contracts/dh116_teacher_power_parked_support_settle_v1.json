@@ -1,0 +1,50 @@
+{
+  "version": "dh116-power-parked-support-settle-v1",
+  "status": "cpu_verified_native_settlement_pending",
+  "hand_only_translation_m": 0.105,
+  "static_initial_clearances": {
+    "left": {
+      "min_start_rod_m": 0.07457891082872342,
+      "min_support_m": 0.0686369384471315,
+      "min_table_m": 0.009872448103265485
+    },
+    "right": {
+      "min_start_rod_m": 0.07202732583703247,
+      "min_support_m": 0.0669214401099781,
+      "min_table_m": 0.0370587497866216
+    }
+  },
+  "original_first_sample": {
+    "sdk": 3,
+    "positive_support_station": 39,
+    "station_center_displacement_m": 0.00016723036766053134,
+    "station_vertical_speed_m_s": 0.48331934213638306,
+    "left_mean_reaction_on_rod_z_n": 1.5043590863545735
+  },
+  "prepublication_freeze": {
+    "frozen_sha256": "94555ef04427494d77736483bf91da42dd57cee7a565819a7876d2019208e7b0",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "power_supported_settle_without_hand",
+      "sdk_setup_steps": 2,
+      "control_steps": 0,
+      "solver_steps": 2856,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 180,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 4,
+      "episode_resets": 1,
+      "sdk_steps": 240
+    }
+  },
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-power-parked-support-settle.md"
+}

@@ -153,7 +153,8 @@ def acquire_original_power_reset(sim, owners, trace, output, *, profile):
         sim = owners = trace = None
 
 
-def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=None):
+def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=None,
+               sdk_end=SDK_END, require_no_hand_contact=False):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -202,7 +203,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
         contact_exchanges = 0
         opposing_exchanges = 0
         peak_support_loads = {name: 0. for name in ("table", "support_0", "support_1")}
-        for before_sdk in range(2, SDK_END):
+        for before_sdk in range(2, sdk_end):
             if power.clock()["physics_step"] != before_sdk:
                 raise ValueError("only the preceding same-rod reaction can be delivered")
             if any(np.linalg.norm(row["forces"], axis=-1).max() > 30. for row in route.values()):
@@ -210,7 +211,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             write_composer_reactions(composers, route, to_tensor=to_tensor)
             for binding in bindings.values():
                 binding.hand.write_data_to_sim()
-            sdk = step_thumb_physics(sim, before_sdk, budget_end=SDK_END)
+            sdk = step_thumb_physics(sim, before_sdk, budget_end=sdk_end)
             for binding in bindings.values():
                 binding.hand.update(DT)
                 hand_safety(binding)
@@ -220,6 +221,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             if supported_acquire is not None:
                 from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import _owned
                 from go2_pvcnn.control.dh116.tabletop_dual_hand_reset import read_joint_target_evidence
+                from go2_pvcnn.control.dh116.tabletop_joint_target_readback import WRIST_LINEAR
 
                 native_joint_state = {}
                 for side, binding in bindings.items():
@@ -227,9 +229,12 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                     target = read_joint_target_evidence(binding.hand)["backend"]
                     if not target["available"]:
                         raise ValueError("actual Power backend position targets are required")
-                    native_joint_state[side] = dict(names=list(binding.hand.joint_names),
-                        q_rad=_owned(view.get_dof_positions()), qd_rad_s=_owned(view.get_dof_velocities()),
-                        target_rad=_owned(target["values"]), target_source=target["source"])
+                    names = list(binding.hand.joint_names)
+                    units = ["m" if name in WRIST_LINEAR else "rad" for name in names]
+                    native_joint_state[side] = dict(names=names, position_units=units,
+                        velocity_units=[unit+"/s" for unit in units],
+                        position=_owned(view.get_dof_positions()), velocity=_owned(view.get_dof_velocities()),
+                        target=_owned(target["values"]), target_source=target["source"])
                 for name, wrench in row["external_support_wrenches_world"].items():
                     peak_support_loads[name] = max(peak_support_loads[name], float(np.linalg.norm(wrench[:3])))
             native.write_new(output/f"power_exchange_{sdk}.json", encode_owned(dict(
@@ -244,13 +249,17 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             for pair in row["rod_mesh_contact_pairs"]["pairs"]:
                 loaded[pair["mesh_name"]] += 1
             max_residual = max(max_residual, row["pair_force_residual_n"])
+            if require_no_hand_contact and any(loaded[name] > 0 for name in power.bindings):
+                raise RuntimeError("the isolated support-settling interval recorded a hand pair")
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
-            rods_per_env=1, sdk_steps=SDK_END, measured_exchanges=SDK_END-2,
+            rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,
             solver_substeps=power.clock()["rod_tick"], mesh_names=power.mesh_names,
             pair_counts=loaded, max_force_balance_residual_n=max_residual,
             native_qualification=False, grasp_qualified=False, teacher_admission=False, ppo_updates=0)
         if supported_acquire is not None:
-            result.update(scope="measured_power_end_support_load_no_action", peak_support_force_n=peak_support_loads,
+            scope = ("measured_power_support_settling_without_hand" if require_no_hand_contact
+                     else "measured_power_end_support_load_no_action")
+            result.update(scope=scope, peak_support_force_n=peak_support_loads,
                           power_contact_qualified=False, supported_seed_clock=setup["clock"])
         if args.measure_contact_evidence:
             result.update(same_clock_contact_exchanges=contact_exchanges,
@@ -259,7 +268,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
         return result
     except Exception:
         sdk = native.clock(sim)["sdk_step"]
-        if not 2 <= sdk <= SDK_END:
+        if not 2 <= sdk <= sdk_end:
             raise
         failure = dict(failure=traceback.format_exc(), guarded_stop_sdk_step=sdk,
                        grasp_qualified=False, teacher_admission=False, ppo_updates=0)

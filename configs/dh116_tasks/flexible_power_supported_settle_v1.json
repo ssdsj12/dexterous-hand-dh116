@@ -1,0 +1,7 @@
+{
+  "version": "dh116-power-support-settle-v1",
+  "base_config_sha256": "5c54a8f741f02d3b2cda7110acb8b92a109fe212e549d08cd9b33678c8e07df0",
+  "sdk_steps": 240,
+  "initial_hand_x_translation_m": 0.105,
+  "assessment": "support loads with parked hands; no task success"
+}

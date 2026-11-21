@@ -3894,3 +3894,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - Added a source-bound Pinch force-feedback driver that can issue up to two certified left index micro-increments with both wrists fixed. Historical replay and native execution are reported separately.
 
 - Proved a separate right Tripod two-segment distal approach for the fixed raised reference against all source and locked cooked envelopes. New native contact remains unverified.
+
+- Added a hands-clear Power support settling case with an independent step budget, measured contact stop, and explicit native DOF units.
