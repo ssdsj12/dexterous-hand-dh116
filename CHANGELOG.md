@@ -1,3 +1,7 @@
+## Power checked retreat and opening native result
+
+Confirm the native retreat interlock, guarded extension, and clean exit from frozen source. [Report](docs/superpowers/reports/2026-11-21-teacher-power-retreat-then-open-native.md).
+
 ## Pinch right supported first contact probe
 
 Use a two-pad material-station allowance and retain next-step native force evidence. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-right-first-contact.md).
