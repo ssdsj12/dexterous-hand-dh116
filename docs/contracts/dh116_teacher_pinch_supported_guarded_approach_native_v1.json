@@ -1,0 +1,58 @@
+{
+  "version": "dh116-teacher-pinch-supported-guarded-approach-native-v1",
+  "native_runs": 1,
+  "native_natural_exit_code": 0,
+  "reduction_sha256": "66ac4acf9679f9072f642aef78dd5ffeeee3c3f5a61d414d3d24a53806f0f243",
+  "cpu_regressions_passed": 98,
+  "actual": {
+    "world_displacement_m": {
+      "left": [
+        -0.0014319419860839844,
+        0.00048775970935821533,
+        -0.00235670804977417
+      ],
+      "right": [
+        -0.000648796558380127,
+        -0.00011986494064331055,
+        -0.0008954107761383057
+      ]
+    },
+    "terminal_solver_node_pad_distances": {
+      "left.finger14_link": {
+        "initial_gap_m": 0.003954074768079481,
+        "minimum_gap_m": 0.0030423531205392472,
+        "minimum_node_id": 35
+      },
+      "left.finger23_link": {
+        "initial_gap_m": 0.006572705569039722,
+        "minimum_gap_m": 0.003461679073349623,
+        "minimum_node_id": 34
+      },
+      "right.finger14_link": {
+        "initial_gap_m": 0.0031398797808231743,
+        "minimum_gap_m": 0.0016616468757540519,
+        "minimum_node_id": 3
+      },
+      "right.finger23_link": {
+        "initial_gap_m": 0.0018485874562242889,
+        "minimum_gap_m": 0.0010538804882067937,
+        "minimum_node_id": 2
+      }
+    },
+    "action_pair_counts": {
+      "support_0": 2304,
+      "support_1": 2304
+    },
+    "sdk_steps": 432,
+    "solver_steps": 5160,
+    "control_windows": 24,
+    "outer_sha256": "e0910c26d2d3ab4e5c2d4947c873b630b858dda3b5a89b287174bb3b66e3c694",
+    "frozen_sha256": "c009820ecca6fb390ca23776023d7837682c6b627e0d89ee6184311f2089a919",
+    "elapsed_s": 106.72290723398328,
+    "last_row_sha256": "5f7a79b96ce17399b0c53759568c36e5ec182c5f77615a66db4d98503c4dac9c",
+    "result_sha256": "51c55c95221e49b5e7e8d98b5064ca04889bee7552ecf599056fc63d656fac7a"
+  },
+  "hand_contact_verified": false,
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

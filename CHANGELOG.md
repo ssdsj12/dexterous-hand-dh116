@@ -1,3 +1,7 @@
+## Pinch supported approach native result
+
+Record actual bilateral hand advance and end-support loads after a matched Reset. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-supported-guarded-approach-native.md).
+
 ## Pinch guarded supported approach
 
 Bind per-hand approach commands to the sealed settled native Pinch state and whole-hand geometry. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-supported-guarded-approach.md).
