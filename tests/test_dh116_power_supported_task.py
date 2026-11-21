@@ -90,3 +90,65 @@ def test_freeze_does_not_run_offline_usd_scene_preparation(tmp_path, monkeypatch
     plan, _ = pilot.freeze(Namespace(**paths))
     assert plan["budget"]["sdk_steps"] == 10 and plan["budget"]["solver_steps"] == 96
     assert str(pilot.CONFIG) in plan["frozen_files"]
+
+
+def test_supported_worker_records_all_exchanges_and_independent_support_loads(tmp_path, monkeypatch):
+    from types import SimpleNamespace as NS
+    from go2_pvcnn.control.dh116 import tabletop_dual_hand_reset as reset_api
+    from go2_pvcnn.control.dh116 import tabletop_power_contact_evidence as evidence
+    from scripts import verify_dh116_power_shared_rod as shared
+
+    sim = NS(sdk=2)
+    monkeypatch.setattr(shared.native, "clock", lambda ctx: {"sdk_step": ctx.sdk})
+    def advance(ctx, previous, *, budget_end):
+        assert ctx.sdk == previous and previous < budget_end
+        ctx.sdk += 1
+        return ctx.sdk
+    monkeypatch.setattr(shared, "step_thumb_physics", advance)
+    monkeypatch.setattr(shared, "hand_safety", lambda binding: None)
+    monkeypatch.setattr(power, "write_composer_reactions", lambda *args, **kw: None)
+    monkeypatch.setattr(reset_api, "read_joint_target_evidence",
+        lambda hand: {"backend": {"available": True, "values": np.zeros((1, 17)), "source": "test"}})
+    monkeypatch.setattr(evidence, "measure_power_contact",
+        lambda row: {"all_substeps_power_contacts": False})
+    names = power.SUPPORTED_POWER_MESH_NAMES
+    hand_names = power.HAND_NAMES + power.PALM_NAMES
+    meshes = {key: dict(body_index=index, side=key.split(".")[0])
+              for index, key in enumerate(hand_names)}
+    poses = {key: (np.zeros(3), np.array([0., 0., 0., 1.])) for key in hand_names}
+    monkeypatch.setattr(shared, "measure_links", lambda *args, **kw: (poses, {}, np.ones(2)))
+    monkeypatch.setattr(shared, "bind_palm_sources",
+        lambda *args, **kw: ({key: meshes[key] for key in power.PALM_NAMES}, {}))
+    hands = []
+    for side in power.SIDES:
+        view = NS(get_dof_positions=lambda: np.zeros((1, 17)), get_dof_velocities=lambda: np.zeros((1, 17)))
+        hand = NS(permanent_wrench_composer=object(), root_physx_view=view,
+                  joint_names=list(range(17)), write_data_to_sim=lambda: None, update=lambda _: None)
+        hands.append(NS(side=side, hand=hand))
+    clock = lambda: dict(physics_step=sim.sdk, rod_tick=(sim.sdk-2)*12)
+    original = NS(bindings={key: meshes[key] for key in power.HAND_NAMES}, clock=clock, rope=object())
+    owners = NS(resources={"runtime": original,
+        "dual_episode": NS(_bindings=hands, _exchange=NS(_read_geometry=NS(_shapes={})))},
+        keep=lambda name, value: value)
+    fixture = NS(_base=NS(nodes=np.zeros((41, 3))), rope=original.rope, clock=clock, mesh_names=names,
+                 bindings=meshes)
+    vectors = {side: {"forces": np.zeros((1,6,3))} for side in power.SIDES}
+    fixture.step = lambda *args, **kw: dict(hand_wrenches_com_world=vectors, pair_force_residual_n=0.,
+        rod_mesh_contact_pairs={"pairs":[{"mesh_name": "support_0"},{"mesh_name": "support_1"}]},
+        external_support_wrenches_world={"table": np.zeros(6),
+            "support_0": np.array([0.,0.,.15, 0.,0.,0.]), "support_1": np.array([0.,0.,.17, 0.,0.,0.])})
+    def attach(orig, **kwargs):
+        assert orig is original and "support_poses" in kwargs
+        return fixture
+    monkeypatch.setattr(power.PowerSharedRodRuntime, "from_original_reset", attach)
+
+    result = shared.run_shared(sim, owners, None, tmp_path, profile=None,
+        args=NS(measure_contact_evidence=True),
+        supported_acquire=lambda *a, **kw: ({"clock": dict(physics_step=2)}, {"support_poses": {}}))
+    assert result.get("failure") is None, result
+    assert result["solver_substeps"] == 96
+    assert result["native_qualification"] is False
+    assert result["peak_support_force_n"] == {"table":0., "support_0":.15,"support_1":.17}
+    assert len(list(tmp_path.glob("power_exchange_*.json"))) == 8
+    binding = json.loads((tmp_path/"power_binding.json").read_text())
+    assert binding["pair_capacity"] == 41*15*12 and binding["supported_task"] is True

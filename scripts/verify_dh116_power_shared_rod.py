@@ -190,7 +190,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             raise ValueError("the single original allocation must cover all Power mesh pairs")
         native.write_new(output/"power_binding.json", dict(reset_clock=clock, added=added, mesh_names=power.mesh_names,
                          rods_per_env=1, solver_steps_before_registration=0, solver_steps_after_registration=0,
-                         pair_capacity=scoped_owners.allocated_capacity))
+                         pair_capacity=capacity, supported_task=supported_acquire is not None))
         composers = {side:bindings[side].hand.permanent_wrench_composer for side in SIDES}
         links = contact_links(power.bindings)
         to_tensor = partial(torch.as_tensor, dtype=torch.float32, device="cuda:0")

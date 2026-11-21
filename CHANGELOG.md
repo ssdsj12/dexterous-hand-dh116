@@ -3886,3 +3886,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - Added the isolated Power supported-rod acquisition path with original hand limits, live joint and link readback, and explicit support wrench attribution. The bounded native pilot remains separately tracked.
 
 - Kept Power recipe freeze free of pre-AppLauncher USD imports after the first worker failed before Isaac startup.
+
+- Bound the supported Power ledger to its actual 15-slot layout and archived native Reset geometry and the guarded acquisition failure.

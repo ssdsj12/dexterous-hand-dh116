@@ -45470,6 +45470,32 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-supported-binding-cpu": {
+      "title": "Record actual Power Reset evidence and exercise supported contact ledger",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-supported-startup-import-boundary-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_end_supported_rod.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_supported_binding_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-binding.md",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "cpu_fixture_and_native_reset_only",
+        "passed": 121,
+        "failed": 0,
+        "native_acquisition_failed": true,
+        "native_exit": 1,
+        "result_sha256": "5f7e9bfb67484bae45b094d342662639f775cb767f191247012063edda518c61",
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
