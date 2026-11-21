@@ -52,3 +52,6 @@ This is NOT a dynamically robust route or a native execution recipe. The smalles
 Evidence is retained privately under ref902/command-v3-staged-path-screen.{py,json,log}. JSON SHA c2c24c228d1ba6e5956d0408b11a31ab95aadd6b6fd7811028485d7fc4b790a2; harness SHA ca1fd2976f8120ed1cac5466849853e025cc2875f7c891d2abc0125e16605ddb; log SHA 51611a4473aab0e8a6f6a41cdd00566a79f0cf8d5569d66b2bb9cddd3388591b. Run command used the existing Ubuntu CPU environment and /mnt/mydisk/xk/envs/dh116/bin/python with that private harness path. This diagnostic is separate from the 262 regression tests.
 
 Next: increase intermediate path reserve without altering the final 902 grip, qualify measured wrist position/velocity convergence before closure, and bind every new phase to the existing guard and action receipts. Do not run the current thin-margin path merely because ideal geometry passed.
+
+## Subsequent bound refinement
+The 0.122/0.245 micrometre numbers above are coarse lower-certificate reserves, not exact measured clearances. The follow-up [tracking-reserve report](2026-11-21-teacher-902-tracking-reserve.md) tightens seven archived states while preserving the original proof and failure evidence. Support853 refines to3.760575 mm; selected rod reserves remain18–68 micrometres. Neither the old proof nor this selected refinement qualifies native tracking.

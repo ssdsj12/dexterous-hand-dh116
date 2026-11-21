@@ -98,6 +98,8 @@
       "passed": 60,
       "failed": 0,
       "log_sha256": "cab8b30c5c5ecf15bfaa2e27a7f553eb49078b9ea8000e3ec44e86fe33a16c0b"
-    }
+    },
+    "margin_interpretation": "Original values are reserves of conservative lower bounds, not exact geometric margins; see the seven-state refinement.",
+    "refinement_readiness": "docs/contracts/dh116_teacher_902_tracking_reserve_v1.json"
   }
 }

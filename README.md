@@ -1,3 +1,7 @@
+## 902 tracking reserve refinement
+
+Distinguish loose distance bounds from actual narrow rod clearance using complete archived envelopes and source-bound certificates. 218 related CPU checks pass; selected-state evidence is not full-path/native qualification. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-tracking-reserve.md).
+
 ## 902 original-source entry binding
 
 Independent v2 entry now authenticates actual F4 vertices, captured USD identity and all nine rod frames. 202 related CPU checks pass; the previous native contact failure remains blocked. Antigravity R1–R3 reviewed the change. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-source-binding.md).
