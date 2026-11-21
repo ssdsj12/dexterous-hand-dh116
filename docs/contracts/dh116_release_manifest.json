@@ -30938,6 +30938,31 @@
         "verified_at_utc": "2026-11-21T09:32:36.885518+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-force-guided-index-seating-native",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-force-guided-index-seating-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_force_guided_index_seating_native_v1.json",
+      "cpu_tests": {
+        "passed": 217,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "526176335cd36efb90d5ac3dedffc0e17f2d3de6",
+        "source_tree": "c9d855c92f14da1a9020f617b69215f41bf0d241",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T09:38:10.328772+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
