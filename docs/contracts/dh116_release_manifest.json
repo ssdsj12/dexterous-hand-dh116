@@ -29338,6 +29338,31 @@
         "verified_at_utc": "2026-11-21T03:14:41.705978+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Pinch native PPO checkpoint resume B v2",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-b-v2.md",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_pair_b_v2.json",
+      "cpu_tests": {
+        "passed": 120,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b365f3e0ec6336fd969f9933bce95daf21e48b51",
+        "source_tree": "1ce25e087698f60fa977c98b2ec70939c47d5d54",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T03:26:22.910286+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
