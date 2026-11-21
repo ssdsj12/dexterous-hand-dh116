@@ -31213,6 +31213,31 @@
         "verified_at_utc": "2026-11-21T11:16:03.094202+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-flexible-distal-reset",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_902_flexible_distal_reset_v1.json",
+      "cpu_tests": {
+        "passed": 160,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "db68e0279655fd977f6935631ffc1fcd9070b71a",
+        "source_tree": "393ad438b39c8cb9a5e5720f7cbb08f033e68f35",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T11:45:07.729007+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
