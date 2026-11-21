@@ -98,9 +98,9 @@ def verify_static_contract(config):
     gate=static_preflight(config.preflight,project=config.project,backend_profile=profile)
     if not gate["static_ready"]:
         raise ValueError("native static contract denied: "+", ".join(gate["blocked_reasons"]))
-    # C04's implemented real reader is Pinch smoke. Full requires a separately
-    # implemented common evaluator/source adapter; JSON declarations cannot supply it.
-    if config.preflight["style"] != "pinch":
+    # Pinch and Tripod have independent smoke readers. Full contact/slip/hold
+    # still requires its own real evaluator; JSON declarations cannot supply it.
+    if config.preflight["style"] not in ("pinch","tripod"):
         raise ValueError(config.preflight["style"]+"_distance_reader_implementation_pending")
     if config.preflight["profile"] != "approach_wiring_smoke_v1":
         raise ValueError("full_shared_contact_slip_hold_source_adapter_missing")
@@ -358,17 +358,25 @@ class NativeEpisodeOwner:
         # Preserve the original reset API/physical owner; the scoped existing
         # successors add numeric/mesh readback and unchanged clearance guards.
         self.ledger.emit("reset_clock_preflight",reset_clock_preflight(self))
+        style=self.contract.config.preflight["style"]
+        if style not in ("pinch","tripod"):
+            raise ValueError("independent style-specific Reset implementation required")
         self.contract.runtime.reserve_reset(self)
         old_reset,old_exchange=module.DualHandResetTransaction,module.FlexiblePhysicalExchange
         def reset_factory(seed,*,episode_uid):
             return MeasuredMeshReset(seed,episode_uid=episode_uid,mesh_plan=self.mesh_plan)
         with profile_reader_scope(self.backend_profile):
             try:
-                module.DualHandResetTransaction=reset_factory
+                if style == "pinch":
+                    module.DualHandResetTransaction=reset_factory
                 module.FlexiblePhysicalExchange=ClearanceGuardedExchange
                 with numeric_reset_state_scope(sim=self.sim,rod=self.rod,
                         record=lambda row:self.ledger.emit("numeric_reset",row)) as audit:
-                    result=self.episode.reset(seed,episode_uid=episode_uid,owner_resets=owner_resets)
+                    options={}
+                    if style == "tripod":
+                        options=dict(supported_mesh_plan=self.mesh_plan,
+                            record_reset_readback=lambda row:self.ledger.emit("supported_reset_readback",row))
+                    result=self.episode.reset(seed,episode_uid=episode_uid,owner_resets=owner_resets,**options)
                 self.numeric_audit=deepcopy(audit)
             finally:
                 module.DualHandResetTransaction,module.FlexiblePhysicalExchange=old_reset,old_exchange

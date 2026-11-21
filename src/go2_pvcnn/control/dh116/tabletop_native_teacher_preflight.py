@@ -124,6 +124,9 @@ class ResolvedResetManifest:
 
 def load_reset_manifest(config, *, project=ROOT):
     try:
+        if config["style"] == "tripod":
+            from .tabletop_tripod_reset_manifest import load_tripod_reset_manifest
+            return load_tripod_reset_manifest(config,project=project)
         path, raw = _binding(config["resolved_reset_manifest"], project)
         value = json.loads(raw)
         if (value.get("schema") != RESET_MANIFEST_SCHEMA or value.get("style") != config["style"]
@@ -386,7 +389,20 @@ def static_preflight(config, *, project=ROOT, backend_profile=None):
         "eight_sdk_per_control": "tabletop_deformable_control_step.py"}
     for capability in sorted(required_capabilities(config["profile"]) - {"backend", "resolved_reset", "finite_budget", "task_context"}):
         filename = sources.get(capability)
-        if capability == "same_clock_distance" and config["style"] != "pinch":
+        if capability == "same_clock_distance" and config["style"] == "tripod":
+            from .tabletop_tripod_reset_manifest import TripodResetManifest
+            path = project / "src/go2_pvcnn/control/dh116/tabletop_tripod_reset_distance.py"
+            def tripod_distance():
+                if type(manifest) is not TripodResetManifest:
+                    raise ValueError("independent source-derived Tripod Reset manifest required")
+                from .tabletop_tripod_reset_distance import MeasuredTripodResetApproach
+                from .tabletop_native_teacher_sources import NativeTripodSources
+                if NativeTripodSources.STYLE != "tripod":
+                    raise ValueError("independent Tripod source adapter required")
+                return MeasuredTripodResetApproach(project)
+            check(capability,tripod_distance,str(path),
+                  "current independent six-pad reader; actual same-owner live verification still required")
+        elif capability == "same_clock_distance" and config["style"] != "pinch":
             components.append(_component(capability, False, reader="BilateralMeasuredPinchApproach",
                 reason=config["style"] + "_distance_reader_implementation_pending",
                 release="independent style-specific same-clock fixed-material41 reader; Pinch proof cannot transfer"))
@@ -451,6 +467,11 @@ def validate_live_mesh(sim, rod, *, reset_receipt, mesh_plan):
         validate_reset_readback, capture_mesh_state, validate_capture)
     from .tabletop_deformable_r0_replay import decode_owned, encode_owned
     receipt = decode_owned(reset_receipt)
+    from . import tabletop_supported_mesh_reset as supported
+    if mesh_plan.get("version") == supported.PLAN_VERSION:
+        validate_reset_readback = supported.validate_supported_readback
+        capture_mesh_state = supported.capture_supported_mesh_state
+        validate_capture = supported.validate_supported_capture
     status = validate_reset_readback(receipt["mesh_state_readback"],
                                     reset_receipt=receipt, mesh_plan=mesh_plan)
     current = capture_mesh_state(sim, rod)
@@ -513,8 +534,11 @@ def live_preflight(owner, reset_contract, *, backend_profile, manifest):
     if (type(reset_contract) is not LiveResetContract or reset_contract.owner is not owner
             or isinstance(owner, (bool, dict))):
         raise ValueError("real same-instance owner and LiveResetContract required")
-    if type(manifest) is not ResolvedResetManifest or type(backend_profile) is not BackendProfile:
-        raise ValueError("immutable source-loaded profile and resolved Reset manifest required")
+    from .tabletop_tripod_reset_manifest import TripodResetManifest
+    manifest_types = {"pinch":ResolvedResetManifest,"tripod":TripodResetManifest}
+    if (type(manifest) not in manifest_types.values() or type(backend_profile) is not BackendProfile
+            or type(manifest) is not manifest_types.get(manifest.data()["style"])):
+        raise ValueError("immutable style-specific source-loaded profile and resolved Reset manifest required")
     from . import tabletop_mesh_observation_source as source
     from . import tabletop_dual_hand_reset as reset
     from . import tabletop_mesh_reset_numeric_state as numeric
@@ -580,8 +604,16 @@ def live_preflight(owner, reset_contract, *, backend_profile, manifest):
         for packet in c.mounted_observation["source_packets"]:
             if packet["reset_seed"]["root_seed_w"] != receipt["seed"]["authored_root_seed_w"]:
                 raise ValueError("mounted authored reference differs from resolved raw Reset")
-        if type(c.distance_reader) is not BilateralMeasuredPinchApproach or data["style"] != "pinch":
+        from .tabletop_tripod_reset_distance import MeasuredTripodResetApproach
+        readers = {"pinch":BilateralMeasuredPinchApproach,"tripod":MeasuredTripodResetApproach}
+        if type(c.distance_reader) is not readers.get(data["style"]):
             raise ValueError("independent style-specific real distance reader required")
+        if data["style"] == "tripod":
+            from .tabletop_power_shared_rod import PowerSharedRodRuntime, PROXIMAL_POWER_MESH_NAMES
+            if (type(c.rod) is not PowerSharedRodRuntime
+                    or tuple(c.rod.mesh_names) != PROXIMAL_POWER_MESH_NAMES
+                    or c.distance_reader.scope != "owner_source_unqualified"):
+                raise ValueError("actual seventeen-slot Tripod owner and native Reset distance required")
         distance = c.distance_reader.capture_reset(receipt, c.parameter_packet, grasp=data["style"])
         if distance["missing_reason"] is not None:
             raise ValueError("actual bilateral Reset distance unavailable")

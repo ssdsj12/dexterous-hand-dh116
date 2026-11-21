@@ -48224,6 +48224,34 @@
         "teacher_admission": false,
         "scope": "CPU adapter only; static/live gate, native collector and PPO pending"
       }
+    },
+    "teacher.tripod-admission-reset": {
+      "title": "Independent Tripod manifest/static gate and original supported Reset lease",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-source-adapter"
+      ],
+      "tests": [
+        "tests/test_native_teacher_tripod_admission.py",
+        "tests/test_native_teacher_preflight.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_native_teacher_tripod_sources.py",
+        "tests/test_fresh_supported_episode.py",
+        "tests/test_supported_mesh_reset.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_admission_reset_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-admission-reset.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 102,
+        "cpu_failed": 0,
+        "new_tests": 3,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU static gate and supported Reset bridge only; native worker and PPO pending"
+      }
     }
   },
   "execution_target": {

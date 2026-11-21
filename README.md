@@ -1,3 +1,7 @@
+## Independent Tripod admission and Reset lease
+
+The Teacher gate now reads the real Tripod manifest, preserves the supported17 Reset/readback and rejects mesh drift without hidden steps. 102 selected CPU checks pass. Full live native Collector/PPO remains pending; no new physical run or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-admission-reset.md).
+
 ## Independent Tripod Teacher source adapter
 
 Tripod now uses its own six-pad Reset and policy-history distance, source-derived manifest and task context. Missing middle-pad SDF coverage refuses reward creation. 55 selected CPU checks pass; static/live admission and native Tripod PPO remain pending. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-source-adapter.md).
