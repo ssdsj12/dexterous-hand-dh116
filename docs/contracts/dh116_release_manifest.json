@@ -29988,6 +29988,31 @@
         "verified_at_utc": "2026-11-21T05:47:09.468208+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power proximal supported-scene binding",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-binding.md",
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_binding_v1.json",
+      "cpu_tests": {
+        "passed": 126,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "f478e9e4b5f2f46152dbe36cae0b153f4fb7c17d",
+        "source_tree": "1ec542ef8e19ae8cd02148741ef516d45d68472e",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T05:50:39.938568+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
