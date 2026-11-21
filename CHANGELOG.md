@@ -1,3 +1,7 @@
+## Power high wrist bypass native result
+
+Verify the opened wrist route and natural exit against original support and collision constraints. [Report](docs/superpowers/reports/2026-11-21-teacher-power-guarded-wrist-bypass-native.md).
+
 ## Power guarded wrist bypass
 
 Compile and gate separate motion after the measured opening, with the original rate, joint and contact limits. [Report](docs/superpowers/reports/2026-11-21-teacher-power-guarded-wrist-bypass.md).

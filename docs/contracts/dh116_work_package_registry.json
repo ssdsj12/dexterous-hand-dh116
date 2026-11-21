@@ -47074,6 +47074,30 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-guarded-wrist-bypass-native": {
+      "title": "Verify Power reaches the high pre-grasp waypoint with original geometry",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-guarded-wrist-bypass"
+      ],
+      "tests": [
+        "tests/test_dh116_power_high_bypass.py",
+        "tests/test_dh116_power_retreat_then_open.py",
+        "tests/test_dh116_power_supported_task.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_guarded_wrist_bypass_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-guarded-wrist-bypass-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 219,
+        "native_exit_code": 0,
+        "validated_sdk_steps": 3584,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
