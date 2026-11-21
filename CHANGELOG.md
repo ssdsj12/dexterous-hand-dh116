@@ -3890,3 +3890,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - Bound the supported Power ledger to its actual 15-slot layout and archived native Reset geometry and the guarded acquisition failure.
 
 - Verified both raised Power supports produce measured DeformX reactions in a naturally exiting native pilot. Contact remains asymmetric and the grip is unqualified.
+
+- Added a source-bound Pinch force-feedback driver that can issue up to two certified left index micro-increments with both wrists fixed. Historical replay and native execution are reported separately.

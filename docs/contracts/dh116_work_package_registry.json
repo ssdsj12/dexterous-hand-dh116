@@ -45522,6 +45522,29 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-fixed-wrist-force-feedback-cpu": {
+      "title": "Select the isolated index increment from measured opposing loads",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-same-state-force-hold-control-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_pinch_fixed_force_feedback.py",
+        "tests/test_teacher_force_closure.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_fixed_wrist_force_feedback_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-fixed-wrist-force-feedback.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_and_historical_replay",
+        "passed": 145,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

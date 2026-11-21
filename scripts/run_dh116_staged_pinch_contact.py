@@ -145,11 +145,12 @@ class ObservedClose(ClearanceGuardedExchange):
             self = action = row = None
 
 
-def inspect_interval(path, actions, *, sdk_steps=SDK_STEPS):
+def inspect_interval(path, actions, *, sdk_steps=SDK_STEPS, feedback_factory=None):
     audit = inspect_evidence(path)
     if audit["physics_budget_end"] != sdk_steps or audit["solver_substeps"] != SUBSTEPS:
         raise ValueError("ledger differs from frozen close budget")
-    quiet, begins, rows = [], [], []
+    quiet, begins, rows, expected_actions, decisions = [], [], [], [], []
+    feedback = feedback_factory() if feedback_factory is not None else None
     reset_nodes = None
     with Path(path).open() as f:
         next(f)
@@ -159,6 +160,15 @@ def inspect_interval(path, actions, *, sdk_steps=SDK_STEPS):
             if entry["operation"] == "reset":
                 reset_nodes = np.asarray(data["reset"]["rod_reset"]["node_positions"], dtype=float)[0]
             if entry["operation"] == "begin":
+                index = len(begins)
+                if index >= len(actions):
+                    raise ValueError("more control requests than the frozen budget")
+                expected = actions[index]
+                if feedback is not None:
+                    expected, selection = feedback(index, expected, rows[-8:])
+                    if selection is not None:
+                        decisions.append(selection)
+                expected_actions.append(expected)
                 begins.append(data["action"])
             if entry["operation"] == "physical":
                 row = data["exchange"]
@@ -174,12 +184,14 @@ def inspect_interval(path, actions, *, sdk_steps=SDK_STEPS):
         if quiet != [recalculated]:
             raise ValueError("quiet receipt differs from current-instance raw rows")
     if (len(begins) > len(actions)
-            or any(not np.array_equal(observed, expected[None,:]) for observed, expected in zip(begins, actions))
+            or any(not np.array_equal(observed, expected[None,:]) for observed, expected in zip(begins, expected_actions))
             or (len(begins) > 1 and (len(quiet) != 1 or not quiet[0]["passed"]))):
         raise ValueError("close was not gated by its own quiet window and frozen actions")
     reactions = [(x["physics_step"], x["stage_reaction"]) for x in rows if "stage_reaction" in x]
     common = [step for step, data in reactions if data["bilateral_loaded_opposed_substeps"]]
     full = [step for step, data in reactions if data["all_12_loaded_opposed"]]
+    if feedback is not None:
+        audit["fixed_wrist_force_decisions"] = decisions
     return dict(audit, quiet_admission=quiet[0] if quiet else None,
                 rows_with_simultaneous_loaded_opposition=common, rows_all_12_opposed=full,
                 final_8_sdk_all_substeps_opposed=(len(rows) == sdk_steps - 2
@@ -187,7 +199,7 @@ def inspect_interval(path, actions, *, sdk_steps=SDK_STEPS):
                 teacher_admission=False, grasp_qualified=False)
 
 
-def acquire(sim, owners, trace, output, *, plan, sdk_steps=SDK_STEPS):
+def acquire(sim, owners, trace, output, *, plan, sdk_steps=SDK_STEPS, feedback_factory=None):
     import sys
     from uuid import uuid4
     import torch
@@ -200,6 +212,15 @@ def acquire(sim, owners, trace, output, *, plan, sdk_steps=SDK_STEPS):
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile, profile_reader_scope
 
     fresh = episode = exchange = journal = result = None
+    feedback = feedback_factory() if feedback_factory is not None else None
+    last_rows, live_decisions = [], []
+
+    def record(row):
+        journal.record(row)
+        if row["kind"] == "physical":
+            last_rows.append(row["exchange"])
+            del last_rows[:-8]
+
     try:
         profile = BackendProfile.load(ROOT)
         source = plan["pair_proposal"]
@@ -212,7 +233,8 @@ def acquire(sim, owners, trace, output, *, plan, sdk_steps=SDK_STEPS):
                 (builder, "BACKEND", Path(profile.binary_path)), (builder, "BACKEND_SHA", profile.binary_sha256),
                 (physical, "FlexiblePhysicalExchange", ObservedClose)):
             fresh = builder.build_fresh_owned(sim, owners, project=ROOT, prepared=prepared,
-                ownership=trace, record=journal.record, run_uuid=run, episode_uid=run+":0",
+                ownership=trace, record=journal.record if feedback is None else record,
+                run_uuid=run, episode_uid=run+":0",
                 physics_budget_end=sdk_steps, expected_reset_seed=seed, pair_proposal=source)
             episode = fresh.episode
             reset = episode.reset(seed, episode_uid=run+":0", owner_resets=diagnostic_reset_owners())
@@ -229,7 +251,12 @@ def acquire(sim, owners, trace, output, *, plan, sdk_steps=SDK_STEPS):
                 device=str(exchange._bindings[0].hand.data.joint_pos.device))
             exchange.parameter_reader.capture_reset(rod_reset, material_reference_uid=run+":fixed_material41",
                 rope=exchange._rod.rope, backend=exchange.backend, sim=sim, read_clock=exchange._rod.clock)
-            for action in plan["action_schedule"]:
+            for index, action in enumerate(plan["action_schedule"]):
+                if feedback is not None:
+                    action, selection = feedback(index, action, last_rows)
+                    if selection is not None:
+                        lifecycle.native.write_new(Path(output)/f"fixed_wrist_force_{index}.json", selection)
+                        live_decisions.append(selection)
                 command = torch.tensor(action, dtype=torch.float64)[None,:]
                 journal.begin(episode.pre_action_state(), command)
                 result = episode.control(command)
@@ -237,7 +264,10 @@ def acquire(sim, owners, trace, output, *, plan, sdk_steps=SDK_STEPS):
                 if result["termination_reason"]:
                     break
         journal.close()
-        audit = inspect_interval(journal_path, np.asarray(plan["action_schedule"]), sdk_steps=sdk_steps)
+        audit = inspect_interval(journal_path, np.asarray(plan["action_schedule"]), sdk_steps=sdk_steps,
+                                 feedback_factory=feedback_factory)
+        if feedback is not None and audit["fixed_wrist_force_decisions"] != live_decisions:
+            raise ValueError("independent force decisions differ from the physical control ledger")
         report = dict(version=VERSION, physics_rows=audit["measured_physics_rows"],
                       close_evidence=audit, ppo_updates=0, grasp_qualified=False, teacher_admission=False)
         if audit["terminal_reason"]:

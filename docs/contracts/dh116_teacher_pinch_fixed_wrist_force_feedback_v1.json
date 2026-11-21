@@ -1,0 +1,81 @@
+{
+  "version": "dh116-pinch-fixed-wrist-force-feedback-v1",
+  "status": "cpu_verified_native_feedback_pending",
+  "nominal_prefix_control_windows": 45,
+  "max_channel_2_total_rad": 0.0001,
+  "cpu_tests": 145,
+  "prepublication_freeze": {
+    "frozen_sha256": "4985809c587f44191279d63e862aa227efe3e6b2d2c2d8834f8992872e8c05ea",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "pinch",
+      "sdk_setup_steps": 2,
+      "control_steps": 55,
+      "solver_steps": 5280,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 520,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 0,
+      "episode_resets": 1,
+      "sdk_steps": 442
+    }
+  },
+  "archived_source": {
+    "source_sha256": "53cae3cd0edd1fa642dd016fd0140b117076ed95a679139a39ec5944d32e437a",
+    "decision": {
+      "observed_sdk_step": 362,
+      "proposed_control_step": 45,
+      "identity": {
+        "run_uuid": "staged-pinch-eb07007050e442118d4ae86097a5d10e",
+        "episode_uid": "staged-pinch-eb07007050e442118d4ae86097a5d10e:0",
+        "reset_id": 1,
+        "rod_uid": "rod0"
+      },
+      "solver_substeps": 96,
+      "left_insufficient_substeps": 51,
+      "right_insufficient_substeps": 0,
+      "reasons": [
+        "left_required_load_deficit"
+      ],
+      "left_index_delta_rad": 5e-05,
+      "total_index_delta_rad": 5e-05
+    },
+    "action": [
+      0.0,
+      0.0,
+      0.01,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "source_scope": "existing matched zero-action trajectory; counterfactual force decision only"
+  },
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-fixed-wrist-force-feedback.md"
+}
