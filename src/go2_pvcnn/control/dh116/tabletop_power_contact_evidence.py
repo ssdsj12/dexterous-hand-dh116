@@ -8,7 +8,8 @@ import numpy as np
 
 from .tabletop_deformx_pair_capture import validate_pair_capture
 from .tabletop_power_shared_rod import (
-    END_SUPPORT_NAMES, PALM_NAMES, PADS, POWER_MESH_NAMES, SUPPORTED_POWER_MESH_NAMES, _bindings,
+    END_SUPPORT_NAMES, PALM_NAMES, PADS, POWER_MESH_NAMES, SUPPORTED_POWER_MESH_NAMES,
+    SUPPORTED_LAYOUTS, PROXIMAL_LINK, PROXIMAL_NAMES, PROXIMAL_POWER_MESH_NAMES, _bindings,
 )
 from .tabletop_teacher_force_closure import _opposition, _pad_summary
 
@@ -27,7 +28,7 @@ IDENTITY_FIELDS = ("run_uuid", "env_id", "episode_uid", "reset_id", "rod_uid", "
 
 def _power_pairs(rod):
     names = tuple(rod["mesh_names"])
-    if names not in (POWER_MESH_NAMES, SUPPORTED_POWER_MESH_NAMES):
+    if names not in (POWER_MESH_NAMES, *SUPPORTED_LAYOUTS):
         raise ValueError("the named Power layout with palms at slots 11 and 12 is required")
     if (rod["pair_capture_status"] != "validated_solver_samples"
             or rod["source"] != "RopeBatch.positions/velocities/contact_forces/mesh_wrenches"
@@ -39,15 +40,15 @@ def _power_pairs(rod):
             or not rod["physics_step"] or not rod["rod_tick"] or rod["rod_tick"] % SUBSTEPS):
         raise ValueError("an actual completed one-rod exchange with valid contacts is required")
     bindings = _bindings(rod["mesh_bindings"])
-    if set(bindings) != set(POWER_MESH_NAMES) - {"table"}:
-        raise ValueError("both sets of original five pads and a palm binding are required")
-    for name in PALM_NAMES:
-        capture_sha = bindings[name].get("capture_sha256")
-        if not isinstance(capture_sha, str) or re.fullmatch(r"[0-9a-f]{64}", capture_sha) is None or capture_sha == "0" * 64:
-            raise ValueError("a nonzero geometry capture SHA is required for every palm")
-    if any(bindings[PALM_NAMES[0]][key] == bindings[PALM_NAMES[1]][key]
-           for key in ("capture_sha256", "cooked_geometry_sha256", "sdf_sha256")):
-        raise ValueError("left and right palms must retain separate geometry sources")
+    if set(bindings) != set(names) - {"table", *END_SUPPORT_NAMES}:
+        raise ValueError("the complete physical binding set is required")
+    source_pairs = (PALM_NAMES, PROXIMAL_NAMES) if names == PROXIMAL_POWER_MESH_NAMES else (PALM_NAMES,)
+    for left, right in source_pairs:
+        for key in ("capture_sha256", "cooked_geometry_sha256", "sdf_sha256"):
+            a, b = bindings[left].get(key), bindings[right].get(key)
+            if (not all(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value)
+                        and value != "0"*64 for value in (a,b)) or a == b):
+                raise ValueError("left and right Power contacts must retain separate geometry sources")
 
     capture = rod["rod_mesh_contact_pairs"]
     if (capture["scope"] != "rod_node_to_sdf_mesh_substep_force"
@@ -75,7 +76,7 @@ def _power_pairs(rod):
     if (node_forces.shape != (1, NODE_COUNT, 3) or set(wrench_by_name) != set(names)
             or not np.array_equal(rod["table_wrench_world"], wrench_by_name["table"])):
         raise ValueError("same-boundary one-rod force array and complete named wrenches required")
-    if names == SUPPORTED_POWER_MESH_NAMES:
+    if names in SUPPORTED_LAYOUTS:
         static = rod["external_support_wrenches_world"]
         if (type(static) is not dict or set(static) != {"table", *END_SUPPORT_NAMES}
                 or any(not np.array_equal(wrench, wrench_by_name[name]) for name,wrench in static.items())
@@ -138,7 +139,15 @@ def measure_power_contact(rod):
                 table_normal_load_n=table_load, zero_table_load=max(table_load) <= TABLE_LOAD_LIMIT_N,
                 proximal_sdf_registered=False, native_qualification=False,
                 grasp_qualified=False, teacher_admission=False)
-    if tuple(rod["mesh_names"]) == SUPPORTED_POWER_MESH_NAMES:
+    names = tuple(rod["mesh_names"])
+    if names == PROXIMAL_POWER_MESH_NAMES:
+        result["registered_proximal_links"] = [PROXIMAL_LINK]
+        result["proximal_contacts"] = {}
+        for side in ("left", "right"):
+            slot = names.index(f"{side}.{PROXIMAL_LINK}")
+            result["proximal_contacts"][side] = [_pad_summary(group[step,slot], 1, slot)
+                                                 for step in range(SUBSTEPS)]
+    if names in SUPPORTED_LAYOUTS:
         loads = {}
         for name in ("table", *END_SUPPORT_NAMES):
             slot = SUPPORTED_POWER_MESH_NAMES.index(name)

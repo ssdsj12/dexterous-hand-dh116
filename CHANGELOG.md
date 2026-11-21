@@ -1,3 +1,7 @@
+## Power proximal supported-scene binding
+
+Add an opt-in near-open diagnostic that routes each original little proximal collider on its own frozen source. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-binding.md).
+
 ## Power proximal SDF source and sampling
 
 Bake the independently measured left and right finger52 surfaces, comparing two grid spacings at the same physical sample distances. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-sdfs.md).

@@ -46030,6 +46030,32 @@
         "contact_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-proximal-supported-binding": {
+      "title": "Bind original bilateral Power proximal SDFs in the supported-task diagnostic",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-original-proximal-sdfs"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_power_palm_raycast.py",
+        "tests/test_dh116_deformx_pad_sdf.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_binding_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-binding.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 126,
+        "failed": 0,
+        "task_registration_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

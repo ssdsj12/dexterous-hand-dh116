@@ -16,6 +16,7 @@ from scripts.verify_dh116_deformx_thumb_contact import step_thumb_physics
 from scripts.verify_dh116_power_live_palm_feedback import hand_safety
 
 ROOT = Path(__file__).resolve().parents[1]
+PROXIMAL_SDF_CONTRACT = ROOT / "docs/contracts/dh116_teacher_power_proximal_sdfs_v1.json"
 SDK_END = 10
 DT = 1 / 480
 SUBSTEPS = 12
@@ -113,6 +114,68 @@ def bind_palm_sources(sim, bindings, original, *, args):
             cooked_geometry_sha256=archive_geometry_digest(archive), capture_sha256=frozen["gpu_row_sha256"],
             sdf_sha256=frozen["sdf_file_sha256"])
     return palm_bindings, palm_grids
+
+
+def proximal_registration_inputs(capture, bake):
+    """Load exactly the two 0.5 mm candidates tied to their own original native rows."""
+    from go2_pvcnn.control.dh116.tabletop_power_shared_rod import PROXIMAL_LINK, PROXIMAL_NAMES
+
+    contract = json.loads(PROXIMAL_SDF_CONTRACT.read_bytes())["candidate_lookups"]["0.0005"]
+    outer, result = capture/"outer.json", bake/"result.json"
+    raw_sha = contract["raw_native_receipt_sha256"]
+    sources.checked_json(outer, raw_sha)
+    if sources.checked_json(result, contract["result_sha256"])["raw_native_receipt_sha256"] != raw_sha:
+        raise ValueError("Power proximal bake and native receipt differ")
+    packets = {}
+    paths = [PROXIMAL_SDF_CONTRACT, outer, result]
+    for name in PROXIMAL_NAMES:
+        side = name.split(".")[0]
+        row, grid = capture/"native"/f"{side}_{PROXIMAL_LINK}.json", bake/f"{name}.npz"
+        expected = contract["records"][name]
+        archive = sources.checked_json(row, expected["native_row_sha256"])
+        if archive["side"] != side or archive["link"] != PROXIMAL_LINK:
+            raise ValueError("original per-hand proximal native row required")
+        if sources.sha(grid) != expected["grid_sha256"]:
+            raise ValueError("sealed proximal SDF differs from verified bake")
+        with np.load(grid, allow_pickle=False) as data:
+            values, origin, spacing = data["values"], data["origin"], float(data["spacing"])
+        if (values.shape != tuple(expected["shape"]) or values.dtype != np.float32
+                or origin.shape != (3,) or not np.isfinite(origin).all() or not np.isfinite(values).all()
+                or spacing != .0005):
+            raise ValueError("exact metre 0.5 mm proximal SDF grid required")
+        packets[name] = archive, dict(values=values, origin=origin, spacing=spacing), expected
+        paths.extend((row, grid))
+    return packets, paths
+
+
+def bind_proximal_sources(sim, bindings, original, *, args):
+    from ropesim import sdf
+    from scripts.audit_dh116_power_palm_parity import read_collision_source
+    from go2_pvcnn.control.dh116.tabletop_power_shared_rod import PROXIMAL_LINK
+
+    packets, _ = proximal_registration_inputs(args.proximal_capture, args.proximal_bake)
+    records, grids = {}, {}
+    for name, (archive, values, expected) in packets.items():
+        side = archive["side"]
+        hand = bindings[side].hand
+        body = hand.body_names.index(PROXIMAL_LINK)
+        path = hand.root_physx_view.link_paths[0][body]
+        _, _, live = read_collision_source(sim.stage, path, expected_link=PROXIMAL_LINK)
+        parent = original.bindings[f"{side}.finger53_link"]
+        raw = archive["source"]
+        live_root, archive_root = Path(path), Path(raw["body_path"])
+        if (live_root.parent != Path(parent["prim_path"]).parent
+                or live["geometry_sha256"] != raw["geometry_sha256"]
+                or any(Path(live[key]).relative_to(live_root) != Path(raw[key]).relative_to(archive_root)
+                       for key in ("mesh_path", "collision_owner"))
+                or not np.allclose(live["mesh_to_body"], raw["mesh_to_body"], atol=2e-6, rtol=0)):
+            raise ValueError("original Power proximal collider differs from the same-side measured source")
+        grids[name] = sdf.SdfGrid(**values)
+        records[name] = dict(side=side, body_name=PROXIMAL_LINK, body_index=body, prim_path=path,
+            source_usd_sha256=parent["source_usd_sha256"], source_geometry_sha256=live["geometry_sha256"],
+            cooked_geometry_sha256=archive_geometry_digest(archive), capture_sha256=expected["native_row_sha256"],
+            sdf_sha256=expected["grid_sha256"])
+    return records, grids
 
 
 def archive_geometry_digest(archive):
@@ -230,23 +293,34 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
         if setup["clock"]["physics_step"] != 2 or native.clock(sim)["sdk_step"] != 2:
             raise ValueError("original same-clock task Reset and table clearance required")
         clock = original.clock()
-        added, grids = bind_palm_sources(sim, bindings, original, args=args)
-        meshes = {**original.bindings, **added}
-        first_poses, _, _ = measure_links(sim, bindings, meshes, clearance_shapes, sdk=2)
-        power = owners.keep("power_runtime", PowerSharedRodRuntime.from_original_reset(original,
-            palm_bindings=added, palm_grids=grids, palm_poses={name:first_poses[name] for name in added},
-            expected_clock=clock, **(support_options or {})))
-        if power.rope is not original.rope or power.clock() != clock:
-            raise ValueError("the shared rod or its reset boundary changed")
         stationary_near_open = getattr(args, "verify_near_open_settling", False)
         if stationary_near_open and (supported_acquire is None or not require_no_hand_contact
                                      or action_after_settle is not None):
             raise ValueError("stationary Reset binding is restricted to the near-open settling diagnostic")
+        added, grids = bind_palm_sources(sim, bindings, original, args=args)
+        capture = getattr(args, "proximal_capture", None)
+        proximal_bake = getattr(args, "proximal_bake", None)
+        proximal, proximal_grids = {}, {}
+        if capture is not None or proximal_bake is not None:
+            if not stationary_near_open or capture is None or proximal_bake is None:
+                raise ValueError("proximal SDFs only enter the independent near-open no-contact diagnostic")
+            proximal, proximal_grids = bind_proximal_sources(sim, bindings, original, args=args)
+        meshes = {**original.bindings, **added, **proximal}
+        first_poses, _, _ = measure_links(sim, bindings, meshes, clearance_shapes, sdk=2)
+        options = dict(support_options or {})
+        if proximal:
+            options.update(proximal_bindings=proximal, proximal_grids=proximal_grids,
+                           proximal_poses={name: first_poses[name] for name in proximal})
+        power = owners.keep("power_runtime", PowerSharedRodRuntime.from_original_reset(original,
+            palm_bindings=added, palm_grids=grids, palm_poses={name:first_poses[name] for name in added},
+            expected_clock=clock, **options))
+        if power.rope is not original.rope or power.clock() != clock:
+            raise ValueError("the shared rod or its reset boundary changed")
         nodes = len(power._base.nodes)
         capacity = nodes * len(power.mesh_names) * SUBSTEPS
         if scoped_owners is not None and scoped_owners.allocated_capacity != capacity:
             raise ValueError("the single original allocation must cover all Power mesh pairs")
-        native.write_new(output/"power_binding.json", dict(reset_clock=clock, added=added, mesh_names=power.mesh_names,
+        native.write_new(output/"power_binding.json", dict(reset_clock=clock, added={**added, **proximal}, mesh_names=power.mesh_names,
                          rods_per_env=1, solver_steps_before_registration=0, solver_steps_after_registration=0,
                          pair_capacity=capacity, supported_task=supported_acquire is not None,
                          stationary_first_solver_exchange=stationary_near_open))

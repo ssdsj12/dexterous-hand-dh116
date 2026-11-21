@@ -129,6 +129,13 @@ def freeze(args):
     config = json.loads(CONFIG.read_bytes())
     probe = getattr(args,"verify_supported_action_handoff",False)
     near = getattr(args,"verify_near_open_settling",False)
+    capture = getattr(args, "proximal_capture", None)
+    bake = getattr(args, "proximal_bake", None)
+    proximal_files = []
+    if capture is not None or bake is not None:
+        if not near or capture is None or bake is None:
+            raise ValueError("both proximal evidence inputs and the near-open diagnostic are required")
+        _, proximal_files = shared.proximal_registration_inputs(capture, bake)
     settle = args.settle_without_hand_contact or probe or near
     sdk_end = shared.SDK_END
     if settle:
@@ -189,12 +196,13 @@ def freeze(args):
                 preserved_scope=config["scope"], power_seed_sha256=seed["sha256"])
     mode = "power_supported_settle_without_hand" if settle else "power_supported_contact_pilot"
     if near:
-        mode = "power_supported_near_open_no_contact_settling"
+        mode = ("power_supported_proximal_no_contact_settling" if proximal_files
+                else "power_supported_near_open_no_contact_settling")
     if probe:
         mode = "power_supported_settle_and_action_probe"
         plan["action24"] = action
     plan["budget"].update(mode=mode, sdk_steps=sdk_end, control_steps=int(probe),
-                          solver_steps=(sdk_end-2)*shared.SUBSTEPS, new_power_mesh_registrations=4)
+                          solver_steps=(sdk_end-2)*shared.SUBSTEPS, new_power_mesh_registrations=6 if proximal_files else 4)
     src = ROOT / "src/go2_pvcnn/control/dh116"
     files = [CONFIG, Path(__file__), Path(shared.__file__), args.rays,
              src/"tabletop_power_supported_task.py", src/"tabletop_power_contact_evidence.py",
@@ -211,7 +219,7 @@ def freeze(args):
     if probe:
         files.append(ACTION_PROBE)
     if near:
-        files.extend((NEAR_OPEN,parent,screen))
+        files.extend((NEAR_OPEN,parent,screen, *proximal_files))
     hashes = {str(path.resolve(strict=True)):native.sha(path) for path in files}
     for path, digest in hashes.items():
         if plan["frozen_files"].setdefault(path, digest) != digest:
@@ -229,6 +237,8 @@ def main(argv=None):
     scope.add_argument("--verify-near-open-settling", action="store_true")
     parser.add_argument("--near-open-parent-receipt",type=Path)
     parser.add_argument("--near-open-screen",type=Path)
+    parser.add_argument("--proximal-capture", type=Path)
+    parser.add_argument("--proximal-bake", type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(ROOT)

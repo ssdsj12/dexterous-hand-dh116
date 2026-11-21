@@ -6,23 +6,26 @@ import pytest
 
 from go2_pvcnn.control.dh116.tabletop_deformx_pair_capture import read_pair_capture
 from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
-from go2_pvcnn.control.dh116.tabletop_power_shared_rod import POWER_MESH_NAMES, PADS, PALM_NAMES
+from go2_pvcnn.control.dh116.tabletop_power_shared_rod import (
+    POWER_MESH_NAMES, PADS, PALM_NAMES, END_SUPPORT_NAMES,
+)
 
 
-def build(*, missing_palm=None, palm_aligned=False, table=False):
+def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False):
     def stamp(name):
         return hashlib.sha256(name.encode()).hexdigest()
 
-    names = POWER_MESH_NAMES
+    names = (*POWER_MESH_NAMES, *END_SUPPORT_NAMES, "left.finger52_link", "right.finger52_link") if proximal else POWER_MESH_NAMES
+    static = {"table", *END_SUPPORT_NAMES} if proximal else {"table"}
     bindings = {name: dict(
         side=name.split(".")[0], body_name=name.split(".")[1], body_index=slot,
         prim_path="/World/" + name.replace(".", "/"),
         **{key: stamp(name + key) for key in
-           ("source_usd_sha256", "cooked_geometry_sha256", "sdf_sha256", "capture_sha256")},
-    ) for slot, name in enumerate(names) if name != "table"}
-    slots = [i for i, name in enumerate(names) if name != missing_palm and (table or name != "table")]
+           ("source_usd_sha256", "source_geometry_sha256", "cooked_geometry_sha256", "sdf_sha256", "capture_sha256")},
+    ) for slot, name in enumerate(names) if name not in static}
+    slots = [i for i, name in enumerate(names) if name != missing_palm and (table or name not in static)]
     indices, vectors = [], []
-    node_forces, mesh = np.zeros((41, 3)), np.zeros((13, 6))
+    node_forces, mesh = np.zeros((41, 3)), np.zeros((len(names), 6))
     for step in range(12):
         for slot in slots:
             name = names[slot]
@@ -40,7 +43,7 @@ def build(*, missing_palm=None, palm_aligned=False, table=False):
             vectors.append([0., 0., 0., *direction, *force, 0., 0., 0.])
             node_forces[slot] += force / 12
             mesh[slot, :3] -= force / 12
-    raw = dict(substeps=12, mesh_count=13, capacity=41*13*12,
+    raw = dict(substeps=12, mesh_count=len(names), capacity=41*len(names)*12,
                attempted=len(indices), overflow=False, indices=np.asarray(indices),
                vectors=np.asarray(vectors),
                node_forces_on_rod_world_n=node_forces, mesh_wrenches_on_mesh_world=mesh)
@@ -54,6 +57,8 @@ def build(*, missing_palm=None, palm_aligned=False, table=False):
                mesh_bindings=bindings, rod_mesh_contact_pairs=capture,
                distributed_contact=node_forces[None, :, :],
                named_wrenches=dict(zip(names, mesh)), table_wrench_world=mesh[5])
+    if proximal:
+        rod["external_support_wrenches_world"] = {name: mesh[names.index(name)] for name in static}
     return rod
 
 
@@ -97,3 +102,12 @@ def test_malformed_live_power_sources_are_rejected(failure):
         rod["mesh_bindings"]["left.base_link"]["capture_sha256"] = "0" * 64
     with pytest.raises(ValueError):
         measure_power_contact(rod)
+
+def test_proximal_load_cannot_replace_a_palm_or_a_distal_pad():
+    state = build(proximal=True, missing_palm="right.base_link")
+    result = measure_power_contact(state)
+    assert result["registered_proximal_links"] == ["finger52_link"]
+    assert not result["proximal_sdf_registered"] and not result["all_substeps_power_contacts"]
+    assert result["proximal_contacts"]["right"][0]["normal_load_n"] == pytest.approx(.1)
+    assert result["hands"]["right"]["per_substep"][0]["palm_normal_load_n"] == 0.
+    assert not result["teacher_admission"]

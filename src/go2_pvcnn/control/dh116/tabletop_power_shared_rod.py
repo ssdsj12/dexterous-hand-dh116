@@ -27,6 +27,10 @@ PALM_NAMES=tuple(f"{side}.base_link" for side in SIDES)
 POWER_MESH_NAMES=(*MESH_NAMES,*PALM_NAMES)
 END_SUPPORT_NAMES=("support_0","support_1")
 SUPPORTED_POWER_MESH_NAMES=(*POWER_MESH_NAMES,*END_SUPPORT_NAMES)
+PROXIMAL_LINK = "finger52_link"
+PROXIMAL_NAMES = tuple(f"{side}.{PROXIMAL_LINK}" for side in SIDES)
+PROXIMAL_POWER_MESH_NAMES = (*SUPPORTED_POWER_MESH_NAMES, *PROXIMAL_NAMES)
+SUPPORTED_LAYOUTS = (SUPPORTED_POWER_MESH_NAMES, PROXIMAL_POWER_MESH_NAMES)
 VERSION="dh116-dual-hand-free-rod-composition-v1"
 
 
@@ -36,7 +40,9 @@ def contact_links(values):
         return PADS
     if names==set((*HAND_NAMES,*PALM_NAMES)):
         return (*PADS,"base_link")
-    raise ValueError("both hands must bind the original five pads or five pads and both palms")
+    if names == set((*HAND_NAMES, *PALM_NAMES, *PROXIMAL_NAMES)):
+        return (*PADS, "base_link", PROXIMAL_LINK)
+    raise ValueError("both hands must bind the same original pad, palm and optional proximal layout")
 
 
 def _array(value, shape, label):
@@ -105,7 +111,7 @@ def route_world_wrenches(wrenches, bindings, poses, centers_of_mass):
     """RopeBatch reports force ON each mesh, world torque about its link origin."""
     bindings=_bindings(bindings)
     links=contact_links(bindings)
-    meshes=POWER_MESH_NAMES if "base_link" in links else MESH_NAMES
+    meshes = (*bindings, "table")
     poses=_poses(poses,bindings)
     if set(centers_of_mass)!=set(bindings) or set(wrenches)!=set(meshes):
         raise ValueError("exact contact link COM and independent mesh wrenches required")
@@ -130,9 +136,9 @@ def write_composer_reactions(composers, routes, *, to_tensor):
     counts=[]
     for side in SIDES:
         row=routes[side];ids=row["body_ids"]
-        if (not isinstance(ids,list) or len(ids) not in (5,6) or len(set(ids))!=len(ids) or
+        if (not isinstance(ids,list) or len(ids) not in (5,6,7) or len(set(ids))!=len(ids) or
                 any(type(i) is not int or i<0 for i in ids) or row.get("is_global") is not True):
-            raise ValueError("five pad indices, optional palm index and world wrench frame required")
+            raise ValueError("complete original hand contact indices and world wrench frame required")
         counts.append(len(ids))
         if not all(callable(getattr(composers[side],name,None))
                    for name in ("reset","set_forces_and_torques")):
@@ -214,7 +220,8 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
 
     @classmethod
     def from_original_reset(cls,original,*,palm_bindings,palm_grids,palm_poses,expected_clock,
-                            support_grids=None, support_poses=None):
+                            support_grids=None, support_poses=None, proximal_bindings=None,
+                            proximal_grids=None, proximal_poses=None):
         """Extend a fresh measured Reset; supports use one new, full pair allocation."""
         if (type(original) is not OriginalDualHandRodRuntime or original._needs_reset
                 or original.mesh_names!=MESH_NAMES or original.clock()!=expected_clock
@@ -223,18 +230,31 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
             raise ValueError("fresh measured original reset and matching SDK clock required")
         if any(set(value)!=set(PALM_NAMES) for value in (palm_bindings,palm_grids,palm_poses)):
             raise ValueError("both original palms are required for Power")
-        checked=_bindings({**original.bindings,**palm_bindings})
-        poses=_poses(palm_poses,PALM_NAMES)
-        grids={name:grid.as_args() for name,grid in palm_grids.items()}
         support_grid_args, support_targets = _support_mesh_inputs(
             support_grids, support_poses, allow_supports=original.require_pairs is True)
-        grids.update(support_grid_args)
-        poses.update(support_targets)
+        binding_rows = {**original.bindings, **palm_bindings}
+        poses = {**_poses(palm_poses, PALM_NAMES), **support_targets}
+        grids = {**{name:grid.as_args() for name,grid in palm_grids.items()}, **support_grid_args}
+        proximal = any(value is not None for value in (proximal_bindings, proximal_grids, proximal_poses))
+        if proximal:
+            if (not support_grid_args or any(value is None or set(value) != set(PROXIMAL_NAMES)
+                    for value in (proximal_bindings, proximal_grids, proximal_poses))):
+                raise ValueError("both original proximal inputs require a complete supported Power layout")
+            for field in ("capture_sha256", "source_geometry_sha256", "cooked_geometry_sha256", "sdf_sha256"):
+                digests = [proximal_bindings[name].get(field) for name in PROXIMAL_NAMES]
+                if (any(not isinstance(value, str) or not re.fullmatch("[0-9a-f]{64}", value)
+                        or value == "0"*64 for value in digests) or digests[0] == digests[1]):
+                    raise ValueError("independent authenticated proximal sources required")
+            binding_rows.update(proximal_bindings)
+            poses.update(_poses(proximal_poses, PROXIMAL_NAMES))
+            grids.update({name:grid.as_args() for name,grid in proximal_grids.items()})
+        checked = _bindings(binding_rows)
         _array(original.rope.mesh_wrenches(),(1,len(MESH_NAMES),6),"unchanged original mesh slots")
         obj=cls.__new__(cls)
         obj._base=original._base
         obj.bindings=checked
-        obj.mesh_names=SUPPORTED_POWER_MESH_NAMES if support_grid_args else POWER_MESH_NAMES
+        obj.mesh_names = (PROXIMAL_POWER_MESH_NAMES if proximal
+                          else SUPPORTED_POWER_MESH_NAMES if support_grid_args else POWER_MESH_NAMES)
         obj.run_uuid,obj.env_id,obj.rod_uid=original.run_uuid,original.env_id,original.rod_uid
         obj.require_pairs=True
         obj._needs_reset=True
@@ -270,7 +290,7 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
             raise RuntimeError("reset unexpectedly advanced solver time")
         row.update(rod_mesh_contact_pairs=None,pair_capture_status="invalid_until_measured_step",
                    hand_wrenches_com_world=None,table_wrench_world=None)
-        if self.mesh_names == SUPPORTED_POWER_MESH_NAMES:
+        if self.mesh_names in SUPPORTED_LAYOUTS:
             row["external_support_wrenches_world"] = None
         self._last_solver_time=before
         self._needs_reset=False
@@ -296,7 +316,7 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
                 raise ValueError("solver time changed outside the owned exchange")
             stationary_first = stationary_reset_poses is not None
             if stationary_first:
-                if self.mesh_names != SUPPORTED_POWER_MESH_NAMES or b.rod_tick != 0:
+                if self.mesh_names not in SUPPORTED_LAYOUTS or b.rod_tick != 0:
                     raise ValueError("a stationary first exchange requires the fresh supported Reset")
                 reset_poses = _poses(stationary_reset_poses, self.bindings)
                 for name, (pos, quat) in poses.items():
@@ -332,7 +352,7 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
                 packet=pair_reader()
                 if packet.get("substeps")!=b.cfg["rod"]["solver_substeps"]:
                     raise ValueError("pair capture solver substep count differs")
-                if self.mesh_names == SUPPORTED_POWER_MESH_NAMES:
+                if self.mesh_names in SUPPORTED_LAYOUTS:
                     capacity=len(b.nodes)*len(self.mesh_names)*b.cfg["rod"]["solver_substeps"]
                     if (type(packet.get("capacity")) is not int or packet["capacity"]!=capacity
                             or type(packet.get("mesh_count")) is not int or packet["mesh_count"]!=len(self.mesh_names)
@@ -346,13 +366,13 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
                         raise ValueError("atomic pair capture does not match this step's totals")
                 pairs=read_pair_capture(SimpleNamespace(contact_pair_samples=lambda:packet),
                     dt_s=DT,physics_step=physics_step,rod_tick=b.rod_tick,mesh_names=self.mesh_names)
-                if self.mesh_names in (POWER_MESH_NAMES, SUPPORTED_POWER_MESH_NAMES):
+                if self.mesh_names in (POWER_MESH_NAMES, *SUPPORTED_LAYOUTS):
                     pairs["solver_buffer"] = {key: packet[key] for key in (
                         "substeps", "mesh_count", "capacity", "attempted", "overflow"
                     )}
             hand_meshes={name:named[name] for name in (*self.bindings,"table")}
             routes,table=route_world_wrenches(hand_meshes,self.bindings,poses,centers)
-            if self.mesh_names == SUPPORTED_POWER_MESH_NAMES:
+            if self.mesh_names in SUPPORTED_LAYOUTS:
                 row["external_support_wrenches_world"]={key:named[key].copy() for key in ("table",*END_SUPPORT_NAMES)}
             row.update(contact_valid=True,distributed_contact=nodes,named_wrenches=named,
                 rod_mesh_contact_pairs=pairs,pair_capture_status="validated_solver_samples" if pairs else "unavailable",

@@ -1,0 +1,38 @@
+{
+  "version": "dh116-teacher-power-proximal-binding-v1",
+  "frozen_preflight": {
+    "frozen_sha256": "001717bdc8cb91ea150a60346effc6ee39b16fe29ffaeaa97599ec9bfa6e2f3c",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "power_supported_proximal_no_contact_settling",
+      "sdk_setup_steps": 2,
+      "control_steps": 0,
+      "solver_steps": 2856,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 180,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 6,
+      "episode_resets": 1,
+      "sdk_steps": 240
+    }
+  },
+  "previous_mesh_count": 15,
+  "candidate_mesh_count": 17,
+  "pair_capacity": 8364,
+  "cpu_tests": {
+    "passed": 126,
+    "failed": 0,
+    "log_sha256": "81d145ec8df0a5c1d1bb68892dd188428827b9202a1b318d2eb5b9f707d704b1"
+  },
+  "negative_fixture_sha256": "634a0d89999fbbc4973988051ca7238ca99a96297d5f77f165503233bcb8078e",
+  "native_runs": 0,
+  "native_contact_qualified": false,
+  "grasp_verified": false,
+  "teacher_admission": false
+}

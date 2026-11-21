@@ -258,3 +258,88 @@ def test_supported_worker_records_all_exchanges_and_independent_support_loads(
     row = json.loads((tmp_path/"power_exchange_3.json").read_text())
     assert row["native_joint_state"]["left"]["position_units"][:3] == ["m"]*3
     assert row["native_joint_state"]["left"]["velocity_units"][-1] == "rad/s"
+
+
+def test_proximal_meshes_append_after_both_static_supports(monkeypatch):
+    original, base, bindings, poses, _ = runtime(monkeypatch, pairs=True)
+    original.require_pairs = True
+    original.reset(physics_step=2, episode_uid="proximal-cpu:0", reset_id=1, pad_poses=poses)
+    same_pose = (np.zeros(3), np.array([0., 0., 0., 1.]))
+    bodies = {}
+    for side, digest in zip(power.SIDES, ("a", "b"), strict=True):
+        for name, body in (("base_link", 6), ("finger52_link", 15)):
+            bodies[f"{side}.{name}"] = dict(bindings[f"{side}.finger14_link"], side=side, body_name=name,
+                body_index=body, prim_path=f"/World/{side}Hand/{name}",
+                capture_sha256=digest*64, source_geometry_sha256=digest*64,
+                cooked_geometry_sha256=digest*64, sdf_sha256=digest*64)
+    palms = {key:value for key,value in bodies.items() if key.endswith(".base_link")}
+    proximal = {key:value for key,value in bodies.items() if key.endswith(".finger52_link")}
+    options = dict(palm_bindings=palms, palm_grids={p:Grid() for p in palms},
+        palm_poses={p:same_pose for p in palms}, expected_clock=original.clock(),
+        support_grids={s:Grid() for s in power.END_SUPPORT_NAMES},
+        support_poses={s:same_pose for s in power.END_SUPPORT_NAMES},
+        proximal_bindings=proximal, proximal_grids={k:Grid() for k in proximal},
+        proximal_poses={k:same_pose for k in proximal})
+    capacities = []
+    base.rope.enable_contact_pair_capture = capacities.append
+    with pytest.raises(ValueError, match="both original proximal"):
+        power.PowerSharedRodRuntime.from_original_reset(original, **dict(options,
+            proximal_grids={"left.finger52_link": Grid()}))
+    assert len(base.rope.slots) == 11 and not capacities
+    owner = power.PowerSharedRodRuntime.from_original_reset(original, **options)
+    assert owner.mesh_names == (*power.SUPPORTED_POWER_MESH_NAMES, *proximal)
+    assert capacities == [len(base.nodes)*17*12]
+    assert power.contact_links(owner.bindings)[-1] == "finger52_link"
+    wrenches = {k: np.zeros(6) for k in (*owner.bindings, "table")}
+    wrenches["right.finger52_link"] = np.arange(6, dtype=float)
+    positions = {**poses, **{k:same_pose for k in bodies}}
+    routes, _ = power.route_world_wrenches(wrenches, owner.bindings, positions,
+                                          {k:v[0] for k,v in positions.items()})
+    assert len(routes["right"]["body_ids"]) == 7
+    assert routes["right"]["body_ids"][-1] == 15
+    assert routes["right"]["forces"][0, -1].tolist() == [0., 1., 2.]
+
+
+@pytest.mark.parametrize("corrupt", [None, "archive", "grid", "spacing", "side"])
+def test_proximal_candidate_hashes_and_grid_contract(tmp_path, monkeypatch, corrupt):
+    from scripts import verify_dh116_power_shared_rod as shared
+
+    capture = tmp_path/"capture"
+    native = capture/"native"
+    bake = tmp_path/"bake"
+    native.mkdir(parents=True)
+    bake.mkdir()
+
+    def write(path, data):
+        path.write_text(json.dumps(data))
+        return shared.native.sha(path)
+
+    outer_sha = write(capture/"outer.json", {"exit_code": 0})
+    write(bake/"result.json", {"raw_native_receipt_sha256": outer_sha})
+    lookup = {"raw_native_receipt_sha256": outer_sha,
+              "result_sha256": shared.native.sha(bake/"result.json"), "records": {}}
+    for side in power.SIDES:
+        name = side + ".finger52_link"
+        row = native/f"{side}_finger52_link.json"
+        row_sha = write(row, {"side": side if corrupt != "side" or side != "right" else "left",
+                              "link": "finger52_link"})
+        grid = bake/f"{name}.npz"
+        spacing = .001 if corrupt == "spacing" and side == "left" else .0005
+        np.savez(grid, values=np.ones((2, 2, 2), dtype=np.float32), origin=np.zeros(3), spacing=spacing)
+        lookup["records"][name] = {"shape": [2, 2, 2], "native_row_sha256": row_sha,
+                                   "grid_sha256": shared.native.sha(grid)}
+    contract = tmp_path/"readiness.json"
+    write(contract, {"candidate_lookups": {"0.0005": lookup}})
+    monkeypatch.setattr(shared, "PROXIMAL_SDF_CONTRACT", contract)
+    if corrupt == "archive":
+        (native/"left_finger52_link.json").write_text("{}")
+    if corrupt == "grid":
+        (bake/"right.finger52_link.npz").write_bytes(b"replaced")
+    if corrupt:
+        with pytest.raises(ValueError):
+            shared.proximal_registration_inputs(capture, bake)
+    else:
+        packets, frozen = shared.proximal_registration_inputs(capture, bake)
+        assert tuple(packets) == power.PROXIMAL_NAMES
+        assert len(frozen) == 7 and contract in frozen
+        assert all(item[1]["spacing"] == .0005 for item in packets.values())
