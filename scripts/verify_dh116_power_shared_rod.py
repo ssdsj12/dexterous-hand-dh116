@@ -153,7 +153,7 @@ def acquire_original_power_reset(sim, owners, trace, output, *, profile):
         sim = owners = trace = None
 
 
-def run_shared(sim, owners, trace, output, *, profile, args):
+def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -162,10 +162,13 @@ def run_shared(sim, owners, trace, output, *, profile, args):
     )
 
     episode = original = power = bindings = composers = binding = scoped_owners = None
-    setup = None
+    setup = support_options = None
     try:
-        scoped_owners = SharedPowerOwners(owners)
-        setup = acquire_original_power_reset(sim, scoped_owners, trace, output, profile=profile)
+        if supported_acquire is None:
+            scoped_owners = SharedPowerOwners(owners)
+            setup = acquire_original_power_reset(sim, scoped_owners, trace, output, profile=profile)
+        else:
+            setup, support_options = supported_acquire(sim, owners, trace, output, profile=profile)
         episode = owners.resources["dual_episode"]
         original = owners.resources["runtime"]
         clearance_shapes = episode._exchange._read_geometry._shapes
@@ -178,11 +181,12 @@ def run_shared(sim, owners, trace, output, *, profile, args):
         first_poses, _, _ = measure_links(sim, bindings, meshes, clearance_shapes, sdk=2)
         power = owners.keep("power_runtime", PowerSharedRodRuntime.from_original_reset(original,
             palm_bindings=added, palm_grids=grids, palm_poses={name:first_poses[name] for name in added},
-            expected_clock=clock))
+            expected_clock=clock, **(support_options or {})))
         if power.rope is not original.rope or power.clock() != clock:
             raise ValueError("the shared rod or its reset boundary changed")
         nodes = len(power._base.nodes)
-        if scoped_owners.allocated_capacity != nodes * len(power.mesh_names) * SUBSTEPS:
+        capacity = nodes * len(power.mesh_names) * SUBSTEPS
+        if scoped_owners is not None and scoped_owners.allocated_capacity != capacity:
             raise ValueError("the single original allocation must cover all Power mesh pairs")
         native.write_new(output/"power_binding.json", dict(reset_clock=clock, added=added, mesh_names=power.mesh_names,
                          rods_per_env=1, solver_steps_before_registration=0, solver_steps_after_registration=0,
@@ -197,6 +201,7 @@ def run_shared(sim, owners, trace, output, *, profile, args):
         max_residual = 0.
         contact_exchanges = 0
         opposing_exchanges = 0
+        peak_support_loads = {name: 0. for name in ("table", "support_0", "support_1")}
         for before_sdk in range(2, SDK_END):
             if power.clock()["physics_step"] != before_sdk:
                 raise ValueError("only the preceding same-rod reaction can be delivered")
@@ -211,8 +216,24 @@ def run_shared(sim, owners, trace, output, *, profile, args):
                 hand_safety(binding)
             poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk)
             row = power.step(poses, centers, physics_step=sdk)
+            native_joint_state = None
+            if supported_acquire is not None:
+                from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import _owned
+                from go2_pvcnn.control.dh116.tabletop_dual_hand_reset import read_joint_target_evidence
+
+                native_joint_state = {}
+                for side, binding in bindings.items():
+                    view = binding.hand.root_physx_view
+                    target = read_joint_target_evidence(binding.hand)["backend"]
+                    if not target["available"]:
+                        raise ValueError("actual Power backend position targets are required")
+                    native_joint_state[side] = dict(names=list(binding.hand.joint_names),
+                        q_rad=_owned(view.get_dof_positions()), qd_rad_s=_owned(view.get_dof_velocities()),
+                        target_rad=_owned(target["values"]), target_source=target["source"])
+                for name, wrench in row["external_support_wrenches_world"].items():
+                    peak_support_loads[name] = max(peak_support_loads[name], float(np.linalg.norm(wrench[:3])))
             native.write_new(output/f"power_exchange_{sdk}.json", encode_owned(dict(
-                route=route, preceding_reaction_sdk_step=before_sdk if before_sdk>2 else None,
+                route=route, native_joint_state=native_joint_state, preceding_reaction_sdk_step=before_sdk if before_sdk>2 else None,
                 clearance_m=clearance, rod=row, hand_link_poses=poses, hand_link_coms=centers)))
             if args.measure_contact_evidence:
                 evidence = measure_power_contact(row)
@@ -228,6 +249,9 @@ def run_shared(sim, owners, trace, output, *, profile, args):
             solver_substeps=power.clock()["rod_tick"], mesh_names=power.mesh_names,
             pair_counts=loaded, max_force_balance_residual_n=max_residual,
             native_qualification=False, grasp_qualified=False, teacher_admission=False, ppo_updates=0)
+        if supported_acquire is not None:
+            result.update(scope="measured_power_end_support_load_no_action", peak_support_force_n=peak_support_loads,
+                          power_contact_qualified=False, supported_seed_clock=setup["clock"])
         if args.measure_contact_evidence:
             result.update(same_clock_contact_exchanges=contact_exchanges,
                           bilateral_opposed_contact_exchanges=opposing_exchanges)
@@ -243,6 +267,7 @@ def run_shared(sim, owners, trace, output, *, profile, args):
         return failure
     finally:
         sim = owners = trace = episode = original = power = bindings = composers = binding = scoped_owners = None
+        view = setup = support_options = None
 
 
 def main(argv=None):

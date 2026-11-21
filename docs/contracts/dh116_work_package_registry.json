@@ -45420,6 +45420,33 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-supported-contact-acquisition-cpu": {
+      "title": "Author and audit the independent Power supported contact scene",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-end-support-layout-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_end_supported_rod.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_power_live_palm_feedback.py",
+        "tests/test_dual_hand_reset.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_supported_contact_pilot_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-contact-pilot.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_fixture",
+        "passed": 158,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

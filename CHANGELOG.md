@@ -3882,3 +3882,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - 下一步：根据原试验安全门结果推进，不绕过接触、反作用力和碰撞保护。
 
 - Verified two native Pinch PPO updates across a fresh-process checkpoint resume. Both v2 processes exited naturally; this is a diagnostic, not grasp qualification.
+
+- Added the isolated Power supported-rod acquisition path with original hand limits, live joint and link readback, and explicit support wrench attribution. The bounded native pilot remains separately tracked.

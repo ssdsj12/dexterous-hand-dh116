@@ -1,0 +1,58 @@
+{
+  "version": "dh116-powered-contact-supported-diagnostic-v1",
+  "status": "cpu_pass_native_pending",
+  "core_config": {
+    "path": "configs/dh116_tasks/flexible_power_supported_contact_v1.json",
+    "sha256": "5c54a8f741f02d3b2cda7110acb8b92a109fe212e549d08cd9b33678c8e07df0"
+  },
+  "freeze": {
+    "frozen_sha256": "b940ce77ccb21b9562723cc90dde9f5bc9caae2a61710b458961d89edff7c302",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "power_supported_contact_pilot",
+      "sdk_setup_steps": 2,
+      "control_steps": 0,
+      "solver_steps": 96,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 180,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 4,
+      "episode_resets": 1,
+      "sdk_steps": 10
+    }
+  },
+  "geometry": {
+    "per_hand": {
+      "left": {
+        "min_rod_clearance_m": 0.00018066017493022164,
+        "min_table_clearance_m": 0.009872448103265485,
+        "support": 0.0024085797150703234
+      },
+      "right": {
+        "min_rod_clearance_m": 0.00010980688685908259,
+        "min_table_clearance_m": 0.0370587497866216,
+        "support": 0.0022035701924987758
+      }
+    },
+    "inter_hand_gap_m": 0.2605302238868662,
+    "shape_count": 44,
+    "support_station_indices": [
+      1,
+      39
+    ],
+    "scope": "static FK of candidate, no native measurement"
+  },
+  "native_runs": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "support_box_screen_sha256": "80f7922949e14a37b778f93789ebcb45df0c41a26a64f6d16bdb0e161fcd2f4e",
+  "offline_clearance_proof_sha256": "52c91f23ebdbb2258b9fb092a938e848d07af0bac88b3f157b1d2a9609382612",
+  "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-contact-pilot.md"
+}

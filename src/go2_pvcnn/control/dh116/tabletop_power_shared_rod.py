@@ -61,6 +61,15 @@ def _poses(values, names):
     return result
 
 
+def _support_mesh_inputs(grids, poses, *, allow_supports):
+    if grids is None and poses is None:
+        return {}, {}
+    if (not allow_supports or grids is None or poses is None
+            or set(grids) != set(END_SUPPORT_NAMES) or set(poses) != set(END_SUPPORT_NAMES)):
+        raise ValueError("two static end supports require both palms and a complete pair capture")
+    return {name: grid.as_args() for name, grid in grids.items()}, _poses(poses, END_SUPPORT_NAMES)
+
+
 def _bindings(values):
     links=contact_links(values)
     result={}
@@ -152,15 +161,11 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         palm_poses={} if palm_poses is None else palm_poses
         if set(palm_grids)!=expected or set(palm_poses)!=expected:
             raise ValueError("Power requires grids and poses for both original palm bindings")
-        supported=support_grids is not None or support_poses is not None
-        if supported and (not extended or require_pairs is not True
-                or support_grids is None or support_poses is None
-                or set(support_grids)!=set(END_SUPPORT_NAMES) or set(support_poses)!=set(END_SUPPORT_NAMES)):
-            raise ValueError("two static end supports require both palms and a complete pair capture")
+        support_grid_args, support_targets = _support_mesh_inputs(
+            support_grids, support_poses, allow_supports=extended and require_pairs is True)
         poses={"right."+name:value for name,value in _poses(right_poses,PADS).items()}
         poses.update(_poses(palm_poses,expected))
-        if supported:
-            poses.update(_poses(support_poses,END_SUPPORT_NAMES))
+        poses.update(support_targets)
         if set(right_grids)!=set(PADS):
             raise ValueError("five right original SDFs required")
         if (not isinstance(base,FreeRodRuntime) or base.names!=list(PADS)+["table"] or
@@ -175,12 +180,11 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         _array(base.rope.mesh_wrenches(),(1,6,6),"original six mesh slots")
         grid_args={"right."+name:right_grids[name].as_args() for name in PADS}
         grid_args.update({name:grid.as_args() for name,grid in palm_grids.items()})
-        if supported:
-            grid_args.update({name:grid.as_args() for name,grid in support_grids.items()})
+        grid_args.update(support_grid_args)
         self._base=base
         self.bindings=checked
         self.mesh_names=POWER_MESH_NAMES if extended else MESH_NAMES
-        if supported:
+        if support_grid_args:
             self.mesh_names=SUPPORTED_POWER_MESH_NAMES
         self.run_uuid,self.env_id,self.rod_uid=run_uuid,env_id,rod_uid
         self.require_pairs=require_pairs
@@ -209,8 +213,9 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         _array(self.rope.mesh_wrenches(),(1,len(self.mesh_names),6),"dual hand mesh slots")
 
     @classmethod
-    def from_original_reset(cls,original,*,palm_bindings,palm_grids,palm_poses,expected_clock):
-        """Take over the original free rod immediately after its measured Reset."""
+    def from_original_reset(cls,original,*,palm_bindings,palm_grids,palm_poses,expected_clock,
+                            support_grids=None, support_poses=None):
+        """Extend a fresh measured Reset; supports use one new, full pair allocation."""
         if (type(original) is not OriginalDualHandRodRuntime or original._needs_reset
                 or original.mesh_names!=MESH_NAMES or original.clock()!=expected_clock
                 or expected_clock["rod_tick"]!=0 or expected_clock["reset_id"]<1
@@ -221,11 +226,15 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         checked=_bindings({**original.bindings,**palm_bindings})
         poses=_poses(palm_poses,PALM_NAMES)
         grids={name:grid.as_args() for name,grid in palm_grids.items()}
+        support_grid_args, support_targets = _support_mesh_inputs(
+            support_grids, support_poses, allow_supports=original.require_pairs is True)
+        grids.update(support_grid_args)
+        poses.update(support_targets)
         _array(original.rope.mesh_wrenches(),(1,len(MESH_NAMES),6),"unchanged original mesh slots")
         obj=cls.__new__(cls)
         obj._base=original._base
         obj.bindings=checked
-        obj.mesh_names=POWER_MESH_NAMES
+        obj.mesh_names=SUPPORTED_POWER_MESH_NAMES if support_grid_args else POWER_MESH_NAMES
         obj.run_uuid,obj.env_id,obj.rod_uid=original.run_uuid,original.env_id,original.rod_uid
         obj.require_pairs=True
         obj._needs_reset=True
@@ -234,6 +243,8 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         # A partial append invalidates the original retired owner as well.
         original._needs_reset=True
         obj._append_meshes(poses,grids,start=len(MESH_NAMES))
+        if support_grid_args:
+            obj.rope.enable_contact_pair_capture(len(obj._base.nodes) * len(obj.mesh_names) * obj._base.cfg["rod"]["solver_substeps"])
         obj._needs_reset=False
         if obj.clock()!=expected_clock:
             raise RuntimeError("palms must register without advancing SDK, rod, or Reset")
