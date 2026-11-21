@@ -29663,6 +29663,31 @@
         "verified_at_utc": "2026-11-21T04:24:24.065415+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power native retained 24D action handoff",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-action-handoff-native.md",
+      "readiness": "docs/contracts/dh116_teacher_power_supported_action_handoff_native_v1.json",
+      "cpu_tests": {
+        "passed": 75,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "fa2a9ec6b4a6e1e55a3ee42bbba3f5937a22a3e2",
+        "source_tree": "fcd031fd81efbcafc7c0992539b76cce506aa909",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T04:31:03.406385+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
