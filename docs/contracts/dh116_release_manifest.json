@@ -31388,6 +31388,31 @@
         "verified_at_utc": "2026-11-21T13:05:25.593827+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-command-replay",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-command-replay.md",
+      "readiness": "docs/contracts/dh116_teacher_902_command_replay_v1.json",
+      "cpu_tests": {
+        "passed": 120,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ae8ffa0f5b6837a838bd8b22f617079f7155a219",
+        "source_tree": "3d999aa24e6c7b5181721c1aecb3ece049dff60e",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T13:25:20.949167+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
