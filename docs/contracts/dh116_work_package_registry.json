@@ -45810,6 +45810,29 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-parked-left-approach-cpu": {
+      "title": "Prove the left Tripod route independently on the sealed native rod",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-parked-right-approach-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_distal_route.py",
+        "tests/test_dh116_supported_rod_reference.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_left_parked_approach_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-parked-left-approach.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_static_continuous_route_from_archived_native_data",
+        "passed": 67,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

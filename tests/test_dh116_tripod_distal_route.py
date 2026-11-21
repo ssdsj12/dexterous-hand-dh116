@@ -31,3 +31,29 @@ def test_uses_convex_separation_when_world_aabbs_overlap():
     assert np.all(vertices.max(0)>low) and np.all(vertices.min(0)<high)
     assert support_clearance_lower(vertices,low,high) > .5
     assert support_clearance_lower(vertices,-.02*np.ones(3),.02*np.ones(3)) < 0
+
+
+def test_left_terminal_reference_cannot_select_the_right_native_link_transforms(tmp_path):
+    import hashlib
+    import json
+
+    from go2_pvcnn.control.dh116.linear_coupling import ACTIVE
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
+    from scripts.certify_dh116_tripod_distal_route import read_terminal
+
+    sides = ("left", "right")
+    joints = {side: {"joint_names": ACTIVE, "q": np.arange(6.)[None, :] + i}
+              for i, side in enumerate(sides)}
+    poses = {side: {"body_names": ["base_link"],
+                    "link_poses_xyzw": np.array([[[float(i), 0., 0., 0., 0., 0., 1.]]])}
+             for i, side in enumerate(sides)}
+    record = dict(physics_step=522, tripod_near_geometry=dict(passed=True, hand_pairs=[], hands=poses),
+                  action_readback=dict(post=dict(hands=joints)),
+                  rod=dict(node_positions=np.zeros((1, 41, 3))))
+    ledger = tmp_path / "physical.jsonl"
+    ledger.write_text(json.dumps({"operation": "physical", "payload": encode_owned({"exchange": record})}) + "\n")
+    contract = dict(side="left", native_sdk_step=522,
+                    physical_ledger_sha256=hashlib.sha256(ledger.read_bytes()).hexdigest())
+    q, body, _ = read_terminal(ledger, contract)
+    assert q.tolist() == joints["left"]["q"][0].tolist()
+    assert body["base_link"][0] == 0.

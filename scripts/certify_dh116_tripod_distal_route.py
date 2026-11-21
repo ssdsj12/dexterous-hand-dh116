@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prove a right-hand Tripod route with the archived rod held in a fixed geometry."""
+"""Prove a hand-specific Tripod route against a fixed archived rod geometry."""
 
 import argparse
 from copy import deepcopy
@@ -20,6 +20,13 @@ from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, active_limits
 from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
 from go2_pvcnn.control.dh116.tabletop_measured_closure_geometry import rod_support_lower
 from go2_pvcnn.control.dh116.tabletop_supported_rod_reference import load_parked_reference
+
+
+ROUTE_VERSIONS = {
+    "dh116-flexible-tripod-right-distal-approach-cpu-v1": ("right", False),
+    "dh116-flexible-tripod-right-parked-rod-approach-cpu-v1": ("right", True),
+    "dh116-flexible-tripod-left-parked-rod-approach-cpu-v1": ("left", True),
+}
 
 
 def prove_segment(margins, motion_m, *, max_samples):
@@ -46,10 +53,13 @@ def read_terminal(ledger, contract):
     near = exchange["tripod_near_geometry"]
     if not near["passed"] or near["hand_pairs"]:
         raise ValueError("controlled Tripod source boundary must have a clean no-contact ledger")
-    hand = exchange["action_readback"]["post"]["hands"]["right"]
+    side = contract["side"]
+    if side not in ("left", "right"):
+        raise ValueError("the native Tripod link source must name one physical hand")
+    hand = exchange["action_readback"]["post"]["hands"][side]
     joints = hand["q"][0, [hand["joint_names"].index(name) for name in ACTIVE]]
-    right = near["hands"]["right"]
-    body = dict(zip(right["body_names"], right["link_poses_xyzw"][0], strict=True))
+    geometry = near["hands"][side]
+    body = dict(zip(geometry["body_names"], geometry["link_poses_xyzw"][0], strict=True))
     return joints, body, exchange["rod"]["node_positions"][0].copy()
 
 
@@ -133,15 +143,14 @@ def main(argv=None):
     parser.add_argument("--parked-receipt", type=Path)
     args = parser.parse_args(argv)
     contract = json.loads(args.contract.read_bytes())
-    if (contract.get("version") not in ("dh116-flexible-tripod-right-distal-approach-cpu-v1",
-                                        "dh116-flexible-tripod-right-parked-rod-approach-cpu-v1")
-            or contract.get("side") != "right" or len(contract["waypoints"]) < 2
+    version = ROUTE_VERSIONS.get(contract.get("version"))
+    if (version is None or contract.get("side") != version[0] or len(contract["waypoints"]) < 2
             or len(contract["support_boxes"]) != 2
             or contract.get("native_measurement") is not False):
-        raise ValueError("explicit right-hand static-rod route required")
+        raise ValueError("explicit hand-specific static-rod route required")
     base_q, body, nodes = read_terminal(args.ledger, contract)
     parked = contract.get("parked_rod_reference")
-    if (parked is None) != (contract["version"] == "dh116-flexible-tripod-right-distal-approach-cpu-v1"):
+    if (parked is not None) != version[1]:
         raise ValueError("route version and physical reference kind differ")
     binding = None
     if parked is None:
@@ -158,9 +167,10 @@ def main(argv=None):
         binding = dict(sample_sha256=ref.sample_sha256, receipt_sha256=ref.receipt_sha256,
             sdk_step=ref.physics_step, rod_tick=ref.rod_tick,
             max_snapshot_speed_m_s=float(np.linalg.norm(ref.node_velocities,axis=-1).max()))
-    records = proof(load_geometry(Path.cwd(), side="right"), body, base_q, nodes, contract)
+    side = version[0]
+    records = proof(load_geometry(Path.cwd(), side=side), body, base_q, nodes, contract)
     passed = len(records) == len(contract["waypoints"])-1 and all(row["proved"] for row in records)
-    out=dict(scope="right_hand_static_rod_kinematic_approach",proved=passed,
+    out=dict(scope=f"{side}_hand_static_rod_kinematic_approach",proved=passed,
              native_measurement=False,grasp_qualified=False,records=records)
     if binding is not None:
         out["fixed_native_rod_reference"] = binding

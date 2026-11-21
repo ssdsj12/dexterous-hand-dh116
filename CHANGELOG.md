@@ -1,3 +1,7 @@
+## Tripod left approach proof
+
+Bind an independent left DH116 route to its native link sources and quantify how measured rod motion compares with the fixed-curve clearance. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-parked-left-approach.md).
+
 ## Native Power near-open support settling
 
 Verify the closer open hands leave the actual rod supported for all 2,856 substeps and preserve the far-parked trajectory exactly. [Report](docs/superpowers/reports/2026-11-21-teacher-power-near-open-settle-native.md).
