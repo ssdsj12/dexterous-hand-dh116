@@ -290,7 +290,7 @@ def supported_action_schedule(action, remaining_sdk):
 def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                          clearance_shapes, setup, action, sdk_end, verify_support_continuity=False,
                          task="power", support_scene=None, waypoint_archive=None, precontact_archive=None,
-                         distal_probe=None):
+                         distal_probe=None, power_open_boundary_sdk=None):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -310,7 +310,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 reference_nodes=power._base.last["node_positions"], distal_probe=distal_probe)
             poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk, **options)
             roots = [np.r_[poses[name][0],poses[name][1][[3,0,1,2]]] for name in PALM_NAMES]
-            if task in ("tripod", "pinch"):
+            if task in ("tripod", "pinch") or power_open_boundary_sdk is not None:
                 current_geometry.update(physics_step=sdk, poses=poses, centers_of_mass=centers,
                                         table_clearance_m=clearance)
             return dict(physics_step=sdk, root_poses_w=torch.tensor(np.stack(roots),dtype=torch.float64)[None],
@@ -329,13 +329,20 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
             read_geometry_after_sdk=after_sdk, physics_budget_end=sdk_end, continue_supported_rod=True))
         trace.watch("power_control_exchange", control, owner="supported Power action diagnostic", release="owned scope")
 
+        power_start = geometry()["root_poses_w"] if power_open_boundary_sdk is not None else None
+
         def observe(row):
             emitted = row
-            if task in ("tripod", "pinch"):
+            if task in ("tripod", "pinch") or power_open_boundary_sdk is not None:
                 if current_geometry.get("physics_step") != row["physics_step"]:
                     raise ValueError("current hand link and action readbacks have different SDK ticks")
                 emitted = dict(row, sdk_hand_geometry=current_geometry.copy())
             native.write_new(output/f"{task}_control_{row['physics_step']}.json", encode_owned(emitted))
+            if power_open_boundary_sdk is not None and row["physics_step"] == power_open_boundary_sdk:
+                positions = [current_geometry["poses"][name][0][0] for name in PALM_NAMES]
+                retreat = np.asarray(positions) - power_start.numpy()[0, :, 0]
+                if np.any(retreat < .0035):
+                    return "power_retreat_readback_below_opening_interlock"
             if waypoint_archive is not None and row["physics_step"] == 272:
                 verify_waypoint_boundary(encode_owned(row), waypoint_archive)
             if precontact_archive is not None and row["physics_step"] == 432:
@@ -383,7 +390,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
 def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=None,
                sdk_end=SDK_END, require_no_hand_contact=False, action_after_settle=None,
                task="power", live_support_scene=None, tripod_archive=None, waypoint_archive=None,
-               precontact_archive=None, pinch_archive=None, distal_contact=None):
+               precontact_archive=None, pinch_archive=None, distal_contact=None,
+               power_open_archive=None, power_open_boundary_sdk=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -399,6 +407,9 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                     or live_support_scene is None or (action_after_settle is None) != (pinch_archive is None)))
                 or (task != "pinch" and pinch_archive is not None)
                 or (distal_contact is not None and (task != "tripod" or precontact_archive is None))
+                or (power_open_archive is not None and (task != "power" or action_after_settle is None
+                    or live_support_scene is None or type(power_open_boundary_sdk) is not int))
+                or (power_open_archive is None and power_open_boundary_sdk is not None)
                 or (task == "power" and (tripod_archive is not None or waypoint_archive is not None))
                 or (waypoint_archive is not None and tripod_archive is None)
                 or (precontact_archive is not None and (task != "tripod" or waypoint_archive is None
@@ -425,7 +436,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
         action_reference = getattr(args, "proximal_action_reference", None)
         if stationary_near_open and (supported_acquire is None or not require_no_hand_contact
                                      or (action_after_settle is not None and action_reference is None and tripod_archive is None
-                                         and pinch_archive is None)):
+                                         and pinch_archive is None and power_open_archive is None)):
             raise ValueError("stationary Reset binding is restricted to the near-open settling diagnostic")
         added, grids = bind_palm_sources(sim, bindings, original, args=args)
         capture = getattr(args, "proximal_capture", None)
@@ -526,9 +537,9 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 archived, _ = proximal_action_boundary(action_reference, request["native_outer_sha256"])
                 final_settle = json.loads((output/f"power_exchange_{settle_end}.json").read_bytes())
                 verify_proximal_action_boundary(final_settle, archived)
-            if tripod_archive is not None or pinch_archive is not None:
+            if any(v is not None for v in (tripod_archive, pinch_archive, power_open_archive)):
                 final_settle = json.loads((output/f"{task}_exchange_{settle_end}.json").read_bytes())
-                recorded = tripod_archive if task == "tripod" else pinch_archive
+                recorded = {"tripod":tripod_archive,"pinch":pinch_archive,"power":power_open_archive}[task]
                 verify_proximal_action_boundary(final_settle, recorded)
             probe = None
             if distal_contact is not None:
@@ -541,9 +552,10 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                     max_pad_penetration_m=distal_contact["max_pad_penetration_m"])
             control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
                 meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end,
-                verify_support_continuity=any(x is not None for x in (action_reference, tripod_archive, pinch_archive)),
+                verify_support_continuity=any(x is not None for x in (action_reference, tripod_archive, pinch_archive, power_open_archive)),
                 task=task, support_scene=live_support_scene, waypoint_archive=waypoint_archive,
-                precontact_archive=precontact_archive, distal_probe=probe)
+                precontact_archive=precontact_archive, distal_probe=probe,
+                power_open_boundary_sdk=power_open_boundary_sdk)
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,

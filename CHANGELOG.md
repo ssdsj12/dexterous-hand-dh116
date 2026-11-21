@@ -1,3 +1,7 @@
+## Power retreat then open
+
+Check the swept Power opening route and interlock opening on measured retreat. [Report](docs/superpowers/reports/2026-11-21-teacher-power-retreat-then-open.md).
+
 ## Tripod right first contact native result
 
 Record measured three-finger contact, next-step PhysX reaction, and continued support loading. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-right-first-contact-native.md).

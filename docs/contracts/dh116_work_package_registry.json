@@ -46695,6 +46695,31 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-retreat-then-open": {
+      "title": "Power retreat then open guarded motion",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-proximal-approach-direction"
+      ],
+      "tests": [
+        "tests/test_dh116_power_retreat_then_open.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_retreat_then_open_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-retreat-then-open.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 153,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
