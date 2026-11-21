@@ -45545,6 +45545,29 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-right-distal-continuous-approach-cpu": {
+      "title": "Prove both right Tripod distal approach segments against source and cooked envelopes",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-near-settle-extension-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_distal_route.py",
+        "tests/test_tripod_tracking_envelope.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_distal_approach_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-distal-approach-proof.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "right_hand_static_geometry_cpu",
+        "passed": 283,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

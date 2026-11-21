@@ -1,0 +1,32 @@
+{
+  "version": "dh116-tripod-right-distal-approach-v1",
+  "status": "conditional_right_route_certified",
+  "config_sha256": "2530eacd8d65112dcd554e1cc533d3490194e27fb899f2250718d9239024d549",
+  "proof_sha256": "967684c6de76f13f0d71af4cbb8cb291f0cc64ae7d9cc77f3b5151e68a420a8d",
+  "scope": "right_hand_archived_fixed_rod_raised_reference",
+  "sdk_source": 522,
+  "continuous_interval_minimum_m": [
+    0.0005589818436793801,
+    2.18988004207785e-05
+  ],
+  "at_endpoint_cooked_gap_interval_mm": {
+    "finger14_link": [
+      0.1747528101134274,
+      0.17875281012166122
+    ],
+    "finger23_link": [
+      0.10409598500438845,
+      0.1080959850098745
+    ],
+    "finger33_link": [
+      0.0782966035627949,
+      0.0822966035681786
+    ]
+  },
+  "cpu_tests_passed": 283,
+  "native_run_count": 0,
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-distal-approach-proof.md"
+}
