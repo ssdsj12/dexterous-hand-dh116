@@ -29788,6 +29788,31 @@
         "verified_at_utc": "2026-11-21T04:56:52.343677+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.deformx-zero-time-reset-pose-cuda",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-deformx-zero-time-reset-pose.md",
+      "readiness": "docs/contracts/dh116_deformx_zero_time_reset_pose_v1.json",
+      "cpu_tests": {
+        "passed": 102,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "6ef5be904437bed376530b64f7f685263d174ae1",
+        "source_tree": "2349a571535a28fd5ac61183b1b14ebbd4378638",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T05:06:18.211267+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
