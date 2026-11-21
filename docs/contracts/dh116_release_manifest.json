@@ -29388,6 +29388,31 @@
         "verified_at_utc": "2026-11-21T03:28:10.320898+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power startup import boundary",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-startup.md",
+      "readiness": "docs/contracts/dh116_teacher_power_supported_startup_v1.json",
+      "cpu_tests": {
+        "passed": 114,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "d91a873e04b13558264ae630249393837cd7a491",
+        "source_tree": "f96f12d0bf29d1fa4d5740b150f0a766ee6c9d48",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T03:32:01.924084+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
