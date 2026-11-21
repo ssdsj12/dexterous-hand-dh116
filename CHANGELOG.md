@@ -1,3 +1,7 @@
+## Tripod native clock precision
+
+V5 issued2 actions/16 measured SDK steps/192 solver substeps, but stopped before PPO at a Pinch-only float32 clock gate; cleanup then SIGSEGV. The same existing ULP bound now covers the independent Tripod source, with457 selected CPU checks passing. V6 remains unexecuted pending startup budget and fault-lifetime readiness. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-reward-clock-parity.md).
+
 ## Tripod Collector grasp binding
 
 V4 reached live preflight but stopped at a stale Pinch-only Collector guard:2 SDK steps,0 controls/update,exit1 without signal. Collector now binds exact independent sources and model grasp; cross-grasp sources are rejected. 386 selected CPU checks pass. V5 is frozen and unexecuted; no grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-collector-grasp-routing.md).

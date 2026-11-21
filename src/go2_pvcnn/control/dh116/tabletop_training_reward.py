@@ -43,13 +43,13 @@ def _finite(value):
         return False
 
 
-def _solver_interval_matches(previous, current, *, pinch_smoke):
+def _solver_interval_matches(previous, current, *, native_smoke):
     step = 1 / PHYSICS_HZ
     interval = current.solver_time_s - previous.solver_time_s
     if math.isclose(interval, step, rel_tol=0., abs_tol=1e-9):
         return True
-    if not (pinch_smoke and current.scope == "unqualified_source"
-            and current.source == "policy_owned_pinch_endpoint_v1"):
+    if not (native_smoke and current.scope == "unqualified_source"
+            and current.source in ("policy_owned_pinch_endpoint_v1","policy_owned_tripod_endpoint_v1")):
         return False
     times = (previous.solver_time_s, current.solver_time_s)
     # The native RopeBatch getter returns binary32 seconds. Keep these
@@ -552,7 +552,7 @@ class TrainingReward:
                     or (row.stamp.env_id, row.stamp.reset_uid, row.stamp.rod_uid, row.stamp.source) !=
                        (prior.env_id, prior.reset_uid, prior.rod_uid, prior.source)
                     or row.stamp.physics_tick != prior.physics_tick + 1
-                    or not _solver_interval_matches(prior, row.stamp, pinch_smoke=self.config.profile == SMOKE)):
+                    or not _solver_interval_matches(prior, row.stamp, native_smoke=self.config.profile == SMOKE)):
                 raise SourceFailure("same episode and consecutive actual 480Hz clock required")
             if row.target_ids != self._last.target_ids:
                 raise SourceFailure("episode material target IDs changed")

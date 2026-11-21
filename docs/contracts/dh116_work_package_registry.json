@@ -48652,18 +48652,100 @@
       "evidence_scope": "tripod_actual_fresh_smoke8_v5",
       "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v5.json",
       "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Frozen one-shot diagnostic; requires exact current native batch and live resource reservation; no grasp qualification.",
+      "blocker_kind": "failed_native",
+      "reason": "Actual Tripod executed two controls/16 measured SDK steps/192 solver substeps, one transition, zero updates; SDK18 float32 clock rejected by Pinch-only reward allowance. Fault cleanup retained references and ended SIGSEGV. Fingerprint consumed.",
       "dependencies": [
         "teacher.tripod-fresh-reset-native-validation",
         "teacher.tripod-collector-grasp-routing"
       ],
       "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v5.md",
       "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v5.json",
-      "native_runs": 0,
+      "native_runs": 1,
       "actual_launch": {
         "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v5.json",
         "sha256": "875ad7ae0fa24e01ac2033160bcf3cedd65d863d41d84a1ff6325b31ac653560"
+      },
+      "last_result": {
+        "exit_code": 255,
+        "debugger_inferior_signal": 11,
+        "sdk_steps": 18,
+        "setup_sdk_steps": 2,
+        "control_steps": 2,
+        "completed_transitions": 1,
+        "solver_calls": 16,
+        "internal_solver_substeps": 192,
+        "ppo_updates": 0,
+        "attempt_fingerprint": "c01d8d503a1e2b1cebcf5fc726c4018fa4d4a02ad329212977625e6e6b33aa79",
+        "code_config_sha256": "0e5208b1aff0ebcf7e4a0f8f72aa612df0f42846882a51d1665f410bbcdd9a5b",
+        "result_sha256": "3b63619186b655e685cac00200225c9a3c103fb762f1b548f7adaf7a442f85c5",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false
+      },
+      "dependency_scopes": {}
+    },
+    "teacher.tripod-reward-clock-parity": {
+      "title": "Extend exact native binary32 reward clock bounds to independent Tripod smoke",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-collector-grasp-routing"
+      ],
+      "tests": [
+        "tests/test_native_teacher_reward.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_training.py",
+        "tests/test_native_teacher_tripod_sources.py",
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_reward_clock_parity_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-reward-clock-parity.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_passed": 457,
+        "cpu_failed": 0,
+        "native_runs_on_current_code": 0,
+        "previous_recipe": "teacher.tripod-ppo-fresh-smoke8-v5",
+        "previous_recipe_native_runs": 1,
+        "measured_sdk_steps": 16,
+        "control_steps": 2,
+        "completed_transitions": 1,
+        "ppo_updates": 0,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "scope": "CPU exact binary32 clock support and real v5 failure evidence; not current fix native success"
+      }
+    },
+    "teacher.tripod-ppo-fresh-smoke8-v6": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Independent Tripod fresh17 smoke8 actual PPO diagnostic",
+      "evidence_scope": "tripod_actual_fresh_smoke8_v6",
+      "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v6.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Frozen current sources; v5 measured insufficient remaining wall budget and fault-path retained resources. Resolve runtime readiness before issuing any new exact batch; unexecuted.",
+      "dependencies": [
+        "teacher.tripod-fresh-reset-native-validation",
+        "teacher.tripod-reward-clock-parity"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v6.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v6.json",
+      "native_runs": 0,
+      "actual_launch": {
+        "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v6.json",
+        "sha256": "6ec015b3afa8c23ad6cd9f84113f00f1f61f064cd9c0cdc9c0478c24a119199a"
       }
     }
   },

@@ -1218,8 +1218,12 @@ def test_config_origin_fix_revalidated_copy_cannot_alias_engine_owned_config():
     (18, 0.03541666641831398, "unqualified_source", "policy_owned_pinch_endpoint_v1", False),
     (18, 0.03333333507180214, "cpu_fixture", "cpu_fixture_reader", False),
     (18, 0.03333333507180214, "unqualified_source", "other_clock_reader", False),
+    (18, 0.03333333507180214, "unqualified_source", "policy_owned_tripod_endpoint_v1", True),
+    (19, 0.03333333507180214, "unqualified_source", "policy_owned_tripod_endpoint_v1", False),
+    (18, 0.03541666641831398, "unqualified_source", "policy_owned_tripod_endpoint_v1", False),
+    (18, 0.03333333507180214 + 5e-12, "unqualified_source", "policy_owned_tripod_endpoint_v1", False),
 ])
-def test_native_pinch_float32_clock_only_accepts_consecutive_physics(tick, raw, scope, source, accepted):
+def test_native_smoke_float32_clock_only_accepts_consecutive_physics(tick, raw, scope, source, accepted):
     def sample(tick, seconds):
         ep = endpoint(tick)
         clock = replace(ep.stamp, solver_time_s=seconds, scope=scope, source=source)

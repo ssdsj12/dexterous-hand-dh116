@@ -1,6 +1,6 @@
 {
   "version": "dh116-teacher-tripod-smoke8-native-v5",
-  "status": "frozen_unexecuted_after_collector_grasp_binding",
+  "status": "blocked_native_reward_clock_and_fault_release",
   "identity": {
     "actual_identity": {
       "companion_sha256": "875ad7ae0fa24e01ac2033160bcf3cedd65d863d41d84a1ff6325b31ac653560",
@@ -17,11 +17,163 @@
       "command_spec_sha256": "7dd3f871ed396c484b5ad8bce9c53b87d776f74f3747a8f0e1ba8ec1c388e693"
     }
   },
-  "native_runs": 0,
+  "native_runs": 1,
   "native_ppo_updates": 0,
   "teacher_admission": false,
   "grasp_qualified": false,
   "planned_sdk_steps": 66,
   "planned_control_steps": 8,
-  "planned_internal_solver_substeps": 768
+  "planned_internal_solver_substeps": 768,
+  "result": {
+    "version": "dh116-tripod-native-failure-readback-v5",
+    "tested_head": "8ec2f08a0f3753a2f6d38275871717436f5482cf",
+    "attempt": "/home/xk/.dh116-native-control-11-17/native-attempts/teacher.tripod-ppo-fresh-smoke8-v5/c01d8d503a1e2b1cebcf5fc726c4018fa4d4a02ad329212977625e6e6b33aa79/attempt-t6gh4i7c",
+    "output": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/native-output-tripod-smoke8-c01d8d50/teacher.tripod-ppo-fresh-smoke8-v5/attempt-t6gh4i7c/native",
+    "attempt_fingerprint": "c01d8d503a1e2b1cebcf5fc726c4018fa4d4a02ad329212977625e6e6b33aa79",
+    "receipt_sha256": "3b63619186b655e685cac00200225c9a3c103fb762f1b548f7adaf7a442f85c5",
+    "outer_exit_sha256": "21902c8605c8b8e53c4042623fd8c5d31f2c031ca9713574848f14d43f52cfae",
+    "native_log_sha256": "3fc22d32e3aba670d8098cb1e56cb5b321a57b8853a9fbcbe382bb1c338f6870",
+    "journal_sha256": "85b0e9acd08933648083b99f0e31a6440c83d06e51fee943fbe2db6db9866387",
+    "lifecycle_result_sha256": "9462c10bf1ab258a33a047e257f2ff15d17e8984143f703206b829b4842d36a8",
+    "sdk_steps": 18,
+    "setup_sdk_steps": 2,
+    "measured_sdk_steps": 16,
+    "issued_controls": 2,
+    "completed_transitions": 1,
+    "solver_calls": 16,
+    "internal_solver_substeps": 192,
+    "ppo_updates": 0,
+    "exit_code": 255,
+    "signal": 11,
+    "duration_seconds": 192.47762013506144,
+    "physics_guards": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "raw_clock_sequence": [
+      {
+        "sdk_step": 3,
+        "sdk_time_s": 0.00625,
+        "solver_time_s": 0.0020833334419876337,
+        "rod_tick": 12
+      },
+      {
+        "sdk_step": 4,
+        "sdk_time_s": 0.008333333333333333,
+        "solver_time_s": 0.004166666883975267,
+        "rod_tick": 24
+      },
+      {
+        "sdk_step": 5,
+        "sdk_time_s": 0.010416666666666666,
+        "solver_time_s": 0.006250000558793545,
+        "rod_tick": 36
+      },
+      {
+        "sdk_step": 6,
+        "sdk_time_s": 0.0125,
+        "solver_time_s": 0.008333333767950535,
+        "rod_tick": 48
+      },
+      {
+        "sdk_step": 7,
+        "sdk_time_s": 0.014583333333333334,
+        "solver_time_s": 0.010416666977107525,
+        "rod_tick": 60
+      },
+      {
+        "sdk_step": 8,
+        "sdk_time_s": 0.016666666666666666,
+        "solver_time_s": 0.012500000186264515,
+        "rod_tick": 72
+      },
+      {
+        "sdk_step": 9,
+        "sdk_time_s": 0.01875,
+        "solver_time_s": 0.014583333395421505,
+        "rod_tick": 84
+      },
+      {
+        "sdk_step": 10,
+        "sdk_time_s": 0.020833333333333332,
+        "solver_time_s": 0.01666666753590107,
+        "rod_tick": 96
+      },
+      {
+        "sdk_step": 11,
+        "sdk_time_s": 0.022916666666666665,
+        "solver_time_s": 0.01875000074505806,
+        "rod_tick": 108
+      },
+      {
+        "sdk_step": 12,
+        "sdk_time_s": 0.025,
+        "solver_time_s": 0.02083333395421505,
+        "rod_tick": 120
+      },
+      {
+        "sdk_step": 13,
+        "sdk_time_s": 0.027083333333333334,
+        "solver_time_s": 0.02291666716337204,
+        "rod_tick": 132
+      },
+      {
+        "sdk_step": 14,
+        "sdk_time_s": 0.029166666666666667,
+        "solver_time_s": 0.02500000037252903,
+        "rod_tick": 144
+      },
+      {
+        "sdk_step": 15,
+        "sdk_time_s": 0.03125,
+        "solver_time_s": 0.02708333358168602,
+        "rod_tick": 156
+      },
+      {
+        "sdk_step": 16,
+        "sdk_time_s": 0.03333333333333333,
+        "solver_time_s": 0.02916666679084301,
+        "rod_tick": 168
+      },
+      {
+        "sdk_step": 17,
+        "sdk_time_s": 0.035416666666666666,
+        "solver_time_s": 0.03125,
+        "rod_tick": 180
+      },
+      {
+        "sdk_step": 18,
+        "sdk_time_s": 0.0375,
+        "solver_time_s": 0.03333333507180214,
+        "rod_tick": 192
+      }
+    ],
+    "clock_error_s": 1.7384688059778053e-09,
+    "root_error": "TrainingReward Pinch-only binary32 getter clock branch rejects independent Tripod at actual SDK18 despite consecutive SDK and rod ticks",
+    "native_release_verified": false,
+    "app_close_returned": true,
+    "post_close_crash": {
+      "stack_top": "libomni.physx.tensors.plugin.so / _physicsTensors / Py_FinalizeEx",
+      "full_gdb_stack_sha256": "3fc22d32e3aba670d8098cb1e56cb5b321a57b8853a9fbcbe382bb1c338f6870",
+      "maps_sha256": "db821d831c1d0a24e4718a6b4e435601b269d5327da13cd1e6db421514665883"
+    },
+    "native_qualification": false,
+    "teacher_admission": false,
+    "grasp_qualified": false,
+    "no_checkpoint": true
+  }
 }

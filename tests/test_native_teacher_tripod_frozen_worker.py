@@ -8,7 +8,7 @@ from go2_pvcnn.control.dh116.tabletop_native_teacher_preflight import load_reset
 from go2_pvcnn.control.dh116.tabletop_native_teacher_worker_contract import worker_training_target_contract
 
 ROOT = Path(__file__).resolve().parents[1]
-NAME = "teacher.tripod-ppo-fresh-smoke8-v5"
+NAME = "teacher.tripod-ppo-fresh-smoke8-v6"
 
 
 def test_frozen_tripod_worker_retains_real_tripod_reset_and_finite_native_budget(tmp_path):
