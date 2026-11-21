@@ -119,12 +119,13 @@ def acquire_supported_reset(sim, owners, trace, output, *, profile, config):
 
 
 def freeze(args):
-    from go2_pvcnn.control.dh116.tabletop_dual_hand_scene_preparation import prepare_scene
+    from go2_pvcnn.control.dh116.tabletop_deformable_grasp_task import load_flexible_grasp_task
     from go2_pvcnn.control.dh116.tabletop_power_supported_task import prepare_initial_state
 
     config = json.loads(CONFIG.read_bytes())
-    prepared = prepare_scene(ROOT)
-    seed, _, _, _ = prepare_initial_state(config, prepared["table"])
+    task = load_flexible_grasp_task(ROOT/"configs/dh116_tasks/flexible_dual_hand_grasp_v1.json", ROOT)
+    table = dict(center_m=task["scene"]["table_center_m"], size_m=task["scene"]["table_size_m"])
+    seed, _, _, _ = prepare_initial_state(config, table)
     plan = reset.freeze_plan(args.output)
     plan.update(version="dh116-power-supported-contact-pilot-v1",
                 preserved_scope=config["scope"], power_seed_sha256=seed["sha256"])
@@ -142,8 +143,6 @@ def freeze(args):
         sources.checked_json(archive, frozen["gpu_row_sha256"])
         files.extend((archive, bake/"result.json", bake/f"{side}.base_link.npz"))
     hashes = {str(path.resolve(strict=True)):native.sha(path) for path in files}
-    hashes.update({str(ROOT/path): digest for path, digest in prepared["local_sources"].items()})
-    hashes.update(prepared["external_sources"])
     for path, digest in hashes.items():
         if plan["frozen_files"].setdefault(path, digest) != digest:
             raise ValueError(f"conflicting frozen Power artifact: {path}")
@@ -158,6 +157,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     native.validate_execution_context(ROOT)
     plan, config = freeze(args)
+    from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
+
+    assert_clean_import_boundary()
     digest = native.digest(plan)
     if args.approved_frozen_sha256 is None:
         native.write_new(args.plan, plan)

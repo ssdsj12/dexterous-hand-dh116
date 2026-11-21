@@ -63,3 +63,30 @@ def test_frozen_power_seed_keeps_free_rod_on_two_supports():
     cfg["fixed_rod_nodes"] = [0]
     with pytest.raises(ValueError, match="free Power rod"):
         prepare_initial_state(cfg, table)
+
+
+def test_freeze_does_not_run_offline_usd_scene_preparation(tmp_path, monkeypatch):
+    from argparse import Namespace
+    from go2_pvcnn.control.dh116 import tabletop_dual_hand_scene_preparation as scene_api
+    from scripts import verify_dh116_power_supported_task as pilot
+
+    def fail_if_scene_prepared(*args, **kwargs):
+        raise AssertionError("offline USD must not be loaded into the future AppLauncher process")
+
+    monkeypatch.setattr(scene_api, "prepare_scene", fail_if_scene_prepared)
+    monkeypatch.setattr(pilot.reset, "freeze_plan", lambda output: {"budget": {}, "frozen_files": {}})
+    monkeypatch.setattr(pilot.sources, "checked_json", lambda path, sha: {"palms": {"left": {}, "right": {}}})
+    monkeypatch.setattr(pilot.sources, "fixture", lambda side, rays, bake: (
+        None, None, {"gpu_row_sha256": "a"*64}, None))
+    paths = {"output": tmp_path / "native", "rays": tmp_path / "rays.json"}
+    paths["rays"].write_text("{}")
+    for side in ("left", "right"):
+        bake = tmp_path / f"{side}-bake"
+        bake.mkdir()
+        (bake / "result.json").write_text("{}")
+        (bake / f"{side}.base_link.npz").write_bytes(b"test")
+        (tmp_path / f"{side}_base_link.json").write_text("{}")
+        paths[f"{side}_bake"] = bake
+    plan, _ = pilot.freeze(Namespace(**paths))
+    assert plan["budget"]["sdk_steps"] == 10 and plan["budget"]["solver_steps"] == 96
+    assert str(pilot.CONFIG) in plan["frozen_files"]

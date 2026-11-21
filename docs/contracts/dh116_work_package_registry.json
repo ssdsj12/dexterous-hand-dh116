@@ -45447,6 +45447,29 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-supported-startup-import-boundary-cpu": {
+      "title": "Keep Power numeric preflight separate from native USD authoring",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-supported-contact-acquisition-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_end_supported_rod.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_supported_startup_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-startup.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_fixture",
+        "passed": 114,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

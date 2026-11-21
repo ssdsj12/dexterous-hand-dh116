@@ -1,0 +1,41 @@
+{
+  "version": "dh116-power-supported-startup-v1",
+  "status": "cpu_verified_native_retry_pending",
+  "cpu_tests": 114,
+  "previous_launch": {
+    "result_sha256": "fa3a9bf5b9375cb1972ca5d27e9a9c34d5971b7e27bec801a539815ea38c9af5",
+    "frozen_sha256": "669577ac5c20b64197d822709001025bc52182acb14e7f267d19aeee2fec7b7a",
+    "native_log_sha256": "015efd07ad3e94ab7c5b07bbbf89f107c8f1f8de62a6d5605432560fdaaaef99",
+    "blocked_before_app": true,
+    "outer_exit": 1,
+    "debugger_inferior_exit": 1,
+    "sdk_steps": 0,
+    "solver_steps": 0,
+    "contact_pairs": 0
+  },
+  "repaired_cpu_preflight": {
+    "frozen_sha256": "ea3bcc3eb5ce01882f8efe0d6a866e3ea00e1a3d567c09d337230025b5c13fb9",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "power_supported_contact_pilot",
+      "sdk_setup_steps": 2,
+      "control_steps": 0,
+      "solver_steps": 96,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 180,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 4,
+      "episode_resets": 1,
+      "sdk_steps": 10
+    }
+  },
+  "native_qualification": false,
+  "teacher_admission": false,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-startup.md"
+}
