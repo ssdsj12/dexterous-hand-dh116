@@ -63,6 +63,32 @@ def reconstruct(model,state,poses,side):
     return shapes,errors,float(mimic)
 
 
+def validate_recipe(frozen):
+    if frozen.get("version")=="dh116-902-fixed-wrist-open-reset-v1":
+        return
+    if frozen.get("version")!="dh116-902-joint-contact-open-reset-v1":
+        raise ValueError("independent measured open Reset recipe required")
+    if frozen["screen"].get("version")!="dh116-902-joint-contact-path-cpu-v1":
+        raise ValueError("new Reset must carry the exact full path CPU proof")
+    for name,key in (("joint_search","search_sha256"),("joint_path_proof","supplied_path_proof_sha256")):
+        record=frozen[name];artifact=Path(record["path"]).resolve(strict=True)
+        if (record["sha256"]!=sha(artifact) or frozen["frozen_files"].get(str(artifact))!=record["sha256"]
+                or frozen["screen"].get(key)!=record["sha256"]):
+            raise ValueError("new Reset artifact differs from full path evidence")
+    record=frozen["joint_candidate"];path=Path(record["path"]).resolve(strict=True)
+    path.relative_to(ROOT)
+    digest=sha(path)
+    if (record["sha256"]!=digest or frozen["frozen_files"].get(str(path))!=digest
+            or frozen["screen"]["candidate_sha256"]!=digest):
+        raise ValueError("frozen joint candidate bytes differ")
+    joint=json.loads(path.read_bytes())
+    config=frozen["reset_config"]
+    if (joint.get("native_admissible") is not False or joint.get("teacher_admission") is not False
+            or config["hands"]["right"]["pose_wxyz"]!=joint["pose_wxyz"]
+            or config["hands"]["right"]["q_rad"]!=frozen["screen"]["opening_active_q_rad"]):
+        raise ValueError("new measured Reset differs from source-bound open candidate")
+
+
 def audit(receipt,expected_sha):
     from go2_pvcnn.control.dh116.tabletop_supported_rod_reference import load_parked_reference,_read_artifact
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
@@ -72,8 +98,7 @@ def audit(receipt,expected_sha):
     if sha(receipt)!=expected_sha:raise ValueError("explicit outer receipt SHA differs")
     outer=json.loads(receipt.read_bytes());output=receipt.parent/"native";manifest=outer["artifact_sha256"]
     frozen,_=_read_artifact(output,manifest,"frozen_plan.json")
-    if frozen["version"]!="dh116-902-fixed-wrist-open-reset-v1":
-        raise ValueError("independent fixed-wrist open Reset receipt required")
+    validate_recipe(frozen)
     if (output/"tripod_failure.json").exists():raise ValueError("internally failed Reset cannot qualify")
     scene,_=_read_artifact(output,manifest,"tripod_support_scene.json")
     models={side:load_geometry(ROOT,side=side) for side in ("left","right")}

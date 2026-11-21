@@ -32,6 +32,19 @@ def select_target(config,search_path,receipt_sha):
     return row
 
 
+def path_row_passed(row):
+    try:
+        values=[row[k] for k in ("noncontact_rod_clearance_m","support_clearance_m",
+            "table_clearance_m","contact_rod_clearance_m")]
+        gaps=row["pad_gaps_m"];ids=row["node_ids"]
+        return bool(row["shape_count"]==22 and np.isfinite(values+gaps).all()
+            and values[0]>.00025 and values[1]>=.001 and values[2]>=.0021
+            and values[3]>=-.00015 and row["all_envelopes_certified"] is True
+            and len(gaps)==3 and min(gaps)>=-.00015 and len(ids)==3
+            and all(type(k) is int and 0<=k<20 for k in ids))
+    except (KeyError,TypeError,ValueError):return False
+
+
 def certify(candidate_path,search_path,receipt,receipt_sha):
     from scripts.audit_dh116_wire_contact_witness import shapes_world
     from scripts.audit_dh116_pinch_initial_pose import load_geometry
@@ -55,6 +68,8 @@ def certify(candidate_path,search_path,receipt,receipt_sha):
     nodes=np.stack([initial["rod_boundary"]["rod_snapshot"]["node_positions"][0],*[ref.node_positions for ref in refs]])
     boxes=[(np.asarray(b["center_m"])-np.asarray(b["size_m"])/2,
             np.asarray(b["center_m"])+np.asarray(b["size_m"])/2) for b in refs[0].support_boxes]
+    if frozen["frozen_files"].get(str(REFERENCE.resolve()))!=sha(REFERENCE):
+        raise ValueError("original frozen table reference differs")
     reference=json.loads(REFERENCE.read_bytes());table=reference["table"]
     top=table["center_m"][2]+table["size_m"][2]/2
     models={s:load_geometry(ROOT,side=s) for s in ("left","right")}
@@ -74,10 +89,7 @@ def certify(candidate_path,search_path,receipt,receipt_sha):
     for i,q in enumerate(states):
         row=_measure_hand("right",(models["right"],{}),pose,q,tail,tube,boxes,grids,top,request)
         row["ordinal"]=i+1
-        row["geometry_passed"]=bool(row["noncontact_rod_clearance_m"]>.00025
-            and row["support_clearance_m"]>=.001 and row["table_clearance_m"]>=.0021
-            and row["contact_rod_clearance_m"]>=-.00015 and row["all_envelopes_certified"]
-            and min(row["pad_gaps_m"])>=-.00015)
+        row["geometry_passed"]=path_row_passed(row)
         samples.append(row)
     dependencies=[Path(__file__),candidate_path,ROOT/ORIGINAL_REQUEST,REFERENCE,
         ROOT/"scripts/search_dh116_902_joint_contact.py",ROOT/"scripts/screen_dh116_902_fixed_wrist_open.py",

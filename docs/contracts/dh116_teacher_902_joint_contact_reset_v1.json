@@ -1,0 +1,55 @@
+{
+  "version": "dh116-teacher-902-joint-contact-reset-v1",
+  "base_head": "bd80a5b8727b24453ca699f1dbc0f333a5bb6105",
+  "status": "cpu_preflight_passed_native_not_run",
+  "cpu_tests": {
+    "passed": 235,
+    "failed": 0,
+    "new_cases": 7,
+    "log_sha256": "652a975e7870825615fd8b8d2df6a9e90b169dad36ddfc63f7fc9d2cc4de1bab",
+    "registry_passed": 60
+  },
+  "native_runs": 0,
+  "teacher_admission": false,
+  "force_qualified": false,
+  "grasp_qualified": false,
+  "source_sha256": {
+    "scripts/verify_dh116_902_fixed_wrist_open_reset.py": "9feaa274a402f9320630307ca54d3b3906e19e009493d4f537e011f24bc70fde",
+    "scripts/certify_dh116_902_joint_contact_path.py": "7b11a7e0ad4b36d2d9173aa26b5ac23622e923a7f89dddbddcf1fa9498fc95c2",
+    "scripts/audit_dh116_902_live_clearance.py": "4bc35404f861407bfae33912edddfc7eddcdc22539a7e1c93ecf14d1df86973c",
+    "tests/test_dh116_902_joint_contact_reset.py": "56aed0894af0657f9cb58f6ecc845e58a08395227688450bb6f11fd4da54a91b"
+  },
+  "candidate_sha256": "4f194a601be909629a85ad6b7cc43e281da17e87a6ca2897bb14e2297af2c6ea",
+  "frozen_sha256": "386c8ffedcabc305e7674dc4738d14851d03716797b22e80a397832f84f1a53e",
+  "budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "902_tripod_joint_contact_open_settle",
+    "sdk_setup_steps": 2,
+    "control_steps": 0,
+    "solver_steps": 2856,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 180,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 6,
+    "episode_resets": 1,
+    "sdk_steps": 240
+  },
+  "refreshed_cpu_proof_sha256": "7113aad0fd17b625b4147485534da703fe08eab3e4d29fef70dcee893e57e66d",
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "rounds": "902-candidate-reset R1-R2",
+    "production_sources_verified": true,
+    "test_source_reviewed_before_two_final_cases": true
+  },
+  "next_gate": [
+    "one serial new-wrist Reset-only with exact frozen source; no reuse of old fingerprint",
+    "natural exit and complete interval followed by 239-frame saved-data geometry audit",
+    "preserve original search-source receipt separately from new execution-boundary receipt for closure"
+  ]
+}

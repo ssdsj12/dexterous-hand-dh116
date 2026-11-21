@@ -70,6 +70,53 @@ def run_screen(candidate,receipt):
         return checked_reset_proof(json.loads(out.read_bytes()))
 
 
+def adapt_joint_reset(config,joint,proof):
+    if (proof.get("version")!="dh116-902-joint-contact-path-cpu-v1"
+            or proof.get("closure_geometry_passed") is not True
+            or proof.get("endpoint_contact_candidate_passed") is not True
+            or proof.get("physical_substeps")!=512 or proof.get("control_windows")!=64
+            or any(proof.get(key) is not False for key in ("teacher_admission",
+                "native_contact_verified","force_qualified","grasp_qualified")) or proof.get("native_runs")!=0
+            or proof.get("pose_wxyz")!=joint.get("pose_wxyz")
+            or proof.get("opening_active_q_rad")!=config["hands"]["right"]["q_rad"]):
+        raise ValueError("source-bound full CPU path and unchanged measured opening required")
+    adapted=deepcopy(proof)
+    adapted.update(native_admissible=False,ppo_updates=0,
+        right_wrist_pose_wxyz=proof["pose_wxyz"],settling_outer_sha256=proof["receipt_sha256"])
+    checked_reset_proof(adapted)
+    result=deepcopy(config)
+    result["hands"]["right"]["pose_wxyz"]=joint["pose_wxyz"]
+    return result,adapted
+
+
+def joint_reset_inputs(config,args):
+    from scripts.certify_dh116_902_joint_contact_path import select_target
+    joint=json.loads(args.joint_candidate.read_bytes())
+    select_target(joint,args.joint_search,old.sha(args.settling_receipt))
+    with TemporaryDirectory(prefix="dh116-joint-reset-") as folder:
+        out=Path(folder)/"proof.json"
+        subprocess.run([sys.executable,"-B","-m","scripts.certify_dh116_902_joint_contact_path",
+            "--candidate",str(args.joint_candidate),"--search",str(args.joint_search),
+            "--receipt",str(args.settling_receipt),"--receipt-sha256",joint["receipt_sha256"],
+            "--output",str(out)],cwd=ROOT,timeout=210,check=True)
+        proof=json.loads(out.read_bytes())
+    supplied=args.joint_path_proof.read_bytes()
+    if (proof!=json.loads(supplied)
+            or proof["candidate_sha256"]!=old.sha(args.joint_candidate)
+            or proof["search_sha256"]!=old.sha(args.joint_search)):
+        raise ValueError("fresh exact joint candidate/path/source proof required")
+    result,adapted=adapt_joint_reset(config,joint,proof)
+    adapted["supplied_path_proof_sha256"]=screen.hashlib.sha256(supplied).hexdigest()
+    return result,adapted
+
+
+def check_joint_frozen_proof(proof,frozen,candidate,search,path_proof):
+    fields=("candidate_sha256","search_sha256","supplied_path_proof_sha256")
+    for path,key in zip((candidate,search,path_proof),fields):
+        if frozen.get(str(Path(path).resolve(strict=True)))!=proof[key]:
+            raise ValueError("joint artifact changed between CPU screen and final freeze")
+
+
 def check_frozen_proof(proof,frozen,receipt):
     expected={str(Path(receipt).resolve(strict=True)):proof["settling_outer_sha256"]}
     expected.update({str((ROOT/path).resolve(strict=True)):value
@@ -105,9 +152,18 @@ def main(argv=None):
     for name in ("rays","left-bake","right-bake","proximal-capture","proximal-bake"):
         p.add_argument("--"+name,type=Path,required=True)
     p.add_argument("--approved-frozen-sha256")
+    for name in ("joint-candidate","joint-search","joint-path-proof"):
+        p.add_argument("--"+name,type=Path)
     args=p.parse_args(argv)
+    options=(args.joint_candidate,args.joint_search,args.joint_path_proof)
+    if any(options) and not all(options):
+        p.error("joint Reset requires candidate, search and exact full path proof together")
     config,files=reset_config(args.candidate)
-    proof=run_screen(args.candidate,args.settling_receipt)
+    if all(options):
+        config,proof=joint_reset_inputs(config,args)
+        files=(*files,*options,Path(__file__).with_name("certify_dh116_902_joint_contact_path.py"))
+    else:
+        proof=run_screen(args.candidate,args.settling_receipt)
     if (proof["right_wrist_pose_wxyz"]!=config["hands"]["right"]["pose_wxyz"]
             or proof["opening_active_q_rad"]!=config["hands"]["right"]["q_rad"]):
         raise ValueError("fresh proof and actual Reset initial targets differ")
@@ -120,6 +176,12 @@ def main(argv=None):
     plan.update(version="dh116-902-fixed-wrist-open-reset-v1",screen=proof,
         reset_config=config,preserved_scope="independent Tripod open Reset and support settling only")
     plan["budget"].update(BUDGET)
+    if all(options):
+        plan["version"]="dh116-902-joint-contact-open-reset-v1"
+        plan["budget"]["mode"]="902_tripod_joint_contact_open_settle"
+        for name in ("joint_candidate","joint_search","joint_path_proof"):
+            path=getattr(args,name).resolve(strict=True)
+            plan[name]=dict(path=str(path),sha256=native.sha(path))
     _,proximal=shared.proximal_registration_inputs(args.proximal_capture,args.proximal_bake)
     files=[*files,Path(supported.__file__),Path(shared.__file__),args.rays,
         args.settling_receipt,*proximal]
@@ -136,6 +198,8 @@ def main(argv=None):
         files.extend((raw,bake/"result.json",bake/(side+".base_link.npz")))
     plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in files})
     check_frozen_proof(proof,plan["frozen_files"],args.settling_receipt)
+    if all(options):
+        check_joint_frozen_proof(proof,plan["frozen_files"],*options)
     assert_clean_import_boundary()
     digest=native.digest(plan)
     if args.approved_frozen_sha256 is None:
