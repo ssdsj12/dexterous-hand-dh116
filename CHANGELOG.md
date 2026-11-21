@@ -1,3 +1,7 @@
+## Pinch fixed-wrist index seating native result
+
+Keep the measured transient right load gain and incomplete grip qualification. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-force-guided-index-seating-native.md).
+
 ## Pinch force-guided right index seating
 
 Take a bounded right-index action from measured Pinch reaction data with both wrists fixed. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-force-guided-index-seating.md).

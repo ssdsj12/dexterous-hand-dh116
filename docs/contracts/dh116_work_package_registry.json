@@ -47027,6 +47027,31 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-force-guided-index-seating-native": {
+      "title": "Measure right Pinch reaction after bounded index seating",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-force-guided-index-seating"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_force_seating.py",
+        "tests/test_dh116_pinch_supported_reset.py",
+        "tests/test_dh116_supported_distal_transfer.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_force_guided_index_seating_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-force-guided-index-seating-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 217,
+        "native_exit_code": 0,
+        "right_loaded_sdk_rows": 0,
+        "best_combined_minimum_substep_load_n": 0.14405516886464112,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
