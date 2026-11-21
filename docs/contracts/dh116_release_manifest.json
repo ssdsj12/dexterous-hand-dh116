@@ -30113,6 +30113,31 @@
         "verified_at_utc": "2026-11-21T06:12:51.663849+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Pinch thumb tangent and sealed replay",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-thumb-tangent-probe.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_thumb_tangent_probe_v1.json",
+      "cpu_tests": {
+        "passed": 117,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "56edf7647c0d9f86cbf1ff3a1377e3f766660575",
+        "source_tree": "3b7e15bbc7fbfcd28060df3b65898c06dace889f",
+        "remote_branch": "11-17",
+        "files_verified": 15,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T06:24:35.772725+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
