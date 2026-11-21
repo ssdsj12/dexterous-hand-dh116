@@ -46056,6 +46056,30 @@
         "task_registration_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-proximal-supported-native-result": {
+      "title": "Verify bilateral Power proximal registration against the native no-contact baseline",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-proximal-supported-binding"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_binding_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-binding-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "natural_exit": 0,
+        "sdk_steps": 240,
+        "solver_steps": 2856,
+        "native_task_registration": true,
+        "native_contact_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
