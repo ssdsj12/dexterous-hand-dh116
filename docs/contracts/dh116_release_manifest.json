@@ -29538,6 +29538,31 @@
         "verified_at_utc": "2026-11-21T04:03:30.855122+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Pinch native fixed-wrist feedback comparison",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-fixed-wrist-force-feedback-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_fixed_wrist_force_feedback_native_v1.json",
+      "cpu_tests": {
+        "passed": 105,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "fcd417a39220b3c33fcddb97e9c05f7dfe40d480",
+        "source_tree": "080cdc21d633123a1601cc7aa6248d207c824cba",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T04:06:15.550314+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
