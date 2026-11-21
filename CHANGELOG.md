@@ -1,3 +1,7 @@
+## Power proximal Tensor View ray comparison
+
+Freeze one same-clock ray diagnostic driven by the exact native rigid-body Tensor View and the earlier rigid-interface poses. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-tensor-pose.md).
+
 ## Native Power proximal ray evidence
 
 Record exact geometry parity and original per-side hits, including a GPU ray surface discrepancy that blocks contact admission. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-rays-native.md).

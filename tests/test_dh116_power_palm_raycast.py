@@ -39,3 +39,19 @@ def test_proximal_ray_witness_requires_the_exact_body_and_owned_collider(monkeyp
     assert rejected["owned_rays"] == 0
     with pytest.raises(ValueError, match="finger52_link"):
         audit.ray_audit(row, dict(row, link="finger53_link"), cast(src["body_path"]), expected_link="finger52_link")
+
+
+def test_proximal_tensor_pose_requires_one_exact_body_and_a_finite_unit_quaternion():
+    from types import SimpleNamespace
+    from scripts.audit_dh116_power_proximal_raycast import owned_tensor_pose
+
+    path = "/World/left/finger52_link"
+    valid = np.array([[1., 2., 3., 0., 0., 0., 1.]])
+    def view(p, values):
+        return SimpleNamespace(count=1, prim_paths=[p], get_transforms=lambda: values)
+    assert owned_tensor_pose(view(path, valid), path) == {
+        "position_m": [1., 2., 3.], "quaternion_xyzw": [0., 0., 0., 1.]}
+    with pytest.raises(ValueError, match="exact"):
+        owned_tensor_pose(view(path.replace("left", "right"), valid), path)
+    with pytest.raises(ValueError, match="unit"):
+        owned_tensor_pose(view(path, np.zeros((1, 7))), path)

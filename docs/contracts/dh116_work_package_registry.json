@@ -45957,6 +45957,28 @@
         "sdf_registered": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-proximal-tensor-pose-ray-cpu": {
+      "title": "Compare exact Tensor View and rigid-interface pose sources for Power rays",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-proximal-ray-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_palm_raycast.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_tensor_pose_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-tensor-pose.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_exact_body_pose_fixture",
+        "passed": 66,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
