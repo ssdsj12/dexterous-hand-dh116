@@ -1,3 +1,7 @@
+## Power proximal native motion handoff
+
+Record one guarded 24D pulse on the original supported flexible rod with all 17 slots attached. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-action-native.md).
+
 ## Power proximal action handoff
 
 Continue the same 17-slot rod through one opt-in, guarded wrist approach pulse. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-action.md).
