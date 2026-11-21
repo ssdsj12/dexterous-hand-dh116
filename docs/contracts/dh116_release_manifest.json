@@ -31488,6 +31488,31 @@
         "verified_at_utc": "2026-11-21T14:33:25.956781+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher-902-contact-guard-audit",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-contact-guard-audit.md",
+      "readiness": "docs/contracts/dh116_teacher_902_contact_guard_audit_v1.json",
+      "cpu_tests": {
+        "passed": 257,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "cf409a959030dac6fd06b8eecdcdcbfb9e2526fe",
+        "source_tree": "fd234987e9f4a8d0cb18b26254006d4eaf89b71e",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T14:56:52.757429+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
