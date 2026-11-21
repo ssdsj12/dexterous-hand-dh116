@@ -22,9 +22,9 @@ class FlexiblePhysicalExchange:
     """Preserve the previous measured rod reaction through the next SDK write."""
 
     def __init__(self, sim, rod, bindings, *, root_seed_w, read_geometry,
-                 physics_budget_end, read_geometry_after_sdk=None):
+                 physics_budget_end, read_geometry_after_sdk=None, continue_supported_rod=False):
         clock = rod.clock()
-        if (clock["clock_valid"] is not True or clock["rod_tick"] != 0
+        if (clock["clock_valid"] is not True or (clock["rod_tick"] != 0 and not continue_supported_rod)
                 or clock["reset_id"] < 1 or clock["physics_step"] != sim.current_time_step_index
                 or type(physics_budget_end) is not int or physics_budget_end <= clock["physics_step"]):
             raise ValueError("fresh synchronized reset and a future physics budget required")
@@ -33,6 +33,30 @@ class FlexiblePhysicalExchange:
         if (not isinstance(root_seed_w, torch.Tensor) or root_seed_w.shape != (1, 2, 7)
                 or not root_seed_w.is_floating_point() or not bool(torch.isfinite(root_seed_w).all())):
             raise ValueError("finite original single-environment wrist seed required")
+        previous = None
+        wrench_writer = write_composer_reactions
+        expected_links = 5
+        if continue_supported_rod:
+            from .tabletop_power_shared_rod import (
+                PowerSharedRodRuntime, SUPPORTED_POWER_MESH_NAMES,
+                write_composer_reactions as write_supported_reactions,
+            )
+
+            if (type(rod) is not PowerSharedRodRuntime
+                    or rod.mesh_names != SUPPORTED_POWER_MESH_NAMES):
+                raise ValueError("the same supported Power rod owner is required for the action handoff")
+            if getattr(rod, "_action_exchange_claimed", False):
+                raise ValueError("supported rod already attached to an action exchange")
+            previous = rod._base.last
+            if (clock["rod_tick"] <= 0 or not isinstance(previous, dict)
+                    or any(previous.get(key) != clock[key] for key in ("run_uuid", "episode_uid",
+                                                                        "env_id", "reset_id", "rod_uid",
+                                                                        "physics_step", "rod_tick"))
+                    or previous.get("pair_capture_status") != "validated_solver_samples"
+                    or previous.get("contact_valid") is not True):
+                raise ValueError("same-clock, complete previous supported rod exchange required")
+            expected_links = 6
+            wrench_writer = write_supported_reactions
         env = clock["env_id"]
         self._composers = {}
         self._body_ids = {}
@@ -42,7 +66,7 @@ class FlexiblePhysicalExchange:
             if list(view.prim_paths) != [path] or len(view.link_paths) != 1:
                 raise ValueError("one actual articulation instance per side required")
             pads = [value for value in rod.bindings.values() if value["side"] == b.side]
-            if len(pads) != 5 or any(view.link_paths[0][pad["body_index"]] != pad["prim_path"]
+            if len(pads) != expected_links or any(view.link_paths[0][pad["body_index"]] != pad["prim_path"]
                                      for pad in pads):
                 raise ValueError("same PhysX links required for action and rod reaction")
             self._body_ids[b.side] = [pad["body_index"] for pad in pads]
@@ -67,6 +91,19 @@ class FlexiblePhysicalExchange:
         self._palms = torch.zeros((1, 2, 3), dtype=self._seed.dtype)
         self._angles = torch.zeros_like(self._palms)
         self._reaction = None
+        self._write_reactions = wrench_writer
+        if previous is not None:
+            routes = previous["hand_wrenches_com_world"]
+            if set(routes) != set(SIDES) or any(
+                    routes[side]["body_ids"] != self._body_ids[side]
+                    or routes[side].get("is_global") is not True
+                    or any(routes[side][name].shape != (1, expected_links, 3)
+                           or not np.isfinite(routes[side][name]).all() for name in ("forces", "torques"))
+                    or np.linalg.norm(routes[side]["forces"], axis=-1).max() > 30.
+                    for side in SIDES):
+                raise ValueError("original mounted composer routes or force guard failed at handoff")
+            self._reaction = clock["physics_step"], deepcopy(routes)
+            rod._action_exchange_claimed = True
 
     def _clock(self, substep):
         clock = self._rod.clock()
@@ -132,7 +169,7 @@ class FlexiblePhysicalExchange:
             source_step, routes = source
             if source_step != expected:
                 raise ValueError("queued reaction does not belong to the prior completed SDK step")
-        write_composer_reactions(self._composers, routes,
+        self._write_reactions(self._composers, routes,
             to_tensor=lambda value: torch.as_tensor(value, dtype=torch.float32, device=self._device))
         connection.submit(self._bindings, read_clock=read_clock,
             projected_root_poses=projection["projected_root_poses"],

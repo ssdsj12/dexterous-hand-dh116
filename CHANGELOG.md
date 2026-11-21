@@ -3904,3 +3904,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - Bound supported Rod geometry proofs to verified native material snapshots, including measured velocities and original rest lengths. The old raised Tripod curve remains a separate reference.
 
 - Certified a new right Tripod corridor on the measured supported rod and used finite convex support separation when world bounding boxes overlapped.
+
+- Added an opt-in handoff of the continuing supported Power rod and palm reactions to the original 24D action exchange. The native probe is separately tracked.

@@ -94,6 +94,11 @@ def test_freeze_does_not_run_offline_usd_scene_preparation(tmp_path, monkeypatch
     paths["settle_without_hand_contact"] = True
     settled, config = pilot.freeze(Namespace(**paths))
     original = json.loads(pilot.CONFIG.read_bytes())
+    probe, parked = pilot.freeze(Namespace(**dict(paths,verify_supported_action_handoff=True)))
+    assert parked == config
+    assert probe["budget"]["sdk_steps"]==248 and probe["budget"]["control_steps"]==1
+    assert probe["budget"]["solver_steps"]==246*12
+    assert [i for i,value in enumerate(probe["action24"]) if value] == [12,15]
     assert settled["budget"]["sdk_steps"] == 240 and settled["budget"]["solver_steps"] == 238*12
     assert str(pilot.SETTLE) in settled["frozen_files"]
     assert config["rod_nodes_w_m"] == original["rod_nodes_w_m"]

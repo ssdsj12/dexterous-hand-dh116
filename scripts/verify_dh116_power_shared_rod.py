@@ -153,8 +153,59 @@ def acquire_original_power_reset(sim, owners, trace, output, *, profile):
         sim = owners = trace = None
 
 
+def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
+                         clearance_shapes, setup, action, sdk_end):
+    """Run one retained 24D control on the continuing rod and real hand views."""
+    import torch
+    from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
+    from go2_pvcnn.control.dh116.tabletop_power_shared_rod import PALM_NAMES, END_SUPPORT_NAMES
+
+    control = row = None
+    try:
+        start = power.clock()
+        if sdk_end-start["physics_step"] != 8:
+            raise ValueError("exactly one remaining control interval required")
+        root = torch.tensor(setup["root_pose_wxyz"], dtype=torch.float64)[None]
+
+        def geometry():
+            sdk = native.clock(sim)["sdk_step"]
+            poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk)
+            roots = [np.r_[poses[name][0],poses[name][1][[3,0,1,2]]] for name in PALM_NAMES]
+            return dict(physics_step=sdk, root_poses_w=torch.tensor(np.stack(roots),dtype=torch.float64)[None],
+                        clearance_m=torch.tensor(clearance,dtype=torch.float64).reshape(1,2),
+                        pad_poses=poses, centers_of_mass=centers)
+
+        def after_sdk(previous):
+            measured = geometry()
+            if measured["physics_step"] != previous["physics_step"]+1:
+                raise ValueError("power hand geometry is not at the next SDK step")
+            measured.update(geometry_phase="sdk_complete_rod_pending", rod_source_physics_step=previous["physics_step"])
+            return measured
+
+        control = owners.keep("power_control_exchange", FlexiblePhysicalExchange(sim, power,
+            [bindings[side] for side in SIDES], root_seed_w=root, read_geometry=geometry,
+            read_geometry_after_sdk=after_sdk, physics_budget_end=sdk_end, continue_supported_rod=True))
+        trace.watch("power_control_exchange", control, owner="supported Power action diagnostic", release="owned scope")
+
+        def observe(row):
+            native.write_new(output/f"power_control_{row['physics_step']}.json", encode_owned(row))
+            if any(pair["mesh_name"] not in END_SUPPORT_NAMES
+                   for pair in row["rod"]["rod_mesh_contact_pairs"]["pairs"]):
+                return "external_contact_during_parked_action"
+            return None
+
+        result = control.control(torch.tensor(action,dtype=torch.float64)[None],observe=observe)
+        native.write_new(output/"power_control_result.json", encode_owned(dict(start=start,end=power.clock(),result=result)))
+        if result["termination_reason"] or result["physical_samples"] != 8:
+            raise ValueError(f"Power controlled handoff stopped: {result['termination_reason']}")
+        return result
+    finally:
+        sim = owners = trace = power = bindings = control = row = None
+
+
 def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=None,
-               sdk_end=SDK_END, require_no_hand_contact=False):
+               sdk_end=SDK_END, require_no_hand_contact=False, action_after_settle=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -165,6 +216,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
     episode = original = power = bindings = composers = binding = scoped_owners = None
     setup = support_options = None
     try:
+        if action_after_settle is not None and (supported_acquire is None or not require_no_hand_contact):
+            raise ValueError("Power action must follow the measured hands-clear support interval")
         if supported_acquire is None:
             scoped_owners = SharedPowerOwners(owners)
             setup = acquire_original_power_reset(sim, scoped_owners, trace, output, profile=profile)
@@ -203,7 +256,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
         contact_exchanges = 0
         opposing_exchanges = 0
         peak_support_loads = {name: 0. for name in ("table", "support_0", "support_1")}
-        for before_sdk in range(2, sdk_end):
+        settle_end = sdk_end if action_after_settle is None else sdk_end-8
+        for before_sdk in range(2, settle_end):
             if power.clock()["physics_step"] != before_sdk:
                 raise ValueError("only the preceding same-rod reaction can be delivered")
             if any(np.linalg.norm(row["forces"], axis=-1).max() > 30. for row in route.values()):
@@ -211,7 +265,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             write_composer_reactions(composers, route, to_tensor=to_tensor)
             for binding in bindings.values():
                 binding.hand.write_data_to_sim()
-            sdk = step_thumb_physics(sim, before_sdk, budget_end=sdk_end)
+            sdk = step_thumb_physics(sim, before_sdk, budget_end=settle_end)
             for binding in bindings.values():
                 binding.hand.update(DT)
                 hand_safety(binding)
@@ -251,6 +305,11 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             max_residual = max(max_residual, row["pair_force_residual_n"])
             if require_no_hand_contact and any(loaded[name] > 0 for name in power.bindings):
                 raise RuntimeError("the isolated support-settling interval recorded a hand pair")
+        measured_action_steps = 0
+        if action_after_settle is not None:
+            control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
+                meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end)
+            measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,
             solver_substeps=power.clock()["rod_tick"], mesh_names=power.mesh_names,
@@ -261,6 +320,9 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                      else "measured_power_end_support_load_no_action")
             result.update(scope=scope, peak_support_force_n=peak_support_loads,
                           power_contact_qualified=False, supported_seed_clock=setup["clock"])
+        if measured_action_steps:
+            result.update(scope="measured_supported_power_action_handoff", executed_control_windows=1,
+                          controlled_sdk_steps=measured_action_steps, parked_sdk_steps=settle_end-2)
         if args.measure_contact_evidence:
             result.update(same_clock_contact_exchanges=contact_exchanges,
                           bilateral_opposed_contact_exchanges=opposing_exchanges)

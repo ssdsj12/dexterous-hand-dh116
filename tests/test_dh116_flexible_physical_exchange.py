@@ -129,3 +129,70 @@ def test_rod_reaction_over_original_cap_is_never_submitted(monkeypatch):
     assert result["termination_reason"] == "excess_force"
     assert len(rows) == 1 and base.rope.steps == 1
     assert all(not c[2]["forces"].any() for c in calls if c[0] == "reaction")
+
+
+def prepare_supported_handoff(monkeypatch):
+    import numpy as np
+    from go2_pvcnn.control.dh116.tabletop_power_shared_rod import PowerSharedRodRuntime
+    from test_dual_hand_rod_runtime import Grid
+
+    old, sim, base, calls = setup(monkeypatch, budget_end=18)
+    palms, initial, grid = {}, {}, {}
+    for binding in old._bindings:
+        hand = binding.hand
+        name = binding.side + ".base_link"
+        view = hand.root_physx_view
+        view.link_paths[0].append(f"/World/envs/env_7/{binding.side}Hand/base_link")
+        palms[name] = dict(old._rod.bindings[binding.side+".finger14_link"], body_index=5,
+                           body_name="base_link", prim_path=view.link_paths[0][5])
+        initial[name]=(np.zeros(3), np.array([0.,0.,0.,1.]))
+        grid[name]=Grid()
+    support = {name:Grid() for name in ("support_0","support_1")}
+    support_poses = {name:(np.zeros(3),np.array([0.,0.,0.,1.])) for name in support}
+    base.rope.enable_contact_pair_capture = lambda count: None
+    original_capture=base.rope.contact_pair_samples
+    base.rope.contact_pair_samples=lambda: dict(original_capture(), capacity=len(base.nodes)*15*12, mesh_count=15)
+    old._rod.require_pairs = True
+    supported = PowerSharedRodRuntime.from_original_reset(old._rod, palm_bindings=palms,
+        palm_poses=initial, palm_grids=grid, expected_clock=old._rod.clock(),
+        support_grids=support, support_poses=support_poses)
+    scene = old._read_geometry
+    def read():
+        geometry=scene()
+        geometry["pad_poses"]={**geometry["pad_poses"], **initial}
+        geometry["centers_of_mass"]={**geometry["centers_of_mass"], **{key:np.zeros(3) for key in initial}}
+        return geometry
+
+    sim.step(render=False)
+    geometry=read()
+    before=supported.step(geometry["pad_poses"],geometry["centers_of_mass"],physics_step=3)
+    return old, supported, sim, before, read, calls
+
+
+def test_native_power_action_exchange_retains_real_clock_and_next_palm_reactions(monkeypatch):
+    old, rod, sim, previous, read, calls = prepare_supported_handoff(monkeypatch)
+    attached=FlexiblePhysicalExchange(sim, rod, old._bindings, root_seed_w=old._seed,
+        read_geometry=read, physics_budget_end=20, continue_supported_rod=True)
+    rows=[]
+    attached.control(torch.zeros(1,24),observe=lambda row:rows.append(row))
+    assert sim.current_time_step_index==11 and [row["physics_step"] for row in rows]==list(range(4,12))
+    assert rows[0]["reaction_source_physics_step"]==3
+    assert rows[0]["rod"]["rod_tick"]==24
+    for side in ("left", "right"):
+        actual=rows[0]["issued_composer_wrench"][side]
+        expected=previous["hand_wrenches_com_world"][side]
+        assert actual["body_ids"]==expected["body_ids"] and len(actual["body_ids"])==6
+        assert (actual["forces"]==expected["forces"]).all()
+    with pytest.raises(ValueError,match="already attached"):
+        FlexiblePhysicalExchange(sim,rod,old._bindings,root_seed_w=old._seed,
+            read_geometry=read,physics_budget_end=28,continue_supported_rod=True)
+
+
+def test_supported_handoff_rejects_a_stale_measured_rod_row_before_writes(monkeypatch):
+    old, rod, sim, previous, read, calls=prepare_supported_handoff(monkeypatch)
+    rod._base.last["physics_step"]=2
+    before=list(calls)
+    with pytest.raises(ValueError,match="same-clock"):
+        FlexiblePhysicalExchange(sim,rod,old._bindings,root_seed_w=old._seed,
+            read_geometry=read,physics_budget_end=20,continue_supported_rod=True)
+    assert calls==before
