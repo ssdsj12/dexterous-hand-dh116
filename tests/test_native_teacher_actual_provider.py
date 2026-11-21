@@ -145,7 +145,7 @@ def test_acquisition_uses_one_journal_and_releases_collector_on_every_return(tmp
         events.append((phase, collector.journal))
 
     monkeypatch.setattr(provider(), "_record_actual_wall_budget", record)
-    config = {"preflight": {}, "model_config": {}, "episode_cap_s": 2., "rollout_steps": 32}
+    config = {"preflight": {"style": "pinch"}, "model_config": {}, "episode_cap_s": 2., "rollout_steps": 32}
     if failure in ("update", "both"):
         with pytest.raises(ValueError, match="original update failure"):
             provider()._acquire(sim, owners, trace, attempt=attempt, config=config, lease=lease)

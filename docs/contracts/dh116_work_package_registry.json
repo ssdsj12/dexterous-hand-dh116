@@ -48252,6 +48252,34 @@
         "teacher_admission": false,
         "scope": "CPU static gate and supported Reset bridge only; native worker and PPO pending"
       }
+    },
+    "teacher.tripod-fresh-worker-composition": {
+      "title": "Connect source-bound supported17 Teacher factory to actual provider and original PPO factories",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-admission-reset"
+      ],
+      "tests": [
+        "tests/test_native_teacher_tripod_factory.py",
+        "tests/test_native_teacher_tripod_worker_composition.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_native_teacher_actual_provider.py",
+        "tests/test_native_teacher_actual_factories.py",
+        "tests/test_native_teacher_actual_resume_update.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_fresh_worker_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-fresh-worker.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 56,
+        "cpu_failed": 0,
+        "new_tests": 4,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU composition only; recipe/target/artifact audits and native PPO pending"
+      }
     }
   },
   "execution_target": {

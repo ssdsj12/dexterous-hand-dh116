@@ -46,10 +46,10 @@ def build_actual_factories(*, lease, episode_factory, prepare_source_pack, resum
         if (json.dumps(expected, sort_keys=True, allow_nan=False) !=
                 json.dumps(lease.process_config, sort_keys=True, allow_nan=False)):
             raise ValueError("C04 Teacher contract differs from the issued process config")
-        if (config.preflight["style"] != "pinch"
+        if (config.preflight["style"] not in ("pinch","tripod")
                 or config.preflight["profile"] != "approach_wiring_smoke_v1"
                 or type(config.rollout_steps) is not int or config.rollout_steps not in (8, 32)):
-            raise ValueError("approved Pinch approach smoke and bounded horizon required")
+            raise ValueError("approved independent grasp approach smoke and bounded horizon required")
         static.runtime.bind_parent_deadline(lease.deadline_monotonic_s)
         owner = episode_factory(static)
         if (type(owner) is not NativeEpisodeOwner or owner.contract is not static

@@ -1,4 +1,4 @@
-"""Owned Pinch PPO worker. The scheduler verifies eventual outer-process exit."""
+"""Owned independent Pinch/Tripod PPO worker. The scheduler verifies eventual outer-process exit."""
 from contextlib import closing
 from dataclasses import dataclass
 from functools import partial
@@ -52,7 +52,7 @@ def _verify_attempt(config, lease, output, *, role="a_fresh"):
 def _fresh_reset_owners():
     sources = {
         "controller": "fresh policy is constructed after Reset; C04 clears issued-action history",
-        "filter": "Pinch approach smoke has no standalone filter at its first Reset",
+        "filter": "approach smoke has no standalone filter at its first Reset",
         "contact": "C04 opens the live smoke source after the first physical Reset",
         "camera_history": "camera-free worker has no camera history owner",
     }
@@ -65,14 +65,15 @@ def _fresh_reset_owners():
 
 def _prepare_source_pack(owner, contract, *, device):
     from .tabletop_native_parameter_endpoints import NativeParameterEndpoints
-    from .tabletop_native_teacher_sources import NativePinchSources
+    from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources
 
     sources = owner.sources
     reader = sources.reader
     rope = owner.rod.rope
     backend = sys.modules.get("ropesim._ropesim")
     clock = owner.rod.clock()
-    if (type(sources) is not NativePinchSources or sources.owner is not owner
+    expected_sources={"pinch":NativePinchSources,"tripod":NativeTripodSources}
+    if (type(sources) is not expected_sources.get(contract.config["grasp"]) or sources.owner is not owner
             or sources.scope != "owner_source_unqualified"
             or type(reader) is not NativeParameterEndpoints or reader.device != device
             or backend is None or type(rope) is not backend.RopeBatch
@@ -83,7 +84,7 @@ def _prepare_source_pack(owner, contract, *, device):
             or str(owner.sim.device) != device or owner.sim.current_time_step_index != 2
             or clock["physics_step"] != 2 or clock["rod_tick"] != 0
             or clock["episode_uid"] != owner.episode_uid):
-        raise ValueError("live source pack requires the same Pinch Reset, native rod and both SDK hands")
+        raise ValueError("live source pack requires the same independent grasp Reset, native rod and both SDK hands")
     profile, mode = contract.backend_profile, contract.context_mode
 
     def bind_model(model):
@@ -162,7 +163,7 @@ def _acquire(sim, owners, trace, *, attempt, config, lease, resume=None):
     from .tabletop_native_teacher_actual_update import run_fresh_update, run_resumed_update
     from .tabletop_native_teacher_collector import NativeJournal
     from .tabletop_native_teacher_session import (
-        NativeSessionConfig, build_fresh_pinch_owner, create_native_collector,
+        NativeSessionConfig, build_fresh_pinch_owner, build_fresh_tripod_owner, create_native_collector,
     )
 
     session = NativeSessionConfig(preflight=config["preflight"], model_config=config["model_config"],
@@ -170,7 +171,11 @@ def _acquire(sim, owners, trace, *, attempt, config, lease, resume=None):
         rollout_steps=config["rollout_steps"], project=attempt.project)
     with closing(NativeJournal(session.journal_path)) as journal:
         def build(static):
-            return build_fresh_pinch_owner(static, sim=sim, owners=owners, prepared=None,
+            builders={"pinch":build_fresh_pinch_owner,"tripod":build_fresh_tripod_owner}
+            style=config["preflight"]["style"]
+            if style not in builders:
+                raise ValueError("independent native scene factory unavailable for "+style)
+            return builders[style](static, sim=sim, owners=owners, prepared=None,
                 ownership=trace, ledger=journal, run_uuid=attempt.session_uid,
                 episode_uid=attempt.session_uid + ":0", owner_resets=_fresh_reset_owners(), mesh_plan=None)
 

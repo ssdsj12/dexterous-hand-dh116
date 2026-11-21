@@ -1,3 +1,7 @@
+## Tripod fresh17 Teacher Worker composition
+
+The actual provider now selects an independent fresh17 scene factory and exact Tripod source adapter, then reuses the original policy/PPO factories. 56 selected CPU checks pass. Recipe semantics, checkpoint target and complete output audits still gate native launch; no new native/PPO/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-fresh-worker.md).
+
 ## Independent Tripod admission and Reset lease
 
 The Teacher gate now reads the real Tripod manifest, preserves the supported17 Reset/readback and rejects mesh drift without hidden steps. 102 selected CPU checks pass. Full live native Collector/PPO remains pending; no new physical run or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-admission-reset.md).

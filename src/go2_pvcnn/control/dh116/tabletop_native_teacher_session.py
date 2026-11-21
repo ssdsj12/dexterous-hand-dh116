@@ -202,6 +202,54 @@ def build_fresh_pinch_owner(contract, *, sim, owners, prepared, ownership, ledge
         sim = owners = prepared = ownership = ledger = owner_resets = fresh = None
 
 
+def build_fresh_tripod_owner(contract, *, sim, owners, prepared, ownership, ledger,
+                             run_uuid, episode_uid, owner_resets, mesh_plan=None):
+    """Build the authenticated supported17 scene once; its lease performs Reset.
+
+    The original builder owns all scene/SDK/rod operations. This consumer only
+    binds the manifest task and sources to that fresh episode and existing journal.
+    """
+    from .tabletop_fresh_supported_builder import build_fresh_supported_owned
+    from .tabletop_native_teacher_collector import NativeJournal
+    from .tabletop_native_teacher_profile import profile_reader_scope
+    from .tabletop_tripod_reset_manifest import TripodResetManifest
+    from .tabletop_deformable_r0_replay import encode_owned
+    from .tabletop_native_teacher_profile import digest
+
+    fresh = None
+    try:
+        if (type(contract) is not StaticContract or type(ledger) is not NativeJournal
+                or contract.config.preflight["style"] != "tripod"
+                or contract.config.preflight["profile"] != "approach_wiring_smoke_v1"
+                or type(contract.reset_manifest) is not TripodResetManifest
+                or Path(contract.config.journal_path) != ledger.path or mesh_plan is not None):
+            raise ValueError("independent Tripod smoke contract, own journal and fresh17 plan required")
+        data = contract.reset_manifest.data()
+        if digest(encode_owned(contract.reset_seed)) != digest(encode_owned(data["reset_seed"])):
+            raise ValueError("Tripod static seed differs from source-derived manifest")
+        contract.reset_manifest.verify(project=contract.config.project)
+        def record_setup(row):
+            if row["kind"] == "setup":
+                ownership.event("tripod_scene_setup",source_row=row)
+        with profile_reader_scope(contract.backend_profile):
+            task=data["task_config"]
+            fresh=build_fresh_supported_owned(sim,owners,project=contract.config.project,
+                prepared=prepared,ownership=ownership,record=record_setup,
+                backend_profile=contract.backend_profile,task_config=Path(task["path"]),
+                task_config_sha256=task["sha256"],extra_sources=data["extra_sources"],
+                run_uuid=run_uuid,episode_uid=episode_uid,
+                physics_budget_end=contract.budget["max_sdk_steps"])
+            if (fresh.reset_seed_sha256 != contract.reset_seed["sha256"]
+                    or digest(encode_owned(fresh.reset_seed)) != digest(encode_owned(contract.reset_seed))
+                    or fresh.task_config_sha256 != task["sha256"]):
+                raise ValueError("fresh Tripod scene seed/task differs from immutable Reset sources")
+            return NativeEpisodeOwner(fresh.episode,contract,episode_uid=episode_uid,
+                owner_resets=owner_resets,mesh_plan=fresh.mesh_plan,ledger=ledger,
+                setup_events=fresh.setup_events,initial_geometry=fresh.initial_geometry)
+    finally:
+        sim = owners = prepared = ownership = ledger = owner_resets = fresh = None
+
+
 def create_native_collector(config,factories):
     contract=verify_static_contract(config)
     owner=factories.episode(contract)
