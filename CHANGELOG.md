@@ -1,3 +1,7 @@
+## Power guarded wrist bypass
+
+Compile and gate separate motion after the measured opening, with the original rate, joint and contact limits. [Report](docs/superpowers/reports/2026-11-21-teacher-power-guarded-wrist-bypass.md).
+
 ## Pinch fixed-wrist index seating native result
 
 Keep the measured transient right load gain and incomplete grip qualification. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-force-guided-index-seating-native.md).

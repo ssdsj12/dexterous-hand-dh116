@@ -63,9 +63,29 @@ def freeze(args):
         raise ValueError("immutable Power settled source and bilateral swept certificates required")
     schedule = compile_schedule(decode_owned(row), proof)
     sdk_end = screen.SDK + 8 * len(schedule)
+    route = getattr(args, "high_bypass_reference", None)
+    if route is not None:
+        from scripts import verify_dh116_power_high_bypass as bypass
+
+        raw, previous_support, dependencies = bypass.read_source(route)
+        if previous_support["supports"] != config["support_scene"]["supports"] or sdk_end != bypass.SDK:
+            raise ValueError("the Power bypass must continue the same support layout after opening")
+        request = sources.checked_json(bypass.REQUEST,
+            "78cd6368d3703033498e93fcfdcc5853364fbc792869f6d0940b1275ea0b9dfd")
+        more, waypoints = bypass.compile_route(decode_owned(raw), request)
+        schedule = np.vstack((schedule, more))
+        sdk_end = screen.SDK + 8 * len(schedule)
+        boundaries = [bypass.SDK + 8 * int(w) for w in np.cumsum(bypass.WINDOWS)]
+        plan["power_high_route"] = dict(anchor_sdk=bypass.SDK, archive=raw, checkpoints={
+            str(step): {side: poses[index].tolist() for side, poses in waypoints.items()}
+            for index, step in enumerate(boundaries)})
+        for path in (*dependencies, Path(bypass.__file__), bypass.REQUEST):
+            plan["frozen_files"][str(path.resolve(strict=True))] = native.sha(path)
     plan["power_retreat_then_open"] = schedule.tolist()
     plan["budget"].update(mode="power_retreat_then_open", sdk_steps=sdk_end, control_steps=len(schedule),
-                          solver_steps=(sdk_end - 2)*shared.SUBSTEPS, soft_wall_seconds=420)
+                          solver_steps=(sdk_end - 2)*shared.SUBSTEPS, soft_wall_seconds=1080 if route else 420)
+    if route:
+        plan["budget"]["mode"] = "power_high_bypass_from_opening"
     for path in (Path(__file__), Path(screen.__file__), screen.REQUEST, args.retreat_screen, *files):
         plan["frozen_files"][str(path.resolve(strict=True))] = native.sha(path)
     return plan, config, row
@@ -76,6 +96,7 @@ def main(argv=None):
     for name in ("output", "plan", "rays", "left-bake", "right-bake", "near-open-parent-receipt",
                  "near-open-screen", "proximal-capture", "proximal-bake", "retreat-reference", "retreat-screen"):
         parser.add_argument("--"+name, type=Path, required=True)
+    parser.add_argument("--high-bypass-reference", type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(screen.measured.ROOT)
@@ -97,7 +118,7 @@ def main(argv=None):
     reset.execute(plan, acquire_operation=partial(shared.run_shared, profile=BackendProfile.load(screen.measured.ROOT),
         args=args, sdk_end=end, require_no_hand_contact=True, live_support_scene=config["support_scene"],
         power_open_archive=row, power_open_boundary_sdk=screen.SDK+8*screen.WINDOWS[0],
-        action_after_settle=plan["power_retreat_then_open"],
+        action_after_settle=plan["power_retreat_then_open"], power_route=plan.get("power_high_route"),
         supported_acquire=partial(supported.acquire_supported_reset, config=config, sdk_end=end)))
     return 0
 

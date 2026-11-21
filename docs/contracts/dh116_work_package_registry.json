@@ -47052,6 +47052,28 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-guarded-wrist-bypass": {
+      "title": "Move the original opened Power wrists along independently screened safe routes",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-retreat-then-open-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_high_bypass.py",
+        "tests/test_dh116_power_retreat_then_open.py",
+        "tests/test_dh116_power_supported_task.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_guarded_wrist_bypass_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-guarded-wrist-bypass.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 219,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

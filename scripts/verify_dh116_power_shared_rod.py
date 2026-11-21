@@ -317,7 +317,7 @@ def supported_action_schedule(action, remaining_sdk):
 def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                          clearance_shapes, setup, action, sdk_end, verify_support_continuity=False,
                          task="power", support_scene=None, waypoint_archive=None, precontact_archive=None,
-                         distal_probe=None, power_open_boundary_sdk=None, force_seating=None):
+                         distal_probe=None, power_open_boundary_sdk=None, force_seating=None, power_route=None):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -381,6 +381,24 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 retreat = np.asarray(positions) - power_start.numpy()[0, :, 0]
                 if np.any(retreat < .0035):
                     return "power_retreat_readback_below_opening_interlock"
+            if power_route is not None:
+                step = row["physics_step"]
+                if step == power_route["anchor_sdk"]:
+                    verify_waypoint_boundary(encode_owned(emitted), power_route["archive"],
+                                             sdk_step=step, exact_geometry=True)
+                targets = power_route["checkpoints"].get(str(step))
+                if targets is not None:
+                    errors = {}
+                    for side in SIDES:
+                        xyz, quat = current_geometry["poses"][f"{side}.base_link"]
+                        target = np.asarray(targets[side])
+                        rotation = Rotation.from_quat(quat).inv() * Rotation.from_quat(target[[4,5,6,3]])
+                        errors[side] = dict(position_m=float(np.linalg.norm(xyz-target[:3])),
+                                            rotation_rad=float(rotation.magnitude()))
+                    native.write_new(output/f"power_high_bypass_checkpoint_{step}.json",
+                        dict(physics_step=step, errors=errors))
+                    if any(err["position_m"] > .00035 or err["rotation_rad"] > .008 for err in errors.values()):
+                        return "power_high_bypass_tracking_gate"
             if waypoint_archive is not None and row["physics_step"] == 272:
                 verify_waypoint_boundary(encode_owned(row), waypoint_archive)
             if precontact_archive is not None and row["physics_step"] == 432:
@@ -464,7 +482,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                sdk_end=SDK_END, require_no_hand_contact=False, action_after_settle=None,
                task="power", live_support_scene=None, tripod_archive=None, waypoint_archive=None,
                precontact_archive=None, pinch_archive=None, distal_contact=None,
-               power_open_archive=None, power_open_boundary_sdk=None):
+               power_open_archive=None, power_open_boundary_sdk=None, power_route=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -633,7 +651,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 task=task, support_scene=live_support_scene, waypoint_archive=waypoint_archive,
                 precontact_archive=precontact_archive, distal_probe=probe,
                 power_open_boundary_sdk=power_open_boundary_sdk,
-                force_seating=None if distal_contact is None else distal_contact.get("seating"))
+                force_seating=None if distal_contact is None else distal_contact.get("seating"), power_route=power_route)
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,
