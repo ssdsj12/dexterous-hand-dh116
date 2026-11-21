@@ -46802,6 +46802,34 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-right-first-contact-native-result": {
+      "title": "Pinch right supported first contact and load shortfall native result",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.pinch-right-first-contact-probe"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_pinch_supported_reset.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dh116_power_palm_contact_evidence.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_pinch_right_first_contact_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-right-first-contact-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 154,
+        "native_natural_exit_code": 0,
+        "first_contact_sdk": 617,
+        "first_transfer_sdk": 618,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -1,0 +1,96 @@
+{
+  "version": "dh116-teacher-pinch-right-first-contact-native-v1",
+  "native_runs": 1,
+  "reduction_sha256": "a00bfa43852debe58ef9330395c964bf0781352fae8a8fbb5bf43355983a472f",
+  "force_diagnostic_sha256": "f808f15c23e997319bbeee555e08005af5e4f38694d1f52ea6001b274f2b684a",
+  "force_shortfall": {
+    "right_two_finger_sdk_interval": [
+      635,
+      656
+    ],
+    "reasons": {
+      "required_pad_normal_load_not_above_0.05n:thumb": 234,
+      "required_pad_normal_load_not_above_0.05n:index": 263,
+      "required_hand_normal_load_not_above_0.3n": 264
+    },
+    "total_normal_force_min_n": 0.030628667396459298,
+    "total_normal_force_mean_n": 0.06312788813894812,
+    "total_normal_force_peak_n": 0.12241427289315134,
+    "signed_opposition_passed_substeps": 264,
+    "solver_substeps": 264
+  },
+  "actual": {
+    "version": "dh116-teacher-pinch-right-first-contact-native-v1",
+    "outer_sha256": "34be61e663cf05a0b2669a49c739ee56c60d646fe368394917ee0064eb171e70",
+    "frozen_sha256": "995831c3d0a067db9a27b643f6a6a34c0d11c6fa600cd34815d71b0489e62f3f",
+    "elapsed_s": 129.04598114988767,
+    "native_natural_exit_code": 0,
+    "diagnostic": {
+      "first_contact_sdk": 617,
+      "first_transfer_sdk": 618,
+      "contact_rows": 40,
+      "transfer_rows": 39,
+      "all_substeps_loaded_rows_by_hand": {
+        "left": 0,
+        "right": 0
+      },
+      "grasp_qualified": false,
+      "teacher_admission": false
+    },
+    "control_windows": 52,
+    "sdk_total": 656,
+    "solver_steps": 7848,
+    "pair_counts": {
+      "support_0": 2688,
+      "support_1": 2688,
+      "right.finger14_link": 474,
+      "right.finger23_link": 264
+    },
+    "peak_normal_load_per_pair_n": {
+      "support_0": 0.1779978722338858,
+      "support_1": 0.15957044064998627,
+      "right.finger14_link": 0.07014467995358206,
+      "right.finger23_link": 0.05226959293956927
+    },
+    "first_sdk_by_contact": {
+      "support_0": 433,
+      "support_1": 433,
+      "right.finger14_link": 617,
+      "right.finger23_link": 635
+    },
+    "support_peaks_n": {
+      "table": 0,
+      "support_0": 0.1792711459030516,
+      "support_1": 0.16435851648926364
+    },
+    "right_substep_all_loaded_ticks": [],
+    "first_transfer_force_norm_by_articulation_body_n": {
+      "left": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "right": [
+        0.013156496897417293,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "first_physical_row_sha256": "fc98e33e423730d291a6df8349949ea439d996762db0286d234a8e67c12476ff",
+    "first_transfer_row_sha256": "ebb19a6e36a392e284cd59029ebac83ae6b6a30a6c16dbb30d7ea0ea64b1c1f2",
+    "last_row_sha256": "1fc90a7c605d841ee78f85cd09f99a9b1fa14c8cc1c60de8bd31684636ef2aaf",
+    "cpu_regressions_passed": 154,
+    "support_free_qualification": false,
+    "ppo_updates": 0,
+    "grasp_qualified": false,
+    "teacher_admission": false
+  }
+}

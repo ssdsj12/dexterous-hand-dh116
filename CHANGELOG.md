@@ -1,3 +1,7 @@
+## Pinch right first contact native result
+
+Record actual opposed reactions and insufficient normal loads during supported two-pad contact. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-right-first-contact-native.md).
+
 ## Power checked retreat and opening native result
 
 Confirm the native retreat interlock, guarded extension, and clean exit from frozen source. [Report](docs/superpowers/reports/2026-11-21-teacher-power-retreat-then-open-native.md).
