@@ -46855,6 +46855,35 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-bilateral-distal-continuation-native-guarded-failure": {
+      "title": "Tripod guarded bilateral contact stop native result",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-bilateral-distal-continuation"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_tripod_measured_precontact.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_bilateral_distal_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-bilateral-distal-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 156,
+        "native_exit_code": 1,
+        "native_result": "live_whole_hand_rod_clearance_stop",
+        "right_qualified_rows": 46,
+        "bilateral_qualified_rows": 0,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

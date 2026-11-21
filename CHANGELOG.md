@@ -1,3 +1,7 @@
+## Tripod bilateral continuation guard stop
+
+Retain measured right-side loading and the whole-hand geometry protection stop. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-bilateral-distal-native.md).
+
 ## Tripod bilateral distal contact continuation
 
 Replay right contact then allow a guarded measured two-stage left closure. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-bilateral-distal-continuation.md).
