@@ -1,6 +1,6 @@
 {
   "version": "dh116-teacher-902-flexible-distal-precontact-v1",
-  "status": "cpu_precontact_screened",
+  "status": "pinch_approach_verified_tripod_stopped_by_rod_clearance",
   "cpu_tests_passed": 163,
   "cpu_log_sha256": "3ddc2a7b09a90889340f38484c88072b73666c1649005a91abc254304b4bf8e3",
   "actual": {
@@ -71,5 +71,109 @@
   },
   "pose_tracking_native_verified": false,
   "grasp_qualified": false,
-  "teacher_admission": false
+  "teacher_admission": false,
+  "native_runs": 2,
+  "native_actual": {
+    "pinch": {
+      "outer_sha256": "ac6345ae0b377b70a098155786571e14cd91855af3a252471529ed7218d360f7",
+      "frozen_sha256": "d7f2ce613a2cf134570cd1f80568cf577b7f37c0b081ec4e026dcc869e4c8acf",
+      "last_row_sha256": "ea6985622f9b45a280f005f56c5f48ba2cc2ab9482b62394632d31f7e0206888",
+      "last_complete_sdk": 432,
+      "app_close_returned": true,
+      "process_exit_code": 0,
+      "wall_seconds": 111.99743712018244,
+      "terminal_hands": {
+        "left": {
+          "wrist_error_m": 4.186463668377853e-05,
+          "wrist_rotation_error_rad": 0.0030989518539295104,
+          "max_active_target_error_rad": 0.0015254616737365723,
+          "actual_target_pad_sdf_gaps": {
+            "finger14_link": {
+              "gap_m": 0.0014184588504732283,
+              "station": 36
+            },
+            "finger23_link": {
+              "gap_m": 0.0015040770498506509,
+              "station": 36
+            }
+          }
+        },
+        "right": {
+          "wrist_error_m": 4.334072601873458e-05,
+          "wrist_rotation_error_rad": 0.005516161238960389,
+          "max_active_target_error_rad": 0.0019125118851661682,
+          "actual_target_pad_sdf_gaps": {
+            "finger14_link": {
+              "gap_m": 0.001580712930274811,
+              "station": 4
+            },
+            "finger23_link": {
+              "gap_m": 0.0014542481587015961,
+              "station": 4
+            }
+          }
+        }
+      },
+      "hand_pairs": 0,
+      "native_grasp_verified": false
+    },
+    "tripod": {
+      "outer_sha256": "598214969aa64292b57fbde328048987b488b07c439548ae1463c0ccb9e7bcfe",
+      "frozen_sha256": "39ee260e77fe31b2e73a890726c0bf6ac2d1e0d2f5ce93798cfa0430055895b3",
+      "last_row_sha256": "451802c355f62f9feb79e6093fc7c0df2ee6a201295d85d4595d88d3d82bd441",
+      "last_complete_sdk": 410,
+      "app_close_returned": true,
+      "process_exit_code": 1,
+      "wall_seconds": 133.34430206380785,
+      "terminal_hands": {
+        "left": {
+          "wrist_error_m": 0.00017424161947138104,
+          "wrist_rotation_error_rad": 0.010371540844724943,
+          "max_active_target_error_rad": 0.0039282143115997314,
+          "actual_target_pad_sdf_gaps": {
+            "finger14_link": {
+              "gap_m": 0.002268344363929453,
+              "station": 36
+            },
+            "finger23_link": {
+              "gap_m": 0.0021932787467309157,
+              "station": 36
+            },
+            "finger33_link": {
+              "gap_m": 0.0019159619057231595,
+              "station": 34
+            }
+          }
+        },
+        "right": {
+          "wrist_error_m": 0.0003563833474729308,
+          "wrist_rotation_error_rad": 0.007658476737820234,
+          "max_active_target_error_rad": 0.0026851892471313477,
+          "actual_target_pad_sdf_gaps": {
+            "finger14_link": {
+              "gap_m": 0.0018050910276792365,
+              "station": 3
+            },
+            "finger23_link": {
+              "gap_m": 0.0014612990953283079,
+              "station": 2
+            },
+            "finger33_link": {
+              "gap_m": 0.0012900755579930891,
+              "station": 4
+            }
+          }
+        }
+      },
+      "hand_pairs": 0,
+      "native_grasp_verified": false,
+      "stop": {
+        "sdk": 411,
+        "guard_sha256": "8780cb584e2088e131564de518ed53a9c6b0f72562ac03dc2af6a939ee0c5a5c",
+        "link": "right.finger33_link",
+        "limit_m": 0.00025,
+        "measured_gap_lower_m": 0.00024799629906091525
+      }
+    }
+  }
 }

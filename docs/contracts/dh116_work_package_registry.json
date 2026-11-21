@@ -47367,6 +47367,37 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.902-flexible-distal-precontact-native": {
+      "title": "Audit native 902 distal approach and Tripod live clearance failure",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-flexible-distal-precontact"
+      ],
+      "tests": [
+        "tests/test_dh116_902_flexible_precontact.py",
+        "tests/test_dh116_902_flexible_reset.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_pinch_supported_reset.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_native_phase_contract_v2.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_flexible_distal_precontact_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-precontact.md",
+      "native_runs": 2,
+      "last_result": {
+        "cpu_preflight_passed": 163,
+        "pinch_native_approach_passed": true,
+        "tripod_native_approach_passed": false,
+        "tripod_first_guard_sdk": 411,
+        "native_grasp_verified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -1,3 +1,7 @@
+## Native 902 distal approach results
+
+Verify Pinch reaches precontact and record the exact Tripod right middle-finger clearance stop. [Report](docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-precontact.md).
+
 ## 902 flexible distal approach
 
 Screen the arms and fingers against measured settled wire and end supports. [Report](docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-precontact.md).
