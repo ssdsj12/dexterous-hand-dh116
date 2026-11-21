@@ -29913,6 +29913,31 @@
         "verified_at_utc": "2026-11-21T05:29:47.415173+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-proximal-tensor-pose-ray-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-tensor-pose.md",
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_tensor_pose_v1.json",
+      "cpu_tests": {
+        "passed": 66,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b13065e2ac2e2bea830a2353b4df293984d11a70",
+        "source_tree": "f7194ce0cfb507e6ecf451e671a4c8b93fe910fc",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T05:32:37.993489+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
