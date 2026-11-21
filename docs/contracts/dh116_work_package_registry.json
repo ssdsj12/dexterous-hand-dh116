@@ -45833,6 +45833,30 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.deformx-zero-time-reset-pose-cuda": {
+      "title": "Verify an independent CUDA Reset pose commit without a solver step",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-reset-solver-sweep-repair"
+      ],
+      "tests": [
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_power_supported_task.py"
+      ],
+      "readiness": "docs/contracts/dh116_deformx_zero_time_reset_pose_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-deformx-zero-time-reset-pose.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_and_standalone_cuda_no_isaac",
+        "passed": 102,
+        "failed": 0,
+        "cuda_verified": true,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

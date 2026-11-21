@@ -1,0 +1,47 @@
+--- a/csrc/sdf.h
++++ b/csrc/sdf.h
+@@ -49,6 +49,8 @@
+     int add(const float* values, int nx, int ny, int nz, glm::vec3 origin, float spacing, float muS, float muK,
+             const float* pos, const float* q, int rows, cudaStream_t s);
+     void set_friction(int index, float muS, float muK);
++    // Immediately establish one Reset pose without stepping or consuming other targets.
++    void commit_reset_pose_host(int index, const float* pos, const float* q, int rows, cudaStream_t s);
+     // Targets from DEVICE arrays for mesh `index`: pos [rows*3], q [rows*4] (rows 1 or N,
+     // q = x,y,z,w, normalized here); or, with index = -1, for every mesh from a dense
+     // pos [N, count(), 3], q [N, count(), 4]. tele [N] uint8 (device) or null; teleAll overrides.
+--- a/csrc/sdf.cu
++++ b/csrc/sdf.cu
+@@ -159,6 +159,17 @@
+     check(cudaStreamSynchronize(s), "add_mesh");
+     pendingSet = pending;
+     return idx;
++}
++
++void SdfStore::commit_reset_pose_host(int index, const float* pos, const float* q, int rows, cudaStream_t s) {
++    if (index < 0 || index >= count()) throw std::invalid_argument("mesh index out of range");
++    const bool other_pending = pendingSet;
++    invalidate_pair_capture();
++    set_targets_host(index, pos, q, rows, nullptr, true, s);
++    commitMeshK<<<blocks(N), 256, 0, s>>>(d_cur, d_tgt, d_tele, d_poses, d_box, index, N);
++    check(cudaGetLastError(), "commit one reset mesh pose");
++    check(cudaStreamSynchronize(s), "synchronize reset mesh pose");
++    pendingSet = other_pending;
+ }
+
+ void SdfStore::set_friction(int index, float muS, float muK) {
+--- a/csrc/bindings.cpp
++++ b/csrc/bindings.cpp
+@@ -1020,6 +1020,13 @@
+         // step (it moves there over the substeps; friction is relative to it);
+         // True / [N] bool (host or CUDA): replaced now (resets). pos/quat: host
+         // [3]/[4] or [N,3]/[N,4], or CUDA float32 [N,3]/[N,4] (no host round trip).
++        .def("commit_mesh_reset_pose",
++             [](RopeBatch& b, int index, farray pos, farray quat) {
++                 const int rows = parse_poses(pos, quat, b.num_envs(), "commit_mesh_reset_pose");
++                 std::lock_guard<std::mutex> g(b.mutex());
++                 b.sdf.commit_reset_pose_host(index, pos.data(), quat.data(), rows, b.raw()->solverStream());
++             }, py::arg("index"), py::arg("pos"), py::arg("quat"),
++             "Commit one host-supplied Reset pose immediately, leaving solver time and other targets unchanged.")
+         .def("set_mesh_poses",
+              [](RopeBatch& b, int index, py::object pos, py::object quat, py::object teleport) {
+                  const PoseRows r = parse_pose_rows(pos, quat, b.num_envs(), "set_mesh_poses");

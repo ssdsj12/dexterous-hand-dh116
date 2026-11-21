@@ -1,3 +1,7 @@
+## DeformX zero-time Reset pose commit
+
+Add an optional compiled solver API and verify the next controlled sweep against a direct physical initialization on SM89. [Report](docs/superpowers/reports/2026-11-21-teacher-deformx-zero-time-reset-pose.md).
+
 ## Tripod left approach proof
 
 Bind an independent left DH116 route to its native link sources and quantify how measured rod motion compares with the fixed-curve clearance. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-parked-left-approach.md).
