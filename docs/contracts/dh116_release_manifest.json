@@ -31088,6 +31088,31 @@
         "verified_at_utc": "2026-11-21T10:17:29.336764+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-staged-left-distal-approach",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-staged-left-distal-approach.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_staged_left_distal_approach_v1.json",
+      "cpu_tests": {
+        "passed": 222,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1ad10126812614bebdad93096e17f33b99edc099",
+        "source_tree": "e77f1671436f4fee1a92d708b3a1d2c6a9b0d475",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T10:20:17.936380+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
