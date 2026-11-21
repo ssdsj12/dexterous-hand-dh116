@@ -31513,6 +31513,31 @@
         "verified_at_utc": "2026-11-21T14:56:52.757429+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher-902-source-binding",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-source-binding.md",
+      "readiness": "docs/contracts/dh116_teacher_902_source_binding_v1.json",
+      "cpu_tests": {
+        "passed": 262,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "55a5afe3f2f41457c18564d68f6824649c9610b5",
+        "source_tree": "c54ce7769a50cf30168f6c0cb1851a01b1804a15",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T15:07:13.918396+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
