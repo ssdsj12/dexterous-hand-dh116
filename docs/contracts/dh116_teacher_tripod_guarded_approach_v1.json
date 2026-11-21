@@ -1,0 +1,39 @@
+{
+  "version": "dh116-teacher-tripod-guarded-approach-v1",
+  "frozen_preflight": {
+    "frozen_sha256": "4dee12446ba6036e08715c6a3923db5976ebcc8a35030ba2057fe710f5e871fb",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "tripod_supported_guarded_approach",
+      "sdk_setup_steps": 2,
+      "control_steps": 4,
+      "solver_steps": 3240,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 180,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 6,
+      "episode_resets": 1,
+      "sdk_steps": 272
+    }
+  },
+  "command_bound_m": {
+    "left": 0.0005,
+    "right": 0.00046904157598234294
+  },
+  "min_live_rod_gap_m": 0.00025,
+  "cpu_tests": {
+    "passed": 111,
+    "failed": 0,
+    "log_sha256": "eeaec99c7a2d4fccd393fe0520eef062a249126c97358b9670231496c053c4ca"
+  },
+  "native_runs": 0,
+  "native_approach_verified": false,
+  "grasp_verified": false,
+  "teacher_admission": false
+}

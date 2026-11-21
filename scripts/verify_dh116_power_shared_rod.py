@@ -53,7 +53,7 @@ class SharedPowerOwners:
         return CapacityReservation()
 
 
-def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, support_scene=None):
+def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, support_scene=None, reference_nodes=None):
     from go2_pvcnn.control.dh116.tabletop_batch_geometry import collision_clearance
     from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import _owned
     from go2_pvcnn.control.dh116.tabletop_deformable_wrist_projection import CLEARANCE_M
@@ -85,13 +85,17 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
     if support_scene is not None:
         from go2_pvcnn.control.dh116.tabletop_batch_geometry import rotated_points
         from scripts.certify_dh116_tripod_distal_route import support_clearance_lower
+        from scripts.screen_dh116_tripod_supported_reset import archived_tube, separation
 
         boxes = [(np.asarray(box["center_m"])-np.asarray(box["size_m"])/2,
                   np.asarray(box["center_m"])+np.asarray(box["size_m"])/2) for box in support_scene["supports"]]
+        tube = None if reference_nodes is None else archived_tube(reference_nodes)
         for hand, body, vertices in clearance_shapes:
             world = rotated_points(frame_poses[0, hand, body], vertices)
             if any(support_clearance_lower(world, low, high) <= 1e-10 for low, high in boxes):
                 raise ValueError("live Tripod source envelope intersects a support")
+            if tube is not None and separation(world, *tube) <= .00025:
+                raise ValueError("live Tripod source envelope lost its staged rod clearance")
     if native.clock(sim)["sdk_step"] != sdk:
         raise ValueError("SDK moved during link and COM readback")
     if not np.isfinite(clearance).all() or np.any(clearance < CLEARANCE_M):
@@ -254,8 +258,18 @@ def acquire_original_power_reset(sim, owners, trace, output, *, profile):
         sim = owners = trace = None
 
 
+def supported_action_schedule(action, remaining_sdk):
+    schedule = np.atleast_2d(np.asarray(action, dtype=float))
+    if (schedule.ndim != 2 or schedule.shape[1] != 24 or len(schedule) == 0
+            or not np.isfinite(schedule).all() or np.any(np.abs(schedule) > 1.)
+            or 8*len(schedule) != remaining_sdk):
+        raise ValueError("finite 24D control windows must match the remaining SDK budget")
+    return schedule
+
+
 def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
-                         clearance_shapes, setup, action, sdk_end, verify_support_continuity=False):
+                         clearance_shapes, setup, action, sdk_end, verify_support_continuity=False,
+                         task="power", support_scene=None):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -265,13 +279,14 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
     control = row = None
     try:
         start = power.clock()
-        if sdk_end-start["physics_step"] != 8:
-            raise ValueError("exactly one remaining control interval required")
+        schedule = supported_action_schedule(action, sdk_end-start["physics_step"])
         root = torch.tensor(setup["root_pose_wxyz"], dtype=torch.float64)[None]
 
         def geometry():
             sdk = native.clock(sim)["sdk_step"]
-            poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk)
+            options = {} if support_scene is None else dict(support_scene=support_scene,
+                reference_nodes=power._base.last["node_positions"])
+            poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk, **options)
             roots = [np.r_[poses[name][0],poses[name][1][[3,0,1,2]]] for name in PALM_NAMES]
             return dict(physics_step=sdk, root_poses_w=torch.tensor(np.stack(roots),dtype=torch.float64)[None],
                         clearance_m=torch.tensor(clearance,dtype=torch.float64).reshape(1,2),
@@ -290,7 +305,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         trace.watch("power_control_exchange", control, owner="supported Power action diagnostic", release="owned scope")
 
         def observe(row):
-            native.write_new(output/f"power_control_{row['physics_step']}.json", encode_owned(row))
+            native.write_new(output/f"{task}_control_{row['physics_step']}.json", encode_owned(row))
             pairs = row["rod"]["rod_mesh_contact_pairs"]["pairs"]
             if any(pair["mesh_name"] not in END_SUPPORT_NAMES for pair in pairs):
                 return "external_contact_during_parked_action"
@@ -302,18 +317,27 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                     return "lost_support_during_proximal_approach_pulse"
             return None
 
-        result = control.control(torch.tensor(action,dtype=torch.float64)[None],observe=observe)
-        native.write_new(output/"power_control_result.json", encode_owned(dict(start=start,end=power.clock(),result=result)))
-        if result["termination_reason"] or result["physical_samples"] != 8:
-            raise ValueError(f"Power controlled handoff stopped: {result['termination_reason']}")
-        return result
+        completed = []
+        for command in schedule:
+            result = control.control(torch.tensor(command, dtype=torch.float64)[None], observe=observe)
+            completed.append(result)
+            if result["termination_reason"] or result["physical_samples"] != 8:
+                break
+        aggregate = (completed[0] if len(schedule)==1 else dict(
+            physical_samples=sum(item["physical_samples"] for item in completed), windows=completed,
+            termination_reason=completed[-1]["termination_reason"]))
+        native.write_new(output/f"{task}_control_result.json",
+                         encode_owned(dict(start=start, end=power.clock(), result=aggregate)))
+        if aggregate["termination_reason"] or aggregate["physical_samples"] != 8*len(schedule):
+            raise ValueError(f"{task} controlled handoff stopped: {aggregate['termination_reason']}")
+        return aggregate
     finally:
         sim = owners = trace = power = bindings = control = row = None
 
 
 def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=None,
                sdk_end=SDK_END, require_no_hand_contact=False, action_after_settle=None,
-               task="power", live_support_scene=None):
+               task="power", live_support_scene=None, tripod_archive=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -324,9 +348,10 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
     episode = original = power = bindings = composers = binding = scoped_owners = None
     setup = support_options = None
     try:
-        if (task not in ("power", "tripod") or (task == "tripod" and
-                (supported_acquire is None or not require_no_hand_contact or action_after_settle is not None
-                 or live_support_scene is None))):
+        if (task not in ("power", "tripod") or (task == "power" and tripod_archive is not None)
+                or (task == "tripod" and
+                (supported_acquire is None or not require_no_hand_contact or live_support_scene is None
+                 or (action_after_settle is None) != (tripod_archive is None)))):
             raise ValueError("separate Tripod static support diagnostic required")
         if action_after_settle is not None and (supported_acquire is None or not require_no_hand_contact):
             raise ValueError("Power action must follow the measured hands-clear support interval")
@@ -345,7 +370,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
         stationary_near_open = getattr(args, "verify_near_open_settling", False)
         action_reference = getattr(args, "proximal_action_reference", None)
         if stationary_near_open and (supported_acquire is None or not require_no_hand_contact
-                                     or (action_after_settle is not None and action_reference is None)):
+                                     or (action_after_settle is not None and action_reference is None and tripod_archive is None)):
             raise ValueError("stationary Reset binding is restricted to the near-open settling diagnostic")
         added, grids = bind_palm_sources(sim, bindings, original, args=args)
         capture = getattr(args, "proximal_capture", None)
@@ -386,7 +411,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
         contact_exchanges = 0
         opposing_exchanges = 0
         peak_support_loads = {name: 0. for name in ("table", "support_0", "support_1")}
-        settle_end = sdk_end if action_after_settle is None else sdk_end-8
+        control_windows = 0 if action_after_settle is None else len(np.atleast_2d(action_after_settle))
+        settle_end = sdk_end - 8*control_windows
         for before_sdk in range(2, settle_end):
             if power.clock()["physics_step"] != before_sdk:
                 raise ValueError("only the preceding same-rod reaction can be delivered")
@@ -445,9 +471,13 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 archived, _ = proximal_action_boundary(action_reference, request["native_outer_sha256"])
                 final_settle = json.loads((output/f"power_exchange_{settle_end}.json").read_bytes())
                 verify_proximal_action_boundary(final_settle, archived)
+            if tripod_archive is not None:
+                final_settle = json.loads((output/f"tripod_exchange_{settle_end}.json").read_bytes())
+                verify_proximal_action_boundary(final_settle, tripod_archive)
             control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
                 meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end,
-                verify_support_continuity=action_reference is not None)
+                verify_support_continuity=action_reference is not None or tripod_archive is not None,
+                task=task, support_scene=live_support_scene)
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,
@@ -460,7 +490,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             result.update(scope=scope, peak_support_force_n=peak_support_loads,
                           power_contact_qualified=False, supported_seed_clock=setup["clock"])
         if measured_action_steps:
-            result.update(scope="measured_supported_power_action_handoff", executed_control_windows=1,
+            result.update(scope=f"measured_supported_{task}_action_handoff", executed_control_windows=control_windows,
                           controlled_sdk_steps=measured_action_steps, parked_sdk_steps=settle_end-2)
         if args.measure_contact_evidence:
             result.update(same_clock_contact_exchanges=contact_exchanges,

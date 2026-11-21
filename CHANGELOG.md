@@ -1,3 +1,7 @@
+## Tripod guarded approach
+
+Carry the settled Tripod rod through a four-window precontact translation with live physical guards. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-guarded-approach.md).
+
 ## Tripod independent supported native Reset
 
 Publish the receipts and native measurements. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-supported-reset-native.md).

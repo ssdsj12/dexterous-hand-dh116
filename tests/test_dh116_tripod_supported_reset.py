@@ -28,3 +28,24 @@ def test_tripod_scene_scope_uses_separate_seed_and_preserves_original_supports()
     assert active.shape == (2, 6) and nodes.shape == (41, 3)
     assert set(supports) == {"support_0", "support_1"}
     assert seed["reset_root_pose_w"][0][2] > seed["reset_root_pose_w"][1][2]-.03
+
+
+def test_tripod_approach_is_a_four_window_translation_from_real_reset():
+    from scripts.verify_dh116_tripod_supported_reset import approach_commands
+
+    schedule = approach_commands()
+    assert schedule.shape == (4, 24)
+    np.testing.assert_array_equal(np.flatnonzero(schedule[0]), [14, 15, 16, 17])
+    np.testing.assert_allclose(schedule[:, 14], -.75)
+    assert np.any(schedule[:, 15:18]) and not np.any(schedule[:, 18:])
+
+
+@pytest.mark.parametrize("remaining, good", [(8, False), (32, True), (40, False)])
+def test_shared_motion_schedule_checks_exact_sdk_budget(remaining, good):
+    from scripts.verify_dh116_power_shared_rod import supported_action_schedule
+
+    if good:
+        assert supported_action_schedule(np.zeros((4, 24)), remaining).shape == (4, 24)
+    else:
+        with pytest.raises(ValueError, match="control"):
+            supported_action_schedule(np.zeros((4, 24)), remaining)
