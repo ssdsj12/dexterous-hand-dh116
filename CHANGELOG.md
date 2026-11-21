@@ -1,3 +1,7 @@
+## Tripod guarded approach native tracking
+
+Record measured bilateral displacement and chronological support reactions across four control windows. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-guarded-approach-native.md).
+
 ## Tripod guarded approach
 
 Carry the settled Tripod rod through a four-window precontact translation with live physical guards. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-guarded-approach.md).
