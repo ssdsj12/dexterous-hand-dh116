@@ -1,0 +1,128 @@
+{
+  "version": "dh116-teacher-tripod-archived-motion-envelope-v1",
+  "archived_rod": {
+    "first_sdk": 232,
+    "last_sdk": 240,
+    "node_count": 41,
+    "reference_sha256": "e99021b41b6e07dae66fa812bb3fcbf9a81f33237e77c50bc44993fcd3a81fc6",
+    "sample_sha256": [
+      "35aa9e697d29f23c09c5a895e3d926531a34746b627017e4a27cf46e2fe130e5",
+      "f59e9d1ab4b034965d39404595c4c824ae931e9e754f8177b238b7095b877460",
+      "8422a1357df2993f239f5e47a5ec8620add8d4e3cd55c3e3e64cce66d63e6e8f",
+      "afad222c12ce0368ba8a183bc57615be0dcf1c89c995c21c1886c598bd082b10",
+      "21aed8a6cf3d58f6de93348737a356823587fdbe5911bbdb1259f226b04aeaf2",
+      "8fada76f3d978d3658f58938b0829f315809288b41faf385e0b808c5db049422",
+      "753a6ca96673559275a95f8c4173ee43737271d142c8b147fc45a9f9fffd358c",
+      "40f29c75683a0e73dd07effe0ff6caf06f69be20cf8339f6553e6ad6c2281e4f",
+      "e99021b41b6e07dae66fa812bb3fcbf9a81f33237e77c50bc44993fcd3a81fc6"
+    ],
+    "max_point_displacement_m": 0.0002285838134366433,
+    "online_motion_bound": false
+  },
+  "cpu_tests": {
+    "passed": 80,
+    "failed": 0,
+    "log_sha256": "83ee0b7eb97d1557ff811b3a03b2a31156cd47b9ef1bb16a4304a18c430d368b"
+  },
+  "cases": {
+    "left-0.5": {
+      "sha256": "1cafd9f62379e96b141ff160e97deafc82e817022244e9ba5dd503a59420f1a2",
+      "proved": true,
+      "execution_ready": false,
+      "segment_passed": [
+        true,
+        true
+      ],
+      "margins_m": [
+        0.0003105054670865081,
+        5.3696074504362744e-05
+      ],
+      "failures": [
+        [],
+        []
+      ]
+    },
+    "left-1.0": {
+      "sha256": "d5c1d1471249e47c4a1cf9830815832ea5b0cd1328bc501af32fcc2b76a0c689",
+      "proved": false,
+      "execution_ready": false,
+      "segment_passed": [
+        true,
+        false
+      ],
+      "margins_m": [
+        0.0003105054670865081,
+        null
+      ],
+      "failures": [
+        [],
+        [
+          {
+            "point": [
+              0.875
+            ],
+            "margins": {
+              "rod:source:finger14_link": -4.1941985387742333e-05,
+              "rod:source:finger33_link": -4.88687734414384e-05
+            }
+          }
+        ]
+      ]
+    },
+    "right-0.5": {
+      "sha256": "fbf95959efbc2787d4960fd3b9617836be98b410884f699cd140cb755c13ce3c",
+      "proved": true,
+      "execution_ready": false,
+      "segment_passed": [
+        true,
+        true,
+        true
+      ],
+      "margins_m": [
+        0.0006727187898500814,
+        0.00017935437962774624,
+        5.944952444290885e-06
+      ],
+      "failures": [
+        [],
+        [],
+        []
+      ]
+    },
+    "right-1.0": {
+      "sha256": "2f65cd1597922cf65f7f828784afcabac0c4dea42823c7ebaeb4764afc6bb544",
+      "proved": false,
+      "execution_ready": false,
+      "segment_passed": [
+        true,
+        true,
+        false
+      ],
+      "margins_m": [
+        0.0006727187898500814,
+        0.00017935437962774624,
+        null
+      ],
+      "failures": [
+        [],
+        [],
+        [
+          {
+            "point": [
+              0.875
+            ],
+            "margins": {
+              "rod:source:finger14_link": -6.439745803602851e-05,
+              "rod:source:finger23_link": -6.769910866076038e-05,
+              "rod:source:finger33_link": -4.195125120752045e-05
+            }
+          }
+        ]
+      ]
+    }
+  },
+  "native_runs": 0,
+  "execution_ready": false,
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

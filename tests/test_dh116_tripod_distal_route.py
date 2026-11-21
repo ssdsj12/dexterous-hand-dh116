@@ -57,3 +57,44 @@ def test_left_terminal_reference_cannot_select_the_right_native_link_transforms(
     q, body, _ = read_terminal(ledger, contract)
     assert q.tolist() == joints["left"]["q"][0].tolist()
     assert body["base_link"][0] == 0.
+
+
+def test_archived_envelope_uses_all_material_nodes_and_contiguous_steps(monkeypatch):
+    from types import SimpleNamespace
+    from scripts import certify_dh116_tripod_distal_route as route
+
+    current = SimpleNamespace(physics_step=240, node_positions=np.zeros((41, 3)),
+        rest_lengths_m=np.ones(40), support_boxes=(), receipt_sha256="p", sample_sha256="now")
+    requested = []
+
+    def load(path, digest, sdk):
+        assert path == "receipt" and digest == "p"
+        requested.append(sdk)
+        nodes = current.node_positions.copy()
+        nodes[-1, 2] = .0001 * (240 - sdk)
+        return SimpleNamespace(physics_step=sdk, node_positions=nodes, rest_lengths_m=np.ones(40),
+                               support_boxes=(), receipt_sha256=digest, sample_sha256=str(sdk))
+
+    monkeypatch.setattr(route, "load_parked_reference", load)
+    envelope = route.archived_rod_envelope("receipt", current, 2)
+    assert requested == [238, 239]
+    assert envelope["max_point_displacement_m"] == pytest.approx(.0002)
+    assert envelope["sample_sha256"] == ["238", "239", "now"]
+    assert envelope["online_motion_bound"] is False
+    with pytest.raises(ValueError):
+        route.archived_rod_envelope("receipt", current, 0)
+
+
+def test_envelope_debits_rod_only_and_preserves_entire_interval_requirement():
+    def margins(_):
+        return {"rod:source:finger52_link": .00012, "support:source:finger52_link": .0001}
+
+    motion = {key: 0. for key in margins(0.)}
+    proof = prove_segment(margins, motion, max_samples=4, rod_displacement_reserve_m=.0002)
+    assert proof["proved"] is False
+    assert set(proof["violations"][0]["margins"]) == {"rod:source:finger52_link"}
+    good = prove_segment(margins, motion, max_samples=4, rod_displacement_reserve_m=.00005)
+    assert good["proved"]
+    assert good["certified_boxes"][0]["minimum_margin_m"] == pytest.approx(.00007)
+    with pytest.raises(ValueError):
+        prove_segment(margins, motion, max_samples=4, rod_displacement_reserve_m=-.00001)

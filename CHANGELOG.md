@@ -1,3 +1,7 @@
+## Tripod archived rod motion envelope
+
+Audit bilateral approach prefixes with a continuous distance reserve derived from the same archived material nodes. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-archived-motion-envelope.md).
+
 ## Power proximal registration native settling result
 
 Compare the 17-slot supported scene with its 15-slot stationary control, retaining both tracking and reaction evidence. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-binding-native.md).

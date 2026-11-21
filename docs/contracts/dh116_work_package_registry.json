@@ -46080,6 +46080,31 @@
         "native_contact_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-archived-motion-envelope": {
+      "title": "Certify independent Tripod prefixes under an archived rod displacement envelope",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-parked-right-approach-cpu",
+        "teacher.tripod-parked-left-approach-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_distal_route.py",
+        "tests/test_tripod_tracking_envelope.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_archived_motion_envelope_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-archived-motion-envelope.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 80,
+        "failed": 0,
+        "complete_route_certified": false,
+        "half_final_segment_certified_both": true,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
