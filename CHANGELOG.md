@@ -1,3 +1,7 @@
+## Pinch native PPO diagnostic A
+
+Sealed one real PPO update and registered the independently bounded same-source B diagnostic. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-a-v2.md).
+
 ## Power end-support contact separation
 
 Append both static supports after the two palms and distinguish their contact loads from hand reactions. [Report](docs/superpowers/reports/2026-11-21-teacher-power-end-support-layout.md).
