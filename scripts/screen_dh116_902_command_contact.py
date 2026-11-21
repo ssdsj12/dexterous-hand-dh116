@@ -153,6 +153,10 @@ def dependency_files():
     from scripts.screen_dh116_902_flexible_contact import contact_dependency_files
     return (*contact_dependency_files(),Path(__file__),Path(__file__).with_name("screen_dh116_902_command_path.py"),
             *(reset.ROOT/name for name in (
+                "scripts/bake_dh116_deformx_pad_sdfs.py",
+                "scripts/audit_dh116_cooked_hull_device_parity.py",
+                "scripts/verify_dh116_cooked_convex_hulls_native.py",
+                "docs/contracts/dh116_deformx_pad_sdf_evidence_lock.json",
                 "src/go2_pvcnn/control/dh116/tabletop_command_kernels.py",
                 "src/go2_pvcnn/control/dh116/tabletop_palm_mount.py",
                 "src/go2_pvcnn/control/dh116/tabletop_deformable_wrist_projection.py",
@@ -297,6 +301,63 @@ def _contact(proof, request, archive):
         envelope_refinement=request["envelope_refinement"],command_proof=proof,command_request=request)
 
 
+
+def locked_geometry():
+    """Read the existing authenticated F4 geometry without importing USD or Kit."""
+    from scripts import verify_dh116_902_flexible_reset as reset
+    from scripts.audit_dh116_pinch_initial_pose import CAPTURE
+    from scripts.bake_dh116_deformx_pad_sdfs import checked_json,input_packets
+    from scripts.verify_dh116_cooked_convex_hulls_native import _sources
+    root=reset.ROOT
+    oldpath=root/"configs/dh116_tasks/flexible_pinch_candidate_v1.json"
+    old=checked_json(oldpath,"9f751680de805c5075282c16bc5c5e5e30b8b7c261a3dd36f3b7b1cbab8f35c8")
+    lockpath=root/"docs/contracts/dh116_deformx_pad_sdf_evidence_lock.json"
+    refpath=root/"configs/dh116_training/pose_reference.json"
+    lock=checked_json(lockpath,old["sources"][str(lockpath.relative_to(root))])
+    checked_json(refpath,old["sources"][str(refpath.relative_to(root))])
+    packets=input_packets(CAPTURE,lock);assets=_sources(root)
+    captured=checked_json(CAPTURE/"gpu/result.json",lock["gpu_result_sha256"])["source_usds"]
+    if any(assets[side]["sha256"]!=captured[side]["sha256"] for side in SIDES):
+        raise ValueError("current side-specific assets must equal the F4 captured USD")
+    names=("src/go2_pvcnn/control/dh116/hand_point_kinematics.py",
+           "src/go2_pvcnn/control/dh116/usd_surface.py",
+           "src/go2_pvcnn/control/dh116/usd_contract.py",
+           "src/go2_pvcnn/control/dh116/linear_coupling.py")
+    common=dict(pose_reference=reset.sha(refpath),pad_evidence_lock=reset.sha(lockpath),
+                old_candidate=reset.sha(oldpath),**{n:reset.sha(root/n) for n in names})
+    sources={side:dict(common,usd=assets[side]["sha256"],**{
+        str(CAPTURE/f"gpu/{key.replace('.','_')}.json"):packet[3]
+        for key,packet in packets.items() if key.startswith(side+".")}) for side in SIDES}
+    hulls={"right."+pad:packets["right."+pad][1]["vertices"] for pad in PADS}
+    evidence_files=tuple(CAPTURE/name for name in (
+        *lock["outer_exit_sha256"],"parity.json","gpu/result.json",
+        *(f"gpu/{key.replace('.','_')}.json" for key in packets)))
+    return hulls,sources,(root/"assets/fixed_dual_panda_dh116_v1/manifest.json",oldpath,lockpath,refpath,*(Path(a["path"]) for a in assets.values()),*evidence_files)
+
+
+def validate_locked_geometry(proof,cooked):
+    expected,sources,files=locked_geometry()
+    if (proof.get("model_sources")!=sources or not isinstance(cooked,dict)
+            or set(cooked)!=set(expected)
+            or any(not np.array_equal(np.asarray(cooked[k]),np.asarray(v)) for k,v in expected.items())):
+        raise ValueError("continuous hulls and model sources must equal authenticated original F4 data")
+    return files
+
+
+def rod_snapshot_digest(raw):
+    from scripts.diagnose_dh116_teacher_initialization import digest
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
+    if not isinstance(raw,list) or len(raw)!=9:
+        raise ValueError("all nine original rod snapshots required")
+    try:
+        nodes=np.stack([decode_owned(row)["rod"]["node_positions"][0] for row in raw])
+    except (KeyError,TypeError,ValueError,IndexError) as error:
+        raise ValueError("complete original rod snapshots required") from error
+    if nodes.shape!=(9,41,3) or not np.isfinite(nodes).all():
+        raise ValueError("finite full nine-frame 41-node envelope required")
+    return digest(nodes.tolist())
+
+
 def independent_entry(task, contact):
     from scripts.screen_dh116_902_flexible_contact import independent_entry as legacy
     proof=contact.get("command_proof",{});request=contact.get("command_request",{})
@@ -307,6 +368,7 @@ def independent_entry(task, contact):
             or proof.get("archive_digest")!=contact.get("archive_digest")
             or contact.get("envelope_refinement")!=request["envelope_refinement"]):
         raise ValueError("complete source-bound actual-command contact proof required")
+    validate_locked_geometry(proof,contact["continuous_cooked_hulls"])
     old=dict(contact,entry_contract="dh116-902-distal-contact-v1",envelope_refinement=None)
     return legacy(task,old)
 
@@ -324,7 +386,9 @@ def load_stage(receipt, request_path, proof_path, grasp, *, before_sdk):
     expected_sources={str(p.relative_to(reset.ROOT)):reset.sha(p) for p in dependency_files()}
     if (sdk!=before_sdk or proof.get("request_sha256")!=reset.sha(request_path)
             or proof.get("outer_sha256")!=reset.sha(receipt) or proof.get("archive_digest")!=digest(raw[-1])
+            or proof.get("rod_samples_sha256")!=rod_snapshot_digest(raw)
             or proof.get("source_sha256")!=expected_sources or proof.get("action_sha256")!=digest(actions.tolist())):
         raise ValueError("frozen v2 request, source and original 24D commands required")
     contact=_contact(proof,request,raw[-1]);independent_entry(grasp,contact)
-    return actions,contact,(*files,*config_files,request_path,proof_path,*dependency_files())
+    _,_,geometry_files=locked_geometry()
+    return actions,contact,(*files,*config_files,request_path,proof_path,*dependency_files(),*geometry_files)

@@ -137,8 +137,8 @@ def sealed_contact():
     return m._contact(p,req,archive)
 
 @pytest.mark.parametrize("mutation",["clock","source","station","cooked","step","wrong_side"])
-def test_runtime_entry_rejects_mixed_identity_proofs(mutation):
-    m=api();c=sealed_contact();assert m.independent_entry("tripod",c)
+def test_runtime_entry_rejects_mixed_identity_proofs(mutation,monkeypatch):
+    m=api();c=sealed_contact();mock_locked_geometry(monkeypatch,c);assert m.independent_entry("tripod",c)
     if mutation=="clock":c["archive"]["rod"]["physics_step"]=407
     if mutation=="source":c["command_request"]["source_outer_sha256"]="b"*64
     if mutation=="station":c["stations"]=dict(c["stations"],**{"right.finger14_link":[19]})
@@ -147,20 +147,25 @@ def test_runtime_entry_rejects_mixed_identity_proofs(mutation):
     if mutation=="wrong_side":c["contact_side"]="left"
     with pytest.raises(ValueError):m.independent_entry("tripod",c)
 
-@pytest.mark.parametrize("field",["request_sha256","outer_sha256","archive_digest","source_sha256","action_sha256"])
+@pytest.mark.parametrize("field",["request_sha256","outer_sha256","archive_digest","source_sha256","action_sha256","rod_samples_sha256"])
 def test_frozen_loader_rejects_changed_seals(tmp_path,monkeypatch,field):
     import json
     m=api()
     from scripts import screen_dh116_902_flexible_contact as old
     from scripts import verify_dh116_902_flexible_reset as reset
     from scripts.diagnose_dh116_teacher_initialization import digest
-    c=sealed_contact();proof=c["command_proof"];raw=c["archive"]
+    c=sealed_contact();mock_locked_geometry(monkeypatch,c);proof=c["command_proof"];raw=c["archive"]
+    raw["rod"]["node_positions"]=[np.zeros((41,3)).tolist()]
+    raw["physics_step"]=408;raw["rod"]["physics_step"]=408
+    import copy
+    archive=[copy.deepcopy(raw) for _ in range(9)]
+    proof["rod_samples_sha256"]=digest(np.zeros((9,41,3)).tolist())
     receipt=tmp_path/"outer.json";reqfile=tmp_path/"request.json";pf=tmp_path/"proof.json"
     receipt.write_text("{}")
     req=dict(request(),source_outer_sha256=reset.sha(receipt))
     reqfile.write_text(json.dumps(req))
     actions=np.zeros((66,24))
-    monkeypatch.setattr(old,"boundary",lambda *a:([raw],[],(),408))
+    monkeypatch.setattr(old,"boundary",lambda *a:(archive,[],(),408))
     monkeypatch.setattr(reset,"load_candidate",lambda *a:({}, {}, ()))
     monkeypatch.setattr(m,"compile_actions",lambda *a:actions)
     monkeypatch.setattr(m,"dependency_files",lambda:())
@@ -181,3 +186,51 @@ def test_v2_native_parent_import_is_clean_in_fresh_process():
         "assert_clean_import_boundary()"],env=dict(os.environ,CUDA_VISIBLE_DEVICES=""),
         text=True,capture_output=True)
     assert result.returncode==0,result.stdout+result.stderr
+
+def mock_locked_geometry(monkeypatch,contact):
+    import copy
+    contact["command_proof"]["model_sources"]={"left":{"usd":"a"*64},"right":{"usd":"b"*64}}
+    hulls=copy.deepcopy(contact["continuous_cooked_hulls"])
+    sources=copy.deepcopy(contact["command_proof"]["model_sources"])
+    monkeypatch.setattr(api(),"locked_geometry",lambda:(hulls,sources,()),raising=False)
+
+def test_independent_entry_rejects_two_matching_forged_hull_copies(monkeypatch):
+    import copy
+    m=api();c=sealed_contact();mock_locked_geometry(monkeypatch,c)
+    assert m.independent_entry("tripod",c)
+    changed=copy.deepcopy(c["continuous_cooked_hulls"])
+    changed["right.finger33_link"]=[[0.,0.,0.],[2.,0.,0.],[0.,2.,0.],[0.,0.,2.]]
+    c["continuous_cooked_hulls"]=changed
+    c["command_proof"]["continuous_cooked_hulls"]=copy.deepcopy(changed)
+    with pytest.raises(ValueError,match="F4"):m.independent_entry("tripod",c)
+
+def test_independent_entry_rejects_changed_model_sources(monkeypatch):
+    m=api();c=sealed_contact();mock_locked_geometry(monkeypatch,c)
+    c["command_proof"]["model_sources"]["right"]["usd"]="c"*64
+    with pytest.raises(ValueError,match="F4"):m.independent_entry("tripod",c)
+
+def test_full_envelope_digest_includes_earlier_frames_and_rejects_missing_data():
+    import copy
+    m=api();raw=[dict(rod=dict(node_positions=[np.zeros((41,3)).tolist()])) for _ in range(9)]
+    original=m.rod_snapshot_digest(raw)
+    changed=copy.deepcopy(raw);changed[0]["rod"]["node_positions"][0][0][0]=.001
+    assert m.rod_snapshot_digest(changed)!=original
+    for bad in [raw[:-1],[{}]*9]:
+        with pytest.raises(ValueError):m.rod_snapshot_digest(bad)
+    raw[1]["rod"]["node_positions"][0][1][1]=float("nan")
+    with pytest.raises(ValueError):m.rod_snapshot_digest(raw)
+
+def test_locked_geometry_rejects_manifest_and_usd_swapped_together(monkeypatch):
+    from scripts import bake_dh116_deformx_pad_sdfs as bake
+    from scripts import verify_dh116_cooked_convex_hulls_native as native
+    def document(path,expected):
+        if path.name=="flexible_pinch_candidate_v1.json":
+            return dict(sources={"docs/contracts/dh116_deformx_pad_sdf_evidence_lock.json":"a"*64,
+                                "configs/dh116_training/pose_reference.json":"b"*64})
+        if path.name=="dh116_deformx_pad_sdf_evidence_lock.json":return dict(gpu_result_sha256="c"*64)
+        if path.name=="result.json":return dict(source_usds={s:dict(sha256="d"*64) for s in ("left","right")})
+        return {}
+    monkeypatch.setattr(bake,"checked_json",document)
+    monkeypatch.setattr(bake,"input_packets",lambda *a:{})
+    monkeypatch.setattr(native,"_sources",lambda *a:{s:dict(sha256="e"*64,path="/unused") for s in ("left","right")})
+    with pytest.raises(ValueError,match="captured USD"):api().locked_geometry()

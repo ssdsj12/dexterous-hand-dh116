@@ -1,3 +1,7 @@
+## 902 original-source entry binding
+
+Independent v2 entry now authenticates actual F4 vertices, captured USD identity and all nine rod frames. 202 related CPU checks pass; the previous native contact failure remains blocked. Antigravity R1–R3 reviewed the change. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-source-binding.md).
+
 ## Native 902 contact guard and tracking
 
 One Tripod attempt naturally exited 1 at SDK476. Source-envelope rejection is distinct from actual cooked contact; measured wrist tracking dominates pose discrepancy and hand reaction remains zero. No grasp qualification. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-contact-guard-audit.md).

@@ -47502,7 +47502,8 @@
         "teacher.902-continuous-contact-guard",
         "teacher.902-command-replay",
         "teacher.902-distance-certificate",
-        "teacher.902-live-envelope"
+        "teacher.902-live-envelope",
+        "teacher.902-source-binding"
       ],
       "tests": [],
       "readiness": "docs/contracts/dh116_teacher_902_contact_guard_audit_v1.json",
@@ -47658,6 +47659,29 @@
         "native_contact_passed": false,
         "natural_exit_code": 1,
         "first_guard_sdk": 476,
+        "teacher_admission": false
+      }
+    },
+    "teacher.902-source-binding": {
+      "title": "Authenticate original F4 geometry and complete nine-frame rod envelope at independent v2 entry",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-contact-guard-audit"
+      ],
+      "tests": [
+        "tests/test_dh116_902_command_contact.py",
+        "tests/test_dh116_902_contact_guard.py",
+        "tests/test_dh116_902_flexible_reset.py",
+        "tests/test_dh116_continuous_envelope_refinement.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_source_binding_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-source-binding.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 202,
+        "real_F4_smoke_passed": true,
         "teacher_admission": false
       }
     }
