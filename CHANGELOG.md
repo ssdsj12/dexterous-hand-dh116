@@ -1,3 +1,7 @@
+## Tripod fresh Reset verified in Isaac
+
+One real GPU2 run built17 slots before Reset, preserved8364 pair capacity and all rod numeric state, reconstructed66 common channels with305 unknown, and exited naturally0 in105.7s. Two SDK setup steps, zero control/solver/PPO; grasp qualification remains false. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-fresh-reset-native.md).
+
 ## Tripod native launch boundary
 
 The first launch was correctly refused before App creation because CPU source verification imported USD. The verifier now runs in a separate CPU interpreter; parent SHA and original clean-import checks remain strict. Seven focused CPU checks pass; native17 Reset still pending. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-reset-clean-entry.md).

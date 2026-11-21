@@ -48147,6 +48147,37 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-fresh-reset-native-validation": {
+      "title": "Verify actual fresh17 Tripod Reset, numeric invariants and natural exit",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-reset-clean-entry"
+      ],
+      "tests": [
+        "tests/test_tripod_fresh_reset_native_audit.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_fresh_reset_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-fresh-reset-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_actual_data_audits_passed": 1,
+        "cpu_actual_data_audits_failed": 0,
+        "native_reset_component_verified": true,
+        "exit_code": 0,
+        "sdk_steps": 2,
+        "control_steps": 0,
+        "solver_steps": 0,
+        "ppo_updates": 0,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "cpu_passed": 3,
+        "cpu_failed": 0,
+        "new_tests": 3
+      }
     }
   },
   "execution_target": {
