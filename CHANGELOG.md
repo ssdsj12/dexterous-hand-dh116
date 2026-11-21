@@ -3888,3 +3888,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - Kept Power recipe freeze free of pre-AppLauncher USD imports after the first worker failed before Isaac startup.
 
 - Bound the supported Power ledger to its actual 15-slot layout and archived native Reset geometry and the guarded acquisition failure.
+
+- Verified both raised Power supports produce measured DeformX reactions in a naturally exiting native pilot. Contact remains asymmetric and the grip is unqualified.

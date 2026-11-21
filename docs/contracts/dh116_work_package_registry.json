@@ -45496,6 +45496,32 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-supported-contact-native-result": {
+      "title": "Validate measured support forces in the native Power no-action pilot",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-supported-binding-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_end_supported_rod.py",
+        "tests/test_dh116_power_palm_contact_evidence.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_supported_contact_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-contact-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "native_support_only",
+        "native_exit": 0,
+        "solver_substeps": 96,
+        "support_pairs": 105,
+        "result_sha256": "65a04975f6a9aea501b7e85e2f7d2c2bff923dac32c530c524b9178d3743228d",
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
