@@ -112,9 +112,12 @@ def main(argv=None):
     parser.add_argument("--approved-frozen-sha256")
     parser.add_argument("--settled-receipt", type=Path)
     parser.add_argument("--precontact-proof", type=Path)
+    parser.add_argument("--precontact-windows", type=int, default=24)
     args = parser.parse_args(argv)
     if (args.settled_receipt is None) != (args.precontact_proof is None):
         parser.error("the native precontact approach needs its receipt and geometry proof")
+    if args.precontact_windows != 24 and args.settled_receipt is None:
+        parser.error("a shorter prefix requires the original precontact receipt and proof")
     if args.plan is None:
         if args.settled_receipt is not None:
             parser.error("a native Plan is required for the precontact approach")
@@ -143,9 +146,9 @@ def main(argv=None):
         from scripts import screen_dh116_902_flexible_precontact as route
 
         approach, actions, sources_used = route.load_approach(
-            args.settled_receipt, args.precontact_proof, args.grasp, config)
+            args.settled_receipt, args.precontact_proof, args.grasp, config, windows=args.precontact_windows)
         files = (*files, *sources_used)
-        sdk_end = route.SDK_END
+        sdk_end = SDK_END + 8 * len(actions)
         plan["action_schedule"] = actions.tolist()
         plan["budget"].update(mode="902_" + args.grasp + "_hands_clear_precontact",
                               sdk_steps=sdk_end, control_steps=len(actions),

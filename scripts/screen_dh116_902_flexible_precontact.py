@@ -85,7 +85,16 @@ def screen(receipt, grasp):
                 all_passed=passed, samples=measurements, native_grasp_verified=False)
 
 
-def load_approach(receipt, proof_path, grasp, config):
+def bounded_prefix(actions, windows):
+    """Shorten the original command sequence without speeding up its target motion."""
+    actions = np.asarray(actions, dtype=float)
+    if (type(windows) is not int or not 1 <= windows <= WINDOWS
+            or actions.shape != (WINDOWS, 24) or not np.isfinite(actions).all()):
+        raise ValueError("a finite original 24-window approach and bounded integer prefix required")
+    return actions[:windows].copy()
+
+
+def load_approach(receipt, proof_path, grasp, config, *, windows=WINDOWS):
     raw, files = load_settled(receipt, grasp, config)
     proof = json.loads(proof_path.read_bytes())
     request = json.loads(GOALS.read_bytes())
@@ -99,7 +108,7 @@ def load_approach(receipt, proof_path, grasp, config):
         raise ValueError("passing sealed 22-envelope waypoint proof required")
     state = settled_control_state(decode_owned(raw[-1]), config)
     actions = waypoint_controls(config, state, request["goals"][grasp], windows=WINDOWS)
-    return raw[-1], actions, (*files, GOALS, proof_path, Path(__file__), Path(measured.__file__))
+    return raw[-1], bounded_prefix(actions, windows), (*files, GOALS, proof_path, Path(__file__), Path(measured.__file__))
 
 
 def main(argv=None):

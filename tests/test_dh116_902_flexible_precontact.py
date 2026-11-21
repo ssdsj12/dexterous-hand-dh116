@@ -41,3 +41,14 @@ def test_frozen_proof_cannot_be_reused_for_a_different_pose(monkeypatch, tmp_pat
     monkeypatch.setattr(route, "load_settled", lambda *args: ([], ()))
     with pytest.raises(ValueError, match="passing sealed 22-envelope waypoint"):
         route.load_approach(receipt, proof, "pinch", {})
+
+
+def test_short_approach_is_original_action_prefix_without_retiming():
+    from scripts.screen_dh116_902_flexible_precontact import bounded_prefix
+    actions=np.arange(24*24).reshape(24,24)/1000.
+    actual=bounded_prefix(actions,21)
+    np.testing.assert_array_equal(actual,actions[:21])
+    assert actual.shape==(21,24)
+    for invalid in (0,25,True,21.5):
+        with pytest.raises(ValueError):
+            bounded_prefix(actions,invalid)

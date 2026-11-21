@@ -1,3 +1,7 @@
+## 902 Tripod safe contact boundary
+
+Shorten the original approach without changing its command speed; preserve the earlier failed native guard. [Report](docs/superpowers/reports/2026-11-21-teacher-902-tripod-safe-boundary.md).
+
 ## Native 902 distal approach results
 
 Verify Pinch reaches precontact and record the exact Tripod right middle-finger clearance stop. [Report](docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-precontact.md).

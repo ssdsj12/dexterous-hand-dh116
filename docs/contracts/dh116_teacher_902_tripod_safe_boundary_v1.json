@@ -1,0 +1,26 @@
+{
+  "version": "dh116-teacher-902-tripod-safe-boundary-v1",
+  "status": "cpu_passed_native_pending",
+  "base_head": "227fe18ff07c9946e4a13831ecc4d7dd6693b2e0",
+  "grasp": "tripod",
+  "original_approach_windows": 24,
+  "executed_prefix_windows": 21,
+  "planned_sdk_end": 408,
+  "planned_solver_steps": 4872,
+  "teacher_queries": 0,
+  "ppo_updates": 0,
+  "cpu_tests_passed": 164,
+  "cpu_log_sha256": "3a1d3921a1338933bf6dc32478750015f43c47043ebc97e06095d62407779aa6",
+  "failed_predecessor": {
+    "outer_sha256": "598214969aa64292b57fbde328048987b488b07c439548ae1463c0ccb9e7bcfe",
+    "guard_sdk": 411,
+    "guard_name": "right.finger33_link",
+    "gap_lower_m": 0.00024799629906091525,
+    "required_gap_m": 0.00025
+  },
+  "fixed_stereo_unchanged": true,
+  "native_runs": 0,
+  "native_boundary_verified": false,
+  "grasp_qualified": false,
+  "teacher_admission": false
+}
