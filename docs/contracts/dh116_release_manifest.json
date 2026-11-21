@@ -29738,6 +29738,31 @@
         "verified_at_utc": "2026-11-21T04:51:20.364905+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-near-open-settle-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-near-open-settle-native.md",
+      "readiness": "docs/contracts/dh116_teacher_power_near_open_settle_native_v1.json",
+      "cpu_tests": {
+        "passed": 153,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "32c3544e895c9bc856cf643f3c7f5a2d654fff8c",
+        "source_tree": "2b01f86b1a14fd08be5a7df5338ed85ec55153a8",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T04:55:31.044651+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
