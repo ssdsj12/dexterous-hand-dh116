@@ -99,6 +99,32 @@ def test_freeze_does_not_run_offline_usd_scene_preparation(tmp_path, monkeypatch
     assert probe["budget"]["sdk_steps"]==248 and probe["budget"]["control_steps"]==1
     assert probe["budget"]["solver_steps"]==246*12
     assert [i for i,value in enumerate(probe["action24"]) if value] == [12,15]
+    from go2_pvcnn.control.dh116 import tabletop_supported_rod_reference as parked_reference
+
+    draft = json.loads(pilot.NEAR_OPEN.read_bytes())
+    parent, screen = tmp_path/"parent.json", tmp_path/"screen.json"
+    parent.write_text("{}")
+    screen.write_text("".join(json.dumps(dict(side=side, candidates=[candidate])) + "\n"
+                              for side,candidate in draft["candidate"].items()))
+    source_sha = pilot.native.sha
+    monkeypatch.setattr(pilot.native, "sha",
+        lambda path: draft["candidate_geometry_sha256"] if path == screen else source_sha(path))
+    witnessed = []
+    monkeypatch.setattr(parked_reference, "load_parked_reference",
+        lambda path,digest,step: witnessed.append((path,digest,step)))
+    near, initial = pilot.freeze(Namespace(**dict(paths,verify_near_open_settling=True,
+        near_open_parent_receipt=parent,near_open_screen=screen)))
+    assert witnessed == [(parent,draft["source_parked_outer_sha256"],240)]
+    assert near["budget"]["sdk_steps"] == 240 and near["budget"]["control_steps"] == 0
+    assert near["budget"]["mode"] == "power_supported_near_open_no_contact_settling"
+    assert initial["rod_nodes_w_m"] == config["rod_nodes_w_m"]
+    assert str(pilot.NEAR_OPEN) in near["frozen_files"]
+    assert all(initial["hands"][side]["q_rad"] != original["hands"][side]["q_rad"] for side in power.SIDES)
+    screen.write_text("".join(json.dumps(dict(side=side, candidates=[])) + "\n"
+                              for side in draft["candidate"]))
+    with pytest.raises(ValueError, match="geometry precheck"):
+        pilot.freeze(Namespace(**dict(paths,verify_near_open_settling=True,
+            near_open_parent_receipt=parent,near_open_screen=screen)))
     assert settled["budget"]["sdk_steps"] == 240 and settled["budget"]["solver_steps"] == 238*12
     assert str(pilot.SETTLE) in settled["frozen_files"]
     assert config["rod_nodes_w_m"] == original["rod_nodes_w_m"]

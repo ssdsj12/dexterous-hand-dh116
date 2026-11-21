@@ -13,6 +13,7 @@ ROOT = shared.ROOT
 CONFIG = ROOT / "configs/dh116_tasks/flexible_power_supported_contact_v1.json"
 SETTLE = ROOT / "configs/dh116_tasks/flexible_power_supported_settle_v1.json"
 ACTION_PROBE = ROOT / "configs/dh116_tasks/flexible_power_supported_action_probe_v1.json"
+NEAR_OPEN = ROOT / "configs/dh116_tasks/flexible_power_near_open_settle_v1.json"
 native, reset, sources = shared.native, shared.reset, shared.sources
 
 
@@ -123,10 +124,12 @@ def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_
 def freeze(args):
     from go2_pvcnn.control.dh116.tabletop_deformable_grasp_task import load_flexible_grasp_task
     from go2_pvcnn.control.dh116.tabletop_power_supported_task import prepare_initial_state
+    from go2_pvcnn.control.dh116.tabletop_supported_rod_reference import load_parked_reference
 
     config = json.loads(CONFIG.read_bytes())
     probe = getattr(args,"verify_supported_action_handoff",False)
-    settle = args.settle_without_hand_contact or probe
+    near = getattr(args,"verify_near_open_settling",False)
+    settle = args.settle_without_hand_contact or probe or near
     sdk_end = shared.SDK_END
     if settle:
         experiment = json.loads(SETTLE.read_bytes())
@@ -136,8 +139,37 @@ def freeze(args):
                 or experiment["initial_hand_x_translation_m"] != .105):
             raise ValueError("independent bounded support settlement configuration required")
         sdk_end = experiment["sdk_steps"]
-        for hand in config["hands"].values():
-            hand["pose_wxyz"][0] += experiment["initial_hand_x_translation_m"]
+        if not near:
+            for hand in config["hands"].values():
+                hand["pose_wxyz"][0] += experiment["initial_hand_x_translation_m"]
+    if near:
+        candidate = json.loads(NEAR_OPEN.read_bytes())
+        parent = getattr(args,"near_open_parent_receipt",None)
+        screen = getattr(args,"near_open_screen",None)
+        if parent is None or screen is None or native.sha(screen) != candidate["candidate_geometry_sha256"]:
+            raise ValueError("exact native parent and near-open geometry evidence are required")
+        load_parked_reference(parent, candidate["source_parked_outer_sha256"], 240)
+        if (candidate["version"] != "dh116-power-near-open-settle-v1"
+                or candidate["baseline_config_sha256"] != native.sha(CONFIG)
+                or candidate["sdk_setup_and_measurement_steps"] != sdk_end
+                or candidate["native_qualification"] is not False
+                or set(candidate["candidate"]) != set(shared.SIDES)):
+            raise ValueError("separate two-hand Power near-open Reset contract required")
+        screen_rows = [json.loads(line) for line in screen.read_text().splitlines()]
+        if sorted(row["side"] for row in screen_rows) != sorted(shared.SIDES):
+            raise ValueError("exactly one certified geometry row is required for each hand")
+        screened_by_side = {row["side"]: row["candidates"] for row in screen_rows}
+        for side, specification in candidate["candidate"].items():
+            if (specification not in screened_by_side[side] or specification["side"] != side
+                    or specification["native_start_verified"] is not False
+                    or specification["clearance_to_sampled_rod_tube_m"] <= .001
+                    or specification["table_clearance_m"] < .0021
+                    or specification["minimum_support_gap_m"] <= 0.):
+                raise ValueError("original near-open geometry precheck is required for both hands")
+            initial_xyz = [base+offset for base,offset in
+                           zip(specification["target_pose_wxyz"][:3],specification["start_world_offset_m"],strict=True)]
+            config["hands"][side] = dict(pose_wxyz=initial_xyz+specification["initial_quaternion_wxyz"],
+                                           q_rad=specification["initial_q_rad"])
     action = None
     if probe:
         request = json.loads(ACTION_PROBE.read_bytes())
@@ -156,6 +188,8 @@ def freeze(args):
     plan.update(version="dh116-power-supported-contact-pilot-v1",
                 preserved_scope=config["scope"], power_seed_sha256=seed["sha256"])
     mode = "power_supported_settle_without_hand" if settle else "power_supported_contact_pilot"
+    if near:
+        mode = "power_supported_near_open_no_contact_settling"
     if probe:
         mode = "power_supported_settle_and_action_probe"
         plan["action24"] = action
@@ -176,6 +210,8 @@ def freeze(args):
         files.append(SETTLE)
     if probe:
         files.append(ACTION_PROBE)
+    if near:
+        files.extend((NEAR_OPEN,parent,screen))
     hashes = {str(path.resolve(strict=True)):native.sha(path) for path in files}
     for path, digest in hashes.items():
         if plan["frozen_files"].setdefault(path, digest) != digest:
@@ -190,6 +226,9 @@ def main(argv=None):
     scope = parser.add_mutually_exclusive_group()
     scope.add_argument("--settle-without-hand-contact", action="store_true")
     scope.add_argument("--verify-supported-action-handoff", action="store_true")
+    scope.add_argument("--verify-near-open-settling", action="store_true")
+    parser.add_argument("--near-open-parent-receipt",type=Path)
+    parser.add_argument("--near-open-screen",type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(ROOT)
@@ -210,7 +249,8 @@ def main(argv=None):
     args.measure_contact_evidence = True
     end = plan["budget"]["sdk_steps"]
     reset.execute(plan, acquire_operation=partial(shared.run_shared, profile=BackendProfile.load(ROOT),
-        args=args, sdk_end=end, require_no_hand_contact=args.settle_without_hand_contact or args.verify_supported_action_handoff,
+        args=args, sdk_end=end, require_no_hand_contact=(args.settle_without_hand_contact
+            or args.verify_supported_action_handoff or args.verify_near_open_settling),
         action_after_settle=plan.get("action24"),
         supported_acquire=partial(acquire_supported_reset, config=config, sdk_end=end)))
     return 0

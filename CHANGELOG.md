@@ -1,3 +1,7 @@
+## Power near-open support settling
+
+Add an independent rotated and opened Reset with separate verified clearance for both hands on the archived rod curve. [Report](docs/superpowers/reports/2026-11-21-teacher-power-near-open-settle.md).
+
 ## Pinch native PPO diagnostic A
 
 Sealed one real PPO update and registered the independently bounded same-source B diagnostic. [Report](docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-a-v2.md).

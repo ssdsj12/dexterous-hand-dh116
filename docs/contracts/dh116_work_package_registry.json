@@ -45735,6 +45735,29 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-near-open-settle-cpu": {
+      "title": "Bind the independently rotated near-open Power reset to real supported rod evidence",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-supported-action-handoff-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_supported_rod_reference.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_near_open_settle_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-near-open-settle.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_frozen_pose_from_archived_native_rod",
+        "passed": 86,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
