@@ -47898,12 +47898,16 @@
       ],
       "readiness": "docs/contracts/dh116_teacher_902_joint_contact_reset_v1.json",
       "report": "docs/superpowers/reports/2026-11-22-teacher-902-joint-contact-reset.md",
-      "native_runs": 0,
+      "native_runs": 1,
       "last_result": {
         "cpu_preflight_passed": 235,
         "main_cpu_freeze_passed": true,
         "native_reset_verified": false,
-        "teacher_admission": false
+        "teacher_admission": false,
+        "bounded_reset_gate_passed": true,
+        "native_reset_interval_verified": true,
+        "native_outer_exit": 0,
+        "derived_geometry_passed": true
       }
     }
   },

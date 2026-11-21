@@ -21,3 +21,17 @@ Closure must preserve two distinct identities: the original search-source receip
 Private evidence: ref902/joint-reset-*.log/json and joint-candidate-reset-native-v1/{argv.json,plan.json,freeze.log}. No raw records/models are uploaded. 528 protected files and three original checkpoints are verified before commit.
 
 Registry regression: 60 passed, 0 failed.
+
+## Actual sealed native result
+
+The first prelaunch check rejected fingerprint 386c8ffe because required source publication changed frozen docs/contracts/dh116_release_manifest.json. No GDB/Isaac attempt or SDK step had started. That CPU-only plan is superseded; no retry of a consumed native fingerprint occurred.
+
+After final publication, the recipe was freshly sealed and executed once: 8f5d710152a3d77bf09c59fc23261faa7513a2a014bb542ab42bd73de82f2df6. Source HEAD c5dc15203356cf657076d0fe2cdd3ce9a6d5b6e2. The outer/GDB inferior both naturally exited 0, signal=None, forced_exit=false, exceeded_budget=false; wall 94.931s. 240 SDK / 2856 solver steps, all 238 exchange records, no internal failure; zero control/Teacher/PPO. Both supports have 2856 contact-pair records; hand/table pair counts are zero; max pair force residual 0 N. No process was force-terminated.
+
+Fresh 239-frame measured-base/q-derived audit exited 0. Right rod/support/table lower bounds are 6.1970886 / 2.3684033 / 46.5378628 mm; left bounds are 1.2311466 / 22.9422547 / 57.3823270 mm. Both hands have 0-rad active target error in the last nine saved frames, constant backend targets, passive mimic residual <=4.0046871e-8 rad. Final rod maximum node speed 0.012912691m/s remains reported without a steady-rod qualification claim.
+
+Outer receipt SHA 655a24bb551c655685a0e168712c13e282226ea6f93de167ee3bb49e3286add2; derived-clearance audit SHA 631a917b8dd434d97c1b4746f9c8f8ae0c358e3eae5b27a8d75e66d5f60352e3. Raw files are private under ref902/joint-candidate-reset-native-sealed. The native budget is consumed and must not be rerun.
+
+This passes the bounded operational Reset interval and its derived geometric audit. It does not certify independently measured full-link motion, contact force, grip, Lift/Hold, or Teacher admission. All qualification flags remain scoped accordingly.
+
+Next work must distinguish the original search-source receipt from this new execution-boundary receipt. The current certify API binds those as one receipt, so it needs an explicit execution-source path with candidate/Reset recipe identity checks before a fresh closing proof can be generated. Do not replace the original search SHA. Then keep the existing continuous guards and SupportedDistalProbe and require actual opposing force plus next-step reaction delivery.

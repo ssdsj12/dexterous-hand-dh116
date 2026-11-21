@@ -4232,3 +4232,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - 2026-11-22: isolated 902 Tripod micro-alignment now passes initial and full 512-substep float32 CPU closure gates; 228 related tests passed. Actual new Reset/contact/force qualification remains pending. See [docs/superpowers/reports/2026-11-22-teacher-902-joint-contact.md](docs/superpowers/reports/2026-11-22-teacher-902-joint-contact.md).
 
 - 2026-11-22: added explicit source-bound aligned-wrist Reset-only opt-in; 235 related CPU tests passed and fresh main freeze passed. Native Reset/contact qualification pending. See [docs/superpowers/reports/2026-11-22-teacher-902-joint-contact-reset.md](docs/superpowers/reports/2026-11-22-teacher-902-joint-contact-reset.md).
+
+- 2026-11-22: aligned Tripod wrist completed one actual 240-SDK/2856-solver Reset interval with natural exit 0 and passing 239-frame derived clearance audit. Closing/contact/Teacher qualification remains pending.
