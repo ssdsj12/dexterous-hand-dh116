@@ -29613,6 +29613,31 @@
         "verified_at_utc": "2026-11-21T04:15:43.492751+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Tripod right approach on the measured supported rod",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-parked-right-approach.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_parked_approach_v1.json",
+      "cpu_tests": {
+        "passed": 66,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "58cee5e75f9658dc066cdc151b9de58bdaf8b844",
+        "source_tree": "9412ada97dcc003190ba53cfa02f751eb869c78f",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T04:23:02.671086+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
