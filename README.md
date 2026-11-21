@@ -1,3 +1,7 @@
+## Source-derived Tripod Reset manifest
+
+The independent Tripod17 manifest now reconstructs state and scene inputs from real exited native evidence on every load. Rehashed caller fields cannot replace the rod/task/style. 70 selected CPU checks pass; the independent source adapter/live gate and PPO remain pending. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-reset-manifest.md).
+
 ## Tripod fresh Reset verified in Isaac
 
 One real GPU2 run built17 slots before Reset, preserved8364 pair capacity and all rod numeric state, reconstructed66 common channels with305 unknown, and exited naturally0 in105.7s. Two SDK setup steps, zero control/solver/PPO; grasp qualification remains false. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-fresh-reset-native.md).

@@ -48178,6 +48178,28 @@
         "cpu_failed": 0,
         "new_tests": 3
       }
+    },
+    "teacher.tripod-reset-manifest": {
+      "title": "Derive independent Tripod17 Teacher Reset manifest from actual raw native sources",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-fresh-reset-native-validation"
+      ],
+      "tests": [
+        "tests/test_tripod_reset_manifest.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_reset_manifest_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-reset-manifest.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 70,
+        "cpu_failed": 0,
+        "new_tests": 4,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

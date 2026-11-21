@@ -1,0 +1,132 @@
+{
+  "version": "dh116-teacher-tripod-reset-manifest-v1",
+  "base_head": "b489922383d1c25cdb6de5cb1319047676133ca3",
+  "status": "source_reconstructed_manifest_ready_adapter_and_live_gate_pending",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_tripod_reset_manifest.py": "36256e63f16fd751d874f28a1a831f129279eb5658dd88672ea017f495620124",
+    "scripts/prepare_dh116_tripod_teacher_reset.py": "9a652b922c7b46ddfb7d5b878cf37965ccc227bdcf5152bf7f45a159bd95d836",
+    "tests/test_tripod_reset_manifest.py": "277f0484cabac66af7e3ab755e5fc4d9ab400a348854e4cda6e3e1655334f496"
+  },
+  "cpu": {
+    "passed": 70,
+    "failed": 0,
+    "new_tests": 4,
+    "manifest_passed": 4,
+    "manifest_seconds": 51.57,
+    "regression_passed": 66,
+    "regression_seconds": 39.94,
+    "commands": [
+      [
+        "/mnt/mydisk/xk/envs/dh116/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_tripod_reset_manifest.py"
+      ],
+      [
+        "/mnt/mydisk/xk/envs/dh116/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_native_teacher_preflight.py",
+        "tests/test_tripod_fresh_reset_native_audit.py"
+      ]
+    ],
+    "scope": "70 disjoint selected CPU cases, including raw native data replay; no new native run",
+    "log_sha256": {
+      "tripod-reset-manifest-red-tests.log": "873ffe730a1fa270c5ed182a239947682bf16c958d17060df0a4d82b338e12de",
+      "tripod-reset-manifest-first-green.log": "2585e52f0612f55e5deb0b5f8e270357dd1d88a3cd583557c09f0edf958180bc",
+      "tripod-reset-manifest-regression.log": "9b6a6c15dc283a56c3b86e80a144b516597c4db144b16148279273a8f959a33a",
+      "tripod-reset-manifest-production.log": "a061964bde535949bd13553a8e6025023114cd5da441191dd419074db25966c8"
+    },
+    "registry_passed": 60,
+    "registry_failed": 0,
+    "registry_seconds": 13.97,
+    "registry_log_sha256": "7cf47e6eb07a1bdc2d674a37c4d2f8eb025ad30b8ae928ff1ad710250d944cca"
+  },
+  "manifest": {
+    "binding": {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-teacher-resolved-reset-v1.json",
+      "sha256": "ed086c283c177e52a5d9358c2f4887ccaea3d5c568e4770b19dc517d5f1f6d5c"
+    },
+    "schema": "dh116-native-teacher-resolved-tripod17-reset-v1",
+    "scope": "native_reset_only_no_contact_or_grasp_admission",
+    "target_material_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40
+    ],
+    "native_fingerprint": "71a60cdc5a90873f80afa571a8a528261401abe17dbc5f8c53568ed22afaf2dc",
+    "task_config": {
+      "path": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/fresh-supported-tripod-reset-native-v2/task.json",
+      "sha256": "6a635f5fd9d7d0415975cfa6de7192a3d632dc5eb5f374ac2634f3fca68898b9"
+    }
+  },
+  "provenance": {
+    "historical_receipt": "pinned outer/GDB/plan/artifact bytes; actual Reset state rederived each load",
+    "current_compatibility": "original backend profile + explicit Reset implementations + authenticated17 plan sources/assets/SDFs",
+    "consumer_compatibility": "new source/model/optimizer gates must be independently verified; native Reset is not blanket training qualification"
+  },
+  "readiness": {
+    "tripod_manifest": true,
+    "tripod_sources": false,
+    "tripod_live_gate": false,
+    "tripod_ppo": false,
+    "grasp_success": false
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "physical_parameters_changed": false,
+  "cameras_changed": false,
+  "r2_enabled": false,
+  "review": {
+    "new_external_review_obtained": false,
+    "result": "Antigravity current UI individual/baseline quota reached; no paid/security changes"
+  }
+}
