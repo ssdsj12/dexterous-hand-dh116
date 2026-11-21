@@ -30188,6 +30188,31 @@
         "verified_at_utc": "2026-11-21T06:37:51.641474+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Tripod independent supported native Reset",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-supported-reset-native.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_supported_reset_native_v1.json",
+      "cpu_tests": {
+        "passed": 107,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "8c40411a70d79a38d6bebbbf68d35a0777294df9",
+        "source_tree": "9194367bc1dc1b8601d12d8b8a4c59ac298a66f9",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T06:38:07.454598+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
