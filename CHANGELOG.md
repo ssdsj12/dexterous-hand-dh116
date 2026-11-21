@@ -1,3 +1,7 @@
+## Tripod guarded waypoints native result
+
+Record measured motion, remaining fingertip clearances, support reactions, and natural exit. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-waypoint-native.md).
+
 ## Tripod guarded waypoint continuation
 
 Record the evidence and original control contract. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-guarded-waypoints.md).
