@@ -1,3 +1,7 @@
+## Power proximal collision ownership
+
+Add separate bounded CPU and GPU PhysX ray capture for each original little-finger proximal collider. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-rays.md).
+
 ## Native Pinch Reset pose control comparison
 
 Verify the zero-time collider commit on the original two-hand Pinch route and compare one measured motion against the queued Reset. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-reset-pose-first-control-native.md).

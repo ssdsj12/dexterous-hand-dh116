@@ -1,0 +1,9 @@
+# Power little-finger proximal surface qualification
+
+Four sampled paths from the verified near-open reset toward the candidate wrap encountered the source `finger52_link` envelope on both hands. The modes were translation only, rotation only, simultaneous wrap, and translation/rotation followed by flexion. The existing 15-slot DeformX task represents the distal pads and palms. It has no proximal `finger52_link` reaction. The static checks therefore block the direct motions before they can become false successful grasps.
+
+Two read-only Antigravity reviews identified the existing palm capture, ray and SDF audit entry points. Independent review found a stored cooked query for each original `finger52_link`, but the capture explicitly records no live shape attachment witness. No historical plane test or reconstructed convex surface grants attachment.
+
+The code now exposes the existing original collision reader and ray ownership check for this explicit link. A separate diagnostic freezes CPU and CUDA requests on the two original articulation bodies. Each collects the original cooked surface and rays from every fan triangle, matching the reported rigid body and collision owner. The independent comparison requires natural exit receipts from both devices, validates CPU/GPU topology and reports native ray distances and coverage. Missing or foreign hits cannot stand in for actual collider evidence.
+
+68 related CPU tests passed, including a false opposite-hand ray rejection. The native budget is two SDK steps per device and zero control, solver, Teacher or PPO steps. The SDF bake, distributed force, opposite load and full Power wrap remain separate. Other unregistered links still require clearance.

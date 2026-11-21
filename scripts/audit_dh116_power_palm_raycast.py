@@ -36,15 +36,16 @@ def first_triangle_hit(triangles, origin, direction, limit):
     return float(distances[hit].min()) if hit.any() else None
 
 
-def ray_audit(row, reference_row, cast):
-    if (row["side"], row["link"]) != (reference_row["side"], "base_link"):
-        raise ValueError("same side and original base_link are required")
+def ray_audit(row, reference_row, cast, *, expected_link="base_link"):
+    if ((row["side"], row["link"]) != (reference_row["side"], expected_link)
+            or reference_row["link"] != expected_link):
+        raise ValueError(f"same side and original {expected_link} are required")
     if row["source"]["geometry_sha256"] != reference_row["source"]["geometry_sha256"]:
-        raise ValueError("original palm collision source differs from the archived reference")
+        raise ValueError("original link collision source differs from the archived reference")
     measured, _ = _pad_hull(row)
     archived, _ = _pad_hull(reference_row)
     if not compare_hull_topology(archived, measured)["parity_passed"]:
-        raise ValueError("live palm triangles differ from the archived topology")
+        raise ValueError("live link triangles differ from the archived topology")
     vertices = np.asarray(measured["vertices"])
     faces = np.asarray(measured["faces"])
     triangles = vertices[faces]

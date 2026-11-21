@@ -45908,6 +45908,29 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-proximal-ray-preflight": {
+      "title": "Freeze owned PhysX rays for both original Power proximal colliders",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-near-open-settle-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_palm_raycast.py",
+        "tests/test_dh116_power_palm_parity.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_ray_preflight_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-rays.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_and_source_only",
+        "passed": 68,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

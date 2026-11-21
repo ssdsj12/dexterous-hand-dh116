@@ -1,0 +1,46 @@
+{
+  "version": "dh116-teacher-power-proximal-ray-preflight-v1",
+  "body": "finger52_link",
+  "sides": [
+    "left",
+    "right"
+  ],
+  "cpu_preflight": {
+    "cpu": {
+      "frozen_sha256": "61647074f84ff69fca0eeb02d44bc187bc56a3618cc5e3419bac2cfa441b0651",
+      "budget": {
+        "sdk_steps": 2,
+        "solver_steps": 0,
+        "control_steps": 0,
+        "ppo_updates": 0,
+        "soft_wall_seconds": 180,
+        "auto_retries": 0,
+        "auto_kill": false
+      }
+    },
+    "gpu": {
+      "frozen_sha256": "bbfecf65ccad28242d64629512d13084be76880ce488b415450a07bf9a9e8411",
+      "budget": {
+        "sdk_steps": 2,
+        "solver_steps": 0,
+        "control_steps": 0,
+        "ppo_updates": 0,
+        "soft_wall_seconds": 180,
+        "auto_retries": 0,
+        "auto_kill": false
+      }
+    }
+  },
+  "cpu_tests": {
+    "passed": 68,
+    "failed": 0
+  },
+  "archived_cooking": {
+    "sha256": "c122c87408d681166cf9a437479d0010e1a8dd335dfdf55cb7e7ec0e2610982e",
+    "live_actor_shape_attachment_proven": false
+  },
+  "native_contact_qualified": false,
+  "sdf_registered": false,
+  "native_qualification": false,
+  "teacher_admission": false
+}

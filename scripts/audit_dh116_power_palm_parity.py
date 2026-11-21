@@ -29,21 +29,25 @@ def file_sha(path):
 
 
 def read_palm_source(stage, body_path):
+    return read_collision_source(stage, body_path, expected_link="base_link")
+
+
+def read_collision_source(stage, body_path, *, expected_link):
     from pxr import Sdf, UsdGeom, UsdPhysics
 
     path = Sdf.Path(body_path)
-    if (not path.IsAbsolutePath() or not path.IsPrimPath() or path.name != "base_link"
+    if (not path.IsAbsolutePath() or not path.IsPrimPath() or path.name != expected_link
             or UsdGeom.GetStageUpAxis(stage) != UsdGeom.Tokens.z or UsdGeom.GetStageMetersPerUnit(stage) != 1.):
-        raise ValueError("absolute original metre Z-up base_link required")
+        raise ValueError(f"absolute original metre Z-up {expected_link} required")
     source = read_surface(stage, body_path, branch="collisions")
     mesh = stage.GetPrimAtPath(source["mesh_path"])
     ancestor = mesh
     while ancestor.GetPath() != path:
         if ancestor.HasAPI(UsdPhysics.RigidBodyAPI):
-            raise ValueError("original palm collision belongs to a nested rigid body")
+            raise ValueError("original link collision belongs to a nested rigid body")
         ancestor = ancestor.GetParent()
     if source["collision_approximation"] != "convexHull":
-        raise ValueError("original palm convexHull approximation required")
+        raise ValueError("original link convexHull approximation required")
     vertices = np.asarray(source["points_body"], dtype=np.float32)
     triangles = np.asarray(source["triangles"], dtype=np.int64)
     if source["orientation"] == "leftHanded":
