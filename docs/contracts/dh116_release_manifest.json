@@ -31913,6 +31913,42 @@
         "verified_at_utc": "2026-11-21T18:07:08.262260+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.supported-reset-readback",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-supported-reset-readback.md",
+      "readiness": "docs/contracts/dh116_teacher_supported_reset_readback_v1.json",
+      "cpu_tests": {
+        "passed": 27,
+        "failed": 0,
+        "scope": "final narrow reset/readback bridge suite"
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "57bb4126d27574cb2803968a28529b44cf8da231",
+        "source_tree": "c5b0d9675643832c9c9e1b2f2a336ff858c706b2",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T18:33:04.746731+00:00"
+      },
+      "remote_verified": true,
+      "expanded_cpu_tests": {
+        "passed": 281,
+        "failed": 1,
+        "baseline_failure_reproduced": true,
+        "new_regressions": 0
+      },
+      "registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
     }
   ]
 }
