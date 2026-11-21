@@ -95,9 +95,9 @@ class Hand(ActionHand):
         self.events.append(self.side+':cache_refresh')
 
 
-def setup(monkeypatch):
+def setup(monkeypatch, *, nodes=None):
     events=[]
-    base,bindings,poses,_=rod_setup(monkeypatch)
+    base,bindings,poses,_=rod_setup(monkeypatch, nodes=nodes)
     rod=DualHandRodRuntime(base,bindings=bindings,right_grids={n:Grid() for n in PADS},
         right_poses={n:poses['right.'+n] for n in PADS},run_uuid='run-cpu',env_id=7)
     hands=[Hand(s,events) for s in ('left','right')]

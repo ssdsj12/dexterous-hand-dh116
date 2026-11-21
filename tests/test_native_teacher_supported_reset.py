@@ -14,8 +14,8 @@ from go2_pvcnn.control.dh116.tabletop_dual_hand_reset import DualHandResetTransa
 from go2_pvcnn.control.dh116.tabletop_power_shared_rod import PowerSharedRodRuntime
 
 
-def supported_reset_case(monkeypatch):
-    events, original, hands, bindings, sim, seed, owners = setup(monkeypatch)
+def supported_reset_case(monkeypatch, *, nodes=None):
+    events, original, hands, bindings, sim, seed, owners = setup(monkeypatch, nodes=nodes)
     for hand in hands:
         hand.body_names[6] = "finger52_link"
         hand.root_physx_view.link_paths = [[

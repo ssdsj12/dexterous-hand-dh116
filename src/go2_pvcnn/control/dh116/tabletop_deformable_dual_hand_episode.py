@@ -40,15 +40,30 @@ class DualHandPhysicalEpisode:
         self._control_index = 0
         self._rod_packet = self._state_seed = None
 
-    def reset(self, seed, *, episode_uid, owner_resets):
+    def reset(self, seed, *, episode_uid, owner_resets, supported_mesh_plan=None,
+              record_reset_readback=None):
         if self._state != "new":
             raise RuntimeError("one reset per physical episode owner")
+        supported = supported_mesh_plan is not None
+        if ((not supported and record_reset_readback is not None)
+                or (supported and not callable(record_reset_readback))):
+            raise ValueError("supported Reset requires its independent readback recorder")
         self._state = "failed"
-        reset = DualHandResetTransaction(seed, episode_uid=episode_uid)
-        receipt = reset.run(self._sim, self._rod, self._bindings, owner_resets=owner_resets)
+        geometry_options = {}
+        exchange_options = {}
+        if supported:
+            from .tabletop_supported_mesh_reset import MeasuredSupportedMeshReset
+            reset = MeasuredSupportedMeshReset(seed,episode_uid=episode_uid,mesh_plan=supported_mesh_plan)
+            receipt = reset.run(self._sim,self._rod,self._bindings,owner_resets=owner_resets,
+                                record_readback=record_reset_readback)
+            geometry_options["contact_bindings"] = self._rod.bindings
+            exchange_options = dict(measured_supported_reset=receipt,supported_mesh_plan=supported_mesh_plan)
+        else:
+            reset = DualHandResetTransaction(seed, episode_uid=episode_uid)
+            receipt = reset.run(self._sim, self._rod, self._bindings, owner_resets=owner_resets)
         packet = self._boundary.capture(receipt["rod_reset"])
         reader = LiveGeometryReader(self._sim, self._bindings, self._inspect_geometry(),
-                                    read_clock=self._rod.clock)
+                                    read_clock=self._rod.clock, **geometry_options)
         initial = reader()
         clear = bool((initial["clearance_m"] >= CLEARANCE_M).all())
         evidence = dict(kind="reset", reset=receipt, rod_boundary=packet,
@@ -63,7 +78,8 @@ class DualHandPhysicalEpisode:
         root = torch.tensor(receipt["seed"]["reset_root_pose_w"], dtype=torch.float64)[None]
         self._exchange = FlexiblePhysicalExchange(self._sim, self._rod, self._bindings,
             root_seed_w=root, read_geometry=reader,
-            read_geometry_after_sdk=reader.read_after_sdk_step, physics_budget_end=self._end)
+            read_geometry_after_sdk=reader.read_after_sdk_step, physics_budget_end=self._end,
+            **exchange_options)
         self._rod_packet = packet
         self._state_seed = dict(version=SEED_VERSION, source=SEED_SOURCE,
             identity=self._read_state_clock(),

@@ -23,7 +23,11 @@ class FlexiblePhysicalExchange:
     """Preserve the previous measured rod reaction through the next SDK write."""
 
     def __init__(self, sim, rod, bindings, *, root_seed_w, read_geometry,
-                 physics_budget_end, read_geometry_after_sdk=None, continue_supported_rod=False):
+                 physics_budget_end, read_geometry_after_sdk=None, continue_supported_rod=False,
+                 measured_supported_reset=None, supported_mesh_plan=None):
+        fresh_supported = measured_supported_reset is not None or supported_mesh_plan is not None
+        if fresh_supported and (continue_supported_rod or measured_supported_reset is None or supported_mesh_plan is None):
+            raise ValueError("fresh supported Reset and measured continuation are exclusive; both Reset inputs required")
         clock = rod.clock()
         if (clock["clock_valid"] is not True or (clock["rod_tick"] != 0 and not continue_supported_rod)
                 or clock["reset_id"] < 1 or clock["physics_step"] != sim.current_time_step_index
@@ -37,6 +41,14 @@ class FlexiblePhysicalExchange:
         previous = None
         wrench_writer = write_composer_reactions
         expected_links = 5
+        reset_binding = None
+        if fresh_supported:
+            from .tabletop_fresh_supported_exchange import validate_fresh_supported_reset
+            from .tabletop_power_shared_rod import contact_links, write_composer_reactions as write_supported_reactions
+            reset_binding = validate_fresh_supported_reset(sim,rod,
+                reset_receipt=measured_supported_reset,mesh_plan=supported_mesh_plan)
+            expected_links = len(contact_links(rod.bindings))
+            wrench_writer = write_supported_reactions
         if continue_supported_rod:
             from .tabletop_power_shared_rod import (
                 PowerSharedRodRuntime, PROXIMAL_POWER_MESH_NAMES, SUPPORTED_POWER_MESH_NAMES, contact_links,
@@ -93,6 +105,8 @@ class FlexiblePhysicalExchange:
         self._angles = torch.zeros_like(self._palms)
         self._reaction = None
         self._write_reactions = wrench_writer
+        self._route_count = expected_links
+        self._fresh_supported_binding = reset_binding
         if previous is not None:
             routes = previous["hand_wrenches_com_world"]
             if set(routes) != set(SIDES) or any(
@@ -105,6 +119,9 @@ class FlexiblePhysicalExchange:
                 raise ValueError("original mounted composer routes or force guard failed at handoff")
             self._reaction = clock["physics_step"], deepcopy(routes)
             rod._action_exchange_claimed = True
+        elif fresh_supported:
+            rod._action_exchange_claimed = True
+            rod._fresh_action_exchange_epoch = tuple(reset_binding["reset_epoch"])
 
     def _clock(self, substep):
         clock = self._rod.clock()
@@ -163,8 +180,8 @@ class FlexiblePhysicalExchange:
         if source is None:
             if pre["rod_tick"] != 0:
                 raise ValueError("reaction may be absent only at the fresh reset boundary")
-            routes = {side: dict(body_ids=self._body_ids[side], forces=np.zeros((1, 5, 3)),
-                                 torques=np.zeros((1, 5, 3)), is_global=True) for side in SIDES}
+            routes = {side: dict(body_ids=self._body_ids[side], forces=np.zeros((1, self._route_count, 3)),
+                                 torques=np.zeros((1, self._route_count, 3)), is_global=True) for side in SIDES}
             source_step = None
         else:
             source_step, routes = source
@@ -191,11 +208,16 @@ class FlexiblePhysicalExchange:
         self._palms, self._angles = projection["palm_offsets_m"], projection["projected_angles"]
         self._reaction = sdk, rod_row["hand_wrenches_com_world"]
         self._expected_sdk_step = sdk
-        return dict(physics_step=sdk, policy_step=self._control, substep=substep,
+        result = dict(physics_step=sdk, policy_step=self._control, substep=substep,
                     reaction_source_physics_step=source_step, issued_composer_wrench=deepcopy(routes),
                     rod=deepcopy(rod_row), action_readback=action_row, wrist_projection=projection,
                     guard_failure=guard_failure,
                     native_qualification=False, teacher_admission=False)
+        if self._fresh_supported_binding is not None:
+            result["fresh_supported_exchange_binding"] = deepcopy(self._fresh_supported_binding)
+            result["issued_composer_wrench_source"] = (
+                "commanded_reset_zero_not_measured_contact" if source_step is None else "previous_measured_rod_step")
+        return result
 
     def control(self, action, *, observe, select_substep_action=None):
         """Deliver each real physical row once, including optional target holds.

@@ -1,3 +1,7 @@
+## Fresh supported control chain
+
+Connect the authenticated17-slot Reset to all14 link sources and seven-route feedback without a hidden settling step. Reset zeros remain commanded/unmeasured; subsequent reactions use the previous rod row. Verified Reset epochs allow new leases and invalidate old exchanges. 261 selected CPU checks and60 Registry checks pass; native Tripod collector remains pending. [Report](docs/superpowers/reports/2026-11-22-teacher-fresh-supported-control.md).
+
 ## Independent supported17 mesh Reset
 
 Authenticate all17 constructor slots, rebuild at actual14 SDK link poses without a hidden settling step, and require direct current/target/solver readback with8364 pair capacity. Frozen eleven-slot readers remain byte-identical. 172 selected CPU checks and60 Registry checks pass; fresh collector/native PPO remain pending. [Report](docs/superpowers/reports/2026-11-22-teacher-supported-mesh-reset.md).

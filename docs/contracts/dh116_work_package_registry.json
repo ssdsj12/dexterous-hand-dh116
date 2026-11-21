@@ -48073,6 +48073,33 @@
         "owner_preflight_session_passed": 91,
         "registry_passed": 60
       }
+    },
+    "teacher.fresh-supported-control": {
+      "title": "Connect measured supported Reset to fresh seven-route physical exchange and current episode state",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-mesh-reset"
+      ],
+      "tests": [
+        "tests/test_fresh_supported_physical_exchange.py",
+        "tests/test_fresh_supported_episode.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_fresh_supported_control_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-fresh-supported-control.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 261,
+        "cpu_failed": 0,
+        "new_tests": 6,
+        "scope": "CPU bridge only; independent Tripod native collector and qualification pending",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "control_cpu_passed": 119,
+        "teacher_cpu_passed": 142,
+        "registry_passed": 60
+      }
     }
   },
   "execution_target": {

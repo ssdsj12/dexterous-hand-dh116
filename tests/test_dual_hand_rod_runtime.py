@@ -57,13 +57,14 @@ class FakeRope:
         self.wrenches[0,0,2]=-1.
         self.wrenches[0,6,2]=-2.
 
-def setup(monkeypatch,*,pairs=False):
+def setup(monkeypatch,*,pairs=False,nodes=None):
     from go2_pvcnn.control.dh116.tabletop_deformable_grasp_runtime import FreeRodRuntime
     monkeypatch.setitem(sys.modules,"ropesim",SimpleNamespace(RopeBatch=FakeRope,
         sdf=SimpleNamespace(from_function=lambda *a:Grid())))
     cfg=json.loads((ROOT/"configs/dh116_tasks/flexible_pinch_candidate_v1.json").read_text())
     initial={n:(np.zeros(3),np.array([0,0,0,1.])) for n in PADS}
-    base=FreeRodRuntime(cfg,[[0,0,.2],[.1,0,.2],[.2,0,.2]],{n:Grid() for n in PADS},
+    nodes = [[0,0,.2],[.1,0,.2],[.2,0,.2]] if nodes is None else nodes
+    base=FreeRodRuntime(cfg,nodes,{n:Grid() for n in PADS},
         initial,[0,0,0],[1,1,.1],episode_uid="construction")
     bindings={f"{side}.{name}":dict(side=side,body_name=name,body_index=i,
         prim_path=f"/World/{side}Hand/{name}",source_usd_sha256="a"*64,

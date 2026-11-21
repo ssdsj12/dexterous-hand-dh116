@@ -10,8 +10,8 @@ from go2_pvcnn.control.dh116 import tabletop_mesh_reset_order as original
 from go2_pvcnn.control.dh116.tabletop_power_shared_rod import PROXIMAL_POWER_MESH_NAMES, END_SUPPORT_NAMES, HAND_NAMES, PALM_NAMES, PROXIMAL_NAMES, SIDES
 
 
-def case(monkeypatch):
-    c = native_semantics(monkeypatch, case=supported_reset_case(monkeypatch))
+def case(monkeypatch, *, nodes=None):
+    c = native_semantics(monkeypatch, case=supported_reset_case(monkeypatch, nodes=nodes))
     m = importlib.import_module("go2_pvcnn.control.dh116.tabletop_supported_mesh_reset")
     entries = []
     for name, (args, kw) in zip(c.rod.mesh_names, c.slots, strict=True):
