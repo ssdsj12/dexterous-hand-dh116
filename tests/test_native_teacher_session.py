@@ -163,8 +163,8 @@ def test_approved_reward_ppo_parameters_are_mapped_without_old_trainer_defaults(
     pre=candidate_config();pre["reward_config"]=dict(path=str(raw),sha256=hashlib.sha256(raw.read_bytes()).hexdigest())
     limits=dict(max_sdk_steps=29,max_solver_calls=27,max_resets=3,max_episode_count=3,wall_timeout_s=3.)
     # Only source/manifest/budget verifiers are isolated here. No native claim.
-    monkeypatch.setattr(m,"static_preflight",lambda *a,**k:dict(static_ready=True))
-    monkeypatch.setattr(m,"load_reset_manifest",lambda *a,**k:SimpleNamespace(data=lambda:dict(reset_seed={})))
+    monkeypatch.setattr(m,"_static_preflight_with_manifest",lambda *a,**k:(
+        dict(static_ready=True),SimpleNamespace(data=lambda:dict(reset_seed={}))))
     monkeypatch.setattr(m,"validate_budget",lambda *a,**k:limits)
     model_config,*_=setup("pinch")
     config=m.NativeSessionConfig(pre,model_config,tmp_path/"journal",2.,32,root)

@@ -48865,6 +48865,64 @@
       "actual_launch": {
         "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v8.json",
         "sha256": "df882601a58b57b7138031eabc1797496c43904d2cf604903e8e344482dc8292"
+      },
+      "dependency_scopes": {}
+    },
+    "teacher.tripod-ppo-fresh-smoke8-v9": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Independent Tripod fresh17 smoke8 actual PPO diagnostic",
+      "evidence_scope": "tripod_actual_fresh_smoke8_v9",
+      "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v9.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Frozen one-shot diagnostic; requires exact current native batch and live resource reservation; no grasp qualification.",
+      "dependencies": [
+        "teacher.tripod-fresh-reset-native-validation",
+        "teacher.static-manifest-handoff"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v9.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v9.json",
+      "native_runs": 0,
+      "actual_launch": {
+        "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v9.json",
+        "sha256": "b69b7320af8527873575b8a3b153b92564a760ccaeb7cd350f0a60180886a68f"
+      }
+    },
+    "teacher.static-manifest-handoff": {
+      "title": "Reuse this-call verified Reset manifest within the static Teacher contract",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.native-worker-fault-cache-release"
+      ],
+      "tests": [
+        "tests/test_native_teacher_static_manifest_handoff.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_native_teacher_preflight.py",
+        "tests/test_native_teacher_tripod_admission.py",
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_static_manifest_handoff_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-static-manifest-handoff.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 230,
+        "cpu_failed": 0,
+        "native_runs": 0,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU same-call source handoff and frozen recipe; native remains independently gated"
       }
     }
   },

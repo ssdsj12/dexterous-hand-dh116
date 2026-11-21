@@ -314,7 +314,8 @@ def _reader_source_sha256(value, reader):
     return sha256_file(path) if path.is_file() else None
 
 
-def static_preflight(config, *, project=ROOT, backend_profile=None):
+def _static_preflight_with_manifest(config, *, project=ROOT, backend_profile=None):
+    """Return this call's report and immutable source, never a cached pass."""
     validate_config(config)
     project = Path(project).resolve()
     components = []
@@ -448,7 +449,14 @@ def static_preflight(config, *, project=ROOT, backend_profile=None):
         blocked_reasons=blocked, required_capabilities=sorted(required_capabilities(config["profile"])),
         ledger=dict(width=371, measured_selected=66, unknown_nan_false=305,
                     unknown_slots_block_new_schema=False),
-        new_native_steps=0, ppo_updates=0, native_qualification=False, teacher_admission=False)
+        new_native_steps=0, ppo_updates=0, native_qualification=False, teacher_admission=False), manifest
+
+
+def static_preflight(config, *, project=ROOT, backend_profile=None):
+    """Keep the public JSON report without exporting internal source objects."""
+    report, _ = _static_preflight_with_manifest(
+        config,project=project,backend_profile=backend_profile)
+    return report
 
 
 def validate_live_numeric(audit, *, reset_receipt, rope, expected_clock):

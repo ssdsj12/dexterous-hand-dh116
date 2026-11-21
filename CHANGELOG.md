@@ -1,5 +1,7 @@
 ## Worker fault-path cache release
 
+The Teacher static contract now forwards its own fully verified Reset manifest instead of immediately replaying it twice.230 selected CPU checks pass; complete static median24.18s →14.75s. Later source/Builder/live checks and all physical contracts remain unchanged. Tripod v9 is frozen, unexecuted and unqualified. [Report](docs/superpowers/reports/2026-11-22-static-manifest-handoff.md).
+
 The actual worker now releases its source-bound stat cache at the existing pre-GC boundary on success and acquisition failure, after synchronization and traceback cleanup.203 selected CPU checks pass; the sealed lifecycle/Reset sources stay unchanged. No new native run or SIGSEGV/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-native-worker-fault-cache-release.md).
 
 ## Tripod raw-data decode performance

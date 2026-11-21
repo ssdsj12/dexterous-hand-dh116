@@ -8,8 +8,8 @@ from pathlib import Path
 from copy import deepcopy
 import json
 
-from .tabletop_native_teacher_preflight import (candidate_config, static_preflight,
-    load_reset_manifest, validate_budget, live_preflight, _binding)
+from .tabletop_native_teacher_preflight import (candidate_config, _static_preflight_with_manifest,
+    validate_budget, live_preflight, _binding)
 from .tabletop_native_teacher_profile import BackendProfile, ROOT
 from .tabletop_native_teacher_collector import NativeTeacherCollector
 
@@ -95,7 +95,8 @@ def verify_static_contract(config):
             or not math.isfinite(config.episode_cap_s) or config.episode_cap_s <= 0):
         raise ValueError("finite episode cap and rollout length required")
     profile=BackendProfile.load(config.project)
-    gate=static_preflight(config.preflight,project=config.project,backend_profile=profile)
+    gate,manifest=_static_preflight_with_manifest(
+        config.preflight,project=config.project,backend_profile=profile)
     if not gate["static_ready"]:
         raise ValueError("native static contract denied: "+", ".join(gate["blocked_reasons"]))
     # Pinch and Tripod have independent smoke readers. Full contact/slip/hold
@@ -109,7 +110,6 @@ def verify_static_contract(config):
     from .tabletop_training_reward import load_config
     from .tabletop_privileged_ppo import PPOConfig
     from .tabletop_native_teacher_model import model_contract
-    manifest=load_reset_manifest(config.preflight,project=config.project)
     budget=validate_budget(config.preflight,project=config.project)
     path,_=_binding(config.preflight["reward_config"],config.project)
     reward=load_config(path,ppo_gamma=config.preflight["ppo"]["gamma"])
