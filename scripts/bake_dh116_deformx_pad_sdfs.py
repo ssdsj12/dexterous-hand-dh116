@@ -87,7 +87,7 @@ def input_packets(capture, lock):
     return packets
 
 
-def bake_register(packets, lock, package_root, output):
+def bake_register(packets, lock, package_root, output, *, spacing_m=_SPACING_M):
     from scipy.spatial.transform import Rotation
 
     for name, digest in lock["backend_files"].items():
@@ -119,10 +119,10 @@ def bake_register(packets, lock, package_root, output):
             if not sdf.is_closed(faces):
                 raise ValueError(f"live hull is open after upstream weld: {key}")
             spec = ColliderSpec(asset=row["side"] + "_hand", bodies=[row["link"]], dynamic=True,
-                                spacing=_SPACING_M, margin=_MARGIN_M, round=0., thickness=0.)
+                                spacing=spacing_m, margin=_MARGIN_M, round=0., thickness=0.)
             grid = bake_body(vertices, faces, spec, key)
             metrics = validate_signed_grid(grid, vertices, rod_radius=_ROD_RADIUS_M)
-            if grid.spacing != _SPACING_M:
+            if grid.spacing != spacing_m:
                 raise ValueError(f"unexpected grid spacing: {key}")
             position = np.asarray(row["sdk_body"]["position_m"], dtype=np.float32)
             quaternion = np.asarray(row["sdk_body"]["quaternion_xyzw"], dtype=np.float32)
@@ -140,7 +140,7 @@ def bake_register(packets, lock, package_root, output):
             record = {
                 **metrics, "gpu_row_sha256": digest, "closed_welded_hull": True,
                 "welded_vertices": len(vertices), "welded_faces": len(faces),
-                "rod_radius_m": _ROD_RADIUS_M, "voxels_per_rod_radius": _ROD_RADIUS_M / _SPACING_M,
+                "rod_radius_m": _ROD_RADIUS_M, "voxels_per_rod_radius": _ROD_RADIUS_M / spacing_m,
                 "margin_m": _MARGIN_M, "thickness_m": 0., "round_m": 0.,
                 "frame": "original_pad_coincident_local_basis_m",
                 "native_coincident_basis_max_matrix_delta": basis_delta,

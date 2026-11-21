@@ -46004,6 +46004,32 @@
         "native_contact_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-original-proximal-sdfs": {
+      "title": "Bake each original Power little proximal surface on the locked GPU backend",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-proximal-tensor-pose-ray-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_deformx_pad_sdf.py",
+        "tests/test_dh116_power_left_palm_sdf.py",
+        "tests/test_dh116_power_right_palm_sdf.py",
+        "tests/test_dh116_power_palm_raycast.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_sdfs_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-sdfs.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 70,
+        "failed": 0,
+        "gpu_bakes": 2,
+        "contact_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

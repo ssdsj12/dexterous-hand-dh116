@@ -1,3 +1,7 @@
+## Power proximal SDF source and sampling
+
+Bake the independently measured left and right finger52 surfaces, comparing two grid spacings at the same physical sample distances. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-sdfs.md).
+
 ## Native Power proximal pose-source result
 
 Use exact same-clock rigid Tensor View readback to resolve the GPU ray discrepancy and count both setup and capture SDK steps. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-tensor-pose-native.md).
