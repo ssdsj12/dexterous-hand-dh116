@@ -32305,6 +32305,31 @@
         "verified_at_utc": "2026-11-21T21:52:16.926962+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-supported17-health",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-supported17-health.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_supported17_health_v1.json",
+      "cpu_tests": {
+        "passed": 230,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "2dd547d9d45b9f282b8547124b1ec05439c7ab0a",
+        "source_tree": "4b0187302f62a07f4e7eef0a5df569fff4251916",
+        "remote_branch": "11-17",
+        "files_verified": 18,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T22:10:00.024410+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
