@@ -30013,6 +30013,31 @@
         "verified_at_utc": "2026-11-21T05:50:39.938568+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power proximal native supported settling",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-binding-native.md",
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_binding_native_v1.json",
+      "cpu_tests": {
+        "passed": 85,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "d6c6c347956247515573f2717dcceb6a9fb4b0de",
+        "source_tree": "c37f8c63005eab83041d1734e5b1556a545c35fa",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T05:54:33.831578+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
