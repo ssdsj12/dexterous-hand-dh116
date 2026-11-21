@@ -49,6 +49,10 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
     _evaluate is a separate policy contract. No frozen schedule, absolute step
     origin, zero wrist request or diagnostic SDK limit is inherited.
     """
+    REQUIRED_PADS = REQUIRED
+    ROUTE_COUNT = 5
+    VERSION = GEOMETRY_VERSION
+
     def __init__(self,project,*,scope):
         if scope not in ("cpu_fixture","owner_source_unqualified"):raise ValueError("explicit unqualified source scope required")
         super().__init__(project)
@@ -71,7 +75,7 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
         _array(exchange["rod"]["distributed_contact"],(1,41,3))
         for side in ("left","right"):
             for field in ("forces","torques"):
-                _array(exchange["rod"]["hand_wrenches_com_world"][side][field],(1,5,3))
+                _array(exchange["rod"]["hand_wrenches_com_world"][side][field],(1,self.ROUTE_COUNT,3))
         _require(np.array_equal(nodes,_array(exchange["rod"]["node_positions"],(1,41,3))[0]),"actual fixed material41 nodes differ")
         packet_scope=exchange["material_director"].get("source_scope")
         _require((packet_scope=="cpu_fixture")==(self.scope=="cpu_fixture"),"parameter/source fixture scope differs")
@@ -116,14 +120,14 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
                 for n,vertices in shapes.items():
                     v=self._transform(vertices,matrices[n]);vertices_all.append(v);key=kind+":"+n
                     tables[key]=float(v[:,2].min()-.3)
-                    if n not in REQUIRED:
+                    if n not in self.REQUIRED_PADS:
                         lower=rod_support_lower(v,nodes)+RADIUS-radius
                         if lower<0:
                             certificate=certify(v,nodes);validate_certificate(certificate,v,nodes)
                             lower=certificate["lower_m"]+RADIUS-radius
                         gaps[key]=lower
             whole[side]=np.concatenate(vertices_all)
-            sdf={n:self._sdf(self._grids[side][n],matrices[n],nodes,radius=radius) for n in REQUIRED}
+            sdf={n:self._sdf(self._grids[side][n],matrices[n],nodes,radius=radius) for n in self.REQUIRED_PADS}
             for key,gap in tables.items():
                 if gap<CLEARANCE_M:reasons.append(side+":table:"+key)
             for key,gap in gaps.items():
@@ -140,7 +144,7 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
         left,right=whole["left"],whole["right"]
         separation=float(max(np.max(right.min(0)-left.max(0)),np.max(left.min(0)-right.max(0))))
         if separation<0:reasons.append("inter_hand_separation_not_proven")
-        return dict(version=GEOMETRY_VERSION,source_scope=self.scope,raw=deepcopy(raw),raw_sha256=hashlib.sha256(_bytes(raw)).hexdigest(),
+        return dict(version=self.VERSION,source_scope=self.scope,raw=deepcopy(raw),raw_sha256=hashlib.sha256(_bytes(raw)).hexdigest(),
             sources=deepcopy(self.sources),sides=sides,source_complete=not source_errors,source_errors=source_errors,
             passed=not reasons and not source_errors,failure_reasons=reasons,
             terminal_reason=None if not reasons else "policy_owned_source_geometry_guard",
@@ -148,7 +152,7 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
             fixed_material_ids=list(range(41)),new_sdk_steps=0,native_qualification=False,teacher_admission=False)
 
     def validate(self,packet,exchange):
-        _require(packet.get("version")==GEOMETRY_VERSION and packet.get("sources")==self.sources
+        _require(packet.get("version")==self.VERSION and packet.get("sources")==self.sources
             and packet.get("source_scope")==self.scope,"policy-owned geometry source/version/scope differs")
         rebuilt=self._evaluate(decode_owned(encode_owned(packet["raw"])),exchange)
         _require(_bytes(rebuilt)==_bytes(packet),"owned SDK pose/clock/source geometry recomputation differs")

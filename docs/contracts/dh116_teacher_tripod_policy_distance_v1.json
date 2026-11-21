@@ -1,0 +1,127 @@
+{
+  "version": "dh116-teacher-tripod-policy-distance-v1",
+  "base_head": "d9ba234557af226fdd6dd1322bdca78dbf40f4b5",
+  "status": "cpu_policy_distance_verified_reset_owner_and_native_pending",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_policy_pinch_distance.py": "cc45d1a833ba46d77a8b9e956724a50ed21c3bfa9628e37fb066c2f659379f56",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_policy_tripod_distance.py": "849d357443defe6aef42cbf91fe166a6c88def907022607e769adff28d87cfb3",
+    "tests/test_native_teacher_policy_tripod_distance.py": "bac347b7ac85b8b14cd1188c46db19cc40db81414c2eaa88c0cbf74eab3bfaee"
+  },
+  "cpu": {
+    "new_tests": 6,
+    "source_geometry_passed": 96,
+    "source_geometry_failed": 0,
+    "source_geometry_seconds": 281.33,
+    "owner_update_resume_passed": 70,
+    "owner_update_resume_failed": 0,
+    "owner_update_resume_seconds": 92.83,
+    "disjoint_selected_total": 166,
+    "logs_sha256": {
+      "tripod-distance-red.log": "9516a54364d44def94b1aca43c50e58a42b57ea50feebf4ce178cb371b29412e",
+      "tripod-distance-green-5.log": "722f825c251ada84fe780b56fc0850f588e0d6de17a6ffa061b2621917da1d88",
+      "tripod-distance-regression.log": "ce5114c46fa634e7b732fd63558e34a1204b4b04fae2185cbba89594d1574121",
+      "tripod-distance-owner-regression.log": "04022e87e78210311f790c25e82869e81039701cd2cfbfb5371774ed4ae6d6bc"
+    },
+    "registry_passed": 60,
+    "registry_failed": 0,
+    "registry_log_sha256": "f131cc9498bdbea19fce483c387dcefbb2e93ce66a87410103163a6dafcc809a"
+  },
+  "source_contract": {
+    "required_pads_per_hand": [
+      "finger14_link",
+      "finger23_link",
+      "finger33_link"
+    ],
+    "material_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40
+    ],
+    "distance_units": "m",
+    "coordinate_frame": "world_to_actual_pad_local",
+    "quantity": "discrete_solver_node_to_three_locked_pad_SDF_positive_gap",
+    "missing_pad_policy": "unknown_and_reject_required_policy_source_not_zero_or_two_pad_mean",
+    "uncertainty": null,
+    "uncertainty_calibrated": false,
+    "hand_wrench_routes": 7,
+    "mesh_slots": 17,
+    "supports": [
+      "table",
+      "support_0",
+      "support_1"
+    ],
+    "geometry_scope": "same_completed_SDK_endpoint_only",
+    "selected_pad_penetration_floor_m": -0.00015,
+    "non_target_rod_clearance_m": 0.00025,
+    "original_table_floor_m": 0.0021,
+    "policy_history_bound": true,
+    "continuous_trajectory_qualified": false
+  },
+  "fixture_scope": "CPU SDK/solver doubles and locked real hardware SDFs; synthetic extra channels, not new native measurements",
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "basis": "Teacher-Tripod-Smoke R1 minimal source plan, corrected to7 routes by Codex",
+    "new_patch_external_review": "not_executed_external_account_quota_exhausted",
+    "independent_code_and_tests": true
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "contact_qualified": false,
+  "r2_enabled": false,
+  "cameras_changed": false,
+  "physical_parameters_changed": false,
+  "existing_pinch_behavior_preserved": true,
+  "known_prior_unresolved": [
+    "sealed legacy R0 replay source-SHA mismatch, previously reproduced at d9ba parent; not rerun or relabelled here"
+  ],
+  "next": [
+    "Implement Tripod same-clock six-pad Reset baseline over all14 measured link copies",
+    "Independent17-mesh zero-step reset plan/readback using original clear/add and unchanged pair capacity",
+    "Fresh supported owner and real7-route exchange, original continuous/runtime guards, source factory/preflight",
+    "Then existing66+realrod PPO boundedupdate1 and resume2, separate Pinch/Tripod/Power qualification"
+  ],
+  "unchanged_camera_sha256": {
+    "configs/dh116_training/stereo_camera_front_640x480_v3.json": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b",
+    "configs/dh116_training/stereo_camera_hand_order_640x480_v1.json": "673b71d4edc425620c78544959cdd00a545db0104bb164a6f2d22f368776d98b"
+  }
+}

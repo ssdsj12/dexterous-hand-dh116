@@ -47995,6 +47995,31 @@
         "scope": "CPU bridge only; supported collector/native pending",
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-policy-distance": {
+      "title": "Independent three-pad Tripod policy distance with complete supported source identity",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-reset-readback"
+      ],
+      "tests": [
+        "tests/test_native_teacher_policy_tripod_distance.py",
+        "tests/test_native_teacher_policy_pinch_distance.py",
+        "tests/test_native_teacher_supported_reset.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_policy_distance_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-policy-distance.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_source_geometry_passed": 96,
+        "cpu_owner_update_resume_passed": 70,
+        "new_tests": 6,
+        "scope": "CPU policy-endpoint source only; Reset/collector/native pending",
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

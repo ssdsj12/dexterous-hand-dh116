@@ -1,3 +1,7 @@
+## Tripod policy distance
+
+Independent three-pad-per-hand SDF distance binds actual policy history and all7 wrench routes/17 meshes; missing middle coverage stays unknown. Pinch defaults remain2 pads/5 routes. 166 selected CPU checks pass; Tripod Reset/fresh collector/native PPO remain pending. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-policy-distance.md).
+
 ## Supported Teacher Reset/readback
 
 Preserve all14 actual hand contact-link poses and all17 mesh slots; refuse bad extra identities before writes. Original10-pad reader remains default; explicit extended reads keep full-hand clearance. Final27 CPU checks pass; expanded281 pass/1 historical source-SHA failure reproduced on baseline. No new native/PPO or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-supported-reset-readback.md).
