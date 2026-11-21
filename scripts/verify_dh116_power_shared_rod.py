@@ -95,11 +95,11 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
             world = rotated_points(frame_poses[0, hand, body], vertices)
             if any(support_clearance_lower(world, low, high) <= 1e-10 for low, high in boxes):
                 raise ValueError("live original hand source envelope intersects a support")
-            contact_shape = active_probe and (hand, body) in distal_probe.shape_keys
+            contact_shape = active_probe and distal_probe.contact_shape(sdk, (hand, body))
             if tube is not None and not contact_shape and separation(world, *tube) <= .00025:
                 raise ValueError("live hand source envelope lost its staged rod clearance")
         if active_probe:
-            distal_probe.check_pad_gaps(poses, reference_nodes)
+            distal_probe.check_pad_gaps(sdk, poses, reference_nodes)
     if native.clock(sim)["sdk_step"] != sdk:
         raise ValueError("SDK moved during link and COM readback")
     if not np.isfinite(clearance).all() or np.any(clearance < CLEARANCE_M):
@@ -352,9 +352,22 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 verify_waypoint_boundary(encode_owned(emitted), distal_probe.archive,
                                          sdk_step=distal_probe.boundary_sdk, exact_geometry=True)
             if distal_probe is not None:
+                later = distal_probe.bilateral
+                if later is not None and row["physics_step"] == later["boundary_sdk"]:
+                    actual = encode_owned(emitted)
+                    expected = later["archive"]
+                    verify_waypoint_boundary(actual, expected, sdk_step=later["boundary_sdk"], exact_geometry=True)
+                    if (actual["rod"]["rod_mesh_contact_pairs"] != expected["rod"]["rod_mesh_contact_pairs"]
+                            or actual["issued_composer_wrench"] != expected["issued_composer_wrench"]):
+                        raise ValueError("the previous right Tripod contact or force differs from the sealed replay")
                 evidence, reason = distal_probe.observe(row)
                 if distal_probe.active(row["physics_step"]):
                     native.write_new(output/f"{task}_distal_probe_{row['physics_step']}.json", evidence)
+                    if reason is None and later is not None and row["physics_step"] == later["midpoint_sdk"]:
+                        from scripts.verify_dh116_supported_distal_transfer import midpoint_reached
+
+                        if not midpoint_reached(emitted, later["midpoint_target"]):
+                            return "left_tripod_midpoint_tracking_gate"
                     return reason
             pairs = row["rod"]["rod_mesh_contact_pairs"]["pairs"]
             if any(pair["mesh_name"] not in END_SUPPORT_NAMES for pair in pairs):
@@ -552,7 +565,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 geometry = scene.load_sdf_arrays(scene.prepare_scene(ROOT))
                 probe = SupportedDistalProbe(distal_contact["boundary_sdk"], distal_contact["stations"],
                     meshes, clearance_shapes, grids=geometry, archive=distal_contact["archive"],
-                    max_pad_penetration_m=distal_contact["max_pad_penetration_m"], grasp=distal_contact["grasp"])
+                    max_pad_penetration_m=distal_contact["max_pad_penetration_m"], grasp=distal_contact["grasp"],
+                    bilateral=distal_contact.get("bilateral"))
             control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
                 meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end,
                 verify_support_continuity=any(x is not None for x in (action_reference, tripod_archive, pinch_archive, power_open_archive)),

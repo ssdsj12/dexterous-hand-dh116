@@ -1,0 +1,81 @@
+{
+  "version": "dh116-tripod-bilateral-first-contact-v1",
+  "native_runs": 0,
+  "cpu_regressions_passed": 156,
+  "native_budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "tripod_bilateral_measured_distal_contact",
+    "sdk_setup_steps": 2,
+    "control_steps": 132,
+    "solver_steps": 15528,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 600,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 6,
+    "episode_resets": 1,
+    "sdk_steps": 1296
+  },
+  "screen_sha256": "73aa9ed889c787652f3671f1215282f889749f7c0014455541f90568d9225bf6",
+  "source_outer_sha256": "61f0c76b6d52deea4c079c3f77c4ee45f01958521e3fe37ff77d884f6eca62e6",
+  "source_end_row_sha256": "1bb740f9df2e24bf195f12fa690d27c6c31e0bf3dbf0a8869bc3d294300a6585",
+  "geometry": {
+    "left": {
+      "minimum_non_target_rod_m": 0.0009395417367431547,
+      "terminal": {
+        "shape_count": 22,
+        "rod_clearance_m": -0.0007228008899579086,
+        "support_clearance_m": 0.03628667471227781,
+        "table_clearance_m": 0.04130019025360537,
+        "limiting_shape": "source_colliders:finger14_link",
+        "pad_gaps_m": [
+          -7.000074725295024e-05,
+          -6.99929445989447e-05,
+          -7.00072014336783e-05
+        ],
+        "node_ids": [
+          35,
+          35,
+          33
+        ],
+        "opposition": [
+          -0.8708265565520429,
+          -0.5732895591439022
+        ],
+        "noncontact_rod_clearance_m": 0.0009395417367431547
+      }
+    },
+    "right": {
+      "minimum_non_target_rod_m": 0.001066661761415566,
+      "terminal": {
+        "shape_count": 22,
+        "rod_clearance_m": -0.0012443032326144854,
+        "support_clearance_m": 0.0006950542282934142,
+        "table_clearance_m": 0.04776231038224793,
+        "limiting_shape": "source_colliders:finger33_link",
+        "pad_gaps_m": [
+          -1.3469046290549846e-06,
+          -8.168946618071493e-07,
+          -9.096884372259556e-07
+        ],
+        "node_ids": [
+          3,
+          2,
+          4
+        ],
+        "opposition": [
+          -0.7655376567047104,
+          -0.9984038349223836
+        ],
+        "noncontact_rod_clearance_m": 0.0010666634845316603
+      }
+    }
+  },
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

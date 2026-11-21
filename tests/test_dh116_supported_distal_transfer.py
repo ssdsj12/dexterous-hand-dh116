@@ -54,7 +54,7 @@ def test_probe_persists_contact_then_transferred_wrench_and_rejects_unselected_c
     probe = transfer.SupportedDistalProbe(528, target, binding, [(1, 4, np.zeros((4, 3)))],
                 grids={'right.finger14_link': None}, archive={}, max_pad_penetration_m=.00025)
     monkeypatch.setattr(transfer, 'measure_supported_distal_contact',
-                        lambda rod, grasp: dict(per_hand={s: {'loaded': False}
+                        lambda rod, grasp: dict(bilateral=False, per_hand={s: {'loaded': False}
                                                          for s in ('left', 'right')}))
     def wrench(force):
         return {'right': {'body_ids': [4], 'is_global': True,
@@ -83,7 +83,7 @@ def test_pinch_probe_uses_a_two_pad_diagnostic_without_enabling_third_pad(monkey
                for i, name in enumerate(target)}
     def observe(rod, *, grasp):
         assert grasp == 'pinch'
-        return dict(per_hand=dict(left={'loaded': False}, right={'loaded': False}))
+        return dict(bilateral=False, per_hand=dict(left={'loaded': False}, right={'loaded': False}))
     monkeypatch.setattr(transfer, 'measure_supported_distal_contact', observe)
     probe = transfer.SupportedDistalProbe(432, target, binding,
                 [(1, i, np.zeros((4, 3))) for i in range(2)], grids=dict.fromkeys(target),
@@ -95,3 +95,35 @@ def test_pinch_probe_uses_a_two_pad_diagnostic_without_enabling_third_pad(monkey
     evidence, reason = probe.observe(row(433, [dict(mesh_name='right.finger33_link', node_index=2)]))
     assert evidence['violations'] == ['right.finger33_link:2']
     assert reason == 'unexpected_contact_outside_distal_station'
+
+
+def test_bilateral_tripod_targets_activate_only_after_the_exact_right_contact_boundary():
+    from scripts.verify_dh116_supported_distal_transfer import selected_stations_at
+
+    right = {'right.finger14_link': [3]}
+    left = {'left.finger14_link': [35]}
+    assert selected_stations_at(528, 528, right, 752, left) == {}
+    assert selected_stations_at(529, 528, right, 752, left) == right
+    assert selected_stations_at(752, 528, right, 752, left) == right
+    assert selected_stations_at(753, 528, right, 752, left) == {**right, **left}
+
+
+def test_left_midpoint_rejects_position_rotation_and_finger_tracking_errors():
+    from scipy.spatial.transform import Rotation
+    from scripts.verify_dh116_supported_distal_transfer import midpoint_reached
+
+    pose = np.array([.5, .13, .43, 1., 0., 0., 0.])
+    target = {'pose_wxyz':pose,'active_q_rad':np.array([.1,.2,.3,.4,.5,.6])}
+    row = {'sdk_hand_geometry':{'poses':{'left.base_link':(pose[:3].copy(),[0.,0.,0.,1.])}},
+           'action_readback':{'post':{'hands':{'left':{'q':target['active_q_rad'][None].copy(),
+                                                     'active_indices':list(range(6))}}}}}
+    assert midpoint_reached(row,target)
+    modified = deepcopy(row)
+    modified['sdk_hand_geometry']['poses']['left.base_link'][0][0] += .00021
+    assert not midpoint_reached(modified,target)
+    modified = deepcopy(row)
+    modified['sdk_hand_geometry']['poses']['left.base_link'] = (pose[:3], Rotation.from_rotvec([.009,0,0]).as_quat())
+    assert not midpoint_reached(modified,target)
+    modified = deepcopy(row)
+    modified['action_readback']['post']['hands']['left']['q'][0,0] += .0026
+    assert not midpoint_reached(modified,target)

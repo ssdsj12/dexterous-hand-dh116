@@ -51,6 +51,7 @@ def approach_reference(receipt):
 WAYPOINT_CONTRACT = screen.ROOT/"docs/contracts/dh116_teacher_tripod_guarded_approach_native_v1.json"
 WAYPOINT_INDEX = {"left": 1, "right": 2}
 WAYPOINT_WINDOWS = 20
+BILATERAL_CONTACT_PROOF_SHA = "73aa9ed889c787652f3671f1215282f889749f7c0014455541f90568d9225bf6"
 DISTAL_CONTACT_PROOF_SHA = "bc2202bae667df2d2b55084569ee7b50d28af7873bf78ff743ac7815faa9a1f8"
 PRECONTACT_PROOF_SHA = "a3f3436c87c43ad516666bc7b1ad6005ff50bdda5f4be7267ddda96b571ea8fe"
 WAYPOINT_PROOF_SHA = "15c89406150e583bde244a827951ebfc702c69b1e48cd8e8b5729f9a72620c27"
@@ -162,6 +163,53 @@ def load_distal_contact(receipt, proof, config):
         max_pad_penetration_m=first.MAX_PAD_SDF_PENETRATION_M)
 
 
+def bilateral_schedule(config, row, waypoints, windows, pauses):
+    from scipy.spatial.transform import Rotation
+
+    commands = []
+    position = np.asarray(row["wrist_projection"]["projected_root_poses"], dtype=float).copy()
+    angles = np.asarray(row["wrist_projection"]["projected_angles"], dtype=float).copy()
+    hands = {side: dict(hand, backend_targets=np.asarray(hand["backend_targets"], dtype=float).copy())
+             for side, hand in row["action_readback"]["post"]["hands"].items()}
+    basis = np.asarray(config["hands"]["left"]["pose_wxyz"], dtype=float)
+    seed_rot = Rotation.from_quat(basis[[4, 5, 6, 3]])
+    right = hands["right"]
+    keep_right = dict(pose_wxyz=position[0, 1].tolist(),
+                      active_q_rad=right["backend_targets"][0, right["active_indices"]].tolist())
+    command_state = dict(wrist_projection=dict(projected_root_poses=position, projected_angles=angles),
+                         action_readback=dict(post=dict(hands=hands)))
+    for waypoint, count, pause in zip(waypoints, windows, pauses, strict=True):
+        phase = waypoint_controls(config, command_state, {"left":waypoint, "right":keep_right}, windows=count)
+        phase[:, [*range(6, 12), *range(15, 18), *range(21, 24)]] = 0.
+        commands.extend((phase, np.zeros((pause, 24))))
+        position[0, 0] = waypoint["pose_wxyz"]
+        angles[0, 0] = (seed_rot.inv() * Rotation.from_quat(position[0, 0, [4, 5, 6, 3]])).as_euler("XYZ")
+        hands["left"]["backend_targets"][0, hands["left"]["active_indices"]] = waypoint["active_q_rad"]
+    return np.vstack(commands)
+
+
+def load_bilateral_contact(receipt, proof, config):
+    from scripts import screen_dh116_tripod_bilateral_first_contact as bilateral
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
+
+    rows, _, files = bilateral.measured.archive(receipt, contract=bilateral.CONTRACT, sdk=bilateral.SDK)
+    audit = sources.checked_json(proof, BILATERAL_CONTACT_PROOF_SHA)
+    request = bilateral.read_request()
+    if (audit["all_passed"] is not True or audit["version"] != request["version"]
+            or audit["outer_sha256"] != native.sha(receipt)
+            or audit["request_sha256"] != native.sha(bilateral.REQUEST)
+            or audit["last_row_sha256"] != native.sha(files[-2]) or audit["before_sdk"] != bilateral.SDK
+            or not bilateral.route_passes(audit["samples"])):
+        raise ValueError("exact bilateral Tripod continuation proof required")
+    commands = bilateral_schedule(config, decode_owned(rows[-1]), request["left_waypoints"],
+                                  bilateral.WINDOWS, bilateral.PAUSES)
+    dependencies = (*files, bilateral.REQUEST, proof, Path(bilateral.__file__))
+    parameters = dict(boundary_sdk=bilateral.SDK, stations=request["target_stations"],
+                      midpoint_sdk=bilateral.SDK+8*(bilateral.WINDOWS[0]+bilateral.PAUSES[0]),
+                      midpoint_target=request["left_waypoints"][0])
+    return rows[-1], commands, dependencies, parameters
+
+
 def freeze(args):
     from go2_pvcnn.control.dh116.tabletop_power_supported_task import prepare_initial_state
 
@@ -200,7 +248,11 @@ def freeze(args):
         digest = native.sha(source)
         if plan["frozen_files"].setdefault(path, digest) != digest:
             raise ValueError("inconsistent Tripod source fingerprints")
-    archived = waypoint = precontact = distal_archive = None
+    archived = waypoint = precontact = distal_archive = bilateral_archive = None
+    if (args.bilateral_reference is None) != (args.bilateral_screen is None):
+        raise ValueError("provide both bilateral Tripod continuation sources")
+    if args.bilateral_reference is not None and args.distal_reference is None:
+        raise ValueError("bilateral Tripod requires the native right contact prefix")
     if (args.distal_reference is None) != (args.distal_screen is None):
         raise ValueError("provide both right Tripod distal contact inputs")
     if args.distal_reference is not None and args.precontact_reference is None:
@@ -241,6 +293,12 @@ def freeze(args):
             plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
             plan["right_tripod_distal_contact"] = parameters
             actions = np.vstack((actions,appended))
+        if args.bilateral_reference is not None:
+            bilateral_archive, appended, bound, parameters = load_bilateral_contact(
+                args.bilateral_reference, args.bilateral_screen, config)
+            plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
+            plan["bilateral_tripod_contact"] = parameters
+            actions = np.vstack((actions,appended))
         sdk_end = SDK_END + 8*len(actions)
         plan["tripod_approach"] = actions.tolist()
         plan["budget"].update(mode=("tripod_guarded_waypoint_continuation" if waypoint
@@ -251,7 +309,9 @@ def freeze(args):
             plan["budget"]["mode"] = "tripod_measured_guarded_precontact"
         if distal_archive is not None:
             plan["budget"].update(mode="tripod_right_measured_distal_contact", soft_wall_seconds=420)
-    return plan, config, archived, waypoint, precontact, distal_archive
+        if bilateral_archive is not None:
+            plan["budget"].update(mode="tripod_bilateral_measured_distal_contact", soft_wall_seconds=600)
+    return plan, config, archived, waypoint, precontact, distal_archive, bilateral_archive
 
 
 def main(argv=None):
@@ -266,10 +326,12 @@ def main(argv=None):
     parser.add_argument("--precontact-screen", type=Path)
     parser.add_argument("--distal-reference", type=Path)
     parser.add_argument("--distal-screen", type=Path)
+    parser.add_argument("--bilateral-reference", type=Path)
+    parser.add_argument("--bilateral-screen", type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(screen.ROOT)
-    plan, config, archived, waypoint, precontact, distal_archive = freeze(args)
+    plan, config, archived, waypoint, precontact, distal_archive, bilateral_archive = freeze(args)
     from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
 
     assert_clean_import_boundary()
@@ -286,6 +348,8 @@ def main(argv=None):
     args.measure_contact_evidence = False
     sdk_end = plan["budget"]["sdk_steps"]
     distal = None if distal_archive is None else dict(plan["right_tripod_distal_contact"], archive=distal_archive)
+    if bilateral_archive is not None:
+        distal["bilateral"] = dict(plan["bilateral_tripod_contact"], archive=bilateral_archive)
     reset.execute(plan, acquire_operation=partial(shared.run_shared, profile=BackendProfile.load(screen.ROOT),
         args=args, supported_acquire=partial(supported.acquire_supported_reset, config=config, sdk_end=sdk_end,
         task="tripod"), sdk_end=sdk_end, require_no_hand_contact=True, task="tripod", tripod_archive=archived,

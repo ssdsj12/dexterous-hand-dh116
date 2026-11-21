@@ -1,3 +1,7 @@
+## Tripod bilateral distal contact continuation
+
+Replay right contact then allow a guarded measured two-stage left closure. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-bilateral-distal-continuation.md).
+
 ## Pinch right first contact native result
 
 Record actual opposed reactions and insufficient normal loads during supported two-pad contact. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-right-first-contact-native.md).
