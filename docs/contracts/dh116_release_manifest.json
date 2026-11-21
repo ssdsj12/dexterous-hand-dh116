@@ -32455,6 +32455,31 @@
         "verified_at_utc": "2026-11-21T23:29:06.497277+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.static-manifest-handoff",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-static-manifest-handoff.md",
+      "readiness": "docs/contracts/dh116_static_manifest_handoff_v1.json",
+      "cpu_tests": {
+        "passed": 230,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "d893feed75d255ffaf55141ed4f3f991f90498b7",
+        "source_tree": "cbc4b0485b68d666764e89702aea66c3a444659b",
+        "remote_branch": "11-17",
+        "files_verified": 15,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T23:49:21.033128+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }

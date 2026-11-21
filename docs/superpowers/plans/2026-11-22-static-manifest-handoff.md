@@ -8,4 +8,4 @@
 - [x] Extract common private preflight body/return; preserve public report and independent builder/source/live full verify calls.
 - [x] Prove exact object handoff, reject changed test-owned file on the next call; run public preflight/session regressions.
 - [x] Measure full static contract before/after in alternating CPU runs; report exact scope, no native claim.
-- [ ] Freeze current recipe, run regressions, report/Registry/readiness, protection and Windows same-commit publication.
+- [x] Freeze current recipe, run regressions, report/Registry/readiness, protection and Windows same-commit publication.
