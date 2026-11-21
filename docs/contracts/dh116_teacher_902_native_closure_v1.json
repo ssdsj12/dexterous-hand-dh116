@@ -1,7 +1,7 @@
 {
   "version": "dh116-teacher-902-native-closure-v1",
   "base_head": "3d704bc26b7614cf98426772a07ea9a6020a66d9",
-  "status": "launch_environment_fixed_native_closure_pending",
+  "status": "blocked_native_three_pad_contact_incomplete",
   "cpu_tests": {
     "passed": 242,
     "failed": 0,
@@ -44,7 +44,7 @@
     "auto_retries": 0,
     "auto_kill": false
   },
-  "native_runs": 0,
+  "native_runs": 1,
   "force_qualified": false,
   "grasp_qualified": false,
   "teacher_admission": false,
@@ -55,11 +55,11 @@
     "last_optional_hash_strengthening_reread": false
   },
   "next": [
-    "Seal only after all Windows publication/manifest updates",
-    "One serial bounded actual closing/contact ledger, preserve guard failure and native stack",
-    "Record per-pad load, opposition and next-step issued reaction without granting 5s Hold or Teacher qualification"
+    "Review bounded whole-envelope certificate fallback without changing the 0.15mm threshold",
+    "Diagnose missing right index contact under actual force/tracking; preserve original hand/rod mechanics",
+    "Only qualify three-pad fixed-wrist hold after a new guarded actual receipt; no Lift/Teacher promotion"
   ],
-  "launch_attempts": 1,
+  "launch_attempts": 2,
   "launch_rejection": {
     "head": "1a1ed3e5c27323bb52ed45a64ac54a3b36ed3182",
     "frozen_sha256": "0ad0f0a7b728f56ee2a7a485da71a8475d33836b99bb37cb1e3d9960645ce1a3",
@@ -79,5 +79,58 @@
     "actual_bad_environment_rejected_in_seconds": 2.9464935280848294,
     "strict_identity_preserved": true,
     "full_postproof_guard_preserved": true
+  },
+  "native_result": {
+    "head": "ee037586b920eef62a21482230834f0cb3627637",
+    "frozen_sha256": "9545f8adfbb592b93ed3c10c739dc60940dd7ce437556e73bd1394989eb49895",
+    "exit_code": 1,
+    "signal": null,
+    "forced_exit": false,
+    "elapsed_s": 221.22277321200818,
+    "sdk_steps": 765,
+    "completed_solver_ticks": 9144,
+    "complete_control_rows": 524,
+    "first_contact_sdk": 746,
+    "first_reaction_transfer_sdk": 747,
+    "reaction_transfer_rows": 18,
+    "station_violations": 0,
+    "right_pad_normal_load_n": {
+      "thumb": 0.1860691655103506,
+      "index": 0.0,
+      "middle": 0.20360967308098474
+    },
+    "right_total_normal_load_n": 0.38967883859133534,
+    "three_pad_loaded_rows": 0,
+    "zero_action_feedback_seconds": 0.025,
+    "guard_sdk": 765,
+    "guard_link": "right.finger14_link",
+    "guard_reason": "full_envelope_unresolved",
+    "guard_lower_m": -0.00015021097269733762,
+    "original_contact_limit_m": 0.00015,
+    "natural_cleanup_completed": true,
+    "raw_artifact_count": 1315,
+    "outer_receipt_sha256": "1994a06aa8d224feec783e4e9dcd5213ff4ffbacf6d03cd063d0a940a24ad31d",
+    "analysis_sha256": "022b653849309b4b4d75461c5e764f5b09d51a45a9f556dc2c8bbb17f6fc57a5",
+    "native_log_sha256": "9084bf04df1f16acc03927fe53a289a41dc27756c35f2b15081c921720ea8b80",
+    "supports_still_loaded": true,
+    "grasp_qualified": false,
+    "teacher_admission": false,
+    "ppo_updates": 0,
+    "postrun_cpu_tests": {
+      "passed": 122,
+      "failed": 0,
+      "seconds": 19.28,
+      "log_sha256": "df2eb3f3194b3d6818427026112ecf5965aec13bfc4fa063cafd4fd80d4e3e17"
+    }
+  },
+  "offline_guard_inspection": {
+    "scope": "single recorded whole 3-node envelope at SDK765; no runtime change",
+    "lower_m": -0.00014676834014949302,
+    "upper_m": -0.00014676823339416622,
+    "bound_width_m": 1.0675532680082256e-10,
+    "data_sha256": "ac1417ba8f2565610c0e219891445bc9d68f50903d384d4ba8f70792e69133d2",
+    "antigravity_review": "unavailable_baseline_model_quota_reached",
+    "native_pass": false,
+    "proposed_runtime_fallback_implemented": false
   }
 }

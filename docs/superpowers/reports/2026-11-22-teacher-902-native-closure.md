@@ -40,3 +40,28 @@ The private launcher now preserves the original environment and asserts the comp
 Old attempt/receipt remain immutable outside Git. The old fingerprint will not be retried. Publish and seal a new corrected-version fingerprint before the next single bounded physical diagnostic. The diagnostic budget and all physical/success gates remain unchanged.
 
 Launch correction Registry regression: 60 passed, 0 failed, 14.83s. The original 242-case physical-helper regression is retained separately from this 62-case entry regression.
+
+## Actual corrected-version native run (not passed)
+Executed HEAD ee037586b920eef62a21482230834f0cb3627637 / frozen 9545f8adfbb592b93ed3c10c739dc60940dd7ce437556e73bd1394989eb49895. Source-equivalent commits were imported/pushed through Windows before freezing. One GPU2 instance, zero Teacher queries/model loads/PPO updates, no retry.
+
+Actual: 2 SDK initialization + 238 settling + 524 completed controlled physical steps, then one SDK step rejected before the next rod solve = SDK765. Last complete SDK764 has rod tick9144. 65 complete control windows plus4 substeps of the next window completed; only12 zero-action feedback physical steps (0.025s), not the planned16 windows, and not the required5s Hold. Raw 1315-file inventory count is recorded exactly in readiness; every raw artifact was rehashed against the outer receipt.
+
+| Actual right pad | First nonzero SDK | Final normal load N |
+|---|---:|---:|
+| thumb | 761 | 0.1860691655 |
+| index | none | 0 |
+| middle | 746 | 0.2036096731 |
+
+Total final normal load0.3896788386N. First nonzero reaction from SDK746 was delivered at747;18 nonzero reaction rows were checked through764. Unexpected station violations0. Neither hand has any three-pad loaded row; left remains stationary/unloaded by design. Both support pairs still carry load. Final right active target errors: finger11 -0.0018860698rad, finger12 -0.0001000091rad, finger21 -0.0005604029rad, finger31 -0.0008732677rad; measured max abs qd0.04116419rad/s. These are physical feedback/tracking measurements, not proof of complete gripping.
+
+Guard SDK765: right.finger14_link, original complete source-envelope bound -0.1502109727mm against the selected-pad -0.1500000000mm floor. Reason is full_envelope_unresolved (two segment directions did not certify the whole group), not a certified physical-penetration conclusion. The generic non-distal clearance limit in the same file is a different0.25mm contract; it was NOT used to relax the selected-pad floor.
+
+A separate offline inspection used ALL original source vertices and ALL three nodes of the failing convex group, with feasible convex witnesses and full support bounds. Lower/upper -0.1467683401/-0.1467682334mm (width1.068e-10m) certify this one recorded snapshot inside the original floor. It does not certify future physical steps, repair index contact, or retroactively pass this failed run. No runtime fallback or threshold change was applied. A proposed full-group direction fallback awaits review/tests; Antigravity currently reports baseline model quota reached. No billing/model/access change was made.
+
+Lifecycle: app.close returned normally; outer/GDB inferior exited1 because the diagnostic was incomplete, no signal/SIGSEGV, no SIGTERM/SIGKILL/timeout/forced exit. Total outer wall221.223s. GPU2 returned to9MiB and single-instance lock released. This proves cleanup for this run only.
+
+Reproduce evidence: private folder ref902/execution-closure-native-context-fixed under the audit evidence root; argv.json stores the complete entry command and freeze.log stores the exact fingerprint. run-joint-closure-context-fixed.py is the one-shot outer launcher; native-analysis.json and whole-group-offline-bound.json are derived, while native/tripod_control_241..764.json, tripod_geometry_guard_765.json and outer.json remain raw immutable evidence. None of the raw data/logs/maps entered Git.
+
+Next: preserve blocked contact status; review whole-convex certificate refinement without reducing the original domain or threshold, then address actual index-pad gap/force tracking. No Lift, native success, full state/Teacher/PPO/BC/DAgger promotion is granted. Pinch and Power require their own physical evidence.
+
+Post-run related CPU plus Registry regression: 122 passed,0 failed,19.28s. Verified all1315 raw artifacts against outer receipt SHA values; no raw artifacts were uploaded.

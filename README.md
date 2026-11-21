@@ -3717,3 +3717,5 @@ Tripod 右手独立跟踪实现与回归见 [运行边界报告](docs/superpower
 - 2026-11-22: wired a source-separated SDK240-to-contact diagnostic with original guards and measured reaction priming; fixed exact held-axis compilation. 242 related CPU tests passed; actual closure not yet run. See [docs/superpowers/reports/2026-11-22-teacher-902-native-closure.md](docs/superpowers/reports/2026-11-22-teacher-902-native-closure.md).
 
 Teacher 902 launch update: approved execution context is rejected early with explicit differences; the first closing launch consumed zero physical steps. Actual contact/force and Teacher qualification remain pending.
+
+Actual Tripod closing: thumb/middle force and next-step reaction observed; index remains unloaded and SDK765 full-envelope guard stops the run. Natural exit1, no SIGSEGV. This is not a successful three-pad grasp, Lift, Hold, or trained Teacher.
