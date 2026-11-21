@@ -30363,6 +30363,31 @@
         "verified_at_utc": "2026-11-21T07:02:04.054306+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-guarded-waypoint-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-waypoint-native.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_waypoint_native_v1.json",
+      "cpu_tests": {
+        "passed": 87,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a662a8f82c0fd0c78f10f38a7647c3f33d47b9ec",
+        "source_tree": "570f030d0b0b0359d5e947130cbd127576ae089a",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T07:14:39.455727+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
