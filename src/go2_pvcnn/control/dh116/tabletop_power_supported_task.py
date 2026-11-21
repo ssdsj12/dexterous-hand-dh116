@@ -9,17 +9,18 @@ from .tabletop_power_shared_rod import END_SUPPORT_NAMES, SIDES
 
 POWER_SCOPE = "power_end_supported_contact_diagnostic"
 TRIPOD_SCOPE = "tripod_end_supported_contact_diagnostic"
+PINCH_SCOPE = "pinch_end_supported_contact_diagnostic"
 
 
 def prepare_initial_state(config, table, *, expected_scope=POWER_SCOPE):
     """Bind an independent pose to the free rod, support boxes and original Reset."""
     nodes = np.asarray(config["rod_nodes_w_m"], dtype=np.float32)
-    if (expected_scope not in (POWER_SCOPE, TRIPOD_SCOPE) or config["scope"] != expected_scope
+    if (expected_scope not in (POWER_SCOPE, TRIPOD_SCOPE, PINCH_SCOPE) or config["scope"] != expected_scope
             or config["physics_qualified"] is not False
             or config["fixed_rod_nodes"] != []
             or config["gravity_w_m_s2"] != [0., 0., -9.81]
             or nodes.shape != (41, 3) or not np.isfinite(nodes).all()):
-        label = "Power" if expected_scope == POWER_SCOPE else "Tripod"
+        label = {POWER_SCOPE:"Power", TRIPOD_SCOPE:"Tripod", PINCH_SCOPE:"Pinch"}.get(expected_scope, "supported")
         raise ValueError(f"explicit unqualified free {label} rod and real gravity required")
     support = config["support_scene"]
     boxes = support["supports"]

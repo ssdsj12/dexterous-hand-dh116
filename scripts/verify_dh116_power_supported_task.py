@@ -31,7 +31,7 @@ def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_
     from go2_pvcnn.control.dh116.tabletop_palm_mount import MountView
     from go2_pvcnn.control.dh116.tabletop_power_shared_rod import END_SUPPORT_NAMES
     from go2_pvcnn.control.dh116.tabletop_power_supported_task import (
-        POWER_SCOPE, TRIPOD_SCOPE, assemble_supported_scene, guard_hand_supports, prepare_initial_state,
+        POWER_SCOPE, TRIPOD_SCOPE, PINCH_SCOPE, assemble_supported_scene, guard_hand_supports, prepare_initial_state,
     )
     from ropesim import sdf
     from scripts import audit_dh116_pinch_initial_pose as geometry
@@ -40,7 +40,7 @@ def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_
     from scripts.verify_dh116_dual_pinch_interval import diagnostic_reset_owners
 
     hand = hands = scene = original = pad_bindings = mount_bindings = episode = value = None
-    scopes = {"power": POWER_SCOPE, "tripod": TRIPOD_SCOPE}
+    scopes = {"power": POWER_SCOPE, "tripod": TRIPOD_SCOPE, "pinch": PINCH_SCOPE}
     if task not in scopes or native.clock(sim)["sdk_step"] != 0:
         raise ValueError("fresh App-owned supported task scene required")
     try:

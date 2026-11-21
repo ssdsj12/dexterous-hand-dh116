@@ -93,7 +93,7 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
         for hand, body, vertices in clearance_shapes:
             world = rotated_points(frame_poses[0, hand, body], vertices)
             if any(support_clearance_lower(world, low, high) <= 1e-10 for low, high in boxes):
-                raise ValueError("live Tripod source envelope intersects a support")
+                raise ValueError("live original hand source envelope intersects a support")
             if tube is not None and separation(world, *tube) <= .00025:
                 raise ValueError("live Tripod source envelope lost its staged rod clearance")
     if native.clock(sim)["sdk_step"] != sdk:
@@ -371,13 +371,15 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
     episode = original = power = bindings = composers = binding = scoped_owners = None
     setup = support_options = None
     try:
-        if (task not in ("power", "tripod")
+        if (task not in ("power", "tripod", "pinch")
+                or (task == "pinch" and (supported_acquire is None or action_after_settle is not None
+                    or not require_no_hand_contact or live_support_scene is None))
                 or (task == "power" and (tripod_archive is not None or waypoint_archive is not None))
                 or (waypoint_archive is not None and tripod_archive is None)
                 or (task == "tripod" and
                 (supported_acquire is None or not require_no_hand_contact or live_support_scene is None
                  or (action_after_settle is None) != (tripod_archive is None)))):
-            raise ValueError("separate Tripod static support diagnostic required")
+            raise ValueError("exact separate supported-task acquisition required")
         if action_after_settle is not None and (supported_acquire is None or not require_no_hand_contact):
             raise ValueError("Power action must follow the measured hands-clear support interval")
         if supported_acquire is None:

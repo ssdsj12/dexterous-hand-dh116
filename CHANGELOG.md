@@ -1,3 +1,7 @@
+## Pinch supported flexible rod Reset preparation
+
+Add an independent supported free-rod seed based on measured bilateral Pinch contact stations. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-supported-reset.md).
+
 ## Tripod guarded waypoints native result
 
 Record measured motion, remaining fingertip clearances, support reactions, and natural exit. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-waypoint-native.md).
