@@ -29313,6 +29313,31 @@
         "verified_at_utc": "2026-11-21T03:07:20.380917+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Pinch native fresh PPO A v2",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-actual-resume-pair-a-v2.md",
+      "readiness": "docs/contracts/dh116_teacher_actual_resume_pair_a_v2.json",
+      "cpu_tests": {
+        "passed": 67,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "e8e6d6fbb18f367e5a3f7d67117e0262538ee51d",
+        "source_tree": "0fd9145a538ff4c82ea4c5f3c6aa2046b825fadb",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T03:14:41.705978+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
