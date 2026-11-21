@@ -31563,6 +31563,31 @@
         "verified_at_utc": "2026-11-21T15:12:24.043746+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher-902-tracking-reserve",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-tracking-reserve.md",
+      "readiness": "docs/contracts/dh116_teacher_902_tracking_reserve_v1.json",
+      "cpu_tests": {
+        "passed": 278,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b060458ba2133bbb4383bbe1cfccc94f7997763a",
+        "source_tree": "8b6e6aa32117a60500b889601942afa21ae971f6",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T15:30:10.164942+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
