@@ -1,3 +1,7 @@
+## Power first solver exchange after Reset
+
+Preserve the measured stationary Reset at solver entry and reproduce the false pre-Reset collider sweep in an isolated CUDA replay. [Report](docs/superpowers/reports/2026-11-21-teacher-power-reset-solver-sweep.md).
+
 ## Power near-open support settling
 
 Add an independent rotated and opened Reset with separate verified clearance for both hands on the archived rod curve. [Report](docs/superpowers/reports/2026-11-21-teacher-power-near-open-settle.md).

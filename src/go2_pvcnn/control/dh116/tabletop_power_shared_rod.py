@@ -276,7 +276,7 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         self._needs_reset=False
         return deepcopy(self._decorate(row))
 
-    def step(self, pad_poses, centers_of_mass, *, physics_step):
+    def step(self, pad_poses, centers_of_mass, *, physics_step, stationary_reset_poses=None):
         if self._needs_reset:
             raise RuntimeError("valid fresh reset required before another step")
         b=self._base
@@ -294,10 +294,22 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         try:
             if before!=self._last_solver_time:
                 raise ValueError("solver time changed outside the owned exchange")
+            stationary_first = stationary_reset_poses is not None
+            if stationary_first:
+                if self.mesh_names != SUPPORTED_POWER_MESH_NAMES or b.rod_tick != 0:
+                    raise ValueError("a stationary first exchange requires the fresh supported Reset")
+                reset_poses = _poses(stationary_reset_poses, self.bindings)
+                for name, (pos, quat) in poses.items():
+                    reset_pos, reset_quat = reset_poses[name]
+                    quat_gap = min(np.linalg.norm(quat-reset_quat), np.linalg.norm(quat+reset_quat))
+                    if np.linalg.norm(pos-reset_pos) > 1.e-6 or quat_gap > 5.e-6:
+                        raise ValueError(f"stationary first exchange moved {name} beyond readback precision")
             b.physics_step=physics_step  # SDK has already advanced in the caller.
             for slot,name in enumerate(self.mesh_names):
                 if name in self.bindings:
-                    self.rope.set_mesh_poses(slot,*poses[name],teleport=False)
+                    # DeformX consumes pending teleports when it starts a solver step.
+                    # Replacing that flag with False here sweeps from the pre-Reset pose.
+                    self.rope.set_mesh_poses(slot,*poses[name],teleport=stationary_first)
             previous_tick=b.rod_tick
             b.rod_tick=None  # A throwing solver call has unknown partial progress.
             self.rope.step_free(DT,b.cfg["rod"]["solver_substeps"])

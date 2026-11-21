@@ -36,6 +36,55 @@ def test_attach_both_palms_and_supports_after_original_reset_once(monkeypatch):
     assert len(caps) == 1 and len(base.rope.slots) == 15
 
 
+@pytest.mark.parametrize("first_motion_m", [0., 2.e-6])
+def test_supported_stationary_first_step_never_sweeps_the_queued_reset(monkeypatch, first_motion_m):
+    original, base, bindings, poses, _ = runtime(monkeypatch, pairs=True)
+    original.require_pairs = True
+    original.reset(physics_step=2, episode_uid="stationary-cpu:0", reset_id=1, pad_poses=poses)
+    palms = {f"{side}.base_link": dict(bindings[f"{side}.finger14_link"],
+        body_name="base_link", body_index=6, prim_path=f"/World/{side}Hand/base_link")
+        for side in power.SIDES}
+    identity = (np.zeros(3), np.array([0., 0., 0., 1.]))
+    base.rope.enable_contact_pair_capture = lambda capacity: None
+    attached = power.PowerSharedRodRuntime.from_original_reset(original,
+        palm_bindings=palms, palm_grids={key:Grid() for key in palms},
+        palm_poses={key:identity for key in palms}, expected_clock=original.clock(),
+        support_grids={key:Grid() for key in power.END_SUPPORT_NAMES},
+        support_poses={key:identity for key in power.END_SUPPORT_NAMES})
+    reference = {**poses, **{key:identity for key in palms}}
+    readback = dict(reference)
+    key = "left.finger53_link"
+    pos, quat = reference[key]
+    readback[key] = (pos + [first_motion_m, 0., 0.], -quat)
+    centers = {name:value[0] for name,value in readback.items()}
+    indices = np.array([[step, 0, slot] for step in range(12) for slot in (0, 6)])
+    vectors = np.zeros((24, 12))
+    vectors[:, 5] = 1.
+    vectors[:, 8] = np.tile([1., 2.], 12)
+    base.rope.contact_pair_samples = lambda: dict(substeps=12, mesh_count=15,
+        capacity=len(base.nodes)*15*12, attempted=24, overflow=False,
+        indices=indices, vectors=vectors, node_forces_on_rod_world_n=base.rope.force[0],
+        mesh_wrenches_on_mesh_world=base.rope.wrenches[0])
+    base.rope.poses.clear()
+    if first_motion_m:
+        with pytest.raises(ValueError, match="stationary first"):
+            attached.step(readback, centers, physics_step=3, stationary_reset_poses=reference)
+        assert base.rope.steps == 0
+        assert not base.rope.poses
+        return
+
+    attached.step(readback, centers, physics_step=3, stationary_reset_poses=reference)
+    assert len(base.rope.poses) == 12 and all(p[3] for p in base.rope.poses)
+    assert base.rope.steps == 1
+    base.rope.poses.clear()
+    attached.step(readback, centers, physics_step=4)
+    assert len(base.rope.poses) == 12 and all(not p[3] for p in base.rope.poses)
+    assert base.rope.steps == 2
+    with pytest.raises(ValueError, match="fresh supported Reset"):
+        attached.step(readback, centers, physics_step=5, stationary_reset_poses=reference)
+    assert base.rope.steps == 2
+
+
 def test_native_support_guard_rejects_one_micrometre_intrusion():
     from go2_pvcnn.control.dh116.tabletop_power_supported_task import guard_hand_supports
 

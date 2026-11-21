@@ -238,13 +238,18 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             expected_clock=clock, **(support_options or {})))
         if power.rope is not original.rope or power.clock() != clock:
             raise ValueError("the shared rod or its reset boundary changed")
+        stationary_near_open = getattr(args, "verify_near_open_settling", False)
+        if stationary_near_open and (supported_acquire is None or not require_no_hand_contact
+                                     or action_after_settle is not None):
+            raise ValueError("stationary Reset binding is restricted to the near-open settling diagnostic")
         nodes = len(power._base.nodes)
         capacity = nodes * len(power.mesh_names) * SUBSTEPS
         if scoped_owners is not None and scoped_owners.allocated_capacity != capacity:
             raise ValueError("the single original allocation must cover all Power mesh pairs")
         native.write_new(output/"power_binding.json", dict(reset_clock=clock, added=added, mesh_names=power.mesh_names,
                          rods_per_env=1, solver_steps_before_registration=0, solver_steps_after_registration=0,
-                         pair_capacity=capacity, supported_task=supported_acquire is not None))
+                         pair_capacity=capacity, supported_task=supported_acquire is not None,
+                         stationary_first_solver_exchange=stationary_near_open))
         composers = {side:bindings[side].hand.permanent_wrench_composer for side in SIDES}
         links = contact_links(power.bindings)
         to_tensor = partial(torch.as_tensor, dtype=torch.float32, device="cuda:0")
@@ -270,7 +275,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 binding.hand.update(DT)
                 hand_safety(binding)
             poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk)
-            row = power.step(poses, centers, physics_step=sdk)
+            stationary_reset_poses = first_poses if stationary_near_open and before_sdk == 2 else None
+            row = power.step(poses, centers, physics_step=sdk, stationary_reset_poses=stationary_reset_poses)
             native_joint_state = None
             if supported_acquire is not None:
                 from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import _owned
@@ -293,7 +299,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                     peak_support_loads[name] = max(peak_support_loads[name], float(np.linalg.norm(wrench[:3])))
             native.write_new(output/f"power_exchange_{sdk}.json", encode_owned(dict(
                 route=route, native_joint_state=native_joint_state, preceding_reaction_sdk_step=before_sdk if before_sdk>2 else None,
-                clearance_m=clearance, rod=row, hand_link_poses=poses, hand_link_coms=centers)))
+                clearance_m=clearance, rod=row, hand_link_poses=poses, hand_link_coms=centers,
+                stationary_reset_pose_bound=stationary_reset_poses is not None)))
             if args.measure_contact_evidence:
                 evidence = measure_power_contact(row)
                 native.write_new(output/f"power_contact_{sdk}.json", evidence)

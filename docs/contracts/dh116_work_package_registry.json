@@ -45758,6 +45758,31 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-reset-solver-sweep-repair": {
+      "title": "Preserve the actual stationary Power Reset pose for the first solver exchange",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-near-open-settle-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_end_supported_rod.py",
+        "tests/test_dh116_flexible_physical_exchange.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_reset_solver_sweep_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-reset-solver-sweep.md",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "cpu_and_cuda_solver_only_replay_from_failed_native_attempt",
+        "passed": 153,
+        "failed": 0,
+        "near_open_native_failed": true,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
