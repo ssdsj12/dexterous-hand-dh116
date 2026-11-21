@@ -545,7 +545,7 @@ def live_preflight(owner, reset_contract, *, backend_profile, manifest):
     from .tabletop_deformable_r0_replay import decode_owned
     from .tabletop_teacher_mounted_wrist_source import validate_mounted_observation
     from .tabletop_bilateral_r0_approach import BilateralMeasuredPinchApproach
-    from .tabletop_r0_health_separation import capture_solver_health
+    from .tabletop_native_teacher_solver_health import capture_teacher_solver_health
     from .tabletop_deformx_parameter_snapshot import validate_snapshot
     c = reset_contract
     if (getattr(owner, "rod", None) is not c.rod or getattr(owner, "sim", None) is not c.sim
@@ -617,8 +617,8 @@ def live_preflight(owner, reset_contract, *, backend_profile, manifest):
         distance = c.distance_reader.capture_reset(receipt, c.parameter_packet, grasp=data["style"])
         if distance["missing_reason"] is not None:
             raise ValueError("actual bilateral Reset distance unavailable")
-        health = capture_solver_health(c.rod, backend=sys.modules["ropesim._ropesim"], sim=c.sim,
-                                       expected_clock=clock["rod"])
+        health = capture_teacher_solver_health(c.rod, backend=sys.modules["ropesim._ropesim"], sim=c.sim,
+                                               expected_clock=clock["rod"], grasp=data["style"])
         if health["last_error"] != 0:
             raise ValueError("actual native numerical health is not zero")
         if reset._clock(c.sim, c.rod) != clock:

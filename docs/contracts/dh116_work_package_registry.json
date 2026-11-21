@@ -48503,18 +48503,91 @@
       "evidence_scope": "tripod_actual_fresh_smoke8_v3",
       "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v3.json",
       "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Frozen one-shot diagnostic; requires exact current native batch and live resource reservation; no grasp qualification.",
+      "blocker_kind": "failed_native",
+      "reason": "Source getter and source health0 passed; live_preflight still called legacy exact11 health reader. Two SDK setup steps, no control/update; fault-path release unverified, exit1 without signal. Fingerprint consumed.",
       "dependencies": [
         "teacher.tripod-fresh-reset-native-validation",
         "teacher.tripod-supported17-health"
       ],
       "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v3.md",
       "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v3.json",
-      "native_runs": 0,
+      "native_runs": 1,
       "actual_launch": {
         "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v3.json",
         "sha256": "f86a37c442c5f4bd9563a235ca46396740fe08474718464a249a07cef2733a1a"
+      },
+      "last_result": {
+        "exit_code": 1,
+        "debugger_inferior_signal": null,
+        "sdk_steps": 2,
+        "control_steps": 0,
+        "solver_calls": 0,
+        "ppo_updates": 0,
+        "attempt_fingerprint": "f2940452d2ec5e30e38767ccb522fd47d649c62054208eb54ec6d9d7addbecec",
+        "code_config_sha256": "56c12aba6d5bceedba28d8b2d649967a121aceaa4128b9309ab7af06e8b4d2c4",
+        "result_sha256": "b49862d2a009841cea0084e1652bc7961356178d29b18b853528dcd48313950d",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false
+      },
+      "dependency_scopes": {}
+    },
+    "teacher.tripod-live-health-routing": {
+      "title": "Unify actual source and live preflight health dispatch without changing legacy reader",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-supported17-health"
+      ],
+      "tests": [
+        "tests/test_native_teacher_tripod_live_preflight.py",
+        "tests/test_native_teacher_tripod_admission.py",
+        "tests/test_native_teacher_preflight.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_r0_numerical_health_source.py",
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_live_health_routing_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-live-health-routing.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 259,
+        "cpu_failed": 0,
+        "new_tests": 1,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU actual live_preflight dispatch and current v4 recipe; v3 failed before policy"
+      }
+    },
+    "teacher.tripod-ppo-fresh-smoke8-v4": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Independent Tripod fresh17 smoke8 actual PPO diagnostic",
+      "evidence_scope": "tripod_actual_fresh_smoke8_v4",
+      "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v4.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Frozen one-shot diagnostic; requires exact current native batch and live resource reservation; no grasp qualification.",
+      "dependencies": [
+        "teacher.tripod-fresh-reset-native-validation",
+        "teacher.tripod-live-health-routing"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v4.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v4.json",
+      "native_runs": 0,
+      "actual_launch": {
+        "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v4.json",
+        "sha256": "af864332e276e6d9fbe0732f6d39b60509bf8aa85beb68c7e5f61a9a135b9a2a"
       }
     }
   },

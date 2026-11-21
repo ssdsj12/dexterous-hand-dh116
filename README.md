@@ -1,3 +1,7 @@
+## Tripod live health dispatch
+
+Actual v3 reached native reset_sources with solver health0, then stopped at a second legacy reader in live_preflight. Both Teacher paths now share the exact supported17 adapter;124 selected CPU tests pass. Independent v4 remains unexecuted; no native PPO or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-live-health-routing.md).
+
 ## Tripod supported17 health adapter
 
 The second native attempt stopped at an old runtime type gate:2 SDK steps,0 controls/solver/PPO,exit1 without SIGSEGV. A Teacher-only17-slot getter adapter now retains the sealed legacy health source, with95 CPU tests passing. Independent v3 is frozen and remains unexecuted. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-supported17-health.md).

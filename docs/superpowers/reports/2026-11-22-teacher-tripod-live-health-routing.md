@@ -1,0 +1,44 @@
+# Tripod来源与准入健康读取统一
+基线bbf50d44f4c0f3f08d9fd89fe6c65c6f52f49fd6；不改PPO、物理、初始姿态或成功标准。
+
+## v3真实结果
+包teacher.tripod-ppo-fresh-smoke8-v3，指纹f2940452d2ec5e30e38767ccb522fd47d649c62054208eb54ec6d9d7addbecec。
+实际2个SDK初始化步、1次零步Reset，控制/solver/PPO均0；154.875009s，外层和inferior exit1、signal=null；无强制结束。
+回执SHA b49862d2a009841cea0084e1652bc7961356178d29b18b853528dcd48313950d。
+本次真实reset_sources首次写出：参数scope=native_getter，source health scope=native_getter，last_error=0；
+六指腹Reset距离每手均值分别0.0019469666294753551m和0.009661120673020681m。
+这些是初始几何间隙与数值状态，不是接触力或抓取成功；尚无策略动作或Checkpoint。
+随后live_preflight第620行仍直接调用封存旧health读取器，触发旧exact11类型拒绝。前一包只修复了来源层，遗漏了这个独立准入入口。
+故障关闭app.close返回，但release审计false、无shutdown_complete，不能计自然exit0或生命周期通过。
+全部原始账本、Python栈、外层退出和PID/锁记录保留；已确认进程终止，没有同指纹重跑。
+
+## 实际修改
+tabletop_native_teacher_preflight.live_preflight改用capture_teacher_solver_health，并传入真实immutable manifest中的style。
+来源层与准入层现共用同一独立typed helper；Teacher链中只剩该helper的Pinch分支调用旧capture_solver_health。
+保留全部原SDK/参数/共用状态/数值Reset/mesh/原生后端/时钟检查，非零last_error仍拒绝。
+未删除重复读取或直接相信reset_sources中的旧值，准入层仍独立重新读getter。
+封存健康模块SHA保持50ddb2b2f8b4491765df7651ee3c0cfaa58b9a54ea883e5d5b5888be913f6285。
+
+## CPU证明的范围
+新增test_native_teacher_tripod_live_preflight：使用v3 SHA绑定原始Reset/numeric/parameters的只读副本、真实PythonPowerSharedRodRuntime构造和41节点/17槽；
+直接调用live_preflight，以实际typed健康实现覆盖0与4，拒绝非零值且无新步。
+此路由案例明确替代前置硬件I/O校验边界，不是完整原生来源准入证明。返回的native_qualification与teacher_admission始终false。
+初版夹具猜测第41项padding quaternion造成更早失败，已改为直接使用记录中的全部41项数值状态；未改物理数据或padding资格。
+随后测试在旧health类型guard处按预期失败；修复路由后用例与Tripod admission、原Preflight/Session/Health共124通过、0失败（138.56s）。
+Source层/独立helper已有上一包95项CPU证明与本次真实health0证据，但不把这些合并计为PPO成功。
+
+## 独立v4冻结
+v1–v3均保留失败配方与回执，各自blocked。v4使用新源码/配置指纹：
+8847d62d8c9aab49adcdfd1fd360c7b42f5f3724475bbb32112086eabc139f4e。
+560文件闭包SHA ecc68f7a46ccaf63a3bb2c44955f42bb0b27fe91bcc9d8db0447bdf76ecd2b35，
+包含本次真实live_preflight路由回归。
+配置内容SHA602f0299625b17207fd0137ac52c84c9abf394679cf8575dec3ce013a60d0f7c不变。
+预算保持GPU3单实例、1环境、8控制、2+64SDK、768solver内部子步、1更新、内180s/外240s；
+未调动作std、原关节范围、Mimic、SDF、资产、USD、双RGB或物理。R2/ForceProxy关闭。
+v4尚未原生执行；必须使用其独立私有预算记录，经Windows发布同commit并核对资源后单次启动。
+只有完整原生更新、Checkpoint及外层自然exit0经独立重算通过后，才允许基于真实A回执创建B恢复。
+所有smoke回合都不能进入完整成功专家池；30mm/5s/0.5mm仍未获完整抓取证明。
+Antigravity额度仍不可用，无本包新审查回复。下一包优先完成v4真实动作/更新与退出验证，其他抓法独立推进。
+
+
+当前v4配方/启动/合同/Registry回归135通过、0失败（33.81s），与124项不重叠，共259项。528保护文件与3份历史Checkpoint复验原SHA不变。

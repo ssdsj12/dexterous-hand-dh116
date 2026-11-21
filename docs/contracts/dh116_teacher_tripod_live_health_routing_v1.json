@@ -1,0 +1,113 @@
+{
+  "version": "dh116-teacher-tripod-live-health-routing-v1",
+  "base_head": "bbf50d44f4c0f3f08d9fd89fe6c65c6f52f49fd6",
+  "status": "cpu_live_preflight_dispatch_ready_native_v4_pending",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_preflight.py": "cd1ed7f1d5057717c5c802a3755427f90d27e226dd69f9e3663caf0de5317861",
+    "tests/test_native_teacher_tripod_live_preflight.py": "8e40b9b1ab1f1aa58496b629bf422f3f04f0fa71f0e03f2ba8677a551174dbbe",
+    "tests/test_native_teacher_tripod_frozen_worker.py": "a2b7318cdb90398931fd7244921ba1dd346c7be527ec3f720d2336687bcef52a"
+  },
+  "cpu": {
+    "passed": 259,
+    "failed": 0,
+    "new_tests": 1,
+    "seconds": 138.56,
+    "scope": "Two disjoint file groups:124 live routing/admission/preflight/session/health checks and135 current frozen recipe/launch/worker-contract/Registry; no revised native run",
+    "tests": [
+      "tests/test_native_teacher_tripod_live_preflight.py",
+      "tests/test_native_teacher_tripod_admission.py",
+      "tests/test_native_teacher_preflight.py",
+      "tests/test_native_teacher_session.py",
+      "tests/test_r0_numerical_health_source.py"
+    ],
+    "log_sha256": {
+      "tripod-live-preflight-route-red.log": "f8ad0f95a96be8909bc394cd44cc497170867f88bc733008432d15b9e664e89d",
+      "tripod-live-preflight-route-red-2.log": "9a991c341eb06ad77c43de28631e8349dd0c7dd13bd4c81a09578435be4cd0c0",
+      "tripod-live-preflight-route-green.log": "2e0abe1d92602b3c070740789c38c956c5ede9ce3a28b95b23f3e8e2d3443b32",
+      "tripod-frozen-worker-v4-red.log": "7d45bff2327e116365d896c6e64221046ea9080d52ff9ec0d4f8b2c8eee2a93e",
+      "tripod-smoke8-freeze-recipe-v4.log": "22a47ecfa3c60f7c5383a71e76770cfcd6eda6774af1cb125a50904fe52e59d0"
+    },
+    "frozen_recipe_passed": 135,
+    "frozen_recipe_failed": 0,
+    "frozen_recipe_seconds": 33.81,
+    "frozen_recipe_log_sha256": "589f43c8ddec3672d3c0ed9af59305220fd87283e87e005a6908f1fb7f372037",
+    "commands": [
+      [
+        "/mnt/mydisk/xk/envs/dh116/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_native_teacher_tripod_live_preflight.py",
+        "tests/test_native_teacher_tripod_admission.py",
+        "tests/test_native_teacher_preflight.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_r0_numerical_health_source.py"
+      ],
+      [
+        "/mnt/mydisk/xk/envs/dh116/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py"
+      ]
+    ]
+  },
+  "previous_native_attempt": {
+    "version": "dh116-tripod-native-failure-readback-v3",
+    "tested_head": "bbf50d44f4c0f3f08d9fd89fe6c65c6f52f49fd6",
+    "attempt": "/home/xk/.dh116-native-control-11-17/native-attempts/teacher.tripod-ppo-fresh-smoke8-v3/f2940452d2ec5e30e38767ccb522fd47d649c62054208eb54ec6d9d7addbecec/attempt-riwkhjjt",
+    "output": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/native-output-tripod-smoke8-f2940452/teacher.tripod-ppo-fresh-smoke8-v3/attempt-riwkhjjt/native",
+    "attempt_fingerprint": "f2940452d2ec5e30e38767ccb522fd47d649c62054208eb54ec6d9d7addbecec",
+    "receipt_sha256": "b49862d2a009841cea0084e1652bc7961356178d29b18b853528dcd48313950d",
+    "outer_exit_sha256": "43def06f1afaa537d73ecb5ddb36c27ccab7cfd37271a05ab0f513e9a7e6a6fb",
+    "native_log_sha256": "2ff6dd4d0a4e236509bf7b89269c2d0e77e9314994007177cce1d405557357d7",
+    "journal_sha256": "76f17475792ff4b3da1572a74893f7200d30e7e1481c02397cdb5450c31b8039",
+    "lifecycle_result_sha256": "77bf092c2c97746995ca231f79bbfaad2bd04adb27b96fa89afcd70b462a55f5",
+    "sdk_steps": 2,
+    "controls": 0,
+    "solver_calls": 0,
+    "ppo_updates": 0,
+    "exit_code": 1,
+    "signal": null,
+    "duration_seconds": 154.87500941520557,
+    "parameter_scope": "native_getter",
+    "source_health": 0,
+    "source_health_scope": "native_getter",
+    "reset_distance_per_hand_m": [
+      0.0019469666294753551,
+      0.009661120673020681
+    ],
+    "native_release_verified": false,
+    "app_close_returned": true,
+    "native_qualification": false,
+    "grasp_qualified": false,
+    "teacher_admission": false,
+    "root_error": "live_preflight still directly called legacy exact11 capture_solver_health after sources successfully captured supported17 health0"
+  },
+  "readiness": {
+    "source_and_preflight_share_health_dispatch": true,
+    "nonzero_health_refused_cpu": true,
+    "source_health_zero_observed_native": true,
+    "full_native_preflight_verified": false,
+    "native_v4_update": false,
+    "fault_path_lifetime_verified": false,
+    "grasp_success": false
+  },
+  "native_runs": 1,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "cameras_changed": false,
+  "physical_parameters_changed": false
+}

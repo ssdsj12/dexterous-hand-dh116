@@ -1,0 +1,27 @@
+{
+  "version": "dh116-teacher-tripod-smoke8-native-v4",
+  "status": "frozen_unexecuted_after_unified_preflight_health",
+  "identity": {
+    "actual_identity": {
+      "companion_sha256": "af864332e276e6d9fbe0732f6d39b60509bf8aa85beb68c7e5f61a9a135b9a2a",
+      "core_recipe_identity": {
+        "code_config_sha256": "74e2060149811ef96f119def3c9263874c5caf10755ce4c57e5cc2d2dfe06b2b",
+        "command_spec_sha256": "d27cf4158188966f419d53c7d83c0a6b1ab112eeb1bfddf9c874a004fd4a4cdb"
+      },
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "source_closure_sha256": "ecc68f7a46ccaf63a3bb2c44955f42bb0b27fe91bcc9d8db0447bdf76ecd2b35"
+    },
+    "attempt_fingerprint": "8847d62d8c9aab49adcdfd1fd360c7b42f5f3724475bbb32112086eabc139f4e",
+    "core_identity": {
+      "code_config_sha256": "74e2060149811ef96f119def3c9263874c5caf10755ce4c57e5cc2d2dfe06b2b",
+      "command_spec_sha256": "d27cf4158188966f419d53c7d83c0a6b1ab112eeb1bfddf9c874a004fd4a4cdb"
+    }
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "planned_sdk_steps": 66,
+  "planned_control_steps": 8,
+  "planned_internal_solver_substeps": 768
+}
