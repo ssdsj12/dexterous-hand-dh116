@@ -14,15 +14,15 @@ def api():
     assert path.exists(),"independent reset mesh rebuild adapter is missing"
     return importlib.import_module("go2_pvcnn.control.dh116.tabletop_mesh_reset_order")
 
-def native_semantics(monkeypatch):
-    events,rod,hands,bindings,sim,seed,owners=setup(monkeypatch)
+def native_semantics(monkeypatch, *, case=None):
+    events,rod,hands,bindings,sim,seed,owners=setup(monkeypatch) if case is None else case
     rope=rod.rope
     rope.last_error=0
     # Existing CPU fixture did not model d_cur/d_tgt/deferred teleport.
     rope.current={i:(np.array(k["pos"],np.float32),np.array(k.get("quat",[0,0,0,1]),np.float32))
                   for i,(_,k) in enumerate(rope.slots)}
     rope.targets=deepcopy(rope.current);rope.tele={i:False for i in rope.current}
-    rope.capacity=41*11*12;rope.pair_ready=False;rope.pending=False;rope.add_calls=0
+    rope.capacity=41*len(rod.mesh_names)*12;rope.pair_ready=False;rope.pending=False;rope.add_calls=0
     original_add=rope.add_mesh
     def add(*a,**k):
         events.append("add_mesh")

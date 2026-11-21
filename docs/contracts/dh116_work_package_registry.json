@@ -48046,6 +48046,33 @@
         "teacher_admission": false,
         "registry_passed": 60
       }
+    },
+    "teacher.supported-mesh-reset": {
+      "title": "Independent authenticated seventeen-slot zero-step Reset and direct native mesh-state reader",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.fresh-tripod-reset-sources"
+      ],
+      "tests": [
+        "tests/test_supported_mesh_reset.py",
+        "tests/test_mesh_reset_order.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_supported_mesh_reset_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-supported-mesh-reset.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 172,
+        "cpu_failed": 0,
+        "new_tests": 4,
+        "scope": "CPU source and state-machine only; native/fresh collector remains unqualified",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "reset_source_passed": 81,
+        "owner_preflight_session_passed": 91,
+        "registry_passed": 60
+      }
     }
   },
   "execution_target": {

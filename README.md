@@ -1,3 +1,7 @@
+## Independent supported17 mesh Reset
+
+Authenticate all17 constructor slots, rebuild at actual14 SDK link poses without a hidden settling step, and require direct current/target/solver readback with8364 pair capacity. Frozen eleven-slot readers remain byte-identical. 172 selected CPU checks and60 Registry checks pass; fresh collector/native PPO remain pending. [Report](docs/superpowers/reports/2026-11-22-teacher-supported-mesh-reset.md).
+
 ## Fresh supported Tripod Reset sources
 
 Fresh construction now accepts all17 original mesh slots without a hidden Reset; palm/proximal metadata preserves verified frame, units and SDF path. Independent three-pad Reset distance refuses pose, clock and source mismatches; unknown stays unknown. 102 selected CPU checks and60 Registry checks pass; no new native/PPO or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-fresh-tripod-reset-sources.md).
