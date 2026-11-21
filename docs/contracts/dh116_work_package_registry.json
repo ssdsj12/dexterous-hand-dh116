@@ -47947,6 +47947,30 @@
         "three_pad_loaded_rows": 0
       },
       "reason": "Actual SDK765 whole-envelope certificate unresolved; right index has zero load. Natural exit1 with no signal. Contact diagnostic incomplete; no Teacher qualification."
+    },
+    "teacher.902-whole-envelope": {
+      "title": "Certify the whole original rod-group convex hull without reducing guards",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-live-envelope"
+      ],
+      "tests": [
+        "tests/test_dh116_continuous_envelope_refinement.py",
+        "tests/test_dh116_902_joint_contact_path.py",
+        "tests/test_dh116_902_execution_handoff.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_whole_envelope_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-whole-envelope.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 227,
+        "final_narrow_passed": 29,
+        "actual_saved_guard_cpu_replay_passed": true,
+        "old_native_run_promoted": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

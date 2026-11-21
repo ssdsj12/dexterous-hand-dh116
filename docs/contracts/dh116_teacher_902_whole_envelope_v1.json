@@ -1,0 +1,78 @@
+{
+  "version": "dh116-teacher-902-whole-envelope-v1",
+  "base_head": "1b9655b32a9af31467050d81515b0157a6d1e280",
+  "status": "cpu_verified_no_new_native",
+  "scope": "same full convex domain and original contact floor; improved separation directions",
+  "source_sha256": {
+    "scripts/audit_dh116_certified_segment_distance.py": "8f511fd67a29c1e27cb07bbe60ac6a39c8ea7e9750929896138e44f643495a4b",
+    "scripts/certify_dh116_902_joint_contact_path.py": "9f7e3658218c32591b0be5ded68e32ff85977a14e5539de363b26ecb4019be5c",
+    "tests/test_dh116_continuous_envelope_refinement.py": "3e188a90594f97e3c01b859766d06823b17c4101bbf3f5e10710aa23b67943ca"
+  },
+  "cpu": {
+    "passed": 227,
+    "failed": 0,
+    "seconds": 41.76,
+    "log_sha256": "8045f4f8704d5ba4588ea48df35729a57c7990c59bf40c92f1b02dc6204a1305",
+    "final_narrow_passed": 29,
+    "final_narrow_log_sha256": "96cda022784fc1c51d9b43ef7e4531b80cfcf988a1501d90fcbbfd365c407c70",
+    "red_failures": 2,
+    "red_log_sha256": "e688762fb1282e3a9a0fdd231252811fd0f657a48fcb0eba8026dca03dc18fa9",
+    "registry_passed": 60,
+    "registry_log_sha256": "128bab6583c7934177e21318774a323c4cd31d9a344adc87dd783a80561eb580"
+  },
+  "recorded_snapshot_replay": {
+    "sdk": 765,
+    "raw_guard_sha256": "fad1df8848df447d720899f93a3e4a5982187582bc7afd4cced8299f99ba04b1",
+    "original_lower_m": -0.00015021097269733762,
+    "full_lower_m": -0.00014676528968840573,
+    "upper_m": -0.0001467651829343544,
+    "bound_width_m": 1.0675405134538685e-10,
+    "qp_calls": 3,
+    "shared_qp_limit": 40,
+    "raw_transform": "original rotated_points, no quaternion normalization",
+    "replay_sha256": "949f8b1f58cd202fe4c532d5cccb5af31278c0256bccbe3822319cec83d6b92c",
+    "native_result_unchanged": true
+  },
+  "fresh_cpu_path": {
+    "path_sha256": "f7d1cedc060d6ffac171c5de823d66f058b1cb0d1a92b02806a4d2f1ab3708db",
+    "initial_passed": true,
+    "all_640_substeps_passed": true,
+    "endpoint_candidate_passed": true,
+    "standalone_bound_source_explicit": true
+  },
+  "index_gap_analysis": {
+    "reference": "same saved SDK764; no new physics",
+    "ideal_goal_static_gap_m": -2e-05,
+    "ideal_goal_actual_rod_gap_m": 0.0001300533,
+    "actual_pose_actual_rod_gap_m": 0.0001836754,
+    "max_rod_node_drift_m": 0.004597773309797049,
+    "analysis_sha256": "6f830803ccd1453a0d400e5af65c87c0b8d616912a932bfc454515a38093bbb8",
+    "index_only_extra_rad": 0.002,
+    "index_only_gap_m": -6.94203513879315e-06,
+    "index_only_source_lower_m": -0.0002407784018987123,
+    "index_only_admissible": false,
+    "full_envelope_counterfactual_sha256": "0d33f829a091d207aca84faad1cedced0bb9bd558ac5490e792d6a408fa05b1d"
+  },
+  "native_runs": 0,
+  "ppo_updates": 0,
+  "force_qualified": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "cameras_changed": false,
+  "physical_parameters_changed": false,
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "model": "Gemini 4 Argon Medium",
+    "rounds": "902-whole-envelope R1-R2",
+    "implementation_sha_reviewed": true,
+    "final_test_strengthening_and_standalone_dependency_post_review": true
+  },
+  "next": [
+    "Reuse actual 66+rod PPO trainer; audit real Tripod source/factory gap before new smoke",
+    "Do not rerun the consumed old fixed-wrist closing fingerprint or claim three-pad success"
+  ],
+  "unchanged_camera_sha256": {
+    "configs/dh116_training/stereo_camera_front_640x480_v3.json": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b",
+    "configs/dh116_training/stereo_camera_hand_order_640x480_v1.json": "673b71d4edc425620c78544959cdd00a545db0104bb164a6f2d22f368776d98b"
+  }
+}

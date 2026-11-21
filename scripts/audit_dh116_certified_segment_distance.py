@@ -135,6 +135,78 @@ def segment_hull_distance(vertices, start, end):
     return segment_hull_bounds(vertices, start, end)["lower_m"]
 
 
+
+def _group_envelope_bounds(vertices, support_nodes):
+    """Certify unsigned distance to the entire finite group convex hull.
+
+    SLSQP only proposes feasible points. Full-set support separation and a
+    feasible upper witness must agree within the original one-nanometre bound.
+    """
+    vertices, support_nodes = np.asarray(vertices), np.asarray(support_nodes)
+    origin = vertices.mean(axis=0)
+    scale = max(float(np.ptp(vertices, axis=0).max()),
+                float(np.ptp(support_nodes, axis=0).max()), .001)
+    v, w = (vertices-origin)/scale, (support_nodes-origin)/scale
+    planes = ConvexHull(v).equations
+    normals, offsets = planes[:, :3], planes[:, 3]
+    if np.any(offsets >= 0.):
+        return None
+    count = len(w)
+    constraints = np.column_stack([normals, np.zeros((len(planes), count))])
+    total_gradient = np.r_[np.zeros(3), np.ones(count)]
+
+    def residual(x):
+        return x[:3]-x[3:]@w
+
+    def objective(x):
+        d = residual(x)
+        return float(d@d)
+
+    def jacobian(x):
+        d = residual(x)
+        return np.r_[2*d, -2*w@d]
+
+    fit = minimize(objective, np.r_[np.zeros(3), np.full(count, 1/count)],
+        jac=jacobian, bounds=[(None, None)]*3+[(0., 1.)]*count,
+        constraints=[dict(type="ineq", fun=lambda x: -constraints@x-offsets,
+                          jac=lambda x: -constraints),
+                     dict(type="eq", fun=lambda x: x[3:].sum()-1,
+                          jac=lambda x: total_gradient)],
+        method="SLSQP", options=dict(ftol=1e-14, maxiter=200))
+    if ((not fit.success or fit.status != 0) and fit.status != 8
+            or not np.isfinite(fit.x).all()):
+        return None
+    point = fit.x[:3].copy()
+    weights = np.maximum(fit.x[3:], 0.)
+    total = float(weights.sum())
+    if not np.isfinite(total) or total <= 0.:
+        return None
+    weights /= total
+    group_point = weights@w
+    heights = normals@point
+    positive = heights > 0.
+    if positive.any():
+        factor = min(1., float(np.min(-offsets[positive]/heights[positive])))
+        point *= factor*(1.-1e-12)
+    if np.any(normals@point+offsets > 0.):
+        return None
+    delta = point-group_point
+    length = float(np.linalg.norm(delta))
+    if not np.isfinite(length) or length <= 0.:
+        return None
+    normal = delta/(length*(1.+1e-12))
+    lower = max(0., float(np.min(v@normal)-np.max(w@normal))*scale
+                - _DISTANCE_ROUNDING_M)
+    upper = length*scale+_DISTANCE_ROUNDING_M
+    if not np.isfinite([lower, upper]).all() or not 0. <= upper-lower <= 1e-9:
+        return None
+    # Return the independently checked full-set lower bound; the upper bound
+    # exists solely to certify the proposal and is never the acceptance test.
+    return dict(normal=normal.tolist(), lower_m=lower, upper_m=upper,
+                hull_point_m=(point*scale+origin).tolist(),
+                group_point_m=(group_point*scale+origin).tolist(),
+                source_node_count=count, optimizer_status=int(fit.status))
+
 ENVELOPE_REFINEMENT_VERSION = "dh116-continuous-envelope-support-v1"
 
 
@@ -207,6 +279,22 @@ def rod_envelope_clearance(vertices, node_samples, *, max_penetration_m, max_qp_
                                   segment_upper_m=upper_gap))
             if lower[group] >= -max_penetration_m:
                 break
+
+        if lower[group] < -max_penetration_m:
+            if calls >= max_qp_calls:
+                return result("qp_budget_exhausted")
+            calls += 1
+            bound = _group_envelope_bounds(v, support_nodes)
+            if bound is None:
+                return result("full_envelope_unresolved")
+            normal = np.asarray(bound["normal"])
+            support_lower = float(np.min(v@normal)-np.max(support_nodes@normal)
+                                  -.005-_DISTANCE_ROUNDING_M)
+            lower[group] = max(lower[group], support_lower)
+            witnesses.append(dict(group=int(group), segment="full_group_convex_hull",
+                source_frames=list(range(len(nodes))), source_node_count=len(support_nodes),
+                normal=normal.tolist(), support_lower_m=support_lower,
+                group_upper_m=bound["upper_m"]-.005))
         if lower[group] < -max_penetration_m:
             return result("full_envelope_unresolved")
     return result("certified")

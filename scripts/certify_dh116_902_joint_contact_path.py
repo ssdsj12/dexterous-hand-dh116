@@ -123,7 +123,8 @@ def certify(candidate_path,search_path,receipt,receipt_sha):
         samples.append(row)
     dependencies=[Path(__file__),candidate_path,ROOT/ORIGINAL_REQUEST,REFERENCE,
         ROOT/"scripts/search_dh116_902_joint_contact.py",ROOT/"scripts/screen_dh116_902_fixed_wrist_open.py",
-        ROOT/"scripts/screen_dh116_902_command_contact.py",ROOT/"scripts/audit_dh116_pinch_initial_pose.py"]
+        ROOT/"scripts/screen_dh116_902_command_contact.py",ROOT/"scripts/audit_dh116_pinch_initial_pose.py",
+        ROOT/"scripts/audit_dh116_certified_segment_distance.py"]
     extra={}
     if execution:
         from scripts.screen_dh116_902_command_contact import locked_geometry,PADS

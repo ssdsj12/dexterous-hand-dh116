@@ -4240,3 +4240,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - 2026-11-22: Preserve frozen launch PYTHONPATH and fail mismatched 902 closing identities before proof/Kit; retain the strict final fingerprint guard and zero-step rejected attempt evidence.
 
 - 2026-11-22: Record first aligned-wrist Tripod actual closing/contact reaction at SDK746/747; stop at SDK765 whole-envelope uncertainty, keep three-pad/Teacher admission blocked, preserve natural nonzero exit evidence.
+
+- 2026-11-22: Add bounded complete convex-group certificate fallback and explicit helper SHA in standalone902 proof; retain original geometry/threshold and diagnose actual index gap without issuing unsafe compensation.
