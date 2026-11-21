@@ -30563,6 +30563,31 @@
         "verified_at_utc": "2026-11-21T07:58:19.303274+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-right-distal-first-contact-probe",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-right-first-contact.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_first_contact_v1.json",
+      "cpu_tests": {
+        "passed": 151,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "cf3fc06e447692290583cc97c23cb8fc896adcd5",
+        "source_tree": "f632d145b9cc0ecc731b317060cc2da0fb6d3915",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T08:04:49.488306+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
