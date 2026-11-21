@@ -31588,6 +31588,31 @@
         "verified_at_utc": "2026-11-21T15:30:10.164942+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher-902-staged-approach",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-staged-approach.md",
+      "readiness": "docs/contracts/dh116_teacher_902_staged_approach_v1.json",
+      "cpu_tests": {
+        "passed": 294,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7211691fe051165142000a83988a1f7180b6b48d",
+        "source_tree": "c7899cce38c9b9983b6a1f6a12b33554a0351d96",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T15:40:01.973523+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
