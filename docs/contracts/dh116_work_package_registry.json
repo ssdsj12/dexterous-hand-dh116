@@ -46884,6 +46884,30 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.supported-distal-live-clearance-evidence": {
+      "title": "Record measured link and clock at a supported rod geometry stop",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-bilateral-distal-continuation-native-guarded-failure"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_tripod_measured_precontact.py",
+        "tests/test_dh116_power_retreat_then_open.py",
+        "tests/test_dh116_pinch_supported_reset.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_supported_distal_live_clearance_evidence_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-supported-distal-live-clearance-evidence.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 137,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -127,3 +127,58 @@ def test_left_midpoint_rejects_position_rotation_and_finger_tracking_errors():
     modified = deepcopy(row)
     modified['action_readback']['post']['hands']['left']['q'][0,0] += .0026
     assert not midpoint_reached(modified,target)
+
+
+def test_live_source_clearance_keeps_support_even_for_selected_contact_shape():
+    from scripts.verify_dh116_power_shared_rod import check_supported_shape
+    from scripts.screen_dh116_tripod_supported_reset import archived_tube
+
+    y = np.linspace(-.20, .20, 41)
+    rod = np.c_[np.zeros(41), y, np.zeros(41)]
+    shape = np.array([[x,y,z] for x in (-.001,.001) for y in (-.001,.001) for z in (-.001,.001)])
+    tube = archived_tube(rod[None])
+    boxes = [('support_0', np.array([.020,-.1,-.1]), np.array([.040,.1,.1]))]
+    row = check_supported_shape(shape, boxes, tube, contact_shape=False)
+    assert row['conditions'] == ['rod_clearance']
+    assert row['rod_gap_lower_m'] <= .00025
+    assert check_supported_shape(shape, boxes, tube, contact_shape=True) is None
+    row = check_supported_shape(shape+[.03,0,0], boxes, tube, contact_shape=True)
+    assert row['conditions'] == ['support_clearance']
+    assert list(row['support_gap_m']) == ['support_0']
+
+
+def test_live_source_guard_emits_the_measured_body_before_stopping(monkeypatch):
+    from types import SimpleNamespace
+
+    from scripts import verify_dh116_power_shared_rod as shared
+
+    step = 1178
+    monkeypatch.setattr(shared.native, "clock", lambda _: {"sdk_step": step})
+    transforms = np.zeros((1, 23, 7))
+    transforms[..., 6] = 1.
+    transforms[0, 4, :3] = [.40, .13, .30]
+    transforms[0, 5, :3] = [.55, -.13, .40]
+    names = [f"link_{i}" for i in range(23)]
+    names[4] = "finger13_link"
+    view = SimpleNamespace(get_link_transforms=lambda: transforms, get_coms=lambda: transforms,
+                           link_paths=[[f"/World/left/{name}" for name in names]])
+    hand = SimpleNamespace(root_physx_view=view, body_names=names)
+    bindings = {side: SimpleNamespace(hand=hand) for side in shared.SIDES}
+    verts = np.array([[x, y, z] for x in (-.001, .001) for y in (-.001, .001) for z in (-.001, .001)])
+    rods = np.c_[np.full(41, .40), np.linspace(-.20, .20, 41), np.full(41, .30)][None]
+    supports = {"supports": [{"name": "support_0", "center_m": [.80, .10, .30], "size_m": [.01, .01, .01]}]}
+    records = []
+
+    with pytest.raises(ValueError, match=r"clearance: left\.finger13_link"):
+        shared.measure_links(None, bindings, {}, [(0, 4, verts), (1, 5, verts)], sdk=step,
+                             support_scene=supports, reference_nodes=rods, record_guard=records.append)
+    assert len(records) == 1
+    record = records[0]
+    assert record["current_sdk_clock"] == {"sdk_step": step}
+    assert record["observed_sdk_step"] == step
+    (failure,) = record["failures"]
+    assert failure["link_prim"] == "/World/left/finger13_link"
+    assert failure["conditions"] == ["rod_clearance"]
+    assert failure["rod_gap_lower_m"] < .00025
+    np.testing.assert_array_equal(failure["pose_world_wxyz"], [.40, .13, .30, 1., 0., 0., 0.])
+    np.testing.assert_array_equal(failure["source_vertices_local_m"], verts)

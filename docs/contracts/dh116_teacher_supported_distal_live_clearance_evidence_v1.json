@@ -1,0 +1,20 @@
+{
+  "version": "dh116-teacher-supported-distal-live-clearance-evidence-v1",
+  "cpu_regressions_passed": 137,
+  "native_runs": 0,
+  "historical_guard_sdk_step": 1178,
+  "historical_complete_row_sdk_step": 1177,
+  "historical_forensics_sha256": "e1a01669dbf60481e93b21851942bf33473b77f9c39eb0e9f89bd11a969ea675",
+  "historical_fk_candidate": {
+    "hand": "left",
+    "body": "finger13_link",
+    "gap_lower_m": 0.00025767563033890495,
+    "exact_trigger_confirmed": false
+  },
+  "limits_m": {
+    "non_distal_rod": 0.00025,
+    "support": 1e-10
+  },
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

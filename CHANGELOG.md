@@ -1,3 +1,7 @@
+## Supported distal live clearance evidence
+
+Persist the measured hand link, SDK boundary, support margins, and earlier rod snapshot at the existing guard stop. [Report](docs/superpowers/reports/2026-11-21-teacher-supported-distal-live-clearance-evidence.md).
+
 ## Tripod bilateral continuation guard stop
 
 Retain measured right-side loading and the whole-hand geometry protection stop. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-bilateral-distal-native.md).

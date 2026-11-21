@@ -53,7 +53,21 @@ class SharedPowerOwners:
         return CapacityReservation()
 
 
-def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, support_scene=None, reference_nodes=None, distal_probe=None):
+def check_supported_shape(world, boxes, tube, *, contact_shape):
+    from scripts.certify_dh116_tripod_distal_route import support_clearance_lower
+    from scripts.screen_dh116_tripod_supported_reset import separation
+
+    gaps = {name: float(support_clearance_lower(world, low, high)) for name, low, high in boxes}
+    conditions = ["support_clearance"] if any(gap <= 1e-10 for gap in gaps.values()) else []
+    rod_gap = None if tube is None or contact_shape else float(separation(world, *tube))
+    if rod_gap is not None and rod_gap <= .00025:
+        conditions.append("rod_clearance")
+    if conditions:
+        return dict(conditions=conditions, support_gap_m=gaps, rod_gap_lower_m=rod_gap,
+                    selected_distal_shape=bool(contact_shape))
+
+
+def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, support_scene=None, reference_nodes=None, distal_probe=None, record_guard=None):
     from go2_pvcnn.control.dh116.tabletop_batch_geometry import collision_clearance
     from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import _owned
     from go2_pvcnn.control.dh116.tabletop_deformable_wrist_projection import CLEARANCE_M
@@ -84,20 +98,33 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
     clearance, _ = collision_clearance(frame_poses, clearance_shapes)
     if support_scene is not None:
         from go2_pvcnn.control.dh116.tabletop_batch_geometry import rotated_points
-        from scripts.certify_dh116_tripod_distal_route import support_clearance_lower
-        from scripts.screen_dh116_tripod_supported_reset import archived_tube, separation
+        from scripts.screen_dh116_tripod_supported_reset import archived_tube
 
-        boxes = [(np.asarray(box["center_m"])-np.asarray(box["size_m"])/2,
+        boxes = [(box["name"], np.asarray(box["center_m"])-np.asarray(box["size_m"])/2,
                   np.asarray(box["center_m"])+np.asarray(box["size_m"])/2) for box in support_scene["supports"]]
         tube = None if reference_nodes is None else archived_tube(reference_nodes)
         active_probe = distal_probe is not None and distal_probe.active(sdk)
+        failures = []
         for hand, body, vertices in clearance_shapes:
             world = rotated_points(frame_poses[0, hand, body], vertices)
-            if any(support_clearance_lower(world, low, high) <= 1e-10 for low, high in boxes):
-                raise ValueError("live original hand source envelope intersects a support")
             contact_shape = active_probe and distal_probe.contact_shape(sdk, (hand, body))
-            if tube is not None and not contact_shape and separation(world, *tube) <= .00025:
-                raise ValueError("live hand source envelope lost its staged rod clearance")
+            failure = check_supported_shape(world, boxes, tube, contact_shape=contact_shape)
+            if failure is not None:
+                side = SIDES[hand]
+                articulation = bindings[side].hand
+                failures.append(dict(**failure, side=side, body_index=body,
+                    body_name=articulation.body_names[body], link_prim=articulation.root_physx_view.link_paths[0][body],
+                    pose_world_wxyz=frame_poses[0, hand, body].copy(),
+                    source_vertices_local_m=np.asarray(vertices).copy()))
+        if failures:
+            if record_guard is not None:
+                record_guard(dict(observed_sdk_step=sdk, current_sdk_clock=native.clock(sim),
+                                  failures=failures, table_clearance_m=clearance))
+            first = failures[0]
+            reason = ("live original hand source envelope intersects a support"
+                      if "support_clearance" in first["conditions"]
+                      else "live hand source envelope lost its staged rod clearance")
+            raise ValueError(f'{reason}: {first["side"]}.{first["body_name"]}')
         if active_probe:
             distal_probe.check_pad_gaps(sdk, poses, reference_nodes)
     if native.clock(sim)["sdk_step"] != sdk:
@@ -306,8 +333,16 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
 
         def geometry():
             sdk = native.clock(sim)["sdk_step"]
+            rod = power._base.last
+
+            def record_guard(row):
+                native.write_new(output/f"{task}_geometry_guard_{sdk}.json", encode_owned(dict(
+                    **row, rod_source_physics_step=rod["physics_step"],
+                    rod_node_positions_world_m=rod["node_positions"],
+                    rod_clearance_limit_m=.00025, support_clearance_limit_m=1e-10)))
+
             options = {} if support_scene is None else dict(support_scene=support_scene,
-                reference_nodes=power._base.last["node_positions"], distal_probe=distal_probe)
+                reference_nodes=rod["node_positions"], distal_probe=distal_probe, record_guard=record_guard)
             poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk, **options)
             roots = [np.r_[poses[name][0],poses[name][1][[3,0,1,2]]] for name in PALM_NAMES]
             if task in ("tripod", "pinch") or power_open_boundary_sdk is not None:
