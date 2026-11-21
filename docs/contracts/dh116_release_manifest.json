@@ -31263,6 +31263,31 @@
         "verified_at_utc": "2026-11-21T11:50:40.111307+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-flexible-distal-precontact",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-precontact.md",
+      "readiness": "docs/contracts/dh116_teacher_902_flexible_distal_precontact_v1.json",
+      "cpu_tests": {
+        "passed": 163,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "21bf5643663e06af8fc41ac1dcc2884caec5ce53",
+        "source_tree": "dc9f4f74c2ff980b419fe26eb32da487c08546c6",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T11:59:29.980975+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
