@@ -48124,6 +48124,29 @@
         "teacher_admission": false,
         "scope": "CPU construction/acquisition preparation only; real native Reset and Tripod PPO pending"
       }
+    },
+    "teacher.tripod-reset-clean-entry": {
+      "title": "Keep App process clean while fully revalidating supported Tripod Reset sources",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.fresh-supported-builder"
+      ],
+      "tests": [
+        "tests/test_tripod_supported_reset_capture.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_reset_clean_entry_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-reset-clean-entry.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 7,
+        "cpu_failed": 0,
+        "pre_app_launch_failed": 1,
+        "isaac_instances_started": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

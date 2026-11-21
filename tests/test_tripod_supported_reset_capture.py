@@ -54,3 +54,39 @@ def test_new_reset_entry_refuses_changed_candidate_before_creating_or_running_an
     with pytest.raises(ValueError,match="SHA"):
         m.freeze_plan(tmp_path/"native",task_config=task,task_config_sha256=digest,extra_sources=extra)
     assert not (tmp_path/"native").exists()
+
+
+def test_approved_cli_revalidates_in_cpu_child_and_keeps_app_process_usd_free(tmp_path):
+    import os
+    import subprocess
+    import sys
+    m = entry()
+    task,digest,extra = inputs(tmp_path)
+    output = tmp_path/"native"
+    plan = m.freeze_plan(output,task_config=task,task_config_sha256=digest,extra_sources=extra)
+    path = tmp_path/"plan.json"
+    path.write_text(json.dumps(plan))
+    args = ["--output",str(output),"--plan",str(path),"--task-config",str(task),"--task-sha256",digest]
+    for key,value in extra.items():
+        args.extend(("--"+key.replace("_","-"),str(value)))
+    args.extend(("--approved-frozen-sha256",m.native.digest(plan)))
+    code = '''
+import importlib.abc,sys,json
+from scripts import record_dh116_tripod_supported_reset as m
+class Boundary(importlib.abc.MetaPathFinder):
+    def find_spec(self,name,path=None,target=None):
+        if name.split(".")[0] in ("pxr","PhysxSchema","isaaclab","isaacsim","ropesim"):
+            raise RuntimeError("pre-App runtime import:"+name)
+sys.meta_path.insert(0,Boundary())
+def execute(plan,*,acquire_operation):
+    assert callable(acquire_operation)
+    assert not any(n.split(".")[0] in ("pxr","isaaclab","ropesim") for n in sys.modules)
+    print("ENTRY_CLEAN")
+m.lifecycle.execute=execute
+m.main(json.loads(sys.argv[1]))
+'''
+    result = subprocess.run([sys.executable,"-B","-c",code,json.dumps(args)],
+        cwd=m.ROOT,env=os.environ.copy(),capture_output=True,text=True,timeout=45)
+    assert result.returncode == 0, result.stdout+result.stderr
+    assert "ENTRY_CLEAN" in result.stdout
+    assert not output.exists()

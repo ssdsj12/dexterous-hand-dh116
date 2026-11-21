@@ -7,6 +7,8 @@ solver update, policy/model query or PPO. Outer natural exit is verified separat
 import argparse
 from functools import partial
 import json
+import subprocess
+import sys
 from pathlib import Path
 from uuid import uuid4
 
@@ -117,19 +119,40 @@ def main(argv=None):
         parser.add_argument("--"+flag,type=Path,required=True)
     parser.add_argument("--task-sha256",required=True)
     parser.add_argument("--approved-frozen-sha256")
+    parser.add_argument("--verify-existing-plan",action="store_true",help="CPU-only source verification child; never launches an App")
     args = parser.parse_args(argv)
     native.validate_execution_context(ROOT)
     extra = {key:getattr(args,key) for key in
              ("rays","left_bake","right_bake","proximal_capture","proximal_bake")}
-    expected = freeze_plan(args.output,task_config=args.task_config,
-                          task_config_sha256=args.task_sha256,extra_sources=extra)
-    if args.approved_frozen_sha256 is None:
-        native.write_new(args.plan,expected)
+    if args.verify_existing_plan or args.approved_frozen_sha256 is None:
+        if args.verify_existing_plan and args.approved_frozen_sha256 is not None:
+            parser.error("CPU verifier cannot execute an approved native plan")
+        expected = freeze_plan(args.output,task_config=args.task_config,
+                              task_config_sha256=args.task_sha256,extra_sources=extra)
+        if args.verify_existing_plan:
+            if json.loads(args.plan.read_bytes()) != expected or args.output.exists():
+                raise ValueError("current independently rebuilt source plan differs")
+        else:
+            native.write_new(args.plan,expected)
         print(json.dumps(dict(frozen_sha256=native.digest(expected),budget=expected["budget"])))
         return 0
-    if (native.digest(expected) != args.approved_frozen_sha256
-            or json.loads(args.plan.read_bytes()) != expected or args.output.exists()):
+    # CPU source inspection imports USD. Run it in a separate interpreter before
+    # entering the original R06 launcher, never unload SDK modules or skip its gate.
+    expected = json.loads(args.plan.read_bytes())
+    if native.digest(expected) != args.approved_frozen_sha256 or args.output.exists():
         raise ValueError("exact fresh published fingerprint and exclusive output required")
+    verification = [sys.executable,"-B","-m","scripts.record_dh116_tripod_supported_reset",
+        "--verify-existing-plan","--output",str(args.output),"--plan",str(args.plan),
+        "--task-config",str(args.task_config),"--task-sha256",args.task_sha256]
+    for key,value in extra.items():
+        verification.extend(("--"+key.replace("_","-"),str(value)))
+    subprocess.run(verification,check=True)
+    # Recheck every source byte after the child exits; no native import is needed.
+    for path,digest in expected["frozen_files"].items():
+        from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
+        checked_file(path,digest)
+    if json.loads(args.plan.read_bytes()) != expected or args.output.exists():
+        raise ValueError("frozen plan or exclusive output changed after verification")
     lifecycle.execute(expected,acquire_operation=partial(acquire,plan=expected))
     return 0
 

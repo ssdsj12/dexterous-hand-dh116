@@ -1,0 +1,70 @@
+{
+  "version": "dh116-teacher-tripod-reset-clean-entry-v1",
+  "base_head": "29a63e4723a4939dae0730438257ea63394523fb",
+  "status": "cpu_process_boundary_fixed_new_native_recipe_pending",
+  "source_sha256": {
+    "scripts/record_dh116_tripod_supported_reset.py": "562e7b948205489e5c92ef394dfa470db21a7e92259c7cf43a5422f9b8fdc37c",
+    "tests/test_tripod_supported_reset_capture.py": "4951f90124d5348fc85e671a4b538a3b9ee11974b63966f2c8bf9ddfc92374f2"
+  },
+  "cpu": {
+    "passed": 7,
+    "failed": 0,
+    "new_regression_tests": 1,
+    "seconds": 42.66,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_tripod_supported_reset_capture.py",
+      "tests/test_fresh_supported_builder.py"
+    ],
+    "log_sha256": {
+      "tripod-reset-clean-entry-red.log": "0c07dc1014f94f55c7c0860c835c80f1ae241aa6f906a1c6bd99b4a3f01ef767",
+      "tripod-reset-clean-entry-green.log": "cfe41b5f8e70bf564a9f74cc53a0bb350a063836481dd095b298b0cd0d44548c"
+    },
+    "registry_passed": 60,
+    "registry_failed": 0,
+    "registry_seconds": 15.33,
+    "registry_log_sha256": "6ce44ff34aa96fb3bb6547e723d85dd66d1269fede4f2a13045231ae26b25183"
+  },
+  "failure_evidence": {
+    "launch_attempts": 1,
+    "isaac_instances_started": 0,
+    "actual_sdk_steps": 0,
+    "control_steps": 0,
+    "solver_steps": 0,
+    "ppo_updates": 0,
+    "failed_fingerprint": "ebe5ffeacde86cd2ca1eca1aa2269ef8c1e8d43c35ebe6a34d955b59e139444b",
+    "outer_sha256": "d47c10dfb0691c96fcd1f65a7d108516efa69c2aa077d5c48b36e02ffa069857",
+    "log_sha256": "b1733de0f917e6655859c5d0481f62def84b147b24f3d111bb4837e8272bd25d",
+    "exit_code": 1,
+    "signal": null,
+    "forced_exit": false,
+    "wall_s": 12.860381697071716,
+    "cause": "CPU freeze imports scene_preparation -> usd_surface -> pxr in App process; original pre-App guard correctly refused"
+  },
+  "fix": {
+    "cpu_verification": "separate same-interpreter child rebuilds and compares complete current plan",
+    "parent_after_child": "rechecks every frozen regular file and unchanged plan; existing R06 clean import guard retained",
+    "no_modules_unloaded": true,
+    "no_source_checks_bypassed": true,
+    "original_lifecycle_unchanged": true
+  },
+  "readiness": {
+    "native_launch_boundary_cpu": true,
+    "actual_fresh17_reset": false,
+    "tripod_ppo": false,
+    "teacher_success": false
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "physical_parameters_changed": false,
+  "cameras_changed": false,
+  "r2_enabled": false
+}

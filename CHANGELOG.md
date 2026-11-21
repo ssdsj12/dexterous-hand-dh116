@@ -1,3 +1,7 @@
+## Tripod native launch boundary
+
+The first launch was correctly refused before App creation because CPU source verification imported USD. The verifier now runs in a separate CPU interpreter; parent SHA and original clean-import checks remain strict. Seven focused CPU checks pass; native17 Reset still pending. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-reset-clean-entry.md).
+
 ## Fresh17 Tripod scene and Reset entry
 
 Build all original17 collision slots at SDK2 before the first episode Reset; allocate8364 pairs once and preserve the fresh owner. Added an independent two-step native Reset recorder using the existing lifecycle. 74 selected CPU tests pass; native Reset and Tripod PPO remain pending. [Report](docs/superpowers/reports/2026-11-22-teacher-fresh-supported-builder.md).
