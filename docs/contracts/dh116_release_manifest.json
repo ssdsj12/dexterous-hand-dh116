@@ -31688,6 +31688,31 @@
         "verified_at_utc": "2026-11-21T16:21:31.744522+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-fixed-wrist-open-reset-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_902_fixed_wrist_open_reset_v1.json",
+      "cpu_tests": {
+        "passed": 142,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "03a1454a53c9b66c9d205455c461d5ee9883f629",
+        "source_tree": "d526fedba4892b16e29ad8a0869a7bfbba7b2484",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T16:25:48.880546+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
