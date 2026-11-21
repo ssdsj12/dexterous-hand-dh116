@@ -30438,6 +30438,31 @@
         "verified_at_utc": "2026-11-21T07:21:12.322299+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-measured-precontact",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-measured-precontact.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_measured_precontact_v1.json",
+      "cpu_tests": {
+        "passed": 117,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ec26d09de9fc563b15bc636ccb3a4fc30891ec84",
+        "source_tree": "74dbb139c5a5f49ff900a864ef305b54abfd8832",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T07:41:21.013316+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
