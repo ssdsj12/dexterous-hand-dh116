@@ -31638,6 +31638,31 @@
         "verified_at_utc": "2026-11-21T16:03:13.697886+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-fixed-wrist-open-screen",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-fixed-wrist-open.md",
+      "readiness": "docs/contracts/dh116_teacher_902_fixed_wrist_open_v1.json",
+      "cpu_tests": {
+        "passed": 200,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c70c4b5e4e90cd9c996ae866ef6b29d4d438786b",
+        "source_tree": "579e390e8543e7d21b0784921286b4adfa860947",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T16:05:12.276549+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
