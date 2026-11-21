@@ -31413,6 +31413,31 @@
         "verified_at_utc": "2026-11-21T13:25:20.949167+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-distance-certificate",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-distance-certificate.md",
+      "readiness": "docs/contracts/dh116_teacher_902_distance_certificate_v1.json",
+      "cpu_tests": {
+        "passed": 208,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "bb38010eebaea89773335b12b463e84f51e6cfd5",
+        "source_tree": "2a49c4c37e7bb46dbeac35c67b5d7bb1e0443915",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T13:51:09.993977+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
