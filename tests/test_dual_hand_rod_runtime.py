@@ -24,7 +24,7 @@ class Grid:
 class FakeRope:
     @classmethod
     def from_positions(cls,nodes,**kwargs):
-        obj=cls();obj.nodes=nodes.copy();obj.num_envs=1
+        obj=cls();obj.nodes=nodes.copy();obj.num_envs=1;obj.verts_per_rope=nodes.shape[1]
         obj.fixed_root_orientation=kwargs["fix_root_orientation"]
         obj.pinned=kwargs["pinned"].copy();obj.time=0.;obj.last_error=""
         obj.slots=[];obj.poses=[];obj.steps=0;obj.resets=0

@@ -91,9 +91,9 @@ class _NativeGeometrySources:
         return RewardEndpoint(stamp,tuple(str(i) for i in range(41)),fields)
 
     def _health(self,clock):
-        from .tabletop_r0_health_separation import capture_solver_health
-        return capture_solver_health(self.owner.rod,backend=sys.modules["ropesim._ropesim"],
-            sim=self.owner.sim,expected_clock=clock)
+        from .tabletop_native_teacher_solver_health import capture_teacher_solver_health
+        return capture_teacher_solver_health(self.owner.rod,backend=sys.modules["ropesim._ropesim"],
+            sim=self.owner.sim,expected_clock=clock,grasp=self.STYLE)
 
     def after_reset(self,result):
         owner=self.owner;receipt=result["reset"];clock=owner.rod.clock()

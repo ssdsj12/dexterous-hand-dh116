@@ -8,8 +8,8 @@ from test_dual_hand_rod_runtime import Grid
 from go2_pvcnn.control.dh116 import tabletop_power_shared_rod as power
 
 
-def fresh_proximal_case(monkeypatch):
-    base, poses, centers, kwargs = supported_fixture(monkeypatch)
+def fresh_proximal_case(monkeypatch, *, nodes=None):
+    base, poses, centers, kwargs = supported_fixture(monkeypatch,nodes=nodes)
     proximal = {}
     for side, token in zip(power.SIDES, ("a", "b"), strict=True):
         key = side + "." + power.PROXIMAL_LINK

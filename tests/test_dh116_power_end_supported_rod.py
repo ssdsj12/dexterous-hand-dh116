@@ -8,8 +8,8 @@ from go2_pvcnn.control.dh116 import tabletop_power_shared_rod as power
 SUPPORTS = ("support_0", "support_1")
 
 
-def supported_fixture(monkeypatch, *, incomplete=False):
-    base, bindings, poses, centers = setup(monkeypatch)
+def supported_fixture(monkeypatch, *, incomplete=False, nodes=None):
+    base, bindings, poses, centers = setup(monkeypatch, nodes=nodes)
     for side in ("left", "right"):
         key = f"{side}.base_link"
         bindings[key] = dict(bindings[f"{side}.finger14_link"], body_name="base_link",

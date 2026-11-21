@@ -1,0 +1,43 @@
+# Tripod supported17 Teacher健康读取
+基线b6b64a0bfcde3fddd5fec4d517f65105e80978f9。
+
+## 原生v2真实失败
+包teacher.tripod-ppo-fresh-smoke8-v2，指纹d0986552aff722ec33bafe54f715d42aa38e1e48954c2ca5ff7b6416e2ae6369。
+2初始化SDK步、零步Reset；控制/solver/PPO均0。143.717129s，外层与GDB inferior exit1，signal=null，无强制清理，无相同指纹重跑。
+回执SHA eb3735123d317e7af0207e73ecac0b9a378f026bc924b573c6a3fc9666f38082。
+此前参数scope缺口不再报错；下一处真实栈为NativeTripodSources._health→capture_solver_health：
+actual runtime and exact completed clock required。
+旧读取器仅接受精确DualHandRodRuntime，真实fresh17为精确PowerSharedRodRuntime。二者共享同一个原FreeRodRuntime/RopeBatch，但不是同一Python类型。
+故障清理app.close返回，native_release_verified仍false，没有shutdown_complete。外层退出1不能记为生命周期成功。
+本次无Checkpoint、无采样动作、无Teacher更新，不能计入成功BC/专家池。
+
+## 实际代码与隔离
+新增tabletop_native_teacher_solver_health.capture_teacher_solver_health，实际NativeGeometrySources._health调用此入口并传真实抓法。
+Pinch直接委托原capture_solver_health；Tripod仅接受精确PowerSharedRodRuntime和精确FreeRodRuntime，要求17槽/14绑定、同一base.rope、1环境41节点和实际锁定二进制。
+实际getter前后重复检查SDK/rod时钟、rope身份和后端；仅在校验通过后读取真实last_error并用原序列化器保留未知/整数错误。无新物理步、无新求解器步。
+不使用isinstance任意子类或兼容外观对象替代真实类型；外来wrapper与时钟漂移均拒绝。
+保留原tabletop_r0_health_separation.py字节SHA 50ddb2b2f8b4491765df7651ee3c0cfaa58b9a54ea883e5d5b5888be913f6285；没有重签历史健康源码或放宽读取准入。
+本适配只接通Teacher smoke的solver状态，不代表旧observe_health的5指wrench观察已升级为7route，也不代表Power全握/R0完整力学已通过。
+
+## CPU回归与失败过程
+新增1项实际来源方法的CPU行为案例：真实PythonFreeRodRuntime和PowerSharedRodRuntime构造/17槽Reset，GPU/native transport使用明确CPU doubles；
+经NativeTripodSources._health读取0及4两种真实getter返回，保持owner和clock；漂移与外来wrapper拒绝，solver.steps仍0。新增可选nodes参数仅复用测试夹具，FakeRope节点数由实际数组形状确定。
+原Pinch getter案例改经专用适配层入口，保留原0/非零与未知、身份检查断言。
+先复现旧精确类型失败；最初直接改旧健康模块导致历史SHA拒绝，已仅恢复本轮自己的两行改动，改用独立适配层。
+另一组3条旧归档回放测试在HEAD原字节副本也失败：其clearance source SHA已非当前实现。未修改归档、未放宽生产校验；
+保留3时刻原始wrench形状验证，并明确断言现行观察器拒绝旧实现来源。有效来源下missing-getter=unknown等原场景仍由既有CPU测试覆盖。
+一次测试漏导入clearance导致NameError，修正后重跑。所有red、中间失败、baseline复现及最终日志SHA保留，未删除原生失败证据。
+最终95通过/0失败（51.40s）：health源/奖励、旧双手runtime、新17槽、支架及Tripod Source。
+本包不将CPU构造写成原生物理通过。
+
+## 冻结v3与后继
+v1/v2失败配方和输入原字节保留，并分别blocked；不能用它们的预算/Checkpoint冒充新实验。
+独立v3仍为GPU3单实例、1环境、8控制、2+64SDK、64solver调用×12=768内部子步、1PPO更新；内180s/外240s。
+新指纹f2940452d2ec5e30e38767ccb522fd47d649c62054208eb54ec6d9d7addbecec；
+559源码/配置闭包SHA7823022836cd5f7cce777b3031e6ea8907183b9d5d364076bd8ac85d61b71ab7。
+未调整噪声、种子姿态、关节边界、奖励或物理，固定双RGB未改。
+v3原生尚未执行；待发布并确认当前资源/锁与精确私有授权后单次执行。若更新成功，必须先独立审计完整回执和自然exit0，再生成实际Checkpoint绑定的恢复配方。
+30mm Lift/5s Hold/0.5mm Slip、R2/ForceProxy关闭和528文件/历史Checkpoint保护保留。Antigravity quota仍阻断新回复，不冒充新外部审查。
+
+
+冻结v3/启动/合同/Registry回归135通过、0失败（32.95s）；与95项为不重叠文件，共230通过/0失败。528保护文件、3份历史Checkpoint、两份固定RGB配置原SHA复验无变化。

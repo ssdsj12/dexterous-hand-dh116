@@ -41,7 +41,8 @@ def row_for(c):
 def test_actual_runtime_getter_zero_and_nonzero_are_distinct_owned_samples(health_case,monkeypatch,code):
     c=health_case;events=[]
     monkeypatch.setattr(type(c.rope),"last_error",property(lambda self:events.append("getter") or code))
-    status=capture(c)
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_solver_health import capture_teacher_solver_health
+    status=capture_teacher_solver_health(c.runtime,backend=c.backend,sim=c.sim,expected_clock=c.expected,grasp="pinch")
     assert events and c.events==[]
     assert status["last_error"]==code and status["identity"]==c.expected
     assert status["source_scope"]=="native_getter"
@@ -170,21 +171,17 @@ def projected_native_rows():
 
 
 @pytest.mark.parametrize("step",[3,176,234])
-def test_frozen_actual_ledger_shapes_guard_and_missing_getter_remain_unknown(projected_native_rows,step):
+def test_frozen_legacy_ledger_keeps_raw_shapes_but_cannot_claim_current_clearance(projected_native_rows,step):
+    from go2_pvcnn.control.dh116 import tabletop_deformable_clearance_guard as clearance
     row=projected_native_rows[step]
     for side in ("left","right"):
         for name in ("forces","torques"):
             assert row["rod"]["hand_wrenches_com_world"][side][name].shape==(1,5,3)
-    result=api().observe_health(row,solver_status=None)
-    assert result["numerical_health"]["value"] is None
-    assert result["solver_status"] is None and result["solver_owner_bound"] is False
-    assert all(result["finite_channels"].values())
-    assert result["constraint_health"]["value"] is True
-    assert result["constraint_health"]["source_error"] is None
-    assert result["physical_terminal"]["reason"] is None
-    assert result["motion"]["hold_motion"] is None and result["original_stable"] is None
-    assert result["new_physics_steps"]==result["new_solver_steps"]==0
-    assert result["native_qualification"] is result["teacher_admission"] is False
+    # The independently SHA-pinned old row remains immutable. Its implementation
+    # stamps are historical; silently using current sources would requalify it.
+    assert row["post_step_clearance"]["source_sha256"] != clearance._pins()
+    with pytest.raises(ValueError,match="source, implementation"):
+        api().observe_health(row,solver_status=None)
 
 
 @pytest.mark.parametrize("field",["source_sha256","sdk_time_s","guard_failure"])
@@ -203,3 +200,41 @@ def test_actual_wrench_shape_cannot_drop_the_environment_axis(health_case,field)
     row["rod"]["hand_wrenches_com_world"]["left"][field]=np.zeros((5,3))
     with pytest.raises(ValueError,match="shape"):
         api().observe_health(row,solver_status=capture(c))
+
+def test_supported17_health_reads_the_same_actual_rope_without_stepping(monkeypatch):
+    from types import SimpleNamespace
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_solver_health import capture_teacher_solver_health
+    from test_dh116_fresh_supported_rod import fresh_proximal_case
+    from go2_pvcnn.control.dh116.tabletop_power_shared_rod import PowerSharedRodRuntime, PROXIMAL_POWER_MESH_NAMES
+    nodes=np.column_stack((np.linspace(0,.5,41),np.zeros(41),np.full(41,.4))).astype(np.float32)
+    base,kwargs=fresh_proximal_case(monkeypatch,nodes=nodes)
+    runtime=PowerSharedRodRuntime(base,**kwargs)
+    poses={name:(np.zeros(3),np.array([0.,0.,0.,1.])) for name in runtime.bindings}
+    runtime.reset(physics_step=2,episode_uid="cpu-supported-health:0",reset_id=1,pad_poses=poses)
+    sim=SimpleNamespace(current_time_step_index=2,current_time=2/480)
+    backend=SimpleNamespace(__file__=str(api().BACKEND),RopeBatch=type(runtime.rope))
+    expected=runtime.clock()
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_sources import NativeTripodSources
+    import sys
+    monkeypatch.setitem(sys.modules,"ropesim._ropesim",backend)
+    source=SimpleNamespace(owner=SimpleNamespace(rod=runtime,sim=sim),STYLE="tripod")
+    assert runtime.mesh_names==PROXIMAL_POWER_MESH_NAMES and len(runtime.rope.slots)==17
+    for code in (0,4):
+        runtime.rope.last_error=code
+        status=NativeTripodSources._health(source,expected)
+        assert status["last_error"]==code and status["source_instance_id"]==id(base.rope)
+        assert status["source_scope"]=="native_getter" and status["identity"]==expected
+        assert status["native_readback_qualified"] is False
+        assert runtime.rope.steps==0 and runtime.rope.time==0. and runtime.clock()==expected
+    def drifting_getter(self):
+        sim.current_time += 1/480
+        return 0
+    with monkeypatch.context() as patch:
+        patch.setattr(type(runtime.rope),"last_error",property(drifting_getter),raising=False)
+        with pytest.raises(ValueError,match="clock"):
+            NativeTripodSources._health(source,expected)
+    sim.current_time=expected["timestamp_s"]
+    # Having a compatible-looking clock/rope does not grant a foreign wrapper this API.
+    impostor=SimpleNamespace(_base=base,rope=base.rope,clock=runtime.clock)
+    with pytest.raises(ValueError,match="actual runtime"):
+        capture_teacher_solver_health(impostor,backend=backend,sim=sim,expected_clock=expected,grasp="tripod")

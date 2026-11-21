@@ -1,3 +1,7 @@
+## Tripod supported17 health adapter
+
+The second native attempt stopped at an old runtime type gate:2 SDK steps,0 controls/solver/PPO,exit1 without SIGSEGV. A Teacher-only17-slot getter adapter now retains the sealed legacy health source, with95 CPU tests passing. Independent v3 is frozen and remains unexecuted. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-supported17-health.md).
+
 ## Tripod native source failure and getter repair
 
 The first actual Tripod worker stopped before policy: 2 SDK steps, 0 controls/solver/PPO, exit1 without SIGSEGV; fault-path release remained unverified. Native parameter production now emits its verified getter scope, with 64 CPU checks passing. An independent same-budget v2 is frozen, not yet executed. [Report](docs/superpowers/reports/2026-11-22-teacher-native-parameter-scope.md).
