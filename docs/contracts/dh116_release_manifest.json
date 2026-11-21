@@ -31949,6 +31949,37 @@
         "passed": 60,
         "failed": 0
       }
+    },
+    {
+      "package": "teacher.tripod-policy-distance",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-policy-distance.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_policy_distance_v1.json",
+      "cpu_tests": {
+        "passed": 166,
+        "failed": 0,
+        "scope": "two disjoint selected source/geometry and owner/update/resume suites; not whole repository"
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a65c01afc7591c99802bb06e28433008a1bbd5f0",
+        "source_tree": "176b93df758f3af0e768dde00dcd51eaa666870d",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T18:57:51.988430+00:00"
+      },
+      "remote_verified": true,
+      "registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "known_prior_legacy_replay_failure_remains": true
     }
   ]
 }
