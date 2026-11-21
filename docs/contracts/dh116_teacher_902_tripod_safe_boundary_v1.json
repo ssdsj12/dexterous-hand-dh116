@@ -1,6 +1,6 @@
 {
   "version": "dh116-teacher-902-tripod-safe-boundary-v1",
-  "status": "cpu_passed_native_pending",
+  "status": "native_safe_boundary_verified",
   "base_head": "227fe18ff07c9946e4a13831ecc4d7dd6693b2e0",
   "grasp": "tripod",
   "original_approach_windows": 24,
@@ -19,8 +19,22 @@
     "required_gap_m": 0.00025
   },
   "fixed_stereo_unchanged": true,
-  "native_runs": 0,
-  "native_boundary_verified": false,
+  "native_runs": 1,
+  "native_boundary_verified": true,
   "grasp_qualified": false,
-  "teacher_admission": false
+  "teacher_admission": false,
+  "actual": {
+    "outer_sha256": "ba230eed88c2b003f58bb0a7104d3811312d3bafabde999c0ca9ba5435f1e0a9",
+    "last_row_sha256": "3c066ff00d19e1b2fd640fdfc5b68ffa050854f1025090ee1cfe64b7cacbdf19",
+    "result_sha256": "ed346689e80547a1c343b2902430ac560d3a66a7f6c8e0181c9e7ef006079087",
+    "frozen_sha256": "2abca6974837643964ea0899d7396f149e2fefe6f8a3aed3ad5e3b2c6fcac6f5",
+    "sdk_end": 408,
+    "solver_steps": 4872,
+    "controlled_rows_verified": 168,
+    "failed_run_safe_prefix_matches_exactly": true,
+    "app_close_returned": true,
+    "process_exit_code": 0,
+    "wall_seconds": 124.49607703788206,
+    "hand_contact_rows": 0
+  }
 }

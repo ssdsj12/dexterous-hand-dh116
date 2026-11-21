@@ -1,3 +1,7 @@
+## Native 902 Tripod safe boundary
+
+Verified SDK 408, exact replay-prefix identity and natural exit 0 before the previous SDK 411 failure. [Report](docs/superpowers/reports/2026-11-21-teacher-902-tripod-safe-boundary.md).
+
 ## 902 Tripod safe contact boundary
 
 Shorten the original approach without changing its command speed; preserve the earlier failed native guard. [Report](docs/superpowers/reports/2026-11-21-teacher-902-tripod-safe-boundary.md).

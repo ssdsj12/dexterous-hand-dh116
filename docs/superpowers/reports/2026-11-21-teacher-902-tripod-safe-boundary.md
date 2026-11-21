@@ -16,3 +16,11 @@ Antigravity desktop review R1/R2 on HEAD 227fe18 read the actual script SHAs and
 Command extension: append --precontact-windows 21 to the same original Tripod 902 native recipe with its settled receipt and precontact proof, then freeze a fresh plan. Full raw logs stay on Ubuntu and are SHA-bound by readiness.
 
 Next: verify this single shorter native run and exact boundary identity; screen the measured distal closure separately. Pinch wrist alignment and Power full wrap remain independent tasks.
+
+## Actual native result
+
+Executed one new frozen recipe on GPU 2 at source commit 3f2a23ea. Completed SDK 408 / 4872 solver steps / 21 control windows in 124.50 seconds. App.close returned; GDB inferior and outer process naturally exited 0, no timeout or forced signal.
+
+All 168 controlled rows have matching SDK/rod/link clocks and no guard failure or hand contacts. The final hand geometry, nodes and action state match the earlier failed run's SDK 408 prefix exactly through verify_waypoint_boundary(..., exact_geometry=True). The earlier SDK 411 failure remains unchanged and separate.
+
+Readiness binds outer SHA ba230eed88c2b003f58bb0a7104d3811312d3bafabde999c0ca9ba5435f1e0a9 and final row SHA 3c066ff00d19e1b2fd640fdfc5b68ffa050854f1025090ee1cfe64b7cacbdf19. Both cameras retain their previous bytes. This qualifies an independent safe precontact boundary, not distal contact, grip, Lift/Hold or Teacher training.
