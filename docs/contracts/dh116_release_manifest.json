@@ -30713,6 +30713,31 @@
         "verified_at_utc": "2026-11-21T08:30:58.572906+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-right-first-contact-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-right-first-contact-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_right_first_contact_native_v1.json",
+      "cpu_tests": {
+        "passed": 154,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "e469945457fb826a3dcf7e06ee3545c7a6cbb0d0",
+        "source_tree": "2479a4edd1ad5538706954bb5219d6571a3f6795",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T08:32:49.815578+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
