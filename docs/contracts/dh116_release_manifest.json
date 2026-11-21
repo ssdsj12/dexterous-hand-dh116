@@ -29813,6 +29813,31 @@
         "verified_at_utc": "2026-11-21T05:06:18.211267+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-reset-pose-first-control-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-reset-pose-first-control.md",
+      "readiness": "docs/contracts/dh116_pinch_reset_pose_first_control_v1.json",
+      "cpu_tests": {
+        "passed": 132,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "09f3f94c7e2cdadc66cd47a5b7594ac71f3650eb",
+        "source_tree": "46642c5380c064f27fae0b46b32709233d1299ad",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T05:13:47.722990+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
