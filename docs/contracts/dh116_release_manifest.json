@@ -31788,6 +31788,31 @@
         "verified_at_utc": "2026-11-21T16:58:20.191888+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-joint-contact-reset-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-902-joint-contact-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_902_joint_contact_reset_v1.json",
+      "cpu_tests": {
+        "passed": 295,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "4892ac3a2c03de049edaa039b4c13d957070c267",
+        "source_tree": "84cf4730c00cccab462a638c6304af9eabf32376",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T17:04:27.850750+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
