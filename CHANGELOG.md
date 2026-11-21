@@ -1,3 +1,7 @@
+## Power staged palm contact witness
+
+Prepare the separately screened native palm routes and check raw contacts and reactions. [Report](docs/superpowers/reports/2026-11-21-teacher-power-staged-palm-witness.md).
+
 ## Pinch left approach wrist workspace
 
 Reject unreachable targets before issuing commands and record the native midpoint stop. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-left-staged-wrist-workspace.md).

@@ -47213,6 +47213,27 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-staged-palm-witness": {
+      "title": "Verify the original Power palm route and reaction interface",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-guarded-wrist-bypass-native"
+      ],
+      "tests": [
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_high_bypass.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_staged_palm_witness_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-staged-palm-witness.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 187,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

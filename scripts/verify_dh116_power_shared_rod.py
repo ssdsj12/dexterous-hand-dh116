@@ -387,6 +387,9 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 if step == power_route["anchor_sdk"]:
                     verify_waypoint_boundary(encode_owned(emitted), power_route["archive"],
                                              sdk_step=step, exact_geometry=True)
+                added = power_route.get("palm_witness")
+                if added is not None and step == added["sdk_step"]:
+                    verify_waypoint_boundary(encode_owned(emitted),added["archive"],sdk_step=step,exact_geometry=True)
                 targets = power_route["checkpoints"].get(str(step))
                 if targets is not None:
                     errors = {}
@@ -405,7 +408,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
             if precontact_archive is not None and row["physics_step"] == 432:
                 verify_waypoint_boundary(encode_owned(emitted), precontact_archive,
                                          sdk_step=432, exact_geometry=True)
-            if distal_probe is not None and row["physics_step"] == distal_probe.boundary_sdk:
+            if (distal_probe is not None and distal_probe.archive is not None
+                    and row["physics_step"] == distal_probe.boundary_sdk):
                 verify_waypoint_boundary(encode_owned(emitted), distal_probe.archive,
                                          sdk_step=distal_probe.boundary_sdk, exact_geometry=True)
             for seating in seatings:
@@ -429,7 +433,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                             raise ValueError(f"{task} contact or force differs from the sealed pre-retarget replay")
                 evidence, reason = distal_probe.observe(row)
                 if distal_probe.active(row["physics_step"]):
-                    native.write_new(output/f"{task}_distal_probe_{row['physics_step']}.json", evidence)
+                    probe_label = "palm" if task == "power" else "distal"
+                    native.write_new(output/f"{task}_{probe_label}_probe_{row['physics_step']}.json", evidence)
                     if reason is None and later is not None and row["physics_step"] == later["midpoint_sdk"]:
                         from scripts.verify_dh116_supported_distal_transfer import midpoint_reached
 
@@ -474,7 +479,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
             physical_samples=sum(item["physical_samples"] for item in completed), windows=completed,
             termination_reason=completed[-1]["termination_reason"]))
         if distal_probe is not None:
-            native.write_new(output/f"{task}_distal_probe_summary.json", distal_probe.summary())
+            probe_label = "palm" if task == "power" else "distal"
+            native.write_new(output/f"{task}_{probe_label}_probe_summary.json", distal_probe.summary())
         native.write_new(output/f"{task}_control_result.json",
                          encode_owned(dict(start=start, end=power.clock(), result=aggregate)))
         if aggregate["termination_reason"] or aggregate["physical_samples"] != 8*len(schedule):
@@ -651,6 +657,13 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                     meshes, clearance_shapes, grids=geometry, archive=distal_contact["archive"],
                     max_pad_penetration_m=distal_contact["max_pad_penetration_m"], grasp=distal_contact["grasp"],
                     bilateral=distal_contact.get("bilateral"))
+            if power_route is not None and "palm_witness" in power_route:
+                from scripts.verify_dh116_power_staged_palm_witness import SupportedPalmProbe
+
+                palm_request = power_route["palm_witness"]
+                probe = SupportedPalmProbe(meshes, clearance_shapes, bake_dirs={
+                    "left": args.left_bake, "right": args.right_bake},
+                    boundary_sdk=palm_request["boundary_sdk"], stations=palm_request["stations"])
             control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
                 meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end,
                 verify_support_continuity=any(x is not None for x in (action_reference, tripod_archive, pinch_archive, power_open_archive)),

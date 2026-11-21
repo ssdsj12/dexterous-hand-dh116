@@ -81,10 +81,34 @@ def freeze(args):
             for index, step in enumerate(boundaries)})
         for path in (*dependencies, Path(bypass.__file__), bypass.REQUEST):
             plan["frozen_files"][str(path.resolve(strict=True))] = native.sha(path)
+    palm_reference = getattr(args, "palm_witness_reference", None)
+    if palm_reference is not None:
+        if route is None:
+            raise ValueError("Power palm approach requires live replay of the verified high bypass")
+        from scripts import verify_dh116_power_staged_palm_witness as palm
+
+        anchor, request, dependencies = palm.load_palm_approaches(palm_reference, config)
+        if sdk_end != palm.SDK:
+            raise ValueError("Power palm approach must continue the exact SDK 3584 high waypoint")
+        windows = request["stage_windows"]
+        extra, waypoints = bypass.compile_wrist_waypoints(decode_owned(anchor), request["hands"], windows)
+        schedule = np.vstack((schedule, extra, np.zeros((request["cooloff_windows"], 24))))
+        boundaries = [palm.SDK + 8 * int(i) for i in np.cumsum(windows)]
+        plan["power_high_route"]["checkpoints"].update({
+            str(step): {side: poses[index].tolist() for side, poses in waypoints.items()}
+            for index, step in enumerate(boundaries)})
+        plan["power_high_route"]["palm_witness"] = dict(
+            sdk_step=palm.SDK, archive=anchor, boundary_sdk=boundaries[1],
+            stations={f"{side}.base_link": [item["station"]] for side, item in request["hands"].items()})
+        sdk_end = screen.SDK + 8 * len(schedule)
+        for path in dependencies:
+            plan["frozen_files"][str(path.resolve(strict=True))] = native.sha(path)
     plan["power_retreat_then_open"] = schedule.tolist()
     plan["budget"].update(mode="power_retreat_then_open", sdk_steps=sdk_end, control_steps=len(schedule),
                           solver_steps=(sdk_end - 2)*shared.SUBSTEPS, soft_wall_seconds=1080 if route else 420)
-    if route:
+    if palm_reference:
+        plan["budget"].update(mode="power_staged_palm_witness",soft_wall_seconds=1550)
+    elif route:
         plan["budget"]["mode"] = "power_high_bypass_from_opening"
     for path in (Path(__file__), Path(screen.__file__), screen.REQUEST, args.retreat_screen, *files):
         plan["frozen_files"][str(path.resolve(strict=True))] = native.sha(path)
@@ -97,6 +121,7 @@ def main(argv=None):
                  "near-open-screen", "proximal-capture", "proximal-bake", "retreat-reference", "retreat-screen"):
         parser.add_argument("--"+name, type=Path, required=True)
     parser.add_argument("--high-bypass-reference", type=Path)
+    parser.add_argument("--palm-witness-reference", type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(screen.measured.ROOT)

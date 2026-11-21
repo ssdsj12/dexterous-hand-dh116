@@ -48,22 +48,28 @@ def compile_route(row, request):
             or request["runtime_interpolation"] != "world_xyz_and_reset_relative_intrinsic_XYZ"
             or set(request["hands"]) != set(measured.SIDES)):
         raise ValueError("expected the frozen high bypass route")
+    if np.max(np.abs(row["wrist_projection"]["projected_angles"])) > 1e-9:
+        raise ValueError("the high route must start from the unchanged reset rotation basis")
+    return compile_wrist_waypoints(row, request["hands"], WINDOWS)
+
+
+def compile_wrist_waypoints(row, hands, stages_count):
     projection = row["wrist_projection"]
     bases = projection["projected_root_poses"][0]
     seed_xyz = bases[:, :3] - projection["palm_offsets_m"][0]
-    if (np.abs(projection["projected_angles"]).max() > 1e-9
-            or projection["safe_z_clipped"].any()):
+    if projection["safe_z_clipped"].any():
         raise ValueError("the high route must start from the unchanged reset rotation basis")
     windows = []
     targets = {}
     for lane, side in enumerate(measured.SIDES):
-        poses = np.asarray(request["hands"][side]["waypoints"], dtype=float)
-        if (poses.shape != (3, 7) or not np.isfinite(poses).all()
+        poses = np.asarray(hands[side]["waypoints"], dtype=float)
+        if (poses.shape != (len(stages_count)+1, 7) or not np.isfinite(poses).all()
                 or not np.allclose(np.linalg.norm(poses[:,3:], axis=1), 1., atol=5e-7, rtol=0)
                 or not np.allclose(poses[0], bases[lane], atol=1e-9, rtol=0)):
-            raise ValueError("each Power hand must begin at its actual projected SDK 880 pose")
+            raise ValueError("each Power hand must begin at its actual projected wrist pose")
         offsets = poses[:, :3] - seed_xyz[lane]
-        seed = Rotation.from_quat(poses[0, [4,5,6,3]])
+        seed = (Rotation.from_quat(poses[0, [4,5,6,3]]) *
+                Rotation.from_euler("XYZ", projection["projected_angles"][0,lane]).inv())
         angles = (seed.inv()*Rotation.from_quat(poses[:, [4,5,6,3]])).as_euler("XYZ")
         if ((offsets < WRIST["palm_lower_m"]).any() or (offsets > WRIST["palm_upper_m"]).any()
                 or np.any(np.abs(angles) > WRIST["rotation_limit_rad"])):
@@ -71,7 +77,7 @@ def compile_route(row, request):
         targets[side] = poses[1:]
         windows.append((np.diff(poses[:,:3], axis=0), np.diff(angles, axis=0)))
     stages = []
-    for stage, count in enumerate(WINDOWS):
+    for stage, count in enumerate(stages_count):
         command = np.zeros(24)
         for lane, (translation, rotation) in enumerate(windows):
             for start, delta, rate in ((12, translation, ACTION_CONTRACT["translation_rate_m_s"]),

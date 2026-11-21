@@ -11,13 +11,13 @@ SIDES = ("left", "right")
 DISTAL = ("finger14_link", "finger23_link", "finger33_link")
 
 
-def target_shape_keys(bindings, clearance_shapes, stations):
+def target_shape_keys(bindings, clearance_shapes, stations, *, allowed_links=DISTAL):
     counts = Counter((side, body) for side, body, _ in clearance_shapes)
     keys = set()
     for name in stations:
         side, link = name.split(".", 1)
         entry = bindings.get(name)
-        if (side not in SIDES or link not in DISTAL or entry is None
+        if (side not in SIDES or link not in allowed_links or entry is None
                 or entry["side"] != side or entry["body_name"] != link
                 or entry["prim_path"].rsplit("/", 1)[-1] != link):
             raise ValueError("owned mounted distal pair binding required")
@@ -73,6 +73,23 @@ def check_reaction_delivery(prior, current):
     return transferred
 
 
+def validate_live_pad_gaps(grids, poses, reference_nodes, *, max_penetration_m):
+    from scipy.spatial.transform import Rotation
+    from scripts.prepare_dh116_pinch_closure_margin import sample_contact
+
+    nodes = np.asarray(reference_nodes, dtype=float)
+    if nodes.shape != (1, 41, 3) or not np.isfinite(nodes).all():
+        raise ValueError("one intact previous solver node model required")
+    for name, grid in grids.items():
+        position, quaternion = poses[name]
+        transform = np.eye(4)
+        transform[:3, :3] = Rotation.from_quat(quaternion).as_matrix()
+        transform[:3, 3] = position
+        gap = sample_contact(grid, transform, nodes[0], dtype=np.float64)["minimum_gap_m"]
+        if gap is None or gap < -max_penetration_m:
+            raise ValueError(f"selected live pad SDF exceeded its penetration bound: {name} gap={gap!r}")
+
+
 class SupportedDistalProbe:
     """Track measured contact and the following PhysX command, without granting success."""
 
@@ -116,22 +133,8 @@ class SupportedDistalProbe:
             sdk > self.bilateral["boundary_sdk"] and key in self.additional_shape_keys)
 
     def check_pad_gaps(self, sdk, poses, reference_nodes):
-        from scipy.spatial.transform import Rotation
-        from scripts.prepare_dh116_pinch_closure_margin import sample_contact
-
-        nodes = np.asarray(reference_nodes, dtype=float)
-        if nodes.shape != (1, 41, 3) or not np.isfinite(nodes).all():
-            raise ValueError("one intact previous solver node model required")
-        for name in self.stations_at(sdk):
-            grid = self.grids[name]
-            position, quaternion = poses[name]
-            transform = np.eye(4)
-            transform[:3, :3] = Rotation.from_quat(quaternion).as_matrix()
-            transform[:3, 3] = position
-            result = sample_contact(grid, transform, nodes[0], dtype=np.float64)
-            gap = result["minimum_gap_m"]
-            if gap is None or gap < -self.max_pad_penetration_m:
-                raise ValueError(f"selected live pad SDF exceeded its penetration bound: {name} gap={gap!r}")
+        grids = {name: self.grids[name] for name in self.stations_at(sdk)}
+        validate_live_pad_gaps(grids, poses, reference_nodes, max_penetration_m=self.max_pad_penetration_m)
 
     def observe(self, row):
         sdk = row["physics_step"]
