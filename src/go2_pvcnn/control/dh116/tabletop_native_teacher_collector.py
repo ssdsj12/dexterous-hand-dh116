@@ -190,11 +190,10 @@ class NativeTeacherCollector:
         self.accept_updated_policy()
         return result
 
-    def attach_student_stereo(self, camera, output):
+    def attach_student_stereo(self, camera, output, *, camera_profile="front"):
         """Transfer a fresh camera on this simulation to this opt-in collector."""
         from .tabletop_native_teacher_stereo import capture_identity
-        from .tabletop_stereo_calibration import StereoCalibration
-        from .tabletop_teacher_stereo_alignment import STUDENT_CAMERA
+        from .tabletop_teacher_stereo_alignment import student_camera_calibration
         from .tabletop_tiled_stereo_capture import TiledStereoCapture
 
         if (type(camera) is not TiledStereoCapture or camera.sim is not self.owner.sim
@@ -202,14 +201,14 @@ class NativeTeacherCollector:
                 or self._closed or self.quarantined or self._active or self.transitions != 0):
             raise ValueError("fresh fixed Student stereo and the same unadvanced Teacher owner required")
         project = Path(self.owner.contract.config.project).resolve()
-        expected = StereoCalibration.from_json(project / STUDENT_CAMERA)
+        expected = student_camera_calibration(project, camera_profile)
         output = Path(output).resolve()
         if camera.calibration.sha256 != expected.sha256 or output.is_relative_to(project):
             raise ValueError("fixed Student calibration and independent evidence directory required")
         output.mkdir(exist_ok=False)
         camera.snapshot = lambda: capture_identity(
             self.owner.pre_action_state(), expected.sha256, sdk_timestamp_s=float(camera.sim.current_time))
-        self._student_stereo = camera, output
+        self._student_stereo = camera, output, camera_profile
 
     def _pack_observation(self, pre, context, *, purpose):
         recorded = getattr(self.sources, "pack_recorded", None)
@@ -293,9 +292,9 @@ class NativeTeacherCollector:
         stereo = {}
         if self._student_stereo is not None:
             from .tabletop_native_teacher_stereo import save_aligned_rgb_pair
-            camera, output = self._student_stereo
+            camera, output, camera_profile = self._student_stereo
             label = save_aligned_rgb_pair(
-                pre, camera.capture(), camera.calibration, output, origins=camera.origins)
+                pre, camera.capture(), camera.calibration, output, origins=camera.origins, camera_profile=camera_profile)
             if label["state_sha256"] != prehash or _digest(owner.pre_action_state()) != prehash:
                 raise SourceFailure("Teacher state changed during Student RGB capture")
             stereo = dict(student_stereo=label)
@@ -360,7 +359,8 @@ class NativeTeacherCollector:
         if verify_source is not None:
             verify_source()
         if stereo:
-            if stereo["student_stereo"]["student_sync_usable"]:
+            label = stereo["student_stereo"]
+            if label["student_sync_usable"] and label["student_hand_order_usable"]:
                 self.journal.emit("student_stereo_action",dict(collection_token=token,
                                   pre_action_sha256=prehash, issued_actions=issued, **stereo))
             else:

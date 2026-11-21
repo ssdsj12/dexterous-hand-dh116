@@ -47261,6 +47261,29 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.fixed-stereo-physical-hand-order": {
+      "title": "Retain native hand identities in fixed Student stereo captures",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.native-student-stereo-sidecar-cpu-v1"
+      ],
+      "tests": [
+        "tests/test_teacher_stereo_handedness.py",
+        "tests/test_native_teacher_stereo.py",
+        "tests/test_native_teacher_collector.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_fixed_stereo_hand_order_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-fixed-stereo-hand-order.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 159,
+        "archived_projection_samples": 584,
+        "native_image_reprojection_verified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -1,0 +1,114 @@
+{
+  "K_left": [
+    [
+      417.0321193091858,
+      0.0,
+      320.0
+    ],
+    [
+      0.0,
+      417.0321193091858,
+      240.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "K_right": [
+    [
+      417.0321193091858,
+      0.0,
+      320.0
+    ],
+    [
+      0.0,
+      417.0321193091858,
+      240.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_left": [
+    [
+      0.0,
+      -0.6064491759237279,
+      0.7951222528777767,
+      -0.16000000000000003
+    ],
+    [
+      -1.0,
+      0.0,
+      0.0,
+      0.04
+    ],
+    [
+      0.0,
+      -0.7951222528777767,
+      -0.6064491759237279,
+      0.88
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_right": [
+    [
+      0.0,
+      -0.6064491759237279,
+      0.7951222528777767,
+      -0.16000000000000003
+    ],
+    [
+      -1.0,
+      0.0,
+      0.0,
+      -0.04
+    ],
+    [
+      0.0,
+      -0.7951222528777767,
+      -0.6064491759237279,
+      0.88
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "width": 640,
+  "height": 480,
+  "baseline_m": 0.08,
+  "distortion_left": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "distortion_right": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "rectified": true,
+  "version": "dh116-stereo-optical-v1",
+  "calibration_sha256": "6a5848163e5ee16f1b06959894e04a32f8dc98e25a012cb38b159143196441b6",
+  "profile_version": "dh116-stereo-camera-hand-order-v1",
+  "enabled_by_default": false,
+  "resolution_mode": "native_two_fixed_cameras_not_mirrored_images",
+  "physical_left_screen_role": "left_image_side_in_both_views",
+  "physical_right_screen_role": "right_image_side_in_both_views",
+  "native_qualification": "pending image capture, same-clock and wire reprojection"
+}

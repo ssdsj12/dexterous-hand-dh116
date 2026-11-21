@@ -12,6 +12,23 @@ from .tabletop_stereo_geometry import world_to_palms
 
 
 STUDENT_CAMERA = "configs/dh116_training/stereo_camera_front_640x480_v3.json"
+STUDENT_CAMERA_PROFILES = {
+    "front": STUDENT_CAMERA,
+    "hand_order": "configs/dh116_training/stereo_camera_hand_order_640x480_v1.json",
+}
+
+
+def student_camera_path(project, profile):
+    try:
+        return Path(project) / STUDENT_CAMERA_PROFILES[profile]
+    except KeyError as exc:
+        raise ValueError(f"unknown Student camera profile: {profile}") from exc
+
+
+def student_camera_calibration(project, profile="front"):
+    from .tabletop_stereo_calibration import StereoCalibration
+
+    return StereoCalibration.from_json(student_camera_path(project, profile))
 
 
 def state_digest(state):
@@ -40,6 +57,15 @@ def _projection(nodes, k, world_from_camera, width, height):
                 rod_optical_z_m=xyz[:, 2].tolist(), rod_in_frame=in_frame.tolist())
 
 
+def project_physical_palms(left_right_palms, k, world_from_camera, width, height):
+    palms = _projection(left_right_palms[:, :3], k, world_from_camera, width, height)
+    pixels = palms["rod_pixels_uv"]
+    in_frame = palms["rod_in_frame"]
+    return dict(physical_palm_pixels_uv=dict(zip(("left", "right"), pixels, strict=True)),
+                both_physical_palms_in_frame=all(in_frame),
+                physical_left_before_right=all(in_frame) and pixels[0][0] < pixels[1][0])
+
+
 def aligned_payload(state, expected_identity, pair, calibration, origins):
     """Register geometry from the same digest-bound Teacher observation."""
     timing = pair["render_timing"]
@@ -65,6 +91,7 @@ def aligned_payload(state, expected_identity, pair, calibration, origins):
         k = _finite(pair["K_" + side], (1, 3, 3))[0]
         pose = _finite(pair["T_world_" + side], (1, 4, 4))[0]
         cameras[side] = _projection(nodes, k, pose, calibration.width, calibration.height)
+        cameras[side].update(project_physical_palms(palms, k, pose, calibration.width, calibration.height))
     return dict(schema="dh116-teacher-student-stereo-alignment-v1", teacher_obs67=obs.tolist(),
                 rod_nodes_world_m=nodes.tolist(), palm_poses_world_xyz_wxyz=palms.tolist(),
                 rod_nodes_palm_m={"left": local[0].tolist(), "right": local[1].tolist()},
@@ -107,14 +134,17 @@ def capture_initial_pair(runtime, plan, *, read_clock, write_receipt):
     """Capture one RGB pair at the existing frozen initialization boundary."""
     from PIL import Image
     from pxr import Gf, UsdGeom, UsdLux, Vt
-    from .tabletop_stereo_calibration import StereoCalibration
     from .tabletop_stereo_rgb_bridge import _NativeRenderSetting
     from .tabletop_tiled_stereo_capture import TiledStereoCapture
     from .tabletop_tiled_stereo_native import TiledNativeStereoReader
 
     root, output = Path(plan["project"]), Path(plan["output"])
-    calibration = StereoCalibration.from_json(root / STUDENT_CAMERA)
     limits = plan["teacher_stereo"]
+    profile = limits.get("camera_profile", "front")
+    camera_path = student_camera_path(root, profile)
+    if "camera_config" in limits and root / limits["camera_config"] != camera_path:
+        raise ValueError("Student camera profile and frozen configuration differ")
+    calibration = student_camera_calibration(root, profile)
     if calibration.sha256 != limits["calibration_sha256"]:
         raise ValueError("Student calibration changed")
     sim = runtime.sim
@@ -160,7 +190,9 @@ def capture_initial_pair(runtime, plan, *, read_clock, write_receipt):
                                     max_render_attempts=limits["max_render_attempts"], origins=origins)
         packet = camera.capture()
         result = aligned_payload(state, identity, packet, calibration, origins)
-        result.update(source_scope=packet["source_scope"], phase="initialization_before_control",
+        result.update(camera_profile=profile, physical_hand_order_verified=all(
+                          camera["physical_left_before_right"] for camera in result["cameras"].values()),
+                      source_scope=packet["source_scope"], phase="initialization_before_control",
                       privileged_source="original frozen GPU Teacher get_obs()", render_passes=packet["render_passes"])
         for side in ("left", "right"):
             filename = f"teacher_{side}_rgb.png"

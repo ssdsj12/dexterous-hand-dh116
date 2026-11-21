@@ -83,3 +83,33 @@ def test_frame_timing_flags_are_saved_with_raw_evidence(tmp_path, delta_s, usabl
     assert receipt["student_sync_rejection"] == (
         None if usable else "rgb_sdk_skew_at_or_above_2ms")
     assert (tmp_path/result["receipt_path"]).with_name("right.png").is_file()
+
+
+@pytest.mark.parametrize("swap,verified", [(False, True), (True, False)])
+def test_hand_order_rig_binds_actual_palms_and_retains_rejected_evidence(tmp_path, swap, verified):
+    import json
+    from pathlib import Path
+    from go2_pvcnn.control.dh116.tabletop_teacher_stereo_alignment import student_camera_calibration
+
+    _, pre, packet = fixture()
+    cal = student_camera_calibration(Path(__file__).resolve().parents[1], "hand_order")
+    palms = [[.53, .13, .43, 1., 0., 0., 0.], [.47, -.13, .45, 1., 0., 0., 0.]]
+    if swap:
+        palms.reverse()
+    for source, pose in zip(pre["common"]["source_packets"], palms, strict=True):
+        source["body_link_pose_w"] = pose
+    for side in ("left", "right"):
+        packet[f"K_{side}"] = getattr(cal, f"K_{side}").numpy()[None]
+        packet[f"T_world_{side}"] = getattr(cal, f"T_world_{side}").numpy()[None]
+    packet["calibration_sha256"] = cal.sha256
+    packet["identity"] = capture_identity(
+        pre, cal.sha256, sdk_timestamp_s=packet["render_timing"]["physical_timestamp_s"])
+    label = save_aligned_rgb_pair(pre, packet, cal, tmp_path, camera_profile="hand_order")
+    receipt = json.loads((tmp_path / label["receipt_path"]).read_text())
+    assert receipt["student_sync_usable"] is True
+    assert label["student_hand_order_usable"] is verified
+    assert receipt["student_hand_order_usable"] is verified
+    assert (tmp_path / label["receipt_path"]).with_name("left.png").is_file()
+    for side in ("left", "right"):
+        palms_uv = receipt["cameras"][side]["physical_palm_pixels_uv"]
+        assert ((palms_uv["left"][0] < palms_uv["right"][0]) is verified)

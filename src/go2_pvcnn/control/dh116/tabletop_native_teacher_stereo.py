@@ -11,7 +11,7 @@ from .tabletop_deformable_r0_replay import _digest
 from .tabletop_stereo_geometry import world_to_palms
 from .tabletop_stereo_validation import validate_images
 from .tabletop_teacher_preaction_readback import _identity
-from .tabletop_teacher_stereo_alignment import _finite, _projection
+from .tabletop_teacher_stereo_alignment import _finite, _projection, project_physical_palms
 from .tabletop_teacher_stereo_sync import student_rgb_timing
 from .tabletop_tiled_stereo_capture import _clock
 
@@ -49,7 +49,7 @@ def capture_identity(pre, calibration_sha256, *, sdk_timestamp_s=None):
                 state_sha256=_digest(pre), calibration_sha256=calibration_sha256)
 
 
-def save_aligned_rgb_pair(pre, packet, calibration, output, *, origins=None):
+def save_aligned_rgb_pair(pre, packet, calibration, output, *, origins=None, camera_profile="front"):
     from PIL import Image
 
     timing = packet["render_timing"]
@@ -85,6 +85,8 @@ def save_aligned_rgb_pair(pre, packet, calibration, output, *, origins=None):
         k = _finite(packet["K_" + side], (1, 3, 3))[0]
         transform = _finite(packet["T_world_" + side], (1, 4, 4))[0]
         cameras[side] = _projection(nodes, k, transform, calibration.width, calibration.height)
+        cameras[side].update(project_physical_palms(
+            palms, k, transform, calibration.width, calibration.height))
 
     folder = Path(output) / f"frame-{capture_id:06d}"
     folder.mkdir()
@@ -98,13 +100,17 @@ def save_aligned_rgb_pair(pre, packet, calibration, output, *, origins=None):
         cameras[side].update(rgb_file=path.name, rgb_sha256=hashlib.sha256(path.read_bytes()).hexdigest())
 
     sync = student_rgb_timing(left_clock["simulation_time"], identity["sdk_timestamp_s"])
+    hand_order_verified = all(camera["physical_left_before_right"] for camera in cameras.values())
+    hand_order = dict(physical_hand_order_verified=hand_order_verified,
+                      student_hand_order_usable=camera_profile != "hand_order" or hand_order_verified)
     receipt = dict(schema="dh116-native-teacher-student-stereo-v1", identity=identity,
+                   camera_profile=camera_profile,
                    privileged_values=[float(v) if ok else None for v, ok in zip(values, valid)],
                    privileged_valid=valid.tolist(), cameras=cameras, render_timing=timing,
                    source_scope=packet["source_scope"], native_qualification=False,
                    rod_nodes_world_m=nodes.tolist(), palm_poses_world_xyz_wxyz=palms.tolist(),
                    rod_nodes_palm_m={side:local[i].tolist() for i,side in enumerate(SIDES)},
-                   occlusion_measured=False, **sync)
+                   occlusion_measured=False, **sync, **hand_order)
     path = folder / "alignment.json"
     with path.open("x", encoding="utf-8") as stream:
         json.dump(receipt, stream, allow_nan=False)
@@ -113,4 +119,4 @@ def save_aligned_rgb_pair(pre, packet, calibration, output, *, origins=None):
     return dict(receipt_path=str(path.relative_to(output)),
                 receipt_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
                 state_sha256=identity["state_sha256"], capture_id=capture_id,
-                calibration_sha256=calibration.sha256, **sync)
+                calibration_sha256=calibration.sha256, **sync, **hand_order)
