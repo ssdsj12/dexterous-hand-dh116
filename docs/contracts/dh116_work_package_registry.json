@@ -47509,7 +47509,7 @@
       "readiness": "docs/contracts/dh116_teacher_902_contact_guard_audit_v1.json",
       "report": "docs/superpowers/reports/2026-11-21-teacher-902-contact-guard-audit.md",
       "native_runs": 1,
-      "reason": "One v2 native attempt stopped at SDK476: actual wrist tracking plus conservative source/cooked mismatch; no hand forces. Natural exit 1. Same fingerprint retry forbidden; guards unchanged."
+      "reason": "One v2 native attempt stopped at SDK476: actual wrist tracking plus conservative source/cooked mismatch; no hand forces. Natural exit 1. Same fingerprint retry forbidden; guards unchanged. Staged CPU path passes 1032 ideal substeps but contact/support reserves are only 0.122/0.245 micrometres; measured convergence and robust intermediate clearance still required."
     },
     "teacher.902-command-replay": {
       "title": "Replay actual 480 Hz commands before screening 902 contact paths",
@@ -47682,7 +47682,10 @@
       "last_result": {
         "cpu_preflight_passed": 202,
         "real_F4_smoke_passed": true,
-        "teacher_admission": false
+        "teacher_admission": false,
+        "registry_tests_passed": 60,
+        "staged_ideal_substeps_passed": 1032,
+        "staged_native_admissible": false
       }
     }
   },

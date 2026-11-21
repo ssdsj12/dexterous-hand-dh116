@@ -66,5 +66,38 @@
     "failed": 0,
     "log_sha256": "db5d6451fe75fd2ff7a0292ef35303e7c492097556ac6661b64276b6dbcea33f"
   },
-  "cpu_tests_total": 262
+  "cpu_tests_total": 262,
+  "staged_path_followup": {
+    "scope": "staged_ideal_command_CPU_only_not_native_receipt",
+    "control_windows": 129,
+    "checked_command_substeps": 1032,
+    "phase_windows": {
+      "open_middle": 9,
+      "move_wrist": 66,
+      "close_fixed_wrist": 54
+    },
+    "archived_envelope_guard_passed": true,
+    "endpoint_error": {
+      "position_m": 1.1415167050419747e-08,
+      "rotation_rad": 7.207938917283932e-08,
+      "joint_rad": 2.682209014892578e-07
+    },
+    "contact_margin_above_original_limit_m": 1.222721229986103e-07,
+    "support_margin_above_original_reserve_m": 2.451085119878696e-07,
+    "elapsed_seconds": 130.51076152105816,
+    "native_admissible": false,
+    "actual_tracking_qualified": false,
+    "new_native_recipe_frozen": false,
+    "native_runs": 0,
+    "evidence_sha256": {
+      "command-v3-staged-path-screen.json": "c2c24c228d1ba6e5956d0408b11a31ab95aadd6b6fd7811028485d7fc4b790a2",
+      "command-v3-staged-path-screen.py": "ca1fd2976f8120ed1cac5466849853e025cc2875f7c891d2abc0125e16605ddb",
+      "command-v3-staged-path-screen.log": "51611a4473aab0e8a6f6a41cdd00566a79f0cf8d5569d66b2bb9cddd3388591b"
+    },
+    "registry_tests": {
+      "passed": 60,
+      "failed": 0,
+      "log_sha256": "cab8b30c5c5ecf15bfaa2e27a7f553eb49078b9ea8000e3ec44e86fe33a16c0b"
+    }
+  }
 }
