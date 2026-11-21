@@ -32330,6 +32330,31 @@
         "verified_at_utc": "2026-11-21T22:10:00.024410+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-live-health-routing",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-live-health-routing.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_live_health_routing_v1.json",
+      "cpu_tests": {
+        "passed": 259,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b5c1eb4a9bc08cce3130144fa9f9d8bfb3a5b3c8",
+        "source_tree": "2911899da3decab80a2eeebc3a2890bbe3316cb7",
+        "remote_branch": "11-17",
+        "files_verified": 14,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T22:27:31.163416+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
