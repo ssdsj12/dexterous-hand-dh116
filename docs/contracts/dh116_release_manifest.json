@@ -31980,6 +31980,31 @@
         "failed": 0
       },
       "known_prior_legacy_replay_failure_remains": true
+    },
+    {
+      "package": "teacher.fresh-tripod-reset-sources",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-fresh-tripod-reset-sources.md",
+      "readiness": "docs/contracts/dh116_teacher_fresh_tripod_reset_sources_v1.json",
+      "cpu_tests": {
+        "passed": 102,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "82b46eb4cba575351f8ccb82daa9dab783a81d03",
+        "source_tree": "6e2bfeb6d5608d9813db6aff3b96aae9080f1e17",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T19:19:01.564652+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
