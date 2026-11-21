@@ -45711,6 +45711,30 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-supported-action-handoff-native-result": {
+      "title": "Verify live 24D SDK handoff on the same supported rod",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-supported-action-handoff-cpu"
+      ],
+      "tests": [
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_power_supported_task.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_supported_action_handoff_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-action-handoff-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "native_continuous_action_probe",
+        "native_exit": 0,
+        "controlled_sdk_steps": 8,
+        "result_sha256": "fa00a2f6dc064ea10a015ee483bc99cdc1886f7ffaa380c83dd6b22c8d10c461",
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

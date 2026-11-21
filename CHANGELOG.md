@@ -3906,3 +3906,5 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - Certified a new right Tripod corridor on the measured supported rod and used finite convex support separation when world bounding boxes overlapped.
 
 - Added an opt-in handoff of the continuing supported Power rod and palm reactions to the original 24D action exchange. The native probe is separately tracked.
+
+- Verified the retained 24D control moves both original hands after Power support settling while preserving the solver clock and world composer reactions.

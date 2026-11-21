@@ -1,0 +1,47 @@
+{
+  "version": "dh116-teacher-supported-power-action-handoff-native-v1",
+  "status": "native_parked_action_handoff_verified",
+  "native_runs": 1,
+  "native_ppo_updates": 0,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-power-supported-action-handoff-native.md",
+  "outer_receipt_sha256": "fa00a2f6dc064ea10a015ee483bc99cdc1886f7ffaa380c83dd6b22c8d10c461",
+  "frozen_sha256": "624b519d8d9ebcae2820bf2a17e6570fc6f7d698ffbe5694c40e411041ccb115",
+  "tested_head": "f83fe65fb5dadfbbe8f2b953b4014b4ab22e232b",
+  "elapsed_s": 64.00501332292333,
+  "parked_measurements": 238,
+  "controlled_sdk_steps": 8,
+  "controlled_solver_substeps": 96,
+  "measured_world_palm_translation_m": {
+    "left": [
+      -4.327856183820446e-05,
+      9.602670820534653e-08,
+      1.3596839084494327e-07
+    ],
+    "right": [
+      -4.333003383995148e-05,
+      -8.18027149091464e-08,
+      1.0170075764202081e-07
+    ]
+  },
+  "projected_world_palm_offsets_m": [
+    [
+      [
+        -8.333333333333334e-05,
+        0.0,
+        0.0
+      ],
+      [
+        -8.333333333333334e-05,
+        0.0,
+        0.0
+      ]
+    ]
+  ],
+  "support_bilateral_control_substeps": 96,
+  "hand_pairs": 0,
+  "table_pairs": 0,
+  "verified_natural_exit": true,
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

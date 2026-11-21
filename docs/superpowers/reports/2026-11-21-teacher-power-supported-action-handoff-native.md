@@ -1,0 +1,7 @@
+# Native supported Power 24D action handoff
+
+The original 24D policy-shaped action executed after support settling, on the same two DH116 articulations and the same free DeformX rod. The original episode and Reset IDs continued from SDK 240 to 248 and solver tick 2,856 to 2,952. The previously measured hand reactions were passed forward to the correct six link destinations per hand at each SDK step. Both supports carried the rod throughout the 96 controlled solver substeps. No hand–rod or table–rod pairs were recorded during the park-control probe.
+
+Only World X was requested on both sides. The projected displacement was -0.083333 mm per hand. Actual World X displacement from the native mounted joint poses was -0.043279 mm left and -0.043330 mm right. Measurements and controller targets were checked separately. There was no terminal event, PPO step, grasp attempt or lift.
+
+The worker exited naturally within 64.005 seconds. Outer and GDB inferior exit were zero. Receipt SHA-256 `fa00a2f6dc064ea10a015ee483bc99cdc1886f7ffaa380c83dd6b22c8d10c461`, frozen recipe SHA-256 `624b519d8d9ebcae2820bf2a17e6570fc6f7d698ffbe5694c40e411041ccb115`. Follow-on hand approach needs a separate conditioned initialization and path that keep clear during rod sag. The continuing control and simulation boundary is verified for the bounded native probe; Teacher contact reward and grasp admission remain closed.
