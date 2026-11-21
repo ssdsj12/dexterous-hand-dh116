@@ -31363,6 +31363,31 @@
         "verified_at_utc": "2026-11-21T12:30:49.671733+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.902-continuous-contact-guard",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-continuous-contact.md",
+      "readiness": "docs/contracts/dh116_teacher_902_continuous_contact_v1.json",
+      "cpu_tests": {
+        "passed": 347,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0ee937c1f3e3e0f48ef140d003c3478f4a5009a5",
+        "source_tree": "a750e3bb8b53ffe7c56203d58c2518d3d1e3419c",
+        "remote_branch": "11-17",
+        "files_verified": 14,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T13:05:25.593827+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
