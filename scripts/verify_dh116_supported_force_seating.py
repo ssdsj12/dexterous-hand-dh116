@@ -12,7 +12,7 @@ from scripts import screen_dh116_tripod_measured_precontact as measured
 TRIPOD_REQUEST = measured.ROOT / "configs/dh116_tasks/flexible_tripod_right_force_seating_v1.json"
 TRIPOD_CONTRACT = measured.ROOT / "docs/contracts/dh116_teacher_tripod_measured_left_retarget_native_v2.json"
 TRIPOD_SDK = 1296
-PAD_FOR_SLOT = {8: "index", 9: "middle"}
+PAD_FOR_SLOT = {2: "index", 8: "index", 9: "middle"}
 DOSE_THRESHOLD_N = .085
 
 
@@ -28,9 +28,11 @@ def validate_seating_schedule(schedule, pad_by_slot, *, max_travel_rad):
         raise ValueError("seating exceeds the screened finger travel budget")
 
 
-def select_seating_command(planned, evidence, pad_by_slot):
-    right = evidence["per_hand"]["right"]
-    rows = right["per_substep"]
+def select_seating_command(planned, evidence, pad_by_slot, *, side="right"):
+    if side not in ("left", "right") or any((slot < 6) != (side == "left") for slot in pad_by_slot):
+        raise ValueError("a seating action must use the measured hand identity")
+    hand = evidence["per_hand"][side]
+    rows = hand["per_substep"]
     if len(rows) != 12:
         raise ValueError("complete 12-substep current solver load required")
     combined = np.asarray([row["total_normal_load_n"] for row in rows], dtype=float)
@@ -44,7 +46,7 @@ def select_seating_command(planned, evidence, pad_by_slot):
         if not np.isfinite(forces).all() or np.any(forces < 0.):
             raise ValueError("seating requires measured per-pad normal force")
         minimums[pad] = float(forces.min())
-        if right["loaded"] or (total_ready and minimums[pad] >= DOSE_THRESHOLD_N):
+        if hand["loaded"] or (total_ready and minimums[pad] >= DOSE_THRESHOLD_N):
             issued[slot] = 0.
     return issued, minimums
 
@@ -100,3 +102,32 @@ def load_pinch_seating(receipt):
     validate_seating_schedule(appended, pads, max_travel_rad=request["maximum_finger_travel_rad"])
     return appended, dict(sdk_step=sdk, archive=rows[-1], pad_by_slot={"8": "index"}), (
         *paths, Path(__file__), request_path)
+
+
+def load_tripod_left_stabilization(receipt, actions, *, start_sdk):
+    request_path = measured.ROOT / "configs/dh116_tasks/flexible_tripod_left_index_stabilize_v1.json"
+    contract = measured.ROOT / "docs/contracts/dh116_teacher_tripod_force_guided_right_seating_native_v1.json"
+    req = json.loads(request_path.read_bytes())
+    sdk = 1480
+    if (req["version"] != "dh116-tripod-left-index-stabilize-v1" or req["source_sdk"] != sdk
+            or req["dose_windows"] != 4 or req["hold_windows"] != 24
+            or not 0. < req["max_travel_rad"] <= .0006):
+        raise ValueError("the measured left index stabilization recipe is required")
+    info = json.loads(contract.read_bytes())["actual"]
+    _, _, bound = measured.archive(receipt, contract=contract, sdk=info["end_sdk"])
+    outer = measured.sources.checked_json(receipt, info["outer_sha256"])
+    path = receipt.parent / "native" / f"tripod_control_{sdk}.json"
+    row = measured.sources.checked_json(path, outer["artifact_sha256"][path.name])
+    if (row["physics_step"] != sdk or row["rod"]["physics_step"] != sdk
+            or row["sdk_hand_geometry"]["physics_step"] != sdk or row["rod"]["rod_tick"] != (sdk-2)*12
+            or row["guard_failure"] is not None):
+        raise ValueError("left stabilization must start at the complete same-clock measured boundary")
+    count = (sdk - start_sdk) // 8
+    if not 0 < count < len(actions) or start_sdk + 8 * count != sdk:
+        raise ValueError("left stabilization requires replay through all prior right doses")
+    planned = np.zeros((req["dose_windows"] + req["hold_windows"], 24))
+    planned[:req["dose_windows"], 2] = req["normalized_index_action"]
+    pads = {2:"index"}
+    validate_seating_schedule(planned, pads, max_travel_rad=req["max_travel_rad"])
+    return np.vstack((actions[:count], planned)), dict(sdk_step=sdk, archive=row, side="left",
+        pad_by_slot={"2":"index"}), (*bound, path, request_path, Path(__file__))

@@ -365,9 +365,10 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         trace.watch("power_control_exchange", control, owner="supported Power action diagnostic", release="owned scope")
 
         power_start = geometry()["root_poses_w"] if power_open_boundary_sdk is not None else None
-        seating = force_seating
-        if seating is None and distal_probe is not None and distal_probe.bilateral is not None:
-            seating = distal_probe.bilateral.get("seating")
+        primary_seating = None
+        if distal_probe is not None and distal_probe.bilateral is not None:
+            primary_seating = distal_probe.bilateral.get("seating")
+        seatings = tuple(stage for stage in (primary_seating, force_seating) if stage is not None)
 
         def observe(row):
             emitted = row
@@ -407,7 +408,9 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
             if distal_probe is not None and row["physics_step"] == distal_probe.boundary_sdk:
                 verify_waypoint_boundary(encode_owned(emitted), distal_probe.archive,
                                          sdk_step=distal_probe.boundary_sdk, exact_geometry=True)
-            if seating is not None and row["physics_step"] == seating["sdk_step"]:
+            for seating in seatings:
+                if row["physics_step"] != seating["sdk_step"]:
+                    continue
                 actual, expected = encode_owned(emitted), seating["archive"]
                 verify_waypoint_boundary(actual, expected, sdk_step=seating["sdk_step"], exact_geometry=True)
                 if (actual["rod"]["rod_mesh_contact_pairs"] != expected["rod"]["rod_mesh_contact_pairs"]
@@ -446,7 +449,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         completed = []
         for command in schedule:
             sdk = power.clock()["physics_step"]
-            if seating is not None and sdk >= seating["sdk_step"]:
+            seating = next((s for s in reversed(seatings) if s["sdk_step"] <= sdk), None)
+            if seating is not None:
                 from scripts.verify_dh116_supported_force_seating import select_seating_command
                 from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_supported_distal_contact
 
@@ -454,11 +458,12 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 if prior is None or prior["physics_step"] != sdk:
                     raise ValueError("force seating requires the previously completed same-SDK solver sample")
                 evidence = measure_supported_distal_contact(prior["rod"], grasp=task)
+                side = seating.get("side", "right")
                 selected, loads = select_seating_command(command, evidence, {
-                    int(slot): pad for slot, pad in seating["pad_by_slot"].items()})
+                    int(slot): pad for slot, pad in seating["pad_by_slot"].items()}, side=side)
                 native.write_new(output/f"{task}_seating_command_{sdk}.json",
                     dict(source_sdk_step=sdk, proposed_action=command.tolist(), issued_action=selected.tolist(),
-                         minimum_pad_force_n=loads, previously_qualified=evidence["per_hand"]["right"]["loaded"]))
+                         minimum_pad_force_n=loads, measured_hand=side, previously_qualified=evidence["per_hand"][side]["loaded"]))
                 command = selected
             result = control.control(torch.tensor(command, dtype=torch.float64)[None], observe=observe)
             completed.append(result)

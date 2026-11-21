@@ -1,0 +1,9 @@
+# Tripod left-index load oscillation and bounded dose
+
+Antigravity read branch 11-17 at `1435604`. The four source hashes matched the Ubuntu checkout. Both reviews found no control-phase branch in the target submission or reaction path. `FlexiblePhysicalExchange._step` resubmits targets and the previous completed solver reaction at every SDK step. The only action selection at the control boundary produces zero during the previous holding sequence. The rod and PhysX use the expected one-SDK staggered exchange.
+
+The sealed 144-step hold sequence had a constant left `finger21` target of 0.709243 rad. Its left-index mean force peaked at phase index 5 in all 18 windows and had lag-eight autocorrelation 0.995. Mean left-index force and the next SDK joint velocity had correlation −0.997. Together with the original per-substep contact pairs and actual q/qd, this supports physical contact oscillation. It does not identify the sole cause or show how the dose will affect continuous loading.
+
+The follow-up replays the same right force seating and requires the exact SDK 1480 native state. It can then dose only the original left index joint, action slot 2, by at most 0.0006 rad across four windows, using that hand's own measured load. Twenty-four hold windows follow with no wrist or new right action. The independent 33-sample CPU screen gave a minimum non-pad clearance of 0.669 mm, with the left-index SDF gap changing from approximately +14 to −45 µm. The first diagnosis compares force troughs in all eight phases to the prior zero-action windows.
+
+Use the existing Tripod setup and `--left-seating-reference <right-seating outer.json>`. Full CPU regressions passed 220 tests, and the freeze check emitted at most 1704 SDK steps, 183 controls and 20424 solver steps. This package does not record a new native result, grasp pass or Teacher admission.

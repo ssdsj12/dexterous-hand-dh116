@@ -277,6 +277,9 @@ def freeze(args):
             raise ValueError("inconsistent Tripod source fingerprints")
     archived = waypoint = precontact = distal_archive = bilateral_archive = None
     seating = getattr(args, "seating_reference", None)
+    left_seating = getattr(args, "left_seating_reference", None)
+    if left_seating is not None and seating is None:
+        raise ValueError("left stabilization requires the measured right seating sequence")
     retarget = getattr(args, "retarget_reference", None)
     if seating is not None and retarget is None:
         raise ValueError("Tripod force seating requires the verified retarget path")
@@ -344,6 +347,12 @@ def freeze(args):
                 actions, seat, bound = load_tripod_seating(seating, actions, start_sdk=SDK_END)
                 parameters["seating"] = seat
                 plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
+                if left_seating is not None:
+                    from scripts.verify_dh116_supported_force_seating import load_tripod_left_stabilization
+
+                    actions, added, bound = load_tripod_left_stabilization(left_seating, actions, start_sdk=SDK_END)
+                    plan["tripod_left_seating"] = added
+                    plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
         sdk_end = SDK_END + 8*len(actions)
         plan["tripod_approach"] = actions.tolist()
         plan["budget"].update(mode=("tripod_guarded_waypoint_continuation" if waypoint
@@ -376,6 +385,7 @@ def main(argv=None):
     parser.add_argument("--retarget-reference", type=Path)
     parser.add_argument("--retarget-screen", type=Path)
     parser.add_argument("--seating-reference", type=Path)
+    parser.add_argument("--left-seating-reference", type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(screen.ROOT)
@@ -398,6 +408,8 @@ def main(argv=None):
     distal = None if distal_archive is None else dict(plan["right_tripod_distal_contact"], archive=distal_archive)
     if bilateral_archive is not None:
         distal["bilateral"] = dict(plan["bilateral_tripod_contact"], archive=bilateral_archive)
+        if "tripod_left_seating" in plan:
+            distal["seating"] = plan["tripod_left_seating"]
     reset.execute(plan, acquire_operation=partial(shared.run_shared, profile=BackendProfile.load(screen.ROOT),
         args=args, supported_acquire=partial(supported.acquire_supported_reset, config=config, sdk_end=sdk_end,
         task="tripod"), sdk_end=sdk_end, require_no_hand_contact=True, task="tripod", tripod_archive=archived,

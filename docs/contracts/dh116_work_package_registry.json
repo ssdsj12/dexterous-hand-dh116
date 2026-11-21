@@ -47098,6 +47098,28 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-left-index-oscillation-dose": {
+      "title": "Probe the measured left-index instability against the original zero-action hold",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-force-guided-right-seating-native"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_force_seating.py",
+        "tests/test_dh116_tripod_bilateral_distal_retarget.py",
+        "tests/test_dh116_supported_distal_transfer.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_left_index_oscillation_dose_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-left-index-oscillation-dose.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 220,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

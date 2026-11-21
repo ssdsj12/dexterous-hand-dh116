@@ -1,3 +1,7 @@
+## Tripod left-index load oscillation
+
+Preserve the measured holding-phase oscillation and add a hand-bound fixed-wrist dosing probe. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-left-index-oscillation-dose.md).
+
 ## Power high wrist bypass native result
 
 Verify the opened wrist route and natural exit against original support and collision constraints. [Report](docs/superpowers/reports/2026-11-21-teacher-power-guarded-wrist-bypass-native.md).

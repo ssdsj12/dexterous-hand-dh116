@@ -69,3 +69,17 @@ def test_pinch_seating_uses_only_the_right_index_and_its_own_receipt(monkeypatch
     np.testing.assert_allclose(commands[:8,8], .03)
     np.testing.assert_array_equal(commands[8:], 0.)
     assert plan["archive"] == sealed and plan["pad_by_slot"] == {"8":"index"} and receipt in sources
+
+
+def test_left_index_seating_reads_left_force_and_preserves_right_channel():
+    command=np.zeros((4,24))
+    command[:,2]=.03
+    validate_seating_schedule(command,{2:"index"},max_travel_rad=.0006)
+    right_only=evidence(index=.10,loaded=True)
+    left_only=evidence(index=.01,loaded=False)["per_hand"]["right"]
+    right_only["per_hand"]["left"]=left_only
+    actual, force=select_seating_command(command[0],right_only,{2:"index"},side="left")
+    assert np.flatnonzero(actual).tolist()==[2]
+    assert force=={"index":.01}
+    with pytest.raises(ValueError,match="measured hand identity"):
+        select_seating_command(command[0],right_only,{2:"index"},side="right")
