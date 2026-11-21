@@ -1,0 +1,143 @@
+{
+  "version": "dh116-teacher-tripod-collector-grasp-routing-v1",
+  "base_head": "e7bbec2960046c970c57b9ddafaa6a4d9591fb81",
+  "status": "cpu_grasp_routing_verified_native_v5_pending",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_collector.py": "e4a96060eb06b27ebc42f090887fd0022d4a487d9ea90acf8b461cd0e3482f70",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_training.py": "a892f26fe4160b39fb2b5b10f97ebe052573604fc7e602a5a9394eef936b724e",
+    "tests/test_native_teacher_collector.py": "4f7d4bd1a703bc591f495def8d1fd842e07b319627825f1db67eb70cb78f5b53",
+    "tests/test_native_teacher_training.py": "46f89f104ec830e20029e5b8ec58dddafdf919b4e5923d7cfe3be35c3eadb1a9",
+    "tests/test_native_teacher_tripod_frozen_worker.py": "9695670e446471d763f7c7530562acef04e122152d5bd60da9a6829148d32227",
+    "configs/dh116_execution/tripod-actual-smoke8-core-v5.json": "7dd3f871ed396c484b5ad8bce9c53b87d776f74f3747a8f0e1ba8ec1c388e693",
+    "configs/dh116_execution/tripod-actual-smoke8-launch-v5.json": "875ad7ae0fa24e01ac2033160bcf3cedd65d863d41d84a1ff6325b31ac653560"
+  },
+  "cpu": {
+    "passed": 386,
+    "failed": 0,
+    "new_parameterized_cases": 8,
+    "groups": [
+      {
+        "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-collector-routing-green.log",
+        "sha256": "2c1a2060572e2782e0a7219759187f7591108874811cbae94838720e7f4b0d91",
+        "passed": 47,
+        "failed": 0,
+        "seconds": 125.99,
+        "tests": [
+          "tests/test_native_teacher_collector.py",
+          "tests/test_native_teacher_training.py"
+        ]
+      },
+      {
+        "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-collector-dependent-regression.log",
+        "sha256": "120300d04009f202812cf70d56f23ed8e5b16d14769a52fc901afeeed56d0b78",
+        "passed": 204,
+        "failed": 0,
+        "seconds": 416.82,
+        "tests": [
+          "tests/test_native_teacher_actual_factories.py",
+          "tests/test_native_teacher_session.py",
+          "tests/test_native_teacher_checkpoint.py",
+          "tests/test_native_teacher_actual_update.py",
+          "tests/test_native_teacher_actual_artifacts.py",
+          "tests/test_native_teacher_worker_artifacts.py"
+        ]
+      },
+      {
+        "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-frozen-worker-v5-green.log",
+        "sha256": "26d5a582183b7327513bdf630236356e1fbd934ecb3b43f61a33ff1c73a8c043",
+        "passed": 135,
+        "failed": 0,
+        "seconds": 36.53,
+        "tests": [
+          "tests/test_native_teacher_tripod_frozen_worker.py",
+          "tests/test_native_teacher_actual_launch.py",
+          "tests/test_native_teacher_worker_contract.py",
+          "tests/test_dh116_work_packages.py"
+        ]
+      }
+    ],
+    "red_log_sha256": {
+      "tripod-collector-routing-red.log": "09bf7f27aa2f5c149278d0c9e1734a667196b214b53d28ce42cfcd1cf2c3cb83",
+      "tripod-collector-routing-red-2.log": "c14e85b92ea03f4c87a0c3835689f8249e785f621ad7b32d72fc802740a7ba6c",
+      "tripod-collector-routing-red-3.log": "e9ef03ca370d5306f38435bf721420804fd1f77b3909dd829c0b38d28ce2edbd",
+      "tripod-frozen-worker-v5-red.log": "ff18a4281250285c3da22b154f769f015de5b154ec90f17e1a52a5e7a3975898"
+    }
+  },
+  "previous_native_attempt": {
+    "version": "dh116-tripod-native-failure-readback-v4",
+    "tested_head": "e7bbec2960046c970c57b9ddafaa6a4d9591fb81",
+    "attempt": "/home/xk/.dh116-native-control-11-17/native-attempts/teacher.tripod-ppo-fresh-smoke8-v4/8847d62d8c9aab49adcdfd1fd360c7b42f5f3724475bbb32112086eabc139f4e/attempt-q0arlsf6",
+    "output": "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/native-output-tripod-smoke8-8847d62d/teacher.tripod-ppo-fresh-smoke8-v4/attempt-q0arlsf6/native",
+    "attempt_fingerprint": "8847d62d8c9aab49adcdfd1fd360c7b42f5f3724475bbb32112086eabc139f4e",
+    "receipt_sha256": "f8ae85d4f9f7f3b8d5652a3e786b9cd444822eafde945d6a23409ee2dfe06633",
+    "outer_exit_sha256": "d8320dc68968306439bd18acfac6c97ffe7fe6135ef61f719feefcececd7ae7e",
+    "native_log_sha256": "267839a3358e29c1e32a01e7471a5285c72e1d7255ca3ae9f49271ce29bc06a3",
+    "journal_sha256": "580b0a3aa2cac095f5be4797102728fd4541457095a9c49946672c9cc0aca57b",
+    "lifecycle_result_sha256": "14671b39ea9641be8e293e1e489aad7aa17092e50a42d1fb91ca2330de386226",
+    "sdk_steps": 2,
+    "controls": 0,
+    "solver_calls": 0,
+    "ppo_updates": 0,
+    "exit_code": 1,
+    "signal": null,
+    "duration_seconds": 171.22343647899106,
+    "parameter_scope": "native_getter",
+    "source_health": 0,
+    "source_health_scope": "native_getter",
+    "reset_distance_per_hand_m": [
+      0.0019469666294753551,
+      0.009661120673020681
+    ],
+    "live_preflight_reached_collector": true,
+    "native_release_verified": false,
+    "app_close_returned": true,
+    "native_qualification": false,
+    "grasp_qualified": false,
+    "teacher_admission": false,
+    "root_error": "NativeTeacherCollector still accepts exact NativePinchSources only after independent Tripod source/Reset/live_preflight/model construction"
+  },
+  "next_native_identity": {
+    "actual_identity": {
+      "companion_sha256": "875ad7ae0fa24e01ac2033160bcf3cedd65d863d41d84a1ff6325b31ac653560",
+      "core_recipe_identity": {
+        "code_config_sha256": "0e5208b1aff0ebcf7e4a0f8f72aa612df0f42846882a51d1665f410bbcdd9a5b",
+        "command_spec_sha256": "7dd3f871ed396c484b5ad8bce9c53b87d776f74f3747a8f0e1ba8ec1c388e693"
+      },
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "source_closure_sha256": "3b26929d049ce7a7656d8fc73f917fd879c7027d31bf0f85d041241bdf2c4287"
+    },
+    "attempt_fingerprint": "c01d8d503a1e2b1cebcf5fc726c4018fa4d4a02ad329212977625e6e6b33aa79",
+    "core_identity": {
+      "code_config_sha256": "0e5208b1aff0ebcf7e4a0f8f72aa612df0f42846882a51d1665f410bbcdd9a5b",
+      "command_spec_sha256": "7dd3f871ed396c484b5ad8bce9c53b87d776f74f3747a8f0e1ba8ec1c388e693"
+    }
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "readiness": {
+    "collector_grasp_sources_verified_cpu": true,
+    "cross_grasp_refused_cpu": true,
+    "model_grasp_mismatch_refused_cpu": true,
+    "independent_power_source": false,
+    "real_tripod_reset_verified": true,
+    "real_tripod_live_preflight_reached_collector": true,
+    "real_tripod_control": false,
+    "real_tripod_update": false,
+    "resume_pair": false,
+    "full_contact_slip_hold": false
+  },
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "cameras_changed": false,
+  "physical_parameters_changed": false,
+  "protected_files_verified": 528,
+  "original_checkpoints_verified": 3,
+  "review": {
+    "antigravity": "quota unavailable until 2026-11-27; no new response",
+    "independent_review": "Collector/source/model/preflight/factory/session/update/checkpoint/artifact paths reviewed"
+  },
+  "next": "One independently frozen v5 finite native diagnostic after Windows publication and actual resource reservation; no same fingerprint retry"
+}

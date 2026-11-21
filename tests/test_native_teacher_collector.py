@@ -16,7 +16,7 @@ from test_native_teacher_context import backend_profile
 
 
 def fixture(monkeypatch,tmp_path,profile,*,rollout_steps=2,cap_controls=99,ppo_config=None,physics_budget_end=66,
-            configure_trainer=None):
+            configure_trainer=None,grasp="pinch"):
     import test_deformable_r0_replay as replay
     from go2_pvcnn.control.dh116.tabletop_action24_history_owner import Action24HistoryOwner
     from go2_pvcnn.control.dh116.tabletop_native_teacher_context import TaskContextOwner
@@ -45,7 +45,7 @@ def fixture(monkeypatch,tmp_path,profile,*,rollout_steps=2,cap_controls=99,ppo_c
     for side in ("left","right"):
         history.record(dict(kind="initial_geometry",side=side,evidence=dict(side=side,
             identity=dict(sdk_step=2,sdk_time_s=2/480))))
-    config,*_=model_setup("pinch")
+    config,*_=model_setup(grasp)
     model=NativeContextTeacher(config,backend_profile=profile)
     reward_config=load_config(Path(__file__).resolve().parents[1]/"configs/dh116_training/approach_wiring_smoke_v1.json")
     trainer=DeformablePPOTrainer(model,ppo_config or PPOConfig(gamma=reward_config.gamma,epochs=1,minibatches=1,
@@ -617,3 +617,55 @@ def test_collector_counts_original_guards_without_copying_durable_physical_rows(
     physical = [row for row in operations(collector) if row["operation"] == "physical"]
     assert len(physical) == collector.consumed_sdk_steps == 8
     assert all("rod_boundary" in row["payload"] for row in physical)
+
+
+@pytest.mark.parametrize("grasp,source_grasp,model_grasp,accepted", [
+    ("pinch","pinch","pinch",True),
+    ("tripod","tripod","tripod",True),
+    ("tripod","pinch","tripod",False),
+    ("pinch","tripod","pinch",False),
+    ("tripod","tripod","pinch",False),
+    ("power","tripod","power",False),
+])
+def test_collector_binds_exact_grasp_source_and_model_before_collection(
+        monkeypatch,tmp_path,backend_profile,grasp,source_grasp,model_grasp,accepted):
+    """Only exercise admission routing over CPU data, never claim native I/O."""
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_session import (
+        NativeEpisodeOwner,NativeSessionConfig,StaticContract,ModelContract,LiveContract)
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_sources import NativePinchSources,NativeTripodSources
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_collector import NativeTeacherCollector
+    c,ep,rod,hands,sim,_=fixture(monkeypatch,tmp_path,backend_profile,grasp=model_grasp)
+    # SDK/source construction was tested separately. Here only those unavailable
+    # native I/O boundaries use CPU buffers; the real collector/type/identity
+    # checks, model and reward execute unchanged.
+    for restore in reversed(c.owner._restores):restore()
+    from test_dh116_flexible_measured_common_teacher import setup as model_setup
+    model_config,*_=model_setup(model_grasp)
+    owner=object.__new__(NativeEpisodeOwner)
+    owner.__dict__.update(c.owner.__dict__)
+    config=NativeSessionConfig(
+        preflight=dict(style=grasp,profile=c.reward.config.profile),
+        model_config=model_config,journal_path=c.journal.path,
+        episode_cap_s=2.,rollout_steps=c.trainer.rollout_steps)
+    owner.contract=StaticContract(config,backend_profile,None,{},c.trainer.config,
+        c.reward.config,{},None,"cpu_fixture_no_native_contract")
+    owner.backend_profile=backend_profile
+    source_type={"pinch":NativePinchSources,"tripod":NativeTripodSources}[source_grasp]
+    source=object.__new__(source_type)
+    source.owner=owner
+    source.reset_reward=c.sources.reset_reward
+    owner.sources=source
+    live=LiveContract(owner.contract,ModelContract(
+        model_config,backend_profile,c.trainer.model.context_mode),None,{})
+    from go2_pvcnn.control.dh116.tabletop_training_reward import TrainingReward
+    reward=TrainingReward(c.reward.config)
+    before=(sim.current_time_step_index,rod.rope.steps,c.trainer.counters["updates"])
+    if accepted:
+        routed=NativeTeacherCollector(owner,c.trainer,reward,live)
+        assert routed._source_profile is backend_profile
+        assert routed.sources is source and routed.transitions==0
+        assert operations(routed)[-1]["payload"]["teacher_admission"] is False
+    else:
+        with pytest.raises(ValueError,match="same verified owner/model/profile/approved PPO config"):
+            NativeTeacherCollector(owner,c.trainer,reward,live)
+    assert before==(sim.current_time_step_index,rod.rope.steps,c.trainer.counters["updates"])

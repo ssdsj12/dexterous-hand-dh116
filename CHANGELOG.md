@@ -1,3 +1,7 @@
+## Tripod Collector grasp binding
+
+V4 reached live preflight but stopped at a stale Pinch-only Collector guard:2 SDK steps,0 controls/update,exit1 without signal. Collector now binds exact independent sources and model grasp; cross-grasp sources are rejected. 386 selected CPU checks pass. V5 is frozen and unexecuted; no grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-collector-grasp-routing.md).
+
 ## Tripod live health dispatch
 
 Actual v3 reached native reset_sources with solver health0, then stopped at a second legacy reader in live_preflight. Both Teacher paths now share the exact supported17 adapter;124 selected CPU tests pass. Independent v4 remains unexecuted; no native PPO or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-live-health-routing.md).

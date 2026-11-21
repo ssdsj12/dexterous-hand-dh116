@@ -96,7 +96,7 @@ def preflight_training(config):
             identity=model_contract(config['model_config'],BackendProfile.load(),config['preflight']['profile'])
             if identity['grasp']!=config['preflight']['style']:raise ValueError('model/source grasp differs')
         except (ValueError,KeyError,TypeError,OSError) as error:reasons.append('model_contract_invalid: '+str(error))
-    if config['preflight']['style']!='pinch':reasons.append(config['preflight']['style']+'_distance_reader_implementation_pending')
+    if config['preflight']['style'] not in ('pinch','tripod'):reasons.append(config['preflight']['style']+'_distance_reader_implementation_pending')
     if config['preflight']['profile']!='approach_wiring_smoke_v1':reasons.append('full_shared_contact_slip_hold_source_adapter_missing')
     if (type(config['episode_cap_s']) not in (int,float) or not math.isfinite(config['episode_cap_s'])
             or config['episode_cap_s']<=0):reasons.append('explicit_episode_cap_s_missing')

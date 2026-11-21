@@ -111,10 +111,13 @@ class NativeTeacherCollector:
         self._source_profile = None
         if self.sources.scope!="cpu_fixture":
             from .tabletop_native_teacher_session import NativeEpisodeOwner,LiveContract
-            from .tabletop_native_teacher_sources import NativePinchSources
+            from .tabletop_native_teacher_sources import NativePinchSources,NativeTripodSources
             from .tabletop_native_teacher_model import model_contract,verify_native_teacher_identity
+            style=owner.contract.config.preflight.get("style") if type(owner) is NativeEpisodeOwner else None
+            source_type={"pinch":NativePinchSources,"tripod":NativeTripodSources}.get(style)
             if (type(owner) is not NativeEpisodeOwner or type(live) is not LiveContract
-                    or type(self.sources) is not NativePinchSources or live.static is not owner.contract
+                    or source_type is None or type(self.sources) is not source_type
+                    or live.static is not owner.contract or trainer.model.model_identity["grasp"]!=style
                     or trainer.model._backend_profile is not owner.backend_profile
                     or trainer.config!=live.static.ppo_config
                     or trainer.rollout_steps!=live.static.config.rollout_steps):

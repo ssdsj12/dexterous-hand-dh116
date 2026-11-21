@@ -48576,18 +48576,94 @@
       "evidence_scope": "tripod_actual_fresh_smoke8_v4",
       "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v4.json",
       "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Frozen one-shot diagnostic; requires exact current native batch and live resource reservation; no grasp qualification.",
+      "blocker_kind": "failed_native",
+      "reason": "Independent Tripod Reset/source/live_preflight reached Collector; stale exact NativePinchSources gate rejected it. Two SDK setup steps, no controls/solver/update. Exit1/no signal, fault-path release unverified. Fingerprint consumed.",
       "dependencies": [
         "teacher.tripod-fresh-reset-native-validation",
         "teacher.tripod-live-health-routing"
       ],
       "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v4.md",
       "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v4.json",
-      "native_runs": 0,
+      "native_runs": 1,
       "actual_launch": {
         "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v4.json",
         "sha256": "af864332e276e6d9fbe0732f6d39b60509bf8aa85beb68c7e5f61a9a135b9a2a"
+      },
+      "last_result": {
+        "exit_code": 1,
+        "debugger_inferior_signal": null,
+        "sdk_steps": 2,
+        "control_steps": 0,
+        "solver_calls": 0,
+        "ppo_updates": 0,
+        "attempt_fingerprint": "8847d62d8c9aab49adcdfd1fd360c7b42f5f3724475bbb32112086eabc139f4e",
+        "code_config_sha256": "74e2060149811ef96f119def3c9263874c5caf10755ce4c57e5cc2d2dfe06b2b",
+        "result_sha256": "f8ae85d4f9f7f3b8d5652a3e786b9cd444822eafde945d6a23409ee2dfe06633",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false
+      },
+      "dependency_scopes": {}
+    },
+    "teacher.tripod-collector-grasp-routing": {
+      "title": "Bind Collector and diagnostic training to independent grasp-specific sources",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-live-health-routing"
+      ],
+      "tests": [
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_training.py",
+        "tests/test_native_teacher_actual_factories.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_native_teacher_checkpoint.py",
+        "tests/test_native_teacher_actual_update.py",
+        "tests/test_native_teacher_actual_artifacts.py",
+        "tests/test_native_teacher_worker_artifacts.py",
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_collector_grasp_routing_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-collector-grasp-routing.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 386,
+        "cpu_failed": 0,
+        "new_parameterized_cases": 8,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU Collector grasp/type/model routing and existing dependent chains; v4 native failed before controls, v5 unexecuted"
+      }
+    },
+    "teacher.tripod-ppo-fresh-smoke8-v5": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Independent Tripod fresh17 smoke8 actual PPO diagnostic",
+      "evidence_scope": "tripod_actual_fresh_smoke8_v5",
+      "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v5.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Frozen one-shot diagnostic; requires exact current native batch and live resource reservation; no grasp qualification.",
+      "dependencies": [
+        "teacher.tripod-fresh-reset-native-validation",
+        "teacher.tripod-collector-grasp-routing"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v5.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v5.json",
+      "native_runs": 0,
+      "actual_launch": {
+        "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v5.json",
+        "sha256": "875ad7ae0fa24e01ac2033160bcf3cedd65d863d41d84a1ff6325b31ac653560"
       }
     }
   },

@@ -170,3 +170,15 @@ def test_rollout32_r0_update_retains_all_source_bindings(monkeypatch, tmp_path, 
     assert exact_kl <= approved["target_kl"]
     print(f"rows={len(rows)} sources={len(inputs)} controls={len(decisions)} physics={len(physical)} "
           f"accepted={result['accepted_minibatch_updates']} l2={result['parameter_delta_l2']:.9g} exact_kl={exact_kl:.9g}")
+
+
+@pytest.mark.parametrize("grasp,reader_missing",[("tripod",False),("power",True)])
+def test_training_preflight_names_only_missing_independent_distance_sources(grasp,reader_missing):
+    """CLI diagnostics retain the lease gate without reporting implemented Tripod missing."""
+    r=runner();config=r.candidate_training_config()
+    config["preflight"]["style"]=grasp
+    report=r.preflight_training(config)
+    assert (grasp+"_distance_reader_implementation_pending" in report["blocked_reasons"]) is reader_missing
+    assert "c06_source_bound_worker_lease_missing" in report["blocked_reasons"]
+    assert report["native_execution_ready"] is False
+    assert report["policy_constructed"] is False
