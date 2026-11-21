@@ -18,7 +18,7 @@ PROXIMAL_ACTION = ROOT / "configs/dh116_tasks/flexible_power_proximal_action_v1.
 native, reset, sources = shared.native, shared.reset, shared.sources
 
 
-def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_end=shared.SDK_END):
+def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_end=shared.SDK_END, task="power"):
     from go2_pvcnn.control.dh116 import tabletop_dual_hand_scene_preparation as scene_api
     from go2_pvcnn.control.dh116 import tabletop_dual_pinch_builder as builder
     from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import HandBinding
@@ -31,7 +31,7 @@ def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_
     from go2_pvcnn.control.dh116.tabletop_palm_mount import MountView
     from go2_pvcnn.control.dh116.tabletop_power_shared_rod import END_SUPPORT_NAMES
     from go2_pvcnn.control.dh116.tabletop_power_supported_task import (
-        assemble_supported_scene, guard_hand_supports, prepare_initial_state,
+        POWER_SCOPE, TRIPOD_SCOPE, assemble_supported_scene, guard_hand_supports, prepare_initial_state,
     )
     from ropesim import sdf
     from scripts import audit_dh116_pinch_initial_pose as geometry
@@ -40,11 +40,12 @@ def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_
     from scripts.verify_dh116_dual_pinch_interval import diagnostic_reset_owners
 
     hand = hands = scene = original = pad_bindings = mount_bindings = episode = value = None
-    if native.clock(sim)["sdk_step"] != 0:
-        raise ValueError("fresh App-owned Power scene required")
+    scopes = {"power": POWER_SCOPE, "tripod": TRIPOD_SCOPE}
+    if task not in scopes or native.clock(sim)["sdk_step"] != 0:
+        raise ValueError("fresh App-owned supported task scene required")
     try:
         prepared = scene_api.prepare_scene(ROOT)
-        seed, active, nodes, support_poses = prepare_initial_state(config, prepared["table"])
+        seed, active, nodes, support_poses = prepare_initial_state(config, prepared["table"], expected_scope=scopes[task])
         cfg = load_candidate(ROOT / "configs/dh116_tasks/flexible_pinch_candidate_v1.json", ROOT)
         support_scene = config["support_scene"]
         if (cfg["rod"]["gravity_world_m_s2"] != config["gravity_w_m_s2"]
@@ -73,7 +74,7 @@ def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_
                             release="owned scope then SDK STOP", callbacks=True)
         pad_bindings, poses, view_paths = builder._initial_pads(prepared, hands)
         grids = {name: sdf.SdfGrid(**data) for name, data in scene_api.load_sdf_arrays(prepared).items()}
-        run = "power-supported-" + uuid4().hex
+        run = f"{task}-supported-" + uuid4().hex
         base = owners.keep("base_runtime", FreeRodRuntime(cfg, nodes,
             {name: grids["left."+name] for name in PADS}, {name: poses["left."+name] for name in PADS},
             prepared["table"]["center_m"], prepared["table"]["size_m"], episode_uid=run+":construction"))
@@ -89,7 +90,7 @@ def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_
 
         def record(row):
             record.count += 1
-            native.write_new(output/f"power_reset_source_{record.count}.json", encode_owned(row))
+            native.write_new(output/f"{task}_reset_source_{record.count}.json", encode_owned(row))
         record.count = 0
 
         with profile_reader_scope(profile), bindings((geometry, "segment_hull_distance", segment_hull_distance)):
@@ -111,8 +112,8 @@ def acquire_supported_reset(sim, owners, trace, output, *, profile, config, sdk_
         clock = original.clock()
         if native.clock(sim)["sdk_step"] != sdk or clock["physics_step"] != sdk or clock["rod_tick"] != 0:
             raise ValueError("support evidence must belong to the fresh same-clock Reset")
-        trace.checkpoint("power_supported_reset_complete")
-        native.write_new(output/"power_support_scene.json", dict(reset_clock=clock, support_paths=paths,
+        trace.checkpoint(f"{task}_supported_reset_complete")
+        native.write_new(output/f"{task}_support_scene.json", dict(reset_clock=clock, support_paths=paths,
             supports=support_scene["supports"], support_material=material, settings=settings,
             world_hull_clearance=clearance, reset_seed_sha256=seed["sha256"],
             no_hidden_rod_pins=True, authored_rod_force=False, source_scope="same_clock_geometry_diagnostic"))

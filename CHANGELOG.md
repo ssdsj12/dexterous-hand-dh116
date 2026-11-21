@@ -1,3 +1,7 @@
+## Tripod independent supported Reset
+
+Freeze hand-specific initial poses against the full archived settling tube and preserve a separate native receipt. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-supported-reset.md).
+
 ## Pinch thumb tangent probe and verified archive replay
 
 Freeze a two-channel fixed-wrist intervention and replay old clearance with the receipt's own sealed source stamps. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-thumb-tangent-probe.md).

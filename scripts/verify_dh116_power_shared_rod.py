@@ -53,7 +53,7 @@ class SharedPowerOwners:
         return CapacityReservation()
 
 
-def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk):
+def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, support_scene=None):
     from go2_pvcnn.control.dh116.tabletop_batch_geometry import collision_clearance
     from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import _owned
     from go2_pvcnn.control.dh116.tabletop_deformable_wrist_projection import CLEARANCE_M
@@ -80,7 +80,18 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk):
             xyz, quat = native_poses[0, body, :3], native_poses[0, body, 3:]
             poses[name] = (xyz.copy(), quat.copy())
             centers[name] = xyz + Rotation.from_quat(quat).apply(local_com[0, body, :3])
-    clearance, _ = collision_clearance(np.stack(frames, axis=1), clearance_shapes)
+    frame_poses = np.stack(frames, axis=1)
+    clearance, _ = collision_clearance(frame_poses, clearance_shapes)
+    if support_scene is not None:
+        from go2_pvcnn.control.dh116.tabletop_batch_geometry import rotated_points
+        from scripts.certify_dh116_tripod_distal_route import support_clearance_lower
+
+        boxes = [(np.asarray(box["center_m"])-np.asarray(box["size_m"])/2,
+                  np.asarray(box["center_m"])+np.asarray(box["size_m"])/2) for box in support_scene["supports"]]
+        for hand, body, vertices in clearance_shapes:
+            world = rotated_points(frame_poses[0, hand, body], vertices)
+            if any(support_clearance_lower(world, low, high) <= 1e-10 for low, high in boxes):
+                raise ValueError("live Tripod source envelope intersects a support")
     if native.clock(sim)["sdk_step"] != sdk:
         raise ValueError("SDK moved during link and COM readback")
     if not np.isfinite(clearance).all() or np.any(clearance < CLEARANCE_M):
@@ -301,7 +312,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
 
 
 def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=None,
-               sdk_end=SDK_END, require_no_hand_contact=False, action_after_settle=None):
+               sdk_end=SDK_END, require_no_hand_contact=False, action_after_settle=None,
+               task="power", live_support_scene=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -312,6 +324,10 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
     episode = original = power = bindings = composers = binding = scoped_owners = None
     setup = support_options = None
     try:
+        if (task not in ("power", "tripod") or (task == "tripod" and
+                (supported_acquire is None or not require_no_hand_contact or action_after_settle is not None
+                 or live_support_scene is None))):
+            raise ValueError("separate Tripod static support diagnostic required")
         if action_after_settle is not None and (supported_acquire is None or not require_no_hand_contact):
             raise ValueError("Power action must follow the measured hands-clear support interval")
         if supported_acquire is None:
@@ -340,7 +356,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 raise ValueError("proximal SDFs only enter the independent near-open no-contact diagnostic")
             proximal, proximal_grids = bind_proximal_sources(sim, bindings, original, args=args)
         meshes = {**original.bindings, **added, **proximal}
-        first_poses, _, _ = measure_links(sim, bindings, meshes, clearance_shapes, sdk=2)
+        support_measurement = {} if live_support_scene is None else {"support_scene": live_support_scene}
+        first_poses, _, _ = measure_links(sim, bindings, meshes, clearance_shapes, sdk=2, **support_measurement)
         options = dict(support_options or {})
         if proximal:
             options.update(proximal_bindings=proximal, proximal_grids=proximal_grids,
@@ -354,7 +371,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
         capacity = nodes * len(power.mesh_names) * SUBSTEPS
         if scoped_owners is not None and scoped_owners.allocated_capacity != capacity:
             raise ValueError("the single original allocation must cover all Power mesh pairs")
-        native.write_new(output/"power_binding.json", dict(reset_clock=clock, added={**added, **proximal}, mesh_names=power.mesh_names,
+        native.write_new(output/f"{task}_binding.json", dict(reset_clock=clock, added={**added, **proximal}, mesh_names=power.mesh_names,
                          rods_per_env=1, solver_steps_before_registration=0, solver_steps_after_registration=0,
                          pair_capacity=capacity, supported_task=supported_acquire is not None,
                          stationary_first_solver_exchange=stationary_near_open))
@@ -382,7 +399,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             for binding in bindings.values():
                 binding.hand.update(DT)
                 hand_safety(binding)
-            poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk)
+            poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk, **support_measurement)
             stationary_reset_poses = first_poses if stationary_near_open and before_sdk == 2 else None
             row = power.step(poses, centers, physics_step=sdk, stationary_reset_poses=stationary_reset_poses)
             native_joint_state = None
@@ -405,13 +422,13 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                         target=_owned(target["values"]), target_source=target["source"])
                 for name, wrench in row["external_support_wrenches_world"].items():
                     peak_support_loads[name] = max(peak_support_loads[name], float(np.linalg.norm(wrench[:3])))
-            native.write_new(output/f"power_exchange_{sdk}.json", encode_owned(dict(
+            native.write_new(output/f"{task}_exchange_{sdk}.json", encode_owned(dict(
                 route=route, native_joint_state=native_joint_state, preceding_reaction_sdk_step=before_sdk if before_sdk>2 else None,
                 clearance_m=clearance, rod=row, hand_link_poses=poses, hand_link_coms=centers,
                 stationary_reset_pose_bound=stationary_reset_poses is not None)))
             if args.measure_contact_evidence:
                 evidence = measure_power_contact(row)
-                native.write_new(output/f"power_contact_{sdk}.json", evidence)
+                native.write_new(output/f"{task}_contact_{sdk}.json", evidence)
                 contact_exchanges += 1
                 opposing_exchanges += int(evidence["all_substeps_power_contacts"])
             route = row["hand_wrenches_com_world"]
@@ -438,7 +455,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             pair_counts=loaded, max_force_balance_residual_n=max_residual,
             native_qualification=False, grasp_qualified=False, teacher_admission=False, ppo_updates=0)
         if supported_acquire is not None:
-            scope = ("measured_power_support_settling_without_hand" if require_no_hand_contact
+            scope = (f"measured_{task}_support_settling_without_hand" if require_no_hand_contact
                      else "measured_power_end_support_load_no_action")
             result.update(scope=scope, peak_support_force_n=peak_support_loads,
                           power_contact_qualified=False, supported_seed_clock=setup["clock"])
@@ -448,7 +465,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
         if args.measure_contact_evidence:
             result.update(same_clock_contact_exchanges=contact_exchanges,
                           bilateral_opposed_contact_exchanges=opposing_exchanges)
-        native.write_new(output/"power_shared_result.json", result)
+        native.write_new(output/f"{task}_shared_result.json", result)
         return result
     except Exception:
         sdk = native.clock(sim)["sdk_step"]
@@ -456,7 +473,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             raise
         failure = dict(failure=traceback.format_exc(), guarded_stop_sdk_step=sdk,
                        grasp_qualified=False, teacher_admission=False, ppo_updates=0)
-        native.write_new(output/"power_failure.json", failure)
+        native.write_new(output/f"{task}_failure.json", failure)
         return failure
     finally:
         sim = owners = trace = episode = original = power = bindings = composers = binding = scoped_owners = None

@@ -1,0 +1,54 @@
+{
+  "version": "dh116-teacher-tripod-supported-reset-v1",
+  "archived_seed_geometry_sha256": "d83baf7e07e2e60d461272b2cd8df22b773e23e02bee83461ac5253d391685ec",
+  "archive_sample_count": 239,
+  "geometry_lower_bounds": {
+    "left": {
+      "rod_gap_lower_m": 0.0012311362887686417,
+      "table_clearance_m": 0.05738234604516007,
+      "support_gap_m": 0.022942229830453253,
+      "limiting_rod_shape": "source:finger23_link",
+      "shape_count": 22,
+      "passed": true
+    },
+    "right": {
+      "rod_gap_lower_m": 0.002126586839393929,
+      "table_clearance_m": 0.04400864011982625,
+      "support_gap_m": 0.0019199985749063508,
+      "limiting_rod_shape": "source:finger23_link",
+      "shape_count": 22,
+      "passed": true
+    }
+  },
+  "frozen_preflight": {
+    "frozen_sha256": "751b4c9950f2b22375aec55998b7daeb85abd593970a1ee0ac6d02b5a081943f",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "tripod_supported_seed_no_hand_contact",
+      "sdk_setup_steps": 2,
+      "control_steps": 0,
+      "solver_steps": 2856,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 180,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 6,
+      "episode_resets": 1,
+      "sdk_steps": 240
+    }
+  },
+  "cpu_tests": {
+    "passed": 107,
+    "failed": 0,
+    "log_sha256": "8481b812faad39b95f51a6c1996c1bd78e444c586bd5f0e8c6f3a9ce940467d4"
+  },
+  "native_runs": 0,
+  "native_reset_verified": false,
+  "grasp_qualified": false,
+  "teacher_admission": false
+}

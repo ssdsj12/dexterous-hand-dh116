@@ -7,15 +7,20 @@ from .tabletop_dual_hand_reset import prepare_reset_state
 from .tabletop_power_shared_rod import END_SUPPORT_NAMES, SIDES
 
 
-def prepare_initial_state(config, table):
+POWER_SCOPE = "power_end_supported_contact_diagnostic"
+TRIPOD_SCOPE = "tripod_end_supported_contact_diagnostic"
+
+
+def prepare_initial_state(config, table, *, expected_scope=POWER_SCOPE):
     """Bind an independent pose to the free rod, support boxes and original Reset."""
     nodes = np.asarray(config["rod_nodes_w_m"], dtype=np.float32)
-    if (config["scope"] != "power_end_supported_contact_diagnostic"
+    if (expected_scope not in (POWER_SCOPE, TRIPOD_SCOPE) or config["scope"] != expected_scope
             or config["physics_qualified"] is not False
             or config["fixed_rod_nodes"] != []
             or config["gravity_w_m_s2"] != [0., 0., -9.81]
             or nodes.shape != (41, 3) or not np.isfinite(nodes).all()):
-        raise ValueError("explicit unqualified free Power rod and real gravity required")
+        label = "Power" if expected_scope == POWER_SCOPE else "Tripod"
+        raise ValueError(f"explicit unqualified free {label} rod and real gravity required")
     support = config["support_scene"]
     boxes = support["supports"]
     if [box["name"] for box in boxes] != ["negative_y", "positive_y"]:
