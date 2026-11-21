@@ -1,0 +1,58 @@
+{
+  "version": "dh116-pinch-reset-pose-first-control-v1",
+  "candidate_backend_sha256": "1b2c5a1a685c9e6e0e3171f926ce4f8eddfce3f589dd739166aedf75948c6199",
+  "cpu_preflight": {
+    "commit": {
+      "frozen_sha256": "43b8641af5b85348d39559d096bce8061c64bb0a5c0d0b2bcadb2ff04083e4d9",
+      "budget": {
+        "gpu": 2,
+        "num_envs": 1,
+        "mode": "pinch",
+        "sdk_setup_steps": 2,
+        "control_steps": 1,
+        "solver_steps": 96,
+        "teacher_queries": 0,
+        "ppo_updates": 0,
+        "model_loads": 0,
+        "explicit_app_updates_for_stop": 1,
+        "soft_wall_seconds": 180,
+        "auto_retries": 0,
+        "auto_kill": false,
+        "new_power_sdf_bakes": 0,
+        "new_power_mesh_registrations": 0,
+        "episode_resets": 1,
+        "sdk_steps": 10
+      }
+    },
+    "legacy": {
+      "frozen_sha256": "7cce850ea3ee627ce540a1c305a71b9b7d9d822035702a1422ea3f89a80f9238",
+      "budget": {
+        "gpu": 2,
+        "num_envs": 1,
+        "mode": "pinch",
+        "sdk_setup_steps": 2,
+        "control_steps": 1,
+        "solver_steps": 96,
+        "teacher_queries": 0,
+        "ppo_updates": 0,
+        "model_loads": 0,
+        "explicit_app_updates_for_stop": 1,
+        "soft_wall_seconds": 180,
+        "auto_retries": 0,
+        "auto_kill": false,
+        "new_power_sdf_bakes": 0,
+        "new_power_mesh_registrations": 0,
+        "episode_resets": 1,
+        "sdk_steps": 10
+      }
+    }
+  },
+  "cpu_tests": {
+    "passed": 132,
+    "failed": 0
+  },
+  "native_runs": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false
+}

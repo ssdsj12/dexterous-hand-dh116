@@ -187,13 +187,23 @@ def _run_acquisition(sim, owners, trace, output, profile, plan, cache_release, o
         sim = owners = trace = None
 
 
-def execute(plan, *, acquire_operation=None):
+def execute(plan, *, acquire_operation=None, diagnostic_backend=None):
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile
     from go2_pvcnn.control.dh116.tabletop_stereo_native import native_instance_lock
 
     profile = BackendProfile.load(ROOT)
     if profile.digest != plan["backend_profile_sha256"]:
         raise ValueError("current backend profile differs from frozen numeric Reset")
+    backend_path = Path(profile.binary_path)
+    locked_candidate = plan.get("diagnostic_reset_pose_backend")
+    if (diagnostic_backend is None) != (locked_candidate is None):
+        raise ValueError("frozen diagnostic backend and the requested backend must agree")
+    if diagnostic_backend is not None:
+        if acquire_operation is None or list(diagnostic_backend) != locked_candidate:
+            raise ValueError("explicit diagnostic acquisition and matching backend are required")
+        backend_path = Path(diagnostic_backend[0])
+        if native.sha(backend_path) != diagnostic_backend[1]:
+            raise ValueError("the diagnostic Reset backend bytes differ")
     os.environ["CUDA_VISIBLE_DEVICES"]="2"
     os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
     os.environ.setdefault("OMNI_KIT_ACCEPT_EULA","YES")
@@ -201,9 +211,9 @@ def execute(plan, *, acquire_operation=None):
     with native_instance_lock():
         output.mkdir()
         native.write_new(output/"frozen_plan.json",plan)
-        sys.path.insert(0,str(Path(profile.binary_path).parents[1]))
+        sys.path.insert(0, str(backend_path.parents[1]))
         from ropesim import _ropesim
-        native.validate_native_module(_ropesim,Path(profile.binary_path),plan["frozen_files"])
+        native.validate_native_module(_ropesim, backend_path, plan["frozen_files"])
         from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
         assert_clean_import_boundary()
         from isaaclab.app import AppLauncher

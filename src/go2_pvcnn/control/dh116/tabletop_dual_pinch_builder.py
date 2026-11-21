@@ -217,14 +217,15 @@ def _fresh_initial_geometry(project, prepared, sim, hands, episode, radius_m):
 
 def build_fresh_owned(sim, owners, *, project, prepared, ownership, record,
                       run_uuid, episode_uid, physics_budget_end, expected_reset_seed=None,
-                      pair_proposal=None):
+                      pair_proposal=None, diagnostic_backend=None):
     """Build the single Pinch scene, deferring the episode Reset to Teacher."""
     try:
         return _build_owned(
             sim, owners, project=project, prepared=prepared, ownership=ownership, record=record,
             run_uuid=run_uuid, episode_uid=episode_uid, physics_budget_end=physics_budget_end,
             owner_resets=None, damping_override=None, defer_episode_reset=True,
-            expected_reset_seed=expected_reset_seed, pair_proposal=pair_proposal)
+            expected_reset_seed=expected_reset_seed, pair_proposal=pair_proposal,
+            diagnostic_backend=diagnostic_backend)
     finally:
         sim = owners = prepared = ownership = record = None
 
@@ -249,7 +250,7 @@ def build_reset_owned(sim,owners,*,project,prepared,ownership,record,owner_reset
 
 def _build_owned(sim, owners, *, project, prepared, ownership, record, run_uuid, episode_uid,
                  physics_budget_end, owner_resets, damping_override, defer_episode_reset,
-                 expected_reset_seed=None, pair_proposal=None):
+                 expected_reset_seed=None, pair_proposal=None, diagnostic_backend=None):
     scene=hands=hand=view=base=rod=episode=bindings=mount=composers=None
     inspect=read_clock=backend=grids=members=value=geometry=initial_geometry=None
     try:
@@ -274,7 +275,8 @@ def _build_owned(sim, owners, *, project, prepared, ownership, record, run_uuid,
         from .tabletop_deformable_wrist_projection import CLEARANCE_M as POLICY_FLOOR
         from ropesim import _ropesim as backend,sdf
         import numpy as np
-        if Path(backend.__file__).resolve()!=BACKEND.resolve() or _sha(BACKEND)!=BACKEND_SHA:
+        backend_path, backend_hash = (BACKEND, BACKEND_SHA) if diagnostic_backend is None else diagnostic_backend
+        if Path(backend.__file__).resolve() != Path(backend_path).resolve() or _sha(backend_path) != backend_hash:
             raise ValueError("loaded qualified pair backend identity differs")
         if POLICY_FLOOR!=CLEARANCE_M:
             raise ValueError("original policy floor changed")
@@ -336,7 +338,7 @@ def _build_owned(sim, owners, *, project, prepared, ownership, record, run_uuid,
         bindings=owners.keep("hand_bindings",tuple(bindings))
         inspect = partial(_inspect_geometry, project, prepared, sim, hands, rod)
         episode=owners.keep("dual_episode",DualHandPhysicalEpisode(sim,rod,bindings,
-            backend_artifact=BACKEND,backend_sha256=BACKEND_SHA,inspect_geometry=inspect,
+            backend_artifact=backend_path,backend_sha256=backend_hash,inspect_geometry=inspect,
             physics_budget_end=physics_budget_end,record=record))
         ownership.watch("episode",episode,owner="dual builder",release="owned scope")
         if defer_episode_reset:

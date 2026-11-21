@@ -399,3 +399,34 @@ def test_power_reserves_complete_pair_capture_during_original_single_allocation(
     original.rope.enable_contact_pair_capture(len(base.nodes)*11*12)
     assert allocations==[len(base.nodes)*13*12] and original.rope is rope
     assert scoped.allocated_capacity==len(base.nodes)*13*12
+
+
+def test_committing_owned_reset_poses_binds_existing_slots_before_any_step(monkeypatch):
+    rod, base, _, poses, _ = runtime(monkeypatch)
+    reset(rod, poses)
+    calls = []
+    base.rope.commit_mesh_reset_pose = lambda index, xyz, q: calls.append((index, xyz.copy(), q.copy()))
+    identity = rod.clock()
+    with pytest.raises(ValueError, match="identity"):
+        rod.commit_reset_mesh_poses(expected_clock=dict(identity, episode_uid="foreign"))
+    assert not calls
+    result = rod.commit_reset_mesh_poses(expected_clock=identity)
+    assert [call[0] for call in calls] == list(range(5)) + list(range(6, 11))
+    assert result["clock"] == rod.clock() == identity
+    assert result["solver_steps"] == base.rope.steps == 0
+    with pytest.raises(ValueError, match="already committed"):
+        rod.commit_reset_mesh_poses(expected_clock=identity)
+    assert len(calls) == 10
+
+
+def test_commit_failure_requires_fresh_reset_before_control(monkeypatch):
+    rod, base, _, poses, centers = runtime(monkeypatch)
+    reset(rod, poses)
+    def fail(index, xyz, q):
+        raise RuntimeError("native partial commit")
+    base.rope.commit_mesh_reset_pose = fail
+    with pytest.raises(RuntimeError, match="native partial"):
+        rod.commit_reset_mesh_poses(expected_clock=rod.clock())
+    with pytest.raises(RuntimeError, match="fresh reset"):
+        rod.step(poses, centers, physics_step=3)
+    assert base.rope.steps == 0

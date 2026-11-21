@@ -146,6 +146,7 @@ class DualHandRodRuntime:
         self.run_uuid,self.env_id,self.rod_uid=run_uuid,env_id,rod_uid
         self.require_pairs=require_pairs
         self._needs_reset=True
+        self._reset_pad_poses = None
         self._last_solver_time=None
         self._seen_episodes={base.episode_uid}
         # A failed native append consumes the composition too: the caller must
@@ -201,8 +202,38 @@ class DualHandRodRuntime:
         row.update(rod_mesh_contact_pairs=None,pair_capture_status="invalid_until_measured_step",
                    hand_wrenches_com_world=None,table_wrench_world=None)
         self._last_solver_time=before
+        self._reset_pad_poses = poses
         self._needs_reset=False
         return deepcopy(self._decorate(row))
+
+    def commit_reset_mesh_poses(self, *, expected_clock):
+        """Commit the original same-Reset collider poses without stepping the rod."""
+        clock = self.clock()
+        if (clock != expected_clock or clock["clock_valid"] is not True
+                or clock["rod_tick"] != 0 or self._base.last is not None):
+            raise ValueError("fresh solver Reset identity required for mesh pose commit")
+        if self._reset_pad_poses is None:
+            raise ValueError("Reset collider poses were already committed or unavailable")
+        commit_pose = getattr(self.rope, "commit_mesh_reset_pose", None)
+        if not callable(commit_pose):
+            raise ValueError("the loaded solver does not provide zero-time Reset pose commit")
+        poses = self._reset_pad_poses
+        self._reset_pad_poses = None
+        names = []
+        self._needs_reset = True
+        try:
+            for slot, name in enumerate(self.mesh_names):
+                if name in poses:
+                    commit_pose(slot, *poses[name])
+                    names.append(name)
+            if float(self.rope.time) != self._last_solver_time:
+                raise RuntimeError("collider Reset pose commit advanced the solver clock")
+            self._needs_reset = False
+            return dict(clock=clock, mesh_names=names, solver_steps=0,
+                        source="RopeBatch.commit_mesh_reset_pose")
+        except BaseException:
+            self._needs_reset = True
+            raise
 
     def step(self, pad_poses, centers_of_mass, *, physics_step):
         if self._needs_reset:
@@ -210,6 +241,7 @@ class DualHandRodRuntime:
         b=self._base
         if type(physics_step) is not int or physics_step!=b.physics_step+1:
             raise ValueError("SDK physics step must advance exactly once")
+        self._reset_pad_poses = None
         poses=_poses(pad_poses,HAND_NAMES)
         if set(centers_of_mass)!=set(HAND_NAMES):
             raise ValueError("both hands' exact COM bindings required")

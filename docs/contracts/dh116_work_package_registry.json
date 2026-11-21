@@ -45857,6 +45857,30 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-reset-pose-first-control-cpu": {
+      "title": "Bind the original Pinch first control to an independently sealed solver Reset candidate",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.deformx-zero-time-reset-pose-cuda"
+      ],
+      "tests": [
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_dh116_flexible_physical_exchange.py"
+      ],
+      "readiness": "docs/contracts/dh116_pinch_reset_pose_first_control_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-reset-pose-first-control.md",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_fixtures_and_actual_source_freeze",
+        "passed": 132,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
