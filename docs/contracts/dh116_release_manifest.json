@@ -29688,6 +29688,31 @@
         "verified_at_utc": "2026-11-21T04:31:03.406385+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.power-near-open-settle-cpu",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-near-open-settle.md",
+      "readiness": "docs/contracts/dh116_teacher_power_near_open_settle_v1.json",
+      "cpu_tests": {
+        "passed": 86,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "f1497b1f4f9d975ce79b71188ccbe71732c2cbeb",
+        "source_tree": "73b55f076a1e67c5c274642f4c4c7ede40d132a0",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T04:40:00.797986+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
