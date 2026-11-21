@@ -46348,6 +46348,31 @@
         "archived_selected_left_index_delta_rad": 5e-05,
         "teacher_admission": false
       }
+    },
+    "teacher.power-proximal-approach-direction": {
+      "title": "Classify the first bilateral Power proximal SDF overlap directions",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-proximal-action-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_proximal_first_contact.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_deformx_pad_sdf.py",
+        "tests/test_dh116_power_palm_raycast.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_approach_direction_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-approach-direction.md",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 83,
+        "failed": 0,
+        "away_from_palm_routes": 8,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

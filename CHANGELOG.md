@@ -1,3 +1,7 @@
+## Power proximal approach direction
+
+Evaluate the sealed bilateral near-open routes with their own SDF normals on the retained rod. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-approach-direction.md).
+
 ## Pinch late measured load recovery
 
 Reuse the sealed tangential candidate and allow an index increment only after the current measured opposition gate. [Report](docs/superpowers/reports/2026-11-21-teacher-pinch-delayed-force-recovery.md).
