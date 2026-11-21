@@ -1,3 +1,7 @@
+## Tripod right first contact native result
+
+Record measured three-finger contact, next-step PhysX reaction, and continued support loading. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-right-first-contact-native.md).
+
 ## Tripod right distal first contact probe
 
 Preserve original non-target clearance and verify the actual next-step PhysX reaction. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-right-first-contact.md).

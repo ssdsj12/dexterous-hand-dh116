@@ -46663,6 +46663,38 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-right-distal-first-contact-native-result": {
+      "title": "Tripod right real distal contact and PhysX reaction native result",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-right-distal-first-contact-probe"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_tripod_measured_precontact.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_pinch_supported_reset.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_dh116_power_palm_contact_evidence.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_right_first_contact_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-right-first-contact-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "cpu_preflight_passed": 151,
+        "native_natural_exit_code": 0,
+        "first_contact_sdk": 696,
+        "first_transfer_sdk": 697,
+        "right_all_substeps_loaded_rows": 8,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
