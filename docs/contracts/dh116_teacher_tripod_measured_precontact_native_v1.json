@@ -1,0 +1,66 @@
+{
+  "version": "dh116-teacher-tripod-measured-precontact-native-v1",
+  "native_runs": 1,
+  "native_natural_exit_code": 0,
+  "reduction_sha256": "f0eb0c16037c2b4fa89fb71d0e7a583e2c62c7f978302ff03398b60580dbf1c3",
+  "actual": {
+    "world_displacement_m": {
+      "left": [
+        0.00015527009963989258,
+        -0.0002359151840209961,
+        -0.0004380345344543457
+      ],
+      "right": [
+        -4.139542579650879e-05,
+        -3.78340482711792e-05,
+        7.101893424987793e-05
+      ]
+    },
+    "terminal_solver_node_pad_distances": {
+      "left.finger14_link": {
+        "minimum_gap_m": 0.0017779849617469796,
+        "minimum_node_id": 36
+      },
+      "left.finger23_link": {
+        "minimum_gap_m": 0.0012634818641121702,
+        "minimum_node_id": 36
+      },
+      "left.finger33_link": {
+        "minimum_gap_m": 0.0010961241630408122,
+        "minimum_node_id": 34
+      },
+      "right.finger14_link": {
+        "minimum_gap_m": 0.0013610682706084428,
+        "minimum_node_id": 3
+      },
+      "right.finger23_link": {
+        "minimum_gap_m": 0.0009878515890880792,
+        "minimum_node_id": 2
+      },
+      "right.finger33_link": {
+        "minimum_gap_m": 0.0015009607939710876,
+        "minimum_node_id": 4
+      }
+    },
+    "action_pair_counts": {
+      "support_0": 3456,
+      "support_1": 3456
+    },
+    "new_action_pairs": {
+      "support_0": 1152,
+      "support_1": 1152
+    },
+    "sdk_steps": 528,
+    "solver_steps": 6312,
+    "control_windows": 36,
+    "outer_sha256": "a46df284963839783bafc368a4efa948b75e7ba3fdb46fc9b2a94cfa12227aee",
+    "frozen_sha256": "926291a78ed8b019f3539219bcd4db5a712ab1128aade0298ce914810934c7b3",
+    "elapsed_s": 147.69834045600146,
+    "last_row_sha256": "76080f27ea2f2e49de8db03b796c54a785a1b0859b4380334b7460977ff68f05",
+    "result_sha256": "1b5cc9829e5b501f9cc494cff19facc4fe1a36bb7f2b8aff2fea61472ed2b45d",
+    "cpu_regressions_passed": 117,
+    "hand_contact_verified": false,
+    "physical_grasp_qualified": false,
+    "teacher_admission": false
+  }
+}

@@ -1,3 +1,7 @@
+## Tripod measured precontact native result
+
+Record original-boundary replay, distal clearances and end-support continuity. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-measured-precontact-native.md).
+
 ## Tripod measured precontact targets
 
 Screen a bilateral continuation from exact native joint, link and rod readback. [Report](docs/superpowers/reports/2026-11-21-teacher-tripod-measured-precontact.md).
