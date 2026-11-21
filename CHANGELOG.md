@@ -1,3 +1,7 @@
+## Tripod native source failure and getter repair
+
+The first actual Tripod worker stopped before policy: 2 SDK steps, 0 controls/solver/PPO, exit1 without SIGSEGV; fault-path release remained unverified. Native parameter production now emits its verified getter scope, with 64 CPU checks passing. An independent same-budget v2 is frozen, not yet executed. [Report](docs/superpowers/reports/2026-11-22-teacher-native-parameter-scope.md).
+
 ## Tripod smoke8 executable recipe
 
 An independent fresh17 Tripod actual-worker recipe binds the real Reset, original Tripod model and 558 source/config files. 135 selected CPU tests pass. One bounded native update remains unexecuted; no grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-frozen.md).

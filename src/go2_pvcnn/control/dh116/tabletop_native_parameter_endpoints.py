@@ -136,7 +136,8 @@ class NativeParameterEndpoints(prior.MaterialDirectorReadback):
             radius_source=dict(api="RopeBatch.parameter_snapshot.contact_radius_m",
                 provenance="native_host_metadata",backend_sha256=BACKEND_SHA,identity=deepcopy(identity),
                 uncertainty=None,hardware_measured=False,task_physics_qualified=False)
-            return dict(version=VERSION,identity=deepcopy(identity),sources=deepcopy(self.sources),
+            return dict(version=VERSION,source_scope="native_getter",
+                identity=deepcopy(identity),sources=deepcopy(self.sources),
                 node_positions_m=nodes,segment_quaternions_xyzw=directors[:,:40].copy(),
                 native_parameters=checked,raw_native_parameters=owned,mass_readback=mass,
                 reward_radius_sample=dict(value=float(raw["contact_radius_m"]),source=radius_source),

@@ -48331,19 +48331,34 @@
       "evidence_scope": "tripod_actual_fresh_smoke8_v1",
       "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v1.json",
       "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Frozen one-shot diagnostic; requires exact current native batch and live resource reservation; no grasp qualification.",
+      "blocker_kind": "failed_native",
+      "reason": "Actual worker rejected missing parameter source_scope before any action/update; fault-path release remains unverified, natural exit1 without SIGSEGV. Fingerprint consumed; no same-version retry.",
       "dependencies": [
         "teacher.tripod-fresh-reset-native-validation",
         "teacher.tripod-smoke8-launch-freeze"
       ],
       "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native.md",
       "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v1.json",
-      "native_runs": 0,
+      "native_runs": 1,
       "actual_launch": {
         "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v1.json",
         "sha256": "73c8886737cfe7c2c8ea67b03bd61ac9fe7378f06d3343efe412ed506f55beb2"
-      }
+      },
+      "last_result": {
+        "exit_code": 1,
+        "debugger_inferior_signal": null,
+        "sdk_steps": 2,
+        "control_steps": 0,
+        "solver_calls": 0,
+        "ppo_updates": 0,
+        "attempt_fingerprint": "c6b3b2804df1ed5f43c2fb69cd317669055241d424e45637aa34fb9de73d0a79",
+        "code_config_sha256": "b12b543dbbaedc597283b737db8c562f58e4bc4fea1e7edd6de5d2abd9f9d30a",
+        "result_sha256": "076889e1d4714de4073cc8d424e1611af16214b5eb924731e644920725bebfb4",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false
+      },
+      "dependency_scopes": {}
     },
     "teacher.tripod-smoke8-launch-freeze": {
       "title": "Freeze actual Tripod fresh17 smoke8 recipe without changing PPO or physical contracts",
@@ -48369,6 +48384,63 @@
         "native_qualification": false,
         "teacher_admission": false,
         "scope": "CPU recipe integration; no actual native lease or new PPO"
+      }
+    },
+    "teacher.native-parameter-source-scope": {
+      "title": "Emit getter provenance after existing parameter/clock/owner validation; retain failed Tripod attempt",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-worker-contract-audit"
+      ],
+      "tests": [
+        "tests/test_dh116_native_parameter_endpoints.py",
+        "tests/test_native_teacher_tripod_reset_distance.py",
+        "tests/test_native_teacher_tripod_sources.py",
+        "tests/test_native_teacher_model.py",
+        "tests/test_native_teacher_actual_inputs.py",
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-native-parameter-scope.md",
+      "readiness": "docs/contracts/dh116_teacher_native_parameter_scope_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 199,
+        "cpu_failed": 0,
+        "scope": "CPU parameter source fix and independent v2 frozen recipe; no revised native execution",
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.tripod-ppo-fresh-smoke8-v2": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Independent Tripod fresh17 smoke8 actual PPO diagnostic",
+      "evidence_scope": "tripod_actual_fresh_smoke8_v1",
+      "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v2.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Frozen one-shot diagnostic; requires exact current native batch and live resource reservation; no grasp qualification.",
+      "dependencies": [
+        "teacher.tripod-fresh-reset-native-validation",
+        "teacher.native-parameter-source-scope"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v2.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v2.json",
+      "native_runs": 0,
+      "actual_launch": {
+        "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v2.json",
+        "sha256": "5155e693e241a835131d3ece98c161f606f5c33f4e6469779bcd421a063fa361"
       }
     }
   },

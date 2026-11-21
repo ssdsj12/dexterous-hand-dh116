@@ -1,0 +1,28 @@
+{
+  "version": "dh116-teacher-tripod-smoke8-native-v2",
+  "status": "frozen_unexecuted_after_getter_scope_fix",
+  "identity": {
+    "actual_identity": {
+      "companion_sha256": "5155e693e241a835131d3ece98c161f606f5c33f4e6469779bcd421a063fa361",
+      "core_recipe_identity": {
+        "code_config_sha256": "0af79581b6c595eaf8756a73814cebd031d5867e204c09d61bbd6e339b6f9daa",
+        "command_spec_sha256": "962fd91362ab1a44af7f530e34f0e3d790417e24aa73e46a18d2ce06f210d4e7"
+      },
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "source_closure_sha256": "7ca2bb71590d68cc2f4db8adf7ba306d1a4432cd0f77e7772d63977f6db56058"
+    },
+    "attempt_fingerprint": "d0986552aff722ec33bafe54f715d42aa38e1e48954c2ca5ff7b6416e2ae6369",
+    "core_identity": {
+      "code_config_sha256": "0af79581b6c595eaf8756a73814cebd031d5867e204c09d61bbd6e339b6f9daa",
+      "command_spec_sha256": "962fd91362ab1a44af7f530e34f0e3d790417e24aa73e46a18d2ce06f210d4e7"
+    }
+  },
+  "source_closure_sha256": "7ca2bb71590d68cc2f4db8adf7ba306d1a4432cd0f77e7772d63977f6db56058",
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "planned_sdk_steps": 66,
+  "planned_control_steps": 8,
+  "planned_internal_solver_substeps": 768
+}

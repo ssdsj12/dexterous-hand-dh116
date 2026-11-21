@@ -42,6 +42,7 @@ def test_real_clock_bound_native_radius_and_rest(endpoint):
     c=endpoint
     p=c.owner.capture_reset(c.row(),material_reference_uid="material-1",**c.args)
     assert p["identity"]==c.clock
+    assert p["source_scope"]=="native_getter"
     assert p["reward_radius_sample"]["value"]==pytest.approx(.005)
     assert p["reward_radius_sample"]["source"]["provenance"]=="native_host_metadata"
     assert p["reward_radius_sample"]["source"]["identity"]==c.clock
@@ -51,6 +52,7 @@ def test_real_clock_bound_native_radius_and_rest(endpoint):
     c.advance()
     p2=c.owner.capture(c.row(),**c.args)
     assert p2["identity"]==c.clock
+    assert p2["source_scope"]=="native_getter"
     assert p2["reward_radius_sample"]["source"]["identity"]!=p["identity"]
 
 @pytest.mark.parametrize("fault",["radius","gravity","ea","ei","rest","mass","fixed","backend","clock","solver","fixed_orientation"])
