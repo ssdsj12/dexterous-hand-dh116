@@ -1,0 +1,92 @@
+{
+  "version": "dh116-teacher-tripod-smoke8-frozen-v1",
+  "base_head": "1f4b8385923a5ddf1ef3a579563c8293f01efc25",
+  "status": "cpu_frozen_recipe_passed_native_not_started",
+  "identity": {
+    "core_identity": {
+      "command_spec_sha256": "65b838a00929542d89730d9463f3a28944d5dd40e93a8d65747d94eaf7402d22",
+      "code_config_sha256": "b12b543dbbaedc597283b737db8c562f58e4bc4fea1e7edd6de5d2abd9f9d30a"
+    },
+    "actual_identity": {
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "core_recipe_identity": {
+        "code_config_sha256": "b12b543dbbaedc597283b737db8c562f58e4bc4fea1e7edd6de5d2abd9f9d30a",
+        "command_spec_sha256": "65b838a00929542d89730d9463f3a28944d5dd40e93a8d65747d94eaf7402d22"
+      },
+      "companion_sha256": "73c8886737cfe7c2c8ea67b03bd61ac9fe7378f06d3343efe412ed506f55beb2",
+      "source_closure_sha256": "3f07512d5e35ef4f7eacf88084a4f68770950c737f8e17e315fb83049a23dc45"
+    },
+    "attempt_fingerprint": "c6b3b2804df1ed5f43c2fb69cd317669055241d424e45637aa34fb9de73d0a79"
+  },
+  "budget": {
+    "environments": 1,
+    "gpu_index": 3,
+    "min_disk_free_bytes": 1073741824,
+    "min_gpu_free_mib": 4096,
+    "physics_steps": 66,
+    "timeout_seconds": 240,
+    "updates": 1
+  },
+  "limits": {
+    "controls": 8,
+    "inner_wall_timeout_s": 180,
+    "internal_substeps_per_solver_call": 12,
+    "jsonl_limits": {
+      "ownership.jsonl": 128,
+      "physics.jsonl": 64,
+      "training_events.jsonl": 768,
+      "transitions.jsonl": 8
+    },
+    "max_episode_count": 1,
+    "max_internal_solver_substeps": 768,
+    "max_processes": 1,
+    "max_resets": 1,
+    "max_solver_calls": 64,
+    "measured_sdk_steps": 64,
+    "other_sdk_steps": 0,
+    "sdk_steps_per_control": 8,
+    "setup_sdk_steps": 2,
+    "warmup_sdk_steps": 0
+  },
+  "source_files_count": 557,
+  "source_closure_sha256": "3f07512d5e35ef4f7eacf88084a4f68770950c737f8e17e315fb83049a23dc45",
+  "training_config_sha256": "602f0299625b17207fd0137ac52c84c9abf394679cf8575dec3ce013a60d0f7c",
+  "cpu": {
+    "passed": 135,
+    "failed": 0,
+    "new_tests": 1,
+    "seconds": 35.19,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_native_teacher_tripod_frozen_worker.py",
+      "tests/test_native_teacher_actual_launch.py",
+      "tests/test_native_teacher_worker_contract.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": {
+      "tripod-frozen-worker-red.log": "2e7dfe844740c2626d709c152544b6be6851969757d71f7e40f06b3d01c49117",
+      "tripod-frozen-worker-green.log": "3cf43caaf77e9f549886babd4295ae309074bb39841af5ec635d313e285f43ea",
+      "tripod-smoke8-freeze.log": "e802aba3a7850c1c9c70e0f0f4ddc5ad2ac061036c0e72e10ba028e05c062c78",
+      "tripod-smoke8-freeze-v2.log": "eda6cd7b0ffa33455cb8b1832c61c8911bdf196083c752c8eef09a57647fbf69"
+    },
+    "registry_passed": 60,
+    "registry_failed": 0,
+    "registry_seconds": 14.68,
+    "registry_log_sha256": "0fc845f01131c739092aea7dd7ffc52a376bf37062eaefaff3341a5e3f0b2a46"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "physical_parameters_changed": false,
+  "cameras_changed": false,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "new_external_review_obtained": false
+}

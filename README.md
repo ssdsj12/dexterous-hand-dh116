@@ -1,3 +1,7 @@
+## Tripod smoke8 executable recipe
+
+An independent fresh17 Tripod actual-worker recipe binds the real Reset, original Tripod model and 558 source/config files. 135 selected CPU tests pass. One bounded native update remains unexecuted; no grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-frozen.md).
+
 ## Tripod Worker source and grasp identity
 
 Independent Tripod recipe/manifest/target and complete input/journal checks now retain the actual grasp across fresh/resume and reject cross-grasp leases before App creation. 369 selected CPU tests pass; no new native PPO or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-worker-contract.md).
