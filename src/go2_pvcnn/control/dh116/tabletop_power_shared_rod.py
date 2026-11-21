@@ -25,6 +25,8 @@ HAND_NAMES=tuple(f"{side}.{name}" for side in SIDES for name in PADS)
 MESH_NAMES=tuple(["left."+name for name in PADS]+["table"]+["right."+name for name in PADS])
 PALM_NAMES=tuple(f"{side}.base_link" for side in SIDES)
 POWER_MESH_NAMES=(*MESH_NAMES,*PALM_NAMES)
+END_SUPPORT_NAMES=("support_0","support_1")
+SUPPORTED_POWER_MESH_NAMES=(*POWER_MESH_NAMES,*END_SUPPORT_NAMES)
 VERSION="dh116-dual-hand-free-rod-composition-v1"
 
 
@@ -141,7 +143,8 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
     """One environment and one free rod; SDK clock is supplied by its caller."""
 
     def __init__(self, base, *, bindings, right_grids, right_poses, run_uuid, env_id,
-                 rod_uid="rod0", require_pairs=False, palm_grids=None, palm_poses=None):
+                 rod_uid="rod0", require_pairs=False, palm_grids=None, palm_poses=None,
+                 support_grids=None, support_poses=None):
         checked=_bindings(bindings)
         extended="base_link" in contact_links(checked)
         expected=set(PALM_NAMES) if extended else set()
@@ -149,8 +152,15 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         palm_poses={} if palm_poses is None else palm_poses
         if set(palm_grids)!=expected or set(palm_poses)!=expected:
             raise ValueError("Power requires grids and poses for both original palm bindings")
+        supported=support_grids is not None or support_poses is not None
+        if supported and (not extended or require_pairs is not True
+                or support_grids is None or support_poses is None
+                or set(support_grids)!=set(END_SUPPORT_NAMES) or set(support_poses)!=set(END_SUPPORT_NAMES)):
+            raise ValueError("two static end supports require both palms and a complete pair capture")
         poses={"right."+name:value for name,value in _poses(right_poses,PADS).items()}
         poses.update(_poses(palm_poses,expected))
+        if supported:
+            poses.update(_poses(support_poses,END_SUPPORT_NAMES))
         if set(right_grids)!=set(PADS):
             raise ValueError("five right original SDFs required")
         if (not isinstance(base,FreeRodRuntime) or base.names!=list(PADS)+["table"] or
@@ -165,9 +175,13 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         _array(base.rope.mesh_wrenches(),(1,6,6),"original six mesh slots")
         grid_args={"right."+name:right_grids[name].as_args() for name in PADS}
         grid_args.update({name:grid.as_args() for name,grid in palm_grids.items()})
+        if supported:
+            grid_args.update({name:grid.as_args() for name,grid in support_grids.items()})
         self._base=base
         self.bindings=checked
         self.mesh_names=POWER_MESH_NAMES if extended else MESH_NAMES
+        if supported:
+            self.mesh_names=SUPPORTED_POWER_MESH_NAMES
         self.run_uuid,self.env_id,self.rod_uid=run_uuid,env_id,rod_uid
         self.require_pairs=require_pairs
         self._needs_reset=True
@@ -183,11 +197,15 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         material=hand_material_contract(self._base.cfg["hand"]["material_profile"])["hand_contact_material"]
         for slot_id,name in enumerate(self.mesh_names[start:],start):
             pos,quat=poses[name]
-            slot=self.rope.add_mesh(*grid_args[name],pos=pos,quat=quat,
-                mu_s=max(r["mu_s"],material["static_friction"]),
-                mu_k=max(r["mu_k"],material["dynamic_friction"]))
+            if name in END_SUPPORT_NAMES:
+                mu_s=self._base.cfg["table"]["mu_s"]
+                mu_k=self._base.cfg["table"]["mu_k"]
+            else:
+                mu_s=max(r["mu_s"],material["static_friction"])
+                mu_k=max(r["mu_k"],material["dynamic_friction"])
+            slot=self.rope.add_mesh(*grid_args[name],pos=pos,quat=quat,mu_s=mu_s,mu_k=mu_k)
             if slot!=slot_id:
-                raise RuntimeError("actual appended hand mesh slot identity differs")
+                raise RuntimeError("actual appended hand or support mesh slot identity differs")
         _array(self.rope.mesh_wrenches(),(1,len(self.mesh_names),6),"dual hand mesh slots")
 
     @classmethod
@@ -235,11 +253,14 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
         row=b.reset(physics_step=physics_step,episode_uid=episode_uid,reset_id=reset_id,
             pad_poses={name:poses["left."+name] for name in PADS})
         for slot,name in enumerate(self.mesh_names[6:],6):
-            self.rope.set_mesh_poses(slot,*poses[name],teleport=True)
+            if name in self.bindings:
+                self.rope.set_mesh_poses(slot,*poses[name],teleport=True)
         if not math.isfinite(float(self.rope.time)) or float(self.rope.time)!=before:
             raise RuntimeError("reset unexpectedly advanced solver time")
         row.update(rod_mesh_contact_pairs=None,pair_capture_status="invalid_until_measured_step",
                    hand_wrenches_com_world=None,table_wrench_world=None)
+        if self.mesh_names == SUPPORTED_POWER_MESH_NAMES:
+            row["external_support_wrenches_world"] = None
         self._last_solver_time=before
         self._needs_reset=False
         return deepcopy(self._decorate(row))
@@ -264,7 +285,7 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
                 raise ValueError("solver time changed outside the owned exchange")
             b.physics_step=physics_step  # SDK has already advanced in the caller.
             for slot,name in enumerate(self.mesh_names):
-                if name!="table":
+                if name in self.bindings:
                     self.rope.set_mesh_poses(slot,*poses[name],teleport=False)
             previous_tick=b.rod_tick
             b.rod_tick=None  # A throwing solver call has unknown partial progress.
@@ -288,6 +309,12 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
                 packet=pair_reader()
                 if packet.get("substeps")!=b.cfg["rod"]["solver_substeps"]:
                     raise ValueError("pair capture solver substep count differs")
+                if self.mesh_names == SUPPORTED_POWER_MESH_NAMES:
+                    capacity=len(b.nodes)*len(self.mesh_names)*b.cfg["rod"]["solver_substeps"]
+                    if (type(packet.get("capacity")) is not int or packet["capacity"]!=capacity
+                            or type(packet.get("mesh_count")) is not int or packet["mesh_count"]!=len(self.mesh_names)
+                            or packet.get("overflow") is not False):
+                        raise ValueError("complete ordered Power end-support contact capture required")
                 for observed,expected in (
                     (packet["node_forces_on_rod_world_n"],nodes[0]),
                     (packet["mesh_wrenches_on_mesh_world"],meshes[0])):
@@ -296,11 +323,14 @@ class PowerSharedRodRuntime(OriginalDualHandRodRuntime):
                         raise ValueError("atomic pair capture does not match this step's totals")
                 pairs=read_pair_capture(SimpleNamespace(contact_pair_samples=lambda:packet),
                     dt_s=DT,physics_step=physics_step,rod_tick=b.rod_tick,mesh_names=self.mesh_names)
-                if self.mesh_names == POWER_MESH_NAMES:
+                if self.mesh_names in (POWER_MESH_NAMES, SUPPORTED_POWER_MESH_NAMES):
                     pairs["solver_buffer"] = {key: packet[key] for key in (
                         "substeps", "mesh_count", "capacity", "attempted", "overflow"
                     )}
-            routes,table=route_world_wrenches(named,self.bindings,poses,centers)
+            hand_meshes={name:named[name] for name in (*self.bindings,"table")}
+            routes,table=route_world_wrenches(hand_meshes,self.bindings,poses,centers)
+            if self.mesh_names == SUPPORTED_POWER_MESH_NAMES:
+                row["external_support_wrenches_world"]={key:named[key].copy() for key in ("table",*END_SUPPORT_NAMES)}
             row.update(contact_valid=True,distributed_contact=nodes,named_wrenches=named,
                 rod_mesh_contact_pairs=pairs,pair_capture_status="validated_solver_samples" if pairs else "unavailable",
                 hand_wrenches_com_world=routes,table_wrench_world=table,pair_force_residual_n=residual)

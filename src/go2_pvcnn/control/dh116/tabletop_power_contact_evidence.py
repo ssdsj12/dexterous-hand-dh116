@@ -7,7 +7,9 @@ import re
 import numpy as np
 
 from .tabletop_deformx_pair_capture import validate_pair_capture
-from .tabletop_power_shared_rod import PALM_NAMES, PADS, POWER_MESH_NAMES, _bindings
+from .tabletop_power_shared_rod import (
+    END_SUPPORT_NAMES, PALM_NAMES, PADS, POWER_MESH_NAMES, SUPPORTED_POWER_MESH_NAMES, _bindings,
+)
 from .tabletop_teacher_force_closure import _opposition, _pad_summary
 
 
@@ -24,8 +26,8 @@ IDENTITY_FIELDS = ("run_uuid", "env_id", "episode_uid", "reset_id", "rod_uid", "
 
 
 def _power_pairs(rod):
-    names = POWER_MESH_NAMES
-    if tuple(rod["mesh_names"]) != names:
+    names = tuple(rod["mesh_names"])
+    if names not in (POWER_MESH_NAMES, SUPPORTED_POWER_MESH_NAMES):
         raise ValueError("the named Power layout with palms at slots 11 and 12 is required")
     if (rod["pair_capture_status"] != "validated_solver_samples"
             or rod["source"] != "RopeBatch.positions/velocities/contact_forces/mesh_wrenches"
@@ -37,7 +39,7 @@ def _power_pairs(rod):
             or not rod["physics_step"] or not rod["rod_tick"] or rod["rod_tick"] % SUBSTEPS):
         raise ValueError("an actual completed one-rod exchange with valid contacts is required")
     bindings = _bindings(rod["mesh_bindings"])
-    if set(bindings) != set(names) - {"table"}:
+    if set(bindings) != set(POWER_MESH_NAMES) - {"table"}:
         raise ValueError("both sets of original five pads and a palm binding are required")
     for name in PALM_NAMES:
         capture_sha = bindings[name].get("capture_sha256")
@@ -73,6 +75,12 @@ def _power_pairs(rod):
     if (node_forces.shape != (1, NODE_COUNT, 3) or set(wrench_by_name) != set(names)
             or not np.array_equal(rod["table_wrench_world"], wrench_by_name["table"])):
         raise ValueError("same-boundary one-rod force array and complete named wrenches required")
+    if names == SUPPORTED_POWER_MESH_NAMES:
+        static = rod["external_support_wrenches_world"]
+        if (type(static) is not dict or set(static) != {"table", *END_SUPPORT_NAMES}
+                or any(not np.array_equal(wrench, wrench_by_name[name]) for name,wrench in static.items())
+                or buffer["capacity"] != NODE_COUNT * len(names) * SUBSTEPS):
+            raise ValueError("static support wrenches must come from the same ordered solver capture")
     return validate_pair_capture(
         dict(buffer, indices=np.asarray(ids, dtype=int).reshape(-1, 3),
              vectors=np.asarray(vectors, dtype=float).reshape(-1, 12)),
@@ -122,7 +130,7 @@ def measure_power_contact(rod):
     table_slot = POWER_MESH_NAMES.index("table")
     table_load = [_pad_summary(group[step, table_slot], 1, table_slot)["normal_load_n"]
                   for step in range(SUBSTEPS)]
-    return dict(identity={key: rod[key] for key in IDENTITY_FIELDS},
+    result = dict(identity={key: rod[key] for key in IDENTITY_FIELDS},
                 evidence_scope="same_boundary_simulated_distal_and_palm_contact",
                 hands=hands,
                 all_substeps_power_contacts=all(len(hand["loaded_opposed_substeps"]) == SUBSTEPS
@@ -130,3 +138,12 @@ def measure_power_contact(rod):
                 table_normal_load_n=table_load, zero_table_load=max(table_load) <= TABLE_LOAD_LIMIT_N,
                 proximal_sdf_registered=False, native_qualification=False,
                 grasp_qualified=False, teacher_admission=False)
+    if tuple(rod["mesh_names"]) == SUPPORTED_POWER_MESH_NAMES:
+        loads = {}
+        for name in ("table", *END_SUPPORT_NAMES):
+            slot = SUPPORTED_POWER_MESH_NAMES.index(name)
+            loads[name] = [sum(float(np.linalg.norm(pair["force_on_rod_world_n"])) for pair in group[step,slot])
+                           for step in range(SUBSTEPS)]
+        result["external_support_force_norm_n"] = loads
+        result["zero_external_support_load"] = all(max(per_step) <= TABLE_LOAD_LIMIT_N for per_step in loads.values())
+    return result

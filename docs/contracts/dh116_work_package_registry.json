@@ -45345,6 +45345,34 @@
       "title": "Pinch independent A with the common A/B eight-control PPO closure",
       "readiness": "docs/contracts/dh116_teacher_actual_native_clock_v2.json",
       "native_runs": 0
+    },
+    "teacher.power-end-support-layout-cpu": {
+      "title": "Keep Power end support loads separate from grasp and hand reactions",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-palm-contact-evidence-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_end_supported_rod.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_power_palm_reactions.py",
+        "tests/test_deformx_end_supported_scene.py",
+        "tests/test_teacher_force_runtime.py",
+        "tests/test_teacher_force_closure.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-end-support-layout.md",
+      "readiness": "docs/contracts/dh116_teacher_power_end_support_layout_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_fixture",
+        "passed": 121,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

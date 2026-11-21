@@ -1,3 +1,7 @@
+## Power end-support contact separation
+
+Append both static supports after the two palms and distinguish their contact loads from hand reactions. [Report](docs/superpowers/reports/2026-11-21-teacher-power-end-support-layout.md).
+
 ## Pinch resume wall budget
 
 Preserve the failed resumed attempt and start the bounded native clock after its read-only producer preflight. [Report](docs/superpowers/reports/2026-11-21-teacher-resume-budget-timing.md).

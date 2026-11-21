@@ -1,0 +1,99 @@
+{
+  "version": "dh116-teacher-power-end-support-layout-v1",
+  "status": "cpu_verified_supported_power_slot_routing",
+  "existing_layout_mesh_counts": [
+    11,
+    13
+  ],
+  "supported_mesh_count": 15,
+  "palm_slots": [
+    11,
+    12
+  ],
+  "support_slots": [
+    13,
+    14
+  ],
+  "solver_pair_capacity_for_41_material_nodes": 7380,
+  "hand_wrench_routes_per_hand": 6,
+  "stationary_support_load_excluded_from_hand_routes": true,
+  "source_data_kind": "offline_certified_geometry_and_cpu_fixture",
+  "candidate_pose_screen": {
+    "rows": 14,
+    "sha256": "6f2b84ad5c41b8dc04917af61c76dbf58eb367e56b16b6efd239601508a082bf",
+    "two_sided": true,
+    "interhand_gap_lower_m": 0.2605302238868662,
+    "candidates": {
+      "left": {
+        "scope": "offline source/cooked interval proof",
+        "side": "left",
+        "dx_m": 0.0,
+        "dz_m": 0.0,
+        "open_rad": 0.005,
+        "table_clearance_m": 0.009872448103265485,
+        "all_source_min_m": 0.00018066017493022164,
+        "worst_palm_or_pad_gap_m": 0.0009923853024768553,
+        "invalid_gaps": {},
+        "intersecting_supports": [],
+        "pose_wxyz": [
+          0.5365080654697889,
+          0.15765944700283518,
+          0.3279688996766966,
+          0.3131808475051845,
+          0.38976032862848925,
+          -0.26508590895906037,
+          -0.8244598861404329
+        ],
+        "q_rad": [
+          1.241431085143148,
+          0.5255824557658536,
+          0.7823615547546848,
+          0.7477799873857066,
+          0.8721002127721269,
+          1.2161742502396182
+        ],
+        "clear_initial_candidate": true,
+        "actual_contact_measured": false
+      },
+      "right": {
+        "scope": "offline source/cooked interval proof",
+        "side": "right",
+        "dx_m": 0.0,
+        "dz_m": 0.0,
+        "open_rad": 0.005,
+        "table_clearance_m": 0.0370587497866216,
+        "all_source_min_m": 0.00010980688685908259,
+        "worst_palm_or_pad_gap_m": 0.0009317966404823593,
+        "invalid_gaps": {},
+        "intersecting_supports": [],
+        "pose_wxyz": [
+          0.5424645833846451,
+          -0.15364772159866566,
+          0.3576859595886812,
+          0.7655099054688858,
+          0.30787037379767446,
+          -0.49544860008621594,
+          -0.27155312968055967
+        ],
+        "q_rad": [
+          0.18271406284802566,
+          0.19198829049232213,
+          0.7769379618063393,
+          0.742440199133094,
+          0.8676742162118201,
+          1.2166669561638686
+        ],
+        "clear_initial_candidate": true,
+        "actual_contact_measured": false
+      }
+    }
+  },
+  "cpu_tests_passed": 121,
+  "cpu_log_sha256": "f3a1d174da4337452b01416c086d28b12c7c65be4fd45b82712fec48de91bb26",
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "proximal_sdf_registered": false,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "report": "docs/superpowers/reports/2026-11-21-teacher-power-end-support-layout.md"
+}
