@@ -32230,6 +32230,31 @@
         "verified_at_utc": "2026-11-21T21:17:45.620564+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-worker-contract-audit",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-worker-contract.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_worker_contract_v1.json",
+      "cpu_tests": {
+        "passed": 369,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "890062a7da36a9aa29d15fd30997c0e25022fc3c",
+        "source_tree": "1ee1c47b83b2297deb7106e98bf83714a3ee2990",
+        "remote_branch": "11-17",
+        "files_verified": 17,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T21:35:44.090981+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
