@@ -30513,6 +30513,31 @@
         "verified_at_utc": "2026-11-21T07:49:30.286260+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.pinch-supported-guarded-approach-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-pinch-supported-guarded-approach-native.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_supported_guarded_approach_native_v1.json",
+      "cpu_tests": {
+        "passed": 98,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "017a736ab6145085d40902df094a3a671fde290f",
+        "source_tree": "f1763f5855f8c910b2d9539f603e6355204d968c",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T07:56:30.554444+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
