@@ -29963,6 +29963,31 @@
         "verified_at_utc": "2026-11-21T05:36:54.486215+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Power bilateral proximal SDF candidates",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-sdfs.md",
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_sdfs_v1.json",
+      "cpu_tests": {
+        "passed": 70,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "3efd95033aa3a09b1e6f2ed6ad4946d64cd3d1ef",
+        "source_tree": "5e6919140b2a42ed2f6fe1e7e296571db0ee1487",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T05:47:09.468208+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
