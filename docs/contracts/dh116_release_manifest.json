@@ -29263,6 +29263,31 @@
         "verified_at_utc": "2026-11-21T02:46:05.113520+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Pinch resume failure evidence and native clock repair",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-resume-budget-timing.md",
+      "readiness": "docs/contracts/dh116_teacher_actual_native_clock_v2.json",
+      "cpu_tests": {
+        "passed": 220,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "cbd7c30eb92aa20134effa81775f35ceb2c86adf",
+        "source_tree": "8f71d6d9d16afb73c7142a6ef188959448550342",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T03:04:41.284488+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
