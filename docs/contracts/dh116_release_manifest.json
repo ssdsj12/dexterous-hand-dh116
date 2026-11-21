@@ -32405,6 +32405,31 @@
         "verified_at_utc": "2026-11-21T23:03:05.378980+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-owned-decode-performance",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-owned-decode-performance.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_owned_decode_performance_v1.json",
+      "cpu_tests": {
+        "passed": 157,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "35a285df66578751df519d3a0a22b054758cdc79",
+        "source_tree": "ad5059c1657b3eabb04211d175244c94c84013c3",
+        "remote_branch": "11-17",
+        "files_verified": 14,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T23:15:50.270483+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }

@@ -32,7 +32,7 @@ Files: tabletop_fast_owned_codec.py, tabletop_tripod_reset_manifest.py; primary 
 - [x] Verify decoder semantics before integrating manifest.
 - [x] CPU raw-evidence equivalence and before/after wall measurements.
 - [x] Integrate only if qualified, run regressions, independently review.
-- [ ] Report/Registry/protection/Windows same-commit publication.
+- [x] Report/Registry/protection/Windows same-commit publication.
 
 Exact decoder candidate:
 
