@@ -72,6 +72,9 @@ def held_route_passed(rows):
 def independent_entry(task, contact):
     """Admit only an explicit independently sealed boundary; legacy paths remain strict."""
     from scripts.diagnose_dh116_teacher_initialization import digest
+    if contact is not None and contact.get("entry_contract") == "dh116-902-command-contact-v2":
+        from scripts.screen_dh116_902_command_contact import independent_entry as command_entry
+        return command_entry(task, contact)
     if contact is None or contact.get("entry_contract") != "dh116-902-distal-contact-v1":
         return False
     if contact.get("envelope_refinement") is not None:
@@ -203,6 +206,9 @@ def prepare(receipt, request_path, *, expected_grasp=None):
     from scripts.screen_dh116_tripod_supported_reset import archived_tube
     from scripts.verify_dh116_tripod_supported_reset import waypoint_controls
     request = json.loads(request_path.read_bytes())
+    if request.get("version") == "dh116-902-command-contact-v2":
+        from scripts.screen_dh116_902_command_contact import prepare as command_prepare
+        return command_prepare(receipt, request_path, expected_grasp=expected_grasp)
     grasp, side = request.get("grasp"), request.get("contact_side")
     windows, hold = request.get("control_windows"), request.get("hold_windows")
     if (request.get("version") != "dh116-902-distal-contact-v1" or side not in ("left", "right")
@@ -258,6 +264,9 @@ def load_stage(receipt, request_path, proof_path, grasp, *, before_sdk):
     from scripts.diagnose_dh116_teacher_initialization import digest
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
     request=json.loads(request_path.read_bytes());proof=json.loads(proof_path.read_bytes())
+    if request.get("version") == "dh116-902-command-contact-v2":
+        from scripts.screen_dh116_902_command_contact import load_stage as command_stage
+        return command_stage(receipt, request_path, proof_path, grasp, before_sdk=before_sdk)
     raw,_,files,sdk=boundary(receipt,grasp)
     checked_request(request,grasp=grasp,sdk=sdk,outer_sha=reset.sha(receipt))
     if (request["grasp"]!=grasp or proof.get("grasp")!=grasp or sdk!=before_sdk

@@ -47600,6 +47600,42 @@
         "native_grasp_verified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.902-command-contact-v2": {
+      "title": "Certify both hands on source-bound quantized 902 Tripod command route",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-live-envelope"
+      ],
+      "tests": [
+        "-q",
+        "tests/test_pinch_capsule_distance_certificate.py",
+        "tests/test_dh116_902_flexible_reset.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_902_flexible_contact.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_tripod_measured_precontact.py",
+        "tests/test_dh116_tripod_near_corridor.py",
+        "tests/test_dh116_tripod_right_axis_calibration.py",
+        "tests/test_dh116_tripod_right_tracking_native.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_902_command_path.py",
+        "tests/test_dh116_continuous_envelope_refinement.py",
+        "tests/test_dh116_902_command_contact.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_command_contact_v2.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-command-contact-v2.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 191,
+        "all_528_command_states_passed": true,
+        "native_grasp_verified": false,
+        "teacher_admission": false,
+        "registry_tests_passed": 60
+      }
     }
   },
   "execution_target": {

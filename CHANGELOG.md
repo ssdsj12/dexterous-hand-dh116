@@ -1,3 +1,7 @@
+## 902 versioned command contact proof
+
+Preserve the original terminal grip while checking all 528 float32 command substeps and both hands. Numerical waypoint compensation fixes a real endpoint failure; native contact and grasp remain pending. Fixed stereo is unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-command-contact-v2.md).
+
 ## 902 shared complete-envelope guard
 
 Versioned source/cooked refinement preserves original safety limits. 231 CPU checks pass; a full 528-substep ideal command replay is geometrically supported, but remains unqualified for native grasping. Both fixed RGB cameras are unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-live-envelope.md).
