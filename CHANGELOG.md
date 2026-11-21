@@ -1,3 +1,7 @@
+## Native Power near-open support settling
+
+Verify the closer open hands leave the actual rod supported for all 2,856 substeps and preserve the far-parked trajectory exactly. [Report](docs/superpowers/reports/2026-11-21-teacher-power-near-open-settle-native.md).
+
 ## Power first solver exchange after Reset
 
 Preserve the measured stationary Reset at solver entry and reproduce the false pre-Reset collider sweep in an isolated CUDA replay. [Report](docs/superpowers/reports/2026-11-21-teacher-power-reset-solver-sweep.md).

@@ -45783,6 +45783,33 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-near-open-settle-native-result": {
+      "title": "Verify the near-open hands leave both supports carrying the free rod",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-reset-solver-sweep-repair"
+      ],
+      "tests": [
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_supported_rod_reference.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_near_open_settle_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-near-open-settle-native.md",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "native_near_open_support_settling",
+        "native_exit": 0,
+        "first_stationary_solver_exchange": true,
+        "hand_pairs": 0,
+        "table_pairs": 0,
+        "both_support_loaded_substeps": 2856,
+        "result_sha256": "2da34c93c7dc967736840f709a04e7d57cc8998e9239e02e51a2a21b78d1f814",
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
