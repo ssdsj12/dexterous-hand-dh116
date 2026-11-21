@@ -55,3 +55,32 @@ def codec_scope():
             if codec.encode_owned is not encode_owned:
                 raise RuntimeError("owned codec binding changed inside isolated scope")
             codec.encode_owned=before
+
+
+def decode_owned(value):
+    """Decode numeric JSON arrays without walking every scalar in Python.
+
+    The dtype probe only excludes dictionaries/tags and irregular structure.
+    Conversion always uses the original payload, preserving mixed integer/float
+    values before the declared dtype is applied. Tagged or unusual inputs keep
+    the original decoder's validation and rejection behavior.
+    """
+    if isinstance(value,dict):
+        if set(value)=={"__dh116_array__","dtype"}:
+            dtype=np.dtype(value["dtype"])
+            if dtype.kind not in "bifu":
+                raise ValueError("invalid numeric array type")
+            payload=value["__dh116_array__"]
+            try:
+                probe=np.asarray(payload)
+            except (TypeError,ValueError,OverflowError):
+                return codec.decode_owned(value)
+            if probe.dtype.kind in "bifu":
+                return np.array(payload,dtype=dtype,copy=True)
+            return codec.decode_owned(value)
+        if set(value)=={"__dh116_nonfinite__"}:
+            return codec.decode_owned(value)
+        return {key:decode_owned(item) for key,item in value.items()}
+    if isinstance(value,list):
+        return [decode_owned(item) for item in value]
+    return value

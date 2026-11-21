@@ -55,3 +55,36 @@ def test_finite_native_arrays_bypass_legacy_scalar_recursion(monkeypatch, tmp_pa
     finally:
         journal.close()
     assert legacy.encode_owned is reject
+
+
+def test_bulk_owned_decoder_preserves_exact_wire_data_and_raw_integer_precision():
+    from go2_pvcnn.control.dh116 import tabletop_fast_owned_codec as fast
+    payload={"state":{"__dh116_array__":[[-0.,2.25],[4.,8.]],"dtype":">f8"},
+             "valid":{"__dh116_array__":[True,False],"dtype":"bool"},
+             "unknown":{"__dh116_array__":[{"__dh116_nonfinite__":"nan"},-0.],"dtype":"float32"},
+             "exact":{"__dh116_array__":[9007199254740993,1.75],"dtype":"int64"},
+             "absent":None}
+    decoded=fast.decode_owned(payload)
+    assert decoded["state"].dtype==np.dtype(">f8")
+    np.testing.assert_array_equal(decoded["state"],[[-0.,2.25],[4.,8.]])
+    assert np.signbit(decoded["state"][0,0])
+    np.testing.assert_array_equal(decoded["valid"],[True,False])
+    assert decoded["valid"].dtype==np.dtype("bool")
+    assert np.isnan(decoded["unknown"][0]) and np.signbit(decoded["unknown"][1])
+    np.testing.assert_array_equal(decoded["exact"],[9007199254740993,1])
+    assert decoded["absent"] is None
+    payload["state"]["__dh116_array__"][0][1]=99.
+    assert decoded["state"][0,1]==2.25
+    assert legacy.decode_owned is not fast.decode_owned
+
+
+@pytest.mark.parametrize("payload", [
+    {"__dh116_array__":[{"__dh116_nonfinite__":"bogus"}],"dtype":"bool"},
+    {"__dh116_array__":[1,2],"dtype":"object"},
+    {"__dh116_array__":[1,2],"dtype":"complex128"},
+    {"__dh116_array__":[[1],[2,3]],"dtype":"float32"},
+])
+def test_bulk_owned_decoder_keeps_original_invalid_packet_rejection(payload):
+    from go2_pvcnn.control.dh116 import tabletop_fast_owned_codec as fast
+    with pytest.raises(ValueError):legacy.decode_owned(payload)
+    with pytest.raises(ValueError):fast.decode_owned(payload)

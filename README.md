@@ -1,3 +1,7 @@
+## Tripod raw-data decode performance
+
+Owned numeric JSON decoding preserves exact output bytes while reducing the measured median1.406s to0.476s; complete manifest revalidation improves9.932s to8.560s. All provenance/geometry checks remain.157 selected CPU checks pass; no new native run, PPO update or qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-owned-decode-performance.md).
+
 ## Tripod native clock precision
 
 V5 issued2 actions/16 measured SDK steps/192 solver substeps, but stopped before PPO at a Pinch-only float32 clock gate; cleanup then SIGSEGV. The same existing ULP bound now covers the independent Tripod source, with457 selected CPU checks passing. V6 remains unexecuted pending startup budget and fault-lifetime readiness. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-reward-clock-parity.md).

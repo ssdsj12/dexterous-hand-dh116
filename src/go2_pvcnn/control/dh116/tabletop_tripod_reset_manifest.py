@@ -62,7 +62,8 @@ def _binding(value):
 def _derive(run_dir, outer_binding, project):
     """Read raw source evidence; never accept caller-provided state/qualification."""
     from scripts.run_dh116_work_packages import debugger_status
-    from .tabletop_deformable_r0_replay import decode_owned, encode_owned
+    from .tabletop_deformable_r0_replay import encode_owned
+    from .tabletop_fast_owned_codec import decode_owned
     from .tabletop_supported_mesh_reset import validate_supported_readback
     from .tabletop_mesh_reset_numeric_state import validate_numeric_reset_audit
     from .tabletop_teacher_mounted_wrist_source import validate_mounted_observation
