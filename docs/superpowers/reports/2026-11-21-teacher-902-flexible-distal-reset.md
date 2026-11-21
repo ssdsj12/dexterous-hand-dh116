@@ -16,3 +16,14 @@ The native distal evidence reducer checks both fixed material index and current 
 CPU screening command for each grasp: `python -B -m scripts.verify_dh116_902_flexible_reset --grasp pinch --output /tmp/dh116-902-pinch.json`. Substitute `tripod` and a separate output file for Tripod. The CPU regression command was `python -m pytest -q tests/test_dh116_902_flexible_reset.py tests/test_dh116_power_palm_contact_evidence.py tests/test_dh116_supported_distal_transfer.py tests/test_dh116_pinch_supported_reset.py tests/test_dh116_tripod_supported_reset.py tests/test_teacher_force_closure.py tests/test_dh116_power_supported_task.py tests/test_native_phase_contract_v2.py`, with 160 tests passed. No original policy, checkpoint or camera settings are used as authority for the new native result.
 
 Next measure the same-clock 240-step native Reset and settle for each grasp. Following native clearance, establish opposing pad forces, hold a fixed wrist until contact is stable, and evaluate unsupported lift, drift and hold. The original 30 mm, 5 s and 0.5 mm standards apply.
+
+## Isaac native Reset and settlement
+
+The bounded Pinch and Tripod runs each completed 240 SDK steps, including 2 initialization steps and 238 measured exchanges at 480 Hz. There were 12 DeformX substeps per measured boundary and 2,856 positive contact pairs on each end support. There were no hand, palm, proximal or table pairs. The minimum centerline Z reached 347.067 mm and each support carried a final measured reaction of approximately 0.1565 N. Each run returned naturally with exit 0 and an independently verified App close marker. No policy action, RGB capture, lift, PPO update or grasp qualification took place in these headless Reset diagnostics.
+
+| Mode | Frozen recipe SHA-256 | Sealed outer receipt SHA-256 | Wall time |
+|---|---|---|---:|
+| pinch | `36ad54537d5ad74cf3100de7e7dc3d2e9d96b3cedcac61f03a028214f439a919` | `e2725ec5bee3943032d74b09a6bb2174e2b04f8122328d90af346c7824954764` | 71.22 s |
+| tripod | `aa7498ab5dd2bd743fb4b34445e3ce25ff5f0db23ca45483c4fc2d440627ffc2` | `cd237bfd52ba5375aa337eef96fa3b248ea2552e5ab34eba25ec1ef8f026e033` | 86.13 s |
+
+Next use the sealed settled rod samples for a conservative distal closure path, then measure opposable pad forces during a fixed-wrist hold.

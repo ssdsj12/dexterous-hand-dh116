@@ -1,3 +1,7 @@
+## Native 902-inspired Pinch and Tripod Reset
+
+Verify independent native resets, actual end-support loads and natural exit in both modes. [Report](docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-reset.md).
+
 ## 902 Pinch and Tripod on the flexible rod
 
 Add independent Reset candidates and require distal links to load their own material half. [Report](docs/superpowers/reports/2026-11-21-teacher-902-flexible-distal-reset.md).
