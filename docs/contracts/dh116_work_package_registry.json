@@ -48100,6 +48100,30 @@
         "teacher_cpu_passed": 142,
         "registry_passed": 60
       }
+    },
+    "teacher.fresh-supported-builder": {
+      "title": "Build fresh original17 supported Tripod scene and bounded native Reset acquisition",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.fresh-supported-control"
+      ],
+      "tests": [
+        "tests/test_fresh_supported_builder.py",
+        "tests/test_tripod_supported_reset_capture.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_fresh_supported_builder_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-fresh-supported-builder.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 74,
+        "cpu_failed": 0,
+        "new_tests": 6,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU construction/acquisition preparation only; real native Reset and Tripod PPO pending"
+      }
     }
   },
   "execution_target": {

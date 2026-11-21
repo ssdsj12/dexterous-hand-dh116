@@ -1,3 +1,7 @@
+## Fresh17 Tripod scene and Reset entry
+
+Build all original17 collision slots at SDK2 before the first episode Reset; allocate8364 pairs once and preserve the fresh owner. Added an independent two-step native Reset recorder using the existing lifecycle. 74 selected CPU tests pass; native Reset and Tripod PPO remain pending. [Report](docs/superpowers/reports/2026-11-22-teacher-fresh-supported-builder.md).
+
 ## Fresh supported control chain
 
 Connect the authenticated17-slot Reset to all14 link sources and seven-route feedback without a hidden settling step. Reset zeros remain commanded/unmeasured; subsequent reactions use the previous rod row. Verified Reset epochs allow new leases and invalidate old exchanges. 261 selected CPU checks and60 Registry checks pass; native Tripod collector remains pending. [Report](docs/superpowers/reports/2026-11-22-teacher-fresh-supported-control.md).

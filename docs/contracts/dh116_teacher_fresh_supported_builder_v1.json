@@ -1,0 +1,118 @@
+{
+  "version": "dh116-teacher-fresh-supported-builder-v1",
+  "base_head": "9621dffa3c5c043fa128273e20d11c61269dc342",
+  "status": "cpu_direct17_constructor_and_reset_entry_verified_native_pending",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_fresh_supported_builder.py": "65dc5ca5d669d561ca085303f5297fe78f530eb5fea2cc7b9a5b8313e8600b4f",
+    "scripts/record_dh116_tripod_supported_reset.py": "4d0bcb6774b11d076311b4d4e540dbf89c21883ed092ad75fa7926d6ad4a1c32",
+    "tests/test_fresh_supported_builder.py": "a3763526b85dc5a09e53c8989019dd4772cb3bee75eade61e548ae10cd1044cf",
+    "tests/test_tripod_supported_reset_capture.py": "6d2eacb70207e13efc9760b6e9c95711b068e6951c23fef6e61a3e1860978610",
+    "tests/test_dh116_dual_pinch_builder.py": "9a288e60b61c1394bfb7aac028143671e6862995a1315cf58967835a935a04c9"
+  },
+  "cpu": {
+    "passed": 74,
+    "failed": 0,
+    "new_tests": 6,
+    "construction_passed": 26,
+    "construction_seconds": 184.53,
+    "control_passed": 48,
+    "control_seconds": 25.08,
+    "commands": [
+      [
+        "/mnt/mydisk/xk/envs/dh116/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_tripod_supported_reset_capture.py",
+        "tests/test_fresh_supported_builder.py",
+        "tests/test_dh116_dual_pinch_builder.py"
+      ],
+      [
+        "/mnt/mydisk/xk/envs/dh116/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_fresh_supported_episode.py",
+        "tests/test_fresh_supported_physical_exchange.py",
+        "tests/test_supported_mesh_reset.py",
+        "tests/test_native_teacher_supported_reset.py",
+        "tests/test_dh116_power_end_supported_rod.py",
+        "tests/test_mesh_reset_order.py"
+      ]
+    ],
+    "log_sha256": {
+      "fresh-supported-builder-red.log": "f561b2b8b78d3a340251f052d7125059dfb98837617703a7ee8927fbc86b48bb",
+      "tripod-supported-reset-entry-red.log": "868d60f4742938b4fbe8972551d568a5bf8b7fb7bb0b001f10275cf923ae7225",
+      "fresh-supported-builder-first-green.log": "2af515376343574929d34e0245e34486cce3954950749d06200b6b73ac54f574",
+      "fresh-supported-builder-entry-green.log": "3e6dff709210d53baded50dd1b604d22aef42949fc9583b04c547b726b3a0708",
+      "fresh-supported-builder-control-regression.log": "03277fd4e31692af4e29d51083c912684563e70039227423baef677346074d24"
+    },
+    "scope": "74 disjoint selected CPU cases, not full repository",
+    "registry_passed": 60,
+    "registry_failed": 0,
+    "registry_seconds": 15.47,
+    "registry_log_sha256": "e096dab529aed76573b228f8c61b209c1cc02ff8c54bf29ef1cde37c2292a792"
+  },
+  "construction": {
+    "mesh_slots": 17,
+    "link_sources": 14,
+    "routes_per_hand": 7,
+    "pair_capacity": 8364,
+    "material_nodes": 41,
+    "sdk_setup_steps": 2,
+    "episode_resets_before_handoff": 0,
+    "solver_steps_before_handoff": 0,
+    "source": "original side-specific USD/SDF producers; actual link transforms; no old11 Reset/append"
+  },
+  "native_recipe": {
+    "entry": "scripts/record_dh116_tripod_supported_reset.py",
+    "gpu": 2,
+    "num_envs": 1,
+    "sdk_steps": 2,
+    "episode_resets": 1,
+    "control_steps": 0,
+    "solver_steps": 0,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "soft_wall_seconds": 180,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "natural_exit_verified_by": "independent outer GDB result and lifecycle receipts, not worker flags"
+  },
+  "readiness": {
+    "fresh_scene_cpu": true,
+    "native_reset_entry_cpu": true,
+    "native_fresh17_reset": false,
+    "tripod_collector": false,
+    "formal_training": false,
+    "teacher_grasp_success": false
+  },
+  "review": {
+    "new_review_obtained": false,
+    "status": "Antigravity current quota banner; no new request or paid setting changes",
+    "evidence_sha256": "ded63d7313aa779065f66ad323b5712489e38d1d96468d66cd91efe2977d842f"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "physical_parameters_changed": false,
+  "cameras_changed": false,
+  "r2_enabled": false,
+  "sealed_legacy_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_mesh_reset_order.py": "94394cd6a10c528422bda28f7ee8813587ba1ca970dff54d9eabcc41ab19b50a",
+    "src/go2_pvcnn/control/dh116/tabletop_mesh_reset_readback.py": "53c362e365df241280caa8d89ebd821a8a541d7c62c845d4956a6c12530ca0cc"
+  },
+  "remaining": [
+    "Acquire real source-bound fresh17 Reset with natural exit; no copied CPU qualification",
+    "Independent Tripod NativeSources/session/preflight and existing PPO update/resume",
+    "Power full-fist/palm independent source and actual force-hold-off-support qualification",
+    "Long-clock Reset and complete Lift30mm/Hold5s/Slip0.5mm evaluation remain unqualified"
+  ]
+}

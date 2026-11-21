@@ -62,7 +62,7 @@ def geometry():
 class View:pass
 class Sim:pass
 
-def setup(monkeypatch,tmp_path,prepared,geometry,fault=None):
+def setup(monkeypatch,tmp_path,prepared,geometry,fault=None,*,use_layout=False):
     from test_dual_hand_reset import Hand
     from test_dual_hand_rod_runtime import FakeRope,Grid
     from go2_pvcnn.control.dh116.tabletop_dual_hand_reset import RESET_OWNERS
@@ -127,10 +127,11 @@ def setup(monkeypatch,tmp_path,prepared,geometry,fault=None):
             view.link_paths=[[prefix+"/"+side+"Hand/"+n for n in hand.body_names]]
             view.get_coms=lambda:np.zeros((1,23,7))
             hand._physics_sim_view=sim.physics_sim_view
-            pose=np.asarray(prepared["hands"][side]["builder_initial_root_pose_w"])
+            pose=np.asarray(layout["hand_roots"][side] if use_layout else prepared["hands"][side]["builder_initial_root_pose_w"]).copy()
+            if use_layout: pose[2] += .04
             hand.data.root_pose_w[0]=torch.tensor(pose,dtype=torch.float32)
             hand.root_native[:]=hand.data.root_pose_w[:,[0,1,2,4,5,6,3]]
-            full=expand(prepared["hands"][side]["source_active_q"])
+            full=expand(layout["active_joints"][side] if use_layout else prepared["hands"][side]["source_active_q"])
             for j,name in enumerate(JOINTS):
                 k=hand.joint_names.index(name)
                 hand.measured[0,k]=float(full[j]);hand.data.joint_pos[0,k]=float(full[j])
