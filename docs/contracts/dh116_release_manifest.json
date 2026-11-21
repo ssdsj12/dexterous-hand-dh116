@@ -30038,6 +30038,31 @@
         "verified_at_utc": "2026-11-21T05:54:33.831578+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "Tripod archived rod envelope near approach",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-archived-motion-envelope.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_archived_motion_envelope_v1.json",
+      "cpu_tests": {
+        "passed": 80,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "022d8fbe9c5db086a4d42df5cf67cde45f6436de",
+        "source_tree": "1ae7fad482328ef6841bef0b11b88af537b52e07",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T05:58:39.637043+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
