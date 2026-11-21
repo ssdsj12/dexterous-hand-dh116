@@ -31013,6 +31013,31 @@
         "verified_at_utc": "2026-11-21T09:51:50.490440+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-left-index-oscillation-dose",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-left-index-oscillation-dose.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_left_index_oscillation_dose_v1.json",
+      "cpu_tests": {
+        "passed": 220,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "4a5535dddcc48a5727db4eeb0a2bc1001e9c0092",
+        "source_tree": "08510b08a3a30c180ae6313f24560132b6b2dcd4",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T09:54:25.358991+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
