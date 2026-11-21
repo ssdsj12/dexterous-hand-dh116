@@ -31538,6 +31538,31 @@
         "verified_at_utc": "2026-11-21T15:07:13.918396+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher-902-staged-path-screen",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-source-binding.md",
+      "readiness": "docs/contracts/dh116_teacher_902_source_binding_v1.json",
+      "cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "238ca08c76fda25042848764776a83c1d9c567e4",
+        "source_tree": "5bcf6bcd20d9a134e10ae4fefd01d520304b166d",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T15:12:24.043746+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
