@@ -32255,6 +32255,31 @@
         "verified_at_utc": "2026-11-21T21:35:44.090981+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-smoke8-launch-freeze",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-frozen.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_frozen_v1.json",
+      "cpu_tests": {
+        "passed": 135,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "757d347b6c871c7dfce6dc8b1c55a5653e78655f",
+        "source_tree": "a2900518d97722a8eb6f3c19474a9eefc4fcb727",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-21T21:41:13.368664+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
