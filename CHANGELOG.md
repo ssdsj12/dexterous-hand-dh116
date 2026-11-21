@@ -1,3 +1,7 @@
+## Native Power proximal ray evidence
+
+Record exact geometry parity and original per-side hits, including a GPU ray surface discrepancy that blocks contact admission. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-rays-native.md).
+
 ## Power proximal collision ownership
 
 Add separate bounded CPU and GPU PhysX ray capture for each original little-finger proximal collider. [Report](docs/superpowers/reports/2026-11-21-teacher-power-proximal-rays.md).

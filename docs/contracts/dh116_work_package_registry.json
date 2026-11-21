@@ -45931,6 +45931,32 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-proximal-ray-native-result": {
+      "title": "Measure the original Power proximal PhysX hit and CPU/GPU topology",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-proximal-ray-preflight"
+      ],
+      "tests": [
+        "tests/test_dh116_power_palm_raycast.py",
+        "tests/test_dh116_power_palm_parity.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_power_proximal_ray_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-power-proximal-rays-native.md",
+      "native_runs": 2,
+      "last_result": {
+        "scope": "native_ray_and_topology_acquisition",
+        "natural_exits": [
+          0,
+          0
+        ],
+        "gpu_surface_qualification": false,
+        "sdf_registered": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

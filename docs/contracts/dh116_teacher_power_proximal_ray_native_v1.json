@@ -1,0 +1,78 @@
+{
+  "version": "dh116-teacher-power-proximal-ray-native-v1",
+  "receipts": {
+    "cpu": {
+      "sha256": "7168ec0b46d1515f967b5af811cf575ec3fb4d09a7b95e6be2dc0f584c8589bc",
+      "frozen_sha256": "963e65a72637b2d5f4bca54137317d7f4a2b1e666f98053171fd525ce6651674",
+      "wall_s": 30.053020833060145
+    },
+    "gpu": {
+      "sha256": "f3ee963420a5e381616c1da969e90d4507fc60fc93d3825d77df28f1d1b20773",
+      "frozen_sha256": "c7fc9cf2b81edb686465c0ef885f3e93299a5cbca384f5eeca191083ad76bfa6",
+      "wall_s": 33.01454412913881
+    }
+  },
+  "rays": {
+    "cpu": {
+      "left": {
+        "total": 64,
+        "owned": 36,
+        "original_fan_abs_error_max_m": 1.6848580123129085e-05,
+        "original_fan_abs_error_p95_m": 4.220371283220406e-08
+      },
+      "right": {
+        "total": 64,
+        "owned": 36,
+        "original_fan_abs_error_max_m": 1.6836195550025933e-05,
+        "original_fan_abs_error_p95_m": 4.387664033012398e-08
+      }
+    },
+    "gpu": {
+      "left": {
+        "total": 64,
+        "owned": 36,
+        "original_fan_abs_error_max_m": 0.0005166328858884246,
+        "original_fan_abs_error_p95_m": 0.0004479229431981625
+      },
+      "right": {
+        "total": 64,
+        "owned": 36,
+        "original_fan_abs_error_max_m": 0.0005167251628873798,
+        "original_fan_abs_error_p95_m": 0.00044796779771368554
+      }
+    }
+  },
+  "geometry_parity": {
+    "left.finger52_link": {
+      "cpu_vertices": 34,
+      "gpu_vertices": 34,
+      "cpu_polygons": 61,
+      "gpu_polygons": 61,
+      "max_vertex_delta_m": 0.0,
+      "directed_polygon_topology_equal": true,
+      "vertex_tolerance_m": 5e-07,
+      "parity_passed": true,
+      "cpu_local_basis_max_delta": 2.220446049250313e-16,
+      "gpu_local_basis_max_delta": 2.220446049250313e-16
+    },
+    "right.finger52_link": {
+      "cpu_vertices": 34,
+      "gpu_vertices": 34,
+      "cpu_polygons": 61,
+      "gpu_polygons": 61,
+      "max_vertex_delta_m": 0.0,
+      "directed_polygon_topology_equal": true,
+      "vertex_tolerance_m": 5e-07,
+      "parity_passed": true,
+      "cpu_local_basis_max_delta": 2.220446049250313e-16,
+      "gpu_local_basis_max_delta": 2.220446049250313e-16
+    }
+  },
+  "native_acquisition_runs": 2,
+  "comparison_sha256": "b23bdb69d28b7a3bb5adc1b531386cf3cbf8df177d49ceee5ace2d3f666bd604",
+  "attachment_witness_for_reported_rays": true,
+  "gpu_pose_surface_qualification": false,
+  "sdf_registered": false,
+  "native_contact_qualified": false,
+  "teacher_admission": false
+}
