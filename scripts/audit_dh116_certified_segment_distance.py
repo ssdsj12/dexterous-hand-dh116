@@ -6,6 +6,9 @@ from scipy.spatial import ConvexHull
 from scripts.audit_dh116_pinch_initial_pose import finite_array
 
 
+_DISTANCE_ROUNDING_M = 1e-12
+
+
 def _certify_segment_distance(vertices, start, axis, planes, estimate, scale):
     """Check a feasible upper bound and a full-vertex separating lower bound."""
     point = estimate[:3].copy()
@@ -23,7 +26,7 @@ def _certify_segment_distance(vertices, start, axis, planes, estimate, scale):
 
     delta = point - endpoint
     norm = float(np.linalg.norm(delta))
-    rounding_m = 1e-12
+    rounding_m = _DISTANCE_ROUNDING_M
     lower = 0.
     if norm > 0.:
         # A non-expansive direction makes support separation a distance bound.
@@ -37,8 +40,49 @@ def _certify_segment_distance(vertices, start, axis, planes, estimate, scale):
     return point, endpoint, lower
 
 
-def segment_hull_distance(vertices, start, end):
-    """Resolve status 8 only when independent bounds match within one nanometre."""
+def _polish_segment_distance(vertices, start, axis, planes, estimate, scale):
+    """Try at most 64 nearby feature sets; only the original certificate accepts."""
+    from itertools import chain, combinations, islice
+    constraints = np.vstack([
+        np.column_stack([planes[:, :3], np.zeros(len(planes))]),
+        [0., 0., 0., -1.], [0., 0., 0., 1.],
+    ])
+    offsets = np.r_[planes[:, 3], 0., -1.]
+    slack = np.abs(constraints @ estimate + offsets)
+    # Candidate selection only. This does not relax feasibility or distance bounds.
+    active = np.flatnonzero(slack <= 1e-6)
+    active = active[np.argsort(slack[active], kind="stable")]
+    features = chain.from_iterable(combinations(active, size) for size in range(1, 5))
+    residual_matrix = np.column_stack([np.eye(3), -axis])
+    attempts = 0
+    for selected in islice(features, 64):
+        attempts += 1
+        equality, values = constraints[list(selected)], offsets[list(selected)]
+        kkt = np.block([
+            [residual_matrix.T @ residual_matrix, equality.T],
+            [equality, np.zeros((len(equality), len(equality)))],
+        ])
+        rhs = np.r_[residual_matrix.T @ start, -values]
+        try:
+            candidate = np.linalg.lstsq(kkt, rhs, rcond=None)[0][:4]
+        except np.linalg.LinAlgError:
+            continue
+        if (not np.isfinite(candidate).all()
+                or np.max(constraints @ candidate + offsets) > 1e-8):
+            continue
+        checked = _certify_segment_distance(vertices, start, axis, planes, candidate, scale)
+        if checked is not None:
+            return checked, attempts
+    return None, attempts
+
+
+def segment_hull_bounds(vertices, start, end):
+    """Certify distance bounds for a convex solid and one finite centreline segment.
+
+    Optimizer success is not a certificate. Both accepted stop statuses require
+    feasible witnesses and full-vertex support bounds within one nanometre.
+    These are unsigned distances, not penetration depth or multi-frame coverage.
+    """
     v, a = finite_array(vertices), finite_array(start, (3,))
     axis = finite_array(end, (3,)) - a
     origin = v.mean(0)
@@ -67,10 +111,25 @@ def segment_hull_distance(vertices, start, end):
     estimate = result.x
     if (np.isfinite(estimate).all() and -.00000001 <= estimate[3] <= 1.00000001
             and np.max(constraints @ estimate + offsets) <= 1e-8):
-        if result.success:
-            return scale * float(np.linalg.norm(residual(estimate)))
-        if result.status == 8:
+        if (result.success and result.status == 0) or result.status == 8:
             checked = _certify_segment_distance(v, a, axis, planes, estimate, scale)
+            method, attempts = "direct_support_bounds", 0
+            if checked is None:
+                checked, attempts = _polish_segment_distance(v, a, axis, planes, estimate, scale)
+                method = "active_feature_polish"
             if checked is not None:
-                return checked[2]
+                point, endpoint, lower = checked
+                return dict(
+                    lower_m=lower,
+                    upper_m=float(np.linalg.norm(point - endpoint)) * scale + _DISTANCE_ROUNDING_M,
+                    hull_point_m=(point * scale + origin).tolist(),
+                    segment_point_m=(endpoint * scale + origin).tolist(),
+                    optimizer_status=int(result.status),
+                    certificate_method=method, polish_candidates=attempts,
+                )
     raise ValueError("continuous patch/convex-hull distance did not converge")
+
+
+def segment_hull_distance(vertices, start, end):
+    """Return only the independently certified lower bound for legacy callers."""
+    return segment_hull_bounds(vertices, start, end)["lower_m"]

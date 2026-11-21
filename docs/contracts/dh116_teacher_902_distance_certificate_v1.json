@@ -1,0 +1,130 @@
+{
+  "version": "dh116-teacher-902-distance-certificate-v1",
+  "base_head": "115c8e9e8e9ff236f2e995c331b0857adfc6d7a7",
+  "status": "cpu_certificate_repaired_contact_route_blocked",
+  "source_sha256": {
+    "scripts/audit_dh116_certified_segment_distance.py": "9af88d4f563d25c8bf63e566801397c76a310fcdffb01cf5ffdd54cc38adc5be",
+    "tests/test_pinch_capsule_distance_certificate.py": "57d26893b801d1fc0a5852935514aa2ae11901c5d28c3be8303a0f0cab17b4dc"
+  },
+  "certificate": {
+    "width_limit_m": 1e-09,
+    "rounding_m": 1e-12,
+    "maximum_polish_candidates": 64,
+    "optimizer_success_alone_accepted": false,
+    "legacy_api_returns": "certified_lower_bound",
+    "scope": "unsigned distance between one convex solid and one finite centreline segment"
+  },
+  "cpu_tests": {
+    "passed": 148,
+    "failed": 0,
+    "log_sha256": "1d14ddc82fd0e17841f217d5c6a1c9f44487ca9e22bb990d917fad133ead82f0",
+    "test_files": [
+      "tests/test_pinch_capsule_distance_certificate.py",
+      "tests/test_dh116_902_flexible_reset.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_dh116_902_flexible_contact.py",
+      "tests/test_dh116_supported_distal_transfer.py",
+      "tests/test_dh116_tripod_measured_precontact.py",
+      "tests/test_dh116_tripod_near_corridor.py",
+      "tests/test_dh116_tripod_right_axis_calibration.py",
+      "tests/test_dh116_tripod_right_tracking_native.py",
+      "tests/test_dual_hand_rod_runtime.py",
+      "tests/test_dh116_tripod_supported_reset.py",
+      "tests/test_dh116_902_command_path.py"
+    ],
+    "log_contains_registry": true
+  },
+  "focused_tests": {
+    "passed": 19,
+    "failed": 0,
+    "overlap_with_cpu_tests": 19,
+    "log_sha256": "815a1a0dc1c9272190561f6057a08651e12ab643edcc13279562a4a4390bfbc9"
+  },
+  "failure_history": {
+    "success_certificate_red": 4,
+    "polish_red": 2,
+    "caller_regression_before_polish": 4,
+    "resolved": true
+  },
+  "diagnostic": {
+    "critical_direct_source_index": {
+      "ordinal": 462,
+      "full_envelope_lower_m": -0.0002270549951454326,
+      "subset_upper_m": -0.00022447788790993725,
+      "qualified": false
+    },
+    "critical_delayed_source_middle": {
+      "ordinal": 374,
+      "full_envelope_lower_m": -0.00014916801631760903,
+      "scope": "one critical substep, not a route certificate"
+    },
+    "full_delayed_path": {
+      "control_windows": 66,
+      "ideal_sdk_substeps": 528,
+      "float32_finger_and_wrist_targets": true,
+      "minimum_full_envelope_lower_m": -0.0001727972885838991,
+      "violating_subset_upper_m": -0.00017272608869650131,
+      "worst_ordinal": 478,
+      "worst_link": "right.finger23_link",
+      "minimum_noncontact_m": 0.0026230569839532647,
+      "minimum_support_m": 2.5139514411853803e-06,
+      "qualified": false
+    },
+    "environment": "archived SDK400-408 fixed rod geometry; ideal tracking, not native dynamics",
+    "semantics": "negative capsule-envelope gap is not physical penetration depth",
+    "full_9_frame_3_node_support_preserved": true,
+    "live_guard_changed": false
+  },
+  "review": {
+    "skill": "antigravity-desktop-review",
+    "rounds": [
+      "902-midpath R1",
+      "902-midpath R2",
+      "902-midpath R3",
+      "902-midpath R4"
+    ],
+    "final_source_sha256": "9af88d4f563d25c8bf63e566801397c76a310fcdffb01cf5ffdd54cc38adc5be",
+    "adopted": [
+      "independent distance bounds for optimizer success",
+      "bounded feature polish with unchanged certificate",
+      "retain original time/three-node convex envelope"
+    ],
+    "corrected": [
+      "single-frame or per-frame segment union is not the complete original envelope"
+    ]
+  },
+  "native_runs": 0,
+  "teacher_queries": 0,
+  "ppo_updates": 0,
+  "rgb_frames_captured": 0,
+  "fixed_camera_sha256": {
+    "stereo_camera_front_640x480_v3.json": "6e42c51c1f6a20183f61a7783bcbaa63684058aaf6e158e6df3aed4a1d0fa11b",
+    "stereo_camera_hand_order_640x480_v1.json": "673b71d4edc425620c78544959cdd00a545db0104bb164a6f2d22f368776d98b"
+  },
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "next": "Change the midpath index/middle timing or clearance, screen the complete float32 command path, then independently validate live geometry and reaction forces.",
+  "evidence_sha256": {
+    "certificate-success-red.log": "fc60a5dd1a6064570f89eca83f451a2b9e8cf0211f5e8c05db6c813dc8a46061",
+    "certificate-polish-red.log": "f5741d8071b8bb36c8e25bedf5443e8e7b8ce50d0e8d57b15ab875852b90e849",
+    "certificate-callers-regression.log": "80d2e70f8163a14c13398e263e03483743f8c58fd77a04eff379868a2c32a740",
+    "certificate-reset-failure-diagnosis.log": "ab268611d34ef1acd35c3e7e74d418f1f3f70eb1b0254700c6f9b8db4fd8395a",
+    "critical-command-continuous-certificates.json": "b0899975ccf508805150b68904310b6ff9e1feda168e2e6549c063472154256b",
+    "critical-full-envelope-certificates.json": "e079542f4b78581fa63048bb9ede37c04c61a2b946b643a76d6eb34044b7f105",
+    "check-command-refined-envelope.py": "0e18b206bc8985114344de0409db7811751ad18e29824bbdd015aca3d7d86575",
+    "check-command-refined-envelope-exit.json": "c3a2c8704fd8ff3c0767fd6a5bc3519dd9a9c3bf3d1be01d364ee10382aa0ab3",
+    "check-command-refined-envelope.log": "c3fd50f9ad82f1fd4ba975ca137a3a9d38ee557ff3ba178cd689a0de97d6d191",
+    "tripod-command-delay16-refined-envelope.json": "5398e2f82022e09e64333a6d77b615b38c141d575c429ecc3e534b0aea91a769"
+  },
+  "registry_tests": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "1d14ddc82fd0e17841f217d5c6a1c9f44487ca9e22bb990d917fad133ead82f0"
+  },
+  "combined_release_tests": {
+    "passed": 208,
+    "failed": 0,
+    "seconds": 56.08,
+    "log_sha256": "1d14ddc82fd0e17841f217d5c6a1c9f44487ca9e22bb990d917fad133ead82f0"
+  }
+}

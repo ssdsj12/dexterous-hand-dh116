@@ -47500,13 +47500,14 @@
       "status": "blocked",
       "dependencies": [
         "teacher.902-continuous-contact-guard",
-        "teacher.902-command-replay"
+        "teacher.902-command-replay",
+        "teacher.902-distance-certificate"
       ],
       "tests": [],
       "readiness": "docs/contracts/dh116_teacher_902_continuous_contact_v1.json",
       "report": "docs/superpowers/reports/2026-11-21-teacher-902-continuous-contact.md",
       "native_runs": 0,
-      "reason": "Seven timing candidates fail continuous geometry screening; command replay is not native dynamics or contact-load qualification."
+      "reason": "Full float32 command replay has a certified index gap failure at ordinal 478; no live refined-guard or grasp qualification."
     },
     "teacher.902-command-replay": {
       "title": "Replay actual 480 Hz commands before screening 902 contact paths",
@@ -47531,6 +47532,39 @@
         "maximum_command_error": 0,
         "native_grasp_verified": false,
         "teacher_admission": false
+      }
+    },
+    "teacher.902-distance-certificate": {
+      "title": "Certify successful distance solves and preserve complete archived envelopes",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-command-replay"
+      ],
+      "tests": [
+        "tests/test_pinch_capsule_distance_certificate.py",
+        "tests/test_dh116_902_flexible_reset.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_902_flexible_contact.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_dh116_tripod_measured_precontact.py",
+        "tests/test_dh116_tripod_near_corridor.py",
+        "tests/test_dh116_tripod_right_axis_calibration.py",
+        "tests/test_dh116_tripod_right_tracking_native.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_902_command_path.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_902_distance_certificate_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-902-distance-certificate.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 148,
+        "focused_tests_passed": 19,
+        "contact_route_qualified": false,
+        "teacher_admission": false,
+        "registry_tests_passed": 60
       }
     }
   },

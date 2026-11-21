@@ -1,3 +1,7 @@
+## 902 certified distance bounds
+
+Require independent bounds even when the optimizer reports success; bounded feature polishing preserves the original precision. Complete 528-substep CPU replay still rejects the contact route. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-distance-certificate.md).
+
 ## 902 actual command replay
 
 Verify the original 480 Hz command path and actual float32 writes against 16 archived physical steps; seven new timing candidates remain rejected. Fixed stereo unchanged. [Report](docs/superpowers/reports/2026-11-21-teacher-902-command-replay.md).
