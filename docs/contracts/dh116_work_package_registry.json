@@ -46399,6 +46399,31 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-guarded-waypoint-continuation": {
+      "title": "Tripod guarded waypoint continuation",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-supported-guarded-approach-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_tripod_distal_route.py",
+        "tests/test_tripod_tracking_envelope.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_guarded_waypoints_v1.json",
+      "report": "docs/superpowers/reports/2026-11-21-teacher-tripod-guarded-waypoints.md",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_preflight_passed": 112,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

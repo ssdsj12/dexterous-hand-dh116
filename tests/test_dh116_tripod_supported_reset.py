@@ -49,3 +49,31 @@ def test_shared_motion_schedule_checks_exact_sdk_budget(remaining, good):
     else:
         with pytest.raises(ValueError, match="control"):
             supported_action_schedule(np.zeros((4, 24)), remaining)
+
+
+def test_waypoint_controls_use_original_action_units_and_intrinsic_wrist():
+    from scipy.spatial.transform import Rotation
+    from scripts.verify_dh116_tripod_supported_reset import waypoint_controls, screen
+    from go2_pvcnn.control.dh116.linear_coupling import ACTIVE
+
+    _, scene = screen.scene_request()
+    seeds = [scene["hands"][s]["pose_wxyz"] for s in ("left", "right")]
+    seed = np.asarray(seeds)
+    nominal = seed.copy()
+    nominal[:, 0] -= .0002
+    states = {s:{"joint_names":list(ACTIVE), "active_indices":list(range(6)),
+                 "backend_targets":np.asarray([scene["hands"][s]["q_rad"]])}
+              for s in ("left", "right")}
+    row = dict(wrist_projection=dict(projected_root_poses=nominal[None], projected_angles=np.zeros((1,2,3))),
+               action_readback=dict(post=dict(hands=states)))
+    desired = {}
+    for i,side in enumerate(("left","right")):
+        pose=seed[i].copy()
+        target=Rotation.from_quat(pose[[4,5,6,3]]) * Rotation.from_euler("XYZ",[.01,-.02,0.])
+        pose[3:]=target.as_quat()[[3,0,1,2]]
+        desired[side]=dict(pose_wxyz=pose,active_q_rad=np.asarray(scene["hands"][side]["q_rad"])+.001)
+    planned=waypoint_controls(scene,row,desired)
+    assert planned.shape == (20,24)
+    np.testing.assert_allclose(planned[:,:12].sum(0)*.3/60,.001)
+    np.testing.assert_allclose(planned[:,12:18].sum(0)*.01/60,[.0002,0,0,.0002,0,0])
+    np.testing.assert_allclose(planned[:,18:24].sum(0)*.5/60,[.01,-.02,0,.01,-.02,0],atol=1e-12)

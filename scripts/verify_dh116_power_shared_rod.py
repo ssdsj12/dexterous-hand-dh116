@@ -258,6 +258,18 @@ def acquire_original_power_reset(sim, owners, trace, output, *, profile):
         sim = owners = trace = None
 
 
+def verify_waypoint_boundary(actual, archived):
+    array_fields = ("node_positions","velocities","rest_lengths_m","external_support_wrenches_world",
+                    "mesh_names","physics_step","rod_tick")
+    hand_fields = ("q","qd","backend_targets","native_anchor_pose_w")
+    if (actual["physics_step"] != 272 or actual["physics_step"] != archived["physics_step"]
+            or any(actual["rod"][key] != archived["rod"][key] for key in array_fields)
+            or any(actual["action_readback"]["post"]["hands"][side][key]
+                   != archived["action_readback"]["post"]["hands"][side][key]
+                   for side in SIDES for key in hand_fields)):
+        raise ValueError("live Tripod action prefix does not match its sealed waypoint boundary")
+
+
 def supported_action_schedule(action, remaining_sdk):
     schedule = np.atleast_2d(np.asarray(action, dtype=float))
     if (schedule.ndim != 2 or schedule.shape[1] != 24 or len(schedule) == 0
@@ -269,7 +281,7 @@ def supported_action_schedule(action, remaining_sdk):
 
 def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                          clearance_shapes, setup, action, sdk_end, verify_support_continuity=False,
-                         task="power", support_scene=None):
+                         task="power", support_scene=None, waypoint_archive=None):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -281,6 +293,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         start = power.clock()
         schedule = supported_action_schedule(action, sdk_end-start["physics_step"])
         root = torch.tensor(setup["root_pose_wxyz"], dtype=torch.float64)[None]
+        current_geometry = {}
 
         def geometry():
             sdk = native.clock(sim)["sdk_step"]
@@ -288,6 +301,9 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 reference_nodes=power._base.last["node_positions"])
             poses, centers, clearance = measure_links(sim, bindings, meshes, clearance_shapes, sdk=sdk, **options)
             roots = [np.r_[poses[name][0],poses[name][1][[3,0,1,2]]] for name in PALM_NAMES]
+            if task == "tripod":
+                current_geometry.update(physics_step=sdk, poses=poses, centers_of_mass=centers,
+                                        table_clearance_m=clearance)
             return dict(physics_step=sdk, root_poses_w=torch.tensor(np.stack(roots),dtype=torch.float64)[None],
                         clearance_m=torch.tensor(clearance,dtype=torch.float64).reshape(1,2),
                         pad_poses=poses, centers_of_mass=centers)
@@ -305,7 +321,14 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         trace.watch("power_control_exchange", control, owner="supported Power action diagnostic", release="owned scope")
 
         def observe(row):
-            native.write_new(output/f"{task}_control_{row['physics_step']}.json", encode_owned(row))
+            emitted = row
+            if task == "tripod":
+                if current_geometry.get("physics_step") != row["physics_step"]:
+                    raise ValueError("current Tripod link and action readbacks have different SDK ticks")
+                emitted = dict(row, sdk_hand_geometry=current_geometry.copy())
+            native.write_new(output/f"{task}_control_{row['physics_step']}.json", encode_owned(emitted))
+            if waypoint_archive is not None and row["physics_step"] == 272:
+                verify_waypoint_boundary(encode_owned(row), waypoint_archive)
             pairs = row["rod"]["rod_mesh_contact_pairs"]["pairs"]
             if any(pair["mesh_name"] not in END_SUPPORT_NAMES for pair in pairs):
                 return "external_contact_during_parked_action"
@@ -337,7 +360,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
 
 def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=None,
                sdk_end=SDK_END, require_no_hand_contact=False, action_after_settle=None,
-               task="power", live_support_scene=None, tripod_archive=None):
+               task="power", live_support_scene=None, tripod_archive=None, waypoint_archive=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -348,7 +371,9 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
     episode = original = power = bindings = composers = binding = scoped_owners = None
     setup = support_options = None
     try:
-        if (task not in ("power", "tripod") or (task == "power" and tripod_archive is not None)
+        if (task not in ("power", "tripod")
+                or (task == "power" and (tripod_archive is not None or waypoint_archive is not None))
+                or (waypoint_archive is not None and tripod_archive is None)
                 or (task == "tripod" and
                 (supported_acquire is None or not require_no_hand_contact or live_support_scene is None
                  or (action_after_settle is None) != (tripod_archive is None)))):
@@ -477,7 +502,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
             control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
                 meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end,
                 verify_support_continuity=action_reference is not None or tripod_archive is not None,
-                task=task, support_scene=live_support_scene)
+                task=task, support_scene=live_support_scene, waypoint_archive=waypoint_archive)
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,
