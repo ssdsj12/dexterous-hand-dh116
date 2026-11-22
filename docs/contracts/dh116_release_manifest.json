@@ -32716,6 +32716,45 @@
         "verified_at_utc": "2026-11-22T01:31:34.308436+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-smoke8-v11-native-result",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v11.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v11.json",
+      "cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1865a52f0b4cdd6b289a4ed8814e35995ae734f4",
+        "source_tree": "b25598f684ab2d40bff90a985531902ed47b76f6",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T01:48:27.379599+00:00"
+      },
+      "remote_verified": true,
+      "native_tested_head": "1184cc419216ef7ef83fd16451cbd1e4f3ba52de",
+      "diagnostic_verified": true,
+      "native_result": {
+        "outer_exit_code": 0,
+        "inferior_exit_code": 0,
+        "signal": null,
+        "controls": 8,
+        "sdk_steps": 66,
+        "solver_calls": 64,
+        "internal_solver_substeps": 768,
+        "accepted_ppo_updates": 1,
+        "scheduler_receipt_sha256": "b49afa36539549d35d731315f6821339d1dc5cadbc70c2141e3e0442d6d53eb9",
+        "checkpoint_sha256": "35231d09bb947775301743d1c715889ff076eca1c7dedacf93149097c7167cec"
+      }
     }
   ]
 }
