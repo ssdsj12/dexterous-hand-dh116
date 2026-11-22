@@ -1,3 +1,5 @@
+Independent zero-command Tripod settling entry now reuses the real supported17 scene/Reset/R06;150 CPU regressions pass.No new native execution or policy/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-tripod-zero-action-settling-entry.md).
+
 Existing 64-row native data now has source-bound target/q tracking:both hands64/64 covered,zero hand load remains.134 CPU regressions pass;no new native run or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-contact-target-tracking-audit.md).
 
 First actual Contact Tripod fresh8 PPO diagnostic completed:67 SDK/65 solver/780 substeps,one update,independent audit and natural exit0. All64 rows still have zero hand load;wire remains stand-supported,not grasp success. [Report](docs/superpowers/reports/2026-11-22-tripod-contact-fresh8-native.md).
