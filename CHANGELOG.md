@@ -1,3 +1,5 @@
+Teacher startup now reuses bounded pureCPU owned-JSON decoding while rechecking all26 source files and all physical validators.213 CPU regressions pass;complete repeated Reset derivation median8.956s ->5.683s,with byte-identical returned digest. No new native/PPO/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-owned-json-decode-cache.md).
+
 Tripod Reset parsing now consumes the exact SHA-verified bytes from each independent load; all26 inventory checks and physical guards remain.98 CPU checks pass;complete CPU audit median8.463s ->8.459s. No material speedup is demonstrated;this repairs byte provenance. Spent v10 is correctly rejected under changed source. No new native/PPO qualification. [Report](docs/superpowers/reports/2026-11-22-tripod-verified-artifact-bytes.md).
 
 Teacher terminal Restart now consults the authoritative session budget, preserving legal shorter episodes.69 CPU checks pass. Historical Tripod v10 stopped after7 controls/58 SDK steps with0 PPO and exit1/no signal; no new native qualification. [Report](docs/superpowers/reports/2026-11-22-native-terminal-budget-precedence.md).

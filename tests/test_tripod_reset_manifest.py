@@ -37,6 +37,17 @@ def test_manifest_recovers_real_supported_reset_state_and_native_scene_inputs(na
     m = module()
     native_manifest = native_manifest()
     inventory={RUN/'native'/name for name in json.loads((RUN/'outer.json').read_bytes())['artifact_sha256']}
+    from collections import OrderedDict
+    from go2_pvcnn.control.dh116 import tabletop_fast_owned_codec as owned
+    monkeypatch.setattr(owned,'_JSON_CACHE',OrderedDict())
+    large_size=(RUN/'native'/m.FILES['reset_readback']).stat().st_size
+    parse=json.loads
+    large_parses=[]
+    def count_large(raw,*args,**kwargs):
+        if type(raw) is bytes and len(raw)==large_size:
+            large_parses.append(len(raw))
+        return parse(raw,*args,**kwargs)
+    monkeypatch.setattr(owned.json,'loads',count_large)
     # Each independent verification must parse exactly the bytes whose SHA
     # was checked, not a later unchecked read of the same artifact pathname.
     watched={RUN/'native'/name for name in {*m.FILES.values(),'frozen_plan.json',
@@ -72,8 +83,9 @@ def test_manifest_recovers_real_supported_reset_state_and_native_scene_inputs(na
     assert data["scope"] == "native_reset_only_no_contact_or_grasp_admission"
     assert data["teacher_admission"] is data["grasp_qualified"] is False
     assert loaded.verify(project=ROOT) == loaded
-    # load and verify both recheck all native files; there is no cross-call cache.
+    # Both calls recheck provenance/qualification; only CPU decoding may be reused.
     assert all(reads.get(path,0)==2 for path in inventory)
+    assert large_parses==[large_size]
     data["rod_state"]["positions"][0][0][0] += 1
     assert loaded.data()["rod_state"]["positions"][0][0][0] != data["rod_state"]["positions"][0][0][0]
 

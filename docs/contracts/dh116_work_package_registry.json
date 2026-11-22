@@ -49122,6 +49122,38 @@
         "full_output_equal": true,
         "scope": "CPU real-source complete artifact verification"
       }
+    },
+    "teacher.owned-json-decode-cache": {
+      "title": "Bound pureCPU owned JSON decoding reuse while preserving complete source and geometry checks",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-verified-artifact-bytes"
+      ],
+      "tests": [
+        "tests/test_native_teacher_owned_json_cache.py",
+        "tests/test_fast_owned_codec.py",
+        "tests/test_native_teacher_owned_codec_parity.py",
+        "tests/test_owned_codec_comparison.py",
+        "tests/test_tripod_reset_manifest.py",
+        "tests/test_native_teacher_tripod_admission.py",
+        "tests/test_native_teacher_static_manifest_handoff.py",
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-owned-json-decode-cache.md",
+      "readiness": "docs/contracts/dh116_owned_json_decode_cache_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 213,
+        "cpu_failed": 0,
+        "native_runs": 0,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU decoding ownership and complete independent qualification checks"
+      }
     }
   },
   "execution_target": {

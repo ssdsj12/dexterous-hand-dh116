@@ -6,6 +6,12 @@ Missing/nonfinite values, array subclasses and all other inputs use the old
 implementation. No value is quantized, rounded, filled, clipped or dropped.
 """
 from contextlib import contextmanager
+from collections import OrderedDict
+import copy
+import hashlib
+import json
+import sys
+import weakref
 from threading import RLock
 from math import isfinite
 import numpy as np
@@ -84,3 +90,79 @@ def decode_owned(value):
     if isinstance(value,list):
         return [decode_owned(item) for item in value]
     return value
+
+
+# Pure CPU deserialization only. No raw bytes or qualification result is held.
+_JSON_CACHE = OrderedDict()
+_JSON_CACHE_LOCK = RLock()
+_JSON_CACHE_MIN_RAW_BYTES = 32 * 1024**2
+_JSON_CACHE_MAX_BYTES = 64 * 1024**2
+_JSON_CACHE_MAX_ENTRIES = 2
+
+
+def _owned_cpu_bytes(value, seen):
+    if id(value) in seen:
+        return 0
+    seen.add(id(value))
+    kind = type(value)
+    size = sys.getsizeof(value)
+    if kind in (type(None), bool, int, float, str):
+        return size
+    if kind is np.ndarray:
+        if value.dtype.kind not in "bifu" or not value.flags.owndata:
+            return None
+        if id(value.dtype) not in seen:
+            seen.add(id(value.dtype))
+            size += sys.getsizeof(value.dtype)
+        # ndarray.__sizeof__ includes its owned CPU allocation.
+        return size
+    if kind not in (dict, list):
+        return None
+    children = (part for pair in value.items() for part in pair) if kind is dict else value
+    for child in children:
+        amount = _owned_cpu_bytes(child, seen)
+        if amount is None:
+            return None
+        size += amount
+    return size
+
+
+def decode_owned_json(raw):
+    """Reuse bounded CPU decoding of identical bytes, always returning owned data.
+
+    The caller still verifies provenance and executes all physical validators.
+    This cache records neither those checks nor their outcome. Stdlib JSON and
+    the existing decoder remain the only schema authorities. The size limit
+    bounds retained cache objects, not raw input, temporary copies or process RSS.
+    """
+    if type(raw) is not bytes or len(raw) < _JSON_CACHE_MIN_RAW_BYTES:
+        return decode_owned(json.loads(raw))
+    parser, decoder = json.loads, decode_owned
+    try:
+        identities = tuple(weakref.ref(fn) for fn in (parser, decoder, codec.decode_owned))
+    except TypeError:
+        return decoder(parser(raw))
+    key = (hashlib.sha256(raw).digest(), *identities,
+           sys.get_int_max_str_digits() if hasattr(sys, "get_int_max_str_digits") else None)
+    with _JSON_CACHE_LOCK:
+        if key in _JSON_CACHE:
+            value, _ = _JSON_CACHE[key]
+            _JSON_CACHE.move_to_end(key)
+            return copy.deepcopy(value)
+        value = decoder(parser(raw))
+        size = _owned_cpu_bytes(value, set())
+        if size is None:
+            return value
+        size += sys.getsizeof(key) + sum(sys.getsizeof(part) for part in key)
+        # The stored size integer is bounded by MAX_BYTES whenever retained.
+        size += sys.getsizeof((value, size)) + sys.getsizeof(_JSON_CACHE_MAX_BYTES)
+        if size + sys.getsizeof(OrderedDict()) > _JSON_CACHE_MAX_BYTES:
+            return value
+        # Isolate the first caller too; validators may pop/mutate nested fields.
+        result = copy.deepcopy(value)
+        _JSON_CACHE[key] = (value, size)
+        while (len(_JSON_CACHE) > _JSON_CACHE_MAX_ENTRIES or
+               sys.getsizeof(_JSON_CACHE) + sum(item[1] for item in _JSON_CACHE.values())
+               > _JSON_CACHE_MAX_BYTES):
+            _JSON_CACHE.popitem(last=False)
+        return result

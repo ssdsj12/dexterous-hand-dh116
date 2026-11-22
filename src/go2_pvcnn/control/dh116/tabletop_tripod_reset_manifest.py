@@ -63,7 +63,7 @@ def _derive(run_dir, outer_binding, project):
     """Read raw source evidence; never accept caller-provided state/qualification."""
     from scripts.run_dh116_work_packages import debugger_status
     from .tabletop_deformable_r0_replay import encode_owned
-    from .tabletop_fast_owned_codec import decode_owned
+    from .tabletop_fast_owned_codec import decode_owned_json
     from .tabletop_supported_mesh_reset import validate_supported_readback
     from .tabletop_mesh_reset_numeric_state import validate_numeric_reset_audit
     from .tabletop_teacher_mounted_wrist_source import validate_mounted_observation
@@ -129,17 +129,17 @@ def _derive(run_dir, outer_binding, project):
         "native cleanup stages incomplete")
     _require(json.loads(documents.pop("app_close_returned.json"))["app_close_returned"] is True,
              "App.close did not return normally")
-    saved = decode_owned(json.loads(documents.pop(FILES["reset_readback"])))
+    saved = decode_owned_json(documents.pop(FILES["reset_readback"]))
     readback = saved["readback"]
     receipt = dict(readback.pop("completed_reset_receipt"),mesh_state_readback=readback)
-    event = decode_owned(json.loads(documents.pop("episode_reset.json")))
+    event = decode_owned_json(documents.pop("episode_reset.json"))
     from .tabletop_mesh_reset_order import _digest
     _require(_digest(event["reset"])==_digest(receipt), "durable Reset and readback receipts differ")
     with profile_reader_scope(profile):
         validate_supported_readback(readback,reset_receipt=receipt,mesh_plan=saved["mesh_plan"])
-        audit = decode_owned(json.loads(documents.pop(FILES["numeric_reset"])))
+        audit = decode_owned_json(documents.pop(FILES["numeric_reset"]))
         validate_numeric_reset_audit(audit,reset_receipt=receipt)
-    common = decode_owned(json.loads(documents.pop(FILES["common"])))
+    common = decode_owned_json(documents.pop(FILES["common"]))
     status = validate_mounted_observation(common)
     _require(status["valid_channels"]==66 and status["unknown_channels"]==305,
              "actual common66/unknown305 contract differs")
@@ -152,7 +152,7 @@ def _derive(run_dir, outer_binding, project):
     seed,_,_,_ = prepare_initial_state(task,saved["mesh_plan"]["original_plan"]["prepared_scene"]["table"],
                                       expected_scope=TRIPOD_SCOPE)
     _require(seed==receipt["seed"], "task and native Reset seed differ")
-    geometry = decode_owned(json.loads(documents.pop(FILES["geometry"])))
+    geometry = decode_owned_json(documents.pop(FILES["geometry"]))
     _require([row["side"] for row in geometry]==["left","right"]
              and all(row["evidence"]["initial_geometry_passed"] is True for row in geometry),
              "independent left/right geometry required")
