@@ -1,4 +1,4 @@
-The resized wire probe now supports a checked quiet interval. Three specimen-specific settled shapes were measured with standalone DeformX. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-quiet-settlement.md)
+The parked 9 mm Tripod wire reached a measured quiet interval in Isaac. Both supports remained loaded and no hand contact occurred. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-quiet-settlement.md)
 
 The opt-in wire catalog now isolates elastic stiffness from dimensions. Three equal-size specimens passed standalone CUDA parameter readback. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-material-generalization.md)
 

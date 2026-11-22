@@ -50397,8 +50397,11 @@
       "last_result": {
         "cpu_passed": 93,
         "standalone_cuda_specimens": 3,
-        "native_status": "pending",
-        "teacher_admission": false
+        "native_status": "passed_supported_wire_quiet_without_hand_contact",
+        "teacher_admission": false,
+        "sdk_steps": 1426,
+        "solver_substeps": 17088,
+        "outer_sha256": "51250fce8d722f925517b0f63695ba33b05ae061453e096ec9b3c517c90b7a4a"
       }
     }
   },

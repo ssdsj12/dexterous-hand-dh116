@@ -158,7 +158,82 @@
     ],
     "log_sha256": "414a6d7cf447d379857f1cf2cd1d8784c125e2c6be78c36feb82c7e08b7f1805"
   },
-  "native_status": "pending",
+  "native_status": "passed_supported_wire_quiet_without_hand_contact",
   "teacher_admission": false,
-  "grasp_qualified": false
+  "grasp_qualified": false,
+  "native": {
+    "sdk_steps": 1426,
+    "rows": 1424,
+    "pair_frames": 1424,
+    "maximum_node_error_vs_standalone_m": 0.0,
+    "maximum_vertical_load_error_vs_standalone_n": 0.0,
+    "raw_artifact_count": 1454,
+    "outer_sha256": "51250fce8d722f925517b0f63695ba33b05ae061453e096ec9b3c517c90b7a4a",
+    "source_head": "5676de76abdd113c6e549e65f78187b83d7e5b0e",
+    "frozen_sha256": "246babdffa5c8f37dc5a14bad03457734c5a74e88aaf84915343a701204be767",
+    "native_wall_s": 126.05967023409903,
+    "quiet": {
+      "qualified": true,
+      "first_sdk": 1379,
+      "last_sdk": 1426,
+      "max_node_speed_m_s": 9.430117588329624e-05,
+      "max_node_window_displacement_m": 1.494301193962364e-07,
+      "center_drop_m": 0.018780841350555577,
+      "measured_weight_n": 0.23242342804827992,
+      "terminal_support_load_n": [
+        0.1163145899772644,
+        0.11634509265422821
+      ],
+      "both_supports_only": true,
+      "initial_min_z_m": 0.3457191586494446,
+      "teacher_admission": false,
+      "grasp_qualified": false
+    },
+    "exit_code": 0,
+    "failure": null,
+    "teacher_admission": false,
+    "grasp_qualified": false
+  },
+  "endpoint_refinement": [
+    {
+      "side": "left",
+      "checked": 387,
+      "passed": 20,
+      "rejections": {
+        "finger14_link": 367
+      }
+    },
+    {
+      "side": "right",
+      "checked": 480,
+      "passed": 0,
+      "rejections": {
+        "finger13_link": 329,
+        "finger23_link": 109,
+        "table_or_support": 7,
+        "finger14_link": 35
+      }
+    }
+  ],
+  "parked_native_left_path": {
+    "cpu_clearance_verified": true,
+    "passed_paths": 6,
+    "proof_sha256": "846466c054d8030638c5b683218eb6eeb1b5bc35d81b0646cec2c09449f9a620",
+    "selected_link": "left.finger14_link",
+    "node": 35,
+    "world_translation_m": [
+      0.005599974764874949,
+      -0.001400003223087129,
+      0.011399993301017486
+    ],
+    "minimum_hull_clearance_m": -0.00010126244429566186,
+    "minimum_unselected_clearance_m": 0.002524026159702797,
+    "endpoint_sdf_gap_m": -2.89870657813043e-05,
+    "native_path_executed": false
+  },
+  "release_registry_tests": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "8da2667d623faa8e847d0b0e06211082b7ad54a3efc97e0799fe00e53901508c"
+  }
 }

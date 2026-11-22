@@ -33863,6 +33863,32 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-quiet-settlement",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-quiet-settlement.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_quiet_settlement_v1.json",
+      "status": "passed_supported_wire_quiet_without_hand_contact",
+      "cpu_tests": {
+        "passed": 93,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "sdk_steps": 1426,
+      "solver_substeps": 17088,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "5676de76abdd113c6e549e65f78187b83d7e5b0e",
+        "source_tree": "8746b8c848fe223f5b928ba01242645c4d69b704",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
