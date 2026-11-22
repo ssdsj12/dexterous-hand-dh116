@@ -63,14 +63,56 @@ def test_right_relief_uses_world_direction_and_only_right_intrinsic_z():
         api().right_relief_action(u, travel_m=.003, rotation_rad=.02, windows=17)
 
 
-def test_contact_pair_without_native_wrench_and_changed_right_target_are_rejected():
+def test_contact_pair_without_native_wrench_is_rejected():
     state = api().FirstDistalContact(row(10))
     empty = row(11, pad="left.finger14_link")
     empty["rod"]["hand_wrenches_com_world"]["left"]["forces"][:] = 0.
     assert state.observe(empty) == "distal_pair_without_reaction"
     assert state.first_contact_sdk is None
-    different_target = row(11)
-    different_target["action_readback"]["post"] = {
-        "hands":{"right":{"backend_targets":np.ones((1,17))}}
-    }
-    assert state.observe(different_target) == "right_target_changed"
+
+
+def test_inactive_wrist_accepts_only_seed_bound_mount_conversion():
+    from copy import deepcopy
+
+    from go2_pvcnn.control.dh116.tabletop_free_wrist_grasp import compose_rotation
+    from go2_pvcnn.control.dh116.tabletop_palm_mount import local_translation
+
+    reset_pose = np.array([.53014244464784, .12239645099196261, .44256242988167543,
+                           -.4263382994182291, -.4701642785671765, .6254986943669114, .45379796049989923])
+    anchor = reset_pose.astype(np.float32)[None]
+    projected = reset_pose.copy()
+    projected[3:] = compose_rotation(torch.from_numpy(reset_pose[3:]), torch.zeros(3)).numpy()
+    zero = np.zeros((1, 17), dtype=np.float32)
+    post = zero.copy()
+    post[:, :3] = local_translation(torch.from_numpy(reset_pose[None]),
+                                    torch.from_numpy(anchor).double()).float().numpy()
+    assert np.any(post)
+    hand = dict(joint_names=["wrist_x", "wrist_y", "wrist_z", *[f"other{i}" for i in range(14)]],
+                mount_anchor_pose_w=anchor)
+    readback = dict(pre={"hands": {"left": dict(hand, backend_targets=zero)}},
+                    post={"hands": {"left": dict(hand, backend_targets=post)}},
+                    request={"action24": np.zeros((1, 24))},
+                    submission={"projected_root_poses": np.tile(projected, (1, 2, 1)),
+                                "projected_angles": np.zeros((1, 2, 3))})
+    held = api().HeldPalmTarget("left", reset_pose)
+    assert held.observe(readback)
+    stable = deepcopy(readback)
+    stable["pre"]["hands"]["left"]["backend_targets"] = post.copy()
+    assert held.observe(stable)
+    for key in ("pose", "action", "backend"):
+        discrepancy = deepcopy(stable)
+        if key == "pose":
+            discrepancy["submission"]["projected_root_poses"][0, 0, 0] += 1e-10
+        elif key == "action":
+            discrepancy["request"]["action24"][0, 12] = 1e-10
+        else:
+            discrepancy["post"]["hands"]["left"]["backend_targets"][0, 0] += 1e-10
+        assert not held.observe(discrepancy)
+
+
+def test_tangential_load_without_a_valid_normal_pair_blocks_the_approach():
+    state = api().FirstDistalContact(row(10))
+    rubbing = row(11, pad="left.finger14_link")
+    rubbing["rod"]["rod_mesh_contact_pairs"]["pairs"][0]["normal_force_on_rod_n"] = 0.
+    assert state.observe(rubbing) == "left_wrench_without_positive_normal_pair"
+    assert state.first_contact_sdk is None

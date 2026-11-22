@@ -1,7 +1,7 @@
 {
   "version": "dh116-tripod-distal-or-relief-v1",
   "CPU": {
-    "passed": 87,
+    "passed": 92,
     "failed": 0,
     "argv": [
       "/mnt/mydisk/xk/envs/dh116/bin/python",
@@ -18,18 +18,19 @@
       "tests/test_tripod_contact_seed.py",
       "tests/test_dh116_work_packages.py",
       "tests/test_supported_lift_observation.py",
-      "tests/test_supported_wire_specifications.py"
+      "tests/test_supported_wire_specifications.py",
+      "tests/test_supported_wire_material_variants.py"
     ],
-    "log_sha256": "7deb7ba45fb42382895feb079ef8a1d6a8a55044a902920d920f27ea038142d3"
+    "log_sha256": "3cfe7cae07f0647dc5b449b6b8ec5b8063c1be725151e6fd9d017960a158678a"
   },
   "source_sha256": {
-    "scripts/verify_dh116_wire_live_palm_approach.py": "3ab5ce07e71c22dfd6d7345805295ba9578eb4d753c2e1d1c3057eb3471fd394",
+    "scripts/verify_dh116_wire_live_palm_approach.py": "beca807f9747fdc8503d18a0db6c1b8d5f1dede400b2c7bef1bfbea45a05d7a8",
     "src/go2_pvcnn/control/dh116/tabletop_wire_continuous_clearance.py": "044f093f76673a830c483ad26793ec72c908aeeb7269ccbf33df013acfc06c17",
-    "src/go2_pvcnn/control/dh116/tabletop_wire_first_distal.py": "83d9c3ed67bc57ca1477bf551a45e29419325321e26a066a25bb27dfff5f9726",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_first_distal.py": "5172938cd10cfe565457f3fb71fe05249994e4eee9f6e342f27e5c921f723464",
     "tests/test_wire_continuous_clearance.py": "7f4c90fbc3f8754a1c8ee3280dacdddf06551475be9b798c4fdfbe88d46734e1",
-    "tests/test_wire_first_distal_contact.py": "4ed6fca1eed813e4e0b4811c9ad9dca97f3afbf5ca305123e77535bc85812824"
+    "tests/test_wire_first_distal_contact.py": "c18586ad919c8d3c825070663318df61570e20645ff088f207acc815d2fb986e"
   },
-  "native_status": "pending",
+  "native_status": "right_v1_guarded_stop_at_sdk11_right_corrected_pending",
   "teacher_admission": false,
   "grasp_qualified": false,
   "generalization_qualified": false,
@@ -50,5 +51,27 @@
     "controls": 21,
     "solver_substeps": 2112,
     "ppo_updates": 0
+  },
+  "right_v1": {
+    "outer_sha256": "9e4dd29ca92c47e40ad3e5184c88f4a57a26a8623237e15a28202b148815a884",
+    "sdk_steps": 11,
+    "controls_submitted": 1,
+    "solver_substeps": 108,
+    "exit_code": 1,
+    "signal": null,
+    "elapsed_s": 74.10071185510606,
+    "source_commit": "2e57c000b62c9568ca12f95af343670653fc7144",
+    "actual_contact": false,
+    "frozen_sha256": "5fd996e7c9f99a288be53865126fc8611540aeefa039317c1a796ec18f2191a7",
+    "native_log_sha256": "ed6d249f56ac387637d99d99e7e9f1d41928ce68fee3e2ff811d8ffb7391e473",
+    "step11_sha256": "4f8d7ead4265af82623af311418720a54aa10024dfe9c9f4dc1f773e83fd59f9",
+    "corrected_guard_archive_replay": {
+      "native_row_replay_passed": true,
+      "sdk": 11,
+      "hull_count": 44,
+      "plan_seed_sha256": "ccf6738904fa3f152ce97a63464dbaf80f4861df45a047f449e9caebd96285ed",
+      "minimum_rod_clearance_m": 0.0013201944426482815,
+      "max_saved_prismatic_roundtrip_m": 1.7696637044650743e-08
+    }
   }
 }

@@ -27,7 +27,6 @@ class FirstDistalContact:
         self.first_pairs = []
         self.violations = []
         self.contact_samples = 0
-        self._right_target = None
 
     def select(self, action, clock):
         import torch
@@ -48,12 +47,6 @@ class FirstDistalContact:
         if rod["physics_step"] != sdk or rod["rod_tick"] != (sdk-2)*12:
             raise ValueError("same SDK and solver endpoint required for first distal forces")
         transferred = check_reaction_delivery(self.previous, row)
-        hand = row["action_readback"]
-        pre, post = (hand[key]["hands"]["right"]["backend_targets"] for key in ("pre", "post"))
-        if self._right_target is None:
-            self._right_target = np.array(pre, copy=True)
-        if not np.array_equal(pre, self._right_target) or not np.array_equal(post, self._right_target):
-            return "right_target_changed"
         pairs = rod["rod_mesh_contact_pairs"]["pairs"]
         self.violations = pairs_outside_station(pairs, LEFT_TRIPOD_STATIONS)
         if self.violations:
@@ -67,8 +60,11 @@ class FirstDistalContact:
         hand_wrenches = rod["hand_wrenches_com_world"]
         if any(np.any(hand_wrenches["right"][key]) for key in ("forces", "torques")):
             return "right_unexpected_wrench"
+        left_loaded = any(np.any(hand_wrenches["left"][key]) for key in ("forces", "torques"))
+        if left_loaded and not contacts:
+            return "left_wrench_without_positive_normal_pair"
         if contacts:
-            if not any(np.any(hand_wrenches["left"][key]) for key in ("forces", "torques")):
+            if not left_loaded:
                 return "distal_pair_without_reaction"
             self.contact_samples += 1
             if self.first_contact_sdk is None:
@@ -80,6 +76,54 @@ class FirstDistalContact:
             self.first_transfer_sdk = sdk
         self.previous = row
         return None
+
+
+class HeldPalmTarget:
+    """Check a fixed world target and the original mount conversion independently."""
+
+    def __init__(self, side, reset_pose):
+        import torch
+
+        from .tabletop_free_wrist_grasp import compose_rotation
+
+        self.side = side
+        self.index = ("left", "right").index(side)
+        seed = torch.as_tensor(reset_pose, dtype=torch.float64).reshape(1, 7)
+        rotation = compose_rotation(seed[:, 3:], seed.new_zeros((1, 3)))
+        self.pose = torch.cat((seed[:, :3], rotation), dim=1).numpy()
+        self._previous = self._anchor = None
+
+    def observe(self, readback):
+        import torch
+
+        from .tabletop_palm_mount import JOINT_NAMES, local_translation
+
+        index = self.index
+        slots = [*range(6*index, 6*index+6), *range(12+3*index, 15+3*index),
+                 *range(18+3*index, 21+3*index)]
+        submitted = readback["submission"]
+        if (np.any(np.asarray(readback["request"]["action24"])[:, slots])
+                or not np.array_equal(np.asarray(submitted["projected_root_poses"])[:, index], self.pose)
+                or np.any(np.asarray(submitted["projected_angles"])[:, index])):
+            return False
+        pre, post = (readback[key]["hands"][self.side] for key in ("pre", "post"))
+        anchor = pre["mount_anchor_pose_w"]
+        if not np.array_equal(anchor, post["mount_anchor_pose_w"]):
+            return False
+        before, after = pre["backend_targets"], post["backend_targets"]
+        translation = [pre["joint_names"].index(name) for name in JOINT_NAMES]
+        if self._previous is None:
+            if np.any(before[:, translation]):
+                return False
+        elif not np.array_equal(before, self._previous) or not np.array_equal(anchor, self._anchor):
+            return False
+        expected = before.copy()
+        expected[:, translation] = local_translation(
+            torch.from_numpy(self.pose), torch.from_numpy(anchor).double()).float().numpy()
+        if not np.array_equal(after, expected):
+            return False
+        self._previous, self._anchor = after.copy(), anchor.copy()
+        return True
 
 
 def right_relief_action(direction, *, travel_m, rotation_rad, windows):

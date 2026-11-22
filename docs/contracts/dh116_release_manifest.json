@@ -33813,6 +33813,52 @@
         "seconds": 19.32,
         "log_sha256": "2d5747d9081b4e112a33b2e759a4cffbabf4492efd86cc4454b7bf55c9bacb50"
       }
+    },
+    {
+      "package": "teacher.tripod-distal-or-relief",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-distal-or-relief.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_distal_or_relief_v1.json",
+      "status": "right_v1_guarded_stop_at_sdk11_right_corrected_pending",
+      "cpu_tests": {
+        "passed": 87,
+        "failed": 0
+      },
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "2e57c000b62c9568ca12f95af343670653fc7144",
+        "source_tree": "630d13b8404414f3b9396fec764915c44e04f1c2",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
+    },
+    {
+      "package": "teacher.wire-material-generalization",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-material-generalization.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_material_generalization_v2.json",
+      "status": "standalone_cuda_only",
+      "cpu_tests": {
+        "passed": 90,
+        "failed": 0
+      },
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "f8ab7a76d387c1244207e302f392419ae911877c",
+        "source_tree": "674a76f7de836c43d993a55cbb7c532a39988501",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

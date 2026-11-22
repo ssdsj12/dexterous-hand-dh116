@@ -181,7 +181,7 @@ def acquire(sim, owners, trace, output, *, plan):
             from go2_pvcnn.control.dh116.tabletop_dual_hand_scene_preparation import load_sdf_arrays
             from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_supported_distal_contact
             from go2_pvcnn.control.dh116.tabletop_wire_continuous_clearance import WireClearance
-            from go2_pvcnn.control.dh116.tabletop_wire_first_distal import FirstDistalContact
+            from go2_pvcnn.control.dh116.tabletop_wire_first_distal import FirstDistalContact, HeldPalmTarget
 
             stations = {} if distal is None else distal["stations"]
             sources = target_shape_keys(runtime.bindings, shapes, stations)
@@ -318,33 +318,35 @@ def acquire(sim, owners, trace, output, *, plan):
         native.write_new(output/"wire_pulse_request.json", encode_owned(
             dict(geometry=start_geometry, reaction=measured, action24=action)))
         minimum_gap = start_geometry["minimum_rod_clearance_m"]
-        held_left_targets = None
+        held_palm = None
+        if not original_pulse:
+            held_palm = HeldPalmTarget("left" if right_relief is not None else "right",
+                                       root[0, 0 if right_relief is not None else 1])
 
         def observe(row):
-            nonlocal minimum_gap, held_left_targets
+            nonlocal minimum_gap
             sdk = row["physics_step"]
             if geometry_row["physics_step"] != sdk or row["reaction_source_physics_step"] != sdk-1:
                 raise ValueError("geometry and reaction transport clocks do not match")
             minimum_gap = min(minimum_gap, geometry_row["minimum_rod_clearance_m"])
             native.write_new(output/f"wire_pulse_step_{sdk}.json", encode_owned(
                 dict(row, sdk_hand_geometry=geometry_row)))
+            if held_palm is not None and not held_palm.observe(row["action_readback"]):
+                return f"{held_palm.side}_target_changed_during_unilateral_approach"
             if contact_owner is not None:
                 evidence = measure_supported_distal_contact(row["rod"], grasp="tripod")
                 native.write_new(output/f"wire_distal_evidence_{sdk}.json", evidence)
                 if evidence["wrong_side_contacts"] or evidence["unexpected_hand_contacts"]:
                     return "unexpected_distal_station"
                 return contact_owner.observe(row)
-            if right_relief is not None:
-                action_state = row["action_readback"]
-                pre, post = (action_state[key]["hands"]["left"]["backend_targets"] for key in ("pre","post"))
-                if held_left_targets is None:
-                    held_left_targets = np.array(pre, copy=True)
-                if not np.array_equal(pre, held_left_targets) or not np.array_equal(post, held_left_targets):
-                    return "left_target_changed_during_right_relief"
             rod_row = row["rod"]
             pairs = rod_row["rod_mesh_contact_pairs"]["pairs"]
             if any(pair["mesh_name"] in runtime.bindings for pair in pairs):
                 return "first_hand_reaction"
+            if right_relief is not None and any(
+                    np.any(hand[key]) for hand in rod_row["hand_wrenches_com_world"].values()
+                    for key in ("forces", "torques")):
+                return "unexpected_hand_wrench"
             wrenches = rod_row["external_support_wrenches_world"]
             if (np.linalg.norm(wrenches["table"][:3]) > 1e-6
                     or any(wrenches[name][2] >= 0. for name in END_SUPPORT_NAMES)):
@@ -391,7 +393,7 @@ def acquire(sim, owners, trace, output, *, plan):
             initial_rotation = Rotation.from_quat(start_geometry["poses"]["right.base_link"][1])
             endpoint = Rotation.from_quat(geometry_row["poses"]["right.base_link"][1])
             relief_rad = float((initial_rotation.inv()*endpoint).as_rotvec()[2])
-            report.update(right_intrinsic_z_rad=relief_rad, left_targets_unchanged=True,
+            report.update(right_intrinsic_z_rad=relief_rad, left_world_target_unchanged=True,
                           first_contact_sdk=None, lift_promoted=False)
         native.write_new(output/"wire_pulse_result.json", report)
         if right_relief is not None and not (travel["right"]["signed_travel_m"] > 0. and relief_rad > 0.):
