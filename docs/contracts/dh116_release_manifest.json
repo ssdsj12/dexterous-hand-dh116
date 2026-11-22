@@ -791,16 +791,16 @@
       "report": "docs/superpowers/reports/2026-11-12-existing-solid-cylinder-execution-scope.md",
       "native_qualification": false,
       "execution_target": {
-        "name": "\u73b0\u6709\u521a\u6027\u4efb\u52a1\u5b8c\u6574\u95ed\u73af\uff08\u590d\u7528\u539f\u73af\u5883\uff0c\u4e0d\u91cd\u65b0\u5efa\u6a21\uff09",
+        "name": "现有刚性任务完整闭环（复用原环境，不重新建模）",
         "package": "wp6.rigid-native-final",
         "deferred": {
-          "wp5.cpu-source-check": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
-          "wp5.source-payload": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
-          "wp5.source": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
-          "wp5.build": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
-          "wp5.solver-native": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
-          "wp2.qualified-labels": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
-          "wp6.deformable-native-final": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e"
+          "wp5.cpu-source-check": "等待真实柔性后端，保留原状态和证据",
+          "wp5.source-payload": "等待真实柔性后端，保留原状态和证据",
+          "wp5.source": "等待真实柔性后端，保留原状态和证据",
+          "wp5.build": "等待真实柔性后端，保留原状态和证据",
+          "wp5.solver-native": "等待真实柔性后端，保留原状态和证据",
+          "wp2.qualified-labels": "等待真实柔性后端，保留原状态和证据",
+          "wp6.deformable-native-final": "等待真实柔性后端，保留原状态和证据"
         }
       },
       "package": "orchestration.existing-rigid-scope",
@@ -25040,10 +25040,10 @@
         "render_only_v2/videos/delivery_verified.json": "0627e567f8947166b28e00024b1e7e3aab62825b6ef3c58d5afd1840e04ad61b"
       },
       "video_sha256": {
-        "pinch_\u5b8c\u6574\u52a8\u4f5c_\u5019\u9009\u6f14\u793a.mp4": "4d868732badf3504397b17c950cdfcf77cfe848a9cd491622b2bd7a5bc34eafd",
-        "tripod_\u5b8c\u6574\u52a8\u4f5c_\u5019\u9009\u6f14\u793a.mp4": "b68a68e423b53877ed8029fe5f4d2ebbba84d175f5307eb7bd018dc9f1f04c39",
-        "power_\u5b8c\u6574\u52a8\u4f5c_\u5019\u9009\u6f14\u793a.mp4": "275fac1fe0b60614ba11b6ecff31f7d69db53290aac3d0b65773bd08fbd1845e",
-        "DH116_\u4e09\u6293\u6cd5_\u5b8c\u6574\u52a8\u4f5c_\u5019\u9009\u6f14\u793a.mp4": "f5b41155d269fb799074846f05ec3e927743e152a95017a37f1b006a110525b9"
+        "pinch_完整动作_候选演示.mp4": "4d868732badf3504397b17c950cdfcf77cfe848a9cd491622b2bd7a5bc34eafd",
+        "tripod_完整动作_候选演示.mp4": "b68a68e423b53877ed8029fe5f4d2ebbba84d175f5307eb7bd018dc9f1f04c39",
+        "power_完整动作_候选演示.mp4": "275fac1fe0b60614ba11b6ecff31f7d69db53290aac3d0b65773bd08fbd1845e",
+        "DH116_三抓法_完整动作_候选演示.mp4": "f5b41155d269fb799074846f05ec3e927743e152a95017a37f1b006a110525b9"
       },
       "publication": {
         "state": "prepared_for_windows_publication",
@@ -25054,7 +25054,7 @@
       "user_observed_failure": {
         "source": "explicit_user_feedback_after_Windows_compilation_playback",
         "playback_seen_by_user": true,
-        "observation": "\u6839\u672c\u6ca1\u6293\u4f4f\uff0c\u53ea\u662f\u7075\u5de7\u624b\u672c\u8eab\u5f80\u4e0a\u8d70",
+        "observation": "根本没抓住，只是灵巧手本身往上走",
         "classification": "failed_contact_and_lift_diagnostics_not_successful_teacher_demonstrations",
         "power_21mm_is_sustained_grasp_evidence": false,
         "next_contact_analysis_scope": "separate cache-only diagnostic work package; no new native or PPO"
@@ -34253,6 +34253,36 @@
         "source_tree": "cd41f8275d43e3bb0c9a355a28de8aea417b75a2",
         "remote_branch": "11-17",
         "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
+    },
+    {
+      "package": "teacher.power-correct-wire-side",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-correct-wire-side.md",
+      "readiness": "docs/contracts/dh116_teacher_power_correct_wire_side_v1.json",
+      "status": "cpu_and_archived_native_replay_verified",
+      "cpu_tests": {
+        "passed": 172,
+        "failed": 0
+      },
+      "registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "historical_native_samples_replayed": 6986,
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a16bbc9c85de80a715aa187563460517870e269e",
+        "source_tree": "befe0b4645324669983a6fe2ffdf9c2ed2248881",
+        "remote_branch": "11-17",
+        "files_verified": 11,
         "pr2_draft": true,
         "pr2_merged": false
       }
