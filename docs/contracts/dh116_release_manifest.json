@@ -33487,6 +33487,38 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.supported-lift-observation-v2",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-supported-lift-observation.md",
+      "readiness": "docs/contracts/dh116_supported_lift_observation_v2.json",
+      "cpu_tests": {
+        "passed": 35,
+        "failed": 0,
+        "new_cases": 10
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "archived_sdk_rows": 256,
+      "archived_off_support_lift_rows": 0,
+      "new_native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "88929133610e52cd7d5daf76b7b1848707a06cc9",
+        "source_tree": "8db9229715cb619855234a91ecb0b79f48faab1a",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "remote_verified": true
     }
   ]
 }
