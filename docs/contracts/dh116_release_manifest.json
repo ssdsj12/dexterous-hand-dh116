@@ -32606,6 +32606,66 @@
         "verified_at_utc": "2026-11-22T01:00:04.759472+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-verified-artifact-bytes",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-tripod-verified-artifact-bytes.md",
+      "readiness": "docs/contracts/dh116_tripod_verified_artifact_bytes_v1.json",
+      "cpu_tests": {
+        "passed": 98,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c02681843b4ad01306fcaf5bbade851807df65c1",
+        "source_tree": "b30ef3a372c1009d6c0318e0b2748ce062971e3f",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T01:12:19.649986+00:00"
+      },
+      "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-ppo-fresh-smoke8-v10-result",
+      "branch": "11-17",
+      "status": "failed",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v10.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v10.json",
+      "cpu_tests": {
+        "passed": 0,
+        "failed": 0,
+        "scope": "historical native result; CPU changes accounted separately"
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "native_tested_head": "e072ca823d5d4a37b7d2e010563b129af0cdb3e5",
+      "native_result": {
+        "controls": 7,
+        "sdk_steps": 58,
+        "solver_calls": 56,
+        "internal_solver_substeps": 672,
+        "exit_code": 1,
+        "signal": null,
+        "readback_sha256": "1350ae70e9dea385863cf2122b887990280164a01bd030f7f9d2e3a479bfe6e2"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "9edea8902b0b833f7599a79e75f47ec417ee57c7",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "remote_verified": true
     }
   ]
 }
