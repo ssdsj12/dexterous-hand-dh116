@@ -32980,6 +32980,31 @@
         "verified_at_utc": "2026-11-22T05:14:22.607395+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.supported-contact-worker",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-supported-contact-worker.md",
+      "readiness": "docs/contracts/dh116_supported_contact_worker_v1.json",
+      "cpu_tests": {
+        "passed": 404,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "2ec652f77313d52929c7bbc5bd661ca975cc767f",
+        "source_tree": "70bb78d9f9c2ecd19f1ca4263991707f2a1c6a8c",
+        "remote_branch": "11-17",
+        "files_verified": 16,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T06:09:36.982598+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
