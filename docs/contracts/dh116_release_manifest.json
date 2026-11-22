@@ -32855,6 +32855,31 @@
         "verified_at_utc": "2026-11-22T02:39:24.754772+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.supported-source-priming",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-supported-source-priming.md",
+      "readiness": "docs/contracts/dh116_supported_source_priming_v1.json",
+      "cpu_tests": {
+        "passed": 136,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1b801b214a22f502898414f7205e4f5ed0ab2263",
+        "source_tree": "b4e2beeda5d5f5fe99ca9be62ef65e3bdb90ee7d",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T03:17:10.870941+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
