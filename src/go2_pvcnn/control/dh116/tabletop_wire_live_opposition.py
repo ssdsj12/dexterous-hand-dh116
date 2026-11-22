@@ -89,7 +89,39 @@ class IndexReaction:
 _PIVOT_FRACTIONS = np.linspace(0., 1., 5)
 
 
-def compose_projected_pivot(action, *, root_seed_w, measured_base_w, clearance_m, palm_offsets_m, angles_rad):
+def choose_thumb_reseat(gap_after_translation, preview):
+    """Select a bounded wrist-only increment from the current thumb SDF."""
+    result = dict(action=np.zeros(ACTION_CONTRACT["size"]), reason="thumb_reseat_hold")
+    zero = np.zeros(3)
+    gap = gap_after_translation(zero)
+    if gap is None or not math.isfinite(gap) or gap <= -2e-6:
+        return result
+    epsilon = 1e-6
+    basis = np.eye(3) * epsilon
+    neighbors = [gap_after_translation(direction * step) for direction in basis for step in (-1., 1.)]
+    if any(value is None or not math.isfinite(value) for value in neighbors):
+        return result
+    gradient = np.diff(np.reshape(neighbors, (3, 2)), axis=1).ravel() / (2 * epsilon)
+    magnitude = np.linalg.norm(gradient)
+    if not math.isfinite(magnitude) or magnitude <= 1e-6:
+        return result
+    travel = min(10e-6, max(2e-6, (gap + 2e-6) / magnitude))
+    meter_per_sdk_step = ACTION_CONTRACT["translation_rate_m_s"] * DT
+    for length in (travel, travel / 2):
+        delta = -gradient * (length / magnitude)
+        endpoint = gap_after_translation(delta)
+        if endpoint is None or not math.isfinite(endpoint) or not -.00015 <= endpoint < gap:
+            continue
+        action = np.zeros(ACTION_CONTRACT["size"])
+        action[12:15] = delta / meter_per_sdk_step
+        if np.linalg.norm(action[12:15]) <= 1. and preview(action)["passed"]:
+            return dict(action=action, reason="thumb_wrist_reseat", gap_m=float(gap),
+                        predicted_gap_m=float(endpoint))
+    return result
+
+
+def compose_projected_pivot(action, *, root_seed_w, measured_base_w, clearance_m, palm_offsets_m, angles_rad,
+                            allow_translation_only=False):
     """Return world rotation increments and translations if the original projector keeps the move."""
     from scipy.spatial.transform import Rotation
     import torch
@@ -100,7 +132,8 @@ def compose_projected_pivot(action, *, root_seed_w, measured_base_w, clearance_m
 
     action = np.asarray(action, dtype=float)
     if (action.shape != (24,) or not np.isfinite(action).all()
-            or np.any(action[np.r_[:12, 15:18, 21:24]]) or not np.any(action[18:21])):
+            or np.any(action[np.r_[:12, 15:18, 21:24]])
+            or not (np.any(action[18:21]) or allow_translation_only and np.any(action[12:15]))):
         return None
     command = torch.as_tensor(action)[None]
     root, base, clearance, palms, angles = (

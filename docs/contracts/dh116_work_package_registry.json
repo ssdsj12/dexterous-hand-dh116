@@ -50515,6 +50515,26 @@
         "teacher_admission": false,
         "generalization_qualified": false
       }
+    },
+    "teacher.tripod-thumb-reseat": {
+      "title": "Guard measured Tripod thumb re-seat while closing the index",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-composed-pivot",
+        "teacher.wire-grasp-feedback"
+      ],
+      "tests": [
+        "tests/test_wire_thumb_reseat.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-thumb-reseat.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_thumb_reseat_v1.json",
+      "last_result": {
+        "cpu_passed": 144,
+        "native_status": "pending",
+        "teacher_admission": false,
+        "grasp_qualified": false
+      }
     }
   },
   "execution_target": {

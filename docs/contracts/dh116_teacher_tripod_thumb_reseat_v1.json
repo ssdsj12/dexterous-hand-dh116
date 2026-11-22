@@ -1,0 +1,93 @@
+{
+  "version": "dh116-teacher-tripod-thumb-reseat-v1",
+  "status": "cpu_and_archive_replay_passed_native_pending",
+  "source_sha256": {
+    "scripts/verify_dh116_wire_live_palm_approach.py": "a2ef6653eff2418a442ccfb6049e219720aabb9eed3add25ef0b24a7e8a24d90",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_live_opposition.py": "e1f4e7d376ee2ff30a02b6d67bb8e6efb54371035ccd507ad1860b969d6f498a",
+    "tests/test_wire_thumb_reseat.py": "003c7d017546303b3b425c3635969b6dcbcd181ed42f42446ac98e5c42ed334e"
+  },
+  "archive_replay_sha256": "b318109def2a3769d6a73857edcd070a18a696ff33d6d09a79ce73587ca510d8",
+  "frozen_source_recipe_sha256": "77576a5247ffe198f2a6ed9d0991a3bee3fa3d22d9150a225744b4fbbaaa0db9",
+  "selected_replay": {
+    "sdk": 3210,
+    "measured_vs_fk_max_position_m": 7.355247405516546e-08,
+    "measured_vs_fk_max_rotation_rad": 9.5412295827323e-07,
+    "gradients": {
+      "left.finger14_link": [
+        0.8804151613236999,
+        -0.10370088966357716,
+        -0.5118157591910144
+      ],
+      "left.finger23_link": [
+        -0.9013789338896753,
+        0.08537511524304986,
+        -0.4084590030511981
+      ]
+    },
+    "rows": {
+      "decision": {
+        "reason": "thumb_wrist_reseat",
+        "gap_m": 8.968199010893525e-06,
+        "predicted_gap_m": -1.2721086067668877e-06
+      },
+      "delta_um": [
+        -8.600822897799796,
+        1.0130595490878618,
+        4.999955582871179
+      ],
+      "thumb_before_um": 8.968199010893525,
+      "index_before_um": 3934.15093286629,
+      "thumb_after_um": -1.2721086067668876,
+      "index_after_um": 3939.947359282091,
+      "guard": {
+        "passed": true,
+        "rod_motion_m": 2.684949777176371e-06,
+        "minimum_rod_margin_m": 2.4757704812438044e-05
+      }
+    }
+  },
+  "cpu": {
+    "passed": 144,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_wire_continuous_clearance.py",
+      "tests/test_tripod_opposition_route.py",
+      "tests/test_wire_first_distal_contact.py",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_tripod_contact_seed.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_specifications.py",
+      "tests/test_supported_wire_material_variants.py",
+      "tests/test_dh116_tripod_right_tracking_launch.py",
+      "tests/test_wire_live_opposition.py",
+      "tests/test_dh116_flexible_physical_exchange.py",
+      "tests/test_dh116_dual_hand_clock_handoff.py",
+      "tests/test_wire_thumb_reseat.py",
+      "tests/test_supported_wire_grasp_feedback.py"
+    ],
+    "log_sha256": "99393386d43f9656c0786f2d5e56ee6e5926f77ff7afc3bc55a595abdd56e5e7"
+  },
+  "new_native_runs": 0,
+  "ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "antigravity": {
+    "reviewed": true,
+    "unmodified_action_selector": true,
+    "applied_single_same_clock_geometry_read": true,
+    "explicit_wrist_slots": true,
+    "reseat_windows_recorded": true,
+    "additional_control_windows": 0
+  },
+  "next_native_frozen_sha256": "76de79c1f23ffd7746f4bc4a416953b7af093fda30f93b15bd604ab393df7a82"
+}

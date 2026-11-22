@@ -1,3 +1,5 @@
+Opt-in Tripod thumb re-seat passes a 44-hull CPU replay check on a 9 mm reference wire. Native overlap remains pending. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-thumb-reseat.md)
+
 The supported-wire verifier records same-clock palm geometry and masked hand reactions for wire adaptation. CPU replay verified the pre-contact endpoint of a 9 mm run. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-grasp-feedback.md)
 
 Tripod's composed wrist preview crossed the former SDK 3101 stop on a 9 mm wire. The left index first touched at SDK 3292 and its reaction was delivered at 3293. The thumb unloaded during closure, so opposing contact and Lift remain pending. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-composed-pivot.md)
