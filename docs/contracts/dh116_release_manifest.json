@@ -34199,6 +34199,37 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-common-pregrasp",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-common-pregrasp.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_common_pregrasp_v1.json",
+      "status": "cpu_common_pregrasp_all_three_holdouts_clear_native_pending",
+      "cpu_tests": {
+        "passed": 109,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "static_holdout_clear": {
+        "pinch": 104,
+        "tripod": 104,
+        "power": 104
+      },
+      "trial_count_per_grasp": 104,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a465bfb534dce8f0227989d1e38949404a339736",
+        "source_tree": "c9b5ab48cacc2361201b12dae8ea542777b29b86",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
