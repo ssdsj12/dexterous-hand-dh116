@@ -1,3 +1,5 @@
+The opt-in resized Tripod approach proposes one bounded, radius-aware wrist correction from live palm geometry and checks each physical exchange. Grasp and Teacher admission are pending. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-live-palm-approach.md)
+
 The opt-in wire spec catalog prepares disjoint training and held-out candidates. Three lengths/diameters passed standalone CUDA parameter readback. Palm-frame position and per-pad force evidence are recorded separately from native grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-wire-spec-generalization.md)
 
 The nominal Tripod lateral-wrist candidate ran to completion. Its final 128 physical samples contained 2 bilateral contacts, 1 consecutive step and zero off-support Lift. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-left-wrist-native.md)

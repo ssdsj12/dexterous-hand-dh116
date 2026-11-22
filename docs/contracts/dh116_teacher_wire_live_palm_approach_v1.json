@@ -1,0 +1,98 @@
+{
+  "version": "dh116-wire-live-palm-approach-v1",
+  "baseline_head": "a1d17dbdbeed7c9c9637801ec7560dc9840e84a1",
+  "source_sha256": {
+    "scripts/verify_dh116_wire_live_palm_approach.py": "0a14461110cef9a225d64f753235dc089b4476cd5060eee58994c36b9baa78fd",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_live_palm_approach.py": "7e39d85bc1b163c8d939107f9cff20a3fcde56ad9e528d0b7e01e920df766c55",
+    "tests/test_wire_live_palm_approach.py": "1fd0c47fbd652d3a80fad23cac7cdbc0753a7cd779545a6b2d67da21668d4f02"
+  },
+  "train_spec": "r45-l450",
+  "cpu": {
+    "passed": 94,
+    "failed": 0,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_dh116_power_palm_contact_evidence.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "ff27853fbfe5f8e93162fc83b2bd3a428d2f047b6d598a627bd275839d9e6cc8",
+    "red_results": 3,
+    "additional_dtype_red": 1
+  },
+  "frozen_cpu_budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "measured_wire_micro_approach",
+    "sdk_setup_steps": 2,
+    "control_steps": 1,
+    "solver_steps": 192,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 180,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 6,
+    "episode_resets": 1,
+    "sdk_steps": 18
+  },
+  "archived_decision": {
+    "sdk": 10,
+    "rod_tick": 96,
+    "action24": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -0.30000000000000004,
+      -4.046542619314187e-17,
+      0.0,
+      -0.30000000000000004,
+      -3.894031670866111e-17,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "spec_sha256": "d960cd64e7fbf09764825596ed53d091199a176ced68cebb6bb0e8bc1df97fc2",
+    "read_only_archived_sample": true
+  },
+  "native_run": null,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "next": "Close with per-pad force feedback and independently verify supported grasp progression for each style.",
+  "antigravity": {
+    "round": "Wire-Grip-Refinement R3",
+    "worktree_head": "a1d17dbdbeed7c9c9637801ec7560dc9840e84a1",
+    "reviewed_driver_sha256": "dc4e5171a95a5d7ca314de1cf4be0fd58b46694bdbcb7686409ceb7e9e4cbb37",
+    "reviewed_calculation_sha256": "7e39d85bc1b163c8d939107f9cff20a3fcde56ad9e528d0b7e01e920df766c55",
+    "completed": true,
+    "applied": [
+      "Float64 pose and clearance for existing wrist projection",
+      "terminal clearance recalculated with the terminal rod tick"
+    ]
+  }
+}
