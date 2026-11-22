@@ -17,7 +17,9 @@ from .tabletop_native_teacher_profile import CONTEXT_SCHEMA_VERSION, digest
 from .tabletop_deformable_r0_replay import _digest
 from .tabletop_teacher_mounted_wrist_source import _clock
 
-MODES = ("approach_wiring_smoke_v1", "flexible_train_r1_full")
+CONTACT_PRELIFT = "approach_contact_prelift_v1"
+MODES = ("approach_wiring_smoke_v1", "flexible_train_r1_full", CONTACT_PRELIFT)
+CONTACT_PRELIFT_EXCLUDED = (7, 47)
 SCOPES = ("cpu_fixture", "owner_source_unqualified")
 SMOKE_EXCLUDED = (4, 5, 6, 7, 47)
 
@@ -203,6 +205,11 @@ def validate_context_tensors(values, valid, *, mode=None):
     elif mode == MODES[1]:
         if not bool(valid[:,SMOKE_EXCLUDED].all()):
             raise ValueError("full context requires qualified contact/support/history sources")
+    elif mode == CONTACT_PRELIFT:
+        if (not bool(valid[:,[4,5,6]].all()) or bool(valid[:,CONTACT_PRELIFT_EXCLUDED].any())
+                or not bool((values[:,1] == 1).all()) or bool(valid[:,8:10].any())
+                or not bool((values[:,10:12] == 0).all()) or not bool((values[:,48] == 0).all())):
+            raise ValueError("contact-only Close requires measured contact, no anchors/hold/support latch/success")
     for i in (4,5):
         if not bool(((values[valid[:,i],i] >= 0) & (values[valid[:,i],i] <= 1)).all()):
             raise ValueError("contact fraction outside [0,1]")
@@ -236,6 +243,8 @@ def validate_context(packet, *, backend_profile, identities=None):
         wanted[8+j]=bool(anchors[0])
     if meta.mode == MODES[0]:
         for i in SMOKE_EXCLUDED: wanted[i]=False
+    elif meta.mode == CONTACT_PRELIFT:
+        for i in CONTACT_PRELIFT_EXCLUDED: wanted[i]=False
     if applicable != wanted:
         raise ValueError("context applicability differs from task/source profile")
     for i,applies in enumerate(applicable):
@@ -295,6 +304,10 @@ class TaskContextOwner:
     """One episode, with pre/post snapshots and an explicit bootstrap-before-commit boundary."""
 
     def __init__(self, *, backend_profile, mode, scope, episode_cap_s, external_cap_s, grasp="pinch"):
+        if mode == CONTACT_PRELIFT:
+            from .tabletop_native_teacher_contact_context import PrimedContactContextOwner
+            if type(self) is not PrimedContactContextOwner:
+                raise ValueError("event-bound PrimedContactContextOwner required for contact mode")
         if (grasp not in ("pinch","tripod","power") or mode not in MODES or scope not in SCOPES or any(type(v) not in (int,float)
                 or not math.isfinite(v) or v <= 0 for v in (episode_cap_s,external_cap_s))):
             raise ValueError("explicit task profile/scope and finite episode/external caps required")
@@ -415,7 +428,7 @@ class TaskContextOwner:
         def setv(indices,data):
             values[:,indices]=torch.as_tensor(data,dtype=torch.float32)
             valid[:,indices]=True
-        phase="Approach"
+        phase="Close" if self.mode == CONTACT_PRELIFT else "Approach"
         if self.mode == MODES[1]:
             if phase_receipt is None:
                 raise ValueError("owned original phase receipt required for full context")
@@ -461,9 +474,9 @@ class TaskContextOwner:
             success,failure=events["success_emitted"],events["trusted_failure_emitted"]
         setv(48,float(success))
         setv(49,float(failure))
-        if self.mode == MODES[1]:
+        if self.mode in (MODES[1], CONTACT_PRELIFT):
             fields=state.get("physical_fields",{})
-            for i in SMOKE_EXCLUDED:
+            for i in (SMOKE_EXCLUDED if self.mode == MODES[1] else (4,5,6)):
                 item=fields.get(i)
                 if (not isinstance(item,dict) or item.get("source") != CONTEXT_FIELDS[i]["source"]
                         or item.get("identity") != identity or item.get("valid") is not True):
@@ -479,13 +492,14 @@ class TaskContextOwner:
                 setv(i,raw/CONTEXT_FIELDS[i]["scale"])
         applicable=tuple(bool(valid[0,i]) for i in range(50))
         reasons=tuple(None if x else ("unanchored" if i in (8,9)
-            else "finite task deadline disabled" if i == 46 else "smoke excluded")
+            else "finite task deadline disabled" if i == 46
+            else "prelift_contact_only_excluded" if self.mode == CONTACT_PRELIFT else "smoke excluded")
             for i,x in enumerate(applicable))
         meta=ContextMetadata(self.owner_uid,(identity,),self.profile.digest,self.scope,self.mode,
             tuple(x["source"] for x in CONTEXT_FIELDS),applicable,reasons,references,token,self.grasp)
         return validate_context(TaskContextPacket(values,valid,meta),backend_profile=self.profile)
 
-    def reset_from_verified_state(self,state,*,history_owner,phase_owner=None):
+    def _freeze_reset_references(self,state,*,history_owner,phase_owner=None):
         history=self._history(history_owner)
         if self._current is not None or history._reset is None:
             raise ValueError("fresh context owner and actual controller reset receipt required")
@@ -517,6 +531,11 @@ class TaskContextOwner:
         self._fixed=[float(z.median()),float(z.min()),max(distance,.005),distance,.03,5.,.0005]
         self._reset_identity=identity
         self._success=self._failure=False
+        return history,identity,phase_receipt
+
+    def reset_from_verified_state(self,state,*,history_owner,phase_owner=None):
+        history,identity,phase_receipt=self._freeze_reset_references(
+            state,history_owner=history_owner,phase_owner=phase_owner)
         packet=self._build(identity,history._previous,_digest(history._reset),state,phase_receipt=phase_receipt)
         if self.mode == MODES[1]:
             self._phase_source=phase_owner

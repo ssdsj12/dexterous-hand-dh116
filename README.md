@@ -1,3 +1,5 @@
+Measured contact Context now preserves Reset S0,validates every accepted physical event,and reaches the real Teacher Actor under an independent contact namespace.273 broad CPU cases and18 final owner cases pass(overlap17);native contact Reward/Collector remain pending. [Report](docs/superpowers/reports/2026-11-22-supported-contact-context.md).
+
 Conservative contact source preserves all12 solver substeps, original per-pad/hand force thresholds and separate table/stand evidence.40 CPU cases pass;old64-row v11 replay still has0 contact progress. No new native run or grasp claim. [Report](docs/superpowers/reports/2026-11-22-supported-contact-measurement.md).
 
 Explicit supported source priming now preserves Reset/S0 atSDK2 and validates one separately charged physical exchange before the first policy atSDK3.136 related CPU checks pass;no native run or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-supported-source-priming.md).

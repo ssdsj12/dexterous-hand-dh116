@@ -17,7 +17,7 @@ from .tabletop_native_teacher_profile import (
     INPUT_KEYS, digest,
 )
 from .tabletop_native_teacher_context import (
-    CONTEXT_SCHEMA_SHA256, ContextIdentity, TaskContextPacket, encode_context,
+    CONTEXT_SCHEMA_SHA256, ContextIdentity, TaskContextPacket, encode_context, CONTACT_PRELIFT,
     validate_context, validate_context_tensors,
 )
 from .tabletop_deformable_privileged_teacher import (
@@ -100,11 +100,22 @@ def model_contract(config,backend_profile,context_mode):
             or config.get("native_ready") is not False or config.get("use_cameras") is not False
             or set(model) != set(expected)|{"initial_std"}
             or any(model[k] != v for k,v in expected.items())
-            or context_mode not in ("approach_wiring_smoke_v1","flexible_train_r1_full")):
+            or context_mode not in ("approach_wiring_smoke_v1","flexible_train_r1_full",CONTACT_PRELIFT)
+            or context_mode == CONTACT_PRELIFT and config.get("grasp") not in ("pinch","tripod")):
         raise ValueError("camera-free CPU hyperparameters and independent native-context schema required")
     parent=Path(__file__).parent
+    dependencies=(
+        Path(__file__).name,"tabletop_native_teacher_context.py","tabletop_privileged_teacher.py",
+        "tabletop_deformable_privileged_teacher.py","tabletop_squashed_gaussian.py",
+        "tabletop_flexible_measured_common_teacher.py","tabletop_native_teacher_profile.py",
+        "tabletop_deformable_grasp_task.py","tabletop_action24_history_owner.py")
+    if context_mode == CONTACT_PRELIFT:
+        dependencies+=("tabletop_native_teacher_contact_context.py",
+                       "tabletop_native_teacher_source_priming.py",
+                       "tabletop_native_teacher_contact_measurement.py")
     identity=dict(policy_version=VERSION,task_kind="deformable_rod",grasp=config["grasp"],
-        checkpoint_namespace="native_context_teacher_"+config["grasp"]+"_cpu_v1",
+        checkpoint_namespace=(("native_contact_teacher_" if context_mode == CONTACT_PRELIFT
+            else "native_context_teacher_")+config["grasp"]+"_cpu_v1"),
         config_semantic_sha256=digest(config),context_mode=context_mode,common_size=371,
         common_indices=list(common_selection()),raw_common_unknown="NaN_false_305",
         action_size=24,distribution="tanh_latent_gaussian",rod_features=list(ROD_FEATURES),
@@ -117,11 +128,7 @@ def model_contract(config,backend_profile,context_mode):
         backend_patch_sha256=profile.patch_sha256,
         architecture=dict(common=[66,256,256],rod=[13,64,64],rod_pool="mean+max",
             context=[100,64,64],fusion=448,actor=24,critic=1,independent_branches=True),
-        dependency_source_sha256={name:file_sha256(parent/name) for name in (
-            Path(__file__).name,"tabletop_native_teacher_context.py","tabletop_privileged_teacher.py",
-            "tabletop_deformable_privileged_teacher.py","tabletop_squashed_gaussian.py",
-            "tabletop_flexible_measured_common_teacher.py","tabletop_native_teacher_profile.py",
-            "tabletop_deformable_grasp_task.py","tabletop_action24_history_owner.py")},
+        dependency_source_sha256={name:file_sha256(parent/name) for name in dependencies},
         native_ready=False,training_reward_qualified=False,context_owner_native_connected=False)
     return dict(identity,model_identity_sha256=digest(identity))
 

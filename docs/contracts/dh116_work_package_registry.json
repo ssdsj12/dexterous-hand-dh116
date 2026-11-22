@@ -49453,6 +49453,37 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.supported-contact-context": {
+      "title": "Bind measured contact history into Teacher Context and actual Actor inputs",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-source-priming",
+        "teacher.supported-contact-measurement"
+      ],
+      "tests": [
+        "tests/test_native_teacher_contact_context.py",
+        "tests/test_native_teacher_context.py",
+        "tests/test_native_teacher_model.py",
+        "tests/test_native_teacher_source_priming.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_checkpoint.py",
+        "tests/test_native_teacher_session.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-supported-contact-context.md",
+      "readiness": "docs/contracts/dh116_supported_contact_context_v1.json",
+      "reason": "Event-bound CPU Context/Actor component verified;contact Reward/source/native Collector integration still pending",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 274,
+        "failed": 0,
+        "broad_passed": 273,
+        "final_contact_owner_passed": 18,
+        "overlap": 17,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
