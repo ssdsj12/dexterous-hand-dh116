@@ -34461,6 +34461,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-surface-pairs",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-surface-pairs.md",
+      "readiness": "docs/contracts/dh116_teacher_power_surface_pairs_v1.json",
+      "status": "searched_new_surfaces_and_stations_no_bilateral_static_candidate",
+      "cpu_tests": {
+        "passed": 180,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "237b45e44560fbd4f771fc0be6b6f20c0f37df03",
+        "source_tree": "804d99c8c7cad14bc0eac0dbc7ea32cc023e4b66",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
