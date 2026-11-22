@@ -1,3 +1,5 @@
+Tripod adds a same-episode supported thumb-to-index native diagnostic with measured pre-action geometry and next-SDK reaction tracking. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-live-opposition.md)
+
 Tripod CPU coverage proves two continuous thumb-to-index candidate paths on the sealed supported rod, with a 20 µm rod-motion reserve. Native sustained opposition remains pending. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-opposition-route.md)
 
 Tripod reproduced a left thumb reaction in the same live settled episode and naturally exited 0 in the bounded corrective run. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-settled-thumb.md)

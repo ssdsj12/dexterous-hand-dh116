@@ -191,6 +191,46 @@ def _settled_thumb_transfer_end(plan, result, output):
     return end
 
 
+def _settled_left_opposition_end(plan, result, output):
+    """Validate a complete, possibly early two-pad diagnostic control boundary."""
+    from go2_pvcnn.control.dh116.tabletop_wire_live_opposition import VERSION
+
+    budget = plan["budget"]
+    quiet, end = plan["quiet_settlement_sdk"], result.get("sdk_steps")
+    feedback = result.get("approach_feedback", {})
+    probe = feedback.get("left_opposition", {})
+    start = probe.get("start_sdk")
+    contact, transfer = (probe.get(f"first_index_{key}_sdk") for key in ("contact", "transfer"))
+    first_thumb = probe.get("first_thumb_contact_sdk")
+    ready = probe.get("first_thumb_transfer_sdk")
+    state = result.get("quiet_settlement", {})
+    clock = feedback.get("readback", {}).get("clock", {})
+    receipt = output/"settled_left_opposition.json"
+    if (plan["version"] != VERSION or result.get("scope") != "measured_settled_wire_left_opposition_probe"
+            or any(type(i) is not int for i in (start, end, ready, first_thumb))
+            or not quiet < first_thumb < ready <= start <= end <= budget["sdk_steps"]
+            or (start-quiet) % 8 or (end-quiet) % 8
+            or ready != first_thumb+1 or feedback.get("first_transfer_sdk") != ready
+            or feedback.get("first_contact_sdk") != first_thumb or feedback.get("contact_reached") is not True
+            or feedback.get("start_sdk") != quiet or feedback.get("end_sdk") != end
+            or probe.get("last_sdk") != end or probe.get("physical_samples") != end-start
+            or state.get("qualified") is not True or state.get("last_sdk") != quiet
+            or clock.get("clock_valid") is not True or clock.get("physics_step") != end
+            or clock.get("rod_tick") != (end-2)*12 or result.get("solver_substeps") != (end-2)*12
+            or result.get("measured_exchanges") != end-2
+            or result.get("control_steps") != (end-quiet)//8
+            or result["control_steps"] > budget["control_steps"] or result["solver_substeps"] > budget["solver_steps"]
+            or any(probe.get(k) is not False for k in ("teacher_admission", "grasp_qualified", "lift_promoted"))):
+        raise ValueError("completed live opposition clocks and bounded diagnostic outcome required")
+    if ((contact is None) != (transfer is None)
+            or contact is not None and (type(contact) is not int or type(transfer) is not int
+                                         or not start < contact < transfer <= end or transfer != contact+1)):
+        raise ValueError("index contact needs the next completed reaction clock")
+    if not receipt.is_file() or receipt.is_symlink() or json.loads(receipt.read_bytes()) != probe:
+        raise ValueError("settled opposition receipt differs from the measured completion")
+    return end
+
+
 def _run_acquisition(sim, owners, trace, output, profile, plan, cache_release, operation=None):
     try:
         if operation is None:
@@ -205,15 +245,18 @@ def _run_acquisition(sim, owners, trace, output, profile, plan, cache_release, o
                      not 2 <= expected_step <= maximum_step)):
                 raise ValueError("guarded acquisition stop clock is outside the frozen budget")
             settled_thumb = plan["budget"].get("mode") == "quiet_wire_then_left_thumb_transfer"
+            left_opposition = plan["budget"].get("mode") == "quiet_wire_then_left_opposition_transfer"
             actual_step = native.clock(sim)["sdk_step"]
             try:
                 if settled_thumb and not result.get("failure"):
                     expected_step = _settled_thumb_transfer_end(plan, result, output)
+                if left_opposition and not result.get("failure"):
+                    expected_step = _settled_left_opposition_end(plan, result, output)
                 if actual_step != expected_step:
                     raise ValueError("measured acquisition SDK clock differs from its frozen budget")
                 native.validate_loaded_project_modules(ROOT, frozen_files=plan["frozen_files"])
             except Exception:
-                if settled_thumb and type(actual_step) is int and 2 <= actual_step <= maximum_step:
+                if (settled_thumb or left_opposition) and type(actual_step) is int and 2 <= actual_step <= maximum_step:
                     try:
                         cache_release(sim, expected_sdk_step=actual_step)
                     except Exception:

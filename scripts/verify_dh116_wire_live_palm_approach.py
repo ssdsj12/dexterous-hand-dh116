@@ -157,6 +157,47 @@ def bind_settled_thumb(plan, run, receipt_sha, path, path_sha):
             raise ValueError("inconsistent settled thumb source: " + key)
 
 
+def bind_left_opposition(plan, proof_path, proof_sha):
+    """Bind a proved static candidate to a separate bounded live recipe."""
+    from go2_pvcnn.control.dh116.tabletop_wire_live_opposition import HOLD_WINDOWS, MODE, VERSION, index_closure
+
+    proof = json.loads(checked_file(proof_path, proof_sha))
+    path = np.asarray(proof["canonical_proposed_pivot_actions"], dtype=float)
+    windows = len(path)
+    if (plan["version"] != "dh116-wire-settled-left-thumb-approach-v1"
+            or proof["version"] != "dh116-tripod-static-opposition-route-v1"
+            or not proof["proved_static_hull_path"] or proof["native_measurement"] is not False
+            or proof["grasp_qualified"] is not False or proof["issued_action_count"] != 0
+            or proof["basis"]["wire_spec_sha256"] != plan["spec_sha256"]
+            or proof["basis"]["station"] != plan["variant_options"]["stations"]["left"]
+            or len(proof["pivot"]) != windows or not all(row["proved"] for row in proof["pivot"])
+            or not proof["close"]["proved"] or proof["right_fixed_minimum_margin_m"] <= 0.
+            or not 1 <= windows <= 256 or path.shape != (windows, 24)
+            or not np.isfinite(path).all() or np.any(path[:, np.r_[:12, 15:18, 21:24]])):
+        raise ValueError("a separate proved left opposition candidate on this settled wire is required")
+    rotvec = np.asarray(proof["world_rotvec_rad"], dtype=float)
+    if rotvec.shape != (3,) or not np.isfinite(rotvec).all() or not 0. < np.linalg.norm(rotvec) <= .16:
+        raise ValueError("the approved candidate must use a bounded world pivot")
+    increment = proof["index_increment_rad"]
+    _, close = index_closure(increment)
+    plan["left_opposition"] = dict(pivot_windows=windows, close_windows=close, hold_windows=HOLD_WINDOWS,
+        approach_windows=plan["budget"]["control_steps"], world_rotvec_rad=rotvec.tolist(),
+        index_increment_rad=increment, route_proof_sha256=proof_sha, basis=proof["basis"])
+    extra = windows + close + HOLD_WINDOWS
+    end = plan["budget"]["sdk_steps"] + 8*extra
+    plan.update(version=VERSION, preserved_scope="same live supported rod and left two-pad opposition diagnostic")
+    plan["budget"].update(mode=MODE, sdk_steps=end, solver_steps=(end-2)*12, soft_wall_seconds=900)
+    plan["budget"]["control_steps"] += extra
+    sources = {str(proof_path.resolve(strict=True)): proof_sha}
+    for name in ("scripts/certify_dh116_tripod_opposition.py",
+                 "src/go2_pvcnn/control/dh116/tabletop_wire_live_opposition.py"):
+        file = (ROOT/name).resolve(strict=True)
+        sources[str(file)] = native.sha(file)
+    for file, digest in sources.items():
+        if plan["frozen_files"].setdefault(file, digest) != digest:
+            raise ValueError("inconsistent opposition source: " + file)
+
+
 def validate_settled_handoff(reference, live, sdk):
     """Compare the same measured pose, joints and centerline used by the frozen path."""
     from scipy.spatial.transform import Rotation
@@ -230,6 +271,12 @@ def freeze(args):
         if any(item is None for item in settled) or distal_parked is not None:
             raise ValueError("settled thumb requires its own complete receipt and path evidence")
         bind_settled_thumb(plan, *settled)
+    opposition = getattr(args, "opposition_proof", None)
+    proof_sha = getattr(args, "opposition_proof_sha256", None)
+    if (opposition is None) != (proof_sha is None):
+        raise ValueError("opposition requires its source proof and SHA")
+    if opposition is not None:
+        bind_left_opposition(plan, opposition, proof_sha)
     return plan
 
 
@@ -268,6 +315,17 @@ def acquire(sim, owners, trace, output, *, plan):
     end_sdk = plan["budget"]["sdk_steps"]
     start_sdk = plan.get("quiet_settlement_sdk", parked.SDK_END)
     settled_thumb = "quiet_settlement_sdk" in plan
+    opposition = plan.get("left_opposition")
+    phase = "approach"
+    index_reaction = None
+    motion_stop = None
+    frames_sdk = prior_frames = live_frames = prior_nodes = live_nodes = None
+    recent_load = None
+    opposition_rows = 0
+    max_opposed_substeps = 0
+    loaded_opposed_ticks = 0
+    index_peak_n = 0.
+    thumb_peak_n = 0.
     try:
         settled = parked.acquire(sim, owners, trace, output, plan=plan)
         if settled.get("failure"):
@@ -313,6 +371,14 @@ def acquire(sim, owners, trace, output, *, plan):
             from go2_pvcnn.control.dh116.tabletop_wire_first_distal import FirstDistalContact, HeldPalmTarget
 
             stations = {} if distal is None else distal["stations"]
+            if opposition:
+                from go2_pvcnn.control.dh116.tabletop_wire_live_opposition import (
+                    INDEX, IndexReaction, guard_prediction, index_closure, left_loads, ready_after_thumb,
+                )
+                from scripts.audit_dh116_pinch_initial_pose import path_displacement_bound
+                from scripts.certify_dh116_tripod_opposition import pivot_commands
+
+                stations = {**stations, INDEX: (34, 35, 36)}
             sources = target_shape_keys(runtime.bindings, shapes, stations)
             stations_by_body = {(0, runtime.bindings[link]["body_index"]):link for link in stations}
             if set(stations_by_body) != sources or len(shapes) != 34:
@@ -331,6 +397,7 @@ def acquire(sim, owners, trace, output, *, plan):
 
         def geometry():
             nonlocal tube_clock, tube, envelope, geometry_row, minimum_gap
+            nonlocal frames_sdk, prior_frames, live_frames
             sdk = native.clock(sim)["sdk_step"]
             rod_row = runtime._base.last
             before = runtime.clock()
@@ -350,6 +417,9 @@ def acquire(sim, owners, trace, output, *, plan):
                 if transform.shape != (1, 23, 7):
                     raise ValueError("complete DH116 pose readback required")
                 frames.append(transform[0][:, [0, 1, 2, 6, 3, 4, 5]])
+            if opposition and frames_sdk != sdk:
+                prior_frames, live_frames = live_frames, np.stack(frames)
+                frames_sdk = sdk
             pad_sdf = {}
             if original_pulse:
                 gap = min(separation(rotated_points(frames[hand][body], vertices), *tube)
@@ -364,7 +434,8 @@ def acquire(sim, owners, trace, output, *, plan):
                 selected_bounds = {}
                 for i, (hand, body, vertices) in enumerate(shapes):
                     link = stations_by_body.get((hand, body))
-                    selected = link is not None and sdk > start_sdk
+                    enabled = link is not None and (not opposition or link != INDEX or phase in ("close", "hold"))
+                    selected = enabled and sdk > start_sdk
                     guard = envelope.certify(rotated_points(frames[hand][body], vertices), selected=selected)
                     if not guard["passed"]:
                         native.write_new(output/f"wire_clearance_stop_{sdk}.json", dict(
@@ -373,7 +444,7 @@ def acquire(sim, owners, trace, output, *, plan):
                             link=bindings[SIDES[hand]].hand.body_names[body], **guard))
                         raise ValueError("original radius-aware continuous hull clearance failed")
                     gap = min(gap, guard["lower_m"])
-                    if link is not None:
+                    if enabled:
                         selected_bounds[link] = min(selected_bounds.get(link, np.inf), guard["lower_m"])
                 for link, bound in selected_bounds.items():
                     xyz, quat = poses[link]
@@ -460,6 +531,8 @@ def acquire(sim, owners, trace, output, *, plan):
         transfer_complete = "settled_thumb_reaction_delivered"
 
         def observe(row):
+            nonlocal prior_nodes, live_nodes, recent_load
+            nonlocal opposition_rows, max_opposed_substeps, loaded_opposed_ticks, index_peak_n, thumb_peak_n
             sdk = row["physics_step"]
             if geometry_row["physics_step"] != sdk or row["reaction_source_physics_step"] != sdk-1:
                 raise ValueError("geometry and reaction transport clocks do not match")
@@ -468,10 +541,16 @@ def acquire(sim, owners, trace, output, *, plan):
             if held_palm is not None and not held_palm.observe(row["action_readback"]):
                 return f"{held_palm.side}_target_changed_during_unilateral_approach"
             if settled_thumb:
-                from go2_pvcnn.control.dh116.tabletop_palm_mount import JOINT_NAMES
+                from go2_pvcnn.control.dh116.tabletop_palm_mount import ANGULAR_JOINT_NAMES, JOINT_NAMES
 
                 pre, post = (row["action_readback"][key]["hands"]["left"] for key in ("pre", "post"))
-                held = [i for i, name in enumerate(pre["joint_names"]) if name not in JOINT_NAMES]
+                if phase == "pivot":
+                    moving = JOINT_NAMES + ANGULAR_JOINT_NAMES
+                elif phase == "close" and row["action_readback"]["request"]["action24"][0, 2]:
+                    moving = ("finger21", "finger22")
+                else:
+                    moving = JOINT_NAMES if phase == "approach" else ()
+                held = [i for i, name in enumerate(pre["joint_names"]) if name not in moving]
                 if (not np.array_equal(pre["backend_targets"][:, held], post["backend_targets"][:, held])
                         or int(row["wrist_projection"]["projection_reasons"][0, 0])):
                     return "settled_left_finger_or_wrist_target_changed"
@@ -481,13 +560,28 @@ def acquire(sim, owners, trace, output, *, plan):
                 if evidence["wrong_side_contacts"] or evidence["unexpected_hand_contacts"]:
                     return "unexpected_distal_station"
                 stop = contact_owner.observe(row)
+                if opposition and stop is None:
+                    prior_nodes, live_nodes = live_nodes, row["rod"]["node_positions"].copy()
+                    recent_load = left_loads(evidence["per_hand"]["left"]["per_substep"])
+                    if phase != "approach":
+                        index_reaction.observe(sdk, recent_load, row["issued_composer_wrench"]["left"])
+                        opposition_rows += 1
+                        max_opposed_substeps = max(max_opposed_substeps, recent_load["opposed_substeps"])
+                        loaded_opposed_ticks += int(recent_load["loaded_opposed_substeps"] == 12)
+                        index_peak_n = max(index_peak_n, recent_load["index_peak_n"])
+                        thumb_peak_n = max(thumb_peak_n, recent_load["thumb_peak_n"])
+                        native.write_new(output/f"wire_opposition_step_{sdk}.json",
+                            dict(sdk=sdk, phase=phase, loads=recent_load,
+                                 index_contact_sdk=index_reaction.first_contact_sdk,
+                                 index_transfer_sdk=index_reaction.first_transfer_sdk))
                 if (settled_thumb and stop is None and row["guard_failure"] is None
                         and contact_owner.first_transfer_sdk == sdk):
                     native.write_new(output/"settled_thumb_transfer.json", encode_owned(dict(
                         first_contact_sdk=contact_owner.first_contact_sdk, first_transfer_sdk=sdk,
                         first_pairs=contact_owner.first_pairs, issued_wrench=row["issued_composer_wrench"],
                         teacher_admission=False, grasp_qualified=False)))
-                    return transfer_complete
+                    if not opposition:
+                        return transfer_complete
                 return stop
             rod_row = row["rod"]
             pairs = rod_row["rod_mesh_contact_pairs"]["pairs"]
@@ -503,7 +597,7 @@ def acquire(sim, owners, trace, output, *, plan):
                 return "unexpected_support_transition"
             return None
 
-        reserved_controls = plan["budget"]["control_steps"]
+        reserved_controls = opposition["approach_windows"] if opposition else plan["budget"]["control_steps"]
         n_controls = 0
         for i in range(reserved_controls):
             command = action if distal is None or i < distal["approach_windows"] else np.zeros_like(action)
@@ -514,9 +608,93 @@ def acquire(sim, owners, trace, output, *, plan):
                 break
             if result["termination_reason"] or result["physical_samples"] != 8:
                 raise ValueError(f"approach stopped: {result['termination_reason']}")
+            if opposition and ready_after_thumb(contact_owner.first_transfer_sdk, contact_owner.previous):
+                break
+
+        probe_result = None
+        if opposition:
+            previous = contact_owner.previous
+            if not ready_after_thumb(contact_owner.first_transfer_sdk, previous):
+                raise ValueError("opposition needs live thumb transfer and a whole control boundary")
+            opposition_start = previous["physics_step"]
+            geometry()
+            hand = previous["action_readback"]["post"]["hands"]["left"]
+            active = hand["q"][0, hand["active_indices"]]
+            left = load_geometry(ROOT, side="left")
+            close_action, close_windows = index_closure(opposition["index_increment_rad"])
+            index_delta = close_action[:6] * ACTION_CONTRACT["joint_rate_rad_s"] / 480
+            travel_bounds = [path_displacement_bound(left, active, index_delta, cooked=cooked)
+                             for cooked in (False, True)]
+            finger_travel = {i: travel_bounds[int(i >= 34)][bindings["left"].hand.body_names[body]]
+                             for i, (side, body, _) in enumerate(shapes) if side == 0}
+            table = prepare_scene(ROOT)["table"]
+            table_top = table["center_m"][2] + table["size_m"][2]/2
+            boxes = [(np.asarray(box["center_m"])-np.asarray(box["size_m"])/2,
+                      np.asarray(box["center_m"])+np.asarray(box["size_m"])/2)
+                     for box in supports["supports"]]
+            idx = runtime.bindings[INDEX]["body_index"]
+            index_reaction = IndexReaction(body_id=idx)
+            close_start = None
+            position, rotation = geometry_row["poses"]["left.base_link"]
+            projection = previous["action_readback"]["submission"]
+            _, _, pivot_actions = pivot_commands(np.r_[position, np.roll(rotation, 1)],
+                projection["projected_root_poses"][0, 0, 3:], projection["projected_angles"][0, 0],
+                live_nodes[0, plan["variant_options"]["stations"]["left"]],
+                np.asarray(opposition["world_rotvec_rad"]), windows=opposition["pivot_windows"])
+
+            def select_opposition(proposed, clock):
+                nonlocal motion_stop
+                sdk = clock["physics_step"]
+                if sdk != frames_sdk or sdk != contact_owner.previous["physics_step"]:
+                    raise ValueError("opposition prediction must use the live pre-command SDK and solver endpoint")
+                hold = phase == "hold" or motion_stop is not None or index_reaction.first_contact_sdk is not None
+                if hold:
+                    return torch.zeros_like(proposed), dict(paused=True, reason="retain_opposition_targets")
+                selected = {key for key, link in stations_by_body.items() if link in contact_owner.stations}
+                preview = guard_prediction(action=proposed[0].numpy(), frames=live_frames, before_frames=prior_frames,
+                    nodes=live_nodes, before_nodes=prior_nodes, shapes=shapes, selected=selected,
+                    left_palm=geometry_row["poses"]["left.base_link"][0],
+                    finger_travel=finger_travel if phase == "close" else {}, boxes=boxes, table_top=table_top,
+                    radius=radius)
+                if not preview["passed"]:
+                    motion_stop = dict(sdk=sdk, phase=phase, preview=preview)
+                return (torch.zeros_like(proposed) if motion_stop else proposed,
+                        dict(paused=motion_stop is not None, reason="predicted_geometry_guard" if motion_stop
+                            else "measured_one_step_opposition_preview", preview=preview))
+
+            if recent_load["thumb_loaded_substeps"] == 0:
+                motion_stop = dict(sdk=opposition_start, phase=phase, reason="no_thumb_load_at_boundary")
+            batches = (("pivot", pivot_actions), ("close", (close_action,)*close_windows),
+                       ("hold", (np.zeros(ACTION_CONTRACT["size"]),)*opposition["hold_windows"]))
+            for stage, batch in batches:
+                if motion_stop and not index_reaction.deliver_after_stop(stage):
+                    break
+                phase = stage
+                if stage == "close":
+                    close_start = native.clock(sim)["sdk_step"]
+                    contact_owner.stations = stations
+                for additional in batch:
+                    result = control.control(torch.as_tensor(additional)[None], observe=observe,
+                                             select_substep_action=select_opposition)
+                    n_controls += 1
+                    if result["termination_reason"] or result["physical_samples"] != 8:
+                        raise ValueError(f"opposition stopped: {result['termination_reason']}")
+                    if motion_stop or stage == "close" and index_reaction.first_contact_sdk is not None:
+                        break
+            probe_result = dict(start_sdk=opposition_start, close_start_sdk=close_start,
+                last_sdk=native.clock(sim)["sdk_step"], physical_samples=opposition_rows, motion_stop=motion_stop,
+                first_thumb_contact_sdk=contact_owner.first_contact_sdk,
+                first_thumb_transfer_sdk=contact_owner.first_transfer_sdk,
+                first_index_contact_sdk=index_reaction.first_contact_sdk,
+                first_index_transfer_sdk=index_reaction.first_transfer_sdk, index_transfer_force_n=index_reaction.transfer_force_n,
+                max_opposed_substeps=max_opposed_substeps, full_threshold_sdk_count=loaded_opposed_ticks,
+                peak_normal_n=dict(thumb=thumb_peak_n,index=index_peak_n),
+                teacher_admission=False, grasp_qualified=False, lift_promoted=False)
+            native.write_new(output/"settled_left_opposition.json", probe_result)
+
         last_tick = native.clock(sim)["sdk_step"]
         if (not start_sdk < last_tick <= end_sdk
-                or last_tick != end_sdk and result["termination_reason"] != transfer_complete):
+                or not opposition and last_tick != end_sdk and result["termination_reason"] != transfer_complete):
             raise ValueError("approach ended at the wrong SDK boundary")
         geometry()
         end = feedback(geometry_row)
@@ -549,6 +727,9 @@ def acquire(sim, owners, trace, output, *, plan):
             relief_rad = float((initial_rotation.inv()*endpoint).as_rotvec()[2])
             report.update(right_intrinsic_z_rad=relief_rad, left_world_target_unchanged=True,
                           first_contact_sdk=None, lift_promoted=False)
+        if probe_result is not None:
+            report["left_opposition"] = probe_result
+            scope = "measured_settled_wire_left_opposition_probe"
         native.write_new(output/"wire_pulse_result.json", report)
         if right_relief is not None and not (travel["right"]["signed_travel_m"] > 0. and relief_rad > 0.):
             raise ValueError("actual right translation and intrinsic-Z rotation must move as requested")
@@ -588,6 +769,8 @@ def main():
     parser.add_argument("--settled-outer-sha256")
     parser.add_argument("--settled-path", type=Path)
     parser.add_argument("--settled-path-sha256")
+    parser.add_argument("--opposition-proof", type=Path)
+    parser.add_argument("--opposition-proof-sha256")
     parser.add_argument("--approved-frozen-sha256")
     parser.add_argument("--verify-existing-plan", action="store_true")
     args = parser.parse_args()
@@ -615,6 +798,9 @@ def main():
     if args.settled_run is not None:
         child_args.extend(("--settled-run", str(args.settled_run), "--settled-outer-sha256", args.settled_outer_sha256,
                            "--settled-path", str(args.settled_path), "--settled-path-sha256", args.settled_path_sha256))
+    if args.opposition_proof is not None:
+        child_args.extend(("--opposition-proof", str(args.opposition_proof),
+                           "--opposition-proof-sha256", args.opposition_proof_sha256))
     subprocess.run([sys.executable, "-B", "-m", "scripts.verify_dh116_wire_live_palm_approach",
                     *child_args, "--verify-existing-plan"], check=True)
     for path, digest in frozen["frozen_files"].items():

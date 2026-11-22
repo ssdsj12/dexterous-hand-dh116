@@ -1,0 +1,99 @@
+{
+  "version": "dh116-teacher-wire-live-opposition-v1",
+  "status": "cpu_and_frozen_native_preflight_passed",
+  "case": "tripod_left_thumb_index_on_supported_wire",
+  "cpu": {
+    "passed": 134,
+    "failed": 0,
+    "log_sha256": "b72183b9d5a779a0241126f4c2a66106638cb8d3a6069ec25ccd130cc5fca062",
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_wire_continuous_clearance.py",
+      "tests/test_tripod_opposition_route.py",
+      "tests/test_wire_first_distal_contact.py",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_tripod_contact_seed.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_specifications.py",
+      "tests/test_supported_wire_material_variants.py",
+      "tests/test_dh116_tripod_right_tracking_launch.py",
+      "tests/test_wire_live_opposition.py",
+      "tests/test_dh116_flexible_physical_exchange.py",
+      "tests/test_dh116_dual_hand_clock_handoff.py"
+    ]
+  },
+  "source_sha256": {
+    "scripts/verify_dh116_wire_live_palm_approach.py": "fa946d12ef854e9001293346764e4ccf40cb2480a060ef06b2ff0174e1206e6f",
+    "scripts/record_dh116_teacher_numeric_reset.py": "631340014f05b37382bf4f40e60d974786b8f66a6674a699d71d221281b40c8d",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_live_opposition.py": "8667b72fbeaebb2fe8bad3a5d509e07f62e4e70e2dbc4f19831d4e7b9f611b93",
+    "tests/test_wire_live_opposition.py": "ac720b5c2e6a591b5736178ffb38368782d28ea4a8fa64c2adcbaa55991b3541"
+  },
+  "budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "quiet_wire_then_left_opposition_transfer",
+    "sdk_setup_steps": 2,
+    "control_steps": 239,
+    "solver_steps": 40032,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 900,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 6,
+    "episode_resets": 1,
+    "sdk_steps": 3338
+  },
+  "source_proof_sha256": "9df9ed32fbbb8fd690c81de777061286db6a535e0cbd6a3522a14e6e763eeca5",
+  "reference": {
+    "sdk": 2168,
+    "rod_tick": 25992,
+    "receipt_sha256": "760fe69c15cdf6e624a3660ca0e81d4343ed33198cf5c1e71a64dbb1b3c72031",
+    "live_sample_sha256": "3f994da0423b545ad54abd1363ba022b7ecc38f4241e001c5e9d6727d239cf02",
+    "source_head": "559bfff2137fe4096be7d7043cbe7a715b833170",
+    "wire_spec_sha256": "d960cd64e7fbf09764825596ed53d091199a176ced68cebb6bb0e8bc1df97fc2",
+    "station": 35
+  },
+  "prior_attempts": [
+    {
+      "scope": "cpu_launcher_freeze",
+      "exit_code": 127,
+      "error": "default hand interpreter path absent",
+      "fixed_by": "explicit actual DH116_PYTHON",
+      "log_sha256": "fbb3ca0da0646b266542f420c66739eb085fc53ef4246386188f79c980330af3"
+    },
+    {
+      "scope": "cpu_frozen_source_reverify",
+      "exit_code": 1,
+      "error": "updated readiness and registry are included in the frozen documentation inputs",
+      "fix": "freeze final committed sources including readiness and registry",
+      "log_sha256": "9ac61519d02b34830df284eca7c9988da611f2006a943b77353d94fc5354fffb"
+    }
+  ],
+  "measured_grasp_success": false,
+  "teacher_admission": false,
+  "ppo_updates": 0,
+  "native_runs": 0,
+  "pre_documentation_frozen_sha256": "b36054003368647fda39ea90c9576fb8a028ad1cec983be26d10013a00b66033",
+  "review": {
+    "antigravity_rounds": 3,
+    "late_contact_hold_verified": true,
+    "init_import_inventory_verified": true
+  },
+  "release_registry_cpu": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "ac2b35e714780ecbc661cd36f75def78630b1db84486e8bbd60ca0cb407c7500"
+  }
+}

@@ -50448,6 +50448,25 @@
         "teacher_admission": false,
         "grasp_qualified": false
       }
+    },
+    "teacher.tripod-live-opposition": {
+      "title": "Continue supported Tripod into live left thumb-index opposition",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-static-opposition-route"
+      ],
+      "tests": [
+        "tests/test_wire_live_opposition.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-live-opposition.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_live_opposition_v1.json",
+      "last_result": {
+        "cpu_passed": 134,
+        "native_status": "frozen_pending",
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
