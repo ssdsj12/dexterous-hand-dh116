@@ -1,6 +1,6 @@
 {
   "version": "dh116-teacher-tripod-thumb-reseat-v1",
-  "status": "native_observer_failure_tensor_conversion_fixed_cpu",
+  "status": "native_thumb_recovered_index_did_not_reach_contact",
   "source_sha256": {
     "scripts/verify_dh116_wire_live_palm_approach.py": "709209725e9d63e9102020dd5dc4a47a4de2139738251cc8490dd84a6efab58a",
     "src/go2_pvcnn/control/dh116/tabletop_wire_live_opposition.py": "b49b2341ab757ebe3828669ff976158e974b97d6e5bd8dcb9744446420c302dc",
@@ -76,7 +76,7 @@
     ],
     "log_sha256": "c887ebabaa2eb876fb790812ce31d2f309837d8dc4b75819fb7b401e819ee03e"
   },
-  "new_native_runs": 1,
+  "new_native_runs": 2,
   "ppo_updates": 0,
   "teacher_admission": false,
   "grasp_qualified": false,
@@ -232,6 +232,183 @@
     "power_left_palm_index_sha256": "589e6b7b198358056e1593a88b1b7dd6f6dfc1c1c96bd7a7320b4f8258bf87fb",
     "power_right_little_failure_sha256": "50843d5c33de98e8c2e0a43c757e36f30cab3c39defd346c4b18f595b79a053d",
     "new_native_runs": 0,
+    "grasp_qualified": false,
+    "pinch_right_alternative_pose_sha256": "8136d0faa1e2972d33f8258ecf5d2bc0a365ffaae4c4ef41d77937fcf6291442",
+    "power_left_same_section_screen_sha256": "a1ea3380794c24467639531a8924c0d2351f0152928f615f62a24481c60e1aee"
+  },
+  "next_closed_loop_issue": "wrist_reseat_replaces_index_windows_and_thumb_unloads_after_hold",
+  "native_corrected_audit_sha256": "e4eb1505f249797daf354083dd6bd0cb154587f0ab563d06e3dd02b47400332c",
+  "native_corrected": {
+    "source_commit": "1325feb76b28d09211b07f341176c4c40828043a",
+    "outer_sha256": "d646edc848b0aa3c58b325e86dae31960415756e87770fadb255ebb29ba48a5a",
+    "frozen_sha256": "45290cd152d694b166fd5100454c697e877e64bef81cf07db8bb1af68eee0431",
+    "native_time_s": 765.1285797681194,
+    "artifact_count": 6332,
+    "exit_code": 0,
+    "signal": null,
+    "forced_exit": false,
+    "close_mode": "normal",
+    "failure": null,
+    "sdk_steps": 3298,
+    "last_completed_sample_sdk": 3298,
+    "solver_substeps": 39552,
+    "motion_rows": 1872,
+    "thumb_contact_sdk": 2167,
+    "thumb_transfer_sdk": 2168,
+    "thumb_held_to_boundary": [
+      2168,
+      2169,
+      2170
+    ],
+    "index_contact_sdk": null,
+    "index_transfer_sdk": null,
+    "first_thumb_no_load_sdk": 3204,
+    "measured_stages": {
+      "pivot": {
+        "samples": 1024,
+        "moving": 1024,
+        "thumb_all_substeps": 1024,
+        "index_all_substeps": 0,
+        "opposed_all_substeps": 0,
+        "max_opposed_substeps": 0,
+        "peak_index_normal_n": 0.0,
+        "peak_thumb_normal_n": 0.017496623358279617,
+        "both_threshold": 0
+      },
+      "close": {
+        "samples": 88,
+        "moving": 57,
+        "thumb_all_substeps": 41,
+        "index_all_substeps": 0,
+        "opposed_all_substeps": 0,
+        "max_opposed_substeps": 0,
+        "peak_index_normal_n": 0.0,
+        "peak_thumb_normal_n": 0.012847931969724793,
+        "both_threshold": 0
+      },
+      "hold": {
+        "samples": 16,
+        "moving": 0,
+        "thumb_all_substeps": 0,
+        "index_all_substeps": 0,
+        "opposed_all_substeps": 0,
+        "max_opposed_substeps": 0,
+        "peak_index_normal_n": 0.0,
+        "peak_thumb_normal_n": 0.0012079257952267303,
+        "both_threshold": 0
+      }
+    },
+    "kinematics": {
+      "palms": {
+        "left": {
+          "world_displacement_m": [
+            -0.006495237350463867,
+            -0.011326603591442108,
+            9.846687316894531e-05
+          ],
+          "world_rotation_rotvec_rad": [
+            -5.899377811005182e-06,
+            -1.724122151337636e-05,
+            -0.11935206856880426
+          ],
+          "actual_index_delta_rad": 0.01662445068359375,
+          "backend_index_delta_rad": 0.016701102256774902
+        },
+        "right": {
+          "world_displacement_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "world_rotation_rotvec_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "actual_index_delta_rad": 0.0,
+          "backend_index_delta_rad": 0.0
+        }
+      },
+      "source_sdk": 2170,
+      "node35_displacement_m": [
+        -0.0001818239688873291,
+        -2.2411346435546875e-05,
+        3.5762786865234375e-06
+      ],
+      "terminal_sdk_hand_pad_sdf": {
+        "left.finger14_link": {
+          "minimum_gap_m": 3.6016674957546277e-06,
+          "minimum_node_id": 35
+        },
+        "left.finger23_link": {
+          "minimum_gap_m": 0.002816915420736716,
+          "minimum_node_id": 35
+        }
+      }
+    },
+    "probe": {
+      "start_sdk": 2170,
+      "close_start_sdk": 3194,
+      "last_sdk": 3298,
+      "physical_samples": 1128,
+      "motion_stop": null,
+      "first_thumb_contact_sdk": 2167,
+      "first_thumb_transfer_sdk": 2168,
+      "first_index_contact_sdk": null,
+      "first_index_transfer_sdk": null,
+      "index_transfer_force_n": null,
+      "max_opposed_substeps": 0,
+      "full_threshold_sdk_count": 0,
+      "peak_normal_n": {
+        "thumb": 0.017496623358279617,
+        "index": 0.0
+      },
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "lift_promoted": false,
+      "close_windows_reserved_for_reseat": 5
+    },
+    "reseat_reasons": {
+      "await_full_thumb_load": 19,
+      "thumb_wrist_reseat": 28,
+      "thumb_load_restored": 12
+    },
+    "reseat": {
+      "moved_sdk_steps": 28,
+      "first": [
+        3211,
+        9.140884810990464e-06,
+        -1.0992929597277226e-06,
+        2.4894898976019564e-05
+      ],
+      "last": [
+        3280,
+        -5.85823963211024e-09,
+        -1.994119473108444e-06,
+        2.7487411776487545e-05
+      ],
+      "minimum_margin_m": 9.98878587588993e-07
+    },
+    "composed_steps": {
+      "count": 93,
+      "first": [
+        3102,
+        1,
+        2.923675088072079e-05
+      ],
+      "last": [
+        3194,
+        1,
+        1.8417838790833567e-05
+      ],
+      "minimum_margin_m": 1.8417838790833567e-05,
+      "sdk3102": [
+        3102,
+        1,
+        2.923675088072079e-05
+      ]
+    },
+    "teacher_admission": false,
     "grasp_qualified": false
   }
 }

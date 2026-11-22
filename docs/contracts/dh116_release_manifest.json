@@ -34056,6 +34056,35 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.tripod-thumb-reseat-native",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-thumb-reseat.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_thumb_reseat_v1.json",
+      "status": "native_thumb_recovered_index_did_not_reach_contact",
+      "cpu_tests": {
+        "passed": 145,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_sdk_steps": 3298,
+      "native_exit_code": 0,
+      "reseat_sdk_steps": 28,
+      "outer_sha256": "d646edc848b0aa3c58b325e86dae31960415756e87770fadb255ebb29ba48a5a",
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1325feb76b28d09211b07f341176c4c40828043a",
+        "source_tree": "e87ba4ece503c8ffab9c2984f3d5232bf5fc4e88",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

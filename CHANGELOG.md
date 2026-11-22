@@ -1,4 +1,4 @@
-Opt-in Tripod thumb re-seat now accepts native Torch action readback. The first 9 mm run stopped at the first guarded pause before applying a wrist correction. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-thumb-reseat.md)
+Opt-in Tripod wrist re-seat restored native thumb load on a 9 mm wire and exited naturally. The index did not reach contact within the original control budget. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-thumb-reseat.md)
 
 The supported-wire verifier records same-clock palm geometry and masked hand reactions for wire adaptation. CPU replay verified the pre-contact endpoint of a 9 mm run. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-grasp-feedback.md)
 

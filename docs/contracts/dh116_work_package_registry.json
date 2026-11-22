@@ -50531,9 +50531,11 @@
       "readiness": "docs/contracts/dh116_teacher_tripod_thumb_reseat_v1.json",
       "last_result": {
         "cpu_passed": 145,
-        "native_status": "native_observer_type_error_fixed_cpu_retest_pending",
-        "native_sdk_steps": 3204,
-        "native_outer_exit_code": 1,
+        "native_status": "native_thumb_recovered_index_did_not_reach_contact",
+        "native_sdk_steps": 3298,
+        "native_outer_exit_code": 0,
+        "verified_reseat_sdk_steps": 28,
+        "thumb_all_substeps_close_sdk_rows": 41,
         "teacher_admission": false,
         "grasp_qualified": false
       }
