@@ -32880,6 +32880,31 @@
         "verified_at_utc": "2026-11-22T03:17:10.870941+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.supported-contact-measurement",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-supported-contact-measurement.md",
+      "readiness": "docs/contracts/dh116_supported_contact_measurement_v1.json",
+      "cpu_tests": {
+        "passed": 40,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a373efb8bc504f52997d7408128d630d68559e7f",
+        "source_tree": "72a0b7a33fb1e5806611d6224ef14e0d5752e270",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T03:19:46.041009+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
