@@ -3863,3 +3863,5 @@ Actual Tripod closing: thumb/middle force and next-step reaction observed; index
 Teacher 902 geometry update: opt-in whole-group support certification retains all nodes/frames and original0.15mm floor. SDK765 saved-frame CPU replay is now certified; actual three-pad force, Teacher grasp and Lift/Hold remain unqualified.
 
 Bilateral Tripod load feedback is now opt-in at the real supported-rod control boundary; 115 CPU tests pass. Stable native grasp and Lift remain unqualified. See [report](docs/superpowers/reports/2026-11-22-teacher-bilateral-load-feedback.md).
+
+The bilateral feedback native candidate was rejected: same-cohort bilateral loading 12/224 versus 24/224 baseline, with no Lift. See [native result](docs/superpowers/reports/2026-11-22-teacher-bilateral-load-feedback-native.md).

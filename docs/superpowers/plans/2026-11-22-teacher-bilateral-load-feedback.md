@@ -10,7 +10,7 @@ Use the approved execution-chain design and existing real supported-rod exchange
 - [x] Preserve original action units, physical setup and qualification thresholds.
 - [x] Run CPU regression and real-source plan serialization preflight.
 - [x] Publish the identical commit through Windows and verify GitHub.
-- [ ] Run one finite same-replay native contact-hold candidate.
+- [x] Run one finite same-replay native contact-hold candidate: rejected; same-cohort grasp regression, natural exit 0.
 - [ ] Add measured stable-load to off-support Lift continuation if the evidence permits.
 
 This package does not enable PPO learning or claim grasp success. Native/PPO outcomes must be reported independently.

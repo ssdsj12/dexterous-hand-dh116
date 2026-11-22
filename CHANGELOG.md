@@ -4386,3 +4386,7 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 ## 2026-11-22 — Bilateral load acquisition candidate
 
 Added fixed-wrist bilateral weak-pad feedback to the existing Tripod runtime, an independent opt-in config, and source-bound CPU integration coverage. Original grasp/Lift standards are unchanged; native success is pending.
+
+### Bilateral candidate native outcome
+
+The single bounded 1808-SDK run exited naturally with code 0. Same-cohort bilateral loading regressed from 24/224 to 12/224; stable grasp and Lift remain blocked. The opt-in candidate is retained as failure evidence.

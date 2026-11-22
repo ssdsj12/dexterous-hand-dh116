@@ -1,0 +1,205 @@
+{
+  "version": "dh116-teacher-bilateral-load-feedback-native-v1",
+  "outer_sha256": "f60d0ad5ad4114a54761958f8ec45839416a79a7f932ec176eb432a74b0f54ce",
+  "actual_budget": {
+    "sdk_steps": 1808,
+    "control_steps": 196,
+    "solver_substeps": 21672,
+    "feedback_windows": 64,
+    "ppo_updates": 0,
+    "elapsed_s": 512.087681382196
+  },
+  "native_exit_code": 0,
+  "native_signal": null,
+  "natural_exit_verified": true,
+  "all_feedback": {
+    "start_sdk": 1297,
+    "end_sdk": 1808,
+    "rows": 512,
+    "loaded_sdk_rows": {
+      "left": 43,
+      "right": 312,
+      "bilateral": 25
+    },
+    "longest_consecutive_sdk_rows": {
+      "left": 1,
+      "right": 257,
+      "bilateral": 1
+    },
+    "minimum_pad_force_n": {
+      "left": {
+        "thumb": 0.023699589386201425,
+        "index": 0.0,
+        "middle": 0.03926496337872841
+      },
+      "right": {
+        "thumb": 0.07963452226275325,
+        "index": 0.054278035963208626,
+        "middle": 0.02756582100305839
+      }
+    },
+    "support_peak_force_n": {
+      "table": 0.0,
+      "support_0": 0.12268509093548223,
+      "support_1": 0.2035772329675695
+    },
+    "full_support_free_sdk_rows": 0,
+    "peak_median_node_lift_from_sdk1296_m": -8.970499038696289e-06,
+    "final_minimum_node_lift_from_sdk1296_m": -0.0007248520851135254,
+    "wrong_side_pairs": 0,
+    "violations": [],
+    "pair_counts": {
+      "support_0": 6144,
+      "right.finger23_link": 6144,
+      "right.finger14_link": 6144,
+      "right.finger33_link": 6144,
+      "left.finger33_link": 6144,
+      "left.finger14_link": 6144,
+      "left.finger23_link": 2315,
+      "support_1": 6144
+    }
+  },
+  "same_cohort": {
+    "baseline": {
+      "start_sdk": 1297,
+      "end_sdk": 1520,
+      "rows": 224,
+      "loaded_sdk_rows": {
+        "left": 31,
+        "right": 167,
+        "bilateral": 24
+      },
+      "longest_consecutive_sdk_rows": {
+        "left": 1,
+        "right": 60,
+        "bilateral": 1
+      },
+      "minimum_pad_force_n": {
+        "left": {
+          "thumb": 0.0793333378939346,
+          "index": 0.0,
+          "middle": 0.08284802270084511
+        },
+        "right": {
+          "thumb": 0.1063467764014957,
+          "index": 0.05754173562039111,
+          "middle": 0.02937341961634604
+        }
+      },
+      "support_peak_force_n": {
+        "table": 0.0,
+        "support_0": 0.07752183632200467,
+        "support_1": 0.20375996028639012
+      },
+      "full_support_free_sdk_rows": 0,
+      "peak_median_node_lift_from_sdk1296_m": -8.940696716308594e-06,
+      "final_minimum_node_lift_from_sdk1296_m": -0.0008197426795959473,
+      "wrong_side_pairs": 0,
+      "violations": [],
+      "pair_counts": {
+        "support_0": 2688,
+        "right.finger23_link": 2688,
+        "right.finger14_link": 2688,
+        "right.finger33_link": 2688,
+        "left.finger33_link": 2688,
+        "left.finger14_link": 2688,
+        "left.finger23_link": 1014,
+        "support_1": 2688
+      }
+    },
+    "bilateral_feedback": {
+      "start_sdk": 1297,
+      "end_sdk": 1520,
+      "rows": 224,
+      "loaded_sdk_rows": {
+        "left": 30,
+        "right": 34,
+        "bilateral": 12
+      },
+      "longest_consecutive_sdk_rows": {
+        "left": 1,
+        "right": 2,
+        "bilateral": 1
+      },
+      "minimum_pad_force_n": {
+        "left": {
+          "thumb": 0.06532448941577124,
+          "index": 0.0,
+          "middle": 0.06065481122501265
+        },
+        "right": {
+          "thumb": 0.07963452226275325,
+          "index": 0.054278035963208626,
+          "middle": 0.02756582100305839
+        }
+      },
+      "support_peak_force_n": {
+        "table": 0.0,
+        "support_0": 0.08413435383840868,
+        "support_1": 0.2035772329675695
+      },
+      "full_support_free_sdk_rows": 0,
+      "peak_median_node_lift_from_sdk1296_m": -8.970499038696289e-06,
+      "final_minimum_node_lift_from_sdk1296_m": -0.0007806718349456787,
+      "wrong_side_pairs": 0,
+      "violations": [],
+      "pair_counts": {
+        "support_0": 2688,
+        "right.finger23_link": 2688,
+        "right.finger14_link": 2688,
+        "right.finger33_link": 2688,
+        "left.finger33_link": 2688,
+        "left.finger14_link": 2688,
+        "left.finger23_link": 1010,
+        "support_1": 2688
+      }
+    }
+  },
+  "requested_target_travel_rad": {
+    "2": 0.0006,
+    "9": 0.0018000000000000004
+  },
+  "selected_finger_windows": {
+    "left": {
+      "null": 1,
+      "index": 63
+    },
+    "right": {
+      "middle": 30,
+      "null": 34
+    }
+  },
+  "maximum_absolute_wrist_command": 0.0,
+  "native_grasp_qualified": false,
+  "teacher_admission": false,
+  "learned_teacher": false,
+  "ppo_updates": 0,
+  "scope": "new real fixed-wrist feedback candidate; paired original physical boundary; no Lift or policy learning claim",
+  "status": "native_candidate_rejected",
+  "source_commit": "bc058f840c3774336a5af7e708233025a105667c",
+  "execution_head": "bf2d4cb66eb46f9224fd6d435a9895b2ffa3b48c",
+  "frozen_sha256": "4990101faf276d4cdc9f88ba20098d4de8757d6d42ec590352f7b71bf7805448",
+  "cpu_tests_passed": 115,
+  "registry_tests_passed": 60,
+  "reduction_sha256": "4fe6692d4b385e1b977766f9f69b80738d820f699cc1c1665dba7c97023f9faf",
+  "reducer_sha256": "98468d5a5a419fd005762f15b3c909dceb01a97456b1464c4e60f660fb531c83",
+  "comparison_function_sha256": "48c46eba685044f2754c42a74c29de68039475499f54442c044a2f2c460f6b08",
+  "first_reducer_failure": "old probe omitted wrong_side_contacts; preserved failure log; both cohorts recomputed from original rod pairs with the same current unchanged physical reducer",
+  "initial_reduction_failure_log_sha256": "dc058d7b924a4e4c498f9625103a209f30c2ddb176206ab5d3ee2e88d6ab7dde",
+  "blocked_successors": [
+    "stable_bilateral_prelift",
+    "off_support_lift",
+    "qualified_teacher_success"
+  ],
+  "failure_reason": "single weakest-pad policy starves other joints; paired cohort regresses and left contact remains intermittent; causal mechanism still requires coordinated comparison",
+  "automatic_retry": false,
+  "default_config_changed": false,
+  "publication_registry_test": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 17.02,
+    "log_sha256": "b4e35a0fad5a1304d0d2d9c914bfcb0846404f9292c878e6d202f0ae047e76aa"
+  },
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3
+}

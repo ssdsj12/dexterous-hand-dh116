@@ -1,7 +1,7 @@
 {
   "version": "dh116-teacher-bilateral-load-feedback-v1",
   "baseline_head": "b51608cb931658a1220738d748d25302315672d6",
-  "status": "passed_cpu_pending_native",
+  "status": "passed_cpu_native_candidate_rejected",
   "scope": "opt_in_fixed_wrist_tripod_load_acquisition_not_learned_teacher",
   "cpu": {
     "passed": 115,
@@ -93,5 +93,6 @@
     "separate_from115": true
   },
   "protected_files_verified": 528,
-  "historical_checkpoints_verified": 3
+  "historical_checkpoints_verified": 3,
+  "native_result_contract": "docs/contracts/dh116_teacher_bilateral_load_feedback_native_v1.json"
 }

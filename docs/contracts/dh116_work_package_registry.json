@@ -49901,6 +49901,29 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.bilateral-load-feedback-native": {
+      "title": "Actual bounded bilateral feedback completes naturally but fails stable grasp",
+      "executor": "gated",
+      "status": "blocked",
+      "dependencies": [
+        "teacher.bilateral-load-feedback"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_force_seating.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_bilateral_load_feedback_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-bilateral-load-feedback-native.md",
+      "blocked_reason": "native candidate rejected: 12/224 paired bilateral steps versus 24/224 baseline; longest bilateral run one SDK; no Lift",
+      "last_result": {
+        "native_runs": 1,
+        "natural_exit_code": 0,
+        "passed_cpu": 115,
+        "ppo_updates": 0,
+        "grasp_qualified": false,
+        "teacher_admission": false,
+        "same_fingerprint_rerun_allowed": false
+      }
     }
   },
   "execution_target": {
