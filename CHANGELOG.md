@@ -1,4 +1,4 @@
-An opt-in Tripod diagnostic continues from measured quiet support settlement to a single left thumb reaction. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-settled-thumb.md)
+Tripod measured a left thumb reaction in the same live settled episode. Native fault-close evidence and the narrow early-stop correction are recorded. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-settled-thumb.md)
 
 The parked 9 mm Tripod wire reached a measured quiet interval in Isaac. Both supports remained loaded and no hand contact occurred. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-quiet-settlement.md)
 

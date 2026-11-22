@@ -99,3 +99,45 @@ def test_frozen_launch_keeps_curved_and_straight_provenance(filename, key, tmp_p
     rejected.write_bytes(tracking.read_bytes() + b" ")
     with pytest.raises(ValueError, match="SHA|approved"):
         launch.freeze_plan(tmp_path / "native", rejected)
+
+
+def test_measured_settled_thumb_stop_admits_early_boundary_for_cache_release(monkeypatch, tmp_path):
+    import json
+
+    monkeypatch.setattr(reset.native, "clock", lambda sim: {"sdk_step": sim.step})
+    monkeypatch.setattr(reset.native, "validate_loaded_project_modules", lambda *a, **k: None)
+    plan = dict(version="dh116-wire-settled-left-thumb-approach-v1", quiet_settlement_sdk=1426,
+                budget=dict(mode="quiet_wire_then_left_thumb_transfer", sdk_steps=2210,
+                            solver_steps=26496, control_steps=98), frozen_files={})
+    motion = dict(first_contact_sdk=2167, first_transfer_sdk=2168, contact_reached=True,
+                  start_sdk=1426, end_sdk=2168, control_steps=93, teacher_admission=False,
+                  grasp_qualified=False,
+                  readback=dict(clock=dict(clock_valid=True, physics_step=2168, rod_tick=25992)))
+    proof = dict(first_contact_sdk=2167, first_transfer_sdk=2168,
+                 teacher_admission=False, grasp_qualified=False)
+    (tmp_path/"settled_thumb_transfer.json").write_text(json.dumps(proof))
+    result = dict(scope="measured_settled_wire_left_thumb", sdk_steps=2168, solver_substeps=25992,
+                  measured_exchanges=2166, control_steps=93, quiet_settlement=dict(qualified=True, last_sdk=1426),
+                  approach_feedback=motion)
+    calls = []
+
+    def run(actual_sdk=2168):
+        return reset._run_acquisition(SimpleNamespace(step=actual_sdk), None, None, tmp_path, None,
+            plan, lambda sim, *, expected_sdk_step: calls.append(expected_sdk_step), lambda *a: result)
+
+    assert run() == result
+    assert calls == [2168]
+    with pytest.raises(ValueError, match="clock"):
+        run(2167)
+    motion["first_contact_sdk"] = 2166
+    with pytest.raises(ValueError, match="transfer"):
+        run()
+    motion["first_contact_sdk"] = 2167
+    motion["readback"]["clock"]["rod_tick"] -= 12
+    with pytest.raises(ValueError, match="transfer"):
+        run()
+    motion["readback"]["clock"]["rod_tick"] += 12
+    (tmp_path/"settled_thumb_transfer.json").unlink()
+    with pytest.raises(ValueError, match="transfer"):
+        run()
+    assert calls == [2168, 2167, 2168, 2168, 2168]

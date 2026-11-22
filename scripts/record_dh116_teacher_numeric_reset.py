@@ -159,6 +159,38 @@ def _acquire(sim, owners, trace, output, profile, *, pair_proposal=None):
         return outcome
 
 
+def _settled_thumb_transfer_end(plan, result, output):
+    """Admit only the consecutive measured contact/transfer endpoint of this recipe."""
+    budget = plan["budget"]
+    start, end = plan["quiet_settlement_sdk"], result.get("sdk_steps")
+    feedback = result.get("approach_feedback", {})
+    quiet = result.get("quiet_settlement", {})
+    clock = feedback.get("readback", {}).get("clock", {})
+    contact = feedback.get("first_contact_sdk")
+    path = output/"settled_thumb_transfer.json"
+    if (plan.get("version") != "dh116-wire-settled-left-thumb-approach-v1"
+            or result.get("scope") != "measured_settled_wire_left_thumb"
+            or type(end) is not int or type(contact) is not int
+            or not start < contact < end <= budget["sdk_steps"] or end != contact+1
+            or quiet.get("qualified") is not True or quiet.get("last_sdk") != start
+            or feedback.get("contact_reached") is not True or feedback.get("first_transfer_sdk") != end
+            or feedback.get("start_sdk") != start or feedback.get("end_sdk") != end
+            or feedback.get("teacher_admission") is not False or feedback.get("grasp_qualified") is not False
+            or clock.get("clock_valid") is not True or clock.get("physics_step") != end
+            or clock.get("rod_tick") != (end-2)*12
+            or result.get("measured_exchanges") != end-2 or result.get("solver_substeps") != (end-2)*12
+            or result.get("control_steps") != (end-start+7)//8
+            or result["control_steps"] > budget["control_steps"]
+            or result["solver_substeps"] > budget["solver_steps"]
+            or not path.is_file() or path.is_symlink()):
+        raise ValueError("verified settled thumb contact and transfer within the frozen budget required")
+    proof = json.loads(path.read_bytes())
+    if (proof.get("first_contact_sdk") != contact or proof.get("first_transfer_sdk") != end
+            or proof.get("teacher_admission") is not False or proof.get("grasp_qualified") is not False):
+        raise ValueError("settled thumb transfer record differs from the measured completion")
+    return end
+
+
 def _run_acquisition(sim, owners, trace, output, profile, plan, cache_release, operation=None):
     try:
         if operation is None:
@@ -172,9 +204,22 @@ def _run_acquisition(sim, owners, trace, output, profile, plan, cache_release, o
                     (not result.get("failure") or type(expected_step) is not int or
                      not 2 <= expected_step <= maximum_step)):
                 raise ValueError("guarded acquisition stop clock is outside the frozen budget")
-            if native.clock(sim)["sdk_step"] != expected_step:
-                raise ValueError("measured acquisition SDK clock differs from its frozen budget")
-            native.validate_loaded_project_modules(ROOT, frozen_files=plan["frozen_files"])
+            settled_thumb = plan["budget"].get("mode") == "quiet_wire_then_left_thumb_transfer"
+            actual_step = native.clock(sim)["sdk_step"]
+            try:
+                if settled_thumb and not result.get("failure"):
+                    expected_step = _settled_thumb_transfer_end(plan, result, output)
+                if actual_step != expected_step:
+                    raise ValueError("measured acquisition SDK clock differs from its frozen budget")
+                native.validate_loaded_project_modules(ROOT, frozen_files=plan["frozen_files"])
+            except Exception:
+                if settled_thumb and type(actual_step) is int and 2 <= actual_step <= maximum_step:
+                    try:
+                        cache_release(sim, expected_sdk_step=actual_step)
+                    except Exception:
+                        # The once-only native cache callback records its own error.
+                        pass
+                raise
         # The read-only guard inside this callback is the last SDK cache operation.
         try:
             cache_release(sim, expected_sdk_step=expected_step)

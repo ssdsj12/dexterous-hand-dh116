@@ -46,8 +46,108 @@
     "auto_retry": false,
     "forced_exit": false
   },
-  "native_status": "pending",
-  "measured_thumb_transfer": false,
+  "native_status": "measured_left_thumb_transfer_v1_faulted_close_v2_pending",
+  "measured_thumb_transfer": true,
   "teacher_admission": false,
-  "grasp_qualified": false
+  "grasp_qualified": false,
+  "verified_natural_close": false,
+  "native_v1": {
+    "source_commit": "d75a2d37413f397fb65f4b8951c38c0a0f98b6b2",
+    "native_time_s": 316.2628880799748,
+    "outer_sha256": "0dd8b3bbbd5e3fd45d0af3954a5d9919ea02cc831b332eddf8b6dc5375ebaa1d",
+    "frozen_sha256": "a7b54c52f40667ae713bed335dfc4ecf93d73776eab2c172361de558f1e23a49",
+    "exit_code": 255,
+    "sdk_steps": 2168,
+    "control_rows": 742,
+    "solver_steps": 25992,
+    "artifact_count": 2939,
+    "quiet": {
+      "qualified": true,
+      "first_sdk": 1379,
+      "last_sdk": 1426,
+      "max_node_speed_m_s": 9.430117588329624e-05,
+      "max_node_window_displacement_m": 1.494301193962364e-07,
+      "center_drop_m": 0.018780841350555577,
+      "measured_weight_n": 0.23242342804827992,
+      "terminal_support_load_n": [
+        0.1163145899772644,
+        0.11634509265422821
+      ],
+      "both_supports_only": true,
+      "initial_min_z_m": 0.3457191586494446,
+      "teacher_admission": false,
+      "grasp_qualified": false
+    },
+    "handoff": {
+      "node_max_error_m": 0.0,
+      "link_max_error_m": 0.0,
+      "link_max_error_rad": 0.0,
+      "joint_max_native_unit_error": 0.0
+    },
+    "observed_contact_at_sdk": 2167,
+    "applied_reaction_at_sdk": 2168,
+    "transfer_force_n": 0.007031293965219846,
+    "max_node_on_rod_normal_n": 0.008858117902084371,
+    "left_actual_displacement_m": [
+      0.005374312400817871,
+      -0.0013436228036880493,
+      0.010940730571746826
+    ],
+    "guard_stops": [],
+    "debugger_inferior_signal": 11,
+    "teacher_admission": false,
+    "grasp_qualified": false,
+    "cache_callback_artifacts_produced": false,
+    "app_close_returned": true,
+    "stop_reason": "completed_contact_rejected_by_original_exact_endpoint_gate",
+    "fault_stack_sha256": "4c86cd03117ea4f9aa7b1f1fac2515cd5f09efc1fe4249cc887e81792cbb7b84",
+    "ownership_after_close_sha256": "3c7ea99574c9e5aafbeab7439cf4571c0cebe57c7f39d55eaa3378264471bfe1"
+  },
+  "left_opposition_cpu": {
+    "finger23_link": {
+      "gap_m": 0.00020548292399959374,
+      "node": 35,
+      "q_delta": 0.048000000000000265,
+      "dot": -0.4649086515912092
+    },
+    "finger33_link": {
+      "gap_m": 0.0005650777151290087,
+      "node": 33,
+      "q_delta": 0.028000000000000247,
+      "dot": -0.41811391793511227
+    }
+  },
+  "right_endpoint_cpu": {
+    "checked": 380,
+    "passed": 2,
+    "continuous_route_passed": false
+  },
+  "correction_sha256s": {
+    "scripts/record_dh116_teacher_numeric_reset.py": "c484d8e5d9cb2ed4701315214dc5be40e5847a962ca7c731566dfa7c9073d0a5",
+    "tests/test_dh116_tripod_right_tracking_launch.py": "f70513d14dc85167f75777151b4b23684ab52dbc5298c2a392ba8b5487e639a4"
+  },
+  "corrected_cpu": {
+    "passed": 106,
+    "failed": 0,
+    "log_sha256": "76c5e78ea3931a38b83f5f3be08ceb7b4b57bc6f847cfd6995ea2a54e16382e4",
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_wire_continuous_clearance.py",
+      "tests/test_wire_first_distal_contact.py",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_tripod_contact_seed.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_specifications.py",
+      "tests/test_supported_wire_material_variants.py",
+      "tests/test_dh116_tripod_right_tracking_launch.py"
+    ]
+  }
 }

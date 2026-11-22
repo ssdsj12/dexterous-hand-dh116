@@ -50417,9 +50417,13 @@
       "report": "docs/superpowers/reports/2026-11-23-teacher-wire-settled-thumb.md",
       "readiness": "docs/contracts/dh116_teacher_wire_settled_thumb_v1.json",
       "last_result": {
-        "cpu_passed": 95,
-        "native_status": "pending",
-        "teacher_admission": false
+        "cpu_passed": 106,
+        "native_status": "measured_left_thumb_transfer_v1_faulted_close_v2_pending",
+        "teacher_admission": false,
+        "contact_sdk": 2167,
+        "transfer_sdk": 2168,
+        "outer_sha256": "0dd8b3bbbd5e3fd45d0af3954a5d9919ea02cc831b332eddf8b6dc5375ebaa1d",
+        "native_clean_exit": false
       }
     }
   },
