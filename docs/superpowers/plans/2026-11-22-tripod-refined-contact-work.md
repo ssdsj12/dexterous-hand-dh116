@@ -10,5 +10,5 @@
 - [x] Change only shared guard call in tabletop_native_teacher_policy_tripod_distance.py to check_supported_shape(world, boxes, None if target else tube, ...).
 - [x] Run Tripod policy, continuous envelope and existing source/reset regressions. Check all protective failures remain.
 - [x] Replay authentic v9 geometry with unchanged inputs; compare reference/new complete packets and failure reasons, alternate timings in actual control_source_scope.
-- [ ] Verify 528 sources/3 old checkpoints, source-bound manifest, fixed RGB. Update Registry/readiness/report/README/CHANGELOG; Ubuntu commit and Windows same-commit publication.
+- [x] Verify 528 sources/3 old checkpoints, source-bound manifest, fixed RGB. Update Registry/readiness/report/README/CHANGELOG; Ubuntu commit and Windows same-commit publication.
 No new native attempt or forced cleanup in this CPU package. New bounded recipe preparation is a later separately frozen package.

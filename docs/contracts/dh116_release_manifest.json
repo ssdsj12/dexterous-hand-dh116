@@ -32531,6 +32531,31 @@
         "verified_at_utc": "2026-11-22T00:03:03.056854+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-refined-contact-work",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-tripod-refined-contact-work.md",
+      "readiness": "docs/contracts/dh116_tripod_refined_contact_work_v1.json",
+      "cpu_tests": {
+        "passed": 95,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a19e2db0374be8f1172ca096ef1480ad7917c63f",
+        "source_tree": "3f9a49f468a255c00eed23a3d03b1ab86a53f89c",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T00:20:38.863814+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
