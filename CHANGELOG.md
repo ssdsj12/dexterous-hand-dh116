@@ -1,3 +1,5 @@
+Actual zero-command Tripod counterfactual completed243SDK/241solver/2892substeps,natural exit0,241 geometry rows independently recomputed.Zero hand load;mean rod sag10.60mm and still moving at0.5s.No Teacher/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-tripod-zero-action-settling-native.md).
+
 Independent zero-command Tripod settling entry now reuses the real supported17 scene/Reset/R06;150 CPU regressions pass.No new native execution or policy/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-tripod-zero-action-settling-entry.md).
 
 Existing 64-row native data now has source-bound target/q tracking:both hands64/64 covered,zero hand load remains.134 CPU regressions pass;no new native run or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-contact-target-tracking-audit.md).

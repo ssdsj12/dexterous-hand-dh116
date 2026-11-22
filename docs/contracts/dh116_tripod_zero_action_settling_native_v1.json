@@ -1,0 +1,329 @@
+{
+  "version": "dh116-tripod-zero-action-settling-native-v1",
+  "evidence_kind": "actual_native_zero_action_counterfactual_plus_independent_CPU_replay",
+  "tested_head": "1c3668340457c8a25de2125c0248ba9cacdfaa6e",
+  "frozen_sha256": "6c8b0a88943a9ca7635e0e5b4e2c2bc127861ead60380daefb07b7ff0aa9e418",
+  "scope_sha256": "84e72056c6be8ef95eb047b052eaa120c88073f7f3c025a575077e118adfaa81",
+  "outer_sha256": "0347830a8f7fd65becfcf78bc9f8dc5ec95ff56f741966876ef93b24c22122c1",
+  "physics_sha256": "6e8d6f1b73910799b49f7939621ae9495c5e96fa93c6f648cde3bbfd1580a775",
+  "raw_physics_sha256": "1f7bb305d839742ac03ee4af2136663cfc5929031820f0799276088a67ded47c",
+  "artifacts_verified": 28,
+  "frozen_files_verified": 2073,
+  "geometry_rows_recomputed": 241,
+  "raw_guard_rows_recomputed": 241,
+  "outer_exit_code": 0,
+  "inferior_exit_code": 0,
+  "elapsed_s": 242.49832000304013,
+  "sdk_steps": 243,
+  "solver_calls": 241,
+  "solver_substeps": 2892,
+  "raw_rows": 241,
+  "source_rows": 241,
+  "weakrefs_dead": 14,
+  "single_instance_lock_reacquired": true,
+  "general_native_release_proven": false,
+  "native_runs": 1,
+  "ppo_updates": 0,
+  "on_policy": false,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "contact_summary": {
+    "version": "dh116-offline-supported-teacher-contact-ledger-v1",
+    "source_sha256": "6e8d6f1b73910799b49f7939621ae9495c5e96fa93c6f648cde3bbfd1580a775",
+    "evidence_kind": "offline_replay_of_existing_raw_not_new_native",
+    "grasp": "tripod",
+    "rows": 241,
+    "first_sdk_step": 3,
+    "last_sdk_step": 243,
+    "bilateral_rows": 0,
+    "support_free_rows": 0,
+    "table_contact_rows": 0,
+    "joint_tracking_schema": "dh116-raw-target-tracking-audit-v1",
+    "tracking_summary": {
+      "left": {
+        "valid_rows": 241,
+        "missing_rows": 0,
+        "full_interval_coverage": true,
+        "missing_sdk_steps": [],
+        "coverage_scope": "provided_consecutive_raw_physics_rows",
+        "residual_scope": "valid_rows_only",
+        "max_abs_controlled_tracking_error_rad": 4.699505229410761e-09,
+        "max_abs_controlled_tracking_error_m": 2.4855798752554392e-08,
+        "passive_target_slots_excluded": true
+      },
+      "right": {
+        "valid_rows": 241,
+        "missing_rows": 0,
+        "full_interval_coverage": true,
+        "missing_sdk_steps": [],
+        "coverage_scope": "provided_consecutive_raw_physics_rows",
+        "residual_scope": "valid_rows_only",
+        "max_abs_controlled_tracking_error_rad": 5.44349010311862e-09,
+        "max_abs_controlled_tracking_error_m": 9.989389426756645e-09,
+        "passive_target_slots_excluded": true
+      }
+    },
+    "per_hand": {
+      "left": {
+        "loaded_rows": 0,
+        "max_total_normal_load_n": 0.0
+      },
+      "right": {
+        "loaded_rows": 0,
+        "max_total_normal_load_n": 0.0
+      }
+    },
+    "support_max_force_norm_n": {
+      "table": 0.0,
+      "support_0": 0.15735538364289536,
+      "support_1": 0.15757968263427316
+    },
+    "node_speed_max_m_s": 0.07183308228640962,
+    "native_runs": 0,
+    "ppo_updates": 0,
+    "native_qualification": false,
+    "teacher_admission": false,
+    "grasp_qualified": false
+  },
+  "settling": {
+    "first": {
+      "sdk": 3,
+      "rod_tick": 12,
+      "time_s": 0.00625,
+      "mean_z_m": 0.3649835673774161,
+      "median_z_m": 0.36498022079467773,
+      "min_z_m": 0.36497947573661804,
+      "max_node_speed_m_s": 0.01796565324675303,
+      "pad_gaps_m": {
+        "left": {
+          "finger14_link": 0.0024010022170841694,
+          "finger23_link": 0.001593128778040409,
+          "finger33_link": 0.0018567508086562157
+        },
+        "right": {
+          "finger14_link": 0.006674060598015785,
+          "finger23_link": 0.009878967888653278,
+          "finger33_link": 0.012427371926605701
+        }
+      },
+      "distance_mean_m": 0.005805213702842593,
+      "support_load_n": {
+        "table": 0.0,
+        "support_0": 0.02741521653631688,
+        "support_1": 0.02741535432254489
+      }
+    },
+    "last": {
+      "sdk": 243,
+      "rod_tick": 2892,
+      "time_s": 0.50625,
+      "mean_z_m": 0.35438460402372407,
+      "median_z_m": 0.3526788651943207,
+      "min_z_m": 0.3469879925251007,
+      "max_node_speed_m_s": 0.012626074417567525,
+      "pad_gaps_m": {
+        "left": {
+          "finger14_link": 0.004024802707135677,
+          "finger23_link": 0.004389878362417221,
+          "finger33_link": 0.0033295173197984695
+        },
+        "right": {
+          "finger14_link": 0.00737221073359251,
+          "finger23_link": 0.009594051167368889,
+          "finger33_link": 0.011018537916243076
+        }
+      },
+      "distance_mean_m": 0.00662149970109264,
+      "support_load_n": {
+        "table": 0.0,
+        "support_0": 0.15066371880389348,
+        "support_1": 0.15066371931418843
+      }
+    },
+    "mean_z_delta_m": -0.010598963353692037,
+    "tail48_mean_z_range_m": 0.0008918795643783062,
+    "tail48_node_speed_max_m_s": 0.0184462108903929,
+    "steady_state_qualification": false
+  },
+  "comparison": {
+    "configured_reset_seed_same": true,
+    "seed_comparison_source": "SHA-verified old core reset_sha256 -> same c123 manifest -> actual new captured seed",
+    "old_core_sha256": "ba95fff665d1e8120c6033dac1389d1d1c1b7679b9d6ca7486a49e1239bc62fd",
+    "sdk4_67_material_positions_max_abs_difference_m": 0.0,
+    "prime_differences": {
+      "nodes_max_m": 0.0,
+      "left_q_max_abs": 0.0,
+      "left_qd_max_abs": 0.0,
+      "left_backend_targets_max_abs": 0.0,
+      "right_q_max_abs": 0.0,
+      "right_qd_max_abs": 0.0,
+      "right_backend_targets_max_abs": 0.0
+    },
+    "zero_sdk4_67_mean_z_delta_m": -0.004671093894214162,
+    "policy_sdk4_67_mean_z_delta_m": -0.004671093894214162,
+    "policy_first_gaps_m": {
+      "left": {
+        "finger14_link": 0.002411345485597849,
+        "finger23_link": 0.0016053603030741215,
+        "finger33_link": 0.0018514092080295086
+      },
+      "right": {
+        "finger14_link": 0.006678113713860512,
+        "finger23_link": 0.009879007935523987,
+        "finger33_link": 0.012417093850672245
+      }
+    },
+    "policy_last_gaps_m": {
+      "left": {
+        "finger14_link": 0.003413170576095581,
+        "finger23_link": 0.002391620073467493,
+        "finger33_link": 0.0016822246834635735
+      },
+      "right": {
+        "finger14_link": 0.00690875668078661,
+        "finger23_link": 0.009971218183636665,
+        "finger33_link": 0.011728375218808651
+      }
+    },
+    "zero_sdk4_gaps_m": {
+      "left": {
+        "finger14_link": 0.002410752233117819,
+        "finger23_link": 0.0016065407544374466,
+        "finger33_link": 0.001852172426879406
+      },
+      "right": {
+        "finger14_link": 0.0066782329231500626,
+        "finger23_link": 0.00987896416336298,
+        "finger33_link": 0.012417634017765522
+      }
+    },
+    "zero_sdk67_gaps_m": {
+      "left": {
+        "finger14_link": 0.003070351667702198,
+        "finger23_link": 0.0026749237440526485,
+        "finger33_link": 0.001825978048145771
+      },
+      "right": {
+        "finger14_link": 0.006948966532945633,
+        "finger23_link": 0.00982296746224165,
+        "finger33_link": 0.011791874654591084
+      }
+    },
+    "causal_unique_explanation_proven": false
+  },
+  "status": "actual_native_counterfactual_verified_zero_contact_rod_not_steady",
+  "diagnostic_verified": true,
+  "native_ppo_updates": 0,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "cameras_changed": false,
+  "physical_parameters_changed": false,
+  "policy_controller_reward_or_reset_reference_changed": false,
+  "execution": {
+    "source_commit": "1254014210882ce0d090fdc33ab64fca77411524",
+    "tested_head": "1c3668340457c8a25de2125c0248ba9cacdfaa6e",
+    "actual_frozen_sha256": "6c8b0a88943a9ca7635e0e5b4e2c2bc127861ead60380daefb07b7ff0aa9e418",
+    "scope_sha256": "84e72056c6be8ef95eb047b052eaa120c88073f7f3c025a575077e118adfaa81",
+    "authority": "standing complete-access approval for finite distinct bounded diagnostics",
+    "sdk_setup_steps": 2,
+    "diagnostic_prime_sdk_steps": 1,
+    "measured_sdk_steps": 240,
+    "zero_command_control_windows": 30,
+    "policy_windows": 0,
+    "model_loads": 0,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "inner_soft_wall_s": 360,
+    "outer_soft_wall_s": 480,
+    "actual_outer_wall_s": 242.49832000304013,
+    "gpu": 2,
+    "num_envs": 1,
+    "max_attempts": 1,
+    "actual_attempts": 1,
+    "automatic_retry": false,
+    "forced_cleanup": false
+  },
+  "evidence_sha256": {
+    "independent_audit_v2": "d67c47e7b1dc2c81f67d63be9b0919f04c32e676c8502fef3cd7bfaedb8505ed",
+    "independent_audit_v2_log": "36d5fb2fb1d7ffd8ab30331a529755d7237f2ad7c7afb94c623538a67368194e",
+    "audit_source_v2": "33ec4cfcfba78af4e734ade2a6cd0ce88ab7a13474cd2c287a933c2909a09492",
+    "native_log": "e3d5bccf62cb4aaa0e805203dab9b99eaaa96e86530ba037c029b6e4f3f49d0d",
+    "capture": "e84ac710d40ed60bac91178316fb1850e59938b9b86d8697ee3c4b66a4bc944b",
+    "outer_driver": "ca8c9c81456b210df76bd10143588e2d7e0beca49a141f70d6789b90658ec2f8",
+    "authorization_scope": "ab0369a2b85bc038ffa4e2b157392aa51528ce285394615a927bc75d11e256c7",
+    "contact_audit": "9d31c35b5dac2e43a6581bc41abf900d5f590e7b43fe8fed9b50b504a2f85632",
+    "artifact_sha256": {
+      "after_app_close.maps": "3aaffefb1de0ae33c23c727020caa524eee3c2d35a43894553f8be72817bd69e",
+      "after_app_close.refs.json": "7dad904bf1b244458dce811baef33b74a2c43f9afa07c963842fbc3fc29e4cb0",
+      "after_stop.maps": "c9f9e4490d711f86171b0f8f874a33b28d21d8c1022dd7a597c5ec9285c40ddd",
+      "after_stop.refs.json": "7dad904bf1b244458dce811baef33b74a2c43f9afa07c963842fbc3fc29e4cb0",
+      "app_close_returned.json": "9d064d53f917000ae2466102eabeb06c3c5d89ea8a6e407fe9575aa5f09dbb96",
+      "before_app_close.json": "aa12bd46da41c46c71e72ff22a26eb690c1b9be0b9d036f58cf40b42dc5b81b3",
+      "before_close_check.maps": "98474f488b9e35a785ebf637f2df03a75a256bc5b1c6284921533be55c2e6b91",
+      "before_close_check.refs.json": "7dad904bf1b244458dce811baef33b74a2c43f9afa07c963842fbc3fc29e4cb0",
+      "before_stop.maps": "29467d42e28c835596c0e2afbeca2416baf0b6145a586d433ac3de14511055f7",
+      "before_stop.refs.json": "c3688018fad3a4fe18bc6a07453623f7cec650c1bd75f33812756f6ceb7f4d8e",
+      "cleanup_stages.json": "ebde22cf19524db2dbb2e2c180affab85f16e5ea6eb739ead0a462fd32580795",
+      "episode_reset.json": "b997e50cef6a04d5413c1295f58dd49cc5feed3653c540a337813b014f594459",
+      "frozen_plan.json": "99baffaff00efc76626b703d5195f1d75cd65f6a87a2ee10708b1949b86b9f2f",
+      "mesh_reset_numeric_state.json": "8591d5ce8d619a021c7e65bfa1231d0a074c6bbb3bc41a6632674902f3756f53",
+      "mesh_reset_state.json": "0818e4272ad9c16658d9730cbe9891804d209e23a2ade605cb4be4e8cb3fded3",
+      "owned_hand_and_solver_references_dropped.maps": "29467d42e28c835596c0e2afbeca2416baf0b6145a586d433ac3de14511055f7",
+      "owned_hand_and_solver_references_dropped.refs.json": "c3688018fad3a4fe18bc6a07453623f7cec650c1bd75f33812756f6ceb7f4d8e",
+      "ownership.jsonl": "caa58c0e3c5290df797f826d461a4beb1c5b7ec6d106d86b9a2c58effab9324d",
+      "physics.jsonl": "6e8d6f1b73910799b49f7939621ae9495c5e96fa93c6f648cde3bbfd1580a775",
+      "pre_action_common.json": "ebbba8c3bdf6e0c94a6b877a0ce4953c5416ba38048c1d6db3980275ae1afc9d",
+      "raw_physics.jsonl": "1f7bb305d839742ac03ee4af2136663cfc5929031820f0799276088a67ded47c",
+      "reset_geometry.json": "0aa0dc7d617aebf38728f82e1f955feb47096c33a415bccdc3c2450efc622646",
+      "result.json": "6e135a3919700add9fcd9c24d22532f332be47a0f779ce2316635f51a5c46ff8",
+      "settling_capture.json": "e84ac710d40ed60bac91178316fb1850e59938b9b86d8697ee3c4b66a4bc944b",
+      "stat_cache_after.json": "87ae1b569f5fa9c5568266cc193d05d2fbca9775070df8146e9467dd9d1bfafd",
+      "stat_cache_before.json": "295ddf852e9f606164c570f78571b3ef93f6901f38aa282d16e35ecac686e2ee",
+      "stat_cache_release.json": "b346e0542cda625024b6bc3c80f1b567e02c691f50b1e640e73c890536eb0ae4",
+      "stop_commit.json": "60c9ff78877c956a6660f512de8c1345c54f98d7107d3e91724f19d7ef4cd231"
+    }
+  },
+  "audit_corrections": {
+    "initial_CPU_freeze": "noncanonical home symlink rejected before any native;canonical real path then passed,no gate bypass",
+    "initial_analysis": "v1 seed-identity fallback not accepted;v2 independently verifies old pinned core -> c123 -> actual captured seed",
+    "v1_restriction_sha256": "e0754fe32b4348b1b10a8fb85d12fe7ee52d65ade7fea5d2d52df46d197797a5",
+    "native_retries_added": 0
+  },
+  "cpu_after_native": {
+    "passed": 91,
+    "failed": 0,
+    "seconds": 60.02,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_tripod_zero_action_settling.py",
+      "tests/test_teacher_contact_ledger_audit.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "b9d82180896079289080166449b0c60a075f4d9a7e1c067af727c083e1f7c0b5",
+    "new_native_runs": 0
+  },
+  "antigravity": {
+    "prior_scope": "Teacher-ZeroContact R1-R4 code/design dialogue",
+    "new_native_result_review": false,
+    "native_result_independently_verified_by": "Codex existing contact reducer,241 geometry recomputations and frozen raw guard validation"
+  },
+  "next": {
+    "automatic_native_rerun": false,
+    "new_steady_reset_claim_allowed": false,
+    "focus": "independent review of approach potential clamp and passive sag,retain original Reset2/dref and force-based grasp gates",
+    "pinch": "its own bilateral pad/load source and supported17 Teacher route still pending",
+    "power": "five fingers+palm wrapping and actual load source still pending",
+    "formal_bc_dagger_student": "blocked until qualified Teacher/stereo data"
+  },
+  "metadata_registry_tests": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 14.7,
+    "overlaps_cpu_after_native": true,
+    "log_sha256": "e3503dfa188ad245b40f92092fcde543f9fcfca74e19de75d6cb865d62128f4f"
+  }
+}

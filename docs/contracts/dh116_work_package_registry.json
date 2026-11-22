@@ -49747,6 +49747,39 @@
         "native_qualification": false,
         "teacher_admission": false,
         "grasp_qualified": false
+      },
+      "followup_native_result": "teacher.tripod-zero-action-settling-native-result"
+    },
+    "teacher.tripod-zero-action-settling-native-result": {
+      "title": "Actual zero-command supported17 Tripod settling counterfactual and full241 row independent replay",
+      "executor": "pytest",
+      "status": "passed",
+      "blocker_kind": "diagnostic_complete_unqualified",
+      "reason": "Single actual diagnostic and natural exit verified;zero hand load and rod still moving,no grasp or Teacher admission.",
+      "dependencies": [
+        "teacher.tripod-zero-action-settling-entry"
+      ],
+      "tests": [
+        "tests/test_tripod_zero_action_settling.py",
+        "tests/test_teacher_contact_ledger_audit.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-tripod-zero-action-settling-native.md",
+      "readiness": "docs/contracts/dh116_tripod_zero_action_settling_native_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 91,
+        "failed": 0,
+        "native_runs": 1,
+        "native_ppo_updates": 0,
+        "diagnostic_verified": true,
+        "sdk_steps": 243,
+        "solver_calls": 241,
+        "solver_substeps": 2892,
+        "outer_exit_code": 0,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false
       }
     }
   },
