@@ -33723,6 +33723,32 @@
         "seconds": 18.65,
         "log_sha256": "e1e9744aeac3f911b9c03d5015da7e183bd79f7c9c6000705979712be2d6b08e"
       }
+    },
+    {
+      "package": "teacher.tripod-coupled-response",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-coupled-response.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_coupled_response_v1.json",
+      "status": "offline_native_archive_response_audited",
+      "cpu_tests": {
+        "passed": 84,
+        "failed": 0,
+        "log_sha256": "ce16c0e681268058b36c5d15d3267f77e0f73aa9b01bff4404b6932637e6d95b"
+      },
+      "archived_native_ticks": 256,
+      "new_native_runs": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ab8c8e8c67ba48dd5e96a548c5bc504ee0b8134a",
+        "source_tree": "d907133aafd189b144c38d1858675ebee8a570cc",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
