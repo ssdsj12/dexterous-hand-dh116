@@ -50334,6 +50334,25 @@
         "solver_substeps": 96,
         "outer_sha256": "3de9d08bbd8afc3c88cfb9f27c1bd5f00d4069c7fb090e90edb741f1813a9698"
       }
+    },
+    "teacher.tripod-distal-or-relief": {
+      "title": "Verify radius-aware Tripod distal contact and screened wrist relief",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-contact-seed"
+      ],
+      "tests": [
+        "tests/test_wire_continuous_clearance.py",
+        "tests/test_wire_first_distal_contact.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-distal-or-relief.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_distal_or_relief_v1.json",
+      "last_result": {
+        "cpu_passed": 87,
+        "native_status": "pending",
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

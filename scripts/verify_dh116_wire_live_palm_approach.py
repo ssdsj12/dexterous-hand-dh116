@@ -19,6 +19,77 @@ SDK_END = parked.SDK_END + 8
 VERSION = "dh116-wire-live-palm-approach-v1"
 
 
+def bind_distal_start(plan, run, receipt_sha256):
+    """Match a completed native Reset that used the same resized wire and pose."""
+    from scripts.prepare_dh116_tripod_contact_seed import read_receipt
+    from go2_pvcnn.control.dh116.tabletop_wire_first_distal import (
+        APPROACH_TRAVEL_M, APPROACH_WINDOWS, HOLD_WINDOWS, LEFT_TRIPOD_STATIONS,
+    )
+
+    receipt_file = run/"outer.json"
+    receipt = read_receipt(run, receipt_sha256)
+    plan_file, state_file = (run/"native"/name for name in ("frozen_plan.json", "result.json"))
+    previous_plan = json.loads(checked_file(plan_file, receipt["artifact_sha256"][plan_file.name]))
+    result = json.loads(checked_file(state_file, receipt["artifact_sha256"][state_file.name]))
+    if (previous_plan["version"] != parked.VERSION
+            or previous_plan["variant_options"]["stations"] != {"left": 35, "right": 3}
+            or any(previous_plan[key] != plan[key] for key in (
+                "reset_seed_sha256", "spec_sha256", "variant_options", "task_config"))
+            or result["failure"] is not None or result["physics_steps"] != parked.SDK_END
+            or result["acquisition"]["solver_substeps"] != (parked.SDK_END-2)*12):
+        raise ValueError("successful native parked result for the same wire and Reset required")
+    plan["first_distal_approach"] = dict(
+        approach_windows=APPROACH_WINDOWS, hold_windows=HOLD_WINDOWS, travel_m=APPROACH_TRAVEL_M,
+        stations={key: list(value) for key, value in LEFT_TRIPOD_STATIONS.items()},
+        prior_receipt_sha256=receipt_sha256)
+    count = APPROACH_WINDOWS + HOLD_WINDOWS
+    sdk = parked.SDK_END + count*8
+    plan["budget"].update(mode="measured_left_distal_approach", control_steps=count,
+                          sdk_steps=sdk, solver_steps=(sdk-2)*12, soft_wall_seconds=300)
+    plan["preserved_scope"] = "original Tripod left distal approach and measured reaction hold"
+    for path in (receipt_file, plan_file, state_file,
+                 ROOT/"src/go2_pvcnn/control/dh116/tabletop_wire_continuous_clearance.py",
+                 ROOT/"src/go2_pvcnn/control/dh116/tabletop_wire_first_distal.py",
+                 ROOT/"scripts/prepare_dh116_tripod_contact_seed.py"):
+        path = path.resolve(strict=True)
+        digest = native.sha(path)
+        if plan["frozen_files"].setdefault(str(path), digest) != digest:
+            raise ValueError("inconsistent distal approach source: "+str(path))
+
+
+def bind_right_relief(plan, source, expected_sha):
+    """Freeze a CPU-screened unilateral translation/rotation and its original Reset."""
+    from go2_pvcnn.control.dh116.tabletop_wire_first_distal import right_relief_action
+
+    proof = json.loads(checked_file(source, expected_sha))
+    samples = proof["samples"]
+    minima = {
+        key: min(row[key] for row in samples) if samples else float("nan")
+        for key in ("rod_gap_m", "support_gap_m", "table_gap_m")
+    }
+    if (len(samples) != 13
+            or any(not np.isfinite(row[key]) for row in samples for key in minima)
+            or any(proof["minimum_"+key] != value for key, value in minima.items())
+            or proof["scope"] != "sampled_real_reset_right_relief"
+            or proof["reset_seed_sha256"] != plan["reset_seed_sha256"]
+            or proof["spec_sha256"] != plan["spec_sha256"]
+            or proof["minimum_rod_gap_m"] <= .00025
+            or proof["minimum_support_gap_m"] <= 0.
+            or proof["minimum_table_gap_m"] < .0021):
+        raise ValueError("matching original right relief path clearance evidence required")
+    windows = 18
+    action = right_relief_action(proof["direction_world"], travel_m=proof["travel_m"],
+                                 rotation_rad=proof["right_intrinsic_z_rad"], windows=windows)
+    start = plan.pop("first_distal_approach")
+    plan["right_relief"] = dict(action24=action.tolist(), screen_sha256=expected_sha,
+                                 prior_receipt_sha256=start["prior_receipt_sha256"])
+    plan["frozen_files"][str(source.resolve(strict=True))] = expected_sha
+    sdk = parked.SDK_END + windows*8
+    plan["budget"].update(mode="measured_right_relief_approach", control_steps=windows,
+                          sdk_steps=sdk, solver_steps=(sdk-2)*12, soft_wall_seconds=300)
+    plan["preserved_scope"] = "right transverse approach with measured intrinsic Z relief"
+
+
 def freeze(args):
     plan = parked.freeze(args)
     plan.update(version=VERSION, preserved_scope="one live transverse pre-contact wrist pulse")
@@ -30,6 +101,18 @@ def freeze(args):
         key, digest = str(path.resolve(strict=True)), native.sha(path)
         if plan["frozen_files"].setdefault(key, digest) != digest:
             raise ValueError("conflicting approach source: " + key)
+    distal_parked = getattr(args, "distal_parked_run", None)
+    distal_sha = getattr(args, "distal_outer_sha256", None)
+    if (distal_parked is None) != (distal_sha is None):
+        raise ValueError("distal approach needs both the prior parked run and its outer receipt SHA")
+    if distal_parked is not None:
+        bind_distal_start(plan, distal_parked, distal_sha)
+    relief = getattr(args, "right_relief_screen", None)
+    relief_sha = getattr(args, "right_relief_sha256", None)
+    if (relief is None) != (relief_sha is None) or (relief is not None and distal_parked is None):
+        raise ValueError("right relief requires a full clearance screen and matching parked receipt")
+    if relief is not None:
+        bind_right_relief(plan, relief, relief_sha)
     return plan
 
 
@@ -62,6 +145,10 @@ def acquire(sim, owners, trace, output, *, plan):
 
     runtime = control = episode = None
     bindings = None
+    distal = plan.get("first_distal_approach")
+    right_relief = plan.get("right_relief")
+    original_pulse = distal is None and right_relief is None
+    end_sdk = plan["budget"]["sdk_steps"]
     try:
         settled = parked.acquire(sim, owners, trace, output, plan=plan)
         if settled.get("failure"):
@@ -83,18 +170,48 @@ def acquire(sim, owners, trace, output, *, plan):
         initial = json.loads((output/"wire_variant_terminal_feedback.json").read_bytes())
         radius = initial["readback"]["measured_radius_m"]
         supports = variant["scene"]["support_scene"]
-        tube_clock, tube = None, None
+        tube_clock, tube, envelope = None, None, None
         geometry_row = None
+        stations_by_body = {}
+        if not original_pulse:
+            from scipy.spatial.transform import Rotation
+            from scripts.audit_dh116_pinch_initial_pose import load_geometry
+            from scripts.verify_dh116_supported_distal_transfer import target_shape_keys
+            from scripts.prepare_dh116_pinch_closure_margin import sample_contact
+            from go2_pvcnn.control.dh116.tabletop_dual_hand_scene_preparation import load_sdf_arrays
+            from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_supported_distal_contact
+            from go2_pvcnn.control.dh116.tabletop_wire_continuous_clearance import WireClearance
+            from go2_pvcnn.control.dh116.tabletop_wire_first_distal import FirstDistalContact
+
+            stations = {} if distal is None else distal["stations"]
+            sources = target_shape_keys(runtime.bindings, shapes, stations)
+            stations_by_body = {(0, runtime.bindings[link]["body_index"]):link for link in stations}
+            if set(stations_by_body) != sources or len(shapes) != 34:
+                raise ValueError("complete original source hulls and explicit distal stations required")
+            cooked = []
+            for side_index, side in enumerate(SIDES):
+                pads = load_geometry(ROOT, side=side)["cooked_pads"]
+                if len(pads) != 5:
+                    raise ValueError("each hand must supply five archived cooked pad hulls")
+                for name, mesh in pads.items():
+                    binding = runtime.bindings[side+"."+name]
+                    cooked.append((side_index, binding["body_index"], mesh["vertices"]))
+            shapes = tuple(shapes) + tuple(cooked)
+            grids = load_sdf_arrays(prepare_scene(ROOT))
+
 
         def geometry():
-            nonlocal tube_clock, tube, geometry_row
+            nonlocal tube_clock, tube, envelope, geometry_row
             sdk = native.clock(sim)["sdk_step"]
             rod_row = runtime._base.last
             before = runtime.clock()
             if before["physics_step"] not in (sdk-1, sdk) or rod_row["physics_step"] != before["physics_step"]:
                 raise ValueError("rod geometry must use the present or immediately preceding SDK tick")
             if before != tube_clock:
-                tube = wire_tube(rod_row["node_positions"], radius_m=radius)
+                if original_pulse:
+                    tube = wire_tube(rod_row["node_positions"], radius_m=radius)
+                else:
+                    envelope = WireClearance(rod_row["node_positions"], radius_m=radius)
                 tube_clock = before
             poses, centers, clearance = shared.measure_links(sim, bindings, runtime.bindings, shapes,
                                                              sdk=sdk, support_scene=supports)
@@ -104,17 +221,50 @@ def acquire(sim, owners, trace, output, *, plan):
                 if transform.shape != (1, 23, 7):
                     raise ValueError("complete DH116 pose readback required")
                 frames.append(transform[0][:, [0, 1, 2, 6, 3, 4, 5]])
-            gap = min(separation(rotated_points(frames[hand][body], vertices), *tube)
-                      for hand, body, vertices in shapes)
-            if not np.isfinite(gap) or gap <= .00025:
-                native.write_new(output/f"wire_clearance_stop_{sdk}.json", dict(
-                    physics_step=sdk, rod_source_physics_step=before["physics_step"],
-                    minimum_rod_clearance_m=gap))
-                raise ValueError("original non-contact rod clearance failed")
+            pad_sdf = {}
+            if original_pulse:
+                gap = min(separation(rotated_points(frames[hand][body], vertices), *tube)
+                          for hand, body, vertices in shapes)
+                if not np.isfinite(gap) or gap <= .00025:
+                    native.write_new(output/f"wire_clearance_stop_{sdk}.json", dict(
+                        physics_step=sdk, rod_source_physics_step=before["physics_step"],
+                        minimum_rod_clearance_m=gap))
+                    raise ValueError("original non-contact rod clearance failed")
+            else:
+                gap = np.inf
+                selected_bounds = {}
+                for i, (hand, body, vertices) in enumerate(shapes):
+                    link = stations_by_body.get((hand, body))
+                    selected = link is not None and sdk > parked.SDK_END
+                    guard = envelope.certify(rotated_points(frames[hand][body], vertices), selected=selected)
+                    if not guard["passed"]:
+                        native.write_new(output/f"wire_clearance_stop_{sdk}.json", dict(
+                            physics_step=sdk, rod_source_physics_step=before["physics_step"],
+                            hand=SIDES[hand], hull="source" if i < 34 else "cooked",
+                            link=bindings[SIDES[hand]].hand.body_names[body], **guard))
+                        raise ValueError("original radius-aware continuous hull clearance failed")
+                    gap = min(gap, guard["lower_m"])
+                    if link is not None:
+                        selected_bounds[link] = min(selected_bounds.get(link, np.inf), guard["lower_m"])
+                for link, bound in selected_bounds.items():
+                    xyz, quat = poses[link]
+                    transform = np.eye(4)
+                    transform[:3,:3] = Rotation.from_quat(quat).as_matrix()
+                    transform[:3,3] = xyz
+                    local = sample_contact(grids[link], transform, rod_row["node_positions"][0],
+                                           radius=radius, dtype=np.float64)
+                    pad_sdf[link] = local
+                    observed = local["minimum_gap_m"]
+                    floor = .00025 if sdk == parked.SDK_END else -.00015
+                    if (observed is None and bound <= .00025) or (observed is not None and observed < floor):
+                        native.write_new(output/f"wire_pad_sdf_stop_{sdk}.json", dict(
+                            physics_step=sdk, rod_source_physics_step=before["physics_step"],
+                            selected_link=link, minimum_gap_m=observed, clearance_floor_m=floor))
+                        raise ValueError("original selected distal SDF bound failed")
             if native.clock(sim)["sdk_step"] != sdk or runtime.clock() != before:
                 raise ValueError("clearance readback should not advance either clock")
             geometry_row = dict(physics_step=sdk, poses=poses, rod_source_physics_step=before["physics_step"],
-                                minimum_rod_clearance_m=gap)
+                                minimum_rod_clearance_m=gap, pad_sdf=pad_sdf, hull_count=len(shapes))
             return pack_geometry(sdk, poses, centers, clearance)
 
         def after_sdk(previous):
@@ -144,27 +294,53 @@ def acquire(sim, owners, trace, output, *, plan):
         geometry()
         start_geometry = geometry_row
         measured = feedback(start_geometry)
-        action = choose_pulse(measured, start_geometry)
-        first, last = ACTION_CONTRACT["slices"]["world_translation_velocity"]
-        if not np.linalg.norm(action[first:last].reshape(2, 3), axis=1).all():
-            raise ValueError("both unloaded hands require a measured approach direction")
+        contact_owner = None
+        if original_pulse:
+            action = choose_pulse(measured, start_geometry)
+            first, last = ACTION_CONTRACT["slices"]["world_translation_velocity"]
+            if not np.linalg.norm(action[first:last].reshape(2, 3), axis=1).all():
+                raise ValueError("both unloaded hands require a measured approach direction")
+        elif right_relief is not None:
+            action = np.asarray(right_relief["action24"], dtype=float)
+        else:
+            if not measured["reaction_valid"] or any(
+                    pad["mean_normal_n"] > 0. for side in measured["measured_hands"].values()
+                    for pad in side["reaction"].values()):
+                raise ValueError("left distal approach requires zero initial hand contact")
+            contact_owner = FirstDistalContact(dict(physics_step=parked.SDK_END, rod=runtime._base.last))
+            action = np.zeros(ACTION_CONTRACT["size"])
+            action[14] = distal["travel_m"]*60/(distal["approach_windows"]*ACTION_CONTRACT["translation_rate_m_s"])
         control = owners.keep("power_control_exchange", FlexiblePhysicalExchange(
             sim, runtime, [bindings[side] for side in SIDES], root_seed_w=root,
             read_geometry=geometry, read_geometry_after_sdk=after_sdk,
-            physics_budget_end=SDK_END, continue_supported_rod=True))
+            physics_budget_end=end_sdk, continue_supported_rod=True))
         trace.watch("power_control_exchange", control, owner="wire pose and reaction pulse", release="owned scope")
         native.write_new(output/"wire_pulse_request.json", encode_owned(
             dict(geometry=start_geometry, reaction=measured, action24=action)))
         minimum_gap = start_geometry["minimum_rod_clearance_m"]
+        held_left_targets = None
 
         def observe(row):
-            nonlocal minimum_gap
+            nonlocal minimum_gap, held_left_targets
             sdk = row["physics_step"]
             if geometry_row["physics_step"] != sdk or row["reaction_source_physics_step"] != sdk-1:
                 raise ValueError("geometry and reaction transport clocks do not match")
             minimum_gap = min(minimum_gap, geometry_row["minimum_rod_clearance_m"])
             native.write_new(output/f"wire_pulse_step_{sdk}.json", encode_owned(
                 dict(row, sdk_hand_geometry=geometry_row)))
+            if contact_owner is not None:
+                evidence = measure_supported_distal_contact(row["rod"], grasp="tripod")
+                native.write_new(output/f"wire_distal_evidence_{sdk}.json", evidence)
+                if evidence["wrong_side_contacts"] or evidence["unexpected_hand_contacts"]:
+                    return "unexpected_distal_station"
+                return contact_owner.observe(row)
+            if right_relief is not None:
+                action_state = row["action_readback"]
+                pre, post = (action_state[key]["hands"]["left"]["backend_targets"] for key in ("pre","post"))
+                if held_left_targets is None:
+                    held_left_targets = np.array(pre, copy=True)
+                if not np.array_equal(pre, held_left_targets) or not np.array_equal(post, held_left_targets):
+                    return "left_target_changed_during_right_relief"
             rod_row = row["rod"]
             pairs = rod_row["rod_mesh_contact_pairs"]["pairs"]
             if any(pair["mesh_name"] in runtime.bindings for pair in pairs):
@@ -175,10 +351,16 @@ def acquire(sim, owners, trace, output, *, plan):
                 return "unexpected_support_transition"
             return None
 
-        result = control.control(torch.as_tensor(action)[None], observe=observe)
+        n_controls = plan["budget"]["control_steps"]
+        for i in range(n_controls):
+            command = action if distal is None or i < distal["approach_windows"] else np.zeros_like(action)
+            result = control.control(torch.as_tensor(command)[None], observe=observe,
+                select_substep_action=None if contact_owner is None else contact_owner.select)
+            if result["termination_reason"] or result["physical_samples"] != 8:
+                raise ValueError(f"approach stopped: {result['termination_reason']}")
         last_tick = native.clock(sim)["sdk_step"]
-        if result["termination_reason"] or last_tick != SDK_END or result["physical_samples"] != 8:
-            raise ValueError(f"approach stopped at SDK {last_tick}: {result['termination_reason']}")
+        if last_tick != end_sdk:
+            raise ValueError("approach ended at the wrong SDK boundary")
         geometry()
         minimum_gap = min(minimum_gap, geometry_row["minimum_rod_clearance_m"])
         end = feedback(geometry_row)
@@ -188,25 +370,45 @@ def acquire(sim, owners, trace, output, *, plan):
             key = f"{side}.base_link"
             delta = np.asarray(geometry_row["poses"][key][0]) - start_geometry["poses"][key][0]
             direction = action[start+3*index:start+3*index+3]
-            signed = float(delta @ direction / np.linalg.norm(direction))
+            magnitude = np.linalg.norm(direction)
+            signed = float(delta @ direction / magnitude) if magnitude > 0. else None
             travel[side] = dict(world_delta_m=delta.tolist(), signed_travel_m=signed)
         report = dict(start_sdk=parked.SDK_END, end_sdk=last_tick, measured_radius_m=radius,
                       minimum_clearance_m=minimum_gap, signed_palms=travel, readback=end,
                       terminal_rod_clearance_physics_step=geometry_row["rod_source_physics_step"],
-                      control_steps=1, optimizer_updates=0, teacher_admission=False,
+                      control_steps=n_controls, optimizer_updates=0, teacher_admission=False,
                       grasp_qualified=False)
+        scope = "measured_wire_precontact_palm_feedback"
+        if contact_owner is not None:
+            scope = "measured_wire_left_distal_approach"
+            report.update(first_contact_sdk=contact_owner.first_contact_sdk,
+                first_transfer_sdk=contact_owner.first_transfer_sdk,
+                contact_reached=bool(contact_owner.first_contact_sdk and contact_owner.first_transfer_sdk),
+                first_pairs=contact_owner.first_pairs, contact_samples=contact_owner.contact_samples,
+                terminal_violations=contact_owner.violations, lift_promoted=False)
+        if right_relief is not None:
+            scope = "measured_wire_right_relief_approach"
+            initial_rotation = Rotation.from_quat(start_geometry["poses"]["right.base_link"][1])
+            endpoint = Rotation.from_quat(geometry_row["poses"]["right.base_link"][1])
+            relief_rad = float((initial_rotation.inv()*endpoint).as_rotvec()[2])
+            report.update(right_intrinsic_z_rad=relief_rad, left_targets_unchanged=True,
+                          first_contact_sdk=None, lift_promoted=False)
         native.write_new(output/"wire_pulse_result.json", report)
-        if any(record["signed_travel_m"] <= 0. for record in travel.values()):
+        if right_relief is not None and not (travel["right"]["signed_travel_m"] > 0. and relief_rad > 0.):
+            raise ValueError("actual right translation and intrinsic-Z rotation must move as requested")
+        if original_pulse and any(record["signed_travel_m"] <= 0. for record in travel.values()):
             raise ValueError("positive actual motion along each measured direction required")
-        return dict(settled, scope="measured_wire_precontact_palm_feedback", sdk_steps=last_tick, solver_substeps=end["clock"]["rod_tick"],
-                    control_steps=1, measured_exchanges=settled["measured_exchanges"]+8,
+        if contact_owner is not None and contact_owner.first_contact_sdk is not None and contact_owner.first_transfer_sdk is None:
+            raise ValueError("actual first contact must have its next completed reaction transfer")
+        return dict(settled, scope=scope, sdk_steps=last_tick, solver_substeps=end["clock"]["rod_tick"],
+                    control_steps=n_controls, measured_exchanges=settled["measured_exchanges"]+8*n_controls,
                     approach_feedback=report)
     except Exception:
         sdk = native.clock(sim)["sdk_step"]
         failure = dict(failure=traceback.format_exc(), guarded_stop_sdk_step=sdk,
                        teacher_admission=False, grasp_qualified=False, ppo_updates=0)
         native.write_new(output/"wire_pulse_failure.json", failure)
-        if not 2 <= sdk <= SDK_END:
+        if not 2 <= sdk <= end_sdk:
             raise
         return failure
     finally:
@@ -220,6 +422,10 @@ def main():
     for name in parked.VALUE_ARGS:
         kind = int if name.endswith("material-id") else str
         parser.add_argument("--"+name, type=kind, required=True)
+    parser.add_argument("--distal-parked-run", type=Path)
+    parser.add_argument("--distal-outer-sha256")
+    parser.add_argument("--right-relief-screen", type=Path)
+    parser.add_argument("--right-relief-sha256")
     parser.add_argument("--approved-frozen-sha256")
     parser.add_argument("--verify-existing-plan", action="store_true")
     args = parser.parse_args()
@@ -238,6 +444,12 @@ def main():
         raise ValueError("exact approved native approach recipe and fresh output required")
     child_args = [part for name in (*parked.PATH_ARGS, *parked.VALUE_ARGS)
                   for part in ("--"+name, str(getattr(args, name.replace("-", "_"))))]
+    if args.distal_parked_run is not None:
+        child_args.extend(("--distal-parked-run", str(args.distal_parked_run),
+                           "--distal-outer-sha256", args.distal_outer_sha256))
+    if args.right_relief_screen is not None:
+        child_args.extend(("--right-relief-screen", str(args.right_relief_screen),
+                           "--right-relief-sha256", args.right_relief_sha256))
     subprocess.run([sys.executable, "-B", "-m", "scripts.verify_dh116_wire_live_palm_approach",
                     *child_args, "--verify-existing-plan"], check=True)
     for path, digest in frozen["frozen_files"].items():

@@ -1,3 +1,5 @@
+Tripod has an opt-in radius-aware approach and first distal reaction check. The CPU-screened right wrist path is ready for a bounded Isaac diagnostic. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-distal-or-relief.md)
+
 The measured Tripod contact-seeded 9 mm native Reset and its short supported exchange passed. The right proximal thumb limits the reverse approach under the original clearance guard. Grasp and Teacher admission remain open. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-contact-seed.md)
 
 Isaac verified one radius-aware wrist approach from live palm geometry on the supported 9 mm wire. Both hands moved in the requested direction and the process exited naturally. Grasp and Teacher admission are pending. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-live-palm-approach.md)

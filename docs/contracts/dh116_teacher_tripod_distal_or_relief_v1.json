@@ -1,0 +1,54 @@
+{
+  "version": "dh116-tripod-distal-or-relief-v1",
+  "CPU": {
+    "passed": 87,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_wire_continuous_clearance.py",
+      "tests/test_wire_first_distal_contact.py",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_tripod_contact_seed.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_specifications.py"
+    ],
+    "log_sha256": "7deb7ba45fb42382895feb079ef8a1d6a8a55044a902920d920f27ea038142d3"
+  },
+  "source_sha256": {
+    "scripts/verify_dh116_wire_live_palm_approach.py": "3ab5ce07e71c22dfd6d7345805295ba9578eb4d753c2e1d1c3057eb3471fd394",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_continuous_clearance.py": "044f093f76673a830c483ad26793ec72c908aeeb7269ccbf33df013acfc06c17",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_first_distal.py": "83d9c3ed67bc57ca1477bf551a45e29419325321e26a066a25bb27dfff5f9726",
+    "tests/test_wire_continuous_clearance.py": "7f4c90fbc3f8754a1c8ee3280dacdddf06551475be9b798c4fdfbe88d46734e1",
+    "tests/test_wire_first_distal_contact.py": "4ed6fca1eed813e4e0b4811c9ad9dca97f3afbf5ca305123e77535bc85812824"
+  },
+  "native_status": "pending",
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "test_spec": {
+    "diameter_mm": 9,
+    "rest_length_mm": 450,
+    "split": "train"
+  },
+  "right_relief_screen_sha256": "8356f04b7dad7924acc5bd0f3b7d2202add6322aed5135e1353909eddf4a9f64",
+  "right_relief_budget": {
+    "sdk_steps": 154,
+    "controls": 18,
+    "solver_substeps": 1824,
+    "ppo_updates": 0
+  },
+  "left_distal_budget": {
+    "sdk_steps": 178,
+    "controls": 21,
+    "solver_substeps": 2112,
+    "ppo_updates": 0
+  }
+}
