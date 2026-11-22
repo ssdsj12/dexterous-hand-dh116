@@ -1,0 +1,6 @@
+# Teacher有限CPU线程资源配置
+现有通用native调度器接受DH116_NUM_THREADS，Teacher v2严格字段表却拒绝任何environment，导致已测资源配置无法进入真实worker。
+只增加可选environment，且必须恰为DH116_NUM_THREADS一项、规范字符串1..64。禁止库路径、任意命令和其他环境注入。
+旧不含environment的配方仍按原字段与预算执行；新字段进入原配方字节SHA/源码身份，无绕过审批、来源或单实例锁。
+使用已有CPU结构fixture测试上下界、非法环境和fingerprint改变；真实Ubuntu scripts/python.sh子进程核对该值传到Torch/OMP/OpenBLAS/MKL，CPU测试不启动Isaac。
+当前8样本几何线程1中位0.819s、64为1.040s；只给新有限诊断选择1，不改变全局环境或正式训练并行配置，也不声称原生wall已合格。

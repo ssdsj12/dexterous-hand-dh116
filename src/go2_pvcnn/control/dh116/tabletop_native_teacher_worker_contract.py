@@ -135,9 +135,15 @@ def validate_teacher_recipe_v2(spec):
     """
     fields = {"version", "entrypoint", "argv", "source_files", "budget", "validator",
         "inputs", "teacher_contract"}
-    if (not isinstance(spec, dict) or set(spec) != fields
+    if (not isinstance(spec, dict) or set(spec) not in (fields, fields | {"environment"})
             or not _exact_int(spec["version"], 2) or spec["entrypoint"] != ENTRYPOINT):
         raise ValueError("exact C06 v2 worker recipe schema required")
+    if "environment" in spec:
+        environment = spec["environment"]
+        threads = environment.get("DH116_NUM_THREADS") if isinstance(environment, dict) else None
+        if (not isinstance(environment, dict) or set(environment) != {"DH116_NUM_THREADS"}
+                or type(threads) is not str or threads not in {str(n) for n in range(1, 65)}):
+            raise ValueError("bounded DH116_NUM_THREADS is the only Teacher environment override")
     contract = spec["teacher_contract"]
     keys = {"schema", "profile", "style", "training_config", "semantic_sha256", "source_sha256",
         "backend_sha256", "target_sha256", "reset_sha256", "reward_sha256", "limits", "journal_contract"}

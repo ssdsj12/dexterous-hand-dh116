@@ -97,7 +97,8 @@ def test_v2_rejects_unbound_contracts(tmp_path,damage):
 
 
 def test_scheduler_dispatch_shares_source_fingerprint_and_keeps_v1_240_cap(tmp_path):
-    spec=recipe(tmp_path);root=tmp_path/"repo";root.mkdir()
+    spec=recipe(tmp_path);spec["environment"]={"DH116_NUM_THREADS":"1"}
+    root=tmp_path/"repo";root.mkdir()
     for name in [spec["entrypoint"],"scripts/python.sh","scripts/run_dh116_work_packages.py",*spec["source_files"]]:
         path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text("# CPU structural fixture only\n")
     config_name="configs/dh116_execution/teacher-v2.json"
@@ -106,6 +107,9 @@ def test_scheduler_dispatch_shares_source_fingerprint_and_keeps_v1_240_cap(tmp_p
     out=scheduler.native_recipe(repo,package)
     assert out["spec"]["budget"]["physics_steps"]==258
     first=out["code_config_sha256"]
+    spec["environment"]["DH116_NUM_THREADS"]="2";path.write_text(json.dumps(spec))
+    assert scheduler.native_recipe(repo,package)["code_config_sha256"] != first
+    spec["environment"]["DH116_NUM_THREADS"]="1";path.write_text(json.dumps(spec))
     (root/spec["source_files"][0]).write_text("# modified CPU fixture source\n")
     with pytest.raises(ValueError,match="source"):
         scheduler.native_recipe(repo,package)
@@ -221,5 +225,25 @@ def test_short_diagnostic_cannot_inherit_larger_budget(tmp_path, field):
         spec["teacher_contract"]["limits"]["max_solver_calls"] = 256
     else:
         spec["teacher_contract"]["limits"]["jsonl_limits"]["training_events.jsonl"] = 2048
+    with pytest.raises(ValueError):
+        contract_module().validate_teacher_recipe_v2(spec)
+
+
+@pytest.mark.parametrize("threads",["1","64"])
+def test_v2_accepts_only_finite_numeric_cpu_thread_resources(tmp_path,threads):
+    spec=smoke8_recipe(tmp_path)
+    spec["environment"]={"DH116_NUM_THREADS":threads}
+    verified=contract_module().validate_teacher_recipe_v2(spec)
+    assert verified==spec
+    verified["environment"]["DH116_NUM_THREADS"]="3"
+    assert spec["environment"]["DH116_NUM_THREADS"]==threads
+
+
+@pytest.mark.parametrize("environment",[
+    {},None,{"DH116_NUM_THREADS":"0"},{"DH116_NUM_THREADS":"65"},
+    {"DH116_NUM_THREADS":1},{"LD_LIBRARY_PATH":"/tmp/other-runtime"},{"DH116_NUM_THREADS":"01"},
+])
+def test_v2_rejects_unbounded_or_foreign_runtime_environment(tmp_path,environment):
+    spec=smoke8_recipe(tmp_path);spec["environment"]=environment
     with pytest.raises(ValueError):
         contract_module().validate_teacher_recipe_v2(spec)

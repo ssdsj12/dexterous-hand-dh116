@@ -48905,7 +48905,8 @@
         "native_qualification": false,
         "teacher_admission": false,
         "evidence": "docs/contracts/dh116_native_wall_rejection_v1.json"
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.static-manifest-handoff": {
       "title": "Reuse this-call verified Reset manifest within the static Teacher contract",
@@ -48993,6 +48994,62 @@
         "native_qualification": false,
         "teacher_admission": false,
         "scope": "CPU geometry/source35 plus disjoint Registry60; recorded64-packet comparison; no native"
+      }
+    },
+    "teacher.tripod-ppo-fresh-smoke8-v10": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Independent Tripod fresh17 smoke8 actual PPO diagnostic",
+      "evidence_scope": "tripod_actual_fresh_smoke8_v10",
+      "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v10.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Frozen one-shot diagnostic; requires exact current native batch and live resource reservation; no grasp qualification.",
+      "dependencies": [
+        "teacher.tripod-fresh-reset-native-validation",
+        "teacher.native-cpu-resource-recipe"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v10.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v10.json",
+      "native_runs": 0,
+      "actual_launch": {
+        "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v10.json",
+        "sha256": "46b30fc3e706d947e70f1ec08f878448f5c68050a2c8de0ce4dbaee7e5abf215"
+      }
+    },
+    "teacher.native-cpu-resource-recipe": {
+      "title": "Bind bounded CPU thread resources through existing Teacher scheduler and launcher",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-refined-contact-work"
+      ],
+      "tests": [
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-native-cpu-resource-recipe.md",
+      "readiness": "docs/contracts/dh116_native_cpu_resource_recipe_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 144,
+        "cpu_failed": 0,
+        "effective_torch_numeric_threads": 1,
+        "interop_threads_unchanged": 64,
+        "actual_launcher_cpu_probe": true,
+        "native_runs": 0,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU strict resource schema/fingerprint and existing bash launcher; no SDK qualification"
       }
     }
   },

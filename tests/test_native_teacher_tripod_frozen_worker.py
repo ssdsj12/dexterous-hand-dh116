@@ -1,6 +1,9 @@
 """Frozen Tripod launch consumes the actual schema/profile and current source closure."""
 from pathlib import Path
 import json
+import os
+import subprocess
+import sys
 
 from scripts.run_dh116_work_packages import Repository
 from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile, digest
@@ -8,7 +11,7 @@ from go2_pvcnn.control.dh116.tabletop_native_teacher_preflight import load_reset
 from go2_pvcnn.control.dh116.tabletop_native_teacher_worker_contract import worker_training_target_contract
 
 ROOT = Path(__file__).resolve().parents[1]
-NAME = "teacher.tripod-ppo-fresh-smoke8-v9"
+NAME = "teacher.tripod-ppo-fresh-smoke8-v10"
 
 
 def test_frozen_tripod_worker_retains_real_tripod_reset_and_finite_native_budget(tmp_path):
@@ -38,3 +41,16 @@ def test_frozen_tripod_worker_retains_real_tripod_reset_and_finite_native_budget
     assert pin["limits"]["inner_wall_timeout_s"] == 180
     # Structural parsing and current source hashes grant neither a native lease nor a grasp.
     assert config["model_config"]["native_ready"] is False
+    assert recipe["spec"]["environment"] == {"DH116_NUM_THREADS": "1"}
+    # Exercise the real existing launcher with deliberately conflicting inherited
+    # numeric settings. CUDA is masked; this imports no Isaac app or solver.
+    probe = "import os,torch,json;print(json.dumps(dict(torch_threads=torch.get_num_threads()," \
+        "omp=os.environ.get('OMP_NUM_THREADS'),openblas=os.environ.get('OPENBLAS_NUM_THREADS')," \
+        "mkl=os.environ.get('MKL_NUM_THREADS'),cuda=os.environ.get('CUDA_VISIBLE_DEVICES'))))"
+    result = subprocess.run(["bash", str(ROOT/"scripts/python.sh"), "-c", probe],
+        cwd=ROOT,env={**os.environ, **recipe["spec"]["environment"],
+            "DH116_PYTHON":sys.executable,"CUDA_VISIBLE_DEVICES":"",
+            "OMP_NUM_THREADS":"17","OPENBLAS_NUM_THREADS":"17","MKL_NUM_THREADS":"17"},
+        capture_output=True,text=True,check=True,timeout=60)
+    assert json.loads(result.stdout.splitlines()[-1]) == dict(
+        torch_threads=1,omp="1",openblas="1",mkl="1",cuda="")

@@ -1,0 +1,39 @@
+{
+  "version": "dh116-teacher-tripod-smoke8-native-v10",
+  "status": "frozen_unexecuted",
+  "identity": {
+    "actual_identity": {
+      "companion_sha256": "46b30fc3e706d947e70f1ec08f878448f5c68050a2c8de0ce4dbaee7e5abf215",
+      "core_recipe_identity": {
+        "code_config_sha256": "4ef793acd0868177ac4f0df6819a60963ccc844e40f8765662db0145f345fb30",
+        "command_spec_sha256": "857befe1a581bc9d43cd1dc1b09f3feee77514468cdc9875c94d1b9fabc8cd5d"
+      },
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "source_closure_sha256": "0cdca4ea2008909cb7d0ebc157785a031b1997e27bd4726e7abcd8f2edec778d"
+    },
+    "attempt_fingerprint": "01d238dc651cc69a1cc0f32ff9b4bdb76a23578398d4e7b4a904f93db4288fbc",
+    "core_identity": {
+      "code_config_sha256": "4ef793acd0868177ac4f0df6819a60963ccc844e40f8765662db0145f345fb30",
+      "command_spec_sha256": "857befe1a581bc9d43cd1dc1b09f3feee77514468cdc9875c94d1b9fabc8cd5d"
+    }
+  },
+  "environment": {
+    "DH116_NUM_THREADS": "1"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "planned_sdk_steps": 66,
+  "planned_control_steps": 8,
+  "planned_solver_calls": 64,
+  "planned_internal_solver_substeps": 768,
+  "planned_updates": 1,
+  "inner_wall_s": 180,
+  "outer_wall_s": 240,
+  "full_runtime_verified": false,
+  "automatic_retry": false,
+  "automatic_forced_cleanup": false,
+  "launch_readiness": "finite candidate after source publication and actual current resource/authorization checks"
+}

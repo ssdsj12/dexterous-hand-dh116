@@ -1,0 +1,130 @@
+{
+  "version": "dh116-native-cpu-resource-recipe-v1",
+  "base_head": "c9c15aac75440347c7cd9916e680d015f588af73",
+  "status": "cpu_configured_frozen_native_v10_unexecuted",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_worker_contract.py": "b711c7f65c6b672ee52d0bcd53359dddc1f0bc8139cc04b1583cd9f5885053dc",
+    "tests/test_native_teacher_worker_contract.py": "e51f9c666685df125bbdff87d7d74cd1b9674ce6cea5839fdeda7973c98bf6f6",
+    "tests/test_native_teacher_tripod_frozen_worker.py": "7033f2951162252999b03b5d5e5cfafea010b7fc89961a49de9d1dafced3e58f",
+    "scripts/python.sh": "3aadbf9026b9ccc9008a7b72eb5eb2cbacd2087fa5153e6717d32b6f991bf27e"
+  },
+  "cpu": {
+    "passed": 144,
+    "failed": 0,
+    "new_cases": 9,
+    "seconds": 34.33,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_native_teacher_tripod_frozen_worker.py",
+      "tests/test_native_teacher_worker_contract.py",
+      "tests/test_native_teacher_actual_launch.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/native-cpu-resource-recipe-frozen-green.log",
+    "sha256": "6b446aeebfb29589cf2a78b1853ae5d0b50a7912e5caf7c1ae64b7c344c7e7a3",
+    "contract_red_sha256": "d7ebdd138ff1aa4be84867ea720482f9d7d8dbbb6999ee2012ee835f78b47dc9",
+    "frozen_red_sha256": "968b85fde84cd1d69a424307aac68c2df73aae38ab1d5b2f7596be00b934e670",
+    "intermediate_passed": 142,
+    "intermediate_overlaps": true
+  },
+  "launcher_readback": {
+    "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/native-cpu-resource-launcher-readback.json",
+    "sha256": "fb9c467ae1dac9b815ce3eada206ba0043bd08de2fef0f13f58c5dd313fdfdf3",
+    "effective": {
+      "python": "3.10.12",
+      "torch": "2.7.0+cu128",
+      "numpy": "1.26.4",
+      "torch_threads": 1,
+      "torch_interop_threads": 64,
+      "selected_threads": "1",
+      "omp": "1",
+      "openblas": "1",
+      "mkl": "1",
+      "numba": "1",
+      "cuda_visible_devices": ""
+    },
+    "uses_original_scripts_python_sh": true,
+    "inherited_thread_variables": 17,
+    "cuda_masked": true
+  },
+  "environment_schema": {
+    "optional": true,
+    "allowed_keys": [
+      "DH116_NUM_THREADS"
+    ],
+    "canonical_string_range": [
+      1,
+      64
+    ],
+    "foreign_library_path_allowed": false,
+    "old_no_environment_recipes_unchanged": true,
+    "recipe_identity_changes_when_threads_change": true
+  },
+  "selected_environment": {
+    "DH116_NUM_THREADS": "1"
+  },
+  "thread_interop_unchanged": 64,
+  "benchmark_refs": [
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-v9-geometry-thread-benchmark.json",
+      "sha256": "b8f59ed8c1c7c5ff70d9d4b76ef2e531282bc53f7120353cc3d5a37e104f3c9c"
+    },
+    {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-v9-inference-thread-benchmark.json",
+      "sha256": "469c99089f1bd562e693043f14dd300176720fcac13b87072a57ca5f1f4ecc07"
+    }
+  ],
+  "next_native_identity": {
+    "actual_identity": {
+      "companion_sha256": "46b30fc3e706d947e70f1ec08f878448f5c68050a2c8de0ce4dbaee7e5abf215",
+      "core_recipe_identity": {
+        "code_config_sha256": "4ef793acd0868177ac4f0df6819a60963ccc844e40f8765662db0145f345fb30",
+        "command_spec_sha256": "857befe1a581bc9d43cd1dc1b09f3feee77514468cdc9875c94d1b9fabc8cd5d"
+      },
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "source_closure_sha256": "0cdca4ea2008909cb7d0ebc157785a031b1997e27bd4726e7abcd8f2edec778d"
+    },
+    "attempt_fingerprint": "01d238dc651cc69a1cc0f32ff9b4bdb76a23578398d4e7b4a904f93db4288fbc",
+    "core_identity": {
+      "code_config_sha256": "4ef793acd0868177ac4f0df6819a60963ccc844e40f8765662db0145f345fb30",
+      "command_spec_sha256": "857befe1a581bc9d43cd1dc1b09f3feee77514468cdc9875c94d1b9fabc8cd5d"
+    }
+  },
+  "source_files": 565,
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "whole_native_wall_fit_verified": false,
+  "physical_parameters_changed": false,
+  "old_reset_source_changed": false,
+  "environment_packages_changed": false,
+  "cameras_changed": false,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "protected_files_verified": 528,
+  "original_checkpoints_verified": 3,
+  "next": "Publish exact frozen config, recheck real resource/authorization, execute at most one v10 bounded diagnostic; preserve v9 failure.",
+  "review": {
+    "independent_readonly": "passed_no_major_findings",
+    "reviewer_ran_tests": false,
+    "antigravity": "quota unavailable; no new response",
+    "canonical_negative_added": true
+  },
+  "post_metadata_registry": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 15.98,
+    "overlaps_main_suite": true,
+    "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/native-cpu-resource-recipe-registry-final-green.log",
+    "sha256": "5a9c7b886e26795d5df20673c508a32add7a8824d7847e24802b5888a998dcbd"
+  },
+  "user_untracked_in_source_closure": false
+}
