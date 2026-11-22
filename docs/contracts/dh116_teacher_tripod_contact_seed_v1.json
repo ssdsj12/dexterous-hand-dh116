@@ -226,7 +226,8 @@
       "first_fail": {
         "travel_m": 0.0025,
         "rod_gap_m": 0.0001843032303628367,
-        "table_gap_m": 0.051068135200664
+        "table_gap_m": 0.051068135200664,
+        "limiting_hull": "False.finger14_link"
       }
     },
     {
@@ -244,7 +245,8 @@
       "first_fail": {
         "travel_m": 0.00175,
         "rod_gap_m": 0.00011692687291198212,
-        "table_gap_m": 0.06136639895375762
+        "table_gap_m": 0.06136639895375762,
+        "limiting_hull": "False.finger13_link"
       }
     }
   ],
@@ -338,8 +340,107 @@
       "original native Reset preserved"
     ]
   },
-  "native_run": null,
+  "native_run": {
+    "verified": true,
+    "source_head": "fd04b8278ed800406da3b42cf541308ddcd20b04",
+    "frozen_sha256": "100f323fe33083f01d348e25f569e2fb56796f52fd85ada447f42486a71625dd",
+    "outer_sha256": "3de9d08bbd8afc3c88cfb9f27c1bd5f00d4069c7fb090e90edb741f1813a9698",
+    "artifact_count": 37,
+    "elapsed_s": 66.34541866905056,
+    "native_exit": 0,
+    "reset_count": 1,
+    "sdk_steps": 10,
+    "solver_substeps": 96,
+    "control_steps": 0,
+    "ppo_updates": 0,
+    "hull_count": 44,
+    "support_gap_m": 0.006493219768530383,
+    "support_forces_n": {
+      "table": 0.0,
+      "support_0": 0.03477432663931646,
+      "support_1": 0.03473765150533307
+    },
+    "hand_q": {
+      "left": {
+        "q_max_error_rad": 0.0,
+        "qd_max_rad_s": 0.0,
+        "root_pose_wxyz": [
+          0.5301424264907837,
+          0.12239645421504974,
+          0.44256243109703064,
+          -0.4263382852077484,
+          -0.4701642692089081,
+          0.6254987120628357,
+          0.45379796624183655
+        ]
+      },
+      "right": {
+        "q_max_error_rad": 0.0,
+        "qd_max_rad_s": 0.0,
+        "root_pose_wxyz": [
+          0.46689295768737793,
+          -0.1200726255774498,
+          0.4837864339351654,
+          0.4561062455177307,
+          0.7942754030227661,
+          -0.3328418433666229,
+          -0.22429883480072021
+        ]
+      }
+    },
+    "spec": {
+      "measured_radius_m": 0.0044999998062849045,
+      "rest_length_m": 0.44999998807907104,
+      "total_mass_kg": 0.023692499297299854,
+      "weight_n": 0.23242342804827992,
+      "evidence_scope": "native_parameter_getter_readback",
+      "hardware_measured": false
+    },
+    "grasp_qualified": false,
+    "teacher_admission": false,
+    "evidence_root": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-contact-dynamics-v1/native-run-v1",
+    "post_run_audit_sha256": "1cb6cbb51be9e078d02288f82e4cf95916af5d2d0d89e40e4b36ec8beff7cbdd",
+    "first_audit_rejected_scope": "incorrect R0 expectation corrected independently; original R0 false is retained",
+    "command": [
+      "bash",
+      "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/scripts/python.sh",
+      "-B",
+      "-m",
+      "scripts.verify_dh116_wire_variant_isaac",
+      "--output",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-contact-dynamics-v1/native-run-v1/native",
+      "--plan",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-contact-dynamics-v1/native-run-v1/plan.json",
+      "--task-config",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-contact-dynamics-v1/contact-seeded-nominal-v2.json",
+      "--task-sha256",
+      "e4d98a8027b97222b0370285cd7b93cc601aeb1de6200f6d3670498cb3c3f75e",
+      "--rays",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2203-power-palm-rays-enabled-native/native/palm_rays.json",
+      "--left-bake",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2184-left-power-sdf-native/bake",
+      "--right-bake",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2200-right-power-sdf-native/bake",
+      "--proximal-capture",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2312-power-proximal-tensor-ray-native",
+      "--proximal-bake",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2314-power-proximal-sdf-half-mm/bake",
+      "--catalog",
+      "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/configs/dh116_training/supported_wire_generalization_v1.json",
+      "--catalog-sha256",
+      "c68729f3e114e15f3e9efddc262877c6c14b1ecc062fcf34c741505654b47fee",
+      "--variant",
+      "r45-l450",
+      "--left-material-id",
+      "35",
+      "--right-material-id",
+      "3",
+      "--approved-frozen-sha256",
+      "100f323fe33083f01d348e25f569e2fb56796f52fd85ada447f42486a71625dd"
+    ]
+  },
   "grasp_qualified": false,
   "teacher_admission": false,
-  "generalization_qualified": false
+  "generalization_qualified": false,
+  "next": "Use separated side motion and adjust the right thumb approach so its proximal hull stays outside the wire envelope."
 }

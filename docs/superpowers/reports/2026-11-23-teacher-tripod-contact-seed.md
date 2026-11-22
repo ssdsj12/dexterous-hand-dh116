@@ -14,8 +14,20 @@ The actual 9 mm × 450 mm candidate uses one authored straight rod pose and an a
 - Right minimum rod gap 1.247 mm, minimum table gap 62.983 mm, and minimum support gap 6.493 mm.
 - The right middle pad remains 7.241 mm from the conservative rod envelope. Reversing all 14.5 mm would take at least 1.45 s at the original wrist rate. There is no claimed safe straight path into full grasp.
 
-Antigravity reviewed all three steps, including the actual generator, selected frame and original runtime path. The 77 CPU regressions passed. The first native plan preflight stopped on a noncanonical filename before Isaac. The next preflight resolved the same file and passed. The original runtime must still verify the resized native Reset, actual hulls and short support exchange.
+Antigravity reviewed all three steps, including the actual generator, selected frame and original runtime path. The 77 CPU regressions passed. The first native plan preflight stopped on a noncanonical filename before Isaac. The next preflight resolved the same file and passed. The native result is recorded below.
 
 ## Next controlled phase
 
 Measure approach against the actual pad SDF distances, then use multiple sample windows of measured force and geometric clearance to select closing or relief. Keep the existing target-only action path. Progress to Lift only from consecutive stable opposing contact. The separate Pinch and Power contact criteria and all off-support height, hold and slip requirements still apply.
+
+## Native contact-seeded Reset
+
+GPU2 executed the published candidate. The native run completed a single Reset, 10 SDK steps and 96 DeformX substeps in 66.345 s. No actions, model queries or PPO updates ran. Both GDB and the outer process exited naturally with code 0. The independent verifier checked all 37 native hashes, the two actual joint-state packets, the 44 collision envelopes, the 17-mesh solver, the two end supports and the live CUDA material readback. The first audit expected a training-specific R0 flag. The diagnostic correctly leaves R0 false. The corrected verifier requires that flag to remain false and checks the explicit successful native Reset and hand readbacks.
+
+The SDK2 q readback matched all six source active joints exactly at recorded precision on each hand and both measured qd vectors were zero. Minimum native hand-to-support separation was 6.493 mm. At SDK10 the end supports carried 34.774 mN and 34.738 mN. The table load and all hand contact counts were zero. Actual native radius was 4.5 mm and rest length was 450 mm. No stable grasp, lift, or training outcome is claimed.
+
+## Guarded reverse-approach screen
+
+The CPU check of the reverse retreat preserved the static plus eight measured sag frames. It admitted 2.25 mm on the left and 1.50 mm on the right before the next 0.25 mm sample tripped the non-contact limit. The left limiting hull is the intended distal thumb `finger14_link`. The right limiting hull is the non-target proximal thumb `finger13_link`. Reversing the entire retreat would cross the right protection boundary before achieving the intended distal contacts. Plan an explicit proximal-thumb relief and approach one side at a time while keeping the existing contact and non-contact guards.
+
+Frozen SHA256 `100f323fe33083f01d348e25f569e2fb56796f52fd85ada447f42486a71625dd`. Outer receipt SHA256 `3de9d08bbd8afc3c88cfb9f27c1bd5f00d4069c7fb090e90edb741f1813a9698`.

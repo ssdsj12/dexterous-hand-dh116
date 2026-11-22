@@ -50328,8 +50328,11 @@
       "readiness": "docs/contracts/dh116_teacher_tripod_contact_seed_v1.json",
       "last_result": {
         "cpu_passed": 77,
-        "native_status": "pending",
-        "teacher_admission": false
+        "native_status": "passed_measured_contact_seeded_reset",
+        "teacher_admission": false,
+        "sdk_steps": 10,
+        "solver_substeps": 96,
+        "outer_sha256": "3de9d08bbd8afc3c88cfb9f27c1bd5f00d4069c7fb090e90edb741f1813a9698"
       }
     }
   },
