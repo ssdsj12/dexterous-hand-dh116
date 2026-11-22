@@ -285,6 +285,10 @@ def freeze(args):
         if not getattr(args, "compose_pivot_preview", False):
             raise ValueError("thumb re-seat requires the guarded composed opposition plan")
         plan["left_opposition"]["thumb_reseat"] = True
+    if getattr(args, "coupled_close", False):
+        if not getattr(args, "thumb_reseat", False):
+            raise ValueError("coupled close requires the guarded thumb re-seat plan")
+        plan["left_opposition"]["coupled_close"] = True
     return plan
 
 
@@ -329,6 +333,7 @@ def acquire(sim, owners, trace, output, *, plan):
     motion_stop = None
     frames_sdk = prior_frames = live_frames = prior_nodes = live_nodes = None
     recent_load = None
+    index_steps = coupled_steps = 0
     opposition_rows = 0
     max_opposed_substeps = 0
     loaded_opposed_ticks = 0
@@ -381,7 +386,8 @@ def acquire(sim, owners, trace, output, *, plan):
             stations = {} if distal is None else distal["stations"]
             if opposition:
                 from go2_pvcnn.control.dh116.tabletop_wire_live_opposition import (
-                    INDEX, THUMB, IndexReaction, choose_thumb_reseat, close_action_joint_names, compose_projected_pivot,
+                    INDEX, THUMB, IndexReaction, choose_coupled_close, choose_thumb_reseat,
+                    close_action_joint_names, compose_projected_pivot,
                     guard_prediction, index_closure,
                     left_loads, ready_after_thumb,
                 )
@@ -542,6 +548,7 @@ def acquire(sim, owners, trace, output, *, plan):
 
         def observe(row):
             nonlocal prior_nodes, live_nodes, recent_load
+            nonlocal index_steps, coupled_steps
             nonlocal opposition_rows, max_opposed_substeps, loaded_opposed_ticks, index_peak_n, thumb_peak_n
             sdk = row["physics_step"]
             if geometry_row["physics_step"] != sdk or row["reaction_source_physics_step"] != sdk-1:
@@ -559,6 +566,8 @@ def acquire(sim, owners, trace, output, *, plan):
                 elif phase == "close":
                     issued = row["action_readback"]["request"]["action24"][0]
                     moving = close_action_joint_names(issued, allow_thumb_reseat=opposition.get("thumb_reseat", False))
+                    index_steps += int(bool(issued[2]))
+                    coupled_steps += int(bool(issued[2]) and bool(issued[12:15].any()))
                 else:
                     moving = JOINT_NAMES if phase == "approach" else ()
                 held = [i for i, name in enumerate(pre["joint_names"]) if name not in moving]
@@ -646,6 +655,7 @@ def acquire(sim, owners, trace, output, *, plan):
             idx = runtime.bindings[INDEX]["body_index"]
             index_reaction = IndexReaction(body_id=idx)
             close_start = None
+            coupled_close = opposition.get("coupled_close", False)
             position, rotation = geometry_row["poses"]["left.base_link"]
             projection = previous["action_readback"]["submission"]
             _, _, pivot_actions = pivot_commands(np.r_[position, np.roll(rotation, 1)],
@@ -659,7 +669,10 @@ def acquire(sim, owners, trace, output, *, plan):
                 def projected_pivot():
                     live = geometry() if reseat_geometry is None else reseat_geometry
                     targets = contact_owner.previous["wrist_projection"]
-                    return compose_projected_pivot(candidate, root_seed_w=root,
+                    wrist_candidate = candidate.copy()
+                    if coupled_close and reseat_geometry is not None:
+                        wrist_candidate[2] = 0.
+                    return compose_projected_pivot(wrist_candidate, root_seed_w=root,
                         measured_base_w=live["root_poses_w"], clearance_m=live["clearance_m"],
                         palm_offsets_m=targets["palm_offsets_m"], angles_rad=targets["projected_angles"],
                         allow_translation_only=reseat_geometry is not None)
@@ -669,7 +682,7 @@ def acquire(sim, owners, trace, output, *, plan):
                 return guard_prediction(action=candidate, frames=live_frames, before_frames=prior_frames,
                     nodes=live_nodes, before_nodes=prior_nodes, shapes=shapes, selected=selected,
                     left_palm=geometry_row["poses"]["left.base_link"][0],
-                    finger_travel=finger_travel if phase == "close" and reseat_geometry is None else {},
+                    finger_travel=finger_travel if phase == "close" and candidate[2] else {},
                     boxes=boxes, table_top=table_top, radius=radius,
                     composed_pivot=projected_pivot if phase == "pivot"
                     and opposition.get("composed_pivot_preview") else None)
@@ -696,12 +709,15 @@ def acquire(sim, owners, trace, output, *, plan):
                 if hold:
                     return torch.zeros_like(proposed), dict(paused=True, reason="retain_opposition_targets")
                 candidate = proposed[0].numpy()
+                if coupled_close and phase == "close" and index_steps >= 8*close_windows:
+                    return torch.zeros_like(proposed), dict(paused=True, reason="index_command_travel_complete")
                 if phase == "close" and opposition.get("thumb_reseat"):
                     if np.any(candidate[12:15]):
                         if full_thumb_load():
                             return torch.zeros_like(proposed), dict(paused=True, reason="thumb_load_restored")
-                        if np.any(candidate[np.r_[:12, 15:24]]):
-                            raise ValueError("thumb re-seat only permits left wrist translation")
+                        forbidden = np.r_[:2, 3:12, 15:24] if coupled_close else np.r_[:12, 15:24]
+                        if np.any(candidate[forbidden]):
+                            raise ValueError("thumb re-seat proposal moved an unapproved target")
                         live = geometry()
                         gap = translated_thumb_gap(np.zeros(3))
                         shift = candidate[12:15] * ACTION_CONTRACT["translation_rate_m_s"] / 480
@@ -712,7 +728,8 @@ def acquire(sim, owners, trace, output, *, plan):
                             return torch.zeros_like(proposed), dict(paused=True, reason="thumb_sdf_no_improvement")
                         preview = preview_opposition(candidate, reseat_geometry=live)
                         return (proposed if preview["passed"] else torch.zeros_like(proposed),
-                                dict(paused=not preview["passed"], reason="thumb_wrist_reseat",
+                                dict(paused=not preview["passed"],
+                                     reason="thumb_wrist_and_index" if candidate[2] else "thumb_wrist_reseat",
                                      gap_m=gap, next_gap_m=next_gap, preview=preview))
                     if not full_thumb_load() or not np.any(candidate):
                         return torch.zeros_like(proposed), dict(paused=True, reason="await_full_thumb_load")
@@ -735,13 +752,26 @@ def acquire(sim, owners, trace, output, *, plan):
                 if stage == "close":
                     close_start = native.clock(sim)["sdk_step"]
                     contact_owner.stations = stations
+                    if coupled_close:
+                        begin = contact_owner.previous["action_readback"]["post"]["hands"]["left"]
+                        index_joint = begin["joint_names"].index("finger21")
+                        index_start = float(begin["q"][0, index_joint])
+                        remaining = min((end_sdk - close_start) // 8,
+                                        plan["budget"]["control_steps"] - n_controls)
+                        remaining -= opposition["hold_windows"]
+                        if remaining < close_windows:
+                            raise ValueError("frozen budget cannot cover nominal close and hold")
+                        batch = (close_action,)*remaining
                 for additional in batch:
                     if stage == "close" and opposition.get("thumb_reseat") and not full_thumb_load():
                         live = geometry()
                         if geometry_row["rod_source_physics_step"] != contact_owner.previous["physics_step"]:
                             raise ValueError("thumb re-seat proposal requires the completed rod boundary")
-                        reseat = choose_thumb_reseat(translated_thumb_gap,
-                            lambda action: preview_opposition(action, reseat_geometry=live))
+                        def preview_reseat(action):
+                            return preview_opposition(action, reseat_geometry=live)
+
+                        reseat = (choose_coupled_close(additional, translated_thumb_gap, preview_reseat)
+                                  if coupled_close else choose_thumb_reseat(translated_thumb_gap, preview_reseat))
                         additional = reseat["action"]
                         reseat_windows += 1
                     result = control.control(torch.as_tensor(additional)[None], observe=observe,
@@ -749,7 +779,8 @@ def acquire(sim, owners, trace, output, *, plan):
                     n_controls += 1
                     if result["termination_reason"] or result["physical_samples"] != 8:
                         raise ValueError(f"opposition stopped: {result['termination_reason']}")
-                    if motion_stop or stage == "close" and index_reaction.first_contact_sdk is not None:
+                    if motion_stop or stage == "close" and (
+                            index_reaction.first_contact_sdk is not None or coupled_close and index_steps >= 8*close_windows):
                         break
             probe_result = dict(start_sdk=opposition_start, close_start_sdk=close_start,
                 last_sdk=native.clock(sim)["sdk_step"], physical_samples=opposition_rows, motion_stop=motion_stop,
@@ -762,6 +793,10 @@ def acquire(sim, owners, trace, output, *, plan):
                 teacher_admission=False, grasp_qualified=False, lift_promoted=False)
             if opposition.get("thumb_reseat"):
                 probe_result["close_windows_reserved_for_reseat"] = reseat_windows
+            if coupled_close and close_start is not None:
+                final = contact_owner.previous["action_readback"]["post"]["hands"]["left"]
+                probe_result.update(index_issued_substeps=index_steps, coupled_issued_substeps=coupled_steps,
+                                    measured_index_delta_rad=float(final["q"][0, index_joint]) - index_start)
             native.write_new(output/"settled_left_opposition.json", probe_result)
 
         last_tick = native.clock(sim)["sdk_step"]
@@ -845,6 +880,7 @@ def main():
     parser.add_argument("--opposition-proof-sha256")
     parser.add_argument("--compose-pivot-preview", action="store_true")
     parser.add_argument("--thumb-reseat", action="store_true")
+    parser.add_argument("--coupled-close", action="store_true")
     parser.add_argument("--approved-frozen-sha256")
     parser.add_argument("--verify-existing-plan", action="store_true")
     args = parser.parse_args()
@@ -879,6 +915,8 @@ def main():
         child_args.append("--compose-pivot-preview")
     if args.thumb_reseat:
         child_args.append("--thumb-reseat")
+    if args.coupled_close:
+        child_args.append("--coupled-close")
     subprocess.run([sys.executable, "-B", "-m", "scripts.verify_dh116_wire_live_palm_approach",
                     *child_args, "--verify-existing-plan"], check=True)
     for path, digest in frozen["frozen_files"].items():

@@ -50559,6 +50559,25 @@
         "teacher_admission": false,
         "generalization_qualified": false
       }
+    },
+    "teacher.tripod-coupled-close": {
+      "title": "Guard simultaneous Tripod thumb recovery and index closure",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-thumb-reseat"
+      ],
+      "tests": [
+        "tests/test_wire_thumb_reseat.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-coupled-close.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_coupled_close_v1.json",
+      "last_result": {
+        "cpu_passed": 147,
+        "native_status": "pending",
+        "teacher_admission": false,
+        "grasp_qualified": false
+      }
     }
   },
   "execution_target": {

@@ -68,3 +68,45 @@ def test_native_close_readback_accepts_real_cpu_torch_action():
     issued.zero_()
     issued[0, 2] = .3
     assert close_action_joint_names(issued[0], allow_thumb_reseat=True) == ("finger21", "finger22")
+
+def test_coupled_close_preserves_nominal_index_and_rechecks_wrist_only_fallback():
+    from go2_pvcnn.control.dh116.tabletop_wire_live_opposition import choose_coupled_close
+
+    index = np.zeros(24)
+    index[2] = .25
+    seen = []
+
+    def preview(action):
+        seen.append(action.copy())
+        return {"passed": True}
+
+    def gap(shift):
+        return 3e-6 - shift[0]
+
+    coupled = choose_coupled_close(index, gap, preview)
+    assert coupled["action"][2] == .25
+    assert coupled["action"][12] > 0
+    np.testing.assert_array_equal(coupled["action"], seen[-1])
+    assert np.count_nonzero(coupled["action"]) == 2
+
+    def reject_motion_mix(action):
+        return {"passed": bool(action[2] == 0)}
+
+    wrist_only = choose_coupled_close(index, gap, reject_motion_mix)
+    assert wrist_only["action"][2] == 0
+    assert wrist_only["action"][12] > 0
+    hold = choose_coupled_close(index, gap, lambda action: {"passed": False})
+    assert not np.any(hold["action"])
+
+
+def test_coupled_close_only_allows_original_index_and_left_wrist_readback():
+    import torch
+
+    from go2_pvcnn.control.dh116.tabletop_palm_mount import JOINT_NAMES
+    from go2_pvcnn.control.dh116.tabletop_wire_live_opposition import close_action_joint_names
+
+    action = torch.zeros(24)
+    action[2] = .25
+    action[12] = .3
+    assert close_action_joint_names(action, allow_thumb_reseat=True) == ("finger21", "finger22") + JOINT_NAMES
+    assert close_action_joint_names(action, allow_thumb_reseat=False) == ("finger21", "finger22")

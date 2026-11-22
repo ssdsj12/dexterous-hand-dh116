@@ -94,11 +94,9 @@ def close_action_joint_names(issued, *, allow_thumb_reseat):
     from .tabletop_palm_mount import JOINT_NAMES
 
     action = np.asarray(issued)
-    if action[2]:
-        return "finger21", "finger22"
-    if allow_thumb_reseat and np.any(action[12:15]):
-        return JOINT_NAMES
-    return ()
+    fingers = ("finger21", "finger22") if action[2] else ()
+    wrist = JOINT_NAMES if allow_thumb_reseat and np.any(action[12:15]) else ()
+    return fingers + wrist
 
 
 def choose_thumb_reseat(gap_after_translation, preview):
@@ -130,6 +128,18 @@ def choose_thumb_reseat(gap_after_translation, preview):
             return dict(action=action, reason="thumb_wrist_reseat", gap_m=float(gap),
                         predicted_gap_m=float(endpoint))
     return result
+
+
+def choose_coupled_close(index_action, gap_after_translation, preview):
+    """Try the nominal index and re-seat together before offering re-seat alone."""
+    nominal = np.asarray(index_action, dtype=float)
+    if (nominal.shape != (24,) or not 0. < nominal[2] <= 1.
+            or np.any(nominal[np.r_[:2, 3:24]])):
+        raise ValueError("one bounded left index increment required")
+    result = choose_thumb_reseat(gap_after_translation, lambda wrist: preview(wrist + nominal))
+    if np.any(result["action"]):
+        return dict(result, action=result["action"] + nominal, reason="thumb_wrist_and_index")
+    return choose_thumb_reseat(gap_after_translation, preview)
 
 
 def compose_projected_pivot(action, *, root_seed_w, measured_base_w, clearance_m, palm_offsets_m, angles_rad,

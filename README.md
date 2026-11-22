@@ -1,3 +1,5 @@
+The opt-in Tripod diagnostic can combine a measured wrist re-seat and an index increment under the existing collision and motion limits. CPU geometry replay passed; native opposing contact remains pending. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-coupled-close.md)
+
 An opt-in evaluation catalog crosses eight unseen wire diameter, length and stiffness combinations and excludes them from the training pilot. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-factorial-holdout.md)
 
 Opt-in Tripod wrist re-seat restored native thumb load on a 9 mm wire and exited naturally. The index did not reach contact within the original control budget. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-thumb-reseat.md)
