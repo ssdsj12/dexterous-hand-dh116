@@ -1,3 +1,5 @@
+The repaired supported exchange now has a new real fresh17 Tripod Reset proof:2 SDK initialization steps,0 control/solver/PPO,natural outer/inferior exit0 in106.75s.90 CPU/actual-artifact checks pass. This refreshes Reset evidence only;Teacher contact and grasp remain unqualified. [Report](docs/superpowers/reports/2026-11-22-tripod-route-order-reset-native.md).
+
 Actual Tripod v11 raw replay now preserves same-clock contact,actions,q/qd and external support.64/64 rows have0 required bilateral contact and0 support-free rows:the short PPO diagnostic did not grasp.130 CPU checks pass;no new native or training run. [Report](docs/superpowers/reports/2026-11-22-actual-supported-contact-ledger.md).
 
 Supported fresh/continued reactions now bind bodies in the same canonical order as measured forces and torques.3 original-code failures reproduced;212 CPU regressions pass. Old native source pins correctly reject this changed implementation;new matching Reset evidence is required. [Report](docs/superpowers/reports/2026-11-22-supported-reaction-route-order.md).

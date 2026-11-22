@@ -49370,6 +49370,38 @@
       "readiness": "docs/contracts/dh116_actual_supported_contact_ledger_v1.json",
       "native_runs": 0,
       "reason": "130 CPU checks pass;64 historical native rows independently reduced,0 bilateral and0 off-support;no grasp qualification."
+    },
+    "teacher.tripod-route-order-reset-native": {
+      "title": "Verify real fresh17 Reset after canonical reaction-order source repair",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-reaction-route-order"
+      ],
+      "tests": [
+        "tests/test_tripod_supported_reset_capture.py",
+        "tests/test_fresh_supported_builder.py",
+        "tests/test_fresh_supported_physical_exchange.py",
+        "tests/test_supported_mesh_reset.py",
+        "tests/test_native_teacher_supported_reset.py",
+        "tests/test_physical_exchange_route_order.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-tripod-route-order-reset-native.md",
+      "readiness": "docs/contracts/dh116_tripod_route_order_reset_native_v3.json",
+      "reason": "Actual one-shot fresh17 Reset verified against2054 frozen source files,natural exit0;no control/PPO/contact/grasp qualification.",
+      "native_runs": 1,
+      "last_result": {
+        "result_sha256": "450f21eb2ea7e5996bfb564fb2f45143b754e84f2241fb0b94e2329fee85f002",
+        "native_reset_component_verified": true,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "sdk_steps": 2,
+        "solver_steps": 0,
+        "control_steps": 0,
+        "native_ppo_updates": 0,
+        "exit_code": 0
+      }
     }
   },
   "execution_target": {
