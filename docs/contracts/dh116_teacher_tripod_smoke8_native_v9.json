@@ -1,6 +1,6 @@
 {
   "version": "dh116-teacher-tripod-smoke8-native-v9",
-  "status": "frozen_unexecuted",
+  "status": "failed_native_parent_wall_deadline",
   "identity": {
     "actual_identity": {
       "companion_sha256": "b69b7320af8527873575b8a3b153b92564a760ccaeb7cd350f0a60180886a68f",
@@ -17,8 +17,8 @@
       "command_spec_sha256": "185d5823b0eeb258f343f3ff90cc20f984ee406f9d1ddf097f50374b192ffbb9"
     }
   },
-  "native_runs": 0,
-  "native_ppo_updates": 0,
+  "native_runs": 1,
+  "native_ppo_updates": 1,
   "teacher_admission": false,
   "grasp_qualified": false,
   "planned_sdk_steps": 66,
@@ -27,10 +27,25 @@
   "wall_inner_s": 180,
   "wall_outer_s": 240,
   "full_runtime_verified": false,
-  "launch_readiness": "single bounded diagnostic only after actual resource and authorization checks",
+  "launch_readiness": false,
   "supersedes_unexecuted": [
     "v6",
     "v7",
     "v8"
-  ]
+  ],
+  "native_readback": {
+    "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-smoke8-native-v9-readback.json",
+    "sha256": "b4eb8747f686d2a7e26e9fb7ac0ca2a351f647df6fd51f8cbba37487b01f670d"
+  },
+  "tested_head": "fcb22947d332dcfd788a70615cdb982e87fb8da9",
+  "outer_exit_code": 1,
+  "debugger_signal": null,
+  "natural_exit_0": false,
+  "app_close_returned": true,
+  "actual_sdk_steps": 66,
+  "actual_control_steps": 8,
+  "actual_internal_solver_substeps": 768,
+  "accepted_minibatch_updates": 1,
+  "checkpoint_admitted": false,
+  "blocker": "Budget guard rejected after one computed update; same fingerprint spent, no retry or resume"
 }

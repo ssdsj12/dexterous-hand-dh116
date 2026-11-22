@@ -142,10 +142,27 @@ def _record_actual_wall_budget(collector, lease, phase, *, operation="fresh_upda
     owner = collector.owner
     runtime = owner.contract.runtime
     sample = runtime.wall_readback()
-    if (sample["parent_deadline_s"] != lease.deadline_monotonic_s or sample["remaining_s"] <= 0.
-            or owner.context.external_cap_s != sample["local_cap_s"]
-            or owner.context.episode_cap_s != owner.contract.config.episode_cap_s):
-        raise ValueError("live actual Teacher wall budget or context cap differs")
+    rejected = []
+    if sample["parent_deadline_s"] != lease.deadline_monotonic_s:
+        rejected.append("parent_deadline_mismatch")
+    if sample["remaining_s"] <= 0.:
+        rejected.append("wall_deadline_exhausted")
+    if owner.context.external_cap_s != sample["local_cap_s"]:
+        rejected.append("external_cap_mismatch")
+    if owner.context.episode_cap_s != owner.contract.config.episode_cap_s:
+        rejected.append("episode_cap_mismatch")
+    if rejected:
+        # Preserve the unmodified failing sample before rejecting this run.
+        # A sealed checkpoint alone never overrides the parent budget decision.
+        payload = dict(sample, phase=phase, episode_uid=owner.episode_uid,
+            sdk_step=owner.sim.current_time_step_index, episode_cap_s=owner.context.episode_cap_s,
+            rejection_reasons=rejected, native_qualification=False, teacher_admission=False)
+        message = "live actual Teacher wall budget or context cap differs"
+        try:
+            collector.journal.emit(operation + "_rejected", payload)
+        except Exception as error:
+            raise ValueError(message + "; rejection evidence write failed: " + str(error)) from error
+        raise ValueError(message)
     collector.journal.emit(operation, dict(sample, phase=phase,
         episode_uid=owner.episode_uid, sdk_step=owner.sim.current_time_step_index,
         episode_cap_s=owner.context.episode_cap_s))

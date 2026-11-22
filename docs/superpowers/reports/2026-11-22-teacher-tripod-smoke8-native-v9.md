@@ -1,5 +1,5 @@
-# Tripod v9有限配方（尚未执行）
-合入时钟binary32读取、真实worker异常缓存释放及静态账本同调用传递，未修改封存Reset或物理来源。
-指纹8b369481554184fd9ee1e39f73e5fa41838eeb015bd4be413e8085133a1217cb，565文件闭包。
-1环境、8控制、66SDK、768内部子步、1更新、180/240s不扩大。当前CPU验证不能替代更新、自然退出或抓取。
-v8未执行，保留历史；后续以实际回执更新，不预造checkpoint、完成或成功池记录。
+# Tripod v9唯一原生诊断：失败保留
+
+实测fcb22947；8控制、66SDK、768内部子步，1次真实PPO更新。更新后父墙钟校验拒绝，外层自然exit1，无signal。
+stat cache清理后0项、tracked weakrefs全失活；未获native release、自然exit0或抓取资格。失败Checkpoint不恢复、不入成功池。
+[完整证据报告](2026-11-22-tripod-native-v9-and-wall-rejection.md)。原指纹已消耗，不重跑、不扩预算。
