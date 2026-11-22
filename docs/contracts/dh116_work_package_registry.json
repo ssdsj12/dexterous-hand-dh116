@@ -50711,6 +50711,48 @@
         "grasp_qualified": false,
         "generalization_qualified": false
       }
+    },
+    "teacher.power-measured-palm-fixed-wrist": {
+      "title": "Exclude unreachable Power digit poses from the measured palm boundary",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.power-staged-palm-witness-native",
+        "teacher.power-correct-wire-side"
+      ],
+      "tests": [
+        "tests/test_dh116_power_fixed_wrist_digits.py",
+        "tests/test_dh116_power_material_reach.py",
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_dh116_power_closure_constraints.py",
+        "tests/test_dh116_power_joint_palm_direction.py",
+        "tests/test_dh116_power_proximal_first_contact.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "timeout_seconds": 360,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-measured-palm-fixed-wrist.md",
+      "readiness": "docs/contracts/dh116_teacher_power_measured_palm_fixed_wrist_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_replay_same_boundary_fixed_wrist_excluded",
+        "cpu_passed": 157,
+        "archive_sdk": 6504,
+        "fixed_wrist_excluded_by": {
+          "left": [
+            "finger53_link"
+          ],
+          "right": [
+            "finger23_link",
+            "finger53_link"
+          ]
+        },
+        "native_runs": 0,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

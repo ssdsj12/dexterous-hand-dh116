@@ -1,0 +1,125 @@
+{
+  "version": "dh116-teacher-power-measured-palm-fixed-wrist-v1",
+  "status": "fixed_wrist_excluded_at_archived_palm_boundary",
+  "clock": {
+    "run_uuid": "power-supported-3bcd1a6756a94fcab74e7b47e34f59f0",
+    "env_id": 0,
+    "episode_uid": "power-supported-3bcd1a6756a94fcab74e7b47e34f59f0:0",
+    "reset_id": 1,
+    "rod_uid": "rod0",
+    "physics_step": 6504,
+    "rod_tick": 78024,
+    "timestamp_s": 13.549999999999999,
+    "solver_time_s": 13.546916961669922,
+    "clock_valid": true
+  },
+  "archive": {
+    "outer_sha256": "522f0180c88583ebf4cd4be1664e41667ecd25c67e583adb675fdd92969e7e9a",
+    "support_sha256": "d88c3a281e3a9d20cdbead2a1073ebf35a3928172b91812308cc6b06052abbaf",
+    "motion_row_sha256": "618f7f52161c7d72713608cfa1138f4600569da8c3cdb91722688441e5bde093",
+    "contract_sha256": "1a52b1d13548cbda5918d75988873421e1c718d918b9023f136471031dcb22a8",
+    "config_sha256": "5c54a8f741f02d3b2cda7110acb8b92a109fe212e549d08cd9b33678c8e07df0"
+  },
+  "archive_sweep": {
+    "result_sha256": "65aaa08184aaa4f98558806ee5d92604653f84aefdc72a2a7f395c3e87d2d20f",
+    "script_exit_code": 2,
+    "wire_radius_m": 0.005,
+    "exclusions": [
+      {
+        "side": "left",
+        "pad": "finger53_link",
+        "gap_lower_m": 0.003268875816981336,
+        "clearance_to_half_mm_m": 0.002768875816981336,
+        "independent_refinement_verified": false
+      },
+      {
+        "side": "right",
+        "pad": "finger23_link",
+        "gap_lower_m": 0.0006210568177128306,
+        "clearance_to_half_mm_m": 0.00012105681771283064,
+        "independent_refinement_verified": true
+      },
+      {
+        "side": "right",
+        "pad": "finger53_link",
+        "gap_lower_m": 0.0007762062435158285,
+        "clearance_to_half_mm_m": 0.00027620624351582846,
+        "independent_refinement_verified": true
+      }
+    ],
+    "native_palm_normal_load_n": {
+      "left": [
+        0.0013054852977085435,
+        0.0008535864671684118,
+        0.0019080168639020252,
+        0.0012552741890939749,
+        0.0018578056026330213,
+        0.002159071877446254,
+        0.0006025317101072103,
+        0.0008535864550431005,
+        0.0019080167796368187,
+        0.001104641100400153,
+        0.001104641054818252,
+        0.0009540085115841365
+      ],
+      "right": [
+        0.0010042193211494941,
+        0.0013556961096578457,
+        0.001506328921475009,
+        0.0008033755061201212,
+        0.0011046411420264244,
+        0.0013054853446019493,
+        0.0011548522185374065,
+        0.0015565399371545213,
+        0.0006025315978116827,
+        0.0015063291775782805,
+        0.0012050632886971301,
+        0.0012050633823125821
+      ]
+    },
+    "swept_fingers": 10,
+    "thumb_abduction_fixed": true,
+    "pose_and_rod_frozen": true
+  },
+  "source_sha256": {
+    "scripts/audit_dh116_power_fixed_wrist_digits.py": "0a261eae9b8eaa6cecb10cacc67a67d06932f576ad08f1ba6fb49f79ac96a275",
+    "tests/test_dh116_power_fixed_wrist_digits.py": "e128ba4a1eebd39385779a85ebfe1d8840d8968f415bdb676e5c22ef1fde78fc"
+  },
+  "cpu": {
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_power_fixed_wrist_digits.py",
+      "tests/test_dh116_power_material_reach.py",
+      "tests/test_dh116_power_staged_palm_witness.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_dh116_power_palm_contact_evidence.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_dh116_power_closure_constraints.py",
+      "tests/test_dh116_power_joint_palm_direction.py",
+      "tests/test_dh116_power_proximal_first_contact.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "passed": 157,
+    "failed": 0,
+    "log_sha256": "65a1f97ecc589ace211d11e66d852903e20ccb48e87f3ffe589bd78e26a57932"
+  },
+  "archive_command": [
+    "/mnt/mydisk/xk/envs/dh116/bin/python",
+    "-B",
+    "-m",
+    "scripts.audit_dh116_power_fixed_wrist_digits",
+    "--palm-receipt",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2404-power-palm-witness-native/outer.json",
+    "--output",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_fixed_wrist_measured_sdk6504_v1.json"
+  ],
+  "new_native_runs": 0,
+  "new_isaac_steps": 0,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "generalization_qualified": false
+}

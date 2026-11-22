@@ -1,3 +1,5 @@
+Archived bilateral Power palm feedback now anchors a two-hand reach audit. The measured wrist positions exclude full wrap before re-seating. [Report](docs/superpowers/reports/2026-11-23-teacher-power-measured-palm-fixed-wrist.md)
+
 Power contact, force feedback and Lift now share a wire-side check in the supported scene. CPU tests and historical replay passed. Native grasp qualification is pending. [Report](docs/superpowers/reports/2026-11-23-teacher-power-correct-wire-side.md)
 
 The three published common pregrasp seeds can now freeze independent native zero-action settlement recipes. CPU verification passed; native execution is pending. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-fixed-native-settlement.md)
