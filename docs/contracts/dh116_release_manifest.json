@@ -33634,6 +33634,32 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.tripod-left-world-xy-seating-native",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-left-wrist-native.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_left_wrist_native_v1.json",
+      "status": "blocked_unstable_measured_contact",
+      "cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "sdk_steps": 2192,
+      "grasp_qualified": false,
+      "lift_qualified": false,
+      "teacher_admission": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b1c79d297fa9991e872c73fd6764fffd1a183b86",
+        "source_tree": "3b6485c850b3cea554494eb80de32fabd29c221d",
+        "remote_branch": "11-17",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

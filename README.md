@@ -1,3 +1,5 @@
+The opt-in wire spec catalog prepares disjoint training and held-out candidates. Three lengths/diameters passed standalone CUDA parameter readback. Palm-frame position and per-pad force evidence are recorded separately from native grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-wire-spec-generalization.md)
+
 The nominal Tripod lateral-wrist candidate ran to completion. Its final 128 physical samples contained 2 bilateral contacts, 1 consecutive step and zero off-support Lift. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-left-wrist-native.md)
 
 Tripod now has an opt-in measured left-wrist seating experiment after the exact prior replay. The proposed 0.127 mm lateral correction passed the archived geometry screen. Live opposing reaction and actual cable Lift remain open. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-left-wrist-seating.md)

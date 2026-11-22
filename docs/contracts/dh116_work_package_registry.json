@@ -50215,6 +50215,34 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.wire-spec-generalization": {
+      "title": "Validate different wire specimens and same-clock palm/reaction features",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.lift-diagnostic-v2",
+        "teacher.tripod-lift-current-reset"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-wire-spec-generalization.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_spec_generalization_v1.json",
+      "tests": [
+        "tests/test_supported_wire_specifications.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_dh116_native_parameter_endpoints.py",
+        "tests/test_native_teacher_contact_sources.py"
+      ],
+      "last_result": {
+        "standalone_cuda_specs": 3,
+        "heldout_specs": 2,
+        "isaac_runs": 0,
+        "native_ppo_updates": 0,
+        "generalization_qualified": false,
+        "grasp_qualified": false,
+        "passed": 116,
+        "failed": 0
+      }
     }
   },
   "execution_target": {
