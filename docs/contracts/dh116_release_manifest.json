@@ -34286,6 +34286,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-measured-palm-fixed-wrist",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-measured-palm-fixed-wrist.md",
+      "readiness": "docs/contracts/dh116_teacher_power_measured_palm_fixed_wrist_v1.json",
+      "status": "fixed_wrist_excluded_at_archived_palm_boundary",
+      "cpu_tests": {
+        "passed": 157,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "3b50825da01aed369474bbdb6d857acb9c409a42",
+        "source_tree": "b1b8955ae403f6957d026002e9de967ade15e4cb",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
