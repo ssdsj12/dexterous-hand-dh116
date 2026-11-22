@@ -34386,6 +34386,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-thumb-clearance",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-thumb-clearance.md",
+      "readiness": "docs/contracts/dh116_teacher_power_thumb_clearance_v1.json",
+      "status": "both_sampled_partial_detours_clear_continuous_and_native_pending",
+      "cpu_tests": {
+        "passed": 156,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "dfe81146650ad7e693db29a9f25df00bef503d82",
+        "source_tree": "32d03502c7a6004c8d5a2dce46bbeffe01f568ee",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
