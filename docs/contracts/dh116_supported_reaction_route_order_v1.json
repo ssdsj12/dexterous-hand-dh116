@@ -1,0 +1,78 @@
+{
+  "version": "dh116-supported-reaction-route-order-v1",
+  "status": "cpu_passed_native_source_refresh_required",
+  "baseline_head": "b981257ed1499d6b995623a80622f164726493c8",
+  "source_before_sha256": "3928e6de5b9f85a9265d21343969b2da9985b8e7c282f6c4df22ef924a34c7f4",
+  "source_after_sha256": "02a773f58e052d9e36c881183f7021bc95288d5f5c0867e8c20993e6d04080e1",
+  "antigravity_review": {
+    "round": "Teacher-Tripod-Smoke R2",
+    "role": "codex-dh116-ssh-reviewer",
+    "head": "44b0cdce82ebcf4646be9033c0dfe70aea4e0bce",
+    "review_sha256": "4ad7f6405a5ffea84eebe3a7770dd3a1fc5765076c7026a6c2ec5ceb5d101b1d",
+    "independently_verified": true,
+    "r3_followup": "sent_and_pending"
+  },
+  "tdd_red": {
+    "failed": 3,
+    "log_sha256": "8efd49eb6f0828f97c8d298987de54e89668738f859a3ae341d78975220be84e"
+  },
+  "cpu_tests": {
+    "passed": 212,
+    "failed": 0,
+    "seconds": 103.93,
+    "command": [
+      "tests/test_physical_exchange_route_order.py",
+      "tests/test_fresh_supported_physical_exchange.py",
+      "tests/test_dh116_flexible_physical_exchange.py",
+      "tests/test_supported_mesh_reset.py",
+      "tests/test_native_teacher_supported_reset.py",
+      "tests/test_tripod_exchange_admission.py",
+      "tests/test_dual_hand_rod_runtime.py",
+      "tests/test_dh116_dual_hand_episode.py",
+      "tests/test_dual_hand_reset.py",
+      "tests/test_fresh_supported_episode.py",
+      "tests/test_fresh_supported_builder.py",
+      "tests/test_dh116_power_palm_reactions.py",
+      "tests/test_dh116_power_proximal_first_contact.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_native_teacher_tripod_actual_resume_recipe.py",
+      "tests/test_native_teacher_actual_resume_origin.py",
+      "tests/test_native_teacher_actual_resume_launch.py",
+      "tests/test_native_teacher_actual_resume_budget.py",
+      "tests/test_native_teacher_actual_resume_update.py",
+      "tests/test_native_teacher_actual_resume_artifacts.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "c63f77513095f68f9dcb90dc105a8ebd36e1afe86c2198dfed67573254738e6a"
+  },
+  "narrow_cpu": {
+    "passed": 33,
+    "failed": 0,
+    "overlaps_primary_regression": true,
+    "log_sha256": "82f1447974993de8beba9bb7864620caa9ca787c894d34796ff01d00f0498a9a"
+  },
+  "source_gate_negative": {
+    "expected_rejection": "v2 source inventory SHA differs from actual scheduler source closure",
+    "log_sha256": "ca6923cd027920e3fa6c73c826657b826997ae582772d9100df305acf4a076c8",
+    "old_recipe_sha_modified": false,
+    "historical_receipts_modified": false
+  },
+  "legacy_default_path_changed": false,
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "current_reset_source_compatible": false,
+  "resume_v11_allowed": false,
+  "physical_parameters_changed": false,
+  "cameras_changed": false,
+  "r2_enabled": false,
+  "next_task": "fresh source-bound native Reset using existing recorder,then independent matching A/B;complete measured grasp endpoints before full reward",
+  "metadata_cpu_tests": {
+    "passed": 60,
+    "failed": 0,
+    "overlaps_primary_regression": true,
+    "log_sha256": "b22401e2e3a40b004615f028532240b6c5afbc2c61585b8a91e054268f6d3f41"
+  }
+}

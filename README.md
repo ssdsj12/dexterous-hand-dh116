@@ -1,3 +1,5 @@
+Supported fresh/continued reactions now bind bodies in the same canonical order as measured forces and torques.3 original-code failures reproduced;212 CPU regressions pass. Old native source pins correctly reject this changed implementation;new matching Reset evidence is required. [Report](docs/superpowers/reports/2026-11-22-supported-reaction-route-order.md).
+
 Tripod B resume now binds the real A checkpoint through the existing implementation:94 CPU checks pass. No native attempt was launched;measured repeated origin audit exceeds the prior observed remaining budget. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-resume-smoke8-native-v11.md).
 
 Tripod v11 completed one real bounded PPO update (8 controls/66 SDK/768 internal) and natural outer/inferior exit0;original-artifact audit is diagnostic_verified. This rollout moved away from its Reset distance baseline,clamping the active approach potential to0;Teacher/grasp qualification remains false. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v11.md).

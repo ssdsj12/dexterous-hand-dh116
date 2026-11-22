@@ -78,7 +78,10 @@ class FlexiblePhysicalExchange:
             view = b.hand.root_physx_view
             if list(view.prim_paths) != [path] or len(view.link_paths) != 1:
                 raise ValueError("one actual articulation instance per side required")
-            pads = [value for value in rod.bindings.values() if value["side"] == b.side]
+            # Match the measured wrench channel order, not serialized dict order.
+            pads = ([rod.bindings[f"{b.side}.{name}"] for name in contact_links(rod.bindings)]
+                    if fresh_supported or continue_supported_rod else
+                    [value for value in rod.bindings.values() if value["side"] == b.side])
             if len(pads) != expected_links or any(view.link_paths[0][pad["body_index"]] != pad["prim_path"]
                                      for pad in pads):
                 raise ValueError("same PhysX links required for action and rod reaction")

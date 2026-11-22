@@ -49275,8 +49275,8 @@
         "teacher.tripod-resume-smoke8-v11-freeze"
       ],
       "status": "blocked",
-      "blocker_kind": "resource_budget",
-      "reason": "No native attempt: repeated complete origin audit measured warm19.839s versus A remaining10.741s;do not extend or move the frozen clocks.",
+      "blocker_kind": "source",
+      "reason": "Unexecuted v11 B preserved:canonical exchange repair invalidates old566-source closure;new matching Reset and A/B required. Original repeated-origin budget risk also remains.",
       "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-resume-smoke8-native-v11.md",
       "readiness": "docs/contracts/dh116_teacher_tripod_resume_smoke8_native_v11.json",
       "native_runs": 0,
@@ -49310,6 +49310,44 @@
         "cpu_passed": 94,
         "cpu_failed": 0,
         "native_runs": 0,
+        "native_qualification": false
+      }
+    },
+    "teacher.supported-reaction-route-order": {
+      "title": "Canonical supported body IDs match measured force and torque channels",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [],
+      "tests": [
+        "tests/test_physical_exchange_route_order.py",
+        "tests/test_fresh_supported_physical_exchange.py",
+        "tests/test_dh116_flexible_physical_exchange.py",
+        "tests/test_supported_mesh_reset.py",
+        "tests/test_native_teacher_supported_reset.py",
+        "tests/test_tripod_exchange_admission.py",
+        "tests/test_dual_hand_rod_runtime.py",
+        "tests/test_dh116_dual_hand_episode.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_fresh_supported_episode.py",
+        "tests/test_fresh_supported_builder.py",
+        "tests/test_dh116_power_palm_reactions.py",
+        "tests/test_dh116_power_proximal_first_contact.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_native_teacher_tripod_actual_resume_recipe.py",
+        "tests/test_native_teacher_actual_resume_origin.py",
+        "tests/test_native_teacher_actual_resume_launch.py",
+        "tests/test_native_teacher_actual_resume_budget.py",
+        "tests/test_native_teacher_actual_resume_update.py",
+        "tests/test_native_teacher_actual_resume_artifacts.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_supported_reaction_route_order_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-supported-reaction-route-order.md",
+      "reason": "212 CPU regressions pass;actual source change requires a new Reset proof;no native/grasp qualification.",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 212,
+        "cpu_failed": 0,
         "native_qualification": false
       }
     }

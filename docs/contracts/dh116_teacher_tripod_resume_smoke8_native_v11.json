@@ -1,6 +1,6 @@
 {
   "version": "dh116-teacher-tripod-resume-smoke8-native-v11",
-  "status": "cpu_freeze_passed_native_budget_blocked",
+  "status": "historical_cpu_freeze_current_source_incompatible",
   "baseline_head": "44b0cdce82ebcf4646be9033c0dfe70aea4e0bce",
   "package": "teacher.tripod-ppo-resume-smoke8-v11",
   "companion_sha256": "fc4f53ade7048e2ed71e20d2a16a821a3c3ba05ef290c6c36c11ba4ffad91830",
@@ -41,5 +41,7 @@
     "failed": 0,
     "overlaps_primary_regression": true,
     "log_sha256": "2bc3aa6044e6ecb2545e928008a8dc5919146f144c7ac0bdf42bfe362462588c"
-  }
+  },
+  "current_source_compatible": false,
+  "current_source_blocker": "supported reaction route order repaired;no edits to old core/source/receipt/checkpoint SHA"
 }
