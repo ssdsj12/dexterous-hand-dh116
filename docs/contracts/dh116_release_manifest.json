@@ -32505,6 +32505,32 @@
         "verified_at_utc": "2026-11-22T00:00:47.351937+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-ppo-fresh-smoke8-v9",
+      "branch": "11-17",
+      "status": "failed_native",
+      "report": "docs/superpowers/reports/2026-11-22-tripod-native-v9-and-wall-rejection.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v9.json",
+      "native_runs": 1,
+      "observed_native_ppo_updates": 1,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "native_tested_commit": "fcb22947d332dcfd788a70615cdb982e87fb8da9",
+      "attempt_fingerprint": "8b369481554184fd9ee1e39f73e5fa41838eeb015bd4be413e8085133a1217cb",
+      "outer_exit_code": 1,
+      "debugger_signal": null,
+      "checkpoint_admitted": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "record_commit": "489f1a02076107f7d08912c50a91bf9076a5a716",
+        "record_scope": "historical native evidence; logging fix in record commit was not native-tested",
+        "remote_branch": "11-17",
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T00:03:03.056854+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
