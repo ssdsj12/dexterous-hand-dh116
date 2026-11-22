@@ -34173,6 +34173,32 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.tripod-index-resume",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-index-resume.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_index_resume_v1.json",
+      "status": "cpu_verified_native_pending",
+      "cpu_tests": {
+        "passed": 163,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "replayed_post_reseat_candidates": 13,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1a23319d40e9d4e3478b263436826646eb5c9197",
+        "source_tree": "a7dfa4ff47ca47364a5de3e2f8d699bbafd041d1",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
