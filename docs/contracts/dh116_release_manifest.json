@@ -34411,6 +34411,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-continuous-thumb-route",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-continuous-thumb-route.md",
+      "readiness": "docs/contracts/dh116_teacher_power_continuous_thumb_route_v1.json",
+      "status": "static_command_geometry_verified_live_opposition_and_lift_pending",
+      "cpu_tests": {
+        "passed": 174,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "51f6788e177c10be95cecfdee7aafa970538addc",
+        "source_tree": "ba1036707f8967d98187f698e69fb3003571ca6c",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
