@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
-from go2_pvcnn.control.dh116.tabletop_supported_wire_specs import build_variant, group_wire_specs
+from go2_pvcnn.control.dh116.tabletop_supported_wire_specs import build_variant, catalog_wire_specs
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,20 +13,18 @@ ROOT = Path(__file__).resolve().parents[1]
 def prepare(scene_path, scene_sha256, catalog_path, catalog_sha256, stations):
     scene = json.loads(checked_file(scene_path, scene_sha256))
     catalog = json.loads(checked_file(catalog_path, catalog_sha256))
-    if (catalog["version"] != "dh116-supported-wire-generalization-v1"
-            or catalog["material_scaling"] != "same_homogeneous_circular_candidate_material"):
-        raise ValueError("known opt-in circular wire candidate catalog required")
     if scene["fixed_rod_nodes"] != [] or scene["physics_qualified"] is not False:
         raise ValueError("free supported scenario geometry required")
     source = catalog["reference_rod"]
     rod = json.loads(checked_file(ROOT / source["path"], source["sha256"]))["rod"]
-    groups = group_wire_specs(catalog["variants"], rod)
+    groups = catalog_wire_specs(catalog, rod)
     output = {}
     for split, candidates in groups.items():
         output[split] = {}
         for row in candidates:
             result = build_variant(scene, rod, radius_m=row["rod"]["radius_m"], length_m=row["length_m"],
-                                   grasp_material_ids=stations)
+                                   grasp_material_ids=stations,
+                                   elastic_modulus_scale=row.get("elastic_modulus_scale", 1.))
             if result["spec_sha256"] != row["spec_sha256"]:
                 raise ValueError("geometry and evaluation split must bind the same physical specification")
             output[split][row["id"]] = result

@@ -50353,6 +50353,26 @@
         "native_status": "pending",
         "teacher_admission": false
       }
+    },
+    "teacher.wire-material-generalization": {
+      "title": "Isolate wire material stiffness from dimensions",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-distal-or-relief"
+      ],
+      "tests": [
+        "tests/test_supported_wire_material_variants.py",
+        "tests/test_wire_variant_isaac_reset.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-material-generalization.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_material_generalization_v2.json",
+      "last_result": {
+        "cpu_passed": 90,
+        "standalone_cuda_candidates": 3,
+        "native_status": "pending",
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -19,39 +19,75 @@ def _positive(value, label):
     return float(value)
 
 
-def _scale_material(baseline, radius_m, length_m):
-    """Scale uniform circular rods of the same candidate material in SI units."""
+def _scale_material(baseline, radius_m, length_m, *, elastic_modulus_scale=1.):
+    """Scale circular geometry and optionally the candidate elastic modulus in SI."""
+    modulus = _positive(elastic_modulus_scale, "elastic modulus scale")
     radius = _positive(radius_m, "wire radius")
     length = _positive(length_m, "wire length")
     scale = radius / _positive(baseline["radius_m"], "reference radius")
     rod = deepcopy(baseline)
     rod["radius_m"] = radius
-    for field, factor in (("linear_density_kg_m", scale**2), ("axial_stiffness_n", scale**2),
-                          ("bend_stiffness_n_m2", scale**4)):
+    for field, factor in (("linear_density_kg_m", scale**2), ("axial_stiffness_n", scale**2 * modulus),
+                          ("bend_stiffness_n_m2", scale**4 * modulus)):
         rod[field] = _positive(_positive(baseline[field], field) * factor, field)
     return dict(length_m=length, rod=rod)
 
 
-def group_wire_specs(rows, baseline):
-    """Split by immutable physical parameters, even when spec names differ."""
+def _solver_key(*values):
+    with np.errstate(over="ignore", under="ignore"):
+        key = np.asarray(values, dtype=np.float32)
+    if not np.isfinite(key).all() or (key <= 0).any():
+        raise ValueError("positive finite physical parameters at solver precision required")
+    return tuple(key)
+
+
+def group_wire_specs(rows, baseline, *, independent_stiffness=False):
+    """Group immutable physical candidates and isolate geometry and modulus by split."""
     groups = {"train": [], "validation": [], "test": []}
-    identities, physical_dimensions, names = set(), set(), set()
+    physical_specs, names = set(), set()
+    geometry_splits, modulus_splits = {}, {}
+    fields = {"id", "split", "radius_m", "length_m"}
+    if independent_stiffness:
+        fields.add("elastic_modulus_scale")
     for row in rows:
-        if (set(row) != {"id", "split", "radius_m", "length_m"} or row["split"] not in groups
+        if (set(row) != fields or row["split"] not in groups
                 or not isinstance(row["id"], str) or not row["id"].strip() or row["id"] in names):
             raise ValueError("distinct named wire candidates and explicit train/validation/test splits required")
-        spec = _scale_material(baseline, row["radius_m"], row["length_m"])
-        identity = digest(spec)
-        dimensions = tuple(np.asarray((spec["rod"]["radius_m"], spec["length_m"]), dtype=np.float32))
-        if identity in identities or dimensions in physical_dimensions:
+        split = row["split"]
+        modulus = row.get("elastic_modulus_scale", 1.)
+        spec = _scale_material(baseline, row["radius_m"], row["length_m"],
+                               elastic_modulus_scale=modulus)
+        rod = spec["rod"]
+        geometry = _solver_key(rod["radius_m"], spec["length_m"])
+        physical = geometry + _solver_key(rod["linear_density_kg_m"], rod["axial_stiffness_n"],
+                                          rod["bend_stiffness_n_m2"])
+        if physical in physical_specs:
             raise ValueError("identical physical specification at solver precision assigned more than once")
-        identities.add(identity)
-        physical_dimensions.add(dimensions)
+        if geometry_splits.setdefault(geometry, split) != split:
+            raise ValueError("wire geometry assigned across splits")
+        if independent_stiffness and modulus_splits.setdefault(_solver_key(modulus), split) != split:
+            raise ValueError("wire stiffness assigned across splits")
+        physical_specs.add(physical)
         names.add(row["id"])
-        groups[row["split"]].append(dict(**spec, id=row["id"], spec_sha256=identity))
-    if not groups["train"] or not groups["test"]:
-        raise ValueError("at least one train and held-out test wire specification required")
+        case = dict(**spec, id=row["id"], spec_sha256=digest(spec))
+        if independent_stiffness:
+            case["elastic_modulus_scale"] = modulus
+        groups[split].append(case)
+    if not groups["train"] or not groups["test"] or (independent_stiffness and not groups["validation"]):
+        raise ValueError("training and held-out wire specification groups required")
     return groups
+
+
+def catalog_wire_specs(catalog, baseline):
+    """Load the original size-only catalog or the opt-in size and modulus catalog."""
+    mode = catalog["version"], catalog["material_scaling"]
+    known = {
+        ("dh116-supported-wire-generalization-v1", "same_homogeneous_circular_candidate_material"): False,
+        ("dh116-supported-wire-generalization-v2", "circular_candidate_with_independent_elastic_modulus"): True,
+    }
+    if mode not in known:
+        raise ValueError("known opt-in circular wire candidate catalog required")
+    return group_wire_specs(catalog["variants"], baseline, independent_stiffness=known[mode])
 
 
 def _validate_stations(stations):
@@ -61,9 +97,9 @@ def _validate_stations(stations):
         raise ValueError("explicit material station in each hand's original half required")
 
 
-def build_variant(scene, baseline, *, radius_m, length_m, grasp_material_ids):
+def build_variant(scene, baseline, *, radius_m, length_m, grasp_material_ids, elastic_modulus_scale=1.):
     """Build a separate solver/scene candidate. A native Reset still has to qualify it."""
-    spec = _scale_material(baseline, radius_m, length_m)
+    spec = _scale_material(baseline, radius_m, length_m, elastic_modulus_scale=elastic_modulus_scale)
     radius, length = spec["rod"]["radius_m"], spec["length_m"]
     geometry = deepcopy(scene)
     support = geometry["support_scene"]
@@ -108,7 +144,7 @@ def build_variant(scene, baseline, *, radius_m, length_m, grasp_material_ids):
 
 
 
-def prepare_variant(scene, table, baseline, *, radius_m, length_m, stations):
+def prepare_variant(scene, table, baseline, *, radius_m, length_m, stations, elastic_modulus_scale=1.):
     """Reuse the original hand seed and the independently prepared variant geometry."""
     from .tabletop_dual_hand_reset import prepare_reset_state
     from .tabletop_power_shared_rod import END_SUPPORT_NAMES
@@ -116,7 +152,7 @@ def prepare_variant(scene, table, baseline, *, radius_m, length_m, stations):
 
     baseline_seed, active, _, _ = prepare_initial_state(scene, table, expected_scope=TRIPOD_SCOPE)
     variant = build_variant(scene, baseline, radius_m=radius_m, length_m=length_m,
-                            grasp_material_ids=stations)
+                            grasp_material_ids=stations, elastic_modulus_scale=elastic_modulus_scale)
     config = variant["scene"]
     seed = prepare_reset_state(
         hand_roots={side: config["hands"][side]["pose_wxyz"] for side in SIDES},

@@ -1,0 +1,115 @@
+{
+  "version": "dh116-supported-wire-generalization-v2",
+  "reference_rod": {
+    "path": "configs/dh116_tasks/flexible_pinch_candidate_v1.json",
+    "sha256": "9f751680de805c5075282c16bc5c5e5e30b8b7c261a3dd36f3b7b1cbab8f35c8"
+  },
+  "material_scaling": "circular_candidate_with_independent_elastic_modulus",
+  "variants": [
+    {
+      "id": "r45-l450",
+      "split": "train",
+      "radius_m": 0.0045,
+      "length_m": 0.45,
+      "elastic_modulus_scale": 1.0
+    },
+    {
+      "id": "r45-l500",
+      "split": "train",
+      "radius_m": 0.0045,
+      "length_m": 0.5,
+      "elastic_modulus_scale": 1.0
+    },
+    {
+      "id": "r45-l550",
+      "split": "train",
+      "radius_m": 0.0045,
+      "length_m": 0.55,
+      "elastic_modulus_scale": 1.0
+    },
+    {
+      "id": "r50-l450",
+      "split": "train",
+      "radius_m": 0.005,
+      "length_m": 0.45,
+      "elastic_modulus_scale": 1.0
+    },
+    {
+      "id": "r50-l500",
+      "split": "train",
+      "radius_m": 0.005,
+      "length_m": 0.5,
+      "elastic_modulus_scale": 1.0
+    },
+    {
+      "id": "r50-l550",
+      "split": "train",
+      "radius_m": 0.005,
+      "length_m": 0.55,
+      "elastic_modulus_scale": 1.0
+    },
+    {
+      "id": "r55-l450",
+      "split": "train",
+      "radius_m": 0.0055,
+      "length_m": 0.45,
+      "elastic_modulus_scale": 1.0
+    },
+    {
+      "id": "r55-l500",
+      "split": "train",
+      "radius_m": 0.0055,
+      "length_m": 0.5,
+      "elastic_modulus_scale": 1.0
+    },
+    {
+      "id": "r55-l550",
+      "split": "train",
+      "radius_m": 0.0055,
+      "length_m": 0.55,
+      "elastic_modulus_scale": 1.0
+    },
+    {
+      "id": "train-soft",
+      "split": "train",
+      "radius_m": 0.005,
+      "length_m": 0.5,
+      "elastic_modulus_scale": 0.8
+    },
+    {
+      "id": "train-stiff",
+      "split": "train",
+      "radius_m": 0.005,
+      "length_m": 0.5,
+      "elastic_modulus_scale": 1.2
+    },
+    {
+      "id": "validation-soft",
+      "split": "validation",
+      "radius_m": 0.0047,
+      "length_m": 0.47,
+      "elastic_modulus_scale": 0.9
+    },
+    {
+      "id": "validation-stiff",
+      "split": "validation",
+      "radius_m": 0.0047,
+      "length_m": 0.47,
+      "elastic_modulus_scale": 1.1
+    },
+    {
+      "id": "test-soft",
+      "split": "test",
+      "radius_m": 0.00525,
+      "length_m": 0.475,
+      "elastic_modulus_scale": 0.7
+    },
+    {
+      "id": "test-stiff",
+      "split": "test",
+      "radius_m": 0.00525,
+      "length_m": 0.475,
+      "elastic_modulus_scale": 1.3
+    }
+  ]
+}

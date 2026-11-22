@@ -11,7 +11,7 @@ import traceback
 import numpy as np
 
 from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile, checked_file
-from go2_pvcnn.control.dh116.tabletop_supported_wire_specs import group_wire_specs, prepare_variant
+from go2_pvcnn.control.dh116.tabletop_supported_wire_specs import catalog_wire_specs, prepare_variant
 from scripts import record_dh116_tripod_supported_reset as original
 
 
@@ -58,11 +58,10 @@ def validate_settlement(result, rod_row):
 
 def _choice(catalog, candidate_id):
     catalog_ref = catalog["reference_rod"]
-    if (catalog["version"] != "dh116-supported-wire-generalization-v1"
-            or catalog_ref["path"] != BASE_ROD):
+    if catalog_ref["path"] != BASE_ROD:
         raise ValueError("original wire family catalog required")
     rod = json.loads(checked_file(ROOT / BASE_ROD, catalog_ref["sha256"]))["rod"]
-    train = group_wire_specs(catalog["variants"], rod)["train"]
+    train = catalog_wire_specs(catalog, rod)["train"]
     selected = [case for case in train if case["id"] == candidate_id]
     if len(selected) != 1:
         raise ValueError("explicit training-only wire specimen required for the native pilot")
@@ -82,6 +81,8 @@ def freeze(args):
     rod, case = _choice(catalog, args.variant)
     options = dict(radius_m=case["rod"]["radius_m"], length_m=case["length_m"],
                    stations=dict(left=args.left_material_id, right=args.right_material_id))
+    if "elastic_modulus_scale" in case:
+        options["elastic_modulus_scale"] = case["elastic_modulus_scale"]
     seed, _, _, _, variant = prepare_variant(scene, prepare_scene(ROOT)["table"], rod, **options)
     if variant["spec_sha256"] != case["spec_sha256"]:
         raise ValueError("scene and catalog wire specification differ")

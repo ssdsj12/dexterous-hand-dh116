@@ -36,6 +36,14 @@ def test_resized_seed_retains_hand_joints_and_measures_new_rest_length():
     assert seed["sha256"] != expected["sha256"]
     assert scene["support_scene"]["wire_radius_m"] == .005
 
+    harder_seed, _, harder_nodes, _, harder = module.prepare_variant(
+        scene, table, cfg["rod"], radius_m=.0045, length_m=.45, stations=dict(left=35,right=5),
+        elastic_modulus_scale=1.2)
+    assert np.array_equal(harder_nodes, nodes)
+    assert harder_seed["reset_root_pose_w"] == seed["reset_root_pose_w"]
+    assert harder_seed["sha256"] != seed["sha256"]
+    assert harder["rod"]["bend_stiffness_n_m2"] == pytest.approx(1.2*variant["rod"]["bend_stiffness_n_m2"])
+
 
 def test_support_settlement_requires_both_real_end_loads_at_terminal_and_no_hand_pairs():
     from scripts.verify_dh116_wire_variant_isaac import validate_settlement

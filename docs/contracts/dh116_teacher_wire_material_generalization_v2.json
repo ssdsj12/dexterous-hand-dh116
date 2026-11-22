@@ -1,0 +1,88 @@
+{
+  "version": "dh116-teacher-wire-material-generalization-v2",
+  "source_sha256": {
+    "configs/dh116_training/supported_wire_generalization_v2.json": "df6f798664e5f73e71d00ef48ae00372e590eaff977fd9d46d6379aa21f79c53",
+    "scripts/prepare_dh116_supported_wire_variants.py": "b0057ec5d9889781b8e8a42da60da880447ec293044c3910dbaa124e3ef0cad4",
+    "scripts/verify_dh116_wire_variant_isaac.py": "973150a2886e0dfcd1dcdb37c82b375fc2b8ef732530b37817e0d6a4112733e1",
+    "src/go2_pvcnn/control/dh116/tabletop_supported_wire_specs.py": "0a66e276985a3f2e867f30aa4addb2dfe4e1ce3d669f0562e4207dd46aab8c0f",
+    "tests/test_supported_wire_material_variants.py": "015ef92124e5da204a8e492559c3f1d93ba457184b92d6f67e2bf6fc6ecb2aa5",
+    "tests/test_wire_variant_isaac_reset.py": "df76d04d3a13d5d9f5b4e848225704162dcb19cae9dbf9e43f277a31f58eb1d7"
+  },
+  "train_variants": 11,
+  "validation_variants": 2,
+  "test_variants": 2,
+  "cpu": {
+    "passed": 90,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_wire_continuous_clearance.py",
+      "tests/test_wire_first_distal_contact.py",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_tripod_contact_seed.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_specifications.py",
+      "tests/test_supported_wire_material_variants.py"
+    ],
+    "log_sha256": "21213a5b8e91bd42bd658582d5a65ee07c75ffbf3198214ab3fdfbfc4638b728"
+  },
+  "cuda": {
+    "getter_evidence_sha256": "5921d6b19d580389b02490f9c39e72c3d5e5322fae7c9d5d6b4e779e08ae205e",
+    "spec_manifest_sha256": "77e4844220329a03970c03fd2d474605ef0b78cc178acf4c8982fac9f3a5ec52",
+    "scope": "standalone_cuda_constructor_and_parameter_getters",
+    "device": "NVIDIA GeForce RTX 4090",
+    "backend_sha256": "8817010163946945495c987923d11f3ade4fbd52482a83bbdd48f017d3149340",
+    "variants": {
+      "train-soft": {
+        "measured_radius_m": 0.004999999888241291,
+        "rest_length_m": 0.5,
+        "total_mass_kg": 0.032499998592855676,
+        "weight_n": 0.3188249998334563,
+        "evidence_scope": "native_parameter_getter_readback",
+        "hardware_measured": false,
+        "spec_sha256": "64cefce6d2a84b9aa83801b5ca633a513f092beca1e53062dbd51e7dd4f387a1",
+        "axial_stiffness_n": 640.0,
+        "bend_stiffness_n_m2": 0.014399999752640724
+      },
+      "r50-l500": {
+        "measured_radius_m": 0.004999999888241291,
+        "rest_length_m": 0.5,
+        "total_mass_kg": 0.032499998592855676,
+        "weight_n": 0.3188249998334563,
+        "evidence_scope": "native_parameter_getter_readback",
+        "hardware_measured": false,
+        "spec_sha256": "25bb38ea69b2684b89dd6edd525f2d2f9b88eadde7ce1b007e3893aa6c7443f5",
+        "axial_stiffness_n": 799.9999389648438,
+        "bend_stiffness_n_m2": 0.017999999225139618
+      },
+      "train-stiff": {
+        "measured_radius_m": 0.004999999888241291,
+        "rest_length_m": 0.5,
+        "total_mass_kg": 0.032499998592855676,
+        "weight_n": 0.3188249998334563,
+        "evidence_scope": "native_parameter_getter_readback",
+        "hardware_measured": false,
+        "spec_sha256": "14478821fe3250069f6362b1d26e4b44c8abef3ee4932865d6f772810afe5644",
+        "axial_stiffness_n": 960.0,
+        "bend_stiffness_n_m2": 0.02160000056028366
+      }
+    },
+    "isaac_steps": 0,
+    "solver_steps": 0,
+    "ppo_updates": 0,
+    "grasp_qualified": false,
+    "teacher_admission": false
+  },
+  "native_isaac_status": "pending",
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "teacher_admission": false
+}

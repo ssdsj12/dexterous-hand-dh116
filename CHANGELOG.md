@@ -1,3 +1,5 @@
+The opt-in wire catalog now isolates elastic stiffness from dimensions. Three equal-size specimens passed standalone CUDA parameter readback. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-material-generalization.md)
+
 Tripod has an opt-in radius-aware approach and first distal reaction check. The CPU-screened right wrist path is ready for a bounded Isaac diagnostic. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-distal-or-relief.md)
 
 The measured Tripod contact-seeded 9 mm native Reset and its short supported exchange passed. The right proximal thumb limits the reverse approach under the original clearance guard. Grasp and Teacher admission remain open. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-contact-seed.md)
