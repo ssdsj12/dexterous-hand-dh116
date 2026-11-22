@@ -33457,6 +33457,36 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.friction-profile-v2",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-friction-profile.md",
+      "readiness": "docs/contracts/dh116_teacher_friction_profile_v2.json",
+      "cpu_tests": {
+        "passed": 154,
+        "failed": 0,
+        "new_cases": 7
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "new_native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b6e5f91f1b12d99dca7bb2b83db37c27be97eada",
+        "source_tree": "d2da24a80583f16db664117333a175621356dac0",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "remote_verified": true
     }
   ]
 }
