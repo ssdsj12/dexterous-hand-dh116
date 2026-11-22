@@ -165,7 +165,7 @@ def _refine_digit_exclusion(geometry, wrist, q, index, pad, nodes, radius, limit
     return proof
 
 
-def _measure_wrist(geometry, side, row, scene, nodes):
+def align_measured_wrist(geometry, side, row, *, apply_to_geometry):
     hand = row["action_readback"]["post"]["hands"][side]
     indices = hand["active_indices"]
     if ([hand["joint_names"][index] for index in indices] != list(ACTIVE)
@@ -178,7 +178,7 @@ def _measure_wrist(geometry, side, row, scene, nodes):
     palm = actual["base_link"]
     wrist = np.r_[palm[:3, 3], Rotation.from_matrix(palm[:3, :3]).as_quat()[[3, 0, 1, 2]]]
     start_fk = fk_poses(geometry, wrist, q)
-    alignment = {}
+    alignment, transforms = {}, {}
     for name in DISTAL_PAD_LINKS:
         binding = row["rod"]["mesh_bindings"][f"{side}.{name}"]
         cooked = geometry["cooked_pads"][name]
@@ -191,9 +191,16 @@ def _measure_wrist(geometry, side, row, scene, nodes):
         if translation > 1e-6 or angle > 5e-6:
             raise ValueError("original FK does not reproduce measured cooked pad poses")
         alignment[name] = dict(position_m=translation, rotation_rad=angle)
-        for group in ("source_colliders", "cooked_pads"):
-            shape = geometry[group][name]
-            shape["vertices"] = shape["vertices"] @ offset[:3, :3].T + offset[:3, 3]
+        transforms[name] = offset
+        if apply_to_geometry:
+            for group in ("source_colliders", "cooked_pads"):
+                shape = geometry[group][name]
+                shape["vertices"] = shape["vertices"] @ offset[:3, :3].T + offset[:3, 3]
+    return wrist, q, alignment, transforms
+
+
+def _measure_wrist(geometry, side, row, scene, nodes):
+    wrist, q, alignment, _ = align_measured_wrist(geometry, side, row, apply_to_geometry=True)
     limits = active_limits()
     radius = scene["wire_radius_m"]
     results, excluded = {}, []
@@ -212,8 +219,8 @@ def _measure_wrist(geometry, side, row, scene, nodes):
                 digits=results, excluded_pads=excluded, sources=geometry["source_sha256"])
 
 
-def audit_measured_wrist(row, scene, *, project):
-    """Exclude unreachable closing postures against the observed curved rod."""
+def measured_palm_boundary(row):
+    """Validate measured hand and rod exchanges against the same SDK clock."""
     rod = row["rod"]
     clock = _clock(lambda: rod)
     post = row["action_readback"]["post"]
@@ -229,6 +236,12 @@ def audit_measured_wrist(row, scene, *, project):
     }
     if (contact["wrong_side_contacts"] or any(min(load) <= 0 for load in hand_loads.values())):
         raise ValueError("measured palm contact on both assigned wire halves required")
+    return clock, nodes, hand_loads
+
+
+def audit_measured_wrist(row, scene, *, project):
+    """Exclude unreachable closing postures against the observed curved rod."""
+    clock, nodes, hand_loads = measured_palm_boundary(row)
     hands = {side: _measure_wrist(load_geometry(project, side=side), side, row, scene, nodes)
              for side in hand_loads}
     return dict(scope="archived_palm_fixed_wrist_independent_flexion", clock=clock,

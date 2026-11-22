@@ -1,3 +1,5 @@
+The measured Power re-seating scan found no full five-pad candidate around the archived palm locations. [Report](docs/superpowers/reports/2026-11-23-teacher-power-measured-reseat.md)
+
 Archived bilateral Power palm feedback now anchors a two-hand reach audit. The measured wrist positions exclude full wrap before re-seating. [Report](docs/superpowers/reports/2026-11-23-teacher-power-measured-palm-fixed-wrist.md)
 
 Power contact, force feedback and Lift now share a wire-side check in the supported scene. CPU tests and historical replay passed. Native grasp qualification is pending. [Report](docs/superpowers/reports/2026-11-23-teacher-power-correct-wire-side.md)

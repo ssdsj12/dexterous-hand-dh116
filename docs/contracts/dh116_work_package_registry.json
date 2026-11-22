@@ -50753,6 +50753,40 @@
         "native_runs": 0,
         "teacher_admission": false
       }
+    },
+    "teacher.power-measured-reseat": {
+      "title": "Screen wrist re-seating using the measured Power palm contacts",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.power-measured-palm-fixed-wrist"
+      ],
+      "tests": [
+        "tests/test_dh116_power_measured_reseat.py",
+        "tests/test_dh116_power_fixed_wrist_digits.py",
+        "tests/test_dh116_power_material_reach.py",
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_wire_fixed_pregrasp_native_reset.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "timeout_seconds": 360,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-measured-reseat.md",
+      "readiness": "docs/contracts/dh116_teacher_power_measured_reseat_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_reseat_screen_no_combined_endpoint",
+        "cpu_passed": 133,
+        "open_endpoint_screened": {
+          "left": 477,
+          "right": 386
+        },
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
