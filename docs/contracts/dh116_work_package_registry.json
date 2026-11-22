@@ -50581,6 +50581,31 @@
         "teacher_admission": false,
         "grasp_qualified": false
       }
+    },
+    "teacher.wire-holdout-starts": {
+      "title": "Evaluate fixed-wrist setup against independent wire specifications",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-factorial-holdout"
+      ],
+      "tests": [
+        "tests/test_supported_wire_holdout_resets.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-holdout-starts.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_holdout_starts_v1.json",
+      "last_result": {
+        "cpu_passed": 79,
+        "native_status": "heldout_native_pending",
+        "trial_count_per_grasp": 104,
+        "static_clearance": {
+          "pinch": 24,
+          "tripod": 72,
+          "power": 0
+        },
+        "teacher_admission": false,
+        "generalization_qualified": false
+      }
     }
   },
   "execution_target": {

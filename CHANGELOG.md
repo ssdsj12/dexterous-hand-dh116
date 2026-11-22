@@ -1,3 +1,5 @@
+The fixed-wrist wire evaluation keeps 104 held-out setups per grasp and reports original hull clearance separately from native success. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-holdout-starts.md)
+
 The opt-in Tripod diagnostic can combine a measured wrist re-seat and an index increment under the existing collision and motion limits. Native replay reached an index gap of 0.531 mm and exited naturally; opposing load and Lift remain pending. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-coupled-close.md)
 
 An opt-in evaluation catalog crosses eight unseen wire diameter, length and stiffness combinations and excludes them from the training pilot. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-factorial-holdout.md)
