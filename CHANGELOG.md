@@ -1,5 +1,7 @@
 ## Worker fault-path cache release
 
+Tripod selected pads now use the existing full-node refinement path without an unused coarse tube calculation; non-pad and shared guards stay unchanged.95 CPU checks pass across policy/source and Registry suites, plus an overlapping strengthened primary recheck. All64 recorded geometry packets match under current code provenance; inner8-packet CPU median0.809s →0.750s. No new native qualification. [Report](docs/superpowers/reports/2026-11-22-tripod-refined-contact-work.md).
+
 Tripod v9 computed one real PPO update across8 controls/66 SDK steps, but the parent wall guard rejected the run. Outer exit1, no signal; its checkpoint remains failed evidence. Rejected wall samples now persist before raising;173 CPU checks pass, no native retest of that logging change. [Report](docs/superpowers/reports/2026-11-22-tripod-native-v9-and-wall-rejection.md).
 
 The Teacher static contract now forwards its own fully verified Reset manifest instead of immediately replaying it twice.230 selected CPU checks pass; complete static median24.18s →14.75s. Later source/Builder/live checks and all physical contracts remain unchanged. Tripod v9 is frozen, unexecuted and unqualified. [Report](docs/superpowers/reports/2026-11-22-static-manifest-handoff.md).

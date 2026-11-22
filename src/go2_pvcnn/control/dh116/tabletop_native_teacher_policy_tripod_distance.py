@@ -146,7 +146,9 @@ class PolicyOwnedTripodGeometry(PolicyOwnedPinchGeometry):
                     # quaternion arithmetic; do not renormalize away a boundary.
                     world = rotated_points(np.r_[pose[:3], pose[6], pose[3:6]], vertices)
                     target = name in REQUIRED
-                    result = check_supported_shape(world, boxes, tube, contact_shape=target,
+                    # Selected pads use the full-node certificate below. Its
+                    # result replaces the unused coarse tube bound; non-pads retain it.
+                    result = check_supported_shape(world, boxes, None if target else tube, contact_shape=target,
                         contact_penetration_m=.00015 if target else None,
                         reference_nodes=nodes[None],
                         envelope_refinement=ENVELOPE_REFINEMENT_VERSION if target else None)

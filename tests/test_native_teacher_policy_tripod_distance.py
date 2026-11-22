@@ -88,6 +88,37 @@ def tripod_case(monkeypatch, tmp_path, profile, templates, *, visible_middle=Tru
 
 def test_tripod_uses_three_distinct_pad_sources_and_two_hand_means(
         monkeypatch, tmp_path, backend_profile, sdk_templates):
+    # Full-node refinement owns selected-pad decisions. Protect the measured
+    # performance contract without skipping its actual certificate or support guard.
+    from scripts import verify_dh116_power_shared_rod as shared
+    from scripts import screen_dh116_tripod_supported_reset as screen
+    from scripts import audit_dh116_certified_segment_distance as cert
+    counts = dict(refined=0, coarse_refined=0, coarse_other=0, certificates=0)
+    active = dict(refined=False)
+    original_guard, original_coarse, original_certificate = (
+        shared.check_supported_shape, screen.separation, cert.rod_envelope_clearance)
+    def guard(*args, **kwargs):
+        previous = active["refined"]
+        active["refined"] = bool(kwargs.get("contact_shape")
+            and kwargs.get("envelope_refinement") is not None)
+        counts["refined"] += int(active["refined"])
+        certificates_before = counts["certificates"]
+        try:
+            result = original_guard(*args, **kwargs)
+            if active["refined"]:
+                assert counts["certificates"] > certificates_before
+            return result
+        finally:
+            active["refined"] = previous
+    def coarse(*args, **kwargs):
+        counts["coarse_refined" if active["refined"] else "coarse_other"] += 1
+        return original_coarse(*args, **kwargs)
+    def certificate(*args, **kwargs):
+        counts["certificates"] += 1
+        return original_certificate(*args, **kwargs)
+    monkeypatch.setattr(shared, "check_supported_shape", guard)
+    monkeypatch.setattr(screen, "separation", coarse)
+    monkeypatch.setattr(cert, "rod_envelope_clearance", certificate)
     reader, event, c, sim = tripod_case(monkeypatch, tmp_path, backend_profile, sdk_templates)
     with profile_reader_scope(backend_profile):
         result = reader.capture(event, history_owner=c.history, grasp="tripod")
@@ -104,6 +135,9 @@ def test_tripod_uses_three_distinct_pad_sources_and_two_hand_means(
     assert result["contact_inferred_from_geometry"] is False
     assert result["teacher_admission"] is False and result["new_physics_steps"] == 0
     assert sim.current_time_step_index == 3
+    assert counts["refined"] > 0 and counts["certificates"] == counts["refined"]
+    assert counts["coarse_other"] > 0
+    assert counts["coarse_refined"] == 0, "unused coarse pad bound must not precede the real full-node certificate"
 
 
 def test_tripod_missing_middle_coverage_is_unknown_not_a_two_pad_mean(

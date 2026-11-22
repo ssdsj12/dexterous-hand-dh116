@@ -48968,6 +48968,32 @@
         "teacher_admission": false,
         "scope": "CPU evidence persistence; v9 tested prior published code and remains failed"
       }
+    },
+    "teacher.tripod-refined-contact-work": {
+      "title": "Omit unused coarse pad bound while retaining full-node continuous certificates",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.native-wall-rejection-evidence"
+      ],
+      "tests": [
+        "tests/test_native_teacher_policy_tripod_distance.py",
+        "tests/test_dh116_continuous_envelope_refinement.py",
+        "tests/test_native_teacher_tripod_sources.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-tripod-refined-contact-work.md",
+      "readiness": "docs/contracts/dh116_tripod_refined_contact_work_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 95,
+        "cpu_failed": 0,
+        "recorded_cpu_packets_compared": 64,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU geometry/source35 plus disjoint Registry60; recorded64-packet comparison; no native"
+      }
     }
   },
   "execution_target": {
