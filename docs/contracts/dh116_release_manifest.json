@@ -34311,6 +34311,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-measured-reseat",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-measured-reseat.md",
+      "readiness": "docs/contracts/dh116_teacher_power_measured_reseat_v1.json",
+      "status": "no_cpu_reseat_candidate_for_full_wrap",
+      "cpu_tests": {
+        "passed": 133,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "3c41f9d296047e98808df9c53b5a0fa546cc86f9",
+        "source_tree": "7f5b40fb7f6f39852fcf4e03d78e5f93c08d54ac",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
