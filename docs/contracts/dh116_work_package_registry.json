@@ -50350,10 +50350,15 @@
       "readiness": "docs/contracts/dh116_teacher_tripod_distal_or_relief_v1.json",
       "last_result": {
         "cpu_passed": 92,
-        "native_status": "right_v1_guarded_stop_at_sdk11_right_corrected_pending",
+        "native_status": "right_and_left_approaches_guarded_before_hand_contact",
         "teacher_admission": false,
         "guarded_sdk": 11,
-        "outer_sha256": "9e4dd29ca92c47e40ad3e5184c88f4a57a26a8623237e15a28202b148815a884"
+        "outer_sha256": "9e4dd29ca92c47e40ad3e5184c88f4a57a26a8623237e15a28202b148815a884",
+        "right_sdk": 73,
+        "left_sdk": 68,
+        "total_contact_frames": 0,
+        "right_outer_sha256": "101460a5d20752e0c154e99993fa738d3da737ce714bdce8336d7c9bd302f504",
+        "left_outer_sha256": "e2955a2f206d4cc4348431d194b7706f734bd4bb8209a81c5bbf1aa694c9918e"
       }
     },
     "teacher.wire-material-generalization": {

@@ -21,6 +21,18 @@ The single Isaac instance reached SDK 11 in 74.10 s. After both setup steps and 
 
 The fixed hold audit now checks no inactive-side action and the exact projected world Reset pose and angles. It independently computes the expected SDK prismatic targets using the original mount conversion and the observed, fixed mount anchor. It checks all non-prismatic joint targets exactly and compares the entire backend target to the expected result. The archived SDK 11 row and original frozen Reset passed the new validation without changing any geometry threshold. A left tangential wrench without a valid normal pair now stops the unilateral probe, as does any hand wrench in the right pre-contact probe.
 
-The regression passed 92 tests. The updated native path still requires its own run and result.
+The regression passed 92 tests. Two distinct bounded native candidates followed.
 
 Antigravity independently matched the corrected hold auditor and the material catalog source. Only the selected left-pad SDFs are sampled in the contact probe. The right pre-contact probe checks the 44 hulls and measured wrench but still uses its single frozen positive-Z recipe.
+
+
+## Corrected right approach and independent left approach
+
+| Candidate | Last SDK step | Physical action rows | Wall time | Stop |
+| --- | ---: | ---: | ---: | --- |
+| Right wrist relief | 73 | 63 | 87.35 s | Left middle source hull reached a certified upper gap of 0.241 mm under the original 0.25 mm clearance floor |
+| Left distal approach | 68 | 58 | 81.20 s | Left middle source hull reached −0.161 mm under the original −0.15 mm selected envelope floor |
+
+Both completed ordinary cleanup and exited with code 1 due to the recorded guard. Neither received a signal, force exit or timeout. All 63 right-run inactive-side target checks passed. The right palm moved 1.212 mm along the requested direction with 0.00390 rad intrinsic-Z rotation. Offline decomposition using native endpoints gives 2.99–3.44 mm vertical sag for material nodes 32–33 and zero observed movement of the left middle hull. The local decrease in right-run clearance is attributable to wire motion between the measured physical endpoints.
+
+The left palm moved +1.097 mm in World Z. The SDK68 same-clock middle-pad SDF still read +0.111 mm at material node 33. The certificate and SDF check different geometry representations and sampling domains. No solver hand pair or wrench was available, and no Lift phase ran. The next candidate needs a settled wire pose and a path that brings a real material node into the correct SDF contact patch before the original hull guard is reached. Screen multi-spec approach poses independently and keep the original success thresholds.

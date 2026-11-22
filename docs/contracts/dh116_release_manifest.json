@@ -33819,9 +33819,9 @@
       "branch": "11-17",
       "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-distal-or-relief.md",
       "readiness": "docs/contracts/dh116_teacher_tripod_distal_or_relief_v1.json",
-      "status": "right_v1_guarded_stop_at_sdk11_right_corrected_pending",
+      "status": "right_and_left_approaches_guarded_before_hand_contact",
       "cpu_tests": {
-        "passed": 87,
+        "passed": 92,
         "failed": 0
       },
       "teacher_admission": false,
@@ -33835,7 +33835,11 @@
         "files_verified": 10,
         "pr2_draft": true,
         "pr2_merged": false
-      }
+      },
+      "native_runs": 3,
+      "published_runtime_commit": "d29ff857d3df29d0b6e1fdc17375a7fc7951f34a",
+      "right_outer_sha256": "101460a5d20752e0c154e99993fa738d3da737ce714bdce8336d7c9bd302f504",
+      "left_outer_sha256": "e2955a2f206d4cc4348431d194b7706f734bd4bb8209a81c5bbf1aa694c9918e"
     },
     {
       "package": "teacher.wire-material-generalization",

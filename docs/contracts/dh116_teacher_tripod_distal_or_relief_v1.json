@@ -30,7 +30,7 @@
     "tests/test_wire_continuous_clearance.py": "7f4c90fbc3f8754a1c8ee3280dacdddf06551475be9b798c4fdfbe88d46734e1",
     "tests/test_wire_first_distal_contact.py": "c18586ad919c8d3c825070663318df61570e20645ff088f207acc815d2fb986e"
   },
-  "native_status": "right_v1_guarded_stop_at_sdk11_right_corrected_pending",
+  "native_status": "right_and_left_approaches_guarded_before_hand_contact",
   "teacher_admission": false,
   "grasp_qualified": false,
   "generalization_qualified": false,
@@ -73,5 +73,131 @@
       "minimum_rod_clearance_m": 0.0013201944426482815,
       "max_saved_prismatic_roundtrip_m": 1.7696637044650743e-08
     }
+  },
+  "right_v2": {
+    "frozen_sha256": "aedfddee62f7d7b78e9a8c726dec3f846ef58b9e493a8b081260b10f5fafdca3",
+    "outer_sha256": "101460a5d20752e0c154e99993fa738d3da737ce714bdce8336d7c9bd302f504",
+    "code_head": "d29ff857d3df29d0b6e1fdc17375a7fc7951f34a",
+    "sdk_steps": 73,
+    "rows": 63,
+    "solver_substeps": 852,
+    "hold_checks_passed": 63,
+    "min_rod_clearance_m": 0.0002502333039016481,
+    "max_left_actual_drift_m": 1.8480911030404942e-08,
+    "meshes": [
+      "support_0",
+      "support_1"
+    ],
+    "native_exit_code": 1,
+    "runtime_s": 87.3541131359525,
+    "right_intrinsic_z_rad": null,
+    "signed_right_travel_m": null,
+    "grasp_qualified": false,
+    "teacher_admission": false,
+    "guard_stop": {
+      "physics_step": 73,
+      "rod_source_physics_step": 73,
+      "hand": "left",
+      "hull": "source",
+      "link": "finger33_link",
+      "passed": false,
+      "lower_m": -2.512574952784258e-06,
+      "fast_lower_m": -2.512574952784258e-06,
+      "segments_checked": 1,
+      "threshold_m": 0.00025,
+      "failed_segment": {
+        "group": 16,
+        "segment": 32,
+        "upper_m": 0.00024115382795094915
+      }
+    },
+    "dynamics": {
+      "right_delta_world_m": [
+        0.000464022159576416,
+        -1.4901161193847656e-08,
+        -0.0011201798915863037
+      ],
+      "signed_right_travel_m": 0.0012124848672874626,
+      "actual_right_intrinsic_z_rad": 0.0038979693424257473,
+      "node32_motion_m": [
+        0.0,
+        -3.758072853088379e-05,
+        -0.003437042236328125
+      ],
+      "node33_motion_m": [
+        0.0,
+        -4.780292510986328e-05,
+        -0.0029902756214141846
+      ],
+      "minimum_source_middle_clearance_change": {
+        "hand_0_rod_0": {
+          "lower_m": 0.0017240193791537043,
+          "upper_m": 0.0017240200963714756
+        },
+        "hand_0_rod_1": {
+          "lower_m": 0.0002411548418022628,
+          "upper_m": 0.00024115485413704792
+        },
+        "hand_1_rod_0": {
+          "lower_m": 0.0017240193791537043,
+          "upper_m": 0.0017240200963714756
+        },
+        "hand_1_rod_1": {
+          "lower_m": 0.0002411548418022628,
+          "upper_m": 0.00024115485413704792
+        }
+      },
+      "max_left_middle_hull_motion_m": 0.0
+    },
+    "contact": false,
+    "app_close_returned": true
+  },
+  "left_v1": {
+    "source_head": "d29ff857d3df29d0b6e1fdc17375a7fc7951f34a",
+    "outer_sha256": "e2955a2f206d4cc4348431d194b7706f734bd4bb8209a81c5bbf1aa694c9918e",
+    "frozen_sha256": "3ff6f00a4c1f1208ccf4fe0fa53e9dc1b25d3dc0a6747e79c0dbdfbf0373787c",
+    "exit_code": 1,
+    "elapsed_s": 81.19778605201282,
+    "sdk_steps": 68,
+    "solver_substeps": 792,
+    "rows": 58,
+    "first_pairs": null,
+    "complete_transferred_after_first": false,
+    "frames_with_pairs": 0,
+    "left_world_z_travel_m": 0.001097261905670166,
+    "minimum_pre_solver_clearance_m": -0.00014583264732306303,
+    "guard_stop": [
+      {
+        "physics_step": 68,
+        "rod_source_physics_step": 68,
+        "hand": "left",
+        "hull": "source",
+        "link": "finger33_link",
+        "passed": false,
+        "lower_m": -0.000338035206942222,
+        "fast_lower_m": -0.000338035206942222,
+        "segments_checked": 1,
+        "threshold_m": -0.00015,
+        "failed_segment": {
+          "group": 16,
+          "segment": 32,
+          "upper_m": -0.0001607232233753796
+        }
+      }
+    ],
+    "grasp_qualified": false,
+    "teacher_admission": false,
+    "same_clock_middle_pad_sdf": {
+      "minimum_gap_m": 0.00011100630201748077,
+      "minimum_node_id": 33,
+      "native_contact_observed": false,
+      "evidence_sha256": "1660be05a41546d5f8c9043fc46985ace3e88018e294be3ca980fb95a519980e"
+    },
+    "app_close_returned": true
+  },
+  "publication_registry_tests": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "7d797e137ba0d14dbbbc34e88b9f340925e4f89fbc6364ddda80677096bb366e"
   }
 }
