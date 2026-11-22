@@ -18,11 +18,16 @@ from scripts.audit_dh116_power_fixed_wrist_digits import (
 from scripts.diagnose_dh116_teacher_initialization import digest
 from scripts.prepare_dh116_pinch_closure_margin import sample_grid
 from scripts.audit_dh116_pinch_initial_pose import box_relation
+from scripts.audit_dh116_power_material_reach import seated_geometry, transport_power_station
+from scripts.prepare_dh116_wire_pose_candidate import _material_tangents
 from scripts.prepare_dh116_power_palm_seed import thumb_clearance
 from scripts.verify_dh116_power_staged_palm_witness import MAX_PALM_PENETRATION_M
 
 ANGLES_DEG = range(-20, 21, 5)
 SLIDES_M = (-.008, -.004, 0., .004, .008)
+TRANSPORT_ANGLES_DEG = (-20, -10, 0, 10, 20)
+TRANSPORT_SLIDES_M = (-.004, 0., .004)
+STEPS_TOWARD_CENTER = range(5)
 REACH_M = .0005
 PAD_PENETRATION_M = .00015
 PALM_ALIGNMENT_COS = .85
@@ -51,6 +56,45 @@ def palm_anchor(rod, nodes, side):
     normal, tangent, transverse = (axis / norm for axis, norm in zip(axes, norms, strict=True))
     return dict(node_id=station, pivot_world_m=pivot, normal_world=normal,
                 tangent_world=tangent, transverse_world=transverse)
+
+
+def transport_anchor(wrist, measured, nodes, *, target, side, tangents=None):
+    """Transport one observed rigid palm frame to a proposed material station."""
+    center = len(nodes) // 2
+    if (side not in ("left", "right") or not
+            (center < target < len(nodes)-1 if side == "left" else 0 < target < center)):
+        raise ValueError("target must be interior to the assigned wire half")
+    source = measured["node_id"]
+    if target == source:
+        return wrist, measured
+    tangents = _material_tangents(nodes) if tangents is None else tangents
+    moved, normal = transport_power_station(wrist, measured["normal_world"], nodes, tangents,
+                                            source=source, target=target)
+    rotation = Rotation.from_quat(np.roll(moved[3:], -1)) * Rotation.from_quat(np.roll(wrist[3:], -1)).inv()
+    pivot = nodes[target] + rotation.apply(measured["pivot_world_m"] - nodes[source])
+    tangent = nodes[target+1]-nodes[target-1]
+    tangent /= np.linalg.norm(tangent)
+    transverse = np.cross(tangent, normal)
+    length = np.linalg.norm(transverse)
+    if not np.isfinite(length) or length < 1e-8:
+        raise ValueError("transported palm normal and wire tangent must define a frame")
+    return moved, dict(node_id=target, pivot_world_m=pivot, normal_world=normal,
+                        tangent_world=tangent, transverse_world=transverse/length)
+
+
+def support_adjacent_nodes(rod, nodes, scene):
+    """Flag supported material, its immediate neighbors and spheres near a support."""
+    mask = np.zeros(len(nodes), dtype=bool)
+    support_names = ("table", "support_0", "support_1")
+    for pair in rod["rod_mesh_contact_pairs"]["pairs"]:
+        if pair["mesh_name"] in support_names and pair["normal_force_on_rod_n"] > 0.:
+            index = pair["node_index"]
+            mask[max(0,index-1):index+2] = True
+    for support in scene["supports"]:
+        center, size = np.asarray(support["center_m"]), np.asarray(support["size_m"])
+        distance = np.linalg.norm(np.maximum(np.abs(nodes-center)-size/2, 0.), axis=1)
+        mask |= distance <= scene["wire_radius_m"] + CLEARANCE_M
+    return mask
 
 
 def pick_pad_witness(gaps, normal_dots, allowed, *, thumb):
@@ -149,13 +193,15 @@ def _wrist_clearance(geometry, wrist, q, scene):
     support = _support_clearance_lower(hulls, scene["supports"])
     inter_digit = thumb_clearance(hulls)
     return dict(table_m=table, support_m=support, thumb_clearance_m=inter_digit,
+                hand_y_bounds_m=[min(float(points[:,1].min()) for points in hulls.values()),
+                                 max(float(points[:,1].max()) for points in hulls.values())],
                 passed=bool(table >= CLEARANCE_M and support >= CLEARANCE_M and inter_digit > 0.))
 
 
-def screen_side(row, nodes, scene, side, files, project):
+def screen_side(row, nodes, scene, side, files, project, *, transport_stations=False):
     geometry = load_geometry(project, side=side)
     wrist, active, correction, offsets = align_measured_wrist(geometry, side, row, apply_to_geometry=True)
-    anchor = palm_anchor(row["rod"], nodes, side)
+    measured = palm_anchor(row["rod"], nodes, side)
     grids, hashes = _locked_grids(row["rod"], side, files)
     alternatives = _finger_samples(geometry, wrist, active, offsets)
     # The arm is projected in the original Reset frame, including its wrist angles.
@@ -165,15 +211,29 @@ def screen_side(row, nodes, scene, side, files, project):
     reset_pos = target[:3] - projection["palm_offsets_m"][0, side_id]
     reset_rot = Rotation.from_quat(target[[4, 5, 6, 3]]) * Rotation.from_euler(
         "XYZ", projection["projected_angles"][0, side_id]).inv()
-    allowed = np.arange(len(nodes)) > 20 if side == "left" else np.arange(len(nodes)) < 20
+    center = len(nodes) // 2
+    allowed = np.arange(len(nodes)) > center if side == "left" else np.arange(len(nodes)) < center
+    support_nodes = support_adjacent_nodes(row["rod"], nodes, scene)
+    scored_nodes = allowed & ~support_nodes if transport_stations else allowed
     radius = scene["wire_radius_m"]
     rows = []
     rejected = dict(palm=0, action_bounds=0, open_geometry=0, combined_pose=0)
-    for roll, yaw, pitch, slide in product(ANGLES_DEG, ANGLES_DEG, ANGLES_DEG, SLIDES_M):
+    source = measured["node_id"]
+    toward_center = -1 if side == "left" else 1
+    steps = STEPS_TOWARD_CENTER if transport_stations else range(1)
+    target_ids = tuple(source + toward_center*step for step in steps
+                       if abs(source - center) > step)
+    tangents = _material_tangents(nodes)
+    bases = {target: transport_anchor(wrist, measured, nodes, target=target, side=side, tangents=tangents)
+             for target in target_ids}
+    angles_deg = TRANSPORT_ANGLES_DEG if transport_stations else ANGLES_DEG
+    slides_m = TRANSPORT_SLIDES_M if transport_stations else SLIDES_M
+    for target, roll, yaw, pitch, slide in product(target_ids, angles_deg, angles_deg, angles_deg, slides_m):
+        wrist_at_target, anchor = bases[target]
         tilt = Rotation.from_rotvec(np.deg2rad(roll)*anchor["tangent_world"]) * Rotation.from_rotvec(
             np.deg2rad(yaw)*anchor["normal_world"]) * Rotation.from_rotvec(
             np.deg2rad(pitch)*anchor["transverse_world"])
-        palm = _palm_candidate(wrist, anchor, nodes, grids["base_link"], radius, tilt, slide)
+        palm = _palm_candidate(wrist_at_target, anchor, nodes, grids["base_link"], radius, tilt, slide)
         if palm is None:
             rejected["palm"] += 1
             continue
@@ -190,7 +250,7 @@ def screen_side(row, nodes, scene, side, files, project):
         if not guards["passed"]:
             rejected["open_geometry"] += 1
             continue
-        witnesses = {}
+        witnesses, support_only = {}, {}
         for pad, (transforms, joint_values) in alternatives.items():
             rotations = orient @ transforms[:, :, :3]
             xyz = transforms[:, :, 3] @ orient.T + root
@@ -200,7 +260,12 @@ def screen_side(row, nodes, scene, side, files, project):
             direction = np.einsum("kij,knj->kni", rotations, gradients.reshape(len(xyz), -1, 3))
             with np.errstate(invalid="ignore", divide="ignore"):
                 dots = direction @ palm_normal / np.linalg.norm(direction, axis=-1)
-            witness = pick_pad_witness(gaps, dots, allowed, thumb=(pad == DISTAL_PAD_LINKS[0]))
+            thumb = pad == DISTAL_PAD_LINKS[0]
+            if transport_stations:
+                diagnostic = pick_pad_witness(gaps, dots, allowed & support_nodes, thumb=thumb)
+                if diagnostic is not None and abs(gaps[diagnostic]) <= REACH_M:
+                    support_only[pad] = dict(node_id=int(diagnostic[1]), gap_m=float(gaps[diagnostic]))
+            witness = pick_pad_witness(gaps, dots, scored_nodes, thumb=thumb)
             if witness is not None:
                 i, j = witness
                 unit = direction[i, j] / np.linalg.norm(direction[i, j])
@@ -215,23 +280,49 @@ def screen_side(row, nodes, scene, side, files, project):
             thumb = np.asarray(witnesses[DISTAL_PAD_LINKS[0]]["normal_world"])
             opposed = any(float(thumb @ witnesses[pad]["normal_world"]) < -.2 for pad in DISTAL_PAD_LINKS[1:])
             combined.update(q_rad=q.tolist(), thumb_opposed=bool(opposed))
+            if transport_stations and combined["passed"] and opposed:
+                shapes = shapes_world(geometry, pose, q)
+                combined["whole_hand_static_geometry"] = seated_geometry(
+                    shapes, nodes, scene["supports"], scene["table_top_m"], radius)
             if not combined["passed"] or not opposed:
                 rejected["combined_pose"] += 1
         gap_order = [abs(gap["gap_m"]) for gap in witnesses.values()]
-        rows.append(dict(roll_deg=roll, yaw_deg=yaw, pitch_deg=pitch, slide_m=slide,
+        rows.append(dict(target_node_id=target, roll_deg=roll, yaw_deg=yaw, pitch_deg=pitch, slide_m=slide,
                          position_correction_m=correction_m, palm_gap_m=palm_gap, wrist_wxyz_m=pose.tolist(),
                          open_endpoint=guards, independent_near_pads=near, witnesses=witnesses,
+                         support_adjacent_witnesses=support_only,
                          combined_endpoint=combined,
                          rank=[-len(near), 5-len(gap_order), max(gap_order,default=1.), sum(gap_order)]))
-    return dict(anchor={k: v.tolist() if isinstance(v,np.ndarray) else v for k,v in anchor.items()},
+    return dict(anchor={key: v.tolist() if isinstance(v,np.ndarray) else v for key,v in measured.items()},
+                candidate_target_nodes=list(target_ids), support_adjacent_nodes=np.flatnonzero(support_nodes).tolist(),
                 pad_pose_alignment=correction, sdf_sha256=hashes, rejections=rejected,
-                enumerated=len(ANGLES_DEG)**3 * len(SLIDES_M), candidates=sorted(rows,key=lambda item:item["rank"]))
+                enumerated=len(target_ids) * len(angles_deg)**3 * len(slides_m),
+                candidates=sorted(rows,key=lambda item:item["rank"]))
+
+
+def _separated_pairs(hands):
+    """A positive world-Y interval separates all left/right hulls at both endpoints."""
+    eligible = {}
+    for side, hand in hands.items():
+        eligible[side] = [row for row in hand["candidates"] if row["combined_endpoint"]
+                          and row["combined_endpoint"].get("whole_hand_static_geometry", {}).get("eligible")
+                          and row["combined_endpoint"]["thumb_opposed"]]
+    pairs = []
+    for left, right in product(eligible["left"], eligible["right"]):
+        margins = {field: left[field]["hand_y_bounds_m"][0]-right[field]["hand_y_bounds_m"][1]
+                   for field in ("open_endpoint", "combined_endpoint")}
+        if min(margins.values()) >= CLEARANCE_M:
+            pairs.append(dict(left_target_node_id=left["target_node_id"], right_target_node_id=right["target_node_id"],
+                              left_wrist_wxyz_m=left["wrist_wxyz_m"], right_wrist_wxyz_m=right["wrist_wxyz_m"],
+                              separations_m=margins))
+    return pairs
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--palm-receipt", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--transport-stations", action="store_true")
     args = parser.parse_args(argv)
     project = Path(__file__).resolve().parents[1]
     row, scene, sources = load_measured_palm_boundary(args.palm_receipt, project=project)
@@ -240,11 +331,13 @@ def main(argv=None):
     plan = json.loads(args.palm_receipt.with_name("plan.json").read_bytes())
     if digest(plan) != outer["frozen_sha256"]:
         raise ValueError("expected native frozen plan for the SDF source binding")
-    hands = {side: screen_side(row, nodes, scene, side, plan["frozen_files"], project)
-             for side in ("left", "right")}
-    result = dict(version="dh116-power-measured-reseat-screen-v1", archive=sources, clock=clock,
-                  hands=hands, continuous_route_verified=False, native_action_performed=False,
-                  teacher_admission=False, grasp_qualified=False)
+    hands = {side: screen_side(row, nodes, scene, side, plan["frozen_files"], project,
+                               transport_stations=args.transport_stations) for side in ("left", "right")}
+    version = "dh116-power-measured-station-transport-v1" if args.transport_stations else "dh116-power-measured-reseat-screen-v1"
+    result = dict(version=version, archive=sources, clock=clock, wire_radius_m=scene["wire_radius_m"],
+                  hands=hands, separated_endpoint_pairs=_separated_pairs(hands),
+                  new_station_native_contact_verified=False, continuous_route_verified=False,
+                  native_action_performed=False, teacher_admission=False, grasp_qualified=False)
     with args.output.open("x", encoding="utf-8") as out:
         json.dump(result, out, indent=2, allow_nan=False)
         out.write("\n")

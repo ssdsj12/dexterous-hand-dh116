@@ -1,3 +1,5 @@
+The Power scan now compares transported interior material stations and tracks support-adjacent witnesses separately. Native Power qualification remains pending. [Report](docs/superpowers/reports/2026-11-23-teacher-power-transported-contact-stations.md)
+
 The measured Power re-seating scan found no full five-pad candidate around the archived palm locations. [Report](docs/superpowers/reports/2026-11-23-teacher-power-measured-reseat.md)
 
 Archived bilateral Power palm feedback now anchors a two-hand reach audit. The measured wrist positions exclude full wrap before re-seating. [Report](docs/superpowers/reports/2026-11-23-teacher-power-measured-palm-fixed-wrist.md)

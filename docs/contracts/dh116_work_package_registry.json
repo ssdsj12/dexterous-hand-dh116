@@ -50787,6 +50787,40 @@
         },
         "teacher_admission": false
       }
+    },
+    "teacher.power-trans-material-stations": {
+      "title": "Screen Power palm transport to interior measured wire stations",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.power-measured-reseat"
+      ],
+      "tests": [
+        "tests/test_dh116_power_measured_reseat.py",
+        "tests/test_dh116_power_fixed_wrist_digits.py",
+        "tests/test_dh116_power_material_reach.py",
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_wire_fixed_pregrasp_native_reset.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "timeout_seconds": 360,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-transported-contact-stations.md",
+      "readiness": "docs/contracts/dh116_teacher_power_transport_stations_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_transported_stations_without_full_wrap",
+        "cpu_passed": 135,
+        "grid_candidates": 3750,
+        "left_endpoint_rows": 199,
+        "right_endpoint_rows": 166,
+        "bilateral_endpoint_pairs": 0,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -44,3 +44,37 @@ def test_support_fast_separation_and_near_contact_keep_the_original_gate():
         bound = screen._support_clearance_lower({"cooked:finger53_link": vertices}, [support])
         assert bound <= exact + 1e-12
         assert (bound >= screen.CLEARANCE_M) == (exact >= screen.CLEARANCE_M)
+
+
+def test_transported_palm_preserves_local_witness_and_uses_proposed_node():
+    from scipy.spatial.transform import Rotation
+    from scripts.prepare_dh116_wire_pose_candidate import _material_tangents, _station_frame
+
+    row, _, _ = screen.load_measured_palm_boundary(PALM_RECEIPT, project=ROOT)
+    _, nodes, _ = screen.measured_palm_boundary(row)
+    side = "left"
+    initial = screen.palm_anchor(row["rod"], nodes, side)
+    position, xyzw = row["sdk_hand_geometry"]["poses"][f"{side}.base_link"]
+    pose = np.r_[position, np.roll(xyzw, 1)]
+    candidate, target = screen.transport_anchor(pose, initial, nodes, target=29, side=side)
+    tangents = _material_tangents(nodes)
+    original_basis = _station_frame(tangents, initial["node_id"])
+    new_basis = _station_frame(tangents, target["node_id"])
+    np.testing.assert_allclose(new_basis.T @ (target["pivot_world_m"] - nodes[29]),
+                               original_basis.T @ (initial["pivot_world_m"] - nodes[31]))
+    old_rotation = Rotation.from_quat(np.roll(pose[3:], -1))
+    new_rotation = Rotation.from_quat(np.roll(candidate[3:], -1))
+    np.testing.assert_allclose(new_rotation.inv().apply(target["normal_world"]),
+                               old_rotation.inv().apply(initial["normal_world"]))
+    assert target["node_id"] == 29
+    assert initial["node_id"] == 31
+    with pytest.raises(ValueError, match="assigned wire half"):
+        screen.transport_anchor(pose, initial, nodes, target=19, side=side)
+
+
+def test_support_adjacent_nodes_excluded_even_if_only_neighbour_is_loaded():
+    row, scene, _ = screen.load_measured_palm_boundary(PALM_RECEIPT, project=ROOT)
+    _, nodes, _ = screen.measured_palm_boundary(row)
+    mask = screen.support_adjacent_nodes(row["rod"], nodes, scene)
+    assert mask[0] and mask[1] and mask[39] and mask[40]
+    assert not mask[28] and not mask[12]
