@@ -49594,9 +49594,9 @@
     "teacher.tripod-contact-fresh8-v1": {
       "title": "Actual supported17 Tripod contact fresh8 diagnostic with separately charged source prime",
       "executor": "native_bounded",
-      "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Frozen CPU recipe;exact native execution identity and resource lock required,zero attempts",
+      "status": "passed",
+      "blocker_kind": "diagnostic_complete_unqualified",
+      "reason": "Single actual contact-profile PPO diagnostic independently verified,natural exit0;zero hand load,not grasp or Teacher qualification.",
       "requires_approval": true,
       "resource_class": "isaac_single_gpu",
       "retry_policy": {
@@ -49612,12 +49612,33 @@
       ],
       "dependency_scopes": {},
       "tests": [],
-      "native_runs": 0,
-      "report": "docs/superpowers/reports/2026-11-22-tripod-contact-fresh8-frozen.md",
-      "readiness": "docs/contracts/dh116_tripod_contact_fresh8_frozen_v1.json",
+      "native_runs": 1,
+      "report": "docs/superpowers/reports/2026-11-22-tripod-contact-fresh8-native.md",
+      "readiness": "docs/contracts/dh116_tripod_contact_fresh8_native_v1.json",
       "actual_launch": {
         "path": "configs/dh116_execution/tripod-contact-fresh8-launch-v1.json",
         "sha256": "5af05c745d3eefd67d0c82776e64f30dae05b3862896908d5dcf862d83f3285e"
+      },
+      "last_result": {
+        "diagnostic_verified": true,
+        "native_qualification": false,
+        "package": "teacher.tripod-contact-fresh8-v1",
+        "receipt_sha256": "a8c9b362e248188e5cc19d4c489eb0cc333ff4ef623d6470d13899054bb25edc",
+        "teacher_admission": false,
+        "tested_head": "bbaacaad5cf960f0bee63c0b1d4993d6e435b653",
+        "native_runs": 1,
+        "native_ppo_updates": 1,
+        "controls": 8,
+        "sdk_steps": 67,
+        "solver_calls": 65,
+        "internal_solver_substeps": 780,
+        "outer_exit_code": 0,
+        "debugger_inferior_exit_code": 0,
+        "debugger_inferior_signal": null,
+        "grasp_qualified": false,
+        "checkpoint_sha256": "b2242925b780569fe4917662b9fcf06b0688136baaada9cb8b257893bafd5196",
+        "readback_sha256": "55246ee28abbb3b898b62b9fdc027847b3bded19fd58e60b11c725d753bbd8d1",
+        "scope": "actual_fresh_contact_prelift_diagnostic"
       }
     },
     "teacher.tripod-contact-fresh8-freeze": {
@@ -49641,6 +49662,31 @@
         "failed": 0,
         "native_qualification": false,
         "teacher_admission": false
+      }
+    },
+    "teacher.tripod-contact-fresh8-native-result": {
+      "title": "Reverify actual Contact Tripod fresh8 PPO and zero-load raw contact evidence",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-contact-fresh8-freeze"
+      ],
+      "tests": [
+        "tests/test_native_teacher_tripod_contact_frozen.py",
+        "tests/test_teacher_contact_ledger_audit.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-tripod-contact-fresh8-native.md",
+      "readiness": "docs/contracts/dh116_tripod_contact_fresh8_native_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 67,
+        "failed": 0,
+        "native_runs": 1,
+        "native_ppo_updates": 1,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false
       }
     }
   },

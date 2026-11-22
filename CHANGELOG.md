@@ -1,3 +1,5 @@
+First actual Contact Tripod fresh8 PPO diagnostic completed:67 SDK/65 solver/780 substeps,one update,independent audit and natural exit0. All64 rows still have zero hand load;wire remains stand-supported,not grasp success. [Report](docs/superpowers/reports/2026-11-22-tripod-contact-fresh8-native.md).
+
 Actual Contact Tripod fresh8 recipe is frozen and independently CPU-audited:145 regressions pass,67SDK/65solver/780substeps including separate source prime. No native attempt or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-tripod-contact-fresh8-frozen.md).
 
 Original bounded Teacher worker now supports independently primed Tripod contact profile,SDK3 starts and separate3+8N accounting;404 CPU regressions pass. No native run or grasp qualification;Pinch17/Power sources and new native recipe remain pending. [Report](docs/superpowers/reports/2026-11-22-supported-contact-worker.md).
