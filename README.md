@@ -1,3 +1,5 @@
+The resized wire probe now supports a checked quiet interval. Three specimen-specific settled shapes were measured with standalone DeformX. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-quiet-settlement.md)
+
 The opt-in wire catalog now isolates elastic stiffness from dimensions. Three equal-size specimens passed standalone CUDA parameter readback. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-material-generalization.md)
 
 Tripod has an opt-in radius-aware approach and first distal reaction check. The corrected right and left Tripod approaches ran 63 and 58 native action steps. Both hit the original geometry guard before measured hand contact. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-distal-or-relief.md)

@@ -50380,6 +50380,26 @@
         "native_status": "pending",
         "teacher_admission": false
       }
+    },
+    "teacher.wire-quiet-settlement": {
+      "title": "Measure specimen-specific support settlement before Tripod contact",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-distal-or-relief",
+        "teacher.wire-material-generalization"
+      ],
+      "tests": [
+        "tests/test_wire_variant_isaac_reset.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-quiet-settlement.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_quiet_settlement_v1.json",
+      "last_result": {
+        "cpu_passed": 93,
+        "standalone_cuda_specimens": 3,
+        "native_status": "pending",
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

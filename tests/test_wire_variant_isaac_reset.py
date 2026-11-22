@@ -63,3 +63,39 @@ def test_support_settlement_requires_both_real_end_loads_at_terminal_and_no_hand
             validate_settlement(result, dict(row, external_support_wrenches_world=loads))
     with pytest.raises(ValueError, match="hand pair"):
         validate_settlement(dict(result, pair_counts=dict(result["pair_counts"], **{"left.thumb": 1})), row)
+
+
+def test_quiet_settlement_rejects_motion_missed_by_net_displacement():
+    from scripts.verify_dh116_wire_variant_isaac import validate_quiet_settlement
+
+    original = np.zeros((41, 3))
+    original[:, 2] = .365
+    settled = original.copy()
+    settled[20, 2] -= .018
+    rows = []
+    for sdk in range(101, 149):
+        rows.append(dict(physics_step=sdk, rod_tick=(sdk-2)*12, node_positions=settled[None].copy(),
+            velocities=np.zeros((1, 41, 3)), contact_valid=True, run_uuid="run", episode_uid="ep",
+            reset_id=0, rod_uid="rod", env_id=0, external_support_wrenches_world={
+                "table": np.zeros(6), "support_0": np.array([0., 0., -.11, 0., 0., 0.]),
+                "support_1": np.array([0., 0., -.12, 0., 0., 0.])},
+            rod_mesh_contact_pairs={"pairs": [
+                {"mesh_name": name, "substep": i, "normal_force_on_rod_n": .1}
+                for name in ("support_0", "support_1") for i in range(12)]}))
+    result = validate_quiet_settlement(rows, original, weight_n=.23)
+    assert result["qualified"] is True
+    assert result["initial_min_z_m"] == pytest.approx(.347)
+    rows[24]["node_positions"][0, 20, 2] += .0001
+    assert not validate_quiet_settlement(rows, original, weight_n=.23)["qualified"]
+    rows[24]["node_positions"][0, 20, 2] -= .0001
+    rows[24]["velocities"][0, 0, 0] = .0005
+    assert not validate_quiet_settlement(rows, original, weight_n=.23)["qualified"]
+    rows[24]["velocities"][0, 0, 0] = 0
+    rows[24]["external_support_wrenches_world"]["support_1"][2] = -.01
+    assert not validate_quiet_settlement(rows, original, weight_n=.23)["qualified"]
+    rows[24]["external_support_wrenches_world"]["support_1"][2] = -.12
+    rows[24]["rod_mesh_contact_pairs"]["pairs"].pop()
+    assert not validate_quiet_settlement(rows, original, weight_n=.23)["qualified"]
+    rows[24]["episode_uid"] = "wrong"
+    with pytest.raises(ValueError, match="identity"):
+        validate_quiet_settlement(rows, original, weight_n=.23)
