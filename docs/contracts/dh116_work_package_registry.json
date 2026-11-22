@@ -50192,6 +50192,29 @@
         "new_native_runs": 0,
         "grasp_qualified": false
       }
+    },
+    "teacher.tripod-left-world-xy-seating-native": {
+      "title": "Native Tripod World XY seating against exact contact replay",
+      "executor": "gated",
+      "status": "blocked",
+      "blocker_kind": "unstable_measured_contact",
+      "reason": "The completed diagnostic produced only 2/128 bilateral rows and one SDK step of continuous opposing load. Zero off-support Lift.",
+      "dependencies": [
+        "teacher.tripod-left-world-xy-seating"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-left-wrist-native.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_left_wrist_native_v1.json",
+      "tests": [],
+      "native_runs": 1,
+      "last_result": {
+        "outer_exit_code": 0,
+        "native_steps": 2192,
+        "bilateral_hold_rows": 2,
+        "hold_rows": 128,
+        "off_support_lift_rows": 0,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

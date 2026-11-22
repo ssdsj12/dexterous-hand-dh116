@@ -33609,6 +33609,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.tripod-left-world-xy-seating",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-left-wrist-seating.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_left_wrist_seating_v1.json",
+      "cpu_tests": {
+        "passed": 104,
+        "failed": 0
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "6b155c0f8bf8e59612e22e6d740efe7b7bace17a",
+        "source_tree": "39e45631dcc27b68398a533431f08b05cef5838e",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

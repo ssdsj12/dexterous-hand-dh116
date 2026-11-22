@@ -1,0 +1,141 @@
+{
+  "version": "dh116-tripod-left-wrist-seating-native-v1",
+  "execution_head": "6b155c0f8bf8e59612e22e6d740efe7b7bace17a",
+  "frozen_sha256": "55263c5c268c1a0d62dd0f7ec25a3654aa189ed7d5cbae1e70aac010ce82f21e",
+  "outer_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+  "recorded_physics_sha256": "b5304696a48e6cc62e2a148bbe2685819150219aa769fa196290e37cd75c9b37",
+  "measured_force_summary_sha256": "4ae41d582e55d231586596ea1988ae1976adc12e3d39b1cb53f8fe03c811c9d4",
+  "measured_force_summary": {
+    "baseline": {
+      "count": 128,
+      "range_sdk": [
+        1929,
+        2056
+      ],
+      "loaded": {
+        "left": 0,
+        "right": 128
+      },
+      "bilateral_steps": 0,
+      "longest_bilateral_epoch_sdk": 0,
+      "minimum_load_n": {
+        "left": {
+          "thumb": 0.03303882914698969,
+          "index": 0.0,
+          "middle": 0.043783947825554906
+        },
+        "right": {
+          "thumb": 0.2037559897016894,
+          "index": 0.15545305476861965,
+          "middle": 0.055031226292701296
+        }
+      }
+    },
+    "hold": {
+      "count": 128,
+      "range_sdk": [
+        2065,
+        2192
+      ],
+      "loaded": {
+        "left": 2,
+        "right": 119
+      },
+      "bilateral_steps": 2,
+      "longest_bilateral_epoch_sdk": 1,
+      "minimum_load_n": {
+        "left": {
+          "thumb": 0.011849790761577828,
+          "index": 0.0,
+          "middle": 0.0406206493560457
+        },
+        "right": {
+          "thumb": 0.19371382298541817,
+          "index": 0.150281340183282,
+          "middle": 0.04529029964292068
+        }
+      }
+    },
+    "left_requested_target_delta_m": [
+      2.5000000000052758e-05,
+      -0.00012499999999998623,
+      0.0
+    ],
+    "left_measured_palm_delta_m": [
+      1.3113021850585938e-05,
+      -6.408989429473877e-05,
+      8.940696716308594e-08
+    ],
+    "end_physics_step": 2192
+  },
+  "earlier_launcher_error": {
+    "isaac_started": false,
+    "sdk_steps": 0,
+    "exit_code": 1,
+    "receipt_sha256": "71edb67acbd3b78a3eb944d191639b8cd257e5f6f7dd53fe95b1925aab125a8a",
+    "launcher_sha256": "d3ef8f453f1b59e2f98bacbf76746d78e5f9ab94963e9fd2de30c2e5b5ef0dd5",
+    "run_v2_launcher_preflight_sha256": "f44f150541f63fa14449f96ecb73b425ab40d7ac440f40a016dd4a8f4d2df923"
+  },
+  "native": {
+    "gpu": 2,
+    "elapsed_s": 625.6005770228803,
+    "outer_exit_code": 0,
+    "debugger_inferior_exit_code": 0,
+    "signal": null,
+    "sdk_steps": 2192,
+    "control_steps": 244,
+    "solver_substeps": 26280,
+    "ppo_updates": 0,
+    "forced_exit": false
+  },
+  "lift_replay": {
+    "scope": "recorded_native_exchanges_offline",
+    "grasp": "tripod",
+    "receipt_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+    "reference": {
+      "epoch": [
+        "tripod-supported-ea5bbcc61dcb47e6ba198186a88ebad0",
+        0,
+        "tripod-supported-ea5bbcc61dcb47e6ba198186a88ebad0:0",
+        1,
+        "rod0"
+      ],
+      "physics_step": 2,
+      "solver_time_s": 0.0,
+      "median_z_m": 0.36500000953674316,
+      "minimum_z_m": 0.36500000953674316,
+      "radius_m": 0.005,
+      "table_top_m": 0.3,
+      "reset_rod_sha256": "8781902b9a0fedca66180eb4c68e8bed51042249989b48550397777ef5b3bb2c"
+    },
+    "first_physics_step": 3,
+    "last_physics_step": 2192,
+    "row_count": 2190,
+    "bilateral_rows": 69,
+    "registered_support_clear_rows": 0,
+    "off_support_lift_rows": 0,
+    "maximum_off_support_lift_m": null,
+    "largest_minimum_node_delta_m": -2.053380012512207e-05,
+    "rows_reaching_off_support_30mm": 0,
+    "phase_counts": {
+      "Close": 2121,
+      "PreliftHold": 69
+    },
+    "prelift_stable_s": 0.25,
+    "new_physics_steps": 0,
+    "ppo_updates": 0
+  },
+  "status": "blocked_unstable_measured_contact",
+  "grasp_qualified": false,
+  "lift_qualified": false,
+  "teacher_admission": false,
+  "next": "Replace open-loop dose with measured pose-and-normal-force feedback, keeping contact qualification and wrist Z disabled until the hold passes.",
+  "cpu_registry": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 16.38,
+    "log_sha256": "165240a19ef1e9180f37f28dcb51b14357975025a2761959c53b51e4c6afb22b"
+  },
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3
+}
