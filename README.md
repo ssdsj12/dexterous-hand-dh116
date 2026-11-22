@@ -1,3 +1,5 @@
+Power partial opposition now has a continuous 24D target certificate on the fixed archived wire. Live contact and Lift are pending. [Report](docs/superpowers/reports/2026-11-23-teacher-power-continuous-thumb-route.md)
+
 Power thumb closure now has two sampled partial-opposition detours on the archived wire. Continuous motion and physical grasp validation are pending. [Report](docs/superpowers/reports/2026-11-23-teacher-power-thumb-clearance.md)
 
 The staged Power screen found thumb middle-link clearance to be the dominant obstruction before local opposition. [Report](docs/superpowers/reports/2026-11-23-teacher-power-partial-opposition-stage.md)
