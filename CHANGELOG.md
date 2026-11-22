@@ -1,3 +1,5 @@
+Training-only reset selection cleared the 104 fixed held-out layouts for each of Pinch, Tripod and Power. Tripod also passes CPU replay of a recorded 9 mm settlement layout. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-common-pregrasp.md)
+
 Tripod can retain the same index increment after the wrist correction restores measured thumb load. CPU replay covered 13 original pause points. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-index-resume.md)
 
 The fixed-wrist wire evaluation keeps 104 held-out setups per grasp and reports original hull clearance separately from native success. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-holdout-starts.md)

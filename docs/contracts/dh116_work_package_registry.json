@@ -50625,6 +50625,30 @@
         "teacher_admission": false,
         "grasp_qualified": false
       }
+    },
+    "teacher.wire-common-pregrasp": {
+      "title": "Select shared wire reset poses using training specimens and measured settlement",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-holdout-starts",
+        "teacher.wire-quiet-settlement"
+      ],
+      "tests": [
+        "tests/test_dh116_wire_common_pregrasp.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-common-pregrasp.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_common_pregrasp_v1.json",
+      "last_result": {
+        "native_status": "pregrasp_native_not_run",
+        "static_holdout_clear": {
+          "pinch": 104,
+          "tripod": 104,
+          "power": 104
+        },
+        "teacher_admission": false,
+        "generalization_qualified": false
+      }
     }
   },
   "execution_target": {

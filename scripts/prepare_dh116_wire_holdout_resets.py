@@ -77,6 +77,22 @@ def prepare_matrix(scene, table, baseline, *, catalog, stations, placements, hul
     return rows
 
 
+def load_reset_hulls(root, scene):
+    """Read original source envelopes and locked cooked pads in the authored poses."""
+    from scripts.audit_dh116_pinch_initial_pose import load_geometry, world_vertices
+
+    hulls, hull_sources = {}, {}
+    for side, hand in scene["hands"].items():
+        info = load_geometry(root, side=side)
+        hull_sources[side] = info["source_sha256"]
+        for cooked in (False, True):
+            for link, vertices in world_vertices(info, hand["pose_wxyz"], hand["q_rad"], cooked=cooked).items():
+                hulls[side, link, cooked] = vertices
+    if len(hulls) != 44:
+        raise ValueError("all 34 source envelopes and 10 locked cooked pads required")
+    return hulls, hull_sources
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scene", type=Path, required=True)
@@ -103,17 +119,7 @@ def main():
     table = prepare_scene(ROOT)["table"]
     hulls = hull_sources = None
     if args.audit_hulls:
-        from scripts.audit_dh116_pinch_initial_pose import load_geometry, world_vertices
-
-        hulls, hull_sources = {}, {}
-        for side, hand in scene["hands"].items():
-            info = load_geometry(ROOT, side=side)
-            hull_sources[side] = info["source_sha256"]
-            for cooked in (False, True):
-                for link, vertices in world_vertices(info, hand["pose_wxyz"], hand["q_rad"], cooked=cooked).items():
-                    hulls[side, link, cooked] = vertices
-        if len(hulls) != 44:
-            raise ValueError("all 34 source envelopes and 10 locked cooked pads required")
+        hulls, hull_sources = load_reset_hulls(ROOT, scene)
     rows = prepare_matrix(scene, table, baseline, catalog=catalog, stations=stations,
                           placements=placement_spec["world_xy_m_yaw_rad"], hulls=hulls)
     sources = dict(scene=sha(args.scene), catalog=sha(args.catalog),

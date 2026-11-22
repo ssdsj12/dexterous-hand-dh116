@@ -9,28 +9,12 @@ from .tabletop_power_supported_task import prepare_initial_state
 from .tabletop_supported_wire_specs import build_variant, catalog_wire_specs, digest
 
 
-def prepare_holdout_variant(scene, table, baseline, *, catalog, variant_id, stations, placement):
-    """Return an evaluation-only CPU scene and seed.
-
-    Placement is (world X metres, world Y metres, yaw radians). The wire and
-    support centres share this transform. Support boxes remain axis-aligned
-    in both backends. The nominal hands are identical across all placements
-    and specimens for a grasp. The returned metadata is for the evaluator.
-    """
-    cases = [case for case in catalog_wire_specs(catalog, baseline)["test"] if case["id"] == variant_id]
-    if len(cases) != 1:
-        raise ValueError("one explicit held-out wire specimen required")
+def place_fixed_wrist_variant(variant, scene, table, placement):
+    """Place a fresh variant's wire and supports without moving either hand."""
     shift_yaw = np.asarray(placement, dtype=float)
     if shift_yaw.shape != (3,) or not np.isfinite(shift_yaw).all():
         raise ValueError("finite world XY shift and yaw required")
     shift_yaw = np.where(shift_yaw == 0., 0., shift_yaw)
-    case = cases[0]
-    baseline_seed, active, _, _ = prepare_initial_state(scene, table, expected_scope=scene["scope"])
-    variant = build_variant(scene, baseline, radius_m=case["rod"]["radius_m"], length_m=case["length_m"],
-                            elastic_modulus_scale=case.get("elastic_modulus_scale", 1.),
-                            grasp_material_ids=stations)
-    if variant["spec_sha256"] != case["spec_sha256"]:
-        raise ValueError("held-out solver specification differs from catalog")
     layout = variant["scene"]
     layout["hands"] = deepcopy(scene["hands"])
 
@@ -71,6 +55,31 @@ def prepare_holdout_variant(scene, table, baseline, *, catalog, variant_id, stat
     if len(support_halves) != 2 or np.all(np.maximum(boxes[0][0], boxes[1][0]) <= np.minimum(boxes[0][1], boxes[1][1])):
         raise ValueError("two disjoint supports on opposite wire halves required")
 
+    return nodes
+
+
+def prepare_holdout_variant(scene, table, baseline, *, catalog, variant_id, stations, placement):
+    """Return an evaluation-only CPU scene and seed.
+
+    Placement is (world X metres, world Y metres, yaw radians). The wire and
+    support centres share this transform. Support boxes remain axis-aligned
+    in both backends. The nominal hands are identical across all placements
+    and specimens for a grasp. The returned metadata is for the evaluator.
+    """
+    cases = [case for case in catalog_wire_specs(catalog, baseline)["test"] if case["id"] == variant_id]
+    if len(cases) != 1:
+        raise ValueError("one explicit held-out wire specimen required")
+    case = cases[0]
+    baseline_seed, active, _, _ = prepare_initial_state(scene, table, expected_scope=scene["scope"])
+    variant = build_variant(scene, baseline, radius_m=case["rod"]["radius_m"], length_m=case["length_m"],
+                            elastic_modulus_scale=case.get("elastic_modulus_scale", 1.),
+                            grasp_material_ids=stations)
+    if variant["spec_sha256"] != case["spec_sha256"]:
+        raise ValueError("held-out solver specification differs from catalog")
+    nodes = place_fixed_wrist_variant(variant, scene, table, placement)
+    layout = variant["scene"]
+    table_center = np.asarray(table["center_m"], dtype=float)
+    table_size = np.asarray(table["size_m"], dtype=float)
     physical_sha256 = digest(dict(scope=layout["scope"], hands=layout["hands"], spec_sha256=variant["spec_sha256"],
                                   nodes=layout["rod_nodes_w_m"], supports=layout["support_scene"]["supports"],
                                   table_center_m=table_center.tolist(), table_size_m=table_size.tolist()))
