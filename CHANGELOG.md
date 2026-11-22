@@ -1,3 +1,5 @@
+The flexible Teacher lift audit now uses the 41 measured rod nodes, the original Reset height and all three support loads. Replaying 256 recorded Tripod physics rows gives eight bilateral rows and zero off-support Lift rows. [Report](docs/superpowers/reports/2026-11-22-teacher-supported-lift-observation.md).
+
 Independent friction-source binding for full grasp/Lift Teacher:154 CPU checks pass; actual parameter/health/build/Reset-radius readers use a separate verified profile and restore old defaults. Full V2 source/reward/collector integration and real grasp/Lift remain pending. [Report](docs/superpowers/reports/2026-11-22-teacher-friction-profile.md).
 
 Teacher archive common-source validation is now fixed: the rehashed joint-value negative control fails before the change and is rejected afterward; 49 related CPU checks pass, 16 real input packs and 8 sampled actions replay unchanged. Antigravity actual source SHAs match. No new native/Teacher qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-archive-common-source-fix.md).

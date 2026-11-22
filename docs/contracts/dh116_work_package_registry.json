@@ -50057,6 +50057,30 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.supported-lift-observation-v2": {
+      "title": "Measure actual flexible rod grasp and off-support Lift against fixed Reset",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.friction-profile-v2"
+      ],
+      "tests": [
+        "tests/test_supported_lift_observation.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_native_teacher_contact_sources.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-supported-lift-observation.md",
+      "readiness": "docs/contracts/dh116_supported_lift_observation_v2.json",
+      "last_result": {
+        "passed": 35,
+        "failed": 0,
+        "archived_physics_rows": 256,
+        "off_support_lift_rows": 0,
+        "new_native_runs": 0,
+        "ppo_updates": 0,
+        "grasp_qualified": false
+      }
     }
   },
   "execution_target": {
