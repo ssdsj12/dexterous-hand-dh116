@@ -49812,6 +49812,32 @@
         "native_qualification": false,
         "grasp_qualified": false
       }
+    },
+    "teacher.archived-input-signal-audit": {
+      "title": "Archived Teacher inputs/action numerical replay and semantic negative control",
+      "executor": "pytest",
+      "status": "blocked",
+      "dependencies": [
+        "teacher.three-grasp-server-audit"
+      ],
+      "tests": [
+        "tests/test_native_teacher_model.py",
+        "tests/test_native_teacher_actual_inputs.py",
+        "tests/test_native_teacher_contact_sources.py",
+        "tests/test_dh116_pinch_seeded_actions.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-input-signal-audit.md",
+      "readiness": "docs/contracts/dh116_teacher_input_signal_audit_v1.json",
+      "blocked_reason": "historical seeded Pinch regression fails; standalone archived common source reconstruction missing",
+      "last_result": {
+        "passed": 49,
+        "failed": 1,
+        "native_runs": 0,
+        "ppo_updates": 0,
+        "runtime_code_changed": false,
+        "teacher_admission": false,
+        "grasp_qualified": false
+      }
     }
   },
   "execution_target": {
