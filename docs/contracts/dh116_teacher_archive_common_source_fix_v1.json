@@ -1,0 +1,93 @@
+{
+  "version": "dh116-teacher-archive-common-source-fix-v1",
+  "tested_head": "98f7d4aee6a0975b93141ffbb570c15aaac022cd",
+  "status": "passed_cpu_only",
+  "production_change": "archive _rebuild calls original validate_mounted_observation before tensor conversion",
+  "red": {
+    "passed": 0,
+    "failed": 1,
+    "deselected": 9,
+    "seconds": 4.29,
+    "failure": "DID NOT RAISE ValueError",
+    "log_sha256": "58755bd1547072f9917a9fab93ed128ceb574d424dfa2fed5d5cddae5a94f72b"
+  },
+  "cpu": {
+    "passed": 49,
+    "failed": 0,
+    "seconds": 63.41,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_native_teacher_model.py",
+      "tests/test_native_teacher_actual_inputs.py",
+      "tests/test_native_teacher_contact_sources.py"
+    ],
+    "log_sha256": "3f2544d03edf906c7fa8d2ac9cb397b1ae644e6ae7c29821adc1c97db50fe689"
+  },
+  "component": {
+    "passed": 10,
+    "failed": 0,
+    "seconds": 11.27,
+    "included_in_49": true,
+    "log_sha256": "997cb699168aaa5ac16d6347b385a883b93632a74505a4e0c6a72f6aa9e72305"
+  },
+  "real_archive_replay": {
+    "source_journal_sha256": "984c0c241daa098b01e61415305f3a5e98a887c0c46d9699feef4e8d1445e151",
+    "packs_rebuilt": 16,
+    "sampled_actions_replayed": 8,
+    "max_action_error": 0.0,
+    "analysis_sha256": "f8aaadeba8a8f9a93a58f45d33161b794842a47fbb68a939aa0fbdac109f7be5",
+    "log_sha256": "3be5da82aaf3c55ba359fc24a5422b617dc27a91ff1c7f8f0c119ce6603c333a",
+    "not_new_native_collection": true
+  },
+  "antigravity": {
+    "skill": "antigravity-desktop-review",
+    "tag": "Teacher-Resume R1",
+    "role": "codex-dh116-ssh-reviewer",
+    "server": "dh116-readonly-ssh",
+    "first_attempt_read_failed": true,
+    "access_failure_reply_sha256": "1676f646f66b564332c7c5c5af2e5a56794584ee6e43ed106c6e85067cb78ff5",
+    "connector_repaired_field": "dh116-readonly-ssh.command",
+    "other_config_or_permissions_changed": false,
+    "restored_actual_read": true,
+    "matching_source_files": 5,
+    "reply_sha256": "a1a76085666ee2895198e0392cce7a8a1b83df513897769fa3db2769e2f95bd7",
+    "actual_inputs_read_range": [
+      1,
+      110
+    ],
+    "approval_scope": "minimal archive validation patch only; not native qualification"
+  },
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_inputs.py": "4cdb02aae71b5bb7f3b559afc444859490391c223ae7a4a2190b6050c08d2cca",
+    "tests/test_native_teacher_actual_inputs.py": "5c79320febabfff207c76d62a2678a1165a4c48b89a4cf71c1b080a20fb15994",
+    "src/go2_pvcnn/control/dh116/tabletop_teacher_mounted_wrist_source.py": "9aa4e96f484ba4cf8f8afa2ff0cdcddb8d4909d3fb9bc52416e616f299cd8d4e",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_model.py": "5356d47ca7230817c9362cab802af77db0318a22d4e81ceb29c80663d78ec451"
+  },
+  "native_runs": 0,
+  "ppo_updates": 0,
+  "teacher_admission": false,
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "historical_pinch_seed_regression_fixed": false,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "publication_registry_regression": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 14.62,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "2cde45cdb28ea9ecadc718073d0ca05d1f46bceddfa7a4cc3f91bd6c6e3f374a",
+    "separate_from49": true
+  },
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3
+}

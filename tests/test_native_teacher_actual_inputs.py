@@ -121,6 +121,7 @@ def test_true_terminal_has_no_bootstrap(ledger, backend_profile):
     ("raw_positions", "physical source"),
     ("parameters", "physical source"),
     ("model_features", "reconstructed"),
+    ("common_values", "mounted observation mask/values differ"),
     ("stale_reference", "purpose"),
     ("truncated_missing_bootstrap", "bootstrap"),
     ("wrong_endpoint", "endpoint"),
@@ -144,6 +145,15 @@ def test_rejects_bad_durable_input_binding(ledger, backend_profile, damage, reas
         digest = _digest(decode_owned(buffers["observation"]))
         pack["sha256"]["observation"] = digest
         row.update(observation=deepcopy(buffers["observation"]), observation_sha256=digest)
+    elif damage == "common_values":
+        common = buffers["pre_action"]["common"]["values"]["__dh116_array__"]
+        common[0] += .01
+        buffers["observation"]["common371"]["__dh116_array__"][0][0] = common[0]
+        pre_digest = _digest(decode_owned(buffers["pre_action"]))
+        obs_digest = _digest(decode_owned(buffers["observation"]))
+        pack["sha256"].update(pre_action=pre_digest, observation=obs_digest)
+        row.update(pre_action_sha256=pre_digest, observation=deepcopy(buffers["observation"]),
+                   observation_sha256=obs_digest)
     elif damage == "stale_reference":
         row["source_pack_sequence"] = ledger[3]["payload"]["source_pack_sequence"]
     elif damage == "truncated_missing_bootstrap":

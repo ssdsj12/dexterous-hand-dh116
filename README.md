@@ -1,3 +1,5 @@
+Teacher archive common-source validation is now fixed: the rehashed joint-value negative control fails before the change and is rejected afterward; 49 related CPU checks pass, 16 real input packs and 8 sampled actions replay unchanged. Antigravity actual source SHAs match. No new native/Teacher qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-archive-common-source-fix.md).
+
 Private CPU candidate review: the original source auditor fails the joint-source negative control; adding the existing mounted-source validation in a temporary test process passes 50 checks (48 overlapping). Production remains unchanged and the historical Pinch regression stays blocked. [Report](docs/superpowers/reports/2026-11-22-teacher-input-signal-audit.md).
 
 Archived Teacher input audit: 16 source packs and 8 Tripod sampled actions reconstruct exactly. Found an offline common-source validation gap and one historical Pinch identity regression (49 passed / 1 failed); no runtime changes or native run. [Report](docs/superpowers/reports/2026-11-22-teacher-input-signal-audit.md).

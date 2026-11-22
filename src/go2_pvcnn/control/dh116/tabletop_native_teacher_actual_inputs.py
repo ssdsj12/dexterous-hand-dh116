@@ -9,6 +9,7 @@ from .tabletop_deformable_r0_replay import _digest, decode_owned
 from .tabletop_deformable_rollout_admission import gae_boundary
 from .tabletop_native_teacher_context import ContextIdentity, ContextMetadata, TaskContextPacket
 from .tabletop_native_teacher_model import _pack
+from .tabletop_teacher_mounted_wrist_source import validate_mounted_observation
 from .tabletop_native_teacher_worker_artifacts import _jsonl
 from .tabletop_native_teacher_worker_contract import JSONL_LIMITS
 
@@ -33,6 +34,7 @@ def _context(data):
 
 def _rebuild(buffers, profile, context, context_mode=CONTEXT_MODE):
     common = buffers["pre_action"]["common"]
+    validate_mounted_observation(common)
     ledger = torch.as_tensor(np.array(common["values"], copy=True), dtype=torch.float32)[None]
     valid = torch.as_tensor(np.array(common["valid"], copy=True), dtype=torch.bool)[None]
     snapshot = buffers["pre_action"]["rod_boundary"]["rod_snapshot"]
