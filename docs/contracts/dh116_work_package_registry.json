@@ -50260,8 +50260,13 @@
       "readiness": "docs/contracts/dh116_teacher_wire_variant_isaac_v1.json",
       "last_result": {
         "cpu_passed": 5,
-        "native_status": "pending",
-        "teacher_admission": false
+        "native_status": "passed_reset_and_short_support_exchange",
+        "teacher_admission": false,
+        "sdk_steps": 10,
+        "solver_substeps": 96,
+        "outer_sha256": "de97adae1f824eb814f91a489c6df8d7d1130e3635c1760174eeb51338107cce",
+        "native_grasp": false,
+        "ppo_updates": 0
       }
     }
   },

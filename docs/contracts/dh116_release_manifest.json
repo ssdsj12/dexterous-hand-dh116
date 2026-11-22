@@ -33690,6 +33690,39 @@
         "seconds": 14.43,
         "log_sha256": "f683a2ffb646c9d9006d7421f5c87ea9b40c0b369befa93ad9d890ed936adb24"
       }
+    },
+    {
+      "package": "teacher.wire-variant-isaac-reset",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-wire-variant-isaac.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_variant_isaac_v1.json",
+      "status": "native_reset_and_short_support_exchange_verified",
+      "native_runs": 1,
+      "sdk_steps": 10,
+      "cpu_tests": {
+        "focused_passed": 5,
+        "broad_passed": 89,
+        "broad_existing_failures": 1
+      },
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "6a587c6b30d962023f529439ce6f726a5367ee46",
+        "source_tree": "97315f6bc97e2e85cfe36ce48642032708ab870f",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "publication_registry_tests": {
+        "passed": 65,
+        "failed": 0,
+        "seconds": 18.65,
+        "log_sha256": "e1e9744aeac3f911b9c03d5015da7e183bd79f7c9c6000705979712be2d6b08e"
+      }
     }
   ]
 }
