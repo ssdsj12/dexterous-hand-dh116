@@ -289,6 +289,10 @@ def freeze(args):
         if not getattr(args, "thumb_reseat", False):
             raise ValueError("coupled close requires the guarded thumb re-seat plan")
         plan["left_opposition"]["coupled_close"] = True
+    if getattr(args, "resume_index_after_reseat", False):
+        if not getattr(args, "coupled_close", False):
+            raise ValueError("index-only transition requires the guarded coupled close plan")
+        plan["left_opposition"]["resume_index_after_reseat"] = True
     return plan
 
 
@@ -656,6 +660,7 @@ def acquire(sim, owners, trace, output, *, plan):
             index_reaction = IndexReaction(body_id=idx)
             close_start = None
             coupled_close = opposition.get("coupled_close", False)
+            resume_index = opposition.get("resume_index_after_reseat", False)
             position, rotation = geometry_row["poses"]["left.base_link"]
             projection = previous["action_readback"]["submission"]
             _, _, pivot_actions = pivot_commands(np.r_[position, np.roll(rotation, 1)],
@@ -714,6 +719,15 @@ def acquire(sim, owners, trace, output, *, plan):
                 if phase == "close" and opposition.get("thumb_reseat"):
                     if np.any(candidate[12:15]):
                         if full_thumb_load():
+                            if resume_index and candidate[2]:
+                                index_only = torch.zeros_like(proposed)
+                                index_only[:, 2] = proposed[:, 2]
+                                proof = preview_opposition(index_only[0].numpy())
+                                if proof["passed"]:
+                                    return index_only, dict(paused=False, reason="thumb_restored_continue_index",
+                                                            index_only_after_reseat=True, preview=proof)
+                                return torch.zeros_like(proposed), dict(
+                                    paused=True, reason="restored_index_geometry_guard", preview=proof)
                             return torch.zeros_like(proposed), dict(paused=True, reason="thumb_load_restored")
                         forbidden = np.r_[:2, 3:12, 15:24] if coupled_close else np.r_[:12, 15:24]
                         if np.any(candidate[forbidden]):
@@ -774,8 +788,11 @@ def acquire(sim, owners, trace, output, *, plan):
                                   if coupled_close else choose_thumb_reseat(translated_thumb_gap, preview_reseat))
                         additional = reseat["action"]
                         reseat_windows += 1
+                    allow_index_only = (resume_index and stage == "close" and bool(additional[2])
+                                        and bool(np.any(additional[12:15])))
                     result = control.control(torch.as_tensor(additional)[None], observe=observe,
-                                             select_substep_action=select_opposition)
+                                             select_substep_action=select_opposition,
+                                             allow_left_index_after_reseat=allow_index_only)
                     n_controls += 1
                     if result["termination_reason"] or result["physical_samples"] != 8:
                         raise ValueError(f"opposition stopped: {result['termination_reason']}")
@@ -881,6 +898,7 @@ def main():
     parser.add_argument("--compose-pivot-preview", action="store_true")
     parser.add_argument("--thumb-reseat", action="store_true")
     parser.add_argument("--coupled-close", action="store_true")
+    parser.add_argument("--resume-index-after-reseat", action="store_true")
     parser.add_argument("--approved-frozen-sha256")
     parser.add_argument("--verify-existing-plan", action="store_true")
     args = parser.parse_args()
@@ -917,6 +935,8 @@ def main():
         child_args.append("--thumb-reseat")
     if args.coupled_close:
         child_args.append("--coupled-close")
+    if args.resume_index_after_reseat:
+        child_args.append("--resume-index-after-reseat")
     subprocess.run([sys.executable, "-B", "-m", "scripts.verify_dh116_wire_live_palm_approach",
                     *child_args, "--verify-existing-plan"], check=True)
     for path, digest in frozen["frozen_files"].items():

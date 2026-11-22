@@ -50606,6 +50606,25 @@
         "teacher_admission": false,
         "generalization_qualified": false
       }
+    },
+    "teacher.tripod-index-resume": {
+      "title": "Continue certified index travel after the thumb reaction recovers",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-coupled-close"
+      ],
+      "tests": [
+        "tests/test_dh116_flexible_substep_selection.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-index-resume.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_index_resume_v1.json",
+      "last_result": {
+        "cpu_passed": 163,
+        "native_status": "pending",
+        "teacher_admission": false,
+        "grasp_qualified": false
+      }
     }
   },
   "execution_target": {

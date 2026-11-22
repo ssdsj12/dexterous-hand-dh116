@@ -222,11 +222,12 @@ class FlexiblePhysicalExchange:
                 "commanded_reset_zero_not_measured_contact" if source_step is None else "previous_measured_rod_step")
         return result
 
-    def control(self, action, *, observe, select_substep_action=None):
+    def control(self, action, *, observe, select_substep_action=None, allow_left_index_after_reseat=False):
         """Deliver each real physical row once, including optional target holds.
 
-        The opt-in selector may issue only the proposed increment or zero.
-        Zero retains targets; it does not freeze the bodies, rod, or clock.
+        By default the selector may issue only the proposed increment or zero.
+        A coupled left index and wrist proposal can explicitly authorize the
+        same index increment with all wrist motion removed. Zero retains targets.
         All reactions and safety checks still run at the original physics rate.
         """
         if self._closed or self._active:
@@ -241,6 +242,17 @@ class FlexiblePhysicalExchange:
         if self._expected_sdk_step + 8 > self._end:
             raise RuntimeError("whole control interval exceeds the physics budget")
         action = action.detach().cpu().double().clone()
+        if type(allow_left_index_after_reseat) is not bool:
+            raise ValueError("explicit boolean authorization required")
+        index_only = None
+        if allow_left_index_after_reseat:
+            index_only = torch.zeros_like(action)
+            index_only[:, 2] = action[:, 2]
+            coupled = index_only.clone()
+            coupled[:, 12:15] = action[:, 12:15]
+            if (select_substep_action is None or not 0. < action[0, 2] <= 1.
+                    or not bool(action[:, 12:15].any()) or not torch.equal(coupled, action)):
+                raise ValueError("index-only transition requires a left index and wrist re-seat proposal")
         self._active = True
         try:
             reason = None
@@ -260,12 +272,20 @@ class FlexiblePhysicalExchange:
                     # Reject unpersistable evidence before any native action write.
                     json.dumps(decision, allow_nan=False)
                     issued = issued.detach().cpu().double().clone()
+                    use_index_only = decision.get("index_only_after_reseat", False)
+                    if (type(use_index_only) is not bool
+                            or use_index_only and (index_only is None or decision["paused"])):
+                        raise ValueError("left index-only transition was not authorized")
                     expected = torch.zeros_like(action) if decision["paused"] else action
+                    if use_index_only:
+                        expected = index_only
                     if not torch.equal(issued, expected):
                         raise ValueError("selector may only retain targets or issue the original action")
                     selection = dict(source_clock=deepcopy(before),
                                      proposed_action24=action.numpy().copy(),
                                      issued_action24=issued.numpy().copy(), decision=deepcopy(decision))
+                    if index_only is not None:
+                        selection["authorized_index_only_action24"] = index_only.numpy().copy()
                 row = self._step(issued, substep)
                 if selection is not None:
                     row["substep_selection"] = selection

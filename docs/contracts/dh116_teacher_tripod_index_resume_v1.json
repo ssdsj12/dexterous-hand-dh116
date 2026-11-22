@@ -1,0 +1,72 @@
+{
+  "version": "dh116-teacher-tripod-index-resume-v1",
+  "status": "cpu_verified_native_pending",
+  "source_sha256": {
+    "scripts/verify_dh116_wire_live_palm_approach.py": "1cbb4daa695c74f9ef6a12f0de460d6a2853f23244465b1f7a468ca993fc0491",
+    "src/go2_pvcnn/control/dh116/tabletop_deformable_physical_exchange.py": "a0cfbf45390bb103af5cca5afdb89039b603d3bc781550cae81e305dfcf95f81",
+    "tests/test_dh116_flexible_substep_selection.py": "c5cc119db0d555cd09edb2d33fbb42a73078598fe1c5a5982960bb8cae7602c5"
+  },
+  "offline": {
+    "source_outer_sha256": "8d08cb8e6f4607f6fb7f2ecbb0c84fc0eb03696e9f6c1b432f10c44d60bd6277",
+    "evidence_sha256": "d0dc72f32a0d740a89183d218ad81fa12f01a7ca4ec0d951e24f0b162bb7dfe1",
+    "candidate_sdk": [
+      3218,
+      3241,
+      3256,
+      3257,
+      3258,
+      3273,
+      3287,
+      3288,
+      3289,
+      3302,
+      3303,
+      3305,
+      3306
+    ],
+    "passing_candidates": 13,
+    "min_guard_margin_m": 7.2303373930745716e-06,
+    "native_measurement": false
+  },
+  "cpu": {
+    "passed": 163,
+    "failed": 0,
+    "log_sha256": "3cb946f5b34a516ae3934fe2c871585495f0a76fd5904e5a7768ffb1f24c4284",
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_wire_continuous_clearance.py",
+      "tests/test_tripod_opposition_route.py",
+      "tests/test_wire_first_distal_contact.py",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_tripod_contact_seed.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_specifications.py",
+      "tests/test_supported_wire_material_variants.py",
+      "tests/test_dh116_tripod_right_tracking_launch.py",
+      "tests/test_wire_live_opposition.py",
+      "tests/test_dh116_flexible_physical_exchange.py",
+      "tests/test_dh116_dual_hand_clock_handoff.py",
+      "tests/test_wire_thumb_reseat.py",
+      "tests/test_supported_wire_grasp_feedback.py",
+      "tests/test_dh116_flexible_substep_selection.py"
+    ]
+  },
+  "native": {
+    "runs": 0,
+    "status": "pending",
+    "max_sdk_steps": 3338,
+    "max_issued_index_sdk_steps": 88,
+    "max_ppo_updates": 0
+  },
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false
+}

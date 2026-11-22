@@ -67,3 +67,52 @@ def test_original_guard_still_stops_wait_step_after_persisting_it(monkeypatch):
     assert result["termination_reason"]=="right:joint_limit"
     assert len(rows)==1 and rows[0]["substep_selection"]["decision"]["paused"]
     assert base.rope.steps==1
+
+
+def test_authorized_left_index_after_reseat_only_cancels_wrist_axes(monkeypatch):
+    e, sim, base, _ = setup(monkeypatch)
+    action = torch.zeros((1, 24), dtype=torch.float64)
+    action[0, [2, 12, 14]] = torch.tensor([.2, .12, -.07], dtype=action.dtype)
+    rows = []
+
+    def choose(proposed, clock):
+        if clock["physics_step"] < 4:
+            return proposed, dict(paused=False, reason="paired")
+        proposed[:, 12:15] = 0.
+        return proposed, dict(paused=False, reason="restored", index_only_after_reseat=True)
+
+    result = e.control(action, observe=rows.append, select_substep_action=choose,
+                       allow_left_index_after_reseat=True)
+    assert result["physical_samples"] == 8
+    assert sim.current_time_step_index == 10 and base.rope.steps == 8
+    for i, row in enumerate(rows):
+        selection = row["substep_selection"]
+        expected = action.clone()
+        if i >= 2:
+            expected[:, 12:15] = 0.
+        np.testing.assert_array_equal(selection["proposed_action24"], action)
+        np.testing.assert_array_equal(selection["issued_action24"], expected)
+        np.testing.assert_array_equal(row["action_readback"]["request"]["action24"], expected)
+        assert selection["source_clock"]["physics_step"] == row["physics_step"] - 1
+
+
+@pytest.mark.parametrize("bad", ["disabled", "more_index", "other_hand", "paused", "wrong_window_axes"])
+def test_index_after_reseat_rejects_unapproved_commands_before_physics(monkeypatch, bad):
+    e, sim, base, calls = setup(monkeypatch)
+    action = torch.zeros((1, 24), dtype=torch.float64)
+    action[0, [2, 12]] = torch.tensor([.2, .12], dtype=action.dtype)
+    if bad == "wrong_window_axes":
+        action[0, 7] = .1
+
+    def choose(proposed, _):
+        proposed[:, 12:15] = 0.
+        if bad == "more_index":
+            proposed[0, 2] += .01
+        if bad == "other_hand":
+            proposed[0, 7] = -.01
+        return proposed, dict(paused=bad == "paused", reason="invalid", index_only_after_reseat=True)
+
+    with pytest.raises(ValueError):
+        e.control(action, observe=lambda row: None, select_substep_action=choose,
+                  allow_left_index_after_reseat=bad != "disabled")
+    assert sim.current_time_step_index == 2 and base.rope.steps == 0 and not calls
