@@ -11,6 +11,7 @@ import json
 import math
 from pathlib import Path
 import struct
+import weakref
 from types import MappingProxyType
 from typing import Mapping
 
@@ -21,6 +22,7 @@ DESIGN_SHA256 = "a6a04d7dab20048d22b152762eb07018c3269cd63bfad77ed2b11799d7ed97d
 SCHEMA_VERSION = "dh116-training-reward-endpoints-v1"
 SCHEMA_SHA256 = hashlib.sha256((SCHEMA_VERSION + ":owned-clock-measurement-request24-fixed-material-tangent-reference:fixed-required-pads:cpu-unqualified").encode()).hexdigest()
 SUCCESS = MappingProxyType({"net_lift_m": .03, "hold_s": 5., "max_slip_m": .0005})
+CONTACT = "approach_contact_prelift_v1"
 SMOKE = "approach_wiring_smoke_v1"
 FULL = "flexible_train_r1_full"
 CURRICULUM = "flexible_train_curriculum_v1"
@@ -30,7 +32,10 @@ _FULL_UNITS = {"median_z": "m", "min_z": "m", "coverage_left": "dimensionless", 
                "opposed_left": "dimensionless", "opposed_right": "dimensionless", "bilateral_support": "dimensionless",
                "off_table": "dimensionless", "no_external_support": "dimensionless", "hold_motion": "dimensionless",
                "prohibited_support": "dimensionless"}
-_BOOL_FIELDS = frozenset((set(_BASE_UNITS) - {"distance"}) | (set(_FULL_UNITS) - {"median_z", "min_z", "coverage_left", "coverage_right"}))
+_CONTACT_UNITS = {name: _FULL_UNITS[name] for name in
+                  ("coverage_left", "coverage_right", "opposed_left", "opposed_right", "bilateral_support")}
+_CONTACT_UNITS["table_contact_failure"] = "dimensionless"
+_BOOL_FIELDS = frozenset((set(_BASE_UNITS) - {"distance"}) | (set(_FULL_UNITS) - {"median_z", "min_z", "coverage_left", "coverage_right"}) | {"table_contact_failure"})
 
 
 def _finite(value):
@@ -259,6 +264,8 @@ class RewardConfig:
 def _profile_spec(profile):
     full = profile in (FULL, CURRICULUM)
     weights = {"distance": 2., "contact": 2., "persistence": .5, "geometry": 1., "lift": 4., "hold": 4.} if full else {"distance": 2.}
+    if profile == CONTACT:
+        weights = {"distance": 2., "contact": 2., "persistence": .5, "geometry": 1.}
     slip_cost = 0.25 if profile == CURRICULUM else (1. if profile == FULL else None)
     costs = {"command_rate": .05, "time": .10, "slip": slip_cost, "velocity": 0. if full else None}
     events = {"trusted_constraint_failure": -40., "prohibited_support": -50. if full else None, "success": 100. if full else None}
@@ -301,7 +308,7 @@ def _sha256_text(value):
 
 
 def _validate_reward_config(config):
-    if not _identity_text(config.profile) or config.profile not in (SMOKE, FULL, CURRICULUM):
+    if not _identity_text(config.profile) or config.profile not in (SMOKE, FULL, CURRICULUM, CONTACT):
         raise ValueError("loaded approved config profile required")
     if type(config.profile_version) is not int or config.profile_version != 1:
         raise ValueError("exact approved config version required")
@@ -339,7 +346,7 @@ def load_config(path, *, ppo_gamma=None):
     if data.get("gamma_source") != "ppo.gamma" or "reward_gamma" in data or "gamma" in data:
         raise ValueError("reward gamma must come only from ppo.gamma")
     profile = data.get("profile")
-    if not _identity_text(profile) or profile not in (SMOKE, FULL, CURRICULUM):
+    if not _identity_text(profile) or profile not in (SMOKE, FULL, CURRICULUM, CONTACT):
         raise ValueError("independent approved reward profile required")
     success = data.get("success")
     if profile == CURRICULUM:
@@ -441,7 +448,7 @@ class TrainingReward:
     returns one packet. SourceFailure poisons this instance until a new reset
     episode. The caller owns rollout quarantine and must not update on failure.
     """
-    def __init__(self, config):
+    def __init__(self, config, *, contact_owner=None):
         if type(config) is not RewardConfig:
             raise TypeError("loaded RewardConfig required")
         _validate_reward_config(config)
@@ -463,6 +470,68 @@ class TrainingReward:
         self.quarantined = False
         self.failed_endpoint = None
         self._context = MappingProxyType({})
+        self._contact_owner = None
+        if self.config.profile == CONTACT:
+            self._bind_contact_owner(contact_owner)
+        elif contact_owner is not None:
+            raise SourceFailure("contact owner is exclusive to the independent contact profile")
+
+    def _bind_contact_owner(self, owner):
+        # A weak lease does not extend native view or CUDA-holder lifetimes.
+        from .tabletop_native_teacher_contact_context import PrimedContactContextOwner
+        if type(owner) is not PrimedContactContextOwner:
+            raise SourceFailure("actual primed contact context required")
+        try:
+            contact = owner.contact_readback
+            packet = owner.current
+            if (contact["physical_observations"] != 1 or owner._pre is not None
+                    or owner._pending is not None or owner._pending_reset
+                    or packet.metadata.identities[0] != owner._contact_identity
+                    or dict(packet.metadata.reference_uids)["contact_event"] != contact["event_sha256"]):
+                raise ValueError("fresh separately primed contact owner required")
+            self._contact_binding = self._contact_owner_identity(owner)
+            self._contact_priming_sha = contact["event_sha256"]
+            self._contact_seen = 0
+            self._contact_owner = weakref.ref(owner)
+        except (ValueError, RuntimeError, KeyError, TypeError) as exc:
+            raise SourceFailure("fresh owned contact priming required: " + str(exc)) from exc
+
+    @staticmethod
+    def _contact_owner_identity(owner):
+        return (owner.current.metadata.owner_uid, owner._history_uid, owner.profile.digest,
+                owner.scope, owner.grasp, owner._reset_identity, tuple(owner._fixed), tuple(owner._references))
+
+    def _contact_source(self):
+        owner = self._contact_owner() if self._contact_owner is not None else None
+        try:
+            if owner is None or self._contact_owner_identity(owner) != self._contact_binding:
+                raise ValueError("contact owner or frozen Reset binding unavailable")
+            return owner, owner.contact_readback
+        except (ValueError, RuntimeError, KeyError, TypeError) as exc:
+            raise SourceFailure("live original contact owner required: " + str(exc)) from exc
+
+    def _validate_contact(self, row, values, *, reset):
+        owner, contact = self._contact_source()
+        identity = owner._contact_identity
+        scope = "cpu_fixture" if owner.scope == "cpu_fixture" else "unqualified_source"
+        expected = (identity.episode_uid, identity.physics_step, identity.solver_time_s, scope,
+                    "world", identity.env_id, str(identity.reset_id), identity.rod_uid)
+        if (row.stamp.clock_identity != expected
+                or contact["physical_observations"] != (1 if reset else self._contact_seen + 1)
+                or row.target_ids != tuple(str(i) for i in range(41)) or row.anchors):
+            raise SourceFailure("same recorded contact event/clock and fixed material41 required")
+        if scope != "cpu_fixture" and row.stamp.source != "policy_owned_" + owner.grasp + "_endpoint_v1":
+            raise SourceFailure("original style-specific native contact endpoint source required")
+        pads = tuple((side, tuple(contact["evidence"]["per_hand"][side]["required_pads"]))
+                     for side in ("left", "right"))
+        if row.required_pad_ids != pads:
+            raise SourceFailure("actual grasp-specific contact pad denominator required")
+        for name in _CONTACT_UNITS:
+            if values[name] != contact[name] or row.fields[name].stamp.source != contact["source"]:
+                raise SourceFailure("contact reward differs from owned measured event: " + name)
+        self._contact_seen = contact["physical_observations"]
+        self._contact_snapshot = contact
+
 
     @property
     def native_ready(self): return False
@@ -552,13 +621,15 @@ class TrainingReward:
                     or (row.stamp.env_id, row.stamp.reset_uid, row.stamp.rod_uid, row.stamp.source) !=
                        (prior.env_id, prior.reset_uid, prior.rod_uid, prior.source)
                     or row.stamp.physics_tick != prior.physics_tick + 1
-                    or not _solver_interval_matches(prior, row.stamp, native_smoke=self.config.profile == SMOKE)):
+                    or not _solver_interval_matches(prior, row.stamp, native_smoke=self.config.profile in (SMOKE, CONTACT))):
                 raise SourceFailure("same episode and consecutive actual 480Hz clock required")
             if row.target_ids != self._last.target_ids:
                 raise SourceFailure("episode material target IDs changed")
         units = dict(_BASE_UNITS)
         if self.config.profile in (FULL, CURRICULUM):
             units.update(_FULL_UNITS)
+        if self.config.profile == CONTACT:
+            units.update(_CONTACT_UNITS)
         guards = frozenset(name for name in row.fields if name.startswith("original_guard_"))
         if reset:
             self._guards = guards
@@ -579,6 +650,8 @@ class TrainingReward:
             if any(not 0 <= values[name] <= 1 for name in ("coverage_left", "coverage_right")):
                 raise SourceFailure("required-pad coverage must be in [0,1]")
             self._read_anchors(row, values)
+        elif self.config.profile == CONTACT:
+            self._validate_contact(row, values, reset=reset)
         return values
 
     def _read_anchors(self, row, values):
@@ -639,6 +712,8 @@ class TrainingReward:
 
     def reset_from_verified_state(self, endpoint, *, previous_request):
         """Verify schema/reset references; this name grants no native attestation."""
+        if self.config.profile == CONTACT and (self.quarantined or self._contact_seen != 0):
+            self._fail("failed or already-reset contact reward cannot be reused", endpoint)
         if type(endpoint) is not RewardEndpoint or type(endpoint.stamp) is not SourceStamp:
             self._fail("owned reset endpoint/clock required", endpoint)
         if self._request is not None and not self._closed and not self.quarantined:
@@ -659,6 +734,13 @@ class TrainingReward:
         try:
             values = self._validate(endpoint, reset=True)
             self._check_request(previous_request, endpoint)
+            if self.config.profile == CONTACT and (
+                    previous_request.token != self._contact_priming_sha
+                    or previous_request.policy_uid != "source_priming_no_policy"
+                    or previous_request.values != (0.,) * 24):
+                raise SourceFailure("separately recorded zero priming request required; not a policy transition")
+            if self.config.profile == CONTACT and values["table_contact_failure"]:
+                raise SourceFailure("primed contact boundary has original forbidden table contact")
             if not values["numerical_health"] or values["constraint_failure"] or any(v for n, v in values.items() if n.startswith("original_guard_")):
                 raise SourceFailure("reset original health/constraint guards failed")
         except SourceFailure as exc:
@@ -671,6 +753,10 @@ class TrainingReward:
         self._dref = max(values["distance"], .005)
         self._reset_median = values.get("median_z")
         self._reset_min = values.get("min_z")
+        if self.config.profile == CONTACT:
+            # S0 stays at Reset2 even though the first usable contact is SDK3.
+            self._reset_median, self._reset_min, self._dref = self._contact_binding[6][:3]
+            self._hold_s = None
         self._tokens.add(previous_request.token)
         self._previous_token = previous_request.token
         self._previous_policy = previous_request.policy_uid
@@ -728,6 +814,17 @@ class TrainingReward:
                                     history_reason="no_bilateral_contact_since_reset") if self._slip is None else
                               _term(self._slip, "m", ";".join(a.drift.stamp.source for a in row.anchors), _source_math(_clip, self._slip / .0005, 0., 2.)))
             phi += 2. * pc + .5 * pp + pg + 4. * pl + 4. * ph
+        elif self.config.profile == CONTACT:
+            contact = self._contact_snapshot
+            self._contact_s = contact["duration_s"]  # The context owner is the sole timer.
+            pc = (values["coverage_left"] + values["coverage_right"]) / 2.
+            pg = (values["opposed_left"] + values["opposed_right"]) / 2.
+            pp = _source_math(_clip, self._contact_s / .25)
+            terms.update(
+                contact=_term(pc, "coverage_fraction", src("coverage_left") + ";" + src("coverage_right"), 2. * pc),
+                geometry=_term(pg, "dimensionless", src("opposed_left") + ";" + src("opposed_right"), pg),
+                persistence=_term(self._contact_s, "s", "owned:" + contact["event_sha256"], .5 * pp))
+            phi += 2. * pc + pg + .5 * pp
         for name in values:
             m = row.fields[name]
             terms["raw:" + name] = _term(m.raw, m.unit, m.stamp.source, applicable=m.applicable, history_reason=m.history_reason, valid=m.valid)
@@ -742,13 +839,19 @@ class TrainingReward:
                    self._previous, tuple((ref[1], ref[2]) for ref in self._anchor_refs.values()))
         if not _owned_raw(numeric):
             raise SourceFailure("finite owned numeric post_context required")
-        return MappingProxyType(dict(episode_uid=row.stamp.episode_uid, physics_tick=row.stamp.physics_tick,
+        context = dict(episode_uid=row.stamp.episode_uid, physics_tick=row.stamp.physics_tick,
             solver_time_s=row.stamp.solver_time_s, target_ids=row.target_ids, distance_ref_m=self._dref,
             reset_median_z_m=self._reset_median, reset_min_z_m=self._reset_min,
             contact_s=self._contact_s, hold_s=self._hold_s, anchors=tuple(sorted(self._anchor_refs.items())),
             slip_status=self._slip_status, previous_request=self._previous, previous_request_token=self._previous_token,
             previous_policy_uid=self._previous_policy, required_pad_ids=row.required_pad_ids, finite_task_remaining_s=None,
-            config_sha256=self.config.config_sha256, schema_sha256=SCHEMA_SHA256, scope=row.stamp.scope))
+            config_sha256=self.config.config_sha256, schema_sha256=SCHEMA_SHA256, scope=row.stamp.scope)
+        if self.config.profile == CONTACT:
+            context.update(contact_owner_uid=self._contact_binding[0],
+                           contact_event_sha256=self._contact_snapshot["event_sha256"],
+                           contact_raw_rod_sha256=self._contact_snapshot["raw_rod_sha256"],
+                           priming_event_sha256=self._contact_priming_sha)
+        return MappingProxyType(context)
 
     def begin(self, submitted_request, *, remaining_substeps):
         if self.quarantined:
@@ -757,6 +860,14 @@ class TrainingReward:
             raise RuntimeError("active verified reset episode required")
         if self._request is not None:
             raise RuntimeError("prior token has an unfinished window")
+        if self.config.profile == CONTACT:
+            try:
+                owner, contact = self._contact_source()
+                if (owner._contact_identity.physics_step != self._last.stamp.physics_tick
+                        or contact["physical_observations"] != self._contact_seen):
+                    raise SourceFailure("contact context moved before the reserved policy window")
+            except SourceFailure as exc:
+                self._fail(str(exc), self._last)
         if type(submitted_request) is not SubmittedRequest:
             self._fail("owned submitted request schema required", self._last)
         if type(remaining_substeps) is not int or remaining_substeps < 8:
@@ -789,6 +900,8 @@ class TrainingReward:
             if not values["numerical_health"]: failures.append("numerical_health")
             if values["constraint_failure"]: failures.append("constraint_failure")
             failures.extend(n for n, v in values.items() if n.startswith("original_guard_") and v)
+            if self.config.profile == CONTACT and values["table_contact_failure"]:
+                failures.append("table_contact_failure")
             full = self.config.profile in (FULL, CURRICULUM)
             if full and values["prohibited_support"]: failures.append("prohibited_support")
             slip_w = (self.config.costs["slip"] or 0.) if full else 0.

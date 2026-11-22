@@ -49484,6 +49484,33 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.supported-contact-reward": {
+      "title": "Bind original TrainingReward to measured contact owner and audit historical grasp evidence",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-contact-context"
+      ],
+      "tests": [
+        "tests/test_native_teacher_contact_reward.py",
+        "tests/test_native_teacher_reward.py",
+        "tests/test_native_teacher_contact_context.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_surface_force_sharing.py",
+        "tests/test_vision_teacher_absolute_mpc.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-supported-contact-reward-history.md",
+      "readiness": "docs/contracts/dh116_supported_contact_reward_v1.json",
+      "native_runs": 0,
+      "reason": "CPU contact reward verified;actual source and native Collector remain gated;historical models unqualified for formal experts",
+      "last_result": {
+        "passed": 402,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

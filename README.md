@@ -1,3 +1,5 @@
+Source-bound contact Reward now shares the measured Context timer, preserves Reset2 S0, excludes Lift/Hold/success and rejects Reset revival. Final402 CPU cases pass; actual native Source/Collector wiring remains pending. Historical rigid successes and legacy16/16 metrics are explicitly separated. [Report](docs/superpowers/reports/2026-11-22-supported-contact-reward-history.md).
+
 Measured contact Context now preserves Reset S0,validates every accepted physical event,and reaches the real Teacher Actor under an independent contact namespace.273 broad CPU cases and18 final owner cases pass(overlap17);native contact Reward/Collector remain pending. [Report](docs/superpowers/reports/2026-11-22-supported-contact-context.md).
 
 Conservative contact source preserves all12 solver substeps, original per-pad/hand force thresholds and separate table/stand evidence.40 CPU cases pass;old64-row v11 replay still has0 contact progress. No new native run or grasp claim. [Report](docs/superpowers/reports/2026-11-22-supported-contact-measurement.md).
