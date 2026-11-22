@@ -89,6 +89,18 @@ class IndexReaction:
 _PIVOT_FRACTIONS = np.linspace(0., 1., 5)
 
 
+def close_action_joint_names(issued, *, allow_thumb_reseat):
+    """Return the targets a recorded close increment was allowed to update."""
+    from .tabletop_palm_mount import JOINT_NAMES
+
+    action = np.asarray(issued)
+    if action[2]:
+        return "finger21", "finger22"
+    if allow_thumb_reseat and np.any(action[12:15]):
+        return JOINT_NAMES
+    return ()
+
+
 def choose_thumb_reseat(gap_after_translation, preview):
     """Select a bounded wrist-only increment from the current thumb SDF."""
     result = dict(action=np.zeros(ACTION_CONTRACT["size"]), reason="thumb_reseat_hold")

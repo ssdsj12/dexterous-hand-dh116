@@ -53,3 +53,18 @@ def test_translation_only_is_an_explicit_unclamped_opposition_candidate():
     offsets[0, 0, 0] = CONTRACT["palm_upper_m"][0]
     kwargs["measured_base_w"][:, :, :3] += offsets
     assert compose_projected_pivot(command, **kwargs, allow_translation_only=True) is None
+
+def test_native_close_readback_accepts_real_cpu_torch_action():
+    import torch
+
+    from go2_pvcnn.control.dh116.tabletop_palm_mount import JOINT_NAMES
+    from go2_pvcnn.control.dh116.tabletop_wire_live_opposition import close_action_joint_names
+
+    issued = torch.zeros((1, 24), dtype=torch.float64)
+    assert close_action_joint_names(issued[0], allow_thumb_reseat=True) == ()
+    issued[0, 12] = .3
+    assert close_action_joint_names(issued[0], allow_thumb_reseat=True) == JOINT_NAMES
+    assert close_action_joint_names(issued[0], allow_thumb_reseat=False) == ()
+    issued.zero_()
+    issued[0, 2] = .3
+    assert close_action_joint_names(issued[0], allow_thumb_reseat=True) == ("finger21", "finger22")

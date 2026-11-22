@@ -381,7 +381,7 @@ def acquire(sim, owners, trace, output, *, plan):
             stations = {} if distal is None else distal["stations"]
             if opposition:
                 from go2_pvcnn.control.dh116.tabletop_wire_live_opposition import (
-                    INDEX, THUMB, IndexReaction, choose_thumb_reseat, compose_projected_pivot,
+                    INDEX, THUMB, IndexReaction, choose_thumb_reseat, close_action_joint_names, compose_projected_pivot,
                     guard_prediction, index_closure,
                     left_loads, ready_after_thumb,
                 )
@@ -558,12 +558,7 @@ def acquire(sim, owners, trace, output, *, plan):
                     moving = JOINT_NAMES + ANGULAR_JOINT_NAMES
                 elif phase == "close":
                     issued = row["action_readback"]["request"]["action24"][0]
-                    if issued[2]:
-                        moving = ("finger21", "finger22")
-                    elif opposition.get("thumb_reseat") and np.any(issued[12:15]):
-                        moving = JOINT_NAMES
-                    else:
-                        moving = ()
+                    moving = close_action_joint_names(issued, allow_thumb_reseat=opposition.get("thumb_reseat", False))
                 else:
                     moving = JOINT_NAMES if phase == "approach" else ()
                 held = [i for i, name in enumerate(pre["joint_names"]) if name not in moving]
