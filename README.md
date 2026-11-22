@@ -3869,3 +3869,5 @@ The bilateral feedback native candidate was rejected: same-cohort bilateral load
 A separate coordinated left Tripod target-increment candidate is opt-in after the exact SDK1704 replay; 119 CPU tests pass. Native grasp and Lift remain pending. See [candidate](docs/superpowers/reports/2026-11-22-teacher-tripod-coordinated-contact.md).
 
 Tripod coordinated native ray A rejected: left8/256 versus right256/256 hold rows; no Lift. See [actual result](docs/superpowers/reports/2026-11-22-teacher-tripod-coordinated-contact-native.md).
+
+Actual Tripod contact-response analysis: correct targets reach PhysX; left index shows a much larger endpoint reaction-work mismatch than the stable right hand. [Evidence and limits](docs/superpowers/reports/2026-11-22-teacher-contact-work.md). Grasp/Lift remains unqualified.

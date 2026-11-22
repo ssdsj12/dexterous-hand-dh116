@@ -1,0 +1,198 @@
+{
+  "version": "dh116-teacher-contact-work-v1",
+  "status": "passed_cpu_actual_archive_analysis_not_grasp_success",
+  "baseline_head": "a2d586ee66a1904c0bfafa89c8d895e87c939333",
+  "source_sha256": {
+    "scripts/audit_dh116_grasp_contact_work.py": "4ac120800c9f99b1f51c892c022ee2652a946379bdf4fbc622f927fde2764dd1",
+    "tests/test_dh116_grasp_contact_work.py": "a2cd43f7cf5fb7718ad5b21d2211e9d4098575073a6a8ca4afeed5e89232e482"
+  },
+  "cpu": {
+    "passed": 38,
+    "failed": 0,
+    "seconds": 5.67,
+    "new_cases": 10,
+    "new_cases_included_in38": true,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_grasp_contact_work.py",
+      "tests/test_dh116_flexible_physical_exchange.py",
+      "tests/test_physical_exchange_route_order.py",
+      "tests/test_fresh_supported_physical_exchange.py",
+      "tests/test_dh116_deformx_pair_capture.py"
+    ],
+    "log_sha256": "151b8862f6b3004c8380ec576b2993da727c2e1506b0380de72be1be05fd1e02"
+  },
+  "red": {
+    "missing_module_failed": 10,
+    "log_sha256": "a247de2af552c3fd925de5bfa04d9459c41293bb77bc11671220577269fae2ff"
+  },
+  "archive_analysis": {
+    "source_execution_head": "765f875d2bf056e8eeab42e2427e551ff36f4734",
+    "start_sdk": 1801,
+    "end_sdk": 2056,
+    "rows": 256,
+    "links": 14,
+    "output_sha256": "ed7d68588206fc1a8322d34281b0692c09e029a6c803a15285c28209bb303d06",
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "scripts/audit_dh116_grasp_contact_work.py",
+      "--native",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/teacher-tripod-coordinated-contact-v1/native-run-v1/native",
+      "--start-sdk",
+      "1801",
+      "--end-sdk",
+      "2056",
+      "--output",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/teacher-contact-work-v1/actual-held-work.json"
+    ],
+    "source_rows_sha256_manifest": "private analysis output retains all257 input SHA values",
+    "per_link_summary": {
+      "left.finger14_link": {
+        "issued_j": 0.00024679254175996644,
+        "current_j": -6.400615398902842e-05,
+        "difference_j": 0.00031079869574899465,
+        "positive_difference_rows": 201,
+        "rows": 256
+      },
+      "left.finger23_link": {
+        "issued_j": 0.001358487793730824,
+        "current_j": -0.0003433046962992915,
+        "difference_j": 0.0017017924900301158,
+        "positive_difference_rows": 192,
+        "rows": 256
+      },
+      "left.finger33_link": {
+        "issued_j": -1.8353418336155476e-06,
+        "current_j": -2.0967590553270515e-06,
+        "difference_j": 2.6141722171150646e-07,
+        "positive_difference_rows": 121,
+        "rows": 256
+      },
+      "left.finger43_link": {
+        "issued_j": 0.0,
+        "current_j": 0.0,
+        "difference_j": 0.0,
+        "positive_difference_rows": 0,
+        "rows": 256
+      },
+      "left.finger53_link": {
+        "issued_j": 0.0,
+        "current_j": 0.0,
+        "difference_j": 0.0,
+        "positive_difference_rows": 0,
+        "rows": 256
+      },
+      "left.base_link": {
+        "issued_j": 0.0,
+        "current_j": 0.0,
+        "difference_j": 0.0,
+        "positive_difference_rows": 0,
+        "rows": 256
+      },
+      "left.finger52_link": {
+        "issued_j": 0.0,
+        "current_j": 0.0,
+        "difference_j": 0.0,
+        "positive_difference_rows": 0,
+        "rows": 256
+      },
+      "right.finger14_link": {
+        "issued_j": 2.2435176404816127e-07,
+        "current_j": -4.411159115147766e-08,
+        "difference_j": 2.6846335519963873e-07,
+        "positive_difference_rows": 246,
+        "rows": 256
+      },
+      "right.finger23_link": {
+        "issued_j": -4.181164658572149e-08,
+        "current_j": -1.2981871144728738e-07,
+        "difference_j": 8.800706486156598e-08,
+        "positive_difference_rows": 188,
+        "rows": 256
+      },
+      "right.finger33_link": {
+        "issued_j": -1.0469159463951474e-08,
+        "current_j": -6.479281085899145e-08,
+        "difference_j": 5.432365139504009e-08,
+        "positive_difference_rows": 210,
+        "rows": 256
+      },
+      "right.finger43_link": {
+        "issued_j": 0.0,
+        "current_j": 0.0,
+        "difference_j": 0.0,
+        "positive_difference_rows": 0,
+        "rows": 256
+      },
+      "right.finger53_link": {
+        "issued_j": 0.0,
+        "current_j": 0.0,
+        "difference_j": 0.0,
+        "positive_difference_rows": 0,
+        "rows": 256
+      },
+      "right.base_link": {
+        "issued_j": 0.0,
+        "current_j": 0.0,
+        "difference_j": 0.0,
+        "positive_difference_rows": 0,
+        "rows": 256
+      },
+      "right.finger52_link": {
+        "issued_j": 0.0,
+        "current_j": 0.0,
+        "difference_j": 0.0,
+        "positive_difference_rows": 0,
+        "rows": 256
+      }
+    },
+    "new_physics_steps": 0,
+    "ppo_updates": 0
+  },
+  "source_inertia_readback": {
+    "scope": "original authored USD, not new native readback",
+    "log_sha256": "473779fe1d063015faf70c508bf8a02eacf28337bfedb220501a767de1aabbde",
+    "left_index_distal_mass_kg": 0.0036540436558425426,
+    "right_index_distal_mass_kg": 0.00365405878983438,
+    "changed": false
+  },
+  "antigravity": {
+    "skill": "antigravity-desktop-review",
+    "round": "Tripod-Coordination R4",
+    "ui_sha256": "0df9194695be1132fbed59d31021b8a3475704508f691c74b3dc201ebd5a7117",
+    "accepted": "read actual coupling order and compare adjacent recorded reaction work",
+    "rejected_claims": [
+      "positive endpoint quadrature difference alone is not strict proof of energy injection or unique cause",
+      "SDK2049 was not a zero-force step: index maximum was0.15234N",
+      "stable right hand alone does not exclude every global coupling defect",
+      "no source evidence establishes thumb increments as the sole cause"
+    ]
+  },
+  "limitations": [
+    "endpoint quadrature is not exact mechanical work or passivity proof",
+    "no matched alternate coupling native trial has been run",
+    "no grasp or Lift qualification"
+  ],
+  "energy_qualified": false,
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "default_config_changed": false,
+  "physics_parameters_changed": false,
+  "r2_enabled": false,
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3,
+  "publication_registry_test": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 14.33,
+    "log_sha256": "f9b0a4f31892c0cf5dfe4e5a796ee1f7783f7e815ea86d394749d469ed1a3413"
+  }
+}
