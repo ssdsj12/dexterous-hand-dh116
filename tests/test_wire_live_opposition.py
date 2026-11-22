@@ -110,3 +110,51 @@ def test_predicted_stop_still_delivers_late_index_wrench_in_hold():
     issued = {"body_ids": [17], "forces": np.array([[[0., 0., .01]]])}
     state.observe(2187, {"index_loaded_substeps": 0}, issued)
     assert not state.deliver_after_stop("hold")
+
+
+def test_rigid_wrist_composition_preserves_a_valid_tangential_thumb_increment():
+    from itertools import product
+
+    hull = np.array([[x, y, z] for x, y, z in product((.004862, .00497), (-.001, .001), (-.0001, .0001))])
+    nodes = np.stack([np.zeros(41), np.linspace(-.25, .25, 41), np.full(41, .5)], axis=-1)[None]
+    frames = np.array([[[0., 0., .5, 1., 0., 0., 0.]]])
+    palm = np.array([0., -.1, .5])
+    seed = np.array([[np.r_[palm, [1., 0., 0., 0.]], [.2, 0., .5, 1., 0., 0., 0.]]])
+    kwargs = dict(frames=frames, before_frames=frames, nodes=nodes, before_nodes=nodes,
+        shapes=[(0, 0, hull)], selected={(0, 0)}, left_palm=palm, finger_travel={},
+        boxes=[(np.ones(3), np.full(3, 2.)), (-np.full(3, 2.), -np.ones(3))], table_top=.3, radius=.005)
+    command = np.zeros(24)
+    command[12] = .8
+    command[20] = .16
+    assert not probe.guard_prediction(action=command, **kwargs)["passed"]
+
+    def composed(move):
+        return probe.compose_projected_pivot(move, root_seed_w=seed, measured_base_w=seed,
+            clearance_m=np.full((1, 2), .2), palm_offsets_m=np.zeros((1, 2, 3)),
+            angles_rad=np.zeros((1, 2, 3)))
+
+    verified = probe.guard_prediction(action=command, composed_pivot=lambda: composed(command), **kwargs)
+    assert verified["passed"] and verified["composed_hull_count"] == 1
+    bad = command.copy()
+    bad[12] *= -1
+    assert not probe.guard_prediction(action=bad, composed_pivot=lambda: composed(bad), **kwargs)["passed"]
+    # The next hull is not selected and must still be rejected after the first exact check.
+    kwargs["shapes"].append((0, 1, hull))
+    kwargs["frames"] = kwargs["before_frames"] = np.repeat(frames, 2, axis=1)
+    later = probe.guard_prediction(action=command, composed_pivot=lambda: composed(command), **kwargs)
+    assert not later["passed"] and later["shape_index"] == 1
+
+
+def test_composed_preview_declines_a_workspace_clamped_wrist_target():
+    from go2_pvcnn.control.dh116.tabletop_free_wrist_grasp import CONTRACT
+
+    seed = np.array([[[0., 0., .5, 1., 0., 0., 0.], [.2, 0., .5, 1., 0., 0., 0.]]])
+    offsets = np.zeros((1, 2, 3))
+    offsets[0, 0, 0] = CONTRACT["palm_upper_m"][0]
+    observed = seed.copy()
+    observed[:, :, :3] += offsets
+    action = np.zeros(24)
+    action[12] = .8
+    action[20] = .16
+    assert probe.compose_projected_pivot(action, root_seed_w=seed, measured_base_w=observed,
+        clearance_m=np.full((1, 2), .2), palm_offsets_m=offsets, angles_rad=np.zeros((1, 2, 3))) is None

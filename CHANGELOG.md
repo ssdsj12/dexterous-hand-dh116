@@ -1,3 +1,5 @@
+Tripod adds an opt-in composed wrist preview verified on the archived SDK 3101 stop frame. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-composed-pivot.md)
+
 Tripod retained measured left thumb contact through 936 live pivot samples and naturally exited 0 after a measured pre-command stop. Index closure is pending. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-live-opposition.md)
 
 Tripod CPU coverage proves two continuous thumb-to-index candidate paths on the sealed supported rod, with a 20 µm rod-motion reserve. Native sustained opposition remains pending. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-opposition-route.md)

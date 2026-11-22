@@ -1,0 +1,105 @@
+{
+  "version": "dh116-teacher-tripod-composed-pivot-v1",
+  "status": "cpu_archive_replay_passed_native_pending",
+  "source_sha256": {
+    "scripts/verify_dh116_wire_live_palm_approach.py": "d4e46e4ac2ec5203eca538b391166acd026809e0685fb3749ab089ec72ba4fa1",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_live_opposition.py": "b33f19dbb0de3f7ceb5ad27415a8d1ad9e93efd558bf54af79cc9ed56eb5d17c",
+    "tests/test_wire_live_opposition.py": "afbe8cbb4613091d6317f706be184d435f929b81fae21b8c1894bd7d3b73c842"
+  },
+  "source_receipt_sha256": "5d373b0acb638a38db7ebcbd953556cc417c3a365a8c19db21d193a7c6f9f7f0",
+  "archive_replay_sha256": "5a2419dadddd7d01b94714c147c10ad8bde28ee6af27af754b4c9b14ac79cdbf",
+  "archive_replay": {
+    "native_reference_sdk": 3101,
+    "native_receipt_sha256": "5d373b0acb638a38db7ebcbd953556cc417c3a365a8c19db21d193a7c6f9f7f0",
+    "archived_source_frame_sha256": "1b4f65d6218dada403cd9024ffbcd63e6779eac2fae0d547dcbdf4730bce100f",
+    "checked_hulls": [
+      "left_thumb_source",
+      "left_thumb_archived_cooked"
+    ],
+    "old": {
+      "passed": false,
+      "shape_index": 0,
+      "side": 0,
+      "body": 0,
+      "rod_motion_m": 5.960464477539063e-08,
+      "observed_hand_motion_m": 2.8853905250922925e-06,
+      "requested_hand_motion_m": 3.3641913021920206e-05,
+      "minimum_rod_margin_m": -0.00010926241742155724,
+      "table_margin_m": 0.041676073897988046,
+      "support_margin_m": 0.03322302534132501
+    },
+    "composed": {
+      "passed": true,
+      "rod_motion_m": 5.960464477539063e-08,
+      "minimum_rod_margin_m": 2.923675088072079e-05,
+      "composed_hull_count": 1
+    },
+    "reconstructed_clearance_m": [
+      [
+        0.04138030735356846,
+        0.0628414278149339
+      ]
+    ],
+    "native_measurement": false
+  },
+  "switch": "--compose-pivot-preview",
+  "new_native_runs": 0,
+  "budget": {
+    "gpu": 2,
+    "environments": 1,
+    "physics_steps": 3338,
+    "max_control_windows": 239,
+    "solver_substeps": 40032,
+    "soft_wall_seconds": 900,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "auto_retry": false,
+    "forced_exit": false
+  },
+  "cpu": {
+    "passed": 136,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_wire_continuous_clearance.py",
+      "tests/test_tripod_opposition_route.py",
+      "tests/test_wire_first_distal_contact.py",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_tripod_contact_seed.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_specifications.py",
+      "tests/test_supported_wire_material_variants.py",
+      "tests/test_dh116_tripod_right_tracking_launch.py",
+      "tests/test_wire_live_opposition.py",
+      "tests/test_dh116_flexible_physical_exchange.py",
+      "tests/test_dh116_dual_hand_clock_handoff.py"
+    ],
+    "log_sha256": "78f093f7117d14ed7b51e804f2392ed7134cfc3e40719f402844443d8a5d20cf"
+  },
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "antigravity": {
+    "rounds": 2,
+    "source_hashes_confirmed": true,
+    "reviewed": [
+      "projected original command",
+      "joint-free scope",
+      "same-clock SDK readback",
+      "all-hull continuation",
+      "serialization"
+    ]
+  },
+  "release_cpu": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "d3a38dc4e4d097267b25a55070a5ebebee48313a50e229887adeb04589561196"
+  }
+}

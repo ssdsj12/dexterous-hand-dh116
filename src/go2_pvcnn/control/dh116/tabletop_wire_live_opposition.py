@@ -86,8 +86,52 @@ class IndexReaction:
             self.first_contact_sdk = sdk
 
 
+_PIVOT_FRACTIONS = np.linspace(0., 1., 5)
+
+
+def compose_projected_pivot(action, *, root_seed_w, measured_base_w, clearance_m, palm_offsets_m, angles_rad):
+    """Return world rotation increments and translations if the original projector keeps the move."""
+    from scipy.spatial.transform import Rotation
+    import torch
+
+    from .tabletop_command_kernels import wrist_requested_targets
+    from .tabletop_deformable_wrist_projection import project_policy_wrist_targets
+    from .tabletop_free_wrist_grasp import compose_rotation
+
+    action = np.asarray(action, dtype=float)
+    if (action.shape != (24,) or not np.isfinite(action).all()
+            or np.any(action[np.r_[:12, 15:18, 21:24]]) or not np.any(action[18:21])):
+        return None
+    command = torch.as_tensor(action)[None]
+    root, base, clearance, palms, angles = (
+        torch.as_tensor(v, dtype=torch.float64) for v in
+        (root_seed_w, measured_base_w, clearance_m, palm_offsets_m, angles_rad))
+    rates = dict(wrist_rate_m_s=ACTION_CONTRACT["translation_rate_m_s"],
+                 rotation_rate_rad_s=ACTION_CONTRACT["rotation_rate_rad_s"])
+    requested_p, requested_a = wrist_requested_targets(palms, angles, command, rates, DT)
+    projected = project_policy_wrist_targets(
+        root_seed_w=root, measured_base_w=base, common_lift_offset_m=root.new_zeros(1),
+        measured_clearance_m=clearance, palm_offsets_m=palms, requested_palm_offsets_m=requested_p,
+        angles_rad=angles, requested_angles_rad=requested_a,
+        allowed=torch.ones(1, dtype=torch.bool), live=torch.ones(1, dtype=torch.bool))
+    delta = command[:, 12:18].reshape(1, 2, 3) * (DT * rates["wrist_rate_m_s"])
+    angular_delta = command[:, 18:24].reshape(1, 2, 3) * (DT * rates["rotation_rate_rad_s"])
+    if (projected["projection_reasons"].any()
+            or not torch.allclose(projected["palm_offsets_m"] - palms, delta, rtol=0., atol=1e-12)
+            or not torch.allclose(projected["projected_angles"] - angles, angular_delta, rtol=0., atol=1e-12)):
+        return None
+    fractions = torch.tensor(_PIVOT_FRACTIONS, dtype=torch.float64)[:, None]
+    # C(t) C(0)^-1 acts on the measured world hull about the measured palm.
+    # A fixed local servo residual cancels in this world increment.
+    yaw = angles[0, 0] + fractions * angular_delta[0, 0]
+    quaternions = compose_rotation(root[0, 0, 3:].expand(len(fractions), 4), yaw).numpy()
+    rotations = Rotation.from_quat(quaternions[:, [1, 2, 3, 0]])
+    return rotations * rotations[0].inv(), fractions.numpy() * delta[0, 0].numpy()
+
+
 def guard_prediction(*, action, frames, before_frames, nodes, before_nodes,
-                     shapes, selected, left_palm, finger_travel, boxes, table_top, radius):
+                     shapes, selected, left_palm, finger_travel, boxes, table_top, radius,
+                     composed_pivot=None):
     """Check a one-step proposed-motion envelope using current and last readbacks."""
     from scripts.certify_dh116_tripod_distal_route import support_clearance_lower
 
@@ -98,6 +142,8 @@ def guard_prediction(*, action, frames, before_frames, nodes, before_nodes,
     translation = float(np.linalg.norm(action[12:15])) * ACTION_CONTRACT["translation_rate_m_s"] * DT
     rotation = float(np.abs(action[18:21]).sum()) * ACTION_CONTRACT["rotation_rate_rad_s"] * DT
     minimum = np.inf
+    composed_count = 0
+    sweep = None
     for i, (side, body, vertices) in enumerate(shapes):
         live = rotated_points(frames[side, body], vertices)
         older = rotated_points(before_frames[side, body], vertices)
@@ -108,12 +154,33 @@ def guard_prediction(*, action, frames, before_frames, nodes, before_nodes,
             requested = translation + rotation*lever + finger_travel.get(i, 0.)
         # This is an empirical preview allowance. Live post-step guards remain active.
         hand_motion = observed + requested
-        proof = envelope.certify(live, selected=(side, body) in selected, reserve_m=reserve+hand_motion)
-        minimum = min(minimum, proof["lower_m"] - proof["threshold_m"] - reserve - hand_motion)
+        is_selected = (side, body) in selected
+        proof = envelope.certify(live, selected=is_selected, reserve_m=reserve+hand_motion)
+        margin = proof["lower_m"] - proof["threshold_m"] - reserve - hand_motion
         table = float(live[:, 2].min() - table_top - CLEARANCE_M)
         support = min(support_clearance_lower(live, lo, hi) for lo, hi in boxes)
-        if not proof["passed"] or table <= hand_motion or support <= hand_motion:
+        hard_space = table > hand_motion and support > hand_motion
+        passed = proof["passed"]
+        if (not passed and hard_space and side == 0 and is_selected and composed_pivot is not None
+                and not finger_travel and not np.any(action[np.r_[:12, 15:18, 21:24]])):
+            if sweep is None:
+                sweep = composed_pivot()
+            if sweep is not None:
+                rotations, shifts = sweep
+                # The closest of five equal-spaced samples is at most 1/8 step away.
+                sample_reserve = reserve + observed + requested / 8.
+                checks = [envelope.certify(left_palm + shift + rot.apply(live-left_palm),
+                                            selected=True, reserve_m=sample_reserve)
+                          for rot, shift in zip(rotations, shifts, strict=True)]
+                margin = min(q["lower_m"] - q["threshold_m"] - sample_reserve for q in checks)
+                passed = all(q["passed"] for q in checks)
+                composed_count += int(passed)
+        minimum = min(minimum, margin)
+        if not passed or not hard_space:
             return dict(passed=False, shape_index=i, side=side, body=body, rod_motion_m=reserve,
                         observed_hand_motion_m=observed, requested_hand_motion_m=requested,
                         minimum_rod_margin_m=minimum, table_margin_m=table, support_margin_m=support)
-    return dict(passed=True, rod_motion_m=reserve, minimum_rod_margin_m=float(minimum))
+    result = dict(passed=True, rod_motion_m=reserve, minimum_rod_margin_m=float(minimum))
+    if composed_count:
+        result["composed_hull_count"] = composed_count
+    return result

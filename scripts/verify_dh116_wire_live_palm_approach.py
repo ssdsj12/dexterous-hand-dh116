@@ -277,6 +277,10 @@ def freeze(args):
         raise ValueError("opposition requires its source proof and SHA")
     if opposition is not None:
         bind_left_opposition(plan, opposition, proof_sha)
+    if getattr(args, "compose_pivot_preview", False):
+        if opposition is None:
+            raise ValueError("composed pivot preview requires a frozen opposition plan")
+        plan["left_opposition"]["composed_pivot_preview"] = True
     return plan
 
 
@@ -373,7 +377,8 @@ def acquire(sim, owners, trace, output, *, plan):
             stations = {} if distal is None else distal["stations"]
             if opposition:
                 from go2_pvcnn.control.dh116.tabletop_wire_live_opposition import (
-                    INDEX, IndexReaction, guard_prediction, index_closure, left_loads, ready_after_thumb,
+                    INDEX, IndexReaction, compose_projected_pivot, guard_prediction, index_closure,
+                    left_loads, ready_after_thumb,
                 )
                 from scripts.audit_dh116_pinch_initial_pose import path_displacement_bound
                 from scripts.certify_dh116_tripod_opposition import pivot_commands
@@ -651,11 +656,20 @@ def acquire(sim, owners, trace, output, *, plan):
                 if hold:
                     return torch.zeros_like(proposed), dict(paused=True, reason="retain_opposition_targets")
                 selected = {key for key, link in stations_by_body.items() if link in contact_owner.stations}
+
+                def projected_pivot():
+                    live = geometry()
+                    targets = contact_owner.previous["wrist_projection"]
+                    return compose_projected_pivot(proposed[0].numpy(), root_seed_w=root,
+                        measured_base_w=live["root_poses_w"], clearance_m=live["clearance_m"],
+                        palm_offsets_m=targets["palm_offsets_m"], angles_rad=targets["projected_angles"])
+
                 preview = guard_prediction(action=proposed[0].numpy(), frames=live_frames, before_frames=prior_frames,
                     nodes=live_nodes, before_nodes=prior_nodes, shapes=shapes, selected=selected,
                     left_palm=geometry_row["poses"]["left.base_link"][0],
                     finger_travel=finger_travel if phase == "close" else {}, boxes=boxes, table_top=table_top,
-                    radius=radius)
+                    radius=radius, composed_pivot=projected_pivot if phase == "pivot"
+                    and opposition.get("composed_pivot_preview") else None)
                 if not preview["passed"]:
                     motion_stop = dict(sdk=sdk, phase=phase, preview=preview)
                 return (torch.zeros_like(proposed) if motion_stop else proposed,
@@ -771,6 +785,7 @@ def main():
     parser.add_argument("--settled-path-sha256")
     parser.add_argument("--opposition-proof", type=Path)
     parser.add_argument("--opposition-proof-sha256")
+    parser.add_argument("--compose-pivot-preview", action="store_true")
     parser.add_argument("--approved-frozen-sha256")
     parser.add_argument("--verify-existing-plan", action="store_true")
     args = parser.parse_args()
@@ -801,6 +816,8 @@ def main():
     if args.opposition_proof is not None:
         child_args.extend(("--opposition-proof", str(args.opposition_proof),
                            "--opposition-proof-sha256", args.opposition_proof_sha256))
+    if args.compose_pivot_preview:
+        child_args.append("--compose-pivot-preview")
     subprocess.run([sys.executable, "-B", "-m", "scripts.verify_dh116_wire_live_palm_approach",
                     *child_args, "--verify-existing-plan"], check=True)
     for path, digest in frozen["frozen_files"].items():
