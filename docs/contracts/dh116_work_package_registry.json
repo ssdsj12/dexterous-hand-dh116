@@ -49688,6 +49688,35 @@
         "teacher_admission": false,
         "grasp_qualified": false
       }
+    },
+    "teacher.contact-target-tracking-audit": {
+      "title": "Audit actual PhysX joint targets/q tracking with identity and missing-source coverage",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-contact-fresh8-native-result"
+      ],
+      "tests": [
+        "tests/test_teacher_contact_ledger_audit.py",
+        "tests/test_native_teacher_contact_measurement.py",
+        "tests/test_native_teacher_policy_tripod_distance.py",
+        "tests/test_dh116_privileged_action_audit.py",
+        "tests/test_joint_target_readback.py",
+        "tests/test_dh116_deformable_bimanual_step.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-contact-target-tracking-audit.md",
+      "readiness": "docs/contracts/dh116_contact_target_tracking_audit_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 134,
+        "failed": 0,
+        "native_runs": 0,
+        "ppo_updates": 0,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false
+      }
     }
   },
   "execution_target": {

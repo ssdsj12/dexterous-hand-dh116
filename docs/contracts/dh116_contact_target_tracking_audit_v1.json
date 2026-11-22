@@ -1,0 +1,230 @@
+{
+  "version": "dh116-contact-target-tracking-audit-v1",
+  "tested_parent_head": "f3679e7081f03e5f634760876997176f0996b129",
+  "status": "software_and_existing_native_replay_verified_no_grasp_qualification",
+  "source_sha256": {
+    "scripts/audit_dh116_teacher_contact_ledger.py": "d2245e0ecc141db57ab4d25d41b20da684264782636477fb6fdf1317b9c79e65",
+    "tests/test_teacher_contact_ledger_audit.py": "f8f2fb9d974548e6da8d32166fd3e9d8754df8449bc46d20fca6319166012cb5"
+  },
+  "implementation": {
+    "functions": [
+      "_finite",
+      "_joint_tracking",
+      "_tracking_summary",
+      "audit_file"
+    ],
+    "original_controller_changed": false,
+    "rules": [
+      "backend targets mapped by measured joint names and original active_indices",
+      "same pre/post articulation owner and units",
+      "passive target slots excluded; q/qd retained",
+      "world palm requests never subtracted from SDK-local wrist targets",
+      "missing source remains NA and full-interval coverage false",
+      "valid-row residuals do not imply contact or controller qualification",
+      "reject left/right alias,owner swap,bool/text/nonfinite target values"
+    ]
+  },
+  "cpu": {
+    "passed": 134,
+    "failed": 0,
+    "seconds": 111.45,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_teacher_contact_ledger_audit.py",
+      "tests/test_native_teacher_contact_measurement.py",
+      "tests/test_native_teacher_policy_tripod_distance.py",
+      "tests/test_dh116_privileged_action_audit.py",
+      "tests/test_joint_target_readback.py",
+      "tests/test_dh116_deformable_bimanual_step.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "668f47699604209d84354b9f92f2746943c8622be976a92af2bf76f72c187e52",
+    "sources_unchanged_during_suite": true,
+    "component_cases": 16,
+    "component_cases_included_in_total": true,
+    "red_evidence": {
+      "contact-tracking-red.log": "b03990655ab8ff79bb12313110c60d879852d645d6331608b22209d154370fbc",
+      "contact-tracking-identity-red-clock.log": "89fafde10d510de0f2c51720d744d02d9f00083893991786d2976e379b172448",
+      "contact-tracking-dtype-red-literal.log": "d5d13d8deb240b82f4d339696668d67d104a31f47348da46e624b3750001c3a4",
+      "contact-tracking-coverage-red.log": "268292ac97375402b8976abfa613d44a3a18e7fb98b0427f31ba68458466d6f8"
+    },
+    "registry_after_registration": {
+      "passed": 60,
+      "failed": 0,
+      "seconds": 14.61,
+      "included_in_broad_suite": true,
+      "log_sha256": "39f8fcabe5134155522a246c91f4eaf8993ad01be495aa99e0e9f25b0288b722"
+    }
+  },
+  "offline_replay": {
+    "version": "dh116-offline-supported-teacher-contact-ledger-v1",
+    "source_sha256": "98770ef33be25d204589f9511a7baa2dc72e2cd2167118b58cc732e2de76b571",
+    "evidence_kind": "offline_replay_of_existing_raw_not_new_native",
+    "grasp": "tripod",
+    "rows": 64,
+    "first_sdk_step": 4,
+    "last_sdk_step": 67,
+    "bilateral_rows": 0,
+    "support_free_rows": 0,
+    "table_contact_rows": 0,
+    "joint_tracking_schema": "dh116-raw-target-tracking-audit-v1",
+    "tracking_summary": {
+      "left": {
+        "valid_rows": 64,
+        "missing_rows": 0,
+        "full_interval_coverage": true,
+        "missing_sdk_steps": [],
+        "coverage_scope": "provided_consecutive_raw_physics_rows",
+        "residual_scope": "valid_rows_only",
+        "max_abs_controlled_tracking_error_rad": 0.004025230649858713,
+        "max_abs_controlled_tracking_error_m": 2.536998363211751e-05,
+        "passive_target_slots_excluded": true
+      },
+      "right": {
+        "valid_rows": 64,
+        "missing_rows": 0,
+        "full_interval_coverage": true,
+        "missing_sdk_steps": [],
+        "coverage_scope": "provided_consecutive_raw_physics_rows",
+        "residual_scope": "valid_rows_only",
+        "max_abs_controlled_tracking_error_rad": 0.004921196959912777,
+        "max_abs_controlled_tracking_error_m": 2.478920214343816e-05,
+        "passive_target_slots_excluded": true
+      }
+    },
+    "per_hand": {
+      "left": {
+        "loaded_rows": 0,
+        "max_total_normal_load_n": 0.0
+      },
+      "right": {
+        "loaded_rows": 0,
+        "max_total_normal_load_n": 0.0
+      }
+    },
+    "support_max_force_norm_n": {
+      "table": 0.0,
+      "support_0": 0.09423355548024405,
+      "support_1": 0.0939374343069786
+    },
+    "node_speed_max_m_s": 0.07183308228640962,
+    "native_runs": 0,
+    "ppo_updates": 0,
+    "native_qualification": false,
+    "teacher_admission": false,
+    "grasp_qualified": false
+  },
+  "offline_replay_artifact_sha256": "1dd00726d2706ab5e56280cd4b98a27cf9d9da4ea4930c32bb8da99626d42951",
+  "offline_replay_log_sha256": "1ca01ccb3ef7bf11fa0dcb9952edc49a5924d7414a106d9b1fe7e1d318550b82",
+  "causal_analysis_sha256": "da214577aea42d0272148f203377799c1b83b98ed6dcad82b8530b61c159296d",
+  "causal_observations": {
+    "duration_s": 0.13333333333333333,
+    "rod_mean_z_delta_m": -0.004671093894214162,
+    "maximum_active_finger_tracking_error_rad": 0.0015381425619125366,
+    "maximum_finger_backend_minus_requested_target_rad": 2.9382063115868107e-08,
+    "pad_gaps": {
+      "left": {
+        "finger14_link": {
+          "first_gap_m": 0.002411345485597849,
+          "last_gap_m": 0.003413170576095581,
+          "min_gap_m": 0.002411345485597849,
+          "max_gap_m": 0.003413170576095581
+        },
+        "finger23_link": {
+          "first_gap_m": 0.0016053603030741215,
+          "last_gap_m": 0.002391620073467493,
+          "min_gap_m": 0.0016053603030741215,
+          "max_gap_m": 0.002391620073467493
+        },
+        "finger33_link": {
+          "first_gap_m": 0.0018514092080295086,
+          "last_gap_m": 0.0016822246834635735,
+          "min_gap_m": 0.0016404525376856327,
+          "max_gap_m": 0.0018514092080295086
+        }
+      },
+      "right": {
+        "finger14_link": {
+          "first_gap_m": 0.006678113713860512,
+          "last_gap_m": 0.00690875668078661,
+          "min_gap_m": 0.006678113713860512,
+          "max_gap_m": 0.006930748000741005
+        },
+        "finger23_link": {
+          "first_gap_m": 0.009879007935523987,
+          "last_gap_m": 0.009971218183636665,
+          "min_gap_m": 0.009879007935523987,
+          "max_gap_m": 0.009971218183636665
+        },
+        "finger33_link": {
+          "first_gap_m": 0.012417093850672245,
+          "last_gap_m": 0.011728375218808651,
+          "min_gap_m": 0.011728375218808651,
+          "max_gap_m": 0.012417093850672245
+        }
+      }
+    },
+    "cause_proven": false,
+    "limitations": [
+      "wrist translation speed is not total pad reachability bound",
+      "distance-potential clamp does not mean PPO parameter gradient is zero",
+      "zero action does not imply stationary hand"
+    ]
+  },
+  "antigravity": {
+    "r1_sha256": "46d03456e9baf613ced87e48e80ad7ed302bd19f404e6976190be4d46f36dbcd",
+    "r2_sha256": "a628d7b4eeae3a51693b8255bf532e0d116534af3cbc8a9b6e72c4ec00ffc022",
+    "r3_status": "completed_source_sha_matched_no_audit_blocker",
+    "accepted": [
+      "coverage scope and missing SDK steps instead of dropping contact ledger",
+      "real no-Actor diagnostic uses original base physical episode,not fake policy tokens"
+    ],
+    "corrected": [
+      "eight controls do not prove physical unreachability",
+      "clamped distance potential is not zero PPO parameter gradient"
+    ],
+    "r3_sha256": "a3b92ba50b75255801e4845728454fe353f1b4f85beb62a5c26a81aa870b5072",
+    "completed_rounds": 3,
+    "independent_corrections": [
+      "prime raw row is charged and persisted BEFORE boundary.capture can reject it,following original prime_supported_sources",
+      "wall estimates are planning observations,not measured settling runtime"
+    ]
+  },
+  "native_runs": 0,
+  "ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "physics_action_observation_success_contracts_changed": false,
+  "next": {
+    "task": "isolated real zero-action supported17 Tripod settling counterfactual",
+    "implementation_status": "reviewed_call_path_not_implemented",
+    "candidate_only": true,
+    "candidate_setup_sdk_steps": 2,
+    "candidate_priming_sdk_steps": 1,
+    "candidate_measured_sdk_steps": 240,
+    "candidate_total_sdk_steps": 243,
+    "candidate_solver_calls": 241,
+    "candidate_solver_substeps": 2892,
+    "native_recipe_frozen": false,
+    "native_attempted": false,
+    "on_policy": false,
+    "gates": [
+      "source-bound native parameter enrichment",
+      "clock-correct durable prime bookkeeping",
+      "guarded row-by-row accounting",
+      "independent budget/fingerprint/lock and normal exit"
+    ]
+  },
+  "remaining": {
+    "Pinch": "independent supported17 contact source and actual qualification pending",
+    "Tripod": "zero hand load in existing native8;no grasp or Lift/Hold qualification",
+    "Power": "independent five-finger+palm wrapping/contact source and actual qualification pending",
+    "formal_bc_dagger_student": "blocked_until_qualified_teacher_and_stereo_data"
+  }
+}

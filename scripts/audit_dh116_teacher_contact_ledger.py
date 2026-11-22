@@ -20,7 +20,10 @@ from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import (
 
 
 def _finite(value, shape, label):
-    array = np.asarray(value, dtype=float)
+    raw = np.asarray(value)
+    if raw.dtype.kind not in "fiu":
+        raise ValueError("numeric non-boolean " + label + " required")
+    array = raw.astype(float)
     if array.shape != shape or not np.isfinite(array).all():
         raise ValueError("finite " + label + " with shape " + str(shape) + " required")
     return array
@@ -38,6 +41,106 @@ def _joints(hand):
                 q=q[0].tolist(), qd=qd[0].tolist(), measured_source=hand.get("measured_source"))
 
 
+
+def _joint_tracking(pre, post, request, side):
+    """Compare same-articulation backend targets in their own joint coordinates.
+
+    Passive target slots are not commands. World palm requests are not SDK-local
+    wrist targets, so no subtraction between those coordinate systems is made.
+    """
+    from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, MIMIC
+    from go2_pvcnn.control.dh116.tabletop_joint_target_readback import WRIST_LINEAR, WRIST_ANGULAR
+    from go2_pvcnn.control.dh116.tabletop_surface_contract import ACTION_CONTRACT
+
+    absent=lambda reason: dict(valid=False,reason=reason,joints=None)
+    if not isinstance(pre,dict) or not isinstance(post,dict):
+        return absent("missing_joint_source")
+    if any("backend_targets" not in hand for hand in (pre,post)):
+        return absent("missing_backend_target_source")
+    if any(hand.get("backend_source")!="physx_backend_get_dof_position_targets"
+           or hand.get("measured_source")!="physx_backend_get_dof_positions/get_dof_velocities"
+           for hand in (pre,post)):
+        return absent("unqualified_joint_or_target_source")
+    identity=("joint_names","active_indices","instance_object_id","view_object_id","prim_paths","row_indices")
+    if any(key not in hand for hand in (pre,post) for key in identity):
+        return absent("missing_tracking_identity")
+    if any(pre[key]!=post[key] for key in identity):
+        raise ValueError("tracking articulation identity/order changed across physical step")
+    names=post["joint_names"]
+    if (not isinstance(names,list) or not names or len(names)!=len(set(names))
+            or any(type(post[key]) is not int or post[key]<=0 for key in ("instance_object_id","view_object_id"))
+            or not isinstance(post["prim_paths"],list) or not post["prim_paths"]
+            or any(not isinstance(path,str) or not path for path in post["prim_paths"])
+            or not isinstance(post["row_indices"],list) or len(post["row_indices"])!=1
+            or type(post["row_indices"][0]) is not int or post["row_indices"][0]<0):
+        raise ValueError("tracking requires distinct names and original articulation/row identity")
+    indices=post["active_indices"]
+    if (not isinstance(indices,list) or len(indices)!=len(ACTIVE)
+            or any(type(i) is not int or not 0<=i<len(names) for i in indices)
+            or tuple(names[i] for i in indices)!=ACTIVE):
+        raise ValueError("tracking active joint mapping differs from canonical action order")
+    old,new=_joints(pre),_joints(post)
+    if not old["valid"] or not new["valid"]:
+        return absent("missing_joint_source")
+    shape=(1,len(names))
+    before=_finite(pre["backend_targets"],shape,"tracking backend targets")[0]
+    after=_finite(post["backend_targets"],shape,"tracking backend targets")[0]
+    requested=request.get("requested_finger_targets_rad")
+    if requested is not None:
+        if request.get("action_contract")!=ACTION_CONTRACT:
+            raise ValueError("tracking requested target requires original 24D action contract")
+        requested=_finite(requested,(1,12),"tracking requested targets")[0]
+    passive={name for name,_,_,_ in MIMIC}
+    result=[]
+    for i,name in enumerate(names):
+        active=name in ACTIVE
+        wrist=name in (*WRIST_LINEAR,*WRIST_ANGULAR)
+        role="active_finger" if active else "wrist" if wrist else "passive_finger" if name in passive else "unmapped"
+        unit=post["units_by_name"].get(name)
+        expected="m" if name in WRIST_LINEAR else "rad"
+        if (active or wrist or name in passive) and (unit!=expected or pre["units_by_name"].get(name)!=expected):
+            raise ValueError("tracking joint coordinate unit differs")
+        controlled=active or wrist
+        sdk=float(after[i]) if controlled else None
+        controller=None
+        reason=("wrist_request_requires_coordinate_and_projection_mapping" if wrist
+                else "missing_requested_finger_targets" if active else "joint_not_commanded")
+        action_index=(0 if side=="left" else 6)+ACTIVE.index(name) if active else None
+        if active and requested is not None:
+            controller=float(requested[action_index]);reason=None
+        result.append(dict(joint=name,joint_role=role,position_unit=unit,action_index=action_index,
+            position_pre=old["q"][i],position=new["q"][i],velocity=new["qd"][i],
+            position_delta=new["q"][i]-old["q"][i],
+            sdk_target=sdk,sdk_target_delta=float(after[i]-before[i]) if controlled else None,
+            target_reason=None if controlled else "passive_joint_not_commanded" if name in passive else "unmapped_joint",
+            actual_minus_sdk_target=new["q"][i]-sdk if controlled else None,
+            requested_target=controller,requested_target_reason=reason,
+            sdk_minus_requested_target=None if controller is None else sdk-controller))
+    return dict(valid=True,reason=None,joints=result,
+        instance_object_id=post["instance_object_id"],view_object_id=post["view_object_id"],
+        prim_paths=list(post["prim_paths"]),row_indices=list(post["row_indices"]),
+        source="same_step_PhysX_backend_position_targets_and_measured_q",
+        coordinate_frame="articulation_joint_coordinates",
+        error_interpretation="observed_tracking_residual_not_a_failure_or_contact_proof")
+
+
+def _tracking_summary(ledger, side):
+    valid=[row["joint_tracking"][side] for row in ledger if row["joint_tracking"][side]["valid"]]
+    def maximum(unit):
+        values=[abs(joint["actual_minus_sdk_target"]) for row in valid for joint in row["joints"]
+                if joint["position_unit"]==unit and joint["actual_minus_sdk_target"] is not None]
+        return max(values) if values else None
+    return dict(valid_rows=len(valid),missing_rows=len(ledger)-len(valid),
+        full_interval_coverage=len(valid)==len(ledger),
+        missing_sdk_steps=[row["identity"]["physics_step"] for row in ledger
+                           if not row["joint_tracking"][side]["valid"]],
+        coverage_scope="provided_consecutive_raw_physics_rows",
+        residual_scope="valid_rows_only",
+        max_abs_controlled_tracking_error_rad=maximum("rad"),
+        max_abs_controlled_tracking_error_m=maximum("m"),
+        passive_target_slots_excluded=True)
+
+
 def audit_file(path, *, expected_sha256, grasp):
     """Consume and hash exactly the audited bytes; reject identity gaps or damage."""
     if grasp not in ("pinch", "tripod"):
@@ -45,6 +148,7 @@ def audit_file(path, *, expected_sha256, grasp):
     if not isinstance(expected_sha256, str) or not re.fullmatch("[0-9a-f]{64}", expected_sha256):
         raise ValueError("explicit raw source SHA256 required")
     ledger, previous, sequence = [], None, -1
+    previous_tracking={}
     digest = hashlib.sha256()
     with Path(path).open("rb") as source:
         for raw in source:
@@ -75,12 +179,29 @@ def audit_file(path, *, expected_sha256, grasp):
             nodes = _finite(rod["node_positions"], (1, 41, 3), "material positions")
             velocity = None if rod.get("velocities") is None else _finite(rod["velocities"], nodes.shape, "node velocities")
             command = _finite(action["request"]["action24"], (1, 24), "actual submitted action24")
+            tracking={side:_joint_tracking(action["pre"].get("hands",{}).get(side),
+                action["post"].get("hands",{}).get(side),action["request"],side)
+                for side in ("left","right")}
+            for side,tracked in tracking.items():
+                if not tracked["valid"]:
+                    continue
+                owner=(tracked["instance_object_id"],tracked["view_object_id"],
+                    tuple(tracked["prim_paths"]),tuple(tracked["row_indices"]),
+                    tuple(j["joint"] for j in tracked["joints"]))
+                if side in previous_tracking and previous_tracking[side]!=owner:
+                    raise ValueError("tracking owner identity changed within the same physical episode")
+                previous_tracking[side]=owner
+            if all(t["valid"] for t in tracking.values()):
+                if any(tracking["left"][key]==tracking["right"][key] for key in
+                        ("instance_object_id","view_object_id","prim_paths")):
+                    raise ValueError("tracking requires distinct left/right owners")
             ledger.append(dict(raw_sequence=ordinal, identity=identity, contact=contact,
                 median_z_m=float(np.median(nodes[0, :, 2])), min_z_m=float(nodes[0, :, 2].min()),
                 node_positions_world_m=nodes[0].tolist(),
                 node_velocities_world_m_s=None if velocity is None else velocity[0].tolist(),
                 node_speed_max_m_s=None if velocity is None else float(np.linalg.norm(velocity[0], axis=1).max()),
                 joint_state={side: _joints(action["post"].get("hands", {}).get(side)) for side in ("left", "right")},
+                joint_tracking=tracking,
                 issued_action24=command[0].tolist(),
                 action_contract=action["request"].get("action_contract"),
                 action_stage="submitted_normalized_command_not_actor_latent_or_measured_tracking",
@@ -96,6 +217,8 @@ def audit_file(path, *, expected_sha256, grasp):
         bilateral_rows=sum(contact(row)["bilateral"] for row in ledger),
         support_free_rows=sum(contact(row)["support_free"] for row in ledger),
         table_contact_rows=sum(max(contact(row)["external_support_force_norm_n"]["table"]) > TABLE_LOAD_LIMIT_N for row in ledger),
+        joint_tracking_schema="dh116-raw-target-tracking-audit-v1",
+        tracking_summary={side:_tracking_summary(ledger,side) for side in ("left","right")},
         per_hand={side: dict(
             loaded_rows=sum(contact(row)["per_hand"][side]["loaded"] for row in ledger),
             max_total_normal_load_n=max(contact(row)["per_hand"][side]["total_normal_load_n"] for row in ledger))
