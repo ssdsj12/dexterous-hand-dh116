@@ -32830,6 +32830,31 @@
         "verified_at_utc": "2026-11-22T02:30:58.618185+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-route-order-reset-native",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-tripod-route-order-reset-native.md",
+      "readiness": "docs/contracts/dh116_tripod_route_order_reset_native_v3.json",
+      "cpu_tests": {
+        "passed": 90,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "704c571c1f3f5e9ff246d3a381399c884a86db04",
+        "source_tree": "5966ec4ca12dce73fb1dff7c620cda1d9fd65602",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T02:39:24.754772+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
