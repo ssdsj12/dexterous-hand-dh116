@@ -32581,6 +32581,31 @@
         "verified_at_utc": "2026-11-22T00:28:37.084399+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.native-terminal-budget-precedence",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-native-terminal-budget-precedence.md",
+      "readiness": "docs/contracts/dh116_native_terminal_budget_precedence_v1.json",
+      "cpu_tests": {
+        "passed": 129,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "9edea8902b0b833f7599a79e75f47ec417ee57c7",
+        "source_tree": "dc091e1f617764dd6eafb3f9ca3e10efaafa2570",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T01:00:04.759472+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
