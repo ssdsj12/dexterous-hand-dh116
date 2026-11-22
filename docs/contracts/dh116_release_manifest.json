@@ -32755,6 +32755,31 @@
         "scheduler_receipt_sha256": "b49afa36539549d35d731315f6821339d1dc5cadbc70c2141e3e0442d6d53eb9",
         "checkpoint_sha256": "35231d09bb947775301743d1c715889ff076eca1c7dedacf93149097c7167cec"
       }
+    },
+    {
+      "package": "teacher.tripod-resume-smoke8-v11-freeze",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-resume-smoke8-native-v11.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_resume_smoke8_native_v11.json",
+      "cpu_tests": {
+        "passed": 94,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0a5e85658471bcbf4e4de2c20b41cf38a8090258",
+        "source_tree": "1afd34c0ec4bb13eccc871e53117a8c6146058bb",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T02:17:32.679486+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
