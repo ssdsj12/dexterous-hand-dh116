@@ -111,10 +111,12 @@ class NativeTeacherCollector:
         self._source_profile = None
         if self.sources.scope!="cpu_fixture":
             from .tabletop_native_teacher_session import NativeEpisodeOwner,LiveContract
-            from .tabletop_native_teacher_sources import NativePinchSources,NativeTripodSources
+            from .tabletop_native_teacher_sources import NativePinchSources,NativeTripodSources,NativeContactTripodSources
             from .tabletop_native_teacher_model import model_contract,verify_native_teacher_identity
             style=owner.contract.config.preflight.get("style") if type(owner) is NativeEpisodeOwner else None
-            source_type={"pinch":NativePinchSources,"tripod":NativeTripodSources}.get(style)
+            mode=owner.contract.config.preflight.get("profile") if type(owner) is NativeEpisodeOwner else None
+            source_type=(NativeContactTripodSources if mode == "approach_contact_prelift_v1" and style == "tripod"
+                         else {"pinch":NativePinchSources,"tripod":NativeTripodSources}.get(style))
             if (type(owner) is not NativeEpisodeOwner or type(live) is not LiveContract
                     or source_type is None or type(self.sources) is not source_type
                     or live.static is not owner.contract or trainer.model.model_identity["grasp"]!=style
@@ -381,7 +383,7 @@ class NativeTeacherCollector:
         return packet
 
     def restart_episode(self,factories):
-        from .tabletop_native_teacher_session import verify_reset_and_sources
+        from .tabletop_native_teacher_session import verify_reset_and_sources,_new_reward
         if self.quarantined or not self.episode_done or self._active:
             raise RuntimeError("only a completed terminal/external truncation can reset")
         if self._student_stereo is not None:
@@ -392,7 +394,7 @@ class NativeTeacherCollector:
         try:
             reset=owner.reset(static.reset_seed,episode_uid=owner.episode_uid,owner_resets=owner.owner_resets)
             live=verify_reset_and_sources(owner,reset,static)
-            reward=factories.reward(live.reward_contract)
+            reward=_new_reward(factories,live,owner)
             return NativeTeacherCollector(owner,self.trainer,reward,live,previous=self)
         except BaseException:
             try:owner.close()

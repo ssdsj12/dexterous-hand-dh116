@@ -9,7 +9,8 @@ from weakref import ref
 
 from .tabletop_deformable_privileged_ppo import DeformablePPOTrainer
 from .tabletop_native_teacher_actual_process import ActualWorkerLease
-from .tabletop_native_teacher_context import TaskContextOwner
+from .tabletop_native_teacher_context import TaskContextOwner,CONTACT_PRELIFT
+from .tabletop_native_teacher_contact_context import PrimedContactContextOwner
 from .tabletop_native_teacher_model import NativeContextTeacher
 from .tabletop_native_teacher_session import ModelContract, NativeEpisodeOwner, NativeFactories, StaticContract
 from .tabletop_native_teacher_training import VERSION
@@ -47,7 +48,8 @@ def build_actual_factories(*, lease, episode_factory, prepare_source_pack, resum
                 json.dumps(lease.process_config, sort_keys=True, allow_nan=False)):
             raise ValueError("C04 Teacher contract differs from the issued process config")
         if (config.preflight["style"] not in ("pinch","tripod")
-                or config.preflight["profile"] != "approach_wiring_smoke_v1"
+                or (config.preflight["profile"] != "approach_wiring_smoke_v1"
+                    and (config.preflight["profile"] != CONTACT_PRELIFT or config.preflight["style"] != "tripod"))
                 or type(config.rollout_steps) is not int or config.rollout_steps not in (8, 32)):
             raise ValueError("approved independent grasp approach smoke and bounded horizon required")
         static.runtime.bind_parent_deadline(lease.deadline_monotonic_s)
@@ -62,13 +64,24 @@ def build_actual_factories(*, lease, episode_factory, prepare_source_pack, resum
         lease.revalidate()
         owner = owner_ref() if owner_ref is not None else None
         context = getattr(owner, "context", None)
+        mode=owner.contract.config.preflight["profile"] if owner is not None else None
+        expected_context=PrimedContactContextOwner if mode == CONTACT_PRELIFT else TaskContextOwner
         if (owner is None or owner._closed or owner.episode._state != "active"
-                or type(context) is not TaskContextOwner or context._current is None or context._closed
+                or type(context) is not expected_context or context._current is None or context._closed
+                or mode == CONTACT_PRELIFT and context._contact_failed
                 or context.profile is not owner.backend_profile
                 or context.scope != owner.sources.scope or context.scope != "owner_source_unqualified"
                 or context.mode != owner.contract.config.preflight["profile"]
                 or context.grasp != owner.contract.config.preflight["style"]):
             raise ValueError("same live episode and verified Reset context required")
+        if mode == CONTACT_PRELIFT:
+            try:
+                measured=context.contact_readback
+                if (measured["physical_observations"] != 1
+                        or context.current.metadata.identities[0] != context._contact_identity):
+                    raise ValueError("fresh primed physical contact required")
+            except (ValueError,RuntimeError,AttributeError) as error:
+                raise ValueError("same live episode and verified contact context required") from error
         return owner
 
     def policy(contract):
@@ -109,10 +122,16 @@ def build_actual_factories(*, lease, episode_factory, prepare_source_pack, resum
             lambda trainer: resume_contract(trainer, owner), expected_sha256=origin["checkpoint_sha256"])
         return restore()
 
-    def reward(contract):
+    def reward(contract, *, contact_owner=None):
         owner = live_owner()
         if contract is not owner.contract.reward_config:
             raise ValueError("same file-backed approved reward configuration required")
+        if contract.profile == CONTACT_PRELIFT:
+            if contact_owner is not owner.context:
+                raise ValueError("same actual primed contact context required")
+            return TrainingReward(contract,contact_owner=owner.context)
+        if contact_owner is not None:
+            raise ValueError("contact context is excluded from old smoke reward")
         return TrainingReward(contract)
 
     return NativeFactories(episode, policy, trainer, reward)

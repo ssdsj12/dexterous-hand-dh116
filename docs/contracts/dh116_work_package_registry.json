@@ -49511,6 +49511,47 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.supported-contact-collector": {
+      "title": "Wire authentic17 Tripod contact sources to original Collector and independently audit primed inputs",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-contact-reward",
+        "teacher.supported-source-priming"
+      ],
+      "tests": [
+        "tests/test_native_teacher_contact_sources.py",
+        "tests/test_native_teacher_contact_session.py",
+        "tests/test_native_teacher_source_priming.py",
+        "tests/test_native_teacher_policy_tripod_distance.py",
+        "tests/test_native_teacher_tripod_sources.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_native_teacher_actual_factories.py",
+        "tests/test_native_teacher_actual_inputs.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_preflight.py",
+        "tests/test_native_teacher_static_manifest_handoff.py",
+        "tests/test_native_teacher_contact_context.py",
+        "tests/test_native_teacher_contact_measurement.py",
+        "tests/test_native_teacher_contact_reward.py",
+        "tests/test_native_teacher_context.py",
+        "tests/test_native_teacher_model.py",
+        "tests/test_native_teacher_tripod_live_preflight.py",
+        "tests/test_native_teacher_tripod_factory.py",
+        "tests/test_native_teacher_tripod_admission.py",
+        "tests/test_native_teacher_tripod_worker_contract.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-supported-contact-collector.md",
+      "readiness": "docs/contracts/dh116_supported_contact_collector_v1.json",
+      "native_runs": 0,
+      "reason": "CPU collector component verified;actual native worker profile/authorization and other independent grasps remain blocked",
+      "last_result": {
+        "passed": 313,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

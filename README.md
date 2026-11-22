@@ -1,3 +1,5 @@
+Primed supported17 Tripod contact sources now reach the original Teacher Collector/Actor/PPO;313 CPU cases pass. Raw-event audit rejects forged live table-contact windows and preserves Reset2 references. Native worker profile/budget integration,Pinch17 and Power palm sources remain pending;no native or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-supported-contact-collector.md).
+
 Source-bound contact Reward now shares the measured Context timer, preserves Reset2 S0, excludes Lift/Hold/success and rejects Reset revival. Final402 CPU cases pass; actual native Source/Collector wiring remains pending. Historical rigid successes and legacy16/16 metrics are explicitly separated. [Report](docs/superpowers/reports/2026-11-22-supported-contact-reward-history.md).
 
 Measured contact Context now preserves Reset S0,validates every accepted physical event,and reaches the real Teacher Actor under an independent contact namespace.273 broad CPU cases and18 final owner cases pass(overlap17);native contact Reward/Collector remain pending. [Report](docs/superpowers/reports/2026-11-22-supported-contact-context.md).

@@ -10,6 +10,7 @@ import json
 import math
 import re
 from pathlib import Path
+from types import SimpleNamespace
 import sys
 
 import numpy as np
@@ -27,6 +28,10 @@ ORIGINAL_RECEIPT_SHA = "6bc124165c6cd907e84ac013b07c9f9df45b2ee1cd4f9499253b42d9
 SMOKE = frozenset(("backend", "resolved_reset", "common66", "rod41x13", "current_parameters",
     "same_clock_distance", "accepted_request24", "sdk_target_readback", "original_guards",
     "native_health", "task_context", "eight_sdk_per_control", "finite_budget"))
+CONTACT_PROFILE = "approach_contact_prelift_v1"
+CONTACT_CAPABILITIES = frozenset(("required_pad_contact", "opposition", "bilateral_support",
+                                 "off_table", "no_external_support", "continuous_history"))
+CONTACT = SMOKE | CONTACT_CAPABILITIES
 FULL = SMOKE | frozenset(("required_pad_contact", "opposition", "bilateral_support",
     "off_table", "no_external_support", "fixed_material_slip", "tangential_slip",
     "hold_motion", "continuous_history"))
@@ -37,6 +42,8 @@ BUDGET_KEYS = frozenset(("max_sdk_steps", "max_resets", "max_solver_calls",
 def required_capabilities(profile):
     if profile == "approach_wiring_smoke_v1":
         return SMOKE
+    if profile == CONTACT_PROFILE:
+        return CONTACT
     if profile == "flexible_train_r1_full":
         return FULL
     raise ValueError("unknown training profile")
@@ -52,7 +59,7 @@ def candidate_config(*, style="pinch", profile="approach_wiring_smoke_v1"):
         model_schema=MODEL_SCHEMA_VERSION, input_schema=INPUT_SCHEMA_VERSION,
         context_schema=CONTEXT_SCHEMA_VERSION, action_dim=24, physics_hz=480, control_hz=60,
         sdk_steps_per_control=8, original_guards_enabled=True, r2_enabled=False,
-        force_proxy_enabled=False, ppo={"gamma": .995 if profile == "approach_wiring_smoke_v1" else .999},
+        force_proxy_enabled=False, ppo={"gamma": .995 if profile in ("approach_wiring_smoke_v1", CONTACT_PROFILE) else .999},
         reward_config=None, resolved_reset_manifest=None, budget=None, authorization=None,
         resource_lock=None, capability_sources={})
 
@@ -319,6 +326,11 @@ def _static_preflight_with_manifest(config, *, project=ROOT, backend_profile=Non
     validate_config(config)
     project = Path(project).resolve()
     components = []
+    if config["profile"] == CONTACT_PROFILE and config["style"] != "tripod":
+        components.append(_component("supported17_contact_source", False,
+            reader="NativeContactTripodSources",
+            reason=config["style"] + "_supported17_contact_source_not_implemented",
+            release="independent same-style supported17 Reset, contact and policy metric required"))
     def check(name, call, reader, release, *, applicable=True):
         if not applicable:
             components.append(_component(name, False, reader=reader, applicable=False, release=release))
@@ -390,7 +402,32 @@ def _static_preflight_with_manifest(config, *, project=ROOT, backend_profile=Non
         "eight_sdk_per_control": "tabletop_deformable_control_step.py"}
     for capability in sorted(required_capabilities(config["profile"]) - {"backend", "resolved_reset", "finite_budget", "task_context"}):
         filename = sources.get(capability)
-        if capability == "same_clock_distance" and config["style"] == "tripod":
+        if config["profile"] == CONTACT_PROFILE and capability in CONTACT_CAPABILITIES:
+            files = ("tabletop_native_teacher_contact_measurement.py",
+                     "tabletop_native_teacher_contact_context.py",
+                     "tabletop_native_teacher_sources.py")
+            def contact_reader():
+                from .tabletop_native_teacher_contact_measurement import capture_supported_contact
+                from .tabletop_native_teacher_contact_context import PrimedContactContextOwner
+                from .tabletop_native_teacher_sources import NativeContactTripodSources
+                if (config["style"] != "tripod" or NativeContactTripodSources.STYLE != "tripod"
+                        or NativeContactTripodSources.PROFILE != CONTACT_PROFILE
+                        or not callable(capture_supported_contact)
+                        or not callable(PrimedContactContextOwner.observe_physical_event)):
+                    raise ValueError(config["style"] + "_supported17_contact_source_not_implemented")
+                refs = []
+                for filename in files:
+                    path = project / "src/go2_pvcnn/control/dh116" / filename
+                    module = importlib.import_module("go2_pvcnn.control.dh116." + path.stem)
+                    if Path(module.__file__).resolve() != path.resolve():
+                        raise ValueError("contact implementation loaded from a different project")
+                    refs.append(sha256_file(path))
+                # Bind all implementation bytes. This is only a static reader check;
+                # the actual owner, raw pair data and primed clock remain live gates.
+                return SimpleNamespace(digest=digest(refs))
+            check(capability, contact_reader, "NativeContactTripodSources",
+                  "actual same-owner primed contact and per-physical-event history still required")
+        elif capability == "same_clock_distance" and config["style"] == "tripod":
             from .tabletop_tripod_reset_manifest import TripodResetManifest
             path = project / "src/go2_pvcnn/control/dh116/tabletop_tripod_reset_distance.py"
             def tripod_distance():

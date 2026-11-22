@@ -14,6 +14,8 @@ def test_static_contract_reuses_this_call_verified_manifest_and_rechecks_next_ca
     saved=Path("/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-ppo-smoke8-v8-input/training.json")
     training=json.loads(saved.read_bytes())
     value=training["preflight"]
+    from test_native_teacher_tripod_admission import config as current_tripod_config
+    value["resolved_reset_manifest"]=current_tripod_config()["resolved_reset_manifest"]
     binding=value["resolved_reset_manifest"]
     original=Path(binding["path"]).read_bytes()
     assert hashlib.sha256(original).hexdigest()==binding["sha256"]
@@ -44,3 +46,15 @@ def test_static_contract_reuses_this_call_verified_manifest_and_rechecks_next_ca
         session.verify_static_contract(config)
     assert len(loaded)==1
     assert not list(tmp_path.glob("*.pt")) and not (tmp_path/"unused.jsonl").exists()
+
+
+def test_historical_reset_manifest_stays_rejected_after_physical_source_changed():
+    from go2_pvcnn.control.dh116 import tabletop_native_teacher_preflight as pre
+    from test_native_teacher_tripod_admission import MANIFEST,MANIFEST_SHA,config
+    value=config()
+    original=MANIFEST.read_bytes()
+    assert hashlib.sha256(original).hexdigest()==MANIFEST_SHA
+    value["resolved_reset_manifest"]=dict(path=str(MANIFEST),sha256=MANIFEST_SHA)
+    with pytest.raises(ValueError,match="actual file SHA differs.*tabletop_deformable_physical_exchange"):
+        pre.load_reset_manifest(value,project=ROOT)
+    assert hashlib.sha256(MANIFEST.read_bytes()).hexdigest()==MANIFEST_SHA

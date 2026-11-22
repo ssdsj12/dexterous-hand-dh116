@@ -36,6 +36,7 @@ def _canonical_pinch_history():
 
 class _NativeGeometrySources:
     STYLE = None
+    PROFILE = "approach_wiring_smoke_v1"
     scope="owner_source_unqualified"
     reward_scope="unqualified_source"
 
@@ -43,7 +44,7 @@ class _NativeGeometrySources:
         from .tabletop_native_parameter_endpoints import NativeParameterEndpoints
         if self.STYLE not in ("pinch","tripod") or contract.config.preflight["style"]!=self.STYLE:
             raise ValueError("independent style-specific distance source missing")
-        if contract.config.preflight["profile"]!="approach_wiring_smoke_v1":
+        if contract.config.preflight["profile"]!=self.PROFILE:
             raise ValueError("full_shared_contact_slip_hold_source_adapter_missing")
         if scope not in ("cpu_fixture","owner_source_unqualified"):raise ValueError("explicit unqualified source scope required")
         self.scope=scope;self.reward_scope="cpu_fixture" if scope=="cpu_fixture" else "unqualified_source"
@@ -157,15 +158,19 @@ class _NativeGeometrySources:
         return SubmittedRequest(sample["collection_token"],decision["policy"]["model_weights_sha256"],
             self._last.stamp,tuple(float(v) for v in sample["actions"][0]),"normalized_submitted_command24_preprojection")
 
+    def _validate_parameter_event(self, event):
+        if self._error is not None:
+            raise self._error
+        from .tabletop_deformable_r0_replay import _digest
+        director = event["exchange"]["material_director"]
+        if (director.get("source_instance_id") != id(self.owner.rod.rope)
+                or _digest(director) != _digest(self.parameters)):
+            raise SourceFailure("current same-owner parameter getter packet differs")
+
     def observe(self,event):
-        if self._error is not None: raise self._error
+        self._validate_parameter_event(event)
         row=event["exchange"]
         with profile_reader_scope(self.contract.backend_profile):
-            from .tabletop_deformable_r0_replay import _digest
-            director=row["material_director"]
-            if (director.get("source_instance_id")!=id(self.owner.rod.rope)
-                    or _digest(director)!=_digest(self.parameters)):
-                raise SourceFailure("current same-owner parameter getter packet differs")
             # This runs AFTER durable physical recording and history.record.
             # The independent reader binds the complete row to the actual issued
             # request/SDK targets, collection token and current history window.
@@ -277,3 +282,88 @@ class NativeTripodSources(_NativeGeometrySources):
         self.distance=PolicyOwnedTripodApproach(contract.config.project,scope=scope,
             task_config=Path(task["path"]),task_config_sha256=task["sha256"],
             mesh_bindings=owner.rod.bindings)
+
+
+class NativeContactTripodSources(NativeTripodSources):
+    """Actual supported17 contact course; old smoke and other grasps stay independent."""
+    PROFILE = "approach_contact_prelift_v1"
+
+    def _install_exchange(self):
+        from .tabletop_native_teacher_contact_measurement import capture_supported_contact
+        super()._install_exchange()
+        exchange = self.owner.episode._exchange
+        step = exchange._step
+        def measured(action, substep):
+            row = step(action, substep)
+            try:
+                contact = capture_supported_contact(row["rod"], grasp=self.STYLE)
+                row["teacher_contact_guard"] = dict(
+                    identity=contact["identity"], raw_rod_sha256=contact["raw_rod_sha256"],
+                    table_contact_failure=contact["table_contact_failure"],
+                    support_load_n=contact["support_load_n"])
+                if contact["table_contact_failure"] and row["guard_failure"] is None:
+                    row["guard_failure"] = "native_teacher_table_contact"
+            except BaseException as error:
+                self._error = error
+                row["native_teacher_source_error"] = dict(type=type(error).__name__, message=str(error))
+            return row
+        exchange._step = measured
+        self.owner._restores.append(lambda: setattr(exchange,"_step",step))
+
+    def _endpoint(self, clock, distance, health, guard):
+        from dataclasses import replace
+        endpoint = super()._endpoint(clock, distance, health, guard)
+        if not getattr(self,"_contact_ready",False):
+            return endpoint  # Real Reset2 remains unprimed; never invent contact.
+        contact = self.owner.context.contact_readback
+        identity = self.owner.context._contact_identity
+        if any(clock[k] != getattr(identity,k) for k in identity.__dataclass_fields__):
+            raise SourceFailure("same-clock original contact Context endpoint required")
+        fields = dict(endpoint.fields)
+        for name in ("coverage_left","coverage_right","opposed_left","opposed_right",
+                     "bilateral_support","table_contact_failure"):
+            fields[name] = Measurement(contact[name],"dimensionless",self._stamp(clock,contact["source"]))
+        pads = tuple((side,tuple(contact["evidence"]["per_hand"][side]["required_pads"]))
+                     for side in ("left","right"))
+        return replace(endpoint,fields=fields,required_pad_ids=pads)
+
+    def initialize_context(self, result):
+        from .tabletop_native_teacher_contact_context import PrimedContactContextOwner
+        from .tabletop_native_teacher_source_priming import prime_supported_sources
+        from .tabletop_native_teacher_profile import profile_reader_scope
+        owner, contract = self.owner, self.contract
+        owner.context = PrimedContactContextOwner(backend_profile=contract.backend_profile,
+            scope=self.scope,episode_cap_s=contract.config.episode_cap_s,
+            external_cap_s=contract.budget["wall_timeout_s"],grasp=self.STYLE)
+        owner.context.reset_pending_from_verified_state(self.context_state(None),history_owner=owner.history)
+        try:
+            with profile_reader_scope(contract.backend_profile):
+                receipt = prime_supported_sources(owner.episode,history=owner.history,
+                    runtime=contract.runtime,journal=owner.ledger)
+                if self._error is not None:
+                    raise self._error
+                event = owner.history.priming_event
+                self._validate_parameter_event(event)
+                distance = self.distance.capture_priming(event,history_owner=owner.history,grasp=self.STYLE)
+                owner.context.commit_primed_state(self.context_state(None),history_owner=owner.history,priming_event=event)
+                self._contact_ready = True
+                self._last = self._endpoint(event["exchange"]["rod"],distance,event["exchange"]["native_teacher_health"],None)
+                owner.ledger.emit("primed_sources",dict(receipt=receipt,parameters=self.parameters,distance=distance,
+                    contact=owner.context.contact_readback,endpoint=self._last,
+                    reset_distance_ref_m=owner.context._fixed[2]))
+        except BaseException:
+            owner.history._failed = True
+            owner.context._contact_failed = True
+            contract.runtime.source_priming_failed = True
+            raise
+
+    def reset_reward(self, reward):
+        receipt = self.owner.history.priming
+        request = SubmittedRequest(receipt["priming_row_sha256"],"source_priming_no_policy",
+            self._last.stamp,(0.,)*24,"normalized_submitted_command24_preprojection")
+        reward.reset_from_verified_state(self._last,previous_request=request)
+
+    def observe(self, event):
+        self._validate_parameter_event(event)
+        self.owner.context.observe_physical_event(event,history_owner=self.owner.history)
+        return super().observe(event)

@@ -12,6 +12,7 @@ from .tabletop_native_teacher_preflight import (candidate_config, _static_prefli
     validate_budget, live_preflight, _binding)
 from .tabletop_native_teacher_profile import BackendProfile, ROOT
 from .tabletop_native_teacher_collector import NativeTeacherCollector
+from .tabletop_training_reward import CONTACT
 
 
 @dataclass(frozen=True)
@@ -86,6 +87,21 @@ def reset_clock_preflight(owner,*,long_clock=False):
     return dict(limits,actual_reset_sdk_step=step,reset_clock_admitted=True)
 
 
+def validate_contact_rollout(controls, budget, approved_controls):
+    """Count the separate prime; never borrow a smoke authorization/step cap."""
+    if (type(controls) is not int or controls not in (8,32) or approved_controls != 32
+            or budget["max_sdk_steps"] != 2+1+8*controls
+            or budget["max_solver_calls"] != 1+8*controls
+            or budget["max_episode_count"] != 1 or budget["max_resets"] != 1):
+        raise ValueError("independent contact rollout requires exact setup2+prime1+policy budget")
+
+
+def _new_reward(factories, live, owner):
+    if getattr(live.reward_contract,"profile",None) == CONTACT:
+        return factories.reward(live.reward_contract,contact_owner=owner.context)
+    return factories.reward(live.reward_contract)
+
+
 def verify_static_contract(config):
     if type(config) is not NativeSessionConfig:
         raise ValueError("explicit NativeSessionConfig and independently pinned sources required")
@@ -104,7 +120,8 @@ def verify_static_contract(config):
     if config.preflight["style"] not in ("pinch","tripod"):
         raise ValueError(config.preflight["style"]+"_distance_reader_implementation_pending")
     if config.preflight["profile"] != "approach_wiring_smoke_v1":
-        raise ValueError("full_shared_contact_slip_hold_source_adapter_missing")
+        if config.preflight["profile"] != CONTACT or config.preflight["style"] != "tripod":
+            raise ValueError("full_shared_contact_slip_hold_source_adapter_missing")
     if config.model_config.get("grasp")!=config.preflight["style"]:
         raise ValueError("model/source grasp identity differs")
     from .tabletop_training_reward import load_config
@@ -123,7 +140,10 @@ def verify_static_contract(config):
         if target not in values or values[target]!=value:
             raise ValueError("preflight/PPO/reward numeric config differs: "+key)
     from .tabletop_native_teacher_worker_contract import validate_fresh_smoke_rollout
-    validate_fresh_smoke_rollout(config.rollout_steps, budget, reward.ppo["rollout_steps"])
+    if reward.profile == CONTACT:
+        validate_contact_rollout(config.rollout_steps,budget,reward.ppo["rollout_steps"])
+    else:
+        validate_fresh_smoke_rollout(config.rollout_steps, budget, reward.ppo["rollout_steps"])
     ppo=PPOConfig(**values)
     model_contract(config.model_config,profile,config.preflight["profile"])
     from .tabletop_deformable_r0_replay import _digest
@@ -220,7 +240,7 @@ def build_fresh_tripod_owner(contract, *, sim, owners, prepared, ownership, ledg
     try:
         if (type(contract) is not StaticContract or type(ledger) is not NativeJournal
                 or contract.config.preflight["style"] != "tripod"
-                or contract.config.preflight["profile"] != "approach_wiring_smoke_v1"
+                or contract.config.preflight["profile"] not in ("approach_wiring_smoke_v1",CONTACT)
                 or type(contract.reset_manifest) is not TripodResetManifest
                 or Path(contract.config.journal_path) != ledger.path or mesh_plan is not None):
             raise ValueError("independent Tripod smoke contract, own journal and fresh17 plan required")
@@ -258,7 +278,7 @@ def create_native_collector(config,factories):
         live=verify_reset_and_sources(owner,reset,contract)
         model=factories.policy(live.model_contract)
         trainer=factories.trainer(model,contract.ppo_config)
-        reward=factories.reward(live.reward_contract)
+        reward=_new_reward(factories,live,owner)
         return NativeTeacherCollector(owner,trainer,reward,live)
     except BaseException:
         try:
@@ -353,7 +373,7 @@ class NativeEpisodeOwner:
     def __init__(self,episode,contract,*,episode_uid,owner_resets,mesh_plan,ledger,setup_events,initial_geometry,previous_reset=None):
         from .tabletop_deformable_dual_hand_episode import DualHandPhysicalEpisode
         from .tabletop_native_teacher_action_history import NativeAction24HistoryOwner
-        from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources
+        from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources, NativeContactTripodSources
         if type(episode) is not DualHandPhysicalEpisode or episode._state != "new":
             raise ValueError("one fresh original physical episode over existing scene required")
         self.episode,self.contract=episode,contract
@@ -367,7 +387,13 @@ class NativeEpisodeOwner:
         # its first callback mutation and every later setup/source operation here,
         # rather than relying on create_native_collector to receive the owner.
         try:
-            self.history=NativeAction24HistoryOwner(initial_action24=__import__("torch").zeros(1,24),
+            style=contract.config.preflight["style"]
+            contact=contract.config.preflight["profile"] == CONTACT
+            if contact and style != "tripod":
+                raise ValueError("independent supported17 contact source required for "+style)
+            from .tabletop_native_teacher_source_priming import PrimedNativeActionHistory
+            history_type=PrimedNativeActionHistory if contact else NativeAction24HistoryOwner
+            self.history=history_type(initial_action24=__import__("torch").zeros(1,24),
                 seed_source="new original controller reset zero request",physics_budget_end=episode._end,
                 solver_substeps=self.rod._base.cfg["rod"]["solver_substeps"],previous_reset=previous_reset)
             self.owner_resets=dict(owner_resets)
@@ -383,7 +409,7 @@ class NativeEpisodeOwner:
             for event in setup_events:
                 if event.get("kind")!="setup": raise ValueError("original scene setup evidence required")
                 ledger.emit("setup",event)
-            source_types={"pinch":NativePinchSources,"tripod":NativeTripodSources}
+            source_types={"tripod":NativeContactTripodSources} if contact else {"pinch":NativePinchSources,"tripod":NativeTripodSources}
             style=contract.config.preflight["style"]
             if style not in source_types:
                 raise ValueError("independent source adapter unavailable for "+style)
@@ -456,6 +482,10 @@ class NativeEpisodeOwner:
         # These callbacks borrow original SDK/controller handles. Drop our copy
         # (including the wrapped controller closure), never mutate caller owners.
         self.owner_resets={}
+        context=getattr(self,"context",None)
+        if getattr(context,"mode",None) == CONTACT:
+            try:context.close()
+            except BaseException as exc:errors.append(exc)
         sources=getattr(self,"sources",None)
         if sources is not None:
             sources._error=None

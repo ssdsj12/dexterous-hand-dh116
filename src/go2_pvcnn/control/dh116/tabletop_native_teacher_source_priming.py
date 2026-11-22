@@ -26,11 +26,14 @@ class PrimedNativeActionHistory(NativeAction24HistoryOwner):
         self._priming = self._priming_sha = self._priming_pre = None
         self._reset_sha = None
         self._row_hashes = []
+        self._priming_event = None
 
     def _check(self):
         super()._check()
         if ((self._reset_sha is not None and _digest(self._reset) != self._reset_sha)
-                or (self._priming_sha is not None and _digest(self._priming) != self._priming_sha)):
+                or (self._priming_sha is not None and _digest(self._priming) != self._priming_sha)
+                or (self._priming is not None and (self._priming_event is None
+                    or _digest(self._priming_event) != self._priming["priming_row_sha256"]))):
             self._failed = True
             raise ValueError("priming or original Reset receipt changed outside owner")
 
@@ -57,6 +60,10 @@ class PrimedNativeActionHistory(NativeAction24HistoryOwner):
     def record_priming(self, row):
         self._check()
         try:
+            # The real controller returns tuple IDs and tensor requests. Apply
+            # the same lossless owned representation as policy history before
+            # its existing JSON-row validator; do not change clocks or values.
+            row = _copy(row)
             _require(row.get("kind") == "priming_physical" and self._priming_pre is not None
                      and self._priming is None and self._decision is None
                      and self._sequence.controls == 0, "one separately prepared priming physical row required")
@@ -83,6 +90,7 @@ class PrimedNativeActionHistory(NativeAction24HistoryOwner):
             self._sequence.rows += 1
             self._sequence._first_boundary_phase = "post_physics"
             self._last_hands = hands
+            self._priming_event = _copy(row)
             self._priming = receipt
             self._priming_sha = _digest(receipt)
             self._priming_pre = None
@@ -96,6 +104,13 @@ class PrimedNativeActionHistory(NativeAction24HistoryOwner):
         self._check()
         _require(self._priming is not None, "source priming required")
         return deepcopy(self._priming)
+
+    @property
+    def priming_event(self):
+        """Return owned recorded source bytes, never a live native view."""
+        self._check()
+        _require(self._priming is not None, "source priming required")
+        return _copy(self._priming_event)
 
     def capture_pre_action(self, pre):
         self._check()

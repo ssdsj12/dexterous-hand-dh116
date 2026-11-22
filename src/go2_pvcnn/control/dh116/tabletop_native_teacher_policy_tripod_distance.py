@@ -204,12 +204,51 @@ class PolicyOwnedTripodApproach:
             contact_inferred_from_geometry=False, stability_measured=False,
             new_physics_steps=0, ppo_updates=0, native_qualification=False, teacher_admission=False)
 
+    def capture_priming(self, event, *, history_owner, grasp="tripod"):
+        """Read the separately recorded zero exchange without inventing a policy."""
+        from .tabletop_native_teacher_source_priming import PrimedNativeActionHistory
+        try:
+            _require(grasp == "tripod" and type(history_owner) is PrimedNativeActionHistory,
+                     "original Tripod primed history required")
+            history_owner._check()
+            receipt = history_owner.priming
+            _require(history_owner._decision is None and history_owner._captured is None
+                     and history_owner._sequence.controls == 0 and event["kind"] == "priming_physical"
+                     and _digest(event) == receipt["priming_row_sha256"],
+                     "original priming event before any policy required")
+            row = event["exchange"]
+            endpoint = row["action_readback"]["post"]["identity"][0]
+            _require(all(history_owner._sequence.clock[k] == endpoint[k] for k in history_owner._sequence.clock),
+                     "same primed history and actual SDK endpoint required")
+            action = np.asarray(row["action_readback"]["request"]["action24"])
+            _require(action.shape == (1, 24) and action.dtype == np.float64
+                     and np.array_equal(action, np.zeros((1,24),np.float64)),
+                     "actual separately issued zero priming command required")
+            packet = self.geometry.validate(row["closure_geometry"], row)
+            _require(packet["source_complete"], "required actual Tripod priming SDF distance unavailable")
+            result = self._metric(packet, _radius(row))
+            binding = dict(kind="source_priming_not_policy", ppo_transitions=0,
+                history_owner_uid=history_owner._owner_uid, physical_row_sha256=_digest(event),
+                sdk_targets_sha256=_digest(row["action_readback"]["submission"]["expected_backend_targets"]))
+            result["history_binding"] = binding
+            result["source"].update(geometry_contract_version=GEOMETRY_VERSION, history_binding=binding)
+            result["source_sha256"] = _digest(result["source"])
+            sample = result["auxiliary"]["samples"]["approach_distance_m"]
+            if sample["value"] is not None:
+                sample["source"] = "actual_tripod_SDK_material41_locked_SDF:"+result["source_sha256"]
+            return result
+        except SourceFailure:
+            raise
+        except (ValueError, KeyError, TypeError, IndexError) as error:
+            raise SourceFailure("owned Tripod priming source: " + str(error)) from error
+
     def capture(self, event, *, history_owner, grasp="tripod"):
         try:
             _require(grasp == "tripod", "independent Tripod source cannot be relabelled")
             from .tabletop_action24_history_owner import Action24HistoryOwner
             from .tabletop_native_teacher_action_history import NativeAction24HistoryOwner
-            _require(type(history_owner) in (Action24HistoryOwner, NativeAction24HistoryOwner),
+            from .tabletop_native_teacher_source_priming import PrimedNativeActionHistory
+            _require(type(history_owner) in (Action24HistoryOwner, NativeAction24HistoryOwner, PrimedNativeActionHistory),
                      "actual policy history owner required")
             history_owner._check()
             row = event["exchange"]

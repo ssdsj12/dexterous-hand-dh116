@@ -4,6 +4,7 @@ from copy import deepcopy
 import hashlib
 import json
 import os
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -15,10 +16,17 @@ MANIFEST = RUN.parent/"tripod-teacher-resolved-reset-v1.json"
 MANIFEST_SHA = "ed086c283c177e52a5d9358c2f4887ccaea3d5c568e4770b19dc517d5f1f6d5c"
 
 
+# The old MANIFEST remains immutable historical evidence for contract-only tests.
+# Current reader/scene tests use the independently acquired route-order-v3 Reset,
+# whose original physical implementation SHA matches this development baseline.
+CURRENT_MANIFEST=Path("/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/fresh-supported-tripod-reset-route-order-v3/teacher-reset-manifest.json")
+CURRENT_MANIFEST_SHA="c123ccbed1161471e2e34dc6941d7e06fcae93cb5ff87499bb8a5440eab0a6ad"
+
+
 def config():
     from go2_pvcnn.control.dh116.tabletop_native_teacher_preflight import candidate_config
     value = candidate_config(style="tripod")
-    value["resolved_reset_manifest"] = dict(path=str(MANIFEST),sha256=MANIFEST_SHA)
+    value["resolved_reset_manifest"] = dict(path=str(CURRENT_MANIFEST),sha256=CURRENT_MANIFEST_SHA)
     reward = ROOT/"configs/dh116_training/approach_wiring_smoke_v1.json"
     value["reward_config"] = dict(path=str(reward),sha256=hashlib.sha256(reward.read_bytes()).hexdigest())
     return value
