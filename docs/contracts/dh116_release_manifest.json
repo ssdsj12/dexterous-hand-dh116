@@ -33386,6 +33386,37 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.contact-work-response",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-contact-work.md",
+      "readiness": "docs/contracts/dh116_teacher_contact_work_v1.json",
+      "cpu_tests": {
+        "passed": 38,
+        "failed": 0,
+        "new_cases": 10
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "archived_sdk_intervals": 256,
+      "new_native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "f035208e81eb7324bf11fd708f651afbb2a3dee5",
+        "source_tree": "35d673824c85b2d862c197aa99e568cb90fbe4bf",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "remote_verified": true
     }
   ]
 }
