@@ -148,19 +148,19 @@ def test_actual_input_audit_binds_exact_journal_prefix_to_checkpoint_seal(monkey
     rows = [earlier, seal, later] if damage != "missing_seal" else [earlier, later]
     raw = b"".join((json.dumps(row, sort_keys=True) + "\n").encode() for row in rows)
     frozen = dict(result={"clean_checkpoint": checkpoint}, rows=rows, raw_journal=raw)
-    profile = object()
+    backend = object()
 
-    def audit(data, *, backend_profile, scope, controls=32, grasp="pinch"):
-        assert data == prefix and backend_profile is profile and scope == "owner_source_unqualified"
-        assert grasp == "pinch"
+    def audit(data, *, backend_profile, scope, controls=32, grasp="pinch", profile=inputs.CONTEXT_MODE):
+        assert data == prefix and backend_profile is backend and scope == "owner_source_unqualified"
+        assert grasp == "pinch" and profile == inputs.CONTEXT_MODE
         return result
 
     monkeypatch.setattr(inputs, "audit_teacher_input_sources", audit)
     if damage:
         with pytest.raises(ValueError, match="source.*seal|checkpoint.*seal"):
-            worker_actual._audit_sealed_packs(frozen, profile)
+            worker_actual._audit_sealed_packs(frozen, backend)
     else:
-        assert worker_actual._audit_sealed_packs(frozen, profile) == result
+        assert worker_actual._audit_sealed_packs(frozen, backend) == result
 
 
 @pytest.mark.parametrize("damage", [None, "setup_step", "order", "duplicate_reset", "advance_reset", "foreign_episode"])

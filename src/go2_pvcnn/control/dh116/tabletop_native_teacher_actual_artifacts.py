@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 from .tabletop_native_teacher_worker_artifacts import PRIMARY_OPERATIONS, _journal, _json, _jsonl
 from .tabletop_native_teacher_worker_contract import (
-    RESULT_SCHEMA, _sha, validate_teacher_recipe_v2, validate_teacher_training_result,
+    RESULT_SCHEMA, SMOKE_PROFILE, CONTACT_PROFILE, _sha, validate_teacher_recipe_v2, validate_teacher_training_result,
 )
 
 
@@ -136,7 +136,7 @@ def _resume_result(result, acquisition, rows, origin, *, contract, checkpoint_sh
     result.update(schema=_RESUME_RESULT_SCHEMA, resume_origin=expected_origin,
                   restored_rng_sha256=origin["rng_state_sha256"])
     return _journal(rows, result, controls=contract["limits"]["controls"], initial_version=1,
-                    prior_accepted=accepted_before, prior_weights=origin["policy_weights_sha256"],grasp=contract["style"])
+                    prior_accepted=accepted_before, prior_weights=origin["policy_weights_sha256"],grasp=contract["style"],profile=contract["profile"])
 
 
 def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes, *, origin=None):
@@ -144,8 +144,9 @@ def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes, *, origin=None):
     physical = acquisition.get("physical")
     contract = spec["teacher_contract"]
     bounds = contract["limits"]
-    expected_clock = dict(start_sdk_step=bounds["setup_sdk_steps"], end_sdk_step=spec["budget"]["physics_steps"],
-                          start_rod_tick=0, end_rod_tick=bounds["max_internal_solver_substeps"])
+    prime_steps = bounds["warmup_sdk_steps"] if contract["profile"]==CONTACT_PROFILE else 0
+    expected_clock = dict(start_sdk_step=bounds["setup_sdk_steps"]+prime_steps, end_sdk_step=spec["budget"]["physics_steps"],
+                          start_rod_tick=12*prime_steps, end_rod_tick=bounds["max_internal_solver_substeps"])
     if (type(physical) is not dict or any(type(physical.get(key)) is not int or physical[key] != value
                                          for key, value in expected_clock.items())):
         raise ValueError("R06 acquisition requires the complete fresh SDK and rod window")
@@ -165,7 +166,7 @@ def _derived_payloads(spec, lifecycle, raw, checkpoint_bytes, *, origin=None):
     if origin is None:
         validate_teacher_training_result(result, expected_semantic_sha256=contract["semantic_sha256"],
                                          artifact_sha256={"teacher_clean.pt": checkpoint_sha})
-        epoch = _journal(rows, result, controls=bounds["controls"],grasp=contract["style"])
+        epoch = _journal(rows, result, controls=bounds["controls"],grasp=contract["style"],profile=contract["profile"])
     else:
         epoch = _resume_result(result, acquisition, rows, origin, contract=contract,
                                checkpoint_sha=checkpoint_sha)
@@ -238,7 +239,8 @@ def _freeze(spec, output, *, origin):
                 artifact_sha256=digests, policy_epoch=epoch)
 
 
-def _audit_sealed_packs(frozen, profile, *, controls=32, seal_operation="fresh_update_checkpoint_sealed",grasp="pinch"):
+def _audit_sealed_packs(frozen, profile, *, controls=32, seal_operation="fresh_update_checkpoint_sealed",grasp="pinch",
+                        context_mode=SMOKE_PROFILE):
     from .tabletop_native_teacher_actual_inputs import SCOPE, audit_teacher_input_sources
 
     seams = [(index, row["payload"]) for index, row in enumerate(frozen["rows"])
@@ -251,14 +253,14 @@ def _audit_sealed_packs(frozen, profile, *, controls=32, seal_operation="fresh_u
             for key, value in frozen["result"]["clean_checkpoint"].items())):
         raise ValueError("checkpoint differs from the original journal seal")
     prefix = b"".join(frozen["raw_journal"].splitlines(keepends=True)[:index])
-    rebuilt = audit_teacher_input_sources(prefix, backend_profile=profile, scope=SCOPE, controls=controls,grasp=grasp)
+    rebuilt = audit_teacher_input_sources(prefix, backend_profile=profile, scope=SCOPE, controls=controls,grasp=grasp,profile=context_mode)
     if rebuilt != seal.get("input_source_audit"):
         raise ValueError("source audit differs from the recorded checkpoint seal")
     return rebuilt
 
 
 
-def _audit_fresh_setup(rows):
+def _audit_fresh_setup(rows, *, profile=SMOKE_PROFILE, end_sdk_step=258):
     from .tabletop_deformable_dual_evidence import _Sequence, _clock_row
     from .tabletop_dual_hand_reset import _no_step
     from .tabletop_deformable_r0_replay import decode_owned
@@ -273,7 +275,7 @@ def _audit_fresh_setup(rows):
                 < first_action["sequence"] < first_physical["sequence"]):
         raise ValueError("ordered SDK setup and exactly one Reset before the first action required")
     try:
-        sequence = _Sequence(258, 12)
+        sequence = _Sequence(end_sdk_step, 12)
         for row in setup:
             sequence.accept("setup", row["payload"])
         data = decode_owned(reset[0]["payload"])
@@ -290,18 +292,28 @@ def _audit_fresh_setup(rows):
                 or after["rod"] != receipt["after_clock"]
                 or data["clearance_passed"] is not True):
             raise ValueError("actual SDK setup and zero-step Reset readbacks differ")
+        expected_policy_clock=sequence.clock
+        if profile==CONTACT_PROFILE:
+            from .tabletop_native_teacher_worker_artifacts import _contact_prime
+            prime=_contact_prime(rows,end_sdk_step=end_sdk_step)
+            expected_policy_clock=prime["clock"]
+        elif profile!=SMOKE_PROFILE:
+            raise ValueError("known setup profile required")
         pre = first_physical["payload"]["exchange"]["action_readback"]["pre"]["identity"]
-        if len(pre) != 1 or _clock_row(pre[0]) != sequence.clock:
+        if len(pre) != 1 or _clock_row(pre[0]) != expected_policy_clock:
             raise ValueError("Reset identity differs from the first executed pre-action boundary")
     except (KeyError, TypeError, IndexError) as error:
         raise ValueError("incomplete actual setup and Reset readback") from error
-    return dict(setup_sdk_steps=sequence.setup, episode_reset_sdk_steps=receipt["new_sdk_steps"],
+    result = dict(setup_sdk_steps=sequence.setup, episode_reset_sdk_steps=receipt["new_sdk_steps"],
                 episode_uid=sequence.clock["episode_uid"], reset_id=sequence.clock["reset_id"])
+    if profile==CONTACT_PROFILE:
+        result.update(source_priming_sdk_steps=1,first_policy_sdk_step=prime["clock"]["physics_step"])
+    return result
 
 
 
 def _audit_fresh_budget(rows, envelope, *, episode_uid, episode_cap_s, local_cap_s, end_sdk_step=258,
-                        role_prefix="fresh"):
+                        role_prefix="fresh", profile=SMOKE_PROFILE):
 
     samples = [row for row in rows if row["operation"] == role_prefix + "_update_wall_budget"]
     decisions = [row["sequence"] for row in rows if row["operation"] == "decision"]
@@ -312,7 +324,10 @@ def _audit_fresh_budget(rows, envelope, *, episode_uid, episode_cap_s, local_cap
         raise ValueError("parent-bound wall budget samples must bracket the fresh update")
     deadline = envelope.deadline_monotonic_s
     before, after = [row["payload"] for row in samples]
-    for row, phase, step in zip((before, after), ("before_update", "after_update"), (2, end_sdk_step)):
+    start_sdk_step=3 if profile==CONTACT_PROFILE else 2
+    if profile not in (SMOKE_PROFILE,CONTACT_PROFILE):
+        raise ValueError("known wall budget profile required")
+    for row, phase, step in zip((before, after), ("before_update", "after_update"), (start_sdk_step, end_sdk_step)):
         numbers = ("episode_cap_s", "local_cap_s", "observed_s", "started_s", "parent_deadline_s", "remaining_s")
         if (any(type(row.get(k)) not in (int, float) or not math.isfinite(row[k]) for k in numbers)
                 or row.get("phase") != phase or row.get("episode_uid") != episode_uid
@@ -379,19 +394,19 @@ def _audit_actual_outputs(spec, output, *, repository, package, envelope, role):
             raise ValueError("resumed output origin differs from the registered A reference")
         frozen = freeze_actual_resume_artifacts(spec=spec, output=output, origin=origin)
         prefix, initial_version = "resume", 1
-    setup = _audit_fresh_setup(frozen["rows"])
+    setup = _audit_fresh_setup(frozen["rows"],profile=pin["profile"],end_sdk_step=spec["budget"]["physics_steps"])
     if origin is not None and setup["episode_uid"] == origin["producer_episode_uid"]:
         raise ValueError("resumed output must contain a distinct physical Reset from A")
     budget = _audit_fresh_budget(frozen["rows"], envelope, episode_uid=setup["episode_uid"],
         episode_cap_s=config["episode_cap_s"], local_cap_s=pin["limits"]["inner_wall_timeout_s"],
-        end_sdk_step=spec["budget"]["physics_steps"], role_prefix=prefix)
+        end_sdk_step=spec["budget"]["physics_steps"], role_prefix=prefix,profile=pin["profile"])
     physical = _physical_journal(frozen["rows"], reward_scope="unqualified_source",
         expected_backend_sha256=pin["backend_sha256"], controls=pin["limits"]["controls"],
-        initial_policy_version=initial_version)
+        initial_policy_version=initial_version,profile=pin["profile"])
     if physical["physical_nodes"] != 41:
         raise ValueError("actual Pinch Worker requires 41 measured material nodes")
     model_input = _audit_sealed_packs(frozen, BackendProfile.load(repository.root),
-        controls=pin["limits"]["controls"], seal_operation=prefix + "_update_checkpoint_sealed",grasp=pin["style"])
+        controls=pin["limits"]["controls"], seal_operation=prefix + "_update_checkpoint_sealed",grasp=pin["style"],context_mode=pin["profile"])
     result = frozen["result"]
     checkpoint_args = dict(checkpoint_bytes=frozen["checkpoint_bytes"],
         checkpoint_binding=result["clean_checkpoint"], training=result["training"], epoch=frozen["policy_epoch"],

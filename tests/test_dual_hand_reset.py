@@ -33,8 +33,8 @@ class Composer:
 
 
 class Hand(ActionHand):
-    def __init__(self,side,events):
-        super().__init__(side,(7,),mounted=True)
+    def __init__(self,side,events,env_id=7):
+        super().__init__(side,(env_id,),mounted=True)
         self.side,self.events = side,events
         self.body_names = list(PADS)+['base_link']+[f'aux{i}' for i in range(17)]
         self.root_physx_view.prim_paths=[f'/World/{side}Hand/wrist_fixed']
@@ -95,13 +95,13 @@ class Hand(ActionHand):
         self.events.append(self.side+':cache_refresh')
 
 
-def setup(monkeypatch, *, nodes=None):
+def setup(monkeypatch, *, nodes=None, env_id=7):
     events=[]
     base,bindings,poses,_=rod_setup(monkeypatch, nodes=nodes)
     rod=DualHandRodRuntime(base,bindings=bindings,right_grids={n:Grid() for n in PADS},
-        right_poses={n:poses['right.'+n] for n in PADS},run_uuid='run-cpu',env_id=7)
-    hands=[Hand(s,events) for s in ('left','right')]
-    hand_bindings=[HandBinding(s,h,{7:f'/World/{s}Hand/wrist_fixed'},MountView(h))
+        right_poses={n:poses['right.'+n] for n in PADS},run_uuid='run-cpu',env_id=env_id)
+    hands=[Hand(s,events,env_id=env_id) for s in ('left','right')]
+    hand_bindings=[HandBinding(s,h,{env_id:f'/World/{s}Hand/wrist_fixed'},MountView(h))
                    for s,h in zip(('left','right'),hands)]
     def refresh():
         events.append('kinematic_refresh')

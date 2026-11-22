@@ -49552,6 +49552,44 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.supported-contact-worker": {
+      "title": "Integrate primed supported17 Tripod contact profile with original bounded PPO worker and artifact audit",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-contact-collector"
+      ],
+      "tests": [
+        "tests/test_native_teacher_contact_worker.py",
+        "tests/test_native_teacher_contact_sources.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_native_teacher_worker_semantic.py",
+        "tests/test_native_teacher_worker_artifacts.py",
+        "tests/test_native_teacher_worker_checkpoint.py",
+        "tests/test_native_teacher_actual_artifacts.py",
+        "tests/test_native_teacher_actual_update.py",
+        "tests/test_native_teacher_actual_resume_update.py",
+        "tests/test_native_teacher_actual_resume_artifacts.py",
+        "tests/test_native_teacher_actual_provider.py",
+        "tests/test_native_teacher_actual_factories.py",
+        "tests/test_native_teacher_training.py",
+        "tests/test_native_teacher_tripod_worker_contract.py",
+        "tests/test_native_teacher_actual_resume_budget.py",
+        "tests/test_dual_hand_reset.py",
+        "tests/test_native_teacher_worker_lease.py",
+        "tests/test_native_teacher_actual_launch_process.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-supported-contact-worker.md",
+      "readiness": "docs/contracts/dh116_supported_contact_worker_v1.json",
+      "native_runs": 0,
+      "reason": "CPU worker integration verified;new native recipe/lease,real contact and independent grasps remain pending",
+      "last_result": {
+        "passed": 404,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

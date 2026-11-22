@@ -10,7 +10,7 @@ from .tabletop_native_teacher_checkpoint import (
 )
 from .tabletop_native_teacher_collector import NativeTeacherCollector
 from .tabletop_native_teacher_training import TrainingStopped, run_updates
-from .tabletop_native_teacher_worker_contract import fresh_smoke_limits
+from .tabletop_native_teacher_worker_contract import teacher_profile_limits,CONTACT_PROFILE
 
 
 ROLLOUT_STEPS = 32
@@ -64,7 +64,9 @@ def run_resumed_update(collector, *, checkpoint_contract, origin, controls=ROLLO
 def _run_update(collector, *, checkpoint_contract, controls, origin):
     if type(collector) is not NativeTeacherCollector:
         raise ValueError("original C04 collector required")
-    limits, _ = fresh_smoke_limits(controls)
+    mode = collector.trainer.model.context_mode
+    limits, _ = teacher_profile_limits(mode, controls, collector.trainer.model.model_identity["grasp"])
+    priming = limits["warmup_sdk_steps"]
     physical_steps = limits["measured_sdk_steps"]
     trainer = collector.trainer
     checkpoint = collector.journal.path.parent / CHECKPOINT_NAME
@@ -100,7 +102,17 @@ def _run_update(collector, *, checkpoint_contract, controls, origin):
     scope = collector.sources.scope
     if (identity["training_contract"]["scope"] != scope or collector.journal.scope != scope):
         raise ValueError("checkpoint, collector and journal must share the same source scope")
-    start = _clock(collector, controls=0, sdk_step=2, rod_tick=0)
+    start = _clock(collector, controls=0, sdk_step=2+priming, rod_tick=12*priming)
+    if priming:
+        from .tabletop_native_teacher_source_priming import PrimedNativeActionHistory
+        history=collector.owner.history
+        runtime=collector.owner.contract.runtime
+        if (type(history) is not PrimedNativeActionHistory
+                or history.priming["reset_identity"]["physics_step"] != 2
+                or any(history.priming["primed_identity"][k]!=start[k] for k in
+                    ("run_uuid","env_id","episode_uid","reset_id","rod_uid","physics_step","rod_tick"))
+                or runtime.sdk_steps!=3 or runtime.solver_calls!=1 or runtime.internal_solver_substeps!=12):
+            raise ValueError("fresh contact source prime, owned history and actual charges required")
     restored_rng = None
     if origin is not None:
         if start["episode_uid"] == origin["producer_episode_uid"]:
@@ -110,8 +122,11 @@ def _run_update(collector, *, checkpoint_contract, controls, origin):
             raise ValueError("restored optimizer RNG differs from A")
     try:
         training = run_updates(collector, additional_updates=1)
-        end = _clock(collector, controls=controls, sdk_step=2 + physical_steps,
+        end = _clock(collector, controls=controls, sdk_step=2 + priming + physical_steps,
                      rod_tick=limits["max_internal_solver_substeps"])
+        if priming and (runtime.sdk_steps!=3+physical_steps or runtime.solver_calls!=1+physical_steps
+                or runtime.internal_solver_substeps!=12*(1+physical_steps)):
+            raise TrainingStopped("contact priming and policy budget charges differ")
         expected_counts = dict(updates=counters["updates"] + 1,
                                environment_steps=counters["environment_steps"] + controls)
         if (collector.transitions != controls or collector.consumed_sdk_steps != physical_steps
@@ -122,12 +137,12 @@ def _run_update(collector, *, checkpoint_contract, controls, origin):
                 or any(end[key] != start[key] for key in ("run_uuid", "episode_uid", "rod_uid", "reset_id"))):
             raise TrainingStopped("exact one-episode control/SDK PPO update required")
         input_audit = {}
-        if scope == "owner_source_unqualified":
+        if scope == "owner_source_unqualified" or mode == CONTACT_PROFILE:
             from .tabletop_native_teacher_actual_inputs import audit_teacher_input_sources
 
             input_audit["input_source_audit"] = audit_teacher_input_sources(
                 collector.journal.path.read_bytes(), backend_profile=collector.owner.backend_profile,
-                scope=scope, controls=controls,grasp=trainer.model.model_identity["grasp"])
+                scope=scope, controls=controls,grasp=trainer.model.model_identity["grasp"],profile=mode)
         if (previous_checkpoint is not None
                 and hashlib.sha256(previous_checkpoint.read_bytes()).hexdigest() != origin["checkpoint_sha256"]):
             raise TrainingStopped("original A checkpoint changed during the resumed update")

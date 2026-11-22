@@ -54,6 +54,16 @@ TRIPOD_SOURCE_FILES = frozenset("src/go2_pvcnn/control/dh116/"+name for name in 
     "tabletop_power_shared_rod.py", "tabletop_power_supported_task.py",
     "tabletop_deformable_dual_hand_episode.py", "tabletop_deformable_physical_exchange.py",
     "tabletop_deformable_live_geometry.py"))
+SMOKE_PROFILE = "approach_wiring_smoke_v1"
+CONTACT_PROFILE = "approach_contact_prelift_v1"
+CONTACT_SOURCE_FILES = frozenset({
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_source_priming.py",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_contact_context.py",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_contact_measurement.py",
+    "src/go2_pvcnn/control/dh116/tabletop_power_contact_evidence.py",
+    "configs/dh116_training/approach_contact_prelift_v1.json",
+    "tests/test_native_teacher_contact_worker.py",
+})
 FIXED_LIMITS = dict(controls=32, sdk_steps_per_control=8, setup_sdk_steps=2,
     measured_sdk_steps=256, warmup_sdk_steps=0, other_sdk_steps=0,
     max_resets=1, max_episode_count=1, max_solver_calls=256,
@@ -118,6 +128,30 @@ def validate_fresh_smoke_rollout(controls, budget, approved_reward_controls):
         raise ValueError("rollout length differs from approved reward/PPO config or exact short budget")
 
 
+def contact_limits(controls):
+    """One separately charged physical prime, outside all PPO control rows."""
+    limits, rows = fresh_smoke_limits(controls)
+    limits.update(warmup_sdk_steps=1, max_solver_calls=limits["max_solver_calls"]+1,
+                  max_internal_solver_substeps=limits["max_internal_solver_substeps"]+12)
+    return limits, rows
+
+
+def teacher_profile_limits(profile, controls, grasp):
+    if profile == CONTACT_PROFILE and grasp == "tripod":
+        return contact_limits(controls)
+    if profile == SMOKE_PROFILE and grasp in ("pinch", "tripod"):
+        return fresh_smoke_limits(controls)
+    raise ValueError("independent grasp/profile worker source required")
+
+
+def validate_profile_rollout(profile, grasp, controls, budget, approved_controls):
+    teacher_profile_limits(profile, controls, grasp)
+    if profile == CONTACT_PROFILE:
+        from .tabletop_native_teacher_session import validate_contact_rollout
+        return validate_contact_rollout(controls, budget, approved_controls)
+    return validate_fresh_smoke_rollout(controls, budget, approved_controls)
+
+
 def _sha(value):
     return isinstance(value, str) and SHA256.fullmatch(value) is not None
 
@@ -149,7 +183,9 @@ def validate_teacher_recipe_v2(spec):
         "backend_sha256", "target_sha256", "reset_sha256", "reward_sha256", "limits", "journal_contract"}
     if (not isinstance(contract, dict) or set(contract) != keys
             or contract["schema"] != RECIPE_SCHEMA
-            or contract["profile"] != "approach_wiring_smoke_v1" or contract["style"] not in ("pinch","tripod")
+            or contract["profile"] not in (SMOKE_PROFILE, CONTACT_PROFILE)
+            or contract["style"] not in ("pinch","tripod")
+            or contract["profile"] == CONTACT_PROFILE and contract["style"] != "tripod"
             or any(not _sha(contract[k]) for k in keys if k.endswith("_sha256"))):
         raise ValueError("independent pinned grasp smoke Teacher contract required")
     if (contract["journal_contract"] != JOURNAL_CONTRACT
@@ -171,11 +207,13 @@ def validate_teacher_recipe_v2(spec):
         raise ValueError("C06 source closure must include recipe and lease implementation")
     if contract["style"] == "tripod" and not TRIPOD_SOURCE_FILES <= set(sources):
         raise ValueError("complete independent Tripod source closure required")
+    if contract["profile"] == CONTACT_PROFILE and not CONTACT_SOURCE_FILES <= set(sources):
+        raise ValueError("complete independent contact source closure required")
     limits = contract["limits"]
     if not isinstance(limits, dict):
         raise ValueError("explicit grasp smoke limits required")
-    fixed, row_budget = fresh_smoke_limits(limits.get("controls"))
-    end_step = fixed["setup_sdk_steps"] + fixed["measured_sdk_steps"]
+    fixed, row_budget = teacher_profile_limits(contract["profile"], limits.get("controls"), contract["style"])
+    end_step = fixed["setup_sdk_steps"] + fixed["warmup_sdk_steps"] + fixed["measured_sdk_steps"]
     budget = spec["budget"]
     bounds = {"gpu_index":(0,63), "timeout_seconds":(31,900), "min_gpu_free_mib":(1,1000000),
         "min_disk_free_bytes":(1,10**13)}
@@ -259,9 +297,7 @@ def training_semantic_config(training_config, *, backend_identity, source_identi
             or type(training_config["rollout_steps"]) is not int):
         raise ValueError("exact C05 training configuration schema required")
     pre = deepcopy(validate_config(training_config["preflight"]))
-    if pre["profile"] != "approach_wiring_smoke_v1" or pre["style"] not in ("pinch","tripod"):
-        raise ValueError("C06 requires independent Pinch/Tripod approach smoke semantics")
-    validate_fresh_smoke_rollout(training_config["rollout_steps"], pre["budget"], 32)
+    validate_profile_rollout(pre["profile"], pre["style"], training_config["rollout_steps"], pre["budget"], 32)
     cap = training_config["episode_cap_s"]
     if type(cap) not in (float,int) or not math.isfinite(cap) or cap <= 0:
         raise ValueError("finite explicit episode cap required")

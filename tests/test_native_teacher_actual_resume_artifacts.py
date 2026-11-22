@@ -73,7 +73,7 @@ def test_b_post_exit_audits_same_clock_and_new_episode(tmp_path, monkeypatch, da
     from go2_pvcnn.control.dh116 import tabletop_native_teacher_worker_artifacts as common
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import BackendProfile
 
-    pin = dict(style="pinch",source_sha256="a"*64, semantic_sha256="b"*64, backend_sha256="c"*64,
+    pin = dict(profile="approach_wiring_smoke_v1",style="pinch",source_sha256="a"*64, semantic_sha256="b"*64, backend_sha256="c"*64,
                training_config={"path":"/fixed", "sha256":"d"*64},
                limits=dict(controls=8, inner_wall_timeout_s=180))
     spec = dict(teacher_contract=pin, budget=dict(physics_steps=66))
@@ -92,8 +92,10 @@ def test_b_post_exit_audits_same_clock_and_new_episode(tmp_path, monkeypatch, da
     monkeypatch.setattr(artifacts, "freeze_actual_resume_artifacts", lambda **_: dict(
         rows=[], result=dict(clean_checkpoint=dict(sha256="1"*64), training=dict(updates=2),
         lifecycle_sha256={}), policy_epoch=dict(policy_version=2), checkpoint_bytes=b"CPU only", artifact_sha256={}))
-    monkeypatch.setattr(artifacts, "_audit_fresh_setup", lambda _: dict(
-        episode_uid=origin["producer_episode_uid"] if damage=="same_episode" else "new_B:0"))
+    def setup(rows, *, profile, end_sdk_step):
+        assert profile == "approach_wiring_smoke_v1" and end_sdk_step == 66
+        return dict(episode_uid=origin["producer_episode_uid"] if damage=="same_episode" else "new_B:0")
+    monkeypatch.setattr(artifacts, "_audit_fresh_setup", setup)
     monkeypatch.setattr(artifacts, "_audit_fresh_budget", lambda *a, **kw: dict())
     monkeypatch.setattr(artifacts, "_audit_sealed_packs", lambda *a, **kw: dict())
     monkeypatch.setattr(BackendProfile, "load", lambda *_: None)

@@ -65,7 +65,8 @@ def _fresh_reset_owners():
 
 def _prepare_source_pack(owner, contract, *, device):
     from .tabletop_native_parameter_endpoints import NativeParameterEndpoints
-    from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources
+    from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources, NativeContactTripodSources
+    from .tabletop_native_teacher_worker_contract import CONTACT_PROFILE
 
     sources = owner.sources
     reader = sources.reader
@@ -73,6 +74,17 @@ def _prepare_source_pack(owner, contract, *, device):
     backend = sys.modules.get("ropesim._ropesim")
     clock = owner.rod.clock()
     expected_sources={"pinch":NativePinchSources,"tripod":NativeTripodSources}
+    contact = contract.context_mode == CONTACT_PROFILE
+    if contact:
+        if contract.config["grasp"] != "tripod":
+            raise ValueError("independent contact source pack required")
+        expected_sources={"tripod":NativeContactTripodSources}
+        primed=owner.history.priming["primed_identity"]
+        keys=("run_uuid","env_id","episode_uid","reset_id","rod_uid","physics_step",
+              "rod_tick","timestamp_s","solver_time_s")
+        if any(primed.get(key)!=clock.get(key) for key in keys):
+            raise ValueError("source pack differs from its original primed identity")
+    sdk_step, rod_tick = (3,12) if contact else (2,0)
     if (type(sources) is not expected_sources.get(contract.config["grasp"]) or sources.owner is not owner
             or sources.scope != "owner_source_unqualified"
             or type(reader) is not NativeParameterEndpoints or reader.device != device
@@ -81,8 +93,8 @@ def _prepare_source_pack(owner, contract, *, device):
             or sources.parameters.get("source_instance_id") != id(rope)
             or len(owner.bindings) != 2
             or any(str(binding.hand.data.joint_pos.device) != device for binding in owner.bindings)
-            or str(owner.sim.device) != device or owner.sim.current_time_step_index != 2
-            or clock["physics_step"] != 2 or clock["rod_tick"] != 0
+            or str(owner.sim.device) != device or owner.sim.current_time_step_index != sdk_step
+            or clock["physics_step"] != sdk_step or clock["rod_tick"] != rod_tick
             or clock["episode_uid"] != owner.episode_uid):
         raise ValueError("live source pack requires the same independent grasp Reset, native rod and both SDK hands")
     profile, mode = contract.backend_profile, contract.context_mode

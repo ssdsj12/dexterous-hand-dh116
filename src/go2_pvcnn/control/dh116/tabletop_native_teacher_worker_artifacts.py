@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .tabletop_native_teacher_worker_contract import (
     validate_teacher_recipe_v2, validate_teacher_training_result, worker_training_source_contract,
-    worker_registered_native_package, _sha, _exact_int)
+    worker_registered_native_package, _sha, _exact_int, SMOKE_PROFILE, CONTACT_PROFILE)
 
 SDK_OPERATIONS = ("delivered_exchange", "physical", "budget_consumed", "policy_pinch_distance")
 CONTROL_OPERATIONS = ("decision", "settlement", "transition_recorded")
@@ -59,9 +59,15 @@ def _jsonl(raw, *, name, maximum):
 
 
 def _journal(rows, result, *, controls=32, initial_version=0, prior_accepted=0,
-             prior_weights=None, grasp="pinch"):
+             prior_weights=None, grasp="pinch", profile=SMOKE_PROFILE):
     if grasp not in ("pinch","tripod"):
         raise ValueError("independent journal grasp required")
+    if profile == CONTACT_PROFILE:
+        if grasp != "tripod":
+            raise ValueError("independent contact journal source required")
+        _contact_prime(rows,end_sdk_step=3+8*controls)
+    elif profile != SMOKE_PROFILE:
+        raise ValueError("known worker journal profile required")
     sdk_operations=(*SDK_OPERATIONS[:-1],"policy_"+grasp+"_distance")
     by_operation={}
     for index,row in enumerate(rows):
@@ -146,7 +152,7 @@ def audit_teacher_artifacts_v2(spec, output):
     checkpoint=validate_teacher_training_result(result,
         expected_semantic_sha256=spec["teacher_contract"]["semantic_sha256"],artifact_sha256=digests)
     journal=ledgers["training_events.jsonl"]
-    epoch=_journal(journal,result,controls=spec["teacher_contract"]["limits"]["controls"],grasp=spec["teacher_contract"]["style"])
+    epoch=_journal(journal,result,controls=spec["teacher_contract"]["limits"]["controls"],grasp=spec["teacher_contract"]["style"],profile=spec["teacher_contract"]["profile"])
     _view("physics.jsonl",ledgers["physics.jsonl"],journal,"physical")
     _view("transitions.jsonl",ledgers["transitions.jsonl"],journal,"transition_recorded")
     _view("ownership.jsonl",ledgers["ownership.jsonl"],journal,None)
@@ -160,8 +166,80 @@ def audit_teacher_artifacts_v2(spec, output):
         checkpoint_binding=checkpoint,checkpoint_bytes=raw[checkpoint["path"]],journal_rows=journal)
 
 
+def _contact_prime(rows, *, end_sdk_step):
+    """Replay the original zero exchange and its separately charged receipt."""
+    import numpy as np
+    from .tabletop_deformable_r0_replay import decode_owned, _digest
+    from .tabletop_deformable_dual_evidence import _Sequence, _clock_row
+    from .tabletop_native_teacher_source_priming import VERSION, SOURCE
+    groups = {}
+    for row in rows:
+        groups.setdefault(row["operation"], []).append(row)
+    def one(operation, kind=None):
+        selected=[row for row in groups.get(operation,[]) if kind is None or row["payload"].get("kind")==kind]
+        if len(selected)!=1:
+            raise ValueError("exactly one original contact priming/Reset record required")
+        return selected[0]
+    reset=one("owner_event","reset")
+    event_row=one("owner_event","priming_physical")
+    exchange=one("priming_exchange")
+    complete=one("source_priming_complete")
+    sources=one("primed_sources")
+    decisions=groups.get("decision",[])
+    if (not decisions or not reset["sequence"]<exchange["sequence"]<event_row["sequence"]
+            <complete["sequence"]<sources["sequence"]<decisions[0]["sequence"]):
+        raise ValueError("contact priming must precede every policy decision")
+    event=decode_owned(event_row["payload"])
+    completed=decode_owned(complete["payload"])
+    receipt=completed["receipt"]
+    raw=event["exchange"]
+    from .tabletop_deformable_bimanual_step import VERSION as ACTION_VERSION
+    from .tabletop_surface_contract import ACTION_CONTRACT
+    trace=raw["action_readback"]
+    reset_snapshot=decode_owned(reset["payload"])["rod_boundary"]["rod_snapshot"]
+    if (trace.get("version")!=ACTION_VERSION or trace.get("env_ids")!=[0]
+            or type(trace["env_ids"][0]) is not int
+            or _digest(trace["request"]["action_contract"])!=_digest(ACTION_CONTRACT)
+            or event["rod_boundary"]["rod_snapshot"]["backend_sha256"]!=reset_snapshot["backend_sha256"]):
+        raise ValueError("original priming action/environment/backend protocol differs")
+    action=np.asarray(raw["action_readback"]["request"]["action24"])
+    if (raw["guard_failure"] is not None or action.shape!=(1,24)
+            or action.dtype!=np.float64 or not np.array_equal(action,np.zeros((1,24),np.float64))
+            or _digest(decode_owned(exchange["payload"]))!=_digest(raw)
+            or receipt!=decode_owned(sources["payload"])["receipt"]
+            or receipt.get("version")!=VERSION or receipt.get("source")!=SOURCE
+            or not isinstance(receipt.get("owner_uid"),str) or not receipt["owner_uid"]
+            or receipt.get("priming_row_sha256")!=_digest(event)
+            or receipt.get("zero_action_sha256")!=_digest(np.zeros((1,24),np.float32))
+            or not _exact_int(receipt.get("ppo_transitions"),0)
+            or any(receipt.get(k) is not False for k in ("native_qualification","teacher_admission"))
+            or any(not _exact_int(completed.get(k),v) for k,v in
+                dict(budget_sdk_steps=3,budget_solver_calls=1,budget_internal_solver_substeps=12).items())):
+        raise ValueError("original zero priming request, receipt or charged budget differs")
+    sequence=_Sequence(end_sdk_step,12)
+    setup=groups.get("setup",[])
+    if len(setup)!=2:
+        raise ValueError("two original setup boundaries before contact priming required")
+    for row in setup:
+        sequence.accept("setup",row["payload"])
+    sequence.accept("reset",decode_owned(reset["payload"]))
+    before=deepcopy(sequence.clock)
+    if (not _exact_int(before["env_id"],0)
+            or type(before["reset_id"]) is not int or before["reset_id"]<1
+            or not _exact_int(before["physics_step"],2) or not _exact_int(before["rod_tick"],0)
+            or _clock_row(receipt["reset_identity"])!=before):
+        raise ValueError("contact source must be primed from the original SDK2 Reset")
+    sequence.action=np.zeros((1,24),np.float64)
+    sequence._physical(event)
+    if (not _exact_int(sequence.clock["physics_step"],3)
+            or not _exact_int(sequence.clock["rod_tick"],12)
+            or _clock_row(receipt["primed_identity"])!=sequence.clock):
+        raise ValueError("contact prime must end at original SDK3/rod12")
+    return dict(clock=deepcopy(sequence.clock),row_sha256=_digest(event),owner_uid=receipt["owner_uid"])
+
+
 def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None, controls=32,
-                      initial_policy_version=0):
+                      initial_policy_version=0, profile=SMOKE_PROFILE):
     """Check existing C04 payloads, never invent Reset/setup or clock values.
 
     This original action schema records the nominal SDK timestamp contract.
@@ -179,7 +257,13 @@ def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None, 
     from .tabletop_stereo_rod_state import _owned_tensor,VERSION as ROD_VERSION,UNITS
     groups={op:[r["payload"] for r in rows if r["operation"]==op] for op in PRIMARY_OPERATIONS}
     measured = controls * 8
-    sequence=_Sequence(2 + measured,12)
+    priming=1 if profile==CONTACT_PROFILE else 0
+    if profile not in (SMOKE_PROFILE,CONTACT_PROFILE):
+        raise ValueError("known physical worker profile required")
+    prime=_contact_prime(rows,end_sdk_step=2+priming+measured) if priming else None
+    sequence=_Sequence(2 + priming + measured,12)
+    if prime is not None:
+        sequence.clock=deepcopy(prime["clock"])
     checked_reward_scope = _required_native_source_scope() if reward_scope is None else reward_scope
     owner=backend=nodes=previous_action=None
     try:
@@ -198,7 +282,11 @@ def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None, 
             decision=decode_owned(groups["decision"][control]);history=decision["history"]
             action=_action(decision["sampled_action24"]);token=decision["collection_token"]
             policy=history["policy"];origin=decision["policy"]
-            if ((history["version"],history["source"]) not in ((VERSION,SOURCE),(V2,SOURCE2))
+            from .tabletop_native_teacher_source_priming import VERSION as V3,SOURCE as SOURCE3
+            accepted_history=((V3,SOURCE3),) if priming else ((VERSION,SOURCE),(V2,SOURCE2))
+            if ((history["version"],history["source"]) not in accepted_history
+                    or priming and (history["owner_uid"]!=prime["owner_uid"]
+                        or history.get("priming_row_sha256")!=prime["row_sha256"])
                     or not isinstance(history["owner_uid"],str) or not history["owner_uid"]
                     or owner is not None and history["owner_uid"]!=owner
                     or history["pre_action_sha256"]!=decision["pre_action_sha256"]
@@ -242,17 +330,17 @@ def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None, 
                 if rod.get("clock_valid") is not True:
                     raise ValueError("physical clock validity requires original boolean true")
                 if any(not _exact_int(exchange.get(key),value) for key,value in
-                        dict(physics_step=measured+2,policy_step=control,substep=substep).items()):
+                        dict(physics_step=measured+2+priming,policy_step=control,substep=substep).items()):
                     raise ValueError("physical SDK/control/substep requires exact integer counters")
                 if sequence.clock is None:
-                    if (not _exact_int(pre["env_id"],0) or not _exact_int(pre["physics_step"],2)
-                            or not _exact_int(pre["rod_tick"],0) or pre["reset_id"]<1):
+                    if (not _exact_int(pre["env_id"],0) or not _exact_int(pre["physics_step"],2+priming)
+                            or not _exact_int(pre["rod_tick"],12*priming) or pre["reset_id"]<1):
                         raise ValueError("initial measured window requires recorded SDK2/rod0 boundary")
                     sequence.clock=pre
                 if first is None:first=pre
                 sequence._physical(sample)  # Original clock/action/rod-boundary validator, no <=240 cap.
-                if (not _exact_int(exchange["physics_step"],measured+2)
-                        or not _exact_int(post["rod_tick"],measured*12)):
+                if (not _exact_int(exchange["physics_step"],measured+2+priming)
+                        or not _exact_int(post["rod_tick"],(measured+priming)*12)):
                     raise ValueError("physical endpoints must cover unique contiguous SDK and rod steps")
                 if (snapshot["version"]!=ROD_VERSION or snapshot["units"]!=UNITS or snapshot["backend"]!="DeformX"
                         or snapshot["coordinate_frame"]!="world" or not _sha(snapshot["backend_sha256"])
@@ -315,10 +403,14 @@ def _physical_journal(rows, *, reward_scope=None, expected_backend_sha256=None, 
         if (sequence.physical != measured or sequence.controls != controls
                 or sequence.windows != controls or sequence.action is not None):
             raise ValueError("complete control/SDK physical settlement required")
-        return dict(physical_nodes=nodes,measured_sdk_steps=sequence.physical,controls=sequence.controls,
+        result = dict(physical_nodes=nodes,measured_sdk_steps=sequence.physical,controls=sequence.controls,
             solver_calls=sequence.physical,internal_solver_substeps=sequence.physical*12,
-            first_sdk_endpoint=3,last_sdk_endpoint=sequence.clock["physics_step"],
+            first_sdk_endpoint=3+priming,last_sdk_endpoint=sequence.clock["physics_step"],
             clock_schema="original_nominal_timestamp_and_recorded_solver_time")
+        if priming:
+            result.update(source_priming_sdk_steps=1,source_priming_solver_calls=1,
+                          source_priming_row_sha256=prime["row_sha256"])
+        return result
     except (KeyError,IndexError,TypeError,AttributeError,ValueError,RuntimeError) as error:
         raise ValueError("physical journal rejected: "+str(error)) from error
 
@@ -364,7 +456,8 @@ def _audit_role_checkpoint(spec, repository, context, *, checkpoint_bytes, check
 def validate_teacher_artifacts_v2(spec, output, *, repository=None, package=None):
     audit=audit_teacher_artifacts_v2(spec,output)
     context=_current_recipe_context(spec,repository,package)
-    physical=_physical_journal(audit.pop("journal_rows"),controls=spec["teacher_contract"]["limits"]["controls"])
+    physical=_physical_journal(audit.pop("journal_rows"),controls=spec["teacher_contract"]["limits"]["controls"],
+        profile=spec["teacher_contract"]["profile"])
     metadata=_audit_fresh_checkpoint(spec,repository,context,checkpoint_bytes=audit.pop("checkpoint_bytes"),
         checkpoint_binding=audit["checkpoint_binding"], training=audit["teacher_training"],
         epoch=audit["policy_epoch"])
@@ -398,7 +491,7 @@ def _cpu_reference(spec,repository,context):
     from .tabletop_privileged_ppo import PPOConfig
     from .tabletop_native_teacher_checkpoint import build_training_contract
     from .tabletop_native_teacher_worker_contract import (
-        SOURCE_FILES, training_semantic_digest, validate_fresh_smoke_rollout, worker_training_target_contract)
+        SOURCE_FILES, TRIPOD_SOURCE_FILES, CONTACT_SOURCE_FILES, training_semantic_digest, validate_profile_rollout, worker_training_target_contract)
     from scripts.run_dh116_work_packages import native_recipe_sources
     # Tie reference code to the same actual scheduler inventory. A temporary
     # source project may contain identical copies, never caller-equal hashes.
@@ -413,6 +506,11 @@ def _cpu_reference(spec,repository,context):
     if not isinstance(config,dict) or not isinstance(config.get("preflight"),dict):
         raise ValueError("complete frozen training configuration required")
     pre=validate_config(config["preflight"])
+    extra_sources = (TRIPOD_SOURCE_FILES if pre["style"]=="tripod" else frozenset())
+    if pre["profile"]==CONTACT_PROFILE:
+        extra_sources = extra_sources | CONTACT_SOURCE_FILES
+    for name in extra_sources:
+        checked_file(ROOT/name,inventory[name])
     if pre.get("authorization") is not None or pre.get("resource_lock") is not None:
         raise ValueError("frozen training config must not include process lease overlay")
     limits=pin["limits"]
@@ -454,7 +552,7 @@ def _cpu_reference(spec,repository,context):
             raise ValueError("frozen preflight/PPO/reward numeric configuration differs: "+key)
     if config["rollout_steps"] != limits["controls"]:
         raise ValueError("frozen rollout length differs from approved controls")
-    validate_fresh_smoke_rollout(config["rollout_steps"], expected_budget, reward.ppo["rollout_steps"])
+    validate_profile_rollout(pre["profile"],pre["style"],config["rollout_steps"], expected_budget, reward.ppo["rollout_steps"])
     ppo=PPOConfig(**values)
     py=random.getstate();numpy=deepcopy(np.random.get_state())
     try:

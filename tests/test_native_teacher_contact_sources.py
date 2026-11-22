@@ -50,7 +50,7 @@ def test_priming_event_readback_is_owned_and_detects_internal_evidence_mutation(
         _=h.priming_event
 
 
-def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_prime_parameter=False):
+def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_prime_parameter=False,controls=1):
     m=source_module()
     from go2_pvcnn.control.dh116.tabletop_deformable_rod_boundary import RodBoundaryState
     from go2_pvcnn.control.dh116.tabletop_native_teacher_model import NativeContextTeacher
@@ -69,8 +69,18 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
     from go2_pvcnn.control.dh116.tabletop_native_teacher_collector import NativeJournal
     journal=NativeJournal(tmp_path/"contact.jsonl",scope="cpu_fixture")
     from test_fresh_supported_episode import episode_case
+    end=18 if controls==1 else 3+8*controls
     second=tmp_path/"fresh";second.mkdir()
-    c,_,plan,ep,rows,readback=episode_case(monkeypatch,second)
+    if controls == 1:
+        c,_,plan,ep,rows,readback=episode_case(monkeypatch,second)
+    else:
+        # Construct a new worker-shaped CPU env0 before any Reset; never relabel
+        # an already captured env7 event, manifest or old native receipt.
+        import test_native_teacher_supported_reset as reset_fixture
+        from test_dual_hand_reset import setup as fresh_reset_setup
+        with monkeypatch.context() as env_scope:
+            env_scope.setattr(reset_fixture,"setup",lambda m,**kw:fresh_reset_setup(m,env_id=0,**kw))
+            c,_,plan,ep,rows,readback=episode_case(monkeypatch,second)
     for binding in c.rod.bindings.values():
         binding.update(frame="PhysX_link_origin",unit="m")
     from go2_pvcnn.control.dh116.tabletop_mesh_reset_order import seal_plan
@@ -80,14 +90,20 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
     from go2_pvcnn.control.dh116.tabletop_deformable_dual_hand_episode import DualHandPhysicalEpisode
     ep=DualHandPhysicalEpisode(c.sim,c.rod,c.bindings,backend_artifact=profile.binary_path,
         backend_sha256=profile.binary_sha256,inspect_geometry=ep._inspect_geometry,
-        physics_budget_end=18,record=rows.append)
+        physics_budget_end=end,record=rows.append)
     history=pm.PrimedNativeActionHistory(initial_action24=torch.zeros(1,24),
-        seed_source="new explicit CPU zero memory",physics_budget_end=18,solver_substeps=12)
+        seed_source="new explicit CPU zero memory",physics_budget_end=end,solver_substeps=12)
     owners=dict(c.owners);owners["controller"]=history.wrap_controller_reset(owners["controller"])
     def record(event):
         journal.emit("physical" if event["kind"]=="physical" else "owner_event",event)
         rows.append(deepcopy(event));history.record(event)
     ep._record=record
+    if controls != 1:
+        # Same explicit CPU setup boundaries already charged below, recorded
+        # before Reset just as the actual NativeEpisodeOwner does.
+        for step in (0,2):
+            journal.emit("setup",dict(kind="setup",sdk_step=step,sdk_time_s=step/480,
+                phase="before_reset" if step==0 else "after_reset"))
     from go2_pvcnn.control.dh116 import tabletop_deformable_dual_hand_episode as ep_module
     from go2_pvcnn.control.dh116.tabletop_deformable_clearance_guard import ClearanceGuardedExchange
     with monkeypatch.context() as reset_scope:
@@ -98,7 +114,7 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
         history.record(dict(kind="initial_geometry",side=side,
             evidence=dict(side=side,identity=dict(sdk_step=2,sdk_time_s=2/480))))
     from go2_pvcnn.control.dh116.tabletop_native_teacher_session import SessionBudget
-    limits=dict(max_sdk_steps=18,max_solver_calls=16,max_resets=1,max_episode_count=1,wall_timeout_s=1000.)
+    limits=dict(max_sdk_steps=end,max_solver_calls=end-2,max_resets=1,max_episode_count=1,wall_timeout_s=1000.)
     runtime=SessionBudget(limits)
     owner=SimpleNamespace(episode=ep,sim=c.sim,rod=c.rod,bindings=ep._bindings,history=history,
         ledger=journal,episode_uid=c.rod.clock()["episode_uid"],_restores=[],
@@ -111,6 +127,7 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
         reward_config=reward_config,budget=limits,runtime=runtime,
         reset_manifest=SimpleNamespace(data=lambda:dict(rod_state=dict(positions=c.rope.nodes.tolist()))))
     owner.contract=contract
+    owner.backend_profile=profile
 
     def metric(packet,radius):
         clock=packet["raw"]["identity"]
@@ -169,6 +186,10 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
     def contacted(action,substep):
         row=step(action,substep)
         data=build(proximal=True,table=table_at is not None and row["rod"]["physics_step"]>=table_at,load=.125)
+        if controls != 1:
+            # The actual getter exports float32 node force buffers. Construct
+            # this CPU buffer in that dtype before recording or snapshotting.
+            data["distributed_contact"]=np.asarray(data["distributed_contact"],np.float32)
         for key in ("distributed_contact","named_wrenches","table_wrench_world",
                     "external_support_wrenches_world","rod_mesh_contact_pairs"):
             row["rod"][key]=deepcopy(data[key])
@@ -191,7 +212,7 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
     config,*_=model_setup("tripod")
     model=NativeContextTeacher(config,backend_profile=profile,context_mode=PROFILE)
     trainer=DeformablePPOTrainer(model,PPOConfig(gamma=.995,epochs=1,minibatches=1,lr=.0001),
-        rollout_steps=1,num_envs=1)
+        rollout_steps=controls,num_envs=1)
     reward=TrainingReward(reward_config,contact_owner=owner.context)
     collector=NativeTeacherCollector(owner,trainer,reward,SimpleNamespace())
     return collector,c,runtime,rows
