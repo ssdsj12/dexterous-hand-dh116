@@ -1,3 +1,5 @@
+Private CPU candidate review: the original source auditor fails the joint-source negative control; adding the existing mounted-source validation in a temporary test process passes 50 checks (48 overlapping). Production remains unchanged and the historical Pinch regression stays blocked. [Report](docs/superpowers/reports/2026-11-22-teacher-input-signal-audit.md).
+
 Archived Teacher input audit: 16 source packs and 8 Tripod sampled actions reconstruct exactly. Found an offline common-source validation gap and one historical Pinch identity regression (49 passed / 1 failed); no runtime changes or native run. [Report](docs/superpowers/reports/2026-11-22-teacher-input-signal-audit.md).
 
 Server-only Teacher audit: 410 CPU checks pass. Only Tripod has a contact-profile route; Pinch/Power and full Lift/Hold sources remain gated. The signed-distance candidate is numerical research only, with no reward activation or new native run. [Report](docs/superpowers/reports/2026-11-22-teacher-three-grasp-server-audit.md).

@@ -49837,6 +49837,15 @@
         "runtime_code_changed": false,
         "teacher_admission": false,
         "grasp_qualified": false
+      },
+      "private_semantic_candidate_review": {
+        "passed": 50,
+        "failed": 0,
+        "warnings": 1,
+        "production_deployed": false,
+        "historical_seed_failure_unresolved": true,
+        "result_sha256": "c131118a0dcc15e67f0dfa45d3015c625089f7beca61d0119875cfc6440d910f",
+        "does_not_replace_last_failed_result": true
       }
     }
   },

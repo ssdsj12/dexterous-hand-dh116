@@ -506,5 +506,61 @@
     "draft": true,
     "state": "open",
     "merged": false
+  },
+  "private_semantic_candidate_review": {
+    "version": "dh116-private-input-semantic-candidate-review-v1",
+    "tested_head": "5f82e0a3733d208ad1b28ff4745e8be2c4b68823",
+    "scope": "server_only_private_CPU_candidate_not_production_change",
+    "red": {
+      "passed": 1,
+      "failed": 1,
+      "seconds": 9.06,
+      "expected_failure": "DID NOT RAISE ValueError",
+      "log_sha256": "d2e5995181121f070b872f70e9b36829bcfbe5b54b32ca858b677382e8cb3739"
+    },
+    "candidate": {
+      "passed": 50,
+      "failed": 0,
+      "warnings": 1,
+      "seconds": 66.35,
+      "overlaps_previous_regression_tests": 48,
+      "private_new_boundary_tests": 2,
+      "log_sha256": "fef824e14a6e0f878690731158a424e0084ad2bbd3adb1e8dea97fc8e6860b62",
+      "warning": "PytestCacheWarning: common rootdir / cannot create /.pytest_cache"
+    },
+    "candidate_kind": "ephemeral pytest plugin calls original validate_mounted_observation before original _rebuild",
+    "original_source_sha256": {
+      "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_inputs.py": "42dc2ddda7ccc80b38635f9971a0f24747eba26f472460fbfb30cc1da1534ff9",
+      "src/go2_pvcnn/control/dh116/tabletop_native_teacher_model.py": "5356d47ca7230817c9362cab802af77db0318a22d4e81ceb29c80663d78ec451",
+      "src/go2_pvcnn/control/dh116/tabletop_native_teacher_context.py": "309c87da226565a97b2bca45cbb4dc02a9ef178ef557383a4f9849a6b4d7973c",
+      "src/go2_pvcnn/control/dh116/tabletop_teacher_mounted_wrist_source.py": "9aa4e96f484ba4cf8f8afa2ff0cdcddb8d4909d3fb9bc52416e616f299cd8d4e",
+      "src/go2_pvcnn/control/dh116/tabletop_teacher_preaction_readback.py": "f7dc893a5bdf124fba2ddd3f62bd3e0e6ee738df99686fbd8d05eb699218c763",
+      "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_factories.py": "cbf4b1624c051591b91d06ec3ce21c0e855086ee7868d042d1a220920ab9fa76",
+      "src/go2_pvcnn/control/dh116/tabletop_native_teacher_collector.py": "9acc6939bc284365488d6a5fa511120c4f39946f79f335c1c7152fb1aae89707",
+      "src/go2_pvcnn/control/dh116/tabletop_deformable_privileged_teacher.py": "f5ee314badf045c27b7efc44cc32e03e0b82f8199b35726f0a81e5e63722c872"
+    },
+    "test_source_sha256": "003a4e308899b0cdde2a3a74ef377166caa415ba39f1fe1e35d89d4848b00b94",
+    "plugin_sha256": "f8bf0c2c3dc9b3f35b9afe125b1e882a040d8c328f4ca30ea2a0b033b4e24600",
+    "runtime_or_repo_test_changes": false,
+    "candidate_deployed": false,
+    "historical_seed_regression_fixed": false,
+    "production_regression_prior": {
+      "passed": 49,
+      "failed": 1
+    },
+    "native_runs": 0,
+    "ppo_updates": 0,
+    "teacher_admission": false,
+    "grasp_qualified": false,
+    "result_sha256": "c131118a0dcc15e67f0dfa45d3015c625089f7beca61d0119875cfc6440d910f",
+    "publication_registry_regression": {
+      "passed": 60,
+      "failed": 0,
+      "seconds": 15.62,
+      "log_sha256": "8d90767574860835a8048ba9dd0353dc64a737a2f03b7fbd4ee51c3bca0323f3",
+      "overlap_with_prior_registry_runs": true
+    },
+    "protected_files_verified": 528,
+    "historical_checkpoints_verified": 3
   }
 }

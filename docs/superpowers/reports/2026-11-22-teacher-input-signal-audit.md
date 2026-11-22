@@ -53,3 +53,19 @@ common66选取实际主动q/qd、mimic残差、掌位姿/速度和腕角；rod41
 优先修离线审计语义和历史重放身份，再处理独立接近奖励候选；Pinch独立接触来源、Power真正拳握接触、完整Lift/Hold仍未完成。无新原生预算消耗。保护文件与历史Checkpoint发布前逐项核验，原始档案、私有脚本和日志不上传GitHub。
 
 发布前Registry回归60 passed（15.38s），与49 passed/1 failed分开记录。528个保护文件及3个历史Checkpoint SHA未变。PR#2仍Draft/open/unmerged。
+
+## 最小语义校验候选的私有CPU复验
+
+后续仍限服务器核查，基线5f82e0a3733d208ad1b28ff4745e8be2c4b68823，没有修改任何生产源码或仓库测试。
+
+先在服务器私有目录创建两个边界测试：真实原始档案继续通过；改变归一化common[0]并重算全部内部引用摘要、但保持原source_packets时必须拒绝。原审计器实跑1 passed/1 failed（9.06s），失败为DID NOT RAISE ValueError，符合已发现缺口，非导入/夹具失败。
+
+随后只在独立pytest进程的临时插件中包装原_rebuild，在原逻辑之前调用既有validate_mounted_observation。未添加生产flag、未替换原数据、未修改任一SHA/clock/owner/物理校验。进程退出时恢复引用，磁盘源码SHA始终未变。
+
+候选运行2项私有测试及test_native_teacher_model.py、test_native_teacher_actual_inputs.py、test_native_teacher_contact_sources.py三个现有文件，合计50 passed（66.35s）。其中48项与上一轮回归重叠，不能与49 passed/1 failed相加。存在1条PytestCacheWarning：跨私有目录和仓库运行使公共rootdir为/，pytest不能创建/.pytest_cache；不是验证错误，完整日志保留，后续应显式设置私有cache_dir。
+
+这个结果仅支持“调用现有来源校验可在保持真实档案可读的同时拒绝该负对照”。未证明所有来源欺骗都能检出，也不替代外层冻结原始档案SHA。候选没有合入或部署。上一轮历史Pinch正式测试失败仍未修复，Registry继续blocked；没有将50项候选通过写成生产回归已全部通过。
+
+生产实施时只需在归档重建入口补语义校验，并把本负对照并入现有owner边界测试；历史模型来源重放应另包修复。生产修复、原生和训练都不属于本轮仅核查范围。
+
+本次候选报告发布前Registry回归60 passed（15.62s），单独记录；528个保护文件和3个历史Checkpoint SHA未变。PR#2保持Draft/open/unmerged。
