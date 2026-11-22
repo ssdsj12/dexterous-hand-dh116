@@ -1,3 +1,5 @@
+Tripod now has an opt-in measured left-wrist seating experiment after the exact prior replay. The proposed 0.127 mm lateral correction passed the archived geometry screen. Live opposing reaction and actual cable Lift remain open. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-left-wrist-seating.md)
+
 A current-source Tripod17 Reset was verified in Isaac with two SDK initialization steps and natural exit 0. Opposing grasp and off-support cable Lift remain the physical priority. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-lift-current-reset.md)
 
 The original native Tripod PPO worker now supports a separately configured measured Lift diagnostic with independent reward replay. 64 CPU tests passed. All 65 archived samples stayed in Close, with zero opposing bilateral load and zero off-support Lift. A current-source Reset receipt remains required. [Report](docs/superpowers/reports/2026-11-22-teacher-native-lift-worker.md)

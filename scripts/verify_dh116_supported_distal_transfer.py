@@ -143,6 +143,8 @@ class SupportedDistalProbe:
         self.boundary_sdk = boundary_sdk
         self.stations = stations
         self.bilateral = bilateral
+        self._left_wrist_seating = None if bilateral is None else bilateral.get("left_wrist_seating")
+        self._wrist_anchor_geometry_matches = False
         self.additional_stations = {} if bilateral is None else bilateral["stations"]
         if (bilateral is not None and (set(self.additional_stations) & set(stations)
                 or bilateral["boundary_sdk"] <= boundary_sdk)):
@@ -197,6 +199,16 @@ class SupportedDistalProbe:
             sdk > self.bilateral["boundary_sdk"] and key in self.additional_shape_keys)
 
     def check_pad_gaps(self, sdk, poses, reference_nodes, *, record_refinement=None):
+        wrist = self._left_wrist_seating
+        if wrist is not None and sdk == wrist["anchor_sdk"]:
+            from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
+
+            expected = decode_owned(wrist["anchor"]["sdk_hand_geometry"]["poses"])
+            if set(poses) != set(expected) or any(
+                    not np.array_equal(a, b) for name in poses
+                    for a, b in zip(poses[name], expected[name], strict=True)):
+                raise ValueError("actual left wrist seating prefix link poses differ at SDK2056")
+            self._wrist_anchor_geometry_matches = True
         grids = {name: self.grids[name] for name in self.stations_at(sdk)}
         validate_live_pad_gaps(grids, poses, reference_nodes, max_penetration_m=self.max_pad_penetration_m)
         if self.continuous_cooked_hulls is not None:
@@ -228,6 +240,17 @@ class SupportedDistalProbe:
 
     def observe(self, row):
         sdk = row["physics_step"]
+        wrist = self._left_wrist_seating
+        if wrist is not None and sdk == wrist["anchor_sdk"]:
+            from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
+            from scripts.verify_dh116_power_shared_rod import verify_waypoint_boundary
+
+            actual, expected = encode_owned(row), wrist["anchor"]
+            verify_waypoint_boundary(actual, expected, sdk_step=sdk)
+            if (not self._wrist_anchor_geometry_matches
+                    or actual["rod"]["rod_mesh_contact_pairs"] != expected["rod"]["rod_mesh_contact_pairs"]
+                    or actual["issued_composer_wrench"] != expected["issued_composer_wrench"]):
+                raise ValueError("actual left wrist seating prefix force and geometry must match SDK2056")
         if not self.active(sdk):
             if sdk == self.boundary_sdk:
                 self.previous = row

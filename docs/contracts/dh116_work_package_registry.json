@@ -50165,6 +50165,33 @@
         "passed": 67,
         "failed": 0
       }
+    },
+    "teacher.tripod-left-world-xy-seating": {
+      "title": "Screen and start a left-wrist translation after the exact measured Tripod replay",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-lift-current-reset",
+        "teacher.lift-diagnostic-v2"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_wrist_seating_screen.py",
+        "tests/test_dh116_tripod_paired_pad_balance.py",
+        "tests/test_dh116_tripod_measured_precontact.py",
+        "tests/test_dh116_supported_force_seating.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-left-wrist-seating.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_left_wrist_seating_v1.json",
+      "last_result": {
+        "passed": 104,
+        "failed": 0,
+        "checked_archived_rows": 256,
+        "xy_offsets": 441,
+        "new_native_runs": 0,
+        "grasp_qualified": false
+      }
     }
   },
   "execution_target": {

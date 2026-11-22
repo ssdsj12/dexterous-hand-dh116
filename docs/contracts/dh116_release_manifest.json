@@ -33584,6 +33584,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.tripod-lift-current-reset",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-lift-current-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_lift_current_reset_v1.json",
+      "cpu_tests": {
+        "passed": 67,
+        "failed": 0
+      },
+      "native_reset_runs": 1,
+      "outer_exit_code": 0,
+      "native_ppo_updates": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "b61d8fa92528a3f067bd347d168f58b73f519013",
+        "source_tree": "5880fbeaed32dfd295b8bc94f62203a85473c916",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

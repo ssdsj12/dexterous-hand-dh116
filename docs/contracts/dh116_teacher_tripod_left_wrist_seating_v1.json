@@ -1,0 +1,176 @@
+{
+  "version": "dh116-tripod-left-wrist-seating-v1",
+  "baseline_head": "b61d8fa92528a3f067bd347d168f58b73f519013",
+  "scope": "archived_geometry_screen_and_live_recipe_preparation",
+  "sources": {
+    "scripts/audit_dh116_tripod_wrist_seating.py": "3189aa3650dee1c879f47cee7256d7929bea7e9e6646e5892dc7907af9cd03d2",
+    "scripts/verify_dh116_tripod_supported_reset.py": "677a88d132aaeae0f34396525a19f7e04203770578a8da48716174eade1679bb",
+    "scripts/verify_dh116_supported_distal_transfer.py": "6cfe3e7145cfe3de2e815694be5a71c88cfe6f7df70a20b58bced3165c50cd75",
+    "tests/test_dh116_tripod_wrist_seating_screen.py": "86c73f61a3af575a75c51a129228fa297d3303f60ae1151a31b18b65434dc8b4"
+  },
+  "cpu": {
+    "passed": 104,
+    "failed": 0,
+    "seconds": 19.89,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_tripod_wrist_seating_screen.py",
+      "tests/test_dh116_tripod_paired_pad_balance.py",
+      "tests/test_dh116_tripod_measured_precontact.py",
+      "tests/test_dh116_supported_force_seating.py",
+      "tests/test_dh116_tripod_supported_reset.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "94cc1e76ed824df1333681e72bcb833498a994fb3cdcc26e00b8678dd0711a58"
+  },
+  "raw_evidence": {
+    "screen_sha256": "ce074f2352af4241941e6cefaa731a33b0038e6128e27256617ccd256f373fd3",
+    "screen": {
+      "version": "dh116-tripod-left-wrist-seating-screen-v1",
+      "proof_sha256": "41710e95616043d2cba03b36748d6ec95540214a74cd96ce027c6e96702b8b16",
+      "archived_sdk_range": [
+        1801,
+        2056
+      ],
+      "samples": 256,
+      "candidates": 441,
+      "feasible_geometry_offsets": 8,
+      "pad_names": [
+        "finger14_link",
+        "finger23_link",
+        "finger33_link"
+      ],
+      "original_max_pad_depth_m": 0.00025,
+      "baseline_pad_max_gap_m": [
+        -3.3279669460570954e-07,
+        2.53604636516018e-05,
+        -4.064394558724038e-07
+      ],
+      "synchronized_wrist_z_headroom_m": 0.04889126167416651,
+      "candidate": {
+        "offset_world_m": [
+          2.5e-05,
+          -0.000125,
+          0.0
+        ],
+        "pad_min_gap_m": [
+          -1.3429207066176403e-05,
+          -4.1412520914506194e-05,
+          -4.338233876565595e-05
+        ],
+        "pad_max_gap_m": [
+          -4.685755424211832e-06,
+          -4.61191536453142e-06,
+          -4.267914387703648e-05
+        ],
+        "minimum_table_gap_m": 0.04223114683841339,
+        "minimum_support_gap_m": 0.03523644660175107,
+        "minimum_noncontact_rod_gap_m": 0.0006842922652615102,
+        "minimum_contact_hull_gap_lower_bound_m": -0.0009070315368523429,
+        "minimum_path_pad_sdf_gap_m": -4.3282356435817015e-05,
+        "route_screen_passed": true,
+        "proposed_action24": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.15000000000000002,
+            -0.75,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      "native_contact_qualified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false
+    },
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "scripts.audit_dh116_tripod_wrist_seating",
+      "--run",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/teacher-tripod-coordinated-contact-v1/native-run-v1",
+      "--proof-sha256",
+      "41710e95616043d2cba03b36748d6ec95540214a74cd96ce027c6e96702b8b16",
+      "--output",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-left-wrist-seating-v1/screen-v3.json"
+    ]
+  },
+  "failure_logs": {
+    "red.log": "3b0760c3e0605642f517c31195a52f887bde23f5b6b0c74caa489c78a399292a",
+    "extension-red.log": "140fe34ea7af35df2579a3203c7275078ee4422d34081bf1fb781afffc95cb5f",
+    "screen.log": "64e8673c55a6421359ecca824ccd41c9a61a0c8b1d953a1df3cdc0f9f102d750",
+    "screen-v2.log": "37f62683c7868d02f6c11405c7d9243820b2b039ff3588dab72dbd00fb57c64e",
+    "candidate-freeze/freeze.log": "3c94e5463536b337b0eb7116330692a65b10a54723c4577fe3956cca977b0b12"
+  },
+  "prospective_native_budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "tripod_left_world_xy_seating_candidate",
+    "sdk_setup_steps": 2,
+    "control_steps": 244,
+    "solver_steps": 26280,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 780,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 6,
+    "episode_resets": 1,
+    "sdk_steps": 2192
+  },
+  "prepublication_freeze_sha256": "3a40b4833f9d43a0446eda85061ef68e1ca9577195254bc32bec28aae95e6293",
+  "runtime_check": "actual SDK2056 rod, measured link poses, joint feedback, action targets, raw solver contact pairs and delivered wrench must match",
+  "antigravity": {
+    "round": "Teacher-Native-Lift R3",
+    "revision": "82c450afcbadf6e51116a3f3912428f6df8a89b4",
+    "checked_original_world_z_slots": [
+      14,
+      17
+    ],
+    "original_wrist_rate_m_s": 0.01,
+    "max_synchronous_wrist_travel_m": 0.04889126167416651,
+    "screening_approach": "move left wrist in World XY, keep finger targets and right wrist unchanged, collect reaction evidence with both wrists stationary",
+    "native_material_penetration": "use 0.25mm SDF limit from the frozen supported Tripod profile"
+  },
+  "new_native_runs": 0,
+  "grasp_qualified": false,
+  "lift_qualified": false,
+  "teacher_admission": false,
+  "registry_after_registration": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 16.24,
+    "log_sha256": "d60cdcbc02d5859608533d2978f8c769e936925c8553959942801e5659c7bc2d"
+  },
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3
+}
