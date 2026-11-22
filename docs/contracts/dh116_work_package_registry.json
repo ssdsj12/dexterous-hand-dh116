@@ -49037,7 +49037,8 @@
         "native_qualification": false,
         "teacher_admission": false,
         "grasp_qualified": false
-      }
+      },
+      "dependency_scopes": {}
     },
     "teacher.native-cpu-resource-recipe": {
       "title": "Bind bounded CPU thread resources through existing Teacher scheduler and launcher",
@@ -49153,6 +49154,59 @@
         "native_qualification": false,
         "teacher_admission": false,
         "scope": "CPU decoding ownership and complete independent qualification checks"
+      }
+    },
+    "teacher.tripod-ppo-fresh-smoke8-v11": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Independent Tripod fresh17 smoke8 actual PPO diagnostic",
+      "evidence_scope": "tripod_actual_fresh_smoke8_v11",
+      "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v11.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Frozen independent candidate; exact fingerprint must bind standing finite-scope authorization and current resources before one execution.",
+      "dependencies": [
+        "teacher.tripod-fresh-reset-native-validation",
+        "teacher.owned-json-decode-cache",
+        "teacher.tripod-smoke8-v11-freeze"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v11.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v11.json",
+      "native_runs": 0,
+      "actual_launch": {
+        "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v11.json",
+        "sha256": "4bba24bd03bef09438f59cc66b8a40187a80111062bd41a904d49c2c12b6dd76"
+      }
+    },
+    "teacher.tripod-smoke8-v11-freeze": {
+      "title": "Freeze current Tripod decode-cache4-thread bounded diagnostic without refreshing spent v10",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.owned-json-decode-cache"
+      ],
+      "tests": [
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v11.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v11.json",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 145,
+        "cpu_failed": 0,
+        "native_runs": 0,
+        "native_qualification": false,
+        "teacher_admission": false
       }
     }
   },

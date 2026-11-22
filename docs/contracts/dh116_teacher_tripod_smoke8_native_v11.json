@@ -1,0 +1,57 @@
+{
+  "version": "dh116-teacher-tripod-smoke8-native-v11",
+  "status": "frozen_unexecuted",
+  "identity": {
+    "actual_identity": {
+      "companion_sha256": "4bba24bd03bef09438f59cc66b8a40187a80111062bd41a904d49c2c12b6dd76",
+      "core_recipe_identity": {
+        "code_config_sha256": "62c2509fd176f4309e22a1834a2e9a3a74d9a9066a2bd949af944e86086f0834",
+        "command_spec_sha256": "e080675e8c0a703bdef89efaf10ea7e1d9d94124ac0fc2145df010b9dfa7e035"
+      },
+      "schema": "dh116-actual-native-execution-identity-v1",
+      "source_closure_sha256": "9a9854d469515467a09a0394da0d70280905ac62da75d87f3271f807e6c06fc0"
+    },
+    "attempt_fingerprint": "538a2305b745ed431470ddadd8c96281d46453882fb27422ec49db0e7772964f",
+    "core_identity": {
+      "code_config_sha256": "62c2509fd176f4309e22a1834a2e9a3a74d9a9066a2bd949af944e86086f0834",
+      "command_spec_sha256": "e080675e8c0a703bdef89efaf10ea7e1d9d94124ac0fc2145df010b9dfa7e035"
+    }
+  },
+  "source_files": 566,
+  "environment": {
+    "DH116_NUM_THREADS": "4"
+  },
+  "cpu_tests": {
+    "passed": 145,
+    "failed": 0,
+    "log_sha256": "8d00f98baa1eb7961e72fd978bd42c064c0a7f4ce210f954beaa8f46d9a596b0"
+  },
+  "tdd_red": {
+    "failed": 1,
+    "deselected": 1,
+    "log_sha256": "a6caf4633575241a11624b322d353723939895b8f7c25deab8a17bea94b16226"
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "planned_sdk_steps": 66,
+  "planned_control_steps": 8,
+  "planned_solver_calls": 64,
+  "planned_internal_solver_substeps": 768,
+  "planned_updates": 1,
+  "inner_wall_s": 180,
+  "outer_wall_s": 240,
+  "full_runtime_verified": false,
+  "automatic_retry": false,
+  "automatic_forced_cleanup": false,
+  "launch_readiness": "new fingerprint bound after publication to existing standing finite-scope authorization and live single-instance/resource check",
+  "interpretation": "diagnostic wiring and budget check only; multiple software/resource changes since v10,not a one-variable native performance attribution",
+  "registry_metadata_recheck": {
+    "passed": 60,
+    "failed": 0,
+    "overlaps_primary_regression": true,
+    "log_sha256": "184dc954edebb6cba32acdd8617a6c31d16ec159d4caca8aab07fe68a230326d"
+  }
+}

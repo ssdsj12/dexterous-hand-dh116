@@ -1,3 +1,5 @@
+Tripod v11 is independently frozen at4 numeric threads with the original8-control/66-SDK/1-update bounded limits.145 CPU checks pass;spent v10 remains rejected under current source. No native result yet. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v11.md).
+
 Teacher startup now reuses bounded pureCPU owned-JSON decoding while rechecking all26 source files and all physical validators.213 CPU regressions pass;complete repeated Reset derivation median8.956s ->5.683s,with byte-identical returned digest. No new native/PPO/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-owned-json-decode-cache.md).
 
 Tripod Reset parsing now consumes the exact SHA-verified bytes from each independent load; all26 inventory checks and physical guards remain.98 CPU checks pass;complete CPU audit median8.463s ->8.459s. No material speedup is demonstrated;this repairs byte provenance. Spent v10 is correctly rejected under changed source. No new native/PPO qualification. [Report](docs/superpowers/reports/2026-11-22-tripod-verified-artifact-bytes.md).
