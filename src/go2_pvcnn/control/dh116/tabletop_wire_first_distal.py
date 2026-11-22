@@ -15,13 +15,16 @@ LEFT_TRIPOD_STATIONS = {
 APPROACH_TRAVEL_M = .0033
 APPROACH_WINDOWS = 20
 HOLD_WINDOWS = 1
+SETTLED_THUMB_STATIONS = {"left.finger14_link": (34, 35, 36)}
 
 
 class FirstDistalContact:
     """Bind first intended force to its immediately following applied SDK reaction."""
 
-    def __init__(self, previous):
+    def __init__(self, previous, *, approach=None):
         self.previous = previous
+        self.approach = None if approach is None else np.asarray(approach, dtype=float).copy()
+        self.stations = LEFT_TRIPOD_STATIONS if approach is None else SETTLED_THUMB_STATIONS
         self.first_contact_sdk = None
         self.first_transfer_sdk = None
         self.first_pairs = []
@@ -33,10 +36,13 @@ class FirstDistalContact:
 
         if clock["physics_step"] != self.previous["physics_step"]:
             raise ValueError("first distal selector needs the previous physical endpoint")
-        allowed = torch.zeros_like(action)
-        allowed[0, 14] = action[0, 14]
-        if not torch.equal(allowed, action) or not 0. <= float(action[0, 14]) <= 1.:
-            raise ValueError("only the original unilateral upward approach slot may change")
+        if self.approach is None:
+            allowed = torch.zeros_like(action)
+            allowed[0, 14] = action[0, 14]
+            if not torch.equal(allowed, action) or not 0. <= float(action[0, 14]) <= 1.:
+                raise ValueError("only the original unilateral upward approach slot may change")
+        elif action.any() and not torch.equal(action, action.new_tensor(self.approach)[None]):
+            raise ValueError("only the screened left translation or zero may be proposed")
         paused = self.first_contact_sdk is not None
         return (torch.zeros_like(action) if paused else action,
                 dict(paused=paused, reason="first_distal_contact_hold" if paused else "bounded_left_approach"))
@@ -48,14 +54,14 @@ class FirstDistalContact:
             raise ValueError("same SDK and solver endpoint required for first distal forces")
         transferred = check_reaction_delivery(self.previous, row)
         pairs = rod["rod_mesh_contact_pairs"]["pairs"]
-        self.violations = pairs_outside_station(pairs, LEFT_TRIPOD_STATIONS)
+        self.violations = pairs_outside_station(pairs, self.stations)
         if self.violations:
             return "unexpected_distal_station"
         wrench = rod["external_support_wrenches_world"]
         if (np.linalg.norm(wrench["table"][:3]) > 1e-6
                 or any(wrench[name][2] >= 0. for name in END_SUPPORT_NAMES)):
             return "unexpected_support_transition"
-        contacts = [pair for pair in pairs if pair["mesh_name"] in LEFT_TRIPOD_STATIONS
+        contacts = [pair for pair in pairs if pair["mesh_name"] in self.stations
                     and pair["normal_force_on_rod_n"] > 0.]
         hand_wrenches = rod["hand_wrenches_com_world"]
         if any(np.any(hand_wrenches["right"][key]) for key in ("forces", "torques")):
@@ -124,6 +130,23 @@ class HeldPalmTarget:
             return False
         self._previous, self._anchor = after.copy(), anchor.copy()
         return True
+
+
+def settled_left_action(world_translation_m, *, windows):
+    """Normalize a frozen straight path without changing the 24D action contract."""
+    from .tabletop_free_wrist_grasp import CONTRACT as WRIST
+
+    delta = np.asarray(world_translation_m, dtype=float)
+    if (delta.shape != (3,) or not np.isfinite(delta).all() or not np.any(delta)
+            or type(windows) is not int or windows < 1
+            or np.any(delta < WRIST["palm_lower_m"]) or np.any(delta > WRIST["palm_upper_m"])):
+        raise ValueError("the screened translation must fit the original wrist workspace")
+    rate = CONTROL_HZ * delta / (windows * ACTION_CONTRACT["translation_rate_m_s"])
+    if np.linalg.norm(rate) > 1.:
+        raise ValueError("the screened translation exceeds the original wrist rate")
+    action = np.zeros(ACTION_CONTRACT["size"])
+    action[12:15] = rate
+    return action
 
 
 def right_relief_action(direction, *, travel_m, rotation_rad, windows):

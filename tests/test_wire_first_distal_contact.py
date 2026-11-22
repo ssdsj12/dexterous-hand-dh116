@@ -116,3 +116,51 @@ def test_tangential_load_without_a_valid_normal_pair_blocks_the_approach():
     rubbing["rod"]["rod_mesh_contact_pairs"]["pairs"][0]["normal_force_on_rod_n"] = 0.
     assert state.observe(rubbing) == "left_wrench_without_positive_normal_pair"
     assert state.first_contact_sdk is None
+
+
+def test_settled_left_wrist_path_only_issues_the_screened_translation():
+    import pytest
+
+    mod = api()
+    delta = np.array([.0056, -.0014, .0114])
+    action = mod.settled_left_action(delta, windows=96)
+    assert np.count_nonzero(action) == 3
+    np.testing.assert_allclose(action[12:15] * .01 * 96 / 60, delta)
+    state = mod.FirstDistalContact(row(1426), approach=action)
+    command = torch.as_tensor(action)[None]
+    assert torch.equal(state.select(command, {"physics_step": 1426})[0], command)
+    wrong = command.clone()
+    wrong[0, 13] *= -1.
+    with pytest.raises(ValueError, match="screened"):
+        state.select(wrong, {"physics_step": 1426})
+    assert state.observe(row(1427, pad="left.finger23_link")) == "unexpected_distal_station"
+    assert state.observe(row(1427, pad="left.finger14_link")) is None
+    assert not state.select(command, {"physics_step": 1427})[0].any()
+    assert state.observe(row(1428, received=True)) is None
+    assert state.first_transfer_sdk == 1428
+    with pytest.raises(ValueError, match="rate"):
+        mod.settled_left_action(delta, windows=12)
+
+
+def test_live_quiet_boundary_rejects_a_different_wire_and_joint_pose():
+    from copy import deepcopy
+
+    import pytest
+    from scripts.verify_dh116_wire_live_palm_approach import validate_settled_handoff
+
+    sdk = 1426
+    actual = dict(rod=dict(physics_step=sdk, rod_tick=(sdk-2)*12,
+                          node_positions=np.zeros((1, 41, 3))),
+        hand_link_poses={side+".base_link": (np.zeros(3), np.array([0., 0., 0., 1.]))
+                         for side in ("left", "right")},
+        native_joint_state={side: dict(names=["x", "y"], position=np.zeros((1, 2)),
+                                      target=np.zeros((1, 2))) for side in ("left", "right")})
+    assert validate_settled_handoff(actual, deepcopy(actual), sdk)["node_max_error_m"] == 0.
+    modified = deepcopy(actual)
+    modified["rod"]["node_positions"][0, 35, 2] += 2e-6
+    with pytest.raises(ValueError, match="centerline"):
+        validate_settled_handoff(actual, modified, sdk)
+    modified = deepcopy(actual)
+    modified["native_joint_state"]["left"]["position"][0, 1] += .002
+    with pytest.raises(ValueError, match="joint"):
+        validate_settled_handoff(actual, modified, sdk)

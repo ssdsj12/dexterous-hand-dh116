@@ -1,0 +1,53 @@
+{
+  "version": "dh116-teacher-wire-settled-thumb-v1",
+  "source_sha256": {
+    "scripts/verify_dh116_wire_live_palm_approach.py": "c509b7a196fe116b70fdfdde4e58f1f391419952d3e078d78735026c22e4e06e",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_first_distal.py": "ab262ae689ef399c86111045bc339af4d45dc915039e26b4b46457422cf488aa",
+    "tests/test_wire_first_distal_contact.py": "3f2d0a3bef3109546424975ea456dfa2267f929343f94562a72a28fd0186f053"
+  },
+  "cpu": {
+    "passed": 95,
+    "failed": 0,
+    "log_sha256": "4952389ec40b0174b79647fc9d5318c76cb0c592fe3f5935a75827207c176c1e",
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_wire_continuous_clearance.py",
+      "tests/test_wire_first_distal_contact.py",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_tripod_contact_seed.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_specifications.py",
+      "tests/test_supported_wire_material_variants.py"
+    ]
+  },
+  "bound_prior_quiet_sha256": "51250fce8d722f925517b0f63695ba33b05ae061453e096ec9b3c517c90b7a4a",
+  "bound_path_sha256": "846466c054d8030638c5b683218eb6eeb1b5bc35d81b0646cec2c09449f9a620",
+  "world_translation_m": [
+    0.005599974764874949,
+    -0.001400003223087129,
+    0.011399993301017486
+  ],
+  "start_sdk": 1426,
+  "physical_budget": {
+    "max_sdk_step": 2210,
+    "max_control_windows": 98,
+    "solver_substeps": 26496,
+    "wall_time_soft_s": 600,
+    "ppo_updates": 0,
+    "teacher_queries": 0,
+    "auto_retry": false,
+    "forced_exit": false
+  },
+  "native_status": "pending",
+  "measured_thumb_transfer": false,
+  "teacher_admission": false,
+  "grasp_qualified": false
+}
