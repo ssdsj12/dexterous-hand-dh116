@@ -50463,9 +50463,13 @@
       "readiness": "docs/contracts/dh116_teacher_wire_live_opposition_v1.json",
       "last_result": {
         "cpu_passed": 134,
-        "native_status": "frozen_pending",
+        "native_status": "native_thumb_pivot_verified_index_closure_pending",
         "grasp_qualified": false,
-        "teacher_admission": false
+        "teacher_admission": false,
+        "outer_sha256": "5d373b0acb638a38db7ebcbd953556cc417c3a365a8c19db21d193a7c6f9f7f0",
+        "native_clean_exit": true,
+        "thumb_all_substep_ticks": 936,
+        "preview_refusal_sdk": 3101
       }
     }
   },

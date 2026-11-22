@@ -33947,6 +33947,33 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-live-opposition",
+      "branch": "11-17",
+      "readiness": "docs/contracts/dh116_teacher_wire_live_opposition_v1.json",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-live-opposition.md",
+      "status": "native_thumb_pivot_verified_index_closure_pending",
+      "native_runs": 1,
+      "native_sdk_steps": 3106,
+      "native_clean_exit": true,
+      "outer_sha256": "5d373b0acb638a38db7ebcbd953556cc417c3a365a8c19db21d193a7c6f9f7f0",
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "cpu_tests": {
+        "passed": 134,
+        "failed": 0
+      },
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "46cf388740bdea2ea05b4ddaae05ed8b7ca69dc7",
+        "source_tree": "ce1028e9581c8f23f3bd1c6e946caba0d0142e0b",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
