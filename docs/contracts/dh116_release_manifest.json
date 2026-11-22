@@ -33055,6 +33055,31 @@
         "verified_at_utc": "2026-11-22T06:37:00.939670+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.contact-target-tracking-audit",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-contact-target-tracking-audit.md",
+      "readiness": "docs/contracts/dh116_contact_target_tracking_audit_v1.json",
+      "cpu_tests": {
+        "passed": 134,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "d5112b9f3d24d6459439c5dbcfcc8debe69e13e4",
+        "source_tree": "7b05446b9da14d50149f9857780be550b387d212",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T07:24:48.681796+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
