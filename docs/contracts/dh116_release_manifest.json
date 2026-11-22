@@ -34001,6 +34001,32 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-grasp-feedback",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-grasp-feedback.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_grasp_feedback_v1.json",
+      "status": "passed_cpu_and_sealed_endpoint_replay",
+      "cpu_tests": {
+        "passed": 97,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "replay_sha256": "ea057a5cf405161a404f1dd8f0b4f044b711dc1370871886f2fb57941fd83b67",
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "5f08cf20690ae4848a857ed90950ec542f6ae046",
+        "source_tree": "ae3a7af8a6308f6c59ba3785562e6f8bccfb450c",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
