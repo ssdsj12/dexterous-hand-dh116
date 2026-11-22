@@ -34336,6 +34336,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-trans-material-stations",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-transported-contact-stations.md",
+      "readiness": "docs/contracts/dh116_teacher_power_transport_stations_v1.json",
+      "status": "no_full_wrap_after_transport_in_measured_rod_geometry",
+      "cpu_tests": {
+        "passed": 135,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0cce741f4406437fd30e0c7bb50e2be330420f17",
+        "source_tree": "a624906e8cc17beb1207bf3073a60f4750b77452",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
