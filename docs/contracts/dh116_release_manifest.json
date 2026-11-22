@@ -33356,6 +33356,36 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-coordinated-contact-native",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-coordinated-contact-native.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_coordinated_contact_native_v1.json",
+      "cpu_tests": {
+        "passed": 119,
+        "failed": 0
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "native_status": "rejected",
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "63ca0fff9898a0c36050993530d1d5c4cd7924fe",
+        "source_tree": "5844545b5a8566837c3b90dfa5966876796776a9",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "remote_verified": true
     }
   ]
 }
