@@ -33938,9 +33938,15 @@
         "combined": "d0e85f89aec6744013459557278f7b7a2ced661bd77b5c619ff0c0308632fe82"
       },
       "publication": {
-        "state": "result_commit_requires_windows_remote_verification",
-        "remote_branch": "11-17"
-      }
+        "state": "windows_publication_verified",
+        "source_commit": "275330a9ba65c51cef8c812e6c28c038f138fc58",
+        "source_tree": "392a06f586da0638cc4c5e8653b18d9b2fa7110b",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "remote_verified": true
     }
   ]
 }
