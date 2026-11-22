@@ -1,3 +1,5 @@
+A current-source Tripod17 Reset was verified in Isaac with two SDK initialization steps and natural exit 0. Opposing grasp and off-support cable Lift remain the physical priority. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-lift-current-reset.md)
+
 The original native Tripod PPO worker now supports a separately configured measured Lift diagnostic with independent reward replay. 64 CPU tests passed. All 65 archived samples stayed in Close, with zero opposing bilateral load and zero off-support Lift. A current-source Reset receipt remains required. [Report](docs/superpowers/reports/2026-11-22-teacher-native-lift-worker.md)
 
 The Teacher Lift diagnostic now settles measured height through the original PPO Collector. The CPU fixture completed one update. Replaying 2,054 archived Tripod physics steps reached PreliftHold on 67 steps and Lift on zero. [Report](docs/superpowers/reports/2026-11-22-teacher-lift-diagnostic-v2.md).
