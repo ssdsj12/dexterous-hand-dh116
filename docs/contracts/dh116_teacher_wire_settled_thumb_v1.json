@@ -46,11 +46,11 @@
     "auto_retry": false,
     "forced_exit": false
   },
-  "native_status": "measured_left_thumb_transfer_v1_faulted_close_v2_pending",
+  "native_status": "measured_settled_left_thumb_transfer_verified_native_close",
   "measured_thumb_transfer": true,
   "teacher_admission": false,
   "grasp_qualified": false,
-  "verified_natural_close": false,
+  "verified_natural_close": true,
   "native_v1": {
     "source_commit": "d75a2d37413f397fb65f4b8951c38c0a0f98b6b2",
     "native_time_s": 316.2628880799748,
@@ -120,7 +120,8 @@
   "right_endpoint_cpu": {
     "checked": 380,
     "passed": 2,
-    "continuous_route_passed": false
+    "continuous_route_passed": false,
+    "evidence_sha256": "74ca25393df126bedd8e8a8b60f7b46bb90b27d6454acf59f4d8ddf8973ae5f6"
   },
   "correction_sha256s": {
     "scripts/record_dh116_teacher_numeric_reset.py": "c484d8e5d9cb2ed4701315214dc5be40e5847a962ca7c731566dfa7c9073d0a5",
@@ -148,6 +149,144 @@
       "tests/test_supported_wire_specifications.py",
       "tests/test_supported_wire_material_variants.py",
       "tests/test_dh116_tripod_right_tracking_launch.py"
+    ]
+  },
+  "native_v2": {
+    "source_commit": "559bfff2137fe4096be7d7043cbe7a715b833170",
+    "native_time_s": 310.0171350808814,
+    "outer_sha256": "760fe69c15cdf6e624a3660ca0e81d4343ed33198cf5c1e71a64dbb1b3c72031",
+    "frozen_sha256": "ac277c7161acadbe03b4d8febb0504a613364a90755f90d66a539e4d572e7c4f",
+    "exit_code": 0,
+    "sdk_steps": 2168,
+    "control_rows": 742,
+    "solver_steps": 25992,
+    "artifact_count": 2942,
+    "quiet": {
+      "qualified": true,
+      "first_sdk": 1379,
+      "last_sdk": 1426,
+      "max_node_speed_m_s": 9.430117588329624e-05,
+      "max_node_window_displacement_m": 1.494301193962364e-07,
+      "center_drop_m": 0.018780841350555577,
+      "measured_weight_n": 0.23242342804827992,
+      "terminal_support_load_n": [
+        0.1163145899772644,
+        0.11634509265422821
+      ],
+      "both_supports_only": true,
+      "initial_min_z_m": 0.3457191586494446,
+      "teacher_admission": false,
+      "grasp_qualified": false
+    },
+    "handoff": {
+      "node_max_error_m": 0.0,
+      "link_max_error_m": 0.0,
+      "link_max_error_rad": 0.0,
+      "joint_max_native_unit_error": 0.0
+    },
+    "observed_contact_at_sdk": 2167,
+    "applied_reaction_at_sdk": 2168,
+    "transfer_force_n": 0.007031293965219846,
+    "max_node_on_rod_normal_n": 0.008858117902084371,
+    "left_actual_displacement_m": [
+      0.005374312400817871,
+      -0.0013436228036880493,
+      0.010940730571746826
+    ],
+    "guard_stops": [],
+    "failure": null,
+    "debugger_inferior_signal": null,
+    "teacher_admission": false,
+    "grasp_qualified": false,
+    "cache_release_calls": 1,
+    "cache_release_sdk": 2168,
+    "tracked_python_weakrefs_alive_after_close": 0,
+    "tracked_python_weakrefs_count": 15,
+    "native_release_verified": false,
+    "cache_receipt_sha256": "98ac07df8663ae940ab5cccbe403e7776acb5a10a8f2ef2f0ab72317709217dd",
+    "ownership_after_close_sha256": "f9d951304d9507c3767ccae21b3e9ca4b42a56c8203780d8abe1cfb13d13660b",
+    "independent_audit_sha256": "bf2d0ab4ff225e46c350c5e24913eef5c89c65eaba595fd704f03501dcac521b"
+  },
+  "left_opposition_pivot_cpu": {
+    "scope": "sampled_static_rod_geometry_only",
+    "source_sdk": 2168,
+    "sampled_routes": 9,
+    "passed_sampled_routes": 9,
+    "sample_points_per_route": 41,
+    "lowest_rotation_example": {
+      "order": "turn_then_close",
+      "passed": true,
+      "reason": null,
+      "endpoint": {
+        "thumb_sdf_m": -3.290464800284609e-08,
+        "index_sdf_m": -1.9998802654821318e-05,
+        "opposing_normal_dot": -0.46738201725549633
+      },
+      "rotation": [
+        0.08,
+        0.0,
+        -0.08
+      ],
+      "q_changes": [
+        0.0,
+        0.0,
+        0.05068027973175049,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "minimum_hull_all_m": -0.00014946271494611354,
+      "minimum_unselected_m": 0.002713387958628638
+    },
+    "evidence_sha256": "ea6a6180f8000dc419ede23eecf41a1622fc74f68aaf14701b3cfecfa14c0e68",
+    "measured_opposing_load": false
+  },
+  "mapped_training_specs_cpu": {
+    "diameter_m": 0.01,
+    "length_m": 0.5,
+    "scope": "endpoint_geometry_only",
+    "specimens": [
+      {
+        "spec": "train-soft",
+        "native_reference_sdk": 2168,
+        "node_shift_m": [
+          1.7881393432617188e-06,
+          0.018090322613716125,
+          -0.002744436264038086
+        ],
+        "tangent_rotation_rad": 0.04954528431497554,
+        "endpoint_candidates": 10,
+        "passes": 10
+      },
+      {
+        "spec": "train-stiff",
+        "native_reference_sdk": 2168,
+        "node_shift_m": [
+          1.7881393432617188e-06,
+          0.018781185150146484,
+          0.0003031492233276367
+        ],
+        "tangent_rotation_rad": 0.009571367560527552,
+        "endpoint_candidates": 10,
+        "passes": 10
+      }
+    ],
+    "evidence_sha256": "97a83e8510fcb93bcf579c7c832116001637549b1ba23c3c4339c5e966df3869",
+    "native_grasp_qualified": false
+  },
+  "release_registry_cpu": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "08bb0a13640789c6fd198023ef04a646c674672f9ef879531d9132571321054a",
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_work_packages.py"
     ]
   }
 }

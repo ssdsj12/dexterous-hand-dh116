@@ -33895,11 +33895,11 @@
       "branch": "11-17",
       "report": "docs/superpowers/reports/2026-11-23-teacher-wire-settled-thumb.md",
       "readiness": "docs/contracts/dh116_teacher_wire_settled_thumb_v1.json",
-      "status": "measured_left_thumb_transfer_v1_faulted_close_v2_pending",
-      "native_runs": 1,
+      "status": "measured_settled_left_thumb_transfer_verified_native_close",
+      "native_runs": 2,
       "contact_sdk": 2167,
       "transfer_sdk": 2168,
-      "outer_sha256": "0dd8b3bbbd5e3fd45d0af3954a5d9919ea02cc831b332eddf8b6dc5375ebaa1d",
+      "outer_sha256": "760fe69c15cdf6e624a3660ca0e81d4343ed33198cf5c1e71a64dbb1b3c72031",
       "cpu_tests": {
         "passed": 106,
         "failed": 0
@@ -33909,13 +33909,15 @@
       "remote_verified": true,
       "publication": {
         "state": "windows_publication_verified",
-        "source_commit": "d75a2d37413f397fb65f4b8951c38c0a0f98b6b2",
-        "source_tree": "16db457c37e2ac4d2e0524c178e2f1986911329e",
+        "source_commit": "559bfff2137fe4096be7d7043cbe7a715b833170",
+        "source_tree": "61634dc27de1952f2a7ffe186c2c20b31239a8ac",
         "remote_branch": "11-17",
         "files_verified": 8,
         "pr2_draft": true,
         "pr2_merged": false
-      }
+      },
+      "native_clean_exit": true,
+      "initial_fault_outer_sha256": "0dd8b3bbbd5e3fd45d0af3954a5d9919ea02cc831b332eddf8b6dc5375ebaa1d"
     }
   ]
 }

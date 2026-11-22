@@ -50418,12 +50418,13 @@
       "readiness": "docs/contracts/dh116_teacher_wire_settled_thumb_v1.json",
       "last_result": {
         "cpu_passed": 106,
-        "native_status": "measured_left_thumb_transfer_v1_faulted_close_v2_pending",
+        "native_status": "measured_settled_left_thumb_transfer_verified_native_close",
         "teacher_admission": false,
         "contact_sdk": 2167,
         "transfer_sdk": 2168,
-        "outer_sha256": "0dd8b3bbbd5e3fd45d0af3954a5d9919ea02cc831b332eddf8b6dc5375ebaa1d",
-        "native_clean_exit": false
+        "outer_sha256": "760fe69c15cdf6e624a3660ca0e81d4343ed33198cf5c1e71a64dbb1b3c72031",
+        "native_clean_exit": true,
+        "initial_fault_outer_sha256": "0dd8b3bbbd5e3fd45d0af3954a5d9919ea02cc831b332eddf8b6dc5375ebaa1d"
       }
     }
   },
