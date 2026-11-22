@@ -1,0 +1,63 @@
+{
+  "version": "dh116-teacher-wire-variant-isaac-v1",
+  "baseline_head": "1d69bf4fdec99fb1042c4c9dabcb981ae45296b3",
+  "sources": {
+    "scripts/verify_dh116_wire_variant_isaac.py": "1b72e51f93e0edcdde09d40f3d8350eeb51dfbb033f8233fe77643d172a38b26",
+    "src/go2_pvcnn/control/dh116/tabletop_supported_variant_builder.py": "268e200259e2d819cb6ca5df835c23de2161ea28cf0335a7674b4daf4c81b310",
+    "src/go2_pvcnn/control/dh116/tabletop_supported_wire_specs.py": "492a9bd56e35d2a20cb30f13b1d9410594871fd0d83a940ee29c21a469e66633",
+    "tests/test_wire_variant_isaac_reset.py": "a65c4caaa2fe38e9c6d2aef53702d632b07fc012b0a0117d3548d1e6d89ec1e2"
+  },
+  "selected_train_spec": "r45-l450",
+  "spec_sha256": "d960cd64e7fbf09764825596ed53d091199a176ced68cebb6bb0e8bc1df97fc2",
+  "frozen_preflight_source_count": 2111,
+  "native_budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "resized_tripod_supported_settle",
+    "sdk_setup_steps": 2,
+    "control_steps": 0,
+    "solver_steps": 96,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 180,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 6,
+    "episode_resets": 1,
+    "sdk_steps": 10
+  },
+  "cpu": {
+    "focused_passed": 5,
+    "union_passed": 89,
+    "union_failed": 1,
+    "cpu_geometry": {
+      "shape_count": 44,
+      "table_top_m": 0.3,
+      "min_world_z_m": 0.34603786336844694,
+      "support_gap_m": 0.0025134351989628094,
+      "min_rod_gap_m": 0.0017474172726677237
+    },
+    "failure": "Historical fresh17 receipt requires the old distal-transfer file SHA; HEAD already differs. Current physical-source audit remains strict.",
+    "test_log_sha256": "f3b4485105db143f74c864a7cb9b34ad1960e42811a9891c6e89901bec29b684"
+  },
+  "evidence_scope": "CPU source/geometry preparation for actual resized native Reset",
+  "antigravity": {
+    "rounds": [
+      "Wire-Native-Reset R1",
+      "Wire-Native-Reset R2"
+    ],
+    "verified_changes": [
+      "isolate builder from frozen baseline Reset source",
+      "freeze explicit dependencies",
+      "compare live CUDA nodes with recorded nodes",
+      "check both terminal support loads and no hand pairs"
+    ]
+  },
+  "native_run": null,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "generalization_qualified": false
+}

@@ -50243,6 +50243,26 @@
         "passed": 116,
         "failed": 0
       }
+    },
+    "teacher.wire-variant-isaac-reset": {
+      "title": "Read a resized supported wire through the real Isaac Reset and feedback entry",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-spec-generalization",
+        "teacher.tripod-lift-current-reset"
+      ],
+      "tests": [
+        "tests/test_wire_variant_isaac_reset.py",
+        "tests/test_supported_wire_specifications.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-wire-variant-isaac.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_variant_isaac_v1.json",
+      "last_result": {
+        "cpu_passed": 5,
+        "native_status": "pending",
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

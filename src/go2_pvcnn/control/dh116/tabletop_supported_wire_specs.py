@@ -107,6 +107,29 @@ def build_variant(scene, baseline, *, radius_m, length_m, grasp_material_ids):
     return dict(scene=geometry, **spec, spec_sha256=digest(spec), native_reset_verified=False)
 
 
+
+def prepare_variant(scene, table, baseline, *, radius_m, length_m, stations):
+    """Reuse the original hand seed and the independently prepared variant geometry."""
+    from .tabletop_dual_hand_reset import prepare_reset_state
+    from .tabletop_power_shared_rod import END_SUPPORT_NAMES
+    from .tabletop_power_supported_task import TRIPOD_SCOPE, prepare_initial_state
+
+    baseline_seed, active, _, _ = prepare_initial_state(scene, table, expected_scope=TRIPOD_SCOPE)
+    variant = build_variant(scene, baseline, radius_m=radius_m, length_m=length_m,
+                            grasp_material_ids=stations)
+    config = variant["scene"]
+    seed = prepare_reset_state(
+        hand_roots={side: config["hands"][side]["pose_wxyz"] for side in SIDES},
+        **{key: baseline_seed[key] for key in ("origin", "root_xy", "initial_offset_m",
+                                               "joint_positions", "joint_velocities")},
+        source_description=variant["spec_sha256"])
+    support_poses = {
+        name: (np.asarray(box["center_m"]), np.array([0., 0., 0., 1.]))
+        for name, box in zip(END_SUPPORT_NAMES, config["support_scene"]["supports"], strict=True)
+    }
+    return seed, active, np.asarray(config["rod_nodes_w_m"], dtype=np.float32), support_poses, variant
+
+
 def verify_wire_getter(spec, snapshot, *, solver_time_s):
     """Match the actual solver's raw parameter getter to the declared variant."""
     verified = validate_snapshot(snapshot, expected_num_envs=1, expected_nodes=MATERIAL_NODES,
