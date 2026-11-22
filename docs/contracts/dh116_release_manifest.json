@@ -34142,6 +34142,37 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-holdout-starts",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-holdout-starts.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_holdout_starts_v1.json",
+      "status": "cpu_holdout_cohort_built_clearance_incomplete",
+      "cpu_tests": {
+        "passed": 79,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "trial_count_per_grasp": 104,
+      "static_clearance": {
+        "pinch": 24,
+        "tripod": 72,
+        "power": 0
+      },
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "32750d26ecce5c5e5f7b902b500921421af01118",
+        "source_tree": "136cdf82b44a19f664e63c2fd05755730ed6ecf9",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
