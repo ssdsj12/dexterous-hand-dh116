@@ -27,6 +27,7 @@ SOURCE_FILES = (
     "scripts/verify_dh116_power_supported_task.py",
     "src/go2_pvcnn/control/dh116/tabletop_supported_wire_specs.py",
     "src/go2_pvcnn/control/dh116/tabletop_supported_variant_builder.py",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_grasp_feedback.py",
     "src/go2_pvcnn/control/dh116/tabletop_material_director_readback.py",
 )
 PATH_ARGS = ("output", "plan", "task-config", "catalog", "rays", "left-bake", "right-bake",
@@ -179,6 +180,7 @@ def acquire(sim, owners, trace, output, *, plan):
     from go2_pvcnn.control.dh116.tabletop_material_director_readback import _copy_endpoint
     from go2_pvcnn.control.dh116.tabletop_supported_wire_specs import observe_wire_pose_and_reaction, verify_wire_getter
     from go2_pvcnn.control.dh116.tabletop_supported_variant_builder import acquire_variant_reset
+    from go2_pvcnn.control.dh116.tabletop_wire_grasp_feedback import pack_wire_grasp_feedback
     from scripts import verify_dh116_power_shared_rod as shared
 
     runtime = None
@@ -236,6 +238,9 @@ def acquire(sim, owners, trace, output, *, plan):
             raise ValueError("terminal palm and reaction readback differs from declared variant")
         settlement = validate_settlement(result, rod_row)
         native.write_new(output/"wire_variant_terminal_feedback.json", observation)
+        policy_feedback = pack_wire_grasp_feedback(observation, before)
+        native.write_new(output/"wire_variant_grasp_feedback.json",
+                         dict(clock=observation["clock"], observation=policy_feedback))
         native.write_new(output/"wire_variant_settlement.json", {
             key: value if key != "terminal_support_wrench_on_mesh_w"
             else {name: wrench.tolist() for name, wrench in value.items()}

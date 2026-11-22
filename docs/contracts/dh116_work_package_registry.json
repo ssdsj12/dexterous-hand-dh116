@@ -50495,6 +50495,26 @@
         "outer_sha256": "8e14856abb32d7c6bdc6ba06e88847cca90905f92d0a61f0cde5826d05de0a4c",
         "native_clean_exit": true
       }
+    },
+    "teacher.wire-grasp-feedback": {
+      "title": "Pack causal grasp feedback independent of wire specimen identity",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-material-generalization",
+        "teacher.wire-quiet-settlement"
+      ],
+      "tests": [
+        "tests/test_supported_wire_grasp_feedback.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-grasp-feedback.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_grasp_feedback_v1.json",
+      "last_result": {
+        "cpu_passed": 97,
+        "native_status": "sealed_endpoint_replay_only",
+        "teacher_admission": false,
+        "generalization_qualified": false
+      }
     }
   },
   "execution_target": {
