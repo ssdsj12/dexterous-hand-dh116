@@ -1,6 +1,6 @@
 {
   "version": "dh116-teacher-tripod-smoke8-native-v11",
-  "status": "frozen_unexecuted",
+  "status": "passed_bounded_diagnostic_unqualified",
   "identity": {
     "actual_identity": {
       "companion_sha256": "4bba24bd03bef09438f59cc66b8a40187a80111062bd41a904d49c2c12b6dd76",
@@ -31,8 +31,8 @@
     "deselected": 1,
     "log_sha256": "a6caf4633575241a11624b322d353723939895b8f7c25deab8a17bea94b16226"
   },
-  "native_runs": 0,
-  "native_ppo_updates": 0,
+  "native_runs": 1,
+  "native_ppo_updates": 1,
   "native_qualification": false,
   "teacher_admission": false,
   "grasp_qualified": false,
@@ -46,12 +46,107 @@
   "full_runtime_verified": false,
   "automatic_retry": false,
   "automatic_forced_cleanup": false,
-  "launch_readiness": "new fingerprint bound after publication to existing standing finite-scope authorization and live single-instance/resource check",
+  "launch_readiness": "spent_once_no_retry;separate verified diagnostic summary only;original receipt unchanged",
   "interpretation": "diagnostic wiring and budget check only; multiple software/resource changes since v10,not a one-variable native performance attribution",
   "registry_metadata_recheck": {
     "passed": 60,
     "failed": 0,
     "overlaps_primary_regression": true,
     "log_sha256": "184dc954edebb6cba32acdd8617a6c31d16ec159d4caca8aab07fe68a230326d"
-  }
+  },
+  "diagnostic_verified": true,
+  "bounded_runtime_verified": true,
+  "tested_head": "1184cc419216ef7ef83fd16451cbd1e4f3ba52de",
+  "attempt": "attempt-kdwlbycn",
+  "scheduler_receipt_sha256": "b49afa36539549d35d731315f6821339d1dc5cadbc70c2141e3e0442d6d53eb9",
+  "readback_sha256": "93363a5f7d8d37171a37a73cf143384d2036468759aa4c4d1cc9f816bc9d996c",
+  "independent_audit_log_sha256": "68dd53be7f71c8973f5bb9651ac58e272b3de8916bc4889415b05cadfe61c690",
+  "physical_evidence": {
+    "physical_nodes": 41,
+    "measured_sdk_steps": 64,
+    "controls": 8,
+    "solver_calls": 64,
+    "internal_solver_substeps": 768,
+    "first_sdk_endpoint": 3,
+    "last_sdk_endpoint": 66,
+    "clock_schema": "original_nominal_timestamp_and_recorded_solver_time"
+  },
+  "budget_evidence": {
+    "parent_deadline_s": 1444759.7357025407,
+    "episode_cap_s": 0.5333333333333333,
+    "session_local_cap_s": 180,
+    "remaining_before_s": 38.57625802978873,
+    "remaining_after_s": 10.740910343825817
+  },
+  "teacher_training": {
+    "loaded_updates": 0,
+    "target_updates": 1,
+    "updates": 1,
+    "accepted_minibatch_updates": 1,
+    "parameter_delta_l2": 0.003922297659230867
+  },
+  "actual_exit_code": 0,
+  "inferior_exit_code": 0,
+  "inferior_signal": null,
+  "duration_seconds": 183.4034118449781,
+  "checkpoint_sha256": "35231d09bb947775301743d1c715889ff076eca1c7dedacf93149097c7167cec",
+  "checkpoint_scope": "clean unqualified wiring diagnostic;never success expert pool",
+  "source_scope": "owner_source_unqualified",
+  "training_reward_qualified": false,
+  "reward": {
+    "profile": "approach_wiring_smoke_v1",
+    "phi_pre_all_zero": true,
+    "phi_post_all_zero": true,
+    "rewards": [
+      -0.0016719602070683804,
+      -0.0016710501780937946,
+      -0.0016710308396994907,
+      -0.0016715332433608488,
+      -0.0016704074998858968,
+      -0.0016695656063704695,
+      -0.0016701596455003206,
+      -0.0016704913022016397
+    ],
+    "integrated_cost_sum": 0.013366198522180841
+  },
+  "next_task": "C05 same-source resume;demonstrate genuine guarded distance progress and supply measured contact/support/slip/phase fields before full-grasp reward;Power needs independent Reset/five-digit+palm sources",
+  "reward_analysis": {
+    "sha256": "73130c9226ccfa14d4b77b8676c16e18dba47ab24e8f526da479a44c992b3c5e",
+    "scope": "offline_readback_of_existing_v11;not_new_native",
+    "distance_potential_active": true,
+    "reset_distance_m": 0.005804043651248018,
+    "dref_m": 0.005804043651248018,
+    "endpoint_distance_m": [
+      0.005810903152450919,
+      0.005821768892928958,
+      0.005836852282906572,
+      0.0058545242839803295,
+      0.005881525265673797,
+      0.005917285336181521,
+      0.00595058617182076,
+      0.0059655731699119014
+    ],
+    "final_distance_delta_m": 0.0001615295186638832,
+    "all_endpoint_distance_ge_dref": true,
+    "phi_post_all_zero": true,
+    "reason": "measured trajectory did not reduce distance;active potential is clamped at zero",
+    "profile_excludes": [
+      "contact",
+      "persistence",
+      "geometry",
+      "lift",
+      "hold",
+      "slip"
+    ],
+    "native_runs": 0,
+    "ppo_updates": 0,
+    "scheduler_receipt_sha256": "b49afa36539549d35d731315f6821339d1dc5cadbc70c2141e3e0442d6d53eb9",
+    "reward_implementation_sha256": "425e49e278793d5f2449d858c578aa0c692e2f19562f31e508131067295ef46f"
+  },
+  "result_metadata_cpu_tests": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "f8f77c0b38da82c17fa46f2157e3cca942866009f492e483405db07dc105e6b4"
+  },
+  "published_summary_reaudit_sha256": "74ce27ac0502a519201db481e0bba7801c8912d867934ffe49b723c4bab73063"
 }

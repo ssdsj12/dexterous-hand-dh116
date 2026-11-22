@@ -49168,9 +49168,8 @@
       "title": "Independent Tripod fresh17 smoke8 actual PPO diagnostic",
       "evidence_scope": "tripod_actual_fresh_smoke8_v11",
       "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v11.json",
-      "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Frozen independent candidate; exact fingerprint must bind standing finite-scope authorization and current resources before one execution.",
+      "status": "passed",
+      "reason": "Independent actual bounded diagnostic reverified;not Teacher or grasp qualification.",
       "dependencies": [
         "teacher.tripod-fresh-reset-native-validation",
         "teacher.owned-json-decode-cache",
@@ -49178,10 +49177,32 @@
       ],
       "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v11.md",
       "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v11.json",
-      "native_runs": 0,
+      "native_runs": 1,
       "actual_launch": {
         "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v11.json",
         "sha256": "4bba24bd03bef09438f59cc66b8a40187a80111062bd41a904d49c2c12b6dd76"
+      },
+      "last_result": {
+        "diagnostic_verified": true,
+        "native_qualification": false,
+        "package": "teacher.tripod-ppo-fresh-smoke8-v11",
+        "receipt_sha256": "b49afa36539549d35d731315f6821339d1dc5cadbc70c2141e3e0442d6d53eb9",
+        "teacher_admission": false,
+        "tested_head": "1184cc419216ef7ef83fd16451cbd1e4f3ba52de",
+        "result_sha256": "b49afa36539549d35d731315f6821339d1dc5cadbc70c2141e3e0442d6d53eb9",
+        "scope": "actual_fresh_approach_wiring_smoke",
+        "native_runs": 1,
+        "native_ppo_updates": 1,
+        "controls": 8,
+        "sdk_steps": 66,
+        "solver_calls": 64,
+        "internal_solver_substeps": 768,
+        "exit_code": 0,
+        "signal": null,
+        "checkpoint_sha256": "35231d09bb947775301743d1c715889ff076eca1c7dedacf93149097c7167cec",
+        "readback_sha256": "93363a5f7d8d37171a37a73cf143384d2036468759aa4c4d1cc9f816bc9d996c",
+        "training_reward_qualified": false,
+        "grasp_qualified": false
       }
     },
     "teacher.tripod-smoke8-v11-freeze": {
@@ -49207,6 +49228,31 @@
         "native_runs": 0,
         "native_qualification": false,
         "teacher_admission": false
+      }
+    },
+    "teacher.tripod-smoke8-v11-native-result": {
+      "title": "Reverify actual Tripod v11 bounded PPO,natural exit and unqualified checkpoint",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-smoke8-v11-freeze"
+      ],
+      "tests": [
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v11.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v11.json",
+      "native_runs": 1,
+      "last_result": {
+        "diagnostic_verified": true,
+        "native_runs": 1,
+        "native_ppo_updates": 1,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "result_sha256": "b49afa36539549d35d731315f6821339d1dc5cadbc70c2141e3e0442d6d53eb9",
+        "tested_head": "1184cc419216ef7ef83fd16451cbd1e4f3ba52de"
       }
     }
   },

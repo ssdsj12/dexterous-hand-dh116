@@ -1,3 +1,5 @@
+Tripod v11 completed one real bounded PPO update (8 controls/66 SDK/768 internal) and natural outer/inferior exit0;original-artifact audit is diagnostic_verified. This rollout moved away from its Reset distance baseline,clamping the active approach potential to0;Teacher/grasp qualification remains false. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v11.md).
+
 Tripod v11 is independently frozen at4 numeric threads with the original8-control/66-SDK/1-update bounded limits.145 CPU checks pass;spent v10 remains rejected under current source. No native result yet. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v11.md).
 
 Teacher startup now reuses bounded pureCPU owned-JSON decoding while rechecking all26 source files and all physical validators.213 CPU regressions pass;complete repeated Reset derivation median8.956s ->5.683s,with byte-identical returned digest. No new native/PPO/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-owned-json-decode-cache.md).
