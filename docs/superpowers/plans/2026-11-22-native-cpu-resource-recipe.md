@@ -10,5 +10,5 @@
 - [x] Extend only the strict v2 field/schema validation; old no-environment, v1 fingerprint, native budgets and source contracts stay unchanged.
 - [x] Run worker/actual-launch/scheduler CPU suites; demonstrate actual scripts/python.sh sees configured threads with CUDA masked.
 - [x] Freeze distinct Tripod v10 core/launch plus exact source closure, 8 controls/66SDK/768substeps/1update/180-240s; leave v9 spent.
-- [ ] Update report/readiness/Registry, protect528/3 models/fixed RGB, commit Ubuntu and publish same commit from Windows.
+- [x] Update report/readiness/Registry, protect528/3 models/fixed RGB, commit Ubuntu and publish same commit from Windows.
 No long training, physics modification, unqualified checkpoint resume or automatic retry.

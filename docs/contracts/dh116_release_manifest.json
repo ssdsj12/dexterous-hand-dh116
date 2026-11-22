@@ -32556,6 +32556,31 @@
         "verified_at_utc": "2026-11-22T00:20:38.863814+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.native-cpu-resource-recipe",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-native-cpu-resource-recipe.md",
+      "readiness": "docs/contracts/dh116_native_cpu_resource_recipe_v1.json",
+      "cpu_tests": {
+        "passed": 144,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "3de0d2140fc87f3bd5f3858e568d109d3f7c8dbc",
+        "source_tree": "2eab582f67645c77815add5ba41e1cc11d5436fa",
+        "remote_branch": "11-17",
+        "files_verified": 14,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T00:28:37.084399+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
