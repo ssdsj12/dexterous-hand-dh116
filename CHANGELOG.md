@@ -1,3 +1,5 @@
+Conservative contact source preserves all12 solver substeps, original per-pad/hand force thresholds and separate table/stand evidence.40 CPU cases pass;old64-row v11 replay still has0 contact progress. No new native run or grasp claim. [Report](docs/superpowers/reports/2026-11-22-supported-contact-measurement.md).
+
 Explicit supported source priming now preserves Reset/S0 atSDK2 and validates one separately charged physical exchange before the first policy atSDK3.136 related CPU checks pass;no native run or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-supported-source-priming.md).
 
 The repaired supported exchange now has a new real fresh17 Tripod Reset proof:2 SDK initialization steps,0 control/solver/PPO,natural outer/inferior exit0 in106.75s.90 CPU/actual-artifact checks pass. This refreshes Reset evidence only;Teacher contact and grasp remain unqualified. [Report](docs/superpowers/reports/2026-11-22-tripod-route-order-reset-native.md).

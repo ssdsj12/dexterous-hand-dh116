@@ -49429,6 +49429,30 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.supported-contact-measurement": {
+      "title": "Bind Teacher contact progress to complete measured12-substep forces",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-source-priming"
+      ],
+      "tests": [
+        "tests/test_native_teacher_contact_measurement.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_teacher_contact_ledger_audit.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-supported-contact-measurement.md",
+      "readiness": "docs/contracts/dh116_supported_contact_measurement_v1.json",
+      "reason": "40 CPU cases and offline64-row old native replay verified;actual training source connection pending",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 40,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
