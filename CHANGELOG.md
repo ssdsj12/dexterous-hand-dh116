@@ -1,3 +1,5 @@
+The Power surface search measured new distal pairs with the unchanged wrist and hull constraints. No evaluated pair passed. [Report](docs/superpowers/reports/2026-11-23-teacher-power-surface-pairs.md)
+
 Power reserve audit found a valid static palm preload, with the tested distal preload violating the original continuous hand/rod envelope. [Report](docs/superpowers/reports/2026-11-23-teacher-power-preload-envelope.md)
 
 Power partial opposition now has a continuous 24D target certificate on the fixed archived wire. Live contact and Lift are pending. [Report](docs/superpowers/reports/2026-11-23-teacher-power-continuous-thumb-route.md)

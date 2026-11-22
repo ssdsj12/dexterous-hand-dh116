@@ -50982,6 +50982,50 @@
         "native_execution_ready": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-surface-pairs": {
+      "title": "Fit Power pad surfaces and test the unchanged wire envelope",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-preload-envelope"
+      ],
+      "tests": [
+        "tests/test_dh116_power_partial_opposition.py",
+        "tests/test_dh116_power_partial_stage_evidence.py",
+        "tests/test_dh116_power_measured_reseat.py",
+        "tests/test_dh116_power_fixed_wrist_digits.py",
+        "tests/test_dh116_power_material_reach.py",
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_wire_fixed_pregrasp_native_reset.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dh116_power_thumb_clearance.py",
+        "tests/test_supported_wire_material_variants.py",
+        "tests/test_wire_variant_isaac_reset.py",
+        "tests/test_supported_wire_factorial_holdouts.py",
+        "tests/test_supported_wire_holdout_resets.py",
+        "tests/test_dh116_power_thumb_route.py",
+        "tests/test_dh116_owned_approach.py",
+        "tests/test_dh116_swept_wrist_projection.py",
+        "tests/test_dh116_power_preload.py",
+        "tests/test_dh116_power_surface_pairs.py"
+      ],
+      "timeout_seconds": 360,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-surface-pairs.md",
+      "readiness": "docs/contracts/dh116_teacher_power_surface_pairs_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "completed_cpu_search_no_candidate_admission",
+        "cpu_passed": 180,
+        "bilateral_static_candidates": false,
+        "teacher_admission": false,
+        "native_execution_ready": false
+      }
     }
   },
   "execution_target": {
