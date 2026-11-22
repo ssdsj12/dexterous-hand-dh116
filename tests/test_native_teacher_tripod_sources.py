@@ -12,7 +12,12 @@ import numpy as np
 import pytest
 import torch
 
-from test_tripod_reset_manifest import ROOT, RUN
+from test_tripod_reset_manifest import ROOT
+
+# The old fixture predates the reviewed reaction-route repair and is correctly
+# rejected by the strict loader. Use the sealed real v3 Reset; never repin it.
+RUN = Path("/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/fresh-supported-tripod-reset-route-order-v3")
+RESET_MANIFEST = RUN / "teacher-reset-manifest.json"
 
 
 def module():
@@ -32,7 +37,7 @@ def arrange(monkeypatch,tmp_path):
     from go2_pvcnn.control.dh116 import tabletop_native_parameter_endpoints as parameters
     from test_native_teacher_model import raw_cpu_packets
     import hashlib,sys
-    manifest_path = RUN.parent/"tripod-teacher-resolved-reset-v1.json"
+    manifest_path = RESET_MANIFEST
     binding=dict(path=str(manifest_path),sha256=hashlib.sha256(manifest_path.read_bytes()).hexdigest())
     manifest=load_tripod_reset_manifest(dict(style="tripod",resolved_reset_manifest=binding),project=ROOT)
     reset=decode_owned(json.loads((RUN/"native/episode_reset.json").read_bytes()))["reset"]

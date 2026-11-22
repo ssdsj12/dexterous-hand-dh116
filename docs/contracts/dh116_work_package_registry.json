@@ -49402,6 +49402,33 @@
         "native_ppo_updates": 0,
         "exit_code": 0
       }
+    },
+    "teacher.supported-source-priming": {
+      "title": "Prime real supported source buffers without fabricating a policy transition",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-route-order-reset-native"
+      ],
+      "tests": [
+        "tests/test_native_teacher_source_priming.py",
+        "tests/test_action24_history_owner.py",
+        "tests/test_fresh_supported_episode.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_native_teacher_context.py",
+        "tests/test_native_teacher_tripod_sources.py",
+        "tests/test_native_teacher_tripod_worker_composition.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-supported-source-priming.md",
+      "readiness": "docs/contracts/dh116_supported_source_priming_v1.json",
+      "reason": "CPU component only;original Reset clock and first actual policy history preserved;actual contact session pending",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 136,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

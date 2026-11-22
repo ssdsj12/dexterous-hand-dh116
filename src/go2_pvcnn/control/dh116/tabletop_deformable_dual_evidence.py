@@ -58,6 +58,7 @@ class _Sequence:
         self.solver_substeps = solver_substeps
         self.setup = 0
         self.clock = None
+        self._first_boundary_phase = "reset"
         self.geometry = set()
         self.physical = 0
         self.controls = 0
@@ -114,7 +115,7 @@ class _Sequence:
         expected = dict(self.clock, policy_step=self.controls, substep=0)
         if identity["phase"] != PHASE or _clock_row(identity) != expected:
             raise ValueError("common state not recorded at the current pre-action clock")
-        _rod_boundary(pre["rod_boundary"], expected, "reset" if self.controls == 0 else "post_physics")
+        _rod_boundary(pre["rod_boundary"], expected, self._first_boundary_phase if self.controls == 0 else "post_physics")
         action = np.asarray(row["action"])
         if (action.shape != (1, 24) or action.dtype.kind != "f"
                 or not np.isfinite(action).all() or np.any(abs(action) > 1)):
