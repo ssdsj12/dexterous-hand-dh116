@@ -50268,6 +50268,25 @@
         "native_grasp": false,
         "ppo_updates": 0
       }
+    },
+    "teacher.tripod-coupled-response": {
+      "title": "Measure individual pad deficits around a bilateral Tripod correction",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-variant-isaac-reset"
+      ],
+      "tests": [
+        "tests/test_tripod_coupled_response.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-coupled-response.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_coupled_response_v1.json",
+      "last_result": {
+        "native_archive_ticks": 256,
+        "cpu_passed": 84,
+        "new_native_runs": 0,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
