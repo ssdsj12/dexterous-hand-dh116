@@ -1,0 +1,345 @@
+{
+  "version": "dh116-teacher-tripod-contact-seed-v1",
+  "baseline_head": "1c7b43d357da8d58f095646cb626488017605798",
+  "source_sha256": {
+    "scripts/prepare_dh116_tripod_contact_seed.py": "5c718e5dc72e9ac5211becfc2a5f56d3af24c46fc9e4131718028c503f4c4f64",
+    "tests/test_tripod_contact_seed.py": "df7893216d30c1f325f43d933f3c324d13f3a750cb73771a3bef2bebcce55ccc"
+  },
+  "diagnosis": {
+    "scope": "symmetric endpoint geometry decomposition, no causal intervention",
+    "source_receipt_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+    "rows": [
+      {
+        "sdk_first": 1929,
+        "sdk_last": 2056,
+        "link": "left.finger23_link",
+        "peak": 1.1863347668682174,
+        "substeps_lt50mn": 989,
+        "sdf_range_um": [
+          -11.000975700331885,
+          24.252443070514087
+        ],
+        "penetration_turnovers": 63,
+        "hand_rms_um": 18.90416022464641,
+        "rod_rms_um": 4.556942041559742,
+        "hand_dominates_switches": 63,
+        "rod_dominates_switches": 0,
+        "mean_abs_force_sdk_change_n": 0.31006236928640246
+      },
+      {
+        "sdk_first": 1929,
+        "sdk_last": 2056,
+        "link": "left.finger33_link",
+        "peak": 0.09007843424808895,
+        "substeps_lt50mn": 138,
+        "sdf_range_um": [
+          -0.7193119147255387,
+          -0.4064394558724038
+        ],
+        "penetration_turnovers": 0,
+        "hand_rms_um": 0.09990854944865452,
+        "rod_rms_um": 0.1194284494840155,
+        "hand_dominates_switches": 0,
+        "rod_dominates_switches": 0,
+        "mean_abs_force_sdk_change_n": 0.0066916275301875956
+      },
+      {
+        "sdk_first": 1929,
+        "sdk_last": 2056,
+        "link": "right.finger33_link",
+        "peak": 0.06607765240542855,
+        "substeps_lt50mn": 0,
+        "sdf_range_um": [
+          -0.6058496245893095,
+          -0.522366860132746
+        ],
+        "penetration_turnovers": 0,
+        "hand_rms_um": 0.03758685349910295,
+        "rod_rms_um": 0.037548954839669274,
+        "hand_dominates_switches": 0,
+        "rod_dominates_switches": 0,
+        "mean_abs_force_sdk_change_n": 0.0018525679893279193
+      },
+      {
+        "sdk_first": 1929,
+        "sdk_last": 2056,
+        "link": "right.finger23_link",
+        "peak": 0.16584670669772272,
+        "substeps_lt50mn": 0,
+        "sdf_range_um": [
+          -1.5527675404384753,
+          -1.4362545131037936
+        ],
+        "penetration_turnovers": 0,
+        "hand_rms_um": 0.1060678698063793,
+        "rod_rms_um": 0.07752398014913697,
+        "hand_dominates_switches": 0,
+        "rod_dominates_switches": 0,
+        "mean_abs_force_sdk_change_n": 0.001744267672363949
+      },
+      {
+        "sdk_first": 2065,
+        "sdk_last": 2192,
+        "link": "left.finger23_link",
+        "peak": 1.2054646895584575,
+        "substeps_lt50mn": 989,
+        "sdf_range_um": [
+          -11.16731381073377,
+          24.43160087930215
+        ],
+        "penetration_turnovers": 63,
+        "hand_rms_um": 19.029212073510312,
+        "rod_rms_um": 4.62189284552283,
+        "hand_dominates_switches": 63,
+        "rod_dominates_switches": 0,
+        "mean_abs_force_sdk_change_n": 0.3179262163466096
+      },
+      {
+        "sdk_first": 2065,
+        "sdk_last": 2192,
+        "link": "left.finger33_link",
+        "peak": 0.0937437901371857,
+        "substeps_lt50mn": 71,
+        "sdf_range_um": [
+          -0.7642752418886289,
+          -0.3865323863804296
+        ],
+        "penetration_turnovers": 0,
+        "hand_rms_um": 0.27926240230011556,
+        "rod_rms_um": 0.2975299417335747,
+        "hand_dominates_switches": 0,
+        "rod_dominates_switches": 0,
+        "mean_abs_force_sdk_change_n": 0.007298046358548578
+      },
+      {
+        "sdk_first": 2065,
+        "sdk_last": 2192,
+        "link": "right.finger33_link",
+        "peak": 0.06110676854983507,
+        "substeps_lt50mn": 51,
+        "sdf_range_um": [
+          -0.5685997102183871,
+          -0.4458548532879428
+        ],
+        "penetration_turnovers": 0,
+        "hand_rms_um": 0.055309284594570976,
+        "rod_rms_um": 0.055671741479231325,
+        "hand_dominates_switches": 0,
+        "rod_dominates_switches": 0,
+        "mean_abs_force_sdk_change_n": 0.0023730284297376666
+      },
+      {
+        "sdk_first": 2065,
+        "sdk_last": 2192,
+        "link": "right.finger23_link",
+        "peak": 0.16835724020861698,
+        "substeps_lt50mn": 0,
+        "sdf_range_um": [
+          -1.5643516954669257,
+          -1.3830257857005979
+        ],
+        "penetration_turnovers": 0,
+        "hand_rms_um": 0.117857390448575,
+        "rod_rms_um": 0.08697908323717865,
+        "hand_dominates_switches": 0,
+        "rod_dominates_switches": 0,
+        "mean_abs_force_sdk_change_n": 0.0017134312901259828
+      }
+    ],
+    "sha256": "9d582e1ec18d4173404cb62aa110fd0978f7d46cc4a29bcb8aba35a16cf59916"
+  },
+  "geometry": {
+    "grasp": "tripod",
+    "origin": {
+      "sdk": 2066,
+      "receipt_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+      "raw_row_sha256": "ec4020ce8ea4ebaa2e08ed8f6592fb6b032adbabba1b9aabab088ebb6e9cfcd1",
+      "source_head": "6b155c0f8bf8e59612e22e6d740efe7b7bace17a",
+      "stable_reference": false,
+      "parked_receipt_sha256": "de97adae1f824eb814f91a489c6df8d7d1130e3635c1760174eeb51338107cce"
+    },
+    "anchors": {
+      "left": 35,
+      "right": 3
+    },
+    "candidate_wire": {
+      "radius_m": 0.0045,
+      "length_m": 0.45,
+      "spec_sha256": "d960cd64e7fbf09764825596ed53d091199a176ced68cebb6bb0e8bc1df97fc2"
+    },
+    "geometry_screen": {
+      "left": {
+        "offset_world_m": [
+          -7.347880794884119e-19,
+          0.0,
+          -0.004
+        ],
+        "retreat_m": 0.004,
+        "minimum_rod_gap_m": 0.001351117780967498,
+        "minimum_table_gap_m": 0.048568135200664,
+        "minimum_support_gap_m": 0.028912501732122977,
+        "required_pad_rod_gaps_m": {
+          "finger14_link": 0.0015001133414544454,
+          "finger23_link": 0.0013956404215308416,
+          "finger33_link": 0.0017440917170993275
+        }
+      },
+      "right": {
+        "offset_world_m": [
+          -0.005548909769293802,
+          0.0,
+          0.013396253221413659
+        ],
+        "retreat_m": 0.0145,
+        "minimum_rod_gap_m": 0.0012467976488245158,
+        "minimum_table_gap_m": 0.0629831881356524,
+        "minimum_support_gap_m": 0.006493233494989665,
+        "required_pad_rod_gaps_m": {
+          "finger14_link": 0.0017052464862963856,
+          "finger23_link": 0.00366741232590706,
+          "finger33_link": 0.007241051819826982
+        }
+      }
+    },
+    "original_active_joint_counts": {
+      "left": 6,
+      "right": 6
+    },
+    "hull_count": 44,
+    "measured_support_samples": 8,
+    "scope": "CPU geometry proposal for new native Reset",
+    "teacher_admission": false
+  },
+  "reverse_path_prescreen": [
+    {
+      "side": "left",
+      "direction_world": [
+        1.8369701987210297e-16,
+        -0.0,
+        1.0
+      ],
+      "last_pass": {
+        "travel_m": 0.0022500000000000003,
+        "rod_gap_m": 0.00027997408845409355,
+        "table_gap_m": 0.05081813520066397
+      },
+      "first_fail": {
+        "travel_m": 0.0025,
+        "rod_gap_m": 0.0001843032303628367,
+        "table_gap_m": 0.051068135200664
+      }
+    },
+    {
+      "side": "right",
+      "direction_world": [
+        0.3826834323650897,
+        -0.0,
+        -0.9238795325112867
+      ],
+      "last_pass": {
+        "travel_m": 0.0015,
+        "rod_gap_m": 0.0002688152827947654,
+        "table_gap_m": 0.061597368836885436
+      },
+      "first_fail": {
+        "travel_m": 0.00175,
+        "rod_gap_m": 0.00011692687291198212,
+        "table_gap_m": 0.06136639895375762
+      }
+    }
+  ],
+  "seed_config_sha256": "e4d98a8027b97222b0370285cd7b93cc601aeb1de6200f6d3670498cb3c3f75e",
+  "seed_command": [
+    "/mnt/mydisk/xk/envs/dh116/bin/python",
+    "-B",
+    "-m",
+    "scripts.prepare_dh116_tripod_contact_seed",
+    "--run",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-left-wrist-seating-v1/native-run-v2",
+    "--receipt-sha256",
+    "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+    "--sdk",
+    "2066",
+    "--nominal-scene",
+    "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/fresh-supported-tripod-reset-native-v2/task.json",
+    "--scene-sha256",
+    "6a635f5fd9d7d0415975cfa6de7192a3d632dc5eb5f374ac2634f3fca68898b9",
+    "--rod-config",
+    "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/configs/dh116_tasks/flexible_pinch_candidate_v1.json",
+    "--rod-config-sha256",
+    "9f751680de805c5075282c16bc5c5e5e30b8b7c261a3dd36f3b7b1cbab8f35c8",
+    "--radius-m",
+    ".0045",
+    "--length-m",
+    ".45",
+    "--output",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-contact-dynamics-v1/contact-seeded-nominal-v2.json",
+    "--report",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-contact-dynamics-v1/contact-seed-geometry-v2.json",
+    "--parked-run",
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/wire-native-reset-v1/native-run-v1",
+    "--parked-receipt-sha256",
+    "de97adae1f824eb814f91a489c6df8d7d1130e3635c1760174eeb51338107cce"
+  ],
+  "geometry_report_sha256": "194e49fbd9ca5570fd2a5ea0648d3eb26b80ced1d1bac79f201d642d9070c614",
+  "cpu": {
+    "passed": 77,
+    "failed": 0,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_tripod_contact_seed.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_supported_wire_specifications.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "ea9c096e4a4cddb35088083f79fc869cf3a86a0c775ccc3fd194cddc19564062"
+  },
+  "native_preflight": {
+    "stage": "CPU complete",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "resized_tripod_supported_settle",
+      "sdk_setup_steps": 2,
+      "control_steps": 0,
+      "solver_steps": 96,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 180,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 6,
+      "episode_resets": 1,
+      "sdk_steps": 10
+    },
+    "retained_failure": "A noncanonical /home path was rejected before Isaac. The corrected recipe resolves the unchanged file."
+  },
+  "antigravity": {
+    "rounds": [
+      "Wire-Stable-Closure R1",
+      "Wire-Stable-Closure R2",
+      "Wire-Stable-Closure R3"
+    ],
+    "reviewed_source_sha256": "5c718e5dc72e9ac5211becfc2a5f56d3af24c46fc9e4131718028c503f4c4f64",
+    "checks": [
+      "native pair source identity",
+      "shortest-arc pose transform",
+      "44-hull variant screen using measured sag",
+      "original native Reset preserved"
+    ]
+  },
+  "native_run": null,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "generalization_qualified": false
+}

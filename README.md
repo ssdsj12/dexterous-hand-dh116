@@ -1,3 +1,5 @@
+The Tripod contact seed generator now transfers measured bilateral distal geometry and checks the resized rod, table and two supports before a shorter native approach. Grasp and Teacher admission remain open. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-contact-seed.md)
+
 Isaac verified one radius-aware wrist approach from live palm geometry on the supported 9 mm wire. Both hands moved in the requested direction and the process exited naturally. Grasp and Teacher admission are pending. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-live-palm-approach.md)
 
 The opt-in wire spec catalog prepares disjoint training and held-out candidates. Three lengths/diameters passed standalone CUDA parameter readback. Palm-frame position and per-pad force evidence are recorded separately from native grasp qualification. [Report](docs/superpowers/reports/2026-11-22-teacher-wire-spec-generalization.md)
