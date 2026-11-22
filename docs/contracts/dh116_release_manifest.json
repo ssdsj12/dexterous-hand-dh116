@@ -33660,6 +33660,36 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-spec-generalization",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-wire-spec-generalization.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_spec_generalization_v1.json",
+      "cpu_tests": {
+        "passed": 116,
+        "failed": 0
+      },
+      "variant_cuda_parameter_checks": 3,
+      "multiwire_isaac_grasp_episodes": 0,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1f76b57153c35bf6edc718821b02f3c2da162a4d",
+        "source_tree": "5018619ab75dd485b2850140c6ea1662e671dec6",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "seconds": 14.43,
+        "log_sha256": "f683a2ffb646c9d9006d7421f5c87ea9b40c0b369befa93ad9d890ed936adb24"
+      }
     }
   ]
 }
