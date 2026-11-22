@@ -79,11 +79,114 @@
     "spec_sha256": "d960cd64e7fbf09764825596ed53d091199a176ced68cebb6bb0e8bc1df97fc2",
     "read_only_archived_sample": true
   },
-  "native_run": null,
+  "native_run": {
+    "verified": true,
+    "head": "27117dc6fb1b0eca29bf7482dad6da901e3b69a7",
+    "frozen_sha256": "217fd946b2b17f64169598ab9eed4ec21728d1bd358d7ec92740a88f7fdeaed0",
+    "outer_sha256": "b9dabfd4749575c23b0ea92777ddddfada6ac88c9cd71a097e03a91aa3bd35c4",
+    "artifacts": 47,
+    "elapsed_s": 66.46173494704999,
+    "sdk_steps": 18,
+    "solver_substeps": 192,
+    "control_steps": 1,
+    "ppo_updates": 0,
+    "native_exit": 0,
+    "palms": {
+      "left": {
+        "signed_travel_m": 2.6047229766845703e-05,
+        "actual_delta_world_m": [
+          -2.6047229766845703e-05,
+          4.470348358154297e-08,
+          -2.9802322387695312e-08
+        ],
+        "transverse_distance_before_m": 0.10288625955581668,
+        "transverse_distance_after_m": 0.10286021232604982
+      },
+      "right": {
+        "signed_travel_m": 2.5987625122070312e-05,
+        "actual_delta_world_m": [
+          -2.5987625122070312e-05,
+          -8.195638656616211e-08,
+          -5.960464477539063e-08
+        ],
+        "transverse_distance_before_m": 0.05345791578292848,
+        "transverse_distance_after_m": 0.05343192815780639
+      }
+    },
+    "minimum_clearance_m": 0.0018682710962720228,
+    "action24": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -0.30000000000000004,
+      -4.046542619314187e-17,
+      0.0,
+      -0.30000000000000004,
+      -3.894031670866111e-17,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "measured_radius_m": 0.0044999998062849045,
+    "grasp_qualified": false,
+    "teacher_admission": false,
+    "evidence_root": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/wire-live-palm-approach-v1/native-run-v1",
+    "post_run_audit_sha256": "42ca100c7105952b5d4f1c81726638b85f80d1207f1e05121de90c3401c1c649",
+    "command": [
+      "bash",
+      "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/scripts/python.sh",
+      "-B",
+      "-m",
+      "scripts.verify_dh116_wire_live_palm_approach",
+      "--output",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/wire-live-palm-approach-v1/native-run-v1/native",
+      "--plan",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/wire-live-palm-approach-v1/native-run-v1/plan.json",
+      "--task-config",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/fresh-supported-tripod-reset-native-v2/task.json",
+      "--task-sha256",
+      "6a635f5fd9d7d0415975cfa6de7192a3d632dc5eb5f374ac2634f3fca68898b9",
+      "--rays",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2203-power-palm-rays-enabled-native/native/palm_rays.json",
+      "--left-bake",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2184-left-power-sdf-native/bake",
+      "--right-bake",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2200-right-power-sdf-native/bake",
+      "--proximal-capture",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2312-power-proximal-tensor-ray-native",
+      "--proximal-bake",
+      "/mnt/mydisk/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2314-power-proximal-sdf-half-mm/bake",
+      "--catalog",
+      "/mnt/mydisk/xk/projects/dh116-teacher-display-owner-20261117/configs/dh116_training/supported_wire_generalization_v1.json",
+      "--catalog-sha256",
+      "c68729f3e114e15f3e9efddc262877c6c14b1ecc062fcf34c741505654b47fee",
+      "--variant",
+      "r45-l450",
+      "--left-material-id",
+      "35",
+      "--right-material-id",
+      "5",
+      "--approved-frozen-sha256",
+      "217fd946b2b17f64169598ab9eed4ec21728d1bd358d7ec92740a88f7fdeaed0"
+    ]
+  },
   "teacher_admission": false,
   "grasp_qualified": false,
   "generalization_qualified": false,
-  "next": "Close with per-pad force feedback and independently verify supported grasp progression for each style.",
+  "next": "Align to each measured finger contact station, then close against the two live pad force sets.",
   "antigravity": {
     "round": "Wire-Grip-Refinement R3",
     "worktree_head": "a1d17dbdbeed7c9c9637801ec7560dc9840e84a1",
@@ -94,5 +197,142 @@
       "Float64 pose and clearance for existing wrist projection",
       "terminal clearance recalculated with the terminal rod tick"
     ]
+  },
+  "diagnostic_contact_anchors": {
+    "survived_bilateral_ticks": [
+      {
+        "physics_step": 2066,
+        "hands": {
+          "left": {
+            "nodes_per_pad": {
+              "finger14_link": {
+                "35": 12
+              },
+              "finger23_link": {
+                "35": 12
+              },
+              "finger33_link": {
+                "33": 12
+              }
+            },
+            "nearest_material_node": 31,
+            "station_local_xyz_m": [
+              0.014322645791989094,
+              -0.059382732035948196,
+              0.11393520016501486
+            ]
+          },
+          "right": {
+            "nodes_per_pad": {
+              "finger14_link": {
+                "3": 12
+              },
+              "finger23_link": {
+                "2": 12
+              },
+              "finger33_link": {
+                "4": 12
+              }
+            },
+            "nearest_material_node": 9,
+            "station_local_xyz_m": [
+              -0.02593863906451173,
+              -0.07930338533277545,
+              0.07641694121894604
+            ]
+          }
+        }
+      },
+      {
+        "physics_step": 2094,
+        "hands": {
+          "left": {
+            "nodes_per_pad": {
+              "finger14_link": {
+                "35": 12
+              },
+              "finger23_link": {
+                "35": 12
+              },
+              "finger33_link": {
+                "33": 12
+              }
+            },
+            "nearest_material_node": 31,
+            "station_local_xyz_m": [
+              0.014283837759996861,
+              -0.05938996052226471,
+              0.11394980180972501
+            ]
+          },
+          "right": {
+            "nodes_per_pad": {
+              "finger14_link": {
+                "3": 12
+              },
+              "finger23_link": {
+                "2": 12
+              },
+              "finger33_link": {
+                "4": 12
+              }
+            },
+            "nearest_material_node": 9,
+            "station_local_xyz_m": [
+              -0.025936705526941363,
+              -0.07932850092721547,
+              0.07643218070999853
+            ]
+          }
+        }
+      }
+    ],
+    "stable_reference": false,
+    "read_only": true,
+    "archive": "nominal10mm_tripod_single_wrist_replay",
+    "result_sha256": "e151e55ba9844563038d225be747bb49bfb75220e2b5a690afb0e266ef38cf39"
+  },
+  "anchor_geometry_cpu": {
+    "candidates": [
+      {
+        "anchors": {
+          "left": 35,
+          "right": 5
+        },
+        "shape_count": 44,
+        "table_top_m": 0.3,
+        "min_world_z_m": 0.34603786336844694,
+        "support_gap_m": 0.0025134351989628094,
+        "min_rod_gap_m": 0.0017474172726677237
+      },
+      {
+        "anchors": {
+          "left": 35,
+          "right": 3
+        },
+        "shape_count": 44,
+        "table_top_m": 0.3,
+        "min_world_z_m": 0.34603786336844694,
+        "support_gap_m": 0.0036877213640954705,
+        "min_rod_gap_m": 0.0017474172726677237
+      },
+      {
+        "anchors": {
+          "left": 34,
+          "right": 3
+        },
+        "shape_count": 44,
+        "table_top_m": 0.3,
+        "min_world_z_m": 0.34603786336844694,
+        "support_gap_m": 0.0036877213640954705,
+        "min_rod_gap_m": 0.0017474172726676196
+      }
+    ],
+    "selected_next_diagnostic": {
+      "left": 35,
+      "right": 3
+    },
+    "evidence_sha256": "1c466c531cdff28345191b471ffaf9d461ffb91fe5f091d8885687711e3be585",
+    "scope": "CPU proposal, no native Reset or grasp"
   }
 }

@@ -50303,9 +50303,14 @@
       "readiness": "docs/contracts/dh116_teacher_wire_live_palm_approach_v1.json",
       "last_result": {
         "cpu_passed": 94,
-        "native_status": "pending",
+        "native_status": "passed_one_precontact_pulse",
         "grasp_qualified": false,
-        "teacher_admission": false
+        "teacher_admission": false,
+        "actual_control_steps": 1,
+        "sdk_steps": 18,
+        "solver_substeps": 192,
+        "outer_sha256": "b9dabfd4749575c23b0ea92777ddddfada6ac88c9cd71a097e03a91aa3bd35c4",
+        "ppo_updates": 0
       }
     }
   },

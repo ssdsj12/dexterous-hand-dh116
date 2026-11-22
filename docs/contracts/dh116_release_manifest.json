@@ -33749,6 +33749,38 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-live-palm-approach",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-live-palm-approach.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_live_palm_approach_v1.json",
+      "status": "native_pose_feedback_pulse_verified",
+      "cpu_tests": {
+        "passed": 94,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "sdk_steps": 18,
+      "policy_queries": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "27117dc6fb1b0eca29bf7482dad6da901e3b69a7",
+        "source_tree": "f8f30ab7c463281d459e5c5a21d8f74c6a97c517",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "publication_registry_tests": {
+        "passed": 64,
+        "failed": 0,
+        "seconds": 18.16,
+        "log_sha256": "ff9d73d169c4382d1d580f14604e5e1b09a6eda0a7d24b44b64787b9e27bcd57"
+      }
     }
   ]
 }
