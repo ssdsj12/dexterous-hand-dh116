@@ -50081,6 +50081,34 @@
         "ppo_updates": 0,
         "grasp_qualified": false
       }
+    },
+    "teacher.lift-diagnostic-v2": {
+      "title": "Measure prelift progression and settle Lift reward through the original PPO Collector",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-lift-observation-v2"
+      ],
+      "tests": [
+        "tests/test_teacher_lift_progress.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_native_teacher_contact_sources.py",
+        "tests/test_native_teacher_tripod_contact_frozen.py",
+        "tests/test_native_teacher_contact_reward.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_lift_diagnostic_v2.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-lift-diagnostic-v2.md",
+      "last_result": {
+        "passed": 96,
+        "failed": 0,
+        "cpu_fixture_ppo_updates": 1,
+        "archived_physics_rows": 2054,
+        "native_ppo_updates": 0,
+        "native_runs": 0,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

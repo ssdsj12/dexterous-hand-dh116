@@ -95,8 +95,14 @@ class NativeTeacherCollector:
     def __init__(self,owner,trainer,reward,live,*,previous=None):
         from .tabletop_training_reward import TrainingReward
         from .tabletop_native_teacher_model import NativeContextTeacher
-        if type(trainer) is not DeformablePPOTrainer or type(reward) is not TrainingReward:
+        lift_diagnostic = False
+        if type(reward) is not TrainingReward:
+            from .tabletop_teacher_lift_reward import SupportedLiftDiagnosticReward
+            lift_diagnostic = type(reward) is SupportedLiftDiagnosticReward
+        if type(trainer) is not DeformablePPOTrainer or not (type(reward) is TrainingReward or lift_diagnostic):
             raise ValueError("original PPO trainer and loaded TrainingReward required")
+        if lift_diagnostic and owner.sources.scope != "cpu_fixture":
+            raise ValueError("Lift diagnostic reward needs its own registered native worker contract")
         if not isinstance(trainer.model,NativeContextTeacher) or trainer.num_envs != 1:
             raise ValueError("independent single-environment NativeContextTeacher required")
         if previous is not None:
@@ -150,7 +156,10 @@ class NativeTeacherCollector:
                     raise RuntimeError("physical source outside pending window")
                 self._guard_results.append(row["exchange"]["guard_failure"])
                 endpoint=self.sources.observe(row)
-                self.reward.observe(endpoint)
+                if lift_diagnostic:
+                    self.reward.observe_recorded_event(row, endpoint)
+                else:
+                    self.reward.observe(endpoint)
                 if self.reward._terminal:
                     self._terminal="reward:"+"|".join(self.reward._reasons)
             except BaseException:

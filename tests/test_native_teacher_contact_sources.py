@@ -50,7 +50,7 @@ def test_priming_event_readback_is_owned_and_detects_internal_evidence_mutation(
         _=h.priming_event
 
 
-def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_prime_parameter=False,controls=1):
+def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_prime_parameter=False,controls=1,lift_diagnostic=False):
     m=source_module()
     from go2_pvcnn.control.dh116.tabletop_deformable_rod_boundary import RodBoundaryState
     from go2_pvcnn.control.dh116.tabletop_native_teacher_model import NativeContextTeacher
@@ -141,11 +141,18 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
 
     class Geometry:
         def capture(self,row,**kwargs):
-            return dict(raw=dict(identity={k:row["rod"][k] for k in ("run_uuid","env_id","episode_uid",
-                "reset_id","rod_uid","physics_step","rod_tick","timestamp_s","solver_time_s")}),
+            raw = dict(identity={k:row["rod"][k] for k in ("run_uuid","env_id","episode_uid",
+                "reset_id","rod_uid","physics_step","rod_tick","timestamp_s","solver_time_s")})
+            if lift_diagnostic:
+                raw["rod_nodes_m"] = np.asarray(row["rod"]["node_positions"])[0].copy()
+                raw["hands"] = {
+                    side: dict(body_names=["base_link"],
+                        link_poses_xyzw=np.array([[[.43, y, .40, 0., 0., 0., 1.]]]))
+                    for side, y in (("left", .18), ("right", -.18))}
+            return dict(raw=raw,
                 source_complete=True,failure_reasons=[],source_errors=[],terminal_reason=None)
         def validate(self,packet,row):
-            assert packet==self.capture(row)
+            assert _digest(packet) == _digest(self.capture(row))
             return deepcopy(packet)
 
     def configure(self,own,con,scope):
@@ -213,7 +220,16 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
     model=NativeContextTeacher(config,backend_profile=profile,context_mode=PROFILE)
     trainer=DeformablePPOTrainer(model,PPOConfig(gamma=.995,epochs=1,minibatches=1,lr=.0001),
         rollout_steps=controls,num_envs=1)
-    reward=TrainingReward(reward_config,contact_owner=owner.context)
+    if lift_diagnostic:
+        name = "go2_pvcnn.control.dh116.tabletop_teacher_lift_reward"
+        assert importlib.util.find_spec(name) is not None, "Lift diagnostic reward is missing"
+        from go2_pvcnn.control.dh116.tabletop_teacher_lift_reward import SupportedLiftDiagnosticReward
+        from go2_pvcnn.control.dh116.tabletop_supported_lift_observation import FixedLiftReference
+        reference = FixedLiftReference.from_rod_reset(reset["reset"]["rod_reset"], radius_m=.005, table_top_m=.3)
+        reward = SupportedLiftDiagnosticReward(reward_config, contact_owner=owner.context,
+            reference=reference, priming_event=history.priming_event, prelift_stable_s=1/480)
+    else:
+        reward=TrainingReward(reward_config,contact_owner=owner.context)
     collector=NativeTeacherCollector(owner,trainer,reward,SimpleNamespace())
     return collector,c,runtime,rows
 
@@ -362,3 +378,25 @@ def test_last_substep_table_failure_cannot_be_forged_as_live_bootstrapped_window
 def test_priming_parameter_source_cannot_differ_from_recorded_getter(monkeypatch,tmp_path,backend_profile):
     with pytest.raises((ValueError,RuntimeError),match="parameter"):
         arrange(monkeypatch,tmp_path,backend_profile,bad_prime_parameter=True)
+
+def test_original_collector_consumes_measured_lift_diagnostic_reward(monkeypatch, tmp_path, backend_profile):
+    collector, fixture, _, _ = arrange(monkeypatch, tmp_path, backend_profile, lift_diagnostic=True)
+    original_step = fixture.rope.step_free
+
+    def lifted_fixture_step(dt, substeps):
+        original_step(dt, substeps)
+        if fixture.sim.current_time_step_index == 8:
+            fixture.rope.nodes[..., 2] += .015
+
+    fixture.rope.step_free = lifted_fixture_step
+    packet = collector.collect()
+    assert packet.profile == "supported_lift_diagnostic_v2"
+    assert packet.post_context["lift_phase"] == "Lift"
+    assert packet.terms["lift"]["contribution"] == pytest.approx(2., abs=1e-5)
+    assert packet.reward == pytest.approx(.995 * packet.phi_post_raw - packet.phi_pre - packet.integrated_cost)
+    assert packet.event == 0 and not packet.terminated
+    assert packet.post_context["hold_s"] is None
+    assert packet.post_context["lift_shaping_delta"] == pytest.approx(1.99, abs=1e-5)
+    assert len(collector.trainer.rollout) == 1
+    metrics = collector.trainer.update()
+    assert metrics["minibatch_updates"] == 1

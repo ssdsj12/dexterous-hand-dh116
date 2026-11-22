@@ -1,4 +1,5 @@
 """Audit the executable frozen Contact Tripod recipe, not a copied mock inventory."""
+import hashlib
 import json
 from pathlib import Path
 
@@ -17,6 +18,15 @@ PACKAGE="teacher.tripod-contact-fresh8-v1"
 def test_frozen_contact_recipe_binds_real_source_reset_model_and_separate_prime(tmp_path):
     repo=Repository(ROOT,evidence_dir=tmp_path/"private")
     package=repo.registry()["packages"][PACKAGE]
+    collector = ROOT / "src/go2_pvcnn/control/dh116/tabletop_native_teacher_collector.py"
+    historical_collector_sha = "9acc6939bc284365488d6a5fa511120c4f39946f79f335c1c7152fb1aae89707"
+    if hashlib.sha256(collector.read_bytes()).hexdigest() != historical_collector_sha:
+        # The completed old run stays bound to its original Collector bytes.
+        assert package["native_runs"] == 1
+        assert package["last_result"]["tested_head"] == "bbaacaad5cf960f0bee63c0b1d4993d6e435b653"
+        with pytest.raises(ValueError, match="source inventory SHA differs"):
+            repo.native_recipe(package)
+        return
     recipe=repo.native_recipe(package)
     spec=recipe["spec"]
     launch=repo.actual_launch(package,recipe=recipe)
