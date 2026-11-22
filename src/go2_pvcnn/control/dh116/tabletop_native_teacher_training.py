@@ -43,6 +43,10 @@ def run_updates(collector, *, additional_updates=1, factories=None):
             tr._native_completed_update=None
             while not tr.rollout.full:
                 if collector.episode_done:
+                    # Session budget survives Reset; the old episode boundary does not.
+                    runtime=getattr(getattr(collector.owner,'contract',None),'runtime',None)
+                    if runtime is not None and runtime.remaining_steps()<8:
+                        raise TrainingStopped('budget_exhausted_before_complete_window')
                     if factories is None:raise TrainingStopped('fresh_verified_reset_factories_required')
                     collector=collector.restart_episode(factories)
                 if collector.collect() is None:raise TrainingStopped('budget_exhausted_before_complete_window')

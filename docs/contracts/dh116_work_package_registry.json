@@ -49009,18 +49009,34 @@
       "evidence_scope": "tripod_actual_fresh_smoke8_v10",
       "command_spec": "configs/dh116_execution/tripod-actual-smoke8-core-v10.json",
       "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Frozen one-shot diagnostic; requires exact current native batch and live resource reservation; no grasp qualification.",
+      "blocker_kind": "failed_native_budget",
+      "reason": "external wall truncation before full rollout; subsequent factory-required reason is secondary",
       "dependencies": [
         "teacher.tripod-fresh-reset-native-validation",
         "teacher.native-cpu-resource-recipe"
       ],
       "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-smoke8-native-v10.md",
       "readiness": "docs/contracts/dh116_teacher_tripod_smoke8_native_v10.json",
-      "native_runs": 0,
+      "native_runs": 1,
       "actual_launch": {
         "path": "configs/dh116_execution/tripod-actual-smoke8-launch-v10.json",
         "sha256": "46b30fc3e706d947e70f1ec08f878448f5c68050a2c8de0ce4dbaee7e5abf215"
+      },
+      "last_result": {
+        "scope": "native_bounded_failed",
+        "tested_head": "e072ca823d5d4a37b7d2e010563b129af0cdb3e5",
+        "attempt_fingerprint": "01d238dc651cc69a1cc0f32ff9b4bdb76a23578398d4e7b4a904f93db4288fbc",
+        "readback_sha256": "1350ae70e9dea385863cf2122b887990280164a01bd030f7f9d2e3a479bfe6e2",
+        "sdk_steps": 58,
+        "control_steps": 7,
+        "solver_calls": 56,
+        "internal_solver_substeps": 672,
+        "ppo_updates": 0,
+        "exit_code": 1,
+        "signal": null,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "grasp_qualified": false
       }
     },
     "teacher.native-cpu-resource-recipe": {
@@ -49050,6 +49066,32 @@
         "native_qualification": false,
         "teacher_admission": false,
         "scope": "CPU strict resource schema/fingerprint and existing bash launcher; no SDK qualification"
+      }
+    },
+    "teacher.native-terminal-budget-precedence": {
+      "title": "Distinguish exhausted session budget from expired episode before Reset",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.native-cpu-resource-recipe"
+      ],
+      "tests": [
+        "tests/test_native_teacher_training.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_actual_update.py",
+        "tests/test_native_teacher_actual_cache_lifecycle.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-native-terminal-budget-precedence.md",
+      "readiness": "docs/contracts/dh116_native_terminal_budget_precedence_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 69,
+        "cpu_failed": 0,
+        "native_runs": 0,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "scope": "CPU terminal budget and legal episode restart"
       }
     }
   },

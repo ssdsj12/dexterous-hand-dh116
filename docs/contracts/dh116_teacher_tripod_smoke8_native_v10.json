@@ -1,6 +1,6 @@
 {
   "version": "dh116-teacher-tripod-smoke8-native-v10",
-  "status": "frozen_unexecuted",
+  "status": "failed_wall_truncation",
   "identity": {
     "actual_identity": {
       "companion_sha256": "46b30fc3e706d947e70f1ec08f878448f5c68050a2c8de0ce4dbaee7e5abf215",
@@ -20,7 +20,7 @@
   "environment": {
     "DH116_NUM_THREADS": "1"
   },
-  "native_runs": 0,
+  "native_runs": 1,
   "native_ppo_updates": 0,
   "native_qualification": false,
   "teacher_admission": false,
@@ -35,5 +35,17 @@
   "full_runtime_verified": false,
   "automatic_retry": false,
   "automatic_forced_cleanup": false,
-  "launch_readiness": "finite candidate after source publication and actual current resource/authorization checks"
+  "launch_readiness": "spent_once_no_automatic_retry",
+  "observed_sdk_steps": 58,
+  "observed_control_steps": 7,
+  "observed_solver_calls": 56,
+  "observed_internal_solver_substeps": 672,
+  "tested_head": "e072ca823d5d4a37b7d2e010563b129af0cdb3e5",
+  "attempt": "attempt-tisissf2",
+  "readback_sha256": "1350ae70e9dea385863cf2122b887990280164a01bd030f7f9d2e3a479bfe6e2",
+  "actual_exit_code": 1,
+  "actual_signal": null,
+  "checkpoint_present": false,
+  "reason": "external wall truncation before full rollout; subsequent factory-required reason is secondary",
+  "failure_report": "docs/superpowers/reports/2026-11-22-native-terminal-budget-precedence.md"
 }

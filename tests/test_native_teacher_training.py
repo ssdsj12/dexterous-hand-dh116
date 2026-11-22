@@ -182,3 +182,42 @@ def test_training_preflight_names_only_missing_independent_distance_sources(gras
     assert "c06_source_bound_worker_lease_missing" in report["blocked_reasons"]
     assert report["native_execution_ready"] is False
     assert report["policy_constructed"] is False
+
+
+@pytest.mark.parametrize("provide_factories,solver_budget,expected",[
+    (False,8,"budget_exhausted_before_complete_window"),
+    (True,8,"budget_exhausted_before_complete_window"),
+    (True,64,"cpu_restart_boundary"),
+])
+def test_terminal_restart_obeys_session_budget_before_episode_end(
+        monkeypatch,tmp_path,backend_profile,provide_factories,solver_budget,expected):
+    from types import SimpleNamespace
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_session import NativeFactories,SessionBudget
+    r=runner()
+    collector,_,rod,_,sim,_=fixture(monkeypatch,tmp_path,backend_profile,
+        rollout_steps=2,cap_controls=1,physics_budget_end=10)
+    runtime=SessionBudget(dict(max_sdk_steps=solver_budget+2,max_solver_calls=solver_budget,
+        max_resets=2,max_episode_count=2,wall_timeout_s=180.))
+    # Synthetic CPU scene setup is already complete. The real existing
+    # observer charges this real SessionBudget for each delivered fixture row.
+    runtime.record_setup(SimpleNamespace(sim=sim),[
+        dict(kind="setup",sdk_step=0,sdk_time_s=0.),
+        dict(kind="setup",sdk_step=sim.current_time_step_index,sdk_time_s=sim.current_time)])
+    collector.owner.contract=SimpleNamespace(runtime=runtime)
+    calls=[]
+    def restart(*args,**kwargs):
+        calls.append("restart")
+        raise r.TrainingStopped("cpu_restart_boundary")
+    # Observe the restart boundary without building any second environment.
+    monkeypatch.setattr(collector,"restart_episode",restart)
+    factories=NativeFactories(restart,restart,restart,restart) if provide_factories else None
+    with pytest.raises(r.TrainingStopped,match=expected):
+        r.run_updates(collector,additional_updates=1,factories=factories)
+    assert calls==(["restart"] if expected=="cpu_restart_boundary" else [])
+    assert rod.rope.steps==8 and runtime.sdk_steps==10 and runtime.solver_calls==8
+    assert collector.episode_done and len(collector.trainer.rollout)==1
+    assert collector.trainer.counters["updates"]==0 and collector.trainer._pending is None
+    assert not list(tmp_path.glob("*.pt"))
+    stopped=[json.loads(line) for line in collector.journal.path.read_text().splitlines()
+             if json.loads(line)["operation"]=="training_stopped"]
+    assert stopped[-1]["payload"]["reason"]==expected
