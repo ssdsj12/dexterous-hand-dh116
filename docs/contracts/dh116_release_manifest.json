@@ -34436,6 +34436,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-preload-envelope",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-preload-envelope.md",
+      "readiness": "docs/contracts/dh116_teacher_power_preload_envelope_v1.json",
+      "status": "palm_preload_geometry_passed_distal_preload_disproved_by_original_envelopes",
+      "cpu_tests": {
+        "passed": 177,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0cc54d60da01356b12d25fa671a5a0c951a05fb1",
+        "source_tree": "2ed9a5345f091480995957c3609fac45d91a58cc",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
