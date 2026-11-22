@@ -12,7 +12,7 @@
 - [x] Extend existing real-manifest test:all26 files verify per load and verify,but large raw parsing occurs once.
 - [x] Run CPU cache,codec,Tripod manifest,source admission,current launch and Registry regression. Preserve RED/failure logs.
 - [x] Benchmark complete baseline/current derivation plus cold/hot CPU cost and RSS;reject unsupported performance claims.
-- [ ] Update readiness/report,verify528 protected files and3 historical checkpoints,commit in Ubuntu and publish same commit through Windows.
+- [x] Update readiness/report,verify528 protected files and3 historical checkpoints,commit in Ubuntu and publish same commit through Windows.
 - [ ] After demonstrated benefit,freeze a separate finite native recipe;do not refresh or rerun spent v10.
 
 Commands: /mnt/mydisk/xk/envs/dh116/bin/python -m pytest -q tests/test_native_teacher_owned_json_cache.py tests/test_native_teacher_owned_codec_parity.py tests/test_tripod_reset_manifest.py

@@ -32666,6 +32666,31 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.owned-json-decode-cache",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-owned-json-decode-cache.md",
+      "readiness": "docs/contracts/dh116_owned_json_decode_cache_v1.json",
+      "cpu_tests": {
+        "passed": 213,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "3787696d8ab9375d482c54c4a88f093a86b5c156",
+        "source_tree": "8c09d2e0d0d9d3391ba26db137bfb81906e2a4ee",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T01:26:35.427092+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
