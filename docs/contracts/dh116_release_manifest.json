@@ -33130,6 +33130,37 @@
         "verified_at_utc": "2026-11-22T08:16:52.361948+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.three-grasp-server-audit",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-three-grasp-server-audit.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_server_audit_v1.json",
+      "cpu_tests": {
+        "passed": 410,
+        "failed": 0
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "runtime_code_changed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "d76ed18c1a5b46f63f840094d690357afe7e2644",
+        "source_tree": "48432df070d1fb0064ebae6841b3a0ce6272e886",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T09:33:47.792232+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
