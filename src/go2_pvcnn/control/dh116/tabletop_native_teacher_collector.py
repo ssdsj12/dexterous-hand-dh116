@@ -101,8 +101,6 @@ class NativeTeacherCollector:
             lift_diagnostic = type(reward) is SupportedLiftDiagnosticReward
         if type(trainer) is not DeformablePPOTrainer or not (type(reward) is TrainingReward or lift_diagnostic):
             raise ValueError("original PPO trainer and loaded TrainingReward required")
-        if lift_diagnostic and owner.sources.scope != "cpu_fixture":
-            raise ValueError("Lift diagnostic reward needs its own registered native worker contract")
         if not isinstance(trainer.model,NativeContextTeacher) or trainer.num_envs != 1:
             raise ValueError("independent single-environment NativeContextTeacher required")
         if previous is not None:
@@ -132,6 +130,13 @@ class NativeTeacherCollector:
                 raise ValueError("same verified owner/model/profile/approved PPO config required")
             verify_native_teacher_identity(trainer.model.model_identity,model_contract(
                 live.model_contract.config,owner.backend_profile,live.model_contract.context_mode))
+            from .tabletop_native_teacher_lift_trial import read_lift_trial
+            trial = read_lift_trial(live.reward_contract)
+            if (lift_diagnostic != (trial is not None) or lift_diagnostic and (
+                    reward.fixed_reference is not getattr(owner, "lift_reference", None)
+                    or reward._contact_owner() is not owner.context
+                    or reward._diagnostic_sha != trial.config_sha256)):
+                raise ValueError("same live native Lift reward and pinned trial required")
             self._source_profile = owner.backend_profile
         self.journal=owner.ledger
         self._student_stereo = None

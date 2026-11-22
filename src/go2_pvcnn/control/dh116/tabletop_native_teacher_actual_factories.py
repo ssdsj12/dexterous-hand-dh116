@@ -129,6 +129,15 @@ def build_actual_factories(*, lease, episode_factory, prepare_source_pack, resum
         if contract.profile == CONTACT_PRELIFT:
             if contact_owner is not owner.context:
                 raise ValueError("same actual primed contact context required")
+            from .tabletop_native_teacher_lift_trial import read_lift_trial
+            trial = read_lift_trial(contract)
+            if trial is not None:
+                if origin is not None:
+                    raise ValueError("first native Lift trial requires a fresh policy")
+                from .tabletop_teacher_lift_reward import SupportedLiftDiagnosticReward
+                return SupportedLiftDiagnosticReward(contract, contact_owner=owner.context,
+                    reference=owner.lift_reference, priming_event=owner.history.priming_event,
+                    prelift_stable_s=trial.prelift_stable_s)
             return TrainingReward(contract,contact_owner=owner.context)
         if contact_owner is not None:
             raise ValueError("contact context is excluded from old smoke reward")

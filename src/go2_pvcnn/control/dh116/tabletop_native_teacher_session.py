@@ -130,6 +130,10 @@ def verify_static_contract(config):
     budget=validate_budget(config.preflight,project=config.project)
     path,_=_binding(config.preflight["reward_config"],config.project)
     reward=load_config(path,ppo_gamma=config.preflight["ppo"]["gamma"])
+    from .tabletop_native_teacher_lift_trial import read_lift_trial
+    if read_lift_trial(reward) is not None and (
+            config.preflight["style"] != "tripod" or config.rollout_steps != 32):
+        raise ValueError("native Tripod Lift trial requires the 32-control contact budget")
     mapping={"learning_rate":"lr","gamma":"gamma","gae_lambda":"lam","clip":"clip",
         "value":"value_coef","entropy":"entropy_coef","max_grad_norm":"max_grad_norm",
         "epochs":"epochs","minibatches":"minibatches","target_kl":"target_kl",
@@ -454,10 +458,17 @@ class NativeEpisodeOwner:
                 self.numeric_audit=deepcopy(audit)
             finally:
                 module.DualHandResetTransaction,module.FlexiblePhysicalExchange=old_reset,old_exchange
+            from .tabletop_native_teacher_lift_trial import lift_reference_from_reset, read_lift_trial
+            lift_trial = read_lift_trial(self.contract.reward_config)
+            lift_geometry = []
             for event in self._initial_geometry():
                 if event.get("kind")!="initial_geometry": raise ValueError("original same-clock geometry evidence required")
                 self.ledger.emit("initial_geometry",event);self.history.record(event)
+                if lift_trial is not None:
+                    lift_geometry.append(event)
             self.sources.after_reset(result)
+            if lift_trial is not None:
+                self.lift_reference = lift_reference_from_reset(result, lift_geometry, self.sources.parameters)
         return result
 
     def live_reset_contract(self,reset):

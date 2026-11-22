@@ -405,7 +405,8 @@ def _audit_actual_outputs(spec, output, *, repository, package, envelope, role):
         initial_policy_version=initial_version,profile=pin["profile"])
     if physical["physical_nodes"] != 41:
         raise ValueError("actual Pinch Worker requires 41 measured material nodes")
-    model_input = _audit_sealed_packs(frozen, BackendProfile.load(repository.root),
+    backend_profile = BackendProfile.load(repository.root)
+    model_input = _audit_sealed_packs(frozen, backend_profile,
         controls=pin["limits"]["controls"], seal_operation=prefix + "_update_checkpoint_sealed",grasp=pin["style"],context_mode=pin["profile"])
     result = frozen["result"]
     checkpoint_args = dict(checkpoint_bytes=frozen["checkpoint_bytes"],
@@ -417,8 +418,19 @@ def _audit_actual_outputs(spec, output, *, repository, package, envelope, role):
         checkpoint = _audit_role_checkpoint(spec, repository, context, **checkpoint_args,
             expected_origin=dict(kind="resume", checkpoint_sha256=origin["checkpoint_sha256"]),
             environment_windows=2)
+    from .tabletop_native_teacher_lift_trial import audit_recorded_lift, read_lift_trial
+    from .tabletop_native_teacher_preflight import _binding
+    from .tabletop_training_reward import load_config
+
+    reward_path, _ = _binding(config["preflight"]["reward_config"], repository.root)
+    reward_config = load_config(reward_path)
+    lift_trial = read_lift_trial(reward_config)
+    lift_audit = {}
+    if lift_trial is not None:
+        lift_audit["lift_reward_audit"] = audit_recorded_lift(
+            frozen["rows"], reward_config, lift_trial, backend_profile=backend_profile)
     return dict(artifact_sha256=frozen["artifact_sha256"], lifecycle_sha256=result["lifecycle_sha256"],
         teacher_training=result["training"], physical_evidence=physical, checkpoint_audit=checkpoint,
         input_source_audit=model_input, physical_to_model_snapshot_binding_verified=True,
         setup_evidence=setup, budget_evidence=budget, actual_setup_source_verified=True, cap_source_verified=True,
-        native_ready=False, native_qualification=False, teacher_admission=False)
+        native_ready=False, native_qualification=False, teacher_admission=False, **lift_audit)

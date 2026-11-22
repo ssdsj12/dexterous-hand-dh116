@@ -1,3 +1,5 @@
+The original native Tripod PPO worker now supports a separately configured measured Lift diagnostic with independent reward replay. 64 CPU tests passed. All 65 archived samples stayed in Close, with zero opposing bilateral load and zero off-support Lift. A current-source Reset receipt remains required. [Report](docs/superpowers/reports/2026-11-22-teacher-native-lift-worker.md)
+
 The Teacher Lift diagnostic now settles measured height through the original PPO Collector. The CPU fixture completed one update. Replaying 2,054 archived Tripod physics steps reached PreliftHold on 67 steps and Lift on zero. [Report](docs/superpowers/reports/2026-11-22-teacher-lift-diagnostic-v2.md).
 
 The flexible Teacher lift audit now uses the 41 measured rod nodes, the original Reset height and all three support loads. Replaying 256 recorded Tripod physics rows gives eight bilateral rows and zero off-support Lift rows. [Report](docs/superpowers/reports/2026-11-22-teacher-supported-lift-observation.md).

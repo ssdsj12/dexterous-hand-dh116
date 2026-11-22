@@ -39,6 +39,13 @@ class SupportedLiftDiagnosticReward(TrainingReward):
             reference, grasp=contact_owner.grasp, prelift_stable_s=prelift_stable_s)
         self._diagnostic_sha = digest({"base": self.config.config_sha256, "schema": SCHEMA,
                                       "prelift_stable_s": prelift_stable_s})
+        from .tabletop_native_teacher_lift_trial import read_lift_trial
+        trial = read_lift_trial(self.config)
+        if trial is not None:
+            if trial.prelift_stable_s != prelift_stable_s or contact_owner.grasp != "tripod":
+                raise SourceFailure("Lift reward differs from its pinned trial configuration")
+            self._diagnostic_sha = trial.config_sha256
+        self.fixed_reference = reference
         self._observe_lift(priming_event, "priming_physical")
 
     def _observe_lift(self, event, kind):
