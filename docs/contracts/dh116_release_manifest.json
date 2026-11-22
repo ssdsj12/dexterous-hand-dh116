@@ -34115,6 +34115,33 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.tripod-coupled-close",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-coupled-close.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_coupled_close_v1.json",
+      "status": "native_approach_improved_index_load_not_reached",
+      "cpu_tests": {
+        "passed": 147,
+        "failed": 0
+      },
+      "native_runs": 1,
+      "native_outer_exit_code": 0,
+      "native_outer_sha256": "8d08cb8e6f4607f6fb7f2ecbb0c84fc0eb03696e9f6c1b432f10c44d60bd6277",
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "d7cdbc9a4d1d43532a2f07db0b1d7a96a1febdf0",
+        "source_tree": "0450d620b27381b092d6400919dacad3f0a90ef5",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

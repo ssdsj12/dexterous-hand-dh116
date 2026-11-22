@@ -50574,7 +50574,10 @@
       "readiness": "docs/contracts/dh116_teacher_tripod_coupled_close_v1.json",
       "last_result": {
         "cpu_passed": 147,
-        "native_status": "pending",
+        "native_status": "native_approach_improved_index_load_not_reached",
+        "natural_exit_code": 0,
+        "combined_issued_sdk_steps": 35,
+        "index_contact_sdk": null,
         "teacher_admission": false,
         "grasp_qualified": false
       }
