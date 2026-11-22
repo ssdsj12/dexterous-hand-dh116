@@ -33194,6 +33194,48 @@
         "verified_at_utc": "2026-11-22T09:46:12.205187+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.archived-input-signal-audit",
+      "revision": "private-semantic-candidate-review-v1",
+      "branch": "11-17",
+      "status": "blocked",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-input-signal-audit.md",
+      "readiness": "docs/contracts/dh116_teacher_input_signal_audit_v1.json",
+      "cpu_tests": {
+        "passed": 49,
+        "failed": 1,
+        "scope": "prior unchanged production regression"
+      },
+      "private_candidate_tests": {
+        "passed": 50,
+        "failed": 0,
+        "warnings": 1,
+        "existing_overlap": 48,
+        "private_new_tests": 2,
+        "candidate_deployed": false
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "runtime_code_changed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "2ef174bf05c1d6d3f6a7795498ccf670c355ce86",
+        "source_tree": "ac5e11f6c79197ff73da4b527e14d044ca32210f",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T09:54:06.363725+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
