@@ -277,6 +277,9 @@ def freeze(args):
             raise ValueError("inconsistent Tripod source fingerprints")
     archived = waypoint = precontact = distal_archive = bilateral_archive = None
     seating = getattr(args, "seating_reference", None)
+    feedback = getattr(args, "bilateral_feedback", None)
+    if feedback is not None and (seating is None or getattr(args, "left_seating_reference", None) is not None):
+        raise ValueError("bilateral feedback needs its original seating anchor and replaces the left serial dose")
     left_seating = getattr(args, "left_seating_reference", None)
     if left_seating is not None and seating is None:
         raise ValueError("left stabilization requires the measured right seating sequence")
@@ -344,7 +347,13 @@ def freeze(args):
             if seating is not None:
                 from scripts.verify_dh116_supported_force_seating import load_tripod_seating
 
-                actions, seat, bound = load_tripod_seating(seating, actions, start_sdk=SDK_END)
+                if feedback is None:
+                    actions, seat, bound = load_tripod_seating(seating, actions, start_sdk=SDK_END)
+                else:
+                    from scripts.verify_dh116_supported_force_seating import load_tripod_bilateral_feedback
+
+                    actions, seat, bound = load_tripod_bilateral_feedback(
+                        seating, actions, start_sdk=SDK_END, request_path=feedback)
                 parameters["seating"] = seat
                 plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
                 if left_seating is not None:
@@ -365,6 +374,8 @@ def freeze(args):
             plan["budget"].update(mode="tripod_right_measured_distal_contact", soft_wall_seconds=420)
         if bilateral_archive is not None:
             plan["budget"].update(mode="tripod_bilateral_measured_distal_contact", soft_wall_seconds=600)
+        if feedback is not None:
+            plan["budget"]["mode"] = "tripod_bilateral_load_feedback_candidate"
     return plan, config, archived, waypoint, precontact, distal_archive, bilateral_archive
 
 
@@ -386,6 +397,8 @@ def main(argv=None):
     parser.add_argument("--retarget-screen", type=Path)
     parser.add_argument("--seating-reference", type=Path)
     parser.add_argument("--left-seating-reference", type=Path)
+    parser.add_argument("--bilateral-feedback", type=Path,
+                        help="opt-in fixed-wrist live bilateral load feedback request")
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(screen.ROOT)

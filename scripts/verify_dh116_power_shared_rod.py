@@ -427,6 +427,18 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         if distal_probe is not None and distal_probe.bilateral is not None:
             primary_seating = distal_probe.bilateral.get("seating")
         seatings = tuple(stage for stage in (primary_seating, force_seating) if stage is not None)
+        from scripts.verify_dh116_supported_force_seating import BilateralLoadFeedback
+
+        bilateral_feedback = {}
+        for stage in seatings:
+            if stage.get("variant") not in (None, "bilateral_load_feedback_v1"):
+                raise ValueError("unknown force seating variant")
+            if stage.get("variant") == "bilateral_load_feedback_v1":
+                if task != "tripod" or (stage["sdk_step"], stage["stop_sdk"]) != (
+                        stage["feedback"]["start_sdk"],
+                        stage["feedback"]["start_sdk"] + 8 * stage["feedback"]["windows"]):
+                    raise ValueError("bilateral feedback must match the frozen Tripod source and budget")
+                bilateral_feedback[stage["sdk_step"]] = BilateralLoadFeedback(**stage["feedback"])
 
         def observe(row):
             emitted = row
@@ -522,12 +534,18 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 if prior is None or prior["physics_step"] != sdk:
                     raise ValueError("force seating requires the previously completed same-SDK solver sample")
                 evidence = measure_supported_distal_contact(prior["rod"], grasp=task)
-                side = seating.get("side", "right")
-                selected, loads = select_seating_command(command, evidence, {
-                    int(slot): pad for slot, pad in seating["pad_by_slot"].items()}, side=side)
-                native.write_new(output/f"{task}_seating_command_{sdk}.json",
-                    dict(source_sdk_step=sdk, proposed_action=command.tolist(), issued_action=selected.tolist(),
-                         minimum_pad_force_n=loads, measured_hand=side, previously_qualified=evidence["per_hand"][side]["loaded"]))
+                if seating["sdk_step"] in bilateral_feedback:
+                    selected, decision = bilateral_feedback[seating["sdk_step"]].decide(evidence, sdk=sdk)
+                    native.write_new(output/f"{task}_bilateral_command_{sdk}.json",
+                        dict(decision, proposed_action=command.tolist(), issued_action=selected.tolist()))
+                else:
+                    side = seating.get("side", "right")
+                    selected, loads = select_seating_command(command, evidence, {
+                        int(slot): pad for slot, pad in seating["pad_by_slot"].items()}, side=side)
+                    native.write_new(output/f"{task}_seating_command_{sdk}.json",
+                        dict(source_sdk_step=sdk, proposed_action=command.tolist(), issued_action=selected.tolist(),
+                             minimum_pad_force_n=loads, measured_hand=side,
+                             previously_qualified=evidence["per_hand"][side]["loaded"]))
                 command = selected
             result = control.control(torch.tensor(command, dtype=torch.float64)[None], observe=observe)
             completed.append(result)
@@ -543,6 +561,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                          encode_owned(dict(start=start, end=power.clock(), result=aggregate)))
         if aggregate["termination_reason"] or aggregate["physical_samples"] != 8*len(schedule):
             raise ValueError(f"{task} controlled handoff stopped: {aggregate['termination_reason']}")
+        if any(feedback.next_sdk != feedback.stop_sdk for feedback in bilateral_feedback.values()):
+            raise ValueError("bilateral feedback windows were not completely consumed")
         return aggregate
     finally:
         sim = owners = trace = power = bindings = control = row = None

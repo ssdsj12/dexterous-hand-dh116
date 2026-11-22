@@ -4382,3 +4382,7 @@ DH116_NUM_THREADS=6 bash scripts/python.sh -m pytest -q tests/test_dh116_policy_
 - 2026-11-22: Record first aligned-wrist Tripod actual closing/contact reaction at SDK746/747; stop at SDK765 whole-envelope uncertainty, keep three-pad/Teacher admission blocked, preserve natural nonzero exit evidence.
 
 - 2026-11-22: Add bounded complete convex-group certificate fallback and explicit helper SHA in standalone902 proof; retain original geometry/threshold and diagnose actual index gap without issuing unsafe compensation.
+
+## 2026-11-22 — Bilateral load acquisition candidate
+
+Added fixed-wrist bilateral weak-pad feedback to the existing Tripod runtime, an independent opt-in config, and source-bound CPU integration coverage. Original grasp/Lift standards are unchanged; native success is pending.

@@ -1,0 +1,97 @@
+{
+  "version": "dh116-teacher-bilateral-load-feedback-v1",
+  "baseline_head": "b51608cb931658a1220738d748d25302315672d6",
+  "status": "passed_cpu_pending_native",
+  "scope": "opt_in_fixed_wrist_tripod_load_acquisition_not_learned_teacher",
+  "cpu": {
+    "passed": 115,
+    "failed": 0,
+    "seconds": 53.74,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_supported_force_seating.py",
+      "tests/test_dh116_tripod_supported_reset.py",
+      "tests/test_dh116_tripod_bilateral_distal_retarget.py",
+      "tests/test_dh116_supported_distal_transfer.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_native_teacher_contact_sources.py",
+      "tests/test_dh116_power_supported_task.py"
+    ],
+    "log_sha256": "794c10a0032bc87d1875400cb24978c3ca1517cdd7020ac06bf73783b60411f0",
+    "owner_passed": 27,
+    "owner_included_in_115": true
+  },
+  "red": {
+    "initial_failed": 10,
+    "initial_log_sha256": "16d708e84e0a285490e4c509e5ac0f6637ae0d45beb2953189c318cfda47d269",
+    "opposing_side_selection_failed": 1,
+    "opposing_side_log_sha256": "b79651d808f2278082a8d5c4f0eaeb7c67039c528af2455a3fb0575428d69969",
+    "json_roundtrip_failed": 1,
+    "json_roundtrip_log_sha256": "f491ad9576df20f521f41b4014025ee9cef527b8fd4a043cbc14503c1437deed",
+    "inconsistent_loaded_flag_failed": 1,
+    "loaded_log_sha256": "ad95c009add106f6e3ea00cd8aa62b36d4a03270a24bcdfab3974975d09e06c0",
+    "final_review_failed": 3,
+    "review_log_sha256": "db7968ccf455aa5ebd3619e27296d33b20488eb51ee89340b399d3c55d5866ce"
+  },
+  "source_sha256": {
+    "scripts/verify_dh116_supported_force_seating.py": "89702785047b9c84ef2ffc4a9a6c567d68675da3b19efbe2943ca916afcd7816",
+    "scripts/verify_dh116_power_shared_rod.py": "bca3084f67d688963348ec73efc588158d35cf65166d7525264ccf77c53d2b6c",
+    "scripts/verify_dh116_tripod_supported_reset.py": "81030bd5265d0dbd8b898d421d79619b2c4ac59a602fd2e9e9c5f134771ca271",
+    "tests/test_dh116_supported_force_seating.py": "8a169ec25f234375c9ee3f4fc6fcfe24150c799a67fc9555732f4c912a2669ff",
+    "configs/dh116_tasks/flexible_tripod_bilateral_load_feedback_v1.json": "88004469450de477c31296b3809b7a476c6503537b01a4b8ce30ebd11457b1e9"
+  },
+  "preserved": {
+    "action_size": 24,
+    "privileged_ledger_size": 371,
+    "joint_limits": true,
+    "physics": true,
+    "stereo": true,
+    "lift_m": 0.03,
+    "hold_s": 5.0,
+    "slip_m": 0.0005
+  },
+  "native": {
+    "runs": 0,
+    "planned_start_sdk": 1296,
+    "planned_feedback_control_windows": 64,
+    "planned_total_sdk_steps": 1808,
+    "planned_total_control_windows": 196,
+    "planned_solver_substeps": 21672,
+    "soft_wall_seconds": 600,
+    "ppo_updates": 0,
+    "teacher_queries": 0,
+    "model_loads": 0
+  },
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "historical_archive_repair_is_dependency": false,
+  "next": "finite real SDK1296 same-replay contact-hold comparison, then actual off-support Lift only after measured stable load",
+  "antigravity": {
+    "skill": "antigravity-desktop-review",
+    "rounds": [
+      "Teacher-GraspLift R1",
+      "R2",
+      "R3",
+      "R4"
+    ],
+    "actual_final_source_sha_verified": true,
+    "reply_evidence_sha256": "8410adcf3f6fe91f36d03effc3becf3d00e4997afab00af92e0ff8cfcca6e4c0",
+    "finding_scope": "no remaining code blocker in opt-in feedback; native grasp not validated"
+  },
+  "registry_cpu": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 15.03,
+    "log_sha256": "d6623772ee0336adef5d86e69bf21c7673d8af8f6f0af573beaa5f0bf4e3ddc9",
+    "separate_from115": true
+  },
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3
+}
