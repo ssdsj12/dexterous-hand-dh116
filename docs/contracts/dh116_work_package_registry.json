@@ -50670,6 +50670,47 @@
         "teacher_admission": false,
         "grasp_qualified": false
       }
+    },
+    "teacher.power-correct-wire-side": {
+      "title": "Verify supported Power contact and Lift use the assigned wire half",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.wire-fixed-pregrasp-native-settlement",
+        "teacher.power-supported-contact-native-result"
+      ],
+      "tests": [
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_power_end_supported_rod.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_supported_wire_specifications.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_wire_fixed_pregrasp_native_reset.py",
+        "tests/test_supported_wire_factorial_holdouts.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_supported_wire_holdout_resets.py",
+        "tests/test_supported_wire_material_variants.py",
+        "tests/test_dh116_wire_common_pregrasp.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_dh116_power_proximal_first_contact.py",
+        "tests/test_dh116_supported_force_seating.py",
+        "tests/test_teacher_lift_progress.py",
+        "tests/test_native_teacher_contact_measurement.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-correct-wire-side.md",
+      "readiness": "docs/contracts/dh116_teacher_power_correct_wire_side_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_and_archived_native_replay",
+        "cpu_passed": 172,
+        "archive_rows": 6986,
+        "teacher_admission": false,
+        "grasp_qualified": false,
+        "generalization_qualified": false
+      }
     }
   },
   "execution_target": {

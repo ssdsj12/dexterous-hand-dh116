@@ -219,18 +219,7 @@ def observe_wire_pose_and_reaction(exchange, spec, *, grasp, grasp_material_ids)
     if grasp == "power":
         contact = measure_power_contact(rod)
         hands, link_field = contact["hands"], "links"
-        y = nodes[0, :, 1]
-        if y[0] >= y[-1]:
-            raise ValueError("supported wire material orientation must run from negative to positive World Y")
-        center = (y[0] + y[-1]) / 2.
-        wrong_side = []
-        for pair in rod["rod_mesh_contact_pairs"]["pairs"]:
-            link, index = pair["mesh_name"], pair["node_index"]
-            if link in rod["mesh_bindings"]:
-                side = rod["mesh_bindings"][link]["side"]
-                sign = 1 if side == "left" else -1
-                if sign * (index - MATERIAL_NODES // 2) <= 0 or sign * (y[index] - center) <= 0:
-                    wrong_side.append(dict(link=link, node_index=index, substep=pair["substep"]))
+        wrong_side = contact["wrong_side_contacts"]
         unexpected = []
         bilateral = contact["all_substeps_power_contacts"]
     elif grasp in ("pinch", "tripod"):

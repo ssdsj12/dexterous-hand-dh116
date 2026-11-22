@@ -54,7 +54,9 @@ def test_wire_on_support_cannot_get_off_support_lift_credit():
     assert all(load > 0 for _, load in observed.peak_support_load_n)
 
 
-@pytest.mark.parametrize("kwargs", [{"missing_palm": "right.base_link"}, {"crossed": True}])
+@pytest.mark.parametrize("kwargs", [
+    {"missing_palm": "right.base_link"}, {"crossed": True}, {"crossed_link": "left.finger52_link"},
+])
 def test_power_requires_both_palms_and_correct_material_side(kwargs):
     rod = sample(**kwargs)
     fixed = reference(rod)

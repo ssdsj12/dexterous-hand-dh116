@@ -16,7 +16,6 @@ from .tabletop_power_shared_rod import END_SUPPORT_NAMES, PROXIMAL_POWER_MESH_NA
 
 _SIDES = ("left", "right")
 _SUPPORTS = ("table", *END_SUPPORT_NAMES)
-_REQUIRED_POWER = tuple(f"{side}.{link}" for side in _SIDES for link in JOINT_CONTACT_LINKS)
 _EPOCH_KEYS = IDENTITY[:5]
 
 
@@ -81,7 +80,7 @@ class SupportedLiftObservation:
     off_support_lift_m: float | None
 
 
-def _power_facts(rod, nodes):
+def _power_facts(rod):
     evidence = measure_power_contact(rod)
     coverage, opposed = [], []
     for side in _SIDES:
@@ -92,21 +91,7 @@ def _power_facts(rod, nodes):
         ) / len(JOINT_CONTACT_LINKS))
         opposed.append(all(row["loaded_opposed"] for row in rows))
 
-    # The complete Power reducer has validated these raw pair indices and mesh
-    # aliases. Apply the same physical material-half rule as Pinch and Tripod.
-    y = nodes[:, 1]
-    if y[0] >= y[-1]:
-        raise ValueError("supported rod material orientation must run from negative to positive World Y")
-    midpoint = (y[0] + y[-1]) / 2
-    wrong_side = False
-    for pair in rod["rod_mesh_contact_pairs"]["pairs"]:
-        link = pair["mesh_name"]
-        if link in _REQUIRED_POWER:
-            sign = 1 if link.startswith("left.") else -1
-            node = pair["node_index"]
-            if sign * (node - 20) <= 0 or sign * (y[node] - midpoint) <= 0:
-                wrong_side = True
-                break
+    wrong_side = bool(evidence["wrong_side_contacts"])
     if wrong_side:
         coverage, opposed = [0., 0.], [False, False]
     required = tuple((side, JOINT_CONTACT_LINKS) for side in _SIDES)
@@ -142,7 +127,7 @@ def observe_supported_lift(rod, reference, *, grasp):
         raise ValueError("complete named 17-mesh capture with table and two end supports required")
 
     nodes = _points(rod)
-    facts = _power_facts(rod, nodes) if grasp == "power" else _distal_facts(rod, grasp)
+    facts = _power_facts(rod) if grasp == "power" else _distal_facts(rod, grasp)
     required, coverage, opposed, bilateral, loads, wrong_side = facts
     required_names = {f"{side}.{link}" for side, links in required for link in links}
     additional = tuple(sorted({

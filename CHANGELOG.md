@@ -1,3 +1,5 @@
+Power contact, force feedback and Lift now share a wire-side check in the supported scene. CPU tests and historical replay passed. Native grasp qualification is pending. [Report](docs/superpowers/reports/2026-11-23-teacher-power-correct-wire-side.md)
+
 The three published common pregrasp seeds can now freeze independent native zero-action settlement recipes. CPU verification passed; native execution is pending. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-fixed-native-settlement.md)
 
 Training-only reset selection cleared the 104 fixed held-out layouts for each of Pinch, Tripod and Power. Tripod also passes CPU replay of a recorded 9 mm settlement layout. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-common-pregrasp.md)

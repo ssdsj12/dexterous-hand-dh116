@@ -91,7 +91,7 @@ def test_loaded_static_support_is_reported_separately_from_grasp(broken):
     from go2_pvcnn.control.dh116.tabletop_deformx_pair_capture import read_pair_capture
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
 
-    rod = build()
+    rod = build(supported_stations=True)
     names = (*power.POWER_MESH_NAMES, *SUPPORTS)
     old = rod["rod_mesh_contact_pairs"]["pairs"]
     indices = [[x["substep"], x["node_index"], x["mesh_index"]] for x in old]

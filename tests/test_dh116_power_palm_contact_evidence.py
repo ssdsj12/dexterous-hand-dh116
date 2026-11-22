@@ -11,7 +11,7 @@ from go2_pvcnn.control.dh116.tabletop_power_shared_rod import (
 )
 
 
-def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False, load=.1, crossed=False):
+def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False, load=.1, crossed=False, crossed_link=None, supported_stations=False):
     def stamp(name):
         return hashlib.sha256(name.encode()).hexdigest()
 
@@ -40,8 +40,8 @@ def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False,
                 direction = np.array([0., 0., 1.])
             force = load * direction
             node = slot
-            if proximal and name not in static:
-                left_half = name.startswith("left.") != crossed
+            if (proximal or supported_stations) and name not in static:
+                left_half = name.startswith("left.") != (crossed or name == crossed_link)
                 node = 33 if left_half else 7
             indices.append((step, node, slot))
             vectors.append([0., 0., 0., *direction, *force, 0., 0., 0.])
@@ -61,9 +61,10 @@ def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False,
                mesh_bindings=bindings, rod_mesh_contact_pairs=capture,
                distributed_contact=node_forces[None, :, :],
                named_wrenches=dict(zip(names, mesh)), table_wrench_world=mesh[5])
-    if proximal:
+    if proximal or supported_stations:
         rod["node_positions"] = np.stack((np.full(41, .43), np.linspace(-.25, .25, 41),
                                           np.full(41, .365)), axis=-1)[None]
+    if proximal:
         rod["external_support_wrenches_world"] = {name: mesh[names.index(name)] for name in static}
     return rod
 
@@ -173,3 +174,33 @@ def test_distal_reference_rejects_missing_or_reversed_material_geometry():
     rod["node_positions"] = nodes[:, ::-1].copy()
     with pytest.raises(ValueError, match="material orientation"):
         measure_supported_distal_contact(rod, grasp="tripod")
+
+
+def test_supported_power_distinguishes_opposing_load_from_the_assigned_wire_side():
+    matched = measure_power_contact(build(proximal=True, load=.2))
+    assert matched["all_substeps_power_contacts"]
+
+    crossed = measure_power_contact(build(proximal=True, load=.2, crossed=True))
+    assert not crossed["all_substeps_power_contacts"]
+    assert not matched["wrong_side_contacts"]
+    assert {entry["link"].split(".")[0] for entry in crossed["wrong_side_contacts"]} == {"left", "right"}
+    for hand in crossed["hands"].values():
+        assert not hand["loaded_opposed_substeps"]
+        assert hand["per_substep"][0]["palm_normal_load_n"] == pytest.approx(.2)
+        assert hand["per_substep"][0]["five_pad_normal_load_n"] == pytest.approx(1.)
+
+
+def test_supported_power_rejects_material_on_the_wrong_world_half():
+    rod = build(proximal=True, load=.2)
+    rod["node_positions"][0, 33, 1] = -.015
+    result = measure_power_contact(rod)
+    assert not result["all_substeps_power_contacts"]
+    assert not result["hands"]["left"]["loaded_opposed_substeps"]
+    assert result["hands"]["right"]["loaded_opposed_substeps"] == list(range(12))
+
+
+def test_supported_power_rejects_missing_world_nodes():
+    rod = build(proximal=True)
+    del rod["node_positions"]
+    with pytest.raises(ValueError, match="41 current world-space nodes"):
+        measure_power_contact(rod)

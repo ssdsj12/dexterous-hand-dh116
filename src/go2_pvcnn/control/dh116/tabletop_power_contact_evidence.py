@@ -89,6 +89,25 @@ def _power_pairs(rod):
     )["pairs"]
 
 
+def _supported_wire_y_split(rod):
+    nodes = np.asarray(rod.get("node_positions"), dtype=float)
+    if nodes.shape != (1, NODE_COUNT, 3) or not np.isfinite(nodes).all():
+        raise ValueError("the same-boundary 41 current world-space nodes are required")
+    y = nodes[0, :, 1]
+    if y[0] >= y[-1]:
+        raise ValueError("supported rod material orientation must run from world negative Y to positive Y")
+    return y, float((y[0] + y[-1]) / 2)
+
+
+def _wrong_wire_side(pair, link, side, y, center_y):
+    index = pair["node_index"]
+    sign = 1 if side == "left" else -1
+    if sign * (index - NODE_COUNT // 2) > 0 and sign * (y[index] - center_y) > 0:
+        return None
+    return dict(link=link, substep=pair["substep"], node_index=index,
+                node_world_y_m=float(y[index]))
+
+
 def measure_power_contact(rod):
     """Measure per-substep Power reactions without assigning grasp success."""
     try:
@@ -99,6 +118,20 @@ def measure_power_contact(rod):
     group = defaultdict(list)
     for pair in pairs:
         group[pair["substep"], pair["mesh_index"]].append(pair)
+
+    names = tuple(rod["mesh_names"])
+    wrong_side = []
+    wrong_substeps = set()
+    if names in SUPPORTED_LAYOUTS:
+        y, center_y = _supported_wire_y_split(rod)
+        for pair in pairs:
+            link = names[pair["mesh_index"]]
+            if link in rod["mesh_bindings"]:
+                side = rod["mesh_bindings"][link]["side"]
+                contact = _wrong_wire_side(pair, link, side, y, center_y)
+                if contact is not None:
+                    wrong_side.append(contact)
+                    wrong_substeps.add((side, pair["substep"]))
 
     hands = {}
     for side in ("left", "right"):
@@ -121,6 +154,7 @@ def measure_power_contact(rod):
                 all(link["normal_load_n"] > MIN_LINK_LOAD_N for link in links.values())
                 and finger_load + palm["normal_load_n"] > MIN_HAND_LOAD_N
                 and pad_opposition["effective"] and palm_cos is not None and palm_cos <= MAX_OPPOSITION_COS
+                and (side, step) not in wrong_substeps
             )
             evidence.append(dict(substep=step, links=links, palm_normal_load_n=palm["normal_load_n"],
                                  five_pad_normal_load_n=finger_load, palm_pad_cosines=opposing,
@@ -139,7 +173,6 @@ def measure_power_contact(rod):
                 table_normal_load_n=table_load, zero_table_load=max(table_load) <= TABLE_LOAD_LIMIT_N,
                 proximal_sdf_registered=False, native_qualification=False,
                 grasp_qualified=False, teacher_admission=False)
-    names = tuple(rod["mesh_names"])
     if names == PROXIMAL_POWER_MESH_NAMES:
         result["registered_proximal_links"] = [PROXIMAL_LINK]
         result["proximal_contacts"] = {}
@@ -153,6 +186,8 @@ def measure_power_contact(rod):
             slot = SUPPORTED_POWER_MESH_NAMES.index(name)
             loads[name] = [sum(float(np.linalg.norm(pair["force_on_rod_world_n"])) for pair in group[step,slot])
                            for step in range(SUBSTEPS)]
+        result["wrong_side_contacts"] = wrong_side
+        result["material_side_split_world_y_m"] = center_y
         result["external_support_force_norm_n"] = loads
         result["zero_external_support_load"] = all(max(per_step) <= TABLE_LOAD_LIMIT_N for per_step in loads.values())
     return result
@@ -174,14 +209,7 @@ def measure_supported_distal_contact(rod, *, grasp):
         pairs, substeps=SUBSTEPS, mesh_count=len(names), grasp=grasp.capitalize(),
         support_slots={name: names.index(name) for name in support_names},
     )
-    nodes = np.asarray(rod.get("node_positions"), dtype=float)
-    if nodes.shape != (1, NODE_COUNT, 3) or not np.isfinite(nodes).all():
-        raise ValueError("the same-boundary 41 current world-space nodes are required")
-    y = nodes[0, :, 1]
-    if y[0] >= y[-1]:
-        raise ValueError("supported rod material orientation must run from world negative Y to positive Y")
-    center_y = (y[0] + y[-1]) / 2
-    center_station = NODE_COUNT // 2
+    y, center_y = _supported_wire_y_split(rod)
     target_sides = {slot: side for side, hand in evidence["per_hand"].items()
                     for slot in hand["required_mesh_ids"]}
     external = {name: [0.] * SUBSTEPS for name in support_names}
@@ -194,11 +222,10 @@ def measure_supported_distal_contact(rod, *, grasp):
         elif pair["mesh_index"] not in target_sides:
             unexpected.add(name)
         else:
-            index = pair["node_index"]
             side = target_sides[pair["mesh_index"]]
-            sign = 1 if side == "left" else -1
-            if sign * (index - center_station) <= 0 or sign * (y[index] - center_y) <= 0:
-                wrong_side.append(dict(link=name, substep=step, node_index=index, node_world_y_m=float(y[index])))
+            contact = _wrong_wire_side(pair, name, side, y, center_y)
+            if contact is not None:
+                wrong_side.append(contact)
                 row = evidence["per_hand"][side]["per_substep"][step]
                 row["loaded"] = False
                 reason = "required_pad_on_wrong_wire_side"
