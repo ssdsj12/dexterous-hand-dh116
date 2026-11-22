@@ -1,3 +1,5 @@
+An opt-in evaluation catalog crosses eight unseen wire diameter, length and stiffness combinations and excludes them from the training pilot. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-factorial-holdout.md)
+
 Opt-in Tripod wrist re-seat restored native thumb load on a 9 mm wire and exited naturally. The index did not reach contact within the original control budget. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-thumb-reseat.md)
 
 The supported-wire verifier records same-clock palm geometry and masked hand reactions for wire adaptation. CPU replay verified the pre-contact endpoint of a 9 mm run. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-grasp-feedback.md)

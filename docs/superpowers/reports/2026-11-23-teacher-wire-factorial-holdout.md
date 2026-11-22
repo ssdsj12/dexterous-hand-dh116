@@ -1,0 +1,9 @@
+# Factorial held-out wire evaluation
+
+The opt-in evaluation catalog keeps all eleven original train and both original validation specimens. Eight held-out test specimens cross two diameters (9.2 and 10.5 mm), two lengths (475 and 525 mm) and two elastic modulus multipliers (0.7 and 1.3). Every diameter, length and modulus value in the test grid is absent from training. Matched pairs vary one physical factor at a time. The multipliers model simulated elastic variation and were not measured on production materials.
+
+CPU tests pass each specimen through the existing catalog and supported-rod scene builder. The tests verify 41 material nodes, rest-length geometry, support placement, solver specification SHA and refusal by the training pilot. The current scene builder moves both end supports to the wire ends and re-anchors the original starting wrists to keep the same material stations. A future policy evaluation must additionally vary relative initial conditions independently. That is required to measure posture adaptation beyond nominal seed placement.
+
+For each grasp, evaluate one frozen checkpoint and one frozen controller across all test cells. Use at least 100 independent initial conditions per grasp overall, stratified across the cells, and report the denominator and success per cell as well as the minimum cell success. Record palm-local wire position and tangent, each pad and palm reaction, issued corrections and support load. Report only lift measured after support separation, a hold of at least 5 s and slip of at most 0.5 mm. The minimum lift remains 30 mm. Compare the same initial conditions with the posture branch or the force feedback branch disabled only as separate diagnostics.
+
+This package qualifies the CPU configuration. No native held-out episode, policy optimization or grasp-success data was produced.

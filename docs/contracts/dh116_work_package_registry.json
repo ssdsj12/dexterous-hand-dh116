@@ -50539,6 +50539,26 @@
         "teacher_admission": false,
         "grasp_qualified": false
       }
+    },
+    "teacher.wire-factorial-holdout": {
+      "title": "Validate independent wire diameter, length and stiffness holdouts",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-material-generalization",
+        "teacher.wire-grasp-feedback"
+      ],
+      "tests": [
+        "tests/test_supported_wire_factorial_holdouts.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-factorial-holdout.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_factorial_holdout_v1.json",
+      "last_result": {
+        "cpu_passed": 10,
+        "native_status": "heldout_native_evaluation_pending",
+        "teacher_admission": false,
+        "generalization_qualified": false
+      }
     }
   },
   "execution_target": {
