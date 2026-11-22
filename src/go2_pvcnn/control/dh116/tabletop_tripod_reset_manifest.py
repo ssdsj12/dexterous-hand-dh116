@@ -85,12 +85,18 @@ def _derive(run_dir, outer_binding, project):
                 "cleanup_stages.json","app_close_returned.json","stop_commit.json"}
     _require(required<=set(inventory), "native inventory incomplete")
     _require(all(isinstance(k,str) and Path(k).name==k for k in inventory), "native artifact path escapes run")
+    # Parse the checksum-verified bytes from this call, never a later pathname
+    # reread. Each independent manifest load still verifies the full inventory.
+    documents = {}
     for name, sha in inventory.items():
-        checked_file(run/name,sha)
+        artifact_raw = checked_file(run/name,sha)
+        if name in required and name!="stop_commit.json":
+            documents[name] = artifact_raw
+    del artifact_raw
     _require(hashlib.sha256((out/"native.log").read_bytes()).hexdigest()==outer["native_log_sha256"],
              "native log SHA differs")
     _require(all(outer[k]==v for k,v in debugger_status(out/"native.log").items()), "debugger log status differs")
-    plan = json.loads((run/"frozen_plan.json").read_bytes())
+    plan = json.loads(documents.pop("frozen_plan.json"))
     _require(plan==json.loads((out/"plan.json").read_bytes()) and digest(plan)==outer["frozen_sha256"]
              and plan["output"]==str(run) and plan["version"]=="dh116-fresh-supported-tripod-reset-capture-v1"
              and plan["style"]=="tripod", "native recipe identity differs")
@@ -111,29 +117,29 @@ def _derive(run_dir, outer_binding, project):
     for path,sha in current_pins.items():
         _require(plan["frozen_files"].get(path)==sha, "physical source absent from frozen recipe: "+path)
         checked_file(path,sha)
-    lifecycle = json.loads((run/"result.json").read_bytes())
+    lifecycle = json.loads(documents.pop("result.json"))
     _require(lifecycle["failure"] is None and lifecycle["close_mode"]=="normal"
              and lifecycle["lifetime_released_before_close"] is True
              and lifecycle["physics_steps"]==2
              and all(lifecycle[k]==0 for k in ("measurement_steps","rod_steps","ppo_updates")),
              "original Reset lifecycle failed or advanced")
-    stages = json.loads((run/"cleanup_stages.json").read_bytes())
+    stages = json.loads(documents.pop("cleanup_stages.json"))
     _require(stages["failure"] is None and all(not row["attempted"] or
         (row["returned"] is True and row["error"] is None) for row in stages["stages"].values()),
         "native cleanup stages incomplete")
-    _require(json.loads((run/"app_close_returned.json").read_bytes())["app_close_returned"] is True,
+    _require(json.loads(documents.pop("app_close_returned.json"))["app_close_returned"] is True,
              "App.close did not return normally")
-    saved = decode_owned(json.loads((run/FILES["reset_readback"]).read_bytes()))
+    saved = decode_owned(json.loads(documents.pop(FILES["reset_readback"])))
     readback = saved["readback"]
     receipt = dict(readback.pop("completed_reset_receipt"),mesh_state_readback=readback)
-    event = decode_owned(json.loads((run/"episode_reset.json").read_bytes()))
+    event = decode_owned(json.loads(documents.pop("episode_reset.json")))
     from .tabletop_mesh_reset_order import _digest
     _require(_digest(event["reset"])==_digest(receipt), "durable Reset and readback receipts differ")
     with profile_reader_scope(profile):
         validate_supported_readback(readback,reset_receipt=receipt,mesh_plan=saved["mesh_plan"])
-        audit = decode_owned(json.loads((run/FILES["numeric_reset"]).read_bytes()))
+        audit = decode_owned(json.loads(documents.pop(FILES["numeric_reset"])))
         validate_numeric_reset_audit(audit,reset_receipt=receipt)
-    common = decode_owned(json.loads((run/FILES["common"]).read_bytes()))
+    common = decode_owned(json.loads(documents.pop(FILES["common"])))
     status = validate_mounted_observation(common)
     _require(status["valid_channels"]==66 and status["unknown_channels"]==305,
              "actual common66/unknown305 contract differs")
@@ -146,7 +152,7 @@ def _derive(run_dir, outer_binding, project):
     seed,_,_,_ = prepare_initial_state(task,saved["mesh_plan"]["original_plan"]["prepared_scene"]["table"],
                                       expected_scope=TRIPOD_SCOPE)
     _require(seed==receipt["seed"], "task and native Reset seed differ")
-    geometry = decode_owned(json.loads((run/FILES["geometry"]).read_bytes()))
+    geometry = decode_owned(json.loads(documents.pop(FILES["geometry"])))
     _require([row["side"] for row in geometry]==["left","right"]
              and all(row["evidence"]["initial_geometry_passed"] is True for row in geometry),
              "independent left/right geometry required")
@@ -154,7 +160,7 @@ def _derive(run_dir, outer_binding, project):
              for group in ("source_colliders","locked_pads") for name,shape in row["evidence"][group].items()}
     _require(len(hulls)==44, "complete34 source/10 cooked shapes required")
     guard_hand_supports(hulls,task["support_scene"])
-    capture = json.loads((run/FILES["acquisition"]).read_bytes())
+    capture = json.loads(documents.pop(FILES["acquisition"]))
     _require(capture==lifecycle["acquisition"] and capture["mesh_count"]==17 and capture["pair_capacity"]==8364
              and capture["reset_seed_sha256"]==seed["sha256"]
              and capture["mesh_plan_sha256"]==saved["mesh_plan"]["sha256"],

@@ -1,0 +1,97 @@
+{
+  "version": "dh116-tripod-verified-artifact-bytes-v1",
+  "status": "cpu_passed",
+  "cpu_tests": {
+    "passed": 98,
+    "failed": 0,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_tripod_reset_manifest.py",
+      "tests/test_native_teacher_tripod_admission.py",
+      "tests/test_native_teacher_static_manifest_handoff.py",
+      "tests/test_native_teacher_tripod_frozen_worker.py",
+      "tests/test_native_teacher_actual_launch.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "a7d9ef2937f6a6e13ccee8917a9a06be0e89e6545beace4fd6caf2fac26160ae"
+  },
+  "intended_red": {
+    "failed": 1,
+    "reason": "artifact reread after SHA verification",
+    "log_sha256": "e2e3bbc9cb61b7275b907d8fc93f570e249886d76be19568a6c5b16dc5861b7a"
+  },
+  "retained_intermediate_failure": {
+    "passed": 68,
+    "failed": 1,
+    "reason": "spent v10 source closure correctly differs from current source",
+    "log_sha256": "9b8433436ac1b900dd73b77926232cea9073521a443309295358b87964cf5a36"
+  },
+  "guarantees": {
+    "native_inventory_files_per_verify": 26,
+    "consumed_json_documents": 10,
+    "parse_checksum_verified_bytes": true,
+    "every_load_and_verify_rechecks_all_inventory": true,
+    "cross_call_manifest_cache": false,
+    "atomic_multifile_snapshot": false,
+    "geometry_thresholds_changed": false,
+    "original_reset_changed": false
+  },
+  "benchmark": {
+    "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-verified-artifact-bytes-benchmark.json",
+    "sha256": "4664764c5ff9fcfaf4ec522e1b778eb6116e62303430aebf43b63086e59785bc",
+    "data": {
+      "schema": "dh116-tripod-complete-derive-verified-bytes-benchmark-v1",
+      "timings_s": {
+        "baseline": [
+          11.097624778049067,
+          8.46285727294162,
+          8.447678251191974
+        ],
+        "verified_bytes": [
+          8.412187125068158,
+          8.6717872438021,
+          8.458621090976521
+        ]
+      },
+      "median_s": {
+        "baseline": 8.46285727294162,
+        "verified_bytes": 8.458621090976521
+      },
+      "full_output_equal": true,
+      "signature": "f68160b0375443a31e169c3d9854913e397f0a6f73dc975503e9c02f81d37687",
+      "baseline_head": "a0cf38f47de0820b7a694469ddb9a906f79ab597",
+      "current_source_sha256": "6adc46e7ca39e7c1e4ae4fe404b897ed8a435939803afc97d16ded9e7fc3ad38",
+      "native_runs": 0,
+      "ppo_updates": 0,
+      "native_qualification": false
+    }
+  },
+  "parser_experiment": {
+    "production_enabled": false,
+    "single_file_benchmark_sha256": "b95b5c240d9a70f697df705bd57af1ff5d9b197a30b6442d0fe388b60b2bf553",
+    "semantic_probe_sha256": "7ad1ac19973be859a6ce63a7456d7703e143546a158dc2f5856d9af941b4f929",
+    "reason": "existing orjson is faster on this real record but differs for big integers, non-finite values and surrogates; no global parser substitution"
+  },
+  "source_sha256": "6adc46e7ca39e7c1e4ae4fe404b897ed8a435939803afc97d16ded9e7fc3ad38",
+  "tests_sha256": {
+    "tests/test_tripod_reset_manifest.py": "2df2365c1abdc00755374937273ed7a9482499b24176ac12b656de7ffbac5d94",
+    "tests/test_native_teacher_tripod_frozen_worker.py": "5e150f83c1bed691ab02a051d38e59d1480cbf1eb9994da9ffff457d571f6ce7"
+  },
+  "protected_files": 528,
+  "protected_historical_checkpoints": 3,
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "native_qualification": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "next_task": "prove any finite fast-parser eligibility against complete pinned corpus and edge cases before a distinct native recipe",
+  "registry_metadata_recheck": {
+    "passed": 60,
+    "failed": 0,
+    "overlaps_primary_regression": true,
+    "log_sha256": "9d39ba5bea5afb8eec48a2ad0d0df88db1fe60b31beeb1aadbde5e5c121bee80"
+  }
+}

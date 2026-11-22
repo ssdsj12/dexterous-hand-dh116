@@ -49093,6 +49093,35 @@
         "teacher_admission": false,
         "scope": "CPU terminal budget and legal episode restart"
       }
+    },
+    "teacher.tripod-verified-artifact-bytes": {
+      "title": "Parse same-call SHA-verified Tripod artifact bytes without skipping independent validation",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.native-terminal-budget-precedence"
+      ],
+      "tests": [
+        "tests/test_tripod_reset_manifest.py",
+        "tests/test_native_teacher_tripod_admission.py",
+        "tests/test_native_teacher_static_manifest_handoff.py",
+        "tests/test_native_teacher_tripod_frozen_worker.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-tripod-verified-artifact-bytes.md",
+      "readiness": "docs/contracts/dh116_tripod_verified_artifact_bytes_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "cpu_passed": 98,
+        "cpu_failed": 0,
+        "native_runs": 0,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "full_output_equal": true,
+        "scope": "CPU real-source complete artifact verification"
+      }
     }
   },
   "execution_target": {
