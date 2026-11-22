@@ -1,0 +1,347 @@
+{
+  "version": "dh116-teacher-power-thumb-clearance-v1",
+  "status": "both_sampled_partial_detours_clear_continuous_and_native_pending",
+  "archive": {
+    "outer_sha256": "522f0180c88583ebf4cd4be1664e41667ecd25c67e583adb675fdd92969e7e9a",
+    "support_sha256": "d88c3a281e3a9d20cdbead2a1073ebf35a3928172b91812308cc6b06052abbaf",
+    "motion_row_sha256": "618f7f52161c7d72713608cfa1138f4600569da8c3cdb91722688441e5bde093",
+    "contract_sha256": "1a52b1d13548cbda5918d75988873421e1c718d918b9023f136471031dcb22a8",
+    "config_sha256": "5c54a8f741f02d3b2cda7110acb8b92a109fe212e549d08cd9b33678c8e07df0"
+  },
+  "clock": {
+    "run_uuid": "power-supported-3bcd1a6756a94fcab74e7b47e34f59f0",
+    "env_id": 0,
+    "episode_uid": "power-supported-3bcd1a6756a94fcab74e7b47e34f59f0:0",
+    "reset_id": 1,
+    "rod_uid": "rod0",
+    "physics_step": 6504,
+    "rod_tick": 78024,
+    "timestamp_s": 13.549999999999999,
+    "solver_time_s": 13.546916961669922,
+    "clock_valid": true
+  },
+  "wire_diameter_m": 0.01,
+  "audit": {
+    "artifact_sha256": "136c94fc94dabbbcd4e8626a1a32ac6720172eb766d7760f4d72bb559bc5fec7",
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "scripts.screen_dh116_power_thumb_clearance",
+      "--palm-receipt",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2404-power-palm-witness-native/outer.json",
+      "--partial-audit",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_partial_opposition_6504_v1.json",
+      "--transport-audit",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_transported_stations_6504_audit_v1.json",
+      "--output",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_thumb_clearance_6504_v3.json"
+    ],
+    "partial_sha256": "0d3a0a2c8e5b3e48141f4fce9e3c33214c497c07883f23595dade3251fc9fa74",
+    "transport_sha256": "a20dc7ea4fa3dfad71c2b574b67137135bf851aca489d3d48976b3ad4e5159f6",
+    "hands": {
+      "left": {
+        "wrist_partner_candidates": 38,
+        "angle_pairs_per_candidate": 2604,
+        "middle_clearance_counts": {
+          "clear": 49,
+          "certified_below_limit": 615
+        },
+        "selected": {
+          "candidate_index": 1,
+          "wrist_wxyz_m": [
+            0.5374980887999375,
+            0.14941664820067455,
+            0.36347005612327465,
+            -0.31407879403373273,
+            -0.62112636977442,
+            0.22663082679082575,
+            0.6813185835255583
+          ],
+          "pair": {
+            "partner": "finger23_link",
+            "thumb_node": 37,
+            "partner_node": 36,
+            "opposition_cos": -0.7862929331571079,
+            "thumb_joints_rad": [
+              0.6632251157578453,
+              0.2563200891017914
+            ],
+            "partner_flexion_rad": 0.916297857297023
+          },
+          "middle_clearance": {
+            "lower_m": 0.0006906288725640676,
+            "upper_m": 0.0017846137374209782,
+            "required_m": 0.00025,
+            "status": "clear"
+          },
+          "stages": {
+            "thumb_first": {
+              "wrist_reseat": {
+                "samples": 17,
+                "failed": 6,
+                "first_failed": {
+                  "fraction": 0.375,
+                  "separation_y_m": 0.2321815191382457,
+                  "within_workspace": true,
+                  "check": {
+                    "open_hull_guards": {
+                      "table_m": 0.009042367860378153,
+                      "support_m": 0.012549814523872937,
+                      "thumb_clearance_m": 0.015580039444726357,
+                      "hand_y_bounds_m": [
+                        0.11161584104394862,
+                        0.22620029199481545
+                      ],
+                      "passed": true
+                    },
+                    "palm_gap_m": -0.0006954251904204012,
+                    "palm_sdf_passed": false,
+                    "limiting_rod": null,
+                    "passed": false
+                  }
+                }
+              },
+              "thumb_first": {
+                "samples": 17,
+                "failed": 0,
+                "first_failed": null
+              },
+              "two_pad_closure": {
+                "samples": 17,
+                "failed": 0,
+                "first_failed": null
+              }
+            }
+          },
+          "detour": {
+            "retreat_world_m": [
+              -0.0008703707932387981,
+              0.0001490776928188917,
+              -0.0012125306279763253
+            ],
+            "flex_exponent": 1.0,
+            "stages": {
+              "wrist_reseat": {
+                "samples": 33,
+                "failed": 0,
+                "first_failed": null
+              },
+              "thumb_first": {
+                "samples": 33,
+                "failed": 0,
+                "first_failed": null
+              },
+              "two_pad_closure": {
+                "samples": 33,
+                "failed": 0,
+                "first_failed": null
+              }
+            },
+            "sampled_route_passed": true
+          }
+        }
+      },
+      "right": {
+        "wrist_partner_candidates": 23,
+        "angle_pairs_per_candidate": 2604,
+        "middle_clearance_counts": {
+          "certified_below_limit": 542,
+          "clear": 7
+        },
+        "selected": {
+          "candidate_index": 51,
+          "wrist_wxyz_m": [
+            0.5333935990386481,
+            -0.12366824939554093,
+            0.34793239358175093,
+            0.8193440600191549,
+            0.2880879628433811,
+            -0.4885728230338691,
+            -0.08352983639870193
+          ],
+          "pair": {
+            "partner": "finger43_link",
+            "thumb_node": 4,
+            "partner_node": 3,
+            "opposition_cos": -0.43286620740863546,
+            "thumb_joints_rad": [
+              1.2217304763960306,
+              0.05901699110712441
+            ],
+            "partner_flexion_rad": 0.6941650434068356
+          },
+          "middle_clearance": {
+            "lower_m": 0.003311326349313019,
+            "upper_m": 0.0036589417996751605,
+            "required_m": 0.00025,
+            "status": "clear"
+          },
+          "stages": {
+            "thumb_abduction": {
+              "wrist_reseat": {
+                "samples": 17,
+                "failed": 0,
+                "first_failed": null
+              },
+              "thumb_abduction": {
+                "samples": 17,
+                "failed": 2,
+                "first_failed": {
+                  "fraction": 0.4375,
+                  "separation_y_m": 0.22278779046525313,
+                  "within_workspace": true,
+                  "check": {
+                    "open_hull_guards": {
+                      "table_m": 0.0275897637696097,
+                      "support_m": 0.0010174513858171898,
+                      "thumb_clearance_m": 0.015625078601761933,
+                      "hand_y_bounds_m": [
+                        -0.244480876482086,
+                        -0.10362266971315669
+                      ],
+                      "passed": false
+                    },
+                    "palm_gap_m": -9.023106784314394e-10,
+                    "palm_sdf_passed": true,
+                    "limiting_rod": null,
+                    "passed": false
+                  }
+                }
+              },
+              "two_pad_closure": {
+                "samples": 17,
+                "failed": 0,
+                "first_failed": null
+              }
+            },
+            "thumb_first": {
+              "wrist_reseat": {
+                "samples": 17,
+                "failed": 0,
+                "first_failed": null
+              },
+              "thumb_first": {
+                "samples": 17,
+                "failed": 1,
+                "first_failed": {
+                  "fraction": 0.4375,
+                  "separation_y_m": 0.22278779046525313,
+                  "within_workspace": true,
+                  "check": {
+                    "open_hull_guards": {
+                      "table_m": 0.0275897637696097,
+                      "support_m": 0.0019945588978426236,
+                      "thumb_clearance_m": 0.014174519609977898,
+                      "hand_y_bounds_m": [
+                        -0.244480876482086,
+                        -0.10362266971315669
+                      ],
+                      "passed": false
+                    },
+                    "palm_gap_m": -9.023106784314394e-10,
+                    "palm_sdf_passed": true,
+                    "limiting_rod": null,
+                    "passed": false
+                  }
+                }
+              },
+              "two_pad_closure": {
+                "samples": 17,
+                "failed": 0,
+                "first_failed": null
+              }
+            }
+          },
+          "detour": {
+            "retreat_world_m": null,
+            "flex_exponent": 2.0,
+            "stages": {
+              "wrist_reseat": {
+                "samples": 33,
+                "failed": 0,
+                "first_failed": null
+              },
+              "thumb_first": {
+                "samples": 33,
+                "failed": 0,
+                "first_failed": null
+              },
+              "two_pad_closure": {
+                "samples": 33,
+                "failed": 0,
+                "first_failed": null
+              }
+            },
+            "sampled_route_passed": true
+          }
+        }
+      }
+    }
+  },
+  "exploratory": {
+    "artifact_sha256": "5921b53b2ee811b4e5328b2d0fdda16a61ebfdb113fc0fb10ac391a18eb42139",
+    "failed_small_left_retractions_mm": [
+      0.5,
+      1.0
+    ]
+  },
+  "antigravity": {
+    "reviewed": true,
+    "joint_limits_and_local_opposition_confirmed": true
+  },
+  "acceptance": {
+    "next": "continuous_sweeps_then_staged_live_load_and_lift",
+    "lift_m": 0.03,
+    "hold_s": 5.0,
+    "slip_m": 0.0005
+  },
+  "source_sha256": {
+    "scripts/screen_dh116_power_thumb_clearance.py": "9516e4ea25cc1badbafdeac9cc7467b077ceb923cb8cf0de52edba23d7d565fa",
+    "tests/test_dh116_power_thumb_clearance.py": "318a3d7878fb5a1d99053a40be77b63d73b3022d08be49b332e5fb33a46b0214"
+  },
+  "cpu": {
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_power_partial_opposition.py",
+      "tests/test_dh116_power_partial_stage_evidence.py",
+      "tests/test_dh116_power_measured_reseat.py",
+      "tests/test_dh116_power_fixed_wrist_digits.py",
+      "tests/test_dh116_power_material_reach.py",
+      "tests/test_dh116_power_staged_palm_witness.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_dh116_power_palm_contact_evidence.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_grasp_feedback.py",
+      "tests/test_wire_fixed_pregrasp_native_reset.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_dh116_power_thumb_clearance.py",
+      "tests/test_supported_wire_material_variants.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_supported_wire_factorial_holdouts.py",
+      "tests/test_supported_wire_holdout_resets.py"
+    ],
+    "passed": 156,
+    "failed": 0,
+    "log_sha256": "4dd147c98adf5a40734bd68d39db59a108f446d6fae831d09f54cdf832823729"
+  },
+  "continuous_route_verified": false,
+  "native_runs": 0,
+  "ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "post_registry_cpu": {
+    "tests": [
+      "tests/test_dh116_work_packages.py",
+      "tests/test_dh116_power_thumb_clearance.py"
+    ],
+    "passed": 64,
+    "failed": 0,
+    "log_sha256": "a0e6670ca3f830198162fe620f333a82effc8a14ce8b35ff1d9fb56aa2b038e0"
+  }
+}
