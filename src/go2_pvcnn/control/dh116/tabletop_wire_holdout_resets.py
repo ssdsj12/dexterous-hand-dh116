@@ -5,7 +5,7 @@ import numpy as np
 
 from .tabletop_dual_hand_reset import prepare_reset_state
 from .tabletop_power_shared_rod import END_SUPPORT_NAMES, SIDES
-from .tabletop_power_supported_task import prepare_initial_state
+from .tabletop_power_supported_task import PINCH_SCOPE, POWER_SCOPE, TRIPOD_SCOPE, prepare_initial_state
 from .tabletop_supported_wire_specs import build_variant, catalog_wire_specs, digest
 
 
@@ -92,3 +92,35 @@ def prepare_holdout_variant(scene, table, baseline, *, catalog, variant_id, stat
                      for name, box in zip(END_SUPPORT_NAMES, layout["support_scene"]["supports"], strict=True)}
     return dict(variant, physical_initial_condition_sha256=physical_sha256, reset_seed=seed,
                 active=active, nodes=np.asarray(nodes, dtype=np.float32), support_poses=support_poses)
+
+
+def fixed_pregrasp_reset(packet, table):
+    """Rebuild the authored Reset for a sealed training-only pregrasp candidate."""
+    scopes = {PINCH_SCOPE: "pinch", TRIPOD_SCOPE: "tripod", POWER_SCOPE: "power"}
+    scene = packet.get("config")
+    if (packet.get("version") != "dh116-wire-common-pregrasp-v1" or packet.get("status") != "cpu_reset_candidate"
+            or not isinstance(scene, dict) or packet.get("scope") not in scopes
+            or any(packet.get(key) is not False for key in
+                   ("native_reset_verified", "approach_verified", "grasp_qualified"))):
+        raise ValueError("sealed unqualified fixed pregrasp candidate required")
+    scope = packet["scope"]
+    seed, active, _, _ = prepare_initial_state(scene, table, expected_scope=scope)
+    if seed["sha256"] != packet.get("reset_seed_sha256"):
+        raise ValueError("fixed pregrasp CPU reset seed differs")
+    return scopes[scope], scene, seed, active
+
+
+def prepare_fixed_pregrasp_variant(packet, table, baseline, *, radius_m, length_m, stations,
+                                   variant_id, elastic_modulus_scale=1.):
+    """Resize only the wire and supports while retaining the exact authored hand seed."""
+    grasp, scene, seed, active = fixed_pregrasp_reset(packet, table)
+    variant = build_variant(scene, baseline, radius_m=radius_m, length_m=length_m,
+                            elastic_modulus_scale=elastic_modulus_scale, grasp_material_ids=stations)
+    if packet["training_spec_sha256"].get(variant_id) != variant["spec_sha256"]:
+        raise ValueError("fixed pregrasp requires the same named training wire specification")
+    nodes = place_fixed_wrist_variant(variant, scene, table, (0., 0., 0.))
+    support_poses = {
+        name: (np.asarray(box["center_m"]), np.array([0., 0., 0., 1.]))
+        for name, box in zip(END_SUPPORT_NAMES, variant["scene"]["support_scene"]["supports"], strict=True)
+    }
+    return seed, active, np.asarray(nodes, dtype=np.float32), support_poses, dict(variant, grasp=grasp)

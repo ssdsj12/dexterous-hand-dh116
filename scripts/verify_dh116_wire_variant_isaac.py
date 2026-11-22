@@ -17,6 +17,8 @@ from scripts import record_dh116_tripod_supported_reset as original
 
 ROOT, native, lifecycle = original.ROOT, original.native, original.lifecycle
 VERSION = "dh116-wire-variant-isaac-settle-v1"
+FIXED_QUIET_VERSION = "dh116-wire-fixed-pregrasp-quiet-v1"
+PREGRASP_READINESS = ROOT / "docs/contracts/dh116_teacher_wire_common_pregrasp_v1.json"
 SDK_END = 10
 QUIET_SAMPLES = 48
 MAX_SETTLEMENT_SDK = 2402
@@ -141,10 +143,14 @@ def _choice(catalog, candidate_id):
 def freeze(args):
     from go2_pvcnn.control.dh116.tabletop_dual_hand_scene_preparation import prepare_scene
 
+    fixed = getattr(args, "fixed_pregrasp", False)
+    quiet = getattr(args, "quiet_settlement_sdk", None)
+    if fixed and quiet is None:
+        raise ValueError("fixed pregrasp requires an explicit quiet settlement budget")
     extra = {name: getattr(args, name) for name in
              ("rays", "left_bake", "right_bake", "proximal_capture", "proximal_bake")}
     plan = original.freeze_plan(args.output, task_config=args.task_config,
-                                task_config_sha256=args.task_sha256, extra_sources=extra)
+                                task_config_sha256=args.task_sha256, extra_sources=extra, fixed_pregrasp=fixed)
     catalog = json.loads(checked_file(args.catalog, args.catalog_sha256))
     scene = json.loads(checked_file(args.task_config, args.task_sha256))
     rod, case = _choice(catalog, args.variant)
@@ -152,7 +158,20 @@ def freeze(args):
                    stations=dict(left=args.left_material_id, right=args.right_material_id))
     if "elastic_modulus_scale" in case:
         options["elastic_modulus_scale"] = case["elastic_modulus_scale"]
-    seed, _, _, _, variant = prepare_variant(scene, prepare_scene(ROOT)["table"], rod, **options)
+    table = prepare_scene(ROOT)["table"]
+    if fixed:
+        from go2_pvcnn.control.dh116.tabletop_wire_holdout_resets import prepare_fixed_pregrasp_variant
+
+        readiness_sha256 = native.sha(PREGRASP_READINESS)
+        readiness = json.loads(checked_file(PREGRASP_READINESS, readiness_sha256))
+        evidence = readiness["scenarios"][plan["style"]]
+        if evidence["selection_sha256"] != args.task_sha256 or evidence["status"] != "cpu_reset_candidate":
+            raise ValueError("fixed pregrasp candidate differs from published CPU reset evidence")
+        options["variant_id"] = args.variant
+        seed, _, _, _, variant = prepare_fixed_pregrasp_variant(scene, table, rod, **options)
+        plan["fixed_pregrasp"] = dict(readiness_sha256=readiness_sha256)
+    else:
+        seed, _, _, _, variant = prepare_variant(scene, table, rod, **options)
     if variant["spec_sha256"] != case["spec_sha256"]:
         raise ValueError("scene and catalog wire specification differ")
     plan.update(version=VERSION, variant_id=args.variant, spec_sha256=case["spec_sha256"],
@@ -160,11 +179,16 @@ def freeze(args):
                 preserved_scope="resized supported Tripod Reset2 and eight stationary physical exchanges")
     plan["budget"].update(mode="resized_tripod_supported_settle", sdk_steps=SDK_END,
                           solver_steps=(SDK_END-2)*12, soft_wall_seconds=180)
-    quiet = getattr(args, "quiet_settlement_sdk", None)
     sources = SOURCE_FILES
     if quiet is not None:
         variant_settlement_budget(plan, quiet)
         sources += ("scripts/prepare_dh116_tripod_owned_approach.py",)
+    if fixed:
+        plan.update(version=FIXED_QUIET_VERSION,
+                    preserved_scope=f"{plan['style']} fixed pregrasp Reset and zero-action settlement")
+        plan["budget"]["mode"] = "fixed_pregrasp_quiet_settle"
+        sources += (str(PREGRASP_READINESS.relative_to(ROOT)),
+                    "src/go2_pvcnn/control/dh116/tabletop_wire_holdout_resets.py")
     for path in (args.catalog, Path(__file__), *(ROOT / name for name in sources)):
         if path.is_symlink() or not path.is_file():
             raise ValueError("regular immutable source required: " + str(path))
@@ -184,13 +208,23 @@ def acquire(sim, owners, trace, output, *, plan):
     from scripts import verify_dh116_power_shared_rod as shared
 
     runtime = None
+    task = plan["style"]
+    fixed = plan.get("version") == FIXED_QUIET_VERSION
     sdk_end = plan.get("quiet_settlement_sdk", SDK_END)
     try:
         profile = BackendProfile.load()
         scene = json.loads(checked_file(plan["task_config"]["path"], plan["task_config"]["sha256"]))
         cfg_path = ROOT / BASE_ROD
         rod = json.loads(checked_file(cfg_path, plan["frozen_files"][str(cfg_path)]))["rod"]
-        _, _, _, _, variant = prepare_variant(scene, prepare_scene(ROOT)["table"], rod, **plan["variant_options"])
+        table = prepare_scene(ROOT)["table"]
+        if fixed:
+            from go2_pvcnn.control.dh116.tabletop_wire_holdout_resets import prepare_fixed_pregrasp_variant
+
+            seed, _, _, _, variant = prepare_fixed_pregrasp_variant(scene, table, rod, **plan["variant_options"])
+            if variant["grasp"] != task or seed["sha256"] != plan["reset_seed_sha256"]:
+                raise ValueError("fixed pregrasp reset identity differs")
+        else:
+            _, _, _, _, variant = prepare_variant(scene, table, rod, **plan["variant_options"])
         spec = dict(rod=variant["rod"], length_m=variant["length_m"])
         if variant["spec_sha256"] != plan["spec_sha256"]:
             raise ValueError("native selected wire specification differs")
@@ -202,7 +236,7 @@ def acquire(sim, owners, trace, output, *, plan):
                 setup, supports = acquire_variant_reset(
                     sim, owners, trace, output, project=ROOT, profile=profile, config=scene,
                     sdk_end=sdk_end, variant_options=plan["variant_options"],
-                    expected_seed_sha256=plan["reset_seed_sha256"])
+                    expected_seed_sha256=plan["reset_seed_sha256"], fixed_pregrasp=fixed, task=task)
                 original_runtime = owners.resources["runtime"]
                 raw = original_runtime.rope.parameter_snapshot()
                 getter = verify_wire_getter(spec, raw, solver_time_s=0.)
@@ -217,13 +251,13 @@ def acquire(sim, owners, trace, output, *, plan):
 
         result = shared.run_shared(sim, owners, trace, output, profile=profile, args=args,
                                    supported_acquire=acquire_reset, sdk_end=sdk_end,
-                                   require_no_hand_contact=True, task="tripod",
+                                   require_no_hand_contact=True, task=task,
                                    live_support_scene=variant["scene"]["support_scene"])
         if result.get("failure"):
             return result
         runtime = owners.resources["power_runtime"]
         before = runtime.clock()
-        terminal = decode_owned(json.loads((output/f"tripod_exchange_{sdk_end}.json").read_bytes()))
+        terminal = decode_owned(json.loads((output/f"{task}_exchange_{sdk_end}.json").read_bytes()))
         raw = runtime.rope.parameter_snapshot()
         live_nodes, _ = _copy_endpoint(runtime.rope, "cuda:0")
         if before != runtime.clock() or before["physics_step"] != sdk_end:
@@ -233,7 +267,7 @@ def acquire(sim, owners, trace, output, *, plan):
                         material_director=dict(identity=before, node_positions_m=live_nodes,
                                                raw_native_parameters=raw))
         observation = observe_wire_pose_and_reaction(
-            exchange, spec, grasp="tripod", grasp_material_ids=plan["variant_options"]["stations"])
+            exchange, spec, grasp=task, grasp_material_ids=plan["variant_options"]["stations"])
         if observation["spec_sha256"] != plan["spec_sha256"]:
             raise ValueError("terminal palm and reaction readback differs from declared variant")
         settlement = validate_settlement(result, rod_row)
@@ -248,7 +282,7 @@ def acquire(sim, owners, trace, output, *, plan):
         })
         if "quiet_settlement_sdk" in plan:
             measurement = [
-                decode_owned(json.loads((output/f"tripod_exchange_{sdk}.json").read_bytes()))["rod"]
+                decode_owned(json.loads((output/f"{task}_exchange_{sdk}.json").read_bytes()))["rod"]
                 for sdk in range(sdk_end-QUIET_SAMPLES+1, sdk_end+1)
             ]
             quiet = validate_quiet_settlement(measurement, variant["scene"]["rod_nodes_w_m"],
@@ -280,6 +314,7 @@ def main():
     parser.add_argument("--left-material-id", type=int, required=True)
     parser.add_argument("--right-material-id", type=int, required=True)
     parser.add_argument("--quiet-settlement-sdk", type=int)
+    parser.add_argument("--fixed-pregrasp", action="store_true")
     parser.add_argument("--approved-frozen-sha256")
     parser.add_argument("--verify-existing-plan", action="store_true")
     args = parser.parse_args()
@@ -300,6 +335,8 @@ def main():
                   for part in ("--" + name, str(getattr(args, name.replace("-", "_"))))]
     if args.quiet_settlement_sdk is not None:
         child_args.extend(("--quiet-settlement-sdk", str(args.quiet_settlement_sdk)))
+    if args.fixed_pregrasp:
+        child_args.append("--fixed-pregrasp")
     subprocess.run([sys.executable, "-B", "-m", "scripts.verify_dh116_wire_variant_isaac",
                     *child_args, "--verify-existing-plan"], check=True)
     for path, sha256 in expected["frozen_files"].items():

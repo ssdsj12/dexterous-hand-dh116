@@ -19,7 +19,7 @@ native = lifecycle.native
 VERSION = "dh116-fresh-supported-tripod-reset-capture-v1"
 
 
-def freeze_plan(output, *, task_config, task_config_sha256, extra_sources):
+def freeze_plan(output, *, task_config, task_config_sha256, extra_sources, fixed_pregrasp=False):
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
     from go2_pvcnn.control.dh116.tabletop_fresh_supported_builder import SOURCE_KEYS
     from go2_pvcnn.control.dh116.tabletop_power_supported_task import prepare_initial_state, TRIPOD_SCOPE
@@ -30,7 +30,14 @@ def freeze_plan(output, *, task_config, task_config_sha256, extra_sources):
     config = json.loads(checked_file(task,task_config_sha256))
     if not task.is_absolute() or task.resolve(strict=True) != task:
         raise ValueError("canonical task configuration path required")
-    prepare_initial_state(config,prepare_scene(ROOT)["table"],expected_scope=TRIPOD_SCOPE)
+    table = prepare_scene(ROOT)["table"]
+    grasp = "tripod"
+    if fixed_pregrasp:
+        from go2_pvcnn.control.dh116.tabletop_wire_holdout_resets import fixed_pregrasp_reset
+
+        grasp, _, _, _ = fixed_pregrasp_reset(config, table)
+    else:
+        prepare_initial_state(config,table,expected_scope=TRIPOD_SCOPE)
     if not isinstance(extra_sources,dict) or set(extra_sources) != SOURCE_KEYS:
         raise ValueError("complete independent palm and proximal sources required")
     extra = {key:Path(value) for key,value in extra_sources.items()}
@@ -46,7 +53,7 @@ def freeze_plan(output, *, task_config, task_config_sha256, extra_sources):
     inputs.extend(proximal_files)
     plan = lifecycle.freeze_plan(output)
     # The caller uses the existing lifecycle, not its historical Pinch acquisition.
-    plan.update(version=VERSION,style="tripod",mesh_count=17,pair_capacity=41*17*12,
+    plan.update(version=VERSION,style=grasp,mesh_count=17,pair_capacity=41*17*12,
         task_config=dict(path=str(task),sha256=task_config_sha256),
         extra_sources={key:str(value) for key,value in extra.items()},
         preserved_scope="fresh supported Tripod17, one measured Reset; no settlement/control/camera/PPO")
