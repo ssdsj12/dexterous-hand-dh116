@@ -33236,6 +33236,36 @@
         "verified_at_utc": "2026-11-22T09:54:06.363725+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.archive-common-source-fix",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-archive-common-source-fix.md",
+      "readiness": "docs/contracts/dh116_teacher_archive_common_source_fix_v1.json",
+      "cpu_tests": {
+        "passed": 49,
+        "failed": 0
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "40ac7841876eb75fd2f45dda810c842b004cd491",
+        "source_tree": "82473e73efedd5ae5831ea0a38dc79d7d11456cb",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T10:57:30.752023+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }

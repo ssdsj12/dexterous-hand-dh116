@@ -29,5 +29,5 @@
 
 - [x] Update report, readiness, Registry, CHANGELOG and README, explicitly retaining historical Pinch regression and native/grasp gates.
 - [x] Verify528 protected files and3 historical Checkpoints, inspect exact diff; only stage the relevant implementation/test/plan/report files.
-- [ ] Ubuntu commit; Windows imports identical commit, normal push11-17; read back remote SHA/tree/file list and Draft PR2.
-- [ ] Publish manifest attestation in a separate commit; save private recovery. No Isaac/PPO launch or new physical success claim.
+- [x] Ubuntu commit; Windows imports identical commit, normal push11-17; read back remote SHA/tree/file list and Draft PR2.
+- [x] Publish manifest attestation in a separate commit; save private recovery. No Isaac/PPO launch or new physical success claim.
