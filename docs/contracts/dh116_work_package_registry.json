@@ -50032,6 +50032,31 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.friction-profile-v2": {
+      "title": "Bind real friction observation sources for the full grasp/Lift Teacher successor",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.friction-observation-source"
+      ],
+      "tests": [
+        "tests/test_native_friction_profile.py",
+        "tests/test_native_teacher_profile.py",
+        "tests/test_native_teacher_model_v2.py",
+        "tests/test_native_teacher_context_v2.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-friction-profile.md",
+      "readiness": "docs/contracts/dh116_teacher_friction_profile_v2.json",
+      "last_result": {
+        "passed": 154,
+        "failed": 0,
+        "new_cases": 7,
+        "new_native_runs": 0,
+        "ppo_updates": 0,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
