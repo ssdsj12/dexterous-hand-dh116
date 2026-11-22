@@ -13,7 +13,7 @@
   },
   "packages": {
     "wp1.sample-retention": {
-      "title": "保留双目原色采样与候选分池",
+      "title": "\u4fdd\u7559\u53cc\u76ee\u539f\u8272\u91c7\u6837\u4e0e\u5019\u9009\u5206\u6c60",
       "executor": "prepared",
       "dependencies": [],
       "status": "passed",
@@ -49,7 +49,7 @@
       }
     },
     "wp1.rgb-native": {
-      "title": "左右原生 RGB 与实例 ID 同步资格",
+      "title": "\u5de6\u53f3\u539f\u751f RGB \u4e0e\u5b9e\u4f8b ID \u540c\u6b65\u8d44\u683c",
       "executor": "gated",
       "dependencies": [
         "wp1.sample-retention",
@@ -140,7 +140,7 @@
       }
     },
     "wp1.calibration": {
-      "title": "双目深度置信度与真实对应校准",
+      "title": "\u53cc\u76ee\u6df1\u5ea6\u7f6e\u4fe1\u5ea6\u4e0e\u771f\u5b9e\u5bf9\u5e94\u6821\u51c6",
       "executor": "gated",
       "dependencies": [
         "wp1.rgb-native",
@@ -149,10 +149,10 @@
         "wp1.segmentation-mask-policy"
       ],
       "status": "blocked",
-      "reason": "Cold8 已完成独立 RGB/Optical-Z 持出诊断，匹配尾部误差仍超限；需要独立准确率和置信度资格。"
+      "reason": "Cold8 \u5df2\u5b8c\u6210\u72ec\u7acb RGB/Optical-Z \u6301\u51fa\u8bca\u65ad\uff0c\u5339\u914d\u5c3e\u90e8\u8bef\u5dee\u4ecd\u8d85\u9650\uff1b\u9700\u8981\u72ec\u7acb\u51c6\u786e\u7387\u548c\u7f6e\u4fe1\u5ea6\u8d44\u683c\u3002"
     },
     "wp2.mode-gates": {
-      "title": "区分状态监督的离线与原生资格模式",
+      "title": "\u533a\u5206\u72b6\u6001\u76d1\u7763\u7684\u79bb\u7ebf\u4e0e\u539f\u751f\u8d44\u683c\u6a21\u5f0f",
       "executor": "prepared",
       "dependencies": [],
       "status": "passed",
@@ -187,7 +187,7 @@
       }
     },
     "wp2.qualified-labels": {
-      "title": "分阶段状态监督与不确定度资格",
+      "title": "\u5206\u9636\u6bb5\u72b6\u6001\u76d1\u7763\u4e0e\u4e0d\u786e\u5b9a\u5ea6\u8d44\u683c",
       "executor": "gated",
       "dependencies": [
         "wp2.mode-gates",
@@ -198,10 +198,10 @@
         "wp2.rigid-qualified-labels"
       ],
       "status": "blocked",
-      "reason": "缺独立几何、材料、接触与不确定度资格数据"
+      "reason": "\u7f3a\u72ec\u7acb\u51e0\u4f55\u3001\u6750\u6599\u3001\u63a5\u89e6\u4e0e\u4e0d\u786e\u5b9a\u5ea6\u8d44\u683c\u6570\u636e"
     },
     "wp3.cpu-contract": {
-      "title": "复核 Teacher 动作合同与 PPO 回滚",
+      "title": "\u590d\u6838 Teacher \u52a8\u4f5c\u5408\u540c\u4e0e PPO \u56de\u6eda",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -238,7 +238,7 @@
       }
     },
     "wp3.mpc-native": {
-      "title": "MPC 371D 和 24D 原生同步重采",
+      "title": "MPC 371D \u548c 24D \u539f\u751f\u540c\u6b65\u91cd\u91c7",
       "executor": "gated",
       "dependencies": [
         "wp3.cpu-contract",
@@ -246,7 +246,7 @@
         "wp4.shutdown-native"
       ],
       "status": "blocked",
-      "reason": "已原生完成 8 个首回合，二指 4 个任务成功。缺同一原生回合外部支撑证明和完整 371D 字段来源，正式 BC 可用轨迹 0。",
+      "reason": "\u5df2\u539f\u751f\u5b8c\u6210 8 \u4e2a\u9996\u56de\u5408\uff0c\u4e8c\u6307 4 \u4e2a\u4efb\u52a1\u6210\u529f\u3002\u7f3a\u540c\u4e00\u539f\u751f\u56de\u5408\u5916\u90e8\u652f\u6491\u8bc1\u660e\u548c\u5b8c\u6574 371D \u5b57\u6bb5\u6765\u6e90\uff0c\u6b63\u5f0f BC \u53ef\u7528\u8f68\u8ff9 0\u3002",
       "last_native_attempt": {
         "status": "completed_mpc_task_only",
         "report": "docs/superpowers/reports/2026-11-12-mpc-t5-first-episode-native-evidence.md",
@@ -257,16 +257,16 @@
       }
     },
     "wp3.actor-bc-r0": {
-      "title": "Teacher Actor-only BC 和原生 R0",
+      "title": "Teacher Actor-only BC \u548c\u539f\u751f R0",
       "executor": "gated",
       "dependencies": [
         "wp3.mpc-native"
       ],
       "status": "blocked",
-      "reason": "已准备与历史成功 T5 精确同合同的 R0 入口。待完整同步成功轨迹和 371D／原生支撑证据后启动正式 BC／R0。"
+      "reason": "\u5df2\u51c6\u5907\u4e0e\u5386\u53f2\u6210\u529f T5 \u7cbe\u786e\u540c\u5408\u540c\u7684 R0 \u5165\u53e3\u3002\u5f85\u5b8c\u6574\u540c\u6b65\u6210\u529f\u8f68\u8ff9\u548c 371D\uff0f\u539f\u751f\u652f\u6491\u8bc1\u636e\u540e\u542f\u52a8\u6b63\u5f0f BC\uff0fR0\u3002"
     },
     "wp3.frozen-eval": {
-      "title": "冻结 Teacher 的二指三指验收",
+      "title": "\u51bb\u7ed3 Teacher \u7684\u4e8c\u6307\u4e09\u6307\u9a8c\u6536",
       "executor": "gated",
       "dependencies": [
         "wp3.actor-bc-r0",
@@ -274,10 +274,10 @@
         "wp3.finger12-event-windows"
       ],
       "status": "blocked",
-      "reason": "缺合格冻结 Teacher 与独立原生初态"
+      "reason": "\u7f3a\u5408\u683c\u51bb\u7ed3 Teacher \u4e0e\u72ec\u7acb\u539f\u751f\u521d\u6001"
     },
     "wp4.cpu-contract": {
-      "title": "复核 PhysX 接触证据与退出合同",
+      "title": "\u590d\u6838 PhysX \u63a5\u89e6\u8bc1\u636e\u4e0e\u9000\u51fa\u5408\u540c",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -308,7 +308,7 @@
       }
     },
     "wp4.shutdown-native": {
-      "title": "PhysX 原生自然退出及第二实例",
+      "title": "PhysX \u539f\u751f\u81ea\u7136\u9000\u51fa\u53ca\u7b2c\u4e8c\u5b9e\u4f8b",
       "executor": "gated",
       "dependencies": [
         "wp4.cpu-contract",
@@ -415,17 +415,17 @@
       }
     },
     "wp4.contact-native": {
-      "title": "逐 contact 来源、外部支撑和滑移资格",
+      "title": "\u9010 contact \u6765\u6e90\u3001\u5916\u90e8\u652f\u6491\u548c\u6ed1\u79fb\u8d44\u683c",
       "executor": "gated",
       "dependencies": [
         "wp4.shutdown-native",
         "wp4.source-audit"
       ],
       "status": "blocked",
-      "reason": "原 GPU Tensor 对象侧、手侧和端支撑接触可读，短窗确有承托。仍缺全回合容量、未枚举 collider/摩擦、外力写入与无支撑资格。"
+      "reason": "\u539f GPU Tensor \u5bf9\u8c61\u4fa7\u3001\u624b\u4fa7\u548c\u7aef\u652f\u6491\u63a5\u89e6\u53ef\u8bfb\uff0c\u77ed\u7a97\u786e\u6709\u627f\u6258\u3002\u4ecd\u7f3a\u5168\u56de\u5408\u5bb9\u91cf\u3001\u672a\u679a\u4e3e collider/\u6469\u64e6\u3001\u5916\u529b\u5199\u5165\u4e0e\u65e0\u652f\u6491\u8d44\u683c\u3002"
     },
     "wp5.cpu-source-check": {
-      "title": "复核 DeformX CUDA 源码资格检查器",
+      "title": "\u590d\u6838 DeformX CUDA \u6e90\u7801\u8d44\u683c\u68c0\u67e5\u5668",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -454,36 +454,36 @@
       }
     },
     "wp5.source": {
-      "title": "取得 DeformX 固定源码和许可证",
+      "title": "\u53d6\u5f97 DeformX \u56fa\u5b9a\u6e90\u7801\u548c\u8bb8\u53ef\u8bc1",
       "executor": "gated",
       "dependencies": [
         "wp5.cpu-source-check",
         "wp5.source-payload"
       ],
       "status": "passed",
-      "reason": "由柔性工作包 flex.f0-source-lock 完成官方递归源码核验。"
+      "reason": "\u7531\u67d4\u6027\u5de5\u4f5c\u5305 flex.f0-source-lock \u5b8c\u6210\u5b98\u65b9\u9012\u5f52\u6e90\u7801\u6838\u9a8c\u3002"
     },
     "wp5.build": {
-      "title": "独立 Toolkit 12.8 与 SM89 编译",
+      "title": "\u72ec\u7acb Toolkit 12.8 \u4e0e SM89 \u7f16\u8bd1",
       "executor": "gated",
       "dependencies": [
         "wp5.source"
       ],
       "status": "passed",
-      "reason": "由 flex.f1-cuda-build 完成隔离 CUDA 12.8 构建及 SM89 读回。"
+      "reason": "\u7531 flex.f1-cuda-build \u5b8c\u6210\u9694\u79bb CUDA 12.8 \u6784\u5efa\u53ca SM89 \u8bfb\u56de\u3002"
     },
     "wp5.solver-native": {
-      "title": "Cosserat 静动杆和双向耦合",
+      "title": "Cosserat \u9759\u52a8\u6746\u548c\u53cc\u5411\u8026\u5408",
       "executor": "gated",
       "dependencies": [
         "wp5.build",
         "wp4.contact-native"
       ],
       "status": "blocked",
-      "reason": "CUDA 与单刚体 DeformX–PhysX 双向物理和自然退出已通过，DH116 双手同杆接触仍待资格。"
+      "reason": "CUDA \u4e0e\u5355\u521a\u4f53 DeformX\u2013PhysX \u53cc\u5411\u7269\u7406\u548c\u81ea\u7136\u9000\u51fa\u5df2\u901a\u8fc7\uff0cDH116 \u53cc\u624b\u540c\u6746\u63a5\u89e6\u4ecd\u5f85\u8d44\u683c\u3002"
     },
     "wp6.deployment-isolation": {
-      "title": "验证三种 Actor 的独立双目部署",
+      "title": "\u9a8c\u8bc1\u4e09\u79cd Actor \u7684\u72ec\u7acb\u53cc\u76ee\u90e8\u7f72",
       "executor": "prepared",
       "dependencies": [],
       "status": "passed",
@@ -516,7 +516,7 @@
       }
     },
     "wp6.cpu-admission": {
-      "title": "复核 Student 成功池与自有 rollout",
+      "title": "\u590d\u6838 Student \u6210\u529f\u6c60\u4e0e\u81ea\u6709 rollout",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -549,7 +549,7 @@
       }
     },
     "wp6.bc-dagger-ppo": {
-      "title": "刚性代理 Student 正式 BC、DAgger 与 PPO",
+      "title": "\u521a\u6027\u4ee3\u7406 Student \u6b63\u5f0f BC\u3001DAgger \u4e0e PPO",
       "executor": "gated",
       "dependencies": [
         "wp6.deployment-isolation",
@@ -558,20 +558,20 @@
         "wp2.rigid-qualified-labels"
       ],
       "status": "blocked",
-      "reason": "缺成功 Teacher 和合格感知，正式训练需批准"
+      "reason": "\u7f3a\u6210\u529f Teacher \u548c\u5408\u683c\u611f\u77e5\uff0c\u6b63\u5f0f\u8bad\u7ec3\u9700\u6279\u51c6"
     },
     "wp6.native-final": {
-      "title": "刚性代理和柔性任务独立验收",
+      "title": "\u521a\u6027\u4ee3\u7406\u548c\u67d4\u6027\u4efb\u52a1\u72ec\u7acb\u9a8c\u6536",
       "executor": "gated",
       "dependencies": [
         "wp6.rigid-native-final",
         "wp6.deformable-native-final"
       ],
       "status": "blocked",
-      "reason": "刚性代理与柔性 Cosserat 两条原生验收均待完成"
+      "reason": "\u521a\u6027\u4ee3\u7406\u4e0e\u67d4\u6027 Cosserat \u4e24\u6761\u539f\u751f\u9a8c\u6536\u5747\u5f85\u5b8c\u6210"
     },
     "bootstrap.scheduler": {
-      "title": "验证工作包调度、恢复与发布收据",
+      "title": "\u9a8c\u8bc1\u5de5\u4f5c\u5305\u8c03\u5ea6\u3001\u6062\u590d\u4e0e\u53d1\u5e03\u6536\u636e",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -599,7 +599,7 @@
       }
     },
     "wp2.ubuntu-contract-audit": {
-      "title": "Ubuntu 371D 合同字节验证",
+      "title": "Ubuntu 371D \u5408\u540c\u5b57\u8282\u9a8c\u8bc1",
       "executor": "prepared",
       "dependencies": [
         "wp2.mode-gates"
@@ -638,7 +638,7 @@
       }
     },
     "wp6.independent-proof": {
-      "title": "Student 独立动作、时钟和物理任务身份",
+      "title": "Student \u72ec\u7acb\u52a8\u4f5c\u3001\u65f6\u949f\u548c\u7269\u7406\u4efb\u52a1\u8eab\u4efd",
       "executor": "prepared",
       "dependencies": [
         "wp6.deployment-isolation"
@@ -677,7 +677,7 @@
       }
     },
     "wp1.confidence-offline": {
-      "title": "双目候选置信度分组校准审计",
+      "title": "\u53cc\u76ee\u5019\u9009\u7f6e\u4fe1\u5ea6\u5206\u7ec4\u6821\u51c6\u5ba1\u8ba1",
       "executor": "prepared",
       "dependencies": [
         "wp1.sample-retention"
@@ -711,7 +711,7 @@
       }
     },
     "wp3.mpc-sync-prepare": {
-      "title": "准备 MPC 371D 与实际 24D 同步采集",
+      "title": "\u51c6\u5907 MPC 371D \u4e0e\u5b9e\u9645 24D \u540c\u6b65\u91c7\u96c6",
       "executor": "prepared",
       "dependencies": [
         "wp3.cpu-contract"
@@ -745,7 +745,7 @@
       }
     },
     "wp4.source-audit": {
-      "title": "验证 PhysX 逐接触来源与条件方向",
+      "title": "\u9a8c\u8bc1 PhysX \u9010\u63a5\u89e6\u6765\u6e90\u4e0e\u6761\u4ef6\u65b9\u5411",
       "executor": "prepared",
       "dependencies": [
         "wp4.cpu-contract"
@@ -779,7 +779,7 @@
       }
     },
     "orchestration.offline-publication": {
-      "title": "GitHub 传输失败时保留 Ubuntu 工作包",
+      "title": "GitHub \u4f20\u8f93\u5931\u8d25\u65f6\u4fdd\u7559 Ubuntu \u5de5\u4f5c\u5305",
       "executor": "prepared",
       "dependencies": [],
       "tests": [
@@ -808,7 +808,7 @@
       }
     },
     "wp2.metric-integrity": {
-      "title": "状态监督残差及不确定度完整性",
+      "title": "\u72b6\u6001\u76d1\u7763\u6b8b\u5dee\u53ca\u4e0d\u786e\u5b9a\u5ea6\u5b8c\u6574\u6027",
       "executor": "prepared",
       "dependencies": [
         "wp2.mode-gates"
@@ -839,7 +839,7 @@
       }
     },
     "wp5.source-payload": {
-      "title": "DeformX 固定源码实际载荷预检",
+      "title": "DeformX \u56fa\u5b9a\u6e90\u7801\u5b9e\u9645\u8f7d\u8377\u9884\u68c0",
       "executor": "prepared",
       "dependencies": [
         "wp5.cpu-source-check"
@@ -870,7 +870,7 @@
       }
     },
     "wp2.rigid-qualified-labels": {
-      "title": "刚性代理状态字段与独立初态监督资格",
+      "title": "\u521a\u6027\u4ee3\u7406\u72b6\u6001\u5b57\u6bb5\u4e0e\u72ec\u7acb\u521d\u6001\u76d1\u7763\u8d44\u683c",
       "executor": "gated",
       "dependencies": [
         "wp2.mode-gates",
@@ -879,10 +879,10 @@
         "wp2.rigid-sdk-velocity"
       ],
       "status": "blocked",
-      "reason": "Cold8 各抓法 12 条 Center XYZ 与线速度标签，物体位移约 1e-8 m，完整姿态标签为 0；需要独立动态初态和逐字段资格。"
+      "reason": "Cold8 \u5404\u6293\u6cd5 12 \u6761 Center XYZ \u4e0e\u7ebf\u901f\u5ea6\u6807\u7b7e\uff0c\u7269\u4f53\u4f4d\u79fb\u7ea6 1e-8 m\uff0c\u5b8c\u6574\u59ff\u6001\u6807\u7b7e\u4e3a 0\uff1b\u9700\u8981\u72ec\u7acb\u52a8\u6001\u521d\u6001\u548c\u9010\u5b57\u6bb5\u8d44\u683c\u3002"
     },
     "wp6.rigid-native-final": {
-      "title": "刚性代理 Student 独立原生验收",
+      "title": "\u521a\u6027\u4ee3\u7406 Student \u72ec\u7acb\u539f\u751f\u9a8c\u6536",
       "executor": "gated",
       "dependencies": [
         "wp6.bc-dagger-ppo",
@@ -890,10 +890,10 @@
         "orchestration.existing-rigid-scope"
       ],
       "status": "blocked",
-      "reason": "缺合格刚性代理 Student；二指和三指各需 100 个独立初态并批准原生预算"
+      "reason": "\u7f3a\u5408\u683c\u521a\u6027\u4ee3\u7406 Student\uff1b\u4e8c\u6307\u548c\u4e09\u6307\u5404\u9700 100 \u4e2a\u72ec\u7acb\u521d\u6001\u5e76\u6279\u51c6\u539f\u751f\u9884\u7b97"
     },
     "wp6.deformable-native-final": {
-      "title": "柔性 Cosserat Student 独立原生验收",
+      "title": "\u67d4\u6027 Cosserat Student \u72ec\u7acb\u539f\u751f\u9a8c\u6536",
       "executor": "gated",
       "dependencies": [
         "wp5.solver-native",
@@ -904,7 +904,7 @@
       "reason": "Real CUDA solver and bilateral single-thumb calibration exist; qualified free-rod bimanual task, separate flexible Teacher/Student and final native evidence are still missing."
     },
     "orchestration.native-gate-split": {
-      "title": "独立排期刚性代理和柔性 Cosserat 验收",
+      "title": "\u72ec\u7acb\u6392\u671f\u521a\u6027\u4ee3\u7406\u548c\u67d4\u6027 Cosserat \u9a8c\u6536",
       "executor": "prepared",
       "dependencies": [
         "orchestration.offline-publication"
@@ -935,7 +935,7 @@
       }
     },
     "wp1.depth-auxiliary-diagnostic": {
-      "title": "双目 RGB 光轴深度辅助头",
+      "title": "\u53cc\u76ee RGB \u5149\u8f74\u6df1\u5ea6\u8f85\u52a9\u5934",
       "executor": "prepared",
       "dependencies": [
         "wp1.sample-retention"
@@ -972,7 +972,7 @@
       }
     },
     "wp1.depth-auxiliary-native": {
-      "title": "独立双目深度辅助训练与资格验证",
+      "title": "\u72ec\u7acb\u53cc\u76ee\u6df1\u5ea6\u8f85\u52a9\u8bad\u7ec3\u4e0e\u8d44\u683c\u9a8c\u8bc1",
       "executor": "gated",
       "dependencies": [
         "wp1.depth-auxiliary-diagnostic",
@@ -980,10 +980,10 @@
         "wp1.depth-auxiliary-optimizer"
       ],
       "status": "blocked",
-      "reason": "历史 2 初态仅有左侧监督，Cold8 8 初态持出后粗网格误差仍超限。需要双侧独立合格监督与验证。"
+      "reason": "\u5386\u53f2 2 \u521d\u6001\u4ec5\u6709\u5de6\u4fa7\u76d1\u7763\uff0cCold8 8 \u521d\u6001\u6301\u51fa\u540e\u7c97\u7f51\u683c\u8bef\u5dee\u4ecd\u8d85\u9650\u3002\u9700\u8981\u53cc\u4fa7\u72ec\u7acb\u5408\u683c\u76d1\u7763\u4e0e\u9a8c\u8bc1\u3002"
     },
     "orchestration.windows-relay-only": {
-      "title": "Ubuntu 提交与 Windows 发布中转",
+      "title": "Ubuntu \u63d0\u4ea4\u4e0e Windows \u53d1\u5e03\u4e2d\u8f6c",
       "executor": "prepared",
       "dependencies": [
         "orchestration.offline-publication"
@@ -1014,7 +1014,7 @@
       }
     },
     "wp4.shutdown-launch-mode": {
-      "title": "PhysX 标定关闭模式与子进程读回",
+      "title": "PhysX \u6807\u5b9a\u5173\u95ed\u6a21\u5f0f\u4e0e\u5b50\u8fdb\u7a0b\u8bfb\u56de",
       "executor": "prepared",
       "dependencies": [
         "wp4.cpu-contract"
@@ -1049,7 +1049,7 @@
       }
     },
     "wp4.sampling-handle-lifetime": {
-      "title": "PhysX 标定句柄释放与退出崩溃诊断",
+      "title": "PhysX \u6807\u5b9a\u53e5\u67c4\u91ca\u653e\u4e0e\u9000\u51fa\u5d29\u6e83\u8bca\u65ad",
       "executor": "prepared",
       "dependencies": [
         "wp4.shutdown-launch-mode"
@@ -1084,7 +1084,7 @@
       }
     },
     "orchestration.existing-rigid-scope": {
-      "title": "现有刚性任务完整闭环（复用原环境，不重新建模）",
+      "title": "\u73b0\u6709\u521a\u6027\u4efb\u52a1\u5b8c\u6574\u95ed\u73af\uff08\u590d\u7528\u539f\u73af\u5883\uff0c\u4e0d\u91cd\u65b0\u5efa\u6a21\uff09",
       "executor": "prepared",
       "dependencies": [
         "orchestration.native-gate-split"
@@ -1113,22 +1113,22 @@
         "report": "docs/superpowers/reports/2026-11-12-existing-solid-cylinder-execution-scope.md",
         "native_qualification": false,
         "execution_target": {
-          "name": "现有刚性任务完整闭环（复用原环境，不重新建模）",
+          "name": "\u73b0\u6709\u521a\u6027\u4efb\u52a1\u5b8c\u6574\u95ed\u73af\uff08\u590d\u7528\u539f\u73af\u5883\uff0c\u4e0d\u91cd\u65b0\u5efa\u6a21\uff09",
           "package": "wp6.rigid-native-final",
           "deferred": {
-            "wp5.cpu-source-check": "等待真实柔性后端，保留原状态和证据",
-            "wp5.source-payload": "等待真实柔性后端，保留原状态和证据",
-            "wp5.source": "等待真实柔性后端，保留原状态和证据",
-            "wp5.build": "等待真实柔性后端，保留原状态和证据",
-            "wp5.solver-native": "等待真实柔性后端，保留原状态和证据",
-            "wp2.qualified-labels": "等待真实柔性后端，保留原状态和证据",
-            "wp6.deformable-native-final": "等待真实柔性后端，保留原状态和证据"
+            "wp5.cpu-source-check": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
+            "wp5.source-payload": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
+            "wp5.source": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
+            "wp5.build": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
+            "wp5.solver-native": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
+            "wp2.qualified-labels": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e",
+            "wp6.deformable-native-final": "\u7b49\u5f85\u771f\u5b9e\u67d4\u6027\u540e\u7aef\uff0c\u4fdd\u7559\u539f\u72b6\u6001\u548c\u8bc1\u636e"
           }
         }
       }
     },
     "wp1.reconstruction-metric-evidence": {
-      "title": "现有刚性任务的密集和稀疏双目指标",
+      "title": "\u73b0\u6709\u521a\u6027\u4efb\u52a1\u7684\u5bc6\u96c6\u548c\u7a00\u758f\u53cc\u76ee\u6307\u6807",
       "executor": "prepared",
       "dependencies": [
         "wp1.sample-retention"
@@ -1169,7 +1169,7 @@
       }
     },
     "wp3.finger12-event-windows": {
-      "title": "Teacher 右手 finger12 下限事件窗口",
+      "title": "Teacher \u53f3\u624b finger12 \u4e0b\u9650\u4e8b\u4ef6\u7a97\u53e3",
       "executor": "prepared",
       "dependencies": [
         "wp3.cpu-contract"
@@ -1202,7 +1202,7 @@
       }
     },
     "wp2.rigid-sdk-velocity": {
-      "title": "现有 solid_cylinder 同钟 SDK 线速度监督",
+      "title": "\u73b0\u6709 solid_cylinder \u540c\u949f SDK \u7ebf\u901f\u5ea6\u76d1\u7763",
       "executor": "prepared",
       "dependencies": [
         "wp2.metric-integrity"
@@ -1241,7 +1241,7 @@
       }
     },
     "wp1.segmentation-mask-policy": {
-      "title": "双目分割按已验证的 Head 能力构建候选",
+      "title": "\u53cc\u76ee\u5206\u5272\u6309\u5df2\u9a8c\u8bc1\u7684 Head \u80fd\u529b\u6784\u5efa\u5019\u9009",
       "executor": "prepared",
       "dependencies": [
         "wp1.sample-retention"
@@ -1282,7 +1282,7 @@
       }
     },
     "wp1.depth-auxiliary-optimizer": {
-      "title": "复用双目深度辅助头的有界监督优化",
+      "title": "\u590d\u7528\u53cc\u76ee\u6df1\u5ea6\u8f85\u52a9\u5934\u7684\u6709\u754c\u76d1\u7763\u4f18\u5316",
       "executor": "prepared",
       "dependencies": [
         "wp1.depth-auxiliary-diagnostic"
@@ -1319,7 +1319,7 @@
       }
     },
     "wp3.mpc-sync32-native-diagnostic": {
-      "title": "原 MPC 371D／24D 短程原生同步诊断",
+      "title": "\u539f MPC 371D\uff0f24D \u77ed\u7a0b\u539f\u751f\u540c\u6b65\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "wp3.cpu-contract",
@@ -1403,7 +1403,7 @@
       }
     },
     "wp3.finger12-pairing-preflight": {
-      "title": "右手 finger12 同初态三路配对预检",
+      "title": "\u53f3\u624b finger12 \u540c\u521d\u6001\u4e09\u8def\u914d\u5bf9\u9884\u68c0",
       "executor": "gated",
       "dependencies": [
         "wp3.finger12-event-windows",
@@ -1468,17 +1468,17 @@
       }
     },
     "wp3.finger12-native-paired": {
-      "title": "右手 finger12 同初态原生三路诊断",
+      "title": "\u53f3\u624b finger12 \u540c\u521d\u6001\u539f\u751f\u4e09\u8def\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "wp3.finger12-pairing-preflight",
         "wp4.shutdown-native"
       ],
       "status": "blocked",
-      "reason": "二指、三指同一实测冷初态的 sampled/mean 均复现右 finger12 合法目标下越限；三指 mean 同时有实际速度越限。匹配 MPC 第三路和动力学根因尚未通过。"
+      "reason": "\u4e8c\u6307\u3001\u4e09\u6307\u540c\u4e00\u5b9e\u6d4b\u51b7\u521d\u6001\u7684 sampled/mean \u5747\u590d\u73b0\u53f3 finger12 \u5408\u6cd5\u76ee\u6807\u4e0b\u8d8a\u9650\uff1b\u4e09\u6307 mean \u540c\u65f6\u6709\u5b9e\u9645\u901f\u5ea6\u8d8a\u9650\u3002\u5339\u914d MPC \u7b2c\u4e09\u8def\u548c\u52a8\u529b\u5b66\u6839\u56e0\u5c1a\u672a\u901a\u8fc7\u3002"
     },
     "wp2.cold8-state-depth-diagnostic": {
-      "title": "Cold8 状态标签与独立深度持出诊断",
+      "title": "Cold8 \u72b6\u6001\u6807\u7b7e\u4e0e\u72ec\u7acb\u6df1\u5ea6\u6301\u51fa\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "wp1.rgb-native",
@@ -1580,7 +1580,7 @@
       }
     },
     "wp4.gpu-contact-report-readback": {
-      "title": "PhysX GPU 接触报告读回与左右拇指标定",
+      "title": "PhysX GPU \u63a5\u89e6\u62a5\u544a\u8bfb\u56de\u4e0e\u5de6\u53f3\u62c7\u6307\u6807\u5b9a",
       "executor": "gated",
       "dependencies": [
         "wp4.shutdown-native",
@@ -1665,7 +1665,7 @@
       }
     },
     "wp3.mpc-t5-first-episode-preflight": {
-      "title": "原 T5 MPC 完整首回合采集预检",
+      "title": "\u539f T5 MPC \u5b8c\u6574\u9996\u56de\u5408\u91c7\u96c6\u9884\u68c0",
       "executor": "gated",
       "dependencies": [
         "wp3.mpc-sync32-native-diagnostic",
@@ -1732,7 +1732,7 @@
       }
     },
     "wp3.finger12-frozen-teacher-pair-runner": {
-      "title": "冻结 Teacher sampled／mean 同初态配对入口",
+      "title": "\u51bb\u7ed3 Teacher sampled\uff0fmean \u540c\u521d\u6001\u914d\u5bf9\u5165\u53e3",
       "executor": "gated",
       "dependencies": [
         "wp3.finger12-pairing-preflight",
@@ -1799,7 +1799,7 @@
       }
     },
     "wp3.teacher-bc-r0-frozen-preflight": {
-      "title": "Teacher Actor-only BC、R0 与冻结验收入口",
+      "title": "Teacher Actor-only BC\u3001R0 \u4e0e\u51bb\u7ed3\u9a8c\u6536\u5165\u53e3",
       "executor": "gated",
       "dependencies": [
         "wp3.cpu-contract"
@@ -1863,7 +1863,7 @@
       }
     },
     "wp4.teacher-task-contact-probe": {
-      "title": "现有刚性 Teacher 任务逐接触读回探针",
+      "title": "\u73b0\u6709\u521a\u6027 Teacher \u4efb\u52a1\u9010\u63a5\u89e6\u8bfb\u56de\u63a2\u9488",
       "executor": "gated",
       "dependencies": [
         "wp4.gpu-contact-report-readback"
@@ -1935,7 +1935,7 @@
       }
     },
     "wp3.teacher-expert-assembly": {
-      "title": "Teacher 原生成功专家数据装配器",
+      "title": "Teacher \u539f\u751f\u6210\u529f\u4e13\u5bb6\u6570\u636e\u88c5\u914d\u5668",
       "executor": "gated",
       "dependencies": [
         "wp3.teacher-bc-r0-frozen-preflight",
@@ -1994,7 +1994,7 @@
       }
     },
     "wp3.teacher-callback-durable-completion": {
-      "title": "Teacher 原生回调产物持久化",
+      "title": "Teacher \u539f\u751f\u56de\u8c03\u4ea7\u7269\u6301\u4e45\u5316",
       "executor": "gated",
       "dependencies": [
         "wp3.teacher-bc-r0-frozen-preflight"
@@ -2058,7 +2058,7 @@
       }
     },
     "wp3.mpc-observation-value-proof": {
-      "title": "MPC 371D 同钟数值与来源校验",
+      "title": "MPC 371D \u540c\u949f\u6570\u503c\u4e0e\u6765\u6e90\u6821\u9a8c",
       "executor": "gated",
       "dependencies": [
         "wp3.mpc-sync32-native-diagnostic"
@@ -2124,7 +2124,7 @@
       }
     },
     "wp3.finger12-sampled-completion-gate": {
-      "title": "冻结 Teacher mean 配对的 sampled 完成证据",
+      "title": "\u51bb\u7ed3 Teacher mean \u914d\u5bf9\u7684 sampled \u5b8c\u6210\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "wp3.finger12-frozen-teacher-pair-runner"
@@ -2186,7 +2186,7 @@
       }
     },
     "wp3.mpc-observation-wrist-interval-proof": {
-      "title": "MPC 完整上一动作窗口的腕部字段校验",
+      "title": "MPC \u5b8c\u6574\u4e0a\u4e00\u52a8\u4f5c\u7a97\u53e3\u7684\u8155\u90e8\u5b57\u6bb5\u6821\u9a8c",
       "executor": "gated",
       "dependencies": [
         "wp3.mpc-observation-value-proof"
@@ -2254,7 +2254,7 @@
       }
     },
     "wp3.teacher-t5-native-contract-binding": {
-      "title": "将 Teacher R0 绑定到原 T5 原生物理合同",
+      "title": "\u5c06 Teacher R0 \u7ed1\u5b9a\u5230\u539f T5 \u539f\u751f\u7269\u7406\u5408\u540c",
       "executor": "gated",
       "dependencies": [
         "wp3.teacher-callback-durable-completion",
@@ -2327,7 +2327,7 @@
       }
     },
     "wp3.mpc-durable-transition-journal": {
-      "title": "MPC 371D 原生同步账本持久化",
+      "title": "MPC 371D \u539f\u751f\u540c\u6b65\u8d26\u672c\u6301\u4e45\u5316",
       "executor": "gated",
       "dependencies": [
         "wp3.mpc-t5-first-episode-preflight",
@@ -2396,7 +2396,7 @@
       }
     },
     "wp3.mpc-internal-state-source-preflight": {
-      "title": "MPC 内部控制状态与 reset 初始化来源",
+      "title": "MPC \u5185\u90e8\u63a7\u5236\u72b6\u6001\u4e0e reset \u521d\u59cb\u5316\u6765\u6e90",
       "executor": "gated",
       "dependencies": [
         "wp3.mpc-durable-transition-journal",
@@ -2467,7 +2467,7 @@
       }
     },
     "wp3.mpc-teacher-provenance-preflight": {
-      "title": "MPC 成功轨迹进入 Teacher 的原生证据预检",
+      "title": "MPC \u6210\u529f\u8f68\u8ff9\u8fdb\u5165 Teacher \u7684\u539f\u751f\u8bc1\u636e\u9884\u68c0",
       "executor": "gated",
       "dependencies": [
         "wp3.teacher-expert-assembly",
@@ -2532,7 +2532,7 @@
       }
     },
     "wp3.mpc-t5-first-episode-native": {
-      "title": "原 T5 MPC 八个首回合原生采集",
+      "title": "\u539f T5 MPC \u516b\u4e2a\u9996\u56de\u5408\u539f\u751f\u91c7\u96c6",
       "executor": "gated",
       "dependencies": [
         "wp3.mpc-t5-first-episode-preflight",
@@ -2625,7 +2625,7 @@
       }
     },
     "wp4.teacher-task-contact-early-readback-failure": {
-      "title": "记录 GPU 任务早期接触读回失败并恢复默认探针",
+      "title": "\u8bb0\u5f55 GPU \u4efb\u52a1\u65e9\u671f\u63a5\u89e6\u8bfb\u56de\u5931\u8d25\u5e76\u6062\u590d\u9ed8\u8ba4\u63a2\u9488",
       "executor": "gated",
       "dependencies": [
         "wp4.teacher-task-contact-probe"
@@ -2693,7 +2693,7 @@
       }
     },
     "wp3.teacher-t5-native-r0-update1": {
-      "title": "原 T5 合同的特权 PPO Teacher 原生单更新",
+      "title": "\u539f T5 \u5408\u540c\u7684\u7279\u6743 PPO Teacher \u539f\u751f\u5355\u66f4\u65b0",
       "executor": "gated",
       "dependencies": [
         "wp3.teacher-t5-native-contract-binding",
@@ -2774,7 +2774,7 @@
       }
     },
     "wp4.teacher-wire-gpu-tensor-native-probe": {
-      "title": "原 GPU 任务 Wire 对象侧接触与支撑读回",
+      "title": "\u539f GPU \u4efb\u52a1 Wire \u5bf9\u8c61\u4fa7\u63a5\u89e6\u4e0e\u652f\u6491\u8bfb\u56de",
       "executor": "gated",
       "dependencies": [
         "wp4.teacher-task-contact-early-readback-failure"
@@ -2850,7 +2850,7 @@
       }
     },
     "wp3.finger12-frozen-teacher-native-v04": {
-      "title": "冻结 Teacher 同初态原生 sampled／mean 复验",
+      "title": "\u51bb\u7ed3 Teacher \u540c\u521d\u6001\u539f\u751f sampled\uff0fmean \u590d\u9a8c",
       "executor": "gated",
       "dependencies": [
         "wp3.finger12-sampled-completion-gate"
@@ -2938,7 +2938,7 @@
       }
     },
     "wp4.teacher-t5-wire-gpu-tensor-native": {
-      "title": "T5 原生 PPO Teacher 的对象侧接触验证",
+      "title": "T5 \u539f\u751f PPO Teacher \u7684\u5bf9\u8c61\u4fa7\u63a5\u89e6\u9a8c\u8bc1",
       "executor": "gated",
       "dependencies": [
         "wp4.teacher-wire-gpu-tensor-native-probe",
@@ -3011,7 +3011,7 @@
       }
     },
     "wp3.teacher-wrap-geometry-preflight": {
-      "title": "握式 Teacher 整手包握几何预检",
+      "title": "\u63e1\u5f0f Teacher \u6574\u624b\u5305\u63e1\u51e0\u4f55\u9884\u68c0",
       "executor": "gated",
       "dependencies": [
         "wp3.teacher-t5-native-contract-binding"
@@ -3081,17 +3081,17 @@
       }
     },
     "wp3.teacher-wrap-native": {
-      "title": "现有 solid_cylinder 握式 Teacher 原生评估",
+      "title": "\u73b0\u6709 solid_cylinder \u63e1\u5f0f Teacher \u539f\u751f\u8bc4\u4f30",
       "executor": "gated",
       "dependencies": [
         "wp3.teacher-wrap-geometry-preflight",
         "wp3.teacher-t5-native-contract-binding"
       ],
       "status": "blocked",
-      "reason": "12 个局部候选复核仍无合格双手整手包握初态。左/右最大间距最小 1.899/0.950 mm，右手还缺拇指贴合和第三个对向指腹。"
+      "reason": "12 \u4e2a\u5c40\u90e8\u5019\u9009\u590d\u6838\u4ecd\u65e0\u5408\u683c\u53cc\u624b\u6574\u624b\u5305\u63e1\u521d\u6001\u3002\u5de6/\u53f3\u6700\u5927\u95f4\u8ddd\u6700\u5c0f 1.899/0.950 mm\uff0c\u53f3\u624b\u8fd8\u7f3a\u62c7\u6307\u8d34\u5408\u548c\u7b2c\u4e09\u4e2a\u5bf9\u5411\u6307\u8179\u3002"
     },
     "wp3.teacher-wrap-diverse-wrist-search": {
-      "title": "握式多腕姿原几何补充搜索",
+      "title": "\u63e1\u5f0f\u591a\u8155\u59ff\u539f\u51e0\u4f55\u8865\u5145\u641c\u7d22",
       "executor": "gated",
       "dependencies": [
         "wp3.teacher-wrap-geometry-preflight"
@@ -3167,7 +3167,7 @@
       }
     },
     "wp3.finger12-native-per-slot-tripod": {
-      "title": "二指三指独立首终止原生配对",
+      "title": "\u4e8c\u6307\u4e09\u6307\u72ec\u7acb\u9996\u7ec8\u6b62\u539f\u751f\u914d\u5bf9",
       "executor": "gated",
       "dependencies": [
         "wp3.finger12-frozen-teacher-native-v04"
@@ -3259,7 +3259,7 @@
       }
     },
     "wp4.teacher-t5-proxy-sdk-force-inventory": {
-      "title": "原生 T5 碰撞实例与 Wire SDK 来源核验",
+      "title": "\u539f\u751f T5 \u78b0\u649e\u5b9e\u4f8b\u4e0e Wire SDK \u6765\u6e90\u6838\u9a8c",
       "executor": "gated",
       "dependencies": [
         "wp4.teacher-t5-wire-gpu-tensor-native"
@@ -3339,7 +3339,7 @@
       }
     },
     "wp3.teacher-wrap-local-fd": {
-      "title": "握式局部可达性有限差分复查",
+      "title": "\u63e1\u5f0f\u5c40\u90e8\u53ef\u8fbe\u6027\u6709\u9650\u5dee\u5206\u590d\u67e5",
       "executor": "gated",
       "dependencies": [
         "wp3.teacher-wrap-diverse-wrist-search"
@@ -3411,7 +3411,7 @@
       }
     },
     "flex.f5-wireseg-ingestion": {
-      "title": "WireSeg-36K 数据接入与单目诊断",
+      "title": "WireSeg-36K \u6570\u636e\u63a5\u5165\u4e0e\u5355\u76ee\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [],
       "status": "passed",
@@ -3481,7 +3481,7 @@
       }
     },
     "flex.f5-wireseg-pretraining": {
-      "title": "WireSeg-36K 正式预训练与独立评估",
+      "title": "WireSeg-36K \u6b63\u5f0f\u9884\u8bad\u7ec3\u4e0e\u72ec\u7acb\u8bc4\u4f30",
       "executor": "gated",
       "dependencies": [
         "flex.f5-wireseg-ingestion"
@@ -3493,7 +3493,7 @@
       "diagnostic_evidence_package": "flex.wireseg-full-manifest-loss-domains"
     },
     "flex.f0-source-lock": {
-      "title": "DeformX 主仓库与递归源码锁定",
+      "title": "DeformX \u4e3b\u4ed3\u5e93\u4e0e\u9012\u5f52\u6e90\u7801\u9501\u5b9a",
       "executor": "gated",
       "dependencies": [],
       "status": "passed",
@@ -3555,7 +3555,7 @@
       }
     },
     "flex.f3-isaac-rigid": {
-      "title": "DeformX 与 Isaac 单刚体双向耦合",
+      "title": "DeformX \u4e0e Isaac \u5355\u521a\u4f53\u53cc\u5411\u8026\u5408",
       "executor": "gated",
       "dependencies": [
         "flex.f2-standalone-gpu"
@@ -3669,7 +3669,7 @@
       }
     },
     "flex.f4-dh116-same-rod": {
-      "title": "原 DH116 Collider 与双手同杆力学验证",
+      "title": "\u539f DH116 Collider \u4e0e\u53cc\u624b\u540c\u6746\u529b\u5b66\u9a8c\u8bc1",
       "executor": "gated",
       "dependencies": [
         "flex.f3-isaac-rigid",
@@ -3678,20 +3678,20 @@
         "flex.f4-bimanual-contact-native"
       ],
       "status": "blocked",
-      "reason": "固定底座左 Pinch v4 的拇指、食指与自由杆同子步载荷及自然退出已验证；尚未原生测得双手同杆接触与连续材料锚。静态手与台面源为未知。"
+      "reason": "\u56fa\u5b9a\u5e95\u5ea7\u5de6 Pinch v4 \u7684\u62c7\u6307\u3001\u98df\u6307\u4e0e\u81ea\u7531\u6746\u540c\u5b50\u6b65\u8f7d\u8377\u53ca\u81ea\u7136\u9000\u51fa\u5df2\u9a8c\u8bc1\uff1b\u5c1a\u672a\u539f\u751f\u6d4b\u5f97\u53cc\u624b\u540c\u6746\u63a5\u89e6\u4e0e\u8fde\u7eed\u6750\u6599\u951a\u3002\u9759\u6001\u624b\u4e0e\u53f0\u9762\u6e90\u4e3a\u672a\u77e5\u3002"
     },
     "flex.f7-synchronized-data": {
-      "title": "双目与柔性物理状态同步数据",
+      "title": "\u53cc\u76ee\u4e0e\u67d4\u6027\u7269\u7406\u72b6\u6001\u540c\u6b65\u6570\u636e",
       "executor": "gated",
       "dependencies": [
         "flex.f7-physics-state",
         "flex.f7-stereo-capture"
       ],
       "status": "blocked",
-      "reason": "汇总柔性物理状态和同步视觉数据的独立证据。"
+      "reason": "\u6c47\u603b\u67d4\u6027\u7269\u7406\u72b6\u6001\u548c\u540c\u6b65\u89c6\u89c9\u6570\u636e\u7684\u72ec\u7acb\u8bc1\u636e\u3002"
     },
     "flex.f8-three-teachers": {
-      "title": "Pinch、Tripod 与 Power 特权 Teacher",
+      "title": "Pinch\u3001Tripod \u4e0e Power \u7279\u6743 Teacher",
       "executor": "gated",
       "dependencies": [
         "flex.f8-pinch",
@@ -3699,29 +3699,29 @@
         "flex.f8-power"
       ],
       "status": "blocked",
-      "reason": "汇总 Pinch、Tripod、Power 独立训练及原生验收证据。"
+      "reason": "\u6c47\u603b Pinch\u3001Tripod\u3001Power \u72ec\u7acb\u8bad\u7ec3\u53ca\u539f\u751f\u9a8c\u6536\u8bc1\u636e\u3002"
     },
     "flex.f9-three-students": {
-      "title": "三种抓法的 BC、DAgger 与 Student PPO",
+      "title": "\u4e09\u79cd\u6293\u6cd5\u7684 BC\u3001DAgger \u4e0e Student PPO",
       "executor": "gated",
       "dependencies": [
         "flex.f8-three-teachers",
         "flex.f7-synchronized-data"
       ],
       "status": "blocked",
-      "reason": "需合格原生 Teacher 与同步双目数据。"
+      "reason": "\u9700\u5408\u683c\u539f\u751f Teacher \u4e0e\u540c\u6b65\u53cc\u76ee\u6570\u636e\u3002"
     },
     "flex.f10-actor-only": {
-      "title": "柔性 Actor-only 部署与三种抓法独立验收",
+      "title": "\u67d4\u6027 Actor-only \u90e8\u7f72\u4e0e\u4e09\u79cd\u6293\u6cd5\u72ec\u7acb\u9a8c\u6536",
       "executor": "gated",
       "dependencies": [
         "flex.f9-three-students"
       ],
       "status": "blocked",
-      "reason": "需冻结 Student 并完成每种抓法至少 100 个独立初态。"
+      "reason": "\u9700\u51bb\u7ed3 Student \u5e76\u5b8c\u6210\u6bcf\u79cd\u6293\u6cd5\u81f3\u5c11 100 \u4e2a\u72ec\u7acb\u521d\u6001\u3002"
     },
     "flex.f1-cuda-build": {
-      "title": "隔离 CUDA 12.8 与 cp310/SM89 扩展",
+      "title": "\u9694\u79bb CUDA 12.8 \u4e0e cp310/SM89 \u6269\u5c55",
       "executor": "gated",
       "dependencies": [
         "flex.f0-source-lock"
@@ -3789,7 +3789,7 @@
       }
     },
     "flex.f2-standalone-gpu": {
-      "title": "Standalone CUDA 静态、动力学与接触验证",
+      "title": "Standalone CUDA \u9759\u6001\u3001\u52a8\u529b\u5b66\u4e0e\u63a5\u89e6\u9a8c\u8bc1",
       "executor": "gated",
       "dependencies": [
         "flex.f1-cuda-build"
@@ -3859,7 +3859,7 @@
       }
     },
     "flex.f6-assets-audit": {
-      "title": "官方 DeformX drop/hang 资产和轨迹审计",
+      "title": "\u5b98\u65b9 DeformX drop/hang \u8d44\u4ea7\u548c\u8f68\u8ff9\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [],
       "status": "passed",
@@ -3931,7 +3931,7 @@
       }
     },
     "flex.f4-dh116-collider-offline": {
-      "title": "DH116 实际指腹碰撞几何预检",
+      "title": "DH116 \u5b9e\u9645\u6307\u8179\u78b0\u649e\u51e0\u4f55\u9884\u68c0",
       "executor": "gated",
       "dependencies": [
         "flex.f0-source-lock",
@@ -4000,7 +4000,7 @@
       }
     },
     "flex.mainline-selection": {
-      "title": "将默认开发目标切换为 DeformX 柔性线缆",
+      "title": "\u5c06\u9ed8\u8ba4\u5f00\u53d1\u76ee\u6807\u5207\u6362\u4e3a DeformX \u67d4\u6027\u7ebf\u7f06",
       "status": "passed",
       "executor": "gated",
       "dependencies": [
@@ -4064,7 +4064,7 @@
       }
     },
     "flex.f3-isaac-rigid-diagnostic": {
-      "title": "单 PhysX 刚体双向传力及关闭失败诊断",
+      "title": "\u5355 PhysX \u521a\u4f53\u53cc\u5411\u4f20\u529b\u53ca\u5173\u95ed\u5931\u8d25\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f2-standalone-gpu"
@@ -4140,7 +4140,7 @@
       }
     },
     "flex.f4-cooked-hull-audit": {
-      "title": "实际指腹烘焙设置和 PhysX 凸包读回入口",
+      "title": "\u5b9e\u9645\u6307\u8179\u70d8\u7119\u8bbe\u7f6e\u548c PhysX \u51f8\u5305\u8bfb\u56de\u5165\u53e3",
       "executor": "gated",
       "dependencies": [
         "flex.f4-dh116-collider-offline"
@@ -4204,7 +4204,7 @@
       }
     },
     "flex.f6-derived-render-preflight": {
-      "title": "官方 drop/hang DomeLight 派生修复",
+      "title": "\u5b98\u65b9 drop/hang DomeLight \u6d3e\u751f\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "flex.f6-assets-audit"
@@ -4270,7 +4270,7 @@
       }
     },
     "flex.f5-wireseg-resumable-relay": {
-      "title": "WireSeg 分块续传与首个完整深度分片",
+      "title": "WireSeg \u5206\u5757\u7eed\u4f20\u4e0e\u9996\u4e2a\u5b8c\u6574\u6df1\u5ea6\u5206\u7247",
       "executor": "gated",
       "dependencies": [
         "flex.f5-wireseg-ingestion"
@@ -4348,7 +4348,7 @@
       }
     },
     "flex.f4-cooked-hull-native": {
-      "title": "原生 PhysX 读取 10 个 DH116 指腹凸包",
+      "title": "\u539f\u751f PhysX \u8bfb\u53d6 10 \u4e2a DH116 \u6307\u8179\u51f8\u5305",
       "executor": "gated",
       "dependencies": [
         "flex.f3-isaac-rigid",
@@ -4423,7 +4423,7 @@
       }
     },
     "flex.f6-render-diagnostic": {
-      "title": "F6 drop 原生渲染与关闭诊断",
+      "title": "F6 drop \u539f\u751f\u6e32\u67d3\u4e0e\u5173\u95ed\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f6-derived-render-preflight"
@@ -4505,7 +4505,7 @@
       }
     },
     "flex.f6-render-native": {
-      "title": "F6 drop/hang 两个原生渲染及自然关闭",
+      "title": "F6 drop/hang \u4e24\u4e2a\u539f\u751f\u6e32\u67d3\u53ca\u81ea\u7136\u5173\u95ed",
       "executor": "gated",
       "dependencies": [
         "flex.f6-derived-render-preflight"
@@ -4514,7 +4514,7 @@
       "reason": "C3 headless/no-camera natural exit passed; C4 rendered lifecycle SIG11 in _extensions after app.close (outer255). C5 telemetry ownership/worker fix is CPU verified and awaits exact new approval; task stereo remains unqualified."
     },
     "flex.f4-cooked-hull-device-parity": {
-      "title": "实际 PhysX CPU/GPU 凸包逐指配对",
+      "title": "\u5b9e\u9645 PhysX CPU/GPU \u51f8\u5305\u9010\u6307\u914d\u5bf9",
       "executor": "gated",
       "dependencies": [
         "flex.f4-cooked-hull-native"
@@ -4594,7 +4594,7 @@
       }
     },
     "flex.f5-wireseg-proxy-throughput": {
-      "title": "第二个 WireSeg 深度分片和实测速率",
+      "title": "\u7b2c\u4e8c\u4e2a WireSeg \u6df1\u5ea6\u5206\u7247\u548c\u5b9e\u6d4b\u901f\u7387",
       "executor": "gated",
       "dependencies": [
         "flex.f5-wireseg-resumable-relay"
@@ -4656,7 +4656,7 @@
       }
     },
     "flex.f6-appwindow-backtrace": {
-      "title": "F6 渲染自然退出崩溃 C++ 回溯",
+      "title": "F6 \u6e32\u67d3\u81ea\u7136\u9000\u51fa\u5d29\u6e83 C++ \u56de\u6eaf",
       "executor": "gated",
       "dependencies": [
         "flex.f6-render-diagnostic"
@@ -4722,7 +4722,7 @@
       }
     },
     "flex.f4-cooked-pad-sdf": {
-      "title": "10 个原生凸包 GPU SDF 烘焙与显式注册",
+      "title": "10 \u4e2a\u539f\u751f\u51f8\u5305 GPU SDF \u70d8\u7119\u4e0e\u663e\u5f0f\u6ce8\u518c",
       "executor": "gated",
       "dependencies": [
         "flex.f4-cooked-hull-device-parity"
@@ -4806,7 +4806,7 @@
       }
     },
     "flex.f3-f6-gate-wiring": {
-      "title": "将原生渲染与实际凸包 SDF 纳入柔性采集依赖",
+      "title": "\u5c06\u539f\u751f\u6e32\u67d3\u4e0e\u5b9e\u9645\u51f8\u5305 SDF \u7eb3\u5165\u67d4\u6027\u91c7\u96c6\u4f9d\u8d56",
       "executor": "gated",
       "status": "passed",
       "dependencies": [
@@ -4862,7 +4862,7 @@
       }
     },
     "flex.f6-headless-experience-render": {
-      "title": "Drop 与 hang 两种原生渲染的精简配置对照",
+      "title": "Drop \u4e0e hang \u4e24\u79cd\u539f\u751f\u6e32\u67d3\u7684\u7cbe\u7b80\u914d\u7f6e\u5bf9\u7167",
       "executor": "gated",
       "dependencies": [
         "flex.f6-appwindow-backtrace"
@@ -4946,7 +4946,7 @@
       }
     },
     "flex.f3-integrated-rigid-entry": {
-      "title": "原 F3 刚体命令的集成原生复验",
+      "title": "\u539f F3 \u521a\u4f53\u547d\u4ee4\u7684\u96c6\u6210\u539f\u751f\u590d\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f3-isaac-rigid"
@@ -5008,7 +5008,7 @@
       }
     },
     "flex.f4-left-contact-native": {
-      "title": "左拇指与柔性杆原生接触",
+      "title": "\u5de6\u62c7\u6307\u4e0e\u67d4\u6027\u6746\u539f\u751f\u63a5\u89e6",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f3-isaac-rigid",
@@ -5249,7 +5249,7 @@
       }
     },
     "flex.f4-right-contact-native": {
-      "title": "右拇指与柔性杆原生接触",
+      "title": "\u53f3\u62c7\u6307\u4e0e\u67d4\u6027\u6746\u539f\u751f\u63a5\u89e6",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f3-isaac-rigid",
@@ -5485,7 +5485,7 @@
       ]
     },
     "flex.f4-single-hand-contact-native": {
-      "title": "单手与柔性杆对向承托",
+      "title": "\u5355\u624b\u4e0e\u67d4\u6027\u6746\u5bf9\u5411\u627f\u6258",
       "executor": "gated",
       "dependencies": [
         "flex.f4-right-contact-native"
@@ -5496,16 +5496,16 @@
       "preparation_package": "flex.f4-free-pinch-runtime-preparation"
     },
     "flex.f4-bimanual-contact-native": {
-      "title": "双手与同一柔性杆接触",
+      "title": "\u53cc\u624b\u4e0e\u540c\u4e00\u67d4\u6027\u6746\u63a5\u89e6",
       "executor": "gated",
       "dependencies": [
         "flex.f4-single-hand-contact-native"
       ],
       "status": "blocked",
-      "reason": "需双手共同作用同一自由rod UID、真实重力、外部支撑审计和独立预算；本批仅独立零g双端固定单拇指标定。"
+      "reason": "\u9700\u53cc\u624b\u5171\u540c\u4f5c\u7528\u540c\u4e00\u81ea\u7531rod UID\u3001\u771f\u5b9e\u91cd\u529b\u3001\u5916\u90e8\u652f\u6491\u5ba1\u8ba1\u548c\u72ec\u7acb\u9884\u7b97\uff1b\u672c\u6279\u4ec5\u72ec\u7acb\u96f6g\u53cc\u7aef\u56fa\u5b9a\u5355\u62c7\u6307\u6807\u5b9a\u3002"
     },
     "flex.f7-physics-state": {
-      "title": "无相机柔性状态、动作与 Reset",
+      "title": "\u65e0\u76f8\u673a\u67d4\u6027\u72b6\u6001\u3001\u52a8\u4f5c\u4e0e Reset",
       "executor": "gated",
       "dependencies": [
         "flex.f4-dh116-same-rod"
@@ -5514,7 +5514,7 @@
       "reason": "Original-region negative source and independent necessary-hold domain replay complete232/29: no contactunknown;hold contribution known inapplicable while raw remainsNA. Remaining instability source missing232/29;full reward0/29. Actual max node speed0.008240307m/s@step152/node0 is diagnostic,not stability qualification. Need numerical/motion stability contract, liveR0 Reset owner order and training coefficients. Common66/371,305NaN/false; no positive grasp prerequisite for known-negative learning."
     },
     "flex.f6-camera-lifecycle": {
-      "title": "同一帧 RGB、径向深度、Optical-Z 与实例 ID",
+      "title": "\u540c\u4e00\u5e27 RGB\u3001\u5f84\u5411\u6df1\u5ea6\u3001Optical-Z \u4e0e\u5b9e\u4f8b ID",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f6-camera-v2"
@@ -5539,7 +5539,7 @@
       ]
     },
     "flex.f7-task-camera-native": {
-      "title": "当前柔性任务双目同钟相机",
+      "title": "\u5f53\u524d\u67d4\u6027\u4efb\u52a1\u53cc\u76ee\u540c\u949f\u76f8\u673a",
       "executor": "gated",
       "dependencies": [
         "flex.f6-camera-lifecycle",
@@ -5549,17 +5549,17 @@
       "reason": "C5 lacked its target holder and crashed during finalization. CPU-only debugger capture fix does not qualify stereo synchronization or natural exit."
     },
     "flex.f7-stereo-capture": {
-      "title": "柔性任务同步双目采集",
+      "title": "\u67d4\u6027\u4efb\u52a1\u540c\u6b65\u53cc\u76ee\u91c7\u96c6",
       "executor": "gated",
       "dependencies": [
         "flex.f7-physics-state",
         "flex.f7-task-camera-native"
       ],
       "status": "blocked",
-      "reason": "需同一 pre-action 时钟绑定视觉、真实物理状态与实际动作。"
+      "reason": "\u9700\u540c\u4e00 pre-action \u65f6\u949f\u7ed1\u5b9a\u89c6\u89c9\u3001\u771f\u5b9e\u7269\u7406\u72b6\u6001\u4e0e\u5b9e\u9645\u52a8\u4f5c\u3002"
     },
     "flex.f5-wireseg-subset": {
-      "title": "可验证 WireSeg RGB 子集与视觉诊断",
+      "title": "\u53ef\u9a8c\u8bc1 WireSeg RGB \u5b50\u96c6\u4e0e\u89c6\u89c9\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f5-wireseg-ingestion"
@@ -5631,7 +5631,7 @@
       }
     },
     "flex.f5-wireseg-full": {
-      "title": "完整 WireSeg 扩展基准",
+      "title": "\u5b8c\u6574 WireSeg \u6269\u5c55\u57fa\u51c6",
       "executor": "gated",
       "dependencies": [
         "flex.f5-wireseg-subset"
@@ -5641,7 +5641,7 @@
       "blocker_kind": "external_data"
     },
     "flex.f8-pinch": {
-      "title": "Pinch 无相机 R0 特权 Teacher",
+      "title": "Pinch \u65e0\u76f8\u673a R0 \u7279\u6743 Teacher",
       "executor": "gated",
       "dependencies": [
         "flex.f7-physics-state"
@@ -5650,7 +5650,7 @@
       "reason": "Latest original-projection Pinch diagnostic completed234SDKsteps/163.4967s/natural0; left index raw428/original-region0, right both-region276solver windows, bilateral0. Moving-left measured-source CPU600-query candidate still fails original table/non-target/region guards (worst margin -0.011208mm), no new native recipe. Teacher preparation continues independently: full R0 stability/health source and training reward eligibility required; no positive-grasp prerequisite imposed for known-negative PPO learning."
     },
     "flex.f8-tripod": {
-      "title": "Tripod 无相机 R0 特权 Teacher",
+      "title": "Tripod \u65e0\u76f8\u673a R0 \u7279\u6743 Teacher",
       "executor": "gated",
       "dependencies": [
         "flex.f7-physics-state"
@@ -5659,16 +5659,16 @@
       "reason": "Full nonlinear source17/cooked5 closure audit: best endpoint still fails thumb SDF target and non-target clearances;589CPU queries,0newphysics. Preserve all native guards; no recipe issued."
     },
     "flex.f8-power": {
-      "title": "Power 无相机 R0 特权 Teacher",
+      "title": "Power \u65e0\u76f8\u673a R0 \u7279\u6743 Teacher",
       "executor": "gated",
       "dependencies": [
         "flex.f7-physics-state"
       ],
       "status": "blocked",
-      "reason": "备用左右原姿态通过静态净空，但实际 SDF 全闭合区间分别排除三个和四个必要指腹。未形成五指 Reset/闭合配方；原生同杆与 R0 仍待验证。"
+      "reason": "\u5907\u7528\u5de6\u53f3\u539f\u59ff\u6001\u901a\u8fc7\u9759\u6001\u51c0\u7a7a\uff0c\u4f46\u5b9e\u9645 SDF \u5168\u95ed\u5408\u533a\u95f4\u5206\u522b\u6392\u9664\u4e09\u4e2a\u548c\u56db\u4e2a\u5fc5\u8981\u6307\u8179\u3002\u672a\u5f62\u6210\u4e94\u6307 Reset/\u95ed\u5408\u914d\u65b9\uff1b\u539f\u751f\u540c\u6746\u4e0e R0 \u4ecd\u5f85\u9a8c\u8bc1\u3002"
     },
     "flex.execution-dependency-split": {
-      "title": "拆分柔性物理、双目采集与逐抓法 Teacher 资格",
+      "title": "\u62c6\u5206\u67d4\u6027\u7269\u7406\u3001\u53cc\u76ee\u91c7\u96c6\u4e0e\u9010\u6293\u6cd5 Teacher \u8d44\u683c",
       "executor": "prepared",
       "dependencies": [],
       "status": "passed",
@@ -5736,7 +5736,7 @@
       }
     },
     "flex.f4-left-contact-diagnostic-source": {
-      "title": "真实 DH116 左拇指接触账本与关闭诊断",
+      "title": "\u771f\u5b9e DH116 \u5de6\u62c7\u6307\u63a5\u89e6\u8d26\u672c\u4e0e\u5173\u95ed\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f3-isaac-rigid",
@@ -5801,7 +5801,7 @@
       }
     },
     "flex.f6-camera-lifecycle-tools": {
-      "title": "任务相机单次渲染与自然退出诊断入口",
+      "title": "\u4efb\u52a1\u76f8\u673a\u5355\u6b21\u6e32\u67d3\u4e0e\u81ea\u7136\u9000\u51fa\u8bca\u65ad\u5165\u53e3",
       "executor": "gated",
       "dependencies": [],
       "status": "passed",
@@ -5867,7 +5867,7 @@
       }
     },
     "flex.native-bounded-scheduler": {
-      "title": "带授权、预算和证据的原生调度",
+      "title": "\u5e26\u6388\u6743\u3001\u9884\u7b97\u548c\u8bc1\u636e\u7684\u539f\u751f\u8c03\u5ea6",
       "executor": "gated",
       "dependencies": [],
       "status": "passed",
@@ -5921,7 +5921,7 @@
       }
     },
     "flex.f6-camera-v0": {
-      "title": "空渲染 Kit 生命周期",
+      "title": "\u7a7a\u6e32\u67d3 Kit \u751f\u547d\u5468\u671f",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f6-camera-lifecycle-tools"
@@ -6017,7 +6017,7 @@
       }
     },
     "flex.f6-camera-v1": {
-      "title": "单相机 Render Product 生命周期",
+      "title": "\u5355\u76f8\u673a Render Product \u751f\u547d\u5468\u671f",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f6-camera-v0"
@@ -6042,7 +6042,7 @@
       ]
     },
     "flex.f6-camera-v2": {
-      "title": "单相机 RGB 生命周期",
+      "title": "\u5355\u76f8\u673a RGB \u751f\u547d\u5468\u671f",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f6-camera-v1"
@@ -6067,7 +6067,7 @@
       ]
     },
     "flex.f6-camera-native-recipes": {
-      "title": "任务相机有界原生配方",
+      "title": "\u4efb\u52a1\u76f8\u673a\u6709\u754c\u539f\u751f\u914d\u65b9",
       "executor": "prepared",
       "dependencies": [
         "flex.native-bounded-scheduler"
@@ -6127,7 +6127,7 @@
       }
     },
     "flex.f4-thumb-teardown-recipe": {
-      "title": "左拇指资源释放变体与有界配方",
+      "title": "\u5de6\u62c7\u6307\u8d44\u6e90\u91ca\u653e\u53d8\u4f53\u4e0e\u6709\u754c\u914d\u65b9",
       "executor": "prepared",
       "dependencies": [
         "flex.native-bounded-scheduler"
@@ -6193,7 +6193,7 @@
       }
     },
     "flex.f5-wireseg-paired-heldout-depth": {
-      "title": "WireSeg 配对深度持出评估",
+      "title": "WireSeg \u914d\u5bf9\u6df1\u5ea6\u6301\u51fa\u8bc4\u4f30",
       "executor": "gated",
       "dependencies": [
         "flex.f5-wireseg-subset"
@@ -6257,7 +6257,7 @@
       }
     },
     "flex.f6-camera-no-default-stage": {
-      "title": "相机退出隔离 SDK 默认场景",
+      "title": "\u76f8\u673a\u9000\u51fa\u9694\u79bb SDK \u9ed8\u8ba4\u573a\u666f",
       "executor": "gated",
       "dependencies": [
         "flex.f6-camera-native-recipes"
@@ -6315,7 +6315,7 @@
       }
     },
     "flex.scheduler-fixture-lock-isolation": {
-      "title": "隔离 CPU 测试租约与原生执行",
+      "title": "\u9694\u79bb CPU \u6d4b\u8bd5\u79df\u7ea6\u4e0e\u539f\u751f\u6267\u884c",
       "executor": "gated",
       "dependencies": [
         "flex.native-bounded-scheduler"
@@ -6381,7 +6381,7 @@
       }
     },
     "flex.f5-wireseg-fixed16-diagnostic": {
-      "title": "WireSeg 固定16样本分割与深度诊断",
+      "title": "WireSeg \u56fa\u5b9a16\u6837\u672c\u5206\u5272\u4e0e\u6df1\u5ea6\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f5-wireseg-paired-heldout-depth"
@@ -6463,7 +6463,7 @@
       }
     },
     "flex.native-receipt-binding": {
-      "title": "原生前置回执绑定与同次崩溃栈",
+      "title": "\u539f\u751f\u524d\u7f6e\u56de\u6267\u7ed1\u5b9a\u4e0e\u540c\u6b21\u5d29\u6e83\u6808",
       "executor": "gated",
       "dependencies": [
         "flex.native-bounded-scheduler"
@@ -6529,7 +6529,7 @@
       }
     },
     "flex.f4-paired-thumb-recipes": {
-      "title": "左右拇指独立身份配方与单次取证",
+      "title": "\u5de6\u53f3\u62c7\u6307\u72ec\u7acb\u8eab\u4efd\u914d\u65b9\u4e0e\u5355\u6b21\u53d6\u8bc1",
       "executor": "gated",
       "dependencies": [
         "flex.native-receipt-binding",
@@ -6594,7 +6594,7 @@
       }
     },
     "flex.f6-camera-c0-c3-controls": {
-      "title": "相机官方最小App与stage单变量对照",
+      "title": "\u76f8\u673a\u5b98\u65b9\u6700\u5c0fApp\u4e0estage\u5355\u53d8\u91cf\u5bf9\u7167",
       "executor": "gated",
       "dependencies": [
         "flex.native-receipt-binding",
@@ -6667,7 +6667,7 @@
       }
     },
     "flex.f6-camera-c0": {
-      "title": "官方最小SimulationApp生命周期",
+      "title": "\u5b98\u65b9\u6700\u5c0fSimulationApp\u751f\u547d\u5468\u671f",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f6-camera-lifecycle-tools"
@@ -6779,7 +6779,7 @@
       }
     },
     "flex.f6-camera-c1": {
-      "title": "独立无stage渲染生命周期",
+      "title": "\u72ec\u7acb\u65e0stage\u6e32\u67d3\u751f\u547d\u5468\u671f",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f6-camera-lifecycle-tools"
@@ -6891,7 +6891,7 @@
       }
     },
     "flex.f6-camera-c2": {
-      "title": "同渲染experience默认stage对照",
+      "title": "\u540c\u6e32\u67d3experience\u9ed8\u8ba4stage\u5bf9\u7167",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f6-camera-lifecycle-tools"
@@ -7003,7 +7003,7 @@
       }
     },
     "flex.deformable-task-budget-boundaries": {
-      "title": "标定与Teacher回合预算边界",
+      "title": "\u6807\u5b9a\u4e0eTeacher\u56de\u5408\u9884\u7b97\u8fb9\u754c",
       "executor": "gated",
       "dependencies": [
         "flex.f4-paired-thumb-recipes"
@@ -7067,7 +7067,7 @@
       }
     },
     "flex.native-receipt-integrity": {
-      "title": "原生成功结果恢复与发布二次核验",
+      "title": "\u539f\u751f\u6210\u529f\u7ed3\u679c\u6062\u590d\u4e0e\u53d1\u5e03\u4e8c\u6b21\u6838\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.native-receipt-binding"
@@ -7129,7 +7129,7 @@
       }
     },
     "flex.f5-wireseg-sixth-blob": {
-      "title": "WireSeg第三个RGB分片完整核验",
+      "title": "WireSeg\u7b2c\u4e09\u4e2aRGB\u5206\u7247\u5b8c\u6574\u6838\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f5-wireseg-resumable-relay"
@@ -7201,7 +7201,7 @@
       }
     },
     "flex.f6-camera-current-fault-audit": {
-      "title": "相机C0到C2当前故障栈与原生对照",
+      "title": "\u76f8\u673aC0\u5230C2\u5f53\u524d\u6545\u969c\u6808\u4e0e\u539f\u751f\u5bf9\u7167",
       "executor": "gated",
       "dependencies": [
         "flex.f6-camera-c0-c3-controls"
@@ -7299,7 +7299,7 @@
       }
     },
     "flex.f4-thumb-paired-native-audit": {
-      "title": "左右拇指接触账本与预算偏差复核",
+      "title": "\u5de6\u53f3\u62c7\u6307\u63a5\u89e6\u8d26\u672c\u4e0e\u9884\u7b97\u504f\u5dee\u590d\u6838",
       "executor": "gated",
       "dependencies": [
         "flex.f4-paired-thumb-recipes"
@@ -7383,7 +7383,7 @@
       }
     },
     "flex.deformable-task-budget-v2": {
-      "title": "Teacher与Hold预算显式计入初始化阶段",
+      "title": "Teacher\u4e0eHold\u9884\u7b97\u663e\u5f0f\u8ba1\u5165\u521d\u59cb\u5316\u9636\u6bb5",
       "executor": "gated",
       "dependencies": [
         "flex.deformable-task-budget-boundaries"
@@ -7457,7 +7457,7 @@
       }
     },
     "flex.f4-thumb-total-physics-budget": {
-      "title": "拇指初始化及收尾总物理步预算修复",
+      "title": "\u62c7\u6307\u521d\u59cb\u5316\u53ca\u6536\u5c3e\u603b\u7269\u7406\u6b65\u9884\u7b97\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "flex.f4-paired-thumb-recipes",
@@ -7528,7 +7528,7 @@
       }
     },
     "flex.eb31c79-batch-closeout": {
-      "title": "本批原生结果、127项集成回归及预算恢复点",
+      "title": "\u672c\u6279\u539f\u751f\u7ed3\u679c\u3001127\u9879\u96c6\u6210\u56de\u5f52\u53ca\u9884\u7b97\u6062\u590d\u70b9",
       "executor": "gated",
       "dependencies": [
         "flex.f4-thumb-total-physics-budget",
@@ -8802,7 +8802,7 @@
       }
     },
     "flex.f6-camera-c5-ownership-preparation": {
-      "title": "C5 telemetry hook 所有权对照与正常退出采样",
+      "title": "C5 telemetry hook \u6240\u6709\u6743\u5bf9\u7167\u4e0e\u6b63\u5e38\u9000\u51fa\u91c7\u6837",
       "executor": "gated",
       "dependencies": [
         "flex.f6-camera-c3-c4-native-audit"
@@ -8993,7 +8993,7 @@
       }
     },
     "flex.wireseg-legacy-diagnostic-continuation": {
-      "title": "WireSeg 旧断点独立诊断恢复与第九个官方数据块",
+      "title": "WireSeg \u65e7\u65ad\u70b9\u72ec\u7acb\u8bca\u65ad\u6062\u590d\u4e0e\u7b2c\u4e5d\u4e2a\u5b98\u65b9\u6570\u636e\u5757",
       "executor": "gated",
       "dependencies": [
         "flex.wireseg-strict-resume",
@@ -9096,7 +9096,7 @@
       }
     },
     "flex.f6-camera-c5-worker-boundary": {
-      "title": "C5 原生 worker 保留独立采样入口",
+      "title": "C5 \u539f\u751f worker \u4fdd\u7559\u72ec\u7acb\u91c7\u6837\u5165\u53e3",
       "executor": "gated",
       "dependencies": [
         "flex.f6-camera-c5-ownership-preparation"
@@ -9170,7 +9170,7 @@
       }
     },
     "flex.wireseg-depth-error-attribution": {
-      "title": "WireSeg 旧深度模型只读误差归因",
+      "title": "WireSeg \u65e7\u6df1\u5ea6\u6a21\u578b\u53ea\u8bfb\u8bef\u5dee\u5f52\u56e0",
       "executor": "gated",
       "dependencies": [
         "flex.wireseg-legacy-diagnostic-continuation"
@@ -9280,7 +9280,7 @@
       }
     },
     "flex.f4-free-pinch-runtime-preparation": {
-      "title": "自由杆单手 Pinch 实际运行入口与独立退出验收",
+      "title": "\u81ea\u7531\u6746\u5355\u624b Pinch \u5b9e\u9645\u8fd0\u884c\u5165\u53e3\u4e0e\u72ec\u7acb\u9000\u51fa\u9a8c\u6536",
       "executor": "gated",
       "dependencies": [
         "flex.f4-thumb-total-physics-budget",
@@ -9519,7 +9519,7 @@
       }
     },
     "flex.wireseg-full-manifest-loss-domains": {
-      "title": "WireSeg 完整固定清单监督域与误差复核",
+      "title": "WireSeg \u5b8c\u6574\u56fa\u5b9a\u6e05\u5355\u76d1\u7763\u57df\u4e0e\u8bef\u5dee\u590d\u6838",
       "executor": "gated",
       "dependencies": [
         "flex.wireseg-depth-error-attribution"
@@ -9699,7 +9699,7 @@
       }
     },
     "flex.f7-force-aggregate-evidence": {
-      "title": "柔性杆力反馈来源与聚合证据校验",
+      "title": "\u67d4\u6027\u6746\u529b\u53cd\u9988\u6765\u6e90\u4e0e\u805a\u5408\u8bc1\u636e\u6821\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.flexible-task-r0-contract"
@@ -9725,7 +9725,7 @@
       }
     },
     "flex.wireseg-paired-depth18-resume-preflight": {
-      "title": "WireSeg depth18 精确配对与双任务恢复预检",
+      "title": "WireSeg depth18 \u7cbe\u786e\u914d\u5bf9\u4e0e\u53cc\u4efb\u52a1\u6062\u590d\u9884\u68c0",
       "executor": "gated",
       "dependencies": [
         "flex.wireseg-legacy-diagnostic-continuation",
@@ -9812,7 +9812,7 @@
       }
     },
     "flex.f4-physx-tensor-lifetime-evidence": {
-      "title": "PhysX Tensor View 退出栈与所有权审计",
+      "title": "PhysX Tensor View \u9000\u51fa\u6808\u4e0e\u6240\u6709\u6743\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f4-free-pinch-runtime-preparation"
@@ -9884,7 +9884,7 @@
       }
     },
     "flex.f4-pinch-cooked-initial-geometry": {
-      "title": "Pinch cooked hull 初态修正与 Tripod 独立筛选",
+      "title": "Pinch cooked hull \u521d\u6001\u4fee\u6b63\u4e0e Tripod \u72ec\u7acb\u7b5b\u9009",
       "executor": "gated",
       "dependencies": [
         "flex.f4-free-pinch-runtime-preparation",
@@ -9969,7 +9969,7 @@
       }
     },
     "flex.f8-power-flexible-initial-preflight": {
-      "title": "Power 独立档案的柔性桌面与杆筛选",
+      "title": "Power \u72ec\u7acb\u6863\u6848\u7684\u67d4\u6027\u684c\u9762\u4e0e\u6746\u7b5b\u9009",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-cooked-initial-geometry"
@@ -10065,7 +10065,7 @@
       }
     },
     "flex.f7-deformx-pair-capture-cpu": {
-      "title": "DeformX 逐接触对补丁与 CPU 校验",
+      "title": "DeformX \u9010\u63a5\u89e6\u5bf9\u8865\u4e01\u4e0e CPU \u6821\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f7-force-aggregate-evidence"
@@ -10102,7 +10102,7 @@
       }
     },
     "flex.f7-deformx-pair-capture-native": {
-      "title": "DeformX CUDA 逐接触对读回单步校准",
+      "title": "DeformX CUDA \u9010\u63a5\u89e6\u5bf9\u8bfb\u56de\u5355\u6b65\u6821\u51c6",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f7-deformx-pair-capture-cpu"
@@ -10202,7 +10202,7 @@
       }
     },
     "flex.f7-teacher-preaction-readback-cpu": {
-      "title": "柔性 Teacher 前动作 371D 来源审计",
+      "title": "\u67d4\u6027 Teacher \u524d\u52a8\u4f5c 371D \u6765\u6e90\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f7-force-aggregate-evidence"
@@ -10276,7 +10276,7 @@
       }
     },
     "flex.f8-tripod-power-pose-preparation": {
-      "title": "Tripod 与 Power 独立闭合可达性检查",
+      "title": "Tripod \u4e0e Power \u72ec\u7acb\u95ed\u5408\u53ef\u8fbe\u6027\u68c0\u67e5",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-cooked-initial-geometry",
@@ -10349,7 +10349,7 @@
       }
     },
     "flex.f7-r0-control-settlement-cpu": {
-      "title": "柔性 R0 控制步与提前终止结算",
+      "title": "\u67d4\u6027 R0 \u63a7\u5236\u6b65\u4e0e\u63d0\u524d\u7ec8\u6b62\u7ed3\u7b97",
       "executor": "gated",
       "dependencies": [
         "flex.flexible-task-r0-contract"
@@ -10421,7 +10421,7 @@
       }
     },
     "flex.f4-physx-lifetime-probes-cpu": {
-      "title": "PhysX Tensor View 两种清理路径对照准备",
+      "title": "PhysX Tensor View \u4e24\u79cd\u6e05\u7406\u8def\u5f84\u5bf9\u7167\u51c6\u5907",
       "executor": "gated",
       "dependencies": [
         "flex.f4-physx-tensor-lifetime-evidence"
@@ -10515,7 +10515,7 @@
       }
     },
     "flex.f4-physx-lifetime-registry-native": {
-      "title": "PhysX 所有权生命周期 registry 原生对照",
+      "title": "PhysX \u6240\u6709\u6743\u751f\u547d\u5468\u671f registry \u539f\u751f\u5bf9\u7167",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f4-physx-lifetime-probes-cpu"
@@ -10647,7 +10647,7 @@
       }
     },
     "flex.f4-physx-lifetime-explicit-native": {
-      "title": "PhysX 所有权生命周期 explicit 原生对照",
+      "title": "PhysX \u6240\u6709\u6743\u751f\u547d\u5468\u671f explicit \u539f\u751f\u5bf9\u7167",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f4-physx-lifetime-probes-cpu"
@@ -10779,7 +10779,7 @@
       }
     },
     "flex.f4-physx-lifetime-contrast-audit": {
-      "title": "PhysX 生命周期两格原生证据复核",
+      "title": "PhysX \u751f\u547d\u5468\u671f\u4e24\u683c\u539f\u751f\u8bc1\u636e\u590d\u6838",
       "executor": "gated",
       "dependencies": [
         "flex.f4-physx-lifetime-probes-cpu"
@@ -10827,7 +10827,7 @@
       }
     },
     "flex.f8-teacher-rollout-admission-cpu": {
-      "title": "三抓法 Teacher rollout 准入与 GAE 边界审计",
+      "title": "\u4e09\u6293\u6cd5 Teacher rollout \u51c6\u5165\u4e0e GAE \u8fb9\u754c\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f7-teacher-preaction-readback-cpu",
@@ -10904,7 +10904,7 @@
       }
     },
     "flex.f4-physx-gdb-all-stop-cpu": {
-      "title": "PhysX GDB 全线程暂停后取证",
+      "title": "PhysX GDB \u5168\u7ebf\u7a0b\u6682\u505c\u540e\u53d6\u8bc1",
       "executor": "gated",
       "dependencies": [
         "flex.f4-physx-lifetime-contrast-audit"
@@ -10972,7 +10972,7 @@
       }
     },
     "flex.f4-dual-hand-rod-runtime-cpu": {
-      "title": "双手同杆运行时与 10 指腹反作用力路由",
+      "title": "\u53cc\u624b\u540c\u6746\u8fd0\u884c\u65f6\u4e0e 10 \u6307\u8179\u53cd\u4f5c\u7528\u529b\u8def\u7531",
       "executor": "gated",
       "dependencies": [
         "flex.f7-deformx-pair-capture-cpu"
@@ -11042,7 +11042,7 @@
       }
     },
     "flex.f7-bimanual-action-connection-cpu": {
-      "title": "双手 24D 控制边界与 PhysX 目标读回",
+      "title": "\u53cc\u624b 24D \u63a7\u5236\u8fb9\u754c\u4e0e PhysX \u76ee\u6807\u8bfb\u56de",
       "executor": "gated",
       "dependencies": [
         "flex.f7-teacher-preaction-readback-cpu",
@@ -11121,7 +11121,7 @@
       }
     },
     "flex.f7-wrist-table-projection-cpu": {
-      "title": "柔性双手腕部原桌面安全投影",
+      "title": "\u67d4\u6027\u53cc\u624b\u8155\u90e8\u539f\u684c\u9762\u5b89\u5168\u6295\u5f71",
       "executor": "gated",
       "dependencies": [
         "flex.f7-bimanual-action-connection-cpu"
@@ -11191,7 +11191,7 @@
       }
     },
     "flex.f7-physical-exchange-cpu": {
-      "title": "60 Hz 双手控制与 480 Hz 柔性物理交换",
+      "title": "60 Hz \u53cc\u624b\u63a7\u5236\u4e0e 480 Hz \u67d4\u6027\u7269\u7406\u4ea4\u6362",
       "executor": "gated",
       "dependencies": [
         "flex.f7-wrist-table-projection-cpu",
@@ -11266,7 +11266,7 @@
       }
     },
     "flex.f7-teacher-mounted-wrist-source-cpu": {
-      "title": "Teacher 371D 原腕部状态来源",
+      "title": "Teacher 371D \u539f\u8155\u90e8\u72b6\u6001\u6765\u6e90",
       "executor": "gated",
       "dependencies": [
         "flex.f7-teacher-preaction-readback-cpu",
@@ -11341,7 +11341,7 @@
       }
     },
     "flex.f4-physx-lifetime-frame-v2-cpu": {
-      "title": "PhysX 构造 frame 引用释放与原生复验准备",
+      "title": "PhysX \u6784\u9020 frame \u5f15\u7528\u91ca\u653e\u4e0e\u539f\u751f\u590d\u9a8c\u51c6\u5907",
       "executor": "gated",
       "dependencies": [
         "flex.f4-physx-gdb-all-stop-cpu"
@@ -11427,7 +11427,7 @@
       }
     },
     "flex.f4-physx-lifetime-frame-v2-native": {
-      "title": "PhysX 构造 frame 释放 v2 单次原生",
+      "title": "PhysX \u6784\u9020 frame \u91ca\u653e v2 \u5355\u6b21\u539f\u751f",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f4-physx-lifetime-frame-v2-cpu"
@@ -11628,7 +11628,7 @@
       }
     },
     "flex.f7-mount-view-path-identity-cpu": {
-      "title": "Teacher 原生腕部实例路径绑定修复",
+      "title": "Teacher \u539f\u751f\u8155\u90e8\u5b9e\u4f8b\u8def\u5f84\u7ed1\u5b9a\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "flex.f7-teacher-mounted-wrist-source-cpu"
@@ -11702,7 +11702,7 @@
       }
     },
     "flex.f7-solver-float-clock-cpu": {
-      "title": "DeformX PPO 与 Hold 窗口的单精度时钟校验",
+      "title": "DeformX PPO \u4e0e Hold \u7a97\u53e3\u7684\u5355\u7cbe\u5ea6\u65f6\u949f\u6821\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f7-physical-exchange-cpu"
@@ -11768,7 +11768,7 @@
       }
     },
     "flex.f4-dual-hand-scene-preparation-cpu": {
-      "title": "柔性双手原 USD 场景装配与几何身份",
+      "title": "\u67d4\u6027\u53cc\u624b\u539f USD \u573a\u666f\u88c5\u914d\u4e0e\u51e0\u4f55\u8eab\u4efd",
       "executor": "gated",
       "dependencies": [
         "flex.f4-dual-hand-rod-runtime-cpu",
@@ -11845,7 +11845,7 @@
       }
     },
     "flex.f7-contact-pair-reduction-cpu": {
-      "title": "逐指腹接触对与同子步加载诊断",
+      "title": "\u9010\u6307\u8179\u63a5\u89e6\u5bf9\u4e0e\u540c\u5b50\u6b65\u52a0\u8f7d\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f4-dual-hand-rod-runtime-cpu",
@@ -11912,7 +11912,7 @@
       }
     },
     "flex.f7-teacher-policy-owner-source-cpu": {
-      "title": "Teacher 原策略 owner 动作与目标来源",
+      "title": "Teacher \u539f\u7b56\u7565 owner \u52a8\u4f5c\u4e0e\u76ee\u6807\u6765\u6e90",
       "executor": "gated",
       "dependencies": [
         "flex.f7-mount-view-path-identity-cpu"
@@ -11982,7 +11982,7 @@
       }
     },
     "flex.f7-rod-reset-boundary-cpu": {
-      "title": "柔性杆 Reset 与测量状态同钟适配",
+      "title": "\u67d4\u6027\u6746 Reset \u4e0e\u6d4b\u91cf\u72b6\u6001\u540c\u949f\u9002\u914d",
       "executor": "gated",
       "dependencies": [
         "flex.f4-dual-hand-rod-runtime-cpu",
@@ -12049,7 +12049,7 @@
       }
     },
     "flex.f7-deformx-pair-worker-v2-cpu": {
-      "title": "DeformX 接触对校准 worker 注册路径修复",
+      "title": "DeformX \u63a5\u89e6\u5bf9\u6821\u51c6 worker \u6ce8\u518c\u8def\u5f84\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "flex.f7-deformx-pair-capture-cpu"
@@ -12121,7 +12121,7 @@
       }
     },
     "flex.f7-deformx-pair-capture-v2-native": {
-      "title": "DeformX 逐接触对 CUDA 校准 v2",
+      "title": "DeformX \u9010\u63a5\u89e6\u5bf9 CUDA \u6821\u51c6 v2",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f7-deformx-pair-worker-v2-cpu"
@@ -12231,7 +12231,7 @@
       }
     },
     "flex.f7-live-geometry-reader-cpu": {
-      "title": "柔性 24D 控制的同钟几何读回",
+      "title": "\u67d4\u6027 24D \u63a7\u5236\u7684\u540c\u949f\u51e0\u4f55\u8bfb\u56de",
       "executor": "gated",
       "dependencies": [
         "flex.f4-dual-hand-scene-preparation-cpu",
@@ -12298,7 +12298,7 @@
       }
     },
     "flex.f8-right-pinch-closure-screen-cpu": {
-      "title": "右手 Pinch 独立闭合筛查",
+      "title": "\u53f3\u624b Pinch \u72ec\u7acb\u95ed\u5408\u7b5b\u67e5",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-cooked-initial-geometry",
@@ -12375,7 +12375,7 @@
       }
     },
     "flex.f7-dual-hand-reset-cpu": {
-      "title": "双手同杆原地 Reset 事务",
+      "title": "\u53cc\u624b\u540c\u6746\u539f\u5730 Reset \u4e8b\u52a1",
       "executor": "gated",
       "dependencies": [
         "flex.f4-dual-hand-rod-runtime-cpu",
@@ -12466,7 +12466,7 @@
       }
     },
     "flex.f7-dual-hand-clock-handoff-cpu": {
-      "title": "PhysX 到 DeformX 位姿交接",
+      "title": "PhysX \u5230 DeformX \u4f4d\u59ff\u4ea4\u63a5",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-hand-reset-cpu",
@@ -12542,7 +12542,7 @@
       }
     },
     "flex.f7-dual-hand-physical-episode-cpu": {
-      "title": "双手物理 Episode 链路",
+      "title": "\u53cc\u624b\u7269\u7406 Episode \u94fe\u8def",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-hand-clock-handoff-cpu",
@@ -12619,7 +12619,7 @@
       }
     },
     "flex.f8-right-pinch-targeted-cpu": {
-      "title": "右手 Pinch 定向静态闭合",
+      "title": "\u53f3\u624b Pinch \u5b9a\u5411\u9759\u6001\u95ed\u5408",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-closure-screen-cpu"
@@ -12697,7 +12697,7 @@
       }
     },
     "flex.f7-dual-hand-episode-common-cpu": {
-      "title": "柔性双手动作前同钟状态读回",
+      "title": "\u67d4\u6027\u53cc\u624b\u52a8\u4f5c\u524d\u540c\u949f\u72b6\u6001\u8bfb\u56de",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-hand-physical-episode-cpu",
@@ -12776,7 +12776,7 @@
       }
     },
     "flex.f4-pinch-initial-geometry-v2-cpu": {
-      "title": "左 Pinch v2 初始全手几何读回",
+      "title": "\u5de6 Pinch v2 \u521d\u59cb\u5168\u624b\u51e0\u4f55\u8bfb\u56de",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-cooked-initial-geometry"
@@ -12848,7 +12848,7 @@
       }
     },
     "flex.f8-tripod-proximal-targeted-cpu": {
-      "title": "Tripod 近端碰撞定向筛查",
+      "title": "Tripod \u8fd1\u7aef\u78b0\u649e\u5b9a\u5411\u7b5b\u67e5",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-targeted-cpu"
@@ -12924,7 +12924,7 @@
       }
     },
     "flex.f8-right-pinch-policy-clearance-cpu": {
-      "title": "右手 Pinch 原策略净空复验",
+      "title": "\u53f3\u624b Pinch \u539f\u7b56\u7565\u51c0\u7a7a\u590d\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-targeted-cpu",
@@ -12997,7 +12997,7 @@
       }
     },
     "flex.f4-pinch-left-v2-preparation-cpu": {
-      "title": "单左 Pinch v2 原生复验准备",
+      "title": "\u5355\u5de6 Pinch v2 \u539f\u751f\u590d\u9a8c\u51c6\u5907",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-initial-geometry-v2-cpu",
@@ -13081,7 +13081,7 @@
       }
     },
     "flex.f4-pinch-left-v2-native": {
-      "title": "左 Pinch v2 单手自由杆读回和自然退出",
+      "title": "\u5de6 Pinch v2 \u5355\u624b\u81ea\u7531\u6746\u8bfb\u56de\u548c\u81ea\u7136\u9000\u51fa",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f4-pinch-left-v2-preparation-cpu",
@@ -13251,7 +13251,7 @@
       }
     },
     "flex.f8-paired-pinch-reset-preflight-cpu": {
-      "title": "双手 Pinch 同杆 Reset 提案",
+      "title": "\u53cc\u624b Pinch \u540c\u6746 Reset \u63d0\u6848",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-policy-clearance-cpu",
@@ -13322,7 +13322,7 @@
       }
     },
     "flex.f8-power-closure-constraints-cpu": {
-      "title": "Power 固定根闭合连续界",
+      "title": "Power \u56fa\u5b9a\u6839\u95ed\u5408\u8fde\u7eed\u754c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tripod-proximal-targeted-cpu"
@@ -13394,7 +13394,7 @@
       }
     },
     "flex.f7-dual-hand-r0-replay-cpu": {
-      "title": "双手柔性 Episode 的 R0 账本重放",
+      "title": "\u53cc\u624b\u67d4\u6027 Episode \u7684 R0 \u8d26\u672c\u91cd\u653e",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-hand-episode-common-cpu",
@@ -13495,7 +13495,7 @@
       }
     },
     "flex.f7-measured-common-teacher-cpu": {
-      "title": "柔性 Teacher 独立实测状态投影",
+      "title": "\u67d4\u6027 Teacher \u72ec\u7acb\u5b9e\u6d4b\u72b6\u6001\u6295\u5f71",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-hand-episode-common-cpu"
@@ -13573,7 +13573,7 @@
       }
     },
     "flex.f7-measured-common-checkpoint-cpu": {
-      "title": "柔性实测字段 Teacher 独立断点",
+      "title": "\u67d4\u6027\u5b9e\u6d4b\u5b57\u6bb5 Teacher \u72ec\u7acb\u65ad\u70b9",
       "executor": "gated",
       "dependencies": [
         "flex.f7-measured-common-teacher-cpu"
@@ -13643,7 +13643,7 @@
       }
     },
     "flex.f8-tripod-joint-root-direction-cpu": {
-      "title": "Tripod 联合手掌和关节几何方向",
+      "title": "Tripod \u8054\u5408\u624b\u638c\u548c\u5173\u8282\u51e0\u4f55\u65b9\u5411",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tripod-proximal-targeted-cpu"
@@ -13717,7 +13717,7 @@
       }
     },
     "flex.f4-pinch-left-v3-preparation-cpu": {
-      "title": "左 Pinch v3 Kit 启动边界",
+      "title": "\u5de6 Pinch v3 Kit \u542f\u52a8\u8fb9\u754c",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-initial-geometry-v2-cpu",
@@ -13803,7 +13803,7 @@
       }
     },
     "flex.f4-pinch-left-v3-native": {
-      "title": "左 Pinch v3 原生启动与单手读回",
+      "title": "\u5de6 Pinch v3 \u539f\u751f\u542f\u52a8\u4e0e\u5355\u624b\u8bfb\u56de",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f4-pinch-left-v3-preparation-cpu",
@@ -13989,7 +13989,7 @@
       }
     },
     "flex.f4-pinch-v3-evidence-replay-cpu": {
-      "title": "左 Pinch v3 原生账本重放",
+      "title": "\u5de6 Pinch v3 \u539f\u751f\u8d26\u672c\u91cd\u653e",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-left-v3-preparation-cpu"
@@ -14065,7 +14065,7 @@
       }
     },
     "flex.f7-pair-source-basis-cpu": {
-      "title": "柔性杆接触方向与材料节点分辨率",
+      "title": "\u67d4\u6027\u6746\u63a5\u89e6\u65b9\u5411\u4e0e\u6750\u6599\u8282\u70b9\u5206\u8fa8\u7387",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-hand-r0-replay-cpu"
@@ -14145,7 +14145,7 @@
       }
     },
     "flex.f8-power-joint-palm-direction-cpu": {
-      "title": "Power 掌位与六主动关节联合几何",
+      "title": "Power \u638c\u4f4d\u4e0e\u516d\u4e3b\u52a8\u5173\u8282\u8054\u5408\u51e0\u4f55",
       "executor": "gated",
       "dependencies": [
         "flex.f8-power-closure-constraints-cpu",
@@ -14220,7 +14220,7 @@
       }
     },
     "flex.f4-pinch-force-precision-cpu": {
-      "title": "Pinch 后继配方独立力守恒归约",
+      "title": "Pinch \u540e\u7ee7\u914d\u65b9\u72ec\u7acb\u529b\u5b88\u6052\u5f52\u7ea6",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-v3-evidence-replay-cpu"
@@ -14288,7 +14288,7 @@
       }
     },
     "flex.f4-dual-pinch-builder-cpu": {
-      "title": "双手 Pinch 同一自由杆原生构造接线",
+      "title": "\u53cc\u624b Pinch \u540c\u4e00\u81ea\u7531\u6746\u539f\u751f\u6784\u9020\u63a5\u7ebf",
       "executor": "gated",
       "dependencies": [
         "flex.f8-paired-pinch-reset-preflight-cpu"
@@ -14356,7 +14356,7 @@
       }
     },
     "flex.f4-simulation-owner-cleanup-cpu": {
-      "title": "SimulationContext 已知 ready 订阅释放",
+      "title": "SimulationContext \u5df2\u77e5 ready \u8ba2\u9605\u91ca\u653e",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-v3-evidence-replay-cpu"
@@ -14422,7 +14422,7 @@
       }
     },
     "flex.f4-pinch-closure-margin-cpu": {
-      "title": "左 Pinch 实测节点与两指闭合候选",
+      "title": "\u5de6 Pinch \u5b9e\u6d4b\u8282\u70b9\u4e0e\u4e24\u6307\u95ed\u5408\u5019\u9009",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-v3-evidence-replay-cpu"
@@ -14488,7 +14488,7 @@
       }
     },
     "flex.f7-dual-physical-evidence-cpu": {
-      "title": "双手柔性物理和 24D 决策证据落盘",
+      "title": "\u53cc\u624b\u67d4\u6027\u7269\u7406\u548c 24D \u51b3\u7b56\u8bc1\u636e\u843d\u76d8",
       "executor": "gated",
       "dependencies": [
         "flex.f4-dual-pinch-builder-cpu",
@@ -14555,7 +14555,7 @@
       }
     },
     "flex.f7-dual-pinch-eight-tick-cpu": {
-      "title": "双手 Pinch 八子步完整动作接线",
+      "title": "\u53cc\u624b Pinch \u516b\u5b50\u6b65\u5b8c\u6574\u52a8\u4f5c\u63a5\u7ebf",
       "executor": "gated",
       "dependencies": [
         "flex.f4-dual-pinch-builder-cpu",
@@ -14622,7 +14622,7 @@
       }
     },
     "flex.f4-pinch-left-v4-cpu": {
-      "title": "左固定底座 Pinch v4 配方与退出审计",
+      "title": "\u5de6\u56fa\u5b9a\u5e95\u5ea7 Pinch v4 \u914d\u65b9\u4e0e\u9000\u51fa\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f4-simulation-owner-cleanup-cpu",
@@ -14696,7 +14696,7 @@
       }
     },
     "flex.f4-pinch-left-v4-native": {
-      "title": "左 Pinch v4 固定底座实测闭合和原生退出",
+      "title": "\u5de6 Pinch v4 \u56fa\u5b9a\u5e95\u5ea7\u5b9e\u6d4b\u95ed\u5408\u548c\u539f\u751f\u9000\u51fa",
       "dependencies": [
         "flex.f4-pinch-left-v4-cpu",
         "flex.f4-physx-lifetime-frame-v2-native",
@@ -14973,7 +14973,7 @@
       }
     },
     "flex.f7-bimanual-table-contact-cpu": {
-      "title": "双手 PhysX 逐身体台面接触来源",
+      "title": "\u53cc\u624b PhysX \u9010\u8eab\u4f53\u53f0\u9762\u63a5\u89e6\u6765\u6e90",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-eight-tick-cpu"
@@ -15037,7 +15037,7 @@
       }
     },
     "flex.f7-static-table-contact-capability-cpu": {
-      "title": "静态台面 GPU 过滤能力门",
+      "title": "\u9759\u6001\u53f0\u9762 GPU \u8fc7\u6ee4\u80fd\u529b\u95e8",
       "executor": "gated",
       "dependencies": [
         "flex.f7-bimanual-table-contact-cpu",
@@ -15100,7 +15100,7 @@
       }
     },
     "flex.f8-tripod-sdf-constrained-direction-cpu": {
-      "title": "Tripod 节点 SDF 与初态硬约束",
+      "title": "Tripod \u8282\u70b9 SDF \u4e0e\u521d\u6001\u786c\u7ea6\u675f",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tripod-joint-root-direction-cpu"
@@ -15164,7 +15164,7 @@
       }
     },
     "flex.f4-pinch-v4-contact-provenance-cpu": {
-      "title": "左 Pinch v4 原生接触与来源分项复核",
+      "title": "\u5de6 Pinch v4 \u539f\u751f\u63a5\u89e6\u4e0e\u6765\u6e90\u5206\u9879\u590d\u6838",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-left-v4-native",
@@ -15235,7 +15235,7 @@
       }
     },
     "flex.f7-contact-material-observability-cpu": {
-      "title": "实测节点中心与连续材料锚来源审计",
+      "title": "\u5b9e\u6d4b\u8282\u70b9\u4e2d\u5fc3\u4e0e\u8fde\u7eed\u6750\u6599\u951a\u6765\u6e90\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f4-pinch-v4-contact-provenance-cpu"
@@ -15303,7 +15303,7 @@
       }
     },
     "flex.f7-dual-pinch-integrated-entry-cpu": {
-      "title": "双手 Pinch 原始构造、动作和账本整链",
+      "title": "\u53cc\u624b Pinch \u539f\u59cb\u6784\u9020\u3001\u52a8\u4f5c\u548c\u8d26\u672c\u6574\u94fe",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-eight-tick-cpu",
@@ -15400,7 +15400,7 @@
       }
     },
     "flex.f8-power-alternative-sdf-interval-cpu": {
-      "title": "Power 独立初态与原五指 SDF 可达范围",
+      "title": "Power \u72ec\u7acb\u521d\u6001\u4e0e\u539f\u4e94\u6307 SDF \u53ef\u8fbe\u8303\u56f4",
       "executor": "gated",
       "dependencies": [
         "flex.f8-power-joint-palm-direction-cpu"
@@ -15464,7 +15464,7 @@
       }
     },
     "flex.f7-dual-pinch-postexit-audit-cpu": {
-      "title": "双手 Pinch 独立原生退出和逐步审计",
+      "title": "\u53cc\u624b Pinch \u72ec\u7acb\u539f\u751f\u9000\u51fa\u548c\u9010\u6b65\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-integrated-entry-cpu",
@@ -15527,7 +15527,7 @@
       }
     },
     "flex.f7-dual-pinch-zero-interval-cpu": {
-      "title": "双手 Pinch 精确 2+8 原生配方准备",
+      "title": "\u53cc\u624b Pinch \u7cbe\u786e 2+8 \u539f\u751f\u914d\u65b9\u51c6\u5907",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-integrated-entry-cpu",
@@ -15629,7 +15629,7 @@
       }
     },
     "flex.f7-dual-pinch-zero-interval-native": {
-      "title": "双手 Pinch 同杆零动作 2+8 原生诊断",
+      "title": "\u53cc\u624b Pinch \u540c\u6746\u96f6\u52a8\u4f5c 2+8 \u539f\u751f\u8bca\u65ad",
       "dependencies": [
         "flex.f7-dual-pinch-zero-interval-cpu",
         "flex.f4-pinch-left-v4-native",
@@ -15832,7 +15832,7 @@
       }
     },
     "flex.f7-cosserat-material-marker-cpu": {
-      "title": "Cosserat 材料标记随杆截面运动的 CPU 参考",
+      "title": "Cosserat \u6750\u6599\u6807\u8bb0\u968f\u6746\u622a\u9762\u8fd0\u52a8\u7684 CPU \u53c2\u8003",
       "executor": "gated",
       "dependencies": [
         "flex.f7-contact-material-observability-cpu"
@@ -15898,7 +15898,7 @@
       }
     },
     "flex.f7-dual-external-wire-layout-cpu": {
-      "title": "双手外部柔性杆的原场景元数据",
+      "title": "\u53cc\u624b\u5916\u90e8\u67d4\u6027\u6746\u7684\u539f\u573a\u666f\u5143\u6570\u636e",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-zero-interval-cpu"
@@ -15958,7 +15958,7 @@
       }
     },
     "flex.f7-dual-pinch-zero-interval-v2-cpu": {
-      "title": "双手 Pinch 2+8 原生元数据修正版",
+      "title": "\u53cc\u624b Pinch 2+8 \u539f\u751f\u5143\u6570\u636e\u4fee\u6b63\u7248",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-external-wire-layout-cpu",
@@ -16025,7 +16025,7 @@
       }
     },
     "flex.f7-dual-pinch-zero-interval-v2-native": {
-      "title": "双手 Pinch 原生同杆 2+8 元数据修正版",
+      "title": "\u53cc\u624b Pinch \u539f\u751f\u540c\u6746 2+8 \u5143\u6570\u636e\u4fee\u6b63\u7248",
       "dependencies": [
         "flex.f7-dual-pinch-zero-interval-v2-cpu",
         "flex.f4-pinch-left-v4-native",
@@ -16240,7 +16240,7 @@
       }
     },
     "flex.f7-dual-pinch-zero-interval-v3-cpu": {
-      "title": "双手 Pinch 场景准备交接",
+      "title": "\u53cc\u624b Pinch \u573a\u666f\u51c6\u5907\u4ea4\u63a5",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-zero-interval-v2-cpu",
@@ -16299,7 +16299,7 @@
       }
     },
     "flex.f7-dual-pinch-zero-interval-v3-native": {
-      "title": "双手 Pinch 零动作区间 v3 原生复验",
+      "title": "\u53cc\u624b Pinch \u96f6\u52a8\u4f5c\u533a\u95f4 v3 \u539f\u751f\u590d\u9a8c",
       "executor": "native_bounded",
       "status": "failed",
       "dependencies": [
@@ -16522,7 +16522,7 @@
       }
     },
     "flex.f7-dual-mounted-sdk-boundary-cpu": {
-      "title": "双手原生 Reset 账本与 SDK 输入回归",
+      "title": "\u53cc\u624b\u539f\u751f Reset \u8d26\u672c\u4e0e SDK \u8f93\u5165\u56de\u5f52",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-zero-interval-v3-cpu"
@@ -16582,7 +16582,7 @@
       }
     },
     "flex.f7-dual-pinch-zero-interval-v4-cpu": {
-      "title": "双手 Pinch 原台面碰撞节点",
+      "title": "\u53cc\u624b Pinch \u539f\u53f0\u9762\u78b0\u649e\u8282\u70b9",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-zero-interval-v3-cpu",
@@ -16641,7 +16641,7 @@
       }
     },
     "flex.f7-dual-pinch-zero-interval-v4-native": {
-      "title": "双手 Pinch 零动作区间 v4 原生复验",
+      "title": "\u53cc\u624b Pinch \u96f6\u52a8\u4f5c\u533a\u95f4 v4 \u539f\u751f\u590d\u9a8c",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -16956,7 +16956,7 @@
       }
     },
     "flex.f7-native-boundary-inference-cpu": {
-      "title": "柔性 Teacher 真实动作前状态离线推理",
+      "title": "\u67d4\u6027 Teacher \u771f\u5b9e\u52a8\u4f5c\u524d\u72b6\u6001\u79bb\u7ebf\u63a8\u7406",
       "executor": "gated",
       "dependencies": [
         "flex.f7-measured-common-teacher-cpu",
@@ -17025,7 +17025,7 @@
       }
     },
     "flex.f8-tripod-two-phase-sdf-cpu": {
-      "title": "Tripod 起点与沉降杆闭合分阶段审计",
+      "title": "Tripod \u8d77\u70b9\u4e0e\u6c89\u964d\u6746\u95ed\u5408\u5206\u9636\u6bb5\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tripod-sdf-constrained-direction-cpu"
@@ -17095,7 +17095,7 @@
       }
     },
     "flex.f7-poststep-source-clearance-cpu": {
-      "title": "双手柔性动作后的实测净空保护",
+      "title": "\u53cc\u624b\u67d4\u6027\u52a8\u4f5c\u540e\u7684\u5b9e\u6d4b\u51c0\u7a7a\u4fdd\u62a4",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-zero-interval-v4-native",
@@ -17156,7 +17156,7 @@
       }
     },
     "flex.f7-static-table-report-source-cpu": {
-      "title": "静态台面 PhysX 逐接触来源校验",
+      "title": "\u9759\u6001\u53f0\u9762 PhysX \u9010\u63a5\u89e6\u6765\u6e90\u6821\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-zero-interval-v4-cpu"
@@ -17222,7 +17222,7 @@
       }
     },
     "flex.f7-dual-pinch-readback-profile-cpu": {
-      "title": "冻结双手 Pinch 单区间动作回读 profile",
+      "title": "\u51bb\u7ed3\u53cc\u624b Pinch \u5355\u533a\u95f4\u52a8\u4f5c\u56de\u8bfb profile",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-zero-interval-v4-native",
@@ -17297,7 +17297,7 @@
       }
     },
     "flex.f7-dual-v4-r0-native-ledger-replay": {
-      "title": "真实双手 Pinch v4 账本的 R0 离线重放",
+      "title": "\u771f\u5b9e\u53cc\u624b Pinch v4 \u8d26\u672c\u7684 R0 \u79bb\u7ebf\u91cd\u653e",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-hand-r0-replay-cpu",
@@ -17388,7 +17388,7 @@
       }
     },
     "flex.f7-measured-closure-geometry-cpu": {
-      "title": "同钟双手闭合几何实测与失败保护",
+      "title": "\u540c\u949f\u53cc\u624b\u95ed\u5408\u51e0\u4f55\u5b9e\u6d4b\u4e0e\u5931\u8d25\u4fdd\u62a4",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-readback-profile-cpu",
@@ -17463,7 +17463,7 @@
       }
     },
     "flex.f7-dual-pinch-guarded-closure-cpu": {
-      "title": "双手 Pinch 单动作区间原生执行与失败记录准备",
+      "title": "\u53cc\u624b Pinch \u5355\u52a8\u4f5c\u533a\u95f4\u539f\u751f\u6267\u884c\u4e0e\u5931\u8d25\u8bb0\u5f55\u51c6\u5907",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-zero-interval-v4-native",
@@ -17535,7 +17535,7 @@
       }
     },
     "flex.f7-dual-pinch-guarded-closure-native": {
-      "title": "双手 Pinch 单次受保护手指动作原生读回",
+      "title": "\u53cc\u624b Pinch \u5355\u6b21\u53d7\u4fdd\u62a4\u624b\u6307\u52a8\u4f5c\u539f\u751f\u8bfb\u56de",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -17880,7 +17880,7 @@
       }
     },
     "flex.f7-pinch-raised-reset-direction-cpu": {
-      "title": "Pinch 初始掌位与两指闭合的有界可达性诊断",
+      "title": "Pinch \u521d\u59cb\u638c\u4f4d\u4e0e\u4e24\u6307\u95ed\u5408\u7684\u6709\u754c\u53ef\u8fbe\u6027\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-readback-profile-cpu",
@@ -17951,7 +17951,7 @@
       }
     },
     "flex.f7-r0-reward-domain-cpu": {
-      "title": "区分 flexible R0 观测缺失与奖励定义域",
+      "title": "\u533a\u5206 flexible R0 \u89c2\u6d4b\u7f3a\u5931\u4e0e\u5956\u52b1\u5b9a\u4e49\u57df",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-v4-r0-native-ledger-replay"
@@ -18019,7 +18019,7 @@
       }
     },
     "flex.f7-material-director-readback-cpu": {
-      "title": "绑定真实 DeformX API 的材料方向端点读回",
+      "title": "\u7ed1\u5b9a\u771f\u5b9e DeformX API \u7684\u6750\u6599\u65b9\u5411\u7aef\u70b9\u8bfb\u56de",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-guarded-closure-native"
@@ -18091,7 +18091,7 @@
       }
     },
     "flex.f7-pinch-spread-axial-direction-cpu": {
-      "title": "Pinch 初态展开角与沿杆位置的非线性可达性核验",
+      "title": "Pinch \u521d\u6001\u5c55\u5f00\u89d2\u4e0e\u6cbf\u6746\u4f4d\u7f6e\u7684\u975e\u7ebf\u6027\u53ef\u8fbe\u6027\u6838\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-raised-reset-direction-cpu",
@@ -18164,7 +18164,7 @@
       }
     },
     "flex.f7-dual-pinch-closure-readback-cpu": {
-      "title": "真实双手动作区间的目标与实测响应对齐",
+      "title": "\u771f\u5b9e\u53cc\u624b\u52a8\u4f5c\u533a\u95f4\u7684\u76ee\u6807\u4e0e\u5b9e\u6d4b\u54cd\u5e94\u5bf9\u9f50",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-guarded-closure-native"
@@ -18232,7 +18232,7 @@
       }
     },
     "flex.f7-pinch-nonlinear-trust-region-cpu": {
-      "title": "Pinch 有界非线性几何候选的实际接受与拒绝",
+      "title": "Pinch \u6709\u754c\u975e\u7ebf\u6027\u51e0\u4f55\u5019\u9009\u7684\u5b9e\u9645\u63a5\u53d7\u4e0e\u62d2\u7edd",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-spread-axial-direction-cpu"
@@ -18314,7 +18314,7 @@
       }
     },
     "flex.f7-dual-pinch-director-endpoints-cpu": {
-      "title": "双手 Pinch 同钟材料方向读回与生命周期原生准备",
+      "title": "\u53cc\u624b Pinch \u540c\u949f\u6750\u6599\u65b9\u5411\u8bfb\u56de\u4e0e\u751f\u547d\u5468\u671f\u539f\u751f\u51c6\u5907",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-guarded-closure-native",
@@ -18389,7 +18389,7 @@
       }
     },
     "flex.f7-dual-pinch-director-endpoints-native": {
-      "title": "双手 Pinch 同钟材料方向单次原生端点读回",
+      "title": "\u53cc\u624b Pinch \u540c\u949f\u6750\u6599\u65b9\u5411\u5355\u6b21\u539f\u751f\u7aef\u70b9\u8bfb\u56de",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -18756,7 +18756,7 @@
       }
     },
     "flex.f7-native-director-endpoint-summary-cpu": {
-      "title": "真实材料方向端点与原动作路径只读对照",
+      "title": "\u771f\u5b9e\u6750\u6599\u65b9\u5411\u7aef\u70b9\u4e0e\u539f\u52a8\u4f5c\u8def\u5f84\u53ea\u8bfb\u5bf9\u7167",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-director-endpoints-native"
@@ -18832,7 +18832,7 @@
       }
     },
     "flex.f7-parameter-provenance-readback-cpu": {
-      "title": "柔性求解器参数getter与配置来源分离",
+      "title": "\u67d4\u6027\u6c42\u89e3\u5668\u53c2\u6570getter\u4e0e\u914d\u7f6e\u6765\u6e90\u5206\u79bb",
       "executor": "gated",
       "dependencies": [
         "flex.f7-native-director-endpoint-summary-cpu"
@@ -18916,7 +18916,7 @@
       }
     },
     "flex.f7-dual-pinch-parameter-readback-cpu": {
-      "title": "双手 Pinch 参数来源同钟原生读回准备",
+      "title": "\u53cc\u624b Pinch \u53c2\u6570\u6765\u6e90\u540c\u949f\u539f\u751f\u8bfb\u56de\u51c6\u5907",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-director-endpoints-native",
@@ -18993,7 +18993,7 @@
       }
     },
     "flex.f7-dual-pinch-parameter-readback-native": {
-      "title": "双手 Pinch 参数来源单次原生端点读回",
+      "title": "\u53cc\u624b Pinch \u53c2\u6570\u6765\u6e90\u5355\u6b21\u539f\u751f\u7aef\u70b9\u8bfb\u56de",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -19380,7 +19380,7 @@
       }
     },
     "flex.f7-pinch-static-yaw-screen-cpu": {
-      "title": "Pinch 静态World-Z偏航独立几何筛选",
+      "title": "Pinch \u9759\u6001World-Z\u504f\u822a\u72ec\u7acb\u51e0\u4f55\u7b5b\u9009",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-nonlinear-trust-region-cpu"
@@ -19462,7 +19462,7 @@
       }
     },
     "flex.f7-pinch-yaw-convex-witness-cpu": {
-      "title": "Pinch 已存偏航候选凸包重叠证据",
+      "title": "Pinch \u5df2\u5b58\u504f\u822a\u5019\u9009\u51f8\u5305\u91cd\u53e0\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-static-yaw-screen-cpu"
@@ -19540,7 +19540,7 @@
       }
     },
     "flex.f7-pinch-coupled-lateral-reset-cpu": {
-      "title": "Pinch 横向掌位偏航闭合联合求解",
+      "title": "Pinch \u6a2a\u5411\u638c\u4f4d\u504f\u822a\u95ed\u5408\u8054\u5408\u6c42\u89e3",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-yaw-convex-witness-cpu"
@@ -19618,7 +19618,7 @@
       }
     },
     "flex.f7-pinch-direct-nonlinear-reset-cpu": {
-      "title": "Pinch 完整非线性约束初姿有限求解",
+      "title": "Pinch \u5b8c\u6574\u975e\u7ebf\u6027\u7ea6\u675f\u521d\u59ff\u6709\u9650\u6c42\u89e3",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-coupled-lateral-reset-cpu"
@@ -19704,7 +19704,7 @@
       }
     },
     "flex.f7-pinch-world-tilt-reset-cpu": {
-      "title": "Pinch 独立初始横滚俯仰约束求解",
+      "title": "Pinch \u72ec\u7acb\u521d\u59cb\u6a2a\u6eda\u4fef\u4ef0\u7ea6\u675f\u6c42\u89e3",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-direct-nonlinear-reset-cpu"
@@ -19786,7 +19786,7 @@
       }
     },
     "flex.f7-native-parameter-getters-cpu": {
-      "title": "独立 DeformX 原生参数只读接口与零步验证准备",
+      "title": "\u72ec\u7acb DeformX \u539f\u751f\u53c2\u6570\u53ea\u8bfb\u63a5\u53e3\u4e0e\u96f6\u6b65\u9a8c\u8bc1\u51c6\u5907",
       "executor": "gated",
       "dependencies": [
         "flex.f7-dual-pinch-parameter-readback-native"
@@ -19860,7 +19860,7 @@
       }
     },
     "flex.f7-native-parameter-getters-native": {
-      "title": "DeformX 独立参数接口零步 CUDA 读回",
+      "title": "DeformX \u72ec\u7acb\u53c2\u6570\u63a5\u53e3\u96f6\u6b65 CUDA \u8bfb\u56de",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -19967,7 +19967,7 @@
       }
     },
     "flex.f7-native-parameter-endpoints-cpu": {
-      "title": "原生参数与真实 Reset／480Hz 时钟绑定",
+      "title": "\u539f\u751f\u53c2\u6570\u4e0e\u771f\u5b9e Reset\uff0f480Hz \u65f6\u949f\u7ed1\u5b9a",
       "executor": "gated",
       "dependencies": [
         "flex.f7-native-parameter-getters-native"
@@ -20041,7 +20041,7 @@
       }
     },
     "flex.f7-native-parameter-task-cpu": {
-      "title": "独立原生 getter 后端接入双手实际任务",
+      "title": "\u72ec\u7acb\u539f\u751f getter \u540e\u7aef\u63a5\u5165\u53cc\u624b\u5b9e\u9645\u4efb\u52a1",
       "executor": "gated",
       "dependencies": [
         "flex.f7-native-parameter-endpoints-cpu",
@@ -20129,7 +20129,7 @@
       }
     },
     "flex.f7-native-parameter-task-native": {
-      "title": "独立原生参数后端双手任务单次18步",
+      "title": "\u72ec\u7acb\u539f\u751f\u53c2\u6570\u540e\u7aef\u53cc\u624b\u4efb\u52a1\u5355\u6b2118\u6b65",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -20521,7 +20521,7 @@
       }
     },
     "flex.f7-r0-applicability-cpu": {
-      "title": "R0 适用域与实测 Reset 接近基准独立修复",
+      "title": "R0 \u9002\u7528\u57df\u4e0e\u5b9e\u6d4b Reset \u63a5\u8fd1\u57fa\u51c6\u72ec\u7acb\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "flex.f7-r0-reward-domain-cpu",
@@ -20612,7 +20612,7 @@
       }
     },
     "flex.f7-r0-measured-approach-cpu": {
-      "title": "实测指腹/柔性杆几何接入 R0 接近进度",
+      "title": "\u5b9e\u6d4b\u6307\u8179/\u67d4\u6027\u6746\u51e0\u4f55\u63a5\u5165 R0 \u63a5\u8fd1\u8fdb\u5ea6",
       "executor": "gated",
       "dependencies": [
         "flex.f7-r0-applicability-cpu",
@@ -20701,7 +20701,7 @@
       }
     },
     "flex.f7-r0-reset-approach-cpu": {
-      "title": "Reset实际读回补齐R0接近基准",
+      "title": "Reset\u5b9e\u9645\u8bfb\u56de\u8865\u9f50R0\u63a5\u8fd1\u57fa\u51c6",
       "executor": "gated",
       "dependencies": [
         "flex.f7-r0-measured-approach-cpu"
@@ -20791,7 +20791,7 @@
       }
     },
     "flex.f7-pinch-dynamic-fk-cpu": {
-      "title": "Pinch非零动作FK与SDK跟踪误差分离",
+      "title": "Pinch\u975e\u96f6\u52a8\u4f5cFK\u4e0eSDK\u8ddf\u8e2a\u8bef\u5dee\u5206\u79bb",
       "executor": "gated",
       "dependencies": [
         "flex.f7-native-parameter-task-native",
@@ -20872,7 +20872,7 @@
       }
     },
     "flex.f7-pinch-rod-axis-clearance-cpu": {
-      "title": "Pinch绕杆轴初态与连续桌面净空",
+      "title": "Pinch\u7ed5\u6746\u8f74\u521d\u6001\u4e0e\u8fde\u7eed\u684c\u9762\u51c0\u7a7a",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-dynamic-fk-cpu"
@@ -20950,7 +20950,7 @@
       }
     },
     "flex.f7-pinch-rod-axis-margin-cpu": {
-      "title": "Pinch杆轴Reset最大净空与161点深度检查",
+      "title": "Pinch\u6746\u8f74Reset\u6700\u5927\u51c0\u7a7a\u4e0e161\u70b9\u6df1\u5ea6\u68c0\u67e5",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-rod-axis-clearance-cpu"
@@ -21030,7 +21030,7 @@
       }
     },
     "flex.f7-pinch-margin-contact-cpu": {
-      "title": "左Pinch最大净空初态独立234步接触配方",
+      "title": "\u5de6Pinch\u6700\u5927\u51c0\u7a7a\u521d\u6001\u72ec\u7acb234\u6b65\u63a5\u89e6\u914d\u65b9",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-rod-axis-margin-cpu",
@@ -21103,7 +21103,7 @@
       }
     },
     "flex.f7-pinch-margin-contact-native": {
-      "title": "左Pinch最大净空初态单次原生接触诊断",
+      "title": "\u5de6Pinch\u6700\u5927\u51c0\u7a7a\u521d\u6001\u5355\u6b21\u539f\u751f\u63a5\u89e6\u8bca\u65ad",
       "executor": "native_bounded",
       "status": "blocked",
       "reason": "Consumed once: SDK216 closure_geometry_guard source:finger22_link; original XZ-only bound inconclusive. Real left contact recorded; outer exit1/no signal. New CPU 3D proof does not overwrite native failure.",
@@ -21422,7 +21422,7 @@
       }
     },
     "flex.f7-pinch-polyline-support-proof-cpu": {
-      "title": "Pinch真实接触账本与三维逐杆段间隙证明",
+      "title": "Pinch\u771f\u5b9e\u63a5\u89e6\u8d26\u672c\u4e0e\u4e09\u7ef4\u9010\u6746\u6bb5\u95f4\u9699\u8bc1\u660e",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-margin-contact-cpu"
@@ -21500,7 +21500,7 @@
       }
     },
     "flex.f7-pinch-segment-contact-cpu": {
-      "title": "Pinch三维逐杆段证明独立原生配方",
+      "title": "Pinch\u4e09\u7ef4\u9010\u6746\u6bb5\u8bc1\u660e\u72ec\u7acb\u539f\u751f\u914d\u65b9",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-polyline-support-proof-cpu",
@@ -21577,7 +21577,7 @@
       }
     },
     "flex.f7-pinch-segment-contact-native": {
-      "title": "Pinch三维逐段证明单次原生单因素复验",
+      "title": "Pinch\u4e09\u7ef4\u9010\u6bb5\u8bc1\u660e\u5355\u6b21\u539f\u751f\u5355\u56e0\u7d20\u590d\u9a8c",
       "executor": "native_bounded",
       "status": "failed",
       "reason": "Consumed once, actual234/234 naturalexit0. Original validator rejected old operation version. Independent disk-only postexit-v2 reaudit qualifies only execution scope; retain original failed receipt SHA97f83e... unchanged.",
@@ -22002,7 +22002,7 @@
       "independent_reaudit_sha256": "57cbc1b6b97eb594368e4702746241c3be3a3b0c562d99293ab2b470b30706cf"
     },
     "flex.f7-pinch-segment-postexit-repair-cpu": {
-      "title": "左Pinch234步原生账本独立复审与来源修复",
+      "title": "\u5de6Pinch234\u6b65\u539f\u751f\u8d26\u672c\u72ec\u7acb\u590d\u5ba1\u4e0e\u6765\u6e90\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-segment-contact-cpu",
@@ -22089,7 +22089,7 @@
       }
     },
     "flex.f8-right-pinch-measured-direction-cpu": {
-      "title": "右Pinch实测闭合方向与非目标几何阻断",
+      "title": "\u53f3Pinch\u5b9e\u6d4b\u95ed\u5408\u65b9\u5411\u4e0e\u975e\u76ee\u6807\u51e0\u4f55\u963b\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-segment-postexit-repair-cpu"
@@ -22175,7 +22175,7 @@
       }
     },
     "flex.f8-right-pinch-reset-direction-cpu": {
-      "title": "右Pinch独立Reset几何与节点SDF诊断",
+      "title": "\u53f3Pinch\u72ec\u7acbReset\u51e0\u4f55\u4e0e\u8282\u70b9SDF\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-measured-direction-cpu"
@@ -22261,7 +22261,7 @@
       }
     },
     "flex.f7-segment-r0-measured-approach-cpu": {
-      "title": "最新Segment原生账本的R0实测approach接入",
+      "title": "\u6700\u65b0Segment\u539f\u751f\u8d26\u672c\u7684R0\u5b9e\u6d4bapproach\u63a5\u5165",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pinch-segment-postexit-repair-cpu",
@@ -22352,7 +22352,7 @@
       }
     },
     "flex.f8-right-pinch-closest-support-cpu": {
-      "title": "右Pinch原始凸包杆段距离独立证明",
+      "title": "\u53f3Pinch\u539f\u59cb\u51f8\u5305\u6746\u6bb5\u8ddd\u79bb\u72ec\u7acb\u8bc1\u660e",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-reset-direction-cpu"
@@ -22432,7 +22432,7 @@
       }
     },
     "flex.f8-right-pinch-relative-orientation-cpu": {
-      "title": "右Pinch独立相对初始姿态非线性验证",
+      "title": "\u53f3Pinch\u72ec\u7acb\u76f8\u5bf9\u521d\u59cb\u59ff\u6001\u975e\u7ebf\u6027\u9a8c\u8bc1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-closest-support-cpu"
@@ -22518,7 +22518,7 @@
       }
     },
     "flex.f7-pinch-contact-timeline-cpu": {
-      "title": "真实Pinch相向接触连续时间重算",
+      "title": "\u771f\u5b9ePinch\u76f8\u5411\u63a5\u89e6\u8fde\u7eed\u65f6\u95f4\u91cd\u7b97",
       "executor": "gated",
       "dependencies": [
         "flex.f7-pair-source-basis-cpu",
@@ -22605,7 +22605,7 @@
       }
     },
     "flex.f8-right-pinch-nonsmooth-proposal-cpu": {
-      "title": "右Pinch非光滑候选与完整非线性验算分离",
+      "title": "\u53f3Pinch\u975e\u5149\u6ed1\u5019\u9009\u4e0e\u5b8c\u6574\u975e\u7ebf\u6027\u9a8c\u7b97\u5206\u79bb",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-relative-orientation-cpu"
@@ -22695,7 +22695,7 @@
       }
     },
     "flex.f8-right-pinch-surface-registration-cpu": {
-      "title": "右Pinch独立表面配准与穿桌候选拒绝",
+      "title": "\u53f3Pinch\u72ec\u7acb\u8868\u9762\u914d\u51c6\u4e0e\u7a7f\u684c\u5019\u9009\u62d2\u7edd",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-nonsmooth-proposal-cpu"
@@ -22777,7 +22777,7 @@
       }
     },
     "flex.f8-right-pinch-owned-stations-cpu": {
-      "title": "右Pinch自身材料点与受约束掌根候选",
+      "title": "\u53f3Pinch\u81ea\u8eab\u6750\u6599\u70b9\u4e0e\u53d7\u7ea6\u675f\u638c\u6839\u5019\u9009",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-surface-registration-cpu"
@@ -22863,7 +22863,7 @@
       }
     },
     "flex.f8-right-pinch-owned-approach-cpu": {
-      "title": "右Pinch合法初态与连续接近路径",
+      "title": "\u53f3Pinch\u5408\u6cd5\u521d\u6001\u4e0e\u8fde\u7eed\u63a5\u8fd1\u8def\u5f84",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-owned-stations-cpu"
@@ -22951,7 +22951,7 @@
       }
     },
     "flex.f8-right-pinch-action-contract-cpu": {
-      "title": "右Pinch原24D动作与逐步执行目标合同",
+      "title": "\u53f3Pinch\u539f24D\u52a8\u4f5c\u4e0e\u9010\u6b65\u6267\u884c\u76ee\u6807\u5408\u540c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-owned-approach-cpu"
@@ -23037,7 +23037,7 @@
       }
     },
     "flex.f8-right-pinch-owned-contact-cpu": {
-      "title": "右Pinch独立原生入口与退出校验",
+      "title": "\u53f3Pinch\u72ec\u7acb\u539f\u751f\u5165\u53e3\u4e0e\u9000\u51fa\u6821\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-action-contract-cpu"
@@ -23109,7 +23109,7 @@
       }
     },
     "flex.f8-right-pinch-owned-contact-native": {
-      "title": "右Pinch独立234步接近原生诊断",
+      "title": "\u53f3Pinch\u72ec\u7acb234\u6b65\u63a5\u8fd1\u539f\u751f\u8bca\u65ad",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -23542,7 +23542,7 @@
       }
     },
     "flex.f8-right-owned-native-evidence-cpu": {
-      "title": "右Pinch实际接触与跟踪只读审计",
+      "title": "\u53f3Pinch\u5b9e\u9645\u63a5\u89e6\u4e0e\u8ddf\u8e2a\u53ea\u8bfb\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-pinch-owned-contact-native"
@@ -23626,7 +23626,7 @@
       }
     },
     "flex.f8-bilateral-owned-contract-cpu": {
-      "title": "双手同杆原24D控制和几何合同",
+      "title": "\u53cc\u624b\u540c\u6746\u539f24D\u63a7\u5236\u548c\u51e0\u4f55\u5408\u540c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-right-owned-native-evidence-cpu"
@@ -23698,7 +23698,7 @@
       }
     },
     "flex.f8-bilateral-owned-native-cpu": {
-      "title": "双手同杆独立原生入口与父回执门控",
+      "title": "\u53cc\u624b\u540c\u6746\u72ec\u7acb\u539f\u751f\u5165\u53e3\u4e0e\u7236\u56de\u6267\u95e8\u63a7",
       "executor": "gated",
       "dependencies": [
         "flex.f8-bilateral-owned-contract-cpu"
@@ -23770,7 +23770,7 @@
       }
     },
     "flex.f8-bilateral-owned-pinch-native": {
-      "title": "双手同杆Pinch独立234步原生诊断",
+      "title": "\u53cc\u624b\u540c\u6746Pinch\u72ec\u7acb234\u6b65\u539f\u751f\u8bca\u65ad",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -24225,7 +24225,7 @@
       }
     },
     "flex.f8-bilateral-native-evidence-cpu": {
-      "title": "同一episode双手接触与Reset相对跟踪实测审计",
+      "title": "\u540c\u4e00episode\u53cc\u624b\u63a5\u89e6\u4e0eReset\u76f8\u5bf9\u8ddf\u8e2a\u5b9e\u6d4b\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-bilateral-owned-pinch-native"
@@ -24319,7 +24319,7 @@
       }
     },
     "flex.f7-bilateral-r0-measured-replay-cpu": {
-      "title": "双手同杆原生账本的R0实测接近与完整奖励门控",
+      "title": "\u53cc\u624b\u540c\u6746\u539f\u751f\u8d26\u672c\u7684R0\u5b9e\u6d4b\u63a5\u8fd1\u4e0e\u5b8c\u6574\u5956\u52b1\u95e8\u63a7",
       "executor": "gated",
       "dependencies": [
         "flex.f8-bilateral-native-evidence-cpu",
@@ -24414,7 +24414,7 @@
       }
     },
     "flex.f7-bilateral-material-correspondence-cpu": {
-      "title": "实际双手接触与固定材料标记对应误差",
+      "title": "\u5b9e\u9645\u53cc\u624b\u63a5\u89e6\u4e0e\u56fa\u5b9a\u6750\u6599\u6807\u8bb0\u5bf9\u5e94\u8bef\u5dee",
       "executor": "gated",
       "dependencies": [
         "flex.f7-bilateral-r0-measured-replay-cpu",
@@ -24505,7 +24505,7 @@
       }
     },
     "flex.f8-tripod-vertical-sdf-cpu": {
-      "title": "Tripod 起点连续节点 SDF 核验",
+      "title": "Tripod \u8d77\u70b9\u8fde\u7eed\u8282\u70b9 SDF \u6838\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tripod-two-phase-sdf-cpu"
@@ -24589,7 +24589,7 @@
       }
     },
     "flex.f8-tripod-node-closure-cpu": {
-      "title": "Tripod 节点对齐闭合与数值边界修复",
+      "title": "Tripod \u8282\u70b9\u5bf9\u9f50\u95ed\u5408\u4e0e\u6570\u503c\u8fb9\u754c\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tripod-vertical-sdf-cpu"
@@ -25059,7 +25059,7 @@
       }
     },
     "flex.f8-tripod-owned-contact-native": {
-      "title": "独立左手Tripod234步原生接近与静置准入",
+      "title": "\u72ec\u7acb\u5de6\u624bTripod234\u6b65\u539f\u751f\u63a5\u8fd1\u4e0e\u9759\u7f6e\u51c6\u5165",
       "executor": "native_bounded",
       "status": "failed",
       "reason": "native or CPU qualification failed; durable evidence retained outside Git",
@@ -25478,7 +25478,7 @@
       }
     },
     "flex.f8-tripod-native-tracking-audit": {
-      "title": "Tripod终止前缀与实际腕旋转滞后归因",
+      "title": "Tripod\u7ec8\u6b62\u524d\u7f00\u4e0e\u5b9e\u9645\u8155\u65cb\u8f6c\u6ede\u540e\u5f52\u56e0",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tripod-owned-native-cpu"
@@ -25552,7 +25552,7 @@
       }
     },
     "flex.f8-tripod-fixed-orientation-screen": {
-      "title": "固定腕姿Tripod与实测滞后离线筛选",
+      "title": "\u56fa\u5b9a\u8155\u59ffTripod\u4e0e\u5b9e\u6d4b\u6ede\u540e\u79bb\u7ebf\u7b5b\u9009",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tripod-native-tracking-audit"
@@ -25628,7 +25628,7 @@
       }
     },
     "flex.f8-tripod-conditional-envelope-cpu": {
-      "title": "Tripod条件跟踪域与完整几何覆盖证明",
+      "title": "Tripod\u6761\u4ef6\u8ddf\u8e2a\u57df\u4e0e\u5b8c\u6574\u51e0\u4f55\u8986\u76d6\u8bc1\u660e",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tripod-fixed-orientation-screen"
@@ -25708,7 +25708,7 @@
       }
     },
     "flex.f8-tripod-full-geometry-closure-audit": {
-      "title": "Tripod完整几何闭合搜索与失败证据",
+      "title": "Tripod\u5b8c\u6574\u51e0\u4f55\u95ed\u5408\u641c\u7d22\u4e0e\u5931\u8d25\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tripod-conditional-envelope-cpu"
@@ -25782,7 +25782,7 @@
       }
     },
     "flex.f8-bilateral-substep-load-audit": {
-      "title": "双手Pinch逐求解器子步载荷与原阈值审计",
+      "title": "\u53cc\u624bPinch\u9010\u6c42\u89e3\u5668\u5b50\u6b65\u8f7d\u8377\u4e0e\u539f\u9608\u503c\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-bilateral-owned-pinch-native"
@@ -25856,7 +25856,7 @@
       }
     },
     "flex.f8-bilateral-effective-pad-region-audit": {
-      "title": "双手Pinch原有效指腹区域逐接触审计",
+      "title": "\u53cc\u624bPinch\u539f\u6709\u6548\u6307\u8179\u533a\u57df\u9010\u63a5\u89e6\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-bilateral-substep-load-audit"
@@ -25934,7 +25934,7 @@
       }
     },
     "flex.f8-pinch-effective-target-path": {
-      "title": "Pinch原有效指腹目标和受限绕行路径",
+      "title": "Pinch\u539f\u6709\u6548\u6307\u8179\u76ee\u6807\u548c\u53d7\u9650\u7ed5\u884c\u8def\u5f84",
       "executor": "gated",
       "dependencies": [
         "flex.f8-bilateral-effective-pad-region-audit"
@@ -26014,7 +26014,7 @@
       }
     },
     "flex.f8-effective-right-native-cpu": {
-      "title": "右手原有效指腹路径原生入口与全步CPU审计",
+      "title": "\u53f3\u624b\u539f\u6709\u6548\u6307\u8179\u8def\u5f84\u539f\u751f\u5165\u53e3\u4e0e\u5168\u6b65CPU\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-pinch-effective-target-path"
@@ -26088,7 +26088,7 @@
       }
     },
     "flex.f8-effective-right-pinch-native": {
-      "title": "右手原有效指腹234步原生接触诊断",
+      "title": "\u53f3\u624b\u539f\u6709\u6548\u6307\u8179234\u6b65\u539f\u751f\u63a5\u89e6\u8bca\u65ad",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -26553,7 +26553,7 @@
       }
     },
     "flex.f8-effective-right-tracking-replay": {
-      "title": "右手原生有效指腹失败的实测跟踪与杆位移分解",
+      "title": "\u53f3\u624b\u539f\u751f\u6709\u6548\u6307\u8179\u5931\u8d25\u7684\u5b9e\u6d4b\u8ddf\u8e2a\u4e0e\u6746\u4f4d\u79fb\u5206\u89e3",
       "executor": "gated",
       "dependencies": [
         "flex.f8-effective-right-pinch-native"
@@ -26633,7 +26633,7 @@
       }
     },
     "flex.f7-effective-pad-negative-r0-cpu": {
-      "title": "原有效指腹负证据接入R0且保留缺失来源",
+      "title": "\u539f\u6709\u6548\u6307\u8179\u8d1f\u8bc1\u636e\u63a5\u5165R0\u4e14\u4fdd\u7559\u7f3a\u5931\u6765\u6e90",
       "executor": "gated",
       "dependencies": [
         "flex.f8-effective-right-pinch-native",
@@ -26724,7 +26724,7 @@
       }
     },
     "flex.f7-r0-hold-necessary-domain-cpu": {
-      "title": "保持奖励必要条件与实际solver节点速度诊断",
+      "title": "\u4fdd\u6301\u5956\u52b1\u5fc5\u8981\u6761\u4ef6\u4e0e\u5b9e\u9645solver\u8282\u70b9\u901f\u5ea6\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f7-effective-pad-negative-r0-cpu"
@@ -26818,7 +26818,7 @@
       }
     },
     "flex.f7-live-r0-reset-cpu": {
-      "title": "真实耦合Reset后原R0初始化及同钟观察器",
+      "title": "\u771f\u5b9e\u8026\u5408Reset\u540e\u539fR0\u521d\u59cb\u5316\u53ca\u540c\u949f\u89c2\u5bdf\u5668",
       "executor": "gated",
       "dependencies": [
         "flex.f8-effective-right-pinch-native"
@@ -26888,7 +26888,7 @@
       }
     },
     "flex.f7-live-r0-reset-native": {
-      "title": "真实耦合Reset与原R0同进程234步原生诊断",
+      "title": "\u771f\u5b9e\u8026\u5408Reset\u4e0e\u539fR0\u540c\u8fdb\u7a0b234\u6b65\u539f\u751f\u8bca\u65ad",
       "executor": "native_bounded",
       "status": "failed",
       "dependencies": [
@@ -26913,7 +26913,7 @@
         "tests/test_live_r0_native_worker.py"
       ],
       "scheduler_entrypoint": "scripts/run_dh116_live_r0_work_packages.py",
-      "reason": "本次actual Reset/R0234步、29窗口已完成，natural exit0，无信号；187.245秒超180秒，原生预算失败。只读复核不晋级；CPU热点为递归数值编码。此配方已耗，不自动重跑。",
+      "reason": "\u672c\u6b21actual Reset/R0234\u6b65\u300129\u7a97\u53e3\u5df2\u5b8c\u6210\uff0cnatural exit0\uff0c\u65e0\u4fe1\u53f7\uff1b187.245\u79d2\u8d85180\u79d2\uff0c\u539f\u751f\u9884\u7b97\u5931\u8d25\u3002\u53ea\u8bfb\u590d\u6838\u4e0d\u664b\u7ea7\uff1bCPU\u70ed\u70b9\u4e3a\u9012\u5f52\u6570\u503c\u7f16\u7801\u3002\u6b64\u914d\u65b9\u5df2\u8017\uff0c\u4e0d\u81ea\u52a8\u91cd\u8dd1\u3002",
       "last_native_attempt": {
         "executor": "native_bounded",
         "tested_head": "0786429f52af87f378a4c59b212a90e2373921b5",
@@ -27299,7 +27299,7 @@
       }
     },
     "flex.f7-live-r0-budget-profile-cpu": {
-      "title": "真实R0原生超时证据与CPU编码热点",
+      "title": "\u771f\u5b9eR0\u539f\u751f\u8d85\u65f6\u8bc1\u636e\u4e0eCPU\u7f16\u7801\u70ed\u70b9",
       "executor": "gated",
       "dependencies": [
         "flex.f7-live-r0-reset-cpu"
@@ -27363,7 +27363,7 @@
       }
     },
     "flex.f7-fast-owned-codec-cpu": {
-      "title": "同原生账本字节等价编码加速",
+      "title": "\u540c\u539f\u751f\u8d26\u672c\u5b57\u8282\u7b49\u4ef7\u7f16\u7801\u52a0\u901f",
       "executor": "gated",
       "dependencies": [
         "flex.f7-live-r0-budget-profile-cpu"
@@ -27431,7 +27431,7 @@
       }
     },
     "flex.f7-fast-r0-reset-cpu": {
-      "title": "原R0独立快速编码有界原生配方",
+      "title": "\u539fR0\u72ec\u7acb\u5feb\u901f\u7f16\u7801\u6709\u754c\u539f\u751f\u914d\u65b9",
       "executor": "gated",
       "dependencies": [
         "flex.f7-fast-owned-codec-cpu",
@@ -27498,7 +27498,7 @@
       }
     },
     "flex.f7-fast-r0-reset-native": {
-      "title": "快速编码真实Reset与原R0234步原生诊断",
+      "title": "\u5feb\u901f\u7f16\u7801\u771f\u5b9eReset\u4e0e\u539fR0234\u6b65\u539f\u751f\u8bca\u65ad",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -28011,7 +28011,7 @@
       }
     },
     "flex.f7-complete-pair-r0-cpu": {
-      "title": "完整原子接触包与在线负接触R0源",
+      "title": "\u5b8c\u6574\u539f\u5b50\u63a5\u89e6\u5305\u4e0e\u5728\u7ebf\u8d1f\u63a5\u89e6R0\u6e90",
       "executor": "gated",
       "dependencies": [
         "flex.f7-fast-r0-reset-cpu",
@@ -28086,7 +28086,7 @@
       }
     },
     "flex.f7-complete-pair-r0-native": {
-      "title": "完整原子接触源与负接触R0234步原生诊断",
+      "title": "\u5b8c\u6574\u539f\u5b50\u63a5\u89e6\u6e90\u4e0e\u8d1f\u63a5\u89e6R0234\u6b65\u539f\u751f\u8bca\u65ad",
       "executor": "native_bounded",
       "status": "failed",
       "dependencies": [
@@ -28544,7 +28544,7 @@
       }
     },
     "flex.f7-complete-pair-recipe-scope-cpu": {
-      "title": "原子接触配方保护资产路径分类修复",
+      "title": "\u539f\u5b50\u63a5\u89e6\u914d\u65b9\u4fdd\u62a4\u8d44\u4ea7\u8def\u5f84\u5206\u7c7b\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "flex.f7-complete-pair-r0-cpu"
@@ -28614,7 +28614,7 @@
       }
     },
     "flex.f7-complete-pair-budget-analysis-cpu": {
-      "title": "完整接触原生超时账本与来源增长审计",
+      "title": "\u5b8c\u6574\u63a5\u89e6\u539f\u751f\u8d85\u65f6\u8d26\u672c\u4e0e\u6765\u6e90\u589e\u957f\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f7-complete-pair-r0-cpu"
@@ -28684,7 +28684,7 @@
       }
     },
     "flex.f7-r0-measurement-origin-cpu": {
-      "title": "R0固定测量来源与逐帧证据分离",
+      "title": "R0\u56fa\u5b9a\u6d4b\u91cf\u6765\u6e90\u4e0e\u9010\u5e27\u8bc1\u636e\u5206\u79bb",
       "executor": "gated",
       "dependencies": [
         "flex.f7-complete-pair-budget-analysis-cpu"
@@ -28770,7 +28770,7 @@
       }
     },
     "flex.f7-origin-r0-native-prep-cpu": {
-      "title": "稳定来源R0独立原生入口与退出后核验",
+      "title": "\u7a33\u5b9a\u6765\u6e90R0\u72ec\u7acb\u539f\u751f\u5165\u53e3\u4e0e\u9000\u51fa\u540e\u6838\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f7-r0-measurement-origin-cpu"
@@ -28844,7 +28844,7 @@
       }
     },
     "flex.f7-origin-r0-native": {
-      "title": "稳定测量来源完整接触R0234步原生诊断",
+      "title": "\u7a33\u5b9a\u6d4b\u91cf\u6765\u6e90\u5b8c\u6574\u63a5\u89e6R0234\u6b65\u539f\u751f\u8bca\u65ad",
       "executor": "native_bounded",
       "status": "failed",
       "dependencies": [
@@ -29313,7 +29313,7 @@
       }
     },
     "flex.f7-effective-right-r0-approach-source-cpu": {
-      "title": "当前有效右侧几何与真实Reset的R0接近测量",
+      "title": "\u5f53\u524d\u6709\u6548\u53f3\u4fa7\u51e0\u4f55\u4e0e\u771f\u5b9eReset\u7684R0\u63a5\u8fd1\u6d4b\u91cf",
       "executor": "gated",
       "dependencies": [
         "flex.f7-r0-measurement-origin-cpu"
@@ -29393,7 +29393,7 @@
       }
     },
     "flex.f7-owned-clock-projection-cpu": {
-      "title": "完整账本时钟投影与原验证器等价回放",
+      "title": "\u5b8c\u6574\u8d26\u672c\u65f6\u949f\u6295\u5f71\u4e0e\u539f\u9a8c\u8bc1\u5668\u7b49\u4ef7\u56de\u653e",
       "executor": "gated",
       "dependencies": [
         "flex.f7-r0-measurement-origin-cpu"
@@ -29473,7 +29473,7 @@
       }
     },
     "flex.f7-sealed-r0-native-prep-cpu": {
-      "title": "封存原生账本后自然退出及完整后置审计",
+      "title": "\u5c01\u5b58\u539f\u751f\u8d26\u672c\u540e\u81ea\u7136\u9000\u51fa\u53ca\u5b8c\u6574\u540e\u7f6e\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f7-owned-clock-projection-cpu",
@@ -29546,7 +29546,7 @@
       }
     },
     "flex.f7-sealed-r0-native": {
-      "title": "封存owner与完整后置审计234步原生验证",
+      "title": "\u5c01\u5b58owner\u4e0e\u5b8c\u6574\u540e\u7f6e\u5ba1\u8ba1234\u6b65\u539f\u751f\u9a8c\u8bc1",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -30127,7 +30127,7 @@
       }
     },
     "flex.f7-live-measured-approach-cpu": {
-      "title": "真实Reset和同钟几何距离接入独立R0会话",
+      "title": "\u771f\u5b9eReset\u548c\u540c\u949f\u51e0\u4f55\u8ddd\u79bb\u63a5\u5165\u72ec\u7acbR0\u4f1a\u8bdd",
       "executor": "gated",
       "dependencies": [
         "flex.f7-effective-right-r0-approach-source-cpu",
@@ -30214,7 +30214,7 @@
       }
     },
     "flex.f7-approach-r0-native-prep-cpu": {
-      "title": "同钟接近源独立原生配方与全R0后置重算",
+      "title": "\u540c\u949f\u63a5\u8fd1\u6e90\u72ec\u7acb\u539f\u751f\u914d\u65b9\u4e0e\u5168R0\u540e\u7f6e\u91cd\u7b97",
       "executor": "gated",
       "dependencies": [
         "flex.f7-live-measured-approach-cpu",
@@ -30283,7 +30283,7 @@
       }
     },
     "flex.f7-approach-r0-native": {
-      "title": "真实Reset及232样本接近源原生验证",
+      "title": "\u771f\u5b9eReset\u53ca232\u6837\u672c\u63a5\u8fd1\u6e90\u539f\u751f\u9a8c\u8bc1",
       "executor": "native_bounded",
       "status": "passed",
       "dependencies": [
@@ -30884,7 +30884,7 @@
       }
     },
     "flex.f8-pinch-tracking-targets-cpu": {
-      "title": "同钟跟踪误差约束的Pinch目标与连续接近路径",
+      "title": "\u540c\u949f\u8ddf\u8e2a\u8bef\u5dee\u7ea6\u675f\u7684Pinch\u76ee\u6807\u4e0e\u8fde\u7eed\u63a5\u8fd1\u8def\u5f84",
       "executor": "gated",
       "dependencies": [
         "flex.f7-approach-r0-native"
@@ -30972,7 +30972,7 @@
       }
     },
     "flex.f8-tracking-pinch-native-prep-cpu": {
-      "title": "Tracking-aware Pinch 独立原生入口与完整退出审计",
+      "title": "Tracking-aware Pinch \u72ec\u7acb\u539f\u751f\u5165\u53e3\u4e0e\u5b8c\u6574\u9000\u51fa\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-pinch-tracking-targets-cpu"
@@ -31058,7 +31058,7 @@
       }
     },
     "flex.f8-tracking-pinch-native": {
-      "title": "Tracking-aware Pinch 单次234步接触诊断",
+      "title": "Tracking-aware Pinch \u5355\u6b21234\u6b65\u63a5\u89e6\u8bca\u65ad",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f8-tracking-pinch-native-prep-cpu",
@@ -31564,7 +31564,7 @@
       }
     },
     "flex.f8-tracking-pinch-contact-replay-cpu": {
-      "title": "真实右Pinch区域接触与双侧未承托证据",
+      "title": "\u771f\u5b9e\u53f3Pinch\u533a\u57df\u63a5\u89e6\u4e0e\u53cc\u4fa7\u672a\u627f\u6258\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tracking-pinch-native"
@@ -31650,7 +31650,7 @@
       }
     },
     "flex.f8-left-pinch-correlated-reset-cpu": {
-      "title": "左Pinch同钟实测来源与独立Reset候选",
+      "title": "\u5de6Pinch\u540c\u949f\u5b9e\u6d4b\u6765\u6e90\u4e0e\u72ec\u7acbReset\u5019\u9009",
       "executor": "gated",
       "dependencies": [
         "flex.f8-tracking-pinch-contact-replay-cpu"
@@ -31728,7 +31728,7 @@
       }
     },
     "flex.f8-left-pinch-continuous-approach-cpu": {
-      "title": "左Pinch完整路径与高位Approach条件性审计",
+      "title": "\u5de6Pinch\u5b8c\u6574\u8def\u5f84\u4e0e\u9ad8\u4f4dApproach\u6761\u4ef6\u6027\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-left-pinch-correlated-reset-cpu"
@@ -31810,7 +31810,7 @@
       }
     },
     "flex.f8-left-pinch-approach-native-prep-cpu": {
-      "title": "左Pinch独立Approach原生入口与双手目标校验",
+      "title": "\u5de6Pinch\u72ec\u7acbApproach\u539f\u751f\u5165\u53e3\u4e0e\u53cc\u624b\u76ee\u6807\u6821\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-left-pinch-continuous-approach-cpu"
@@ -31892,7 +31892,7 @@
       }
     },
     "flex.f8-left-pinch-approach-native": {
-      "title": "左Pinch高位Approach单次234步原生接触诊断",
+      "title": "\u5de6Pinch\u9ad8\u4f4dApproach\u5355\u6b21234\u6b65\u539f\u751f\u63a5\u89e6\u8bca\u65ad",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f8-left-pinch-approach-native-prep-cpu",
@@ -32561,7 +32561,7 @@
       ]
     },
     "flex.f8-left-pinch-projection-failure-audit-cpu": {
-      "title": "左Pinch原生safe-z终止与失败前缀审计",
+      "title": "\u5de6Pinch\u539f\u751fsafe-z\u7ec8\u6b62\u4e0e\u5931\u8d25\u524d\u7f00\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-left-pinch-approach-native-prep-cpu"
@@ -32627,7 +32627,7 @@
       }
     },
     "flex.f8-owned-wrist-projection-evidence-cpu": {
-      "title": "原手腕安全投影实测输入留存与独立重算",
+      "title": "\u539f\u624b\u8155\u5b89\u5168\u6295\u5f71\u5b9e\u6d4b\u8f93\u5165\u7559\u5b58\u4e0e\u72ec\u7acb\u91cd\u7b97",
       "executor": "gated",
       "dependencies": [
         "flex.f8-left-pinch-projection-failure-audit-cpu"
@@ -32697,7 +32697,7 @@
       }
     },
     "flex.f8-original-projected-pinch-prep-cpu": {
-      "title": "原安全投影约束下的Pinch独立原生配方",
+      "title": "\u539f\u5b89\u5168\u6295\u5f71\u7ea6\u675f\u4e0b\u7684Pinch\u72ec\u7acb\u539f\u751f\u914d\u65b9",
       "executor": "gated",
       "dependencies": [
         "flex.f8-owned-wrist-projection-evidence-cpu"
@@ -32769,7 +32769,7 @@
       }
     },
     "flex.f8-original-projected-pinch-native": {
-      "title": "原安全投影Pinch单次234步原生诊断",
+      "title": "\u539f\u5b89\u5168\u6295\u5f71Pinch\u5355\u6b21234\u6b65\u539f\u751f\u8bca\u65ad",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f8-original-projected-pinch-prep-cpu",
@@ -33327,7 +33327,7 @@
         },
         "status": "passed",
         "report": "docs/superpowers/reports/dh116-managed-flex.f8-original-projected-pinch-native.md",
-        "reason": "仅保留已完成预算/原guard/自然退出诊断；新源审计证明mesh Reset未同步，不能据此授予Teacher。",
+        "reason": "\u4ec5\u4fdd\u7559\u5df2\u5b8c\u6210\u9884\u7b97/\u539fguard/\u81ea\u7136\u9000\u51fa\u8bca\u65ad\uff1b\u65b0\u6e90\u5ba1\u8ba1\u8bc1\u660emesh Reset\u672a\u540c\u6b65\uff0c\u4e0d\u80fd\u636e\u6b64\u6388\u4e88Teacher\u3002",
         "reset_mesh_pose_qualified": false,
         "teacher_admission": false,
         "qualification_correction_report": "docs/superpowers/reports/2026-11-14-substep-contact-reset-audit.md"
@@ -33597,10 +33597,10 @@
           "report": "docs/superpowers/reports/dh116-managed-flex.f8-original-projected-pinch-native.md"
         }
       ],
-      "reason": "仅保留已完成预算/原guard/自然退出诊断；新源审计证明mesh Reset未同步，不能据此授予Teacher。"
+      "reason": "\u4ec5\u4fdd\u7559\u5df2\u5b8c\u6210\u9884\u7b97/\u539fguard/\u81ea\u7136\u9000\u51fa\u8bca\u65ad\uff1b\u65b0\u6e90\u5ba1\u8ba1\u8bc1\u660emesh Reset\u672a\u540c\u6b65\uff0c\u4e0d\u80fd\u636e\u6b64\u6388\u4e88Teacher\u3002"
     },
     "flex.f8-projected-pinch-native-contact-audit-cpu": {
-      "title": "原生Pinch逐指有效区域与安全投影证据核验",
+      "title": "\u539f\u751fPinch\u9010\u6307\u6709\u6548\u533a\u57df\u4e0e\u5b89\u5168\u6295\u5f71\u8bc1\u636e\u6838\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-original-projected-pinch-native"
@@ -33663,7 +33663,7 @@
         "status": "passed",
         "report": "docs/superpowers/reports/2026-11-14-projected-pinch-native-contact.md",
         "report_source_commit": "b3ac14ea66eb8e6d4cf9a73c04691c6a2b53249f",
-        "reason": "旧候选统计为步末坐标近似，不能作为严格positive或negative有效接触证据；新子步重算见独立报告。",
+        "reason": "\u65e7\u5019\u9009\u7edf\u8ba1\u4e3a\u6b65\u672b\u5750\u6807\u8fd1\u4f3c\uff0c\u4e0d\u80fd\u4f5c\u4e3a\u4e25\u683cpositive\u6216negative\u6709\u6548\u63a5\u89e6\u8bc1\u636e\uff1b\u65b0\u5b50\u6b65\u91cd\u7b97\u89c1\u72ec\u7acb\u62a5\u544a\u3002",
         "positive_effective_contact_qualified": false,
         "negative_effective_contact_qualified": false,
         "contact_timing_scope": "endpoint approximation; superseded by source-derived substep audit"
@@ -33699,10 +33699,10 @@
           "report_source_commit": "b3ac14ea66eb8e6d4cf9a73c04691c6a2b53249f"
         }
       ],
-      "reason": "旧候选统计为步末坐标近似，不能作为严格positive或negative有效接触证据；新子步重算见独立报告。"
+      "reason": "\u65e7\u5019\u9009\u7edf\u8ba1\u4e3a\u6b65\u672b\u5750\u6807\u8fd1\u4f3c\uff0c\u4e0d\u80fd\u4f5c\u4e3a\u4e25\u683cpositive\u6216negative\u6709\u6548\u63a5\u89e6\u8bc1\u636e\uff1b\u65b0\u5b50\u6b65\u91cd\u7b97\u89c1\u72ec\u7acb\u62a5\u544a\u3002"
     },
     "flex.f8-projected-pinch-tracking-decomposition-cpu": {
-      "title": "Pinch同钟SDK投影、跟踪与实际杆几何分解",
+      "title": "Pinch\u540c\u949fSDK\u6295\u5f71\u3001\u8ddf\u8e2a\u4e0e\u5b9e\u9645\u6746\u51e0\u4f55\u5206\u89e3",
       "executor": "gated",
       "dependencies": [
         "flex.f8-projected-pinch-native-contact-audit-cpu"
@@ -33770,7 +33770,7 @@
       }
     },
     "flex.f8-moving-left-pinch-candidates-cpu": {
-      "title": "实际闭合左手数据约束候选与失败证据",
+      "title": "\u5b9e\u9645\u95ed\u5408\u5de6\u624b\u6570\u636e\u7ea6\u675f\u5019\u9009\u4e0e\u5931\u8d25\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "flex.f8-projected-pinch-tracking-decomposition-cpu"
@@ -33844,7 +33844,7 @@
       }
     },
     "flex.f8-r0-health-separation-cpu": {
-      "title": "R0数值健康与Hold运动分离",
+      "title": "R0\u6570\u503c\u5065\u5eb7\u4e0eHold\u8fd0\u52a8\u5206\u79bb",
       "executor": "gated",
       "dependencies": [
         "flex.f8-projected-pinch-native-contact-audit-cpu"
@@ -33924,14 +33924,14 @@
       }
     },
     "flex.f8-r0-health-getter-native": {
-      "title": "实际同钟RopeBatch错误来源与R0数值健康诊断",
+      "title": "\u5b9e\u9645\u540c\u949fRopeBatch\u9519\u8bef\u6765\u6e90\u4e0eR0\u6570\u503c\u5065\u5eb7\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "flex.f8-r0-health-separation-cpu",
         "flex.f8-original-projected-pinch-native"
       ],
       "status": "blocked",
-      "reason": "零步同11网格Reset修复CPU已通过；还需新backend直接cur/tgt/tele与substep pose/gap读回原生验证，再冻结新配方。旧预算已消费，准备entry仍不可执行。",
+      "reason": "\u96f6\u6b65\u540c11\u7f51\u683cReset\u4fee\u590dCPU\u5df2\u901a\u8fc7\uff1b\u8fd8\u9700\u65b0backend\u76f4\u63a5cur/tgt/tele\u4e0esubstep pose/gap\u8bfb\u56de\u539f\u751f\u9a8c\u8bc1\uff0c\u518d\u51bb\u7ed3\u65b0\u914d\u65b9\u3002\u65e7\u9884\u7b97\u5df2\u6d88\u8d39\uff0c\u51c6\u5907entry\u4ecd\u4e0d\u53ef\u6267\u884c\u3002",
       "requires_approval": true,
       "resource_class": "isaac_single_gpu",
       "retry_policy": {
@@ -33940,7 +33940,7 @@
       }
     },
     "vision.wireseg-depth20-materialization-cpu": {
-      "title": "WireSeg depth20已审计子集独立物化与断点读取",
+      "title": "WireSeg depth20\u5df2\u5ba1\u8ba1\u5b50\u96c6\u72ec\u7acb\u7269\u5316\u4e0e\u65ad\u70b9\u8bfb\u53d6",
       "executor": "gated",
       "dependencies": [],
       "status": "passed",
@@ -34032,7 +34032,7 @@
       }
     },
     "flex.f7-actual-backend-measured-teacher-cpu": {
-      "title": "Teacher真实后端输入与独立模型身份适配",
+      "title": "Teacher\u771f\u5b9e\u540e\u7aef\u8f93\u5165\u4e0e\u72ec\u7acb\u6a21\u578b\u8eab\u4efd\u9002\u914d",
       "executor": "gated",
       "dependencies": [
         "flex.f7-measured-common-teacher-cpu"
@@ -34112,7 +34112,7 @@
       }
     },
     "flex.f8-substep-contact-reset-audit-cpu": {
-      "title": "逐solver子步接触坐标与延迟Reset审计",
+      "title": "\u9010solver\u5b50\u6b65\u63a5\u89e6\u5750\u6807\u4e0e\u5ef6\u8fdfReset\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "flex.f8-projected-pinch-native-contact-audit-cpu"
@@ -34186,7 +34186,7 @@
       }
     },
     "flex.f8-health-getter-native-prep-cpu": {
-      "title": "同钟数值健康getter与终止留证原生准备",
+      "title": "\u540c\u949f\u6570\u503c\u5065\u5eb7getter\u4e0e\u7ec8\u6b62\u7559\u8bc1\u539f\u751f\u51c6\u5907",
       "executor": "gated",
       "dependencies": [
         "flex.f8-r0-health-separation-cpu",
@@ -34273,7 +34273,7 @@
       }
     },
     "flex.f7-zero-step-mesh-reset-rebuild-cpu": {
-      "title": "每episode零步重提交原11个碰撞网格",
+      "title": "\u6bcfepisode\u96f6\u6b65\u91cd\u63d0\u4ea4\u539f11\u4e2a\u78b0\u649e\u7f51\u683c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-substep-contact-reset-audit-cpu",
@@ -34346,7 +34346,7 @@
       }
     },
     "flex.f8-mesh-observations-build-cpu": {
-      "title": "独立编译真实网格姿态与同子步接触采样扩展",
+      "title": "\u72ec\u7acb\u7f16\u8bd1\u771f\u5b9e\u7f51\u683c\u59ff\u6001\u4e0e\u540c\u5b50\u6b65\u63a5\u89e6\u91c7\u6837\u6269\u5c55",
       "executor": "gated",
       "dependencies": [
         "flex.f8-substep-contact-reset-audit-cpu"
@@ -34430,7 +34430,7 @@
       }
     },
     "flex.f8-substep-clock-provenance-cpu": {
-      "title": "分离名义子步时间与账本端点时钟",
+      "title": "\u5206\u79bb\u540d\u4e49\u5b50\u6b65\u65f6\u95f4\u4e0e\u8d26\u672c\u7aef\u70b9\u65f6\u949f",
       "executor": "gated",
       "dependencies": [
         "flex.f8-substep-contact-reset-audit-cpu"
@@ -34500,7 +34500,7 @@
       }
     },
     "flex.f7-no-camera-on-policy-collector-cpu": {
-      "title": "无相机Teacher采样与CPU owner隔离",
+      "title": "\u65e0\u76f8\u673aTeacher\u91c7\u6837\u4e0eCPU owner\u9694\u79bb",
       "executor": "gated",
       "dependencies": [
         "flex.f7-actual-backend-measured-teacher-cpu"
@@ -34582,7 +34582,7 @@
       }
     },
     "flex.f8-native-pair-v2-consumer-cpu": {
-      "title": "同子步mesh姿态与原生gap接触包消费",
+      "title": "\u540c\u5b50\u6b65mesh\u59ff\u6001\u4e0e\u539f\u751fgap\u63a5\u89e6\u5305\u6d88\u8d39",
       "executor": "gated",
       "dependencies": [
         "flex.f8-mesh-observations-build-cpu"
@@ -34658,7 +34658,7 @@
       }
     },
     "flex.f8-observation-source-reset-readback-cpu": {
-      "title": "独立CUDA来源绑定与零步Reset实际读回",
+      "title": "\u72ec\u7acbCUDA\u6765\u6e90\u7ed1\u5b9a\u4e0e\u96f6\u6b65Reset\u5b9e\u9645\u8bfb\u56de",
       "executor": "gated",
       "dependencies": [
         "flex.f8-mesh-observations-build-cpu"
@@ -34736,7 +34736,7 @@
       }
     },
     "flex.r0-readonly-original-control-cost": {
-      "title": "原控制代价逐物理行只读复算",
+      "title": "\u539f\u63a7\u5236\u4ee3\u4ef7\u9010\u7269\u7406\u884c\u53ea\u8bfb\u590d\u7b97",
       "executor": "gated",
       "dependencies": [
         "flex.f7-no-camera-on-policy-collector-cpu"
@@ -34812,7 +34812,7 @@
       }
     },
     "flex.f8-native-pair-actual-pose-atlas-cpu": {
-      "title": "真实接触姿态下的原指腹区域判别",
+      "title": "\u771f\u5b9e\u63a5\u89e6\u59ff\u6001\u4e0b\u7684\u539f\u6307\u8179\u533a\u57df\u5224\u522b",
       "executor": "gated",
       "dependencies": [
         "flex.f8-native-pair-v2-consumer-cpu"
@@ -34878,7 +34878,7 @@
       }
     },
     "flex.f8-mesh-reset-health-owner-cpu": {
-      "title": "Pinch 实际 Reset 与接触读数接入物理 owner",
+      "title": "Pinch \u5b9e\u9645 Reset \u4e0e\u63a5\u89e6\u8bfb\u6570\u63a5\u5165\u7269\u7406 owner",
       "executor": "gated",
       "dependencies": [
         "flex.f8-observation-source-reset-readback-cpu",
@@ -34950,7 +34950,7 @@
       }
     },
     "flex.f8-mesh-reset-health-projected-pinch-prep-cpu": {
-      "title": "冻结 Pinch 网格 Reset 单次原生配方",
+      "title": "\u51bb\u7ed3 Pinch \u7f51\u683c Reset \u5355\u6b21\u539f\u751f\u914d\u65b9",
       "executor": "gated",
       "dependencies": [
         "flex.f8-mesh-reset-health-owner-cpu",
@@ -35015,7 +35015,7 @@
       }
     },
     "flex.f8-mesh-reset-health-projected-pinch-native": {
-      "title": "Pinch 网格 Reset、逐接触姿态和健康读数原生诊断",
+      "title": "Pinch \u7f51\u683c Reset\u3001\u9010\u63a5\u89e6\u59ff\u6001\u548c\u5065\u5eb7\u8bfb\u6570\u539f\u751f\u8bca\u65ad",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f8-mesh-reset-health-projected-pinch-prep-cpu",
@@ -35557,7 +35557,7 @@
       }
     },
     "flex.f8-mesh-reset-numeric-state-cpu": {
-      "title": "复制 CUDA 实际杆状态并保留严格 Reset 比较",
+      "title": "\u590d\u5236 CUDA \u5b9e\u9645\u6746\u72b6\u6001\u5e76\u4fdd\u7559\u4e25\u683c Reset \u6bd4\u8f83",
       "executor": "gated",
       "dependencies": [
         "flex.f8-mesh-reset-health-owner-cpu"
@@ -35627,7 +35627,7 @@
       }
     },
     "flex.f8-mesh-reset-numeric-pinch-prep-cpu": {
-      "title": "冻结 Pinch CUDA 数值 Reset 复验",
+      "title": "\u51bb\u7ed3 Pinch CUDA \u6570\u503c Reset \u590d\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-mesh-reset-numeric-state-cpu",
@@ -35692,7 +35692,7 @@
       }
     },
     "flex.f8-mesh-reset-numeric-pinch-native": {
-      "title": "Pinch 数值 Reset 与逐接触姿态原生复验",
+      "title": "Pinch \u6570\u503c Reset \u4e0e\u9010\u63a5\u89e6\u59ff\u6001\u539f\u751f\u590d\u9a8c",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f8-mesh-reset-numeric-pinch-prep-cpu",
@@ -36244,7 +36244,7 @@
       }
     },
     "flex.f8-physical-evidence-encoding-cpu": {
-      "title": "等字节加速柔性物理账本编码",
+      "title": "\u7b49\u5b57\u8282\u52a0\u901f\u67d4\u6027\u7269\u7406\u8d26\u672c\u7f16\u7801",
       "executor": "gated",
       "dependencies": [
         "flex.f8-mesh-reset-numeric-pinch-prep-cpu"
@@ -36314,7 +36314,7 @@
       }
     },
     "flex.r0-approach-control-candidate": {
-      "title": "结合实测接近进展与原控制代价的奖励候选",
+      "title": "\u7ed3\u5408\u5b9e\u6d4b\u63a5\u8fd1\u8fdb\u5c55\u4e0e\u539f\u63a7\u5236\u4ee3\u4ef7\u7684\u5956\u52b1\u5019\u9009",
       "executor": "gated",
       "dependencies": [
         "flex.r0-readonly-original-control-cost"
@@ -36386,7 +36386,7 @@
       }
     },
     "flex.f8-pinch-fast-evidence-prep-cpu": {
-      "title": "冻结 Pinch 等字节账本复验",
+      "title": "\u51bb\u7ed3 Pinch \u7b49\u5b57\u8282\u8d26\u672c\u590d\u9a8c",
       "executor": "gated",
       "dependencies": [
         "flex.f8-physical-evidence-encoding-cpu",
@@ -36453,7 +36453,7 @@
       }
     },
     "flex.f8-pinch-fast-evidence-native": {
-      "title": "Pinch 等字节物理账本原生复验",
+      "title": "Pinch \u7b49\u5b57\u8282\u7269\u7406\u8d26\u672c\u539f\u751f\u590d\u9a8c",
       "executor": "native_bounded",
       "dependencies": [
         "flex.f8-pinch-fast-evidence-prep-cpu",
@@ -36684,7 +36684,7 @@
       }
     },
     "flex.f8-action24-history-owner-cpu": {
-      "title": "控制器动作历史与 PPO 实际请求绑定",
+      "title": "\u63a7\u5236\u5668\u52a8\u4f5c\u5386\u53f2\u4e0e PPO \u5b9e\u9645\u8bf7\u6c42\u7ed1\u5b9a",
       "executor": "gated",
       "dependencies": [
         "flex.f7-no-camera-on-policy-collector-cpu"
@@ -36750,7 +36750,7 @@
       }
     },
     "review.execution-chain-design-v1": {
-      "title": "Teacher、视觉和 Student 全链路审查及修正设计",
+      "title": "Teacher\u3001\u89c6\u89c9\u548c Student \u5168\u94fe\u8def\u5ba1\u67e5\u53ca\u4fee\u6b63\u8bbe\u8ba1",
       "executor": "gated",
       "dependencies": [],
       "status": "passed",
@@ -36828,7 +36828,7 @@
       }
     },
     "review.execution-chain-implementation-plans-v2": {
-      "title": "执行链分包实施计划与新版 Teacher PPO 奖励规范",
+      "title": "\u6267\u884c\u94fe\u5206\u5305\u5b9e\u65bd\u8ba1\u5212\u4e0e\u65b0\u7248 Teacher PPO \u5956\u52b1\u89c4\u8303",
       "executor": "gated",
       "dependencies": [
         "review.execution-chain-design-v1"
@@ -36926,7 +36926,7 @@
       }
     },
     "repair.r01-actor-inputs": {
-      "title": "R01：统一三种Stereo Actor的BC与DAgger特征入口",
+      "title": "R01\uff1a\u7edf\u4e00\u4e09\u79cdStereo Actor\u7684BC\u4e0eDAgger\u7279\u5f81\u5165\u53e3",
       "executor": "gated",
       "dependencies": [
         "review.execution-chain-implementation-plans-v2"
@@ -37006,7 +37006,7 @@
       }
     },
     "repair.r03-expert-source-binding": {
-      "title": "R03：将Teacher专家张量绑定到实际原生来源",
+      "title": "R03\uff1a\u5c06Teacher\u4e13\u5bb6\u5f20\u91cf\u7ed1\u5b9a\u5230\u5b9e\u9645\u539f\u751f\u6765\u6e90",
       "executor": "gated",
       "dependencies": [
         "review.execution-chain-implementation-plans-v2"
@@ -37082,7 +37082,7 @@
       }
     },
     "repair.r07-usd-camera-projection": {
-      "title": "R07：修正非中心USD相机主点投影",
+      "title": "R07\uff1a\u4fee\u6b63\u975e\u4e2d\u5fc3USD\u76f8\u673a\u4e3b\u70b9\u6295\u5f71",
       "executor": "gated",
       "dependencies": [
         "review.execution-chain-implementation-plans-v2"
@@ -37170,7 +37170,7 @@
       }
     },
     "repair.r02-canonical-field-losses": {
-      "title": "R02：统一371槽分类、回归与旋转监督数学",
+      "title": "R02\uff1a\u7edf\u4e00371\u69fd\u5206\u7c7b\u3001\u56de\u5f52\u4e0e\u65cb\u8f6c\u76d1\u7763\u6570\u5b66",
       "executor": "gated",
       "dependencies": [
         "repair.r01-actor-inputs"
@@ -37254,7 +37254,7 @@
       }
     },
     "repair.r08-retained-source-reaudit": {
-      "title": "R08：独立重审留存Pinch账本并保留原失败身份",
+      "title": "R08\uff1a\u72ec\u7acb\u91cd\u5ba1\u7559\u5b58Pinch\u8d26\u672c\u5e76\u4fdd\u7559\u539f\u5931\u8d25\u8eab\u4efd",
       "executor": "gated",
       "dependencies": [
         "review.execution-chain-implementation-plans-v2"
@@ -37350,7 +37350,7 @@
       }
     },
     "repair.r04-sealed-stereo-sources": {
-      "title": "R04.1/R04.2：绑定封存Stereo来源与离线准入",
+      "title": "R04.1/R04.2\uff1a\u7ed1\u5b9a\u5c01\u5b58Stereo\u6765\u6e90\u4e0e\u79bb\u7ebf\u51c6\u5165",
       "executor": "gated",
       "dependencies": [
         "repair.r02-canonical-field-losses"
@@ -37442,7 +37442,7 @@
       }
     },
     "repair.r06-fault-safe-lifecycle": {
-      "title": "R06：新增opt-in故障安全资源清理与独立账本持久化",
+      "title": "R06\uff1a\u65b0\u589eopt-in\u6545\u969c\u5b89\u5168\u8d44\u6e90\u6e05\u7406\u4e0e\u72ec\u7acb\u8d26\u672c\u6301\u4e45\u5316",
       "executor": "gated",
       "dependencies": [
         "review.execution-chain-implementation-plans-v2"
@@ -37522,7 +37522,7 @@
       }
     },
     "repair.r05-stereo-admission-matcher": {
-      "title": "R05：统一Student与采集的Stereo matcher准入",
+      "title": "R05\uff1a\u7edf\u4e00Student\u4e0e\u91c7\u96c6\u7684Stereo matcher\u51c6\u5165",
       "executor": "gated",
       "dependencies": [
         "repair.r04-sealed-stereo-sources"
@@ -37604,7 +37604,7 @@
       }
     },
     "teacher.c01-backend-profile-preflight": {
-      "title": "C01 当前后端来源与 Reset 两阶段预检",
+      "title": "C01 \u5f53\u524d\u540e\u7aef\u6765\u6e90\u4e0e Reset \u4e24\u9636\u6bb5\u9884\u68c0",
       "executor": "gated",
       "dependencies": [
         "repair.r08-retained-source-reaudit"
@@ -37657,7 +37657,7 @@
       }
     },
     "teacher.c03-training-reward-cpu": {
-      "title": "C03 独立 Teacher 奖励结算与来源隔离",
+      "title": "C03 \u72ec\u7acb Teacher \u5956\u52b1\u7ed3\u7b97\u4e0e\u6765\u6e90\u9694\u79bb",
       "executor": "gated",
       "dependencies": [
         "review.execution-chain-implementation-plans-v2"
@@ -37701,7 +37701,7 @@
       }
     },
     "repair.r04-masked-label-ledger": {
-      "title": "R04 masked 371D 标签兼容与旧 Critic 隔离",
+      "title": "R04 masked 371D \u6807\u7b7e\u517c\u5bb9\u4e0e\u65e7 Critic \u9694\u79bb",
       "executor": "gated",
       "dependencies": [
         "repair.r04-sealed-stereo-sources",
@@ -37747,7 +37747,7 @@
       }
     },
     "teacher.c02-native-context-model": {
-      "title": "C02 common66／rod41×13／context50 独立 Teacher",
+      "title": "C02 common66\uff0frod41\u00d713\uff0fcontext50 \u72ec\u7acb Teacher",
       "executor": "gated",
       "dependencies": [
         "teacher.c01-backend-profile-preflight"
@@ -37802,7 +37802,7 @@
       }
     },
     "teacher.c04-native-session-collector": {
-      "title": "C04 实际来源绑定的独立无相机 Teacher Collector",
+      "title": "C04 \u5b9e\u9645\u6765\u6e90\u7ed1\u5b9a\u7684\u72ec\u7acb\u65e0\u76f8\u673a Teacher Collector",
       "executor": "gated",
       "dependencies": [
         "teacher.c01-backend-profile-preflight",
@@ -37867,7 +37867,7 @@
       }
     },
     "teacher.c05-native-checkpoint-training-cpu": {
-      "title": "C05 原 PPO 有界更新、原子恢复与只读 Checkpoint 审计",
+      "title": "C05 \u539f PPO \u6709\u754c\u66f4\u65b0\u3001\u539f\u5b50\u6062\u590d\u4e0e\u53ea\u8bfb Checkpoint \u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "teacher.c04-native-session-collector",
@@ -37923,7 +37923,7 @@
       }
     },
     "review.fixed-s0-v2-design": {
-      "title": "批准的独立fixed-S0 v2设计与实施计划",
+      "title": "\u6279\u51c6\u7684\u72ec\u7acbfixed-S0 v2\u8bbe\u8ba1\u4e0e\u5b9e\u65bd\u8ba1\u5212",
       "executor": "prepared",
       "dependencies": [
         "teacher.c04-native-session-collector",
@@ -37959,7 +37959,7 @@
       }
     },
     "teacher.v2.phase-contract-cpu": {
-      "title": "四阶段CPU数学合同",
+      "title": "\u56db\u9636\u6bb5CPU\u6570\u5b66\u5408\u540c",
       "executor": "prepared",
       "dependencies": [
         "review.fixed-s0-v2-design"
@@ -38002,7 +38002,7 @@
       }
     },
     "teacher.v2.phase-context-model": {
-      "title": "context51与独立六键模型",
+      "title": "context51\u4e0e\u72ec\u7acb\u516d\u952e\u6a21\u578b",
       "executor": "prepared",
       "dependencies": [
         "teacher.v2.phase-contract-cpu",
@@ -38010,22 +38010,22 @@
         "teacher.v2.model51-cpu"
       ],
       "status": "blocked",
-      "reason": "model51/context51 CPU子包已交付；真实S0 verified manifest→model identity→packet正绑定未实装，full来源/见证与新checkpoint/session集成仍关闭；不得以fixture或null身份晋级",
+      "reason": "model51/context51 CPU\u5b50\u5305\u5df2\u4ea4\u4ed8\uff1b\u771f\u5b9eS0 verified manifest\u2192model identity\u2192packet\u6b63\u7ed1\u5b9a\u672a\u5b9e\u88c5\uff0cfull\u6765\u6e90/\u89c1\u8bc1\u4e0e\u65b0checkpoint/session\u96c6\u6210\u4ecd\u5173\u95ed\uff1b\u4e0d\u5f97\u4ee5fixture\u6216null\u8eab\u4efd\u664b\u7ea7",
       "native_qualification": false
     },
     "teacher.v2.slip-source-cpu": {
-      "title": "固定锚滑移生命周期与同钟真实来源",
+      "title": "\u56fa\u5b9a\u951a\u6ed1\u79fb\u751f\u547d\u5468\u671f\u4e0e\u540c\u949f\u771f\u5b9e\u6765\u6e90",
       "executor": "prepared",
       "dependencies": [
         "review.fixed-s0-v2-design",
         "teacher.v2.slip-lifecycle-cpu"
       ],
       "status": "blocked",
-      "reason": "独立source/reward/evaluator待实现；不得填零或重锚",
+      "reason": "\u72ec\u7acbsource/reward/evaluator\u5f85\u5b9e\u73b0\uff1b\u4e0d\u5f97\u586b\u96f6\u6216\u91cd\u951a",
       "native_qualification": false
     },
     "teacher.v2.long-reset-cpu": {
-      "title": "长clock与显式guarded Reset",
+      "title": "\u957fclock\u4e0e\u663e\u5f0fguarded Reset",
       "executor": "prepared",
       "dependencies": [
         "review.fixed-s0-v2-design",
@@ -38034,11 +38034,11 @@
         "teacher.v2.long-continuation-cpu"
       ],
       "status": "blocked",
-      "reason": "240/258/2402原控制→零步Reset→下一episode CPU已交付；真实SDK长模式尚未资格，现fp32实际SDK消费者在2402/9600拒绝；生产v2 owner/session/worker未接入，长程native门继续关闭",
+      "reason": "240/258/2402\u539f\u63a7\u5236\u2192\u96f6\u6b65Reset\u2192\u4e0b\u4e00episode CPU\u5df2\u4ea4\u4ed8\uff1b\u771f\u5b9eSDK\u957f\u6a21\u5f0f\u5c1a\u672a\u8d44\u683c\uff0c\u73b0fp32\u5b9e\u9645SDK\u6d88\u8d39\u8005\u57282402/9600\u62d2\u7edd\uff1b\u751f\u4ea7v2 owner/session/worker\u672a\u63a5\u5165\uff0c\u957f\u7a0bnative\u95e8\u7ee7\u7eed\u5173\u95ed",
       "native_qualification": false
     },
     "teacher.c06-worker-contracts": {
-      "title": "有界worker真实产物审计CPU合同",
+      "title": "\u6709\u754cworker\u771f\u5b9e\u4ea7\u7269\u5ba1\u8ba1CPU\u5408\u540c",
       "executor": "gated",
       "dependencies": [
         "teacher.c04-native-session-collector",
@@ -38092,7 +38092,7 @@
       }
     },
     "teacher.c06-native-provider": {
-      "title": "真实SDK/Rod单实例worker",
+      "title": "\u771f\u5b9eSDK/Rod\u5355\u5b9e\u4f8bworker",
       "executor": "gated",
       "dependencies": [
         "teacher.c06-worker-contracts",
@@ -38101,11 +38101,11 @@
         "teacher.actual-resume-l03-cpu"
       ],
       "status": "blocked",
-      "reason": "actual provider/入口、来源闭环及独立预算资源待实装验证",
+      "reason": "actual provider/\u5165\u53e3\u3001\u6765\u6e90\u95ed\u73af\u53ca\u72ec\u7acb\u9884\u7b97\u8d44\u6e90\u5f85\u5b9e\u88c5\u9a8c\u8bc1",
       "native_qualification": false
     },
     "native.fixed_s0.v2.integration": {
-      "title": "独立v2真实session/collector/checkpoint入口",
+      "title": "\u72ec\u7acbv2\u771f\u5b9esession/collector/checkpoint\u5165\u53e3",
       "executor": "gated",
       "dependencies": [
         "teacher.v2.phase-context-model",
@@ -38114,11 +38114,11 @@
         "teacher.c06-native-provider"
       ],
       "status": "blocked",
-      "reason": "V2-I01必须实装原source与新身份；旧exact-type不放宽",
+      "reason": "V2-I01\u5fc5\u987b\u5b9e\u88c5\u539fsource\u4e0e\u65b0\u8eab\u4efd\uff1b\u65e7exact-type\u4e0d\u653e\u5bbd",
       "native_qualification": false
     },
     "teacher.c05-checkpoint-origin-audit": {
-      "title": "C05 Checkpoint 实际来源只读审计",
+      "title": "C05 Checkpoint \u5b9e\u9645\u6765\u6e90\u53ea\u8bfb\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "teacher.c05-native-checkpoint-training-cpu"
@@ -38156,7 +38156,7 @@
       }
     },
     "teacher.v2.clock-policy-cpu": {
-      "title": "独立 v2 实测 SDK 时钟包络与来源审计",
+      "title": "\u72ec\u7acb v2 \u5b9e\u6d4b SDK \u65f6\u949f\u5305\u7edc\u4e0e\u6765\u6e90\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "review.fixed-s0-v2-design"
@@ -38206,7 +38206,7 @@
       }
     },
     "teacher.v2.context51-cpu": {
-      "title": "独立 context51 与固定引用生命周期 CPU 合同",
+      "title": "\u72ec\u7acb context51 \u4e0e\u56fa\u5b9a\u5f15\u7528\u751f\u547d\u5468\u671f CPU \u5408\u540c",
       "executor": "gated",
       "dependencies": [
         "teacher.v2.phase-contract-cpu"
@@ -38252,7 +38252,7 @@
       }
     },
     "teacher.v2.reset-source-chain-cpu": {
-      "title": "独立 v2 Reset 全源链与失败进度 CPU 合同",
+      "title": "\u72ec\u7acb v2 Reset \u5168\u6e90\u94fe\u4e0e\u5931\u8d25\u8fdb\u5ea6 CPU \u5408\u540c",
       "executor": "gated",
       "dependencies": [
         "teacher.v2.clock-policy-cpu"
@@ -38299,7 +38299,7 @@
       }
     },
     "review.actual-native-provider-plan": {
-      "title": "实际Teacher启动、来源与A/B恢复实施计划",
+      "title": "\u5b9e\u9645Teacher\u542f\u52a8\u3001\u6765\u6e90\u4e0eA/B\u6062\u590d\u5b9e\u65bd\u8ba1\u5212",
       "executor": "prepared",
       "dependencies": [
         "teacher.c06-worker-contracts",
@@ -38327,7 +38327,7 @@
       }
     },
     "teacher.actual-launch-l01-cpu": {
-      "title": "L01可信parent-issued进程启动与租约",
+      "title": "L01\u53ef\u4fe1parent-issued\u8fdb\u7a0b\u542f\u52a8\u4e0e\u79df\u7ea6",
       "executor": "prepared",
       "dependencies": [
         "review.actual-native-provider-plan"
@@ -38378,7 +38378,7 @@
       }
     },
     "teacher.three-grasp-source-review-v1": {
-      "title": "三抓法 Teacher 输入来源与对向反力校验",
+      "title": "\u4e09\u6293\u6cd5 Teacher \u8f93\u5165\u6765\u6e90\u4e0e\u5bf9\u5411\u53cd\u529b\u6821\u9a8c",
       "executor": "pytest",
       "dependencies": [],
       "status": "blocked",
@@ -38410,7 +38410,7 @@
       }
     },
     "teacher.actual-provider-l02-cpu": {
-      "title": "L02真实场景来源与A更新封存软件",
+      "title": "L02\u771f\u5b9e\u573a\u666f\u6765\u6e90\u4e0eA\u66f4\u65b0\u5c01\u5b58\u8f6f\u4ef6",
       "executor": "prepared",
       "dependencies": [
         "teacher.actual-launch-l01-cpu",
@@ -38435,17 +38435,17 @@
       }
     },
     "teacher.actual-resume-l03-cpu": {
-      "title": "L03真实A身份与独立B恢复执行器软件",
+      "title": "L03\u771f\u5b9eA\u8eab\u4efd\u4e0e\u72ec\u7acbB\u6062\u590d\u6267\u884c\u5668\u8f6f\u4ef6",
       "executor": "prepared",
       "dependencies": [
         "teacher.actual-provider-l02-cpu"
       ],
       "status": "blocked",
-      "reason": "实际来源A读取及独立B执行器待实装；原生审批另计",
+      "reason": "\u5b9e\u9645\u6765\u6e90A\u8bfb\u53d6\u53ca\u72ec\u7acbB\u6267\u884c\u5668\u5f85\u5b9e\u88c5\uff1b\u539f\u751f\u5ba1\u6279\u53e6\u8ba1",
       "native_qualification": false
     },
     "teacher.v2.slip-lifecycle-cpu": {
-      "title": "固定锚生命周期与公开回执历史隔离 v2",
+      "title": "\u56fa\u5b9a\u951a\u751f\u547d\u5468\u671f\u4e0e\u516c\u5f00\u56de\u6267\u5386\u53f2\u9694\u79bb v2",
       "executor": "gated",
       "dependencies": [
         "review.fixed-s0-v2-design"
@@ -38492,7 +38492,7 @@
       }
     },
     "teacher.v2.model51-cpu": {
-      "title": "独立 context51 六键 Teacher 模型 CPU 子包",
+      "title": "\u72ec\u7acb context51 \u516d\u952e Teacher \u6a21\u578b CPU \u5b50\u5305",
       "executor": "gated",
       "dependencies": [
         "review.fixed-s0-v2-design",
@@ -38554,7 +38554,7 @@
       }
     },
     "teacher.v2.long-continuation-cpu": {
-      "title": "原控制长回合零步Reset续行与真实clock消费者门CPU包",
+      "title": "\u539f\u63a7\u5236\u957f\u56de\u5408\u96f6\u6b65Reset\u7eed\u884c\u4e0e\u771f\u5b9eclock\u6d88\u8d39\u8005\u95e8CPU\u5305",
       "executor": "gated",
       "dependencies": [
         "teacher.v2.clock-policy-cpu",
@@ -38621,7 +38621,7 @@
       }
     },
     "preview.live-deformx-stereo.cpu-20261116": {
-      "title": "真实柔性杆与双 RGB 独立预览 CPU 接线",
+      "title": "\u771f\u5b9e\u67d4\u6027\u6746\u4e0e\u53cc RGB \u72ec\u7acb\u9884\u89c8 CPU \u63a5\u7ebf",
       "executor": "gated",
       "dependencies": [],
       "status": "passed",
@@ -38660,7 +38660,7 @@
       }
     },
     "preview.shared-gpu0.cpu-20261116": {
-      "title": "独立预览按批准绑定共享GPU0",
+      "title": "\u72ec\u7acb\u9884\u89c8\u6309\u6279\u51c6\u7ed1\u5b9a\u5171\u4eabGPU0",
       "executor": "gated",
       "dependencies": [
         "preview.live-deformx-stereo.cpu-20261116"
@@ -38694,7 +38694,7 @@
       }
     },
     "preview.toolbar-startup.cpu-20261116": {
-      "title": "预览原生启动失败证据与toolbar依赖修复",
+      "title": "\u9884\u89c8\u539f\u751f\u542f\u52a8\u5931\u8d25\u8bc1\u636e\u4e0etoolbar\u4f9d\u8d56\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "preview.shared-gpu0.cpu-20261116"
@@ -38732,7 +38732,7 @@
       }
     },
     "preview.optional-toolbar-hooks.cpu-20261116": {
-      "title": "可选工具条按钮兼容与启动异常关闭",
+      "title": "\u53ef\u9009\u5de5\u5177\u6761\u6309\u94ae\u517c\u5bb9\u4e0e\u542f\u52a8\u5f02\u5e38\u5173\u95ed",
       "executor": "gated",
       "dependencies": [
         "preview.toolbar-startup.cpu-20261116"
@@ -38770,7 +38770,7 @@
       }
     },
     "preview.native-result.cpu-audit-20261116": {
-      "title": "原生预览失败及批准终止证据归档",
+      "title": "\u539f\u751f\u9884\u89c8\u5931\u8d25\u53ca\u6279\u51c6\u7ec8\u6b62\u8bc1\u636e\u5f52\u6863",
       "executor": "gated",
       "dependencies": [
         "preview.optional-toolbar-hooks.cpu-20261116"
@@ -38807,7 +38807,7 @@
       }
     },
     "preview.offline-cleanup.cpu-20261116": {
-      "title": "预览错误落盘、引用清理与有界崩溃诊断",
+      "title": "\u9884\u89c8\u9519\u8bef\u843d\u76d8\u3001\u5f15\u7528\u6e05\u7406\u4e0e\u6709\u754c\u5d29\u6e83\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "preview.native-result.cpu-audit-20261116"
@@ -38852,7 +38852,7 @@
       }
     },
     "preview.wire-layout.cpu-20261116": {
-      "title": "真实建场wire_center首因与兼容修复",
+      "title": "\u771f\u5b9e\u5efa\u573awire_center\u9996\u56e0\u4e0e\u517c\u5bb9\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "preview.offline-cleanup.cpu-20261116"
@@ -38894,7 +38894,7 @@
       }
     },
     "preview.camera-clock.cpu-20261116": {
-      "title": "首帧空时钟兼容与原生第一轮证据",
+      "title": "\u9996\u5e27\u7a7a\u65f6\u949f\u517c\u5bb9\u4e0e\u539f\u751f\u7b2c\u4e00\u8f6e\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "preview.wire-layout.cpu-20261116"
@@ -38935,7 +38935,7 @@
       }
     },
     "preview.warp-readback.cpu-20261116": {
-      "title": "RGB旧owner接口独立兼容与两轮批次结果",
+      "title": "RGB\u65e7owner\u63a5\u53e3\u72ec\u7acb\u517c\u5bb9\u4e0e\u4e24\u8f6e\u6279\u6b21\u7ed3\u679c",
       "executor": "gated",
       "dependencies": [
         "preview.camera-clock.cpu-20261116"
@@ -38974,7 +38974,7 @@
       }
     },
     "preview.resolution.cpu-20261116": {
-      "title": "预览多分辨率实际执行链与四档离线核验",
+      "title": "\u9884\u89c8\u591a\u5206\u8fa8\u7387\u5b9e\u9645\u6267\u884c\u94fe\u4e0e\u56db\u6863\u79bb\u7ebf\u6838\u9a8c",
       "executor": "gated",
       "dependencies": [
         "preview.warp-readback.cpu-20261116"
@@ -39038,7 +39038,7 @@
       }
     },
     "preview.resolution-native-evidence.cpu-20261116": {
-      "title": "四档原生首例失败证据与严格时钟诊断补齐",
+      "title": "\u56db\u6863\u539f\u751f\u9996\u4f8b\u5931\u8d25\u8bc1\u636e\u4e0e\u4e25\u683c\u65f6\u949f\u8bca\u65ad\u8865\u9f50",
       "executor": "gated",
       "dependencies": [
         "preview.resolution.cpu-20261116"
@@ -39093,7 +39093,7 @@
       }
     },
     "preview.tiled-step.cpu-20261116": {
-      "title": "独立TiledCamera物理边界双RGB采集",
+      "title": "\u72ec\u7acbTiledCamera\u7269\u7406\u8fb9\u754c\u53ccRGB\u91c7\u96c6",
       "executor": "gated",
       "dependencies": [
         "preview.resolution-native-evidence.cpu-20261116"
@@ -39153,7 +39153,7 @@
       }
     },
     "preview.tiled-usd-compat.cpu-20261116": {
-      "title": "TiledCamera原生失败证据与私有USD位姿兼容",
+      "title": "TiledCamera\u539f\u751f\u5931\u8d25\u8bc1\u636e\u4e0e\u79c1\u6709USD\u4f4d\u59ff\u517c\u5bb9",
       "executor": "gated",
       "dependencies": [
         "preview.tiled-step.cpu-20261116"
@@ -39214,7 +39214,7 @@
       }
     },
     "preview.tiled-clock-startup.cpu-20261116": {
-      "title": "TiledCamera时钟扩展注册与首轮失败审计",
+      "title": "TiledCamera\u65f6\u949f\u6269\u5c55\u6ce8\u518c\u4e0e\u9996\u8f6e\u5931\u8d25\u5ba1\u8ba1",
       "executor": "gated",
       "dependencies": [
         "preview.tiled-usd-compat.cpu-20261116"
@@ -39273,7 +39273,7 @@
       }
     },
     "preview.tiled-two-attempt-result-20261116": {
-      "title": "TiledCamera两次原生复验与17对真实RGB证据",
+      "title": "TiledCamera\u4e24\u6b21\u539f\u751f\u590d\u9a8c\u4e0e17\u5bf9\u771f\u5b9eRGB\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "preview.tiled-clock-startup.cpu-20261116"
@@ -39337,7 +39337,7 @@
       }
     },
     "preview.owned-shutdown-repair.cpu-20261116": {
-      "title": "预览完成帧释放、STOP提交与直播关闭修复",
+      "title": "\u9884\u89c8\u5b8c\u6210\u5e27\u91ca\u653e\u3001STOP\u63d0\u4ea4\u4e0e\u76f4\u64ad\u5173\u95ed\u4fee\u590d",
       "executor": "gated",
       "dependencies": [
         "preview.tiled-two-attempt-result-20261116"
@@ -39400,7 +39400,7 @@
       }
     },
     "preview.timeline-wrapper-compat.cpu-20261116": {
-      "title": "Timeline真实Python入口修正与USD关闭失败证据",
+      "title": "Timeline\u771f\u5b9ePython\u5165\u53e3\u4fee\u6b63\u4e0eUSD\u5173\u95ed\u5931\u8d25\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "preview.owned-shutdown-repair.cpu-20261116"
@@ -39465,7 +39465,7 @@
       }
     },
     "preview.window-finalize-owner.cpu-20261116": {
-      "title": "DEXTRAH关闭对照与私有窗口owner释放候选",
+      "title": "DEXTRAH\u5173\u95ed\u5bf9\u7167\u4e0e\u79c1\u6709\u7a97\u53e3owner\u91ca\u653e\u5019\u9009",
       "executor": "gated",
       "dependencies": [
         "preview.timeline-wrapper-compat.cpu-20261116"
@@ -39533,7 +39533,7 @@
       }
     },
     "preview.window-finalize-owner.native-result-20261116": {
-      "title": "原生窗口释放已执行与解释器退出失败证据",
+      "title": "\u539f\u751f\u7a97\u53e3\u91ca\u653e\u5df2\u6267\u884c\u4e0e\u89e3\u91ca\u5668\u9000\u51fa\u5931\u8d25\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "preview.window-finalize-owner.cpu-20261116"
@@ -39606,7 +39606,7 @@
       }
     },
     "preview.fixed-dual-camera.cpu-20261116": {
-      "title": "两台固定相机同次渲染与wire逐帧证据",
+      "title": "\u4e24\u53f0\u56fa\u5b9a\u76f8\u673a\u540c\u6b21\u6e32\u67d3\u4e0ewire\u9010\u5e27\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "preview.window-finalize-owner.cpu-20261116"
@@ -39669,7 +39669,7 @@
       }
     },
     "preview.fixed-dual-camera.native-wire-audit-20261116": {
-      "title": "固定双相机17对实采与wire来源核验、两阶段清理",
+      "title": "\u56fa\u5b9a\u53cc\u76f8\u673a17\u5bf9\u5b9e\u91c7\u4e0ewire\u6765\u6e90\u6838\u9a8c\u3001\u4e24\u9636\u6bb5\u6e05\u7406",
       "executor": "gated",
       "dependencies": [
         "preview.fixed-dual-camera.cpu-20261116"
@@ -39734,7 +39734,7 @@
       }
     },
     "preview.extension-cache.cpu-20261116": {
-      "title": "双相机清理通过与原生扩展缓存释放候选",
+      "title": "\u53cc\u76f8\u673a\u6e05\u7406\u901a\u8fc7\u4e0e\u539f\u751f\u6269\u5c55\u7f13\u5b58\u91ca\u653e\u5019\u9009",
       "executor": "gated",
       "dependencies": [
         "preview.fixed-dual-camera.native-wire-audit-20261116"
@@ -39799,7 +39799,7 @@
       }
     },
     "preview.extension-cache.review-fix-20261116": {
-      "title": "扩展缓存候选借用引用与一次卸载保护修正",
+      "title": "\u6269\u5c55\u7f13\u5b58\u5019\u9009\u501f\u7528\u5f15\u7528\u4e0e\u4e00\u6b21\u5378\u8f7d\u4fdd\u62a4\u4fee\u6b63",
       "executor": "gated",
       "dependencies": [
         "preview.extension-cache.cpu-20261116"
@@ -39864,7 +39864,7 @@
       }
     },
     "preview.fixed-dual-cleanup.batch-result-20261116": {
-      "title": "固定双相机两次原生失败与只读缓存诊断",
+      "title": "\u56fa\u5b9a\u53cc\u76f8\u673a\u4e24\u6b21\u539f\u751f\u5931\u8d25\u4e0e\u53ea\u8bfb\u7f13\u5b58\u8bca\u65ad",
       "executor": "gated",
       "dependencies": [
         "preview.extension-cache.review-fix-20261116"
@@ -40164,7 +40164,7 @@
               "source": "recorded_native_replay",
               "interpolated": false,
               "counts_as_success": false,
-              "video_file": "pinch_完整动作_候选演示.mp4",
+              "video_file": "pinch_\u5b8c\u6574\u52a8\u4f5c_\u5019\u9009\u6f14\u793a.mp4",
               "recording_sha256": "d18ef8977fc204dca16fa11410c92754cc80d244584ac32389ee2793a0695abb",
               "checkpoint_sha256": "0decd82d2492e1e31382670479855948385068d91cf57aa431489cc2b3d8b2d4",
               "measured_height_peak_mm": 6.45032525062561,
@@ -40183,7 +40183,7 @@
               "source": "recorded_native_replay",
               "interpolated": false,
               "counts_as_success": false,
-              "video_file": "tripod_完整动作_候选演示.mp4",
+              "video_file": "tripod_\u5b8c\u6574\u52a8\u4f5c_\u5019\u9009\u6f14\u793a.mp4",
               "recording_sha256": "37ac60011d7b18597e4fc4a3b36d4901b809410eb4eada9d8b911aa27f42e7dd",
               "checkpoint_sha256": "61b2127af32885a07a6a835a30c353f7cd3fc80b617dc7e2aed3951387cfb37a",
               "measured_height_peak_mm": 0.010669231414794922,
@@ -40202,7 +40202,7 @@
               "source": "recorded_native_replay",
               "interpolated": false,
               "counts_as_success": false,
-              "video_file": "power_完整动作_候选演示.mp4",
+              "video_file": "power_\u5b8c\u6574\u52a8\u4f5c_\u5019\u9009\u6f14\u793a.mp4",
               "recording_sha256": "a558a131b602eb6f0150f120025ab666e888998a23ae47e7987aabe0934caf32",
               "checkpoint_sha256": "a3ab4ce1468312c86511f44db51cd9f442369683957c5bb9f5339a88c055962c",
               "measured_height_peak_mm": 21.008789539337158,
@@ -40257,7 +40257,7 @@
       "user_observed_failure": {
         "source": "explicit_user_feedback_after_Windows_compilation_playback",
         "playback_seen_by_user": true,
-        "observation": "根本没抓住，只是灵巧手本身往上走",
+        "observation": "\u6839\u672c\u6ca1\u6293\u4f4f\uff0c\u53ea\u662f\u7075\u5de7\u624b\u672c\u8eab\u5f80\u4e0a\u8d70",
         "classification": "failed_contact_and_lift_diagnostics_not_successful_teacher_demonstrations",
         "power_21mm_is_sustained_grasp_evidence": false,
         "next_contact_analysis_scope": "separate cache-only diagnostic work package; no new native or PPO"
@@ -40428,7 +40428,7 @@
       }
     },
     "teacher.offline-geometry-options-v1": {
-      "title": "离线凸包/设备重算及SDK四元数转换回归",
+      "title": "\u79bb\u7ebf\u51f8\u5305/\u8bbe\u5907\u91cd\u7b97\u53caSDK\u56db\u5143\u6570\u8f6c\u6362\u56de\u5f52",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -40451,7 +40451,7 @@
       "branch": "11-17"
     },
     "teacher.initialization-qnorm-native-v1": {
-      "title": "四元数修复后的34碰撞体原生读取与退出验证",
+      "title": "\u56db\u5143\u6570\u4fee\u590d\u540e\u768434\u78b0\u649e\u4f53\u539f\u751f\u8bfb\u53d6\u4e0e\u9000\u51fa\u9a8c\u8bc1",
       "executor": "gated",
       "dependencies": [],
       "code_dependencies": [
@@ -40478,7 +40478,7 @@
       }
     },
     "teacher.cooked-surface-semantics-v1": {
-      "title": "Cooked面的分项拓扑与参考SDK语义离线诊断",
+      "title": "Cooked\u9762\u7684\u5206\u9879\u62d3\u6251\u4e0e\u53c2\u8003SDK\u8bed\u4e49\u79bb\u7ebf\u8bca\u65ad",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -40498,7 +40498,7 @@
       }
     },
     "teacher.tensor-owner-probe-v1": {
-      "title": "真实缓存SimulationView与上游持有者的只读诊断接线",
+      "title": "\u771f\u5b9e\u7f13\u5b58SimulationView\u4e0e\u4e0a\u6e38\u6301\u6709\u8005\u7684\u53ea\u8bfb\u8bca\u65ad\u63a5\u7ebf",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -40520,7 +40520,7 @@
       }
     },
     "teacher.cpu-fixture-integrity-v1": {
-      "title": "CPU调度夹具身份与外部证据隔离修复",
+      "title": "CPU\u8c03\u5ea6\u5939\u5177\u8eab\u4efd\u4e0e\u5916\u90e8\u8bc1\u636e\u9694\u79bb\u4fee\u590d",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -40563,7 +40563,7 @@
       }
     },
     "teacher.native-cached-view-failure-v1": {
-      "title": "原生缓存Tensor View持有链失败证据",
+      "title": "\u539f\u751f\u7f13\u5b58Tensor View\u6301\u6709\u94fe\u5931\u8d25\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "teacher.tensor-owner-probe-v1"
@@ -40583,7 +40583,7 @@
       }
     },
     "teacher.cleanup-suggestions-verification-v1": {
-      "title": "外部释放与CUDA初始化建议的本机CPU核验",
+      "title": "\u5916\u90e8\u91ca\u653e\u4e0eCUDA\u521d\u59cb\u5316\u5efa\u8bae\u7684\u672c\u673aCPU\u6838\u9a8c",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -40607,7 +40607,7 @@
       }
     },
     "teacher.cuda-frame-owner-trace-v1": {
-      "title": "CUDA初始化帧上游持有者第三层只读诊断",
+      "title": "CUDA\u521d\u59cb\u5316\u5e27\u4e0a\u6e38\u6301\u6709\u8005\u7b2c\u4e09\u5c42\u53ea\u8bfb\u8bca\u65ad",
       "executor": "pytest",
       "dependencies": [
         "teacher.tensor-owner-probe-v1"
@@ -40632,7 +40632,7 @@
       }
     },
     "teacher.cuda-triton-native-evidence-v1": {
-      "title": "原生CUDA上游Triton注册帧及退出失败证据",
+      "title": "\u539f\u751fCUDA\u4e0a\u6e38Triton\u6ce8\u518c\u5e27\u53ca\u9000\u51fa\u5931\u8d25\u8bc1\u636e",
       "executor": "gated",
       "dependencies": [
         "teacher.cuda-frame-owner-trace-v1"
@@ -40652,7 +40652,7 @@
       }
     },
     "teacher.cuda-frame-walk-v2": {
-      "title": "一次有界追踪CUDA上游frame链v2",
+      "title": "\u4e00\u6b21\u6709\u754c\u8ffd\u8e2aCUDA\u4e0a\u6e38frame\u94fev2",
       "executor": "pytest",
       "dependencies": [
         "teacher.cuda-frame-owner-trace-v1"
@@ -40677,7 +40677,7 @@
       }
     },
     "teacher.kit-stat-cache-retention-evidence-v1": {
-      "title": "原生importlib帧链与Kit stat异常缓存CPU复现",
+      "title": "\u539f\u751fimportlib\u5e27\u94fe\u4e0eKit stat\u5f02\u5e38\u7f13\u5b58CPU\u590d\u73b0",
       "executor": "gated",
       "dependencies": [
         "teacher.cuda-frame-walk-v2"
@@ -40697,7 +40697,7 @@
       }
     },
     "teacher.stat-cache-release-v1": {
-      "title": "源码绑定的Kit stat缓存一次释放独立诊断",
+      "title": "\u6e90\u7801\u7ed1\u5b9a\u7684Kit stat\u7f13\u5b58\u4e00\u6b21\u91ca\u653e\u72ec\u7acb\u8bca\u65ad",
       "executor": "pytest",
       "dependencies": [
         "teacher.cuda-frame-walk-v2"
@@ -40721,7 +40721,7 @@
       }
     },
     "teacher.stat-cache-release-native-v1": {
-      "title": "一次源码绑定stat-cache释放原生反事实",
+      "title": "\u4e00\u6b21\u6e90\u7801\u7ed1\u5b9astat-cache\u91ca\u653e\u539f\u751f\u53cd\u4e8b\u5b9e",
       "executor": "gated",
       "dependencies": [
         "teacher.stat-cache-release-v1"
@@ -40746,7 +40746,7 @@
       }
     },
     "teacher.cooked-source-coordinate-audit-v1": {
-      "title": "原始/cooked集合与坐标链离线审计修正",
+      "title": "\u539f\u59cb/cooked\u96c6\u5408\u4e0e\u5750\u6807\u94fe\u79bb\u7ebf\u5ba1\u8ba1\u4fee\u6b63",
       "executor": "pytest",
       "dependencies": [
         "teacher.cooked-surface-semantics-v1"
@@ -40769,7 +40769,7 @@
       }
     },
     "teacher.cooked-failed-face-audit-v1": {
-      "title": "Cooked hull 逐面残差、面积与索引重排复核",
+      "title": "Cooked hull \u9010\u9762\u6b8b\u5dee\u3001\u9762\u79ef\u4e0e\u7d22\u5f15\u91cd\u6392\u590d\u6838",
       "executor": "pytest",
       "dependencies": [
         "teacher.cooked-source-coordinate-audit-v1"
@@ -40790,7 +40790,7 @@
       }
     },
     "teacher.cooked-plane-projection-audit-v1": {
-      "title": "原平面和拟合平面的距离与包覆复核",
+      "title": "\u539f\u5e73\u9762\u548c\u62df\u5408\u5e73\u9762\u7684\u8ddd\u79bb\u4e0e\u5305\u8986\u590d\u6838",
       "executor": "pytest",
       "dependencies": [
         "teacher.cooked-failed-face-audit-v1"
@@ -40810,7 +40810,7 @@
       }
     },
     "teacher.contact-offset-baseline-v1": {
-      "title": "SDK 偏移基线只读入口",
+      "title": "SDK \u504f\u79fb\u57fa\u7ebf\u53ea\u8bfb\u5165\u53e3",
       "executor": "pytest",
       "dependencies": [
         "teacher.stat-cache-release-v1",
@@ -40832,7 +40832,7 @@
       }
     },
     "teacher.student-stereo-alignment-v1": {
-      "title": "柔性 Teacher 同时刻双 RGB 和特权投影",
+      "title": "\u67d4\u6027 Teacher \u540c\u65f6\u523b\u53cc RGB \u548c\u7279\u6743\u6295\u5f71",
       "executor": "pytest",
       "dependencies": [
         "teacher.stat-cache-release-v1"
@@ -40853,7 +40853,7 @@
       }
     },
     "teacher.student-stereo-alignment-offline-v1": {
-      "title": "Teacher 双 RGB 离线投影和物理时序检查",
+      "title": "Teacher \u53cc RGB \u79bb\u7ebf\u6295\u5f71\u548c\u7269\u7406\u65f6\u5e8f\u68c0\u67e5",
       "executor": "pytest",
       "dependencies": [
         "teacher.student-stereo-alignment-v1"
@@ -40874,7 +40874,7 @@
       }
     },
     "teacher.student-stereo-sync-native-v1": {
-      "title": "Teacher 固定双 RGB 与动作下发原生同步",
+      "title": "Teacher \u56fa\u5b9a\u53cc RGB \u4e0e\u52a8\u4f5c\u4e0b\u53d1\u539f\u751f\u540c\u6b65",
       "executor": "pytest",
       "dependencies": [
         "teacher.student-stereo-alignment-v1"
@@ -40898,7 +40898,7 @@
       }
     },
     "teacher.runtime-environment-diagnostics-v1": {
-      "title": "Teacher 运行环境、实际 Warp ABI 与关闭边界",
+      "title": "Teacher \u8fd0\u884c\u73af\u5883\u3001\u5b9e\u9645 Warp ABI \u4e0e\u5173\u95ed\u8fb9\u754c",
       "executor": "pytest",
       "dependencies": [
         "teacher.student-stereo-alignment-v1"
@@ -40921,7 +40921,7 @@
       }
     },
     "teacher.pinch-no-camera-reset-recheck-v1": {
-      "title": "无相机 Pinch 原生初始化复验",
+      "title": "\u65e0\u76f8\u673a Pinch \u539f\u751f\u521d\u59cb\u5316\u590d\u9a8c",
       "executor": "pytest",
       "dependencies": [
         "teacher.runtime-environment-diagnostics-v1"
@@ -40944,7 +40944,7 @@
       }
     },
     "teacher.actual-fresh-pinch-scene-cpu": {
-      "title": "Teacher PPO 同一 Pinch 场景与新 episode 交接",
+      "title": "Teacher PPO \u540c\u4e00 Pinch \u573a\u666f\u4e0e\u65b0 episode \u4ea4\u63a5",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-launch-l01-cpu",
@@ -40967,7 +40967,7 @@
       }
     },
     "teacher.native-student-stereo-sidecar-cpu-v1": {
-      "title": "Teacher 与 Student 固定双目动作前对齐",
+      "title": "Teacher \u4e0e Student \u56fa\u5b9a\u53cc\u76ee\u52a8\u4f5c\u524d\u5bf9\u9f50",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-fresh-pinch-scene-cpu",
@@ -40990,7 +40990,7 @@
       }
     },
     "teacher.native-first-stereo-pair-timing-v1": {
-      "title": "原生 Pinch 首帧和 2 ms 数据门",
+      "title": "\u539f\u751f Pinch \u9996\u5e27\u548c 2 ms \u6570\u636e\u95e8",
       "executor": "pytest",
       "dependencies": [
         "teacher.native-student-stereo-sidecar-cpu-v1"
@@ -41013,7 +41013,7 @@
       }
     },
     "teacher.native-stereo-clock-warmup-v1": {
-      "title": "Pinch 原生双 RGB 时钟热身对照",
+      "title": "Pinch \u539f\u751f\u53cc RGB \u65f6\u949f\u70ed\u8eab\u5bf9\u7167",
       "executor": "pytest",
       "dependencies": [
         "teacher.native-student-stereo-sidecar-cpu-v1"
@@ -41036,7 +41036,7 @@
       }
     },
     "teacher.native-stereo-reset-clock-origin-v1": {
-      "title": "Pinch 原生双目时钟起点复算",
+      "title": "Pinch \u539f\u751f\u53cc\u76ee\u65f6\u949f\u8d77\u70b9\u590d\u7b97",
       "executor": "pytest",
       "dependencies": [
         "teacher.native-student-stereo-sidecar-cpu-v1"
@@ -41058,7 +41058,7 @@
       }
     },
     "teacher.webrtc-display-gate-v1": {
-      "title": "Teacher WebRTC 显示门与控制隔离",
+      "title": "Teacher WebRTC \u663e\u793a\u95e8\u4e0e\u63a7\u5236\u9694\u79bb",
       "executor": "pytest",
       "dependencies": [],
       "status": "blocked",
@@ -41079,7 +41079,7 @@
       }
     },
     "teacher.webrtc-shutdown-order-v1": {
-      "title": "WebRTC 原生关闭阶段与首次故障栈",
+      "title": "WebRTC \u539f\u751f\u5173\u95ed\u9636\u6bb5\u4e0e\u9996\u6b21\u6545\u969c\u6808",
       "executor": "pytest",
       "dependencies": [],
       "status": "blocked",
@@ -41100,7 +41100,7 @@
       }
     },
     "teacher.native-stereo-live-webrtc-v1": {
-      "title": "Teacher 固定双 RGB WebRTC 旁路",
+      "title": "Teacher \u56fa\u5b9a\u53cc RGB WebRTC \u65c1\u8def",
       "executor": "pytest",
       "dependencies": [],
       "status": "blocked",
@@ -41124,7 +41124,7 @@
       }
     },
     "teacher.native-stereo-second-reset-clock-v1": {
-      "title": "Pinch 双目时钟第二次 Reset 原生对照",
+      "title": "Pinch \u53cc\u76ee\u65f6\u949f\u7b2c\u4e8c\u6b21 Reset \u539f\u751f\u5bf9\u7167",
       "executor": "pytest",
       "dependencies": [],
       "status": "blocked",
@@ -41145,7 +41145,7 @@
       }
     },
     "teacher.fresh-numeric-reset-v1": {
-      "title": "当前源码 Teacher Pinch 数值 Reset",
+      "title": "\u5f53\u524d\u6e90\u7801 Teacher Pinch \u6570\u503c Reset",
       "executor": "pytest",
       "dependencies": [],
       "status": "blocked",
@@ -41165,7 +41165,7 @@
       }
     },
     "teacher.ppo-worker-factories-v1": {
-      "title": "Pinch Teacher 原 PPO worker 工厂接线",
+      "title": "Pinch Teacher \u539f PPO worker \u5de5\u5382\u63a5\u7ebf",
       "executor": "pytest",
       "dependencies": [],
       "status": "blocked",
@@ -41186,7 +41186,7 @@
       }
     },
     "teacher.wire-pose-candidate-v1": {
-      "title": "线缆材料坐标下的 DH116 预抓取姿态",
+      "title": "\u7ebf\u7f06\u6750\u6599\u5750\u6807\u4e0b\u7684 DH116 \u9884\u6293\u53d6\u59ff\u6001",
       "executor": "pytest",
       "dependencies": [],
       "status": "passed",
@@ -41209,7 +41209,7 @@
       }
     },
     "teacher.actual-fresh-update-seal-cpu": {
-      "title": "Teacher 首次 32 步 PPO 更新与检查点封存",
+      "title": "Teacher \u9996\u6b21 32 \u6b65 PPO \u66f4\u65b0\u4e0e\u68c0\u67e5\u70b9\u5c01\u5b58",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-fresh-pinch-scene-cpu"
@@ -41231,7 +41231,7 @@
       }
     },
     "teacher.actual-input-audit-cpu": {
-      "title": "Teacher 原始输入核对与父进程时限绑定",
+      "title": "Teacher \u539f\u59cb\u8f93\u5165\u6838\u5bf9\u4e0e\u7236\u8fdb\u7a0b\u65f6\u9650\u7ed1\u5b9a",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-fresh-update-seal-cpu"
@@ -41252,7 +41252,7 @@
       }
     },
     "teacher.actual-fresh-worker-entry-cpu": {
-      "title": "Pinch Teacher 有界 Worker 固定入口",
+      "title": "Pinch Teacher \u6709\u754c Worker \u56fa\u5b9a\u5165\u53e3",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-input-audit-cpu"
@@ -41272,7 +41272,7 @@
       }
     },
     "teacher.actual-worker-ledgers-cpu": {
-      "title": "Pinch Worker 原账本派生与关闭摘要",
+      "title": "Pinch Worker \u539f\u8d26\u672c\u6d3e\u751f\u4e0e\u5173\u95ed\u6458\u8981",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-fresh-worker-entry-cpu"
@@ -41292,7 +41292,7 @@
       }
     },
     "teacher.wire-pose-table-clearance-cpu": {
-      "title": "三抓法候选初态桌面净空",
+      "title": "\u4e09\u6293\u6cd5\u5019\u9009\u521d\u6001\u684c\u9762\u51c0\u7a7a",
       "executor": "pytest",
       "dependencies": [
         "teacher.wire-pose-candidate-v1"
@@ -41312,7 +41312,7 @@
       }
     },
     "teacher.actual-fresh-output-audit-cpu": {
-      "title": "Pinch 首次更新的独立产物核验",
+      "title": "Pinch \u9996\u6b21\u66f4\u65b0\u7684\u72ec\u7acb\u4ea7\u7269\u6838\u9a8c",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-worker-ledgers-cpu"
@@ -41333,7 +41333,7 @@
       }
     },
     "teacher.wire-vertical-repair-cpu": {
-      "title": "三抓法初态抬腕试修与必需指腹验证",
+      "title": "\u4e09\u6293\u6cd5\u521d\u6001\u62ac\u8155\u8bd5\u4fee\u4e0e\u5fc5\u9700\u6307\u8179\u9a8c\u8bc1",
       "executor": "pytest",
       "dependencies": [
         "teacher.wire-pose-table-clearance-cpu"
@@ -41353,7 +41353,7 @@
       }
     },
     "teacher.actual-fresh-setup-audit-cpu": {
-      "title": "Pinch 建场与首动作 Reset 证据",
+      "title": "Pinch \u5efa\u573a\u4e0e\u9996\u52a8\u4f5c Reset \u8bc1\u636e",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-fresh-output-audit-cpu"
@@ -41373,7 +41373,7 @@
       }
     },
     "teacher.actual-fresh-cap-audit-cpu": {
-      "title": "Pinch 实际 PPO 窗口时限证据",
+      "title": "Pinch \u5b9e\u9645 PPO \u7a97\u53e3\u65f6\u9650\u8bc1\u636e",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-fresh-setup-audit-cpu"
@@ -41393,7 +41393,7 @@
       }
     },
     "teacher.wire-joint-pregrasp-cpu": {
-      "title": "Tripod 与 Power 联合腕姿和预形状搜索",
+      "title": "Tripod \u4e0e Power \u8054\u5408\u8155\u59ff\u548c\u9884\u5f62\u72b6\u641c\u7d22",
       "executor": "pytest",
       "dependencies": [
         "teacher.wire-vertical-repair-cpu"
@@ -41413,7 +41413,7 @@
       }
     },
     "teacher.actual-fresh-diagnostic-receipt-cpu": {
-      "title": "Pinch Teacher 实际诊断回执离线复验",
+      "title": "Pinch Teacher \u5b9e\u9645\u8bca\u65ad\u56de\u6267\u79bb\u7ebf\u590d\u9a8c",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-fresh-cap-audit-cpu"
@@ -41434,7 +41434,7 @@
       }
     },
     "teacher.wire-certified-pregrasp-refinement-cpu": {
-      "title": "Tripod／Power 保守几何预抓取细化",
+      "title": "Tripod\uff0fPower \u4fdd\u5b88\u51e0\u4f55\u9884\u6293\u53d6\u7ec6\u5316",
       "executor": "pytest",
       "dependencies": [
         "teacher.wire-joint-pregrasp-cpu"
@@ -41482,7 +41482,7 @@
       "dependency_scopes": {}
     },
     "teacher.pinch-ppo-draft-cpu": {
-      "title": "Pinch 首次原生 PPO 配方 CPU 冻结",
+      "title": "Pinch \u9996\u6b21\u539f\u751f PPO \u914d\u65b9 CPU \u51bb\u7ed3",
       "executor": "pytest",
       "dependencies": [
         "teacher.actual-fresh-diagnostic-receipt-cpu"
@@ -41502,7 +41502,7 @@
       }
     },
     "teacher.wire-coupled-tripod-power-reach-cpu": {
-      "title": "Tripod 成对搜索与 Power 掌面可达边界",
+      "title": "Tripod \u6210\u5bf9\u641c\u7d22\u4e0e Power \u638c\u9762\u53ef\u8fbe\u8fb9\u754c",
       "executor": "pytest",
       "dependencies": [
         "teacher.wire-certified-pregrasp-refinement-cpu"
@@ -41522,7 +41522,7 @@
       }
     },
     "teacher.pinch-owned-update-readback-cpu": {
-      "title": "Pinch 原生更新副本与外层回执复核",
+      "title": "Pinch \u539f\u751f\u66f4\u65b0\u526f\u672c\u4e0e\u5916\u5c42\u56de\u6267\u590d\u6838",
       "executor": "pytest",
       "dependencies": [
         "teacher.pinch-ppo-draft-cpu"
@@ -41542,7 +41542,7 @@
       }
     },
     "teacher.tripod-endpoint-power-palm-seating-cpu": {
-      "title": "Tripod 双来源端点检查与 Power 掌面参考初姿",
+      "title": "Tripod \u53cc\u6765\u6e90\u7aef\u70b9\u68c0\u67e5\u4e0e Power \u638c\u9762\u53c2\u8003\u521d\u59ff",
       "executor": "pytest",
       "dependencies": [
         "teacher.wire-coupled-tripod-power-reach-cpu"
@@ -49953,16 +49953,41 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-coordinated-contact-native": {
+      "title": "Real coordinated Tripod target ray A rejected; diagnose actual intermittent contact before Lift",
+      "executor": "gated",
+      "status": "blocked",
+      "dependencies": [
+        "teacher.tripod-coordinated-contact"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_paired_pad_balance.py"
+      ],
+      "readiness": "docs/contracts/dh116_teacher_tripod_coordinated_contact_native_v1.json",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-coordinated-contact-native.md",
+      "blocked_reason": "right held 256/256 but left only8/256, bilateral longest1 SDK; supports remain loaded; soft deadline exceeded and no independently waited outer exit code",
+      "last_result": {
+        "native_runs": 1,
+        "passed_cpu": 119,
+        "outer_exit_code": null,
+        "debugger_inferior_exit_code": 0,
+        "exceeded_budget": true,
+        "ppo_updates": 0,
+        "grasp_qualified": false,
+        "teacher_admission": false,
+        "same_fingerprint_rerun_allowed": false
+      }
     }
   },
   "execution_target": {
-    "name": "DeformX 柔性线缆三种抓法闭环",
+    "name": "DeformX \u67d4\u6027\u7ebf\u7f06\u4e09\u79cd\u6293\u6cd5\u95ed\u73af",
     "package": "flex.f10-actor-only",
     "deferred": {
-      "wp6.rigid-native-final": "保留 solid_cylinder 作为独立回归，不是柔性闭环依赖。",
-      "wp6.deformable-native-final": "旧的总验收入口保留，其后端和验收由柔性工作包逐级提供实际证据。",
-      "flex.f5-wireseg-full": "独立视觉基准；可用 --scope all 查询。",
-      "flex.f6-render-native": "旧 drop/hang 生成器独立记录；可用 --scope all 查询。"
+      "wp6.rigid-native-final": "\u4fdd\u7559 solid_cylinder \u4f5c\u4e3a\u72ec\u7acb\u56de\u5f52\uff0c\u4e0d\u662f\u67d4\u6027\u95ed\u73af\u4f9d\u8d56\u3002",
+      "wp6.deformable-native-final": "\u65e7\u7684\u603b\u9a8c\u6536\u5165\u53e3\u4fdd\u7559\uff0c\u5176\u540e\u7aef\u548c\u9a8c\u6536\u7531\u67d4\u6027\u5de5\u4f5c\u5305\u9010\u7ea7\u63d0\u4f9b\u5b9e\u9645\u8bc1\u636e\u3002",
+      "flex.f5-wireseg-full": "\u72ec\u7acb\u89c6\u89c9\u57fa\u51c6\uff1b\u53ef\u7528 --scope all \u67e5\u8be2\u3002",
+      "flex.f6-render-native": "\u65e7 drop/hang \u751f\u6210\u5668\u72ec\u7acb\u8bb0\u5f55\uff1b\u53ef\u7528 --scope all \u67e5\u8be2\u3002"
     }
   }
 }

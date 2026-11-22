@@ -4394,3 +4394,5 @@ The single bounded 1808-SDK run exited naturally with code 0. Same-cohort bilate
 ## 2026-11-22 — Coordinated target-increment grasp candidate
 
 Reused the unpublished four-joint left Tripod ray in the real supported-rod exchange. Backend-target increments are explicitly distinguished from measured-q goals. Original limits, physics, stereo and success criteria remain unchanged; native outcome is pending.
+
+- Record actual coordinated Tripod contact failure, target/actual-q mismatch, contact oscillation and soft-timeout/unknown outer-exit evidence; keep Lift and Teacher qualification blocked.

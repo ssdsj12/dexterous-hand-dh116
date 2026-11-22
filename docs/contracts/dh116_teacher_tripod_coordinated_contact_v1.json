@@ -1,7 +1,7 @@
 {
   "version": "dh116-teacher-tripod-coordinated-contact-v1",
   "baseline_head": "84b1fa475ff5b3a083db00bff565e45a3c8855a3",
-  "status": "passed_cpu_pending_native",
+  "status": "passed_cpu_native_candidate_rejected",
   "scope": "independent_left_requested_target_increment_ray_A",
   "source_sha256": {
     "scripts/verify_dh116_tripod_paired_pad_balance.py": "609fb2719083973917fb62241b225d4489533247af73a55e2a086565592b9924",
@@ -72,7 +72,7 @@
     "wall_soft_s": 600,
     "ppo_updates": 0,
     "teacher_queries": 0,
-    "native_runs": 0,
+    "native_runs": 1,
     "automatic_retry": false,
     "automatic_kill": false
   },
@@ -101,5 +101,6 @@
     "separate_from119": true
   },
   "protected_files_verified": 528,
-  "historical_checkpoints_verified": 3
+  "historical_checkpoints_verified": 3,
+  "native_result": "docs/contracts/dh116_teacher_tripod_coordinated_contact_native_v1.json"
 }

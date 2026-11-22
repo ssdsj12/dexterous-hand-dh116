@@ -3867,3 +3867,5 @@ Bilateral Tripod load feedback is now opt-in at the real supported-rod control b
 The bilateral feedback native candidate was rejected: same-cohort bilateral loading 12/224 versus 24/224 baseline, with no Lift. See [native result](docs/superpowers/reports/2026-11-22-teacher-bilateral-load-feedback-native.md).
 
 A separate coordinated left Tripod target-increment candidate is opt-in after the exact SDK1704 replay; 119 CPU tests pass. Native grasp and Lift remain pending. See [candidate](docs/superpowers/reports/2026-11-22-teacher-tripod-coordinated-contact.md).
+
+Tripod coordinated native ray A rejected: left8/256 versus right256/256 hold rows; no Lift. See [actual result](docs/superpowers/reports/2026-11-22-teacher-tripod-coordinated-contact-native.md).
