@@ -4398,3 +4398,5 @@ Reused the unpublished four-joint left Tripod ray in the real supported-rod exch
 - Record actual coordinated Tripod contact failure, target/actual-q mismatch, contact oscillation and soft-timeout/unknown outer-exit evidence; keep Lift and Teacher qualification blocked.
 
 - Add tested adjacent-SDK reaction/COM work diagnostics and apply to256 real archived hold intervals; keep endpoint estimates separate from physical energy and grasp qualification.
+
+- Add a source-locked observation-only DeformX friction-displacement preparation and bounded GPU parity probe; preserve the original backend/physics and keep calibrated slip/Teacher success unqualified.

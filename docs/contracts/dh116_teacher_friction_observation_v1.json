@@ -1,0 +1,224 @@
+{
+  "version": "dh116-teacher-friction-observation-v1",
+  "baseline_head": "b05a0001ccd55052a56939ad430a37d83fe79e79",
+  "status": "passed_cpu_build_and_bounded_standalone_gpu_not_native_teacher",
+  "source_sha256": {
+    "scripts/prepare_dh116_deformx_contact_friction.py": "fb9dfa47b025841e50641657d4ebdcd14397757c4d2652c84918fd0e8e80dd56",
+    "scripts/verify_dh116_deformx_contact_friction.py": "88fc36721ab1021c4b882e5082bde8b9360c5ca7e24ba2f5e5e1ebdf74e3f8d4",
+    "tests/test_deformx_contact_friction_preparation.py": "496a50fe2dbb8dd055b4c5d1cf985ce4b76202eedb82139e3b2dcb162c048db5"
+  },
+  "upstream_commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
+  "parent_source_tree_sha256": "34741b437191fd66bf151331f20476a86f8708414dcc2782a8c69dd15b0efb64",
+  "derived_source_tree_sha256": "0204964dfce03cb95de96f33ddd338519cb925423f992be5774b6166f94e8f91",
+  "parent_binary_sha256": "8817010163946945495c987923d11f3ade4fbd52482a83bbdd48f017d3149340",
+  "derived_binary_sha256": "847c1f49c195b275ac23175182194ad0764a235e5adaed9407d8d6dcce251cf4",
+  "patch_sha256": "8a02fb50d4d581ffffb8a01b7c94e46fb87f965f8a65def9a2c965981c2c355a",
+  "build": {
+    "compiled": true,
+    "solver_executed": false,
+    "isaac_executed": false,
+    "phases": [
+      {
+        "phase": "configure",
+        "exit_code": 0,
+        "elapsed_s": 8.090047047939152
+      },
+      {
+        "phase": "build",
+        "exit_code": 0,
+        "elapsed_s": 36.19990024715662
+      },
+      {
+        "phase": "install",
+        "exit_code": 0,
+        "elapsed_s": 0.11651103710755706
+      }
+    ],
+    "automatic_retry": false,
+    "binary": "/mnt/mydisk/xk/projects/dh116-autonomous-3c80166/contact-friction-observations-20261122/build/python/ropesim/_ropesim.cpython-310-x86_64-linux-gnu.so",
+    "binary_sha256": "847c1f49c195b275ac23175182194ad0764a235e5adaed9407d8d6dcce251cf4",
+    "elapsed_s": 44.41511018597521
+  },
+  "build_result_sha256": "d8c078b042e1b9697d36d98571338cd622e614cda6e130bbfda1c110ffcc47fb",
+  "compiler": {
+    "python": "3.10.12",
+    "cuda_toolkit": "12.8.61",
+    "architecture": 89,
+    "cxx": "GNU12.3.0",
+    "environment_upgraded": false
+  },
+  "cpu": {
+    "passed": 35,
+    "failed": 0,
+    "new_cases": 5,
+    "new_cases_included_in35": true,
+    "seconds": 4.67,
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_deformx_contact_friction_preparation.py",
+      "tests/test_deformx_mesh_observations_preparation.py",
+      "tests/test_dh116_deformx_pair_capture.py"
+    ],
+    "log_sha256": "9543354698c1f31a3dfad6b797a50f14de938837f77fc08a22db0820980aa1f2",
+    "initial_missing_implementation_failures": 5,
+    "red_log_sha256": "9ff8963ecf9fb32291f5ab30d80be9fdad3aee154fbf2b7ec8bc222753014446"
+  },
+  "standalone_gpu": {
+    "gpu_index": 2,
+    "plan_sha256": "733bfb5e9e7d5c332e8d5c7f402a599489d4f22b4a326d607d38cee0bbc8fecd",
+    "outer_sha256": "2ee0837a5e151bb8f6dee4fee8e1923b5f5fbff9c8dac61753b72665e34c1aad",
+    "baseline_exit_code": 0,
+    "candidate_exit_code": 0,
+    "baseline_elapsed_s": 6.033489795867354,
+    "candidate_elapsed_s": 5.883786347927526,
+    "solver_advances": 24,
+    "solver_substeps": 288,
+    "case_results": {
+      "static": {
+        "attempted": 252,
+        "physics_field_max_absolute_differences": {
+          "positions": 0.0,
+          "velocities": 0.0,
+          "contact_forces": 0.0,
+          "mesh_wrenches": 0.0,
+          "before_positions": 0.0,
+          "old_pair.vectors": 0.0,
+          "pose_pair.vectors": 0.0,
+          "pose_pair.mesh_positions_world_m": 0.0,
+          "pose_pair.mesh_quaternions_xyzw": 0.0,
+          "pose_pair.surface_gap_m": 0.0,
+          "pose_pair.normal_force_n": 0.0
+        },
+        "physics_all_compared_fields_exact_numeric_equal": true,
+        "raw_displacement_max_abs_m": 1.0046689036258272e-09,
+        "reconstruction_max_abs_error_m": 1.0046689036258272e-09,
+        "friction_work_max_j": -1.1767906710334742e-19,
+        "max_net_tangent_displacement_per_node_m": 8.968787046370608e-09,
+        "known_mesh_velocity_world_m_s": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "known_mesh_omega_world_rad_s": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "numerical_check_passed": true,
+        "slip_uncertainty_m": null,
+        "slip_qualified": false
+      },
+      "translation": {
+        "attempted": 252,
+        "physics_field_max_absolute_differences": {
+          "positions": 0.0,
+          "velocities": 0.0,
+          "contact_forces": 0.0,
+          "mesh_wrenches": 0.0,
+          "before_positions": 0.0,
+          "old_pair.vectors": 0.0,
+          "pose_pair.vectors": 0.0,
+          "pose_pair.mesh_positions_world_m": 0.0,
+          "pose_pair.mesh_quaternions_xyzw": 0.0,
+          "pose_pair.surface_gap_m": 0.0,
+          "pose_pair.normal_force_n": 0.0
+        },
+        "physics_all_compared_fields_exact_numeric_equal": true,
+        "raw_displacement_max_abs_m": 1.7029927903422504e-06,
+        "reconstruction_max_abs_error_m": 3.69725926752855e-09,
+        "friction_work_max_j": -1.1252775434237058e-09,
+        "max_net_tangent_displacement_per_node_m": 1.8564508309282246e-05,
+        "known_mesh_velocity_world_m_s": [
+          0.009999998845160007,
+          0.0,
+          0.0
+        ],
+        "known_mesh_omega_world_rad_s": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "numerical_check_passed": true,
+        "slip_uncertainty_m": null,
+        "slip_qualified": false
+      },
+      "rotation": {
+        "attempted": 252,
+        "physics_field_max_absolute_differences": {
+          "positions": 0.0,
+          "velocities": 0.0,
+          "contact_forces": 0.0,
+          "mesh_wrenches": 0.0,
+          "before_positions": 0.0,
+          "old_pair.vectors": 0.0,
+          "pose_pair.vectors": 0.0,
+          "pose_pair.mesh_positions_world_m": 0.0,
+          "pose_pair.mesh_quaternions_xyzw": 0.0,
+          "pose_pair.surface_gap_m": 0.0,
+          "pose_pair.normal_force_n": 0.0
+        },
+        "physics_all_compared_fields_exact_numeric_equal": true,
+        "raw_displacement_max_abs_m": 2.0497861896728864e-06,
+        "reconstruction_max_abs_error_m": 9.39678517419798e-10,
+        "friction_work_max_j": -9.8528266751936e-12,
+        "max_net_tangent_displacement_per_node_m": 2.2722012717109054e-05,
+        "known_mesh_velocity_world_m_s": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "known_mesh_omega_world_rad_s": [
+          0.0,
+          0.0,
+          0.09999999403953552
+        ],
+        "numerical_check_passed": true,
+        "slip_uncertainty_m": null,
+        "slip_qualified": false
+      }
+    },
+    "all_compared_physics_fields_exact_numeric_equal": true,
+    "analysis_sha256": "4e8b7544512b123c68856337315734b7a649adc4605c62a2ca330103fadcc64b",
+    "analysis_source_sha256": "091835cbefa1f0434b44e8bf3d5e51f18dd75f7ec75c331c988b8603a4116c1c",
+    "new_isaac_steps": 0,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "automatic_retry": false,
+    "forced_exit": false
+  },
+  "semantics": "native same-end-substep raw dxRel used by existing friction model; World displacement metres; not calibrated material/tangential slip",
+  "readout_qualification_scope": "three controlled plane-mesh standalone cases only",
+  "slip_uncertainty_m": null,
+  "slip_qualified": false,
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "physics_equations_changed": false,
+  "controller_changed": false,
+  "default_backend_changed": false,
+  "old_getter_bytes_unchanged": true,
+  "fixed_stereo_changed": false,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "unresolved": [
+    "full V2 SourceAdapter and independent backend profile integration",
+    "calibrated material and tangential slip sources",
+    "actual reference/relative-motion prelift stability",
+    "full V2 reward/context51/collector and save/resume",
+    "Pinch Tripod Power grasp and off-support Lift/Hold"
+  ],
+  "protected_files_verified": 528,
+  "historical_checkpoints_verified": 3,
+  "publication_registry_test": {
+    "passed": 60,
+    "failed": 0,
+    "seconds": 16.67,
+    "log_sha256": "b87c4a1d9d2fa56c6254ac830dc57e2d8212b9d8a23a5c417b681804d2ec66a7"
+  }
+}

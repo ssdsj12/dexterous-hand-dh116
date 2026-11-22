@@ -3871,3 +3871,5 @@ A separate coordinated left Tripod target-increment candidate is opt-in after th
 Tripod coordinated native ray A rejected: left8/256 versus right256/256 hold rows; no Lift. See [actual result](docs/superpowers/reports/2026-11-22-teacher-tripod-coordinated-contact-native.md).
 
 Actual Tripod contact-response analysis: correct targets reach PhysX; left index shows a much larger endpoint reaction-work mismatch than the stable right hand. [Evidence and limits](docs/superpowers/reports/2026-11-22-teacher-contact-work.md). Grasp/Lift remains unqualified.
+
+Teacher full-task source preparation: independent raw DeformX friction displacement getter built with CUDA12.8/SM89 and validated against the old backend in three controlled GPU cases. [Scope and remaining integration](docs/superpowers/reports/2026-11-22-teacher-friction-observation.md). No grasp/Lift qualification.

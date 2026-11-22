@@ -50005,6 +50005,33 @@
         "grasp_qualified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.friction-observation-source": {
+      "title": "Build and validate a real raw friction displacement producer for full Teacher source integration",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.contact-work-response"
+      ],
+      "tests": [
+        "tests/test_deformx_contact_friction_preparation.py",
+        "tests/test_deformx_mesh_observations_preparation.py",
+        "tests/test_dh116_deformx_pair_capture.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-friction-observation.md",
+      "readiness": "docs/contracts/dh116_teacher_friction_observation_v1.json",
+      "last_result": {
+        "passed": 35,
+        "failed": 0,
+        "new_cases": 5,
+        "standalone_gpu_processes": 2,
+        "standalone_rod_advances": 24,
+        "isaac_steps": 0,
+        "ppo_updates": 0,
+        "slip_qualified": false,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
