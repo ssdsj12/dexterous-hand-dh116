@@ -34230,6 +34230,32 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-fixed-pregrasp-native-settlement",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-fixed-native-settlement.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_fixed_native_settlement_v1.json",
+      "status": "cpu_freeze_verified_native_execution_pending",
+      "cpu_tests": {
+        "passed": 149,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "fixed_pregrasp_freezes": 3,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "341b7d0655831b07b9d216068a94e8e2a09169a2",
+        "source_tree": "cd41f8275d43e3bb0c9a355a28de8aea417b75a2",
+        "remote_branch": "11-17",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
