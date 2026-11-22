@@ -33080,6 +33080,31 @@
         "verified_at_utc": "2026-11-22T07:24:48.681796+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-zero-action-settling-entry",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-tripod-zero-action-settling-entry.md",
+      "readiness": "docs/contracts/dh116_tripod_zero_action_settling_entry_v1.json",
+      "cpu_tests": {
+        "passed": 150,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1254014210882ce0d090fdc33ab64fca77411524",
+        "source_tree": "f7008e6d01a85a1560897a7e0c5a5a019b99af58",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T07:52:14.886718+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
