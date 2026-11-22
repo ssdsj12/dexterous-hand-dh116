@@ -1,3 +1,5 @@
+Power reserve audit found a valid static palm preload, with the tested distal preload violating the original continuous hand/rod envelope. [Report](docs/superpowers/reports/2026-11-23-teacher-power-preload-envelope.md)
+
 Power partial opposition now has a continuous 24D target certificate on the fixed archived wire. Live contact and Lift are pending. [Report](docs/superpowers/reports/2026-11-23-teacher-power-continuous-thumb-route.md)
 
 Power thumb closure now has two sampled partial-opposition detours on the archived wire. Continuous motion and physical grasp validation are pending. [Report](docs/superpowers/reports/2026-11-23-teacher-power-thumb-clearance.md)
