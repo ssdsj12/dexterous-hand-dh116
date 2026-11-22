@@ -49590,6 +49590,58 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-contact-fresh8-v1": {
+      "title": "Actual supported17 Tripod contact fresh8 diagnostic with separately charged source prime",
+      "executor": "native_bounded",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Frozen CPU recipe;exact native execution identity and resource lock required,zero attempts",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "evidence_scope": "tripod_actual_contact_fresh8_v1",
+      "command_spec": "configs/dh116_execution/tripod-contact-fresh8-core-v1.json",
+      "dependencies": [
+        "teacher.supported-contact-worker",
+        "teacher.tripod-route-order-reset-native",
+        "teacher.tripod-contact-fresh8-freeze"
+      ],
+      "dependency_scopes": {},
+      "tests": [],
+      "native_runs": 0,
+      "report": "docs/superpowers/reports/2026-11-22-tripod-contact-fresh8-frozen.md",
+      "readiness": "docs/contracts/dh116_tripod_contact_fresh8_frozen_v1.json",
+      "actual_launch": {
+        "path": "configs/dh116_execution/tripod-contact-fresh8-launch-v1.json",
+        "sha256": "5af05c745d3eefd67d0c82776e64f30dae05b3862896908d5dcf862d83f3285e"
+      }
+    },
+    "teacher.tripod-contact-fresh8-freeze": {
+      "title": "Freeze independently primed Tripod contact actual fresh8 execution recipe",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-contact-worker"
+      ],
+      "tests": [
+        "tests/test_native_teacher_tripod_contact_frozen.py",
+        "tests/test_native_teacher_worker_contract.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-tripod-contact-fresh8-frozen.md",
+      "readiness": "docs/contracts/dh116_tripod_contact_fresh8_frozen_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 145,
+        "failed": 0,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

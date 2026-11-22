@@ -1,3 +1,5 @@
+Actual Contact Tripod fresh8 recipe is frozen and independently CPU-audited:145 regressions pass,67SDK/65solver/780substeps including separate source prime. No native attempt or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-tripod-contact-fresh8-frozen.md).
+
 Original bounded Teacher worker now supports independently primed Tripod contact profile,SDK3 starts and separate3+8N accounting;404 CPU regressions pass. No native run or grasp qualification;Pinch17/Power sources and new native recipe remain pending. [Report](docs/superpowers/reports/2026-11-22-supported-contact-worker.md).
 
 Primed supported17 Tripod contact sources now reach the original Teacher Collector/Actor/PPO;313 CPU cases pass. Raw-event audit rejects forged live table-contact windows and preserves Reset2 references. Native worker profile/budget integration,Pinch17 and Power palm sources remain pending;no native or grasp qualification. [Report](docs/superpowers/reports/2026-11-22-supported-contact-collector.md).
