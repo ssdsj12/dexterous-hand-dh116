@@ -1,3 +1,5 @@
+Actual Tripod v11 raw replay now preserves same-clock contact,actions,q/qd and external support.64/64 rows have0 required bilateral contact and0 support-free rows:the short PPO diagnostic did not grasp.130 CPU checks pass;no new native or training run. [Report](docs/superpowers/reports/2026-11-22-actual-supported-contact-ledger.md).
+
 Supported fresh/continued reactions now bind bodies in the same canonical order as measured forces and torques.3 original-code failures reproduced;212 CPU regressions pass. Old native source pins correctly reject this changed implementation;new matching Reset evidence is required. [Report](docs/superpowers/reports/2026-11-22-supported-reaction-route-order.md).
 
 Tripod B resume now binds the real A checkpoint through the existing implementation:94 CPU checks pass. No native attempt was launched;measured repeated origin audit exceeds the prior observed remaining budget. [Report](docs/superpowers/reports/2026-11-22-teacher-tripod-resume-smoke8-native-v11.md).

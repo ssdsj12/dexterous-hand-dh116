@@ -21,3 +21,6 @@ Old recipe pins, Reset artifacts, A receipt and checkpoint are unchanged. Histor
 Re-record a fresh17 Reset under this source using the existing recorder,2 SDK setup steps,0 control/solver/PPO,one environment and natural exit verification. Reuse existing owners rather than implementing another runtime. Full Teacher still needs measured contact/opposition, support-off, fixed wrist hold, phase and slip fields. Power's open-palm witness is not five-finger grasp qualification. R2 and successful BC/DAgger stay closed.
 
 Fixed two RGB and their calibration remain unchanged. The protected528 files,3 historical checkpoints and unrelated user files remain preserved. Raw review text, failure logs and source evidence are private; only code,tests,readiness and this report are released.
+
+## Subsequent Antigravity R4 verification
+R4 re-read published HEADf49488c3 and matched repaired source SHA02a773f58e052d9e36c881183f7021bc95288d5f5c0867e8c20993e6d04080e1. It accepted the supported-only implementation:contact_links already strictly rejects extra keys,so no redundant permissive count logic was added;legacy remains unchanged. R3/R4 also accepted Codex's correction that net Lift starts only at verified off-support baseline,not at the phase transition,and CPU phase helpers never grant native qualification.

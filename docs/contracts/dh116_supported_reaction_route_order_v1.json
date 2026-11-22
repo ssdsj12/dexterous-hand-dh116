@@ -10,7 +10,8 @@
     "head": "44b0cdce82ebcf4646be9033c0dfe70aea4e0bce",
     "review_sha256": "4ad7f6405a5ffea84eebe3a7770dd3a1fc5765076c7026a6c2ec5ceb5d101b1d",
     "independently_verified": true,
-    "r3_followup": "sent_and_pending"
+    "r3_followup": "completed;R4 independently re-read published fix and agreed no redundant count gate required",
+    "r4_sha256": "150a478d8ba9f10a8b5bb92de451100f52a2c8f2262bed5f5f561910524fb5d7"
   },
   "tdd_red": {
     "failed": 3,

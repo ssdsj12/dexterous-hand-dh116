@@ -49350,6 +49350,26 @@
         "cpu_failed": 0,
         "native_qualification": false
       }
+    },
+    "teacher.actual-supported-contact-ledger": {
+      "title": "Replay actual supported Teacher contact,external support and action-clock ledger",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.supported-reaction-route-order"
+      ],
+      "tests": [
+        "tests/test_teacher_contact_ledger_audit.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_physical_exchange_route_order.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-actual-supported-contact-ledger.md",
+      "readiness": "docs/contracts/dh116_actual_supported_contact_ledger_v1.json",
+      "native_runs": 0,
+      "reason": "130 CPU checks pass;64 historical native rows independently reduced,0 bilateral and0 off-support;no grasp qualification."
     }
   },
   "execution_target": {

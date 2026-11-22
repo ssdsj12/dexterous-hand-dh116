@@ -1,0 +1,94 @@
+{
+  "version": "dh116-actual-supported-contact-ledger-v1",
+  "status": "offline_audit_passed_no_grasp",
+  "baseline_head": "f49488c3c119db40b7359461c621bcc639a732e7",
+  "actual_summary": {
+    "version": "dh116-offline-supported-teacher-contact-ledger-v1",
+    "source_sha256": "af8780644423d297a8e5a1b43d54045ec0688276a78f180d825625c3a2efc688",
+    "evidence_kind": "offline_replay_of_existing_raw_not_new_native",
+    "grasp": "tripod",
+    "rows": 64,
+    "first_sdk_step": 3,
+    "last_sdk_step": 66,
+    "bilateral_rows": 0,
+    "support_free_rows": 0,
+    "table_contact_rows": 0,
+    "per_hand": {
+      "left": {
+        "loaded_rows": 0,
+        "max_total_normal_load_n": 0.0
+      },
+      "right": {
+        "loaded_rows": 0,
+        "max_total_normal_load_n": 0.0
+      }
+    },
+    "support_max_force_norm_n": {
+      "table": 0.0,
+      "support_0": 0.09229257033610057,
+      "support_1": 0.09187661241154617
+    },
+    "node_speed_max_m_s": 0.07183308228640962,
+    "native_runs": 0,
+    "ppo_updates": 0,
+    "native_qualification": false,
+    "teacher_admission": false,
+    "grasp_qualified": false
+  },
+  "ledger_sha256": "d8d3837344afc7d6937ed2d9f7628c4b1adf9ec9bfc176951ac56c178b1962fa",
+  "audit_log_sha256": "de09000139cd094b7fca69cd6d0b217af3b026b3f17bc1848568a61e119abd73",
+  "cpu_tests": {
+    "passed": 130,
+    "failed": 0,
+    "seconds": 19.51,
+    "command": [
+      "tests/test_teacher_contact_ledger_audit.py",
+      "tests/test_dh116_power_palm_contact_evidence.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_dh116_supported_distal_transfer.py",
+      "tests/test_physical_exchange_route_order.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "402e7e9f1b79406a9f297795fb4bc0e774d9b6284fce154b125894d771f290b8"
+  },
+  "tdd_red": {
+    "failed": 5,
+    "log_sha256": "b7287753b70d055e3246bbbb5ca1b51ce444e7062912fb916ac880af6caaf42c"
+  },
+  "command_correction": {
+    "exit_code": 4,
+    "tests_run": 0,
+    "reason": "mistyped existing test filename,corrected without source change",
+    "log_sha256": "1aa3905fab92e193d95265deb6eaf6d59e13f92431bd3cd90b72bf6372d4ae30"
+  },
+  "joint_sources_all64_both_sides_valid": true,
+  "off_support_baseline_available": false,
+  "antigravity_review": {
+    "rounds": [
+      "R3",
+      "R4"
+    ],
+    "same_source_shas_independently_verified": true,
+    "r3_sha256": "d32767f5a7b0fd911f0de5ac86b162931d1cf7e5e03e0680ab474e5bd15667e8",
+    "r4_sha256": "150a478d8ba9f10a8b5bb92de451100f52a2c8f2262bed5f5f561910524fb5d7",
+    "corrections_accepted": [
+      "off-support baseline only after force and geometry clearance",
+      "phase helper remains unqualified",
+      "speed thresholds are old diagnostic examples,not a new task contract"
+    ]
+  },
+  "native_runs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "full_reward_enabled": false,
+  "r2_enabled": false,
+  "force_proxy_enabled": false,
+  "next_task": "source-bound fresh17 Reset refresh then phase data integration;no forced initial closure or early Lift",
+  "metadata_cpu_tests": {
+    "passed": 60,
+    "failed": 0,
+    "overlaps_primary_regression": true,
+    "log_sha256": "3499af4ff5db07c0d7276217d0649cf731386d02ccffd7082f0a6a3f149009e2"
+  }
+}
