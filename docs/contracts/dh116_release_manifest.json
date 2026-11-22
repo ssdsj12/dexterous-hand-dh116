@@ -33005,6 +33005,31 @@
         "verified_at_utc": "2026-11-22T06:09:36.982598+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.tripod-contact-fresh8-freeze",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-tripod-contact-fresh8-frozen.md",
+      "readiness": "docs/contracts/dh116_tripod_contact_fresh8_frozen_v1.json",
+      "cpu_tests": {
+        "passed": 145,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "d0c2a0dca8d6e5defba6cbd81da6cf591d782738",
+        "source_tree": "39f8d652659e873678cd792d187b686d2097ed33",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T06:21:53.108554+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
