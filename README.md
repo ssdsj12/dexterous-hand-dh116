@@ -3865,3 +3865,5 @@ Teacher 902 geometry update: opt-in whole-group support certification retains al
 Bilateral Tripod load feedback is now opt-in at the real supported-rod control boundary; 115 CPU tests pass. Stable native grasp and Lift remain unqualified. See [report](docs/superpowers/reports/2026-11-22-teacher-bilateral-load-feedback.md).
 
 The bilateral feedback native candidate was rejected: same-cohort bilateral loading 12/224 versus 24/224 baseline, with no Lift. See [native result](docs/superpowers/reports/2026-11-22-teacher-bilateral-load-feedback-native.md).
+
+A separate coordinated left Tripod target-increment candidate is opt-in after the exact SDK1704 replay; 119 CPU tests pass. Native grasp and Lift remain pending. See [candidate](docs/superpowers/reports/2026-11-22-teacher-tripod-coordinated-contact.md).

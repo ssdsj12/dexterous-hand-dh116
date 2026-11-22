@@ -4390,3 +4390,7 @@ Added fixed-wrist bilateral weak-pad feedback to the existing Tripod runtime, an
 ### Bilateral candidate native outcome
 
 The single bounded 1808-SDK run exited naturally with code 0. Same-cohort bilateral loading regressed from 24/224 to 12/224; stable grasp and Lift remain blocked. The opt-in candidate is retained as failure evidence.
+
+## 2026-11-22 — Coordinated target-increment grasp candidate
+
+Reused the unpublished four-joint left Tripod ray in the real supported-rod exchange. Backend-target increments are explicitly distinguished from measured-q goals. Original limits, physics, stereo and success criteria remain unchanged; native outcome is pending.

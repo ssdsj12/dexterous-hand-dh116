@@ -281,6 +281,9 @@ def freeze(args):
     if feedback is not None and (seating is None or getattr(args, "left_seating_reference", None) is not None):
         raise ValueError("bilateral feedback needs its original seating anchor and replaces the left serial dose")
     left_seating = getattr(args, "left_seating_reference", None)
+    coordinated = getattr(args, "coordinated_seating_reference", None)
+    if coordinated is not None and (left_seating is None or feedback is not None):
+        raise ValueError("coordinated seating needs the original complete left seating and excludes bilateral feedback")
     if left_seating is not None and seating is None:
         raise ValueError("left stabilization requires the measured right seating sequence")
     retarget = getattr(args, "retarget_reference", None)
@@ -362,6 +365,13 @@ def freeze(args):
                     actions, added, bound = load_tripod_left_stabilization(left_seating, actions, start_sdk=SDK_END)
                     plan["tripod_left_seating"] = added
                     plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
+                    if coordinated is not None:
+                        from scripts.verify_dh116_tripod_paired_pad_balance import load_coordinated_seating
+
+                        actions, stage, bound = load_coordinated_seating(coordinated, actions, start_sdk=SDK_END)
+                        added["stop_sdk"] = stage["sdk_step"]
+                        plan["tripod_coordinated_seating"] = stage
+                        plan["frozen_files"].update({str(path.resolve(strict=True)):native.sha(path) for path in bound})
         sdk_end = SDK_END + 8*len(actions)
         plan["tripod_approach"] = actions.tolist()
         plan["budget"].update(mode=("tripod_guarded_waypoint_continuation" if waypoint
@@ -376,6 +386,8 @@ def freeze(args):
             plan["budget"].update(mode="tripod_bilateral_measured_distal_contact", soft_wall_seconds=600)
         if feedback is not None:
             plan["budget"]["mode"] = "tripod_bilateral_load_feedback_candidate"
+        if coordinated is not None:
+            plan["budget"]["mode"] = "tripod_coordinated_target_increment_candidate"
     return plan, config, archived, waypoint, precontact, distal_archive, bilateral_archive
 
 
@@ -399,6 +411,7 @@ def main(argv=None):
     parser.add_argument("--left-seating-reference", type=Path)
     parser.add_argument("--bilateral-feedback", type=Path,
                         help="opt-in fixed-wrist live bilateral load feedback request")
+    parser.add_argument("--coordinated-seating-reference", type=Path)
     parser.add_argument("--approved-frozen-sha256")
     args = parser.parse_args(argv)
     native.validate_execution_context(screen.ROOT)
@@ -423,6 +436,8 @@ def main(argv=None):
         distal["bilateral"] = dict(plan["bilateral_tripod_contact"], archive=bilateral_archive)
         if "tripod_left_seating" in plan:
             distal["seating"] = plan["tripod_left_seating"]
+        if "tripod_coordinated_seating" in plan:
+            distal["coordinated_seating"] = plan["tripod_coordinated_seating"]
     reset.execute(plan, acquire_operation=partial(shared.run_shared, profile=BackendProfile.load(screen.ROOT),
         args=args, supported_acquire=partial(supported.acquire_supported_reset, config=config, sdk_end=sdk_end,
         task="tripod"), sdk_end=sdk_end, require_no_hand_contact=True, task="tripod", tripod_archive=archived,

@@ -220,6 +220,7 @@ def test_bilateral_loader_keeps_exact_anchor_and_replaces_old_serial_schedule(mo
 
 @pytest.mark.parametrize("variant,windows,error", [
     ("bilateral_load_feedback_v1",1,None),
+    ("left_coordinated_seating_v1",1,None),
     ("unknown_feedback",1,"variant"),
     ("bilateral_load_feedback_v1",2,"consumed"),
 ])
@@ -232,12 +233,16 @@ def test_real_supported_action_hook_issues_feedback_before_physical_control(monk
 
     actual_commands = []
     written = {}
-    power = SimpleNamespace(sdk=1296, _base=SimpleNamespace(last={"physics_step":1296}))
+    coordinated = variant == "left_coordinated_seating_v1"
+    start_sdk = 1704 if coordinated else 1296
+    power = SimpleNamespace(sdk=start_sdk, _base=SimpleNamespace(last={"physics_step":start_sdk}))
     power.clock = lambda: {"physics_step":power.sdk}
-    probe = SimpleNamespace(previous={"physics_step":1296,"rod":power._base.last},
-        bilateral=dict(boundary_sdk=1136,midpoint_sdk=1000,seating=dict(sdk_step=1296,stop_sdk=1296+8*windows,variant=variant,
-            feedback=dict(start_sdk=1296,windows=windows,action_step=.03,pad_target_n=.085,
-                          max_travel_rad={1:0.,2:.0006,3:.0012,7:0.,8:.0012,9:.0018}))),
+    stage=dict(sdk_step=start_sdk,stop_sdk=start_sdk+8*windows,variant=variant,
+        command_semantics="increment_on_existing_backend_targets_not_measured_q_goal",
+        feedback=dict(start_sdk=start_sdk,windows=windows,action_step=.03,pad_target_n=.085,
+                      max_travel_rad={1:0.,2:.0006,3:.0012,7:0.,8:.0012,9:.0018}))
+    probe = SimpleNamespace(previous={"physics_step":start_sdk,"rod":power._base.last},
+        bilateral=dict(boundary_sdk=1136,midpoint_sdk=1000,seating=None if coordinated else stage),
         archive=None)
     def observe(row):
         probe.previous = row
@@ -250,7 +255,8 @@ def test_real_supported_action_hook_issues_feedback_before_physical_control(monk
     monkeypatch.setattr(shared.native, "clock", lambda sim:{"sdk_step":power.sdk})
     monkeypatch.setattr(shared.native, "write_new", lambda path,value:written.setdefault(path.name,value))
     monkeypatch.setattr(contacts,"measure_supported_distal_contact",
-                        lambda rod,*,grasp:bilateral_evidence(sdk=rod["physics_step"]))
+                        lambda rod,*,grasp:bilateral_evidence(left=(.19,.04,.12) if coordinated else (.319,.235,.133),
+                                                            sdk=rod["physics_step"]))
 
     class PhysicalDriver:
         def __init__(self, sim, rod, bindings, **kwargs):
@@ -268,10 +274,14 @@ def test_real_supported_action_hook_issues_feedback_before_physical_control(monk
     owner=SimpleNamespace(keep=lambda name,obj:obj)
     trace=SimpleNamespace(watch=lambda *a,**k:None)
     setup={"root_pose_wxyz":[[0.,0.,0.,1.,0.,0.,0.]]*2}
+    planned=np.zeros((1,24))
+    if coordinated:
+        planned[0,:4]=[.02064,.01198,.00979,.00743]
     def run():
         return shared.run_supported_action(object(),owner,trace,tmp_path,power=power,
             bindings={"left":object(),"right":object()},meshes={},clearance_shapes={},setup=setup,
-            action=np.zeros((1,24)),sdk_end=1304,task="tripod",distal_probe=probe)
+            action=planned,sdk_end=start_sdk+8,task="tripod",distal_probe=probe,
+            coordinated_seating=stage if coordinated else None)
     if error is not None:
         with pytest.raises(ValueError,match=error):
             run()
@@ -279,7 +289,12 @@ def test_real_supported_action_hook_issues_feedback_before_physical_control(monk
             assert not actual_commands
         return
     result=run()
-    assert result["physical_samples"] == 8 and power.sdk == 1304
+    assert result["physical_samples"] == 8 and power.sdk == start_sdk+8
+    if coordinated:
+        np.testing.assert_array_equal(actual_commands[0],planned)
+        decision=written["tripod_left_coord_command_1704.json"]
+        assert decision["source_sdk_step"]==1704 and decision["minimum_pad_force_n"]["index"]==.04
+        return
     assert np.flatnonzero(actual_commands[0][0]).tolist() == [9]
     decision=written["tripod_bilateral_command_1296.json"]
     assert decision["source_sdk_step"] == 1296

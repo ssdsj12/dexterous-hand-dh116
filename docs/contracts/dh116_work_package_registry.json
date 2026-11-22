@@ -49924,6 +49924,35 @@
         "teacher_admission": false,
         "same_fingerprint_rerun_allowed": false
       }
+    },
+    "teacher.tripod-coordinated-contact": {
+      "title": "Apply a coordinated left target-increment ray after the exact supported Tripod replay",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-left-index-stabilization-native"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_paired_pad_balance.py",
+        "tests/test_dh116_supported_force_seating.py",
+        "tests/test_dh116_tripod_supported_reset.py",
+        "tests/test_dh116_tripod_bilateral_distal_retarget.py",
+        "tests/test_dh116_supported_distal_transfer.py",
+        "tests/test_teacher_force_closure.py",
+        "tests/test_dh116_deformx_pair_capture.py",
+        "tests/test_native_teacher_contact_sources.py",
+        "tests/test_dh116_power_supported_task.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-tripod-coordinated-contact.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_coordinated_contact_v1.json",
+      "last_result": {
+        "passed": 119,
+        "failed": 0,
+        "native_runs": 0,
+        "ppo_updates": 0,
+        "grasp_qualified": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

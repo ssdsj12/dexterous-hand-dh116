@@ -374,7 +374,8 @@ def supported_action_schedule(action, remaining_sdk):
 def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                          clearance_shapes, setup, action, sdk_end, verify_support_continuity=False,
                          task="power", support_scene=None, waypoint_archive=None, precontact_archive=None,
-                         distal_probe=None, power_open_boundary_sdk=None, force_seating=None, power_route=None):
+                         distal_probe=None, power_open_boundary_sdk=None, force_seating=None, power_route=None,
+                         coordinated_seating=None):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -426,12 +427,12 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         primary_seating = None
         if distal_probe is not None and distal_probe.bilateral is not None:
             primary_seating = distal_probe.bilateral.get("seating")
-        seatings = tuple(stage for stage in (primary_seating, force_seating) if stage is not None)
+        seatings = tuple(stage for stage in (primary_seating, force_seating, coordinated_seating) if stage is not None)
         from scripts.verify_dh116_supported_force_seating import BilateralLoadFeedback
 
         bilateral_feedback = {}
         for stage in seatings:
-            if stage.get("variant") not in (None, "bilateral_load_feedback_v1"):
+            if stage.get("variant") not in (None, "bilateral_load_feedback_v1", "left_coordinated_seating_v1"):
                 raise ValueError("unknown force seating variant")
             if stage.get("variant") == "bilateral_load_feedback_v1":
                 if task != "tripod" or (stage["sdk_step"], stage["stop_sdk"]) != (
@@ -538,6 +539,15 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                     selected, decision = bilateral_feedback[seating["sdk_step"]].decide(evidence, sdk=sdk)
                     native.write_new(output/f"{task}_bilateral_command_{sdk}.json",
                         dict(decision, proposed_action=command.tolist(), issued_action=selected.tolist()))
+                elif seating.get("variant") == "left_coordinated_seating_v1":
+                    from scripts.verify_dh116_tripod_paired_pad_balance import select_coordinated_command
+
+                    selected, loads = select_coordinated_command(command, evidence)
+                    native.write_new(output/f"{task}_left_coord_command_{sdk}.json",
+                        dict(source_sdk_step=sdk, proposed_action=command.tolist(), issued_action=selected.tolist(),
+                             minimum_pad_force_n=loads, measured_hand="left",
+                             previously_qualified=evidence["per_hand"]["left"]["loaded"],
+                             command_semantics=seating["command_semantics"]))
                 else:
                     side = seating.get("side", "right")
                     selected, loads = select_seating_command(command, evidence, {
@@ -755,7 +765,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 task=task, support_scene=live_support_scene, waypoint_archive=waypoint_archive,
                 precontact_archive=precontact_archive, distal_probe=probe,
                 power_open_boundary_sdk=power_open_boundary_sdk,
-                force_seating=None if distal_contact is None else distal_contact.get("seating"), power_route=power_route)
+                force_seating=None if distal_contact is None else distal_contact.get("seating"), power_route=power_route,
+                coordinated_seating=None if distal_contact is None else distal_contact.get("coordinated_seating"))
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,
