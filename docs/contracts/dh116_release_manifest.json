@@ -33161,6 +33161,39 @@
         "verified_at_utc": "2026-11-22T09:33:47.792232+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.archived-input-signal-audit",
+      "branch": "11-17",
+      "status": "blocked",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-input-signal-audit.md",
+      "readiness": "docs/contracts/dh116_teacher_input_signal_audit_v1.json",
+      "cpu_tests": {
+        "passed": 49,
+        "failed": 1
+      },
+      "failure": "historical Pinch source identity mismatch; standalone common semantic check missing",
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "native_runs": 0,
+      "native_ppo_updates": 0,
+      "runtime_code_changed": false,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "100e2d221583c71e3911791b35d1b60304f78f80",
+        "source_tree": "78f83409ad538000d3ffa435c545c65954a3e756",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false,
+        "verified_at_utc": "2026-11-22T09:46:12.205187+00:00"
+      },
+      "remote_verified": true
     }
   ]
 }
