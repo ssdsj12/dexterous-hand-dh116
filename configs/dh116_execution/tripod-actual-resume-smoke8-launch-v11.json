@@ -1,0 +1,26 @@
+{
+  "checkpoint_origin": {
+    "producer_package": "teacher.tripod-ppo-fresh-smoke8-v11",
+    "receipt_sha256": "b49afa36539549d35d731315f6821339d1dc5cadbc70c2141e3e0442d6d53eb9"
+  },
+  "core_recipe_identity": {
+    "code_config_sha256": "62c2509fd176f4309e22a1834a2e9a3a74d9a9066a2bd949af944e86086f0834",
+    "command_spec_sha256": "e080675e8c0a703bdef89efaf10ea7e1d9d94124ac0fc2145df010b9dfa7e035"
+  },
+  "debugger": "gdb_on_segv",
+  "device_plan": {
+    "cuda_visible_devices": "3",
+    "experience_path": "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.kit",
+    "experience_sha256": "b4a60880219827b4843f3ec3d6f9cbad8028c1c9df588a89c1796a60b8030a92",
+    "logical_device": "cuda:0",
+    "physical_gpu_index": 3
+  },
+  "provider": {
+    "entrypoint": "run_b",
+    "path": "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_provider.py",
+    "sha256": "f6ef918a27369a5c815da27d6eb99bbb4f3cc1dc880762ae2940d1695e15821c"
+  },
+  "role": "b_resume",
+  "schema": "dh116-actual-native-execution-v1",
+  "source_closure_sha256": "9a9854d469515467a09a0394da0d70280905ac62da75d87f3271f807e6c06fc0"
+}
