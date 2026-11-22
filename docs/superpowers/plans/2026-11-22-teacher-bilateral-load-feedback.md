@@ -9,7 +9,7 @@ Use the approved execution-chain design and existing real supported-rod exchange
 - [x] Add an opt-in bounded load-based selector to the existing physical control path.
 - [x] Preserve original action units, physical setup and qualification thresholds.
 - [x] Run CPU regression and real-source plan serialization preflight.
-- [ ] Publish the identical commit through Windows and verify GitHub.
+- [x] Publish the identical commit through Windows and verify GitHub.
 - [ ] Run one finite same-replay native contact-hold candidate.
 - [ ] Add measured stable-load to off-support Lift continuation if the evidence permits.
 
