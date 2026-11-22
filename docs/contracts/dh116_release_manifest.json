@@ -33974,6 +33974,33 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.tripod-composed-pivot",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-composed-pivot.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_composed_pivot_v1.json",
+      "status": "measured_left_index_reaction_transfer_no_opposition",
+      "native_runs": 1,
+      "native_sdk_steps": 3298,
+      "native_clean_exit": true,
+      "outer_sha256": "8e14856abb32d7c6bdc6ba06e88847cca90905f92d0a61f0cde5826d05de0a4c",
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "cpu_tests": {
+        "passed": 136,
+        "failed": 0
+      },
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "558efb8871d85b5aaac5e9a8ca07d89bcd47a69a",
+        "source_tree": "9b8a5d2f3e9a513b0903a35a723a2ee92d6e0002",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

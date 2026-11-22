@@ -1,4 +1,4 @@
-Tripod adds an opt-in composed wrist preview verified on the archived SDK 3101 stop frame. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-composed-pivot.md)
+Tripod's composed wrist preview crossed the former SDK 3101 stop on a 9 mm wire. The left index first touched at SDK 3292 and its reaction was delivered at 3293. The thumb unloaded during closure, so opposing contact and Lift remain pending. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-composed-pivot.md)
 
 Tripod retained measured left thumb contact through 936 live pivot samples and naturally exited 0 after a measured pre-command stop. Index closure is pending. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-live-opposition.md)
 

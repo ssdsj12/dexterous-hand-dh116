@@ -1,6 +1,6 @@
 {
   "version": "dh116-teacher-tripod-composed-pivot-v1",
-  "status": "cpu_archive_replay_passed_native_pending",
+  "status": "measured_left_index_reaction_transfer_no_opposition",
   "source_sha256": {
     "scripts/verify_dh116_wire_live_palm_approach.py": "d4e46e4ac2ec5203eca538b391166acd026809e0685fb3749ab089ec72ba4fa1",
     "src/go2_pvcnn/control/dh116/tabletop_wire_live_opposition.py": "b33f19dbb0de3f7ceb5ad27415a8d1ad9e93efd558bf54af79cc9ed56eb5d17c",
@@ -43,7 +43,7 @@
     "native_measurement": false
   },
   "switch": "--compose-pivot-preview",
-  "new_native_runs": 0,
+  "new_native_runs": 1,
   "budget": {
     "gpu": 2,
     "environments": 1,
@@ -101,5 +101,157 @@
     "passed": 60,
     "failed": 0,
     "log_sha256": "d3a38dc4e4d097267b25a55070a5ebebee48313a50e229887adeb04589561196"
+  },
+  "native_audit_sha256": "78d190501d92375d35a99e8d0e3ec16a5b69efab26af80b0c874c608c20fab32",
+  "native": {
+    "source_commit": "558efb8871d85b5aaac5e9a8ca07d89bcd47a69a",
+    "outer_sha256": "8e14856abb32d7c6bdc6ba06e88847cca90905f92d0a61f0cde5826d05de0a4c",
+    "frozen_sha256": "77576a5247ffe198f2a6ed9d0991a3bee3fa3d22d9150a225744b4fbbaaa0db9",
+    "native_time_s": 744.8104405798949,
+    "artifact_count": 6331,
+    "exit_code": 0,
+    "signal": null,
+    "forced_exit": false,
+    "close_mode": "normal",
+    "failure": null,
+    "sdk_steps": 3298,
+    "last_completed_sample_sdk": 3298,
+    "solver_substeps": 39552,
+    "motion_rows": 1872,
+    "thumb_contact_sdk": 2167,
+    "thumb_transfer_sdk": 2168,
+    "thumb_held_to_boundary": [
+      2168,
+      2169,
+      2170
+    ],
+    "index_contact_sdk": 3292,
+    "index_transfer_sdk": 3293,
+    "first_thumb_no_load_sdk": 3204,
+    "measured_stages": {
+      "pivot": {
+        "samples": 1024,
+        "moving": 1024,
+        "thumb_all_substeps": 1024,
+        "index_all_substeps": 0,
+        "opposed_all_substeps": 0,
+        "max_opposed_substeps": 0,
+        "peak_index_normal_n": 0.0,
+        "peak_thumb_normal_n": 0.017496623358279617,
+        "both_threshold": 0
+      },
+      "close": {
+        "samples": 88,
+        "moving": 88,
+        "thumb_all_substeps": 8,
+        "index_all_substeps": 0,
+        "opposed_all_substeps": 0,
+        "max_opposed_substeps": 0,
+        "peak_index_normal_n": 0.0,
+        "peak_thumb_normal_n": 0.006552081981919464,
+        "both_threshold": 0
+      },
+      "hold": {
+        "samples": 16,
+        "moving": 0,
+        "thumb_all_substeps": 0,
+        "index_all_substeps": 6,
+        "opposed_all_substeps": 0,
+        "max_opposed_substeps": 0,
+        "peak_index_normal_n": 0.04472985225172843,
+        "peak_thumb_normal_n": 0.0,
+        "both_threshold": 0
+      }
+    },
+    "kinematics": {
+      "palms": {
+        "left": {
+          "world_displacement_m": [
+            -0.006392061710357666,
+            -0.011337175965309143,
+            3.904104232788086e-05
+          ],
+          "world_rotation_rotvec_rad": [
+            -4.326335780502058e-06,
+            -1.545040753047222e-05,
+            -0.11935349290768543
+          ],
+          "actual_index_delta_rad": 0.04945635795593262,
+          "backend_index_delta_rad": 0.05067920684814453
+        },
+        "right": {
+          "world_displacement_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "world_rotation_rotvec_rad": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "actual_index_delta_rad": 0.0,
+          "backend_index_delta_rad": 0.0
+        }
+      },
+      "source_sdk": 2170,
+      "node35_displacement_m": [
+        -9.605288505554199e-05,
+        -3.27378511428833e-05,
+        3.5315752029418945e-05
+      ],
+      "terminal_sdk_hand_pad_sdf": {
+        "left.finger14_link": {
+          "minimum_gap_m": 6.405705234680068e-05,
+          "minimum_node_id": 35
+        },
+        "left.finger23_link": {
+          "minimum_gap_m": -9.798420916443291e-06,
+          "minimum_node_id": 35
+        }
+      }
+    },
+    "probe": {
+      "start_sdk": 2170,
+      "close_start_sdk": 3194,
+      "last_sdk": 3298,
+      "physical_samples": 1128,
+      "motion_stop": null,
+      "first_thumb_contact_sdk": 2167,
+      "first_thumb_transfer_sdk": 2168,
+      "first_index_contact_sdk": 3292,
+      "first_index_transfer_sdk": 3293,
+      "index_transfer_force_n": 0.030917786760535942,
+      "max_opposed_substeps": 0,
+      "full_threshold_sdk_count": 0,
+      "peak_normal_n": {
+        "thumb": 0.017496623358279617,
+        "index": 0.04472985225172843
+      },
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "lift_promoted": false
+    },
+    "composed_steps": {
+      "count": 93,
+      "first": [
+        3102,
+        1,
+        2.923675088072079e-05
+      ],
+      "last": [
+        3194,
+        1,
+        1.8417838790833567e-05
+      ],
+      "minimum_margin_m": 1.8417838790833567e-05,
+      "sdk3102": [
+        3102,
+        1,
+        2.923675088072079e-05
+      ]
+    },
+    "teacher_admission": false,
+    "grasp_qualified": false
   }
 }
