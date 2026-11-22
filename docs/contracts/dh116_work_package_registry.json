@@ -49781,6 +49781,37 @@
         "teacher_admission": false,
         "grasp_qualified": false
       }
+    },
+    "teacher.three-grasp-server-audit": {
+      "title": "Server-only review of three actual Teacher source routes and approach-signal feasibility",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-zero-action-settling-native-result"
+      ],
+      "tests": [
+        "tests/test_native_teacher_reward.py",
+        "tests/test_native_teacher_contact_reward.py",
+        "tests/test_native_teacher_session.py",
+        "tests/test_native_teacher_contact_session.py",
+        "tests/test_native_teacher_tripod_sources.py",
+        "tests/test_native_teacher_preflight.py",
+        "tests/test_dh116_deformable_privileged_ppo.py",
+        "tests/test_dh116_deformable_rollout_admission.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-22-teacher-three-grasp-server-audit.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_server_audit_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "passed": 410,
+        "failed": 0,
+        "native_runs": 0,
+        "ppo_updates": 0,
+        "runtime_code_changed": false,
+        "teacher_admission": false,
+        "native_qualification": false,
+        "grasp_qualified": false
+      }
     }
   },
   "execution_target": {

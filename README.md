@@ -1,3 +1,5 @@
+Server-only Teacher audit: 410 CPU checks pass. Only Tripod has a contact-profile route; Pinch/Power and full Lift/Hold sources remain gated. The signed-distance candidate is numerical research only, with no reward activation or new native run. [Report](docs/superpowers/reports/2026-11-22-teacher-three-grasp-server-audit.md).
+
 Actual zero-command Tripod counterfactual completed243SDK/241solver/2892substeps,natural exit0,241 geometry rows independently recomputed.Zero hand load;mean rod sag10.60mm and still moving at0.5s.No Teacher/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-tripod-zero-action-settling-native.md).
 
 Independent zero-command Tripod settling entry now reuses the real supported17 scene/Reset/R06;150 CPU regressions pass.No new native execution or policy/grasp qualification. [Report](docs/superpowers/reports/2026-11-22-tripod-zero-action-settling-entry.md).
