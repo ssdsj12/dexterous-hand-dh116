@@ -1,3 +1,5 @@
+The staged Power screen found thumb middle-link clearance to be the dominant obstruction before local opposition. [Report](docs/superpowers/reports/2026-11-23-teacher-power-partial-opposition-stage.md)
+
 The Power scan now compares transported interior material stations and tracks support-adjacent witnesses separately. Native Power qualification remains pending. [Report](docs/superpowers/reports/2026-11-23-teacher-power-transported-contact-stations.md)
 
 The measured Power re-seating scan found no full five-pad candidate around the archived palm locations. [Report](docs/superpowers/reports/2026-11-23-teacher-power-measured-reseat.md)

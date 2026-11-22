@@ -50821,6 +50821,42 @@
         "bilateral_endpoint_pairs": 0,
         "teacher_admission": false
       }
+    },
+    "teacher.power-partial-opposition-stage": {
+      "title": "Audit staged Power local opposition and causal wrench delivery",
+      "executor": "pytest",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.power-trans-material-stations"
+      ],
+      "tests": [
+        "tests/test_dh116_power_partial_opposition.py",
+        "tests/test_dh116_power_partial_stage_evidence.py",
+        "tests/test_dh116_power_measured_reseat.py",
+        "tests/test_dh116_power_fixed_wrist_digits.py",
+        "tests/test_dh116_power_material_reach.py",
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_wire_fixed_pregrasp_native_reset.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "timeout_seconds": 360,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-partial-opposition-stage.md",
+      "readiness": "docs/contracts/dh116_teacher_power_partial_opposition_stage_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_endpoint_audit_and_original_wrench_replay",
+        "cpu_passed": 141,
+        "local_pair_candidates": 82,
+        "confirmed_thumb_middle_overlap": 71,
+        "closure_endpoints_passed": 0,
+        "replayed_native_steps": 148,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

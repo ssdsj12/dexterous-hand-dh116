@@ -1,0 +1,151 @@
+{
+  "version": "dh116-teacher-power-partial-opposition-stage-v1",
+  "status": "no_safe_sampled_partial_closure_endpoint_in_transport_grid",
+  "archive": {
+    "outer_sha256": "522f0180c88583ebf4cd4be1664e41667ecd25c67e583adb675fdd92969e7e9a",
+    "support_sha256": "d88c3a281e3a9d20cdbead2a1073ebf35a3928172b91812308cc6b06052abbaf",
+    "motion_row_sha256": "618f7f52161c7d72713608cfa1138f4600569da8c3cdb91722688441e5bde093",
+    "contract_sha256": "1a52b1d13548cbda5918d75988873421e1c718d918b9023f136471031dcb22a8",
+    "config_sha256": "5c54a8f741f02d3b2cda7110acb8b92a109fe212e549d08cd9b33678c8e07df0"
+  },
+  "clock": {
+    "run_uuid": "power-supported-3bcd1a6756a94fcab74e7b47e34f59f0",
+    "env_id": 0,
+    "episode_uid": "power-supported-3bcd1a6756a94fcab74e7b47e34f59f0:0",
+    "reset_id": 1,
+    "rod_uid": "rod0",
+    "physics_step": 6504,
+    "rod_tick": 78024,
+    "timestamp_s": 13.549999999999999,
+    "solver_time_s": 13.546916961669922,
+    "clock_valid": true
+  },
+  "endpoint_audit": {
+    "artifact_sha256": "0d3a0a2c8e5b3e48141f4fce9e3c33214c497c07883f23595dade3251fc9fa74",
+    "transport_sha256": "a20dc7ea4fa3dfad71c2b574b67137135bf851aca489d3d48976b3ad4e5159f6",
+    "hands": {
+      "left": {
+        "candidates": 51,
+        "endpoint_passes": {
+          "wrist_only": 38,
+          "thumb_abduction": 29,
+          "two_pad_closure": 0
+        },
+        "candidates_passing_all_endpoints": 0,
+        "closure_limiting_shapes": {
+          "cooked:finger14_link": 2,
+          "source:finger13_link": 44,
+          "source:finger14_link": 2,
+          "source:finger33_link": 1,
+          "cooked:finger43_link": 1,
+          "source:finger43_link": 1
+        },
+        "thumb_middle_confirmed_overlap": 44,
+        "source_boundary_passed": true
+      },
+      "right": {
+        "candidates": 31,
+        "endpoint_passes": {
+          "wrist_only": 23,
+          "thumb_abduction": 9,
+          "two_pad_closure": 0
+        },
+        "candidates_passing_all_endpoints": 0,
+        "closure_limiting_shapes": {
+          "source:finger13_link": 27,
+          "cooked:finger14_link": 3,
+          "source:finger14_link": 1
+        },
+        "thumb_middle_confirmed_overlap": 27,
+        "source_boundary_passed": true
+      }
+    },
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "scripts.screen_dh116_power_partial_opposition",
+      "--palm-receipt",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2404-power-palm-witness-native/outer.json",
+      "--transport-audit",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_transported_stations_6504_audit_v1.json",
+      "--output",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_partial_opposition_6504_v1.json"
+    ]
+  },
+  "archived_reaction_replay": {
+    "artifact_sha256": "da4d93e99fe42b1b8adc6678dbbbecaec349c7bf589f64ac37d17effed0199d8",
+    "consecutive_rows": 148,
+    "both_palms_with_positive_normal": 126,
+    "both_palms_reaction_delivered": 148,
+    "all_local_targets_with_reaction": 0,
+    "full_power": 0,
+    "archive": {
+      "outer_sha256": "522f0180c88583ebf4cd4be1664e41667ecd25c67e583adb675fdd92969e7e9a",
+      "support_sha256": "d88c3a281e3a9d20cdbead2a1073ebf35a3928172b91812308cc6b06052abbaf",
+      "motion_row_sha256": "618f7f52161c7d72713608cfa1138f4600569da8c3cdb91722688441e5bde093",
+      "contract_sha256": "1a52b1d13548cbda5918d75988873421e1c718d918b9023f136471031dcb22a8",
+      "config_sha256": "5c54a8f741f02d3b2cda7110acb8b92a109fe212e549d08cd9b33678c8e07df0"
+    },
+    "first_sdk": 6356,
+    "last_sdk": 6504,
+    "proposed_stations": {
+      "left.base_link": [
+        31
+      ],
+      "left.finger14_link": [
+        34
+      ],
+      "left.finger53_link": [
+        33
+      ],
+      "right.base_link": [
+        9
+      ],
+      "right.finger14_link": [
+        5
+      ],
+      "right.finger53_link": [
+        6
+      ]
+    },
+    "counterfactual_thumb_little_stations": true,
+    "native_runs": 0,
+    "teacher_admission": false
+  },
+  "source_sha256": {
+    "scripts/screen_dh116_power_partial_opposition.py": "d749693569d677b7c75714d354c8ba5ef01125aff4762b0598cd606610aa8fc0",
+    "scripts/verify_dh116_power_partial_stage.py": "4b0dcea4d48c5bb968a487553e3e648f61b4cf21a022c17d60fd3f4d0a013229",
+    "tests/test_dh116_power_partial_opposition.py": "1460be039a51347209a1ffc411ee86446bcfed9ee0e3b7e5d06f8e5a4fca6fcc",
+    "tests/test_dh116_power_partial_stage_evidence.py": "142f30af40b8665d99b74ab011ab2595b243719fd1359e670e11783e54831a9a"
+  },
+  "cpu": {
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_power_partial_opposition.py",
+      "tests/test_dh116_power_partial_stage_evidence.py",
+      "tests/test_dh116_power_measured_reseat.py",
+      "tests/test_dh116_power_fixed_wrist_digits.py",
+      "tests/test_dh116_power_material_reach.py",
+      "tests/test_dh116_power_staged_palm_witness.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_dh116_power_palm_contact_evidence.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_grasp_feedback.py",
+      "tests/test_wire_fixed_pregrasp_native_reset.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "passed": 141,
+    "failed": 0,
+    "log_sha256": "ab80c9dc60806c6e0a8b7e790f7ace92d7637c2de51c1942763b26c5510184ef"
+  },
+  "native_runs": 0,
+  "continuous_route_verified": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false
+}
