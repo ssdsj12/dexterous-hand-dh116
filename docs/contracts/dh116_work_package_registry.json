@@ -50426,6 +50426,28 @@
         "native_clean_exit": true,
         "initial_fault_outer_sha256": "0dd8b3bbbd5e3fd45d0af3954a5d9919ea02cc831b332eddf8b6dc5375ebaa1d"
       }
+    },
+    "teacher.tripod-static-opposition-route": {
+      "title": "Certify a continuous staged left Tripod opposition candidate on the sealed rod",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-settled-thumb"
+      ],
+      "tests": [
+        "tests/test_tripod_opposition_route.py",
+        "tests/test_wire_continuous_clearance.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-opposition-route.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_opposition_route_v1.json",
+      "last_result": {
+        "cpu_passed": 112,
+        "proved_static_routes": 2,
+        "rod_reserve_m": 2e-05,
+        "native_status": "pending",
+        "teacher_admission": false,
+        "grasp_qualified": false
+      }
     }
   },
   "execution_target": {

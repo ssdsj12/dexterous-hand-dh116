@@ -1,3 +1,5 @@
+Tripod CPU coverage proves two continuous thumb-to-index candidate paths on the sealed supported rod, with a 20 µm rod-motion reserve. Native sustained opposition remains pending. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-opposition-route.md)
+
 Tripod reproduced a left thumb reaction in the same live settled episode and naturally exited 0 in the bounded corrective run. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-settled-thumb.md)
 
 The parked 9 mm Tripod wire reached a measured quiet interval in Isaac. Both supports remained loaded and no hand contact occurred. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-quiet-settlement.md)

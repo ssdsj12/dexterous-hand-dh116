@@ -33918,6 +33918,29 @@
       },
       "native_clean_exit": true,
       "initial_fault_outer_sha256": "0dd8b3bbbd5e3fd45d0af3954a5d9919ea02cc831b332eddf8b6dc5375ebaa1d"
+    },
+    {
+      "package": "teacher.tripod-static-opposition-route",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-opposition-route.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_opposition_route_v1.json",
+      "status": "proved_two_static_routes_live_opposition_pending",
+      "cpu_tests": {
+        "passed": 112,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "source_receipt_sha256": "760fe69c15cdf6e624a3660ca0e81d4343ed33198cf5c1e71a64dbb1b3c72031",
+      "proof_sha256": {
+        "yaw": "9df9ed32fbbb8fd690c81de777061286db6a535e0cbd6a3522a14e6e763eeca5",
+        "combined": "d0e85f89aec6744013459557278f7b7a2ced661bd77b5c619ff0c0308632fe82"
+      },
+      "publication": {
+        "state": "result_commit_requires_windows_remote_verification",
+        "remote_branch": "11-17"
+      }
     }
   ]
 }

@@ -47,3 +47,31 @@ def test_refines_sampling_error_with_a_certified_segment_distance():
     assert report["lower_m"] > .00025
     assert report["fast_lower_m"] < .00025
     assert report["segments_checked"] > 0
+
+
+def test_motion_reserve_refines_an_already_admissible_projected_bound():
+    proof = module().WireClearance(wire(), radius_m=.0045)
+    point = hull(.0043701, azimuth=np.deg2rad(2.5))
+
+    original = proof.certify(point, selected=True)
+    assert original["passed"]
+    assert original["segments_checked"] == 0
+    assert original["lower_m"] < -.00013
+
+    refined = proof.certify(point, selected=True, reserve_m=.00002)
+    assert refined["passed"]
+    assert refined["threshold_m"] == -.00015
+    assert refined["reserve_m"] == .00002
+    assert refined["segments_checked"] > 0
+    assert refined["lower_m"] >= -.00013
+
+    too_large = proof.certify(point, selected=True, reserve_m=.000025)
+    assert not too_large["passed"]
+    assert too_large["threshold_m"] == original["threshold_m"]
+
+
+@pytest.mark.parametrize("invalid", [-1., float("inf"), float("nan"), True])
+def test_motion_reserve_rejects_invalid_values(invalid):
+    proof = module().WireClearance(wire(), radius_m=.0045)
+    with pytest.raises(ValueError, match="reserve"):
+        proof.certify(hull(.005), selected=False, reserve_m=invalid)

@@ -21,16 +21,22 @@ class WireClearance:
         self.normals, self.upper = wire_tube(self.nodes, radius_m=radius_m)
         self.radius_m = float(radius_m)
 
-    def certify(self, vertices, *, selected):
-        """Check the original selected or unselected clearance, with no threshold fallback."""
+    def certify(self, vertices, *, selected, reserve_m=0.):
+        """Certify the original gap plus an optional nonnegative displacement reserve."""
         v = np.asarray(vertices, dtype=float)
         if (v.ndim != 2 or v.shape[1:] != (3,) or len(v) < 4
                 or not np.isfinite(v).all() or type(selected) is not bool):
             raise ValueError("finite link hull vertices and explicit contact status required")
+        if (isinstance(reserve_m, (bool, np.bool_))
+                or not isinstance(reserve_m, (int, float, np.integer, np.floating))
+                or not np.isfinite(reserve_m) or reserve_m < 0.):
+            raise ValueError("finite nonnegative motion reserve required")
         threshold = -SELECTED_PENETRATION_M if selected else NONCONTACT_GAP_M
+        required = threshold + float(reserve_m)
+        evidence = {"reserve_m": float(reserve_m)} if reserve_m else {}
 
         def accepted(gap):
-            return gap >= threshold if selected else gap > threshold
+            return gap >= required if selected else gap > required
 
         support = (v @ self.normals.T).min(axis=0)
         lower = (support[None] - self.upper).max(axis=1) - ROUNDING_M
@@ -54,7 +60,7 @@ class WireClearance:
                     break
             if terminal is not None:
                 return dict(passed=False, lower_m=float(min(fast, lower_segment)), fast_lower_m=fast,
-                            segments_checked=checked, threshold_m=threshold, failed_segment=terminal)
+                            segments_checked=checked, threshold_m=threshold, failed_segment=terminal, **evidence)
             lower[group] = max(bound, lower_segment)
         return dict(passed=True, lower_m=float(lower.min()), fast_lower_m=fast,
-                    segments_checked=checked, threshold_m=threshold, failed_segment=None)
+                    segments_checked=checked, threshold_m=threshold, failed_segment=None, **evidence)
