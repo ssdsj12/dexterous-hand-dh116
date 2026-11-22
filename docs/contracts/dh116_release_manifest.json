@@ -34361,6 +34361,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-partial-opposition-stage",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-partial-opposition-stage.md",
+      "readiness": "docs/contracts/dh116_teacher_power_partial_opposition_stage_v1.json",
+      "status": "no_safe_sampled_partial_closure_endpoint_in_transport_grid",
+      "cpu_tests": {
+        "passed": 141,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "791507edaf42e47e020658a1a2352e9aa5adec16",
+        "source_tree": "4dee47e8e4c8e1184b4f4212780718c4ad7a320c",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
