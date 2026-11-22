@@ -33519,6 +33519,40 @@
         "pr2_merged": false
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.lift-diagnostic-v2",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-lift-diagnostic-v2.md",
+      "readiness": "docs/contracts/dh116_teacher_lift_diagnostic_v2.json",
+      "cpu_tests": {
+        "passed": 96,
+        "failed": 0,
+        "new_cases": 5,
+        "registry_subset": 60
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "archived_sdk_rows": 2054,
+      "archived_off_support_lift_rows": 0,
+      "cpu_fixture_ppo_updates": 1,
+      "new_native_runs": 0,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c8ce2f4bd5ebddff65164c635337e82ef87ebdb3",
+        "source_tree": "5cc9fca5a4c61a9b22cdbd7b39c96582069456a3",
+        "remote_branch": "11-17",
+        "files_verified": 12,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "remote_verified": true
     }
   ]
 }
