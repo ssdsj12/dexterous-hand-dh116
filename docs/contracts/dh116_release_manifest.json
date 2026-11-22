@@ -33296,6 +33296,37 @@
         "verified_at_utc": "2026-11-22T11:41:15.804233+00:00"
       },
       "remote_verified": true
+    },
+    {
+      "package": "teacher.bilateral-load-feedback-native",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-22-teacher-bilateral-load-feedback-native.md",
+      "readiness": "docs/contracts/dh116_teacher_bilateral_load_feedback_native_v1.json",
+      "outcome": "native_candidate_rejected",
+      "native_runs": 1,
+      "native_ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "cpu_tests": {
+        "passed": 115,
+        "failed": 0
+      },
+      "publication_registry_tests": {
+        "passed": 60,
+        "failed": 0,
+        "separately_recorded": true
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "3e82f61dfa9e0e116560158c920d988183d5527d",
+        "source_tree": "3069bef18da677f735644bc15f7566547d84122c",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "remote_verified": true
     }
   ]
 }
