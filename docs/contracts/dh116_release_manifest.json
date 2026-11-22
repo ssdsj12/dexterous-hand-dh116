@@ -34085,6 +34085,36 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-factorial-holdout",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-factorial-holdout.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_factorial_holdout_v1.json",
+      "status": "cpu_catalog_validated",
+      "cpu_tests": {
+        "passed": 70,
+        "failed": 0
+      },
+      "native_runs": 0,
+      "wire_specs": {
+        "train": 11,
+        "validation": 2,
+        "test": 8
+      },
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "bdcb06f9fd4531ca4fd78221d963974b38e1981d",
+        "source_tree": "ab14d88834fa199b763721125bff7ba29cb96cae",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
