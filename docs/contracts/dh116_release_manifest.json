@@ -36135,6 +36135,37 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.shared-native-contact-replay-v1",
+      "branch": "11-17",
+      "status": "two_lane_shared_nonzero_reaction_verified_full_reset_ppo_pending",
+      "native_sdk_steps": 226,
+      "native_solver_calls": 216,
+      "native_ppo_updates": 0,
+      "isaac_environments": 2,
+      "nonzero_hand_reaction_steps": [
+        22,
+        0
+      ],
+      "max_hand_mesh_force_n": [
+        0.12905559404667805,
+        0
+      ],
+      "native_exit_code": 0,
+      "forced_exit": false,
+      "fixed_owner_cpu_passed": 22,
+      "teacher_admission": false,
+      "native_receipt_sha256": "e3db3c4016ca73bdf254b9b6b67872122a7aa6f9f1fb83149ea6d43202269d9b",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-native-contact-replay.md",
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "1f66078dda00cc1666a9e399e194afb827e40ada",
+        "source_tree": "3f00f7ef1a2474420a95f183bd72121d672c9465",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
