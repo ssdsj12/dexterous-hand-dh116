@@ -128,3 +128,16 @@ def test_reset_read_failure_cannot_issue_first_action(monkeypatch,tmp_path,prepa
     assert r["measured_physics_rows"]==0 and r["last_sdk_step"]==2
     assert d==p==[2]
     assert (out/"app_close_returned.json").exists()
+
+
+def test_native_getter_scope_and_untagged_historical_packet_are_both_valid(endpoint):
+    c = endpoint
+    packet = c.owner.capture_reset(c.row(), material_reference_uid="mat-scope", **c.args)
+    assert packet["source_scope"] == "native_getter"
+    validate(packet, c.row(), c.nodes)
+    old_packet = deepcopy(packet)
+    old_packet.pop("source_scope")
+    validate(old_packet, c.row(), c.nodes)
+    packet["source_scope"] = "cpu_fixture"
+    with pytest.raises(ValueError):
+        validate(packet, c.row(), c.nodes)

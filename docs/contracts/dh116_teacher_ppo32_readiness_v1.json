@@ -1694,5 +1694,57 @@
       "failed": 0,
       "log_sha256": "b97cd1aa4546f2a483d80644bd2b152ef13cc23ed3ca1104b93a1dbed4af46c4"
     }
+  },
+  "shared_native_contact_replay": {
+    "status": "two_lane_nonzero_contact_passed_ppo_pending",
+    "native": {
+      "receipt_sha256": "e3db3c4016ca73bdf254b9b6b67872122a7aa6f9f1fb83149ea6d43202269d9b",
+      "journal_sha256": "b7ff1c7f855b931e7b9d5fb475a146d692e214d7c4ed36737e91424604c0519f",
+      "result_sha256": "a0936fb417c589dfd0cb20ad0eda8bdd175b06f8b353312f245fd666e237f45c",
+      "exit_code": 0,
+      "forced_exit": false,
+      "gpu": 3,
+      "environments": 2,
+      "sdk_steps": 226,
+      "shared_solver_calls": 216,
+      "solver_substeps": 2592,
+      "physical_exchange_rows": 216,
+      "nonzero_hand_reaction_steps": [
+        22,
+        0
+      ],
+      "maximum_hand_mesh_force_n": [
+        0.12905559404667805,
+        0.0
+      ],
+      "all_action_readback_rows_verified": 216,
+      "ppo_updates": 0,
+      "first_nonzero_generated_force_sdk_step": 204,
+      "first_nonzero_issued_force_sdk_step": 205,
+      "offline_readback_check_sha256": "18f29704cfa763f1674e2269c8757f38894d1876e050625b5a742b38485bfda5"
+    },
+    "cpu_tests": {
+      "commands_and_ownership_passed": 22,
+      "cuda_skipped": 1,
+      "endpoint_scope_passed": 15,
+      "fixed_owner_regression": {
+        "passed": 22,
+        "failed": 0,
+        "seconds": 456.01,
+        "log_sha256": "ad17eaf5c2527f97efba058bbce0233be62c8adabcc6a8b4a1959709976dc5ff"
+      }
+    },
+    "regression_failure": {
+      "old_reader_scope": "native_getter",
+      "old_validator_missing_field": "source_scope",
+      "repair": "accept exact native_getter tag while retaining untagged historical packets and rejecting alternate tags",
+      "before_log_sha256": "706ffbcec277e0a43f4a399e2bfbff98193e0d754c2931e7ab201c8747f49c23",
+      "after_log_sha256": "e82b7c354f38a75ecff3a764a7dbfbb6f2a43d7948dece30947395e614373a95"
+    },
+    "pending": [
+      "complete hand/mesh/rod local Reset and next-window continuation",
+      "shared backend reward/guard/action parity",
+      "Pinch/Tripod/Power 128 or 512 lane PPO"
+    ]
   }
 }

@@ -23,6 +23,10 @@ def packet(p,rod,sdk_time,rest,sources,*,reset,prior=None):
         "material_reference_uid","source_instance_id","boundary","new_sdk_steps","new_solver_steps",
         "task_physics_qualified","teacher_admission","substep_director_history_available",
         "continuous_contact_s_m","r0_tangential_slip_m"}
+    # Older sealed v1 endpoints predate the explicit native source tag.
+    if "source_scope" in p:
+        expected_keys.add("source_scope")
+        require(p["source_scope"] == "native_getter", "native endpoint source scope differs")
     require(set(p)==expected_keys,"native endpoint fields differ")
     original.exact(p,dict(version=reader.VERSION,
         boundary="completed_reset_endpoint" if reset else "completed_physics_endpoint",

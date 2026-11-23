@@ -4528,3 +4528,5 @@ Reused the unpublished four-joint left Tripod ray in the real supported-rod exch
 Added compact GPU pair reduction and atomic reader; three 128-lane solver probes passed. Live Isaac PPO integration remains pending.
 
 Added exclusive shared rod step/reaction ownership and rod-only Reset. Two-lane Isaac startup exits naturally; nonzero hand contact and PPO remain pending.
+
+Replayed original 24D approach actions with the shared solver in real Isaac: 22/0 nonzero hand-reaction steps, natural exit 0. Corrected the historical native_getter scope audit mismatch.
