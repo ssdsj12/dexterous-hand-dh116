@@ -34668,6 +34668,37 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-right-concurrent-route",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-right-concurrent-route.md",
+      "readiness": "docs/contracts/dh116_teacher_power_right_concurrent_route_v1.json",
+      "status": "passed_cpu_right_continuous_target_geometry",
+      "cpu_tests": {
+        "passed": 200,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "right_continuous_control_steps": 82,
+      "right_sdf_target_samples": 657,
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "242205a396930093f565ff335d59557ef1481964",
+        "source_tree": "9b531b37309aca02fe510b4fa230c4a357551252",
+        "remote_branch": "11-17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
