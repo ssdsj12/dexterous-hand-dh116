@@ -34576,6 +34576,37 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-feedback-policy",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-feedback-policy.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_feedback_policy_v1.json",
+      "status": "passed_cpu_feedback_conditioning_and_archived_action_equivalence",
+      "cpu_tests": {
+        "passed": 316,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 65,
+        "failed": 0
+      },
+      "archived_inputs": 16,
+      "synthetic_cpu_ppo_updates": 1,
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "e13399f10745450f5f86673ad9ec7b7caf6d5afe",
+        "source_tree": "0a4495cfb7d091ae69e89a4f7d486909d44bcbf0",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
