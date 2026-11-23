@@ -51799,6 +51799,118 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-reset-continuity-r5": {
+      "title": "Tripod Reset continuity against archived settling",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-current-native-reset-r4"
+      ],
+      "tests": [
+        "tests/test_dh116_tripod_reset_continuity.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-continuity.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round5_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "sealed_reset_continuity_and_historical_zero_action_margin",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "cpu_passed": 72
+      }
+    },
+    "teacher.power-relocated-palm-r5": {
+      "title": "Power relocated right palm reachability",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-right-index-r4"
+      ],
+      "tests": [
+        "tests/test_dh116_power_relocated_palm.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-relocated-palm.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round5_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "large_tilt_candidates_excluded_by_workspace_or_pad_gaps",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "cpu_passed": 107
+      }
+    },
+    "teacher.tripod-transverse-approach-r5": {
+      "title": "Tripod historical transverse relief",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-early-boundary-r4"
+      ],
+      "tests": [
+        "tests/test_tripod_transverse_approach.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-transverse-approach.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round5_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "two_window_historical_precontact_geometry_candidate",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "cpu_passed": 120
+      }
+    },
+    "teacher.tripod-902-preflight-r5": {
+      "title": "Tripod Reset preflight for the exact 902 seed",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-transverse-approach-r5"
+      ],
+      "tests": [
+        "tests/test_tripod_supported_reset_capture.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-902-approach-preflight.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round5_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "exact_902_seed_cpu_launcher_and_archive_checks",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "gdb_cpu_exit_code": 0,
+        "verified_frozen_source_files": 2191
+      }
+    },
+    "teacher.902-pinch-relief-r5": {
+      "title": "902 Pinch paired endpoint and approach guards",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-pinch-facets-r4"
+      ],
+      "tests": [
+        "tests/test_dh116_902_pinch_relief.py",
+        "tests/test_dh116_902_pinch_relief_route.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-relief-and-route.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round5_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "paired_historical_endpoint_qualified_command_route_blocked",
+        "native_qualification": false,
+        "teacher_admission": false,
+        "cpu_passed": 183
+      }
     }
   },
   "execution_target": {

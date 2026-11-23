@@ -35392,6 +35392,186 @@
         "passed": 60,
         "failed": 0
       }
+    },
+    {
+      "package": "teacher.tripod-reset-continuity-r5",
+      "branch": "11-17",
+      "status": "sealed_reset_continuity_and_historical_zero_action_margin",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-continuity.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round5_v1.json",
+      "cpu_tests": {
+        "passed": 72,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 227,
+        "failed": 0,
+        "skipped": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_reset_component_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a73cde6375dfaa73e653e0250d9d847ca6d0871f",
+        "source_tree": "3a0fb0a30c205b1cf298f66231b3f753f35218e4",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.power-relocated-palm-r5",
+      "branch": "11-17",
+      "status": "large_tilt_candidates_excluded_by_workspace_or_pad_gaps",
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-relocated-palm.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round5_v1.json",
+      "cpu_tests": {
+        "passed": 107,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 227,
+        "failed": 0,
+        "skipped": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_reset_component_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "bf440fb35ddf7bc3ff829540bd1d9a4f1f671f3d",
+        "source_tree": "ff35331596dd24e94d61c3633b280e881dd32b73",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.tripod-transverse-approach-r5",
+      "branch": "11-17",
+      "status": "two_window_historical_precontact_geometry_candidate",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-transverse-approach.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round5_v1.json",
+      "cpu_tests": {
+        "passed": 120,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 227,
+        "failed": 0,
+        "skipped": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_reset_component_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "98f52d1898ca578981eb7437393372697c8c1a2b",
+        "source_tree": "c25648f52aec7301f22a59cb38ac62b46d5dc0ff",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.tripod-902-preflight-r5",
+      "branch": "11-17",
+      "status": "exact_902_seed_cpu_launcher_and_archive_checks",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-902-approach-preflight.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round5_v1.json",
+      "cpu_launcher_preflight": {
+        "gdb_exit_code": 0,
+        "verified_frozen_source_files": 2191
+      },
+      "integrated_cpu_tests": {
+        "passed": 227,
+        "failed": 0,
+        "skipped": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_reset_component_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "3cc9911b5639cf77ce33c3ebdad384bafe49adf6",
+        "source_tree": "3b1907edc98376c157e672fada0cf8fe34a16dad",
+        "remote_branch": "11-17",
+        "files_verified": 2,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.902-pinch-relief-r5",
+      "branch": "11-17",
+      "status": "paired_historical_endpoint_qualified_command_route_blocked",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-relief-and-route.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round5_v1.json",
+      "cpu_tests": {
+        "passed": 183,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 227,
+        "failed": 0,
+        "skipped": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_reset_component_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "690c11fc84265bb37c5abf0a40fb870cbc1c090d",
+        "source_tree": "adcd7bb5a4ff5db0385626dbd5d06dae5407ee47",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
     }
   ]
 }

@@ -1,0 +1,237 @@
+{
+  "version": 1,
+  "branch": "11-17",
+  "base_commit": "71a52a4755fd1644b8eb7f531863dafbeba38824",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round5.md",
+  "native_isaac_runs": 0,
+  "new_sdk_steps": 0,
+  "new_control_steps": 0,
+  "new_rod_steps": 0,
+  "ppo_updates": 0,
+  "formal_teacher_training": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "teacher_admission": false,
+  "integrated_cpu": {
+    "passed": 227,
+    "failed": 0,
+    "skipped": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-ra",
+      "tests/test_dh116_902_pinch_alignment.py",
+      "tests/test_dh116_902_pinch_right_alignment.py",
+      "tests/test_dh116_power_remaining_digits.py",
+      "tests/test_tripod_wrist_relief.py",
+      "tests/test_dh116_supported_force_seating.py",
+      "tests/test_dh116_power_bilateral_handoff.py",
+      "tests/test_dh116_power_bilateral_receipt.py",
+      "tests/test_supported_wire_factorial_holdouts.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_tripod_index_contact_loss.py",
+      "tests/test_dh116_902_pinch_coupled.py",
+      "tests/test_tripod_wrist_relief_command.py",
+      "tests/test_dh116_power_coupled_wrist.py",
+      "tests/test_tripod_supported_reset_capture.py",
+      "tests/test_dh116_loaded_pair_continuity.py",
+      "tests/test_dh116_902_pinch_facets.py",
+      "tests/test_tripod_early_boundary.py",
+      "tests/test_dh116_power_right_index.py",
+      "tests/test_dh116_tripod_reset_continuity.py",
+      "tests/test_dh116_power_relocated_palm.py",
+      "tests/test_tripod_transverse_approach.py",
+      "tests/test_dh116_902_pinch_relief.py",
+      "tests/test_dh116_902_pinch_relief_route.py"
+    ],
+    "log_sha256": "6f9213dd6952cf776a5754d9b70e295d3d32a3c505cb4adf39f49735bb131ab5",
+    "fixtures_sha256": "fe31696526871c15ddb63863ccb6c9d9cd62cd7d108f0f7db6a98cbae924c6f1",
+    "fixtures": {
+      "DH116_PINCH_ALIGNMENT_RECEIPT": {
+        "file": "ref902/approach-native-pinch/outer.json",
+        "sha256": "ac6345ae0b377b70a098155786571e14cd91855af3a252471529ed7218d360f7"
+      },
+      "DH116_PINCH_COUPLED_WARM": {
+        "file": "sync-pinch-round2-alternate-v2-warm.json",
+        "sha256": "14d431563ee931463952fb27773b84a85f749c387711d025fa1279d8afc405d3"
+      },
+      "DH116_PINCH_FACET_RIGHT": {
+        "file": "sync-pinch-round3-coupled-right-v4.json",
+        "sha256": "7fc275f62c076260f4c30a55790a76bbcb598bd1e9b5a05e4ed0537fd5ec38f1"
+      },
+      "DH116_PINCH_RELIEF_RIGHT": {
+        "file": "sync-pinch-round4-facet-right-v4.json",
+        "sha256": "9a894bf3bf2f1808b9135f023ac9bb078f737233e367eb69d337f9b7298fc503"
+      },
+      "DH116_PINCH_RELIEF_ROUTE_LEFT": {
+        "file": "sync-pinch-round5-relief-left-v3.json",
+        "sha256": "c606f84d04beadb939039dc39148e14cf15b050ac3d2795222aad43682cac89c"
+      },
+      "DH116_PINCH_RELIEF_ROUTE_RIGHT": {
+        "file": "sync-pinch-round5-relief-right-v3.json",
+        "sha256": "553e446fe5c67da938f05be4d5a9dc87ef13dd548d6bee1be994322541da2f38"
+      }
+    },
+    "initial_invocation": {
+      "passed": 225,
+      "failed": 1,
+      "skipped": 1,
+      "log_sha256": "30a73cfb5095a9ca4b4585286788020922b892a8320a87cc385740904bf9c646",
+      "cause": "The invocation supplied a relief output where the test requires the original sealed facet, and omitted the paired endpoint fixture variables."
+    }
+  },
+  "packages": {
+    "teacher.tripod-reset-continuity-r5": {
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-continuity.md",
+      "source_files": [
+        "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-continuity.md",
+        "scripts/audit_dh116_tripod_reset_continuity.py",
+        "tests/test_dh116_tripod_reset_continuity.py"
+      ],
+      "evidence_sha256": {
+        "continuity_report": "11c8b053e5223313a9c405dca134c045f2291b8b12675bab480a56cec9936aac",
+        "cpu_log": "37e8c9c82922d6dd2ffc47f7837f4be63d758df2680e60e65e428eeec49ac590"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a73cde6375dfaa73e653e0250d9d847ca6d0871f",
+        "source_tree": "3a0fb0a30c205b1cf298f66231b3f753f35218e4",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "sealed_reset_continuity_and_historical_zero_action_margin",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "cpu_passed": 72
+    },
+    "teacher.power-relocated-palm-r5": {
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-relocated-palm.md",
+      "source_files": [
+        "docs/superpowers/reports/2026-11-23-sync-power-relocated-palm.md",
+        "tests/test_dh116_power_relocated_palm.py",
+        "tools/audit_dh116_power_relocated_palm.py"
+      ],
+      "evidence_sha256": {
+        "relocated_palm_result": "612be36c63a06a974492ce3659aed9b0e047daf1b674553dae3ad2b263f12000",
+        "cpu_log": "3042dc79ece3d321f0ea31d69d53a6d6cad7e9eb84c8e70748bea70ccf59e8b9"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "bf440fb35ddf7bc3ff829540bd1d9a4f1f671f3d",
+        "source_tree": "ff35331596dd24e94d61c3633b280e881dd32b73",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "large_tilt_candidates_excluded_by_workspace_or_pad_gaps",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "cpu_passed": 107
+    },
+    "teacher.tripod-transverse-approach-r5": {
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-transverse-approach.md",
+      "source_files": [
+        "docs/contracts/dh116_teacher_tripod_transverse_approach_v1.json",
+        "docs/superpowers/reports/2026-11-23-teacher-tripod-transverse-approach.md",
+        "scripts/audit_dh116_tripod_transverse_approach.py",
+        "tests/test_tripod_transverse_approach.py"
+      ],
+      "evidence_sha256": {
+        "full": "9c84f8b1798d41b9e8ba2c3402a3334dcb0005ed7cc00125b182fa3c0ba6b52d",
+        "causal_cutoff": "ffbaee3e943e52409a54a93a0641b775a8a920931a7ad07afac94112c30cccc0"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "98f52d1898ca578981eb7437393372697c8c1a2b",
+        "source_tree": "c25648f52aec7301f22a59cb38ac62b46d5dc0ff",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "two_window_historical_precontact_geometry_candidate",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "cpu_passed": 120
+    },
+    "teacher.tripod-902-preflight-r5": {
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-902-approach-preflight.md",
+      "source_files": [
+        "docs/contracts/dh116_teacher_tripod_902_preflight_r5_v1.json",
+        "docs/superpowers/reports/2026-11-23-teacher-tripod-902-approach-preflight.md"
+      ],
+      "evidence_sha256": {
+        "freeze": "903c7654f6a06e5ecece50d111ae79a9d68e3806007272ca16a8dbf9ffc7d94e",
+        "gdb_preflight_log": "dc746b0f0ee3c5ba51ce7cda6c0b5e41d715b19cc061f3c5904f5b5b691b9850",
+        "staged_action_draft": "dbbd67046b5dd3b051c84b9ae24710b7ab123d7e115f57d17b9ccac311db196a"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "3cc9911b5639cf77ce33c3ebdad384bafe49adf6",
+        "source_tree": "3b1907edc98376c157e672fada0cf8fe34a16dad",
+        "remote_branch": "11-17",
+        "files_verified": 2,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "exact_902_seed_cpu_launcher_and_archive_checks",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "gdb_cpu_exit_code": 0,
+      "verified_frozen_source_files": 2191
+    },
+    "teacher.902-pinch-relief-r5": {
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-relief-and-route.md",
+      "source_files": [
+        "docs/superpowers/reports/2026-11-23-teacher-902-pinch-relief-and-route.md",
+        "scripts/certify_dh116_902_pinch_relief_route.py",
+        "scripts/screen_dh116_902_pinch_relief.py",
+        "tests/test_dh116_902_pinch_relief.py",
+        "tests/test_dh116_902_pinch_relief_route.py"
+      ],
+      "evidence_sha256": {
+        "paired_endpoint": "a3621728c16bbc9a5599b4665f29a556b6241ff84bb8594f0b8594b479f7ba6f",
+        "route": "593a9fc121306f04313c9e21ad5d440d5d4ca851896e62260b3c8cea7bff3d76",
+        "blocker_witness": "27ffd0afdbc0f8fd1e2ed89111d014edbc940c639de79dde9313d1d8fb71d7fc",
+        "cpu_log": "abcf10c09ab1a6a9e8a8a86df738259572587263d6c02cb549a89e80635d0b4a"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "690c11fc84265bb37c5abf0a40fb870cbc1c090d",
+        "source_tree": "adcd7bb5a4ff5db0385626dbd5d06dae5407ee47",
+        "remote_branch": "11-17",
+        "files_verified": 5,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "paired_historical_endpoint_qualified_command_route_blocked",
+      "native_qualification": false,
+      "teacher_admission": false,
+      "cpu_passed": 183
+    }
+  },
+  "next": {
+    "pinch": "Left wrist and digit transition before the paired endpoint",
+    "tripod": "Exact 902 native Reset and archived-anchor guarded approach runner",
+    "power": "Coordinated full-palm and five-digit approach with live deformation and reaction"
+  },
+  "registry_cpu": {
+    "passed": 60,
+    "failed": 0,
+    "skipped": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-ra",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "e5717a302df53e015878ee99be020299879a32506265138cea4a17522e5a64ba"
+  }
+}
