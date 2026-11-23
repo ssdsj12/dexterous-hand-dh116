@@ -85,3 +85,29 @@ def test_group_rejects_shared_solver_before_first_write(monkeypatch):
         control_group((a, b), torch.zeros(2, 24), observe=lambda row: None)
     assert not calls and not remaining_calls
     assert sim.current_time_step_index == 2 and base.rope.steps == 0
+
+
+@pytest.mark.parametrize("fault_sdk_step", [3, 10])
+def test_source_failure_stops_the_batch_without_committing_even_on_last_tick(monkeypatch, fault_sdk_step):
+    from go2_pvcnn.control.dh116.tabletop_teacher_physical_group import TeacherPhysicalGroup
+
+    left, sim, _, _ = setup(monkeypatch, env_id=0)
+    right, _, _, _ = setup(monkeypatch, env_id=1, sim=sim)
+    complete = left._complete_substep
+
+    def broken_reader(pending, sdk):
+        row = complete(pending, sdk)
+        if sdk == fault_sdk_step:
+            row["native_teacher_source_error"] = {"type": "SourceFailure", "message": "fixture reader failed"}
+        return row
+
+    left._complete_substep = broken_reader
+    rows = []
+    result = TeacherPhysicalGroup((left, right)).control(
+        torch.zeros((2, 24)), observe=rows.append,
+        commit=lambda _: pytest.fail("source-failed window was committed"),
+    )
+    assert result["aborted"] and result["terminal_reasons"] == {0: "native_teacher_source_error"}
+    assert sim.current_time_step_index == fault_sdk_step
+    assert [row["rod"]["env_id"] for row in rows[-2:]] == [0, 1]
+    assert rows[-2]["native_teacher_source_error"]["message"] == "fixture reader failed"

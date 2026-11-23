@@ -52303,6 +52303,45 @@
       "report": "docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
       "native_runs": 0
+    },
+    "teacher.pinch-ppo64-v1": {
+      "title": "Pinch Teacher PPO with 64 independent Isaac lanes",
+      "executor": "gated",
+      "status": "blocked",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.ppo32-isolation-preflight-v1"
+      ],
+      "reason": "The 64-lane CPU writer is available. Live lane sources, lane-local Reset and the native update worker have not been assembled. Concurrent grasp processes also require separate GPU reservations.",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-teacher64-rollout.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "native_runs": 0
+    },
+    "teacher.tripod-ppo64-v1": {
+      "title": "Tripod Teacher PPO with 64 independent Isaac lanes",
+      "executor": "gated",
+      "status": "blocked",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.ppo32-isolation-preflight-v1"
+      ],
+      "reason": "The 64-lane CPU writer is available. Live lane sources, lane-local Reset and the native update worker have not been assembled. Concurrent grasp processes also require separate GPU reservations.",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-teacher64-rollout.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "native_runs": 0
+    },
+    "teacher.power-ppo64-v1": {
+      "title": "Power Teacher PPO with 64 independent Isaac lanes",
+      "executor": "gated",
+      "status": "blocked",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.ppo32-isolation-preflight-v1"
+      ],
+      "reason": "The 64-lane CPU writer is available. Live lane sources, lane-local Reset and the native update worker have not been assembled. Concurrent grasp processes also require separate GPU reservations.",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-teacher64-rollout.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "native_runs": 0
     }
   },
   "execution_target": {

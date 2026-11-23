@@ -199,9 +199,9 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
     source=m.NativeContactTripodSources(owner,contract,scope="cpu_fixture");owner.sources=source
     monkeypatch.setattr(source,"_health",lambda clock:make_solver_status(clock,0,source_scope="cpu_fixture",
         source_instance_id=id(c.rope),backend_sha256=profile.binary_sha256))
-    step=ep._exchange._step
-    def contacted(action,substep):
-        row=step(action,substep)
+    complete=ep._exchange._complete_substep
+    def contacted(pending,sdk):
+        row=complete(pending,sdk)
         hand_links = ("finger14_link","finger23_link","finger33_link") if wire_trace_geometry else None
         data=build(proximal=True,table=table_at is not None and row["rod"]["physics_step"]>=table_at,load=.125,
                    hand_contact_links=hand_links)
@@ -215,7 +215,7 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
         row["rod"]["rod_mesh_contact_pairs"].update(physics_step=row["rod"]["physics_step"],rod_tick=row["rod"]["rod_tick"])
         row["rod"]["source_scope"]="cpu_fixture"
         return row
-    ep._exchange._step=contacted
+    ep._exchange._complete_substep=contacted
     reset["reset"]["rod_reset"]["source_scope"]="cpu_fixture"
     with profile_reader_scope(profile):
         source.after_reset(reset)
@@ -268,7 +268,7 @@ def test_original_collector_uses_primed_source_then_real_ppo_update(monkeypatch,
                and row["payload"].get("kind")=="priming_physical")
     prime["exchange"]["rod"]["mesh_bindings"]["left.base_link"]["capture_sha256"]="c"*64
     # Reject the incompatible prime layout before trusting any later receipt hash.
-    with pytest.raises(ValueError,match="Tripod physical source layout differs"):
+    with pytest.raises(ValueError,match="mid-step contact source bindings changed"):
         audit_teacher_input_sources(b"".join((json.dumps(row)+"\n").encode() for row in changed),
             backend_profile=backend_profile,scope="cpu_fixture",controls=1,grasp="tripod",profile=PROFILE)
     damaged=[json.loads(line) for line in collector.journal.path.read_text().splitlines()]

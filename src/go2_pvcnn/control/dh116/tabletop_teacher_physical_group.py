@@ -18,9 +18,9 @@ def _control_group(lanes, actions, *, observe, window_index):
     """Issue one 60 Hz request per lane, sharing eight global SDK steps."""
     lanes = tuple(lanes)
     validate_actions(actions)
-    if (not 2 <= len(lanes) <= 32 or actions.shape != (len(lanes), 24)
+    if (not 2 <= len(lanes) <= 64 or actions.shape != (len(lanes), 24)
             or not callable(observe) or any(not isinstance(lane, FlexiblePhysicalExchange) for lane in lanes)):
-        raise ValueError("two to 32 physical lanes, [N,24] actions and a row observer required")
+        raise ValueError("two to 64 physical lanes, [N,24] actions and a row observer required")
     if any(lane._closed or lane._active for lane in lanes):
         raise RuntimeError("closed or in-progress physical lane")
     sim = lanes[0]._sim
@@ -63,6 +63,8 @@ def _control_group(lanes, actions, *, observe, window_index):
                 row = lane._complete_substep(prepared, sdk_step)
                 reason = observe(deepcopy(row))
                 guard = row["guard_failure"]
+                if guard is None and "native_teacher_source_error" in row:
+                    guard = "native_teacher_source_error"
                 guard_failed |= guard is not None
                 reason = guard or reason
                 if reason is not None:

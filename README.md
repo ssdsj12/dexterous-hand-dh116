@@ -1,3 +1,5 @@
+The 64-lane Teacher PPO writer has CPU integration evidence for Pinch, Tripod and Power. Native dynamic training requires a grouped scene and episode owner. [Report](docs/superpowers/reports/2026-11-23-dh116-teacher64-rollout.md)
+
 The Teacher batch window and per-lane Reset path now has two-lane CPU evidence, including terminal and timeout GAE. Integration with live multi-environment training is pending. [Report](docs/superpowers/reports/2026-11-23-dh116-r21-batch-window-clock.md)
 
 The held-pose native coupling audit verified 6 Pinch, Tripod and Power capacity cases across 32 and 64 independent lanes. Multi-environment PPO collection and episode recovery remain pending. [Report](docs/superpowers/reports/2026-11-23-dh116-three-grasp-isaac-coupling.md)

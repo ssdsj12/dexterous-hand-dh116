@@ -92,7 +92,7 @@ def actual_source_case(monkeypatch,tmp_path,profile,sdk_templates,*,start_sdk=2)
     contract=SimpleNamespace(config=SimpleNamespace(preflight=dict(style="pinch",profile="approach_wiring_smoke_v1"),
         project=ROOT,episode_cap_s=20.),backend_profile=profile,
         reset_manifest=SimpleNamespace(data=lambda:dict(rod_state=dict(positions=rod.rope.nodes.tolist()))),
-        budget=limits,runtime=SessionBudget(limits))
+        budget=limits,runtime=SessionBudget(limits),reward_config=c.reward.config)
     # Only actual native parameter/health getters are replaced. Packets are
     # newly generated CPU-scoped current-ABI data, not old backend relabelling.
     _,_,template_parameters,_=raw_cpu_packets(profile)
@@ -264,3 +264,25 @@ def test_actual_adapter_passes_string_device_to_original_parameter_constructor(b
     assert source.reader.device == str(device)
     assert source.reader.sources["backend_sha256"] == backend_profile.binary_sha256
     np.testing.assert_array_equal(source.reader._nodes, nodes[0])
+
+
+def test_shared_substep_uses_the_same_real_sources_and_restores_hook(
+        monkeypatch, tmp_path, backend_profile, sdk_templates):
+    from scripts.verify_dh116_deformx_thumb_contact import step_thumb_physics
+
+    collector, source, ep, rod, _, sim, _ = actual_source_case(
+        monkeypatch, tmp_path, backend_profile, sdk_templates)
+    exchange = ep._exchange
+    pending = exchange._prepare_substep(torch.zeros((1, 24), dtype=torch.float64), 0)
+    sdk = step_thumb_physics(sim, sim.current_time_step_index, budget_end=1024)
+    row = exchange._complete_substep(pending, sdk)
+    assert row["rod"]["physics_step"] == sdk
+    assert row["material_director"]["source_instance_id"] == id(rod.rope)
+    assert row["native_teacher_health"]["last_error"] == 0
+    assert row["closure_geometry"]["source_complete"] is True
+    assert "native_teacher_source_error" not in row
+    collector.owner._restores.pop()()
+    pending = exchange._prepare_substep(torch.zeros((1, 24), dtype=torch.float64), 1)
+    sdk = step_thumb_physics(sim, sim.current_time_step_index, budget_end=1024)
+    row = exchange._complete_substep(pending, sdk)
+    assert "material_director" not in row

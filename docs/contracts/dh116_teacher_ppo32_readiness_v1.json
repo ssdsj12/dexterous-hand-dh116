@@ -869,5 +869,70 @@
       "measure and seal the installed SDK clock with the current source closure",
       "verify two live lanes with nonzero hand–rod reaction, timeout/terminal endpoint and isolated Reset"
     ]
+  },
+  "ppo64_followup": {
+    "basis_head": "238c535792c1637518062b33142d01948c14e8e4",
+    "report": "docs/superpowers/reports/2026-11-23-dh116-teacher64-rollout.md",
+    "requested_envs_per_grasp": 64,
+    "requested_concurrent_grasps": 3,
+    "current_native_instance_lock_scope": "host",
+    "cpu_integration_passed": 602,
+    "cpu_tests": {
+      "batch": {
+        "passed": 394,
+        "failed": 0,
+        "skipped": 0,
+        "log_sha256": "70560bffbe9ffeddd4a36d613a322959a8d997a53ba9305caaf0b5326da73076"
+      },
+      "policy_sources": {
+        "passed": 84,
+        "failed": 0,
+        "skipped": 0,
+        "log_sha256": "bc3cb71a4da491d308eb14d77024af94c73a53da35e7787f273f595f9843e107"
+      },
+      "contact_initial": {
+        "passed": 63,
+        "failed": 1,
+        "skipped": 0,
+        "log_sha256": "e12a56a253717e64d0e3ff6a26f4a5b9545a26b3ba0d11a5c0263a1834896862"
+      },
+      "contact_final_assertion": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "log_sha256": "f8f3f38e4f7a686bc421234970aa6043d418e94ee793640663dc3d2bba2f3d9c"
+      },
+      "registry": {
+        "passed": 60,
+        "failed": 0,
+        "skipped": 0,
+        "log_sha256": "9495f50a33c3ffc118ea3338c9d4eb08db05fbc2f64276951d1dd003eddde2dc"
+      },
+      "historical_tripod_baseline": {
+        "passed": 0,
+        "failed": 2,
+        "skipped": 0,
+        "log_sha256": "d284edded8bcf0b1ede51c0e6eefbea29c3487ab692e8d93210cd42255cf4e44"
+      },
+      "historical_tripod_current": {
+        "passed": 0,
+        "failed": 2,
+        "skipped": 0,
+        "log_sha256": "dc985f55ed0e364461e3355eef34757fb8cf7aaf80f9387b175f40a9516df285"
+      }
+    },
+    "cpu_integration_note": "Contact audit assertion was aligned with the current independent replay error and its single failed case passed a fresh rerun. The two historic manifest mismatches reproduced on original sources.",
+    "native_dynamic_envs_started": 0,
+    "native_ppo_updates": 0,
+    "teacher_admission": false,
+    "status": "cpu_rollout_verified_native_multi_lane_provider_pending",
+    "blockers": [
+      "native_worker_num_envs_1",
+      "live_lane_wise_critic_and_settlement_provider_missing",
+      "native_lane_local_reset_and_batch_journal_missing",
+      "host_global_isaac_instance_lock"
+    ],
+    "protected_files_sha256_verified": 528,
+    "historical_missing_checkpoints": 2
   }
 }

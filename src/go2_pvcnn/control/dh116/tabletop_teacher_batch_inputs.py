@@ -9,8 +9,8 @@ from .tabletop_native_teacher_model import INPUT_KEYS, NativeContextTeacher
 def pack_teacher_group(model, lane_packets, *, backend_profile):
     """Pack one observation per environment in ascending env_id order."""
     packets = tuple(lane_packets)
-    if type(model) is not NativeContextTeacher or not 2 <= len(packets) <= 32:
-        raise ValueError("one native Teacher and two to 32 source packets required")
+    if type(model) is not NativeContextTeacher or not 2 <= len(packets) <= 64:
+        raise ValueError("one native Teacher and two to 64 source packets required")
     contexts = [packet[3] for packet in packets]
     if any(not isinstance(context, TaskContextPacket) or len(context.metadata.identities) != 1
            for context in contexts):

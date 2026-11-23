@@ -127,9 +127,10 @@ class _NativeGeometrySources:
 
     def _install_exchange(self):
         owner=self.owner
-        exchange=owner.episode._exchange;step=exchange._step
-        def enriched(action,substep):
-            row=step(action,substep)
+        exchange=owner.episode._exchange
+        complete=exchange._complete_substep
+        def enriched(pending,sdk):
+            row=complete(pending,sdk)
             self._raw=deepcopy(row["rod"])
             # Failure is attached and delivered before being raised by observe.
             # Original physical state is already advanced; never lose that row.
@@ -151,8 +152,9 @@ class _NativeGeometrySources:
                 self._error=exc
                 row["native_teacher_source_error"]=dict(type=type(exc).__name__,message=str(exc))
             return row
-        exchange._step=enriched
-        owner._restores.append(lambda:setattr(exchange,"_step",step))
+        # Single-lane and shared-SDK exchange both complete through this boundary.
+        exchange._complete_substep=enriched
+        owner._restores.append(lambda:setattr(exchange,"_complete_substep",complete))
 
     def _capture_geometry(self,row,owner):
         return self.distance.geometry.capture(row,sim=owner.sim,
@@ -338,9 +340,9 @@ class NativeContactTripodSources(NativeTripodSources):
         from .tabletop_native_teacher_contact_measurement import capture_supported_contact
         super()._install_exchange()
         exchange = self.owner.episode._exchange
-        step = exchange._step
-        def measured(action, substep):
-            row = step(action, substep)
+        complete = exchange._complete_substep
+        def measured(pending, sdk):
+            row = complete(pending, sdk)
             try:
                 contact = capture_supported_contact(row["rod"], grasp=self.STYLE)
                 row["teacher_contact_guard"] = dict(
@@ -353,12 +355,12 @@ class NativeContactTripodSources(NativeTripodSources):
                 self._error = error
                 row["native_teacher_source_error"] = dict(type=type(error).__name__, message=str(error))
             return row
-        exchange._step = measured
-        self.owner._restores.append(lambda: setattr(exchange,"_step",step))
+        exchange._complete_substep = measured
+        self.owner._restores.append(lambda: setattr(exchange,"_complete_substep",complete))
 
-    def _endpoint(self, clock, distance, health, guard):
+    def _endpoint(self, clock, distance, health, guard, *, hands=None):
         from dataclasses import replace
-        endpoint = super()._endpoint(clock, distance, health, guard)
+        endpoint = super()._endpoint(clock, distance, health, guard, hands=hands)
         if not getattr(self,"_contact_ready",False):
             return endpoint  # Real Reset2 remains unprimed; never invent contact.
         contact = self.owner.context.contact_readback
