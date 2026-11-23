@@ -52446,6 +52446,20 @@
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
       "ppo_updates": 0,
       "teacher_admission": false
+    },
+    "teacher.shared-source-model-v1": {
+      "title": "Explicit shared source, frame-normalized observations and CUDA model update",
+      "executor": "offline",
+      "status": "passed",
+      "scope": "source/model CPU and actual CUDA regression only",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.shared-mesh-local-reset-v1"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-teacher-source.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "native_ppo_updates": 0,
+      "teacher_admission": false
     }
   },
   "execution_target": {

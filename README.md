@@ -4001,3 +4001,5 @@ Shared solver ownership and the two-lane Isaac startup probe are recorded in doc
 Real two-lane shared-solver contact replay and remaining PPO integration are documented in docs/superpowers/reports/2026-11-23-dh116-shared-native-contact-replay.md.
 
 Shared CUDA selected mesh Reset and actual two-lane DH116 continuation naturally exit 0; Teacher PPO remains pending. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-mesh-local-reset.md).
+
+Explicit shared parent/row Teacher observations and CUDA model update regression: 57 tests passed; live shared PPO remains pending. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-teacher-source.md).

@@ -41,13 +41,13 @@ class _StructuredRollout(OnPolicyRollout):
 
 
 class DeformablePPOTrainer(PPOTrainer):
-    """Independent CPU trainer using the original update, GAE and KL guard."""
+    """Structured trainer with explicit device; original CPU GAE/update/KL guard."""
 
-    def __init__(self, model, config=None, *, rollout_steps=32, num_envs=1):
+    def __init__(self, model, config=None, *, rollout_steps=32, num_envs=1, device="cpu"):
         if not isinstance(model, DeformablePrivilegedTeacher):
             raise ValueError("independent deformable Teacher model required")
         verify_base_ppo_source()
-        super().__init__(model, config, rollout_steps=rollout_steps, num_envs=num_envs, device="cpu")
+        super().__init__(model, config, rollout_steps=rollout_steps, num_envs=num_envs, device=device)
 
     def _new_rollout(self):
         self.rollout = _StructuredRollout(self.rollout_steps, self.num_envs,

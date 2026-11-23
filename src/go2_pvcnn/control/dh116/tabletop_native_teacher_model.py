@@ -144,25 +144,29 @@ def verify_native_teacher_identity(observed,expected):
         raise ValueError("native context Teacher model identity differs")
 
 
+
+def initialize_native_network(self, identity, backend_profile, context_mode, initial_std):
+    # Initialize layers/distribution without constructing a historical
+    # backend identity and then relabelling it as current native proof.
+    PrivilegedTeacher.__init__(self,initial_std=initial_std)
+    self._model_identity=identity
+    self._backend_profile=backend_profile
+    self.backend_sha256=backend_profile.binary_sha256
+    self.context_mode=context_mode
+    def common_encoder():
+        return nn.Sequential(nn.Linear(66,256),nn.ELU(),nn.Linear(256,256),nn.ELU())
+    def context_encoder():
+        return nn.Sequential(nn.Linear(100,64),nn.ELU(),nn.Linear(64,64),nn.ELU())
+    self.actor,self.critic=common_encoder(),common_encoder()
+    self.actor_rod,self.critic_rod=_MaterialEncoder(64),_MaterialEncoder(64)
+    self.actor_context,self.critic_context=context_encoder(),context_encoder()
+    self.actor_head,self.critic_head=nn.Linear(448,24),nn.Linear(448,1)
+
 class NativeContextTeacher(DeformablePrivilegedTeacher):
     """Independent weights/identity, with the original three-part PPO protocol."""
     def __init__(self,config,*,backend_profile,context_mode="approach_wiring_smoke_v1"):
         identity=model_contract(config,backend_profile,context_mode)
-        # Initialize layers/distribution without constructing a historical
-        # backend identity and then relabelling it as current native proof.
-        PrivilegedTeacher.__init__(self,initial_std=config["model"]["initial_std"])
-        self._model_identity=identity
-        self._backend_profile=backend_profile
-        self.backend_sha256=backend_profile.binary_sha256
-        self.context_mode=context_mode
-        def common_encoder():
-            return nn.Sequential(nn.Linear(66,256),nn.ELU(),nn.Linear(256,256),nn.ELU())
-        def context_encoder():
-            return nn.Sequential(nn.Linear(100,64),nn.ELU(),nn.Linear(64,64),nn.ELU())
-        self.actor,self.critic=common_encoder(),common_encoder()
-        self.actor_rod,self.critic_rod=_MaterialEncoder(64),_MaterialEncoder(64)
-        self.actor_context,self.critic_context=context_encoder(),context_encoder()
-        self.actor_head,self.critic_head=nn.Linear(448,24),nn.Linear(448,1)
+        initialize_native_network(self, identity, backend_profile, context_mode, config["model"]["initial_std"])
 
     def pack(self,*args,**kwargs):
         raise ValueError("new model requires pack_native_inputs or explicit pack_cpu_fixture")

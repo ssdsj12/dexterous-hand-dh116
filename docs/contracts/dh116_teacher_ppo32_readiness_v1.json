@@ -1834,5 +1834,44 @@
       "Pinch/Tripod/Power 128 or 512 Isaac PPO",
       "untrained Pinch non-target clearance guard"
     ]
+  },
+  "shared_teacher_source": {
+    "status": "shared_source_model_gpu_update_regression_passed_native_rollout_pending",
+    "source_family": "shared_batched_solver_v1",
+    "cpu": {
+      "passed": 11,
+      "skipped": 1,
+      "failed": 0,
+      "log_sha256": "a86d58f69152de6231f90aa7f88445ce70c1e68313d7bb9a0fbe4ec4caca8fda"
+    },
+    "cuda_regression": {
+      "gpu": 3,
+      "passed": 57,
+      "failed": 0,
+      "seconds": 49.04,
+      "log_sha256": "fdd74031ea80751273f7b29df0bedb8a4b06bd1aadca5d0ef0d393ab1dd03afb",
+      "actual_cuda_model_update": true,
+      "native_isaac": false
+    },
+    "scope": {
+      "live_isaac_ppo_updates": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false
+    },
+    "origin_test": {
+      "binary_exact_inputs_action_atol": 1e-06,
+      "initial_fp32_strain_difference": 5.9604644775390625e-06,
+      "failed_log_sha256": "64f6c7b0950304e63865396495fc1fa03ad7b920ae433212e0c7f9bc0dd61965",
+      "rounding_or_physical_guard_change": false
+    },
+    "source_regression": {
+      "rod_uid_binding_red_sha256": "ed1312ca3bce52a6d5de5ee6acd64cf17bad9760c54e3297232bda6935d583d3"
+    },
+    "pending": [
+      "wire actual shared capture into physical windows and original R0 settlement",
+      "same-policy real two-lane PPO and local Reset continuation",
+      "three-grasp 128/512 Isaac training"
+    ],
+    "report": "docs/superpowers/reports/2026-11-23-dh116-shared-teacher-source.md"
   }
 }
