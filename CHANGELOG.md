@@ -1,3 +1,5 @@
+Add committed Teacher control windows with lane-local Reset and a current-source CPU clock audit. 211 selected CPU regressions pass. [Report](docs/superpowers/reports/2026-11-23-dh116-r21-batch-window-clock.md)
+
 Added grasp-specific native coupling probes with individual SDF ownership, lane-local Reset and same-lane reaction audit. 6 capacity cases completed with natural exit. [Report](docs/superpowers/reports/2026-11-23-dh116-three-grasp-isaac-coupling.md)
 
 Verified the original Power hand and support scene at 32 then 64 parallel Isaac lanes, with isolated wrist-state restore and natural exit. [Report](docs/superpowers/reports/2026-11-23-dh116-isaac-32-64-scene-capacity.md)

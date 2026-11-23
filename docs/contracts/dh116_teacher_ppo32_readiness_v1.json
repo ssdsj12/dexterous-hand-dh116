@@ -827,5 +827,47 @@
         }
       }
     }
+  },
+  "r21_batch_window": {
+    "basis_head": "0698e564cd4d3e673a57c6049ae422dd22a77485",
+    "status": "cpu_window_verified_native_collector_pending",
+    "report": "docs/superpowers/reports/2026-11-23-dh116-r21-batch-window-clock.md",
+    "cpu": {
+      "current_passed": 211,
+      "current_failed": 0,
+      "historical_passed": 6,
+      "historical_failed": 16,
+      "current_log_sha256": "d35b800a90f97f1a09bfcff588353117e79856a3c18ca87e531d6b074571ae39",
+      "historical_log_sha256": "b8e823e5e4b768cbdc70d92fdc84adce507b97f1e4a733014b6a2ca8c6e4be19"
+    },
+    "clock_probe": {
+      "schema": "dh116-current-clock-consumers-v3",
+      "source_sha256": {
+        "tabletop_deformable_bimanual_step.py": "e144640a0310ab4824e482a2d643165239a74bbfdee66cae42289ff8cb3ee7f2",
+        "tabletop_deformable_live_geometry.py": "19e2535dc9ba86556d41284f15fc65bbf30ab7f261653488f4f03e64fe8a4b17",
+        "tabletop_deformable_dual_evidence.py": "df54cff14e78ab261b8b76e5e488d7423a21dfb91fc5d13e397a1c35c07a1150",
+        "tabletop_deformable_dual_hand_episode.py": "95a8a1f71f1ec4c75d7335c99fcf6c764f4a36f53e33bf7113eef173738934f6",
+        "tabletop_dual_hand_rod_runtime.py": "2526072d03efbd2d4c37818b4aaca8f79ca2fc51ed55e9c8b6bdb7a8c1eb94ed",
+        "tabletop_native_clock_consumers_v2.py": "0997ddefd0cfec777830e83ff78e92ef07513e9acbc4f92b4605d6fe4ae11fe8",
+        "tabletop_native_training_clock.py": "90bc0e7bab5117d5724d35ea5faaee25cb378981b1f3d58815d295c34439a32b"
+      },
+      "table_sha256": "1bd37d2f684feeed41da7b99cc872cd3ca05b69a2ea5690f35c378d8b9a162e8",
+      "cpu_endpoints_passed": 32,
+      "actual_sdk_precision_qualified": false,
+      "native_ready": false
+    },
+    "policy_steps_per_window": 1,
+    "sdk_steps_per_full_window": 8,
+    "control_lane_limit": 32,
+    "native_dynamic_envs": 0,
+    "native_ppo_updates": 0,
+    "teacher_admission": false,
+    "protected_source_hashes_verified": 528,
+    "historical_checkpoints_present": 0,
+    "pending": [
+      "bind actual per-lane Reset, reward and rollout sources to the grouped collector",
+      "measure and seal the installed SDK clock with the current source closure",
+      "verify two live lanes with nonzero hand–rod reaction, timeout/terminal endpoint and isolated Reset"
+    ]
   }
 }
