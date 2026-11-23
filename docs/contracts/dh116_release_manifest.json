@@ -36263,6 +36263,27 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.shared-native-inputs-v1",
+      "branch": "11-17",
+      "status": "two_lane_actual_shared_input_reset_and_continuation_verified",
+      "native_captures": 29,
+      "sdk_steps": 226,
+      "native_ppo_updates": 0,
+      "cpu_passed": 36,
+      "cpu_skipped": 2,
+      "cuda_regression_passed": 60,
+      "natural_exit_code": 0,
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-native-teacher-inputs.md",
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "eac05f8aa2c7483d23cb6f69387c067c0c24dcef",
+        "source_tree": "85a55270a200d3b1f803970ffd73f559b88e0041",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
