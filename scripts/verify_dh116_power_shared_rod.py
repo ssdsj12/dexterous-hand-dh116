@@ -379,11 +379,27 @@ def supported_action_schedule(action, remaining_sdk):
     return schedule
 
 
+def prepare_finger_hold(schedule, *, task, first_sdk, hold_from_sdk):
+    """Validate held-finger channels after the preserved replay prefix."""
+    if hold_from_sdk is None:
+        return None
+    if task not in ("pinch", "tripod"):
+        raise ValueError("held-finger phases are only supported for Pinch and Tripod")
+    from go2_pvcnn.control.dh116.tabletop_grasp_finger_hold import GraspFingerHold
+
+    offset = hold_from_sdk - first_sdk if type(hold_from_sdk) is int else -1
+    if offset < 0 or offset % 8 or offset // 8 >= len(schedule):
+        raise ValueError("held fingers must begin at an existing control window boundary")
+    hold = GraspFingerHold(task)
+    hold.verify_action(np.asarray(schedule)[offset // 8:])
+    return hold
+
+
 def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                          clearance_shapes, setup, action, sdk_end, verify_support_continuity=False,
                          task="power", support_scene=None, waypoint_archive=None, precontact_archive=None,
                          distal_probe=None, power_open_boundary_sdk=None, force_seating=None, power_route=None,
-                         coordinated_seating=None, replay_gate=None):
+                         coordinated_seating=None, replay_gate=None, fixed_fingers_from_sdk=None):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -394,6 +410,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
     try:
         start = power.clock()
         schedule = supported_action_schedule(action, sdk_end-start["physics_step"])
+        finger_hold = prepare_finger_hold(schedule, task=task, first_sdk=start["physics_step"],
+                                          hold_from_sdk=fixed_fingers_from_sdk)
         root = torch.tensor(setup["root_pose_wxyz"], dtype=torch.float64)[None]
         current_geometry = {}
 
@@ -469,6 +487,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 emitted = dict(row, sdk_hand_geometry=current_geometry.copy())
             encoded = encode_owned(emitted)
             native.write_new(output/f"{task}_control_{row['physics_step']}.json", encoded)
+            if finger_hold is not None and row["physics_step"] > fixed_fingers_from_sdk:
+                finger_hold.observe(encoded)
             if replay_gate is not None:
                 replay_gate.observe(encoded)
             if power_open_boundary_sdk is not None and row["physics_step"] == power_open_boundary_sdk:
@@ -589,6 +609,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                              minimum_pad_force_n=loads, measured_hand=side,
                              previously_qualified=evidence["per_hand"][side]["loaded"]))
                 command = selected
+            if finger_hold is not None and sdk >= fixed_fingers_from_sdk:
+                finger_hold.verify_action(command)
             result = control.control(torch.tensor(command, dtype=torch.float64)[None], observe=observe)
             completed.append(result)
             if result["termination_reason"] or result["physical_samples"] != 8:
@@ -605,6 +627,11 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
             raise ValueError(f"{task} controlled handoff stopped: {aggregate['termination_reason']}")
         if any(feedback.next_sdk != feedback.stop_sdk for feedback in bilateral_feedback.values()):
             raise ValueError("bilateral feedback windows were not completely consumed")
+        if finger_hold is not None:
+            native.write_new(output/f"{task}_fixed_finger_hold.json", {
+                "held_action_indices": list(finger_hold.held_action_indices),
+                "first_pre_action_sdk": fixed_fingers_from_sdk, "last_sdk": sdk_end,
+                "verified_readback_rows": sdk_end-fixed_fingers_from_sdk, "teacher_admission": False})
         return aggregate
     finally:
         sim = owners = trace = power = bindings = control = row = None
@@ -615,7 +642,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                task="power", live_support_scene=None, tripod_archive=None, waypoint_archive=None,
                precontact_archive=None, pinch_archive=None, distal_contact=None,
                power_open_archive=None, power_open_boundary_sdk=None, power_route=None,
-               replay_gate=None):
+               replay_gate=None, fixed_fingers_from_sdk=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -652,6 +679,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                           or (task == "pinch" and pinch_archive is not None))
             if not compatible or replay_gate.task != task or action_after_settle is None:
                 raise ValueError("same-task control schedule and archived handoff required for replay interlocks")
+        if fixed_fingers_from_sdk is not None and action_after_settle is None:
+            raise ValueError("held fingers require an explicit native control schedule")
         if action_after_settle is not None and (supported_acquire is None or not require_no_hand_contact):
             raise ValueError("Power action must follow the measured hands-clear support interval")
         if supported_acquire is None:
@@ -812,7 +841,7 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 power_open_boundary_sdk=power_open_boundary_sdk,
                 force_seating=None if distal_contact is None else distal_contact.get("seating"), power_route=power_route,
                 coordinated_seating=None if distal_contact is None else distal_contact.get("coordinated_seating"),
-                replay_gate=replay_gate)
+                replay_gate=replay_gate, fixed_fingers_from_sdk=fixed_fingers_from_sdk)
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,

@@ -231,6 +231,11 @@ def freeze(args):
                     preserved_scope="one right-only precontact window after exact live SDK 568 replay")
         plan["replay_interlocks"].update(live_sdk=END_SDK, end_sdk=sdk_end,
                                          live_receipt_sha256=LIVE_OUTER_SHA, live_proof_sha256=LIVE_PROOF_SHA)
+    if getattr(args, "fixed_nonparticipating_fingers", False):
+        if live_anchor is None:
+            raise ValueError("held Tripod fingers require the separately bound SDK 568 continuation")
+        hold = shared.prepare_finger_hold(actions, task="tripod", first_sdk=PARKED_SDK, hold_from_sdk=END_SDK)
+        plan["fixed_finger_phase"] = {"from_sdk": END_SDK, "held_action_indices": list(hold.held_action_indices)}
     mode = "tripod_902_precontact_interlocked" if live_anchor is None else "tripod_902_live_continuation_interlocked"
     plan["budget"].update(mode=mode, sdk_steps=sdk_end,
                           control_steps=len(actions), solver_steps=(sdk_end - 2) * shared.SUBSTEPS,
@@ -252,6 +257,7 @@ def main(argv=None):
     parser.add_argument("--verify-existing-plan", action="store_true")
     parser.set_defaults(bilateral_reference=None, bilateral_screen=None, verify_near_open_settling=True,
                         measure_contact_evidence=False)
+    parser.add_argument("--fixed-nonparticipating-fingers", action="store_true")
     args = parser.parse_args(argv)
     if args.verify_existing_plan and args.approved_frozen_sha256 is not None:
         parser.error("CPU-only verification and native execution are exclusive")
@@ -287,7 +293,8 @@ def main(argv=None):
                   live_support_scene=config["support_scene"], waypoint_archive=waypoint,
                   precontact_archive=precontact,
                   distal_contact=dict(plan["right_tripod_distal_contact"], archive=distal),
-                  replay_gate=gate))
+                  replay_gate=gate,
+                  fixed_fingers_from_sdk=plan.get("fixed_finger_phase", {}).get("from_sdk")))
     gate.finish()
     return 0
 

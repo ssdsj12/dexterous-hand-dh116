@@ -203,6 +203,9 @@ def freeze(args):
     plan.update(version="dh116-902-pinch-native-withdrawal-v1", screen=config_report,
                 action_schedule=recipe["actions"], pinch_withdrawal=recipe,
                 preserved_scope="hands-clear fixed-wrist Pinch index withdrawal after exact SDK432 replay")
+    if getattr(args, "fixed_nonparticipating_fingers", False):
+        hold = shared.prepare_finger_hold(actions, task="pinch", first_sdk=PARKED_SDK, hold_from_sdk=ANCHOR_SDK)
+        plan["fixed_finger_phase"] = {"from_sdk": ANCHOR_SDK, "held_action_indices": list(hold.held_action_indices)}
     plan["budget"].update(mode="902_pinch_index_only_withdrawal", sdk_steps=END_SDK,
                           control_steps=len(actions), solver_steps=(END_SDK - 2) * shared.SUBSTEPS,
                           new_power_mesh_registrations=6, soft_wall_seconds=300)
@@ -219,6 +222,7 @@ def main(argv=None):
     controls = parser.add_mutually_exclusive_group()
     controls.add_argument("--verify-existing-plan", action="store_true")
     controls.add_argument("--approved-frozen-sha256")
+    parser.add_argument("--fixed-nonparticipating-fingers", action="store_true")
     args = parser.parse_args(argv)
     args.verify_near_open_settling = True
     args.measure_contact_evidence = False
@@ -248,7 +252,8 @@ def main(argv=None):
     reset.execute(plan, acquire_operation=partial(shared.run_shared, profile=BackendProfile.load(ROOT),
         args=args, supported_acquire=acquire, sdk_end=END_SDK, task="pinch", require_no_hand_contact=True,
         live_support_scene=config["support_scene"], action_after_settle=plan["action_schedule"],
-        pinch_archive=parked, replay_gate=gate))
+        pinch_archive=parked, replay_gate=gate,
+        fixed_fingers_from_sdk=plan.get("fixed_finger_phase", {}).get("from_sdk")))
     gate.finish()
     return 0
 
