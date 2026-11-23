@@ -34637,6 +34637,37 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-free-wrist-refit",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-free-wrist-refit.md",
+      "readiness": "docs/contracts/dh116_teacher_power_free_wrist_refit_v1.json",
+      "status": "passed_cpu_unilateral_static_power_candidate",
+      "cpu_tests": {
+        "passed": 196,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "right_static_candidates": 1,
+      "left_static_candidates": 0,
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "721de6d73a04a163f225bbae55ef2582739405a8",
+        "source_tree": "7b5cdecfe879c5a83d3cfd1b40fc16e601228516",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
