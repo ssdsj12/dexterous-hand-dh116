@@ -35835,6 +35835,35 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-pose-current-reset-smoke8-v3",
+      "branch": "11-17",
+      "status": "current_reset_and_native_ppo_diagnostic_verified",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-supported-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_power_ppo_readiness_v1.json",
+      "cpu_focused": {
+        "passed": 140,
+        "failed": 0
+      },
+      "cpu_registry_and_rewards": {
+        "passed": 345,
+        "failed": 0
+      },
+      "native_qualification": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "new_ppo_updates": 1,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ebe251311974e70ac14d1e238ebaa282cecdae4d",
+        "source_tree": "f7670a343ff05d91b9297249fd7795ca6bdf7189",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

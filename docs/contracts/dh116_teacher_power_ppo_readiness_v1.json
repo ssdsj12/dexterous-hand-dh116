@@ -1,7 +1,7 @@
 {
   "version": "dh116-teacher-power-ppo-readiness-v1",
   "style": "power",
-  "status": "native_reset_verified_ppo_clock_fix_prepared",
+  "status": "three_poses_have_native_ppo_diagnostic",
   "cpu": {
     "passed": 29,
     "failed": 0,
@@ -19,13 +19,25 @@
       "passed": 140,
       "failed": 0,
       "measured_sdk17_to_18_replay": true
+    },
+    "scheduler_and_reward": {
+      "passed": 345,
+      "failed": 0
+    },
+    "expanded_earlier_revision": {
+      "passed": 1224,
+      "failed": 53,
+      "errors": 84,
+      "baseline_reproduced_failed": 49,
+      "baseline_reproduced_errors": 84,
+      "changed_test_expectations": 4
     }
   },
   "sdk_setup_steps": 2,
   "episode_resets": 1,
   "reset_only_solver_substeps": 0,
   "native_reset_verified": true,
-  "ppo_updates": 0,
+  "ppo_updates": 1,
   "grasp_qualified": false,
   "teacher_admission": false,
   "report": "docs/superpowers/reports/2026-11-23-teacher-power-supported-reset.md",
@@ -64,5 +76,43 @@
     "separate_reset_verified": true,
     "raw_pair_capture_supported_for_batched_solver": false,
     "production_multi_env_verified": false
+  },
+  "three_pose_updates": {
+    "pinch": 1,
+    "tripod": 1,
+    "power": 1
+  },
+  "multi_environment_ppo_verified": false,
+  "power_ppo_v3": {
+    "tested_head": "ebe251311974e70ac14d1e238ebaa282cecdae4d",
+    "receipt_sha256": "edc014794cc86775e9684cf7a03fac269ca4f7b8600c21b72b366480d79d5e24",
+    "independent_audit_sha256": "87ba1080a35ecf4f6cba704891aeaf6c1902c6665a17dcfcd28673cf21730fe7",
+    "checkpoint_sha256": "da21f5f273b1f604d8563c276e1abeeee1c393d53b3a2a62b4447ba5b7617ace",
+    "raw_journal_sha256": "8792679472ac5b5af4f80199e96e84c29d871362a630b4bd7121d3ef976fc016",
+    "updates": 1,
+    "duration_s": 173.27223946899176,
+    "outer_exit_code": 0,
+    "inferior_exit_code": 0,
+    "setup_sdk_steps": 2,
+    "control_windows": 8,
+    "measured_sdk_steps": 64,
+    "internal_solver_substeps": 768,
+    "parameters_l2": 0.00429203475484112,
+    "exact_kl": 0.0016722902655601501,
+    "contact_pairs": {
+      "support_0": 768,
+      "support_1": 768,
+      "hand": 0
+    },
+    "peak_active_error_rad_reset": [
+      0.08000005709474856,
+      0.08000001126381706
+    ],
+    "peak_active_error_rad_rollout_end": [
+      0.08024325720327352,
+      0.08486981764614365
+    ],
+    "min_rod_z_m_end": 0.35714781284332275,
+    "net_lift_verified": false
   }
 }
