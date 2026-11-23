@@ -35969,6 +35969,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.r21-batch-window-current-clock-v1",
+      "branch": "11-17",
+      "status": "cpu_window_verified_native_collector_pending",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-r21-batch-window-clock.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "cpu_tests": {
+        "current_passed": 211,
+        "current_failed": 0,
+        "historical_passed": 6,
+        "historical_failed": 16
+      },
+      "native_dynamic_envs": 0,
+      "native_ppo_updates": 0,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "remote_branch": "11-17",
+        "source_commit": "b45f63dc05a6a0af75f0c631d4ee708c8deaddb2",
+        "source_tree": "bcd17a6bd4750d7184df3d89c8f65f353bc24745",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
