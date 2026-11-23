@@ -36108,6 +36108,33 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.shared-rod-owner-v1",
+      "branch": "11-17",
+      "status": "native_static_startup_verified_contact_unproven",
+      "cpu_passed": 53,
+      "cpu_skipped": 1,
+      "gpu_passed": 54,
+      "solver_128_grasp_probe_cases": 3,
+      "native_sdk_steps": 18,
+      "isaac_envs": 2,
+      "nonzero_hand_reaction_steps": [
+        0,
+        0
+      ],
+      "native_ppo_updates": 0,
+      "teacher_admission": false,
+      "native_receipt_sha256": "383606fb0ab5b1d6e6d6fb1352c9a7ba2b3db0909fc4e41650f7ce5ec94a62b3",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-rod-owner.md",
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0ed10868e7c392da96131fd1d878ab6e2f0c67f2",
+        "source_tree": "f7c68921ed516cdc02ecb61249fd90a76df6828a",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
