@@ -51348,6 +51348,57 @@
         "left_continuous_route_verified": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-bilateral-detour": {
+      "title": "Certify left Power detour while holding the right target on the archived rod",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-left-contact-refit"
+      ],
+      "tests": [
+        "tests/test_dh116_power_partial_opposition.py",
+        "tests/test_dh116_power_partial_stage_evidence.py",
+        "tests/test_dh116_power_measured_reseat.py",
+        "tests/test_dh116_power_fixed_wrist_digits.py",
+        "tests/test_dh116_power_material_reach.py",
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_wire_fixed_pregrasp_native_reset.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dh116_power_thumb_clearance.py",
+        "tests/test_supported_wire_material_variants.py",
+        "tests/test_wire_variant_isaac_reset.py",
+        "tests/test_supported_wire_factorial_holdouts.py",
+        "tests/test_supported_wire_holdout_resets.py",
+        "tests/test_dh116_power_thumb_route.py",
+        "tests/test_dh116_owned_approach.py",
+        "tests/test_dh116_swept_wrist_projection.py",
+        "tests/test_dh116_power_preload.py",
+        "tests/test_dh116_power_surface_pairs.py",
+        "tests/test_dh116_wire_common_pregrasp.py",
+        "tests/test_dh116_power_left_contact_refit.py",
+        "tests/test_dh116_power_bilateral_detour.py",
+        "tests/test_dh116_pinch_initial_table_clearance.py",
+        "tests/test_pinch_initial_geometry_v2.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-bilateral-detour.md",
+      "readiness": "docs/contracts/dh116_teacher_power_bilateral_detour_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_fixed_rod_sequential_power_partial_target_geometry",
+        "cpu_passed": 210,
+        "shared_pinch_passed": 37,
+        "left_control_windows": 307,
+        "left_sdf_ticks": 2457,
+        "continuous_target_geometry_proved": true,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -302,6 +302,11 @@ def path_displacement_bound(geometry, active_q, delta, *, cooked=False):
     This bounds unsampled points between adjacent commanded FK states.
     """
     full_delta = dict(zip(JOINTS, expand(np.asarray(active_q)+delta)-expand(active_q)))
+    return joint_rate_displacement_bound(geometry, full_delta, cooked=cooked)
+
+
+def joint_rate_displacement_bound(geometry, joint_rates, *, cooked=False):
+    """Per-link point speed from full joint rates and fixed lever-arm bounds."""
     by_child = {e[2]: e for e in geometry["fk"].edges}
     out = {}
     shapes = geometry["cooked_pads"] if cooked else geometry["source_colliders"]
@@ -313,7 +318,7 @@ def path_displacement_bound(geometry, active_q, delta, *, cooked=False):
             joint, parent, _, t0, t1, axis = by_child[path]
             radius = downstream+float(np.linalg.norm(t1[:3, 3]))
             if axis is not None:
-                distance += abs(full_delta[joint])*radius
+                distance += abs(joint_rates[joint])*radius
             downstream = radius+float(np.linalg.norm(t0[:3, 3]))
             path = parent
         out[name] = distance

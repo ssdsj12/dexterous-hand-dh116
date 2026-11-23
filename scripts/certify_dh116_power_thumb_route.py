@@ -8,13 +8,13 @@ from pathlib import Path
 import numpy as np
 from scipy.spatial.transform import Rotation
 
-from go2_pvcnn.control.dh116.linear_coupling import expand
+from go2_pvcnn.control.dh116.linear_coupling import JOINTS, coupling_matrix, expand
 from go2_pvcnn.control.dh116.tabletop_deformable_wrist_projection import CLEARANCE_M
 from go2_pvcnn.control.dh116.tabletop_free_wrist_grasp import CONTRACT as WRIST
 from go2_pvcnn.control.dh116.tabletop_measured_closure_geometry import rod_support_lower
 from go2_pvcnn.control.dh116.tabletop_polyline_support_certificate import RADIUS
 from go2_pvcnn.control.dh116.tabletop_surface_contract import ACTION_CONTRACT
-from scripts.audit_dh116_pinch_initial_pose import checked_json, path_displacement_bound
+from scripts.audit_dh116_pinch_initial_pose import checked_json, joint_rate_displacement_bound, path_displacement_bound
 from scripts.audit_dh116_power_fixed_wrist_digits import (
     align_measured_wrist, load_geometry, load_measured_palm_boundary, measured_palm_boundary,
 )
@@ -36,7 +36,7 @@ SIDES = ("left", "right")
 STAGES = ("wrist_reseat", "thumb_first", "two_pad_closure")
 
 
-def compile_stage(start, end, *, retreat_world_m, flex_exponents):
+def compile_stage(start, end, *, retreat_world_m, flex_exponents, joint_detour_rad=None):
     """Return 60 Hz target chords and their normalized 24D command rows."""
     delta = end - start
     translation = ACTION_CONTRACT["translation_rate_m_s"]
@@ -46,6 +46,11 @@ def compile_stage(start, end, *, retreat_world_m, flex_exponents):
     rpy_speed = np.linalg.norm(delta[:, 3:6], axis=1)
     joint_speed = np.abs(delta[:, 6:])
     joint_speed[:, 1] *= flex_exponents
+    if joint_detour_rad is not None:
+        joint_detour_rad = np.asarray(joint_detour_rad, dtype=float)
+        if joint_detour_rad.shape != (2, 6) or not np.isfinite(joint_detour_rad).all():
+            raise ValueError("finite per-hand joint detour required")
+        joint_speed += np.pi * np.abs(joint_detour_rad)
     duration = max(xyz_speed.max() / translation, rpy_speed.max() / rotation, joint_speed.max() / joint)
     # Leave one control window at an exact rate boundary instead of
     # rounding the discrete normalized command just above its hard limit.
@@ -55,6 +60,8 @@ def compile_stage(start, end, *, retreat_world_m, flex_exponents):
     states[:, :, :3] -= np.sin(np.pi * f)[:, None, None] * retreat_world_m
     for hand, exponent in enumerate(flex_exponents):
         states[:, hand, 6:] = thumb_path(start[hand, 6:], end[hand, 6:], f, flex_exponent=exponent)
+    if joint_detour_rad is not None:
+        states[:, :, 6:] += np.sin(np.pi * f)[:, None, None] * joint_detour_rad
     # Set the exact poses at the transitions between compiled stages.
     states[0] = start
     states[-1] = end
@@ -147,8 +154,15 @@ def shape_speed_bounds(shapes, root, *, linear_speed, angular_speed, joint_motio
     }
 
 
+def maximum_joint_rates(states):
+    """Absolute slopes of every full joint over the normalized command interval."""
+    slopes = np.diff(states[:, 6:], axis=0) * (len(states) - 1)
+    full_slopes = slopes @ coupling_matrix().T
+    return dict(zip(JOINTS, np.abs(full_slopes).max(axis=0), strict=True))
+
+
 def prove_stage(hand, states, targets, nodes, scene, *, allow_concurrent=False,
-                max_samples=4096, max_seconds=150.):
+                allow_joint_reversal=False, require_palm_reach=True, max_samples=4096, max_seconds=150.):
     model, seed, origin = hand["model"], hand["seed"], hand["origin"]
     grid = hand["palm_grid"]
     offsets = states[:, :3] - origin
@@ -159,8 +173,8 @@ def prove_stage(hand, states, targets, nodes, scene, *, allow_concurrent=False,
         expand(state[6:])
     start, end = states[[0, -1]]
     start_pose = root_pose(start, seed)
-    endpoints = [endpoint(model, root_pose(state, seed), state[6:], nodes, scene, grid, targets=targets)
-                 for state in (start, end)]
+    endpoints = [endpoint(model, root_pose(state, seed), state[6:], nodes, scene, grid, targets=targets,
+                          require_palm_reach=require_palm_reach) for state in (start, end)]
     delta = np.diff(states, axis=0) * (len(states) - 1)
     xyz_speed = float(np.linalg.norm(delta[:, :3], axis=1).max())
     angular_speed = float(np.abs(delta[:, 3:6]).sum(axis=1).max())
@@ -168,15 +182,19 @@ def prove_stage(hand, states, targets, nodes, scene, *, allow_concurrent=False,
     # its total travel. The ordinary stage mode holds wrist or joints fixed.
     q_delta = end[6:] - start[6:]
     moving = np.abs(q_delta) > 0.
-    concurrent = (xyz_speed > 0. or angular_speed > 0.) and moving.any()
-    if ((concurrent and not allow_concurrent) or np.any(delta[:, 6:][:, ~moving] != 0.)
-            or np.any(delta[:, 6:] * q_delta < 0.)):
-        raise ValueError("Power swept bounds require monotone joint motion and explicit concurrent mode")
+    concurrent = (xyz_speed > 0. or angular_speed > 0.) and np.any(delta[:, 6:] != 0.)
+    reversals = np.any(delta[:, 6:][:, ~moving] != 0.) or np.any(delta[:, 6:] * q_delta < 0.)
+    if (concurrent and not allow_concurrent) or (reversals and not allow_joint_reversal):
+        raise ValueError("Power swept bounds require explicit concurrent and joint reversal modes")
     factor = float(np.max(np.abs(delta[:, 6:][:, moving] / q_delta[moving]))) if moving.any() else 0.
     joint_motion = {}
     for kind in ("source", "cooked"):
-        for link, travel in path_displacement_bound(model, start[6:], q_delta, cooked=kind == "cooked").items():
-            joint_motion[f"{kind}:{link}"] = travel * factor
+        if allow_joint_reversal:
+            speeds = joint_rate_displacement_bound(model, maximum_joint_rates(states), cooked=kind == "cooked")
+        else:
+            travel = path_displacement_bound(model, start[6:], q_delta, cooked=kind == "cooked")
+            speeds = {name: metres * factor for name, metres in travel.items()}
+        joint_motion.update({f"{kind}:{name}": metres for name, metres in speeds.items()})
     shapes = shapes_world(model, start_pose, start[6:])
     speeds = shape_speed_bounds(shapes, start[:3], linear_speed=xyz_speed,
                                 angular_speed=angular_speed, joint_motion=joint_motion)

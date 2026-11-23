@@ -78,13 +78,14 @@ def clearance_status(*, lower_m, upper_m, required_m):
     return "unresolved"
 
 
-def endpoint(geometry, pose, q, nodes, scene, palm_grid, *, targets=()):
+def endpoint(geometry, pose, q, nodes, scene, palm_grid, *, targets=(), require_palm_reach=True):
     """Check a sampled endpoint with the native palm SDF and whole-hand rod geometry."""
     geometry_result = _wrist_clearance(geometry, pose, q, scene)
     palm = fk_poses(geometry, pose, q)["base_link"]
     radius = scene["wire_radius_m"]
     palm_gap = sample_contact(palm_grid, palm, nodes, radius=radius, dtype=np.float64)["minimum_gap_m"]
-    palm_passed = palm_gap is not None and -MAX_PALM_PENETRATION_M <= palm_gap <= REACH_M
+    palm_passed = (palm_gap is not None and palm_gap >= -MAX_PALM_PENETRATION_M
+                   and (not require_palm_reach or palm_gap <= REACH_M))
     preliminary = []
     for label, verts in shapes_world(geometry, pose, q).items():
         # Measured native Power palms are admitted using the original registered palm SDF.

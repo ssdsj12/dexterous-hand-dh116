@@ -53,22 +53,25 @@ def command_sections(states, *, count):
         yield first, last, states[first:last + 1]
 
 
-def _prove_right_section(item):
-    hand, states, targets, nodes, scene, seconds, first, last = item
+def _prove_command_section(item):
+    hand, states, targets, nodes, scene, seconds, first, last, reversal, palm_reach = item
     result = route.prove_stage(hand, states, targets, nodes, scene, allow_concurrent=True,
+                               allow_joint_reversal=reversal, require_palm_reach=palm_reach,
                                max_samples=4096, max_seconds=seconds)
     result["first_control_window"] = first
     result["last_control_window_exclusive"] = last
     return result
 
 
-def prove_right_sections(hand, states, targets, nodes, scene, *, count, seconds):
-    section_args = [(hand, section, targets, nodes, scene, seconds, first, last)
+def prove_command_sections(hand, states, targets, nodes, scene, *, count, seconds,
+                           allow_joint_reversal=False, require_palm_reach=True):
+    section_args = [(hand, section, targets, nodes, scene, seconds, first, last,
+                     allow_joint_reversal, require_palm_reach)
                     for first, last, section in command_sections(states, count=count)]
     if count == 1:
-        return [_prove_right_section(section_args[0])]
+        return [_prove_command_section(section_args[0])]
     with ProcessPoolExecutor(max_workers=count, mp_context=get_context("spawn")) as pool:
-        return list(pool.map(_prove_right_section, section_args))
+        return list(pool.map(_prove_command_section, section_args))
 
 
 def main(argv=None):
@@ -99,7 +102,7 @@ def main(argv=None):
     for hand in (left_hand, right_hand):
         route.validate_palm_lattice(hand["palm_grid"], radius=scene["wire_radius_m"])
     left = route.prove_stage(left_hand, states[:, 0], left_targets, nodes, scene)
-    right = prove_right_sections(right_hand, states[:, 1], right_targets, nodes, scene,
+    right = prove_command_sections(right_hand, states[:, 1], right_targets, nodes, scene,
                                  count=args.proof_sections, seconds=args.proof_time_limit)
     for item in right:
         print("right", item["first_control_window"], item["last_control_window_exclusive"],
