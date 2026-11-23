@@ -45,7 +45,7 @@ def opposed_at_station(side, gaps, stations, opposition):
 
 
 def _side_fit(side, row, nodes, tube, boxes, grids, table_top, model, *,
-              max_evaluations, starts, alternate=None, move_scale=MOVE_SCALE):
+              max_evaluations, starts, alternate=None, move_scale=MOVE_SCALE, optimize=None):
     # Align candidate FK to the same-clock measured links. For the unobserved
     # colliders use original USD FK. The result remains a CPU endpoint estimate.
     hand = row["action_readback"]["post"]["hands"][side]
@@ -157,18 +157,49 @@ def _side_fit(side, row, nodes, tube, boxes, grids, table_top, model, *,
     pad_mask = np.array([name in PADS for name, _ in shapes.values()])
     rod_limits = np.where(pad_mask, -.00012, NONPAD_RESERVE_M + .00003)
 
-    def residual(coordinates, material_station, center):
+    def search_values(coordinates, material_station, *, refine_support=False, rod_tubes=None):
         _, _, transforms, world = geometry(coordinates)
         gaps, _, opposition = pad_metrics(transforms, material_station)
-        rod = np.array([separation(vertices, *tube) for vertices in world.values()])
-        support = np.array([support_clearance_lower(vertices, lo, hi)
-                            for vertices in world.values() for lo, hi in boxes])
+        envelope_tubes = {} if rod_tubes is None else rod_tubes
+        rod = np.array([separation(vertices, *envelope_tubes.get(label, tube))
+                        for label, vertices in world.items()])
+        if refine_support:
+            # Use the same SAT witness near the guard on both sides of its
+            # threshold so a finite difference sees the same geometry.
+            support = np.array([support_bound(vertices, lo, hi, reserve_m=SUPPORT_RESERVE_M + .00035)["lower_m"]
+                                for vertices in world.values() for lo, hi in boxes])
+        else:
+            support = np.array([support_clearance_lower(vertices, lo, hi)
+                                for vertices in world.values() for lo, hi in boxes])
         table = np.array([vertices[:, 2].min() - table_top for vertices in world.values()])
-        return np.r_[(np.asarray(gaps) + .00004) * 1000,
+        return np.asarray(gaps), rod, support, table, opposition
+
+    def residual(coordinates, material_station, center):
+        gaps, rod, support, table, opposition = search_values(coordinates, material_station)
+        return np.r_[(gaps + .00004) * 1000,
                      np.maximum(rod_limits - rod, 0.) * 12000,
                      np.maximum(SUPPORT_RESERVE_M - support, 0.) * 12000,
                      np.maximum(TABLE_RESERVE_M - table, 0.) * 12000,
                      2. * max(opposition - OPPOSITION_LIMIT, 0.), .02 * (coordinates - center)]
+
+    def guard_state(coordinates, material_station, rod_tubes=None):
+        gaps, rod, support, table, opposition = search_values(
+            coordinates, material_station, refine_support=True, rod_tubes=rod_tubes)
+        original_rod_limits = np.where(pad_mask, -PAD_LIMIT_M, NONPAD_RESERVE_M)
+        margins = np.r_[(rod - original_rod_limits) * 1000,
+                        (support - SUPPORT_RESERVE_M) * 1000,
+                        (table - TABLE_RESERVE_M) * 1000,
+                        (gaps + PAD_LIMIT_M) * 1000, OPPOSITION_LIMIT - opposition]
+        return np.r_[gaps * 1000, margins]
+
+    if optimize is not None:
+        labels = [*(f"rod:{label}" for label in shapes),
+                  *(f"support:{i}:{label}" for label in shapes for i in range(len(boxes))),
+                  *(f"table:{label}" for label in shapes),
+                  *(f"sdf_penetration:{label}" for label in PADS), "pad_normal_opposition"]
+        return optimize(station=station, rotation=rotation, origin=origin, state=guard_state,
+                        measure=measure, lower=lower, upper=upper, labels=labels,
+                        world_shapes=lambda coordinates: geometry(coordinates)[3])
 
     if alternate is None:
         rng = np.random.default_rng(902)
