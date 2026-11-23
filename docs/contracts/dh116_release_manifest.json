@@ -35864,6 +35864,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.ppo32-isolation-preflight-v1",
+      "branch": "11-17",
+      "status": "cpu_and_cuda_preflight_verified",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "cpu_tests": {
+        "passed": 206,
+        "failed": 0
+      },
+      "cuda_solver_owners": 32,
+      "native_isaac_envs": 0,
+      "ppo_updates": 0,
+      "native_qualification": false,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "remote_branch": "11-17",
+        "source_commit": "1f40cdda8f1ae9ab91e21e0a55afc307a35bc048",
+        "source_tree": "7d773a25711a82e7386d0f97325e6b6954a7ae21",
+        "files_verified": 16,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
