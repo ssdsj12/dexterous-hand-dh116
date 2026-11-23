@@ -35804,6 +35804,37 @@
         "passed": 64,
         "failed": 0
       }
+    },
+    {
+      "package": "teacher.tripod-finger-goal-current-reset-smoke8-v1",
+      "branch": "11-17",
+      "status": "current_reset_and_native_ppo_diagnostic_verified",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-and-ppo.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_finger_goal_ppo_native_v1.json",
+      "physical_reset_readiness": "docs/contracts/dh116_teacher_tripod_current_reset_for_ppo_v1.json",
+      "cpu_environment_tests": {
+        "passed": 19,
+        "failed": 0
+      },
+      "cpu_registry_tests": {
+        "passed": 64,
+        "failed": 0
+      },
+      "new_isaac_runs": 2,
+      "new_ppo_updates": 1,
+      "native_qualification": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "65171d8eb75d9591f4b14a7354825b6ebb1ce6d9",
+        "source_tree": "0bc36bad8c26f4047421d8ced0d30424ba3d18fc",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

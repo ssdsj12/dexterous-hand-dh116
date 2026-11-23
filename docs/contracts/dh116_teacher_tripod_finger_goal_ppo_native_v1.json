@@ -1,0 +1,50 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "branch": "11-17",
+  "package": "teacher.tripod-finger-goal-current-reset-smoke8-v1",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-and-ppo.md",
+  "tested_head": "65171d8eb75d9591f4b14a7354825b6ebb1ce6d9",
+  "pretraining_reset": "docs/contracts/dh116_teacher_tripod_current_reset_for_ppo_v1.json",
+  "diagnostic_verified": true,
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "native_runs": 1,
+  "ppo_updates": 1,
+  "receipt_sha256": "a13752fe3417c3f48c3adaa16e6e685b6081a0385b559b97081e60a423186294",
+  "independent_audit_sha256": "028162d0739d61a8fe6d4a3f2a6095db0b6ee1089542bad0314cb0c18c5f4184",
+  "checkpoint_sha256": "2b40560791e1bcd8b6b0f5527decc7e015ee0c016c4028692290cd4005ac4903",
+  "raw_ledger_sha256": "6f0d15e9d8a934769ecbd1d356fee261e6444cb1203d55ef31954efea5b0070d",
+  "outer_exit_code": 0,
+  "inferior_exit_code": 0,
+  "elapsed_s": 178.43033344997093,
+  "actual_physics": {
+    "initialization_steps": 2,
+    "control_windows": 8,
+    "measured_sdk_steps": 64,
+    "solver_substeps": 768
+  },
+  "training": {
+    "accepted_minibatch_updates": 1,
+    "loaded_updates": 0,
+    "parameter_delta_l2": 0.004284160250014894,
+    "target_updates": 1,
+    "updates": 1
+  },
+  "accepted_exact_kl": 0.0015036538243293762,
+  "accepted_learning_rate": 1e-05,
+  "maximum_active_angle_rad": {
+    "end": [
+      0.1075232891807556,
+      0.09823372627598047
+    ],
+    "reset": [
+      0.10524907395935057,
+      0.09837436809194088
+    ]
+  },
+  "solver_contact_pairs_by_mesh": {
+    "support_0": 768,
+    "support_1": 768
+  }
+}

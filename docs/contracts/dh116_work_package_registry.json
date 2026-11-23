@@ -52114,9 +52114,8 @@
       "title": "Tripod current Reset and finger-goal native PPO",
       "evidence_scope": "tripod_finger_goal_current_reset_v1",
       "command_spec": "configs/dh116_execution/tripod-finger-goal-current-reset-smoke8-core-v1.json",
-      "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Current native Reset is verified. One bounded PPO execution is pending.",
+      "status": "passed",
+      "reason": "Current independent Reset and one bounded native PPO update were verified. No grasp qualification.",
       "dependencies": [
         "teacher.tripod-current-reset-for-ppo-v1"
       ],
@@ -52124,6 +52123,18 @@
       "actual_launch": {
         "path": "configs/dh116_execution/tripod-finger-goal-current-reset-smoke8-launch-v1.json",
         "sha256": "8bd69749c49e72fbd2fe61abc347d3dbacddf2837cccff149911d05bc75eb552"
+      },
+      "readiness": "docs/contracts/dh116_teacher_tripod_finger_goal_ppo_native_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "inferior_exit": 0,
+        "ppo_updates": 1,
+        "result_sha256": "a13752fe3417c3f48c3adaa16e6e685b6081a0385b559b97081e60a423186294",
+        "diagnostic_verified": true,
+        "native_qualification": false,
+        "teacher_admission": false
       }
     }
   },
