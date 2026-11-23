@@ -383,7 +383,7 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                          clearance_shapes, setup, action, sdk_end, verify_support_continuity=False,
                          task="power", support_scene=None, waypoint_archive=None, precontact_archive=None,
                          distal_probe=None, power_open_boundary_sdk=None, force_seating=None, power_route=None,
-                         coordinated_seating=None):
+                         coordinated_seating=None, tripod_replay_gate=None):
     """Run one retained 24D control on the continuing rod and real hand views."""
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_physical_exchange import FlexiblePhysicalExchange
@@ -467,7 +467,10 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 if current_geometry.get("physics_step") != row["physics_step"]:
                     raise ValueError("current hand link and action readbacks have different SDK ticks")
                 emitted = dict(row, sdk_hand_geometry=current_geometry.copy())
-            native.write_new(output/f"{task}_control_{row['physics_step']}.json", encode_owned(emitted))
+            encoded = encode_owned(emitted)
+            native.write_new(output/f"{task}_control_{row['physics_step']}.json", encoded)
+            if tripod_replay_gate is not None:
+                tripod_replay_gate.observe(encoded)
             if power_open_boundary_sdk is not None and row["physics_step"] == power_open_boundary_sdk:
                 positions = [current_geometry["poses"][name][0][0] for name in PALM_NAMES]
                 retreat = np.asarray(positions) - power_start.numpy()[0, :, 0]
@@ -550,6 +553,8 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         completed = []
         for command in schedule:
             sdk = power.clock()["physics_step"]
+            if tripod_replay_gate is not None:
+                tripod_replay_gate.before_window(sdk)
             seating = next((s for s in reversed(seatings) if s["sdk_step"] <= sdk < s.get("stop_sdk", sdk_end)), None)
             if seating is not None:
                 from scripts.verify_dh116_supported_force_seating import select_seating_command
@@ -609,7 +614,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                sdk_end=SDK_END, require_no_hand_contact=False, action_after_settle=None,
                task="power", live_support_scene=None, tripod_archive=None, waypoint_archive=None,
                precontact_archive=None, pinch_archive=None, distal_contact=None,
-               power_open_archive=None, power_open_boundary_sdk=None, power_route=None):
+               power_open_archive=None, power_open_boundary_sdk=None, power_route=None,
+               tripod_replay_gate=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
     from go2_pvcnn.control.dh116.tabletop_power_contact_evidence import measure_power_contact
@@ -641,6 +647,9 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 (supported_acquire is None or not require_no_hand_contact or live_support_scene is None
                  or (action_after_settle is None) != (tripod_archive is None)))):
             raise ValueError("exact separate supported-task acquisition required")
+        if tripod_replay_gate is not None and (task != "tripod" or action_after_settle is None
+                or tripod_archive is None or distal_contact is None):
+            raise ValueError("archived Tripod control and distal probe required for the replay interlocks")
         if action_after_settle is not None and (supported_acquire is None or not require_no_hand_contact):
             raise ValueError("Power action must follow the measured hands-clear support interval")
         if supported_acquire is None:
@@ -764,6 +773,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 final_settle = json.loads((output/f"{task}_exchange_{settle_end}.json").read_bytes())
                 recorded = {"tripod":tripod_archive,"pinch":pinch_archive,"power":power_open_archive}[task]
                 verify_proximal_action_boundary(final_settle, recorded)
+                if tripod_replay_gate is not None:
+                    tripod_replay_gate.check_parked(final_settle)
             probe = None
             if distal_contact is not None:
                 from scripts.verify_dh116_supported_distal_transfer import SupportedDistalProbe
@@ -798,7 +809,8 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 precontact_archive=precontact_archive, distal_probe=probe,
                 power_open_boundary_sdk=power_open_boundary_sdk,
                 force_seating=None if distal_contact is None else distal_contact.get("seating"), power_route=power_route,
-                coordinated_seating=None if distal_contact is None else distal_contact.get("coordinated_seating"))
+                coordinated_seating=None if distal_contact is None else distal_contact.get("coordinated_seating"),
+                tripod_replay_gate=tripod_replay_gate)
             measured_action_steps = control_result["physical_samples"]
         result = dict(scope="original_dual_hand_shared_rod_no_action_power_layout",
             rods_per_env=1, sdk_steps=sdk_end, measured_exchanges=sdk_end-2,
