@@ -35743,6 +35743,37 @@
         "passed": 60,
         "failed": 0
       }
+    },
+    {
+      "package": "teacher.tripod-live-endpoint-r6",
+      "branch": "11-17",
+      "status": "cpu_refit_from_native_sdk568_bounded_candidate_unexecuted",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-live-endpoint.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "cpu_tests": {
+        "passed": 15,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_qualification": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "70fd318f8e36a433892cfed0d51428ddfe33549e",
+        "source_tree": "ef74e87be67c8497317aaa858bebe9e5edcb18df",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
     }
   ]
 }

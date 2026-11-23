@@ -14,3 +14,7 @@ Antigravity R9 read the original read-only runtime and identified the parked and
 The one approved Isaac run used no cameras, no Teacher queries and no PPO. Original protected source and checkpoint digests were verified. No new grasp qualifies. The next native stages require opposing reaction, fixed-wrist stabilization, absence of external support, 30 mm net Lift, 5 s Hold and at most 0.5 mm slip. Held-out wire specifications remain unverified.
 
 The integrated CPU suite passed 241 tests. The updated registry passed 60 scheduler tests. An earlier invocation supplied the v1 Pinch failure artifact instead of the v2 SHA-bound blocker; the verifier rejected it. The corrected invocation used the original sealed v2 fixture and reran the entire suite. Both logs are retained in Ubuntu evidence.
+
+## Measured SDK 568 follow-up
+
+The independent endpoint audit found measured right thumb, index and middle SDF gaps of 1.083, 0.900 and 1.335 mm at their fixed stations. A 1/16-scale right triad refit starting from the sealed measured row improved all six two-model gaps by at least 28.965 µm under its short-horizon extrapolation with 73.056 µm minimum rod margin. The original full forward command failed the same test. The command remains unexecuted. The integration reproduced the audit output byte-for-byte and passed 15 focused tests. [Endpoint report](2026-11-23-teacher-tripod-live-endpoint.md)

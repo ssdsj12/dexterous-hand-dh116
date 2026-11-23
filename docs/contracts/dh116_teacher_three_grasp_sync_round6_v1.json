@@ -261,6 +261,32 @@
       "controlled_sdk_rows": 328,
       "solver_substeps": 6792,
       "natural_exit_verified": true
+    },
+    "teacher.tripod-live-endpoint-r6": {
+      "source_files": [
+        "docs/superpowers/reports/2026-11-23-teacher-tripod-live-endpoint.md",
+        "scripts/audit_dh116_tripod_live_endpoint.py",
+        "tests/test_tripod_live_endpoint.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-live-endpoint.md",
+      "evidence_sha256": {
+        "result": "208aca8047a5f2240a6abd4864ea2cade452b2982e4d93b0a95e1823807afc8f",
+        "cpu_log": "00d7da5f95850c994fa191fe735336483aed8bce1236805517044e896def41be",
+        "reproduction_argv": "463bbbb7d057df892eb74d0180ca4f44e5bb11465d2fa6cf92fd9c65681deeff"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "70fd318f8e36a433892cfed0d51428ddfe33549e",
+        "source_tree": "ef74e87be67c8497317aaa858bebe9e5edcb18df",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "cpu_refit_from_native_sdk568_bounded_candidate_unexecuted",
+      "cpu_passed": 15,
+      "native_qualification": false,
+      "teacher_admission": false
     }
   },
   "registry_cpu": {
@@ -274,6 +300,13 @@
       "-q",
       "tests/test_dh116_work_packages.py"
     ],
-    "log_sha256": "bc753f4edaca76be79b663c9b0419f184a97c2216419a03d44bc7cecbc1d0a7f"
+    "log_sha256": "b5d59d411842b201b0dce845517be42db0a557ef29bb405adc882c325b89dd88"
+  },
+  "tripod_measured_endpoint_followup": {
+    "prior_sdk": 568,
+    "normalized_refit_fraction": 0.0625,
+    "minimum_continuous_rod_margin_m": 7.3056e-05,
+    "minimum_six_gap_reduction_m": 2.8965e-05,
+    "native_command_executed": false
   }
 }

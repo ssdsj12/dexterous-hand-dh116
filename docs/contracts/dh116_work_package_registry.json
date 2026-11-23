@@ -52029,6 +52029,29 @@
         "solver_substeps": 6792,
         "natural_exit_verified": true
       }
+    },
+    "teacher.tripod-live-endpoint-r6": {
+      "title": "Tripod measured endpoint and next-window proof",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-902-native-approach-r6",
+        "teacher.tripod-triad-continuation-r6"
+      ],
+      "tests": [
+        "tests/test_tripod_live_endpoint.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-live-endpoint.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_refit_from_native_sdk568_bounded_candidate_unexecuted",
+        "cpu_passed": 15,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
