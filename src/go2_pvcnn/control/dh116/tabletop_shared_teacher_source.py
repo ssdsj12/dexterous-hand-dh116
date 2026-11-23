@@ -63,6 +63,9 @@ class SharedSourceIdentity:
     rod_ticks: tuple
     sdk_step: int
     sdk_time_s: float
+    sdk_dt_s: float
+    sdk_timer_dt_s: float
+    policy_time_s: float
     solver_time_s: float
     profile_sha256: str
     scope: str
@@ -105,13 +108,22 @@ class SharedTeacherSource:
 
     def _boundary(self):
         r, solver = self.runtime, self.runtime.solver
+        getter = getattr(self.sim,"get_physics_dt",None)
+        dt = float(getter()) if callable(getter) else 1/480
+        fp32_dt = float(np.float32(1/480))
+        # Isaac 4.5 current_time accumulates the native callback step_size,
+        # while get_physics_dt returns the configured nominal reciprocal rate.
+        # Retain both, verify raw timer progression; never fit a free offset.
+        timer_dt = float(np.float32(dt)) if callable(getter) else dt
+        if (dt not in (1/480,fp32_dt) or not np.isfinite(float(self.sim.current_time))):
+            raise ValueError("actual 480Hz SDK dt and finite native time required")
         if (r._failed or solver.last_error != 0 or float(solver.time) != r._time
                 or self.sim.current_time_step_index != r.physics_step
-                or abs(float(self.sim.current_time)-r.physics_step/480) > 1e-5):
+                or abs(float(self.sim.current_time)-r.physics_step*timer_dt) > max(1e-9,r.physics_step*1e-14)):
             raise ValueError("shared SDK/solver source boundary changed or failed")
         return SharedSourceIdentity(id(solver), solver.num_envs, tuple(range(solver.num_envs)),
             r.run_uuid, r.episodes, self.rod_uids, tuple(r.resets), tuple(r.ticks), r.physics_step,
-            float(self.sim.current_time), float(solver.time), self.profile.digest, self.scope)
+            float(self.sim.current_time), dt, timer_dt, r.physics_step/480, float(solver.time), self.profile.digest, self.scope)
 
     def validate_fresh(self, packet):
         if type(packet) is not SharedTeacherPacket or packet.source != self._boundary():
@@ -151,7 +163,7 @@ class SharedTeacherSource:
             identity = ContextIdentity.from_clock(c["identity"])
             expected = ContextIdentity(boundary.run_uuid, i, boundary.episode_uids[i],
                 boundary.reset_ids[i], boundary.rod_uids[i], boundary.sdk_step, boundary.rod_ticks[i],
-                boundary.sdk_time_s, boundary.solver_time_s)
+                boundary.policy_time_s, boundary.solver_time_s)
             if identity != expected or context.metadata.scope != self.scope:
                 raise ValueError("same shared parent row/time/episode and source scope required")
             validate_context(context, backend_profile=self.profile, identities=(expected,))

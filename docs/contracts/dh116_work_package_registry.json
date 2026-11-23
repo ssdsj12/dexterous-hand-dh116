@@ -52460,6 +52460,20 @@
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
       "native_ppo_updates": 0,
       "teacher_admission": false
+    },
+    "teacher.shared-native-inputs-v1": {
+      "title": "Actual shared mounted/rod/context input readback and local Reset",
+      "executor": "gated",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.shared-source-model-v1"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-native-teacher-inputs.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "native_ppo_updates": 0,
+      "scope": "two-lane archived physical action replay and diagnostic mean only",
+      "teacher_admission": false
     }
   },
   "execution_target": {

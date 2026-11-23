@@ -130,7 +130,7 @@ def reset_live_lane(sim, scenes, seed, archive, runtime, bindings, lane, *, star
         solver_time_s=before_time, reset_sdk_steps=0, reset_solver_steps=0)
 
 
-def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, end, *, reset, backend, commands=None, reset_last_window=False):
+def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, end, *, reset, backend, commands=None, reset_last_window=False, teacher_source_audit=False):
     import torch
     from scripts.audit_dh116_batch_rod_exchange import _live_contact_geometry
     from scripts.verify_dh116_deformx_thumb_contact import step_thumb_physics
@@ -205,7 +205,11 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
     reaction = None
     reset_receipt = None
     journal = NativeJournal(output / "shared_coupling.jsonl")
+    input_audit = None
     try:
+        if teacher_source_audit:
+            from scripts.audit_dh116_shared_teacher_native_inputs import NativeInputAudit
+            input_audit = NativeInputAudit(runtime,sim,scenes,seed,bindings,hand_bindings,archive,output)
         for sdk in range(start_step + 1, end + 1):
             control_index, substep_index = divmod(sdk - start_step - 1, 8)
             transactions = []
@@ -287,6 +291,8 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
             journal.emit("shared_step", dict(sdk_step=sdk, rod_ticks=list(runtime.ticks),
                 action_readbacks=action_readbacks, counts=capture["counts"].cpu().numpy(), mesh_wrenches=capture["mesh_wrenches"].cpu().numpy(),
                 source_solver_id=id(solver), min_table_clearance_m=float(clearance.min())))
+            if input_audit is not None:
+                input_audit.after_step(action_readbacks)
             if reset_last_window and sdk == end - 8:
                 reset_receipt = reset_live_lane(sim, scenes, seed, archive, runtime, bindings, 0, start_step=start_step)
                 palms[0].zero_()
@@ -294,6 +300,8 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                 measured = [_live_contact_geometry(scene, names)
                             for scene, names in zip(scenes, bindings, strict=True)]
                 journal.emit("local_reset", reset_receipt)
+                if input_audit is not None:
+                    input_audit.after_reset(0)
             reaction = runtime.consume(physics_step=sdk + 1)
         if reset_last_window and (reset_receipt is None or runtime.resets != [2, 1]
                                   or runtime.ticks != [96, (end-start_step)*12]):
@@ -303,9 +311,13 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
             physics_rows=end - start_step, contact_replay=commands is not None,
             local_reset=reset_receipt, per_lane_resets=runtime.resets, per_lane_rod_ticks=runtime.ticks,
             native_qualification=False, teacher_admission=False)
+        if input_audit is not None:
+            result["teacher_input_audit"] = input_audit.finish()
         write_new(output / "shared_result.json", result)
         return result
     finally:
+        if input_audit is not None:
+            input_audit.close()
         journal.close()
 
 
@@ -319,6 +331,7 @@ def main():
     parser.add_argument("--contact-receipt", type=Path)
     parser.add_argument("--contact-receipt-sha256")
     parser.add_argument("--reset-last-window", action="store_true")
+    parser.add_argument("--teacher-source-audit", action="store_true")
     args = parser.parse_args()
     if os.environ.get("CUDA_VISIBLE_DEVICES") != "3":
         raise ValueError("bounded probe uses physical GPU 3")
@@ -332,6 +345,8 @@ def main():
         args.smoke, args.smoke_sha256, args.smoke_ledger_sha256)
     if args.reset_last_window and (args.contact_receipt is None or not hasattr(_ropesim.RopeBatch, "reset_env_mesh_poses")):
         raise ValueError("complete local Reset needs the contact replay and selected-reset candidate backend")
+    if args.teacher_source_audit and args.contact_receipt is None:
+        raise ValueError("actual source audit requires the authenticated contact trajectory")
     commands = None
     if args.contact_receipt is not None:
         if args.contact_receipt_sha256 is None:
@@ -344,7 +359,7 @@ def main():
         args.output.mkdir(exist_ok=False)
         _run(Path(__file__).resolve().parents[1], archive, 3, 2, args.output,
              coupled=True, max_sdk_step=18 if commands is None else 10 + 8 * len(commands),
-             extra_exercise=partial(coupled, reset=reset, backend=_ropesim, commands=commands, reset_last_window=args.reset_last_window))
+             extra_exercise=partial(coupled, reset=reset, backend=_ropesim, commands=commands, reset_last_window=args.reset_last_window, teacher_source_audit=args.teacher_source_audit))
 
 
 if __name__ == "__main__":

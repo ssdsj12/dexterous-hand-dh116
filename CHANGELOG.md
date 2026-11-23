@@ -4534,3 +4534,5 @@ Replayed original 24D approach actions with the shared solver in real Isaac: 22/
 Shared CUDA selected mesh Reset and actual two-lane DH116 continuation naturally exit 0; Teacher PPO remains pending. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-mesh-local-reset.md).
 
 Explicit shared parent/row Teacher observations and CUDA model update regression: 57 tests passed; live shared PPO remains pending. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-teacher-source.md).
+
+Real two-lane shared Teacher input readback, local Reset and 29 CUDA diagnostic captures naturally exit 0; actual PPO remains pending. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-native-teacher-inputs.md).

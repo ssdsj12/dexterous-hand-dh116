@@ -1873,5 +1873,73 @@
       "three-grasp 128/512 Isaac training"
     ],
     "report": "docs/superpowers/reports/2026-11-23-dh116-shared-teacher-source.md"
+  },
+  "shared_native_teacher_inputs": {
+    "status": "actual_two_lane_shared_teacher_inputs_reset_and_continuation_verified",
+    "environments": 2,
+    "sdk_step": 226,
+    "solver_calls": 216,
+    "solver_substeps": 2592,
+    "captures": 29,
+    "valid_common_fields_per_capture": 132,
+    "nonzero_hand_reaction_steps": [
+      14,
+      0
+    ],
+    "final_resets": [
+      2,
+      1
+    ],
+    "final_rod_ticks": [
+      96,
+      2592
+    ],
+    "outer_exit": 0,
+    "forced_exit": false,
+    "elapsed_s": 58.53289249795489,
+    "native_ppo_updates": 0,
+    "action_owner": "archived_command_replay",
+    "teacher_admission": false,
+    "capture_median_seconds": 0.03522858489304781,
+    "capture_mean_seconds": 0.04272338188381802,
+    "capture_max_seconds": 0.23858874896541238,
+    "raw_vs_nominal_max_difference_ns": 24.555871891429604,
+    "receipt_sha256": "58d9b86e378b07e4157e7706e85e1e58df41e45ae3d200470f178574f6064a29",
+    "input_capture_sha256": "4c25d6a6d07582aca9aab4b620d572faae67e77170f5361022f005fa42f66dfe",
+    "source_clock_sha256": "4fd34be763bdf1abe88e002f83d9b00bc7e52f4b89f44bee31a18f05fa43d8d9",
+    "cpu": {
+      "passed": 36,
+      "skipped": 2,
+      "failed": 0,
+      "log_sha256": "e6ad6a411c4ffbb1ea2659c3fc4f9cfc5dd1df38c7d11966570946558e7ab749"
+    },
+    "cuda_regression": {
+      "passed": 60,
+      "failed": 0,
+      "log_sha256": "a67c2283ab8ef412704f59c14d19f0545660d2641a8e881311d1bb7e3790cabd"
+    },
+    "failed_attempts": [
+      {
+        "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-teacher-inputs-gpu3-gupeg2c9",
+        "receipt_sha256": "3ad8e547026082d8a2be2b4d5cc8544ec2afe0e69cd6ea57d73e0aead2528820",
+        "exit_code": 1,
+        "signal": null,
+        "forced_exit": false,
+        "sdk_steps": 10
+      },
+      {
+        "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-teacher-inputs-v2-gpu3-nd77x7_b",
+        "receipt_sha256": "8c3310dc45e0f68d26977bab6c7dc8909c6eb8e971e8fce06d3fd84894f2e85d",
+        "exit_code": 1,
+        "signal": null,
+        "forced_exit": false,
+        "sdk_steps": 10
+      }
+    ],
+    "remaining": [
+      "original R0 endpoint and exactly-once settlement at shared physical windows",
+      "real on-policy two-lane PPO with local Reset continuation",
+      "Pinch/Tripod/Power 128 or 512 Isaac training"
+    ]
   }
 }
