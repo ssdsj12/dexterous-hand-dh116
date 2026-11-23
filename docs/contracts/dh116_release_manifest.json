@@ -36086,6 +36086,28 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.shared-pair-compact-gpu-v1",
+      "branch": "11-17",
+      "status": "compact_cuda_probe_verified_isaac_training_pending",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-batched-pair-reduction.md",
+      "cpu_passed": 73,
+      "cpu_skipped": 2,
+      "gpu_passed": 47,
+      "solver_probe_cases": 3,
+      "solver_lanes_per_grasp": 128,
+      "native_ppo_updates": 0,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "remote_branch": "11-17",
+        "source_commit": "f46021c004b1daa5318acbf513f9541ed696d8d0",
+        "source_tree": "2aeb04c9f8f846e50ca09969d5b354ddb1d42b94",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
