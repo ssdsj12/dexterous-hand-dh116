@@ -51070,6 +51070,43 @@
         "teacher_admission": false,
         "native_execution_ready": false
       }
+    },
+    "teacher.wire-control-feedback": {
+      "title": "Measure whole-window wire geometry and hand reaction from sealed control steps",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-grasp-feedback"
+      ],
+      "tests": [
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_supported_wire_specifications.py",
+        "tests/test_supported_wire_material_variants.py",
+        "tests/test_supported_wire_factorial_holdouts.py",
+        "tests/test_supported_wire_holdout_resets.py",
+        "tests/test_wire_variant_isaac_reset.py",
+        "tests/test_wire_live_palm_approach.py",
+        "tests/test_wire_live_opposition.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_contact_sources.py",
+        "tests/test_native_teacher_source_priming.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "timeout_seconds": 420,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-control-feedback.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_control_feedback_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_and_sealed_archive_replay",
+        "cpu_passed": 198,
+        "sealed_windows": 9,
+        "native_actor_feedback_active": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

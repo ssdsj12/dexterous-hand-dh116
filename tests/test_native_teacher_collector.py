@@ -656,7 +656,7 @@ def test_collector_binds_exact_grasp_source_and_model_before_collection(
     source.reset_reward=c.sources.reset_reward
     owner.sources=source
     live=LiveContract(owner.contract,ModelContract(
-        model_config,backend_profile,c.trainer.model.context_mode),None,{})
+        model_config,backend_profile,c.trainer.model.context_mode),c.reward.config,{})
     from go2_pvcnn.control.dh116.tabletop_training_reward import TrainingReward
     reward=TrainingReward(c.reward.config)
     before=(sim.current_time_step_index,rod.rope.steps,c.trainer.counters["updates"])
