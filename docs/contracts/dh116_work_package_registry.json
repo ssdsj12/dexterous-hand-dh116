@@ -51107,6 +51107,48 @@
         "native_actor_feedback_active": false,
         "teacher_admission": false
       }
+    },
+    "teacher.live-wire-feedback": {
+      "title": "Record owned whole-window wire feedback beside the original Teacher input",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-control-feedback",
+        "teacher.supported-contact-collector"
+      ],
+      "tests": [
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_supported_wire_specifications.py",
+        "tests/test_supported_wire_material_variants.py",
+        "tests/test_supported_wire_factorial_holdouts.py",
+        "tests/test_supported_wire_holdout_resets.py",
+        "tests/test_wire_variant_isaac_reset.py",
+        "tests/test_wire_live_palm_approach.py",
+        "tests/test_wire_live_opposition.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_contact_sources.py",
+        "tests/test_native_teacher_source_priming.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_native_teacher_actual_provider.py",
+        "tests/test_native_teacher_actual_update.py",
+        "tests/test_native_teacher_actual_launch.py",
+        "tests/test_native_teacher_actual_inputs.py"
+      ],
+      "timeout_seconds": 480,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-live-wire-feedback.md",
+      "readiness": "docs/contracts/dh116_teacher_live_wire_feedback_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_integration_and_archived_native_source_replay",
+        "cpu_passed": 265,
+        "matched_adjoining_boundaries": 7,
+        "native_actor_feedback_active": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

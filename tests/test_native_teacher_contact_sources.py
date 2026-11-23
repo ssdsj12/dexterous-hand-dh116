@@ -50,7 +50,8 @@ def test_priming_event_readback_is_owned_and_detects_internal_evidence_mutation(
         _=h.priming_event
 
 
-def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_prime_parameter=False,controls=1,lift_diagnostic=False):
+def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_prime_parameter=False,controls=1,lift_diagnostic=False,
+            wire_trace_geometry=False,wire_pose_error_m=0.):
     m=source_module()
     from go2_pvcnn.control.dh116.tabletop_deformable_rod_boundary import RodBoundaryState
     from go2_pvcnn.control.dh116.tabletop_native_teacher_model import NativeContextTeacher
@@ -149,6 +150,15 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
                     side: dict(body_names=["base_link"],
                         link_poses_xyzw=np.array([[[.43, y, .40, 0., 0., 0., 1.]]]))
                     for side, y in (("left", .18), ("right", -.18))}
+            if wire_trace_geometry:
+                raw["rod_nodes_m"] = np.asarray(row["rod"]["node_positions"])[0].copy()
+                raw["hands"] = {}
+                for binding in ep._bindings:
+                    body = binding.mount.base_id
+                    pose = np.asarray(binding.hand.root_physx_view.get_link_transforms())[0, body].copy()
+                    pose[0] += wire_pose_error_m
+                    raw["hands"][binding.side] = dict(body_names=["base_link"],
+                                                      link_poses_xyzw=pose.reshape(1,1,7))
             return dict(raw=raw,
                 source_complete=True,failure_reasons=[],source_errors=[],terminal_reason=None)
         def validate(self,packet,row):
@@ -192,7 +202,9 @@ def arrange(monkeypatch,tmp_path,profile,*,table_at=None,bad_middle=False,bad_pr
     step=ep._exchange._step
     def contacted(action,substep):
         row=step(action,substep)
-        data=build(proximal=True,table=table_at is not None and row["rod"]["physics_step"]>=table_at,load=.125)
+        hand_links = ("finger14_link","finger23_link","finger33_link") if wire_trace_geometry else None
+        data=build(proximal=True,table=table_at is not None and row["rod"]["physics_step"]>=table_at,load=.125,
+                   hand_contact_links=hand_links)
         if controls != 1:
             # The actual getter exports float32 node force buffers. Construct
             # this CPU buffer in that dtype before recording or snapshotting.
@@ -400,3 +412,77 @@ def test_original_collector_consumes_measured_lift_diagnostic_reward(monkeypatch
     assert len(collector.trainer.rollout) == 1
     metrics = collector.trainer.update()
     assert metrics["minibatch_updates"] == 1
+
+
+
+def test_wire_trace_binds_previous_control_to_bootstrap_and_next_decision(monkeypatch,tmp_path,backend_profile):
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_provider import _trace_actual_wire_feedback
+
+    collector,c,budget,_=arrange(monkeypatch,tmp_path,backend_profile,controls=2,wire_trace_geometry=True)
+    with _trace_actual_wire_feedback(collector,tmp_path,profile=PROFILE):
+        first=collector.collect()
+        second=collector.collect()
+    journal=[json.loads(line) for line in (tmp_path/"wire_control_feedback.jsonl").read_text().splitlines()]
+    assert all(row["scope"]=="cpu_fixture" and row["operation"]=="wire_control_feedback" for row in journal)
+    traces=[row["payload"] for row in journal]
+    assert first.done is False and second.truncated is True
+    assert collector.transitions == 2 and budget.solver_calls == 17
+    decision, bootstrap, next_decision, final_bootstrap = traces
+    assert [t["purpose"] for t in traces] == ["decision","bootstrap","decision","bootstrap_truncated"]
+    assert [t["clock"]["physics_step"] for t in traces] == [3,11,11,19]
+    assert decision["status"] == "no_previous_control_window"
+    assert not np.any(decision["observation"]["reaction_valid"])
+    assert np.isfinite(decision["observation"]["position_in_palm_m"]).all()
+    assert bootstrap["status"] == next_decision["status"] == "measured"
+    assert bootstrap["pre_action_sha256"] == next_decision["pre_action_sha256"]
+    assert bootstrap["observation_sha256"] == next_decision["observation_sha256"]
+    assert bootstrap["source_window"]["end_sdk_step"] == 11
+    assert bootstrap["source_window"]["first_sdk_step"] == 4
+    assert final_bootstrap["source_window"]["first_sdk_step"] == 12
+    batch=collector.trainer.rollout.batch()
+    assert {"common371","common_valid","rod_nodes","rod_mask","task_context","task_context_valid"} == set(batch["actor_obs"])
+    assert batch["actions"].shape[-1] == 24
+
+
+def test_wire_trace_rejects_disagreeing_palms_without_serving_a_feedback_packet(monkeypatch,tmp_path,backend_profile):
+    collector,_,_,_=arrange(monkeypatch,tmp_path,backend_profile,wire_trace_geometry=True,wire_pose_error_m=.001)
+    records=[]
+    with collector.trace_wire_feedback(lambda _,payload:records.append(deepcopy(payload))):
+        packet=collector.collect()
+    assert not packet.terminated and not collector.quarantined
+    decision,bootstrap=records
+    assert decision["status"] == "no_previous_control_window"
+    assert bootstrap["status"] == "rejected"
+    assert "palm pose differs" in bootstrap["reason"]
+    assert bootstrap["observation"] is None
+
+
+def test_wire_trace_never_publishes_a_partial_terminal_window(monkeypatch,tmp_path,backend_profile):
+    collector,_,budget,_=arrange(monkeypatch,tmp_path,backend_profile,table_at=6,wire_trace_geometry=True)
+    records=[]
+    with collector.trace_wire_feedback(lambda _,payload:records.append(deepcopy(payload))):
+        packet=collector.collect()
+    assert packet.terminated is True and budget.solver_calls == 4
+    assert len(records) == 1 and records[0]["status"] == "no_previous_control_window"
+
+
+
+def test_wire_trace_clears_partial_source_window_when_the_collector_quarantines(monkeypatch,tmp_path,backend_profile):
+    collector,_,budget,_=arrange(monkeypatch,tmp_path,backend_profile,wire_trace_geometry=True)
+    source=collector.sources
+    observe=source.observe
+
+    def fail_third(row):
+        if row["exchange"]["substep"] == 2:
+            raise ValueError("fixture unavailable on third physical row")
+        return observe(row)
+
+    monkeypatch.setattr(source,"observe",fail_third)
+    traces=[]
+    with collector.trace_wire_feedback(lambda _,payload:traces.append(deepcopy(payload))):
+        wire_trace=collector._wire_feedback
+        with pytest.raises(ValueError,match="fixture unavailable"):
+            collector.collect()
+        assert not wire_trace._rows and wire_trace._bootstrap is None
+    assert budget.solver_calls == 4 and collector.quarantined
+    assert len(traces) == 1 and traces[0]["status"] == "no_previous_control_window"

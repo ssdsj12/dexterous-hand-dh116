@@ -1,5 +1,5 @@
 """Owned independent Pinch/Tripod PPO worker. The scheduler verifies eventual outer-process exit."""
-from contextlib import closing
+from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from functools import partial
 import hashlib
@@ -180,6 +180,23 @@ def _record_actual_wall_budget(collector, lease, phase, *, operation="fresh_upda
         episode_cap_s=owner.context.episode_cap_s))
 
 
+@contextmanager
+def _trace_actual_wire_feedback(collector, output, *, profile):
+    from .tabletop_native_teacher_collector import NativeJournal
+    from .tabletop_training_reward import CONTACT
+
+    if profile != CONTACT:
+        yield
+        return
+    if collector.trainer.model.context_mode != profile:
+        raise ValueError("contact profile and wire trace source differ")
+    # The authorized contact profile opts in. Keep the original training
+    # journal and checkpoint replay schema independent of this diagnostic.
+    with closing(NativeJournal(output / "wire_control_feedback.jsonl", scope=collector.sources.scope)) as journal:
+        with collector.trace_wire_feedback(journal.emit):
+            yield
+
+
 def _acquire(sim, owners, trace, *, attempt, config, lease, resume=None):
     import torch
 
@@ -228,30 +245,31 @@ def _acquire(sim, owners, trace, *, attempt, config, lease, resume=None):
             checkpoint_contract = (_checkpoint_contract(collector, attempt) if resume is None
                                    else restored_contract)
             record_budget(collector, lease, "before_update")
-            if resume is not None:
-                with codec_scope(), collector.trace_wall_windows(trace.event):
-                    result = run_resumed_update(collector, checkpoint_contract=checkpoint_contract,
-                                                controls=config["rollout_steps"], origin=resume)
-            else:
-                with torch.random.fork_rng(devices=[]):
-                    torch.default_generator.manual_seed(FRESH_POLICY_EXPLORATION_SEED)
-                    rng_bytes = torch.get_rng_state().numpy().tobytes()
-                    journal.emit("fresh_policy_rng", {
-                        "version": "dh116-fresh-policy-cpu-rng-v1",
-                        "device_scope": "cpu",
-                        "initialization_seed": FRESH_POLICY_INITIALIZATION_SEED,
-                        "exploration_seed": FRESH_POLICY_EXPLORATION_SEED,
-                        "initial_weights_sha256": collector._epoch["weights"],
-                        "exploration_state_sha256": hashlib.sha256(rng_bytes).hexdigest(),
-                        "deterministic_physics_claimed": False,
-                        "native_qualification": False,
-                        "teacher_admission": False,
-                    })
-                    # The one owned worker can accelerate the legacy encoder during
-                    # collection; the unchanged replay schema remains authoritative.
+            with _trace_actual_wire_feedback(collector, attempt.output, profile=config["preflight"].get("profile")):
+                if resume is not None:
                     with codec_scope(), collector.trace_wall_windows(trace.event):
-                        result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract,
-                                                  controls=config["rollout_steps"])
+                        result = run_resumed_update(collector, checkpoint_contract=checkpoint_contract,
+                                                    controls=config["rollout_steps"], origin=resume)
+                else:
+                    with torch.random.fork_rng(devices=[]):
+                        torch.default_generator.manual_seed(FRESH_POLICY_EXPLORATION_SEED)
+                        rng_bytes = torch.get_rng_state().numpy().tobytes()
+                        journal.emit("fresh_policy_rng", {
+                            "version": "dh116-fresh-policy-cpu-rng-v1",
+                            "device_scope": "cpu",
+                            "initialization_seed": FRESH_POLICY_INITIALIZATION_SEED,
+                            "exploration_seed": FRESH_POLICY_EXPLORATION_SEED,
+                            "initial_weights_sha256": collector._epoch["weights"],
+                            "exploration_state_sha256": hashlib.sha256(rng_bytes).hexdigest(),
+                            "deterministic_physics_claimed": False,
+                            "native_qualification": False,
+                            "teacher_admission": False,
+                        })
+                        # The one owned worker can accelerate the legacy encoder during
+                        # collection; the unchanged replay schema remains authoritative.
+                        with codec_scope(), collector.trace_wall_windows(trace.event):
+                            result = run_fresh_update(collector, checkpoint_contract=checkpoint_contract,
+                                                      controls=config["rollout_steps"])
             record_budget(collector, lease, "after_update")
         except BaseException:
             try:

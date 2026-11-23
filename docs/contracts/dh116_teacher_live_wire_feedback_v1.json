@@ -1,0 +1,93 @@
+{
+  "version": "dh116-teacher-live-wire-feedback-v1",
+  "status": "passed_cpu_collector_integration_and_archived_native_source_replay",
+  "provider_profile": "approach_contact_prelift_v1",
+  "provider_style": "tripod",
+  "sidecar": "wire_control_feedback.jsonl",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_provider.py": "eca9d1ebd4ff283cfda0455df070e313d0945875224a017eb72c9336f734911d",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_collector.py": "1f949487e04d4520fe1c33f233c031123f0597c82b02a17ac1609e594617ec63",
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_wire_feedback.py": "eb9f9bdb9c68e7b8dd19dbf98a00bbe7506a86a3625d727a6584803074d40ce6",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_grasp_feedback.py": "c2cf124cc1b705b9394d31de70342fff68436b29e900a479b82d86aa9f683385",
+    "tests/test_dh116_power_palm_contact_evidence.py": "be657946453f5f99bbd2de9e1c976ae648663b3fc05642b1b94b03289baa5e1a",
+    "tests/test_native_teacher_contact_sources.py": "a032e102ba984d8201fc3409912f5cd75797a32a2af497d5abeecce4a9fab490"
+  },
+  "scope": "owned_diagnostic_only",
+  "archived_readback": {
+    "raw_journal_sha256": "984c0c241daa098b01e61415305f3a5e98a887c0c46d9699feef4e8d1445e151",
+    "archive_authority_sha256": "7b28fbd386a8adbb594e3ae7653a017acc6f8fcf816b28408b0c0fcf9ca18faf",
+    "replay_sha256": "e7a82d3c7374dbf332e929895c1ade32841ee8b4e2196990fd601456413c0194",
+    "query_sha256": "bdff7bfbc60a24bbc51c409e19be03438488967edff3efeddffd950b5904c7a0",
+    "query_command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/wire-teacher-live-archive-query.py"
+    ],
+    "decisions": 8,
+    "advanced_exchanges": 64,
+    "bootstrap": 8,
+    "identical_boundary_feedback_sha256": {
+      "11": "8e22f2c552683459fb0d8b0e5c046caf6a49bd9c0bf99c3dec980d7418025659",
+      "19": "ec7b8fa8658580222b7ffafd5d86f9968b1c46ea08bd9befe8208acdea9c6b1c",
+      "27": "3a14ec01176e8e1786ae68aae75a44fd47a29e5d67c9a9297c7f2878f1683f15",
+      "35": "7c8bb7660fa763fc7faa15497aba296a0062c08bbb12c80f95ae37ef0d40799a",
+      "43": "b7339232a01203fe55a825811cc5dd9a308de7d157b1f6c6ce3df7c8d6a92184",
+      "51": "048ca21c0f3bc11ca0335e22d2ca6d0be8d5b0f998a1cbf838c0e5a0c5a7e33e",
+      "59": "cbf5a1d93c4c2a97233c1711c4824d4c7ab838962947bb0bca230fc88b0c563b"
+    },
+    "unmeasured_first_sdk": 3,
+    "truncated_last_sdk": 67
+  },
+  "cpu": {
+    "passed": 265,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_supported_wire_grasp_feedback.py",
+      "tests/test_supported_wire_specifications.py",
+      "tests/test_supported_wire_material_variants.py",
+      "tests/test_supported_wire_factorial_holdouts.py",
+      "tests/test_supported_wire_holdout_resets.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_live_opposition.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_dh116_power_palm_contact_evidence.py",
+      "tests/test_native_teacher_collector.py",
+      "tests/test_native_teacher_contact_sources.py",
+      "tests/test_native_teacher_source_priming.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_native_teacher_actual_provider.py",
+      "tests/test_native_teacher_actual_update.py",
+      "tests/test_native_teacher_actual_launch.py",
+      "tests/test_native_teacher_actual_inputs.py"
+    ],
+    "log_sha256": "dbe4c619f843513344477a09b0d309f0f5d5a76fedaeba2643fd88f9b5e5ff33"
+  },
+  "new_native_runs": 0,
+  "new_ppo_updates": 0,
+  "actor_used": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "antigravity": {
+    "reviewed_sources": true,
+    "rounds": [
+      "DH116 \u5728\u7ebf\u63e1\u529b\u65c1\u8def R1",
+      "DH116 \u5728\u7ebf\u63e1\u529b\u65c1\u8def R2"
+    ],
+    "reviewed_base": "182e3fe16b77e38509bab494f72d397eb51587bc",
+    "read_sha256": {
+      "trace": "eb9f9bdb9c68e7b8dd19dbf98a00bbe7506a86a3625d727a6584803074d40ce6",
+      "collector": "1f949487e04d4520fe1c33f233c031123f0597c82b02a17ac1609e594617ec63",
+      "provider": "eca9d1ebd4ff283cfda0455df070e313d0945875224a017eb72c9336f734911d"
+    }
+  }
+}

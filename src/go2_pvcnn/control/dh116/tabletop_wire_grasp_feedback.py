@@ -31,6 +31,10 @@ def pack_wire_grasp_feedback(observation, decision_clock):
     if (clock != _clock(lambda: decision_clock) or clock["reset_id"] == 0
             or clock["rod_tick"] < SUBSTEPS or clock["rod_tick"] % SUBSTEPS):
         raise ValueError("same completed pre-action SDK/rod boundary required")
+    return _pack_measurement(observation)
+
+
+def _pack_measurement(observation):
     positions, tangents = [], []
     forces = np.zeros((len(SIDES), len(PAD_NAMES), 5))
     valid = np.zeros(forces.shape[:2], dtype=bool)
@@ -59,6 +63,26 @@ def pack_wire_grasp_feedback(observation, decision_clock):
             valid[side_index, index] = True
     return dict(position_in_palm_m=positions, tangent_in_palm=tangents,
                 reaction_force_n=forces.tolist(), reaction_valid=valid.tolist())
+
+
+def _palm_frame_geometry(nodes, palms, grasp_material_ids):
+    if nodes.shape != (1, MATERIAL_NODES, 3) or not np.isfinite(nodes).all():
+        raise ValueError("finite current 41-node wire geometry required")
+    hands, rotations = {}, {}
+    for side, (position, rotation) in zip(SIDES, palms, strict=True):
+        if (np.shape(position) != (3,) or not np.isfinite(position).all()
+                or np.shape(rotation) != (4,) or not np.isfinite(rotation).all()
+                or not math.isclose(np.linalg.norm(rotation), 1., abs_tol=1e-5, rel_tol=0.)):
+            raise ValueError("finite current palm position and unit XYZW quaternion required")
+        inverse = rotations[side] = Rotation.from_quat(rotation).inv()
+        index = grasp_material_ids[side]
+        tangent = nodes[0, min(index+1, MATERIAL_NODES-1)] - nodes[0, max(index-1, 0)]
+        length = np.linalg.norm(tangent)
+        if not length > 0.:
+            raise ValueError("current material station has no tangent")
+        hands[side] = dict(xyz_in_palm_m=inverse.apply(nodes[0, index]-position).tolist(),
+                           tangent_in_palm=inverse.apply(tangent/length).tolist(), reaction={})
+    return hands, rotations
 
 
 def pack_wire_control_feedback(exchanges, decision_clock, *, grasp, grasp_material_ids):
@@ -104,24 +128,8 @@ def pack_wire_control_feedback(exchanges, decision_clock, *, grasp, grasp_materi
         raise ValueError("consecutive native solver times required")
 
     nodes = np.asarray(exchanges[-1]["rod"]["node_positions"], dtype=float)
-    if nodes.shape != (1, MATERIAL_NODES, 3) or not np.isfinite(nodes).all():
-        raise ValueError("finite current 41-node wire geometry required")
     palms = _palm_poses(exchanges[-1], end["physics_step"])
-    hands, rotations = {}, {}
-    for side, (position, rotation) in zip(SIDES, palms, strict=True):
-        if (np.shape(position) != (3,) or not np.isfinite(position).all()
-                or np.shape(rotation) != (4,) or not np.isfinite(rotation).all()
-                or not math.isclose(np.linalg.norm(rotation), 1., abs_tol=1e-5, rel_tol=0.)):
-            raise ValueError("finite current palm position and unit XYZW quaternion required")
-        inverse = rotations[side] = Rotation.from_quat(rotation).inv()
-        index = grasp_material_ids[side]
-        tangent = nodes[0, min(index+1, MATERIAL_NODES-1)] - nodes[0, max(index-1, 0)]
-        length = np.linalg.norm(tangent)
-        if not length > 0.:
-            raise ValueError("current material station has no tangent")
-        hands[side] = dict(xyz_in_palm_m=inverse.apply(nodes[0, index]-position).tolist(),
-                           tangent_in_palm=inverse.apply(tangent/length).tolist(), reaction={})
-
+    hands, rotations = _palm_frame_geometry(nodes, palms, grasp_material_ids)
     observation = dict(clock=end, measured_hands=hands, reaction_valid=False)
     if any(exchange["rod"]["contact_valid"] is not True for exchange in exchanges):
         return pack_wire_grasp_feedback(observation, end)

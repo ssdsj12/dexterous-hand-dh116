@@ -11,7 +11,7 @@ from go2_pvcnn.control.dh116.tabletop_power_shared_rod import (
 )
 
 
-def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False, load=.1, crossed=False, crossed_link=None, supported_stations=False):
+def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False, load=.1, crossed=False, crossed_link=None, supported_stations=False, hand_contact_links=None):
     def stamp(name):
         return hashlib.sha256(name.encode()).hexdigest()
 
@@ -23,7 +23,8 @@ def build(*, missing_palm=None, palm_aligned=False, table=False, proximal=False,
         **{key: stamp(name + key) for key in
            ("source_usd_sha256", "source_geometry_sha256", "cooked_geometry_sha256", "sdf_sha256", "capture_sha256")},
     ) for slot, name in enumerate(names) if name not in static}
-    slots = [i for i, name in enumerate(names) if name != missing_palm and (table or name not in static)]
+    slots = [i for i, name in enumerate(names) if name != missing_palm and (table or name not in static)
+             and (hand_contact_links is None or name in static or name.split(".")[-1] in hand_contact_links)]
     indices, vectors = [], []
     node_forces, mesh = np.zeros((41, 3)), np.zeros((len(names), 6))
     for step in range(12):

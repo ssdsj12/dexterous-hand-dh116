@@ -140,6 +140,7 @@ class NativeTeacherCollector:
             self._source_profile = owner.backend_profile
         self.journal=owner.ledger
         self._student_stereo = None
+        self._wire_feedback = None
         self._wall_trace_sink = self._window_wall = None
         self.quarantined=self._closed=self._active=self.episode_done=False
         self.consumed_sdk_steps=0 if previous is None else previous.consumed_sdk_steps
@@ -167,6 +168,8 @@ class NativeTeacherCollector:
                     self.reward.observe(endpoint)
                 if self.reward._terminal:
                     self._terminal="reward:"+"|".join(self.reward._reasons)
+                if self._wire_feedback is not None:
+                    self._wire_feedback.record(row["exchange"])
             except BaseException:
                 self.quarantined=True
                 raise
@@ -237,6 +240,22 @@ class NativeTeacherCollector:
         return observation, dict(source_pack_sequence=sequence)
 
     @contextmanager
+    def trace_wire_feedback(self, sink):
+        """Observe one fresh episode without changing Actor inputs or execution."""
+        from .tabletop_native_teacher_wire_feedback import WireFeedbackTrace
+
+        if (not callable(sink) or self._active or self._closed or self.quarantined or self.episode_done
+                or self.owner.episode._control_index != 0 or self._wire_feedback is not None):
+            raise ValueError("fresh idle episode and independent wire feedback sink required")
+        trace = WireFeedbackTrace(self.trainer.model.model_identity["grasp"], sink)
+        self._wire_feedback = trace
+        try:
+            yield
+        finally:
+            self._wire_feedback = None
+            trace.clear_window()
+
+    @contextmanager
     def trace_wall_windows(self, sink):
         """Use a separate diagnostic sink for this synchronous collection scope."""
         if not callable(sink) or self._active or self._closed or self._wall_trace_sink is not None:
@@ -272,6 +291,8 @@ class NativeTeacherCollector:
                 return packet
         except BaseException as exc:
             self.quarantined=True
+            if self._wire_feedback is not None:
+                self._wire_feedback.clear_window()
             try:
                 self.journal.emit("rollout_quarantined",dict(type=type(exc).__name__,message=str(exc),
                     consumed_sdk_steps=self.consumed_sdk_steps,recorded_transitions=len(tr.rollout),
@@ -330,6 +351,10 @@ class NativeTeacherCollector:
         self.journal.emit("decision",dict(pre_action_sha256=prehash,observation=obs,
             collection_token=token,policy=self._epoch,sampled_action24=sample["actions"],history=decision,
             **decision_source, **stereo))
+        if self._wire_feedback is not None:
+            self._wire_feedback.emit(pre, pre_action_sha256=prehash, purpose="decision", collection_token=token)
+            if _digest(owner.pre_action_state()) != prehash:
+                raise SourceFailure("owner changed during the pre-action wire trace")
         timing = self._window_wall
         if timing is not None:
             timing.advance("physical_control")
@@ -367,6 +392,9 @@ class NativeTeacherCollector:
             # to the physical endpoint of this action and before any Reset.
             observation = _copy(next_obs)
             with torch.no_grad(): value=tr.model.value(next_obs).detach().cpu().clone()
+            if self._wire_feedback is not None:
+                self._wire_feedback.emit(next_pre, pre_action_sha256=next_hash,
+                    purpose="bootstrap_truncated" if truncated else "bootstrap", collection_token=token)
             if _digest(owner.pre_action_state())!=next_hash: raise SourceFailure("bootstrap source advanced before reset")
             next_endpoint=deepcopy(endpoint)
             bootstrap_source = dict(collection_token=token, identity=next_endpoint,
@@ -394,6 +422,8 @@ class NativeTeacherCollector:
         self.journal.emit("transition_recorded",dict(collection_token=token,rollout_length=len(tr.rollout)))
         self.context.commit_post_context(post_context)
         self.transitions+=1;self.episode_done=bool(terminated or truncated)
+        if self.episode_done and self._wire_feedback is not None:
+            self._wire_feedback.clear_window()
         return packet
 
     def restart_episode(self,factories):
@@ -402,6 +432,8 @@ class NativeTeacherCollector:
             raise RuntimeError("only a completed terminal/external truncation can reset")
         if self._student_stereo is not None:
             raise RuntimeError("Student stereo recording requires an independently attached episode owner")
+        if self._wire_feedback is not None:
+            raise RuntimeError("wire feedback tracing requires an independently attached episode owner")
         static=self.live.static
         self.close()
         owner=factories.episode(static)
@@ -420,6 +452,8 @@ class NativeTeacherCollector:
     def close(self):
         if self._closed:return
         self._closed=True
+        if self._wire_feedback is not None:
+            self._wire_feedback.clear_window()
         stereo, self._student_stereo = self._student_stereo, None
         try:
             try:
