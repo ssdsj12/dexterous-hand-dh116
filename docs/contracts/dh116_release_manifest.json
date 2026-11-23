@@ -34808,6 +34808,43 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-bilateral-handoff",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-bilateral-handoff.md",
+      "readiness": "docs/contracts/dh116_teacher_power_bilateral_handoff_v1.json",
+      "status": "cpu_frozen_power_partial_contact_native_pending",
+      "cpu_tests": {
+        "passed": 72,
+        "failed": 0
+      },
+      "earlier_combined_cpu_tests": {
+        "passed": 263,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_contact_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "candidate_frozen_sha256": "4a0805d17307bd0a65c0d2a8dabccee43ea664fb24c3a473125a01ac00b6dde6",
+      "candidate_sdk_steps": 14216,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "9bfd615aa566e21563fc126bc20eb4ee09bc7c13",
+        "source_tree": "b79c8c199f93ce6a4811b02ddb99abee43ad7aa3",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
