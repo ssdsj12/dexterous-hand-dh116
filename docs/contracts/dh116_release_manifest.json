@@ -34699,6 +34699,46 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-left-contact-refit",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-left-contact-refit.md",
+      "readiness": "docs/contracts/dh116_teacher_power_left_contact_refit_v1.json",
+      "status": "passed_cpu_bilateral_partial_static_same_wire",
+      "cpu_tests": {
+        "passed": 203,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "bilateral_partial_static_passed": true,
+      "pending_left_continuous_route": {
+        "target_geometry_samples_passed": 17,
+        "fixed_rod_only": true,
+        "palm_detour_m": 0.0025,
+        "thumb_flexion_reduction_rad": 0.035,
+        "thumb_abduction_increment_rad": 0.05,
+        "continuous_route_verified": false,
+        "screen_sha256": "442fddaaa8e67e106b7641e5efadec613fdac80708baaf16a4d6c38482187103",
+        "script_sha256": "8127d5d76e4a727488470fb855ed7e344e14b25e3fbf23b8b070f4525ddb98c7"
+      },
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "18ac77b575f3fdd47c3bfd1e53e3e719967dd337",
+        "source_tree": "4e375e6463920abb0e9e3dbab611099c64d8bc34",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
