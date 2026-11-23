@@ -1,3 +1,5 @@
+The wire Teacher diagnostic separates palm pose, force availability and force-value effects in the canonical 24D action. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-feedback-ablation.md)
+
 The sequential Power partial approach now has continuous target coverage on the same archived rod. [Report](docs/superpowers/reports/2026-11-23-teacher-power-bilateral-detour.md)
 
 The two Power hands now pass the original partial-contact endpoint checks on the same archived wire. [Report](docs/superpowers/reports/2026-11-23-teacher-power-left-contact-refit.md)

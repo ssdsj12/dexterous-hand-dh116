@@ -51399,6 +51399,40 @@
         "continuous_target_geometry_proved": true,
         "teacher_admission": false
       }
+    },
+    "teacher.wire-feedback-ablation": {
+      "title": "Isolate same-state wire posture and reaction corrections",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-feedback-policy",
+        "teacher.wire-common-pregrasp"
+      ],
+      "tests": [
+        "tests/test_wire_feedback_ablation.py",
+        "tests/test_wire_feedback_teacher.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_supported_wire_factorial_holdouts.py",
+        "tests/test_supported_wire_holdout_resets.py",
+        "tests/test_dh116_wire_common_pregrasp.py",
+        "tests/test_wire_live_palm_approach.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_model.py",
+        "tests/test_native_teacher_checkpoint.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-feedback-ablation.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_feedback_ablation_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "same_state_cpu_policy_diagnostic",
+        "cpu_passed": 249,
+        "native_qualification": false,
+        "teacher_admission": false,
+        "generalization_qualified": false
+      }
     }
   },
   "execution_target": {
