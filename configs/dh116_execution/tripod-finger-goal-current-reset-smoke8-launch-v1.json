@@ -1,0 +1,23 @@
+{
+  "checkpoint_origin": null,
+  "core_recipe_identity": {
+    "command_spec_sha256": "6db90bdcdedfbabfb32348dc9e49d39ea7adbb087ae8ff47b82cde50d5543ad3",
+    "code_config_sha256": "3e5b5b2ef0de5a23f61e7ab61ae7511cf88ac11e07879de72e1c0a4422e9e7f7"
+  },
+  "debugger": "gdb_on_segv",
+  "device_plan": {
+    "cuda_visible_devices": "3",
+    "experience_path": "/mnt/mydisk/xk/projects/IsaacLab/apps/isaacsim_4_5/isaaclab.python.headless.kit",
+    "experience_sha256": "b4a60880219827b4843f3ec3d6f9cbad8028c1c9df588a89c1796a60b8030a92",
+    "logical_device": "cuda:0",
+    "physical_gpu_index": 3
+  },
+  "provider": {
+    "entrypoint": "run_a",
+    "path": "src/go2_pvcnn/control/dh116/tabletop_native_teacher_actual_provider.py",
+    "sha256": "eca9d1ebd4ff283cfda0455df070e313d0945875224a017eb72c9336f734911d"
+  },
+  "role": "a_fresh",
+  "schema": "dh116-actual-native-execution-v1",
+  "source_closure_sha256": "0b608051d4aa2fe34bc71e541b2bdc58fd82405afaad8638d07d06539b28f271"
+}

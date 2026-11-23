@@ -52085,6 +52085,46 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-current-reset-for-ppo-v1": {
+      "title": "Tripod current-source Reset and pre-PPO environment verification",
+      "executor": "gated",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-and-ppo.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_current_reset_for_ppo_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "scope": "native Reset only; no control, rollout, or PPO",
+        "native_qualification": false
+      }
+    },
+    "teacher.tripod-finger-goal-current-reset-smoke8-v1": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Tripod current Reset and finger-goal native PPO",
+      "evidence_scope": "tripod_finger_goal_current_reset_v1",
+      "command_spec": "configs/dh116_execution/tripod-finger-goal-current-reset-smoke8-core-v1.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Current native Reset is verified. One bounded PPO execution is pending.",
+      "dependencies": [
+        "teacher.tripod-current-reset-for-ppo-v1"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-and-ppo.md",
+      "actual_launch": {
+        "path": "configs/dh116_execution/tripod-finger-goal-current-reset-smoke8-launch-v1.json",
+        "sha256": "8bd69749c49e72fbd2fe61abc347d3dbacddf2837cccff149911d05bc75eb552"
+      }
     }
   },
   "execution_target": {

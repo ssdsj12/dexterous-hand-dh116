@@ -1,0 +1,31 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "branch": "11-17",
+  "package": "teacher.tripod-current-reset-for-ppo-v1",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-and-ppo.md",
+  "tested_head": "bafcceee8897b859f82bd70c06e17840d1f3afc0",
+  "native_runs": 1,
+  "ppo_updates": 0,
+  "reset_verified": true,
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "reset_budget": {
+    "setup_sdk_steps": 2,
+    "solver_steps": 0,
+    "episode_resets": 1
+  },
+  "backend_profile_sha256": "fce062347dd924fef2d0bb58520ba2c6efa11829a6a019b841aaed951a3f502d",
+  "reset_seed_sha256": "5b040a43753b43d2a02136e9c44016b8125c02b5b274fa766a563f2f68ba93dd",
+  "mesh_plan_sha256": "6fcac588f7e846018acc2b277e9d56e740b962fb9499a59ccccc12c391c4227e",
+  "frozen_sha256": "f9fd751d602af1735426960da41c25c1f5b379b2c059c999eb972ebb5890fd03",
+  "outer_receipt_sha256": "6856f268f643796fc8740aa96cae7ea5b2ce1ea5f1efdbfa160c0a5c4b09ed93",
+  "audit_sha256": "fd335b862d4fe90819f50e01fc5bbfe665bc4fcb3fbaf4a417b3166cf0178195",
+  "training_reset_manifest_sha256": "a06e6509c19c58c511acf53d2d7bb5c05b0cedcf4547232e38247b2399984d02",
+  "elapsed_s": 105.1369951989036,
+  "natural_exit_code": 0,
+  "cpu_tests": {
+    "passed": 19,
+    "failed": 0
+  }
+}
