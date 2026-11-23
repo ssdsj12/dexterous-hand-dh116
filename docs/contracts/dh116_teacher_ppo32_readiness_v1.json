@@ -1742,9 +1742,97 @@
       "after_log_sha256": "e82b7c354f38a75ecff3a764a7dbfbb6f2a43d7948dece30947395e614373a95"
     },
     "pending": [
-      "complete hand/mesh/rod local Reset and next-window continuation",
       "shared backend reward/guard/action parity",
       "Pinch/Tripod/Power 128 or 512 lane PPO"
+    ]
+  },
+  "shared_mesh_local_reset": {
+    "status": "mechanical_local_reset_and_continuation_passed_teacher_integration_pending",
+    "native": {
+      "sdk_step": 226,
+      "environments": 2,
+      "shared_solver": true,
+      "nonzero_reaction_steps": [
+        14,
+        0
+      ],
+      "ppo_updates": 0,
+      "teacher_queries": 0,
+      "physics_rows": 216,
+      "contact_replay": true,
+      "local_reset": {
+        "sdk_step": 218,
+        "env_id": 0,
+        "reset_id": 2,
+        "episode_uid": "native:0:2",
+        "rod_ticks": [
+          0,
+          2496
+        ],
+        "current_target_solver_equal": true,
+        "mesh_motion_zero": true,
+        "neighbor_hand_and_rod_state_bitwise_preserved": true,
+        "neighbor_mesh_state_bitwise_preserved": true,
+        "neighbor_reaction_bitwise_preserved": true,
+        "solver_time_s": 0.43333300948143005,
+        "reset_sdk_steps": 0,
+        "reset_solver_steps": 0
+      },
+      "per_lane_resets": [
+        2,
+        1
+      ],
+      "per_lane_rod_ticks": [
+        96,
+        2592
+      ],
+      "native_qualification": false,
+      "teacher_admission": false,
+      "receipt_sha256": "2e00adb144d16377eb684d932e761aa37b4eaf33cbd048e581c1a2c5c5379c33",
+      "journal_sha256": "7ce731d22238af55d921e5b7484f99f46b0aeebf8fd37aa9bb08f0581021ddb5",
+      "exit_code": 0,
+      "forced_exit": false,
+      "elapsed_s": 57.00258412095718,
+      "gpu": 3
+    },
+    "cpu": {
+      "passed": 57,
+      "skipped": 1,
+      "failed": 0,
+      "log_sha256": "5fa908c60076f8a0f6d18537a02b29e4bc9b127b3f430fda7b185776bf0b0849"
+    },
+    "solver_only": {
+      "grasps": [
+        "pinch",
+        "tripod",
+        "power"
+      ],
+      "lanes": 128,
+      "cases_passed": 3,
+      "log_sha256": "2fab6702661c7d082dd4992572cd9a5b41e9dfe523ba0c8457ec81e81e1d8b0b",
+      "isaac_envs": 0,
+      "ppo_updates": 0
+    },
+    "backend": {
+      "binary_sha256": "19de772f73beb082a1f20e9b2337d2d593bfc6021121db18e4a3e15dfc0ff6bb",
+      "cuda_toolkit": "12.8.61",
+      "cuda_arch": 89,
+      "python": "3.10.12",
+      "torch": "2.7.0+cu128",
+      "patch": "scripts/patches/deformx_shared_mesh_reset.patch"
+    },
+    "protection": {
+      "unchanged_files": 528,
+      "checkpoints": {
+        "/tmp/dh116-wp3-teacher128-v02/teacher_diagnostic/teacher_update_000000.pt": "absent_before_and_after",
+        "/tmp/dh116-wp3-teacher128-v02/teacher_diagnostic/teacher_update_000001.pt": "absent_before_and_after"
+      }
+    },
+    "remaining": [
+      "actual Teacher state/reward/context local Reset",
+      "shared source identity and PPO collector",
+      "Pinch/Tripod/Power 128 or 512 Isaac PPO",
+      "untrained Pinch non-target clearance guard"
     ]
   }
 }

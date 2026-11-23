@@ -3999,3 +3999,5 @@ Compact GPU shared contact reduction verification is recorded in docs/superpower
 Shared solver ownership and the two-lane Isaac startup probe are recorded in docs/superpowers/reports/2026-11-23-dh116-shared-rod-owner.md. The static probe observed zero hand reactions.
 
 Real two-lane shared-solver contact replay and remaining PPO integration are documented in docs/superpowers/reports/2026-11-23-dh116-shared-native-contact-replay.md.
+
+Shared CUDA selected mesh Reset and actual two-lane DH116 continuation naturally exit 0; Teacher PPO remains pending. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-mesh-local-reset.md).

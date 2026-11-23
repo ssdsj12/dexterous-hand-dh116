@@ -52,7 +52,85 @@ def restore_hand_seed(sim, scenes, seed):
         raise ValueError("hand seed restore advanced SDK physics")
 
 
-def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, end, *, reset, backend, commands=None):
+def reset_live_lane(sim, scenes, seed, archive, runtime, bindings, lane, *, start_step):
+    """Reset one complete mechanical lane at a completed control boundary."""
+    import torch
+    from scripts.audit_dh116_batch_rod_exchange import _live_contact_geometry, translated_static_pose
+
+    sdk = sim.current_time_step_index
+    if (runtime.physics_step != sdk or (sdk-start_step) % 8
+            or runtime._reaction is None or runtime._consumed):
+        raise ValueError("completed shared window with pending reactions required")
+    solver = runtime.solver
+    before_time = float(solver.time)
+    before_nodes = torch.as_tensor(solver.positions()).clone()
+    before_velocity = torch.as_tensor(solver.velocities()).clone()
+    before_mesh = solver.mesh_state_snapshot()
+    before_reaction = runtime._reaction["mesh_wrenches"].clone()
+    peers = [i for i in range(len(scenes)) if i != lane]
+
+    def hand_state(scene):
+        return [[value.detach().cpu().numpy().copy() for value in (
+            hand.root_physx_view.get_dof_positions(),
+            hand.root_physx_view.get_dof_velocities(),
+            hand.root_physx_view.get_dof_position_targets(),
+            hand.root_physx_view.get_link_transforms())] for hand in scene["hands"]]
+
+    before_hands = {i: hand_state(scenes[i]) for i in peers}
+    restore_hand_seed(sim, [scenes[lane]], seed)
+    for hand in scenes[lane]["hands"]:
+        hand.permanent_wrench_composer.reset()
+        hand.instantaneous_wrench_composer.reset()
+        hand.write_data_to_sim()
+    measured, _ = _live_contact_geometry(scenes[lane], bindings[lane])
+    positions, rotations = [], []
+    for slot, entry in enumerate(archive.mesh_plan["entries"]):
+        name = entry["name"]
+        if name in measured:
+            xyz, quat = measured[name]
+        else:
+            xyz, quat = translated_static_pose(archive.style, entry, np.zeros(3))
+            xyz = np.asarray(xyz, dtype=np.float32) + np.asarray(scenes[lane]["origin"], dtype=np.float32)
+            np.testing.assert_array_equal(before_mesh["current_positions_world_m"][lane, slot], xyz)
+        positions.append(xyz)
+        rotations.append(quat)
+    positions = np.asarray(positions, dtype=np.float32)[None]
+    rotations = np.asarray(rotations, dtype=np.float32)[None]
+    runtime.reset_rod_lane(lane, episode_uid=f"native:{lane}:{runtime.resets[lane]+1}")
+    solver.reset_env_mesh_poses(np.asarray([lane], dtype=np.int32), positions, rotations)
+    after_mesh = solver.mesh_state_snapshot()
+    for phase in ("current", "target", "solver"):
+        np.testing.assert_array_equal(after_mesh[phase+"_positions_world_m"][lane], positions[0])
+        np.testing.assert_allclose(after_mesh[phase+"_quaternions_xyzw"][lane], rotations[0], atol=2e-6, rtol=0)
+    for key in ("solver_linear_velocity_world_m_s", "solver_angular_velocity_world_rad_s",
+                "motion_delta_world_m", "motion_rotation_world_rad", "pending_teleport"):
+        if np.any(after_mesh[key][lane]):
+            raise ValueError("selected mesh Reset retained motion")
+    for key, value in before_mesh.items():
+        if isinstance(value, np.ndarray):
+            np.testing.assert_array_equal(after_mesh[key][peers], value[peers])
+    if [after_mesh["pair_counts"][i] for i in peers] != [before_mesh["pair_counts"][i] for i in peers]:
+        raise ValueError("Reset changed another native pair count")
+    for i in peers:
+        for actual, expected in zip(hand_state(scenes[i]), before_hands[i], strict=True):
+            for a, b in zip(actual, expected, strict=True):
+                np.testing.assert_array_equal(a, b)
+    torch.testing.assert_close(torch.as_tensor(solver.positions())[peers], before_nodes[peers], rtol=0, atol=0)
+    torch.testing.assert_close(torch.as_tensor(solver.velocities())[peers], before_velocity[peers], rtol=0, atol=0)
+    torch.testing.assert_close(runtime._reaction["mesh_wrenches"][peers], before_reaction[peers], rtol=0, atol=0)
+    if (runtime._reaction["mesh_wrenches"][lane].count_nonzero()
+            or runtime.ticks[lane] != 0 or sim.current_time_step_index != sdk
+            or float(solver.time) != before_time):
+        raise ValueError("local Reset retained reaction or advanced a clock")
+    return dict(sdk_step=sdk, env_id=lane, reset_id=runtime.resets[lane],
+        episode_uid=runtime.episodes[lane], rod_ticks=list(runtime.ticks),
+        current_target_solver_equal=True, mesh_motion_zero=True,
+        neighbor_hand_and_rod_state_bitwise_preserved=True,
+        neighbor_mesh_state_bitwise_preserved=True, neighbor_reaction_bitwise_preserved=True,
+        solver_time_s=before_time, reset_sdk_steps=0, reset_solver_steps=0)
+
+
+def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, end, *, reset, backend, commands=None, reset_last_window=False):
     import torch
     from scripts.audit_dh116_batch_rod_exchange import _live_contact_geometry
     from scripts.verify_dh116_deformx_thumb_contact import step_thumb_physics
@@ -125,6 +203,7 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
     angles = [torch.zeros_like(value) for value in palms]
     nonzero = [0] * len(scenes)
     reaction = None
+    reset_receipt = None
     journal = NativeJournal(output / "shared_coupling.jsonl")
     try:
         for sdk in range(start_step + 1, end + 1):
@@ -205,13 +284,25 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                     connection, projection, read_clock = transaction
                     action_readbacks.append(connection.finish(hand_bindings[lane], read_clock=read_clock))
                     palms[lane], angles[lane] = projection["palm_offsets_m"], projection["projected_angles"]
-            reaction = runtime.consume(physics_step=sdk + 1)
-            journal.emit("shared_step", dict(sdk_step=sdk, rod_ticks=runtime.ticks,
+            journal.emit("shared_step", dict(sdk_step=sdk, rod_ticks=list(runtime.ticks),
                 action_readbacks=action_readbacks, counts=capture["counts"].cpu().numpy(), mesh_wrenches=capture["mesh_wrenches"].cpu().numpy(),
                 source_solver_id=id(solver), min_table_clearance_m=float(clearance.min())))
+            if reset_last_window and sdk == end - 8:
+                reset_receipt = reset_live_lane(sim, scenes, seed, archive, runtime, bindings, 0, start_step=start_step)
+                palms[0].zero_()
+                angles[0].zero_()
+                measured = [_live_contact_geometry(scene, names)
+                            for scene, names in zip(scenes, bindings, strict=True)]
+                journal.emit("local_reset", reset_receipt)
+            reaction = runtime.consume(physics_step=sdk + 1)
+        if reset_last_window and (reset_receipt is None or runtime.resets != [2, 1]
+                                  or runtime.ticks != [96, (end-start_step)*12]):
+            raise ValueError("complete local Reset and continued lane clocks required")
         result = dict(sdk_step=end, environments=len(scenes), shared_solver=True,
             nonzero_reaction_steps=nonzero, ppo_updates=0, teacher_queries=0,
-            physics_rows=end - start_step, contact_replay=commands is not None, native_qualification=False, teacher_admission=False)
+            physics_rows=end - start_step, contact_replay=commands is not None,
+            local_reset=reset_receipt, per_lane_resets=runtime.resets, per_lane_rod_ticks=runtime.ticks,
+            native_qualification=False, teacher_admission=False)
         write_new(output / "shared_result.json", result)
         return result
     finally:
@@ -227,6 +318,7 @@ def main():
         parser.add_argument("--"+name, required=True)
     parser.add_argument("--contact-receipt", type=Path)
     parser.add_argument("--contact-receipt-sha256")
+    parser.add_argument("--reset-last-window", action="store_true")
     args = parser.parse_args()
     if os.environ.get("CUDA_VISIBLE_DEVICES") != "3":
         raise ValueError("bounded probe uses physical GPU 3")
@@ -238,6 +330,8 @@ def main():
     archive = load_grasp_archive("pinch", args.receipt, args.receipt_sha256)
     _, reset = load_inputs("pinch", args.receipt, args.receipt_sha256,
         args.smoke, args.smoke_sha256, args.smoke_ledger_sha256)
+    if args.reset_last_window and (args.contact_receipt is None or not hasattr(_ropesim.RopeBatch, "reset_env_mesh_poses")):
+        raise ValueError("complete local Reset needs the contact replay and selected-reset candidate backend")
     commands = None
     if args.contact_receipt is not None:
         if args.contact_receipt_sha256 is None:
@@ -250,7 +344,7 @@ def main():
         args.output.mkdir(exist_ok=False)
         _run(Path(__file__).resolve().parents[1], archive, 3, 2, args.output,
              coupled=True, max_sdk_step=18 if commands is None else 10 + 8 * len(commands),
-             extra_exercise=partial(coupled, reset=reset, backend=_ropesim, commands=commands))
+             extra_exercise=partial(coupled, reset=reset, backend=_ropesim, commands=commands, reset_last_window=args.reset_last_window))
 
 
 if __name__ == "__main__":

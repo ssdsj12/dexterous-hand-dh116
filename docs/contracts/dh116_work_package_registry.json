@@ -52345,6 +52345,12 @@
         "ppo_updates": 0,
         "full_local_reset_pending": true,
         "receipt_sha256": "e3db3c4016ca73bdf254b9b6b67872122a7aa6f9f1fb83149ea6d43202269d9b"
+      },
+      "shared_mechanical_reset_progress": {
+        "sdk_step": 218,
+        "exit_code": 0,
+        "pending": "Teacher source/reward/context integration",
+        "receipt_sha256": "2e00adb144d16377eb684d932e761aa37b4eaf33cbd048e581c1a2c5c5379c33"
       }
     },
     "teacher.tripod-ppo64-v1": {
@@ -52423,6 +52429,20 @@
       ],
       "branch": "11-17",
       "report": "docs/superpowers/reports/2026-11-23-dh116-shared-native-contact-replay.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "ppo_updates": 0,
+      "teacher_admission": false
+    },
+    "teacher.shared-mesh-local-reset-v1": {
+      "title": "Zero-time selected CUDA mesh and real DH116 local Reset",
+      "executor": "gated",
+      "status": "passed",
+      "scope": "mechanical two-lane Reset, contact and continuation only",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.shared-native-contact-replay-v1"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-mesh-local-reset.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
       "ppo_updates": 0,
       "teacher_admission": false

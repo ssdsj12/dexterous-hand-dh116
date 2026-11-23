@@ -4530,3 +4530,5 @@ Added compact GPU pair reduction and atomic reader; three 128-lane solver probes
 Added exclusive shared rod step/reaction ownership and rod-only Reset. Two-lane Isaac startup exits naturally; nonzero hand contact and PPO remain pending.
 
 Replayed original 24D approach actions with the shared solver in real Isaac: 22/0 nonzero hand-reaction steps, natural exit 0. Corrected the historical native_getter scope audit mismatch.
+
+Shared CUDA selected mesh Reset and actual two-lane DH116 continuation naturally exit 0; Teacher PPO remains pending. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-mesh-local-reset.md).
