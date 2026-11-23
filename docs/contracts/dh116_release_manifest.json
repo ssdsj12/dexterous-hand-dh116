@@ -34816,7 +34816,7 @@
       "readiness": "docs/contracts/dh116_teacher_power_bilateral_handoff_v1.json",
       "status": "cpu_frozen_power_partial_contact_native_pending",
       "cpu_tests": {
-        "passed": 72,
+        "passed": 73,
         "failed": 0
       },
       "earlier_combined_cpu_tests": {
@@ -34833,17 +34833,31 @@
       "grasp_qualified": false,
       "teacher_admission": false,
       "generalization_qualified": false,
-      "candidate_frozen_sha256": "4a0805d17307bd0a65c0d2a8dabccee43ea664fb24c3a473125a01ac00b6dde6",
+      "candidate_frozen_sha256": "6e3c66dcb2fecb69e5c5397865cb6f9c2874846e76e26fc1276a4e96edb7c333",
       "candidate_sdk_steps": 14216,
       "remote_verified": true,
       "publication": {
         "state": "windows_publication_verified",
-        "source_commit": "9bfd615aa566e21563fc126bc20eb4ee09bc7c13",
-        "source_tree": "b79c8c199f93ce6a4811b02ddb99abee43ad7aa3",
+        "source_commit": "2747add58a380a55e6b99b5ee036964cf639b474",
+        "source_tree": "d3116388294e52e578dca6c2e04b9387dfebd508",
         "remote_branch": "11-17",
-        "files_verified": 9,
+        "files_verified": 5,
         "pr2_draft": true,
-        "pr2_merged": false
+        "pr2_merged": false,
+        "release_metadata_excluded_from_own_execution_fingerprint": true
+      },
+      "earlier_publication": {
+        "publication": {
+          "state": "windows_publication_verified",
+          "source_commit": "2747add58a380a55e6b99b5ee036964cf639b474",
+          "source_tree": "d3116388294e52e578dca6c2e04b9387dfebd508",
+          "remote_branch": "11-17",
+          "files_verified": 5,
+          "pr2_draft": true,
+          "pr2_merged": false,
+          "release_metadata_excluded_from_own_execution_fingerprint": true
+        },
+        "draft_frozen_sha256": "4a0805d17307bd0a65c0d2a8dabccee43ea664fb24c3a473125a01ac00b6dde6"
       }
     }
   ]
