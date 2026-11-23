@@ -77,7 +77,7 @@ def _extra_grids(plan):
 
 def _expected_entries(plan):
     """Reconstruct only constructor arguments, never a native pose/state snapshot."""
-    from .tabletop_power_supported_task import prepare_initial_state, TRIPOD_SCOPE
+    from .tabletop_power_supported_task import prepare_initial_state, POWER_SCOPE, TRIPOD_SCOPE
     from .tabletop_deformable_grasp_runtime import box_sdf
     from .tabletop_material import hand_material_contract
     from .tabletop_native_parameter_endpoints import BUILD
@@ -100,8 +100,10 @@ def _expected_entries(plan):
     task_path = Path(plan["task_config"]["path"])
     _require(_sha(task_path) == plan["task_config"]["sha256"], "frozen supported task bytes differ")
     task = json.loads(task_path.read_bytes())
+    scope = task["scope"]
+    _require(scope in (TRIPOD_SCOPE, POWER_SCOPE), "explicit supported Tripod or Power task required")
     _, _, nodes, support_poses = prepare_initial_state(
-        task, baseline["prepared_scene"]["table"], expected_scope=TRIPOD_SCOPE)
+        task, baseline["prepared_scene"]["table"], expected_scope=scope)
     _require(task["gravity_w_m_s2"] == plan["cfg"]["rod"]["gravity_world_m_s2"]
              and task["support_scene"]["wire_radius_m"] == plan["cfg"]["rod"]["radius_m"],
              "task gravity/radius differs from original physical parameters")

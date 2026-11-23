@@ -1,4 +1,4 @@
-"""Fresh supported Tripod scene inside an existing App and ownership scope.
+"""Fresh supported dual-hand scene inside an existing App and ownership scope.
 
 Build all seventeen original collision slots before the caller's first Reset.
 No App/SDK owner, settlement, controller motion or Teacher admission is created.
@@ -77,7 +77,7 @@ def _initial_geometry(project, prepared, sim, hands, episode, radius_m, support_
 
 def build_fresh_supported_owned(sim, owners, *, project, prepared, ownership, record,
                                 backend_profile, task_config, task_config_sha256,
-                                extra_sources, run_uuid, episode_uid, physics_budget_end):
+                                extra_sources, run_uuid, episode_uid, physics_budget_end, style="tripod"):
     """Return the new original episode; the caller exclusively performs Reset.
 
     Requires the exact current backend profile. All side-specific source USD/SDF
@@ -103,7 +103,7 @@ def build_fresh_supported_owned(sim, owners, *, project, prepared, ownership, re
             raise ValueError("canonical frozen supported task path required")
         config = json.loads(raw)
         from . import tabletop_dual_hand_scene_preparation as scene_api
-        from .tabletop_power_supported_task import prepare_initial_state, TRIPOD_SCOPE, assemble_supported_scene
+        from .tabletop_power_supported_task import prepare_initial_state, POWER_SCOPE, TRIPOD_SCOPE, assemble_supported_scene
         from .tabletop_deformable_grasp_runtime import FreeRodRuntime, load_candidate
         from .tabletop_dual_hand_rod_runtime import PADS
         from .tabletop_power_shared_rod import (
@@ -122,8 +122,11 @@ def build_fresh_supported_owned(sim, owners, *, project, prepared, ownership, re
         checked_file(backend_profile.binary_path, backend_profile.binary_sha256)
         prepared = scene_api.prepare_scene(project) if prepared is None else prepared
         scene_api._verify(project,prepared)
+        scopes = {"tripod": TRIPOD_SCOPE, "power": POWER_SCOPE}
+        if style not in scopes:
+            raise ValueError("explicit supported Tripod or Power style required")
         seed, active, nodes, support_poses = prepare_initial_state(
-            config, prepared["table"], expected_scope=TRIPOD_SCOPE)
+            config, prepared["table"], expected_scope=scopes[style])
         cfg = load_candidate(project/"configs/dh116_tasks/flexible_pinch_candidate_v1.json",project)
         if (cfg["rod"]["gravity_world_m_s2"] != config["gravity_w_m_s2"]
                 or cfg["rod"]["radius_m"] != config["support_scene"]["wire_radius_m"]):

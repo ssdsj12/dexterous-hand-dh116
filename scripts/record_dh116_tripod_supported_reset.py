@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Acquire fresh17 Tripod Reset evidence using the existing single-App lifecycle.
+"""Acquire fresh17 Tripod or Power Reset evidence using the existing single-App lifecycle.
 
 Two measured SDK initialization steps, one zero-step episode Reset, no control,
 solver update, policy/model query or PPO. Outer natural exit is verified separately.
@@ -17,12 +17,13 @@ from scripts import record_dh116_teacher_numeric_reset as lifecycle
 ROOT = lifecycle.ROOT
 native = lifecycle.native
 VERSION = "dh116-fresh-supported-tripod-reset-capture-v1"
+POWER_VERSION = "dh116-fresh-supported-power-reset-capture-v1"
 
 
-def freeze_plan(output, *, task_config, task_config_sha256, extra_sources, fixed_pregrasp=False):
+def freeze_plan(output, *, task_config, task_config_sha256, extra_sources, fixed_pregrasp=False, style="tripod"):
     from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
     from go2_pvcnn.control.dh116.tabletop_fresh_supported_builder import SOURCE_KEYS
-    from go2_pvcnn.control.dh116.tabletop_power_supported_task import prepare_initial_state, TRIPOD_SCOPE
+    from go2_pvcnn.control.dh116.tabletop_power_supported_task import prepare_initial_state, POWER_SCOPE, TRIPOD_SCOPE
     from go2_pvcnn.control.dh116.tabletop_dual_hand_scene_preparation import prepare_scene
     from scripts import verify_dh116_power_shared_rod as shared
 
@@ -31,13 +32,16 @@ def freeze_plan(output, *, task_config, task_config_sha256, extra_sources, fixed
     if not task.is_absolute() or task.resolve(strict=True) != task:
         raise ValueError("canonical task configuration path required")
     table = prepare_scene(ROOT)["table"]
-    grasp = "tripod"
+    scopes = {"tripod": TRIPOD_SCOPE, "power": POWER_SCOPE}
+    if style not in scopes:
+        raise ValueError("explicit supported Tripod or Power style required")
+    grasp = style
     if fixed_pregrasp:
         from go2_pvcnn.control.dh116.tabletop_wire_holdout_resets import fixed_pregrasp_reset
 
         grasp, _, _, _ = fixed_pregrasp_reset(config, table)
     else:
-        prepare_initial_state(config,table,expected_scope=TRIPOD_SCOPE)
+        prepare_initial_state(config,table,expected_scope=scopes[style])
     if not isinstance(extra_sources,dict) or set(extra_sources) != SOURCE_KEYS:
         raise ValueError("complete independent palm and proximal sources required")
     extra = {key:Path(value) for key,value in extra_sources.items()}
@@ -53,11 +57,11 @@ def freeze_plan(output, *, task_config, task_config_sha256, extra_sources, fixed
     inputs.extend(proximal_files)
     plan = lifecycle.freeze_plan(output)
     # The caller uses the existing lifecycle, not its historical Pinch acquisition.
-    plan.update(version=VERSION,style=grasp,mesh_count=17,pair_capacity=41*17*12,
+    plan.update(version=POWER_VERSION if grasp == "power" else VERSION,style=grasp,mesh_count=17,pair_capacity=41*17*12,
         task_config=dict(path=str(task),sha256=task_config_sha256),
         extra_sources={key:str(value) for key,value in extra.items()},
-        preserved_scope="fresh supported Tripod17, one measured Reset; no settlement/control/camera/PPO")
-    plan["budget"].update(mode="fresh_tripod_reset17",sdk_steps=2,episode_resets=1,
+        preserved_scope=f"fresh supported {grasp.title()}17, one measured Reset; no settlement/control/camera/PPO")
+    plan["budget"].update(mode=f"fresh_{grasp}_reset17",sdk_steps=2,episode_resets=1,
                           new_power_mesh_registrations=6)
     for path in inputs:
         if path.is_symlink() or not path.is_file():
@@ -65,7 +69,7 @@ def freeze_plan(output, *, task_config, task_config_sha256, extra_sources, fixed
         key = str(path.resolve(strict=True))
         digest = native.sha(path)
         if plan["frozen_files"].setdefault(key,digest) != digest:
-            raise ValueError("conflicting frozen Tripod Reset source: "+key)
+            raise ValueError("conflicting frozen supported Reset source: "+key)
     return plan
 
 
@@ -81,16 +85,17 @@ def acquire(sim, owners, trace, output, *, plan):
         profile = BackendProfile.load(ROOT)
         if profile.digest != plan["backend_profile_sha256"] or plan["budget"]["sdk_steps"] != 2:
             raise ValueError("exact frozen current profile and two-step Reset scope required")
-        run = "fresh-tripod17-"+uuid4().hex
+        style = plan["style"]
+        run = f"fresh-{style}17-"+uuid4().hex
         episode_uid = run+":0"
         def record(row):
-            trace.event("tripod_fresh_boundary",kind=row["kind"])
+            trace.event(f"{style}_fresh_boundary",kind=row["kind"])
             if row["kind"] == "reset":
                 _write(output/"episode_reset.json",row)
         fresh = build_fresh_supported_owned(sim,owners,project=ROOT,prepared=None,ownership=trace,
             record=record,backend_profile=profile,task_config=Path(plan["task_config"]["path"]),
             task_config_sha256=plan["task_config"]["sha256"],extra_sources=plan["extra_sources"],
-            run_uuid=run,episode_uid=episode_uid,physics_budget_end=10)
+            run_uuid=run,episode_uid=episode_uid,physics_budget_end=10,style=style)
         episode = fresh.episode
         def readback(row):
             _write(output/"mesh_reset_state.json",dict(readback=row,mesh_plan=fresh.mesh_plan))
@@ -108,7 +113,7 @@ def acquire(sim, owners, trace, output, *, plan):
             raise ValueError("same-clock two-step Reset and original66 common fields required")
         _write(output/"reset_geometry.json",geometry)
         _write(output/"pre_action_common.json",pre["common"])
-        outcome = dict(version=VERSION,style="tripod",run_uuid=run,episode_uid=episode_uid,
+        outcome = dict(version=plan["version"],style=style,run_uuid=run,episode_uid=episode_uid,
             **native.clock(sim),actual_rod_tick=identity["rod_tick"],mesh_count=17,pair_capacity=8364,
             reset_seed_sha256=fresh.reset_seed_sha256,mesh_plan_sha256=fresh.mesh_plan["sha256"],
             task_config=plan["task_config"],clearance_passed=result["clearance_passed"],
@@ -125,6 +130,7 @@ def main(argv=None):
     for flag in ("output","plan","task-config","rays","left-bake","right-bake","proximal-capture","proximal-bake"):
         parser.add_argument("--"+flag,type=Path,required=True)
     parser.add_argument("--task-sha256",required=True)
+    parser.add_argument("--style",choices=("tripod","power"),default="tripod")
     parser.add_argument("--approved-frozen-sha256")
     parser.add_argument("--verify-existing-plan",action="store_true",help="CPU-only source verification child; never launches an App")
     args = parser.parse_args(argv)
@@ -135,7 +141,7 @@ def main(argv=None):
         if args.verify_existing_plan and args.approved_frozen_sha256 is not None:
             parser.error("CPU verifier cannot execute an approved native plan")
         expected = freeze_plan(args.output,task_config=args.task_config,
-                              task_config_sha256=args.task_sha256,extra_sources=extra)
+                              task_config_sha256=args.task_sha256,extra_sources=extra,style=args.style)
         if args.verify_existing_plan:
             if json.loads(args.plan.read_bytes()) != expected or args.output.exists():
                 raise ValueError("current independently rebuilt source plan differs")
@@ -150,7 +156,7 @@ def main(argv=None):
         raise ValueError("exact fresh published fingerprint and exclusive output required")
     verification = [sys.executable,"-B","-m","scripts.record_dh116_tripod_supported_reset",
         "--verify-existing-plan","--output",str(args.output),"--plan",str(args.plan),
-        "--task-config",str(args.task_config),"--task-sha256",args.task_sha256]
+        "--task-config",str(args.task_config),"--task-sha256",args.task_sha256,"--style",args.style]
     for key,value in extra.items():
         verification.extend(("--"+key.replace("_","-"),str(value)))
     subprocess.run(verification,check=True)

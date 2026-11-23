@@ -1,0 +1,17 @@
+{
+  "version": "dh116-teacher-power-ppo-readiness-v1",
+  "style": "power",
+  "status": "reset_recipe_verified_on_cpu",
+  "cpu": {
+    "passed": 29,
+    "failed": 0
+  },
+  "sdk_setup_steps": 2,
+  "episode_resets": 1,
+  "reset_only_solver_substeps": 0,
+  "native_reset_verified": false,
+  "ppo_updates": 0,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "report": "docs/superpowers/reports/2026-11-23-teacher-power-supported-reset.md"
+}
