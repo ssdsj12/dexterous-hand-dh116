@@ -30,7 +30,7 @@ def _check_smoke(path, digest):
         raise ValueError("actual separated hand reaction, local Reset and a subsequent complete window required")
 
 
-def _exercise(sim, scenes, seed, prepared, archive, nodes, simulator_owners, output, gpu, end, *, contract):
+def _exercise(sim, scenes, seed, prepared, archive, nodes, simulator_owners, output, gpu, end, *, contract, legacy_row_json=False, profile_two_lanes=False, full_window_evidence=False):
     from contextlib import ExitStack
     import math
 
@@ -39,6 +39,7 @@ def _exercise(sim, scenes, seed, prepared, archive, nodes, simulator_owners, out
     from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_provider import _fresh_reset_owners
     from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_update import _seal_checkpoint
     from go2_pvcnn.control.dh116.tabletop_native_teacher_batch import BatchBudget, NativeTeacherBatch
+    from go2_pvcnn.control.dh116.tabletop_teacher_batch_evidence import BatchEvidence
     from go2_pvcnn.control.dh116.tabletop_native_teacher_checkpoint import build_training_contract
     from go2_pvcnn.control.dh116.tabletop_native_teacher_collector import NativeJournal
     from go2_pvcnn.control.dh116.tabletop_native_teacher_model import NativeContextTeacher
@@ -50,15 +51,25 @@ def _exercise(sim, scenes, seed, prepared, archive, nodes, simulator_owners, out
     rods = _build_rods(scenes, archive, nodes, simulator_owners)
     profile = contract.backend_profile
     budget = BatchBudget(range(len(rods)), start_sdk_step=sim.current_time_step_index, max_sdk_step=end)
-    journals = [NativeJournal(output / f"lane_{i:03d}.jsonl") for i in range(len(rods))]
+    evidence = None if legacy_row_json else BatchEvidence(
+        output, lane_count=len(rods), full_windows=full_window_evidence)
+    journals = ([evidence.lane(i) for i in range(len(rods))] if evidence is not None else
+                [NativeJournal(output / f"lane_{i:03d}.jsonl") for i in range(len(rods))])
+    seal = evidence.seal if evidence is not None else None
     group_log = NativeJournal(output / "training.jsonl")
     model = NativeContextTeacher(contract.config.model_config, backend_profile=profile)
     trainer = DeformablePPOTrainer(model, contract.ppo_config, rollout_steps=contract.config.rollout_steps,
                                    num_envs=len(scenes))
     with ExitStack() as cleanup:
         cleanup.callback(group_log.close)
-        for journal in journals:
-            cleanup.callback(journal.close)
+        if seal is not None:
+            def finish_evidence(error_type, _error, _traceback):
+                seal("rejected" if error_type is not None else "cleanup")
+
+            cleanup.push(finish_evidence)
+        else:
+            for journal in journals:
+                cleanup.callback(journal.close)
 
         def reset(env_id, old):
             rod, scene, journal = rods[env_id], scenes[env_id], journals[env_id]
@@ -96,16 +107,32 @@ def _exercise(sim, scenes, seed, prepared, archive, nodes, simulator_owners, out
             return owner
 
         batch = NativeTeacherBatch([reset(i, None) for i in range(len(rods))], trainer,
-                                   reset_lane=reset, journal=group_log, budget=budget)
+                                   reset_lane=reset, journal=group_log, budget=budget,
+                                    compact=evidence is not None and not full_window_evidence,
+                                    log_windows=profile_two_lanes or evidence is None or full_window_evidence)
+        if seal is not None:
+            seal("initial_reset")
         peak = _gpu_memory(gpu)
         times = []
-        for _ in range(contract.config.rollout_steps):
-            window = batch.collect()
+        windows = 1 if profile_two_lanes else contract.config.rollout_steps
+        for _ in range(windows):
+            try:
+                window = batch.collect(seal_evidence=seal)
+            except BaseException:
+                if seal is not None:
+                    seal("rejected")
+                raise
             times.append(window["window_seconds"])
             peak = max(peak, _gpu_memory(gpu))
             message = dict(grasp="pinch", gpu=gpu, environments=len(rods), sdk_step=budget.sdk_step,
-                           window_seconds=times[-1], peak_observed_gpu_mib=peak)
+                           window_seconds=times[-1], phase_seconds=window["phase_seconds"], peak_observed_gpu_mib=peak)
             print("DH116_TRAINING_WINDOW", json.dumps(message), flush=True)
+        if profile_two_lanes:
+            result = dict(grasp="pinch", environments=len(rods), sdk_step=budget.sdk_step,
+                          budget=budget.snapshot(), ppo_updates=0, phase_seconds=window["phase_seconds"],
+                          window_seconds=times[-1], peak_observed_gpu_mib=peak)
+            write_new(output / "timing_profile.json", result)
+            return result
         before = [p.detach().double().clone() for p in model.parameters()]
         metrics = batch.update()
         delta = sum(float((p.detach().double() - old).square().sum())
@@ -148,6 +175,11 @@ def main():
     for flag in ("receipt-sha256", "smoke-sha256", "training-config-sha256"):
         parser.add_argument("--" + flag, required=True)
     parser.add_argument("--gpu", type=int, required=True)
+    journal = parser.add_mutually_exclusive_group()
+    journal.add_argument("--legacy-row-json", action="store_true", help="original per-row JSON audit")
+    journal.add_argument("--full-window-evidence", action="store_true", help="seal all rows of every window")
+    parser.add_argument("--profile-two-lanes", action="store_true",
+                        help="measure one native two-lane window without a PPO update")
     args = parser.parse_args()
     if os.environ.get("CUDA_VISIBLE_DEVICES") != str(args.gpu):
         raise ValueError("exclusive visible physical GPU required")
@@ -169,11 +201,15 @@ def main():
     ppo = PPOConfig(lr=p["learning_rate"], gamma=p["gamma"], lam=p["gae_lambda"], clip=p["clip"],
         epochs=p["epochs"], minibatches=p["minibatches"], value_coef=p["value"], entropy_coef=p["entropy"],
         max_grad_norm=p["max_grad_norm"], target_kl=p["target_kl"], kl_backtrack_steps=p["kl_backtrack_steps"])
-    end = 2 + 8 * cfg["rollout_steps"]
+    lane_count = 2 if args.profile_two_lanes else 64
+    update_count = 0 if args.profile_two_lanes else 1
+    window_count = 1 if args.profile_two_lanes else cfg["rollout_steps"]
+    end = 2 + 8 * window_count
     limits = dict(max_sdk_steps=end, max_solver_calls=end - 2, wall_timeout_s=3600.)
     tracked_sources = [Path(__file__), Path(__file__).with_name("smoke_dh116_teacher_batch_dynamic.py"),
          project / "src/go2_pvcnn/control/dh116/tabletop_native_teacher_batch.py",
-         project / "src/go2_pvcnn/control/dh116/tabletop_native_teacher_batch_episode.py"]
+         project / "src/go2_pvcnn/control/dh116/tabletop_native_teacher_batch_episode.py",
+         project / "src/go2_pvcnn/control/dh116/tabletop_teacher_batch_evidence.py"]
     hashes = {p.name: sha256(p.read_bytes()).hexdigest() for p in tracked_sources}
     contract = SimpleNamespace(config=SimpleNamespace(**cfg), backend_profile=BackendProfile.load(project),
         reset_manifest=manifest, reward_config=reward, ppo_config=ppo, budget=limits, runtime=SessionBudget(limits),
@@ -185,13 +221,15 @@ def main():
         args.output.mkdir(exist_ok=False)
         write_new(args.output / "run_plan.json", dict(grasp="pinch", environments=64, gpu=args.gpu,
             sdk_budget=end, rollout_steps=32, additional_updates=1, ppo=asdict(ppo), source_sha256=hashes,
-            smoke_sha256=args.smoke_sha256))
+            smoke_sha256=args.smoke_sha256, evidence=("jsonl" if args.legacy_row_json else
+                        "dhb_full" if args.full_window_evidence else "summary_with_failure_dhb")))
         sys.path.insert(0, str(BACKEND.parents[1]))
         from ropesim import _ropesim
         if Path(_ropesim.__file__).resolve() != BACKEND:
             raise ValueError("native training loaded a different DeformX binary")
-        _run(project, archive, args.gpu, 64, args.output, coupled=True, max_sdk_step=end,
-             extra_exercise=partial(_exercise, contract=contract))
+        _run(project, archive, args.gpu, lane_count, args.output, coupled=True, max_sdk_step=end,
+             extra_exercise=partial(_exercise, contract=contract, legacy_row_json=args.legacy_row_json,
+                                     profile_two_lanes=args.profile_two_lanes, full_window_evidence=args.full_window_evidence))
 
 
 if __name__ == "__main__":

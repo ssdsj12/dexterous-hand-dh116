@@ -1,3 +1,5 @@
+The GPU 3 Pinch batch has a compact training journal and an optional full audit. A two-lane native window completed in 4.14 seconds. The earlier 64-lane run stopped at the original geometry guard before PPO updated. [Report](docs/superpowers/reports/2026-11-23-dh116-compact-teacher-rollout.md)
+
 The GPU 3 Pinch Teacher committed a 64-lane native PPO collection window after a two-lane dynamic test of measured reaction and local Reset. The first optimizer update is pending. [Report](docs/superpowers/reports/2026-11-23-dh116-native-teacher-batch-gpu3.md)
 
 The 64-lane Teacher PPO writer has CPU integration evidence for Pinch, Tripod and Power. Native dynamic training requires a grouped scene and episode owner. [Report](docs/superpowers/reports/2026-11-23-dh116-teacher64-rollout.md)

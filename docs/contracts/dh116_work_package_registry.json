@@ -52312,16 +52312,18 @@
       "dependencies": [
         "teacher.ppo32-isolation-preflight-v1"
       ],
-      "reason": "GPU3 native two-lane dynamic Reset and natural exit passed. The 64-lane worker committed its first real 64-row PPO window. The sealed optimizer update and final process exit remain pending.",
-      "report": "docs/superpowers/reports/2026-11-23-dh116-native-teacher-batch-gpu3.md",
+      "reason": "One native GPU3 window committed 64 transitions. Lane 55 stopped window two at SDK18 under the original non-target geometry guard. Compact two-lane instrumentation and natural exit passed. A clean complete rollout remains pending.",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-compact-teacher-rollout.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
       "native_runs": 2,
       "last_result": {
-        "status": "native_rollout_in_progress_at_snapshot",
+        "status": "native_rollout_rejected_by_original_guard",
         "committed_windows": 1,
         "ppo_updates": 0,
         "first_window_sha256": "07f938f8a7f6a8e42295867783d36005077bd6c383c8218e54269f6aaaec4f34",
-        "dynamic_smoke_exit_code": 0
+        "dynamic_smoke_exit_code": 0,
+        "failure_physics_tick": 18,
+        "failure_env_id": 55
       }
     },
     "teacher.tripod-ppo64-v1": {

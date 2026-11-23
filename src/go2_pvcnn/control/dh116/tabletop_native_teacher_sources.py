@@ -147,6 +147,8 @@ class _NativeGeometrySources:
                     row["material_director"]=deepcopy(self.parameters)
                     row["original_guard_failure"]=row["guard_failure"]
                     row["closure_geometry"]=self._capture_geometry(row,owner)
+                    if getattr(owner.history, "compact_batch", False):
+                        self._live_geometry.capture(row)
                     row["native_teacher_health"]=self._health(clock)
                     geometry=row["closure_geometry"]
                     if geometry["source_complete"] and geometry["failure_reasons"] and row["guard_failure"] is None:
@@ -197,7 +199,8 @@ class _NativeGeometrySources:
             # This runs AFTER durable physical recording and history.record.
             # The independent reader binds the complete row to the actual issued
             # request/SDK targets, collection token and current history window.
-            d=self.distance.capture(event,history_owner=self.owner.history,grasp=self.STYLE)
+            options = {"live_geometry": self._live_geometry} if getattr(self.owner.history, "compact_batch", False) else {}
+            d=self.distance.capture(event,history_owner=self.owner.history,grasp=self.STYLE,**options)
             from .tabletop_deformable_clearance_guard import validate_post_step_clearance
             raw=dict(row,guard_failure=row["original_guard_failure"])
             checked=validate_post_step_clearance(raw)
@@ -279,10 +282,11 @@ class NativePinchSources(_NativeGeometrySources):
 
     def _configure_distances(self,owner,contract,scope):
         from .tabletop_bilateral_r0_approach import BilateralMeasuredPinchApproach
-        from .tabletop_native_teacher_policy_pinch_distance import PolicyOwnedPinchApproach
+        from .tabletop_native_teacher_policy_pinch_distance import LiveGeometryHandoff, PolicyOwnedPinchApproach
         with _canonical_pinch_history():
             self.reset_distance=BilateralMeasuredPinchApproach(contract.config.project)
         self.distance=PolicyOwnedPinchApproach(contract.config.project,scope=scope)
+        self._live_geometry = LiveGeometryHandoff()
 
 
 class NativeTripodSources(_NativeGeometrySources):

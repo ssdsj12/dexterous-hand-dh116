@@ -964,7 +964,7 @@
       "outer_sha256": "faf2f543c38cf1e42f6c3d19220d5de44ac88ce617f454e166e4865236526195"
     },
     "pinch": {
-      "status": "native_rollout_in_progress_at_snapshot",
+      "status": "one_committed_window_then_native_guard_rejection",
       "environments": 64,
       "rollout_target_windows": 32,
       "committed_windows_at_snapshot": 1,
@@ -977,7 +977,12 @@
       "peak_observed_gpu_mib_at_snapshot": 3326,
       "attempt_sha256": "5dd3201517ec24fe35ea3c4e0a0911b171e32f86860fe5d6f4fc7cfd87af3317",
       "plan_sha256": "4f09c02668a2c0525ed83ff5850b402c4462a49ebf33bc32e5dc45662cb3e702",
-      "failed_attempt_sha256": "90faa5c2c7bddfe980a6ee691f5168bbbd1e4bafe27cd22bdd95aabe12a18cfe"
+      "failed_attempt_sha256": "90faa5c2c7bddfe980a6ee691f5168bbbd1e4bafe27cd22bdd95aabe12a18cfe",
+      "exit_code": 1,
+      "failed_env_id": 55,
+      "failed_sdk_step": 18,
+      "failed_guard": "policy_owned_source_geometry_guard",
+      "final_outer_receipt_sha256": "7512bdaa8519fa284ec86728801aa841ec2151c25321e32ef4cd86fd478d9087"
     },
     "tripod": {
       "status": "blocked_reset_recorder_source_sha_mismatch_and_live_batch_sources_pending",
@@ -988,5 +993,53 @@
       "native_runs": 0
     },
     "teacher_admission": false
+  },
+  "compact_native_teacher": {
+    "report": "docs/superpowers/reports/2026-11-23-dh116-compact-teacher-rollout.md",
+    "cpu": {
+      "passed": 160,
+      "skipped": 1,
+      "log_sha256": "2911784a13cbcbb9043a099ed54d4d72335ce377f212d4f374c921436858d92c"
+    },
+    "gpu_focused_passed": 10,
+    "gpu3_native": {
+      "lanes": 2,
+      "windows": 1,
+      "ppo_updates": 0,
+      "window_seconds": 4.1350255301222205,
+      "exit_code": 0,
+      "receipt_sha256": "74f2e618d5dbc2878f2b44ba0de43980815e3060e452fd3614963f65b0149a42"
+    },
+    "parity_subset": {
+      "complete_native_gpu_admission": false,
+      "flags_exact": {
+        "cpu_guard": true,
+        "cpu_lowest": true,
+        "cpu_projection_reasons": true,
+        "cuda_clearance_guard": true,
+        "cuda_guard": true,
+        "cuda_lowest": true,
+        "cuda_projection_reasons": true
+      },
+      "max_abs_error": {
+        "cpu_vs_archive_clearance": 5.551115123125783e-17,
+        "cpu_vs_archive_reward": 0.0,
+        "cpu_vs_archive_rod_features": 0.0,
+        "cpu_vs_archive_targets": 0.0,
+        "cpu_vs_cuda_clearance": 5.551115123125783e-17,
+        "cpu_vs_cuda_reward": 2.168404344971009e-19,
+        "cpu_vs_cuda_rod_features": 5.960464477539063e-08,
+        "cpu_vs_cuda_targets": 2.220446049250313e-16,
+        "cuda_vs_archive_clearance": 0.0,
+        "cuda_vs_archive_reward": 2.168404344971009e-19,
+        "cuda_vs_archive_rod_features": 5.960464477539063e-08,
+        "cuda_vs_archive_targets": 2.220446049250313e-16
+      },
+      "rows": 512,
+      "subset_passed": true,
+      "windows": 64
+    },
+    "parity_log_sha256": "1203d25464d24eaa3d44ef624866192ce612db7fca7ed65330b4be3632a34027",
+    "three_style_128_or_512_status": "unverified_shared_pair_capture_and_style_specific_rollout_required"
   }
 }

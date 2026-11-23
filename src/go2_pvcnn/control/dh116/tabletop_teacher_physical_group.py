@@ -1,6 +1,7 @@
 """An opt-in 480 Hz barrier for independently owned DH116 physical lanes."""
 
 from copy import deepcopy
+from time import perf_counter
 
 import torch
 
@@ -14,7 +15,7 @@ def control_group(lanes, actions, *, observe):
     return _control_group(lanes, actions, observe=observe, window_index=None)
 
 
-def _control_group(lanes, actions, *, observe, window_index, progress=None):
+def _control_group(lanes, actions, *, observe, window_index, progress=None, timings=None, owned_rows=False):
     """Issue one 60 Hz request per lane, sharing eight global SDK steps."""
     lanes = tuple(lanes)
     validate_actions(actions)
@@ -51,19 +52,28 @@ def _control_group(lanes, actions, *, observe, window_index, progress=None):
 
     terminal = {}
     guard_failed = False
+    def stamp(key, started):
+        if timings is not None:
+            timings[key] = timings.get(key, 0.) + perf_counter() - started
+
     for lane in lanes:
         lane._active = True
     try:
         for substep in range(8):
             expected = sim.current_time_step_index
+            started = perf_counter()
             pending = [lane._prepare_substep(action[None], substep)
                        for lane, action in zip(lanes, actions, strict=True)]
+            stamp("native_prepare_s", started)
+            started = perf_counter()
             try:
                 sdk_step = step_thumb_physics(sim, expected, budget_end=budget_end)
             finally:
                 if progress is not None and sim.current_time_step_index != expected:
                     progress.advanced_sdk(sim.current_time_step_index)
+                stamp("sdk_step_s", started)
             for env_id, lane, prepared in zip(env_ids, lanes, pending, strict=True):
+                started = perf_counter()
                 try:
                     row = lane._complete_substep(prepared, sdk_step)
                 finally:
@@ -71,7 +81,10 @@ def _control_group(lanes, actions, *, observe, window_index, progress=None):
                         clock = lane._rod.clock()
                         if clock["physics_step"] == sdk_step and clock["clock_valid"]:
                             progress.advanced_rod(clock)
-                reason = observe(deepcopy(row))
+                    stamp("native_completion_s", started)
+                started = perf_counter()
+                reason = observe(row if owned_rows else deepcopy(row))
+                stamp("observe_and_guard_s", started)
                 guard = row["guard_failure"]
                 if guard is None and "native_teacher_source_error" in row:
                     guard = "native_teacher_source_error"
@@ -118,7 +131,7 @@ class TeacherPhysicalGroup:
             if isinstance(lane, FlexiblePhysicalExchange):
                 lane._closed = True
 
-    def control(self, actions, *, observe, commit, progress=None):
+    def control(self, actions, *, observe, commit, progress=None, timings=None, owned_rows=False):
         """Commit full windows only; the caller settles the trusted PPO sample."""
         if self._closed or self._busy:
             raise RuntimeError("closed or in-progress group")
@@ -129,12 +142,17 @@ class TeacherPhysicalGroup:
         self._busy = True
         try:
             report = _control_group(self._lanes, actions, observe=observe,
-                                    window_index=self._window_index, progress=progress)
+                                    window_index=self._window_index, progress=progress, timings=timings, owned_rows=owned_rows)
             if report["aborted"]:
                 self._close()
                 return report
             boundary = [lane._clock(0)[0] for lane in self._lanes]
-            commit(deepcopy(report))
+            started = perf_counter()
+            try:
+                commit(deepcopy(report))
+            finally:
+                if timings is not None:
+                    timings["window_admission_s"] = perf_counter() - started
             if [lane._clock(0)[0] for lane in self._lanes] != boundary:
                 raise ValueError("sample commit changed the owned physical boundary")
             self._window_index += 1

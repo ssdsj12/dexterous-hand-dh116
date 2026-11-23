@@ -27,10 +27,10 @@ class NativeBatchPhysicalEpisode(DualHandPhysicalEpisode):
         self._state = "active"
         return evidence
 
-    def record_physical_row(self, row):
+    def record_physical_row(self, row, *, owned=False):
         """Persist the exact measured row for both direct and lockstep steps."""
         packet = self._boundary.capture(row["rod"])
-        event = dict(kind="physical", exchange=row, rod_boundary=deepcopy(packet),
+        event = dict(kind="physical", exchange=row, rod_boundary=packet if owned else deepcopy(packet),
                      native_qualification=False, teacher_admission=False)
         self._record(event)
         self._rod_packet = packet

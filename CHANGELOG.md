@@ -1,3 +1,5 @@
+Batch Pinch collection retains raw failure evidence in memory and verifies one owning geometry result per SDK step. Full per-step audit is opt-in. [Report](docs/superpowers/reports/2026-11-23-dh116-compact-teacher-rollout.md)
+
 Add a native Pinch batch worker for 64 independent rods on one SDK clock. Verify the two-lane contact/Reset path and commit the first real 64-transition rollout window. [Report](docs/superpowers/reports/2026-11-23-dh116-native-teacher-batch-gpu3.md)
 
 Extend the shared Teacher exchange and PPO writer to 64 lanes. Capture measured sources at the shared step boundary and reject source failures before storing a transition. [Report](docs/superpowers/reports/2026-11-23-dh116-teacher64-rollout.md)

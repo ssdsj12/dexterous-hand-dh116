@@ -159,6 +159,24 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
         return rebuilt
 
 
+class LiveGeometryHandoff:
+    """Pass the original completed guard to its synchronous consuming observer."""
+
+    def __init__(self):
+        self._captured = None
+
+    def capture(self, row):
+        _require(self._captured is None, "prior geometry must be consumed before the next SDK step")
+        self._captured = row, row["closure_geometry"]
+
+    def take(self, row):
+        info = self._captured
+        _require(info is not None and info[0] is row and info[1] is row["closure_geometry"],
+                 "same owned live geometry already evaluated by the original guard required")
+        self._captured = None
+        return info[1]
+
+
 class PolicyOwnedPinchApproach(MeasuredPinchApproach):
     VERSION=VERSION
     def __init__(self,project,*,scope="owner_source_unqualified"):
@@ -166,32 +184,46 @@ class PolicyOwnedPinchApproach(MeasuredPinchApproach):
         self.geometry=PolicyOwnedPinchGeometry(project,scope=scope)
         self.source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
-    def capture(self,event,*,history_owner,grasp="pinch"):
-        try:return self._capture(event,history_owner=history_owner,grasp=grasp)
+    def capture(self,event,*,history_owner,grasp="pinch",live_geometry=None):
+        try:return self._capture(event,history_owner=history_owner,grasp=grasp,live_geometry=live_geometry)
         except SourceFailure:raise
         except (ValueError,KeyError,TypeError,IndexError) as exc:
             raise SourceFailure("policy-owned Pinch source: "+str(exc)) from exc
 
-    def _capture(self,event,*,history_owner,grasp):
+    def _capture(self,event,*,history_owner,grasp,live_geometry=None):
         _require(grasp=="pinch","independent style-specific Pinch source required")
         from .tabletop_action24_history_owner import Action24HistoryOwner
         from .tabletop_native_teacher_action_history import NativeAction24HistoryOwner
         _require(type(history_owner) in (Action24HistoryOwner,NativeAction24HistoryOwner),"actual policy history owner required")
         history_owner._check();row=event["exchange"]
-        _require(history_owner._decision is not None and history_owner._row_hashes
-            and history_owner._row_hashes[-1]==_digest(event),"actual durable row/history hash differs")
+        compact = getattr(history_owner, "compact_batch", False)
+        if compact:
+            physical_identity = history_owner.claim_compact_physical(event)
+        else:
+            _require(history_owner._decision is not None and history_owner._row_hashes
+                and history_owner._row_hashes[-1]==_digest(event),"actual durable row/history hash differs")
+            _require(history_owner._target_hashes[-1]==_digest(
+                row["action_readback"]["submission"]["expected_backend_targets"]),
+                "actual submitted SDK target history differs")
+            physical_identity = dict(physical_row_sha256=history_owner._row_hashes[-1],
+                                     sdk_targets_sha256=history_owner._target_hashes[-1])
         decision=history_owner._decision
-        _require(np.array_equal(np.asarray(row["action_readback"]["request"]["action24"]),history_owner._issued.astype(np.float64))
-            and history_owner._target_hashes[-1]==_digest(row["action_readback"]["submission"]["expected_backend_targets"]),
-            "actual issued policy request/SDK target history differs")
+        _require(np.array_equal(np.asarray(row["action_readback"]["request"]["action24"]),
+                                history_owner._issued.astype(np.float64)),
+                 "actual issued policy request history differs")
         endpoint=row["action_readback"]["post"]["identity"][0]
         _require(all(history_owner._sequence.clock[k]==endpoint[k] for k in history_owner._sequence.clock),"same history endpoint/window clock required")
-        packet=self.geometry.validate(row["closure_geometry"],row)
+        if compact:
+            _require(type(live_geometry) is LiveGeometryHandoff, "original live geometry handoff required")
+            packet = live_geometry.take(row)
+        else:
+            _require(live_geometry is None, "archived evidence requires independent geometry verification")
+            packet = self.geometry.validate(row["closure_geometry"], row)
         _require(packet["source_complete"],"required actual Pinch SDF distance source unavailable: "+str(packet["source_errors"]))
         result=self._metric(packet,_radius(row))
         binding=dict(collection_token=decision["policy"]["collection_token"],policy=deepcopy(decision["policy"]),
-            physical_row_sha256=history_owner._row_hashes[-1],sdk_targets_sha256=history_owner._target_hashes[-1],
-            history_owner_uid=history_owner._owner_uid,physical_samples=len(history_owner._row_hashes))
+            history_owner_uid=history_owner._owner_uid,physical_samples=history_owner._sequence.substep,
+            **physical_identity)
         result.update(version=VERSION,source_scope=self.scope,history_binding=binding)
         result["source"].update(version=VERSION,geometry_contract_version=GEOMETRY_VERSION,history_binding=binding,
             target_schema="fixed_material_nodes41_set_distance_v1",target_material_ids=list(range(41)))

@@ -413,7 +413,9 @@ class NativeEpisodeOwner:
             original=episode._record
             def record(row):
                 ledger.emit("physical" if row["kind"]=="physical" else "owner_event",row)
-                original(deepcopy(row));self.history.record(row)
+                if not (batch_lane and self.history.compact_batch and row["kind"] == "physical"):
+                    original(deepcopy(row))
+                self.history.record(row)
             self._restores.append(lambda:setattr(episode,"_record",original))
             episode._record=record
             setup_events=tuple(setup_events)

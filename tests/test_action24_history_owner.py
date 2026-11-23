@@ -283,3 +283,50 @@ def test_batch_history_binds_only_the_selected_pending_action(monkeypatch, tmp_p
     settlement = owner.end(ep.control(sample["actions"][1:2]))
     with pytest.raises(ValueError, match="identity changed after actual execution"):
         owner.issued_for_pending(trainer, settlement, lane_index=0)
+
+
+
+def test_batch_policy_snapshot_reads_all_lanes_and_rejects_mutated_pending(monkeypatch, tmp_path):
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_action_history import BatchPolicySnapshot
+
+    _, _, original, obs, *_ = fixture(monkeypatch, tmp_path, native=True)
+    trainer = DeformablePPOTrainer(original.model, original.config, rollout_steps=2, num_envs=2)
+    batch = {key: torch.cat((value, value)) for key, value in obs.items()}
+    trainer.collect_step(batch, batch)
+    snapshot = BatchPolicySnapshot(trainer)
+    identity_a, action_a = snapshot.read(trainer, 0)
+    identity_b, action_b = snapshot.read(trainer, 1)
+    assert identity_a["pending_sha256"] == identity_b["pending_sha256"]
+    assert not np.array_equal(action_a, action_b)
+    snapshot.verify()
+    trainer._pending["old_log_prob"][1] += 1
+    with pytest.raises(ValueError, match="changed during native batch"):
+        snapshot.verify()
+
+
+
+def test_compact_history_accepts_only_owned_row_without_full_physical_hash(monkeypatch, tmp_path):
+    owner, ep, trainer, obs, _, _, _, rows, _ = fixture(monkeypatch, tmp_path, native=True)
+    owner.enable_compact_batch()
+    original = owner.record
+    observed = []
+
+    def record(row):
+        original(row)
+        if row["kind"] == "physical":
+            with pytest.raises(ValueError, match="owning recorded physical event"):
+                owner.claim_compact_physical(deepcopy(row))
+            observed.append(owner.claim_compact_physical(row))
+            with pytest.raises(ValueError, match="owning recorded physical event"):
+                owner.claim_compact_physical(row)
+
+    ep._record = record
+    pre, _, sample, _ = begin(owner, ep, trainer, obs)
+    result = ep.control(sample["actions"])
+    settlement = owner.end(result)
+    assert len(observed) == 8
+    assert [v["substep"] for v in observed] == list(range(8))
+    assert settlement["physical_samples"] == 8
+    assert "physical_rows_sha256" not in settlement
+    assert "wrist_projection_sha256" not in settlement
+    assert torch.equal(owner.issued_for_pending(trainer, settlement), sample["actions"])

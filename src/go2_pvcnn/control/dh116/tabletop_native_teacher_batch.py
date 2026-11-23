@@ -6,7 +6,7 @@ from time import perf_counter
 import numpy as np
 import torch
 
-from .tabletop_deformable_r0_replay import _digest
+from .tabletop_native_teacher_action_history import BatchPolicySnapshot
 from .tabletop_dual_hand_reset import SIDES, prepare_reset_state
 from .tabletop_native_teacher_context import ContextIdentity
 from .tabletop_native_teacher_profile import control_source_scope
@@ -95,9 +95,10 @@ class BatchBudget:
 class NativeTeacherBatch:
     """Bind actual lane owners to one trainer. The provider owns App and Reset."""
 
-    def __init__(self, owners, trainer, *, reset_lane, journal, budget):
+    def __init__(self, owners, trainer, *, reset_lane, journal, budget, compact=False, log_windows=True):
         owners = tuple(owners)
         self.trainer, self.reset_lane, self.journal, self.budget = trainer, reset_lane, journal, budget
+        self.compact, self.log_windows = compact, log_windows
         self.owners = {owner.rod.env_id: owner for owner in owners}
         if (tuple(self.owners) != tuple(budget.lanes) or len(owners) != trainer.num_envs
                 or len(self.owners) != trainer.num_envs or trainer._pending is not None
@@ -109,8 +110,12 @@ class NativeTeacherBatch:
         if (trainer.config != self.contract.ppo_config or trainer.rollout_steps != self.contract.config.rollout_steps
                 or trainer.model.model_identity["grasp"] != self.contract.config.preflight["style"]):
             raise ValueError("grasp, PPO config, and rollout length must match the lane source contract")
+        if compact and self.contract.config.preflight["style"] != "pinch":
+            raise ValueError("compact measured history currently requires the Pinch source adapter")
         self.rewards = {}
         for env_id, owner in self.owners.items():
+            if compact:
+                owner.history.enable_compact_batch()
             self.rewards[env_id] = self._reward(owner)
             budget.reset_lane(env_id, owner.rod.clock())
         self.failed = False
@@ -120,20 +125,22 @@ class NativeTeacherBatch:
         owner.sources.reset_reward(reward)
         return reward
 
-    def collect(self):
+    def collect(self, *, seal_evidence=None):
         if self.failed:
             raise RuntimeError("failed grouped Teacher rollout cannot continue")
+        started = perf_counter()
+        timings = {}
         try:
             with control_source_scope(self.contract.backend_profile) as verify_source:
-                report, started = self._collect(verify_source)
-            return self._complete(report, started)
+                report = self._collect(verify_source, timings)
+            return self._complete(report, started, timings, seal_evidence)
         except BaseException as exc:
             self.failed = True
             self.journal.emit("batch_failure", dict(type=type(exc).__name__, error=str(exc),
-                                                    budget=self.budget.snapshot()))
+                                                    budget=self.budget.snapshot(), phase_seconds=timings))
             raise
 
-    def _collect(self, verify_source):
+    def _collect(self, verify_source, timings):
         self.budget.require_window()
         started = perf_counter()
         trainer = self.trainer
@@ -146,23 +153,28 @@ class NativeTeacherBatch:
             states[env_id] = pre
             packets.append((pre, owner.sources._raw, owner.sources.parameters, context))
         obs = pack_teacher_group(trainer.model, packets, backend_profile=self.contract.backend_profile)
+        timings["pre_action_pack_s"] = perf_counter() - started
+        started = perf_counter()
         sample = trainer.collect_step(obs, obs)
         token = sample["collection_token"]
-        policy_uid = _digest(trainer.model.state_dict())
+        policy = BatchPolicySnapshot(trainer)
+        policy_uid = policy.policy["model_weights_sha256"]
         for index, (env_id, owner) in enumerate(self.owners.items()):
-            decision = owner.history.begin(states[env_id], trainer, lane_index=index)
+            decision = owner.history.begin(states[env_id], trainer, lane_index=index, policy_snapshot=policy)
             lane_sample = dict(sample, actions=sample["actions"][index:index + 1])
             request = owner.sources.submitted_request(lane_sample, decision)
             self.rewards[env_id].begin(request, remaining_substeps=CONTROL_SUBSTEPS)
             owner.ledger.emit("decision", dict(collection_token=token, history=decision))
 
+        timings["policy_and_history_s"] = perf_counter() - started
         rows = {env_id: [] for env_id in self.owners}
+        lane_metrics = {}
 
         def observe(row):
             env_id = row["rod"]["env_id"]
             owner, reward = self.owners[env_id], self.rewards[env_id]
             rows[env_id].append(row)
-            event = owner.episode.record_physical_row(row)
+            event = owner.episode.record_physical_row(row, owned=self.compact)
             if row["guard_failure"] is not None or "native_teacher_source_error" in row:
                 return None
             reward.observe(owner.sources.observe(event))
@@ -186,10 +198,12 @@ class NativeTeacherBatch:
                 packet = reward.settle_once(token, truncated=truncated,
                     buffer_full=not truncated and not reward._terminal and len(trainer.rollout) + 1 == trainer.rollout_steps)
                 settlements[env_id] = packet
+                lane_metrics[env_id] = dict(reward=packet.reward, terminated=packet.terminated,
+                                            truncated=packet.truncated)
                 context = owner.context.advance_physical_endpoint(owner.sources.context_state(packet),
                     history_owner=history, collection_token=token)
                 contexts[env_id] = context
-                issued = history.issued_for_pending(trainer, physical, lane_index=index)
+                issued = history.issued_for_pending(trainer, physical, lane_index=index, policy_snapshot=policy)
                 if not packet.terminated:
                     pre = owner.pre_action_state()
                     identity = ContextIdentity.from_clock(pre["common"]["identity"])
@@ -205,6 +219,7 @@ class NativeTeacherBatch:
                 owner.ledger.emit("batch_settlement", dict(reward=packet, history=physical, issued_actions=issued,
                                                           bootstrap_source=source))
             verify_source()
+            policy.verify()
             record_group_window(trainer, sample, report, rows, settlements, bootstrap,
                                 policy_uid=policy_uid, reward_config=self.contract.reward_config)
             for env_id, owner in self.owners.items():
@@ -212,16 +227,24 @@ class NativeTeacherBatch:
                 if env_id in report["terminal_reasons"]:
                     owner.episode._state = "closed"
 
-        report = self.group.control(sample["actions"], observe=observe, commit=commit, progress=self.budget)
+        report = self.group.control(sample["actions"], observe=observe, commit=commit, progress=self.budget,
+                                    timings=timings, owned_rows=self.compact)
         if report["aborted"]:
             raise SourceFailure("shared window rejected: " + repr(report["terminal_reasons"]))
-        return report, started
+        return dict(report, lane_metrics=lane_metrics)
 
-    def _complete(self, report, started):
+    def _complete(self, report, started, timings, seal_evidence):
+        before = perf_counter()
         if report["terminal_reasons"] and self.budget.sdk_step + CONTROL_SUBSTEPS <= self.budget.max_sdk_step:
             self.group.reset_done(self._reset)
-        metrics = dict(window_seconds=perf_counter() - started, budget=self.budget.snapshot(), **report)
-        self.journal.emit("batch_control", metrics)
+        timings["lane_reset_s"] = perf_counter() - before
+        before = perf_counter()
+        artifact = seal_evidence("committed") if seal_evidence is not None else None
+        timings["evidence_seal_s"] = perf_counter() - before
+        metrics = dict(window_seconds=perf_counter() - started, budget=self.budget.snapshot(),
+                       phase_seconds=timings, evidence_file=artifact.name if artifact else None, **report)
+        if self.log_windows:
+            self.journal.emit("batch_control", metrics)
         return metrics
 
     def _reset(self, env_id, exchange):
@@ -229,6 +252,8 @@ class NativeTeacherBatch:
         if exchange is not old.episode._exchange:
             raise ValueError("Reset selected the wrong lane exchange")
         fresh = self.reset_lane(env_id, old)
+        if self.compact:
+            fresh.history.enable_compact_batch()
         self.budget.reset_lane(env_id, fresh.rod.clock())
         self.owners[env_id] = fresh
         self.rewards[env_id] = self._reward(fresh)
