@@ -36062,6 +36062,30 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.shared-deformx-raw-pair-buckets-v1",
+      "branch": "11-17",
+      "status": "three_grasp_cuda_probe_verified_isaac_training_pending",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-pair-scale-probe.md",
+      "solver_lane_counts": [
+        2,
+        128,
+        512
+      ],
+      "solver_probe_cases": 9,
+      "upstream_gpu_tests_passed": 39,
+      "native_ppo_updates": 0,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "remote_branch": "11-17",
+        "source_commit": "42283016ec1095214acc8e94b48436c36900a9b3",
+        "source_tree": "3828a984c97a34b83ac2d9ff3595ce3c4f62a7ee",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
