@@ -36166,6 +36166,85 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.shared-mesh-local-reset-v1",
+      "branch": "11-17",
+      "status": "mechanical_local_reset_and_continuation_passed_teacher_integration_pending",
+      "cpu": {
+        "passed": 57,
+        "skipped": 1,
+        "failed": 0,
+        "log_sha256": "5fa908c60076f8a0f6d18537a02b29e4bc9b127b3f430fda7b185776bf0b0849"
+      },
+      "native": {
+        "sdk_step": 226,
+        "environments": 2,
+        "shared_solver": true,
+        "nonzero_reaction_steps": [
+          14,
+          0
+        ],
+        "ppo_updates": 0,
+        "teacher_queries": 0,
+        "physics_rows": 216,
+        "contact_replay": true,
+        "local_reset": {
+          "sdk_step": 218,
+          "env_id": 0,
+          "reset_id": 2,
+          "episode_uid": "native:0:2",
+          "rod_ticks": [
+            0,
+            2496
+          ],
+          "current_target_solver_equal": true,
+          "mesh_motion_zero": true,
+          "neighbor_hand_and_rod_state_bitwise_preserved": true,
+          "neighbor_mesh_state_bitwise_preserved": true,
+          "neighbor_reaction_bitwise_preserved": true,
+          "solver_time_s": 0.43333300948143005,
+          "reset_sdk_steps": 0,
+          "reset_solver_steps": 0
+        },
+        "per_lane_resets": [
+          2,
+          1
+        ],
+        "per_lane_rod_ticks": [
+          96,
+          2592
+        ],
+        "native_qualification": false,
+        "teacher_admission": false,
+        "receipt_sha256": "2e00adb144d16377eb684d932e761aa37b4eaf33cbd048e581c1a2c5c5379c33",
+        "journal_sha256": "7ce731d22238af55d921e5b7484f99f46b0aeebf8fd37aa9bb08f0581021ddb5",
+        "exit_code": 0,
+        "forced_exit": false,
+        "elapsed_s": 57.00258412095718,
+        "gpu": 3
+      },
+      "solver_only": {
+        "grasps": [
+          "pinch",
+          "tripod",
+          "power"
+        ],
+        "lanes": 128,
+        "cases_passed": 3,
+        "log_sha256": "2fab6702661c7d082dd4992572cd9a5b41e9dfe523ba0c8457ec81e81e1d8b0b",
+        "isaac_envs": 0,
+        "ppo_updates": 0
+      },
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-mesh-local-reset.md",
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "5bf318e3edc90bf4ef9f386ffc87c0901f8f2a72",
+        "source_tree": "1e4da97835394feb0e06b8160d1aff800a0a7bf8",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
