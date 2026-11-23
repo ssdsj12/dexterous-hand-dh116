@@ -1,0 +1,198 @@
+{
+  "version": "dh116-teacher-tripod-early-boundary-v1",
+  "base_head": "44c649ba2f069dbafb5a1685100eab1927faef83",
+  "status": "loaded_boundaries_blocked_precontact_progress_certified_on_frozen_archive",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-early-boundary.md",
+  "source_sha256": {
+    "scripts/audit_dh116_tripod_early_boundary.py": "5e13794dc4bfd5e0283887d4ae837f650d20fdccd1db4ab7f6e6efda0b18b390",
+    "tests/test_tripod_early_boundary.py": "b62d27e8121ac21de5208eef912dc673774b482671bb821b2cf12dff4f050e9b"
+  },
+  "archived_native": {
+    "receipt_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+    "original_head": "6b155c0f8bf8e59612e22e6d740efe7b7bace17a",
+    "scan_argv": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-early-round4-20261123/sync-tripod-early-final-argv.json",
+      "sha256": "086211212fed4b320238f7d1ffea6e6d92aaa8f70a084d2f462e5fa5ac860ec8"
+    },
+    "scan_result": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-early-round4-20261123/sync-tripod-early-final.json",
+      "sha256": "5e8ed0df228c292da35eaffcdcbe01e7c0302e6f5083101aba8bac5ffb8656a5"
+    },
+    "causal_cutoff_argv": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-early-round4-20261123/sync-tripod-early-causal-cutoff-argv.json",
+      "sha256": "3aba3794a7f730852914479e0b4d79a99990f1b7a6a0c300fb95fa4a77c2ea57"
+    },
+    "causal_cutoff_result": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-early-round4-20261123/sync-tripod-early-causal-cutoff.json",
+      "sha256": "190dcaa46c6b4ef7e83bbb0a0dac5c7ca301ee19b9d73f43c5bf25e9f25620a9"
+    },
+    "original_boundary_count": 145,
+    "count_with_left_thumb_load": 18,
+    "count_with_protected_bilateral_load": 8,
+    "count_loaded_thumb_admissible": 0,
+    "last_unreserved_full_scene_sdk": 592,
+    "causal_maximum_read_sdk": 576,
+    "specified_late_boundaries": {
+      "1328": {
+        "measured_left_cooked_thumb": {
+          "passed": false,
+          "lower_m": -0.0008438927646845173,
+          "fast_lower_m": -0.0008438927646845173,
+          "segments_checked": 2,
+          "threshold_m": -0.00015,
+          "failed_segment": {
+            "group": 17,
+            "segment": 35,
+            "upper_m": -0.0007117825971937946
+          }
+        },
+        "target_left_cooked_thumb": {
+          "passed": false,
+          "lower_m": -0.0006796687893967034,
+          "fast_lower_m": -0.0006796687893967034,
+          "segments_checked": 2,
+          "threshold_m": -0.00015,
+          "failed_segment": {
+            "group": 17,
+            "segment": 35,
+            "upper_m": -0.0005491999325377287
+          }
+        }
+      },
+      "1392": {
+        "measured_left_cooked_thumb": {
+          "passed": false,
+          "lower_m": -0.0007958336278144017,
+          "fast_lower_m": -0.0007958336278144017,
+          "segments_checked": 2,
+          "threshold_m": -0.00015,
+          "failed_segment": {
+            "group": 17,
+            "segment": 35,
+            "upper_m": -0.0006870551965335306
+          }
+        },
+        "target_left_cooked_thumb": {
+          "passed": false,
+          "lower_m": -0.0007762344003168441,
+          "fast_lower_m": -0.0007762344003168441,
+          "segments_checked": 2,
+          "threshold_m": -0.00015,
+          "failed_segment": {
+            "group": 17,
+            "segment": 35,
+            "upper_m": -0.000667233628337453
+          }
+        }
+      },
+      "1400": {
+        "measured_left_cooked_thumb": {
+          "passed": false,
+          "lower_m": -0.0007927827425166733,
+          "fast_lower_m": -0.0007927827425166733,
+          "segments_checked": 2,
+          "threshold_m": -0.00015,
+          "failed_segment": {
+            "group": 17,
+            "segment": 35,
+            "upper_m": -0.0006854160635699153
+          }
+        },
+        "target_left_cooked_thumb": {
+          "passed": false,
+          "lower_m": -0.0007805914249496503,
+          "fast_lower_m": -0.0007805914249496503,
+          "segments_checked": 2,
+          "threshold_m": -0.00015,
+          "failed_segment": {
+            "group": 17,
+            "segment": 35,
+            "upper_m": -0.0006729129528135766
+          }
+        }
+      }
+    },
+    "candidate": {
+      "sdk": 576,
+      "next_policy_step": 42,
+      "fraction_of_authored": 0.23095703125,
+      "peak_absolute_action": 0.045900916273029425,
+      "action24": [
+        -0.0007742864302902793,
+        -0.0009493454854236916,
+        -0.0010688238641402374,
+        -0.00021865174251918992,
+        -5.735879919181268e-07,
+        -4.5887039353450143e-07,
+        0.028955216842954053,
+        0.045900916273029425,
+        0.004324408224365796,
+        0.016815175032762048,
+        -2.4090695660561323e-06,
+        -2.7532223612070084e-06,
+        -0.0004722356935640224,
+        0.0007626249260403121,
+        0.0011482261198755058,
+        0.005298786135352198,
+        -0.002518680812625658,
+        0.0032428354808296347,
+        -0.0027709364270389523,
+        -0.0025730006771373737,
+        -0.001484052833674521,
+        0.0005509791827270521,
+        0.006861381414782009,
+        0.00904477319614745
+      ],
+      "both_support_minimum_load_n": {
+        "support_0": 0.15679871308241683,
+        "support_1": 0.15719988928286383
+      },
+      "future_physical_rows_used": false,
+      "minimum_rod_margin": {
+        "value_m": 5.173230473054405e-08,
+        "side": "right",
+        "link": "finger14_link",
+        "geometry": "measured"
+      },
+      "minimum_table_margin_m": 0.04529779211571446,
+      "minimum_support_margin_m": 0.0014352697188669964,
+      "minimum_pad_gap_m": 0.0004767899194374407,
+      "physical_shapes": 44,
+      "frozen_geometry_models": 2,
+      "original_full_action_certified": false
+    }
+  },
+  "cpu": {
+    "passed": 113,
+    "failed": 0,
+    "seconds": 4.39,
+    "environment": {
+      "PYTHONPATH": "src:."
+    },
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_tripod_early_boundary.py",
+      "tests/test_tripod_wrist_relief_command.py",
+      "tests/test_tripod_wrist_relief.py",
+      "tests/test_tripod_index_contact_loss.py",
+      "tests/test_dh116_supported_force_seating.py",
+      "tests/test_dh116_supported_distal_transfer.py",
+      "tests/test_dh116_deformable_bimanual_step.py",
+      "tests/test_wire_live_opposition.py"
+    ],
+    "log": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-early-round4-20261123/sync-tripod-early-final-cpu.log",
+      "sha256": "c2de14d4f25102266499a03cc9066bb3a0e9d94897d2149732f80370a85a8bcd"
+    }
+  },
+  "new_native_steps": 0,
+  "ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false
+}
