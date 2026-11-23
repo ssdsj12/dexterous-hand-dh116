@@ -36019,6 +36019,30 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.pinch-ppo64-native-gpu3-v1",
+      "branch": "11-17",
+      "status": "native_64_lane_rollout_in_progress_at_snapshot",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-native-teacher-batch-gpu3.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "cpu_tests": {
+        "passed": 136,
+        "failed": 0
+      },
+      "native_two_lane_dynamic_exit_code": 0,
+      "native_64_lane_distinct_issued_actions_first_window": 64,
+      "native_ppo_updates_at_snapshot": 0,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "remote_branch": "11-17",
+        "source_commit": "301d1eccb87c7a5a0a405cfdca173e376d1de10e",
+        "source_tree": "39298ad939628eb7461981791cbe23c3a4b3e397",
+        "files_verified": 20,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
