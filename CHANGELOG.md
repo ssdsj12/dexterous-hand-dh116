@@ -1,3 +1,5 @@
+Add a native Pinch batch worker for 64 independent rods on one SDK clock. Verify the two-lane contact/Reset path and commit the first real 64-transition rollout window. [Report](docs/superpowers/reports/2026-11-23-dh116-native-teacher-batch-gpu3.md)
+
 Extend the shared Teacher exchange and PPO writer to 64 lanes. Capture measured sources at the shared step boundary and reject source failures before storing a transition. [Report](docs/superpowers/reports/2026-11-23-dh116-teacher64-rollout.md)
 
 Add committed Teacher control windows with lane-local Reset and a current-source CPU clock audit. 211 selected CPU regressions pass. [Report](docs/superpowers/reports/2026-11-23-dh116-r21-batch-window-clock.md)

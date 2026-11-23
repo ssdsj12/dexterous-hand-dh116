@@ -17,7 +17,7 @@ def module():
     return tabletop_action24_history_owner
 
 
-def fixture(monkeypatch, tmp_path):
+def fixture(monkeypatch, tmp_path, *, native=False):
     ep, rod, hands, sim, seed, owners, rows = episode_setup(monkeypatch, tmp_path)
     rod.env_id = 0
     for binding in ep._bindings:
@@ -34,14 +34,19 @@ def fixture(monkeypatch, tmp_path):
             hand.data.body_link_pose_w = hand.link_poses[..., [0,1,2,6,3,4,5]]
         hand.update = update
     initial = torch.zeros((1,24), dtype=torch.float32)
-    owner = module().Action24HistoryOwner(initial_action24=initial,
+    history_type = module().Action24HistoryOwner
+    if native:
+        from go2_pvcnn.control.dh116.tabletop_native_teacher_action_history import NativeAction24HistoryOwner
+        history_type = NativeAction24HistoryOwner
+    owner = history_type(initial_action24=initial,
         seed_source="explicit CPU fixture controller reset zeros; no historical backfill",
         physics_budget_end=18, solver_substeps=12)
     owners["controller"] = owner.wrap_controller_reset(owners["controller"])
     ep._record = owner.wrap_recorder(rows.append)
     # These setup/geometry events are explicitly CPU fixtures. They grant no geometry qualification.
-    for phase, step in (("before_reset",0),("after_reset",2)):
-        owner.record(dict(kind="setup",phase=phase,sdk_step=step,sdk_time_s=step/480))
+    if not native:
+        for phase, step in (("before_reset",0),("after_reset",2)):
+            owner.record(dict(kind="setup",phase=phase,sdk_step=step,sdk_time_s=step/480))
     ep.reset(seed,episode_uid="run-cpu:action-history",owner_resets=owners)
     for side in ("left","right"):
         owner.record(dict(kind="initial_geometry",side=side,
@@ -262,3 +267,19 @@ def test_reset_callback_is_once_and_preserves_unavailable_controller_status():
     assert packet["action24_history"]["previous_action24"] == [[0.]*24]
     assert packet["action24_history"]["teacher_admission"] is False
     with pytest.raises(ValueError): callback(dict(context,episode_uid="cpu:b",reset_id=2))
+
+
+def test_batch_history_binds_only_the_selected_pending_action(monkeypatch, tmp_path):
+    owner, ep, original, obs, *_ = fixture(monkeypatch, tmp_path, native=True)
+    trainer = DeformablePPOTrainer(original.model, original.config, rollout_steps=2, num_envs=2)
+    batch = {key: torch.cat((value, value)) for key, value in obs.items()}
+    pre = ep.pre_action_state()
+    owner.capture_pre_action(pre)
+    sample = trainer.collect_step(batch, batch)
+    decision = owner.begin(pre, trainer, lane_index=1)
+    assert decision["policy"]["batch_row"] == 1
+    assert np.array_equal(decision["sampled_action24"], sample["actions"][1:2])
+    assert not torch.equal(sample["actions"][0], sample["actions"][1])
+    settlement = owner.end(ep.control(sample["actions"][1:2]))
+    with pytest.raises(ValueError, match="identity changed after actual execution"):
+        owner.issued_for_pending(trainer, settlement, lane_index=0)

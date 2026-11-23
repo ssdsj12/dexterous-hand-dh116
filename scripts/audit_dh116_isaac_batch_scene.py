@@ -18,8 +18,8 @@ import numpy as np
 
 def scene_lanes(count, table_size):
     size = np.asarray(table_size, dtype=float)
-    if count not in (32, 64) or size.shape != (3,) or not np.isfinite(size).all() or (size <= 0).any():
-        raise ValueError("32 or 64 lanes and a positive original table size required")
+    if count not in (2, 32, 64) or size.shape != (3,) or not np.isfinite(size).all() or (size <= 0).any():
+        raise ValueError("2, 32 or 64 lanes and a positive original table size required")
     columns = math.ceil(math.sqrt(count))
     spacing = float(max(size[:2]) + 1.0)
     return [(f"/World/DH116BatchAudit/lane_{i:03d}",
@@ -307,7 +307,7 @@ def _exercise(sim, scenes, seed, prepared, output, gpu, write_new, *, rod_spec=N
     return result
 
 
-def _run(project, archive, gpu, num_envs, output, *, coupled):
+def _run(project, archive, gpu, num_envs, output, *, coupled, max_sdk_step=10, extra_exercise=None):
     from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
     assert_clean_import_boundary()
     from isaaclab.app import AppLauncher
@@ -363,8 +363,12 @@ def _run(project, archive, gpu, num_envs, output, *, coupled):
             prepared = prepare_scene(project)
             lanes = scene_lanes(num_envs, prepared["table"]["size_m"])
             scenes, seed, rod_nodes = _author(sim, owners, trace, project, prepared, archive, lanes)
-            result = _exercise(sim, scenes, seed, prepared, output, gpu, write_new,
-                rod_spec=(archive, rod_nodes, owners) if coupled else None)
+            if extra_exercise is None:
+                result = _exercise(sim, scenes, seed, prepared, output, gpu, write_new,
+                    rod_spec=(archive, rod_nodes, owners) if coupled else None)
+            else:
+                result = extra_exercise(sim, scenes, seed, prepared, archive, rod_nodes, owners,
+                                        output, gpu, max_sdk_step)
             result["style"] = archive.style
             completed_step = result["sdk_step"]
             return result
@@ -391,7 +395,7 @@ def _run(project, archive, gpu, num_envs, output, *, coupled):
             return _run_lifecycle_with_stat_cache(SimpleNamespace(update=app.update,
                 close=lambda: app.close(wait_for_replicator=False)),
                 lifecycle=run_lifecycle, cache_release=cache, read_sim=read_sim,
-                read_completed_sdk_step=lambda: completed_step, max_sdk_step=10,
+                read_completed_sdk_step=lambda: completed_step, max_sdk_step=max_sdk_step,
                 make_sim=make_sim, acquire=acquire, synchronize=lambda: torch.cuda.synchronize(0),
                 clear_sim=lambda sim: clear_known_simulation_instance(sim, contract=clear_contract),
                 stop=stop, manager_is_none=lambda: SimulationManager.get_physics_sim_view() is None,

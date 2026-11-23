@@ -56,7 +56,12 @@ class _NativeGeometrySources:
         # This reader is always instantiated under the reviewed current profile;
         # never borrow the historical 2fea packet/default sources.
         with profile_reader_scope(contract.backend_profile):
-            self.reader=NativeParameterEndpoints(np.asarray(contract.reset_manifest.data()["rod_state"]["positions"],np.float32)[0],device=str(owner.bindings[0].hand.data.joint_pos.device))
+            device = str(owner.bindings[0].hand.data.joint_pos.device)
+            if getattr(owner, "batch_lane", False):
+                self.reader = NativeParameterEndpoints(owner.rod._base.nodes, device=device, env_id=owner.rod.env_id)
+            else:
+                nodes = np.asarray(contract.reset_manifest.data()["rod_state"]["positions"], np.float32)[0]
+                self.reader = NativeParameterEndpoints(nodes, device=device)
         self.solver_substeps=owner.rod._base.cfg["rod"]["solver_substeps"]
         self._sdk_start=owner.sim.current_time_step_index
         self._error=None;self.parameters=None;self._last=None

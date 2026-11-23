@@ -14,7 +14,7 @@ def control_group(lanes, actions, *, observe):
     return _control_group(lanes, actions, observe=observe, window_index=None)
 
 
-def _control_group(lanes, actions, *, observe, window_index):
+def _control_group(lanes, actions, *, observe, window_index, progress=None):
     """Issue one 60 Hz request per lane, sharing eight global SDK steps."""
     lanes = tuple(lanes)
     validate_actions(actions)
@@ -58,9 +58,19 @@ def _control_group(lanes, actions, *, observe, window_index):
             expected = sim.current_time_step_index
             pending = [lane._prepare_substep(action[None], substep)
                        for lane, action in zip(lanes, actions, strict=True)]
-            sdk_step = step_thumb_physics(sim, expected, budget_end=budget_end)
+            try:
+                sdk_step = step_thumb_physics(sim, expected, budget_end=budget_end)
+            finally:
+                if progress is not None and sim.current_time_step_index != expected:
+                    progress.advanced_sdk(sim.current_time_step_index)
             for env_id, lane, prepared in zip(env_ids, lanes, pending, strict=True):
-                row = lane._complete_substep(prepared, sdk_step)
+                try:
+                    row = lane._complete_substep(prepared, sdk_step)
+                finally:
+                    if progress is not None:
+                        clock = lane._rod.clock()
+                        if clock["physics_step"] == sdk_step and clock["clock_valid"]:
+                            progress.advanced_rod(clock)
                 reason = observe(deepcopy(row))
                 guard = row["guard_failure"]
                 if guard is None and "native_teacher_source_error" in row:
@@ -108,7 +118,7 @@ class TeacherPhysicalGroup:
             if isinstance(lane, FlexiblePhysicalExchange):
                 lane._closed = True
 
-    def control(self, actions, *, observe, commit):
+    def control(self, actions, *, observe, commit, progress=None):
         """Commit full windows only; the caller settles the trusted PPO sample."""
         if self._closed or self._busy:
             raise RuntimeError("closed or in-progress group")
@@ -119,7 +129,7 @@ class TeacherPhysicalGroup:
         self._busy = True
         try:
             report = _control_group(self._lanes, actions, observe=observe,
-                                    window_index=self._window_index)
+                                    window_index=self._window_index, progress=progress)
             if report["aborted"]:
                 self._close()
                 return report

@@ -3,8 +3,10 @@
 The old one-shot v1 owner is unchanged. Policy/token/weights/request/SDK target
 checking and physical sequencing are reused verbatim through inheritance.
 """
+from contextlib import contextmanager
 from copy import deepcopy
 import numpy as np
+from . import tabletop_action24_history_owner as original
 from .tabletop_action24_history_owner import Action24HistoryOwner,_require
 from .tabletop_deformable_dual_evidence import _Sequence,_clock_row,_rod_boundary
 from .tabletop_deformable_r0_replay import _digest
@@ -46,6 +48,38 @@ class _ResetBoundSequence(_Sequence):
                 "same scene absolute clocks and fresh reset identity required")
         _rod_boundary(row["rod_boundary"],clock,"reset")
         self.clock=clock;self.rows+=1
+
+
+@contextmanager
+def _batch_policy(trainer, lane_index):
+    """Supply the checked native lane row to the unchanged history protocol."""
+    from .tabletop_deformable_privileged_ppo import DeformablePPOTrainer
+    from scripts.probe_dh116_physx_lifetime_frame_v2 import bindings
+
+    def read(actual):
+        _require(actual is trainer and type(trainer) is DeformablePPOTrainer
+                 and type(lane_index) is int and 0 <= lane_index < trainer.num_envs,
+                 "explicit original PPO batch row required")
+        pending = trainer._pending
+        _require(isinstance(pending, dict), "current sampled policy transition required")
+        original._cpu_tree(pending)
+        _require(pending["actions"].shape == (trainer.num_envs, 24)
+                 and pending["session_id"] == trainer.session_id
+                 and pending["policy_version"] == trainer.policy_version,
+                 "pending policy batch or epoch differs")
+        identity = trainer.model.model_identity
+        _require(isinstance(identity.get("model_identity_sha256"), str)
+                 and len(identity["model_identity_sha256"]) == 64
+                 and isinstance(identity.get("checkpoint_namespace"), str),
+                 "explicit model/checkpoint namespace required")
+        policy = dict(collection_token=pending["collection_token"], session_id=trainer.session_id,
+                      policy_version=trainer.policy_version, model_identity=identity,
+                      model_weights_sha256=_digest(trainer.model.state_dict()),
+                      pending_sha256=_digest(pending), batch_row=lane_index)
+        return policy, original._action(pending["actions"][lane_index:lane_index + 1])
+
+    with bindings((original, "_policy", read)):
+        yield
 
 
 class NativeAction24HistoryOwner(Action24HistoryOwner):
@@ -97,8 +131,18 @@ class NativeAction24HistoryOwner(Action24HistoryOwner):
         self._captured=_copy(packet)
         return _copy(packet)
 
-    def begin(self,pre,trainer):
+    def begin(self,pre,trainer,*,lane_index=None):
         from .tabletop_deformable_r0_replay import _copy
-        super().begin(pre,trainer)
+        if lane_index is None:
+            super().begin(pre,trainer)
+        else:
+            with _batch_policy(trainer, lane_index):
+                super().begin(pre,trainer)
         self._decision.update(version=VERSION,source=SOURCE)
         return _copy(self._decision)
+
+    def issued_for_pending(self, trainer, settlement, *, lane_index=None):
+        if lane_index is None:
+            return super().issued_for_pending(trainer, settlement)
+        with _batch_policy(trainer, lane_index):
+            return super().issued_for_pending(trainer, settlement)

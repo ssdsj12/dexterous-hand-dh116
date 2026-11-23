@@ -40,6 +40,8 @@ def translated_static_pose(style, entry, origin):
 
 def _build_rods(scenes, archive, nodes, owners):
     from ropesim import sdf
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_lane_layout import verify_translated_bindings
     from go2_pvcnn.control.dh116.tabletop_deformable_grasp_runtime import FreeRodRuntime
     from go2_pvcnn.control.dh116.tabletop_dual_hand_rod_runtime import DualHandRodRuntime, PADS
     from go2_pvcnn.control.dh116.tabletop_power_shared_rod import (
@@ -80,6 +82,7 @@ def _build_rods(scenes, archive, nodes, owners):
                 proximal_poses={n: poses[n] for n in PROXIMAL_NAMES})
         if tuple(entries) != tuple(rod.mesh_names):
             raise ValueError("live solver slots do not match this grasp's archive")
+        verify_translated_bindings(plan["bindings"], rod.bindings, scene["prefix"], _digest(plan["bindings"]))
         rod.rope.enable_contact_pair_capture(len(nodes)*len(entries)*12)
         rods.append(rod)
     return rods
@@ -108,6 +111,7 @@ def rebuild_reset_meshes(rope, style, entries, poses, origin, capacity):
         if (not np.array_equal(snapshot[phase+"_positions_world_m"], positions)
                 or not np.allclose(snapshot[phase+"_quaternions_xyzw"], rotations, atol=2e-6, rtol=0)):
             raise ValueError("rebuilt reset mesh state differs from original pose")
+    return snapshot
 
 
 def reset_rod_fingerprint(rope, device):

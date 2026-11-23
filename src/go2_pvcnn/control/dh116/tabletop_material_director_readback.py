@@ -80,6 +80,8 @@ def _copy_endpoint(rope,device):
 class MaterialDirectorReadback:
     """One 41-node free rod, reset then every completed 12-substep SDK interval."""
 
+    _env_id = 0
+
     def __init__(self,constructor_nodes_m,*,device):
         self.sources=source_basis()
         self._nodes=_array(np.asarray(constructor_nodes_m,dtype=np.float32),(41,3),"constructor nodes")
@@ -158,8 +160,8 @@ class MaterialDirectorReadback:
                         or any(identity[key]<old[key] for old in history
                                for key in ("physics_step","solver_time_s"))):
                     raise ValueError("fresh monotonic reset on the same run/env/rod required")
-            if identity["env_id"]!=0 or identity["reset_id"]<1:
-                raise ValueError("single environment zero and actual positive reset ID required")
+            if identity["env_id"] != self._env_id or identity["reset_id"] < 1:
+                raise ValueError("owning environment and actual positive reset ID required")
             self._seen_episodes.add(identity["episode_uid"]);self._seen_material.add(material_reference_uid)
             self._material_uid=material_reference_uid
             self._reset_identity=deepcopy(identity)  # Preserve an attempted real reset even if its read fails.

@@ -377,15 +377,20 @@ class NativeEpisodeOwner:
     disarms this lease and restores callbacks; outer R06 lifecycle releases native
     resources after clearing exception frames. Returning from close proves no exit.
     """
-    def __init__(self,episode,contract,*,episode_uid,owner_resets,mesh_plan,ledger,setup_events,initial_geometry,previous_reset=None):
+    def __init__(self,episode,contract,*,episode_uid,owner_resets,mesh_plan,ledger,setup_events,initial_geometry,previous_reset=None,batch_lane=False):
         from .tabletop_deformable_dual_hand_episode import DualHandPhysicalEpisode
         from .tabletop_native_teacher_action_history import NativeAction24HistoryOwner
         from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources, NativePowerSources, NativeContactTripodSources
-        if type(episode) is not DualHandPhysicalEpisode or episode._state != "new":
-            raise ValueError("one fresh original physical episode over existing scene required")
+        episode_type = DualHandPhysicalEpisode
+        if batch_lane:
+            from .tabletop_native_teacher_batch_episode import NativeBatchPhysicalEpisode
+            episode_type = NativeBatchPhysicalEpisode
+        if type(episode) is not episode_type or episode._state != "new":
+            raise ValueError("one fresh physical episode over its existing scene required")
         self.episode,self.contract=episode,contract
         self.sim,self.rod,self.bindings=episode._sim,episode._rod,episode._bindings
         self.backend_profile=contract.backend_profile
+        self.batch_lane = batch_lane
         self.episode_uid,self.mesh_plan,self.ledger=episode_uid,mesh_plan,ledger
         self._closed=False;self._restores=[]
         self._initial_geometry=initial_geometry

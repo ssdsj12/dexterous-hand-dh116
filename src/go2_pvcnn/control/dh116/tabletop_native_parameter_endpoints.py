@@ -78,7 +78,10 @@ def source_basis():
 
 class NativeParameterEndpoints(prior.MaterialDirectorReadback):
     """Inherited episode sequencing, new explicit backend and native parameter source."""
-    def __init__(self,constructor_nodes_m,*,device):
+    def __init__(self,constructor_nodes_m,*,device,env_id=0):
+        if type(env_id) is not int or env_id < 0:
+            raise ValueError("explicit nonnegative actual environment ID required")
+        self._env_id = env_id
         self.sources=source_basis()
         self.config=json.loads((ROOT/CONFIG).read_text())
         self._nodes=prior._array(np.asarray(constructor_nodes_m,dtype=np.float32),(41,3),"constructor nodes")
