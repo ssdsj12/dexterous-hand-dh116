@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "status": "cpu_preflight_current_902_seed_no_native_execution",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-902-approach-preflight.md",
+  "current_execution_source_commit": "d415dd7610b6614daaa60801cd275c994ba33886",
+  "new_native_isaac_runs": 0,
+  "original_sample_provenance": {
+    "fresh_R4_reset_seed": "5b040a43753b43d2a02136e9c44016b8125c02b5b274fa766a563f2f68ba93dd",
+    "staged_902_seed": "9d16393ecdcc02d007c7518d2d25e79b16d14b268e8e228765a86935b0799704",
+    "rod_node_max_euclidean_difference_m": 0.0,
+    "hand_translation_difference_m": {
+      "left": 0.0,
+      "right": 0.011761701665818691
+    },
+    "archive_prefix_windows": 39,
+    "archive_prefix_last_sdk": 552,
+    "prefix_first_control_sdk": 241,
+    "hand_pair_samples_during_prefix": 0,
+    "source_archive_receipt_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+    "candidate_config_sha256": "8ad3450db5fcb63dfd79cc07f509c1ed7e791879dfa951fa5b2877020c9690b5",
+    "current_902_native_reset_verified": false
+  },
+  "cpu_reset_preflight": {
+    "verified_frozen_file_count": 2191,
+    "debugger_cpu_exit_code": 0,
+    "frozen_sha256": "903c7654f6a06e5ecece50d111ae79a9d68e3806007272ca16a8dbf9ffc7d94e",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "fresh_tripod_reset17",
+      "sdk_setup_steps": 2,
+      "control_steps": 0,
+      "solver_steps": 0,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 180,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 6,
+      "episode_resets": 1,
+      "sdk_steps": 2
+    }
+  },
+  "draft": {
+    "schema": "tripod-902-precontact-command-draft-v1",
+    "scope": "authenticated historical prefix plus CPU conditional two-window geometry",
+    "historical_reset_seed_sha256": "9d16393ecdcc02d007c7518d2d25e79b16d14b268e8e228765a86935b0799704",
+    "unrelated_fresh_reset_seed_sha256": "5b040a43753b43d2a02136e9c44016b8125c02b5b274fa766a563f2f68ba93dd",
+    "case_config_sha256": "8ad3450db5fcb63dfd79cc07f509c1ed7e791879dfa951fa5b2877020c9690b5",
+    "historical_outer_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+    "prefix_sha256": "70f97bc859c8f641b4355524b9d06d13fae86b605d9e19739870f3d71c0a3060",
+    "route_proof_sha256": "9c84f8b1798d41b9e8ba2c3402a3334dcb0005ed7cc00125b182fa3c0ba6b52d",
+    "causal_cutoff_proof_sha256": "ffbaee3e943e52409a54a93a0641b775a8a920931a7ad07afac94112c30cccc0",
+    "native_reset_preflight_sha256": "903c7654f6a06e5ecece50d111ae79a9d68e3806007272ca16a8dbf9ffc7d94e",
+    "archived_anchor_files_sha256": {
+      "tripod_reset_source_1.json": "16acb75b20126893a804a6ebc4fb3a5a26f97643f7c0dddcb6441de4a2020514",
+      "tripod_exchange_240.json": "ac0f67c5f6f22d31abf01077ccd22b80620d5798ea5827a4c78cf5e3381d6935",
+      "tripod_control_552.json": "62e27b9b439d919d6975a0c9a97929df6d5895ad9924e1d435c07eff951a791c"
+    },
+    "budget_projection": {
+      "sdk_setup_steps": 2,
+      "parked_sdk_steps": 238,
+      "control_windows": 41,
+      "maximum_sdk_step": 568,
+      "solver_substeps": 6792,
+      "ppo_updates": 0
+    },
+    "historical_minimum_two_window_rod_margin_m": 2.8540684891436243e-05,
+    "native_command_receipt_available": false,
+    "native_execution_ready": false,
+    "teacher_admission": false
+  },
+  "evidence_sha256": {
+    "source-argv.json": "8941923db1693c7fa7cbc4a8cf116a6661064514a754d635f11afd1e6137f515",
+    "source-proof.log": "35d9eb6b972a1fa430cc9712046a1520968a9b1167be7f1c662e0f63b946665c",
+    "argv.json": "d3cca7308c59a5e8b602229f6952cdf74eb429defc3ce1bdba14134055f5a223",
+    "task.json": "8ad3450db5fcb63dfd79cc07f509c1ed7e791879dfa951fa5b2877020c9690b5",
+    "prefix.json": "70f97bc859c8f641b4355524b9d06d13fae86b605d9e19739870f3d71c0a3060",
+    "plan.json": "e9827ff8d517658bec7424f29b025d8ec316c356b6ba731809775a6d2aa7dbd0",
+    "freeze.log": "e8c4c92689c110b4313199b807e462a750e6425e0db0e4ebf6a9815f9a66624b",
+    "verify.log": "dc746b0f0ee3c5ba51ce7cda6c0b5e41d715b19cc061f3c5904f5b5b691b9850",
+    "approach-draft.json": "dbbd67046b5dd3b051c84b9ae24710b7ab123d7e115f57d17b9ccac311db196a"
+  },
+  "teacher_admission": false,
+  "grasp_qualified": false
+}
