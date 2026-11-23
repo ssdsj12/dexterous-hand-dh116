@@ -36284,6 +36284,26 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.shared-native-ppo-v1",
+      "branch": "11-17",
+      "status": "pinch_power_two_lane_two_update_reset_verified_tripod_guard_blocked",
+      "native_ppo_updates_completed_runs": 4,
+      "actual_isaac_envs_per_run": 2,
+      "teacher_admission": false,
+      "cpu_passed": 104,
+      "cpu_skipped": 2,
+      "cuda_checkpoint_passed": 2,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-native-ppo.md",
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "93aa20e70d5ee6f1be653cfd23a0efde12cd4689",
+        "source_tree": "73fcea12e4caebb1d23610b688bef8f68c899d18",
+        "files_verified": 24,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
