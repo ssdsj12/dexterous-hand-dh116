@@ -36043,6 +36043,25 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.native-compact-evidence-v1",
+      "branch": "11-17",
+      "status": "native_two_lane_compact_verified_64_window_measured",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-compact-teacher-rollout.md",
+      "cpu_tests": {
+        "passed": 160,
+        "skipped": 1
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "remote_branch": "11-17",
+        "source_commit": "e234a734bc46d1ad5bb652182f9f1c8ce89123cc",
+        "source_tree": "28e612d4bd7cc6a278f826fd7195e1b6045a99d8",
+        "files_verified": 18,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

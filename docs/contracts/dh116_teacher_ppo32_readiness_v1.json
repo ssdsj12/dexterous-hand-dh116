@@ -1040,6 +1040,365 @@
       "windows": 64
     },
     "parity_log_sha256": "1203d25464d24eaa3d44ef624866192ce612db7fca7ed65330b4be3632a34027",
-    "three_style_128_or_512_status": "unverified_shared_pair_capture_and_style_specific_rollout_required"
+    "three_style_128_or_512_status": "cuda_pair_buckets_verified_isaac_rollout_and_independent_parity_pending",
+    "pinch_64_native_rerun": {
+      "sdk_step": 15,
+      "gpu": 3,
+      "committed_windows": 1,
+      "committed_transitions": 64,
+      "solver_calls": 832,
+      "peak_observed_gpu_mib": 3326,
+      "first_window_seconds": 97.6593901340384,
+      "failure": "right:non_target_not_proven_clear:source:finger13_link",
+      "failure_env_ids": [
+        6,
+        39,
+        53
+      ],
+      "rejected_evidence_sha256": "830379af366802d35f0a6b1ab697d5f8ed332ff36761dbf9682b3fffc373025f",
+      "receipt_sha256": "b4bc016dbd9010ae11fd5affb4322aaae3db7b8230ea122e56dbbc80321f7b6e",
+      "exit_code": 1,
+      "ppo_updates": 0
+    }
+  },
+  "shared_native_pair_probe": {
+    "report": "docs/superpowers/reports/2026-11-23-dh116-shared-pair-scale-probe.md",
+    "build_cuda": "12.8.61",
+    "sm": 89,
+    "backend_live_unchanged": true,
+    "upstream_gpu_tests_passed": 39,
+    "upstream_gpu_log_sha256": "7662fde3b83680e8caa964fbffe6e3ac213f741c9a352edd6b2f46387296a80b",
+    "attempts": {
+      "pinch": {
+        "2": {
+          "grasp": "pinch",
+          "backend_sha256": "4e2c747b9de7d9cc41f9e9d53d69fcb16902577e6b13636516c1a3d4381d6c98",
+          "environments": 2,
+          "native_calls": 3,
+          "isolated_overflow_probe_steps": 1,
+          "per_field_independent_error": {
+            "vectors": 7.238368561957031e-05,
+            "mesh_positions_world_m": 0.0,
+            "mesh_quaternions_xyzw": 0.0,
+            "surface_gap_m": 0.0,
+            "normal_force_n": 0.0,
+            "node_forces_on_rod_world_n": 4.2067076719831675e-05,
+            "mesh_wrenches_on_mesh_world": 7.652715794392861e-08
+          },
+          "reset_lane": 0,
+          "continued_post_reset": true,
+          "counts": [
+            492,
+            492
+          ],
+          "step_and_pair_seconds": [
+            0.001731343101710081,
+            0.0010729951318353415
+          ],
+          "maximum_shared_vs_independent_error": 7.238368561957031e-05,
+          "independent_parity_at_1e_5": false,
+          "maximum_capture_observer_error": 1.5522044760629683e-10,
+          "raw_pair_capacity_per_env": 5412,
+          "free_device_mib": 23627,
+          "isaac_envs": 0,
+          "ppo_updates": 0,
+          "log_sha256": "6c676077eacc4fce33609a38bdd6fd9ceb5ed9eba2e2ff6b246d2d3cefe1539f"
+        },
+        "128": {
+          "grasp": "pinch",
+          "backend_sha256": "4e2c747b9de7d9cc41f9e9d53d69fcb16902577e6b13636516c1a3d4381d6c98",
+          "environments": 128,
+          "native_calls": 3,
+          "isolated_overflow_probe_steps": 1,
+          "per_field_independent_error": {
+            "vectors": 7.238368561957031e-05,
+            "mesh_positions_world_m": 0.0,
+            "mesh_quaternions_xyzw": 0.0,
+            "surface_gap_m": 0.0,
+            "normal_force_n": 0.0,
+            "node_forces_on_rod_world_n": 4.2067076719831675e-05,
+            "mesh_wrenches_on_mesh_world": 7.652715794392861e-08
+          },
+          "reset_lane": 0,
+          "continued_post_reset": true,
+          "counts": [
+            62484,
+            62484
+          ],
+          "step_and_pair_seconds": [
+            0.007890281965956092,
+            0.007606619969010353
+          ],
+          "maximum_shared_vs_independent_error": 7.238368561957031e-05,
+          "independent_parity_at_1e_5": false,
+          "maximum_capture_observer_error": 5.960464477539063e-08,
+          "raw_pair_capacity_per_env": 5412,
+          "free_device_mib": 23543,
+          "isaac_envs": 0,
+          "ppo_updates": 0,
+          "log_sha256": "7515b991fc7af1d6345973153e475b8a09e26d0ad6a4f39b0ff68a5a8f9256ec"
+        },
+        "512": {
+          "grasp": "pinch",
+          "backend_sha256": "4e2c747b9de7d9cc41f9e9d53d69fcb16902577e6b13636516c1a3d4381d6c98",
+          "environments": 512,
+          "native_calls": 3,
+          "isolated_overflow_probe_steps": 1,
+          "per_field_independent_error": {
+            "vectors": 7.238368561957031e-05,
+            "mesh_positions_world_m": 0.0,
+            "mesh_quaternions_xyzw": 0.0,
+            "surface_gap_m": 0.0,
+            "normal_force_n": 0.0,
+            "node_forces_on_rod_world_n": 4.2067076719831675e-05,
+            "mesh_wrenches_on_mesh_world": 7.652715794392861e-08
+          },
+          "reset_lane": 0,
+          "continued_post_reset": true,
+          "counts": [
+            251412,
+            251412
+          ],
+          "step_and_pair_seconds": [
+            0.027096936013549566,
+            0.028090381994843483
+          ],
+          "maximum_shared_vs_independent_error": 7.238368561957031e-05,
+          "independent_parity_at_1e_5": false,
+          "maximum_capture_observer_error": 5.960464477539063e-08,
+          "raw_pair_capacity_per_env": 5412,
+          "free_device_mib": 23297,
+          "isaac_envs": 0,
+          "ppo_updates": 0,
+          "log_sha256": "ec7173f4b1226cf92d81a655de07b823013bf4b9f696681cf52ebf3eacbde91c"
+        }
+      },
+      "tripod": {
+        "2": {
+          "grasp": "tripod",
+          "backend_sha256": "4e2c747b9de7d9cc41f9e9d53d69fcb16902577e6b13636516c1a3d4381d6c98",
+          "environments": 2,
+          "native_calls": 3,
+          "isolated_overflow_probe_steps": 1,
+          "per_field_independent_error": {
+            "vectors": 0.0002422325051156804,
+            "mesh_positions_world_m": 0.0,
+            "mesh_quaternions_xyzw": 0.0,
+            "surface_gap_m": 0.0,
+            "normal_force_n": 0.0,
+            "node_forces_on_rod_world_n": 4.677733522839844e-05,
+            "mesh_wrenches_on_mesh_world": 4.677733522839844e-05
+          },
+          "reset_lane": 0,
+          "continued_post_reset": true,
+          "counts": [
+            24,
+            24
+          ],
+          "step_and_pair_seconds": [
+            0.001644409028813243,
+            0.0011693548876792192
+          ],
+          "maximum_shared_vs_independent_error": 0.0002422325051156804,
+          "independent_parity_at_1e_5": false,
+          "maximum_capture_observer_error": 0.0,
+          "raw_pair_capacity_per_env": 8364,
+          "free_device_mib": 23527,
+          "isaac_envs": 0,
+          "ppo_updates": 0,
+          "log_sha256": "716fa72e96d1cdd71d8e47e1653f7e6f7349de53d340fef64dd76f66147d843b"
+        },
+        "128": {
+          "grasp": "tripod",
+          "backend_sha256": "4e2c747b9de7d9cc41f9e9d53d69fcb16902577e6b13636516c1a3d4381d6c98",
+          "environments": 128,
+          "native_calls": 3,
+          "isolated_overflow_probe_steps": 1,
+          "per_field_independent_error": {
+            "vectors": 0.0002422325051156804,
+            "mesh_positions_world_m": 0.0,
+            "mesh_quaternions_xyzw": 0.0,
+            "surface_gap_m": 0.0,
+            "normal_force_n": 0.0,
+            "node_forces_on_rod_world_n": 4.677733522839844e-05,
+            "mesh_wrenches_on_mesh_world": 4.677733522839844e-05
+          },
+          "reset_lane": 0,
+          "continued_post_reset": true,
+          "counts": [
+            3048,
+            3048
+          ],
+          "step_and_pair_seconds": [
+            0.0038706809282302856,
+            0.003641605144366622
+          ],
+          "maximum_shared_vs_independent_error": 0.0002422325051156804,
+          "independent_parity_at_1e_5": false,
+          "maximum_capture_observer_error": 0.0,
+          "raw_pair_capacity_per_env": 8364,
+          "free_device_mib": 23405,
+          "isaac_envs": 0,
+          "ppo_updates": 0,
+          "log_sha256": "0e46316a35be7eabcd1720bfa01b43d050f6c55765494bf2080f8489ce7384a4"
+        },
+        "512": {
+          "grasp": "tripod",
+          "backend_sha256": "4e2c747b9de7d9cc41f9e9d53d69fcb16902577e6b13636516c1a3d4381d6c98",
+          "environments": 512,
+          "native_calls": 3,
+          "isolated_overflow_probe_steps": 1,
+          "per_field_independent_error": {
+            "vectors": 0.0002422325051156804,
+            "mesh_positions_world_m": 0.0,
+            "mesh_quaternions_xyzw": 0.0,
+            "surface_gap_m": 0.0,
+            "normal_force_n": 0.0,
+            "node_forces_on_rod_world_n": 4.677733522839844e-05,
+            "mesh_wrenches_on_mesh_world": 4.677733522839844e-05
+          },
+          "reset_lane": 0,
+          "continued_post_reset": true,
+          "counts": [
+            12264,
+            12264
+          ],
+          "step_and_pair_seconds": [
+            0.010043561924248934,
+            0.010343220084905624
+          ],
+          "maximum_shared_vs_independent_error": 0.0002422325051156804,
+          "independent_parity_at_1e_5": false,
+          "maximum_capture_observer_error": 0.0,
+          "raw_pair_capacity_per_env": 8364,
+          "free_device_mib": 23055,
+          "isaac_envs": 0,
+          "ppo_updates": 0,
+          "log_sha256": "4c003b889a6a900bc72b56913e7fad1c45536fa4919d5898a011e3573630b441"
+        }
+      },
+      "power": {
+        "2": {
+          "grasp": "power",
+          "backend_sha256": "4e2c747b9de7d9cc41f9e9d53d69fcb16902577e6b13636516c1a3d4381d6c98",
+          "environments": 2,
+          "native_calls": 3,
+          "isolated_overflow_probe_steps": 1,
+          "per_field_independent_error": {
+            "vectors": 0.0002422325051156804,
+            "mesh_positions_world_m": 0.0,
+            "mesh_quaternions_xyzw": 0.0,
+            "surface_gap_m": 0.0,
+            "normal_force_n": 0.0,
+            "node_forces_on_rod_world_n": 4.677733522839844e-05,
+            "mesh_wrenches_on_mesh_world": 4.677733522839844e-05
+          },
+          "reset_lane": 0,
+          "continued_post_reset": true,
+          "counts": [
+            24,
+            24
+          ],
+          "step_and_pair_seconds": [
+            0.0017250608652830124,
+            0.0012734010815620422
+          ],
+          "maximum_shared_vs_independent_error": 0.0002422325051156804,
+          "independent_parity_at_1e_5": false,
+          "maximum_capture_observer_error": 0.0,
+          "raw_pair_capacity_per_env": 8364,
+          "free_device_mib": 23527,
+          "isaac_envs": 0,
+          "ppo_updates": 0,
+          "log_sha256": "541592b0f151d577d8b385da4c2e6a4ab754eab6543d8d01e3f31da2aa937616"
+        },
+        "128": {
+          "grasp": "power",
+          "backend_sha256": "4e2c747b9de7d9cc41f9e9d53d69fcb16902577e6b13636516c1a3d4381d6c98",
+          "environments": 128,
+          "native_calls": 3,
+          "isolated_overflow_probe_steps": 1,
+          "per_field_independent_error": {
+            "vectors": 0.0002422325051156804,
+            "mesh_positions_world_m": 0.0,
+            "mesh_quaternions_xyzw": 0.0,
+            "surface_gap_m": 0.0,
+            "normal_force_n": 0.0,
+            "node_forces_on_rod_world_n": 4.677733522839844e-05,
+            "mesh_wrenches_on_mesh_world": 4.677733522839844e-05
+          },
+          "reset_lane": 0,
+          "continued_post_reset": true,
+          "counts": [
+            3048,
+            3048
+          ],
+          "step_and_pair_seconds": [
+            0.00395872606895864,
+            0.0035460619255900383
+          ],
+          "maximum_shared_vs_independent_error": 0.0002422325051156804,
+          "independent_parity_at_1e_5": false,
+          "maximum_capture_observer_error": 0.0,
+          "raw_pair_capacity_per_env": 8364,
+          "free_device_mib": 23405,
+          "isaac_envs": 0,
+          "ppo_updates": 0,
+          "log_sha256": "08727998a2291ec12f95623be2a861b65fdfd78b863f8c2a5ced7153515415dc"
+        },
+        "512": {
+          "grasp": "power",
+          "backend_sha256": "4e2c747b9de7d9cc41f9e9d53d69fcb16902577e6b13636516c1a3d4381d6c98",
+          "environments": 512,
+          "native_calls": 3,
+          "isolated_overflow_probe_steps": 1,
+          "per_field_independent_error": {
+            "vectors": 0.0002422325051156804,
+            "mesh_positions_world_m": 0.0,
+            "mesh_quaternions_xyzw": 0.0,
+            "surface_gap_m": 0.0,
+            "normal_force_n": 0.0,
+            "node_forces_on_rod_world_n": 4.677733522839844e-05,
+            "mesh_wrenches_on_mesh_world": 4.677733522839844e-05
+          },
+          "reset_lane": 0,
+          "continued_post_reset": true,
+          "counts": [
+            12264,
+            12264
+          ],
+          "step_and_pair_seconds": [
+            0.01038840296678245,
+            0.010234963148832321
+          ],
+          "maximum_shared_vs_independent_error": 0.0002422325051156804,
+          "independent_parity_at_1e_5": false,
+          "maximum_capture_observer_error": 0.0,
+          "raw_pair_capacity_per_env": 8364,
+          "free_device_mib": 23055,
+          "isaac_envs": 0,
+          "ppo_updates": 0,
+          "log_sha256": "22e075bbd1cf6b89a9f1f6853af52136607047edae539ca8d0c0050e49f63a82"
+        }
+      }
+    },
+    "reset_manifests": {
+      "tripod": {
+        "exit_code": 0,
+        "sdk_step": 2,
+        "ppo_updates": 0,
+        "receipt_sha256": "5fad40ad0fe7951ca5c3653a8ea35590c3e0f1e443e90f822e395d7d54e4b0fd",
+        "manifest_sha256": "0ba4f414957b5fa0c0305aad7e6b6aa93658bcded2309b8834fafc2b9b1d492d"
+      },
+      "power": {
+        "exit_code": 0,
+        "sdk_step": 2,
+        "ppo_updates": 0,
+        "receipt_sha256": "6c32cdbc9d1b5b4ef4bf52ced80f7f3de39c6db9069d51d3aab8c5ad36a84fd0",
+        "manifest_sha256": "f63472da8ae1683022d338bb9f6a284b4452c1f6e5b0189f7b0b999fb6f71fc6"
+      }
+    },
+    "isaac_envs_with_shared_solver": 0,
+    "ppo_updates": 0
   }
 }

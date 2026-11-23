@@ -1,0 +1,119 @@
+--- a/csrc/sdf.h
++++ b/csrc/sdf.h
+@@ -66 +66 @@
+-    void enable_pair_capture(int capacity);
++    void enable_pair_capture(int capacity, bool batched = false);
+@@ -74 +74 @@
+-    PairReadback contact_pairs(cudaStream_t stream) const;
++    PairReadback contact_pairs(cudaStream_t stream, int env = 0) const;
+--- a/csrc/sdf.cu
++++ b/csrc/sdf.cu
+@@ -210,2 +210,2 @@
+-void SdfStore::enable_pair_capture(int capacity) {
+-    if (N != 1 || !forcesOn || !count() || pairCapacity || capacity < 1 || capacity > 1048576)
++void SdfStore::enable_pair_capture(int capacity, bool batched) {
++    if ((!batched && N != 1) || (batched && (N < 2 || N > 512 || (int64_t)N * capacity > 8388608)) || !forcesOn || !count() || pairCapacity || capacity < 1 || capacity > 1048576)
+@@ -214 +214 @@
+-        check(cudaMalloc(&d_pairCount, sizeof(int)), "cudaMalloc(pair count)");
++        check(cudaMalloc(&d_pairCount, sizeof(int) * N), "cudaMalloc(pair count)");
+@@ -216 +216 @@
+-        check(cudaMalloc(&d_pairs, sizeof(PairSample) * capacity), "cudaMalloc(pair samples)");
++        check(cudaMalloc(&d_pairs, sizeof(PairSample) * (size_t)capacity * N), "cudaMalloc(pair samples)");
+@@ -233 +233,2 @@
+-SdfStore::PairReadback SdfStore::contact_pairs(cudaStream_t stream) const {
++SdfStore::PairReadback SdfStore::contact_pairs(cudaStream_t stream, int env) const {
++    if (env < 0 || env >= N) throw std::out_of_range("pair capture environment");
+@@ -237 +238 @@
+-    check(cudaMemcpy(&attempted, d_pairCount, sizeof(int), cudaMemcpyDeviceToHost), "download pair count");
++    check(cudaMemcpy(&attempted, d_pairCount + env, sizeof(int), cudaMemcpyDeviceToHost), "download pair count");
+@@ -242 +243 @@
+-        check(cudaMemcpy(result.samples.data(), d_pairs, sizeof(PairSample) * result.samples.size(),
++        check(cudaMemcpy(result.samples.data(), d_pairs + (size_t)env * pairCapacity, sizeof(PairSample) * result.samples.size(),
+@@ -271 +272 @@
+-        check(cudaMemsetAsync(d_pairCount, 0, sizeof(int), s), "zero(pair count)");
++        check(cudaMemsetAsync(d_pairCount, 0, sizeof(int) * N, s), "zero(pair count)");
+--- a/csrc/bindings.cpp
++++ b/csrc/bindings.cpp
+@@ -1083,0 +1084,2 @@
++                 if (b.sdf.envs() != 1)
++                     throw py::value_error("v2 pair readback requires a single environment");
+@@ -1130,0 +1133,71 @@
++        .def("enable_batched_contact_pair_capture",
++             [](RopeBatch& b, int capacity_per_env) {
++                 std::lock_guard<std::mutex> g(b.mutex());
++                 if (b.stepped || b.raw()->meta.numPlanes)
++                     throw py::value_error("batch pair capture needs mesh-only configuration before stepping");
++                 b.sdf.enable_pair_capture(capacity_per_env, true);
++                 b.sdf.write_meta(b.raw()->meta, b.verts_per_rope());
++             }, py::arg("capacity_per_env"))
++        .def("contact_pair_samples_batched_v1",
++             [](RopeBatch& b) {
++                 std::lock_guard<std::mutex> g(b.mutex());
++                 const float before = b.raw()->meta.time;
++                 if (b.sdf.envs() < 2)
++                     throw py::value_error("batch pair readback requires more than one environment");
++                 py::list lanes;
++                 for (int env = 0; env < b.sdf.envs(); ++env) {
++                     auto capture = b.sdf.contact_pairs(b.raw()->solverStream(), env);
++                     const py::ssize_t size = capture.samples.size();
++                     py::array_t<int> ids({size, py::ssize_t(3)});
++                     py::array_t<float> vectors({size, py::ssize_t(12)});
++                     py::array_t<float> positions({size, py::ssize_t(3)});
++                     py::array_t<float> quaternions({size, py::ssize_t(4)});
++                     py::array_t<float> gaps(size), normal_forces(size);
++                     auto idx = ids.mutable_unchecked<2>();
++                     auto v = vectors.mutable_unchecked<2>();
++                     auto p = positions.mutable_unchecked<2>();
++                     auto q = quaternions.mutable_unchecked<2>();
++                     auto gap = gaps.mutable_unchecked<1>();
++                     auto nf = normal_forces.mutable_unchecked<1>();
++                     for (py::ssize_t i = 0; i < size; ++i) {
++                         const auto& r = capture.samples[i];
++                         idx(i, 0) = r.substep; idx(i, 1) = r.node; idx(i, 2) = r.mesh;
++                         for (int j = 0; j < 3; ++j) {
++                             v(i, j) = r.point[j]; v(i, 3+j) = r.normal[j];
++                             v(i, 6+j) = r.forceOnRod[j]; v(i, 9+j) = r.torqueOnMesh[j];
++                             p(i, j) = r.meshPosition[j];
++                         }
++                         for (int j = 0; j < 4; ++j) q(i, j) = r.meshQuaternion[j];
++                         gap(i) = r.gap; nf(i) = r.normalForce;
++                     }
++                     py::dict out;
++                     out["schema"] = "dh116.sdf_pair_samples_lane.v1";
++                     out["env_id"] = env;
++                     out["substeps"] = capture.substeps; out["mesh_count"] = capture.mesh_count;
++                     out["capacity"] = capture.capacity; out["attempted"] = capture.attempted;
++                     out["overflow"] = capture.attempted > capture.capacity;
++                     out["indices"] = ids; out["vectors"] = vectors;
++                     out["mesh_positions_world_m"] = positions;
++                     out["mesh_quaternions_xyzw"] = quaternions;
++                     out["surface_gap_m"] = gaps; out["normal_force_n"] = normal_forces;
++                     out["sample_source"] = "cuda_surfaceReadout_same_end_substep_evaluation";
++                     out["normal_force_semantics"] = "unaveraged_penalty_normal_force_before_friction";
++                     out["owner_time_s_before"] = before; out["owner_time_s_after"] = b.raw()->meta.time;
++                     out["owner_time_source"] = "native_host_owner_metadata_at_readback";
++                     out["substep_timestamp_s"] = py::none();
++                     out["last_error"] = b.raw()->lastErrorCode;
++                     lanes.append(out);
++                 }
++                 py::dict result;
++                 result["schema"] = "dh116.sdf_pair_samples_batch.v1";
++                 result["lanes"] = lanes;
++                 auto N = py::ssize_t(b.sdf.envs()), V = py::ssize_t(b.verts_per_rope());
++                 auto M = py::ssize_t(b.sdf.count());
++                 py::array_t<float> node_forces({N, V, py::ssize_t(3)});
++                 py::array_t<float> mesh_wrenches({N, M, py::ssize_t(6)});
++                 b.sdf.contact_forces(node_forces.mutable_data());
++                 b.sdf.wrenches(mesh_wrenches.mutable_data());
++                 result["node_forces_on_rod_world_n"] = node_forces;
++                 result["mesh_wrenches_on_mesh_world"] = mesh_wrenches;
++                 return result;
++             }, "Owned raw solver contact buckets by actual CUDA environment.")
+--- a/third_party/yarnball/KittenEngine/YarnBall/sim/contact.cuh
++++ b/third_party/yarnball/KittenEngine/YarnBall/sim/contact.cuh
+@@ -203 +203 @@
+-				const int i = atomicAdd(data->d_sdfPairCount, 1);
++				const int i = atomicAdd(data->d_sdfPairCount + env, 1);
+@@ -205 +205 @@
+-					data->d_sdfPairs[i] = {*data->d_sdfPairSubstep,
++					data->d_sdfPairs[(size_t)env * data->sdfPairCapacity + i] = {*data->d_sdfPairSubstep,

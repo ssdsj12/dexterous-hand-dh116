@@ -52312,18 +52312,28 @@
       "dependencies": [
         "teacher.ppo32-isolation-preflight-v1"
       ],
-      "reason": "One native GPU3 window committed 64 transitions. Lane 55 stopped window two at SDK18 under the original non-target geometry guard. Compact two-lane instrumentation and natural exit passed. A clean complete rollout remains pending.",
-      "report": "docs/superpowers/reports/2026-11-23-dh116-compact-teacher-rollout.md",
+      "reason": "The compact GPU3 run committed its first real 64-row window in 97.659 s. Original source geometry stopped lanes 6, 39 and 53 at SDK 15 and no PPO optimizer update ran.",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-pair-scale-probe.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
-      "native_runs": 2,
+      "native_runs": 3,
       "last_result": {
-        "status": "native_rollout_rejected_by_original_guard",
+        "sdk_step": 15,
+        "gpu": 3,
         "committed_windows": 1,
-        "ppo_updates": 0,
-        "first_window_sha256": "07f938f8a7f6a8e42295867783d36005077bd6c383c8218e54269f6aaaec4f34",
-        "dynamic_smoke_exit_code": 0,
-        "failure_physics_tick": 18,
-        "failure_env_id": 55
+        "committed_transitions": 64,
+        "solver_calls": 832,
+        "peak_observed_gpu_mib": 3326,
+        "first_window_seconds": 97.6593901340384,
+        "failure": "right:non_target_not_proven_clear:source:finger13_link",
+        "failure_env_ids": [
+          6,
+          39,
+          53
+        ],
+        "rejected_evidence_sha256": "830379af366802d35f0a6b1ab697d5f8ed332ff36761dbf9682b3fffc373025f",
+        "receipt_sha256": "b4bc016dbd9010ae11fd5affb4322aaae3db7b8230ea122e56dbbc80321f7b6e",
+        "exit_code": 1,
+        "ppo_updates": 0
       }
     },
     "teacher.tripod-ppo64-v1": {
@@ -52334,10 +52344,17 @@
       "dependencies": [
         "teacher.ppo32-isolation-preflight-v1"
       ],
-      "reason": "Current preflight rejects the archived supported Reset recorder SHA. A fresh Tripod Reset and translated seven-route geometry sources must bind before a 64-lane launch.",
-      "report": "docs/superpowers/reports/2026-11-23-dh116-native-teacher-batch-gpu3.md",
+      "reason": "Current native Tripod 17-slot Reset and seal passed. Shared solver-only raw ownership passed. Actual Isaac batched controller/feedback and policy rollout are pending.",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-pair-scale-probe.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
-      "native_runs": 0
+      "native_runs": 0,
+      "reset_prerequisite": {
+        "exit_code": 0,
+        "sdk_step": 2,
+        "ppo_updates": 0,
+        "receipt_sha256": "5fad40ad0fe7951ca5c3653a8ea35590c3e0f1e443e90f822e395d7d54e4b0fd",
+        "manifest_sha256": "0ba4f414957b5fa0c0305aad7e6b6aa93658bcded2309b8834fafc2b9b1d492d"
+      }
     },
     "teacher.power-ppo64-v1": {
       "title": "Power Teacher PPO with 64 independent Isaac lanes",
@@ -52347,10 +52364,17 @@
       "dependencies": [
         "teacher.ppo32-isolation-preflight-v1"
       ],
-      "reason": "Current preflight rejects the archived physical exchange SHA. A fresh Power Reset and translated seventeen-slot/palm sources must bind before a 64-lane launch.",
-      "report": "docs/superpowers/reports/2026-11-23-dh116-native-teacher-batch-gpu3.md",
+      "reason": "Current native Power 17-slot Reset and seal passed. Shared solver-only raw ownership passed. Actual Isaac batched controller/feedback and policy rollout are pending.",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-pair-scale-probe.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
-      "native_runs": 0
+      "native_runs": 0,
+      "reset_prerequisite": {
+        "exit_code": 0,
+        "sdk_step": 2,
+        "ppo_updates": 0,
+        "receipt_sha256": "6c32cdbc9d1b5b4ef4bf52ced80f7f3de39c6db9069d51d3aab8c5ad36a84fd0",
+        "manifest_sha256": "f63472da8ae1683022d338bb9f6a284b4452c1f6e5b0189f7b0b999fb6f71fc6"
+      }
     }
   },
   "execution_target": {
