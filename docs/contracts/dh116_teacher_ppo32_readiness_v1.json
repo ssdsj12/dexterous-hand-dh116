@@ -392,5 +392,78 @@
     "ticks_per_completed_case": 2,
     "gpu_reserve_mib": 2048,
     "shared_sdf_raw_pair_rejection": "pair capture requires one rope, mesh forces, and a bounded one-time allocation"
+  },
+  "native_power_scene_capacity": {
+    "basis_head": "37ae4ba641057e6437f6cd834ee4cdf5a9b69ba5",
+    "report": "docs/superpowers/reports/2026-11-23-dh116-isaac-32-64-scene-capacity.md",
+    "probe_sha256": "efb17e983f14b26d745217d9eb55e4eedde6b948a5b3a7e87e335b11f057d96c",
+    "gpu_index": 2,
+    "stage_order": [
+      32,
+      64
+    ],
+    "cpu_tests": {
+      "passed": 70,
+      "failed": 0,
+      "log_sha256": "3c3f87531efc13b1ef6f78f1ae74b1c0104fc8750bf6a1ba200c74abf6048863"
+    },
+    "runs": {
+      "32": {
+        "physics_rows": 8,
+        "environments": 32,
+        "articulations": 64,
+        "isolated_joint_restore": true,
+        "sdk_step": 10,
+        "min_source_clearance_m": 0.007369707705805029,
+        "step_and_readback_seconds": 0.23928344901651144,
+        "gpu_used_mib": 2628,
+        "process_peak_rss_kib": 3053740,
+        "solver_steps": 0,
+        "teacher_queries": 0,
+        "ppo_updates": 0,
+        "elapsed_s": 87.78938341187313,
+        "released_python_weakrefs": 257,
+        "outer_exit_code": 0,
+        "forced_exit": false,
+        "outer_sha256": "6989bd7ac661aa5ea004d8c1f1945a672856d44d8c806ca018f4ca2f818f4936",
+        "native_log_sha256": "e894aa8ce1da774df7350ba6d406e832dc8183edf680780a21188e11a3df2fbe",
+        "scene_observations_sha256": "10cd5d3f915c696ed5d242acee488bb1b76e0390d5a2316c4e4534bfe565ef2b"
+      },
+      "64": {
+        "physics_rows": 8,
+        "environments": 64,
+        "articulations": 128,
+        "isolated_joint_restore": true,
+        "sdk_step": 10,
+        "min_source_clearance_m": 0.007369707705805029,
+        "step_and_readback_seconds": 0.23831609194166958,
+        "gpu_used_mib": 2642,
+        "process_peak_rss_kib": 3129768,
+        "solver_steps": 0,
+        "teacher_queries": 0,
+        "ppo_updates": 0,
+        "elapsed_s": 133.97561766696163,
+        "released_python_weakrefs": 513,
+        "outer_exit_code": 0,
+        "forced_exit": false,
+        "outer_sha256": "9c6d2be9cad8ace410c88f63d9a35c56542ecfff3948db89d45e442eb9f2c64b",
+        "native_log_sha256": "ac8c640184b45df94b0ae43f7dea201882e0f74c91a782ee8d61fb5bfbea2536",
+        "scene_observations_sha256": "7ee56e931f6eea93ae97df73d332797ad3a8bcec86e2bfedd52dbed915524871"
+      }
+    },
+    "retained_failures": {
+      "premature_usd_import": {
+        "outer_sha256": "5c5e79ffdbb8e6158f7d8c293baa7ca5c9e66393e1486c2a457968ae7975306b",
+        "exit_code": 1,
+        "native_log_sha256": "9bb89f544f6fffc96e95b356309b002038cf7c9193ba5131c10e3f11524f5412"
+      },
+      "ownership_snapshot_limit": {
+        "outer_sha256": "30bdb9db739152b94ac62315dd8257d277387e714689781cbf938290b3867cd0",
+        "exit_code": 1,
+        "native_log_sha256": "1a83fe225daaf14500730a707fb0f65bd92a6173de13a7503ca02286f2e3762b"
+      }
+    },
+    "fully_coupled_teacher_envs": 0,
+    "teacher_admission": false
   }
 }

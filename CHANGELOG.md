@@ -1,3 +1,5 @@
+Verified the original Power hand and support scene at 32 then 64 parallel Isaac lanes, with isolated wrist-state restore and natural exit. [Report](docs/superpowers/reports/2026-11-23-dh116-isaac-32-64-scene-capacity.md)
+
 Extended the isolated Power solver capacity audit. Separate owners preserve raw pairs at 640 rods. A single shared-SDF batch verified aggregate forces and Reset at 1024 rods. [Report](docs/superpowers/reports/2026-11-23-teacher-power-1024-capacity.md)
 
 Add the lockstep Teacher physical barrier and same-clock source packing for 32 lanes, with a 32-owner CUDA capacity probe. The Isaac multi-environment launcher is pending. [Report](docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md)

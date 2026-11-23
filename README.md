@@ -1,3 +1,5 @@
+Power scene capacity has been verified at 32 and 64 Isaac lanes. The native multi-environment Teacher PPO path still needs the coupled rod and episode loop. [Report](docs/superpowers/reports/2026-11-23-dh116-isaac-32-64-scene-capacity.md)
+
 The Power solver capacity probe reached 1024 rods in a shared-SDF batch. Approval for multi-environment Isaac PPO is pending native integration and raw pair provenance. [Report](docs/superpowers/reports/2026-11-23-teacher-power-1024-capacity.md)
 
 Teacher PPO now has a 32-lane physical and policy preflight. The verified native setup still runs one Isaac environment per job. [Report](docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md)
