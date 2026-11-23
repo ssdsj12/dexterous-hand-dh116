@@ -35889,6 +35889,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-solver-capacity-1024-v1",
+      "branch": "11-17",
+      "status": "solver_capacity_verified_isaac_integration_blocked",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-1024-capacity.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "cpu_tests": {
+        "passed": 66,
+        "failed": 0
+      },
+      "raw_pair_solver_owners": 640,
+      "shared_sdf_solver_lanes": 1024,
+      "native_isaac_envs": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "remote_branch": "11-17",
+        "source_commit": "7cddeffe8079ee3c707788f01850cb6dcf68c5f0",
+        "source_tree": "7948b4af1dd90170f5b30c1566c25d23077391d3",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
