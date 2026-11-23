@@ -4526,3 +4526,5 @@ Reused the unpublished four-joint left Tripod ray in the real supported-rod exch
 - Add a source-locked observation-only DeformX friction-displacement preparation and bounded GPU parity probe; preserve the original backend/physics and keep calibrated slip/Teacher success unqualified.
 
 Added compact GPU pair reduction and atomic reader; three 128-lane solver probes passed. Live Isaac PPO integration remains pending.
+
+Added exclusive shared rod step/reaction ownership and rod-only Reset. Two-lane Isaac startup exits naturally; nonzero hand contact and PPO remain pending.

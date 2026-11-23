@@ -3995,3 +3995,5 @@ Actual Tripod contact-response analysis: correct targets reach PhysX; left index
 Teacher full-task source preparation: independent raw DeformX friction displacement getter built with CUDA12.8/SM89 and validated against the old backend in three controlled GPU cases. [Scope and remaining integration](docs/superpowers/reports/2026-11-22-teacher-friction-observation.md). No grasp/Lift qualification.
 
 Compact GPU shared contact reduction verification is recorded in docs/superpowers/reports/2026-11-23-dh116-batched-pair-reduction.md. Live shared Isaac PPO remains pending.
+
+Shared solver ownership and the two-lane Isaac startup probe are recorded in docs/superpowers/reports/2026-11-23-dh116-shared-rod-owner.md. The static probe observed zero hand reactions.

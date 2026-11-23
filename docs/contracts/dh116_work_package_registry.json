@@ -52387,6 +52387,20 @@
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
       "isaac_envs": 0,
       "ppo_updates": 0
+    },
+    "teacher.shared-rod-owner-v1": {
+      "title": "Shared solver step and reaction ownership",
+      "executor": "offline",
+      "status": "passed",
+      "scope": "ownership CPU/CUDA probes and two-lane static Isaac startup",
+      "dependencies": [
+        "teacher.shared-pair-compact-gpu-v1"
+      ],
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-rod-owner.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "ppo_updates": 0,
+      "contact_qualified": false
     }
   },
   "execution_target": {

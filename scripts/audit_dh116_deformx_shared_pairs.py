@@ -12,6 +12,7 @@ import torch
 from go2_pvcnn.control.dh116.tabletop_deformable_grasp_runtime import material_mapping
 from go2_pvcnn.control.dh116.tabletop_deformx_pair_capture import validate_pair_capture
 from go2_pvcnn.control.dh116.tabletop_batched_pair_capture import compact_pair_capture
+from go2_pvcnn.control.dh116.tabletop_shared_rod_owner import SharedRodOwner
 from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
 from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
 from scripts.audit_dh116_isaac_batch_scene import load_grasp_archive
@@ -111,12 +112,16 @@ def audit(backend, plan, reset, num_envs, *, style):
     if not all(np.array_equal(initial[i], position(solver)[0])
                for i, solver in enumerate((reference_0, reference_1))):
         raise ValueError("identical independent constructor poses required")
+    owner = SharedRodOwner(batch, run_uuid="shared-pair-probe", physics_step=2,
+        episodes=tuple(f"probe:{i}:1" for i in range(num_envs)),
+        mesh_names=tuple(row["name"] for row in plan["entries"]),
+        solver_substeps=SUBSTEPS, device="cuda")
     raw_times, counts, compact_times = [], [], []
     errors = {}
     observer_error = 0.
-    for _ in range(2):
+    for step_index in range(2):
         now = perf_counter()
-        batch.step_free(DT, SUBSTEPS)
+        owner.advance(physics_step=3 + step_index)
         raw = batch.contact_pair_samples_batched_v1()
         raw_times.append(perf_counter() - now)
         if (raw["schema"] != "dh116.sdf_pair_samples_batch.v1" or batch.last_error
@@ -159,9 +164,19 @@ def audit(backend, plan, reset, num_envs, *, style):
             for key in (FORCES, WRENCHES):
                 compare(key, raw[key][env_id], packet[key])
         counts.append(int(sum(lane["attempted"] for lane in raw["lanes"])))
+        if step_index == 0:
+            reaction = owner.consume(physics_step=4)
+            if reaction["source_physics_step"] != 3 or reaction["source_solver_id"] != id(batch):
+                raise ValueError("shared reaction source identity changed")
+            try:
+                owner.consume(physics_step=4)
+            except RuntimeError:
+                pass
+            else:
+                raise ValueError("shared reaction was consumed twice")
 
     before = position(batch)
-    batch.reset_envs(np.array([0], dtype=np.int32))
+    owner.reset_rod_lane(0, episode_uid="probe:0:2")
     after = position(batch)
     if (np.array_equal(before[0], initial[0]) or not np.array_equal(after[0], initial[0])
             or not np.array_equal(after[1:], before[1:])):
@@ -173,7 +188,13 @@ def audit(backend, plan, reset, num_envs, *, style):
             raise
     else:
         raise ValueError("pre-Reset contact evidence remained readable")
-    batch.step_free(DT, SUBSTEPS)
+    reset_reaction = owner.consume(physics_step=5)
+    if (reset_reaction["rod_ticks"][0] != 0 or any(
+            tick != 2 * SUBSTEPS for tick in reset_reaction["rod_ticks"][1:])
+            or bool(reset_reaction["mesh_wrenches"][0].any())):
+        raise ValueError("local Reset retained the old reaction or changed another lane clock")
+    owner.advance(physics_step=5)
+    owner.consume(physics_step=6)
     continued = batch.contact_pair_samples_batched_v1()
     if batch.last_error or continued["lanes"][0]["attempted"] or any(
             lane["overflow"] or not lane["attempted"] for lane in continued["lanes"][1:]):
@@ -184,7 +205,7 @@ def audit(backend, plan, reset, num_envs, *, style):
     if witness[0]["overflow"] or not witness[1]["overflow"] or witness[1]["capacity"] != 1:
         raise ValueError("overflow in a contacting lane must not affect its neighbor")
     max_error = max(errors.values())
-    return dict(environments=num_envs, native_calls=3, isolated_overflow_probe_steps=1,
+    return dict(environments=num_envs, native_calls=3, exclusive_reaction_owner_verified=True, isolated_overflow_probe_steps=1,
                 per_field_independent_error=errors, reset_lane=0, continued_post_reset=True, counts=counts,
                 step_and_pair_seconds=raw_times, compact_gpu_validation_seconds=compact_times, maximum_shared_vs_independent_error=max_error,
                 independent_parity_at_1e_5=max_error < 1e-5, maximum_capture_observer_error=observer_error,

@@ -1541,5 +1541,158 @@
       "changed": 0,
       "historical_tmp_checkpoints": "paths_absent_unverified"
     }
+  },
+  "shared_rod_owner": {
+    "status": "native_startup_passed_contact_unproven",
+    "solver_only_128_grasp_probes": [
+      {
+        "grasp": "pinch",
+        "environments": 128,
+        "native_calls": 3,
+        "exclusive_reaction_owner_verified": true,
+        "isolated_overflow_probe_steps": 1,
+        "per_field_independent_error": {
+          "vectors": 7.238368561957031e-05,
+          "mesh_positions_world_m": 0.0,
+          "mesh_quaternions_xyzw": 0.0,
+          "surface_gap_m": 0.0,
+          "normal_force_n": 0.0,
+          "node_forces_on_rod_world_n": 4.2067076719831675e-05,
+          "mesh_wrenches_on_mesh_world": 7.652715794392861e-08
+        },
+        "reset_lane": 0,
+        "continued_post_reset": true,
+        "counts": [
+          62484,
+          62484
+        ],
+        "step_and_pair_seconds": [
+          0.21585038909688592,
+          0.021201997995376587
+        ],
+        "compact_gpu_validation_seconds": [
+          0.010260423179715872,
+          0.008330886019393802
+        ],
+        "maximum_shared_vs_independent_error": 7.238368561957031e-05,
+        "independent_parity_at_1e_5": false,
+        "maximum_capture_observer_error": 5.960464477539063e-08,
+        "raw_pair_capacity_per_env": 5412,
+        "free_device_mib": 23427,
+        "isaac_envs": 0,
+        "ppo_updates": 0
+      },
+      {
+        "grasp": "tripod",
+        "environments": 128,
+        "native_calls": 3,
+        "exclusive_reaction_owner_verified": true,
+        "isolated_overflow_probe_steps": 1,
+        "per_field_independent_error": {
+          "vectors": 0.0002422325051156804,
+          "mesh_positions_world_m": 0.0,
+          "mesh_quaternions_xyzw": 0.0,
+          "surface_gap_m": 0.0,
+          "normal_force_n": 0.0,
+          "node_forces_on_rod_world_n": 4.677733522839844e-05,
+          "mesh_wrenches_on_mesh_world": 4.677733522839844e-05
+        },
+        "reset_lane": 0,
+        "continued_post_reset": true,
+        "counts": [
+          3048,
+          3048
+        ],
+        "step_and_pair_seconds": [
+          0.01342217088676989,
+          0.012548810103908181
+        ],
+        "compact_gpu_validation_seconds": [
+          0.005805801134556532,
+          0.005625213962048292
+        ],
+        "maximum_shared_vs_independent_error": 0.0002422325051156804,
+        "independent_parity_at_1e_5": false,
+        "maximum_capture_observer_error": 0.0,
+        "raw_pair_capacity_per_env": 8364,
+        "free_device_mib": 23289,
+        "isaac_envs": 0,
+        "ppo_updates": 0
+      },
+      {
+        "grasp": "power",
+        "environments": 128,
+        "native_calls": 3,
+        "exclusive_reaction_owner_verified": true,
+        "isolated_overflow_probe_steps": 1,
+        "per_field_independent_error": {
+          "vectors": 0.0002422325051156804,
+          "mesh_positions_world_m": 0.0,
+          "mesh_quaternions_xyzw": 0.0,
+          "surface_gap_m": 0.0,
+          "normal_force_n": 0.0,
+          "node_forces_on_rod_world_n": 4.677733522839844e-05,
+          "mesh_wrenches_on_mesh_world": 4.677733522839844e-05
+        },
+        "reset_lane": 0,
+        "continued_post_reset": true,
+        "counts": [
+          3048,
+          3048
+        ],
+        "step_and_pair_seconds": [
+          0.012735950062051415,
+          0.011962097836658359
+        ],
+        "compact_gpu_validation_seconds": [
+          0.005747502902522683,
+          0.005706734023988247
+        ],
+        "maximum_shared_vs_independent_error": 0.0002422325051156804,
+        "independent_parity_at_1e_5": false,
+        "maximum_capture_observer_error": 0.0,
+        "raw_pair_capacity_per_env": 8364,
+        "free_device_mib": 23289,
+        "isaac_envs": 0,
+        "ppo_updates": 0
+      }
+    ],
+    "cpu_regression": {
+      "passed": 53,
+      "skipped": 1,
+      "failed": 0,
+      "log_sha256": "bea30fe4d59ba522bede6f20be15e4008cf76747b2708310d24fcd6cf7c99f45"
+    },
+    "native": {
+      "receipt_sha256": "383606fb0ab5b1d6e6d6fb1352c9a7ba2b3db0909fc4e41650f7ce5ec94a62b3",
+      "exit_code": 0,
+      "forced_exit": false,
+      "sdk_steps": 18,
+      "environments": 2,
+      "solver_calls": 8,
+      "physics_rows": 8,
+      "nonzero_hand_reaction_steps": [
+        0,
+        0
+      ],
+      "ppo_updates": 0,
+      "journal_sha256": "476973b67d14117531c0d3392469849a360cd4a05cf6d3a77fb182b9068a772c"
+    },
+    "failed_attempt": {
+      "receipt_sha256": "34fd2668a9a55e879eeedc391db0e65ee6fbb5d60cc620b6e3d085de7b4bdacf",
+      "exit_code": 1,
+      "reason": "collision_clearance tuple unpacking",
+      "natural_exit": true
+    },
+    "pending": [
+      "actual nonzero hand contact with archived approach actions",
+      "complete Isaac and collider local Reset",
+      "PPO integration and all three grasp 128/512 training"
+    ],
+    "gpu_regression": {
+      "passed": 54,
+      "failed": 0,
+      "log_sha256": "b97cd1aa4546f2a483d80644bd2b152ef13cc23ed3ca1104b93a1dbed4af46c4"
+    }
   }
 }
