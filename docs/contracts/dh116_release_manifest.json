@@ -35914,6 +35914,33 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-isaac-scene-32-64-capacity-v1",
+      "branch": "11-17",
+      "status": "native_scene_capacity_verified_ppo_integration_pending",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-isaac-32-64-scene-capacity.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "cpu_tests": {
+        "passed": 70,
+        "failed": 0
+      },
+      "native_scene_capacity": [
+        32,
+        64
+      ],
+      "coupled_teacher_envs": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "remote_branch": "11-17",
+        "source_commit": "641322721fba7955cc4c2977e9f45aa91ead6c5d",
+        "source_tree": "3cbb673e9cf72a2e799d6fc5753b950d418785b4",
+        "files_verified": 6,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
